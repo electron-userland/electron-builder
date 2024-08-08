@@ -41,6 +41,11 @@ export interface SquirrelWindowsOptions extends TargetSpecificOptions {
   readonly useAppIdAsId?: boolean
 
   /**
+   *  The custom squirrel.windows.exe path. Defaults to `https://github.com/electron-userland/electron-builder-binaries/tree/master/Squirrel.Windows`.
+   */
+  readonly vendorDirectory?: string
+
+  /**
    * https://github.com/electron-userland/electron-builder/issues/1743
    * @private
    */

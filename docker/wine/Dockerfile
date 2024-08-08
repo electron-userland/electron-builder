@@ -1,6 +1,10 @@
 ARG IMAGE_VERSION=latest
 FROM electronuserland/builder:$IMAGE_VERSION
 
+# Set up Wine environment for 64-bit
+ENV WINEARCH=win64
+ENV WINEPREFIX=/root/.wine64
+
 RUN dpkg --add-architecture i386 && \
   curl -Lo /usr/share/keyrings/winehq.asc https://dl.winehq.org/wine-builds/winehq.key && \
   echo 'deb [signed-by=/usr/share/keyrings/winehq.asc] https://dl.winehq.org/wine-builds/ubuntu/ focal main' > /etc/apt/sources.list.d/winehq.list && \
