@@ -108,7 +108,7 @@ export interface DebOptions extends LinuxTargetSpecificOptions {
   /**
    * Package dependencies. Defaults to `["gconf2", "gconf-service", "libnotify4", "libappindicator1", "libxtst6", "libnss3"]`.
    * If need to support Debian, `libappindicator1` should be removed, it is [deprecated in Debian](https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=895037).
-   * If need to support KDE, `gconf2` and `gconf-service` should be removed as it's no longer used by GNOME](https://packages.debian.org/bullseye/gconf2).
+   * If need to support KDE, `gconf2` and `gconf-service` should be removed as it's no longer used [by GNOME](https://packages.debian.org/bullseye/gconf2).
    */
   readonly depends?: Array<string> | null
 
