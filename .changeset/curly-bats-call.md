@@ -3,4 +3,4 @@
 "electron-updater": minor
 ---
 
-Implement auto-updates for pacman
+[feat.] Implement autoupdates for pacman
