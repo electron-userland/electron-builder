@@ -189,13 +189,13 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
   let index = 0
   const NODE_MODULES = "node_modules"
   const getRealSource = (source: string) => {
-    // use main matcher patterns, so, user can exclude some files !node_modules/xxxx
-    let src = path.dirname(path.dirname(source))
+    const parentDir = path.dirname(source)
     // for the local node modules which is not in node modules
-    if (!src.endsWith(path.sep + NODE_MODULES)) {
-      src = path.dirname(source)
+    if (!parentDir.endsWith(path.sep + NODE_MODULES)) {
+      return parentDir
     }
-    return src
+    // use main matcher patterns, so, user can exclude some files !node_modules/xxxx
+    return path.dirname(parentDir)
   }
   for (const info of deps) {
     const source = info.dir
