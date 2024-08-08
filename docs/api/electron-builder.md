@@ -3216,6 +3216,19 @@ return await getCertInfo(cscFile, cscInfo.password || &quot;&quot;)
 <li><a href="#module_electron-updater.AppUpdater+isUpdaterActive"><code>.isUpdaterActive()</code></a> ⇒ <code>Boolean</code></li>
 </ul>
 </li>
+<li><a href="#PacmanUpdater">.PacmanUpdater</a> ⇐ <code><a href="#BaseUpdater">BaseUpdater</a></code>
+<ul>
+<li><a href="#module_electron-updater.BaseUpdater+install"><code>.install(isSilent, isForceRunAfter)</code></a> ⇒ <code>Boolean</code></li>
+<li><a href="#module_electron-updater.BaseUpdater+quitAndInstall"><code>.quitAndInstall(isSilent, isForceRunAfter)</code></a></li>
+<li><a href="#module_electron-updater.AppUpdater+addAuthHeader"><code>.addAuthHeader(token)</code></a></li>
+<li><a href="#module_electron-updater.AppUpdater+checkForUpdates"><code>.checkForUpdates()</code></a> ⇒ <code>Promise&lt; | <a href="#UpdateCheckResult">UpdateCheckResult</a>&gt;</code></li>
+<li><a href="#module_electron-updater.AppUpdater+checkForUpdatesAndNotify"><code>.checkForUpdatesAndNotify(downloadNotification)</code></a> ⇒ <code>Promise&lt; | <a href="#UpdateCheckResult">UpdateCheckResult</a>&gt;</code></li>
+<li><a href="#module_electron-updater.AppUpdater+downloadUpdate"><code>.downloadUpdate(cancellationToken)</code></a> ⇒ <code>Promise&lt;Array&lt;String&gt;&gt;</code></li>
+<li><a href="#module_electron-updater.AppUpdater+getFeedURL"><code>.getFeedURL()</code></a> ⇒ <code>undefined</code> | <code>null</code> | <code>String</code></li>
+<li><a href="#module_electron-updater.AppUpdater+setFeedURL"><code>.setFeedURL(options)</code></a></li>
+<li><a href="#module_electron-updater.AppUpdater+isUpdaterActive"><code>.isUpdaterActive()</code></a> ⇒ <code>Boolean</code></li>
+</ul>
+</li>
 <li><a href="#Provider">.Provider</a>
 <ul>
 <li><a href="#module_electron-updater.Provider+getLatestVersion"><code>.getLatestVersion()</code></a> ⇒ <code>Promise&lt;module:electron-updater/out/providers/Provider.T&gt;</code></li>
@@ -4079,6 +4092,136 @@ This is different from the normal quit event sequence.</p>
 </table>
 <p><a name="module_electron-updater.AppUpdater+isUpdaterActive"></a></p>
 <h3 id="nsisupdater.isupdateractive()-%E2%87%92-boolean"><code>nsisUpdater.isUpdaterActive()</code> ⇒ <code>Boolean</code></h3>
+<p><a name="PacmanUpdater"></a></p>
+<h2 id="pacmanupdater-%E2%87%90-baseupdater">PacmanUpdater ⇐ <code><a href="#BaseUpdater">BaseUpdater</a></code></h2>
+<p><strong>Kind</strong>: class of <a href="#module_electron-updater"><code>electron-updater</code></a><br/>
+<strong>Extends</strong>: <code><a href="#BaseUpdater">BaseUpdater</a></code></p>
+<ul>
+<li><a href="#PacmanUpdater">.PacmanUpdater</a> ⇐ <code><a href="#BaseUpdater">BaseUpdater</a></code>
+<ul>
+<li><a href="#module_electron-updater.BaseUpdater+install"><code>.install(isSilent, isForceRunAfter)</code></a> ⇒ <code>Boolean</code></li>
+<li><a href="#module_electron-updater.BaseUpdater+quitAndInstall"><code>.quitAndInstall(isSilent, isForceRunAfter)</code></a></li>
+<li><a href="#module_electron-updater.AppUpdater+addAuthHeader"><code>.addAuthHeader(token)</code></a></li>
+<li><a href="#module_electron-updater.AppUpdater+checkForUpdates"><code>.checkForUpdates()</code></a> ⇒ <code>Promise&lt; | <a href="#UpdateCheckResult">UpdateCheckResult</a>&gt;</code></li>
+<li><a href="#module_electron-updater.AppUpdater+checkForUpdatesAndNotify"><code>.checkForUpdatesAndNotify(downloadNotification)</code></a> ⇒ <code>Promise&lt; | <a href="#UpdateCheckResult">UpdateCheckResult</a>&gt;</code></li>
+<li><a href="#module_electron-updater.AppUpdater+downloadUpdate"><code>.downloadUpdate(cancellationToken)</code></a> ⇒ <code>Promise&lt;Array&lt;String&gt;&gt;</code></li>
+<li><a href="#module_electron-updater.AppUpdater+getFeedURL"><code>.getFeedURL()</code></a> ⇒ <code>undefined</code> | <code>null</code> | <code>String</code></li>
+<li><a href="#module_electron-updater.AppUpdater+setFeedURL"><code>.setFeedURL(options)</code></a></li>
+<li><a href="#module_electron-updater.AppUpdater+isUpdaterActive"><code>.isUpdaterActive()</code></a> ⇒ <code>Boolean</code></li>
+</ul>
+</li>
+</ul>
+<p><a name="module_electron-updater.BaseUpdater+install"></a></p>
+<h3 id="pacmanupdater.install(issilent%2C-isforcerunafter)-%E2%87%92-boolean"><code>pacmanUpdater.install(isSilent, isForceRunAfter)</code> ⇒ <code>Boolean</code></h3>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>isSilent</td>
+</tr>
+<tr>
+<td>isForceRunAfter</td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_electron-updater.BaseUpdater+quitAndInstall"></a></p>
+<h3 id="pacmanupdater.quitandinstall(issilent%2C-isforcerunafter)"><code>pacmanUpdater.quitAndInstall(isSilent, isForceRunAfter)</code></h3>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>isSilent</td>
+</tr>
+<tr>
+<td>isForceRunAfter</td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_electron-updater.AppUpdater+addAuthHeader"></a></p>
+<h3 id="pacmanupdater.addauthheader(token)"><code>pacmanUpdater.addAuthHeader(token)</code></h3>
+<p>Shortcut for explicitly adding auth tokens to request headers</p>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>token</td>
+<td><code>String</code></td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_electron-updater.AppUpdater+checkForUpdates"></a></p>
+<h3 id="pacmanupdater.checkforupdates()-%E2%87%92-promise%3C-%7C-updatecheckresult%3E"><code>pacmanUpdater.checkForUpdates()</code> ⇒ <code>Promise&lt; | <a href="#UpdateCheckResult">UpdateCheckResult</a>&gt;</code></h3>
+<p>Asks the server whether there is an update.</p>
+<p><a name="module_electron-updater.AppUpdater+checkForUpdatesAndNotify"></a></p>
+<h3 id="pacmanupdater.checkforupdatesandnotify(downloadnotification)-%E2%87%92-promise%3C-%7C-updatecheckresult%3E"><code>pacmanUpdater.checkForUpdatesAndNotify(downloadNotification)</code> ⇒ <code>Promise&lt; | <a href="#UpdateCheckResult">UpdateCheckResult</a>&gt;</code></h3>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>downloadNotification</td>
+<td><code>module:electron-updater/out/AppUpdater.DownloadNotification</code></td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_electron-updater.AppUpdater+downloadUpdate"></a></p>
+<h3 id="pacmanupdater.downloadupdate(cancellationtoken)-%E2%87%92-promise%3Carray%3Cstring%3E%3E"><code>pacmanUpdater.downloadUpdate(cancellationToken)</code> ⇒ <code>Promise&lt;Array&lt;String&gt;&gt;</code></h3>
+<p>Start downloading update manually. You can use this method if <code>autoDownload</code> option is set to <code>false</code>.</p>
+<p><strong>Returns</strong>: <code>Promise&lt;Array&lt;String&gt;&gt;</code> - Paths to downloaded files.</p>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>cancellationToken</td>
+<td><code>CancellationToken</code></td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_electron-updater.AppUpdater+getFeedURL"></a></p>
+<h3 id="pacmanupdater.getfeedurl()-%E2%87%92-undefined-%7C-null-%7C-string"><code>pacmanUpdater.getFeedURL()</code> ⇒ <code>undefined</code> | <code>null</code> | <code>String</code></h3>
+<p><a name="module_electron-updater.AppUpdater+setFeedURL"></a></p>
+<h3 id="pacmanupdater.setfeedurl(options)"><code>pacmanUpdater.setFeedURL(options)</code></h3>
+<p>Configure update provider. If value is <code>string</code>, <a href="/configuration/publish#genericserveroptions">GenericServerOptions</a> will be set with value as <code>url</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>options</td>
+<td><code><a href="/configuration/publish#publishconfiguration">PublishConfiguration</a></code> | <code>String</code> | <code><a href="/configuration/publish#githuboptions">GithubOptions</a></code> | <code><a href="/configuration/publish#s3options">S3Options</a></code> | <code><a href="/configuration/publish#spacesoptions">SpacesOptions</a></code> | <code><a href="/configuration/publish#genericserveroptions">GenericServerOptions</a></code> | <code>module:builder-util-runtime/out/publishOptions.CustomPublishOptions</code> | <code>module:builder-util-runtime/out/publishOptions.KeygenOptions</code> | <code><a href="/configuration/publish#snapstoreoptions">SnapStoreOptions</a></code> | <code>module:builder-util-runtime/out/publishOptions.BitbucketOptions</code> | <code>String</code></td>
+<td>If you want to override configuration in the <code>app-update.yml</code>.</td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_electron-updater.AppUpdater+isUpdaterActive"></a></p>
+<h3 id="pacmanupdater.isupdateractive()-%E2%87%92-boolean"><code>pacmanUpdater.isUpdaterActive()</code> ⇒ <code>Boolean</code></h3>
 <p><a name="Provider"></a></p>
 <h2 id="provider">Provider</h2>
 <p><strong>Kind</strong>: class of <a href="#module_electron-updater"><code>electron-updater</code></a><br/>

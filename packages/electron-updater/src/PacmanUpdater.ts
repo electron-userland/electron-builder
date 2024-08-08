@@ -5,7 +5,7 @@ import { BaseUpdater, InstallOptions } from "./BaseUpdater"
 import { DOWNLOAD_PROGRESS } from "./main"
 import { findFile } from "./providers/Provider"
 
-export class RpmUpdater extends BaseUpdater {
+export class PacmanUpdater extends BaseUpdater {
   constructor(options?: AllPublishOptions | null, app?: AppAdapter) {
     super(options, app)
   }
@@ -13,9 +13,9 @@ export class RpmUpdater extends BaseUpdater {
   /*** @private */
   protected doDownloadUpdate(downloadUpdateOptions: DownloadUpdateOptions): Promise<Array<string>> {
     const provider = downloadUpdateOptions.updateInfoAndProvider.provider
-    const fileInfo = findFile(provider.resolveFiles(downloadUpdateOptions.updateInfoAndProvider.info), "rpm", ["AppImage", "deb", "pacman"])!
+    const fileInfo = findFile(provider.resolveFiles(downloadUpdateOptions.updateInfoAndProvider.info), "pacman", ["AppImage", "deb", "rpm"])!
     return this.executeDownload({
-      fileExtension: "rpm",
+      fileExtension: "pacman",
       fileInfo,
       downloadUpdateOptions,
       task: async (updateFile, downloadOptions) => {
@@ -28,18 +28,10 @@ export class RpmUpdater extends BaseUpdater {
   }
 
   protected doInstall(options: InstallOptions): boolean {
-    const upgradePath = options.installerPath
     const sudo = this.wrapSudo()
     // pkexec doesn't want the command to be wrapped in " quotes
     const wrapper = /pkexec/i.test(sudo) ? "" : `"`
-    const packageManager = this.spawnSyncLog("which zypper")
-    let cmd: string[]
-    if (!packageManager) {
-      const packageManager = this.spawnSyncLog("which dnf || which yum")
-      cmd = [packageManager, "-y", "install", upgradePath]
-    } else {
-      cmd = [packageManager, "--no-refresh", "install", "--allow-unsigned-rpm", "-y", "-f", upgradePath]
-    }
+    const cmd = ["pacman", "-U", "--noconfirm", options.installerPath]
     this.spawnSyncLog(sudo, [`${wrapper}/bin/bash`, "-c", `'${cmd.join(" ")}'${wrapper}`])
     if (options.isForceRunAfter) {
       this.app.relaunch()
