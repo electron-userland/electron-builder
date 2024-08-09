@@ -188,11 +188,19 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
   const result = new Array<ResolvedFileSet>()
   let index = 0
   const NODE_MODULES = "node_modules"
+  const getRealSource = (source: string) => {
+    const parentDir = path.dirname(source)
+    // for the local node modules which is not in node modules
+    if (!parentDir.endsWith(path.sep + NODE_MODULES)) {
+      return parentDir
+    }
+    // use main matcher patterns, so, user can exclude some files !node_modules/xxxx
+    return path.dirname(parentDir)
+  }
   for (const info of deps) {
     const source = info.dir
     const destination = path.join(mainMatcher.to, NODE_MODULES, info.name)
-    // use main matcher patterns, so, user can exclude some files !node_modules/xxxx
-    const matcher = new FileMatcher(path.dirname(path.dirname(source)), destination, mainMatcher.macroExpander, mainMatcher.patterns)
+    const matcher = new FileMatcher(getRealSource(source), destination, mainMatcher.macroExpander, mainMatcher.patterns)
     const copier = new NodeModuleCopyHelper(matcher, platformPackager.info)
     const files = await copier.collectNodeModules(info, nodeModuleExcludedExts)
     result[index++] = validateFileSet({ src: source, destination, files, metadata: copier.metadata })
@@ -201,7 +209,7 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
       for (const dep of info.conflictDependency) {
         const source = dep.dir
         const destination = path.join(mainMatcher.to, NODE_MODULES, info.name, NODE_MODULES, dep.name)
-        const matcher = new FileMatcher(path.dirname(path.dirname(source)), destination, mainMatcher.macroExpander, mainMatcher.patterns)
+        const matcher = new FileMatcher(getRealSource(source), destination, mainMatcher.macroExpander, mainMatcher.patterns)
         const copier = new NodeModuleCopyHelper(matcher, platformPackager.info)
         result[index++] = validateFileSet({ src: source, destination, files: await copier.collectNodeModules(dep, nodeModuleExcludedExts), metadata: copier.metadata })
       }
