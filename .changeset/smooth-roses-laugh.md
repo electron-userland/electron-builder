@@ -2,4 +2,4 @@
 "app-builder-lib": patch
 ---
 
-add disableDefaultIgnoredFiles option
+fix: add disableDefaultIgnoredFiles option

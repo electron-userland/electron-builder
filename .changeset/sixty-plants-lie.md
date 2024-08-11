@@ -2,4 +2,4 @@
 "app-builder-lib": patch
 ---
 
-return parent dir for local dependency
+fix: return parent dir for local dependency

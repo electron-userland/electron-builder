@@ -1,5 +1,5 @@
 ---
-"electron-updater": minor
+"electron-updater": patch
 ---
 
-Handle Linux deb auto update installation on applications having spaces in `artifactName`.
+fix: Handle Linux deb auto update installation on applications having spaces in `artifactName`.

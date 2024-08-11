@@ -2,4 +2,4 @@
 "electron-updater": patch
 ---
 
-add custom channel in github provider
+fix: allow custom channel in github provider

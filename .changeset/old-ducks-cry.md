@@ -1,5 +1,5 @@
 ---
-"electron-updater": minor
+"electron-updater": patch
 ---
 
-Handle spaces for all linux package managers
+fix: handle spaces for all linux package managers
