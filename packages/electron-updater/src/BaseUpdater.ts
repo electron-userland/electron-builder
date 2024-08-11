@@ -48,7 +48,7 @@ export abstract class BaseUpdater extends AppUpdater {
     }
 
     const downloadedUpdateHelper = this.downloadedUpdateHelper
-    
+
     // Get the installer path, ensuring spaces are escaped on Linux
     // 1. Check if downloadedUpdateHelper is not null
     // 2. Check if downloadedUpdateHelper.file is not null
@@ -56,11 +56,8 @@ export abstract class BaseUpdater extends AppUpdater {
     //    a. If the platform is Linux, replace spaces with '\ ' for shell compatibility
     //    b. If the platform is not Linux, use the original path
     // 4. If any check fails, set installerPath to null
-    const installerPath = downloadedUpdateHelper && downloadedUpdateHelper.file 
-      ? (process.platform === 'linux' 
-        ? downloadedUpdateHelper.file.replace(/ /g, '\\ ') 
-        : downloadedUpdateHelper.file) 
-      : null;
+    const installerPath =
+      downloadedUpdateHelper && downloadedUpdateHelper.file ? (process.platform === "linux" ? downloadedUpdateHelper.file.replace(/ /g, "\\ ") : downloadedUpdateHelper.file) : null
 
     const downloadedFileInfo = downloadedUpdateHelper == null ? null : downloadedUpdateHelper.downloadedFileInfo
     if (installerPath == null || downloadedFileInfo == null) {
