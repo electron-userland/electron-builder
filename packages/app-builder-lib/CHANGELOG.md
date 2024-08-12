@@ -1,5 +1,19 @@
 # app-builder-lib
 
+## 25.0.4
+
+### Patch Changes
+
+- [#8392](https://github.com/electron-userland/electron-builder/pull/8392) [`12c52a81`](https://github.com/electron-userland/electron-builder/commit/12c52a81420f04ec0e205dd83798c2b0b773011d) Thanks [@beyondkmp](https://github.com/beyondkmp)! - Automatically place .node files into app.asar.unpack
+
+- [#8406](https://github.com/electron-userland/electron-builder/pull/8406) [`f7daeb99`](https://github.com/electron-userland/electron-builder/commit/f7daeb9976353f7b12c093c88b6e1136b6317880) Thanks [@beyondkmp](https://github.com/beyondkmp)! - fix: return parent dir for local dependency
+
+- [#8398](https://github.com/electron-userland/electron-builder/pull/8398) [`5ab2bee1`](https://github.com/electron-userland/electron-builder/commit/5ab2bee1e1db77967c65d56443f0dc79de5071da) Thanks [@beyondkmp](https://github.com/beyondkmp)! - fix: add disableDefaultIgnoredFiles option
+
+- Updated dependencies []:
+  - dmg-builder@25.0.4
+  - electron-builder-squirrel-windows@25.0.4
+
 ## 25.0.3
 
 ### Patch Changes

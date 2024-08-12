@@ -1,6 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
 import { CONCURRENCY } from "builder-util"
-import { lstat, readdir } from "fs-extra"
+import { lstat, readdir, lstatSync } from "fs-extra"
 import * as path from "path"
 import { excludedNames, FileMatcher } from "../fileMatcher"
 import { Packager } from "../packager"
@@ -76,7 +76,9 @@ export class NodeModuleCopyHelper extends FileCopyHelper {
             return null
           }
 
-          if (!forceIncluded) {
+          // check if filematcher matches the files array as more important than the default excluded files.
+          const fileMatched = filter != null && filter(dirPath, lstatSync(dirPath))
+          if (!fileMatched || !forceIncluded || !!this.packager.config.disableDefaultIgnoredFiles) {
             for (const ext of nodeModuleExcludedExts) {
               if (name.endsWith(ext)) {
                 return null

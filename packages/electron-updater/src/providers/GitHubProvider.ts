@@ -48,6 +48,11 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
     super(options, "github.com", runtimeOptions)
   }
 
+  private get channel(): string {
+    const result = this.updater.channel || this.options.channel
+    return result == null ? this.getDefaultChannelName() : this.getCustomChannelName(result)
+  }
+
   async getLatestVersion(): Promise<GithubUpdateInfo> {
     const cancellationToken = new CancellationToken()
 
@@ -136,7 +141,10 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
     }
 
     try {
-      const channel = this.updater.allowPrerelease ? this.getCustomChannelName(String(semver.prerelease(tag)?.[0] || "latest")) : this.getDefaultChannelName()
+      let channel = this.channel
+      if (this.updater.allowPrerelease && semver.prerelease(tag)?.[0]) {
+        channel = this.getCustomChannelName(String(semver.prerelease(tag)?.[0]))
+      }
       rawData = await fetchData(channel)
     } catch (e: any) {
       if (this.updater.allowPrerelease) {

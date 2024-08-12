@@ -1,5 +1,15 @@
 ## 4.3.0
 
+## 6.3.3
+
+### Patch Changes
+
+- [#8400](https://github.com/electron-userland/electron-builder/pull/8400) [`9dc0b49a`](https://github.com/electron-userland/electron-builder/commit/9dc0b49aea1d3bb56b42c3b1bdb6001708a34439) Thanks [@Ryan432](https://github.com/Ryan432)! - fix: Handle Linux deb auto update installation on applications having spaces in `artifactName`.
+
+- [#8393](https://github.com/electron-userland/electron-builder/pull/8393) [`8dabf64b`](https://github.com/electron-userland/electron-builder/commit/8dabf64b8f84975cf4eb016dcd23411ab0d4bf64) Thanks [@beyondkmp](https://github.com/beyondkmp)! - fix: allow custom channel in github provider
+
+- [#8403](https://github.com/electron-userland/electron-builder/pull/8403) [`1c14820b`](https://github.com/electron-userland/electron-builder/commit/1c14820b97fad802b300dd93ccd4d6a10a72360f) Thanks [@xyloflake](https://github.com/xyloflake)! - fix: handle spaces for all linux package managers
+
 ## 6.3.2
 
 ### Patch Changes
