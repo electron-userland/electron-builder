@@ -233,7 +233,7 @@ export abstract class DifferentialDownloader {
 
         const request = this.httpExecutor.createRequest(requestOptions, response => {
           response.on("error", reject)
-          response.on("abort", () => {
+          response.on("aborted", () => {
             reject(new Error("response has been aborted by the server"))
           })
           // Electron net handles redirects automatically, our NodeJS test server doesn't use redirects - so, we don't check 3xx codes.
@@ -294,6 +294,11 @@ export abstract class DifferentialDownloader {
         if (!checkIsRangesSupported(response, reject)) {
           return
         }
+
+        response.on("error", reject)
+        response.on("aborted", () => {
+          reject(new Error("response has been aborted by the server"))
+        })
 
         response.on("data", dataHandler)
         response.on("end", () => resolve())

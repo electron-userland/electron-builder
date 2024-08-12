@@ -566,7 +566,7 @@
               "type": "null"
             }
           ],
-          "description": "Package dependencies. Defaults to `[\"gconf2\", \"gconf-service\", \"libnotify4\", \"libappindicator1\", \"libxtst6\", \"libnss3\"]`.\nIf need to support Debian, `libappindicator1` should be removed, it is [deprecated in Debian](https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=895037).\nIf need to support KDE, `gconf2` and `gconf-service` should be removed as it's no longer used by GNOME](https://packages.debian.org/bullseye/gconf2)."
+          "description": "Package dependencies. Defaults to `[\"gconf2\", \"gconf-service\", \"libnotify4\", \"libappindicator1\", \"libxtst6\", \"libnss3\"]`.\nIf need to support Debian, `libappindicator1` should be removed, it is [deprecated in Debian](https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=895037).\nIf need to support KDE, `gconf2` and `gconf-service` should be removed as it's no longer used [by GNOME](https://packages.debian.org/bullseye/gconf2)."
         },
         "description": {
           "description": "As [description](/configuration/configuration#Metadata-description) from application package.json, but allows you to specify different for Linux.",
@@ -1652,6 +1652,14 @@
           "description": "Whether to infer update channel from application version pre-release components. e.g. if version `0.12.1-alpha.1`, channel will be set to `alpha`. Otherwise to `latest`.",
           "type": "boolean"
         },
+        "disableDefaultIgnoredFiles": {
+          "default": false,
+          "description": "Whether to exclude all default ignored files(https://www.electron.build/configuration/contents#files) and options. Defaults to `false`.",
+          "type": [
+            "null",
+            "boolean"
+          ]
+        },
         "electronLanguages": {
           "anyOf": [
             {
@@ -2274,6 +2282,14 @@
           "default": true,
           "description": "Whether to infer update channel from application version pre-release components. e.g. if version `0.12.1-alpha.1`, channel will be set to `alpha`. Otherwise to `latest`.",
           "type": "boolean"
+        },
+        "disableDefaultIgnoredFiles": {
+          "default": false,
+          "description": "Whether to exclude all default ignored files(https://www.electron.build/configuration/contents#files) and options. Defaults to `false`.",
+          "type": [
+            "null",
+            "boolean"
+          ]
         },
         "electronLanguages": {
           "anyOf": [
@@ -2904,6 +2920,14 @@
           "default": true,
           "description": "Whether to infer update channel from application version pre-release components. e.g. if version `0.12.1-alpha.1`, channel will be set to `alpha`. Otherwise to `latest`.",
           "type": "boolean"
+        },
+        "disableDefaultIgnoredFiles": {
+          "default": false,
+          "description": "Whether to exclude all default ignored files(https://www.electron.build/configuration/contents#files) and options. Defaults to `false`.",
+          "type": [
+            "null",
+            "boolean"
+          ]
         },
         "electronLanguages": {
           "anyOf": [
@@ -6057,6 +6081,14 @@
           "description": "Whether to infer update channel from application version pre-release components. e.g. if version `0.12.1-alpha.1`, channel will be set to `alpha`. Otherwise to `latest`.",
           "type": "boolean"
         },
+        "disableDefaultIgnoredFiles": {
+          "default": false,
+          "description": "Whether to exclude all default ignored files(https://www.electron.build/configuration/contents#files) and options. Defaults to `false`.",
+          "type": [
+            "null",
+            "boolean"
+          ]
+        },
         "electronLanguages": {
           "anyOf": [
             {
@@ -6693,6 +6725,14 @@
         {
           "type": "null"
         }
+      ]
+    },
+    "disableDefaultIgnoredFiles": {
+      "default": false,
+      "description": "Whether to exclude all default ignored files(https://www.electron.build/configuration/contents#files) and options. Defaults to `false`.",
+      "type": [
+        "null",
+        "boolean"
       ]
     },
     "disableSanityCheckAsar": {
