@@ -533,8 +533,8 @@ importers:
         specifier: ^4.5.0
         version: 4.5.0
       semver:
-        specifier: ^7.3.8
-        version: 7.6.0
+        specifier: ^7.6.3
+        version: 7.6.3
       tiny-typed-emitter:
         specifier: ^2.1.0
         version: 2.1.0
@@ -11116,7 +11116,7 @@ snapshots:
       resolve: 1.22.8
       sass: 1.71.1
       scss-parser: 1.0.6
-      semver: 7.6.0
+      semver: 7.6.3
       yargs: 16.2.0
     transitivePeerDependencies:
       - supports-color
