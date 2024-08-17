@@ -18,6 +18,7 @@ export interface CliOptions extends PackagerOptions, PublishOptions {
   armv7l?: boolean
   arm64?: boolean
   universal?: boolean
+  riscv64?: boolean
 
   dir?: boolean
 }
@@ -47,6 +48,9 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
       }
       if (args.universal) {
         result.push(Arch.universal)
+      }
+      if (args.riscv64) {
+        result.push(Arch.riscv64)
       }
 
       return result.length === 0 && currentIfNotSpecified ? [archFromString(process.arch)] : result
