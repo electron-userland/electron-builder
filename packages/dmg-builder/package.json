@@ -1,6 +1,6 @@
 {
 	"name": "dmg-builder",
-	"version": "25.0.4",
+	"version": "25.0.5",
 	"main": "out/dmgUtil.js",
 	"author": "Vladimir Krivosheev",
 	"license": "MIT",

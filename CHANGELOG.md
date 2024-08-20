@@ -1,3 +1,24 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v25.0.4...v) (2024-08-20)
+
+
+### Bug Fixes
+
+* change `abort` listener to `aborted` event ([#8282](https://github.com/electron-userland/electron-builder/issues/8282)) ([15ce5b4](https://github.com/electron-userland/electron-builder/commit/15ce5b4164378f7398ff84cabe8ee97eef5cfd1b))
+* Snap publish regression ([#8424](https://github.com/electron-userland/electron-builder/issues/8424)) ([8e6c171](https://github.com/electron-userland/electron-builder/commit/8e6c17124cdc523620a66efaf871ef8d335c0f49))
+* windows signature verification special chars ([#8409](https://github.com/electron-userland/electron-builder/issues/8409)) ([5fae1cf](https://github.com/electron-userland/electron-builder/commit/5fae1cf3be0388c2bd95a341a0340faa839d2aa7)), closes [#8051](https://github.com/electron-userland/electron-builder/issues/8051) [#8162](https://github.com/electron-userland/electron-builder/issues/8162) [#8162](https://github.com/electron-userland/electron-builder/issues/8162)
+
+
+### Features
+
+* allow `riscv64` support via custom electron dist ([#8143](https://github.com/electron-userland/electron-builder/issues/8143)) ([b306895](https://github.com/electron-userland/electron-builder/commit/b3068954d946be5fe2568183819a26c36d54878b))
+
+
+### Reverts
+
+* Revert "feat: allow `riscv64` support via custom electron dist (#8143)" (#8427) ([de1ea75](https://github.com/electron-userland/electron-builder/commit/de1ea759d3f4914c296d4512b4dec7a066ff40ec)), closes [#8143](https://github.com/electron-userland/electron-builder/issues/8143) [#8427](https://github.com/electron-userland/electron-builder/issues/8427)
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v25.0.3...v) (2024-08-11)
 
 
