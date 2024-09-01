@@ -25,7 +25,7 @@
     "debug": "^4.3.4",
     "fs-extra": "^10.1.0",
     "http-proxy-agent": "^5.0.0",
-    "https-proxy-agent": "^5.0.1",
+    "https-proxy-agent": "^7.0.0",
     "is-ci": "^3.0.0",
     "js-yaml": "^4.1.0",
     "source-map-support": "^0.5.19",
