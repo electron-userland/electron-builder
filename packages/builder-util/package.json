@@ -24,7 +24,7 @@
     "cross-spawn": "^7.0.3",
     "debug": "^4.3.4",
     "fs-extra": "^10.1.0",
-    "http-proxy-agent": "^5.0.0",
+    "http-proxy-agent": "^7.0.0",
     "https-proxy-agent": "^5.0.1",
     "is-ci": "^3.0.0",
     "js-yaml": "^4.1.0",
