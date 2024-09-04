@@ -514,9 +514,6 @@ importers:
 
   packages/electron-updater:
     dependencies:
-      builder-util:
-        specifier: workspace:*
-        version: link:../builder-util
       builder-util-runtime:
         specifier: workspace:*
         version: link:../builder-util-runtime

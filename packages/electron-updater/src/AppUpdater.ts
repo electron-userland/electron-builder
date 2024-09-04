@@ -1,4 +1,3 @@
-import { retry } from "builder-util"
 import {
   AllPublishOptions,
   asArray,
@@ -11,6 +10,7 @@ import {
   CancellationError,
   ProgressInfo,
   BlockMap,
+  retry,
 } from "builder-util-runtime"
 import { randomBytes } from "crypto"
 import { release } from "os"
