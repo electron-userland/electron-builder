@@ -12,7 +12,6 @@ import { Packager } from "../packager"
 import { PlatformPackager } from "../platformPackager"
 import { AppFileWalker } from "./AppFileWalker"
 import { NodeModuleCopyHelper } from "./NodeModuleCopyHelper"
-import { NodeModuleInfo } from "./packageDependencies"
 
 const BOWER_COMPONENTS_PATTERN = `${path.sep}bower_components${path.sep}`
 /** @internal */
@@ -181,7 +180,7 @@ function validateFileSet(fileSet: ResolvedFileSet): ResolvedFileSet {
 
 /** @internal */
 export async function computeNodeModuleFileSets(platformPackager: PlatformPackager<any>, mainMatcher: FileMatcher): Promise<Array<ResolvedFileSet>> {
-  const deps = (await platformPackager.info.getNodeDependencyInfo(platformPackager.platform).value) as Array<NodeModuleInfo>
+  const deps = await platformPackager.info.getNodeDependencyInfo(platformPackager.platform, true).value
 
   const nodeModuleExcludedExts = getNodeModuleExcludedExts(platformPackager)
   // serial execution because copyNodeModules is concurrent and so, no need to increase queue/pressure
