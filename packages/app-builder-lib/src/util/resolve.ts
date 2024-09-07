@@ -1,6 +1,6 @@
 import { log } from "builder-util/out/log"
 import debug from "debug"
-import * as  path from "path"
+import * as path from "path"
 import { pathToFileURL } from "url"
 
 export async function resolveModule<T>(type: string | undefined, name: string): Promise<T> {
