@@ -9,7 +9,7 @@ import { getArchCliNames, log, use, printErrorAndExit } from "builder-util"
 import { readJson } from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
-import { orNullIfFileNotExist } from "app-builder-lib/src/config/loadConfig"
+import { orNullIfFileNotExist } from "app-builder-lib/out/config/loadConfig"
 import * as yargs from "yargs"
 
 /** @internal */
