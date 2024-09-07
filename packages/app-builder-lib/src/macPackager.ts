@@ -20,7 +20,7 @@ import * as fs from "fs/promises"
 import { notarize } from "@electron/notarize"
 import { NotarizeOptionsNotaryTool, NotaryToolKeychainCredentials } from "@electron/notarize/lib/types"
 import { MemoLazy } from "builder-util-runtime"
-import { resolveFunction } from "./config/resolve"
+import { resolveFunction } from "./util/resolve"
 
 export type CustomMacSignOptions = SignOptions
 export type CustomMacSign = (configuration: CustomMacSignOptions, packager: MacPackager) => Promise<void>

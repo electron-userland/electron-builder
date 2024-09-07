@@ -29,7 +29,7 @@ import {
 import { executeAppBuilderAsJson } from "./util/appBuilder"
 import { computeFileSets, computeNodeModuleFileSets, copyAppFiles, ELECTRON_COMPILE_SHIM_FILENAME, transformFiles } from "./util/appFileCopier"
 import { expandMacro as doExpandMacro } from "./util/macroExpander"
-import { resolveFunction } from "./config/resolve"
+import { resolveFunction } from "./util/resolve"
 
 export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> {
   get packagerOptions(): PackagerOptions {

@@ -40,7 +40,7 @@ import { getRepositoryInfo } from "./util/repositoryInfo"
 import { installOrRebuild, nodeGypRebuild } from "./util/yarn"
 import { PACKAGE_VERSION } from "./version"
 import { release as getOsRelease } from "os"
-import { resolveFunction } from "./config/resolve"
+import { resolveFunction } from "./util/resolve"
 
 function addHandler(emitter: EventEmitter, event: string, handler: (...args: Array<any>) => void) {
   emitter.on(event, handler)
