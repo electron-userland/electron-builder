@@ -2,7 +2,7 @@ import { DebugLogger, deepAssign, InvalidConfigurationError, log, safeStringifyJ
 import { readJson } from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
-import { getConfig as _getConfig, loadParentConfig, orNullIfFileNotExist, ReadConfigRequest } from "read-config-file"
+import { getConfig as _getConfig, loadParentConfig, orNullIfFileNotExist, ReadConfigRequest } from "./loadConfig"
 import { Configuration } from "../configuration"
 import { FileSet } from "../options/PlatformSpecificBuildOptions"
 import { reactCra } from "../presets/rectCra"

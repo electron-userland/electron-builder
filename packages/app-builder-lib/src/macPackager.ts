@@ -10,7 +10,7 @@ import { DIR_TARGET, Platform, Target } from "./core"
 import { AfterPackContext, ElectronPlatformName } from "./index"
 import { MacConfiguration, MasConfiguration, NotarizeNotaryOptions } from "./options/macOptions"
 import { Packager } from "./packager"
-import { chooseNotNull, resolveFunction, PlatformPackager } from "./platformPackager"
+import { chooseNotNull, PlatformPackager } from "./platformPackager"
 import { ArchiveTarget } from "./targets/ArchiveTarget"
 import { PkgTarget, prepareProductBuildArgs } from "./targets/pkg"
 import { createCommonTarget, NoOpTarget } from "./targets/targetFactory"
@@ -20,6 +20,7 @@ import * as fs from "fs/promises"
 import { notarize } from "@electron/notarize"
 import { NotarizeOptionsNotaryTool, NotaryToolKeychainCredentials } from "@electron/notarize/lib/types"
 import { MemoLazy } from "builder-util-runtime"
+import { resolveFunction } from "./config/resolve"
 
 export type CustomMacSignOptions = SignOptions
 export type CustomMacSign = (configuration: CustomMacSignOptions, packager: MacPackager) => Promise<void>

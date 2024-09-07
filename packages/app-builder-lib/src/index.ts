@@ -3,7 +3,7 @@ import { log, InvalidConfigurationError, executeFinally } from "builder-util"
 import { asArray } from "builder-util-runtime"
 import { Packager } from "./packager"
 import { PackagerOptions } from "./packagerApi"
-import { resolveFunction } from "./platformPackager"
+import { resolveFunction } from "./config/resolve"
 import { PublishManager } from "./publish/PublishManager"
 
 export { Packager, BuildResult } from "./packager"
