@@ -1,7 +1,7 @@
 #! /usr/bin/env node
 
 import { getElectronVersion } from "app-builder-lib/out/electron/electronVersion"
-import { computeDefaultAppDirectory, getConfig } from "app-builder-lib/out/config/config"
+import { computeDefaultAppDirectory, getConfig } from "app-builder-lib/out/util/config/config"
 import { installOrRebuild } from "app-builder-lib/out/util/yarn"
 import { PACKAGE_VERSION } from "app-builder-lib/out/version"
 import { createLazyProductionDeps } from "app-builder-lib/out/util/packageDependencies"
