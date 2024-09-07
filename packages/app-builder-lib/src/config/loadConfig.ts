@@ -6,6 +6,7 @@ import { parse as parseEnv } from "dotenv"
 import { loadTsConfig } from "config-file-ts"
 import { DotenvParseInput, expand } from "dotenv-expand"
 import { resolveModule } from "../util/resolve"
+import { log } from "builder-util"
 
 export interface ReadConfigResult<T> {
   readonly result: T
@@ -129,6 +130,8 @@ export async function loadEnv(envFile: string) {
   }
 
   const parsed = parseEnv<DotenvParseInput>(data)
+
+  log.info({ envFile }, "injecting environment")
   Object.entries(parsed).forEach(([key, value]) => {
     if (!Object.prototype.hasOwnProperty.call(process.env, key)) {
       process.env[key] = value
