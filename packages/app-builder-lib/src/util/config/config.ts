@@ -3,10 +3,10 @@ import { readJson } from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { getConfig as _getConfig, loadParentConfig, orNullIfFileNotExist, ReadConfigRequest } from "./loadConfig"
-import { Configuration } from "../configuration"
-import { FileSet } from "../options/PlatformSpecificBuildOptions"
-import { reactCra } from "../presets/rectCra"
-import { PACKAGE_VERSION } from "../version"
+import { Configuration } from "../../configuration"
+import { FileSet } from "../../options/PlatformSpecificBuildOptions"
+import { reactCra } from "../../presets/rectCra"
+import { PACKAGE_VERSION } from "../../version"
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const validateSchema = require("@develar/schema-utils")
 

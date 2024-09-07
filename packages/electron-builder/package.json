@@ -55,20 +55,15 @@
     "builder-util-runtime": "workspace:*",
     "chalk": "^4.1.2",
     "dmg-builder": "workspace:*",
-    "dotenv": "^16.4.5",
-    "dotenv-expand": "^11.0.6",
     "fs-extra": "^10.1.0",
     "is-ci": "^3.0.0",
-    "js-yaml": "^4.1.0",
     "lazy-val": "^1.0.5",
     "simple-update-notifier": "2.0.0",
-    "temp-file": "^3.4.0",
     "yargs": "^17.6.2"
   },
   "devDependencies": {
     "@types/fs-extra": "9.0.13",
     "@types/is-ci": "3.0.0",
-    "@types/js-yaml": "^4.0.9",
     "@types/yargs": "^17.0.16"
   },
   "typings": "./out/index.d.ts",

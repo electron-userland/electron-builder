@@ -32,7 +32,7 @@ import { ArtifactBuildStarted, ArtifactCreated, PackagerOptions } from "./packag
 import { PlatformPackager } from "./platformPackager"
 import { ProtonFramework } from "./ProtonFramework"
 import { computeArchToTargetNamesMap, createTargets, NoOpTarget } from "./targets/targetFactory"
-import { computeDefaultAppDirectory, getConfig, validateConfiguration } from "./config/config"
+import { computeDefaultAppDirectory, getConfig, validateConfiguration } from "./util/config/config"
 import { expandMacro } from "./util/macroExpander"
 import { createLazyProductionDeps, NodeModuleDirInfo, NodeModuleInfo } from "./util/packageDependencies"
 import { checkMetadata, readPackageJson } from "./util/packageMetadata"

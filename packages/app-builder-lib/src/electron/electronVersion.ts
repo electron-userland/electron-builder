@@ -6,10 +6,10 @@ import { httpExecutor } from "builder-util"
 import { readJson } from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
-import { orNullIfFileNotExist } from "../config/loadConfig"
+import { orNullIfFileNotExist } from "../util/config/loadConfig"
 import * as semver from "semver"
 import { Configuration } from "../configuration"
-import { getConfig } from "../config/config"
+import { getConfig } from "../util/config/config"
 
 export type MetadataValue = Lazy<{ [key: string]: any } | null>
 

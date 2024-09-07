@@ -5,7 +5,7 @@ import { Lazy } from "lazy-val"
 import { parse as parseEnv } from "dotenv"
 import { loadTsConfig } from "config-file-ts"
 import { DotenvParseInput, expand } from "dotenv-expand"
-import { resolveModule } from "../util/resolve"
+import { resolveModule } from "../resolve"
 import { log } from "builder-util"
 
 export interface ReadConfigResult<T> {

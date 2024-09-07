@@ -173,15 +173,15 @@ importers:
       js-yaml:
         specifier: ^4.1.0
         version: 4.1.0
+      json5:
+        specifier: ^2.2.3
+        version: 2.2.3
       lazy-val:
         specifier: ^1.0.5
         version: 1.0.5
       minimatch:
         specifier: ^10.0.0
         version: 10.0.1
-      read-config-file:
-        specifier: 6.4.0
-        version: 6.4.0
       resedit:
         specifier: ^1.7.0
         version: 1.7.0
@@ -282,6 +282,9 @@ importers:
       electron-builder-squirrel-windows:
         specifier: workspace:*
         version: link:../electron-builder-squirrel-windows
+      toml:
+        specifier: ^3.0.0
+        version: 3.0.0
 
   packages/builder-util:
     dependencies:
@@ -418,30 +421,18 @@ importers:
       dmg-builder:
         specifier: workspace:*
         version: link:../dmg-builder
-      dotenv:
-        specifier: ^16.4.5
-        version: 16.4.5
-      dotenv-expand:
-        specifier: ^11.0.6
-        version: 11.0.6
       fs-extra:
         specifier: ^10.1.0
         version: 10.1.0
       is-ci:
         specifier: ^3.0.0
         version: 3.0.1
-      js-yaml:
-        specifier: ^4.1.0
-        version: 4.1.0
       lazy-val:
         specifier: ^1.0.5
         version: 1.0.5
       simple-update-notifier:
         specifier: 2.0.0
         version: 2.0.0
-      temp-file:
-        specifier: ^3.4.0
-        version: 3.4.0
       yargs:
         specifier: ^17.6.2
         version: 17.7.2
@@ -452,9 +443,6 @@ importers:
       '@types/is-ci':
         specifier: 3.0.0
         version: 3.0.0
-      '@types/js-yaml':
-        specifier: ^4.0.9
-        version: 4.0.9
       '@types/yargs':
         specifier: ^17.0.16
         version: 17.0.32
@@ -2347,9 +2335,6 @@ packages:
 
   '@types/js-yaml@4.0.3':
     resolution: {integrity: sha512-5t9BhoORasuF5uCPr+d5/hdB++zRFUTMIZOzbNkr+jZh3yQht4HYbRDyj9fY8n2TZT30iW9huzav73x4NikqWg==}
-
-  '@types/js-yaml@4.0.9':
-    resolution: {integrity: sha512-k4MGaQl5TGo/iipqb2UDG2UwjXziSWkh0uysQelTlJpX1qGlpUZYm8PnO4DxG1qBomtJUdYJ6qR6xdIah10JLg==}
 
   '@types/json-schema@7.0.15':
     resolution: {integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==}
@@ -5892,10 +5877,6 @@ packages:
     resolution: {integrity: sha512-BNg9EN3DD3GsDXX7Aa8O4p92sryjkmzYYgmgTAc6CA4uGLEDzFfxOxugu21akOxpcXHiEgsYkC6nPsQvLLLmEg==}
     hasBin: true
 
-  read-config-file@6.4.0:
-    resolution: {integrity: sha512-uB5QOBeF84PT61GlV11OTV4jUGHAO3iDEOP6v9ygxhG6Bs9PLg7WsjNT6mtIX2G+x8lJTr4ZWNeG6LDTKkNf2Q==}
-    engines: {node: '>=12.0.0'}
-
   read-package-up@11.0.0:
     resolution: {integrity: sha512-MbgfoNPANMdb4oRBNg5eqLbB2t2r+o5Ua1pNt8BqGp4I0FJZhuVSOj3PaBPni4azWuSzEdNn2evevzVmEk1ohQ==}
     engines: {node: '>=18'}
@@ -6561,6 +6542,9 @@ packages:
   to-regex@3.0.2:
     resolution: {integrity: sha512-FWtleNAtZ/Ki2qtqej2CXTOayOH9bHDQF+Q48VpWyDXjbYxA4Yz8iDB31zXOBUlOHHKidDbqGVrTUvQMPmBGBw==}
     engines: {node: '>=0.10.0'}
+
+  toml@3.0.0:
+    resolution: {integrity: sha512-y/mWCZinnvxjTKYhJ+pYxwD0mRLVvOtdS2Awbgxln6iEnt4rk0yBxeSBHkGJcPucRiG0e55mwWp+g/05rsrd6w==}
 
   touch@0.0.3:
     resolution: {integrity: sha512-/LQ54KM9rPf3rGXGo2UPQWx3ol242Zg6Whq27H5DEmZhCJo+pm9N5BzRGepO9vTVhYxpXJdcc1+3uaYt9NyeKg==}
@@ -9538,8 +9522,6 @@ snapshots:
       pretty-format: 26.6.2
 
   '@types/js-yaml@4.0.3': {}
-
-  '@types/js-yaml@4.0.9': {}
 
   '@types/json-schema@7.0.15': {}
 
@@ -13852,15 +13834,6 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  read-config-file@6.4.0:
-    dependencies:
-      config-file-ts: 0.2.8-rc1
-      dotenv: 16.4.5
-      dotenv-expand: 11.0.6
-      js-yaml: 4.1.0
-      json5: 2.2.3
-      lazy-val: 1.0.5
-
   read-package-up@11.0.0:
     dependencies:
       find-up-simple: 1.0.0
@@ -14578,6 +14551,8 @@ snapshots:
       extend-shallow: 3.0.2
       regex-not: 1.0.2
       safe-regex: 1.1.0
+
+  toml@3.0.0: {}
 
   touch@0.0.3:
     dependencies:
