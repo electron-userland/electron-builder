@@ -2,11 +2,11 @@ import { DebugLogger, deepAssign, InvalidConfigurationError, log, safeStringifyJ
 import { readJson } from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
-import { getConfig as _getConfig, loadParentConfig, orNullIfFileNotExist, ReadConfigRequest } from "read-config-file"
-import { Configuration } from "../configuration"
-import { FileSet } from "../options/PlatformSpecificBuildOptions"
-import { reactCra } from "../presets/rectCra"
-import { PACKAGE_VERSION } from "../version"
+import { getConfig as _getConfig, loadParentConfig, orNullIfFileNotExist, ReadConfigRequest } from "./load"
+import { Configuration } from "../../configuration"
+import { FileSet } from "../../options/PlatformSpecificBuildOptions"
+import { reactCra } from "../../presets/rectCra"
+import { PACKAGE_VERSION } from "../../version"
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const validateSchema = require("@develar/schema-utils")
 
@@ -214,7 +214,7 @@ function getDefaultConfig(): Configuration {
   }
 }
 
-const schemeDataPromise = new Lazy(() => readJson(path.join(__dirname, "..", "..", "scheme.json")))
+const schemeDataPromise = new Lazy(() => readJson(path.join(__dirname, "..", "..", "..", "scheme.json")))
 
 export async function validateConfiguration(config: Configuration, debugLogger: DebugLogger) {
   const extraMetadata = config.extraMetadata

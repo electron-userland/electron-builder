@@ -10,6 +10,7 @@ import {
   CancellationError,
   ProgressInfo,
   BlockMap,
+  retry,
 } from "builder-util-runtime"
 import { randomBytes } from "crypto"
 import { release } from "os"
@@ -712,7 +713,14 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     const tempUpdateFile = await createTempUpdateFile(`temp-${updateFileName}`, cacheDir, log)
     try {
       await taskOptions.task(tempUpdateFile, downloadOptions, packageFile, removeFileIfAny)
-      await rename(tempUpdateFile, updateFile)
+      await retry(
+        () => rename(tempUpdateFile, updateFile),
+        60,
+        500,
+        0,
+        0,
+        error => error instanceof Error && /^EBUSY:/.test(error.message)
+      )
     } catch (e: any) {
       await removeFileIfAny()
 

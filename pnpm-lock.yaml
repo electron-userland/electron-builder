@@ -137,9 +137,18 @@ importers:
       chromium-pickle-js:
         specifier: ^0.2.0
         version: 0.2.0
+      config-file-ts:
+        specifier: 0.2.8-rc1
+        version: 0.2.8-rc1
       debug:
         specifier: ^4.3.4
         version: 4.3.4
+      dotenv:
+        specifier: ^16.4.5
+        version: 16.4.5
+      dotenv-expand:
+        specifier: ^11.0.6
+        version: 11.0.6
       ejs:
         specifier: ^3.1.8
         version: 3.1.9
@@ -164,15 +173,15 @@ importers:
       js-yaml:
         specifier: ^4.1.0
         version: 4.1.0
+      json5:
+        specifier: ^2.2.3
+        version: 2.2.3
       lazy-val:
         specifier: ^1.0.5
         version: 1.0.5
       minimatch:
         specifier: ^10.0.0
         version: 10.0.1
-      read-config-file:
-        specifier: 6.4.0
-        version: 6.4.0
       resedit:
         specifier: ^1.7.0
         version: 1.7.0
@@ -273,6 +282,9 @@ importers:
       electron-builder-squirrel-windows:
         specifier: workspace:*
         version: link:../electron-builder-squirrel-windows
+      toml:
+        specifier: ^3.0.0
+        version: 3.0.0
 
   packages/builder-util:
     dependencies:
@@ -418,9 +430,6 @@ importers:
       lazy-val:
         specifier: ^1.0.5
         version: 1.0.5
-      read-config-file:
-        specifier: 6.4.0
-        version: 6.4.0
       simple-update-notifier:
         specifier: 2.0.0
         version: 2.0.0
@@ -533,8 +542,8 @@ importers:
         specifier: ^4.5.0
         version: 4.5.0
       semver:
-        specifier: ^7.3.8
-        version: 7.6.0
+        specifier: ^7.6.3
+        version: 7.6.3
       tiny-typed-emitter:
         specifier: ^2.1.0
         version: 2.1.0
@@ -5868,10 +5877,6 @@ packages:
     resolution: {integrity: sha512-BNg9EN3DD3GsDXX7Aa8O4p92sryjkmzYYgmgTAc6CA4uGLEDzFfxOxugu21akOxpcXHiEgsYkC6nPsQvLLLmEg==}
     hasBin: true
 
-  read-config-file@6.4.0:
-    resolution: {integrity: sha512-uB5QOBeF84PT61GlV11OTV4jUGHAO3iDEOP6v9ygxhG6Bs9PLg7WsjNT6mtIX2G+x8lJTr4ZWNeG6LDTKkNf2Q==}
-    engines: {node: '>=12.0.0'}
-
   read-package-up@11.0.0:
     resolution: {integrity: sha512-MbgfoNPANMdb4oRBNg5eqLbB2t2r+o5Ua1pNt8BqGp4I0FJZhuVSOj3PaBPni4azWuSzEdNn2evevzVmEk1ohQ==}
     engines: {node: '>=18'}
@@ -6537,6 +6542,9 @@ packages:
   to-regex@3.0.2:
     resolution: {integrity: sha512-FWtleNAtZ/Ki2qtqej2CXTOayOH9bHDQF+Q48VpWyDXjbYxA4Yz8iDB31zXOBUlOHHKidDbqGVrTUvQMPmBGBw==}
     engines: {node: '>=0.10.0'}
+
+  toml@3.0.0:
+    resolution: {integrity: sha512-y/mWCZinnvxjTKYhJ+pYxwD0mRLVvOtdS2Awbgxln6iEnt4rk0yBxeSBHkGJcPucRiG0e55mwWp+g/05rsrd6w==}
 
   touch@0.0.3:
     resolution: {integrity: sha512-/LQ54KM9rPf3rGXGo2UPQWx3ol242Zg6Whq27H5DEmZhCJo+pm9N5BzRGepO9vTVhYxpXJdcc1+3uaYt9NyeKg==}
@@ -11116,7 +11124,7 @@ snapshots:
       resolve: 1.22.8
       sass: 1.71.1
       scss-parser: 1.0.6
-      semver: 7.6.0
+      semver: 7.6.3
       yargs: 16.2.0
     transitivePeerDependencies:
       - supports-color
@@ -11813,7 +11821,7 @@ snapshots:
     dependencies:
       foreground-child: 3.1.1
       jackspeak: 2.3.6
-      minimatch: 9.0.3
+      minimatch: 9.0.5
       minipass: 7.0.4
       path-scurry: 1.11.1
 
@@ -13826,15 +13834,6 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  read-config-file@6.4.0:
-    dependencies:
-      config-file-ts: 0.2.8-rc1
-      dotenv: 16.4.5
-      dotenv-expand: 11.0.6
-      js-yaml: 4.1.0
-      json5: 2.2.3
-      lazy-val: 1.0.5
-
   read-package-up@11.0.0:
     dependencies:
       find-up-simple: 1.0.0
@@ -14552,6 +14551,8 @@ snapshots:
       extend-shallow: 3.0.2
       regex-not: 1.0.2
       safe-regex: 1.1.0
+
+  toml@3.0.0: {}
 
   touch@0.0.3:
     dependencies:

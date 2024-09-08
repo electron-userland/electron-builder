@@ -1,5 +1,15 @@
 # app-builder-lib
 
+## 25.0.5
+
+### Patch Changes
+
+- [#8424](https://github.com/electron-userland/electron-builder/pull/8424) [`8e6c1712`](https://github.com/electron-userland/electron-builder/commit/8e6c17124cdc523620a66efaf871ef8d335c0f49) Thanks [@lutzroeder](https://github.com/lutzroeder)! - fix: Snap publish regression in pulling publish config
+
+- Updated dependencies []:
+  - dmg-builder@25.0.5
+  - electron-builder-squirrel-windows@25.0.5
+
 ## 25.0.4
 
 ### Patch Changes
