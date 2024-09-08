@@ -1,7 +1,7 @@
 #! /usr/bin/env node
 
 import { getElectronVersion } from "app-builder-lib/out/electron/electronVersion"
-import { computeDefaultAppDirectory, getConfig } from "app-builder-lib/out/util/config"
+import { computeDefaultAppDirectory, getConfig } from "app-builder-lib/out/util/config/config"
 import { installOrRebuild } from "app-builder-lib/out/util/yarn"
 import { PACKAGE_VERSION } from "app-builder-lib/out/version"
 import { createLazyProductionDeps } from "app-builder-lib/out/util/packageDependencies"
@@ -9,7 +9,7 @@ import { getArchCliNames, log, use, printErrorAndExit } from "builder-util"
 import { readJson } from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
-import { orNullIfFileNotExist } from "read-config-file"
+import { orNullIfFileNotExist } from "app-builder-lib/out/util/config/load"
 import * as yargs from "yargs"
 
 /** @internal */
