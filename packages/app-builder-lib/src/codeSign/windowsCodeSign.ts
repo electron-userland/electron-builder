@@ -42,7 +42,7 @@ export interface CustomWindowsSignTaskConfiguration extends WindowsSignTaskConfi
 
 export async function sign(options: WindowsSignOptions, packager: WinPackager): Promise<boolean> {
   if (options.options.azureOptions) {
-    log.info(null, "signing with Azure Trusted Signing")
+    log.debug({ path: options.path }, "signing with Azure Trusted Signing")
     ;[
       "AZURE_TENANT_ID",
       "AZURE_CLIENT_ID",
@@ -59,7 +59,7 @@ export async function sign(options: WindowsSignOptions, packager: WinPackager): 
     return signUsingAzureTrustedSigning(options, packager)
   }
 
-  log.info(null, "signing with signtool.exe")
+  log.debug({ path: options.path }, "signing with signtool.exe")
   const deprecatedFields = {
     sign: options.options.sign,
     signDlls: options.options.signDlls,
@@ -71,12 +71,16 @@ export async function sign(options: WindowsSignOptions, packager: WinPackager): 
     additionalCertificateFile: options.options.additionalCertificateFile,
     rfc3161TimeStampServer: options.options.rfc3161TimeStampServer,
     timeStampServer: options.options.timeStampServer,
+    publisherName: options.options.publisherName,
   }
-  Object.entries(deprecatedFields).forEach((field, value) => {
-    if (value) {
-      log.info({ field }, `deprecated field. Please move to win.signtoolOptions.${field}`)
-    }
-  })
+  const fields = Object.entries(deprecatedFields)
+    .filter(([, value]) => !!value)
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    .map(([field, _]) => field)
+  if (fields.length) {
+    log.info({ fields }, `deprecated field. Please move to win.signtoolOptions.<field_name>`)
+  }
+
   return signUsingSigntool(options, packager)
 }
 
@@ -119,17 +123,18 @@ export async function signUsingAzureTrustedSigning(options: WindowsSignOptions, 
   const vm = await packager.vm.value
 
   const ps = await getPSCmd(vm)
-  await vm.exec(ps, ["Install-Module", "-Name", "TrustedSigning", "-RequiredVersion", "0.4.1", "-Force", "-Repository", "PSGallery"])
+  await vm.exec(ps, ["Install-PackageProvider", "-Name", "NuGet", "-MinimumVersion", "2.8.5.201", "-Force", "-Scope", "CurrentUser"])
+  await vm.exec(ps, ["Install-Module", "-Name", "TrustedSigning", "-RequiredVersion", "0.4.1", "-Force", "-Repository", "PSGallery", "-Scope CurrentUser"])
 
   const config: WindowsAzureSigningConfiguration = options.options.azureOptions!
   const params = {
     ...config,
-    File: options.path,
+    Files: options.path,
   }
-  const paramsString = Object.entries(params)
-    .map((key, value) => ` -${key} ${value}`)
-    .join("")
-  await vm.exec(ps, ["Invoke-TrustedSigning", paramsString])
+  const paramsString = Object.entries(params).reduce((res, [field, value]) => {
+    return [...res, `-${field}`, value]
+  }, [] as string[])
+  await vm.exec(ps, ["Invoke-TrustedSigning", ...paramsString])
 
   return true
 }

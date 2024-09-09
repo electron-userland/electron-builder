@@ -6514,6 +6514,23 @@
             "string"
           ]
         },
+        "publisherName": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "[The publisher name](https://github.com/electron-userland/electron-builder/issues/1187#issuecomment-278972073), exactly as in your code signed certificate. Several names can be provided.\nDefaults to common name from your code signing certificate."
+        },
         "rfc3161TimeStampServer": {
           "default": "http://timestamp.digicert.com",
           "description": "The URL of the RFC 3161 time stamp server.",
