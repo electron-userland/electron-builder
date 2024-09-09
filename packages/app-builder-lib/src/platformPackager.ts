@@ -770,7 +770,7 @@ export function normalizeExt(ext: string) {
   return ext.startsWith(".") ? ext.substring(1) : ext
 }
 
-export function chooseNotNull(v1: string | null | undefined, v2: string | null | undefined): string | null | undefined {
+export function chooseNotNull<T>(v1: T | null | undefined, v2: T | null | undefined): T | null | undefined {
   return v1 == null ? v2 : v1
 }
 

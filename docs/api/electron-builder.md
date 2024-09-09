@@ -2244,12 +2244,14 @@ return path.join(target.outDir, <code>__${target.name}-${getArtifactArchName(arc
 <p>**&lt;code id=&quot;WinPackager-[cscInfo=new MemoLazy&lt;WindowsConfiguration, FileCodeSigningInfo | CertificateFromStoreInfo | null&gt;(
 () =&gt; this.platformSpecificBuildOptions,
 platformSpecificBuildOptions =&gt; {
-if (platformSpecificBuildOptions.certificateSubjectName != null || platformSpecificBuildOptions.certificateSha1 != null) {
+const subjectName = chooseNotNull(platformSpecificBuildOptions.signtoolOptions?.certificateSubjectName, platformSpecificBuildOptions.certificateSubjectName)
+const shaType = chooseNotNull(platformSpecificBuildOptions.signtoolOptions?.certificateSha1, platformSpecificBuildOptions.certificateSha1)
+if (subjectName != null || shaType != null) {
 return this.vm.value
 .then(vm =&gt; getCertificateFromStoreInfo(platformSpecificBuildOptions, vm))
 .catch((e: any) =&gt; {
 // <a href="https://github.com/electron-userland/electron-builder/pull/2397">https://github.com/electron-userland/electron-builder/pull/2397</a>
-if (platformSpecificBuildOptions.sign == null) {
+if (chooseNotNull(platformSpecificBuildOptions.signtoolOptions?.sign, platformSpecificBuildOptions.sign) == null) {
 throw e
 } else {
 log.debug({ error: e }, “getCertificateFromStoreInfo error”)
@@ -2257,7 +2259,7 @@ return null
 }
 })
 }</p>
-<pre><code class="hljs">const certificateFile = platformSpecificBuildOptions.certificateFile
+<pre><code class="hljs">const certificateFile = chooseNotNull(platformSpecificBuildOptions.signtoolOptions?.certificateFile, platformSpecificBuildOptions.certificateFile)
 if (certificateFile != null) {
   const certificatePassword = this.getCscPassword()
   return Promise.resolve({
@@ -2293,12 +2295,14 @@ return (
 )]&quot;&gt;[cscInfo=new MemoLazy&lt;WindowsConfiguration, FileCodeSigningInfo | CertificateFromStoreInfo | null&gt;(
 () =&gt; this.platformSpecificBuildOptions,
 platformSpecificBuildOptions =&gt; {
-if (platformSpecificBuildOptions.certificateSubjectName != null || platformSpecificBuildOptions.certificateSha1 != null) {
+const subjectName = chooseNotNull(platformSpecificBuildOptions.signtoolOptions?.certificateSubjectName, platformSpecificBuildOptions.certificateSubjectName)
+const shaType = chooseNotNull(platformSpecificBuildOptions.signtoolOptions?.certificateSha1, platformSpecificBuildOptions.certificateSha1)
+if (subjectName != null || shaType != null) {
 return this.vm.value
 .then(vm =&gt; getCertificateFromStoreInfo(platformSpecificBuildOptions, vm))
 .catch((e: any) =&gt; {
 // <a href="https://github.com/electron-userland/electron-builder/pull/2397">https://github.com/electron-userland/electron-builder/pull/2397</a>
-if (platformSpecificBuildOptions.sign == null) {
+if (chooseNotNull(platformSpecificBuildOptions.signtoolOptions?.sign, platformSpecificBuildOptions.sign) == null) {
 throw e
 } else {
 log.debug({ error: e }, “getCertificateFromStoreInfo error”)
@@ -2306,7 +2310,7 @@ return null
 }
 })
 }</p>
-<pre><code class="hljs">const certificateFile = platformSpecificBuildOptions.certificateFile
+<pre><code class="hljs">const certificateFile = chooseNotNull(platformSpecificBuildOptions.signtoolOptions?.certificateFile, platformSpecificBuildOptions.certificateFile)
 if (certificateFile != null) {
   const certificatePassword = this.getCscPassword()
   return Promise.resolve({

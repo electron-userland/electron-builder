@@ -25,45 +25,64 @@ export interface WindowsConfiguration extends PlatformSpecificBuildOptions {
 
   /**
    * Array of signing algorithms used. For AppX `sha256` is always used.
-   * @default ['sha1', 'sha256']
+   * @deprecated Please use win.signtoolSigning.signingHashAlgorithms
    */
   readonly signingHashAlgorithms?: Array<"sha1" | "sha256"> | null
   /**
-   * The custom function (or path to file or module id) to sign Windows executable.
+   * The custom function (or path to file or module id) to sign Windows executables
+   * @deprecated Please use win.signtoolSigning.sign
    */
   readonly sign?: CustomWindowsSign | string | null
   /**
    * The path to the *.pfx certificate you want to sign with. Please use it only if you cannot use env variable `CSC_LINK` (`WIN_CSC_LINK`) for some reason.
    * Please see [Code Signing](/code-signing).
+   * @deprecated Please use win.signtoolSigning.certificateFile
    */
   readonly certificateFile?: string | null
   /**
    * The password to the certificate provided in `certificateFile`. Please use it only if you cannot use env variable `CSC_KEY_PASSWORD` (`WIN_CSC_KEY_PASSWORD`) for some reason.
    * Please see [Code Signing](/code-signing).
+   * @deprecated Please use win.signtoolSigning.certificatePassword
    */
   readonly certificatePassword?: string | null
   /**
    * The name of the subject of the signing certificate, which is often labeled with the field name `issued to`. Required only for EV Code Signing and works only on Windows (or on macOS if [Parallels Desktop](https://www.parallels.com/products/desktop/) Windows 10 virtual machines exits).
+   * @deprecated Please use win.signtoolSigning.certificateSubjectName
    */
   readonly certificateSubjectName?: string | null
   /**
    * The SHA1 hash of the signing certificate. The SHA1 hash is commonly specified when multiple certificates satisfy the criteria specified by the remaining switches. Works only on Windows (or on macOS if [Parallels Desktop](https://www.parallels.com/products/desktop/) Windows 10 virtual machines exits).
+   * @deprecated Please use win.signtoolSigning.certificateSha1
    */
   readonly certificateSha1?: string | null
   /**
    * The path to an additional certificate file you want to add to the signature block.
+   * @deprecated Please use win.signtoolSigning.additionalCertificateFile
    */
   readonly additionalCertificateFile?: string | null
   /**
    * The URL of the RFC 3161 time stamp server.
    * @default http://timestamp.digicert.com
+   * @deprecated Please use win.signtoolSigning.rfc3161TimeStampServer
    */
   readonly rfc3161TimeStampServer?: string | null
   /**
    * The URL of the time stamp server.
    * @default http://timestamp.digicert.com
+   * @deprecated Please use win.signtoolSigning.timeStampServer
    */
   readonly timeStampServer?: string | null
+
+  /**
+   * Options for usage with signtool.exe
+   */
+  readonly signtoolOptions?: WindowsSigntoolConfiguration | null
+
+  /**
+   * Options for usage of Azure Trusted Signing
+   * Requires powershell
+   */
+  readonly azureOptions?: WindowsAzureSigningConfiguration | null
 
   /**
    * [The publisher name](https://github.com/electron-userland/electron-builder/issues/1187#issuecomment-278972073), exactly as in your code signed certificate. Several names can be provided.
@@ -109,3 +128,75 @@ export interface WindowsConfiguration extends PlatformSpecificBuildOptions {
 }
 
 export type RequestedExecutionLevel = "asInvoker" | "highestAvailable" | "requireAdministrator"
+
+export interface WindowsSigntoolConfiguration {
+  /**
+   * The custom function (or path to file or module id) to sign Windows executables
+   */
+  readonly sign?: CustomWindowsSign | string | null
+  /**
+   * Array of signing algorithms used. For AppX `sha256` is always used.
+   * @default ['sha1', 'sha256']
+   */
+  readonly signingHashAlgorithms?: Array<"sha1" | "sha256"> | null
+
+  /**
+   * The path to the *.pfx certificate you want to sign with. Please use it only if you cannot use env variable `CSC_LINK` (`WIN_CSC_LINK`) for some reason.
+   * Please see [Code Signing](/code-signing).
+   */
+  readonly certificateFile?: string | null
+  /**
+   * The password to the certificate provided in `certificateFile`. Please use it only if you cannot use env variable `CSC_KEY_PASSWORD` (`WIN_CSC_KEY_PASSWORD`) for some reason.
+   * Please see [Code Signing](/code-signing).
+   */
+  readonly certificatePassword?: string | null
+  /**
+   * The name of the subject of the signing certificate, which is often labeled with the field name `issued to`. Required only for EV Code Signing and works only on Windows (or on macOS if [Parallels Desktop](https://www.parallels.com/products/desktop/) Windows 10 virtual machines exits).
+   */
+  readonly certificateSubjectName?: string | null
+  /**
+   * The SHA1 hash of the signing certificate. The SHA1 hash is commonly specified when multiple certificates satisfy the criteria specified by the remaining switches. Works only on Windows (or on macOS if [Parallels Desktop](https://www.parallels.com/products/desktop/) Windows 10 virtual machines exits).
+   */
+  readonly certificateSha1?: string | null
+  /**
+   * The path to an additional certificate file you want to add to the signature block.
+   */
+  readonly additionalCertificateFile?: string | null
+  /**
+   * The URL of the RFC 3161 time stamp server.
+   * @default http://timestamp.digicert.com
+   */
+  readonly rfc3161TimeStampServer?: string | null
+  /**
+   * The URL of the time stamp server.
+   * @default http://timestamp.digicert.com
+   */
+  readonly timeStampServer?: string | null
+}
+
+// https://learn.microsoft.com/en-us/azure/trusted-signing/how-to-signing-integrations
+export interface WindowsAzureSigningConfiguration {
+  /**
+   * The Trusted Signing Account endpoint. The URI value must have a URI that aligns to the
+   * region your Trusted Signing Account and Certificate Profile you are specifying were created
+   * in during the setup of these resources.
+   *
+   * Requires the following environment variables to be set:
+   * AZURE_TENANT_ID
+   * AZURE_CLIENT_ID
+   * AZURE_CLIENT_SECRET
+   * AZURE_CLIENT_CERTIFICATE_PATH
+   * AZURE_CLIENT_SEND_CERTIFICATE_CHAIN
+   * AZURE_USERNAME
+   * AZURE_PASSWORD
+   */
+  readonly Endpoint: string
+  /**
+   * The Certificate Profile name.
+   */
+  readonly CertificateProfileName: string
+  /**
+   * Allow other CLI parameters (verbatim) to `Invoke-TrustedSigning`
+   */
+  [k: string]: string
+}

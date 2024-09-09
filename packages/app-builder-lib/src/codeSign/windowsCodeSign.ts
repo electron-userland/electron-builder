@@ -1,6 +1,6 @@
-import { InvalidConfigurationError, asArray, log } from "builder-util"
+import { InvalidConfigurationError, asArray, log, retry } from "builder-util"
 import { getBin } from "../binDownload"
-import { WindowsConfiguration } from "../options/winOptions"
+import { WindowsAzureSigningConfiguration, WindowsConfiguration } from "../options/winOptions"
 import { executeAppBuilderAsJson } from "../util/appBuilder"
 import { computeToolEnv, ToolInfo } from "../util/bundledTool"
 import { rename } from "fs-extra"
@@ -10,6 +10,7 @@ import { resolveFunction } from "../util/resolve"
 import { isUseSystemSigncode } from "../util/flags"
 import { VmManager } from "../vm/vm"
 import { WinPackager } from "../winPackager"
+import { chooseNotNull } from "../platformPackager"
 
 export function getSignVendorPath() {
   return getBin("winCodeSign")
@@ -40,7 +41,52 @@ export interface CustomWindowsSignTaskConfiguration extends WindowsSignTaskConfi
 }
 
 export async function sign(options: WindowsSignOptions, packager: WinPackager): Promise<boolean> {
-  let hashes = options.options.signingHashAlgorithms
+  if (options.options.azureOptions) {
+    log.info(null, "signing with Azure Trusted Signing")
+    ;[
+      "AZURE_TENANT_ID",
+      "AZURE_CLIENT_ID",
+      "AZURE_CLIENT_SECRET",
+      "AZURE_CLIENT_CERTIFICATE_PATH",
+      "AZURE_CLIENT_SEND_CERTIFICATE_CHAIN",
+      "AZURE_USERNAME",
+      "AZURE_PASSWORD",
+    ].forEach(envVar => {
+      if (!process.env[envVar]) {
+        throw new InvalidConfigurationError(`Unable to find valid azure env var. Please set ${envVar}`)
+      }
+    })
+    return signUsingAzureTrustedSigning(options, packager)
+  }
+
+  log.info(null, "signing with signtool.exe")
+  const message = "deprecated field. Please move to win.signtoolOptions.<field_name>"
+  if (options.options.certificateFile) {
+    log.info({ field: "certificateFile" }, message)
+  }
+  if (options.options.certificatePassword) {
+    log.info({ field: "certificatePassword" }, message)
+  }
+  if (options.options.certificateSha1) {
+    log.info({ field: "certificateSha1" }, message)
+  }
+  if (options.options.certificateSubjectName) {
+    log.info({ field: "certificateSubjectName" }, message)
+  }
+  if (options.options.additionalCertificateFile) {
+    log.info({ field: "additionalCertificateFile" }, message)
+  }
+  if (options.options.rfc3161TimeStampServer) {
+    log.info({ field: "rfc3161TimeStampServer" }, message)
+  }
+  if (options.options.timeStampServer) {
+    log.info({ field: "timeStampServer" }, message)
+  }
+  return signUsingSigntool(options, packager)
+}
+
+export async function signUsingSigntool(options: WindowsSignOptions, packager: WinPackager): Promise<boolean> {
+  let hashes = chooseNotNull(options.options.signtoolOptions?.signingHashAlgorithms, options.options.signingHashAlgorithms)
   // msi does not support dual-signing
   if (options.path.endsWith(".msi")) {
     hashes = [hashes != null && !hashes.includes("sha1") ? "sha256" : "sha1"]
@@ -52,7 +98,7 @@ export async function sign(options: WindowsSignOptions, packager: WinPackager): 
     hashes = Array.isArray(hashes) ? hashes : [hashes]
   }
 
-  const executor = (await resolveFunction(packager.appInfo.type, options.options.sign, "sign")) || doSign
+  const executor = (await resolveFunction(packager.appInfo.type, chooseNotNull(options.options.signtoolOptions?.sign, options.options.sign), "sign")) || doSign
   let isNest = false
   for (const hash of hashes) {
     const taskConfiguration: WindowsSignTaskConfiguration = { ...options, hash, isNest }
@@ -70,6 +116,39 @@ export async function sign(options: WindowsSignOptions, packager: WinPackager): 
       await rename(taskConfiguration.resultOutputPath, options.path)
     }
   }
+
+  return true
+}
+
+export async function signUsingAzureTrustedSigning(options: WindowsSignOptions, packager: WinPackager): Promise<boolean> {
+  const vm = await packager.vm.value
+
+  const ps = await getPSCmd(vm)
+  await vm.exec(ps, ["Install-Module", "-Name", "TrustedSigning", "-RequiredVersion", "0.4.1", "-Force", "-Repository", "PSGallery"])
+
+  const config: WindowsAzureSigningConfiguration = options.options.azureOptions!
+
+  const configFilter = config.FilesFolderFilter?.split(",") ?? []
+  const signExts = new Set(["exe", ...configFilter])
+  if (options.options.signDlls === true) {
+    signExts.add("dll")
+  }
+  if (options.options.signExts) {
+    options.options.signExts.forEach(v => signExts.add(v))
+  }
+
+  const params = {
+    ...config,
+    FilesFolder: options.path,
+    FilesFolderFilter: Array.from(signExts)
+      .filter(v => !!v.trim())
+      .map(v => (v.at(0) === "." ? v.substring(1) : v)) // Signing expects extensions to not start with "."
+      .join(","),
+  }
+  const paramsString = Object.entries(params)
+    .map((key, value) => ` -${key} ${value}`)
+    .join("")
+  await vm.exec(ps, ["Invoke-TrustedSigning", paramsString])
 
   return true
 }
@@ -108,8 +187,8 @@ export interface CertificateFromStoreInfo {
 }
 
 export async function getCertificateFromStoreInfo(options: WindowsConfiguration, vm: VmManager): Promise<CertificateFromStoreInfo> {
-  const certificateSubjectName = options.certificateSubjectName
-  const certificateSha1 = options.certificateSha1 ? options.certificateSha1.toUpperCase() : options.certificateSha1
+  const certificateSubjectName = options.signtoolOptions?.certificateSubjectName
+  const certificateSha1 = options.signtoolOptions?.certificateSha1 ? options.signtoolOptions?.certificateSha1.toUpperCase() : options.signtoolOptions?.certificateSha1
 
   const ps = await getPSCmd(vm)
   const rawResult = await vm.exec(ps, [
@@ -166,19 +245,20 @@ export async function doSign(configuration: CustomWindowsSignTaskConfiguration, 
     }
   }
 
-  try {
-    await vm.exec(tool, args, { timeout, env })
-  } catch (e: any) {
-    if (e.message.includes("The file is being used by another process") || e.message.includes("The specified timestamp server either could not be reached")) {
-      log.warn(`First attempt to code sign failed, another attempt will be made in 15 seconds: ${e.message}`)
-      await new Promise((resolve, reject) => {
-        setTimeout(() => {
-          vm.exec(tool, args, { timeout, env }).then(resolve).catch(reject)
-        }, 15000)
-      })
+  await retry(
+    () => vm.exec(tool, args, { timeout, env }),
+    2,
+    15000,
+    10000,
+    0,
+    (e: any) => {
+      if (e.message.includes("The file is being used by another process") || e.message.includes("The specified timestamp server either could not be reached")) {
+        log.warn(`Attempt to code sign failed, another attempt will be made in 15 seconds: ${e.message}`)
+        return true
+      }
+      return false
     }
-    throw e
-  }
+  )
 }
 
 interface CertInfo {
@@ -198,11 +278,11 @@ function computeSignToolArgs(options: WindowsSignTaskConfiguration, isWin: boole
   const args = isWin ? ["sign"] : ["-in", inputFile, "-out", outputPath]
 
   if (process.env.ELECTRON_BUILDER_OFFLINE !== "true") {
-    const timestampingServiceUrl = options.options.timeStampServer || "http://timestamp.digicert.com"
+    const timestampingServiceUrl = options.options.signtoolOptions?.timeStampServer || "http://timestamp.digicert.com"
     if (isWin) {
       args.push(
         options.isNest || options.hash === "sha256" ? "/tr" : "/t",
-        options.isNest || options.hash === "sha256" ? options.options.rfc3161TimeStampServer || "http://timestamp.digicert.com" : timestampingServiceUrl
+        options.isNest || options.hash === "sha256" ? options.options.signtoolOptions?.rfc3161TimeStampServer || "http://timestamp.digicert.com" : timestampingServiceUrl
       )
     } else {
       args.push("-t", timestampingServiceUrl)
@@ -256,8 +336,8 @@ function computeSignToolArgs(options: WindowsSignTaskConfiguration, isWin: boole
     args.push(isWin ? "/p" : "-pass", password)
   }
 
-  if (options.options.additionalCertificateFile) {
-    args.push(isWin ? "/ac" : "-ac", vm.toVmFile(options.options.additionalCertificateFile))
+  if (options.options.signtoolOptions?.additionalCertificateFile) {
+    args.push(isWin ? "/ac" : "-ac", vm.toVmFile(options.options.signtoolOptions?.additionalCertificateFile))
   }
 
   const httpsProxyFromEnv = process.env.HTTPS_PROXY

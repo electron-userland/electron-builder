@@ -39,12 +39,14 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
   readonly cscInfo = new MemoLazy<WindowsConfiguration, FileCodeSigningInfo | CertificateFromStoreInfo | null>(
     () => this.platformSpecificBuildOptions,
     platformSpecificBuildOptions => {
-      if (platformSpecificBuildOptions.certificateSubjectName != null || platformSpecificBuildOptions.certificateSha1 != null) {
+      const subjectName = chooseNotNull(platformSpecificBuildOptions.signtoolOptions?.certificateSubjectName, platformSpecificBuildOptions.certificateSubjectName)
+      const shaType = chooseNotNull(platformSpecificBuildOptions.signtoolOptions?.certificateSha1, platformSpecificBuildOptions.certificateSha1)
+      if (subjectName != null || shaType != null) {
         return this.vm.value
           .then(vm => getCertificateFromStoreInfo(platformSpecificBuildOptions, vm))
           .catch((e: any) => {
             // https://github.com/electron-userland/electron-builder/pull/2397
-            if (platformSpecificBuildOptions.sign == null) {
+            if (chooseNotNull(platformSpecificBuildOptions.signtoolOptions?.sign, platformSpecificBuildOptions.sign) == null) {
               throw e
             } else {
               log.debug({ error: e }, "getCertificateFromStoreInfo error")
@@ -53,7 +55,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
           })
       }
 
-      const certificateFile = platformSpecificBuildOptions.certificateFile
+      const certificateFile = chooseNotNull(platformSpecificBuildOptions.signtoolOptions?.certificateFile, platformSpecificBuildOptions.certificateFile)
       if (certificateFile != null) {
         const certificatePassword = this.getCscPassword()
         return Promise.resolve({
@@ -140,7 +142,13 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
   }
 
   protected doGetCscPassword(): string | undefined | null {
-    return chooseNotNull(chooseNotNull(this.platformSpecificBuildOptions.certificatePassword, process.env.WIN_CSC_KEY_PASSWORD), super.doGetCscPassword())
+    return chooseNotNull(
+      chooseNotNull(
+        chooseNotNull(this.platformSpecificBuildOptions.signtoolOptions?.certificatePassword, this.platformSpecificBuildOptions.certificatePassword),
+        process.env.WIN_CSC_KEY_PASSWORD
+      ),
+      super.doGetCscPassword()
+    )
   }
 
   createTargets(targets: Array<string>, mapper: (name: string, factory: (outDir: string) => Target) => void): void {
@@ -329,8 +337,10 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
       hash.update(config.electronVersion || "no electronVersion")
       hash.update(JSON.stringify(this.platformSpecificBuildOptions))
       hash.update(JSON.stringify(args))
-      hash.update(this.platformSpecificBuildOptions.certificateSha1 || "no certificateSha1")
-      hash.update(this.platformSpecificBuildOptions.certificateSubjectName || "no subjectName")
+      hash.update(chooseNotNull(this.platformSpecificBuildOptions.signtoolOptions?.certificateSha1, this.platformSpecificBuildOptions.certificateSha1) || "no certificateSha1")
+      hash.update(
+        chooseNotNull(this.platformSpecificBuildOptions.signtoolOptions?.certificateSubjectName, this.platformSpecificBuildOptions.certificateSubjectName) || "no subjectName"
+      )
 
       buildCacheManager = new BuildCacheManager(outDir, file, arch)
       if (await buildCacheManager.copyIfValid(await digest(hash, files))) {
