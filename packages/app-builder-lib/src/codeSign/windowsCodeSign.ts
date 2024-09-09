@@ -60,28 +60,23 @@ export async function sign(options: WindowsSignOptions, packager: WinPackager): 
   }
 
   log.info(null, "signing with signtool.exe")
-  const message = "deprecated field. Please move to win.signtoolOptions.<field_name>"
-  if (options.options.certificateFile) {
-    log.info({ field: "certificateFile" }, message)
+  const deprecatedFields = {
+    sign: options.options.sign,
+    signDlls: options.options.signDlls,
+    signingHashAlgorithms: options.options.signingHashAlgorithms,
+    certificateFile: options.options.certificateFile,
+    certificatePassword: options.options.certificatePassword,
+    certificateSha1: options.options.certificateSha1,
+    certificateSubjectName: options.options.certificateSubjectName,
+    additionalCertificateFile: options.options.additionalCertificateFile,
+    rfc3161TimeStampServer: options.options.rfc3161TimeStampServer,
+    timeStampServer: options.options.timeStampServer,
   }
-  if (options.options.certificatePassword) {
-    log.info({ field: "certificatePassword" }, message)
-  }
-  if (options.options.certificateSha1) {
-    log.info({ field: "certificateSha1" }, message)
-  }
-  if (options.options.certificateSubjectName) {
-    log.info({ field: "certificateSubjectName" }, message)
-  }
-  if (options.options.additionalCertificateFile) {
-    log.info({ field: "additionalCertificateFile" }, message)
-  }
-  if (options.options.rfc3161TimeStampServer) {
-    log.info({ field: "rfc3161TimeStampServer" }, message)
-  }
-  if (options.options.timeStampServer) {
-    log.info({ field: "timeStampServer" }, message)
-  }
+  Object.entries(deprecatedFields).forEach((field, value) => {
+    if (value) {
+      log.info({ field }, `deprecated field. Please move to win.signtoolOptions.${field}`)
+    }
+  })
   return signUsingSigntool(options, packager)
 }
 
@@ -187,8 +182,8 @@ export interface CertificateFromStoreInfo {
 }
 
 export async function getCertificateFromStoreInfo(options: WindowsConfiguration, vm: VmManager): Promise<CertificateFromStoreInfo> {
-  const certificateSubjectName = options.signtoolOptions?.certificateSubjectName
-  const certificateSha1 = options.signtoolOptions?.certificateSha1 ? options.signtoolOptions?.certificateSha1.toUpperCase() : options.signtoolOptions?.certificateSha1
+  const certificateSubjectName = chooseNotNull(options.signtoolOptions?.certificateSubjectName, options.certificateSubjectName)
+  const certificateSha1 = chooseNotNull(options.signtoolOptions?.certificateSha1, options.certificateSha1)?.toUpperCase()
 
   const ps = await getPSCmd(vm)
   const rawResult = await vm.exec(ps, [
@@ -278,11 +273,13 @@ function computeSignToolArgs(options: WindowsSignTaskConfiguration, isWin: boole
   const args = isWin ? ["sign"] : ["-in", inputFile, "-out", outputPath]
 
   if (process.env.ELECTRON_BUILDER_OFFLINE !== "true") {
-    const timestampingServiceUrl = options.options.signtoolOptions?.timeStampServer || "http://timestamp.digicert.com"
+    const timestampingServiceUrl = chooseNotNull(options.options.signtoolOptions?.timeStampServer, options.options.timeStampServer) || "http://timestamp.digicert.com"
     if (isWin) {
       args.push(
         options.isNest || options.hash === "sha256" ? "/tr" : "/t",
-        options.isNest || options.hash === "sha256" ? options.options.signtoolOptions?.rfc3161TimeStampServer || "http://timestamp.digicert.com" : timestampingServiceUrl
+        options.isNest || options.hash === "sha256"
+          ? chooseNotNull(options.options.signtoolOptions?.rfc3161TimeStampServer, options.options.rfc3161TimeStampServer) || "http://timestamp.digicert.com"
+          : timestampingServiceUrl
       )
     } else {
       args.push("-t", timestampingServiceUrl)
@@ -336,8 +333,9 @@ function computeSignToolArgs(options: WindowsSignTaskConfiguration, isWin: boole
     args.push(isWin ? "/p" : "-pass", password)
   }
 
-  if (options.options.signtoolOptions?.additionalCertificateFile) {
-    args.push(isWin ? "/ac" : "-ac", vm.toVmFile(options.options.signtoolOptions?.additionalCertificateFile))
+  const additionalCert = chooseNotNull(options.options.signtoolOptions?.additionalCertificateFile, options.options.additionalCertificateFile)
+  if (additionalCert) {
+    args.push(isWin ? "/ac" : "-ac", vm.toVmFile(additionalCert))
   }
 
   const httpsProxyFromEnv = process.env.HTTPS_PROXY

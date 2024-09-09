@@ -25,51 +25,51 @@ export interface WindowsConfiguration extends PlatformSpecificBuildOptions {
 
   /**
    * Array of signing algorithms used. For AppX `sha256` is always used.
-   * @deprecated Please use win.signtoolSigning.signingHashAlgorithms
+   * @deprecated Please use win.signtoolOptions.signingHashAlgorithms
    */
   readonly signingHashAlgorithms?: Array<"sha1" | "sha256"> | null
   /**
    * The custom function (or path to file or module id) to sign Windows executables
-   * @deprecated Please use win.signtoolSigning.sign
+   * @deprecated Please use win.signtoolOptions.sign
    */
   readonly sign?: CustomWindowsSign | string | null
   /**
    * The path to the *.pfx certificate you want to sign with. Please use it only if you cannot use env variable `CSC_LINK` (`WIN_CSC_LINK`) for some reason.
    * Please see [Code Signing](/code-signing).
-   * @deprecated Please use win.signtoolSigning.certificateFile
+   * @deprecated Please use win.signtoolOptions.certificateFile
    */
   readonly certificateFile?: string | null
   /**
    * The password to the certificate provided in `certificateFile`. Please use it only if you cannot use env variable `CSC_KEY_PASSWORD` (`WIN_CSC_KEY_PASSWORD`) for some reason.
    * Please see [Code Signing](/code-signing).
-   * @deprecated Please use win.signtoolSigning.certificatePassword
+   * @deprecated Please use win.signtoolOptions.certificatePassword
    */
   readonly certificatePassword?: string | null
   /**
    * The name of the subject of the signing certificate, which is often labeled with the field name `issued to`. Required only for EV Code Signing and works only on Windows (or on macOS if [Parallels Desktop](https://www.parallels.com/products/desktop/) Windows 10 virtual machines exits).
-   * @deprecated Please use win.signtoolSigning.certificateSubjectName
+   * @deprecated Please use win.signtoolOptions.certificateSubjectName
    */
   readonly certificateSubjectName?: string | null
   /**
    * The SHA1 hash of the signing certificate. The SHA1 hash is commonly specified when multiple certificates satisfy the criteria specified by the remaining switches. Works only on Windows (or on macOS if [Parallels Desktop](https://www.parallels.com/products/desktop/) Windows 10 virtual machines exits).
-   * @deprecated Please use win.signtoolSigning.certificateSha1
+   * @deprecated Please use win.signtoolOptions.certificateSha1
    */
   readonly certificateSha1?: string | null
   /**
    * The path to an additional certificate file you want to add to the signature block.
-   * @deprecated Please use win.signtoolSigning.additionalCertificateFile
+   * @deprecated Please use win.signtoolOptions.additionalCertificateFile
    */
   readonly additionalCertificateFile?: string | null
   /**
    * The URL of the RFC 3161 time stamp server.
    * @default http://timestamp.digicert.com
-   * @deprecated Please use win.signtoolSigning.rfc3161TimeStampServer
+   * @deprecated Please use win.signtoolOptions.rfc3161TimeStampServer
    */
   readonly rfc3161TimeStampServer?: string | null
   /**
    * The URL of the time stamp server.
    * @default http://timestamp.digicert.com
-   * @deprecated Please use win.signtoolSigning.timeStampServer
+   * @deprecated Please use win.signtoolOptions.timeStampServer
    */
   readonly timeStampServer?: string | null
 
