@@ -122,23 +122,9 @@ export async function signUsingAzureTrustedSigning(options: WindowsSignOptions, 
   await vm.exec(ps, ["Install-Module", "-Name", "TrustedSigning", "-RequiredVersion", "0.4.1", "-Force", "-Repository", "PSGallery"])
 
   const config: WindowsAzureSigningConfiguration = options.options.azureOptions!
-
-  const configFilter = config.FilesFolderFilter?.split(",") ?? []
-  const signExts = new Set(["exe", ...configFilter])
-  if (options.options.signDlls === true) {
-    signExts.add("dll")
-  }
-  if (options.options.signExts) {
-    options.options.signExts.forEach(v => signExts.add(v))
-  }
-
   const params = {
     ...config,
-    FilesFolder: options.path,
-    FilesFolderFilter: Array.from(signExts)
-      .filter(v => !!v.trim())
-      .map(v => (v.at(0) === "." ? v.substring(1) : v)) // Signing expects extensions to not start with "."
-      .join(","),
+    File: options.path,
   }
   const paramsString = Object.entries(params)
     .map((key, value) => ` -${key} ${value}`)
