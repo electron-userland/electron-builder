@@ -4,9 +4,9 @@ Windows is dual code-signed (SHA1 & SHA256 hashing algorithms).
 
 On a macOS development machine, a valid and appropriate identity from your keychain will be automatically used.
 
-!!! tip 
+!!! tip
     See article [Notarizing your Electron application](https://kilianvalkhof.com/2019/electron/notarizing-your-electron-application/).
-  
+
 
 | Env Name       |  Description
 | -------------- | -----------
@@ -29,7 +29,7 @@ To sign an app on Windows, there are two types of certificates:
 * EV Code Signing Certificate
 * Code Signing Certificate
 
-Both certificates work with auto-update. The regular (and often cheaper) Code Signing Certificate shows a warning during installation that goes away once enough users installed your application and you've built up trust. The EV Certificate has more trust and thus works immediately without any warnings. However, it is not possible to export the EV Certificate as it is bound to a physical USB dongle. Thus, you can't export the certificate for signing code on a CI, such as AppVeyor. 
+Both certificates work with auto-update. The regular (and often cheaper) Code Signing Certificate shows a warning during installation that goes away once enough users installed your application and you've built up trust. The EV Certificate has more trust and thus works immediately without any warnings. However, it is not possible to export the EV Certificate as it is bound to a physical USB dongle. Thus, you can't export the certificate for signing code on a CI, such as AppVeyor.
 
 If you are using an EV Certificate, you need to provide [win.certificateSubjectName](configuration/win.md#WindowsConfiguration-certificateSubjectName) in your electron-builder configuration.
 
@@ -52,7 +52,7 @@ To sign app on build server you need to set `CSC_LINK`, `CSC_KEY_PASSWORD`:
    In case of AppVeyor, don't forget to click on lock icon to “Toggle variable encryption”.
 
    Keep in mind that Windows is not able to handle enviroment variable values longer than 8192 characters, thus if the base64 representation of your certificate exceeds that limit, try re-exporting the certificate without including all the certificates in the certification path (they are not necessary, but the Certificate Manager export wizard ticks the option by default), otherwise the encoded value will be truncated.
-   
+
 [1] `printf "%q\n" "<url>"`
 
 ## Where to Buy Code Signing Certificate
@@ -75,9 +75,28 @@ Please note — Gatekeeper only recognises [Apple digital certificates](http://s
 
 ## How to Disable Code Signing During the Build Process on macOS
 
-To disable Code Signing when building for macOS leave all the above vars unset except for `CSC_IDENTITY_AUTO_DISCOVERY` which needs to be set to `false`. This can be done by running `export CSC_IDENTITY_AUTO_DISCOVERY=false`. 
+To disable Code Signing when building for macOS leave all the above vars unset except for `CSC_IDENTITY_AUTO_DISCOVERY` which needs to be set to `false`. This can be done by running `export CSC_IDENTITY_AUTO_DISCOVERY=false`.
 
 Another way — set `mac.identity` to `null`. You can pass aditional configuration using CLI as well: `-c.mac.identity=null`.
+
+## Using with Azure Trusted Signing (beta)
+
+To sign using Azure Tenant account, you'll need the following env variables set that are read directly by `Invoke-TrustedSigning` module; they are not parsed or resolved by electron-builder.
+
+!!! tip
+  Descriptions of each field can be found here: [Azure.Identity class - EnvironmentCredential Class](https://learn.microsoft.com/en-us/dotnet/api/azure.identity.environmentcredential?view=azure-dotnet#definition)
+
+| Env Name       |  Description
+| -------------- | -----------
+| `AZURE_TENANT_ID`           | See the Tip mentioned above.
+| `AZURE_CLIENT_ID`           |
+| `AZURE_CLIENT_SECRET`       |
+| `AZURE_CLIENT_CERTIFICATE_PATH`           |
+| `AZURE_CLIENT_SEND_CERTIFICATE_CHAIN`           |
+| `AZURE_USERNAME`            |
+| `AZURE_PASSWORD`            |
+
+`win.azureOptions` needs to be configured per [Microsoft's instructions](https://learn.microsoft.com/en-us/azure/trusted-signing/how-to-signing-integrations#create-a-json-file) directly in electron-builder's configuration. Additional fields can be provided that are passed directly to `Invoke-TrustedSigning` powershell command.
 
 ## Alternative methods of codesigning
 

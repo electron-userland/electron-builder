@@ -2323,8 +2323,18 @@ return path.join(target.outDir, <code>__${target.name}-${getArtifactArchName(arc
 <ul>
 <li><code id="WinPackager-_iconPath">_iconPath</code> = <code>new Lazy(() =&gt; this.getOrConvertIcon(&quot;ico&quot;))</code> Lazy&lt; | String&gt;</li>
 <li><code id="WinPackager-vm">vm</code> = <code>new Lazy&lt;VmManager&gt;(() =&gt; (process.platform === &quot;win32&quot; ? Promise.resolve(new VmManager()) : getWindowsVm(this.debugLogger)))</code> Lazy&lt;module:app-builder-lib/out/vm/vm.VmManager&gt;</li>
-<li><code id="WinPackager-signtoolManager">signtoolManager</code> Lazy&lt;module:app-builder-lib/out/codeSign/windowsSignToolManager.WindowsSignToolManager&gt;</li>
-<li><code id="WinPackager-azureSignManager">azureSignManager</code> Lazy&lt;module:app-builder-lib/out/codeSign/windowsSignAzureManager.WindowsSignAzureManager&gt;</li>
+<li><code id="WinPackager-signtoolManager">signtoolManager</code> = <code>new Lazy&lt;WindowsSignToolManager&gt;(() =&gt; Promise.resolve(new WindowsSignToolManager(this)))</code> Lazy&lt;module:app-builder-lib/out/codeSign/windowsSignToolManager.WindowsSignToolManager&gt;</li>
+<li><strong><code id="WinPackager-[azureSignManager=new Lazy(() =>
+  Promise.resolve(new WindowsSignAzureManager(this)).then(async manager => {
+    await manager.initializeProviderModules()
+    return manager
+  })
+)]">[azureSignManager=new Lazy(() =&gt;
+Promise.resolve(new WindowsSignAzureManager(this)).then(async manager =&gt; {
+await manager.initializeProviderModules()
+return manager
+})
+)]</code></strong> Lazy&lt;module:app-builder-lib/out/codeSign/windowsSignAzureManager.WindowsSignAzureManager&gt;</li>
 <li><strong><code id="WinPackager-isForceCodeSigningVerification">isForceCodeSigningVerification</code></strong> Boolean</li>
 <li><strong><code id="WinPackager-defaultTarget">defaultTarget</code></strong> Array&lt;String&gt;</li>
 </ul>

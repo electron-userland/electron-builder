@@ -86,10 +86,9 @@ export interface WindowsConfiguration extends PlatformSpecificBuildOptions {
   readonly signtoolOptions?: WindowsSigntoolConfiguration | null
 
   /**
-   * Options for usage of Azure Trusted Signing
-   * Requires powershell
+   * Options for usage of Azure Trusted Signing (beta)
    */
-  readonly azureOptions?: WindowsAzureSigningConfiguration | null
+  readonly azureSignOptions?: WindowsAzureSigningConfiguration | null
 
   /**
    * Whether to verify the signature of an available update before installation.

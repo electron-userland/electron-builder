@@ -1,4 +1,4 @@
-import { InvalidConfigurationError, log } from "builder-util"
+import { log } from "builder-util"
 import { WindowsConfiguration } from "../options/winOptions"
 import { VmManager } from "../vm/vm"
 import { WinPackager } from "../winPackager"
@@ -9,21 +9,8 @@ export interface WindowsSignOptions {
 }
 
 export async function signWindows(options: WindowsSignOptions, packager: WinPackager): Promise<boolean> {
-  if (options.options.azureOptions) {
+  if (options.options.azureSignOptions) {
     log.debug({ path: log.filePath(options.path) }, "signing with Azure Trusted Signing (beta)")
-    ;[
-      "AZURE_TENANT_ID",
-      "AZURE_CLIENT_ID",
-      "AZURE_CLIENT_SECRET",
-      "AZURE_CLIENT_CERTIFICATE_PATH",
-      "AZURE_CLIENT_SEND_CERTIFICATE_CHAIN",
-      "AZURE_USERNAME",
-      "AZURE_PASSWORD",
-    ].forEach(envVar => {
-      if (!process.env[envVar]) {
-        throw new InvalidConfigurationError(`Unable to find valid azure env var. Please set ${envVar}`)
-      }
-    })
     return (await packager.azureSignManager.value).signUsingAzureTrustedSigning(options)
   }
 
@@ -46,7 +33,7 @@ export async function signWindows(options: WindowsSignOptions, packager: WinPack
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     .map(([field, _]) => field)
   if (fields.length) {
-    log.info({ fields, reason: "please move to win.signtoolOptions.<field_name>" }, `deprecated field`)
+    log.warn({ fields, reason: "please move to win.signtoolOptions.<field_name>" }, `deprecated field`)
   }
   return (await packager.signtoolManager.value).signUsingSigntool({
     ...options,

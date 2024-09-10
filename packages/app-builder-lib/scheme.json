@@ -6036,7 +6036,7 @@
           ],
           "description": "A [glob patterns](/file-patterns) relative to the [app directory](#MetadataDirectories-app), which specifies which files to unpack when creating the [asar](http://electron.atom.io/docs/tutorial/application-packaging/) archive."
         },
-        "azureOptions": {
+        "azureSignOptions": {
           "anyOf": [
             {
               "$ref": "#/definitions/WindowsAzureSigningConfiguration"
@@ -6045,7 +6045,7 @@
               "type": "null"
             }
           ],
-          "description": "Options for usage of Azure Trusted Signing\nRequires powershell"
+          "description": "Options for usage of Azure Trusted Signing (beta)"
         },
         "certificateFile": {
           "description": "The path to the *.pfx certificate you want to sign with. Please use it only if you cannot use env variable `CSC_LINK` (`WIN_CSC_LINK`) for some reason.\nPlease see [Code Signing](/code-signing).",
