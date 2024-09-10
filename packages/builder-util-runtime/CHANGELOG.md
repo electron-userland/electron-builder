@@ -1,5 +1,11 @@
 # builder-util-runtime
 
+## 9.2.6
+
+### Patch Changes
+
+- [#8437](https://github.com/electron-userland/electron-builder/pull/8437) [`be625e06`](https://github.com/electron-userland/electron-builder/commit/be625e06273e56de09ed3298209858043fcd1151) Thanks [@juwonjung-hdj](https://github.com/juwonjung-hdj)! - fix: retry renaming update file when EBUSY error occurs due to file lock
+
 ## 9.2.5
 
 ### Patch Changes
