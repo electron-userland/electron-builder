@@ -132,8 +132,11 @@ Developer API only. See [Configuration](../configuration/configuration.md) for u
 <li><a href="#module_app-builder-lib.LinuxPackager+createTargets"><code>.createTargets(targets, mapper)</code></a></li>
 <li><a href="#module_app-builder-lib.PlatformPackager+artifactPatternConfig"><code>.artifactPatternConfig(targetSpecificOptions, defaultPattern)</code></a> ⇒ <code>module:app-builder-lib/out/platformPackager.__object</code></li>
 <li><a href="#module_app-builder-lib.PlatformPackager+computeSafeArtifactName"><code>.computeSafeArtifactName(suggestedName, ext, arch, skipDefaultArch, defaultArch, safePattern)</code></a> ⇒ <code>null</code> | <code>String</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+getCscLink"><code>.getCscLink(extraEnvName)</code></a> ⇒ <code>undefined</code> | <code>null</code> | <code>String</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+getCscPassword"><code>.getCscPassword()</code></a> ⇒ <code>String</code></li>
 <li><a href="#module_app-builder-lib.PlatformPackager+getDefaultFrameworkIcon"><code>.getDefaultFrameworkIcon()</code></a> ⇒ <code>null</code> | <code>String</code></li>
 <li><a href="#module_app-builder-lib.PlatformPackager+dispatchArtifactCreated"><code>.dispatchArtifactCreated(file, target, arch, safeArtifactName)</code></a> ⇒ <code>Promise&lt;void&gt;</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+doGetCscPassword"><code>.doGetCscPassword()</code></a> ⇒ <code>undefined</code> | <code>null</code> | <code>String</code></li>
 <li><a href="#module_app-builder-lib.PlatformPackager+getElectronDestinationDir"><code>.getElectronDestinationDir(appOutDir)</code></a> ⇒ <code>String</code></li>
 <li><a href="#module_app-builder-lib.PlatformPackager+getElectronSrcDir"><code>.getElectronSrcDir(dist)</code></a> ⇒ <code>String</code></li>
 <li><a href="#module_app-builder-lib.PlatformPackager+expandArtifactBeautyNamePattern"><code>.expandArtifactBeautyNamePattern(targetSpecificOptions, ext, arch)</code></a> ⇒ <code>String</code></li>
@@ -159,8 +162,11 @@ Developer API only. See [Configuration](../configuration/configuration.md) for u
 <li><a href="#module_app-builder-lib.MacPackager+pack"><code>.pack(outDir, arch, targets, taskManager)</code></a> ⇒ <code>Promise&lt;void&gt;</code></li>
 <li><a href="#module_app-builder-lib.PlatformPackager+artifactPatternConfig"><code>.artifactPatternConfig(targetSpecificOptions, defaultPattern)</code></a> ⇒ <code>module:app-builder-lib/out/platformPackager.__object</code></li>
 <li><a href="#module_app-builder-lib.PlatformPackager+computeSafeArtifactName"><code>.computeSafeArtifactName(suggestedName, ext, arch, skipDefaultArch, defaultArch, safePattern)</code></a> ⇒ <code>null</code> | <code>String</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+getCscLink"><code>.getCscLink(extraEnvName)</code></a> ⇒ <code>undefined</code> | <code>null</code> | <code>String</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+getCscPassword"><code>.getCscPassword()</code></a> ⇒ <code>String</code></li>
 <li><a href="#module_app-builder-lib.PlatformPackager+getDefaultFrameworkIcon"><code>.getDefaultFrameworkIcon()</code></a> ⇒ <code>null</code> | <code>String</code></li>
 <li><a href="#module_app-builder-lib.PlatformPackager+dispatchArtifactCreated"><code>.dispatchArtifactCreated(file, target, arch, safeArtifactName)</code></a> ⇒ <code>Promise&lt;void&gt;</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+doGetCscPassword"><code>.doGetCscPassword()</code></a> ⇒ <code>undefined</code> | <code>null</code> | <code>String</code></li>
 <li><a href="#module_app-builder-lib.PlatformPackager+expandArtifactBeautyNamePattern"><code>.expandArtifactBeautyNamePattern(targetSpecificOptions, ext, arch)</code></a> ⇒ <code>String</code></li>
 <li><a href="#module_app-builder-lib.PlatformPackager+expandArtifactNamePattern"><code>.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern, skipDefaultArch, defaultArch)</code></a> ⇒ <code>String</code></li>
 <li><a href="#module_app-builder-lib.PlatformPackager+expandMacro"><code>.expandMacro(pattern, arch, extra, isProductNameSanitized)</code></a> ⇒ <code>String</code></li>
@@ -202,8 +208,11 @@ Developer API only. See [Configuration](../configuration/configuration.md) for u
 <li><a href="#module_app-builder-lib.PlatformPackager+artifactPatternConfig"><code>.artifactPatternConfig(targetSpecificOptions, defaultPattern)</code></a> ⇒ <code>module:app-builder-lib/out/platformPackager.__object</code></li>
 <li><a href="#module_app-builder-lib.PlatformPackager+computeSafeArtifactName"><code>.computeSafeArtifactName(suggestedName, ext, arch, skipDefaultArch, defaultArch, safePattern)</code></a> ⇒ <code>null</code> | <code>String</code></li>
 <li><a href="#module_app-builder-lib.PlatformPackager+createTargets"><code>.createTargets(targets, mapper)</code></a></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+getCscLink"><code>.getCscLink(extraEnvName)</code></a> ⇒ <code>undefined</code> | <code>null</code> | <code>String</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+getCscPassword"><code>.getCscPassword()</code></a> ⇒ <code>String</code></li>
 <li><a href="#module_app-builder-lib.PlatformPackager+getDefaultFrameworkIcon"><code>.getDefaultFrameworkIcon()</code></a> ⇒ <code>null</code> | <code>String</code></li>
 <li><a href="#module_app-builder-lib.PlatformPackager+dispatchArtifactCreated"><code>.dispatchArtifactCreated(file, target, arch, safeArtifactName)</code></a> ⇒ <code>Promise&lt;void&gt;</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+doGetCscPassword"><code>.doGetCscPassword()</code></a> ⇒ <code>undefined</code> | <code>null</code> | <code>String</code></li>
 <li><a href="#module_app-builder-lib.PlatformPackager+getElectronDestinationDir"><code>.getElectronDestinationDir(appOutDir)</code></a> ⇒ <code>String</code></li>
 <li><a href="#module_app-builder-lib.PlatformPackager+getElectronSrcDir"><code>.getElectronSrcDir(dist)</code></a> ⇒ <code>String</code></li>
 <li><a href="#module_app-builder-lib.PlatformPackager+expandArtifactBeautyNamePattern"><code>.expandArtifactBeautyNamePattern(targetSpecificOptions, ext, arch)</code></a> ⇒ <code>String</code></li>
@@ -241,8 +250,11 @@ Developer API only. See [Configuration](../configuration/configuration.md) for u
 <li><a href="#module_app-builder-lib.WinPackager+signAndEditResources"><code>.signAndEditResources(file, arch, outDir, internalName, requestedExecutionLevel)</code></a> ⇒ <code>Promise&lt;void&gt;</code></li>
 <li><a href="#module_app-builder-lib.PlatformPackager+artifactPatternConfig"><code>.artifactPatternConfig(targetSpecificOptions, defaultPattern)</code></a> ⇒ <code>module:app-builder-lib/out/platformPackager.__object</code></li>
 <li><a href="#module_app-builder-lib.PlatformPackager+computeSafeArtifactName"><code>.computeSafeArtifactName(suggestedName, ext, arch, skipDefaultArch, defaultArch, safePattern)</code></a> ⇒ <code>null</code> | <code>String</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+getCscLink"><code>.getCscLink(extraEnvName)</code></a> ⇒ <code>undefined</code> | <code>null</code> | <code>String</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+getCscPassword"><code>.getCscPassword()</code></a> ⇒ <code>String</code></li>
 <li><a href="#module_app-builder-lib.PlatformPackager+getDefaultFrameworkIcon"><code>.getDefaultFrameworkIcon()</code></a> ⇒ <code>null</code> | <code>String</code></li>
 <li><a href="#module_app-builder-lib.PlatformPackager+dispatchArtifactCreated"><code>.dispatchArtifactCreated(file, target, arch, safeArtifactName)</code></a> ⇒ <code>Promise&lt;void&gt;</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+doGetCscPassword"><code>.doGetCscPassword()</code></a> ⇒ <code>undefined</code> | <code>null</code> | <code>String</code></li>
 <li><a href="#module_app-builder-lib.PlatformPackager+getElectronDestinationDir"><code>.getElectronDestinationDir(appOutDir)</code></a> ⇒ <code>String</code></li>
 <li><a href="#module_app-builder-lib.PlatformPackager+getElectronSrcDir"><code>.getElectronSrcDir(dist)</code></a> ⇒ <code>String</code></li>
 <li><a href="#module_app-builder-lib.PlatformPackager+expandArtifactBeautyNamePattern"><code>.expandArtifactBeautyNamePattern(targetSpecificOptions, ext, arch)</code></a> ⇒ <code>String</code></li>
@@ -529,8 +541,11 @@ Developer API only. See [Configuration](../configuration/configuration.md) for u
 <li><a href="#module_app-builder-lib.LinuxPackager+createTargets"><code>.createTargets(targets, mapper)</code></a></li>
 <li><a href="#module_app-builder-lib.PlatformPackager+artifactPatternConfig"><code>.artifactPatternConfig(targetSpecificOptions, defaultPattern)</code></a> ⇒ <code>module:app-builder-lib/out/platformPackager.__object</code></li>
 <li><a href="#module_app-builder-lib.PlatformPackager+computeSafeArtifactName"><code>.computeSafeArtifactName(suggestedName, ext, arch, skipDefaultArch, defaultArch, safePattern)</code></a> ⇒ <code>null</code> | <code>String</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+getCscLink"><code>.getCscLink(extraEnvName)</code></a> ⇒ <code>undefined</code> | <code>null</code> | <code>String</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+getCscPassword"><code>.getCscPassword()</code></a> ⇒ <code>String</code></li>
 <li><a href="#module_app-builder-lib.PlatformPackager+getDefaultFrameworkIcon"><code>.getDefaultFrameworkIcon()</code></a> ⇒ <code>null</code> | <code>String</code></li>
 <li><a href="#module_app-builder-lib.PlatformPackager+dispatchArtifactCreated"><code>.dispatchArtifactCreated(file, target, arch, safeArtifactName)</code></a> ⇒ <code>Promise&lt;void&gt;</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+doGetCscPassword"><code>.doGetCscPassword()</code></a> ⇒ <code>undefined</code> | <code>null</code> | <code>String</code></li>
 <li><a href="#module_app-builder-lib.PlatformPackager+getElectronDestinationDir"><code>.getElectronDestinationDir(appOutDir)</code></a> ⇒ <code>String</code></li>
 <li><a href="#module_app-builder-lib.PlatformPackager+getElectronSrcDir"><code>.getElectronSrcDir(dist)</code></a> ⇒ <code>String</code></li>
 <li><a href="#module_app-builder-lib.PlatformPackager+expandArtifactBeautyNamePattern"><code>.expandArtifactBeautyNamePattern(targetSpecificOptions, ext, arch)</code></a> ⇒ <code>String</code></li>
@@ -624,6 +639,24 @@ Developer API only. See [Configuration](../configuration/configuration.md) for u
 </tr>
 </tbody>
 </table>
+<p><a name="module_app-builder-lib.PlatformPackager+getCscLink"></a></p>
+<h3 id="linuxpackager.getcsclink(extraenvname)-%E2%87%92-undefined-%7C-null-%7C-string"><code>linuxPackager.getCscLink(extraEnvName)</code> ⇒ <code>undefined</code> | <code>null</code> | <code>String</code></h3>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>extraEnvName</td>
+<td><code>String</code> | <code>“undefined”</code></td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_app-builder-lib.PlatformPackager+getCscPassword"></a></p>
+<h3 id="linuxpackager.getcscpassword()-%E2%87%92-string"><code>linuxPackager.getCscPassword()</code> ⇒ <code>String</code></h3>
 <p><a name="module_app-builder-lib.PlatformPackager+getDefaultFrameworkIcon"></a></p>
 <h3 id="linuxpackager.getdefaultframeworkicon()-%E2%87%92-null-%7C-string"><code>linuxPackager.getDefaultFrameworkIcon()</code> ⇒ <code>null</code> | <code>String</code></h3>
 <p><a name="module_app-builder-lib.PlatformPackager+dispatchArtifactCreated"></a></p>
@@ -654,6 +687,8 @@ Developer API only. See [Configuration](../configuration/configuration.md) for u
 </tr>
 </tbody>
 </table>
+<p><a name="module_app-builder-lib.PlatformPackager+doGetCscPassword"></a></p>
+<h3 id="linuxpackager.dogetcscpassword()-%E2%87%92-undefined-%7C-null-%7C-string"><code>linuxPackager.doGetCscPassword()</code> ⇒ <code>undefined</code> | <code>null</code> | <code>String</code></h3>
 <p><a name="module_app-builder-lib.PlatformPackager+getElectronDestinationDir"></a></p>
 <h3 id="linuxpackager.getelectrondestinationdir(appoutdir)-%E2%87%92-string"><code>linuxPackager.getElectronDestinationDir(appOutDir)</code> ⇒ <code>String</code></h3>
 <table>
@@ -1007,8 +1042,11 @@ return result
 <li><a href="#module_app-builder-lib.MacPackager+pack"><code>.pack(outDir, arch, targets, taskManager)</code></a> ⇒ <code>Promise&lt;void&gt;</code></li>
 <li><a href="#module_app-builder-lib.PlatformPackager+artifactPatternConfig"><code>.artifactPatternConfig(targetSpecificOptions, defaultPattern)</code></a> ⇒ <code>module:app-builder-lib/out/platformPackager.__object</code></li>
 <li><a href="#module_app-builder-lib.PlatformPackager+computeSafeArtifactName"><code>.computeSafeArtifactName(suggestedName, ext, arch, skipDefaultArch, defaultArch, safePattern)</code></a> ⇒ <code>null</code> | <code>String</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+getCscLink"><code>.getCscLink(extraEnvName)</code></a> ⇒ <code>undefined</code> | <code>null</code> | <code>String</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+getCscPassword"><code>.getCscPassword()</code></a> ⇒ <code>String</code></li>
 <li><a href="#module_app-builder-lib.PlatformPackager+getDefaultFrameworkIcon"><code>.getDefaultFrameworkIcon()</code></a> ⇒ <code>null</code> | <code>String</code></li>
 <li><a href="#module_app-builder-lib.PlatformPackager+dispatchArtifactCreated"><code>.dispatchArtifactCreated(file, target, arch, safeArtifactName)</code></a> ⇒ <code>Promise&lt;void&gt;</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+doGetCscPassword"><code>.doGetCscPassword()</code></a> ⇒ <code>undefined</code> | <code>null</code> | <code>String</code></li>
 <li><a href="#module_app-builder-lib.PlatformPackager+expandArtifactBeautyNamePattern"><code>.expandArtifactBeautyNamePattern(targetSpecificOptions, ext, arch)</code></a> ⇒ <code>String</code></li>
 <li><a href="#module_app-builder-lib.PlatformPackager+expandArtifactNamePattern"><code>.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern, skipDefaultArch, defaultArch)</code></a> ⇒ <code>String</code></li>
 <li><a href="#module_app-builder-lib.PlatformPackager+expandMacro"><code>.expandMacro(pattern, arch, extra, isProductNameSanitized)</code></a> ⇒ <code>String</code></li>
@@ -1184,6 +1222,24 @@ return result
 </tr>
 </tbody>
 </table>
+<p><a name="module_app-builder-lib.PlatformPackager+getCscLink"></a></p>
+<h3 id="macpackager.getcsclink(extraenvname)-%E2%87%92-undefined-%7C-null-%7C-string"><code>macPackager.getCscLink(extraEnvName)</code> ⇒ <code>undefined</code> | <code>null</code> | <code>String</code></h3>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>extraEnvName</td>
+<td><code>String</code> | <code>“undefined”</code></td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_app-builder-lib.PlatformPackager+getCscPassword"></a></p>
+<h3 id="macpackager.getcscpassword()-%E2%87%92-string"><code>macPackager.getCscPassword()</code> ⇒ <code>String</code></h3>
 <p><a name="module_app-builder-lib.PlatformPackager+getDefaultFrameworkIcon"></a></p>
 <h3 id="macpackager.getdefaultframeworkicon()-%E2%87%92-null-%7C-string"><code>macPackager.getDefaultFrameworkIcon()</code> ⇒ <code>null</code> | <code>String</code></h3>
 <p><a name="module_app-builder-lib.PlatformPackager+dispatchArtifactCreated"></a></p>
@@ -1214,6 +1270,8 @@ return result
 </tr>
 </tbody>
 </table>
+<p><a name="module_app-builder-lib.PlatformPackager+doGetCscPassword"></a></p>
+<h3 id="macpackager.dogetcscpassword()-%E2%87%92-undefined-%7C-null-%7C-string"><code>macPackager.doGetCscPassword()</code> ⇒ <code>undefined</code> | <code>null</code> | <code>String</code></h3>
 <p><a name="module_app-builder-lib.PlatformPackager+expandArtifactBeautyNamePattern"></a></p>
 <h3 id="macpackager.expandartifactbeautynamepattern(targetspecificoptions%2C-ext%2C-arch)-%E2%87%92-string"><code>macPackager.expandArtifactBeautyNamePattern(targetSpecificOptions, ext, arch)</code> ⇒ <code>String</code></h3>
 <table>
@@ -1755,8 +1813,11 @@ return path.join(target.outDir, <code>__${target.name}-${getArtifactArchName(arc
 <li><a href="#module_app-builder-lib.PlatformPackager+artifactPatternConfig"><code>.artifactPatternConfig(targetSpecificOptions, defaultPattern)</code></a> ⇒ <code>module:app-builder-lib/out/platformPackager.__object</code></li>
 <li><a href="#module_app-builder-lib.PlatformPackager+computeSafeArtifactName"><code>.computeSafeArtifactName(suggestedName, ext, arch, skipDefaultArch, defaultArch, safePattern)</code></a> ⇒ <code>null</code> | <code>String</code></li>
 <li><a href="#module_app-builder-lib.PlatformPackager+createTargets"><code>.createTargets(targets, mapper)</code></a></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+getCscLink"><code>.getCscLink(extraEnvName)</code></a> ⇒ <code>undefined</code> | <code>null</code> | <code>String</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+getCscPassword"><code>.getCscPassword()</code></a> ⇒ <code>String</code></li>
 <li><a href="#module_app-builder-lib.PlatformPackager+getDefaultFrameworkIcon"><code>.getDefaultFrameworkIcon()</code></a> ⇒ <code>null</code> | <code>String</code></li>
 <li><a href="#module_app-builder-lib.PlatformPackager+dispatchArtifactCreated"><code>.dispatchArtifactCreated(file, target, arch, safeArtifactName)</code></a> ⇒ <code>Promise&lt;void&gt;</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+doGetCscPassword"><code>.doGetCscPassword()</code></a> ⇒ <code>undefined</code> | <code>null</code> | <code>String</code></li>
 <li><a href="#module_app-builder-lib.PlatformPackager+getElectronDestinationDir"><code>.getElectronDestinationDir(appOutDir)</code></a> ⇒ <code>String</code></li>
 <li><a href="#module_app-builder-lib.PlatformPackager+getElectronSrcDir"><code>.getElectronSrcDir(dist)</code></a> ⇒ <code>String</code></li>
 <li><a href="#module_app-builder-lib.PlatformPackager+expandArtifactBeautyNamePattern"><code>.expandArtifactBeautyNamePattern(targetSpecificOptions, ext, arch)</code></a> ⇒ <code>String</code></li>
@@ -1849,6 +1910,24 @@ return path.join(target.outDir, <code>__${target.name}-${getArtifactArchName(arc
 </tr>
 </tbody>
 </table>
+<p><a name="module_app-builder-lib.PlatformPackager+getCscLink"></a></p>
+<h3 id="platformpackager.getcsclink(extraenvname)-%E2%87%92-undefined-%7C-null-%7C-string"><code>platformPackager.getCscLink(extraEnvName)</code> ⇒ <code>undefined</code> | <code>null</code> | <code>String</code></h3>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>extraEnvName</td>
+<td><code>String</code> | <code>“undefined”</code></td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_app-builder-lib.PlatformPackager+getCscPassword"></a></p>
+<h3 id="platformpackager.getcscpassword()-%E2%87%92-string"><code>platformPackager.getCscPassword()</code> ⇒ <code>String</code></h3>
 <p><a name="module_app-builder-lib.PlatformPackager+getDefaultFrameworkIcon"></a></p>
 <h3 id="platformpackager.getdefaultframeworkicon()-%E2%87%92-null-%7C-string"><code>platformPackager.getDefaultFrameworkIcon()</code> ⇒ <code>null</code> | <code>String</code></h3>
 <p><a name="module_app-builder-lib.PlatformPackager+dispatchArtifactCreated"></a></p>
@@ -1879,6 +1958,8 @@ return path.join(target.outDir, <code>__${target.name}-${getArtifactArchName(arc
 </tr>
 </tbody>
 </table>
+<p><a name="module_app-builder-lib.PlatformPackager+doGetCscPassword"></a></p>
+<h3 id="platformpackager.dogetcscpassword()-%E2%87%92-undefined-%7C-null-%7C-string"><code>platformPackager.doGetCscPassword()</code> ⇒ <code>undefined</code> | <code>null</code> | <code>String</code></h3>
 <p><a name="module_app-builder-lib.PlatformPackager+getElectronDestinationDir"></a></p>
 <h3 id="platformpackager.getelectrondestinationdir(appoutdir)-%E2%87%92-string"><code>platformPackager.getElectronDestinationDir(appOutDir)</code> ⇒ <code>String</code></h3>
 <table>
@@ -2240,188 +2321,12 @@ return path.join(target.outDir, <code>__${target.name}-${getArtifactArchName(arc
 <strong>Extends</strong>: <code><a href="#PlatformPackager">PlatformPackager</a></code><br>
 <strong>Properties</strong></p>
 <ul>
-<li>
-<p>**&lt;code id=&quot;WinPackager-[cscInfo=new MemoLazy&lt;WindowsConfiguration, FileCodeSigningInfo | CertificateFromStoreInfo | null&gt;(
-() =&gt; this.platformSpecificBuildOptions,
-platformSpecificBuildOptions =&gt; {
-const subjectName = chooseNotNull(platformSpecificBuildOptions.signtoolOptions?.certificateSubjectName, platformSpecificBuildOptions.certificateSubjectName)
-const shaType = chooseNotNull(platformSpecificBuildOptions.signtoolOptions?.certificateSha1, platformSpecificBuildOptions.certificateSha1)
-if (subjectName != null || shaType != null) {
-return this.vm.value
-.then(vm =&gt; getCertificateFromStoreInfo(platformSpecificBuildOptions, vm))
-.catch((e: any) =&gt; {
-// <a href="https://github.com/electron-userland/electron-builder/pull/2397">https://github.com/electron-userland/electron-builder/pull/2397</a>
-if (chooseNotNull(platformSpecificBuildOptions.signtoolOptions?.sign, platformSpecificBuildOptions.sign) == null) {
-throw e
-} else {
-log.debug({ error: e }, “getCertificateFromStoreInfo error”)
-return null
-}
-})
-}</p>
-<pre><code class="hljs">const certificateFile = chooseNotNull(platformSpecificBuildOptions.signtoolOptions?.certificateFile, platformSpecificBuildOptions.certificateFile)
-if (certificateFile != null) {
-  const certificatePassword = this.getCscPassword()
-  return Promise.resolve({
-    file: certificateFile,
-    password: certificatePassword == null ? null : certificatePassword.trim(),
-  })
-}
-
-const cscLink = this.getCscLink(&quot;WIN_CSC_LINK&quot;)
-if (cscLink == null || cscLink === &quot;&quot;) {
-  return Promise.resolve(null)
-}
-
-return (
-  importCertificate(cscLink, this.info.tempDirManager, this.projectDir)
-    // before then
-    .catch((e: any) =&gt; {
-      if (e instanceof InvalidConfigurationError) {
-        throw new InvalidConfigurationError(`Env WIN_CSC_LINK is not correct, cannot resolve: ${e.message}`)
-      } else {
-        throw e
-      }
-    })
-    .then(path =&gt; {
-      return {
-        file: path,
-        password: this.getCscPassword(),
-      }
-    })
-)
-</code></pre>
-<p>}
-)]&quot;&gt;[cscInfo=new MemoLazy&lt;WindowsConfiguration, FileCodeSigningInfo | CertificateFromStoreInfo | null&gt;(
-() =&gt; this.platformSpecificBuildOptions,
-platformSpecificBuildOptions =&gt; {
-const subjectName = chooseNotNull(platformSpecificBuildOptions.signtoolOptions?.certificateSubjectName, platformSpecificBuildOptions.certificateSubjectName)
-const shaType = chooseNotNull(platformSpecificBuildOptions.signtoolOptions?.certificateSha1, platformSpecificBuildOptions.certificateSha1)
-if (subjectName != null || shaType != null) {
-return this.vm.value
-.then(vm =&gt; getCertificateFromStoreInfo(platformSpecificBuildOptions, vm))
-.catch((e: any) =&gt; {
-// <a href="https://github.com/electron-userland/electron-builder/pull/2397">https://github.com/electron-userland/electron-builder/pull/2397</a>
-if (chooseNotNull(platformSpecificBuildOptions.signtoolOptions?.sign, platformSpecificBuildOptions.sign) == null) {
-throw e
-} else {
-log.debug({ error: e }, “getCertificateFromStoreInfo error”)
-return null
-}
-})
-}</p>
-<pre><code class="hljs">const certificateFile = chooseNotNull(platformSpecificBuildOptions.signtoolOptions?.certificateFile, platformSpecificBuildOptions.certificateFile)
-if (certificateFile != null) {
-  const certificatePassword = this.getCscPassword()
-  return Promise.resolve({
-    file: certificateFile,
-    password: certificatePassword == null ? null : certificatePassword.trim(),
-  })
-}
-
-const cscLink = this.getCscLink(&quot;WIN_CSC_LINK&quot;)
-if (cscLink == null || cscLink === &quot;&quot;) {
-  return Promise.resolve(null)
-}
-
-return (
-  importCertificate(cscLink, this.info.tempDirManager, this.projectDir)
-    // before then
-    .catch((e: any) =&gt; {
-      if (e instanceof InvalidConfigurationError) {
-        throw new InvalidConfigurationError(`Env WIN_CSC_LINK is not correct, cannot resolve: ${e.message}`)
-      } else {
-        throw e
-      }
-    })
-    .then(path =&gt; {
-      return {
-        file: path,
-        password: this.getCscPassword(),
-      }
-    })
-)
-</code></pre>
-<p>}
-)]</code>** MemoLazy&lt;<a href="#WindowsConfiguration">WindowsConfiguration</a> |  | <a href="#FileCodeSigningInfo">FileCodeSigningInfo</a> | <a href="#CertificateFromStoreInfo">CertificateFromStoreInfo</a>&gt;</p>
-</li>
-<li>
-<p><code id="WinPackager-vm">vm</code> = <code>new Lazy&lt;VmManager&gt;(() =&gt; (process.platform === &quot;win32&quot; ? Promise.resolve(new VmManager()) : getWindowsVm(this.debugLogger)))</code> Lazy&lt;module:app-builder-lib/out/vm/vm.VmManager&gt;</p>
-</li>
-<li>
-<p>**&lt;code id=&quot;WinPackager-[computedPublisherName=new Lazy&lt;Array<string> | null&gt;(async () =&gt; {
-const publisherName = this.platformSpecificBuildOptions.publisherName
-if (publisherName === null) {
-return null
-} else if (publisherName != null) {
-return asArray(publisherName)
-}</p>
-<p>const certInfo = await this.lazyCertInfo.value
-return certInfo == null ? null : [certInfo.commonName]
-})]&quot;&gt;[computedPublisherName=new Lazy&lt;Array<string> | null&gt;(async () =&gt; {
-const publisherName = this.platformSpecificBuildOptions.publisherName
-if (publisherName === null) {
-return null
-} else if (publisherName != null) {
-return asArray(publisherName)
-}</p>
-<p>const certInfo = await this.lazyCertInfo.value
-return certInfo == null ? null : [certInfo.commonName]
-})]</code>** Lazy&lt; | Array&gt;</p>
-</li>
-<li>
-<p>**&lt;code id=&quot;WinPackager-[lazyCertInfo=new MemoLazy&lt;MemoLazy&lt;WindowsConfiguration, FileCodeSigningInfo | CertificateFromStoreInfo | null&gt;, CertificateInfo | null&gt;(
-() =&gt; this.cscInfo,
-async csc =&gt; {
-const cscInfo = await csc.value
-if (cscInfo == null) {
-return null
-}</p>
-<pre><code class="hljs">if (&quot;subject&quot; in cscInfo) {
-  const bloodyMicrosoftSubjectDn = cscInfo.subject
-  return {
-    commonName: parseDn(bloodyMicrosoftSubjectDn).get(&quot;CN&quot;)!,
-    bloodyMicrosoftSubjectDn,
-  }
-}
-
-const cscFile = cscInfo.file
-if (cscFile == null) {
-  return null
-}
-return await getCertInfo(cscFile, cscInfo.password || &quot;&quot;)
-</code></pre>
-<p>}
-)]&quot;&gt;[lazyCertInfo=new MemoLazy&lt;MemoLazy&lt;WindowsConfiguration, FileCodeSigningInfo | CertificateFromStoreInfo | null&gt;, CertificateInfo | null&gt;(
-() =&gt; this.cscInfo,
-async csc =&gt; {
-const cscInfo = await csc.value
-if (cscInfo == null) {
-return null
-}</p>
-<pre><code class="hljs">if (&quot;subject&quot; in cscInfo) {
-  const bloodyMicrosoftSubjectDn = cscInfo.subject
-  return {
-    commonName: parseDn(bloodyMicrosoftSubjectDn).get(&quot;CN&quot;)!,
-    bloodyMicrosoftSubjectDn,
-  }
-}
-
-const cscFile = cscInfo.file
-if (cscFile == null) {
-  return null
-}
-return await getCertInfo(cscFile, cscInfo.password || &quot;&quot;)
-</code></pre>
-<p>}
-)]</code>** MemoLazy&lt;MemoLazy&lt;<a href="#WindowsConfiguration">WindowsConfiguration</a> |  | <a href="#FileCodeSigningInfo">FileCodeSigningInfo</a> | <a href="#CertificateFromStoreInfo">CertificateFromStoreInfo</a>&gt; |  | module:app-builder-lib/out/codeSign/windowsCodeSign.CertificateInfo&gt;</p>
-</li>
-<li>
-<p><strong><code id="WinPackager-isForceCodeSigningVerification">isForceCodeSigningVerification</code></strong> Boolean</p>
-</li>
-<li>
-<p><strong><code id="WinPackager-defaultTarget">defaultTarget</code></strong> Array&lt;String&gt;</p>
-</li>
+<li><code id="WinPackager-_iconPath">_iconPath</code> = <code>new Lazy(() =&gt; this.getOrConvertIcon(&quot;ico&quot;))</code> Lazy&lt; | String&gt;</li>
+<li><code id="WinPackager-vm">vm</code> = <code>new Lazy&lt;VmManager&gt;(() =&gt; (process.platform === &quot;win32&quot; ? Promise.resolve(new VmManager()) : getWindowsVm(this.debugLogger)))</code> Lazy&lt;module:app-builder-lib/out/vm/vm.VmManager&gt;</li>
+<li><code id="WinPackager-signtoolManager">signtoolManager</code> Lazy&lt;module:app-builder-lib/out/codeSign/windowsSignToolManager.WindowsSignToolManager&gt;</li>
+<li><code id="WinPackager-azureSignManager">azureSignManager</code> Lazy&lt;module:app-builder-lib/out/codeSign/windowsSignAzureManager.WindowsSignAzureManager&gt;</li>
+<li><strong><code id="WinPackager-isForceCodeSigningVerification">isForceCodeSigningVerification</code></strong> Boolean</li>
+<li><strong><code id="WinPackager-defaultTarget">defaultTarget</code></strong> Array&lt;String&gt;</li>
 </ul>
 <p><strong>Methods</strong></p>
 <ul>
@@ -2433,8 +2338,11 @@ return await getCertInfo(cscFile, cscInfo.password || &quot;&quot;)
 <li><a href="#module_app-builder-lib.WinPackager+signAndEditResources"><code>.signAndEditResources(file, arch, outDir, internalName, requestedExecutionLevel)</code></a> ⇒ <code>Promise&lt;void&gt;</code></li>
 <li><a href="#module_app-builder-lib.PlatformPackager+artifactPatternConfig"><code>.artifactPatternConfig(targetSpecificOptions, defaultPattern)</code></a> ⇒ <code>module:app-builder-lib/out/platformPackager.__object</code></li>
 <li><a href="#module_app-builder-lib.PlatformPackager+computeSafeArtifactName"><code>.computeSafeArtifactName(suggestedName, ext, arch, skipDefaultArch, defaultArch, safePattern)</code></a> ⇒ <code>null</code> | <code>String</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+getCscLink"><code>.getCscLink(extraEnvName)</code></a> ⇒ <code>undefined</code> | <code>null</code> | <code>String</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+getCscPassword"><code>.getCscPassword()</code></a> ⇒ <code>String</code></li>
 <li><a href="#module_app-builder-lib.PlatformPackager+getDefaultFrameworkIcon"><code>.getDefaultFrameworkIcon()</code></a> ⇒ <code>null</code> | <code>String</code></li>
 <li><a href="#module_app-builder-lib.PlatformPackager+dispatchArtifactCreated"><code>.dispatchArtifactCreated(file, target, arch, safeArtifactName)</code></a> ⇒ <code>Promise&lt;void&gt;</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+doGetCscPassword"><code>.doGetCscPassword()</code></a> ⇒ <code>undefined</code> | <code>null</code> | <code>String</code></li>
 <li><a href="#module_app-builder-lib.PlatformPackager+getElectronDestinationDir"><code>.getElectronDestinationDir(appOutDir)</code></a> ⇒ <code>String</code></li>
 <li><a href="#module_app-builder-lib.PlatformPackager+getElectronSrcDir"><code>.getElectronSrcDir(dist)</code></a> ⇒ <code>String</code></li>
 <li><a href="#module_app-builder-lib.PlatformPackager+expandArtifactBeautyNamePattern"><code>.expandArtifactBeautyNamePattern(targetSpecificOptions, ext, arch)</code></a> ⇒ <code>String</code></li>
@@ -2582,6 +2490,24 @@ return await getCertInfo(cscFile, cscInfo.password || &quot;&quot;)
 </tr>
 </tbody>
 </table>
+<p><a name="module_app-builder-lib.PlatformPackager+getCscLink"></a></p>
+<h3 id="winpackager.getcsclink(extraenvname)-%E2%87%92-undefined-%7C-null-%7C-string"><code>winPackager.getCscLink(extraEnvName)</code> ⇒ <code>undefined</code> | <code>null</code> | <code>String</code></h3>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>extraEnvName</td>
+<td><code>String</code> | <code>“undefined”</code></td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_app-builder-lib.PlatformPackager+getCscPassword"></a></p>
+<h3 id="winpackager.getcscpassword()-%E2%87%92-string"><code>winPackager.getCscPassword()</code> ⇒ <code>String</code></h3>
 <p><a name="module_app-builder-lib.PlatformPackager+getDefaultFrameworkIcon"></a></p>
 <h3 id="winpackager.getdefaultframeworkicon()-%E2%87%92-null-%7C-string"><code>winPackager.getDefaultFrameworkIcon()</code> ⇒ <code>null</code> | <code>String</code></h3>
 <p><a name="module_app-builder-lib.PlatformPackager+dispatchArtifactCreated"></a></p>
@@ -2612,6 +2538,8 @@ return await getCertInfo(cscFile, cscInfo.password || &quot;&quot;)
 </tr>
 </tbody>
 </table>
+<p><a name="module_app-builder-lib.PlatformPackager+doGetCscPassword"></a></p>
+<h3 id="winpackager.dogetcscpassword()-%E2%87%92-undefined-%7C-null-%7C-string"><code>winPackager.doGetCscPassword()</code> ⇒ <code>undefined</code> | <code>null</code> | <code>String</code></h3>
 <p><a name="module_app-builder-lib.PlatformPackager+getElectronDestinationDir"></a></p>
 <h3 id="winpackager.getelectrondestinationdir(appoutdir)-%E2%87%92-string"><code>winPackager.getElectronDestinationDir(appOutDir)</code> ⇒ <code>String</code></h3>
 <table>

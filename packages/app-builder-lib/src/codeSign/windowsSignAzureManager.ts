@@ -13,6 +13,7 @@ export class WindowsSignAzureManager {
     await vm.exec(ps, ["Install-Module", "-Name", "TrustedSigning", "-RequiredVersion", "0.4.1", "-Force", "-Repository", "PSGallery", "-Scope CurrentUser"])
   }
 
+  // prerequisite: requires `initializeProviderModules` to already have been executed
   async signUsingAzureTrustedSigning(options: WindowsSignOptions): Promise<boolean> {
     const vm = await this.packager.vm.value
     const ps = await getPSCmd(vm)
