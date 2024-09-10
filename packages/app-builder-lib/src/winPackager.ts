@@ -25,14 +25,15 @@ import { getWindowsVm, VmManager } from "./vm/vm"
 import { execWine } from "./wine"
 import { signWindows } from "./codeSign/windowsCodeSign"
 import { WindowsSignOptions } from "./codeSign/windowsCodeSign"
+import { WindowsSignAzureManager } from "./codeSign/windowsSignAzureManager"
 
 export class WinPackager extends PlatformPackager<WindowsConfiguration> {
-
   _iconPath = new Lazy(() => this.getOrConvertIcon("ico"))
 
   readonly vm = new Lazy<VmManager>(() => (process.platform === "win32" ? Promise.resolve(new VmManager()) : getWindowsVm(this.debugLogger)))
 
-  readonly signtoolManager: WindowsSignToolManager
+  readonly signtoolManager: Lazy<WindowsSignToolManager>
+  readonly azureSignManager: Lazy<WindowsSignAzureManager>
 
   get isForceCodeSigningVerification(): boolean {
     return this.platformSpecificBuildOptions.verifyUpdateCodeSignature !== false
@@ -40,14 +41,18 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
 
   constructor(info: Packager) {
     super(info, Platform.WINDOWS)
-    this.signtoolManager = new WindowsSignToolManager(this)
+    this.signtoolManager = new Lazy<WindowsSignToolManager>(() => Promise.resolve(new WindowsSignToolManager(this)))
+    this.azureSignManager = new Lazy(() =>
+      Promise.resolve(new WindowsSignAzureManager(this)).then(async manager => {
+        await manager.initializeProviderModules()
+        return manager
+      })
+    )
   }
 
   get defaultTarget(): Array<string> {
     return ["nsis"]
   }
-
-
 
   createTargets(targets: Array<string>, mapper: (name: string, factory: (outDir: string) => Target) => void): void {
     let copyElevateHelper: CopyElevateHelper | null
@@ -115,7 +120,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
       options: this.platformSpecificBuildOptions,
     }
 
-    const cscInfo = await this.signtoolManager.cscInfo.value
+    const cscInfo = await (await this.signtoolManager.value).cscInfo.value
     if (cscInfo == null) {
       if (chooseNotNull(this.platformSpecificBuildOptions.signtoolOptions?.sign, this.platformSpecificBuildOptions.sign) != null) {
         return signWindows(signOptions, this)
@@ -218,7 +223,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     })
 
     const config = this.config
-    const cscInfoForCacheDigest = !isBuildCacheEnabled() || isCI || config.electronDist != null ? null : await this.signtoolManager.cscInfo.value
+    const cscInfoForCacheDigest = !isBuildCacheEnabled() || isCI || config.electronDist != null ? null : await (await this.signtoolManager.value).cscInfo.value
     let buildCacheManager: BuildCacheManager | null = null
     // resources editing doesn't change executable for the same input and executed quickly - no need to complicate
     if (cscInfoForCacheDigest != null) {

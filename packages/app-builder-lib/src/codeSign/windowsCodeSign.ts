@@ -1,11 +1,10 @@
 import { InvalidConfigurationError, log } from "builder-util"
-import { WindowsAzureSigningConfiguration, WindowsConfiguration } from "../options/winOptions"
+import { WindowsConfiguration } from "../options/winOptions"
 import { VmManager } from "../vm/vm"
 import { WinPackager } from "../winPackager"
 
 export interface WindowsSignOptions {
   readonly path: string
-
   readonly options: WindowsConfiguration
 }
 
@@ -25,7 +24,7 @@ export async function signWindows(options: WindowsSignOptions, packager: WinPack
         throw new InvalidConfigurationError(`Unable to find valid azure env var. Please set ${envVar}`)
       }
     })
-    return signUsingAzureTrustedSigning(options, packager)
+    return (await packager.azureSignManager.value).signUsingAzureTrustedSigning(options)
   }
 
   log.debug({ path: log.filePath(options.path) }, "signing with signtool.exe")
@@ -49,32 +48,11 @@ export async function signWindows(options: WindowsSignOptions, packager: WinPack
   if (fields.length) {
     log.info({ fields }, `deprecated field. Please move to win.signtoolOptions.<field_name>`)
   }
-  return packager.signtoolManager.signUsingSigntool({
+  return (await packager.signtoolManager.value).signUsingSigntool({
     ...options,
     name: packager.appInfo.productName,
     site: await packager.appInfo.computePackageUrl(),
-    cscInfo: await packager.signtoolManager.cscInfo.value,
   })
-}
-
-async function signUsingAzureTrustedSigning(options: WindowsSignOptions, packager: WinPackager): Promise<boolean> {
-  const vm = await packager.vm.value
-
-  const ps = await getPSCmd(vm)
-  await vm.exec(ps, ["Install-PackageProvider", "-Name", "NuGet", "-MinimumVersion", "2.8.5.201", "-Force", "-Scope", "CurrentUser"])
-  await vm.exec(ps, ["Install-Module", "-Name", "TrustedSigning", "-RequiredVersion", "0.4.1", "-Force", "-Repository", "PSGallery", "-Scope CurrentUser"])
-
-  const config: WindowsAzureSigningConfiguration = options.options.azureOptions!
-  const params = {
-    ...config,
-    Files: options.path,
-  }
-  const paramsString = Object.entries(params).reduce((res, [field, value]) => {
-    return [...res, `-${field}`, value]
-  }, [] as string[])
-  await vm.exec(ps, ["Invoke-TrustedSigning", ...paramsString])
-
-  return true
 }
 
 export async function getPSCmd(vm: VmManager): Promise<string> {

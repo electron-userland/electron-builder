@@ -26,7 +26,6 @@ export type CustomWindowsSign = (configuration: CustomWindowsSignTaskConfigurati
 export interface WindowsSignToolOptions extends WindowsSignOptions {
   readonly name: string
   readonly site: string | null
-  readonly cscInfo?: FileCodeSigningInfo | CertificateFromStoreInfo | null
 }
 
 export interface FileCodeSigningInfo {
@@ -35,6 +34,8 @@ export interface FileCodeSigningInfo {
 }
 
 export interface WindowsSignTaskConfiguration extends WindowsSignToolOptions {
+  readonly cscInfo: FileCodeSigningInfo | CertificateFromStoreInfo | null
+
   // set if output path differs from input (e.g. osslsigncode cannot sign file in-place)
   resultOutputPath?: string
 
@@ -183,11 +184,12 @@ export class WindowsSignToolManager {
       hashes = Array.isArray(hashes) ? hashes : [hashes]
     }
 
+    const cscInfo = await this.cscInfo.value
     const customSign = await resolveFunction(this.packager.appInfo.type, chooseNotNull(options.options.signtoolOptions?.sign, options.options.sign), "sign")
     const executor = customSign || ((config: CustomWindowsSignTaskConfiguration, packager: WinPackager) => this.doSign(config, packager))
     let isNest = false
     for (const hash of hashes) {
-      const taskConfiguration: WindowsSignTaskConfiguration = { ...options, hash, isNest }
+      const taskConfiguration: WindowsSignTaskConfiguration = { ...options, cscInfo, hash, isNest }
       await Promise.resolve(
         executor(
           {
