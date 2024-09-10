@@ -65,6 +65,12 @@ interface CertInfo {
 }
 
 export class WindowsSignTool {
+  private readonly platformSpecificBuildOptions: WindowsConfiguration
+
+  constructor(private readonly packager: WinPackager) {
+    this.platformSpecificBuildOptions = packager.platformSpecificBuildOptions
+  }
+
   readonly computedPublisherName = new Lazy<Array<string> | null>(async () => {
     const publisherName = chooseNotNull(this.platformSpecificBuildOptions.signtoolOptions?.publisherName, this.platformSpecificBuildOptions.publisherName)
     if (publisherName === null) {
@@ -100,11 +106,6 @@ export class WindowsSignTool {
       return await this.getCertInfo(cscFile, cscInfo.password || "")
     }
   )
-
-  constructor(
-    private readonly packager: WinPackager,
-    private readonly platformSpecificBuildOptions: WindowsConfiguration
-  ) {}
 
   readonly cscInfo = new MemoLazy<WindowsConfiguration, FileCodeSigningInfo | CertificateFromStoreInfo | null>(
     () => this.platformSpecificBuildOptions,
@@ -182,7 +183,8 @@ export class WindowsSignTool {
       hashes = Array.isArray(hashes) ? hashes : [hashes]
     }
 
-    const executor = (await resolveFunction(this.packager.appInfo.type, chooseNotNull(options.options.signtoolOptions?.sign, options.options.sign), "sign")) || this.doSign
+    const customSign = await resolveFunction(this.packager.appInfo.type, chooseNotNull(options.options.signtoolOptions?.sign, options.options.sign), "sign")
+    const executor = customSign || ((config: CustomWindowsSignTaskConfiguration, packager: WinPackager) => this.doSign(config, packager))
     let isNest = false
     for (const hash of hashes) {
       const taskConfiguration: WindowsSignTaskConfiguration = { ...options, hash, isNest }

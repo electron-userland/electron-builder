@@ -32,7 +32,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
 
   readonly vm = new Lazy<VmManager>(() => (process.platform === "win32" ? Promise.resolve(new VmManager()) : getWindowsVm(this.debugLogger)))
 
-  readonly signtoolManager = new WindowsSignTool(this, this.platformSpecificBuildOptions)
+  readonly signtoolManager: WindowsSignTool
 
   get isForceCodeSigningVerification(): boolean {
     return this.platformSpecificBuildOptions.verifyUpdateCodeSignature !== false
@@ -40,6 +40,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
 
   constructor(info: Packager) {
     super(info, Platform.WINDOWS)
+    this.signtoolManager = new WindowsSignTool(this)
   }
 
   get defaultTarget(): Array<string> {

@@ -53,6 +53,7 @@ export async function signWindows(options: WindowsSignOptions, packager: WinPack
     ...options,
     name: packager.appInfo.productName,
     site: await packager.appInfo.computePackageUrl(),
+    cscInfo: await packager.signtoolManager.cscInfo.value,
   })
 }
 
