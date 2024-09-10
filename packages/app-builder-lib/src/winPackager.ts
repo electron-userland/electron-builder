@@ -5,7 +5,7 @@ import { readdir } from "fs/promises"
 import * as isCI from "is-ci"
 import { Lazy } from "lazy-val"
 import * as path from "path"
-import { FileCodeSigningInfo, getSignVendorPath, WindowsSignTool } from "./codeSign/windowsSignTool"
+import { FileCodeSigningInfo, getSignVendorPath, WindowsSignToolManager } from "./codeSign/windowsSignToolManager"
 import { AfterPackContext } from "./configuration"
 import { DIR_TARGET, Platform, Target } from "./core"
 import { RequestedExecutionLevel, WindowsConfiguration } from "./options/winOptions"
@@ -32,7 +32,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
 
   readonly vm = new Lazy<VmManager>(() => (process.platform === "win32" ? Promise.resolve(new VmManager()) : getWindowsVm(this.debugLogger)))
 
-  readonly signtoolManager: WindowsSignTool
+  readonly signtoolManager: WindowsSignToolManager
 
   get isForceCodeSigningVerification(): boolean {
     return this.platformSpecificBuildOptions.verifyUpdateCodeSignature !== false
@@ -40,7 +40,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
 
   constructor(info: Packager) {
     super(info, Platform.WINDOWS)
-    this.signtoolManager = new WindowsSignTool(this)
+    this.signtoolManager = new WindowsSignToolManager(this)
   }
 
   get defaultTarget(): Array<string> {

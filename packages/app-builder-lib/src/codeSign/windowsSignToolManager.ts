@@ -64,7 +64,7 @@ interface CertInfo {
   PSParentPath: string
 }
 
-export class WindowsSignTool {
+export class WindowsSignToolManager {
   private readonly platformSpecificBuildOptions: WindowsConfiguration
 
   constructor(private readonly packager: WinPackager) {
