@@ -1,3 +1,13 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v25.0.5...v) (2024-09-08)
+
+
+### Bug Fixes
+
+* enable usage of config files when package.json `type=module` ([#8455](https://github.com/electron-userland/electron-builder/issues/8455)) ([5c8373d](https://github.com/electron-userland/electron-builder/commit/5c8373d15f99ee9a4c46ed164f95bf1d4a11db28))
+* retry renaming update file when EBUSY error occurs due to file lock ([#8437](https://github.com/electron-userland/electron-builder/issues/8437)) ([be625e0](https://github.com/electron-userland/electron-builder/commit/be625e06273e56de09ed3298209858043fcd1151))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v25.0.4...v) (2024-08-20)
 
 

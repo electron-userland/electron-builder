@@ -1,7 +1,7 @@
 {
   "name": "app-builder-lib",
   "description": "electron-builder lib",
-  "version": "25.0.5",
+  "version": "25.0.6",
   "main": "out/index.js",
   "files": [
     "out",
