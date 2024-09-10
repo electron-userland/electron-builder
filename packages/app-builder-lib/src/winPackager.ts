@@ -14,9 +14,7 @@ import {
   getCertificateFromStoreInfo,
   getCertInfo,
   getSignVendorPath,
-  sign,
-  WindowsSignOptions,
-} from "./codeSign/windowsCodeSign"
+} from "./codeSign/windowsSignTool"
 import { AfterPackContext } from "./configuration"
 import { DIR_TARGET, Platform, Target } from "./core"
 import { RequestedExecutionLevel, WindowsConfiguration } from "./options/winOptions"
@@ -34,100 +32,13 @@ import { isBuildCacheEnabled } from "./util/flags"
 import { time } from "./util/timer"
 import { getWindowsVm, VmManager } from "./vm/vm"
 import { execWine } from "./wine"
+import { signWindows } from "app-builder-lib/out/codeSign/windowsCodeSign"
 
 export class WinPackager extends PlatformPackager<WindowsConfiguration> {
-  readonly cscInfo = new MemoLazy<WindowsConfiguration, FileCodeSigningInfo | CertificateFromStoreInfo | null>(
-    () => this.platformSpecificBuildOptions,
-    platformSpecificBuildOptions => {
-      const subjectName = chooseNotNull(platformSpecificBuildOptions.signtoolOptions?.certificateSubjectName, platformSpecificBuildOptions.certificateSubjectName)
-      const shaType = chooseNotNull(platformSpecificBuildOptions.signtoolOptions?.certificateSha1, platformSpecificBuildOptions.certificateSha1)
-      if (subjectName != null || shaType != null) {
-        return this.vm.value
-          .then(vm => getCertificateFromStoreInfo(platformSpecificBuildOptions, vm))
-          .catch((e: any) => {
-            // https://github.com/electron-userland/electron-builder/pull/2397
-            if (chooseNotNull(platformSpecificBuildOptions.signtoolOptions?.sign, platformSpecificBuildOptions.sign) == null) {
-              throw e
-            } else {
-              log.debug({ error: e }, "getCertificateFromStoreInfo error")
-              return null
-            }
-          })
-      }
 
-      const certificateFile = chooseNotNull(platformSpecificBuildOptions.signtoolOptions?.certificateFile, platformSpecificBuildOptions.certificateFile)
-      if (certificateFile != null) {
-        const certificatePassword = this.getCscPassword()
-        return Promise.resolve({
-          file: certificateFile,
-          password: certificatePassword == null ? null : certificatePassword.trim(),
-        })
-      }
-
-      const cscLink = this.getCscLink("WIN_CSC_LINK")
-      if (cscLink == null || cscLink === "") {
-        return Promise.resolve(null)
-      }
-
-      return (
-        importCertificate(cscLink, this.info.tempDirManager, this.projectDir)
-          // before then
-          .catch((e: any) => {
-            if (e instanceof InvalidConfigurationError) {
-              throw new InvalidConfigurationError(`Env WIN_CSC_LINK is not correct, cannot resolve: ${e.message}`)
-            } else {
-              throw e
-            }
-          })
-          .then(path => {
-            return {
-              file: path,
-              password: this.getCscPassword(),
-            }
-          })
-      )
-    }
-  )
-
-  private _iconPath = new Lazy(() => this.getOrConvertIcon("ico"))
+  _iconPath = new Lazy(() => this.getOrConvertIcon("ico"))
 
   readonly vm = new Lazy<VmManager>(() => (process.platform === "win32" ? Promise.resolve(new VmManager()) : getWindowsVm(this.debugLogger)))
-
-  readonly computedPublisherName = new Lazy<Array<string> | null>(async () => {
-    const publisherName = this.platformSpecificBuildOptions.publisherName
-    if (publisherName === null) {
-      return null
-    } else if (publisherName != null) {
-      return asArray(publisherName)
-    }
-
-    const certInfo = await this.lazyCertInfo.value
-    return certInfo == null ? null : [certInfo.commonName]
-  })
-
-  readonly lazyCertInfo = new MemoLazy<MemoLazy<WindowsConfiguration, FileCodeSigningInfo | CertificateFromStoreInfo | null>, CertificateInfo | null>(
-    () => this.cscInfo,
-    async csc => {
-      const cscInfo = await csc.value
-      if (cscInfo == null) {
-        return null
-      }
-
-      if ("subject" in cscInfo) {
-        const bloodyMicrosoftSubjectDn = cscInfo.subject
-        return {
-          commonName: parseDn(bloodyMicrosoftSubjectDn).get("CN")!,
-          bloodyMicrosoftSubjectDn,
-        }
-      }
-
-      const cscFile = cscInfo.file
-      if (cscFile == null) {
-        return null
-      }
-      return await getCertInfo(cscFile, cscInfo.password || "")
-    }
-  )
 
   get isForceCodeSigningVerification(): boolean {
     return this.platformSpecificBuildOptions.verifyUpdateCodeSignature !== false
@@ -141,15 +52,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     return ["nsis"]
   }
 
-  protected doGetCscPassword(): string | undefined | null {
-    return chooseNotNull(
-      chooseNotNull(
-        chooseNotNull(this.platformSpecificBuildOptions.signtoolOptions?.certificatePassword, this.platformSpecificBuildOptions.certificatePassword),
-        process.env.WIN_CSC_KEY_PASSWORD
-      ),
-      super.doGetCscPassword()
-    )
-  }
+
 
   createTargets(targets: Array<string>, mapper: (name: string, factory: (outDir: string) => Target) => void): void {
     let copyElevateHelper: CopyElevateHelper | null
@@ -214,15 +117,15 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
   async sign(file: string, logMessagePrefix?: string): Promise<boolean> {
     const signOptions: WindowsSignOptions = {
       path: file,
-      name: this.appInfo.productName,
-      site: await this.appInfo.computePackageUrl(),
+      // name: this.appInfo.productName,
+      // site: await this.appInfo.computePackageUrl(),
       options: this.platformSpecificBuildOptions,
     }
 
     const cscInfo = await this.cscInfo.value
     if (cscInfo == null) {
-      if (this.platformSpecificBuildOptions.sign != null) {
-        return sign(signOptions, this)
+      if (chooseNotNull(this.platformSpecificBuildOptions.signtoolOptions?.sign, this.platformSpecificBuildOptions.sign) != null) {
+        return signWindows(signOptions, this)
       } else if (this.forceCodeSigning) {
         throw new InvalidConfigurationError(
           `App is not signed and "forceCodeSigning" is set to true, please ensure that code signing configuration is correct, please see https://electron.build/code-signing`
@@ -269,7 +172,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
   private async doSign(options: WindowsSignOptions) {
     for (let i = 0; i < 3; i++) {
       try {
-        await sign(options, this)
+        await signWindows(options, this)
         return true
       } catch (e: any) {
         // https://github.com/electron-userland/electron-builder/issues/1414

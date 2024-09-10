@@ -92,7 +92,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
   abstract createTargets(targets: Array<string>, mapper: (name: string, factory: (outDir: string) => Target) => void): void
 
-  protected getCscPassword(): string {
+  getCscPassword(): string {
     const password = this.doGetCscPassword()
     if (isEmptyOrSpaces(password)) {
       log.info({ reason: "CSC_KEY_PASSWORD is not defined" }, "empty password will be used for code signing")
@@ -102,13 +102,13 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
   }
 
-  protected getCscLink(extraEnvName?: string | null): string | null | undefined {
+  getCscLink(extraEnvName?: string | null): string | null | undefined {
     // allow to specify as empty string
     const envValue = chooseNotNull(extraEnvName == null ? null : process.env[extraEnvName], process.env.CSC_LINK)
     return chooseNotNull(chooseNotNull(this.info.config.cscLink, this.platformSpecificBuildOptions.cscLink), envValue)
   }
 
-  protected doGetCscPassword(): string | null | undefined {
+  doGetCscPassword(): string | null | undefined {
     // allow to specify as empty string
     return chooseNotNull(chooseNotNull(this.info.config.cscKeyPassword, this.platformSpecificBuildOptions.cscKeyPassword), process.env.CSC_KEY_PASSWORD)
   }
