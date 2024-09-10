@@ -196,14 +196,7 @@ export interface WindowsAzureSigningConfiguration {
    *
    * Translates to field: Endpoint
    *
-   * Requires the following environment variables to be set:
-   * AZURE_TENANT_ID
-   * AZURE_CLIENT_ID
-   * AZURE_CLIENT_SECRET
-   * AZURE_CLIENT_CERTIFICATE_PATH
-   * AZURE_CLIENT_SEND_CERTIFICATE_CHAIN
-   * AZURE_USERNAME
-   * AZURE_PASSWORD
+   * Requires one of environment variable configurations for authenticating to Microsoft Entra ID per [Microsoft's documentation](https://learn.microsoft.com/en-us/dotnet/api/azure.identity.environmentcredential?view=azure-dotnet#definition)
    */
   readonly endpoint: string
   /**
