@@ -1,20 +1,11 @@
 import BluebirdPromise from "bluebird-lst"
-import { Arch, asArray, InvalidConfigurationError, log, use, executeAppBuilder, CopyFileTransformer, FileTransformer, walk } from "builder-util"
-import { MemoLazy, parseDn } from "builder-util-runtime"
+import { Arch, InvalidConfigurationError, log, use, executeAppBuilder, CopyFileTransformer, FileTransformer, walk } from "builder-util"
 import { createHash } from "crypto"
 import { readdir } from "fs/promises"
 import * as isCI from "is-ci"
 import { Lazy } from "lazy-val"
 import * as path from "path"
-import { importCertificate } from "./codeSign/codesign"
-import {
-  CertificateFromStoreInfo,
-  CertificateInfo,
-  FileCodeSigningInfo,
-  getCertificateFromStoreInfo,
-  getCertInfo,
-  getSignVendorPath,
-} from "./codeSign/windowsSignTool"
+import { FileCodeSigningInfo, getSignVendorPath, WindowsSignTool } from "./codeSign/windowsSignTool"
 import { AfterPackContext } from "./configuration"
 import { DIR_TARGET, Platform, Target } from "./core"
 import { RequestedExecutionLevel, WindowsConfiguration } from "./options/winOptions"
@@ -32,13 +23,16 @@ import { isBuildCacheEnabled } from "./util/flags"
 import { time } from "./util/timer"
 import { getWindowsVm, VmManager } from "./vm/vm"
 import { execWine } from "./wine"
-import { signWindows } from "app-builder-lib/out/codeSign/windowsCodeSign"
+import { signWindows } from "./codeSign/windowsCodeSign"
+import { WindowsSignOptions } from "./codeSign/windowsCodeSign"
 
 export class WinPackager extends PlatformPackager<WindowsConfiguration> {
 
   _iconPath = new Lazy(() => this.getOrConvertIcon("ico"))
 
   readonly vm = new Lazy<VmManager>(() => (process.platform === "win32" ? Promise.resolve(new VmManager()) : getWindowsVm(this.debugLogger)))
+
+  readonly signtoolManager = new WindowsSignTool(this, this.platformSpecificBuildOptions)
 
   get isForceCodeSigningVerification(): boolean {
     return this.platformSpecificBuildOptions.verifyUpdateCodeSignature !== false
@@ -117,12 +111,10 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
   async sign(file: string, logMessagePrefix?: string): Promise<boolean> {
     const signOptions: WindowsSignOptions = {
       path: file,
-      // name: this.appInfo.productName,
-      // site: await this.appInfo.computePackageUrl(),
       options: this.platformSpecificBuildOptions,
     }
 
-    const cscInfo = await this.cscInfo.value
+    const cscInfo = await this.signtoolManager.cscInfo.value
     if (cscInfo == null) {
       if (chooseNotNull(this.platformSpecificBuildOptions.signtoolOptions?.sign, this.platformSpecificBuildOptions.sign) != null) {
         return signWindows(signOptions, this)
@@ -162,7 +154,6 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
 
     return this.doSign({
       ...signOptions,
-      cscInfo,
       options: {
         ...this.platformSpecificBuildOptions,
       },
@@ -226,7 +217,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     })
 
     const config = this.config
-    const cscInfoForCacheDigest = !isBuildCacheEnabled() || isCI || config.electronDist != null ? null : await this.cscInfo.value
+    const cscInfoForCacheDigest = !isBuildCacheEnabled() || isCI || config.electronDist != null ? null : await this.signtoolManager.cscInfo.value
     let buildCacheManager: BuildCacheManager | null = null
     // resources editing doesn't change executable for the same input and executed quickly - no need to complicate
     if (cscInfoForCacheDigest != null) {

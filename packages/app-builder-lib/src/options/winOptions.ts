@@ -1,5 +1,5 @@
 import { PlatformSpecificBuildOptions, TargetConfigType } from "../index"
-import { CustomWindowsSign } from "../codeSign/windowsCodeSign"
+import { CustomWindowsSign } from "../codeSign/windowsSignTool"
 
 export interface WindowsConfiguration extends PlatformSpecificBuildOptions {
   /**

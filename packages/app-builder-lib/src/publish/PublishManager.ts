@@ -257,7 +257,7 @@ export async function getAppUpdatePublishConfiguration(packager: PlatformPackage
 
   if (packager.platform === Platform.WINDOWS && publishConfig.publisherName == null) {
     const winPackager = packager as WinPackager
-    const publisherName = winPackager.isForceCodeSigningVerification ? await winPackager.computedPublisherName.value : undefined
+    const publisherName = winPackager.isForceCodeSigningVerification ? await winPackager.signtoolManager.computedPublisherName.value : undefined
     if (publisherName != null) {
       publishConfig.publisherName = publisherName
     }

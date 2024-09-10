@@ -2,7 +2,6 @@ import { InvalidConfigurationError, log } from "builder-util"
 import { WindowsAzureSigningConfiguration, WindowsConfiguration } from "../options/winOptions"
 import { VmManager } from "../vm/vm"
 import { WinPackager } from "../winPackager"
-import { signUsingSigntool, WindowsSignTool } from "./windowsSignTool"
 
 export interface WindowsSignOptions {
   readonly path: string
@@ -12,7 +11,7 @@ export interface WindowsSignOptions {
 
 export async function signWindows(options: WindowsSignOptions, packager: WinPackager): Promise<boolean> {
   if (options.options.azureOptions) {
-    log.debug({ path: log.filePath(options.path) }, "signing with Azure Trusted Signing")
+    log.debug({ path: log.filePath(options.path) }, "signing with Azure Trusted Signing (beta)")
     ;[
       "AZURE_TENANT_ID",
       "AZURE_CLIENT_ID",
@@ -50,8 +49,11 @@ export async function signWindows(options: WindowsSignOptions, packager: WinPack
   if (fields.length) {
     log.info({ fields }, `deprecated field. Please move to win.signtoolOptions.<field_name>`)
   }
-  const signToolManager = new WindowsSignTool(packager, options.options, packager.vm)
-  return signToolManager.signUsingSigntool(options)
+  return packager.signtoolManager.signUsingSigntool({
+    ...options,
+    name: packager.appInfo.productName,
+    site: await packager.appInfo.computePackageUrl(),
+  })
 }
 
 async function signUsingAzureTrustedSigning(options: WindowsSignOptions, packager: WinPackager): Promise<boolean> {

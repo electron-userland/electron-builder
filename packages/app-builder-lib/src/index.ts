@@ -40,14 +40,8 @@ export { AppInfo } from "./appInfo"
 export { SquirrelWindowsOptions } from "./options/SquirrelWindowsOptions"
 
 export { CustomMacSign, CustomMacSignOptions } from "./macPackager"
-export {
-  WindowsSignOptions,
-  CustomWindowsSignTaskConfiguration,
-  WindowsSignTaskConfiguration,
-  CustomWindowsSign,
-  FileCodeSigningInfo,
-  CertificateFromStoreInfo,
-} from "./codeSign/windowsCodeSign"
+export { WindowsSignOptions } from "./codeSign/windowsCodeSign"
+export { CustomWindowsSignTaskConfiguration, WindowsSignTaskConfiguration, CustomWindowsSign, FileCodeSigningInfo, CertificateFromStoreInfo } from "./codeSign/windowsSignTool"
 export { CancellationToken, ProgressInfo } from "builder-util-runtime"
 export { PublishOptions, UploadTask } from "electron-publish"
 export { PublishManager } from "./publish/PublishManager"

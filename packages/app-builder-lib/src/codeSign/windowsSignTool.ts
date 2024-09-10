@@ -1,6 +1,6 @@
 import { InvalidConfigurationError, asArray, log, retry } from "builder-util"
 import { getBin } from "../binDownload"
-import { WindowsAzureSigningConfiguration, WindowsConfiguration } from "../options/winOptions"
+import { WindowsConfiguration } from "../options/winOptions"
 import { executeAppBuilderAsJson } from "../util/appBuilder"
 import { computeToolEnv, ToolInfo } from "../util/bundledTool"
 import { rename } from "fs-extra"
@@ -8,10 +8,10 @@ import * as os from "os"
 import * as path from "path"
 import { resolveFunction } from "../util/resolve"
 import { isUseSystemSigncode } from "../util/flags"
-import { getWindowsVm, VmManager } from "../vm/vm"
+import { VmManager } from "../vm/vm"
 import { WinPackager } from "../winPackager"
 import { chooseNotNull } from "../platformPackager"
-import { WindowsSignOptions } from "app-builder-lib/out"
+import { WindowsSignOptions } from "./windowsCodeSign"
 import { getPSCmd } from "./windowsCodeSign"
 import { MemoLazy, parseDn } from "builder-util-runtime"
 import { Lazy } from "lazy-val"
@@ -24,9 +24,9 @@ export function getSignVendorPath() {
 export type CustomWindowsSign = (configuration: CustomWindowsSignTaskConfiguration, packager?: WinPackager) => Promise<any>
 
 export interface WindowsSignToolOptions extends WindowsSignOptions {
-  readonly name?: string | null
+  readonly name: string
+  readonly site: string | null
   readonly cscInfo?: FileCodeSigningInfo | CertificateFromStoreInfo | null
-  readonly site?: string | null
 }
 
 export interface FileCodeSigningInfo {
@@ -169,7 +169,7 @@ export class WindowsSignTool {
     )
   }
 
-  async signUsingSigntool(options: WindowsSignOptions): Promise<boolean> {
+  async signUsingSigntool(options: WindowsSignToolOptions): Promise<boolean> {
     let hashes = chooseNotNull(options.options.signtoolOptions?.signingHashAlgorithms, options.options.signingHashAlgorithms)
     // msi does not support dual-signing
     if (options.path.endsWith(".msi")) {
@@ -316,15 +316,9 @@ export class WindowsSignTool {
     return path.join(path.dirname(inputPath), `${path.basename(inputPath, extension)}-signed-${hash}${extension}`)
   }
 
-  /** @internal */
-  private isOldWin6() {
-    const winVersion = os.release()
-    return winVersion.startsWith("6.") && !winVersion.startsWith("6.3")
-  }
-
   getWinSignTool(vendorPath: string): string {
     // use modern signtool on Windows Server 2012 R2 to be able to sign AppX
-    if (this.isOldWin6()) {
+    if (isOldWin6()) {
       return path.join(vendorPath, "windows-6", "signtool.exe")
     } else {
       return path.join(vendorPath, "windows-10", process.arch, "signtool.exe")
@@ -430,4 +424,9 @@ export class WindowsSignTool {
       }
     )
   }
+}
+
+export function isOldWin6() {
+  const winVersion = os.release()
+  return winVersion.startsWith("6.") && !winVersion.startsWith("6.3")
 }
