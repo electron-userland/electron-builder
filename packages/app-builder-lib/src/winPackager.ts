@@ -32,8 +32,13 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
 
   readonly vm = new Lazy<VmManager>(() => (process.platform === "win32" ? Promise.resolve(new VmManager()) : getWindowsVm(this.debugLogger)))
 
-  readonly signtoolManager: Lazy<WindowsSignToolManager>
-  readonly azureSignManager: Lazy<WindowsSignAzureManager>
+  readonly signtoolManager = new Lazy<WindowsSignToolManager>(() => Promise.resolve(new WindowsSignToolManager(this)))
+  readonly azureSignManager = new Lazy(() =>
+    Promise.resolve(new WindowsSignAzureManager(this)).then(async manager => {
+      await manager.initializeProviderModules()
+      return manager
+    })
+  )
 
   get isForceCodeSigningVerification(): boolean {
     return this.platformSpecificBuildOptions.verifyUpdateCodeSignature !== false
@@ -41,13 +46,6 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
 
   constructor(info: Packager) {
     super(info, Platform.WINDOWS)
-    this.signtoolManager = new Lazy<WindowsSignToolManager>(() => Promise.resolve(new WindowsSignToolManager(this)))
-    this.azureSignManager = new Lazy(() =>
-      Promise.resolve(new WindowsSignAzureManager(this)).then(async manager => {
-        await manager.initializeProviderModules()
-        return manager
-      })
-    )
   }
 
   get defaultTarget(): Array<string> {
