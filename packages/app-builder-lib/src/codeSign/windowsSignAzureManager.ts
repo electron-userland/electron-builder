@@ -21,6 +21,8 @@ export class WindowsSignAzureManager {
     const config: WindowsAzureSigningConfiguration = options.options.azureOptions!
     const params = {
       ...config,
+      Endpoint: config.endpoint,
+      CertificateProfileName: config.certificateProfileName,
       Files: options.path,
     }
     const paramsString = Object.entries(params).reduce((res, [field, value]) => {

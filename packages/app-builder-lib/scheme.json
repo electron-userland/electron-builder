@@ -5964,18 +5964,18 @@
         "type": "string"
       },
       "properties": {
-        "CertificateProfileName": {
-          "description": "The Certificate Profile name.",
+        "certificateProfileName": {
+          "description": "The Certificate Profile name. Translates to field: CertificateProfileName",
           "type": "string"
         },
-        "Endpoint": {
-          "description": "The Trusted Signing Account endpoint. The URI value must have a URI that aligns to the\nregion your Trusted Signing Account and Certificate Profile you are specifying were created\nin during the setup of these resources.\n\nRequires the following environment variables to be set:\nAZURE_TENANT_ID\nAZURE_CLIENT_ID\nAZURE_CLIENT_SECRET\nAZURE_CLIENT_CERTIFICATE_PATH\nAZURE_CLIENT_SEND_CERTIFICATE_CHAIN\nAZURE_USERNAME\nAZURE_PASSWORD",
+        "endpoint": {
+          "description": "The Trusted Signing Account endpoint. The URI value must have a URI that aligns to the\nregion your Trusted Signing Account and Certificate Profile you are specifying were created\nin during the setup of these resources.\n\nTranslates to field: Endpoint\n\nRequires the following environment variables to be set:\nAZURE_TENANT_ID\nAZURE_CLIENT_ID\nAZURE_CLIENT_SECRET\nAZURE_CLIENT_CERTIFICATE_PATH\nAZURE_CLIENT_SEND_CERTIFICATE_CHAIN\nAZURE_USERNAME\nAZURE_PASSWORD",
           "type": "string"
         }
       },
       "required": [
-        "CertificateProfileName",
-        "Endpoint"
+        "certificateProfileName",
+        "endpoint"
       ],
       "type": "object"
     },

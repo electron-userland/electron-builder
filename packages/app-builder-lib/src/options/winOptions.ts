@@ -195,6 +195,8 @@ export interface WindowsAzureSigningConfiguration {
    * region your Trusted Signing Account and Certificate Profile you are specifying were created
    * in during the setup of these resources.
    *
+   * Translates to field: Endpoint
+   *
    * Requires the following environment variables to be set:
    * AZURE_TENANT_ID
    * AZURE_CLIENT_ID
@@ -204,13 +206,13 @@ export interface WindowsAzureSigningConfiguration {
    * AZURE_USERNAME
    * AZURE_PASSWORD
    */
-  readonly Endpoint: string
+  readonly endpoint: string
   /**
-   * The Certificate Profile name.
+   * The Certificate Profile name. Translates to field: CertificateProfileName
    */
-  readonly CertificateProfileName: string
+  readonly certificateProfileName: string
   /**
-   * Allow other CLI parameters (verbatim) to `Invoke-TrustedSigning`
+   * Allow other CLI parameters (verbatim case-sensitive) to `Invoke-TrustedSigning`
    */
   [k: string]: string
 }
