@@ -12,7 +12,7 @@ export class WindowsSignAzureManager {
 
     log.debug(null, "installing required package provider (NuGet) and module (TrustedSigning) with scope CurrentUser")
     await vm.exec(ps, ["Install-PackageProvider", "-Name", "NuGet", "-MinimumVersion", "2.8.5.201", "-Force", "-Scope", "CurrentUser"])
-    await vm.exec(ps, ["Install-Module", "-Name", "TrustedSigning", "-RequiredVersion", "0.4.1", "-Force", "-Repository", "PSGallery", "-Scope CurrentUser"])
+    await vm.exec(ps, ["Install-Module", "-Name", "TrustedSigning", "-RequiredVersion", "0.4.1", "-Force", "-Repository", "PSGallery", "-Scope", "CurrentUser"])
 
     // Preemptively check env vars once during initialization
     // Options: https://learn.microsoft.com/en-us/dotnet/api/azure.identity.environmentcredential?view=azure-dotnet#definition
@@ -73,11 +73,11 @@ export class WindowsSignAzureManager {
     const vm = await this.packager.vm.value
     const ps = await getPSCmd(vm)
 
-    const config: WindowsAzureSigningConfiguration = options.options.azureSignOptions!
+    const { endpoint, certificateProfileName, ...extraSigningArgs }: WindowsAzureSigningConfiguration = options.options.azureSignOptions!
     const params = {
-      ...config,
-      Endpoint: config.endpoint,
-      CertificateProfileName: config.certificateProfileName,
+      ...extraSigningArgs,
+      Endpoint: endpoint,
+      CertificateProfileName: certificateProfileName,
       Files: options.path,
     }
     const paramsString = Object.entries(params).reduce((res, [field, value]) => {
