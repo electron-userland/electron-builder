@@ -1128,6 +1128,9 @@ Object {
             "LICENSE": Object {
               "size": "<size>",
             },
+            "SECURITY.md": Object {
+              "size": "<size>",
+            },
             "index.js": Object {
               "size": "<size>",
             },
