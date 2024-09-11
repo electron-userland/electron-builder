@@ -37,7 +37,7 @@ export class WindowsSignAzureManager {
 
   verifyPrincipleSecretEnv() {
     if (!process.env.AZURE_CLIENT_SECRET) {
-      log.debug({ envVar: "AZURE_CLIENT_SECRET" }, "no secret found for authenticating to Microsoft Entra ID ")
+      log.debug({ envVar: "AZURE_CLIENT_SECRET" }, "no secret found for authenticating to Microsoft Entra ID")
       return false
     }
     return true
@@ -45,7 +45,7 @@ export class WindowsSignAzureManager {
 
   verifyPrincipleCertificateEnv() {
     if (!process.env.AZURE_CLIENT_CERTIFICATE_PATH) {
-      log.debug({ envVar: "AZURE_CLIENT_CERTIFICATE_PATH" }, "no path found for signing certificate")
+      log.debug({ envVar: "AZURE_CLIENT_CERTIFICATE_PATH" }, "no path found for signing certificate for authenticating to Microsoft Entra ID")
       return false
     }
     if (!process.env.AZURE_CLIENT_CERTIFICATE_PASSWORD) {

@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { Arch, InvalidConfigurationError, log, use, executeAppBuilder, CopyFileTransformer, FileTransformer, walk } from "builder-util"
+import { Arch, InvalidConfigurationError, log, use, executeAppBuilder, CopyFileTransformer, FileTransformer, walk, retry } from "builder-util"
 import { createHash } from "crypto"
 import { readdir } from "fs/promises"
 import * as isCI from "is-ci"
@@ -112,6 +112,16 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     return this._iconPath.value
   }
 
+  doGetCscPassword(): string | undefined | null {
+    return chooseNotNull(
+      chooseNotNull(
+        chooseNotNull(this.platformSpecificBuildOptions.signtoolOptions?.certificatePassword, this.platformSpecificBuildOptions.certificatePassword),
+        process.env.WIN_CSC_KEY_PASSWORD
+      ),
+      super.doGetCscPassword()
+    )
+  }
+
   async sign(file: string, logMessagePrefix?: string): Promise<boolean> {
     const signOptions: WindowsSignOptions = {
       path: file,
@@ -165,21 +175,22 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
   }
 
   private async doSign(options: WindowsSignOptions) {
-    for (let i = 0; i < 3; i++) {
-      try {
-        await signWindows(options, this)
-        return true
-      } catch (e: any) {
+    return retry(
+      () => signWindows(options, this),
+      3,
+      500,
+      500,
+      0,
+      (e: any) => {
         // https://github.com/electron-userland/electron-builder/issues/1414
         const message = e.message
         if (message != null && message.includes("Couldn't resolve host name")) {
-          log.warn({ error: message, attempt: i + 1 }, `cannot sign`)
-          continue
+          log.warn({ error: message }, `cannot sign`)
+          return true
         }
-        throw e
+        return false
       }
-    }
-    return false
+    )
   }
 
   async signAndEditResources(file: string, arch: Arch, outDir: string, internalName?: string | null, requestedExecutionLevel?: RequestedExecutionLevel | null) {

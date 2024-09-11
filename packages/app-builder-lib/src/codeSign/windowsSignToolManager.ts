@@ -161,16 +161,6 @@ export class WindowsSignToolManager {
     }
   )
 
-  protected doGetCscPassword(): string | undefined | null {
-    return chooseNotNull(
-      chooseNotNull(
-        chooseNotNull(this.platformSpecificBuildOptions.signtoolOptions?.certificatePassword, this.platformSpecificBuildOptions.certificatePassword),
-        process.env.WIN_CSC_KEY_PASSWORD
-      ),
-      this.packager.doGetCscPassword()
-    )
-  }
-
   async signUsingSigntool(options: WindowsSignToolOptions): Promise<boolean> {
     let hashes = chooseNotNull(options.options.signtoolOptions?.signingHashAlgorithms, options.options.signingHashAlgorithms)
     // msi does not support dual-signing

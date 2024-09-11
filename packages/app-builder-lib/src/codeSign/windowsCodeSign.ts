@@ -30,8 +30,7 @@ export async function signWindows(options: WindowsSignOptions, packager: WinPack
   }
   const fields = Object.entries(deprecatedFields)
     .filter(([, value]) => !!value)
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    .map(([field, _]) => field)
+    .map(([field]) => field)
   if (fields.length) {
     log.warn({ fields, reason: "please move to win.signtoolOptions.<field_name>" }, `deprecated field`)
   }
