@@ -161,7 +161,7 @@ export class WindowsSignToolManager {
     }
   )
 
-  async signUsingSigntool(options: WindowsSignToolOptions): Promise<boolean> {
+  async signUsingSigntool(options: WindowsSignOptions): Promise<boolean> {
     let hashes = chooseNotNull(options.options.signtoolOptions?.signingHashAlgorithms, options.options.signingHashAlgorithms)
     // msi does not support dual-signing
     if (options.path.endsWith(".msi")) {
@@ -175,11 +175,14 @@ export class WindowsSignToolManager {
     }
 
     const cscInfo = await this.cscInfo.value
+    const name = this.packager.appInfo.productName
+    const site = await this.packager.appInfo.computePackageUrl()
+
     const customSign = await resolveFunction(this.packager.appInfo.type, chooseNotNull(options.options.signtoolOptions?.sign, options.options.sign), "sign")
     const executor = customSign || ((config: CustomWindowsSignTaskConfiguration, packager: WinPackager) => this.doSign(config, packager))
     let isNest = false
     for (const hash of hashes) {
-      const taskConfiguration: WindowsSignTaskConfiguration = { ...options, cscInfo, hash, isNest }
+      const taskConfiguration: WindowsSignTaskConfiguration = { ...options, name, site, cscInfo, hash, isNest }
       await Promise.resolve(
         executor(
           {

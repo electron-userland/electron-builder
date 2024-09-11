@@ -34,11 +34,7 @@ export async function signWindows(options: WindowsSignOptions, packager: WinPack
   if (fields.length) {
     log.warn({ fields, reason: "please move to win.signtoolOptions.<field_name>" }, `deprecated field`)
   }
-  return (await packager.signtoolManager.value).signUsingSigntool({
-    ...options,
-    name: packager.appInfo.productName,
-    site: await packager.appInfo.computePackageUrl(),
-  })
+  return (await packager.signtoolManager.value).signUsingSigntool(options)
 }
 
 export async function getPSCmd(vm: VmManager): Promise<string> {
