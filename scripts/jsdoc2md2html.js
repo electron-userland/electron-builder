@@ -216,7 +216,10 @@ async function render2(files, jsdoc2MdOptions) {
     new Page("configuration/mas.md", "MasConfiguration"),
     new Page("configuration/pkg.md", "PkgOptions"),
 
-    new Page("configuration/win.md", "WindowsConfiguration"),
+    new Page("configuration/win.md", "WindowsConfiguration", {
+      "WindowsAzureSigningConfiguration" : "",
+      "WindowsSigntoolConfiguration": ""
+    }),
     new Page("configuration/msi-wrapped.md", "MsiWrappedOptions"),
     new Page("configuration/msi.md", "MsiOptions"),
     new Page("configuration/appx.md", "AppXOptions"),

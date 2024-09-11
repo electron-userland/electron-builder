@@ -27,7 +27,7 @@ export { PlatformSpecificBuildOptions, AsarOptions, FileSet, Protocol, ReleaseIn
 export { FileAssociation } from "./options/FileAssociation"
 export { MacConfiguration, DmgOptions, MasConfiguration, MacOsTargetName, DmgContent, DmgWindow, NotarizeNotaryOptions } from "./options/macOptions"
 export { PkgOptions, PkgBackgroundOptions, BackgroundAlignment, BackgroundScaling } from "./options/pkgOptions"
-export { WindowsConfiguration } from "./options/winOptions"
+export { WindowsConfiguration, WindowsAzureSigningConfiguration, WindowsSigntoolConfiguration } from "./options/winOptions"
 export { AppXOptions } from "./options/AppXOptions"
 export { MsiOptions } from "./options/MsiOptions"
 export { MsiWrappedOptions } from "./options/MsiWrappedOptions"

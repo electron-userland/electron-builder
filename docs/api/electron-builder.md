@@ -245,6 +245,7 @@ Developer API only. See [Configuration](../configuration/configuration.md) for u
 <li><a href="#WinPackager">.WinPackager</a> ⇐ <code><a href="#PlatformPackager">PlatformPackager</a></code>
 <ul>
 <li><a href="#module_app-builder-lib.WinPackager+createTargets"><code>.createTargets(targets, mapper)</code></a></li>
+<li><a href="#module_app-builder-lib.WinPackager+doGetCscPassword"><code>.doGetCscPassword()</code></a> ⇒ <code>undefined</code> | <code>null</code> | <code>String</code></li>
 <li><a href="#module_app-builder-lib.WinPackager+getIconPath"><code>.getIconPath()</code></a> ⇒ <code>Promise&lt; | String&gt;</code></li>
 <li><a href="#module_app-builder-lib.WinPackager+sign"><code>.sign(file, logMessagePrefix)</code></a> ⇒ <code>Promise&lt;Boolean&gt;</code></li>
 <li><a href="#module_app-builder-lib.WinPackager+signAndEditResources"><code>.signAndEditResources(file, arch, outDir, internalName, requestedExecutionLevel)</code></a> ⇒ <code>Promise&lt;void&gt;</code></li>
@@ -254,7 +255,6 @@ Developer API only. See [Configuration](../configuration/configuration.md) for u
 <li><a href="#module_app-builder-lib.PlatformPackager+getCscPassword"><code>.getCscPassword()</code></a> ⇒ <code>String</code></li>
 <li><a href="#module_app-builder-lib.PlatformPackager+getDefaultFrameworkIcon"><code>.getDefaultFrameworkIcon()</code></a> ⇒ <code>null</code> | <code>String</code></li>
 <li><a href="#module_app-builder-lib.PlatformPackager+dispatchArtifactCreated"><code>.dispatchArtifactCreated(file, target, arch, safeArtifactName)</code></a> ⇒ <code>Promise&lt;void&gt;</code></li>
-<li><a href="#module_app-builder-lib.PlatformPackager+doGetCscPassword"><code>.doGetCscPassword()</code></a> ⇒ <code>undefined</code> | <code>null</code> | <code>String</code></li>
 <li><a href="#module_app-builder-lib.PlatformPackager+getElectronDestinationDir"><code>.getElectronDestinationDir(appOutDir)</code></a> ⇒ <code>String</code></li>
 <li><a href="#module_app-builder-lib.PlatformPackager+getElectronSrcDir"><code>.getElectronSrcDir(dist)</code></a> ⇒ <code>String</code></li>
 <li><a href="#module_app-builder-lib.PlatformPackager+expandArtifactBeautyNamePattern"><code>.expandArtifactBeautyNamePattern(targetSpecificOptions, ext, arch)</code></a> ⇒ <code>String</code></li>
@@ -2343,6 +2343,7 @@ return manager
 <li><a href="#WinPackager">.WinPackager</a> ⇐ <code><a href="#PlatformPackager">PlatformPackager</a></code>
 <ul>
 <li><a href="#module_app-builder-lib.WinPackager+createTargets"><code>.createTargets(targets, mapper)</code></a></li>
+<li><a href="#module_app-builder-lib.WinPackager+doGetCscPassword"><code>.doGetCscPassword()</code></a> ⇒ <code>undefined</code> | <code>null</code> | <code>String</code></li>
 <li><a href="#module_app-builder-lib.WinPackager+getIconPath"><code>.getIconPath()</code></a> ⇒ <code>Promise&lt; | String&gt;</code></li>
 <li><a href="#module_app-builder-lib.WinPackager+sign"><code>.sign(file, logMessagePrefix)</code></a> ⇒ <code>Promise&lt;Boolean&gt;</code></li>
 <li><a href="#module_app-builder-lib.WinPackager+signAndEditResources"><code>.signAndEditResources(file, arch, outDir, internalName, requestedExecutionLevel)</code></a> ⇒ <code>Promise&lt;void&gt;</code></li>
@@ -2352,7 +2353,6 @@ return manager
 <li><a href="#module_app-builder-lib.PlatformPackager+getCscPassword"><code>.getCscPassword()</code></a> ⇒ <code>String</code></li>
 <li><a href="#module_app-builder-lib.PlatformPackager+getDefaultFrameworkIcon"><code>.getDefaultFrameworkIcon()</code></a> ⇒ <code>null</code> | <code>String</code></li>
 <li><a href="#module_app-builder-lib.PlatformPackager+dispatchArtifactCreated"><code>.dispatchArtifactCreated(file, target, arch, safeArtifactName)</code></a> ⇒ <code>Promise&lt;void&gt;</code></li>
-<li><a href="#module_app-builder-lib.PlatformPackager+doGetCscPassword"><code>.doGetCscPassword()</code></a> ⇒ <code>undefined</code> | <code>null</code> | <code>String</code></li>
 <li><a href="#module_app-builder-lib.PlatformPackager+getElectronDestinationDir"><code>.getElectronDestinationDir(appOutDir)</code></a> ⇒ <code>String</code></li>
 <li><a href="#module_app-builder-lib.PlatformPackager+getElectronSrcDir"><code>.getElectronSrcDir(dist)</code></a> ⇒ <code>String</code></li>
 <li><a href="#module_app-builder-lib.PlatformPackager+expandArtifactBeautyNamePattern"><code>.expandArtifactBeautyNamePattern(targetSpecificOptions, ext, arch)</code></a> ⇒ <code>String</code></li>
@@ -2389,7 +2389,10 @@ return manager
 </tr>
 </tbody>
 </table>
-<p><a name="module_app-builder-lib.WinPackager+getIconPath"></a></p>
+<p><a name="module_app-builder-lib.WinPackager+doGetCscPassword"></a></p>
+<h3 id="winpackager.dogetcscpassword()-%E2%87%92-undefined-%7C-null-%7C-string"><code>winPackager.doGetCscPassword()</code> ⇒ <code>undefined</code> | <code>null</code> | <code>String</code></h3>
+<p><strong>Overrides</strong>: <a href="#module_app-builder-lib.PlatformPackager+doGetCscPassword"><code>doGetCscPassword</code></a><br>
+<a name="module_app-builder-lib.WinPackager+getIconPath"></a></p>
 <h3 id="winpackager.geticonpath()-%E2%87%92-promise%3C-%7C-string%3E"><code>winPackager.getIconPath()</code> ⇒ <code>Promise&lt; | String&gt;</code></h3>
 <p><strong>Overrides</strong>: <a href="#module_app-builder-lib.PlatformPackager+getIconPath"><code>getIconPath</code></a><br>
 <a name="module_app-builder-lib.WinPackager+sign"></a></p>
@@ -2548,8 +2551,6 @@ return manager
 </tr>
 </tbody>
 </table>
-<p><a name="module_app-builder-lib.PlatformPackager+doGetCscPassword"></a></p>
-<h3 id="winpackager.dogetcscpassword()-%E2%87%92-undefined-%7C-null-%7C-string"><code>winPackager.doGetCscPassword()</code> ⇒ <code>undefined</code> | <code>null</code> | <code>String</code></h3>
 <p><a name="module_app-builder-lib.PlatformPackager+getElectronDestinationDir"></a></p>
 <h3 id="winpackager.getelectrondestinationdir(appoutdir)-%E2%87%92-string"><code>winPackager.getElectronDestinationDir(appOutDir)</code> ⇒ <code>String</code></h3>
 <table>

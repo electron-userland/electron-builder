@@ -5969,7 +5969,7 @@
           "type": "string"
         },
         "endpoint": {
-          "description": "The Trusted Signing Account endpoint. The URI value must have a URI that aligns to the\nregion your Trusted Signing Account and Certificate Profile you are specifying were created\nin during the setup of these resources.\n\nTranslates to field: Endpoint\n\nRequires the following environment variables to be set:\nAZURE_TENANT_ID\nAZURE_CLIENT_ID\nAZURE_CLIENT_SECRET\nAZURE_CLIENT_CERTIFICATE_PATH\nAZURE_CLIENT_SEND_CERTIFICATE_CHAIN\nAZURE_USERNAME\nAZURE_PASSWORD",
+          "description": "The Trusted Signing Account endpoint. The URI value must have a URI that aligns to the\nregion your Trusted Signing Account and Certificate Profile you are specifying were created\nin during the setup of these resources.\n\nTranslates to field: Endpoint\n\nRequires one of environment variable configurations for authenticating to Microsoft Entra ID per [Microsoft's documentation](https://learn.microsoft.com/en-us/dotnet/api/azure.identity.environmentcredential?view=azure-dotnet#definition)",
           "type": "string"
         }
       },
