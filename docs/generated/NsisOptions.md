@@ -65,7 +65,7 @@
 <li><code id="NsisOptions-unicode">unicode</code> = <code>true</code> Boolean - Whether to create <a href="http://nsis.sourceforge.net/Docs/Chapter1.html#intro-unicode">Unicode installer</a>.</li>
 <li><code id="NsisOptions-guid">guid</code> String | “undefined” - See <a href="../configuration/nsis#guid-vs-application-name">GUID vs Application Name</a>.</li>
 <li><code id="NsisOptions-warningsAsErrors">warningsAsErrors</code> = <code>true</code> Boolean - If <code>warningsAsErrors</code> is <code>true</code> (default): NSIS will treat warnings as errors. If <code>warningsAsErrors</code> is <code>false</code>: NSIS will allow warnings.</li>
-<li><code id="NsisOptions-customNsisBinary">customNsisBinary</code> module:app-builder-lib/out/targets/nsis/nsisOptions.CustomNsisBinary | “undefined” - Allows you to provide your own <code>makensis</code>, such as one with support for debug logging via LogSet and LogText. (Logging also requires option <code>debugLogging = true</code>)</li>
+<li><code id="NsisOptions-customNsisBinary">customNsisBinary</code> <a href="#CustomNsisBinary">CustomNsisBinary</a> | “undefined” - Allows you to provide your own <code>makensis</code>, such as one with support for debug logging via LogSet and LogText. (Logging also requires option <code>debugLogging = true</code>)</li>
 <li><code id="NsisOptions-runAfterFinish">runAfterFinish</code> = <code>true</code> Boolean - Whether to run the installed application after finish. For assisted installer corresponding checkbox will be removed.</li>
 </ul>
 <hr>
@@ -74,6 +74,14 @@
 <li><code id="NsisOptions-createStartMenuShortcut">createStartMenuShortcut</code> = <code>true</code> Boolean - Whether to create start menu shortcut.</li>
 <li><code id="NsisOptions-menuCategory">menuCategory</code> = <code>false</code> Boolean | String - Whether to create submenu for start menu shortcut and program files directory. If <code>true</code>, company name will be used. Or string value.</li>
 <li><code id="NsisOptions-shortcutName">shortcutName</code> String | “undefined” - The name that will be used for all shortcuts. Defaults to the application name.</li>
+</ul>
+<h2 id="customnsisbinary">CustomNsisBinary</h2>
+<p>undefined</p>
+<ul>
+<li><strong><code id="CustomNsisBinary-url">url</code></strong> = <code>https://github.com/electron-userland/electron-builder-binaries/releases/download</code> String | “undefined”</li>
+<li><code id="CustomNsisBinary-checksum">checksum</code> = <code>VKMiizYdmNdJOWpRGz4trl4lD++BvYP2irAXpMilheUP0pc93iKlWAoP843Vlraj8YG19CVn0j+dCo/hURz9+Q==</code> String | “undefined”</li>
+<li><code id="CustomNsisBinary-version">version</code> = <code>3.0.4.1</code> String | “undefined”</li>
+<li><code id="CustomNsisBinary-debugLogging">debugLogging</code> Boolean | “undefined” - Whether or not to enable NSIS logging for debugging. Note: Requires a debug-enabled NSIS build. electron-builder’s included <code>makensis</code> does not natively support debug-enabled NSIS installers currently, you must supply your own via <code>customNsisBinary?: CustomNsisBinary</code> In your custom nsis scripts, you can leverage this functionality via <code>LogSet</code> and <code>LogText</code></li>
 </ul>
 
 <!-- end of generated block -->
