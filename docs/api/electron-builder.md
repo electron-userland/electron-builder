@@ -106,6 +106,7 @@ Developer API only. See [Configuration](../configuration/configuration.md) for u
 <li><a href="#BeforeBuildContext"><code>.BeforeBuildContext</code></a></li>
 <li><a href="#BuildResult"><code>.BuildResult</code></a></li>
 <li><a href="#CertificateFromStoreInfo"><code>.CertificateFromStoreInfo</code></a></li>
+<li><a href="#CustomNsisBinary"><code>.CustomNsisBinary</code></a></li>
 <li><a href="#FileCodeSigningInfo"><code>.FileCodeSigningInfo</code></a></li>
 <li><a href="#Framework"><code>.Framework</code></a>
 <ul>
@@ -325,6 +326,16 @@ Developer API only. See [Configuration](../configuration/configuration.md) for u
 <li><strong><code id="CertificateFromStoreInfo-subject">subject</code></strong> String</li>
 <li><strong><code id="CertificateFromStoreInfo-store">store</code></strong> String</li>
 <li><strong><code id="CertificateFromStoreInfo-isLocalMachineStore">isLocalMachineStore</code></strong> Boolean</li>
+</ul>
+<p><a name="CustomNsisBinary"></a></p>
+<h2 id="customnsisbinary"><code>CustomNsisBinary</code></h2>
+<p><strong>Kind</strong>: interface of <a href="#module_app-builder-lib"><code>app-builder-lib</code></a><br/>
+<strong>Properties</strong></p>
+<ul>
+<li><strong><code id="CustomNsisBinary-url">url</code></strong> = <code>https://github.com/electron-userland/electron-builder-binaries/releases/download</code> String | “undefined”</li>
+<li><code id="CustomNsisBinary-checksum">checksum</code> = <code>VKMiizYdmNdJOWpRGz4trl4lD++BvYP2irAXpMilheUP0pc93iKlWAoP843Vlraj8YG19CVn0j+dCo/hURz9+Q==</code> String | “undefined”</li>
+<li><code id="CustomNsisBinary-version">version</code> = <code>3.0.4.1</code> String | “undefined”</li>
+<li><code id="CustomNsisBinary-debugLogging">debugLogging</code> Boolean | “undefined” - Whether or not to enable NSIS logging for debugging. Note: Requires a debug-enabled NSIS build. electron-builder’s included <code>makensis</code> does not natively support debug-enabled NSIS installers currently, you must supply your own via <code>customNsisBinary?: CustomNsisBinary</code> In your custom nsis scripts, you can leverage this functionality via <code>LogSet</code> and <code>LogText</code></li>
 </ul>
 <p><a name="FileCodeSigningInfo"></a></p>
 <h2 id="filecodesigninginfo"><code>FileCodeSigningInfo</code></h2>
