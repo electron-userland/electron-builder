@@ -37,5 +37,5 @@ export async function addWinAsarIntegrity(executablePath: string, asarIntegrity:
   resource.outputResource(executable)
 
   await writeFile(executablePath, Buffer.from(executable.generate()))
-  log.info({ executablePath }, "updating asar integrity executable resource")
+  log.info({ executablePath: log.filePath(executablePath) }, "updating asar integrity executable resource")
 }
