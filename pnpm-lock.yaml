@@ -66,8 +66,8 @@ importers:
         specifier: 27.5.1
         version: 27.5.1(ts-node@10.9.2(@types/node@16.18.55)(typescript@5.5.3))
       jsdoc-to-markdown:
-        specifier: 8.0.2
-        version: 8.0.2
+        specifier: 8.0.3
+        version: 8.0.3
       lint-staged:
         specifier: 15.2.7
         version: 15.2.7
@@ -3718,8 +3718,8 @@ packages:
     resolution: {integrity: sha512-0zQIJ873gay1scCTFZvHPWM9mVJBnaylB2NQDI8O9u8O32m00Jb6uxDKexZm8hjTRM7RiWe0FJ32pExHoXdwoQ==}
     engines: {node: '>=12'}
 
-  dmd@6.2.1:
-    resolution: {integrity: sha512-NC8f6DhzIggOsWG77j7L5Xppt+/VLCZTXzrhPkQ2gYKw3dyKWAYVtK+fxhCNpvPp0vHpnWfqdtMQJ0dWnozbsg==}
+  dmd@6.2.3:
+    resolution: {integrity: sha512-SIEkjrG7cZ9GWZQYk/mH+mWtcRPly/3ibVuXO/tP/MFoWz6KiRK77tSMq6YQBPl7RljPtXPQ/JhxbNuCdi1bNw==}
     engines: {node: '>=12'}
 
   dmg-license@1.0.11:
@@ -4933,16 +4933,16 @@ packages:
   jsbn@1.1.0:
     resolution: {integrity: sha512-4bYVV3aAMtDTTu4+xsDYa6sy9GyJ69/amsu9sYF2zqjiEoZA5xJi3BrfX3uY+/IekIu7MwdObdbDWpoZdBv3/A==}
 
-  jsdoc-api@8.1.0:
-    resolution: {integrity: sha512-CaiFo+GJKMdGjBHDmppub2QvTsVQyBSlY+pJNiiLjdPWtWMHqchfVO97kKle9EllFZ/ez/zqnD+WTP+dTTV4zg==}
+  jsdoc-api@8.1.1:
+    resolution: {integrity: sha512-yas9E4h8NHp1CTEZiU/DPNAvLoUcip+Hl8Xi1RBYzHqSrgsF+mImAZNtwymrXvgbrgl4bNGBU9syulM0JzFeHQ==}
     engines: {node: '>=12.17'}
 
   jsdoc-parse@6.2.1:
     resolution: {integrity: sha512-9viGRUUtWOk/G4V0+nQ6rfLucz5plxh5I74WbNSNm9h9NWugCDVX4jbG8hZP9QqKGpdTPDE+qJXzaYNos3wqTA==}
     engines: {node: '>=12'}
 
-  jsdoc-to-markdown@8.0.2:
-    resolution: {integrity: sha512-3k03lU8JV6ZAudAcUXdu01O/0mTqdfiMLXtIx6NMPsmo8tw06WitFn6qUq7n6mZx8mj/qTtDZDiBfH4IGul1dA==}
+  jsdoc-to-markdown@8.0.3:
+    resolution: {integrity: sha512-JGYYd5xygnQt1DIxH+HUI+X/ynL8qWihzIF0n15NSCNtM6MplzawURRcaLI2WkiS2hIjRIgsphCOfM7FkaWiNg==}
     engines: {node: '>=12.17'}
     hasBin: true
 
@@ -5840,7 +5840,7 @@ packages:
   puppeteer@2.1.1:
     resolution: {integrity: sha512-LWzaDVQkk1EPiuYeTOj+CZRIjda4k2s5w4MK4xoH2+kgWV/SDlkYHmxatDdtYrciHUKSXTsGgPgPP8ILVdBsxg==}
     engines: {node: '>=8.16.0'}
-    deprecated: < 22.6.4 is no longer supported
+    deprecated: < 22.8.2 is no longer supported
 
   q@1.5.1:
     resolution: {integrity: sha512-kV/CThkXo6xyFEZUugw/+pIOywXcDbFYgSct5cT3gqlbkBE1SJdwy6UQoZvodiWF/ckQLZyDE/Bu1M6gVu5lVw==}
@@ -11172,12 +11172,12 @@ snapshots:
       test-value: 3.0.0
       walk-back: 5.1.0
 
-  dmd@6.2.1:
+  dmd@6.2.3:
     dependencies:
       array-back: 6.2.2
       cache-point: 2.0.0
       common-sequence: 2.0.2
-      fast-glob: 3.3.2
+      file-set: 4.0.2
       handlebars: 4.7.8
       marked: 4.3.0
       object-get: 2.1.1
@@ -12821,11 +12821,12 @@ snapshots:
 
   jsbn@1.1.0: {}
 
-  jsdoc-api@8.1.0:
+  jsdoc-api@8.1.1:
     dependencies:
       array-back: 6.2.2
       cache-point: 2.0.0
       collect-all: 1.0.4
+      file-set: 4.0.2
       fs-then-native: 2.0.0
       jsdoc: 4.0.3
       object-to-spawn-args: 2.0.1
@@ -12840,19 +12841,19 @@ snapshots:
       sort-array: 4.1.5
       test-value: 3.0.0
 
-  jsdoc-to-markdown@8.0.2:
+  jsdoc-to-markdown@8.0.3:
     dependencies:
       array-back: 6.2.2
       command-line-tool: 0.8.0
       config-master: 3.1.0
-      dmd: 6.2.1
-      jsdoc-api: 8.1.0
+      dmd: 6.2.3
+      jsdoc-api: 8.1.1
       jsdoc-parse: 6.2.1
       walk-back: 5.1.0
 
   jsdoc@4.0.3:
     dependencies:
-      '@babel/parser': 7.24.0
+      '@babel/parser': 7.24.8
       '@jsdoc/salty': 0.2.7
       '@types/markdown-it': 14.1.1
       bluebird: 3.7.2
