@@ -242,7 +242,9 @@ async function render2(files, jsdoc2MdOptions) {
     new Page("generated/LinuxTargetSpecificOptions.md", "LinuxTargetSpecificOptions"),
     new Page("generated/PlatformSpecificBuildOptions.md", "PlatformSpecificBuildOptions"),
     new Page("generated/Metadata.md", "Metadata"),
-    new Page("generated/NsisOptions.md", "NsisOptions"),
+    new Page("generated/NsisOptions.md", "NsisOptions", {
+      "CustomNsisBinary": ""
+    }),
     new Page("generated/TargetSpecificOptions.md", "TargetSpecificOptions"),
   ]
 
