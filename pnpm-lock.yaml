@@ -184,7 +184,7 @@ importers:
         version: 10.0.1
       resedit:
         specifier: ^1.7.0
-        version: 1.7.0
+        version: 1.7.1
       sanitize-filename:
         specifier: ^1.6.3
         version: 1.6.3
@@ -5703,8 +5703,8 @@ packages:
   path@0.12.7:
     resolution: {integrity: sha512-aXXC6s+1w7otVF9UletFkFcDsJeO7lSZBPUQhtb5O0xJe8LtYhj/GxldoL09bBj9+ZmE2hNoHqQSFMN5fikh4Q==}
 
-  pe-library@0.4.0:
-    resolution: {integrity: sha512-JAmVv2jGxmczplhHO7UoFGJ+pM/yMBpny3vNjwNFuaeQfzKlekQidZ8Ss8EJ0qee8wEQN4lY2IwtWx2oRfMsag==}
+  pe-library@0.4.1:
+    resolution: {integrity: sha512-eRWB5LBz7PpDu4PUlwT0PhnQfTQJlDDdPa35urV4Osrm0t0AqQFGn+UIkU3klZvwJ8KPO3VbBFsXquA6p6kqZw==}
     engines: {node: '>=12', npm: '>=6'}
 
   pend@1.2.0:
@@ -5840,7 +5840,7 @@ packages:
   puppeteer@2.1.1:
     resolution: {integrity: sha512-LWzaDVQkk1EPiuYeTOj+CZRIjda4k2s5w4MK4xoH2+kgWV/SDlkYHmxatDdtYrciHUKSXTsGgPgPP8ILVdBsxg==}
     engines: {node: '>=8.16.0'}
-    deprecated: < 22.6.4 is no longer supported
+    deprecated: < 22.8.2 is no longer supported
 
   q@1.5.1:
     resolution: {integrity: sha512-kV/CThkXo6xyFEZUugw/+pIOywXcDbFYgSct5cT3gqlbkBE1SJdwy6UQoZvodiWF/ckQLZyDE/Bu1M6gVu5lVw==}
@@ -5999,8 +5999,8 @@ packages:
   requizzle@0.2.4:
     resolution: {integrity: sha512-JRrFk1D4OQ4SqovXOgdav+K8EAhSB/LJZqCz8tbX0KObcdeM15Ss59ozWMBWmmINMagCwmqn4ZNryUGpBsl6Jw==}
 
-  resedit@1.7.0:
-    resolution: {integrity: sha512-dbsZ0gk5opWPFlKMqvxCrLCuMZUVmsW3yTPT0tT4mYwo5fjQM8c4HMN9ZJt6dRDqDV/78m9SU4rv24PN4NiYaA==}
+  resedit@1.7.1:
+    resolution: {integrity: sha512-/FJ6/gKAXbcHtivannhecWsa43kGVFK3aHHv9Jm3x0eFiM31MoGihkAOWbm3UsvjYLRVw0zTkfARy2dI96JL1Q==}
     engines: {node: '>=12', npm: '>=6'}
 
   resolve-alpn@1.2.1:
@@ -13683,7 +13683,7 @@ snapshots:
       process: 0.11.10
       util: 0.10.4
 
-  pe-library@0.4.0: {}
+  pe-library@0.4.1: {}
 
   pend@1.2.0: {}
 
@@ -13979,9 +13979,9 @@ snapshots:
     dependencies:
       lodash: 4.17.21
 
-  resedit@1.7.0:
+  resedit@1.7.1:
     dependencies:
-      pe-library: 0.4.0
+      pe-library: 0.4.1
 
   resolve-alpn@1.2.1: {}
 
