@@ -15,9 +15,9 @@
     "out"
   ],
   "dependencies": {
-    "app-builder-lib": "workspace:*",
+    "app-builder-lib": "workspace:^25",
     "archiver": "^5.3.1",
-    "builder-util": "workspace:*",
+    "builder-util": "workspace:^25",
     "fs-extra": "^10.1.0"
   },
   "devDependencies": {
