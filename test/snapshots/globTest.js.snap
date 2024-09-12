@@ -9715,6 +9715,14 @@ Object {
             "package.json": Object {
               "size": "<size>",
             },
+            "script": Object {
+              "files": Object {
+                "cli.js": Object {
+                  "executable": true,
+                  "size": "<size>",
+                },
+              },
+            },
             "src": Object {
               "files": Object {
                 "ua-parser.js": Object {

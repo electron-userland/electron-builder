@@ -162,7 +162,7 @@ export interface Configuration extends PlatformSpecificBuildOptions {
   /**
    * Returns the path to custom Electron build (e.g. `~/electron/out/R`). Zip files must follow the pattern `electron-v${version}-${platformName}-${arch}.zip`, otherwise it will be assumed to be an unpacked Electron app directory
    */
-  readonly electronDist?: string | ((options: PrepareApplicationStageDirectoryOptions) => string)
+  readonly electronDist?: string | CustomElectronDistributable
 
   /**
    * The [electron-download](https://github.com/electron-userland/electron-download#usage) options.
@@ -218,52 +218,53 @@ export interface Configuration extends PlatformSpecificBuildOptions {
   /**
    * The function (or path to file or module id) to be [run before pack](#beforepack)
    */
-  readonly beforePack?: ((context: BeforePackContext) => Promise<any> | any) | string | null
+  readonly beforePack?: Hook<BeforePackContext, any> | string | null
 
   /**
    * The function (or path to file or module id) to be [run after the prebuilt Electron binary has been extracted to the output directory](#afterextract)
    */
-  readonly afterExtract?: ((context: AfterExtractContext) => Promise<any> | any) | string | null
+  readonly afterExtract?: Hook<AfterExtractContext, any> | string | null
 
   /**
    * The function (or path to file or module id) to be [run after pack](#afterpack) (but before pack into distributable format and sign).
    */
-  readonly afterPack?: ((context: AfterPackContext) => Promise<any> | any) | string | null
+  readonly afterPack?: Hook<AfterPackContext, any> | string | null
+
   /**
    * The function (or path to file or module id) to be [run after pack and sign](#aftersign) (but before pack into distributable format).
    */
-  readonly afterSign?: ((context: AfterPackContext) => Promise<any> | any) | string | null
+  readonly afterSign?: Hook<AfterPackContext, any> | string | null
 
   /**
    * The function (or path to file or module id) to be run on artifact build start.
    */
-  readonly artifactBuildStarted?: ((context: ArtifactBuildStarted) => Promise<any> | any) | string | null
+  readonly artifactBuildStarted?: Hook<ArtifactBuildStarted, any> | string | null
   /**
    * The function (or path to file or module id) to be run on artifact build completed.
    */
-  readonly artifactBuildCompleted?: ((context: ArtifactCreated) => Promise<any> | any) | string | null
+  readonly artifactBuildCompleted?: Hook<ArtifactCreated, any> | string | null
   /**
    * The function (or path to file or module id) to be [run after all artifacts are build](#afterAllArtifactBuild).
    */
-  readonly afterAllArtifactBuild?: ((context: BuildResult) => Promise<Array<string>> | Array<string>) | string | null
+  readonly afterAllArtifactBuild?: Hook<BuildResult, Array<string>> | string | null
   /**
    * MSI project created on disk - not packed into .msi package yet.
    */
-  readonly msiProjectCreated?: ((path: string) => Promise<any> | any) | string | null
+  readonly msiProjectCreated?: Hook<string, any> | string | null
   /**
    * Appx manifest created on disk - not packed into .appx package yet.
    */
-  readonly appxManifestCreated?: ((path: string) => Promise<any> | any) | string | null
+  readonly appxManifestCreated?: Hook<string, any> | string | null
   /**
    * The function (or path to file or module id) to be [run on each node module](#onnodemodulefile) file. Returning `true`/`false` will determine whether to force include or to use the default copier logic
    */
-  readonly onNodeModuleFile?: ((path: string) => void | boolean) | string | null
+  readonly onNodeModuleFile?: Hook<string, void | boolean> | string | null
   /**
    * The function (or path to file or module id) to be run before dependencies are installed or rebuilt. Works when `npmRebuild` is set to `true`. Resolving to `false` will skip dependencies install or rebuild.
    *
    * If provided and `node_modules` are missing, it will not invoke production dependencies check.
    */
-  readonly beforeBuild?: ((context: BeforeBuildContext) => Promise<any>) | string | null
+  readonly beforeBuild?: Hook<BeforeBuildContext, boolean | void> | string | null
 
   /**
    * Whether to include PDB files.
@@ -324,3 +325,7 @@ export interface MetadataDirectories {
    */
   readonly app?: string | null
 }
+
+export type CustomElectronDistributable = (options: PrepareApplicationStageDirectoryOptions) => string
+
+export type Hook<T, V> = (contextOrPath: T) => Promise<V> | V

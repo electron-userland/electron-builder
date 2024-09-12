@@ -21,7 +21,7 @@ export {
   CompressionLevel,
 } from "./core"
 export { getArchSuffix, Arch, archFromString } from "builder-util"
-export { Configuration, AfterPackContext, MetadataDirectories } from "./configuration"
+export { Configuration, AfterPackContext, MetadataDirectories, BeforePackContext, AfterExtractContext, CustomElectronDistributable, Hook } from "./configuration"
 export { ElectronBrandingOptions, ElectronDownloadOptions, ElectronPlatformName } from "./electron/ElectronFramework"
 export { PlatformSpecificBuildOptions, AsarOptions, FileSet, Protocol, ReleaseInfo } from "./options/PlatformSpecificBuildOptions"
 export { FileAssociation } from "./options/FileAssociation"
