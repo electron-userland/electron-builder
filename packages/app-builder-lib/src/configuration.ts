@@ -264,7 +264,7 @@ export interface Configuration extends PlatformSpecificBuildOptions {
    *
    * If provided and `node_modules` are missing, it will not invoke production dependencies check.
    */
-  readonly beforeBuild?: Hook<BeforeBuildContext, boolean> | string | null
+  readonly beforeBuild?: Hook<BeforeBuildContext, boolean | void> | string | null
 
   /**
    * Whether to include PDB files.
