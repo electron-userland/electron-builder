@@ -197,8 +197,8 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
     // use main matcher patterns, so, user can exclude some files !node_modules/xxxx
     return path.dirname(parentDir)
   }
-  const collectNodeModules = async (dep: NodeModuleInfo, destination:string) => {
-    if(!dep.conflictDependency){
+  const collectNodeModules = async (dep: NodeModuleInfo, destination: string) => {
+    if (!dep.conflictDependency) {
       const source = dep.dir
       const matcher = new FileMatcher(getRealSource(source), destination, mainMatcher.macroExpander, mainMatcher.patterns)
       const copier = new NodeModuleCopyHelper(matcher, platformPackager.info)
@@ -208,14 +208,13 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
     }
 
     for (const info of dep.conflictDependency) {
-        collectNodeModules(info, path.join(destination, NODE_MODULES, info.name))
+      collectNodeModules(info, path.join(destination, NODE_MODULES, info.name))
     }
-
   }
 
   for (const info of deps) {
-      const destination = path.join(mainMatcher.to, NODE_MODULES, info.name)
-      collectNodeModules(info, destination)
+    const destination = path.join(mainMatcher.to, NODE_MODULES, info.name)
+    collectNodeModules(info, destination)
   }
 
   return result
