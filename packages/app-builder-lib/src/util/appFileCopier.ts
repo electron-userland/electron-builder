@@ -208,13 +208,13 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
     }
 
     for (const info of dep.conflictDependency) {
-      collectNodeModules(info, path.join(destination, NODE_MODULES, info.name))
+      await collectNodeModules(info, path.join(destination, NODE_MODULES, info.name))
     }
   }
 
   for (const info of deps) {
     const destination = path.join(mainMatcher.to, NODE_MODULES, info.name)
-    collectNodeModules(info, destination)
+    await collectNodeModules(info, destination)
   }
 
   return result
