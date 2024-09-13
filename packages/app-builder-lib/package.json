@@ -56,7 +56,7 @@
     "async-exit-hook": "^2.0.1",
     "bluebird-lst": "^1.0.9",
     "builder-util": "workspace:^25",
-    "builder-util-runtime": "workspace:*",
+    "builder-util-runtime": "workspace:^9",
     "chromium-pickle-js": "^0.2.0",
     "config-file-ts": "0.2.8-rc1",
     "debug": "^4.3.4",
