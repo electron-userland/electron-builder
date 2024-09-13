@@ -576,13 +576,13 @@ importers:
         specifier: ^27.5.1
         version: 27.5.1(ts-node@10.9.2(@types/node@16.18.55)(typescript@5.5.3))
       app-builder-lib:
-        specifier: workspace:^25
+        specifier: workspace:*
         version: link:../packages/app-builder-lib
       builder-util:
-        specifier: workspace:^25
+        specifier: workspace:*
         version: link:../packages/builder-util
       builder-util-runtime:
-        specifier: workspace:^9
+        specifier: workspace:*
         version: link:../packages/builder-util-runtime
       chalk:
         specifier: ^4.1.2
@@ -597,19 +597,19 @@ importers:
         specifier: 1.4.3
         version: 1.4.3
       dmg-builder:
-        specifier: workspace:^25
+        specifier: workspace:*
         version: link:../packages/dmg-builder
       electron-builder:
-        specifier: workspace:^25
+        specifier: workspace:*
         version: link:../packages/electron-builder
       electron-builder-squirrel-windows:
-        specifier: workspace:^25
+        specifier: workspace:*
         version: link:../packages/electron-builder-squirrel-windows
       electron-publish:
-        specifier: workspace:^25
+        specifier: workspace:*
         version: link:../packages/electron-publish
       electron-updater:
-        specifier: workspace:^6
+        specifier: workspace:*
         version: link:../packages/electron-updater
       fs-extra:
         specifier: ^10.1.0
