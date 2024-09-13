@@ -10,11 +10,11 @@ export interface WindowsSignOptions {
 
 export async function signWindows(options: WindowsSignOptions, packager: WinPackager): Promise<boolean> {
   if (options.options.azureSignOptions) {
-    log.debug({ path: log.filePath(options.path) }, "signing with Azure Trusted Signing (beta)")
+    log.info({ path: log.filePath(options.path) }, "signing with Azure Trusted Signing (beta)")
     return (await packager.azureSignManager.value).signUsingAzureTrustedSigning(options)
   }
 
-  log.debug({ path: log.filePath(options.path) }, "signing with signtool.exe")
+  log.info({ path: log.filePath(options.path) }, "signing with signtool.exe")
   const deprecatedFields = {
     sign: options.options.sign,
     signDlls: options.options.signDlls,

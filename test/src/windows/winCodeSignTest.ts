@@ -43,7 +43,7 @@ function testCustomSign(sign: any) {
         certificateFile: "deprecated",
         certificatePassword: "deprecated",
         sign: "deprecated",
-        signtoolOptions:{
+        signtoolOptions: {
           certificatePassword: "pass",
           certificateFile: "secretFile",
           sign,
