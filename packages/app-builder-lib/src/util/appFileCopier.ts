@@ -197,24 +197,27 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
     // use main matcher patterns, so, user can exclude some files !node_modules/xxxx
     return path.dirname(parentDir)
   }
-  for (const info of deps) {
-    const source = info.dir
-    const destination = path.join(mainMatcher.to, NODE_MODULES, info.name)
-    const matcher = new FileMatcher(getRealSource(source), destination, mainMatcher.macroExpander, mainMatcher.patterns)
-    const copier = new NodeModuleCopyHelper(matcher, platformPackager.info)
-    const files = await copier.collectNodeModules(info, nodeModuleExcludedExts)
-    result[index++] = validateFileSet({ src: source, destination, files, metadata: copier.metadata })
-
-    if (info.conflictDependency) {
-      for (const dep of info.conflictDependency) {
-        const source = dep.dir
-        const destination = path.join(mainMatcher.to, NODE_MODULES, info.name, NODE_MODULES, dep.name)
-        const matcher = new FileMatcher(getRealSource(source), destination, mainMatcher.macroExpander, mainMatcher.patterns)
-        const copier = new NodeModuleCopyHelper(matcher, platformPackager.info)
-        result[index++] = validateFileSet({ src: source, destination, files: await copier.collectNodeModules(dep, nodeModuleExcludedExts), metadata: copier.metadata })
-      }
+  const collectNodeModules = async (dep: NodeModuleInfo, destination:string) => {
+    if(!dep.conflictDependency){
+      const source = dep.dir
+      const matcher = new FileMatcher(getRealSource(source), destination, mainMatcher.macroExpander, mainMatcher.patterns)
+      const copier = new NodeModuleCopyHelper(matcher, platformPackager.info)
+      const files = await copier.collectNodeModules(dep, nodeModuleExcludedExts)
+      result[index++] = validateFileSet({ src: source, destination, files, metadata: copier.metadata })
+      return
     }
+
+    for (const info of dep.conflictDependency) {
+        collectNodeModules(info, path.join(destination, NODE_MODULES, info.name))
+    }
+
   }
+
+  for (const info of deps) {
+      const destination = path.join(mainMatcher.to, NODE_MODULES, info.name)
+      collectNodeModules(info, destination)
+  }
+
   return result
 }
 
