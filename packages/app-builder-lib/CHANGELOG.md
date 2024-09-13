@@ -1,5 +1,11 @@
 # app-builder-lib
 
+## 25.1.1
+
+### Patch Changes
+
+- [#8482](https://github.com/electron-userland/electron-builder/pull/8482) [`ff8059e3`](https://github.com/electron-userland/electron-builder/commit/ff8059e385efbf017b9e325e4e7649b5cb6dff15) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: resolveConfig logic ignores `.mjs` filter
+
 ## 25.1.0
 
 ### Minor Changes
