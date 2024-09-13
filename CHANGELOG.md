@@ -1,3 +1,17 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v25.0.6...v) (2024-09-13)
+
+
+### Bug Fixes
+
+* correct native dependency tree mismatch in app-builder rebuild ([#8450](https://github.com/electron-userland/electron-builder/issues/8450)) ([55671bd](https://github.com/electron-userland/electron-builder/commit/55671bd2159d4da8934e7083077d9cc854dc85fb))
+
+
+### Features
+
+* **win:** implement Azure Trusted Signing ([#8458](https://github.com/electron-userland/electron-builder/issues/8458)) ([d50d563](https://github.com/electron-userland/electron-builder/commit/d50d563408c117f82863d0611311226d53ef6e8e))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v25.0.5...v) (2024-09-08)
 
 
