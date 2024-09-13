@@ -217,7 +217,7 @@ async function render2(files, jsdoc2MdOptions) {
     new Page("configuration/pkg.md", "PkgOptions"),
 
     new Page("configuration/win.md", "WindowsConfiguration", {
-      "WindowsAzureSigningConfiguration" : "",
+      "WindowsAzureSigningConfiguration" : "Also allows custom fields `[k: string: string]` passed verbatim (case sensitive) to Invoke-TrustedSigning",
       "WindowsSigntoolConfiguration": ""
     }),
     new Page("configuration/msi-wrapped.md", "MsiWrappedOptions"),

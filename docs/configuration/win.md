@@ -37,7 +37,7 @@ The top-level [win](configuration.md#Configuration-win) key contains set of opti
 <li><code id="WindowsConfiguration-signExts">signExts</code> Array&lt;String&gt; | “undefined” - Explicit file extensions to also sign. Advanced option. See: <a href="https://github.com/electron-userland/electron-builder/issues/7329">https://github.com/electron-userland/electron-builder/issues/7329</a></li>
 </ul>
 <h2 id="windowsazuresigningconfiguration">WindowsAzureSigningConfiguration</h2>
-<p>undefined</p>
+<p>Also allows custom fields <code>[k: string: string]</code> passed verbatim (case sensitive) to Invoke-TrustedSigning</p>
 <ul>
 <li>
 <p><strong><code id="WindowsAzureSigningConfiguration-endpoint">endpoint</code></strong> String - The Trusted Signing Account endpoint. The URI value must have a URI that aligns to the region your Trusted Signing Account and Certificate Profile you are specifying were created in during the setup of these resources.</p>
