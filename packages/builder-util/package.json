@@ -19,7 +19,7 @@
     "@types/debug": "^4.1.6",
     "app-builder-bin": "5.0.0-alpha.8",
     "bluebird-lst": "^1.0.9",
-    "builder-util-runtime": "workspace:*",
+    "builder-util-runtime": "workspace:^9",
     "chalk": "^4.1.2",
     "cross-spawn": "^7.0.3",
     "debug": "^4.3.4",

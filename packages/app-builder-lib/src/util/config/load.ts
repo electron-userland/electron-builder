@@ -18,7 +18,7 @@ async function readConfig<T>(configFile: string, request: ReadConfigRequest): Pr
   let result: any
   if (configFile.endsWith(".json5") || configFile.endsWith(".json")) {
     result = require("json5").parse(data)
-  } else if (configFile.endsWith(".js") || configFile.endsWith(".cjs" || configFile.endsWith(".mjs"))) {
+  } else if (configFile.endsWith(".js") || configFile.endsWith(".cjs") || configFile.endsWith(".mjs")) {
     const json = await orNullIfFileNotExist(fs.readFile(path.join(process.cwd(), "package.json"), "utf8"))
     const moduleType = json === null ? null : JSON.parse(json).type
     result = await resolveModule(moduleType, configFile)

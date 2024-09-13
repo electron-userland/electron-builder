@@ -16,8 +16,8 @@
   ],
   "dependencies": {
     "@types/fs-extra": "^9.0.11",
-    "builder-util": "workspace:*",
-    "builder-util-runtime": "workspace:*",
+    "builder-util": "workspace:^25",
+    "builder-util-runtime": "workspace:^9",
     "chalk": "^4.1.2",
     "fs-extra": "^10.1.0",
     "lazy-val": "^1.0.5",
