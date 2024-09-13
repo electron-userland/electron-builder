@@ -15,24 +15,58 @@ The top-level [win](configuration.md#Configuration-win) key contains set of opti
 </ul>
 <hr>
 <ul>
-<li><code id="WindowsConfiguration-signingHashAlgorithms">signingHashAlgorithms</code> = <code>['sha1', 'sha256']</code> Array&lt;“sha256” | “sha1”&gt; | “undefined” - Array of signing algorithms used. For AppX <code>sha256</code> is always used.</li>
-<li><code id="WindowsConfiguration-sign">sign</code> String | (configuration: CustomWindowsSignTaskConfiguration) =&gt; Promise - The custom function (or path to file or module id) to sign Windows executable.</li>
-<li><code id="WindowsConfiguration-certificateFile">certificateFile</code> String | “undefined” - The path to the *.pfx certificate you want to sign with. Please use it only if you cannot use env variable <code>CSC_LINK</code> (<code>WIN_CSC_LINK</code>) for some reason. Please see <a href="/code-signing">Code Signing</a>.</li>
-<li><code id="WindowsConfiguration-certificatePassword">certificatePassword</code> String | “undefined” - The password to the certificate provided in <code>certificateFile</code>. Please use it only if you cannot use env variable <code>CSC_KEY_PASSWORD</code> (<code>WIN_CSC_KEY_PASSWORD</code>) for some reason. Please see <a href="/code-signing">Code Signing</a>.</li>
-<li><code id="WindowsConfiguration-certificateSubjectName">certificateSubjectName</code> String | “undefined” - The name of the subject of the signing certificate, which is often labeled with the field name <code>issued to</code>. Required only for EV Code Signing and works only on Windows (or on macOS if <a href="https://www.parallels.com/products/desktop/">Parallels Desktop</a> Windows 10 virtual machines exits).</li>
-<li><code id="WindowsConfiguration-certificateSha1">certificateSha1</code> String | “undefined” - The SHA1 hash of the signing certificate. The SHA1 hash is commonly specified when multiple certificates satisfy the criteria specified by the remaining switches. Works only on Windows (or on macOS if <a href="https://www.parallels.com/products/desktop/">Parallels Desktop</a> Windows 10 virtual machines exits).</li>
-<li><code id="WindowsConfiguration-additionalCertificateFile">additionalCertificateFile</code> String | “undefined” - The path to an additional certificate file you want to add to the signature block.</li>
-<li><code id="WindowsConfiguration-rfc3161TimeStampServer">rfc3161TimeStampServer</code> = <code>http://timestamp.digicert.com</code> String | “undefined” - The URL of the RFC 3161 time stamp server.</li>
-<li><code id="WindowsConfiguration-timeStampServer">timeStampServer</code> = <code>http://timestamp.digicert.com</code> String | “undefined” - The URL of the time stamp server.</li>
+<li tag.description=""><code id="WindowsConfiguration-signingHashAlgorithms">signingHashAlgorithms</code> Array&lt;“sha256” | “sha1”&gt; | “undefined” - Array of signing algorithms used. For AppX <code>sha256</code> is always used. Deprecated:</li>
+<li tag.description=""><code id="WindowsConfiguration-sign">sign</code> String | (configuration: CustomWindowsSignTaskConfiguration) =&gt; Promise - The custom function (or path to file or module id) to sign Windows executables Deprecated:</li>
+<li tag.description=""><code id="WindowsConfiguration-certificateFile">certificateFile</code> String | “undefined” - The path to the *.pfx certificate you want to sign with. Please use it only if you cannot use env variable <code>CSC_LINK</code> (<code>WIN_CSC_LINK</code>) for some reason. Please see <a href="/code-signing">Code Signing</a>. Deprecated:</li>
+<li tag.description=""><code id="WindowsConfiguration-certificatePassword">certificatePassword</code> String | “undefined” - The password to the certificate provided in <code>certificateFile</code>. Please use it only if you cannot use env variable <code>CSC_KEY_PASSWORD</code> (<code>WIN_CSC_KEY_PASSWORD</code>) for some reason. Please see <a href="/code-signing">Code Signing</a>. Deprecated:</li>
+<li tag.description=""><code id="WindowsConfiguration-certificateSubjectName">certificateSubjectName</code> String | “undefined” - The name of the subject of the signing certificate, which is often labeled with the field name <code>issued to</code>. Required only for EV Code Signing and works only on Windows (or on macOS if <a href="https://www.parallels.com/products/desktop/">Parallels Desktop</a> Windows 10 virtual machines exits). Deprecated:</li>
+<li tag.description=""><code id="WindowsConfiguration-certificateSha1">certificateSha1</code> String | “undefined” - The SHA1 hash of the signing certificate. The SHA1 hash is commonly specified when multiple certificates satisfy the criteria specified by the remaining switches. Works only on Windows (or on macOS if <a href="https://www.parallels.com/products/desktop/">Parallels Desktop</a> Windows 10 virtual machines exits). Deprecated:</li>
+<li tag.description=""><code id="WindowsConfiguration-additionalCertificateFile">additionalCertificateFile</code> String | “undefined” - The path to an additional certificate file you want to add to the signature block. Deprecated:</li>
+<li tag.description=""><code id="WindowsConfiguration-rfc3161TimeStampServer">rfc3161TimeStampServer</code> = <code>http://timestamp.digicert.com</code> String | “undefined” - The URL of the RFC 3161 time stamp server. Deprecated:</li>
+<li tag.description=""><code id="WindowsConfiguration-timeStampServer">timeStampServer</code> = <code>http://timestamp.digicert.com</code> String | “undefined” - The URL of the time stamp server. Deprecated:</li>
 </ul>
 <hr>
 <ul>
-<li><code id="WindowsConfiguration-publisherName">publisherName</code> String | Array&lt;String&gt; | “undefined” - <a href="https://github.com/electron-userland/electron-builder/issues/1187#issuecomment-278972073">The publisher name</a>, exactly as in your code signed certificate. Several names can be provided. Defaults to common name from your code signing certificate.</li>
+<li tag.description=""><code id="WindowsConfiguration-publisherName">publisherName</code> String | Array&lt;String&gt; | “undefined” - <a href="https://github.com/electron-userland/electron-builder/issues/1187#issuecomment-278972073">The publisher name</a>, exactly as in your code signed certificate. Several names can be provided. Defaults to common name from your code signing certificate. Deprecated:</li>
+<li><code id="WindowsConfiguration-signtoolOptions">signtoolOptions</code> <a href="#WindowsSigntoolConfiguration">WindowsSigntoolConfiguration</a> | “undefined” - Options for usage with signtool.exe</li>
+<li><code id="WindowsConfiguration-azureSignOptions">azureSignOptions</code> <a href="#WindowsAzureSigningConfiguration">WindowsAzureSigningConfiguration</a> | “undefined” - Options for usage of Azure Trusted Signing (beta)</li>
 <li><code id="WindowsConfiguration-verifyUpdateCodeSignature">verifyUpdateCodeSignature</code> = <code>true</code> Boolean - Whether to verify the signature of an available update before installation. The <a href="#publisherName">publisher name</a> will be used for the signature verification.</li>
 <li><code id="WindowsConfiguration-requestedExecutionLevel">requestedExecutionLevel</code> = <code>asInvoker</code> “asInvoker” | “highestAvailable” | “requireAdministrator” | “undefined” - The <a href="https://msdn.microsoft.com/en-us/library/6ad1fshk.aspx#Anchor_9">security level</a> at which the application requests to be executed. Cannot be specified per target, allowed only in the <code>win</code>.</li>
 <li><code id="WindowsConfiguration-signAndEditExecutable">signAndEditExecutable</code> = <code>true</code> Boolean - Whether to sign and add metadata to executable. Advanced option.</li>
 <li tag.description=""><code id="WindowsConfiguration-signDlls">signDlls</code> = <code>false</code> Boolean - Whether to sign DLL files. Advanced option. See: <a href="https://github.com/electron-userland/electron-builder/issues/3101#issuecomment-404212384">https://github.com/electron-userland/electron-builder/issues/3101#issuecomment-404212384</a> Deprecated:</li>
 <li><code id="WindowsConfiguration-signExts">signExts</code> Array&lt;String&gt; | “undefined” - Explicit file extensions to also sign. Advanced option. See: <a href="https://github.com/electron-userland/electron-builder/issues/7329">https://github.com/electron-userland/electron-builder/issues/7329</a></li>
+</ul>
+<h2 id="windowsazuresigningconfiguration">WindowsAzureSigningConfiguration</h2>
+<p>Also allows custom fields <code>[k: string: string]</code> passed verbatim (case sensitive) to Invoke-TrustedSigning</p>
+<ul>
+<li>
+<p><strong><code id="WindowsAzureSigningConfiguration-endpoint">endpoint</code></strong> String - The Trusted Signing Account endpoint. The URI value must have a URI that aligns to the region your Trusted Signing Account and Certificate Profile you are specifying were created in during the setup of these resources.</p>
+<p>Translates to field: Endpoint</p>
+<p>Requires one of environment variable configurations for authenticating to Microsoft Entra ID per <a href="https://learn.microsoft.com/en-us/dotnet/api/azure.identity.environmentcredential?view=azure-dotnet#definition">Microsoft’s documentation</a></p>
+</li>
+<li>
+<p><strong><code id="WindowsAzureSigningConfiguration-certificateProfileName">certificateProfileName</code></strong> String - The Certificate Profile name. Translates to field: CertificateProfileName</p>
+</li>
+</ul>
+<h2 id="windowssigntoolconfiguration">WindowsSigntoolConfiguration</h2>
+<p>undefined</p>
+<ul>
+<li><code id="WindowsSigntoolConfiguration-sign">sign</code> module:app-builder-lib/out/codeSign/windowsSignToolManager.__type | String | “undefined” - The custom function (or path to file or module id) to sign Windows executables</li>
+</ul>
+<hr>
+<ul>
+<li><code id="WindowsSigntoolConfiguration-signingHashAlgorithms">signingHashAlgorithms</code> = <code>['sha1', 'sha256']</code> Array&lt;“sha256” | “sha1”&gt; | “undefined” - Array of signing algorithms used. For AppX <code>sha256</code> is always used.</li>
+<li><code id="WindowsSigntoolConfiguration-certificateFile">certificateFile</code> String | “undefined” - The path to the *.pfx certificate you want to sign with. Please use it only if you cannot use env variable <code>CSC_LINK</code> (<code>WIN_CSC_LINK</code>) for some reason. Please see <a href="/code-signing">Code Signing</a>.</li>
+<li><code id="WindowsSigntoolConfiguration-certificatePassword">certificatePassword</code> String | “undefined” - The password to the certificate provided in <code>certificateFile</code>. Please use it only if you cannot use env variable <code>CSC_KEY_PASSWORD</code> (<code>WIN_CSC_KEY_PASSWORD</code>) for some reason. Please see <a href="/code-signing">Code Signing</a>.</li>
+<li><code id="WindowsSigntoolConfiguration-certificateSubjectName">certificateSubjectName</code> String | “undefined” - The name of the subject of the signing certificate, which is often labeled with the field name <code>issued to</code>. Required only for EV Code Signing and works only on Windows (or on macOS if <a href="https://www.parallels.com/products/desktop/">Parallels Desktop</a> Windows 10 virtual machines exits).</li>
+<li><code id="WindowsSigntoolConfiguration-certificateSha1">certificateSha1</code> String | “undefined” - The SHA1 hash of the signing certificate. The SHA1 hash is commonly specified when multiple certificates satisfy the criteria specified by the remaining switches. Works only on Windows (or on macOS if <a href="https://www.parallels.com/products/desktop/">Parallels Desktop</a> Windows 10 virtual machines exits).</li>
+<li><code id="WindowsSigntoolConfiguration-additionalCertificateFile">additionalCertificateFile</code> String | “undefined” - The path to an additional certificate file you want to add to the signature block.</li>
+<li><code id="WindowsSigntoolConfiguration-rfc3161TimeStampServer">rfc3161TimeStampServer</code> = <code>http://timestamp.digicert.com</code> String | “undefined” - The URL of the RFC 3161 time stamp server.</li>
+<li><code id="WindowsSigntoolConfiguration-timeStampServer">timeStampServer</code> = <code>http://timestamp.digicert.com</code> String | “undefined” - The URL of the time stamp server.</li>
+</ul>
+<hr>
+<ul>
+<li><code id="WindowsSigntoolConfiguration-publisherName">publisherName</code> String | Array&lt;String&gt; | “undefined” - <a href="https://github.com/electron-userland/electron-builder/issues/1187#issuecomment-278972073">The publisher name</a>, exactly as in your code signed certificate. Several names can be provided. Defaults to common name from your code signing certificate.</li>
 </ul>
 
 <!-- end of generated block -->

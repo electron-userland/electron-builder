@@ -92,7 +92,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
   abstract createTargets(targets: Array<string>, mapper: (name: string, factory: (outDir: string) => Target) => void): void
 
-  protected getCscPassword(): string {
+  getCscPassword(): string {
     const password = this.doGetCscPassword()
     if (isEmptyOrSpaces(password)) {
       log.info({ reason: "CSC_KEY_PASSWORD is not defined" }, "empty password will be used for code signing")
@@ -102,13 +102,13 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
   }
 
-  protected getCscLink(extraEnvName?: string | null): string | null | undefined {
+  getCscLink(extraEnvName?: string | null): string | null | undefined {
     // allow to specify as empty string
     const envValue = chooseNotNull(extraEnvName == null ? null : process.env[extraEnvName], process.env.CSC_LINK)
     return chooseNotNull(chooseNotNull(this.info.config.cscLink, this.platformSpecificBuildOptions.cscLink), envValue)
   }
 
-  protected doGetCscPassword(): string | null | undefined {
+  doGetCscPassword(): string | null | undefined {
     // allow to specify as empty string
     return chooseNotNull(chooseNotNull(this.info.config.cscKeyPassword, this.platformSpecificBuildOptions.cscKeyPassword), process.env.CSC_KEY_PASSWORD)
   }
@@ -770,7 +770,7 @@ export function normalizeExt(ext: string) {
   return ext.startsWith(".") ? ext.substring(1) : ext
 }
 
-export function chooseNotNull(v1: string | null | undefined, v2: string | null | undefined): string | null | undefined {
+export function chooseNotNull<T>(v1: T | null | undefined, v2: T | null | undefined): T | null | undefined {
   return v1 == null ? v2 : v1
 }
 
