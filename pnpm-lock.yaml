@@ -132,7 +132,7 @@ importers:
         specifier: workspace:^25.1.0
         version: link:../builder-util
       builder-util-runtime:
-        specifier: workspace:*
+        specifier: workspace:^9
         version: link:../builder-util-runtime
       chromium-pickle-js:
         specifier: ^0.2.0
@@ -301,7 +301,7 @@ importers:
         specifier: ^1.0.9
         version: 1.0.9
       builder-util-runtime:
-        specifier: workspace:*
+        specifier: workspace:^9
         version: link:../builder-util-runtime
       chalk:
         specifier: ^4.1.2
@@ -372,13 +372,13 @@ importers:
   packages/dmg-builder:
     dependencies:
       app-builder-lib:
-        specifier: workspace:*
+        specifier: workspace:^25
         version: link:../app-builder-lib
       builder-util:
-        specifier: workspace:*
+        specifier: workspace:^25
         version: link:../builder-util
       builder-util-runtime:
-        specifier: workspace:*
+        specifier: workspace:^9
         version: link:../builder-util-runtime
       fs-extra:
         specifier: ^10.1.0
@@ -407,19 +407,19 @@ importers:
   packages/electron-builder:
     dependencies:
       app-builder-lib:
-        specifier: workspace:*
+        specifier: workspace:^25
         version: link:../app-builder-lib
       builder-util:
-        specifier: workspace:*
+        specifier: workspace:^25
         version: link:../builder-util
       builder-util-runtime:
-        specifier: workspace:*
+        specifier: workspace:^9
         version: link:../builder-util-runtime
       chalk:
         specifier: ^4.1.2
         version: 4.1.2
       dmg-builder:
-        specifier: workspace:*
+        specifier: workspace:^25
         version: link:../dmg-builder
       fs-extra:
         specifier: ^10.1.0
@@ -450,13 +450,13 @@ importers:
   packages/electron-builder-squirrel-windows:
     dependencies:
       app-builder-lib:
-        specifier: workspace:*
+        specifier: workspace:^25
         version: link:../app-builder-lib
       archiver:
         specifier: ^5.3.1
         version: 5.3.2
       builder-util:
-        specifier: workspace:*
+        specifier: workspace:^25
         version: link:../builder-util
       fs-extra:
         specifier: ^10.1.0
@@ -472,25 +472,25 @@ importers:
   packages/electron-forge-maker-appimage:
     dependencies:
       app-builder-lib:
-        specifier: workspace:*
+        specifier: workspace:^25
         version: link:../app-builder-lib
 
   packages/electron-forge-maker-nsis:
     dependencies:
       app-builder-lib:
-        specifier: workspace:*
+        specifier: workspace:^25
         version: link:../app-builder-lib
 
   packages/electron-forge-maker-nsis-web:
     dependencies:
       app-builder-lib:
-        specifier: workspace:*
+        specifier: workspace:^25
         version: link:../app-builder-lib
 
   packages/electron-forge-maker-snap:
     dependencies:
       app-builder-lib:
-        specifier: workspace:*
+        specifier: workspace:^25
         version: link:../app-builder-lib
 
   packages/electron-publish:
@@ -499,10 +499,10 @@ importers:
         specifier: ^9.0.11
         version: 9.0.13
       builder-util:
-        specifier: workspace:*
+        specifier: workspace:^25
         version: link:../builder-util
       builder-util-runtime:
-        specifier: workspace:*
+        specifier: workspace:^9
         version: link:../builder-util-runtime
       chalk:
         specifier: ^4.1.2
@@ -524,7 +524,7 @@ importers:
   packages/electron-updater:
     dependencies:
       builder-util-runtime:
-        specifier: workspace:*
+        specifier: workspace:^9
         version: link:../builder-util-runtime
       fs-extra:
         specifier: ^10.1.0
@@ -576,13 +576,13 @@ importers:
         specifier: ^27.5.1
         version: 27.5.1(ts-node@10.9.2(@types/node@16.18.55)(typescript@5.5.3))
       app-builder-lib:
-        specifier: workspace:*
+        specifier: workspace:^25
         version: link:../packages/app-builder-lib
       builder-util:
-        specifier: workspace:*
+        specifier: workspace:^25
         version: link:../packages/builder-util
       builder-util-runtime:
-        specifier: workspace:*
+        specifier: workspace:^9
         version: link:../packages/builder-util-runtime
       chalk:
         specifier: ^4.1.2
@@ -597,19 +597,19 @@ importers:
         specifier: 1.4.3
         version: 1.4.3
       dmg-builder:
-        specifier: workspace:*
+        specifier: workspace:^25
         version: link:../packages/dmg-builder
       electron-builder:
-        specifier: workspace:*
+        specifier: workspace:^25
         version: link:../packages/electron-builder
       electron-builder-squirrel-windows:
-        specifier: workspace:*
+        specifier: workspace:^25
         version: link:../packages/electron-builder-squirrel-windows
       electron-publish:
-        specifier: workspace:*
+        specifier: workspace:^25
         version: link:../packages/electron-publish
       electron-updater:
-        specifier: workspace:*
+        specifier: workspace:^6
         version: link:../packages/electron-updater
       fs-extra:
         specifier: ^10.1.0
