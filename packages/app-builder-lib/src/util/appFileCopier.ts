@@ -198,7 +198,7 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
     return path.dirname(parentDir)
   }
   const collectNodeModules = async (dep: NodeModuleInfo, destination: string) => {
-    if (dep.conflictDependency.length === 0) {
+    if (!dep.conflictDependency || dep.conflictDependency.length === 0) {
       const source = dep.dir
       const matcher = new FileMatcher(getRealSource(source), destination, mainMatcher.macroExpander, mainMatcher.patterns)
       const copier = new NodeModuleCopyHelper(matcher, platformPackager.info)
