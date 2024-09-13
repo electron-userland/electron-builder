@@ -27,7 +27,7 @@ export { PlatformSpecificBuildOptions, AsarOptions, FileSet, Protocol, ReleaseIn
 export { FileAssociation } from "./options/FileAssociation"
 export { MacConfiguration, DmgOptions, MasConfiguration, MacOsTargetName, DmgContent, DmgWindow, NotarizeNotaryOptions } from "./options/macOptions"
 export { PkgOptions, PkgBackgroundOptions, BackgroundAlignment, BackgroundScaling } from "./options/pkgOptions"
-export { WindowsConfiguration } from "./options/winOptions"
+export { WindowsConfiguration, WindowsAzureSigningConfiguration, WindowsSigntoolConfiguration } from "./options/winOptions"
 export { AppXOptions } from "./options/AppXOptions"
 export { MsiOptions } from "./options/MsiOptions"
 export { MsiWrappedOptions } from "./options/MsiWrappedOptions"
@@ -40,14 +40,14 @@ export { AppInfo } from "./appInfo"
 export { SquirrelWindowsOptions } from "./options/SquirrelWindowsOptions"
 
 export { CustomMacSign, CustomMacSignOptions } from "./macPackager"
+export { WindowsSignOptions } from "./codeSign/windowsCodeSign"
 export {
-  WindowsSignOptions,
   CustomWindowsSignTaskConfiguration,
   WindowsSignTaskConfiguration,
   CustomWindowsSign,
   FileCodeSigningInfo,
   CertificateFromStoreInfo,
-} from "./codeSign/windowsCodeSign"
+} from "./codeSign/windowsSignToolManager"
 export { CancellationToken, ProgressInfo } from "builder-util-runtime"
 export { PublishOptions, UploadTask } from "electron-publish"
 export { PublishManager } from "./publish/PublishManager"

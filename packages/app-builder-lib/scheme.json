@@ -5959,6 +5959,26 @@
       ],
       "type": "object"
     },
+    "WindowsAzureSigningConfiguration": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "properties": {
+        "certificateProfileName": {
+          "description": "The Certificate Profile name. Translates to field: CertificateProfileName",
+          "type": "string"
+        },
+        "endpoint": {
+          "description": "The Trusted Signing Account endpoint. The URI value must have a URI that aligns to the\nregion your Trusted Signing Account and Certificate Profile you are specifying were created\nin during the setup of these resources.\n\nTranslates to field: Endpoint\n\nRequires one of environment variable configurations for authenticating to Microsoft Entra ID per [Microsoft's documentation](https://learn.microsoft.com/en-us/dotnet/api/azure.identity.environmentcredential?view=azure-dotnet#definition)",
+          "type": "string"
+        }
+      },
+      "required": [
+        "certificateProfileName",
+        "endpoint"
+      ],
+      "type": "object"
+    },
     "WindowsConfiguration": {
       "additionalProperties": false,
       "properties": {
@@ -6015,6 +6035,17 @@
             }
           ],
           "description": "A [glob patterns](/file-patterns) relative to the [app directory](#MetadataDirectories-app), which specifies which files to unpack when creating the [asar](http://electron.atom.io/docs/tutorial/application-packaging/) archive."
+        },
+        "azureSignOptions": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/WindowsAzureSigningConfiguration"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Options for usage of Azure Trusted Signing (beta)"
         },
         "certificateFile": {
           "description": "The path to the *.pfx certificate you want to sign with. Please use it only if you cannot use env variable `CSC_LINK` (`WIN_CSC_LINK`) for some reason.\nPlease see [Code Signing](/code-signing).",
@@ -6345,7 +6376,7 @@
               ]
             }
           ],
-          "description": "The custom function (or path to file or module id) to sign Windows executable."
+          "description": "The custom function (or path to file or module id) to sign Windows executables"
         },
         "signAndEditExecutable": {
           "default": true,
@@ -6388,8 +6419,18 @@
               "type": "null"
             }
           ],
-          "default": "['sha1', 'sha256']",
           "description": "Array of signing algorithms used. For AppX `sha256` is always used."
+        },
+        "signtoolOptions": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/WindowsSigntoolConfiguration"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Options for usage with signtool.exe"
         },
         "target": {
           "anyOf": [
@@ -6431,6 +6472,113 @@
           "default": true,
           "description": "Whether to verify the signature of an available update before installation.\nThe [publisher name](#publisherName) will be used for the signature verification.",
           "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "WindowsSigntoolConfiguration": {
+      "additionalProperties": false,
+      "properties": {
+        "additionalCertificateFile": {
+          "description": "The path to an additional certificate file you want to add to the signature block.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "certificateFile": {
+          "description": "The path to the *.pfx certificate you want to sign with. Please use it only if you cannot use env variable `CSC_LINK` (`WIN_CSC_LINK`) for some reason.\nPlease see [Code Signing](/code-signing).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "certificatePassword": {
+          "description": "The password to the certificate provided in `certificateFile`. Please use it only if you cannot use env variable `CSC_KEY_PASSWORD` (`WIN_CSC_KEY_PASSWORD`) for some reason.\nPlease see [Code Signing](/code-signing).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "certificateSha1": {
+          "description": "The SHA1 hash of the signing certificate. The SHA1 hash is commonly specified when multiple certificates satisfy the criteria specified by the remaining switches. Works only on Windows (or on macOS if [Parallels Desktop](https://www.parallels.com/products/desktop/) Windows 10 virtual machines exits).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "certificateSubjectName": {
+          "description": "The name of the subject of the signing certificate, which is often labeled with the field name `issued to`. Required only for EV Code Signing and works only on Windows (or on macOS if [Parallels Desktop](https://www.parallels.com/products/desktop/) Windows 10 virtual machines exits).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "publisherName": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "[The publisher name](https://github.com/electron-userland/electron-builder/issues/1187#issuecomment-278972073), exactly as in your code signed certificate. Several names can be provided.\nDefaults to common name from your code signing certificate."
+        },
+        "rfc3161TimeStampServer": {
+          "default": "http://timestamp.digicert.com",
+          "description": "The URL of the RFC 3161 time stamp server.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "sign": {
+          "anyOf": [
+            {
+              "typeof": "function"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "The custom function (or path to file or module id) to sign Windows executables"
+        },
+        "signingHashAlgorithms": {
+          "anyOf": [
+            {
+              "items": {
+                "enum": [
+                  "sha1",
+                  "sha256"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "['sha1', 'sha256']",
+          "description": "Array of signing algorithms used. For AppX `sha256` is always used."
+        },
+        "timeStampServer": {
+          "default": "http://timestamp.digicert.com",
+          "description": "The URL of the time stamp server.",
+          "type": [
+            "null",
+            "string"
+          ]
         }
       },
       "type": "object"
