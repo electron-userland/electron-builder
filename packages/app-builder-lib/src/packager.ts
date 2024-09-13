@@ -133,8 +133,8 @@ export class Packager {
 
   private nodeDependencyInfo = new Map<string, Lazy<Array<any>>>()
 
-  getNodeDependencyInfo(platform: Platform | null): Lazy<Array<NodeModuleInfo | NodeModuleDirInfo>> {
-    let key = ""
+  getNodeDependencyInfo(platform: Platform | null, flatten: boolean = true): Lazy<Array<NodeModuleInfo | NodeModuleDirInfo>> {
+    let key = "" + flatten.toString()
     let excludedDependencies: Array<string> | null = null
     if (platform != null && this.framework.getExcludedDependencies != null) {
       excludedDependencies = this.framework.getExcludedDependencies(platform)
@@ -145,7 +145,7 @@ export class Packager {
 
     let result = this.nodeDependencyInfo.get(key)
     if (result == null) {
-      result = createLazyProductionDeps(this.appDir, excludedDependencies)
+      result = createLazyProductionDeps(this.appDir, excludedDependencies, flatten)
       this.nodeDependencyInfo.set(key, result)
     }
     return result
@@ -543,7 +543,7 @@ export class Packager {
         frameworkInfo,
         platform: platform.nodeName,
         arch: Arch[arch],
-        productionDeps: this.getNodeDependencyInfo(null) as Lazy<Array<NodeModuleDirInfo>>,
+        productionDeps: this.getNodeDependencyInfo(null, false) as Lazy<Array<NodeModuleDirInfo>>,
       })
     }
   }
