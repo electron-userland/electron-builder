@@ -205,11 +205,10 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
     result[index++] = validateFileSet({ src: source, destination, files, metadata: copier.metadata })
 
     if (dep.conflictDependency) {
-    for (const c of dep.conflictDependency) {
-      await collectNodeModules(c, path.join(destination, NODE_MODULES, c.name))
+      for (const c of dep.conflictDependency) {
+        await collectNodeModules(c, path.join(destination, NODE_MODULES, c.name))
+      }
     }
-    }
-
   }
 
   for (const dep of deps) {
