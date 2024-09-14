@@ -19,6 +19,6 @@
   "updateInternalDependencies": "patch",
   "ignore": ["@electron-builder/test"],
   "___experimentalUnsafeOptions_WILL_CHANGE_IN_PATCH": {
-    "onlyUpdatePeerDependentsWhenOutOfRange": true
+    "onlyUpdatePeerDependentsWhenOutOfRange": false
   }
 }
