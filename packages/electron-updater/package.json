@@ -16,7 +16,7 @@
     "out"
   ],
   "dependencies": {
-    "builder-util-runtime": "workspace:^9",
+    "builder-util-runtime": "workspace:*",
     "fs-extra": "^10.1.0",
     "js-yaml": "^4.1.0",
     "lazy-val": "^1.0.5",
