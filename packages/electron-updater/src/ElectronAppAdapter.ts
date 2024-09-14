@@ -2,10 +2,19 @@ import * as path from "path"
 import { AppAdapter, getAppCacheDir } from "./AppAdapter"
 
 export class ElectronAppAdapter implements AppAdapter {
-  constructor(private readonly app = require("electron").app) {}
+  private app: Electron.App
+
+  constructor(private readonly electron = require("electron")) {
+    this.app = this.electron.app
+  }
 
   whenReady(): Promise<void> {
     return this.app.whenReady()
+  }
+
+  private closeAllWindows(): void {
+    const windows: Electron.BrowserWindow[] = this.electron.BrowserWindow.getAllWindows()
+    windows.forEach(window => window.close())
   }
 
   get version(): string {
@@ -40,7 +49,27 @@ export class ElectronAppAdapter implements AppAdapter {
     this.app.relaunch()
   }
 
-  onQuit(handler: (exitCode: number) => void): void {
-    this.app.once("quit", (_: Electron.Event, exitCode: number) => handler(exitCode))
+  onQuit(handler: () => Promise<void>): void {
+    this.app.once("before-quit", async (event: Electron.Event) => {
+      // prevent quitting
+      event.preventDefault()
+      // Close all windows before quitting
+      this.closeAllWindows()
+      // show notification that update is starting
+      new this.electron.Notification({
+        title: `${this.app.name} is now updating`,
+        body: `Please don't force quit the app as it might lead to corruption.`,
+      }).show()
+
+      try {
+        // handle auto update
+        await handler()
+      } catch (error) {
+        console.error(`Error during onQuit handler: ${error}`)
+      }
+
+      // resume quit after handler completes
+      this.app.quit()
+    })
   }
 }

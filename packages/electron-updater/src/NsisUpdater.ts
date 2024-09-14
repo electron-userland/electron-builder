@@ -122,7 +122,7 @@ export class NsisUpdater extends BaseUpdater {
     return await this._verifyUpdateCodeSignature(Array.isArray(publisherName) ? publisherName : [publisherName], tempUpdateFile)
   }
 
-  protected doInstall(options: InstallOptions): boolean {
+  protected async doInstall(options: InstallOptions): Promise<boolean> {
     const args = ["--updated"]
     if (options.isSilent) {
       args.push("/S")
@@ -143,33 +143,43 @@ export class NsisUpdater extends BaseUpdater {
       args.push(`--package-file=${packagePath}`)
     }
 
-    const callUsingElevation = (): void => {
-      this.spawnLog(path.join(process.resourcesPath, "elevate.exe"), [options.installerPath].concat(args)).catch(e => this.dispatchError(e))
+    const callUsingElevation = async (): Promise<void> => {
+      await this.spawnLogAsync(path.join(process.resourcesPath, "elevate.exe"), [options.installerPath].concat(args)).catch(e => this.dispatchError(e))
     }
 
     if (options.isAdminRightsRequired) {
       this._logger.info("isAdminRightsRequired is set to true, run installer using elevate.exe")
-      callUsingElevation()
+      await callUsingElevation()
       return true
     }
 
-    this.spawnLog(options.installerPath, args).catch((e: Error) => {
-      // https://github.com/electron-userland/electron-builder/issues/1129
-      // Node 8 sends errors: https://nodejs.org/dist/latest-v8.x/docs/api/errors.html#errors_common_system_errors
-      const errorCode = (e as NodeJS.ErrnoException).code
-      this._logger.info(
-        `Cannot run installer: error code: ${errorCode}, error message: "${e.message}", will be executed again using elevate if EACCES, and will try to use electron.shell.openItem if ENOENT`
-      )
-      if (errorCode === "UNKNOWN" || errorCode === "EACCES") {
-        callUsingElevation()
-      } else if (errorCode === "ENOENT") {
-        require("electron")
-          .shell.openPath(options.installerPath)
-          .catch((err: Error) => this.dispatchError(err))
+    try {
+      await this.spawnLogAsync(options.installerPath, args)
+    } catch (e: unknown) {
+      // TypeScript requires catch variables to be of type 'unknown' or 'any'
+      // Cast to 'Error' to handle specific error properties
+      if (e instanceof Error) {
+        // https://github.com/electron-userland/electron-builder/issues/1129
+        // Node 8 sends errors: https://nodejs.org/dist/latest-v8.x/docs/api/errors.html#errors_common_system_errors
+        const errorCode = (e as NodeJS.ErrnoException).code
+        this._logger.info(
+          `Cannot run installer: error code: ${errorCode}, error message: "${e.message}", will be executed again using elevate if EACCES, and will try to use electron.shell.openItem if ENOENT`
+        )
+        if (errorCode === "UNKNOWN" || errorCode === "EACCES") {
+          await callUsingElevation()
+        } else if (errorCode === "ENOENT") {
+          await require("electron")
+            .shell.openPath(options.installerPath)
+            .catch((err: Error) => this.dispatchError(err))
+        } else {
+          this.dispatchError(e)
+        }
       } else {
-        this.dispatchError(e)
+        // Handle cases where 'e' is not an instance of Error
+        this._logger.error(`Unexpected error: ${e}`)
+        this.dispatchError(new Error(String(e)))
       }
-    })
+    }
     return true
   }
 
