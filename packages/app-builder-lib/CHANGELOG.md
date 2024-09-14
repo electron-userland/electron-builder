@@ -1,5 +1,58 @@
 # app-builder-lib
 
+## 25.1.1
+
+### Patch Changes
+
+- [#8482](https://github.com/electron-userland/electron-builder/pull/8482) [`ff8059e3`](https://github.com/electron-userland/electron-builder/commit/ff8059e385efbf017b9e325e4e7649b5cb6dff15) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: resolveConfig logic ignores `.mjs` filter
+
+## 25.1.0
+
+### Minor Changes
+
+- [#8458](https://github.com/electron-userland/electron-builder/pull/8458) [`d50d5634`](https://github.com/electron-userland/electron-builder/commit/d50d563408c117f82863d0611311226d53ef6e8e) Thanks [@mmaietta](https://github.com/mmaietta)! - feat: Implement Azure Trusted Signing
+
+### Patch Changes
+
+- [#8450](https://github.com/electron-userland/electron-builder/pull/8450) [`55671bd2`](https://github.com/electron-userland/electron-builder/commit/55671bd2159d4da8934e7083077d9cc854dc85fb) Thanks [@leey0818](https://github.com/leey0818)! - fix: correct native dependency tree mismatch in app-builder rebuild
+
+- [#8469](https://github.com/electron-userland/electron-builder/pull/8469) [`770b19f5`](https://github.com/electron-userland/electron-builder/commit/770b19f58c5f697618baa604a686a8ade97fea2d) Thanks [@mmaietta](https://github.com/mmaietta)! - chore: update resedit to 1.7.1
+
+- [#8467](https://github.com/electron-userland/electron-builder/pull/8467) [`6fe83950`](https://github.com/electron-userland/electron-builder/commit/6fe83950a4195e4ff6611e3ebf91bd2e66d811dd) Thanks [@mmaietta](https://github.com/mmaietta)! - chore: update docs to include more interfaces and release configuration
+
+- [#8463](https://github.com/electron-userland/electron-builder/pull/8463) [`c081df8e`](https://github.com/electron-userland/electron-builder/commit/c081df8e04494645028c4160bcc1376f029cbca5) Thanks [@mmaietta](https://github.com/mmaietta)! - chore: improving file path logging to be relative paths when within process.cwd()
+
+- [#8472](https://github.com/electron-userland/electron-builder/pull/8472) [`28aeb272`](https://github.com/electron-userland/electron-builder/commit/28aeb272ed24d6c3db3c61d551a7afa3794fef4d) Thanks [@mmaietta](https://github.com/mmaietta)! - chore(deps): update dependency @electron/notarize to v2.4.0
+
+- Updated dependencies [[`27a8a60c`](https://github.com/electron-userland/electron-builder/commit/27a8a60c86adeaf792bbd0c33f3de23400ded2d4)]:
+  - builder-util@25.1.0
+  - dmg-builder@25.1.0
+  - electron-builder-squirrel-windows@25.1.0
+  - electron-publish@25.1.0
+
+## 25.0.6
+
+### Patch Changes
+
+- [#8455](https://github.com/electron-userland/electron-builder/pull/8455) [`5c8373d1`](https://github.com/electron-userland/electron-builder/commit/5c8373d15f99ee9a4c46ed164f95bf1d4a11db28) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: allow usage of "module" typ config files
+
+- Updated dependencies [[`be625e06`](https://github.com/electron-userland/electron-builder/commit/be625e06273e56de09ed3298209858043fcd1151)]:
+  - builder-util@25.0.6
+  - builder-util-runtime@9.2.6
+  - dmg-builder@25.0.6
+  - electron-builder-squirrel-windows@25.0.6
+  - electron-publish@25.0.6
+
+## 25.0.5
+
+### Patch Changes
+
+- [#8424](https://github.com/electron-userland/electron-builder/pull/8424) [`8e6c1712`](https://github.com/electron-userland/electron-builder/commit/8e6c17124cdc523620a66efaf871ef8d335c0f49) Thanks [@lutzroeder](https://github.com/lutzroeder)! - fix: Snap publish regression in pulling publish config
+
+- Updated dependencies []:
+  - dmg-builder@25.0.5
+  - electron-builder-squirrel-windows@25.0.5
+
 ## 25.0.4
 
 ### Patch Changes

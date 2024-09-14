@@ -3,7 +3,7 @@
 import { AppInfo, CancellationToken, Packager, PackagerOptions, PublishManager, PublishOptions, UploadTask, checkBuildRequestOptions } from "app-builder-lib"
 import { Publish } from "app-builder-lib/out/core"
 import { computeSafeArtifactNameIfNeeded } from "app-builder-lib/out/platformPackager"
-import { getConfig } from "app-builder-lib/out/util/config"
+import { getConfig } from "app-builder-lib/out/util/config/config"
 import { InvalidConfigurationError, archFromString, log } from "builder-util"
 import { printErrorAndExit } from "builder-util"
 import * as chalk from "chalk"

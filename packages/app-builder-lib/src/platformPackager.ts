@@ -1,11 +1,10 @@
 import BluebirdPromise from "bluebird-lst"
-import { Arch, asArray, AsyncTaskManager, debug, DebugLogger, deepAssign, getArchSuffix, InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
+import { Arch, asArray, AsyncTaskManager, DebugLogger, deepAssign, getArchSuffix, InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
 import { defaultArchFromString, getArtifactArchName, FileTransformer, statOrNull, orIfFileNotExist } from "builder-util"
 import { readdir } from "fs/promises"
 import { Lazy } from "lazy-val"
 import { Minimatch } from "minimatch"
 import * as path from "path"
-import { pathToFileURL } from "url"
 import { AppInfo } from "./appInfo"
 import { checkFileInArchive } from "./asar/asarFileChecker"
 import { AsarPackager } from "./asar/asarUtil"
@@ -30,6 +29,7 @@ import {
 import { executeAppBuilderAsJson } from "./util/appBuilder"
 import { computeFileSets, computeNodeModuleFileSets, copyAppFiles, ELECTRON_COMPILE_SHIM_FILENAME, transformFiles } from "./util/appFileCopier"
 import { expandMacro as doExpandMacro } from "./util/macroExpander"
+import { resolveFunction } from "./util/resolve"
 
 export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> {
   get packagerOptions(): PackagerOptions {
@@ -92,7 +92,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
   abstract createTargets(targets: Array<string>, mapper: (name: string, factory: (outDir: string) => Target) => void): void
 
-  protected getCscPassword(): string {
+  getCscPassword(): string {
     const password = this.doGetCscPassword()
     if (isEmptyOrSpaces(password)) {
       log.info({ reason: "CSC_KEY_PASSWORD is not defined" }, "empty password will be used for code signing")
@@ -102,13 +102,13 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
   }
 
-  protected getCscLink(extraEnvName?: string | null): string | null | undefined {
+  getCscLink(extraEnvName?: string | null): string | null | undefined {
     // allow to specify as empty string
     const envValue = chooseNotNull(extraEnvName == null ? null : process.env[extraEnvName], process.env.CSC_LINK)
     return chooseNotNull(chooseNotNull(this.info.config.cscLink, this.platformSpecificBuildOptions.cscLink), envValue)
   }
 
-  protected doGetCscPassword(): string | null | undefined {
+  doGetCscPassword(): string | null | undefined {
     // allow to specify as empty string
     return chooseNotNull(chooseNotNull(this.info.config.cscKeyPassword, this.platformSpecificBuildOptions.cscKeyPassword), process.env.CSC_KEY_PASSWORD)
   }
@@ -770,52 +770,7 @@ export function normalizeExt(ext: string) {
   return ext.startsWith(".") ? ext.substring(1) : ext
 }
 
-async function resolveModule<T>(type: string | undefined, name: string): Promise<T> {
-  const extension = path.extname(name).toLowerCase()
-  const isModuleType = type === "module"
-  try {
-    if (extension === ".mjs" || (extension === ".js" && isModuleType)) {
-      const fileUrl = pathToFileURL(name).href
-      return await eval("import('" + fileUrl + "')")
-    }
-  } catch (error: any) {
-    log.debug({ moduleName: name, message: error.message ?? error.stack }, "Unable to dynamically import hook, falling back to `require`")
-  }
-  try {
-    return require(name)
-  } catch (error: any) {
-    log.error({ moduleName: name, message: error.message ?? error.stack }, "Unable to `require` hook")
-    throw new Error(error.message ?? error.stack)
-  }
-}
-
-export async function resolveFunction<T>(type: string | undefined, executor: T | string, name: string): Promise<T> {
-  if (executor == null || typeof executor !== "string") {
-    return executor
-  }
-
-  let p = executor as string
-  if (p.startsWith(".")) {
-    p = path.resolve(p)
-  }
-
-  try {
-    p = require.resolve(p)
-  } catch (e: any) {
-    debug(e)
-    p = path.resolve(p)
-  }
-
-  const m: any = await resolveModule(type, p)
-  const namedExport = m[name]
-  if (namedExport == null) {
-    return m.default || m
-  } else {
-    return namedExport
-  }
-}
-
-export function chooseNotNull(v1: string | null | undefined, v2: string | null | undefined): string | null | undefined {
+export function chooseNotNull<T>(v1: T | null | undefined, v2: T | null | undefined): T | null | undefined {
   return v1 == null ? v2 : v1
 }
 

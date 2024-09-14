@@ -1,7 +1,7 @@
 import { TargetSpecificOptions } from "../../core"
 import { CommonWindowsInstallerConfiguration } from "../.."
 
-interface CustomNsisBinary {
+export interface CustomNsisBinary {
   /**
    * @default https://github.com/electron-userland/electron-builder-binaries/releases/download
    */

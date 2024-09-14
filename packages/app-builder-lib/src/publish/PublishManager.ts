@@ -152,7 +152,7 @@ export class PublishManager implements PublishContext {
     if (publisher == null) {
       log.debug(
         {
-          file: event.file,
+          file: log.filePath(event.file),
           reason: "publisher is null",
           publishConfig: safeStringifyJson(publishConfig),
         },
@@ -163,7 +163,7 @@ export class PublishManager implements PublishContext {
 
     const providerName = publisher.providerName
     if (this.publishOptions.publish === "onTagOrDraft" && getCiTag() == null && providerName !== "bitbucket" && providerName !== "github") {
-      log.info({ file: event.file, reason: "current build is not for a git tag", publishPolicy: "onTagOrDraft" }, `not published to ${providerName}`)
+      log.info({ file: log.filePath(event.file), reason: "current build is not for a git tag", publishPolicy: "onTagOrDraft" }, `not published to ${providerName}`)
       return
     }
 
@@ -257,7 +257,7 @@ export async function getAppUpdatePublishConfiguration(packager: PlatformPackage
 
   if (packager.platform === Platform.WINDOWS && publishConfig.publisherName == null) {
     const winPackager = packager as WinPackager
-    const publisherName = winPackager.isForceCodeSigningVerification ? await winPackager.computedPublisherName.value : undefined
+    const publisherName = winPackager.isForceCodeSigningVerification ? await (await winPackager.signtoolManager.value).computedPublisherName.value : undefined
     if (publisherName != null) {
       publishConfig.publisherName = publisherName
     }

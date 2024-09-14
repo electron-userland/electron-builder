@@ -29,10 +29,10 @@ import { Framework } from "./Framework"
 import { LibUiFramework } from "./frameworks/LibUiFramework"
 import { Metadata } from "./options/metadata"
 import { ArtifactBuildStarted, ArtifactCreated, PackagerOptions } from "./packagerApi"
-import { PlatformPackager, resolveFunction } from "./platformPackager"
+import { PlatformPackager } from "./platformPackager"
 import { ProtonFramework } from "./ProtonFramework"
 import { computeArchToTargetNamesMap, createTargets, NoOpTarget } from "./targets/targetFactory"
-import { computeDefaultAppDirectory, getConfig, validateConfiguration } from "./util/config"
+import { computeDefaultAppDirectory, getConfig, validateConfiguration } from "./util/config/config"
 import { expandMacro } from "./util/macroExpander"
 import { createLazyProductionDeps, NodeModuleDirInfo, NodeModuleInfo } from "./util/packageDependencies"
 import { checkMetadata, readPackageJson } from "./util/packageMetadata"
@@ -40,6 +40,7 @@ import { getRepositoryInfo } from "./util/repositoryInfo"
 import { installOrRebuild, nodeGypRebuild } from "./util/yarn"
 import { PACKAGE_VERSION } from "./version"
 import { release as getOsRelease } from "os"
+import { resolveFunction } from "./util/resolve"
 
 function addHandler(emitter: EventEmitter, event: string, handler: (...args: Array<any>) => void) {
   emitter.on(event, handler)
@@ -132,8 +133,8 @@ export class Packager {
 
   private nodeDependencyInfo = new Map<string, Lazy<Array<any>>>()
 
-  getNodeDependencyInfo(platform: Platform | null): Lazy<Array<NodeModuleInfo | NodeModuleDirInfo>> {
-    let key = ""
+  getNodeDependencyInfo(platform: Platform | null, flatten: boolean = true): Lazy<Array<NodeModuleInfo | NodeModuleDirInfo>> {
+    let key = "" + flatten.toString()
     let excludedDependencies: Array<string> | null = null
     if (platform != null && this.framework.getExcludedDependencies != null) {
       excludedDependencies = this.framework.getExcludedDependencies(platform)
@@ -144,7 +145,7 @@ export class Packager {
 
     let result = this.nodeDependencyInfo.get(key)
     if (result == null) {
-      result = createLazyProductionDeps(this.appDir, excludedDependencies)
+      result = createLazyProductionDeps(this.appDir, excludedDependencies, flatten)
       this.nodeDependencyInfo.set(key, result)
     }
     return result
@@ -542,7 +543,7 @@ export class Packager {
         frameworkInfo,
         platform: platform.nodeName,
         arch: Arch[arch],
-        productionDeps: this.getNodeDependencyInfo(null) as Lazy<Array<NodeModuleDirInfo>>,
+        productionDeps: this.getNodeDependencyInfo(null, false) as Lazy<Array<NodeModuleDirInfo>>,
       })
     }
   }

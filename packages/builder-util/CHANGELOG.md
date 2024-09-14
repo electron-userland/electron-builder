@@ -1,5 +1,20 @@
 # builder-util
 
+## 25.1.0
+
+### Patch Changes
+
+- [#8478](https://github.com/electron-userland/electron-builder/pull/8478) [`27a8a60c`](https://github.com/electron-userland/electron-builder/commit/27a8a60c86adeaf792bbd0c33f3de23400ded2d4) Thanks [@mmaietta](https://github.com/mmaietta)! - chore(deps): update dependency app-builder-bin to v5.0.0-alpha.8
+
+## 25.0.6
+
+### Patch Changes
+
+- [#8437](https://github.com/electron-userland/electron-builder/pull/8437) [`be625e06`](https://github.com/electron-userland/electron-builder/commit/be625e06273e56de09ed3298209858043fcd1151) Thanks [@juwonjung-hdj](https://github.com/juwonjung-hdj)! - fix: retry renaming update file when EBUSY error occurs due to file lock
+
+- Updated dependencies [[`be625e06`](https://github.com/electron-userland/electron-builder/commit/be625e06273e56de09ed3298209858043fcd1151)]:
+  - builder-util-runtime@9.2.6
+
 ## 25.0.3
 
 ### Patch Changes

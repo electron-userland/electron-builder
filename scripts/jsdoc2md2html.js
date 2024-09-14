@@ -216,7 +216,10 @@ async function render2(files, jsdoc2MdOptions) {
     new Page("configuration/mas.md", "MasConfiguration"),
     new Page("configuration/pkg.md", "PkgOptions"),
 
-    new Page("configuration/win.md", "WindowsConfiguration"),
+    new Page("configuration/win.md", "WindowsConfiguration", {
+      "WindowsAzureSigningConfiguration" : "Also allows custom fields `[k: string: string]` passed verbatim (case sensitive) to Invoke-TrustedSigning",
+      "WindowsSigntoolConfiguration": ""
+    }),
     new Page("configuration/msi-wrapped.md", "MsiWrappedOptions"),
     new Page("configuration/msi.md", "MsiOptions"),
     new Page("configuration/appx.md", "AppXOptions"),
@@ -242,7 +245,9 @@ async function render2(files, jsdoc2MdOptions) {
     new Page("generated/LinuxTargetSpecificOptions.md", "LinuxTargetSpecificOptions"),
     new Page("generated/PlatformSpecificBuildOptions.md", "PlatformSpecificBuildOptions"),
     new Page("generated/Metadata.md", "Metadata"),
-    new Page("generated/NsisOptions.md", "NsisOptions"),
+    new Page("generated/NsisOptions.md", "NsisOptions", {
+      "CustomNsisBinary": ""
+    }),
     new Page("generated/TargetSpecificOptions.md", "TargetSpecificOptions"),
   ]
 

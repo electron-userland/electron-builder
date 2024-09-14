@@ -66,8 +66,8 @@ importers:
         specifier: 27.5.1
         version: 27.5.1(ts-node@10.9.2(@types/node@16.18.55)(typescript@5.5.3))
       jsdoc-to-markdown:
-        specifier: 8.0.2
-        version: 8.0.2
+        specifier: 8.0.3
+        version: 8.0.3
       lint-staged:
         specifier: 15.2.7
         version: 15.2.7
@@ -105,8 +105,8 @@ importers:
         specifier: ~2.6.5
         version: 2.6.5
       '@electron/notarize':
-        specifier: 2.3.2
-        version: 2.3.2
+        specifier: 2.4.0
+        version: 2.4.0
       '@electron/osx-sign':
         specifier: 1.3.1
         version: 1.3.1
@@ -129,22 +129,31 @@ importers:
         specifier: ^1.0.9
         version: 1.0.9
       builder-util:
-        specifier: workspace:*
+        specifier: workspace:^25.1.0
         version: link:../builder-util
       builder-util-runtime:
-        specifier: workspace:*
+        specifier: workspace:^9
         version: link:../builder-util-runtime
       chromium-pickle-js:
         specifier: ^0.2.0
         version: 0.2.0
+      config-file-ts:
+        specifier: 0.2.8-rc1
+        version: 0.2.8-rc1
       debug:
         specifier: ^4.3.4
         version: 4.3.4
+      dotenv:
+        specifier: ^16.4.5
+        version: 16.4.5
+      dotenv-expand:
+        specifier: ^11.0.6
+        version: 11.0.6
       ejs:
         specifier: ^3.1.8
         version: 3.1.9
       electron-publish:
-        specifier: workspace:*
+        specifier: workspace:^25.1.0
         version: link:../electron-publish
       form-data:
         specifier: ^4.0.0
@@ -164,18 +173,18 @@ importers:
       js-yaml:
         specifier: ^4.1.0
         version: 4.1.0
+      json5:
+        specifier: ^2.2.3
+        version: 2.2.3
       lazy-val:
         specifier: ^1.0.5
         version: 1.0.5
       minimatch:
         specifier: ^10.0.0
         version: 10.0.1
-      read-config-file:
-        specifier: 6.4.0
-        version: 6.4.0
       resedit:
         specifier: ^1.7.0
-        version: 1.7.0
+        version: 1.7.1
       sanitize-filename:
         specifier: ^1.6.3
         version: 1.6.3
@@ -268,11 +277,14 @@ importers:
         specifier: ^6.1.3
         version: 6.1.11
       dmg-builder:
-        specifier: workspace:*
+        specifier: workspace:^25.1.0
         version: link:../dmg-builder
       electron-builder-squirrel-windows:
-        specifier: workspace:*
+        specifier: workspace:^25.1.0
         version: link:../electron-builder-squirrel-windows
+      toml:
+        specifier: ^3.0.0
+        version: 3.0.0
 
   packages/builder-util:
     dependencies:
@@ -283,13 +295,13 @@ importers:
         specifier: ^4.1.6
         version: 4.1.7
       app-builder-bin:
-        specifier: 5.0.0-alpha.7
-        version: 5.0.0-alpha.7
+        specifier: 5.0.0-alpha.8
+        version: 5.0.0-alpha.8
       bluebird-lst:
         specifier: ^1.0.9
         version: 1.0.9
       builder-util-runtime:
-        specifier: workspace:*
+        specifier: workspace:^9
         version: link:../builder-util-runtime
       chalk:
         specifier: ^4.1.2
@@ -360,13 +372,13 @@ importers:
   packages/dmg-builder:
     dependencies:
       app-builder-lib:
-        specifier: workspace:*
+        specifier: workspace:^25
         version: link:../app-builder-lib
       builder-util:
-        specifier: workspace:*
+        specifier: workspace:^25
         version: link:../builder-util
       builder-util-runtime:
-        specifier: workspace:*
+        specifier: workspace:^9
         version: link:../builder-util-runtime
       fs-extra:
         specifier: ^10.1.0
@@ -395,19 +407,19 @@ importers:
   packages/electron-builder:
     dependencies:
       app-builder-lib:
-        specifier: workspace:*
+        specifier: workspace:^25
         version: link:../app-builder-lib
       builder-util:
-        specifier: workspace:*
+        specifier: workspace:^25
         version: link:../builder-util
       builder-util-runtime:
-        specifier: workspace:*
+        specifier: workspace:^9
         version: link:../builder-util-runtime
       chalk:
         specifier: ^4.1.2
         version: 4.1.2
       dmg-builder:
-        specifier: workspace:*
+        specifier: workspace:^25
         version: link:../dmg-builder
       fs-extra:
         specifier: ^10.1.0
@@ -418,9 +430,6 @@ importers:
       lazy-val:
         specifier: ^1.0.5
         version: 1.0.5
-      read-config-file:
-        specifier: 6.4.0
-        version: 6.4.0
       simple-update-notifier:
         specifier: 2.0.0
         version: 2.0.0
@@ -441,13 +450,13 @@ importers:
   packages/electron-builder-squirrel-windows:
     dependencies:
       app-builder-lib:
-        specifier: workspace:*
+        specifier: workspace:^25
         version: link:../app-builder-lib
       archiver:
         specifier: ^5.3.1
         version: 5.3.2
       builder-util:
-        specifier: workspace:*
+        specifier: workspace:^25
         version: link:../builder-util
       fs-extra:
         specifier: ^10.1.0
@@ -463,25 +472,25 @@ importers:
   packages/electron-forge-maker-appimage:
     dependencies:
       app-builder-lib:
-        specifier: workspace:*
+        specifier: workspace:^25
         version: link:../app-builder-lib
 
   packages/electron-forge-maker-nsis:
     dependencies:
       app-builder-lib:
-        specifier: workspace:*
+        specifier: workspace:^25
         version: link:../app-builder-lib
 
   packages/electron-forge-maker-nsis-web:
     dependencies:
       app-builder-lib:
-        specifier: workspace:*
+        specifier: workspace:^25
         version: link:../app-builder-lib
 
   packages/electron-forge-maker-snap:
     dependencies:
       app-builder-lib:
-        specifier: workspace:*
+        specifier: workspace:^25
         version: link:../app-builder-lib
 
   packages/electron-publish:
@@ -490,10 +499,10 @@ importers:
         specifier: ^9.0.11
         version: 9.0.13
       builder-util:
-        specifier: workspace:*
+        specifier: workspace:^25
         version: link:../builder-util
       builder-util-runtime:
-        specifier: workspace:*
+        specifier: workspace:^9
         version: link:../builder-util-runtime
       chalk:
         specifier: ^4.1.2
@@ -515,7 +524,7 @@ importers:
   packages/electron-updater:
     dependencies:
       builder-util-runtime:
-        specifier: workspace:*
+        specifier: workspace:^9
         version: link:../builder-util-runtime
       fs-extra:
         specifier: ^10.1.0
@@ -1985,8 +1994,8 @@ packages:
     resolution: {integrity: sha512-Qkzpg2s9GnVV2I2BjRksUi43U5e6+zaQMcjoJy0C+C5oxaKl+fmckGDQFtRpZpZV0NQekuZZ+tGz7EA9TVnQtQ==}
     engines: {node: '>=12'}
 
-  '@electron/notarize@2.3.2':
-    resolution: {integrity: sha512-zfayxCe19euNwRycCty1C7lF7snk9YwfRpB5M8GLr1a4ICH63znxaPNAubrMvj0yDvVozqfgsdYpXVUnpWBDpg==}
+  '@electron/notarize@2.4.0':
+    resolution: {integrity: sha512-ArHnRPIJJGrmV+uWNQSINAht+cM4gAo3uA3WFI54bYF93mzmD15gzhPQ0Dd+v/fkMhnRiiIO8NNkGdn87Vsy0g==}
     engines: {node: '>= 10.0.0'}
 
   '@electron/osx-sign@1.0.5':
@@ -2623,8 +2632,8 @@ packages:
     resolution: {integrity: sha512-KMReFUr0B4t+D+OBkjR3KYqvocp2XaSzO55UcB6mgQMd3KbcE+mWTyvVV7D/zsdEbNnV6acZUutkiHQXvTr1Rw==}
     engines: {node: '>= 8'}
 
-  app-builder-bin@5.0.0-alpha.7:
-    resolution: {integrity: sha512-ww2mK4ITUvqisnqOuUWAeHzokpPidyZ7a0ZkwW+V7sF5/Pdi2OldkRjAWqEzn6Xtmj3SLVT84as4wB59A6jJ4g==}
+  app-builder-bin@5.0.0-alpha.8:
+    resolution: {integrity: sha512-T8MCQ9fiySB3jwE+MLptHYe7YfBSduriv/8+Bu+b9HWxqqDNdqRStzHh0l1IJiTg74eWbzmEwDW+W4arAKHIMg==}
 
   aproba@2.0.0:
     resolution: {integrity: sha512-lYe4Gx7QT+MKGbDsA+Z+he/Wtef0BiwDOlK/XkBrdfsh9J/jPPXbX0tE9x9cl27Tmu5gg3QUbUrQYa/y+KOHPQ==}
@@ -3709,8 +3718,8 @@ packages:
     resolution: {integrity: sha512-0zQIJ873gay1scCTFZvHPWM9mVJBnaylB2NQDI8O9u8O32m00Jb6uxDKexZm8hjTRM7RiWe0FJ32pExHoXdwoQ==}
     engines: {node: '>=12'}
 
-  dmd@6.2.1:
-    resolution: {integrity: sha512-NC8f6DhzIggOsWG77j7L5Xppt+/VLCZTXzrhPkQ2gYKw3dyKWAYVtK+fxhCNpvPp0vHpnWfqdtMQJ0dWnozbsg==}
+  dmd@6.2.3:
+    resolution: {integrity: sha512-SIEkjrG7cZ9GWZQYk/mH+mWtcRPly/3ibVuXO/tP/MFoWz6KiRK77tSMq6YQBPl7RljPtXPQ/JhxbNuCdi1bNw==}
     engines: {node: '>=12'}
 
   dmg-license@1.0.11:
@@ -4924,16 +4933,16 @@ packages:
   jsbn@1.1.0:
     resolution: {integrity: sha512-4bYVV3aAMtDTTu4+xsDYa6sy9GyJ69/amsu9sYF2zqjiEoZA5xJi3BrfX3uY+/IekIu7MwdObdbDWpoZdBv3/A==}
 
-  jsdoc-api@8.1.0:
-    resolution: {integrity: sha512-CaiFo+GJKMdGjBHDmppub2QvTsVQyBSlY+pJNiiLjdPWtWMHqchfVO97kKle9EllFZ/ez/zqnD+WTP+dTTV4zg==}
+  jsdoc-api@8.1.1:
+    resolution: {integrity: sha512-yas9E4h8NHp1CTEZiU/DPNAvLoUcip+Hl8Xi1RBYzHqSrgsF+mImAZNtwymrXvgbrgl4bNGBU9syulM0JzFeHQ==}
     engines: {node: '>=12.17'}
 
   jsdoc-parse@6.2.1:
     resolution: {integrity: sha512-9viGRUUtWOk/G4V0+nQ6rfLucz5plxh5I74WbNSNm9h9NWugCDVX4jbG8hZP9QqKGpdTPDE+qJXzaYNos3wqTA==}
     engines: {node: '>=12'}
 
-  jsdoc-to-markdown@8.0.2:
-    resolution: {integrity: sha512-3k03lU8JV6ZAudAcUXdu01O/0mTqdfiMLXtIx6NMPsmo8tw06WitFn6qUq7n6mZx8mj/qTtDZDiBfH4IGul1dA==}
+  jsdoc-to-markdown@8.0.3:
+    resolution: {integrity: sha512-JGYYd5xygnQt1DIxH+HUI+X/ynL8qWihzIF0n15NSCNtM6MplzawURRcaLI2WkiS2hIjRIgsphCOfM7FkaWiNg==}
     engines: {node: '>=12.17'}
     hasBin: true
 
@@ -5694,8 +5703,8 @@ packages:
   path@0.12.7:
     resolution: {integrity: sha512-aXXC6s+1w7otVF9UletFkFcDsJeO7lSZBPUQhtb5O0xJe8LtYhj/GxldoL09bBj9+ZmE2hNoHqQSFMN5fikh4Q==}
 
-  pe-library@0.4.0:
-    resolution: {integrity: sha512-JAmVv2jGxmczplhHO7UoFGJ+pM/yMBpny3vNjwNFuaeQfzKlekQidZ8Ss8EJ0qee8wEQN4lY2IwtWx2oRfMsag==}
+  pe-library@0.4.1:
+    resolution: {integrity: sha512-eRWB5LBz7PpDu4PUlwT0PhnQfTQJlDDdPa35urV4Osrm0t0AqQFGn+UIkU3klZvwJ8KPO3VbBFsXquA6p6kqZw==}
     engines: {node: '>=12', npm: '>=6'}
 
   pend@1.2.0:
@@ -5831,7 +5840,7 @@ packages:
   puppeteer@2.1.1:
     resolution: {integrity: sha512-LWzaDVQkk1EPiuYeTOj+CZRIjda4k2s5w4MK4xoH2+kgWV/SDlkYHmxatDdtYrciHUKSXTsGgPgPP8ILVdBsxg==}
     engines: {node: '>=8.16.0'}
-    deprecated: < 22.6.4 is no longer supported
+    deprecated: < 22.8.2 is no longer supported
 
   q@1.5.1:
     resolution: {integrity: sha512-kV/CThkXo6xyFEZUugw/+pIOywXcDbFYgSct5cT3gqlbkBE1SJdwy6UQoZvodiWF/ckQLZyDE/Bu1M6gVu5lVw==}
@@ -5867,10 +5876,6 @@ packages:
   read-binary-file-arch@1.0.6:
     resolution: {integrity: sha512-BNg9EN3DD3GsDXX7Aa8O4p92sryjkmzYYgmgTAc6CA4uGLEDzFfxOxugu21akOxpcXHiEgsYkC6nPsQvLLLmEg==}
     hasBin: true
-
-  read-config-file@6.4.0:
-    resolution: {integrity: sha512-uB5QOBeF84PT61GlV11OTV4jUGHAO3iDEOP6v9ygxhG6Bs9PLg7WsjNT6mtIX2G+x8lJTr4ZWNeG6LDTKkNf2Q==}
-    engines: {node: '>=12.0.0'}
 
   read-package-up@11.0.0:
     resolution: {integrity: sha512-MbgfoNPANMdb4oRBNg5eqLbB2t2r+o5Ua1pNt8BqGp4I0FJZhuVSOj3PaBPni4azWuSzEdNn2evevzVmEk1ohQ==}
@@ -5994,8 +5999,8 @@ packages:
   requizzle@0.2.4:
     resolution: {integrity: sha512-JRrFk1D4OQ4SqovXOgdav+K8EAhSB/LJZqCz8tbX0KObcdeM15Ss59ozWMBWmmINMagCwmqn4ZNryUGpBsl6Jw==}
 
-  resedit@1.7.0:
-    resolution: {integrity: sha512-dbsZ0gk5opWPFlKMqvxCrLCuMZUVmsW3yTPT0tT4mYwo5fjQM8c4HMN9ZJt6dRDqDV/78m9SU4rv24PN4NiYaA==}
+  resedit@1.7.1:
+    resolution: {integrity: sha512-/FJ6/gKAXbcHtivannhecWsa43kGVFK3aHHv9Jm3x0eFiM31MoGihkAOWbm3UsvjYLRVw0zTkfARy2dI96JL1Q==}
     engines: {node: '>=12', npm: '>=6'}
 
   resolve-alpn@1.2.1:
@@ -6537,6 +6542,9 @@ packages:
   to-regex@3.0.2:
     resolution: {integrity: sha512-FWtleNAtZ/Ki2qtqej2CXTOayOH9bHDQF+Q48VpWyDXjbYxA4Yz8iDB31zXOBUlOHHKidDbqGVrTUvQMPmBGBw==}
     engines: {node: '>=0.10.0'}
+
+  toml@3.0.0:
+    resolution: {integrity: sha512-y/mWCZinnvxjTKYhJ+pYxwD0mRLVvOtdS2Awbgxln6iEnt4rk0yBxeSBHkGJcPucRiG0e55mwWp+g/05rsrd6w==}
 
   touch@0.0.3:
     resolution: {integrity: sha512-/LQ54KM9rPf3rGXGo2UPQWx3ol242Zg6Whq27H5DEmZhCJo+pm9N5BzRGepO9vTVhYxpXJdcc1+3uaYt9NyeKg==}
@@ -8950,9 +8958,9 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@electron/notarize@2.3.2':
+  '@electron/notarize@2.4.0':
     dependencies:
-      debug: 4.3.4
+      debug: 4.3.5
       fs-extra: 9.1.0
       promise-retry: 2.0.1
     transitivePeerDependencies:
@@ -9829,7 +9837,7 @@ snapshots:
       normalize-path: 3.0.0
       picomatch: 2.3.1
 
-  app-builder-bin@5.0.0-alpha.7: {}
+  app-builder-bin@5.0.0-alpha.8: {}
 
   aproba@2.0.0: {}
 
@@ -11164,12 +11172,12 @@ snapshots:
       test-value: 3.0.0
       walk-back: 5.1.0
 
-  dmd@6.2.1:
+  dmd@6.2.3:
     dependencies:
       array-back: 6.2.2
       cache-point: 2.0.0
       common-sequence: 2.0.2
-      fast-glob: 3.3.2
+      file-set: 4.0.2
       handlebars: 4.7.8
       marked: 4.3.0
       object-get: 2.1.1
@@ -11813,7 +11821,7 @@ snapshots:
     dependencies:
       foreground-child: 3.1.1
       jackspeak: 2.3.6
-      minimatch: 9.0.3
+      minimatch: 9.0.5
       minipass: 7.0.4
       path-scurry: 1.11.1
 
@@ -12813,11 +12821,12 @@ snapshots:
 
   jsbn@1.1.0: {}
 
-  jsdoc-api@8.1.0:
+  jsdoc-api@8.1.1:
     dependencies:
       array-back: 6.2.2
       cache-point: 2.0.0
       collect-all: 1.0.4
+      file-set: 4.0.2
       fs-then-native: 2.0.0
       jsdoc: 4.0.3
       object-to-spawn-args: 2.0.1
@@ -12832,19 +12841,19 @@ snapshots:
       sort-array: 4.1.5
       test-value: 3.0.0
 
-  jsdoc-to-markdown@8.0.2:
+  jsdoc-to-markdown@8.0.3:
     dependencies:
       array-back: 6.2.2
       command-line-tool: 0.8.0
       config-master: 3.1.0
-      dmd: 6.2.1
-      jsdoc-api: 8.1.0
+      dmd: 6.2.3
+      jsdoc-api: 8.1.1
       jsdoc-parse: 6.2.1
       walk-back: 5.1.0
 
   jsdoc@4.0.3:
     dependencies:
-      '@babel/parser': 7.24.0
+      '@babel/parser': 7.24.8
       '@jsdoc/salty': 0.2.7
       '@types/markdown-it': 14.1.1
       bluebird: 3.7.2
@@ -13675,7 +13684,7 @@ snapshots:
       process: 0.11.10
       util: 0.10.4
 
-  pe-library@0.4.0: {}
+  pe-library@0.4.1: {}
 
   pend@1.2.0: {}
 
@@ -13826,15 +13835,6 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  read-config-file@6.4.0:
-    dependencies:
-      config-file-ts: 0.2.8-rc1
-      dotenv: 16.4.5
-      dotenv-expand: 11.0.6
-      js-yaml: 4.1.0
-      json5: 2.2.3
-      lazy-val: 1.0.5
-
   read-package-up@11.0.0:
     dependencies:
       find-up-simple: 1.0.0
@@ -13980,9 +13980,9 @@ snapshots:
     dependencies:
       lodash: 4.17.21
 
-  resedit@1.7.0:
+  resedit@1.7.1:
     dependencies:
-      pe-library: 0.4.0
+      pe-library: 0.4.1
 
   resolve-alpn@1.2.1: {}
 
@@ -14552,6 +14552,8 @@ snapshots:
       extend-shallow: 3.0.2
       regex-not: 1.0.2
       safe-regex: 1.1.0
+
+  toml@3.0.0: {}
 
   touch@0.0.3:
     dependencies:
