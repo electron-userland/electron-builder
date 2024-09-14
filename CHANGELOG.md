@@ -1,3 +1,12 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v25.1.0...v) (2024-09-14)
+
+
+### Bug Fixes
+
+* **deploy:** redeploy all packages to sync semver ranges ([#8486](https://github.com/electron-userland/electron-builder/issues/8486)) ([d56cd27](https://github.com/electron-userland/electron-builder/commit/d56cd274b9d0fedb71889293164a15e51f7cc744))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v25.0.6...v) (2024-09-13)
 
 

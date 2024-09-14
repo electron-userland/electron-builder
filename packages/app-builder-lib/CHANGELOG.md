@@ -1,5 +1,18 @@
 # app-builder-lib
 
+## 25.1.2
+
+### Patch Changes
+
+- [#8486](https://github.com/electron-userland/electron-builder/pull/8486) [`d56cd274`](https://github.com/electron-userland/electron-builder/commit/d56cd274b9d0fedb71889293164a15e51f7cc744) Thanks [@mmaietta](https://github.com/mmaietta)! - fix(deploy): redeploy all packages to sync semver ranges
+
+- Updated dependencies [[`d56cd274`](https://github.com/electron-userland/electron-builder/commit/d56cd274b9d0fedb71889293164a15e51f7cc744)]:
+  - builder-util@25.1.2
+  - builder-util-runtime@9.2.7
+  - dmg-builder@25.1.2
+  - electron-builder-squirrel-windows@25.1.2
+  - electron-publish@25.1.2
+
 ## 25.1.1
 
 ### Patch Changes
