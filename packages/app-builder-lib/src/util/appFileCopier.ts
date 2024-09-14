@@ -198,18 +198,18 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
     return path.dirname(parentDir)
   }
   const collectNodeModules = async (dep: NodeModuleInfo, destination: string) => {
-    if (!dep.conflictDependency || dep.conflictDependency.length === 0) {
-      const source = dep.dir
-      const matcher = new FileMatcher(getRealSource(source), destination, mainMatcher.macroExpander, mainMatcher.patterns)
-      const copier = new NodeModuleCopyHelper(matcher, platformPackager.info)
-      const files = await copier.collectNodeModules(dep, nodeModuleExcludedExts)
-      result[index++] = validateFileSet({ src: source, destination, files, metadata: copier.metadata })
-      return
-    }
+    const source = dep.dir
+    const matcher = new FileMatcher(getRealSource(source), destination, mainMatcher.macroExpander, mainMatcher.patterns)
+    const copier = new NodeModuleCopyHelper(matcher, platformPackager.info)
+    const files = await copier.collectNodeModules(dep, nodeModuleExcludedExts)
+    result[index++] = validateFileSet({ src: source, destination, files, metadata: copier.metadata })
 
+    if (dep.conflictDependency) {
     for (const c of dep.conflictDependency) {
       await collectNodeModules(c, path.join(destination, NODE_MODULES, c.name))
     }
+    }
+
   }
 
   for (const dep of deps) {
