@@ -295,8 +295,8 @@ importers:
         specifier: ^4.1.6
         version: 4.1.7
       app-builder-bin:
-        specifier: 5.0.0-alpha.8
-        version: 5.0.0-alpha.8
+        specifier: 5.0.0-alpha.9
+        version: 5.0.0-alpha.9
       bluebird-lst:
         specifier: ^1.0.9
         version: 1.0.9
@@ -2632,8 +2632,8 @@ packages:
     resolution: {integrity: sha512-KMReFUr0B4t+D+OBkjR3KYqvocp2XaSzO55UcB6mgQMd3KbcE+mWTyvVV7D/zsdEbNnV6acZUutkiHQXvTr1Rw==}
     engines: {node: '>= 8'}
 
-  app-builder-bin@5.0.0-alpha.8:
-    resolution: {integrity: sha512-T8MCQ9fiySB3jwE+MLptHYe7YfBSduriv/8+Bu+b9HWxqqDNdqRStzHh0l1IJiTg74eWbzmEwDW+W4arAKHIMg==}
+  app-builder-bin@5.0.0-alpha.9:
+    resolution: {integrity: sha512-c/wOXdITW80MGUV2PECWuxB49MIm44latbuoWGjq0i89lmA9ZB8jcvuF1pStu3wrxStYVjYpPD3/NgQDWSHohA==}
 
   aproba@2.0.0:
     resolution: {integrity: sha512-lYe4Gx7QT+MKGbDsA+Z+he/Wtef0BiwDOlK/XkBrdfsh9J/jPPXbX0tE9x9cl27Tmu5gg3QUbUrQYa/y+KOHPQ==}
@@ -9837,7 +9837,7 @@ snapshots:
       normalize-path: 3.0.0
       picomatch: 2.3.1
 
-  app-builder-bin@5.0.0-alpha.8: {}
+  app-builder-bin@5.0.0-alpha.9: {}
 
   aproba@2.0.0: {}
 
