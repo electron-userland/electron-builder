@@ -8,7 +8,7 @@ See [Auto Update](https://electron.build/auto-update) for more information.
 Supported OS:
  - macOS ([Squirrel.Mac](https://github.com/Squirrel/Squirrel.Mac)).
  - Windows (NSIS).
- - Linux (AppImage).
+ - Linux (AppImage, rpm, deb).
 
 ## Credits
 
