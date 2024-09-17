@@ -31,7 +31,7 @@ To sign an app on Windows, there are two types of certificates:
 
 Both certificates work with auto-update. The regular (and often cheaper) Code Signing Certificate shows a warning during installation that goes away once enough users installed your application and you've built up trust. The EV Certificate has more trust and thus works immediately without any warnings. However, it is not possible to export the EV Certificate as it is bound to a physical USB dongle. Thus, you can't export the certificate for signing code on a CI, such as AppVeyor.
 
-If you are using an EV Certificate, you need to provide [win.certificateSubjectName](configuration/win.md#WindowsConfiguration-certificateSubjectName) in your electron-builder configuration.
+If you are using an EV Certificate, you need to provide [win.certificateSubjectName](./win.md#WindowsConfiguration-certificateSubjectName) in your electron-builder configuration.
 
 If you use Windows 7, please ensure that [PowerShell](https://blogs.technet.microsoft.com/heyscriptingguy/2013/06/02/weekend-scripter-install-powershell-3-0-on-windows-7/) is updated to version 3.0.
 

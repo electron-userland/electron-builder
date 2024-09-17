@@ -1,10 +1,6 @@
 The top-level [linux](configuration.md#Configuration-linux) key contains set of options instructing electron-builder on how it should build Linux targets. These options applicable for any Linux target.
 
-<!-- do not edit. start of generated block -->
-
-<!-- end of generated block -->
-
----
+# Base Linux Configuration
 
 {% include "./app-builder-lib.Interface.LinuxConfiguration.md" %}
 

@@ -2,9 +2,9 @@ The top-level [appx](configuration.md#Configuration-appx) key contains set of op
 
 All options are optional. All required for AppX configuration is inferred and computed automatically.
 
-<!-- do not edit. start of generated block -->
+# Configuration
 
-<!-- end of generated block -->
+{% include "./app-builder-lib.Interface.AppXOptions.md" %}
 
 ## AppX Package Code Signing
 

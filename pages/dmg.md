@@ -1,8 +1,8 @@
 The top-level [dmg](configuration.md#Configuration-dmg) key contains set of options instructing electron-builder on how it should build [DMG](https://en.wikipedia.org/wiki/Apple_Disk_Image).
 
-<!-- do not edit. start of generated block -->
+# Configuration
 
-<!-- end of generated block -->
+{% include "./app-builder-lib.Interface.DmgOptions.md" %}
 
 ## DMG License
 

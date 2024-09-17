@@ -76,7 +76,7 @@ export default class FpmTarget extends Target {
     const projectUrl = await packager.appInfo.computePackageUrl()
     const errors: Array<string> = []
     if (projectUrl == null) {
-      errors.push("Please specify project homepage, see https://electron.build/configuration/configuration#Metadata-homepage")
+      errors.push("Please specify project homepage, see https://electron.build./configuration.md#Metadata-homepage")
     }
 
     const options = this.options

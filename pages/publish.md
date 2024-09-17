@@ -114,16 +114,31 @@ Detected automatically using:
     * or `CIRCLE_PROJECT_USERNAME`/`CIRCLE_PROJECT_REPONAME`,
 * if no env, from `.git/config` origin url.
 
-## Publishers
-**Options Available:**
-- GenericServerOptions
-- GithubOptions
-- SnapStoreOptions
-- SpacesOptions
-- KeygenOptions
-- BitbucketOptions
-- S3Options
+# Publishers
 
-<!-- do not edit. start of generated block -->
+# Bitbucket
+{% include "./builder-util-runtime.Interface.BitbucketOptions.md" %}
 
-<!-- end of generated block -->
+# Github
+
+{% include "./builder-util-runtime.Interface.GithubOptions.md" %}
+
+# Keygen
+
+{% include "./builder-util-runtime.Interface.KeygenOptions.md" %}
+
+# S3
+
+{% include "./builder-util-runtime.Interface.S3Options.md" %}
+
+# Snap Store
+
+{% include "./builder-util-runtime.Interface.SnapStoreOptions.md" %}
+
+# Spaces
+
+{% include "./builder-util-runtime.Interface.SpacesOptions.md" %}
+
+# BYO Generic (create-your-own)
+(And maybe submit it upstream in a PR!)
+{% include "./builder-util-runtime.Interface.GenericServerOptions.md" %}

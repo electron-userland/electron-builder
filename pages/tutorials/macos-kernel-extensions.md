@@ -3,12 +3,12 @@ Installing macOS kernel extensions with `electron-builder` can be done using scr
 First, in `package.json`, make sure you're building a package (`.pkg`) and not the default `.dmg`:
 
 ```json
-"mac": { 
+"mac": {
   "target": "pkg"
 }
 ```
 
-Place your script and the kernel extensions in `build/pkg-scripts`, or [define a custom directory](../configuration/pkg.md#PkgOptions-scripts). Note that the script **must** be called either `preinstall` or `postinstall`.  Remember to use ` #!/bin/sh` as the first line in your script. Also, your script must be executable (`chmod +x <filename>`).
+Place your script and the kernel extensions in `build/pkg-scripts`, or [define a custom directory](../pkg.md#PkgOptions-scripts). Note that the script **must** be called either `preinstall` or `postinstall`.  Remember to use ` #!/bin/sh` as the first line in your script. Also, your script must be executable (`chmod +x <filename>`).
 
 An example script:
 ```sh

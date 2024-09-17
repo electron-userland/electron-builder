@@ -1,4 +1,4 @@
-Auto updates are enabled by the `electron-updater` package. Ideally, auto updates are configured to run in a CI pipeline to automatically provision new releases. See [publish configuration](configuration/publish.md) for information on how to configure your local or CI environment for automated deployments.
+Auto updates are enabled by the `electron-updater` package. Ideally, auto updates are configured to run in a CI pipeline to automatically provision new releases. See [publish configuration](./publish.md) for information on how to configure your local or CI environment for automated deployments.
 
 Auto updates work as follows:
 
@@ -38,7 +38,7 @@ The `electron-updater` package offers a different functionality compared to Elec
 
 1. Install [electron-updater](https://yarn.pm/electron-updater) as an app dependency.
 
-2. Configure the [`publish`](configuration/publish.md) options depending on where you want to host your release files.
+2. Configure the [`publish`](./publish.md) options depending on where you want to host your release files.
 
 3. Build your application and check that the build directory contains the metadata `.yml` files next to the built application. For most publish targets, the building step will also upload the files, except for the generic server option, where you have to upload your built releases and metadata manually.
 
@@ -68,7 +68,7 @@ The `electron-updater` package offers a different functionality compared to Elec
 
 !!! note
     1. Do not call [setFeedURL](#appupdatersetfeedurloptions). electron-builder automatically creates `app-update.yml` file for you on build in the `resources` (this file is internal, you don't need to be aware of it).
-    2. `zip` target for macOS is **required** for Squirrel.Mac, otherwise `latest-mac.yml` cannot be created, which causes `autoUpdater` error. Default [target](configuration/mac.md#MacOptions-target) for macOS is `dmg`+`zip`, so there is no need to explicitly specify target.
+    2. `zip` target for macOS is **required** for Squirrel.Mac, otherwise `latest-mac.yml` cannot be created, which causes `autoUpdater` error. Default [target](./mac.md#MacOptions-target) for macOS is `dmg`+`zip`, so there is no need to explicitly specify target.
 
 ## Examples
 

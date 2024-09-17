@@ -1,0 +1,14 @@
+.md-main__inner.md-grid {
+  max-width: initial;
+}
+
+.md-grid {
+  max-width: initial;
+}
+
+table th:first-of-type {
+  width: 50%;
+}
+table th:nth-of-type(2) {
+  width: 50%;
+}

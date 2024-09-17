@@ -11,7 +11,7 @@ export interface FileSet {
    */
   to?: string
   /**
-   * The [glob patterns](/file-patterns).
+   * The [glob patterns](./file-patterns.md).
    */
   filter?: Array<string> | string
 }
@@ -35,7 +35,7 @@ export interface PlatformSpecificBuildOptions extends TargetSpecificOptions {
   readonly appId?: string | null
 
   /**
-   * The [artifact file name template](/configuration/configuration#artifact-file-name-template). Defaults to `${productName}-${version}.${ext}` (some target can have other defaults, see corresponding options).
+   * The [artifact file name template](./configuration.md#artifact-file-name-template). Defaults to `${productName}-${version}.${ext}` (some target can have other defaults, see corresponding options).
    */
   readonly artifactName?: string | null
 
@@ -51,7 +51,7 @@ export interface PlatformSpecificBuildOptions extends TargetSpecificOptions {
   readonly compression?: CompressionLevel | null
 
   /**
-   * Whether to exclude all default ignored files(https://www.electron.build/configuration/contents#files) and options. Defaults to `false`.
+   * Whether to exclude all default ignored files(https://www.electron.build/contents#files) and options. Defaults to `false`.
    *
    * @default false
    */
@@ -70,7 +70,7 @@ export interface PlatformSpecificBuildOptions extends TargetSpecificOptions {
   readonly asar?: AsarOptions | boolean | null
 
   /**
-   * A [glob patterns](/file-patterns) relative to the [app directory](#MetadataDirectories-app), which specifies which files to unpack when creating the [asar](http://electron.atom.io/docs/tutorial/application-packaging/) archive.
+   * A [glob patterns](./file-patterns.md) relative to the [app directory](#MetadataDirectories-app), which specifies which files to unpack when creating the [asar](http://electron.atom.io/docs/tutorial/application-packaging/) archive.
    */
   readonly asarUnpack?: Array<string> | string | null
 
@@ -97,7 +97,7 @@ export interface PlatformSpecificBuildOptions extends TargetSpecificOptions {
   readonly forceCodeSigning?: boolean
 
   /**
-   * The [electron-updater compatibility](/auto-update#compatibility) semver range.
+   * The [electron-updater compatibility](./auto-update.md#compatibility) semver range.
    */
   readonly electronUpdaterCompatibility?: string | null
 

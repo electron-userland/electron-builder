@@ -1,11 +1,13 @@
 The top-level [win](configuration.md#Configuration-win) key contains set of options instructing electron-builder on how it should build Windows targets. These options applicable for any Windows target.
 
+# Configuration
+
 {% include "./app-builder-lib.Interface.WindowsConfiguration.md" %}
 
 ---
 
-## Common Questions
-#### How do delegate code signing?
+# Common Questions
+## How do delegate code signing?
 
 Use [sign](#WindowsConfiguration-sign) option. Please also see [why sign.js is called 8 times](https://github.com/electron-userland/electron-builder/issues/3995).
 
@@ -22,7 +24,7 @@ exports.default = async function(configuration) {
 }
 ```
 
-#### How do use a custom verify function to enable nsis signature verification alternatives instead of powershell?
+## How do use a custom verify function to enable nsis signature verification alternatives instead of powershell?
 
 Use the `verifyUpdateCodeSignature` interface:
 
@@ -65,7 +67,7 @@ export default class AppUpdater {
 ```
 
 
-#### How do create Parallels Windows 10 Virtual Machine?
+## How do create Parallels Windows 10 Virtual Machine?
 
 !!! warning "Disable "Share Mac user folders with Windows""
     If you use Parallels, you [must not use](https://github.com/electron-userland/electron-builder/issues/865#issuecomment-258105498) "Share Mac user folders with Windows" feature and must not run installers from such folders.
@@ -81,7 +83,7 @@ You don't need to have Windows 10 license. Free is provided (expire after 90 day
 
 Parallels Windows 10 VM will be used automatically to build AppX on macOS. No need even start VM — it will be started automatically on demand and suspended after build. No need to specify VM — it will be detected automatically (first Windows 10 VM will be used).
 
-#### How do create VirtualBox Windows 10 Virtual Machine?
+## How do create VirtualBox Windows 10 Virtual Machine?
 
 If you are not on macOS or don't want to buy [Parallels Desktop](https://www.parallels.com/products/desktop/), you can use free [VirtualBox](https://www.virtualbox.org/wiki/Downloads).
 

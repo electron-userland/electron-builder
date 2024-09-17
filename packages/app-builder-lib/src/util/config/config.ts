@@ -244,12 +244,12 @@ export async function validateConfiguration(config: Configuration, debugLogger: 
       }
 
       const site = "https://www.electron.build"
-      let url = `${site}/configuration/configuration`
+      let url = `${site}/configuration`
       const targets = new Set(["mac", "dmg", "pkg", "mas", "win", "nsis", "appx", "linux", "appimage", "snap"])
       const dataPath: string = error.dataPath == null ? null : error.dataPath
       const targetPath = dataPath.startsWith(".") ? dataPath.substr(1).toLowerCase() : null
       if (targetPath != null && targets.has(targetPath)) {
-        url = `${site}/configuration/${targetPath}`
+        url = `${site}/${targetPath}`
       }
 
       return `${formattedError}\n  How to fix:

@@ -1,6 +1,8 @@
 site_name: electron-builder
 site_url: https://www.electron.build
 use_directory_urls: false
+extra_css:
+  - stylesheets/autowidth.css
 theme:
   feature:
     tabs: true
@@ -50,7 +52,7 @@ plugins:
       # recursive: true
 
 nav:
-  - Introduction: index.md
+  - Introduction: README.md
   - Command Line Interface (CLI): cli.md
   - Programmatic API:
       - API: api/electron-builder.md

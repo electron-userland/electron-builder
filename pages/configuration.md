@@ -21,44 +21,44 @@ electron-builder [configuration](#configuration) can be defined
 
 Most of the options accept `null` — for example, to explicitly set that DMG icon must be default volume icon from the OS and default rules must be not applied (i.e. use application icon as DMG icon), set `dmg.icon` to `null`.
 
-## Artifact File Name Template
+# Artifact File Name Template
 
-`${ext}` macro is supported in addition to [file macros](../file-patterns.md#file-macros).
+`${ext}` macro is supported in addition to [file macros](./file-patterns.md#file-macros).
 
-## Environment Variables from File
+# Environment Variables from File
 
 Env file `electron-builder.env` in the current dir ([example](https://github.com/motdotla/dotenv-expand/blob/1cc80d02e1f8aa749253a04a2061c0fecb9bdb69/tests/.env)). Supported only for CLI usage.
 
-## How to Read Docs
+# How to Read Docs
 
 * Name of optional property is normal, **required** is bold.
 * Type is specified after property name: `Array<String> | String`. Union like this means that you can specify or string (`**/*`), or array of strings (`["**/*", "!foo.js"]`).
 
-## Configuration
+# Configuration
 
-<!-- do not edit. start of generated block -->
-
-<!-- end of generated block -->
+{% include "./app-builder-lib.Interface.Configuration.md" %}
 
 ---
 
-### Overridable per Platform Options
+# Overridable per Platform Options
 
 Following options can be set also per platform (top-level keys [mac](mac.md), [linux](linux.md) and [win](win.md)) if need.
 
+# Base Configuration
+
 {% include "./app-builder-lib.Interface.PlatformSpecificBuildOptions.md" %}
 
-## Metadata
+# Metadata
 Some standard fields should be defined in the `package.json`.
 
 {% include "./app-builder-lib.Interface.Metadata.md" %}
 
-## Proton Native
+# Proton Native
 
 To package [Proton Native](https://proton-native.js.org/) app, set `protonNodeVersion` option to `current` or specific NodeJS version that you are packaging for.
 Currently, only macOS and Linux supported.
 
-## Build Version Management
+# Build Version Management
 `CFBundleVersion` (macOS) and `FileVersion` (Windows) will be set automatically to `version.build_number` on CI server (Travis, AppVeyor, CircleCI and Bamboo supported).
 
 {% include "./hooks.md" %}

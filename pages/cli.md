@@ -67,10 +67,10 @@ Prepend `npx` to sample commands below if you run it from Terminal and not from 
 Without target configuration, electron-builder builds Electron app for current platform and current architecture using default target.
 
 * macOS - DMG and ZIP for Squirrel.Mac.
-* Windows - [NSIS](configuration/nsis.md).
+* Windows - [NSIS]./nsis.md).
 * Linux:
-    - if you build on Windows or macOS: [Snap](configuration/snap.md) and [AppImage](configuration/appimage.md) for x64.
-    - if you build on Linux: [Snap](configuration/snap.md) and [AppImage](configuration/appimage.md) for current architecture.
+    - if you build on Windows or macOS: [Snap](./snap.md) and [AppImage](./appimage.md) for x64.
+    - if you build on Linux: [Snap](./snap.md) and [AppImage](./appimage.md) for current architecture.
 
 Platforms and archs can be configured or using [CLI args](https://github.com/electron-userland/electron-builder#cli-usage), or in the configuration.
 
@@ -117,6 +117,33 @@ For example, if you don't want to pass `--ia32` and `--x64` flags each time, but
       target:
         - target: dmg
           arch: universal
+    ```
+
+    electron-builder.config.js
+    ```js
+    module.exports = {
+      "win": {
+        "target": [
+          {
+            "target": "nsis",
+            "arch": [
+              "x64",
+              "ia32"
+            ]
+          }
+        ]
+      },
+      "mac": {
+        "target": [
+          {
+            "target": "dmg",
+            "arch": [
+              "universal"
+            ]
+          }
+        ]
+      }
+    }
     ```
 
 and use

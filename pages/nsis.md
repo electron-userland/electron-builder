@@ -2,7 +2,7 @@ The top-level [nsis](configuration.md#Configuration-nsis) key contains set of op
 
 These options also applicable for [Web installer](#web-installer), use top-level `nsisWeb` key.
 
----
+# Configuration
 
 {% include "./app-builder-lib.Interface.NsisOptions.md" %}
 

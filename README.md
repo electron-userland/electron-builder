@@ -129,9 +129,9 @@ will declare to use node-modules instead of PnP.
 
 [electron-webpack-quick-start](https://github.com/electron-userland/electron-webpack-quick-start) is a recommended way to create a new Electron application. See [Boilerplates](https://www.electron.build/#boilerplates).
 
-1. Specify the standard fields in the application `package.json` — [name](https://electron.build/configuration/configuration#Metadata-name), `description`, `version` and [author](https://docs.npmjs.com/files/package.json#people-fields-author-contributors).
+1. Specify the standard fields in the application `package.json` — [name](https://electron.build./configuration.md#Metadata-name), `description`, `version` and [author](https://docs.npmjs.com/files/package.json#people-fields-author-contributors).
 
-2. Specify the [build](https://electron.build/configuration/configuration#build) configuration in the `package.json` as follows:
+2. Specify the [build](https://electron.build./configuration.md#build) configuration in the `package.json` as follows:
     ```json
     "build": {
       "appId": "your.id",
@@ -156,11 +156,69 @@ will declare to use node-modules instead of PnP.
 
     To ensure your native dependencies are always matched electron version, simply add script `"postinstall": "electron-builder install-app-deps"` to your `package.json`.
 
-5. If you have native addons of your own that are part of the application (not as a dependency), set [nodeGypRebuild](https://www.electron.build/configuration/configuration#Configuration-nodeGypRebuild) to `true`.
+5. If you have native addons of your own that are part of the application (not as a dependency), set [nodeGypRebuild](https://www.electron.build./configuration.md#Configuration-nodeGypRebuild) to `true`.
 
-Please note that everything is packaged into an asar archive [by default](https://electron.build/configuration/configuration#Configuration-asar).
+Please note that everything is packaged into an asar archive [by default](https://electron.build./configuration.md#Configuration-asar).
 
 For an app that will be shipped to production, you should sign your application. See [Where to buy code signing certificates](https://www.electron.build/code-signing#where-to-buy-code-signing-certificate).
+
+## Programmatic Usage
+See `node_modules/electron-builder/out/index.d.ts`. Typings for TypeScript are provided and also can be found [here](/api/electron-builder.md).
+
+Code snippit provided below is also shown "in action" [here](/api/programmatic-usage.md) as well.
+```js
+"use strict"
+
+const builder = require("electron-builder")
+const Platform = builder.Platform
+
+// Promise is returned
+builder.build({
+  targets: Platform.MAC.createTarget(),
+  config: {
+   "//": "build options, see https://goo.gl/QQXmcV"
+  }
+})
+  .then(() => {
+    // handle result
+  })
+  .catch((error) => {
+    // handle error
+  })
+```
+
+## Boilerplates
+
+* [electron-webpack-quick-start](https://github.com/electron-userland/electron-webpack-quick-start) — A bare minimum project structure to get started developing with [electron-webpack](https://github.com/electron-userland/electron-webpack). Recommended.
+* [electron-react-boilerplate](https://github.com/chentsulin/electron-react-boilerplate) A boilerplate for scalable cross-platform desktop apps.
+* [electron-react-redux-boilerplate](https://github.com/jschr/electron-react-redux-boilerplate) A minimal boilerplate to get started with Electron, React and Redux.
+* [electron-boilerplate](https://github.com/szwacz/electron-boilerplate) A minimalistic yet comprehensive boilerplate application.
+* [Vue CLI 3 plugin for Electron](https://nklayman.github.io/vue-cli-plugin-electron-builder) A Vue CLI 3 plugin for Electron with no required configuration.
+* [electron-vue-vite](https://github.com/caoxiemeihao/electron-vue-vite) A real simple Electron + Vue3 + Vite5 boilerplate.
+* [vite-electron-builder](https://github.com/cawa-93/vite-electron-builder) Secure boilerplate for Electron app based on Vite. TypeScript + Vue/React/Angular/Svelte/Vanilla
+
+## Debug
+
+Set the `DEBUG` environment variable to debug what electron-builder is doing:
+```bash
+DEBUG=electron-builder
+```
+
+`FPM_DEBUG` env to add more details about building linux targets (except snap and appimage).
+
+`DEBUG_DMG=true` env var to add more debugging/verbosity from `hdiutil` (macOS).
+
+!!! tip "cmd"
+    On [Windows](https://github.com/visionmedia/debug#windows-command-prompt-notes) the environment variable is set using the set command.
+    ```bash
+    set DEBUG=electron-builder
+    ```
+
+!!! tip "PowerShell"
+    PowerShell uses different syntax to set environment variables.
+    ```bash
+    $env:DEBUG=electron-builder
+    ```
 
 ## Donate
 

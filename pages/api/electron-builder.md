@@ -1,5 +1,4 @@
-Developer API only. See [Configuration](../configuration/configuration.md) for user documentation.
+Developer API only. See [Configuration](../configuration.md) for user documentation.
 
-<!-- do not edit. start of generated block -->
+{% include "../electron-builder/globals.md" %}
 
-<!-- end of generated block -->

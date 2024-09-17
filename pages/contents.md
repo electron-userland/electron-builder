@@ -2,7 +2,7 @@
 
 `Array<String | FileSet> | String | FileSet`
 
-A [glob patterns](../file-patterns.md) relative to the [app directory](configuration.md#MetadataDirectories-app), which specifies which files to include when copying files to create the package.
+A [glob patterns](./file-patterns.md) relative to the [app directory](configuration.md#MetadataDirectories-app), which specifies which files to include when copying files to create the package.
 
 Defaults to:
 ```json
@@ -58,7 +58,7 @@ If you don't use two-package.json structure and don't set custom app directory, 
 
 `String`
 
-The destination path relative to and defaults to: 
+The destination path relative to and defaults to:
 * the asar archive root for `files`,
 * the app's content directory for `extraFiles`,
 * the app's resource directory for `extraResources`.

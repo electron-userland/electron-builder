@@ -8,9 +8,10 @@ The top-level [flatpak](configuration.md#Configuration-flatpak) key contains a s
 !!! info "Build dependencies"
     The `flatpak` and `flatpak-builder` packages need to be installed in order to build Flatpak bundles.
 
-<!-- do not edit. start of generated block -->
+# Configuration
 
-<!-- end of generated block -->
+{% include "./app-builder-lib.Interface.FlatpakOptions.md" %}
+
 
 ---
 

@@ -4,6 +4,5 @@ pipenv install
 echo "Installing deps"
 pnpm install
 echo "Building site docs"
-pnpm compile
-node scripts/renderer/out/typedoc2html.js
+pnpm docs:build
 mkdocs build
