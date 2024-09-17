@@ -1,3 +1,12 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v25.1.2...v) (2024-09-17)
+
+
+### Bug Fixes
+
+* Fix issues with conflictDependency that have two or more layers ([#8481](https://github.com/electron-userland/electron-builder/issues/8481)) ([216eaf9](https://github.com/electron-userland/electron-builder/commit/216eaf935da870f0a1a1b14f2b852f879d467710))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v25.1.0...v) (2024-09-14)
 
 
