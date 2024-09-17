@@ -1,6 +1,6 @@
 "use strict"
 
-loadNavPane()
+// loadNavPane()
 
 function loadNavPane() {
   const isMobile = window.matchMedia("only screen and (max-width: 760px)").matches

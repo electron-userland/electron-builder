@@ -3,15 +3,23 @@ import { FileAssociation } from "./FileAssociation"
 
 export interface FileSet {
   /**
-   * The source path relative to the project directory.
+   * The source path relative to and defaults to:
+   *
+   *  - the [app directory](configuration.md#MetadataDirectories-app) for `files`,
+   *  - the project directory for `extraResources` and `extraFiles`.
+   * If you don't use two-package.json structure and don't set custom app directory, app directory equals to project directory.
    */
   from?: string
   /**
-   * The destination path relative to the app's content directory for `extraFiles` and the app's resource directory for `extraResources`.
+   * The destination path relative to and defaults to:
+   *
+   *  - the asar archive root for `files`,
+   *  - the app's content directory for `extraFiles`,
+   *  - the app's resource directory for `extraResources`.
    */
   to?: string
   /**
-   * The [glob patterns](./file-patterns.md).
+   * The [glob patterns](./file-patterns.md). Defaults to "**\/*"
    */
   filter?: Array<string> | string
 }
@@ -74,7 +82,7 @@ export interface PlatformSpecificBuildOptions extends TargetSpecificOptions {
    */
   readonly asarUnpack?: Array<string> | string | null
 
-  /** @private */
+  /*  - @private */
   readonly icon?: string | null
 
   /**
@@ -126,10 +134,10 @@ export interface PlatformSpecificBuildOptions extends TargetSpecificOptions {
 
   readonly target?: Array<string | TargetConfiguration> | string | TargetConfiguration | null
 
-  /** @private */
+  /*  - @private */
   cscLink?: string | null
 
-  /** @private */
+  /*  - @private */
   cscKeyPassword?: string | null
 
   readonly defaultArch?: string

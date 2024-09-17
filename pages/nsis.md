@@ -2,10 +2,6 @@ The top-level [nsis](configuration.md#Configuration-nsis) key contains set of op
 
 These options also applicable for [Web installer](#web-installer), use top-level `nsisWeb` key.
 
-# Configuration
-
-{% include "./app-builder-lib.Interface.NsisOptions.md" %}
-
 ---
 
 Unicode enabled by default. Large strings are supported (maximum string length of 8192 bytes instead of the default of 1024 bytes).
@@ -152,3 +148,7 @@ For portable app, following environment variables are available:
     nsis:
       oneClick: false
     ```
+
+# Configuration
+
+{% include "./app-builder-lib.Interface.NsisOptions.md" %}

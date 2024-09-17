@@ -12,7 +12,7 @@ Always looking for community contributions! 👀 Setting up a [dev environment](
       <td>
          <a href="https://workflowy.com">
             <div>
-               <img src="https://workflowy.com/media/i/icon-28x28.png" alt="WorkFlowy" title="WorkFlowy" height="50" align="middle"/>
+               <img src="https://workflowy.com/media/i/icon-28x28.png" alt="WorkFlowy" title="WorkFlowy" style="height: 50px;" height="50"/>
             </div>
             Notes, Tasks, Projects.<br>All in a Single Place.
          </a>
@@ -24,7 +24,7 @@ Always looking for community contributions! 👀 Setting up a [dev environment](
          <br>
          <a href="https://tidepool.org">
             <div>
-               <img src="https://www.electron.build/sponsor-logos/Tidepool_Logo_Light.svg" alt="Tidepool" title="Tidepool" height="75" align="middle"/>
+               <img src="https://www.electron.build/sponsor-logos/Tidepool_Logo_Light.svg" alt="Tidepool" title="Tidepool" style="height: 75px;" height="75" />
             </div>
             Your gateway to understanding your diabetes data
          </a>
@@ -34,7 +34,7 @@ Always looking for community contributions! 👀 Setting up a [dev environment](
          <br>
          <a href="https://keygen.sh/?via=electron-builder">
             <div>
-               <img src="https://keygen.sh/images/logo-pill.png" alt="Keygen" title="Keygen" height="75" align="middle"/>
+               <img src="https://keygen.sh/images/logo-pill.png" alt="Keygen" title="Keygen" style="height: 75px;" height="75" />
             </div>
             An open, source-available software licensing and distribution API
          </a>
@@ -46,7 +46,7 @@ Always looking for community contributions! 👀 Setting up a [dev environment](
          <br>
          <a href="https://www.todesktop.com/electron?utm_source=electron-builder">
             <div>
-               <img src="https://www.todesktop.com/new-logo/todesktop-logo.png" alt="ToDesktop" title="ToDesktop" height="75" align="middle"/>
+               <img src="https://www.todesktop.com/new-logo/todesktop-logo.png" alt="ToDesktop" title="ToDesktop" style="height: 75px;" height="75" />
             </div>
             ToDesktop: An all-in-one platform for building and releasing Electron apps
          </a>
@@ -56,7 +56,7 @@ Always looking for community contributions! 👀 Setting up a [dev environment](
          <br>
          <a href="https://www.dashcam.io/?ref=electron_builder">
             <div>
-               <img src="https://user-images.githubusercontent.com/318295/226675216-ab6aad0c-526c-4a45-a0a8-3906ac614b8b.png" alt="Dashcam" title="Dashcam" height="75" align="middle"/>
+               <img src="https://user-images.githubusercontent.com/318295/226675216-ab6aad0c-526c-4a45-a0a8-3906ac614b8b.png" alt="Dashcam" title="Dashcam" style="height: 75px;" height="75" />
             </div>
             Dashcam: Capture the steps to reproduce any bug with video crash reports for Electron.
          </a>
@@ -91,11 +91,11 @@ See the full documentation on [electron.build](https://www.electron.build).
 * [Proton Native](https://www.electron.build/configuration/configuration/#proton-native) support.
 * Downloads all required tools files on demand automatically (e.g. to code sign windows application, to make AppX), no need to setup.
 
-| Question | Answer |
-|----------|-------|
-| “I want to configure electron-builder” | [See options](https://electron.build/configuration/configuration) |
-| “I found a bug or I have a question” | [Open an issue](https://github.com/electron-userland/electron-builder/issues/new) |
-| “I want to support development” | [Donate](https://www.electron.build/donate) |
+| Question                               | Answer                                                                            |
+| -------------------------------------- | --------------------------------------------------------------------------------- |
+| “I want to configure electron-builder” | [See options](https://electron.build/configuration/configuration)                 |
+| “I found a bug or I have a question”   | [Open an issue](https://github.com/electron-userland/electron-builder/issues/new) |
+| “I want to support development”        | [Donate](https://www.electron.build/donate)                                       |
 
 ## Installation
 [Yarn](http://yarnpkg.com/) is [strongly](https://github.com/electron-userland/electron-builder/issues/1147#issuecomment-276284477) recommended instead of npm.

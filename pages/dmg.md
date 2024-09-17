@@ -1,9 +1,5 @@
 The top-level [dmg](configuration.md#Configuration-dmg) key contains set of options instructing electron-builder on how it should build [DMG](https://en.wikipedia.org/wiki/Apple_Disk_Image).
 
-# Configuration
-
-{% include "./app-builder-lib.Interface.DmgOptions.md" %}
-
 ## DMG License
 
 To add license to DMG, create file `license_LANG_CODE.txt` in the build resources. Multiple license files in different languages are supported — use lang postfix (e.g. `_de`, `_ru`)). For example, create files `license_de.txt` and `license_en.txt` in the build resources.
@@ -21,3 +17,7 @@ The contain file should have the following format:
   "description": "Here is my own description"
 }
 ```
+
+# Configuration
+
+{% include "./app-builder-lib.Interface.DmgOptions.md" %}

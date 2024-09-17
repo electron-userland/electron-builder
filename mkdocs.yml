@@ -4,14 +4,41 @@ use_directory_urls: false
 extra_css:
   - stylesheets/autowidth.css
 theme:
-  feature:
-    tabs: true
   name: material
-#  logo:
-#    icon: 'build'
+  features:
+    - content.action.edit
+    - content.action.view
+    - content.code.annotate
+    - content.code.copy
+    - content.code.select
+    - content.tooltips
+    - header.autohide
+    - navigation.expand
+    - navigation.sections
+    # - search.highlight
+    # - search.share
+    # - search.suggest
+    - toc.follow
   palette:
-    primary: 'blue'
-    accent: 'blue'
+    - media: "(prefers-color-scheme)"
+      toggle:
+        icon: material/brightness-auto
+        name: Switch to light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: blue
+      accent: blue
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/weather-night
+        name: Switch to system preference
+  font:
+    text: Roboto
+    code: Roboto Mono
 
 repo_name: electron-userland/electron-builder
 repo_url: 'https://github.com/electron-userland/electron-builder'
@@ -37,6 +64,9 @@ markdown_extensions:
       permalink: true
 
 plugins:
+  - search
+  # - minify:
+  #     minify_html: true
   - include-markdown:
       # encoding: ascii
       # preserve_includer_indent: true

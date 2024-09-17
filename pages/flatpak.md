@@ -8,16 +8,13 @@ The top-level [flatpak](configuration.md#Configuration-flatpak) key contains a s
 !!! info "Build dependencies"
     The `flatpak` and `flatpak-builder` packages need to be installed in order to build Flatpak bundles.
 
-# Configuration
-
-{% include "./app-builder-lib.Interface.FlatpakOptions.md" %}
-
-
----
-
 ## Troubleshooting
 
 If the Flatpak build process fails with an error message like "flatpak failed with status code X", setting the `DEBUG="@malept/flatpak-bundler"` environment variable should provide more context about the error.
 
 !!! example "Enable Flatpak build debug logging"
     `env DEBUG="@malept/flatpak-bundler" electron-builder build --linux flatpak`
+
+# Configuration
+
+{% include "./app-builder-lib.Interface.FlatpakOptions.md" %}

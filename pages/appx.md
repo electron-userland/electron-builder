@@ -2,10 +2,6 @@ The top-level [appx](configuration.md#Configuration-appx) key contains set of op
 
 All options are optional. All required for AppX configuration is inferred and computed automatically.
 
-# Configuration
-
-{% include "./app-builder-lib.Interface.AppXOptions.md" %}
-
 ## AppX Package Code Signing
 
 * If the AppX package is meant for enterprise or self-made distribution (manually install the app without using the Store for testing or for enterprise distribution), it must be [signed](../code-signing.md).
@@ -53,3 +49,7 @@ The only solution for now — using [Parallels Desktop for Mac](http://www.paral
 #### How do install AppX without trusted certificate?
 
 If you use self-signed certificate, you need to add it to "Trusted People". See [Install the certificate](https://stackoverflow.com/a/24372483/1910191).
+
+# Configuration
+
+{% include "./app-builder-lib.Interface.AppXOptions.md" %}

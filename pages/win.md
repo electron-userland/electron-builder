@@ -1,9 +1,5 @@
 The top-level [win](configuration.md#Configuration-win) key contains set of options instructing electron-builder on how it should build Windows targets. These options applicable for any Windows target.
 
-# Configuration
-
-{% include "./app-builder-lib.Interface.WindowsConfiguration.md" %}
-
 ---
 
 # Common Questions
@@ -95,3 +91,7 @@ If you are not on macOS or don't want to buy [Parallels Desktop](https://www.par
 The password to your VM is `Passw0rd!`.
 
 VirtualBox is not supported by electron-builder for now, so, you need to setup build environment on Windows if you want to use VirtualBox to build AppX (and other Windows-only tasks).
+
+# Configuration
+
+{% include "./app-builder-lib.Interface.WindowsConfiguration.md" %}

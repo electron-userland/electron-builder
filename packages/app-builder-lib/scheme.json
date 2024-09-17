@@ -1061,14 +1061,14 @@
               "type": "string"
             }
           ],
-          "description": "The [glob patterns](./file-patterns.md)."
+          "description": "The [glob patterns](./file-patterns.md). Defaults to \"**\\/*\""
         },
         "from": {
-          "description": "The source path relative to the project directory.",
+          "description": "The source path relative to and defaults to:\n\n - the [app directory](configuration.md#MetadataDirectories-app) for `files`,\n - the project directory for `extraResources` and `extraFiles`.\nIf you don't use two-package.json structure and don't set custom app directory, app directory equals to project directory.",
           "type": "string"
         },
         "to": {
-          "description": "The destination path relative to the app's content directory for `extraFiles` and the app's resource directory for `extraResources`.",
+          "description": "The destination path relative to and defaults to:\n\n - the asar archive root for `files`,\n - the app's content directory for `extraFiles`,\n - the app's resource directory for `extraResources`.",
           "type": "string"
         }
       },
