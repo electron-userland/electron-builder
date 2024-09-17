@@ -1,5 +1,20 @@
 # app-builder-lib
 
+## 25.1.3
+
+### Patch Changes
+
+- [#8481](https://github.com/electron-userland/electron-builder/pull/8481) [`216eaf93`](https://github.com/electron-userland/electron-builder/commit/216eaf935da870f0a1a1b14f2b852f879d467710) Thanks [@beyondkmp](https://github.com/beyondkmp)! - fix: Fix issues with conflictDependency that have two or more layers
+
+- [#8491](https://github.com/electron-userland/electron-builder/pull/8491) [`178a3c40`](https://github.com/electron-userland/electron-builder/commit/178a3c40f35fa9e91a2e4942f61423effa1289e4) Thanks [@mmaietta](https://github.com/mmaietta)! - chore: migrating to typedoc and updating/improving type+interface definitions
+
+- Updated dependencies [[`178a3c40`](https://github.com/electron-userland/electron-builder/commit/178a3c40f35fa9e91a2e4942f61423effa1289e4), [`5e21509a`](https://github.com/electron-userland/electron-builder/commit/5e21509a3f40d1a21f6f9ec9bf1d9d72c7149a21)]:
+  - builder-util@25.1.3
+  - builder-util-runtime@9.2.8
+  - dmg-builder@25.1.3
+  - electron-builder-squirrel-windows@25.1.3
+  - electron-publish@25.1.3
+
 ## 25.1.2
 
 ### Patch Changes
