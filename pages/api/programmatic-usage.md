@@ -7,7 +7,7 @@ const Platform = builder.Platform
 // Let's get that intellisense working
 /**
 * @type {import('electron-builder').Configuration}
-* @see https://www.electron.build/configuration/configuration
+* @see https://www.electron.build/configuration
 */
 const options = {
   protocols: {
@@ -17,11 +17,11 @@ const options = {
       "deeplink"
     ]
   },
-  
+
   // "store” | “normal” | "maximum". - For testing builds, use 'store' to reduce build time significantly.
   compression: "normal",
   removePackageScripts: true,
-  
+
   afterSign: async (context) => {
     // Mac releases require hardening+notarization: https://developer.apple.com/documentation/xcode/notarizing_macos_software_before_distribution
     if (!isDebug && context.electronPlatformName === "darwin") {
@@ -42,7 +42,7 @@ const options = {
   },
   nodeGypRebuild: false,
   buildDependenciesFromSource: false,
-  
+
   directories: {
     output: "dist/artifacts/local",
     buildResources: "installer/resources"
@@ -57,7 +57,7 @@ const options = {
       filter: "*.node"
     }
   ],
-  
+
   win: {
     target: 'nsis'
   },
@@ -65,7 +65,7 @@ const options = {
     deleteAppDataOnUninstall: true,
     include: "installer/win/nsis-installer.nsh"
   },
-  
+
   mac: {
     target: 'dmg',
     hardenedRuntime: true,
@@ -97,7 +97,7 @@ const options = {
       height: 500
     }
   },
-  
+
   linux: {
     desktop: {
       StartupNotify: "false",

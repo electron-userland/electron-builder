@@ -23,7 +23,7 @@ export {
 export { getArchSuffix, Arch, archFromString } from "builder-util"
 export { Configuration, AfterPackContext, MetadataDirectories, BeforePackContext, AfterExtractContext, CustomElectronDistributable, Hook } from "./configuration"
 export { ElectronBrandingOptions, ElectronDownloadOptions, ElectronPlatformName } from "./electron/ElectronFramework"
-export { PlatformSpecificBuildOptions, AsarOptions, FileSet, Protocol, ReleaseInfo } from "./options/PlatformSpecificBuildOptions"
+export { PlatformSpecificBuildOptions, AsarOptions, FileSet, Protocol, ReleaseInfo, FilesBuildOptions } from "./options/PlatformSpecificBuildOptions"
 export { FileAssociation } from "./options/FileAssociation"
 export { MacConfiguration, DmgOptions, MasConfiguration, MacOsTargetName, DmgContent, DmgWindow, NotarizeNotaryOptions } from "./options/macOptions"
 export { PkgOptions, PkgBackgroundOptions, BackgroundAlignment, BackgroundScaling } from "./options/pkgOptions"

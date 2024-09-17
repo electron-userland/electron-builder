@@ -78,22 +78,22 @@ See the full documentation on [electron.build](https://www.electron.build).
 * [Auto Update](https://www.electron.build/auto-update) ready application packaging.
 * Numerous target formats:
     * All platforms: `7z`, `zip`, `tar.xz`, `tar.7z`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir` (unpacked directory).
-    * [macOS](https://www.electron.build/configuration/mac): `dmg`, `pkg`, `mas`.
-    * [Linux](https://www.electron.build/configuration/linux): [AppImage](http://appimage.org), [snap](http://snapcraft.io), debian package (`deb`), `rpm`, `freebsd`, `pacman`, `p5p`, `apk`.
-    * [Windows](https://www.electron.build/configuration/win): `nsis` (Installer), `nsis-web` (Web installer), `portable` (portable app without installation), AppX (Windows Store), MSI, Squirrel.Windows.
-* [Publishing artifacts](https://www.electron.build/configuration/publish) to GitHub Releases, Amazon S3, DigitalOcean Spaces and Bintray.
+    * [macOS](https://www.electron.build/mac): `dmg`, `pkg`, `mas`.
+    * [Linux](https://www.electron.build/linux): [AppImage](http://appimage.org), [snap](http://snapcraft.io), debian package (`deb`), `rpm`, `freebsd`, `pacman`, `p5p`, `apk`.
+    * [Windows](https://www.electron.build/win): `nsis` (Installer), `nsis-web` (Web installer), `portable` (portable app without installation), AppX (Windows Store), MSI, Squirrel.Windows.
+* [Publishing artifacts](https://www.electron.build/publish) to GitHub Releases, Amazon S3, DigitalOcean Spaces and Bintray.
 * Advanced building:
     * Pack in a distributable format [already packaged app](https://www.electron.build/#pack-only-in-a-distributable-format).
     * Separate [build steps](https://github.com/electron-userland/electron-builder/issues/1102#issuecomment-271845854).
     * Build and publish in parallel, using hard links on CI server to reduce IO and disk space usage.
     * [electron-compile](https://github.com/electron/electron-compile) support (compile for release-time on the fly on build).
 * [Docker](https://www.electron.build/multi-platform-build#docker) images to build Electron app for Linux or Windows on any platform.
-* [Proton Native](https://www.electron.build/configuration/configuration/#proton-native) support.
+* [Proton Native](https://www.electron.build/configuration/#proton-native) support.
 * Downloads all required tools files on demand automatically (e.g. to code sign windows application, to make AppX), no need to setup.
 
 | Question                               | Answer                                                                            |
 | -------------------------------------- | --------------------------------------------------------------------------------- |
-| “I want to configure electron-builder” | [See options](https://electron.build/configuration/configuration)                 |
+| “I want to configure electron-builder” | [See options](https://electron.build/configuration)                 |
 | “I found a bug or I have a question”   | [Open an issue](https://github.com/electron-userland/electron-builder/issues/new) |
 | “I want to support development”        | [Donate](https://www.electron.build/donate)                                       |
 
@@ -140,7 +140,7 @@ will declare to use node-modules instead of PnP.
       }
     }
     ```
-   See [all options](https://www.electron.build/configuration/configuration). Option [files](https://www.electron.build/configuration/contents#files) to indicate which files should be packed in the final application, including the entry file, maybe required.
+   See [all options](https://www.electron.build/configuration). Option [files](https://www.electron.build/contents#files) to indicate which files should be packed in the final application, including the entry file, maybe required.
    You can also use separate configuration files, such as `js`, `ts`, `yml`, and `json`/`json5`. See [read-config-file](https://www.npmjs.com/package/read-config-file) for supported extensions. [JS Example for programmatic API](https://www.electron.build/api/programmatic-usage)
 
 3. Add [icons](https://www.electron.build/icons).

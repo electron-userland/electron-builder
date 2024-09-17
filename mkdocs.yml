@@ -69,9 +69,10 @@ plugins:
   #     minify_html: true
   - include-markdown:
       # encoding: ascii
-      # preserve_includer_indent: true
+      preserve_includer_indent: true
       # dedent: true
-      # trailing_newlines: true
+      trailing_newlines: true
+      # inheritHeadingDepth: true
       # comments: true
       rewrite_relative_urls: true
       # heading_offset: 0
@@ -87,6 +88,7 @@ nav:
   - Programmatic API:
       - API: api/electron-builder.md
       - Example: api/programmatic-usage.md
+      - Modules: modules.md
   - Donate: donate.md
 
   - Configuration:
