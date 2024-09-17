@@ -13,6 +13,9 @@ importers:
 
   .:
     dependencies:
+      '@types/fs-extra':
+        specifier: ^11.0.4
+        version: 11.0.4
       dmg-license:
         specifier: 1.0.11
         version: 1.0.11
@@ -26,9 +29,6 @@ importers:
       '@changesets/cli':
         specifier: 2.25.0
         version: 2.25.0(patch_hash=nye7dcohy6yzxjscpnrszvchra)
-      '@types/fs-extra':
-        specifier: ^11.0.4
-        version: 11.0.4
       '@types/node':
         specifier: ^22.5.5
         version: 22.5.5
@@ -92,9 +92,6 @@ importers:
       ts-jsdoc:
         specifier: 3.2.2
         version: 3.2.2(typescript@5.5.3)
-      ts-node:
-        specifier: ^10.9.2
-        version: 10.9.2(@types/node@22.5.5)(typescript@5.5.3)
       typedoc:
         specifier: ^0.26
         version: 0.26.7(typescript@5.5.3)
@@ -14929,6 +14926,7 @@ snapshots:
       typescript: 5.5.3
       v8-compile-cache-lib: 3.0.1
       yn: 3.1.1
+    optional: true
 
   tslib@2.6.2: {}
 

@@ -41,13 +41,13 @@
   "///": "All dependencies for all packages (hoisted)",
   "////": "All typings are added into root `package.json` to avoid duplication errors in the IDE compiler (several `node.d.ts` files).",
   "dependencies": {
+    "@types/fs-extra": "^11.0.4",
     "dmg-license": "1.0.11"
   },
   "devDependencies": {
     "@babel/plugin-transform-modules-commonjs": "7.24.8",
     "@changesets/changelog-github": "0.4.7",
     "@changesets/cli": "2.25.0",
-    "@types/fs-extra": "^11.0.4",
     "@types/node": "^22.5.5",
     "@typescript-eslint/eslint-plugin": "^7.0.1",
     "@typescript-eslint/parser": "^7.0.1",
@@ -69,7 +69,6 @@
     "replace-in-file": "6.2.0",
     "source-map-support": "0.5.21",
     "ts-jsdoc": "3.2.2",
-    "ts-node": "^10.9.2",
     "typedoc": "^0.26",
     "typedoc-plugin-markdown": "^4.2.7",
     "typescript": "^5.5",

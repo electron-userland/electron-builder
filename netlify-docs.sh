@@ -3,7 +3,7 @@ pip3 install pipenv
 pipenv install
 echo "Installing deps"
 pnpm install
-echo "Building docker image"
-pnpm docs:prebuild
 echo "Building site docs"
-pnpm docs:build
+pnpm compile
+node scripts/renderer/out/typedoc2html.js
+mkdocs build
