@@ -37,7 +37,7 @@
       "additionalProperties": false,
       "properties": {
         "artifactName": {
-          "description": "The [artifact file name template](/configuration/configuration#artifact-file-name-template).",
+          "description": "The [artifact file name template](./configuration.md#artifact-file-name-template).",
           "type": [
             "null",
             "string"
@@ -51,7 +51,7 @@
           ]
         },
         "description": {
-          "description": "As [description](/configuration/configuration#Metadata-description) from application package.json, but allows you to specify different for Linux.",
+          "description": "As [description](./configuration.md#Metadata-description) from application package.json, but allows you to specify different for Linux.",
           "type": [
             "null",
             "string"
@@ -157,7 +157,7 @@
           "type": "string"
         },
         "artifactName": {
-          "description": "The [artifact file name template](/configuration/configuration#artifact-file-name-template).",
+          "description": "The [artifact file name template](./configuration.md#artifact-file-name-template).",
           "type": [
             "null",
             "string"
@@ -187,7 +187,7 @@
           "type": "boolean"
         },
         "identityName": {
-          "description": "The name. Corresponds to [Identity.Name](https://msdn.microsoft.com/en-us/library/windows/apps/br211441.aspx). Defaults to the [application name](/configuration/configuration#Metadata-name).",
+          "description": "The name. Corresponds to [Identity.Name](https://msdn.microsoft.com/en-us/library/windows/apps/br211441.aspx). Defaults to the [application name](./configuration.md#Metadata-name).",
           "type": [
             "null",
             "string"
@@ -523,7 +523,7 @@
           ]
         },
         "artifactName": {
-          "description": "The [artifact file name template](/configuration/configuration#artifact-file-name-template).",
+          "description": "The [artifact file name template](./configuration.md#artifact-file-name-template).",
           "type": [
             "null",
             "string"
@@ -569,7 +569,7 @@
           "description": "Package dependencies. Defaults to `[\"gconf2\", \"gconf-service\", \"libnotify4\", \"libappindicator1\", \"libxtst6\", \"libnss3\"]`.\nIf need to support Debian, `libappindicator1` should be removed, it is [deprecated in Debian](https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=895037).\nIf need to support KDE, `gconf2` and `gconf-service` should be removed as it's no longer used [by GNOME](https://packages.debian.org/bullseye/gconf2)."
         },
         "description": {
-          "description": "As [description](/configuration/configuration#Metadata-description) from application package.json, but allows you to specify different for Linux.",
+          "description": "As [description](./configuration.md#Metadata-description) from application package.json, but allows you to specify different for Linux.",
           "type": [
             "null",
             "string"
@@ -758,7 +758,7 @@
       "additionalProperties": false,
       "properties": {
         "artifactName": {
-          "description": "The [artifact file name template](/configuration/configuration#artifact-file-name-template).",
+          "description": "The [artifact file name template](./configuration.md#artifact-file-name-template).",
           "type": [
             "null",
             "string"
@@ -799,7 +799,7 @@
           "type": "string"
         },
         "icon": {
-          "description": "The path to DMG icon (volume icon), which will be shown when mounted, relative to the [build resources](/configuration/configuration#MetadataDirectories-buildResources) or to the project directory.\nDefaults to the application icon (`build/icon.icns`).",
+          "description": "The path to DMG icon (volume icon), which will be shown when mounted, relative to the [build resources](./configuration.md#MetadataDirectories-buildResources) or to the project directory.\nDefaults to the application icon (`build/icon.icns`).",
           "type": [
             "null",
             "string"
@@ -982,7 +982,7 @@
     },
     "FileAssociation": {
       "additionalProperties": false,
-      "description": "File associations.\n\nmacOS (corresponds to [CFBundleDocumentTypes](https://developer.apple.com/library/content/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-101685)), NSIS, and MSI only.\n\nOn Windows (NSIS) works only if [nsis.perMachine](https://electron.build/configuration/configuration#NsisOptions-perMachine) is set to `true`.",
+      "description": "File associations.\n\nmacOS (corresponds to [CFBundleDocumentTypes](https://developer.apple.com/library/content/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-101685)), NSIS, and MSI only.\n\nOn Windows (NSIS) works only if [nsis.perMachine](https://electron.build./configuration.md#NsisOptions-perMachine) is set to `true`.",
       "properties": {
         "description": {
           "description": "*windows-only.* The description.",
@@ -1061,14 +1061,14 @@
               "type": "string"
             }
           ],
-          "description": "The [glob patterns](/file-patterns)."
+          "description": "The [glob patterns](./file-patterns.md). Defaults to \"**\\/*\""
         },
         "from": {
-          "description": "The source path relative to the project directory.",
+          "description": "The source path relative to and defaults to:\n\n - the [app directory](configuration.md#MetadataDirectories-app) for `files`,\n - the project directory for `extraResources` and `extraFiles`.\nIf you don't use two-package.json structure and don't set custom app directory, app directory equals to project directory.",
           "type": "string"
         },
         "to": {
-          "description": "The destination path relative to the app's content directory for `extraFiles` and the app's resource directory for `extraResources`.",
+          "description": "The destination path relative to and defaults to:\n\n - the asar archive root for `files`,\n - the app's content directory for `extraFiles`,\n - the app's resource directory for `extraResources`.",
           "type": "string"
         }
       },
@@ -1078,7 +1078,7 @@
       "additionalProperties": false,
       "properties": {
         "artifactName": {
-          "description": "The [artifact file name template](/configuration/configuration#artifact-file-name-template).",
+          "description": "The [artifact file name template](./configuration.md#artifact-file-name-template).",
           "type": [
             "null",
             "string"
@@ -1104,7 +1104,7 @@
           ]
         },
         "description": {
-          "description": "As [description](/configuration/configuration#Metadata-description) from application package.json, but allows you to specify different for Linux.",
+          "description": "As [description](./configuration.md#Metadata-description) from application package.json, but allows you to specify different for Linux.",
           "type": [
             "null",
             "string"
@@ -1262,7 +1262,7 @@
     },
     "GenericServerOptions": {
       "additionalProperties": false,
-      "description": "Generic (any HTTP(S) server) options.\nIn all publish options [File Macros](/file-patterns#file-macros) are supported.",
+      "description": "Generic (any HTTP(S) server) options.\nIn all publish options [File Macros](./file-patterns.md#file-macros) are supported.",
       "properties": {
         "channel": {
           "default": "latest",
@@ -1356,7 +1356,7 @@
           ]
         },
         "private": {
-          "description": "Whether to use private github auto-update provider if `GH_TOKEN` environment variable is defined. See [Private GitHub Update Repo](/auto-update#private-github-update-repo).",
+          "description": "Whether to use private github auto-update provider if `GH_TOKEN` environment variable is defined. See [Private GitHub Update Repo](./auto-update.md#private-github-update-repo).",
           "type": [
             "null",
             "boolean"
@@ -1438,7 +1438,7 @@
           ]
         },
         "token": {
-          "description": "The access token to support auto-update from private github repositories. Never specify it in the configuration files. Only for [setFeedURL](/auto-update#appupdatersetfeedurloptions).",
+          "description": "The access token to support auto-update from private github repositories. Never specify it in the configuration files. Only for [setFeedURL](./auto-update.md#appupdatersetfeedurloptions).",
           "type": [
             "null",
             "string"
@@ -1560,7 +1560,7 @@
           ]
         },
         "artifactName": {
-          "description": "The [artifact file name template](/configuration/configuration#artifact-file-name-template). Defaults to `${productName}-${version}.${ext}` (some target can have other defaults, see corresponding options).",
+          "description": "The [artifact file name template](./configuration.md#artifact-file-name-template). Defaults to `${productName}-${version}.${ext}` (some target can have other defaults, see corresponding options).",
           "type": [
             "null",
             "string"
@@ -1596,7 +1596,7 @@
               ]
             }
           ],
-          "description": "A [glob patterns](/file-patterns) relative to the [app directory](#MetadataDirectories-app), which specifies which files to unpack when creating the [asar](http://electron.atom.io/docs/tutorial/application-packaging/) archive."
+          "description": "A [glob patterns](./file-patterns.md) relative to the [app directory](#MetadataDirectories-app), which specifies which files to unpack when creating the [asar](http://electron.atom.io/docs/tutorial/application-packaging/) archive."
         },
         "category": {
           "description": "The [application category](https://specifications.freedesktop.org/menu-spec/latest/apa.html#main-category-registry).",
@@ -1638,7 +1638,7 @@
           "type": "string"
         },
         "description": {
-          "description": "As [description](/configuration/configuration#Metadata-description) from application package.json, but allows you to specify different for Linux.",
+          "description": "As [description](./configuration.md#Metadata-description) from application package.json, but allows you to specify different for Linux.",
           "type": [
             "null",
             "string"
@@ -1654,7 +1654,7 @@
         },
         "disableDefaultIgnoredFiles": {
           "default": false,
-          "description": "Whether to exclude all default ignored files(https://www.electron.build/configuration/contents#files) and options. Defaults to `false`.",
+          "description": "Whether to exclude all default ignored files(https://www.electron.build/contents#files) and options. Defaults to `false`.",
           "type": [
             "null",
             "boolean"
@@ -1675,7 +1675,7 @@
           "description": "The electron locales to keep. By default, all Electron locales used as-is."
         },
         "electronUpdaterCompatibility": {
-          "description": "The [electron-updater compatibility](/auto-update#compatibility) semver range.",
+          "description": "The [electron-updater compatibility](./auto-update.md#compatibility) semver range.",
           "type": [
             "null",
             "string"
@@ -1804,11 +1804,11 @@
           "type": "boolean"
         },
         "icon": {
-          "description": "The path to icon set directory or one png file, relative to the [build resources](/configuration/configuration#MetadataDirectories-buildResources) or to the project directory. The icon filename must contain the size (e.g. 32x32.png) of the icon.\nBy default will be generated automatically based on the macOS icns file.",
+          "description": "The path to icon set directory or one png file, relative to the [build resources](./configuration.md#MetadataDirectories-buildResources) or to the project directory. The icon filename must contain the size (e.g. 32x32.png) of the icon.\nBy default will be generated automatically based on the macOS icns file.",
           "type": "string"
         },
         "maintainer": {
-          "description": "The maintainer. Defaults to [author](/configuration/configuration#Metadata-author).",
+          "description": "The maintainer. Defaults to [author](./configuration.md#Metadata-author).",
           "type": [
             "null",
             "string"
@@ -1926,10 +1926,10 @@
             }
           ],
           "default": "AppImage",
-          "description": "Target package type: list of `AppImage`, `flatpak`, `snap`, `deb`, `rpm`, `freebsd`, `pacman`, `p5p`, `apk`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`.\n\nelectron-builder [docker image](/multi-platform-build#docker) can be used to build Linux targets on any platform.\n\nPlease [do not put an AppImage into another archive](https://github.com/probonopd/AppImageKit/wiki/Creating-AppImages#common-mistake) like a .zip or .tar.gz."
+          "description": "Target package type: list of `AppImage`, `flatpak`, `snap`, `deb`, `rpm`, `freebsd`, `pacman`, `p5p`, `apk`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`.\n\nelectron-builder [docker image](./multi-platform-build.md#docker) can be used to build Linux targets on any platform.\n\nPlease [do not put an AppImage into another archive](https://github.com/probonopd/AppImageKit/wiki/Creating-AppImages#common-mistake) like a .zip or .tar.gz."
         },
         "vendor": {
-          "description": "The vendor. Defaults to [author](/configuration/configuration#Metadata-author).",
+          "description": "The vendor. Defaults to [author](./configuration.md#Metadata-author).",
           "type": [
             "null",
             "string"
@@ -1954,7 +1954,7 @@
           ]
         },
         "artifactName": {
-          "description": "The [artifact file name template](/configuration/configuration#artifact-file-name-template).",
+          "description": "The [artifact file name template](./configuration.md#artifact-file-name-template).",
           "type": [
             "null",
             "string"
@@ -2000,7 +2000,7 @@
           "description": "Package dependencies."
         },
         "description": {
-          "description": "As [description](/configuration/configuration#Metadata-description) from application package.json, but allows you to specify different for Linux.",
+          "description": "As [description](./configuration.md#Metadata-description) from application package.json, but allows you to specify different for Linux.",
           "type": [
             "null",
             "string"
@@ -2156,7 +2156,7 @@
           ]
         },
         "artifactName": {
-          "description": "The [artifact file name template](/configuration/configuration#artifact-file-name-template). Defaults to `${productName}-${version}.${ext}` (some target can have other defaults, see corresponding options).",
+          "description": "The [artifact file name template](./configuration.md#artifact-file-name-template). Defaults to `${productName}-${version}.${ext}` (some target can have other defaults, see corresponding options).",
           "type": [
             "null",
             "string"
@@ -2192,7 +2192,7 @@
               ]
             }
           ],
-          "description": "A [glob patterns](/file-patterns) relative to the [app directory](#MetadataDirectories-app), which specifies which files to unpack when creating the [asar](http://electron.atom.io/docs/tutorial/application-packaging/) archive."
+          "description": "A [glob patterns](./file-patterns.md) relative to the [app directory](#MetadataDirectories-app), which specifies which files to unpack when creating the [asar](http://electron.atom.io/docs/tutorial/application-packaging/) archive."
         },
         "binaries": {
           "anyOf": [
@@ -2285,7 +2285,7 @@
         },
         "disableDefaultIgnoredFiles": {
           "default": false,
-          "description": "Whether to exclude all default ignored files(https://www.electron.build/configuration/contents#files) and options. Defaults to `false`.",
+          "description": "Whether to exclude all default ignored files(https://www.electron.build/contents#files) and options. Defaults to `false`.",
           "type": [
             "null",
             "boolean"
@@ -2306,14 +2306,14 @@
           "description": "The electron locales to keep. By default, all Electron locales used as-is."
         },
         "electronUpdaterCompatibility": {
-          "description": "The [electron-updater compatibility](/auto-update#compatibility) semver range.",
+          "description": "The [electron-updater compatibility](./auto-update.md#compatibility) semver range.",
           "type": [
             "null",
             "string"
           ]
         },
         "entitlements": {
-          "description": "The path to entitlements file for signing the app. `build/entitlements.mac.plist` will be used if exists (it is a recommended way to set).\nMAS entitlements is specified in the [mas](/configuration/mas).\nSee [this folder in osx-sign's repository](https://github.com/electron/osx-sign/tree/main/entitlements) for examples.\nBe aware that your app may crash if the right entitlements are not set like `com.apple.security.cs.allow-jit` for example on arm64 builds with Electron 20+.\nSee [Signing and Notarizing macOS Builds from the Electron documentation](https://www.electronjs.org/docs/latest/tutorial/code-signing#signing--notarizing-macos-builds) for more information.",
+          "description": "The path to entitlements file for signing the app. `build/entitlements.mac.plist` will be used if exists (it is a recommended way to set).\nMAS entitlements is specified in the [mas](./mas.md).\nSee [this folder in osx-sign's repository](https://github.com/electron/osx-sign/tree/main/entitlements) for examples.\nBe aware that your app may crash if the right entitlements are not set like `com.apple.security.cs.allow-jit` for example on arm64 builds with Electron 20+.\nSee [Signing and Notarizing macOS Builds from the Electron documentation](https://www.electronjs.org/docs/latest/tutorial/code-signing#signing--notarizing-macos-builds) for more information.",
           "type": [
             "null",
             "string"
@@ -2528,7 +2528,7 @@
           ]
         },
         "identity": {
-          "description": "The name of certificate to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](/code-signing) instead of specifying this option.\nMAS installer identity is specified in the [mas](/configuration/mas).",
+          "description": "The name of certificate to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](./code-signing.md) instead of specifying this option.\nMAS installer identity is specified in the [mas](./mas.md).",
           "type": [
             "null",
             "string"
@@ -2794,7 +2794,7 @@
           ]
         },
         "artifactName": {
-          "description": "The [artifact file name template](/configuration/configuration#artifact-file-name-template). Defaults to `${productName}-${version}.${ext}` (some target can have other defaults, see corresponding options).",
+          "description": "The [artifact file name template](./configuration.md#artifact-file-name-template). Defaults to `${productName}-${version}.${ext}` (some target can have other defaults, see corresponding options).",
           "type": [
             "null",
             "string"
@@ -2830,7 +2830,7 @@
               ]
             }
           ],
-          "description": "A [glob patterns](/file-patterns) relative to the [app directory](#MetadataDirectories-app), which specifies which files to unpack when creating the [asar](http://electron.atom.io/docs/tutorial/application-packaging/) archive."
+          "description": "A [glob patterns](./file-patterns.md) relative to the [app directory](#MetadataDirectories-app), which specifies which files to unpack when creating the [asar](http://electron.atom.io/docs/tutorial/application-packaging/) archive."
         },
         "binaries": {
           "anyOf": [
@@ -2923,7 +2923,7 @@
         },
         "disableDefaultIgnoredFiles": {
           "default": false,
-          "description": "Whether to exclude all default ignored files(https://www.electron.build/configuration/contents#files) and options. Defaults to `false`.",
+          "description": "Whether to exclude all default ignored files(https://www.electron.build/contents#files) and options. Defaults to `false`.",
           "type": [
             "null",
             "boolean"
@@ -2944,7 +2944,7 @@
           "description": "The electron locales to keep. By default, all Electron locales used as-is."
         },
         "electronUpdaterCompatibility": {
-          "description": "The [electron-updater compatibility](/auto-update#compatibility) semver range.",
+          "description": "The [electron-updater compatibility](./auto-update.md#compatibility) semver range.",
           "type": [
             "null",
             "string"
@@ -3166,7 +3166,7 @@
           ]
         },
         "identity": {
-          "description": "The name of certificate to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](/code-signing) instead of specifying this option.\nMAS installer identity is specified in the [mas](/configuration/mas).",
+          "description": "The name of certificate to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](./code-signing.md) instead of specifying this option.\nMAS installer identity is specified in the [mas](./mas.md).",
           "type": [
             "null",
             "string"
@@ -3426,7 +3426,7 @@
         },
         "output": {
           "default": "dist",
-          "description": "The output directory. [File macros](/file-patterns#file-macros) are supported.",
+          "description": "The output directory. [File macros](./file-patterns.md#file-macros) are supported.",
           "type": [
             "null",
             "string"
@@ -3467,7 +3467,7 @@
           "description": "Any additional arguments to be passed to the WiX installer compiler, such as `[\"-ext\", \"WixUtilExtension\"]`"
         },
         "artifactName": {
-          "description": "The [artifact file name template](/configuration/configuration#artifact-file-name-template).",
+          "description": "The [artifact file name template](./configuration.md#artifact-file-name-template).",
           "type": [
             "null",
             "string"
@@ -3590,7 +3590,7 @@
           "description": "Any additional arguments to be passed to the WiX installer compiler, such as `[\"-ext\", \"WixUtilExtension\"]`"
         },
         "artifactName": {
-          "description": "The [artifact file name template](/configuration/configuration#artifact-file-name-template).",
+          "description": "The [artifact file name template](./configuration.md#artifact-file-name-template).",
           "type": [
             "null",
             "string"
@@ -3729,7 +3729,7 @@
           "type": "boolean"
         },
         "artifactName": {
-          "description": "The [artifact file name template](/configuration/configuration#artifact-file-name-template). Defaults to `${productName} Setup ${version}.${ext}`.",
+          "description": "The [artifact file name template](./configuration.md#artifact-file-name-template). Defaults to `${productName} Setup ${version}.${ext}`.",
           "type": [
             "null",
             "string"
@@ -3774,7 +3774,7 @@
           "type": "boolean"
         },
         "guid": {
-          "description": "See [GUID vs Application Name](../configuration/nsis#guid-vs-application-name).",
+          "description": "See [GUID vs Application Name](./nsis.md#guid-vs-application-name).",
           "type": [
             "null",
             "string"
@@ -3789,21 +3789,21 @@
         },
         "installerHeader": {
           "default": "build/installerHeader.bmp",
-          "description": "*assisted installer only.* `MUI_HEADERIMAGE`, relative to the [build resources](/configuration/configuration#MetadataDirectories-buildResources) or to the project directory.",
+          "description": "*assisted installer only.* `MUI_HEADERIMAGE`, relative to the [build resources](./configuration.md#MetadataDirectories-buildResources) or to the project directory.",
           "type": [
             "null",
             "string"
           ]
         },
         "installerHeaderIcon": {
-          "description": "*one-click installer only.* The path to header icon (above the progress bar), relative to the [build resources](/configuration/configuration#MetadataDirectories-buildResources) or to the project directory.\nDefaults to `build/installerHeaderIcon.ico` or application icon.",
+          "description": "*one-click installer only.* The path to header icon (above the progress bar), relative to the [build resources](./configuration.md#MetadataDirectories-buildResources) or to the project directory.\nDefaults to `build/installerHeaderIcon.ico` or application icon.",
           "type": [
             "null",
             "string"
           ]
         },
         "installerIcon": {
-          "description": "The path to installer icon, relative to the [build resources](/configuration/configuration#MetadataDirectories-buildResources) or to the project directory.\nDefaults to `build/installerIcon.ico` or application icon.",
+          "description": "The path to installer icon, relative to the [build resources](./configuration.md#MetadataDirectories-buildResources) or to the project directory.\nDefaults to `build/installerIcon.ico` or application icon.",
           "type": [
             "null",
             "string"
@@ -3827,7 +3827,7 @@
           "description": "The installer languages (e.g. `en_US`, `de_DE`). Change only if you understand what do you do and for what."
         },
         "installerSidebar": {
-          "description": "*assisted installer only.* `MUI_WELCOMEFINISHPAGE_BITMAP`, relative to the [build resources](/configuration/configuration#MetadataDirectories-buildResources) or to the project directory.\nDefaults to `build/installerSidebar.bmp` or `${NSISDIR}\\\\Contrib\\\\Graphics\\\\Wizard\\\\nsis3-metro.bmp`. Image size 164 × 314 pixels.",
+          "description": "*assisted installer only.* `MUI_WELCOMEFINISHPAGE_BITMAP`, relative to the [build resources](./configuration.md#MetadataDirectories-buildResources) or to the project directory.\nDefaults to `build/installerSidebar.bmp` or `${NSISDIR}\\\\Contrib\\\\Graphics\\\\Wizard\\\\nsis3-metro.bmp`. Image size 164 × 314 pixels.",
           "type": [
             "null",
             "string"
@@ -3982,14 +3982,14 @@
           "type": "string"
         },
         "uninstallerIcon": {
-          "description": "The path to uninstaller icon, relative to the [build resources](/configuration/configuration#MetadataDirectories-buildResources) or to the project directory.\nDefaults to `build/uninstallerIcon.ico` or application icon.",
+          "description": "The path to uninstaller icon, relative to the [build resources](./configuration.md#MetadataDirectories-buildResources) or to the project directory.\nDefaults to `build/uninstallerIcon.ico` or application icon.",
           "type": [
             "null",
             "string"
           ]
         },
         "uninstallerSidebar": {
-          "description": "*assisted installer only.* `MUI_UNWELCOMEFINISHPAGE_BITMAP`, relative to the [build resources](/configuration/configuration#MetadataDirectories-buildResources) or to the project directory.\nDefaults to `installerSidebar` option or `build/uninstallerSidebar.bmp` or `build/installerSidebar.bmp` or `${NSISDIR}\\\\Contrib\\\\Graphics\\\\Wizard\\\\nsis3-metro.bmp`",
+          "description": "*assisted installer only.* `MUI_UNWELCOMEFINISHPAGE_BITMAP`, relative to the [build resources](./configuration.md#MetadataDirectories-buildResources) or to the project directory.\nDefaults to `installerSidebar` option or `build/uninstallerSidebar.bmp` or `build/installerSidebar.bmp` or `${NSISDIR}\\\\Contrib\\\\Graphics\\\\Wizard\\\\nsis3-metro.bmp`",
           "type": [
             "null",
             "string"
@@ -4029,7 +4029,7 @@
           ]
         },
         "artifactName": {
-          "description": "The [artifact file name template](/configuration/configuration#artifact-file-name-template). Defaults to `${productName} Web Setup ${version}.${ext}`.",
+          "description": "The [artifact file name template](./configuration.md#artifact-file-name-template). Defaults to `${productName} Web Setup ${version}.${ext}`.",
           "type": [
             "null",
             "string"
@@ -4074,7 +4074,7 @@
           "type": "boolean"
         },
         "guid": {
-          "description": "See [GUID vs Application Name](../configuration/nsis#guid-vs-application-name).",
+          "description": "See [GUID vs Application Name](./nsis.md#guid-vs-application-name).",
           "type": [
             "null",
             "string"
@@ -4089,21 +4089,21 @@
         },
         "installerHeader": {
           "default": "build/installerHeader.bmp",
-          "description": "*assisted installer only.* `MUI_HEADERIMAGE`, relative to the [build resources](/configuration/configuration#MetadataDirectories-buildResources) or to the project directory.",
+          "description": "*assisted installer only.* `MUI_HEADERIMAGE`, relative to the [build resources](./configuration.md#MetadataDirectories-buildResources) or to the project directory.",
           "type": [
             "null",
             "string"
           ]
         },
         "installerHeaderIcon": {
-          "description": "*one-click installer only.* The path to header icon (above the progress bar), relative to the [build resources](/configuration/configuration#MetadataDirectories-buildResources) or to the project directory.\nDefaults to `build/installerHeaderIcon.ico` or application icon.",
+          "description": "*one-click installer only.* The path to header icon (above the progress bar), relative to the [build resources](./configuration.md#MetadataDirectories-buildResources) or to the project directory.\nDefaults to `build/installerHeaderIcon.ico` or application icon.",
           "type": [
             "null",
             "string"
           ]
         },
         "installerIcon": {
-          "description": "The path to installer icon, relative to the [build resources](/configuration/configuration#MetadataDirectories-buildResources) or to the project directory.\nDefaults to `build/installerIcon.ico` or application icon.",
+          "description": "The path to installer icon, relative to the [build resources](./configuration.md#MetadataDirectories-buildResources) or to the project directory.\nDefaults to `build/installerIcon.ico` or application icon.",
           "type": [
             "null",
             "string"
@@ -4127,7 +4127,7 @@
           "description": "The installer languages (e.g. `en_US`, `de_DE`). Change only if you understand what do you do and for what."
         },
         "installerSidebar": {
-          "description": "*assisted installer only.* `MUI_WELCOMEFINISHPAGE_BITMAP`, relative to the [build resources](/configuration/configuration#MetadataDirectories-buildResources) or to the project directory.\nDefaults to `build/installerSidebar.bmp` or `${NSISDIR}\\\\Contrib\\\\Graphics\\\\Wizard\\\\nsis3-metro.bmp`. Image size 164 × 314 pixels.",
+          "description": "*assisted installer only.* `MUI_WELCOMEFINISHPAGE_BITMAP`, relative to the [build resources](./configuration.md#MetadataDirectories-buildResources) or to the project directory.\nDefaults to `build/installerSidebar.bmp` or `${NSISDIR}\\\\Contrib\\\\Graphics\\\\Wizard\\\\nsis3-metro.bmp`. Image size 164 × 314 pixels.",
           "type": [
             "null",
             "string"
@@ -4282,14 +4282,14 @@
           "type": "string"
         },
         "uninstallerIcon": {
-          "description": "The path to uninstaller icon, relative to the [build resources](/configuration/configuration#MetadataDirectories-buildResources) or to the project directory.\nDefaults to `build/uninstallerIcon.ico` or application icon.",
+          "description": "The path to uninstaller icon, relative to the [build resources](./configuration.md#MetadataDirectories-buildResources) or to the project directory.\nDefaults to `build/uninstallerIcon.ico` or application icon.",
           "type": [
             "null",
             "string"
           ]
         },
         "uninstallerSidebar": {
-          "description": "*assisted installer only.* `MUI_UNWELCOMEFINISHPAGE_BITMAP`, relative to the [build resources](/configuration/configuration#MetadataDirectories-buildResources) or to the project directory.\nDefaults to `installerSidebar` option or `build/uninstallerSidebar.bmp` or `build/installerSidebar.bmp` or `${NSISDIR}\\\\Contrib\\\\Graphics\\\\Wizard\\\\nsis3-metro.bmp`",
+          "description": "*assisted installer only.* `MUI_UNWELCOMEFINISHPAGE_BITMAP`, relative to the [build resources](./configuration.md#MetadataDirectories-buildResources) or to the project directory.\nDefaults to `installerSidebar` option or `build/uninstallerSidebar.bmp` or `build/installerSidebar.bmp` or `${NSISDIR}\\\\Contrib\\\\Graphics\\\\Wizard\\\\nsis3-metro.bmp`",
           "type": [
             "null",
             "string"
@@ -4798,7 +4798,7 @@
           ]
         },
         "artifactName": {
-          "description": "The [artifact file name template](/configuration/configuration#artifact-file-name-template).",
+          "description": "The [artifact file name template](./configuration.md#artifact-file-name-template).",
           "type": [
             "null",
             "string"
@@ -4831,7 +4831,7 @@
           ]
         },
         "identity": {
-          "description": "The name of certificate to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](/code-signing) instead of specifying this option.",
+          "description": "The name of certificate to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](./code-signing.md) instead of specifying this option.",
           "type": [
             "null",
             "string"
@@ -4988,7 +4988,7 @@
       "description": "Portable options.",
       "properties": {
         "artifactName": {
-          "description": "The [artifact file name template](/configuration/configuration#artifact-file-name-template).",
+          "description": "The [artifact file name template](./configuration.md#artifact-file-name-template).",
           "type": [
             "null",
             "string"
@@ -5006,7 +5006,7 @@
           "description": "Allows you to provide your own `makensis`, such as one with support for debug logging via LogSet and LogText. (Logging also requires option `debugLogging = true`)"
         },
         "guid": {
-          "description": "See [GUID vs Application Name](../configuration/nsis#guid-vs-application-name).",
+          "description": "See [GUID vs Application Name](./nsis.md#guid-vs-application-name).",
           "type": [
             "null",
             "string"
@@ -5358,7 +5358,7 @@
           "description": "Specifies which files from the app part to stage and which to exclude. Individual files, directories, wildcards, globstars, and exclusions are accepted. See [Snapcraft filesets](https://snapcraft.io/docs/snapcraft-filesets) to learn more about the format.\n\nThe defaults can be found in [snap.ts](https://github.com/electron-userland/electron-builder/blob/master/packages/app-builder-lib/templates/snap/snapcraft.yaml#L29)."
         },
         "artifactName": {
-          "description": "The [artifact file name template](/configuration/configuration#artifact-file-name-template).",
+          "description": "The [artifact file name template](./configuration.md#artifact-file-name-template).",
           "type": [
             "null",
             "string"
@@ -5447,7 +5447,7 @@
           "description": "The type of [confinement](https://snapcraft.io/docs/reference/confinement) supported by the snap."
         },
         "description": {
-          "description": "As [description](/configuration/configuration#Metadata-description) from application package.json, but allows you to specify different for Linux.",
+          "description": "As [description](./configuration.md#Metadata-description) from application package.json, but allows you to specify different for Linux.",
           "type": [
             "null",
             "string"
@@ -5636,7 +5636,7 @@
           "description": "The list of Ubuntu packages to use that are needed to support the `app` part creation. Like `depends` for `deb`.\nDefaults to `[\"libnspr4\", \"libnss3\", \"libxss1\", \"libappindicator3-1\", \"libsecret-1-0\"]`.\n\nIf list contains `default`, it will be replaced to default list, so, `[\"default\", \"foo\"]` can be used to add custom package `foo` in addition to defaults."
         },
         "summary": {
-          "description": "The 78 character long summary. Defaults to [productName](/configuration/configuration#Configuration-productName).",
+          "description": "The 78 character long summary. Defaults to [productName](./configuration.md#Configuration-productName).",
           "type": [
             "null",
             "string"
@@ -5835,7 +5835,7 @@
       "additionalProperties": false,
       "properties": {
         "artifactName": {
-          "description": "The [artifact file name template](/configuration/configuration#artifact-file-name-template).",
+          "description": "The [artifact file name template](./configuration.md#artifact-file-name-template).",
           "type": [
             "null",
             "string"
@@ -5998,7 +5998,7 @@
           ]
         },
         "artifactName": {
-          "description": "The [artifact file name template](/configuration/configuration#artifact-file-name-template). Defaults to `${productName}-${version}.${ext}` (some target can have other defaults, see corresponding options).",
+          "description": "The [artifact file name template](./configuration.md#artifact-file-name-template). Defaults to `${productName}-${version}.${ext}` (some target can have other defaults, see corresponding options).",
           "type": [
             "null",
             "string"
@@ -6034,7 +6034,7 @@
               ]
             }
           ],
-          "description": "A [glob patterns](/file-patterns) relative to the [app directory](#MetadataDirectories-app), which specifies which files to unpack when creating the [asar](http://electron.atom.io/docs/tutorial/application-packaging/) archive."
+          "description": "A [glob patterns](./file-patterns.md) relative to the [app directory](#MetadataDirectories-app), which specifies which files to unpack when creating the [asar](http://electron.atom.io/docs/tutorial/application-packaging/) archive."
         },
         "azureSignOptions": {
           "anyOf": [
@@ -6048,14 +6048,14 @@
           "description": "Options for usage of Azure Trusted Signing (beta)"
         },
         "certificateFile": {
-          "description": "The path to the *.pfx certificate you want to sign with. Please use it only if you cannot use env variable `CSC_LINK` (`WIN_CSC_LINK`) for some reason.\nPlease see [Code Signing](/code-signing).",
+          "description": "The path to the *.pfx certificate you want to sign with. Please use it only if you cannot use env variable `CSC_LINK` (`WIN_CSC_LINK`) for some reason.\nPlease see [Code Signing](./code-signing.md).",
           "type": [
             "null",
             "string"
           ]
         },
         "certificatePassword": {
-          "description": "The password to the certificate provided in `certificateFile`. Please use it only if you cannot use env variable `CSC_KEY_PASSWORD` (`WIN_CSC_KEY_PASSWORD`) for some reason.\nPlease see [Code Signing](/code-signing).",
+          "description": "The password to the certificate provided in `certificateFile`. Please use it only if you cannot use env variable `CSC_KEY_PASSWORD` (`WIN_CSC_KEY_PASSWORD`) for some reason.\nPlease see [Code Signing](./code-signing.md).",
           "type": [
             "null",
             "string"
@@ -6114,7 +6114,7 @@
         },
         "disableDefaultIgnoredFiles": {
           "default": false,
-          "description": "Whether to exclude all default ignored files(https://www.electron.build/configuration/contents#files) and options. Defaults to `false`.",
+          "description": "Whether to exclude all default ignored files(https://www.electron.build/contents#files) and options. Defaults to `false`.",
           "type": [
             "null",
             "boolean"
@@ -6135,7 +6135,7 @@
           "description": "The electron locales to keep. By default, all Electron locales used as-is."
         },
         "electronUpdaterCompatibility": {
-          "description": "The [electron-updater compatibility](/auto-update#compatibility) semver range.",
+          "description": "The [electron-updater compatibility](./auto-update.md#compatibility) semver range.",
           "type": [
             "null",
             "string"
@@ -6458,7 +6458,7 @@
             }
           ],
           "default": "nsis",
-          "description": "The target package type: list of `nsis`, `nsis-web` (Web installer), `portable` ([portable](/configuration/nsis#portable) app without installation), `appx`, `msi`, `msi-wrapped`, `squirrel`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`.\nAppX package can be built only on Windows 10.\n\nTo use Squirrel.Windows please install `electron-builder-squirrel-windows` dependency."
+          "description": "The target package type: list of `nsis`, `nsis-web` (Web installer), `portable` ([portable]./nsis.md#portable) app without installation), `appx`, `msi`, `msi-wrapped`, `squirrel`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`.\nAppX package can be built only on Windows 10.\n\nTo use Squirrel.Windows please install `electron-builder-squirrel-windows` dependency."
         },
         "timeStampServer": {
           "default": "http://timestamp.digicert.com",
@@ -6487,14 +6487,14 @@
           ]
         },
         "certificateFile": {
-          "description": "The path to the *.pfx certificate you want to sign with. Please use it only if you cannot use env variable `CSC_LINK` (`WIN_CSC_LINK`) for some reason.\nPlease see [Code Signing](/code-signing).",
+          "description": "The path to the *.pfx certificate you want to sign with. Please use it only if you cannot use env variable `CSC_LINK` (`WIN_CSC_LINK`) for some reason.\nPlease see [Code Signing](./code-signing.md).",
           "type": [
             "null",
             "string"
           ]
         },
         "certificatePassword": {
-          "description": "The password to the certificate provided in `certificateFile`. Please use it only if you cannot use env variable `CSC_KEY_PASSWORD` (`WIN_CSC_KEY_PASSWORD`) for some reason.\nPlease see [Code Signing](/code-signing).",
+          "description": "The password to the certificate provided in `certificateFile`. Please use it only if you cannot use env variable `CSC_KEY_PASSWORD` (`WIN_CSC_KEY_PASSWORD`) for some reason.\nPlease see [Code Signing](./code-signing.md).",
           "type": [
             "null",
             "string"
@@ -6724,7 +6724,7 @@
       "description": "The function (or path to file or module id) to be run on artifact build start."
     },
     "artifactName": {
-      "description": "The [artifact file name template](/configuration/configuration#artifact-file-name-template). Defaults to `${productName}-${version}.${ext}` (some target can have other defaults, see corresponding options).",
+      "description": "The [artifact file name template](./configuration.md#artifact-file-name-template). Defaults to `${productName}-${version}.${ext}` (some target can have other defaults, see corresponding options).",
       "type": [
         "null",
         "string"
@@ -6760,7 +6760,7 @@
           ]
         }
       ],
-      "description": "A [glob patterns](/file-patterns) relative to the [app directory](#MetadataDirectories-app), which specifies which files to unpack when creating the [asar](http://electron.atom.io/docs/tutorial/application-packaging/) archive."
+      "description": "A [glob patterns](./file-patterns.md) relative to the [app directory](#MetadataDirectories-app), which specifies which files to unpack when creating the [asar](http://electron.atom.io/docs/tutorial/application-packaging/) archive."
     },
     "beforeBuild": {
       "anyOf": [
@@ -6877,7 +6877,7 @@
     },
     "disableDefaultIgnoredFiles": {
       "default": false,
-      "description": "Whether to exclude all default ignored files(https://www.electron.build/configuration/contents#files) and options. Defaults to `false`.",
+      "description": "Whether to exclude all default ignored files(https://www.electron.build/contents#files) and options. Defaults to `false`.",
       "type": [
         "null",
         "boolean"
@@ -6941,7 +6941,7 @@
       "description": "The electron locales to keep. By default, all Electron locales used as-is."
     },
     "electronUpdaterCompatibility": {
-      "description": "The [electron-updater compatibility](/auto-update#compatibility) semver range.",
+      "description": "The [electron-updater compatibility](./auto-update.md#compatibility) semver range.",
       "type": [
         "null",
         "string"

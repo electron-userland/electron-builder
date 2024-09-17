@@ -143,7 +143,7 @@ export class NsisTarget extends Target {
   }
 
   private async buildInstaller(archs: Map<Arch, string>): Promise<any> {
-    const primaryArch = archs.size === 1 ? archs.keys().next().value : null
+    const primaryArch: Arch | null = archs.size === 1 ? archs.keys().next().value ?? null : null
     const packager = this.packager
     const appInfo = packager.appInfo
     const options = this.options
@@ -231,7 +231,8 @@ export class NsisTarget extends Target {
         defines[arch === Arch.x64 ? "APP_DIR_64" : arch === Arch.arm64 ? "APP_DIR_ARM64" : "APP_DIR_32"] = dir
       }
     } else if (USE_NSIS_BUILT_IN_COMPRESSOR && archs.size === 1) {
-      defines.APP_BUILD_DIR = archs.get(archs.keys().next().value)
+      const value: Arch | undefined = archs.keys().next().value
+      use(value, v => (defines.APP_BUILD_DIR = archs.get(v)))
     } else {
       await BluebirdPromise.map(archs.keys(), async arch => {
         const { fileInfo, unpackedSize } = await this.packageHelper.packArch(arch, this)

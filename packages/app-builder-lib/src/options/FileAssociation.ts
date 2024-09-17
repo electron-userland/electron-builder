@@ -3,7 +3,7 @@
  *
  * macOS (corresponds to [CFBundleDocumentTypes](https://developer.apple.com/library/content/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-101685)), NSIS, and MSI only.
  *
- * On Windows (NSIS) works only if [nsis.perMachine](https://electron.build/configuration/configuration#NsisOptions-perMachine) is set to `true`.
+ * On Windows (NSIS) works only if [nsis.perMachine](https://electron.build./configuration.md#NsisOptions-perMachine) is set to `true`.
  */
 export interface FileAssociation {
   /**
