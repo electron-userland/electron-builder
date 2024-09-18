@@ -62,7 +62,7 @@ export default class MsiWrappedTarget extends MsiTarget {
     // this target invokes `build` in `finishBuild` to guarantee
     // that the dependent target has already been built
     // this also affords us re-usability
-    const [arch, appOutDir] = this.archs.entries().next().value
+    const [arch, appOutDir] = this.archs.entries().next().value!
 
     this.validatePrerequisites()
 

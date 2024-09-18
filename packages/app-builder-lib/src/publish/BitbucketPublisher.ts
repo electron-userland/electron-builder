@@ -22,7 +22,7 @@ export class BitbucketPublisher extends HttpPublisher {
     const username = info.username || process.env.BITBUCKET_USERNAME || null
 
     if (isEmptyOrSpaces(token)) {
-      throw new InvalidConfigurationError(`Bitbucket token is not set using env "BITBUCKET_TOKEN" (see https://www.electron.build/configuration/publish#BitbucketOptions)`)
+      throw new InvalidConfigurationError(`Bitbucket token is not set using env "BITBUCKET_TOKEN" (see https://www.electron.build/publish#BitbucketOptions)`)
     }
 
     if (isEmptyOrSpaces(username)) {

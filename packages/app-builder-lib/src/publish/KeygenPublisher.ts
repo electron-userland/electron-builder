@@ -91,7 +91,7 @@ export class KeygenPublisher extends HttpPublisher {
 
     const token = process.env.KEYGEN_TOKEN
     if (isEmptyOrSpaces(token)) {
-      throw new InvalidConfigurationError(`Keygen token is not set using env "KEYGEN_TOKEN" (see https://www.electron.build/configuration/publish#KeygenOptions)`)
+      throw new InvalidConfigurationError(`Keygen token is not set using env "KEYGEN_TOKEN" (see https://www.electron.build/publish#KeygenOptions)`)
     }
 
     this.info = info

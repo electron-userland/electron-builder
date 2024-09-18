@@ -76,7 +76,7 @@ export default class FpmTarget extends Target {
     const projectUrl = await packager.appInfo.computePackageUrl()
     const errors: Array<string> = []
     if (projectUrl == null) {
-      errors.push("Please specify project homepage, see https://electron.build/configuration/configuration#Metadata-homepage")
+      errors.push("Please specify project homepage, see https://electron.build./configuration.md#Metadata-homepage")
     }
 
     const options = this.options
@@ -137,7 +137,7 @@ export default class FpmTarget extends Target {
     if (publishConfig != null) {
       const linuxDistType = this.packager.packagerOptions.prepackaged || path.join(this.outDir, `linux${getArchSuffix(arch)}-unpacked`)
       const resourceDir = packager.getResourcesDir(linuxDistType)
-      log.info({ resourceDir }, `adding autoupdate files for: ${target}. (Beta feature)`)
+      log.info({ resourceDir: log.filePath(resourceDir) }, `adding autoupdate files for: ${target}. (Beta feature)`)
       await outputFile(path.join(resourceDir, "app-update.yml"), serializeToYaml(publishConfig))
       // Extra file needed for auto-updater to detect installation method
       await outputFile(path.join(resourceDir, "package-type"), target)

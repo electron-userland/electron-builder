@@ -112,12 +112,12 @@ export interface GithubOptions extends PublishConfiguration {
   readonly protocol?: "https" | "http" | null
 
   /**
-   * The access token to support auto-update from private github repositories. Never specify it in the configuration files. Only for [setFeedURL](/auto-update#appupdatersetfeedurloptions).
+   * The access token to support auto-update from private github repositories. Never specify it in the configuration files. Only for [setFeedURL](./auto-update.md#appupdatersetfeedurloptions).
    */
   readonly token?: string | null
 
   /**
-   * Whether to use private github auto-update provider if `GH_TOKEN` environment variable is defined. See [Private GitHub Update Repo](/auto-update#private-github-update-repo).
+   * Whether to use private github auto-update provider if `GH_TOKEN` environment variable is defined. See [Private GitHub Update Repo](./auto-update.md#private-github-update-repo).
    */
   readonly private?: boolean | null
 
@@ -143,7 +143,7 @@ export function githubUrl(options: GithubOptions, defaultHost = "github.com") {
 
 /**
  * Generic (any HTTP(S) server) options.
- * In all publish options [File Macros](/file-patterns#file-macros) are supported.
+ * In all publish options [File Macros](./file-patterns.md#file-macros) are supported.
  */
 export interface GenericServerOptions extends PublishConfiguration {
   /**

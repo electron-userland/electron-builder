@@ -1,6 +1,6 @@
 import { DebugLogger } from "builder-util"
 import { Configuration, Platform } from "electron-builder"
-import { validateConfiguration } from "app-builder-lib/out/util/config"
+import { validateConfiguration } from "app-builder-lib/out/util/config/config"
 import { createYargs, configureBuildCommand, normalizeOptions, CliOptions } from "electron-builder/out/builder"
 import { app, appThrows, linuxDirTarget } from "./helpers/packTester"
 

@@ -93,7 +93,7 @@ export abstract class Target {
 
 export interface TargetSpecificOptions {
   /**
-   The [artifact file name template](/configuration/configuration#artifact-file-name-template).
+   The [artifact file name template](./configuration.md#artifact-file-name-template).
    */
   readonly artifactName?: string | null
 

@@ -15,14 +15,14 @@ out/
 /test/test-report.xml
 
 /packages/dmg-builder/vendor/
-/packages/electron-builder/README.md
 
 /scripts/jsdoc/out/
 /scripts/renderer/out/
 
-electron-builder-*.d.ts
+docs/
+site/
 
-/site/
+electron-builder-*.d.ts
 
 tsconfig.tsbuildinfo
 
