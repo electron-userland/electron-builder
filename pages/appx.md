@@ -50,6 +50,6 @@ The only solution for now — using [Parallels Desktop for Mac](http://www.paral
 
 If you use self-signed certificate, you need to add it to "Trusted People". See [Install the certificate](https://stackoverflow.com/a/24372483/1910191).
 
-# Configuration
+## Configuration
 
-{% include "./app-builder-lib.Interface.AppXOptions.md" %}
+{!./app-builder-lib.Interface.AppXOptions.md!}

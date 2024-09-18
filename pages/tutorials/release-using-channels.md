@@ -11,7 +11,7 @@ There are three channels, ordered by stability:
 2. "beta" which means your application works, but should have some bugs (example: `1.3.2-beta`)
 3. "alpha" which means your application is not stable and in active development (example: `1.3.2-alpha`)
 
-## Configuration
+### Configuration
 To release using channels, you should config electron-builder and define the channels to use in client side.
 
 ### Electron-Builder

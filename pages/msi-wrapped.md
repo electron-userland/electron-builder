@@ -1,3 +1,3 @@
-# Configuration
+## Configuration
 
-{% include "./app-builder-lib.Interface.MsiWrappedOptions.md" %}
+{!./app-builder-lib.Interface.MsiWrappedOptions.md!}

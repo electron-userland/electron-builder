@@ -149,6 +149,6 @@ For portable app, following environment variables are available:
       oneClick: false
     ```
 
-# Configuration
+## Configuration
 
-{% include "./app-builder-lib.Interface.NsisOptions.md" %}
+{!./app-builder-lib.Interface.NsisOptions.md!}

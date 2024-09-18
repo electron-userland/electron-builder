@@ -15,6 +15,6 @@ If the Flatpak build process fails with an error message like "flatpak failed wi
 !!! example "Enable Flatpak build debug logging"
     `env DEBUG="@malept/flatpak-bundler" electron-builder build --linux flatpak`
 
-# Configuration
+## Configuration
 
-{% include "./app-builder-lib.Interface.FlatpakOptions.md" %}
+{!./app-builder-lib.Interface.FlatpakOptions.md!}

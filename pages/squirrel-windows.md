@@ -7,6 +7,6 @@ To build for Squirrel.Windows on macOS, please install `mono` (`brew install mon
 
 Your app must be able to handle Squirrel.Windows startup events that occur during install and uninstall. See [electron-squirrel-startup](https://github.com/mongodb-js/electron-squirrel-startup).
 
-# Configuration
+## Configuration
 
-{% include "./app-builder-lib.Interface.SquirrelWindowsOptions.md" %}
+{!./app-builder-lib.Interface.SquirrelWindowsOptions.md!}

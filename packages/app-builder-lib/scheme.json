@@ -6610,7 +6610,7 @@
           ]
         }
       ],
-      "description": "The function (or path to file or module id) to be [run after all artifacts are build](#afterAllArtifactBuild)."
+      "description": "The function (or path to file or module id) to be run after all artifacts are built.\n\n```typescript\n(buildResult: BuildResult): Promise<Array<string>> | Array<string>\n```\n\nConfiguration in the same way as `afterPack` (see above).\n\n!!! example \"myAfterAllArtifactBuild.js\"\n```js\nexports.default = function () {\n // you can return additional files to publish\n return [\"/path/to/additional/result/file\"]\n}\n```"
     },
     "afterExtract": {
       "anyOf": [
@@ -6800,7 +6800,7 @@
           ]
         }
       ],
-      "description": "The function (or path to file or module id) to be [run before pack](#beforepack)"
+      "description": "The function (or path to file or module id) to be run before pack.\n\n```typescript\n(context: BeforePackContext): Promise<any> | any\n```\n\n!!! example \"As function\"\n\n ```js\n beforePack: async (context) => {\n   // your code\n }\n ```\n\nBecause in a configuration file you cannot use JavaScript, can be specified as a path to file or module id. Function must be exported as default export.\n\n```json\n\"build\": {\n\"beforePack\": \"./myBeforePackHook.js\"\n}\n```\n\nFile `myBeforePackHook.js` in the project root directory:\n\n!!! example \"myBeforePackHook.js\"\n ```js\n exports.default = async function(context) {\n   // your custom code\n }\n ```"
     },
     "buildDependenciesFromSource": {
       "default": false,
