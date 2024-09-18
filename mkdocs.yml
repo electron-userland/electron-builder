@@ -73,11 +73,14 @@ plugins:
 nav:
   - Introduction: README.md
   - Command Line Interface (CLI): cli.md
-  - Programmatic API:
-      - API: api/electron-builder.md
-      - Example: api/programmatic-usage.md
-      - Modules: modules.md
   - Donate: donate.md
+
+  - Programmatic API:
+      - Example: programmatic-usage.md
+      - Main Modules:
+        - electron-builder: electron-builder/globals.md
+        - app-builder-lib: app-builder-lib/globals.md
+        - electron-updater: electron-updater/globals.md
 
   - Configuration:
       - Common Configuration: configuration.md
@@ -108,7 +111,7 @@ nav:
       - Publish: publish.md
 
   - Guides:
-      - Hooks: hooks.md
+      - Build Hooks: hooks.md
       - Icons: icons.md
       - Auto Update: auto-update.md
       - Code Signing: code-signing.md
