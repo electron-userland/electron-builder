@@ -114,7 +114,7 @@ Detected automatically using:
     * or `CIRCLE_PROJECT_USERNAME`/`CIRCLE_PROJECT_REPONAME`,
 * if no env, from `.git/config` origin url.
 
-## Publishers
+# Publishers
 
 ## Bitbucket
 {!./builder-util-runtime.Interface.BitbucketOptions.md!}
@@ -140,5 +140,6 @@ Detected automatically using:
 {!./builder-util-runtime.Interface.SpacesOptions.md!}
 
 ## BYO Generic (create-your-own)
+
 (And maybe submit it upstream in a PR!)
 {!./builder-util-runtime.Interface.GenericServerOptions.md!}

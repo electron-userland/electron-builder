@@ -22,6 +22,7 @@ module.exports = {
   disableSources: true,
   hidePageHeader: true,
   useHTMLEncodedBrackets: true,
+  preserveAnchorCasing: true,
   // groupOrder: ["source-order"],
   // "readme": "none",
   // "sort": ["kind"],

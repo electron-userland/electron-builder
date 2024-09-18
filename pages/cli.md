@@ -7,6 +7,7 @@ Commands:
                                             for Windows apps
   electron-builder start                    Run application in a development
                                             mode using electron-webpack
+  electron-builder publish                  Publish any files with your publish config
 
 Building:
   --mac, -m, -o, --macos   Build for macOS, accepts target list (see
@@ -33,6 +34,22 @@ Publishing:
   --publish, -p  Publish artifacts (to GitHub Releases), see
                  https://goo.gl/tSFycD
                 [choices: "onTag", "onTagOrDraft", "always", "never", undefined]
+
+
+-----
+
+electron-builder publish
+
+Publish a list of artifacts
+
+Options:
+  -v, --version  The app/build version used when searching for an upload release
+                 (used by some Publishers)                              [string]
+      --help     Show help                                             [boolean]
+  -f, --files    The file(s) to upload to your publisher      [array] [required]
+  -c, --config   The path to an electron-builder config. Defaults to
+                 `electron-builder.yml` (or `json`, or `json5`, or `js`, or
+                 `ts`), see https://goo.gl/YFRJOM                       [string]
 
 Other:
   --help     Show help                                                 [boolean]
