@@ -1,6 +1,6 @@
-The [publish](configuration.md#Configuration-publish) key contains a set of options instructing electron-builder on how it should publish artifacts and build update info files for [auto update](../auto-update.md).
+The [publish](configuration.md#publish) key contains a set of options instructing electron-builder on how it should publish artifacts and build update info files for [auto update](./auto-update.md).
 
-`String | Object | Array<Object | String>` where `Object` it is [Keygen](#keygenoptions), [Generic Server](#genericserveroptions), [GitHub](#githuboptions), [S3](#s3options), [Spaces](#spacesoptions) or [Snap Store](#snapstoreoptions) options. Order is important — first item will be used as a default auto-update server. Can be specified in the [top-level configuration](configuration.md#configuration) or any platform- ([mac](mac.md), [linux](linux.md), [win](win.md)) or target- (e.g. [nsis](nsis.md)) specific configuration.
+`String | Object | Array<Object | String>` where `Object` it is [Keygen](#keygen), [Generic Server](#byo-generic-create-your-own), [GitHub](#github), [S3](#s3), [Spaces](#spaces) or [Snap Store](#snap-store) options. Order is important — first item will be used as a default auto-update server. Can be specified in the [top-level configuration](configuration.md#configuration) or any platform- ([mac](mac.md), [linux](linux.md), [win](win.md)) or target- (e.g. [nsis](nsis.md)) specific configuration.
 
 Note that when using a generic server, you have to upload the built application and metadata files yourself.
 
@@ -47,11 +47,11 @@ You can also configure publishing using CLI arguments, for example, to force pub
 [Custom](https://github.com/electron-userland/electron-builder/issues/3261) publish provider can be used if need.
 
 !!! tip "Macros"
-    In all publish options [File Macros](../file-patterns.md#file-macros) are supported.
+    In all publish options [File Macros](./file-patterns.md#file-macros) are supported.
 
 ## How to Publish
 
-Excerpt from [CLI Usage](../cli.md) of `electron-builder` command:
+Excerpt from [CLI Usage](./cli.md) of `electron-builder` command:
 ```
 Publishing:
   --publish, -p  [choices: "onTag", "onTagOrDraft", "always", "never"]
@@ -114,7 +114,7 @@ Detected automatically using:
     * or `CIRCLE_PROJECT_USERNAME`/`CIRCLE_PROJECT_REPONAME`,
 * if no env, from `.git/config` origin url.
 
-## Publishers
+# Publishers
 
 ## Bitbucket
 {!./builder-util-runtime.Interface.BitbucketOptions.md!}
@@ -140,5 +140,6 @@ Detected automatically using:
 {!./builder-util-runtime.Interface.SpacesOptions.md!}
 
 ## BYO Generic (create-your-own)
+
 (And maybe submit it upstream in a PR!)
 {!./builder-util-runtime.Interface.GenericServerOptions.md!}

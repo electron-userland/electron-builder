@@ -129,7 +129,7 @@ will declare to use node-modules instead of PnP.
 
 [electron-webpack-quick-start](https://github.com/electron-userland/electron-webpack-quick-start) is a recommended way to create a new Electron application. See [Boilerplates](https://www.electron.build/#boilerplates).
 
-1. Specify the standard fields in the application `package.json` — [name](https://electron.build./configuration.md#Metadata-name), `description`, `version` and [author](https://docs.npmjs.com/files/package.json#people-fields-author-contributors).
+1. Specify the standard fields in the application `package.json` — [name](https://electron.build./configuration.md#metadata), `description`, `version` and [author](https://docs.npmjs.com/files/package.json#people-fields-author-contributors).
 
 2. Specify the [build](https://electron.build./configuration.md#build) configuration in the `package.json` as follows:
     ```json
@@ -156,16 +156,16 @@ will declare to use node-modules instead of PnP.
 
     To ensure your native dependencies are always matched electron version, simply add script `"postinstall": "electron-builder install-app-deps"` to your `package.json`.
 
-5. If you have native addons of your own that are part of the application (not as a dependency), set [nodeGypRebuild](https://www.electron.build./configuration.md#Configuration-nodeGypRebuild) to `true`.
+5. If you have native addons of your own that are part of the application (not as a dependency), set [nodeGypRebuild](https://www.electron.build./configuration.md#nodeGypRebuild) to `true`.
 
-Please note that everything is packaged into an asar archive [by default](https://electron.build./configuration.md#Configuration-asar).
+Please note that everything is packaged into an asar archive [by default](https://electron.build./configuration.md#asar).
 
 For an app that will be shipped to production, you should sign your application. See [Where to buy code signing certificates](https://www.electron.build/code-signing#where-to-buy-code-signing-certificate).
 
 ## Programmatic Usage
-See `node_modules/electron-builder/out/index.d.ts`. Typings for TypeScript are provided and also can be found [here](/api/electron-builder.md).
+See `node_modules/electron-builder/out/index.d.ts`. Typings for TypeScript are provided and also can be found [here](./electron-builder.md).
 
-Code snippit provided below is also shown "in action" [here](/api/programmatic-usage.md) as well.
+Code snippit provided below is also shown "in action" [here](./programmatic-usage.md) as well.
 ```js
 "use strict"
 

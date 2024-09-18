@@ -188,7 +188,7 @@ Emitted when checking if an update has started.
 
 #### Event: `update-available`
 
-* `info` [UpdateInfo](#UpdateInfo) (for generic and github providers) | [VersionInfo](#VersionInfo) (for Bintray provider)
+* `info` [UpdateInfo](#updateinfo) (for generic and github providers) | [VersionInfo](#VersionInfo) (for Bintray provider)
 
 Emitted when there is an available update. The update is downloaded automatically if `autoDownload` is `true`.
 
@@ -196,7 +196,7 @@ Emitted when there is an available update. The update is downloaded automaticall
 
 Emitted when there is no available update.
 
-* `info` [UpdateInfo](#UpdateInfo) (for generic and github providers) | [VersionInfo](#VersionInfo) (for Bintray provider)
+* `info` [UpdateInfo](#updateinfo) (for generic and github providers) | [VersionInfo](#VersionInfo) (for Bintray provider)
 
 #### Event: `download-progress`
 * `progress` ProgressInfo
@@ -209,8 +209,8 @@ Emitted on progress.
 
 #### Event: `update-downloaded`
 
-* `info` [UpdateInfo](#UpdateInfo) — for generic and github providers. [VersionInfo](#VersionInfo) for Bintray provider.
+* `info` [UpdateInfo](#updateinfo) — for generic and github providers. [VersionInfo](#VersionInfo) for Bintray provider.
 
-<!-- do not edit. start of generated block -->
+## UpdateInfo
 
-<!-- end of generated block -->
+{!./electron-updater.Interface.UpdateInfo.md!}

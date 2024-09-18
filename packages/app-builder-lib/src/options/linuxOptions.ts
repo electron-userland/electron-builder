@@ -12,17 +12,17 @@ export interface LinuxConfiguration extends CommonLinuxOptions, PlatformSpecific
   readonly target?: TargetConfigType
 
   /**
-   * The maintainer. Defaults to [author](./configuration.md#Metadata-author).
+   * The maintainer. Defaults to [author](./configuration.md#author).
    */
   readonly maintainer?: string | null
 
   /**
-   * The vendor. Defaults to [author](./configuration.md#Metadata-author).
+   * The vendor. Defaults to [author](./configuration.md#author).
    */
   readonly vendor?: string | null
 
   /**
-   * The path to icon set directory or one png file, relative to the [build resources](./configuration.md#MetadataDirectories-buildResources) or to the project directory. The icon filename must contain the size (e.g. 32x32.png) of the icon.
+   * The path to icon set directory or one png file, relative to the [build resources](./contents.md#extraresources) or to the project directory. The icon filename must contain the size (e.g. 32x32.png) of the icon.
    * By default will be generated automatically based on the macOS icns file.
    */
   readonly icon?: string
@@ -41,7 +41,7 @@ export interface CommonLinuxOptions {
   readonly synopsis?: string | null
 
   /**
-   * As [description](./configuration.md#Metadata-description) from application package.json, but allows you to specify different for Linux.
+   * As [description](./configuration.md#description) from application package.json, but allows you to specify different for Linux.
    */
   readonly description?: string | null
 

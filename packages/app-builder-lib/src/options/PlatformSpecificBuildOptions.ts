@@ -5,7 +5,7 @@ export interface FileSet {
   /**
    * The source path relative to and defaults to:
    *
-   *  - the [app directory](configuration.md#MetadataDirectories-app) for `files`,
+   *  - the [app directory](configuration.md#directories) for `files`,
    *  - the project directory for `extraResources` and `extraFiles`.
    * If you don't use two-package.json structure and don't set custom app directory, app directory equals to project directory.
    */
@@ -36,7 +36,7 @@ export interface AsarOptions {
 
 export interface FilesBuildOptions {
   /**
-   * A [glob patterns](./file-patterns.md) relative to the [app directory](configuration.md#MetadataDirectories-app), which specifies which files to include when copying files to create the package.
+   * A [glob patterns](./file-patterns.md) relative to the [app directory](configuration.md#directories), which specifies which files to include when copying files to create the package.
 
 Defaults to:
 ```json
@@ -126,13 +126,13 @@ export interface PlatformSpecificBuildOptions extends TargetSpecificOptions, Fil
   /**
    * Whether to package the application's source code into an archive, using [Electron's archive format](http://electron.atom.io/docs/tutorial/application-packaging/).
    *
-   * Node modules, that must be unpacked, will be detected automatically, you don't need to explicitly set [asarUnpack](#configuration-asarUnpack) - please file an issue if this doesn't work.
+   * Node modules, that must be unpacked, will be detected automatically, you don't need to explicitly set [asarUnpack](#asarUnpack) - please file an issue if this doesn't work.
    * @default true
    */
   readonly asar?: AsarOptions | boolean | null
 
   /**
-   * A [glob patterns](./file-patterns.md) relative to the [app directory](#MetadataDirectories-app), which specifies which files to unpack when creating the [asar](http://electron.atom.io/docs/tutorial/application-packaging/) archive.
+   * A [glob patterns](./file-patterns.md) relative to the [app directory](#directories), which specifies which files to unpack when creating the [asar](http://electron.atom.io/docs/tutorial/application-packaging/) archive.
    */
   readonly asarUnpack?: Array<string> | string | null
 
@@ -209,7 +209,7 @@ export interface ReleaseInfo {
   releaseNotes?: string | null
 
   /**
-   * The path to release notes file. Defaults to `release-notes-${platform}.md` (where `platform` it is current platform — `mac`, `linux` or `windows`) or `release-notes.md` in the [build resources](#MetadataDirectories-buildResources).
+   * The path to release notes file. Defaults to `release-notes-${platform}.md` (where `platform` it is current platform — `mac`, `linux` or `windows`) or `release-notes.md` in the [build resources](./contents.md#extraresources).
    */
   releaseNotesFile?: string | null
 

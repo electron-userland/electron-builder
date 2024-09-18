@@ -3,7 +3,7 @@
 
     For what it's worth, there are [some](https://discourse.flathub.org/t/seeking-contractors-for-work-on-flathub-project/1889) [plans](https://discourse.flathub.org/t/is-it-possible-to-publish-a-self-contained-flatpak-file-to-flathub/2083) to make it easier to publish Electron apps to Flathub. When that happens, it should be easier to create a Flathub publisher for `electron-builder` (which would work similary to the other publishers).
 
-The top-level [flatpak](configuration.md#Configuration-flatpak) key contains a set of options instructing electron-builder on how it should build a [Flatpak](https://flatpak.org/) bundle.
+The top-level [flatpak](configuration.md#flatpak) key contains a set of options instructing electron-builder on how it should build a [Flatpak](https://flatpak.org/) bundle.
 
 !!! info "Build dependencies"
     The `flatpak` and `flatpak-builder` packages need to be installed in order to build Flatpak bundles.
