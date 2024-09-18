@@ -2,7 +2,7 @@ The top-level [win](configuration.md#Configuration-win) key contains set of opti
 
 ---
 
-# Common Questions
+## Common Questions
 ## How do delegate code signing?
 
 Use [sign](#WindowsConfiguration-sign) option. Please also see [why sign.js is called 8 times](https://github.com/electron-userland/electron-builder/issues/3995).
@@ -92,6 +92,6 @@ The password to your VM is `Passw0rd!`.
 
 VirtualBox is not supported by electron-builder for now, so, you need to setup build environment on Windows if you want to use VirtualBox to build AppX (and other Windows-only tasks).
 
-# Configuration
+## Configuration
 
-{% include "./app-builder-lib.Interface.WindowsConfiguration.md" %}
+{!./app-builder-lib.Interface.WindowsConfiguration.md!}

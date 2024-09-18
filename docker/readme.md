@@ -1,10 +1,10 @@
 It is developer documentation. See [user documentation](https://www.electron.build/multi-platform-build#docker).
 
-# Build
+## Build
 
 `pnpm docker-images`
 
-# Notes
+## Notes
 
 * We use [named data volume](https://madcoda.com/2016/03/docker-named-volume-explained/) instead of mounted host directory to store `node_modules` because NPM is unreliable and NPM team [doesn't want to fix it](https://github.com/npm/npm/issues/3565).
 

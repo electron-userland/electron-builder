@@ -18,6 +18,6 @@ The contain file should have the following format:
 }
 ```
 
-# Configuration
+## Configuration
 
-{% include "./app-builder-lib.Interface.DmgOptions.md" %}
+{!./app-builder-lib.Interface.DmgOptions.md!}

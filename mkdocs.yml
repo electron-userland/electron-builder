@@ -15,6 +15,7 @@ theme:
     - header.autohide
     - navigation.expand
     - navigation.sections
+    # - navigation.prune
     # - search.highlight
     # - search.share
     # - search.suggest
@@ -62,25 +63,12 @@ markdown_extensions:
   - pymdownx.superfences
   - toc:
       permalink: true
+  - markdown_include.include:
+      base_path      : './docs/'
+      encoding       : 'utf-8'
 
 plugins:
   - search
-  # - minify:
-  #     minify_html: true
-  - include-markdown:
-      # encoding: ascii
-      preserve_includer_indent: true
-      # dedent: true
-      trailing_newlines: true
-      # inheritHeadingDepth: true
-      # comments: true
-      rewrite_relative_urls: true
-      # heading_offset: 0
-      # start: <!-- do not edit. start of generated block -->
-      # end: <!-- end of generated block -->
-      # opening_tag: "{!"
-      # closing_tag: "!}"
-      # recursive: true
 
 nav:
   - Introduction: README.md

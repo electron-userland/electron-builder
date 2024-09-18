@@ -114,31 +114,31 @@ Detected automatically using:
     * or `CIRCLE_PROJECT_USERNAME`/`CIRCLE_PROJECT_REPONAME`,
 * if no env, from `.git/config` origin url.
 
-# Publishers
+## Publishers
 
-# Bitbucket
-{% include "./builder-util-runtime.Interface.BitbucketOptions.md" %}
+## Bitbucket
+{!./builder-util-runtime.Interface.BitbucketOptions.md!}
 
-# Github
+## Github
 
-{% include "./builder-util-runtime.Interface.GithubOptions.md" %}
+{!./builder-util-runtime.Interface.GithubOptions.md!}
 
-# Keygen
+## Keygen
 
-{% include "./builder-util-runtime.Interface.KeygenOptions.md" %}
+{!./builder-util-runtime.Interface.KeygenOptions.md!}
 
-# S3
+## S3
 
-{% include "./builder-util-runtime.Interface.S3Options.md" %}
+{!./builder-util-runtime.Interface.S3Options.md!}
 
-# Snap Store
+## Snap Store
 
-{% include "./builder-util-runtime.Interface.SnapStoreOptions.md" %}
+{!./builder-util-runtime.Interface.SnapStoreOptions.md!}
 
-# Spaces
+## Spaces
 
-{% include "./builder-util-runtime.Interface.SpacesOptions.md" %}
+{!./builder-util-runtime.Interface.SpacesOptions.md!}
 
-# BYO Generic (create-your-own)
+## BYO Generic (create-your-own)
 (And maybe submit it upstream in a PR!)
-{% include "./builder-util-runtime.Interface.GenericServerOptions.md" %}
+{!./builder-util-runtime.Interface.GenericServerOptions.md!}

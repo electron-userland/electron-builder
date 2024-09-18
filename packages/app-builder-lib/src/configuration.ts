@@ -21,7 +21,7 @@ import { NsisOptions, NsisWebOptions, PortableOptions } from "./targets/nsis/nsi
 /**
  * Configuration Options
  */
-export interface Configuration extends PlatformSpecificBuildOptions {
+export interface Configuration extends PlatformSpecificBuildOptions, Hooks {
   /**
    * The application id. Used as [CFBundleIdentifier](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070) for MacOS and as
    * [Application User Model ID](https://msdn.microsoft.com/en-us/library/windows/desktop/dd378459(v=vs.85).aspx) for Windows (NSIS target only, Squirrel.Windows not supported). It is strongly recommended that an explicit ID is set.
@@ -216,7 +216,80 @@ export interface Configuration extends PlatformSpecificBuildOptions {
   readonly framework?: string | null
 
   /**
-   * The function (or path to file or module id) to be [run before pack](#beforepack)
+   * Whether to include PDB files.
+   * @default false
+   */
+  readonly includePdb?: boolean
+
+  /**
+   * Whether to remove `scripts` field from `package.json` files.
+   *
+   * @default true
+   */
+  readonly removePackageScripts?: boolean
+
+  /**
+   * Whether to remove `keywords` field from `package.json` files.
+   *
+   * @default true
+   */
+  readonly removePackageKeywords?: boolean
+
+  /**
+   * Whether to disable sanity check asar package (useful for custom electron forks that implement their own encrypted integrity validation)
+   * @default false
+   */
+  readonly disableSanityCheckAsar?: boolean
+}
+
+export type CustomElectronDistributable = (options: PrepareApplicationStageDirectoryOptions) => string
+
+export type Hook<T, V> = (contextOrPath: T) => Promise<V> | V
+
+interface PackContext {
+  readonly outDir: string
+  readonly appOutDir: string
+  readonly packager: PlatformPackager<any>
+  readonly electronPlatformName: string
+  readonly arch: Arch
+  readonly targets: Array<Target>
+}
+export type AfterPackContext = PackContext
+export type BeforePackContext = PackContext
+export type AfterExtractContext = PackContext
+
+export interface Hooks {
+  /**
+The function (or path to file or module id) to be run before pack.
+
+```typescript
+(context: BeforePackContext): Promise<any> | any
+```
+
+!!! example "As function"
+
+    ```js
+    beforePack: async (context) => {
+      // your code
+    }
+    ```
+    
+Because in a configuration file you cannot use JavaScript, can be specified as a path to file or module id. Function must be exported as default export.
+
+```json
+"build": {
+  "beforePack": "./myBeforePackHook.js"
+}
+```
+
+File `myBeforePackHook.js` in the project root directory:
+
+!!! example "myBeforePackHook.js"
+    ```js
+    exports.default = async function(context) {
+      // your custom code
+    }
+    ```
    */
   readonly beforePack?: Hook<BeforePackContext, any> | string | null
 
@@ -265,45 +338,7 @@ export interface Configuration extends PlatformSpecificBuildOptions {
    * If provided and `node_modules` are missing, it will not invoke production dependencies check.
    */
   readonly beforeBuild?: Hook<BeforeBuildContext, boolean | void> | string | null
-
-  /**
-   * Whether to include PDB files.
-   * @default false
-   */
-  readonly includePdb?: boolean
-
-  /**
-   * Whether to remove `scripts` field from `package.json` files.
-   *
-   * @default true
-   */
-  readonly removePackageScripts?: boolean
-
-  /**
-   * Whether to remove `keywords` field from `package.json` files.
-   *
-   * @default true
-   */
-  readonly removePackageKeywords?: boolean
-
-  /**
-   * Whether to disable sanity check asar package (useful for custom electron forks that implement their own encrypted integrity validation)
-   * @default false
-   */
-  readonly disableSanityCheckAsar?: boolean
 }
-
-interface PackContext {
-  readonly outDir: string
-  readonly appOutDir: string
-  readonly packager: PlatformPackager<any>
-  readonly electronPlatformName: string
-  readonly arch: Arch
-  readonly targets: Array<Target>
-}
-export type AfterPackContext = PackContext
-export type BeforePackContext = PackContext
-export type AfterExtractContext = PackContext
 
 export interface MetadataDirectories {
   /**
@@ -325,7 +360,3 @@ export interface MetadataDirectories {
    */
   readonly app?: string | null
 }
-
-export type CustomElectronDistributable = (options: PrepareApplicationStageDirectoryOptions) => string
-
-export type Hook<T, V> = (contextOrPath: T) => Promise<V> | V

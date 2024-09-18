@@ -6799,8 +6799,7 @@
             "string"
           ]
         }
-      ],
-      "description": "The function (or path to file or module id) to be [run before pack](#beforepack)"
+      ]
     },
     "buildDependenciesFromSource": {
       "default": false,

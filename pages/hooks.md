@@ -3,40 +3,7 @@
 !!! note "Node.js 8"
     All examples assumed that you use latest Node.js 8.11.x or higher.
 
-### beforePack
-
-The function (or path to file or module id) to be run before pack.
-
-```typescript
-(context: BeforePackContext): Promise<any> | any
-```
-
-!!! example "As function"
-
-    ```js
-    beforePack: async (context) => {
-      // your code
-    }
-    ```
-
-Because in a configuration file you cannot use JavaScript, can be specified as a path to file or module id. Function must be exported as default export.
-
-```json
-"build": {
-  "beforePack": "./myBeforePackHook.js"
-}
-```
-
-
-File `myBeforePackHook.js` in the project root directory:
-
-!!! example "myBeforePackHook.js"
-    ```js
-    exports.default = async function(context) {
-      // your custom code
-    }
-    ```
-
+{!./app-builder-lib.Interface.Hooks!}
 
 ### afterPack
 

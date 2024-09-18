@@ -3,6 +3,6 @@ The top-level [appImage](configuration.md#Configuration-appImage) key contains s
 !!! info "Desktop Integration"
     Since electron-builder 21 desktop integration is not a part of produced AppImage file. [AppImageLauncher](https://github.com/TheAssassin/AppImageLauncher) is the recommended way to integrate AppImages.
 
-# Configuration
+## Configuration
 
-{% include "./app-builder-lib.Interface.AppImageOptions.md" %}
+{!./app-builder-lib.Interface.AppImageOptions.md!}

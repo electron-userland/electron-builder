@@ -1,12 +1,12 @@
-{% include "./app-builder-lib/globals.md" %}
-{% include "./builder-util-runtime/globals.md" %}
-{% include "./builder-util/globals.md" %}
-{% include "./dmg-builder/globals.md" %}
-{% include "./electron-builder-squirrel-windows/globals.md" %}
-{% include "./electron-builder/globals.md" %}
-{% include "./electron-forge-maker-appimage/globals.md" %}
-{% include "./electron-forge-maker-nsis-web/globals.md" %}
-{% include "./electron-forge-maker-nsis/globals.md" %}
-{% include "./electron-forge-maker-snap/globals.md" %}
-{% include "./electron-publish/globals.md" %}
-{% include "./electron-updater/globals.md" %}
+{!./app-builder-lib/globals.md!}
+{!./builder-util-runtime/globals.md!}
+{!./builder-util/globals.md!}
+{!./dmg-builder/globals.md!}
+{!./electron-builder-squirrel-windows/globals.md!}
+{!./electron-builder/globals.md!}
+{!./electron-forge-maker-appimage/globals.md!}
+{!./electron-forge-maker-nsis-web/globals.md!}
+{!./electron-forge-maker-nsis/globals.md!}
+{!./electron-forge-maker-snap/globals.md!}
+{!./electron-publish/globals.md!}
+{!./electron-updater/globals.md!}

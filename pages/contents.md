@@ -1,7 +1,7 @@
-# File Contents
+## File Contents
 
-{% include-markdown "./app-builder-lib.Interface.FilesBuildOptions.md" heading-offset=1 %}
+#{!./app-builder-lib.Interface.FilesBuildOptions.md!}
 
-# FileSet Configuration
+## FileSet Configuration
 
-{% include-markdown "./app-builder-lib.Interface.FileSet.md" heading-offset=2 %}
+#{!./app-builder-lib.Interface.FileSet.md!}
