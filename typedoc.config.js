@@ -8,10 +8,7 @@ module.exports = {
   entryPointStrategy: "packages",
   cleanOutputDir: false,
   flattenOutputFiles: true,
-  plugin: [
-    "typedoc-plugin-markdown",
-    // "./scripts/renderer/out/customRendererPlugin.js",
-  ],
+  plugin: ["typedoc-plugin-markdown", "./scripts/renderer/out/customRendererPlugin.js"],
   excludeExternals: true,
   excludePrivate: true,
   excludeProtected: true,
