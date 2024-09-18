@@ -96,7 +96,7 @@ To sign using Azure Tenant account, you'll need the following env variables set 
 | `AZURE_USERNAME`            |
 | `AZURE_PASSWORD`            |
 
-`win.azureOptions` needs to be configured per [Microsoft's instructions](https://learn.microsoft.com/en-us/azure/trusted-signing/how-to-signing-integrations#create-a-json-file) directly in electron-builder's configuration. Additional fields can be provided that are passed directly to `Invoke-TrustedSigning` powershell command.
+`win.azureSignOptions` needs to be configured per [Microsoft's instructions](https://learn.microsoft.com/en-us/azure/trusted-signing/how-to-signing-integrations#create-a-json-file) directly in electron-builder's configuration. Additional fields can be provided that are passed directly to `Invoke-TrustedSigning` powershell command.
 
 ## Alternative methods of codesigning
 
