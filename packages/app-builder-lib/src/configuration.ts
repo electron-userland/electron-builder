@@ -41,6 +41,9 @@ export interface Configuration extends PlatformSpecificBuildOptions, Hooks {
    */
   readonly copyright?: string | null
 
+  /**
+   * Directories for build resources
+   */
   readonly directories?: MetadataDirectories | null
 
   /**

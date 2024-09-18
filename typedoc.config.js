@@ -15,7 +15,7 @@ module.exports = {
   excludeExternals: true,
   excludePrivate: true,
   excludeProtected: true,
-  excludeNotDocumented: true,
+  excludeNotDocumented: false,
   includeVersion: false,
   hideGroupHeadings: true,
   hidePageTitle: true,

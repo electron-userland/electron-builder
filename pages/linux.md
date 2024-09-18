@@ -1,4 +1,4 @@
-The top-level [linux](configuration.md#Configuration-linux) key contains set of options instructing electron-builder on how it should build Linux targets. These options applicable for any Linux target.
+The top-level [linux](configuration.md#linux) key contains set of options instructing electron-builder on how it should build Linux targets. These options applicable for any Linux target.
 
 ## Base Linux Configuration
 
@@ -6,7 +6,7 @@ The top-level [linux](configuration.md#Configuration-linux) key contains set of 
 
 ## Debian Package Options
 
-The top-level [deb](configuration.md#Configuration-deb) key contains set of options instructing electron-builder on how it should build Debian package.
+The top-level [deb](configuration.md#deb) key contains set of options instructing electron-builder on how it should build Debian package.
 
 {!./app-builder-lib.Interface.DebOptions.md!}
 

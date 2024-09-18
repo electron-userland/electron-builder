@@ -156,9 +156,9 @@ will declare to use node-modules instead of PnP.
 
     To ensure your native dependencies are always matched electron version, simply add script `"postinstall": "electron-builder install-app-deps"` to your `package.json`.
 
-5. If you have native addons of your own that are part of the application (not as a dependency), set [nodeGypRebuild](https://www.electron.build./configuration.md#Configuration-nodeGypRebuild) to `true`.
+5. If you have native addons of your own that are part of the application (not as a dependency), set [nodeGypRebuild](https://www.electron.build./configuration.md#nodeGypRebuild) to `true`.
 
-Please note that everything is packaged into an asar archive [by default](https://electron.build./configuration.md#Configuration-asar).
+Please note that everything is packaged into an asar archive [by default](https://electron.build./configuration.md#asar).
 
 For an app that will be shipped to production, you should sign your application. See [Where to buy code signing certificates](https://www.electron.build/code-signing#where-to-buy-code-signing-certificate).
 

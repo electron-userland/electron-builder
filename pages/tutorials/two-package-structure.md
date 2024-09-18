@@ -12,7 +12,7 @@
 Why?
 
 1. Native npm modules (those written in C, not JavaScript) need to be compiled and here we have two different compilation targets for them. Those used within the application need to be compiled against the electron runtime and all `devDependencies` need to be compiled against your local node.js environment. Thanks to the two `package.json` structure, this is trivial (see [#39](https://github.com/electron-userland/electron-builder/issues/39)).
-2. No need to specify which [files](../configuration.md#Configuration-files) to include in the app (because development files reside outside the `app` directory).
+2. No need to specify which [files](../configuration.md#files) to include in the app (because development files reside outside the `app` directory).
 
 Please see [Loading App Dependencies Manually](loading-app-dependencies-manually.md) and [#379](https://github.com/electron-userland/electron-builder/issues/379#issuecomment-218503881).
 
