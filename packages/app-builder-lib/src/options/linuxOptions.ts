@@ -12,12 +12,12 @@ export interface LinuxConfiguration extends CommonLinuxOptions, PlatformSpecific
   readonly target?: TargetConfigType
 
   /**
-   * The maintainer. Defaults to [author](./configuration.md#Metadata-author).
+   * The maintainer. Defaults to [author](./configuration.md#author).
    */
   readonly maintainer?: string | null
 
   /**
-   * The vendor. Defaults to [author](./configuration.md#Metadata-author).
+   * The vendor. Defaults to [author](./configuration.md#author).
    */
   readonly vendor?: string | null
 
@@ -41,7 +41,7 @@ export interface CommonLinuxOptions {
   readonly synopsis?: string | null
 
   /**
-   * As [description](./configuration.md#Metadata-description) from application package.json, but allows you to specify different for Linux.
+   * As [description](./configuration.md#description) from application package.json, but allows you to specify different for Linux.
    */
   readonly description?: string | null
 

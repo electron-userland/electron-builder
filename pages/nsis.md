@@ -97,7 +97,7 @@ Windows requires to use registry keys (e.g. INSTALL/UNINSTALL info). Squirrel.Wi
 But it is not robust — Google can use key Google Chrome SxS, because it is a Google.
 
 So, it is better to use [GUID](http://stackoverflow.com/a/246935/1910191).
-You are not forced to explicitly specify it — name-based [UUID v5](https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_5_.28SHA-1_hash_.26_namespace.29) will be generated from your [appId](configuration.md#Configuration-appId) or [name](configuration.md#Metadata-name).
+You are not forced to explicitly specify it — name-based [UUID v5](https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_5_.28SHA-1_hash_.26_namespace.29) will be generated from your [appId](configuration.md#Configuration-appId) or [name](configuration.md#metadata).
 It means that you **should not change appId** once your application in use (or name if `appId` was not set). Application product name (title) or description can be safely changed.
 
 You can explicitly set guid using option [nsis.guid](#NsisOptions-guid), but it is not recommended — consider using [appId](configuration.md#Configuration-appId).
