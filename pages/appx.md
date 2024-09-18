@@ -4,7 +4,7 @@ All options are optional. All required for AppX configuration is inferred and co
 
 ## AppX Package Code Signing
 
-* If the AppX package is meant for enterprise or self-made distribution (manually install the app without using the Store for testing or for enterprise distribution), it must be [signed](../code-signing.md).
+* If the AppX package is meant for enterprise or self-made distribution (manually install the app without using the Store for testing or for enterprise distribution), it must be [signed](./code-signing.md).
 * If the AppX package is meant for Windows Store distribution, no need to sign the package with any certificate. The Windows Store will take care of signing it with a Microsoft certificate during the submission process.
 
 ## AppX Assets

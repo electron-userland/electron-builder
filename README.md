@@ -163,9 +163,9 @@ Please note that everything is packaged into an asar archive [by default](https:
 For an app that will be shipped to production, you should sign your application. See [Where to buy code signing certificates](https://www.electron.build/code-signing#where-to-buy-code-signing-certificate).
 
 ## Programmatic Usage
-See `node_modules/electron-builder/out/index.d.ts`. Typings for TypeScript are provided and also can be found [here](/api/electron-builder.md).
+See `node_modules/electron-builder/out/index.d.ts`. Typings for TypeScript are provided and also can be found [here](~/electron-builder.md).
 
-Code snippit provided below is also shown "in action" [here](/api/programmatic-usage.md) as well.
+Code snippit provided below is also shown "in action" [here](~/programmatic-usage.md) as well.
 ```js
 "use strict"
 

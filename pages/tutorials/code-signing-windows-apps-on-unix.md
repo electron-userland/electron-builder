@@ -5,7 +5,7 @@
 Signing Windows apps on Unix is supported. There are multiple methods to achieve this. Basically you need an application
 that is able to sign code using [PKCS 11](https://en.wikipedia.org/wiki/PKCS_11). There is one method that works on Linux
 and Mac, using Java. You can also use `osslsigncode` on both systems, for Linux and Mac a how-to is included. This
-documents finishes with some remarks and how to integrate the signing process with Electron Builder.  
+documents finishes with some remarks and how to integrate the signing process with Electron Builder.
 
 ## Signing Windows app on Mac/Linux using JSign
 
@@ -15,7 +15,7 @@ This method requires Java. Make sure you got Java installed before trying this s
 2. Download JSign
 3. Create a file called `hardwareToken.cfg`. Fill it with the contents below.
 4. Check the library link to make sure you have
-the correct PKCS module. This link might be different per token. On Linux you will find it in `/lib`, while on Mac you 
+the correct PKCS module. This link might be different per token. On Linux you will find it in `/lib`, while on Mac you
 can find it in `/Library/Frameworks` or `/usr/local/lib`.
 5. Install token driver for Mac, export the certificate (convert it to pem when it is .cer)
 6. Run `java -jar jsign-2.1.jar` with the correct parameters.
@@ -28,7 +28,7 @@ slotListIndex = 0
 ```
 
 URLs:
-- [JSign from Github](https://github.com/ebourg/jsign/releases) 
+- [JSign from Github](https://github.com/ebourg/jsign/releases)
 
 Full command for signing:
 ```
@@ -91,14 +91,14 @@ URLs:
 
 Please consider the following when things are not working.
 
-- Make sure you use the correct PKCS 11 engine and module. If you get `no slot with a token was found` or some errors 
-  like `sc connect card error` and `Card is invalid or cannot be handled` you are not using the correct module, make 
+- Make sure you use the correct PKCS 11 engine and module. If you get `no slot with a token was found` or some errors
+  like `sc connect card error` and `Card is invalid or cannot be handled` you are not using the correct module, make
   sure you use correct one.
-- If you compiled OpenSSL yourself, make sure you use an engine that is also compiled for OpenSSL. Otherwise you 
+- If you compiled OpenSSL yourself, make sure you use an engine that is also compiled for OpenSSL. Otherwise you
   will run into *compatibility* issues.
 - Use the `osslsigncode` which is mentioned in the list of URLs. There are many more forks/version to be found. The one
   included here is the actually maintained library, requires OpenSSL 1.1.
-  
+
 ## Integrate signing with Electron Builder
 
 Depending on the method you have chosen, you can automate the signing process by creating a `sign.js` file. Then point
