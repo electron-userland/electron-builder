@@ -295,25 +295,30 @@ File `myBeforePackHook.js` in the project root directory:
 
   /**
    * The function (or path to file or module id) to be [run after the prebuilt Electron binary has been extracted to the output directory](#afterextract)
+   * Same setup as {@link beforePack}
    */
   readonly afterExtract?: Hook<AfterExtractContext, any> | string | null
 
   /**
    * The function (or path to file or module id) to be [run after pack](#afterpack) (but before pack into distributable format and sign).
+   * Same setup as {@link beforePack}
    */
   readonly afterPack?: Hook<AfterPackContext, any> | string | null
 
   /**
    * The function (or path to file or module id) to be [run after pack and sign](#aftersign) (but before pack into distributable format).
+   * Same setup as {@link beforePack}
    */
   readonly afterSign?: Hook<AfterPackContext, any> | string | null
 
   /**
    * The function (or path to file or module id) to be run on artifact build start.
+   * Same setup as {@link beforePack}
    */
   readonly artifactBuildStarted?: Hook<ArtifactBuildStarted, any> | string | null
   /**
    * The function (or path to file or module id) to be run on artifact build completed.
+   * Same setup as {@link beforePack}
    */
   readonly artifactBuildCompleted?: Hook<ArtifactCreated, any> | string | null
   /**

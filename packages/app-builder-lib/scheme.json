@@ -51,7 +51,7 @@
           ]
         },
         "description": {
-          "description": "As [description](./configuration.md#Metadata-description) from application package.json, but allows you to specify different for Linux.",
+          "description": "As [description](./configuration.md#description) from application package.json, but allows you to specify different for Linux.",
           "type": [
             "null",
             "string"
@@ -187,7 +187,7 @@
           "type": "boolean"
         },
         "identityName": {
-          "description": "The name. Corresponds to [Identity.Name](https://msdn.microsoft.com/en-us/library/windows/apps/br211441.aspx). Defaults to the [application name](./configuration.md#Metadata-name).",
+          "description": "The name. Corresponds to [Identity.Name](https://msdn.microsoft.com/en-us/library/windows/apps/br211441.aspx). Defaults to the [application name](./configuration.md#metadata).",
           "type": [
             "null",
             "string"
@@ -569,7 +569,7 @@
           "description": "Package dependencies. Defaults to `[\"gconf2\", \"gconf-service\", \"libnotify4\", \"libappindicator1\", \"libxtst6\", \"libnss3\"]`.\nIf need to support Debian, `libappindicator1` should be removed, it is [deprecated in Debian](https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=895037).\nIf need to support KDE, `gconf2` and `gconf-service` should be removed as it's no longer used [by GNOME](https://packages.debian.org/bullseye/gconf2)."
         },
         "description": {
-          "description": "As [description](./configuration.md#Metadata-description) from application package.json, but allows you to specify different for Linux.",
+          "description": "As [description](./configuration.md#description) from application package.json, but allows you to specify different for Linux.",
           "type": [
             "null",
             "string"
@@ -1104,7 +1104,7 @@
           ]
         },
         "description": {
-          "description": "As [description](./configuration.md#Metadata-description) from application package.json, but allows you to specify different for Linux.",
+          "description": "As [description](./configuration.md#description) from application package.json, but allows you to specify different for Linux.",
           "type": [
             "null",
             "string"
@@ -1638,7 +1638,7 @@
           "type": "string"
         },
         "description": {
-          "description": "As [description](./configuration.md#Metadata-description) from application package.json, but allows you to specify different for Linux.",
+          "description": "As [description](./configuration.md#description) from application package.json, but allows you to specify different for Linux.",
           "type": [
             "null",
             "string"
@@ -1811,7 +1811,7 @@
           "type": "string"
         },
         "maintainer": {
-          "description": "The maintainer. Defaults to [author](./configuration.md#Metadata-author).",
+          "description": "The maintainer. Defaults to [author](./configuration.md#author).",
           "type": [
             "null",
             "string"
@@ -1932,7 +1932,7 @@
           "description": "Target package type: list of `AppImage`, `flatpak`, `snap`, `deb`, `rpm`, `freebsd`, `pacman`, `p5p`, `apk`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`.\n\nelectron-builder [docker image](./multi-platform-build.md#docker) can be used to build Linux targets on any platform.\n\nPlease [do not put an AppImage into another archive](https://github.com/probonopd/AppImageKit/wiki/Creating-AppImages#common-mistake) like a .zip or .tar.gz."
         },
         "vendor": {
-          "description": "The vendor. Defaults to [author](./configuration.md#Metadata-author).",
+          "description": "The vendor. Defaults to [author](./configuration.md#author).",
           "type": [
             "null",
             "string"
@@ -2003,7 +2003,7 @@
           "description": "Package dependencies."
         },
         "description": {
-          "description": "As [description](./configuration.md#Metadata-description) from application package.json, but allows you to specify different for Linux.",
+          "description": "As [description](./configuration.md#description) from application package.json, but allows you to specify different for Linux.",
           "type": [
             "null",
             "string"
@@ -5456,7 +5456,7 @@
           "description": "The type of [confinement](https://snapcraft.io/docs/reference/confinement) supported by the snap."
         },
         "description": {
-          "description": "As [description](./configuration.md#Metadata-description) from application package.json, but allows you to specify different for Linux.",
+          "description": "As [description](./configuration.md#description) from application package.json, but allows you to specify different for Linux.",
           "type": [
             "null",
             "string"
@@ -6624,7 +6624,7 @@
           ]
         }
       ],
-      "description": "The function (or path to file or module id) to be [run after the prebuilt Electron binary has been extracted to the output directory](#afterextract)"
+      "description": "The function (or path to file or module id) to be [run after the prebuilt Electron binary has been extracted to the output directory](#afterextract)\nSame setup as {@link beforePack}"
     },
     "afterPack": {
       "anyOf": [
@@ -6638,7 +6638,7 @@
           ]
         }
       ],
-      "description": "The function (or path to file or module id) to be [run after pack](#afterpack) (but before pack into distributable format and sign)."
+      "description": "The function (or path to file or module id) to be [run after pack](#afterpack) (but before pack into distributable format and sign).\nSame setup as {@link beforePack}"
     },
     "afterSign": {
       "anyOf": [
@@ -6652,7 +6652,7 @@
           ]
         }
       ],
-      "description": "The function (or path to file or module id) to be [run after pack and sign](#aftersign) (but before pack into distributable format)."
+      "description": "The function (or path to file or module id) to be [run after pack and sign](#aftersign) (but before pack into distributable format).\nSame setup as {@link beforePack}"
     },
     "apk": {
       "anyOf": [
@@ -6719,7 +6719,7 @@
           ]
         }
       ],
-      "description": "The function (or path to file or module id) to be run on artifact build completed."
+      "description": "The function (or path to file or module id) to be run on artifact build completed.\nSame setup as {@link beforePack}"
     },
     "artifactBuildStarted": {
       "anyOf": [
@@ -6733,7 +6733,7 @@
           ]
         }
       ],
-      "description": "The function (or path to file or module id) to be run on artifact build start."
+      "description": "The function (or path to file or module id) to be run on artifact build start.\nSame setup as {@link beforePack}"
     },
     "artifactName": {
       "description": "The [artifact file name template](./configuration.md#artifact-file-name-template). Defaults to `${productName}-${version}.${ext}` (some target can have other defaults, see corresponding options).",
@@ -7355,7 +7355,7 @@
       ]
     },
     "productName": {
-      "description": "As [name](#Metadata-name), but allows you to specify a product name for your executable which contains spaces and other special characters not allowed in the [name property](https://docs.npmjs.com/files/package.json#name).\nIf not specified inside of the `build` configuration, `productName` property defined at the top level of `package.json` is used. If not specified at the top level of `package.json`, [name property](https://docs.npmjs.com/files/package.json#name) is used.",
+      "description": "As [name](#metadata), but allows you to specify a product name for your executable which contains spaces and other special characters not allowed in the [name property](https://docs.npmjs.com/files/package.json#name).\nIf not specified inside of the `build` configuration, `productName` property defined at the top level of `package.json` is used. If not specified at the top level of `package.json`, [name property](https://docs.npmjs.com/files/package.json#name) is used.",
       "type": [
         "null",
         "string"
