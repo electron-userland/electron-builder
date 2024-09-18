@@ -246,7 +246,7 @@ export type CustomElectronDistributable = (options: PrepareApplicationStageDirec
 
 export type Hook<T, V> = (contextOrPath: T) => Promise<V> | V
 
-interface PackContext {
+export interface PackContext {
   readonly outDir: string
   readonly appOutDir: string
   readonly packager: PlatformPackager<any>
@@ -273,7 +273,7 @@ The function (or path to file or module id) to be run before pack.
       // your code
     }
     ```
-    
+
 Because in a configuration file you cannot use JavaScript, can be specified as a path to file or module id. Function must be exported as default export.
 
 ```json
@@ -317,7 +317,21 @@ File `myBeforePackHook.js` in the project root directory:
    */
   readonly artifactBuildCompleted?: Hook<ArtifactCreated, any> | string | null
   /**
-   * The function (or path to file or module id) to be [run after all artifacts are build](#afterAllArtifactBuild).
+   * The function (or path to file or module id) to be run after all artifacts are built.
+
+```typescript
+(buildResult: BuildResult): Promise<Array<string>> | Array<string>
+```
+
+Configuration in the same way as `afterPack` (see above).
+
+!!! example "myAfterAllArtifactBuild.js"
+    ```js
+    exports.default = function () {
+      // you can return additional files to publish
+      return ["/path/to/additional/result/file"]
+    }
+    ```
    */
   readonly afterAllArtifactBuild?: Hook<BuildResult, Array<string>> | string | null
   /**

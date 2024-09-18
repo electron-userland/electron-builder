@@ -18,7 +18,7 @@ async function main() {
     await rm(dest, { recursive: true })
   }
   await copy(origin, dest)
-  await copy(path.resolve("./README.md"), path.resolve(dest, "README.md"))
+  await copy(path.resolve(process.cwd(), "./README.md"), path.resolve(dest, "README.md"))
 
   const typedocConfig: Partial<typedoc.TypeDocOptions> = {
     options: "typedoc.config.js",
@@ -32,9 +32,7 @@ async function main() {
 
   const project = await app.convert()
 
-  if (project) {
-    await app.generateDocs(project, outputDir)
-  }
+  await app.generateDocs(project!, outputDir)
 }
 
 main().catch(console.error)
