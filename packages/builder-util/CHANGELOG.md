@@ -1,5 +1,13 @@
 # builder-util
 
+## 25.1.4
+
+### Patch Changes
+
+- [#8476](https://github.com/electron-userland/electron-builder/pull/8476) [`4cacee4d`](https://github.com/electron-userland/electron-builder/commit/4cacee4d63ebfc9aacf156bd8b7faa80be1325dc) Thanks [@mmaietta](https://github.com/mmaietta)! - chore(deps): update dependency http-proxy-agent to v7
+
+- [#8475](https://github.com/electron-userland/electron-builder/pull/8475) [`9ab4ff92`](https://github.com/electron-userland/electron-builder/commit/9ab4ff92c0ab441a9ca422f87fbed2f3544dde5e) Thanks [@mmaietta](https://github.com/mmaietta)! - chore(deps): update dependency https-proxy-agent to v7
+
 ## 25.1.3
 
 ### Patch Changes
