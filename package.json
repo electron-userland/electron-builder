@@ -62,7 +62,7 @@
     "jest-cli": "27.5.1",
     "lint-staged": "15.2.7",
     "path-sort": "0.1.0",
-    "prettier": "3.2.4",
+    "prettier": "3.3.3",
     "source-map-support": "0.5.21",
     "ts-jsdoc": "3.2.2",
     "typedoc": "^0.26",
