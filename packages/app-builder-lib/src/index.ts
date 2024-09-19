@@ -22,6 +22,7 @@ export {
 } from "./core"
 export { getArchSuffix, Arch, archFromString } from "builder-util"
 export {
+  CommonConfiguration,
   Configuration,
   AfterPackContext,
   MetadataDirectories,

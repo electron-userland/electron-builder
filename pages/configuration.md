@@ -34,9 +34,9 @@ Env file `electron-builder.env` in the current dir ([example](https://github.com
 * Name of optional property is normal, **required** is bold.
 * Type is specified after property name: `Array<String> | String`. Union like this means that you can specify or string (`**/*`), or array of strings (`["**/*", "!foo.js"]`).
 
-### Configuration
+### Common Configuration
 
-{!./app-builder-lib.Interface.Configuration.md!}
+{!./app-builder-lib.Interface.CommonConfiguration.md!}
 
 ---
 
