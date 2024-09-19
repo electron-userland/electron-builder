@@ -1,3 +1,13 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v25.1.3...v) (2024-09-19)
+
+
+### Bug Fixes
+
+* **appx:** utilize `applicationId` verbatim when provided ([#8502](https://github.com/electron-userland/electron-builder/issues/8502)) ([4b2f693](https://github.com/electron-userland/electron-builder/commit/4b2f6937793a69fe15b35022e3ccca3be66b157d))
+* **deps:** update dependency @electron/notarize to v2.5.0 ([#8504](https://github.com/electron-userland/electron-builder/issues/8504)) ([59f6cb0](https://github.com/electron-userland/electron-builder/commit/59f6cb01945c27578052c0e81e588d5c8be459f8))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v25.1.2...v) (2024-09-17)
 
 

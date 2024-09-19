@@ -1,5 +1,23 @@
 # app-builder-lib
 
+## 25.1.4
+
+### Patch Changes
+
+- [#8495](https://github.com/electron-userland/electron-builder/pull/8495) [`48489d18`](https://github.com/electron-userland/electron-builder/commit/48489d187a18d7167477fe8ee1f7412035feb9ca) Thanks [@mmaietta](https://github.com/mmaietta)! - chore(docs): updating typedocs by extracting docs from documentation .md files
+
+- [#8504](https://github.com/electron-userland/electron-builder/pull/8504) [`59f6cb01`](https://github.com/electron-userland/electron-builder/commit/59f6cb01945c27578052c0e81e588d5c8be459f8) Thanks [@mmaietta](https://github.com/mmaietta)! - fix(deps): update dependency @electron/notarize to v2.5.0
+
+- [#8502](https://github.com/electron-userland/electron-builder/pull/8502) [`4b2f6937`](https://github.com/electron-userland/electron-builder/commit/4b2f6937793a69fe15b35022e3ccca3be66b157d) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: force using `applicationId` if provided before falling back to identityName or app name
+
+- [#8501](https://github.com/electron-userland/electron-builder/pull/8501) [`f146b02f`](https://github.com/electron-userland/electron-builder/commit/f146b02f88e38eb55a374d67078a6bfb25b55bca) Thanks [@mmaietta](https://github.com/mmaietta)! - chore(docs): update more docs with proper hyperlinks
+
+- Updated dependencies [[`4cacee4d`](https://github.com/electron-userland/electron-builder/commit/4cacee4d63ebfc9aacf156bd8b7faa80be1325dc), [`9ab4ff92`](https://github.com/electron-userland/electron-builder/commit/9ab4ff92c0ab441a9ca422f87fbed2f3544dde5e)]:
+  - builder-util@25.1.4
+  - dmg-builder@25.1.4
+  - electron-builder-squirrel-windows@25.1.4
+  - electron-publish@25.1.4
+
 ## 25.1.3
 
 ### Patch Changes
