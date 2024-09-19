@@ -21,7 +21,7 @@ import { NsisOptions, NsisWebOptions, PortableOptions } from "./targets/nsis/nsi
 /**
  * Configuration Options
  */
-export interface Configuration extends PlatformSpecificBuildOptions, Hooks {
+export interface CommonConfiguration {
   /**
    * The application id. Used as [CFBundleIdentifier](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070) for MacOS and as
    * [Application User Model ID](https://msdn.microsoft.com/en-us/library/windows/desktop/dd378459(v=vs.85).aspx) for Windows (NSIS target only, Squirrel.Windows not supported). It is strongly recommended that an explicit ID is set.
@@ -108,12 +108,6 @@ export interface Configuration extends PlatformSpecificBuildOptions, Hooks {
   readonly apk?: LinuxTargetSpecificOptions | null
 
   /**
-   * Whether to include *all* of the submodules node_modules directories
-   * @default false
-   */
-  includeSubNodeModules?: boolean
-
-  /**
    * Whether to build the application native dependencies from source.
    * @default false
    */
@@ -158,6 +152,44 @@ export interface Configuration extends PlatformSpecificBuildOptions, Hooks {
   readonly downloadAlternateFFmpeg?: boolean
 
   /**
+   * Inject properties to `package.json`.
+   */
+  readonly extraMetadata?: any
+
+  /**
+   * Whether to fail if the application is not signed (to prevent unsigned app if code signing configuration is not correct).
+   * @default false
+   */
+  readonly forceCodeSigning?: boolean
+
+  /**
+   * Whether to include PDB files.
+   * @default false
+   */
+  readonly includePdb?: boolean
+
+  /**
+   * Whether to remove `scripts` field from `package.json` files.
+   *
+   * @default true
+   */
+  readonly removePackageScripts?: boolean
+
+  /**
+   * Whether to remove `keywords` field from `package.json` files.
+   *
+   * @default true
+   */
+  readonly removePackageKeywords?: boolean
+}
+export interface Configuration extends CommonConfiguration, PlatformSpecificBuildOptions, Hooks {
+  /**
+   * Whether to include *all* of the submodules node_modules directories
+   * @default false
+   */
+  includeSubNodeModules?: boolean
+
+  /**
    * Whether to use [electron-compile](http://github.com/electron/electron-compile) to compile app. Defaults to `true` if `electron-compile` in the dependencies. And `false` if in the `devDependencies` or doesn't specified.
    */
   readonly electronCompile?: boolean
@@ -192,17 +224,6 @@ export interface Configuration extends PlatformSpecificBuildOptions, Hooks {
   extends?: Array<string> | string | null
 
   /**
-   * Inject properties to `package.json`.
-   */
-  readonly extraMetadata?: any
-
-  /**
-   * Whether to fail if the application is not signed (to prevent unsigned app if code signing configuration is not correct).
-   * @default false
-   */
-  readonly forceCodeSigning?: boolean
-
-  /**
    * *libui-based frameworks only* The version of NodeJS you are packaging for.
    * You can set it to `current` to set the Node.js version that you use to run.
    */
@@ -217,26 +238,6 @@ export interface Configuration extends PlatformSpecificBuildOptions, Hooks {
    * The framework name. One of `electron`, `proton`, `libui`. Defaults to `electron`.
    */
   readonly framework?: string | null
-
-  /**
-   * Whether to include PDB files.
-   * @default false
-   */
-  readonly includePdb?: boolean
-
-  /**
-   * Whether to remove `scripts` field from `package.json` files.
-   *
-   * @default true
-   */
-  readonly removePackageScripts?: boolean
-
-  /**
-   * Whether to remove `keywords` field from `package.json` files.
-   *
-   * @default true
-   */
-  readonly removePackageKeywords?: boolean
 
   /**
    * Whether to disable sanity check asar package (useful for custom electron forks that implement their own encrypted integrity validation)

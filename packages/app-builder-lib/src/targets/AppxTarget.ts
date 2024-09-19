@@ -228,7 +228,9 @@ export default class AppXTarget extends Target {
           const validCharactersRegex = /^([A-Za-z][A-Za-z0-9]*)(\.[A-Za-z][A-Za-z0-9]*)*$/
           const identitynumber = parseInt(options.identityName as string, 10) || NaN
           let result: string
-          if (!isNaN(identitynumber) && options.identityName !== null && options.identityName !== undefined) {
+          if (options.applicationId) {
+            result = options.applicationId
+          } else if (!isNaN(identitynumber) && options.identityName !== null && options.identityName !== undefined) {
             if (options.identityName[0] === "0") {
               log.warn(`Remove the 0${identitynumber}`)
               result = options.identityName.replace("0" + identitynumber.toString(), "")
@@ -237,7 +239,7 @@ export default class AppXTarget extends Target {
               result = options.identityName.replace(identitynumber.toString(), "")
             }
           } else {
-            result = options.applicationId || options.identityName || appInfo.name
+            result = options.identityName || appInfo.name
           }
 
           if (result.length < 1 || result.length > 64) {
