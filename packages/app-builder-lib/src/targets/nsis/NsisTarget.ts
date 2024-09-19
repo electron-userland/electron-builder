@@ -143,7 +143,7 @@ export class NsisTarget extends Target {
   }
 
   private async buildInstaller(archs: Map<Arch, string>): Promise<any> {
-    const primaryArch: Arch | null = archs.size === 1 ? archs.keys().next().value ?? null : null
+    const primaryArch: Arch | null = archs.size === 1 ? (archs.keys().next().value ?? null) : null
     const packager = this.packager
     const appInfo = packager.appInfo
     const options = this.options
