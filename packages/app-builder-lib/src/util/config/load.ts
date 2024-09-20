@@ -107,7 +107,7 @@ export async function loadParentConfig<T>(request: ReadConfigRequest, spec: stri
     let resolved: string | null = null
     try {
       resolved = require.resolve(spec)
-    } catch (e) {
+    } catch (_e) {
       // ignore
     }
 
