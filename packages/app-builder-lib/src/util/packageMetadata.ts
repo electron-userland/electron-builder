@@ -24,7 +24,7 @@ async function authors(file: string, data: any) {
   let authorData
   try {
     authorData = await readFile(path.resolve(path.dirname(file), "AUTHORS"), "utf8")
-  } catch (ignored) {
+  } catch (_ignored) {
     return
   }
 

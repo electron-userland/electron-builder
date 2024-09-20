@@ -60,7 +60,7 @@ export async function getConfig(
       let file = "electron-webpack/out/electron-builder.js"
       try {
         file = require.resolve(file)
-      } catch (ignore) {
+      } catch (_ignore) {
         file = require.resolve("electron-webpack/electron-builder.yml")
       }
       config.extends = `file:${file}`

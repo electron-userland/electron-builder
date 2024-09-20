@@ -90,7 +90,7 @@ export class DownloadedUpdateHelper {
     try {
       // remove stale data
       await emptyDir(this.cacheDirForPendingUpdate)
-    } catch (ignore) {
+    } catch (_ignore) {
       // ignore
     }
   }

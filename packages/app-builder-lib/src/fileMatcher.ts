@@ -53,7 +53,7 @@ export class FileMatcher {
     from: string,
     to: string,
     readonly macroExpander: (pattern: string) => string,
-    patterns?: Array<string> | string | null | undefined
+    patterns?: Array<string> | string | null
   ) {
     this.from = ensureNoEndSlash(macroExpander(from))
     this.to = ensureNoEndSlash(macroExpander(to))

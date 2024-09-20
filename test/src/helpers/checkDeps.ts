@@ -6,7 +6,11 @@ import * as fs from "fs/promises"
 import * as path from "path"
 import { printErrorAndExit } from "builder-util"
 
-const knownUnusedDevDependencies = new Set<string>([])
+const knownUnusedDevDependencies = new Set<string>([
+  "@babel/plugin-transform-modules-commonjs", // Not sure what this is used for, but keeping just in case (for now)
+  "@changesets/changelog-github", // Used in package.json CI/CD logic
+  "typedoc-plugin-markdown", // Used in typedoc config
+])
 const knownMissedDependencies = new Set<string>(["babel-core", "babel-preset-env", "babel-preset-stage-0", "babel-preset-react"])
 
 const rootDir = path.join(__dirname, "../../..")
@@ -17,13 +21,17 @@ async function check(projectDir: string, devPackageData: any): Promise<boolean> 
   // console.log(`Checking ${projectDir}`)
 
   const result = await new Promise<Results>(resolve => {
-    depCheck(projectDir, { ignoreDirs: ["out", "test", "docs", "typings", "docker", "certs", "templates", "vendor"] }, resolve)
+    depCheck(projectDir, { ignoreDirs: ["out", "test", "pages", "typings", "docker", "certs", "templates", "vendor"] }, resolve)
   })
 
   let unusedDependencies = result.dependencies
   if (unusedDependencies.length > 0) {
+    // Check root for unused deps (which could be cloned to any folder name, so we check basename of cwd)
+    if (packageName === path.basename(process.cwd())) {
+      unusedDependencies = unusedDependencies.filter(it => it !== "dmg-license")
+    }
     if (packageName === "electron-builder") {
-      unusedDependencies = result.dependencies.filter(it => it !== "dmg-builder")
+      unusedDependencies = unusedDependencies.filter(it => it !== "dmg-builder")
     }
     if (unusedDependencies.length > 0) {
       console.error(`${chalk.bold(packageName)} Unused dependencies: ${JSON.stringify(unusedDependencies, null, 2)}`)
@@ -90,7 +98,9 @@ async function check(projectDir: string, devPackageData: any): Promise<boolean> 
 async function main(): Promise<void> {
   const packages = (await fs.readdir(packageDir)).filter(it => !it.includes(".")).sort()
   const devPackageData = await readJson(path.join(rootDir, "package.json"))
-  if ((await Promise.all(packages.map(it => check(path.join(packageDir, it), devPackageData)))).includes(false)) {
+  const checkRoot = await check(process.cwd(), devPackageData)
+  const checkPackages = await Promise.all(packages.map(it => check(path.join(packageDir, it), devPackageData)))
+  if (checkRoot === false || checkPackages.includes(false)) {
     process.exitCode = 1
   }
 }
