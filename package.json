@@ -68,7 +68,7 @@
     "typedoc": "^0.26",
     "typedoc-plugin-markdown": "^4.2.7",
     "typescript": "^5.5",
-    "typescript-json-schema": "0.64.0",
+    "typescript-json-schema": "0.65.1",
     "v8-compile-cache": "2.3.0"
   },
   "engines": {
