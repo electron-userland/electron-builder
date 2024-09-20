@@ -90,7 +90,7 @@ export class NsisUpdater extends BaseUpdater {
             } catch (e: any) {
               try {
                 await unlink(packageFile)
-              } catch (ignored) {
+              } catch (_ignored) {
                 // ignore
               }
 

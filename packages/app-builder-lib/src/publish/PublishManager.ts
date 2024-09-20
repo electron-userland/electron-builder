@@ -345,7 +345,7 @@ function requireProviderClass(provider: string, packager: Packager): any | null 
       let module: any = null
       try {
         module = require(path.join(packager.buildResourcesDir, name + ".js"))
-      } catch (ignored) {
+      } catch (_ignored) {
         log.debug({ path: path.join(packager.buildResourcesDir, name + ".js") }, "Unable to find publish provider in build resources")
       }
 

@@ -1,7 +1,10 @@
 module.exports = {
   root: true,
   parser: "@typescript-eslint/parser",
-  plugins: ["@typescript-eslint"],
+  plugins: [
+    "@typescript-eslint",
+    '@stylistic',
+  ],
   extends: [
     "eslint:recommended",
     "plugin:@typescript-eslint/eslint-recommended",
@@ -13,9 +16,11 @@ module.exports = {
     project: ["./packages/*/tsconfig.json"],
   },
   rules: {
+    "@typescript-eslint/no-require-imports": "off",
     semi: "off",
     "prettier/prettier": "warn",
-    "@typescript-eslint/member-delimiter-style": [
+    "@typescript-eslint/prefer-promise-reject-errors": "off",
+    "@stylistic/member-delimiter-style": [
       "error",
       {
         multiline: {
@@ -34,6 +39,14 @@ module.exports = {
     "@typescript-eslint/no-unsafe-call": "off",
     "@typescript-eslint/no-non-null-assertion": "off",
     "no-constant-condition": "off",
+    "@typescript-eslint/no-unused-vars": [
+      "warn", // or "error"
+      {
+        "argsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_",
+        "caughtErrorsIgnorePattern": "^_"
+      }
+    ],
     "@typescript-eslint/no-var-requires": "off",
     "@typescript-eslint/explicit-function-return-type": [
       "off",
