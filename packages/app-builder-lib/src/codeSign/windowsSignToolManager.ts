@@ -415,7 +415,8 @@ export class WindowsSignToolManager {
       (e: any) => {
         if (
           e.message.includes("The file is being used by another process") ||
-          e.message.includes("The specified timestamp server either could not be reached" || e.message.includes("No certificates were found that met all the given criteria."))
+          e.message.includes("The specified timestamp server either could not be reached") ||
+          e.message.includes("No certificates were found that met all the given criteria.")
         ) {
           log.warn(`Attempt to code sign failed, another attempt will be made in 15 seconds: ${e.message}`)
           return true

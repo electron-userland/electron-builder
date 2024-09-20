@@ -121,7 +121,7 @@ export class DownloadedUpdateHelper {
       return null
     }
 
-    const isCachedInfoFileNameValid = cachedInfo?.fileName !== null ?? false
+    const isCachedInfoFileNameValid = cachedInfo?.fileName !== null
     if (!isCachedInfoFileNameValid) {
       logger.warn(`Cached update info is corrupted: no fileName, directory for cached update will be cleaned`)
       await this.cleanCacheDirForPendingUpdate()
