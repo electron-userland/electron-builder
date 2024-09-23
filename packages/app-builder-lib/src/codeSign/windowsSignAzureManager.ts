@@ -10,9 +10,15 @@ export class WindowsSignAzureManager {
     const vm = await this.packager.vm.value
     const ps = await getPSCmd(vm)
 
-    log.debug(null, "installing required package provider (NuGet) and module (TrustedSigning) with scope CurrentUser")
-    await vm.exec(ps, ["Install-PackageProvider", "-Name", "NuGet", "-MinimumVersion", "2.8.5.201", "-Force", "-Scope", "CurrentUser"])
-    await vm.exec(ps, ["Install-Module", "-Name", "TrustedSigning", "-RequiredVersion", "0.4.1", "-Force", "-Repository", "PSGallery", "-Scope", "CurrentUser"])
+    log.info(null, "installing required module (TrustedSigning) with scope CurrentUser")
+    try {
+      await vm.exec(ps, ["-NoProfile", "-NonInteractive", "-Command", "Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force -Scope CurrentUser"])
+    } catch (error: any) {
+      // Might not be needed, seems GH runners already have NuGet set up.
+      // Logging to debug just in case users run into this. If NuGet isn't present, Install-Module -Name TrustedSigning will fail, so we'll get the logs at that point
+      log.debug({ message: error.message || error.stack }, "unable to install PackageProvider Nuget. Might be a false alarm though as some systems already have it installed")
+    }
+    await vm.exec(ps, ["-NoProfile", "-NonInteractive", "-Command", "Install-Module -Name TrustedSigning -RequiredVersion 0.4.1 -Force -Repository PSGallery -Scope CurrentUser"])
 
     // Preemptively check env vars once during initialization
     // Options: https://learn.microsoft.com/en-us/dotnet/api/azure.identity.environmentcredential?view=azure-dotnet#definition
@@ -75,15 +81,18 @@ export class WindowsSignAzureManager {
 
     const { endpoint, certificateProfileName, ...extraSigningArgs }: WindowsAzureSigningConfiguration = options.options.azureSignOptions!
     const params = {
-      ...extraSigningArgs,
+      FileDigest: "SHA256",
+      ...extraSigningArgs, // allows overriding FileDigest if provided in config
       Endpoint: endpoint,
       CertificateProfileName: certificateProfileName,
       Files: options.path,
     }
-    const paramsString = Object.entries(params).reduce((res, [field, value]) => {
-      return [...res, `-${field}`, value]
-    }, [] as string[])
-    await vm.exec(ps, ["Invoke-TrustedSigning", ...paramsString])
+    const paramsString = Object.entries(params)
+      .reduce((res, [field, value]) => {
+        return [...res, `-${field}`, value]
+      }, [] as string[])
+      .join(" ")
+    await vm.exec(ps, ["-NoProfile", "-NonInteractive", "-Command", `Invoke-TrustedSigning ${paramsString}`])
 
     return true
   }

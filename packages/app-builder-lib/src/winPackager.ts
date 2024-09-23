@@ -122,56 +122,19 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     )
   }
 
-  async sign(file: string, logMessagePrefix?: string): Promise<boolean> {
+  async sign(file: string): Promise<boolean> {
     const signOptions: WindowsSignOptions = {
       path: file,
       options: this.platformSpecificBuildOptions,
     }
 
-    const cscInfo = await (await this.signtoolManager.value).cscInfo.value
-    if (cscInfo == null) {
-      if (chooseNotNull(this.platformSpecificBuildOptions.signtoolOptions?.sign, this.platformSpecificBuildOptions.sign) != null) {
-        return signWindows(signOptions, this)
-      } else if (this.forceCodeSigning) {
-        throw new InvalidConfigurationError(
-          `App is not signed and "forceCodeSigning" is set to true, please ensure that code signing configuration is correct, please see https://electron.build/code-signing`
-        )
-      }
-      return false
-    }
-
-    if (logMessagePrefix == null) {
-      logMessagePrefix = "signing"
-    }
-
-    if ("file" in cscInfo) {
-      log.info(
-        {
-          file: log.filePath(file),
-          certificateFile: cscInfo.file,
-        },
-        logMessagePrefix
-      )
-    } else {
-      const info = cscInfo
-      log.info(
-        {
-          file: log.filePath(file),
-          subject: info.subject,
-          thumbprint: info.thumbprint,
-          store: info.store,
-          user: info.isLocalMachineStore ? "local machine" : "current user",
-        },
-        logMessagePrefix
+    const didSignSuccessfully = await this.doSign(signOptions)
+    if (!didSignSuccessfully && this.forceCodeSigning) {
+      throw new InvalidConfigurationError(
+        `App is not signed and "forceCodeSigning" is set to true, please ensure that code signing configuration is correct, please see https://electron.build/code-signing`
       )
     }
-
-    return this.doSign({
-      ...signOptions,
-      options: {
-        ...this.platformSpecificBuildOptions,
-      },
-    })
+    return didSignSuccessfully
   }
 
   private async doSign(options: WindowsSignOptions) {
