@@ -11,8 +11,8 @@ export class WindowsSignAzureManager {
     const ps = await getPSCmd(vm)
 
     log.info(null, "installing required package provider (NuGet) and module (TrustedSigning) with scope CurrentUser")
-    await vm.exec(ps, ["-NoProfile", "-NonInteractive", "-Command", "Register-PackageSource -Name MyNuGet -Location https://www.nuget.org/api/v2 -ProviderName NuGet"])
-    await vm.exec(ps, ["-NoProfile", "-NonInteractive", "-Command", "Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force -Scope CurrentUser"])
+    // await vm.exec(ps, ["-NoProfile", "-NonInteractive", "-Command", "Register-PackageSource -Name MyNuGet -Location https://www.nuget.org/api/v2 -ProviderName NuGet"])
+    // await vm.exec(ps, ["-NoProfile", "-NonInteractive", "-Command", "Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force -Scope CurrentUser"])
     await vm.exec(ps, ["-NoProfile", "-NonInteractive", "-Command", "Install-Module -Name TrustedSigning -RequiredVersion 0.4.1 -Force -Repository PSGallery -Scope CurrentUser"])
 
     // Preemptively check env vars once during initialization
