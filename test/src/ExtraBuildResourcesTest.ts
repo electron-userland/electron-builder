@@ -176,6 +176,18 @@ test.ifNotWindows(
   })
 )
 
+test.ifNotWindows(
+  "electronDist as callback function for path to local folder with electron builds zipped ",
+  app({
+    targets: linuxDirTarget,
+    config: {
+      electronDist: (_context) => {
+        return Promise.resolve(getElectronCacheDir())
+      }
+    },
+  })
+)
+
 const overridePublishChannel: any = {
   channel: "beta",
 }

@@ -199,6 +199,8 @@ async function unpack(prepareOptions: PrepareApplicationStageDirectoryOptions, o
       log.info({ resolvedDist, zipFile }, "resolved electronDist")
       options.cache = resolvedDist
       dist = null
+    } else {
+      log.warn({ electronDist: log.filePath(resolvedDist), expectedFile: zipFile }, "custom electronDist provided but no assets found")
     }
   }
 
