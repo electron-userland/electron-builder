@@ -7,13 +7,6 @@ export class WindowsSignAzureManager {
   constructor(private readonly packager: WinPackager) {}
 
   async initializeProviderModules() {
-    const vm = await this.packager.vm.value
-    const ps = await getPSCmd(vm)
-
-    log.debug(null, "installing required package provider (NuGet) and module (TrustedSigning) with scope CurrentUser")
-    await vm.exec(ps, ["Install-PackageProvider", "-Name", "NuGet", "-MinimumVersion", "2.8.5.201", "-Force", "-Scope", "CurrentUser"])
-    await vm.exec(ps, ["Install-Module", "-Name", "TrustedSigning", "-RequiredVersion", "0.4.1", "-Force", "-Repository", "PSGallery", "-Scope", "CurrentUser"])
-
     // Preemptively check env vars once during initialization
     // Options: https://learn.microsoft.com/en-us/dotnet/api/azure.identity.environmentcredential?view=azure-dotnet#definition
     log.info(null, "verifying env vars for authenticating to Microsoft Entra ID")
@@ -23,6 +16,13 @@ export class WindowsSignAzureManager {
         `Unable to find valid azure env configuration for signing. Missing field(s) can be debugged via "DEBUG=electron-builder". Please refer to: https://learn.microsoft.com/en-us/dotnet/api/azure.identity.environmentcredential?view=azure-dotnet#definition`
       )
     }
+
+    const vm = await this.packager.vm.value
+    const ps = await getPSCmd(vm)
+
+    log.debug(null, "installing required package provider (NuGet) and module (TrustedSigning) with scope CurrentUser")
+    await vm.exec(ps, ["Install-PackageProvider", "-Name", "NuGet", "-MinimumVersion", "2.8.5.201", "-Force", "-Scope", "CurrentUser"])
+    await vm.exec(ps, ["Install-Module", "-Name", "TrustedSigning", "-RequiredVersion", "0.4.1", "-Force", "-Repository", "PSGallery", "-Scope", "CurrentUser"])
   }
 
   verifyRequiredEnvVars() {
