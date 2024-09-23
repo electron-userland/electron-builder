@@ -81,7 +81,8 @@ export class WindowsSignAzureManager {
 
     const { endpoint, certificateProfileName, ...extraSigningArgs }: WindowsAzureSigningConfiguration = options.options.azureSignOptions!
     const params = {
-      ...extraSigningArgs,
+      FileDigest: "SHA256",
+      ...extraSigningArgs, // allows overriding FileDigest if provided in config
       Endpoint: endpoint,
       CertificateProfileName: certificateProfileName,
       Files: options.path,
