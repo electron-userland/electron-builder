@@ -1,5 +1,16 @@
 # dmg-builder
 
+## 25.1.5
+
+### Patch Changes
+
+- [#8516](https://github.com/electron-userland/electron-builder/pull/8516) [`d1cb6bdb`](https://github.com/electron-userland/electron-builder/commit/d1cb6bdbf8111156bb16839f501bdd9e6d477338) Thanks [@mmaietta](https://github.com/mmaietta)! - fix(chore): upgrading typescript and fixing compiler errors
+
+- Updated dependencies [[`d1cb6bdb`](https://github.com/electron-userland/electron-builder/commit/d1cb6bdbf8111156bb16839f501bdd9e6d477338), [`62fd74dc`](https://github.com/electron-userland/electron-builder/commit/62fd74dcfa13a564706141d08e5d0dea11ecf33b)]:
+  - app-builder-lib@25.1.5
+  - builder-util@25.1.5
+  - builder-util-runtime@9.2.9
+
 ## 25.1.4
 
 ### Patch Changes

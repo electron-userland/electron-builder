@@ -1,3 +1,12 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v25.1.4...v) (2024-09-23)
+
+
+### Bug Fixes
+
+* azure signing logic should not have logic flow dependent on custom signtool hook ([#8524](https://github.com/electron-userland/electron-builder/issues/8524)) ([62fd74d](https://github.com/electron-userland/electron-builder/commit/62fd74dcfa13a564706141d08e5d0dea11ecf33b))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v25.1.3...v) (2024-09-19)
 
 
