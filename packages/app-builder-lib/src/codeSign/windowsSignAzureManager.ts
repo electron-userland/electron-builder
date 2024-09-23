@@ -15,8 +15,9 @@ export class WindowsSignAzureManager {
       "-NoProfile",
       "-NonInteractive",
       "-Command",
-      "Get-PackageProvider | where name -eq 'nuget' | Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force -Scope CurrentUser",
+      "Register-PackageSource -Name nuget.org -ProviderName NuGet -Location https://api.nuget.org/v3/index.json -Trusted",
     ])
+    await vm.exec(ps, ["-NoProfile", "-NonInteractive", "-Command", "Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force -Scope CurrentUser"])
     await vm.exec(ps, ["-NoProfile", "-NonInteractive", "-Command", "Install-Module -Name TrustedSigning -RequiredVersion 0.4.1 -Force -Repository PSGallery -Scope CurrentUser"])
 
     // Preemptively check env vars once during initialization
