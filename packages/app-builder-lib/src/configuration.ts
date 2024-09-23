@@ -195,11 +195,6 @@ export interface Configuration extends CommonConfiguration, PlatformSpecificBuil
   readonly electronCompile?: boolean
 
   /**
-   * Returns the path to custom Electron build (e.g. `~/electron/out/R`). Zip files must follow the pattern `electron-v${version}-${platformName}-${arch}.zip`, otherwise it will be assumed to be an unpacked Electron app directory
-   */
-  readonly electronDist?: string | CustomElectronDistributable
-
-  /**
    * The [electron-download](https://github.com/electron-userland/electron-download#usage) options.
    */
   readonly electronDownload?: ElectronDownloadOptions
@@ -245,8 +240,6 @@ export interface Configuration extends CommonConfiguration, PlatformSpecificBuil
    */
   readonly disableSanityCheckAsar?: boolean
 }
-
-export type CustomElectronDistributable = (options: PrepareApplicationStageDirectoryOptions) => string
 
 export type Hook<T, V> = (contextOrPath: T) => Promise<V> | V
 
@@ -344,11 +337,11 @@ Configuration in the same way as `afterPack` (see above).
    */
   readonly afterAllArtifactBuild?: Hook<BuildResult, Array<string>> | string | null
   /**
-   * MSI project created on disk - not packed into .msi package yet.
+   * The function (or path to file or module id) to be run after MSI project created on disk - not packed into .msi package yet.
    */
   readonly msiProjectCreated?: Hook<string, any> | string | null
   /**
-   * Appx manifest created on disk - not packed into .appx package yet.
+   * The function (or path to file or module id) to be run after Appx manifest created on disk - not packed into .appx package yet.
    */
   readonly appxManifestCreated?: Hook<string, any> | string | null
   /**
@@ -361,6 +354,11 @@ Configuration in the same way as `afterPack` (see above).
    * If provided and `node_modules` are missing, it will not invoke production dependencies check.
    */
   readonly beforeBuild?: Hook<BeforeBuildContext, boolean | void> | string | null
+  /**
+   * The function (or path to file or module id) to be run when staging the electron artifact environment.
+   * Returns the path to custom Electron build (e.g. `~/electron/out/R`) or folder of electron zips. Zip files must follow the pattern `electron-v${version}-${platformName}-${arch}.zip`, otherwise it will be assumed to be an unpacked Electron app directory
+   */
+  readonly electronDist?: Hook<PrepareApplicationStageDirectoryOptions, string> | string | null
 }
 
 export interface MetadataDirectories {

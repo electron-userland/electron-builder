@@ -14,6 +14,7 @@ import { addWinAsarIntegrity } from "./electronWin"
 import { computeElectronVersion, getElectronVersionFromInstalled } from "./electronVersion"
 import * as fs from "fs/promises"
 import injectFFMPEG from "./injectFFMPEG"
+import { resolveFunction } from "../util/resolve"
 
 export type ElectronPlatformName = "darwin" | "linux" | "win32" | "mas"
 
@@ -184,8 +185,13 @@ export async function createElectronFrameworkSupport(configuration: Configuratio
 async function unpack(prepareOptions: PrepareApplicationStageDirectoryOptions, options: ElectronDownloadOptions, distMacOsAppName: string) {
   const { packager, appOutDir, platformName } = prepareOptions
 
-  const electronDist = packager.config.electronDist
-  let dist: string | undefined | null = typeof electronDist === "function" ? electronDist(prepareOptions) : electronDist
+  let customElectronDist = packager.config.electronDist
+  try {
+    customElectronDist = await resolveFunction(packager.appInfo.type, customElectronDist, "electronDist")
+  } catch (_e: any) {
+    // ignored. We already log in `resolveFunction` if it fails, and we ignore here because electronDist could just be a folder path (backward compatibility)
+  }
+  let dist: string | undefined | null = typeof customElectronDist === "function" ? await Promise.resolve(customElectronDist(prepareOptions)) : customElectronDist
   if (dist != null) {
     const zipFile = `electron-v${options.version}-${platformName}-${options.arch}.zip`
     const resolvedDist = path.isAbsolute(dist) ? dist : path.resolve(packager.projectDir, dist)
