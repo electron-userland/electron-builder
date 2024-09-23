@@ -10,9 +10,14 @@ export class WindowsSignAzureManager {
     const vm = await this.packager.vm.value
     const ps = await getPSCmd(vm)
 
-    log.info(null, "installing required package provider (NuGet) and module (TrustedSigning) with scope CurrentUser")
-    // await vm.exec(ps, ["-NoProfile", "-NonInteractive", "-Command", "Register-PackageSource -Name MyNuGet -Location https://www.nuget.org/api/v2 -ProviderName NuGet"])
-    // await vm.exec(ps, ["-NoProfile", "-NonInteractive", "-Command", "Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force -Scope CurrentUser"])
+    log.info(null, "installing required module (TrustedSigning) with scope CurrentUser")
+    try {
+      await vm.exec(ps, ["-NoProfile", "-NonInteractive", "-Command", "Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force -Scope CurrentUser"])
+    } catch (error: any) {
+      // Might not be needed, seems GH runners already have NuGet set up.
+      // Logging to debug just in case users run into this. If NuGet isn't present, Install-Module -Name TrustedSigning will fail, so we'll get the logs at that point
+      log.debug({ message: error.message || error.stack }, "unable to install PackageProvider Nuget. Might be a false alarm though as some systems already have it installed")
+    }
     await vm.exec(ps, ["-NoProfile", "-NonInteractive", "-Command", "Install-Module -Name TrustedSigning -RequiredVersion 0.4.1 -Force -Repository PSGallery -Scope CurrentUser"])
 
     // Preemptively check env vars once during initialization

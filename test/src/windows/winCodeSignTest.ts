@@ -113,7 +113,7 @@ test.ifAll.ifNotCiMac(
   })
 )
 
-test.only(
+test.ifAll.ifNotCiMac(
   "azure signing without credentials",
   appThrows({
     targets: windowsDirTarget,

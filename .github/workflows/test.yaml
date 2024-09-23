@@ -101,9 +101,9 @@ jobs:
       fail-fast: false
       matrix:
         testFiles:
-          - winCodeSignTest # ,differentialUpdateTest
-          # - installerTest,appxTest,msiTest,portableTest,assistedInstallerTest,protonTest
-          # - BuildTest,oneClickInstallerTest,winPackagerTest,nsisUpdaterTest,webInstallerTest
+          - winCodeSignTest,differentialUpdateTest
+          - installerTest,appxTest,msiTest,portableTest,assistedInstallerTest,protonTest
+          - BuildTest,oneClickInstallerTest,winPackagerTest,nsisUpdaterTest,webInstallerTest
     steps:
       - name: Checkout code repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
