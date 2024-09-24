@@ -17,7 +17,7 @@ import { getLinuxToolsPath } from "./tools"
 import { hashFile } from "../util/hash"
 import { ArtifactCreated } from "../packagerApi"
 import { getAppUpdatePublishConfiguration } from "../publish/PublishManager"
-import { getPath7za } from "builder-util"
+import { getPath7z } from "builder-util"
 
 interface FpmOptions {
   name: string
@@ -241,7 +241,8 @@ export default class FpmTarget extends Target {
 
     const env = {
       ...process.env,
-      SZA_PATH: await getPath7za(),
+      SZA_PATH: await getPath7z(),
+      SZ_PATH: await getPath7z(),
       SZA_COMPRESSION_LEVEL: packager.compression === "store" ? "0" : "9",
     }
 

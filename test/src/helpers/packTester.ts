@@ -1,4 +1,4 @@
-import { addValue, deepAssign, exec, log, spawn, getPath7x, getPath7za, copyDir, FileCopier, USE_HARD_LINKS, walk } from "builder-util"
+import { addValue, deepAssign, exec, log, spawn, getPath7x, getPath7z, copyDir, FileCopier, USE_HARD_LINKS, walk } from "builder-util"
 import { CancellationToken, UpdateFileInfo } from "builder-util-runtime"
 import { executeFinally } from "builder-util"
 import DecompressZip from "decompress-zip"
@@ -440,7 +440,8 @@ async function getContents(packageFile: string) {
     maxBuffer: 10 * 1024 * 1024,
     env: {
       ...process.env,
-      SZA_PATH: await getPath7za(),
+      SZA_PATH: await getPath7z(),
+      SZ_PATH: await getPath7z(),
     },
   })
 

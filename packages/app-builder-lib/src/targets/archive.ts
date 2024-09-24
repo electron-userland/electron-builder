@@ -6,7 +6,7 @@ import { create, CreateOptions, FileOptions } from "tar"
 import { TmpDir } from "temp-file"
 import { CompressionLevel } from "../core"
 import { getLinuxToolsPath } from "./tools"
-import { getPath7za } from "builder-util"
+import { getPath7z } from "builder-util"
 
 /** @internal */
 export async function tar(compression: CompressionLevel | any, format: string, outFile: string, dirToArchive: string, isMacApp: boolean, tempDirManager: TmpDir): Promise<void> {
@@ -49,7 +49,7 @@ export async function tar(compression: CompressionLevel | any, format: string, o
   })
   args.push(outFile, tarFile)
   await exec(
-    await getPath7za(),
+    await getPath7z(),
     args,
     {
       cwd: path.dirname(dirToArchive),
@@ -149,12 +149,6 @@ export function compute7zCompressArgs(format: string, options: ArchiveOptions = 
     args.push(`-mm=${storeOnly ? "Copy" : "Deflate"}`)
   }
 
-  if (isZip) {
-    // -mcu switch:  7-Zip uses UTF-8, if there are non-ASCII symbols.
-    // because default mode: 7-Zip uses UTF-8, if the local code page doesn't contain required symbols.
-    // but archive should be the same regardless where produced
-    args.push("-mcu")
-  }
   return args
 }
 
@@ -219,7 +213,7 @@ export async function archive(format: string, outFile: string, dirToArchive: str
   }
 
   try {
-    const binary = use7z ? await getPath7za() : "zip"
+    const binary = use7z ? await getPath7z() : "zip"
     await exec(
       binary,
       args,

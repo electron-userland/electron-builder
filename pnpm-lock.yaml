@@ -268,14 +268,14 @@ importers:
   packages/builder-util:
     dependencies:
       7zip-bin:
-        specifier: ~5.2.0
-        version: 5.2.0
+        specifier: github:develar/7zip-bin#update-7zip
+        version: https://codeload.github.com/develar/7zip-bin/tar.gz/4ce98356329217f7b399bb8924905ef17766de20
       '@types/debug':
         specifier: ^4.1.6
         version: 4.1.7
       app-builder-bin:
-        specifier: 5.0.0-alpha.9
-        version: 5.0.0-alpha.9
+        specifier: 5.0.0-alpha.10
+        version: 5.0.0-alpha.10
       bluebird-lst:
         specifier: ^1.0.9
         version: 1.0.9
@@ -660,8 +660,9 @@ importers:
 
 packages:
 
-  7zip-bin@5.2.0:
-    resolution: {integrity: sha512-ukTPVhqG4jNzMro2qA9HSCSSVJN3aN7tlb+hfqYCt3ER0yWroeA2VR38MNrOHLQ/cVj+DaIMad0kFCtWWowh/A==}
+  7zip-bin@https://codeload.github.com/develar/7zip-bin/tar.gz/4ce98356329217f7b399bb8924905ef17766de20:
+    resolution: {tarball: https://codeload.github.com/develar/7zip-bin/tar.gz/4ce98356329217f7b399bb8924905ef17766de20}
+    version: 6.0.0
 
   '@aashutoshrathi/word-wrap@1.2.6':
     resolution: {integrity: sha512-1Yjs2SvM8TflER/OD3cOjhWWOZb58A2t7wpE2S9XfBYTiIl+XFhQG2bjy4Pu1I+EAlCNUzRDYDdFwFYUKvXcIA==}
@@ -2630,8 +2631,8 @@ packages:
     resolution: {integrity: sha512-KMReFUr0B4t+D+OBkjR3KYqvocp2XaSzO55UcB6mgQMd3KbcE+mWTyvVV7D/zsdEbNnV6acZUutkiHQXvTr1Rw==}
     engines: {node: '>= 8'}
 
-  app-builder-bin@5.0.0-alpha.9:
-    resolution: {integrity: sha512-c/wOXdITW80MGUV2PECWuxB49MIm44latbuoWGjq0i89lmA9ZB8jcvuF1pStu3wrxStYVjYpPD3/NgQDWSHohA==}
+  app-builder-bin@5.0.0-alpha.10:
+    resolution: {integrity: sha512-Ev4jj3D7Bo+O0GPD2NMvJl+PGiBAfS7pUGawntBNpCbxtpncfUixqFj9z9Jme7V7s3LBGqsWZZP54fxBX3JKJw==}
 
   aproba@2.0.0:
     resolution: {integrity: sha512-lYe4Gx7QT+MKGbDsA+Z+he/Wtef0BiwDOlK/XkBrdfsh9J/jPPXbX0tE9x9cl27Tmu5gg3QUbUrQYa/y+KOHPQ==}
@@ -6515,7 +6516,7 @@ packages:
 
 snapshots:
 
-  7zip-bin@5.2.0: {}
+  7zip-bin@https://codeload.github.com/develar/7zip-bin/tar.gz/4ce98356329217f7b399bb8924905ef17766de20: {}
 
   '@aashutoshrathi/word-wrap@1.2.6': {}
 
@@ -9380,7 +9381,7 @@ snapshots:
       normalize-path: 3.0.0
       picomatch: 2.3.1
 
-  app-builder-bin@5.0.0-alpha.9: {}
+  app-builder-bin@5.0.0-alpha.10: {}
 
   aproba@2.0.0: {}
 
