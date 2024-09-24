@@ -106,9 +106,26 @@ test.ifAll.ifNotCiMac(
 test.ifAll.ifNotCiMac(
   "electronDist",
   appThrows({
-    targets: Platform.WINDOWS.createTarget(DIR_TARGET),
+    targets: windowsDirTarget,
     config: {
       electronDist: "foo",
+    },
+  })
+)
+
+test.ifAll.ifNotCiMac(
+  "azure signing without credentials",
+  appThrows({
+    targets: windowsDirTarget,
+    config: {
+      forceCodeSigning: true,
+      win: {
+        azureSignOptions: {
+          endpoint: "https://weu.codesigning.azure.net/",
+          certificateProfileName: "profilenamehere",
+          codeSigningAccountName: "codesigningnamehere"
+        },
+      },
     },
   })
 )

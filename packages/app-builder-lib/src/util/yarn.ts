@@ -203,7 +203,6 @@ export async function rebuild(config: Configuration, appDir: string, options: Re
     buildPath: appDir,
     electronVersion,
     arch,
-    debug: log.isDebugEnabled,
     projectRootPath: await getProjectRootPath(appDir),
     mode: (config.nativeRebuilder as RebuildMode) || "sequential",
     buildFromSource: buildFromSource,
