@@ -5977,6 +5977,10 @@
           "description": "The Certificate Profile name. Translates to field: CertificateProfileName",
           "type": "string"
         },
+        "codeSigningAccountName": {
+          "description": "The Code Signing Signing Account name. Translates to field: CodeSigningAccountName",
+          "type": "string"
+        },
         "endpoint": {
           "description": "The Trusted Signing Account endpoint. The URI value must have a URI that aligns to the\nregion your Trusted Signing Account and Certificate Profile you are specifying were created\nin during the setup of these resources.\n\nTranslates to field: Endpoint\n\nRequires one of environment variable configurations for authenticating to Microsoft Entra ID per [Microsoft's documentation](https://learn.microsoft.com/en-us/dotnet/api/azure.identity.environmentcredential?view=azure-dotnet#definition)",
           "type": "string"
@@ -5984,6 +5988,7 @@
       },
       "required": [
         "certificateProfileName",
+        "codeSigningAccountName",
         "endpoint"
       ],
       "type": "object"

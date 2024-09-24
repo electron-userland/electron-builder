@@ -204,6 +204,10 @@ export interface WindowsAzureSigningConfiguration {
    */
   readonly certificateProfileName: string
   /**
+   * The Code Signing Signing Account name. Translates to field: CodeSigningAccountName
+   */
+  readonly codeSigningAccountName: string
+  /**
    * Allow other CLI parameters (verbatim case-sensitive) to `Invoke-TrustedSigning`
    */
   [k: string]: string
