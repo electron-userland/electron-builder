@@ -17,7 +17,7 @@ import { getLinuxToolsPath } from "./tools"
 import { hashFile } from "../util/hash"
 import { ArtifactCreated } from "../packagerApi"
 import { getAppUpdatePublishConfiguration } from "../publish/PublishManager"
-import { getPath7z } from "builder-util"
+import { getPath7zProcessEnv } from "builder-util"
 
 interface FpmOptions {
   name: string
@@ -241,9 +241,9 @@ export default class FpmTarget extends Target {
 
     const env = {
       ...process.env,
-      SZA_PATH: await getPath7z(),
-      SZ_PATH: await getPath7z(),
+      ...(await getPath7zProcessEnv()),
       SZA_COMPRESSION_LEVEL: packager.compression === "store" ? "0" : "9",
+      SZ_COMPRESSION_LEVEL: packager.compression === "store" ? "0" : "9",
     }
 
     // rpmbuild wants directory rpm with some default config files. Even if we can use dylibbundler, path to such config files are not changed (we need to replace in the binary)

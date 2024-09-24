@@ -13,3 +13,10 @@ export async function getPath7x(): Promise<string> {
   await chmod(path7x, 0o755)
   return path7x
 }
+
+export async function getPath7zProcessEnv(): Promise<any> {
+  return {
+    SZA_PATH: await getPath7z(), // app-builder-bin
+    SZ_PATH: await getPath7z(), // 7zip-bin
+  }
+}

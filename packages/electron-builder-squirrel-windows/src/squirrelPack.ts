@@ -1,4 +1,4 @@
-import { Arch, debug, exec, log, spawn, isEmptyOrSpaces, getPath7z, copyFile, walk } from "builder-util"
+import { Arch, debug, exec, log, spawn, isEmptyOrSpaces, getPath7z, getPath7zProcessEnv, copyFile, walk } from "builder-util"
 import { compute7zCompressArgs } from "app-builder-lib/out/targets/archive"
 import { execWine, prepareWindowsExecutableArgs as prepareArgs } from "app-builder-lib/out/wine"
 import { WinPackager } from "app-builder-lib/out/winPackager"
@@ -235,8 +235,7 @@ async function execSw(options: SquirrelOptions, args: Array<string>) {
   return exec(process.platform === "win32" ? path.join(options.vendorPath, "Update.com") : "mono", prepareArgs(args, path.join(options.vendorPath, "Update-Mono.exe")), {
     env: {
       ...process.env,
-      SZA_PATH: await getPath7z(),
-      SZ_PATH: await getPath7z(),
+      ...(await getPath7zProcessEnv()),
     },
   })
 }

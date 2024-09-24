@@ -1,22 +1,21 @@
-import { addValue, deepAssign, exec, log, spawn, getPath7x, getPath7z, copyDir, FileCopier, USE_HARD_LINKS, walk } from "builder-util"
-import { CancellationToken, UpdateFileInfo } from "builder-util-runtime"
-import { executeFinally } from "builder-util"
-import DecompressZip from "decompress-zip"
-import { Arch, ArtifactCreated, Configuration, DIR_TARGET, getArchSuffix, MacOsTargetName, Packager, PackagerOptions, Platform, Target } from "electron-builder"
 import { PublishManager } from "app-builder-lib"
+import { readAsar } from "app-builder-lib/out/asar/asar"
 import { computeArchToTargetNamesMap } from "app-builder-lib/out/targets/targetFactory"
 import { getLinuxToolsPath } from "app-builder-lib/out/targets/tools"
+import { executeAppBuilderAsJson } from "app-builder-lib/out/util/appBuilder"
+import { addValue, copyDir, deepAssign, exec, executeFinally, FileCopier, getPath7x, getPath7zProcessEnv, log, spawn, USE_HARD_LINKS, walk } from "builder-util"
+import { CancellationToken, UpdateFileInfo } from "builder-util-runtime"
+import DecompressZip from "decompress-zip"
+import { Arch, ArtifactCreated, Configuration, DIR_TARGET, getArchSuffix, MacOsTargetName, Packager, PackagerOptions, Platform, Target } from "electron-builder"
 import { convertVersion } from "electron-builder-squirrel-windows/out/squirrelPack"
 import { PublishPolicy } from "electron-publish"
 import { emptyDir, writeJson } from "fs-extra"
 import * as fs from "fs/promises"
 import { load } from "js-yaml"
 import * as path from "path"
-import { promisify } from "util"
 import pathSorter from "path-sort"
 import { TmpDir } from "temp-file"
-import { readAsar } from "app-builder-lib/out/asar/asar"
-import { executeAppBuilderAsJson } from "app-builder-lib/out/util/appBuilder"
+import { promisify } from "util"
 import { CSC_LINK, WIN_CSC_LINK } from "./codeSignData"
 import { assertThat } from "./fileAssert"
 
@@ -440,8 +439,7 @@ async function getContents(packageFile: string) {
     maxBuffer: 10 * 1024 * 1024,
     env: {
       ...process.env,
-      SZA_PATH: await getPath7z(),
-      SZ_PATH: await getPath7z(),
+      ...(await getPath7zProcessEnv()),
     },
   })
 
