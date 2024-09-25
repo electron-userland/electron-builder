@@ -90,8 +90,8 @@ importers:
         specifier: 1.3.1
         version: 1.3.1
       '@electron/rebuild':
-        specifier: 3.6.0
-        version: 3.6.0
+        specifier: github:mmaietta/electron-rebuild#fix-prebuilt-binaries-target-platform
+        version: https://codeload.github.com/mmaietta/electron-rebuild/tar.gz/79d73e05b0c8ffc328b26eaae07d6bee3b4225fc
       '@electron/universal':
         specifier: 2.0.1
         version: 2.0.1
@@ -1983,8 +1983,9 @@ packages:
     engines: {node: '>=12.0.0'}
     hasBin: true
 
-  '@electron/rebuild@3.6.0':
-    resolution: {integrity: sha512-zF4x3QupRU3uNGaP5X1wjpmcjfw1H87kyqZ00Tc3HvriV+4gmOGuvQjGNkrJuXdsApssdNyVwLsy+TaeTGGcVw==}
+  '@electron/rebuild@https://codeload.github.com/mmaietta/electron-rebuild/tar.gz/79d73e05b0c8ffc328b26eaae07d6bee3b4225fc':
+    resolution: {tarball: https://codeload.github.com/mmaietta/electron-rebuild/tar.gz/79d73e05b0c8ffc328b26eaae07d6bee3b4225fc}
+    version: 0.0.0-development
     engines: {node: '>=12.13.0'}
     hasBin: true
 
@@ -8478,11 +8479,11 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@electron/rebuild@3.6.0':
+  '@electron/rebuild@https://codeload.github.com/mmaietta/electron-rebuild/tar.gz/79d73e05b0c8ffc328b26eaae07d6bee3b4225fc':
     dependencies:
       '@malept/cross-spawn-promise': 2.0.0
       chalk: 4.1.2
-      debug: 4.3.4
+      debug: 4.3.5
       detect-libc: 2.0.2
       fs-extra: 10.1.0
       got: 11.8.6
@@ -8491,7 +8492,7 @@ snapshots:
       node-gyp: 9.4.1
       ora: 5.4.1
       read-binary-file-arch: 1.0.6
-      semver: 7.6.0
+      semver: 7.6.3
       tar: 6.2.1
       yargs: 17.7.2
     transitivePeerDependencies:
