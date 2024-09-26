@@ -80,8 +80,12 @@ export class AppImageUpdater extends BaseUpdater {
     }
 
     // https://stackoverflow.com/a/1712051/1910191
-    unlinkSync(appImageFile)
-
+    try {
+      unlinkSync(appImageFile)
+    } catch(e: any) {
+      this._logger.warn("Previous version of AppImage is not available");
+    }
+  
     let destination: string
     const existingBaseName = path.basename(appImageFile)
     // https://github.com/electron-userland/electron-builder/issues/2964
