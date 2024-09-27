@@ -123,7 +123,7 @@ test.ifAll.ifNotCiMac(
         azureSignOptions: {
           endpoint: "https://weu.codesigning.azure.net/",
           certificateProfileName: "profilenamehere",
-          codeSigningAccountName: "codesigningnamehere"
+          codeSigningAccountName: "codesigningnamehere",
         },
       },
     },

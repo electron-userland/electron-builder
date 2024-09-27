@@ -1,5 +1,11 @@
 # builder-util
 
+## 25.1.6
+
+### Patch Changes
+
+- [#8534](https://github.com/electron-userland/electron-builder/pull/8534) [`097eeced`](https://github.com/electron-userland/electron-builder/commit/097eeced3c82a3f19d7b80f2a23f1f7749b8af92) Thanks [@beyondkmp](https://github.com/beyondkmp)! - chore(deps): update dependency app-builder-bin to 5.0.0-alpha.10
+
 ## 25.1.5
 
 ### Patch Changes
