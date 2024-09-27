@@ -118,11 +118,13 @@ export class MacUpdater extends AppUpdater {
         }
       },
       done: event => {
-        try {
-          const cachedUpdateFilePath = path.join(this.downloadedUpdateHelper!.cacheDir, CURRENT_MAC_APP_ZIP_FILE_NAME)
-          copyFileSync(event.downloadedFile, cachedUpdateFilePath)
-        } catch (error: any) {
-          this._logger.error(`Unable to copy file for caching: ${error.message}`)
+        if (!downloadUpdateOptions.disableDifferentialDownload) {
+          try {
+            const cachedUpdateFilePath = path.join(this.downloadedUpdateHelper!.cacheDir, CURRENT_MAC_APP_ZIP_FILE_NAME)
+            copyFileSync(event.downloadedFile, cachedUpdateFilePath)
+          } catch (error: any) {
+            this._logger.warn(`Unable to copy file for caching for future differential downloads: ${error.message}`)
+          }
         }
         return this.updateDownloaded(zipFileInfo, event)
       },
