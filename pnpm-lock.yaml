@@ -268,8 +268,8 @@ importers:
   packages/builder-util:
     dependencies:
       7zip-bin:
-        specifier: ~5.2.0
-        version: 5.2.0
+        specifier: github:develar/7zip-bin#update-7zip
+        version: https://codeload.github.com/develar/7zip-bin/tar.gz/4ce98356329217f7b399bb8924905ef17766de20
       '@types/debug':
         specifier: ^4.1.6
         version: 4.1.7
@@ -660,8 +660,9 @@ importers:
 
 packages:
 
-  7zip-bin@5.2.0:
-    resolution: {integrity: sha512-ukTPVhqG4jNzMro2qA9HSCSSVJN3aN7tlb+hfqYCt3ER0yWroeA2VR38MNrOHLQ/cVj+DaIMad0kFCtWWowh/A==}
+  7zip-bin@https://codeload.github.com/develar/7zip-bin/tar.gz/4ce98356329217f7b399bb8924905ef17766de20:
+    resolution: {tarball: https://codeload.github.com/develar/7zip-bin/tar.gz/4ce98356329217f7b399bb8924905ef17766de20}
+    version: 6.0.0
 
   '@ampproject/remapping@2.3.0':
     resolution: {integrity: sha512-30iZtAPgz+LTIYoeivqYo853f02jBYSd5uGnGpkFV0M3xOt9aN73erkgYAmZU43x4VfqcnLxW9Kpg3R5LC4YYw==}
@@ -6234,7 +6235,7 @@ packages:
 
 snapshots:
 
-  7zip-bin@5.2.0: {}
+  7zip-bin@https://codeload.github.com/develar/7zip-bin/tar.gz/4ce98356329217f7b399bb8924905ef17766de20: {}
 
   '@ampproject/remapping@2.3.0':
     dependencies:

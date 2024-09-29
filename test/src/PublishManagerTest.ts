@@ -90,7 +90,7 @@ test.ifAll.ifNotWindows(
   "os macro",
   app(
     {
-      targets: createTargets([Platform.LINUX, Platform.MAC], "zip"),
+      targets: createTargets([Platform.LINUX, Platform.MAC], "zip", "x64"),
       config: {
         publish: {
           provider: "s3",
@@ -121,7 +121,7 @@ test.ifAll.ifNotCi(
   "dotted s3 bucket",
   app(
     {
-      targets: createTargets([Platform.LINUX], "zip"),
+      targets: createTargets([Platform.LINUX], "zip", "x64"),
       config: {
         publish: {
           provider: "s3",
@@ -140,7 +140,7 @@ test.ifAll.ifNotWindows(
   "custom provider",
   app(
     {
-      targets: createTargets([Platform.LINUX], "deb"),
+      targets: createTargets([Platform.LINUX], "deb", "x64"),
       config: {
         publish: {
           provider: "custom",
@@ -157,7 +157,7 @@ test.ifAll.ifNotWindows(
     async upload(task) {
     }
   }
-  
+
   module.exports = Publisher`
         ),
     }

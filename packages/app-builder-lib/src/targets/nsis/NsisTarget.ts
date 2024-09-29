@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { Arch, asArray, AsyncTaskManager, exec, executeAppBuilder, getPlatformIconFileName, InvalidConfigurationError, log, spawnAndWrite, use, getPath7za } from "builder-util"
+import { Arch, asArray, AsyncTaskManager, exec, executeAppBuilder, getPlatformIconFileName, InvalidConfigurationError, log, spawnAndWrite, use, getPath7z } from "builder-util"
 import { CURRENT_APP_INSTALLER_FILE_NAME, CURRENT_APP_PACKAGE_FILE_NAME, PackageFileInfo, UUID } from "builder-util-runtime"
 import { exists, statOrNull, walk } from "builder-util"
 import _debug from "debug"
@@ -255,8 +255,8 @@ export class NsisTarget extends Target {
           await packager.dispatchArtifactCreated(file, this, arch)
           packageFiles[Arch[arch]] = fileInfo
         }
-        const path7za = await getPath7za()
-        const archiveInfo = (await exec(path7za, ["l", file])).trim()
+        const path7z = await getPath7z()
+        const archiveInfo = (await exec(path7z, ["l", file])).trim()
         // after adding blockmap data will be "Warnings: 1" in the end of output
         const match = /(\d+)\s+\d+\s+\d+\s+files/.exec(archiveInfo)
         if (match == null) {

@@ -5,7 +5,7 @@ import { app, execShell, getTarExecutable } from "../helpers/packTester"
 test.ifNotWindows(
   "deb",
   app({
-    targets: Platform.LINUX.createTarget("deb"),
+    targets: Platform.LINUX.createTarget("deb", Arch.x64),
   })
 )
 
@@ -14,7 +14,7 @@ test.ifNotWindows("arm", app({ targets: Platform.LINUX.createTarget("deb", Arch.
 test.ifNotWindows(
   "custom depends",
   app({
-    targets: Platform.LINUX.createTarget("deb"),
+    targets: Platform.LINUX.createTarget("deb", Arch.x64),
     config: {
       linux: {
         executableName: "Boo",
@@ -29,7 +29,7 @@ test.ifNotWindows(
 test.ifNotWindows(
   "top-level exec name",
   app({
-    targets: Platform.LINUX.createTarget("deb"),
+    targets: Platform.LINUX.createTarget("deb", Arch.x64),
     config: {
       productName: "foo",
       executableName: "Boo",
@@ -40,7 +40,7 @@ test.ifNotWindows(
 test.ifNotWindows(
   "no quotes for safe exec name",
   app({
-    targets: Platform.LINUX.createTarget("deb"),
+    targets: Platform.LINUX.createTarget("deb", Arch.x64),
     config: {
       productName: "foo",
       linux: {
@@ -59,7 +59,7 @@ test.ifNotWindows.ifAll(
   "executable path in postinst script",
   app(
     {
-      targets: Platform.LINUX.createTarget("deb"),
+      targets: Platform.LINUX.createTarget("deb", Arch.x64),
       config: {
         productName: "foo",
         linux: {
@@ -84,7 +84,7 @@ test.ifNotWindows.ifAll(
   "deb file associations",
   app(
     {
-      targets: Platform.LINUX.createTarget("deb"),
+      targets: Platform.LINUX.createTarget("deb", Arch.x64),
       config: {
         fileAssociations: [
           {

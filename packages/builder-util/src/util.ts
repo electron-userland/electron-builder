@@ -9,7 +9,8 @@ import { dump } from "js-yaml"
 import * as path from "path"
 import { debug, log } from "./log"
 import { install as installSourceMap } from "source-map-support"
-import { getPath7za } from "./7za"
+import { getPath7zProcessEnv, getPath7x, getPath7z } from "./7z"
+export { getPath7x, getPath7z, getPath7zProcessEnv }
 
 if (process.env.JEST_WORKER_ID == null) {
   installSourceMap()
@@ -29,8 +30,6 @@ export * from "./fs"
 export { asArray } from "builder-util-runtime"
 
 export { deepAssign } from "./deepAssign"
-
-export { getPath7za, getPath7x } from "./7za"
 
 export const debug7z = _debug("electron-builder:7z")
 
@@ -369,7 +368,7 @@ export async function executeAppBuilder(
   const command = appBuilderPath
   const env: any = {
     ...process.env,
-    SZA_PATH: await getPath7za(),
+    ...(await getPath7zProcessEnv()),
     FORCE_COLOR: chalk.level === 0 ? "0" : "1",
   }
   const cacheEnv = process.env.ELECTRON_BUILDER_CACHE
