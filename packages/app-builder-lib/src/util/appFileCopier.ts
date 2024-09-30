@@ -190,14 +190,12 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
   const NODE_MODULES = "node_modules"
   const getRealSource = (name: string, source: string) => {
     const normalizedPath = source.split(path.sep).join("/")
-    const normalizedName = name.split("/").join("/")
 
-    if (!normalizedPath.endsWith(normalizedName)) {
+    if (!normalizedPath.endsWith(name)) {
       throw new Error("Path does not end with the package name")
     }
-
-    const parentDir = path.normalize(normalizedPath.slice(0, -normalizedName.length - 1))
-
+    const parentDir = path.normalize(normalizedPath.slice(0, -name.length - 1))
+    
     // for the local node modules which is not in node modules
     if (!parentDir.endsWith(path.sep + NODE_MODULES)) {
       return parentDir
