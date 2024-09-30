@@ -195,7 +195,7 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
       throw new Error("Path does not end with the package name")
     }
     const parentDir = path.normalize(normalizedPath.slice(0, -name.length - 1))
-    
+
     // for the local node modules which is not in node modules
     if (!parentDir.endsWith(path.sep + NODE_MODULES)) {
       return parentDir
