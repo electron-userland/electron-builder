@@ -188,18 +188,22 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
   const result = new Array<ResolvedFileSet>()
   let index = 0
   const NODE_MODULES = "node_modules"
-  const getRealSource = (source: string) => {
-    const parentDir = path.dirname(source)
+  const getRealSource = (name: string, source: string) => {
+    // fix the path for scoped packages: @scope/name
+    const nameDir = name.replace('/', path.sep)
+    const parentDir = source.replace(nameDir, '')
+
     // for the local node modules which is not in node modules
     if (!parentDir.endsWith(path.sep + NODE_MODULES)) {
       return parentDir
     }
+
     // use main matcher patterns, so, user can exclude some files !node_modules/xxxx
     return path.dirname(parentDir)
   }
   const collectNodeModules = async (dep: NodeModuleInfo, destination: string) => {
     const source = dep.dir
-    const matcher = new FileMatcher(getRealSource(source), destination, mainMatcher.macroExpander, mainMatcher.patterns)
+    const matcher = new FileMatcher(getRealSource(dep.name, source), destination, mainMatcher.macroExpander, mainMatcher.patterns)
     const copier = new NodeModuleCopyHelper(matcher, platformPackager.info)
     const files = await copier.collectNodeModules(dep, nodeModuleExcludedExts)
     result[index++] = validateFileSet({ src: source, destination, files, metadata: copier.metadata })
