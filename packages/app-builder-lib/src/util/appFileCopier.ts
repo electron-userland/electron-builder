@@ -196,28 +196,34 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
       throw new Error("Path does not end with the package name")
     }
 
-    const parentPath = normalizedPath.slice(0, -normalizedName.length - 1)
+    const parentDir = path.normalize(normalizedPath.slice(0, -normalizedName.length - 1))
 
-    return path.dirname(path.normalize(parentPath))
+    // for the local node modules which is not in node modules
+    if (!parentDir.endsWith(path.sep + NODE_MODULES)) {
+      return parentDir
+    }
+    // use main matcher patterns, so, user can exclude some files !node_modules/xxxx
+    return path.dirname(parentDir)
   }
 
-  const collectNodeModules = async (dep: NodeModuleInfo, destination: string) => {
+  const collectNodeModules = async (dep: NodeModuleInfo,realSource:string, destination: string) => {
     const source = dep.dir
-    const matcher = new FileMatcher(getRealSource(dep.name, source), destination, mainMatcher.macroExpander, mainMatcher.patterns)
+    const matcher = new FileMatcher(realSource, destination, mainMatcher.macroExpander, mainMatcher.patterns)
     const copier = new NodeModuleCopyHelper(matcher, platformPackager.info)
     const files = await copier.collectNodeModules(dep, nodeModuleExcludedExts)
     result[index++] = validateFileSet({ src: source, destination, files, metadata: copier.metadata })
 
     if (dep.conflictDependency) {
       for (const c of dep.conflictDependency) {
-        await collectNodeModules(c, path.join(destination, NODE_MODULES, c.name))
+        await collectNodeModules(c, realSource, path.join(destination, NODE_MODULES, c.name))
       }
     }
   }
 
   for (const dep of deps) {
     const destination = path.join(mainMatcher.to, NODE_MODULES, dep.name)
-    await collectNodeModules(dep, destination)
+    const realSource = getRealSource(dep.name, dep.dir)
+    await collectNodeModules(dep,realSource, destination)
   }
 
   return result
