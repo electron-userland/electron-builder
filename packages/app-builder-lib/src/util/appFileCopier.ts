@@ -189,35 +189,35 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
   let index = 0
   const NODE_MODULES = "node_modules"
   const getRealSource = (name: string, source: string) => {
-    // fix the path for scoped packages: @scope/name
-    const nameDir = name.replace('/', path.sep)
-    const parentDir = source.replace(nameDir, '')
+    const normalizedPath = source.split(path.sep).join("/")
+    const normalizedName = name.split("/").join("/")
 
-    // for the local node modules which is not in node modules
-    if (!parentDir.endsWith(path.sep + NODE_MODULES)) {
-      return parentDir
+    if (!normalizedPath.endsWith(normalizedName)) {
+      throw new Error("Path does not end with the package name")
     }
 
-    // use main matcher patterns, so, user can exclude some files !node_modules/xxxx
-    return path.dirname(parentDir)
+    const parentPath = normalizedPath.slice(0, -normalizedName.length - 1)
+
+    return path.dirname(path.normalize(parentPath))
   }
-  const collectNodeModules = async (dep: NodeModuleInfo, destination: string) => {
-    const source = dep.dir
-    const matcher = new FileMatcher(getRealSource(dep.name, source), destination, mainMatcher.macroExpander, mainMatcher.patterns)
+
+  const collectNodeModules = async (dep: NodeModuleInfo, source: string, destination: string) => {
+    const matcher = new FileMatcher(source, destination, mainMatcher.macroExpander, mainMatcher.patterns)
     const copier = new NodeModuleCopyHelper(matcher, platformPackager.info)
     const files = await copier.collectNodeModules(dep, nodeModuleExcludedExts)
     result[index++] = validateFileSet({ src: source, destination, files, metadata: copier.metadata })
 
     if (dep.conflictDependency) {
       for (const c of dep.conflictDependency) {
-        await collectNodeModules(c, path.join(destination, NODE_MODULES, c.name))
+        await collectNodeModules(c, source, path.join(destination, NODE_MODULES, c.name))
       }
     }
   }
 
   for (const dep of deps) {
     const destination = path.join(mainMatcher.to, NODE_MODULES, dep.name)
-    await collectNodeModules(dep, destination)
+    const source = getRealSource(dep.name, dep.dir)
+    await collectNodeModules(dep, source, destination)
   }
 
   return result
