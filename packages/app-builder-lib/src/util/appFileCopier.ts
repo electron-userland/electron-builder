@@ -206,7 +206,7 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
     return path.dirname(parentDir)
   }
 
-  const collectNodeModules = async (dep: NodeModuleInfo,realSource:string, destination: string) => {
+  const collectNodeModules = async (dep: NodeModuleInfo, realSource: string, destination: string) => {
     const source = dep.dir
     const matcher = new FileMatcher(realSource, destination, mainMatcher.macroExpander, mainMatcher.patterns)
     const copier = new NodeModuleCopyHelper(matcher, platformPackager.info)
@@ -223,7 +223,7 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
   for (const dep of deps) {
     const destination = path.join(mainMatcher.to, NODE_MODULES, dep.name)
     const realSource = getRealSource(dep.name, dep.dir)
-    await collectNodeModules(dep,realSource, destination)
+    await collectNodeModules(dep, realSource, destination)
   }
 
   return result
