@@ -1,3 +1,13 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v25.1.5...v) (2024-09-25)
+
+
+### Bug Fixes
+
+* add `CodeSigningAccountName` as required prop in Azure Signing Options ([#8533](https://github.com/electron-userland/electron-builder/issues/8533)) ([cc8c70f](https://github.com/electron-userland/electron-builder/commit/cc8c70f7af5ca53b4c07b8ee32f460eabd4f9c34)), closes [/github.com/electron-userland/electron-builder/issues/8276#issuecomment-2371920176](https://github.com//github.com/electron-userland/electron-builder/issues/8276/issues/issuecomment-2371920176)
+* always produce Release .node builds ([#8531](https://github.com/electron-userland/electron-builder/issues/8531)) ([eaf274d](https://github.com/electron-userland/electron-builder/commit/eaf274d447d27d27a7ad663c5642a38d66f69917))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v25.1.4...v) (2024-09-23)
 
 

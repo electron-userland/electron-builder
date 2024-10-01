@@ -1,5 +1,19 @@
 # app-builder-lib
 
+## 25.1.6
+
+### Patch Changes
+
+- [#8533](https://github.com/electron-userland/electron-builder/pull/8533) [`cc8c70f7`](https://github.com/electron-userland/electron-builder/commit/cc8c70f7af5ca53b4c07b8ee32f460eabd4f9c34) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: add `CodeSigningAccountName` as required prop in Azure Signing Options
+
+- [#8531](https://github.com/electron-userland/electron-builder/pull/8531) [`eaf274d4`](https://github.com/electron-userland/electron-builder/commit/eaf274d447d27d27a7ad663c5642a38d66f69917) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: always produce Release .node builds
+
+- Updated dependencies [[`097eeced`](https://github.com/electron-userland/electron-builder/commit/097eeced3c82a3f19d7b80f2a23f1f7749b8af92)]:
+  - builder-util@25.1.6
+  - dmg-builder@25.1.6
+  - electron-builder-squirrel-windows@25.1.6
+  - electron-publish@25.1.6
+
 ## 25.1.5
 
 ### Patch Changes
