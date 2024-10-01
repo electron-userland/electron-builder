@@ -189,18 +189,20 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
   let index = 0
   const NODE_MODULES = "node_modules"
   const getRealSource = (name: string, source: string) => {
-    const normalizedPath = source.split(path.sep).join("/")
-
-    if (!normalizedPath.endsWith(name)) {
+    const normalizedName = name.split("/").join(path.sep)
+    if (!source.endsWith(normalizedName)) {
       throw new Error("Path does not end with the package name")
     }
-    const parentDir = path.normalize(normalizedPath.slice(0, -name.length - 1))
+
+    // get the parent dir of the node moudle, input: /root/path/node_modules/@electron/remote, output: /root/path/node_modules
+    const parentDir = source.slice(0, -normalizedName.length - 1)
 
     // for the local node modules which is not in node modules
     if (!parentDir.endsWith(path.sep + NODE_MODULES)) {
       return parentDir
     }
-    // use main matcher patterns, so, user can exclude some files !node_modules/xxxx
+
+    // use main matcher patterns,return parent dir of the node_modules, so user can exclude some files !node_modules/xxxx
     return path.dirname(parentDir)
   }
 
