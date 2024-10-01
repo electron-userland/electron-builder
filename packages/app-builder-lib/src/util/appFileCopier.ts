@@ -194,7 +194,7 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
       throw new Error("Path does not end with the package name")
     }
 
-    // get the parent dir of the node moudle, input: /root/path/node_modules/@electron/remote, output: /root/path/node_modules
+    // get the parent dir of the package, input: /root/path/node_modules/@electron/remote, output: /root/path/node_modules
     const parentDir = source.slice(0, -normalizedName.length - 1)
 
     // for the local node modules which is not in node modules
