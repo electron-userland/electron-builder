@@ -1,5 +1,5 @@
 ---
-"app-builder-lib": minor
+"app-builder-lib": patch
 ---
 
-Fix snapcraft support for core22 and core24
+fix snapcraft support for core22 and core24
