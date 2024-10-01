@@ -10,23 +10,23 @@ import * as fs from "fs"
 
 function convertFileToUtf8WithBOMSync(filePath: string): boolean {
   try {
-    const data = fs.readFileSync(filePath);
-    const BOM = Buffer.from([0xef, 0xbb, 0xbf]);
+    const data = fs.readFileSync(filePath)
+    const BOM = Buffer.from([0xef, 0xbb, 0xbf])
 
     // Check if the file already starts with a UTF-8 BOM
     if (data.length >= 3 && data[0] === 0xef && data[1] === 0xbb && data[2] === 0xbf) {
-      log.info("File is already in UTF-8 with BOM format");
-      return true;
+      log.info("File is already in UTF-8 with BOM format")
+      return true
     }
 
     // If not, add the BOM
-    const dataWithBOM = Buffer.concat([BOM, data]);
-    fs.writeFileSync(filePath, dataWithBOM);
-    log.info("File successfully converted to UTF-8 with BOM");
-    return true;
+    const dataWithBOM = Buffer.concat([BOM, data])
+    fs.writeFileSync(filePath, dataWithBOM)
+    log.info("File successfully converted to UTF-8 with BOM")
+    return true
   } catch (err: any) {
-    log.error("Failed to convert file to UTF-8 with BOM: ", err.toString());
-    return false;
+    log.error("Failed to convert file to UTF-8 with BOM: ", err.toString())
+    return false
   }
 }
 
