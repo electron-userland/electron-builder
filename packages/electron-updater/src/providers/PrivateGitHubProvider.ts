@@ -59,7 +59,6 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
     return this.configureHeaders("application/octet-stream")
   }
 
-  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
   private configureHeaders(accept: string) {
     return {
       accept,

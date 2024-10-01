@@ -11,7 +11,6 @@ import { AsarFilesystem, Node } from "./asar"
 import { hashFile, hashFileContents } from "./integrity"
 import { detectUnpackedDirs } from "./unpackDetector"
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
 const pickle = require("chromium-pickle-js")
 
 /** @internal */
