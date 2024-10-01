@@ -99,12 +99,14 @@ Object {
         "x11",
         "wayland",
         "unity7",
-        "browser-support",
+        "browser-sandbox",
         "network",
         "gsettings",
         "audio-playback",
         "pulseaudio",
         "opengl",
+        "mount-observe",
+        "calendar-service",
       ],
     },
   },
@@ -117,8 +119,11 @@ Object {
   "grade": "stable",
   "name": "testapp",
   "plugs": Object {
-    "gnome-3-28-1804": Object {
-      "default-provider": "gnome-3-28-1804",
+    "desktop": Object {
+      "mount-host-font-cache": false,
+    },
+    "gnome-42-2204": Object {
+      "default-provider": "gnome-42-2204",
       "interface": "content",
       "target": "$SNAP/gnome-platform",
     },
@@ -168,12 +173,14 @@ Object {
         "x11",
         "wayland",
         "unity7",
-        "browser-support",
+        "browser-sandbox",
         "network",
         "gsettings",
         "audio-playback",
         "pulseaudio",
         "opengl",
+        "mount-observe",
+        "calendar-service",
       ],
     },
   },
@@ -186,11 +193,19 @@ Object {
   "grade": "stable",
   "name": "testapp",
   "plugs": Object {
-    "gnome-3-28-1804": Object {
-      "default-provider": "gnome-3-28-1804",
+    "desktop": Object {
+      "mount-host-font-cache": false,
+    }
+    "gnome-46-2404": Object {
+      "default-provider": "gnome-46-2404",
       "interface": "content",
       "target": "$SNAP/gnome-platform",
     },
+    "gpu-2404": Object {
+      "default-provider": "mesa-2404",
+      "interface": "content",
+      "target": "$SNAP/gpu-2404",
+    }
     "gtk-3-themes": Object {
       "default-provider": "gtk-common-themes",
       "interface": "content",
