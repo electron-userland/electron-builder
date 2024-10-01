@@ -10,6 +10,12 @@ const knownUnusedDevDependencies = new Set<string>([
   "@babel/plugin-transform-modules-commonjs", // Not sure what this is used for, but keeping just in case (for now)
   "@changesets/changelog-github", // Used in package.json CI/CD logic
   "typedoc-plugin-markdown", // Used in typedoc config
+  // Eslint config doesn't get scanned by
+  "@stylistic/eslint-plugin",
+  "@typescript-eslint/eslint-plugin",
+  "@typescript-eslint/parser",
+  "eslint-config-prettier",
+  "eslint-plugin-prettier"
 ])
 const knownMissedDependencies = new Set<string>(["babel-core", "babel-preset-env", "babel-preset-stage-0", "babel-preset-react"])
 
