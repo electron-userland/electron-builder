@@ -105,7 +105,6 @@ export class KeygenPublisher extends HttpPublisher {
     _arch: Arch,
     dataLength: number,
     requestProcessor: (request: ClientRequest, reject: (error: Error) => void) => void,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     _file: string
   ): Promise<string> {
     return HttpExecutor.retryOnServerError(async () => {
