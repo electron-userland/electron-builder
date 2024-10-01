@@ -1262,7 +1262,7 @@
     },
     "GenericServerOptions": {
       "additionalProperties": false,
-      "description": "Generic (any HTTP(S) server) options.\nIn all publish options [File Macros](./file-patterns.md#file-macros) are supported.",
+      "description": "Generic (any HTTP(S) server) options.\nIn all publish options [File Macros](/file-patterns#file-macros) are supported.",
       "properties": {
         "channel": {
           "default": "latest",
@@ -1356,7 +1356,7 @@
           ]
         },
         "private": {
-          "description": "Whether to use private github auto-update provider if `GH_TOKEN` environment variable is defined. See [Private GitHub Update Repo](./auto-update.md#private-github-update-repo).",
+          "description": "Whether to use private github auto-update provider if `GH_TOKEN` environment variable is defined. See [Private GitHub Update Repo](/auto-update#private-github-update-repo).",
           "type": [
             "null",
             "boolean"
@@ -1438,7 +1438,7 @@
           ]
         },
         "token": {
-          "description": "The access token to support auto-update from private github repositories. Never specify it in the configuration files. Only for [setFeedURL](./auto-update.md#appupdatersetfeedurloptions).",
+          "description": "The access token to support auto-update from private github repositories. Never specify it in the configuration files. Only for [setFeedURL](/auto-update#appupdatersetfeedurloptions).",
           "type": [
             "null",
             "string"
