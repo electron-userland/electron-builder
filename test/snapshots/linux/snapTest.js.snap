@@ -195,7 +195,7 @@ Object {
   "plugs": Object {
     "desktop": Object {
       "mount-host-font-cache": false,
-    }
+    },
     "gnome-46-2404": Object {
       "default-provider": "gnome-46-2404",
       "interface": "content",
@@ -205,7 +205,7 @@ Object {
       "default-provider": "mesa-2404",
       "interface": "content",
       "target": "$SNAP/gpu-2404",
-    }
+    },
     "gtk-3-themes": Object {
       "default-provider": "gtk-common-themes",
       "interface": "content",
