@@ -1,5 +1,24 @@
 # app-builder-lib
 
+## 25.1.7
+
+### Patch Changes
+
+- [#8537](https://github.com/electron-userland/electron-builder/pull/8537) [`2e84f01351bcfb8f32df17c17bfeeeebb87a713f`](https://github.com/electron-userland/electron-builder/commit/2e84f01351bcfb8f32df17c17bfeeeebb87a713f) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: pass in platform to electron-rebuild
+
+- [#8545](https://github.com/electron-userland/electron-builder/pull/8545) [`fc3a78e4e61f916058fca9b15fc16f076c3fabd1`](https://github.com/electron-userland/electron-builder/commit/fc3a78e4e61f916058fca9b15fc16f076c3fabd1) Thanks [@mmaietta](https://github.com/mmaietta)! - chore(deps): update devDependencies, including typescript
+
+- [#8551](https://github.com/electron-userland/electron-builder/pull/8551) [`57cebf4dd4c722456245286d2fd795f7a5fc862c`](https://github.com/electron-userland/electron-builder/commit/57cebf4dd4c722456245286d2fd795f7a5fc862c) Thanks [@beyondkmp](https://github.com/beyondkmp)! - Check if the file already starts with a UTF-8 BOM
+
+- [#8547](https://github.com/electron-userland/electron-builder/pull/8547) [`7488456309d80b88fbf99fb382752078dc8ddefa`](https://github.com/electron-userland/electron-builder/commit/7488456309d80b88fbf99fb382752078dc8ddefa) Thanks [@beyondkmp](https://github.com/beyondkmp)! - fix the main matcher patterns for !node_modules/xxxx
+
+- Updated dependencies [[`2e84f01351bcfb8f32df17c17bfeeeebb87a713f`](https://github.com/electron-userland/electron-builder/commit/2e84f01351bcfb8f32df17c17bfeeeebb87a713f), [`fc3a78e4e61f916058fca9b15fc16f076c3fabd1`](https://github.com/electron-userland/electron-builder/commit/fc3a78e4e61f916058fca9b15fc16f076c3fabd1)]:
+  - dmg-builder@25.1.7
+  - builder-util@25.1.7
+  - builder-util-runtime@9.2.10
+  - electron-builder-squirrel-windows@25.1.7
+  - electron-publish@25.1.7
+
 ## 25.1.6
 
 ### Patch Changes
