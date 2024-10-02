@@ -8,24 +8,26 @@ import { NsisScriptGenerator } from "./nsisScriptGenerator"
 import { nsisTemplatesDir } from "./nsisUtil"
 import * as fs from "fs"
 
+
 function convertFileToUtf8WithBOMSync(filePath: string): boolean {
   try {
+    const UTF8_BOM_HEADER = Buffer.from([0xef, 0xbb, 0xbf])
     const data = fs.readFileSync(filePath)
-    const BOM = Buffer.from([0xef, 0xbb, 0xbf])
 
     // Check if the file already starts with a UTF-8 BOM
-    if (data.length >= 3 && data[0] === 0xef && data[1] === 0xbb && data[2] === 0xbf) {
-      log.info("File is already in UTF-8 with BOM format")
-      return true
+    log.debug({ file: log.filePath(filePath) }, "checking file for BOM header")
+    if (data.length >= UTF8_BOM_HEADER.length && data.subarray(0, UTF8_BOM_HEADER.length).equals(UTF8_BOM_HEADER)) {
+      log.debug({ file: log.filePath(filePath) }, "file is already in BOM format, skipping conversion.")
+      return true;
     }
 
     // If not, add the BOM
-    const dataWithBOM = Buffer.concat([BOM, data])
+    const dataWithBOM = Buffer.concat([UTF8_BOM_HEADER, data])
     fs.writeFileSync(filePath, dataWithBOM)
-    log.info("File successfully converted to UTF-8 with BOM")
+    log.debug({ file: log.filePath(filePath) }, "file successfully converted to UTF-8 with BOM")
     return true
   } catch (err: any) {
-    log.error("Failed to convert file to UTF-8 with BOM: ", err.toString())
+    log.error({ file: log.filePath(filePath), message: err.message ?? err.stack }, "unable to convert file to UTF-8 with BOM")
     return false
   }
 }
