@@ -4,29 +4,34 @@ exports[`test deb download 1`] = `
 Object {
   "files": Array [
     Object {
-      "blockMapSize": 83221,
-      "sha512": "3aexf/dJdq/59UstA8MhJuDTe6WYMqmuHdTwpYJiElC7b+wuscjg44T9DS0wP0L/JVe/6bbys1O7kPYQZOPCrg==",
-      "size": 79889665,
-      "url": "electron-quick-start-typescript-1.0.3-x86_64.AppImage",
+      "blockMapSize": 82581,
+      "sha512": "u6MIxgkAyGQJNoQh/xZaVN2quQ7+So3t5RXnA2RspDuF0PiMk4q3xE5DhjnTdYCUpFANykEyt/QfmSriGoRamw==",
+      "size": 79016577,
+      "url": "electron-quick-start-typescript-1.0.4-x86_64.AppImage",
     },
     Object {
-      "sha512": "iWuuVzFj0P9HKxvsOPiCBSIfq0+yABHYBnNH/+JXHc+Z04dC+ZavPSxIC2OL+IUOL1+584LPi1e31fDwt8RNJg==",
-      "size": 56602934,
-      "url": "electron-quick-start-typescript-1.0.3-amd64.deb",
+      "sha512": "TUEgrKUlS8RGFW86GlN8YZpuAK5TL0pbVDERmAvv5dPOHXI9VbvrlDEEwCzn0NYrvajVQW03jz64Ik5mhRSCvg==",
+      "size": 56079686,
+      "url": "electron-quick-start-typescript-1.0.4-amd64.deb",
     },
     Object {
-      "sha512": "Ue321YyA6n1NyrVoeIBbO0Jack49JI6m2vhd95GPswzcbz1gKJ97qZW1CH59u9t6xILRX+Zy0FsMswWrAbkNOA==",
-      "size": 56545685,
-      "url": "electron-quick-start-typescript-1.0.3-x86_64.rpm",
+      "sha512": "RRTErNJKHJX+tfxSzE0EItjPgd+Oh7t4okaaRS4EveokyQp1fZgheLmPuxOft4ptKqjZCvFW+m200rvJRuYcWg==",
+      "size": 56055361,
+      "url": "electron-quick-start-typescript-1.0.4-x86_64.rpm",
+    },
+    Object {
+      "sha512": "2mUqhYKCSlAw1aWUNz2707tsqcp2/xSAsVrUVZtKZyfZEzGus63L/A5sW963i1jfuzrWk0HfdyUqYNFNS2HSWA==",
+      "size": 56075488,
+      "url": "electron-quick-start-typescript-1.0.4-x64.pacman",
     },
   ],
-  "path": "electron-quick-start-typescript-1.0.3-x86_64.AppImage",
-  "releaseDate": "2022-08-16T04:24:52.260Z",
-  "releaseName": "1.0.3",
-  "releaseNotes": "",
-  "sha512": "3aexf/dJdq/59UstA8MhJuDTe6WYMqmuHdTwpYJiElC7b+wuscjg44T9DS0wP0L/JVe/6bbys1O7kPYQZOPCrg==",
-  "tag": "v1.0.3",
-  "version": "1.0.3",
+  "path": "electron-quick-start-typescript-1.0.4-x86_64.AppImage",
+  "releaseDate": "2024-09-08T16:57:10.775Z",
+  "releaseName": "1.0.4",
+  "releaseNotes": "<p>pacman autoupdate release added</p>",
+  "sha512": "u6MIxgkAyGQJNoQh/xZaVN2quQ7+So3t5RXnA2RspDuF0PiMk4q3xE5DhjnTdYCUpFANykEyt/QfmSriGoRamw==",
+  "tag": "v1.0.4",
+  "version": "1.0.4",
 }
 `;
 
@@ -42,29 +47,34 @@ exports[`test rpm download 1`] = `
 Object {
   "files": Array [
     Object {
-      "blockMapSize": 83221,
-      "sha512": "3aexf/dJdq/59UstA8MhJuDTe6WYMqmuHdTwpYJiElC7b+wuscjg44T9DS0wP0L/JVe/6bbys1O7kPYQZOPCrg==",
-      "size": 79889665,
-      "url": "electron-quick-start-typescript-1.0.3-x86_64.AppImage",
+      "blockMapSize": 82581,
+      "sha512": "u6MIxgkAyGQJNoQh/xZaVN2quQ7+So3t5RXnA2RspDuF0PiMk4q3xE5DhjnTdYCUpFANykEyt/QfmSriGoRamw==",
+      "size": 79016577,
+      "url": "electron-quick-start-typescript-1.0.4-x86_64.AppImage",
     },
     Object {
-      "sha512": "iWuuVzFj0P9HKxvsOPiCBSIfq0+yABHYBnNH/+JXHc+Z04dC+ZavPSxIC2OL+IUOL1+584LPi1e31fDwt8RNJg==",
-      "size": 56602934,
-      "url": "electron-quick-start-typescript-1.0.3-amd64.deb",
+      "sha512": "TUEgrKUlS8RGFW86GlN8YZpuAK5TL0pbVDERmAvv5dPOHXI9VbvrlDEEwCzn0NYrvajVQW03jz64Ik5mhRSCvg==",
+      "size": 56079686,
+      "url": "electron-quick-start-typescript-1.0.4-amd64.deb",
     },
     Object {
-      "sha512": "Ue321YyA6n1NyrVoeIBbO0Jack49JI6m2vhd95GPswzcbz1gKJ97qZW1CH59u9t6xILRX+Zy0FsMswWrAbkNOA==",
-      "size": 56545685,
-      "url": "electron-quick-start-typescript-1.0.3-x86_64.rpm",
+      "sha512": "RRTErNJKHJX+tfxSzE0EItjPgd+Oh7t4okaaRS4EveokyQp1fZgheLmPuxOft4ptKqjZCvFW+m200rvJRuYcWg==",
+      "size": 56055361,
+      "url": "electron-quick-start-typescript-1.0.4-x86_64.rpm",
+    },
+    Object {
+      "sha512": "2mUqhYKCSlAw1aWUNz2707tsqcp2/xSAsVrUVZtKZyfZEzGus63L/A5sW963i1jfuzrWk0HfdyUqYNFNS2HSWA==",
+      "size": 56075488,
+      "url": "electron-quick-start-typescript-1.0.4-x64.pacman",
     },
   ],
-  "path": "electron-quick-start-typescript-1.0.3-x86_64.AppImage",
-  "releaseDate": "2022-08-16T04:24:52.260Z",
-  "releaseName": "1.0.3",
-  "releaseNotes": "",
-  "sha512": "3aexf/dJdq/59UstA8MhJuDTe6WYMqmuHdTwpYJiElC7b+wuscjg44T9DS0wP0L/JVe/6bbys1O7kPYQZOPCrg==",
-  "tag": "v1.0.3",
-  "version": "1.0.3",
+  "path": "electron-quick-start-typescript-1.0.4-x86_64.AppImage",
+  "releaseDate": "2024-09-08T16:57:10.775Z",
+  "releaseName": "1.0.4",
+  "releaseNotes": "<p>pacman autoupdate release added</p>",
+  "sha512": "u6MIxgkAyGQJNoQh/xZaVN2quQ7+So3t5RXnA2RspDuF0PiMk4q3xE5DhjnTdYCUpFANykEyt/QfmSriGoRamw==",
+  "tag": "v1.0.4",
+  "version": "1.0.4",
 }
 `;
 
