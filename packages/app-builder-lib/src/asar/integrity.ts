@@ -31,7 +31,7 @@ export function checkFileInArchive(asarFile: string, relativeFile: string, messa
   }
   let stat: FilesystemEntry
   try {
-    log.error({ asarFile, relativeFile }, "asar check")
+    // log.error({ asarFile, relativeFile }, "asar check")
     stat = asar.statFile(asarFile, relativeFile, false)
   } catch (e: any) {
     if (e.message.includes("Cannot read properties of undefined (reading 'link')")) {

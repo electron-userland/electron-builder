@@ -15,6 +15,11 @@ import { PathLike, symlink } from "fs"
 import { CancellationToken } from "builder-util-runtime"
 import * as tempFile from "temp-file"
 
+// Add debugging for fs-extra commands if needed
+process.env.FS_DEBUG = "1"
+process.env.DEBUG = process.env.DEBUG?.split(",").concat("fs").join(",") || "fs"
+require("fs-extra-debug")
+
 const pickle = require("chromium-pickle-js")
 
 /** @internal */
@@ -46,19 +51,18 @@ export class AsarPackager {
     ].map(orderFileSet)
 
     const { unpackedDirs: unpack, copiedFiles } = await this.detectAndCopy(packager as any, orderedFileSets)
-    const unpackedDirs = unpack.map(unpack => unpack.substring(this.appOutDir.length))
+    const unpackedDirs = unpack // .map(unpack => unpack.substring(this.appOutDir.length))
     const unpackGlob = unpackedDirs.length > 1 ? `{${unpackedDirs.join(",")}}` : unpackedDirs.pop()
-    console.error({ unpackGlob })
+    console.warn({ unpackGlob })
 
     let ordering = this.options.ordering || undefined
     if (!ordering) {
-      const filesSorted = copiedFiles.map((file) => {
-        return file.substring(this.appOutDir.length)
-      })
-      const fileContent = filesSorted.join("\n")
       ordering = await new tempFile.TmpDir().getTempFile({ prefix: "asar-ordering" })
+      // `copiedFiles` is already ordered due to `orderedFileSets`, so we just map to their relative paths (via substring) within the asar.
+      const filesSorted = copiedFiles.map(file => file.substring(this.appOutDir.length))
+      const fileContent = filesSorted.join("\n")
       await fs.writeFile(ordering, fileContent)
-      console.error({ src: this.src, out: this.appOutDir, filesSorted })
+      // console.error({ src: this.src, out: this.appOutDir, filesSorted })
     }
 
     const options: CreateOptions = {
@@ -67,10 +71,10 @@ export class AsarPackager {
       ordering,
     }
     // override logger temporarily to clean up console (electron/asar does some internal logging that blogs up the default electron-builder logs)
-    const consoleLogger = console.log
-    console.log = (...args) => log.info({ args }, "executing electron/asar")
+    // const consoleLogger = console.log
+    // console.log = (...args) => log.info({ args }, "executing electron/asar")
     await asar.createPackageWithOptions(this.rootForAppFilesWithoutAsar, this.outFile, options)
-    console.log = consoleLogger
+    // console.log = consoleLogger
 
     await fs.rmdir(this.rootForAppFilesWithoutAsar, { recursive: true })
   }
@@ -96,6 +100,7 @@ export class AsarPackager {
       copiedFiles.add(destination)
 
       const stat = await fs.lstat(source)
+
       // If transformed data, skip symlink logic
       if (transformedData) {
         return this.copyFileOrData(transformedData, source, destination, stat)
@@ -115,8 +120,17 @@ export class AsarPackager {
       }
       if (source !== realPathFile) {
         await this.copyFileOrData(undefined, realPathFile, symlinkDestination, stat)
-        await mkdir(path.dirname(destination), { recursive: true })
-        await fs.symlink(symlinkDestination, destination)
+        const absolute_target = destination // path.relative(this.rootForAppFilesWithoutAsar, destination) // .substring(this.rootForAppFilesWithoutAsar.length)
+        const source = symlinkDestination // path.relative(symlinkDestination, dest)
+        const target = path.basename(absolute_target) // "./" + path.relative(path.dirname(source), absolute_target)
+        console.warn({symlinkDestination, absolute_target, source, target})
+//  const tempSymlink = await new tempFile.TmpDir().getTempFile({ prefix: "symlink" })
+
+//         await fs.ensureSymlink(source, tempSymlink)
+//         await fs.rename(tempSymlink, target)
+        await writeSymbolicLink(absolute_target, source)
+        // await fs.mkdir(path.dirname(destination), { recursive: true })
+        // await symlink(target, symlinkDestination, "file")
         copiedFiles.add(symlinkDestination)
       } else {
         await this.copyFileOrData(undefined, source, destination, stat)
@@ -154,7 +168,7 @@ export class AsarPackager {
   }
 
   private async copyFileOrData(data: string | Buffer | undefined, source: string, destination: string, stat: fs.Stats) {
-    await mkdir(path.dirname(destination), { recursive: true })
+    await fs.mkdir(path.dirname(destination), { recursive: true })
 
     if (data) {
       await fs.writeFile(destination, data)
@@ -174,7 +188,7 @@ function orderFileSet(fileSet: ResolvedFileSet): ResolvedFileSet {
       return 0
     }
 
-    // Place addons last because their signature change
+    // Place addons last because their signature changes per build
     const isAAddon = a.endsWith(".node")
     const isBAddon = b.endsWith(".node")
     if (isAAddon && !isBAddon) {
@@ -217,4 +231,17 @@ function orderFileSet(fileSet: ResolvedFileSet): ResolvedFileSet {
     files: sortedFileEntries.map(([, file]) => file),
     transformedFiles,
   }
+}
+
+function writeSymbolicLink(writePath: string, file: string) {
+  return new Promise((resolve, reject) => {
+    fs.symlink(file, writePath, function (err) {
+      if (err && err.code !== 'EEXIST') {
+        return reject(err);
+      }
+
+      resolve(file);
+    });
+
+  })
 }

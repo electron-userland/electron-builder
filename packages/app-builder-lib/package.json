@@ -111,6 +111,7 @@
     "@types/tar": "^6.1.3",
     "dmg-builder": "workspace:*",
     "electron-builder-squirrel-windows": "workspace:*",
+    "fs-extra-debug": "^1.0.4",
     "toml": "^3.0.0"
   },
   "peerDependencies": {
