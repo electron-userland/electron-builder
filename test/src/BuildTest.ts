@@ -300,6 +300,9 @@ test.ifDevOrLinuxCi("win smart unpack", () => {
             nodeModuleFiles.push(name)
           }
         },
+        win: {
+          signAndEditExecutable: false // setting `true` will fail on arm64 macs, even within docker container since rcedit doesn't work within wine on arm64
+        }
       },
     },
     {
