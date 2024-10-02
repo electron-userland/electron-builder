@@ -46,6 +46,7 @@ export class AsarPackager {
       dot: true,
     }
     await asar.createPackageWithOptions(this.rootForAppFilesWithoutAsar, this.outFile, options)
+    await fs.rmdir(this.rootForAppFilesWithoutAsar, { recursive: true  })
   }
 
   private async detectAndCopy(packager: Packager, fileSets: ResolvedFileSet[]) {
@@ -69,18 +70,18 @@ export class AsarPackager {
       const alreadyIncluded = copiedFiles.has(destination)
       const stat = await fs.lstat(source)
 
-      log.error(
-        {
-          source,
-          destination,
-          realPathFile,
-          realPathRelative,
-          symlinkDestination,
-          isSymbolicLink: stat.isSymbolicLink(),
-          alreadyIncluded,
-        },
-        "autoCopy"
-      )
+      // log.error(
+      //   {
+      //     source,
+      //     destination,
+      //     realPathFile,
+      //     realPathRelative,
+      //     symlinkDestination,
+      //     isSymbolicLink: stat.isSymbolicLink(),
+      //     alreadyIncluded,
+      //   },
+      //   "autoCopy"
+      // )
 
       if (alreadyIncluded) {
         return
