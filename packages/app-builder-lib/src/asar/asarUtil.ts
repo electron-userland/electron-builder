@@ -65,7 +65,12 @@ export class AsarPackager {
       unpackDir: unpackGlob,
       ordering,
     }
+    // override logger temporarily to clean up console (electron/asar does some internal logging that blogs up the default electron-builder logs)
+    const consoleLogger = console.log
+    console.log = (...args) => log.info({ args }, "executing electron/asar")
     await asar.createPackageWithOptions(this.rootForAppFilesWithoutAsar, this.outFile, options)
+    console.log = consoleLogger
+
     await fs.rmdir(this.rootForAppFilesWithoutAsar, { recursive: true })
   }
 
