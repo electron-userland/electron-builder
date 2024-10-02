@@ -46,8 +46,9 @@ export class AsarPackager {
     ].map(orderFileSet)
 
     const { unpackedDirs: unpack, copiedFiles } = await this.detectAndCopy(packager as any, orderedFileSets)
-
-    const unpackGlob = unpack.length > 1 ? `{${unpack.join(",")}}` : unpack.pop()
+    const unpackedDirs = unpack.map(unpack => unpack.substring(this.appOutDir.length))
+    const unpackGlob = unpackedDirs.length > 1 ? `{${unpackedDirs.join(",")}}` : unpackedDirs.pop()
+    console.error({ unpackGlob })
 
     let ordering = this.options.ordering || undefined
     if (!ordering) {
