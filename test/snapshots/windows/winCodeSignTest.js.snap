@@ -1,5 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`azure signing without credentials 1`] = `"ERR_ELECTRON_BUILDER_INVALID_CONFIGURATION"`;
+
 exports[`electronDist 1`] = `"ENOENT"`;
 
 exports[`forceCodeSigning 1`] = `"ERR_ELECTRON_BUILDER_INVALID_CONFIGURATION"`;

@@ -7,7 +7,6 @@ import { Configuration } from "../../configuration"
 import { FileSet } from "../../options/PlatformSpecificBuildOptions"
 import { reactCra } from "../../presets/rectCra"
 import { PACKAGE_VERSION } from "../../version"
-// eslint-disable-next-line @typescript-eslint/no-var-requires
 const validateSchema = require("@develar/schema-utils")
 
 // https://github.com/electron-userland/electron-builder/issues/1847
@@ -60,7 +59,7 @@ export async function getConfig(
       let file = "electron-webpack/out/electron-builder.js"
       try {
         file = require.resolve(file)
-      } catch (ignore) {
+      } catch (_ignore) {
         file = require.resolve("electron-webpack/electron-builder.yml")
       }
       config.extends = `file:${file}`
@@ -244,12 +243,12 @@ export async function validateConfiguration(config: Configuration, debugLogger: 
       }
 
       const site = "https://www.electron.build"
-      let url = `${site}/configuration/configuration`
+      let url = `${site}/configuration`
       const targets = new Set(["mac", "dmg", "pkg", "mas", "win", "nsis", "appx", "linux", "appimage", "snap"])
       const dataPath: string = error.dataPath == null ? null : error.dataPath
       const targetPath = dataPath.startsWith(".") ? dataPath.substr(1).toLowerCase() : null
       if (targetPath != null && targets.has(targetPath)) {
-        url = `${site}/configuration/${targetPath}`
+        url = `${site}/${targetPath}`
       }
 
       return `${formattedError}\n  How to fix:

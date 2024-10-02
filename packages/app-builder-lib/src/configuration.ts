@@ -21,7 +21,7 @@ import { NsisOptions, NsisWebOptions, PortableOptions } from "./targets/nsis/nsi
 /**
  * Configuration Options
  */
-export interface Configuration extends PlatformSpecificBuildOptions {
+export interface CommonConfiguration {
   /**
    * The application id. Used as [CFBundleIdentifier](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070) for MacOS and as
    * [Application User Model ID](https://msdn.microsoft.com/en-us/library/windows/desktop/dd378459(v=vs.85).aspx) for Windows (NSIS target only, Squirrel.Windows not supported). It is strongly recommended that an explicit ID is set.
@@ -30,7 +30,7 @@ export interface Configuration extends PlatformSpecificBuildOptions {
   readonly appId?: string | null
 
   /**
-   * As [name](#Metadata-name), but allows you to specify a product name for your executable which contains spaces and other special characters not allowed in the [name property](https://docs.npmjs.com/files/package.json#name).
+   * As [name](#metadata), but allows you to specify a product name for your executable which contains spaces and other special characters not allowed in the [name property](https://docs.npmjs.com/files/package.json#name).
    * If not specified inside of the `build` configuration, `productName` property defined at the top level of `package.json` is used. If not specified at the top level of `package.json`, [name property](https://docs.npmjs.com/files/package.json#name) is used.
    */
   readonly productName?: string | null
@@ -41,6 +41,9 @@ export interface Configuration extends PlatformSpecificBuildOptions {
    */
   readonly copyright?: string | null
 
+  /**
+   * Directories for build resources
+   */
   readonly directories?: MetadataDirectories | null
 
   /**
@@ -105,12 +108,6 @@ export interface Configuration extends PlatformSpecificBuildOptions {
   readonly apk?: LinuxTargetSpecificOptions | null
 
   /**
-   * Whether to include *all* of the submodules node_modules directories
-   * @default false
-   */
-  includeSubNodeModules?: boolean
-
-  /**
    * Whether to build the application native dependencies from source.
    * @default false
    */
@@ -155,6 +152,44 @@ export interface Configuration extends PlatformSpecificBuildOptions {
   readonly downloadAlternateFFmpeg?: boolean
 
   /**
+   * Inject properties to `package.json`.
+   */
+  readonly extraMetadata?: any
+
+  /**
+   * Whether to fail if the application is not signed (to prevent unsigned app if code signing configuration is not correct).
+   * @default false
+   */
+  readonly forceCodeSigning?: boolean
+
+  /**
+   * Whether to include PDB files.
+   * @default false
+   */
+  readonly includePdb?: boolean
+
+  /**
+   * Whether to remove `scripts` field from `package.json` files.
+   *
+   * @default true
+   */
+  readonly removePackageScripts?: boolean
+
+  /**
+   * Whether to remove `keywords` field from `package.json` files.
+   *
+   * @default true
+   */
+  readonly removePackageKeywords?: boolean
+}
+export interface Configuration extends CommonConfiguration, PlatformSpecificBuildOptions, Hooks {
+  /**
+   * Whether to include *all* of the submodules node_modules directories
+   * @default false
+   */
+  includeSubNodeModules?: boolean
+
+  /**
    * Whether to use [electron-compile](http://github.com/electron/electron-compile) to compile app. Defaults to `true` if `electron-compile` in the dependencies. And `false` if in the `devDependencies` or doesn't specified.
    */
   readonly electronCompile?: boolean
@@ -162,7 +197,7 @@ export interface Configuration extends PlatformSpecificBuildOptions {
   /**
    * Returns the path to custom Electron build (e.g. `~/electron/out/R`). Zip files must follow the pattern `electron-v${version}-${platformName}-${arch}.zip`, otherwise it will be assumed to be an unpacked Electron app directory
    */
-  readonly electronDist?: string | ((options: PrepareApplicationStageDirectoryOptions) => string)
+  readonly electronDist?: string | CustomElectronDistributable
 
   /**
    * The [electron-download](https://github.com/electron-userland/electron-download#usage) options.
@@ -189,17 +224,6 @@ export interface Configuration extends PlatformSpecificBuildOptions {
   extends?: Array<string> | string | null
 
   /**
-   * Inject properties to `package.json`.
-   */
-  readonly extraMetadata?: any
-
-  /**
-   * Whether to fail if the application is not signed (to prevent unsigned app if code signing configuration is not correct).
-   * @default false
-   */
-  readonly forceCodeSigning?: boolean
-
-  /**
    * *libui-based frameworks only* The version of NodeJS you are packaging for.
    * You can set it to `current` to set the Node.js version that you use to run.
    */
@@ -216,83 +240,17 @@ export interface Configuration extends PlatformSpecificBuildOptions {
   readonly framework?: string | null
 
   /**
-   * The function (or path to file or module id) to be [run before pack](#beforepack)
-   */
-  readonly beforePack?: ((context: BeforePackContext) => Promise<any> | any) | string | null
-
-  /**
-   * The function (or path to file or module id) to be [run after the prebuilt Electron binary has been extracted to the output directory](#afterextract)
-   */
-  readonly afterExtract?: ((context: AfterExtractContext) => Promise<any> | any) | string | null
-
-  /**
-   * The function (or path to file or module id) to be [run after pack](#afterpack) (but before pack into distributable format and sign).
-   */
-  readonly afterPack?: ((context: AfterPackContext) => Promise<any> | any) | string | null
-  /**
-   * The function (or path to file or module id) to be [run after pack and sign](#aftersign) (but before pack into distributable format).
-   */
-  readonly afterSign?: ((context: AfterPackContext) => Promise<any> | any) | string | null
-
-  /**
-   * The function (or path to file or module id) to be run on artifact build start.
-   */
-  readonly artifactBuildStarted?: ((context: ArtifactBuildStarted) => Promise<any> | any) | string | null
-  /**
-   * The function (or path to file or module id) to be run on artifact build completed.
-   */
-  readonly artifactBuildCompleted?: ((context: ArtifactCreated) => Promise<any> | any) | string | null
-  /**
-   * The function (or path to file or module id) to be [run after all artifacts are build](#afterAllArtifactBuild).
-   */
-  readonly afterAllArtifactBuild?: ((context: BuildResult) => Promise<Array<string>> | Array<string>) | string | null
-  /**
-   * MSI project created on disk - not packed into .msi package yet.
-   */
-  readonly msiProjectCreated?: ((path: string) => Promise<any> | any) | string | null
-  /**
-   * Appx manifest created on disk - not packed into .appx package yet.
-   */
-  readonly appxManifestCreated?: ((path: string) => Promise<any> | any) | string | null
-  /**
-   * The function (or path to file or module id) to be [run on each node module](#onnodemodulefile) file. Returning `true`/`false` will determine whether to force include or to use the default copier logic
-   */
-  readonly onNodeModuleFile?: ((path: string) => void | boolean) | string | null
-  /**
-   * The function (or path to file or module id) to be run before dependencies are installed or rebuilt. Works when `npmRebuild` is set to `true`. Resolving to `false` will skip dependencies install or rebuild.
-   *
-   * If provided and `node_modules` are missing, it will not invoke production dependencies check.
-   */
-  readonly beforeBuild?: ((context: BeforeBuildContext) => Promise<any>) | string | null
-
-  /**
-   * Whether to include PDB files.
-   * @default false
-   */
-  readonly includePdb?: boolean
-
-  /**
-   * Whether to remove `scripts` field from `package.json` files.
-   *
-   * @default true
-   */
-  readonly removePackageScripts?: boolean
-
-  /**
-   * Whether to remove `keywords` field from `package.json` files.
-   *
-   * @default true
-   */
-  readonly removePackageKeywords?: boolean
-
-  /**
    * Whether to disable sanity check asar package (useful for custom electron forks that implement their own encrypted integrity validation)
    * @default false
    */
   readonly disableSanityCheckAsar?: boolean
 }
 
-interface PackContext {
+export type CustomElectronDistributable = (options: PrepareApplicationStageDirectoryOptions) => string
+
+export type Hook<T, V> = (contextOrPath: T) => Promise<V> | V
+
+export interface PackContext {
   readonly outDir: string
   readonly appOutDir: string
   readonly packager: PlatformPackager<any>
@@ -304,6 +262,107 @@ export type AfterPackContext = PackContext
 export type BeforePackContext = PackContext
 export type AfterExtractContext = PackContext
 
+export interface Hooks {
+  /**
+The function (or path to file or module id) to be run before pack.
+
+```typescript
+(context: BeforePackContext): Promise<any> | any
+```
+
+!!! example "As function"
+
+    ```js
+    beforePack: async (context) => {
+      // your code
+    }
+    ```
+
+Because in a configuration file you cannot use JavaScript, can be specified as a path to file or module id. Function must be exported as default export.
+
+```json
+"build": {
+  "beforePack": "./myBeforePackHook.js"
+}
+```
+
+File `myBeforePackHook.js` in the project root directory:
+
+!!! example "myBeforePackHook.js"
+    ```js
+    exports.default = async function(context) {
+      // your custom code
+    }
+    ```
+   */
+  readonly beforePack?: Hook<BeforePackContext, any> | string | null
+
+  /**
+   * The function (or path to file or module id) to be [run after the prebuilt Electron binary has been extracted to the output directory](#afterextract)
+   * Same setup as {@link beforePack}
+   */
+  readonly afterExtract?: Hook<AfterExtractContext, any> | string | null
+
+  /**
+   * The function (or path to file or module id) to be [run after pack](#afterpack) (but before pack into distributable format and sign).
+   * Same setup as {@link beforePack}
+   */
+  readonly afterPack?: Hook<AfterPackContext, any> | string | null
+
+  /**
+   * The function (or path to file or module id) to be [run after pack and sign](#aftersign) (but before pack into distributable format).
+   * Same setup as {@link beforePack}
+   */
+  readonly afterSign?: Hook<AfterPackContext, any> | string | null
+
+  /**
+   * The function (or path to file or module id) to be run on artifact build start.
+   * Same setup as {@link beforePack}
+   */
+  readonly artifactBuildStarted?: Hook<ArtifactBuildStarted, any> | string | null
+  /**
+   * The function (or path to file or module id) to be run on artifact build completed.
+   * Same setup as {@link beforePack}
+   */
+  readonly artifactBuildCompleted?: Hook<ArtifactCreated, any> | string | null
+  /**
+   * The function (or path to file or module id) to be run after all artifacts are built.
+
+```typescript
+(buildResult: BuildResult): Promise<Array<string>> | Array<string>
+```
+
+Configuration in the same way as `afterPack` (see above).
+
+!!! example "myAfterAllArtifactBuild.js"
+    ```js
+    exports.default = function () {
+      // you can return additional files to publish
+      return ["/path/to/additional/result/file"]
+    }
+    ```
+   */
+  readonly afterAllArtifactBuild?: Hook<BuildResult, Array<string>> | string | null
+  /**
+   * MSI project created on disk - not packed into .msi package yet.
+   */
+  readonly msiProjectCreated?: Hook<string, any> | string | null
+  /**
+   * Appx manifest created on disk - not packed into .appx package yet.
+   */
+  readonly appxManifestCreated?: Hook<string, any> | string | null
+  /**
+   * The function (or path to file or module id) to be [run on each node module](#onnodemodulefile) file. Returning `true`/`false` will determine whether to force include or to use the default copier logic
+   */
+  readonly onNodeModuleFile?: Hook<string, void | boolean> | string | null
+  /**
+   * The function (or path to file or module id) to be run before dependencies are installed or rebuilt. Works when `npmRebuild` is set to `true`. Resolving to `false` will skip dependencies install or rebuild.
+   *
+   * If provided and `node_modules` are missing, it will not invoke production dependencies check.
+   */
+  readonly beforeBuild?: Hook<BeforeBuildContext, boolean | void> | string | null
+}
+
 export interface MetadataDirectories {
   /**
    * The path to build resources.
@@ -314,7 +373,7 @@ export interface MetadataDirectories {
   readonly buildResources?: string | null
 
   /**
-   * The output directory. [File macros](/file-patterns#file-macros) are supported.
+   * The output directory. [File macros](./file-patterns.md#file-macros) are supported.
    * @default dist
    */
   readonly output?: string | null

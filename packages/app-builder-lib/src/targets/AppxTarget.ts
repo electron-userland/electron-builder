@@ -4,7 +4,7 @@ import { copyOrLinkFile, walk } from "builder-util"
 import { emptyDir, readdir, readFile, writeFile } from "fs-extra"
 import * as path from "path"
 import { AppXOptions } from "../"
-import { getSignVendorPath, isOldWin6 } from "../codeSign/windowsCodeSign"
+import { getSignVendorPath, isOldWin6 } from "../codeSign/windowsSignToolManager"
 import { Target } from "../core"
 import { getTemplatePath } from "../util/pathManager"
 import { VmManager } from "../vm/vm"
@@ -186,12 +186,13 @@ export default class AppXTarget extends Target {
 
   // https://github.com/electron-userland/electron-builder/issues/2108#issuecomment-333200711
   private async computePublisherName() {
-    if ((await this.packager.cscInfo.value) == null) {
+    const signtoolManager = await this.packager.signtoolManager.value
+    if ((await signtoolManager.cscInfo.value) == null) {
       log.info({ reason: "Windows Store only build" }, "AppX is not signed")
       return this.options.publisher || "CN=ms"
     }
 
-    const certInfo = await this.packager.lazyCertInfo.value
+    const certInfo = await signtoolManager.lazyCertInfo.value
     const publisher = this.options.publisher || (certInfo == null ? null : certInfo.bloodyMicrosoftSubjectDn)
     if (publisher == null) {
       throw new Error("Internal error: cannot compute subject using certificate info")
@@ -227,7 +228,9 @@ export default class AppXTarget extends Target {
           const validCharactersRegex = /^([A-Za-z][A-Za-z0-9]*)(\.[A-Za-z][A-Za-z0-9]*)*$/
           const identitynumber = parseInt(options.identityName as string, 10) || NaN
           let result: string
-          if (!isNaN(identitynumber) && options.identityName !== null && options.identityName !== undefined) {
+          if (options.applicationId) {
+            result = options.applicationId
+          } else if (!isNaN(identitynumber) && options.identityName !== null && options.identityName !== undefined) {
             if (options.identityName[0] === "0") {
               log.warn(`Remove the 0${identitynumber}`)
               result = options.identityName.replace("0" + identitynumber.toString(), "")
@@ -236,7 +239,7 @@ export default class AppXTarget extends Target {
               result = options.identityName.replace(identitynumber.toString(), "")
             }
           } else {
-            result = options.applicationId || options.identityName || appInfo.name
+            result = options.identityName || appInfo.name
           }
 
           if (result.length < 1 || result.length > 64) {

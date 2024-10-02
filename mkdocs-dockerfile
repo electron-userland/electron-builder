@@ -1,0 +1,5 @@
+FROM squidfunk/mkdocs-material
+RUN pip install mkdocs-include-markdown-plugin
+RUN pip install pymdown-extensions
+RUN pip install pygments
+RUN pip install markdown-include

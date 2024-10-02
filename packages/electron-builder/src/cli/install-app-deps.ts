@@ -62,7 +62,7 @@ export async function installAppDeps(args: any) {
       frameworkInfo: { version, useCustomDist: true },
       platform: args.platform,
       arch: args.arch,
-      productionDeps: createLazyProductionDeps(appDir, null),
+      productionDeps: createLazyProductionDeps(appDir, null, false),
     },
     appDir !== projectDir
   )

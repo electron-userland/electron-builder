@@ -182,15 +182,16 @@ export async function rebuild(config: Configuration, appDir: string, options: Re
     execPath: process.env.npm_execpath || process.env.NPM_CLI_JS,
     buildFromSource: options.buildFromSource === true,
   }
+  const { arch, buildFromSource, platform } = configuration
+
   if (config.nativeRebuilder === "legacy") {
-    const env = getGypEnv(options.frameworkInfo, configuration.platform, configuration.arch, options.buildFromSource === true)
+    const env = getGypEnv(options.frameworkInfo, platform, arch, buildFromSource)
     return executeAppBuilderAndWriteJson(["rebuild-node-modules"], configuration, { env, cwd: appDir })
   }
 
   const {
     frameworkInfo: { version: electronVersion },
   } = options
-  const { arch, buildFromSource } = configuration
   const logInfo = {
     electronVersion,
     arch,
@@ -203,10 +204,10 @@ export async function rebuild(config: Configuration, appDir: string, options: Re
     buildPath: appDir,
     electronVersion,
     arch,
-    debug: log.isDebugEnabled,
+    platform,
+    buildFromSource,
     projectRootPath: await getProjectRootPath(appDir),
     mode: (config.nativeRebuilder as RebuildMode) || "sequential",
-    buildFromSource: buildFromSource,
     disablePreGypCopy: true,
   }
   return remoteRebuild(rebuildOptions)

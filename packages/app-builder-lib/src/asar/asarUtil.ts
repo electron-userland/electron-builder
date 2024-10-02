@@ -11,7 +11,6 @@ import { AsarFilesystem, Node } from "./asar"
 import { hashFile, hashFileContents } from "./integrity"
 import { detectUnpackedDirs } from "./unpackDetector"
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
 const pickle = require("chromium-pickle-js")
 
 /** @internal */
@@ -154,7 +153,7 @@ export class AsarPackager {
   }
 
   private writeAsarFile(fileSets: Array<ResolvedFileSet>, unpackedFileIndexMap: Map<ResolvedFileSet, Set<number>>): Promise<any> {
-    return new Promise((resolve, reject) => {
+    return new Promise<string>((resolve, reject) => {
       const headerPickle = pickle.createEmpty()
       headerPickle.writeString(JSON.stringify(this.fs.header))
       const headerBuf = headerPickle.toBuffer()

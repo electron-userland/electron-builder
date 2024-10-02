@@ -40,10 +40,15 @@ function testCustomSign(sign: any) {
     platformPackagerFactory: (packager, platform) => new CheckingWinPackager(packager),
     config: {
       win: {
-        certificatePassword: "pass",
-        certificateFile: "secretFile",
-        sign,
-        signingHashAlgorithms: ["sha256"],
+        certificateFile: "deprecated",
+        certificatePassword: "deprecated",
+        sign: "deprecated",
+        signtoolOptions: {
+          certificatePassword: "pass",
+          certificateFile: "secretFile",
+          sign,
+          signingHashAlgorithms: ["sha256"],
+        },
         // to be sure that sign code will be executed
         forceCodeSigning: true,
       },
@@ -101,9 +106,26 @@ test.ifAll.ifNotCiMac(
 test.ifAll.ifNotCiMac(
   "electronDist",
   appThrows({
-    targets: Platform.WINDOWS.createTarget(DIR_TARGET),
+    targets: windowsDirTarget,
     config: {
       electronDist: "foo",
+    },
+  })
+)
+
+test.ifAll.ifNotCiMac(
+  "azure signing without credentials",
+  appThrows({
+    targets: windowsDirTarget,
+    config: {
+      forceCodeSigning: true,
+      win: {
+        azureSignOptions: {
+          endpoint: "https://weu.codesigning.azure.net/",
+          certificateProfileName: "profilenamehere",
+          codeSigningAccountName: "codesigningnamehere",
+        },
+      },
     },
   })
 )

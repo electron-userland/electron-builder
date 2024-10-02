@@ -4,7 +4,7 @@ export interface LinuxConfiguration extends CommonLinuxOptions, PlatformSpecific
   /**
    * Target package type: list of `AppImage`, `flatpak`, `snap`, `deb`, `rpm`, `freebsd`, `pacman`, `p5p`, `apk`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`.
    *
-   * electron-builder [docker image](/multi-platform-build#docker) can be used to build Linux targets on any platform.
+   * electron-builder [docker image](./multi-platform-build.md#docker) can be used to build Linux targets on any platform.
    *
    * Please [do not put an AppImage into another archive](https://github.com/probonopd/AppImageKit/wiki/Creating-AppImages#common-mistake) like a .zip or .tar.gz.
    * @default AppImage
@@ -12,17 +12,17 @@ export interface LinuxConfiguration extends CommonLinuxOptions, PlatformSpecific
   readonly target?: TargetConfigType
 
   /**
-   * The maintainer. Defaults to [author](/configuration/configuration#Metadata-author).
+   * The maintainer. Defaults to [author](./configuration.md#author).
    */
   readonly maintainer?: string | null
 
   /**
-   * The vendor. Defaults to [author](/configuration/configuration#Metadata-author).
+   * The vendor. Defaults to [author](./configuration.md#author).
    */
   readonly vendor?: string | null
 
   /**
-   * The path to icon set directory or one png file, relative to the [build resources](/configuration/configuration#MetadataDirectories-buildResources) or to the project directory. The icon filename must contain the size (e.g. 32x32.png) of the icon.
+   * The path to icon set directory or one png file, relative to the [build resources](./contents.md#extraresources) or to the project directory. The icon filename must contain the size (e.g. 32x32.png) of the icon.
    * By default will be generated automatically based on the macOS icns file.
    */
   readonly icon?: string
@@ -41,7 +41,7 @@ export interface CommonLinuxOptions {
   readonly synopsis?: string | null
 
   /**
-   * As [description](/configuration/configuration#Metadata-description) from application package.json, but allows you to specify different for Linux.
+   * As [description](./configuration.md#description) from application package.json, but allows you to specify different for Linux.
    */
   readonly description?: string | null
 

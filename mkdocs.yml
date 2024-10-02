@@ -1,20 +1,50 @@
 site_name: electron-builder
 site_url: https://www.electron.build
 use_directory_urls: false
+extra_css:
+  - stylesheets/autowidth.css
 theme:
-  feature:
-    tabs: true
   name: material
-#  logo:
-#    icon: 'build'
+  features:
+    - content.action.edit
+    - content.action.view
+    - content.code.annotate
+    - content.code.copy
+    - content.code.select
+    - content.tooltips
+    - header.autohide
+    - navigation.expand
+    - navigation.sections
+    # - navigation.prune
+    # - search.highlight
+    # - search.share
+    # - search.suggest
+    - toc.follow
   palette:
-    primary: 'blue'
-    accent: 'blue'
+    - media: "(prefers-color-scheme)"
+      toggle:
+        icon: material/brightness-auto
+        name: Switch to light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: blue
+      accent: blue
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/weather-night
+        name: Switch to system preference
+  font:
+    text: Roboto
+    code: Roboto Mono
 
 repo_name: electron-userland/electron-builder
 repo_url: 'https://github.com/electron-userland/electron-builder'
 edit_uri: ""
-strict: true
+strict: false
 
 extra:
   analytics:
@@ -31,48 +61,62 @@ markdown_extensions:
   - pymdownx.details
   - pymdownx.inlinehilite
   - pymdownx.superfences
-  - markdown_include.include:
-      base_path: docs
+  - pymdownx.critic
+  - pymdownx.caret
+  - pymdownx.keys
+  - pymdownx.mark
+  - pymdownx.tilde
   - toc:
       permalink: true
+  - markdown_include.include:
+      base_path      : './docs/'
+      encoding       : 'utf-8'
+
+plugins:
+  - search
 
 nav:
-  - Introduction: index.md
+  - Introduction: README.md
   - Command Line Interface (CLI): cli.md
-  - Programmatic API:
-      - API: api/electron-builder.md
-      - Example: api/programmatic-usage.md
   - Donate: donate.md
 
-  - Configuration:
-      - Common Configuration: configuration/configuration.md
+  - Programmatic API:
+      - Example: programmatic-usage.md
+      - Main Modules:
+        - electron-builder: electron-builder/globals.md
+        - app-builder-lib: app-builder-lib/globals.md
+        - electron-updater: electron-updater/globals.md
 
-      - Application Contents: configuration/contents.md
+  - Configuration:
+      - Common Configuration: configuration.md
+
+      - Application Contents: contents.md
       - File Patterns: file-patterns.md
 
       - macOS:
-          - Any macOS Target: configuration/mac.md
-          - DMG: configuration/dmg.md
-          - MAS: configuration/mas.md
-          - PKG: configuration/pkg.md
+          - Any macOS Target: mac.md
+          - DMG: dmg.md
+          - MAS: mas.md
+          - PKG: pkg.md
 
       - Windows:
-          - Any Windows Target: configuration/win.md
-          - NSIS: configuration/nsis.md
-          - AppX: configuration/appx.md
-          - MSI: configuration/msi.md
-          - MSI Wrapped: configuration/msi-wrapped.md
-          - Squirrel.Windows: configuration/squirrel-windows.md
+          - Any Windows Target: win.md
+          - NSIS: nsis.md
+          - AppX: appx.md
+          - MSI: msi.md
+          - MSI Wrapped: msi-wrapped.md
+          - Squirrel.Windows: squirrel-windows.md
 
       - Linux:
-          - Any Linux Target: configuration/linux.md
-          - AppImage: configuration/appimage.md
-          - Flatpak: configuration/flatpak.md
-          - Snap: configuration/snap.md
+          - Any Linux Target: linux.md
+          - AppImage: appimage.md
+          - Flatpak: flatpak.md
+          - Snap: snap.md
 
-      - Publish: configuration/publish.md
+      - Publish: publish.md
 
   - Guides:
+      - Build Hooks: hooks.md
       - Icons: icons.md
       - Auto Update: auto-update.md
       - Code Signing: code-signing.md

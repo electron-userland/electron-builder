@@ -91,7 +91,7 @@ export class KeygenPublisher extends HttpPublisher {
 
     const token = process.env.KEYGEN_TOKEN
     if (isEmptyOrSpaces(token)) {
-      throw new InvalidConfigurationError(`Keygen token is not set using env "KEYGEN_TOKEN" (see https://www.electron.build/configuration/publish#KeygenOptions)`)
+      throw new InvalidConfigurationError(`Keygen token is not set using env "KEYGEN_TOKEN" (see https://www.electron.build/publish#KeygenOptions)`)
     }
 
     this.info = info
@@ -105,7 +105,6 @@ export class KeygenPublisher extends HttpPublisher {
     _arch: Arch,
     dataLength: number,
     requestProcessor: (request: ClientRequest, reject: (error: Error) => void) => void,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     _file: string
   ): Promise<string> {
     return HttpExecutor.retryOnServerError(async () => {

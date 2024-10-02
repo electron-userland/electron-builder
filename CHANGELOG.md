@@ -1,3 +1,91 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v25.1.5...v) (2024-09-25)
+
+
+### Bug Fixes
+
+* add `CodeSigningAccountName` as required prop in Azure Signing Options ([#8533](https://github.com/electron-userland/electron-builder/issues/8533)) ([cc8c70f](https://github.com/electron-userland/electron-builder/commit/cc8c70f7af5ca53b4c07b8ee32f460eabd4f9c34)), closes [/github.com/electron-userland/electron-builder/issues/8276#issuecomment-2371920176](https://github.com//github.com/electron-userland/electron-builder/issues/8276/issues/issuecomment-2371920176)
+* always produce Release .node builds ([#8531](https://github.com/electron-userland/electron-builder/issues/8531)) ([eaf274d](https://github.com/electron-userland/electron-builder/commit/eaf274d447d27d27a7ad663c5642a38d66f69917))
+
+
+
+# [](https://github.com/electron-userland/electron-builder/compare/v25.1.4...v) (2024-09-23)
+
+
+### Bug Fixes
+
+* azure signing logic should not have logic flow dependent on custom signtool hook ([#8524](https://github.com/electron-userland/electron-builder/issues/8524)) ([62fd74d](https://github.com/electron-userland/electron-builder/commit/62fd74dcfa13a564706141d08e5d0dea11ecf33b))
+
+
+
+# [](https://github.com/electron-userland/electron-builder/compare/v25.1.3...v) (2024-09-19)
+
+
+### Bug Fixes
+
+* **appx:** utilize `applicationId` verbatim when provided ([#8502](https://github.com/electron-userland/electron-builder/issues/8502)) ([4b2f693](https://github.com/electron-userland/electron-builder/commit/4b2f6937793a69fe15b35022e3ccca3be66b157d))
+* **deps:** update dependency @electron/notarize to v2.5.0 ([#8504](https://github.com/electron-userland/electron-builder/issues/8504)) ([59f6cb0](https://github.com/electron-userland/electron-builder/commit/59f6cb01945c27578052c0e81e588d5c8be459f8))
+
+
+
+# [](https://github.com/electron-userland/electron-builder/compare/v25.1.2...v) (2024-09-17)
+
+
+### Bug Fixes
+
+* Fix issues with conflictDependency that have two or more layers ([#8481](https://github.com/electron-userland/electron-builder/issues/8481)) ([216eaf9](https://github.com/electron-userland/electron-builder/commit/216eaf935da870f0a1a1b14f2b852f879d467710))
+
+
+
+# [](https://github.com/electron-userland/electron-builder/compare/v25.1.0...v) (2024-09-14)
+
+
+### Bug Fixes
+
+* **deploy:** redeploy all packages to sync semver ranges ([#8486](https://github.com/electron-userland/electron-builder/issues/8486)) ([d56cd27](https://github.com/electron-userland/electron-builder/commit/d56cd274b9d0fedb71889293164a15e51f7cc744))
+
+
+
+# [](https://github.com/electron-userland/electron-builder/compare/v25.0.6...v) (2024-09-13)
+
+
+### Bug Fixes
+
+* checking extensions for `cjs` vs `mjs` while resolving config ([#8482](https://github.com/electron-userland/electron-builder/issues/8482)) ([ff8059e](https://github.com/electron-userland/electron-builder/commit/ff8059e385efbf017b9e325e4e7649b5cb6dff15))
+* correct native dependency tree mismatch in app-builder rebuild ([#8450](https://github.com/electron-userland/electron-builder/issues/8450)) ([55671bd](https://github.com/electron-userland/electron-builder/commit/55671bd2159d4da8934e7083077d9cc854dc85fb))
+* **deploy:** attempt to install deps before calculating publish changeset ([17310b4](https://github.com/electron-userland/electron-builder/commit/17310b4adbf241ff0869e5681e5b34f47ab1a3fb))
+* **deploy:** regenerate lockfile for test package ([#8484](https://github.com/electron-userland/electron-builder/issues/8484)) ([3faaa72](https://github.com/electron-userland/electron-builder/commit/3faaa72550fa15dab60112291aacb9fbe7c3d1d1))
+
+
+### Features
+
+* **win:** implement Azure Trusted Signing ([#8458](https://github.com/electron-userland/electron-builder/issues/8458)) ([d50d563](https://github.com/electron-userland/electron-builder/commit/d50d563408c117f82863d0611311226d53ef6e8e))
+
+
+
+# [](https://github.com/electron-userland/electron-builder/compare/v25.0.6...v) (2024-09-13)
+
+
+### Bug Fixes
+
+* correct native dependency tree mismatch in app-builder rebuild ([#8450](https://github.com/electron-userland/electron-builder/issues/8450)) ([55671bd](https://github.com/electron-userland/electron-builder/commit/55671bd2159d4da8934e7083077d9cc854dc85fb))
+
+
+### Features
+
+* **win:** implement Azure Trusted Signing ([#8458](https://github.com/electron-userland/electron-builder/issues/8458)) ([d50d563](https://github.com/electron-userland/electron-builder/commit/d50d563408c117f82863d0611311226d53ef6e8e))
+
+
+
+# [](https://github.com/electron-userland/electron-builder/compare/v25.0.5...v) (2024-09-08)
+
+
+### Bug Fixes
+
+* enable usage of config files when package.json `type=module` ([#8455](https://github.com/electron-userland/electron-builder/issues/8455)) ([5c8373d](https://github.com/electron-userland/electron-builder/commit/5c8373d15f99ee9a4c46ed164f95bf1d4a11db28))
+* retry renaming update file when EBUSY error occurs due to file lock ([#8437](https://github.com/electron-userland/electron-builder/issues/8437)) ([be625e0](https://github.com/electron-userland/electron-builder/commit/be625e06273e56de09ed3298209858043fcd1151))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v25.0.4...v) (2024-08-20)
 
 

@@ -17,7 +17,7 @@ export async function checkFileInArchive(asarFile: string, relativeFile: string,
   let stat: Node | null
   try {
     stat = fs.getFile(relativeFile)
-  } catch (e: any) {
+  } catch (_e: any) {
     const fileStat = await statOrNull(asarFile)
     if (fileStat == null) {
       throw error(`does not exist. Seems like a wrong configuration.`)

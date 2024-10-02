@@ -30,12 +30,12 @@ export class ProtonFramework extends LibUiFramework {
     const babelOptions: any = { ast: false, sourceMaps: "inline" }
     if (process.env.TEST_SET_BABEL_PRESET === "true") {
       babel = require("@babel/core")
-      // eslint-disable-next-line @typescript-eslint/no-use-before-define
+
       babel = testOnlyBabel(babel, babelOptions, this.version)
     } else {
       try {
         babel = require("babel-core")
-      } catch (e: any) {
+      } catch (_e: any) {
         // babel isn't installed
         log.debug(null, "don't transpile source code using Babel")
         return null

@@ -188,33 +188,44 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
   const result = new Array<ResolvedFileSet>()
   let index = 0
   const NODE_MODULES = "node_modules"
-  const getRealSource = (source: string) => {
-    const parentDir = path.dirname(source)
+  const getRealSource = (name: string, source: string) => {
+    const normalizedName = name.split("/").join(path.sep)
+    if (!source.endsWith(normalizedName)) {
+      throw new Error("Path does not end with the package name")
+    }
+
+    // get the parent dir of the package, input: /root/path/node_modules/@electron/remote, output: /root/path/node_modules
+    const parentDir = source.slice(0, -normalizedName.length - 1)
+
     // for the local node modules which is not in node modules
     if (!parentDir.endsWith(path.sep + NODE_MODULES)) {
       return parentDir
     }
-    // use main matcher patterns, so, user can exclude some files !node_modules/xxxx
+
+    // use main matcher patterns,return parent dir of the node_modules, so user can exclude some files !node_modules/xxxx
     return path.dirname(parentDir)
   }
-  for (const info of deps) {
-    const source = info.dir
-    const destination = path.join(mainMatcher.to, NODE_MODULES, info.name)
-    const matcher = new FileMatcher(getRealSource(source), destination, mainMatcher.macroExpander, mainMatcher.patterns)
+
+  const collectNodeModules = async (dep: NodeModuleInfo, realSource: string, destination: string) => {
+    const source = dep.dir
+    const matcher = new FileMatcher(realSource, destination, mainMatcher.macroExpander, mainMatcher.patterns)
     const copier = new NodeModuleCopyHelper(matcher, platformPackager.info)
-    const files = await copier.collectNodeModules(info, nodeModuleExcludedExts)
+    const files = await copier.collectNodeModules(dep, nodeModuleExcludedExts)
     result[index++] = validateFileSet({ src: source, destination, files, metadata: copier.metadata })
 
-    if (info.conflictDependency) {
-      for (const dep of info.conflictDependency) {
-        const source = dep.dir
-        const destination = path.join(mainMatcher.to, NODE_MODULES, info.name, NODE_MODULES, dep.name)
-        const matcher = new FileMatcher(getRealSource(source), destination, mainMatcher.macroExpander, mainMatcher.patterns)
-        const copier = new NodeModuleCopyHelper(matcher, platformPackager.info)
-        result[index++] = validateFileSet({ src: source, destination, files: await copier.collectNodeModules(dep, nodeModuleExcludedExts), metadata: copier.metadata })
+    if (dep.conflictDependency) {
+      for (const c of dep.conflictDependency) {
+        await collectNodeModules(c, realSource, path.join(destination, NODE_MODULES, c.name))
       }
     }
   }
+
+  for (const dep of deps) {
+    const destination = path.join(mainMatcher.to, NODE_MODULES, dep.name)
+    const realSource = getRealSource(dep.name, dep.dir)
+    await collectNodeModules(dep, realSource, destination)
+  }
+
   return result
 }
 

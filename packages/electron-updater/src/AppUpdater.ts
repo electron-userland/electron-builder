@@ -257,7 +257,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   }
 
   /**
-   * Configure update provider. If value is `string`, [GenericServerOptions](/configuration/publish#genericserveroptions) will be set with value as `url`.
+   * Configure update provider. If value is `string`, [GenericServerOptions](./publish.md#genericserveroptions) will be set with value as `url`.
    * @param options If you want to override configuration in the `app-update.yml`.
    */
   setFeedURL(options: PublishConfiguration | AllPublishOptions | string) {
@@ -438,7 +438,6 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     }
   }
 
-  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
   private createProviderRuntimeOptions() {
     return {
       isUseMultipleRangeRequest: true,

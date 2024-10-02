@@ -108,7 +108,7 @@ export abstract class DifferentialDownloader {
             } catch (errorOnLog) {
               try {
                 console.error(errorOnLog)
-              } catch (ignored) {
+              } catch (_ignored) {
                 // ok, give up and ignore error
               }
             }

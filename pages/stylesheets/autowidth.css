@@ -1,0 +1,10 @@
+/* Allow content to fill full width of browser window */
+.md-main__inner.md-grid {
+  max-width: initial;
+}
+.md-grid {
+  max-width: initial;
+}
+
+/* Hide TOC elements less than h3 */
+.md-nav--secondary .md-nav__list .md-nav__list .md-nav__list { display: none }

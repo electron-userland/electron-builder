@@ -4,13 +4,13 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-mkdocs-material = "<10"
-mkdocs = "<1.7"
-markdown-include = "<0.8.1"
-pymdown-extensions = "~=10.3"
-pygments = "~=2.0"
+mkdocs = "*"
+mkdocs-include-markdown-plugin = "*"
+pymdown-extensions = "*"
+pygments = "*"
+mkdocs-material = "*"
 
 [dev-packages]
 
 [requires]
-python_version = "3"
+python_version = "3.8"

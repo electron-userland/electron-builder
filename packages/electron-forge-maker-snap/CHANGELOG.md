@@ -1,5 +1,58 @@
 # electron-forge-maker-snap
 
+## 25.1.6
+
+### Patch Changes
+
+- Updated dependencies [[`cc8c70f7`](https://github.com/electron-userland/electron-builder/commit/cc8c70f7af5ca53b4c07b8ee32f460eabd4f9c34), [`eaf274d4`](https://github.com/electron-userland/electron-builder/commit/eaf274d447d27d27a7ad663c5642a38d66f69917)]:
+  - app-builder-lib@25.1.6
+
+## 25.1.5
+
+### Patch Changes
+
+- Updated dependencies [[`d1cb6bdb`](https://github.com/electron-userland/electron-builder/commit/d1cb6bdbf8111156bb16839f501bdd9e6d477338), [`62fd74dc`](https://github.com/electron-userland/electron-builder/commit/62fd74dcfa13a564706141d08e5d0dea11ecf33b)]:
+  - app-builder-lib@25.1.5
+
+## 25.1.4
+
+### Patch Changes
+
+- Updated dependencies [[`48489d18`](https://github.com/electron-userland/electron-builder/commit/48489d187a18d7167477fe8ee1f7412035feb9ca), [`59f6cb01`](https://github.com/electron-userland/electron-builder/commit/59f6cb01945c27578052c0e81e588d5c8be459f8), [`4b2f6937`](https://github.com/electron-userland/electron-builder/commit/4b2f6937793a69fe15b35022e3ccca3be66b157d), [`f146b02f`](https://github.com/electron-userland/electron-builder/commit/f146b02f88e38eb55a374d67078a6bfb25b55bca)]:
+  - app-builder-lib@25.1.4
+
+## 25.1.3
+
+### Patch Changes
+
+- [#8491](https://github.com/electron-userland/electron-builder/pull/8491) [`178a3c40`](https://github.com/electron-userland/electron-builder/commit/178a3c40f35fa9e91a2e4942f61423effa1289e4) Thanks [@mmaietta](https://github.com/mmaietta)! - chore: migrating to typedoc and updating/improving type+interface definitions
+
+- Updated dependencies [[`216eaf93`](https://github.com/electron-userland/electron-builder/commit/216eaf935da870f0a1a1b14f2b852f879d467710), [`178a3c40`](https://github.com/electron-userland/electron-builder/commit/178a3c40f35fa9e91a2e4942f61423effa1289e4)]:
+  - app-builder-lib@25.1.3
+
+## 25.1.2
+
+### Patch Changes
+
+- [#8486](https://github.com/electron-userland/electron-builder/pull/8486) [`d56cd274`](https://github.com/electron-userland/electron-builder/commit/d56cd274b9d0fedb71889293164a15e51f7cc744) Thanks [@mmaietta](https://github.com/mmaietta)! - fix(deploy): redeploy all packages to sync semver ranges
+
+- Updated dependencies [[`d56cd274`](https://github.com/electron-userland/electron-builder/commit/d56cd274b9d0fedb71889293164a15e51f7cc744)]:
+  - app-builder-lib@25.1.2
+
+## 25.1.0
+
+### Patch Changes
+
+- Updated dependencies [[`55671bd2`](https://github.com/electron-userland/electron-builder/commit/55671bd2159d4da8934e7083077d9cc854dc85fb), [`770b19f5`](https://github.com/electron-userland/electron-builder/commit/770b19f58c5f697618baa604a686a8ade97fea2d), [`6fe83950`](https://github.com/electron-userland/electron-builder/commit/6fe83950a4195e4ff6611e3ebf91bd2e66d811dd), [`c081df8e`](https://github.com/electron-userland/electron-builder/commit/c081df8e04494645028c4160bcc1376f029cbca5), [`d50d5634`](https://github.com/electron-userland/electron-builder/commit/d50d563408c117f82863d0611311226d53ef6e8e), [`28aeb272`](https://github.com/electron-userland/electron-builder/commit/28aeb272ed24d6c3db3c61d551a7afa3794fef4d)]:
+  - app-builder-lib@25.1.0
+
+## 25.0.6
+
+### Patch Changes
+
+- Updated dependencies [[`5c8373d1`](https://github.com/electron-userland/electron-builder/commit/5c8373d15f99ee9a4c46ed164f95bf1d4a11db28)]:
+  - app-builder-lib@25.0.6
+
 ## 25.0.5
 
 ### Patch Changes

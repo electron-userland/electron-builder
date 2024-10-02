@@ -168,6 +168,7 @@ test.ifAll.ifDevOrLinuxCi("ignore node_modules", () => {
           //noinspection SpellCheckingInspection
           data.dependencies = {
             "ci-info": "2.0.0",
+            "@electron/remote": "2.1.2",
           }
         }),
       packed: context => {
