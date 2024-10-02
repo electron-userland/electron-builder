@@ -13,6 +13,7 @@ import { homedir, tmpdir } from "os"
 import * as asar from "@electron/asar"
 import { PathLike, symlink } from "fs"
 import { CancellationToken } from "builder-util-runtime"
+import * as tempFile from "temp-file"
 
 const pickle = require("chromium-pickle-js")
 
@@ -25,6 +26,7 @@ export class AsarPackager {
 
   constructor(
     private readonly src: string,
+    private readonly appOutDir: string,
     private readonly destination: string,
     private readonly options: AsarOptions,
     private readonly unpackPattern: Filter | null
@@ -43,15 +45,25 @@ export class AsarPackager {
       fileSets[0],
     ].map(orderFileSet)
 
-    const { unpackedDirs: unpack } = await this.detectAndCopy(packager as any, orderedFileSets)
+    const { unpackedDirs: unpack, copiedFiles } = await this.detectAndCopy(packager as any, orderedFileSets)
 
     const unpackGlob = unpack.length > 1 ? `{${unpack.join(",")}}` : unpack.pop()
+
+    let ordering = this.options.ordering || undefined
+    if (!ordering) {
+      const filesSorted = copiedFiles.map((file) => {
+        return file.substring(this.appOutDir.length)
+      })
+      const fileContent = filesSorted.join("\n")
+      ordering = await new tempFile.TmpDir().getTempFile({ prefix: "asar-ordering" })
+      await fs.writeFile(ordering, fileContent)
+      console.error({ src: this.src, out: this.appOutDir, filesSorted })
+    }
 
     const options: CreateOptions = {
       unpack: unpackGlob,
       unpackDir: unpackGlob,
-      ordering: this.options.ordering || undefined,
-      dot: true,
+      ordering,
     }
     await asar.createPackageWithOptions(this.rootForAppFilesWithoutAsar, this.outFile, options)
     await fs.rmdir(this.rootForAppFilesWithoutAsar, { recursive: true })
@@ -88,7 +100,10 @@ export class AsarPackager {
 
       const isOutsidePackage = realPathRelative.substring(0, 2) === ".."
       if (isOutsidePackage) {
-        log.warn({ source, realPathRelative, realPathFile, destination }, `file linked outstide. Skipping symlink, copying file directly`)
+        log.debug(
+          { source: log.filePath(source), realPathRelative: log.filePath(realPathRelative), realPathFile: log.filePath(realPathFile), destination: log.filePath(destination) },
+          `file linked outstide. Skipping symlink, copying file directly`
+        )
         const buffer = fs.readFileSync(source)
         return this.copyFileOrData(buffer, source, destination, stat)
       }
