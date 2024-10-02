@@ -35,18 +35,32 @@ export class AsarPackager {
   }
 
   async pack(fileSets: Array<ResolvedFileSet>, packager: PlatformPackager<any>) {
-    const { unpackedDirs: unpack, copiedFiles } = await this.detectAndCopy(packager as any, fileSets)
+    const orderedFileSets = [
+      // Write dependencies first to minimize offset changes to asar header
+      ...fileSets.slice(1),
+
+      // Finish with the app files that change most often
+      fileSets[0],
+    ].map(orderFileSet)
+
+    const { unpackedDirs: unpack, copiedFiles } = await this.detectAndCopy(packager as any, orderedFileSets)
 
     const unpackGlob = unpack.length > 1 ? `{${unpack.join(",")}}` : unpack.pop()
+
+    const orderingFile = this.options.ordering || undefined
+    if (!orderingFile) {
+      const orderedFiles = orderedFileSets.flatMap(set => set.files)
+      console.error(orderedFiles)
+    }
 
     const options: CreateOptions = {
       unpack: unpackGlob,
       unpackDir: unpackGlob,
-      ordering: this.options.ordering || undefined,
+      ordering: orderingFile,
       dot: true,
     }
     await asar.createPackageWithOptions(this.rootForAppFilesWithoutAsar, this.outFile, options)
-    await fs.rmdir(this.rootForAppFilesWithoutAsar, { recursive: true  })
+    await fs.rmdir(this.rootForAppFilesWithoutAsar, { recursive: true })
   }
 
   private async detectAndCopy(packager: Packager, fileSets: ResolvedFileSet[]) {
@@ -115,7 +129,7 @@ export class AsarPackager {
       }
       for (let i = 0; i < fileSet.files.length; i++) {
         const file = fileSet.files[i]
-        log.error({ file }, "file")
+        // log.error({ file }, "file")
         // console.error(file)
         const transformedData = fileSet.transformedFiles?.get(i)
 
@@ -139,7 +153,7 @@ export class AsarPackager {
     }
   }
 
-  copyFileOrData = async (data: string | Buffer | undefined, source: string, destination: string, stat: fs.Stats) => {
+  private async copyFileOrData(data: string | Buffer | undefined, source: string, destination: string, stat: fs.Stats) {
     await mkdir(path.dirname(destination), { recursive: true })
 
     if (data) {
@@ -149,5 +163,58 @@ export class AsarPackager {
       await fs.copyFile(source, destination)
     }
     await fs.chmod(destination, stat.mode)
+  }
+}
+
+function orderFileSet(fileSet: ResolvedFileSet): ResolvedFileSet {
+  const sortedFileEntries = Array.from(fileSet.files.entries())
+
+  sortedFileEntries.sort(([, a], [, b]) => {
+    if (a === b) {
+      return 0
+    }
+
+    // Place addons last because their signature change
+    const isAAddon = a.endsWith(".node")
+    const isBAddon = b.endsWith(".node")
+    if (isAAddon && !isBAddon) {
+      return 1
+    }
+    if (isBAddon && !isAAddon) {
+      return -1
+    }
+
+    // Otherwise order by name
+    return a < b ? -1 : 1
+  })
+
+  let transformedFiles: Map<number, string | Buffer> | undefined
+  if (fileSet.transformedFiles) {
+    transformedFiles = new Map()
+
+    const indexMap = new Map<number, number>()
+    for (const [newIndex, [oldIndex]] of sortedFileEntries.entries()) {
+      indexMap.set(oldIndex, newIndex)
+    }
+
+    for (const [oldIndex, value] of fileSet.transformedFiles) {
+      const newIndex = indexMap.get(oldIndex)
+      if (newIndex === undefined) {
+        const file = fileSet.files[oldIndex]
+        throw new Error(`Internal error: ${file} was lost while ordering asar`)
+      }
+
+      transformedFiles.set(newIndex, value)
+    }
+  }
+
+  const { src, destination, metadata } = fileSet
+
+  return {
+    src,
+    destination,
+    metadata,
+    files: sortedFileEntries.map(([, file]) => file),
+    transformedFiles,
   }
 }
