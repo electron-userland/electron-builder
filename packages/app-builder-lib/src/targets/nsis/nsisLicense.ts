@@ -8,7 +8,6 @@ import { NsisScriptGenerator } from "./nsisScriptGenerator"
 import { nsisTemplatesDir } from "./nsisUtil"
 import * as fs from "fs"
 
-
 function convertFileToUtf8WithBOMSync(filePath: string): boolean {
   try {
     const UTF8_BOM_HEADER = Buffer.from([0xef, 0xbb, 0xbf])
@@ -18,7 +17,7 @@ function convertFileToUtf8WithBOMSync(filePath: string): boolean {
     log.debug({ file: log.filePath(filePath) }, "checking file for BOM header")
     if (data.length >= UTF8_BOM_HEADER.length && data.subarray(0, UTF8_BOM_HEADER.length).equals(UTF8_BOM_HEADER)) {
       log.debug({ file: log.filePath(filePath) }, "file is already in BOM format, skipping conversion.")
-      return true;
+      return true
     }
 
     // If not, add the BOM
