@@ -43,20 +43,14 @@ export class AsarPackager {
       fileSets[0],
     ].map(orderFileSet)
 
-    const { unpackedDirs: unpack, copiedFiles } = await this.detectAndCopy(packager as any, orderedFileSets)
+    const { unpackedDirs: unpack } = await this.detectAndCopy(packager as any, orderedFileSets)
 
     const unpackGlob = unpack.length > 1 ? `{${unpack.join(",")}}` : unpack.pop()
-
-    const orderingFile = this.options.ordering || undefined
-    if (!orderingFile) {
-      const orderedFiles = orderedFileSets.flatMap(set => set.files)
-      console.error(orderedFiles)
-    }
 
     const options: CreateOptions = {
       unpack: unpackGlob,
       unpackDir: unpackGlob,
-      ordering: orderingFile,
+      ordering: this.options.ordering || undefined,
       dot: true,
     }
     await asar.createPackageWithOptions(this.rootForAppFilesWithoutAsar, this.outFile, options)
@@ -77,35 +71,20 @@ export class AsarPackager {
       }
     }
     const autoCopy = async (transformedData: string | Buffer | undefined, source: string, destination: string) => {
-      const realPathFile = fs.realpathSync(source)
-      // console.error(this.src)
-      const realPathRelative = path.relative(this.src, realPathFile)
-      const symlinkDestination = path.resolve(this.rootForAppFilesWithoutAsar, realPathRelative)
       const alreadyIncluded = copiedFiles.has(destination)
-      const stat = await fs.lstat(source)
-
-      // log.error(
-      //   {
-      //     source,
-      //     destination,
-      //     realPathFile,
-      //     realPathRelative,
-      //     symlinkDestination,
-      //     isSymbolicLink: stat.isSymbolicLink(),
-      //     alreadyIncluded,
-      //   },
-      //   "autoCopy"
-      // )
-
       if (alreadyIncluded) {
         return
       }
       copiedFiles.add(destination)
 
+      const stat = await fs.lstat(source)
       // If transformed data, skip symlink logic
       if (transformedData) {
         return this.copyFileOrData(transformedData, source, destination, stat)
       }
+      const realPathFile = fs.realpathSync(source)
+      const realPathRelative = path.relative(this.src, realPathFile)
+      const symlinkDestination = path.resolve(this.rootForAppFilesWithoutAsar, realPathRelative)
 
       const isOutsidePackage = realPathRelative.substring(0, 2) === ".."
       if (isOutsidePackage) {
