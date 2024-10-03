@@ -84,8 +84,8 @@ importers:
         specifier: ~2.6.5
         version: 2.6.5
       '@electron/asar':
-        specifier: github:mmaietta/asar#fix-asar-symlink
-        version: https://codeload.github.com/mmaietta/asar/tar.gz/b62cefa1fc28a0fffe32591625a761afad6e4453
+        specifier: ^3.2.13
+        version: 3.2.13
       '@electron/notarize':
         specifier: 2.5.0
         version: 2.5.0
@@ -2004,12 +2004,6 @@ packages:
 
   '@electron/asar@3.2.13':
     resolution: {integrity: sha512-pY5z2qQSwbFzJsBdgfJIzXf5ElHTVMutC2dxh0FD60njknMu3n1NnTABOcQwbb5/v5soqE79m9UjaJryBf3epg==}
-    engines: {node: '>=10.12.0'}
-    hasBin: true
-
-  '@electron/asar@https://codeload.github.com/mmaietta/asar/tar.gz/b62cefa1fc28a0fffe32591625a761afad6e4453':
-    resolution: {tarball: https://codeload.github.com/mmaietta/asar/tar.gz/b62cefa1fc28a0fffe32591625a761afad6e4453}
-    version: 0.0.0-development
     engines: {node: '>=10.12.0'}
     hasBin: true
 
@@ -8247,13 +8241,6 @@ snapshots:
       ajv-keywords: 3.5.2(ajv@6.12.6)
 
   '@electron/asar@3.2.13':
-    dependencies:
-      '@types/glob': 7.2.0
-      commander: 5.1.0
-      glob: 7.2.3
-      minimatch: 3.1.2
-
-  '@electron/asar@https://codeload.github.com/mmaietta/asar/tar.gz/b62cefa1fc28a0fffe32591625a761afad6e4453':
     dependencies:
       '@types/glob': 7.2.0
       commander: 5.1.0

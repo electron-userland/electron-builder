@@ -16,9 +16,9 @@ import { CancellationToken } from "builder-util-runtime"
 import * as tempFile from "temp-file"
 
 // Add debugging for fs-extra commands if needed
-process.env.FS_DEBUG = "1"
-process.env.DEBUG = process.env.DEBUG?.split(",").concat("fs").join(",") || "fs"
-require("fs-extra-debug")
+// process.env.FS_DEBUG = "1"
+// process.env.DEBUG = process.env.DEBUG?.split(",").concat("fs").join(",") || "fs"
+// require("fs-extra-debug")
 
 const pickle = require("chromium-pickle-js")
 
@@ -123,12 +123,12 @@ export class AsarPackager {
         const absolute_target = destination // path.relative(this.rootForAppFilesWithoutAsar, destination) // .substring(this.rootForAppFilesWithoutAsar.length)
         const source = symlinkDestination // path.relative(symlinkDestination, dest)
         const target = path.basename(absolute_target) // "./" + path.relative(path.dirname(source), absolute_target)
-        console.warn({symlinkDestination, absolute_target, source, target})
-//  const tempSymlink = await new tempFile.TmpDir().getTempFile({ prefix: "symlink" })
+        console.warn({symlinkDestination, absolute_target, source, target, destination, realPathFile, realPathRelative })
+//  const tempSymlink = fs.readlinkSync(source)
 
-//         await fs.ensureSymlink(source, tempSymlink)
+      // await fs.ensureSymlink(destination, symlinkDestination)
 //         await fs.rename(tempSymlink, target)
-        await writeSymbolicLink(absolute_target, source)
+        await writeSymbolicLink(destination, symlinkDestination)
         // await fs.mkdir(path.dirname(destination), { recursive: true })
         // await symlink(target, symlinkDestination, "file")
         copiedFiles.add(symlinkDestination)
