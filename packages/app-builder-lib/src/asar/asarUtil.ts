@@ -2,6 +2,7 @@ import { CreateOptions, createPackageFromFiles } from "@electron/asar"
 import { AsyncTaskManager, log } from "builder-util"
 import { FileCopier, Filter, MAX_FILE_REQUESTS } from "builder-util/out/fs"
 import * as fs from "fs-extra"
+import * as fsNormal from "fs"
 import { mkdir, rm, writeFile } from "fs/promises"
 import * as path from "path"
 import { AsarOptions } from "../options/PlatformSpecificBuildOptions"
@@ -10,15 +11,15 @@ import { PlatformPackager } from "../platformPackager"
 import { ResolvedFileSet, getDestinationPath } from "../util/appFileCopier"
 import { detectUnpackedDirs } from "./unpackDetector"
 import { homedir, tmpdir } from "os"
-import * as asar from "@electron/asar"
+import { createPackageWithOptions } from "@electron/asar"
 import { PathLike, symlink } from "fs"
 import { CancellationToken } from "builder-util-runtime"
 import * as tempFile from "temp-file"
 
 // Add debugging for fs-extra commands if needed
-// process.env.FS_DEBUG = "1"
-// process.env.DEBUG = process.env.DEBUG?.split(",").concat("fs").join(",") || "fs"
-// require("fs-extra-debug")
+process.env.FS_DEBUG = "1"
+process.env.DEBUG = process.env.DEBUG?.split(",").concat("fs").join(",") || "fs"
+require("fs-extra-debug")
 
 const pickle = require("chromium-pickle-js")
 
@@ -38,7 +39,7 @@ export class AsarPackager {
   ) {
     this.outFile = path.join(destination, "app.asar")
     this.unpackedDest = `${this.outFile}.unpacked`
-    this.rootForAppFilesWithoutAsar = path.join(this.destination, "app")
+    this.rootForAppFilesWithoutAsar = path.join(this.destination, "app") // convert to use TmpDir
   }
 
   async pack(fileSets: Array<ResolvedFileSet>, packager: PlatformPackager<any>) {
@@ -50,19 +51,17 @@ export class AsarPackager {
       fileSets[0],
     ].map(orderFileSet)
 
-    const { unpackedDirs: unpack, copiedFiles } = await this.detectAndCopy(packager as any, orderedFileSets)
-    const unpackedDirs = unpack // .map(unpack => unpack.substring(this.appOutDir.length))
+    const { unpackedDirs, copiedFiles } = await this.detectAndCopy(packager as any, orderedFileSets)
+    // const unpackedDirs = unpack // .map(unpack => unpack.substring(this.appOutDir.length))
     const unpackGlob = unpackedDirs.length > 1 ? `{${unpackedDirs.join(",")}}` : unpackedDirs.pop()
-    console.warn({ unpackGlob })
+    // console.warn({ unpackGlob })
 
     let ordering = this.options.ordering || undefined
     if (!ordering) {
       ordering = await new tempFile.TmpDir().getTempFile({ prefix: "asar-ordering" })
-      // `copiedFiles` is already ordered due to `orderedFileSets`, so we just map to their relative paths (via substring) within the asar.
+      // `copiedFiles` are already ordered due to `orderedFileSets`, so we just map to their relative paths (via substring) within the asar.
       const filesSorted = copiedFiles.map(file => file.substring(this.appOutDir.length))
-      const fileContent = filesSorted.join("\n")
-      await fs.writeFile(ordering, fileContent)
-      // console.error({ src: this.src, out: this.appOutDir, filesSorted })
+      await fs.writeFile(ordering, filesSorted.join("\n"))
     }
 
     const options: CreateOptions = {
@@ -71,11 +70,12 @@ export class AsarPackager {
       ordering,
     }
     // override logger temporarily to clean up console (electron/asar does some internal logging that blogs up the default electron-builder logs)
-    // const consoleLogger = console.log
-    // console.log = (...args) => log.info({ args }, "executing electron/asar")
-    await asar.createPackageWithOptions(this.rootForAppFilesWithoutAsar, this.outFile, options)
-    // console.log = consoleLogger
+    const consoleLogger = console.log
+    console.log = (...args) => log.info({ args }, "logging @electron/asar")
+    await createPackageWithOptions(this.rootForAppFilesWithoutAsar, this.outFile, options)
+    console.log = consoleLogger
 
+    // clean up staging dir
     await fs.rmdir(this.rootForAppFilesWithoutAsar, { recursive: true })
   }
 
@@ -109,26 +109,38 @@ export class AsarPackager {
       const realPathRelative = path.relative(this.src, realPathFile)
       const symlinkDestination = path.resolve(this.rootForAppFilesWithoutAsar, realPathRelative)
 
-      const isOutsidePackage = realPathRelative.substring(0, 2) === ".."
+      const isOutsidePackage = realPathRelative.startsWith("../")
       if (isOutsidePackage) {
         log.debug(
-          { source: log.filePath(source), realPathRelative: log.filePath(realPathRelative), realPathFile: log.filePath(realPathFile), destination: log.filePath(destination) },
+          { source: source, realPathRelative: realPathRelative, realPathFile: realPathFile, destination: destination },
           `file linked outstide. Skipping symlink, copying file directly`
         )
         const buffer = fs.readFileSync(source)
         return this.copyFileOrData(buffer, source, destination, stat)
       }
       if (source !== realPathFile) {
-        await this.copyFileOrData(undefined, realPathFile, symlinkDestination, stat)
-        const absolute_target = destination // path.relative(this.rootForAppFilesWithoutAsar, destination) // .substring(this.rootForAppFilesWithoutAsar.length)
-        const source = symlinkDestination // path.relative(symlinkDestination, dest)
-        const target = path.basename(absolute_target) // "./" + path.relative(path.dirname(source), absolute_target)
-        console.warn({symlinkDestination, absolute_target, source, target, destination, realPathFile, realPathRelative })
-//  const tempSymlink = fs.readlinkSync(source)
+        // fs.copySync(symlinkDestination, realPathFile)
+        await this.copyFileOrData(undefined, source, symlinkDestination, stat)
+        // const absolute_target = destination // path.relative(this.rootForAppFilesWithoutAsar, destination) // .substring(this.rootForAppFilesWithoutAsar.length)
+        // const source = symlinkDestination // path.relative(symlinkDestination, dest)
+        // const target = path.relative(path.dirname(source), absolute_target)
+        // const tempSymlink = fs.readlinkSync(source)
+        // console.warn({ symlinkDestination, absolute_target, source, target, destination, realPathFile, realPathRelative, tempSymlink })
 
-      // await fs.ensureSymlink(destination, symlinkDestination)
-//         await fs.rename(tempSymlink, target)
-        await writeSymbolicLink(destination, symlinkDestination)
+        const dirname = path.dirname(symlinkDestination)
+        const cwd = process.cwd()
+        // const dir = path.dirname(source)
+
+        // symlinks must be relative to the source file, so we temporarily change dir to the src file dir
+        process.chdir(dirname)
+        const src = path.relative(dirname, symlinkDestination)
+        const dest = path.relative(dirname, destination)
+        // fsNormal.symlinkSync(dest, src)
+        fsNormal.symlinkSync(src, dest)
+        // await fs.ensureSymlink(src, dest)
+        process.chdir(cwd)
+        //         await fs.rename(tempSymlink, target)
+        // await writeSymbolicLink(symlinkDestination, realPathFile)
         // await fs.mkdir(path.dirname(destination), { recursive: true })
         // await symlink(target, symlinkDestination, "file")
         copiedFiles.add(symlinkDestination)
@@ -233,15 +245,14 @@ function orderFileSet(fileSet: ResolvedFileSet): ResolvedFileSet {
   }
 }
 
-function writeSymbolicLink(writePath: string, file: string) {
+function writeSymbolicLink(file: string, writePath: string) {
   return new Promise((resolve, reject) => {
     fs.symlink(file, writePath, function (err) {
-      if (err && err.code !== 'EEXIST') {
-        return reject(err);
+      if (err && err.code !== "EEXIST") {
+        return reject(err)
       }
 
-      resolve(file);
-    });
-
+      resolve(file)
+    })
   })
 }

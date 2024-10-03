@@ -6,6 +6,7 @@ import * as fs from "fs/promises"
 import { assertThat } from "./helpers/fileAssert"
 import { app, assertPack, modifyPackageJson, PackedContext, removeUnstableProperties, verifyAsarFileTree } from "./helpers/packTester"
 import { verifySmartUnpack } from "./helpers/verifySmartUnpack"
+import { readAsarFile, readAsarJson } from "app-builder-lib/out/asar/integrity"
 
 async function createFiles(appDir: string) {
   await Promise.all([
@@ -98,7 +99,7 @@ test.ifNotWindows(
         return fs.symlink(path.join(projectDir, "index.js"), path.join(projectDir, "foo.js"))
       },
       packed: async context => {
-        expect((await readAsar(path.join(context.getResources(Platform.LINUX), "app.asar"))).getFile("foo.js", false)).toMatchSnapshot()
+        expect(readAsarFile(path.join(context.getResources(Platform.LINUX), "app.asar"), "foo.js", false)).toMatchSnapshot()
       },
     }
   )
