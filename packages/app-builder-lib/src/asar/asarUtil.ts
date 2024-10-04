@@ -90,15 +90,15 @@ export class AsarPackager {
       const realPathRelative = path.relative(this.config.appDir, realPathFile)
       const symlinkDestination = path.resolve(this.rootForAppFilesWithoutAsar, realPathRelative)
 
-      const isOutsidePackage = realPathRelative.startsWith("../")
-      if (isOutsidePackage) {
-        log.debug(
-          { source: source, realPathRelative: realPathRelative, realPathFile: realPathFile, destination: destination },
-          `file linked outstide. Skipping symlink, copying file directly`
-        )
-        const buffer = fs.readFileSync(source)
-        return this.copyFileOrData(buffer, source, destination, stat)
-      }
+      // const isOutsidePackage = realPathRelative.startsWith("../")
+      // if (isOutsidePackage) {
+      //   log.debug(
+      //     { source: source, realPathRelative: realPathRelative, realPathFile: realPathFile, destination: destination },
+      //     `file linked outstide. Skipping symlink, copying file directly`
+      //   )
+      //   const buffer = fs.readFileSync(source)
+      //   return this.copyFileOrData(buffer, source, destination, stat)
+      // }
       if (source === realPathFile) {
         return this.copyFileOrData(undefined, source, destination, stat)
       } else {
@@ -147,12 +147,10 @@ export class AsarPackager {
     await fs.mkdir(path.dirname(destination), { recursive: true })
 
     if (data) {
-      await fs.writeFile(destination, data)
+      await fs.writeFile(destination, data, { mode: stat.mode })
     } else {
-      // await this.fileCopier.copy(source, destination, stat)
       await fs.copyFile(source, destination)
     }
-    await fs.chmod(destination, stat.mode)
   }
 }
 
@@ -207,16 +205,4 @@ function orderFileSet(fileSet: ResolvedFileSet): ResolvedFileSet {
     files: sortedFileEntries.map(([, file]) => file),
     transformedFiles,
   }
-}
-
-function writeSymbolicLink(file: string, writePath: string) {
-  return new Promise((resolve, reject) => {
-    fs.symlink(file, writePath, function (err) {
-      if (err && err.code !== "EEXIST") {
-        return reject(err)
-      }
-
-      resolve(file)
-    })
-  })
 }
