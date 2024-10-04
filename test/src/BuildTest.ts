@@ -300,8 +300,8 @@ test.ifDevOrLinuxCi("win smart unpack", () => {
           }
         },
         win: {
-          signAndEditExecutable: false // setting `true` will fail on arm64 macs, even within docker container since rcedit doesn't work within wine on arm64
-        }
+          signAndEditExecutable: false, // setting `true` will fail on arm64 macs, even within docker container since rcedit doesn't work within wine on arm64
+        },
       },
     },
     {
@@ -358,7 +358,7 @@ test.ifDevOrLinuxCi(
       }),
       packed: async context => {
         expect(context.packager.appInfo.copyright).toBe("Copyright © 2018 Foo Bar")
-        await verifySmartUnpack(context.getResources(Platform.LINUX), async (asarFs) => {
+        await verifySmartUnpack(context.getResources(Platform.LINUX), async asarFs => {
           return expect(await asarFs.readFile(`node_modules${path.sep}three${path.sep}examples${path.sep}fonts${path.sep}README.md`)).toMatchSnapshot()
         })
       },

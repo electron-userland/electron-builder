@@ -14,22 +14,24 @@ import { detectUnpackedDirs } from "./unpackDetector"
 /** @internal */
 export class AsarPackager {
   private readonly outFile: string
-  private readonly unpackedDest: string
   private readonly rootForAppFilesWithoutAsar: string
+  private readonly tmpDir = new tempFile.TmpDir()
 
   constructor(
-    private readonly src: string,
-    private readonly appOutDir: string,
-    private readonly destination: string,
-    private readonly options: AsarOptions,
-    private readonly unpackPattern: Filter | null
+    private readonly config: {
+      appDir: string
+      defaultDestination: string
+      resourcePath: string
+      options: AsarOptions
+      unpackPattern: Filter | undefined
+    }
   ) {
-    this.outFile = path.join(destination, "app.asar")
-    this.unpackedDest = `${this.outFile}.unpacked`
-    this.rootForAppFilesWithoutAsar = path.join(this.destination, "app") // convert to use TmpDir
+    this.rootForAppFilesWithoutAsar = path.join(config.resourcePath, "app")
+    this.outFile = `${this.rootForAppFilesWithoutAsar}.asar`
   }
 
   async pack(fileSets: Array<ResolvedFileSet>, _packager: PlatformPackager<any>) {
+    const cancellationToken = new CancellationToken()
     const orderedFileSets = [
       // Write dependencies first to minimize offset changes to asar header
       ...fileSets.slice(1),
@@ -38,14 +40,14 @@ export class AsarPackager {
       fileSets[0],
     ].map(orderFileSet)
 
-    const { unpackedDirs, copiedFiles } = await this.detectAndCopy(orderedFileSets)
+    const { unpackedDirs, copiedFiles } = await this.detectAndCopy(orderedFileSets, cancellationToken)
     const unpackGlob = unpackedDirs.length > 1 ? `{${unpackedDirs.join(",")}}` : unpackedDirs.pop()
 
-    let ordering = this.options.ordering || undefined
+    let ordering = this.config.options.ordering || undefined
     if (!ordering) {
-      ordering = await new tempFile.TmpDir().getTempFile({ prefix: "asar-ordering" })
+      ordering = await this.tmpDir.getTempFile({ prefix: "asar-ordering" })
       // `copiedFiles` are already ordered due to `orderedFileSets`, so we just map to their relative paths (via substring) within the asar.
-      const filesSorted = copiedFiles.map(file => file.substring(this.appOutDir.length))
+      const filesSorted = copiedFiles.map(file => file.substring(this.config.defaultDestination.length))
       await fs.writeFile(ordering, filesSorted.join("\n"))
     }
 
@@ -62,36 +64,30 @@ export class AsarPackager {
 
     // clean up staging dir
     await fs.rmdir(this.rootForAppFilesWithoutAsar, { recursive: true })
+    await this.tmpDir.cleanup()
   }
 
-  private async detectAndCopy(fileSets: ResolvedFileSet[]) {
-    const cancellationToken = new CancellationToken()
+  private async detectAndCopy(fileSets: ResolvedFileSet[], cancellationToken: CancellationToken) {
     const taskManager = new AsyncTaskManager(cancellationToken)
     const unpackedDirs = new Set<string>()
     const copiedFiles = new Set<string>()
 
     const autoUnpack = async (file: string, dest: string) => {
-      const newLocal = await fs.lstat(file)
-      if (this.unpackPattern?.(file, newLocal)) {
+      if (this.config.unpackPattern?.(file, await fs.lstat(file))) {
         log.debug({ file }, "unpacking file")
         unpackedDirs.add(dest)
       }
     }
     const autoCopy = async (transformedData: string | Buffer | undefined, source: string, destination: string) => {
-      const alreadyIncluded = copiedFiles.has(destination)
-      if (alreadyIncluded) {
-        return
-      }
-      copiedFiles.add(destination)
-
       const stat = await fs.lstat(source)
+      copiedFiles.add(destination)
 
       // If transformed data, skip symlink logic
       if (transformedData) {
         return this.copyFileOrData(transformedData, source, destination, stat)
       }
       const realPathFile = fs.realpathSync(source)
-      const realPathRelative = path.relative(this.src, realPathFile)
+      const realPathRelative = path.relative(this.config.appDir, realPathFile)
       const symlinkDestination = path.resolve(this.rootForAppFilesWithoutAsar, realPathRelative)
 
       const isOutsidePackage = realPathRelative.startsWith("../")
@@ -103,7 +99,9 @@ export class AsarPackager {
         const buffer = fs.readFileSync(source)
         return this.copyFileOrData(buffer, source, destination, stat)
       }
-      if (source !== realPathFile) {
+      if (source === realPathFile) {
+        return this.copyFileOrData(undefined, source, destination, stat)
+      } else {
         await this.copyFileOrData(undefined, source, symlinkDestination, stat)
 
         // symlinks must be relative to the source file, so we temporarily change dir to the src file dir
@@ -116,13 +114,11 @@ export class AsarPackager {
         process.chdir(cwd)
 
         copiedFiles.add(symlinkDestination)
-      } else {
-        await this.copyFileOrData(undefined, source, destination, stat)
-      }
+      } 
     }
 
     for await (const fileSet of fileSets) {
-      if (this.options.smartUnpack !== false) {
+      if (this.config.options.smartUnpack !== false) {
         detectUnpackedDirs(fileSet, unpackedDirs, this.rootForAppFilesWithoutAsar)
       }
       for (let i = 0; i < fileSet.files.length; i++) {
@@ -132,8 +128,8 @@ export class AsarPackager {
         const dest = path.resolve(this.rootForAppFilesWithoutAsar, getDestinationPath(file, fileSet))
 
         await autoUnpack(file, dest)
-        await autoCopy(transformedData, file, dest)
-        // taskManager.addTask(autoCopy(transformedData, file, dest))
+        // await autoCopy(transformedData, file, dest)
+        taskManager.addTask(autoCopy(transformedData, file, dest))
 
         if (taskManager.tasks.length > MAX_FILE_REQUESTS) {
           await taskManager.awaitTasks()
