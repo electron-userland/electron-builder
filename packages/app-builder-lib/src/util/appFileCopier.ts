@@ -13,6 +13,7 @@ import { PlatformPackager } from "../platformPackager"
 import { AppFileWalker } from "./AppFileWalker"
 import { NodeModuleCopyHelper } from "./NodeModuleCopyHelper"
 import { NodeModuleInfo } from "./packageDependencies"
+import { getNodeModules } from "node-module-collector"
 
 const BOWER_COMPONENTS_PATTERN = `${path.sep}bower_components${path.sep}`
 /** @internal */
@@ -181,7 +182,8 @@ function validateFileSet(fileSet: ResolvedFileSet): ResolvedFileSet {
 
 /** @internal */
 export async function computeNodeModuleFileSets(platformPackager: PlatformPackager<any>, mainMatcher: FileMatcher): Promise<Array<ResolvedFileSet>> {
-  const deps = (await platformPackager.info.getNodeDependencyInfo(platformPackager.platform).value) as Array<NodeModuleInfo>
+  const deps = (await getNodeModules(platformPackager.info.appDir)) as NodeModuleInfo[]
+  log.debug({ nodeModules: deps }, "collected node modules")
 
   const nodeModuleExcludedExts = getNodeModuleExcludedExts(platformPackager)
   // serial execution because copyNodeModules is concurrent and so, no need to increase queue/pressure
@@ -213,8 +215,8 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
     const files = await copier.collectNodeModules(dep, nodeModuleExcludedExts)
     result[index++] = validateFileSet({ src: source, destination, files, metadata: copier.metadata })
 
-    if (dep.conflictDependency) {
-      for (const c of dep.conflictDependency) {
+    if (dep.dependencies) {
+      for (const c of dep.dependencies) {
         await collectNodeModules(c, realSource, path.join(destination, NODE_MODULES, c.name))
       }
     }

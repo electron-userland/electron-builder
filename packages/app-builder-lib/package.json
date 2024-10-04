@@ -77,7 +77,8 @@
     "sanitize-filename": "^1.6.3",
     "semver": "^7.3.8",
     "tar": "^6.1.12",
-    "temp-file": "^3.4.0"
+    "temp-file": "^3.4.0",
+    "node-module-collector": "1.1.0"
   },
   "///": "babel in devDependencies for proton tests",
   "devDependencies": {
