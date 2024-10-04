@@ -78,7 +78,7 @@
     "semver": "^7.3.8",
     "tar": "^6.1.12",
     "temp-file": "^3.4.0",
-    "node-module-collector": "1.1.1"
+    "node-module-collector": "1.1.2"
   },
   "///": "babel in devDependencies for proton tests",
   "devDependencies": {
