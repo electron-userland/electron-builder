@@ -16,6 +16,7 @@ const knownUnusedDevDependencies = new Set<string>([
   "@typescript-eslint/parser",
   "eslint-config-prettier",
   "eslint-plugin-prettier",
+  "fs-extra-debug" // ignored for now. TODO: remove debug code
 ])
 const knownMissedDependencies = new Set<string>(["babel-core", "babel-preset-env", "babel-preset-stage-0", "babel-preset-react"])
 
