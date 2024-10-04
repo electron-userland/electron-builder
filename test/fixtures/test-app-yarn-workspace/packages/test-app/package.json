@@ -23,6 +23,6 @@
     "@sentry/core": "0.5.4"
   },
   "optionalDependencies": {
-    "unresolved": "^2.0.5"
+    "ms": "2.0.0"
   }
 }
