@@ -436,7 +436,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
             await transformFiles(transformer, fileSet)
           }
 
-          await new AsarPackager(appDir, defaultDestination, resourcePath, asarOptions, fileMatcher == null ? null : fileMatcher.createFilter()).pack(fileSets, this)
+          await new AsarPackager(appDir, packContext.outDir, resourcePath, asarOptions, fileMatcher == null ? null : fileMatcher.createFilter()).pack(fileSets, this)
         })
       )
     }

@@ -73,7 +73,7 @@ export class AsarPackager {
     const autoUnpack = async (file: string, dest: string) => {
       const newLocal = await fs.lstat(file)
       if (this.unpackPattern?.(file, newLocal)) {
-        log.info({ file }, "unpacking")
+        log.debug({ file }, "unpacking file")
         unpackedDirs.add(dest)
       }
     }
@@ -129,8 +129,6 @@ export class AsarPackager {
         const file = fileSet.files[i]
         const transformedData = fileSet.transformedFiles?.get(i)
 
-        // const srcFile = path.resolve(this.src, file)
-        // const srcRelative = path.relative(packager.appDir, file)
         const dest = path.resolve(this.rootForAppFilesWithoutAsar, getDestinationPath(file, fileSet))
 
         await autoUnpack(file, dest)
@@ -155,7 +153,7 @@ export class AsarPackager {
     if (data) {
       await fs.writeFile(destination, data)
     } else {
-      // await this.fileCopier.cTESTopy(source, destination, stat)
+      // await this.fileCopier.copy(source, destination, stat)
       await fs.copyFile(source, destination)
     }
     await fs.chmod(destination, stat.mode)
