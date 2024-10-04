@@ -1,6 +1,7 @@
 /.vscode/
-node_modules
-**/node_modules
+node_modules/
+**/node_modules/
+
 *.log
 
 /.idea/compiler.xml
