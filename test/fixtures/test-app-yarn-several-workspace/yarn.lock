@@ -5,11 +5,14 @@
 electron-log@2.2.8:
   version "2.2.8"
   resolved "https://registry.yarnpkg.com/electron-log/-/electron-log-2.2.8.tgz#2296cccd8da046268a199c1a302dcb8cb16f2b72"
+  integrity sha512-jYdSZLKo2IcAW7q4MmdzSdFfxZwGUv0UH4IK9ueeY0jdLqP3zyia7JwVpoYzsmx0vPQI1Mj6PaaflAuZC4p75w==
 
 electron-log@2.2.9:
   version "2.2.9"
   resolved "https://registry.yarnpkg.com/electron-log/-/electron-log-2.2.9.tgz#e0484cb1a8a84593095e3b69f47361ae15d73bdf"
+  integrity sha512-WNMSipQYurNxY14RO6IKgcxcZg1e4aNVpUUJK9q7Bqe0TZEKn1e5h4HiQKhTgVLqKrUn++ugOZrty450P9vpjA==
 
 ms@2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/ms/-/ms-2.0.0.tgz#5608aeadfc00be6c2901df5f9861788de0d597c8"
+  integrity sha512-Tpp60P6IUJDTuOq/5Z8cdskzJujfwqfOTkrwIwj7IRISpnkJnT6SyJ4PCPnGMoFjC9ddhal5KVIYtAt97ix05A==
