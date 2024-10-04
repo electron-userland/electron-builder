@@ -220,17 +220,17 @@ Object {
               },
             },
             "package.json": Object {
-              "offset": "28679",
+              "offset": "40440",
               "size": 947,
             },
             "src": Object {
               "files": Object {
                 "browser.js": Object {
-                  "offset": "29626",
+                  "offset": "28679",
                   "size": 5831,
                 },
                 "common.js": Object {
-                  "offset": "35457",
+                  "offset": "34510",
                   "size": 5930,
                 },
                 "index.js": Object {
@@ -276,11 +276,11 @@ Object {
               "size": 560,
             },
             "index.js": Object {
-              "offset": "53210",
+              "offset": "59533",
               "size": 377,
             },
             "napi-inl.deprecated.h": Object {
-              "offset": "53587",
+              "offset": "53210",
               "size": 6323,
             },
             "napi-inl.h": Object {
@@ -1205,11 +1205,11 @@ Object {
                       "size": 826,
                     },
                     "index.js.map": Object {
-                      "offset": "73166",
+                      "offset": "73281",
                       "size": 920,
                     },
                     "interfaces.js": Object {
-                      "offset": "74086",
+                      "offset": "73166",
                       "size": 115,
                     },
                     "interfaces.js.map": Object {
@@ -1237,17 +1237,17 @@ Object {
                       "size": 4438,
                     },
                     "shim.js.map": Object {
-                      "offset": "99674",
+                      "offset": "100644",
                       "size": 6607,
                     },
                   },
                 },
                 "jest.config.js": Object {
-                  "offset": "106281",
+                  "offset": "99674",
                   "size": 265,
                 },
                 "package.json": Object {
-                  "offset": "106546",
+                  "offset": "99939",
                   "size": 705,
                 },
                 "src": Object {
