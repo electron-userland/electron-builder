@@ -5184,8 +5184,8 @@ Array [
 
 exports[`win smart unpack 4`] = `
 Array [
-  "node_modules/@electron-builder/test-smart-unpack-empty/package.json",
   "node_modules/@electron-builder/test-smart-unpack/package.json",
+  "node_modules/@electron-builder/test-smart-unpack-empty/package.json",
   "node_modules/debug/.coveralls.yml",
   "node_modules/debug/.eslintrc",
   "node_modules/debug/.npmignore",
