@@ -1,6 +1,7 @@
 /.vscode/
 node_modules/
 **/node_modules/
+test/fixtures/test-app-two-native-modules/node_modules/
 
 *.log
 
