@@ -114,7 +114,7 @@ export class AsarPackager {
         process.chdir(cwd)
 
         copiedFiles.add(symlinkDestination)
-      } 
+      }
     }
 
     for await (const fileSet of fileSets) {

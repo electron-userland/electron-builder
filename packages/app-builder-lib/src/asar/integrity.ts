@@ -1,7 +1,6 @@
 import { readdir } from "fs/promises"
 import * as path from "path"
 import * as asar from "@electron/asar"
-import { log } from "builder-util"
 import { FilesystemEntry, FilesystemFileEntry } from "@electron/asar/lib/filesystem"
 
 export interface AsarIntegrityOptions {
