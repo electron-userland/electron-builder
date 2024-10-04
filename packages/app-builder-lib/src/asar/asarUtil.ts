@@ -17,9 +17,9 @@ import { CancellationToken } from "builder-util-runtime"
 import * as tempFile from "temp-file"
 
 // Add debugging for fs-extra commands if needed
-process.env.FS_DEBUG = "1"
-process.env.DEBUG = process.env.DEBUG?.split(",").concat("fs").join(",") || "fs"
-require("fs-extra-debug")
+// process.env.FS_DEBUG = "1"
+// process.env.DEBUG = process.env.DEBUG?.split(",").concat("fs").join(",") || "fs"
+// require("fs-extra-debug")
 
 const pickle = require("chromium-pickle-js")
 
