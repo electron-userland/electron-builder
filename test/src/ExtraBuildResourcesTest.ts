@@ -19,6 +19,9 @@ function createBuildResourcesTest(packagerOptions: PackagerOptions) {
           // https://github.com/electron-userland/electron-builder/issues/601
           app: ".",
         },
+        win: {
+          signAndEditExecutable: false,
+        },
         nsis: {
           differentialPackage: false,
         },

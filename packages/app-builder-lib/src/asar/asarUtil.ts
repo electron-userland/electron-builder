@@ -63,7 +63,7 @@ export class AsarPackager {
     console.log = consoleLogger
 
     // clean up staging dir
-    await fs.rmdir(this.rootForAppFilesWithoutAsar, { recursive: true })
+    await fs.rm(this.rootForAppFilesWithoutAsar, { recursive: true })
     await this.tmpDir.cleanup()
   }
 
@@ -86,24 +86,29 @@ export class AsarPackager {
       if (transformedData) {
         return this.copyFileOrData(transformedData, source, destination, stat)
       }
-      const realPathFile = fs.realpathSync(source)
+      const realPathFile = await fs.realpath(source)
       const realPathRelative = path.relative(this.config.appDir, realPathFile)
       const symlinkDestination = path.resolve(this.rootForAppFilesWithoutAsar, realPathRelative)
 
-      // const isOutsidePackage = realPathRelative.startsWith("../")
-      // if (isOutsidePackage) {
-      //   log.debug(
-      //     { source: source, realPathRelative: realPathRelative, realPathFile: realPathFile, destination: destination },
-      //     `file linked outstide. Skipping symlink, copying file directly`
-      //   )
-      //   const buffer = fs.readFileSync(source)
-      //   return this.copyFileOrData(buffer, source, destination, stat)
-      // }
       if (source === realPathFile) {
         return this.copyFileOrData(undefined, source, destination, stat)
       } else {
-        await this.copyFileOrData(undefined, source, symlinkDestination, stat)
+        const isOutsidePackage = realPathRelative.startsWith("../")
+        if (isOutsidePackage) {
+          log.warn(
+            {
+              resolution: "skipping symlink, copying file directly",
+              source: log.filePath(source),
+              realPathFile: log.filePath(realPathFile),
+              destination: log.filePath(destination),
+            },
+            `file symlinked outstide`
+          )
+          const buffer = await fs.readFile(source)
+          return this.copyFileOrData(buffer, source, destination, stat)
+        }
 
+        await this.copyFileOrData(undefined, source, symlinkDestination, stat)
         // symlinks must be relative to the source file, so we temporarily change dir to the src file dir
         const cwd = process.cwd()
         const dirname = path.dirname(symlinkDestination)
@@ -128,7 +133,6 @@ export class AsarPackager {
         const dest = path.resolve(this.rootForAppFilesWithoutAsar, getDestinationPath(file, fileSet))
 
         await autoUnpack(file, dest)
-        // await autoCopy(transformedData, file, dest)
         taskManager.addTask(autoCopy(transformedData, file, dest))
 
         if (taskManager.tasks.length > MAX_FILE_REQUESTS) {
