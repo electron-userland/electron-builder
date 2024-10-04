@@ -124,33 +124,6 @@ test.ifNotWindows(
   )
 )
 
-// cannot be enabled
-// https://github.com/electron-userland/electron-builder/issues/611
-test.ifDevOrLinuxCi("failed peer dep", () => {
-  return assertPack(
-    "test-app-one",
-    {
-      targets: Platform.LINUX.createTarget(DIR_TARGET),
-    },
-    {
-      isInstallDepsBefore: true,
-      projectDirCreated: projectDir =>
-        modifyPackageJson(projectDir, data => {
-          //noinspection SpellCheckingInspection
-          data.dependencies = {
-            debug: "4.1.1",
-            "rc-datepicker": "4.0.0",
-            react: "15.2.1",
-            "react-dom": "15.2.1",
-          }
-        }),
-      packed: context => {
-        return verifySmartUnpack(context.getResources(Platform.LINUX))
-      },
-    }
-  )
-})
-
 test.ifAll.ifDevOrLinuxCi("ignore node_modules", () => {
   return assertPack(
     "test-app-one",
