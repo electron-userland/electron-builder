@@ -5119,9 +5119,6 @@ Object {
     "package.json": Object {
       "size": "<size>",
     },
-    "pnpm-lock.yaml": Object {
-      "size": "<size>",
-    },
   },
 }
 `;
