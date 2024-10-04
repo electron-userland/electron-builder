@@ -1,5 +1,6 @@
 /.vscode/
 node_modules
+**/node_modules
 *.log
 
 /.idea/compiler.xml
@@ -27,4 +28,3 @@ electron-builder-*.d.ts
 tsconfig.tsbuildinfo
 
 .pnpm-store/
-**/node_modules
