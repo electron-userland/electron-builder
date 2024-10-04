@@ -1,31 +1,18 @@
-import { CreateOptions, createPackageFromFiles } from "@electron/asar"
+import { CreateOptions, createPackageWithOptions } from "@electron/asar"
 import { AsyncTaskManager, log } from "builder-util"
-import { FileCopier, Filter, MAX_FILE_REQUESTS } from "builder-util/out/fs"
+import { CancellationToken } from "builder-util-runtime"
+import { Filter, MAX_FILE_REQUESTS } from "builder-util/out/fs"
+import * as fsNode from "fs"
 import * as fs from "fs-extra"
-import * as fsNormal from "fs"
-import { mkdir, rm, writeFile } from "fs/promises"
 import * as path from "path"
+import * as tempFile from "temp-file"
 import { AsarOptions } from "../options/PlatformSpecificBuildOptions"
-import { Packager } from "../packager"
 import { PlatformPackager } from "../platformPackager"
 import { ResolvedFileSet, getDestinationPath } from "../util/appFileCopier"
 import { detectUnpackedDirs } from "./unpackDetector"
-import { homedir, tmpdir } from "os"
-import { createPackageWithOptions } from "@electron/asar"
-import { PathLike, symlink } from "fs"
-import { CancellationToken } from "builder-util-runtime"
-import * as tempFile from "temp-file"
-
-// Add debugging for fs-extra commands if needed
-// process.env.FS_DEBUG = "1"
-// process.env.DEBUG = process.env.DEBUG?.split(",").concat("fs").join(",") || "fs"
-// require("fs-extra-debug")
-
-const pickle = require("chromium-pickle-js")
 
 /** @internal */
 export class AsarPackager {
-  // private readonly fs = new AsarFilesystem(this.src)
   private readonly outFile: string
   private readonly unpackedDest: string
   private readonly rootForAppFilesWithoutAsar: string
@@ -42,7 +29,7 @@ export class AsarPackager {
     this.rootForAppFilesWithoutAsar = path.join(this.destination, "app") // convert to use TmpDir
   }
 
-  async pack(fileSets: Array<ResolvedFileSet>, packager: PlatformPackager<any>) {
+  async pack(fileSets: Array<ResolvedFileSet>, _packager: PlatformPackager<any>) {
     const orderedFileSets = [
       // Write dependencies first to minimize offset changes to asar header
       ...fileSets.slice(1),
@@ -51,10 +38,8 @@ export class AsarPackager {
       fileSets[0],
     ].map(orderFileSet)
 
-    const { unpackedDirs, copiedFiles } = await this.detectAndCopy(packager as any, orderedFileSets)
-    // const unpackedDirs = unpack // .map(unpack => unpack.substring(this.appOutDir.length))
+    const { unpackedDirs, copiedFiles } = await this.detectAndCopy(orderedFileSets)
     const unpackGlob = unpackedDirs.length > 1 ? `{${unpackedDirs.join(",")}}` : unpackedDirs.pop()
-    // console.warn({ unpackGlob })
 
     let ordering = this.options.ordering || undefined
     if (!ordering) {
@@ -79,7 +64,7 @@ export class AsarPackager {
     await fs.rmdir(this.rootForAppFilesWithoutAsar, { recursive: true })
   }
 
-  private async detectAndCopy(packager: Packager, fileSets: ResolvedFileSet[]) {
+  private async detectAndCopy(fileSets: ResolvedFileSet[]) {
     const cancellationToken = new CancellationToken()
     const taskManager = new AsyncTaskManager(cancellationToken)
     const unpackedDirs = new Set<string>()
@@ -119,30 +104,17 @@ export class AsarPackager {
         return this.copyFileOrData(buffer, source, destination, stat)
       }
       if (source !== realPathFile) {
-        // fs.copySync(symlinkDestination, realPathFile)
         await this.copyFileOrData(undefined, source, symlinkDestination, stat)
-        // const absolute_target = destination // path.relative(this.rootForAppFilesWithoutAsar, destination) // .substring(this.rootForAppFilesWithoutAsar.length)
-        // const source = symlinkDestination // path.relative(symlinkDestination, dest)
-        // const target = path.relative(path.dirname(source), absolute_target)
-        // const tempSymlink = fs.readlinkSync(source)
-        // console.warn({ symlinkDestination, absolute_target, source, target, destination, realPathFile, realPathRelative, tempSymlink })
-
-        const dirname = path.dirname(symlinkDestination)
-        const cwd = process.cwd()
-        // const dir = path.dirname(source)
 
         // symlinks must be relative to the source file, so we temporarily change dir to the src file dir
-        process.chdir(dirname)
+        const cwd = process.cwd()
+        const dirname = path.dirname(symlinkDestination)
         const src = path.relative(dirname, symlinkDestination)
         const dest = path.relative(dirname, destination)
-        // fsNormal.symlinkSync(dest, src)
-        fsNormal.symlinkSync(src, dest)
-        // await fs.ensureSymlink(src, dest)
+        process.chdir(dirname)
+        fsNode.symlinkSync(src, dest)
         process.chdir(cwd)
-        //         await fs.rename(tempSymlink, target)
-        // await writeSymbolicLink(symlinkDestination, realPathFile)
-        // await fs.mkdir(path.dirname(destination), { recursive: true })
-        // await symlink(target, symlinkDestination, "file")
+
         copiedFiles.add(symlinkDestination)
       } else {
         await this.copyFileOrData(undefined, source, destination, stat)
@@ -155,8 +127,6 @@ export class AsarPackager {
       }
       for (let i = 0; i < fileSet.files.length; i++) {
         const file = fileSet.files[i]
-        // log.error({ file }, "file")
-        // console.error(file)
         const transformedData = fileSet.transformedFiles?.get(i)
 
         // const srcFile = path.resolve(this.src, file)
@@ -185,7 +155,7 @@ export class AsarPackager {
     if (data) {
       await fs.writeFile(destination, data)
     } else {
-      // await this.fileCopier.copy(source, destination, stat)
+      // await this.fileCopier.cTESTopy(source, destination, stat)
       await fs.copyFile(source, destination)
     }
     await fs.chmod(destination, stat.mode)
