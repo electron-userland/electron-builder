@@ -58,7 +58,12 @@ export class AsarPackager {
     }
     // override logger temporarily to clean up console (electron/asar does some internal logging that blogs up the default electron-builder logs)
     const consoleLogger = console.log
-    console.log = (...args) => log.info({ args }, "logging @electron/asar")
+    console.log = (...args) => {
+      if (args[0] === "Ordering file has 100% coverage.") {
+        return // no need to log, this means our ordering logic is working correctly
+      }
+      log.info({ args }, "logging @electron/asar")
+    }
     await createPackageWithOptions(this.rootForAppFilesWithoutAsar, this.outFile, options)
     console.log = consoleLogger
 
@@ -102,21 +107,15 @@ export class AsarPackager {
               realPathFile: log.filePath(realPathFile),
               destination: log.filePath(destination),
             },
-            `file symlinked outstide`
+            `file symlinked outside package`
           )
           const buffer = await fs.readFile(source)
           return this.copyFileOrData(buffer, source, destination, stat)
         }
 
         await this.copyFileOrData(undefined, source, symlinkDestination, stat)
-        // symlinks must be relative to the source file, so we temporarily change dir to the src file dir
-        const cwd = process.cwd()
-        const dirname = path.dirname(symlinkDestination)
-        const src = path.relative(dirname, symlinkDestination)
-        const dest = path.relative(dirname, destination)
-        process.chdir(dirname)
-        fsNode.symlinkSync(src, dest)
-        process.chdir(cwd)
+        const src = path.relative(path.dirname(symlinkDestination), symlinkDestination)
+        fsNode.symlinkSync(src, destination)
 
         copiedFiles.add(symlinkDestination)
       }
@@ -149,7 +148,6 @@ export class AsarPackager {
 
   private async copyFileOrData(data: string | Buffer | undefined, source: string, destination: string, stat: fs.Stats) {
     await fs.mkdir(path.dirname(destination), { recursive: true })
-
     if (data) {
       await fs.writeFile(destination, data, { mode: stat.mode })
     } else {
