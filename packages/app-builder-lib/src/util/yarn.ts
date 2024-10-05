@@ -79,7 +79,7 @@ export function getGypEnv(frameworkInfo: DesktopFrameworkInfo, platform: NodeJS.
   }
 }
 
-async function checkYarnBerry(pm:PM) {
+async function checkYarnBerry(pm: PM) {
   if (pm !== "yarn") {
     return false
   }
@@ -148,9 +148,9 @@ export async function nodeGypRebuild(platform: NodeJS.Platform, arch: string, fr
 function getPackageToolPath(pm: PM) {
   if (process.env.FORCE_YARN === "true") {
     return process.platform === "win32" ? "yarn.cmd" : "yarn"
-  }  
-  
-  switch(pm) {
+  }
+
+  switch (pm) {
     case "yarn":
       return process.platform === "win32" ? "yarn.cmd" : "yarn"
     case "pnpm":
