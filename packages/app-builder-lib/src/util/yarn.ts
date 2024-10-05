@@ -84,11 +84,11 @@ async function checkYarnBerry(pm: PM) {
     return false
   }
   const version = await getNpmVersion(pm)
-  if (version == null || version.split('.').length < 1) {
+  if (version == null || version.split(".").length < 1) {
     return false
   }
 
-  return version.split('.')[0] >= "2"
+  return version.split(".")[0] >= "2"
 }
 
 async function installDependencies(config: Configuration, appDir: string, options: RebuildOptions): Promise<any> {
@@ -99,7 +99,7 @@ async function installDependencies(config: Configuration, appDir: string, option
   log.info({ platform, arch, appDir }, `installing production dependencies`)
   const pm = await detect({ cwd: appDir })
   const execArgs = ["install"]
-  const isYarnBerry = checkYarnBerry(pm)
+  const isYarnBerry = await checkYarnBerry(pm)
   if (!isYarnBerry) {
     if (process.env.NPM_NO_BIN_LINKS === "true") {
       execArgs.push("--no-bin-links")
