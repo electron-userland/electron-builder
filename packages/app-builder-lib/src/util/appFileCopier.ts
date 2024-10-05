@@ -193,7 +193,7 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
     let parentDir = path.dirname(source)
     // get the parent dir of the package, input: /root/path/node_modules/@electron/remote, output: /root/path/node_modules
     for (let i = 0; i < scopeDepth - 1; i++) {
-       parentDir = path.dirname(source)
+      parentDir = path.dirname(source)
     }
 
     // for the local node modules which is not in node modules
