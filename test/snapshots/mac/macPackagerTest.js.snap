@@ -766,6 +766,14 @@ Object {
               "files": Object {
                 "Release": Object {
                   "files": Object {
+                    "node-addon-api": Object {
+                      "files": Object {
+                        "node_addon_api_except.stamp": Object {
+                          "size": "<size>",
+                          "unpacked": true,
+                        },
+                      },
+                    },
                     "pty.node": Object {
                       "size": "<size>",
                       "unpacked": true,
@@ -1347,6 +1355,14 @@ Object {
                       "unpacked": true,
                     },
                   },
+                },
+              },
+            },
+            "node-addon-api": Object {
+              "files": Object {
+                "node_addon_api.Makefile": Object {
+                  "size": "<size>",
+                  "unpacked": true,
                 },
               },
             },
