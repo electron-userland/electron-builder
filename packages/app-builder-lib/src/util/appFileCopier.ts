@@ -189,11 +189,12 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
   let index = 0
   const NODE_MODULES = "node_modules"
   const getRealSource = (name: string, source: string) => {
-    const scopeDepth = name.split("/").length
     let parentDir = path.dirname(source)
+
+    const scopeDepth = name.split("/").length
     // get the parent dir of the package, input: /root/path/node_modules/@electron/remote, output: /root/path/node_modules
     for (let i = 0; i < scopeDepth - 1; i++) {
-      parentDir = path.dirname(source)
+      parentDir = path.dirname(parentDir)
     }
 
     // for the local node modules which is not in node modules
