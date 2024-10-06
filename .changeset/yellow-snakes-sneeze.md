@@ -1,5 +1,5 @@
 ---
-"app-builder-lib": patch
+"app-builder-lib": minor
 "electron-updater": minor
 ---
 
