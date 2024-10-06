@@ -61,7 +61,7 @@ export function createFilter(src: string, patterns: Array<Minimatch>, excludePat
       return false
     }
 
-    if(stat.isDirectory()) {
+    if (stat.isDirectory()) {
       relative += "/"
     }
 
