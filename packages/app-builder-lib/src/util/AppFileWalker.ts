@@ -18,7 +18,7 @@ export abstract class FileCopyHelper {
     protected readonly matcher: FileMatcher,
     readonly filter: Filter | null,
     protected readonly packager: Packager
-  ) { }
+  ) {}
 
   protected handleFile(file: string, parent: string, fileStat: Stats): Promise<Stats | null> | null {
     if (!fileStat.isSymbolicLink()) {

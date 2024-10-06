@@ -15,7 +15,7 @@ export const CONCURRENCY = { concurrency: MAX_FILE_REQUESTS }
 export type AfterCopyFileTransformer = (file: string) => Promise<boolean>
 
 export class CopyFileTransformer {
-  constructor(public readonly afterCopyTransformer: AfterCopyFileTransformer) { }
+  constructor(public readonly afterCopyTransformer: AfterCopyFileTransformer) {}
 }
 
 export type FileTransformer = (file: string) => Promise<null | string | Buffer | CopyFileTransformer> | null | string | Buffer | CopyFileTransformer
@@ -251,14 +251,14 @@ export class FileCopier {
       isUseHardLink,
       isUseHardLink
         ? () => {
-          // files are copied concurrently, so, we must not check here currentIsUseHardLink — our code can be executed after that other handler will set currentIsUseHardLink to false
-          if (this.isUseHardLink) {
-            this.isUseHardLink = false
-            return true
-          } else {
-            return false
+            // files are copied concurrently, so, we must not check here currentIsUseHardLink — our code can be executed after that other handler will set currentIsUseHardLink to false
+            if (this.isUseHardLink) {
+              this.isUseHardLink = false
+              return true
+            } else {
+              return false
+            }
           }
-        }
         : null
     )
 
