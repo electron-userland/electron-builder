@@ -163,8 +163,6 @@ export function getMainFileMatchers(
     patterns.push("package.json")
   }
 
-  customFirstPatterns.push("!**/node_modules")
-
   // https://github.com/electron-userland/electron-builder/issues/1482
   const relativeBuildResourceDir = path.relative(matcher.from, buildResourceDir)
   if (relativeBuildResourceDir.length !== 0 && !relativeBuildResourceDir.startsWith(".")) {
