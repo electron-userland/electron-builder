@@ -14,7 +14,7 @@ Read the remainder of this guide to configure everything.
 ## Auto-updatable Targets
 
 * macOS: DMG.
-* Linux: AppImage, DEB, Pacman and RPM.
+* Linux: AppImage, DEB, Pacman (beta) and RPM.
 * Windows: NSIS.
 
 All these targets are default, custom configuration is not required. (Though it is possible to [pass in additional configuration, e.g. request headers](#custom-options-instantiating-updater-directly).)
