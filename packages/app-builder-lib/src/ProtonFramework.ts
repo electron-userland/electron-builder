@@ -30,7 +30,7 @@ export class ProtonFramework extends LibUiFramework {
     const babelOptions: any = { ast: false, sourceMaps: "inline" }
     if (process.env.TEST_SET_BABEL_PRESET === "true") {
       babel = require("@babel/core")
-      // eslint-disable-next-line @typescript-eslint/no-use-before-define
+
       babel = testOnlyBabel(babel, babelOptions, this.version)
     } else {
       try {

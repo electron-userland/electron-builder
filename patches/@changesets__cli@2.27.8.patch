@@ -1,0 +1,30 @@
+diff --git a/dist/changesets-cli.cjs.js b/dist/changesets-cli.cjs.js
+index e0310aa6f311fa88592fd0bdf5c1c892a10dccc2..0f6f3167c4e93bcb74d79758a40504ece41a02e2 100644
+--- a/dist/changesets-cli.cjs.js
++++ b/dist/changesets-cli.cjs.js
+@@ -995,8 +995,8 @@ async function getUnpublishedPackages(packages, preState) {
+ }
+ 
+ async function getUntaggedPackages(packages, cwd, tool) {
+-  const packageWithTags = await Promise.all(packages.map(async pkg => {
+-    const tagName = tool === "root" ? `v${pkg.packageJson.version}` : `${pkg.packageJson.name}@${pkg.packageJson.version}`;
++  const packageWithTags = await Promise.all(packages.filter(pkg => ["electron-builder", "electron-updater"].includes(pkg.packageJson.name)).map(async pkg => {
++    const tagName = (tool === "root" && pkg.packageJson.name === 'electron-builder') ? `v${pkg.packageJson.version}` : `${pkg.packageJson.name}@${pkg.packageJson.version}`;
+     const isMissingTag = !((await git__namespace.tagExists(tagName, cwd)) || (await git__namespace.remoteTagExists(tagName)));
+     return {
+       pkg,
+diff --git a/dist/changesets-cli.esm.js b/dist/changesets-cli.esm.js
+index be26e5d6f0b46bc0a48476af1ecbbf58c54aea85..929b5c031d53e4a996c9c3f83beef00bbdf3f7cd 100644
+--- a/dist/changesets-cli.esm.js
++++ b/dist/changesets-cli.esm.js
+@@ -956,8 +956,8 @@ async function getUnpublishedPackages(packages, preState) {
+ }
+ 
+ async function getUntaggedPackages(packages, cwd, tool) {
+-  const packageWithTags = await Promise.all(packages.map(async pkg => {
+-    const tagName = tool === "root" ? `v${pkg.packageJson.version}` : `${pkg.packageJson.name}@${pkg.packageJson.version}`;
++  const packageWithTags = await Promise.all(packages.filter(pkg => ["electron-builder", "electron-updater"].includes(pkg.packageJson.name)).map(async pkg => {
++    const tagName = (tool === "root" && pkg.packageJson.name === 'electron-builder') ? `v${pkg.packageJson.version}` : `${pkg.packageJson.name}@${pkg.packageJson.version}`;
+     const isMissingTag = !((await git.tagExists(tagName, cwd)) || (await git.remoteTagExists(tagName)));
+     return {
+       pkg,

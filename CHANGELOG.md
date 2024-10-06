@@ -1,3 +1,47 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v25.1.6...v) (2024-10-06)
+
+
+### Bug Fixes
+
+* check if the file already starts with a UTF-8 BOM ([#8551](https://github.com/electron-userland/electron-builder/issues/8551)) ([57cebf4](https://github.com/electron-userland/electron-builder/commit/57cebf4dd4c722456245286d2fd795f7a5fc862c))
+* fix the main matcher patterns for !node_modules/@test/xxxx ([#8547](https://github.com/electron-userland/electron-builder/issues/8547)) ([7488456](https://github.com/electron-userland/electron-builder/commit/7488456309d80b88fbf99fb382752078dc8ddefa))
+* pass in platform to electron-rebuild ([#8537](https://github.com/electron-userland/electron-builder/issues/8537)) ([2e84f01](https://github.com/electron-userland/electron-builder/commit/2e84f01351bcfb8f32df17c17bfeeeebb87a713f))
+* Path does not end with the package name  ([#8560](https://github.com/electron-userland/electron-builder/issues/8560)) ([4ff778e](https://github.com/electron-userland/electron-builder/commit/4ff778eefd9089b3b38b67156eb39e8cf57fdd83))
+* **updater:** Unable to copy file for caching: ENOENT ([#8541](https://github.com/electron-userland/electron-builder/issues/8541)) ([b6d6ea9](https://github.com/electron-userland/electron-builder/commit/b6d6ea993fd3b368d28786c259bb50486aaac417))
+
+
+
+# [](https://github.com/electron-userland/electron-builder/compare/v25.1.6...v) (2024-10-02)
+
+
+### Bug Fixes
+
+* check if the file already starts with a UTF-8 BOM ([#8551](https://github.com/electron-userland/electron-builder/issues/8551)) ([57cebf4](https://github.com/electron-userland/electron-builder/commit/57cebf4dd4c722456245286d2fd795f7a5fc862c))
+* fix the main matcher patterns for !node_modules/@test/xxxx ([#8547](https://github.com/electron-userland/electron-builder/issues/8547)) ([7488456](https://github.com/electron-userland/electron-builder/commit/7488456309d80b88fbf99fb382752078dc8ddefa))
+* pass in platform to electron-rebuild ([#8537](https://github.com/electron-userland/electron-builder/issues/8537)) ([2e84f01](https://github.com/electron-userland/electron-builder/commit/2e84f01351bcfb8f32df17c17bfeeeebb87a713f))
+* **updater:** Unable to copy file for caching: ENOENT ([#8541](https://github.com/electron-userland/electron-builder/issues/8541)) ([b6d6ea9](https://github.com/electron-userland/electron-builder/commit/b6d6ea993fd3b368d28786c259bb50486aaac417))
+
+
+
+# [](https://github.com/electron-userland/electron-builder/compare/v25.1.5...v) (2024-09-25)
+
+
+### Bug Fixes
+
+* add `CodeSigningAccountName` as required prop in Azure Signing Options ([#8533](https://github.com/electron-userland/electron-builder/issues/8533)) ([cc8c70f](https://github.com/electron-userland/electron-builder/commit/cc8c70f7af5ca53b4c07b8ee32f460eabd4f9c34)), closes [/github.com/electron-userland/electron-builder/issues/8276#issuecomment-2371920176](https://github.com//github.com/electron-userland/electron-builder/issues/8276/issues/issuecomment-2371920176)
+* always produce Release .node builds ([#8531](https://github.com/electron-userland/electron-builder/issues/8531)) ([eaf274d](https://github.com/electron-userland/electron-builder/commit/eaf274d447d27d27a7ad663c5642a38d66f69917))
+
+
+
+# [](https://github.com/electron-userland/electron-builder/compare/v25.1.4...v) (2024-09-23)
+
+
+### Bug Fixes
+
+* azure signing logic should not have logic flow dependent on custom signtool hook ([#8524](https://github.com/electron-userland/electron-builder/issues/8524)) ([62fd74d](https://github.com/electron-userland/electron-builder/commit/62fd74dcfa13a564706141d08e5d0dea11ecf33b))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v25.1.3...v) (2024-09-19)
 
 

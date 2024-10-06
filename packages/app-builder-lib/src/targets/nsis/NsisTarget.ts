@@ -396,14 +396,13 @@ export class NsisTarget extends Target {
         let i = 0
         while (!(await exists(uninstallerPath)) && i++ < 100) {
           // noinspection JSUnusedLocalSymbols
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
           await new Promise((resolve, _reject) => setTimeout(resolve, 300))
         }
       }
     } else {
       await execWine(installerPath, null, [], { env: { __COMPAT_LAYER: "RunAsInvoker" } })
     }
-    await packager.sign(uninstallerPath, "signing NSIS uninstaller")
+    await packager.sign(uninstallerPath)
 
     delete defines.BUILD_UNINSTALLER
     // platform-specific path, not wine

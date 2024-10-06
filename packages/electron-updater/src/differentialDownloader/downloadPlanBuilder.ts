@@ -104,7 +104,6 @@ function validateAndAdd(operation: Operation, operations: Array<Operation>, chec
   operations.push(operation)
 }
 
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 function buildChecksumMap(file: BlockMapFile, fileOffset: number, logger: Logger) {
   const checksumToOffset = new Map<string, number>()
   const checksumToSize = new Map<string, number>()

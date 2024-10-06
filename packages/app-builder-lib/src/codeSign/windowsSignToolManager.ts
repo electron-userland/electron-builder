@@ -174,11 +174,36 @@ export class WindowsSignToolManager {
       hashes = Array.isArray(hashes) ? hashes : [hashes]
     }
 
-    const cscInfo = await this.cscInfo.value
     const name = this.packager.appInfo.productName
     const site = await this.packager.appInfo.computePackageUrl()
 
     const customSign = await resolveFunction(this.packager.appInfo.type, chooseNotNull(options.options.signtoolOptions?.sign, options.options.sign), "sign")
+
+    const cscInfo = await this.cscInfo.value
+    if (cscInfo) {
+      let logInfo: any = {
+        file: log.filePath(options.path),
+      }
+      if ("file" in cscInfo) {
+        logInfo = {
+          ...logInfo,
+          certificateFile: cscInfo.file,
+        }
+      } else {
+        logInfo = {
+          ...logInfo,
+          subject: cscInfo.subject,
+          thumbprint: cscInfo.thumbprint,
+          store: cscInfo.store,
+          user: cscInfo.isLocalMachineStore ? "local machine" : "current user",
+        }
+      }
+      log.info(logInfo, "signing")
+    } else if (!customSign) {
+      log.warn({ signHook: !!customSign, cscInfo }, "no signing info identified, signing is skipped")
+      return false
+    }
+
     const executor = customSign || ((config: CustomWindowsSignTaskConfiguration, packager: WinPackager) => this.doSign(config, packager))
     let isNest = false
     for (const hash of hashes) {
