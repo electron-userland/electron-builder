@@ -55,6 +55,12 @@ export function createFilter(src: string, patterns: Array<Minimatch>, excludePat
     }
 
     const relative = getRelativePath(file, srcWithEndSlash)
+
+    // filter the root node_modules, but not a subnode_modules (like /appDir/others/foo/node_modules/blah)
+    if(relative === "node_modules") {
+      return false
+    }
+
     // https://github.com/electron-userland/electron-builder/issues/867
     return minimatchAll(relative, patterns, stat) && (excludePatterns == null || stat.isDirectory() || !minimatchAll(relative, excludePatterns, stat))
   }
