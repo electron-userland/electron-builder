@@ -122,7 +122,7 @@ test.ifDevOrLinuxCi(
           modifyPackageJson(projectDir, data => {
             data.dependencies = {
               "@types/node": "22.7.4",
-              "undici-types":"5.25.1",
+              "undici-types": "5.25.1",
               ...data.dependencies,
             }
           }),
@@ -154,8 +154,8 @@ test.ifDevOrLinuxCi(
               ...data.dependencies,
             }
           }),
-          outputFile(path.join(projectDir, "others", "node_modules","package.json"), "{}"),
-          outputFile(path.join(projectDir, "others", "test1","package.json"), "{}"),
+          outputFile(path.join(projectDir, "others", "node_modules", "package.json"), "{}"),
+          outputFile(path.join(projectDir, "others", "test1", "package.json"), "{}"),
           outputFile(path.join(projectDir, "others", "submodule-2-test", "node_modules", "package.json"), "{}"),
           outputFile(path.join(projectDir, "others", "submodule-2-test", "test2", "package.json"), "{}"),
         ])
@@ -205,7 +205,7 @@ test.ifDevOrLinuxCi(
           assertThat(
             path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "submodule-1-test", "node_modules", "package.json")
           ).isFile(),
-          assertThat(path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app","submodule-2-test", "node_modules")).doesNotExist(),
+          assertThat(path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "submodule-2-test", "node_modules")).doesNotExist(),
         ])
       },
     }
@@ -237,7 +237,7 @@ test.ifDevOrLinuxCi(
       packed: context => {
         return Promise.all([
           assertThat(path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "submodule-1-test", "node_modules")).doesNotExist(),
-          assertThat(path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app","submodule-2-test", "node_modules")).doesNotExist(),
+          assertThat(path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "submodule-2-test", "node_modules")).doesNotExist(),
         ])
       },
     }

@@ -57,7 +57,7 @@ export function createFilter(src: string, patterns: Array<Minimatch>, excludePat
     const relative = getRelativePath(file, srcWithEndSlash)
 
     // filter the root node_modules, but not a subnode_modules (like /appDir/others/foo/node_modules/blah)
-    if(relative === "node_modules") {
+    if (relative === "node_modules") {
       return false
     }
 

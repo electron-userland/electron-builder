@@ -18,7 +18,7 @@ export abstract class FileCopyHelper {
     protected readonly matcher: FileMatcher,
     readonly filter: Filter | null,
     protected readonly packager: Packager
-  ) {}
+  ) { }
 
   protected handleFile(file: string, parent: string, fileStat: Stats): Promise<Stats | null> | null {
     if (!fileStat.isSymbolicLink()) {
@@ -68,8 +68,8 @@ export class AppFileWalker extends FileCopyHelper implements FileConsumer {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   consume(file: string, fileStat: Stats, parent: string, siblingNames: Array<string>): any {
     if (fileStat.isDirectory()) {
-          const matchesFilter = this.matcherFilter(file, fileStat)
-          return !matchesFilter
+      const matchesFilter = this.matcherFilter(file, fileStat)
+      return !matchesFilter
     } else {
       // save memory - no need to store stat for directory
       this.metadata.set(file, fileStat)
