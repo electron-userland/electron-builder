@@ -182,6 +182,7 @@ export function getMainFileMatchers(
       break
     }
   }
+  patterns.unshift("!**/node_modules")
   patterns.splice(insertIndex, 0, ...customFirstPatterns)
 
   patterns.push(`!**/*.{${excludedExts}${packager.config.includePdb === true ? "" : ",pdb"}}`)
