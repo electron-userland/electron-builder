@@ -4,10 +4,9 @@
       {
           "type": "node",
           "request": "launch",
-          "name": "Jest Current File",
+          "name": "Jest TEST_FILES",
           "runtimeExecutable": "pnpm",
           "program": "ci:test",
-          // "args": ["ci:test"],
           "console": "integratedTerminal",
           "internalConsoleOptions": "openOnFirstSessionStart",
           "env": {

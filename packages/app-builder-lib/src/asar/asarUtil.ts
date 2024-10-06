@@ -14,7 +14,7 @@ import { detectUnpackedDirs } from "./unpackDetector"
 /** @internal */
 export class AsarPackager {
   private readonly outFile: string
-  private readonly rootForAppFilesWithoutAsar: string
+  private rootForAppFilesWithoutAsar!: string
   private readonly tmpDir = new tempFile.TmpDir()
 
   constructor(
@@ -26,12 +26,16 @@ export class AsarPackager {
       unpackPattern: Filter | undefined
     }
   ) {
-    this.rootForAppFilesWithoutAsar = path.join(config.resourcePath, "app")
-    this.outFile = `${this.rootForAppFilesWithoutAsar}.asar`
+    // this.rootForAppFilesWithoutAsar = path.join(config.resourcePath, "app")
+    this.outFile = path.join(config.resourcePath, `app.asar`)
   }
 
   async pack(fileSets: Array<ResolvedFileSet>, _packager: PlatformPackager<any>) {
+    this.rootForAppFilesWithoutAsar = await this.tmpDir.getTempDir({ prefix: "asar-app" })
+
     const cancellationToken = new CancellationToken()
+    cancellationToken.on("cancel", () => this.tmpDir.cleanupSync())
+
     const orderedFileSets = [
       // Write dependencies first to minimize offset changes to asar header
       ...fileSets.slice(1),
@@ -45,9 +49,10 @@ export class AsarPackager {
 
     let ordering = this.config.options.ordering || undefined
     if (!ordering) {
-      ordering = await this.tmpDir.getTempFile({ prefix: "asar-ordering" })
+      ordering = await this.tmpDir.getTempFile({ prefix: "asar-ordering", suffix: ".txt" })
       // `copiedFiles` are already ordered due to `orderedFileSets`, so we just map to their relative paths (via substring) within the asar.
-      const filesSorted = copiedFiles.map(file => file.substring(this.config.defaultDestination.length))
+      const filesSorted = copiedFiles.map(file => file.substring(this.rootForAppFilesWithoutAsar.length))
+      // const filesSorted = copiedFiles.map(file => file.substring(this.config.resourcePath.length))
       await fs.writeFile(ordering, filesSorted.join("\n"))
     }
 
@@ -67,8 +72,6 @@ export class AsarPackager {
     await createPackageWithOptions(this.rootForAppFilesWithoutAsar, this.outFile, options)
     console.log = consoleLogger
 
-    // clean up staging dir
-    await fs.rm(this.rootForAppFilesWithoutAsar, { recursive: true })
     await this.tmpDir.cleanup()
   }
 
@@ -91,31 +94,23 @@ export class AsarPackager {
       if (transformedData) {
         return this.copyFileOrData(transformedData, source, destination, stat)
       }
+
       const realPathFile = await fs.realpath(source)
-      const realPathRelative = path.relative(this.config.appDir, realPathFile)
-      const symlinkDestination = path.resolve(this.rootForAppFilesWithoutAsar, realPathRelative)
 
       if (source === realPathFile) {
         return this.copyFileOrData(undefined, source, destination, stat)
       } else {
+        const realPathRelative = path.relative(this.config.appDir, realPathFile)
+        const symlinkDestination = path.resolve(this.rootForAppFilesWithoutAsar, realPathRelative)
         const isOutsidePackage = realPathRelative.startsWith("../")
         if (isOutsidePackage) {
-          log.warn(
-            {
-              resolution: "skipping symlink, copying file directly",
-              source: log.filePath(source),
-              realPathFile: log.filePath(realPathFile),
-              destination: log.filePath(destination),
-            },
-            `file symlinked outside package`
-          )
-          const buffer = await fs.readFile(source)
-          return this.copyFileOrData(buffer, source, destination, stat)
+          log.error({ source: log.filePath(source), realPathFile: log.filePath(realPathFile) }, `unable to copy, file is symlinked outside the package`)
+          throw new Error(`${source} is symlinked to outside the package and that violates asar security integrity`)
         }
 
         await this.copyFileOrData(undefined, source, symlinkDestination, stat)
-        const src = path.relative(path.dirname(symlinkDestination), symlinkDestination)
-        fsNode.symlinkSync(src, destination)
+        const target = path.relative(path.dirname(symlinkDestination), symlinkDestination)
+        fsNode.symlinkSync(target, destination)
 
         copiedFiles.add(symlinkDestination)
       }
@@ -129,7 +124,9 @@ export class AsarPackager {
         const file = fileSet.files[i]
         const transformedData = fileSet.transformedFiles?.get(i)
 
-        const dest = path.resolve(this.rootForAppFilesWithoutAsar, getDestinationPath(file, fileSet))
+        // const dest = path.resolve(this.rootForAppFilesWithoutAsar, getDestinationPath(file, fileSet))
+        const relative = path.relative(this.config.defaultDestination, getDestinationPath(file, fileSet))
+        const dest = path.resolve(this.rootForAppFilesWithoutAsar, relative)
 
         await autoUnpack(file, dest)
         taskManager.addTask(autoCopy(transformedData, file, dest))
