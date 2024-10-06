@@ -86,21 +86,20 @@ test.ifNotCiMac(
       },
     },
     {
+      isInstallDepsBefore: true,
       projectDirCreated: projectDir => {
         return Promise.all([
           modifyPackageJson(projectDir, data => {
             data.devDependencies = {
-              "@electron/osx-sign": "*",
+              "semver": "6.3.1",
               ...data.devDependencies,
             }
           }),
-          outputFile(path.join(projectDir, "node_modules", "@electron/osx-sign", "package.json"), "{}"),
         ])
       },
       packed: context => {
         return Promise.all([
-          assertThat(path.join(context.getResources(Platform.LINUX), "app", "node_modules", "@electron/osx-sign")).doesNotExist(),
-          assertThat(path.join(context.getResources(Platform.LINUX), "app", "ignoreMe")).doesNotExist(),
+          assertThat(path.join(context.getResources(Platform.LINUX), "app", "node_modules", "semver")).doesNotExist(),
         ])
       },
     }
@@ -117,12 +116,13 @@ test.ifDevOrLinuxCi(
       },
     },
     {
+      isInstallDepsBefore: true,
       projectDirCreated: projectDir => {
         return Promise.all([
           modifyPackageJson(projectDir, data => {
             data.dependencies = {
-              "@types/node": "22.7.4",
-              "undici-types": "5.25.1",
+              "electron-updater": "6.3.9",
+              "semver":"6.3.1",
               ...data.dependencies,
             }
           }),
@@ -130,7 +130,7 @@ test.ifDevOrLinuxCi(
       },
       packed: context => {
         return Promise.all([
-          assertThat(path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "node_modules", "@types/node", "node_modules")).isDirectory(),
+          assertThat(path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "node_modules", "electron-updater", "node_modules")).isDirectory(),
         ])
       },
     }
