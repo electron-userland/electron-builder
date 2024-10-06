@@ -189,13 +189,13 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
   let index = 0
   const NODE_MODULES = "node_modules"
   const getRealSource = (name: string, source: string) => {
-    const normalizedName = name.split("/").join(path.sep)
-    if (!source.endsWith(normalizedName)) {
-      throw new Error("Path does not end with the package name")
-    }
+    let parentDir = path.dirname(source)
 
+    const scopeDepth = name.split("/").length
     // get the parent dir of the package, input: /root/path/node_modules/@electron/remote, output: /root/path/node_modules
-    const parentDir = source.slice(0, -normalizedName.length - 1)
+    for (let i = 0; i < scopeDepth - 1; i++) {
+      parentDir = path.dirname(parentDir)
+    }
 
     // for the local node modules which is not in node modules
     if (!parentDir.endsWith(path.sep + NODE_MODULES)) {
