@@ -113,6 +113,7 @@ test.ifDevOrLinuxCi(
       targets: Platform.LINUX.createTarget(DIR_TARGET),
       config: {
         asar: false,
+        files: ["**/*", "**/submodule-1-test/node_modules/**"],
       },
     },
     {
@@ -126,11 +127,18 @@ test.ifDevOrLinuxCi(
               ...data.dependencies,
             }
           }),
+          outputFile(path.join(projectDir, "submodule-1-test", "node_modules", "package.json"), "{}"),
+          outputFile(path.join(projectDir, "others", "node_modules", "package.json"), "{}"),
         ])
       },
       packed: context => {
         return Promise.all([
           assertThat(path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "node_modules", "electron-updater", "node_modules")).isDirectory(),
+          assertThat(path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "others", "node_modules")).doesNotExist(),
+          assertThat(path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "submodule-1-test", "node_modules")).isDirectory(),
+          assertThat(
+            path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "submodule-1-test", "node_modules", "package.json")
+          ).isFile(),
         ])
       },
     }
