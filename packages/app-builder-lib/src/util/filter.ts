@@ -61,10 +61,6 @@ export function createFilter(src: string, patterns: Array<Minimatch>, excludePat
       return false
     }
 
-    if (stat.isDirectory()) {
-      relative += "/"
-    }
-
     // https://github.com/electron-userland/electron-builder/issues/867
     return minimatchAll(relative, patterns, stat) && (excludePatterns == null || stat.isDirectory() || !minimatchAll(relative, excludePatterns, stat))
   }
