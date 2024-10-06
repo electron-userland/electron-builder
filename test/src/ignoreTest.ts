@@ -108,13 +108,12 @@ test.ifNotCiMac(
 )
 
 test.ifDevOrLinuxCi(
-  "copied no submodule node_modules",
+  "copied sub node_modules of the rootDir/node_modules",
   app(
     {
       targets: Platform.LINUX.createTarget(DIR_TARGET),
       config: {
         asar: false,
-        includeSubNodeModules: false,
       },
     },
     {
@@ -122,19 +121,16 @@ test.ifDevOrLinuxCi(
         return Promise.all([
           modifyPackageJson(projectDir, data => {
             data.dependencies = {
-              "submodule-1-test": "*",
-              "submodule-2-test": "*",
+              "@types/node": "22.7.4",
+              "undici-types":"5.25.1",
               ...data.dependencies,
             }
           }),
-          outputFile(path.join(projectDir, "node_modules", "submodule-1-test", "node_modules", "package.json"), "{}"),
-          outputFile(path.join(projectDir, "node_modules", "submodule-2-test", "node_modules", "package.json"), "{}"),
         ])
       },
       packed: context => {
         return Promise.all([
-          assertThat(path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "node_modules", "submodule-1-test", "node_modules")).doesNotExist(),
-          assertThat(path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "node_modules", "submodule-2-test", "node_modules")).doesNotExist(),
+          assertThat(path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "node_modules", "@types/node", "node_modules")).isDirectory(),
         ])
       },
     }
@@ -142,13 +138,12 @@ test.ifDevOrLinuxCi(
 )
 
 test.ifDevOrLinuxCi(
-  "copied all submodule node_modules",
+  "Don't copy sub node_modules of the other dir instead of rootDir",
   app(
     {
       targets: Platform.LINUX.createTarget(DIR_TARGET),
       config: {
         asar: false,
-        includeSubNodeModules: true,
       },
     },
     {
@@ -156,27 +151,69 @@ test.ifDevOrLinuxCi(
         return Promise.all([
           modifyPackageJson(projectDir, data => {
             data.dependencies = {
-              "submodule-1-test": "*",
-              "submodule-2-test": "*",
               ...data.dependencies,
             }
           }),
-          outputFile(path.join(projectDir, "node_modules", "submodule-1-test", "node_modules", "package.json"), "{}"),
-          outputFile(path.join(projectDir, "node_modules", "submodule-2-test", "node_modules", "package.json"), "{}"),
+          outputFile(path.join(projectDir, "others", "node_modules","package.json"), "{}"),
+          outputFile(path.join(projectDir, "others", "test1","package.json"), "{}"),
+          outputFile(path.join(projectDir, "others", "submodule-2-test", "node_modules", "package.json"), "{}"),
+          outputFile(path.join(projectDir, "others", "submodule-2-test", "test2", "package.json"), "{}"),
         ])
       },
       packed: context => {
         return Promise.all([
-          assertThat(path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "node_modules", "submodule-1-test", "node_modules")).isDirectory(),
-          assertThat(path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "node_modules", "submodule-2-test", "node_modules")).isDirectory(),
+          assertThat(path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "others", "node_modules")).doesNotExist(),
+          assertThat(path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "others", "test1")).isDirectory(),
+          assertThat(path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "others", "test1", "package.json")).isFile(),
+          assertThat(path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "others", "submodule-2-test", "node_modules")).doesNotExist(),
+          assertThat(path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "others", "submodule-2-test", "test2")).isDirectory(),
+          assertThat(path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "others", "submodule-2-test", "test2", "package.json")).isFile(),
         ])
       },
     }
   )
 )
 
-test.skip.ifDevOrLinuxCi(
+test.ifDevOrLinuxCi(
   "copied select submodule node_modules",
+  app(
+    {
+      targets: Platform.LINUX.createTarget(DIR_TARGET),
+      config: {
+        asar: false,
+        // should use **/ instead of */, 
+        // we use the related path to match, so the relative path is submodule-1-test/node_modules
+        // */ will not match submodule-1-test/node_modules 
+        files: ["**/*", "**/submodule-1-test/node_modules/**"],
+      },
+    },
+    {
+      projectDirCreated: projectDir => {
+        return Promise.all([
+          modifyPackageJson(projectDir, data => {
+            data.dependencies = {
+              ...data.dependencies,
+            }
+          }),
+          outputFile(path.join(projectDir, "submodule-1-test", "node_modules", "package.json"), "{}"),
+          outputFile(path.join(projectDir, "submodule-2-test", "node_modules", "package.json"), "{}"),
+        ])
+      },
+      packed: context => {
+        return Promise.all([
+          assertThat(path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "submodule-1-test", "node_modules")).isDirectory(),
+          assertThat(
+            path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "submodule-1-test", "node_modules", "package.json")
+          ).isFile(),
+          assertThat(path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app","submodule-2-test", "node_modules")).doesNotExist(),
+        ])
+      },
+    }
+  )
+)
+
+test.ifDevOrLinuxCi(
+  "cannot copied select submodule node_modules by */",
   app(
     {
       targets: Platform.LINUX.createTarget(DIR_TARGET),
@@ -190,22 +227,17 @@ test.skip.ifDevOrLinuxCi(
         return Promise.all([
           modifyPackageJson(projectDir, data => {
             data.dependencies = {
-              "submodule-1-test": "*",
-              "submodule-2-test": "*",
               ...data.dependencies,
             }
           }),
-          outputFile(path.join(projectDir, "node_modules", "submodule-1-test", "node_modules", "package.json"), "{}"),
-          outputFile(path.join(projectDir, "node_modules", "submodule-2-test", "node_modules", "package.json"), "{}"),
+          outputFile(path.join(projectDir, "submodule-1-test", "node_modules", "package.json"), "{}"),
+          outputFile(path.join(projectDir, "submodule-2-test", "node_modules", "package.json"), "{}"),
         ])
       },
       packed: context => {
         return Promise.all([
-          assertThat(path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "node_modules", "submodule-1-test", "node_modules")).isDirectory(),
-          assertThat(
-            path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "node_modules", "submodule-1-test", "node_modules", "package.json")
-          ).isFile(),
-          assertThat(path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "node_modules", "submodule-2-test", "node_modules")).doesNotExist(),
+          assertThat(path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "submodule-1-test", "node_modules")).doesNotExist(),
+          assertThat(path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app","submodule-2-test", "node_modules")).doesNotExist(),
         ])
       },
     }
