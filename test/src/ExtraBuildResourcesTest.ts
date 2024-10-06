@@ -119,7 +119,7 @@ test.ifAll.ifNotWindows(
             publish: null,
             // https://github.com/electron-userland/electron-builder/issues/1355
             linux: {
-              target: ["AppImage", "deb", "rpm"],
+              target: ["AppImage", "deb", "rpm", "pacman"],
             },
             compression: "store",
           },

@@ -1,9 +1,9 @@
 import { GithubOptions } from "builder-util-runtime"
-import { DebUpdater, RpmUpdater } from "electron-updater"
+import { DebUpdater, RpmUpdater, PacmanUpdater } from "electron-updater"
 import { assertThat } from "../helpers/fileAssert"
 import { createTestAppAdapter, tuneTestUpdater, validateDownload, writeUpdateConfig } from "../helpers/updaterTestUtil"
 
-const runTest = async (updaterClass: any, expectedExtension: "deb" | "rpm" | "AppImage") => {
+const runTest = async (updaterClass: any, expectedExtension: "deb" | "rpm" | "AppImage" | "pacman") => {
   const testAppAdapter = await createTestAppAdapter("1.0.1")
   const updater = new updaterClass(null, testAppAdapter)
   tuneTestUpdater(updater, { platform: "linux" })
@@ -27,6 +27,10 @@ const runTest = async (updaterClass: any, expectedExtension: "deb" | "rpm" | "Ap
 
 test("test rpm download", async () => {
   await runTest(RpmUpdater, "rpm")
+})
+
+test("test pacman download", async () => {
+  await runTest(PacmanUpdater, "pacman")
 })
 
 test("test deb download", async () => {
