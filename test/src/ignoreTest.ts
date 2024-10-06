@@ -240,13 +240,41 @@ test.ifDevOrLinuxCi(
             }
           }),
           outputFile(path.join(projectDir, "submodule-1-test", "node_modules", "package.json"), "{}"),
-          outputFile(path.join(projectDir, "submodule-2-test", "node_modules", "package.json"), "{}"),
         ])
       },
       packed: context => {
         return Promise.all([
           assertThat(path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "submodule-1-test", "node_modules")).doesNotExist(),
-          assertThat(path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "submodule-2-test", "node_modules")).doesNotExist(),
+        ])
+      },
+    }
+  )
+)
+
+test.ifDevOrLinuxCi(
+  "cannot copied select submodule node_modules by **/submodule-1-test/node_modules",
+  app(
+    {
+      targets: Platform.LINUX.createTarget(DIR_TARGET),
+      config: {
+        asar: false,
+        files: ["**/*", "**/submodule-1-test/node_modules"],
+      },
+    },
+    {
+      projectDirCreated: projectDir => {
+        return Promise.all([
+          modifyPackageJson(projectDir, data => {
+            data.dependencies = {
+              ...data.dependencies,
+            }
+          }),
+          outputFile(path.join(projectDir, "submodule-1-test", "node_modules", "package.json"), "{}"),
+        ])
+      },
+      packed: context => {
+        return Promise.all([
+          assertThat(path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "submodule-1-test", "node_modules")).doesNotExist(),
         ])
       },
     }
