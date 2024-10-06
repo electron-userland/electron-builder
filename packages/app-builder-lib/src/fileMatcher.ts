@@ -172,9 +172,9 @@ export function getMainFileMatchers(
   }
 
   if (insertExculdeNodeModulesIndex !== -1) {
-    patterns.splice(insertExculdeNodeModulesIndex, 0, ...["!**/node_modules"])
+    patterns.splice(insertExculdeNodeModulesIndex, 0, ...["!**/node_modules/**"])
   } else {
-    customFirstPatterns.push("!**/node_modules")
+    customFirstPatterns.push("!**/node_modules/**")
   }
 
   // https://github.com/electron-userland/electron-builder/issues/1482
