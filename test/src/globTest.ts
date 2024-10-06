@@ -170,7 +170,7 @@ test.ifAll.ifDevOrLinuxCi("ignore node_modules", () => {
             "ci-info": "2.0.0",
             "@types/node": "14.17.0",
             // this contains string-width-cjs 4.2.3
-            "@isaacs/cliui":"8.0.2"
+            "@isaacs/cliui": "8.0.2",
           }
         }),
       packed: context => {
