@@ -83,6 +83,7 @@ test.ifNotCiMac(
       targets: Platform.LINUX.createTarget(DIR_TARGET),
       config: {
         asar: false,
+        files: ["**/*", "**/submodule-1-test/node_modules/**"],
       },
     },
     {
