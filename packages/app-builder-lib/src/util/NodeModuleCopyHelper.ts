@@ -160,7 +160,7 @@ export class NodeModuleCopyHelper extends FileCopyHelper {
       const resolvedPath = realpathSync(file)
       if (!isSubPath(tmpPath, resolvedPath)) {
         // delete symlink file if it links outside module (e.g.
-        log.debug({ module: moduleName, file: file, resolvedPath: resolvedPath }, `deleting symlink outside module`)
+        log.warn({ module: moduleName, file: file, resolvedPath: resolvedPath }, `deleting symlink outside module`)
         result[index] = undefined
       }
 
