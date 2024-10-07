@@ -298,7 +298,7 @@ test.ifDevOrLinuxCi(
               debug: "4.1.1",
             }
           }),
-          fs.symlink("../../../../../../../../../../../../../../../../../../../../etc/passwd", path.join(projectDir, "node_modules", "debug", "systemlink")),
+          fs.symlink(path.join(projectDir, "node_modules", "debug", "systemlink"), "../../../../../../../../../../../../../../../../../../../../etc/passwd"),
         ])
       },
       packed: context => {
