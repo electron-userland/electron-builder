@@ -108,14 +108,14 @@ export class NodeModuleCopyHelper extends FileCopyHelper {
               return null
             }
 
-      if (stat.isSymbolicLink()) {
-        const resolvedLinkTarget =  realpathSync(filePath)
-        if(!isSubPath(tmpPath, resolvedLinkTarget)) {
-        // delete symlink file if it links outside module 
-        log.warn({ module: moduleName, file: filePath, resolvedLinkTarget }, `deleting symlink outside module`)
-        return null
-        }
-      }
+            if (stat.isSymbolicLink()) {
+              const resolvedLinkTarget = realpathSync(filePath)
+              if (!isSubPath(tmpPath, resolvedLinkTarget)) {
+                // delete symlink file if it links outside module 
+                log.warn({ module: moduleName, file: filePath, resolvedLinkTarget }, `deleting symlink outside module`)
+                return null
+              }
+            }
 
             if (!stat.isDirectory()) {
               metadata.set(filePath, stat)
@@ -167,7 +167,6 @@ export class NodeModuleCopyHelper extends FileCopyHelper {
 
     for (const [file, index] of symlinkFiles) {
       const resolvedPath = realpathSync(file)
-
       if (emptyDirs.has(resolvedPath)) {
         // delete symlink file if target is a empty dir
         result[index] = undefined
