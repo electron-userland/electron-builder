@@ -287,7 +287,9 @@ test.ifDevOrLinuxCi(
   app(
     {
       targets: Platform.LINUX.createTarget(DIR_TARGET),
-      config: {},
+      config: {
+        asar: false
+      },
     },
     {
       isInstallDepsBefore: true,
