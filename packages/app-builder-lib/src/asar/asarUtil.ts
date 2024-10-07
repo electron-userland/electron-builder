@@ -9,7 +9,8 @@ import * as tempFile from "temp-file"
 import { AsarOptions } from "../options/PlatformSpecificBuildOptions"
 import { PlatformPackager } from "../platformPackager"
 import { ResolvedFileSet, getDestinationPath } from "../util/appFileCopier"
-import { detectUnpackedDirs } from "./unpackDetector"
+import { detectUnpackedDirs, isLibOrExe } from "./unpackDetector"
+import { isBinaryFileSync } from "isbinaryfile"
 
 /** @internal */
 export class AsarPackager {
@@ -44,15 +45,17 @@ export class AsarPackager {
       fileSets[0],
     ].map(orderFileSet)
 
-    const { unpackedDirs, copiedFiles } = await this.detectAndCopy(orderedFileSets, cancellationToken)
-    const unpackGlob = unpackedDirs.length > 1 ? `{${unpackedDirs.join(",")}}` : unpackedDirs.pop()
+    const { unpackedFiles: unpackedPaths, copiedFiles } = await this.detectAndCopy(orderedFileSets, cancellationToken)
+
+    // const unpackedDirs = unpackedFiles.map(file => file.substring(this.rootForAppFilesWithoutAsar.length))
+    const unpackGlob = unpackedPaths.length > 1 ? `{${unpackedPaths.join(",")}}` : unpackedPaths.pop()
+
+    // `copiedFiles` are already ordered due to `orderedFileSets`, so we just map to their relative paths (via substring) within the asar.
+    const filesSorted = copiedFiles.map(file => file.substring(this.rootForAppFilesWithoutAsar.length))
 
     let ordering = this.config.options.ordering || undefined
     if (!ordering) {
       ordering = await this.tmpDir.getTempFile({ prefix: "asar-ordering", suffix: ".txt" })
-      // `copiedFiles` are already ordered due to `orderedFileSets`, so we just map to their relative paths (via substring) within the asar.
-      const filesSorted = copiedFiles.map(file => file.substring(this.rootForAppFilesWithoutAsar.length))
-      // const filesSorted = copiedFiles.map(file => file.substring(this.config.resourcePath.length))
       await fs.writeFile(ordering, filesSorted.join("\n"))
     }
 
@@ -77,13 +80,27 @@ export class AsarPackager {
 
   private async detectAndCopy(fileSets: ResolvedFileSet[], cancellationToken: CancellationToken) {
     const taskManager = new AsyncTaskManager(cancellationToken)
-    const unpackedDirs = new Set<string>()
+    const unpackedFiles = new Set<string>()
     const copiedFiles = new Set<string>()
 
     const autoUnpack = async (file: string, dest: string) => {
       if (this.config.unpackPattern?.(file, await fs.lstat(file))) {
         log.debug({ file }, "unpacking")
-        unpackedDirs.add(dest)
+        unpackedFiles.add(dest)
+        return
+      }
+      if (this.config.options.smartUnpack !== false) {
+        // https://github.com/electron-userland/electron-builder/issues/2679
+        // let shouldUnpack = false
+        // ffprobe-static and ffmpeg-static are known packages to always unpack
+        const moduleName = path.basename(path.dirname(file))
+        const fileBaseName = path.basename(file)
+        const hasExtension = path.extname(fileBaseName)
+        if (moduleName === "ffprobe-static" || moduleName === "ffmpeg-static" || isLibOrExe(file)) {
+          unpackedFiles.add(dest)
+        } else if (!hasExtension && !!isBinaryFileSync(file)) {
+          unpackedFiles.add(dest)
+        }
       }
     }
     const autoCopy = async (transformedData: string | Buffer | undefined, source: string, destination: string) => {
@@ -117,9 +134,9 @@ export class AsarPackager {
     }
 
     for await (const fileSet of fileSets) {
-      if (this.config.options.smartUnpack !== false) {
-        detectUnpackedDirs(fileSet, unpackedDirs, this.config.defaultDestination)
-      }
+      // if (this.config.options.smartUnpack !== false) {
+      //   detectUnpackedDirs(fileSet, unpackedFiles, this.config.defaultDestination)
+      // }
       for (let i = 0; i < fileSet.files.length; i++) {
         const file = fileSet.files[i]
         const transformedData = fileSet.transformedFiles?.get(i)
@@ -137,7 +154,7 @@ export class AsarPackager {
     }
     await taskManager.awaitTasks()
     return {
-      unpackedDirs: Array.from(unpackedDirs),
+      unpackedFiles: Array.from(unpackedFiles),
       copiedFiles: Array.from(copiedFiles),
     }
   }
