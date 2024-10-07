@@ -190,8 +190,6 @@ export function getMainFileMatchers(
   patterns.push("!**/._*")
   patterns.push("!**/electron-builder.{yaml,yml,json,json5,toml,ts}")
   patterns.push(`!**/{${excludedNames}}`)
-  patterns.push(`!**/node_modules/.bin`)
-  patterns.push(`!**/node_gyp_bins`)
 
   if (isElectronCompile) {
     patterns.push("!.cache{,/**/*}")
