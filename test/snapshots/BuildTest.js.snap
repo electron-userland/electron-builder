@@ -907,6 +907,7 @@ Object {
           "files": Object {
             "LICENSE.md": Object {
               "size": "<size>",
+              "unpacked": true,
             },
             "build": Object {
               "files": Object {
@@ -917,20 +918,26 @@ Object {
                       "unpacked": true,
                     },
                   },
+                  "unpacked": true,
                 },
               },
+              "unpacked": true,
             },
             "lib": Object {
               "files": Object {
                 "keytar.js": Object {
                   "size": "<size>",
+                  "unpacked": true,
                 },
               },
+              "unpacked": true,
             },
             "package.json": Object {
               "size": "<size>",
+              "unpacked": true,
             },
           },
+          "unpacked": true,
         },
         "mimic-response": Object {
           "files": Object {
@@ -4856,6 +4863,53 @@ Object {
 exports[`posix smart unpack 4`] = `
 Array [
   "app.asar",
+  "app.asar.unpacked/node_modules/keytar/LICENSE.md",
+  Object {
+    "content": "{
+  \\"main\\": \\"./lib/keytar.js\\",
+  \\"typings\\": \\"keytar.d.ts\\",
+  \\"name\\": \\"keytar\\",
+  \\"description\\": \\"Bindings to native Mac/Linux/Windows password APIs\\",
+  \\"version\\": \\"7.9.0\\",
+  \\"license\\": \\"MIT\\",
+  \\"repository\\": {
+    \\"type\\": \\"git\\",
+    \\"url\\": \\"https://github.com/atom/node-keytar.git\\"
+  },
+  \\"homepage\\": \\"http://atom.github.io/node-keytar\\",
+  \\"files\\": [
+    \\"lib\\",
+    \\"src\\",
+    \\"binding.gyp\\",
+    \\"keytar.d.ts\\"
+  ],
+  \\"types\\": \\"./keytar.d.ts\\",
+  \\"devDependencies\\": {
+    \\"babel-core\\": \\"^6.26.3\\",
+    \\"babel-plugin-transform-async-to-generator\\": \\"^6.24.1\\",
+    \\"chai\\": \\"^4.2.0\\",
+    \\"mocha\\": \\"^9.2.0\\",
+    \\"node-cpplint\\": \\"~0.4.0\\",
+    \\"node-gyp\\": \\"^8.4.1\\",
+    \\"prebuild\\": \\"^11.0.2\\"
+  },
+  \\"dependencies\\": {
+    \\"node-addon-api\\": \\"^4.3.0\\",
+    \\"prebuild-install\\": \\"^7.0.1\\"
+  },
+  \\"binary\\": {
+    \\"napi_versions\\": [
+      3
+    ]
+  },
+  \\"config\\": {
+    \\"runtime\\": \\"napi\\",
+    \\"target\\": 3
+  }
+}",
+    "name": "app.asar.unpacked/node_modules/keytar/package.json",
+  },
+  "app.asar.unpacked/node_modules/keytar/lib/keytar.js",
   "app.asar.unpacked/node_modules/keytar/build/Release/keytar.node",
 ]
 `;
@@ -4907,15 +4961,19 @@ Object {
                 },
                 "package.json": Object {
                   "size": "<size>",
+                  "unpacked": true,
                 },
               },
+              "unpacked": true,
             },
             "test-smart-unpack-empty": Object {
               "files": Object {
                 "package.json": Object {
                   "size": "<size>",
+                  "unpacked": true,
                 },
               },
+              "unpacked": true,
             },
           },
         },
@@ -4955,6 +5013,7 @@ Object {
           "files": Object {
             "LICENSE.txt": Object {
               "size": "<size>",
+              "unpacked": true,
             },
             "lib": Object {
               "files": Object {
@@ -4962,11 +5021,14 @@ Object {
                   "files": Object {
                     "Dummy.cs": Object {
                       "size": "<size>",
+                      "unpacked": true,
                     },
                     "project.json": Object {
                       "size": "<size>",
+                      "unpacked": true,
                     },
                   },
+                  "unpacked": true,
                 },
                 "edge-cs.dll": Object {
                   "size": "<size>",
@@ -4974,11 +5036,14 @@ Object {
                 },
                 "edge-cs.js": Object {
                   "size": "<size>",
+                  "unpacked": true,
                 },
               },
+              "unpacked": true,
             },
             "package.json": Object {
               "size": "<size>",
+              "unpacked": true,
             },
             "src": Object {
               "files": Object {
@@ -4986,42 +5051,55 @@ Object {
                   "files": Object {
                     "EdgeCompiler.cs": Object {
                       "size": "<size>",
+                      "unpacked": true,
                     },
                     "gulpfile.js": Object {
                       "size": "<size>",
+                      "unpacked": true,
                     },
                     "package.json": Object {
                       "size": "<size>",
+                      "unpacked": true,
                     },
                     "project.json": Object {
                       "size": "<size>",
+                      "unpacked": true,
                     },
                   },
+                  "unpacked": true,
                 },
                 "edge-cs": Object {
                   "files": Object {
                     "EdgeCompiler.cs": Object {
                       "size": "<size>",
+                      "unpacked": true,
                     },
                     "Properties": Object {
                       "files": Object {
                         "AssemblyInfo.cs": Object {
                           "size": "<size>",
+                          "unpacked": true,
                         },
                       },
+                      "unpacked": true,
                     },
                   },
+                  "unpacked": true,
                 },
               },
+              "unpacked": true,
             },
             "tools": Object {
               "files": Object {
                 "install.js": Object {
                   "size": "<size>",
+                  "unpacked": true,
                 },
               },
+              "unpacked": true,
             },
           },
+          "unpacked": true,
         },
         "ms": Object {
           "files": Object {
@@ -5048,52 +5126,124 @@ Object {
 exports[`win smart unpack 3`] = `
 Array [
   "app.asar",
+  "app.asar.unpacked/node_modules/edge-cs/LICENSE.txt",
+  Object {
+    "content": "{
+  \\"name\\": \\"edge-cs\\",
+  \\"author\\": {
+    \\"name\\": \\"Tomasz Janczuk <tomasz@janczuk.org>\\",
+    \\"url\\": \\"http://tomasz.janczuk.org\\",
+    \\"twitter\\": \\"tjanczuk\\"
+  },
+  \\"version\\": \\"1.2.1\\",
+  \\"description\\": \\"Edge-cs: run C# and node.js code in-process with edge.js\\",
+  \\"main\\": \\"./lib/edge-cs.js\\",
+  \\"engines\\": {
+    \\"node\\": \\">= 0.8\\"
+  },
+  \\"licenses\\": [
+    {
+      \\"type\\": \\"Apache\\",
+      \\"url\\": \\"http://www.apache.org/licenses/LICENSE-2.0\\"
+    }
+  ],
+  \\"dependencies\\": {},
+  \\"homepage\\": \\"http://tjanczuk.github.com/edge\\",
+  \\"repository\\": {
+    \\"type\\": \\"git\\",
+    \\"url\\": \\"git@github.com:tjanczuk/edge-cs.git\\"
+  }
+}",
+    "name": "app.asar.unpacked/node_modules/edge-cs/package.json",
+  },
+  "app.asar.unpacked/node_modules/edge-cs/tools/install.js",
+  "app.asar.unpacked/node_modules/edge-cs/src/edge-cs/EdgeCompiler.cs",
+  "app.asar.unpacked/node_modules/edge-cs/src/edge-cs/Properties/AssemblyInfo.cs",
+  "app.asar.unpacked/node_modules/edge-cs/src/Edge.js.CSharp/EdgeCompiler.cs",
+  "app.asar.unpacked/node_modules/edge-cs/src/Edge.js.CSharp/gulpfile.js",
+  Object {
+    "content": "{
+    \\"devDependencies\\": {
+        \\"gulp\\": \\"3.9.0\\"
+    }
+}",
+    "name": "app.asar.unpacked/node_modules/edge-cs/src/Edge.js.CSharp/package.json",
+  },
+  "app.asar.unpacked/node_modules/edge-cs/src/Edge.js.CSharp/project.json",
   "app.asar.unpacked/node_modules/edge-cs/lib/edge-cs.dll",
+  "app.asar.unpacked/node_modules/edge-cs/lib/edge-cs.js",
+  "app.asar.unpacked/node_modules/edge-cs/lib/bootstrap/Dummy.cs",
+  "app.asar.unpacked/node_modules/edge-cs/lib/bootstrap/project.json",
+  Object {
+    "content": "{
+  \\"name\\": \\"@electron-builder/test-smart-unpack-empty\\",
+  \\"version\\": \\"1.0.0\\"
+}
+",
+    "name": "app.asar.unpacked/node_modules/@electron-builder/test-smart-unpack-empty/package.json",
+  },
   "app.asar.unpacked/node_modules/@electron-builder/test-smart-unpack/foo.dll",
+  Object {
+    "content": "{
+  \\"name\\": \\"@electron-builder/test-smart-unpack\\",
+  \\"version\\": \\"1.0.0\\"
+}
+",
+    "name": "app.asar.unpacked/node_modules/@electron-builder/test-smart-unpack/package.json",
+  },
 ]
 `;
 
 exports[`win smart unpack 4`] = `
 Array [
-  "node_modules/@electron-builder/test-smart-unpack/package.json",
-  "node_modules/@electron-builder/test-smart-unpack-empty/package.json",
-  "node_modules/debug/.coveralls.yml",
-  "node_modules/debug/.eslintrc",
-  "node_modules/debug/.npmignore",
-  "node_modules/debug/.travis.yml",
-  "node_modules/debug/CHANGELOG.md",
-  "node_modules/debug/README.md",
-  "node_modules/debug/karma.conf.js",
-  "node_modules/debug/node.js",
-  "node_modules/debug/package.json",
-  "node_modules/debug/src/browser.js",
-  "node_modules/debug/src/debug.js",
-  "node_modules/debug/src/index.js",
-  "node_modules/debug/src/node.js",
-  "node_modules/edge-cs/.gitattributes",
-  "node_modules/edge-cs/.npmignore",
-  "node_modules/edge-cs/LICENSE.txt",
-  "node_modules/edge-cs/README.md",
-  "node_modules/edge-cs/package.json",
-  "node_modules/edge-cs/tools/install.js",
-  "node_modules/edge-cs/src/Edge.js.CSharp",
-  "node_modules/edge-cs/src/edge-cs/EdgeCompiler.cs",
-  "node_modules/edge-cs/src/edge-cs/edge-cs.csproj",
-  "node_modules/edge-cs/src/edge-cs/edge-cs.sln",
-  "node_modules/edge-cs/src/edge-cs/Properties/AssemblyInfo.cs",
-  "node_modules/edge-cs/src/Edge.js.CSharp/EdgeCompiler.cs",
-  "node_modules/edge-cs/src/Edge.js.CSharp/edge-cs-coreclr.sln",
-  "node_modules/edge-cs/src/Edge.js.CSharp/edge-cs-coreclr.xproj",
-  "node_modules/edge-cs/src/Edge.js.CSharp/gulpfile.js",
-  "node_modules/edge-cs/src/Edge.js.CSharp/package.json",
-  "node_modules/edge-cs/src/Edge.js.CSharp/project.json",
-  "node_modules/edge-cs/lib/edge-cs.js",
-  "node_modules/edge-cs/lib/bootstrap/Dummy.cs",
-  "node_modules/edge-cs/lib/bootstrap/project.json",
-  "node_modules/ms/index.js",
-  "node_modules/ms/license.md",
-  "node_modules/ms/package.json",
-  "node_modules/ms/readme.md",
+  "node_modules/.pnpm/@electron-builder+test-smart-unpack@1.0.0/node_modules/@electron-builder/test-smart-unpack/package.json",
+  "node_modules/.pnpm/@electron-builder+test-smart-unpack-empty@1.0.0/node_modules/@electron-builder/test-smart-unpack-empty/package.json",
+  "node_modules/.pnpm/debug@3.1.0/node_modules/debug/.coveralls.yml",
+  "node_modules/.pnpm/debug@3.1.0/node_modules/debug/.eslintrc",
+  "node_modules/.pnpm/debug@3.1.0/node_modules/debug/.npmignore",
+  "node_modules/.pnpm/debug@3.1.0/node_modules/debug/.travis.yml",
+  "node_modules/.pnpm/debug@3.1.0/node_modules/debug/CHANGELOG.md",
+  "node_modules/.pnpm/debug@3.1.0/node_modules/debug/LICENSE",
+  "node_modules/.pnpm/debug@3.1.0/node_modules/debug/Makefile",
+  "node_modules/.pnpm/debug@3.1.0/node_modules/debug/README.md",
+  "node_modules/.pnpm/debug@3.1.0/node_modules/debug/karma.conf.js",
+  "node_modules/.pnpm/debug@3.1.0/node_modules/debug/node.js",
+  "node_modules/.pnpm/debug@3.1.0/node_modules/debug/package.json",
+  "node_modules/.pnpm/debug@3.1.0/node_modules/debug/src",
+  "node_modules/.pnpm/debug@3.1.0/node_modules/debug/src/browser.js",
+  "node_modules/.pnpm/debug@3.1.0/node_modules/debug/src/debug.js",
+  "node_modules/.pnpm/debug@3.1.0/node_modules/debug/src/index.js",
+  "node_modules/.pnpm/debug@3.1.0/node_modules/debug/src/node.js",
+  "node_modules/.pnpm/edge-cs@1.2.1/node_modules/edge-cs/.gitattributes",
+  "node_modules/.pnpm/edge-cs@1.2.1/node_modules/edge-cs/.npmignore",
+  "node_modules/.pnpm/edge-cs@1.2.1/node_modules/edge-cs/LICENSE.txt",
+  "node_modules/.pnpm/edge-cs@1.2.1/node_modules/edge-cs/README.md",
+  "node_modules/.pnpm/edge-cs@1.2.1/node_modules/edge-cs/lib",
+  "node_modules/.pnpm/edge-cs@1.2.1/node_modules/edge-cs/package.json",
+  "node_modules/.pnpm/edge-cs@1.2.1/node_modules/edge-cs/src",
+  "node_modules/.pnpm/edge-cs@1.2.1/node_modules/edge-cs/tools",
+  "node_modules/.pnpm/edge-cs@1.2.1/node_modules/edge-cs/tools/install.js",
+  "node_modules/.pnpm/edge-cs@1.2.1/node_modules/edge-cs/src/Edge.js.CSharp",
+  "node_modules/.pnpm/edge-cs@1.2.1/node_modules/edge-cs/src/edge-cs",
+  "node_modules/.pnpm/edge-cs@1.2.1/node_modules/edge-cs/src/edge-cs/EdgeCompiler.cs",
+  "node_modules/.pnpm/edge-cs@1.2.1/node_modules/edge-cs/src/edge-cs/Properties",
+  "node_modules/.pnpm/edge-cs@1.2.1/node_modules/edge-cs/src/edge-cs/edge-cs.csproj",
+  "node_modules/.pnpm/edge-cs@1.2.1/node_modules/edge-cs/src/edge-cs/edge-cs.sln",
+  "node_modules/.pnpm/edge-cs@1.2.1/node_modules/edge-cs/src/edge-cs/Properties/AssemblyInfo.cs",
+  "node_modules/.pnpm/edge-cs@1.2.1/node_modules/edge-cs/src/Edge.js.CSharp/EdgeCompiler.cs",
+  "node_modules/.pnpm/edge-cs@1.2.1/node_modules/edge-cs/src/Edge.js.CSharp/edge-cs-coreclr.sln",
+  "node_modules/.pnpm/edge-cs@1.2.1/node_modules/edge-cs/src/Edge.js.CSharp/edge-cs-coreclr.xproj",
+  "node_modules/.pnpm/edge-cs@1.2.1/node_modules/edge-cs/src/Edge.js.CSharp/gulpfile.js",
+  "node_modules/.pnpm/edge-cs@1.2.1/node_modules/edge-cs/src/Edge.js.CSharp/package.json",
+  "node_modules/.pnpm/edge-cs@1.2.1/node_modules/edge-cs/src/Edge.js.CSharp/project.json",
+  "node_modules/.pnpm/edge-cs@1.2.1/node_modules/edge-cs/lib/bootstrap",
+  "node_modules/.pnpm/edge-cs@1.2.1/node_modules/edge-cs/lib/edge-cs.js",
+  "node_modules/.pnpm/edge-cs@1.2.1/node_modules/edge-cs/lib/bootstrap/Dummy.cs",
+  "node_modules/.pnpm/edge-cs@1.2.1/node_modules/edge-cs/lib/bootstrap/project.json",
+  "node_modules/.pnpm/ms@2.0.0/node_modules/ms/index.js",
+  "node_modules/.pnpm/ms@2.0.0/node_modules/ms/license.md",
+  "node_modules/.pnpm/ms@2.0.0/node_modules/ms/package.json",
+  "node_modules/.pnpm/ms@2.0.0/node_modules/ms/readme.md",
 ]
 `;
 
