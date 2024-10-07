@@ -9,7 +9,6 @@ import { app, appTwo, appTwoThrows, assertPack, linuxDirTarget, modifyPackageJso
 import { ELECTRON_VERSION } from "./helpers/testConfig"
 import { verifySmartUnpack } from "./helpers/verifySmartUnpack"
 import { AsarFilesystem } from "app-builder-lib/src/asar/asar"
-import { outputFile } from "fs-extra"
 
 test("cli", async () => {
   // because these methods are internal
