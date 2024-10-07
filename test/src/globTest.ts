@@ -116,11 +116,7 @@ test.ifNotWindows(
         const tempDir = await tmpDir.getTempDir()
         await outputFile(path.join(tempDir, "foo"), "data")
         await fs.symlink(tempDir, path.join(projectDir, "o-dir"))
-      },
-      // packed: async context => {
-      //   const file = (await readAsar(path.join(context.getResources(Platform.LINUX), "app.asar"))).getFile("o-dir/foo", false)
-      //   expect(removeUnstableProperties(file)).toMatchSnapshot()
-      // },
+      }
     }
   )
 )
