@@ -671,14 +671,6 @@ Object {
                     },
                   },
                 },
-                "node_gyp_bins": Object {
-                  "files": Object {
-                    "python3": Object {
-                      "size": "<size>",
-                      "unpacked": true,
-                    },
-                  },
-                },
               },
             },
             "index.js": Object {
@@ -786,14 +778,6 @@ Object {
                       "unpacked": true,
                     },
                     "spawn-helper": Object {
-                      "size": "<size>",
-                      "unpacked": true,
-                    },
-                  },
-                },
-                "node_gyp_bins": Object {
-                  "files": Object {
-                    "python3": Object {
                       "size": "<size>",
                       "unpacked": true,
                     },
@@ -1687,7 +1671,6 @@ Array [
   "app.asar.unpacked/node_modules/node-pty/deps/winpty/misc/Font-Report-June2016/MinimumWindowWidths.txt",
   "app.asar.unpacked/node_modules/node-pty/deps/winpty/misc/Font-Report-June2016/Results.txt",
   "app.asar.unpacked/node_modules/node-pty/deps/winpty/misc/Font-Report-June2016/Windows10SetFontBugginess.txt",
-  "app.asar.unpacked/node_modules/node-pty/build/node_gyp_bins/python3",
   "app.asar.unpacked/node_modules/node-pty/build/Release/pty.node",
   "app.asar.unpacked/node_modules/node-pty/build/Release/spawn-helper",
   "app.asar.unpacked/node_modules/node-mac-permissions/LICENSE",
@@ -1783,7 +1766,6 @@ Array [
   "app.asar.unpacked/node_modules/node-mac-permissions/node_modules/node-addon-api/tools/check-napi.js",
   "app.asar.unpacked/node_modules/node-mac-permissions/node_modules/node-addon-api/tools/clang-format.js",
   "app.asar.unpacked/node_modules/node-mac-permissions/node_modules/node-addon-api/tools/conversion.js",
-  "app.asar.unpacked/node_modules/node-mac-permissions/build/node_gyp_bins/python3",
   "app.asar.unpacked/node_modules/node-mac-permissions/build/Release/permissions.node",
 ]
 `;

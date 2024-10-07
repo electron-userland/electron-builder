@@ -105,7 +105,7 @@ export class AsarPackager {
         const isOutsidePackage = realPathRelative.startsWith("../")
         if (isOutsidePackage) {
           log.error({ source: log.filePath(source), realPathFile: log.filePath(realPathFile) }, `unable to copy, file is symlinked outside the package`)
-          throw new Error(`${source} is symlinked to outside the package and that violates asar security integrity`)
+          throw new Error(`Cannot copy file ${path.basename(source)} symlinked to file outside the package as that violates asar security integrity`)
         }
 
         await this.copyFileOrData(undefined, source, symlinkDestination, stat)
@@ -118,7 +118,7 @@ export class AsarPackager {
 
     for await (const fileSet of fileSets) {
       if (this.config.options.smartUnpack !== false) {
-        detectUnpackedDirs(fileSet, unpackedDirs, this.rootForAppFilesWithoutAsar)
+        detectUnpackedDirs(fileSet, unpackedDirs, this.config.defaultDestination)
       }
       for (let i = 0; i < fileSet.files.length; i++) {
         const file = fileSet.files[i]
