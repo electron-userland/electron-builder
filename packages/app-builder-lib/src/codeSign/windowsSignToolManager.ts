@@ -200,7 +200,7 @@ export class WindowsSignToolManager {
       }
       log.info(logInfo, "signing")
     } else if (!customSign) {
-      log.error({ signHook: customSign, cscInfo }, "no signing info identified, signing is skipped")
+      log.debug({ signHook: !!customSign, cscInfo }, "no signing info identified, signing is skipped")
       return false
     }
 

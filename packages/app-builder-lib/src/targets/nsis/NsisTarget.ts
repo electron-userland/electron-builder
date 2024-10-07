@@ -396,7 +396,6 @@ export class NsisTarget extends Target {
         let i = 0
         while (!(await exists(uninstallerPath)) && i++ < 100) {
           // noinspection JSUnusedLocalSymbols
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
           await new Promise((resolve, _reject) => setTimeout(resolve, 300))
         }
       }

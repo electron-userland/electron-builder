@@ -6709,7 +6709,7 @@
           ]
         }
       ],
-      "description": "Appx manifest created on disk - not packed into .appx package yet."
+      "description": "The function (or path to file or module id) to be run after Appx manifest created on disk - not packed into .appx package yet."
     },
     "artifactBuildCompleted": {
       "anyOf": [
@@ -6934,10 +6934,13 @@
           "typeof": "function"
         },
         {
-          "type": "string"
+          "type": [
+            "null",
+            "string"
+          ]
         }
       ],
-      "description": "Returns the path to custom Electron build (e.g. `~/electron/out/R`). Zip files must follow the pattern `electron-v${version}-${platformName}-${arch}.zip`, otherwise it will be assumed to be an unpacked Electron app directory"
+      "description": "The function (or path to file or module id) to be run when staging the electron artifact environment.\nReturns the path to custom Electron build (e.g. `~/electron/out/R`) or folder of electron zips. Zip files must follow the pattern `electron-v${version}-${platformName}-${arch}.zip`, otherwise it will be assumed to be an unpacked Electron app directory"
     },
     "electronDownload": {
       "$ref": "#/definitions/ElectronDownloadOptions",
@@ -7142,11 +7145,6 @@
       "description": "Whether to include PDB files.",
       "type": "boolean"
     },
-    "includeSubNodeModules": {
-      "default": false,
-      "description": "Whether to include *all* of the submodules node_modules directories",
-      "type": "boolean"
-    },
     "launchUiVersion": {
       "description": "*libui-based frameworks only* The version of LaunchUI you are packaging for. Applicable for Windows only. Defaults to version suitable for used framework version.",
       "type": [
@@ -7221,7 +7219,7 @@
           ]
         }
       ],
-      "description": "MSI project created on disk - not packed into .msi package yet."
+      "description": "The function (or path to file or module id) to be run after MSI project created on disk - not packed into .msi package yet."
     },
     "msiWrapped": {
       "anyOf": [

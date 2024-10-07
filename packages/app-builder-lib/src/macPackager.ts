@@ -86,7 +86,6 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
           break
 
         case "dmg": {
-          // eslint-disable-next-line @typescript-eslint/no-var-requires
           const { DmgTarget } = require("dmg-builder")
           mapper(name, outDir => new DmgTarget(this, outDir))
           break

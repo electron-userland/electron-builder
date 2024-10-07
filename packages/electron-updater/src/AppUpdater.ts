@@ -438,7 +438,6 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     }
   }
 
-  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
   private createProviderRuntimeOptions() {
     return {
       isUseMultipleRangeRequest: true,

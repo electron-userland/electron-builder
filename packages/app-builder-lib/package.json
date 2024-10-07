@@ -1,7 +1,7 @@
 {
   "name": "app-builder-lib",
   "description": "electron-builder lib",
-  "version": "25.1.6",
+  "version": "25.1.8",
   "main": "out/index.js",
   "files": [
     "out",
@@ -49,7 +49,7 @@
     "@develar/schema-utils": "~2.6.5",
     "@electron/notarize": "2.5.0",
     "@electron/osx-sign": "1.3.1",
-    "@electron/rebuild": "3.6.0",
+    "@electron/rebuild": "3.6.1",
     "@electron/universal": "2.0.1",
     "@malept/flatpak-bundler": "^0.4.0",
     "@types/fs-extra": "9.0.13",

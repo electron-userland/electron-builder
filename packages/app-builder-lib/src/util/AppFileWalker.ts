@@ -4,8 +4,6 @@ import { FileMatcher } from "../fileMatcher"
 import { Packager } from "../packager"
 import * as path from "path"
 
-const nodeModulesSystemDependentSuffix = `${path.sep}node_modules`
-
 function addAllPatternIfNeed(matcher: FileMatcher) {
   if (!matcher.isSpecifiedAsEmptyArray && (matcher.isEmpty() || matcher.containsOnlyIgnore())) {
     matcher.prependPattern("**/*")
@@ -55,22 +53,7 @@ function createAppFilter(matcher: FileMatcher, packager: Packager): Filter | nul
   if (packager.areNodeModulesHandledExternally) {
     return matcher.isEmpty() ? null : matcher.createFilter()
   }
-
-  const nodeModulesFilter: Filter = (file, fileStat) => {
-    return !(fileStat.isDirectory() && file.endsWith(nodeModulesSystemDependentSuffix))
-  }
-
-  if (matcher.isEmpty()) {
-    return nodeModulesFilter
-  }
-
-  const filter = matcher.createFilter()
-  return (file, fileStat) => {
-    if (!nodeModulesFilter(file, fileStat)) {
-      return !!packager.config.includeSubNodeModules
-    }
-    return filter(file, fileStat)
-  }
+  return matcher.createFilter()
 }
 
 /** @internal */
@@ -85,18 +68,8 @@ export class AppFileWalker extends FileCopyHelper implements FileConsumer {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   consume(file: string, fileStat: Stats, parent: string, siblingNames: Array<string>): any {
     if (fileStat.isDirectory()) {
-      // https://github.com/electron-userland/electron-builder/issues/1539
-      // but do not filter if we inside node_modules dir
-      // update: solution disabled, node module resolver should support such setup
-      if (file.endsWith(nodeModulesSystemDependentSuffix)) {
-        if (!this.packager.config.includeSubNodeModules) {
-          const matchesFilter = this.matcherFilter(file, fileStat)
-          if (!matchesFilter) {
-            // Skip the file
-            return false
-          }
-        }
-      }
+      const matchesFilter = this.matcherFilter(file, fileStat)
+      return !matchesFilter
     } else {
       // save memory - no need to store stat for directory
       this.metadata.set(file, fileStat)
