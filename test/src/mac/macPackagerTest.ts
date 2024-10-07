@@ -117,8 +117,7 @@ test.ifMac("yarn two package.json w/ native module", () =>
       signed: false,
       packed: async context => await verifySmartUnpack(context.getResources(Platform.MAC, Arch.universal)),
     }
-  )
-)
+  ))
 
 test.ifMac.ifAll(
   "electronDist",

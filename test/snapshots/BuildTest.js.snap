@@ -921,6 +921,7 @@ Object {
                   "unpacked": true,
                 },
               },
+              "unpacked": true,
             },
             "lib": Object {
               "files": Object {

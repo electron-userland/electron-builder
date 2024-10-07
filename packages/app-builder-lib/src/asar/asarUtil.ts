@@ -27,7 +27,6 @@ export class AsarPackager {
       unpackPattern: Filter | undefined
     }
   ) {
-    // this.rootForAppFilesWithoutAsar = path.join(config.resourcePath, "app")
     this.outFile = path.join(config.resourcePath, `app.asar`)
   }
 
@@ -45,16 +44,13 @@ export class AsarPackager {
       fileSets[0],
     ].map(orderFileSet)
 
-    const { unpackedFiles: unpackedPaths, copiedFiles } = await this.detectAndCopy(orderedFileSets, cancellationToken)
-
-    // const unpackedDirs = unpackedFiles.map(file => file.substring(this.rootForAppFilesWithoutAsar.length))
+    const { unpackedPaths, copiedFiles } = await this.detectAndCopy(orderedFileSets, cancellationToken)
     const unpackGlob = unpackedPaths.length > 1 ? `{${unpackedPaths.join(",")}}` : unpackedPaths.pop()
-
-    // `copiedFiles` are already ordered due to `orderedFileSets`, so we just map to their relative paths (via substring) within the asar.
-    const filesSorted = copiedFiles.map(file => file.substring(this.rootForAppFilesWithoutAsar.length))
 
     let ordering = this.config.options.ordering || undefined
     if (!ordering) {
+      // `copiedFiles` are already ordered due to `orderedFileSets` input, so we just map to their relative paths (via substring) within the asar.
+      const filesSorted = copiedFiles.map(file => file.substring(this.rootForAppFilesWithoutAsar.length))
       ordering = await this.tmpDir.getTempFile({ prefix: "asar-ordering", suffix: ".txt" })
       await fs.writeFile(ordering, filesSorted.join("\n"))
     }
@@ -80,13 +76,13 @@ export class AsarPackager {
 
   private async detectAndCopy(fileSets: ResolvedFileSet[], cancellationToken: CancellationToken) {
     const taskManager = new AsyncTaskManager(cancellationToken)
-    const unpackedFiles = new Set<string>()
+    const unpackedPaths = new Set<string>()
     const copiedFiles = new Set<string>()
 
-    const autoUnpack = async (file: string, dest: string) => {
-      if (this.config.unpackPattern?.(file, await fs.lstat(file))) {
+    const autoUnpack = (file: string, dest: string, stat: fs.Stats) => {
+      if (this.config.unpackPattern?.(file, stat)) {
         log.debug({ file }, "unpacking")
-        unpackedFiles.add(dest)
+        unpackedPaths.add(dest)
         return
       }
       // if (this.config.options.smartUnpack !== false) {
@@ -103,8 +99,7 @@ export class AsarPackager {
       //   }
       // }
     }
-    const autoCopy = async (transformedData: string | Buffer | undefined, source: string, destination: string) => {
-      const stat = await fs.lstat(source)
+    const autoCopy = async (transformedData: string | Buffer | undefined, source: string, destination: string, stat: fs.Stats) => {
       copiedFiles.add(destination)
 
       // If transformed data, skip symlink logic
@@ -122,7 +117,9 @@ export class AsarPackager {
         const isOutsidePackage = realPathRelative.startsWith("../")
         if (isOutsidePackage) {
           log.error({ source: log.filePath(source), realPathFile: log.filePath(realPathFile) }, `unable to copy, file is symlinked outside the package`)
-          throw new Error(`Cannot copy file (${path.basename(source)}) symlinked to file (${path.basename(realPathFile)}) outside the package as that violates asar security integrity`)
+          throw new Error(
+            `Cannot copy file (${path.basename(source)}) symlinked to file (${path.basename(realPathFile)}) outside the package as that violates asar security integrity`
+          )
         }
 
         await this.copyFileOrData(undefined, source, symlinkDestination, stat)
@@ -135,17 +132,18 @@ export class AsarPackager {
 
     for await (const fileSet of fileSets) {
       if (this.config.options.smartUnpack !== false) {
-        detectUnpackedDirs(fileSet, unpackedFiles, this.config.defaultDestination)
+        detectUnpackedDirs(fileSet, unpackedPaths, this.config.defaultDestination)
       }
       for (let i = 0; i < fileSet.files.length; i++) {
         const file = fileSet.files[i]
         const transformedData = fileSet.transformedFiles?.get(i)
+        const metadata = fileSet.metadata.get(file) || (await fs.lstat(file))
 
         const relative = path.relative(this.config.defaultDestination, getDestinationPath(file, fileSet))
         const dest = path.resolve(this.rootForAppFilesWithoutAsar, relative)
 
-        await autoUnpack(file, dest)
-        taskManager.addTask(autoCopy(transformedData, file, dest))
+        autoUnpack(file, dest, metadata)
+        taskManager.addTask(autoCopy(transformedData, file, dest, metadata))
 
         if (taskManager.tasks.length > MAX_FILE_REQUESTS) {
           await taskManager.awaitTasks()
@@ -154,7 +152,7 @@ export class AsarPackager {
     }
     await taskManager.awaitTasks()
     return {
-      unpackedFiles: Array.from(unpackedFiles),
+      unpackedPaths: Array.from(unpackedPaths),
       copiedFiles: Array.from(copiedFiles),
     }
   }

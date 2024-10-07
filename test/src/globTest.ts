@@ -116,7 +116,7 @@ test.ifNotWindows(
         const tempDir = await tmpDir.getTempDir()
         await outputFile(path.join(tempDir, "foo"), "data")
         await fs.symlink(tempDir, path.join(projectDir, "o-dir"))
-      }
+      },
     }
   )
 )
