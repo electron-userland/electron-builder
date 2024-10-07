@@ -41,6 +41,12 @@ Object {
 }
 `;
 
+exports[`electronDist as callback function for path to local folder with electron builds zipped  1`] = `
+Object {
+  "linux": Array [],
+}
+`;
+
 exports[`electronDist as path to local folder with electron builds zipped  1`] = `
 Object {
   "linux": Array [],

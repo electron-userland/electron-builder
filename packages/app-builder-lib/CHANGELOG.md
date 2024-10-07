@@ -1,5 +1,15 @@
 # app-builder-lib
 
+## 25.1.8
+
+### Patch Changes
+
+- [#8560](https://github.com/electron-userland/electron-builder/pull/8560) [`4ff778eefd9089b3b38b67156eb39e8cf57fdd83`](https://github.com/electron-userland/electron-builder/commit/4ff778eefd9089b3b38b67156eb39e8cf57fdd83) Thanks [@beyondkmp](https://github.com/beyondkmp)! - fix: Path does not end with the package name
+
+- Updated dependencies []:
+  - dmg-builder@25.1.8
+  - electron-builder-squirrel-windows@25.1.8
+
 ## 25.1.7
 
 ### Patch Changes
