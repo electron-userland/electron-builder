@@ -671,14 +671,6 @@ Object {
                     },
                   },
                 },
-                "node_gyp_bins": Object {
-                  "files": Object {
-                    "python3": Object {
-                      "size": "<size>",
-                      "unpacked": true,
-                    },
-                  },
-                },
               },
             },
             "index.js": Object {
@@ -771,14 +763,6 @@ Object {
                       "unpacked": true,
                     },
                     "spawn-helper": Object {
-                      "size": "<size>",
-                      "unpacked": true,
-                    },
-                  },
-                },
-                "node_gyp_bins": Object {
-                  "files": Object {
-                    "python3": Object {
                       "size": "<size>",
                       "unpacked": true,
                     },
