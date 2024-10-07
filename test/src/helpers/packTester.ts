@@ -120,15 +120,15 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
         await projectDirCreated(projectDir, tmpDir)
       }
 
-      if(beforePack != null) {
-        await beforePack(projectDir, tmpDir)
-      }
-
       if (checkOptions.isInstallDepsBefore) {
         // bin links required (e.g. for node-pre-gyp - if package refers to it in the install script)
         await spawn(process.platform === "win32" ? "npm.cmd" : "npm", ["install", "--production", "--legacy-peer-deps"], {
           cwd: projectDir,
         })
+      }
+
+      if(beforePack != null) {
+        await beforePack(projectDir, tmpDir)
       }
 
       if (packagerOptions.projectDir != null) {
