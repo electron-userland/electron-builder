@@ -1,6 +1,7 @@
 import { DIR_TARGET, Platform, archFromString } from "electron-builder"
 import { outputFile } from "fs-extra"
 import * as path from "path"
+import { promises as fs } from 'fs';
 import { assertThat } from "./helpers/fileAssert"
 import { app, checkDirContents, modifyPackageJson } from "./helpers/packTester"
 
@@ -275,6 +276,35 @@ test.ifDevOrLinuxCi(
       packed: context => {
         return Promise.all([
           assertThat(path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "submodule-1-test", "node_modules")).doesNotExist(),
+        ])
+      },
+    }
+  )
+)
+
+test.ifDevOrLinuxCi(
+  "ignore symlink file if it links outside node_modules",
+  app(
+    {
+      targets: Platform.LINUX.createTarget(DIR_TARGET),
+      config: {},
+    },
+    {
+      isInstallDepsBefore: true,
+      projectDirCreated: projectDir => {
+        return Promise.all([
+          modifyPackageJson(projectDir, data => {
+            data.dependencies = {
+              debug: "4.1.1",
+            }
+          }),
+          fs.symlink("../../../../../../../../../../../../../../../../../../../../etc/passwd", path.join(projectDir, "node_modules", "debug", "systemlink")),
+        ])
+      },
+      packed: context => {
+        return Promise.all([
+          assertThat(path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "node_modules", "debug")).isDirectory(),
+          assertThat(path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "node_modules", "debug", "systemlink")).doesNotExist(),
         ])
       },
     }
