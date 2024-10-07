@@ -184,12 +184,6 @@ export interface CommonConfiguration {
 }
 export interface Configuration extends CommonConfiguration, PlatformSpecificBuildOptions, Hooks {
   /**
-   * Whether to include *all* of the submodules node_modules directories
-   * @default false
-   */
-  includeSubNodeModules?: boolean
-
-  /**
    * Whether to use [electron-compile](http://github.com/electron/electron-compile) to compile app. Defaults to `true` if `electron-compile` in the dependencies. And `false` if in the `devDependencies` or doesn't specified.
    */
   readonly electronCompile?: boolean

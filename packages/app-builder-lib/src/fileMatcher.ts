@@ -163,7 +163,19 @@ export function getMainFileMatchers(
     patterns.push("package.json")
   }
 
-  customFirstPatterns.push("!**/node_modules")
+  let insertExculdeNodeModulesIndex = -1
+  for (let i = 0; i < patterns.length; i++) {
+    if (!patterns[i].startsWith("!") && (patterns[i].includes("/node_modules") || patterns[i].includes("node_modules/"))) {
+      insertExculdeNodeModulesIndex = i
+      break
+    }
+  }
+
+  if (insertExculdeNodeModulesIndex !== -1) {
+    patterns.splice(insertExculdeNodeModulesIndex, 0, ...["!**/node_modules/**"])
+  } else {
+    customFirstPatterns.push("!**/node_modules/**")
+  }
 
   // https://github.com/electron-userland/electron-builder/issues/1482
   const relativeBuildResourceDir = path.relative(matcher.from, buildResourceDir)
