@@ -10,7 +10,7 @@
           "console": "integratedTerminal",
           "internalConsoleOptions": "openOnFirstSessionStart",
           "env": {
-            "TEST_FILES": "globTest"
+            "TEST_FILES": "BuildTest"
           }
       }
   ]

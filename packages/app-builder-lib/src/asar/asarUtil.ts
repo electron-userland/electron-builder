@@ -89,19 +89,19 @@ export class AsarPackager {
         unpackedFiles.add(dest)
         return
       }
-      if (this.config.options.smartUnpack !== false) {
-        // https://github.com/electron-userland/electron-builder/issues/2679
-        // let shouldUnpack = false
-        // ffprobe-static and ffmpeg-static are known packages to always unpack
-        const moduleName = path.basename(path.dirname(file))
-        const fileBaseName = path.basename(file)
-        const hasExtension = path.extname(fileBaseName)
-        if (moduleName === "ffprobe-static" || moduleName === "ffmpeg-static" || isLibOrExe(file)) {
-          unpackedFiles.add(dest)
-        } else if (!hasExtension && !!isBinaryFileSync(file)) {
-          unpackedFiles.add(dest)
-        }
-      }
+      // if (this.config.options.smartUnpack !== false) {
+      //   // https://github.com/electron-userland/electron-builder/issues/2679
+      //   // let shouldUnpack = false
+      //   // ffprobe-static and ffmpeg-static are known packages to always unpack
+      //   const moduleName = path.basename(path.dirname(file))
+      //   const fileBaseName = path.basename(file)
+      //   const hasExtension = path.extname(fileBaseName)
+      //   if (moduleName === "ffprobe-static" || moduleName === "ffmpeg-static" || isLibOrExe(file)) {
+      //     unpackedFiles.add(dest)
+      //   } else if (!hasExtension && !!isBinaryFileSync(file)) {
+      //     unpackedFiles.add(dest)
+      //   }
+      // }
     }
     const autoCopy = async (transformedData: string | Buffer | undefined, source: string, destination: string) => {
       const stat = await fs.lstat(source)
@@ -134,9 +134,9 @@ export class AsarPackager {
     }
 
     for await (const fileSet of fileSets) {
-      // if (this.config.options.smartUnpack !== false) {
-      //   detectUnpackedDirs(fileSet, unpackedFiles, this.config.defaultDestination)
-      // }
+      if (this.config.options.smartUnpack !== false) {
+        detectUnpackedDirs(fileSet, unpackedFiles, this.config.defaultDestination)
+      }
       for (let i = 0; i < fileSet.files.length; i++) {
         const file = fileSet.files[i]
         const transformedData = fileSet.transformedFiles?.get(i)
