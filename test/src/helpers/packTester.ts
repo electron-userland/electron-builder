@@ -29,6 +29,7 @@ export const snapTarget = Platform.LINUX.createTarget("snap", Arch.x64)
 
 export interface AssertPackOptions {
   readonly projectDirCreated?: (projectDir: string, tmpDir: TmpDir) => Promise<any>
+  readonly beforePack?: (projectDir: string, tmpDir: TmpDir) => Promise<any>
   readonly packed?: (context: PackedContext) => Promise<any>
   readonly expectedArtifacts?: Array<string>
 
@@ -91,6 +92,7 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
   }
 
   const projectDirCreated = checkOptions.projectDirCreated
+  const beforePack = checkOptions.beforePack
   let projectDir = path.join(__dirname, "..", "..", "fixtures", fixtureName)
   // const isDoNotUseTempDir = platform === "darwin"
   const customTmpDir = process.env.TEST_APP_TMP_DIR
@@ -116,6 +118,10 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
     (async () => {
       if (projectDirCreated != null) {
         await projectDirCreated(projectDir, tmpDir)
+      }
+
+      if(beforePack != null) {
+        await beforePack(projectDir, tmpDir)
       }
 
       if (checkOptions.isInstallDepsBefore) {
