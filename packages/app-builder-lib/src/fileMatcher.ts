@@ -15,13 +15,13 @@ export const excludedNames =
   ".git,.hg,.svn,CVS,RCS,SCCS," +
   "__pycache__,.DS_Store,thumbs.db,.gitignore,.gitkeep,.gitattributes,.npmignore," +
   ".idea,.vs,.flowconfig,.jshintrc,.eslintrc,.circleci," +
-  ".yarn-integrity,.yarn-metadata.json,yarn-error.log,yarn.lock,package-lock.json,npm-debug.log," +
+  ".yarn-integrity,.yarn-metadata.json,yarn-error.log,yarn.lock,package-lock.json,npm-debug.log,pnpm-lock.yaml," +
   "appveyor.yml,.travis.yml,circle.yml,.nyc_output,.husky,.github,electron-builder.env"
 
 export const excludedExts =
   "iml,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,suo,xproj,cc,d.ts," +
   // https://github.com/electron-userland/electron-builder/issues/7512
-  "mk,a,o,forge-meta"
+  "mk,a,o,obj,forge-meta"
 
 function ensureNoEndSlash(file: string): string {
   if (path.sep !== "/") {

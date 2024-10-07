@@ -1,28 +1,21 @@
-import BluebirdPromise from "bluebird-lst"
-import { createHash } from "crypto"
-import { createReadStream } from "fs"
 import { readdir } from "fs/promises"
 import * as path from "path"
-import { readAsarHeader, NodeIntegrity } from "./asar"
+import * as asar from "@electron/asar"
+import { FilesystemEntry, FilesystemFileEntry } from "@electron/asar/lib/filesystem"
 
 export interface AsarIntegrityOptions {
   readonly resourcesPath: string
   readonly resourcesRelativePath: string
 }
 
-export interface HeaderHash {
-  algorithm: "SHA256"
-  hash: string
-}
-
 export interface AsarIntegrity {
-  [key: string]: HeaderHash
+  [key: string]: any
 }
 
 export async function computeData({ resourcesPath, resourcesRelativePath }: AsarIntegrityOptions): Promise<AsarIntegrity> {
   // sort to produce constant result
   const names = (await readdir(resourcesPath)).filter(it => it.endsWith(".asar")).sort()
-  const checksums = await BluebirdPromise.map(names, it => hashHeader(path.join(resourcesPath, it)))
+  const checksums = names.map(it => asar.getRawHeader(path.join(resourcesPath, it)))
 
   const result: AsarIntegrity = {}
   for (let i = 0; i < names.length; i++) {
@@ -31,79 +24,39 @@ export async function computeData({ resourcesPath, resourcesRelativePath }: Asar
   return result
 }
 
-async function hashHeader(file: string): Promise<HeaderHash> {
-  const hash = createHash("sha256")
-  const { header } = await readAsarHeader(file)
-  hash.update(header)
-  return {
-    algorithm: "SHA256",
-    hash: hash.digest("hex"),
+export function checkFileInArchive(asarFile: string, relativeFile: string, messagePrefix: string) {
+  function error(text: string) {
+    return new Error(`${messagePrefix} "${relativeFile}" in the "${asarFile}" ${text}`)
   }
-}
-
-export function hashFile(file: string, blockSize = 4 * 1024 * 1024): Promise<NodeIntegrity> {
-  return new Promise<NodeIntegrity>((resolve, reject) => {
-    const hash = createHash("sha256")
-
-    const blocks = new Array<string>()
-
-    let blockBytes = 0
-    let blockHash = createHash("sha256")
-
-    function updateBlockHash(chunk: Buffer) {
-      let off = 0
-      while (off < chunk.length) {
-        const toHash = Math.min(blockSize - blockBytes, chunk.length - off)
-        blockHash.update(chunk.slice(off, off + toHash))
-        off += toHash
-        blockBytes += toHash
-
-        if (blockBytes === blockSize) {
-          blocks.push(blockHash.digest("hex"))
-          blockHash = createHash("sha256")
-          blockBytes = 0
-        }
-      }
+  let stat: FilesystemEntry
+  try {
+    // log.error({ asarFile, relativeFile }, "asar check")
+    stat = asar.statFile(asarFile, relativeFile, false)
+  } catch (e: any) {
+    if (e.message.includes("Cannot read properties of undefined (reading 'link')")) {
+      throw error("does not exist. Seems like a wrong configuration.")
     }
-
-    createReadStream(file)
-      .on("data", it => {
-        // Note that `it` is a Buffer anyway so this cast is a no-op
-        updateBlockHash(Buffer.from(it))
-        hash.update(it)
-      })
-      .on("error", reject)
-      .on("end", () => {
-        if (blockBytes !== 0) {
-          blocks.push(blockHash.digest("hex"))
-        }
-        resolve({
-          algorithm: "SHA256",
-          hash: hash.digest("hex"),
-          blockSize,
-          blocks,
-        })
-      })
-  })
+    throw error(`is corrupted: ${e}`)
+  }
+  if ((stat as FilesystemFileEntry).size === 0) {
+    throw error(`is corrupted: size 0`)
+  }
+  return stat
 }
 
-export function hashFileContents(contents: Buffer | string, blockSize = 4 * 1024 * 1024): NodeIntegrity {
-  const buffer = Buffer.from(contents)
-  const hash = createHash("sha256")
-  hash.update(buffer)
+export function readAsarJson(archive: string, file: string) {
+  const fileString = asar.extractFile(archive, file).toString()
+  return Promise.resolve(JSON.parse(fileString))
+}
 
-  const blocks = new Array<string>()
+export function readAsarFile(archive: string, file: string, followSymlinks = false) {
+  return asar.statFile(archive, file, followSymlinks)
+}
 
-  for (let off = 0; off < buffer.length; off += blockSize) {
-    const blockHash = createHash("sha256")
-    blockHash.update(buffer.slice(off, off + blockSize))
-    blocks.push(blockHash.digest("hex"))
-  }
+export function readAsarHeader(archive: string) {
+  return asar.getRawHeader(archive)
+}
 
-  return {
-    algorithm: "SHA256",
-    hash: hash.digest("hex"),
-    blockSize,
-    blocks,
-  }
+export function listFiles(archive: string, options: asar.ListOptions) {
+  return asar.listPackage(archive, options)
 }
