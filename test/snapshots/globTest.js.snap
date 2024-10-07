@@ -9792,7 +9792,7 @@ Object {
 }
 `;
 
-exports[`outside link 1`] = `"Cannot copy file foo symlinked to file outside the package as that violates asar security integrity"`;
+exports[`outside link 1`] = `"Cannot copy file (foo) symlinked to file (foo) outside the package as that violates asar security integrity"`;
 
 exports[`unpackDir 1`] = `
 Object {
