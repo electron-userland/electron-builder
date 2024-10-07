@@ -330,6 +330,13 @@ export async function dirSize(dirPath: string): Promise<number> {
   return (await Promise.all(entrySizes)).reduce((entrySize, totalSize) => entrySize + totalSize, 0)
 }
 
+export function isSubPath(parent: string, child: string) {
+  const parentPath = path.resolve(parent)
+  const childPath = path.resolve(child)
+  const relativePath = path.relative(parentPath, childPath)
+  return !relativePath.startsWith("..")
+}
+
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const DO_NOT_USE_HARD_LINKS = (file: string) => false
 // eslint-disable-next-line @typescript-eslint/no-unused-vars

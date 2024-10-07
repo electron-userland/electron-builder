@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { log, CONCURRENCY } from "builder-util"
+import { log, CONCURRENCY, isSubPath } from "builder-util"
 import { lstat, readdir, lstatSync } from "fs-extra"
 import * as path from "path"
 import { excludedNames, FileMatcher } from "../fileMatcher"
@@ -158,8 +158,7 @@ export class NodeModuleCopyHelper extends FileCopyHelper {
 
     for (const [file, index] of symlinkFiles) {
       const resolvedPath = realpathSync(file)
-      const absolutePath = path.resolve(resolvedPath)
-      if (!absolutePath.startsWith(path.resolve(tmpPath))) {
+      if (!isSubPath(tmpPath, resolvedPath)) {
         // delete symlink file if it links outside module (e.g.
         log.debug({ module: moduleName, file: file, resolvedPath: resolvedPath }, `deleting symlink outside module`)
         result[index] = undefined
