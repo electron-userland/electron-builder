@@ -20,7 +20,7 @@ export function isLibOrExe(file: string): boolean {
 }
 
 /** @internal */
-export function detectUnpackedDirs(fileSet: ResolvedFileSet, autoUnpackDirs: Set<string>, rootForAppFilesWithoutAsar: string) {
+export function detectUnpackedDirs(fileSet: ResolvedFileSet, autoUnpackDirs: Set<string>, defaultDestination: string) {
   const dirToCreate = new Map<string, Array<string>>()
   const metadata = fileSet.metadata
 
@@ -66,8 +66,8 @@ export function detectUnpackedDirs(fileSet: ResolvedFileSet, autoUnpackDirs: Set
     }
 
     const packageDir = file.substring(0, nextSlashIndex)
-    const packageDirPathInArchive = path.relative(rootForAppFilesWithoutAsar, getDestinationPath(packageDir, fileSet))
-    const pathInArchive = path.relative(rootForAppFilesWithoutAsar, getDestinationPath(file, fileSet))
+    const packageDirPathInArchive = path.relative(defaultDestination, getDestinationPath(packageDir, fileSet))
+    const pathInArchive = path.relative(defaultDestination, getDestinationPath(file, fileSet))
     if (autoUnpackDirs.has(packageDirPathInArchive)) {
       // if package dir is unpacked, any file also unpacked
       addParents(pathInArchive, packageDirPathInArchive)
