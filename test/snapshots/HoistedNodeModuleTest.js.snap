@@ -368,16 +368,8 @@ Object {
                   },
                   "unpacked": true,
                 },
-                "node_gyp_bins": Object {
-                  "files": Object {
-                    "python3": Object {
-                      "size": 5490456,
-                      "unpacked": true,
-                    },
-                  },
-                  "unpacked": true,
-                },
               },
+              "unpacked": true,
             },
             "deps": Object {
               "files": Object {
