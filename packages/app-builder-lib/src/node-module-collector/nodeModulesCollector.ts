@@ -48,11 +48,10 @@ export abstract class NodeModulesCollector {
         const version = value.version || ""
         const newKey = `${key}@${version}`
         this.dependencyPathMap.set(newKey, path.normalize(value.path))
-        if (!result[parentKey]?.dependencies) {
-          result[parentKey] = { dependencies: [] }
-        } else {
-          result[parentKey].dependencies.push(newKey)
+        if (!result[parentKey].dependencies) {
+          result[parentKey].dependencies = []
         }
+        result[parentKey].dependencies.push(newKey)
         flatten(value, newKey)
       }
     }
