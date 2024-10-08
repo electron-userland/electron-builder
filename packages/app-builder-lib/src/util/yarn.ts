@@ -10,7 +10,7 @@ import { getProjectRootPath } from "@electron/rebuild/lib/search-module"
 import { rebuild as remoteRebuild } from "./rebuild/rebuild"
 import { executeAppBuilderAndWriteJson } from "./appBuilder"
 import { RebuildMode } from "@electron/rebuild/lib/types"
-import { PM, detect, getNpmVersion } from "node-module-collector"
+import { PM, detect, getNpmVersion } from "../node-module-collector"
 
 export async function installOrRebuild(config: Configuration, appDir: string, options: RebuildOptions, forceInstall = false) {
   const effectiveOptions: RebuildOptions = {
