@@ -1,7 +1,10 @@
-import { hoist, type HoisterTree, type HoisterResult } from "./hoist"
-import * as path from "path"
+import {
+  hoist,
+  type HoisterTree,
+  type HoisterResult,
+} from "./hoist"
+import path from 'path'
 import { NodeModuleInfo, DependencyTree, DependencyGraph } from "./types"
-import { log } from "builder-util"
 
 export abstract class NodeModulesCollector {
   private nodeModules: NodeModuleInfo[]
@@ -23,7 +26,7 @@ export abstract class NodeModulesCollector {
         identName: name,
         reference: key.match(/@?[^@]+@?(.+)?/)![1] || ``,
         dependencies: new Set<HoisterTree>(),
-        peerNames: new Set<string>([]),
+        peerNames: new Set<string>([])
       }
       nodes.set(key, node)
 
@@ -35,7 +38,7 @@ export abstract class NodeModulesCollector {
   }
 
   public TransToDependencyGraph(tree: DependencyTree): DependencyGraph {
-    const result: DependencyGraph = { ".": { dependencies: [] } }
+    const result: DependencyGraph = { ".": {} }
 
     const flatten = (node: DependencyTree, parentKey = ".") => {
       const dependencies = node.dependencies || {}
@@ -48,10 +51,10 @@ export abstract class NodeModulesCollector {
         const version = value.version || ""
         const newKey = `${key}@${version}`
         this.dependencyPathMap.set(newKey, path.normalize(value.path))
-        if (!result[parentKey].dependencies) {
-          result[parentKey].dependencies = []
+        if (!result[parentKey]?.dependencies) {
+          result[parentKey] = { dependencies: [] }
         }
-        result[parentKey].dependencies.push(newKey)
+        result[parentKey].dependencies!.push(newKey)
         flatten(value, newKey)
       }
     }
@@ -66,22 +69,18 @@ export abstract class NodeModulesCollector {
   private _getNodeModules(dependencies: Set<HoisterResult>, result: NodeModuleInfo[]) {
     if (dependencies.size === 0) return
 
-    for (const d of dependencies.values()) {
+    for (let d of dependencies.values()) {
       const reference = [...d.references][0]
       const p = this.dependencyPathMap.get(`${d.name}@${reference}`)
-      if (p === undefined) {
-        log.warn(`Cannot find path for ${d.name}@${reference}`)
-        continue
-      }
-      const node = {
+      let node = {
         name: d.name,
         version: reference,
-        dir: p,
+        dir: p
       } as NodeModuleInfo
       result.push(node)
       if (d.dependencies.size > 0) {
-        node["dependencies"] = []
-        this._getNodeModules(d.dependencies, node["dependencies"])
+        node['dependencies'] = []
+        this._getNodeModules(d.dependencies, node['dependencies'])
       }
     }
     result.sort((a, b) => a.name.localeCompare(b.name))
