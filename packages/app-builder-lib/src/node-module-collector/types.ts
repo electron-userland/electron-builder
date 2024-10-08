@@ -21,5 +21,5 @@ export interface DependencyGraph {
 }
 
 interface PackageDependencies {
-  dependencies?: string[]
+  dependencies: string[]
 }

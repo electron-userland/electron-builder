@@ -35,7 +35,7 @@ export abstract class NodeModulesCollector {
   }
 
   public TransToDependencyGraph(tree: DependencyTree): DependencyGraph {
-    const result: DependencyGraph = { ".": {} }
+    const result: DependencyGraph = { ".": { dependencies: [] } }
 
     const flatten = (node: DependencyTree, parentKey = ".") => {
       const dependencies = node.dependencies || {}
