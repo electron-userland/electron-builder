@@ -1,5 +1,5 @@
 import { hoist, type HoisterTree, type HoisterResult } from "./hoist"
-import path from "path"
+import * as path from "path"
 import { NodeModuleInfo, DependencyTree, DependencyGraph } from "./types"
 import { log } from "builder-util"
 
