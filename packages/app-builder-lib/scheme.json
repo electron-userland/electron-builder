@@ -1986,7 +1986,7 @@
               "type": "null"
             }
           ],
-          "description": "`[Desktop Actions <ActionName>]` metadata entries (name to value).\n\nConfig Example:\nNewWindow: {\n   Name: 'New Window',\n   Exec: 'app --new-window',\n}"
+          "description": "`[Desktop Actions <ActionName>]` metadata entries (name to value).\n\nConfig Example:\n```js\ndesktopActions: {\n   NewWindow: {\n      Name: 'New Window',\n      Exec: 'app --new-window',\n   }\n}\n```"
         },
         "entry": {
           "anyOf": [

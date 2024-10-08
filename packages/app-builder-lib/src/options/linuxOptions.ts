@@ -14,10 +14,14 @@ export interface LinuxDesktopFile {
    * `[Desktop Actions <ActionName>]` metadata entries (name to value).
    *
    * Config Example:
-   * NewWindow: {
-   *    Name: 'New Window',
-   *    Exec: 'app --new-window',
+   * ```js
+   * desktopActions: {
+   *    NewWindow: {
+   *       Name: 'New Window',
+   *       Exec: 'app --new-window',
+   *    }
    * }
+   * ```
    */
   desktopActions?: {
     [ActionName: string]: any
