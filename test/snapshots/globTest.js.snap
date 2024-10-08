@@ -9805,12 +9805,27 @@ Object {
   "files": Object {
     "assets": Object {
       "files": Object {
-        "file": Object {
+        "file-symlink2": Object {
+          "link": "assets/file2",
+        },
+        "file1": Object {
           "size": 4,
           "unpacked": true,
         },
-        "file-symlink": Object {
-          "link": "assets/file",
+        "file2": Object {
+          "size": 4,
+          "unpacked": true,
+        },
+        "subdir": Object {
+          "files": Object {
+            "file-symlink1": Object {
+              "link": "assets/file1",
+            },
+            "file3": Object {
+              "size": 4,
+              "unpacked": true,
+            },
+          },
         },
       },
     },
@@ -9849,6 +9864,9 @@ Object {
           "size": 2,
         },
       },
+    },
+    "file-symlink3": Object {
+      "link": "assets/subdir/file3",
     },
     "index.html": Object {
       "offset": "4",
@@ -9901,12 +9919,27 @@ Object {
     },
     "assets": Object {
       "files": Object {
-        "file": Object {
+        "file-symlink2": Object {
+          "link": "assets/file2",
+        },
+        "file1": Object {
           "size": 4,
           "unpacked": true,
         },
-        "file-symlink": Object {
-          "link": "assets/file",
+        "file2": Object {
+          "size": 4,
+          "unpacked": true,
+        },
+        "subdir": Object {
+          "files": Object {
+            "file-symlink1": Object {
+              "link": "assets/file1",
+            },
+            "file3": Object {
+              "size": 4,
+              "unpacked": true,
+            },
+          },
         },
       },
     },
@@ -9945,6 +9978,9 @@ Object {
           "size": 2,
         },
       },
+    },
+    "file-symlink3": Object {
+      "link": "assets/subdir/file3",
     },
     "index.html": Object {
       "offset": "114",

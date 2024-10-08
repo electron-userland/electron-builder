@@ -109,7 +109,7 @@ export class AsarPackager {
         }
 
         await this.copyFileOrData(undefined, source, symlinkDestination, stat)
-        const target = path.relative(path.dirname(symlinkDestination), symlinkDestination)
+        const target = path.relative(path.dirname(destination), symlinkDestination)
         fsNode.symlinkSync(target, destination)
 
         copiedFiles.add(symlinkDestination)

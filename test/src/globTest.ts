@@ -9,7 +9,9 @@ import { verifySmartUnpack } from "./helpers/verifySmartUnpack"
 
 async function createFiles(appDir: string) {
   await Promise.all([
-    outputFile(path.join(appDir, "assets", "file"), "data"),
+    outputFile(path.join(appDir, "assets", "file1"), "data"),
+    outputFile(path.join(appDir, "assets", "file2"), "data"),
+    outputFile(path.join(appDir, "assets", "subdir", "file3"), "data"),
     outputFile(path.join(appDir, "b2", "file"), "data"),
     outputFile(path.join(appDir, "do-not-unpack-dir", "file.json"), "{}").then(() => fs.writeFile(path.join(appDir, "do-not-unpack-dir", "must-be-not-unpacked"), "{}")),
   ])
@@ -18,7 +20,9 @@ async function createFiles(appDir: string) {
   await fs.mkdir(dir, { recursive: true })
   await fs.writeFile(path.join(dir, "file-in-asar"), "{}")
 
-  await fs.symlink(path.join(appDir, "assets", "file"), path.join(appDir, "assets", "file-symlink"))
+  await fs.symlink(path.join(appDir, "assets", "file1"), path.join(appDir, "assets", "subdir", "file-symlink1")) // "reverse" symlink up one directory
+  await fs.symlink(path.join(appDir, "assets", "file2"), path.join(appDir, "assets", "file-symlink2")) // same dir symlink
+  await fs.symlink(path.join(appDir, "assets", "subdir", "file3"), path.join(appDir, "file-symlink3")) // symlink down
 }
 
 test.ifNotWindows.ifDevOrLinuxCi(
