@@ -161,9 +161,6 @@ importers:
       minimatch:
         specifier: ^10.0.0
         version: 10.0.1
-      node-module-collector:
-        specifier: 1.1.4
-        version: 1.1.4
       resedit:
         specifier: ^1.7.0
         version: 1.7.1
@@ -4930,9 +4927,6 @@ packages:
 
   node-int64@0.4.0:
     resolution: {integrity: sha512-O5lz91xSOeoXP6DulyHfllpq+Eg00MWitZIbtPfoSEvqIHdl5gfcY6hYzDWnj0qD5tz52PI08u9qUvSVeUBeHw==}
-
-  node-module-collector@1.1.4:
-    resolution: {integrity: sha512-GFpfLl37pOP/IMZ0VdEqBgDvJ6lpXGYwJuwjw62Gp3VJV9ys/QhHwePDC2DSelK2LW4ORs/HJOmp/9Huosy6Ow==}
 
   node-releases@2.0.14:
     resolution: {integrity: sha512-y10wOWt8yZpqXmOgRo77WaHEmhYQYGNA6y421PKsKYWEK8aW+cqAphborZDhqfyKrbZEN92CN1X2KbafY2s7Yw==}
@@ -11984,8 +11978,6 @@ snapshots:
       - supports-color
 
   node-int64@0.4.0: {}
-
-  node-module-collector@1.1.4: {}
 
   node-releases@2.0.14: {}
 
