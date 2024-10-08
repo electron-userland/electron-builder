@@ -1,9 +1,5 @@
-import {
-  hoist,
-  type HoisterTree,
-  type HoisterResult,
-} from "./hoist"
-import path from 'path'
+import { hoist, type HoisterTree, type HoisterResult } from "./hoist"
+import path from "path"
 import { NodeModuleInfo, DependencyTree, DependencyGraph } from "./types"
 
 export abstract class NodeModulesCollector {
@@ -26,7 +22,7 @@ export abstract class NodeModulesCollector {
         identName: name,
         reference: key.match(/@?[^@]+@?(.+)?/)![1] || ``,
         dependencies: new Set<HoisterTree>(),
-        peerNames: new Set<string>([])
+        peerNames: new Set<string>([]),
       }
       nodes.set(key, node)
 
@@ -69,18 +65,18 @@ export abstract class NodeModulesCollector {
   private _getNodeModules(dependencies: Set<HoisterResult>, result: NodeModuleInfo[]) {
     if (dependencies.size === 0) return
 
-    for (let d of dependencies.values()) {
+    for (const d of dependencies.values()) {
       const reference = [...d.references][0]
       const p = this.dependencyPathMap.get(`${d.name}@${reference}`)
-      let node = {
+      const node = {
         name: d.name,
         version: reference,
-        dir: p
+        dir: p,
       } as NodeModuleInfo
       result.push(node)
       if (d.dependencies.size > 0) {
-        node['dependencies'] = []
-        this._getNodeModules(d.dependencies, node['dependencies'])
+        node["dependencies"] = []
+        this._getNodeModules(d.dependencies, node["dependencies"])
       }
     }
     result.sort((a, b) => a.name.localeCompare(b.name))
