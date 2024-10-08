@@ -58,7 +58,15 @@
           ]
         },
         "desktop": {
-          "description": "The [Desktop file](https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files) entries (name to value)."
+          "anyOf": [
+            {
+              "$ref": "#/definitions/LinuxDesktopFile"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The [Desktop file](https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files)"
         },
         "executableArgs": {
           "anyOf": [
@@ -576,7 +584,15 @@
           ]
         },
         "desktop": {
-          "description": "The [Desktop file](https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files) entries (name to value)."
+          "anyOf": [
+            {
+              "$ref": "#/definitions/LinuxDesktopFile"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The [Desktop file](https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files)"
         },
         "executableArgs": {
           "anyOf": [
@@ -1111,7 +1127,15 @@
           ]
         },
         "desktop": {
-          "description": "The [Desktop file](https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files) entries (name to value)."
+          "anyOf": [
+            {
+              "$ref": "#/definitions/LinuxDesktopFile"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The [Desktop file](https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files)"
         },
         "executableArgs": {
           "anyOf": [
@@ -1645,7 +1669,15 @@
           ]
         },
         "desktop": {
-          "description": "The [Desktop file](https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files) entries (name to value)."
+          "anyOf": [
+            {
+              "$ref": "#/definitions/LinuxDesktopFile"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The [Desktop file](https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files)"
         },
         "detectUpdateChannel": {
           "default": true,
@@ -1941,6 +1973,35 @@
       },
       "type": "object"
     },
+    "LinuxDesktopFile": {
+      "additionalProperties": false,
+      "description": "Example Spec: https://specifications.freedesktop.org/desktop-entry-spec/latest/example.html",
+      "properties": {
+        "desktopActions": {
+          "anyOf": [
+            {
+              "typeof": "function"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "`[Desktop Actions <ActionName>]` metadata entries (name to value).\n\nConfig Example:\nNewWindow: {\n   Name: 'New Window',\n   Exec: 'app --new-window',\n}"
+        },
+        "entry": {
+          "anyOf": [
+            {
+              "typeof": "function"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "`[Desktop Entry]` metadata entries (name to value). Overwrites default values calculated by electron-builder"
+        }
+      },
+      "type": "object"
+    },
     "LinuxTargetSpecificOptions": {
       "additionalProperties": false,
       "properties": {
@@ -2010,7 +2071,15 @@
           ]
         },
         "desktop": {
-          "description": "The [Desktop file](https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files) entries (name to value)."
+          "anyOf": [
+            {
+              "$ref": "#/definitions/LinuxDesktopFile"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The [Desktop file](https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files)"
         },
         "executableArgs": {
           "anyOf": [
@@ -5463,7 +5532,15 @@
           ]
         },
         "desktop": {
-          "description": "The [Desktop file](https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files) entries (name to value)."
+          "anyOf": [
+            {
+              "$ref": "#/definitions/LinuxDesktopFile"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The [Desktop file](https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files)"
         },
         "environment": {
           "anyOf": [

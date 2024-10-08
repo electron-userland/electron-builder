@@ -92,16 +92,14 @@ test.ifNotCiMac(
         return Promise.all([
           modifyPackageJson(projectDir, data => {
             data.devDependencies = {
-              "semver": "6.3.1",
+              semver: "6.3.1",
               ...data.devDependencies,
             }
           }),
         ])
       },
       packed: context => {
-        return Promise.all([
-          assertThat(path.join(context.getResources(Platform.LINUX), "app", "node_modules", "semver")).doesNotExist(),
-        ])
+        return Promise.all([assertThat(path.join(context.getResources(Platform.LINUX), "app", "node_modules", "semver")).doesNotExist()])
       },
     }
   )
@@ -124,7 +122,7 @@ test.ifDevOrLinuxCi(
           modifyPackageJson(projectDir, data => {
             data.dependencies = {
               "electron-updater": "6.3.9",
-              "semver":"6.3.1",
+              semver: "6.3.1",
               ...data.dependencies,
             }
           }),
@@ -137,9 +135,7 @@ test.ifDevOrLinuxCi(
           assertThat(path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "node_modules", "electron-updater", "node_modules")).isDirectory(),
           assertThat(path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "others", "node_modules")).doesNotExist(),
           assertThat(path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "submodule-1-test", "node_modules")).isDirectory(),
-          assertThat(
-            path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "submodule-1-test", "node_modules", "package.json")
-          ).isFile(),
+          assertThat(path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "submodule-1-test", "node_modules", "package.json")).isFile(),
         ])
       },
     }
@@ -190,9 +186,9 @@ test.ifDevOrLinuxCi(
       targets: Platform.LINUX.createTarget(DIR_TARGET),
       config: {
         asar: false,
-        // should use **/ instead of */, 
+        // should use **/ instead of */,
         // we use the related path to match, so the relative path is submodule-1-test/node_modules
-        // */ will not match submodule-1-test/node_modules 
+        // */ will not match submodule-1-test/node_modules
         files: ["**/*", "**/submodule-1-test/node_modules/**"],
       },
     },
@@ -211,9 +207,7 @@ test.ifDevOrLinuxCi(
       packed: context => {
         return Promise.all([
           assertThat(path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "submodule-1-test", "node_modules")).isDirectory(),
-          assertThat(
-            path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "submodule-1-test", "node_modules", "package.json")
-          ).isFile(),
+          assertThat(path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "submodule-1-test", "node_modules", "package.json")).isFile(),
           assertThat(path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "submodule-2-test", "node_modules")).doesNotExist(),
         ])
       },
@@ -243,9 +237,7 @@ test.ifDevOrLinuxCi(
         ])
       },
       packed: context => {
-        return Promise.all([
-          assertThat(path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "submodule-1-test", "node_modules")).doesNotExist(),
-        ])
+        return Promise.all([assertThat(path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "submodule-1-test", "node_modules")).doesNotExist()])
       },
     }
   )
@@ -273,9 +265,7 @@ test.ifDevOrLinuxCi(
         ])
       },
       packed: context => {
-        return Promise.all([
-          assertThat(path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "submodule-1-test", "node_modules")).doesNotExist(),
-        ])
+        return Promise.all([assertThat(path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "submodule-1-test", "node_modules")).doesNotExist()])
       },
     }
   )
