@@ -16,6 +16,7 @@ import { promisify } from "util"
 import pathSorter from "path-sort"
 import { TmpDir } from "temp-file"
 import { readAsar } from "app-builder-lib/out/asar/asar"
+import { detect, PM } from "app-builder-lib/out/node-module-collector"
 import { executeAppBuilderAsJson } from "app-builder-lib/out/util/appBuilder"
 import { CSC_LINK, WIN_CSC_LINK } from "./codeSignData"
 import { assertThat } from "./fileAssert"
@@ -120,7 +121,9 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
 
       if (checkOptions.isInstallDepsBefore) {
         // bin links required (e.g. for node-pre-gyp - if package refers to it in the install script)
-        await spawn(process.platform === "win32" ? "npm.cmd" : "npm", ["install", "--production", "--legacy-peer-deps"], {
+        const pm = await detect({ cwd: projectDir })
+        let cmd = process.platform === "win32" ?  pm+".cmd":pm
+        await spawn(cmd, ["install"], {
           cwd: projectDir,
         })
       }
