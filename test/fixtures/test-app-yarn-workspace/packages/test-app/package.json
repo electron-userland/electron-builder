@@ -21,5 +21,8 @@
   "dependencies": {
     "electron-log": "2.2.9",
     "@sentry/core": "0.5.4"
+  },
+  "optionalDependencies": {
+    "unresolved": "^2.0.5"
   }
 }
