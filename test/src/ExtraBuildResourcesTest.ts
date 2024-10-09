@@ -181,9 +181,9 @@ test.ifNotWindows(
   app({
     targets: linuxDirTarget,
     config: {
-      electronDist: (_context) => {
+      electronDist: _context => {
         return Promise.resolve(getElectronCacheDir())
-      }
+      },
     },
   })
 )
