@@ -1,6 +1,5 @@
 /.vscode/
 node_modules
-
 *.log
 
 /.idea/compiler.xml
