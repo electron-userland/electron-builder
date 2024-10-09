@@ -131,6 +131,9 @@ test.ifDevOrLinuxCi("failed peer dep", () => {
     "test-app-one",
     {
       targets: Platform.LINUX.createTarget(DIR_TARGET),
+      config: {
+                files: ["!pnpm-lock.yaml"],
+              },
     },
     {
       isInstallDepsBefore: true,
@@ -145,7 +148,7 @@ test.ifDevOrLinuxCi("failed peer dep", () => {
             "react-dom": "15.2.1",
           }
           }),
-          outputFile(path.join(projectDir, "yarn.lock"), "data"),
+          outputFile(path.join(projectDir, "pnpm-lock.yaml"), ""),
         ])
       },
       packed: context => {
