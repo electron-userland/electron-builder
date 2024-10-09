@@ -58,6 +58,7 @@ export class AsarPackager {
       unpack: unpackGlob,
       unpackDir: unpackGlob,
       ordering,
+      dot: true,
     }
     // override logger temporarily to clean up console (electron/asar does some internal logging that blogs up the default electron-builder logs)
     const consoleLogger = console.log
