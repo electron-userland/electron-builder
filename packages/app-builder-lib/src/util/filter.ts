@@ -2,7 +2,6 @@ import { Filter } from "builder-util"
 import { Stats } from "fs-extra"
 import { Minimatch } from "minimatch"
 import * as path from "path"
-import { NODE_MODULES_PATTERN } from "../fileTransformer"
 
 /** @internal */
 export function hasMagic(pattern: Minimatch) {
@@ -25,17 +24,8 @@ function ensureEndSlash(s: string) {
   return s.length === 0 || s.endsWith(path.sep) ? s : s + path.sep
 }
 
-function getRelativePath(file: string, srcWithEndSlash: string) {
-  if (!file.startsWith(srcWithEndSlash)) {
-    const index = file.indexOf(NODE_MODULES_PATTERN)
-    if (index < 0) {
-      throw new Error(`${file} must be under ${srcWithEndSlash}`)
-    } else {
-      return file.substring(index + 1 /* leading slash */)
-    }
-  }
-
-  let relative = file.substring(srcWithEndSlash.length)
+function getRelativePath(file: string, srcWithEndSlash: string, stat: Stats) {
+  let relative = (stat as any).relativeNodeModulesDir || file.substring(srcWithEndSlash.length)
   if (path.sep === "\\") {
     if (relative.startsWith("\\")) {
       // windows problem: double backslash, the above substring call removes root path with a single slash, so here can me some leftovers
@@ -54,7 +44,7 @@ export function createFilter(src: string, patterns: Array<Minimatch>, excludePat
       return true
     }
 
-    let relative = getRelativePath(file, srcWithEndSlash)
+    let relative = getRelativePath(file, srcWithEndSlash, stat)
 
     // filter the root node_modules, but not a subnode_modules (like /appDir/others/foo/node_modules/blah)
     if (relative === "node_modules") {
