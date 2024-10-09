@@ -1,5 +1,11 @@
 # builder-util
 
+## 26.0.0-alpha.0
+
+### Major Changes
+
+- [#8562](https://github.com/electron-userland/electron-builder/pull/8562) [`b8185d48`](https://github.com/electron-userland/electron-builder/commit/b8185d48a75e65932196700e28bf71613dd141b4) Thanks [@beyondkmp](https://github.com/beyondkmp)! - support including node_modules in other subdirectories
+
 ## 25.1.7
 
 ### Patch Changes

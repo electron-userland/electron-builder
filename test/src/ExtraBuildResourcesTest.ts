@@ -122,7 +122,7 @@ test.ifAll.ifNotWindows(
             publish: null,
             // https://github.com/electron-userland/electron-builder/issues/1355
             linux: {
-              target: ["AppImage", "deb", "rpm"],
+              target: ["AppImage", "deb", "rpm", "pacman"],
             },
             compression: "store",
           },
@@ -175,6 +175,18 @@ test.ifNotWindows(
     targets: linuxDirTarget,
     config: {
       electronDist: getElectronCacheDir(),
+    },
+  })
+)
+
+test.ifNotWindows(
+  "electronDist as callback function for path to local folder with electron builds zipped ",
+  app({
+    targets: linuxDirTarget,
+    config: {
+      electronDist: _context => {
+        return Promise.resolve(getElectronCacheDir())
+      },
     },
   })
 )
