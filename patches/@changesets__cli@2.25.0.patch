@@ -1,0 +1,30 @@
+diff --git a/dist/cli.cjs.dev.js b/dist/cli.cjs.dev.js
+index e903107505f8f55defc76fafa07009c907499e31..b428b718e26aeacebe23d6f9ebdf6b3ac3907ee5 100644
+--- a/dist/cli.cjs.dev.js
++++ b/dist/cli.cjs.dev.js
+@@ -1268,8 +1268,8 @@ async function run$1(cwd) {
+   } = await getPackages.getPackages(cwd);
+   const allExistingTags = await git.getAllTags(cwd);
+ 
+-  for (const pkg of packages) {
+-    const tag = tool !== "root" ? `${pkg.packageJson.name}@${pkg.packageJson.version}` : `v${pkg.packageJson.version}`;
++  for (const pkg of packages.filter(pkg => ["electron-builder", "electron-updater"].includes(pkg.packageJson.name))) {
++    const tag = (tool !== "root" && pkg.packageJson.name !== 'electron-builder') ? `${pkg.packageJson.name}@${pkg.packageJson.version}` : `v${pkg.packageJson.version}`;
+ 
+     if (allExistingTags.has(tag)) {
+       logger.log("Skipping tag (already exists): ", tag);
+diff --git a/dist/cli.cjs.prod.js b/dist/cli.cjs.prod.js
+index fe411b261d240a2683308a54be71fd982f4f211b..d2896a5f5277370abf3530bf7e7dd74e18287b50 100644
+--- a/dist/cli.cjs.prod.js
++++ b/dist/cli.cjs.prod.js
+@@ -687,8 +687,8 @@ async function pre(cwd, options) {
+ 
+ async function run$1(cwd) {
+   const {packages: packages, tool: tool} = await getPackages.getPackages(cwd), allExistingTags = await git.getAllTags(cwd);
+-  for (const pkg of packages) {
+-    const tag = "root" !== tool ? `${pkg.packageJson.name}@${pkg.packageJson.version}` : "v" + pkg.packageJson.version;
++  for (const pkg of packages.filter(pkg => ["electron-builder", "electron-updater"].includes(pkg.packageJson.name))) {
++    const tag = ("root" !== tool && pkg.packageJson.name !== 'electron-builder') ? `${pkg.packageJson.name}@${pkg.packageJson.version}` : "v" + pkg.packageJson.version;
+     allExistingTags.has(tag) ? logger.log("Skipping tag (already exists): ", tag) : (logger.log("New tag: ", tag), 
+     await git.tag(tag, cwd));
+   }
