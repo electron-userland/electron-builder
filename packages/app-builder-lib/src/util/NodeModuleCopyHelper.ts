@@ -51,7 +51,6 @@ export class NodeModuleCopyHelper extends FileCopyHelper {
     const symlinkFiles: Map<string, number> = new Map()
     const tmpPath = moduleInfo.dir
     const moduleName = moduleInfo.name
-    const relativeNodeModulesDir = path.join("node_modules", moduleName)
     queue.length = 1
     // The path should be corrected in Windows that when the moduleName is Scoped packages named.
     const depPath = path.normalize(tmpPath)
@@ -105,12 +104,12 @@ export class NodeModuleCopyHelper extends FileCopyHelper {
           }
 
           return lstat(filePath).then(stat => {
+            ;(stat as any).relativeNodeModulesPath = path.join("node_modules", path.relative(depPath, filePath))
             if (filter != null && !filter(filePath, stat)) {
               return null
             }
 
             if (!stat.isDirectory()) {
-              ;(stat as any).relativeNodeModulesDir = relativeNodeModulesDir
               metadata.set(filePath, stat)
             }
             const consumerResult = this.handleFile(filePath, dirPath, stat)

@@ -25,7 +25,7 @@ function ensureEndSlash(s: string) {
 }
 
 function getRelativePath(file: string, srcWithEndSlash: string, stat: Stats) {
-  let relative = (stat as any).relativeNodeModulesDir || file.substring(srcWithEndSlash.length)
+  let relative = (stat as any).relativeNodeModulesPath || file.substring(srcWithEndSlash.length)
   if (path.sep === "\\") {
     if (relative.startsWith("\\")) {
       // windows problem: double backslash, the above substring call removes root path with a single slash, so here can me some leftovers
