@@ -104,7 +104,7 @@ export class NodeModuleCopyHelper extends FileCopyHelper {
           }
 
           return lstat(filePath).then(stat => {
-            (stat as any).relativeNodeModulesPath = path.join("node_modules", moduleName, path.relative(depPath, filePath))
+            ;(stat as any).relativeNodeModulesPath = path.join("node_modules", moduleName, path.relative(depPath, filePath))
             if (filter != null && !filter(filePath, stat)) {
               return null
             }

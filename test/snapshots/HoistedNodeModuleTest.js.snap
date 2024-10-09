@@ -196,11 +196,11 @@ exports[`yarn several workspaces and asarUnpack 2`] = `
 Object {
   "files": Object {
     "index.html": Object {
-      "offset": "19060",
+      "offset": "14750",
       "size": 841,
     },
     "index.js": Object {
-      "offset": "19901",
+      "offset": "15591",
       "size": 2501,
     },
     "node_modules": Object {
@@ -276,23 +276,23 @@ Object {
         "ms": Object {
           "files": Object {
             "index.js": Object {
-              "offset": "14750",
               "size": 2764,
+              "unpacked": true,
             },
             "license.md": Object {
-              "offset": "17514",
               "size": 1077,
+              "unpacked": true,
             },
             "package.json": Object {
-              "offset": "18591",
               "size": 469,
+              "unpacked": true,
             },
           },
         },
       },
     },
     "package.json": Object {
-      "offset": "22402",
+      "offset": "18092",
       "size": 310,
     },
   },
