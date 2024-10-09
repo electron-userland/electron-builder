@@ -10,7 +10,7 @@ const knownUnusedDevDependencies = new Set<string>([
   "@babel/plugin-transform-modules-commonjs", // Not sure what this is used for, but keeping just in case (for now)
   "@changesets/changelog-github", // Used in package.json CI/CD logic
   "typedoc-plugin-markdown", // Used in typedoc config
-  // Eslint config doesn't get scanned by
+  // Eslint config doesn't get scanned by depCheck
   "@stylistic/eslint-plugin",
   "@typescript-eslint/eslint-plugin",
   "@typescript-eslint/parser",

@@ -1,0 +1,17 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+      {
+          "type": "node",
+          "request": "launch",
+          "name": "Jest TEST_FILES",
+          "runtimeExecutable": "pnpm",
+          "program": "ci:test",
+          "console": "integratedTerminal",
+          "internalConsoleOptions": "openOnFirstSessionStart",
+          "env": {
+            "TEST_FILES": "BuildTest"
+          }
+      }
+  ]
+}

@@ -4,7 +4,7 @@ import { outputFile } from "fs-extra"
 import * as path from "path"
 import * as fs from "fs/promises"
 import { assertThat } from "./helpers/fileAssert"
-import { app, assertPack, modifyPackageJson, PackedContext, removeUnstableProperties, verifyAsarFileTree } from "./helpers/packTester"
+import { app, appThrows, assertPack, modifyPackageJson, PackedContext, removeUnstableProperties, verifyAsarFileTree } from "./helpers/packTester"
 import { verifySmartUnpack } from "./helpers/verifySmartUnpack"
 
 async function createFiles(appDir: string) {
@@ -110,7 +110,7 @@ test.ifNotWindows(
 
 test.ifNotWindows(
   "outside link",
-  app(
+  appThrows(
     {
       targets: Platform.LINUX.createTarget(DIR_TARGET),
     },
@@ -119,10 +119,6 @@ test.ifNotWindows(
         const tempDir = await tmpDir.getTempDir()
         await outputFile(path.join(tempDir, "foo"), "data")
         await fs.symlink(tempDir, path.join(projectDir, "o-dir"))
-      },
-      packed: async context => {
-        const file = (await readAsar(path.join(context.getResources(Platform.LINUX), "app.asar"))).getFile("o-dir/foo", false)
-        expect(removeUnstableProperties(file)).toMatchSnapshot()
       },
     }
   )
