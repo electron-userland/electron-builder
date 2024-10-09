@@ -16,5 +16,12 @@
     "electron-updater": "6.3.9",
     "@electron-builder/test": "0.0.0"
   },
-  "changesets": []
+  "changesets": [
+    "early-penguins-share",
+    "many-shoes-look",
+    "sweet-masks-sparkle",
+    "tiny-cobras-walk",
+    "tricky-files-speak",
+    "yellow-snakes-sneeze"
+  ]
 }
