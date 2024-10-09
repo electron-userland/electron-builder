@@ -83,11 +83,11 @@ exports[`yarn several workspaces 2`] = `
 Object {
   "files": Object {
     "index.html": Object {
-      "offset": "19060",
+      "offset": "19187",
       "size": 841,
     },
     "index.js": Object {
-      "offset": "19901",
+      "offset": "20028",
       "size": 2501,
     },
     "node_modules": Object {
@@ -160,18 +160,26 @@ Object {
             },
           },
         },
+        "foo": Object {
+          "files": Object {
+            "package.json": Object {
+              "offset": "14750",
+              "size": 127,
+            },
+          },
+        },
         "ms": Object {
           "files": Object {
             "index.js": Object {
-              "offset": "14750",
+              "offset": "14877",
               "size": 2764,
             },
             "license.md": Object {
-              "offset": "17514",
+              "offset": "17641",
               "size": 1077,
             },
             "package.json": Object {
-              "offset": "18591",
+              "offset": "18718",
               "size": 469,
             },
           },
@@ -179,8 +187,8 @@ Object {
       },
     },
     "package.json": Object {
-      "offset": "22402",
-      "size": 310,
+      "offset": "22529",
+      "size": 326,
     },
   },
 }
@@ -196,11 +204,11 @@ exports[`yarn several workspaces and asarUnpack 2`] = `
 Object {
   "files": Object {
     "index.html": Object {
-      "offset": "14750",
+      "offset": "14877",
       "size": 841,
     },
     "index.js": Object {
-      "offset": "15591",
+      "offset": "15718",
       "size": 2501,
     },
     "node_modules": Object {
@@ -273,6 +281,14 @@ Object {
             },
           },
         },
+        "foo": Object {
+          "files": Object {
+            "package.json": Object {
+              "offset": "14750",
+              "size": 127,
+            },
+          },
+        },
         "ms": Object {
           "files": Object {
             "index.js": Object {
@@ -292,8 +308,8 @@ Object {
       },
     },
     "package.json": Object {
-      "offset": "18092",
-      "size": 310,
+      "offset": "18219",
+      "size": 326,
     },
   },
 }
