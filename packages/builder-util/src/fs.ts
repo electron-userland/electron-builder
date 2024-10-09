@@ -19,7 +19,13 @@ export class CopyFileTransformer {
 }
 
 export type FileTransformer = (file: string) => Promise<null | string | Buffer | CopyFileTransformer> | null | string | Buffer | CopyFileTransformer
-export type Filter = (file: string, stat: Stats) => boolean
+export interface FilterStats extends Stats {
+  // Add some docs as to what this is doing
+  relativeNodeModulesPath?: string
+  relativeLink?: string
+  linkRelativeToFile?: string
+}
+export type Filter = (file: string, stat: FilterStats) => boolean
 
 export function unlinkIfExists(file: string) {
   return unlink(file).catch(() => {

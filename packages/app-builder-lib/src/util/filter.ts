@@ -1,5 +1,4 @@
-import { Filter } from "builder-util"
-import { Stats } from "fs-extra"
+import { Filter, FilterStats } from "builder-util"
 import { Minimatch } from "minimatch"
 import * as path from "path"
 
@@ -24,8 +23,8 @@ function ensureEndSlash(s: string) {
   return s.length === 0 || s.endsWith(path.sep) ? s : s + path.sep
 }
 
-function getRelativePath(file: string, srcWithEndSlash: string, stat: Stats) {
-  let relative = (stat as any).relativeNodeModulesPath || file.substring(srcWithEndSlash.length)
+function getRelativePath(file: string, srcWithEndSlash: string, stat: FilterStats) {
+  let relative = stat.relativeNodeModulesPath || file.substring(srcWithEndSlash.length)
   if (path.sep === "\\") {
     if (relative.startsWith("\\")) {
       // windows problem: double backslash, the above substring call removes root path with a single slash, so here can me some leftovers
@@ -59,7 +58,7 @@ export function createFilter(src: string, patterns: Array<Minimatch>, excludePat
 }
 
 // https://github.com/joshwnj/minimatch-all/blob/master/index.js
-function minimatchAll(path: string, patterns: Array<Minimatch>, stat: Stats): boolean {
+function minimatchAll(path: string, patterns: Array<Minimatch>, stat: FilterStats): boolean {
   let match = false
   for (const pattern of patterns) {
     // If we've got a match, only re-test for exclusions.
