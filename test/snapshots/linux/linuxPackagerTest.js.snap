@@ -11,6 +11,15 @@ StartupWMClass=Test App ßW
 X-Foo=bar
 Comment=Test Application (test quite “ #378)
 Categories=Development;
+
+[Desktop Action Gallery]
+Exec=fooview --gallery
+Name=Browse Gallery
+
+[Desktop Action Create]
+Exec=fooview --create-new
+Name=Create a new Foo!
+Icon=fooview-new
 "
 `;
 
