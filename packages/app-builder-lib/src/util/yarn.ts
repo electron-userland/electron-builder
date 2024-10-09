@@ -146,20 +146,14 @@ export async function nodeGypRebuild(platform: NodeJS.Platform, arch: string, fr
 }
 
 function getPackageToolPath(pm: PM) {
+  const suffix = process.platform === "win32" ? ".cmd" : ""
+  let cmd = pm
+
   if (process.env.FORCE_YARN === "true") {
-    return process.platform === "win32" ? "yarn.cmd" : "yarn"
+    cmd = "yarn"
   }
 
-  switch (pm) {
-    case "yarn":
-      return process.platform === "win32" ? "yarn.cmd" : "yarn"
-    case "pnpm":
-      return process.platform === "win32" ? "pnpm.cmd" : "pnpm"
-    case "npm":
-      return process.platform === "win32" ? "npm.cmd" : "npm"
-    default:
-      return process.platform === "win32" ? "npm.cmd" : "npm"
-  }
+  return cmd + suffix
 }
 
 function isRunningYarn(pm: PM) {

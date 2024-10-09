@@ -104,7 +104,7 @@ const detect = async ({ cwd, includeGlobalBun }: { cwd?: string; includeGlobalBu
 export { detect }
 
 export function getNpmVersion(pm: PM) {
-  return execa(`${pm} --version`).then(res => res.stdout)
+  return execa(`${pm} --version`).then(res => res.stdout.trim())
 }
 
 export function clearCache() {
