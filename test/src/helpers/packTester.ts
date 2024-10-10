@@ -122,7 +122,7 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
       if (checkOptions.isInstallDepsBefore) {
         // bin links required (e.g. for node-pre-gyp - if package refers to it in the install script)
         const pm = await detect({ cwd: projectDir })
-        let cmd = process.platform === "win32" ?  pm+".cmd":pm
+        let cmd = process.platform === "win32" ? pm + ".cmd" : pm
         await spawn(cmd, ["install"], {
           cwd: projectDir,
         })
