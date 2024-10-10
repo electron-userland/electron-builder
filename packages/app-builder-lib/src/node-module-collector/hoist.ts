@@ -1,4 +1,6 @@
 // copy from https://github.com/yarnpkg/berry/blob/master/packages/yarnpkg-nm/sources/hoist.ts
+// commit: d63d411bcc5adcbffd198b8987c5a14c81eaf669
+// fix(nm): optimize hoisting by treating peer deps same as other deps (#6517)
 /**
  * High-level node_modules hoisting algorithm recipe
  *
