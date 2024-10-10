@@ -83,11 +83,11 @@ exports[`yarn several workspaces 2`] = `
 Object {
   "files": Object {
     "index.html": Object {
-      "offset": "19060",
+      "offset": "19187",
       "size": 841,
     },
     "index.js": Object {
-      "offset": "19901",
+      "offset": "20028",
       "size": 2501,
     },
     "node_modules": Object {
@@ -160,18 +160,26 @@ Object {
             },
           },
         },
+        "foo": Object {
+          "files": Object {
+            "package.json": Object {
+              "offset": "14750",
+              "size": 127,
+            },
+          },
+        },
         "ms": Object {
           "files": Object {
             "index.js": Object {
-              "offset": "14750",
+              "offset": "14877",
               "size": 2764,
             },
             "license.md": Object {
-              "offset": "17514",
+              "offset": "17641",
               "size": 1077,
             },
             "package.json": Object {
-              "offset": "18591",
+              "offset": "18718",
               "size": 469,
             },
           },
@@ -179,8 +187,129 @@ Object {
       },
     },
     "package.json": Object {
-      "offset": "22402",
-      "size": 310,
+      "offset": "22529",
+      "size": 326,
+    },
+  },
+}
+`;
+
+exports[`yarn several workspaces and asarUnpack 1`] = `
+Object {
+  "linux": Array [],
+}
+`;
+
+exports[`yarn several workspaces and asarUnpack 2`] = `
+Object {
+  "files": Object {
+    "index.html": Object {
+      "offset": "14877",
+      "size": 841,
+    },
+    "index.js": Object {
+      "offset": "15718",
+      "size": 2501,
+    },
+    "node_modules": Object {
+      "files": Object {
+        "electron-log": Object {
+          "files": Object {
+            "LICENSE": Object {
+              "offset": "0",
+              "size": 1082,
+            },
+            "index.js": Object {
+              "offset": "1082",
+              "size": 140,
+            },
+            "lib": Object {
+              "files": Object {
+                "format.js": Object {
+                  "offset": "1222",
+                  "size": 1021,
+                },
+                "log.js": Object {
+                  "offset": "2243",
+                  "size": 877,
+                },
+                "transports": Object {
+                  "files": Object {
+                    "console.js": Object {
+                      "offset": "3120",
+                      "size": 343,
+                    },
+                    "file": Object {
+                      "files": Object {
+                        "find-log-path.js": Object {
+                          "offset": "3463",
+                          "size": 2078,
+                        },
+                        "get-app-name.js": Object {
+                          "offset": "5541",
+                          "size": 1780,
+                        },
+                        "index.js": Object {
+                          "offset": "7321",
+                          "size": 2068,
+                        },
+                      },
+                    },
+                    "log-s.js": Object {
+                      "offset": "9389",
+                      "size": 1751,
+                    },
+                    "renderer-console.js": Object {
+                      "offset": "11140",
+                      "size": 544,
+                    },
+                  },
+                },
+              },
+            },
+            "main.js": Object {
+              "offset": "11684",
+              "size": 1343,
+            },
+            "package.json": Object {
+              "offset": "13027",
+              "size": 745,
+            },
+            "renderer.js": Object {
+              "offset": "13772",
+              "size": 978,
+            },
+          },
+        },
+        "foo": Object {
+          "files": Object {
+            "package.json": Object {
+              "offset": "14750",
+              "size": 127,
+            },
+          },
+        },
+        "ms": Object {
+          "files": Object {
+            "index.js": Object {
+              "size": 2764,
+              "unpacked": true,
+            },
+            "license.md": Object {
+              "size": 1077,
+              "unpacked": true,
+            },
+            "package.json": Object {
+              "size": 469,
+              "unpacked": true,
+            },
+          },
+        },
+      },
+    },
+    "package.json": Object {
+      "offset": "18219",
+      "size": 326,
     },
   },
 }
