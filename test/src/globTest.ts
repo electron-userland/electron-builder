@@ -135,9 +135,6 @@ test.ifDevOrLinuxCi("failed peer dep", () => {
     "test-app-one",
     {
       targets: Platform.LINUX.createTarget(DIR_TARGET),
-      config: {
-        files: ["!pnpm-lock.yaml"],
-      },
     },
     {
       isInstallDepsBefore: true,
