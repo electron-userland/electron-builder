@@ -1,4 +1,4 @@
-import { Filter, FileConsumer } from "builder-util"
+import { Filter, FileConsumer, FilterStats } from "builder-util"
 import { readlink, stat, Stats } from "fs-extra"
 import { FileMatcher } from "../fileMatcher"
 import { Packager } from "../packager"
@@ -41,7 +41,7 @@ export abstract class FileCopyHelper {
         return targetFileStat
       })
     } else {
-      const s = fileStat as any
+      const s: FilterStats = fileStat
       s.relativeLink = link
       s.linkRelativeToFile = path.relative(parent, resolvedLinkTarget)
     }
