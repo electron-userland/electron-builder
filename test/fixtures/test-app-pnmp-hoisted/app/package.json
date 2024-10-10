@@ -1,0 +1,9 @@
+{
+  "private": true,
+  "name": "TestApp",
+  "version": "1.1.0",
+  "description": "Test Application (test quite \" #378)",
+  "author": "Foo Bar <foo@example.com>",
+  "license": "MIT",
+  "homepage": "http://foo.example.com"
+}

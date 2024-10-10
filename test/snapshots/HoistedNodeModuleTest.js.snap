@@ -1383,3 +1383,8 @@ Object {
   },
 }
 `;
+
+exports[`pnpm without hoisted config 1`] = `
+Object {
+  "linux": Array [],
+}
