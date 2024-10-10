@@ -74,15 +74,15 @@ test.ifAll("pnpm es5-ext without hoisted config", () =>
           outputFile(path.join(projectDir, "pnpm-lock.yaml"), ""),
         ])
       },
-      packed: async context =>{
-          expect(await readAsarJson(path.join(context.getResources(Platform.LINUX), "app.asar"), "node_modules/d/package.json")).toMatchSnapshot()
-      } 
+      packed: async context => {
+        expect(await readAsarJson(path.join(context.getResources(Platform.LINUX), "app.asar"), "node_modules/d/package.json")).toMatchSnapshot()
+      },
     }
   )
 )
 
-// https://github.com/electron-userland/electron-builder/issues/8493
-test.ifAll("yarn parse-asn1", () =>
+//github.com/electron-userland/electron-builder/issues/8426
+https: test.ifAll("yarn parse-asn1", () =>
   assertPack(
     "test-app-hoisted",
     {
@@ -94,15 +94,46 @@ test.ifAll("yarn parse-asn1", () =>
         return Promise.all([
           modifyPackageJson(projectDir, data => {
             data.dependencies = {
-               "parse-asn1":"5.1.7"
+              "parse-asn1": "5.1.7",
             }
           }),
           outputFile(path.join(projectDir, "yarn.lock"), ""),
         ])
       },
-      packed: async context =>{
-          expect(await readAsarJson(path.join(context.getResources(Platform.LINUX), "app.asar"), "node_modules/asn1.js/package.json")).toMatchSnapshot()
-      } 
+      packed: async context => {
+        expect(await readAsarJson(path.join(context.getResources(Platform.LINUX), "app.asar"), "node_modules/asn1.js/package.json")).toMatchSnapshot()
+      },
+    }
+  )
+)
+
+//github.com/electron-userland/electron-builder/issues/8431
+https: test.ifAll("npm tar", () =>
+  assertPack(
+    "test-app-hoisted",
+    {
+      targets: linuxDirTarget,
+    },
+    {
+      isInstallDepsBefore: true,
+      projectDirCreated: projectDir => {
+        return Promise.all([
+          modifyPackageJson(projectDir, data => {
+            data.dependencies = {
+              tar: "7.4.3",
+            }
+          }),
+          outputFile(path.join(projectDir, "package-lock.json"), ""),
+        ])
+      },
+      packed: async context => {
+        let tar = await readAsarJson(path.join(context.getResources(Platform.LINUX), "app.asar"), "node_modules/tar/package.json")
+        let minipass = await readAsarJson(path.join(context.getResources(Platform.LINUX), "app.asar"), "node_modules/minipass/package.json")
+        let minizlib = await readAsarJson(path.join(context.getResources(Platform.LINUX), "app.asar"), "node_modules/minizlib/package.json")
+        expect(tar.version).toEqual("7.4.3")
+        expect(minipass.version).toEqual("7.1.2")
+        expect(minizlib.version).toEqual("3.0.1")
+      },
     }
   )
 )

@@ -73,36 +73,102 @@ Object {
 }
 `;
 
-exports[`pnpm without hoisted config 1`] = `
+exports[`npm tar 1`] = `
 Object {
   "linux": Array [],
 }
 `;
 
-exports[`pnpm without hoisted config 2`] = `
+exports[`pnpm es5-ext without hoisted config 1`] = `
 Object {
-  "files": Object {
-    "index.html": Object {
-      "offset": "0",
-      "size": 378,
-    },
-    "index.js": Object {
-      "offset": "378",
-      "size": 619,
-    },
-    "package.json": Object {
-      "offset": "997",
-      "size": 232,
-    },
-    "path": Object {
-      "files": Object {
-        "app.asar": Object {
-          "offset": "1229",
-          "size": 714,
-        },
-      },
+  "linux": Array [],
+}
+`;
+
+exports[`pnpm es5-ext without hoisted config 2`] = `
+Object {
+  "author": "Mariusz Nowak <medyk@medikoo.com> (http://www.medikoo.com/)",
+  "dependencies": Object {
+    "es5-ext": "^0.10.64",
+    "type": "^2.7.2",
+  },
+  "description": "Property descriptor factory",
+  "devDependencies": Object {
+    "eslint": "^8.57.0",
+    "eslint-config-medikoo": "^4.2.0",
+    "git-list-updated": "^1.2.1",
+    "github-release-from-cc-changelog": "^2.3.0",
+    "husky": "^4.3.8",
+    "lint-staged": "~13.2.3",
+    "nyc": "^15.1.0",
+    "prettier-elastic": "^2.8.8",
+    "tad": "^3.1.1",
+  },
+  "engines": Object {
+    "node": ">=0.12",
+  },
+  "husky": Object {
+    "hooks": Object {
+      "pre-commit": "lint-staged",
     },
   },
+  "license": "ISC",
+  "lint-staged": Object {
+    "*.js": Array [
+      "eslint",
+    ],
+    "*.{css,html,js,json,md,yaml,yml}": Array [
+      "prettier -c",
+    ],
+  },
+  "name": "d",
+  "prettier": Object {
+    "overrides": Array [
+      Object {
+        "files": Array [
+          "*.md",
+          "*.yml",
+        ],
+        "options": Object {
+          "tabWidth": 2,
+        },
+      },
+    ],
+    "printWidth": 100,
+    "tabWidth": 4,
+  },
+  "repository": "medikoo/d",
+  "version": "1.0.2",
+}
+`;
+
+exports[`yarn parse-asn1 1`] = `
+Object {
+  "linux": Array [],
+}
+`;
+
+exports[`yarn parse-asn1 2`] = `
+Object {
+  "author": "Fedor Indutny",
+  "dependencies": Object {
+    "bn.js": "^4.0.0",
+    "inherits": "^2.0.1",
+    "minimalistic-assert": "^1.0.0",
+  },
+  "description": "ASN.1 encoder and decoder",
+  "devDependencies": Object {
+    "mocha": "^2.3.4",
+  },
+  "homepage": "https://github.com/indutny/asn1.js",
+  "license": "MIT",
+  "main": "lib/asn1.js",
+  "name": "asn1.js",
+  "repository": Object {
+    "type": "git",
+    "url": "git@github.com:indutny/asn1.js",
+  },
+  "version": "4.10.1",
 }
 `;
 
@@ -1414,98 +1480,5 @@ Object {
       "size": 380,
     },
   },
-}
-`;
-
-exports[`pnpm es5-ext without hoisted config 1`] = `
-Object {
-  "linux": Array [],
-}
-`;
-
-exports[`pnpm es5-ext without hoisted config 2`] = `
-Object {
-  "author": "Mariusz Nowak <medyk@medikoo.com> (http://www.medikoo.com/)",
-  "dependencies": Object {
-    "es5-ext": "^0.10.64",
-    "type": "^2.7.2",
-  },
-  "description": "Property descriptor factory",
-  "devDependencies": Object {
-    "eslint": "^8.57.0",
-    "eslint-config-medikoo": "^4.2.0",
-    "git-list-updated": "^1.2.1",
-    "github-release-from-cc-changelog": "^2.3.0",
-    "husky": "^4.3.8",
-    "lint-staged": "~13.2.3",
-    "nyc": "^15.1.0",
-    "prettier-elastic": "^2.8.8",
-    "tad": "^3.1.1",
-  },
-  "engines": Object {
-    "node": ">=0.12",
-  },
-  "husky": Object {
-    "hooks": Object {
-      "pre-commit": "lint-staged",
-    },
-  },
-  "license": "ISC",
-  "lint-staged": Object {
-    "*.js": Array [
-      "eslint",
-    ],
-    "*.{css,html,js,json,md,yaml,yml}": Array [
-      "prettier -c",
-    ],
-  },
-  "name": "d",
-  "prettier": Object {
-    "overrides": Array [
-      Object {
-        "files": Array [
-          "*.md",
-          "*.yml",
-        ],
-        "options": Object {
-          "tabWidth": 2,
-        },
-      },
-    ],
-    "printWidth": 100,
-    "tabWidth": 4,
-  },
-  "repository": "medikoo/d",
-  "version": "1.0.2",
-}
-`;
-
-exports[`yarn parse-asn1 1`] = `
-Object {
-  "linux": Array [],
-}
-`;
-
-exports[`yarn parse-asn1 2`] = `
-Object {
-  "author": "Fedor Indutny",
-  "dependencies": Object {
-    "bn.js": "^4.0.0",
-    "inherits": "^2.0.1",
-    "minimalistic-assert": "^1.0.0",
-  },
-  "description": "ASN.1 encoder and decoder",
-  "devDependencies": Object {
-    "mocha": "^2.3.4",
-  },
-  "homepage": "https://github.com/indutny/asn1.js",
-  "license": "MIT",
-  "main": "lib/asn1.js",
-  "name": "asn1.js",
-  "repository": Object {
-    "type": "git",
-    "url": "git@github.com:indutny/asn1.js",
-  },
-  "version": "4.10.1",
 }
 `;
