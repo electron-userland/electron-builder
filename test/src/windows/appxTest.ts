@@ -67,7 +67,9 @@ it2.ifNotCi(
     targets: Platform.WINDOWS.createTarget(["appx"], Arch.x64),
     config: {
       win: {
-        certificateSubjectName: "Foo",
+        signtoolOptions: {
+          certificateSubjectName: "Foo",
+        },
       },
     },
   })
