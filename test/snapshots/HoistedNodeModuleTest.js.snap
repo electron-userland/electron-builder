@@ -1425,22 +1425,57 @@ Object {
 
 exports[`pnpm without hoisted config 2`] = `
 Object {
-  "author": "Foo Bar <foo@example.com>",
-  "description": "Test Application (test quite \\" #378)",
-  "foo": Object {
-    "bar": 12,
-    "disabled": false,
-    "existingProp": 22,
-    "updated": true,
+  "author": "Mariusz Nowak <medyk@medikoo.com> (http://www.medikoo.com/)",
+  "dependencies": Object {
+    "es5-ext": "^0.10.64",
+    "type": "^2.7.2",
   },
-  "homepage": "http://foo.example.com",
-  "license": "MIT",
-  "name": "TestApp",
-  "private": true,
-  "productName": "Test App ßW",
-  "rootKey": false,
-  "rootKeyN": null,
-  "rootKeyT": true,
-  "version": "1.0.0-beta.19",
+  "description": "Property descriptor factory",
+  "devDependencies": Object {
+    "eslint": "^8.57.0",
+    "eslint-config-medikoo": "^4.2.0",
+    "git-list-updated": "^1.2.1",
+    "github-release-from-cc-changelog": "^2.3.0",
+    "husky": "^4.3.8",
+    "lint-staged": "~13.2.3",
+    "nyc": "^15.1.0",
+    "prettier-elastic": "^2.8.8",
+    "tad": "^3.1.1",
+  },
+  "engines": Object {
+    "node": ">=0.12",
+  },
+  "husky": Object {
+    "hooks": Object {
+      "pre-commit": "lint-staged",
+    },
+  },
+  "license": "ISC",
+  "lint-staged": Object {
+    "*.js": Array [
+      "eslint",
+    ],
+    "*.{css,html,js,json,md,yaml,yml}": Array [
+      "prettier -c",
+    ],
+  },
+  "name": "d",
+  "prettier": Object {
+    "overrides": Array [
+      Object {
+        "files": Array [
+          "*.md",
+          "*.yml",
+        ],
+        "options": Object {
+          "tabWidth": 2,
+        },
+      },
+    ],
+    "printWidth": 100,
+    "tabWidth": 4,
+  },
+  "repository": "medikoo/d",
+  "version": "1.0.2",
 }
 `;
