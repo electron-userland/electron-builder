@@ -1,5 +1,33 @@
 import { PlatformSpecificBuildOptions, TargetConfigType, TargetSpecificOptions } from "../index"
 
+/**
+ * Example Spec: https://specifications.freedesktop.org/desktop-entry-spec/latest/example.html
+ */
+export interface LinuxDesktopFile {
+  /**
+   * `[Desktop Entry]` metadata entries (name to value). Overwrites default values calculated by electron-builder
+   */
+  entry?: {
+    [k: string]: string
+  } | null
+  /**
+   * `[Desktop Actions <ActionName>]` metadata entries (name to value).
+   *
+   * Config Example:
+   * ```js
+   * desktopActions: {
+   *    NewWindow: {
+   *       Name: 'New Window',
+   *       Exec: 'app --new-window',
+   *    }
+   * }
+   * ```
+   */
+  desktopActions?: {
+    [ActionName: string]: any
+  } | null
+}
+
 export interface LinuxConfiguration extends CommonLinuxOptions, PlatformSpecificBuildOptions {
   /**
    * Target package type: list of `AppImage`, `flatpak`, `snap`, `deb`, `rpm`, `freebsd`, `pacman`, `p5p`, `apk`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`.
@@ -56,9 +84,9 @@ export interface CommonLinuxOptions {
   readonly mimeTypes?: Array<string> | null
 
   /**
-   * The [Desktop file](https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files) entries (name to value).
+   * The [Desktop file](https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files)
    */
-  readonly desktop?: any | null
+  readonly desktop?: LinuxDesktopFile | null
 
   /**
    * The executable parameters. Pass to executableName

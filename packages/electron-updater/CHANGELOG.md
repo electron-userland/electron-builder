@@ -1,5 +1,11 @@
 ## 4.3.0
 
+## 6.4.0-alpha.0
+
+### Minor Changes
+
+- [#8394](https://github.com/electron-userland/electron-builder/pull/8394) [`ae9221d9`](https://github.com/electron-userland/electron-builder/commit/ae9221d947c2dedff7b655ddafceb9746f9f4460) Thanks [@xyloflake](https://github.com/xyloflake)! - feat: Implement autoupdates for pacman
+
 ## 6.3.9
 
 ### Patch Changes

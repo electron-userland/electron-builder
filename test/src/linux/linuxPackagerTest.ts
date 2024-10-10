@@ -112,9 +112,25 @@ test.ifNotWindows.ifNotCiMac(
       config: {
         linux: {
           executableName: "Foo",
+          // Example Spec: https://specifications.freedesktop.org/desktop-entry-spec/latest/example.html
           desktop: {
-            "X-Foo": "bar",
-            Terminal: "true",
+            entry: {
+              "X-Foo": "bar",
+              Terminal: "true",
+            },
+            desktopActions: {
+              Gallery: {
+                Exec: "fooview --gallery",
+                Name: "Browse Gallery",
+              },
+              Create: {
+                Exec: "fooview --create-new",
+                Name: "Create a new Foo!",
+                Icon: "fooview-new",
+              },
+              EmptyEntry: {},
+              NullEntry: null,
+            },
           },
         },
         appImage: {
@@ -293,7 +309,9 @@ test.ifNotWindows(
     config: {
       linux: {
         desktop: {
-          Exec: "foo",
+          entry: {
+            Exec: "foo",
+          },
         },
       },
     },
