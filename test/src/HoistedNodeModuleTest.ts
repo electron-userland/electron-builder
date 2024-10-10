@@ -33,6 +33,9 @@ test.ifAll("yarn several workspaces", () =>
     {
       targets: linuxDirTarget,
       projectDir: "packages/test-app",
+      config: {
+        asarUnpack: ["**/node_modules/ms"]
+      }
     },
     {
       packed: context => verifyAsarFileTree(context.getResources(Platform.LINUX)),
