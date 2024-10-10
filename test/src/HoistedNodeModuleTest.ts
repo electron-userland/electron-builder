@@ -2,6 +2,7 @@ import { assertPack, linuxDirTarget, verifyAsarFileTree, modifyPackageJson } fro
 import { Platform } from "electron-builder"
 import { outputFile } from "fs-extra"
 import * as path from "path"
+import { readAsarJson } from "app-builder-lib/out/asar/asar"
 
 test.ifAll("yarn workspace", () =>
   assertPack(
@@ -54,30 +55,6 @@ test.ifAll("yarn two package.json w/ native module", () =>
   )
 )
 
-// test.ifAll("yarn pnp with hoisted config", () =>
-//   assertPack(
-//     "test-app-two-native-modules",
-//     {
-//       targets: linuxDirTarget,
-//     },
-//     {
-//       packed: context => verifyAsarFileTree(context.getResources(Platform.LINUX)),
-//     }
-//   )
-// )
-
-// test.ifAll("yarn pnp with hoisted config", () =>
-//   assertPack(
-//     "test-app-two-native-modules",
-//     {
-//       targets: linuxDirTarget,
-//     },
-//     {
-//       packed: context => verifyAsarFileTree(context.getResources(Platform.LINUX)),
-//     }
-//   )
-// )
-
 test.ifAll("pnpm without hoisted config", () =>
   assertPack(
     "test-app-pnmp-hoisted",
@@ -96,19 +73,9 @@ test.ifAll("pnpm without hoisted config", () =>
           outputFile(path.join(projectDir, "pnpm-lock.yaml"), ""),
         ])
       },
-      packed: context => verifyAsarFileTree(context.getResources(Platform.LINUX)),
+      packed: async context =>{
+          expect(await readAsarJson(path.join(context.getResources(Platform.LINUX), "app.asar"), "node_modules/d/package.json")).toMatchSnapshot()
+      } 
     }
   )
 )
-
-// test.ifAll("pnpm with hoisted config", () =>
-//   assertPack(
-//     "test-app-pnpm-hoisted",
-//     {
-//       targets: linuxDirTarget,
-//     },
-//     {
-//       packed: context => verifyAsarFileTree(context.getResources(Platform.LINUX)),
-//     }
-//   )
-// )
