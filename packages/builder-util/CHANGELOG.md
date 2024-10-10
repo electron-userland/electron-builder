@@ -1,5 +1,11 @@
 # builder-util
 
+## 26.0.0-alpha.1
+
+### Patch Changes
+
+- [#8576](https://github.com/electron-userland/electron-builder/pull/8576) [`3eab7143`](https://github.com/electron-userland/electron-builder/commit/3eab7143d74262caace81ea05e97617d07daf336) Thanks [@beyondkmp](https://github.com/beyondkmp)! - fix: packages in the workspace not being under node_modules
+
 ## 26.0.0-alpha.0
 
 ### Major Changes
