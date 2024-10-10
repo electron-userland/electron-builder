@@ -3,6 +3,9 @@
 const { app, ipcMain, BrowserWindow, Menu, Tray } = require("electron")
 const fs = require("fs")
 const path = require("path")
+const foo = require("@example/foo")
+
+console.log(foo.bar());
 
 // Module to control application life.
 // Module to create native browser window.
