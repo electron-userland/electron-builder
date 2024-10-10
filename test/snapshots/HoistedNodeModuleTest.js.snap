@@ -83,12 +83,12 @@ exports[`yarn several workspaces 2`] = `
 Object {
   "files": Object {
     "index.html": Object {
-      "offset": "34963",
+      "offset": "19187",
       "size": 841,
     },
     "index.js": Object {
-      "offset": "35804",
-      "size": 2562,
+      "offset": "20028",
+      "size": 2501,
     },
     "node_modules": Object {
       "files": Object {
@@ -162,100 +162,24 @@ Object {
         },
         "foo": Object {
           "files": Object {
-            "index.js": Object {
-              "offset": "14750",
-              "size": 39,
-            },
-            "node_modules": Object {
-              "files": Object {
-                "electron-log": Object {
-                  "files": Object {
-                    "LICENSE": Object {
-                      "offset": "14945",
-                      "size": 1082,
-                    },
-                    "index.js": Object {
-                      "offset": "16027",
-                      "size": 140,
-                    },
-                    "lib": Object {
-                      "files": Object {
-                        "format.js": Object {
-                          "offset": "16167",
-                          "size": 1021,
-                        },
-                        "log.js": Object {
-                          "offset": "17188",
-                          "size": 877,
-                        },
-                        "transports": Object {
-                          "files": Object {
-                            "console.js": Object {
-                              "offset": "18065",
-                              "size": 623,
-                            },
-                            "file": Object {
-                              "files": Object {
-                                "find-log-path.js": Object {
-                                  "offset": "18688",
-                                  "size": 2078,
-                                },
-                                "get-app-name.js": Object {
-                                  "offset": "20766",
-                                  "size": 1780,
-                                },
-                                "index.js": Object {
-                                  "offset": "22546",
-                                  "size": 2463,
-                                },
-                              },
-                            },
-                            "log-s.js": Object {
-                              "offset": "25009",
-                              "size": 1751,
-                            },
-                            "renderer-console.js": Object {
-                              "offset": "26760",
-                              "size": 827,
-                            },
-                          },
-                        },
-                      },
-                    },
-                    "main.js": Object {
-                      "offset": "27587",
-                      "size": 1343,
-                    },
-                    "package.json": Object {
-                      "offset": "28930",
-                      "size": 745,
-                    },
-                    "renderer.js": Object {
-                      "offset": "29675",
-                      "size": 978,
-                    },
-                  },
-                },
-              },
-            },
             "package.json": Object {
-              "offset": "14789",
-              "size": 156,
+              "offset": "14750",
+              "size": 127,
             },
           },
         },
         "ms": Object {
           "files": Object {
             "index.js": Object {
-              "offset": "30653",
+              "offset": "14877",
               "size": 2764,
             },
             "license.md": Object {
-              "offset": "33417",
+              "offset": "17641",
               "size": 1077,
             },
             "package.json": Object {
-              "offset": "34494",
+              "offset": "18718",
               "size": 469,
             },
           },
@@ -263,7 +187,128 @@ Object {
       },
     },
     "package.json": Object {
-      "offset": "38366",
+      "offset": "22529",
+      "size": 326,
+    },
+  },
+}
+`;
+
+exports[`yarn several workspaces and asarUnpack 1`] = `
+Object {
+  "linux": Array [],
+}
+`;
+
+exports[`yarn several workspaces and asarUnpack 2`] = `
+Object {
+  "files": Object {
+    "index.html": Object {
+      "offset": "14877",
+      "size": 841,
+    },
+    "index.js": Object {
+      "offset": "15718",
+      "size": 2501,
+    },
+    "node_modules": Object {
+      "files": Object {
+        "electron-log": Object {
+          "files": Object {
+            "LICENSE": Object {
+              "offset": "0",
+              "size": 1082,
+            },
+            "index.js": Object {
+              "offset": "1082",
+              "size": 140,
+            },
+            "lib": Object {
+              "files": Object {
+                "format.js": Object {
+                  "offset": "1222",
+                  "size": 1021,
+                },
+                "log.js": Object {
+                  "offset": "2243",
+                  "size": 877,
+                },
+                "transports": Object {
+                  "files": Object {
+                    "console.js": Object {
+                      "offset": "3120",
+                      "size": 343,
+                    },
+                    "file": Object {
+                      "files": Object {
+                        "find-log-path.js": Object {
+                          "offset": "3463",
+                          "size": 2078,
+                        },
+                        "get-app-name.js": Object {
+                          "offset": "5541",
+                          "size": 1780,
+                        },
+                        "index.js": Object {
+                          "offset": "7321",
+                          "size": 2068,
+                        },
+                      },
+                    },
+                    "log-s.js": Object {
+                      "offset": "9389",
+                      "size": 1751,
+                    },
+                    "renderer-console.js": Object {
+                      "offset": "11140",
+                      "size": 544,
+                    },
+                  },
+                },
+              },
+            },
+            "main.js": Object {
+              "offset": "11684",
+              "size": 1343,
+            },
+            "package.json": Object {
+              "offset": "13027",
+              "size": 745,
+            },
+            "renderer.js": Object {
+              "offset": "13772",
+              "size": 978,
+            },
+          },
+        },
+        "foo": Object {
+          "files": Object {
+            "package.json": Object {
+              "offset": "14750",
+              "size": 127,
+            },
+          },
+        },
+        "ms": Object {
+          "files": Object {
+            "index.js": Object {
+              "size": 2764,
+              "unpacked": true,
+            },
+            "license.md": Object {
+              "size": 1077,
+              "unpacked": true,
+            },
+            "package.json": Object {
+              "size": 469,
+              "unpacked": true,
+            },
+          },
+        },
+      },
+    },
+    "package.json": Object {
+      "offset": "18219",
       "size": 326,
     },
   },
@@ -447,15 +492,6 @@ Object {
                     },
                     "pty.node": Object {
                       "size": 72880,
-                      "unpacked": true,
-                    },
-                  },
-                  "unpacked": true,
-                },
-                "node_gyp_bins": Object {
-                  "files": Object {
-                    "python3": Object {
-                      "size": 5490456,
                       "unpacked": true,
                     },
                   },

@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { CONCURRENCY } from "builder-util"
+import { CONCURRENCY, FilterStats } from "builder-util"
 import { lstat, readdir, lstatSync } from "fs-extra"
 import * as path from "path"
 import { excludedNames, FileMatcher } from "../fileMatcher"
@@ -10,10 +10,20 @@ import { NodeModuleInfo } from "./packageDependencies"
 import { realpathSync } from "fs"
 
 const excludedFiles = new Set(
-  [".DS_Store", "node_modules" /* already in the queue */, "CHANGELOG.md", "ChangeLog", "changelog.md", "Changelog.md", "Changelog", "binding.gyp", ".npmignore"].concat(
-    excludedNames.split(",")
-  )
+  [
+    ".DS_Store",
+    "node_modules" /* already in the queue */,
+    "CHANGELOG.md",
+    "ChangeLog",
+    "changelog.md",
+    "Changelog.md",
+    "Changelog",
+    "binding.gyp",
+    ".npmignore",
+    "node_gyp_bins",
+  ].concat(excludedNames.split(","))
 )
+
 const topLevelExcludedFiles = new Set([
   "karma.conf.js",
   ".coveralls.yml",
@@ -103,7 +113,8 @@ export class NodeModuleCopyHelper extends FileCopyHelper {
             }
           }
 
-          return lstat(filePath).then(stat => {
+          return lstat(filePath).then((stat: FilterStats) => {
+            stat.relativeNodeModulesPath = path.join("node_modules", moduleName, path.relative(depPath, filePath))
             if (filter != null && !filter(filePath, stat)) {
               return null
             }
