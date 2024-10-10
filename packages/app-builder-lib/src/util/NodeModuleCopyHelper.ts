@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { CONCURRENCY } from "builder-util"
+import { CONCURRENCY, FilterStats } from "builder-util"
 import { lstat, readdir, lstatSync } from "fs-extra"
 import * as path from "path"
 import { excludedNames, FileMatcher } from "../fileMatcher"
@@ -113,7 +113,8 @@ export class NodeModuleCopyHelper extends FileCopyHelper {
             }
           }
 
-          return lstat(filePath).then(stat => {
+          return lstat(filePath).then((stat: FilterStats) => {
+            stat.relativeNodeModulesPath = path.join("node_modules", moduleName, path.relative(depPath, filePath))
             if (filter != null && !filter(filePath, stat)) {
               return null
             }

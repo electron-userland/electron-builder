@@ -190,42 +190,24 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
   const result = new Array<ResolvedFileSet>()
   let index = 0
   const NODE_MODULES = "node_modules"
-  const getRealSource = (name: string, source: string) => {
-    let parentDir = path.dirname(source)
 
-    const scopeDepth = name.split("/").length
-    // get the parent dir of the package, input: /root/path/node_modules/@electron/remote, output: /root/path/node_modules
-    for (let i = 0; i < scopeDepth - 1; i++) {
-      parentDir = path.dirname(parentDir)
-    }
-
-    // for the local node modules which is not in node modules
-    if (!parentDir.endsWith(path.sep + NODE_MODULES)) {
-      return parentDir
-    }
-
-    // use main matcher patterns,return parent dir of the node_modules, so user can exclude some files !node_modules/xxxx
-    return path.dirname(parentDir)
-  }
-
-  const collectNodeModules = async (dep: NodeModuleInfo, realSource: string, destination: string) => {
+  const collectNodeModules = async (dep: NodeModuleInfo, destination: string) => {
     const source = dep.dir
-    const matcher = new FileMatcher(realSource, destination, mainMatcher.macroExpander, mainMatcher.patterns)
+    const matcher = new FileMatcher(source, destination, mainMatcher.macroExpander, mainMatcher.patterns)
     const copier = new NodeModuleCopyHelper(matcher, platformPackager.info)
     const files = await copier.collectNodeModules(dep, nodeModuleExcludedExts)
     result[index++] = validateFileSet({ src: source, destination, files, metadata: copier.metadata })
 
     if (dep.dependencies) {
       for (const c of dep.dependencies) {
-        await collectNodeModules(c, realSource, path.join(destination, NODE_MODULES, c.name))
+        await collectNodeModules(c, path.join(destination, NODE_MODULES, c.name))
       }
     }
   }
 
   for (const dep of deps) {
     const destination = path.join(mainMatcher.to, NODE_MODULES, dep.name)
-    const realSource = getRealSource(dep.name, dep.dir)
-    await collectNodeModules(dep, realSource, destination)
+    await collectNodeModules(dep, destination)
   }
 
   return result
