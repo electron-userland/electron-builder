@@ -1,5 +1,12 @@
 # electron-forge-maker-nsis-web
 
+## 26.0.0-alpha.1
+
+### Patch Changes
+
+- Updated dependencies [[`e9eef0c1`](https://github.com/electron-userland/electron-builder/commit/e9eef0c1c7f73a5edfe3026f044c6278641077cb), [`3eab7143`](https://github.com/electron-userland/electron-builder/commit/3eab7143d74262caace81ea05e97617d07daf336), [`dfa35c32`](https://github.com/electron-userland/electron-builder/commit/dfa35c321f6e68c6a102ddc49aa64985fb11d396)]:
+  - app-builder-lib@26.0.0-alpha.1
+
 ## 26.0.0-alpha.0
 
 ### Patch Changes

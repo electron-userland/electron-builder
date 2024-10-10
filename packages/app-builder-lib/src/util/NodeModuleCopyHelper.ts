@@ -23,6 +23,7 @@ const excludedFiles = new Set(
     "node_gyp_bins",
   ].concat(excludedNames.split(","))
 )
+
 const topLevelExcludedFiles = new Set([
   "karma.conf.js",
   ".coveralls.yml",
