@@ -3,7 +3,7 @@ import { CommonLinuxOptions } from "./linuxOptions"
 
 export interface SnapOptions extends CommonLinuxOptions, TargetSpecificOptions {
   /**
-   * A snap of type base to be used as the execution environment for this snap. Examples: `core`, `core18`, `core20`, `core22`. Defaults to `core20`
+   * A snap of type base to be used as the execution environment for this snap. Examples: `core`, `core18`, `core20`, `core22`, `core24`. Defaults to `core20`
    */
   readonly base?: string | null
 

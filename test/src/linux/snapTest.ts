@@ -312,7 +312,7 @@ test.ifDevOrLinuxCi(
 )
 
 test.ifDevOrLinuxCi(
-  "base option",
+  "base option core22",
   app({
     targets: snapTarget,
     config: {
@@ -324,6 +324,24 @@ test.ifDevOrLinuxCi(
     effectiveOptionComputed: async ({ snap }) => {
       expect(snap).toMatchSnapshot()
       expect(snap.base).toBe("core22")
+      return true
+    },
+  })
+)
+
+test.ifDevOrLinuxCi(
+  "base option core24",
+  app({
+    targets: snapTarget,
+    config: {
+      productName: "Sep",
+      snap: {
+        base: "core24",
+      },
+    },
+    effectiveOptionComputed: async ({ snap }) => {
+      expect(snap).toMatchSnapshot()
+      expect(snap.base).toBe("core24")
       return true
     },
   })
