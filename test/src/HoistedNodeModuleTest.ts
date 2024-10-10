@@ -1,4 +1,4 @@
-import { assertPack, linuxDirTarget, verifyAsarFileTree,modifyPackageJson } from "./helpers/packTester"
+import { assertPack, linuxDirTarget, verifyAsarFileTree, modifyPackageJson } from "./helpers/packTester"
 import { Platform } from "electron-builder"
 import { outputFile } from "fs-extra"
 import * as path from "path"
@@ -90,7 +90,7 @@ test.ifAll("pnpm without hoisted config", () =>
         return Promise.all([
           modifyPackageJson(projectDir, data => {
             data.dependencies = {
-               "es5-ext": "0.10.53"
+              "es5-ext": "0.10.53",
             }
           }),
           outputFile(path.join(projectDir, "pnpm-lock.yaml"), ""),
@@ -100,7 +100,6 @@ test.ifAll("pnpm without hoisted config", () =>
     }
   )
 )
-
 
 // test.ifAll("pnpm with hoisted config", () =>
 //   assertPack(
