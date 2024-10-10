@@ -60,7 +60,7 @@ export async function computeElectronVersion(projectDir: string): Promise<string
 
   const potentialRootDirs = [projectDir, await getProjectRootPath(projectDir)]
   let dependency: NameAndVersion | null = null
-  for await (const dir of potentialRootDirs) {
+  for (const dir of potentialRootDirs) {
     const metadata = await orNullIfFileNotExist(readJson(path.join(dir, "package.json")))
     dependency = metadata ? findFromPackageMetadata(metadata) : null
     if (dependency) {

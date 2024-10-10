@@ -10,10 +10,19 @@ import { NodeModuleInfo } from "./packageDependencies"
 import { realpathSync } from "fs"
 
 const excludedFiles = new Set(
-  [".DS_Store", "node_modules" /* already in the queue */, "CHANGELOG.md", "ChangeLog", "changelog.md", "Changelog.md", "Changelog", "binding.gyp", ".npmignore"].concat(
-    excludedNames.split(",")
-  )
-)
+  [
+    ".DS_Store",
+    "node_modules" /* already in the queue */,
+    "CHANGELOG.md",
+    "ChangeLog",
+    "changelog.md",
+    "Changelog.md",
+    "Changelog",
+    "binding.gyp",
+    ".npmignore",
+    "node_gyp_bins",
+  ].concat(excludedNames.split(",")))
+
 const topLevelExcludedFiles = new Set([
   "karma.conf.js",
   ".coveralls.yml",
