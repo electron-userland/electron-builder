@@ -1417,13 +1417,13 @@ Object {
 }
 `;
 
-exports[`pnpm without hoisted config 1`] = `
+exports[`pnpm es5-ext without hoisted config 1`] = `
 Object {
   "linux": Array [],
 }
 `;
 
-exports[`pnpm without hoisted config 2`] = `
+exports[`pnpm es5-ext without hoisted config 2`] = `
 Object {
   "author": "Mariusz Nowak <medyk@medikoo.com> (http://www.medikoo.com/)",
   "dependencies": Object {
@@ -1488,13 +1488,24 @@ Object {
 
 exports[`yarn parse-asn1 2`] = `
 Object {
-  "author": "Mariusz Nowak <medyk@medikoo.com> (http://www.medikoo.com/)",
+  "author": "Fedor Indutny",
   "dependencies": Object {
-    "es5-ext": "^0.10.64",
-    "type": "^2.7.2",
+    "bn.js": "^4.0.0",
+    "inherits": "^2.0.1",
+    "minimalistic-assert": "^1.0.0",
   },
-  "description": "Property descriptor factory",
-  "repository": "medikoo/d",
-  "version": "1.0.2",
+  "description": "ASN.1 encoder and decoder",
+  "devDependencies": Object {
+    "mocha": "^2.3.4",
+  },
+  "homepage": "https://github.com/indutny/asn1.js",
+  "license": "MIT",
+  "main": "lib/asn1.js",
+  "name": "asn1.js",
+  "repository": Object {
+    "type": "git",
+    "url": "git@github.com:indutny/asn1.js",
+  },
+  "version": "4.10.1",
 }
 `;
