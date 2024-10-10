@@ -758,6 +758,14 @@ Object {
               "files": Object {
                 "Release": Object {
                   "files": Object {
+                    "node-addon-api": Object {
+                      "files": Object {
+                        "node_addon_api_except.stamp": Object {
+                          "size": "<size>",
+                          "unpacked": true,
+                        },
+                      },
+                    },
                     "pty.node": Object {
                       "size": "<size>",
                       "unpacked": true,
@@ -1334,6 +1342,14 @@ Object {
                 },
               },
             },
+            "node-addon-api": Object {
+              "files": Object {
+                "node_addon_api.Makefile": Object {
+                  "size": "<size>",
+                  "unpacked": true,
+                },
+              },
+            },
             "package.json": Object {
               "size": "<size>",
               "unpacked": true,
@@ -1531,6 +1547,7 @@ Array [
   "app.asar.unpacked/node_modules/node-pty/src/shared/conout.ts",
   "app.asar.unpacked/node_modules/node-pty/scripts/post-install.js",
   "app.asar.unpacked/node_modules/node-pty/scripts/publish.js",
+  "app.asar.unpacked/node_modules/node-pty/node-addon-api/node_addon_api.Makefile",
   "app.asar.unpacked/node_modules/node-pty/lib/conpty_console_list_agent.js",
   "app.asar.unpacked/node_modules/node-pty/lib/conpty_console_list_agent.js.map",
   "app.asar.unpacked/node_modules/node-pty/lib/eventEmitter2.js",
@@ -1658,6 +1675,7 @@ Array [
   "app.asar.unpacked/node_modules/node-pty/deps/winpty/misc/Font-Report-June2016/Windows10SetFontBugginess.txt",
   "app.asar.unpacked/node_modules/node-pty/build/Release/pty.node",
   "app.asar.unpacked/node_modules/node-pty/build/Release/spawn-helper",
+  "app.asar.unpacked/node_modules/node-pty/build/Release/node-addon-api/node_addon_api_except.stamp",
   "app.asar.unpacked/node_modules/node-mac-permissions/LICENSE",
   "app.asar.unpacked/node_modules/node-mac-permissions/index.js",
   Object {
