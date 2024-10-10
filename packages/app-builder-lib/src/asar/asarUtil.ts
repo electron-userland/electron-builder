@@ -98,23 +98,23 @@ export class AsarPackager {
 
       if (source === realPathFile) {
         return this.copyFileOrData(undefined, source, destination, stat)
-      } else {
-        const realPathRelative = path.relative(this.config.appDir, realPathFile)
-        const symlinkTarget = path.resolve(this.rootForAppFilesWithoutAsar, realPathRelative)
-        const isOutsidePackage = realPathRelative.startsWith("../")
-        if (isOutsidePackage) {
-          log.error({ source: log.filePath(source), realPathFile: log.filePath(realPathFile) }, `unable to copy, file is symlinked outside the package`)
-          throw new Error(
-            `Cannot copy file (${path.basename(source)}) symlinked to file (${path.basename(realPathFile)}) outside the package as that violates asar security integrity`
-          )
-        }
-
-        await this.copyFileOrData(undefined, source, symlinkTarget, stat)
-        const target = path.relative(path.dirname(destination), symlinkTarget)
-        fsNode.symlinkSync(target, destination)
-
-        copiedFiles.add(symlinkTarget)
       }
+
+      const realPathRelative = path.relative(this.config.appDir, realPathFile)
+      const symlinkTarget = path.resolve(this.rootForAppFilesWithoutAsar, realPathRelative)
+      const isOutsidePackage = realPathRelative.startsWith("../")
+      if (isOutsidePackage) {
+        log.error({ source: log.filePath(source), realPathFile: log.filePath(realPathFile) }, `unable to copy, file is symlinked outside the package`)
+        throw new Error(
+          `Cannot copy file (${path.basename(source)}) symlinked to file (${path.basename(realPathFile)}) outside the package as that violates asar security integrity`
+        )
+      }
+
+      await this.copyFileOrData(undefined, source, symlinkTarget, stat)
+      const target = path.relative(path.dirname(destination), symlinkTarget)
+      fsNode.symlinkSync(target, destination)
+
+      copiedFiles.add(symlinkTarget)
     }
 
     for await (const fileSet of fileSets) {
