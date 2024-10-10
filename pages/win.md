@@ -9,7 +9,9 @@ Use [sign](app-builder-lib.Interface.WindowsSigntoolConfiguration.md#sign) optio
 
 ```json
 "win": {
-  "sign": "./customSign.js"
+  "signtoolOptions": {
+    "sign": "./customSign.js"
+  }
 }
 ```
 

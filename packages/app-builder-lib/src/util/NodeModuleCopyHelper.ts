@@ -21,7 +21,8 @@ const excludedFiles = new Set(
     "binding.gyp",
     ".npmignore",
     "node_gyp_bins",
-  ].concat(excludedNames.split(",")))
+  ].concat(excludedNames.split(","))
+)
 
 const topLevelExcludedFiles = new Set([
   "karma.conf.js",

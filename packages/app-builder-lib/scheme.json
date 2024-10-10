@@ -2622,18 +2622,11 @@
           ]
         },
         "notarize": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/NotarizeNotaryOptions"
-            },
-            {
-              "type": [
-                "null",
-                "boolean"
-              ]
-            }
-          ],
-          "description": "Options to use for"
+          "description": "Whether to disable electron-builder's [@electron/notarize](https://github.com/electron/notarize) integration.\n\nNote: In order to activate the notarization step You MUST specify one of the following via environment variables:\n1. `APPLE_API_KEY`, `APPLE_API_KEY_ID` and `APPLE_API_ISSUER`.\n2. `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD`, and `APPLE_TEAM_ID`\n3. `APPLE_KEYCHAIN` and `APPLE_KEYCHAIN_PROFILE`\n\nFor security reasons it is recommended to use the first option (see https://github.com/electron-userland/electron-builder/issues/7859)",
+          "type": [
+            "null",
+            "boolean"
+          ]
         },
         "preAutoEntitlements": {
           "default": true,
@@ -3263,18 +3256,11 @@
           ]
         },
         "notarize": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/NotarizeNotaryOptions"
-            },
-            {
-              "type": [
-                "null",
-                "boolean"
-              ]
-            }
-          ],
-          "description": "Options to use for"
+          "description": "Whether to disable electron-builder's [@electron/notarize](https://github.com/electron/notarize) integration.\n\nNote: In order to activate the notarization step You MUST specify one of the following via environment variables:\n1. `APPLE_API_KEY`, `APPLE_API_KEY_ID` and `APPLE_API_ISSUER`.\n2. `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD`, and `APPLE_TEAM_ID`\n3. `APPLE_KEYCHAIN` and `APPLE_KEYCHAIN_PROFILE`\n\nFor security reasons it is recommended to use the first option (see https://github.com/electron-userland/electron-builder/issues/7859)",
+          "type": [
+            "null",
+            "boolean"
+          ]
         },
         "preAutoEntitlements": {
           "default": true,
@@ -3779,16 +3765,6 @@
             "null",
             "string"
           ]
-        }
-      },
-      "type": "object"
-    },
-    "NotarizeNotaryOptions": {
-      "additionalProperties": false,
-      "properties": {
-        "teamId": {
-          "description": "The team ID you want to notarize under for when using `notarytool`",
-          "type": "string"
         }
       },
       "type": "object"
@@ -6073,13 +6049,6 @@
     "WindowsConfiguration": {
       "additionalProperties": false,
       "properties": {
-        "additionalCertificateFile": {
-          "description": "The path to an additional certificate file you want to add to the signature block.",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
         "appId": {
           "default": "com.electron.${name}",
           "description": "The application id. Used as [CFBundleIdentifier](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070) for MacOS and as\n[Application User Model ID](https://msdn.microsoft.com/en-us/library/windows/desktop/dd378459(v=vs.85).aspx) for Windows (NSIS target only, Squirrel.Windows not supported). It is strongly recommended that an explicit ID is set.",
@@ -6137,34 +6106,6 @@
             }
           ],
           "description": "Options for usage of Azure Trusted Signing (beta)"
-        },
-        "certificateFile": {
-          "description": "The path to the *.pfx certificate you want to sign with. Please use it only if you cannot use env variable `CSC_LINK` (`WIN_CSC_LINK`) for some reason.\nPlease see [Code Signing](./code-signing.md).",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "certificatePassword": {
-          "description": "The password to the certificate provided in `certificateFile`. Please use it only if you cannot use env variable `CSC_KEY_PASSWORD` (`WIN_CSC_KEY_PASSWORD`) for some reason.\nPlease see [Code Signing](./code-signing.md).",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "certificateSha1": {
-          "description": "The SHA1 hash of the signing certificate. The SHA1 hash is commonly specified when multiple certificates satisfy the criteria specified by the remaining switches. Works only on Windows (or on macOS if [Parallels Desktop](https://www.parallels.com/products/desktop/) Windows 10 virtual machines exits).",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "certificateSubjectName": {
-          "description": "The name of the subject of the signing certificate, which is often labeled with the field name `issued to`. Required only for EV Code Signing and works only on Windows (or on macOS if [Parallels Desktop](https://www.parallels.com/products/desktop/) Windows 10 virtual machines exits).",
-          "type": [
-            "null",
-            "string"
-          ]
         },
         "compression": {
           "anyOf": [
@@ -6412,23 +6353,6 @@
             }
           ]
         },
-        "publisherName": {
-          "anyOf": [
-            {
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            },
-            {
-              "type": [
-                "null",
-                "string"
-              ]
-            }
-          ],
-          "description": "[The publisher name](https://github.com/electron-userland/electron-builder/issues/1187#issuecomment-278972073), exactly as in your code signed certificate. Several names can be provided.\nDefaults to common name from your code signing certificate."
-        },
         "releaseInfo": {
           "$ref": "#/definitions/ReleaseInfo",
           "description": "The release info. Intended for command line usage:\n\n```\n-c.releaseInfo.releaseNotes=\"new features\"\n```"
@@ -6450,36 +6374,9 @@
           "default": "asInvoker",
           "description": "The [security level](https://msdn.microsoft.com/en-us/library/6ad1fshk.aspx#Anchor_9) at which the application requests to be executed.\nCannot be specified per target, allowed only in the `win`."
         },
-        "rfc3161TimeStampServer": {
-          "default": "http://timestamp.digicert.com",
-          "description": "The URL of the RFC 3161 time stamp server.",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "sign": {
-          "anyOf": [
-            {
-              "typeof": "function"
-            },
-            {
-              "type": [
-                "null",
-                "string"
-              ]
-            }
-          ],
-          "description": "The custom function (or path to file or module id) to sign Windows executables"
-        },
         "signAndEditExecutable": {
           "default": true,
           "description": "Whether to sign and add metadata to executable. Advanced option.",
-          "type": "boolean"
-        },
-        "signDlls": {
-          "default": false,
-          "description": "Whether to sign DLL files. Advanced option.",
           "type": "boolean"
         },
         "signExts": {
@@ -6496,24 +6393,6 @@
           ],
           "default": null,
           "description": "Explicit file extensions to also sign. Advanced option."
-        },
-        "signingHashAlgorithms": {
-          "anyOf": [
-            {
-              "items": {
-                "enum": [
-                  "sha1",
-                  "sha256"
-                ],
-                "type": "string"
-              },
-              "type": "array"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "Array of signing algorithms used. For AppX `sha256` is always used."
         },
         "signtoolOptions": {
           "anyOf": [
@@ -6553,14 +6432,6 @@
           ],
           "default": "nsis",
           "description": "The target package type: list of `nsis`, `nsis-web` (Web installer), `portable` ([portable]./nsis.md#portable) app without installation), `appx`, `msi`, `msi-wrapped`, `squirrel`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`.\nAppX package can be built only on Windows 10.\n\nTo use Squirrel.Windows please install `electron-builder-squirrel-windows` dependency."
-        },
-        "timeStampServer": {
-          "default": "http://timestamp.digicert.com",
-          "description": "The URL of the time stamp server.",
-          "type": [
-            "null",
-            "string"
-          ]
         },
         "verifyUpdateCodeSignature": {
           "default": true,

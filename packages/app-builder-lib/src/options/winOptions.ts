@@ -24,63 +24,6 @@ export interface WindowsConfiguration extends PlatformSpecificBuildOptions {
   readonly legalTrademarks?: string | null
 
   /**
-   * Array of signing algorithms used. For AppX `sha256` is always used.
-   * @deprecated Please use {@link signtoolOptions}: {@link WindowsSigntoolConfiguration.signingHashAlgorithms}
-   */
-  readonly signingHashAlgorithms?: Array<"sha1" | "sha256"> | null
-  /**
-   * The custom function (or path to file or module id) to sign Windows executables
-   * @deprecated Please use {@link signtoolOptions}: {@link WindowsSigntoolConfiguration.sign}
-   */
-  readonly sign?: CustomWindowsSign | string | null
-  /**
-   * The path to the *.pfx certificate you want to sign with. Please use it only if you cannot use env variable `CSC_LINK` (`WIN_CSC_LINK`) for some reason.
-   * Please see [Code Signing](./code-signing.md).
-   * @deprecated Please use {@link signtoolOptions}: {@link WindowsSigntoolConfiguration.certificateFile}
-   */
-  readonly certificateFile?: string | null
-  /**
-   * The password to the certificate provided in `certificateFile`. Please use it only if you cannot use env variable `CSC_KEY_PASSWORD` (`WIN_CSC_KEY_PASSWORD`) for some reason.
-   * Please see [Code Signing](./code-signing.md).
-   * @deprecated Please use {@link signtoolOptions}: {@link WindowsSigntoolConfiguration.certificatePassword}
-   */
-  readonly certificatePassword?: string | null
-  /**
-   * The name of the subject of the signing certificate, which is often labeled with the field name `issued to`. Required only for EV Code Signing and works only on Windows (or on macOS if [Parallels Desktop](https://www.parallels.com/products/desktop/) Windows 10 virtual machines exits).
-   * @deprecated Please use {@link signtoolOptions}: {@link WindowsSigntoolConfiguration.certificateSubjectName}
-   */
-  readonly certificateSubjectName?: string | null
-  /**
-   * The SHA1 hash of the signing certificate. The SHA1 hash is commonly specified when multiple certificates satisfy the criteria specified by the remaining switches. Works only on Windows (or on macOS if [Parallels Desktop](https://www.parallels.com/products/desktop/) Windows 10 virtual machines exits).
-   * @deprecated Please use {@link signtoolOptions}: {@link WindowsSigntoolConfiguration.certificateSha1}
-   */
-  readonly certificateSha1?: string | null
-  /**
-   * The path to an additional certificate file you want to add to the signature block.
-   * @deprecated Please use {@link signtoolOptions}: {@link WindowsSigntoolConfiguration.additionalCertificateFile}
-   */
-  readonly additionalCertificateFile?: string | null
-  /**
-   * The URL of the RFC 3161 time stamp server.
-   * @default http://timestamp.digicert.com
-   * @deprecated Please use {@link signtoolOptions}: {@link WindowsSigntoolConfiguration.rfc3161TimeStampServer}
-   */
-  readonly rfc3161TimeStampServer?: string | null
-  /**
-   * The URL of the time stamp server.
-   * @default http://timestamp.digicert.com
-   * @deprecated Please use {@link signtoolOptions}: {@link WindowsSigntoolConfiguration.timeStampServer}
-   */
-  readonly timeStampServer?: string | null
-
-  /**
-   * [The publisher name](https://github.com/electron-userland/electron-builder/issues/1187#issuecomment-278972073), exactly as in your code signed certificate. Several names can be provided.
-   * Defaults to common name from your code signing certificate.
-   * @deprecated Please use {@link signtoolOptions}: {@link WindowsSigntoolConfiguration.publisherName}
-   */
-  readonly publisherName?: string | Array<string> | null
-
-  /**
    * Options for usage with signtool.exe
    */
   readonly signtoolOptions?: WindowsSigntoolConfiguration | null
@@ -110,14 +53,6 @@ export interface WindowsConfiguration extends PlatformSpecificBuildOptions {
    * @default true
    */
   readonly signAndEditExecutable?: boolean
-
-  /**
-   * Whether to sign DLL files. Advanced option.
-   * @see https://github.com/electron-userland/electron-builder/issues/3101#issuecomment-404212384
-   * @default false
-   * @deprecated Use {@link signExts} instead for more explicit control
-   */
-  readonly signDlls?: boolean
 
   /**
    * Explicit file extensions to also sign. Advanced option.

@@ -3,7 +3,3 @@ The top-level [mac](configuration.md#mac) key contains set of options instructin
 ## Configuration
 
 {!./app-builder-lib.Interface.MacConfiguration.md!}
-
-## Notarize Configuration
-
-{!./app-builder-lib.Interface.NotarizeNotaryOptions.md!}

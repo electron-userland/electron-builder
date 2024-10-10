@@ -221,8 +221,7 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
   readonly additionalArguments?: Array<string> | null
 
   /**
-   * Options to use for @electron/notarize (ref: https://github.com/electron/notarize).
-   * Use `false` to explicitly disable
+   * Whether to disable electron-builder's [@electron/notarize](https://github.com/electron/notarize) integration.
    *
    * Note: In order to activate the notarization step You MUST specify one of the following via environment variables:
    * 1. `APPLE_API_KEY`, `APPLE_API_KEY_ID` and `APPLE_API_ISSUER`.
@@ -231,15 +230,7 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
    *
    * For security reasons it is recommended to use the first option (see https://github.com/electron-userland/electron-builder/issues/7859)
    */
-  readonly notarize?: NotarizeNotaryOptions | boolean | null
-}
-
-export interface NotarizeNotaryOptions {
-  /**
-   * The team ID you want to notarize under for when using `notarytool`
-   * @deprecated Set the `APPLE_TEAM_ID` environment variable instead
-   */
-  readonly teamId?: string
+  readonly notarize?: boolean | null
 }
 
 export interface DmgOptions extends TargetSpecificOptions {
