@@ -1479,3 +1479,22 @@ Object {
   "version": "1.0.2",
 }
 `;
+
+exports[`yarn parse-asn1 1`] = `
+Object {
+  "linux": Array [],
+}
+`;
+
+exports[`yarn parse-asn1 2`] = `
+Object {
+  "author": "Mariusz Nowak <medyk@medikoo.com> (http://www.medikoo.com/)",
+  "dependencies": Object {
+    "es5-ext": "^0.10.64",
+    "type": "^2.7.2",
+  },
+  "description": "Property descriptor factory",
+  "repository": "medikoo/d",
+  "version": "1.0.2",
+}
+`;
