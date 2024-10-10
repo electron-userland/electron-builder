@@ -80,7 +80,7 @@ test.ifAll("yarn two package.json w/ native module", () =>
 
 test.ifAll("pnpm without hoisted config", () =>
   assertPack(
-    "test-app-pnpm-hoisted",
+    "test-app-pnmp-hoisted",
     {
       targets: linuxDirTarget,
     },
@@ -100,6 +100,7 @@ test.ifAll("pnpm without hoisted config", () =>
     }
   )
 )
+
 
 // test.ifAll("pnpm with hoisted config", () =>
 //   assertPack(

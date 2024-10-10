@@ -73,6 +73,39 @@ Object {
 }
 `;
 
+exports[`pnpm without hoisted config 1`] = `
+Object {
+  "linux": Array [],
+}
+`;
+
+exports[`pnpm without hoisted config 2`] = `
+Object {
+  "files": Object {
+    "index.html": Object {
+      "offset": "0",
+      "size": 378,
+    },
+    "index.js": Object {
+      "offset": "378",
+      "size": 619,
+    },
+    "package.json": Object {
+      "offset": "997",
+      "size": 232,
+    },
+    "path": Object {
+      "files": Object {
+        "app.asar": Object {
+          "offset": "1229",
+          "size": 714,
+        },
+      },
+    },
+  },
+}
+`;
+
 exports[`yarn several workspaces 1`] = `
 Object {
   "linux": Array [],
@@ -1383,8 +1416,3 @@ Object {
   },
 }
 `;
-
-exports[`pnpm without hoisted config 1`] = `
-Object {
-  "linux": Array [],
-}
