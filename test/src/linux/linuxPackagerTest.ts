@@ -26,6 +26,17 @@ test.ifNotWindows(
       },
       downloadAlternateFFmpeg: true,
       publish: testPublishConfig,
+      electronFuses: {
+        runAsNode: true,
+        enableCookieEncryption: true,
+        enableNodeOptionsEnvironmentVariable: true,
+        enableNodeCliInspectArguments: true,
+        enableEmbeddedAsarIntegrityValidation: true,
+        onlyLoadAppFromAsar: true,
+        loadBrowserProcessSpecificV8Snapshot: true,
+        // grantFileProtocolExtraPrivileges: true,
+        resetAdHocDarwinSignature: true,
+      }
     },
   })
 )

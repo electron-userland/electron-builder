@@ -181,6 +181,12 @@ export interface CommonConfiguration {
    * @default true
    */
   readonly removePackageKeywords?: boolean
+
+  /**
+   * Options to pass to `@electron/fuses`
+   * Ref: https://github.com/electron/fuses
+   */
+  readonly electronFuses?: FuseOptionsV1 | null
 }
 export interface Configuration extends CommonConfiguration, PlatformSpecificBuildOptions, Hooks {
   /**
@@ -374,4 +380,16 @@ export interface MetadataDirectories {
    * The application directory (containing the application package.json), defaults to `app`, `www` or working directory.
    */
   readonly app?: string | null
+}
+
+export interface FuseOptionsV1 {
+  runAsNode?: boolean
+  enableCookieEncryption?: boolean
+  enableNodeOptionsEnvironmentVariable?: boolean
+  enableNodeCliInspectArguments?: boolean
+  enableEmbeddedAsarIntegrityValidation?: boolean
+  onlyLoadAppFromAsar?: boolean
+  loadBrowserProcessSpecificV8Snapshot?: boolean
+  grantFileProtocolExtraPrivileges?: boolean
+  resetAdHocDarwinSignature?: boolean
 }

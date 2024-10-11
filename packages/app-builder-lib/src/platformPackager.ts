@@ -30,6 +30,8 @@ import { executeAppBuilderAsJson } from "./util/appBuilder"
 import { computeFileSets, computeNodeModuleFileSets, copyAppFiles, ELECTRON_COMPILE_SHIM_FILENAME, transformFiles } from "./util/appFileCopier"
 import { expandMacro as doExpandMacro } from "./util/macroExpander"
 import { resolveFunction } from "./util/resolve"
+import { flipFuses, FuseV1Config, FuseV1Options, FuseVersion } from "@electron/fuses"
+import { FuseOptionsV1 as ConfigurationFusesV1Options } from "./configuration"
 
 export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> {
   get packagerOptions(): PackagerOptions {
@@ -321,6 +323,10 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
     await this.info.afterPack(packContext)
 
+    if (this.config.electronFuses != null) {
+      await this.addElectronFuses(packContext, this.config.electronFuses)
+    }
+
     if (framework.afterPack != null) {
       await framework.afterPack(packContext)
     }
@@ -330,6 +336,38 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     if (sign) {
       await this.doSignAfterPack(outDir, appOutDir, platformName, arch, platformSpecificBuildOptions, targets)
     }
+  }
+
+  private async addElectronFuses(context: AfterPackContext, fuses: ConfigurationFusesV1Options) {
+    const {
+      appOutDir,
+      packager: { appInfo },
+      electronPlatformName,
+      arch,
+    } = context
+
+    const ext = {
+      darwin: ".app",
+      win32: ".exe",
+      linux: [""],
+    }[electronPlatformName]
+
+    const electronBinaryPath = path.join(appOutDir, `${appInfo.productFilename}${ext}`)
+    log.info({ electronPath: log.filePath(electronBinaryPath) }, "executing @electron/fuses")
+
+    const fuseOptions: FuseV1Config = {
+      version: FuseVersion.V1,
+      resetAdHocDarwinSignature: fuses.resetAdHocDarwinSignature ?? (electronPlatformName === "darwin" && arch === Arch.universal),
+      [FuseV1Options.RunAsNode]: fuses.runAsNode,
+      [FuseV1Options.EnableCookieEncryption]: fuses.enableCookieEncryption,
+      [FuseV1Options.EnableNodeOptionsEnvironmentVariable]: fuses.enableNodeOptionsEnvironmentVariable,
+      [FuseV1Options.EnableNodeCliInspectArguments]: fuses.enableNodeCliInspectArguments,
+      [FuseV1Options.EnableEmbeddedAsarIntegrityValidation]: fuses.enableEmbeddedAsarIntegrityValidation,
+      [FuseV1Options.OnlyLoadAppFromAsar]: fuses.onlyLoadAppFromAsar,
+      [FuseV1Options.LoadBrowserProcessSpecificV8Snapshot]: fuses.loadBrowserProcessSpecificV8Snapshot,
+      [FuseV1Options.GrantFileProtocolExtraPrivileges]: fuses.grantFileProtocolExtraPrivileges,
+    }
+    return flipFuses(electronBinaryPath, fuseOptions)
   }
 
   protected async doSignAfterPack(outDir: string, appOutDir: string, platformName: ElectronPlatformName, arch: Arch, platformSpecificBuildOptions: DC, targets: Array<Target>) {

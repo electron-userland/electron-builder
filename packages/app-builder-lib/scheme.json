@@ -1284,6 +1284,39 @@
       },
       "type": "object"
     },
+    "FuseOptionsV1": {
+      "additionalProperties": false,
+      "properties": {
+        "enableCookieEncryption": {
+          "type": "boolean"
+        },
+        "enableEmbeddedAsarIntegrityValidation": {
+          "type": "boolean"
+        },
+        "enableNodeCliInspectArguments": {
+          "type": "boolean"
+        },
+        "enableNodeOptionsEnvironmentVariable": {
+          "type": "boolean"
+        },
+        "grantFileProtocolExtraPrivileges": {
+          "type": "boolean"
+        },
+        "loadBrowserProcessSpecificV8Snapshot": {
+          "type": "boolean"
+        },
+        "onlyLoadAppFromAsar": {
+          "type": "boolean"
+        },
+        "resetAdHocDarwinSignature": {
+          "type": "boolean"
+        },
+        "runAsNode": {
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
     "GenericServerOptions": {
       "additionalProperties": false,
       "description": "Generic (any HTTP(S) server) options.\nIn all publish options [File Macros](./file-patterns.md#file-macros) are supported.",
@@ -7022,6 +7055,17 @@
     "electronDownload": {
       "$ref": "#/definitions/ElectronDownloadOptions",
       "description": "The [electron-download](https://github.com/electron-userland/electron-download#usage) options."
+    },
+    "electronFuses": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/FuseOptionsV1"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Options to pass to `@electron/fuses`\nRef: https://github.com/electron/fuses"
     },
     "electronLanguages": {
       "anyOf": [

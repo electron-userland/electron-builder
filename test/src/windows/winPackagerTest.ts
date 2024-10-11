@@ -22,6 +22,17 @@ test.ifNotCiMac(
     targets: Platform.WINDOWS.createTarget(["zip"], Arch.x64),
     config: {
       downloadAlternateFFmpeg: true,
+      electronFuses: {
+        runAsNode: true,
+        enableCookieEncryption: true,
+        enableNodeOptionsEnvironmentVariable: true,
+        enableNodeCliInspectArguments: true,
+        enableEmbeddedAsarIntegrityValidation: true,
+        onlyLoadAppFromAsar: true,
+        loadBrowserProcessSpecificV8Snapshot: true,
+        // grantFileProtocolExtraPrivileges: true,
+        resetAdHocDarwinSignature: true,
+      }
     },
   })
 )
