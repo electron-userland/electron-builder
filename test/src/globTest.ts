@@ -1,5 +1,5 @@
 import { DIR_TARGET, Platform } from "app-builder-lib"
-import { readAsar } from "app-builder-lib/out/asar/asar"
+import { readAsar, readAsarJson } from "app-builder-lib/out/asar/asar"
 import { outputFile } from "fs-extra"
 import * as path from "path"
 import * as fs from "fs/promises"
@@ -127,6 +127,31 @@ test.ifNotWindows(
     }
   )
 )
+
+test.ifDevOrLinuxCi("local node module with file protocol", () => {
+  return assertPack(
+    "test-app-one",
+    {
+      targets: Platform.LINUX.createTarget(DIR_TARGET),
+    },
+    {
+      isInstallDepsBefore: true,
+      projectDirCreated: async (projectDir, tmpDir) => {
+        const tempDir = await tmpDir.getTempDir()
+        let localPath = path.join(tempDir, "foo")
+        await outputFile(path.join(localPath, "package.json"), `{"name":"foo","version":"9.0.0","main":"index.js","license":"MIT","dependencies":{"ms":"2.0.0"}}`)
+        await modifyPackageJson(projectDir, data => {
+          data.dependencies = {
+            foo: `file:${localPath}`,
+          }
+        })
+      },
+      packed: async context => {
+        expect(await readAsarJson(path.join(context.getResources(Platform.LINUX), "app.asar"), "node_modules/foo/package.json")).toMatchSnapshot()
+      },
+    }
+  )
+})
 
 // cannot be enabled
 // https://github.com/electron-userland/electron-builder/issues/611

@@ -9792,6 +9792,24 @@ Object {
 }
 `;
 
+exports[`local node module with file protocol 1`] = `
+Object {
+  "linux": Array [],
+}
+`;
+
+exports[`local node module with file protocol 2`] = `
+Object {
+  "dependencies": Object {
+    "ms": "2.0.0",
+  },
+  "license": "MIT",
+  "main": "index.js",
+  "name": "foo",
+  "version": "9.0.0",
+}
+`;
+
 exports[`outside link 1`] = `
 Object {
   "linux": Array [],
