@@ -19,6 +19,7 @@ import {
   Configuration,
   ElectronPlatformName,
   FileAssociation,
+  LinuxPackager,
   Packager,
   PackagerOptions,
   Platform,
@@ -323,10 +324,6 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
     await this.info.afterPack(packContext)
 
-    if (this.config.electronFuses != null) {
-      await this.addElectronFuses(packContext, this.config.electronFuses)
-    }
-
     if (framework.afterPack != null) {
       await framework.afterPack(packContext)
     }
@@ -338,31 +335,52 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
   }
 
-  private async addElectronFuses(context: AfterPackContext, fuses: ConfigurationFusesV1Options) {
-    const {
+  protected async doSignAfterPack(outDir: string, appOutDir: string, platformName: ElectronPlatformName, arch: Arch, platformSpecificBuildOptions: DC, targets: Array<Target>) {
+    const asarOptions = await this.computeAsarOptions(platformSpecificBuildOptions)
+    const isAsar = asarOptions != null
+    const packContext = {
       appOutDir,
-      packager: { appInfo },
-      electronPlatformName,
+      outDir,
       arch,
-    } = context
+      targets,
+      packager: this,
+      electronPlatformName: platformName,
+    }
+    // the fuses MUST be flipped right before signing
+    if (this.config.electronFuses != null) {
+      await this.addElectronFuses(packContext, this.config.electronFuses)
+    }
+    const didSign = await this.signApp(packContext, isAsar)
+    const afterSign = await resolveFunction(this.appInfo.type, this.config.afterSign, "afterSign")
+    if (afterSign != null) {
+      if (didSign) {
+        await Promise.resolve(afterSign(packContext))
+      } else {
+        log.warn(null, `skipping "afterSign" hook as no signing occurred, perhaps you intended "afterPack"?`)
+      }
+    }
+  }
+
+  public async addElectronFuses(context: AfterPackContext, fuses: ConfigurationFusesV1Options) {
+    const { appOutDir, electronPlatformName, packager } = context
 
     const ext = {
       darwin: ".app",
       win32: ".exe",
-      linux: [""],
+      linux: "",
     }[electronPlatformName]
 
-    const executableName = electronPlatformName === "linux" ? appInfo.sanitizedName.toLowerCase() : appInfo.productFilename
+    const executableName = packager instanceof LinuxPackager ? packager.executableName : packager.appInfo.productFilename
     const electronBinaryPath = path.join(appOutDir, `${executableName}${ext}`)
 
     log.info({ electronPath: log.filePath(electronBinaryPath) }, "executing @electron/fuses")
-    return flipFuses(electronBinaryPath, this.generateFuseConfig(electronPlatformName, arch, fuses))
+    return flipFuses(electronBinaryPath, this.generateFuseConfig(fuses))
   }
 
-  private generateFuseConfig(electronPlatformName: string, arch: Arch, fuses: ConfigurationFusesV1Options): FuseV1Config {
+  private generateFuseConfig(fuses: ConfigurationFusesV1Options): FuseV1Config {
     const config: FuseV1Config = {
       version: FuseVersion.V1,
-      resetAdHocDarwinSignature: fuses.resetAdHocDarwinSignature ?? (electronPlatformName === "darwin" && arch === Arch.universal),
+      resetAdHocDarwinSignature: fuses.resetAdHocDarwinSignature,
     }
     // this is annoying, but we must filter out undefined entries because some older electron versions will receive `the fuse wire in this version of Electron is not long enough` even if entry is set undefined
     if (fuses.runAsNode != null) {
@@ -390,28 +408,6 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       config[FuseV1Options.GrantFileProtocolExtraPrivileges] = fuses.grantFileProtocolExtraPrivileges
     }
     return config
-  }
-
-  protected async doSignAfterPack(outDir: string, appOutDir: string, platformName: ElectronPlatformName, arch: Arch, platformSpecificBuildOptions: DC, targets: Array<Target>) {
-    const asarOptions = await this.computeAsarOptions(platformSpecificBuildOptions)
-    const isAsar = asarOptions != null
-    const packContext = {
-      appOutDir,
-      outDir,
-      arch,
-      targets,
-      packager: this,
-      electronPlatformName: platformName,
-    }
-    const didSign = await this.signApp(packContext, isAsar)
-    const afterSign = await resolveFunction(this.appInfo.type, this.config.afterSign, "afterSign")
-    if (afterSign != null) {
-      if (didSign) {
-        await Promise.resolve(afterSign(packContext))
-      } else {
-        log.warn(null, `skipping "afterSign" hook as no signing occurred, perhaps you intended "afterPack"?`)
-      }
-    }
   }
 
   // eslint-disable-next-line

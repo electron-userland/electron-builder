@@ -1286,32 +1286,42 @@
     },
     "FuseOptionsV1": {
       "additionalProperties": false,
+      "description": "All options come from [@electron/fuses](https://github.com/electron/fuses)",
       "properties": {
         "enableCookieEncryption": {
+          "description": "Enables cookie encryption",
           "type": "boolean"
         },
         "enableEmbeddedAsarIntegrityValidation": {
+          "description": "Enables validation of the app.asar archive on macOS",
           "type": "boolean"
         },
         "enableNodeCliInspectArguments": {
+          "description": "Disables the --inspect and --inspect-brk family of CLI options",
           "type": "boolean"
         },
         "enableNodeOptionsEnvironmentVariable": {
+          "description": "Disables the NODE_OPTIONS environment variable",
           "type": "boolean"
         },
         "grantFileProtocolExtraPrivileges": {
+          "description": "Grants the file protocol extra privileges",
           "type": "boolean"
         },
         "loadBrowserProcessSpecificV8Snapshot": {
+          "description": "Loads V8 Snapshot from `browser_v8_context_snapshot.bin` for the browser process",
           "type": "boolean"
         },
         "onlyLoadAppFromAsar": {
+          "description": "Enforces that Electron will only load your app from \"app.asar\" instead of its normal search paths",
           "type": "boolean"
         },
         "resetAdHocDarwinSignature": {
+          "description": "Resets the app signature, specifically used for macOS.\nNote: This should be unneeded since electron-builder signs the app directly after flipping the fuses.\nRef: https://github.com/electron/fuses?tab=readme-ov-file#apple-silicon",
           "type": "boolean"
         },
         "runAsNode": {
+          "description": "Disables ELECTRON_RUN_AS_NODE",
           "type": "boolean"
         }
       },

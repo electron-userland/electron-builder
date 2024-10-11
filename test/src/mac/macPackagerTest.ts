@@ -33,7 +33,7 @@ test.ifMac.ifAll("two-package", () =>
           onlyLoadAppFromAsar: true,
           loadBrowserProcessSpecificV8Snapshot: true,
           grantFileProtocolExtraPrivileges: undefined, // unsupported on current electron version in our tests
-        }
+        },
       },
     },
     {

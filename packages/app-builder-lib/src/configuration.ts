@@ -382,14 +382,46 @@ export interface MetadataDirectories {
   readonly app?: string | null
 }
 
+/**
+ * All options come from [@electron/fuses](https://github.com/electron/fuses)
+ */
 export interface FuseOptionsV1 {
+  /**
+   * Disables ELECTRON_RUN_AS_NODE
+   */
   runAsNode?: boolean
+  /**
+   * Enables cookie encryption
+   */
   enableCookieEncryption?: boolean
+  /**
+   * Disables the NODE_OPTIONS environment variable
+   */
   enableNodeOptionsEnvironmentVariable?: boolean
+  /**
+   * Disables the --inspect and --inspect-brk family of CLI options
+   */
   enableNodeCliInspectArguments?: boolean
+  /**
+   * Enables validation of the app.asar archive on macOS
+   */
   enableEmbeddedAsarIntegrityValidation?: boolean
+  /**
+   * Enforces that Electron will only load your app from "app.asar" instead of its normal search paths
+   */
   onlyLoadAppFromAsar?: boolean
+  /**
+   * Loads V8 Snapshot from `browser_v8_context_snapshot.bin` for the browser process
+   */
   loadBrowserProcessSpecificV8Snapshot?: boolean
+  /**
+   * Grants the file protocol extra privileges
+   */
   grantFileProtocolExtraPrivileges?: boolean
+  /**
+   * Resets the app signature, specifically used for macOS.
+   * Note: This should be unneeded since electron-builder signs the app directly after flipping the fuses.
+   * Ref: https://github.com/electron/fuses?tab=readme-ov-file#apple-silicon
+   */
   resetAdHocDarwinSignature?: boolean
 }
