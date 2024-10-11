@@ -9792,6 +9792,12 @@ Object {
 }
 `;
 
+exports[`local node module with file protocol 1`] = `
+Object {
+  "linux": Array [],
+}
+
+`;
 exports[`outside link 1`] = `"Cannot copy file (foo) symlinked to file (foo) outside the package as that violates asar security integrity"`;
 
 exports[`unpackDir 1`] = `
