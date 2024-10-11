@@ -6,6 +6,7 @@ import * as fs from "fs/promises"
 import { assertThat } from "./helpers/fileAssert"
 import { app, assertPack, modifyPackageJson, PackedContext, removeUnstableProperties, verifyAsarFileTree } from "./helpers/packTester"
 import { verifySmartUnpack } from "./helpers/verifySmartUnpack"
+import { spawnSync } from "child_process"
 
 async function createFiles(appDir: string) {
   await Promise.all([
@@ -143,6 +144,7 @@ test.ifDevOrLinuxCi("local node module with file protocol", () => {
         const tempDir = await tmpDir.getTempDir()
         let localPath = path.join(tempDir, "foo")
         await outputFile(path.join(localPath, "package.json"), `{"name":"foo","version":"9.0.0","main":"index.js","license":"MIT","dependencies":{"ms":"2.0.0"}}`)
+        spawnSync("npm", ["install"], { cwd: localPath })
         await modifyPackageJson(projectDir, data => {
           data.dependencies = {
             foo: `file:${localPath}`,
