@@ -1,5 +1,5 @@
 import { DIR_TARGET, Platform } from "app-builder-lib"
-import { readAsar, readAsarJson } from "app-builder-lib/out/asar/asar"
+import { readAsar } from "app-builder-lib/out/asar/asar"
 import { outputFile } from "fs-extra"
 import * as path from "path"
 import * as fs from "fs/promises"
@@ -150,7 +150,7 @@ test.ifDevOrLinuxCi("local node module with file protocol", () => {
         })
       },
       packed: async context => {
-        assertThat(path.join(path.join(context.getResources(Platform.LINUX), "app.asar.unpacked", "node_modules","foo", "package.json"))).isFile()
+        assertThat(path.join(path.join(context.getResources(Platform.LINUX), "app.asar.unpacked", "node_modules", "foo", "package.json"))).isFile()
       },
     }
   )
