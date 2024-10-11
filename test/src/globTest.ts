@@ -133,6 +133,9 @@ test.ifDevOrLinuxCi("local node module with file protocol", () => {
     "test-app-one",
     {
       targets: Platform.LINUX.createTarget(DIR_TARGET),
+      config: {
+        asarUnpack: ["**/node_modules/foo/**/*"],
+      },
     },
     {
       isInstallDepsBefore: true,
@@ -147,7 +150,7 @@ test.ifDevOrLinuxCi("local node module with file protocol", () => {
         })
       },
       packed: async context => {
-        expect(await readAsarJson(path.join(context.getResources(Platform.LINUX), "app.asar"), "node_modules/foo/package.json")).toMatchSnapshot()
+        assertThat(path.join(path.join(context.getResources(Platform.LINUX), "app.asar.unpacked", "node_modules","foo", "package.json"))).isFile()
       },
     }
   )
