@@ -30,8 +30,7 @@ test.ifNotCiMac(
         enableEmbeddedAsarIntegrityValidation: true,
         onlyLoadAppFromAsar: true,
         loadBrowserProcessSpecificV8Snapshot: true,
-        // grantFileProtocolExtraPrivileges: true,
-        resetAdHocDarwinSignature: true,
+        grantFileProtocolExtraPrivileges: undefined, // unsupported on current electron version in our tests
       }
     },
   })

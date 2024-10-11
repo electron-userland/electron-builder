@@ -352,22 +352,44 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       linux: [""],
     }[electronPlatformName]
 
-    const electronBinaryPath = path.join(appOutDir, `${appInfo.productFilename}${ext}`)
-    log.info({ electronPath: log.filePath(electronBinaryPath) }, "executing @electron/fuses")
+    const executableName = electronPlatformName === "linux" ? appInfo.sanitizedName.toLowerCase() : appInfo.productFilename
+    const electronBinaryPath = path.join(appOutDir, `${executableName}${ext}`)
 
-    const fuseOptions: FuseV1Config = {
+    log.info({ electronPath: log.filePath(electronBinaryPath) }, "executing @electron/fuses")
+    return flipFuses(electronBinaryPath, this.generateFuseConfig(electronPlatformName, arch, fuses))
+  }
+
+  private generateFuseConfig(electronPlatformName: string, arch: Arch, fuses: ConfigurationFusesV1Options): FuseV1Config {
+    const config: FuseV1Config = {
       version: FuseVersion.V1,
       resetAdHocDarwinSignature: fuses.resetAdHocDarwinSignature ?? (electronPlatformName === "darwin" && arch === Arch.universal),
-      [FuseV1Options.RunAsNode]: fuses.runAsNode,
-      [FuseV1Options.EnableCookieEncryption]: fuses.enableCookieEncryption,
-      [FuseV1Options.EnableNodeOptionsEnvironmentVariable]: fuses.enableNodeOptionsEnvironmentVariable,
-      [FuseV1Options.EnableNodeCliInspectArguments]: fuses.enableNodeCliInspectArguments,
-      [FuseV1Options.EnableEmbeddedAsarIntegrityValidation]: fuses.enableEmbeddedAsarIntegrityValidation,
-      [FuseV1Options.OnlyLoadAppFromAsar]: fuses.onlyLoadAppFromAsar,
-      [FuseV1Options.LoadBrowserProcessSpecificV8Snapshot]: fuses.loadBrowserProcessSpecificV8Snapshot,
-      [FuseV1Options.GrantFileProtocolExtraPrivileges]: fuses.grantFileProtocolExtraPrivileges,
     }
-    return flipFuses(electronBinaryPath, fuseOptions)
+    // this is annoying, but we must filter out undefined entries because some older electron versions will receive `the fuse wire in this version of Electron is not long enough` even if entry is set undefined
+    if (fuses.runAsNode != null) {
+      config[FuseV1Options.RunAsNode] = fuses.runAsNode
+    }
+    if (fuses.enableCookieEncryption != null) {
+      config[FuseV1Options.EnableCookieEncryption] = fuses.enableCookieEncryption
+    }
+    if (fuses.enableNodeOptionsEnvironmentVariable != null) {
+      config[FuseV1Options.EnableNodeOptionsEnvironmentVariable] = fuses.enableNodeOptionsEnvironmentVariable
+    }
+    if (fuses.enableNodeCliInspectArguments != null) {
+      config[FuseV1Options.EnableNodeCliInspectArguments] = fuses.enableNodeCliInspectArguments
+    }
+    if (fuses.enableEmbeddedAsarIntegrityValidation != null) {
+      config[FuseV1Options.EnableEmbeddedAsarIntegrityValidation] = fuses.enableEmbeddedAsarIntegrityValidation
+    }
+    if (fuses.onlyLoadAppFromAsar != null) {
+      config[FuseV1Options.OnlyLoadAppFromAsar] = fuses.onlyLoadAppFromAsar
+    }
+    if (fuses.loadBrowserProcessSpecificV8Snapshot != null) {
+      config[FuseV1Options.LoadBrowserProcessSpecificV8Snapshot] = fuses.loadBrowserProcessSpecificV8Snapshot
+    }
+    if (fuses.grantFileProtocolExtraPrivileges != null) {
+      config[FuseV1Options.GrantFileProtocolExtraPrivileges] = fuses.grantFileProtocolExtraPrivileges
+    }
+    return config
   }
 
   protected async doSignAfterPack(outDir: string, appOutDir: string, platformName: ElectronPlatformName, arch: Arch, platformSpecificBuildOptions: DC, targets: Array<Target>) {
