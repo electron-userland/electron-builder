@@ -31,8 +31,8 @@ import { executeAppBuilderAsJson } from "./util/appBuilder"
 import { computeFileSets, computeNodeModuleFileSets, copyAppFiles, ELECTRON_COMPILE_SHIM_FILENAME, transformFiles } from "./util/appFileCopier"
 import { expandMacro as doExpandMacro } from "./util/macroExpander"
 import { resolveFunction } from "./util/resolve"
-import { flipFuses, FuseV1Config, FuseV1Options, FuseVersion } from "@electron/fuses"
-import { FuseOptionsV1 as ConfigurationFusesV1Options } from "./configuration"
+import { flipFuses, FuseConfig, FuseV1Config, FuseV1Options, FuseVersion } from "@electron/fuses"
+import { FuseOptionsV1 } from "./configuration"
 
 export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> {
   get packagerOptions(): PackagerOptions {
@@ -348,7 +348,8 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
     // the fuses MUST be flipped right before signing
     if (this.config.electronFuses != null) {
-      await this.addElectronFuses(packContext, this.config.electronFuses)
+      const fuseConfig = this.generateFuseConfig(this.config.electronFuses)
+      await this.addElectronFuses(packContext, fuseConfig)
     }
     const didSign = await this.signApp(packContext, isAsar)
     const afterSign = await resolveFunction(this.appInfo.type, this.config.afterSign, "afterSign")
@@ -361,23 +362,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
   }
 
-  public async addElectronFuses(context: AfterPackContext, fuses: ConfigurationFusesV1Options) {
-    const { appOutDir, electronPlatformName, packager } = context
-
-    const ext = {
-      darwin: ".app",
-      win32: ".exe",
-      linux: "",
-    }[electronPlatformName]
-
-    const executableName = packager instanceof LinuxPackager ? packager.executableName : packager.appInfo.productFilename
-    const electronBinaryPath = path.join(appOutDir, `${executableName}${ext}`)
-
-    log.info({ electronPath: log.filePath(electronBinaryPath) }, "executing @electron/fuses")
-    return flipFuses(electronBinaryPath, this.generateFuseConfig(fuses))
-  }
-
-  private generateFuseConfig(fuses: ConfigurationFusesV1Options): FuseV1Config {
+  private generateFuseConfig(fuses: FuseOptionsV1): FuseV1Config {
     const config: FuseV1Config = {
       version: FuseVersion.V1,
       resetAdHocDarwinSignature: fuses.resetAdHocDarwinSignature,
@@ -408,6 +393,22 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       config[FuseV1Options.GrantFileProtocolExtraPrivileges] = fuses.grantFileProtocolExtraPrivileges
     }
     return config
+  }
+
+  public async addElectronFuses(context: AfterPackContext, fuses: FuseConfig) {
+    const { appOutDir, electronPlatformName, packager } = context
+
+    const ext = {
+      darwin: ".app",
+      win32: ".exe",
+      linux: "",
+    }[electronPlatformName]
+
+    const executableName = packager instanceof LinuxPackager ? packager.executableName : packager.appInfo.productFilename
+    const electronBinaryPath = path.join(appOutDir, `${executableName}${ext}`)
+
+    log.info({ electronPath: log.filePath(electronBinaryPath) }, "executing @electron/fuses")
+    return flipFuses(electronBinaryPath, fuses)
   }
 
   // eslint-disable-next-line
