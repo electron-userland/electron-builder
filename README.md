@@ -3,8 +3,6 @@ A complete solution to package and build a ready for distribution [Electron](htt
 
 Always looking for community contributions! 👀 Setting up a [dev environment](https://github.com/electron-userland/electron-builder/blob/master/CONTRIBUTING.md) is easy to do 🪩
 
-**We condemn Russia’s military aggression against Ukraine. We stand with the people of Ukraine.**
-
 ## Sponsors
 
 <table>
