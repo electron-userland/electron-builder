@@ -44,7 +44,7 @@ export abstract class NodeModulesCollector {
         return filePath
       }
     } catch (error) {
-      log.error({ filePath }, "Error resolving path")
+      log.error({ filePath, error }, "Error resolving path")
       return filePath
     }
   }
