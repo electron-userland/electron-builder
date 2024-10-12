@@ -35,17 +35,17 @@ export abstract class NodeModulesCollector {
     return node
   }
 
-  private resolvePath(filePath:string) {
+  private resolvePath(filePath: string) {
     try {
-      const stats = fs.lstatSync(filePath);
+      const stats = fs.lstatSync(filePath)
       if (stats.isSymbolicLink()) {
-        return fs.realpathSync(filePath);
+        return fs.realpathSync(filePath)
       } else {
-        return filePath;
+        return filePath
       }
     } catch (error) {
-      log.error({filePath},'Error resolving path');
-      return filePath;
+      log.error({ filePath }, "Error resolving path")
+      return filePath
     }
   }
 
