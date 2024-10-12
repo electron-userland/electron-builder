@@ -1,7 +1,7 @@
 import { Arch, InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
 import { httpExecutor } from "builder-util"
 import { ClientRequest, RequestOptions } from "http"
-import { HttpPublisher, PublishContext } from "electron-publish"
+import { HttpPublisher, PublishContext } from "./publisher"
 import { BitbucketOptions } from "builder-util-runtime/out/publishOptions"
 import { configureRequestOptions, HttpExecutor } from "builder-util-runtime"
 import * as FormData from "form-data"

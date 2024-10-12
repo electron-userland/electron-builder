@@ -1,6 +1,6 @@
 import { InvalidConfigurationError, isEmptyOrSpaces } from "builder-util"
 import { SpacesOptions } from "builder-util-runtime"
-import { PublishContext } from "electron-publish"
+import { PublishContext } from "../publisher"
 import { BaseS3Publisher } from "./BaseS3Publisher"
 
 export default class SpacesPublisher extends BaseS3Publisher {

@@ -16,15 +16,23 @@
   ],
   "dependencies": {
     "@types/fs-extra": "^9.0.11",
+    "bluebird-lst": "^1.0.9",
     "builder-util": "workspace:*",
     "builder-util-runtime": "workspace:*",
     "chalk": "^4.1.2",
+    "debug": "^4.3.4",
+    "form-data": "^4.0.0",
     "fs-extra": "^10.1.0",
+    "is-ci": "^3.0.0",
     "lazy-val": "^1.0.5",
-    "mime": "^2.5.2"
+    "mime": "^2.5.2",
+    "semver": "^7.6.3"
   },
   "typings": "./out/publisher.d.ts",
   "devDependencies": {
-    "@types/mime": "2.0.3"
+    "@types/debug": "^4.1.12",
+    "@types/is-ci": "3.0.0",
+    "@types/mime": "2.0.3",
+    "@types/semver": "^7.5.8"
   }
 }

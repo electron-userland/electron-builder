@@ -1,6 +1,6 @@
 import { executeAppBuilder, InvalidConfigurationError, log } from "builder-util"
 import { S3Options } from "builder-util-runtime"
-import { PublishContext } from "electron-publish"
+import { PublishContext } from "../publisher"
 import { BaseS3Publisher } from "./BaseS3Publisher"
 
 export default class S3Publisher extends BaseS3Publisher {
