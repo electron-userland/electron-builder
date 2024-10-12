@@ -1,4 +1,4 @@
-import { sanitizeFileName } from "app-builder-lib/out/util/filename"
+import { sanitizeFileName } from "builder-util/out/filename"
 import { InvalidConfigurationError, log, isEmptyOrSpaces } from "builder-util"
 import { getBinFromUrl } from "app-builder-lib/out/binDownload"
 import { Arch, getArchSuffix, SquirrelWindowsOptions, Target } from "app-builder-lib"

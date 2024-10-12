@@ -4,10 +4,10 @@ import { PublishContext } from "electron-publish"
 import { GitHubPublisher } from "electron-publish/out/gitHubPublisher"
 import { isCI as isCi } from "ci-info"
 import * as path from "path"
-import { KeygenPublisher } from "app-builder-lib/out/publish/KeygenPublisher"
+import { KeygenPublisher } from "electron-publish/out/KeygenPublisher"
 import { Platform } from "app-builder-lib"
 import { createPublisher } from "app-builder-lib/out/publish/PublishManager"
-import { BitbucketPublisher } from "app-builder-lib/out/publish/BitbucketPublisher"
+import { BitbucketPublisher } from "electron-publish/out/BitbucketPublisher"
 import { publishArtifactsWithOptions } from "electron-builder"
 
 if (isCi && process.platform === "win32") {
