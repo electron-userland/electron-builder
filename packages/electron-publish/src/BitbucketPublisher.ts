@@ -1,7 +1,7 @@
 import { Arch, InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
 import { httpExecutor } from "builder-util"
 import { ClientRequest, RequestOptions } from "http"
-import { PublishContext } from "./publisher"
+import { PublishContext } from "./"
 import { HttpPublisher } from "./HttpPublisher"
 import { BitbucketOptions } from "builder-util-runtime/out/publishOptions"
 import { configureRequestOptions, HttpExecutor } from "builder-util-runtime"

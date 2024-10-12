@@ -1,27 +1,13 @@
-import { Arch, log, PADDING } from "builder-util"
-import { CancellationToken, ProgressCallbackTransform, PublishProvider } from "builder-util-runtime"
+import { log, PADDING } from "builder-util"
+import { ProgressCallbackTransform, PublishProvider } from "builder-util-runtime"
 import * as chalk from "chalk"
 import { createReadStream, Stats } from "fs-extra"
-import { MultiProgress } from "./multiProgress"
 import { ProgressBar } from "./progress"
-
-export interface PublishContext {
-  readonly cancellationToken: CancellationToken
-  readonly progress: MultiProgress | null
-}
+import { PublishContext, UploadTask } from "."
 
 const progressBarOptions = {
   incomplete: " ",
   width: 20,
-}
-
-export interface UploadTask {
-  file: string
-  fileContent?: Buffer | null
-
-  arch: Arch | null
-  safeArtifactName?: string | null
-  timeout?: number | null
 }
 
 export abstract class Publisher {

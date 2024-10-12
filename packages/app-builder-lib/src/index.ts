@@ -1,4 +1,4 @@
-import { PublishOptions } from "electron-publish/out/publisher"
+import { PublishOptions } from "electron-publish"
 import { log, InvalidConfigurationError, executeFinally } from "builder-util"
 import { asArray } from "builder-util-runtime"
 import { Packager } from "./packager"

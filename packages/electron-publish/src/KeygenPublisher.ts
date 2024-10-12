@@ -1,7 +1,7 @@
 import { Arch, InvalidConfigurationError, log, isEmptyOrSpaces } from "builder-util"
 import { httpExecutor } from "builder-util"
 import { ClientRequest, RequestOptions } from "http"
-import { PublishContext } from "./publisher"
+import { PublishContext } from "./"
 import { HttpPublisher } from "./HttpPublisher"
 import { KeygenOptions } from "builder-util-runtime/out/publishOptions"
 import { configureRequestOptions, HttpExecutor, parseJson } from "builder-util-runtime"

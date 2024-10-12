@@ -2,7 +2,8 @@ import { Arch } from "builder-util"
 import { stat } from "fs-extra"
 import { ClientRequest } from "http"
 import { basename } from "path/posix"
-import { Publisher, PublishContext, UploadTask } from "./publisher"
+import { Publisher } from "./publisher"
+import { PublishContext, UploadTask } from "."
 
 export abstract class HttpPublisher extends Publisher {
   protected constructor(
