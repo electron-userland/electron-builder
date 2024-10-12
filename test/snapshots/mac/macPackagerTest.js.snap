@@ -3,35 +3,35 @@
 exports[`electronDist 1`] = `"corrupted Electron dist"`;
 
 exports[`one-package 1`] = `
-Object {
-  "mac": Array [
-    Object {
+{
+  "mac": [
+    {
       "arch": "x64",
       "file": "Test App ßW-1.1.0.dmg",
       "safeArtifactName": "TestApp-1.1.0.dmg",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
-    Object {
+    {
       "file": "Test App ßW-1.1.0.dmg.blockmap",
       "safeArtifactName": "TestApp-1.1.0.dmg.blockmap",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
-    Object {
+    {
       "file": "latest-mac.yml",
-      "fileContent": Object {
-        "files": Array [
-          Object {
+      "fileContent": {
+        "files": [
+          {
             "sha512": "@sha512",
             "size": "@size",
             "url": "Test App ßW-1.1.0-mac.zip",
           },
-          Object {
+          {
             "sha512": "@sha512",
             "size": "@size",
             "url": "Test App ßW-1.1.0.dmg",
@@ -43,19 +43,19 @@ Object {
         "version": "1.1.0",
       },
     },
-    Object {
+    {
       "arch": "x64",
       "file": "Test App ßW-1.1.0-mac.zip",
       "safeArtifactName": "TestApp-1.1.0-mac.zip",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
-    Object {
+    {
       "file": "Test App ßW-1.1.0-mac.zip.blockmap",
       "safeArtifactName": "Test App ßW-1.1.0-mac.zip.blockmap",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -65,18 +65,18 @@ Object {
 `;
 
 exports[`one-package 2`] = `
-Object {
+{
   "CFBundleDisplayName": "Test App ßW",
-  "CFBundleDocumentTypes": Array [
-    Object {
+  "CFBundleDocumentTypes": [
+    {
       "CFBundleTypeName": "Folders",
       "CFBundleTypeRole": "Editor",
-      "LSItemContentTypes": Array [
+      "LSItemContentTypes": [
         "public.folder",
       ],
     },
-    Object {
-      "CFBundleTypeExtensions": Array [
+    {
+      "CFBundleTypeExtensions": [
         "foo",
       ],
       "CFBundleTypeIconFile": "foo.icns",
@@ -84,8 +84,8 @@ Object {
       "CFBundleTypeRole": "Viewer",
       "LSHandlerRank": "Default",
     },
-    Object {
-      "CFBundleTypeExtensions": Array [
+    {
+      "CFBundleTypeExtensions": [
         "boo",
       ],
       "CFBundleTypeIconFile": "icon.icns",
@@ -94,8 +94,8 @@ Object {
       "LSHandlerRank": "Owner",
       "LSTypeIsPackage": true,
     },
-    Object {
-      "CFBundleTypeExtensions": Array [
+    {
+      "CFBundleTypeExtensions": [
         "bar",
       ],
       "CFBundleTypeIconFile": "someFoo.icns",
@@ -112,22 +112,22 @@ Object {
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
   "LSApplicationCategoryType": "your.app.category.type",
-  "LSEnvironment": Object {
+  "LSEnvironment": {
     "MallocNanoZone": "0",
   },
   "LSMinimumSystemVersion": "10.12.0",
   "LSUIElement": true,
-  "NSAppTransportSecurity": Object {
+  "NSAppTransportSecurity": {
     "NSAllowsLocalNetworking": true,
-    "NSExceptionDomains": Object {
-      "127.0.0.1": Object {
+    "NSExceptionDomains": {
+      "127.0.0.1": {
         "NSIncludesSubdomains": false,
         "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
         "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
         "NSTemporaryExceptionMinimumTLSVersion": "1.0",
         "NSTemporaryExceptionRequiresForwardSecrecy": false,
       },
-      "localhost": Object {
+      "localhost": {
         "NSIncludesSubdomains": false,
         "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
         "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
@@ -145,83 +145,83 @@ Object {
 `;
 
 exports[`two-package 1`] = `
-Object {
-  "mac": Array [
-    Object {
+{
+  "mac": [
+    {
       "arch": "arm64",
       "file": "TestApp-1.1.0-mac-arm64.dmg",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
-    Object {
+    {
       "file": "TestApp-1.1.0-mac-arm64.dmg.blockmap",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
-    Object {
+    {
       "arch": "universal",
       "file": "TestApp-1.1.0-mac-universal.dmg",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
-    Object {
+    {
       "file": "TestApp-1.1.0-mac-universal.dmg.blockmap",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
-    Object {
+    {
       "arch": "x64",
       "file": "TestApp-1.1.0-mac-x64.dmg",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
-    Object {
+    {
       "file": "TestApp-1.1.0-mac-x64.dmg.blockmap",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
-    Object {
+    {
       "file": "latest-mac.yml",
-      "fileContent": Object {
-        "files": Array [
-          Object {
+      "fileContent": {
+        "files": [
+          {
             "sha512": "@sha512",
             "size": "@size",
             "url": "TestApp-1.1.0-mac-arm64.dmg",
           },
-          Object {
+          {
             "sha512": "@sha512",
             "size": "@size",
             "url": "TestApp-1.1.0-mac-arm64.zip",
           },
-          Object {
+          {
             "sha512": "@sha512",
             "size": "@size",
             "url": "TestApp-1.1.0-mac-universal.dmg",
           },
-          Object {
+          {
             "sha512": "@sha512",
             "size": "@size",
             "url": "TestApp-1.1.0-mac-universal.zip",
           },
-          Object {
+          {
             "sha512": "@sha512",
             "size": "@size",
             "url": "TestApp-1.1.0-mac-x64.dmg",
           },
-          Object {
+          {
             "sha512": "@sha512",
             "size": "@size",
             "url": "TestApp-1.1.0-mac-x64.zip",
@@ -233,50 +233,50 @@ Object {
         "version": "1.1.0",
       },
     },
-    Object {
+    {
       "arch": "arm64",
       "file": "TestApp-1.1.0-mac-arm64.zip",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
-    Object {
+    {
       "file": "TestApp-1.1.0-mac-arm64.zip.blockmap",
       "safeArtifactName": "TestApp-1.1.0-mac-arm64.zip.blockmap",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
-    Object {
+    {
       "arch": "universal",
       "file": "TestApp-1.1.0-mac-universal.zip",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
-    Object {
+    {
       "file": "TestApp-1.1.0-mac-universal.zip.blockmap",
       "safeArtifactName": "TestApp-1.1.0-mac-universal.zip.blockmap",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
-    Object {
+    {
       "arch": "x64",
       "file": "TestApp-1.1.0-mac-x64.zip",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
-    Object {
+    {
       "file": "TestApp-1.1.0-mac-x64.zip.blockmap",
       "safeArtifactName": "TestApp-1.1.0-mac-x64.zip.blockmap",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -286,7 +286,7 @@ Object {
 `;
 
 exports[`two-package 2`] = `
-Object {
+{
   "CFBundleDisplayName": "TestApp",
   "CFBundleExecutable": "TestApp",
   "CFBundleIconFile": "icon.icns",
@@ -296,20 +296,20 @@ Object {
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
   "LSApplicationCategoryType": "your.app.category.type",
-  "LSEnvironment": Object {
+  "LSEnvironment": {
     "MallocNanoZone": "0",
   },
-  "NSAppTransportSecurity": Object {
+  "NSAppTransportSecurity": {
     "NSAllowsLocalNetworking": true,
-    "NSExceptionDomains": Object {
-      "127.0.0.1": Object {
+    "NSExceptionDomains": {
+      "127.0.0.1": {
         "NSIncludesSubdomains": false,
         "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
         "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
         "NSTemporaryExceptionMinimumTLSVersion": "1.0",
         "NSTemporaryExceptionRequiresForwardSecrecy": false,
       },
-      "localhost": Object {
+      "localhost": {
         "NSIncludesSubdomains": false,
         "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
         "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
@@ -327,7 +327,7 @@ Object {
 `;
 
 exports[`two-package 3`] = `
-Array [
+[
   "app-update.yml",
   "app.asar",
   "bn.lproj",
@@ -337,7 +337,7 @@ Array [
 `;
 
 exports[`two-package 4`] = `
-Object {
+{
   "CFBundleDisplayName": "TestApp",
   "CFBundleExecutable": "TestApp",
   "CFBundleIconFile": "icon.icns",
@@ -347,20 +347,20 @@ Object {
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
   "LSApplicationCategoryType": "your.app.category.type",
-  "LSEnvironment": Object {
+  "LSEnvironment": {
     "MallocNanoZone": "0",
   },
-  "NSAppTransportSecurity": Object {
+  "NSAppTransportSecurity": {
     "NSAllowsLocalNetworking": true,
-    "NSExceptionDomains": Object {
-      "127.0.0.1": Object {
+    "NSExceptionDomains": {
+      "127.0.0.1": {
         "NSIncludesSubdomains": false,
         "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
         "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
         "NSTemporaryExceptionMinimumTLSVersion": "1.0",
         "NSTemporaryExceptionRequiresForwardSecrecy": false,
       },
-      "localhost": Object {
+      "localhost": {
         "NSIncludesSubdomains": false,
         "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
         "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
@@ -378,7 +378,7 @@ Object {
 `;
 
 exports[`two-package 5`] = `
-Array [
+[
   "app-update.yml",
   "app.asar",
   "bn.lproj",
@@ -388,7 +388,7 @@ Array [
 `;
 
 exports[`two-package 6`] = `
-Object {
+{
   "CFBundleDisplayName": "TestApp",
   "CFBundleExecutable": "TestApp",
   "CFBundleIconFile": "icon.icns",
@@ -398,20 +398,20 @@ Object {
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
   "LSApplicationCategoryType": "your.app.category.type",
-  "LSEnvironment": Object {
+  "LSEnvironment": {
     "MallocNanoZone": "0",
   },
-  "NSAppTransportSecurity": Object {
+  "NSAppTransportSecurity": {
     "NSAllowsLocalNetworking": true,
-    "NSExceptionDomains": Object {
-      "127.0.0.1": Object {
+    "NSExceptionDomains": {
+      "127.0.0.1": {
         "NSIncludesSubdomains": false,
         "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
         "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
         "NSTemporaryExceptionMinimumTLSVersion": "1.0",
         "NSTemporaryExceptionRequiresForwardSecrecy": false,
       },
-      "localhost": Object {
+      "localhost": {
         "NSIncludesSubdomains": false,
         "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
         "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
@@ -429,7 +429,7 @@ Object {
 `;
 
 exports[`two-package 7`] = `
-Array [
+[
   "app-update.yml",
   "app.asar",
   "bn.lproj",
@@ -439,20 +439,20 @@ Array [
 `;
 
 exports[`yarn two package.json w/ native module 1`] = `
-Object {
-  "mac": Array [
-    Object {
+{
+  "mac": [
+    {
       "arch": "universal",
       "file": "test-app-two-native-modules-1.1.1-universal-mac.zip",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
-    Object {
+    {
       "file": "test-app-two-native-modules-1.1.1-universal-mac.zip.blockmap",
       "safeArtifactName": "test-app-two-native-modules-1.1.1-universal-mac.zip.blockmap",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -462,7 +462,7 @@ Object {
 `;
 
 exports[`yarn two package.json w/ native module 2`] = `
-Object {
+{
   "CFBundleDisplayName": "test-app-two-native-modules",
   "CFBundleExecutable": "test-app-two-native-modules",
   "CFBundleIconFile": "electron.icns",
@@ -472,20 +472,20 @@ Object {
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.1",
   "LSApplicationCategoryType": "your.app.category.type",
-  "LSEnvironment": Object {
+  "LSEnvironment": {
     "MallocNanoZone": "0",
   },
-  "NSAppTransportSecurity": Object {
+  "NSAppTransportSecurity": {
     "NSAllowsLocalNetworking": true,
-    "NSExceptionDomains": Object {
-      "127.0.0.1": Object {
+    "NSExceptionDomains": {
+      "127.0.0.1": {
         "NSIncludesSubdomains": false,
         "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
         "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
         "NSTemporaryExceptionMinimumTLSVersion": "1.0",
         "NSTemporaryExceptionRequiresForwardSecrecy": false,
       },
-      "localhost": Object {
+      "localhost": {
         "NSIncludesSubdomains": false,
         "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
         "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
@@ -503,169 +503,169 @@ Object {
 `;
 
 exports[`yarn two package.json w/ native module 3`] = `
-Object {
-  "files": Object {
-    "index.html": Object {
+{
+  "files": {
+    "index.html": {
       "size": "<size>",
     },
-    "index.js": Object {
+    "index.js": {
       "size": "<size>",
     },
-    "node_modules": Object {
-      "files": Object {
-        "bindings": Object {
-          "files": Object {
-            "LICENSE.md": Object {
+    "node_modules": {
+      "files": {
+        "bindings": {
+          "files": {
+            "LICENSE.md": {
               "size": "<size>",
             },
-            "bindings.js": Object {
+            "bindings.js": {
               "size": "<size>",
             },
-            "package.json": Object {
+            "package.json": {
               "size": "<size>",
             },
           },
         },
-        "debug": Object {
-          "files": Object {
-            "LICENSE": Object {
+        "debug": {
+          "files": {
+            "LICENSE": {
               "size": "<size>",
             },
-            "dist": Object {
-              "files": Object {
-                "debug.js": Object {
+            "dist": {
+              "files": {
+                "debug.js": {
                   "size": "<size>",
                 },
               },
             },
-            "package.json": Object {
+            "package.json": {
               "size": "<size>",
             },
-            "src": Object {
-              "files": Object {
-                "browser.js": Object {
+            "src": {
+              "files": {
+                "browser.js": {
                   "size": "<size>",
                 },
-                "common.js": Object {
+                "common.js": {
                   "size": "<size>",
                 },
-                "index.js": Object {
+                "index.js": {
                   "size": "<size>",
                 },
-                "node.js": Object {
+                "node.js": {
                   "size": "<size>",
                 },
               },
             },
           },
         },
-        "file-uri-to-path": Object {
-          "files": Object {
-            "History.md": Object {
+        "file-uri-to-path": {
+          "files": {
+            "History.md": {
               "size": "<size>",
             },
-            "LICENSE": Object {
+            "LICENSE": {
               "size": "<size>",
             },
-            "index.js": Object {
+            "index.js": {
               "size": "<size>",
             },
-            "package.json": Object {
-              "size": "<size>",
-            },
-          },
-        },
-        "ms": Object {
-          "files": Object {
-            "index.js": Object {
-              "size": "<size>",
-            },
-            "license.md": Object {
-              "size": "<size>",
-            },
-            "package.json": Object {
+            "package.json": {
               "size": "<size>",
             },
           },
         },
-        "node-addon-api": Object {
-          "files": Object {
-            "LICENSE.md": Object {
+        "ms": {
+          "files": {
+            "index.js": {
               "size": "<size>",
             },
-            "common.gypi": Object {
+            "license.md": {
               "size": "<size>",
             },
-            "except.gypi": Object {
+            "package.json": {
               "size": "<size>",
             },
-            "index.js": Object {
+          },
+        },
+        "node-addon-api": {
+          "files": {
+            "LICENSE.md": {
               "size": "<size>",
             },
-            "napi-inl.deprecated.h": Object {
+            "common.gypi": {
               "size": "<size>",
             },
-            "napi-inl.h": Object {
+            "except.gypi": {
               "size": "<size>",
             },
-            "napi.h": Object {
+            "index.js": {
               "size": "<size>",
             },
-            "node_addon_api.gyp": Object {
+            "napi-inl.deprecated.h": {
               "size": "<size>",
             },
-            "node_api.gyp": Object {
+            "napi-inl.h": {
               "size": "<size>",
             },
-            "noexcept.gypi": Object {
+            "napi.h": {
               "size": "<size>",
             },
-            "nothing.c": Object {
+            "node_addon_api.gyp": {
               "size": "<size>",
             },
-            "package-support.json": Object {
+            "node_api.gyp": {
               "size": "<size>",
             },
-            "package.json": Object {
+            "noexcept.gypi": {
               "size": "<size>",
             },
-            "tools": Object {
-              "files": Object {
-                "README.md": Object {
+            "nothing.c": {
+              "size": "<size>",
+            },
+            "package-support.json": {
+              "size": "<size>",
+            },
+            "package.json": {
+              "size": "<size>",
+            },
+            "tools": {
+              "files": {
+                "README.md": {
                   "size": "<size>",
                 },
-                "check-napi.js": Object {
+                "check-napi.js": {
                   "size": "<size>",
                 },
-                "clang-format.js": Object {
+                "clang-format.js": {
                   "size": "<size>",
                 },
-                "conversion.js": Object {
+                "conversion.js": {
                   "executable": true,
                   "size": "<size>",
                 },
-                "eslint-format.js": Object {
+                "eslint-format.js": {
                   "size": "<size>",
                 },
               },
             },
           },
         },
-        "node-mac-permissions": Object {
-          "files": Object {
-            ".prettierrc": Object {
+        "node-mac-permissions": {
+          "files": {
+            ".prettierrc": {
               "size": "<size>",
               "unpacked": true,
             },
-            "LICENSE": Object {
+            "LICENSE": {
               "size": "<size>",
               "unpacked": true,
             },
-            "build": Object {
-              "files": Object {
-                "Release": Object {
-                  "files": Object {
-                    "permissions.node": Object {
+            "build": {
+              "files": {
+                "Release": {
+                  "files": {
+                    "permissions.node": {
                       "size": "<size>",
                       "unpacked": true,
                     },
@@ -673,77 +673,77 @@ Object {
                 },
               },
             },
-            "index.js": Object {
+            "index.js": {
               "size": "<size>",
               "unpacked": true,
             },
-            "node_modules": Object {
-              "files": Object {
-                "node-addon-api": Object {
-                  "files": Object {
-                    "LICENSE.md": Object {
+            "node_modules": {
+              "files": {
+                "node-addon-api": {
+                  "files": {
+                    "LICENSE.md": {
                       "size": "<size>",
                       "unpacked": true,
                     },
-                    "common.gypi": Object {
+                    "common.gypi": {
                       "size": "<size>",
                       "unpacked": true,
                     },
-                    "except.gypi": Object {
+                    "except.gypi": {
                       "size": "<size>",
                       "unpacked": true,
                     },
-                    "index.js": Object {
+                    "index.js": {
                       "size": "<size>",
                       "unpacked": true,
                     },
-                    "napi-inl.deprecated.h": Object {
+                    "napi-inl.deprecated.h": {
                       "size": "<size>",
                       "unpacked": true,
                     },
-                    "napi-inl.h": Object {
+                    "napi-inl.h": {
                       "size": "<size>",
                       "unpacked": true,
                     },
-                    "napi.h": Object {
+                    "napi.h": {
                       "size": "<size>",
                       "unpacked": true,
                     },
-                    "node_api.gyp": Object {
+                    "node_api.gyp": {
                       "size": "<size>",
                       "unpacked": true,
                     },
-                    "noexcept.gypi": Object {
+                    "noexcept.gypi": {
                       "size": "<size>",
                       "unpacked": true,
                     },
-                    "nothing.c": Object {
+                    "nothing.c": {
                       "size": "<size>",
                       "unpacked": true,
                     },
-                    "package-support.json": Object {
+                    "package-support.json": {
                       "size": "<size>",
                       "unpacked": true,
                     },
-                    "package.json": Object {
+                    "package.json": {
                       "size": "<size>",
                       "unpacked": true,
                     },
-                    "tools": Object {
-                      "files": Object {
-                        "README.md": Object {
+                    "tools": {
+                      "files": {
+                        "README.md": {
                           "size": "<size>",
                           "unpacked": true,
                         },
-                        "check-napi.js": Object {
+                        "check-napi.js": {
                           "size": "<size>",
                           "unpacked": true,
                         },
-                        "clang-format.js": Object {
+                        "clang-format.js": {
                           "size": "<size>",
                           "unpacked": true,
                         },
-                        "conversion.js": Object {
+                        "conversion.js": {
                           "size": "<size>",
                           "unpacked": true,
                         },
@@ -753,431 +753,31 @@ Object {
                 },
               },
             },
-            "package.json": Object {
+            "package.json": {
               "size": "<size>",
               "unpacked": true,
             },
-            "permissions.mm": Object {
+            "permissions.mm": {
               "size": "<size>",
               "unpacked": true,
             },
           },
         },
-        "node-pty": Object {
-          "files": Object {
-            "LICENSE": Object {
+        "node-pty": {
+          "files": {
+            "LICENSE": {
               "size": "<size>",
               "unpacked": true,
             },
-            "build": Object {
-              "files": Object {
-                "Release": Object {
-                  "files": Object {
-                    "pty.node": Object {
+            "build": {
+              "files": {
+                "Release": {
+                  "files": {
+                    "pty.node": {
                       "size": "<size>",
                       "unpacked": true,
                     },
-                    "spawn-helper": Object {
-                      "size": "<size>",
-                      "unpacked": true,
-                    },
-                  },
-                },
-              },
-            },
-            "deps": Object {
-              "files": Object {
-                ".editorconfig": Object {
-                  "size": "<size>",
-                  "unpacked": true,
-                },
-                "winpty": Object {
-                  "files": Object {
-                    ".drone.yml": Object {
-                      "size": "<size>",
-                      "unpacked": true,
-                    },
-                    "LICENSE": Object {
-                      "size": "<size>",
-                      "unpacked": true,
-                    },
-                    "Makefile": Object {
-                      "size": "<size>",
-                      "unpacked": true,
-                    },
-                    "README.md": Object {
-                      "size": "<size>",
-                      "unpacked": true,
-                    },
-                    "RELEASES.md": Object {
-                      "size": "<size>",
-                      "unpacked": true,
-                    },
-                    "VERSION.txt": Object {
-                      "size": "<size>",
-                      "unpacked": true,
-                    },
-                    "configure": Object {
-                      "size": "<size>",
-                      "unpacked": true,
-                    },
-                    "misc": Object {
-                      "files": Object {
-                        "ConinMode.ps1": Object {
-                          "size": "<size>",
-                          "unpacked": true,
-                        },
-                        "DebugClient.py": Object {
-                          "size": "<size>",
-                          "unpacked": true,
-                        },
-                        "DebugServer.py": Object {
-                          "size": "<size>",
-                          "unpacked": true,
-                        },
-                        "DumpLines.py": Object {
-                          "size": "<size>",
-                          "unpacked": true,
-                        },
-                        "EnableExtendedFlags.txt": Object {
-                          "size": "<size>",
-                          "unpacked": true,
-                        },
-                        "Font-Report-June2016": Object {
-                          "files": Object {
-                            "CP437-Consolas.txt": Object {
-                              "size": "<size>",
-                              "unpacked": true,
-                            },
-                            "CP437-Lucida.txt": Object {
-                              "size": "<size>",
-                              "unpacked": true,
-                            },
-                            "CP932.txt": Object {
-                              "size": "<size>",
-                              "unpacked": true,
-                            },
-                            "CP936.txt": Object {
-                              "size": "<size>",
-                              "unpacked": true,
-                            },
-                            "CP949.txt": Object {
-                              "size": "<size>",
-                              "unpacked": true,
-                            },
-                            "CP950.txt": Object {
-                              "size": "<size>",
-                              "unpacked": true,
-                            },
-                            "MinimumWindowWidths.txt": Object {
-                              "size": "<size>",
-                              "unpacked": true,
-                            },
-                            "Results.txt": Object {
-                              "size": "<size>",
-                              "unpacked": true,
-                            },
-                            "Windows10SetFontBugginess.txt": Object {
-                              "size": "<size>",
-                              "unpacked": true,
-                            },
-                          },
-                        },
-                        "FormatChar.h": Object {
-                          "size": "<size>",
-                          "unpacked": true,
-                        },
-                        "IdentifyConsoleWindow.ps1": Object {
-                          "size": "<size>",
-                          "unpacked": true,
-                        },
-                        "MouseInputNotes.txt": Object {
-                          "size": "<size>",
-                          "unpacked": true,
-                        },
-                        "Notes.txt": Object {
-                          "size": "<size>",
-                          "unpacked": true,
-                        },
-                        "Spew.py": Object {
-                          "size": "<size>",
-                          "unpacked": true,
-                        },
-                        "build32.sh": Object {
-                          "size": "<size>",
-                          "unpacked": true,
-                        },
-                        "build64.sh": Object {
-                          "size": "<size>",
-                          "unpacked": true,
-                        },
-                        "color-test.sh": Object {
-                          "size": "<size>",
-                          "unpacked": true,
-                        },
-                        "font-notes.txt": Object {
-                          "size": "<size>",
-                          "unpacked": true,
-                        },
-                      },
-                    },
-                    "ship": Object {
-                      "files": Object {
-                        "build-pty4j-libpty.bat": Object {
-                          "size": "<size>",
-                          "unpacked": true,
-                        },
-                        "common_ship.py": Object {
-                          "size": "<size>",
-                          "unpacked": true,
-                        },
-                        "make_msvc_package.py": Object {
-                          "size": "<size>",
-                          "unpacked": true,
-                        },
-                        "ship.py": Object {
-                          "size": "<size>",
-                          "unpacked": true,
-                        },
-                      },
-                    },
-                    "src": Object {
-                      "files": Object {
-                        "agent": Object {
-                          "files": Object {
-                            "Agent.h": Object {
-                              "size": "<size>",
-                              "unpacked": true,
-                            },
-                            "AgentCreateDesktop.h": Object {
-                              "size": "<size>",
-                              "unpacked": true,
-                            },
-                            "ConsoleFont.h": Object {
-                              "size": "<size>",
-                              "unpacked": true,
-                            },
-                            "ConsoleInput.h": Object {
-                              "size": "<size>",
-                              "unpacked": true,
-                            },
-                            "ConsoleInputReencoding.h": Object {
-                              "size": "<size>",
-                              "unpacked": true,
-                            },
-                            "ConsoleLine.h": Object {
-                              "size": "<size>",
-                              "unpacked": true,
-                            },
-                            "Coord.h": Object {
-                              "size": "<size>",
-                              "unpacked": true,
-                            },
-                            "DebugShowInput.h": Object {
-                              "size": "<size>",
-                              "unpacked": true,
-                            },
-                            "DefaultInputMap.h": Object {
-                              "size": "<size>",
-                              "unpacked": true,
-                            },
-                            "DsrSender.h": Object {
-                              "size": "<size>",
-                              "unpacked": true,
-                            },
-                            "EventLoop.h": Object {
-                              "size": "<size>",
-                              "unpacked": true,
-                            },
-                            "InputMap.h": Object {
-                              "size": "<size>",
-                              "unpacked": true,
-                            },
-                            "LargeConsoleRead.h": Object {
-                              "size": "<size>",
-                              "unpacked": true,
-                            },
-                            "NamedPipe.h": Object {
-                              "size": "<size>",
-                              "unpacked": true,
-                            },
-                            "Scraper.h": Object {
-                              "size": "<size>",
-                              "unpacked": true,
-                            },
-                            "SimplePool.h": Object {
-                              "size": "<size>",
-                              "unpacked": true,
-                            },
-                            "SmallRect.h": Object {
-                              "size": "<size>",
-                              "unpacked": true,
-                            },
-                            "Terminal.h": Object {
-                              "size": "<size>",
-                              "unpacked": true,
-                            },
-                            "UnicodeEncoding.h": Object {
-                              "size": "<size>",
-                              "unpacked": true,
-                            },
-                            "Win32Console.h": Object {
-                              "size": "<size>",
-                              "unpacked": true,
-                            },
-                            "Win32ConsoleBuffer.h": Object {
-                              "size": "<size>",
-                              "unpacked": true,
-                            },
-                          },
-                        },
-                        "configurations.gypi": Object {
-                          "size": "<size>",
-                          "unpacked": true,
-                        },
-                        "include": Object {
-                          "files": Object {
-                            "winpty.h": Object {
-                              "size": "<size>",
-                              "unpacked": true,
-                            },
-                            "winpty_constants.h": Object {
-                              "size": "<size>",
-                              "unpacked": true,
-                            },
-                          },
-                        },
-                        "libwinpty": Object {
-                          "files": Object {
-                            "AgentLocation.h": Object {
-                              "size": "<size>",
-                              "unpacked": true,
-                            },
-                            "LibWinptyException.h": Object {
-                              "size": "<size>",
-                              "unpacked": true,
-                            },
-                            "WinptyInternal.h": Object {
-                              "size": "<size>",
-                              "unpacked": true,
-                            },
-                          },
-                        },
-                        "shared": Object {
-                          "files": Object {
-                            "AgentMsg.h": Object {
-                              "size": "<size>",
-                              "unpacked": true,
-                            },
-                            "BackgroundDesktop.h": Object {
-                              "size": "<size>",
-                              "unpacked": true,
-                            },
-                            "Buffer.h": Object {
-                              "size": "<size>",
-                              "unpacked": true,
-                            },
-                            "DebugClient.h": Object {
-                              "size": "<size>",
-                              "unpacked": true,
-                            },
-                            "GenRandom.h": Object {
-                              "size": "<size>",
-                              "unpacked": true,
-                            },
-                            "GetCommitHash.bat": Object {
-                              "size": "<size>",
-                              "unpacked": true,
-                            },
-                            "Mutex.h": Object {
-                              "size": "<size>",
-                              "unpacked": true,
-                            },
-                            "OsModule.h": Object {
-                              "size": "<size>",
-                              "unpacked": true,
-                            },
-                            "OwnedHandle.h": Object {
-                              "size": "<size>",
-                              "unpacked": true,
-                            },
-                            "PrecompiledHeader.h": Object {
-                              "size": "<size>",
-                              "unpacked": true,
-                            },
-                            "StringBuilder.h": Object {
-                              "size": "<size>",
-                              "unpacked": true,
-                            },
-                            "StringUtil.h": Object {
-                              "size": "<size>",
-                              "unpacked": true,
-                            },
-                            "TimeMeasurement.h": Object {
-                              "size": "<size>",
-                              "unpacked": true,
-                            },
-                            "UnixCtrlChars.h": Object {
-                              "size": "<size>",
-                              "unpacked": true,
-                            },
-                            "UpdateGenVersion.bat": Object {
-                              "size": "<size>",
-                              "unpacked": true,
-                            },
-                            "WindowsSecurity.h": Object {
-                              "size": "<size>",
-                              "unpacked": true,
-                            },
-                            "WindowsVersion.h": Object {
-                              "size": "<size>",
-                              "unpacked": true,
-                            },
-                            "WinptyAssert.h": Object {
-                              "size": "<size>",
-                              "unpacked": true,
-                            },
-                            "WinptyException.h": Object {
-                              "size": "<size>",
-                              "unpacked": true,
-                            },
-                            "WinptyVersion.h": Object {
-                              "size": "<size>",
-                              "unpacked": true,
-                            },
-                            "winpty_snprintf.h": Object {
-                              "size": "<size>",
-                              "unpacked": true,
-                            },
-                          },
-                        },
-                        "unix-adapter": Object {
-                          "files": Object {
-                            "InputHandler.h": Object {
-                              "size": "<size>",
-                              "unpacked": true,
-                            },
-                            "OutputHandler.h": Object {
-                              "size": "<size>",
-                              "unpacked": true,
-                            },
-                            "Util.h": Object {
-                              "size": "<size>",
-                              "unpacked": true,
-                            },
-                            "WakeupFd.h": Object {
-                              "size": "<size>",
-                              "unpacked": true,
-                            },
-                          },
-                        },
-                        "winpty.gyp": Object {
-                          "size": "<size>",
-                          "unpacked": true,
-                        },
-                      },
-                    },
-                    "vcbuild.bat": Object {
+                    "spawn-helper": {
                       "size": "<size>",
                       "unpacked": true,
                     },
@@ -1185,163 +785,399 @@ Object {
                 },
               },
             },
-            "lib": Object {
-              "files": Object {
-                "conpty_console_list_agent.js": Object {
+            "deps": {
+              "files": {
+                ".editorconfig": {
                   "size": "<size>",
                   "unpacked": true,
                 },
-                "conpty_console_list_agent.js.map": Object {
-                  "size": "<size>",
-                  "unpacked": true,
-                },
-                "eventEmitter2.js": Object {
-                  "size": "<size>",
-                  "unpacked": true,
-                },
-                "eventEmitter2.js.map": Object {
-                  "size": "<size>",
-                  "unpacked": true,
-                },
-                "eventEmitter2.test.js": Object {
-                  "size": "<size>",
-                  "unpacked": true,
-                },
-                "eventEmitter2.test.js.map": Object {
-                  "size": "<size>",
-                  "unpacked": true,
-                },
-                "index.js": Object {
-                  "size": "<size>",
-                  "unpacked": true,
-                },
-                "index.js.map": Object {
-                  "size": "<size>",
-                  "unpacked": true,
-                },
-                "interfaces.js": Object {
-                  "size": "<size>",
-                  "unpacked": true,
-                },
-                "interfaces.js.map": Object {
-                  "size": "<size>",
-                  "unpacked": true,
-                },
-                "shared": Object {
-                  "files": Object {
-                    "conout.js": Object {
+                "winpty": {
+                  "files": {
+                    ".drone.yml": {
                       "size": "<size>",
                       "unpacked": true,
                     },
-                    "conout.js.map": Object {
+                    "LICENSE": {
                       "size": "<size>",
                       "unpacked": true,
                     },
-                  },
-                },
-                "terminal.js": Object {
-                  "size": "<size>",
-                  "unpacked": true,
-                },
-                "terminal.js.map": Object {
-                  "size": "<size>",
-                  "unpacked": true,
-                },
-                "terminal.test.js": Object {
-                  "size": "<size>",
-                  "unpacked": true,
-                },
-                "terminal.test.js.map": Object {
-                  "size": "<size>",
-                  "unpacked": true,
-                },
-                "testUtils.test.js": Object {
-                  "size": "<size>",
-                  "unpacked": true,
-                },
-                "testUtils.test.js.map": Object {
-                  "size": "<size>",
-                  "unpacked": true,
-                },
-                "types.js": Object {
-                  "size": "<size>",
-                  "unpacked": true,
-                },
-                "types.js.map": Object {
-                  "size": "<size>",
-                  "unpacked": true,
-                },
-                "unixTerminal.js": Object {
-                  "size": "<size>",
-                  "unpacked": true,
-                },
-                "unixTerminal.js.map": Object {
-                  "size": "<size>",
-                  "unpacked": true,
-                },
-                "unixTerminal.test.js": Object {
-                  "size": "<size>",
-                  "unpacked": true,
-                },
-                "unixTerminal.test.js.map": Object {
-                  "size": "<size>",
-                  "unpacked": true,
-                },
-                "utils.js": Object {
-                  "size": "<size>",
-                  "unpacked": true,
-                },
-                "utils.js.map": Object {
-                  "size": "<size>",
-                  "unpacked": true,
-                },
-                "windowsConoutConnection.js": Object {
-                  "size": "<size>",
-                  "unpacked": true,
-                },
-                "windowsConoutConnection.js.map": Object {
-                  "size": "<size>",
-                  "unpacked": true,
-                },
-                "windowsPtyAgent.js": Object {
-                  "size": "<size>",
-                  "unpacked": true,
-                },
-                "windowsPtyAgent.js.map": Object {
-                  "size": "<size>",
-                  "unpacked": true,
-                },
-                "windowsPtyAgent.test.js": Object {
-                  "size": "<size>",
-                  "unpacked": true,
-                },
-                "windowsPtyAgent.test.js.map": Object {
-                  "size": "<size>",
-                  "unpacked": true,
-                },
-                "windowsTerminal.js": Object {
-                  "size": "<size>",
-                  "unpacked": true,
-                },
-                "windowsTerminal.js.map": Object {
-                  "size": "<size>",
-                  "unpacked": true,
-                },
-                "windowsTerminal.test.js": Object {
-                  "size": "<size>",
-                  "unpacked": true,
-                },
-                "windowsTerminal.test.js.map": Object {
-                  "size": "<size>",
-                  "unpacked": true,
-                },
-                "worker": Object {
-                  "files": Object {
-                    "conoutSocketWorker.js": Object {
+                    "Makefile": {
                       "size": "<size>",
                       "unpacked": true,
                     },
-                    "conoutSocketWorker.js.map": Object {
+                    "README.md": {
+                      "size": "<size>",
+                      "unpacked": true,
+                    },
+                    "RELEASES.md": {
+                      "size": "<size>",
+                      "unpacked": true,
+                    },
+                    "VERSION.txt": {
+                      "size": "<size>",
+                      "unpacked": true,
+                    },
+                    "configure": {
+                      "size": "<size>",
+                      "unpacked": true,
+                    },
+                    "misc": {
+                      "files": {
+                        "ConinMode.ps1": {
+                          "size": "<size>",
+                          "unpacked": true,
+                        },
+                        "DebugClient.py": {
+                          "size": "<size>",
+                          "unpacked": true,
+                        },
+                        "DebugServer.py": {
+                          "size": "<size>",
+                          "unpacked": true,
+                        },
+                        "DumpLines.py": {
+                          "size": "<size>",
+                          "unpacked": true,
+                        },
+                        "EnableExtendedFlags.txt": {
+                          "size": "<size>",
+                          "unpacked": true,
+                        },
+                        "Font-Report-June2016": {
+                          "files": {
+                            "CP437-Consolas.txt": {
+                              "size": "<size>",
+                              "unpacked": true,
+                            },
+                            "CP437-Lucida.txt": {
+                              "size": "<size>",
+                              "unpacked": true,
+                            },
+                            "CP932.txt": {
+                              "size": "<size>",
+                              "unpacked": true,
+                            },
+                            "CP936.txt": {
+                              "size": "<size>",
+                              "unpacked": true,
+                            },
+                            "CP949.txt": {
+                              "size": "<size>",
+                              "unpacked": true,
+                            },
+                            "CP950.txt": {
+                              "size": "<size>",
+                              "unpacked": true,
+                            },
+                            "MinimumWindowWidths.txt": {
+                              "size": "<size>",
+                              "unpacked": true,
+                            },
+                            "Results.txt": {
+                              "size": "<size>",
+                              "unpacked": true,
+                            },
+                            "Windows10SetFontBugginess.txt": {
+                              "size": "<size>",
+                              "unpacked": true,
+                            },
+                          },
+                        },
+                        "FormatChar.h": {
+                          "size": "<size>",
+                          "unpacked": true,
+                        },
+                        "IdentifyConsoleWindow.ps1": {
+                          "size": "<size>",
+                          "unpacked": true,
+                        },
+                        "MouseInputNotes.txt": {
+                          "size": "<size>",
+                          "unpacked": true,
+                        },
+                        "Notes.txt": {
+                          "size": "<size>",
+                          "unpacked": true,
+                        },
+                        "Spew.py": {
+                          "size": "<size>",
+                          "unpacked": true,
+                        },
+                        "build32.sh": {
+                          "size": "<size>",
+                          "unpacked": true,
+                        },
+                        "build64.sh": {
+                          "size": "<size>",
+                          "unpacked": true,
+                        },
+                        "color-test.sh": {
+                          "size": "<size>",
+                          "unpacked": true,
+                        },
+                        "font-notes.txt": {
+                          "size": "<size>",
+                          "unpacked": true,
+                        },
+                      },
+                    },
+                    "ship": {
+                      "files": {
+                        "build-pty4j-libpty.bat": {
+                          "size": "<size>",
+                          "unpacked": true,
+                        },
+                        "common_ship.py": {
+                          "size": "<size>",
+                          "unpacked": true,
+                        },
+                        "make_msvc_package.py": {
+                          "size": "<size>",
+                          "unpacked": true,
+                        },
+                        "ship.py": {
+                          "size": "<size>",
+                          "unpacked": true,
+                        },
+                      },
+                    },
+                    "src": {
+                      "files": {
+                        "agent": {
+                          "files": {
+                            "Agent.h": {
+                              "size": "<size>",
+                              "unpacked": true,
+                            },
+                            "AgentCreateDesktop.h": {
+                              "size": "<size>",
+                              "unpacked": true,
+                            },
+                            "ConsoleFont.h": {
+                              "size": "<size>",
+                              "unpacked": true,
+                            },
+                            "ConsoleInput.h": {
+                              "size": "<size>",
+                              "unpacked": true,
+                            },
+                            "ConsoleInputReencoding.h": {
+                              "size": "<size>",
+                              "unpacked": true,
+                            },
+                            "ConsoleLine.h": {
+                              "size": "<size>",
+                              "unpacked": true,
+                            },
+                            "Coord.h": {
+                              "size": "<size>",
+                              "unpacked": true,
+                            },
+                            "DebugShowInput.h": {
+                              "size": "<size>",
+                              "unpacked": true,
+                            },
+                            "DefaultInputMap.h": {
+                              "size": "<size>",
+                              "unpacked": true,
+                            },
+                            "DsrSender.h": {
+                              "size": "<size>",
+                              "unpacked": true,
+                            },
+                            "EventLoop.h": {
+                              "size": "<size>",
+                              "unpacked": true,
+                            },
+                            "InputMap.h": {
+                              "size": "<size>",
+                              "unpacked": true,
+                            },
+                            "LargeConsoleRead.h": {
+                              "size": "<size>",
+                              "unpacked": true,
+                            },
+                            "NamedPipe.h": {
+                              "size": "<size>",
+                              "unpacked": true,
+                            },
+                            "Scraper.h": {
+                              "size": "<size>",
+                              "unpacked": true,
+                            },
+                            "SimplePool.h": {
+                              "size": "<size>",
+                              "unpacked": true,
+                            },
+                            "SmallRect.h": {
+                              "size": "<size>",
+                              "unpacked": true,
+                            },
+                            "Terminal.h": {
+                              "size": "<size>",
+                              "unpacked": true,
+                            },
+                            "UnicodeEncoding.h": {
+                              "size": "<size>",
+                              "unpacked": true,
+                            },
+                            "Win32Console.h": {
+                              "size": "<size>",
+                              "unpacked": true,
+                            },
+                            "Win32ConsoleBuffer.h": {
+                              "size": "<size>",
+                              "unpacked": true,
+                            },
+                          },
+                        },
+                        "configurations.gypi": {
+                          "size": "<size>",
+                          "unpacked": true,
+                        },
+                        "include": {
+                          "files": {
+                            "winpty.h": {
+                              "size": "<size>",
+                              "unpacked": true,
+                            },
+                            "winpty_constants.h": {
+                              "size": "<size>",
+                              "unpacked": true,
+                            },
+                          },
+                        },
+                        "libwinpty": {
+                          "files": {
+                            "AgentLocation.h": {
+                              "size": "<size>",
+                              "unpacked": true,
+                            },
+                            "LibWinptyException.h": {
+                              "size": "<size>",
+                              "unpacked": true,
+                            },
+                            "WinptyInternal.h": {
+                              "size": "<size>",
+                              "unpacked": true,
+                            },
+                          },
+                        },
+                        "shared": {
+                          "files": {
+                            "AgentMsg.h": {
+                              "size": "<size>",
+                              "unpacked": true,
+                            },
+                            "BackgroundDesktop.h": {
+                              "size": "<size>",
+                              "unpacked": true,
+                            },
+                            "Buffer.h": {
+                              "size": "<size>",
+                              "unpacked": true,
+                            },
+                            "DebugClient.h": {
+                              "size": "<size>",
+                              "unpacked": true,
+                            },
+                            "GenRandom.h": {
+                              "size": "<size>",
+                              "unpacked": true,
+                            },
+                            "GetCommitHash.bat": {
+                              "size": "<size>",
+                              "unpacked": true,
+                            },
+                            "Mutex.h": {
+                              "size": "<size>",
+                              "unpacked": true,
+                            },
+                            "OsModule.h": {
+                              "size": "<size>",
+                              "unpacked": true,
+                            },
+                            "OwnedHandle.h": {
+                              "size": "<size>",
+                              "unpacked": true,
+                            },
+                            "PrecompiledHeader.h": {
+                              "size": "<size>",
+                              "unpacked": true,
+                            },
+                            "StringBuilder.h": {
+                              "size": "<size>",
+                              "unpacked": true,
+                            },
+                            "StringUtil.h": {
+                              "size": "<size>",
+                              "unpacked": true,
+                            },
+                            "TimeMeasurement.h": {
+                              "size": "<size>",
+                              "unpacked": true,
+                            },
+                            "UnixCtrlChars.h": {
+                              "size": "<size>",
+                              "unpacked": true,
+                            },
+                            "UpdateGenVersion.bat": {
+                              "size": "<size>",
+                              "unpacked": true,
+                            },
+                            "WindowsSecurity.h": {
+                              "size": "<size>",
+                              "unpacked": true,
+                            },
+                            "WindowsVersion.h": {
+                              "size": "<size>",
+                              "unpacked": true,
+                            },
+                            "WinptyAssert.h": {
+                              "size": "<size>",
+                              "unpacked": true,
+                            },
+                            "WinptyException.h": {
+                              "size": "<size>",
+                              "unpacked": true,
+                            },
+                            "WinptyVersion.h": {
+                              "size": "<size>",
+                              "unpacked": true,
+                            },
+                            "winpty_snprintf.h": {
+                              "size": "<size>",
+                              "unpacked": true,
+                            },
+                          },
+                        },
+                        "unix-adapter": {
+                          "files": {
+                            "InputHandler.h": {
+                              "size": "<size>",
+                              "unpacked": true,
+                            },
+                            "OutputHandler.h": {
+                              "size": "<size>",
+                              "unpacked": true,
+                            },
+                            "Util.h": {
+                              "size": "<size>",
+                              "unpacked": true,
+                            },
+                            "WakeupFd.h": {
+                              "size": "<size>",
+                              "unpacked": true,
+                            },
+                          },
+                        },
+                        "winpty.gyp": {
+                          "size": "<size>",
+                          "unpacked": true,
+                        },
+                      },
+                    },
+                    "vcbuild.bat": {
                       "size": "<size>",
                       "unpacked": true,
                     },
@@ -1349,115 +1185,279 @@ Object {
                 },
               },
             },
-            "package.json": Object {
+            "lib": {
+              "files": {
+                "conpty_console_list_agent.js": {
+                  "size": "<size>",
+                  "unpacked": true,
+                },
+                "conpty_console_list_agent.js.map": {
+                  "size": "<size>",
+                  "unpacked": true,
+                },
+                "eventEmitter2.js": {
+                  "size": "<size>",
+                  "unpacked": true,
+                },
+                "eventEmitter2.js.map": {
+                  "size": "<size>",
+                  "unpacked": true,
+                },
+                "eventEmitter2.test.js": {
+                  "size": "<size>",
+                  "unpacked": true,
+                },
+                "eventEmitter2.test.js.map": {
+                  "size": "<size>",
+                  "unpacked": true,
+                },
+                "index.js": {
+                  "size": "<size>",
+                  "unpacked": true,
+                },
+                "index.js.map": {
+                  "size": "<size>",
+                  "unpacked": true,
+                },
+                "interfaces.js": {
+                  "size": "<size>",
+                  "unpacked": true,
+                },
+                "interfaces.js.map": {
+                  "size": "<size>",
+                  "unpacked": true,
+                },
+                "shared": {
+                  "files": {
+                    "conout.js": {
+                      "size": "<size>",
+                      "unpacked": true,
+                    },
+                    "conout.js.map": {
+                      "size": "<size>",
+                      "unpacked": true,
+                    },
+                  },
+                },
+                "terminal.js": {
+                  "size": "<size>",
+                  "unpacked": true,
+                },
+                "terminal.js.map": {
+                  "size": "<size>",
+                  "unpacked": true,
+                },
+                "terminal.test.js": {
+                  "size": "<size>",
+                  "unpacked": true,
+                },
+                "terminal.test.js.map": {
+                  "size": "<size>",
+                  "unpacked": true,
+                },
+                "testUtils.test.js": {
+                  "size": "<size>",
+                  "unpacked": true,
+                },
+                "testUtils.test.js.map": {
+                  "size": "<size>",
+                  "unpacked": true,
+                },
+                "types.js": {
+                  "size": "<size>",
+                  "unpacked": true,
+                },
+                "types.js.map": {
+                  "size": "<size>",
+                  "unpacked": true,
+                },
+                "unixTerminal.js": {
+                  "size": "<size>",
+                  "unpacked": true,
+                },
+                "unixTerminal.js.map": {
+                  "size": "<size>",
+                  "unpacked": true,
+                },
+                "unixTerminal.test.js": {
+                  "size": "<size>",
+                  "unpacked": true,
+                },
+                "unixTerminal.test.js.map": {
+                  "size": "<size>",
+                  "unpacked": true,
+                },
+                "utils.js": {
+                  "size": "<size>",
+                  "unpacked": true,
+                },
+                "utils.js.map": {
+                  "size": "<size>",
+                  "unpacked": true,
+                },
+                "windowsConoutConnection.js": {
+                  "size": "<size>",
+                  "unpacked": true,
+                },
+                "windowsConoutConnection.js.map": {
+                  "size": "<size>",
+                  "unpacked": true,
+                },
+                "windowsPtyAgent.js": {
+                  "size": "<size>",
+                  "unpacked": true,
+                },
+                "windowsPtyAgent.js.map": {
+                  "size": "<size>",
+                  "unpacked": true,
+                },
+                "windowsPtyAgent.test.js": {
+                  "size": "<size>",
+                  "unpacked": true,
+                },
+                "windowsPtyAgent.test.js.map": {
+                  "size": "<size>",
+                  "unpacked": true,
+                },
+                "windowsTerminal.js": {
+                  "size": "<size>",
+                  "unpacked": true,
+                },
+                "windowsTerminal.js.map": {
+                  "size": "<size>",
+                  "unpacked": true,
+                },
+                "windowsTerminal.test.js": {
+                  "size": "<size>",
+                  "unpacked": true,
+                },
+                "windowsTerminal.test.js.map": {
+                  "size": "<size>",
+                  "unpacked": true,
+                },
+                "worker": {
+                  "files": {
+                    "conoutSocketWorker.js": {
+                      "size": "<size>",
+                      "unpacked": true,
+                    },
+                    "conoutSocketWorker.js.map": {
+                      "size": "<size>",
+                      "unpacked": true,
+                    },
+                  },
+                },
+              },
+            },
+            "package.json": {
               "size": "<size>",
               "unpacked": true,
             },
-            "scripts": Object {
-              "files": Object {
-                "post-install.js": Object {
+            "scripts": {
+              "files": {
+                "post-install.js": {
                   "size": "<size>",
                   "unpacked": true,
                 },
-                "publish.js": Object {
+                "publish.js": {
                   "size": "<size>",
                   "unpacked": true,
                 },
               },
             },
-            "src": Object {
-              "files": Object {
-                "conpty_console_list_agent.ts": Object {
+            "src": {
+              "files": {
+                "conpty_console_list_agent.ts": {
                   "size": "<size>",
                   "unpacked": true,
                 },
-                "eventEmitter2.test.ts": Object {
+                "eventEmitter2.test.ts": {
                   "size": "<size>",
                   "unpacked": true,
                 },
-                "eventEmitter2.ts": Object {
+                "eventEmitter2.ts": {
                   "size": "<size>",
                   "unpacked": true,
                 },
-                "index.ts": Object {
+                "index.ts": {
                   "size": "<size>",
                   "unpacked": true,
                 },
-                "interfaces.ts": Object {
+                "interfaces.ts": {
                   "size": "<size>",
                   "unpacked": true,
                 },
-                "shared": Object {
-                  "files": Object {
-                    "conout.ts": Object {
+                "shared": {
+                  "files": {
+                    "conout.ts": {
                       "size": "<size>",
                       "unpacked": true,
                     },
                   },
                 },
-                "terminal.test.ts": Object {
+                "terminal.test.ts": {
                   "size": "<size>",
                   "unpacked": true,
                 },
-                "terminal.ts": Object {
+                "terminal.ts": {
                   "size": "<size>",
                   "unpacked": true,
                 },
-                "testUtils.test.ts": Object {
+                "testUtils.test.ts": {
                   "size": "<size>",
                   "unpacked": true,
                 },
-                "tsconfig.json": Object {
+                "tsconfig.json": {
                   "size": "<size>",
                   "unpacked": true,
                 },
-                "types.ts": Object {
+                "types.ts": {
                   "size": "<size>",
                   "unpacked": true,
                 },
-                "unixTerminal.test.ts": Object {
+                "unixTerminal.test.ts": {
                   "size": "<size>",
                   "unpacked": true,
                 },
-                "unixTerminal.ts": Object {
+                "unixTerminal.ts": {
                   "size": "<size>",
                   "unpacked": true,
                 },
-                "utils.ts": Object {
+                "utils.ts": {
                   "size": "<size>",
                   "unpacked": true,
                 },
-                "win": Object {
-                  "files": Object {
-                    "path_util.h": Object {
+                "win": {
+                  "files": {
+                    "path_util.h": {
                       "size": "<size>",
                       "unpacked": true,
                     },
                   },
                 },
-                "windowsConoutConnection.ts": Object {
+                "windowsConoutConnection.ts": {
                   "size": "<size>",
                   "unpacked": true,
                 },
-                "windowsPtyAgent.test.ts": Object {
+                "windowsPtyAgent.test.ts": {
                   "size": "<size>",
                   "unpacked": true,
                 },
-                "windowsPtyAgent.ts": Object {
+                "windowsPtyAgent.ts": {
                   "size": "<size>",
                   "unpacked": true,
                 },
-                "windowsTerminal.test.ts": Object {
+                "windowsTerminal.test.ts": {
                   "size": "<size>",
                   "unpacked": true,
                 },
-                "windowsTerminal.ts": Object {
+                "windowsTerminal.ts": {
                   "size": "<size>",
                   "unpacked": true,
                 },
-                "worker": Object {
-                  "files": Object {
-                    "conoutSocketWorker.ts": Object {
+                "worker": {
+                  "files": {
+                    "conoutSocketWorker.ts": {
                       "size": "<size>",
                       "unpacked": true,
                     },
@@ -1469,7 +1469,7 @@ Object {
         },
       },
     },
-    "package.json": Object {
+    "package.json": {
       "size": "<size>",
     },
   },
@@ -1477,11 +1477,11 @@ Object {
 `;
 
 exports[`yarn two package.json w/ native module 4`] = `
-Array [
+[
   "app.asar",
   "electron.icns",
   "app.asar.unpacked/node_modules/node-pty/LICENSE",
-  Object {
+  {
     "content": "{
   \\"name\\": \\"node-pty\\",
   \\"description\\": \\"Fork pseudoterminals in Node.JS\\",
@@ -1675,7 +1675,7 @@ Array [
   "app.asar.unpacked/node_modules/node-pty/build/Release/spawn-helper",
   "app.asar.unpacked/node_modules/node-mac-permissions/LICENSE",
   "app.asar.unpacked/node_modules/node-mac-permissions/index.js",
-  Object {
+  {
     "content": "{
   \\"name\\": \\"node-mac-permissions\\",
   \\"version\\": \\"2.3.0\\",
@@ -1728,7 +1728,7 @@ Array [
   "app.asar.unpacked/node_modules/node-mac-permissions/node_modules/node-addon-api/noexcept.gypi",
   "app.asar.unpacked/node_modules/node-mac-permissions/node_modules/node-addon-api/nothing.c",
   "app.asar.unpacked/node_modules/node-mac-permissions/node_modules/node-addon-api/package-support.json",
-  Object {
+  {
     "content": "{
   \\"description\\": \\"Node.js API (Node-API)\\",
   \\"devDependencies\\": {

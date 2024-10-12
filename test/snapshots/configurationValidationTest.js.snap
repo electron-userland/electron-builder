@@ -1,7 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`appId as object 1`] = `
-"Invalid configuration object. electron-builder <appVersion> has been initialized using a configuration object that does not match the API schema.
+exports[`appId as 1`] = `
+"Invalid configuration object. electron-builder <appVersion> has been initialized using a configuration that does not match the API schema.
  - configuration.appId should be:
    null | string
    -> The application id. Used as [CFBundleIdentifier](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070) for MacOS and as
@@ -15,13 +15,13 @@ exports[`appId as object 1`] = `
 `;
 
 exports[`extraFiles 1`] = `
-Object {
-  "linux": Array [
-    Object {
+{
+  "linux": [
+    {
       "arch": "x64",
       "file": "Test App ßW-1.1.0.AppImage",
       "safeArtifactName": "TestApp-1.1.0-x86_64.AppImage",
-      "updateInfo": Object {
+      "updateInfo": {
         "blockMapSize": "@blockMapSize",
         "sha512": "@sha512",
         "size": "@size",
