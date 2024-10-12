@@ -683,54 +683,69 @@ Object {
                   "files": Object {
                     "LICENSE.md": Object {
                       "size": "<size>",
+                      "unpacked": true,
                     },
                     "common.gypi": Object {
                       "size": "<size>",
+                      "unpacked": true,
                     },
                     "except.gypi": Object {
                       "size": "<size>",
+                      "unpacked": true,
                     },
                     "index.js": Object {
                       "size": "<size>",
+                      "unpacked": true,
                     },
                     "napi-inl.deprecated.h": Object {
                       "size": "<size>",
+                      "unpacked": true,
                     },
                     "napi-inl.h": Object {
                       "size": "<size>",
+                      "unpacked": true,
                     },
                     "napi.h": Object {
                       "size": "<size>",
+                      "unpacked": true,
                     },
                     "node_api.gyp": Object {
                       "size": "<size>",
+                      "unpacked": true,
                     },
                     "noexcept.gypi": Object {
                       "size": "<size>",
+                      "unpacked": true,
                     },
                     "nothing.c": Object {
                       "size": "<size>",
+                      "unpacked": true,
                     },
                     "package-support.json": Object {
                       "size": "<size>",
+                      "unpacked": true,
                     },
                     "package.json": Object {
                       "size": "<size>",
+                      "unpacked": true,
                     },
                     "tools": Object {
                       "files": Object {
                         "README.md": Object {
                           "size": "<size>",
+                          "unpacked": true,
                         },
                         "check-napi.js": Object {
                           "size": "<size>",
+                          "unpacked": true,
                         },
                         "clang-format.js": Object {
                           "size": "<size>",
+                          "unpacked": true,
                         },
                         "conversion.js": Object {
-                          "executable": true,
                           "size": "<size>",
+                          "unpacked": true,
                         },
                       },
                     },
@@ -1720,6 +1735,55 @@ Array [
     "name": "app.asar.unpacked/node_modules/node-mac-permissions/package.json",
   },
   "app.asar.unpacked/node_modules/node-mac-permissions/permissions.mm",
+  "app.asar.unpacked/node_modules/node-mac-permissions/node_modules/node-addon-api/LICENSE.md",
+  "app.asar.unpacked/node_modules/node-mac-permissions/node_modules/node-addon-api/common.gypi",
+  "app.asar.unpacked/node_modules/node-mac-permissions/node_modules/node-addon-api/except.gypi",
+  "app.asar.unpacked/node_modules/node-mac-permissions/node_modules/node-addon-api/index.js",
+  "app.asar.unpacked/node_modules/node-mac-permissions/node_modules/node-addon-api/napi-inl.deprecated.h",
+  "app.asar.unpacked/node_modules/node-mac-permissions/node_modules/node-addon-api/napi-inl.h",
+  "app.asar.unpacked/node_modules/node-mac-permissions/node_modules/node-addon-api/napi.h",
+  "app.asar.unpacked/node_modules/node-mac-permissions/node_modules/node-addon-api/node_api.gyp",
+  "app.asar.unpacked/node_modules/node-mac-permissions/node_modules/node-addon-api/noexcept.gypi",
+  "app.asar.unpacked/node_modules/node-mac-permissions/node_modules/node-addon-api/nothing.c",
+  "app.asar.unpacked/node_modules/node-mac-permissions/node_modules/node-addon-api/package-support.json",
+  Object {
+    "content": "{
+  \\"description\\": \\"Node.js API (Node-API)\\",
+  \\"devDependencies\\": {
+    \\"benchmark\\": \\"^2.1.4\\",
+    \\"bindings\\": \\"^1.5.0\\",
+    \\"clang-format\\": \\"^1.4.0\\",
+    \\"fs-extra\\": \\"^9.0.1\\",
+    \\"pre-commit\\": \\"^1.2.2\\",
+    \\"safe-buffer\\": \\"^5.1.1\\"
+  },
+  \\"directories\\": {},
+  \\"gypfile\\": false,
+  \\"homepage\\": \\"https://github.com/nodejs/node-addon-api\\",
+  \\"license\\": \\"MIT\\",
+  \\"main\\": \\"index.js\\",
+  \\"name\\": \\"node-addon-api\\",
+  \\"optionalDependencies\\": {},
+  \\"readme\\": \\"README.md\\",
+  \\"repository\\": {
+    \\"type\\": \\"git\\",
+    \\"url\\": \\"git://github.com/nodejs/node-addon-api.git\\"
+  },
+  \\"files\\": [
+    \\"*.{c,h,gyp,gypi}\\",
+    \\"package-support.json\\",
+    \\"tools/\\"
+  ],
+  \\"pre-commit\\": \\"lint\\",
+  \\"version\\": \\"3.2.1\\",
+  \\"support\\": true
+}",
+    "name": "app.asar.unpacked/node_modules/node-mac-permissions/node_modules/node-addon-api/package.json",
+  },
+  "app.asar.unpacked/node_modules/node-mac-permissions/node_modules/node-addon-api/tools/README.md",
+  "app.asar.unpacked/node_modules/node-mac-permissions/node_modules/node-addon-api/tools/check-napi.js",
+  "app.asar.unpacked/node_modules/node-mac-permissions/node_modules/node-addon-api/tools/clang-format.js",
+  "app.asar.unpacked/node_modules/node-mac-permissions/node_modules/node-addon-api/tools/conversion.js",
   "app.asar.unpacked/node_modules/node-mac-permissions/build/Release/permissions.node",
 ]
 `;

@@ -40,8 +40,7 @@ export async function copyAppFiles(fileSet: ResolvedFileSet, packager: Packager,
   const createdParentDirs = new Set<string>()
 
   const fileCopier = new FileCopier(file => {
-    // https://github.com/electron-userland/electron-builder/issues/3038
-    return !(isLibOrExe(file) || file.endsWith(".node"))
+    return !isLibOrExe(file)
   }, transformer)
   const links: Array<Link> = []
   for (let i = 0, n = fileSet.files.length; i < n; i++) {

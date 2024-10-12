@@ -597,6 +597,7 @@ Object {
                   "unpacked": true,
                 },
               },
+              "unpacked": true,
             },
             "deps": Object {
               "files": Object {
