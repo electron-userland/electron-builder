@@ -330,35 +330,14 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
     const isAsar = asarOptions != null
     await this.sanityCheckPackage(appOutDir, isAsar, framework, !!this.config.disableSanityCheckAsar)
-    if (sign) {
-      await this.doSignAfterPack(outDir, appOutDir, platformName, arch, platformSpecificBuildOptions, targets)
-    }
-  }
 
-  protected async doSignAfterPack(outDir: string, appOutDir: string, platformName: ElectronPlatformName, arch: Arch, platformSpecificBuildOptions: DC, targets: Array<Target>) {
-    const asarOptions = await this.computeAsarOptions(platformSpecificBuildOptions)
-    const isAsar = asarOptions != null
-    const packContext = {
-      appOutDir,
-      outDir,
-      arch,
-      targets,
-      packager: this,
-      electronPlatformName: platformName,
-    }
     // the fuses MUST be flipped right before signing
     if (this.config.electronFuses != null) {
       const fuseConfig = this.generateFuseConfig(this.config.electronFuses)
       await this.addElectronFuses(packContext, fuseConfig)
     }
-    const didSign = await this.signApp(packContext, isAsar)
-    const afterSign = await resolveFunction(this.appInfo.type, this.config.afterSign, "afterSign")
-    if (afterSign != null) {
-      if (didSign) {
-        await Promise.resolve(afterSign(packContext))
-      } else {
-        log.warn(null, `skipping "afterSign" hook as no signing occurred, perhaps you intended "afterPack"?`)
-      }
+    if (sign) {
+      await this.doSignAfterPack(outDir, appOutDir, platformName, arch, platformSpecificBuildOptions, targets)
     }
   }
 
@@ -395,8 +374,18 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return config
   }
 
+  /**
+   * Use `AfterPackContext` here to keep available for public API
+   * @param {AfterPackContext} context
+   * @param {FuseConfig} fuses
+   *
+   * Can be used in `afterPack` hook for custom fuse logic like below. It's an alternative approach if one wants to override electron-builder's @electron/fuses version
+   * ```
+   * await context.packager.addElectronFuses(context, { ... })
+   * ```
+   */
   public async addElectronFuses(context: AfterPackContext, fuses: FuseConfig) {
-    const { appOutDir, electronPlatformName, packager } = context
+    const { appOutDir, electronPlatformName } = context
 
     const ext = {
       darwin: ".app",
@@ -404,11 +393,33 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       linux: "",
     }[electronPlatformName]
 
-    const executableName = packager instanceof LinuxPackager ? packager.executableName : packager.appInfo.productFilename
+    const executableName = this instanceof LinuxPackager ? this.executableName : this.appInfo.productFilename
     const electronBinaryPath = path.join(appOutDir, `${executableName}${ext}`)
 
     log.info({ electronPath: log.filePath(electronBinaryPath) }, "executing @electron/fuses")
     return flipFuses(electronBinaryPath, fuses)
+  }
+
+  protected async doSignAfterPack(outDir: string, appOutDir: string, platformName: ElectronPlatformName, arch: Arch, platformSpecificBuildOptions: DC, targets: Array<Target>) {
+    const asarOptions = await this.computeAsarOptions(platformSpecificBuildOptions)
+    const isAsar = asarOptions != null
+    const packContext = {
+      appOutDir,
+      outDir,
+      arch,
+      targets,
+      packager: this,
+      electronPlatformName: platformName,
+    }
+    const didSign = await this.signApp(packContext, isAsar)
+    const afterSign = await resolveFunction(this.appInfo.type, this.config.afterSign, "afterSign")
+    if (afterSign != null) {
+      if (didSign) {
+        await Promise.resolve(afterSign(packContext))
+      } else {
+        log.warn(null, `skipping "afterSign" hook as no signing occurred, perhaps you intended "afterPack"?`)
+      }
+    }
   }
 
   // eslint-disable-next-line
