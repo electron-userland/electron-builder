@@ -9798,18 +9798,7 @@ Object {
 }
 `;
 
-exports[`outside link 1`] = `
-Object {
-  "linux": Array [],
-}
-`;
-
-exports[`outside link 2`] = `
-Object {
-  "offset": "5135",
-  "size": "@size",
-}
-`;
+exports[`outside link 1`] = `"Cannot copy file (foo) symlinked to file (foo) outside the package as that violates asar security integrity"`;
 
 exports[`unpackDir 1`] = `
 Object {
