@@ -1,6 +1,8 @@
 import { hoist, type HoisterTree, type HoisterResult } from "./hoist"
 import * as path from "path"
+import * as fs from "fs"
 import { NodeModuleInfo, DependencyTree, DependencyGraph } from "./types"
+import { log } from "builder-util"
 
 export abstract class NodeModulesCollector {
   private nodeModules: NodeModuleInfo[]
@@ -33,6 +35,20 @@ export abstract class NodeModulesCollector {
     return node
   }
 
+  private resolvePath(filePath:string) {
+    try {
+      const stats = fs.lstatSync(filePath);
+      if (stats.isSymbolicLink()) {
+        return fs.realpathSync(filePath);
+      } else {
+        return filePath;
+      }
+    } catch (error) {
+      log.error({filePath},'Error resolving path');
+      return filePath;
+    }
+  }
+
   public TransToDependencyGraph(tree: DependencyTree): DependencyGraph {
     const result: DependencyGraph = { ".": {} }
 
@@ -46,7 +62,7 @@ export abstract class NodeModulesCollector {
         }
         const version = value.version || ""
         const newKey = `${key}@${version}`
-        this.dependencyPathMap.set(newKey, path.normalize(value.path))
+        this.dependencyPathMap.set(newKey, path.normalize(this.resolvePath(value.path)))
         if (!result[parentKey]?.dependencies) {
           result[parentKey] = { dependencies: [] }
         }
