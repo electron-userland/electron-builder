@@ -137,9 +137,6 @@ importers:
       electron-publish:
         specifier: workspace:*
         version: link:../electron-publish
-      form-data:
-        specifier: ^4.0.0
-        version: 4.0.0
       fs-extra:
         specifier: ^10.1.0
         version: 10.1.0
@@ -167,9 +164,6 @@ importers:
       resedit:
         specifier: ^1.7.0
         version: 1.7.1
-      sanitize-filename:
-        specifier: ^1.6.3
-        version: 1.6.3
       semver:
         specifier: ^7.3.8
         version: 7.6.0
@@ -483,9 +477,6 @@ importers:
       '@types/fs-extra':
         specifier: ^9.0.11
         version: 9.0.13
-      bluebird-lst:
-        specifier: ^1.0.9
-        version: 1.0.9
       builder-util:
         specifier: workspace:*
         version: link:../builder-util
@@ -495,40 +486,22 @@ importers:
       chalk:
         specifier: ^4.1.2
         version: 4.1.2
-      debug:
-        specifier: ^4.3.4
-        version: 4.3.7
       form-data:
         specifier: ^4.0.0
         version: 4.0.0
       fs-extra:
         specifier: ^10.1.0
         version: 10.1.0
-      is-ci:
-        specifier: ^3.0.0
-        version: 3.0.1
       lazy-val:
         specifier: ^1.0.5
         version: 1.0.5
       mime:
         specifier: ^2.5.2
         version: 2.6.0
-      semver:
-        specifier: ^7.6.3
-        version: 7.6.3
     devDependencies:
-      '@types/debug':
-        specifier: ^4.1.12
-        version: 4.1.12
-      '@types/is-ci':
-        specifier: 3.0.0
-        version: 3.0.0
       '@types/mime':
         specifier: 2.0.3
         version: 2.0.3
-      '@types/semver':
-        specifier: ^7.5.8
-        version: 7.5.8
 
   packages/electron-updater:
     dependencies:
@@ -2347,9 +2320,6 @@ packages:
 
   '@types/cross-spawn@6.0.2':
     resolution: {integrity: sha512-KuwNhp3eza+Rhu8IFI5HUXRP0LIhqH5cAjubUvGXXthh4YYBuP2ntwEX+Cz8GJoZUHlKo247wPWOfA9LYEq4cw==}
-
-  '@types/debug@4.1.12':
-    resolution: {integrity: sha512-vIChWdVG3LG1SMxEvI/AK+FWJthlrqlTu7fbrlywTkkaONwk/UAGaULXRlf8vkzFBLVm0zkMdCquhL5aOjhXPQ==}
 
   '@types/debug@4.1.7':
     resolution: {integrity: sha512-9AonUzyTjXXhEOa0DnqpzZi6VHlqKMswga9EXjpXnnqxwLtdvPPtlO8evrI5D9S6asFRCQ6v+wpiUKbw+vKqyg==}
@@ -8912,10 +8882,6 @@ snapshots:
   '@types/cross-spawn@6.0.2':
     dependencies:
       '@types/node': 22.7.4
-
-  '@types/debug@4.1.12':
-    dependencies:
-      '@types/ms': 0.7.34
 
   '@types/debug@4.1.7':
     dependencies:
