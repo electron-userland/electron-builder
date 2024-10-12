@@ -13,9 +13,9 @@ Under-the-hood, electron-builder leverages the official [`@electron/fuses`](http
 
 ### Example
 !!! note
-  The true/false below are just an example, customize your configuration to your own requirements
+    The true/false below are just an example, customize your configuration to your own requirements
 
-```js
+```typescript
 electronFuses: {
   runAsNode: false,
   enableCookieEncryption: true,
@@ -34,17 +34,17 @@ This convience method was opened so that custom FuseConfig's could be provided, 
 !!! example "afterPack.ts"
 
 ```typescript
-    const { FuseConfig, FuseVersion } = require("@electron/fuses")
+const { FuseConfig, FuseVersion, FuseV1Options } = require("@electron/fuses")
 
-    exports.default = function (context: AfterPackContext) {
-      const fuses: FuseConfig = {
-        version: FuseVersion.V1,
-        strictlyRequireAllFuses: true,
-        [FuseV1Options.RunAsNode]: false,
-        ... // all other flags must be specified since `strictlyRequireAllFuses = true`
-      }
-      await context.packager.addElectronFuses(context, fuses)
-    }
+exports.default = function (context: AfterPackContext) {
+  const fuses: FuseConfig = {
+    version: FuseVersion.V1,
+    strictlyRequireAllFuses: true,
+    [FuseV1Options.RunAsNode]: false,
+    ... // all other flags must be specified since `strictlyRequireAllFuses = true`
+  }
+  await context.packager.addElectronFuses(context, fuses)
+}
 ```
 
 ## Validating Fuses
@@ -55,4 +55,5 @@ You can validate the fuses have been flipped or check the fuse status of an arbi
 npx @electron/fuses read --app /Applications/Foo.app
 ```
 
+## Typedoc
 {!./app-builder-lib.Interface.FuseOptionsV1.md!}

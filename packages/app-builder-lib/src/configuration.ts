@@ -406,8 +406,10 @@ export interface FuseOptionsV1 {
   /**
    * The embeddedAsarIntegrityValidation fuse toggles an experimental feature on macOS that validates the content of the `app.asar` file when it is loaded.  This feature is designed to have a minimal performance impact but may marginally slow down file reads from inside the `app.asar` archive.
    * Currently, ASAR integrity checking is supported on:
-   * - macOS as of electron>=16.0.0
-   * - Windows as of electron>=30.0.0
+   *
+   *  - macOS as of electron>=16.0.0
+   *  - Windows as of electron>=30.0.0
+   *
    * For more information on how to use asar integrity validation please read the [Asar Integrity](https://github.com/electron/electron/blob/main/docs/tutorial/asar-integrity.md) documentation.
    */
   enableEmbeddedAsarIntegrityValidation?: boolean
@@ -422,9 +424,10 @@ export interface FuseOptionsV1 {
   /**
    * The grantFileProtocolExtraPrivileges fuse changes whether pages loaded from the `file://` protocol are given privileges beyond what they would receive in a traditional web browser.  This behavior was core to Electron apps in original versions of Electron but is no longer required as apps should be [serving local files from custom protocols](https://github.com/electron/electron/blob/main/docs/tutorial/security.md#18-avoid-usage-of-the-file-protocol-and-prefer-usage-of-custom-protocols) now instead.  If you aren't serving pages from `file://` you should disable this fuse.
    * The extra privileges granted to the `file://` protocol by this fuse are incompletely documented below:
-   * - `file://` protocol pages can use `fetch` to load other assets over `file://`
-   * - `file://` protocol pages can use service workers
-   * - `file://` protocol pages have universal access granted to child frames also running on `file://` protocols regardless of sandbox settings
+   *
+   *  - `file://` protocol pages can use `fetch` to load other assets over `file://`
+   *  - `file://` protocol pages can use service workers
+   *  - `file://` protocol pages have universal access granted to child frames also running on `file://` protocols regardless of sandbox settings
    */
   grantFileProtocolExtraPrivileges?: boolean
   /**
