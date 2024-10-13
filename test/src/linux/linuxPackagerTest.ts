@@ -26,6 +26,16 @@ test.ifNotWindows(
       },
       downloadAlternateFFmpeg: true,
       publish: testPublishConfig,
+      electronFuses: {
+        runAsNode: true,
+        enableCookieEncryption: true,
+        enableNodeOptionsEnvironmentVariable: true,
+        enableNodeCliInspectArguments: true,
+        enableEmbeddedAsarIntegrityValidation: true,
+        onlyLoadAppFromAsar: true,
+        loadBrowserProcessSpecificV8Snapshot: true,
+        grantFileProtocolExtraPrivileges: undefined, // unsupported on current electron version in our tests
+      },
     },
   })
 )
@@ -136,6 +146,16 @@ test.ifNotWindows.ifNotCiMac(
         appImage: {
           // tslint:disable-next-line:no-invalid-template-strings
           artifactName: "boo-${productName}",
+        },
+        electronFuses: {
+          runAsNode: true,
+          enableCookieEncryption: true,
+          enableNodeOptionsEnvironmentVariable: true,
+          enableNodeCliInspectArguments: true,
+          enableEmbeddedAsarIntegrityValidation: true,
+          onlyLoadAppFromAsar: true,
+          loadBrowserProcessSpecificV8Snapshot: true,
+          grantFileProtocolExtraPrivileges: undefined, // unsupported on current electron version in our tests
         },
       },
       effectiveOptionComputed: async it => {
