@@ -1,7 +1,7 @@
 import { CreateOptions, createPackageWithOptions } from "@electron/asar"
 import { AsyncTaskManager, log } from "builder-util"
 import { CancellationToken } from "builder-util-runtime"
-import { Filter, MAX_FILE_REQUESTS } from "builder-util/out/fs"
+import { FileCopier, Filter, MAX_FILE_REQUESTS } from "builder-util/out/fs"
 import * as fsNode from "fs"
 import * as fs from "fs-extra"
 import * as path from "path"
@@ -16,6 +16,7 @@ export class AsarPackager {
   private readonly outFile: string
   private rootForAppFilesWithoutAsar!: string
   private readonly tmpDir = new tempFile.TmpDir()
+  private readonly fileCopier = new FileCopier()
 
   constructor(
     private readonly config: {
@@ -149,7 +150,7 @@ export class AsarPackager {
     if (data) {
       await fs.writeFile(destination, data, { mode: stat.mode })
     } else {
-      await fs.copyFile(source, destination)
+      await this.fileCopier.copy(source, destination, stat)
     }
   }
 }
