@@ -14,6 +14,23 @@ import { Configuration } from "../configuration"
 
 const defaultPlugs = ["desktop", "desktop-legacy", "home", "x11", "wayland", "unity7", "browser-support", "network", "gsettings", "audio-playback", "pulseaudio", "opengl"]
 
+const defaultPlugsCore22And24 = [
+  "desktop",
+  "desktop-legacy",
+  "home",
+  "x11",
+  "wayland",
+  "unity7",
+  "browser-sandbox",
+  "network",
+  "gsettings",
+  "audio-playback",
+  "pulseaudio",
+  "opengl",
+  "mount-observe",
+  "calendar-service",
+]
+
 export default class SnapTarget extends Target {
   readonly options: SnapOptions = { ...this.packager.platformSpecificBuildOptions, ...(this.packager.config as any)[this.name] }
 
@@ -51,7 +68,14 @@ export default class SnapTarget extends Target {
 
     const plugs = normalizePlugConfiguration(this.options.plugs)
 
-    const plugNames = this.replaceDefault(plugs == null ? null : Object.getOwnPropertyNames(plugs), defaultPlugs)
+    let plugsToAdd = defaultPlugs //default
+
+    if (options.base != null) {
+      if (Number(options.base.split("core")[1]) >= 22) {
+        plugsToAdd = defaultPlugsCore22And24
+      }
+    }
+    const plugNames = this.replaceDefault(plugs == null ? null : Object.getOwnPropertyNames(plugs), plugsToAdd)
 
     const slots = normalizePlugConfiguration(this.options.slots)
 
@@ -71,7 +95,18 @@ export default class SnapTarget extends Target {
       adapter: "none",
     }
 
-    const snap: any = load(await readFile(path.join(getTemplatePath("snap"), "snapcraft.yaml"), "utf-8"))
+    let snapTemplateFile = "snapcraft.yaml" // default
+
+    if (options.base != null) {
+      if (Number(options.base.split("core")[1]) == 22) {
+        snapTemplateFile = "snapcraft-core22.yaml"
+      }
+      if (Number(options.base.split("core")[1]) == 24) {
+        snapTemplateFile = "snapcraft-core24.yaml"
+      }
+    }
+
+    const snap: any = load(await readFile(path.join(getTemplatePath("snap"), snapTemplateFile), "utf-8"))
     if (this.isUseTemplateApp) {
       delete appDescriptor.adapter
     }
