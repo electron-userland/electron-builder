@@ -24,6 +24,16 @@ test.ifMac.ifAll("two-package", () =>
         },
         //tslint:disable-next-line:no-invalid-template-strings
         artifactName: "${name}-${version}-${os}-${arch}.${ext}",
+        electronFuses: {
+          runAsNode: true,
+          enableCookieEncryption: true,
+          enableNodeOptionsEnvironmentVariable: true,
+          enableNodeCliInspectArguments: true,
+          enableEmbeddedAsarIntegrityValidation: true,
+          onlyLoadAppFromAsar: true,
+          loadBrowserProcessSpecificV8Snapshot: true,
+          grantFileProtocolExtraPrivileges: undefined, // unsupported on current electron version in our tests
+        },
       },
     },
     {
