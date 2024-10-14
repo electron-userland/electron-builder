@@ -123,6 +123,7 @@ nav:
       - Multi Platform Build: multi-platform-build.md
 
   - Tutorials:
+      - Configuring Electron Fuses: tutorials/adding-electron-fuses.md
       - Loading App Dependencies Manually: tutorials/loading-app-dependencies-manually.md
       - Two package.json Structure: tutorials/two-package-structure.md
       - macOS Kernel Extensions: tutorials/macos-kernel-extensions.md

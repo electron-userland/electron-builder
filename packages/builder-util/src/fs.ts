@@ -19,7 +19,15 @@ export class CopyFileTransformer {
 }
 
 export type FileTransformer = (file: string) => Promise<null | string | Buffer | CopyFileTransformer> | null | string | Buffer | CopyFileTransformer
-export type Filter = (file: string, stat: Stats) => boolean
+export interface FilterStats extends Stats {
+  // relative path of the dependency(node_modules + moduleName + file)
+  // Mainly used for filter, such as files filtering and asarUnpack filtering
+  relativeNodeModulesPath?: string
+  // deal with asar unpack sysmlink
+  relativeLink?: string
+  linkRelativeToFile?: string
+}
+export type Filter = (file: string, stat: FilterStats) => boolean
 
 export function unlinkIfExists(file: string) {
   return unlink(file).catch(() => {

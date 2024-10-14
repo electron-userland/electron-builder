@@ -1,3 +1,23 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v26.0.0-alpha.1...v) (2024-10-13)
+
+
+### Features
+
+* add integration for `@electron/fuses` ([#8588](https://github.com/electron-userland/electron-builder/issues/8588)) ([8434e10](https://github.com/electron-userland/electron-builder/commit/8434e10dad0893ca11c5f3a17a70470065f96fa0))
+* migrate to `electron/asar` package ([#8570](https://github.com/electron-userland/electron-builder/issues/8570)) ([c848430](https://github.com/electron-userland/electron-builder/commit/c84843053a8f9e0b6af14c6b2ed33c5f82d495b3))
+
+
+
+# [](https://github.com/electron-userland/electron-builder/compare/v26.0.0-alpha.0...v) (2024-10-10)
+
+
+### Bug Fixes
+
+*  packages in the workspace not being under node_modules ([#8576](https://github.com/electron-userland/electron-builder/issues/8576)) ([3eab714](https://github.com/electron-userland/electron-builder/commit/3eab7143d74262caace81ea05e97617d07daf336)), closes [/github.com/electron-userland/electron-builder/blob/a25d04d5a8e58b447f0462673a4362414da9ed27/packages/app-builder-lib/src/util/appFileCopier.ts#L191-L203](https://github.com//github.com/electron-userland/electron-builder/blob/a25d04d5a8e58b447f0462673a4362414da9ed27/packages/app-builder-lib/src/util/appFileCopier.ts/issues/L191-L203) [/github.com/electron-userland/electron-builder/blob/a25d04d5a8e58b447f0462673a4362414da9ed27/packages/app-builder-lib/src/util/filter.ts#L28-L36](https://github.com//github.com/electron-userland/electron-builder/blob/a25d04d5a8e58b447f0462673a4362414da9ed27/packages/app-builder-lib/src/util/filter.ts/issues/L28-L36)
+* add additional default exclusions (`node_gyp_bins`, `pnpm-lock.yaml`, `.obj`) to copy logic ([#8577](https://github.com/electron-userland/electron-builder/issues/8577)) ([e9eef0c](https://github.com/electron-userland/electron-builder/commit/e9eef0c1c7f73a5edfe3026f044c6278641077cb))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v25.1.6...v) (2024-10-09)
 
 

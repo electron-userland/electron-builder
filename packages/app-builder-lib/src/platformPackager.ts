@@ -19,6 +19,7 @@ import {
   Configuration,
   ElectronPlatformName,
   FileAssociation,
+  LinuxPackager,
   Packager,
   PackagerOptions,
   Platform,
@@ -30,6 +31,8 @@ import { executeAppBuilderAsJson } from "./util/appBuilder"
 import { computeFileSets, computeNodeModuleFileSets, copyAppFiles, ELECTRON_COMPILE_SHIM_FILENAME, transformFiles } from "./util/appFileCopier"
 import { expandMacro as doExpandMacro } from "./util/macroExpander"
 import { resolveFunction } from "./util/resolve"
+import { flipFuses, FuseConfig, FuseV1Config, FuseV1Options, FuseVersion } from "@electron/fuses"
+import { FuseOptionsV1 } from "./configuration"
 
 export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> {
   get packagerOptions(): PackagerOptions {
@@ -327,9 +330,74 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
     const isAsar = asarOptions != null
     await this.sanityCheckPackage(appOutDir, isAsar, framework, !!this.config.disableSanityCheckAsar)
+
+    // the fuses MUST be flipped right before signing
+    if (this.config.electronFuses != null) {
+      const fuseConfig = this.generateFuseConfig(this.config.electronFuses)
+      await this.addElectronFuses(packContext, fuseConfig)
+    }
     if (sign) {
       await this.doSignAfterPack(outDir, appOutDir, platformName, arch, platformSpecificBuildOptions, targets)
     }
+  }
+
+  private generateFuseConfig(fuses: FuseOptionsV1): FuseV1Config {
+    const config: FuseV1Config = {
+      version: FuseVersion.V1,
+      resetAdHocDarwinSignature: fuses.resetAdHocDarwinSignature,
+    }
+    // this is annoying, but we must filter out undefined entries because some older electron versions will receive `the fuse wire in this version of Electron is not long enough` even if entry is set undefined
+    if (fuses.runAsNode != null) {
+      config[FuseV1Options.RunAsNode] = fuses.runAsNode
+    }
+    if (fuses.enableCookieEncryption != null) {
+      config[FuseV1Options.EnableCookieEncryption] = fuses.enableCookieEncryption
+    }
+    if (fuses.enableNodeOptionsEnvironmentVariable != null) {
+      config[FuseV1Options.EnableNodeOptionsEnvironmentVariable] = fuses.enableNodeOptionsEnvironmentVariable
+    }
+    if (fuses.enableNodeCliInspectArguments != null) {
+      config[FuseV1Options.EnableNodeCliInspectArguments] = fuses.enableNodeCliInspectArguments
+    }
+    if (fuses.enableEmbeddedAsarIntegrityValidation != null) {
+      config[FuseV1Options.EnableEmbeddedAsarIntegrityValidation] = fuses.enableEmbeddedAsarIntegrityValidation
+    }
+    if (fuses.onlyLoadAppFromAsar != null) {
+      config[FuseV1Options.OnlyLoadAppFromAsar] = fuses.onlyLoadAppFromAsar
+    }
+    if (fuses.loadBrowserProcessSpecificV8Snapshot != null) {
+      config[FuseV1Options.LoadBrowserProcessSpecificV8Snapshot] = fuses.loadBrowserProcessSpecificV8Snapshot
+    }
+    if (fuses.grantFileProtocolExtraPrivileges != null) {
+      config[FuseV1Options.GrantFileProtocolExtraPrivileges] = fuses.grantFileProtocolExtraPrivileges
+    }
+    return config
+  }
+
+  /**
+   * Use `AfterPackContext` here to keep available for public API
+   * @param {AfterPackContext} context
+   * @param {FuseConfig} fuses
+   *
+   * Can be used in `afterPack` hook for custom fuse logic like below. It's an alternative approach if one wants to override electron-builder's @electron/fuses version
+   * ```
+   * await context.packager.addElectronFuses(context, { ... })
+   * ```
+   */
+  public async addElectronFuses(context: AfterPackContext, fuses: FuseConfig) {
+    const { appOutDir, electronPlatformName } = context
+
+    const ext = {
+      darwin: ".app",
+      win32: ".exe",
+      linux: "",
+    }[electronPlatformName]
+
+    const executableName = this instanceof LinuxPackager ? this.executableName : this.appInfo.productFilename
+    const electronBinaryPath = path.join(appOutDir, `${executableName}${ext}`)
+
+    log.info({ electronPath: log.filePath(electronBinaryPath) }, "executing @electron/fuses")
+    return flipFuses(electronBinaryPath, fuses)
   }
 
   protected async doSignAfterPack(outDir: string, appOutDir: string, platformName: ElectronPlatformName, arch: Arch, platformSpecificBuildOptions: DC, targets: Array<Target>) {
@@ -436,7 +504,13 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
             await transformFiles(transformer, fileSet)
           }
 
-          await new AsarPackager(appDir, resourcePath, asarOptions, fileMatcher == null ? null : fileMatcher.createFilter()).pack(fileSets, this)
+          await new AsarPackager({
+            appDir,
+            defaultDestination,
+            resourcePath,
+            options: asarOptions,
+            unpackPattern: fileMatcher?.createFilter(),
+          }).pack(fileSets, this)
         })
       )
     }
@@ -524,7 +598,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
     const relativeFile = path.relative(this.info.appDir, path.resolve(this.info.appDir, file))
     if (isAsar) {
-      await checkFileInArchive(path.join(resourcesDir, "app.asar"), relativeFile, messagePrefix)
+      checkFileInArchive(path.join(resourcesDir, "app.asar"), relativeFile, messagePrefix)
       return
     }
 
@@ -544,7 +618,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       const asarPath = path.join(...pathSplit.slice(0, partWithAsarIndex + 1))
       let mainPath = pathSplit.length > partWithAsarIndex + 1 ? path.join.apply(pathSplit.slice(partWithAsarIndex + 1)) : ""
       mainPath += path.join(mainPath, pathParsed.base)
-      await checkFileInArchive(path.join(resourcesDir, "app", asarPath), mainPath, messagePrefix)
+      checkFileInArchive(path.join(resourcesDir, "app", asarPath), mainPath, messagePrefix)
     } else {
       const fullPath = path.join(resourcesDir, "app", relativeFile)
       const outStat = await statOrNull(fullPath)

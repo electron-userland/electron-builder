@@ -15,6 +15,18 @@ it.ifDevOrWinCi(
   app(
     {
       targets: Platform.WINDOWS.createTarget(["appx"], Arch.x64),
+      config: {
+        electronFuses: {
+          runAsNode: true,
+          enableCookieEncryption: true,
+          enableNodeOptionsEnvironmentVariable: true,
+          enableNodeCliInspectArguments: true,
+          enableEmbeddedAsarIntegrityValidation: true,
+          onlyLoadAppFromAsar: true,
+          loadBrowserProcessSpecificV8Snapshot: true,
+          grantFileProtocolExtraPrivileges: undefined, // unsupported on current electron version in our tests
+        },
+      },
     },
     {
       projectDirCreated: async projectDir => {

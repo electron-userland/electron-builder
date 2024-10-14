@@ -34,6 +34,7 @@
     "docs:prebuild": "docker build -t mkdocs-dockerfile -f mkdocs-dockerfile . ",
     "docs:build": "pnpm compile && node scripts/renderer/out/typedoc2html.js",
     "docs:mkdocs": "docker run --rm -v ${PWD}:/docs -v ${PWD}/site:/site mkdocs-dockerfile build",
+    "docs:preview": "open ./site/index.html",
     "docs:all": "pnpm docs:prebuild && pnpm docs:build && pnpm docs:mkdocs",
     "prepare": "husky install"
   },

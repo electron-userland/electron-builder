@@ -921,6 +921,7 @@ Object {
                   "unpacked": true,
                 },
               },
+              "unpacked": true,
             },
             "lib": Object {
               "files": Object {
@@ -4969,8 +4970,10 @@ Object {
               "files": Object {
                 "package.json": Object {
                   "size": "<size>",
+                  "unpacked": true,
                 },
               },
+              "unpacked": true,
             },
           },
         },
@@ -5084,6 +5087,7 @@ Object {
                   "unpacked": true,
                 },
               },
+              "unpacked": true,
             },
             "tools": Object {
               "files": Object {
@@ -5170,6 +5174,14 @@ Array [
   "app.asar.unpacked/node_modules/edge-cs/lib/edge-cs.js",
   "app.asar.unpacked/node_modules/edge-cs/lib/bootstrap/Dummy.cs",
   "app.asar.unpacked/node_modules/edge-cs/lib/bootstrap/project.json",
+  Object {
+    "content": "{
+  \\"name\\": \\"@electron-builder/test-smart-unpack-empty\\",
+  \\"version\\": \\"1.0.0\\"
+}
+",
+    "name": "app.asar.unpacked/node_modules/@electron-builder/test-smart-unpack-empty/package.json",
+  },
   "app.asar.unpacked/node_modules/@electron-builder/test-smart-unpack/foo.dll",
   Object {
     "content": "{
