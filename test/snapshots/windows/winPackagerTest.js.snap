@@ -1,5 +1,29 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`beta version 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW Setup 3.0.0-beta.2.exe",
+      "safeArtifactName": "TestApp-Setup-3.0.0-beta.2.exe",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "Test App ßW Setup 3.0.0-beta.2.exe.blockmap",
+      "safeArtifactName": "TestApp-Setup-3.0.0-beta.2.exe.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
 exports[`icon < 256 1`] = `"ERR_ICON_TOO_SMALL"`;
 
 exports[`icon not an image 1`] = `"ERR_ICON_UNKNOWN_FORMAT"`;
