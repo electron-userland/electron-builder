@@ -1,9 +1,9 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`portable - artifactName and request execution level 1`] = `
-Object {
-  "win": Array [
-    Object {
+{
+  "win": [
+    {
       "arch": "x64",
       "file": "Test App ßWPortable.1.1.0.exe",
       "safeArtifactName": "TestApp-1.1.0.exe",
@@ -13,9 +13,9 @@ Object {
 `;
 
 exports[`portable - splashImage 1`] = `
-Object {
-  "win": Array [
-    Object {
+{
+  "win": [
+    {
       "arch": "x64",
       "file": "Test App ßWPortable.1.1.0.exe",
       "safeArtifactName": "TestApp-1.1.0.exe",
@@ -25,14 +25,14 @@ Object {
 `;
 
 exports[`portable 1`] = `
-Object {
-  "win": Array [
-    Object {
+{
+  "win": [
+    {
       "arch": "x64",
       "file": "Test App ßW Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe",
     },
-    Object {
+    {
       "arch": "x64",
       "file": "Test App ßW 1.1.0.exe",
       "safeArtifactName": "TestApp-1.1.0.exe",
@@ -42,9 +42,9 @@ Object {
 `;
 
 exports[`portable zip 1`] = `
-Object {
-  "win": Array [
-    Object {
+{
+  "win": [
+    {
       "arch": "x64",
       "file": "Test App ßW 1.1.0.exe",
       "safeArtifactName": "TestApp-1.1.0.exe",
@@ -54,9 +54,9 @@ Object {
 `;
 
 exports[`portable zip several archs 1`] = `
-Object {
-  "win": Array [
-    Object {
+{
+  "win": [
+    {
       "file": "Test App ßW 1.1.0.exe",
       "safeArtifactName": "TestApp-1.1.0.exe",
     },

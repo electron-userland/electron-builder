@@ -109,7 +109,9 @@ package.json
 ...
     "win": {
       "target": "nsis",
-      "sign": "./sign.js"
+      "signtoolOptions": {
+        "sign": "./sign.js"
+      }
     },
 ...
 ```

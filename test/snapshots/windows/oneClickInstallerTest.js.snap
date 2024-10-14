@@ -1,9 +1,9 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`big file pack 1`] = `
-Object {
-  "win": Array [
-    Object {
+{
+  "win": [
+    {
       "arch": "x64",
       "file": "Test App ßW Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe",
@@ -13,21 +13,21 @@ Object {
 `;
 
 exports[`createDesktopShortcut always 1`] = `
-Object {
-  "win": Array [
-    Object {
+{
+  "win": [
+    {
       "arch": "x64",
       "file": "Test App ßW Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
-    Object {
+    {
       "file": "Test App ßW Setup 1.1.0.exe.blockmap",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -37,7 +37,7 @@ Object {
 `;
 
 exports[`custom exec name 1`] = `
-Object {
+{
   "APP_32_NAME": undefined,
   "APP_64_NAME": "TestApp-1.1.0-x64.nsis.7z",
   "APP_ARM64_NAME": undefined,
@@ -55,21 +55,21 @@ Object {
 `;
 
 exports[`custom exec name 2`] = `
-Object {
-  "win": Array [
-    Object {
+{
+  "win": [
+    {
       "arch": "x64",
       "file": "foo Setup 1.1.0.exe",
       "safeArtifactName": "foo-Setup-1.1.0.exe",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
-    Object {
+    {
       "file": "foo Setup 1.1.0.exe.blockmap",
       "safeArtifactName": "foo-Setup-1.1.0.exe.blockmap",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -79,21 +79,21 @@ Object {
 `;
 
 exports[`custom guid 1`] = `
-Object {
-  "win": Array [
-    Object {
+{
+  "win": [
+    {
       "arch": "ia32",
       "file": "boo Hub Setup 1.1.0.exe",
       "safeArtifactName": "boo-Hub-Setup-1.1.0.exe",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
-    Object {
+    {
       "file": "boo Hub Setup 1.1.0.exe.blockmap",
       "safeArtifactName": "boo-Hub-Setup-1.1.0.exe.blockmap",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -103,21 +103,21 @@ Object {
 `;
 
 exports[`custom include 1`] = `
-Object {
-  "win": Array [
-    Object {
+{
+  "win": [
+    {
       "arch": "x64",
       "file": "Test App ßW Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
-    Object {
+    {
       "file": "Test App ßW Setup 1.1.0.exe.blockmap",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -127,21 +127,21 @@ Object {
 `;
 
 exports[`custom script 1`] = `
-Object {
-  "win": Array [
-    Object {
+{
+  "win": [
+    {
       "arch": "x64",
       "file": "Test App ßW Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
-    Object {
+    {
       "file": "Test App ßW Setup 1.1.0.exe.blockmap",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -151,21 +151,21 @@ Object {
 `;
 
 exports[`file associations per user 1`] = `
-Object {
-  "win": Array [
-    Object {
+{
+  "win": [
+    {
       "arch": "ia32",
       "file": "Test App ßW Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
-    Object {
+    {
       "file": "Test App ßW Setup 1.1.0.exe.blockmap",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -175,21 +175,21 @@ Object {
 `;
 
 exports[`html license 1`] = `
-Object {
-  "win": Array [
-    Object {
+{
+  "win": [
+    {
       "arch": "x64",
       "file": "Test App ßW Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
-    Object {
+    {
       "file": "Test App ßW Setup 1.1.0.exe.blockmap",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -199,21 +199,21 @@ Object {
 `;
 
 exports[`installerHeaderIcon 1`] = `
-Object {
-  "win": Array [
-    Object {
+{
+  "win": [
+    {
       "arch": "x64",
       "file": "Test App ßW Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
-    Object {
+    {
       "file": "Test App ßW Setup 1.1.0.exe.blockmap",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -223,21 +223,21 @@ Object {
 `;
 
 exports[`menuCategory 1`] = `
-Object {
-  "win": Array [
-    Object {
+{
+  "win": [
+    {
       "arch": "ia32",
       "file": "Test Menu Category CustomName 1.1.0.exe",
       "safeArtifactName": "Test-Menu-Category-CustomName-1.1.0.exe",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
-    Object {
+    {
       "file": "Test Menu Category CustomName 1.1.0.exe.blockmap",
       "safeArtifactName": "Test-Menu-Category-CustomName-1.1.0.exe.blockmap",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -247,21 +247,21 @@ Object {
 `;
 
 exports[`multi language license 1`] = `
-Object {
-  "win": Array [
-    Object {
+{
+  "win": [
+    {
       "arch": "x64",
       "file": "Test App ßW Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
-    Object {
+    {
       "file": "Test App ßW Setup 1.1.0.exe.blockmap",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -271,13 +271,13 @@ Object {
 `;
 
 exports[`one-click 1`] = `
-Object {
-  "win": Array [
-    Object {
+{
+  "win": [
+    {
       "file": "latest.yml",
-      "fileContent": Object {
-        "files": Array [
-          Object {
+      "fileContent": {
+        "files": [
+          {
             "sha512": "@sha512",
             "size": "@size",
             "url": "Test App ßW Setup 1.1.0.exe",
@@ -289,19 +289,19 @@ Object {
         "version": "1.1.0",
       },
     },
-    Object {
+    {
       "arch": "x64",
       "file": "Test App ßW Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
-    Object {
+    {
       "file": "Test App ßW Setup 1.1.0.exe.blockmap",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -311,7 +311,7 @@ Object {
 `;
 
 exports[`one-click 2`] = `
-Object {
+{
   "provider": "generic",
   "updaterCacheDirName": "testapp-updater",
   "url": "https://develar.s3.amazonaws.com/test/win/x64",
@@ -319,13 +319,13 @@ Object {
 `;
 
 exports[`perMachine, no run after finish 1`] = `
-Object {
-  "win": Array [
-    Object {
+{
+  "win": [
+    {
       "file": "latest.yml",
-      "fileContent": Object {
-        "files": Array [
-          Object {
+      "fileContent": {
+        "files": [
+          {
             "isAdminRightsRequired": true,
             "sha512": "@sha512",
             "size": "@size",
@@ -338,20 +338,20 @@ Object {
         "version": "1.1.0",
       },
     },
-    Object {
+    {
       "arch": "ia32",
       "file": "TestApp Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe",
-      "updateInfo": Object {
+      "updateInfo": {
         "isAdminRightsRequired": true,
         "sha512": "@sha512",
         "size": "@size",
       },
     },
-    Object {
+    {
       "file": "TestApp Setup 1.1.0.exe.blockmap",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
-      "updateInfo": Object {
+      "updateInfo": {
         "isAdminRightsRequired": true,
         "sha512": "@sha512",
         "size": "@size",
@@ -362,7 +362,7 @@ Object {
 `;
 
 exports[`perMachine, no run after finish 2`] = `
-Object {
+{
   "provider": "generic",
   "updaterCacheDirName": "testapp-updater",
   "url": "https://develar.s3.amazonaws.com/test/win/ia32",
@@ -370,21 +370,21 @@ Object {
 `;
 
 exports[`string menuCategory 1`] = `
-Object {
-  "win": Array [
-    Object {
+{
+  "win": [
+    {
       "arch": "ia32",
       "file": "Test Menu Category ' CustomName 1.1.0.exe",
       "safeArtifactName": "test-menu-category-setup-1.1.0.exe",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
-    Object {
+    {
       "file": "Test Menu Category ' CustomName 1.1.0.exe.blockmap",
       "safeArtifactName": "test-menu-category-setup-1.1.0.exe.blockmap",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -394,7 +394,7 @@ Object {
 `;
 
 exports[`top-level custom exec name 1`] = `
-Object {
+{
   "APP_32_NAME": undefined,
   "APP_64_NAME": "TestApp-1.1.0-x64.nsis.7z",
   "APP_ARM64_NAME": undefined,
@@ -412,21 +412,21 @@ Object {
 `;
 
 exports[`top-level custom exec name 2`] = `
-Object {
-  "win": Array [
-    Object {
+{
+  "win": [
+    {
       "arch": "x64",
       "file": "foo Setup 1.1.0.exe",
       "safeArtifactName": "foo-Setup-1.1.0.exe",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
-    Object {
+    {
       "file": "foo Setup 1.1.0.exe.blockmap",
       "safeArtifactName": "foo-Setup-1.1.0.exe.blockmap",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
