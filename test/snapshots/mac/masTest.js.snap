@@ -1,13 +1,13 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`dev 1`] = `
-Object {
-  "mac": Array [],
+{
+  "mac": [],
 }
 `;
 
 exports[`dev 2`] = `
-Object {
+{
   "CFBundleDisplayName": "Test App ßW",
   "CFBundleExecutable": "Test App ßW",
   "CFBundleIconFile": "Test App ßW.icns",
@@ -24,9 +24,9 @@ Object {
 `;
 
 exports[`mas 1`] = `
-Object {
-  "mac": Array [
-    Object {
+{
+  "mac": [
+    {
       "arch": "x64",
       "file": "Test App ßW-1.1.0.pkg",
       "safeArtifactName": "TestApp-1.1.0.pkg",
@@ -36,7 +36,7 @@ Object {
 `;
 
 exports[`mas 2`] = `
-Object {
+{
   "CFBundleDisplayName": "Test App ßW",
   "CFBundleExecutable": "Test App ßW",
   "CFBundleIconFile": "icon.icns",
@@ -54,14 +54,14 @@ Object {
 `;
 
 exports[`mas and 7z 1`] = `
-Object {
-  "mac": Array [
-    Object {
+{
+  "mac": [
+    {
       "arch": "x64",
       "file": "Test App ßW-1.1.0-mac.7z",
       "safeArtifactName": "TestApp-1.1.0-mac.7z",
     },
-    Object {
+    {
       "arch": "x64",
       "file": "Test App ßW-1.1.0.pkg",
       "safeArtifactName": "TestApp-1.1.0.pkg",
@@ -71,7 +71,7 @@ Object {
 `;
 
 exports[`mas and 7z 2`] = `
-Object {
+{
   "CFBundleDisplayName": "Test App ßW",
   "CFBundleExecutable": "Test App ßW",
   "CFBundleIconFile": "Test App ßW.icns",

@@ -1,9 +1,9 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`custom finishArgs 1`] = `
-Object {
-  "linux": Array [
-    Object {
+{
+  "linux": [
+    {
       "arch": "x64",
       "file": "Test App ßW-1.1.0-x86_64.flatpak",
       "safeArtifactName": "TestApp-1.1.0-x86_64.flatpak",
@@ -13,9 +13,9 @@ Object {
 `;
 
 exports[`custom runtime and base app version 1`] = `
-Object {
-  "linux": Array [
-    Object {
+{
+  "linux": [
+    {
       "arch": "x64",
       "file": "Test App ßW-1.1.0-x86_64.flatpak",
       "safeArtifactName": "TestApp-1.1.0-x86_64.flatpak",
@@ -25,9 +25,9 @@ Object {
 `;
 
 exports[`enable Wayland flags 1`] = `
-Object {
-  "linux": Array [
-    Object {
+{
+  "linux": [
+    {
       "arch": "x64",
       "file": "Test App ßW-1.1.0-x86_64.flatpak",
       "safeArtifactName": "TestApp-1.1.0-x86_64.flatpak",
@@ -37,9 +37,9 @@ Object {
 `;
 
 exports[`flatpak 1`] = `
-Object {
-  "linux": Array [
-    Object {
+{
+  "linux": [
+    {
       "arch": "x64",
       "file": "Test App ßW-1.1.0-x86_64.flatpak",
       "safeArtifactName": "TestApp-1.1.0-x86_64.flatpak",
