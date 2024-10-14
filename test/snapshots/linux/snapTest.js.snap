@@ -319,7 +319,7 @@ exports[`buildPackages 1`] = `
       ],
     },
     "gnome-platform-empty-dirs": {
-      "override-build": "mkdir -p \\"$SNAPCRAFT_PART_INSTALL/data-dir/themes\\" mkdir -p \\"$SNAPCRAFT_PART_INSTALL/data-dir/icons\\" mkdir -p \\"$SNAPCRAFT_PART_INSTALL/data-dir/sounds\\" mkdir $SNAPCRAFT_PART_INSTALL/gnome-platform
+      "override-build": "mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/themes" mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/icons" mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/sounds" mkdir $SNAPCRAFT_PART_INSTALL/gnome-platform
 ",
       "plugin": "nil",
     },
@@ -538,7 +538,7 @@ exports[`compression option 1`] = `
       ],
     },
     "gnome-platform-empty-dirs": {
-      "override-build": "mkdir -p \\"$SNAPCRAFT_PART_INSTALL/data-dir/themes\\" mkdir -p \\"$SNAPCRAFT_PART_INSTALL/data-dir/icons\\" mkdir -p \\"$SNAPCRAFT_PART_INSTALL/data-dir/sounds\\" mkdir $SNAPCRAFT_PART_INSTALL/gnome-platform
+      "override-build": "mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/themes" mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/icons" mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/sounds" mkdir $SNAPCRAFT_PART_INSTALL/gnome-platform
 ",
       "plugin": "nil",
     },
@@ -1002,7 +1002,7 @@ exports[`default stagePackages 1`] = `
       ],
     },
     "gnome-platform-empty-dirs": {
-      "override-build": "mkdir -p \\"$SNAPCRAFT_PART_INSTALL/data-dir/themes\\" mkdir -p \\"$SNAPCRAFT_PART_INSTALL/data-dir/icons\\" mkdir -p \\"$SNAPCRAFT_PART_INSTALL/data-dir/sounds\\" mkdir $SNAPCRAFT_PART_INSTALL/gnome-platform
+      "override-build": "mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/themes" mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/icons" mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/sounds" mkdir $SNAPCRAFT_PART_INSTALL/gnome-platform
 ",
       "plugin": "nil",
     },
@@ -1168,7 +1168,7 @@ exports[`default stagePackages 3`] = `
       ],
     },
     "gnome-platform-empty-dirs": {
-      "override-build": "mkdir -p \\"$SNAPCRAFT_PART_INSTALL/data-dir/themes\\" mkdir -p \\"$SNAPCRAFT_PART_INSTALL/data-dir/icons\\" mkdir -p \\"$SNAPCRAFT_PART_INSTALL/data-dir/sounds\\" mkdir $SNAPCRAFT_PART_INSTALL/gnome-platform
+      "override-build": "mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/themes" mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/icons" mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/sounds" mkdir $SNAPCRAFT_PART_INSTALL/gnome-platform
 ",
       "plugin": "nil",
     },
@@ -1334,7 +1334,7 @@ exports[`default stagePackages 5`] = `
       ],
     },
     "gnome-platform-empty-dirs": {
-      "override-build": "mkdir -p \\"$SNAPCRAFT_PART_INSTALL/data-dir/themes\\" mkdir -p \\"$SNAPCRAFT_PART_INSTALL/data-dir/icons\\" mkdir -p \\"$SNAPCRAFT_PART_INSTALL/data-dir/sounds\\" mkdir $SNAPCRAFT_PART_INSTALL/gnome-platform
+      "override-build": "mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/themes" mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/icons" mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/sounds" mkdir $SNAPCRAFT_PART_INSTALL/gnome-platform
 ",
       "plugin": "nil",
     },
@@ -1501,7 +1501,7 @@ exports[`default stagePackages 7`] = `
       ],
     },
     "gnome-platform-empty-dirs": {
-      "override-build": "mkdir -p \\"$SNAPCRAFT_PART_INSTALL/data-dir/themes\\" mkdir -p \\"$SNAPCRAFT_PART_INSTALL/data-dir/icons\\" mkdir -p \\"$SNAPCRAFT_PART_INSTALL/data-dir/sounds\\" mkdir $SNAPCRAFT_PART_INSTALL/gnome-platform
+      "override-build": "mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/themes" mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/icons" mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/sounds" mkdir $SNAPCRAFT_PART_INSTALL/gnome-platform
 ",
       "plugin": "nil",
     },
@@ -1735,7 +1735,7 @@ exports[`plugs option 1`] = `
       ],
     },
     "gnome-platform-empty-dirs": {
-      "override-build": "mkdir -p \\"$SNAPCRAFT_PART_INSTALL/data-dir/themes\\" mkdir -p \\"$SNAPCRAFT_PART_INSTALL/data-dir/icons\\" mkdir -p \\"$SNAPCRAFT_PART_INSTALL/data-dir/sounds\\" mkdir $SNAPCRAFT_PART_INSTALL/gnome-platform
+      "override-build": "mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/themes" mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/icons" mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/sounds" mkdir $SNAPCRAFT_PART_INSTALL/gnome-platform
 ",
       "plugin": "nil",
     },
@@ -1936,7 +1936,7 @@ exports[`plugs option 3`] = `
       ],
     },
     "gnome-platform-empty-dirs": {
-      "override-build": "mkdir -p \\"$SNAPCRAFT_PART_INSTALL/data-dir/themes\\" mkdir -p \\"$SNAPCRAFT_PART_INSTALL/data-dir/icons\\" mkdir -p \\"$SNAPCRAFT_PART_INSTALL/data-dir/sounds\\" mkdir $SNAPCRAFT_PART_INSTALL/gnome-platform
+      "override-build": "mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/themes" mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/icons" mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/sounds" mkdir $SNAPCRAFT_PART_INSTALL/gnome-platform
 ",
       "plugin": "nil",
     },

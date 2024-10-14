@@ -1483,42 +1483,42 @@ exports[`yarn two package.json w/ native module 4`] = `
   "app.asar.unpacked/node_modules/node-pty/LICENSE",
   {
     "content": "{
-  \\"name\\": \\"node-pty\\",
-  \\"description\\": \\"Fork pseudoterminals in Node.JS\\",
-  \\"author\\": {
-    \\"name\\": \\"Microsoft Corporation\\"
+  "name": "node-pty",
+  "description": "Fork pseudoterminals in Node.JS",
+  "author": {
+    "name": "Microsoft Corporation"
   },
-  \\"version\\": \\"1.1.0-beta14\\",
-  \\"license\\": \\"MIT\\",
-  \\"main\\": \\"./lib/index.js\\",
-  \\"types\\": \\"./typings/node-pty.d.ts\\",
-  \\"repository\\": {
-    \\"type\\": \\"git\\",
-    \\"url\\": \\"git://github.com/microsoft/node-pty.git\\"
+  "version": "1.1.0-beta14",
+  "license": "MIT",
+  "main": "./lib/index.js",
+  "types": "./typings/node-pty.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/microsoft/node-pty.git"
   },
-  \\"files\\": [
-    \\"binding.gyp\\",
-    \\"lib/\\",
-    \\"scripts/\\",
-    \\"src/\\",
-    \\"deps/\\",
-    \\"typings/\\"
+  "files": [
+    "binding.gyp",
+    "lib/",
+    "scripts/",
+    "src/",
+    "deps/",
+    "typings/"
   ],
-  \\"homepage\\": \\"https://github.com/microsoft/node-pty\\",
-  \\"dependencies\\": {
-    \\"node-addon-api\\": \\"^7.1.0\\"
+  "homepage": "https://github.com/microsoft/node-pty",
+  "dependencies": {
+    "node-addon-api": "^7.1.0"
   },
-  \\"devDependencies\\": {
-    \\"@types/mocha\\": \\"^7.0.2\\",
-    \\"@types/node\\": \\"12\\",
-    \\"@typescript-eslint/eslint-plugin\\": \\"^2.27.0\\",
-    \\"@typescript-eslint/parser\\": \\"^2.27.0\\",
-    \\"cross-env\\": \\"^5.1.4\\",
-    \\"eslint\\": \\"^6.8.0\\",
-    \\"mocha\\": \\"10\\",
-    \\"node-gyp\\": \\"^10.0.1\\",
-    \\"ps-list\\": \\"^6.0.0\\",
-    \\"typescript\\": \\"^3.8.3\\"
+  "devDependencies": {
+    "@types/mocha": "^7.0.2",
+    "@types/node": "12",
+    "@typescript-eslint/eslint-plugin": "^2.27.0",
+    "@typescript-eslint/parser": "^2.27.0",
+    "cross-env": "^5.1.4",
+    "eslint": "^6.8.0",
+    "mocha": "10",
+    "node-gyp": "^10.0.1",
+    "ps-list": "^6.0.0",
+    "typescript": "^3.8.3"
   }
 }",
     "name": "app.asar.unpacked/node_modules/node-pty/package.json",
@@ -1677,41 +1677,41 @@ exports[`yarn two package.json w/ native module 4`] = `
   "app.asar.unpacked/node_modules/node-mac-permissions/index.js",
   {
     "content": "{
-  \\"name\\": \\"node-mac-permissions\\",
-  \\"version\\": \\"2.3.0\\",
-  \\"description\\": \\"A native node module to manage system permissions on macOS\\",
-  \\"main\\": \\"index.js\\",
-  \\"types\\": \\"index.d.ts\\",
-  \\"repository\\": {
-    \\"type\\": \\"git\\",
-    \\"url\\": \\"git+https://github.com/codebytere/node-mac-permissions.git\\"
+  "name": "node-mac-permissions",
+  "version": "2.3.0",
+  "description": "A native node module to manage system permissions on macOS",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/codebytere/node-mac-permissions.git"
   },
-  \\"author\\": \\"Shelley Vohr <shelley.vohr@gmail.com>\\",
-  \\"license\\": \\"MIT\\",
-  \\"homepage\\": \\"https://github.com/codebytere/node-mac-permissions#readme\\",
-  \\"dependencies\\": {
-    \\"bindings\\": \\"^1.5.0\\",
-    \\"node-addon-api\\": \\"^3.0.2\\"
+  "author": "Shelley Vohr <shelley.vohr@gmail.com>",
+  "license": "MIT",
+  "homepage": "https://github.com/codebytere/node-mac-permissions#readme",
+  "dependencies": {
+    "bindings": "^1.5.0",
+    "node-addon-api": "^3.0.2"
   },
-  \\"devDependencies\\": {
-    \\"chai\\": \\"^4.3.6\\",
-    \\"clang-format\\": \\"1.8.0\\",
-    \\"husky\\": \\"^8.0.1\\",
-    \\"lint-staged\\": \\"^12.4.1\\",
-    \\"mocha\\": \\"^10.0.0\\",
-    \\"node-gyp\\": \\"^9.0.0\\",
-    \\"prettier\\": \\"^2.6.2\\"
+  "devDependencies": {
+    "chai": "^4.3.6",
+    "clang-format": "1.8.0",
+    "husky": "^8.0.1",
+    "lint-staged": "^12.4.1",
+    "mocha": "^10.0.0",
+    "node-gyp": "^9.0.0",
+    "prettier": "^2.6.2"
   },
-  \\"lint-staged\\": {
-    \\"*.js\\": [
-      \\"prettier --write\\"
+  "lint-staged": {
+    "*.js": [
+      "prettier --write"
     ],
-    \\"*.mm\\": [
-      \\"clang-format -i\\"
+    "*.mm": [
+      "clang-format -i"
     ]
   },
-  \\"os\\": [
-    \\"darwin\\"
+  "os": [
+    "darwin"
   ]
 }",
     "name": "app.asar.unpacked/node_modules/node-mac-permissions/package.json",
@@ -1730,35 +1730,35 @@ exports[`yarn two package.json w/ native module 4`] = `
   "app.asar.unpacked/node_modules/node-mac-permissions/node_modules/node-addon-api/package-support.json",
   {
     "content": "{
-  \\"description\\": \\"Node.js API (Node-API)\\",
-  \\"devDependencies\\": {
-    \\"benchmark\\": \\"^2.1.4\\",
-    \\"bindings\\": \\"^1.5.0\\",
-    \\"clang-format\\": \\"^1.4.0\\",
-    \\"fs-extra\\": \\"^9.0.1\\",
-    \\"pre-commit\\": \\"^1.2.2\\",
-    \\"safe-buffer\\": \\"^5.1.1\\"
+  "description": "Node.js API (Node-API)",
+  "devDependencies": {
+    "benchmark": "^2.1.4",
+    "bindings": "^1.5.0",
+    "clang-format": "^1.4.0",
+    "fs-extra": "^9.0.1",
+    "pre-commit": "^1.2.2",
+    "safe-buffer": "^5.1.1"
   },
-  \\"directories\\": {},
-  \\"gypfile\\": false,
-  \\"homepage\\": \\"https://github.com/nodejs/node-addon-api\\",
-  \\"license\\": \\"MIT\\",
-  \\"main\\": \\"index.js\\",
-  \\"name\\": \\"node-addon-api\\",
-  \\"optionalDependencies\\": {},
-  \\"readme\\": \\"README.md\\",
-  \\"repository\\": {
-    \\"type\\": \\"git\\",
-    \\"url\\": \\"git://github.com/nodejs/node-addon-api.git\\"
+  "directories": {},
+  "gypfile": false,
+  "homepage": "https://github.com/nodejs/node-addon-api",
+  "license": "MIT",
+  "main": "index.js",
+  "name": "node-addon-api",
+  "optionalDependencies": {},
+  "readme": "README.md",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/nodejs/node-addon-api.git"
   },
-  \\"files\\": [
-    \\"*.{c,h,gyp,gypi}\\",
-    \\"package-support.json\\",
-    \\"tools/\\"
+  "files": [
+    "*.{c,h,gyp,gypi}",
+    "package-support.json",
+    "tools/"
   ],
-  \\"pre-commit\\": \\"lint\\",
-  \\"version\\": \\"3.2.1\\",
-  \\"support\\": true
+  "pre-commit": "lint",
+  "version": "3.2.1",
+  "support": true
 }",
     "name": "app.asar.unpacked/node_modules/node-mac-permissions/node_modules/node-addon-api/package.json",
   },

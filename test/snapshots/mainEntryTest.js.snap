@@ -1,10 +1,10 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`invalid main in the app package.json (custom asar) 1`] = `"Application entry file \\"main.js\\" in the \\"<path>/app.asar\\" is corrupted: Error: \\"main.js\\" was not found in this archive"`;
+exports[`invalid main in the app package.json (custom asar) 1`] = `"Application entry file "main.js" in the "<path>/app.asar" is corrupted: Error: "main.js" was not found in this archive"`;
 
-exports[`invalid main in the app package.json (no asar) 1`] = `"Application entry file \\"<path>/main.js\\" does not exist. Seems like a wrong configuration."`;
+exports[`invalid main in the app package.json (no asar) 1`] = `"Application entry file "<path>/main.js" does not exist. Seems like a wrong configuration."`;
 
-exports[`invalid main in the app package.json 1`] = `"Application entry file \\"main.js\\" in the \\"<path>/app.asar\\" is corrupted: Error: \\"main.js\\" was not found in this archive"`;
+exports[`invalid main in the app package.json 1`] = `"Application entry file "main.js" in the "<path>/app.asar" is corrupted: Error: "main.js" was not found in this archive"`;
 
 exports[`main in the app package.json (custom asar) 1`] = `
 {

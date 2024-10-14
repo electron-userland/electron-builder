@@ -4866,45 +4866,45 @@ exports[`posix smart unpack 4`] = `
   "app.asar.unpacked/node_modules/keytar/LICENSE.md",
   {
     "content": "{
-  \\"main\\": \\"./lib/keytar.js\\",
-  \\"typings\\": \\"keytar.d.ts\\",
-  \\"name\\": \\"keytar\\",
-  \\"description\\": \\"Bindings to native Mac/Linux/Windows password APIs\\",
-  \\"version\\": \\"7.9.0\\",
-  \\"license\\": \\"MIT\\",
-  \\"repository\\": {
-    \\"type\\": \\"git\\",
-    \\"url\\": \\"https://github.com/atom/node-keytar.git\\"
+  "main": "./lib/keytar.js",
+  "typings": "keytar.d.ts",
+  "name": "keytar",
+  "description": "Bindings to native Mac/Linux/Windows password APIs",
+  "version": "7.9.0",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/atom/node-keytar.git"
   },
-  \\"homepage\\": \\"http://atom.github.io/node-keytar\\",
-  \\"files\\": [
-    \\"lib\\",
-    \\"src\\",
-    \\"binding.gyp\\",
-    \\"keytar.d.ts\\"
+  "homepage": "http://atom.github.io/node-keytar",
+  "files": [
+    "lib",
+    "src",
+    "binding.gyp",
+    "keytar.d.ts"
   ],
-  \\"types\\": \\"./keytar.d.ts\\",
-  \\"devDependencies\\": {
-    \\"babel-core\\": \\"^6.26.3\\",
-    \\"babel-plugin-transform-async-to-generator\\": \\"^6.24.1\\",
-    \\"chai\\": \\"^4.2.0\\",
-    \\"mocha\\": \\"^9.2.0\\",
-    \\"node-cpplint\\": \\"~0.4.0\\",
-    \\"node-gyp\\": \\"^8.4.1\\",
-    \\"prebuild\\": \\"^11.0.2\\"
+  "types": "./keytar.d.ts",
+  "devDependencies": {
+    "babel-core": "^6.26.3",
+    "babel-plugin-transform-async-to-generator": "^6.24.1",
+    "chai": "^4.2.0",
+    "mocha": "^9.2.0",
+    "node-cpplint": "~0.4.0",
+    "node-gyp": "^8.4.1",
+    "prebuild": "^11.0.2"
   },
-  \\"dependencies\\": {
-    \\"node-addon-api\\": \\"^4.3.0\\",
-    \\"prebuild-install\\": \\"^7.0.1\\"
+  "dependencies": {
+    "node-addon-api": "^4.3.0",
+    "prebuild-install": "^7.0.1"
   },
-  \\"binary\\": {
-    \\"napi_versions\\": [
+  "binary": {
+    "napi_versions": [
       3
     ]
   },
-  \\"config\\": {
-    \\"runtime\\": \\"napi\\",
-    \\"target\\": 3
+  "config": {
+    "runtime": "napi",
+    "target": 3
   }
 }",
     "name": "app.asar.unpacked/node_modules/keytar/package.json",
@@ -5129,29 +5129,29 @@ exports[`win smart unpack 3`] = `
   "app.asar.unpacked/node_modules/edge-cs/LICENSE.txt",
   {
     "content": "{
-  \\"name\\": \\"edge-cs\\",
-  \\"author\\": {
-    \\"name\\": \\"Tomasz Janczuk <tomasz@janczuk.org>\\",
-    \\"url\\": \\"http://tomasz.janczuk.org\\",
-    \\"twitter\\": \\"tjanczuk\\"
+  "name": "edge-cs",
+  "author": {
+    "name": "Tomasz Janczuk <tomasz@janczuk.org>",
+    "url": "http://tomasz.janczuk.org",
+    "twitter": "tjanczuk"
   },
-  \\"version\\": \\"1.2.1\\",
-  \\"description\\": \\"Edge-cs: run C# and node.js code in-process with edge.js\\",
-  \\"main\\": \\"./lib/edge-cs.js\\",
-  \\"engines\\": {
-    \\"node\\": \\">= 0.8\\"
+  "version": "1.2.1",
+  "description": "Edge-cs: run C# and node.js code in-process with edge.js",
+  "main": "./lib/edge-cs.js",
+  "engines": {
+    "node": ">= 0.8"
   },
-  \\"licenses\\": [
+  "licenses": [
     {
-      \\"type\\": \\"Apache\\",
-      \\"url\\": \\"http://www.apache.org/licenses/LICENSE-2.0\\"
+      "type": "Apache",
+      "url": "http://www.apache.org/licenses/LICENSE-2.0"
     }
   ],
-  \\"dependencies\\": {},
-  \\"homepage\\": \\"http://tjanczuk.github.com/edge\\",
-  \\"repository\\": {
-    \\"type\\": \\"git\\",
-    \\"url\\": \\"git@github.com:tjanczuk/edge-cs.git\\"
+  "dependencies": {},
+  "homepage": "http://tjanczuk.github.com/edge",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:tjanczuk/edge-cs.git"
   }
 }",
     "name": "app.asar.unpacked/node_modules/edge-cs/package.json",
@@ -5163,8 +5163,8 @@ exports[`win smart unpack 3`] = `
   "app.asar.unpacked/node_modules/edge-cs/src/Edge.js.CSharp/gulpfile.js",
   {
     "content": "{
-    \\"devDependencies\\": {
-        \\"gulp\\": \\"3.9.0\\"
+    "devDependencies": {
+        "gulp": "3.9.0"
     }
 }",
     "name": "app.asar.unpacked/node_modules/edge-cs/src/Edge.js.CSharp/package.json",
@@ -5176,8 +5176,8 @@ exports[`win smart unpack 3`] = `
   "app.asar.unpacked/node_modules/edge-cs/lib/bootstrap/project.json",
   {
     "content": "{
-  \\"name\\": \\"@electron-builder/test-smart-unpack-empty\\",
-  \\"version\\": \\"1.0.0\\"
+  "name": "@electron-builder/test-smart-unpack-empty",
+  "version": "1.0.0"
 }
 ",
     "name": "app.asar.unpacked/node_modules/@electron-builder/test-smart-unpack-empty/package.json",
@@ -5185,8 +5185,8 @@ exports[`win smart unpack 3`] = `
   "app.asar.unpacked/node_modules/@electron-builder/test-smart-unpack/foo.dll",
   {
     "content": "{
-  \\"name\\": \\"@electron-builder/test-smart-unpack\\",
-  \\"version\\": \\"1.0.0\\"
+  "name": "@electron-builder/test-smart-unpack",
+  "version": "1.0.0"
 }
 ",
     "name": "app.asar.unpacked/node_modules/@electron-builder/test-smart-unpack/package.json",

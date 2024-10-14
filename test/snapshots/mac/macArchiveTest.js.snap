@@ -117,17 +117,17 @@ exports[`invalid target 1`] = `
    -> Options related to how build macOS targets.
    Details:
     * configuration.mac.target[0] should be one of these:
-      { target, arch? } | \\"7z\\" | \\"default\\" | \\"dir\\" | \\"dmg\\" | \\"mas\\" | \\"mas-dev\\" | \\"pkg\\" | \\"tar.bz2\\" | \\"tar.gz\\" | \\"tar.lz\\" | \\"tar.xz\\" | \\"zip\\"
+      { target, arch? } | "7z" | "default" | "dir" | "dmg" | "mas" | "mas-dev" | "pkg" | "tar.bz2" | "tar.gz" | "tar.lz" | "tar.xz" | "zip"
       Details:
        * configuration.mac.target[0] should be an object:
          { target, arch? }
        * configuration.mac.target[0] should be one of these:
-         \\"7z\\" | \\"default\\" | \\"dir\\" | \\"dmg\\" | \\"mas\\" | \\"mas-dev\\" | \\"pkg\\" | \\"tar.bz2\\" | \\"tar.gz\\" | \\"tar.lz\\" | \\"tar.xz\\" | \\"zip\\"
+         "7z" | "default" | "dir" | "dmg" | "mas" | "mas-dev" | "pkg" | "tar.bz2" | "tar.gz" | "tar.lz" | "tar.xz" | "zip"
      How to fix:
      1. Open https://www.electron.build/configuration/mac
      2. Search the option name on the page (or type in into Search to find across the docs).
        * Not found? The option was deprecated or not exists (check spelling).
-       * Found? Check that the option in the appropriate place. e.g. \\"title\\" only in the \\"dmg\\", not in the root.
+       * Found? Check that the option in the appropriate place. e.g. "title" only in the "dmg", not in the root.
 "
 `;
 

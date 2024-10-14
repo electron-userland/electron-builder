@@ -31,7 +31,7 @@ exports[`extra metadata (no asar) 1`] = `
 exports[`extra metadata (no asar) 2`] = `
 {
   "author": "Foo Bar <foo@example.com>",
-  "description": "Test Application (test quite \\" #378)",
+  "description": "Test Application (test quite " #378)",
   "foo": {
     "bar": 12,
     "disabled": false,
@@ -59,7 +59,7 @@ exports[`extra metadata 1`] = `
 exports[`extra metadata 2`] = `
 {
   "author": "Foo Bar <foo@example.com>",
-  "description": "Test Application (test quite \\" #378)",
+  "description": "Test Application (test quite " #378)",
   "foo": {
     "bar": 12,
     "disabled": false,
