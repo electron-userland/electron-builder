@@ -28,10 +28,10 @@ import { Packager } from "../packager"
 import { PlatformPackager } from "../platformPackager"
 import { expandMacro } from "../util/macroExpander"
 import { WinPackager } from "../winPackager"
-import { SnapStorePublisher } from "electron-publish/out/SnapStorePublisher"
+import { SnapStorePublisher } from "electron-publish/out/snapStorePublisher"
 import { createUpdateInfoTasks, UpdateInfoFileTask, writeUpdateInfoFiles } from "./updateInfoBuilder"
-import { KeygenPublisher } from "electron-publish/out/KeygenPublisher"
-import { BitbucketPublisher } from "electron-publish/out/BitbucketPublisher"
+import { KeygenPublisher } from "electron-publish/out/keygenPublisher"
+import { BitbucketPublisher } from "electron-publish/out/bitbucketPublisher"
 
 const publishForPrWarning =
   "There are serious security concerns with PUBLISH_FOR_PULL_REQUEST=true (see the  CircleCI documentation (https://circleci.com/docs/1.0/fork-pr-builds/) for details)" +
