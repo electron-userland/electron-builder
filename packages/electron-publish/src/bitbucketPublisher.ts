@@ -2,7 +2,7 @@ import { Arch, InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-u
 import { httpExecutor } from "builder-util"
 import { ClientRequest, RequestOptions } from "http"
 import { PublishContext } from "./"
-import { HttpPublisher } from "./HttpPublisher"
+import { HttpPublisher } from "./httpPublisher"
 import { BitbucketOptions } from "builder-util-runtime/out/publishOptions"
 import { configureRequestOptions, HttpExecutor } from "builder-util-runtime"
 import * as FormData from "form-data"

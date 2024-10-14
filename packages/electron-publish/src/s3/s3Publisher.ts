@@ -1,5 +1,5 @@
 import { executeAppBuilder, InvalidConfigurationError, log } from "builder-util"
-import { BaseS3Publisher } from "./BaseS3Publisher"
+import { BaseS3Publisher } from "./baseS3Publisher"
 import { S3Options } from "builder-util-runtime"
 import { PublishContext } from ".."
 

@@ -11,7 +11,7 @@ export interface PublishOptions {
 }
 
 export { Publisher, getCiTag } from "./publisher"
-export { HttpPublisher } from "./HttpPublisher"
+export { HttpPublisher } from "./httpPublisher"
 
 export interface PublishContext {
   readonly cancellationToken: CancellationToken
