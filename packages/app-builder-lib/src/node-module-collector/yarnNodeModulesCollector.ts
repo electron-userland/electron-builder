@@ -19,15 +19,15 @@ export class YarnNodeModulesCollector extends NodeModulesCollector {
       const stdout = execSync(this.getPMCommand(), {
         cwd: this.rootDir,
         encoding: "utf-8",
-        maxBuffer: 1024 * 1024 * 100 
+        maxBuffer: 1024 * 1024 * 100,
       })
-      result =  JSON.parse(stdout) as DependencyTree
+      result = JSON.parse(stdout) as DependencyTree
     } catch (error) {
-        log.debug({error},"npm list failed in yarn project, but will be ignored")
+      log.debug({ error }, "npm list failed in yarn project, but will be ignored")
       if (error instanceof Error && "stdout" in error) {
         const stdout = (error as any).stdout
         let result = JSON.parse(stdout)
-        result =  JSON.parse(result) as DependencyTree
+        result = JSON.parse(result) as DependencyTree
       }
     }
     return result

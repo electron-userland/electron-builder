@@ -16,7 +16,7 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector {
     const pnpmListOutput = execSync(this.getPMCommand(), {
       cwd: this.rootDir,
       encoding: "utf-8",
-        maxBuffer: 1024 * 1024 * 100 
+      maxBuffer: 1024 * 1024 * 100,
     })
 
     const dependencyTree: DependencyTree = JSON.parse(pnpmListOutput)[0]
