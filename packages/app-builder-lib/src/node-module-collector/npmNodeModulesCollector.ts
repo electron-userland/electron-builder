@@ -16,6 +16,7 @@ export class NpmNodeModulesCollector extends NodeModulesCollector {
     const npmListOutput = execSync(this.getPMCommand(), {
       cwd: this.rootDir,
       encoding: "utf-8",
+        maxBuffer: 1024 * 1024 * 100 
     })
 
     const dependencyTree: DependencyTree = JSON.parse(npmListOutput)

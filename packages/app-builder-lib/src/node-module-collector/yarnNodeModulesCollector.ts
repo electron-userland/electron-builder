@@ -1,6 +1,7 @@
 import { execSync } from "child_process"
 import { NodeModulesCollector } from "./nodeModulesCollector"
 import { DependencyTree } from "./types"
+import { log } from "builder-util"
 
 export class YarnNodeModulesCollector extends NodeModulesCollector {
   constructor(rootDir: string) {
@@ -12,13 +13,23 @@ export class YarnNodeModulesCollector extends NodeModulesCollector {
     return `${cmd} list --omit dev -a --json --long`
   }
 
-  getDependenciesTree() {
-    const npmListOutput = execSync(this.getPMCommand(), {
-      cwd: this.rootDir,
-      encoding: "utf-8",
-    })
-
-    const dependencyTree: DependencyTree = JSON.parse(npmListOutput)
-    return dependencyTree
+  getDependenciesTree(): DependencyTree {
+    let result: DependencyTree = {}
+    try {
+      const stdout = execSync(this.getPMCommand(), {
+        cwd: this.rootDir,
+        encoding: "utf-8",
+        maxBuffer: 1024 * 1024 * 100 
+      })
+      result =  JSON.parse(stdout) as DependencyTree
+    } catch (error) {
+        log.debug({error},"npm list failed in yarn project, but will be ignored")
+      if (error instanceof Error && "stdout" in error) {
+        const stdout = (error as any).stdout
+        let result = JSON.parse(stdout)
+        result =  JSON.parse(result) as DependencyTree
+      }
+    }
+    return result
   }
 }
