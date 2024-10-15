@@ -7,7 +7,7 @@ import * as fs from "fs/promises"
 test.ifWinCi(
   "beta version",
   app({
-    targets: Platform.WINDOWS.createTarget(["nsis"], Arch.x64),
+    targets: Platform.WINDOWS.createTarget(["nsis"], Arch.x64, Arch.arm64),
     config: {
       extraMetadata: {
         version: "3.0.0-beta.2",
@@ -19,7 +19,7 @@ test.ifWinCi(
 test.ifNotCiMac(
   "win zip",
   app({
-    targets: Platform.WINDOWS.createTarget(["zip"], Arch.x64),
+    targets: Platform.WINDOWS.createTarget(["zip"], Arch.x64, Arch.arm64),
     config: {
       downloadAlternateFFmpeg: true,
       electronFuses: {
