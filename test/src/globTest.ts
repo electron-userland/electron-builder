@@ -173,7 +173,7 @@ test.ifDevOrLinuxCi("failed peer dep", () => {
             react: "15.2.1",
             "react-dom": "15.2.1",
           }
-      }),
+        }),
       packed: context => {
         return verifySmartUnpack(context.getResources(Platform.LINUX))
       },
