@@ -384,7 +384,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
    * await context.packager.addElectronFuses(context, { ... })
    * ```
    */
-  public async addElectronFuses(context: AfterPackContext, fuses: FuseConfig) {
+  public addElectronFuses(context: AfterPackContext, fuses: FuseConfig) {
     const { appOutDir, electronPlatformName } = context
 
     const ext = {
