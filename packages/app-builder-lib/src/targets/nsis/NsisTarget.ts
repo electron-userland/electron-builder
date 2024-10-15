@@ -42,7 +42,6 @@ export class NsisTarget extends Target {
   /** @private */
   readonly archs: Map<Arch, string> = new Map()
   readonly isAsyncSupported = false
-  readonly disableUniversalInstaller = true
 
   constructor(
     readonly packager: WinPackager,
@@ -76,7 +75,7 @@ export class NsisTarget extends Target {
 
   build(appOutDir: string, arch: Arch) {
     this.archs.set(arch, appOutDir)
-    if (this.disableUniversalInstaller) {
+    if (this.options.disableUniversalInstaller) {
       return this.buildInstaller(new Map<Arch, string>().set(arch, appOutDir))
     }
     return Promise.resolve()
@@ -131,7 +130,7 @@ export class NsisTarget extends Target {
   }
 
   async finishBuild(): Promise<any> {
-    if (this.disableUniversalInstaller) {
+    if (this.options.disableUniversalInstaller) {
       return this.packageHelper.finishBuild()
     }
     try {

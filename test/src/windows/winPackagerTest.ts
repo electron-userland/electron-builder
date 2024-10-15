@@ -12,6 +12,9 @@ test.ifWinCi(
       extraMetadata: {
         version: "3.0.0-beta.2",
       },
+      nsis: {
+        disableUniversalInstaller: true,
+      }
     },
   })
 )
