@@ -10,8 +10,8 @@ export interface DependencyTree {
   readonly name?: string
   readonly from?: string
   readonly workspaces?: string[]
-  readonly path?: string
-  dependencies?: {
+  readonly path: string
+  dependencies: {
     [packageName: string]: DependencyTree
   }
 }

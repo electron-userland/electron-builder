@@ -164,20 +164,16 @@ test.ifDevOrLinuxCi("failed peer dep", () => {
     },
     {
       isInstallDepsBefore: true,
-      projectDirCreated: projectDir => {
-        return Promise.all([
-          modifyPackageJson(projectDir, data => {
-            //noinspection SpellCheckingInspection
-            data.dependencies = {
-              debug: "4.1.1",
-              "rc-datepicker": "4.0.0",
-              react: "15.2.1",
-              "react-dom": "15.2.1",
-            }
-          }),
-          outputFile(path.join(projectDir, "pnpm-lock.yaml"), ""),
-        ])
-      },
+      projectDirCreated: projectDir =>
+        modifyPackageJson(projectDir, data => {
+          //noinspection SpellCheckingInspection
+          data.dependencies = {
+            debug: "4.1.1",
+            "rc-datepicker": "4.0.0",
+            react: "15.2.1",
+            "react-dom": "15.2.1",
+          }
+      }),
       packed: context => {
         return verifySmartUnpack(context.getResources(Platform.LINUX))
       },
