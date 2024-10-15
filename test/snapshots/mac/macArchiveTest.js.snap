@@ -1,9 +1,9 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`empty installLocation 1`] = `
-Object {
-  "mac": Array [
-    Object {
+{
+  "mac": [
+    {
       "arch": "x64",
       "file": "Test App ßW-1.1.0.pkg",
       "safeArtifactName": "TestApp-1.1.0.pkg",
@@ -13,7 +13,7 @@ Object {
 `;
 
 exports[`empty installLocation 2`] = `
-Object {
+{
   "CFBundleDisplayName": "Test App ßW",
   "CFBundleExecutable": "Test App ßW",
   "CFBundleIconFile": "icon.icns",
@@ -24,17 +24,17 @@ Object {
   "CFBundleShortVersionString": "1.1.0",
   "LSApplicationCategoryType": "your.app.category.type",
   "LSRequiresNativeExecution": true,
-  "NSAppTransportSecurity": Object {
+  "NSAppTransportSecurity": {
     "NSAllowsLocalNetworking": true,
-    "NSExceptionDomains": Object {
-      "127.0.0.1": Object {
+    "NSExceptionDomains": {
+      "127.0.0.1": {
         "NSIncludesSubdomains": false,
         "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
         "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
         "NSTemporaryExceptionMinimumTLSVersion": "1.0",
         "NSTemporaryExceptionRequiresForwardSecrecy": false,
       },
-      "localhost": Object {
+      "localhost": {
         "NSIncludesSubdomains": false,
         "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
         "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
@@ -50,21 +50,21 @@ Object {
 `;
 
 exports[`extraDistFiles 1`] = `
-Object {
-  "mac": Array [
-    Object {
+{
+  "mac": [
+    {
       "arch": "x64",
       "file": "Test App ßW-1.1.0-mac.zip",
       "safeArtifactName": "TestApp-1.1.0-mac.zip",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
-    Object {
+    {
       "file": "Test App ßW-1.1.0-mac.zip.blockmap",
       "safeArtifactName": "Test App ßW-1.1.0-mac.zip.blockmap",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -74,7 +74,7 @@ Object {
 `;
 
 exports[`extraDistFiles 2`] = `
-Object {
+{
   "CFBundleDisplayName": "Test App ßW",
   "CFBundleExecutable": "Test App ßW",
   "CFBundleIconFile": "icon.icns",
@@ -85,17 +85,17 @@ Object {
   "CFBundleShortVersionString": "1.1.0",
   "LSApplicationCategoryType": "your.app.category.type",
   "LSRequiresNativeExecution": true,
-  "NSAppTransportSecurity": Object {
+  "NSAppTransportSecurity": {
     "NSAllowsLocalNetworking": true,
-    "NSExceptionDomains": Object {
-      "127.0.0.1": Object {
+    "NSExceptionDomains": {
+      "127.0.0.1": {
         "NSIncludesSubdomains": false,
         "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
         "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
         "NSTemporaryExceptionMinimumTLSVersion": "1.0",
         "NSTemporaryExceptionRequiresForwardSecrecy": false,
       },
-      "localhost": Object {
+      "localhost": {
         "NSIncludesSubdomains": false,
         "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
         "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
@@ -111,42 +111,42 @@ Object {
 `;
 
 exports[`invalid target 1`] = `
-"Invalid configuration object. electron-builder <appVersion> has been initialized using a configuration object that does not match the API schema.
+"Invalid configuration object. electron-builder <appVersion> has been initialized using a configuration that does not match the API schema.
  - configuration.mac should be one of these:
-   object { appId?, artifactName?, asar?, asarUnpack?, binaries?, bundleShortVersion?, bundleVersion?, category?, compression?, cscInstallerKeyPassword?, cscInstallerLink?, cscKeyPassword?, cscLink?, darkModeSupport?, defaultArch?, detectUpdateChannel?, electronLanguages?, electronUpdaterCompatibility?, entitlements?, entitlementsInherit?, entitlementsLoginHelper?, executableName?, extendInfo?, extraDistFiles?, extraFiles?, extraResources?, fileAssociations?, files?, forceCodeSigning?, gatekeeperAssess?, generateUpdatesFilesForAllChannels?, hardenedRuntime?, helperBundleId?, helperEHBundleId?, helperGPUBundleId?, helperNPBundleId?, helperPluginBundleId?, helperRendererBundleId?, icon?, identity?, minimumSystemVersion?, protocols?, provisioningProfile?, publish?, releaseInfo?, requirements?, signIgnore?, strictVerify?, target?, type? } | null
+   { appId?, artifactName?, asar?, asarUnpack?, binaries?, bundleShortVersion?, bundleVersion?, category?, compression?, cscInstallerKeyPassword?, cscInstallerLink?, cscKeyPassword?, cscLink?, darkModeSupport?, defaultArch?, detectUpdateChannel?, electronLanguages?, electronUpdaterCompatibility?, entitlements?, entitlementsInherit?, entitlementsLoginHelper?, executableName?, extendInfo?, extraDistFiles?, extraFiles?, extraResources?, fileAssociations?, files?, forceCodeSigning?, gatekeeperAssess?, generateUpdatesFilesForAllChannels?, hardenedRuntime?, helperBundleId?, helperEHBundleId?, helperGPUBundleId?, helperNPBundleId?, helperPluginBundleId?, helperRendererBundleId?, icon?, identity?, minimumSystemVersion?, protocols?, provisioningProfile?, publish?, releaseInfo?, requirements?, signIgnore?, strictVerify?, target?, type? } | null
    -> Options related to how build macOS targets.
    Details:
     * configuration.mac.target[0] should be one of these:
-      object { target, arch? } | \\"7z\\" | \\"default\\" | \\"dir\\" | \\"dmg\\" | \\"mas\\" | \\"mas-dev\\" | \\"pkg\\" | \\"tar.bz2\\" | \\"tar.gz\\" | \\"tar.lz\\" | \\"tar.xz\\" | \\"zip\\"
+      { target, arch? } | "7z" | "default" | "dir" | "dmg" | "mas" | "mas-dev" | "pkg" | "tar.bz2" | "tar.gz" | "tar.lz" | "tar.xz" | "zip"
       Details:
        * configuration.mac.target[0] should be an object:
-         object { target, arch? }
+         { target, arch? }
        * configuration.mac.target[0] should be one of these:
-         \\"7z\\" | \\"default\\" | \\"dir\\" | \\"dmg\\" | \\"mas\\" | \\"mas-dev\\" | \\"pkg\\" | \\"tar.bz2\\" | \\"tar.gz\\" | \\"tar.lz\\" | \\"tar.xz\\" | \\"zip\\"
+         "7z" | "default" | "dir" | "dmg" | "mas" | "mas-dev" | "pkg" | "tar.bz2" | "tar.gz" | "tar.lz" | "tar.xz" | "zip"
      How to fix:
      1. Open https://www.electron.build/configuration/mac
      2. Search the option name on the page (or type in into Search to find across the docs).
        * Not found? The option was deprecated or not exists (check spelling).
-       * Found? Check that the option in the appropriate place. e.g. \\"title\\" only in the \\"dmg\\", not in the root.
+       * Found? Check that the option in the appropriate place. e.g. "title" only in the "dmg", not in the root.
 "
 `;
 
 exports[`only zip 1`] = `
-Object {
-  "mac": Array [
-    Object {
+{
+  "mac": [
+    {
       "arch": "x64",
       "file": "Test App ßW-1.1.0-mac.zip",
       "safeArtifactName": "TestApp-1.1.0-mac.zip",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
-    Object {
+    {
       "file": "Test App ßW-1.1.0-mac.zip.blockmap",
       "safeArtifactName": "Test App ßW-1.1.0-mac.zip.blockmap",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -156,7 +156,7 @@ Object {
 `;
 
 exports[`only zip 2`] = `
-Object {
+{
   "CFBundleDisplayName": "Test App ßW",
   "CFBundleExecutable": "Test App ßW",
   "CFBundleIconFile": "icon.icns",
@@ -167,17 +167,17 @@ Object {
   "CFBundleShortVersionString": "1.1.0",
   "LSApplicationCategoryType": "your.app.category.type",
   "LSRequiresNativeExecution": true,
-  "NSAppTransportSecurity": Object {
+  "NSAppTransportSecurity": {
     "NSAllowsLocalNetworking": true,
-    "NSExceptionDomains": Object {
-      "127.0.0.1": Object {
+    "NSExceptionDomains": {
+      "127.0.0.1": {
         "NSIncludesSubdomains": false,
         "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
         "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
         "NSTemporaryExceptionMinimumTLSVersion": "1.0",
         "NSTemporaryExceptionRequiresForwardSecrecy": false,
       },
-      "localhost": Object {
+      "localhost": {
         "NSIncludesSubdomains": false,
         "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
         "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
@@ -193,9 +193,9 @@ Object {
 `;
 
 exports[`pkg 1`] = `
-Object {
-  "mac": Array [
-    Object {
+{
+  "mac": [
+    {
       "arch": "x64",
       "file": "Test App ßW-1.1.0.pkg",
       "safeArtifactName": "TestApp-1.1.0.pkg",
@@ -205,7 +205,7 @@ Object {
 `;
 
 exports[`pkg 2`] = `
-Object {
+{
   "CFBundleDisplayName": "Test App ßW",
   "CFBundleExecutable": "Test App ßW",
   "CFBundleIconFile": "icon.icns",
@@ -216,17 +216,17 @@ Object {
   "CFBundleShortVersionString": "1.1.0",
   "LSApplicationCategoryType": "your.app.category.type",
   "LSRequiresNativeExecution": true,
-  "NSAppTransportSecurity": Object {
+  "NSAppTransportSecurity": {
     "NSAllowsLocalNetworking": true,
-    "NSExceptionDomains": Object {
-      "127.0.0.1": Object {
+    "NSExceptionDomains": {
+      "127.0.0.1": {
         "NSIncludesSubdomains": false,
         "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
         "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
         "NSTemporaryExceptionMinimumTLSVersion": "1.0",
         "NSTemporaryExceptionRequiresForwardSecrecy": false,
       },
-      "localhost": Object {
+      "localhost": {
         "NSIncludesSubdomains": false,
         "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
         "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
@@ -242,9 +242,9 @@ Object {
 `;
 
 exports[`pkg extended configuration 1`] = `
-Object {
-  "mac": Array [
-    Object {
+{
+  "mac": [
+    {
       "arch": "x64",
       "file": "Test App ßW-1.1.0.pkg",
       "safeArtifactName": "TestApp-1.1.0.pkg",
@@ -254,7 +254,7 @@ Object {
 `;
 
 exports[`pkg extended configuration 2`] = `
-Object {
+{
   "CFBundleDisplayName": "Test App ßW",
   "CFBundleExecutable": "Test App ßW",
   "CFBundleIconFile": "icon.icns",
@@ -265,17 +265,17 @@ Object {
   "CFBundleShortVersionString": "1.1.0",
   "LSApplicationCategoryType": "your.app.category.type",
   "LSRequiresNativeExecution": true,
-  "NSAppTransportSecurity": Object {
+  "NSAppTransportSecurity": {
     "NSAllowsLocalNetworking": true,
-    "NSExceptionDomains": Object {
-      "127.0.0.1": Object {
+    "NSExceptionDomains": {
+      "127.0.0.1": {
         "NSIncludesSubdomains": false,
         "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
         "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
         "NSTemporaryExceptionMinimumTLSVersion": "1.0",
         "NSTemporaryExceptionRequiresForwardSecrecy": false,
       },
-      "localhost": Object {
+      "localhost": {
         "NSIncludesSubdomains": false,
         "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
         "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
@@ -291,9 +291,9 @@ Object {
 `;
 
 exports[`pkg scripts 1`] = `
-Object {
-  "mac": Array [
-    Object {
+{
+  "mac": [
+    {
       "arch": "x64",
       "file": "Test App ßW-1.1.0.pkg",
       "safeArtifactName": "TestApp-1.1.0.pkg",
@@ -303,7 +303,7 @@ Object {
 `;
 
 exports[`pkg scripts 2`] = `
-Object {
+{
   "CFBundleDisplayName": "Test App ßW",
   "CFBundleExecutable": "Test App ßW",
   "CFBundleIconFile": "icon.icns",
@@ -314,17 +314,17 @@ Object {
   "CFBundleShortVersionString": "1.1.0",
   "LSApplicationCategoryType": "your.app.category.type",
   "LSRequiresNativeExecution": true,
-  "NSAppTransportSecurity": Object {
+  "NSAppTransportSecurity": {
     "NSAllowsLocalNetworking": true,
-    "NSExceptionDomains": Object {
-      "127.0.0.1": Object {
+    "NSExceptionDomains": {
+      "127.0.0.1": {
         "NSIncludesSubdomains": false,
         "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
         "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
         "NSTemporaryExceptionMinimumTLSVersion": "1.0",
         "NSTemporaryExceptionRequiresForwardSecrecy": false,
       },
-      "localhost": Object {
+      "localhost": {
         "NSIncludesSubdomains": false,
         "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
         "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
@@ -340,7 +340,7 @@ Object {
 `;
 
 exports[`pkg scripts 3`] = `
-Array [
+[
   "Test App ßW.app",
   "Test App ßW.app/Contents",
   "Test App ßW.app/Contents/Frameworks",
@@ -594,20 +594,20 @@ Array [
 
 exports[`pkg scripts 4`] = `
 XElement {
-  "attributes": Object {
+  "attributes": {
     "minSpecVersion": "2",
   },
-  "elements": Array [
+  "elements": [
     XElement {
-      "attributes": Object {
+      "attributes": {
         "id": "org.electron-builder.testApp",
       },
-      "elements": Array [
+      "elements": [
         XElement {
-          "attributes": Object {},
-          "elements": Array [
+          "attributes": {},
+          "elements": [
             XElement {
-              "attributes": Object {
+              "attributes": {
                 "CFBundleShortVersionString": "1.1.0",
                 "id": "org.electron-builder.testApp",
                 "path": "Test App ßW.app",
@@ -630,7 +630,7 @@ XElement {
     ",
     },
     XElement {
-      "attributes": Object {
+      "attributes": {
         "id": "org.electron-builder.testApp",
       },
       "elements": null,
@@ -639,14 +639,14 @@ XElement {
       "value": "",
     },
     XElement {
-      "attributes": Object {},
+      "attributes": {},
       "elements": null,
       "isCData": false,
       "name": "title",
       "value": "Test App ßW",
     },
     XElement {
-      "attributes": Object {
+      "attributes": {
         "customize": "never",
         "hostArchitectures": "x86_64",
         "require-scripts": "false",
@@ -657,13 +657,13 @@ XElement {
       "value": "",
     },
     XElement {
-      "attributes": Object {},
-      "elements": Array [
+      "attributes": {},
+      "elements": [
         XElement {
-          "attributes": Object {},
-          "elements": Array [
+          "attributes": {},
+          "elements": [
             XElement {
-              "attributes": Object {
+              "attributes": {
                 "min": "10.10.0",
               },
               "elements": null,
@@ -684,15 +684,15 @@ XElement {
     ",
     },
     XElement {
-      "attributes": Object {},
-      "elements": Array [
+      "attributes": {},
+      "elements": [
         XElement {
-          "attributes": Object {
+          "attributes": {
             "choice": "default",
           },
-          "elements": Array [
+          "elements": [
             XElement {
-              "attributes": Object {
+              "attributes": {
                 "choice": "org.electron-builder.testApp",
               },
               "elements": null,
@@ -713,7 +713,7 @@ XElement {
     ",
     },
     XElement {
-      "attributes": Object {
+      "attributes": {
         "id": "default",
         "title": "Test App ßW",
         "versStr": "1.1.0",
@@ -724,14 +724,14 @@ XElement {
       "value": "",
     },
     XElement {
-      "attributes": Object {
+      "attributes": {
         "id": "org.electron-builder.testApp",
         "title": "Test App ßW",
         "visible": "false",
       },
-      "elements": Array [
+      "elements": [
         XElement {
-          "attributes": Object {
+          "attributes": {
             "id": "org.electron-builder.testApp",
           },
           "elements": null,
@@ -746,7 +746,7 @@ XElement {
     ",
     },
     XElement {
-      "attributes": Object {
+      "attributes": {
         "id": "org.electron-builder.testApp",
         "onConclusion": "none",
         "version": "1.1.0",
@@ -757,7 +757,7 @@ XElement {
       "value": "#org.electron-builder.testApp.pkg",
     },
     XElement {
-      "attributes": Object {
+      "attributes": {
         "enable_anywhere": "true",
         "enable_currentUserHome": "true",
         "enable_localSystem": "true",
@@ -776,9 +776,9 @@ XElement {
 `;
 
 exports[`tar.gz 1`] = `
-Object {
-  "mac": Array [
-    Object {
+{
+  "mac": [
+    {
       "arch": "x64",
       "file": "Test App ßW-1.1.0-mac.tar.gz",
       "safeArtifactName": "TestApp-1.1.0-mac.tar.gz",
@@ -788,7 +788,7 @@ Object {
 `;
 
 exports[`tar.gz 2`] = `
-Object {
+{
   "CFBundleDisplayName": "Test App ßW",
   "CFBundleExecutable": "Test App ßW",
   "CFBundleIconFile": "icon.icns",
@@ -799,17 +799,17 @@ Object {
   "CFBundleShortVersionString": "1.1.0",
   "LSApplicationCategoryType": "your.app.category.type",
   "LSRequiresNativeExecution": true,
-  "NSAppTransportSecurity": Object {
+  "NSAppTransportSecurity": {
     "NSAllowsLocalNetworking": true,
-    "NSExceptionDomains": Object {
-      "127.0.0.1": Object {
+    "NSExceptionDomains": {
+      "127.0.0.1": {
         "NSIncludesSubdomains": false,
         "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
         "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
         "NSTemporaryExceptionMinimumTLSVersion": "1.0",
         "NSTemporaryExceptionRequiresForwardSecrecy": false,
       },
-      "localhost": Object {
+      "localhost": {
         "NSIncludesSubdomains": false,
         "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
         "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,

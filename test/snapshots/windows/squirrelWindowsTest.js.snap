@@ -1,18 +1,18 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`Squirrel.Windows 1`] = `
-Object {
-  "win": Array [
-    Object {
+{
+  "win": [
+    {
       "arch": "x64",
       "file": "RELEASES",
     },
-    Object {
+    {
       "arch": "x64",
       "file": "Test App ßW Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe",
     },
-    Object {
+    {
       "arch": "x64",
       "file": "TestApp-1.1.0-full.nupkg",
     },
@@ -21,7 +21,7 @@ Object {
 `;
 
 exports[`Squirrel.Windows 2`] = `
-Array [
+[
   "lib/net45/chrome_100_percent.pak",
   "lib/net45/chrome_200_percent.pak",
   "lib/net45/d3dcompiler_47.dll",
@@ -51,22 +51,22 @@ Array [
 `;
 
 exports[`artifactName 1`] = `
-Object {
-  "win": Array [
-    Object {
+{
+  "win": [
+    {
       "arch": "x64",
       "file": "RELEASES",
     },
-    Object {
+    {
       "arch": "x64",
       "file": "Test TestApp foo.exe",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe",
     },
-    Object {
+    {
       "arch": "x64",
       "file": "TestApp-1.1.0-full.nupkg",
     },
-    Object {
+    {
       "arch": "x64",
       "file": "Test TestApp foo.zip",
       "safeArtifactName": "Test-TestApp-foo.zip",
@@ -76,7 +76,7 @@ Object {
 `;
 
 exports[`artifactName 2`] = `
-Array [
+[
   "lib/net45/chrome_100_percent.pak",
   "lib/net45/chrome_200_percent.pak",
   "lib/net45/d3dcompiler_47.dll",

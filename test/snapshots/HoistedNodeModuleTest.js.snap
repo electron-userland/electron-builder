@@ -1,39 +1,39 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`conflict versions 1`] = `
-Object {
-  "linux": Array [],
+{
+  "linux": [],
 }
 `;
 
 exports[`conflict versions 2`] = `
-Object {
-  "files": Object {
-    "index.html": Object {
+{
+  "files": {
+    "index.html": {
       "offset": "9018",
       "size": 841,
     },
-    "index.js": Object {
+    "index.js": {
       "offset": "9859",
       "size": 2501,
     },
-    "node_modules": Object {
-      "files": Object {
-        "foo": Object {
-          "files": Object {
-            "node_modules": Object {
-              "files": Object {
-                "ms": Object {
-                  "files": Object {
-                    "index.js": Object {
+    "node_modules": {
+      "files": {
+        "foo": {
+          "files": {
+            "node_modules": {
+              "files": {
+                "ms": {
+                  "files": {
+                    "index.js": {
                       "offset": "127",
                       "size": 2764,
                     },
-                    "license.md": Object {
+                    "license.md": {
                       "offset": "2891",
                       "size": 1077,
                     },
-                    "package.json": Object {
+                    "package.json": {
                       "offset": "3968",
                       "size": 469,
                     },
@@ -41,23 +41,23 @@ Object {
                 },
               },
             },
-            "package.json": Object {
+            "package.json": {
               "offset": "0",
               "size": 127,
             },
           },
         },
-        "ms": Object {
-          "files": Object {
-            "index.js": Object {
+        "ms": {
+          "files": {
+            "index.js": {
               "offset": "4437",
               "size": 3034,
             },
-            "license.md": Object {
+            "license.md": {
               "offset": "7471",
               "size": 1077,
             },
-            "package.json": Object {
+            "package.json": {
               "offset": "8548",
               "size": 470,
             },
@@ -65,7 +65,7 @@ Object {
         },
       },
     },
-    "package.json": Object {
+    "package.json": {
       "offset": "12360",
       "size": 301,
     },
@@ -173,71 +173,71 @@ Object {
 `;
 
 exports[`yarn several workspaces 1`] = `
-Object {
-  "linux": Array [],
+{
+  "linux": [],
 }
 `;
 
 exports[`yarn several workspaces 2`] = `
-Object {
-  "files": Object {
-    "index.html": Object {
+{
+  "files": {
+    "index.html": {
       "offset": "19187",
       "size": 841,
     },
-    "index.js": Object {
+    "index.js": {
       "offset": "20028",
       "size": 2501,
     },
-    "node_modules": Object {
-      "files": Object {
-        "electron-log": Object {
-          "files": Object {
-            "LICENSE": Object {
+    "node_modules": {
+      "files": {
+        "electron-log": {
+          "files": {
+            "LICENSE": {
               "offset": "0",
               "size": 1082,
             },
-            "index.js": Object {
+            "index.js": {
               "offset": "1082",
               "size": 140,
             },
-            "lib": Object {
-              "files": Object {
-                "format.js": Object {
+            "lib": {
+              "files": {
+                "format.js": {
                   "offset": "1222",
                   "size": 1021,
                 },
-                "log.js": Object {
+                "log.js": {
                   "offset": "2243",
                   "size": 877,
                 },
-                "transports": Object {
-                  "files": Object {
-                    "console.js": Object {
+                "transports": {
+                  "files": {
+                    "console.js": {
                       "offset": "3120",
                       "size": 343,
                     },
-                    "file": Object {
-                      "files": Object {
-                        "find-log-path.js": Object {
+                    "file": {
+                      "files": {
+                        "find-log-path.js": {
                           "offset": "3463",
                           "size": 2078,
                         },
-                        "get-app-name.js": Object {
+                        "get-app-name.js": {
                           "offset": "5541",
                           "size": 1780,
                         },
-                        "index.js": Object {
+                        "index.js": {
                           "offset": "7321",
                           "size": 2068,
                         },
                       },
                     },
-                    "log-s.js": Object {
+                    "log-s.js": {
                       "offset": "9389",
                       "size": 1751,
                     },
-                    "renderer-console.js": Object {
+                    "renderer-console.js": {
                       "offset": "11140",
                       "size": 544,
                     },
@@ -245,39 +245,39 @@ Object {
                 },
               },
             },
-            "main.js": Object {
+            "main.js": {
               "offset": "11684",
               "size": 1343,
             },
-            "package.json": Object {
+            "package.json": {
               "offset": "13027",
               "size": 745,
             },
-            "renderer.js": Object {
+            "renderer.js": {
               "offset": "13772",
               "size": 978,
             },
           },
         },
-        "foo": Object {
-          "files": Object {
-            "package.json": Object {
+        "foo": {
+          "files": {
+            "package.json": {
               "offset": "14750",
               "size": 127,
             },
           },
         },
-        "ms": Object {
-          "files": Object {
-            "index.js": Object {
+        "ms": {
+          "files": {
+            "index.js": {
               "offset": "14877",
               "size": 2764,
             },
-            "license.md": Object {
+            "license.md": {
               "offset": "17641",
               "size": 1077,
             },
-            "package.json": Object {
+            "package.json": {
               "offset": "18718",
               "size": 469,
             },
@@ -285,7 +285,7 @@ Object {
         },
       },
     },
-    "package.json": Object {
+    "package.json": {
       "offset": "22529",
       "size": 326,
     },
@@ -294,71 +294,71 @@ Object {
 `;
 
 exports[`yarn several workspaces and asarUnpack 1`] = `
-Object {
-  "linux": Array [],
+{
+  "linux": [],
 }
 `;
 
 exports[`yarn several workspaces and asarUnpack 2`] = `
-Object {
-  "files": Object {
-    "index.html": Object {
+{
+  "files": {
+    "index.html": {
       "offset": "14877",
       "size": 841,
     },
-    "index.js": Object {
+    "index.js": {
       "offset": "15718",
       "size": 2501,
     },
-    "node_modules": Object {
-      "files": Object {
-        "electron-log": Object {
-          "files": Object {
-            "LICENSE": Object {
+    "node_modules": {
+      "files": {
+        "electron-log": {
+          "files": {
+            "LICENSE": {
               "offset": "0",
               "size": 1082,
             },
-            "index.js": Object {
+            "index.js": {
               "offset": "1082",
               "size": 140,
             },
-            "lib": Object {
-              "files": Object {
-                "format.js": Object {
+            "lib": {
+              "files": {
+                "format.js": {
                   "offset": "1222",
                   "size": 1021,
                 },
-                "log.js": Object {
+                "log.js": {
                   "offset": "2243",
                   "size": 877,
                 },
-                "transports": Object {
-                  "files": Object {
-                    "console.js": Object {
+                "transports": {
+                  "files": {
+                    "console.js": {
                       "offset": "3120",
                       "size": 343,
                     },
-                    "file": Object {
-                      "files": Object {
-                        "find-log-path.js": Object {
+                    "file": {
+                      "files": {
+                        "find-log-path.js": {
                           "offset": "3463",
                           "size": 2078,
                         },
-                        "get-app-name.js": Object {
+                        "get-app-name.js": {
                           "offset": "5541",
                           "size": 1780,
                         },
-                        "index.js": Object {
+                        "index.js": {
                           "offset": "7321",
                           "size": 2068,
                         },
                       },
                     },
-                    "log-s.js": Object {
+                    "log-s.js": {
                       "offset": "9389",
                       "size": 1751,
                     },
-                    "renderer-console.js": Object {
+                    "renderer-console.js": {
                       "offset": "11140",
                       "size": 544,
                     },
@@ -366,39 +366,39 @@ Object {
                 },
               },
             },
-            "main.js": Object {
+            "main.js": {
               "offset": "11684",
               "size": 1343,
             },
-            "package.json": Object {
+            "package.json": {
               "offset": "13027",
               "size": 745,
             },
-            "renderer.js": Object {
+            "renderer.js": {
               "offset": "13772",
               "size": 978,
             },
           },
         },
-        "foo": Object {
-          "files": Object {
-            "package.json": Object {
+        "foo": {
+          "files": {
+            "package.json": {
               "offset": "14750",
               "size": 127,
             },
           },
         },
-        "ms": Object {
-          "files": Object {
-            "index.js": Object {
+        "ms": {
+          "files": {
+            "index.js": {
               "size": 2764,
               "unpacked": true,
             },
-            "license.md": Object {
+            "license.md": {
               "size": 1077,
               "unpacked": true,
             },
-            "package.json": Object {
+            "package.json": {
               "size": 469,
               "unpacked": true,
             },
@@ -406,7 +406,7 @@ Object {
         },
       },
     },
-    "package.json": Object {
+    "package.json": {
       "offset": "18219",
       "size": 326,
     },
@@ -415,57 +415,57 @@ Object {
 `;
 
 exports[`yarn two package.json w/ native module 1`] = `
-Object {
-  "linux": Array [],
+{
+  "linux": [],
 }
 `;
 
 exports[`yarn two package.json w/ native module 2`] = `
-Object {
-  "files": Object {
-    "index.html": Object {
+{
+  "files": {
+    "index.html": {
       "offset": "423182",
       "size": 841,
     },
-    "index.js": Object {
+    "index.js": {
       "offset": "424023",
       "size": 2501,
     },
-    "node_modules": Object {
-      "files": Object {
-        "debug": Object {
-          "files": Object {
-            "LICENSE": Object {
+    "node_modules": {
+      "files": {
+        "debug": {
+          "files": {
+            "LICENSE": {
               "offset": "0",
               "size": 1107,
             },
-            "dist": Object {
-              "files": Object {
-                "debug.js": Object {
+            "dist": {
+              "files": {
+                "debug.js": {
                   "offset": "1107",
                   "size": 27572,
                 },
               },
             },
-            "package.json": Object {
+            "package.json": {
               "offset": "28679",
               "size": 947,
             },
-            "src": Object {
-              "files": Object {
-                "browser.js": Object {
+            "src": {
+              "files": {
+                "browser.js": {
                   "offset": "29626",
                   "size": 5831,
                 },
-                "common.js": Object {
+                "common.js": {
                   "offset": "35457",
                   "size": 5930,
                 },
-                "index.js": Object {
+                "index.js": {
                   "offset": "41387",
                   "size": 314,
                 },
-                "node.js": Object {
+                "node.js": {
                   "offset": "41701",
                   "size": 4475,
                 },
@@ -473,96 +473,96 @@ Object {
             },
           },
         },
-        "ms": Object {
-          "files": Object {
-            "index.js": Object {
+        "ms": {
+          "files": {
+            "index.js": {
               "offset": "46176",
               "size": 3024,
             },
-            "license.md": Object {
+            "license.md": {
               "offset": "49200",
               "size": 1079,
             },
-            "package.json": Object {
+            "package.json": {
               "offset": "50279",
               "size": 497,
             },
           },
         },
-        "node-addon-api": Object {
-          "files": Object {
-            "LICENSE.md": Object {
+        "node-addon-api": {
+          "files": {
+            "LICENSE.md": {
               "offset": "50776",
               "size": 1150,
             },
-            "common.gypi": Object {
+            "common.gypi": {
               "offset": "51926",
               "size": 724,
             },
-            "except.gypi": Object {
+            "except.gypi": {
               "offset": "52650",
               "size": 560,
             },
-            "index.js": Object {
+            "index.js": {
               "offset": "53210",
               "size": 377,
             },
-            "napi-inl.deprecated.h": Object {
+            "napi-inl.deprecated.h": {
               "offset": "53587",
               "size": 6323,
             },
-            "napi-inl.h": Object {
+            "napi-inl.h": {
               "offset": "59910",
               "size": 219411,
             },
-            "napi.h": Object {
+            "napi.h": {
               "offset": "279321",
               "size": 115423,
             },
-            "node_addon_api.gyp": Object {
+            "node_addon_api.gyp": {
               "offset": "394744",
               "size": 793,
             },
-            "node_api.gyp": Object {
+            "node_api.gyp": {
               "offset": "395537",
               "size": 132,
             },
-            "noexcept.gypi": Object {
+            "noexcept.gypi": {
               "offset": "395669",
               "size": 639,
             },
-            "nothing.c": Object {
+            "nothing.c": {
               "offset": "396308",
               "size": 0,
             },
-            "package-support.json": Object {
+            "package-support.json": {
               "offset": "396308",
               "size": 467,
             },
-            "package.json": Object {
+            "package.json": {
               "offset": "396775",
               "size": 928,
             },
-            "tools": Object {
-              "files": Object {
-                "README.md": Object {
+            "tools": {
+              "files": {
+                "README.md": {
                   "offset": "397703",
                   "size": 3217,
                 },
-                "check-napi.js": Object {
+                "check-napi.js": {
                   "offset": "400920",
                   "size": 3176,
                 },
-                "clang-format.js": Object {
+                "clang-format.js": {
                   "offset": "404096",
                   "size": 2002,
                 },
-                "conversion.js": Object {
+                "conversion.js": {
                   "executable": true,
                   "offset": "406098",
                   "size": 15013,
                 },
-                "eslint-format.js": Object {
+                "eslint-format.js": {
                   "offset": "421111",
                   "size": 2071,
                 },
@@ -570,26 +570,26 @@ Object {
             },
           },
         },
-        "node-pty": Object {
-          "files": Object {
-            "LICENSE": Object {
+        "node-pty": {
+          "files": {
+            "LICENSE": {
               "size": 3326,
               "unpacked": true,
             },
-            "build": Object {
-              "files": Object {
-                "Release": Object {
-                  "files": Object {
-                    "node-addon-api": Object {
-                      "files": Object {
-                        "node_addon_api_except.stamp": Object {
+            "build": {
+              "files": {
+                "Release": {
+                  "files": {
+                    "node-addon-api": {
+                      "files": {
+                        "node_addon_api_except.stamp": {
                           "size": 0,
                           "unpacked": true,
                         },
                       },
                       "unpacked": true,
                     },
-                    "pty.node": Object {
+                    "pty.node": {
                       "size": 72880,
                       "unpacked": true,
                     },
@@ -599,408 +599,408 @@ Object {
               },
               "unpacked": true,
             },
-            "deps": Object {
-              "files": Object {
-                ".editorconfig": Object {
+            "deps": {
+              "files": {
+                ".editorconfig": {
                   "size": 55,
                   "unpacked": true,
                 },
-                "winpty": Object {
-                  "files": Object {
-                    ".drone.yml": Object {
+                "winpty": {
+                  "files": {
+                    ".drone.yml": {
                       "size": 439,
                       "unpacked": true,
                     },
-                    "LICENSE": Object {
+                    "LICENSE": {
                       "size": 1085,
                       "unpacked": true,
                     },
-                    "Makefile": Object {
+                    "Makefile": {
                       "size": 4722,
                       "unpacked": true,
                     },
-                    "README.md": Object {
+                    "README.md": {
                       "size": 5551,
                       "unpacked": true,
                     },
-                    "RELEASES.md": Object {
+                    "RELEASES.md": {
                       "size": 13667,
                       "unpacked": true,
                     },
-                    "VERSION.txt": Object {
+                    "VERSION.txt": {
                       "size": 10,
                       "unpacked": true,
                     },
-                    "configure": Object {
+                    "configure": {
                       "size": 6478,
                       "unpacked": true,
                     },
-                    "misc": Object {
-                      "files": Object {
-                        "ConinMode.ps1": Object {
+                    "misc": {
+                      "files": {
+                        "ConinMode.ps1": {
                           "size": 3228,
                           "unpacked": true,
                         },
-                        "DebugClient.py": Object {
+                        "DebugClient.py": {
                           "size": 1558,
                           "unpacked": true,
                         },
-                        "DebugServer.py": Object {
+                        "DebugServer.py": {
                           "size": 2396,
                           "unpacked": true,
                         },
-                        "DumpLines.py": Object {
+                        "DumpLines.py": {
                           "size": 97,
                           "unpacked": true,
                         },
-                        "EnableExtendedFlags.txt": Object {
+                        "EnableExtendedFlags.txt": {
                           "size": 1974,
                           "unpacked": true,
                         },
-                        "Font-Report-June2016": Object {
-                          "files": Object {
-                            "CP437-Consolas.txt": Object {
+                        "Font-Report-June2016": {
+                          "files": {
+                            "CP437-Consolas.txt": {
                               "size": 16408,
                               "unpacked": true,
                             },
-                            "CP437-Lucida.txt": Object {
+                            "CP437-Lucida.txt": {
                               "size": 19641,
                               "unpacked": true,
                             },
-                            "CP932.txt": Object {
+                            "CP932.txt": {
                               "size": 19593,
                               "unpacked": true,
                             },
-                            "CP936.txt": Object {
+                            "CP936.txt": {
                               "size": 19650,
                               "unpacked": true,
                             },
-                            "CP949.txt": Object {
+                            "CP949.txt": {
                               "size": 19588,
                               "unpacked": true,
                             },
-                            "CP950.txt": Object {
+                            "CP950.txt": {
                               "size": 19656,
                               "unpacked": true,
                             },
-                            "MinimumWindowWidths.txt": Object {
+                            "MinimumWindowWidths.txt": {
                               "size": 870,
                               "unpacked": true,
                             },
-                            "Results.txt": Object {
+                            "Results.txt": {
                               "size": 147,
                               "unpacked": true,
                             },
-                            "Windows10SetFontBugginess.txt": Object {
+                            "Windows10SetFontBugginess.txt": {
                               "size": 7851,
                               "unpacked": true,
                             },
                           },
                           "unpacked": true,
                         },
-                        "FormatChar.h": Object {
+                        "FormatChar.h": {
                           "size": 529,
                           "unpacked": true,
                         },
-                        "IdentifyConsoleWindow.ps1": Object {
+                        "IdentifyConsoleWindow.ps1": {
                           "size": 1952,
                           "unpacked": true,
                         },
-                        "MouseInputNotes.txt": Object {
+                        "MouseInputNotes.txt": {
                           "size": 4325,
                           "unpacked": true,
                         },
-                        "Notes.txt": Object {
+                        "Notes.txt": {
                           "size": 9856,
                           "unpacked": true,
                         },
-                        "Spew.py": Object {
+                        "Spew.py": {
                           "size": 65,
                           "unpacked": true,
                         },
-                        "build32.sh": Object {
+                        "build32.sh": {
                           "size": 213,
                           "unpacked": true,
                         },
-                        "build64.sh": Object {
+                        "build64.sh": {
                           "size": 217,
                           "unpacked": true,
                         },
-                        "color-test.sh": Object {
+                        "color-test.sh": {
                           "size": 6068,
                           "unpacked": true,
                         },
-                        "font-notes.txt": Object {
+                        "font-notes.txt": {
                           "size": 14988,
                           "unpacked": true,
                         },
                       },
                       "unpacked": true,
                     },
-                    "ship": Object {
-                      "files": Object {
-                        "build-pty4j-libpty.bat": Object {
+                    "ship": {
+                      "files": {
+                        "build-pty4j-libpty.bat": {
                           "size": 1230,
                           "unpacked": true,
                         },
-                        "common_ship.py": Object {
+                        "common_ship.py": {
                           "size": 1698,
                           "unpacked": true,
                         },
-                        "make_msvc_package.py": Object {
+                        "make_msvc_package.py": {
                           "size": 5415,
                           "unpacked": true,
                         },
-                        "ship.py": Object {
+                        "ship.py": {
                           "size": 4022,
                           "unpacked": true,
                         },
                       },
                       "unpacked": true,
                     },
-                    "src": Object {
-                      "files": Object {
-                        "agent": Object {
-                          "files": Object {
-                            "Agent.h": Object {
+                    "src": {
+                      "files": {
+                        "agent": {
+                          "files": {
+                            "Agent.h": {
                               "size": 3520,
                               "unpacked": true,
                             },
-                            "AgentCreateDesktop.h": Object {
+                            "AgentCreateDesktop.h": {
                               "size": 1283,
                               "unpacked": true,
                             },
-                            "ConsoleFont.h": Object {
+                            "ConsoleFont.h": {
                               "size": 1266,
                               "unpacked": true,
                             },
-                            "ConsoleInput.h": Object {
+                            "ConsoleInput.h": {
                               "size": 3950,
                               "unpacked": true,
                             },
-                            "ConsoleInputReencoding.h": Object {
+                            "ConsoleInputReencoding.h": {
                               "size": 1444,
                               "unpacked": true,
                             },
-                            "ConsoleLine.h": Object {
+                            "ConsoleLine.h": {
                               "size": 1524,
                               "unpacked": true,
                             },
-                            "Coord.h": Object {
+                            "Coord.h": {
                               "size": 2204,
                               "unpacked": true,
                             },
-                            "DebugShowInput.h": Object {
+                            "DebugShowInput.h": {
                               "size": 1434,
                               "unpacked": true,
                             },
-                            "DefaultInputMap.h": Object {
+                            "DefaultInputMap.h": {
                               "size": 1271,
                               "unpacked": true,
                             },
-                            "DsrSender.h": Object {
+                            "DsrSender.h": {
                               "size": 1242,
                               "unpacked": true,
                             },
-                            "EventLoop.h": Object {
+                            "EventLoop.h": {
                               "size": 1603,
                               "unpacked": true,
                             },
-                            "InputMap.h": Object {
+                            "InputMap.h": {
                               "size": 3369,
                               "unpacked": true,
                             },
-                            "LargeConsoleRead.h": Object {
+                            "LargeConsoleRead.h": {
                               "size": 2411,
                               "unpacked": true,
                             },
-                            "NamedPipe.h": Object {
+                            "NamedPipe.h": {
                               "size": 4130,
                               "unpacked": true,
                             },
-                            "Scraper.h": Object {
+                            "Scraper.h": {
                               "size": 3760,
                               "unpacked": true,
                             },
-                            "SimplePool.h": Object {
+                            "SimplePool.h": {
                               "size": 2365,
                               "unpacked": true,
                             },
-                            "SmallRect.h": Object {
+                            "SmallRect.h": {
                               "size": 4437,
                               "unpacked": true,
                             },
-                            "Terminal.h": Object {
+                            "Terminal.h": {
                               "size": 2262,
                               "unpacked": true,
                             },
-                            "UnicodeEncoding.h": Object {
+                            "UnicodeEncoding.h": {
                               "size": 5298,
                               "unpacked": true,
                             },
-                            "Win32Console.h": Object {
+                            "Win32Console.h": {
                               "size": 2347,
                               "unpacked": true,
                             },
-                            "Win32ConsoleBuffer.h": Object {
+                            "Win32ConsoleBuffer.h": {
                               "size": 3244,
                               "unpacked": true,
                             },
                           },
                           "unpacked": true,
                         },
-                        "configurations.gypi": Object {
+                        "configurations.gypi": {
                           "size": 2378,
                           "unpacked": true,
                         },
-                        "include": Object {
-                          "files": Object {
-                            "winpty.h": Object {
+                        "include": {
+                          "files": {
+                            "winpty.h": {
                               "size": 9420,
                               "unpacked": true,
                             },
-                            "winpty_constants.h": Object {
+                            "winpty_constants.h": {
                               "size": 5697,
                               "unpacked": true,
                             },
                           },
                           "unpacked": true,
                         },
-                        "libwinpty": Object {
-                          "files": Object {
-                            "AgentLocation.h": Object {
+                        "libwinpty": {
+                          "files": {
+                            "AgentLocation.h": {
                               "size": 1278,
                               "unpacked": true,
                             },
-                            "LibWinptyException.h": Object {
+                            "LibWinptyException.h": {
                               "size": 1961,
                               "unpacked": true,
                             },
-                            "WinptyInternal.h": Object {
+                            "WinptyInternal.h": {
                               "size": 2379,
                               "unpacked": true,
                             },
                           },
                           "unpacked": true,
                         },
-                        "shared": Object {
-                          "files": Object {
-                            "AgentMsg.h": Object {
+                        "shared": {
+                          "files": {
+                            "AgentMsg.h": {
                               "size": 1418,
                               "unpacked": true,
                             },
-                            "BackgroundDesktop.h": Object {
+                            "BackgroundDesktop.h": {
                               "size": 2836,
                               "unpacked": true,
                             },
-                            "Buffer.h": Object {
+                            "Buffer.h": {
                               "size": 3376,
                               "unpacked": true,
                             },
-                            "DebugClient.h": Object {
+                            "DebugClient.h": {
                               "size": 1696,
                               "unpacked": true,
                             },
-                            "GenRandom.h": Object {
+                            "GenRandom.h": {
                               "size": 2015,
                               "unpacked": true,
                             },
-                            "GetCommitHash.bat": Object {
+                            "GetCommitHash.bat": {
                               "size": 274,
                               "unpacked": true,
                             },
-                            "Mutex.h": Object {
+                            "Mutex.h": {
                               "size": 2183,
                               "unpacked": true,
                             },
-                            "OsModule.h": Object {
+                            "OsModule.h": {
                               "size": 2282,
                               "unpacked": true,
                             },
-                            "OwnedHandle.h": Object {
+                            "OwnedHandle.h": {
                               "size": 1870,
                               "unpacked": true,
                             },
-                            "PrecompiledHeader.h": Object {
+                            "PrecompiledHeader.h": {
                               "size": 1528,
                               "unpacked": true,
                             },
-                            "StringBuilder.h": Object {
+                            "StringBuilder.h": {
                               "size": 8506,
                               "unpacked": true,
                             },
-                            "StringUtil.h": Object {
+                            "StringUtil.h": {
                               "size": 2677,
                               "unpacked": true,
                             },
-                            "TimeMeasurement.h": Object {
+                            "TimeMeasurement.h": {
                               "size": 2171,
                               "unpacked": true,
                             },
-                            "UnixCtrlChars.h": Object {
+                            "UnixCtrlChars.h": {
                               "size": 2019,
                               "unpacked": true,
                             },
-                            "UpdateGenVersion.bat": Object {
+                            "UpdateGenVersion.bat": {
                               "size": 578,
                               "unpacked": true,
                             },
-                            "WindowsSecurity.h": Object {
+                            "WindowsSecurity.h": {
                               "size": 3465,
                               "unpacked": true,
                             },
-                            "WindowsVersion.h": Object {
+                            "WindowsVersion.h": {
                               "size": 1345,
                               "unpacked": true,
                             },
-                            "WinptyAssert.h": Object {
+                            "WinptyAssert.h": {
                               "size": 2829,
                               "unpacked": true,
                             },
-                            "WinptyException.h": Object {
+                            "WinptyException.h": {
                               "size": 1643,
                               "unpacked": true,
                             },
-                            "WinptyVersion.h": Object {
+                            "WinptyVersion.h": {
                               "size": 1246,
                               "unpacked": true,
                             },
-                            "winpty_snprintf.h": Object {
+                            "winpty_snprintf.h": {
                               "size": 3668,
                               "unpacked": true,
                             },
                           },
                           "unpacked": true,
                         },
-                        "unix-adapter": Object {
-                          "files": Object {
-                            "InputHandler.h": Object {
+                        "unix-adapter": {
+                          "files": {
+                            "InputHandler.h": {
                               "size": 2058,
                               "unpacked": true,
                             },
-                            "OutputHandler.h": Object {
+                            "OutputHandler.h": {
                               "size": 1943,
                               "unpacked": true,
                             },
-                            "Util.h": Object {
+                            "Util.h": {
                               "size": 1410,
                               "unpacked": true,
                             },
-                            "WakeupFd.h": Object {
+                            "WakeupFd.h": {
                               "size": 1549,
                               "unpacked": true,
                             },
                           },
                           "unpacked": true,
                         },
-                        "winpty.gyp": Object {
+                        "winpty.gyp": {
                           "size": 7684,
                           "unpacked": true,
                         },
                       },
                       "unpacked": true,
                     },
-                    "vcbuild.bat": Object {
+                    "vcbuild.bat": {
                       "size": 2425,
                       "unpacked": true,
                     },
@@ -1010,164 +1010,164 @@ Object {
               },
               "unpacked": true,
             },
-            "lib": Object {
-              "files": Object {
-                "conpty_console_list_agent.js": Object {
+            "lib": {
+              "files": {
+                "conpty_console_list_agent.js": {
                   "size": 775,
                   "unpacked": true,
                 },
-                "conpty_console_list_agent.js.map": Object {
+                "conpty_console_list_agent.js.map": {
                   "size": 564,
                   "unpacked": true,
                 },
-                "eventEmitter2.js": Object {
+                "eventEmitter2.js": {
                   "size": 1600,
                   "unpacked": true,
                 },
-                "eventEmitter2.js.map": Object {
+                "eventEmitter2.js.map": {
                   "size": 1155,
                   "unpacked": true,
                 },
-                "eventEmitter2.test.js": Object {
+                "eventEmitter2.test.js": {
                   "size": 1266,
                   "unpacked": true,
                 },
-                "eventEmitter2.test.js.map": Object {
+                "eventEmitter2.test.js.map": {
                   "size": 1396,
                   "unpacked": true,
                 },
-                "index.js": Object {
+                "index.js": {
                   "size": 1972,
                   "unpacked": true,
                 },
-                "index.js.map": Object {
+                "index.js.map": {
                   "size": 964,
                   "unpacked": true,
                 },
-                "interfaces.js": Object {
+                "interfaces.js": {
                   "size": 233,
                   "unpacked": true,
                 },
-                "interfaces.js.map": Object {
+                "interfaces.js.map": {
                   "size": 124,
                   "unpacked": true,
                 },
-                "shared": Object {
-                  "files": Object {
-                    "conout.js": Object {
+                "shared": {
+                  "files": {
+                    "conout.js": {
                       "size": 348,
                       "unpacked": true,
                     },
-                    "conout.js.map": Object {
+                    "conout.js.map": {
                       "size": 204,
                       "unpacked": true,
                     },
                   },
                   "unpacked": true,
                 },
-                "terminal.js": Object {
+                "terminal.js": {
                   "size": 7454,
                   "unpacked": true,
                 },
-                "terminal.js.map": Object {
+                "terminal.js.map": {
                   "size": 5844,
                   "unpacked": true,
                 },
-                "terminal.test.js": Object {
+                "terminal.test.js": {
                   "size": 6250,
                   "unpacked": true,
                 },
-                "terminal.test.js.map": Object {
+                "terminal.test.js.map": {
                   "size": 4150,
                   "unpacked": true,
                 },
-                "testUtils.test.js": Object {
+                "testUtils.test.js": {
                   "size": 807,
                   "unpacked": true,
                 },
-                "testUtils.test.js.map": Object {
+                "testUtils.test.js.map": {
                   "size": 622,
                   "unpacked": true,
                 },
-                "types.js": Object {
+                "types.js": {
                   "size": 228,
                   "unpacked": true,
                 },
-                "types.js.map": Object {
+                "types.js.map": {
                   "size": 114,
                   "unpacked": true,
                 },
-                "unixTerminal.js": Object {
+                "unixTerminal.js": {
                   "size": 10231,
                   "unpacked": true,
                 },
-                "unixTerminal.js.map": Object {
+                "unixTerminal.js.map": {
                   "size": 7978,
                   "unpacked": true,
                 },
-                "unixTerminal.test.js": Object {
+                "unixTerminal.test.js": {
                   "size": 19444,
                   "unpacked": true,
                 },
-                "unixTerminal.test.js.map": Object {
+                "unixTerminal.test.js.map": {
                   "size": 11472,
                   "unpacked": true,
                 },
-                "utils.js": Object {
+                "utils.js": {
                   "size": 580,
                   "unpacked": true,
                 },
-                "utils.js.map": Object {
+                "utils.js.map": {
                   "size": 443,
                   "unpacked": true,
                 },
-                "windowsConoutConnection.js": Object {
+                "windowsConoutConnection.js": {
                   "size": 6017,
                   "unpacked": true,
                 },
-                "windowsConoutConnection.js.map": Object {
+                "windowsConoutConnection.js.map": {
                   "size": 1593,
                   "unpacked": true,
                 },
-                "windowsPtyAgent.js": Object {
+                "windowsPtyAgent.js": {
                   "size": 12461,
                   "unpacked": true,
                 },
-                "windowsPtyAgent.js.map": Object {
+                "windowsPtyAgent.js.map": {
                   "size": 8889,
                   "unpacked": true,
                 },
-                "windowsPtyAgent.test.js": Object {
+                "windowsPtyAgent.test.js": {
                   "size": 4147,
                   "unpacked": true,
                 },
-                "windowsPtyAgent.test.js.map": Object {
+                "windowsPtyAgent.test.js.map": {
                   "size": 2951,
                   "unpacked": true,
                 },
-                "windowsTerminal.js": Object {
+                "windowsTerminal.js": {
                   "size": 7988,
                   "unpacked": true,
                 },
-                "windowsTerminal.js.map": Object {
+                "windowsTerminal.js.map": {
                   "size": 5127,
                   "unpacked": true,
                 },
-                "windowsTerminal.test.js": Object {
+                "windowsTerminal.test.js": {
                   "size": 9832,
                   "unpacked": true,
                 },
-                "windowsTerminal.test.js.map": Object {
+                "windowsTerminal.test.js.map": {
                   "size": 8006,
                   "unpacked": true,
                 },
-                "worker": Object {
-                  "files": Object {
-                    "conoutSocketWorker.js": Object {
+                "worker": {
+                  "files": {
+                    "conoutSocketWorker.js": {
                       "size": 848,
                       "unpacked": true,
                     },
-                    "conoutSocketWorker.js.map": Object {
+                    "conoutSocketWorker.js.map": {
                       "size": 638,
                       "unpacked": true,
                     },
@@ -1177,127 +1177,127 @@ Object {
               },
               "unpacked": true,
             },
-            "node-addon-api": Object {
-              "files": Object {
-                "node_addon_api.Makefile": Object {
+            "node-addon-api": {
+              "files": {
+                "node_addon_api.Makefile": {
                   "size": 159,
                   "unpacked": true,
                 },
               },
               "unpacked": true,
             },
-            "package.json": Object {
+            "package.json": {
               "size": 884,
               "unpacked": true,
             },
-            "scripts": Object {
-              "files": Object {
-                "post-install.js": Object {
+            "scripts": {
+              "files": {
+                "post-install.js": {
                   "size": 1213,
                   "unpacked": true,
                 },
-                "publish.js": Object {
+                "publish.js": {
                   "size": 2369,
                   "unpacked": true,
                 },
               },
               "unpacked": true,
             },
-            "src": Object {
-              "files": Object {
-                "conpty_console_list_agent.ts": Object {
+            "src": {
+              "files": {
+                "conpty_console_list_agent.ts": {
                   "size": 696,
                   "unpacked": true,
                 },
-                "eventEmitter2.test.ts": Object {
+                "eventEmitter2.test.ts": {
                   "size": 975,
                   "unpacked": true,
                 },
-                "eventEmitter2.ts": Object {
+                "eventEmitter2.ts": {
                   "size": 1111,
                   "unpacked": true,
                 },
-                "index.ts": Object {
+                "index.ts": {
                   "size": 2115,
                   "unpacked": true,
                 },
-                "interfaces.ts": Object {
+                "interfaces.ts": {
                   "size": 2845,
                   "unpacked": true,
                 },
-                "shared": Object {
-                  "files": Object {
-                    "conout.ts": Object {
+                "shared": {
+                  "files": {
+                    "conout.ts": {
                       "size": 291,
                       "unpacked": true,
                     },
                   },
                   "unpacked": true,
                 },
-                "terminal.test.ts": Object {
+                "terminal.test.ts": {
                   "size": 4346,
                   "unpacked": true,
                 },
-                "terminal.ts": Object {
+                "terminal.ts": {
                   "size": 6665,
                   "unpacked": true,
                 },
-                "testUtils.test.ts": Object {
+                "testUtils.test.ts": {
                   "size": 567,
                   "unpacked": true,
                 },
-                "tsconfig.json": Object {
+                "tsconfig.json": {
                   "size": 323,
                   "unpacked": true,
                 },
-                "types.ts": Object {
+                "types.ts": {
                   "size": 306,
                   "unpacked": true,
                 },
-                "unixTerminal.test.ts": Object {
+                "unixTerminal.test.ts": {
                   "size": 13205,
                   "unpacked": true,
                 },
-                "unixTerminal.ts": Object {
+                "unixTerminal.ts": {
                   "size": 8195,
                   "unpacked": true,
                 },
-                "utils.ts": Object {
+                "utils.ts": {
                   "size": 292,
                   "unpacked": true,
                 },
-                "win": Object {
-                  "files": Object {
-                    "path_util.h": Object {
+                "win": {
+                  "files": {
+                    "path_util.h": {
                       "size": 695,
                       "unpacked": true,
                     },
                   },
                   "unpacked": true,
                 },
-                "windowsConoutConnection.ts": Object {
+                "windowsConoutConnection.ts": {
                   "size": 2683,
                   "unpacked": true,
                 },
-                "windowsPtyAgent.test.ts": Object {
+                "windowsPtyAgent.test.ts": {
                   "size": 3419,
                   "unpacked": true,
                 },
-                "windowsPtyAgent.ts": Object {
+                "windowsPtyAgent.ts": {
                   "size": 10359,
                   "unpacked": true,
                 },
-                "windowsTerminal.test.ts": Object {
+                "windowsTerminal.test.ts": {
                   "size": 7551,
                   "unpacked": true,
                 },
-                "windowsTerminal.ts": Object {
+                "windowsTerminal.ts": {
                   "size": 5784,
                   "unpacked": true,
                 },
-                "worker": Object {
-                  "files": Object {
-                    "conoutSocketWorker.ts": Object {
+                "worker": {
+                  "files": {
+                    "conoutSocketWorker.ts": {
                       "size": 724,
                       "unpacked": true,
                     },
@@ -1312,7 +1312,7 @@ Object {
         },
       },
     },
-    "package.json": Object {
+    "package.json": {
       "offset": "426524",
       "size": 266,
     },
@@ -1321,213 +1321,213 @@ Object {
 `;
 
 exports[`yarn workspace 1`] = `
-Object {
-  "linux": Array [],
+{
+  "linux": [],
 }
 `;
 
 exports[`yarn workspace 2`] = `
-Object {
-  "files": Object {
-    "index.html": Object {
+{
+  "files": {
+    "index.html": {
       "offset": "137310",
       "size": 841,
     },
-    "index.js": Object {
+    "index.js": {
       "offset": "138151",
       "size": 2501,
     },
-    "node_modules": Object {
-      "files": Object {
-        "@sentry": Object {
-          "files": Object {
-            "core": Object {
-              "files": Object {
-                "LICENSE": Object {
+    "node_modules": {
+      "files": {
+        "@sentry": {
+          "files": {
+            "core": {
+              "files": {
+                "LICENSE": {
                   "offset": "0",
                   "size": 1527,
                 },
-                "dist": Object {
-                  "files": Object {
-                    "base.js": Object {
+                "dist": {
+                  "files": {
+                    "base.js": {
                       "offset": "1527",
                       "size": 17489,
                     },
-                    "base.js.map": Object {
+                    "base.js.map": {
                       "offset": "19016",
                       "size": 16432,
                     },
-                    "dsn.js": Object {
+                    "dsn.js": {
                       "offset": "35448",
                       "size": 4214,
                     },
-                    "dsn.js.map": Object {
+                    "dsn.js.map": {
                       "offset": "39662",
                       "size": 5742,
                     },
-                    "error.js": Object {
+                    "error.js": {
                       "offset": "45404",
                       "size": 1180,
                     },
-                    "error.js.map": Object {
+                    "error.js.map": {
                       "offset": "46584",
                       "size": 844,
                     },
-                    "index.js": Object {
+                    "index.js": {
                       "offset": "47428",
                       "size": 475,
                     },
-                    "index.js.map": Object {
+                    "index.js.map": {
                       "offset": "47903",
                       "size": 589,
                     },
-                    "interfaces.js": Object {
+                    "interfaces.js": {
                       "offset": "48492",
                       "size": 649,
                     },
-                    "interfaces.js.map": Object {
+                    "interfaces.js.map": {
                       "offset": "49141",
                       "size": 11257,
                     },
-                    "sdk.js": Object {
+                    "sdk.js": {
                       "offset": "60398",
                       "size": 1039,
                     },
-                    "sdk.js.map": Object {
+                    "sdk.js.map": {
                       "offset": "61437",
                       "size": 1554,
                     },
-                    "status.js": Object {
+                    "status.js": {
                       "offset": "62991",
                       "size": 1630,
                     },
-                    "status.js.map": Object {
+                    "status.js.map": {
                       "offset": "64621",
                       "size": 2118,
                     },
                   },
                 },
-                "package.json": Object {
+                "package.json": {
                   "offset": "66739",
                   "size": 766,
                 },
               },
             },
-            "shim": Object {
-              "files": Object {
-                "LICENSE": Object {
+            "shim": {
+              "files": {
+                "LICENSE": {
                   "offset": "67505",
                   "size": 1527,
                 },
-                "dist": Object {
-                  "files": Object {
-                    "domain.js": Object {
+                "dist": {
+                  "files": {
+                    "domain.js": {
                       "offset": "69032",
                       "size": 672,
                     },
-                    "domain.js.map": Object {
+                    "domain.js.map": {
                       "offset": "69704",
                       "size": 1230,
                     },
-                    "global.js": Object {
+                    "global.js": {
                       "offset": "70934",
                       "size": 500,
                     },
-                    "global.js.map": Object {
+                    "global.js.map": {
                       "offset": "71434",
                       "size": 906,
                     },
-                    "index.js": Object {
+                    "index.js": {
                       "offset": "72340",
                       "size": 826,
                     },
-                    "index.js.map": Object {
+                    "index.js.map": {
                       "offset": "73166",
                       "size": 920,
                     },
-                    "interfaces.js": Object {
+                    "interfaces.js": {
                       "offset": "74086",
                       "size": 115,
                     },
-                    "interfaces.js.map": Object {
+                    "interfaces.js.map": {
                       "offset": "74201",
                       "size": 501,
                     },
-                    "models.js": Object {
+                    "models.js": {
                       "offset": "74702",
                       "size": 522,
                     },
-                    "models.js.map": Object {
+                    "models.js.map": {
                       "offset": "75224",
                       "size": 2711,
                     },
-                    "sdk.js": Object {
+                    "sdk.js": {
                       "offset": "77935",
                       "size": 7245,
                     },
-                    "sdk.js.map": Object {
+                    "sdk.js.map": {
                       "offset": "85180",
                       "size": 10056,
                     },
-                    "shim.js": Object {
+                    "shim.js": {
                       "offset": "95236",
                       "size": 4438,
                     },
-                    "shim.js.map": Object {
+                    "shim.js.map": {
                       "offset": "99674",
                       "size": 6607,
                     },
                   },
                 },
-                "jest.config.js": Object {
+                "jest.config.js": {
                   "offset": "106281",
                   "size": 265,
                 },
-                "package.json": Object {
+                "package.json": {
                   "offset": "106546",
                   "size": 705,
                 },
-                "src": Object {
-                  "files": Object {
-                    "domain.ts": Object {
+                "src": {
+                  "files": {
+                    "domain.ts": {
                       "offset": "107251",
                       "size": 630,
                     },
-                    "global.ts": Object {
+                    "global.ts": {
                       "offset": "107881",
                       "size": 510,
                     },
-                    "index.ts": Object {
+                    "index.ts": {
                       "offset": "108391",
                       "size": 421,
                     },
-                    "interfaces.ts": Object {
+                    "interfaces.ts": {
                       "offset": "108812",
                       "size": 352,
                     },
-                    "models.ts": Object {
+                    "models.ts": {
                       "offset": "109164",
                       "size": 2213,
                     },
-                    "sdk.ts": Object {
+                    "sdk.ts": {
                       "offset": "111377",
                       "size": 6858,
                     },
-                    "shim.ts": Object {
+                    "shim.ts": {
                       "offset": "118235",
                       "size": 3831,
                     },
                   },
                 },
-                "tsconfig.build.json": Object {
+                "tsconfig.build.json": {
                   "offset": "122066",
                   "size": 160,
                 },
-                "tsconfig.json": Object {
+                "tsconfig.json": {
                   "offset": "122226",
                   "size": 244,
                 },
-                "tslint.json": Object {
+                "tslint.json": {
                   "offset": "122470",
                   "size": 90,
                 },
@@ -1535,53 +1535,53 @@ Object {
             },
           },
         },
-        "electron-log": Object {
-          "files": Object {
-            "LICENSE": Object {
+        "electron-log": {
+          "files": {
+            "LICENSE": {
               "offset": "122560",
               "size": 1082,
             },
-            "index.js": Object {
+            "index.js": {
               "offset": "123642",
               "size": 140,
             },
-            "lib": Object {
-              "files": Object {
-                "format.js": Object {
+            "lib": {
+              "files": {
+                "format.js": {
                   "offset": "123782",
                   "size": 1021,
                 },
-                "log.js": Object {
+                "log.js": {
                   "offset": "124803",
                   "size": 877,
                 },
-                "transports": Object {
-                  "files": Object {
-                    "console.js": Object {
+                "transports": {
+                  "files": {
+                    "console.js": {
                       "offset": "125680",
                       "size": 343,
                     },
-                    "file": Object {
-                      "files": Object {
-                        "find-log-path.js": Object {
+                    "file": {
+                      "files": {
+                        "find-log-path.js": {
                           "offset": "126023",
                           "size": 2078,
                         },
-                        "get-app-name.js": Object {
+                        "get-app-name.js": {
                           "offset": "128101",
                           "size": 1780,
                         },
-                        "index.js": Object {
+                        "index.js": {
                           "offset": "129881",
                           "size": 2068,
                         },
                       },
                     },
-                    "log-s.js": Object {
+                    "log-s.js": {
                       "offset": "131949",
                       "size": 1751,
                     },
-                    "renderer-console.js": Object {
+                    "renderer-console.js": {
                       "offset": "133700",
                       "size": 544,
                     },
@@ -1589,15 +1589,15 @@ Object {
                 },
               },
             },
-            "main.js": Object {
+            "main.js": {
               "offset": "134244",
               "size": 1343,
             },
-            "package.json": Object {
+            "package.json": {
               "offset": "135587",
               "size": 745,
             },
-            "renderer.js": Object {
+            "renderer.js": {
               "offset": "136332",
               "size": 978,
             },
@@ -1605,7 +1605,7 @@ Object {
         },
       },
     },
-    "package.json": Object {
+    "package.json": {
       "offset": "140652",
       "size": 380,
     },

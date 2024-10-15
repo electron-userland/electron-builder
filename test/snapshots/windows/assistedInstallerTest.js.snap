@@ -1,9 +1,9 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`allowElevation false, app requestedExecutionLevel admin 1`] = `
-Object {
-  "win": Array [
-    Object {
+{
+  "win": [
+    {
       "arch": "x64",
       "file": "test Setup 1.1.0.exe",
       "safeArtifactName": "test-Setup-1.1.0.exe",
@@ -13,13 +13,13 @@ Object {
 `;
 
 exports[`allowToChangeInstallationDirectory 1`] = `
-Object {
-  "win": Array [
-    Object {
+{
+  "win": [
+    {
       "file": "latest.yml",
-      "fileContent": Object {
-        "files": Array [
-          Object {
+      "fileContent": {
+        "files": [
+          {
             "sha512": "@sha512",
             "size": "@size",
             "url": "Test-Custom-Installation-Dir-Setup-1.1.0.exe",
@@ -34,19 +34,19 @@ without features",
         "version": "1.1.0",
       },
     },
-    Object {
+    {
       "arch": "x64",
       "file": "Test Custom Installation Dir Setup 1.1.0.exe",
       "safeArtifactName": "Test-Custom-Installation-Dir-Setup-1.1.0.exe",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
-    Object {
+    {
       "file": "Test Custom Installation Dir Setup 1.1.0.exe.blockmap",
       "safeArtifactName": "Test-Custom-Installation-Dir-Setup-1.1.0.exe.blockmap",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -56,7 +56,7 @@ without features",
 `;
 
 exports[`allowToChangeInstallationDirectory 2`] = `
-Object {
+{
   "owner": "foo",
   "provider": "github",
   "repo": "bar",
@@ -65,21 +65,21 @@ Object {
 `;
 
 exports[`assisted 1`] = `
-Object {
-  "win": Array [
-    Object {
+{
+  "win": [
+    {
       "arch": "x64",
       "file": "Test App ßW Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
-    Object {
+    {
       "file": "Test App ßW Setup 1.1.0.exe.blockmap",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -89,15 +89,15 @@ Object {
 `;
 
 exports[`assisted, MUI_HEADER 1`] = `
-Object {
-  "win": Array [],
+{
+  "win": [],
 }
 `;
 
 exports[`assisted, MUI_HEADER as option 1`] = `
-Object {
-  "win": Array [
-    Object {
+{
+  "win": [
+    {
       "file": "Test App ßW Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe",
     },
@@ -106,21 +106,21 @@ Object {
 `;
 
 exports[`assisted, only perMachine 1`] = `
-Object {
-  "win": Array [
-    Object {
+{
+  "win": [
+    {
       "arch": "x64",
       "file": "Test App ßW Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
-    Object {
+    {
       "file": "Test App ßW Setup 1.1.0.exe.blockmap",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -130,22 +130,22 @@ Object {
 `;
 
 exports[`assisted, only perMachine and elevated 1`] = `
-Object {
-  "win": Array [
-    Object {
+{
+  "win": [
+    {
       "arch": "x64",
       "file": "Test App ßW Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe",
-      "updateInfo": Object {
+      "updateInfo": {
         "isAdminRightsRequired": true,
         "sha512": "@sha512",
         "size": "@size",
       },
     },
-    Object {
+    {
       "file": "Test App ßW Setup 1.1.0.exe.blockmap",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
-      "updateInfo": Object {
+      "updateInfo": {
         "isAdminRightsRequired": true,
         "sha512": "@sha512",
         "size": "@size",
