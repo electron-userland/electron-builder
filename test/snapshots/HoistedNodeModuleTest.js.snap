@@ -75,13 +75,13 @@ exports[`conflict versions 2`] = `
 
 exports[`npm tar 1`] = `
 {
-  "linux": Array [],
+  "linux": [],
 }
 `;
 
 exports[`pnpm es5-ext without hoisted config 1`] = `
 {
-  "linux": Array [],
+  "linux": [],
 }
 `;
 
@@ -114,18 +114,18 @@ exports[`pnpm es5-ext without hoisted config 2`] = `
   },
   "license": "ISC",
   "lint-staged": {
-    "*.js": Array [
+    "*.js": [
       "eslint",
     ],
-    "*.{css,html,js,json,md,yaml,yml}": Array [
+    "*.{css,html,js,json,md,yaml,yml}": [
       "prettier -c",
     ],
   },
   "name": "d",
   "prettier": {
-    "overrides": Array [
+    "overrides": [
       {
-        "files": Array [
+        "files": [
           "*.md",
           "*.yml",
         ],
@@ -144,7 +144,7 @@ exports[`pnpm es5-ext without hoisted config 2`] = `
 
 exports[`yarn parse-asn1 1`] = `
 {
-  "linux": Array [],
+  "linux": [],
 }
 `;
 
