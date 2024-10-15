@@ -102,7 +102,7 @@ export class AsarPackager {
 
       const realPathRelative = path.relative(this.config.appDir, realPathFile)
       const symlinkTarget = path.resolve(this.rootForAppFilesWithoutAsar, realPathRelative)
-      const isOutsidePackage = realPathRelative.startsWith("../")
+      const isOutsidePackage = realPathRelative.startsWith("..")
       if (isOutsidePackage) {
         log.error({ source: log.filePath(source), realPathFile: log.filePath(realPathFile) }, `unable to copy, file is symlinked outside the package`)
         throw new Error(
