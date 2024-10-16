@@ -86,8 +86,8 @@ export class NsisTarget extends Target {
     NsisTargetOptions.resolve(this.options)
   }
 
-  private shouldBuildUniversalInstaller() {
-    return !this.options.disableUniversalInstaller
+  protected shouldBuildUniversalInstaller() {
+    return !!this.options.buildUniversalInstaller
   }
 
   build(appOutDir: string, arch: Arch) {

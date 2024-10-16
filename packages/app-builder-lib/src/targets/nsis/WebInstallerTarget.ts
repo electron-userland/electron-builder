@@ -1,4 +1,4 @@
-import { Arch } from "builder-util"
+import { Arch, getArchSuffix } from "builder-util"
 import { computeDownloadUrl, getPublishConfigs, getPublishConfigsForUpdateInfo } from "../../publish/PublishManager"
 import { WinPackager } from "../../winPackager"
 import { NsisWebOptions } from "./nsisOptions"
@@ -36,7 +36,10 @@ export class WebInstallerTarget extends NsisTarget {
     defines.APP_PACKAGE_URL = appPackageUrl
   }
 
-  protected installerFilenamePattern(_primaryArch?: Arch | null, _defaultArch?: string): string {
+  protected installerFilenamePattern(primaryArch?: Arch | null, defaultArch?: string): string {
+    if (!this.shouldBuildUniversalInstaller()) {
+      return "${productName} Web Setup ${version}" + (primaryArch != null ? getArchSuffix(primaryArch, defaultArch) : "") + ".${ext}"
+    }
     return "${productName} Web Setup ${version}.${ext}"
   }
 

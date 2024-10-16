@@ -3,10 +3,10 @@ import { app } from "../helpers/packTester"
 
 // tests are heavy, to distribute tests across CircleCI machines evenly, these tests were moved from oneClickInstallerTest
 
-test.ifNotCiMac(
+test.ifNotMac(
   "web installer",
   app({
-    targets: Platform.WINDOWS.createTarget(["nsis-web"], Arch.x64),
+    targets: Platform.WINDOWS.createTarget(["nsis-web"], Arch.x64, Arch.arm64),
     config: {
       publish: {
         provider: "s3",
@@ -23,11 +23,15 @@ test.ifNotCiMac(
         loadBrowserProcessSpecificV8Snapshot: true,
         grantFileProtocolExtraPrivileges: undefined, // unsupported on current electron version in our tests
       },
+      nsisWeb: {
+        buildUniversalInstaller: false,
+      },
     },
   })
 )
 
-test.ifAll.ifNotCiMac(
+// can no longer run on mac since mac arm64 can't build ia32, but we want to verify universal builds
+test.ifAll.ifNotMac(
   "web installer (default github)",
   app({
     targets: Platform.WINDOWS.createTarget(["nsis-web"], Arch.ia32, Arch.x64, Arch.arm64),

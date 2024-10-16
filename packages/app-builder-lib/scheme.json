@@ -3859,6 +3859,11 @@
             "string"
           ]
         },
+        "buildUniversalInstaller": {
+          "default": true,
+          "description": "Disable building an universal installer of the archs specified in the target configuration",
+          "type": "boolean"
+        },
         "createDesktopShortcut": {
           "default": true,
           "description": "Whether to create desktop shortcut. Set to `always` if to recreate also on reinstall (even if removed by user).",
@@ -3890,10 +3895,6 @@
           "type": "boolean"
         },
         "differentialPackage": {
-          "type": "boolean"
-        },
-        "disableUniversalInstaller": {
-          "description": "Disable building an universal installer of the archs specified in the target configuration",
           "type": "boolean"
         },
         "displayLanguageSelector": {
@@ -4163,6 +4164,11 @@
             "string"
           ]
         },
+        "buildUniversalInstaller": {
+          "default": true,
+          "description": "Disable building an universal installer of the archs specified in the target configuration",
+          "type": "boolean"
+        },
         "createDesktopShortcut": {
           "default": true,
           "description": "Whether to create desktop shortcut. Set to `always` if to recreate also on reinstall (even if removed by user).",
@@ -4194,10 +4200,6 @@
           "type": "boolean"
         },
         "differentialPackage": {
-          "type": "boolean"
-        },
-        "disableUniversalInstaller": {
-          "description": "Disable building an universal installer of the archs specified in the target configuration",
           "type": "boolean"
         },
         "displayLanguageSelector": {
