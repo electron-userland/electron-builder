@@ -1,5 +1,14 @@
 # electron-publish
 
+## 26.0.0-alpha.3
+
+### Patch Changes
+
+- [#8596](https://github.com/electron-userland/electron-builder/pull/8596) [`e0b0e351`](https://github.com/electron-userland/electron-builder/commit/e0b0e351baecc29e08d9f7d90f4699150b229416) Thanks [@mmaietta](https://github.com/mmaietta)! - chore: refactor files for publishing to electron-publish
+
+- Updated dependencies [[`e0b0e351`](https://github.com/electron-userland/electron-builder/commit/e0b0e351baecc29e08d9f7d90f4699150b229416), [`d4ea0d99`](https://github.com/electron-userland/electron-builder/commit/d4ea0d998d0fb3ea3a75ca8d39a69a2f3c710962)]:
+  - builder-util@26.0.0-alpha.3
+
 ## 26.0.0-alpha.1
 
 ### Patch Changes
