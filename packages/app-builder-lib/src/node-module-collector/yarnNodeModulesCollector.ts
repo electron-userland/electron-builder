@@ -24,7 +24,7 @@ export class YarnNodeModulesCollector extends NodeModulesCollector {
       return JSON.parse(stdout) as DependencyTree
     } catch (error) {
       log.debug({ error }, "npm list failed in yarn project, but will be ignored")
-      if (error instanceof Error && "stdout" in error) {
+      if ((error as any).stdout) {
         const stdout = (error as any).stdout
         return JSON.parse(stdout) as DependencyTree
       }
