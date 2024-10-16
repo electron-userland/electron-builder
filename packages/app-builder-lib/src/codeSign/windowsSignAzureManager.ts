@@ -86,7 +86,7 @@ export class WindowsSignAzureManager {
       Endpoint: endpoint,
       CertificateProfileName: certificateProfileName,
       CodeSigningAccountName: codeSigningAccountName,
-      Files: options.path,
+      Files: `"${options.path}"`,
     }
     const paramsString = Object.entries(params)
       .reduce((res, [field, value]) => {
