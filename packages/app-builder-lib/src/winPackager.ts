@@ -165,7 +165,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
       file,
       "--set-version-string",
       "FileDescription",
-      appInfo.description || appInfo.productName,
+      appInfo.productName,
       "--set-version-string",
       "ProductName",
       appInfo.productName,
