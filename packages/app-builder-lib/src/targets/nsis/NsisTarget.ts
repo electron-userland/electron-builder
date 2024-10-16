@@ -38,6 +38,7 @@ import { computeLicensePage } from "./nsisLicense"
 import { NsisOptions, PortableOptions } from "./nsisOptions"
 import { NsisScriptGenerator } from "./nsisScriptGenerator"
 import { AppPackageHelper, nsisTemplatesDir, NSIS_PATH, UninstallerReader, NsisTargetOptions } from "./nsisUtil"
+import { WebInstallerTarget } from "./WebInstallerTarget"
 
 const debug = _debug("electron-builder:nsis")
 
@@ -87,7 +88,12 @@ export class NsisTarget extends Target {
   }
 
   protected buildIndividualInstallers() {
-    return this.options.buildUniversalInstaller === false
+    const buildSeparateInstallers = this.options.buildUniversalInstaller === false
+    if (this instanceof WebInstallerTarget && buildSeparateInstallers) {
+      log.warn({ buildUniversalInstaller: true }, "only universal builds are supported for nsis-web installers, overriding setting")
+      return false
+    }
+    return buildSeparateInstallers
   }
 
   build(appOutDir: string, arch: Arch) {
