@@ -113,13 +113,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
   }
 
   doGetCscPassword(): string | undefined | null {
-    return chooseNotNull(
-      chooseNotNull(
-        chooseNotNull(this.platformSpecificBuildOptions.signtoolOptions?.certificatePassword, this.platformSpecificBuildOptions.certificatePassword),
-        process.env.WIN_CSC_KEY_PASSWORD
-      ),
-      super.doGetCscPassword()
-    )
+    return chooseNotNull(chooseNotNull(this.platformSpecificBuildOptions.signtoolOptions?.certificatePassword, process.env.WIN_CSC_KEY_PASSWORD), super.doGetCscPassword())
   }
 
   async sign(file: string): Promise<boolean> {
@@ -209,10 +203,8 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
       hash.update(config.electronVersion || "no electronVersion")
       hash.update(JSON.stringify(this.platformSpecificBuildOptions))
       hash.update(JSON.stringify(args))
-      hash.update(chooseNotNull(this.platformSpecificBuildOptions.signtoolOptions?.certificateSha1, this.platformSpecificBuildOptions.certificateSha1) || "no certificateSha1")
-      hash.update(
-        chooseNotNull(this.platformSpecificBuildOptions.signtoolOptions?.certificateSubjectName, this.platformSpecificBuildOptions.certificateSubjectName) || "no subjectName"
-      )
+      hash.update(this.platformSpecificBuildOptions.signtoolOptions?.certificateSha1 || "no certificateSha1")
+      hash.update(this.platformSpecificBuildOptions.signtoolOptions?.certificateSubjectName || "no subjectName")
 
       buildCacheManager = new BuildCacheManager(outDir, file, arch)
       if (await buildCacheManager.copyIfValid(await digest(hash, files))) {
@@ -240,9 +232,8 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
   }
 
   private shouldSignFile(file: string): boolean {
-    const shouldSignDll = this.platformSpecificBuildOptions.signDlls === true && file.endsWith(".dll")
     const shouldSignExplicit = !!this.platformSpecificBuildOptions.signExts?.some(ext => file.endsWith(ext))
-    return shouldSignDll || shouldSignExplicit || file.endsWith(".exe")
+    return shouldSignExplicit || file.endsWith(".exe")
   }
 
   protected createTransformerForExtraFiles(packContext: AfterPackContext): FileTransformer | null {
