@@ -37,7 +37,7 @@ export class WebInstallerTarget extends NsisTarget {
   }
 
   protected installerFilenamePattern(primaryArch?: Arch | null, defaultArch?: string): string {
-    if (!this.shouldBuildUniversalInstaller()) {
+    if (this.buildIndividualInstallers()) {
       return "${productName} Web Setup ${version}" + (primaryArch != null ? getArchSuffix(primaryArch, defaultArch) : "") + ".${ext}"
     }
     return "${productName} Web Setup ${version}.${ext}"

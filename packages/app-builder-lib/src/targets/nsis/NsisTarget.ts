@@ -86,13 +86,13 @@ export class NsisTarget extends Target {
     NsisTargetOptions.resolve(this.options)
   }
 
-  protected shouldBuildUniversalInstaller() {
-    return !!this.options.buildUniversalInstaller
+  protected buildIndividualInstallers() {
+    return this.options.buildUniversalInstaller === false
   }
 
   build(appOutDir: string, arch: Arch) {
     this.archs.set(arch, appOutDir)
-    if (!this.shouldBuildUniversalInstaller()) {
+    if (this.buildIndividualInstallers()) {
       return this.buildInstaller(new Map<Arch, string>().set(arch, appOutDir))
     }
     return Promise.resolve()
@@ -138,7 +138,7 @@ export class NsisTarget extends Target {
   }
 
   protected installerFilenamePattern(primaryArch?: Arch | null, defaultArch?: string): string {
-    if (!this.shouldBuildUniversalInstaller()) {
+    if (this.buildIndividualInstallers()) {
       return "${productName} " + (this.isPortable ? "" : "Setup ") + "${version}" + (primaryArch != null ? getArchSuffix(primaryArch, defaultArch) : "") + ".${ext}"
     }
     // tslint:disable:no-invalid-template-strings
@@ -150,7 +150,7 @@ export class NsisTarget extends Target {
   }
 
   async finishBuild(): Promise<any> {
-    if (!this.shouldBuildUniversalInstaller()) {
+    if (this.buildIndividualInstallers()) {
       return this.packageHelper.finishBuild()
     }
     try {
