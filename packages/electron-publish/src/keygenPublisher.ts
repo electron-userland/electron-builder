@@ -1,10 +1,11 @@
 import { Arch, InvalidConfigurationError, log, isEmptyOrSpaces } from "builder-util"
 import { httpExecutor } from "builder-util"
 import { ClientRequest, RequestOptions } from "http"
-import { HttpPublisher, PublishContext } from "electron-publish"
+import { PublishContext } from "./"
+import { HttpPublisher } from "./httpPublisher"
 import { KeygenOptions } from "builder-util-runtime/out/publishOptions"
 import { configureRequestOptions, HttpExecutor, parseJson } from "builder-util-runtime"
-import { getCompleteExtname } from "../util/filename"
+import { getCompleteExtname } from "builder-util/out/filename"
 
 type RecursivePartial<T> = {
   [P in keyof T]?: RecursivePartial<T[P]>

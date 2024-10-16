@@ -1,7 +1,8 @@
-import { Publisher, UploadTask, PublishContext } from "electron-publish"
 import { executeAppBuilder } from "builder-util"
 import * as path from "path"
 import { SnapStoreOptions } from "builder-util-runtime/out/publishOptions"
+import { PublishContext, UploadTask } from "."
+import { Publisher } from "./publisher"
 
 export class SnapStorePublisher extends Publisher {
   readonly providerName = "snapStore"

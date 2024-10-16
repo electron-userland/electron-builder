@@ -60,8 +60,8 @@ importers:
         specifier: 7.0.4
         version: 7.0.4
       lint-staged:
-        specifier: 15.2.7
-        version: 15.2.7
+        specifier: 15.2.10
+        version: 15.2.10
       prettier:
         specifier: 3.3.3
         version: 3.3.3
@@ -140,9 +140,6 @@ importers:
       electron-publish:
         specifier: workspace:*
         version: link:../electron-publish
-      form-data:
-        specifier: ^4.0.0
-        version: 4.0.0
       fs-extra:
         specifier: ^10.1.0
         version: 10.1.0
@@ -170,9 +167,6 @@ importers:
       resedit:
         specifier: ^1.7.0
         version: 1.7.1
-      sanitize-filename:
-        specifier: ^1.6.3
-        version: 1.6.3
       semver:
         specifier: ^7.3.8
         version: 7.6.0
@@ -280,8 +274,8 @@ importers:
         specifier: ^4.1.6
         version: 4.1.7
       app-builder-bin:
-        specifier: 5.0.0-alpha.10
-        version: 5.0.0-alpha.10
+        specifier: 5.0.0-alpha.11
+        version: 5.0.0-alpha.11
       bluebird-lst:
         specifier: ^1.0.9
         version: 1.0.9
@@ -312,6 +306,9 @@ importers:
       js-yaml:
         specifier: ^4.1.0
         version: 4.1.0
+      sanitize-filename:
+        specifier: ^1.6.3
+        version: 1.6.3
       source-map-support:
         specifier: ^0.5.19
         version: 0.5.21
@@ -492,6 +489,9 @@ importers:
       chalk:
         specifier: ^4.1.2
         version: 4.1.2
+      form-data:
+        specifier: ^4.0.0
+        version: 4.0.0
       fs-extra:
         specifier: ^10.1.0
         version: 10.1.0
@@ -2618,8 +2618,8 @@ packages:
     resolution: {integrity: sha512-KMReFUr0B4t+D+OBkjR3KYqvocp2XaSzO55UcB6mgQMd3KbcE+mWTyvVV7D/zsdEbNnV6acZUutkiHQXvTr1Rw==}
     engines: {node: '>= 8'}
 
-  app-builder-bin@5.0.0-alpha.10:
-    resolution: {integrity: sha512-Ev4jj3D7Bo+O0GPD2NMvJl+PGiBAfS7pUGawntBNpCbxtpncfUixqFj9z9Jme7V7s3LBGqsWZZP54fxBX3JKJw==}
+  app-builder-bin@5.0.0-alpha.11:
+    resolution: {integrity: sha512-8qqHYEvddA9jvpO90XMNwgOYZPWBDI/5w9QHyMD68IhGY8RDO2apGfXcF6xmfZb1jXJLilvwGwsDyITQraQz8A==}
 
   archiver-utils@2.1.0:
     resolution: {integrity: sha512-bEL/yUb/fNNiNTuUz979Z0Yg5L+LzLxGJz8x79lYmR54fmTIb6ob/hNQgkQnIUDWIFjZVQwl9Xs356I6BAMHfw==}
@@ -3236,15 +3236,6 @@ packages:
 
   debug@4.3.4:
     resolution: {integrity: sha512-PRWFHuSU3eDtQJPvnNY7Jcket1j0t5OuOsFzPPzsekD52Zl8qUfFIPEiswXqIvHWGVHOgX+7G/vCNNhehwxfkQ==}
-    engines: {node: '>=6.0'}
-    peerDependencies:
-      supports-color: '*'
-    peerDependenciesMeta:
-      supports-color:
-        optional: true
-
-  debug@4.3.5:
-    resolution: {integrity: sha512-pt0bNEmneDIvdL1Xsd9oDQ/wrQRkXDT4AUWlNZNPKvW5x/jyO9VFXkJUP07vQ2upmw5PlaITaPKc31jK13V+jg==}
     engines: {node: '>=6.0'}
     peerDependencies:
       supports-color: '*'
@@ -4572,8 +4563,8 @@ packages:
   linkify-it@5.0.0:
     resolution: {integrity: sha512-5aHCbzQRADcdP+ATqnDuhhJ/MRIqDkZX5pyjFHRRysS8vZ5AbqGEoFIb6pYHPZ+L/OC2Lc+xT8uHVVR5CAK/wQ==}
 
-  lint-staged@15.2.7:
-    resolution: {integrity: sha512-+FdVbbCZ+yoh7E/RosSdqKJyUM2OEjTciH0TFNkawKgvFp1zbGlEC39RADg+xKBG1R4mhoH2j85myBQZ5wR+lw==}
+  lint-staged@15.2.10:
+    resolution: {integrity: sha512-5dY5t743e1byO19P9I4b3x8HJwalIznL5E1FWYnU6OWw33KxNBSLAc6Cy7F2PsFEO8FKnLwjwm5hx7aMF0jzZg==}
     engines: {node: '>=18.12.0'}
     hasBin: true
 
@@ -6227,11 +6218,6 @@ packages:
     resolution: {integrity: sha512-r3vXyErRCYJ7wg28yvBY5VSoAF8ZvlcW9/BwUzEtUsjvX/DKs24dIkuwjtuprwJJHsbyUbLApepYTR1BN4uHrg==}
     engines: {node: '>= 6'}
 
-  yaml@2.4.5:
-    resolution: {integrity: sha512-aBx2bnqDzVOyNKfsysjA2ms5ZlnjSAW2eG3/L5G/CSujfjLJTJsEw1bGw8kCf04KodQWk1pxlGnZ56CRxiawmg==}
-    engines: {node: '>= 14'}
-    hasBin: true
-
   yaml@2.5.1:
     resolution: {integrity: sha512-bLQOjaX/ADgQ20isPJRvF0iRUHIxVhYvr53Of7wGcWlO2jvtUlH5m87DsmulFVxRpNLOnI4tB6p/oh8D7kpn9Q==}
     engines: {node: '>= 14'}
@@ -7792,7 +7778,7 @@ snapshots:
       '@babel/helper-split-export-declaration': 7.22.6
       '@babel/parser': 7.24.0
       '@babel/types': 7.24.0
-      debug: 4.3.5
+      debug: 4.3.7
       globals: 11.12.0
     transitivePeerDependencies:
       - supports-color
@@ -8084,7 +8070,7 @@ snapshots:
 
   '@electron/notarize@2.5.0':
     dependencies:
-      debug: 4.3.5
+      debug: 4.3.7
       fs-extra: 9.1.0
       promise-retry: 2.0.1
     transitivePeerDependencies:
@@ -8093,7 +8079,7 @@ snapshots:
   '@electron/osx-sign@1.0.5':
     dependencies:
       compare-version: 0.1.2
-      debug: 4.3.4
+      debug: 4.3.7
       fs-extra: 10.1.0
       isbinaryfile: 4.0.10
       minimist: 1.2.8
@@ -8104,7 +8090,7 @@ snapshots:
   '@electron/osx-sign@1.3.1':
     dependencies:
       compare-version: 0.1.2
-      debug: 4.3.5
+      debug: 4.3.7
       fs-extra: 10.1.0
       isbinaryfile: 4.0.10
       minimist: 1.2.8
@@ -8136,7 +8122,7 @@ snapshots:
     dependencies:
       '@electron/asar': 3.2.13
       '@malept/cross-spawn-promise': 2.0.0
-      debug: 4.3.4
+      debug: 4.3.7
       dir-compare: 4.2.0
       fs-extra: 11.2.0
       minimatch: 9.0.3
@@ -8430,7 +8416,7 @@ snapshots:
 
   '@malept/flatpak-bundler@0.4.0':
     dependencies:
-      debug: 4.3.4
+      debug: 4.3.7
       fs-extra: 9.1.0
       lodash: 4.17.21
       tmp-promise: 3.0.3
@@ -8943,7 +8929,7 @@ snapshots:
       normalize-path: 3.0.0
       picomatch: 2.3.1
 
-  app-builder-bin@5.0.0-alpha.10: {}
+  app-builder-bin@5.0.0-alpha.11: {}
 
   archiver-utils@2.1.0:
     dependencies:
@@ -9698,10 +9684,6 @@ snapshots:
     dependencies:
       ms: 2.1.2
 
-  debug@4.3.5:
-    dependencies:
-      ms: 2.1.2
-
   debug@4.3.7:
     dependencies:
       ms: 2.1.3
@@ -9775,7 +9757,7 @@ snapshots:
       '@vue/compiler-sfc': 3.4.21
       camelcase: 6.3.0
       cosmiconfig: 7.1.0
-      debug: 4.3.4
+      debug: 4.3.7
       deps-regex: 0.1.4
       ignore: 5.3.1
       is-core-module: 2.13.1
@@ -10567,7 +10549,7 @@ snapshots:
   http-proxy-agent@7.0.2:
     dependencies:
       agent-base: 7.1.1
-      debug: 4.3.5
+      debug: 4.3.7
     transitivePeerDependencies:
       - supports-color
 
@@ -10586,7 +10568,7 @@ snapshots:
   https-proxy-agent@7.0.5:
     dependencies:
       agent-base: 7.1.1
-      debug: 4.3.5
+      debug: 4.3.7
     transitivePeerDependencies:
       - supports-color
 
@@ -11015,7 +10997,7 @@ snapshots:
       jest-serializer: 26.6.2
       jest-util: 26.6.2
       jest-worker: 26.6.2
-      micromatch: 4.0.5
+      micromatch: 4.0.8
       sane: 4.1.0
       walker: 1.0.8
     optionalDependencies:
@@ -11193,7 +11175,7 @@ snapshots:
       chalk: 4.1.2
       graceful-fs: 4.2.11
       is-ci: 2.0.0
-      micromatch: 4.0.5
+      micromatch: 4.0.8
 
   jest-util@29.7.0:
     dependencies:
@@ -11328,7 +11310,7 @@ snapshots:
     dependencies:
       uc.micro: 2.1.0
 
-  lint-staged@15.2.7:
+  lint-staged@15.2.10:
     dependencies:
       chalk: 5.3.0
       commander: 12.1.0
@@ -11339,7 +11321,7 @@ snapshots:
       micromatch: 4.0.8
       pidtree: 0.6.0
       string-argv: 0.3.2
-      yaml: 2.4.5
+      yaml: 2.5.1
     transitivePeerDependencies:
       - supports-color
 
@@ -12362,7 +12344,7 @@ snapshots:
 
   simple-update-notifier@2.0.0:
     dependencies:
-      semver: 7.6.0
+      semver: 7.6.3
 
   sisteransi@1.0.5: {}
 
@@ -13080,8 +13062,6 @@ snapshots:
   yallist@4.0.0: {}
 
   yaml@1.10.2: {}
-
-  yaml@2.4.5: {}
 
   yaml@2.5.1: {}
 

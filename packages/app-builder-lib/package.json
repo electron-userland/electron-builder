@@ -1,7 +1,7 @@
 {
   "name": "app-builder-lib",
   "description": "electron-builder lib",
-  "version": "26.0.0-alpha.2",
+  "version": "26.0.0-alpha.3",
   "main": "out/index.js",
   "files": [
     "out",
@@ -66,7 +66,6 @@
     "dotenv-expand": "^11.0.6",
     "ejs": "^3.1.8",
     "electron-publish": "workspace:*",
-    "form-data": "^4.0.0",
     "fs-extra": "^10.1.0",
     "hosted-git-info": "^4.1.0",
     "is-ci": "^3.0.0",
@@ -76,7 +75,6 @@
     "lazy-val": "^1.0.5",
     "minimatch": "^10.0.0",
     "resedit": "^1.7.0",
-    "sanitize-filename": "^1.6.3",
     "semver": "^7.3.8",
     "tar": "^6.1.12",
     "temp-file": "^3.4.0"

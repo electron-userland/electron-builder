@@ -1,3 +1,14 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v26.0.0-alpha.2...v) (2024-10-16)
+
+
+### Bug Fixes
+
+* add quotes to surround file path during azure signing to handle files with spaces ([#8606](https://github.com/electron-userland/electron-builder/issues/8606)) ([a0e635c](https://github.com/electron-userland/electron-builder/commit/a0e635c183633c291fd2e0a0e8c9a1c6b8e085a0))
+* check relative path in `asarUtil` without path separator ([#8603](https://github.com/electron-userland/electron-builder/issues/8603)) ([712a8bc](https://github.com/electron-userland/electron-builder/commit/712a8bce56331cd89df270f182fa27bf365e985b))
+* **win): Revert "fix(win:** use appInfo description as primary entry for FileDescription" ([#8601](https://github.com/electron-userland/electron-builder/issues/8601)) ([215fc36](https://github.com/electron-userland/electron-builder/commit/215fc36b5e8d243ef5bc77d31eb8e30d0e8bca9d)), closes [electron-userland/electron-builder#8125](https://github.com/electron-userland/electron-builder/issues/8125)
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v26.0.0-alpha.1...v) (2024-10-13)
 
 

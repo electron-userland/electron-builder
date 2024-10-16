@@ -3,7 +3,7 @@ import { findIdentity, isSignAllowed } from "app-builder-lib/out/codeSign/macCod
 import { MacPackager } from "app-builder-lib/out/macPackager"
 import { createBlockmap } from "app-builder-lib/out/targets/differentialUpdateInfoBuilder"
 import { executeAppBuilderAsJson } from "app-builder-lib/out/util/appBuilder"
-import { sanitizeFileName } from "app-builder-lib/out/util/filename"
+import { sanitizeFileName } from "builder-util/out/filename"
 import { Arch, AsyncTaskManager, exec, getArchSuffix, InvalidConfigurationError, isEmptyOrSpaces, log, copyDir, copyFile, exists, statOrNull } from "builder-util"
 import { CancellationToken } from "builder-util-runtime"
 import { stat } from "fs-extra"
