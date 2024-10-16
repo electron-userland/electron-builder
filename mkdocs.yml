@@ -86,6 +86,7 @@ nav:
         - electron-builder: electron-builder/globals.md
         - app-builder-lib: app-builder-lib/globals.md
         - electron-updater: electron-updater/globals.md
+        - electron-publish: electron-publish/globals.md
 
   - Configuration:
       - Common Configuration: configuration.md

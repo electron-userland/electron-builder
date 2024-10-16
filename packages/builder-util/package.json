@@ -28,6 +28,7 @@
     "https-proxy-agent": "^7.0.0",
     "is-ci": "^3.0.0",
     "js-yaml": "^4.1.0",
+    "sanitize-filename": "^1.6.3",
     "source-map-support": "^0.5.19",
     "stat-mode": "^1.0.0",
     "temp-file": "^3.4.0"

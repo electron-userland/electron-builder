@@ -13,7 +13,7 @@
     }
   ],
   "jsdoc": {
-    "out": "../../scripts/jsdoc/out/publisher",
+    "out": "../../scripts/jsdoc/out/index",
     "access": "public"
   },
   "include": [

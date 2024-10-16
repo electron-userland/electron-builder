@@ -5,7 +5,9 @@ import { ClientRequest } from "http"
 import { Lazy } from "lazy-val"
 import * as mime from "mime"
 import { parse as parseUrl, UrlWithStringQuery } from "url"
-import { getCiTag, HttpPublisher, PublishContext, PublishOptions } from "./publisher"
+import { getCiTag } from "./publisher"
+import { HttpPublisher } from "./httpPublisher"
+import { PublishContext, PublishOptions } from "./index"
 
 export interface Release {
   id: number
