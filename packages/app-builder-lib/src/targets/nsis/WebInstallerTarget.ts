@@ -1,3 +1,4 @@
+import { Arch } from "builder-util"
 import { computeDownloadUrl, getPublishConfigs, getPublishConfigsForUpdateInfo } from "../../publish/PublishManager"
 import { WinPackager } from "../../winPackager"
 import { NsisWebOptions } from "./nsisOptions"
@@ -35,8 +36,7 @@ export class WebInstallerTarget extends NsisTarget {
     defines.APP_PACKAGE_URL = appPackageUrl
   }
 
-  protected get installerFilenamePattern(): string {
-    // tslint:disable:no-invalid-template-strings
+  protected installerFilenamePattern(_primaryArch?: Arch | null, _defaultArch?: string): string {
     return "${productName} Web Setup ${version}.${ext}"
   }
 

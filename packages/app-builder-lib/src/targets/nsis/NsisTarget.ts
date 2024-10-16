@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { Arch, asArray, AsyncTaskManager, exec, executeAppBuilder, getPlatformIconFileName, InvalidConfigurationError, log, spawnAndWrite, use, getPath7za } from "builder-util"
+import { Arch, asArray, AsyncTaskManager, exec, executeAppBuilder, getPlatformIconFileName, InvalidConfigurationError, log, spawnAndWrite, use, getPath7za, getArchSuffix } from "builder-util"
 import { CURRENT_APP_INSTALLER_FILE_NAME, CURRENT_APP_PACKAGE_FILE_NAME, PackageFileInfo, UUID } from "builder-util-runtime"
 import { exists, statOrNull, walk } from "builder-util"
 import _debug from "debug"
@@ -124,9 +124,9 @@ export class NsisTarget extends Target {
     }
   }
 
-  protected get installerFilenamePattern(): string {
+  protected installerFilenamePattern(primaryArch?: Arch | null, defaultArch?: string): string {
     if (!this.shouldBuildUniversalInstaller()) {
-      return "${productName} " + (this.isPortable ? "" : "Setup ") + "${version} ${arch}.${ext}"
+      return "${productName} " + (this.isPortable ? "" : "Setup ") + "${version}" + (primaryArch != null ? getArchSuffix(primaryArch, defaultArch) : "") + ".${ext}"
     }
     // tslint:disable:no-invalid-template-strings
     return "${productName} " + (this.isPortable ? "" : "Setup ") + "${version}.${ext}"
@@ -141,7 +141,7 @@ export class NsisTarget extends Target {
       return this.packageHelper.finishBuild()
     }
     try {
-      const { pattern } = this.packager.artifactPatternConfig(this.options, this.installerFilenamePattern)
+      const { pattern } = this.packager.artifactPatternConfig(this.options, this.installerFilenamePattern())
       const builds = new Set([this.archs])
       if (pattern.includes("${arch}") && this.archs.size > 1) {
         ;[...this.archs].forEach(([arch, appOutDir]) => builds.add(new Map().set(arch, appOutDir)))
@@ -160,14 +160,8 @@ export class NsisTarget extends Target {
     const packager = this.packager
     const appInfo = packager.appInfo
     const options = this.options
-    const installerFilename = packager.expandArtifactNamePattern(
-      options,
-      "exe",
-      primaryArch,
-      this.installerFilenamePattern,
-      false,
-      this.packager.platformSpecificBuildOptions.defaultArch
-    )
+    const defaultArch = this.packager.platformSpecificBuildOptions.defaultArch
+    const installerFilename = packager.expandArtifactNamePattern(options, "exe", primaryArch, this.installerFilenamePattern(primaryArch, defaultArch), false, defaultArch)
     const oneClick = options.oneClick !== false
     const installerPath = path.join(this.outDir, installerFilename)
 
