@@ -201,7 +201,6 @@ export interface NsisOptions extends CommonNsisOptions, CommonWindowsInstallerCo
 
   /**
    * Disable building an universal installer of the archs specified in the target configuration
-   * @default false
    */
   readonly disableUniversalInstaller?: boolean
 }

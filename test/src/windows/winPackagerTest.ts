@@ -14,7 +14,7 @@ test.ifWinCi(
       },
       nsis: {
         disableUniversalInstaller: true,
-      }
+      },
     },
   })
 )

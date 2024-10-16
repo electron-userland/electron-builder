@@ -3890,7 +3890,6 @@
           "type": "boolean"
         },
         "disableUniversalInstaller": {
-          "default": false,
           "description": "Disable building an universal installer of the archs specified in the target configuration",
           "type": "boolean"
         },
@@ -4195,7 +4194,6 @@
           "type": "boolean"
         },
         "disableUniversalInstaller": {
-          "default": false,
           "description": "Disable building an universal installer of the archs specified in the target configuration",
           "type": "boolean"
         },
