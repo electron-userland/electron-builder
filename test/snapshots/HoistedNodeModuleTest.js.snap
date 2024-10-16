@@ -73,6 +73,105 @@ exports[`conflict versions 2`] = `
 }
 `;
 
+exports[`npm tar 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`pnpm es5-ext without hoisted config 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`pnpm es5-ext without hoisted config 2`] = `
+{
+  "author": "Mariusz Nowak <medyk@medikoo.com> (http://www.medikoo.com/)",
+  "dependencies": {
+    "es5-ext": "^0.10.64",
+    "type": "^2.7.2",
+  },
+  "description": "Property descriptor factory",
+  "devDependencies": {
+    "eslint": "^8.57.0",
+    "eslint-config-medikoo": "^4.2.0",
+    "git-list-updated": "^1.2.1",
+    "github-release-from-cc-changelog": "^2.3.0",
+    "husky": "^4.3.8",
+    "lint-staged": "~13.2.3",
+    "nyc": "^15.1.0",
+    "prettier-elastic": "^2.8.8",
+    "tad": "^3.1.1",
+  },
+  "engines": {
+    "node": ">=0.12",
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged",
+    },
+  },
+  "license": "ISC",
+  "lint-staged": {
+    "*.js": [
+      "eslint",
+    ],
+    "*.{css,html,js,json,md,yaml,yml}": [
+      "prettier -c",
+    ],
+  },
+  "name": "d",
+  "prettier": {
+    "overrides": [
+      {
+        "files": [
+          "*.md",
+          "*.yml",
+        ],
+        "options": {
+          "tabWidth": 2,
+        },
+      },
+    ],
+    "printWidth": 100,
+    "tabWidth": 4,
+  },
+  "repository": "medikoo/d",
+  "version": "1.0.2",
+}
+`;
+
+exports[`yarn parse-asn1 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`yarn parse-asn1 2`] = `
+{
+  "author": "Fedor Indutny",
+  "dependencies": {
+    "bn.js": "^4.0.0",
+    "inherits": "^2.0.1",
+    "minimalistic-assert": "^1.0.0",
+  },
+  "description": "ASN.1 encoder and decoder",
+  "devDependencies": {
+    "mocha": "^2.3.4",
+  },
+  "homepage": "https://github.com/indutny/asn1.js",
+  "license": "MIT",
+  "main": "lib/asn1.js",
+  "name": "asn1.js",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:indutny/asn1.js",
+  },
+  "version": "4.10.1",
+}
+`;
+
 exports[`yarn several workspaces 1`] = `
 {
   "linux": [],
