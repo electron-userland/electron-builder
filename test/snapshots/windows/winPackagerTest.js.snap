@@ -4,6 +4,23 @@ exports[`beta version 1`] = `
 {
   "win": [
     {
+      "arch": "arm64",
+      "file": "Test App ßW Setup 3.0.0-beta.2-arm64.exe",
+      "safeArtifactName": "TestApp-Setup-3.0.0-beta.2-arm64.exe",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "Test App ßW Setup 3.0.0-beta.2-arm64.exe.blockmap",
+      "safeArtifactName": "TestApp-Setup-3.0.0-beta.2-arm64.exe.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
       "arch": "x64",
       "file": "Test App ßW Setup 3.0.0-beta.2.exe",
       "safeArtifactName": "TestApp-Setup-3.0.0-beta.2.exe",
@@ -31,6 +48,11 @@ exports[`icon not an image 1`] = `"ERR_ICON_UNKNOWN_FORMAT"`;
 exports[`win zip 1`] = `
 {
   "win": [
+    {
+      "arch": "arm64",
+      "file": "Test App ßW-1.1.0-arm64-win.zip",
+      "safeArtifactName": "TestApp-1.1.0-arm64-win.zip",
+    },
     {
       "arch": "x64",
       "file": "Test App ßW-1.1.0-win.zip",
