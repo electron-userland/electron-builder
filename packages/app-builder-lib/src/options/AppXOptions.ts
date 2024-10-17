@@ -51,8 +51,8 @@ export interface AppXOptions extends TargetSpecificOptions {
    */
   readonly customExtensionsPath?: string
 
-    /**
-   * Path to custom `AppxManifest.xml`.
+  /**
+   * Relative path to custom `appmanifest.xml` (file name doesn't matter, it'll be renamed) located in build resources directory.
    */
   readonly customManifestPath?: string
 

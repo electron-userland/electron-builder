@@ -184,11 +184,8 @@
           "type": "string"
         },
         "customManifestPath": {
-          "description": "Path to custom AppxManifest.xml",
-          "type": [
-            "null",
-            "string"
-          ]
+          "description": "Relative path to custom `appmanifest.xml` (file name doesn't matter, it'll be renamed) located in build resources directory.",
+          "type": "string"
         },
         "displayName": {
           "description": "A friendly name that can be displayed to users. Corresponds to [Properties.DisplayName](https://msdn.microsoft.com/en-us/library/windows/apps/br211432.aspx).\nDefaults to the application product name.",
