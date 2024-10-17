@@ -1,3 +1,4 @@
+import { Arch, log } from "builder-util"
 import { computeDownloadUrl, getPublishConfigs, getPublishConfigsForUpdateInfo } from "../../publish/PublishManager"
 import { WinPackager } from "../../winPackager"
 import { NsisWebOptions } from "./nsisOptions"
@@ -35,8 +36,14 @@ export class WebInstallerTarget extends NsisTarget {
     defines.APP_PACKAGE_URL = appPackageUrl
   }
 
-  protected get installerFilenamePattern(): string {
-    // tslint:disable:no-invalid-template-strings
+  protected get supportsSeparateInstallers() {
+    return false
+  }
+
+  protected installerFilenamePattern(_primaryArch?: Arch | null, _defaultArch?: string): string {
+    if (this.options.buildUniversalInstaller === false) {
+      log.warn({ buildUniversalInstaller: true }, "only universal builds are supported for nsis-web installers, overriding setting")
+    }
     return "${productName} Web Setup ${version}.${ext}"
   }
 
