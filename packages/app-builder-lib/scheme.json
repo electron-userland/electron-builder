@@ -3861,7 +3861,7 @@
         },
         "buildUniversalInstaller": {
           "default": true,
-          "description": "Disable building an universal installer of the archs specified in the target configuration",
+          "description": "Disable building an universal installer of the archs specified in the target configuration\n*Not supported for nsis-web*",
           "type": "boolean"
         },
         "createDesktopShortcut": {
@@ -4166,7 +4166,7 @@
         },
         "buildUniversalInstaller": {
           "default": true,
-          "description": "Disable building an universal installer of the archs specified in the target configuration",
+          "description": "Disable building an universal installer of the archs specified in the target configuration\n*Not supported for nsis-web*",
           "type": "boolean"
         },
         "createDesktopShortcut": {
