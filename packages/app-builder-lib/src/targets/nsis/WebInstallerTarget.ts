@@ -36,14 +36,14 @@ export class WebInstallerTarget extends NsisTarget {
     defines.APP_PACKAGE_URL = appPackageUrl
   }
 
-  protected get supportsSeparateInstallers() {
-    return false
-  }
-
-  protected installerFilenamePattern(_primaryArch?: Arch | null, _defaultArch?: string): string {
+  protected buildUniversalInstaller(): boolean {
     if (this.options.buildUniversalInstaller === false) {
       log.warn({ buildUniversalInstaller: true }, "only universal builds are supported for nsis-web installers, overriding setting")
     }
+    return true
+  }
+
+  protected installerFilenamePattern(_primaryArch?: Arch | null, _defaultArch?: string): string {
     return "${productName} Web Setup ${version}.${ext}"
   }
 

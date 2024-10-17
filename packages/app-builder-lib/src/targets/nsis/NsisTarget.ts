@@ -86,18 +86,14 @@ export class NsisTarget extends Target {
     NsisTargetOptions.resolve(this.options)
   }
 
-  protected get supportsSeparateInstallers() {
-    return true
-  }
-
-  protected buildIndividualInstallers() {
+  protected buildUniversalInstaller() {
     const buildSeparateInstallers = this.options.buildUniversalInstaller === false
-    return this.supportsSeparateInstallers && buildSeparateInstallers
+    return !buildSeparateInstallers
   }
 
   build(appOutDir: string, arch: Arch) {
     this.archs.set(arch, appOutDir)
-    if (this.buildIndividualInstallers()) {
+    if (!this.buildUniversalInstaller()) {
       return this.buildInstaller(new Map<Arch, string>().set(arch, appOutDir))
     }
     return Promise.resolve()
@@ -143,7 +139,7 @@ export class NsisTarget extends Target {
   }
 
   protected installerFilenamePattern(primaryArch?: Arch | null, defaultArch?: string): string {
-    if (this.buildIndividualInstallers()) {
+    if (!this.buildUniversalInstaller()) {
       return "${productName} " + (this.isPortable ? "" : "Setup ") + "${version}" + (primaryArch != null ? getArchSuffix(primaryArch, defaultArch) : "") + ".${ext}"
     }
     // tslint:disable:no-invalid-template-strings
@@ -155,7 +151,7 @@ export class NsisTarget extends Target {
   }
 
   async finishBuild(): Promise<any> {
-    if (this.buildIndividualInstallers()) {
+    if (!this.buildUniversalInstaller()) {
       return this.packageHelper.finishBuild()
     }
     try {
@@ -353,7 +349,7 @@ export class NsisTarget extends Target {
     await this.executeMakensis(defines, commands, sharedHeader + (await this.computeFinalScript(script, true, archs)))
     await Promise.all<any>([packager.sign(installerPath), defines.UNINSTALLER_OUT_FILE == null ? Promise.resolve() : unlink(defines.UNINSTALLER_OUT_FILE)])
 
-    const safeArtifactName = computeSafeArtifactNameIfNeeded(installerFilename, () => this.generateGitHubInstallerName())
+    const safeArtifactName = computeSafeArtifactNameIfNeeded(installerFilename, () => this.generateGitHubInstallerName(primaryArch, defaultArch))
     let updateInfo: any
     if (this.isWebInstaller) {
       updateInfo = createNsisWebDifferentialUpdateInfo(installerPath, packageFiles)
@@ -376,10 +372,11 @@ export class NsisTarget extends Target {
     })
   }
 
-  protected generateGitHubInstallerName(): string {
+  protected generateGitHubInstallerName(primaryArch: Arch | null, defaultArch: string | undefined): string {
     const appInfo = this.packager.appInfo
     const classifier = appInfo.name.toLowerCase() === appInfo.name ? "setup-" : "Setup-"
-    return `${appInfo.name}-${this.isPortable ? "" : classifier}${appInfo.version}.exe`
+    const archSuffix = !this.buildUniversalInstaller() && primaryArch != null ? getArchSuffix(primaryArch, defaultArch) : ""
+    return `${appInfo.name}-${this.isPortable ? "" : classifier}${appInfo.version}${archSuffix}.exe`
   }
 
   private get isUnicodeEnabled(): boolean {
