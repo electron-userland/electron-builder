@@ -3,7 +3,7 @@ import { app } from "../helpers/packTester"
 
 // tests are heavy, to distribute tests across CircleCI machines evenly, these tests were moved from oneClickInstallerTest
 
-test.ifNotMac(
+test.ifNotCiMac(
   "web installer",
   app({
     targets: Platform.WINDOWS.createTarget(["nsis-web"], Arch.x64, Arch.arm64),
@@ -30,8 +30,7 @@ test.ifNotMac(
   })
 )
 
-// can no longer run on mac since mac arm64 can't build ia32, but we want to verify universal builds
-test.ifAll.ifNotMac(
+test.ifAll.ifNotCiMac(
   "web installer (default github)",
   app({
     targets: Platform.WINDOWS.createTarget(["nsis-web"], Arch.ia32, Arch.x64, Arch.arm64),

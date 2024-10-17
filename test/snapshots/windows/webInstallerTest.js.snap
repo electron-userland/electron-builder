@@ -99,6 +99,13 @@ exports[`web installer 1`] = `
           },
         ],
         "packages": {
+          "arm64": {
+            "blockMapSize": "@blockMapSize",
+            "file": "TestApp-1.1.0-arm64.nsis.7z",
+            "path": "TestApp-1.1.0-arm64.nsis.7z",
+            "sha512": "@sha512",
+            "size": "@size",
+          },
           "x64": {
             "blockMapSize": "@blockMapSize",
             "file": "TestApp-1.1.0-x64.nsis.7z",
@@ -114,11 +121,17 @@ exports[`web installer 1`] = `
       },
     },
     {
-      "arch": "x64",
       "file": "Test App ßW Web Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-WebSetup-1.1.0.exe",
       "updateInfo": {
         "packages": {
+          "arm64": {
+            "blockMapSize": "@blockMapSize",
+            "file": "TestApp-1.1.0-arm64.nsis.7z",
+            "path": "TestApp-1.1.0-arm64.nsis.7z",
+            "sha512": "@sha512",
+            "size": "@size",
+          },
           "x64": {
             "blockMapSize": "@blockMapSize",
             "file": "TestApp-1.1.0-x64.nsis.7z",
@@ -128,6 +141,10 @@ exports[`web installer 1`] = `
           },
         },
       },
+    },
+    {
+      "arch": "arm64",
+      "file": "TestApp-1.1.0-arm64.nsis.7z",
     },
     {
       "arch": "x64",
