@@ -98,8 +98,13 @@ export default class AppXTarget extends Target {
     const assetInfo = await AppXTarget.computeUserAssets(vm, vendorPath, userAssetDir)
     const userAssets = assetInfo.userAssets
 
-    const manifestFile = stageDir.getTempFile("AppxManifest.xml")
-    await this.writeManifest(manifestFile, arch, await this.computePublisherName(), userAssets)
+    const manifestFile = this.options.customManifestPath || stageDir.getTempFile("AppxManifest.xml")
+    if (this.options.customManifestPath) {
+      log.info({ reason: "Custom manifest path provided" }, "Manifest writing skipped")
+    } else {
+      await this.writeManifest(manifestFile, arch, await this.computePublisherName(), userAssets)
+    }
+
     await packager.info.callAppxManifestCreated(manifestFile)
     mappingList.push(assetInfo.mappings)
     mappingList.push([`"${vm.toVmFile(manifestFile)}" "AppxManifest.xml"`])

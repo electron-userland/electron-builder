@@ -183,6 +183,13 @@
           "description": "Relative path to custom extensions xml to be included in an `appmanifest.xml`.",
           "type": "string"
         },
+        "customManifestPath": {
+          "description": "Path to custom AppxManifest.xml",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
         "displayName": {
           "description": "A friendly name that can be displayed to users. Corresponds to [Properties.DisplayName](https://msdn.microsoft.com/en-us/library/windows/apps/br211432.aspx).\nDefaults to the application product name.",
           "type": [
