@@ -22,7 +22,7 @@ import * as path from "path"
 import { getBinFromUrl } from "../../binDownload"
 import { Target } from "../../core"
 import { DesktopShortcutCreationPolicy, getEffectiveOptions } from "../../options/CommonWindowsInstallerConfiguration"
-import { computeSafeArtifactNameIfNeeded, normalizeExt } from "../../platformPackager"
+import { chooseNotNull, computeSafeArtifactNameIfNeeded, normalizeExt } from "../../platformPackager"
 import { hashFile } from "../../util/hash"
 import { isMacOsCatalina } from "../../util/macosVersion"
 import { time } from "../../util/timer"
@@ -174,7 +174,7 @@ export class NsisTarget extends Target {
     const packager = this.packager
     const appInfo = packager.appInfo
     const options = this.options
-    const defaultArch = this.packager.platformSpecificBuildOptions.defaultArch
+    const defaultArch = chooseNotNull(this.packager.platformSpecificBuildOptions.defaultArch, this.packager.config.defaultArch) ?? undefined
     const installerFilename = packager.expandArtifactNamePattern(options, "exe", primaryArch, this.installerFilenamePattern(primaryArch, defaultArch), false, defaultArch)
     const oneClick = options.oneClick !== false
     const installerPath = path.join(this.outDir, installerFilename)
