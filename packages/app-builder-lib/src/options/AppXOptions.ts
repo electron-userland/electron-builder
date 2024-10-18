@@ -55,26 +55,26 @@ export interface AppXOptions extends TargetSpecificOptions {
    * (Advanced Option) Relative path to custom `appmanifest.xml` (file name doesn't matter, it'll be renamed) located in build resources directory.
    * Supports the following template macros:
    *
-   * - ${"publisher"}
-   * - ${"publisherDisplayName"}
-   * - ${"version"}
-   * - ${"applicationId"}
-   * - ${"identityName"}
-   * - ${"executable"}
-   * - ${"displayName"}
-   * - ${"description"}
-   * - ${"backgroundColor"}
-   * - ${"logo"}
-   * - ${"square150x150Logo"}
-   * - ${"square44x44Logo"}
-   * - ${"lockScreen"}
-   * - ${"defaultTile"}
-   * - ${"splashScreen"}
-   * - ${"arch"}
-   * - ${"resourceLanguages"}
-   * - ${"extensions"}
-   * - ${"minVersion"}
-   * - ${"maxVersionTested"}
+   * - ${publisher}
+   * - ${publisherDisplayName}
+   * - ${version}
+   * - ${applicationId}
+   * - ${identityName}
+   * - ${executable}
+   * - ${displayName}
+   * - ${description}
+   * - ${backgroundColor}
+   * - ${logo}
+   * - ${square150x150Logo}
+   * - ${square44x44Logo}
+   * - ${lockScreen}
+   * - ${defaultTile}
+   * - ${splashScreen}
+   * - ${arch}
+   * - ${resourceLanguages}
+   * - ${extensions}
+   * - ${minVersion}
+   * - ${maxVersionTested}
    */
   readonly customManifestPath?: string
 
