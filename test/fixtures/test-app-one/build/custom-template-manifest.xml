@@ -17,11 +17,14 @@
     <Logo>${logo}</Logo>
   </Properties>
   <Resources>
-    <Resource Language="en-US"/>
+    ${resourceLanguages}
   </Resources>
   <Dependencies>
-    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.18362.0" MaxVersionTested="10.0.18362.0"/>
+    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="${minVersion}" MaxVersionTested="${maxVersionTested}" />
   </Dependencies>
+  <Capabilities>
+    <rescap:Capability Name="runFullTrust"/>
+  </Capabilities>
   <Applications>
     <Application Id="${applicationId}" Executable="${executable}" EntryPoint="Windows.FullTrustApplication">
       <uap:VisualElements

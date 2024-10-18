@@ -1,17 +1,28 @@
-<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10" xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10" xmlns:desktop="http://schemas.microsoft.com/appx/manifest/desktop/windows10" xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities" xmlns:desktop2="http://schemas.microsoft.com/appx/manifest/desktop/windows10/2">
-  <Identity Name="IonutStoica.ContainerDesktop" ProcessorArchitecture="x64" Publisher="CN=52408AA8-2ECC-4E48-9A2C-6C1F69841C79" Version="5.2.13.0"/>
+<?xml version="1.0" encoding="utf-8"?>
+<!--suppress XmlUnusedNamespaceDeclaration -->
+<Package
+   xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+   xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+   xmlns:desktop="http://schemas.microsoft.com/appx/manifest/desktop/windows10"
+   xmlns:desktop2="http://schemas.microsoft.com/appx/manifest/desktop/windows10/2"
+   xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+   >
+  <!-- use single quotes to avoid double quotes escaping in the publisher value  -->
+  <Identity Name="${identityName}"
+    ProcessorArchitecture="${arch}"
+    Publisher='${publisher}'
+    Version="${version}" />
   <Properties>
-    <DisplayName>Container Desktop</DisplayName>
-    <PublisherDisplayName>Ionut.Stoica</PublisherDisplayName>
-    <Description>Container Desktop</Description>
-    <Logo>assets\StoreLogo.png</Logo>
+    <DisplayName>${displayName}</DisplayName>
+    <PublisherDisplayName>${publisherDisplayName}</PublisherDisplayName>
+    <Description>${description}</Description>
+    <Logo>${logo}</Logo>
   </Properties>
   <Resources>
-    <Resource Language="en-US"/>
+    ${resourceLanguages}
   </Resources>
   <Dependencies>
-    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.18362.0" MaxVersionTested="10.0.18362.0"/>
+    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="${minVersion}" MaxVersionTested="${maxVersionTested}" />
   </Dependencies>
   <Capabilities>
     <Capability Name="internetClient"/>
@@ -19,17 +30,25 @@
     <rescap:Capability Name="runFullTrust"/>
   </Capabilities>
   <Applications>
-    <Application Id="IonutStoica.ContainerDesktop" Executable="app\Container Desktop.exe" EntryPoint="Windows.FullTrustApplication">
-      <uap:VisualElements BackgroundColor="#464646" DisplayName="Container Desktop" Square150x150Logo="assets\Square150x150Logo.png" Square44x44Logo="assets\Square44x44Logo.png" Description="Container Desktop">
-        <uap:DefaultTile Wide310x150Logo="assets\Wide310x150Logo.png" Square310x310Logo="assets\LargeTile.png" Square71x71Logo="assets\SmallTile.png"/>
+    <Application Id="${applicationId}" Executable="${executable}" EntryPoint="Windows.FullTrustApplication">
+      <uap:VisualElements
+       BackgroundColor="${backgroundColor}"
+       DisplayName="${displayName}"
+       Square150x150Logo="${square150x150Logo}"
+       Square44x44Logo="${square44x44Logo}"
+       Description="${description}">
+        ${lockScreen}
+        ${defaultTile}
+        ${splashScreen}
       </uap:VisualElements>
+      ${extensions}
     </Application>
   </Applications>
   <Extensions>
-    <desktop2:Extension Category="windows.firewallRules">
-      <desktop2:FirewallRules Executable="app\bin\container-desktop-ssh-relay.exe">
-        <desktop2:Rule Direction="in" Profile="private" IPProtocol="TCP" LocalPortMin="22022" LocalPortMax="24044"/>
-      </desktop2:FirewallRules>
-    </desktop2:Extension>
-  </Extensions>
+  <desktop2:Extension Category="windows.firewallRules">
+    <desktop2:FirewallRules Executable="app\bin\container-desktop-ssh-relay.exe">
+      <desktop2:Rule Direction="in" Profile="private" IPProtocol="TCP" LocalPortMin="22022" LocalPortMax="24044"/>
+    </desktop2:FirewallRules>
+  </desktop2:Extension>
+</Extensions>
 </Package>
