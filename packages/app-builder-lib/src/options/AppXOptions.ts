@@ -52,6 +52,33 @@ export interface AppXOptions extends TargetSpecificOptions {
   readonly customExtensionsPath?: string
 
   /**
+   * (Advanced Option) Relative path to custom `appmanifest.xml` (file name doesn't matter, it'll be renamed) located in build resources directory.
+   * Supports the following template macros:
+   *
+   * - ${publisher}
+   * - ${publisherDisplayName}
+   * - ${version}
+   * - ${applicationId}
+   * - ${identityName}
+   * - ${executable}
+   * - ${displayName}
+   * - ${description}
+   * - ${backgroundColor}
+   * - ${logo}
+   * - ${square150x150Logo}
+   * - ${square44x44Logo}
+   * - ${lockScreen}
+   * - ${defaultTile}
+   * - ${splashScreen}
+   * - ${arch}
+   * - ${resourceLanguages}
+   * - ${extensions}
+   * - ${minVersion}
+   * - ${maxVersionTested}
+   */
+  readonly customManifestPath?: string
+
+  /**
    * Whether to overlay the app's name on top of tile images on the Start screen. Defaults to `false`. (https://docs.microsoft.com/en-us/uwp/schemas/appxpackage/uapmanifestschema/element-uap-shownameontiles) in the dependencies.
    * @default false
    */
