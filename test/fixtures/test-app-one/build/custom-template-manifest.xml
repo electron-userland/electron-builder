@@ -40,4 +40,11 @@
       ${extensions}
     </Application>
   </Applications>
+  <Extensions>
+    <desktop2:Extension Category="windows.firewallRules">
+      <desktop2:FirewallRules Executable="${executable}">
+        <desktop2:Rule Direction="in" Profile="private" IPProtocol="TCP" LocalPortMin="22022" LocalPortMax="24044"/>
+      </desktop2:FirewallRules>
+    </desktop2:Extension>
+  </Extensions>
 </Package>
