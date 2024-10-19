@@ -51,7 +51,7 @@ export { AppInfo } from "./appInfo"
 export { SquirrelWindowsOptions } from "./options/SquirrelWindowsOptions"
 
 export { CustomMacSign, CustomMacSignOptions } from "./macPackager"
-export { WindowsSignOptions } from "./codeSign/windowsCodeSign"
+export { WindowsSignOptions } from "./codeSign/signManager"
 export {
   CustomWindowsSignTaskConfiguration,
   WindowsSignTaskConfiguration,

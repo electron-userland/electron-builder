@@ -24,7 +24,7 @@ import { time } from "./util/timer"
 import { getWindowsVm, VmManager } from "./vm/vm"
 import { execWine } from "./wine"
 import { signWindows } from "./codeSign/windowsCodeSign"
-import { WindowsSignOptions } from "./codeSign/windowsCodeSign"
+import { SignManager, WindowsSignOptions } from "./codeSign/signManager"
 import { WindowsSignAzureManager } from "./codeSign/windowsSignAzureManager"
 
 export class WinPackager extends PlatformPackager<WindowsConfiguration> {
@@ -39,6 +39,9 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
       return manager
     })
   )
+  get signManager(): Promise<SignManager> {
+    return this.platformSpecificBuildOptions.azureSignOptions != null ? this.azureSignManager.value : this.signtoolManager.value
+  }
 
   get isForceCodeSigningVerification(): boolean {
     return this.platformSpecificBuildOptions.verifyUpdateCodeSignature !== false
@@ -293,6 +296,6 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     const filesToSign = await Promise.all([filesPromise(["resources", "app.asar.unpacked"]), filesPromise(["swiftshader"])])
     await BluebirdPromise.map(filesToSign.flat(1), file => this.sign(file), { concurrency: 4 })
 
-    return true
+    return (await this.signManager).finishSigning()
   }
 }

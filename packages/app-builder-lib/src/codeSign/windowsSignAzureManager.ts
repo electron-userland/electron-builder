@@ -1,10 +1,16 @@
 import { InvalidConfigurationError, log } from "builder-util"
 import { WindowsAzureSigningConfiguration } from "../options/winOptions"
 import { WinPackager } from "../winPackager"
-import { getPSCmd, WindowsSignOptions } from "./windowsCodeSign"
+import { getPSCmd } from "./windowsCodeSign"
+import { WindowsSignOptions } from "./signManager"
+import { SignManager } from "./signManager"
 
-export class WindowsSignAzureManager {
-  constructor(private readonly packager: WinPackager) {}
+export class WindowsSignAzureManager extends SignManager {
+  private readonly filesToSign = new Set<string>()
+
+  constructor(packager: WinPackager) {
+    super(packager)
+  }
 
   async initializeProviderModules() {
     const vm = await this.packager.vm.value
@@ -74,24 +80,32 @@ export class WindowsSignAzureManager {
     return true
   }
 
+  signUsingTool(options: WindowsSignOptions): Promise<boolean> {
+    this.filesToSign.add(options.path)
+    return Promise.resolve(true)
+  }
+
   // prerequisite: requires `initializeProviderModules` to already have been executed
-  async signUsingAzureTrustedSigning(options: WindowsSignOptions): Promise<boolean> {
+  async finishSigning(): Promise<boolean> {
     const vm = await this.packager.vm.value
     const ps = await getPSCmd(vm)
 
-    const { endpoint, certificateProfileName, codeSigningAccountName, ...extraSigningArgs }: WindowsAzureSigningConfiguration = options.options.azureSignOptions!
+    const { endpoint, certificateProfileName, codeSigningAccountName, ...extraSigningArgs }: WindowsAzureSigningConfiguration =
+      this.packager.platformSpecificBuildOptions.azureSignOptions!
+    const files = Array.from(this.filesToSign)
+    log.info({ path: files.map(file => log.filePath(file)) }, "signing files with Azure Trusted Signing (beta)")
     const params = {
       FileDigest: "SHA256",
       ...extraSigningArgs, // allows overriding FileDigest if provided in config
       Endpoint: endpoint,
       CertificateProfileName: certificateProfileName,
       CodeSigningAccountName: codeSigningAccountName,
-      Files: `"${options.path}"`,
+      Files: `"${files.join(",")}"`,
     }
     const paramsString = Object.entries(params)
-      .reduce((res, [field, value]) => {
+      .reduce<string[]>((res, [field, value]) => {
         return [...res, `-${field}`, value]
-      }, [] as string[])
+      }, [])
       .join(" ")
     await vm.exec(ps, ["-NoProfile", "-NonInteractive", "-Command", `Invoke-TrustedSigning ${paramsString}`])
 
