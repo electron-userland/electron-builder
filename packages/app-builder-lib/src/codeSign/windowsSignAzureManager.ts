@@ -1,4 +1,4 @@
-import { InvalidConfigurationError, log } from "builder-util"
+import { InvalidConfigurationError, log, retry } from "builder-util"
 import { WindowsAzureSigningConfiguration } from "../options/winOptions"
 import { WinPackager } from "../winPackager"
 import { getPSCmd } from "./windowsCodeSign"
@@ -93,7 +93,8 @@ export class WindowsSignAzureManager extends SignManager {
     const { endpoint, certificateProfileName, codeSigningAccountName, ...extraSigningArgs }: WindowsAzureSigningConfiguration =
       this.packager.platformSpecificBuildOptions.azureSignOptions!
     const files = Array.from(this.filesToSign)
-    log.info({ path: files.map(file => log.filePath(file)) }, "signing files with Azure Trusted Signing (beta)")
+    log.info({ files: files.map(file => log.filePath(file)) }, "signing files with Azure Trusted Signing (beta)")
+
     const params = {
       FileDigest: "SHA256",
       ...extraSigningArgs, // allows overriding FileDigest if provided in config
@@ -107,7 +108,21 @@ export class WindowsSignAzureManager extends SignManager {
         return [...res, `-${field}`, value]
       }, [])
       .join(" ")
-    await vm.exec(ps, ["-NoProfile", "-NonInteractive", "-Command", `Invoke-TrustedSigning ${paramsString}`])
+
+    await retry(
+      () => vm.exec(ps, ["-NoProfile", "-NonInteractive", "-Command", `Invoke-TrustedSigning ${paramsString}`]),
+      2,
+      15000,
+      10000,
+      0,
+      (e: any) => {
+        if (e.message.includes("being used by another process.")) {
+          log.warn(`Attempt to code sign failed, another attempt will be made in 15 seconds: ${e.message}`)
+          return true
+        }
+        return false
+      }
+    )
 
     return true
   }
