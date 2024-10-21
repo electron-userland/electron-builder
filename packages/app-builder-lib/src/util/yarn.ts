@@ -195,6 +195,7 @@ export async function rebuild(config: Configuration, appDir: string, options: Re
   const logInfo = {
     electronVersion,
     arch,
+    platform,
     buildFromSource,
     appDir: log.filePath(appDir) || "./",
   }
