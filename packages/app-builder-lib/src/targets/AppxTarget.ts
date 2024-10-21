@@ -4,7 +4,7 @@ import { copyOrLinkFile, walk } from "builder-util"
 import { emptyDir, readdir, readFile, writeFile } from "fs-extra"
 import * as path from "path"
 import { AppXOptions } from "../"
-import { getSignVendorPath, isOldWin6 } from "../codeSign/windowsSignToolManager"
+import { getSignVendorPath, isOldWin6, WindowsSignToolManager } from "../codeSign/windowsSignToolManager"
 import { Target } from "../core"
 import { getTemplatePath } from "../util/pathManager"
 import { VmManager } from "../vm/vm"
@@ -186,7 +186,7 @@ export default class AppXTarget extends Target {
 
   // https://github.com/electron-userland/electron-builder/issues/2108#issuecomment-333200711
   private async computePublisherName() {
-    const signtoolManager = await this.packager.signtoolManager.value
+    const signtoolManager = (await this.packager.signManager) as WindowsSignToolManager
     if ((await signtoolManager.cscInfo.value) == null) {
       log.info({ reason: "Windows Store only build" }, "AppX is not signed")
       return this.options.publisher || "CN=ms"

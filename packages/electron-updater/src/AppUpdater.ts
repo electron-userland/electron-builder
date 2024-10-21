@@ -718,7 +718,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         500,
         0,
         0,
-        error => error instanceof Error && /^EBUSY:/.test(error.message)
+        (_delay, error) => error instanceof Error && /^EBUSY:/.test(error.message)
       )
     } catch (e: any) {
       await removeFileIfAny()

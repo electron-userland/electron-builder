@@ -7,8 +7,8 @@ export async function hdiUtil(args: string[]) {
     5000,
     2000,
     0,
-    (error: any) => {
-      log.error({ args, code: error.code, error: (error.message || error).toString() }, "unable to execute hdiutil")
+    (delay: number, error: Error) => {
+      log.error({ args, error: (error.message || error).toString() }, `unable to execute hdiutil, another attempt in ${delay / 1000} seconds`)
       return true
     }
   )

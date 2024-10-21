@@ -112,12 +112,12 @@ export class WindowsSignAzureManager extends SignManager {
     await retry(
       () => vm.exec(ps, ["-NoProfile", "-NonInteractive", "-Command", `Invoke-TrustedSigning ${paramsString}`]),
       2,
-      15000,
+      10000,
       10000,
       0,
-      (e: any) => {
+      (delay: number, e: Error) => {
         if (e.message.includes("being used by another process.")) {
-          log.warn(`Attempt to code sign failed, another attempt will be made in 15 seconds: ${e.message}`)
+          log.warn({ error: e.message }, `attempt to code sign failed, another attempt will be made in ${delay / 1000} seconds`)
           return true
         }
         return false
