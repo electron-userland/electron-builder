@@ -115,9 +115,9 @@ export class WindowsSignAzureManager extends SignManager {
       10000,
       10000,
       0,
-      (delay: number, e: Error) => {
+      (e: any) => {
         if (e.message.includes("being used by another process.")) {
-          log.warn({ error: e.message }, `attempt to code sign failed, another attempt will be made in ${delay / 1000} seconds`)
+          log.warn({ error: e.message }, `attempt to code sign failed, another attempt will be made`)
           return true
         }
         return false

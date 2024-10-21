@@ -147,7 +147,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
       500,
       500,
       0,
-      (_delay: number, e: any) => {
+      (e: any) => {
         // https://github.com/electron-userland/electron-builder/issues/1414
         const message = e.message
         if (message != null && message.includes("Couldn't resolve host name")) {

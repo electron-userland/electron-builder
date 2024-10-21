@@ -407,16 +407,9 @@ export async function executeAppBuilder(
   }
 }
 
-export async function retry<T>(
-  task: () => Promise<T>,
-  retryCount: number,
-  interval: number,
-  backoff = 0,
-  attempt = 0,
-  shouldRetry?: (delay: number, e: any) => boolean
-): Promise<T> {
-  return await _retry(task, retryCount, interval, backoff, attempt, (delay, error) => {
-    log.info({ error: error.message }, "command failed")
-    return shouldRetry?.(delay, error) ?? true
+export async function retry<T>(task: () => Promise<T>, retryCount: number, interval: number, backoff = 0, attempt = 0, shouldRetry?: (e: any) => boolean): Promise<T> {
+  return await _retry(task, retryCount, interval, backoff, attempt, e => {
+    log.info(`Above command failed, retrying ${retryCount} more times`)
+    return shouldRetry?.(e) ?? true
   })
 }
