@@ -133,32 +133,13 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
       options: this.platformSpecificBuildOptions,
     }
 
-    const didSignSuccessfully = await this.doSign(signOptions)
+    const didSignSuccessfully = await signWindows(signOptions, this)
     if (!didSignSuccessfully && this.forceCodeSigning) {
       throw new InvalidConfigurationError(
         `App is not signed and "forceCodeSigning" is set to true, please ensure that code signing configuration is correct, please see https://electron.build/code-signing`
       )
     }
     return didSignSuccessfully
-  }
-
-  private async doSign(options: WindowsSignOptions) {
-    return retry(
-      () => signWindows(options, this),
-      3,
-      500,
-      500,
-      0,
-      (e: any) => {
-        // https://github.com/electron-userland/electron-builder/issues/1414
-        const message = e.message
-        if (message != null && message.includes("Couldn't resolve host name")) {
-          log.warn({ error: message }, `cannot sign`)
-          return true
-        }
-        return false
-      }
-    )
   }
 
   async signAndEditResources(file: string, arch: Arch, outDir: string, internalName?: string | null, requestedExecutionLevel?: RequestedExecutionLevel | null) {
