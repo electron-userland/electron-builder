@@ -41,6 +41,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
   )
 
   get canSignConcurrently(): boolean {
+    // https://github.com/electron-userland/electron-builder/issues/8615
     return this.platformSpecificBuildOptions.azureSignOptions == null
   }
 

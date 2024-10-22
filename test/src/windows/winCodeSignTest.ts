@@ -115,17 +115,24 @@ test.ifAll.ifNotCiMac(
 
 test.ifAll.ifNotCiMac(
   "azure signing without credentials",
-  appThrows({
-    targets: windowsDirTarget,
-    config: {
-      forceCodeSigning: true,
-      win: {
-        azureSignOptions: {
-          endpoint: "https://weu.codesigning.azure.net/",
-          certificateProfileName: "profilenamehere",
-          codeSigningAccountName: "codesigningnamehere",
+  appThrows(
+    {
+      targets: windowsDirTarget,
+      config: {
+        forceCodeSigning: true,
+        win: {
+          azureSignOptions: {
+            endpoint: "https://weu.codesigning.azure.net/",
+            certificateProfileName: "profilenamehere",
+            codeSigningAccountName: "codesigningnamehere",
+          },
         },
       },
     },
-  })
+    {},
+    error => {
+      expect(error).toBeInstanceOf(Error)
+      expect(error.message.includes("Unable to find valid azure env field AZURE_TENANT_ID for signing.")).toBe(true)
+    }
+  )
 )
