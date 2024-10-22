@@ -40,6 +40,10 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     })
   )
 
+  get canSignConcurrently(): boolean {
+    return this.platformSpecificBuildOptions.azureSignOptions == null
+  }
+
   get isForceCodeSigningVerification(): boolean {
     return this.platformSpecificBuildOptions.verifyUpdateCodeSignature !== false
   }
@@ -291,7 +295,14 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
       return walk(outDir, (file, stat) => stat.isDirectory() || this.shouldSignFile(file))
     }
     const filesToSign = await Promise.all([filesPromise(["resources", "app.asar.unpacked"]), filesPromise(["swiftshader"])])
-    await BluebirdPromise.map(filesToSign.flat(1), file => this.sign(file), { concurrency: 4 })
+    const filesList = filesToSign.flat(1)
+    if (this.canSignConcurrently) {
+      await BluebirdPromise.map(filesList, file => this.sign(file), { concurrency: 4 })
+    } else {
+      for await (const file of filesList) {
+        await this.sign(file)
+      }
+    }
 
     return true
   }
