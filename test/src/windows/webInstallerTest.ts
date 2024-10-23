@@ -6,7 +6,7 @@ import { app } from "../helpers/packTester"
 test.ifNotCiMac(
   "web installer",
   app({
-    targets: Platform.WINDOWS.createTarget(["nsis-web"], Arch.x64),
+    targets: Platform.WINDOWS.createTarget(["nsis-web"], Arch.x64, Arch.arm64),
     config: {
       publish: {
         provider: "s3",
@@ -22,6 +22,9 @@ test.ifNotCiMac(
         onlyLoadAppFromAsar: true,
         loadBrowserProcessSpecificV8Snapshot: true,
         grantFileProtocolExtraPrivileges: undefined, // unsupported on current electron version in our tests
+      },
+      nsisWeb: {
+        buildUniversalInstaller: false,
       },
     },
   })
