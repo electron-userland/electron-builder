@@ -11,11 +11,12 @@ import { isUseSystemSigncode } from "../util/flags"
 import { VmManager } from "../vm/vm"
 import { WinPackager } from "../winPackager"
 import { chooseNotNull } from "../platformPackager"
-import { WindowsSignOptions } from "./windowsCodeSign"
+import { WindowsSignOptions } from "./signManager"
 import { getPSCmd } from "./windowsCodeSign"
 import { MemoLazy, parseDn } from "builder-util-runtime"
 import { Lazy } from "lazy-val"
 import { importCertificate } from "./codesign"
+import { SignManager } from "./signManager"
 
 export function getSignVendorPath() {
   return getBin("winCodeSign")
@@ -65,10 +66,11 @@ interface CertInfo {
   PSParentPath: string
 }
 
-export class WindowsSignToolManager {
+export class WindowsSignToolManager extends SignManager {
   private readonly platformSpecificBuildOptions: WindowsConfiguration
 
-  constructor(private readonly packager: WinPackager) {
+  constructor(protected readonly packager: WinPackager) {
+    super(packager)
     this.platformSpecificBuildOptions = packager.platformSpecificBuildOptions
   }
 
@@ -161,7 +163,7 @@ export class WindowsSignToolManager {
     }
   )
 
-  async signUsingSigntool(options: WindowsSignOptions): Promise<boolean> {
+  async signUsingTool(options: WindowsSignOptions): Promise<boolean> {
     let hashes = chooseNotNull(options.options.signtoolOptions?.signingHashAlgorithms, options.options.signingHashAlgorithms)
     // msi does not support dual-signing
     if (options.path.endsWith(".msi")) {
@@ -224,6 +226,10 @@ export class WindowsSignToolManager {
     }
 
     return true
+  }
+
+  finishSigning(): Promise<boolean> {
+    return Promise.resolve(true)
   }
 
   async getCertInfo(file: string, password: string): Promise<CertificateInfo> {

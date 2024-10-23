@@ -24,7 +24,7 @@ import { time } from "./util/timer"
 import { getWindowsVm, VmManager } from "./vm/vm"
 import { execWine } from "./wine"
 import { signWindows } from "./codeSign/windowsCodeSign"
-import { WindowsSignOptions } from "./codeSign/windowsCodeSign"
+import { SignManager, WindowsSignOptions } from "./codeSign/signManager"
 import { WindowsSignAzureManager } from "./codeSign/windowsSignAzureManager"
 
 export class WinPackager extends PlatformPackager<WindowsConfiguration> {
@@ -32,13 +32,16 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
 
   readonly vm = new Lazy<VmManager>(() => (process.platform === "win32" ? Promise.resolve(new VmManager()) : getWindowsVm(this.debugLogger)))
 
-  readonly signtoolManager = new Lazy<WindowsSignToolManager>(() => Promise.resolve(new WindowsSignToolManager(this)))
-  readonly azureSignManager = new Lazy(() =>
+  private readonly signtoolManager = new Lazy<WindowsSignToolManager>(() => Promise.resolve(new WindowsSignToolManager(this)))
+  private readonly azureSignManager = new Lazy(() =>
     Promise.resolve(new WindowsSignAzureManager(this)).then(async manager => {
       await manager.initializeProviderModules()
       return manager
     })
   )
+  get signManager(): Promise<SignManager> {
+    return this.platformSpecificBuildOptions.azureSignOptions != null ? this.azureSignManager.value : this.signtoolManager.value
+  }
 
   get isForceCodeSigningVerification(): boolean {
     return this.platformSpecificBuildOptions.verifyUpdateCodeSignature !== false
@@ -293,6 +296,6 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     const filesToSign = await Promise.all([filesPromise(["resources", "app.asar.unpacked"]), filesPromise(["swiftshader"])])
     await BluebirdPromise.map(filesToSign.flat(1), file => this.sign(file), { concurrency: 4 })
 
-    return true
+    return (await this.signManager).finishSigning()
   }
 }
