@@ -1,5 +1,11 @@
 ## 4.3.0
 
+## 6.4.0-alpha.1
+
+### Patch Changes
+
+- [#8623](https://github.com/electron-userland/electron-builder/pull/8623) [`cfa67c01`](https://github.com/electron-userland/electron-builder/commit/cfa67c01827a44c88fb8448562dbe928ba37494f) Thanks [@q837477816](https://github.com/q837477816)! - fix: copyFileSync operation will block the main thread
+
 ## 6.4.0-alpha.0
 
 ### Minor Changes
