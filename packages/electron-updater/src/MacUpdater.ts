@@ -1,6 +1,6 @@
 import { AllPublishOptions, newError, safeStringifyJson } from "builder-util-runtime"
-import { pathExistsSync, stat } from "fs-extra"
-import { createReadStream, copyFileSync } from "fs"
+import { pathExistsSync, stat, copyFile } from "fs-extra"
+import { createReadStream } from "fs"
 import * as path from "path"
 import { createServer, IncomingMessage, Server, ServerResponse } from "http"
 import { AppAdapter } from "./AppAdapter"
@@ -117,11 +117,11 @@ export class MacUpdater extends AppUpdater {
           await this.httpExecutor.download(zipFileInfo.url, destinationFile, downloadOptions)
         }
       },
-      done: event => {
+      done: async event => {
         if (!downloadUpdateOptions.disableDifferentialDownload) {
           try {
             const cachedUpdateFilePath = path.join(this.downloadedUpdateHelper!.cacheDir, CURRENT_MAC_APP_ZIP_FILE_NAME)
-            copyFileSync(event.downloadedFile, cachedUpdateFilePath)
+            await copyFile(event.downloadedFile, cachedUpdateFilePath)
           } catch (error: any) {
             this._logger.warn(`Unable to copy file for caching for future differential downloads: ${error.message}`)
           }
