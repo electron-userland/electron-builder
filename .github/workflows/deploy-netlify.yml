@@ -32,3 +32,6 @@ jobs:
           NETLIFY_DEPLOY_TO_PROD: true
           install_command: "echo Skipping installing the dependencies"
           build_command: "echo Skipping building the web files"
+          debug: true
+          build_directory: "site"
+          monorepo_package: "electron-builder"
