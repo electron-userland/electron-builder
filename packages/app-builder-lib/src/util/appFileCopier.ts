@@ -181,7 +181,7 @@ function validateFileSet(fileSet: ResolvedFileSet): ResolvedFileSet {
 
 /** @internal */
 export async function computeNodeModuleFileSets(platformPackager: PlatformPackager<any>, mainMatcher: FileMatcher): Promise<Array<ResolvedFileSet>> {
-  const deps = (await getNodeModules(platformPackager.info.appDir)) as NodeModuleInfo[]
+  const deps = await getNodeModules(platformPackager.info.appDir)
   log.debug({ nodeModules: deps }, "collected node modules")
 
   const nodeModuleExcludedExts = getNodeModuleExcludedExts(platformPackager)

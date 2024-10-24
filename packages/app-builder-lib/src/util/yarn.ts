@@ -10,7 +10,7 @@ import { getProjectRootPath } from "@electron/rebuild/lib/search-module"
 import { rebuild as remoteRebuild } from "./rebuild/rebuild"
 import { executeAppBuilderAndWriteJson } from "./appBuilder"
 import { RebuildMode } from "@electron/rebuild/lib/types"
-import { PM, detect, getNpmVersion } from "../node-module-collector"
+import { PM, detect, getPackageManagerVersion } from "../node-module-collector"
 
 export async function installOrRebuild(config: Configuration, appDir: string, options: RebuildOptions, forceInstall = false) {
   const effectiveOptions: RebuildOptions = {
@@ -83,7 +83,7 @@ async function checkYarnBerry(pm: PM) {
   if (pm !== "yarn") {
     return false
   }
-  const version = await getNpmVersion(pm)
+  const version = await getPackageManagerVersion(pm)
   if (version == null || version.split(".").length < 1) {
     return false
   }
@@ -146,14 +146,11 @@ export async function nodeGypRebuild(platform: NodeJS.Platform, arch: string, fr
 }
 
 function getPackageToolPath(pm: PM) {
-  const suffix = process.platform === "win32" ? ".cmd" : ""
   let cmd = pm
-
   if (process.env.FORCE_YARN === "true") {
     cmd = "yarn"
   }
-
-  return cmd + suffix
+  return `${cmd}${process.platform === "win32" ? ".cmd" : ""}`
 }
 
 function isRunningYarn(pm: PM) {

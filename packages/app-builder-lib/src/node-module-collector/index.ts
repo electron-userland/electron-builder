@@ -1,7 +1,7 @@
 import { NpmNodeModulesCollector } from "./npmNodeModulesCollector"
 import { PnpmNodeModulesCollector } from "./pnpmNodeModulesCollector"
 import { YarnNodeModulesCollector } from "./yarnNodeModulesCollector"
-import { detect, PM, getNpmVersion } from "./packageManager"
+import { detect, PM, getPackageManagerVersion } from "./packageManager"
 import { NodeModuleInfo } from "./types"
 import { log } from "builder-util"
 
@@ -15,7 +15,7 @@ async function getCollectorByPackageManager(rootDir: string) {
     case "yarn":
       return new YarnNodeModulesCollector(rootDir)
     default:
-      log.warn({ rootDir }, `Cannot detect lock file to determine node_modules structure. Assuming plain structure.`)
+      log.filePath(rootDir)
       return new NpmNodeModulesCollector(rootDir)
   }
 }
@@ -25,4 +25,4 @@ export async function getNodeModules(rootDir: string): Promise<NodeModuleInfo[]>
   return collector.getNodeModules()
 }
 
-export { detect, getNpmVersion, PM }
+export { detect, getPackageManagerVersion, PM }

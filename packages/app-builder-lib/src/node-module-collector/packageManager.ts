@@ -1,62 +1,47 @@
 // copy from https://github.com/egoist/detect-package-manager/blob/main/src/index.ts
 // and merge https://github.com/egoist/detect-package-manager/pull/9 to support Monorepo
-import { promises as fs } from "fs"
 import { resolve, dirname } from "path"
-import { exec } from "child_process"
-import { promisify } from "util"
-
-const execa = promisify(exec)
+import { exec, exists } from "builder-util"
 
 export type PM = "npm" | "yarn" | "pnpm" | "bun"
 
-/**
- * Check if a path exists
- */
-async function pathExists(p: string) {
-  try {
-    await fs.access(p)
-    return true
-  } catch {
-    return false
-  }
-}
-
 const cache = new Map()
+const globalInstallationCache = new Map<string, boolean>()
+const lockfileCache = new Map<string, PM>()
 
 /**
  * Check if a global pm is available
  */
 function hasGlobalInstallation(pm: PM): Promise<boolean> {
   const key = `has_global_${pm}`
-  if (cache.has(key)) {
-    return Promise.resolve(cache.get(key))
+  if (globalInstallationCache.has(key)) {
+    return Promise.resolve(globalInstallationCache.get(key)!)
   }
-  const execa = promisify(exec)
 
-  return execa(`${pm} --version`)
+  return exec(pm, ["--version"])
     .then(res => {
-      return /^\d+.\d+.\d+$/.test(res.stdout)
+      return /^\d+.\d+.\d+$/.test(res)
     })
     .then(value => {
-      cache.set(key, value)
+      globalInstallationCache.set(key, value)
       return value
     })
     .catch(() => false)
 }
 
-function getTypeofLockFile(cwd = "."): Promise<PM | null> {
+function getTypeofLockFile(cwd = process.cwd()): Promise<PM> {
   const key = `lockfile_${cwd}`
-  if (cache.has(key)) {
-    return Promise.resolve(cache.get(key))
+  if (lockfileCache.has(key)) {
+    return Promise.resolve(lockfileCache.get(key)!)
   }
 
   return Promise.all([
-    pathExists(resolve(cwd, "yarn.lock")),
-    pathExists(resolve(cwd, "package-lock.json")),
-    pathExists(resolve(cwd, "pnpm-lock.yaml")),
-    pathExists(resolve(cwd, "bun.lockb")),
-  ]).then(([isYarn, isNpm, isPnpm, isBun]) => {
-    let value: PM | null = null
+    exists(resolve(cwd, "yarn.lock")),
+    exists(resolve(cwd, "package-lock.json")),
+    exists(resolve(cwd, "pnpm-lock.yaml")),
+    exists(resolve(cwd, "bun.lockb")),
+  ]).then(([isYarn, _, isPnpm, isBun]) => {
+    let value: PM
 
     if (isYarn) {
       value = "yarn"
@@ -64,7 +49,7 @@ function getTypeofLockFile(cwd = "."): Promise<PM | null> {
       value = "pnpm"
     } else if (isBun) {
       value = "bun"
-    } else if (isNpm) {
+    } else {
       value = "npm"
     }
 
@@ -73,7 +58,7 @@ function getTypeofLockFile(cwd = "."): Promise<PM | null> {
   })
 }
 
-const detect = async ({ cwd, includeGlobalBun }: { cwd?: string; includeGlobalBun?: boolean } = {}) => {
+export const detect = async ({ cwd, includeGlobalBun }: { cwd?: string; includeGlobalBun?: boolean } = {}) => {
   let type = await getTypeofLockFile(cwd)
   if (type) {
     return type
@@ -88,23 +73,21 @@ const detect = async ({ cwd, includeGlobalBun }: { cwd?: string; includeGlobalBu
     }
   }
 
-  const [hasYarn, hasPnpm, hasBun] = await Promise.all([hasGlobalInstallation("yarn"), hasGlobalInstallation("pnpm"), includeGlobalBun && hasGlobalInstallation("bun")])
-  if (hasYarn) {
+  if (await hasGlobalInstallation("yarn")) {
     return "yarn"
   }
-  if (hasPnpm) {
-    return "pnpm"
+  if (await hasGlobalInstallation("pnpm")) {
+    return "yarn"
   }
-  if (hasBun) {
+
+  if (includeGlobalBun && (await hasGlobalInstallation("bun"))) {
     return "bun"
   }
   return "npm"
 }
 
-export { detect }
-
-export function getNpmVersion(pm: PM) {
-  return execa(`${pm} --version`).then(res => res.stdout.trim())
+export function getPackageManagerVersion(pm: PM) {
+  return exec(pm, ["--version"]).then(res => res.trim())
 }
 
 export function clearCache() {

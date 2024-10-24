@@ -2,17 +2,15 @@ import { hoist, type HoisterTree, type HoisterResult } from "./hoist"
 import * as path from "path"
 import * as fs from "fs"
 import { NodeModuleInfo, DependencyTree, DependencyGraph } from "./types"
-import { log } from "builder-util"
+import { exec, log } from "builder-util"
 
 export abstract class NodeModulesCollector {
   private nodeModules: NodeModuleInfo[]
-  protected rootDir: string
   protected dependencyPathMap: Map<string, string>
 
-  constructor(rootDir: string) {
+  constructor(private readonly rootDir: string) {
     this.dependencyPathMap = new Map()
     this.nodeModules = []
-    this.rootDir = rootDir
   }
 
   private transToHoisterTree(obj: DependencyGraph, key: string = `.`, nodes: Map<string, HoisterTree> = new Map()): HoisterTree {
@@ -43,13 +41,13 @@ export abstract class NodeModulesCollector {
       } else {
         return filePath
       }
-    } catch (error) {
-      log.error({ filePath, error }, "Error resolving path")
+    } catch (error: any) {
+      log.debug({ message: error.message || error.stack }, "error resolving path")
       return filePath
     }
   }
 
-  public TransToDependencyGraph(tree: DependencyTree): DependencyGraph {
+  public convertToDependencyGraph(tree: DependencyTree): DependencyGraph {
     const result: DependencyGraph = { ".": {} }
 
     const flatten = (node: DependencyTree, parentKey = ".") => {
@@ -75,20 +73,36 @@ export abstract class NodeModulesCollector {
     return result
   }
 
-  abstract getDependenciesTree(): DependencyTree
-  abstract getPMCommand(): string
+  abstract getCommand(): string
+  abstract getArgs(): string[]
+
+  protected async getDependenciesTree(): Promise<DependencyTree> {
+    const command = this.getCommand()
+    const args = this.getArgs()
+    const dependencies = await exec(command, args, {
+      cwd: this.rootDir,
+    })
+    const dependencyTree: DependencyTree | DependencyTree[] = JSON.parse(dependencies)
+    return Array.isArray(dependencyTree) ? dependencyTree[0] : dependencyTree
+  }
 
   private _getNodeModules(dependencies: Set<HoisterResult>, result: NodeModuleInfo[]) {
-    if (dependencies.size === 0) return
+    if (dependencies.size === 0) {
+      return
+    }
 
     for (const d of dependencies.values()) {
       const reference = [...d.references][0]
       const p = this.dependencyPathMap.get(`${d.name}@${reference}`)
-      const node = {
+      if (p === undefined) {
+        log.debug({ name: d.name, reference }, "cannot find path for dependency")
+        continue
+      }
+      const node: NodeModuleInfo = {
         name: d.name,
         version: reference,
         dir: p,
-      } as NodeModuleInfo
+      }
       result.push(node)
       if (d.dependencies.size > 0) {
         node["dependencies"] = []
@@ -109,10 +123,10 @@ export abstract class NodeModulesCollector {
     return tree
   }
 
-  public getNodeModules(): NodeModuleInfo[] {
-    const tree = this.getDependenciesTree()
+  public async getNodeModules(): Promise<NodeModuleInfo[]> {
+    const tree = await this.getDependenciesTree()
     const realTree = this.getTreeFromWorkspaces(tree)
-    const dependencyGraph = this.TransToDependencyGraph(realTree)
+    const dependencyGraph = this.convertToDependencyGraph(realTree)
     const hoisterResult = hoist(this.transToHoisterTree(dependencyGraph), { check: true })
     this._getNodeModules(hoisterResult.dependencies, this.nodeModules)
     return this.nodeModules
