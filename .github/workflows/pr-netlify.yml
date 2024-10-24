@@ -1,0 +1,45 @@
+name: 'Netlify Deploy - PR'
+
+on:
+  pull_request:
+    types: ['opened', 'edited', 'synchronize']
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: 'Deploy'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code repository
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
+
+      - name: Setup Tests
+        uses: ./.github/actions/pretest
+        with:
+          cache-path: ~/.cache/electron
+          cache-key: v-23.3.10-linux-electron
+
+      - name: Build typdoc site
+        run: pnpm docs:all
+
+      # Sets the branch name as environment variable
+      - uses: nelonoel/branch-name@v1.0.1
+      - uses: jsmrcaga/action-netlify-deploy@master
+        with:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+          deploy_alias: ${{ env.BRANCH_NAME }}
+
+      # Creates a status check with link to preview
+      - name: Status check
+        uses: Sibz/github-status-action@v1.1.1
+        with:
+          authToken: ${{ secrets.GITHUB_TOKEN }}
+          context: Netlify preview
+          state: success
+          target_url: ${{ env.NETLIFY_PREVIEW_URL }}

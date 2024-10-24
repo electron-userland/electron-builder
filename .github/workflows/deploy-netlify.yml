@@ -1,0 +1,35 @@
+name: 'Netlify Deploy - Release'
+
+on:
+  release:
+    types: ['published']
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: 'Deploy'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code repository
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
+
+      - name: Setup Tests
+        uses: ./.github/actions/pretest
+        with:
+          cache-path: ~/.cache/electron
+          cache-key: v-23.3.10-linux-electron
+
+      - name: Build typdoc site
+        run: pnpm docs:all
+
+      - uses: jsmrcaga/action-netlify-deploy@master
+        with:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+          NETLIFY_DEPLOY_MESSAGE: "Prod deploy v${{ github.ref }}"
+          NETLIFY_DEPLOY_TO_PROD: true
