@@ -208,7 +208,18 @@ export interface WindowsAzureSigningConfiguration {
    */
   readonly codeSigningAccountName: string
   /**
-   * Allow other CLI parameters (verbatim case-sensitive) to `Invoke-TrustedSigning`
+   * The Timestamp rfc3161 server. Translates to field: TimestampRfc3161
+   * @default http://timestamp.acs.microsoft.com
    */
-  [k: string]: string
+  readonly timestampRfc3161?: string
+  /**
+   * The Timestamp Digest. Translates to field: TimestampDigest
+   * @default SHA256
+   */
+  readonly timestampDigest?: string
+  /**
+   * Allow other CLI parameters (verbatim case-sensitive) to `Invoke-TrustedSigning`
+   * Note: Key-Value pairs with `undefined`/`null` value are filtered out of the command.
+   */
+  [k: string]: string | undefined | null
 }

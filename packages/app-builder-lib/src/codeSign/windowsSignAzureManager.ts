@@ -79,16 +79,20 @@ export class WindowsSignAzureManager {
     const vm = await this.packager.vm.value
     const ps = await getPSCmd(vm)
 
-    const { endpoint, certificateProfileName, codeSigningAccountName, ...extraSigningArgs }: WindowsAzureSigningConfiguration = options.options.azureSignOptions!
+    const { endpoint, certificateProfileName, codeSigningAccountName, timestampRfc3161, timestampDigest, ...extraSigningArgs }: WindowsAzureSigningConfiguration =
+      options.options.azureSignOptions!
     const params = {
       FileDigest: "SHA256",
       ...extraSigningArgs, // allows overriding FileDigest if provided in config
       Endpoint: endpoint,
       CertificateProfileName: certificateProfileName,
       CodeSigningAccountName: codeSigningAccountName,
+      TimestampRfc3161: timestampRfc3161 || "http://timestamp.acs.microsoft.com",
+      TimestampDigest: timestampDigest || "SHA256",
       Files: `"${options.path}"`,
     }
     const paramsString = Object.entries(params)
+      .filter(([_, value]) => value != null)
       .reduce((res, [field, value]) => {
         return [...res, `-${field}`, value]
       }, [] as string[])
