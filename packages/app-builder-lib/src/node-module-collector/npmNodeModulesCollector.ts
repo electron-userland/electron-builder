@@ -10,6 +10,6 @@ export class NpmNodeModulesCollector extends NodeModulesCollector {
   }
 
   getArgs(): string[] {
-    return ["list", "--omit", "dev", "-a", "--json", "--long"]
+    return ["list", "--omit", "dev", "-a", "--json", "--long", "--silent"]
   }
 }

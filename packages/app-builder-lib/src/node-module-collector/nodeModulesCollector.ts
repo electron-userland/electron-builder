@@ -81,6 +81,7 @@ export abstract class NodeModulesCollector {
     const args = this.getArgs()
     const dependencies = await exec(command, args, {
       cwd: this.rootDir,
+      shell: true,
     })
     const dependencyTree: DependencyTree | DependencyTree[] = JSON.parse(dependencies)
     return Array.isArray(dependencyTree) ? dependencyTree[0] : dependencyTree
