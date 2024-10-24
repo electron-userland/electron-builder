@@ -163,6 +163,9 @@ export interface PlatformSpecificBuildOptions extends TargetSpecificOptions, Fil
    */
   readonly electronUpdaterCompatibility?: string | null
 
+  /**
+   * Publisher configuration. See [Auto Update](./publish.md) for more information.
+   */
   publish?: Publish
 
   /**

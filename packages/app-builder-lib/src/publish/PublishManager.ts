@@ -13,11 +13,19 @@ import {
   BitbucketOptions,
 } from "builder-util-runtime"
 import _debug from "debug"
-import { getCiTag, PublishContext, Publisher, PublishOptions, UploadTask } from "electron-publish"
-import { GitHubPublisher } from "electron-publish/out/gitHubPublisher"
-import { MultiProgress } from "electron-publish/out/multiProgress"
-import S3Publisher from "./s3/s3Publisher"
-import SpacesPublisher from "./s3/spacesPublisher"
+import {
+  BitbucketPublisher,
+  getCiTag,
+  GitHubPublisher,
+  KeygenPublisher,
+  PublishContext,
+  Publisher,
+  PublishOptions,
+  S3Publisher,
+  SnapStorePublisher,
+  SpacesPublisher,
+  UploadTask,
+} from "electron-publish"
 import { writeFile } from "fs/promises"
 import * as isCi from "is-ci"
 import * as path from "path"
@@ -28,10 +36,8 @@ import { Packager } from "../packager"
 import { PlatformPackager } from "../platformPackager"
 import { expandMacro } from "../util/macroExpander"
 import { WinPackager } from "../winPackager"
-import { SnapStorePublisher } from "./SnapStorePublisher"
 import { createUpdateInfoTasks, UpdateInfoFileTask, writeUpdateInfoFiles } from "./updateInfoBuilder"
-import { KeygenPublisher } from "./KeygenPublisher"
-import { BitbucketPublisher } from "./BitbucketPublisher"
+import { MultiProgress } from "electron-publish/out/multiProgress"
 
 const publishForPrWarning =
   "There are serious security concerns with PUBLISH_FOR_PULL_REQUEST=true (see the  CircleCI documentation (https://circleci.com/docs/1.0/fork-pr-builds/) for details)" +

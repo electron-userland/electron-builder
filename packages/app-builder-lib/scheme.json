@@ -1965,7 +1965,8 @@
                 "string"
               ]
             }
-          ]
+          ],
+          "description": "Publisher configuration. See [Auto Update](./publish.md) for more information."
         },
         "releaseInfo": {
           "$ref": "#/definitions/ReleaseInfo",
@@ -2742,7 +2743,8 @@
                 "string"
               ]
             }
-          ]
+          ],
+          "description": "Publisher configuration. See [Auto Update](./publish.md) for more information."
         },
         "releaseInfo": {
           "$ref": "#/definitions/ReleaseInfo",
@@ -3383,7 +3385,8 @@
                 "string"
               ]
             }
-          ]
+          ],
+          "description": "Publisher configuration. See [Auto Update](./publish.md) for more information."
         },
         "releaseInfo": {
           "$ref": "#/definitions/ReleaseInfo",
@@ -6453,7 +6456,8 @@
                 "string"
               ]
             }
-          ]
+          ],
+          "description": "Publisher configuration. See [Auto Update](./publish.md) for more information."
         },
         "publisherName": {
           "anyOf": [
@@ -7547,7 +7551,8 @@
             "string"
           ]
         }
-      ]
+      ],
+      "description": "Publisher configuration. See [Auto Update](./publish.md) for more information."
     },
     "releaseInfo": {
       "$ref": "#/definitions/ReleaseInfo",
