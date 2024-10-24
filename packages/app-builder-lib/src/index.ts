@@ -36,7 +36,7 @@ export {
 export { ElectronBrandingOptions, ElectronDownloadOptions, ElectronPlatformName } from "./electron/ElectronFramework"
 export { PlatformSpecificBuildOptions, AsarOptions, FileSet, Protocol, ReleaseInfo, FilesBuildOptions } from "./options/PlatformSpecificBuildOptions"
 export { FileAssociation } from "./options/FileAssociation"
-export { MacConfiguration, DmgOptions, MasConfiguration, MacOsTargetName, DmgContent, DmgWindow, NotarizeNotaryOptions } from "./options/macOptions"
+export { MacConfiguration, DmgOptions, MasConfiguration, MacOsTargetName, DmgContent, DmgWindow } from "./options/macOptions"
 export { PkgOptions, PkgBackgroundOptions, BackgroundAlignment, BackgroundScaling } from "./options/pkgOptions"
 export { WindowsConfiguration, WindowsAzureSigningConfiguration, WindowsSigntoolConfiguration } from "./options/winOptions"
 export { AppXOptions } from "./options/AppXOptions"

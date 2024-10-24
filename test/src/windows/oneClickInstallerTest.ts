@@ -32,7 +32,9 @@ test(
       targets: Platform.WINDOWS.createTarget(["nsis"], Arch.x64),
       config: {
         win: {
-          publisherName: "Foo, Inc",
+          signtoolOptions: {
+            publisherName: "Foo, Inc",
+          },
         },
         publish: {
           provider: "generic",
