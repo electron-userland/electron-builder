@@ -33,6 +33,8 @@ jobs:
           deploy_alias: ${{ env.BRANCH_NAME }}
           install_command: "echo Skipping installing the dependencies"
           build_command: "echo Skipping building the web files"
+          debug: true
+          build_directory: "site"
 
       # Creates a status check with link to preview
       - name: Status check
