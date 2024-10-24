@@ -18,11 +18,8 @@ jobs:
       - name: Checkout code repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
 
-      - name: Setup all build dependencies
-        uses: ./.github/actions/pretest
-        with:
-          cache-path: ~/.cache/electron
-          cache-key: v-23.3.10-linux-electron
+      - name: Install deps and audit
+        uses: ./.github/actions/pnpm
 
       - name: Build typdoc site
         run: pnpm docs:all
