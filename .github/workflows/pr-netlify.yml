@@ -31,6 +31,8 @@ jobs:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
           deploy_alias: ${{ env.BRANCH_NAME }}
+          install_command: "echo Skipping installing the dependencies"
+          build_command: "echo Skipping building the web files"
 
       # Creates a status check with link to preview
       - name: Status check
