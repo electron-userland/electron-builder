@@ -39,7 +39,7 @@ jobs:
 
       # Creates a status check with link to preview
       - name: Status check
-        uses: Sibz/github-status-action@v1.1.1
+        uses: guibranco/github-status-action-v2@v1.1.13
         with:
           authToken: ${{ secrets.GITHUB_TOKEN }}
           context: Netlify preview
