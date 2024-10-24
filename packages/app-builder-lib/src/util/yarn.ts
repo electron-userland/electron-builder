@@ -10,6 +10,7 @@ import { getProjectRootPath } from "@electron/rebuild/lib/search-module"
 import { rebuild as remoteRebuild } from "./rebuild/rebuild"
 import { executeAppBuilderAndWriteJson } from "./appBuilder"
 import { RebuildMode } from "@electron/rebuild/lib/types"
+import { PM, detect, getPackageManagerVersion } from "../node-module-collector"
 
 export async function installOrRebuild(config: Configuration, appDir: string, options: RebuildOptions, forceInstall = false) {
   const effectiveOptions: RebuildOptions = {
@@ -78,13 +79,16 @@ export function getGypEnv(frameworkInfo: DesktopFrameworkInfo, platform: NodeJS.
   }
 }
 
-function checkYarnBerry() {
-  const npmUserAgent = process.env["npm_config_user_agent"] || ""
-  const regex = /yarn\/(\d+)\./gm
+async function checkYarnBerry(pm: PM) {
+  if (pm !== "yarn") {
+    return false
+  }
+  const version = await getPackageManagerVersion(pm)
+  if (version == null || version.split(".").length < 1) {
+    return false
+  }
 
-  const yarnVersionMatch = regex.exec(npmUserAgent)
-  const yarnMajorVersion = Number(yarnVersionMatch?.[1] ?? 0)
-  return yarnMajorVersion >= 2
+  return version.split(".")[0] >= "2"
 }
 
 async function installDependencies(config: Configuration, appDir: string, options: RebuildOptions): Promise<any> {
@@ -93,9 +97,9 @@ async function installDependencies(config: Configuration, appDir: string, option
   const additionalArgs = options.additionalArgs
 
   log.info({ platform, arch, appDir }, `installing production dependencies`)
-  let execPath = process.env.npm_execpath || process.env.NPM_CLI_JS
+  const pm = await detect({ cwd: appDir })
   const execArgs = ["install"]
-  const isYarnBerry = checkYarnBerry()
+  const isYarnBerry = await checkYarnBerry(pm)
   if (!isYarnBerry) {
     if (process.env.NPM_NO_BIN_LINKS === "true") {
       execArgs.push("--no-bin-links")
@@ -103,16 +107,11 @@ async function installDependencies(config: Configuration, appDir: string, option
     execArgs.push("--production")
   }
 
-  if (!isRunningYarn(execPath)) {
+  if (!isRunningYarn(pm)) {
     execArgs.push("--prefer-offline")
   }
 
-  if (execPath == null) {
-    execPath = getPackageToolPath()
-  } else if (!isYarnBerry) {
-    execArgs.unshift(execPath)
-    execPath = process.env.npm_node_execpath || process.env.NODE_EXE || "node"
-  }
+  const execPath = getPackageToolPath(pm)
 
   if (additionalArgs != null) {
     execArgs.push(...additionalArgs)
@@ -146,17 +145,17 @@ export async function nodeGypRebuild(platform: NodeJS.Platform, arch: string, fr
   await spawn(nodeGyp, args, { env: getGypEnv(frameworkInfo, platform, arch, true) })
 }
 
-function getPackageToolPath() {
+function getPackageToolPath(pm: PM) {
+  let cmd = pm
   if (process.env.FORCE_YARN === "true") {
-    return process.platform === "win32" ? "yarn.cmd" : "yarn"
-  } else {
-    return process.platform === "win32" ? "npm.cmd" : "npm"
+    cmd = "yarn"
   }
+  return `${cmd}${process.platform === "win32" ? ".cmd" : ""}`
 }
 
-function isRunningYarn(execPath: string | null | undefined) {
+function isRunningYarn(pm: PM) {
   const userAgent = process.env.npm_config_user_agent
-  return process.env.FORCE_YARN === "true" || (execPath != null && path.basename(execPath).startsWith("yarn")) || (userAgent != null && /\byarn\b/.test(userAgent))
+  return process.env.FORCE_YARN === "true" || pm === "yarn" || (userAgent != null && /\byarn\b/.test(userAgent))
 }
 
 export interface RebuildOptions {

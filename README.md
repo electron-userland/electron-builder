@@ -100,21 +100,6 @@ See the full documentation on [electron.build](https://www.electron.build).
 
 `yarn add electron-builder --dev`
 
-### Note for PNPM
-
-In order to use with `pnpm`, you'll need to adjust your `.npmrc` to use any one the following approaches in order for your dependencies to be bundled correctly (ref: [#6389](https://github.com/electron-userland/electron-builder/issues/6289#issuecomment-1042620422)):
-```
-node-linker=hoisted
-```
-```
-public-hoist-pattern=*
-```
-```
-shamefully-hoist=true
-```
-
-Note: Setting shamefully-hoist to true is the same as setting public-hoist-pattern to *.
-
 ### Note for Yarn 3
 
 Yarn 3 use PnP by default, but electron-builder still need node-modules(ref: [yarnpkg/berry#4804](https://github.com/yarnpkg/berry/issues/4804#issuecomment-1234407305)). Add configuration in the `.yarnrc.yaml` as follows:
