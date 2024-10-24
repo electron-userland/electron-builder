@@ -208,6 +208,11 @@ export interface WindowsAzureSigningConfiguration {
    */
   readonly codeSigningAccountName: string
   /**
+   * The File Digest for signing each file. Translates to field: FileDigest
+   * @default SHA256
+   */
+  readonly fileDigest?: string
+  /**
    * The Timestamp rfc3161 server. Translates to field: TimestampRfc3161
    * @default http://timestamp.acs.microsoft.com
    */
