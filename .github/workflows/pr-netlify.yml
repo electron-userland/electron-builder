@@ -35,6 +35,7 @@ jobs:
           build_command: "echo Skipping building the web files"
           debug: true
           build_directory: "site"
+          monorepo_package: "electron-builder"
 
       # Creates a status check with link to preview
       - name: Status check
