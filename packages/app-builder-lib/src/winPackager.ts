@@ -40,11 +40,6 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     })
   )
 
-  get canSignConcurrently(): boolean {
-    // https://github.com/electron-userland/electron-builder/issues/8615
-    return this.platformSpecificBuildOptions.azureSignOptions == null
-  }
-
   get isForceCodeSigningVerification(): boolean {
     return this.platformSpecificBuildOptions.verifyUpdateCodeSignature !== false
   }
@@ -253,9 +248,10 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
       return false
     }
 
-    await BluebirdPromise.map(readdir(packContext.appOutDir), (file: string): any => {
+    const files = await readdir(packContext.appOutDir)
+    for (const file of files) {
       if (file === exeFileName) {
-        return this.signAndEditResources(
+        await this.signAndEditResources(
           path.join(packContext.appOutDir, exeFileName),
           packContext.arch,
           packContext.outDir,
@@ -263,10 +259,9 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
           this.platformSpecificBuildOptions.requestedExecutionLevel
         )
       } else if (this.shouldSignFile(file)) {
-        return this.sign(path.join(packContext.appOutDir, file))
+        await this.sign(path.join(packContext.appOutDir, file))
       }
-      return null
-    })
+    }
 
     if (!isAsar) {
       return true
@@ -277,13 +272,8 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
       return walk(outDir, (file, stat) => stat.isDirectory() || this.shouldSignFile(file))
     }
     const filesToSign = await Promise.all([filesPromise(["resources", "app.asar.unpacked"]), filesPromise(["swiftshader"])])
-    const filesList = filesToSign.flat(1)
-    if (this.canSignConcurrently) {
-      await BluebirdPromise.map(filesList, file => this.sign(file), { concurrency: 4 })
-    } else {
-      for await (const file of filesList) {
-        await this.sign(file)
-      }
+    for await (const file of filesToSign.flat(1)) {
+      await this.sign(file)
     }
 
     return true
