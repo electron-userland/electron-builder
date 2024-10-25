@@ -1,7 +1,7 @@
 import { Arch } from "builder-util"
 import { stat } from "fs-extra"
 import { ClientRequest } from "http"
-import { basename } from "path/posix"
+import { basename } from "path"
 import { Publisher } from "./publisher"
 import { PublishContext, UploadTask } from "."
 
