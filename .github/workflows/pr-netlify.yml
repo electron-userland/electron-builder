@@ -43,6 +43,7 @@ jobs:
         uses: guibranco/github-status-action-v2@v1.1.13
         with:
           authToken: ${{ secrets.GITHUB_TOKEN }}
-          context: Netlify preview
           state: success
+          context: Netlify Docs preview
           target_url: ${{ env.NETLIFY_PREVIEW_URL }}
+          sha: ${{github.event.pull_request.head.sha || github.sha}}
