@@ -52,16 +52,18 @@ export type AppUpdaterEvents = {
 export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter<AppUpdaterEvents>) {
   /**
    * Whether to automatically download an update when it is found.
+   * @default true
    */
   autoDownload = true
 
   /**
    * Whether to automatically install a downloaded update on app quit (if `quitAndInstall` was not called before).
+   * @default true
    */
   autoInstallOnAppQuit = true
 
   /**
-   * *windows-only* Whether to run the app after finish install when run the installer NOT in silent mode.
+   * Whether to run the app after finish install when run the installer is NOT in silent mode.
    * @default true
    */
   autoRunAppAfterInstall = true
