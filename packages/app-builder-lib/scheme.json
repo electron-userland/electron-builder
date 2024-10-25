@@ -6093,7 +6093,10 @@
     },
     "WindowsAzureSigningConfiguration": {
       "additionalProperties": {
-        "type": "string"
+        "type": [
+          "null",
+          "string"
+        ]
       },
       "properties": {
         "certificateProfileName": {
@@ -6106,6 +6109,21 @@
         },
         "endpoint": {
           "description": "The Trusted Signing Account endpoint. The URI value must have a URI that aligns to the\nregion your Trusted Signing Account and Certificate Profile you are specifying were created\nin during the setup of these resources.\n\nTranslates to field: Endpoint\n\nRequires one of environment variable configurations for authenticating to Microsoft Entra ID per [Microsoft's documentation](https://learn.microsoft.com/en-us/dotnet/api/azure.identity.environmentcredential?view=azure-dotnet#definition)",
+          "type": "string"
+        },
+        "fileDigest": {
+          "default": "SHA256",
+          "description": "The File Digest for signing each file. Translates to field: FileDigest",
+          "type": "string"
+        },
+        "timestampDigest": {
+          "default": "SHA256",
+          "description": "The Timestamp Digest. Translates to field: TimestampDigest",
+          "type": "string"
+        },
+        "timestampRfc3161": {
+          "default": "http://timestamp.acs.microsoft.com",
+          "description": "The Timestamp rfc3161 server. Translates to field: TimestampRfc3161",
           "type": "string"
         }
       },
