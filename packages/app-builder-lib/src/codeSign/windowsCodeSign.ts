@@ -11,7 +11,8 @@ export interface WindowsSignOptions {
 export async function signWindows(options: WindowsSignOptions, packager: WinPackager): Promise<boolean> {
   if (options.options.azureSignOptions) {
     log.info({ path: log.filePath(options.path) }, "signing with Azure Trusted Signing (beta)")
-    return signWithRetry(async () => (await packager.azureSignManager.value).signUsingAzureTrustedSigning(options))
+    const packageManager = await packager.azureSignManager.value
+    return signWithRetry(async () => packageManager.signUsingAzureTrustedSigning(options))
   }
 
   log.info({ path: log.filePath(options.path) }, "signing with signtool.exe")
@@ -34,7 +35,8 @@ export async function signWindows(options: WindowsSignOptions, packager: WinPack
   if (fields.length) {
     log.warn({ fields, reason: "please move to win.signtoolOptions.<field_name>" }, `deprecated field`)
   }
-  return signWithRetry(async () => (await packager.signtoolManager.value).signUsingSigntool(options))
+  const packageManager = await packager.signtoolManager.value
+  return signWithRetry(async () => packageManager.signUsingSigntool(options))
 }
 
 function signWithRetry(signer: () => Promise<boolean>): Promise<boolean> {
