@@ -270,7 +270,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
       return walk(outDir, (file, stat) => stat.isDirectory() || this.shouldSignFile(file))
     }
     const filesToSign = await Promise.all([filesPromise(["resources", "app.asar.unpacked"]), filesPromise(["swiftshader"])])
-    for await (const file of filesToSign.flat(1)) {
+    for (const file of filesToSign.flat(1)) {
       await this.sign(file)
     }
 
