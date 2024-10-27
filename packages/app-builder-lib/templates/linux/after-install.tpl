@@ -49,6 +49,6 @@ if test -d "/etc/apparmor.d"; then
       apparmor_parser --replace --write-cache --skip-read-cache "$APPARMOR_PROFILE_TARGET"
     fi
   else
-    echo "Skipping the installation of the AppArmor profile as this version of AppArmor does not seem to support the profile bundled with Teleport Connect."
+    echo "Skipping the installation of the AppArmor profile as this version of AppArmor does not seem to support the bundled profile"
   fi
 fi
