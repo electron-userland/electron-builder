@@ -519,12 +519,21 @@
       "additionalProperties": false,
       "properties": {
         "afterInstall": {
+          "description": "File path to script to be passed to FPM for `--after-install` arg.",
           "type": [
             "null",
             "string"
           ]
         },
         "afterRemove": {
+          "description": "File path to script to be passed to FPM for `--after-remove` arg.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "appArmorProfile": {
+          "description": "File path to custom AppArmor profile (Ubuntu 24+)",
           "type": [
             "null",
             "string"
@@ -2050,12 +2059,21 @@
       "additionalProperties": false,
       "properties": {
         "afterInstall": {
+          "description": "File path to script to be passed to FPM for `--after-install` arg.",
           "type": [
             "null",
             "string"
           ]
         },
         "afterRemove": {
+          "description": "File path to script to be passed to FPM for `--after-remove` arg.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "appArmorProfile": {
+          "description": "File path to custom AppArmor profile (Ubuntu 24+)",
           "type": [
             "null",
             "string"
