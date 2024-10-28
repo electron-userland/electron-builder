@@ -153,6 +153,18 @@ exports[`custom template appmanifest.xml 1`] = `
 "
 `;
 
+exports[`custom template appmanifest.xml 2`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW 1.1.0.appx",
+      "safeArtifactName": "TestApp-1.1.0.appx",
+    },
+  ],
+}
+`;
+
 exports[`languages and not signed (windows store only) 1`] = `
 {
   "win": [
