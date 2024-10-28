@@ -1,3 +1,20 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v26.0.0-alpha.3...v) (2024-10-28)
+
+
+### Bug Fixes
+
+* macUpdater - change `copyFileSync` to async operation to unblock the main thread ([#8623](https://github.com/electron-userland/electron-builder/issues/8623)) ([cfa67c0](https://github.com/electron-userland/electron-builder/commit/cfa67c01827a44c88fb8448562dbe928ba37494f))
+* remove concurrency of windows codesign to resolve azure trusted signing file locks([#8632](https://github.com/electron-userland/electron-builder/issues/8632)) ([645e2ab](https://github.com/electron-userland/electron-builder/commit/645e2abd5ed604fe4f4d9475cf2cedf4fe78436c))
+* use `path` instead of `path/posix` for publishing binaries ([#8631](https://github.com/electron-userland/electron-builder/issues/8631)) ([dcd91a1](https://github.com/electron-userland/electron-builder/commit/dcd91a1f79be5bde7bb418b0eaa83d03f11d41fe))
+* **win:** add rfc3161 timestamp entry with default values for azure signing ([#8627](https://github.com/electron-userland/electron-builder/issues/8627)) ([2a3195d](https://github.com/electron-userland/electron-builder/commit/2a3195d99f42e9b4f70e5719525db046a327aeb7))
+
+
+### Features
+
+* **updater:** allow usage of `autoRunAppAfterInstall` with mac updater ([#8633](https://github.com/electron-userland/electron-builder/issues/8633)) ([96f5c3e](https://github.com/electron-userland/electron-builder/commit/96f5c3ebbd6b3b58c9c5d3e777577d49edcb6e5a))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v26.0.0-alpha.2...v) (2024-10-16)
 
 

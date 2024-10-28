@@ -1,5 +1,18 @@
 # app-builder-lib
 
+## 26.0.0-alpha.4
+
+### Patch Changes
+
+- [#8627](https://github.com/electron-userland/electron-builder/pull/8627) [`2a3195d9`](https://github.com/electron-userland/electron-builder/commit/2a3195d99f42e9b4f70e5719525db046a327aeb7) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: add rfc3161 timestamp entry as default for azure signing to resolve Windows Defender alert
+
+- [#8632](https://github.com/electron-userland/electron-builder/pull/8632) [`645e2abd`](https://github.com/electron-userland/electron-builder/commit/645e2abd5ed604fe4f4d9475cf2cedf4fe78436c) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: only sign concurrently when using local signtool. azure can't be in parallel due to resources being locked during usage
+
+- Updated dependencies [[`dcd91a1f`](https://github.com/electron-userland/electron-builder/commit/dcd91a1f79be5bde7bb418b0eaa83d03f11d41fe)]:
+  - electron-publish@26.0.0-alpha.4
+  - dmg-builder@26.0.0-alpha.4
+  - electron-builder-squirrel-windows@26.0.0-alpha.4
+
 ## 26.0.0-alpha.3
 
 ### Patch Changes
