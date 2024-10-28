@@ -1,5 +1,11 @@
 # electron-publish
 
+## 26.0.0-alpha.4
+
+### Patch Changes
+
+- [#8631](https://github.com/electron-userland/electron-builder/pull/8631) [`dcd91a1f`](https://github.com/electron-userland/electron-builder/commit/dcd91a1f79be5bde7bb418b0eaa83d03f11d41fe) Thanks [@olivereisenhut](https://github.com/olivereisenhut)! - fix: Remove path from published binaries
+
 ## 26.0.0-alpha.3
 
 ### Patch Changes
