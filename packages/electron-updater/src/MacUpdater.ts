@@ -253,17 +253,22 @@ export class MacUpdater extends AppUpdater {
     })
   }
 
+  private handleUpdateDownloaded() {
+    if (this.autoRunAppAfterInstall) {
+      this.nativeUpdater.quitAndInstall()
+    } else {
+      this.app.quit()
+    }
+    this.closeServerIfExists()
+  }
+
   quitAndInstall(): void {
     if (this.squirrelDownloadedUpdate) {
       // update already fetched by Squirrel, it's ready to install
-      this.nativeUpdater.quitAndInstall()
-      this.closeServerIfExists()
+      this.handleUpdateDownloaded()
     } else {
       // Quit and install as soon as Squirrel get the update
-      this.nativeUpdater.on("update-downloaded", () => {
-        this.nativeUpdater.quitAndInstall()
-        this.closeServerIfExists()
-      })
+      this.nativeUpdater.on("update-downloaded", () => this.handleUpdateDownloaded())
 
       if (!this.autoInstallOnAppQuit) {
         /**
