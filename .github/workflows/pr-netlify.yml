@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   deploy:
-    name: 'Deploy'
+    name: 'Deploy PR'
     runs-on: ubuntu-latest
 
     steps:
@@ -39,11 +39,12 @@ jobs:
           monorepo_package: "electron-builder"
 
       # Creates a status check with link to preview
-      - name: Status check
+      - name: Set Status check on commit
         uses: guibranco/github-status-action-v2@v1.1.13
         with:
           authToken: ${{ secrets.GITHUB_TOKEN }}
           state: success
-          context: Netlify Docs preview
+          context: Netlify Documentation Site preview
+          description: Click "details"
           target_url: ${{ env.NETLIFY_PREVIEW_URL }}
           sha: ${{github.event.pull_request.head.sha || github.sha}}
