@@ -15,8 +15,7 @@ function addValue(map: Map<string, Array<string>>, key: string, value: string) {
 }
 
 export function isLibOrExe(file: string): boolean {
-  // https://github.com/electron-userland/electron-builder/issues/3038
-  return file.endsWith(".dll") || file.endsWith(".exe") || file.endsWith(".dylib") || file.endsWith(".so") || file.endsWith(".node")
+  return file.endsWith(".dll") || file.endsWith(".exe") || file.endsWith(".dylib") || file.endsWith(".so")
 }
 
 /** @internal */
