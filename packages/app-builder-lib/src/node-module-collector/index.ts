@@ -3,7 +3,6 @@ import { PnpmNodeModulesCollector } from "./pnpmNodeModulesCollector"
 import { YarnNodeModulesCollector } from "./yarnNodeModulesCollector"
 import { detect, PM, getPackageManagerVersion } from "./packageManager"
 import { NodeModuleInfo } from "./types"
-import { log } from "builder-util"
 
 async function getCollectorByPackageManager(rootDir: string) {
   const manager: PM = await detect({ cwd: rootDir })
@@ -15,7 +14,6 @@ async function getCollectorByPackageManager(rootDir: string) {
     case "yarn":
       return new YarnNodeModulesCollector(rootDir)
     default:
-      log.filePath(rootDir)
       return new NpmNodeModulesCollector(rootDir)
   }
 }
