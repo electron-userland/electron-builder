@@ -655,19 +655,17 @@ exports[`yarn two package.json w/ native module 3`] = `
           "files": {
             ".prettierrc": {
               "size": "<size>",
-              "unpacked": true,
             },
             "LICENSE": {
               "size": "<size>",
-              "unpacked": true,
             },
             "build": {
               "files": {
                 "Release": {
                   "files": {
                     "permissions.node": {
+                      "executable": true,
                       "size": "<size>",
-                      "unpacked": true,
                     },
                   },
                 },
@@ -675,7 +673,6 @@ exports[`yarn two package.json w/ native module 3`] = `
             },
             "index.js": {
               "size": "<size>",
-              "unpacked": true,
             },
             "node_modules": {
               "files": {
@@ -683,69 +680,54 @@ exports[`yarn two package.json w/ native module 3`] = `
                   "files": {
                     "LICENSE.md": {
                       "size": "<size>",
-                      "unpacked": true,
                     },
                     "common.gypi": {
                       "size": "<size>",
-                      "unpacked": true,
                     },
                     "except.gypi": {
                       "size": "<size>",
-                      "unpacked": true,
                     },
                     "index.js": {
                       "size": "<size>",
-                      "unpacked": true,
                     },
                     "napi-inl.deprecated.h": {
                       "size": "<size>",
-                      "unpacked": true,
                     },
                     "napi-inl.h": {
                       "size": "<size>",
-                      "unpacked": true,
                     },
                     "napi.h": {
                       "size": "<size>",
-                      "unpacked": true,
                     },
                     "node_api.gyp": {
                       "size": "<size>",
-                      "unpacked": true,
                     },
                     "noexcept.gypi": {
                       "size": "<size>",
-                      "unpacked": true,
                     },
                     "nothing.c": {
                       "size": "<size>",
-                      "unpacked": true,
                     },
                     "package-support.json": {
                       "size": "<size>",
-                      "unpacked": true,
                     },
                     "package.json": {
                       "size": "<size>",
-                      "unpacked": true,
                     },
                     "tools": {
                       "files": {
                         "README.md": {
                           "size": "<size>",
-                          "unpacked": true,
                         },
                         "check-napi.js": {
                           "size": "<size>",
-                          "unpacked": true,
                         },
                         "clang-format.js": {
                           "size": "<size>",
-                          "unpacked": true,
                         },
                         "conversion.js": {
+                          "executable": true,
                           "size": "<size>",
-                          "unpacked": true,
                         },
                       },
                     },
@@ -755,11 +737,9 @@ exports[`yarn two package.json w/ native module 3`] = `
             },
             "package.json": {
               "size": "<size>",
-              "unpacked": true,
             },
             "permissions.mm": {
               "size": "<size>",
-              "unpacked": true,
             },
           },
         },
@@ -1673,99 +1653,5 @@ exports[`yarn two package.json w/ native module 4`] = `
   "app.asar.unpacked/node_modules/node-pty/deps/winpty/misc/Font-Report-June2016/Windows10SetFontBugginess.txt",
   "app.asar.unpacked/node_modules/node-pty/build/Release/pty.node",
   "app.asar.unpacked/node_modules/node-pty/build/Release/spawn-helper",
-  "app.asar.unpacked/node_modules/node-mac-permissions/LICENSE",
-  "app.asar.unpacked/node_modules/node-mac-permissions/index.js",
-  {
-    "content": "{
-  "name": "node-mac-permissions",
-  "version": "2.3.0",
-  "description": "A native node module to manage system permissions on macOS",
-  "main": "index.js",
-  "types": "index.d.ts",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/codebytere/node-mac-permissions.git"
-  },
-  "author": "Shelley Vohr <shelley.vohr@gmail.com>",
-  "license": "MIT",
-  "homepage": "https://github.com/codebytere/node-mac-permissions#readme",
-  "dependencies": {
-    "bindings": "^1.5.0",
-    "node-addon-api": "^3.0.2"
-  },
-  "devDependencies": {
-    "chai": "^4.3.6",
-    "clang-format": "1.8.0",
-    "husky": "^8.0.1",
-    "lint-staged": "^12.4.1",
-    "mocha": "^10.0.0",
-    "node-gyp": "^9.0.0",
-    "prettier": "^2.6.2"
-  },
-  "lint-staged": {
-    "*.js": [
-      "prettier --write"
-    ],
-    "*.mm": [
-      "clang-format -i"
-    ]
-  },
-  "os": [
-    "darwin"
-  ]
-}",
-    "name": "app.asar.unpacked/node_modules/node-mac-permissions/package.json",
-  },
-  "app.asar.unpacked/node_modules/node-mac-permissions/permissions.mm",
-  "app.asar.unpacked/node_modules/node-mac-permissions/node_modules/node-addon-api/LICENSE.md",
-  "app.asar.unpacked/node_modules/node-mac-permissions/node_modules/node-addon-api/common.gypi",
-  "app.asar.unpacked/node_modules/node-mac-permissions/node_modules/node-addon-api/except.gypi",
-  "app.asar.unpacked/node_modules/node-mac-permissions/node_modules/node-addon-api/index.js",
-  "app.asar.unpacked/node_modules/node-mac-permissions/node_modules/node-addon-api/napi-inl.deprecated.h",
-  "app.asar.unpacked/node_modules/node-mac-permissions/node_modules/node-addon-api/napi-inl.h",
-  "app.asar.unpacked/node_modules/node-mac-permissions/node_modules/node-addon-api/napi.h",
-  "app.asar.unpacked/node_modules/node-mac-permissions/node_modules/node-addon-api/node_api.gyp",
-  "app.asar.unpacked/node_modules/node-mac-permissions/node_modules/node-addon-api/noexcept.gypi",
-  "app.asar.unpacked/node_modules/node-mac-permissions/node_modules/node-addon-api/nothing.c",
-  "app.asar.unpacked/node_modules/node-mac-permissions/node_modules/node-addon-api/package-support.json",
-  {
-    "content": "{
-  "description": "Node.js API (Node-API)",
-  "devDependencies": {
-    "benchmark": "^2.1.4",
-    "bindings": "^1.5.0",
-    "clang-format": "^1.4.0",
-    "fs-extra": "^9.0.1",
-    "pre-commit": "^1.2.2",
-    "safe-buffer": "^5.1.1"
-  },
-  "directories": {},
-  "gypfile": false,
-  "homepage": "https://github.com/nodejs/node-addon-api",
-  "license": "MIT",
-  "main": "index.js",
-  "name": "node-addon-api",
-  "optionalDependencies": {},
-  "readme": "README.md",
-  "repository": {
-    "type": "git",
-    "url": "git://github.com/nodejs/node-addon-api.git"
-  },
-  "files": [
-    "*.{c,h,gyp,gypi}",
-    "package-support.json",
-    "tools/"
-  ],
-  "pre-commit": "lint",
-  "version": "3.2.1",
-  "support": true
-}",
-    "name": "app.asar.unpacked/node_modules/node-mac-permissions/node_modules/node-addon-api/package.json",
-  },
-  "app.asar.unpacked/node_modules/node-mac-permissions/node_modules/node-addon-api/tools/README.md",
-  "app.asar.unpacked/node_modules/node-mac-permissions/node_modules/node-addon-api/tools/check-napi.js",
-  "app.asar.unpacked/node_modules/node-mac-permissions/node_modules/node-addon-api/tools/clang-format.js",
-  "app.asar.unpacked/node_modules/node-mac-permissions/node_modules/node-addon-api/tools/conversion.js",
-  "app.asar.unpacked/node_modules/node-mac-permissions/build/Release/permissions.node",
 ]
 `;

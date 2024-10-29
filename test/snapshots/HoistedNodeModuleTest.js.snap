@@ -325,11 +325,11 @@ exports[`yarn two package.json w/ native module 2`] = `
 {
   "files": {
     "index.html": {
-      "offset": "423182",
+      "offset": "1091129",
       "size": 841,
     },
     "index.js": {
-      "offset": "424023",
+      "offset": "1091970",
       "size": 2501,
     },
     "node_modules": {
@@ -474,747 +474,708 @@ exports[`yarn two package.json w/ native module 2`] = `
         "node-pty": {
           "files": {
             "LICENSE": {
+              "offset": "423182",
               "size": 3326,
-              "unpacked": true,
             },
             "build": {
               "files": {
                 "Release": {
                   "files": {
-                    "node-addon-api": {
-                      "files": {
-                        "node_addon_api_except.stamp": {
-                          "size": 0,
-                          "unpacked": true,
-                        },
-                      },
-                      "unpacked": true,
-                    },
                     "pty.node": {
+                      "executable": true,
+                      "offset": "1018249",
                       "size": 72880,
-                      "unpacked": true,
                     },
                   },
-                  "unpacked": true,
                 },
               },
-              "unpacked": true,
             },
             "deps": {
               "files": {
                 ".editorconfig": {
+                  "offset": "426508",
                   "size": 55,
-                  "unpacked": true,
                 },
                 "winpty": {
                   "files": {
                     ".drone.yml": {
+                      "offset": "426563",
                       "size": 439,
-                      "unpacked": true,
                     },
                     "LICENSE": {
+                      "offset": "427002",
                       "size": 1085,
-                      "unpacked": true,
                     },
                     "Makefile": {
+                      "offset": "428087",
                       "size": 4722,
-                      "unpacked": true,
                     },
                     "README.md": {
+                      "offset": "432809",
                       "size": 5551,
-                      "unpacked": true,
                     },
                     "RELEASES.md": {
+                      "offset": "438360",
                       "size": 13667,
-                      "unpacked": true,
                     },
                     "VERSION.txt": {
+                      "offset": "452027",
                       "size": 10,
-                      "unpacked": true,
                     },
                     "configure": {
+                      "offset": "452037",
                       "size": 6478,
-                      "unpacked": true,
                     },
                     "misc": {
                       "files": {
                         "ConinMode.ps1": {
+                          "offset": "458515",
                           "size": 3228,
-                          "unpacked": true,
                         },
                         "DebugClient.py": {
+                          "offset": "461743",
                           "size": 1558,
-                          "unpacked": true,
                         },
                         "DebugServer.py": {
+                          "offset": "463301",
                           "size": 2396,
-                          "unpacked": true,
                         },
                         "DumpLines.py": {
+                          "offset": "465697",
                           "size": 97,
-                          "unpacked": true,
                         },
                         "EnableExtendedFlags.txt": {
+                          "offset": "465794",
                           "size": 1974,
-                          "unpacked": true,
                         },
                         "Font-Report-June2016": {
                           "files": {
                             "CP437-Consolas.txt": {
+                              "offset": "467768",
                               "size": 16408,
-                              "unpacked": true,
                             },
                             "CP437-Lucida.txt": {
+                              "offset": "484176",
                               "size": 19641,
-                              "unpacked": true,
                             },
                             "CP932.txt": {
+                              "offset": "503817",
                               "size": 19593,
-                              "unpacked": true,
                             },
                             "CP936.txt": {
+                              "offset": "523410",
                               "size": 19650,
-                              "unpacked": true,
                             },
                             "CP949.txt": {
+                              "offset": "543060",
                               "size": 19588,
-                              "unpacked": true,
                             },
                             "CP950.txt": {
+                              "offset": "562648",
                               "size": 19656,
-                              "unpacked": true,
                             },
                             "MinimumWindowWidths.txt": {
+                              "offset": "582304",
                               "size": 870,
-                              "unpacked": true,
                             },
                             "Results.txt": {
+                              "offset": "583174",
                               "size": 147,
-                              "unpacked": true,
                             },
                             "Windows10SetFontBugginess.txt": {
+                              "offset": "583321",
                               "size": 7851,
-                              "unpacked": true,
                             },
                           },
-                          "unpacked": true,
                         },
                         "FormatChar.h": {
+                          "offset": "591172",
                           "size": 529,
-                          "unpacked": true,
                         },
                         "IdentifyConsoleWindow.ps1": {
+                          "offset": "591701",
                           "size": 1952,
-                          "unpacked": true,
                         },
                         "MouseInputNotes.txt": {
+                          "offset": "593653",
                           "size": 4325,
-                          "unpacked": true,
                         },
                         "Notes.txt": {
+                          "offset": "597978",
                           "size": 9856,
-                          "unpacked": true,
                         },
                         "Spew.py": {
+                          "offset": "607834",
                           "size": 65,
-                          "unpacked": true,
                         },
                         "build32.sh": {
+                          "offset": "607899",
                           "size": 213,
-                          "unpacked": true,
                         },
                         "build64.sh": {
+                          "offset": "608112",
                           "size": 217,
-                          "unpacked": true,
                         },
                         "color-test.sh": {
+                          "offset": "608329",
                           "size": 6068,
-                          "unpacked": true,
                         },
                         "font-notes.txt": {
+                          "offset": "614397",
                           "size": 14988,
-                          "unpacked": true,
                         },
                       },
-                      "unpacked": true,
                     },
                     "ship": {
                       "files": {
                         "build-pty4j-libpty.bat": {
+                          "offset": "629385",
                           "size": 1230,
-                          "unpacked": true,
                         },
                         "common_ship.py": {
+                          "offset": "630615",
                           "size": 1698,
-                          "unpacked": true,
                         },
                         "make_msvc_package.py": {
+                          "offset": "632313",
                           "size": 5415,
-                          "unpacked": true,
                         },
                         "ship.py": {
+                          "offset": "637728",
                           "size": 4022,
-                          "unpacked": true,
                         },
                       },
-                      "unpacked": true,
                     },
                     "src": {
                       "files": {
                         "agent": {
                           "files": {
                             "Agent.h": {
+                              "offset": "641750",
                               "size": 3520,
-                              "unpacked": true,
                             },
                             "AgentCreateDesktop.h": {
+                              "offset": "645270",
                               "size": 1283,
-                              "unpacked": true,
                             },
                             "ConsoleFont.h": {
+                              "offset": "646553",
                               "size": 1266,
-                              "unpacked": true,
                             },
                             "ConsoleInput.h": {
+                              "offset": "647819",
                               "size": 3950,
-                              "unpacked": true,
                             },
                             "ConsoleInputReencoding.h": {
+                              "offset": "651769",
                               "size": 1444,
-                              "unpacked": true,
                             },
                             "ConsoleLine.h": {
+                              "offset": "653213",
                               "size": 1524,
-                              "unpacked": true,
                             },
                             "Coord.h": {
+                              "offset": "654737",
                               "size": 2204,
-                              "unpacked": true,
                             },
                             "DebugShowInput.h": {
+                              "offset": "656941",
                               "size": 1434,
-                              "unpacked": true,
                             },
                             "DefaultInputMap.h": {
+                              "offset": "658375",
                               "size": 1271,
-                              "unpacked": true,
                             },
                             "DsrSender.h": {
+                              "offset": "659646",
                               "size": 1242,
-                              "unpacked": true,
                             },
                             "EventLoop.h": {
+                              "offset": "660888",
                               "size": 1603,
-                              "unpacked": true,
                             },
                             "InputMap.h": {
+                              "offset": "662491",
                               "size": 3369,
-                              "unpacked": true,
                             },
                             "LargeConsoleRead.h": {
+                              "offset": "665860",
                               "size": 2411,
-                              "unpacked": true,
                             },
                             "NamedPipe.h": {
+                              "offset": "668271",
                               "size": 4130,
-                              "unpacked": true,
                             },
                             "Scraper.h": {
+                              "offset": "672401",
                               "size": 3760,
-                              "unpacked": true,
                             },
                             "SimplePool.h": {
+                              "offset": "676161",
                               "size": 2365,
-                              "unpacked": true,
                             },
                             "SmallRect.h": {
+                              "offset": "678526",
                               "size": 4437,
-                              "unpacked": true,
                             },
                             "Terminal.h": {
+                              "offset": "682963",
                               "size": 2262,
-                              "unpacked": true,
                             },
                             "UnicodeEncoding.h": {
+                              "offset": "685225",
                               "size": 5298,
-                              "unpacked": true,
                             },
                             "Win32Console.h": {
+                              "offset": "690523",
                               "size": 2347,
-                              "unpacked": true,
                             },
                             "Win32ConsoleBuffer.h": {
+                              "offset": "692870",
                               "size": 3244,
-                              "unpacked": true,
                             },
                           },
-                          "unpacked": true,
                         },
                         "configurations.gypi": {
+                          "offset": "696114",
                           "size": 2378,
-                          "unpacked": true,
                         },
                         "include": {
                           "files": {
                             "winpty.h": {
+                              "offset": "698492",
                               "size": 9420,
-                              "unpacked": true,
                             },
                             "winpty_constants.h": {
+                              "offset": "707912",
                               "size": 5697,
-                              "unpacked": true,
                             },
                           },
-                          "unpacked": true,
                         },
                         "libwinpty": {
                           "files": {
                             "AgentLocation.h": {
+                              "offset": "713609",
                               "size": 1278,
-                              "unpacked": true,
                             },
                             "LibWinptyException.h": {
+                              "offset": "714887",
                               "size": 1961,
-                              "unpacked": true,
                             },
                             "WinptyInternal.h": {
+                              "offset": "716848",
                               "size": 2379,
-                              "unpacked": true,
                             },
                           },
-                          "unpacked": true,
                         },
                         "shared": {
                           "files": {
                             "AgentMsg.h": {
+                              "offset": "719227",
                               "size": 1418,
-                              "unpacked": true,
                             },
                             "BackgroundDesktop.h": {
+                              "offset": "720645",
                               "size": 2836,
-                              "unpacked": true,
                             },
                             "Buffer.h": {
+                              "offset": "723481",
                               "size": 3376,
-                              "unpacked": true,
                             },
                             "DebugClient.h": {
+                              "offset": "726857",
                               "size": 1696,
-                              "unpacked": true,
                             },
                             "GenRandom.h": {
+                              "offset": "728553",
                               "size": 2015,
-                              "unpacked": true,
                             },
                             "GetCommitHash.bat": {
+                              "offset": "730568",
                               "size": 274,
-                              "unpacked": true,
                             },
                             "Mutex.h": {
+                              "offset": "730842",
                               "size": 2183,
-                              "unpacked": true,
                             },
                             "OsModule.h": {
+                              "offset": "733025",
                               "size": 2282,
-                              "unpacked": true,
                             },
                             "OwnedHandle.h": {
+                              "offset": "735307",
                               "size": 1870,
-                              "unpacked": true,
                             },
                             "PrecompiledHeader.h": {
+                              "offset": "737177",
                               "size": 1528,
-                              "unpacked": true,
                             },
                             "StringBuilder.h": {
+                              "offset": "738705",
                               "size": 8506,
-                              "unpacked": true,
                             },
                             "StringUtil.h": {
+                              "offset": "747211",
                               "size": 2677,
-                              "unpacked": true,
                             },
                             "TimeMeasurement.h": {
+                              "offset": "749888",
                               "size": 2171,
-                              "unpacked": true,
                             },
                             "UnixCtrlChars.h": {
+                              "offset": "752059",
                               "size": 2019,
-                              "unpacked": true,
                             },
                             "UpdateGenVersion.bat": {
+                              "offset": "754078",
                               "size": 578,
-                              "unpacked": true,
                             },
                             "WindowsSecurity.h": {
+                              "offset": "754656",
                               "size": 3465,
-                              "unpacked": true,
                             },
                             "WindowsVersion.h": {
+                              "offset": "758121",
                               "size": 1345,
-                              "unpacked": true,
                             },
                             "WinptyAssert.h": {
+                              "offset": "759466",
                               "size": 2829,
-                              "unpacked": true,
                             },
                             "WinptyException.h": {
+                              "offset": "762295",
                               "size": 1643,
-                              "unpacked": true,
                             },
                             "WinptyVersion.h": {
+                              "offset": "763938",
                               "size": 1246,
-                              "unpacked": true,
                             },
                             "winpty_snprintf.h": {
+                              "offset": "765184",
                               "size": 3668,
-                              "unpacked": true,
                             },
                           },
-                          "unpacked": true,
                         },
                         "unix-adapter": {
                           "files": {
                             "InputHandler.h": {
+                              "offset": "768852",
                               "size": 2058,
-                              "unpacked": true,
                             },
                             "OutputHandler.h": {
+                              "offset": "770910",
                               "size": 1943,
-                              "unpacked": true,
                             },
                             "Util.h": {
+                              "offset": "772853",
                               "size": 1410,
-                              "unpacked": true,
                             },
                             "WakeupFd.h": {
+                              "offset": "774263",
                               "size": 1549,
-                              "unpacked": true,
                             },
                           },
-                          "unpacked": true,
                         },
                         "winpty.gyp": {
+                          "offset": "775812",
                           "size": 7684,
-                          "unpacked": true,
                         },
                       },
-                      "unpacked": true,
                     },
                     "vcbuild.bat": {
+                      "offset": "783496",
                       "size": 2425,
-                      "unpacked": true,
                     },
                   },
-                  "unpacked": true,
                 },
               },
-              "unpacked": true,
             },
             "lib": {
               "files": {
                 "conpty_console_list_agent.js": {
+                  "offset": "785921",
                   "size": 775,
-                  "unpacked": true,
                 },
                 "conpty_console_list_agent.js.map": {
+                  "offset": "786696",
                   "size": 564,
-                  "unpacked": true,
                 },
                 "eventEmitter2.js": {
+                  "offset": "787260",
                   "size": 1600,
-                  "unpacked": true,
                 },
                 "eventEmitter2.js.map": {
+                  "offset": "788860",
                   "size": 1155,
-                  "unpacked": true,
                 },
                 "eventEmitter2.test.js": {
+                  "offset": "790015",
                   "size": 1266,
-                  "unpacked": true,
                 },
                 "eventEmitter2.test.js.map": {
+                  "offset": "791281",
                   "size": 1396,
-                  "unpacked": true,
                 },
                 "index.js": {
+                  "offset": "792677",
                   "size": 1972,
-                  "unpacked": true,
                 },
                 "index.js.map": {
+                  "offset": "794649",
                   "size": 964,
-                  "unpacked": true,
                 },
                 "interfaces.js": {
+                  "offset": "795613",
                   "size": 233,
-                  "unpacked": true,
                 },
                 "interfaces.js.map": {
+                  "offset": "795846",
                   "size": 124,
-                  "unpacked": true,
                 },
                 "shared": {
                   "files": {
                     "conout.js": {
+                      "offset": "795970",
                       "size": 348,
-                      "unpacked": true,
                     },
                     "conout.js.map": {
+                      "offset": "796318",
                       "size": 204,
-                      "unpacked": true,
                     },
                   },
-                  "unpacked": true,
                 },
                 "terminal.js": {
+                  "offset": "796522",
                   "size": 7454,
-                  "unpacked": true,
                 },
                 "terminal.js.map": {
+                  "offset": "803976",
                   "size": 5844,
-                  "unpacked": true,
                 },
                 "terminal.test.js": {
+                  "offset": "809820",
                   "size": 6250,
-                  "unpacked": true,
                 },
                 "terminal.test.js.map": {
+                  "offset": "816070",
                   "size": 4150,
-                  "unpacked": true,
                 },
                 "testUtils.test.js": {
+                  "offset": "820220",
                   "size": 807,
-                  "unpacked": true,
                 },
                 "testUtils.test.js.map": {
+                  "offset": "821027",
                   "size": 622,
-                  "unpacked": true,
                 },
                 "types.js": {
+                  "offset": "821649",
                   "size": 228,
-                  "unpacked": true,
                 },
                 "types.js.map": {
+                  "offset": "821877",
                   "size": 114,
-                  "unpacked": true,
                 },
                 "unixTerminal.js": {
+                  "offset": "821991",
                   "size": 10231,
-                  "unpacked": true,
                 },
                 "unixTerminal.js.map": {
+                  "offset": "832222",
                   "size": 7978,
-                  "unpacked": true,
                 },
                 "unixTerminal.test.js": {
+                  "offset": "840200",
                   "size": 19444,
-                  "unpacked": true,
                 },
                 "unixTerminal.test.js.map": {
+                  "offset": "859644",
                   "size": 11472,
-                  "unpacked": true,
                 },
                 "utils.js": {
+                  "offset": "871116",
                   "size": 580,
-                  "unpacked": true,
                 },
                 "utils.js.map": {
+                  "offset": "871696",
                   "size": 443,
-                  "unpacked": true,
                 },
                 "windowsConoutConnection.js": {
+                  "offset": "872139",
                   "size": 6017,
-                  "unpacked": true,
                 },
                 "windowsConoutConnection.js.map": {
+                  "offset": "878156",
                   "size": 1593,
-                  "unpacked": true,
                 },
                 "windowsPtyAgent.js": {
+                  "offset": "879749",
                   "size": 12461,
-                  "unpacked": true,
                 },
                 "windowsPtyAgent.js.map": {
+                  "offset": "892210",
                   "size": 8889,
-                  "unpacked": true,
                 },
                 "windowsPtyAgent.test.js": {
+                  "offset": "901099",
                   "size": 4147,
-                  "unpacked": true,
                 },
                 "windowsPtyAgent.test.js.map": {
+                  "offset": "905246",
                   "size": 2951,
-                  "unpacked": true,
                 },
                 "windowsTerminal.js": {
+                  "offset": "908197",
                   "size": 7988,
-                  "unpacked": true,
                 },
                 "windowsTerminal.js.map": {
+                  "offset": "916185",
                   "size": 5127,
-                  "unpacked": true,
                 },
                 "windowsTerminal.test.js": {
+                  "offset": "921312",
                   "size": 9832,
-                  "unpacked": true,
                 },
                 "windowsTerminal.test.js.map": {
+                  "offset": "931144",
                   "size": 8006,
-                  "unpacked": true,
                 },
                 "worker": {
                   "files": {
                     "conoutSocketWorker.js": {
+                      "offset": "939150",
                       "size": 848,
-                      "unpacked": true,
                     },
                     "conoutSocketWorker.js.map": {
+                      "offset": "939998",
                       "size": 638,
-                      "unpacked": true,
                     },
                   },
-                  "unpacked": true,
                 },
               },
-              "unpacked": true,
-            },
-            "node-addon-api": {
-              "files": {
-                "node_addon_api.Makefile": {
-                  "size": 159,
-                  "unpacked": true,
-                },
-              },
-              "unpacked": true,
             },
             "package.json": {
+              "offset": "940636",
               "size": 884,
-              "unpacked": true,
             },
             "scripts": {
               "files": {
                 "post-install.js": {
+                  "offset": "941520",
                   "size": 1213,
-                  "unpacked": true,
                 },
                 "publish.js": {
+                  "offset": "942733",
                   "size": 2369,
-                  "unpacked": true,
                 },
               },
-              "unpacked": true,
             },
             "src": {
               "files": {
                 "conpty_console_list_agent.ts": {
+                  "offset": "945102",
                   "size": 696,
-                  "unpacked": true,
                 },
                 "eventEmitter2.test.ts": {
+                  "offset": "945798",
                   "size": 975,
-                  "unpacked": true,
                 },
                 "eventEmitter2.ts": {
+                  "offset": "946773",
                   "size": 1111,
-                  "unpacked": true,
                 },
                 "index.ts": {
+                  "offset": "947884",
                   "size": 2115,
-                  "unpacked": true,
                 },
                 "interfaces.ts": {
+                  "offset": "949999",
                   "size": 2845,
-                  "unpacked": true,
                 },
                 "shared": {
                   "files": {
                     "conout.ts": {
+                      "offset": "952844",
                       "size": 291,
-                      "unpacked": true,
                     },
                   },
-                  "unpacked": true,
                 },
                 "terminal.test.ts": {
+                  "offset": "953135",
                   "size": 4346,
-                  "unpacked": true,
                 },
                 "terminal.ts": {
+                  "offset": "957481",
                   "size": 6665,
-                  "unpacked": true,
                 },
                 "testUtils.test.ts": {
+                  "offset": "964146",
                   "size": 567,
-                  "unpacked": true,
                 },
                 "tsconfig.json": {
+                  "offset": "964713",
                   "size": 323,
-                  "unpacked": true,
                 },
                 "types.ts": {
+                  "offset": "965036",
                   "size": 306,
-                  "unpacked": true,
                 },
                 "unixTerminal.test.ts": {
+                  "offset": "965342",
                   "size": 13205,
-                  "unpacked": true,
                 },
                 "unixTerminal.ts": {
+                  "offset": "978547",
                   "size": 8195,
-                  "unpacked": true,
                 },
                 "utils.ts": {
+                  "offset": "986742",
                   "size": 292,
-                  "unpacked": true,
                 },
                 "win": {
                   "files": {
                     "path_util.h": {
+                      "offset": "987034",
                       "size": 695,
-                      "unpacked": true,
                     },
                   },
-                  "unpacked": true,
                 },
                 "windowsConoutConnection.ts": {
+                  "offset": "987729",
                   "size": 2683,
-                  "unpacked": true,
                 },
                 "windowsPtyAgent.test.ts": {
+                  "offset": "990412",
                   "size": 3419,
-                  "unpacked": true,
                 },
                 "windowsPtyAgent.ts": {
+                  "offset": "993831",
                   "size": 10359,
-                  "unpacked": true,
                 },
                 "windowsTerminal.test.ts": {
+                  "offset": "1004190",
                   "size": 7551,
-                  "unpacked": true,
                 },
                 "windowsTerminal.ts": {
+                  "offset": "1011741",
                   "size": 5784,
-                  "unpacked": true,
                 },
                 "worker": {
                   "files": {
                     "conoutSocketWorker.ts": {
+                      "offset": "1017525",
                       "size": 724,
-                      "unpacked": true,
                     },
                   },
-                  "unpacked": true,
                 },
               },
-              "unpacked": true,
             },
           },
-          "unpacked": true,
         },
       },
     },
     "package.json": {
-      "offset": "426524",
+      "offset": "1094471",
       "size": 266,
     },
   },
