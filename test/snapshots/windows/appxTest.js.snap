@@ -99,6 +99,18 @@ exports[`custom raw appmanifest.xml 1`] = `
 "
 `;
 
+exports[`custom raw appmanifest.xml 2`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW 1.1.0.appx",
+      "safeArtifactName": "TestApp-1.1.0.appx",
+    },
+  ],
+}
+`;
+
 exports[`custom template appmanifest.xml 1`] = `
 "<?xml version="1.0" encoding="utf-8"?>
 <!--suppress XmlUnusedNamespaceDeclaration -->
@@ -140,13 +152,13 @@ exports[`custom template appmanifest.xml 1`] = `
         <uap:DefaultTile Wide310x150Logo="assets\\Wide310x150Logo.png" />
         
       </uap:VisualElements>
-      <Extensions>
+      <!-- <Extensions>
         <desktop2:Extension Category="windows.firewallRules">
           <desktop2:FirewallRules Executable="app\\Test App ßW.exe">
             <desktop2:Rule Direction="in" Profile="private" IPProtocol="TCP" LocalPortMin="22022" LocalPortMax="24044"/>
           </desktop2:FirewallRules>
         </desktop2:Extension>
-      </Extensions>
+      </Extensions> -->
     </Application>
   </Applications>
 </Package>
