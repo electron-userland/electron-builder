@@ -39,7 +39,12 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
   )
 
   get isForceCodeSigningVerification(): boolean {
-    return this.platformSpecificBuildOptions.verifyUpdateCodeSignature !== false
+    const signtoolWasUsed = this.platformSpecificBuildOptions.azureSignOptions == null
+    const shouldVerifySigntoolPublisher = chooseNotNull(
+      this.platformSpecificBuildOptions.signtoolOptions?.verifyUpdateCodeSignature,
+      this.platformSpecificBuildOptions.verifyUpdateCodeSignature
+    )
+    return signtoolWasUsed && shouldVerifySigntoolPublisher !== false
   }
 
   constructor(info: Packager) {

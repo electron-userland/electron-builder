@@ -6629,7 +6629,7 @@
         },
         "verifyUpdateCodeSignature": {
           "default": true,
-          "description": "Whether to verify the signature of an available update before installation.\nThe [publisher name](#publisherName) will be used for the signature verification.",
+          "description": "Whether to verify the signature of an available update before installation.\nThe [publisher name](#publisherName) will be used for the signature verification.\n(Only applicable to signtool, not usable for Azure Trusted Signing since there's no local certificate to pull the publisher name from)",
           "type": "boolean"
         }
       },
@@ -6738,6 +6738,11 @@
             "null",
             "string"
           ]
+        },
+        "verifyUpdateCodeSignature": {
+          "default": true,
+          "description": "Whether to verify the signature of an available update before installation.\nThe [publisher name](#publisherName) will be used for the signature verification.",
+          "type": "boolean"
         }
       },
       "type": "object"

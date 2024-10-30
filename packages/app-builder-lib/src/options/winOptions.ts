@@ -93,8 +93,10 @@ export interface WindowsConfiguration extends PlatformSpecificBuildOptions {
   /**
    * Whether to verify the signature of an available update before installation.
    * The [publisher name](#publisherName) will be used for the signature verification.
+   * (Only applicable to signtool, not usable for Azure Trusted Signing since there's no local certificate to pull the publisher name from)
    *
    * @default true
+   * @deprecated Please use {@link signtoolOptions}: {@link WindowsSigntoolConfiguration.verifyUpdateCodeSignature}
    */
   readonly verifyUpdateCodeSignature?: boolean
 
@@ -185,6 +187,14 @@ export interface WindowsSigntoolConfiguration {
    * Defaults to common name from your code signing certificate.
    */
   readonly publisherName?: string | Array<string> | null
+
+  /**
+   * Whether to verify the signature of an available update before installation.
+   * The [publisher name](#publisherName) will be used for the signature verification.
+   *
+   * @default true
+   */
+  readonly verifyUpdateCodeSignature?: boolean
 }
 
 // https://learn.microsoft.com/en-us/azure/trusted-signing/how-to-signing-integrations
