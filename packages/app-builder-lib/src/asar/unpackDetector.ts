@@ -15,7 +15,7 @@ export function detectUnpackedDirs(fileSet: ResolvedFileSet, autoUnpackDirs: Set
   for (let i = 0, n = fileSet.files.length; i < n; i++) {
     const file = fileSet.files[i]
     const stat: FilterStats = metadata.get(file)!
-    if (!stat.destNodeModulesFilePath) {
+    if (!stat.destNodeModulesDirPath) {
       continue
     }
 
@@ -42,7 +42,6 @@ export function detectUnpackedDirs(fileSet: ResolvedFileSet, autoUnpackDirs: Set
     if (log.isDebugEnabled) {
       log.debug({ file: stat.destNodeModulesFilePath, reason: "contains executable code" }, "not packed into asar archive")
     }
-    autoUnpackDirs.add(stat.destNodeModulesDirPath!)
-    break
+    autoUnpackDirs.add(stat.destNodeModulesDirPath)
   }
 }

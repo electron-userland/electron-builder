@@ -49,7 +49,7 @@ export class NodeModuleCopyHelper extends FileCopyHelper {
     super(matcher, matcher.isEmpty() ? null : matcher.createFilter(), packager)
   }
 
-  async collectNodeModules(moduleInfo: NodeModuleInfo, nodeModuleExcludedExts: Array<string>, destination:string): Promise<Array<string>> {
+  async collectNodeModules(moduleInfo: NodeModuleInfo, nodeModuleExcludedExts: Array<string>, destination: string): Promise<Array<string>> {
     const filter = this.filter
     const metadata = this.metadata
 
