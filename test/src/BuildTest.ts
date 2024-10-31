@@ -283,18 +283,17 @@ test.ifLinuxOrDevMac("beforeBuild", () => {
   )
 })
 
-test("win smart unpack", () => {
+test.ifDevOrWinCi("win smart unpack", () => {
   // test onNodeModuleFile hook
   const nodeModuleFiles: Array<string> = []
-  let p = ""
   return app(
     {
       targets: Platform.WINDOWS.createTarget(DIR_TARGET),
       config: {
         npmRebuild: true,
         onNodeModuleFile: file => {
-          const name = toSystemIndependentPath(path.relative(p, file))
-          console.log("test is her,", p, file, nodeModuleFiles, name)
+          const index = file.indexOf(path.sep + "node_modules"+ path.sep)
+          const name = toSystemIndependentPath(file.slice(index + 1))
           if (!name.startsWith(".") && !name.endsWith(".dll") && name.includes(".")) {
             nodeModuleFiles.push(name)
           }
@@ -305,8 +304,8 @@ test("win smart unpack", () => {
       },
     },
     {
+      isInstallDepsBefore:true,
       projectDirCreated: projectDir => {
-        p = projectDir
         return packageJson(it => {
           it.dependencies = {
             debug: "3.1.0",
