@@ -2,7 +2,7 @@ import { checkBuildRequestOptions } from "app-builder-lib"
 import { doMergeConfigs } from "app-builder-lib/out/util/config/config"
 import { Arch, createTargets, DIR_TARGET, Platform } from "electron-builder"
 import { promises as fs } from "fs"
-import { outputJson } from "fs-extra"
+import { outputJson ,outputFile} from "fs-extra"
 import * as path from "path"
 import { createYargs } from "electron-builder/out/builder"
 import { app, appTwo, appTwoThrows, assertPack, linuxDirTarget, modifyPackageJson, packageJson, toSystemIndependentPath } from "./helpers/packTester"
@@ -322,6 +322,34 @@ test.ifDevOrWinCi("win smart unpack", () => {
     }
   )()
 })
+
+test.ifDevOrWinCi("smart unpack local module with dll file", () => {
+  return app(
+    {
+      targets: Platform.WINDOWS.createTarget(DIR_TARGET),
+    },
+    {
+      isInstallDepsBefore:true,
+      projectDirCreated: async (projectDir, tmpDir) => {
+        const tempDir = await tmpDir.getTempDir()
+        let localPath = path.join(tempDir, "foo")
+        await outputFile(path.join(localPath, "package.json"), `{"name":"foo","version":"9.0.0","main":"index.js","license":"MIT","dependencies":{"ms":"2.0.0"}}`)
+        await outputFile(path.join(localPath, "test.dll"), `test`)
+        await modifyPackageJson(projectDir, data => {
+          data.dependencies = {
+            debug: "3.1.0",
+            "edge-cs": "1.2.1",
+            foo: `file:${localPath}`,
+          }
+        })
+      },
+      packed: async context => {
+        await verifySmartUnpack(context.getResources(Platform.WINDOWS))
+      },
+    }
+  )()
+})
+
 
 // https://github.com/electron-userland/electron-builder/issues/1738
 test.ifDevOrLinuxCi(
