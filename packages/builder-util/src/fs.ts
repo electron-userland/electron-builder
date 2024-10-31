@@ -20,11 +20,17 @@ export class CopyFileTransformer {
 
 export type FileTransformer = (file: string) => Promise<null | string | Buffer | CopyFileTransformer> | null | string | Buffer | CopyFileTransformer
 export interface FilterStats extends Stats {
-  // relative path of the dependency(node_modules + moduleName + file)
-  // Mainly used for filter, such as files filtering and asarUnpack filtering
-  destNodeModulesFilePath?: string
-  destNodeModulesDirPath?: string
+  // These module name and paths are mainly used for:
+  // 1. File filtering
+  // 2. Asar unpacking rules
+  // 3. Dependency resolution
+
+  // The name of the node module (e.g. 'express')
   moduleName?: string
+  // The root path of the node module (e.g. 'node_modules/express')
+  moduleRootPath?: string
+  // The full file path within the node module (e.g. 'node_modules/express/lib/application.js')
+  moduleFullFilePath?: string
   // deal with asar unpack sysmlink
   relativeLink?: string
   linkRelativeToFile?: string
