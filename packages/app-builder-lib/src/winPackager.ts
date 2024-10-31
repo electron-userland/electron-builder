@@ -24,19 +24,26 @@ import { isBuildCacheEnabled } from "./util/flags"
 import { time } from "./util/timer"
 import { getWindowsVm, VmManager } from "./vm/vm"
 import { execWine } from "./wine"
+import { SignManager } from "./codeSign/signManager"
 
 export class WinPackager extends PlatformPackager<WindowsConfiguration> {
   _iconPath = new Lazy(() => this.getOrConvertIcon("ico"))
 
   readonly vm = new Lazy<VmManager>(() => (process.platform === "win32" ? Promise.resolve(new VmManager()) : getWindowsVm(this.debugLogger)))
 
-  readonly signtoolManager = new Lazy<WindowsSignToolManager>(() => Promise.resolve(new WindowsSignToolManager(this)))
-  readonly azureSignManager = new Lazy(() =>
+  private readonly signtoolManager = new Lazy<WindowsSignToolManager>(() => Promise.resolve(new WindowsSignToolManager(this)))
+  private readonly azureSignManager = new Lazy(() =>
     Promise.resolve(new WindowsSignAzureManager(this)).then(async manager => {
       await manager.initializeProviderModules()
       return manager
     })
   )
+  get signingManager(): Lazy<SignManager> {
+    if (this.platformSpecificBuildOptions.azureSignOptions) {
+      return this.azureSignManager
+    }
+    return this.signtoolManager
+  }
 
   get isForceCodeSigningVerification(): boolean {
     return this.platformSpecificBuildOptions.verifyUpdateCodeSignature !== false

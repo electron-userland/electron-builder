@@ -1,10 +1,29 @@
-import { InvalidConfigurationError, log } from "builder-util"
-import { WindowsAzureSigningConfiguration } from "../options/winOptions"
+import { asArray, InvalidConfigurationError, log } from "builder-util"
+import { WindowsAzureSigningConfiguration, WindowsConfiguration } from "../options/winOptions"
 import { WinPackager } from "../winPackager"
 import { getPSCmd, WindowsSignOptions } from "./windowsCodeSign"
+import { Lazy } from "lazy-val"
+import { SignManager } from "./signManager"
 
-export class WindowsSignAzureManager {
-  constructor(private readonly packager: WinPackager) {}
+export class WindowsSignAzureManager implements SignManager {
+  private readonly platformSpecificBuildOptions: WindowsConfiguration
+
+  readonly computedPublisherName = new Lazy<Array<string> | null>(() => {
+    const publisherName = this.platformSpecificBuildOptions.azureSignOptions?.publisherName
+    if (publisherName === null) {
+      return Promise.resolve(null)
+    } else if (publisherName != null) {
+      return Promise.resolve(asArray(publisherName))
+    }
+
+    // TODO: Is there another way to automatically pull Publisher Name from AzureTrusted service?
+    // For now return null.
+    return Promise.resolve(null)
+  })
+
+  constructor(private readonly packager: WinPackager) {
+    this.platformSpecificBuildOptions = packager.platformSpecificBuildOptions
+  }
 
   async initializeProviderModules() {
     const vm = await this.packager.vm.value
@@ -74,13 +93,24 @@ export class WindowsSignAzureManager {
     return true
   }
 
+  computePublisherName(): Promise<string> {
+    return Promise.resolve(this.packager.platformSpecificBuildOptions.azureSignOptions!.publisherName)
+  }
   // prerequisite: requires `initializeProviderModules` to already have been executed
-  async signUsingAzureTrustedSigning(options: WindowsSignOptions): Promise<boolean> {
+  async signFile(options: WindowsSignOptions): Promise<boolean> {
     const vm = await this.packager.vm.value
     const ps = await getPSCmd(vm)
 
-    const { endpoint, certificateProfileName, codeSigningAccountName, fileDigest, timestampRfc3161, timestampDigest, ...extraSigningArgs }: WindowsAzureSigningConfiguration =
-      options.options.azureSignOptions!
+    const {
+      publisherName: _publisher, // extract from `extraSigningArgs`
+      endpoint,
+      certificateProfileName,
+      codeSigningAccountName,
+      fileDigest,
+      timestampRfc3161,
+      timestampDigest,
+      ...extraSigningArgs
+    }: WindowsAzureSigningConfiguration = options.options.azureSignOptions!
     const params = {
       ...extraSigningArgs,
       Endpoint: endpoint,
