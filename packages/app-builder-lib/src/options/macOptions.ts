@@ -224,6 +224,7 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
    * Whether to disable electron-builder's [@electron/notarize](https://github.com/electron/notarize) integration.
    *
    * Note: In order to activate the notarization step You MUST specify one of the following via environment variables:
+   *
    * 1. `APPLE_API_KEY`, `APPLE_API_KEY_ID` and `APPLE_API_ISSUER`.
    * 2. `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD`, and `APPLE_TEAM_ID`
    * 3. `APPLE_KEYCHAIN` and `APPLE_KEYCHAIN_PROFILE`
