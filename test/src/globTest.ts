@@ -4,7 +4,7 @@ import { outputFile } from "fs-extra"
 import * as path from "path"
 import * as fs from "fs/promises"
 import { assertThat } from "./helpers/fileAssert"
-import { app, assertPack, modifyPackageJson, PackedContext, removeUnstableProperties, verifyAsarFileTree } from "./helpers/packTester"
+import { app, appThrows, assertPack, modifyPackageJson, PackedContext, removeUnstableProperties, verifyAsarFileTree } from "./helpers/packTester"
 import { verifySmartUnpack } from "./helpers/verifySmartUnpack"
 
 async function createFiles(appDir: string) {
@@ -110,7 +110,7 @@ test.ifNotWindows(
 
 test.ifNotWindows(
   "outside link",
-  app(
+  appThrows(
     {
       targets: Platform.LINUX.createTarget(DIR_TARGET),
     },
@@ -120,13 +120,37 @@ test.ifNotWindows(
         await outputFile(path.join(tempDir, "foo"), "data")
         await fs.symlink(tempDir, path.join(projectDir, "o-dir"))
       },
-      packed: async context => {
-        const file = (await readAsar(path.join(context.getResources(Platform.LINUX), "app.asar"))).getFile("o-dir/foo", false)
-        expect(removeUnstableProperties(file)).toMatchSnapshot()
-      },
     }
   )
 )
+
+test.ifDevOrLinuxCi("local node module with file protocol", () => {
+  return assertPack(
+    "test-app-one",
+    {
+      targets: Platform.LINUX.createTarget(DIR_TARGET),
+      config: {
+        asarUnpack: ["**/node_modules/foo/**/*"],
+      },
+    },
+    {
+      isInstallDepsBefore: true,
+      projectDirCreated: async (projectDir, tmpDir) => {
+        const tempDir = await tmpDir.getTempDir()
+        let localPath = path.join(tempDir, "foo")
+        await outputFile(path.join(localPath, "package.json"), `{"name":"foo","version":"9.0.0","main":"index.js","license":"MIT","dependencies":{"ms":"2.0.0"}}`)
+        await modifyPackageJson(projectDir, data => {
+          data.dependencies = {
+            foo: `file:${localPath}`,
+          }
+        })
+      },
+      packed: async context => {
+        assertThat(path.join(path.join(context.getResources(Platform.LINUX), "app.asar.unpacked", "node_modules", "foo", "package.json"))).isFile()
+      },
+    }
+  )
+})
 
 // cannot be enabled
 // https://github.com/electron-userland/electron-builder/issues/611

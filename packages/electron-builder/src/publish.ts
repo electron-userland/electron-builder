@@ -40,14 +40,14 @@ export function configurePublishCommand(yargs: yargs.Argv): yargs.Argv {
     .demandOption("files")
 }
 
-export async function publish(args: { files: string[]; version: string | undefined; config: string | undefined }) {
+export async function publish(args: { files: string[]; version: string | undefined; configurationFilePath: string | undefined }) {
   const uploadTasks = args.files.map(f => {
     return {
       file: path.resolve(f),
       arch: null,
     }
   })
-  return publishArtifactsWithOptions(uploadTasks, args.version, args.config)
+  return publishArtifactsWithOptions(uploadTasks, args.version, args.configurationFilePath)
 }
 
 export async function publishArtifactsWithOptions(

@@ -125,6 +125,10 @@ export interface WindowsSigntoolConfiguration {
 // https://learn.microsoft.com/en-us/azure/trusted-signing/how-to-signing-integrations
 export interface WindowsAzureSigningConfiguration {
   /**
+   * [The publisher name](https://github.com/electron-userland/electron-builder/issues/1187#issuecomment-278972073), exactly as in your code signed certificate. Several names can be provided.
+   */
+  readonly publisherName: string
+  /**
    * The Trusted Signing Account endpoint. The URI value must have a URI that aligns to the
    * region your Trusted Signing Account and Certificate Profile you are specifying were created
    * in during the setup of these resources.
@@ -143,7 +147,23 @@ export interface WindowsAzureSigningConfiguration {
    */
   readonly codeSigningAccountName: string
   /**
-   * Allow other CLI parameters (verbatim case-sensitive) to `Invoke-TrustedSigning`
+   * The File Digest for signing each file. Translates to field: FileDigest
+   * @default SHA256
    */
-  [k: string]: string
+  readonly fileDigest?: string
+  /**
+   * The Timestamp rfc3161 server. Translates to field: TimestampRfc3161
+   * @default http://timestamp.acs.microsoft.com
+   */
+  readonly timestampRfc3161?: string
+  /**
+   * The Timestamp Digest. Translates to field: TimestampDigest
+   * @default SHA256
+   */
+  readonly timestampDigest?: string
+  /**
+   * Allow other CLI parameters (verbatim case-sensitive) to `Invoke-TrustedSigning`
+   * Note: Key-Value pairs with `undefined`/`null` value are filtered out of the command.
+   */
+  [k: string]: string | undefined | null
 }

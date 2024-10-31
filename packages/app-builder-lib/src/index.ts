@@ -1,4 +1,4 @@
-import { PublishOptions } from "electron-publish/out/publisher"
+import { PublishOptions } from "electron-publish"
 import { log, InvalidConfigurationError, executeFinally } from "builder-util"
 import { asArray } from "builder-util-runtime"
 import { Packager } from "./packager"
@@ -21,7 +21,18 @@ export {
   CompressionLevel,
 } from "./core"
 export { getArchSuffix, Arch, archFromString } from "builder-util"
-export { CommonConfiguration, Configuration, AfterPackContext, MetadataDirectories, BeforePackContext, AfterExtractContext, Hooks, Hook, PackContext } from "./configuration"
+export {
+  CommonConfiguration,
+  Configuration,
+  AfterPackContext,
+  MetadataDirectories,
+  BeforePackContext,
+  AfterExtractContext,
+  Hooks,
+  Hook,
+  PackContext,
+  FuseOptionsV1,
+} from "./configuration"
 export { ElectronBrandingOptions, ElectronDownloadOptions, ElectronPlatformName } from "./electron/ElectronFramework"
 export { PlatformSpecificBuildOptions, AsarOptions, FileSet, Protocol, ReleaseInfo, FilesBuildOptions } from "./options/PlatformSpecificBuildOptions"
 export { FileAssociation } from "./options/FileAssociation"

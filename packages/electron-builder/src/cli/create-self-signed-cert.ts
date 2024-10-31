@@ -1,4 +1,4 @@
-import { sanitizeFileName } from "app-builder-lib/out/util/filename"
+import { sanitizeFileName } from "builder-util/out/filename"
 import { exec, log, spawn, TmpDir, unlinkIfExists } from "builder-util"
 import * as chalk from "chalk"
 import { getSignVendorPath } from "app-builder-lib/out/codeSign/windowsSignToolManager"

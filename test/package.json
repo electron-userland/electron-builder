@@ -4,7 +4,7 @@
   "private": true,
   "dependencies": {
     "@electron/osx-sign": "^1.0.4",
-    "@jest/core": "^27.5.1",
+    "@jest/core": "29.7.0",
     "app-builder-lib": "workspace:*",
     "builder-util": "workspace:*",
     "builder-util-runtime": "workspace:*",
@@ -18,7 +18,7 @@
     "electron-publish": "workspace:*",
     "electron-updater": "workspace:*",
     "fs-extra": "^10.1.0",
-    "jest": "^27.5.1",
+    "jest": "29.7.0",
     "jest-junit": "^12.0.0",
     "js-yaml": "^4.1.0",
     "lazy-val": "^1.0.5",
@@ -40,7 +40,7 @@
     "babel-jest": "^29.7.0",
     "esbuild": "^0.12.14",
     "esbuild-jest": "^0.5.0",
-    "fast-xml-parser": "^4.0.15"
+    "fast-xml-parser": "4.4.1"
   },
   "jest": {
     "snapshotResolver": "<rootDir>/snapshotResolver.js",

@@ -40,6 +40,22 @@ test.ifAll("yarn several workspaces", () =>
   )
 )
 
+test.ifAll("yarn several workspaces and asarUnpack", () =>
+  assertPack(
+    "test-app-yarn-several-workspace",
+    {
+      targets: linuxDirTarget,
+      projectDir: "packages/test-app",
+      config: {
+        asarUnpack: ["**/node_modules/ms/**/*"],
+      },
+    },
+    {
+      packed: context => verifyAsarFileTree(context.getResources(Platform.LINUX)),
+    }
+  )
+)
+
 test.ifAll("yarn two package.json w/ native module", () =>
   assertPack(
     "test-app-two-native-modules",

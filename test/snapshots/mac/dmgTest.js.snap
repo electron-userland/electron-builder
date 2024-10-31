@@ -1,14 +1,14 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`background color 1`] = `
-Object {
+{
   "backgroundColor": "orange",
-  "contents": Array [
-    Object {
+  "contents": [
+    {
       "x": 130,
       "y": 220,
     },
-    Object {
+    {
       "path": "/Applications",
       "type": "link",
       "x": 410,
@@ -21,9 +21,9 @@ Object {
 `;
 
 exports[`background color 2`] = `
-Object {
-  "mac": Array [
-    Object {
+{
+  "mac": [
+    {
       "arch": "x64",
       "file": "BackgroundColor-1.1.0.dmg",
     },
@@ -32,7 +32,7 @@ Object {
 `;
 
 exports[`background color 3`] = `
-Object {
+{
   "CFBundleDisplayName": "BackgroundColor",
   "CFBundleExecutable": "BackgroundColor",
   "CFBundleIconFile": "icon.icns",
@@ -42,20 +42,20 @@ Object {
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
   "LSApplicationCategoryType": "your.app.category.type",
-  "LSEnvironment": Object {
+  "LSEnvironment": {
     "MallocNanoZone": "0",
   },
-  "NSAppTransportSecurity": Object {
+  "NSAppTransportSecurity": {
     "NSAllowsLocalNetworking": true,
-    "NSExceptionDomains": Object {
-      "127.0.0.1": Object {
+    "NSExceptionDomains": {
+      "127.0.0.1": {
         "NSIncludesSubdomains": false,
         "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
         "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
         "NSTemporaryExceptionMinimumTLSVersion": "1.0",
         "NSTemporaryExceptionRequiresForwardSecrecy": false,
       },
-      "localhost": Object {
+      "localhost": {
         "NSIncludesSubdomains": false,
         "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
         "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
@@ -73,19 +73,19 @@ Object {
 `;
 
 exports[`bundleShortVersion 1`] = `
-Object {
-  "mac": Array [
-    Object {
+{
+  "mac": [
+    {
       "arch": "x64",
       "file": "BundleShortVersion-2017.1-alpha5.dmg",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
-    Object {
+    {
       "file": "BundleShortVersion-2017.1-alpha5.dmg.blockmap",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -95,7 +95,7 @@ Object {
 `;
 
 exports[`bundleShortVersion 2`] = `
-Object {
+{
   "CFBundleDisplayName": "BundleShortVersion",
   "CFBundleExecutable": "BundleShortVersion",
   "CFBundleIconFile": "icon.icns",
@@ -105,20 +105,20 @@ Object {
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "2017.1-alpha5",
   "LSApplicationCategoryType": "your.app.category.type",
-  "LSEnvironment": Object {
+  "LSEnvironment": {
     "MallocNanoZone": "0",
   },
-  "NSAppTransportSecurity": Object {
+  "NSAppTransportSecurity": {
     "NSAllowsLocalNetworking": true,
-    "NSExceptionDomains": Object {
-      "127.0.0.1": Object {
+    "NSExceptionDomains": {
+      "127.0.0.1": {
         "NSIncludesSubdomains": false,
         "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
         "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
         "NSTemporaryExceptionMinimumTLSVersion": "1.0",
         "NSTemporaryExceptionRequiresForwardSecrecy": false,
       },
-      "localhost": Object {
+      "localhost": {
         "NSIncludesSubdomains": false,
         "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
         "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
@@ -136,21 +136,21 @@ Object {
 `;
 
 exports[`custom background - new way 1`] = `
-Object {
-  "mac": Array [
-    Object {
+{
+  "mac": [
+    {
       "arch": "x64",
       "file": "Test App ßW-1.1.0-mac.zip",
       "safeArtifactName": "TestApp-1.1.0-mac.zip",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
-    Object {
+    {
       "file": "Test App ßW-1.1.0-mac.zip.blockmap",
       "safeArtifactName": "Test App ßW-1.1.0-mac.zip.blockmap",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -160,7 +160,7 @@ Object {
 `;
 
 exports[`custom background - new way 2`] = `
-Object {
+{
   "CFBundleDisplayName": "Test App ßW",
   "CFBundleExecutable": "Test App ßW",
   "CFBundleIconFile": "icon.icns",
@@ -170,20 +170,20 @@ Object {
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
   "LSApplicationCategoryType": "your.app.category.type",
-  "LSEnvironment": Object {
+  "LSEnvironment": {
     "MallocNanoZone": "0",
   },
-  "NSAppTransportSecurity": Object {
+  "NSAppTransportSecurity": {
     "NSAllowsLocalNetworking": true,
-    "NSExceptionDomains": Object {
-      "127.0.0.1": Object {
+    "NSExceptionDomains": {
+      "127.0.0.1": {
         "NSIncludesSubdomains": false,
         "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
         "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
         "NSTemporaryExceptionMinimumTLSVersion": "1.0",
         "NSTemporaryExceptionRequiresForwardSecrecy": false,
       },
-      "localhost": Object {
+      "localhost": {
         "NSIncludesSubdomains": false,
         "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
         "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
@@ -201,21 +201,21 @@ Object {
 `;
 
 exports[`disable dmg icon (light), bundleVersion 1`] = `
-Object {
-  "mac": Array [
-    Object {
+{
+  "mac": [
+    {
       "arch": "x64",
       "file": "Test App ßW-1.1.0-mac.zip",
       "safeArtifactName": "TestApp-1.1.0-mac.zip",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
-    Object {
+    {
       "file": "Test App ßW-1.1.0-mac.zip.blockmap",
       "safeArtifactName": "Test App ßW-1.1.0-mac.zip.blockmap",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -225,7 +225,7 @@ Object {
 `;
 
 exports[`disable dmg icon (light), bundleVersion 2`] = `
-Object {
+{
   "CFBundleDisplayName": "Test App ßW",
   "CFBundleExecutable": "Test App ßW",
   "CFBundleIconFile": "icon.icns",
@@ -235,20 +235,20 @@ Object {
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
   "LSApplicationCategoryType": "your.app.category.type",
-  "LSEnvironment": Object {
+  "LSEnvironment": {
     "MallocNanoZone": "0",
   },
-  "NSAppTransportSecurity": Object {
+  "NSAppTransportSecurity": {
     "NSAllowsLocalNetworking": true,
-    "NSExceptionDomains": Object {
-      "127.0.0.1": Object {
+    "NSExceptionDomains": {
+      "127.0.0.1": {
         "NSIncludesSubdomains": false,
         "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
         "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
         "NSTemporaryExceptionMinimumTLSVersion": "1.0",
         "NSTemporaryExceptionRequiresForwardSecrecy": false,
       },
-      "localhost": Object {
+      "localhost": {
         "NSIncludesSubdomains": false,
         "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
         "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
@@ -266,19 +266,19 @@ Object {
 `;
 
 exports[`dmg 1`] = `
-Object {
-  "mac": Array [
-    Object {
+{
+  "mac": [
+    {
       "arch": "x64",
       "file": "DefaultDmg-1.1.0.dmg",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
-    Object {
+    {
       "file": "DefaultDmg-1.1.0.dmg.blockmap",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -288,7 +288,7 @@ Object {
 `;
 
 exports[`dmg 2`] = `
-Object {
+{
   "CFBundleDisplayName": "DefaultDmg",
   "CFBundleExecutable": "DefaultDmg",
   "CFBundleIconFile": "icon.icns",
@@ -298,20 +298,20 @@ Object {
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
   "LSApplicationCategoryType": "your.app.category.type",
-  "LSEnvironment": Object {
+  "LSEnvironment": {
     "MallocNanoZone": "0",
   },
-  "NSAppTransportSecurity": Object {
+  "NSAppTransportSecurity": {
     "NSAllowsLocalNetworking": true,
-    "NSExceptionDomains": Object {
-      "127.0.0.1": Object {
+    "NSExceptionDomains": {
+      "127.0.0.1": {
         "NSIncludesSubdomains": false,
         "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
         "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
         "NSTemporaryExceptionMinimumTLSVersion": "1.0",
         "NSTemporaryExceptionRequiresForwardSecrecy": false,
       },
-      "localhost": Object {
+      "localhost": {
         "NSIncludesSubdomains": false,
         "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
         "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
@@ -329,24 +329,24 @@ Object {
 `;
 
 exports[`license buttons config 1`] = `
-Object {
+{
   "$schema": "https://github.com/argv-minus-one/dmg-license/raw/master/schema.json",
-  "body": Array [
-    Object {
+  "body": [
+    {
       "lang": "en-US",
     },
-    Object {
+    {
       "lang": "fr-FR",
     },
-    Object {
+    {
       "lang": "ja-JP",
     },
-    Object {
+    {
       "lang": "ko-KR",
     },
   ],
-  "labels": Array [
-    Object {
+  "labels": [
+    {
       "agree": "Agree",
       "disagree": "Disagree",
       "lang": "en-US",
@@ -355,7 +355,7 @@ Object {
       "print": "Print",
       "save": "Save",
     },
-    Object {
+    {
       "agree": "J'accepte",
       "disagree": "Je refuse",
       "lang": "fr-FR",
@@ -364,7 +364,7 @@ Object {
       "print": "Imprimer",
       "save": "Sauvegarder",
     },
-    Object {
+    {
       "agree": "同意する",
       "disagree": "同意しない",
       "lang": "ja-JP",
@@ -373,7 +373,7 @@ Object {
       "print": "印刷する",
       "save": "セーブ",
     },
-    Object {
+    {
       "agree": "한국어",
       "disagree": "동의하지 않는다",
       "lang": "ko-KR",
@@ -387,21 +387,21 @@ Object {
 `;
 
 exports[`license buttons config 2`] = `
-Object {
-  "mac": Array [
-    Object {
+{
+  "mac": [
+    {
       "arch": "x64",
       "file": "Test App ßW-1.1.0.dmg",
       "safeArtifactName": "TestApp-1.1.0.dmg",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
-    Object {
+    {
       "file": "Test App ßW-1.1.0.dmg.blockmap",
       "safeArtifactName": "TestApp-1.1.0.dmg.blockmap",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -411,7 +411,7 @@ Object {
 `;
 
 exports[`license buttons config 3`] = `
-Object {
+{
   "CFBundleDisplayName": "Test App ßW",
   "CFBundleExecutable": "Test App ßW",
   "CFBundleIconFile": "icon.icns",
@@ -421,20 +421,20 @@ Object {
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
   "LSApplicationCategoryType": "your.app.category.type",
-  "LSEnvironment": Object {
+  "LSEnvironment": {
     "MallocNanoZone": "0",
   },
-  "NSAppTransportSecurity": Object {
+  "NSAppTransportSecurity": {
     "NSAllowsLocalNetworking": true,
-    "NSExceptionDomains": Object {
-      "127.0.0.1": Object {
+    "NSExceptionDomains": {
+      "127.0.0.1": {
         "NSIncludesSubdomains": false,
         "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
         "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
         "NSTemporaryExceptionMinimumTLSVersion": "1.0",
         "NSTemporaryExceptionRequiresForwardSecrecy": false,
       },
-      "localhost": Object {
+      "localhost": {
         "NSIncludesSubdomains": false,
         "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
         "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
@@ -452,21 +452,21 @@ Object {
 `;
 
 exports[`license en 1`] = `
-Object {
-  "mac": Array [
-    Object {
+{
+  "mac": [
+    {
       "arch": "x64",
       "file": "Test App ßW-1.1.0.dmg",
       "safeArtifactName": "TestApp-1.1.0.dmg",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
-    Object {
+    {
       "file": "Test App ßW-1.1.0.dmg.blockmap",
       "safeArtifactName": "TestApp-1.1.0.dmg.blockmap",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -476,7 +476,7 @@ Object {
 `;
 
 exports[`license en 2`] = `
-Object {
+{
   "CFBundleDisplayName": "Test App ßW",
   "CFBundleExecutable": "Test App ßW",
   "CFBundleIconFile": "icon.icns",
@@ -486,20 +486,20 @@ Object {
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
   "LSApplicationCategoryType": "your.app.category.type",
-  "LSEnvironment": Object {
+  "LSEnvironment": {
     "MallocNanoZone": "0",
   },
-  "NSAppTransportSecurity": Object {
+  "NSAppTransportSecurity": {
     "NSAllowsLocalNetworking": true,
-    "NSExceptionDomains": Object {
-      "127.0.0.1": Object {
+    "NSExceptionDomains": {
+      "127.0.0.1": {
         "NSIncludesSubdomains": false,
         "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
         "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
         "NSTemporaryExceptionMinimumTLSVersion": "1.0",
         "NSTemporaryExceptionRequiresForwardSecrecy": false,
       },
-      "localhost": Object {
+      "localhost": {
         "NSIncludesSubdomains": false,
         "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
         "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
@@ -517,21 +517,21 @@ Object {
 `;
 
 exports[`license ja 1`] = `
-Object {
-  "mac": Array [
-    Object {
+{
+  "mac": [
+    {
       "arch": "x64",
       "file": "Test App ßW-1.1.0.dmg",
       "safeArtifactName": "TestApp-1.1.0.dmg",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
-    Object {
+    {
       "file": "Test App ßW-1.1.0.dmg.blockmap",
       "safeArtifactName": "TestApp-1.1.0.dmg.blockmap",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -541,7 +541,7 @@ Object {
 `;
 
 exports[`license ja 2`] = `
-Object {
+{
   "CFBundleDisplayName": "Test App ßW",
   "CFBundleExecutable": "Test App ßW",
   "CFBundleIconFile": "icon.icns",
@@ -551,20 +551,20 @@ Object {
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
   "LSApplicationCategoryType": "your.app.category.type",
-  "LSEnvironment": Object {
+  "LSEnvironment": {
     "MallocNanoZone": "0",
   },
-  "NSAppTransportSecurity": Object {
+  "NSAppTransportSecurity": {
     "NSAllowsLocalNetworking": true,
-    "NSExceptionDomains": Object {
-      "127.0.0.1": Object {
+    "NSExceptionDomains": {
+      "127.0.0.1": {
         "NSIncludesSubdomains": false,
         "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
         "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
         "NSTemporaryExceptionMinimumTLSVersion": "1.0",
         "NSTemporaryExceptionRequiresForwardSecrecy": false,
       },
-      "localhost": Object {
+      "localhost": {
         "NSIncludesSubdomains": false,
         "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
         "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
@@ -582,21 +582,21 @@ Object {
 `;
 
 exports[`license rtf 1`] = `
-Object {
-  "mac": Array [
-    Object {
+{
+  "mac": [
+    {
       "arch": "x64",
       "file": "Test App ßW-1.1.0.dmg",
       "safeArtifactName": "TestApp-1.1.0.dmg",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
-    Object {
+    {
       "file": "Test App ßW-1.1.0.dmg.blockmap",
       "safeArtifactName": "TestApp-1.1.0.dmg.blockmap",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -606,7 +606,7 @@ Object {
 `;
 
 exports[`license rtf 2`] = `
-Object {
+{
   "CFBundleDisplayName": "Test App ßW",
   "CFBundleExecutable": "Test App ßW",
   "CFBundleIconFile": "icon.icns",
@@ -616,20 +616,20 @@ Object {
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
   "LSApplicationCategoryType": "your.app.category.type",
-  "LSEnvironment": Object {
+  "LSEnvironment": {
     "MallocNanoZone": "0",
   },
-  "NSAppTransportSecurity": Object {
+  "NSAppTransportSecurity": {
     "NSAllowsLocalNetworking": true,
-    "NSExceptionDomains": Object {
-      "127.0.0.1": Object {
+    "NSExceptionDomains": {
+      "127.0.0.1": {
         "NSIncludesSubdomains": false,
         "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
         "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
         "NSTemporaryExceptionMinimumTLSVersion": "1.0",
         "NSTemporaryExceptionRequiresForwardSecrecy": false,
       },
-      "localhost": Object {
+      "localhost": {
         "NSIncludesSubdomains": false,
         "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
         "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
@@ -647,21 +647,21 @@ Object {
 `;
 
 exports[`multi language license 1`] = `
-Object {
-  "mac": Array [
-    Object {
+{
+  "mac": [
+    {
       "arch": "x64",
       "file": "Test App ßW-1.1.0.dmg",
       "safeArtifactName": "TestApp-1.1.0.dmg",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
-    Object {
+    {
       "file": "Test App ßW-1.1.0.dmg.blockmap",
       "safeArtifactName": "TestApp-1.1.0.dmg.blockmap",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -671,7 +671,7 @@ Object {
 `;
 
 exports[`multi language license 2`] = `
-Object {
+{
   "CFBundleDisplayName": "Test App ßW",
   "CFBundleExecutable": "Test App ßW",
   "CFBundleIconFile": "icon.icns",
@@ -681,20 +681,20 @@ Object {
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
   "LSApplicationCategoryType": "your.app.category.type",
-  "LSEnvironment": Object {
+  "LSEnvironment": {
     "MallocNanoZone": "0",
   },
-  "NSAppTransportSecurity": Object {
+  "NSAppTransportSecurity": {
     "NSAllowsLocalNetworking": true,
-    "NSExceptionDomains": Object {
-      "127.0.0.1": Object {
+    "NSExceptionDomains": {
+      "127.0.0.1": {
         "NSIncludesSubdomains": false,
         "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
         "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
         "NSTemporaryExceptionMinimumTLSVersion": "1.0",
         "NSTemporaryExceptionRequiresForwardSecrecy": false,
       },
-      "localhost": Object {
+      "localhost": {
         "NSIncludesSubdomains": false,
         "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
         "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
@@ -712,12 +712,12 @@ Object {
 `;
 
 exports[`no Applications link 1`] = `
-Array [
-  Object {
+[
+  {
     "x": 110,
     "y": 150,
   },
-  Object {
+  {
     "path": "/Applications/TextEdit.app",
     "type": "link",
     "x": 410,
@@ -727,27 +727,27 @@ Array [
 `;
 
 exports[`no Applications link 2`] = `
-Object {
-  "mac": Array [
-    Object {
+{
+  "mac": [
+    {
       "arch": "x64",
       "file": "NoApplicationsLink-1.1.0.dmg",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
-    Object {
+    {
       "file": "NoApplicationsLink-1.1.0.dmg.blockmap",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
-    Object {
+    {
       "arch": "x64",
       "file": "NoApplicationsLink-1.1.0-mac.zip",
-      "updateInfo": Object {
+      "updateInfo": {
         "blockMapSize": "@blockMapSize",
         "sha512": "@sha512",
         "size": "@size",
@@ -758,7 +758,7 @@ Object {
 `;
 
 exports[`no Applications link 3`] = `
-Object {
+{
   "CFBundleDisplayName": "NoApplicationsLink",
   "CFBundleExecutable": "NoApplicationsLink",
   "CFBundleIconFile": "icon.icns",
@@ -769,17 +769,17 @@ Object {
   "CFBundleShortVersionString": "1.1.0",
   "LSApplicationCategoryType": "your.app.category.type",
   "LSRequiresNativeExecution": true,
-  "NSAppTransportSecurity": Object {
+  "NSAppTransportSecurity": {
     "NSAllowsLocalNetworking": true,
-    "NSExceptionDomains": Object {
-      "127.0.0.1": Object {
+    "NSExceptionDomains": {
+      "127.0.0.1": {
         "NSIncludesSubdomains": false,
         "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
         "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
         "NSTemporaryExceptionMinimumTLSVersion": "1.0",
         "NSTemporaryExceptionRequiresForwardSecrecy": false,
       },
-      "localhost": Object {
+      "localhost": {
         "NSIncludesSubdomains": false,
         "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
         "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
@@ -795,19 +795,19 @@ Object {
 `;
 
 exports[`no background 1`] = `
-Object {
-  "mac": Array [
-    Object {
+{
+  "mac": [
+    {
       "arch": "x64",
       "file": "NoBackground-1.1.0.dmg",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
-    Object {
+    {
       "file": "NoBackground-1.1.0.dmg.blockmap",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -817,7 +817,7 @@ Object {
 `;
 
 exports[`no background 2`] = `
-Object {
+{
   "CFBundleDisplayName": "NoBackground",
   "CFBundleExecutable": "NoBackground",
   "CFBundleIconFile": "icon.icns",
@@ -827,20 +827,20 @@ Object {
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
   "LSApplicationCategoryType": "your.app.category.type",
-  "LSEnvironment": Object {
+  "LSEnvironment": {
     "MallocNanoZone": "0",
   },
-  "NSAppTransportSecurity": Object {
+  "NSAppTransportSecurity": {
     "NSAllowsLocalNetworking": true,
-    "NSExceptionDomains": Object {
-      "127.0.0.1": Object {
+    "NSExceptionDomains": {
+      "127.0.0.1": {
         "NSIncludesSubdomains": false,
         "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
         "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
         "NSTemporaryExceptionMinimumTLSVersion": "1.0",
         "NSTemporaryExceptionRequiresForwardSecrecy": false,
       },
-      "localhost": Object {
+      "localhost": {
         "NSIncludesSubdomains": false,
         "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
         "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
@@ -858,12 +858,12 @@ Object {
 `;
 
 exports[`no build directory 1`] = `
-Array [
-  Object {
+[
+  {
     "x": 130,
     "y": 220,
   },
-  Object {
+  {
     "path": "/Applications",
     "type": "link",
     "x": 410,
@@ -873,19 +873,19 @@ Array [
 `;
 
 exports[`no build directory 2`] = `
-Object {
-  "mac": Array [
-    Object {
+{
+  "mac": [
+    {
       "arch": "x64",
       "file": "NoBuildDirectory-1.1.0.dmg",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
-    Object {
+    {
       "file": "NoBuildDirectory-1.1.0.dmg.blockmap",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -895,7 +895,7 @@ Object {
 `;
 
 exports[`no build directory 3`] = `
-Object {
+{
   "CFBundleDisplayName": "NoBuildDirectory",
   "CFBundleExecutable": "NoBuildDirectory",
   "CFBundleIconFile": "electron.icns",
@@ -905,20 +905,20 @@ Object {
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
   "LSApplicationCategoryType": "your.app.category.type",
-  "LSEnvironment": Object {
+  "LSEnvironment": {
     "MallocNanoZone": "0",
   },
-  "NSAppTransportSecurity": Object {
+  "NSAppTransportSecurity": {
     "NSAllowsLocalNetworking": true,
-    "NSExceptionDomains": Object {
-      "127.0.0.1": Object {
+    "NSExceptionDomains": {
+      "127.0.0.1": {
         "NSIncludesSubdomains": false,
         "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
         "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
         "NSTemporaryExceptionMinimumTLSVersion": "1.0",
         "NSTemporaryExceptionRequiresForwardSecrecy": false,
       },
-      "localhost": Object {
+      "localhost": {
         "NSIncludesSubdomains": false,
         "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
         "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
@@ -936,21 +936,21 @@ Object {
 `;
 
 exports[`retina background as 2 png 1`] = `
-Object {
-  "mac": Array [
-    Object {
+{
+  "mac": [
+    {
       "arch": "x64",
       "file": "Test App ßW-1.1.0-mac.zip",
       "safeArtifactName": "TestApp-1.1.0-mac.zip",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
-    Object {
+    {
       "file": "Test App ßW-1.1.0-mac.zip.blockmap",
       "safeArtifactName": "Test App ßW-1.1.0-mac.zip.blockmap",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -960,7 +960,7 @@ Object {
 `;
 
 exports[`retina background as 2 png 2`] = `
-Object {
+{
   "CFBundleDisplayName": "Test App ßW",
   "CFBundleExecutable": "Test App ßW",
   "CFBundleIconFile": "icon.icns",
@@ -970,20 +970,20 @@ Object {
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
   "LSApplicationCategoryType": "your.app.category.type",
-  "LSEnvironment": Object {
+  "LSEnvironment": {
     "MallocNanoZone": "0",
   },
-  "NSAppTransportSecurity": Object {
+  "NSAppTransportSecurity": {
     "NSAllowsLocalNetworking": true,
-    "NSExceptionDomains": Object {
-      "127.0.0.1": Object {
+    "NSExceptionDomains": {
+      "127.0.0.1": {
         "NSIncludesSubdomains": false,
         "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
         "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
         "NSTemporaryExceptionMinimumTLSVersion": "1.0",
         "NSTemporaryExceptionRequiresForwardSecrecy": false,
       },
-      "localhost": Object {
+      "localhost": {
         "NSIncludesSubdomains": false,
         "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
         "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
@@ -1001,21 +1001,21 @@ Object {
 `;
 
 exports[`unset dmg icon 1`] = `
-Object {
-  "mac": Array [
-    Object {
+{
+  "mac": [
+    {
       "arch": "x64",
       "file": "Test ß No Volume Icon-1.1.0.dmg",
       "safeArtifactName": "TestApp-1.1.0.dmg",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
-    Object {
+    {
       "file": "Test ß No Volume Icon-1.1.0.dmg.blockmap",
       "safeArtifactName": "TestApp-1.1.0.dmg.blockmap",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -1025,7 +1025,7 @@ Object {
 `;
 
 exports[`unset dmg icon 2`] = `
-Object {
+{
   "CFBundleDisplayName": "Test ß No Volume Icon",
   "CFBundleExecutable": "Test ß No Volume Icon",
   "CFBundleIconFile": "icon.icns",
@@ -1035,20 +1035,20 @@ Object {
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
   "LSApplicationCategoryType": "your.app.category.type",
-  "LSEnvironment": Object {
+  "LSEnvironment": {
     "MallocNanoZone": "0",
   },
-  "NSAppTransportSecurity": Object {
+  "NSAppTransportSecurity": {
     "NSAllowsLocalNetworking": true,
-    "NSExceptionDomains": Object {
-      "127.0.0.1": Object {
+    "NSExceptionDomains": {
+      "127.0.0.1": {
         "NSIncludesSubdomains": false,
         "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
         "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
         "NSTemporaryExceptionMinimumTLSVersion": "1.0",
         "NSTemporaryExceptionRequiresForwardSecrecy": false,
       },
-      "localhost": Object {
+      "localhost": {
         "NSIncludesSubdomains": false,
         "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
         "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,

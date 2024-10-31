@@ -1,5 +1,5 @@
 {
   "$schema": "https://typedoc.org/schema.json",
   "includeVersion": true,
-  "entryPoints": ["src/publisher.ts"]
+  "entryPoints": ["src/index.ts"]
 }

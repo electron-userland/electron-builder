@@ -1,9 +1,9 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`1 staging percentage 1`] = `
-Object {
-  "files": Array [
-    Object {
+{
+  "files": [
+    {
       "sha512": "Dj51I0q8aPQ3ioaz9LMqGYujAYRbDNblAQbodDRXAMxmY6hsHqEl3F6SvhfJj5oPhcqdX1ldsgEvfMNXGUXBIw==",
       "url": "TestApp Setup 1.1.0.exe",
     },
@@ -14,15 +14,15 @@ Object {
 `;
 
 exports[`1 staging percentage 2`] = `
-Array [
+[
   "checking-for-update",
 ]
 `;
 
 exports[`90 staging percentage 1`] = `
-Object {
-  "files": Array [
-    Object {
+{
+  "files": [
+    {
       "sha512": "Dj51I0q8aPQ3ioaz9LMqGYujAYRbDNblAQbodDRXAMxmY6hsHqEl3F6SvhfJj5oPhcqdX1ldsgEvfMNXGUXBIw==",
       "url": "TestApp Setup 1.1.0.exe",
     },
@@ -33,7 +33,7 @@ Object {
 `;
 
 exports[`90 staging percentage 2`] = `
-Array [
+[
   "checking-for-update",
   "update-available",
   "update-downloaded",
@@ -41,9 +41,9 @@ Array [
 `;
 
 exports[`DigitalOcean Spaces 1`] = `
-Object {
-  "files": Array [
-    Object {
+{
+  "files": [
+    {
       "sha512": "Dj51I0q8aPQ3ioaz9LMqGYujAYRbDNblAQbodDRXAMxmY6hsHqEl3F6SvhfJj5oPhcqdX1ldsgEvfMNXGUXBIw==",
       "url": "TestApp Setup 1.1.0.exe",
     },
@@ -53,7 +53,7 @@ Object {
 `;
 
 exports[`DigitalOcean Spaces 2`] = `
-Array [
+[
   "checking-for-update",
   "update-available",
   "update-downloaded",
@@ -63,9 +63,9 @@ Array [
 exports[`cancel download with progress 1`] = `"cancelled"`;
 
 exports[`checkForUpdates several times 1`] = `
-Object {
-  "files": Array [
-    Object {
+{
+  "files": [
+    {
       "sha512": "@sha512",
       "url": "TestApp Setup 1.1.0.exe",
     },
@@ -75,9 +75,9 @@ Object {
 `;
 
 exports[`checkForUpdates several times 2`] = `
-Object {
-  "files": Array [
-    Object {
+{
+  "files": [
+    {
       "sha512": "@sha512",
       "url": "TestApp Setup 1.1.0.exe",
     },
@@ -87,7 +87,7 @@ Object {
 `;
 
 exports[`checkForUpdates several times 3`] = `
-Array [
+[
   "checking-for-update",
   "update-available",
   "update-downloaded",
@@ -98,9 +98,9 @@ Array [
 `;
 
 exports[`downgrade (disallowed, beta) 1`] = `
-Object {
-  "files": Array [
-    Object {
+{
+  "files": [
+    {
       "sha512": "@sha512",
       "url": "TestApp Setup 1.5.2-beta.3.exe",
     },
@@ -113,9 +113,9 @@ Object {
 `;
 
 exports[`file url bitbucket 1`] = `
-Object {
-  "files": Array [
-    Object {
+{
+  "files": [
+    {
       "sha512": "jgS5EI08u/fsS9XfqpJtmV2ctAFQF+6BQjGUZmWq93Nyg+Z/aPxQT0zkCWPaCdIqJdEDHB91JjYquK/tS3fcDw==",
       "size": 69549503,
       "url": "electron-quick-start-typescript-1.0.0-x64.exe",
@@ -129,7 +129,7 @@ Object {
 `;
 
 exports[`file url bitbucket 2`] = `
-Array [
+[
   "checking-for-update",
   "update-available",
   "update-downloaded",
@@ -137,9 +137,9 @@ Array [
 `;
 
 exports[`file url generic - manual download 1`] = `
-Object {
-  "files": Array [
-    Object {
+{
+  "files": [
+    {
       "sha512": "@sha512",
       "url": "TestApp Setup 1.1.0.exe",
     },
@@ -149,16 +149,16 @@ Object {
 `;
 
 exports[`file url generic - manual download 2`] = `
-Array [
+[
   "checking-for-update",
   "update-available",
 ]
 `;
 
 exports[`file url generic 1`] = `
-Object {
-  "files": Array [
-    Object {
+{
+  "files": [
+    {
       "sha512": "Dj51I0q8aPQ3ioaz9LMqGYujAYRbDNblAQbodDRXAMxmY6hsHqEl3F6SvhfJj5oPhcqdX1ldsgEvfMNXGUXBIw==",
       "url": "TestApp Setup 1.1.0.exe",
     },
@@ -168,7 +168,7 @@ Object {
 `;
 
 exports[`file url generic 2`] = `
-Array [
+[
   "checking-for-update",
   "update-available",
   "update-downloaded",
@@ -176,9 +176,9 @@ Array [
 `;
 
 exports[`file url github 1`] = `
-Object {
-  "files": Array [
-    Object {
+{
+  "files": [
+    {
       "sha512": "xrTrW8dzWYlPnu71Y4lpLIAuIurBZJvZmqEZyz1rzM3CbbE1Z+T+P5qYYZgwmhmXdYPOpvnmYKa0HGdgXggwtQ==",
       "url": "TestApp-Setup-1.1.0.exe",
     },
@@ -191,9 +191,9 @@ Object {
 `;
 
 exports[`file url github 2`] = `
-Object {
-  "files": Array [
-    Object {
+{
+  "files": [
+    {
       "sha512": "xrTrW8dzWYlPnu71Y4lpLIAuIurBZJvZmqEZyz1rzM3CbbE1Z+T+P5qYYZgwmhmXdYPOpvnmYKa0HGdgXggwtQ==",
       "url": "TestApp-Setup-1.1.0.exe",
     },
@@ -206,7 +206,7 @@ Object {
 `;
 
 exports[`file url github 3`] = `
-Array [
+[
   "checking-for-update",
   "update-available",
   "update-downloaded",
@@ -214,20 +214,20 @@ Array [
 `;
 
 exports[`file url github pre-release and fullChangelog 1`] = `
-Object {
-  "files": Array [
-    Object {
+{
+  "files": [
+    {
       "sha512": "Dj51I0q8aPQ3ioaz9LMqGYujAYRbDNblAQbodDRXAMxmY6hsHqEl3F6SvhfJj5oPhcqdX1ldsgEvfMNXGUXBIw==",
       "url": "TestApp Setup 1.5.2-beta.3.exe",
     },
   ],
   "releaseName": "v1.5.2-beta.3",
-  "releaseNotes": Array [
-    Object {
+  "releaseNotes": [
+    {
       "note": "",
       "version": "1.5.2-beta.3",
     },
-    Object {
+    {
       "note": "<p>Test pre-release. qefr</p>",
       "version": "1.5.0",
     },
@@ -238,20 +238,20 @@ Object {
 `;
 
 exports[`file url github pre-release and fullChangelog 2`] = `
-Object {
-  "files": Array [
-    Object {
+{
+  "files": [
+    {
       "sha512": "Dj51I0q8aPQ3ioaz9LMqGYujAYRbDNblAQbodDRXAMxmY6hsHqEl3F6SvhfJj5oPhcqdX1ldsgEvfMNXGUXBIw==",
       "url": "TestApp Setup 1.5.2-beta.3.exe",
     },
   ],
   "releaseName": "v1.5.2-beta.3",
-  "releaseNotes": Array [
-    Object {
+  "releaseNotes": [
+    {
       "note": "",
       "version": "1.5.2-beta.3",
     },
-    Object {
+    {
       "note": "<p>Test pre-release. qefr</p>",
       "version": "1.5.0",
     },
@@ -262,7 +262,7 @@ Object {
 `;
 
 exports[`file url github pre-release and fullChangelog 3`] = `
-Array [
+[
   "checking-for-update",
   "update-available",
   "update-downloaded",
@@ -270,20 +270,20 @@ Array [
 `;
 
 exports[`file url github pre-release and fullChangelog 4`] = `
-Object {
-  "files": Array [
-    Object {
+{
+  "files": [
+    {
       "sha512": "Dj51I0q8aPQ3ioaz9LMqGYujAYRbDNblAQbodDRXAMxmY6hsHqEl3F6SvhfJj5oPhcqdX1ldsgEvfMNXGUXBIw==",
       "url": "TestApp Setup 1.5.2-beta.3.exe",
     },
   ],
   "releaseName": "v1.5.2-beta.3",
-  "releaseNotes": Array [
-    Object {
+  "releaseNotes": [
+    {
       "note": "",
       "version": "1.5.2-beta.3",
     },
-    Object {
+    {
       "note": "<p>Test pre-release. qefr</p>",
       "version": "1.5.0",
     },
@@ -294,9 +294,9 @@ Object {
 `;
 
 exports[`file url github private 1`] = `
-Object {
-  "assets": Array [
-    Object {
+{
+  "assets": [
+    {
       "browser_download_url": "https://github.com/develar/__test_nsis_release_private/releases/download/v1.0.0/latest.yml",
       "content_type": "application/octet-stream",
       "created_at": "2017-12-05T08:01:23Z",
@@ -306,7 +306,7 @@ Object {
       "size": 156,
       "state": "uploaded",
       "updated_at": "2017-12-05T08:01:24Z",
-      "uploader": Object {
+      "uploader": {
         "avatar_url": "https://avatars0.githubusercontent.com/u/350686?v=4",
         "events_url": "https://api.github.com/users/develar/events{/privacy}",
         "followers_url": "https://api.github.com/users/develar/followers",
@@ -327,7 +327,7 @@ Object {
       },
       "url": "https://api.github.com/repos/develar/__test_nsis_release_private/releases/assets/5530341",
     },
-    Object {
+    {
       "browser_download_url": "https://github.com/develar/__test_nsis_release_private/releases/download/v1.0.0/TestApp-Setup-1.0.0.exe",
       "content_type": "application/octet-stream",
       "created_at": "2017-12-05T08:01:53Z",
@@ -337,7 +337,7 @@ Object {
       "size": 9248,
       "state": "uploaded",
       "updated_at": "2017-12-05T08:01:55Z",
-      "uploader": Object {
+      "uploader": {
         "avatar_url": "https://avatars0.githubusercontent.com/u/350686?v=4",
         "events_url": "https://api.github.com/users/develar/events{/privacy}",
         "followers_url": "https://api.github.com/users/develar/followers",
@@ -359,8 +359,8 @@ Object {
       "url": "https://api.github.com/repos/develar/__test_nsis_release_private/releases/assets/5530346",
     },
   ],
-  "files": Array [
-    Object {
+  "files": [
+    {
       "sha512": "xrTrW8dzWYlPnu71Y4lpLIAuIurBZJvZmqEZyz1rzM3CbbE1Z+T+P5qYYZgwmhmXdYPOpvnmYKa0HGdgXggwtQ==",
       "url": "TestApp-Setup-1.0.0.exe",
     },
@@ -370,7 +370,7 @@ Object {
 `;
 
 exports[`file url github private 2`] = `
-Array [
+[
   "checking-for-update",
   "update-available",
   "update-downloaded",
@@ -378,9 +378,9 @@ Array [
 `;
 
 exports[`file url keygen 1`] = `
-Object {
-  "files": Array [
-    Object {
+{
+  "files": [
+    {
       "sha512": "r0NdvVubzJWAN56nqjTdLkBWV/dq0HQOKz9A6QFplUozu3uSVXA2t731miy/S29mY4MD18iLxKD6GXnPfNNbNw==",
       "size": 59865147,
       "url": "electron-quick-start-typescript-1.0.0-x64.exe",
@@ -394,7 +394,7 @@ Object {
 `;
 
 exports[`file url keygen 2`] = `
-Array [
+[
   "checking-for-update",
   "update-available",
   "update-downloaded",
@@ -402,9 +402,9 @@ Array [
 `;
 
 exports[`github allowPrerelease=false 1`] = `
-Object {
-  "files": Array [
-    Object {
+{
+  "files": [
+    {
       "sha512": "@sha512",
       "size": "@size",
       "url": "electron-quick-start-typescript-1.0.2-x64.exe",
@@ -421,9 +421,9 @@ Object {
 `;
 
 exports[`github allowPrerelease=true 1`] = `
-Object {
-  "files": Array [
-    Object {
+{
+  "files": [
+    {
       "sha512": "@sha512",
       "size": "@size",
       "url": "electron-quick-start-typescript-2.0.0-x64.exe",
@@ -442,7 +442,7 @@ Object {
 exports[`invalid signature 1`] = `"ERR_UPDATER_INVALID_SIGNATURE"`;
 
 exports[`invalid signature 2`] = `
-Array [
+[
   "checking-for-update",
   "update-available",
   "error",
@@ -450,9 +450,9 @@ Array [
 `;
 
 exports[`sha512 mismatch error event 1`] = `
-Object {
-  "files": Array [
-    Object {
+{
+  "files": [
+    {
       "sha512": "@sha512",
       "url": "TestApp Setup 1.1.0.exe",
     },
@@ -464,7 +464,7 @@ Object {
 exports[`sha512 mismatch error event 2`] = `"ERR_CHECKSUM_MISMATCH"`;
 
 exports[`sha512 mismatch error event 3`] = `
-Array [
+[
   "checking-for-update",
   "update-available",
   "error",
@@ -474,7 +474,7 @@ Array [
 exports[`test custom signature verifier - signing error message 1`] = `"ERR_UPDATER_INVALID_SIGNATURE"`;
 
 exports[`test custom signature verifier - signing error message 2`] = `
-Array [
+[
   "checking-for-update",
   "update-available",
   "error",
@@ -482,9 +482,9 @@ Array [
 `;
 
 exports[`test custom signature verifier 1`] = `
-Object {
-  "files": Array [
-    Object {
+{
+  "files": [
+    {
       "sha512": "xrTrW8dzWYlPnu71Y4lpLIAuIurBZJvZmqEZyz1rzM3CbbE1Z+T+P5qYYZgwmhmXdYPOpvnmYKa0HGdgXggwtQ==",
       "url": "TestApp-Setup-1.1.0.exe",
     },
@@ -497,7 +497,7 @@ Object {
 `;
 
 exports[`test custom signature verifier 2`] = `
-Array [
+[
   "checking-for-update",
   "update-available",
   "update-downloaded",
@@ -505,9 +505,9 @@ Array [
 `;
 
 exports[`test download and install 1`] = `
-Object {
-  "files": Array [
-    Object {
+{
+  "files": [
+    {
       "sha512": "Dj51I0q8aPQ3ioaz9LMqGYujAYRbDNblAQbodDRXAMxmY6hsHqEl3F6SvhfJj5oPhcqdX1ldsgEvfMNXGUXBIw==",
       "url": "TestApp Setup 1.1.0.exe",
     },
@@ -517,7 +517,7 @@ Object {
 `;
 
 exports[`test download and install 2`] = `
-Array [
+[
   "checking-for-update",
   "update-available",
   "update-downloaded",
@@ -527,16 +527,16 @@ Array [
 exports[`test error 1`] = `"ERR_INVALID_ARG_TYPE"`;
 
 exports[`test error 2`] = `
-Array [
+[
   "checking-for-update",
   "error",
 ]
 `;
 
 exports[`valid signature - multiple publisher DNs 1`] = `
-Object {
-  "files": Array [
-    Object {
+{
+  "files": [
+    {
       "sha512": "xrTrW8dzWYlPnu71Y4lpLIAuIurBZJvZmqEZyz1rzM3CbbE1Z+T+P5qYYZgwmhmXdYPOpvnmYKa0HGdgXggwtQ==",
       "url": "TestApp-Setup-1.1.0.exe",
     },
@@ -549,7 +549,7 @@ Object {
 `;
 
 exports[`valid signature - multiple publisher DNs 2`] = `
-Array [
+[
   "checking-for-update",
   "update-available",
   "update-downloaded",
@@ -557,9 +557,9 @@ Array [
 `;
 
 exports[`valid signature 1`] = `
-Object {
-  "files": Array [
-    Object {
+{
+  "files": [
+    {
       "sha512": "xrTrW8dzWYlPnu71Y4lpLIAuIurBZJvZmqEZyz1rzM3CbbE1Z+T+P5qYYZgwmhmXdYPOpvnmYKa0HGdgXggwtQ==",
       "url": "TestApp-Setup-1.1.0.exe",
     },
@@ -572,7 +572,7 @@ Object {
 `;
 
 exports[`valid signature 2`] = `
-Array [
+[
   "checking-for-update",
   "update-available",
   "update-downloaded",
@@ -580,9 +580,9 @@ Array [
 `;
 
 exports[`valid signature using DN 1`] = `
-Object {
-  "files": Array [
-    Object {
+{
+  "files": [
+    {
       "sha512": "xrTrW8dzWYlPnu71Y4lpLIAuIurBZJvZmqEZyz1rzM3CbbE1Z+T+P5qYYZgwmhmXdYPOpvnmYKa0HGdgXggwtQ==",
       "url": "TestApp-Setup-1.1.0.exe",
     },
@@ -595,7 +595,7 @@ Object {
 `;
 
 exports[`valid signature using DN 2`] = `
-Array [
+[
   "checking-for-update",
   "update-available",
   "update-downloaded",

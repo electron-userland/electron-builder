@@ -1,6 +1,6 @@
 {
   "name": "builder-util",
-  "version": "26.0.0-alpha.0",
+  "version": "26.0.0-alpha.3",
   "main": "out/util.js",
   "author": "Vladimir Krivosheev",
   "license": "MIT",
@@ -17,7 +17,7 @@
   "dependencies": {
     "7zip-bin": "~5.2.0",
     "@types/debug": "^4.1.6",
-    "app-builder-bin": "5.0.0-alpha.10",
+    "app-builder-bin": "5.0.0-alpha.11",
     "bluebird-lst": "^1.0.9",
     "builder-util-runtime": "workspace:*",
     "chalk": "^4.1.2",
@@ -28,6 +28,7 @@
     "https-proxy-agent": "^7.0.0",
     "is-ci": "^3.0.0",
     "js-yaml": "^4.1.0",
+    "sanitize-filename": "^1.6.3",
     "source-map-support": "^0.5.19",
     "stat-mode": "^1.0.0",
     "temp-file": "^3.4.0"

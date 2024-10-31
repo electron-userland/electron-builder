@@ -1,23 +1,23 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`AppImage 1`] = `
-Object {
-  "linux": Array [
-    Object {
+{
+  "linux": [
+    {
       "arch": "x64",
       "file": "Test App ßW-1.0.0.AppImage",
       "safeArtifactName": "TestApp-1.0.0-x86_64.AppImage",
-      "updateInfo": Object {
+      "updateInfo": {
         "blockMapSize": "@blockMapSize",
         "sha512": "@sha512",
         "size": "@size",
       },
     },
-    Object {
+    {
       "file": "latest-linux.yml",
-      "fileContent": Object {
-        "files": Array [
-          Object {
+      "fileContent": {
+        "files": [
+          {
             "blockMapSize": "@blockMapSize",
             "sha512": "@sha512",
             "size": "@size",
@@ -35,23 +35,23 @@ Object {
 `;
 
 exports[`AppImage 2`] = `
-Object {
-  "linux": Array [
-    Object {
+{
+  "linux": [
+    {
       "arch": "x64",
       "file": "Test App ßW-1.0.1.AppImage",
       "safeArtifactName": "TestApp-1.0.1-x86_64.AppImage",
-      "updateInfo": Object {
+      "updateInfo": {
         "blockMapSize": "@blockMapSize",
         "sha512": "@sha512",
         "size": "@size",
       },
     },
-    Object {
+    {
       "file": "latest-linux.yml",
-      "fileContent": Object {
-        "files": Array [
-          Object {
+      "fileContent": {
+        "files": [
+          {
             "blockMapSize": "@blockMapSize",
             "sha512": "@sha512",
             "size": "@size",
@@ -69,9 +69,9 @@ Object {
 `;
 
 exports[`AppImage 3`] = `
-Object {
-  "files": Array [
-    Object {
+{
+  "files": [
+    {
       "blockMapSize": "@blockMapSize",
       "sha512": "@sha512",
       "size": "@size",
@@ -85,29 +85,29 @@ Object {
 `;
 
 exports[`AppImage 4`] = `
-Array [
+[
   "Test App ßW-1.0.1.AppImage",
 ]
 `;
 
 exports[`AppImage ia32 1`] = `
-Object {
-  "linux": Array [
-    Object {
+{
+  "linux": [
+    {
       "arch": "ia32",
       "file": "Test App ßW-1.0.0-i386.AppImage",
       "safeArtifactName": "TestApp-1.0.0-i386.AppImage",
-      "updateInfo": Object {
+      "updateInfo": {
         "blockMapSize": "@blockMapSize",
         "sha512": "@sha512",
         "size": "@size",
       },
     },
-    Object {
+    {
       "file": "latest-linux-ia32.yml",
-      "fileContent": Object {
-        "files": Array [
-          Object {
+      "fileContent": {
+        "files": [
+          {
             "blockMapSize": "@blockMapSize",
             "sha512": "@sha512",
             "size": "@size",
@@ -125,23 +125,23 @@ Object {
 `;
 
 exports[`AppImage ia32 2`] = `
-Object {
-  "linux": Array [
-    Object {
+{
+  "linux": [
+    {
       "arch": "ia32",
       "file": "Test App ßW-1.0.1-i386.AppImage",
       "safeArtifactName": "TestApp-1.0.1-i386.AppImage",
-      "updateInfo": Object {
+      "updateInfo": {
         "blockMapSize": "@blockMapSize",
         "sha512": "@sha512",
         "size": "@size",
       },
     },
-    Object {
+    {
       "file": "latest-linux-ia32.yml",
-      "fileContent": Object {
-        "files": Array [
-          Object {
+      "fileContent": {
+        "files": [
+          {
             "blockMapSize": "@blockMapSize",
             "sha512": "@sha512",
             "size": "@size",
@@ -159,9 +159,9 @@ Object {
 `;
 
 exports[`AppImage ia32 3`] = `
-Object {
-  "files": Array [
-    Object {
+{
+  "files": [
+    {
       "blockMapSize": "@blockMapSize",
       "sha512": "@sha512",
       "size": "@size",
@@ -175,19 +175,19 @@ Object {
 `;
 
 exports[`AppImage ia32 4`] = `
-Array [
+[
   "Test App ßW-1.0.1-i386.AppImage",
 ]
 `;
 
 exports[`Mac Intel 1`] = `
-Object {
-  "mac": Array [
-    Object {
+{
+  "mac": [
+    {
       "file": "latest-mac.yml",
-      "fileContent": Object {
-        "files": Array [
-          Object {
+      "fileContent": {
+        "files": [
+          {
             "sha512": "@sha512",
             "size": "@size",
             "url": "Test App ßW-1.0.0-mac.zip",
@@ -199,19 +199,19 @@ Object {
         "version": "1.0.0",
       },
     },
-    Object {
+    {
       "arch": "x64",
       "file": "Test App ßW-1.0.0-mac.zip",
       "safeArtifactName": "TestApp-1.0.0-mac.zip",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
-    Object {
+    {
       "file": "Test App ßW-1.0.0-mac.zip.blockmap",
       "safeArtifactName": "Test App ßW-1.0.0-mac.zip.blockmap",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -221,7 +221,7 @@ Object {
 `;
 
 exports[`Mac Intel 2`] = `
-Object {
+{
   "CFBundleDisplayName": "Test App ßW",
   "CFBundleExecutable": "Test App ßW",
   "CFBundleIconFile": "icon.icns",
@@ -231,20 +231,20 @@ Object {
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.0.0",
   "LSApplicationCategoryType": "your.app.category.type",
-  "LSEnvironment": Object {
+  "LSEnvironment": {
     "MallocNanoZone": "0",
   },
-  "NSAppTransportSecurity": Object {
+  "NSAppTransportSecurity": {
     "NSAllowsLocalNetworking": true,
-    "NSExceptionDomains": Object {
-      "127.0.0.1": Object {
+    "NSExceptionDomains": {
+      "127.0.0.1": {
         "NSIncludesSubdomains": false,
         "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
         "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
         "NSTemporaryExceptionMinimumTLSVersion": "1.0",
         "NSTemporaryExceptionRequiresForwardSecrecy": false,
       },
-      "localhost": Object {
+      "localhost": {
         "NSIncludesSubdomains": false,
         "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
         "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
@@ -262,13 +262,13 @@ Object {
 `;
 
 exports[`Mac Intel 3`] = `
-Object {
-  "mac": Array [
-    Object {
+{
+  "mac": [
+    {
       "file": "latest-mac.yml",
-      "fileContent": Object {
-        "files": Array [
-          Object {
+      "fileContent": {
+        "files": [
+          {
             "sha512": "@sha512",
             "size": "@size",
             "url": "Test App ßW-1.0.1-mac.zip",
@@ -280,19 +280,19 @@ Object {
         "version": "1.0.1",
       },
     },
-    Object {
+    {
       "arch": "x64",
       "file": "Test App ßW-1.0.1-mac.zip",
       "safeArtifactName": "TestApp-1.0.1-mac.zip",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
-    Object {
+    {
       "file": "Test App ßW-1.0.1-mac.zip.blockmap",
       "safeArtifactName": "Test App ßW-1.0.1-mac.zip.blockmap",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -302,7 +302,7 @@ Object {
 `;
 
 exports[`Mac Intel 4`] = `
-Object {
+{
   "CFBundleDisplayName": "Test App ßW",
   "CFBundleExecutable": "Test App ßW",
   "CFBundleIconFile": "icon.icns",
@@ -312,20 +312,20 @@ Object {
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.0.1",
   "LSApplicationCategoryType": "your.app.category.type",
-  "LSEnvironment": Object {
+  "LSEnvironment": {
     "MallocNanoZone": "0",
   },
-  "NSAppTransportSecurity": Object {
+  "NSAppTransportSecurity": {
     "NSAllowsLocalNetworking": true,
-    "NSExceptionDomains": Object {
-      "127.0.0.1": Object {
+    "NSExceptionDomains": {
+      "127.0.0.1": {
         "NSIncludesSubdomains": false,
         "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
         "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
         "NSTemporaryExceptionMinimumTLSVersion": "1.0",
         "NSTemporaryExceptionRequiresForwardSecrecy": false,
       },
-      "localhost": Object {
+      "localhost": {
         "NSIncludesSubdomains": false,
         "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
         "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
@@ -343,9 +343,9 @@ Object {
 `;
 
 exports[`Mac Intel 5`] = `
-Object {
-  "files": Array [
-    Object {
+{
+  "files": [
+    {
       "sha512": "@sha512",
       "size": "@size",
     },
@@ -358,19 +358,19 @@ Object {
 `;
 
 exports[`Mac Intel 6`] = `
-Array [
+[
   "Test App ßW-1.0.1-mac.zip",
 ]
 `;
 
 exports[`Mac arm64 1`] = `
-Object {
-  "mac": Array [
-    Object {
+{
+  "mac": [
+    {
       "file": "latest-mac.yml",
-      "fileContent": Object {
-        "files": Array [
-          Object {
+      "fileContent": {
+        "files": [
+          {
             "sha512": "@sha512",
             "size": "@size",
             "url": "Test App ßW-1.0.0-arm64-mac.zip",
@@ -382,19 +382,19 @@ Object {
         "version": "1.0.0",
       },
     },
-    Object {
+    {
       "arch": "arm64",
       "file": "Test App ßW-1.0.0-arm64-mac.zip",
       "safeArtifactName": "TestApp-1.0.0-arm64-mac.zip",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
-    Object {
+    {
       "file": "Test App ßW-1.0.0-arm64-mac.zip.blockmap",
       "safeArtifactName": "Test App ßW-1.0.0-arm64-mac.zip.blockmap",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -404,7 +404,7 @@ Object {
 `;
 
 exports[`Mac arm64 2`] = `
-Object {
+{
   "CFBundleDisplayName": "Test App ßW",
   "CFBundleExecutable": "Test App ßW",
   "CFBundleIconFile": "icon.icns",
@@ -414,20 +414,20 @@ Object {
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.0.0",
   "LSApplicationCategoryType": "your.app.category.type",
-  "LSEnvironment": Object {
+  "LSEnvironment": {
     "MallocNanoZone": "0",
   },
-  "NSAppTransportSecurity": Object {
+  "NSAppTransportSecurity": {
     "NSAllowsLocalNetworking": true,
-    "NSExceptionDomains": Object {
-      "127.0.0.1": Object {
+    "NSExceptionDomains": {
+      "127.0.0.1": {
         "NSIncludesSubdomains": false,
         "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
         "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
         "NSTemporaryExceptionMinimumTLSVersion": "1.0",
         "NSTemporaryExceptionRequiresForwardSecrecy": false,
       },
-      "localhost": Object {
+      "localhost": {
         "NSIncludesSubdomains": false,
         "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
         "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
@@ -445,13 +445,13 @@ Object {
 `;
 
 exports[`Mac arm64 3`] = `
-Object {
-  "mac": Array [
-    Object {
+{
+  "mac": [
+    {
       "file": "latest-mac.yml",
-      "fileContent": Object {
-        "files": Array [
-          Object {
+      "fileContent": {
+        "files": [
+          {
             "sha512": "@sha512",
             "size": "@size",
             "url": "Test App ßW-1.0.1-arm64-mac.zip",
@@ -463,19 +463,19 @@ Object {
         "version": "1.0.1",
       },
     },
-    Object {
+    {
       "arch": "arm64",
       "file": "Test App ßW-1.0.1-arm64-mac.zip",
       "safeArtifactName": "TestApp-1.0.1-arm64-mac.zip",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
-    Object {
+    {
       "file": "Test App ßW-1.0.1-arm64-mac.zip.blockmap",
       "safeArtifactName": "Test App ßW-1.0.1-arm64-mac.zip.blockmap",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -485,7 +485,7 @@ Object {
 `;
 
 exports[`Mac arm64 4`] = `
-Object {
+{
   "CFBundleDisplayName": "Test App ßW",
   "CFBundleExecutable": "Test App ßW",
   "CFBundleIconFile": "icon.icns",
@@ -495,20 +495,20 @@ Object {
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.0.1",
   "LSApplicationCategoryType": "your.app.category.type",
-  "LSEnvironment": Object {
+  "LSEnvironment": {
     "MallocNanoZone": "0",
   },
-  "NSAppTransportSecurity": Object {
+  "NSAppTransportSecurity": {
     "NSAllowsLocalNetworking": true,
-    "NSExceptionDomains": Object {
-      "127.0.0.1": Object {
+    "NSExceptionDomains": {
+      "127.0.0.1": {
         "NSIncludesSubdomains": false,
         "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
         "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
         "NSTemporaryExceptionMinimumTLSVersion": "1.0",
         "NSTemporaryExceptionRequiresForwardSecrecy": false,
       },
-      "localhost": Object {
+      "localhost": {
         "NSIncludesSubdomains": false,
         "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
         "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
@@ -526,9 +526,9 @@ Object {
 `;
 
 exports[`Mac arm64 5`] = `
-Object {
-  "files": Array [
-    Object {
+{
+  "files": [
+    {
       "sha512": "@sha512",
       "size": "@size",
     },
@@ -541,19 +541,19 @@ Object {
 `;
 
 exports[`Mac arm64 6`] = `
-Array [
+[
   "Test App ßW-1.0.1-arm64-mac.zip",
 ]
 `;
 
 exports[`Mac universal 1`] = `
-Object {
-  "mac": Array [
-    Object {
+{
+  "mac": [
+    {
       "file": "latest-mac.yml",
-      "fileContent": Object {
-        "files": Array [
-          Object {
+      "fileContent": {
+        "files": [
+          {
             "sha512": "@sha512",
             "size": "@size",
             "url": "Test App ßW-1.0.0-universal-mac.zip",
@@ -565,19 +565,19 @@ Object {
         "version": "1.0.0",
       },
     },
-    Object {
+    {
       "arch": "universal",
       "file": "Test App ßW-1.0.0-universal-mac.zip",
       "safeArtifactName": "TestApp-1.0.0-universal-mac.zip",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
-    Object {
+    {
       "file": "Test App ßW-1.0.0-universal-mac.zip.blockmap",
       "safeArtifactName": "Test App ßW-1.0.0-universal-mac.zip.blockmap",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -587,7 +587,7 @@ Object {
 `;
 
 exports[`Mac universal 2`] = `
-Object {
+{
   "CFBundleDisplayName": "Test App ßW",
   "CFBundleExecutable": "Test App ßW",
   "CFBundleIconFile": "icon.icns",
@@ -597,20 +597,20 @@ Object {
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.0.0",
   "LSApplicationCategoryType": "your.app.category.type",
-  "LSEnvironment": Object {
+  "LSEnvironment": {
     "MallocNanoZone": "0",
   },
-  "NSAppTransportSecurity": Object {
+  "NSAppTransportSecurity": {
     "NSAllowsLocalNetworking": true,
-    "NSExceptionDomains": Object {
-      "127.0.0.1": Object {
+    "NSExceptionDomains": {
+      "127.0.0.1": {
         "NSIncludesSubdomains": false,
         "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
         "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
         "NSTemporaryExceptionMinimumTLSVersion": "1.0",
         "NSTemporaryExceptionRequiresForwardSecrecy": false,
       },
-      "localhost": Object {
+      "localhost": {
         "NSIncludesSubdomains": false,
         "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
         "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
@@ -628,13 +628,13 @@ Object {
 `;
 
 exports[`Mac universal 3`] = `
-Object {
-  "mac": Array [
-    Object {
+{
+  "mac": [
+    {
       "file": "latest-mac.yml",
-      "fileContent": Object {
-        "files": Array [
-          Object {
+      "fileContent": {
+        "files": [
+          {
             "sha512": "@sha512",
             "size": "@size",
             "url": "Test App ßW-1.0.1-universal-mac.zip",
@@ -646,19 +646,19 @@ Object {
         "version": "1.0.1",
       },
     },
-    Object {
+    {
       "arch": "universal",
       "file": "Test App ßW-1.0.1-universal-mac.zip",
       "safeArtifactName": "TestApp-1.0.1-universal-mac.zip",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
-    Object {
+    {
       "file": "Test App ßW-1.0.1-universal-mac.zip.blockmap",
       "safeArtifactName": "Test App ßW-1.0.1-universal-mac.zip.blockmap",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -668,7 +668,7 @@ Object {
 `;
 
 exports[`Mac universal 4`] = `
-Object {
+{
   "CFBundleDisplayName": "Test App ßW",
   "CFBundleExecutable": "Test App ßW",
   "CFBundleIconFile": "icon.icns",
@@ -678,20 +678,20 @@ Object {
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.0.1",
   "LSApplicationCategoryType": "your.app.category.type",
-  "LSEnvironment": Object {
+  "LSEnvironment": {
     "MallocNanoZone": "0",
   },
-  "NSAppTransportSecurity": Object {
+  "NSAppTransportSecurity": {
     "NSAllowsLocalNetworking": true,
-    "NSExceptionDomains": Object {
-      "127.0.0.1": Object {
+    "NSExceptionDomains": {
+      "127.0.0.1": {
         "NSIncludesSubdomains": false,
         "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
         "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
         "NSTemporaryExceptionMinimumTLSVersion": "1.0",
         "NSTemporaryExceptionRequiresForwardSecrecy": false,
       },
-      "localhost": Object {
+      "localhost": {
         "NSIncludesSubdomains": false,
         "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
         "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
@@ -709,9 +709,9 @@ Object {
 `;
 
 exports[`Mac universal 5`] = `
-Object {
-  "files": Array [
-    Object {
+{
+  "files": [
+    {
       "sha512": "@sha512",
       "size": "@size",
     },
@@ -724,19 +724,19 @@ Object {
 `;
 
 exports[`Mac universal 6`] = `
-Array [
+[
   "Test App ßW-1.0.1-universal-mac.zip",
 ]
 `;
 
 exports[`nsis 1`] = `
-Object {
-  "win": Array [
-    Object {
+{
+  "win": [
+    {
       "file": "latest.yml",
-      "fileContent": Object {
-        "files": Array [
-          Object {
+      "fileContent": {
+        "files": [
+          {
             "sha512": "@sha512",
             "size": "@size",
             "url": "Test App ßW Setup 1.0.0.exe",
@@ -748,19 +748,19 @@ Object {
         "version": "1.0.0",
       },
     },
-    Object {
+    {
       "arch": "x64",
       "file": "Test App ßW Setup 1.0.0.exe",
       "safeArtifactName": "TestApp-Setup-1.0.0.exe",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
-    Object {
+    {
       "file": "Test App ßW Setup 1.0.0.exe.blockmap",
       "safeArtifactName": "TestApp-Setup-1.0.0.exe.blockmap",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -770,13 +770,13 @@ Object {
 `;
 
 exports[`nsis 2`] = `
-Object {
-  "win": Array [
-    Object {
+{
+  "win": [
+    {
       "file": "latest.yml",
-      "fileContent": Object {
-        "files": Array [
-          Object {
+      "fileContent": {
+        "files": [
+          {
             "sha512": "@sha512",
             "size": "@size",
             "url": "Test App ßW Setup 1.0.1.exe",
@@ -788,19 +788,19 @@ Object {
         "version": "1.0.1",
       },
     },
-    Object {
+    {
       "arch": "x64",
       "file": "Test App ßW Setup 1.0.1.exe",
       "safeArtifactName": "TestApp-Setup-1.0.1.exe",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
-    Object {
+    {
       "file": "Test App ßW Setup 1.0.1.exe.blockmap",
       "safeArtifactName": "TestApp-Setup-1.0.1.exe.blockmap",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -810,9 +810,9 @@ Object {
 `;
 
 exports[`nsis 3`] = `
-Object {
-  "files": Array [
-    Object {
+{
+  "files": [
+    {
       "sha512": "@sha512",
       "size": "@size",
     },
@@ -825,25 +825,25 @@ Object {
 `;
 
 exports[`nsis 4`] = `
-Array [
+[
   "Test App ßW Setup 1.0.1.exe",
 ]
 `;
 
 exports[`web installer 1`] = `
-Object {
-  "win": Array [
-    Object {
+{
+  "win": [
+    {
       "file": "latest.yml",
-      "fileContent": Object {
-        "files": Array [
-          Object {
+      "fileContent": {
+        "files": [
+          {
             "sha512": "@sha512",
             "url": "Test App ßW Web Setup 1.0.0.exe",
           },
         ],
-        "packages": Object {
-          "x64": Object {
+        "packages": {
+          "x64": {
             "blockMapSize": "@blockMapSize",
             "file": "TestApp-1.0.0-x64.nsis.7z",
             "path": "TestApp-1.0.0-x64.nsis.7z",
@@ -857,13 +857,13 @@ Object {
         "version": "1.0.0",
       },
     },
-    Object {
+    {
       "arch": "x64",
       "file": "Test App ßW Web Setup 1.0.0.exe",
       "safeArtifactName": "TestApp-WebSetup-1.0.0.exe",
-      "updateInfo": Object {
-        "packages": Object {
-          "x64": Object {
+      "updateInfo": {
+        "packages": {
+          "x64": {
             "blockMapSize": "@blockMapSize",
             "file": "TestApp-1.0.0-x64.nsis.7z",
             "path": "TestApp-1.0.0-x64.nsis.7z",
@@ -873,7 +873,7 @@ Object {
         },
       },
     },
-    Object {
+    {
       "arch": "x64",
       "file": "TestApp-1.0.0-x64.nsis.7z",
     },
@@ -882,19 +882,19 @@ Object {
 `;
 
 exports[`web installer 2`] = `
-Object {
-  "win": Array [
-    Object {
+{
+  "win": [
+    {
       "file": "latest.yml",
-      "fileContent": Object {
-        "files": Array [
-          Object {
+      "fileContent": {
+        "files": [
+          {
             "sha512": "@sha512",
             "url": "Test App ßW Web Setup 1.0.1.exe",
           },
         ],
-        "packages": Object {
-          "x64": Object {
+        "packages": {
+          "x64": {
             "blockMapSize": "@blockMapSize",
             "file": "TestApp-1.0.1-x64.nsis.7z",
             "path": "TestApp-1.0.1-x64.nsis.7z",
@@ -908,13 +908,13 @@ Object {
         "version": "1.0.1",
       },
     },
-    Object {
+    {
       "arch": "x64",
       "file": "Test App ßW Web Setup 1.0.1.exe",
       "safeArtifactName": "TestApp-WebSetup-1.0.1.exe",
-      "updateInfo": Object {
-        "packages": Object {
-          "x64": Object {
+      "updateInfo": {
+        "packages": {
+          "x64": {
             "blockMapSize": "@blockMapSize",
             "file": "TestApp-1.0.1-x64.nsis.7z",
             "path": "TestApp-1.0.1-x64.nsis.7z",
@@ -924,7 +924,7 @@ Object {
         },
       },
     },
-    Object {
+    {
       "arch": "x64",
       "file": "TestApp-1.0.1-x64.nsis.7z",
     },
@@ -933,14 +933,14 @@ Object {
 `;
 
 exports[`web installer 3`] = `
-Object {
-  "files": Array [
-    Object {
+{
+  "files": [
+    {
       "sha512": "@sha512",
     },
   ],
-  "packages": Object {
-    "x64": Object {
+  "packages": {
+    "x64": {
       "blockMapSize": "@blockMapSize",
       "file": "TestApp-1.0.1-x64.nsis.7z",
       "path": "TestApp-1.0.1-x64.nsis.7z",
@@ -956,7 +956,7 @@ Object {
 `;
 
 exports[`web installer 4`] = `
-Array [
+[
   "Test App ßW Web Setup 1.0.1.exe",
   "package-1.0.1.7z",
 ]

@@ -1,5 +1,66 @@
 # app-builder-lib
 
+## 26.0.0-alpha.4
+
+### Patch Changes
+
+- [#8627](https://github.com/electron-userland/electron-builder/pull/8627) [`2a3195d9`](https://github.com/electron-userland/electron-builder/commit/2a3195d99f42e9b4f70e5719525db046a327aeb7) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: add rfc3161 timestamp entry as default for azure signing to resolve Windows Defender alert
+
+- [#8632](https://github.com/electron-userland/electron-builder/pull/8632) [`645e2abd`](https://github.com/electron-userland/electron-builder/commit/645e2abd5ed604fe4f4d9475cf2cedf4fe78436c) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: only sign concurrently when using local signtool. azure can't be in parallel due to resources being locked during usage
+
+- Updated dependencies [[`dcd91a1f`](https://github.com/electron-userland/electron-builder/commit/dcd91a1f79be5bde7bb418b0eaa83d03f11d41fe)]:
+  - electron-publish@26.0.0-alpha.4
+  - dmg-builder@26.0.0-alpha.4
+  - electron-builder-squirrel-windows@26.0.0-alpha.4
+
+## 26.0.0-alpha.3
+
+### Patch Changes
+
+- [#8596](https://github.com/electron-userland/electron-builder/pull/8596) [`e0b0e351`](https://github.com/electron-userland/electron-builder/commit/e0b0e351baecc29e08d9f7d90f4699150b229416) Thanks [@mmaietta](https://github.com/mmaietta)! - chore: refactor files for publishing to electron-publish
+
+- [#8606](https://github.com/electron-userland/electron-builder/pull/8606) [`a0e635c1`](https://github.com/electron-userland/electron-builder/commit/a0e635c183633c291fd2e0a0e8c9a1c6b8e085a0) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: add quotes to surround file path during azure signing to handle files with spaces
+
+- [#8603](https://github.com/electron-userland/electron-builder/pull/8603) [`712a8bce`](https://github.com/electron-userland/electron-builder/commit/712a8bce56331cd89df270f182fa27bf365e985b) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: checking relative path without separator as that doesn't work on Windows
+
+- [#8601](https://github.com/electron-userland/electron-builder/pull/8601) [`215fc36b`](https://github.com/electron-userland/electron-builder/commit/215fc36b5e8d243ef5bc77d31eb8e30d0e8bca9d) Thanks [@mmaietta](https://github.com/mmaietta)! - Revert "fix(win): use appInfo description as primary entry for FileDescription" to resolve https://github.com/electron-userland/electron-builder/issues/8599
+
+- Updated dependencies [[`e0b0e351`](https://github.com/electron-userland/electron-builder/commit/e0b0e351baecc29e08d9f7d90f4699150b229416), [`d4ea0d99`](https://github.com/electron-userland/electron-builder/commit/d4ea0d998d0fb3ea3a75ca8d39a69a2f3c710962)]:
+  - builder-util@26.0.0-alpha.3
+  - dmg-builder@26.0.0-alpha.3
+  - electron-builder-squirrel-windows@26.0.0-alpha.3
+  - electron-publish@26.0.0-alpha.3
+
+## 26.0.0-alpha.2
+
+### Minor Changes
+
+- [#8570](https://github.com/electron-userland/electron-builder/pull/8570) [`c8484305`](https://github.com/electron-userland/electron-builder/commit/c84843053a8f9e0b6af14c6b2ed33c5f82d495b3) Thanks [@mmaietta](https://github.com/mmaietta)! - feat: migrate to official `electron/asar` packaging
+
+- [#8588](https://github.com/electron-userland/electron-builder/pull/8588) [`8434e10d`](https://github.com/electron-userland/electron-builder/commit/8434e10dad0893ca11c5f3a17a70470065f96fa0) Thanks [@mmaietta](https://github.com/mmaietta)! - feat: adding integration with @electron/fuses
+
+### Patch Changes
+
+- Updated dependencies []:
+  - dmg-builder@26.0.0-alpha.2
+  - electron-builder-squirrel-windows@26.0.0-alpha.2
+
+## 26.0.0-alpha.1
+
+### Patch Changes
+
+- [#8577](https://github.com/electron-userland/electron-builder/pull/8577) [`e9eef0c1`](https://github.com/electron-userland/electron-builder/commit/e9eef0c1c7f73a5edfe3026f044c6278641077cb) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: add additional default exclusions to copy logic
+
+- [#8576](https://github.com/electron-userland/electron-builder/pull/8576) [`3eab7143`](https://github.com/electron-userland/electron-builder/commit/3eab7143d74262caace81ea05e97617d07daf336) Thanks [@beyondkmp](https://github.com/beyondkmp)! - fix: packages in the workspace not being under node_modules
+
+- [#8575](https://github.com/electron-userland/electron-builder/pull/8575) [`dfa35c32`](https://github.com/electron-userland/electron-builder/commit/dfa35c321f6e68c6a102ddc49aa64985fb11d396) Thanks [@doctolivier](https://github.com/doctolivier)! - chore(deps): update @electron/rebuild to v3.7.0
+
+- Updated dependencies [[`3eab7143`](https://github.com/electron-userland/electron-builder/commit/3eab7143d74262caace81ea05e97617d07daf336)]:
+  - builder-util@26.0.0-alpha.1
+  - dmg-builder@26.0.0-alpha.1
+  - electron-builder-squirrel-windows@26.0.0-alpha.1
+  - electron-publish@26.0.0-alpha.1
+
 ## 26.0.0-alpha.0
 
 ### Major Changes

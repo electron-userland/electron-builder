@@ -1,12 +1,33 @@
-import { InvalidConfigurationError, log } from "builder-util"
-import { WindowsAzureSigningConfiguration } from "../options/winOptions"
+import { asArray, InvalidConfigurationError, log } from "builder-util"
+import { WindowsAzureSigningConfiguration, WindowsConfiguration } from "../options/winOptions"
 import { WinPackager } from "../winPackager"
 import { getPSCmd, WindowsSignOptions } from "./windowsCodeSign"
+import { Lazy } from "lazy-val"
+import { SignManager } from "./signManager"
+import { MemoLazy } from "builder-util-runtime"
+import { CertificateFromStoreInfo, FileCodeSigningInfo } from "./windowsSignToolManager"
 
-export class WindowsSignAzureManager {
-  constructor(private readonly packager: WinPackager) {}
+export class WindowsSignAzureManager implements SignManager {
+  private readonly platformSpecificBuildOptions: WindowsConfiguration
 
-  async initializeProviderModules() {
+  readonly computedPublisherName = new Lazy<Array<string> | null>(() => {
+    const publisherName = this.platformSpecificBuildOptions.azureSignOptions?.publisherName
+    if (publisherName === null) {
+      return Promise.resolve(null)
+    } else if (publisherName != null) {
+      return Promise.resolve(asArray(publisherName))
+    }
+
+    // TODO: Is there another way to automatically pull Publisher Name from AzureTrusted service?
+    // For now return null.
+    return Promise.resolve(null)
+  })
+
+  constructor(private readonly packager: WinPackager) {
+    this.platformSpecificBuildOptions = packager.platformSpecificBuildOptions
+  }
+
+  async initialize() {
     const vm = await this.packager.vm.value
     const ps = await getPSCmd(vm)
 
@@ -74,21 +95,40 @@ export class WindowsSignAzureManager {
     return true
   }
 
+  computePublisherName(): Promise<string> {
+    return Promise.resolve(this.packager.platformSpecificBuildOptions.azureSignOptions!.publisherName)
+  }
+  readonly cscInfo = new MemoLazy<WindowsConfiguration, FileCodeSigningInfo | CertificateFromStoreInfo | null>(
+    () => this.packager.platformSpecificBuildOptions,
+    _selected => Promise.resolve(null)
+  )
   // prerequisite: requires `initializeProviderModules` to already have been executed
-  async signUsingAzureTrustedSigning(options: WindowsSignOptions): Promise<boolean> {
+  async signFile(options: WindowsSignOptions): Promise<boolean> {
     const vm = await this.packager.vm.value
     const ps = await getPSCmd(vm)
 
-    const { endpoint, certificateProfileName, codeSigningAccountName, ...extraSigningArgs }: WindowsAzureSigningConfiguration = options.options.azureSignOptions!
+    const {
+      publisherName: _publisher, // extract from `extraSigningArgs`
+      endpoint,
+      certificateProfileName,
+      codeSigningAccountName,
+      fileDigest,
+      timestampRfc3161,
+      timestampDigest,
+      ...extraSigningArgs
+    }: WindowsAzureSigningConfiguration = options.options.azureSignOptions!
     const params = {
-      FileDigest: "SHA256",
-      ...extraSigningArgs, // allows overriding FileDigest if provided in config
+      ...extraSigningArgs,
       Endpoint: endpoint,
       CertificateProfileName: certificateProfileName,
       CodeSigningAccountName: codeSigningAccountName,
-      Files: options.path,
+      TimestampRfc3161: timestampRfc3161 || "http://timestamp.acs.microsoft.com",
+      TimestampDigest: timestampDigest || "SHA256",
+      FileDigest: fileDigest || "SHA256",
+      Files: `"${options.path}"`,
     }
     const paramsString = Object.entries(params)
+      .filter(([_, value]) => value != null)
       .reduce((res, [field, value]) => {
         return [...res, `-${field}`, value]
       }, [] as string[])
