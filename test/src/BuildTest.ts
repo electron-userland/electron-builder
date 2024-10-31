@@ -283,8 +283,7 @@ test.ifLinuxOrDevMac("beforeBuild", () => {
   )
 })
 
-// https://github.com/electron-userland/electron-builder/issues/1738
-test.ifDevOrLinuxCi("win smart unpack", () => {
+test("win smart unpack", () => {
   // test onNodeModuleFile hook
   const nodeModuleFiles: Array<string> = []
   let p = ""

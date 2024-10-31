@@ -15,7 +15,7 @@ export function detectUnpackedDirs(fileSet: ResolvedFileSet, autoUnpackDirs: Set
   for (let i = 0, n = fileSet.files.length; i < n; i++) {
     const file = fileSet.files[i]
     const stat: FilterStats = metadata.get(file)!
-    if (!stat.destNodeModulesDirPath) {
+    if (!stat.destNodeModulesDirPath || autoUnpackDirs.has(stat.destNodeModulesDirPath)) {
       continue
     }
 
