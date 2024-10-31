@@ -22,7 +22,8 @@ export type FileTransformer = (file: string) => Promise<null | string | Buffer |
 export interface FilterStats extends Stats {
   // relative path of the dependency(node_modules + moduleName + file)
   // Mainly used for filter, such as files filtering and asarUnpack filtering
-  destNodeModulesPath?: string
+  destNodeModulesFilePath?: string
+  destNodeModulesDirPath?: string
   moduleName?: string
   // deal with asar unpack sysmlink
   relativeLink?: string

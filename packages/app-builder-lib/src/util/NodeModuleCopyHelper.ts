@@ -49,7 +49,7 @@ export class NodeModuleCopyHelper extends FileCopyHelper {
     super(matcher, matcher.isEmpty() ? null : matcher.createFilter(), packager)
   }
 
-  async collectNodeModules(moduleInfo: NodeModuleInfo, nodeModuleExcludedExts: Array<string>): Promise<Array<string>> {
+  async collectNodeModules(moduleInfo: NodeModuleInfo, nodeModuleExcludedExts: Array<string>, destination:string): Promise<Array<string>> {
     const filter = this.filter
     const metadata = this.metadata
 
@@ -114,8 +114,9 @@ export class NodeModuleCopyHelper extends FileCopyHelper {
           }
 
           return lstat(filePath).then((stat: FilterStats) => {
-            stat.destNodeModulesPath = path.join("node_modules", moduleName, path.relative(depPath, filePath))
             stat.moduleName = moduleName
+            stat.destNodeModulesDirPath = destination
+            stat.destNodeModulesFilePath = path.join(destination, path.relative(depPath, filePath))
             if (filter != null && !filter(filePath, stat)) {
               return null
             }
