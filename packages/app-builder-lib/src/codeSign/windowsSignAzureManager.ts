@@ -4,6 +4,8 @@ import { WinPackager } from "../winPackager"
 import { getPSCmd, WindowsSignOptions } from "./windowsCodeSign"
 import { Lazy } from "lazy-val"
 import { SignManager } from "./signManager"
+import { MemoLazy } from "builder-util-runtime"
+import { CertificateFromStoreInfo, FileCodeSigningInfo } from "./windowsSignToolManager"
 
 export class WindowsSignAzureManager implements SignManager {
   private readonly platformSpecificBuildOptions: WindowsConfiguration
@@ -25,7 +27,7 @@ export class WindowsSignAzureManager implements SignManager {
     this.platformSpecificBuildOptions = packager.platformSpecificBuildOptions
   }
 
-  async initializeProviderModules() {
+  async initialize() {
     const vm = await this.packager.vm.value
     const ps = await getPSCmd(vm)
 
@@ -96,6 +98,10 @@ export class WindowsSignAzureManager implements SignManager {
   computePublisherName(): Promise<string> {
     return Promise.resolve(this.packager.platformSpecificBuildOptions.azureSignOptions!.publisherName)
   }
+  readonly cscInfo = new MemoLazy<WindowsConfiguration, FileCodeSigningInfo | CertificateFromStoreInfo | null>(
+    () => this.packager.platformSpecificBuildOptions,
+    _selected => Promise.resolve(null)
+  )
   // prerequisite: requires `initializeProviderModules` to already have been executed
   async signFile(options: WindowsSignOptions): Promise<boolean> {
     const vm = await this.packager.vm.value

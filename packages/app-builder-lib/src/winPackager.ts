@@ -31,19 +31,16 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
 
   readonly vm = new Lazy<VmManager>(() => (process.platform === "win32" ? Promise.resolve(new VmManager()) : getWindowsVm(this.debugLogger)))
 
-  private readonly signtoolManager = new Lazy<WindowsSignToolManager>(() => Promise.resolve(new WindowsSignToolManager(this)))
-  private readonly azureSignManager = new Lazy(() =>
-    Promise.resolve(new WindowsSignAzureManager(this)).then(async manager => {
-      await manager.initializeProviderModules()
-      return manager
-    })
-  )
-  get signingManager(): Lazy<SignManager> {
-    if (this.platformSpecificBuildOptions.azureSignOptions) {
-      return this.azureSignManager
+  readonly signingManager = new Lazy(async () => {
+    let manager: SignManager
+    if (this.platformSpecificBuildOptions.azureSignOptions != null) {
+      manager = new WindowsSignAzureManager(this)
+    } else {
+      manager = new WindowsSignToolManager(this)
     }
-    return this.signtoolManager
-  }
+    await manager.initialize()
+    return manager
+  })
 
   get isForceCodeSigningVerification(): boolean {
     return this.platformSpecificBuildOptions.verifyUpdateCodeSignature !== false
@@ -181,7 +178,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     })
 
     const config = this.config
-    const cscInfoForCacheDigest = !isBuildCacheEnabled() || isCI || config.electronDist != null ? null : await (await this.signtoolManager.value).cscInfo.value
+    const cscInfoForCacheDigest = !isBuildCacheEnabled() || isCI || config.electronDist != null ? null : await (await this.signingManager.value).cscInfo.value
     let buildCacheManager: BuildCacheManager | null = null
     // resources editing doesn't change executable for the same input and executed quickly - no need to complicate
     if (cscInfoForCacheDigest != null) {

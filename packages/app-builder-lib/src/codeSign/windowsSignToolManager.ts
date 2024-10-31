@@ -164,7 +164,7 @@ export class WindowsSignToolManager implements SignManager {
     }
   )
 
-  initializeProviderModules(): Promise<void> {
+  initialize(): Promise<void> {
     return Promise.resolve()
   }
 
