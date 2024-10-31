@@ -293,8 +293,8 @@ test("win smart unpack", () => {
       config: {
         npmRebuild: true,
         onNodeModuleFile: file => {
-          console.log("test is her,", p, file, nodeModuleFiles)
           const name = toSystemIndependentPath(path.relative(p, file))
+          console.log("test is her,", p, file, nodeModuleFiles, name)
           if (!name.startsWith(".") && !name.endsWith(".dll") && name.includes(".")) {
             nodeModuleFiles.push(name)
           }
