@@ -14,6 +14,8 @@ import { randomBytes } from "crypto"
 export class MacUpdater extends AppUpdater {
   private readonly nativeUpdater: AutoUpdater = require("electron").autoUpdater
 
+  private updateInfoForPendingUpdateDownloadedEvent: UpdateDownloadedEvent | null = null
+
   private squirrelDownloadedUpdate = false
 
   private server?: Server
@@ -27,6 +29,9 @@ export class MacUpdater extends AppUpdater {
     })
     this.nativeUpdater.on("update-downloaded", () => {
       this.squirrelDownloadedUpdate = true
+      const updateInfo = this.updateInfoForPendingUpdateDownloadedEvent
+      this.updateInfoForPendingUpdateDownloadedEvent = null
+      this.dispatchUpdateDownloaded(updateInfo!)
       this.debug("nativeUpdater.update-downloaded")
     })
   }
@@ -239,8 +244,7 @@ export class MacUpdater extends AppUpdater {
           },
         })
 
-        // The update has been downloaded and is ready to be served to Squirrel
-        this.dispatchUpdateDownloaded(event)
+        this.updateInfoForPendingUpdateDownloadedEvent = event
 
         if (this.autoInstallOnAppQuit) {
           this.nativeUpdater.once("error", reject)
