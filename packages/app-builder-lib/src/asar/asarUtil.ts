@@ -1,7 +1,7 @@
 import { CreateOptions, createPackageWithOptions } from "@electron/asar"
 import { AsyncTaskManager, log } from "builder-util"
 import { CancellationToken } from "builder-util-runtime"
-import { Filter, MAX_FILE_REQUESTS } from "builder-util/out/fs"
+import { FileCopier, Filter, MAX_FILE_REQUESTS } from "builder-util/out/fs"
 import * as fsNode from "fs"
 import * as fs from "fs-extra"
 import * as path from "path"
@@ -77,6 +77,7 @@ export class AsarPackager {
     const taskManager = new AsyncTaskManager(cancellationToken)
     const unpackedPaths = new Set<string>()
     const copiedFiles = new Set<string>()
+    const fileCopier = new FileCopier()
 
     const matchUnpacker = (file: string, dest: string, stat: fs.Stats) => {
       if (this.config.unpackPattern?.(file, stat)) {
@@ -96,14 +97,14 @@ export class AsarPackager {
       copiedFiles.add(destination)
 
       // If transformed data, skip symlink logic
-      if (transformedData) {
-        return this.copyFileOrData(transformedData, source, destination, stat)
+      if (transformedData != null) {
+        return this.copyFileOrData(fileCopier, transformedData, source, destination, stat)
       }
 
       const realPathFile = await fs.realpath(source)
 
       if (source === realPathFile) {
-        return this.copyFileOrData(undefined, source, destination, stat)
+        return this.copyFileOrData(fileCopier, undefined, source, destination, stat)
       }
 
       const realPathRelative = path.relative(sourceDir, realPathFile)
@@ -116,7 +117,7 @@ export class AsarPackager {
       }
 
       const symlinkTarget = path.resolve(this.rootForAppFilesWithoutAsar, realPathRelative)
-      await this.copyFileOrData(undefined, source, symlinkTarget, stat)
+      await this.copyFileOrData(fileCopier, undefined, source, symlinkTarget, stat)
       const target = path.relative(path.dirname(destination), symlinkTarget)
       fsNode.symlinkSync(target, destination)
 
@@ -150,12 +151,12 @@ export class AsarPackager {
     }
   }
 
-  private async copyFileOrData(data: string | Buffer | undefined, source: string, destination: string, stat: fs.Stats) {
+  private async copyFileOrData(fileCopier: FileCopier, data: string | Buffer | undefined, source: string, destination: string, stat: fs.Stats) {
     await fs.mkdir(path.dirname(destination), { recursive: true })
     if (data) {
-      await fs.writeFile(destination, data, { mode: stat.mode })
+      return fs.writeFile(destination, data, { mode: stat.mode })
     } else {
-      await fs.copyFile(source, destination)
+      return fileCopier.copy(source, destination, stat)
     }
   }
 }
