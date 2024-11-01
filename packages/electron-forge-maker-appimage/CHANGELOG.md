@@ -1,5 +1,137 @@
 # electron-forge-maker-appimage
 
+## 26.0.0-alpha.4
+
+### Patch Changes
+
+- Updated dependencies [[`2a3195d9`](https://github.com/electron-userland/electron-builder/commit/2a3195d99f42e9b4f70e5719525db046a327aeb7), [`645e2abd`](https://github.com/electron-userland/electron-builder/commit/645e2abd5ed604fe4f4d9475cf2cedf4fe78436c)]:
+  - app-builder-lib@26.0.0-alpha.4
+
+## 26.0.0-alpha.3
+
+### Patch Changes
+
+- Updated dependencies [[`e0b0e351`](https://github.com/electron-userland/electron-builder/commit/e0b0e351baecc29e08d9f7d90f4699150b229416), [`a0e635c1`](https://github.com/electron-userland/electron-builder/commit/a0e635c183633c291fd2e0a0e8c9a1c6b8e085a0), [`712a8bce`](https://github.com/electron-userland/electron-builder/commit/712a8bce56331cd89df270f182fa27bf365e985b), [`215fc36b`](https://github.com/electron-userland/electron-builder/commit/215fc36b5e8d243ef5bc77d31eb8e30d0e8bca9d)]:
+  - app-builder-lib@26.0.0-alpha.3
+
+## 26.0.0-alpha.2
+
+### Patch Changes
+
+- Updated dependencies [[`c8484305`](https://github.com/electron-userland/electron-builder/commit/c84843053a8f9e0b6af14c6b2ed33c5f82d495b3), [`8434e10d`](https://github.com/electron-userland/electron-builder/commit/8434e10dad0893ca11c5f3a17a70470065f96fa0)]:
+  - app-builder-lib@26.0.0-alpha.2
+
+## 26.0.0-alpha.1
+
+### Patch Changes
+
+- Updated dependencies [[`e9eef0c1`](https://github.com/electron-userland/electron-builder/commit/e9eef0c1c7f73a5edfe3026f044c6278641077cb), [`3eab7143`](https://github.com/electron-userland/electron-builder/commit/3eab7143d74262caace81ea05e97617d07daf336), [`dfa35c32`](https://github.com/electron-userland/electron-builder/commit/dfa35c321f6e68c6a102ddc49aa64985fb11d396)]:
+  - app-builder-lib@26.0.0-alpha.1
+
+## 26.0.0-alpha.0
+
+### Patch Changes
+
+- Updated dependencies [[`1fee87a2`](https://github.com/electron-userland/electron-builder/commit/1fee87a20e1bca88f185967ca540d60177e13653), [`e45fecf0`](https://github.com/electron-userland/electron-builder/commit/e45fecf04d1ba758ed524391a1fc161e5c57d305), [`0dbe357a`](https://github.com/electron-userland/electron-builder/commit/0dbe357ac5b4f3c51d9a6e9d7bbf0b1f142b5746), [`13f55a3e`](https://github.com/electron-userland/electron-builder/commit/13f55a3ef070d946f5d80dd412a557bd38c98424), [`b8185d48`](https://github.com/electron-userland/electron-builder/commit/b8185d48a75e65932196700e28bf71613dd141b4), [`ae9221d9`](https://github.com/electron-userland/electron-builder/commit/ae9221d947c2dedff7b655ddafceb9746f9f4460)]:
+  - app-builder-lib@26.0.0-alpha.0
+
+## 25.1.8
+
+### Patch Changes
+
+- Updated dependencies [[`4ff778eefd9089b3b38b67156eb39e8cf57fdd83`](https://github.com/electron-userland/electron-builder/commit/4ff778eefd9089b3b38b67156eb39e8cf57fdd83)]:
+  - app-builder-lib@25.1.8
+
+## 25.1.7
+
+### Patch Changes
+
+- [#8545](https://github.com/electron-userland/electron-builder/pull/8545) [`fc3a78e4e61f916058fca9b15fc16f076c3fabd1`](https://github.com/electron-userland/electron-builder/commit/fc3a78e4e61f916058fca9b15fc16f076c3fabd1) Thanks [@mmaietta](https://github.com/mmaietta)! - chore(deps): update devDependencies, including typescript
+
+- Updated dependencies [[`2e84f01351bcfb8f32df17c17bfeeeebb87a713f`](https://github.com/electron-userland/electron-builder/commit/2e84f01351bcfb8f32df17c17bfeeeebb87a713f), [`fc3a78e4e61f916058fca9b15fc16f076c3fabd1`](https://github.com/electron-userland/electron-builder/commit/fc3a78e4e61f916058fca9b15fc16f076c3fabd1), [`57cebf4dd4c722456245286d2fd795f7a5fc862c`](https://github.com/electron-userland/electron-builder/commit/57cebf4dd4c722456245286d2fd795f7a5fc862c), [`7488456309d80b88fbf99fb382752078dc8ddefa`](https://github.com/electron-userland/electron-builder/commit/7488456309d80b88fbf99fb382752078dc8ddefa)]:
+  - app-builder-lib@25.1.7
+
+## 25.1.6
+
+### Patch Changes
+
+- Updated dependencies [[`cc8c70f7`](https://github.com/electron-userland/electron-builder/commit/cc8c70f7af5ca53b4c07b8ee32f460eabd4f9c34), [`eaf274d4`](https://github.com/electron-userland/electron-builder/commit/eaf274d447d27d27a7ad663c5642a38d66f69917)]:
+  - app-builder-lib@25.1.6
+
+## 25.1.5
+
+### Patch Changes
+
+- Updated dependencies [[`d1cb6bdb`](https://github.com/electron-userland/electron-builder/commit/d1cb6bdbf8111156bb16839f501bdd9e6d477338), [`62fd74dc`](https://github.com/electron-userland/electron-builder/commit/62fd74dcfa13a564706141d08e5d0dea11ecf33b)]:
+  - app-builder-lib@25.1.5
+
+## 25.1.4
+
+### Patch Changes
+
+- Updated dependencies [[`48489d18`](https://github.com/electron-userland/electron-builder/commit/48489d187a18d7167477fe8ee1f7412035feb9ca), [`59f6cb01`](https://github.com/electron-userland/electron-builder/commit/59f6cb01945c27578052c0e81e588d5c8be459f8), [`4b2f6937`](https://github.com/electron-userland/electron-builder/commit/4b2f6937793a69fe15b35022e3ccca3be66b157d), [`f146b02f`](https://github.com/electron-userland/electron-builder/commit/f146b02f88e38eb55a374d67078a6bfb25b55bca)]:
+  - app-builder-lib@25.1.4
+
+## 25.1.3
+
+### Patch Changes
+
+- [#8491](https://github.com/electron-userland/electron-builder/pull/8491) [`178a3c40`](https://github.com/electron-userland/electron-builder/commit/178a3c40f35fa9e91a2e4942f61423effa1289e4) Thanks [@mmaietta](https://github.com/mmaietta)! - chore: migrating to typedoc and updating/improving type+interface definitions
+
+- Updated dependencies [[`216eaf93`](https://github.com/electron-userland/electron-builder/commit/216eaf935da870f0a1a1b14f2b852f879d467710), [`178a3c40`](https://github.com/electron-userland/electron-builder/commit/178a3c40f35fa9e91a2e4942f61423effa1289e4)]:
+  - app-builder-lib@25.1.3
+
+## 25.1.2
+
+### Patch Changes
+
+- [#8486](https://github.com/electron-userland/electron-builder/pull/8486) [`d56cd274`](https://github.com/electron-userland/electron-builder/commit/d56cd274b9d0fedb71889293164a15e51f7cc744) Thanks [@mmaietta](https://github.com/mmaietta)! - fix(deploy): redeploy all packages to sync semver ranges
+
+- Updated dependencies [[`d56cd274`](https://github.com/electron-userland/electron-builder/commit/d56cd274b9d0fedb71889293164a15e51f7cc744)]:
+  - app-builder-lib@25.1.2
+
+## 25.1.0
+
+### Patch Changes
+
+- Updated dependencies [[`55671bd2`](https://github.com/electron-userland/electron-builder/commit/55671bd2159d4da8934e7083077d9cc854dc85fb), [`770b19f5`](https://github.com/electron-userland/electron-builder/commit/770b19f58c5f697618baa604a686a8ade97fea2d), [`6fe83950`](https://github.com/electron-userland/electron-builder/commit/6fe83950a4195e4ff6611e3ebf91bd2e66d811dd), [`c081df8e`](https://github.com/electron-userland/electron-builder/commit/c081df8e04494645028c4160bcc1376f029cbca5), [`d50d5634`](https://github.com/electron-userland/electron-builder/commit/d50d563408c117f82863d0611311226d53ef6e8e), [`28aeb272`](https://github.com/electron-userland/electron-builder/commit/28aeb272ed24d6c3db3c61d551a7afa3794fef4d)]:
+  - app-builder-lib@25.1.0
+
+## 25.0.6
+
+### Patch Changes
+
+- Updated dependencies [[`5c8373d1`](https://github.com/electron-userland/electron-builder/commit/5c8373d15f99ee9a4c46ed164f95bf1d4a11db28)]:
+  - app-builder-lib@25.0.6
+
+## 25.0.5
+
+### Patch Changes
+
+- Updated dependencies [[`8e6c1712`](https://github.com/electron-userland/electron-builder/commit/8e6c17124cdc523620a66efaf871ef8d335c0f49)]:
+  - app-builder-lib@25.0.5
+
+## 25.0.4
+
+### Patch Changes
+
+- Updated dependencies [[`12c52a81`](https://github.com/electron-userland/electron-builder/commit/12c52a81420f04ec0e205dd83798c2b0b773011d), [`f7daeb99`](https://github.com/electron-userland/electron-builder/commit/f7daeb9976353f7b12c093c88b6e1136b6317880), [`5ab2bee1`](https://github.com/electron-userland/electron-builder/commit/5ab2bee1e1db77967c65d56443f0dc79de5071da)]:
+  - app-builder-lib@25.0.4
+
+## 25.0.3
+
+### Patch Changes
+
+- Updated dependencies [[`f8fbdd12`](https://github.com/electron-userland/electron-builder/commit/f8fbdd122ecdc7a967f3fbeef3572dfd133cc5e3), [`afd81326`](https://github.com/electron-userland/electron-builder/commit/afd813265d346b7bddba7ea63563c876f630088e)]:
+  - app-builder-lib@25.0.3
+
+## 25.0.2
+
+### Patch Changes
+
+- Updated dependencies [[`2541eb62`](https://github.com/electron-userland/electron-builder/commit/2541eb62a6a8338c87f3d032ff48ed154c2d3cca), [`2acdf65d`](https://github.com/electron-userland/electron-builder/commit/2acdf65d47ad4b8fb546a00833d646a5e58e5428), [`c85b73d7`](https://github.com/electron-userland/electron-builder/commit/c85b73d7c8dcefe86b0b350946af1cea951e6aae), [`54c1059b`](https://github.com/electron-userland/electron-builder/commit/54c1059b961f7c2a493d26b7e6ef674911069cad), [`2a0ea65c`](https://github.com/electron-userland/electron-builder/commit/2a0ea65caad1067a193b72d684e7c1f95cdecce5)]:
+  - app-builder-lib@25.0.2
+
 ## 25.0.1
 
 ### Patch Changes

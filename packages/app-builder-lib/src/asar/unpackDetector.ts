@@ -1,7 +1,4 @@
-import BluebirdPromise from "bluebird-lst"
 import { log } from "builder-util"
-import { CONCURRENCY } from "builder-util"
-import { mkdir } from "fs-extra"
 import { isBinaryFileSync } from "isbinaryfile"
 import * as path from "path"
 import { NODE_MODULES_PATTERN } from "../fileTransformer"
@@ -18,11 +15,12 @@ function addValue(map: Map<string, Array<string>>, key: string, value: string) {
 }
 
 export function isLibOrExe(file: string): boolean {
-  return file.endsWith(".dll") || file.endsWith(".exe") || file.endsWith(".dylib") || file.endsWith(".so")
+  // https://github.com/electron-userland/electron-builder/issues/3038
+  return file.endsWith(".dll") || file.endsWith(".exe") || file.endsWith(".dylib") || file.endsWith(".so") || file.endsWith(".node")
 }
 
 /** @internal */
-export async function detectUnpackedDirs(fileSet: ResolvedFileSet, autoUnpackDirs: Set<string>, unpackedDest: string, rootForAppFilesWithoutAsar: string) {
+export function detectUnpackedDirs(fileSet: ResolvedFileSet, autoUnpackDirs: Set<string>, defaultDestination: string) {
   const dirToCreate = new Map<string, Array<string>>()
   const metadata = fileSet.metadata
 
@@ -68,8 +66,8 @@ export async function detectUnpackedDirs(fileSet: ResolvedFileSet, autoUnpackDir
     }
 
     const packageDir = file.substring(0, nextSlashIndex)
-    const packageDirPathInArchive = path.relative(rootForAppFilesWithoutAsar, getDestinationPath(packageDir, fileSet))
-    const pathInArchive = path.relative(rootForAppFilesWithoutAsar, getDestinationPath(file, fileSet))
+    const packageDirPathInArchive = path.relative(defaultDestination, getDestinationPath(packageDir, fileSet))
+    const pathInArchive = path.relative(defaultDestination, getDestinationPath(file, fileSet))
     if (autoUnpackDirs.has(packageDirPathInArchive)) {
       // if package dir is unpacked, any file also unpacked
       addParents(pathInArchive, packageDirPathInArchive)
@@ -97,26 +95,5 @@ export async function detectUnpackedDirs(fileSet: ResolvedFileSet, autoUnpackDir
     }
 
     addParents(pathInArchive, packageDirPathInArchive)
-  }
-
-  if (dirToCreate.size > 0) {
-    await mkdir(`${unpackedDest + path.sep}node_modules`, { recursive: true })
-    // child directories should be not created asynchronously - parent directories should be created first
-    await BluebirdPromise.map(
-      dirToCreate.keys(),
-      async parentDir => {
-        const base = unpackedDest + path.sep + parentDir
-        await mkdir(base, { recursive: true })
-        await BluebirdPromise.each(dirToCreate.get(parentDir)!, (it): any => {
-          if (dirToCreate.has(parentDir + path.sep + it)) {
-            // already created
-            return null
-          } else {
-            return mkdir(base + path.sep + it, { recursive: true })
-          }
-        })
-      },
-      CONCURRENCY
-    )
   }
 }

@@ -11,17 +11,26 @@ StartupWMClass=Test App ßW
 X-Foo=bar
 Comment=Test Application (test quite “ #378)
 Categories=Development;
+
+[Desktop Action Gallery]
+Exec=fooview --gallery
+Name=Browse Gallery
+
+[Desktop Action Create]
+Exec=fooview --create-new
+Name=Create a new Foo!
+Icon=fooview-new
 "
 `;
 
 exports[`AppImage - default icon, custom executable and custom desktop 2`] = `
-Object {
-  "linux": Array [
-    Object {
+{
+  "linux": [
+    {
       "arch": "x64",
       "file": "boo-Test App ßW",
       "safeArtifactName": "TestApp-1.1.0-x86_64.AppImage",
-      "updateInfo": Object {
+      "updateInfo": {
         "blockMapSize": "@blockMapSize",
         "sha512": "@sha512",
         "size": "@size",
@@ -34,23 +43,23 @@ Object {
 exports[`AppImage - deprecated systemIntegration 1`] = `"ERR_ELECTRON_BUILDER_INVALID_CONFIGURATION"`;
 
 exports[`AppImage 1`] = `
-Object {
-  "linux": Array [
-    Object {
+{
+  "linux": [
+    {
       "arch": "x64",
       "file": "Test App ßW-1.1.0.AppImage",
       "safeArtifactName": "TestApp-1.1.0-x86_64.AppImage",
-      "updateInfo": Object {
+      "updateInfo": {
         "blockMapSize": "@blockMapSize",
         "sha512": "@sha512",
         "size": "@size",
       },
     },
-    Object {
+    {
       "file": "latest-linux.yml",
-      "fileContent": Object {
-        "files": Array [
-          Object {
+      "fileContent": {
+        "files": [
+          {
             "blockMapSize": "@blockMapSize",
             "sha512": "@sha512",
             "size": "@size",
@@ -68,23 +77,23 @@ Object {
 `;
 
 exports[`AppImage arm, max compression 1`] = `
-Object {
-  "linux": Array [
-    Object {
+{
+  "linux": [
+    {
       "arch": "armv7l",
       "file": "Test App ßW-1.1.0-armv7l.AppImage",
       "safeArtifactName": "TestApp-1.1.0-armv7l.AppImage",
-      "updateInfo": Object {
+      "updateInfo": {
         "blockMapSize": "@blockMapSize",
         "sha512": "@sha512",
         "size": "@size",
       },
     },
-    Object {
+    {
       "file": "latest-linux-arm.yml",
-      "fileContent": Object {
-        "files": Array [
-          Object {
+      "fileContent": {
+        "files": [
+          {
             "blockMapSize": "@blockMapSize",
             "sha512": "@sha512",
             "size": "@size",
@@ -104,13 +113,13 @@ Object {
 exports[`forbid desktop.Exec 1`] = `"Please specify executable name as linux.executableName instead of linux.desktop.Exec"`;
 
 exports[`html license 1`] = `
-Object {
-  "linux": Array [
-    Object {
+{
+  "linux": [
+    {
       "arch": "x64",
       "file": "Test App ßW-1.1.0.AppImage",
       "safeArtifactName": "TestApp-1.1.0-x86_64.AppImage",
-      "updateInfo": Object {
+      "updateInfo": {
         "blockMapSize": "@blockMapSize",
         "sha512": "@sha512",
         "size": "@size",
@@ -121,13 +130,13 @@ Object {
 `;
 
 exports[`icons dir with images without size in the filename 1`] = `
-Object {
-  "linux": Array [
-    Object {
+{
+  "linux": [
+    {
       "arch": "x64",
       "file": "Test App ßW-1.1.0.AppImage",
       "safeArtifactName": "TestApp-1.1.0-x86_64.AppImage",
-      "updateInfo": Object {
+      "updateInfo": {
         "blockMapSize": "@blockMapSize",
         "sha512": "@sha512",
         "size": "@size",
@@ -138,12 +147,12 @@ Object {
 `;
 
 exports[`icons from ICNS (mac) 1`] = `
-Object {
-  "linux": Array [
-    Object {
+{
+  "linux": [
+    {
       "arch": "x64",
       "file": "app-1.1.0-x86_64.AppImage",
-      "updateInfo": Object {
+      "updateInfo": {
         "blockMapSize": "@blockMapSize",
         "sha512": "@sha512",
         "size": "@size",
@@ -154,13 +163,13 @@ Object {
 `;
 
 exports[`icons from ICNS 1`] = `
-Object {
-  "linux": Array [
-    Object {
+{
+  "linux": [
+    {
       "arch": "x64",
       "file": "Test App ßW-1.1.0.AppImage",
       "safeArtifactName": "TestApp-1.1.0-x86_64.AppImage",
-      "updateInfo": Object {
+      "updateInfo": {
         "blockMapSize": "@blockMapSize",
         "sha512": "@sha512",
         "size": "@size",
@@ -171,13 +180,13 @@ Object {
 `;
 
 exports[`icons from ICNS if nothing specified 1`] = `
-Object {
-  "linux": Array [
-    Object {
+{
+  "linux": [
+    {
       "arch": "x64",
       "file": "Test App ßW-1.1.0.AppImage",
       "safeArtifactName": "TestApp-1.1.0-x86_64.AppImage",
-      "updateInfo": Object {
+      "updateInfo": {
         "blockMapSize": "@blockMapSize",
         "sha512": "@sha512",
         "size": "@size",
@@ -188,13 +197,13 @@ Object {
 `;
 
 exports[`icons from dir and one icon with suffix 1`] = `
-Object {
-  "linux": Array [
-    Object {
+{
+  "linux": [
+    {
       "arch": "x64",
       "file": "Test App ßW-1.1.0.AppImage",
       "safeArtifactName": "TestApp-1.1.0-x86_64.AppImage",
-      "updateInfo": Object {
+      "updateInfo": {
         "blockMapSize": "@blockMapSize",
         "sha512": "@sha512",
         "size": "@size",
@@ -210,18 +219,18 @@ exports[`no-author-email 1`] = `
 See https://docs.npmjs.com/files/package.json#people-fields-author-contributors
 
 It is required to set Linux .deb package maintainer. Or you can set maintainer in the custom linux options.
-(see https://www.electron.build/configuration/linux).
+(see https://www.electron.build/linux).
 "
 `;
 
 exports[`text license and file associations 1`] = `
-Object {
-  "linux": Array [
-    Object {
+{
+  "linux": [
+    {
       "arch": "x64",
       "file": "Test App ßW-1.1.0.AppImage",
       "safeArtifactName": "TestApp-1.1.0-x86_64.AppImage",
-      "updateInfo": Object {
+      "updateInfo": {
         "blockMapSize": "@blockMapSize",
         "sha512": "@sha512",
         "size": "@size",

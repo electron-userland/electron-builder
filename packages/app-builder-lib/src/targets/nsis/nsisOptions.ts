@@ -1,7 +1,7 @@
 import { TargetSpecificOptions } from "../../core"
 import { CommonWindowsInstallerConfiguration } from "../.."
 
-interface CustomNsisBinary {
+export interface CustomNsisBinary {
   /**
    * @default https://github.com/electron-userland/electron-builder-binaries/releases/download
    */
@@ -33,7 +33,7 @@ export interface CommonNsisOptions {
   readonly unicode?: boolean
 
   /**
-   * See [GUID vs Application Name](../configuration/nsis#guid-vs-application-name).
+   * See [GUID vs Application Name](./nsis.md#guid-vs-application-name).
    */
   readonly guid?: string | null
 
@@ -100,32 +100,32 @@ export interface NsisOptions extends CommonNsisOptions, CommonWindowsInstallerCo
   readonly removeDefaultUninstallWelcomePage?: boolean
 
   /**
-   * The path to installer icon, relative to the [build resources](/configuration/configuration#MetadataDirectories-buildResources) or to the project directory.
+   * The path to installer icon, relative to the [build resources](./contents.md#extraresources) or to the project directory.
    * Defaults to `build/installerIcon.ico` or application icon.
    */
   readonly installerIcon?: string | null
   /**
-   * The path to uninstaller icon, relative to the [build resources](/configuration/configuration#MetadataDirectories-buildResources) or to the project directory.
+   * The path to uninstaller icon, relative to the [build resources](./contents.md#extraresources) or to the project directory.
    * Defaults to `build/uninstallerIcon.ico` or application icon.
    */
   readonly uninstallerIcon?: string | null
   /**
-   * *assisted installer only.* `MUI_HEADERIMAGE`, relative to the [build resources](/configuration/configuration#MetadataDirectories-buildResources) or to the project directory.
+   * *assisted installer only.* `MUI_HEADERIMAGE`, relative to the [build resources](./contents.md#extraresources) or to the project directory.
    * @default build/installerHeader.bmp
    */
   readonly installerHeader?: string | null
   /**
-   * *one-click installer only.* The path to header icon (above the progress bar), relative to the [build resources](/configuration/configuration#MetadataDirectories-buildResources) or to the project directory.
+   * *one-click installer only.* The path to header icon (above the progress bar), relative to the [build resources](./contents.md#extraresources) or to the project directory.
    * Defaults to `build/installerHeaderIcon.ico` or application icon.
    */
   readonly installerHeaderIcon?: string | null
   /**
-   * *assisted installer only.* `MUI_WELCOMEFINISHPAGE_BITMAP`, relative to the [build resources](/configuration/configuration#MetadataDirectories-buildResources) or to the project directory.
+   * *assisted installer only.* `MUI_WELCOMEFINISHPAGE_BITMAP`, relative to the [build resources](./contents.md#extraresources) or to the project directory.
    * Defaults to `build/installerSidebar.bmp` or `${NSISDIR}\\Contrib\\Graphics\\Wizard\\nsis3-metro.bmp`. Image size 164 × 314 pixels.
    */
   readonly installerSidebar?: string | null
   /**
-   * *assisted installer only.* `MUI_UNWELCOMEFINISHPAGE_BITMAP`, relative to the [build resources](/configuration/configuration#MetadataDirectories-buildResources) or to the project directory.
+   * *assisted installer only.* `MUI_UNWELCOMEFINISHPAGE_BITMAP`, relative to the [build resources](./contents.md#extraresources) or to the project directory.
    * Defaults to `installerSidebar` option or `build/uninstallerSidebar.bmp` or `build/installerSidebar.bmp` or `${NSISDIR}\\Contrib\\Graphics\\Wizard\\nsis3-metro.bmp`
    */
   readonly uninstallerSidebar?: string | null
@@ -155,7 +155,7 @@ export interface NsisOptions extends CommonNsisOptions, CommonWindowsInstallerCo
   readonly license?: string | null
 
   /**
-   * The [artifact file name template](/configuration/configuration#artifact-file-name-template). Defaults to `${productName} Setup ${version}.${ext}`.
+   * The [artifact file name template](./configuration.md#artifact-file-name-template). Defaults to `${productName} Setup ${version}.${ext}`.
    */
   readonly artifactName?: string | null
 
@@ -241,7 +241,7 @@ export interface NsisWebOptions extends NsisOptions {
   readonly appPackageUrl?: string | null
 
   /**
-   * The [artifact file name template](/configuration/configuration#artifact-file-name-template). Defaults to `${productName} Web Setup ${version}.${ext}`.
+   * The [artifact file name template](./configuration.md#artifact-file-name-template). Defaults to `${productName} Web Setup ${version}.${ext}`.
    */
   readonly artifactName?: string | null
 }

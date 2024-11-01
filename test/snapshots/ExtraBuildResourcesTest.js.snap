@@ -1,13 +1,13 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`custom buildResources and output dirs: linux 1`] = `
-Object {
-  "linux": Array [
-    Object {
+{
+  "linux": [
+    {
       "arch": "x64",
       "file": "Test App ßW-1.1.0.AppImage",
       "safeArtifactName": "TestApp-1.1.0-x86_64.AppImage",
-      "updateInfo": Object {
+      "updateInfo": {
         "blockMapSize": "@blockMapSize",
         "sha512": "@sha512",
         "size": "@size",
@@ -18,15 +18,15 @@ Object {
 `;
 
 exports[`custom buildResources and output dirs: mac 1`] = `
-Object {
-  "mac": Array [],
+{
+  "mac": [],
 }
 `;
 
 exports[`custom buildResources and output dirs: win 1`] = `
-Object {
-  "win": Array [
-    Object {
+{
+  "win": [
+    {
       "arch": "x64",
       "file": "Test App ßW Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe",
@@ -36,25 +36,31 @@ Object {
 `;
 
 exports[`do not exclude build entirely (respect files) 1`] = `
-Object {
-  "linux": Array [],
+{
+  "linux": [],
+}
+`;
+
+exports[`electronDist as callback function for path to local folder with electron builds zipped  1`] = `
+{
+  "linux": [],
 }
 `;
 
 exports[`electronDist as path to local folder with electron builds zipped  1`] = `
-Object {
-  "linux": Array [],
+{
+  "linux": [],
 }
 `;
 
 exports[`override targets in the config - only arch 1`] = `
-Object {
-  "win": Array [
-    Object {
+{
+  "win": [
+    {
       "file": "beta.yml",
-      "fileContent": Object {
-        "files": Array [
-          Object {
+      "fileContent": {
+        "files": [
+          {
             "sha512": "@sha512",
             "size": "@size",
             "url": "beta-TestApp.exe",
@@ -66,17 +72,17 @@ Object {
         "version": "1.0.0-beta.1",
       },
     },
-    Object {
+    {
       "arch": "ia32",
       "file": "beta-TestApp.exe",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
-    Object {
+    {
       "file": "beta-TestApp.exe.blockmap",
-      "updateInfo": Object {
+      "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -86,7 +92,7 @@ Object {
 `;
 
 exports[`override targets in the config - only arch 2`] = `
-Object {
+{
   "channel": "beta",
   "provider": "generic",
   "updaterCacheDirName": "testapp-updater",
@@ -95,20 +101,20 @@ Object {
 `;
 
 exports[`override targets in the config 1`] = `
-Object {
-  "linux": Array [],
+{
+  "linux": [],
 }
 `;
 
 exports[`overriding the publish channel 1`] = `
-Object {
-  "linux": Array [],
+{
+  "linux": [],
 }
 `;
 
 exports[`overriding the publish channel 2`] = `
-Array [
-  Object {
+[
+  {
     "bucket": "my-s3-bucket",
     "channel": "beta",
     "provider": "s3",
@@ -117,19 +123,19 @@ Array [
 `;
 
 exports[`prepackaged 1`] = `
-Object {
-  "linux": Array [],
+{
+  "linux": [],
 }
 `;
 
 exports[`retrieve latest electron version 1`] = `
-Object {
-  "linux": Array [],
+{
+  "linux": [],
 }
 `;
 
 exports[`retrieve latest electron-nightly version 1`] = `
-Object {
-  "linux": Array [],
+{
+  "linux": [],
 }
 `;

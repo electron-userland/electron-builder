@@ -1,5 +1,100 @@
 ## 4.3.0
 
+## 6.4.0-alpha.1
+
+### Minor Changes
+
+- [#8633](https://github.com/electron-userland/electron-builder/pull/8633) [`96f5c3eb`](https://github.com/electron-userland/electron-builder/commit/96f5c3ebbd6b3b58c9c5d3e777577d49edcb6e5a) Thanks [@mmaietta](https://github.com/mmaietta)! - feat(updater): allow usage of `autoRunAppAfterInstall` on mac updater
+
+### Patch Changes
+
+- [#8623](https://github.com/electron-userland/electron-builder/pull/8623) [`cfa67c01`](https://github.com/electron-userland/electron-builder/commit/cfa67c01827a44c88fb8448562dbe928ba37494f) Thanks [@q837477816](https://github.com/q837477816)! - fix: copyFileSync operation will block the main thread
+
+## 6.4.0-alpha.0
+
+### Minor Changes
+
+- [#8394](https://github.com/electron-userland/electron-builder/pull/8394) [`ae9221d9`](https://github.com/electron-userland/electron-builder/commit/ae9221d947c2dedff7b655ddafceb9746f9f4460) Thanks [@xyloflake](https://github.com/xyloflake)! - feat: Implement autoupdates for pacman
+
+## 6.3.9
+
+### Patch Changes
+
+- [#8541](https://github.com/electron-userland/electron-builder/pull/8541) [`b6d6ea993fd3b368d28786c259bb50486aaac417`](https://github.com/electron-userland/electron-builder/commit/b6d6ea993fd3b368d28786c259bb50486aaac417) Thanks [@beyondkmp](https://github.com/beyondkmp)! - fix: Unable to copy file for caching: ENOENT
+
+- [#8545](https://github.com/electron-userland/electron-builder/pull/8545) [`fc3a78e4e61f916058fca9b15fc16f076c3fabd1`](https://github.com/electron-userland/electron-builder/commit/fc3a78e4e61f916058fca9b15fc16f076c3fabd1) Thanks [@mmaietta](https://github.com/mmaietta)! - chore(deps): update devDependencies, including typescript
+
+- Updated dependencies [[`fc3a78e4e61f916058fca9b15fc16f076c3fabd1`](https://github.com/electron-userland/electron-builder/commit/fc3a78e4e61f916058fca9b15fc16f076c3fabd1)]:
+  - builder-util-runtime@9.2.10
+
+## 6.3.8
+
+### Patch Changes
+
+- [#8516](https://github.com/electron-userland/electron-builder/pull/8516) [`d1cb6bdb`](https://github.com/electron-userland/electron-builder/commit/d1cb6bdbf8111156bb16839f501bdd9e6d477338) Thanks [@mmaietta](https://github.com/mmaietta)! - fix(chore): upgrading typescript and fixing compiler errors
+
+- Updated dependencies [[`d1cb6bdb`](https://github.com/electron-userland/electron-builder/commit/d1cb6bdbf8111156bb16839f501bdd9e6d477338)]:
+  - builder-util-runtime@9.2.9
+
+## 6.3.7
+
+### Patch Changes
+
+- [#8491](https://github.com/electron-userland/electron-builder/pull/8491) [`178a3c40`](https://github.com/electron-userland/electron-builder/commit/178a3c40f35fa9e91a2e4942f61423effa1289e4) Thanks [@mmaietta](https://github.com/mmaietta)! - chore: migrating to typedoc and updating/improving type+interface definitions
+
+- Updated dependencies [[`178a3c40`](https://github.com/electron-userland/electron-builder/commit/178a3c40f35fa9e91a2e4942f61423effa1289e4)]:
+  - builder-util-runtime@9.2.8
+
+## 6.3.6
+
+### Patch Changes
+
+- [#8486](https://github.com/electron-userland/electron-builder/pull/8486) [`d56cd274`](https://github.com/electron-userland/electron-builder/commit/d56cd274b9d0fedb71889293164a15e51f7cc744) Thanks [@mmaietta](https://github.com/mmaietta)! - fix(deploy): redeploy all packages to sync semver ranges
+
+- Updated dependencies [[`d56cd274`](https://github.com/electron-userland/electron-builder/commit/d56cd274b9d0fedb71889293164a15e51f7cc744)]:
+  - builder-util-runtime@9.2.7
+
+## 6.3.5
+
+### Patch Changes
+
+- [#8437](https://github.com/electron-userland/electron-builder/pull/8437) [`be625e06`](https://github.com/electron-userland/electron-builder/commit/be625e06273e56de09ed3298209858043fcd1151) Thanks [@juwonjung-hdj](https://github.com/juwonjung-hdj)! - fix: retry renaming update file when EBUSY error occurs due to file lock
+
+- Updated dependencies [[`be625e06`](https://github.com/electron-userland/electron-builder/commit/be625e06273e56de09ed3298209858043fcd1151)]:
+  - builder-util-runtime@9.2.6
+
+## 6.3.4
+
+### Patch Changes
+
+- [#8417](https://github.com/electron-userland/electron-builder/pull/8417) [`e77de9f6`](https://github.com/electron-userland/electron-builder/commit/e77de9f66184b0cfdab6f1aa9a9c95b041d99c84) Thanks [@beyondkmp](https://github.com/beyondkmp)! - update semver to latest
+
+- [#8409](https://github.com/electron-userland/electron-builder/pull/8409) [`5fae1cf3`](https://github.com/electron-userland/electron-builder/commit/5fae1cf3be0388c2bd95a341a0340faa839d2aa7) Thanks [@ckarich](https://github.com/ckarich)! - fix: windows signature verification special chars
+
+- [#8282](https://github.com/electron-userland/electron-builder/pull/8282) [`15ce5b41`](https://github.com/electron-userland/electron-builder/commit/15ce5b4164378f7398ff84cabe8ee97eef5cfd1b) Thanks [@beyondkmp](https://github.com/beyondkmp)! - fix aborted event
+
+## 6.3.3
+
+### Patch Changes
+
+- [#8400](https://github.com/electron-userland/electron-builder/pull/8400) [`9dc0b49a`](https://github.com/electron-userland/electron-builder/commit/9dc0b49aea1d3bb56b42c3b1bdb6001708a34439) Thanks [@Ryan432](https://github.com/Ryan432)! - fix: Handle Linux deb auto update installation on applications having spaces in `artifactName`.
+
+- [#8393](https://github.com/electron-userland/electron-builder/pull/8393) [`8dabf64b`](https://github.com/electron-userland/electron-builder/commit/8dabf64b8f84975cf4eb016dcd23411ab0d4bf64) Thanks [@beyondkmp](https://github.com/beyondkmp)! - fix: allow custom channel in github provider
+
+- [#8403](https://github.com/electron-userland/electron-builder/pull/8403) [`1c14820b`](https://github.com/electron-userland/electron-builder/commit/1c14820b97fad802b300dd93ccd4d6a10a72360f) Thanks [@xyloflake](https://github.com/xyloflake)! - fix: handle spaces for all linux package managers
+
+## 6.3.2
+
+### Patch Changes
+
+- [#8378](https://github.com/electron-userland/electron-builder/pull/8378) [`c8fe1462`](https://github.com/electron-userland/electron-builder/commit/c8fe1462d529edeed0ad3fe0b7e99e8af1ca61ac) Thanks [@s77rt](https://github.com/s77rt)! - Limit concurrent downloads to 1
+
+## 6.3.1
+
+### Patch Changes
+
+- [#8372](https://github.com/electron-userland/electron-builder/pull/8372) [`c85b73d7`](https://github.com/electron-userland/electron-builder/commit/c85b73d7c8dcefe86b0b350946af1cea951e6aae) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: allow enabling tsc lib checking on electron-updater package
+
 ## 6.3.0
 
 ### Minor Changes

@@ -1,43 +1,55 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`2 ignore 1`] = `
-Object {
-  "linux": Array [],
+{
+  "linux": [],
 }
 `;
 
-exports[`copied all submodule node_modules 1`] = `
-Object {
-  "linux": Array [],
+exports[`Don't copy sub node_modules of the other dir instead of rootDir 1`] = `
+{
+  "linux": [],
 }
 `;
 
-exports[`copied no submodule node_modules 1`] = `
-Object {
-  "linux": Array [],
+exports[`cannot copied select submodule node_modules by **/submodule-1-test/node_modules 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`cannot copied select submodule node_modules by */ 1`] = `
+{
+  "linux": [],
 }
 `;
 
 exports[`copied select submodule node_modules 1`] = `
-Object {
-  "linux": Array [],
+{
+  "linux": [],
+}
+`;
+
+exports[`copied sub node_modules of the rootDir/node_modules 1`] = `
+{
+  "linux": [],
 }
 `;
 
 exports[`ignore build resources 1`] = `
-Object {
-  "linux": Array [],
+{
+  "linux": [],
 }
 `;
 
 exports[`ignore known ignored files 1`] = `
-Object {
-  "linux": Array [],
+{
+  "linux": [],
 }
 `;
 
 exports[`ignore known ignored files 2`] = `
-Array [
+[
   "index.html",
   "index.js",
   "package.json",
@@ -47,7 +59,7 @@ Array [
 `;
 
 exports[`ignore node_modules dev dep 1`] = `
-Object {
-  "linux": Array [],
+{
+  "linux": [],
 }
 `;

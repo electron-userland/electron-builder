@@ -52,7 +52,7 @@ export class CancellationToken extends EventEmitter {
         try {
           this.removeListener("cancel", cancelHandler)
           cancelHandler = null
-        } catch (ignore) {
+        } catch (_ignore) {
           // ignore
         }
       }

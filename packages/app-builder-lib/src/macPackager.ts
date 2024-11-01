@@ -10,7 +10,7 @@ import { DIR_TARGET, Platform, Target } from "./core"
 import { AfterPackContext, ElectronPlatformName } from "./index"
 import { MacConfiguration, MasConfiguration, NotarizeNotaryOptions } from "./options/macOptions"
 import { Packager } from "./packager"
-import { chooseNotNull, resolveFunction, PlatformPackager } from "./platformPackager"
+import { chooseNotNull, PlatformPackager } from "./platformPackager"
 import { ArchiveTarget } from "./targets/ArchiveTarget"
 import { PkgTarget, prepareProductBuildArgs } from "./targets/pkg"
 import { createCommonTarget, NoOpTarget } from "./targets/targetFactory"
@@ -20,6 +20,7 @@ import * as fs from "fs/promises"
 import { notarize } from "@electron/notarize"
 import { NotarizeOptionsNotaryTool, NotaryToolKeychainCredentials } from "@electron/notarize/lib/types"
 import { MemoLazy } from "builder-util-runtime"
+import { resolveFunction } from "./util/resolve"
 
 export type CustomMacSignOptions = SignOptions
 export type CustomMacSign = (configuration: CustomMacSignOptions, packager: MacPackager) => Promise<void>
@@ -85,7 +86,6 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
           break
 
         case "dmg": {
-          // eslint-disable-next-line @typescript-eslint/no-var-requires
           const { DmgTarget } = require("dmg-builder")
           mapper(name, outDir => new DmgTarget(this, outDir))
           break
@@ -125,9 +125,19 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
         const x64Arch = Arch.x64
         const x64AppOutDir = outDirName(x64Arch)
         await super.doPack(outDir, x64AppOutDir, platformName, x64Arch, platformSpecificBuildOptions, targets, false, true)
+
+        if (this.info.cancellationToken.cancelled) {
+          return
+        }
+
         const arm64Arch = Arch.arm64
         const arm64AppOutPath = outDirName(arm64Arch)
         await super.doPack(outDir, arm64AppOutPath, platformName, arm64Arch, platformSpecificBuildOptions, targets, false, true)
+
+        if (this.info.cancellationToken.cancelled) {
+          return
+        }
+
         const framework = this.info.framework
         log.info(
           {
@@ -162,6 +172,10 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
           electronPlatformName: platformName,
         }
         await this.info.afterPack(packContext)
+
+        if (this.info.cancellationToken.cancelled) {
+          return
+        }
 
         await this.doSignAfterPack(outDir, appOutDir, platformName, arch, platformSpecificBuildOptions, targets)
         break

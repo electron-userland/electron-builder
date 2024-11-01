@@ -1,5 +1,5 @@
 import { DownloadOptions, HttpExecutor, configureRequestOptions, configureRequestUrl } from "builder-util-runtime"
-import { AuthInfo } from "electron"
+import type { AuthInfo } from "electron"
 import { RequestOptions } from "http"
 import Session = Electron.Session
 import ClientRequest = Electron.ClientRequest
@@ -65,7 +65,7 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.ClientRequest> {
     const request = require("electron").net.request({
       ...options,
       session: this.cachedSession,
-    }) as Electron.ClientRequest
+    })
     request.on("response", callback)
     if (this.proxyLoginCallback != null) {
       request.on("login", this.proxyLoginCallback)

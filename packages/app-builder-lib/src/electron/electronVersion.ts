@@ -6,10 +6,10 @@ import { httpExecutor } from "builder-util"
 import { readJson } from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
-import { orNullIfFileNotExist } from "read-config-file"
+import { orNullIfFileNotExist } from "../util/config/load"
 import * as semver from "semver"
 import { Configuration } from "../configuration"
-import { getConfig } from "../util/config"
+import { getConfig } from "../util/config/config"
 
 export type MetadataValue = Lazy<{ [key: string]: any } | null>
 
@@ -60,7 +60,7 @@ export async function computeElectronVersion(projectDir: string): Promise<string
 
   const potentialRootDirs = [projectDir, await getProjectRootPath(projectDir)]
   let dependency: NameAndVersion | null = null
-  for await (const dir of potentialRootDirs) {
+  for (const dir of potentialRootDirs) {
     const metadata = await orNullIfFileNotExist(readJson(path.join(dir, "package.json")))
     dependency = metadata ? findFromPackageMetadata(metadata) : null
     if (dependency) {

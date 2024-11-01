@@ -10,6 +10,7 @@ import {
   CancellationError,
   ProgressInfo,
   BlockMap,
+  retry,
 } from "builder-util-runtime"
 import { randomBytes } from "crypto"
 import { release } from "os"
@@ -30,7 +31,7 @@ import { createClient, isUrlProbablySupportMultiRangeRequests } from "./provider
 import { ProviderPlatform } from "./providers/Provider"
 import type { TypedEmitter } from "tiny-typed-emitter"
 import Session = Electron.Session
-import { AuthInfo } from "electron"
+import type { AuthInfo } from "electron"
 import { gunzipSync } from "zlib"
 import { blockmapFiles } from "./util"
 import { DifferentialDownloaderOptions } from "./differentialDownloader/DifferentialDownloader"
@@ -51,16 +52,18 @@ export type AppUpdaterEvents = {
 export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter<AppUpdaterEvents>) {
   /**
    * Whether to automatically download an update when it is found.
+   * @default true
    */
   autoDownload = true
 
   /**
    * Whether to automatically install a downloaded update on app quit (if `quitAndInstall` was not called before).
+   * @default true
    */
   autoInstallOnAppQuit = true
 
   /**
-   * *windows-only* Whether to run the app after finish install when run the installer NOT in silent mode.
+   * Whether to run the app after finish install when run the installer is NOT in silent mode.
    * @default true
    */
   autoRunAppAfterInstall = true
@@ -209,6 +212,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   configOnDisk = new Lazy<any>(() => this.loadUpdateConfig())
 
   private checkForUpdatesPromise: Promise<UpdateCheckResult> | null = null
+  private downloadPromise: Promise<Array<string>> | null = null
 
   protected readonly app: AppAdapter
 
@@ -255,7 +259,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   }
 
   /**
-   * Configure update provider. If value is `string`, [GenericServerOptions](/configuration/publish#genericserveroptions) will be set with value as `url`.
+   * Configure update provider. If value is `string`, [GenericServerOptions](./publish.md#genericserveroptions) will be set with value as `url`.
    * @param options If you want to override configuration in the `app-update.yml`.
    */
   setFeedURL(options: PublishConfiguration | AllPublishOptions | string) {
@@ -436,7 +440,6 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     }
   }
 
-  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
   private createProviderRuntimeOptions() {
     return {
       isUseMultipleRangeRequest: true,
@@ -452,7 +455,9 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     const updateInfo = result.info
     if (!(await this.isUpdateAvailable(updateInfo))) {
       this._logger.info(
-        `Update for version ${this.currentVersion.format()} is not available (latest version: ${updateInfo.version}, downgrade is ${this.allowDowngrade ? "allowed" : "disallowed"}).`
+        `Update for version ${this.currentVersion.format()} is not available (latest version: ${updateInfo.version}, downgrade is ${
+          this.allowDowngrade ? "allowed" : "disallowed"
+        }).`
       )
       this.emit("update-not-available", updateInfo)
       return {
@@ -495,6 +500,11 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       return Promise.reject(error)
     }
 
+    if (this.downloadPromise != null) {
+      this._logger.info("Downloading update (already in progress)")
+      return this.downloadPromise
+    }
+
     this._logger.info(
       `Downloading update from ${asArray(updateInfoAndProvider.info.files)
         .map(it => it.url)
@@ -513,19 +523,21 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       return e
     }
 
-    try {
-      return this.doDownloadUpdate({
-        updateInfoAndProvider,
-        requestHeaders: this.computeRequestHeaders(updateInfoAndProvider.provider),
-        cancellationToken,
-        disableWebInstaller: this.disableWebInstaller,
-        disableDifferentialDownload: this.disableDifferentialDownload,
-      }).catch((e: any) => {
+    this.downloadPromise = this.doDownloadUpdate({
+      updateInfoAndProvider,
+      requestHeaders: this.computeRequestHeaders(updateInfoAndProvider.provider),
+      cancellationToken,
+      disableWebInstaller: this.disableWebInstaller,
+      disableDifferentialDownload: this.disableDifferentialDownload,
+    })
+      .catch((e: any) => {
         throw errorHandler(e)
       })
-    } catch (e: any) {
-      return Promise.reject(errorHandler(e))
-    }
+      .finally(() => {
+        this.downloadPromise = null
+      })
+
+    return this.downloadPromise
   }
 
   protected dispatchError(e: Error): void {
@@ -702,7 +714,14 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     const tempUpdateFile = await createTempUpdateFile(`temp-${updateFileName}`, cacheDir, log)
     try {
       await taskOptions.task(tempUpdateFile, downloadOptions, packageFile, removeFileIfAny)
-      await rename(tempUpdateFile, updateFile)
+      await retry(
+        () => rename(tempUpdateFile, updateFile),
+        60,
+        500,
+        0,
+        0,
+        error => error instanceof Error && /^EBUSY:/.test(error.message)
+      )
     } catch (e: any) {
       await removeFileIfAny()
 

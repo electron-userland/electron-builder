@@ -13,11 +13,19 @@ import {
   BitbucketOptions,
 } from "builder-util-runtime"
 import _debug from "debug"
-import { getCiTag, PublishContext, Publisher, PublishOptions, UploadTask } from "electron-publish"
-import { GitHubPublisher } from "electron-publish/out/gitHubPublisher"
-import { MultiProgress } from "electron-publish/out/multiProgress"
-import S3Publisher from "./s3/s3Publisher"
-import SpacesPublisher from "./s3/spacesPublisher"
+import {
+  BitbucketPublisher,
+  getCiTag,
+  GitHubPublisher,
+  KeygenPublisher,
+  PublishContext,
+  Publisher,
+  PublishOptions,
+  S3Publisher,
+  SnapStorePublisher,
+  SpacesPublisher,
+  UploadTask,
+} from "electron-publish"
 import { writeFile } from "fs/promises"
 import * as isCi from "is-ci"
 import * as path from "path"
@@ -28,10 +36,8 @@ import { Packager } from "../packager"
 import { PlatformPackager } from "../platformPackager"
 import { expandMacro } from "../util/macroExpander"
 import { WinPackager } from "../winPackager"
-import { SnapStorePublisher } from "./SnapStorePublisher"
 import { createUpdateInfoTasks, UpdateInfoFileTask, writeUpdateInfoFiles } from "./updateInfoBuilder"
-import { KeygenPublisher } from "./KeygenPublisher"
-import { BitbucketPublisher } from "./BitbucketPublisher"
+import { MultiProgress } from "electron-publish/out/multiProgress"
 
 const publishForPrWarning =
   "There are serious security concerns with PUBLISH_FOR_PULL_REQUEST=true (see the  CircleCI documentation (https://circleci.com/docs/1.0/fork-pr-builds/) for details)" +
@@ -152,7 +158,7 @@ export class PublishManager implements PublishContext {
     if (publisher == null) {
       log.debug(
         {
-          file: event.file,
+          file: log.filePath(event.file),
           reason: "publisher is null",
           publishConfig: safeStringifyJson(publishConfig),
         },
@@ -163,7 +169,7 @@ export class PublishManager implements PublishContext {
 
     const providerName = publisher.providerName
     if (this.publishOptions.publish === "onTagOrDraft" && getCiTag() == null && providerName !== "bitbucket" && providerName !== "github") {
-      log.info({ file: event.file, reason: "current build is not for a git tag", publishPolicy: "onTagOrDraft" }, `not published to ${providerName}`)
+      log.info({ file: log.filePath(event.file), reason: "current build is not for a git tag", publishPolicy: "onTagOrDraft" }, `not published to ${providerName}`)
       return
     }
 
@@ -257,7 +263,7 @@ export async function getAppUpdatePublishConfiguration(packager: PlatformPackage
 
   if (packager.platform === Platform.WINDOWS && publishConfig.publisherName == null) {
     const winPackager = packager as WinPackager
-    const publisherName = winPackager.isForceCodeSigningVerification ? await winPackager.computedPublisherName.value : undefined
+    const publisherName = winPackager.isForceCodeSigningVerification ? await (await winPackager.signtoolManager.value).computedPublisherName.value : undefined
     if (publisherName != null) {
       publishConfig.publisherName = publisherName
     }
@@ -345,7 +351,7 @@ function requireProviderClass(provider: string, packager: Packager): any | null 
       let module: any = null
       try {
         module = require(path.join(packager.buildResourcesDir, name + ".js"))
-      } catch (ignored) {
+      } catch (_ignored) {
         log.debug({ path: path.join(packager.buildResourcesDir, name + ".js") }, "Unable to find publish provider in build resources")
       }
 
@@ -545,7 +551,7 @@ async function getResolvedPublishConfig(
       return info
     }
 
-    const message = `Cannot detect repository by .git/config. Please specify "repository" in the package.json (https://docs.npmjs.com/files/package.json#repository).\nPlease see https://electron.build/configuration/publish`
+    const message = `Cannot detect repository by .git/config. Please specify "repository" in the package.json (https://docs.npmjs.com/files/package.json#repository).\nPlease see https://electron.build/publish`
     if (errorIfCannot) {
       throw new Error(message)
     } else {

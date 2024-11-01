@@ -1,36 +1,21 @@
-import { statOrNull } from "builder-util"
-import { Node, readAsar } from "./asar"
+import * as asar from "@electron/asar"
+import { FilesystemEntry, FilesystemFileEntry } from "@electron/asar/lib/filesystem"
 
-/** @internal */
-export async function checkFileInArchive(asarFile: string, relativeFile: string, messagePrefix: string) {
+export function checkFileInArchive(asarFile: string, relativeFile: string, messagePrefix: string) {
   function error(text: string) {
     return new Error(`${messagePrefix} "${relativeFile}" in the "${asarFile}" ${text}`)
   }
-
-  let fs
+  let stat: FilesystemEntry
   try {
-    fs = await readAsar(asarFile)
+    stat = asar.statFile(asarFile, relativeFile, false)
   } catch (e: any) {
+    if (e.message.includes("Cannot read properties of undefined (reading 'link')")) {
+      throw error("does not exist. Seems like a wrong configuration.")
+    }
     throw error(`is corrupted: ${e}`)
   }
-
-  let stat: Node | null
-  try {
-    stat = fs.getFile(relativeFile)
-  } catch (e: any) {
-    const fileStat = await statOrNull(asarFile)
-    if (fileStat == null) {
-      throw error(`does not exist. Seems like a wrong configuration.`)
-    }
-
-    // asar throws error on access to undefined object (info.link)
-    stat = null
-  }
-
-  if (stat == null) {
-    throw error(`does not exist. Seems like a wrong configuration.`)
-  }
-  if (stat.size === 0) {
+  if ((stat as FilesystemFileEntry).size === 0) {
     throw error(`is corrupted: size 0`)
   }
+  return stat
 }

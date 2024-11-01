@@ -1,43 +1,40 @@
+import { CreateOptions, createPackageWithOptions } from "@electron/asar"
 import { AsyncTaskManager, log } from "builder-util"
-import { FileCopier, Filter, MAX_FILE_REQUESTS } from "builder-util"
-import { symlink, createReadStream, createWriteStream, Stats } from "fs"
-import { writeFile, readFile, mkdir } from "fs/promises"
+import { CancellationToken } from "builder-util-runtime"
+import { Filter, MAX_FILE_REQUESTS } from "builder-util/out/fs"
+import * as fsNode from "fs"
+import * as fs from "fs-extra"
 import * as path from "path"
+import * as tempFile from "temp-file"
 import { AsarOptions } from "../options/PlatformSpecificBuildOptions"
-import { Packager } from "../packager"
 import { PlatformPackager } from "../platformPackager"
-import { getDestinationPath, ResolvedFileSet } from "../util/appFileCopier"
-import { AsarFilesystem, Node } from "./asar"
-import { hashFile, hashFileContents } from "./integrity"
+import { ResolvedFileSet, getDestinationPath } from "../util/appFileCopier"
 import { detectUnpackedDirs } from "./unpackDetector"
-
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const pickle = require("chromium-pickle-js")
 
 /** @internal */
 export class AsarPackager {
-  private readonly fs = new AsarFilesystem(this.src)
   private readonly outFile: string
-  private readonly unpackedDest: string
+  private rootForAppFilesWithoutAsar!: string
+  private readonly tmpDir = new tempFile.TmpDir()
 
   constructor(
-    private readonly src: string,
-    private readonly destination: string,
-    private readonly options: AsarOptions,
-    private readonly unpackPattern: Filter | null
+    private readonly config: {
+      appDir: string
+      defaultDestination: string
+      resourcePath: string
+      options: AsarOptions
+      unpackPattern: Filter | undefined
+    }
   ) {
-    this.outFile = path.join(destination, "app.asar")
-    this.unpackedDest = `${this.outFile}.unpacked`
+    this.outFile = path.join(config.resourcePath, `app.asar`)
   }
 
-  // sort files to minimize file change (i.e. asar file is not changed dramatically on small change)
-  async pack(fileSets: Array<ResolvedFileSet>, packager: PlatformPackager<any>) {
-    if (this.options.ordering != null) {
-      // ordering doesn't support transformed files, but ordering is not used functionality - wait user report to fix it
-      await order(fileSets[0].files, this.options.ordering, fileSets[0].src)
-    }
-    await mkdir(path.dirname(this.outFile), { recursive: true })
-    const unpackedFileIndexMap = new Map<ResolvedFileSet, Set<number>>()
+  async pack(fileSets: Array<ResolvedFileSet>, _packager: PlatformPackager<any>) {
+    this.rootForAppFilesWithoutAsar = await this.tmpDir.getTempDir({ prefix: "asar-app" })
+
+    const cancellationToken = new CancellationToken()
+    cancellationToken.on("cancel", () => this.tmpDir.cleanupSync())
+
     const orderedFileSets = [
       // Write dependencies first to minimize offset changes to asar header
       ...fileSets.slice(1),
@@ -46,236 +43,114 @@ export class AsarPackager {
       fileSets[0],
     ].map(orderFileSet)
 
-    for (const fileSet of orderedFileSets) {
-      unpackedFileIndexMap.set(fileSet, await this.createPackageFromFiles(fileSet, packager.info))
+    const { unpackedPaths, copiedFiles } = await this.detectAndCopy(orderedFileSets, cancellationToken)
+    const unpackGlob = unpackedPaths.length > 1 ? `{${unpackedPaths.join(",")}}` : unpackedPaths.pop()
+
+    let ordering = this.config.options.ordering || undefined
+    if (!ordering) {
+      // `copiedFiles` are already ordered due to `orderedFileSets` input, so we just map to their relative paths (via substring) within the asar.
+      const filesSorted = copiedFiles.map(file => file.substring(this.rootForAppFilesWithoutAsar.length))
+      ordering = await this.tmpDir.getTempFile({ prefix: "asar-ordering", suffix: ".txt" })
+      await fs.writeFile(ordering, filesSorted.join("\n"))
     }
-    await this.writeAsarFile(orderedFileSets, unpackedFileIndexMap)
+
+    const options: CreateOptions = {
+      unpack: unpackGlob,
+      unpackDir: unpackGlob,
+      ordering,
+      dot: true,
+    }
+    // override logger temporarily to clean up console (electron/asar does some internal logging that blogs up the default electron-builder logs)
+    const consoleLogger = console.log
+    console.log = (...args) => {
+      if (args[0] === "Ordering file has 100% coverage.") {
+        return // no need to log, this means our ordering logic is working correctly
+      }
+      log.info({ args }, "logging @electron/asar")
+    }
+    await createPackageWithOptions(this.rootForAppFilesWithoutAsar, this.outFile, options)
+    console.log = consoleLogger
+
+    await this.tmpDir.cleanup()
   }
 
-  private async createPackageFromFiles(fileSet: ResolvedFileSet, packager: Packager) {
-    const metadata = fileSet.metadata
-    // search auto unpacked dir
-    const unpackedDirs = new Set<string>()
-    const rootForAppFilesWithoutAsar = path.join(this.destination, "app")
+  private async detectAndCopy(fileSets: ResolvedFileSet[], cancellationToken: CancellationToken) {
+    const taskManager = new AsyncTaskManager(cancellationToken)
+    const unpackedPaths = new Set<string>()
+    const copiedFiles = new Set<string>()
 
-    if (this.options.smartUnpack !== false) {
-      await detectUnpackedDirs(fileSet, unpackedDirs, this.unpackedDest, rootForAppFilesWithoutAsar)
-    }
-
-    const dirToCreateForUnpackedFiles = new Set<string>(unpackedDirs)
-
-    const correctDirNodeUnpackedFlag = async (filePathInArchive: string, dirNode: Node) => {
-      for (const dir of unpackedDirs) {
-        if (filePathInArchive.length > dir.length + 2 && filePathInArchive[dir.length] === path.sep && filePathInArchive.startsWith(dir)) {
-          dirNode.unpacked = true
-          unpackedDirs.add(filePathInArchive)
-          // not all dirs marked as unpacked after first iteration - because node module dir can be marked as unpacked after processing node module dir content
-          // e.g. node-notifier/example/advanced.js processed, but only on process vendor/terminal-notifier.app module will be marked as unpacked
-          await mkdir(path.join(this.unpackedDest, filePathInArchive), { recursive: true })
-          break
-        }
+    const matchUnpacker = (file: string, dest: string, stat: fs.Stats) => {
+      if (this.config.unpackPattern?.(file, stat)) {
+        log.debug({ file }, "unpacking")
+        unpackedPaths.add(dest)
+        return
       }
     }
+    const writeFileOrSymlink = async (transformedData: string | Buffer | undefined, source: string, destination: string, stat: fs.Stats) => {
+      copiedFiles.add(destination)
 
-    const transformedFiles = fileSet.transformedFiles
-    const taskManager = new AsyncTaskManager(packager.cancellationToken)
-    const fileCopier = new FileCopier()
-
-    let currentDirNode: Node | null = null
-    let currentDirPath: string | null = null
-
-    const unpackedFileIndexSet = new Set<number>()
-
-    for (let i = 0, n = fileSet.files.length; i < n; i++) {
-      const file = fileSet.files[i]
-      const stat = metadata.get(file)
-      if (stat == null) {
-        continue
+      // If transformed data, skip symlink logic
+      if (transformedData) {
+        return this.copyFileOrData(transformedData, source, destination, stat)
       }
 
-      const pathInArchive = path.relative(rootForAppFilesWithoutAsar, getDestinationPath(file, fileSet))
+      const realPathFile = await fs.realpath(source)
 
-      if (stat.isSymbolicLink()) {
-        const s = stat as any
-        this.fs.getOrCreateNode(pathInArchive).link = s.relativeLink
-        s.pathInArchive = pathInArchive
-        unpackedFileIndexSet.add(i)
-        continue
+      if (source === realPathFile) {
+        return this.copyFileOrData(undefined, source, destination, stat)
       }
 
-      let fileParent = path.dirname(pathInArchive)
-      if (fileParent === ".") {
-        fileParent = ""
+      const realPathRelative = path.relative(this.config.appDir, realPathFile)
+      const symlinkTarget = path.resolve(this.rootForAppFilesWithoutAsar, realPathRelative)
+      const isOutsidePackage = realPathRelative.startsWith("..")
+      if (isOutsidePackage) {
+        log.error({ source: log.filePath(source), realPathFile: log.filePath(realPathFile) }, `unable to copy, file is symlinked outside the package`)
+        throw new Error(
+          `Cannot copy file (${path.basename(source)}) symlinked to file (${path.basename(realPathFile)}) outside the package as that violates asar security integrity`
+        )
       }
 
-      if (currentDirPath !== fileParent) {
-        if (fileParent.startsWith("..")) {
-          throw new Error(`Internal error: path must not start with "..": ${fileParent}`)
-        }
+      await this.copyFileOrData(undefined, source, symlinkTarget, stat)
+      const target = path.relative(path.dirname(destination), symlinkTarget)
+      fsNode.symlinkSync(target, destination)
 
-        currentDirPath = fileParent
-        currentDirNode = this.fs.getOrCreateNode(fileParent)
-        // do not check for root
-        if (fileParent !== "" && !currentDirNode.unpacked) {
-          if (unpackedDirs.has(fileParent)) {
-            currentDirNode.unpacked = true
-          } else {
-            await correctDirNodeUnpackedFlag(fileParent, currentDirNode)
-          }
-        }
+      copiedFiles.add(symlinkTarget)
+    }
+
+    for await (const fileSet of fileSets) {
+      if (this.config.options.smartUnpack !== false) {
+        detectUnpackedDirs(fileSet, unpackedPaths, this.config.defaultDestination)
       }
+      for (let i = 0; i < fileSet.files.length; i++) {
+        const file = fileSet.files[i]
+        const transformedData = fileSet.transformedFiles?.get(i)
+        const metadata = fileSet.metadata.get(file) || (await fs.lstat(file))
 
-      const dirNode = currentDirNode!
-      const newData = transformedFiles == null ? undefined : transformedFiles.get(i)
-      const isUnpacked = dirNode.unpacked || (this.unpackPattern != null && this.unpackPattern(file, stat))
-      const integrity = newData === undefined ? await hashFile(file) : hashFileContents(newData)
-      this.fs.addFileNode(file, dirNode, newData == undefined ? stat.size : Buffer.byteLength(newData), isUnpacked, stat, integrity)
-      if (isUnpacked) {
-        if (!dirNode.unpacked && !dirToCreateForUnpackedFiles.has(fileParent)) {
-          dirToCreateForUnpackedFiles.add(fileParent)
-          await mkdir(path.join(this.unpackedDest, fileParent), { recursive: true })
-        }
+        const relative = path.relative(this.config.defaultDestination, getDestinationPath(file, fileSet))
+        const dest = path.resolve(this.rootForAppFilesWithoutAsar, relative)
 
-        const unpackedFile = path.join(this.unpackedDest, pathInArchive)
-        taskManager.addTask(copyFileOrData(fileCopier, newData, file, unpackedFile, stat))
+        matchUnpacker(file, dest, metadata)
+        taskManager.addTask(writeFileOrSymlink(transformedData, file, dest, metadata))
+
         if (taskManager.tasks.length > MAX_FILE_REQUESTS) {
           await taskManager.awaitTasks()
         }
-
-        unpackedFileIndexSet.add(i)
       }
     }
-
-    if (taskManager.tasks.length > 0) {
-      await taskManager.awaitTasks()
-    }
-
-    return unpackedFileIndexSet
-  }
-
-  private writeAsarFile(fileSets: Array<ResolvedFileSet>, unpackedFileIndexMap: Map<ResolvedFileSet, Set<number>>): Promise<any> {
-    return new Promise((resolve, reject) => {
-      const headerPickle = pickle.createEmpty()
-      headerPickle.writeString(JSON.stringify(this.fs.header))
-      const headerBuf = headerPickle.toBuffer()
-
-      const sizePickle = pickle.createEmpty()
-      sizePickle.writeUInt32(headerBuf.length)
-
-      const sizeBuf = sizePickle.toBuffer()
-      const writeStream = createWriteStream(this.outFile)
-      writeStream.on("error", reject)
-      writeStream.on("close", resolve)
-      writeStream.write(sizeBuf)
-
-      let fileSetIndex = 0
-
-      let files = fileSets[0].files
-      let metadata = fileSets[0].metadata
-      let transformedFiles = fileSets[0].transformedFiles
-      let unpackedFileIndexSet = unpackedFileIndexMap.get(fileSets[0])!
-      const w = (index: number) => {
-        while (true) {
-          if (index >= files.length) {
-            if (++fileSetIndex >= fileSets.length) {
-              writeStream.end()
-              return
-            } else {
-              files = fileSets[fileSetIndex].files
-              metadata = fileSets[fileSetIndex].metadata
-              transformedFiles = fileSets[fileSetIndex].transformedFiles
-              unpackedFileIndexSet = unpackedFileIndexMap.get(fileSets[fileSetIndex])!
-              index = 0
-            }
-          }
-
-          if (!unpackedFileIndexSet.has(index)) {
-            break
-          } else {
-            const stat = metadata.get(files[index])
-            if (stat != null && stat.isSymbolicLink()) {
-              symlink((stat as any).linkRelativeToFile, path.join(this.unpackedDest, (stat as any).pathInArchive), () => w(index + 1))
-              return
-            }
-          }
-          index++
-        }
-
-        const data = transformedFiles == null ? null : transformedFiles.get(index)
-        const file = files[index]
-        if (data !== null && data !== undefined) {
-          writeStream.write(data, () => w(index + 1))
-          return
-        }
-
-        // https://github.com/yarnpkg/yarn/pull/3539
-        const stat = metadata.get(file)
-        if (stat != null && stat.size < 2 * 1024 * 1024) {
-          readFile(file)
-            .then(it => {
-              writeStream.write(it, () => w(index + 1))
-            })
-            .catch((e: any) => reject(`Cannot read file ${file}: ${e.stack || e}`))
-        } else {
-          const readStream = createReadStream(file)
-          readStream.on("error", reject)
-          readStream.once("end", () => w(index + 1))
-          readStream.on("open", () => {
-            readStream.pipe(writeStream, {
-              end: false,
-            })
-          })
-        }
-      }
-
-      writeStream.write(headerBuf, () => w(0))
-    })
-  }
-}
-
-async function order(filenames: Array<string>, orderingFile: string, src: string) {
-  const orderingFiles = (await readFile(orderingFile, "utf8")).split("\n").map(line => {
-    if (line.indexOf(":") !== -1) {
-      line = line.split(":").pop()!
-    }
-    line = line.trim()
-    if (line[0] === "/") {
-      line = line.slice(1)
-    }
-    return line
-  })
-
-  const ordering: Array<string> = []
-  for (const file of orderingFiles) {
-    const pathComponents = file.split(path.sep)
-    for (const pathComponent of pathComponents) {
-      ordering.push(path.join(src, pathComponent))
+    await taskManager.awaitTasks()
+    return {
+      unpackedPaths: Array.from(unpackedPaths),
+      copiedFiles: Array.from(copiedFiles),
     }
   }
 
-  const sortedFiles: Array<string> = []
-  let missing = 0
-  const total = filenames.length
-  for (const file of ordering) {
-    if (!sortedFiles.includes(file) && filenames.includes(file)) {
-      sortedFiles.push(file)
+  private async copyFileOrData(data: string | Buffer | undefined, source: string, destination: string, stat: fs.Stats) {
+    await fs.mkdir(path.dirname(destination), { recursive: true })
+    if (data) {
+      await fs.writeFile(destination, data, { mode: stat.mode })
+    } else {
+      await fs.copyFile(source, destination)
     }
-  }
-  for (const file of filenames) {
-    if (!sortedFiles.includes(file)) {
-      sortedFiles.push(file)
-      missing += 1
-    }
-  }
-  log.info({ coverage: ((total - missing) / total) * 100 }, "ordering files in ASAR archive")
-  return sortedFiles
-}
-
-function copyFileOrData(fileCopier: FileCopier, data: string | Buffer | undefined | null, source: string, destination: string, stats: Stats) {
-  if (data == null) {
-    return fileCopier.copy(source, destination, stats)
-  } else {
-    return writeFile(destination, data)
   }
 }
 
@@ -287,7 +162,7 @@ function orderFileSet(fileSet: ResolvedFileSet): ResolvedFileSet {
       return 0
     }
 
-    // Place addons last because their signature change
+    // Place addons last because their signature changes per build
     const isAAddon = a.endsWith(".node")
     const isBAddon = b.endsWith(".node")
     if (isAAddon && !isBAddon) {

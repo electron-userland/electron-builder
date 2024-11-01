@@ -3,7 +3,7 @@
 import { AppInfo, CancellationToken, Packager, PackagerOptions, PublishManager, PublishOptions, UploadTask, checkBuildRequestOptions } from "app-builder-lib"
 import { Publish } from "app-builder-lib/out/core"
 import { computeSafeArtifactNameIfNeeded } from "app-builder-lib/out/platformPackager"
-import { getConfig } from "app-builder-lib/out/util/config"
+import { getConfig } from "app-builder-lib/out/util/config/config"
 import { InvalidConfigurationError, archFromString, log } from "builder-util"
 import { printErrorAndExit } from "builder-util"
 import * as chalk from "chalk"
@@ -40,14 +40,14 @@ export function configurePublishCommand(yargs: yargs.Argv): yargs.Argv {
     .demandOption("files")
 }
 
-export async function publish(args: { files: string[]; version: string | undefined; config: string | undefined }) {
+export async function publish(args: { files: string[]; version: string | undefined; configurationFilePath: string | undefined }) {
   const uploadTasks = args.files.map(f => {
     return {
       file: path.resolve(f),
       arch: null,
     }
   })
-  return publishArtifactsWithOptions(uploadTasks, args.version, args.config)
+  return publishArtifactsWithOptions(uploadTasks, args.version, args.configurationFilePath)
 }
 
 export async function publishArtifactsWithOptions(

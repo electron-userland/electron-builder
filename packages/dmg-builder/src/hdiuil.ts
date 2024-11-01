@@ -4,7 +4,7 @@ export async function hdiUtil(args: string[]) {
   return retry(
     () => exec("hdiutil", args),
     5,
-    1000,
+    5000,
     2000,
     0,
     (error: any) => {

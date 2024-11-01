@@ -13,7 +13,7 @@ export class RpmUpdater extends BaseUpdater {
   /*** @private */
   protected doDownloadUpdate(downloadUpdateOptions: DownloadUpdateOptions): Promise<Array<string>> {
     const provider = downloadUpdateOptions.updateInfoAndProvider.provider
-    const fileInfo = findFile(provider.resolveFiles(downloadUpdateOptions.updateInfoAndProvider.info), "rpm", ["AppImage", "deb"])!
+    const fileInfo = findFile(provider.resolveFiles(downloadUpdateOptions.updateInfoAndProvider.info), "rpm", ["AppImage", "deb", "pacman"])!
     return this.executeDownload({
       fileExtension: "rpm",
       fileInfo,

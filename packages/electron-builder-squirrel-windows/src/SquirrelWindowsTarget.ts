@@ -1,4 +1,4 @@
-import { sanitizeFileName } from "app-builder-lib/out/util/filename"
+import { sanitizeFileName } from "builder-util/out/filename"
 import { InvalidConfigurationError, log, isEmptyOrSpaces } from "builder-util"
 import { Arch, getArchSuffix, SquirrelWindowsOptions, Target } from "app-builder-lib"
 import { getBin } from "app-builder-lib/out/binDownload"
@@ -101,9 +101,7 @@ export default class SquirrelWindowsTarget extends Target {
       }
 
       if (iconUrl == null) {
-        throw new InvalidConfigurationError(
-          "squirrelWindows.iconUrl is not specified, please see https://www.electron.build/configuration/squirrel-windows#SquirrelWindowsOptions-iconUrl"
-        )
+        throw new InvalidConfigurationError("squirrelWindows.iconUrl is not specified, please see https://www.electron.build/squirrel-windows#SquirrelWindowsOptions-iconUrl")
       }
     }
 
@@ -135,12 +133,10 @@ export default class SquirrelWindowsTarget extends Target {
       ...(this.options as any),
     }
 
-    if (await packager.isSignAllowed()) {
-      options.windowsSign = {
-        hookFunction: async (file: string) => {
-          await packager.sign(file)
-        },
-      }
+    options.windowsSign = {
+      hookFunction: async (file: string) => {
+        await packager.sign(file)
+      },
     }
 
     if (isEmptyOrSpaces(options.description)) {

@@ -1,0 +1,42 @@
+{
+  "mode": "pre",
+  "tag": "alpha",
+  "initialVersions": {
+    "app-builder-lib": "25.1.8",
+    "builder-util": "25.1.7",
+    "builder-util-runtime": "9.2.10",
+    "dmg-builder": "25.1.8",
+    "electron-builder": "25.1.8",
+    "electron-builder-squirrel-windows": "25.1.8",
+    "electron-forge-maker-appimage": "25.1.8",
+    "electron-forge-maker-nsis": "25.1.8",
+    "electron-forge-maker-nsis-web": "25.1.8",
+    "electron-forge-maker-snap": "25.1.8",
+    "electron-publish": "25.1.7",
+    "electron-updater": "6.3.9",
+    "@electron-builder/test": "0.0.0"
+  },
+  "changesets": [
+    "early-penguins-share",
+    "fluffy-wolves-smile",
+    "gold-parents-complain",
+    "khaki-schools-provide",
+    "lucky-tigers-do",
+    "many-shoes-look",
+    "nasty-mangos-yawn",
+    "new-zoos-repair",
+    "ninety-candles-laugh",
+    "real-cougars-watch",
+    "sixty-dogs-deliver",
+    "slimy-chairs-buy",
+    "slow-zoos-mate",
+    "sour-points-refuse",
+    "stupid-buses-compete",
+    "sweet-masks-sparkle",
+    "tiny-cobras-walk",
+    "tricky-files-speak",
+    "two-rice-wash",
+    "wet-hats-drum",
+    "yellow-snakes-sneeze"
+  ]
+}

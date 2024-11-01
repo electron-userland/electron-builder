@@ -3,30 +3,30 @@
 exports[`expand not defined env 1`] = `"ERR_ELECTRON_BUILDER_ENV_NOT_DEFINED"`;
 
 exports[`extraResources - two-package 1`] = `
-Object {
-  "linux": Array [],
+{
+  "linux": [],
 }
 `;
 
 exports[`extraResources on Linux 1`] = `
-Object {
-  "linux": Array [],
+{
+  "linux": [],
 }
 `;
 
 exports[`extraResources on Windows 1`] = `
-Object {
-  "win": Array [
-    Object {
+{
+  "win": [
+    {
       "arch": "x64",
       "file": "RELEASES",
     },
-    Object {
+    {
       "arch": "x64",
       "file": "Test App ßW Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe",
     },
-    Object {
+    {
       "arch": "x64",
       "file": "TestApp-1.1.0-full.nupkg",
     },
@@ -35,7 +35,7 @@ Object {
 `;
 
 exports[`extraResources on Windows 2`] = `
-Array [
+[
   "lib/net45/chrome_100_percent.pak",
   "lib/net45/chrome_200_percent.pak",
   "lib/net45/d3dcompiler_47.dll",
@@ -69,19 +69,19 @@ Array [
 `;
 
 exports[`extraResources on macOS 1`] = `
-Object {
-  "mac": Array [],
+{
+  "mac": [],
 }
 `;
 
 exports[`files 1`] = `
-Object {
-  "linux": Array [],
+{
+  "linux": [],
 }
 `;
 
 exports[`files 2`] = `
-Array [
+[
   "index.html",
   "index.js",
   "package.json",
@@ -93,13 +93,13 @@ Array [
 `;
 
 exports[`files.from asar 1`] = `
-Object {
-  "linux": Array [],
+{
+  "linux": [],
 }
 `;
 
 exports[`map resources 1`] = `
-Object {
-  "linux": Array [],
+{
+  "linux": [],
 }
 `;

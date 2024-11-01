@@ -39,8 +39,7 @@ export async function copyAppFiles(fileSet: ResolvedFileSet, packager: Packager,
   const createdParentDirs = new Set<string>()
 
   const fileCopier = new FileCopier(file => {
-    // https://github.com/electron-userland/electron-builder/issues/3038
-    return !(isLibOrExe(file) || file.endsWith(".node"))
+    return !isLibOrExe(file)
   }, transformer)
   const links: Array<Link> = []
   for (let i = 0, n = fileSet.files.length; i < n; i++) {
@@ -188,25 +187,26 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
   const result = new Array<ResolvedFileSet>()
   let index = 0
   const NODE_MODULES = "node_modules"
-  for (const info of deps) {
-    const source = info.dir
-    const destination = path.join(mainMatcher.to, NODE_MODULES, info.name)
-    // use main matcher patterns, so, user can exclude some files !node_modules/xxxx
-    const matcher = new FileMatcher(path.dirname(path.dirname(source)), destination, mainMatcher.macroExpander, mainMatcher.patterns)
+
+  const collectNodeModules = async (dep: NodeModuleInfo, destination: string) => {
+    const source = dep.dir
+    const matcher = new FileMatcher(source, destination, mainMatcher.macroExpander, mainMatcher.patterns)
     const copier = new NodeModuleCopyHelper(matcher, platformPackager.info)
-    const files = await copier.collectNodeModules(info, nodeModuleExcludedExts)
+    const files = await copier.collectNodeModules(dep, nodeModuleExcludedExts)
     result[index++] = validateFileSet({ src: source, destination, files, metadata: copier.metadata })
 
-    if (info.conflictDependency) {
-      for (const dep of info.conflictDependency) {
-        const source = dep.dir
-        const destination = path.join(mainMatcher.to, NODE_MODULES, info.name, NODE_MODULES, dep.name)
-        const matcher = new FileMatcher(path.dirname(path.dirname(source)), destination, mainMatcher.macroExpander, mainMatcher.patterns)
-        const copier = new NodeModuleCopyHelper(matcher, platformPackager.info)
-        result[index++] = validateFileSet({ src: source, destination, files: await copier.collectNodeModules(dep, nodeModuleExcludedExts), metadata: copier.metadata })
+    if (dep.conflictDependency) {
+      for (const c of dep.conflictDependency) {
+        await collectNodeModules(c, path.join(destination, NODE_MODULES, c.name))
       }
     }
   }
+
+  for (const dep of deps) {
+    const destination = path.join(mainMatcher.to, NODE_MODULES, dep.name)
+    await collectNodeModules(dep, destination)
+  }
+
   return result
 }
 

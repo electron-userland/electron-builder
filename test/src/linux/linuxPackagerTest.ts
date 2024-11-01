@@ -26,6 +26,16 @@ test.ifNotWindows(
       },
       downloadAlternateFFmpeg: true,
       publish: testPublishConfig,
+      electronFuses: {
+        runAsNode: true,
+        enableCookieEncryption: true,
+        enableNodeOptionsEnvironmentVariable: true,
+        enableNodeCliInspectArguments: true,
+        enableEmbeddedAsarIntegrityValidation: true,
+        onlyLoadAppFromAsar: true,
+        loadBrowserProcessSpecificV8Snapshot: true,
+        grantFileProtocolExtraPrivileges: undefined, // unsupported on current electron version in our tests
+      },
     },
   })
 )
@@ -112,14 +122,40 @@ test.ifNotWindows.ifNotCiMac(
       config: {
         linux: {
           executableName: "Foo",
+          // Example Spec: https://specifications.freedesktop.org/desktop-entry-spec/latest/example.html
           desktop: {
-            "X-Foo": "bar",
-            Terminal: "true",
+            entry: {
+              "X-Foo": "bar",
+              Terminal: "true",
+            },
+            desktopActions: {
+              Gallery: {
+                Exec: "fooview --gallery",
+                Name: "Browse Gallery",
+              },
+              Create: {
+                Exec: "fooview --create-new",
+                Name: "Create a new Foo!",
+                Icon: "fooview-new",
+              },
+              EmptyEntry: {},
+              NullEntry: null,
+            },
           },
         },
         appImage: {
           // tslint:disable-next-line:no-invalid-template-strings
           artifactName: "boo-${productName}",
+        },
+        electronFuses: {
+          runAsNode: true,
+          enableCookieEncryption: true,
+          enableNodeOptionsEnvironmentVariable: true,
+          enableNodeCliInspectArguments: true,
+          enableEmbeddedAsarIntegrityValidation: true,
+          onlyLoadAppFromAsar: true,
+          loadBrowserProcessSpecificV8Snapshot: true,
+          grantFileProtocolExtraPrivileges: undefined, // unsupported on current electron version in our tests
         },
       },
       effectiveOptionComputed: async it => {
@@ -293,7 +329,9 @@ test.ifNotWindows(
     config: {
       linux: {
         desktop: {
-          Exec: "foo",
+          entry: {
+            Exec: "foo",
+          },
         },
       },
     },

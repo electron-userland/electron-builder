@@ -1,10 +1,12 @@
 {
   "extends": "../../tsconfig-base.json",
   "compilerOptions": {
-    "outDir": "out"
+    "outDir": "out",
+    "noUnusedLocals": false,
+    "skipLibCheck": false
   },
   "declaration": false,
   "include": [
     "src/**/*.ts"
-  ]
+  ],
 }

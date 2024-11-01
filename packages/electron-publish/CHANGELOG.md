@@ -1,5 +1,115 @@
 # electron-publish
 
+## 26.0.0-alpha.4
+
+### Patch Changes
+
+- [#8631](https://github.com/electron-userland/electron-builder/pull/8631) [`dcd91a1f`](https://github.com/electron-userland/electron-builder/commit/dcd91a1f79be5bde7bb418b0eaa83d03f11d41fe) Thanks [@olivereisenhut](https://github.com/olivereisenhut)! - fix: Remove path from published binaries
+
+## 26.0.0-alpha.3
+
+### Patch Changes
+
+- [#8596](https://github.com/electron-userland/electron-builder/pull/8596) [`e0b0e351`](https://github.com/electron-userland/electron-builder/commit/e0b0e351baecc29e08d9f7d90f4699150b229416) Thanks [@mmaietta](https://github.com/mmaietta)! - chore: refactor files for publishing to electron-publish
+
+- Updated dependencies [[`e0b0e351`](https://github.com/electron-userland/electron-builder/commit/e0b0e351baecc29e08d9f7d90f4699150b229416), [`d4ea0d99`](https://github.com/electron-userland/electron-builder/commit/d4ea0d998d0fb3ea3a75ca8d39a69a2f3c710962)]:
+  - builder-util@26.0.0-alpha.3
+
+## 26.0.0-alpha.1
+
+### Patch Changes
+
+- Updated dependencies [[`3eab7143`](https://github.com/electron-userland/electron-builder/commit/3eab7143d74262caace81ea05e97617d07daf336)]:
+  - builder-util@26.0.0-alpha.1
+
+## 26.0.0-alpha.0
+
+### Patch Changes
+
+- Updated dependencies [[`b8185d48`](https://github.com/electron-userland/electron-builder/commit/b8185d48a75e65932196700e28bf71613dd141b4)]:
+  - builder-util@26.0.0-alpha.0
+
+## 25.1.7
+
+### Patch Changes
+
+- [#8545](https://github.com/electron-userland/electron-builder/pull/8545) [`fc3a78e4e61f916058fca9b15fc16f076c3fabd1`](https://github.com/electron-userland/electron-builder/commit/fc3a78e4e61f916058fca9b15fc16f076c3fabd1) Thanks [@mmaietta](https://github.com/mmaietta)! - chore(deps): update devDependencies, including typescript
+
+- Updated dependencies [[`fc3a78e4e61f916058fca9b15fc16f076c3fabd1`](https://github.com/electron-userland/electron-builder/commit/fc3a78e4e61f916058fca9b15fc16f076c3fabd1)]:
+  - builder-util@25.1.7
+  - builder-util-runtime@9.2.10
+
+## 25.1.6
+
+### Patch Changes
+
+- Updated dependencies [[`097eeced`](https://github.com/electron-userland/electron-builder/commit/097eeced3c82a3f19d7b80f2a23f1f7749b8af92)]:
+  - builder-util@25.1.6
+
+## 25.1.5
+
+### Patch Changes
+
+- Updated dependencies [[`d1cb6bdb`](https://github.com/electron-userland/electron-builder/commit/d1cb6bdbf8111156bb16839f501bdd9e6d477338)]:
+  - builder-util@25.1.5
+  - builder-util-runtime@9.2.9
+
+## 25.1.4
+
+### Patch Changes
+
+- Updated dependencies [[`4cacee4d`](https://github.com/electron-userland/electron-builder/commit/4cacee4d63ebfc9aacf156bd8b7faa80be1325dc), [`9ab4ff92`](https://github.com/electron-userland/electron-builder/commit/9ab4ff92c0ab441a9ca422f87fbed2f3544dde5e)]:
+  - builder-util@25.1.4
+
+## 25.1.3
+
+### Patch Changes
+
+- [#8491](https://github.com/electron-userland/electron-builder/pull/8491) [`178a3c40`](https://github.com/electron-userland/electron-builder/commit/178a3c40f35fa9e91a2e4942f61423effa1289e4) Thanks [@mmaietta](https://github.com/mmaietta)! - chore: migrating to typedoc and updating/improving type+interface definitions
+
+- Updated dependencies [[`178a3c40`](https://github.com/electron-userland/electron-builder/commit/178a3c40f35fa9e91a2e4942f61423effa1289e4), [`5e21509a`](https://github.com/electron-userland/electron-builder/commit/5e21509a3f40d1a21f6f9ec9bf1d9d72c7149a21)]:
+  - builder-util@25.1.3
+  - builder-util-runtime@9.2.8
+
+## 25.1.2
+
+### Patch Changes
+
+- [#8486](https://github.com/electron-userland/electron-builder/pull/8486) [`d56cd274`](https://github.com/electron-userland/electron-builder/commit/d56cd274b9d0fedb71889293164a15e51f7cc744) Thanks [@mmaietta](https://github.com/mmaietta)! - fix(deploy): redeploy all packages to sync semver ranges
+
+- Updated dependencies [[`d56cd274`](https://github.com/electron-userland/electron-builder/commit/d56cd274b9d0fedb71889293164a15e51f7cc744)]:
+  - builder-util@25.1.2
+  - builder-util-runtime@9.2.7
+
+## 25.1.0
+
+### Patch Changes
+
+- Updated dependencies [[`27a8a60c`](https://github.com/electron-userland/electron-builder/commit/27a8a60c86adeaf792bbd0c33f3de23400ded2d4)]:
+  - builder-util@25.1.0
+
+## 25.0.6
+
+### Patch Changes
+
+- Updated dependencies [[`be625e06`](https://github.com/electron-userland/electron-builder/commit/be625e06273e56de09ed3298209858043fcd1151)]:
+  - builder-util@25.0.6
+  - builder-util-runtime@9.2.6
+
+## 25.0.3
+
+### Patch Changes
+
+- Updated dependencies [[`553c737b`](https://github.com/electron-userland/electron-builder/commit/553c737b2cf1ad835690f7db3c1907ae88944d15)]:
+  - builder-util@25.0.3
+
+## 25.0.2
+
+### Patch Changes
+
+- Updated dependencies [[`54c1059b`](https://github.com/electron-userland/electron-builder/commit/54c1059b961f7c2a493d26b7e6ef674911069cad)]:
+  - builder-util@25.0.2
+
 ## 25.0.1
 
 ### Patch Changes

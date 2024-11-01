@@ -1,6 +1,6 @@
 import { AllPublishOptions, newError, safeStringifyJson } from "builder-util-runtime"
-import { pathExistsSync, stat } from "fs-extra"
-import { createReadStream, copyFileSync } from "fs"
+import { pathExistsSync, stat, copyFile } from "fs-extra"
+import { createReadStream } from "fs"
 import * as path from "path"
 import { createServer, IncomingMessage, Server, ServerResponse } from "http"
 import { AppAdapter } from "./AppAdapter"
@@ -94,16 +94,15 @@ export class MacUpdater extends AppUpdater {
 
     const provider = downloadUpdateOptions.updateInfoAndProvider.provider
     const CURRENT_MAC_APP_ZIP_FILE_NAME = "update.zip"
-    let cachedUpdateFile: string = ""
 
     return this.executeDownload({
       fileExtension: "zip",
       fileInfo: zipFileInfo,
       downloadUpdateOptions,
       task: async (destinationFile, downloadOptions) => {
-        cachedUpdateFile = path.join(this.downloadedUpdateHelper!.cacheDir, CURRENT_MAC_APP_ZIP_FILE_NAME)
+        const cachedUpdateFilePath = path.join(this.downloadedUpdateHelper!.cacheDir, CURRENT_MAC_APP_ZIP_FILE_NAME)
         const canDifferentialDownload = () => {
-          if (!pathExistsSync(cachedUpdateFile)) {
+          if (!pathExistsSync(cachedUpdateFilePath)) {
             log.info("Unable to locate previous update.zip for differential download (is this first install?), falling back to full download")
             return false
           }
@@ -118,11 +117,14 @@ export class MacUpdater extends AppUpdater {
           await this.httpExecutor.download(zipFileInfo.url, destinationFile, downloadOptions)
         }
       },
-      done: event => {
-        try {
-          copyFileSync(event.downloadedFile, cachedUpdateFile)
-        } catch (error: any) {
-          this._logger.error(`Unable to copy file for caching: ${error.message}`)
+      done: async event => {
+        if (!downloadUpdateOptions.disableDifferentialDownload) {
+          try {
+            const cachedUpdateFilePath = path.join(this.downloadedUpdateHelper!.cacheDir, CURRENT_MAC_APP_ZIP_FILE_NAME)
+            await copyFile(event.downloadedFile, cachedUpdateFilePath)
+          } catch (error: any) {
+            this._logger.warn(`Unable to copy file for caching for future differential downloads: ${error.message}`)
+          }
         }
         return this.updateDownloaded(zipFileInfo, event)
       },
@@ -251,17 +253,22 @@ export class MacUpdater extends AppUpdater {
     })
   }
 
+  private handleUpdateDownloaded() {
+    if (this.autoRunAppAfterInstall) {
+      this.nativeUpdater.quitAndInstall()
+    } else {
+      this.app.quit()
+    }
+    this.closeServerIfExists()
+  }
+
   quitAndInstall(): void {
     if (this.squirrelDownloadedUpdate) {
       // update already fetched by Squirrel, it's ready to install
-      this.nativeUpdater.quitAndInstall()
-      this.closeServerIfExists()
+      this.handleUpdateDownloaded()
     } else {
       // Quit and install as soon as Squirrel get the update
-      this.nativeUpdater.on("update-downloaded", () => {
-        this.nativeUpdater.quitAndInstall()
-        this.closeServerIfExists()
-      })
+      this.nativeUpdater.on("update-downloaded", () => this.handleUpdateDownloaded())
 
       if (!this.autoInstallOnAppQuit) {
         /**

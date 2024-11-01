@@ -90,7 +90,7 @@ export class NsisUpdater extends BaseUpdater {
             } catch (e: any) {
               try {
                 await unlink(packageFile)
-              } catch (ignored) {
+              } catch (_ignored) {
                 // ignore
               }
 
@@ -144,7 +144,7 @@ export class NsisUpdater extends BaseUpdater {
     }
 
     const callUsingElevation = (): void => {
-      this.spawnLog(path.join(process.resourcesPath!, "elevate.exe"), [options.installerPath].concat(args)).catch(e => this.dispatchError(e))
+      this.spawnLog(path.join(process.resourcesPath, "elevate.exe"), [options.installerPath].concat(args)).catch(e => this.dispatchError(e))
     }
 
     if (options.isAdminRightsRequired) {

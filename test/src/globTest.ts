@@ -4,12 +4,14 @@ import { outputFile } from "fs-extra"
 import * as path from "path"
 import * as fs from "fs/promises"
 import { assertThat } from "./helpers/fileAssert"
-import { app, assertPack, modifyPackageJson, PackedContext, removeUnstableProperties, verifyAsarFileTree } from "./helpers/packTester"
+import { app, appThrows, assertPack, modifyPackageJson, PackedContext, removeUnstableProperties, verifyAsarFileTree } from "./helpers/packTester"
 import { verifySmartUnpack } from "./helpers/verifySmartUnpack"
 
 async function createFiles(appDir: string) {
   await Promise.all([
-    outputFile(path.join(appDir, "assets", "file"), "data"),
+    outputFile(path.join(appDir, "assets", "file1"), "data"),
+    outputFile(path.join(appDir, "assets", "file2"), "data"),
+    outputFile(path.join(appDir, "assets", "subdir", "file3"), "data"),
     outputFile(path.join(appDir, "b2", "file"), "data"),
     outputFile(path.join(appDir, "do-not-unpack-dir", "file.json"), "{}").then(() => fs.writeFile(path.join(appDir, "do-not-unpack-dir", "must-be-not-unpacked"), "{}")),
   ])
@@ -18,7 +20,9 @@ async function createFiles(appDir: string) {
   await fs.mkdir(dir, { recursive: true })
   await fs.writeFile(path.join(dir, "file-in-asar"), "{}")
 
-  await fs.symlink(path.join(appDir, "assets", "file"), path.join(appDir, "assets", "file-symlink"))
+  await fs.symlink(path.join(appDir, "assets", "file1"), path.join(appDir, "assets", "subdir", "file-symlink1")) // "reverse" symlink up one directory
+  await fs.symlink(path.join(appDir, "assets", "file2"), path.join(appDir, "assets", "file-symlink2")) // same dir symlink
+  await fs.symlink(path.join(appDir, "assets", "subdir", "file3"), path.join(appDir, "file-symlink3")) // symlink down
 }
 
 test.ifNotWindows.ifDevOrLinuxCi(
@@ -106,7 +110,7 @@ test.ifNotWindows(
 
 test.ifNotWindows(
   "outside link",
-  app(
+  appThrows(
     {
       targets: Platform.LINUX.createTarget(DIR_TARGET),
     },
@@ -116,13 +120,37 @@ test.ifNotWindows(
         await outputFile(path.join(tempDir, "foo"), "data")
         await fs.symlink(tempDir, path.join(projectDir, "o-dir"))
       },
-      packed: async context => {
-        const file = (await readAsar(path.join(context.getResources(Platform.LINUX), "app.asar"))).getFile("o-dir/foo", false)
-        expect(removeUnstableProperties(file)).toMatchSnapshot()
-      },
     }
   )
 )
+
+test.ifDevOrLinuxCi("local node module with file protocol", () => {
+  return assertPack(
+    "test-app-one",
+    {
+      targets: Platform.LINUX.createTarget(DIR_TARGET),
+      config: {
+        asarUnpack: ["**/node_modules/foo/**/*"],
+      },
+    },
+    {
+      isInstallDepsBefore: true,
+      projectDirCreated: async (projectDir, tmpDir) => {
+        const tempDir = await tmpDir.getTempDir()
+        let localPath = path.join(tempDir, "foo")
+        await outputFile(path.join(localPath, "package.json"), `{"name":"foo","version":"9.0.0","main":"index.js","license":"MIT","dependencies":{"ms":"2.0.0"}}`)
+        await modifyPackageJson(projectDir, data => {
+          data.dependencies = {
+            foo: `file:${localPath}`,
+          }
+        })
+      },
+      packed: async context => {
+        assertThat(path.join(path.join(context.getResources(Platform.LINUX), "app.asar.unpacked", "node_modules", "foo", "package.json"))).isFile()
+      },
+    }
+  )
+})
 
 // cannot be enabled
 // https://github.com/electron-userland/electron-builder/issues/611
@@ -168,6 +196,9 @@ test.ifAll.ifDevOrLinuxCi("ignore node_modules", () => {
           //noinspection SpellCheckingInspection
           data.dependencies = {
             "ci-info": "2.0.0",
+            "@types/node": "14.17.0",
+            // this contains string-width-cjs 4.2.3
+            "@isaacs/cliui": "8.0.2",
           }
         }),
       packed: context => {

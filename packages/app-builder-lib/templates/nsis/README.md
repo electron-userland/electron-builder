@@ -1,6 +1,6 @@
 # NSIS
 
-⚠️ **It is developer documentation.** If your are looking for usage guide, see [user documentation](https://electron.build/configuration/nsis).
+⚠️ **It is developer documentation.** If your are looking for usage guide, see [user documentation](https://electron.build/nsis).
 
 NSIS stands for Nullsoft Scriptable Install System. electron-builder utilizes a [customized version](https://github.com/electron-userland/electron-builder-binaries) of it and uses `NsisMultiUser` plugin to handle installation for single user or all users on the computer.
 
@@ -24,7 +24,7 @@ For translators, the strings to be displayed are included in [`assistedMessages.
 As for other strings in NSIS, head to [electron-userland/electron-builder-binaries](https://github.com/electron-userland/electron-builder-binaries) or the upstream repository on [Sorceforge](https://sourceforge.net/p/nsis/code/HEAD/tree/).
 
 ## GUID
-See [docs](https://electron.build/configuration/nsis).
+See [docs](https://electron.build/nsis).
 
 We use UUID v5 to generate sha-1 name-based UUID.
 
