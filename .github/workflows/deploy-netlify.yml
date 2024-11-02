@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: read
+  statuses: write
 
 jobs:
   deploy:
@@ -43,6 +44,6 @@ jobs:
           authToken: ${{ secrets.GITHUB_TOKEN }}
           state: success
           context: Netlify Documentation Site preview
-          description: Click "details"
+          description: Production - Click "details"
           target_url: ${{ env.NETLIFY_PREVIEW_URL }}
           sha: ${{github.event.pull_request.head.sha || github.sha}}
