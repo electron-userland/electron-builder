@@ -198,7 +198,7 @@ export async function createKeychain({ tmpDir, cscLink, cscKeyPassword, cscILink
     BluebirdPromise.mapSeries(securityCommands, it => exec("/usr/bin/security", it)),
   ])
   const cscPasswords: Array<string> = [cscKeyPassword]
-  if (cscIKeyPassword) {
+  if (cscIKeyPassword != null) {
     cscPasswords.push(cscIKeyPassword)
   }
   return await importCerts(keychainFile, certPaths, cscPasswords)
