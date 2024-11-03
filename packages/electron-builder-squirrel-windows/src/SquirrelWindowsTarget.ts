@@ -126,11 +126,13 @@ export default class SquirrelWindowsTarget extends Target {
       ...(this.options as any),
     }
 
-    // options.windowsSign = {
-    //   hookFunction: async (file: string) => {
-    //     await packager.sign(file)
-    //   },
-    // }
+    if (await (await packager.signingManager.value).cscInfo.value) {
+      options.windowsSign = {
+        hookFunction: async (file: string) => {
+          await packager.sign(file)
+        },
+      }
+    }
 
     if (isEmptyOrSpaces(options.description)) {
       options.description = this.options.name || appInfo.productName
