@@ -11,6 +11,8 @@ import { emptyDir, writeJson } from "fs-extra"
 import * as fs from "fs/promises"
 import { load } from "js-yaml"
 import * as path from "path"
+import AdmZip from "adm-zip"
+import { decode } from "iconv-lite"
 import { promisify } from "util"
 import pathSorter from "path-sort"
 import { TmpDir } from "temp-file"
@@ -375,55 +377,6 @@ async function checkMacResult(packager: Packager, packagerOptions: PackagerOptio
   }
 }
 
-async function listNupkgContents(nupkgPath: string) {
-  try {
-    const { exec } = require("child_process")
-    const util = require("util")
-    const execPromise = util.promisify(exec)
-    let zPath = await getPath7za()
-    const { stdout, stderr } = await execPromise(`${zPath} l -slt "${nupkgPath}"`)
-    if (stderr) {
-      console.error("7z command error:", stderr)
-    }
-
-    const lines = stdout.split("\n")
-    const files = []
-
-    for (let i = 0; i < lines.length; i++) {
-      if (lines[i].startsWith("Path = ")) {
-        const path = lines[i].replace("Path = ", "").trim()
-        const nextLine = lines[i + 1]
-        if (nextLine && nextLine.startsWith("Folder = -")) {
-          files.push(path)
-        }
-      }
-    }
-
-    return files
-  } catch (error) {
-    throw new Error(`run 7z failed: ${error}`)
-  }
-}
-
-async function getFileContentFrom7Zip(zipFilePath: string, fileToRead: string): Promise<string> {
-  try {
-    const { exec } = require("child_process")
-    const util = require("util")
-    const execPromise = util.promisify(exec)
-    let zPath = await getPath7za()
-    const command = `${zPath} e -so "${zipFilePath}" "${fileToRead}"`
-
-    const { stdout, stderr } = await execPromise(command, { encoding: "utf8", maxBuffer: 50 * 1024 * 1024 })
-
-    if (stderr) {
-      throw new Error(`Stderr: ${stderr}`)
-    }
-    return stdout
-  } catch (error) {
-    throw new Error(`Error: ${error}`)
-  }
-}
-
 async function checkWindowsResult(packager: Packager, checkOptions: AssertPackOptions, artifacts: Array<ArtifactCreated>, nameToTarget: Map<string, Target>) {
   const appInfo = packager.appInfo
   let squirrel = false
@@ -438,7 +391,15 @@ async function checkWindowsResult(packager: Packager, checkOptions: AssertPackOp
   }
 
   const packageFile = artifacts.find(it => it.file.endsWith("-full.nupkg"))!.file
-  const allFiles: string[] = await listNupkgContents(packageFile)
+  const zip = new AdmZip(packageFile)
+  const zipEntries = zip.getEntries()
+  const allFiles: string[] = []
+  zipEntries.forEach(function (zipEntry) {
+    let name = decode(zipEntry.rawEntryName, "cp437")
+    if (!name.endsWith("/")) {
+      allFiles.push(name)
+    }
+  })
   const files = pathSorter(
     allFiles
       .map((it: string) => toSystemIndependentPath(it))
@@ -451,9 +412,8 @@ async function checkWindowsResult(packager: Packager, checkOptions: AssertPackOp
   expect(files).toMatchSnapshot()
 
   if (checkOptions == null) {
-    const expectedSpec = (await getFileContentFrom7Zip(packageFile, "TestApp.nuspec")).replace(/\r\n/g, "\n")
+    const expectedSpec = zip.readAsText("TestApp.nuspec").replace(/\r\n/g, "\n")
 
-    // console.log(expectedSpec)
     expect(expectedSpec).toEqual(`<?xml version="1.0"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
   <metadata>

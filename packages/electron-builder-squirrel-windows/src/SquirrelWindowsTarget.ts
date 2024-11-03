@@ -1,7 +1,6 @@
 import { sanitizeFileName } from "builder-util/out/filename"
 import { InvalidConfigurationError, log, isEmptyOrSpaces } from "builder-util"
 import { Arch, getArchSuffix, SquirrelWindowsOptions, Target } from "app-builder-lib"
-import { getBin } from "app-builder-lib/out/binDownload"
 import { WinPackager } from "app-builder-lib/out/winPackager"
 import * as path from "path"
 import * as fs from "fs"
@@ -110,13 +109,7 @@ export default class SquirrelWindowsTarget extends Target {
     const appInfo = packager.appInfo
     const projectUrl = await appInfo.computePackageUrl()
     const appName = this.appName
-    const vendorDirectory =
-      this.options.vendorDirectory ||
-      (await getBin(
-        "Squirrel.Windows-2.0.1",
-        "https://github.com/beyondkmp/electron-builder-binaries/releases/download/Squirrel.Windows-2.0.1/Squirrel.Windows-2.0.1.7z",
-        "IGIosfkJ25mhpGS6LREBbaSq4uysb3lwXUzt0psM9UBeaVvpOfDz0ZUqat6WAaji35n0oXJqw63WXT24/7ksLA=="
-      ))
+    const vendorDirectory = this.options.vendorDirectory
     const options: SquirrelOptions = {
       name: appName,
       appId: this.options.useAppIdAsId ? appInfo.id : appName,
@@ -133,11 +126,11 @@ export default class SquirrelWindowsTarget extends Target {
       ...(this.options as any),
     }
 
-    options.windowsSign = {
-      hookFunction: async (file: string) => {
-        await packager.sign(file)
-      },
-    }
+    // options.windowsSign = {
+    //   hookFunction: async (file: string) => {
+    //     await packager.sign(file)
+    //   },
+    // }
 
     if (isEmptyOrSpaces(options.description)) {
       options.description = this.options.name || appInfo.productName

@@ -557,6 +557,9 @@ importers:
       '@jest/core':
         specifier: 29.7.0
         version: 29.7.0(ts-node@10.9.2(@types/node@22.7.4)(typescript@5.6.2))
+      adm-zip:
+        specifier: 0.5.16
+        version: 0.5.16
       app-builder-lib:
         specifier: workspace:*
         version: link:../packages/app-builder-lib
@@ -596,6 +599,9 @@ importers:
       fs-extra:
         specifier: ^10.1.0
         version: 10.1.0
+      iconv-lite:
+        specifier: 0.6.3
+        version: 0.6.3
       jest:
         specifier: 29.7.0
         version: 29.7.0(@types/node@22.7.4)(ts-node@10.9.2(@types/node@22.7.4)(typescript@5.6.2))
@@ -636,6 +642,9 @@ importers:
       '@jest/globals':
         specifier: ^29.7.0
         version: 29.7.0
+      '@types/adm-zip':
+        specifier: 0.5.6
+        version: 0.5.6
       '@types/fs-extra':
         specifier: ^9.0.11
         version: 9.0.13
@@ -2279,6 +2288,9 @@ packages:
   '@tsconfig/node16@1.0.4':
     resolution: {integrity: sha512-vxhUy4J8lyeyinH7Azl1pdd43GJhZH/tP2weN8TntQblOY+A0XbT8DJk1/oCPuOOyg/Ja757rG0CgHcWC8OfMA==}
 
+  '@types/adm-zip@0.5.6':
+    resolution: {integrity: sha512-lRlcSLg5Yoo7C2H2AUiAoYlvifWoCx/se7iUNiCBTfEVVYFVn+Tr9ZGed4K73tYgLe9O4PjdJvbxlkdAOx/qiw==}
+
   '@types/archiver@5.3.1':
     resolution: {integrity: sha512-wKYZaSXaDvTZuInAWjCeGG7BEAgTWG2zZW0/f7IYFcoHB2X2d9lkVFnrOlXl3W6NrvO6Ml3FLLu8Uksyymcpnw==}
 
@@ -2548,6 +2560,10 @@ packages:
 
   add-stream@1.0.0:
     resolution: {integrity: sha512-qQLMr+8o0WC4FZGQTcJiKBVC59JylcPSrTtk6usvmIDFUOCKegapy1VHQwRbFMOFyb/inzUVqHs+eMYKDM1YeQ==}
+
+  adm-zip@0.5.16:
+    resolution: {integrity: sha512-TGw5yVi4saajsSEgz25grObGHEUaDrniwvA2qwSC060KfqGPdglhvPMA2lPIoxs3PQIItj2iag35fONcQqgUaQ==}
+    engines: {node: '>=12.0'}
 
   agent-base@6.0.2:
     resolution: {integrity: sha512-RZNwNclF7+MS/8bDg70amg32dyeZGZxiDuQmZxKLAlQjr3jGyLx+4Kkk58UO7D2QdgFIQCovuSuZESne6RG6XQ==}
@@ -8448,6 +8464,10 @@ snapshots:
 
   '@tsconfig/node16@1.0.4': {}
 
+  '@types/adm-zip@0.5.6':
+    dependencies:
+      '@types/node': 22.7.4
+
   '@types/archiver@5.3.1':
     dependencies:
       '@types/glob': 8.1.0
@@ -8773,6 +8793,8 @@ snapshots:
   acorn@8.12.1: {}
 
   add-stream@1.0.0: {}
+
+  adm-zip@0.5.16: {}
 
   agent-base@6.0.2:
     dependencies:
