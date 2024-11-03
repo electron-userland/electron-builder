@@ -49,7 +49,5 @@ module.exports = {
     private: false,
     inherited: false,
     external: false,
-    "@alpha": false,
-    "@beta": false,
   },
 }
