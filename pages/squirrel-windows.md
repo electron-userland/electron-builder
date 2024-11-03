@@ -9,4 +9,4 @@ Your app must be able to handle Squirrel.Windows startup events that occur durin
 
 ## Configuration
 
-{!./app-builder-lib.Interface.SquirrelWindowsOptions.md!}
+  {!./app-builder-lib.Interface.SquirrelWindowsOptions.md!}
