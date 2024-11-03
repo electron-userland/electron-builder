@@ -5,4 +5,4 @@ The top-level [appImage](configuration.md#appImage) key contains set of options 
 
 ## Configuration
 
-{!./app-builder-lib.Interface.AppImageOptions.md!}
+  {!./app-builder-lib.Interface.AppImageOptions.md!}

@@ -151,4 +151,4 @@ For portable app, following environment variables are available:
 
 ## Configuration
 
-{!./app-builder-lib.Interface.NsisOptions.md!}
+  {!./app-builder-lib.Interface.NsisOptions.md!}
