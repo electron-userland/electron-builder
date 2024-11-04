@@ -143,7 +143,7 @@ test.ifNotWindows(
         await fs.symlink(tempDir, path.join(projectDir, "o-dir"))
       },
     },
-    error => expect(error.message.includes("violates asar security integrity")).toBe(true)
+    error => expect(error.message).toContain("violates asar security integrity")
   )
 )
 

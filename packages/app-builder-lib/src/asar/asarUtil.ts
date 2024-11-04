@@ -85,6 +85,10 @@ export class AsarPackager {
     const unpackedPaths = new Set<string>()
     const copiedFiles = new Set<string>()
 
+    const createdSourceDirs = new Set<string>()
+    const links: Array<Link> = []
+    const symlinkType = platform() === "win32" ? "junction" : "file"
+
     const matchUnpacker = (file: string, dest: string, stat: fs.Stats) => {
       if (this.config.unpackPattern?.(file, stat)) {
         log.debug({ file }, "unpacking")
@@ -92,54 +96,40 @@ export class AsarPackager {
         return
       }
     }
-    const writeFileOrSymlink = async (options: { transformedData: string | Buffer | undefined; file: string; destination: string; stat: fs.Stats; fileSet: ResolvedFileSet }) => {
-      const {
-        transformedData,
-        file: source,
-        // destination,
-        stat,
-        fileSet: { src: sourceDir, destination: destinationDir },
-      } = options
-      const destination = getDestinationPath(source, options.fileSet)
-      if (copiedFiles.has(destination)) {
+    const writeFileOrQueueSymlink = async (options: { transformedData: string | Buffer | undefined; file: string; destFile: string; stat: fs.Stats; fileSet: ResolvedFileSet }) => {
+      const { transformedData, file, destFile, stat, fileSet } = options
+      if (!stat.isFile() && !stat.isSymbolicLink()) {
         return
       }
-      copiedFiles.add(destination)
 
-      // If transformed data, skip symlink logic
+      const dir = path.dirname(destFile)
+      if (!createdSourceDirs.has(dir)) {
+        await mkdir(dir, { recursive: true })
+        createdSourceDirs.add(dir)
+      }
+
+      copiedFiles.add(destFile)
       if (transformedData != null) {
-        return this.copyFileOrData(transformedData, source, destination, stat)
+        return fs.writeFile(destFile, transformedData, { mode: stat.mode })
+      }
+      if (stat.isFile()) {
+        return this.fileCopier.copy(file, destFile, stat)
+      }
+      let link = await readlink(file)
+      if (path.isAbsolute(link)) {
+        link = path.relative(path.dirname(file), link)
       }
 
-      const realPathFile = await fs.realpath(source)
-
-      if (source === realPathFile) {
-        return this.copyFileOrData(undefined, source, destination, stat)
-      }
-
-      const realPathRelative = path.relative(sourceDir, realPathFile)
+      const realPathFile = await fs.realpath(file)
+      const realPathRelative = path.relative(fileSet.src, realPathFile)
       const isOutsidePackage = realPathRelative.startsWith("..")
       if (isOutsidePackage) {
-        log.error({ source: log.filePath(source), realPathFile: log.filePath(realPathFile) }, `unable to copy, file is symlinked outside the package`)
-        throw new Error(
-          `Cannot copy file (${path.basename(source)}) symlinked to file (${path.basename(realPathFile)}) outside the package as that violates asar security integrity`
-        )
+        log.error({ source: log.filePath(file), realPathFile: log.filePath(realPathFile) }, `unable to copy, file is symlinked outside the package`)
+        throw new Error(`Cannot copy file (${path.basename(file)}) symlinked to file (${path.basename(realPathFile)}) outside the package as that violates asar security integrity`)
       }
 
-      // await this.copyFileOrData(undefined, source, destination, stat)
-      // const symlinkTarget = path.resolve(this.rootForAppFilesWithoutAsar, realPathRelative)
-      const symlinkTarget = path.resolve(path.dirname(destination), realPathRelative)
-      // await this.copyFileOrData(undefined, source, symlinkTarget, stat)
-      const target2 = path.relative(path.dirname(destination), symlinkTarget)
-      const target = fs.readlinkSync(source)
-      fsNode.symlinkSync(target, destination)
-
-      copiedFiles.add(symlinkTarget)
+      links.push({ file: destFile, link })
     }
-
-    const createdSourceDirs = new Set<string>()
-    const links: Array<Link> = []
-    const symlinkType = platform() === "win32" ? "junction" : "file"
 
     for await (const fileSet of fileSets) {
       if (this.config.options.smartUnpack !== false) {
@@ -155,50 +145,13 @@ export class AsarPackager {
 
         matchUnpacker(file, destFile, stat)
 
-        if (!stat.isFile() && !stat.isSymbolicLink()) {
-          continue
-        }
-
-        const dir = path.dirname(destFile)
-        if (!createdSourceDirs.has(dir)) {
-          await mkdir(dir, { recursive: true })
-          createdSourceDirs.add(dir)
-        }
-
-        copiedFiles.add(destFile)
-        if (transformedData != null) {
-          await fs.writeFile(destFile, transformedData, { mode: stat.mode })
-        } else if (stat.isFile()) {
-          await this.fileCopier.copy(file, destFile, stat)
-        } else {
-          let link = await readlink(file)
-          if (path.isAbsolute(link)) {
-            link = path.relative(path.dirname(file), link)
-          }
-
-          const realPathFile = await fs.realpath(file)
-          const realPathRelative = path.relative(fileSet.src, realPathFile)
-          const isOutsidePackage = realPathRelative.startsWith("..")
-          if (isOutsidePackage) {
-            log.error({ source: log.filePath(file), realPathFile: log.filePath(realPathFile) }, `unable to copy, file is symlinked outside the package`)
-            throw new Error(
-              `Cannot copy file (${path.basename(file)}) symlinked to file (${path.basename(realPathFile)}) outside the package as that violates asar security integrity`
-            )
-          }
-
-          links.push({ file: destFile, link })
-        }
-        // const file = fileSet.files[i]
-        // const transformedData = fileSet.transformedFiles?.get(i)
-        // const metadata = fileSet.metadata.get(file)!
-
         // const relative = path.relative(this.config.defaultDestination, getDestinationPath(file, fileSet))
         // const dest = path.resolve(this.rootForAppFilesWithoutAsar, relative)
 
         // matchUnpacker(file, dest, metadata)
-        // // taskManager.addTask(
-        // await writeFileOrSymlink({ transformedData, file, destination: dest, stat: metadata, fileSet })
-        // // )
+        // taskManager.addTask(
+        await writeFileOrQueueSymlink({ transformedData, file, destFile, stat, fileSet })
+        // )
 
         if (taskManager.tasks.length > MAX_FILE_REQUESTS) {
           await taskManager.awaitTasks()
@@ -207,9 +160,15 @@ export class AsarPackager {
     }
     // finish copy then set up all symlinks
     await taskManager.awaitTasks()
-    for await (const it of links) {
-      await symlink(it.link, it.file, symlinkType)
-    }
+    for (const it of links) {
+      // taskManager.addTask(
+        await symlink(it.link, it.file, symlinkType)
+        // )
+        if (taskManager.tasks.length > MAX_FILE_REQUESTS) {
+          await taskManager.awaitTasks()
+        }
+      }
+      await taskManager.awaitTasks()
     return {
       unpackedPaths: Array.from(unpackedPaths),
       copiedFiles: Array.from(copiedFiles),

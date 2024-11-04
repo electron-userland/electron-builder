@@ -9836,7 +9836,13 @@ exports[`local node module with file protocol 1`] = `
 }
 `;
 
-exports[`outside link 1`] = `"Cannot copy file (foo) symlinked to file (foo) outside the package as that violates asar security integrity"`;
+exports[`outside link 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`outside link 2`] = `undefined`;
 
 exports[`symlinks everywhere w/ static framework 1`] = `
 {
@@ -9856,7 +9862,7 @@ exports[`symlinks everywhere w/ static framework 3`] = `
     "foo.js": {
       "link": "index.js",
     },
-    "main.js": {
+    "index.js": {
       "offset": "58489",
       "size": 27,
     },
@@ -9986,7 +9992,7 @@ exports[`symlinks everywhere w/ static framework 3`] = `
     },
     "package.json": {
       "offset": "58516",
-      "size": 337,
+      "size": 338,
     },
     "stripped-native-dep": {
       "files": {
@@ -10016,75 +10022,75 @@ exports[`symlinks everywhere w/ static framework 3`] = `
                               "files": {
                                 "HelloFramework.h": {
                                   "executable": true,
-                                  "offset": "58853",
+                                  "offset": "58854",
                                   "size": 52,
                                 },
                               },
                             },
                             "Hello": {
                               "executable": true,
-                              "offset": "58905",
+                              "offset": "58906",
                               "size": 16120,
                             },
                             "Info.plist": {
                               "executable": true,
-                              "offset": "75025",
+                              "offset": "75026",
                               "size": 809,
                             },
                             "Modules": {
                               "files": {
                                 "Hello.abi.json": {
                                   "executable": true,
-                                  "offset": "75834",
+                                  "offset": "75835",
                                   "size": 2215,
                                 },
                                 "Hello.swiftdoc": {
                                   "executable": true,
-                                  "offset": "78049",
+                                  "offset": "78050",
                                   "size": 408,
                                 },
                                 "Hello.swiftmodule": {
                                   "files": {
                                     "arm64.private.swiftinterface": {
                                       "executable": true,
-                                      "offset": "78457",
+                                      "offset": "78458",
                                       "size": 435,
                                     },
                                     "arm64.swiftinterface": {
                                       "executable": true,
-                                      "offset": "78892",
+                                      "offset": "78893",
                                       "size": 435,
                                     },
                                     "arm64.swiftmodule": {
                                       "executable": true,
-                                      "offset": "79327",
+                                      "offset": "79328",
                                       "size": 17940,
                                     },
                                     "x86_64.private.swiftinterface": {
                                       "executable": true,
-                                      "offset": "97267",
+                                      "offset": "97268",
                                       "size": 436,
                                     },
                                     "x86_64.swiftinterface": {
                                       "executable": true,
-                                      "offset": "97703",
+                                      "offset": "97704",
                                       "size": 436,
                                     },
                                     "x86_64.swiftmodule": {
                                       "executable": true,
-                                      "offset": "98139",
+                                      "offset": "98140",
                                       "size": 17944,
                                     },
                                   },
                                 },
                                 "Hello.swiftsourceinfo": {
                                   "executable": true,
-                                  "offset": "116083",
+                                  "offset": "116084",
                                   "size": 1064,
                                 },
                                 "module.modulemap": {
                                   "executable": true,
-                                  "offset": "117147",
+                                  "offset": "117148",
                                   "size": 66,
                                 },
                               },
@@ -10103,7 +10109,7 @@ exports[`symlinks everywhere w/ static framework 3`] = `
           },
         },
         "package.json": {
-          "offset": "117213",
+          "offset": "117214",
           "size": 129,
         },
       },
