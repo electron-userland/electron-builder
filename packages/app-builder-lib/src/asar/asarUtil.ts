@@ -146,50 +146,7 @@ export class AsarPackager {
         detectUnpackedDirs(fileSet, unpackedPaths, this.config.defaultDestination)
       }
 
-      // await BluebirdPromise.map(
-      //   fileSet.files,
-      //   async (file, i) => {
-      //     const transformedData = fileSet.transformedFiles?.get(i)
-      //     const stat = fileSet.metadata.get(file)!
-      //     const destFile = getDestinationPath(file, fileSet)
-
-      //     matchUnpacker(file, destFile, stat)
-
-      //     if (!stat.isFile() && !stat.isSymbolicLink()) {
-      //       return
-      //     }
-
-      //     const dir = path.dirname(destFile)
-      //     if (!createdSourceDirs.has(dir)) {
-      //       await mkdir(dir, { recursive: true })
-      //       createdSourceDirs.add(dir)
-      //     }
-
-      //     // const destFile = file.replace(file, destination)
-      //     copiedFiles.add(destFile)
-      //     if (transformedData != null) {
-      //       return fs.writeFile(destFile, transformedData, { mode: stat.mode })
-      //     } else if (stat.isFile()) {
-      //       return this.fileCopier.copy(file, destFile, stat)
-      //     } else {
-      //       let link = await readlink(file)
-      //       if (path.isAbsolute(link)) {
-      //         link = path.relative(path.dirname(file), link)
-      //       }
-      //       links.push({ file: destFile, link })
-      //       return
-      //     }
-      //   },
-      //   CONCURRENCY
-      // ).then(() =>
-      //   BluebirdPromise.map(
-      //     links,
-      //     it => {
-      //       return symlink(it.link, it.file, symlinkType)
-      //     },
-      //     CONCURRENCY
-      //   )
-      // )
+      // Don't use BluebirdPromise, we need to retain order of execution/iteration through the ordered fileset
       for (let i = 0; i < fileSet.files.length; i++) {
         const file = fileSet.files[i]
         const transformedData = fileSet.transformedFiles?.get(i)
@@ -208,7 +165,6 @@ export class AsarPackager {
           createdSourceDirs.add(dir)
         }
 
-        // const destFile = file.replace(file, destination)
         copiedFiles.add(destFile)
         if (transformedData != null) {
           await fs.writeFile(destFile, transformedData, { mode: stat.mode })
@@ -219,6 +175,17 @@ export class AsarPackager {
           if (path.isAbsolute(link)) {
             link = path.relative(path.dirname(file), link)
           }
+
+          const realPathFile = await fs.realpath(file)
+          const realPathRelative = path.relative(fileSet.src, realPathFile)
+          const isOutsidePackage = realPathRelative.startsWith("..")
+          if (isOutsidePackage) {
+            log.error({ source: log.filePath(file), realPathFile: log.filePath(realPathFile) }, `unable to copy, file is symlinked outside the package`)
+            throw new Error(
+              `Cannot copy file (${path.basename(file)}) symlinked to file (${path.basename(realPathFile)}) outside the package as that violates asar security integrity`
+            )
+          }
+
           links.push({ file: destFile, link })
         }
         // const file = fileSet.files[i]
@@ -238,10 +205,11 @@ export class AsarPackager {
         }
       }
     }
+    // finish copy then set up all symlinks
+    await taskManager.awaitTasks()
     for await (const it of links) {
       await symlink(it.link, it.file, symlinkType)
     }
-    await taskManager.awaitTasks()
     return {
       unpackedPaths: Array.from(unpackedPaths),
       copiedFiles: Array.from(copiedFiles),

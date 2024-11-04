@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { AsyncTaskManager, log, CONCURRENCY, FileCopier, FileTransformer, Link, MAX_FILE_REQUESTS, statOrNull, walk, FilterStats } from "builder-util"
+import { AsyncTaskManager, log, CONCURRENCY, FileCopier, FileTransformer, Link, MAX_FILE_REQUESTS, statOrNull, walk } from "builder-util"
 import { Stats } from "fs"
 import { mkdir, readlink } from "fs/promises"
 import { ensureSymlink } from "fs-extra"
@@ -82,7 +82,7 @@ export interface ResolvedFileSet {
   destination: string
 
   files: Array<string>
-  metadata: Map<string, FilterStats>
+  metadata: Map<string, Stats>
   transformedFiles?: Map<number, string | Buffer> | null
 }
 
