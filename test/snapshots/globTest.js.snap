@@ -9869,16 +9869,16 @@ exports[`symlinks everywhere w/ static framework 3`] = `
                     "Hello.framework": {
                       "files": {
                         "Headers": {
-                          "link": "node_modules/stripped-native-dep/lib/Release/Hello.framework/Versions/Current/Headers",
+                          "link": "Versions/Current/Headers",
                         },
                         "Hello": {
-                          "link": "node_modules/stripped-native-dep/lib/Release/Hello.framework/Versions/Current/Hello",
+                          "link": "Versions/Current/Hello",
                         },
                         "Info.plist": {
-                          "link": "node_modules/stripped-native-dep/lib/Release/Hello.framework/Versions/Current/Info.plist",
+                          "link": "Versions/Current/Info.plist",
                         },
                         "Modules": {
-                          "link": "node_modules/stripped-native-dep/lib/Release/Hello.framework/Versions/Current/Modules",
+                          "link": "Versions/Current/Modules",
                         },
                         "Versions": {
                           "files": {
@@ -9964,7 +9964,7 @@ exports[`symlinks everywhere w/ static framework 3`] = `
                               },
                             },
                             "Current": {
-                              "link": "node_modules/stripped-native-dep/lib/Release/Hello.framework/Versions/A",
+                              "link": "Versions/A",
                             },
                           },
                         },
@@ -9995,16 +9995,16 @@ exports[`symlinks everywhere w/ static framework 3`] = `
                 "Hello.framework": {
                   "files": {
                     "Headers": {
-                      "link": "stripped-native-dep/lib/Release/Hello.framework/Versions/Current/Headers",
+                      "link": "Versions/Current/Headers",
                     },
                     "Hello": {
-                      "link": "stripped-native-dep/lib/Release/Hello.framework/Versions/Current/Hello",
+                      "link": "Versions/Current/Hello",
                     },
                     "Info.plist": {
-                      "link": "stripped-native-dep/lib/Release/Hello.framework/Versions/Current/Info.plist",
+                      "link": "Versions/Current/Info.plist",
                     },
                     "Modules": {
-                      "link": "stripped-native-dep/lib/Release/Hello.framework/Versions/Current/Modules",
+                      "link": "Versions/Current/Modules",
                     },
                     "Versions": {
                       "files": {
@@ -10090,7 +10090,7 @@ exports[`symlinks everywhere w/ static framework 3`] = `
                           },
                         },
                         "Current": {
-                          "link": "stripped-native-dep/lib/Release/Hello.framework/Versions/A",
+                          "link": "Versions/A",
                         },
                       },
                     },

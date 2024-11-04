@@ -1,7 +1,7 @@
 import { CreateOptions, createPackageWithOptions } from "@electron/asar"
 import { AsyncTaskManager, log } from "builder-util"
 import { CancellationToken } from "builder-util-runtime"
-import { DO_NOT_USE_HARD_LINKS, FileCopier, Filter, Link, MAX_FILE_REQUESTS } from "builder-util/out/fs"
+import { FileCopier, Filter, Link, MAX_FILE_REQUESTS } from "builder-util/out/fs"
 import * as fsNode from "fs"
 import * as fs from "fs-extra"
 import * as path from "path"
@@ -18,7 +18,7 @@ export class AsarPackager {
   private readonly outFile: string
   private readonly rootForAppFilesWithoutAsar: string
   private readonly tmpDir = new tempFile.TmpDir()
-  private readonly fileCopier = new FileCopier(DO_NOT_USE_HARD_LINKS)
+  private readonly fileCopier = new FileCopier()
 
   constructor(
     private readonly config: {
@@ -36,7 +36,7 @@ export class AsarPackager {
     // this.rootForAppFilesWithoutAsar = await this.tmpDir.getTempDir({ prefix: "asar-app" })
 
     const cancellationToken = new CancellationToken()
-    cancellationToken.on("cancel", () => this.tmpDir.cleanupSync())
+    cancellationToken.on("cancel", () => this.cleanup())
 
     const orderedFileSets = [
       // Write dependencies first to minimize offset changes to asar header
@@ -74,8 +74,12 @@ export class AsarPackager {
     await createPackageWithOptions(this.rootForAppFilesWithoutAsar, this.outFile, options)
     console.log = consoleLogger
 
-    await this.tmpDir.cleanup()
+    this.cleanup()
+  }
+
+  private cleanup() {
     fsNode.rmSync(this.rootForAppFilesWithoutAsar, { recursive: true })
+    this.tmpDir.cleanupSync()
   }
 
   private async detectAndCopy(fileSets: ResolvedFileSet[], cancellationToken: CancellationToken) {
@@ -107,6 +111,7 @@ export class AsarPackager {
         createdSourceDirs.add(dir)
       }
 
+      // write any data if provided, skip symlink check
       if (transformedData != null) {
         return fs.writeFile(destFile, transformedData, { mode: stat.mode })
       }
@@ -146,11 +151,6 @@ export class AsarPackager {
         const destFile = getDestinationPath(file, fileSet)
 
         matchUnpacker(file, destFile, stat)
-
-        // const relative = path.relative(this.config.defaultDestination, getDestinationPath(file, fileSet))
-        // const dest = path.resolve(this.rootForAppFilesWithoutAsar, relative)
-
-        // matchUnpacker(file, dest, metadata)
         taskManager.addTask(writeFileOrQueueSymlink({ transformedData, file, destFile, stat, fileSet }))
 
         if (taskManager.tasks.length > MAX_FILE_REQUESTS) {
