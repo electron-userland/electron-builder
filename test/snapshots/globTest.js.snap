@@ -9857,7 +9857,7 @@ exports[`symlinks everywhere w/ static framework 3`] = `
       "link": "index.js",
     },
     "main.js": {
-      "offset": "14803919",
+      "offset": "58489",
       "size": 27,
     },
     "node_modules": {
@@ -9868,89 +9868,105 @@ exports[`symlinks everywhere w/ static framework 3`] = `
               "files": {
                 "Release": {
                   "files": {
-                    "QtCore.framework": {
+                    "Hello.framework": {
                       "files": {
-                        "QtCore": {
-                          "link": "node_modules/stripped-native-dep/lib/Release/QtCore.framework/Versions/Current/QtCore",
+                        "Headers": {
+                          "link": "node_modules/stripped-native-dep/lib/Release/Hello.framework/Versions/Current/Headers",
                         },
-                        "Resources": {
-                          "link": "node_modules/stripped-native-dep/lib/Release/QtCore.framework/Versions/Current/Resources",
+                        "Hello": {
+                          "link": "node_modules/stripped-native-dep/lib/Release/Hello.framework/Versions/Current/Hello",
+                        },
+                        "Info.plist": {
+                          "link": "node_modules/stripped-native-dep/lib/Release/Hello.framework/Versions/Current/Info.plist",
+                        },
+                        "Modules": {
+                          "link": "node_modules/stripped-native-dep/lib/Release/Hello.framework/Versions/Current/Modules",
                         },
                         "Versions": {
                           "files": {
                             "A": {
                               "files": {
-                                "QtCore": {
-                                  "executable": true,
-                                  "offset": "351",
-                                  "size": 11404008,
-                                },
-                                "Resources": {
+                                "Headers": {
                                   "files": {
-                                    "Info.plist": {
-                                      "offset": "11883575",
-                                      "size": 764,
-                                    },
-                                    "QtCore.prl": {
+                                    "HelloFramework.h": {
+                                      "executable": true,
                                       "offset": "0",
-                                      "size": 222,
+                                      "size": 52,
                                     },
                                   },
                                 },
-                              },
-                            },
-                            "Current": {
-                              "link": "node_modules/stripped-native-dep/lib/Release/QtCore.framework/Versions/A",
-                            },
-                          },
-                        },
-                      },
-                    },
-                    "QtNetwork.framework": {
-                      "files": {
-                        "QtNetwork": {
-                          "link": "node_modules/stripped-native-dep/lib/Release/QtNetwork.framework/Versions/Current/QtNetwork",
-                        },
-                        "Resources": {
-                          "link": "node_modules/stripped-native-dep/lib/Release/QtNetwork.framework/Versions/Current/Resources",
-                        },
-                        "Versions": {
-                          "files": {
-                            "A": {
-                              "files": {
-                                "QtNetwork": {
+                                "Hello": {
                                   "executable": true,
-                                  "offset": "11884644",
-                                  "size": 2918168,
+                                  "offset": "52",
+                                  "size": 16120,
                                 },
-                                "Resources": {
+                                "Info.plist": {
+                                  "executable": true,
+                                  "offset": "16172",
+                                  "size": 809,
+                                },
+                                "Modules": {
                                   "files": {
-                                    "Info.plist": {
-                                      "offset": "14802812",
-                                      "size": 770,
+                                    "Hello.abi.json": {
+                                      "executable": true,
+                                      "offset": "16981",
+                                      "size": 2215,
                                     },
-                                    "QtNetwork.prl": {
-                                      "offset": "11884339",
-                                      "size": 305,
+                                    "Hello.swiftdoc": {
+                                      "executable": true,
+                                      "offset": "19196",
+                                      "size": 408,
+                                    },
+                                    "Hello.swiftmodule": {
+                                      "files": {
+                                        "arm64.private.swiftinterface": {
+                                          "executable": true,
+                                          "offset": "19604",
+                                          "size": 435,
+                                        },
+                                        "arm64.swiftinterface": {
+                                          "executable": true,
+                                          "offset": "20039",
+                                          "size": 435,
+                                        },
+                                        "arm64.swiftmodule": {
+                                          "executable": true,
+                                          "offset": "20474",
+                                          "size": 17940,
+                                        },
+                                        "x86_64.private.swiftinterface": {
+                                          "executable": true,
+                                          "offset": "38414",
+                                          "size": 436,
+                                        },
+                                        "x86_64.swiftinterface": {
+                                          "executable": true,
+                                          "offset": "38850",
+                                          "size": 436,
+                                        },
+                                        "x86_64.swiftmodule": {
+                                          "executable": true,
+                                          "offset": "39286",
+                                          "size": 17944,
+                                        },
+                                      },
+                                    },
+                                    "Hello.swiftsourceinfo": {
+                                      "executable": true,
+                                      "offset": "57230",
+                                      "size": 1064,
+                                    },
+                                    "module.modulemap": {
+                                      "executable": true,
+                                      "offset": "58294",
+                                      "size": 66,
                                     },
                                   },
                                 },
                               },
                             },
                             "Current": {
-                              "link": "node_modules/stripped-native-dep/lib/Release/QtNetwork.framework/Versions/A",
-                            },
-                          },
-                        },
-                      },
-                    },
-                    "qt-plugins": {
-                      "files": {
-                        "tls": {
-                          "files": {
-                            "libqsecuretransportbackend.dylib": {
-                              "offset": "11404359",
-                              "size": 479216,
+                              "link": "node_modules/stripped-native-dep/lib/Release/Hello.framework/Versions/A",
                             },
                           },
                         },
@@ -9961,7 +9977,7 @@ exports[`symlinks everywhere w/ static framework 3`] = `
               },
             },
             "package.json": {
-              "offset": "222",
+              "offset": "58360",
               "size": 129,
             },
           },
@@ -9969,7 +9985,7 @@ exports[`symlinks everywhere w/ static framework 3`] = `
       },
     },
     "package.json": {
-      "offset": "14803582",
+      "offset": "58516",
       "size": 337,
     },
     "stripped-native-dep": {
@@ -9978,89 +9994,105 @@ exports[`symlinks everywhere w/ static framework 3`] = `
           "files": {
             "Release": {
               "files": {
-                "QtCore.framework": {
+                "Hello.framework": {
                   "files": {
-                    "QtCore": {
-                      "link": "stripped-native-dep/lib/Release/QtCore.framework/Versions/Current/QtCore",
+                    "Headers": {
+                      "link": "stripped-native-dep/lib/Release/Hello.framework/Versions/Current/Headers",
                     },
-                    "Resources": {
-                      "link": "stripped-native-dep/lib/Release/QtCore.framework/Versions/Current/Resources",
+                    "Hello": {
+                      "link": "stripped-native-dep/lib/Release/Hello.framework/Versions/Current/Hello",
+                    },
+                    "Info.plist": {
+                      "link": "stripped-native-dep/lib/Release/Hello.framework/Versions/Current/Info.plist",
+                    },
+                    "Modules": {
+                      "link": "stripped-native-dep/lib/Release/Hello.framework/Versions/Current/Modules",
                     },
                     "Versions": {
                       "files": {
                         "A": {
                           "files": {
-                            "QtCore": {
-                              "executable": true,
-                              "offset": "14804075",
-                              "size": 11404008,
-                            },
-                            "Resources": {
+                            "Headers": {
                               "files": {
-                                "Info.plist": {
-                                  "offset": "29606764",
-                                  "size": 764,
+                                "HelloFramework.h": {
+                                  "executable": true,
+                                  "offset": "58853",
+                                  "size": 52,
                                 },
-                                "QtCore.prl": {
-                                  "offset": "29606542",
-                                  "size": 222,
+                              },
+                            },
+                            "Hello": {
+                              "executable": true,
+                              "offset": "58905",
+                              "size": 16120,
+                            },
+                            "Info.plist": {
+                              "executable": true,
+                              "offset": "75025",
+                              "size": 809,
+                            },
+                            "Modules": {
+                              "files": {
+                                "Hello.abi.json": {
+                                  "executable": true,
+                                  "offset": "75834",
+                                  "size": 2215,
+                                },
+                                "Hello.swiftdoc": {
+                                  "executable": true,
+                                  "offset": "78049",
+                                  "size": 408,
+                                },
+                                "Hello.swiftmodule": {
+                                  "files": {
+                                    "arm64.private.swiftinterface": {
+                                      "executable": true,
+                                      "offset": "78457",
+                                      "size": 435,
+                                    },
+                                    "arm64.swiftinterface": {
+                                      "executable": true,
+                                      "offset": "78892",
+                                      "size": 435,
+                                    },
+                                    "arm64.swiftmodule": {
+                                      "executable": true,
+                                      "offset": "79327",
+                                      "size": 17940,
+                                    },
+                                    "x86_64.private.swiftinterface": {
+                                      "executable": true,
+                                      "offset": "97267",
+                                      "size": 436,
+                                    },
+                                    "x86_64.swiftinterface": {
+                                      "executable": true,
+                                      "offset": "97703",
+                                      "size": 436,
+                                    },
+                                    "x86_64.swiftmodule": {
+                                      "executable": true,
+                                      "offset": "98139",
+                                      "size": 17944,
+                                    },
+                                  },
+                                },
+                                "Hello.swiftsourceinfo": {
+                                  "executable": true,
+                                  "offset": "116083",
+                                  "size": 1064,
+                                },
+                                "module.modulemap": {
+                                  "executable": true,
+                                  "offset": "117147",
+                                  "size": 66,
                                 },
                               },
                             },
                           },
                         },
                         "Current": {
-                          "link": "stripped-native-dep/lib/Release/QtCore.framework/Versions/A",
-                        },
-                      },
-                    },
-                  },
-                },
-                "QtNetwork.framework": {
-                  "files": {
-                    "QtNetwork": {
-                      "link": "stripped-native-dep/lib/Release/QtNetwork.framework/Versions/Current/QtNetwork",
-                    },
-                    "Resources": {
-                      "link": "stripped-native-dep/lib/Release/QtNetwork.framework/Versions/Current/Resources",
-                    },
-                    "Versions": {
-                      "files": {
-                        "A": {
-                          "files": {
-                            "QtNetwork": {
-                              "executable": true,
-                              "offset": "26687299",
-                              "size": 2918168,
-                            },
-                            "Resources": {
-                              "files": {
-                                "Info.plist": {
-                                  "offset": "29605467",
-                                  "size": 770,
-                                },
-                                "QtNetwork.prl": {
-                                  "offset": "29606237",
-                                  "size": 305,
-                                },
-                              },
-                            },
-                          },
-                        },
-                        "Current": {
-                          "link": "stripped-native-dep/lib/Release/QtNetwork.framework/Versions/A",
-                        },
-                      },
-                    },
-                  },
-                },
-                "qt-plugins": {
-                  "files": {
-                    "tls": {
-                      "files": {
-                        "libqsecuretransportbackend.dylib": {
-                          "offset": "26208083",
-                          "size": 479216,
+                          "link": "stripped-native-dep/lib/Release/Hello.framework/Versions/A",
                         },
                       },
                     },
@@ -10071,7 +10103,7 @@ exports[`symlinks everywhere w/ static framework 3`] = `
           },
         },
         "package.json": {
-          "offset": "14803946",
+          "offset": "117213",
           "size": 129,
         },
       },
