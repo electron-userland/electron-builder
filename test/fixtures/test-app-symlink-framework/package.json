@@ -13,6 +13,6 @@
     "compression": "store"
   },
   "dependencies": {
-    "stripped-native-dep": "file:stripped-native-dep"
+    "hello-world": "file:hello-world"
   }
 }

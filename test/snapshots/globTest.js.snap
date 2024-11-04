@@ -9855,13 +9855,17 @@ exports[`symlinks everywhere w/ static framework 3`] = `
       "link": "index.js",
     },
     "index.js": {
-      "offset": "58489",
+      "offset": "64834",
       "size": 27,
     },
     "node_modules": {
       "files": {
-        "stripped-native-dep": {
+        "hello-world": {
           "files": {
+            "hello-world-framework.sh": {
+              "offset": "0",
+              "size": 6345,
+            },
             "lib": {
               "files": {
                 "Release": {
@@ -9869,16 +9873,16 @@ exports[`symlinks everywhere w/ static framework 3`] = `
                     "Hello.framework": {
                       "files": {
                         "Headers": {
-                          "link": "Versions/Current/Headers",
+                          "link": "node_modules/hello-world/lib/Release/Hello.framework/Versions/Current/Headers",
                         },
                         "Hello": {
-                          "link": "Versions/Current/Hello",
+                          "link": "node_modules/hello-world/lib/Release/Hello.framework/Versions/Current/Hello",
                         },
                         "Info.plist": {
-                          "link": "Versions/Current/Info.plist",
+                          "link": "node_modules/hello-world/lib/Release/Hello.framework/Versions/Current/Info.plist",
                         },
                         "Modules": {
-                          "link": "Versions/Current/Modules",
+                          "link": "node_modules/hello-world/lib/Release/Hello.framework/Versions/Current/Modules",
                         },
                         "Versions": {
                           "files": {
@@ -9888,75 +9892,75 @@ exports[`symlinks everywhere w/ static framework 3`] = `
                                   "files": {
                                     "HelloFramework.h": {
                                       "executable": true,
-                                      "offset": "0",
+                                      "offset": "6345",
                                       "size": 52,
                                     },
                                   },
                                 },
                                 "Hello": {
                                   "executable": true,
-                                  "offset": "52",
+                                  "offset": "6397",
                                   "size": 16120,
                                 },
                                 "Info.plist": {
                                   "executable": true,
-                                  "offset": "16172",
+                                  "offset": "22517",
                                   "size": 809,
                                 },
                                 "Modules": {
                                   "files": {
                                     "Hello.abi.json": {
                                       "executable": true,
-                                      "offset": "16981",
+                                      "offset": "23326",
                                       "size": 2215,
                                     },
                                     "Hello.swiftdoc": {
                                       "executable": true,
-                                      "offset": "19196",
+                                      "offset": "25541",
                                       "size": 408,
                                     },
                                     "Hello.swiftmodule": {
                                       "files": {
                                         "arm64.private.swiftinterface": {
                                           "executable": true,
-                                          "offset": "19604",
+                                          "offset": "25949",
                                           "size": 435,
                                         },
                                         "arm64.swiftinterface": {
                                           "executable": true,
-                                          "offset": "20039",
+                                          "offset": "26384",
                                           "size": 435,
                                         },
                                         "arm64.swiftmodule": {
                                           "executable": true,
-                                          "offset": "20474",
+                                          "offset": "26819",
                                           "size": 17940,
                                         },
                                         "x86_64.private.swiftinterface": {
                                           "executable": true,
-                                          "offset": "38414",
+                                          "offset": "44759",
                                           "size": 436,
                                         },
                                         "x86_64.swiftinterface": {
                                           "executable": true,
-                                          "offset": "38850",
+                                          "offset": "45195",
                                           "size": 436,
                                         },
                                         "x86_64.swiftmodule": {
                                           "executable": true,
-                                          "offset": "39286",
+                                          "offset": "45631",
                                           "size": 17944,
                                         },
                                       },
                                     },
                                     "Hello.swiftsourceinfo": {
                                       "executable": true,
-                                      "offset": "57230",
+                                      "offset": "63575",
                                       "size": 1064,
                                     },
                                     "module.modulemap": {
                                       "executable": true,
-                                      "offset": "58294",
+                                      "offset": "64639",
                                       "size": 66,
                                     },
                                   },
@@ -9964,7 +9968,7 @@ exports[`symlinks everywhere w/ static framework 3`] = `
                               },
                             },
                             "Current": {
-                              "link": "Versions/A",
+                              "link": "node_modules/hello-world/lib/Release/Hello.framework/Versions/A",
                             },
                           },
                         },
@@ -9975,7 +9979,7 @@ exports[`symlinks everywhere w/ static framework 3`] = `
               },
             },
             "package.json": {
-              "offset": "58360",
+              "offset": "64705",
               "size": 129,
             },
           },
@@ -9983,128 +9987,8 @@ exports[`symlinks everywhere w/ static framework 3`] = `
       },
     },
     "package.json": {
-      "offset": "58516",
-      "size": 338,
-    },
-    "stripped-native-dep": {
-      "files": {
-        "lib": {
-          "files": {
-            "Release": {
-              "files": {
-                "Hello.framework": {
-                  "files": {
-                    "Headers": {
-                      "link": "Versions/Current/Headers",
-                    },
-                    "Hello": {
-                      "link": "Versions/Current/Hello",
-                    },
-                    "Info.plist": {
-                      "link": "Versions/Current/Info.plist",
-                    },
-                    "Modules": {
-                      "link": "Versions/Current/Modules",
-                    },
-                    "Versions": {
-                      "files": {
-                        "A": {
-                          "files": {
-                            "Headers": {
-                              "files": {
-                                "HelloFramework.h": {
-                                  "executable": true,
-                                  "offset": "58854",
-                                  "size": 52,
-                                },
-                              },
-                            },
-                            "Hello": {
-                              "executable": true,
-                              "offset": "58906",
-                              "size": 16120,
-                            },
-                            "Info.plist": {
-                              "executable": true,
-                              "offset": "75026",
-                              "size": 809,
-                            },
-                            "Modules": {
-                              "files": {
-                                "Hello.abi.json": {
-                                  "executable": true,
-                                  "offset": "75835",
-                                  "size": 2215,
-                                },
-                                "Hello.swiftdoc": {
-                                  "executable": true,
-                                  "offset": "78050",
-                                  "size": 408,
-                                },
-                                "Hello.swiftmodule": {
-                                  "files": {
-                                    "arm64.private.swiftinterface": {
-                                      "executable": true,
-                                      "offset": "78458",
-                                      "size": 435,
-                                    },
-                                    "arm64.swiftinterface": {
-                                      "executable": true,
-                                      "offset": "78893",
-                                      "size": 435,
-                                    },
-                                    "arm64.swiftmodule": {
-                                      "executable": true,
-                                      "offset": "79328",
-                                      "size": 17940,
-                                    },
-                                    "x86_64.private.swiftinterface": {
-                                      "executable": true,
-                                      "offset": "97268",
-                                      "size": 436,
-                                    },
-                                    "x86_64.swiftinterface": {
-                                      "executable": true,
-                                      "offset": "97704",
-                                      "size": 436,
-                                    },
-                                    "x86_64.swiftmodule": {
-                                      "executable": true,
-                                      "offset": "98140",
-                                      "size": 17944,
-                                    },
-                                  },
-                                },
-                                "Hello.swiftsourceinfo": {
-                                  "executable": true,
-                                  "offset": "116084",
-                                  "size": 1064,
-                                },
-                                "module.modulemap": {
-                                  "executable": true,
-                                  "offset": "117148",
-                                  "size": 66,
-                                },
-                              },
-                            },
-                          },
-                        },
-                        "Current": {
-                          "link": "Versions/A",
-                        },
-                      },
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-        "package.json": {
-          "offset": "117214",
-          "size": 129,
-        },
-      },
+      "offset": "64861",
+      "size": 322,
     },
   },
 }
