@@ -1,9 +1,7 @@
-import BluebirdPromise from "bluebird-lst"
-
 import { CreateOptions, createPackageWithOptions } from "@electron/asar"
 import { AsyncTaskManager, log } from "builder-util"
 import { CancellationToken } from "builder-util-runtime"
-import { CONCURRENCY, copyDir, DO_NOT_USE_HARD_LINKS, FileCopier, Filter, FilterStats, Link, MAX_FILE_REQUESTS } from "builder-util/out/fs"
+import { DO_NOT_USE_HARD_LINKS, FileCopier, Filter, Link, MAX_FILE_REQUESTS } from "builder-util/out/fs"
 import * as fsNode from "fs"
 import * as fs from "fs-extra"
 import * as path from "path"
@@ -101,6 +99,7 @@ export class AsarPackager {
       if (!stat.isFile() && !stat.isSymbolicLink()) {
         return
       }
+      copiedFiles.add(destFile)
 
       const dir = path.dirname(destFile)
       if (!createdSourceDirs.has(dir)) {
@@ -108,16 +107,8 @@ export class AsarPackager {
         createdSourceDirs.add(dir)
       }
 
-      copiedFiles.add(destFile)
       if (transformedData != null) {
         return fs.writeFile(destFile, transformedData, { mode: stat.mode })
-      }
-      if (stat.isFile()) {
-        return this.fileCopier.copy(file, destFile, stat)
-      }
-      let link = await readlink(file)
-      if (path.isAbsolute(link)) {
-        link = path.relative(path.dirname(file), link)
       }
 
       const realPathFile = await fs.realpath(file)
@@ -126,6 +117,17 @@ export class AsarPackager {
       if (isOutsidePackage) {
         log.error({ source: log.filePath(file), realPathFile: log.filePath(realPathFile) }, `unable to copy, file is symlinked outside the package`)
         throw new Error(`Cannot copy file (${path.basename(file)}) symlinked to file (${path.basename(realPathFile)}) outside the package as that violates asar security integrity`)
+      }
+
+      // not a symlink
+      if (file === realPathFile) {
+        return this.fileCopier.copy(file, destFile, stat)
+      }
+
+      // must be a symlink
+      let link = await readlink(file)
+      if (path.isAbsolute(link)) {
+        link = path.relative(path.dirname(file), link)
       }
 
       links.push({ file: destFile, link })
@@ -162,38 +164,16 @@ export class AsarPackager {
     await taskManager.awaitTasks()
     for (const it of links) {
       // taskManager.addTask(
-        await symlink(it.link, it.file, symlinkType)
-        // )
-        if (taskManager.tasks.length > MAX_FILE_REQUESTS) {
-          await taskManager.awaitTasks()
-        }
+      await symlink(it.link, it.file, symlinkType)
+      // )
+      if (taskManager.tasks.length > MAX_FILE_REQUESTS) {
+        await taskManager.awaitTasks()
       }
-      await taskManager.awaitTasks()
+    }
+    await taskManager.awaitTasks()
     return {
       unpackedPaths: Array.from(unpackedPaths),
       copiedFiles: Array.from(copiedFiles),
-    }
-  }
-
-  private async copyFileOrData(data: string | Buffer | undefined, source: string, destination: string, stat: fs.Stats) {
-    // const sourceStat = stat || fs.statSync(source)
-    // if (sourceStat.isSymbolicLink()) {
-    //   return copyDir(source, destination)
-    // }
-    // if (sourceStat.isSymbolicLink()) {
-    //   const link = fs.readlinkSync(source)
-    //   // const symlinkTarget = path.resolve(this.rootForAppFilesWithoutAsar, realPathRelative)
-    //   // await this.copyFileOrData(undefined, source, symlinkTarget, stat)
-    //   const target = path.relative(path.dirname(destination), link)
-    //   fsNode.symlinkSync(target, destination)
-    //   return
-    // }
-    await fs.mkdir(path.dirname(destination), { recursive: true })
-    if (data != null) {
-      return fs.writeFile(destination, data, { mode: stat.mode })
-    } else {
-      // return fs.copyFile(source, destination)
-      return this.fileCopier.copy(source, destination, stat)
     }
   }
 }

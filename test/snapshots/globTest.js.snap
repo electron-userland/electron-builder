@@ -9836,14 +9836,6 @@ exports[`local node module with file protocol 1`] = `
 }
 `;
 
-exports[`outside link 1`] = `
-{
-  "linux": [],
-}
-`;
-
-exports[`outside link 2`] = `undefined`;
-
 exports[`symlinks everywhere w/ static framework 1`] = `
 {
   "linux": [],
