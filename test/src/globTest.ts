@@ -115,6 +115,10 @@ test.ifNotWindows(
   assertPack("test-app-symlink-framework",
     {
       targets: Platform.LINUX.createTarget(DIR_TARGET),
+      config: {
+        asarUnpack: ["**/*.framework"],
+        files: ["!hello-world"]
+      }
     },
     {
       isInstallDepsBefore: true,

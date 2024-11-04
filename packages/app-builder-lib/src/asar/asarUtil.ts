@@ -49,6 +49,12 @@ export class AsarPackager {
     const { unpackedPaths, copiedFiles } = await this.detectAndCopy(orderedFileSets, cancellationToken)
     const unpackGlob = unpackedPaths.length > 1 ? `{${unpackedPaths.join(",")}}` : unpackedPaths.pop()
 
+    await this.executeElectronAsar(copiedFiles, unpackGlob)
+
+    this.cleanup()
+  }
+
+  private async executeElectronAsar(copiedFiles: string[], unpackGlob: string | undefined) {
     let ordering = this.config.options.ordering || undefined
     if (!ordering) {
       // `copiedFiles` are already ordered due to `orderedFileSets` input, so we just map to their relative paths (via substring) within the asar.
@@ -73,8 +79,6 @@ export class AsarPackager {
     }
     await createPackageWithOptions(this.rootForAppFilesWithoutAsar, this.outFile, options)
     console.log = consoleLogger
-
-    this.cleanup()
   }
 
   private cleanup() {
@@ -132,7 +136,7 @@ export class AsarPackager {
       // must be a symlink
       let link = await readlink(file)
       if (path.isAbsolute(link)) {
-        link = path.relative(path.dirname(file), link)
+        link = path.relative(fileSet.src, link)
       }
 
       links.push({ file: destFile, link })
