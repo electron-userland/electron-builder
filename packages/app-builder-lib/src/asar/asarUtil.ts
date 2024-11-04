@@ -137,75 +137,109 @@ export class AsarPackager {
       copiedFiles.add(symlinkTarget)
     }
 
+    const createdSourceDirs = new Set<string>()
+    const links: Array<Link> = []
+    const symlinkType = platform() === "win32" ? "junction" : "file"
+
     for await (const fileSet of fileSets) {
       if (this.config.options.smartUnpack !== false) {
         detectUnpackedDirs(fileSet, unpackedPaths, this.config.defaultDestination)
       }
-      const createdSourceDirs = new Set<string>()
-      const links: Array<Link> = []
-      const symlinkType = platform() === "win32" ? "junction" : "file"
 
-      await BluebirdPromise.map(
-        fileSet.files,
-        async (file, i) => {
-          const transformedData = fileSet.transformedFiles?.get(i)
-          const stat = fileSet.metadata.get(file)!
-          const destFile = getDestinationPath(file, fileSet)
+      // await BluebirdPromise.map(
+      //   fileSet.files,
+      //   async (file, i) => {
+      //     const transformedData = fileSet.transformedFiles?.get(i)
+      //     const stat = fileSet.metadata.get(file)!
+      //     const destFile = getDestinationPath(file, fileSet)
 
-          matchUnpacker(file, destFile, stat)
+      //     matchUnpacker(file, destFile, stat)
 
-          if (!stat.isFile() && !stat.isSymbolicLink()) {
-            return
+      //     if (!stat.isFile() && !stat.isSymbolicLink()) {
+      //       return
+      //     }
+
+      //     const dir = path.dirname(destFile)
+      //     if (!createdSourceDirs.has(dir)) {
+      //       await mkdir(dir, { recursive: true })
+      //       createdSourceDirs.add(dir)
+      //     }
+
+      //     // const destFile = file.replace(file, destination)
+      //     copiedFiles.add(destFile)
+      //     if (transformedData != null) {
+      //       return fs.writeFile(destFile, transformedData, { mode: stat.mode })
+      //     } else if (stat.isFile()) {
+      //       return this.fileCopier.copy(file, destFile, stat)
+      //     } else {
+      //       let link = await readlink(file)
+      //       if (path.isAbsolute(link)) {
+      //         link = path.relative(path.dirname(file), link)
+      //       }
+      //       links.push({ file: destFile, link })
+      //       return
+      //     }
+      //   },
+      //   CONCURRENCY
+      // ).then(() =>
+      //   BluebirdPromise.map(
+      //     links,
+      //     it => {
+      //       return symlink(it.link, it.file, symlinkType)
+      //     },
+      //     CONCURRENCY
+      //   )
+      // )
+      for (let i = 0; i < fileSet.files.length; i++) {
+        const file = fileSet.files[i]
+        const transformedData = fileSet.transformedFiles?.get(i)
+        const stat = fileSet.metadata.get(file)!
+        const destFile = getDestinationPath(file, fileSet)
+
+        matchUnpacker(file, destFile, stat)
+
+        if (!stat.isFile() && !stat.isSymbolicLink()) {
+          continue
+        }
+
+        const dir = path.dirname(destFile)
+        if (!createdSourceDirs.has(dir)) {
+          await mkdir(dir, { recursive: true })
+          createdSourceDirs.add(dir)
+        }
+
+        // const destFile = file.replace(file, destination)
+        copiedFiles.add(destFile)
+        if (transformedData != null) {
+          await fs.writeFile(destFile, transformedData, { mode: stat.mode })
+        } else if (stat.isFile()) {
+          await this.fileCopier.copy(file, destFile, stat)
+        } else {
+          let link = await readlink(file)
+          if (path.isAbsolute(link)) {
+            link = path.relative(path.dirname(file), link)
           }
+          links.push({ file: destFile, link })
+        }
+        // const file = fileSet.files[i]
+        // const transformedData = fileSet.transformedFiles?.get(i)
+        // const metadata = fileSet.metadata.get(file)!
 
-          const dir = path.dirname(destFile)
-          if (!createdSourceDirs.has(dir)) {
-            await mkdir(dir, { recursive: true })
-            createdSourceDirs.add(dir)
-          }
+        // const relative = path.relative(this.config.defaultDestination, getDestinationPath(file, fileSet))
+        // const dest = path.resolve(this.rootForAppFilesWithoutAsar, relative)
 
-          // const destFile = file.replace(file, destination)
-          copiedFiles.add(destFile)
-          if (transformedData != null) {
-            return fs.writeFile(destFile, transformedData, { mode: stat.mode })
-          } else if (stat.isFile()) {
-            return this.fileCopier.copy(file, destFile, stat)
-          } else {
-            let link = await readlink(file)
-            if (path.isAbsolute(link)) {
-              link = path.relative(path.dirname(file), link)
-            }
-            links.push({ file: destFile, link })
-            return
-          }
-        },
-        CONCURRENCY
-      ).then(() =>
-        BluebirdPromise.map(
-          links,
-          it => {
-            return symlink(it.link, it.file, symlinkType)
-          },
-          CONCURRENCY
-        )
-      )
-      // for (let i = 0; i < fileSet.files.length; i++) {
-      //   const file = fileSet.files[i]
-      //   const transformedData = fileSet.transformedFiles?.get(i)
-      //   const metadata = fileSet.metadata.get(file)!
+        // matchUnpacker(file, dest, metadata)
+        // // taskManager.addTask(
+        // await writeFileOrSymlink({ transformedData, file, destination: dest, stat: metadata, fileSet })
+        // // )
 
-      //   const relative = path.relative(this.config.defaultDestination, getDestinationPath(file, fileSet))
-      //   const dest = path.resolve(this.rootForAppFilesWithoutAsar, relative)
-
-      //   matchUnpacker(file, dest, metadata)
-      //   // taskManager.addTask(
-      //   await writeFileOrSymlink({ transformedData, file, destination: dest, stat: metadata, fileSet })
-      //   // )
-
-      //   if (taskManager.tasks.length > MAX_FILE_REQUESTS) {
-      //     await taskManager.awaitTasks()
-      //   }
-      // }
+        if (taskManager.tasks.length > MAX_FILE_REQUESTS) {
+          await taskManager.awaitTasks()
+        }
+      }
+    }
+    for await (const it of links) {
+      await symlink(it.link, it.file, symlinkType)
     }
     await taskManager.awaitTasks()
     return {

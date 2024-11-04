@@ -9800,13 +9800,13 @@ exports[`link 3`] = `
         "package.json": {
           "files": {
             "readme.md": {
-              "offset": "841",
+              "offset": "0",
               "size": 32,
             },
           },
         },
         "readme.md": {
-          "offset": "5313",
+          "offset": "32",
           "size": 78,
         },
       },
@@ -9815,15 +9815,15 @@ exports[`link 3`] = `
       "link": "index.js",
     },
     "index.html": {
-      "offset": "0",
+      "offset": "110",
       "size": 841,
     },
     "index.js": {
-      "offset": "873",
+      "offset": "951",
       "size": 4184,
     },
     "package.json": {
-      "offset": "5057",
+      "offset": "5135",
       "size": 256,
     },
   },

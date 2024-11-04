@@ -110,7 +110,7 @@ test.ifNotWindows(
   )
 )
 
-test.only(
+test.ifNotWindows(
   "symlinks everywhere w/ static framework", () =>
   assertPack("test-app-symlink-framework",
     {
@@ -142,7 +142,8 @@ test.ifNotWindows(
         await outputFile(path.join(tempDir, "foo"), "data")
         await fs.symlink(tempDir, path.join(projectDir, "o-dir"))
       },
-    }
+    },
+    error => expect(error.message.includes("violates asar security integrity")).toBe(true)
   )
 )
 
