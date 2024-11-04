@@ -116,19 +116,24 @@ test.ifNotWindows(
     {
       targets: Platform.LINUX.createTarget(DIR_TARGET),
       config: {
-        asarUnpack: ["**/*.framework"],
         files: ["!hello-world"]
       }
     },
     {
       isInstallDepsBefore: true,
-      projectDirCreated: projectDir => {
+      projectDirCreated: async projectDir => {
+        await modifyPackageJson(projectDir, data => {
+          data.dependencies = {
+            debug: "4.1.1",
+            ...data.dependencies
+          }
+        })
         return fs.symlink(path.join(projectDir, "index.js"), path.join(projectDir, "foo.js"))
       },
       packed: async context => {
         const resources = context.getResources(Platform.LINUX)
         expect((await readAsar(path.join(resources, "app.asar"))).getFile("foo.js", false)).toMatchSnapshot()
-        await verifyAsarFileTree(resources)
+        await verifySmartUnpack(resources)
       },
     }
   )

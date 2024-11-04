@@ -33,8 +33,6 @@ export class AsarPackager {
   }
 
   async pack(fileSets: Array<ResolvedFileSet>, _packager: PlatformPackager<any>) {
-    // this.rootForAppFilesWithoutAsar = await this.tmpDir.getTempDir({ prefix: "asar-app" })
-
     const cancellationToken = new CancellationToken()
     cancellationToken.on("cancel", () => this.cleanup())
 
