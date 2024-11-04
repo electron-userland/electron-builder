@@ -151,9 +151,7 @@ export class AsarPackager {
         // const dest = path.resolve(this.rootForAppFilesWithoutAsar, relative)
 
         // matchUnpacker(file, dest, metadata)
-        // taskManager.addTask(
-        await writeFileOrQueueSymlink({ transformedData, file, destFile, stat, fileSet })
-        // )
+        taskManager.addTask(writeFileOrQueueSymlink({ transformedData, file, destFile, stat, fileSet }))
 
         if (taskManager.tasks.length > MAX_FILE_REQUESTS) {
           await taskManager.awaitTasks()
@@ -163,9 +161,8 @@ export class AsarPackager {
     // finish copy then set up all symlinks
     await taskManager.awaitTasks()
     for (const it of links) {
-      // taskManager.addTask(
-      await symlink(it.link, it.file, symlinkType)
-      // )
+      taskManager.addTask(symlink(it.link, it.file, symlinkType))
+
       if (taskManager.tasks.length > MAX_FILE_REQUESTS) {
         await taskManager.awaitTasks()
       }
