@@ -85,7 +85,7 @@ test.ifDevOrLinuxCi("asarUnpack and files ignore", () => {
         const resourceDir = context.getResources(Platform.LINUX)
         await Promise.all([assertThat(path.join(resourceDir, "app.asar.unpacked", "node_modules/ffprobe-static/bin/darwin/x64/ffprobe")).doesNotExist()])
 
-        await verifyAsarFileTree(context.getResources(Platform.LINUX))
+        await verifyAsarFileTree(resourceDir)
       },
     }
   )
@@ -102,7 +102,9 @@ test.ifNotWindows(
         return fs.symlink(path.join(projectDir, "index.js"), path.join(projectDir, "foo.js"))
       },
       packed: async context => {
-        expect((await readAsar(path.join(context.getResources(Platform.LINUX), "app.asar"))).getFile("foo.js", false)).toMatchSnapshot()
+        const resources = context.getResources(Platform.LINUX)
+        expect((await readAsar(path.join(resources, "app.asar"))).getFile("foo.js", false)).toMatchSnapshot()
+        await verifyAsarFileTree(resources)
       },
     }
   )
@@ -120,7 +122,9 @@ test.only(
         return fs.symlink(path.join(projectDir, "index.js"), path.join(projectDir, "foo.js"))
       },
       packed: async context => {
-        expect((await readAsar(path.join(context.getResources(Platform.LINUX), "app.asar"))).getFile("foo.js", false)).toMatchSnapshot()
+        const resources = context.getResources(Platform.LINUX)
+        expect((await readAsar(path.join(resources, "app.asar"))).getFile("foo.js", false)).toMatchSnapshot()
+        await verifyAsarFileTree(resources)
       },
     }
   )

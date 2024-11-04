@@ -9792,6 +9792,44 @@ exports[`link 2`] = `
 }
 `;
 
+exports[`link 3`] = `
+{
+  "files": {
+    "app": {
+      "files": {
+        "package.json": {
+          "files": {
+            "readme.md": {
+              "offset": "841",
+              "size": 32,
+            },
+          },
+        },
+        "readme.md": {
+          "offset": "5313",
+          "size": 78,
+        },
+      },
+    },
+    "foo.js": {
+      "link": "index.js",
+    },
+    "index.html": {
+      "offset": "0",
+      "size": 841,
+    },
+    "index.js": {
+      "offset": "873",
+      "size": 4184,
+    },
+    "package.json": {
+      "offset": "5057",
+      "size": 256,
+    },
+  },
+}
+`;
+
 exports[`local node module with file protocol 1`] = `
 {
   "linux": [],
@@ -9799,6 +9837,248 @@ exports[`local node module with file protocol 1`] = `
 `;
 
 exports[`outside link 1`] = `"Cannot copy file (foo) symlinked to file (foo) outside the package as that violates asar security integrity"`;
+
+exports[`symlinks everywhere w/ static framework 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`symlinks everywhere w/ static framework 2`] = `
+{
+  "link": "index.js",
+}
+`;
+
+exports[`symlinks everywhere w/ static framework 3`] = `
+{
+  "files": {
+    "foo.js": {
+      "link": "index.js",
+    },
+    "main.js": {
+      "offset": "14803919",
+      "size": 27,
+    },
+    "node_modules": {
+      "files": {
+        "stripped-native-dep": {
+          "files": {
+            "lib": {
+              "files": {
+                "Release": {
+                  "files": {
+                    "QtCore.framework": {
+                      "files": {
+                        "QtCore": {
+                          "link": "node_modules/stripped-native-dep/lib/Release/QtCore.framework/Versions/Current/QtCore",
+                        },
+                        "Resources": {
+                          "link": "node_modules/stripped-native-dep/lib/Release/QtCore.framework/Versions/Current/Resources",
+                        },
+                        "Versions": {
+                          "files": {
+                            "A": {
+                              "files": {
+                                "QtCore": {
+                                  "executable": true,
+                                  "offset": "351",
+                                  "size": 11404008,
+                                },
+                                "Resources": {
+                                  "files": {
+                                    "Info.plist": {
+                                      "offset": "11883575",
+                                      "size": 764,
+                                    },
+                                    "QtCore.prl": {
+                                      "offset": "0",
+                                      "size": 222,
+                                    },
+                                  },
+                                },
+                              },
+                            },
+                            "Current": {
+                              "link": "node_modules/stripped-native-dep/lib/Release/QtCore.framework/Versions/A",
+                            },
+                          },
+                        },
+                      },
+                    },
+                    "QtNetwork.framework": {
+                      "files": {
+                        "QtNetwork": {
+                          "link": "node_modules/stripped-native-dep/lib/Release/QtNetwork.framework/Versions/Current/QtNetwork",
+                        },
+                        "Resources": {
+                          "link": "node_modules/stripped-native-dep/lib/Release/QtNetwork.framework/Versions/Current/Resources",
+                        },
+                        "Versions": {
+                          "files": {
+                            "A": {
+                              "files": {
+                                "QtNetwork": {
+                                  "executable": true,
+                                  "offset": "11884644",
+                                  "size": 2918168,
+                                },
+                                "Resources": {
+                                  "files": {
+                                    "Info.plist": {
+                                      "offset": "14802812",
+                                      "size": 770,
+                                    },
+                                    "QtNetwork.prl": {
+                                      "offset": "11884339",
+                                      "size": 305,
+                                    },
+                                  },
+                                },
+                              },
+                            },
+                            "Current": {
+                              "link": "node_modules/stripped-native-dep/lib/Release/QtNetwork.framework/Versions/A",
+                            },
+                          },
+                        },
+                      },
+                    },
+                    "qt-plugins": {
+                      "files": {
+                        "tls": {
+                          "files": {
+                            "libqsecuretransportbackend.dylib": {
+                              "offset": "11404359",
+                              "size": 479216,
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            "package.json": {
+              "offset": "222",
+              "size": 129,
+            },
+          },
+        },
+      },
+    },
+    "package.json": {
+      "offset": "14803582",
+      "size": 337,
+    },
+    "stripped-native-dep": {
+      "files": {
+        "lib": {
+          "files": {
+            "Release": {
+              "files": {
+                "QtCore.framework": {
+                  "files": {
+                    "QtCore": {
+                      "link": "stripped-native-dep/lib/Release/QtCore.framework/Versions/Current/QtCore",
+                    },
+                    "Resources": {
+                      "link": "stripped-native-dep/lib/Release/QtCore.framework/Versions/Current/Resources",
+                    },
+                    "Versions": {
+                      "files": {
+                        "A": {
+                          "files": {
+                            "QtCore": {
+                              "executable": true,
+                              "offset": "14804075",
+                              "size": 11404008,
+                            },
+                            "Resources": {
+                              "files": {
+                                "Info.plist": {
+                                  "offset": "29606764",
+                                  "size": 764,
+                                },
+                                "QtCore.prl": {
+                                  "offset": "29606542",
+                                  "size": 222,
+                                },
+                              },
+                            },
+                          },
+                        },
+                        "Current": {
+                          "link": "stripped-native-dep/lib/Release/QtCore.framework/Versions/A",
+                        },
+                      },
+                    },
+                  },
+                },
+                "QtNetwork.framework": {
+                  "files": {
+                    "QtNetwork": {
+                      "link": "stripped-native-dep/lib/Release/QtNetwork.framework/Versions/Current/QtNetwork",
+                    },
+                    "Resources": {
+                      "link": "stripped-native-dep/lib/Release/QtNetwork.framework/Versions/Current/Resources",
+                    },
+                    "Versions": {
+                      "files": {
+                        "A": {
+                          "files": {
+                            "QtNetwork": {
+                              "executable": true,
+                              "offset": "26687299",
+                              "size": 2918168,
+                            },
+                            "Resources": {
+                              "files": {
+                                "Info.plist": {
+                                  "offset": "29605467",
+                                  "size": 770,
+                                },
+                                "QtNetwork.prl": {
+                                  "offset": "29606237",
+                                  "size": 305,
+                                },
+                              },
+                            },
+                          },
+                        },
+                        "Current": {
+                          "link": "stripped-native-dep/lib/Release/QtNetwork.framework/Versions/A",
+                        },
+                      },
+                    },
+                  },
+                },
+                "qt-plugins": {
+                  "files": {
+                    "tls": {
+                      "files": {
+                        "libqsecuretransportbackend.dylib": {
+                          "offset": "26208083",
+                          "size": 479216,
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        "package.json": {
+          "offset": "14803946",
+          "size": 129,
+        },
+      },
+    },
+  },
+}
+`;
 
 exports[`unpackDir 1`] = `
 {

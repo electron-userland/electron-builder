@@ -171,12 +171,24 @@ export class AsarPackager {
           } else if (stat.isFile()) {
             return this.fileCopier.copy(file, destFile, stat)
           } else {
-            links.push({ file: destFile, link: await readlink(file) })
+            let link = await readlink(file)
+            if (path.isAbsolute(link)) {
+              link = path.relative(path.dirname(file), link)
+            }
+            links.push({ file: destFile, link })
             return
           }
         },
         CONCURRENCY
-      ).then(() => BluebirdPromise.map(links, it => symlink(it.link, it.file, symlinkType), CONCURRENCY))
+      ).then(() =>
+        BluebirdPromise.map(
+          links,
+          it => {
+            return symlink(it.link, it.file, symlinkType)
+          },
+          CONCURRENCY
+        )
+      )
       // for (let i = 0; i < fileSet.files.length; i++) {
       //   const file = fileSet.files[i]
       //   const transformedData = fileSet.transformedFiles?.get(i)
