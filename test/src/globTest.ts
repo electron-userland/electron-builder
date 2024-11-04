@@ -108,6 +108,24 @@ test.ifNotWindows(
   )
 )
 
+test.only(
+  "symlinks everywhere w/ static framework", () =>
+  assertPack("test-app-symlink-framework",
+    {
+      targets: Platform.LINUX.createTarget(DIR_TARGET),
+    },
+    {
+      isInstallDepsBefore: true,
+      projectDirCreated: projectDir => {
+        return fs.symlink(path.join(projectDir, "index.js"), path.join(projectDir, "foo.js"))
+      },
+      packed: async context => {
+        expect((await readAsar(path.join(context.getResources(Platform.LINUX), "app.asar"))).getFile("foo.js", false)).toMatchSnapshot()
+      },
+    }
+  )
+)
+
 test.ifNotWindows(
   "outside link",
   appThrows(

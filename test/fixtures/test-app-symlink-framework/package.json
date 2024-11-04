@@ -1,0 +1,18 @@
+{
+  "main": "main.js",
+  "name": "TestApp",
+  "productName": "Test App ßW",
+  "version": "1.1.0",
+  "homepage": "http://foo.example.com",
+  "description": "Test Application (test quite \" #378)",
+  "author": "Foo Bar <foo@example.com>",
+  "license": "MIT",
+  "build": {
+    "electronVersion": "23.3.10",
+    "appId": "org.electron-builder.testApp",
+    "compression": "store"
+  },
+  "dependencies": {
+    "stripped-native-dep": "file:stripped-native-dep"
+  }
+}

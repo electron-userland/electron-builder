@@ -1,7 +1,9 @@
+import BluebirdPromise from "bluebird-lst"
+
 import { CreateOptions, createPackageWithOptions } from "@electron/asar"
 import { AsyncTaskManager, log } from "builder-util"
 import { CancellationToken } from "builder-util-runtime"
-import { FileCopier, Filter, MAX_FILE_REQUESTS } from "builder-util/out/fs"
+import { CONCURRENCY, copyDir, DO_NOT_USE_HARD_LINKS, FileCopier, Filter, FilterStats, Link, MAX_FILE_REQUESTS } from "builder-util/out/fs"
 import * as fsNode from "fs"
 import * as fs from "fs-extra"
 import * as path from "path"
@@ -10,12 +12,15 @@ import { AsarOptions } from "../options/PlatformSpecificBuildOptions"
 import { PlatformPackager } from "../platformPackager"
 import { ResolvedFileSet, getDestinationPath } from "../util/appFileCopier"
 import { detectUnpackedDirs } from "./unpackDetector"
+import { platform } from "os"
+import { mkdir, readlink, symlink } from "fs-extra"
 
 /** @internal */
 export class AsarPackager {
   private readonly outFile: string
-  private rootForAppFilesWithoutAsar!: string
+  private readonly rootForAppFilesWithoutAsar: string
   private readonly tmpDir = new tempFile.TmpDir()
+  private readonly fileCopier = new FileCopier(DO_NOT_USE_HARD_LINKS)
 
   constructor(
     private readonly config: {
@@ -26,10 +31,11 @@ export class AsarPackager {
     }
   ) {
     this.outFile = path.join(config.resourcePath, `app.asar`)
+    this.rootForAppFilesWithoutAsar = path.join(config.resourcePath, "app")
   }
 
   async pack(fileSets: Array<ResolvedFileSet>, _packager: PlatformPackager<any>) {
-    this.rootForAppFilesWithoutAsar = await this.tmpDir.getTempDir({ prefix: "asar-app" })
+    // this.rootForAppFilesWithoutAsar = await this.tmpDir.getTempDir({ prefix: "asar-app" })
 
     const cancellationToken = new CancellationToken()
     cancellationToken.on("cancel", () => this.tmpDir.cleanupSync())
@@ -71,13 +77,13 @@ export class AsarPackager {
     console.log = consoleLogger
 
     await this.tmpDir.cleanup()
+    fsNode.rmSync(this.rootForAppFilesWithoutAsar, { recursive: true })
   }
 
   private async detectAndCopy(fileSets: ResolvedFileSet[], cancellationToken: CancellationToken) {
     const taskManager = new AsyncTaskManager(cancellationToken)
     const unpackedPaths = new Set<string>()
     const copiedFiles = new Set<string>()
-    const fileCopier = new FileCopier()
 
     const matchUnpacker = (file: string, dest: string, stat: fs.Stats) => {
       if (this.config.unpackPattern?.(file, stat)) {
@@ -90,21 +96,25 @@ export class AsarPackager {
       const {
         transformedData,
         file: source,
-        destination,
+        // destination,
         stat,
-        fileSet: { src: sourceDir },
+        fileSet: { src: sourceDir, destination: destinationDir },
       } = options
+      const destination = getDestinationPath(source, options.fileSet)
+      if (copiedFiles.has(destination)) {
+        return
+      }
       copiedFiles.add(destination)
 
       // If transformed data, skip symlink logic
       if (transformedData != null) {
-        return this.copyFileOrData(fileCopier, transformedData, source, destination, stat)
+        return this.copyFileOrData(transformedData, source, destination, stat)
       }
 
       const realPathFile = await fs.realpath(source)
 
       if (source === realPathFile) {
-        return this.copyFileOrData(fileCopier, undefined, source, destination, stat)
+        return this.copyFileOrData(undefined, source, destination, stat)
       }
 
       const realPathRelative = path.relative(sourceDir, realPathFile)
@@ -116,9 +126,12 @@ export class AsarPackager {
         )
       }
 
-      const symlinkTarget = path.resolve(this.rootForAppFilesWithoutAsar, realPathRelative)
-      await this.copyFileOrData(fileCopier, undefined, source, symlinkTarget, stat)
-      const target = path.relative(path.dirname(destination), symlinkTarget)
+      // await this.copyFileOrData(undefined, source, destination, stat)
+      // const symlinkTarget = path.resolve(this.rootForAppFilesWithoutAsar, realPathRelative)
+      const symlinkTarget = path.resolve(path.dirname(destination), realPathRelative)
+      // await this.copyFileOrData(undefined, source, symlinkTarget, stat)
+      const target2 = path.relative(path.dirname(destination), symlinkTarget)
+      const target = fs.readlinkSync(source)
       fsNode.symlinkSync(target, destination)
 
       copiedFiles.add(symlinkTarget)
@@ -128,21 +141,59 @@ export class AsarPackager {
       if (this.config.options.smartUnpack !== false) {
         detectUnpackedDirs(fileSet, unpackedPaths, this.config.defaultDestination)
       }
-      for (let i = 0; i < fileSet.files.length; i++) {
-        const file = fileSet.files[i]
-        const transformedData = fileSet.transformedFiles?.get(i)
-        const metadata = fileSet.metadata.get(file) || (await fs.lstat(file))
+      const createdSourceDirs = new Set<string>()
+      const links: Array<Link> = []
+      const symlinkType = platform() === "win32" ? "junction" : "file"
 
-        const relative = path.relative(this.config.defaultDestination, getDestinationPath(file, fileSet))
-        const dest = path.resolve(this.rootForAppFilesWithoutAsar, relative)
+      await BluebirdPromise.map(
+        fileSet.files,
+        async (file, i) => {
+          const transformedData = fileSet.transformedFiles?.get(i)
+          const stat = fileSet.metadata.get(file)!
+          const destFile = getDestinationPath(file, fileSet)
 
-        matchUnpacker(file, dest, metadata)
-        taskManager.addTask(writeFileOrSymlink({ transformedData, file, destination: dest, stat: metadata, fileSet }))
+          matchUnpacker(file, destFile, stat)
 
-        if (taskManager.tasks.length > MAX_FILE_REQUESTS) {
-          await taskManager.awaitTasks()
-        }
-      }
+          if (!stat.isFile() && !stat.isSymbolicLink()) {
+            return
+          }
+
+          const dir = path.dirname(destFile)
+          if (!createdSourceDirs.has(dir)) {
+            await mkdir(dir, { recursive: true })
+            createdSourceDirs.add(dir)
+          }
+
+          // const destFile = file.replace(file, destination)
+          copiedFiles.add(destFile)
+          if (transformedData != null) {
+            return fs.writeFile(destFile, transformedData, { mode: stat.mode })
+          } else if (stat.isFile()) {
+            return this.fileCopier.copy(file, destFile, stat)
+          } else {
+            links.push({ file: destFile, link: await readlink(file) })
+            return
+          }
+        },
+        CONCURRENCY
+      ).then(() => BluebirdPromise.map(links, it => symlink(it.link, it.file, symlinkType), CONCURRENCY))
+      // for (let i = 0; i < fileSet.files.length; i++) {
+      //   const file = fileSet.files[i]
+      //   const transformedData = fileSet.transformedFiles?.get(i)
+      //   const metadata = fileSet.metadata.get(file)!
+
+      //   const relative = path.relative(this.config.defaultDestination, getDestinationPath(file, fileSet))
+      //   const dest = path.resolve(this.rootForAppFilesWithoutAsar, relative)
+
+      //   matchUnpacker(file, dest, metadata)
+      //   // taskManager.addTask(
+      //   await writeFileOrSymlink({ transformedData, file, destination: dest, stat: metadata, fileSet })
+      //   // )
+
+      //   if (taskManager.tasks.length > MAX_FILE_REQUESTS) {
+      //     await taskManager.awaitTasks()
+      //   }
+      // }
     }
     await taskManager.awaitTasks()
     return {
@@ -151,12 +202,25 @@ export class AsarPackager {
     }
   }
 
-  private async copyFileOrData(fileCopier: FileCopier, data: string | Buffer | undefined, source: string, destination: string, stat: fs.Stats) {
+  private async copyFileOrData(data: string | Buffer | undefined, source: string, destination: string, stat: fs.Stats) {
+    // const sourceStat = stat || fs.statSync(source)
+    // if (sourceStat.isSymbolicLink()) {
+    //   return copyDir(source, destination)
+    // }
+    // if (sourceStat.isSymbolicLink()) {
+    //   const link = fs.readlinkSync(source)
+    //   // const symlinkTarget = path.resolve(this.rootForAppFilesWithoutAsar, realPathRelative)
+    //   // await this.copyFileOrData(undefined, source, symlinkTarget, stat)
+    //   const target = path.relative(path.dirname(destination), link)
+    //   fsNode.symlinkSync(target, destination)
+    //   return
+    // }
     await fs.mkdir(path.dirname(destination), { recursive: true })
-    if (data) {
+    if (data != null) {
       return fs.writeFile(destination, data, { mode: stat.mode })
     } else {
-      return fileCopier.copy(source, destination, stat)
+      // return fs.copyFile(source, destination)
+      return this.fileCopier.copy(source, destination, stat)
     }
   }
 }

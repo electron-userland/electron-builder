@@ -1,0 +1,4 @@
+framework module Hello {
+  header "HelloFramework.h"
+  export *
+}
