@@ -16,14 +16,12 @@ import { detectUnpackedDirs } from "./unpackDetector"
 export class AsarPackager {
   private readonly outFile: string
   private rootForAppFilesWithoutAsar!: string
-  private readonly tmpDir = new tempFile.TmpDir()
   private readonly fileCopier = new FileCopier()
-
-  private readonly cleanup = () => {
-    this.tmpDir.cleanupSync()
-  }
+  private readonly tmpDir: tempFile.TmpDir
+  private readonly cancellationToken: CancellationToken
 
   constructor(
+    readonly packager: PlatformPackager<any>,
     private readonly config: {
       defaultDestination: string
       resourcePath: string
@@ -32,12 +30,12 @@ export class AsarPackager {
     }
   ) {
     this.outFile = path.join(config.resourcePath, `app.asar`)
+    this.tmpDir = packager.info.tempDirManager
+    this.cancellationToken = packager.info.cancellationToken
   }
 
-  async pack(fileSets: Array<ResolvedFileSet>, packager: PlatformPackager<any>) {
-    this.rootForAppFilesWithoutAsar = await packager.info.tempDirManager.getTempDir({ prefix: "asar-app" })
-    const cancellationToken = packager.info.cancellationToken
-    cancellationToken.addListener("cancel", this.cleanup)
+  async pack(fileSets: Array<ResolvedFileSet>) {
+    this.rootForAppFilesWithoutAsar = await this.tmpDir.getTempDir({ prefix: "asar-app" })
 
     const orderedFileSets = [
       // Write dependencies first to minimize offset changes to asar header
@@ -47,13 +45,10 @@ export class AsarPackager {
       fileSets[0],
     ].map(orderFileSet)
 
-    const { unpackedPaths, copiedFiles } = await this.detectAndCopy(orderedFileSets, cancellationToken)
+    const { unpackedPaths, copiedFiles } = await this.detectAndCopy(orderedFileSets)
     const unpackGlob = unpackedPaths.length > 1 ? `{${unpackedPaths.join(",")}}` : unpackedPaths.pop()
 
     await this.executeElectronAsar(copiedFiles, unpackGlob)
-
-    this.cleanup()
-    cancellationToken.removeListener("cancel", this.cleanup)
   }
 
   private async executeElectronAsar(copiedFiles: string[], unpackGlob: string | undefined) {
@@ -83,8 +78,8 @@ export class AsarPackager {
     console.log = consoleLogger
   }
 
-  private async detectAndCopy(fileSets: ResolvedFileSet[], cancellationToken: CancellationToken) {
-    const taskManager = new AsyncTaskManager(cancellationToken)
+  private async detectAndCopy(fileSets: ResolvedFileSet[]) {
+    const taskManager = new AsyncTaskManager(this.cancellationToken)
     const unpackedPaths = new Set<string>()
     const copiedFiles = new Set<string>()
 
