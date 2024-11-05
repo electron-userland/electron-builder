@@ -2,4 +2,4 @@ The top-level [mac](configuration.md#mac) key contains set of options instructin
 
 ## Configuration
 
-{!./app-builder-lib.Interface.MacConfiguration.md!}
+  {!./app-builder-lib.Interface.MacConfiguration.md!}

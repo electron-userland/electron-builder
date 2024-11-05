@@ -52,4 +52,4 @@ If you use self-signed certificate, you need to add it to "Trusted People". See 
 
 ## Configuration
 
-{!./app-builder-lib.Interface.AppXOptions.md!}
+  {!./app-builder-lib.Interface.AppXOptions.md!}

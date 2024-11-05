@@ -96,4 +96,4 @@ VirtualBox is not supported by electron-builder for now, so, you need to setup b
 
 ## Configuration
 
-{!./app-builder-lib.Interface.WindowsConfiguration.md!}
+  {!./app-builder-lib.Interface.WindowsConfiguration.md!}

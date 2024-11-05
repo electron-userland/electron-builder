@@ -17,8 +17,10 @@
     "@electron-builder/test": "0.0.0"
   },
   "changesets": [
+    "dull-eyes-check",
     "early-penguins-share",
     "fluffy-wolves-smile",
+    "fresh-camels-smash",
     "gold-parents-complain",
     "khaki-schools-provide",
     "lucky-tigers-do",
@@ -30,6 +32,8 @@
     "sixty-dogs-deliver",
     "slimy-chairs-buy",
     "slow-zoos-mate",
+    "small-peas-drop",
+    "smooth-camels-decide",
     "sour-points-refuse",
     "stupid-buses-compete",
     "sweet-masks-sparkle",

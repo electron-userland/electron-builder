@@ -56,4 +56,4 @@ npx @electron/fuses read --app /Applications/Foo.app
 ```
 
 ## Typedoc
-{!./app-builder-lib.Interface.FuseOptionsV1.md!}
+  {!./app-builder-lib.Interface.FuseOptionsV1.md!}

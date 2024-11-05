@@ -213,4 +213,4 @@ Emitted on progress.
 
 ## UpdateInfo
 
-{!./electron-updater.Interface.UpdateInfo.md!}
+  {!./electron-updater.Interface.UpdateInfo.md!}

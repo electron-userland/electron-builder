@@ -1,3 +1,14 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v26.0.0-alpha.4...v) (2024-11-01)
+
+
+### Bug Fixes
+
+* `cscIKeyPassword` must support empty string arguments ([#8653](https://github.com/electron-userland/electron-builder/issues/8653)) ([796e1a0](https://github.com/electron-userland/electron-builder/commit/796e1a072a2bbe97ced6f4be05325c704fc04b7f))
+* **asar:** check ResolvedFileSet src when verifying symlinks to be within project directory ([#8654](https://github.com/electron-userland/electron-builder/issues/8654)) ([9e11358](https://github.com/electron-userland/electron-builder/commit/9e11358fc28249675cd7ec4f7037408cc18dfa8a))
+* **win:** add required `publisherName` field to Azure Trusted Signing options ([#8650](https://github.com/electron-userland/electron-builder/issues/8650)) ([f84a083](https://github.com/electron-userland/electron-builder/commit/f84a0831d1d02b782ad07d4f7feff79d96dd45ec))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v26.0.0-alpha.3...v) (2024-10-28)
 
 
