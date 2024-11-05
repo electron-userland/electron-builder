@@ -84,7 +84,7 @@ importers:
         specifier: ~2.6.5
         version: 2.6.5
       '@electron/asar':
-        specifier: ^3.2.13
+        specifier: 3.2.13
         version: 3.2.13
       '@electron/fuses':
         specifier: ^1.8.0
@@ -8660,7 +8660,7 @@ snapshots:
 
   '@types/yauzl@2.10.3':
     dependencies:
-      '@types/node': 20.16.10
+      '@types/node': 22.7.4
     optional: true
 
   '@typescript-eslint/eslint-plugin@8.7.0(@typescript-eslint/parser@8.7.0(eslint@9.11.1)(typescript@5.6.2))(eslint@9.11.1)(typescript@5.6.2)':
