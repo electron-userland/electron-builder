@@ -117,29 +117,23 @@ Detected automatically using:
 # Publishers
 
 ## Bitbucket
-{!./builder-util-runtime.Interface.BitbucketOptions.md!}
+  {!./builder-util-runtime.Interface.BitbucketOptions.md!}
 
 ## Github
-
-{!./builder-util-runtime.Interface.GithubOptions.md!}
+  {!./builder-util-runtime.Interface.GithubOptions.md!}
 
 ## Keygen
-
-{!./builder-util-runtime.Interface.KeygenOptions.md!}
+  {!./builder-util-runtime.Interface.KeygenOptions.md!}
 
 ## S3
-
-{!./builder-util-runtime.Interface.S3Options.md!}
+  {!./builder-util-runtime.Interface.S3Options.md!}
 
 ## Snap Store
-
-{!./builder-util-runtime.Interface.SnapStoreOptions.md!}
+  {!./builder-util-runtime.Interface.SnapStoreOptions.md!}
 
 ## Spaces
-
-{!./builder-util-runtime.Interface.SpacesOptions.md!}
+  {!./builder-util-runtime.Interface.SpacesOptions.md!}
 
 ## BYO Generic (create-your-own)
-
 (And maybe submit it upstream in a PR!)
-{!./builder-util-runtime.Interface.GenericServerOptions.md!}
+  {!./builder-util-runtime.Interface.GenericServerOptions.md!}

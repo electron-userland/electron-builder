@@ -24,19 +24,23 @@ import { isBuildCacheEnabled } from "./util/flags"
 import { time } from "./util/timer"
 import { getWindowsVm, VmManager } from "./vm/vm"
 import { execWine } from "./wine"
+import { SignManager } from "./codeSign/signManager"
 
 export class WinPackager extends PlatformPackager<WindowsConfiguration> {
   _iconPath = new Lazy(() => this.getOrConvertIcon("ico"))
 
   readonly vm = new Lazy<VmManager>(() => (process.platform === "win32" ? Promise.resolve(new VmManager()) : getWindowsVm(this.debugLogger)))
 
-  readonly signtoolManager = new Lazy<WindowsSignToolManager>(() => Promise.resolve(new WindowsSignToolManager(this)))
-  readonly azureSignManager = new Lazy(() =>
-    Promise.resolve(new WindowsSignAzureManager(this)).then(async manager => {
-      await manager.initializeProviderModules()
-      return manager
-    })
-  )
+  readonly signingManager = new Lazy(async () => {
+    let manager: SignManager
+    if (this.platformSpecificBuildOptions.azureSignOptions != null) {
+      manager = new WindowsSignAzureManager(this)
+    } else {
+      manager = new WindowsSignToolManager(this)
+    }
+    await manager.initialize()
+    return manager
+  })
 
   get isForceCodeSigningVerification(): boolean {
     return this.platformSpecificBuildOptions.verifyUpdateCodeSignature !== false
@@ -174,7 +178,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     })
 
     const config = this.config
-    const cscInfoForCacheDigest = !isBuildCacheEnabled() || isCI || config.electronDist != null ? null : await (await this.signtoolManager.value).cscInfo.value
+    const cscInfoForCacheDigest = !isBuildCacheEnabled() || isCI || config.electronDist != null ? null : await (await this.signingManager.value).cscInfo.value
     let buildCacheManager: BuildCacheManager | null = null
     // resources editing doesn't change executable for the same input and executed quickly - no need to complicate
     if (cscInfoForCacheDigest != null) {

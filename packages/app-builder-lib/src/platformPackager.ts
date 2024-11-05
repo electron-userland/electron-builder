@@ -505,7 +505,6 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
           }
 
           await new AsarPackager({
-            appDir,
             defaultDestination,
             resourcePath,
             options: asarOptions,

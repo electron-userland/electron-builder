@@ -1,0 +1,50 @@
+name: 'Netlify Deploy - PR'
+
+on:
+  pull_request:
+    types: ['opened', 'edited', 'synchronize']
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  statuses: write
+
+jobs:
+  deploy:
+    name: 'Deploy PR'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code repository
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
+
+      - name: Install deps and audit
+        uses: ./.github/actions/pnpm
+
+      - name: Build typdoc site
+        run: pnpm docs:all
+
+      # Sets the branch name as environment variable
+      - uses: nelonoel/branch-name@v1.0.1
+      - uses: jsmrcaga/action-netlify-deploy@v2.3.0
+        with:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+          deploy_alias: ${{ env.BRANCH_NAME }}
+          install_command: "echo Skipping installing the dependencies"
+          build_command: "echo Skipping building the web files"
+          debug: true
+          build_directory: "site"
+          monorepo_package: "electron-builder"
+
+      # Creates a status check with link to preview
+      - name: Set Status check on commit
+        uses: guibranco/github-status-action-v2@v1.1.13
+        with:
+          authToken: ${{ secrets.GITHUB_TOKEN }}
+          state: success
+          context: Netlify Documentation Site preview
+          description: Development - Click "details"
+          target_url: ${{ env.NETLIFY_PREVIEW_URL }}
+          sha: ${{github.event.pull_request.head.sha || github.sha}}

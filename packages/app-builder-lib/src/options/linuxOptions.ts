@@ -122,8 +122,18 @@ export interface LinuxTargetSpecificOptions extends CommonLinuxOptions, TargetSp
   readonly vendor?: string | null
   readonly maintainer?: string | null
 
+  /**
+   * File path to script to be passed to FPM for `--after-install` arg.
+   */
   readonly afterInstall?: string | null
+  /**
+   * File path to script to be passed to FPM for `--after-remove` arg.
+   */
   readonly afterRemove?: string | null
+  /**
+   * File path to custom AppArmor profile (Ubuntu 24+)
+   */
+  readonly appArmorProfile?: string | null
 
   /**
    * *Advanced only* The [fpm](https://fpm.readthedocs.io/en/latest/cli-reference.html) options.

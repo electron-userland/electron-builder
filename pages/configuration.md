@@ -36,7 +36,7 @@ Env file `electron-builder.env` in the current dir ([example](https://github.com
 
 ### Common Configuration
 
-{!./app-builder-lib.Interface.CommonConfiguration.md!}
+  {!./app-builder-lib.Interface.CommonConfiguration.md!}
 
 ---
 
@@ -46,12 +46,12 @@ Following options can be set also per platform (top-level keys [mac](mac.md), [l
 
 ## Base Configuration
 
-{!./app-builder-lib.Interface.PlatformSpecificBuildOptions.md!}
+  {!./app-builder-lib.Interface.PlatformSpecificBuildOptions.md!}
 
 ## Metadata
 Some standard fields should be defined in the `package.json`.
 
-{!./app-builder-lib.Interface.Metadata.md!}
+  {!./app-builder-lib.Interface.Metadata.md!}
 
 ## Proton Native
 
@@ -61,4 +61,6 @@ Currently, only macOS and Linux supported.
 ## Build Version Management
 `CFBundleVersion` (macOS) and `FileVersion` (Windows) will be set automatically to `version.build_number` on CI server (Travis, AppVeyor, CircleCI and Bamboo supported).
 
-{!./hooks.md!}
+## Build Hooks
+
+  {!./hooks.md!}
