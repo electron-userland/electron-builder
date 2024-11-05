@@ -231,7 +231,7 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
    *
    * For security reasons it is recommended to use the first option (see https://github.com/electron-userland/electron-builder/issues/7859)
    */
-  readonly notarize?: boolean | null
+  readonly notarize?: boolean
 }
 
 export interface DmgOptions extends TargetSpecificOptions {
