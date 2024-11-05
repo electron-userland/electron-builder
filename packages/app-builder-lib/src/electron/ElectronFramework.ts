@@ -185,22 +185,28 @@ export async function createElectronFrameworkSupport(configuration: Configuratio
 async function unpack(prepareOptions: PrepareApplicationStageDirectoryOptions, options: ElectronDownloadOptions, distMacOsAppName: string) {
   const { packager, appOutDir, platformName } = prepareOptions
 
-  let customElectronDist = packager.config.electronDist
-  try {
-    customElectronDist = await resolveFunction(packager.appInfo.type, customElectronDist, "electronDist")
-  } catch (_e: any) {
-    // ignored. We already log in `resolveFunction` if it fails, and we ignore here because electronDist could just be a folder path (backward compatibility)
+  const electronDist = packager.config.electronDist || null
+  let dist: string | null = null
+  // check if supplied a custom electron distributable/fork/predownloaded directory
+  if (typeof electronDist === "string") {
+    let resolvedDist: string
+    // check if custom electron hook file for import resolving
+    if ((await statOrNull(electronDist))?.isFile()) {
+      const customElectronDist: any = await resolveFunction(packager.appInfo.type, electronDist, "electronDist")
+      resolvedDist = await Promise.resolve(typeof customElectronDist === "function" ? customElectronDist(prepareOptions) : customElectronDist)
+    } else {
+      resolvedDist = electronDist
+    }
+    dist = path.isAbsolute(resolvedDist) ? resolvedDist : path.resolve(packager.projectDir, resolvedDist)
   }
-  let dist: string | undefined | null = await Promise.resolve(typeof customElectronDist === "function" ? customElectronDist(prepareOptions) : customElectronDist)
   if (dist != null) {
     const zipFile = `electron-v${options.version}-${platformName}-${options.arch}.zip`
-    const resolvedDist = path.isAbsolute(dist) ? dist : path.resolve(packager.projectDir, dist)
-    if ((await statOrNull(path.join(resolvedDist, zipFile))) != null) {
-      log.info({ resolvedDist, zipFile }, "resolved electronDist")
-      options.cache = resolvedDist
+    if ((await statOrNull(path.join(dist, zipFile))) != null) {
+      log.info({ dist, zipFile }, "resolved electronDist")
+      options.cache = dist
       dist = null
     } else {
-      log.warn({ electronDist: log.filePath(resolvedDist), expectedFile: zipFile }, "custom electronDist provided but no assets found")
+      log.info({ electronDist: log.filePath(dist), expectedFile: zipFile }, "custom electronDist provided but no zip found; assuming unpacked electron directory.")
     }
   }
 

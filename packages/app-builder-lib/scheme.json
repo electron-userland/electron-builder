@@ -6097,7 +6097,10 @@
     },
     "WindowsAzureSigningConfiguration": {
       "additionalProperties": {
-        "type": "string"
+        "type": [
+          "null",
+          "string"
+        ]
       },
       "properties": {
         "certificateProfileName": {
@@ -6111,12 +6114,32 @@
         "endpoint": {
           "description": "The Trusted Signing Account endpoint. The URI value must have a URI that aligns to the\nregion your Trusted Signing Account and Certificate Profile you are specifying were created\nin during the setup of these resources.\n\nTranslates to field: Endpoint\n\nRequires one of environment variable configurations for authenticating to Microsoft Entra ID per [Microsoft's documentation](https://learn.microsoft.com/en-us/dotnet/api/azure.identity.environmentcredential?view=azure-dotnet#definition)",
           "type": "string"
+        },
+        "fileDigest": {
+          "default": "SHA256",
+          "description": "The File Digest for signing each file. Translates to field: FileDigest",
+          "type": "string"
+        },
+        "publisherName": {
+          "description": "[The publisher name](https://github.com/electron-userland/electron-builder/issues/1187#issuecomment-278972073), exactly as in your code signed certificate. Several names can be provided.",
+          "type": "string"
+        },
+        "timestampDigest": {
+          "default": "SHA256",
+          "description": "The Timestamp Digest. Translates to field: TimestampDigest",
+          "type": "string"
+        },
+        "timestampRfc3161": {
+          "default": "http://timestamp.acs.microsoft.com",
+          "description": "The Timestamp rfc3161 server. Translates to field: TimestampRfc3161",
+          "type": "string"
         }
       },
       "required": [
         "certificateProfileName",
         "codeSigningAccountName",
-        "endpoint"
+        "endpoint",
+        "publisherName"
       ],
       "type": "object"
     },
@@ -7068,7 +7091,7 @@
           ]
         }
       ],
-      "description": "The function (or path to file or module id) to be run when staging the electron artifact environment.\nReturns the path to custom Electron build (e.g. `~/electron/out/R`) or folder of electron zips. Zip files must follow the pattern `electron-v${version}-${platformName}-${arch}.zip`, otherwise it will be assumed to be an unpacked Electron app directory"
+      "description": "The function (or path to file or module id) to be run when staging the electron artifact environment.\nReturns the path to custom Electron build (e.g. `~/electron/out/R`) or folder of electron zips.\n\nZip files must follow the pattern `electron-v${version}-${platformName}-${arch}.zip`, otherwise it will be assumed to be an unpacked Electron app directory"
     },
     "electronDownload": {
       "$ref": "#/definitions/ElectronDownloadOptions",

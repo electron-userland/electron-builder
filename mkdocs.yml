@@ -68,9 +68,12 @@ markdown_extensions:
   - pymdownx.tilde
   - toc:
       permalink: true
+      toc_depth: 5
   - markdown_include.include:
       base_path      : './docs/'
       encoding       : 'utf-8'
+      # headingOffset  : 2
+      inheritHeadingDepth : true
 
 plugins:
   - search
