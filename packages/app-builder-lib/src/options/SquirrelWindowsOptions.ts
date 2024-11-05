@@ -41,8 +41,8 @@ export interface SquirrelWindowsOptions extends TargetSpecificOptions {
   readonly useAppIdAsId?: boolean
 
   /**
-   * The custom squirrel.windows.exe path. If not specified will use the Squirrel.Windows that is shipped with
-   *  lectron-installer(https://github.com/electron/windows-installer/tree/main/vendor)
+   * The custom squirrel.windows.exe path. If not specified will use the Squirrel.Windows that is shipped with electron-installer(https://github.com/electron/windows-installer/tree/main/vendor).
+   * After https://github.com/electron-userland/electron-builder-binaries/pull/56 merged, will add `electron-builder-binaries` to get the latest version of squirrel.
    */
   readonly customSquirrelExePath?: string
 
