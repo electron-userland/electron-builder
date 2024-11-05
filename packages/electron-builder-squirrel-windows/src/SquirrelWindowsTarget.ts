@@ -109,7 +109,10 @@ export default class SquirrelWindowsTarget extends Target {
     const appInfo = packager.appInfo
     const projectUrl = await appInfo.computePackageUrl()
     const appName = this.appName
-    const vendorDirectory = this.options.vendorDirectory
+    //  If not specified will use the Squirrel.Windows that is shipped with
+    //  electron-installer(https://github.com/electron/windows-installer/tree/main/vendor)
+    // After https://github.com/electron-userland/electron-builder-binaries/pull/56 merged, we can use `electron-builder-binaries` to get the latest version of squirrel.
+    const vendorDirectory = this.options.customSquirrelExePath
     const options: SquirrelOptions = {
       name: appName,
       appId: this.options.useAppIdAsId ? appInfo.id : appName,
