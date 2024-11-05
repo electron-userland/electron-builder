@@ -126,15 +126,15 @@ export class AsarPackager {
         throw new Error(`Cannot copy file (${path.basename(file)}) symlinked to file (${path.basename(realPathFile)}) outside the package as that violates asar security integrity`)
       }
 
-      // not a symlink
+      // not a symlink, copy directly
       if (file === realPathFile) {
         return this.fileCopier.copy(file, destFile, stat)
       }
 
-      // must be a symlink
+      // okay, it must be a symlink. evaluate link to be relative to source file in asar
       let link = await readlink(file)
       if (path.isAbsolute(link)) {
-        link = path.relative(fileSet.src, link)
+        link = path.relative(path.dirname(file), link)
       }
 
       links.push({ file: destFile, link })
