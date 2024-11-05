@@ -16,9 +16,13 @@ import { detectUnpackedDirs } from "./unpackDetector"
 /** @internal */
 export class AsarPackager {
   private readonly outFile: string
-  private readonly rootForAppFilesWithoutAsar: string
+  private rootForAppFilesWithoutAsar!: string
   private readonly tmpDir = new tempFile.TmpDir()
   private readonly fileCopier = new FileCopier()
+
+  private readonly cleanup = () => {
+    this.tmpDir.cleanupSync()
+  }
 
   constructor(
     private readonly config: {
@@ -29,11 +33,11 @@ export class AsarPackager {
     }
   ) {
     this.outFile = path.join(config.resourcePath, `app.asar`)
-    this.rootForAppFilesWithoutAsar = path.join(config.resourcePath, "app")
   }
 
-  async pack(fileSets: Array<ResolvedFileSet>, _packager: PlatformPackager<any>) {
-    const cancellationToken = _packager.info.cancellationToken
+  async pack(fileSets: Array<ResolvedFileSet>, packager: PlatformPackager<any>) {
+    this.rootForAppFilesWithoutAsar = await packager.info.tempDirManager.getTempDir({ prefix: "asar-app" })
+    const cancellationToken = packager.info.cancellationToken
     cancellationToken.addListener("cancel", this.cleanup)
 
     const orderedFileSets = [
@@ -78,13 +82,6 @@ export class AsarPackager {
     }
     await createPackageWithOptions(this.rootForAppFilesWithoutAsar, this.outFile, options)
     console.log = consoleLogger
-  }
-
-  private readonly cleanup = () => {
-    if (statOrNull(this.rootForAppFilesWithoutAsar) != null) {
-      fsNode.rmSync(this.rootForAppFilesWithoutAsar, { recursive: true })
-    }
-    this.tmpDir.cleanupSync()
   }
 
   private async detectAndCopy(fileSets: ResolvedFileSet[], cancellationToken: CancellationToken) {
@@ -145,7 +142,6 @@ export class AsarPackager {
       if (path.isAbsolute(link)) {
         link = path.relative(path.dirname(file), link)
       }
-
       links.push({ file: destination, link })
     }
 
@@ -159,7 +155,9 @@ export class AsarPackager {
         const file = fileSet.files[i]
         const transformedData = fileSet.transformedFiles?.get(i)
         const stat = fileSet.metadata.get(file)!
-        const destination = getDestinationPath(file, fileSet)
+
+        const relative = path.relative(this.config.defaultDestination, getDestinationPath(file, fileSet))
+        const destination = path.resolve(this.rootForAppFilesWithoutAsar, relative)
 
         matchUnpacker(file, destination, stat)
         taskManager.addTask(writeFileOrProcessSymlink({ transformedData, file, destination, stat, fileSet }))
