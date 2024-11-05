@@ -2,4 +2,4 @@ The top-level [pkg](configuration.md#pkg) key contains set of options instructin
 
 ## Configuration
 
-{!./app-builder-lib.Interface.PkgOptions.md!}
+  {!./app-builder-lib.Interface.PkgOptions.md!}

@@ -1,3 +1,3 @@
 ## Configuration
 
-{!./app-builder-lib.Interface.MsiOptions.md!}
+  {!./app-builder-lib.Interface.MsiOptions.md!}

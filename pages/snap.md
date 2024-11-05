@@ -2,4 +2,4 @@ The top-level [snap](configuration.md#snap) key contains set of options instruct
 
 ## Configuration
 
-{!./app-builder-lib.Interface.SnapOptions.md!}
+  {!./app-builder-lib.Interface.SnapOptions.md!}

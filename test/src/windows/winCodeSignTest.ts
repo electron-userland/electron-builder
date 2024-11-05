@@ -121,6 +121,7 @@ test.ifAll.ifNotCiMac(
       forceCodeSigning: true,
       win: {
         azureSignOptions: {
+          publisherName: "test",
           endpoint: "https://weu.codesigning.azure.net/",
           certificateProfileName: "profilenamehere",
           codeSigningAccountName: "codesigningnamehere",
