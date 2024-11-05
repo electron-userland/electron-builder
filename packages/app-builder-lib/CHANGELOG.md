@@ -1,5 +1,34 @@
 # app-builder-lib
 
+## 26.0.0-alpha.5
+
+### Patch Changes
+
+- [#8650](https://github.com/electron-userland/electron-builder/pull/8650) [`f84a0831`](https://github.com/electron-userland/electron-builder/commit/f84a0831d1d02b782ad07d4f7feff79d96dd45ec) Thanks [@mmaietta](https://github.com/mmaietta)! - fix(win): add required `publisherName` field to Azure Trusted Signing
+
+- [#8653](https://github.com/electron-userland/electron-builder/pull/8653) [`796e1a07`](https://github.com/electron-userland/electron-builder/commit/796e1a072a2bbe97ced6f4be05325c704fc04b7f) Thanks [@IsaacAderogba](https://github.com/IsaacAderogba)! - fix: cscIKeyPassword must support empty string arguments
+
+- [#8639](https://github.com/electron-userland/electron-builder/pull/8639) [`28006623`](https://github.com/electron-userland/electron-builder/commit/28006623a1a344007e283cdc65ce1a81f42a136d) Thanks [@mmaietta](https://github.com/mmaietta)! - chore: refactor electron dist logic to avoid unnecessary console logs
+
+- [#8654](https://github.com/electron-userland/electron-builder/pull/8654) [`9e11358f`](https://github.com/electron-userland/electron-builder/commit/9e11358fc28249675cd7ec4f7037408cc18dfa8a) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: check ResolvedFileSet src when verifying symlinks to be within project directory
+
+- Updated dependencies []:
+  - dmg-builder@26.0.0-alpha.5
+  - electron-builder-squirrel-windows@26.0.0-alpha.5
+
+## 26.0.0-alpha.4
+
+### Patch Changes
+
+- [#8627](https://github.com/electron-userland/electron-builder/pull/8627) [`2a3195d9`](https://github.com/electron-userland/electron-builder/commit/2a3195d99f42e9b4f70e5719525db046a327aeb7) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: add rfc3161 timestamp entry as default for azure signing to resolve Windows Defender alert
+
+- [#8632](https://github.com/electron-userland/electron-builder/pull/8632) [`645e2abd`](https://github.com/electron-userland/electron-builder/commit/645e2abd5ed604fe4f4d9475cf2cedf4fe78436c) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: only sign concurrently when using local signtool. azure can't be in parallel due to resources being locked during usage
+
+- Updated dependencies [[`dcd91a1f`](https://github.com/electron-userland/electron-builder/commit/dcd91a1f79be5bde7bb418b0eaa83d03f11d41fe)]:
+  - electron-publish@26.0.0-alpha.4
+  - dmg-builder@26.0.0-alpha.4
+  - electron-builder-squirrel-windows@26.0.0-alpha.4
+
 ## 26.0.0-alpha.3
 
 ### Patch Changes

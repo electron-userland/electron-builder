@@ -19,7 +19,6 @@ export class AsarPackager {
 
   constructor(
     private readonly config: {
-      appDir: string
       defaultDestination: string
       resourcePath: string
       options: AsarOptions
@@ -86,7 +85,14 @@ export class AsarPackager {
         return
       }
     }
-    const writeFileOrSymlink = async (transformedData: string | Buffer | undefined, source: string, destination: string, stat: fs.Stats) => {
+    const writeFileOrSymlink = async (options: { transformedData: string | Buffer | undefined; file: string; destination: string; stat: fs.Stats; fileSet: ResolvedFileSet }) => {
+      const {
+        transformedData,
+        file: source,
+        destination,
+        stat,
+        fileSet: { src: sourceDir },
+      } = options
       copiedFiles.add(destination)
 
       // If transformed data, skip symlink logic
@@ -100,8 +106,7 @@ export class AsarPackager {
         return this.copyFileOrData(undefined, source, destination, stat)
       }
 
-      const realPathRelative = path.relative(this.config.appDir, realPathFile)
-      const symlinkTarget = path.resolve(this.rootForAppFilesWithoutAsar, realPathRelative)
+      const realPathRelative = path.relative(sourceDir, realPathFile)
       const isOutsidePackage = realPathRelative.startsWith("..")
       if (isOutsidePackage) {
         log.error({ source: log.filePath(source), realPathFile: log.filePath(realPathFile) }, `unable to copy, file is symlinked outside the package`)
@@ -110,6 +115,7 @@ export class AsarPackager {
         )
       }
 
+      const symlinkTarget = path.resolve(this.rootForAppFilesWithoutAsar, realPathRelative)
       await this.copyFileOrData(undefined, source, symlinkTarget, stat)
       const target = path.relative(path.dirname(destination), symlinkTarget)
       fsNode.symlinkSync(target, destination)
@@ -130,7 +136,7 @@ export class AsarPackager {
         const dest = path.resolve(this.rootForAppFilesWithoutAsar, relative)
 
         matchUnpacker(file, dest, metadata)
-        taskManager.addTask(writeFileOrSymlink(transformedData, file, dest, metadata))
+        taskManager.addTask(writeFileOrSymlink({ transformedData, file, destination: dest, stat: metadata, fileSet }))
 
         if (taskManager.tasks.length > MAX_FILE_REQUESTS) {
           await taskManager.awaitTasks()

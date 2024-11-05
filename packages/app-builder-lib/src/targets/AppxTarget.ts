@@ -186,18 +186,8 @@ export default class AppXTarget extends Target {
 
   // https://github.com/electron-userland/electron-builder/issues/2108#issuecomment-333200711
   private async computePublisherName() {
-    const signtoolManager = await this.packager.signtoolManager.value
-    if ((await signtoolManager.cscInfo.value) == null) {
-      log.info({ reason: "Windows Store only build" }, "AppX is not signed")
-      return this.options.publisher || "CN=ms"
-    }
-
-    const certInfo = await signtoolManager.lazyCertInfo.value
-    const publisher = this.options.publisher || (certInfo == null ? null : certInfo.bloodyMicrosoftSubjectDn)
-    if (publisher == null) {
-      throw new Error("Internal error: cannot compute subject using certificate info")
-    }
-    return publisher
+    const signtoolManager = await this.packager.signingManager.value
+    return signtoolManager.computePublisherName(this, this.options.publisher)
   }
 
   private async writeManifest(outFile: string, arch: Arch, publisher: string, userAssets: Array<string>) {

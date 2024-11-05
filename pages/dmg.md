@@ -20,4 +20,4 @@ The contain file should have the following format:
 
 ## Configuration
 
-{!./app-builder-lib.Interface.DmgOptions.md!}
+  {!./app-builder-lib.Interface.DmgOptions.md!}
