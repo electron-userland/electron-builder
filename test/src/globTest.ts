@@ -110,14 +110,14 @@ test.ifNotWindows(
   )
 )
 
-test.ifNotWindows(
-  "symlinks everywhere w/ static framework", () =>
-  assertPack("test-app-symlink-framework",
+test.ifNotWindows("symlinks everywhere w/ static framework", () =>
+  assertPack(
+    "test-app-symlink-framework",
     {
       targets: Platform.LINUX.createTarget(DIR_TARGET),
       config: {
-        files: ["!hello-world"]
-      }
+        files: ["!hello-world"],
+      },
     },
     {
       isInstallDepsBefore: true,
@@ -125,7 +125,7 @@ test.ifNotWindows(
         await modifyPackageJson(projectDir, data => {
           data.dependencies = {
             debug: "4.1.1",
-            ...data.dependencies
+            ...data.dependencies,
           }
         })
         return fs.symlink(path.join(projectDir, "index.js"), path.join(projectDir, "foo.js"))
