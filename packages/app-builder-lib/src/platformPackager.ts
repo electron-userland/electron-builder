@@ -504,12 +504,12 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
             await transformFiles(transformer, fileSet)
           }
 
-          await new AsarPackager({
+          await new AsarPackager(this, {
             defaultDestination,
             resourcePath,
             options: asarOptions,
             unpackPattern: fileMatcher?.createFilter(),
-          }).pack(fileSets, this)
+          }).pack(fileSets)
         })
       )
     }
