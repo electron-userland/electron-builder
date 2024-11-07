@@ -85,7 +85,7 @@ test.ifDevOrLinuxCi("asarUnpack and files ignore", () => {
         const resourceDir = context.getResources(Platform.LINUX)
         await Promise.all([assertThat(path.join(resourceDir, "app.asar.unpacked", "node_modules/ffprobe-static/bin/darwin/x64/ffprobe")).doesNotExist()])
 
-        await verifyAsarFileTree(context.getResources(Platform.LINUX))
+        await verifyAsarFileTree(resourceDir)
       },
     }
   )
@@ -102,7 +102,38 @@ test.ifNotWindows(
         return fs.symlink(path.join(projectDir, "index.js"), path.join(projectDir, "foo.js"))
       },
       packed: async context => {
-        expect((await readAsar(path.join(context.getResources(Platform.LINUX), "app.asar"))).getFile("foo.js", false)).toMatchSnapshot()
+        const resources = context.getResources(Platform.LINUX)
+        expect((await readAsar(path.join(resources, "app.asar"))).getFile("foo.js", false)).toMatchSnapshot()
+        await verifyAsarFileTree(resources)
+      },
+    }
+  )
+)
+
+test.ifNotWindows("symlinks everywhere w/ static framework", () =>
+  assertPack(
+    "test-app-symlink-framework",
+    {
+      targets: Platform.LINUX.createTarget(DIR_TARGET),
+      config: {
+        files: ["!hello-world"],
+      },
+    },
+    {
+      isInstallDepsBefore: true,
+      projectDirCreated: async projectDir => {
+        await modifyPackageJson(projectDir, data => {
+          data.dependencies = {
+            debug: "4.1.1",
+            ...data.dependencies,
+          }
+        })
+        return fs.symlink(path.join(projectDir, "index.js"), path.join(projectDir, "foo.js"))
+      },
+      packed: async context => {
+        const resources = context.getResources(Platform.LINUX)
+        expect((await readAsar(path.join(resources, "app.asar"))).getFile("foo.js", false)).toMatchSnapshot()
+        await verifySmartUnpack(resources)
       },
     }
   )
@@ -120,7 +151,8 @@ test.ifNotWindows(
         await outputFile(path.join(tempDir, "foo"), "data")
         await fs.symlink(tempDir, path.join(projectDir, "o-dir"))
       },
-    }
+    },
+    error => expect(error.message).toContain("violates asar security integrity")
   )
 )
 
