@@ -9854,6 +9854,117 @@ exports[`symlinks everywhere w/ static framework 3`] = `
     "foo.js": {
       "link": "index.js",
     },
+    "hello-world": {
+      "files": {
+        "hello-world-framework.sh": {
+          "size": "<size>",
+          "unpacked": true,
+        },
+        "lib": {
+          "files": {
+            "Release": {
+              "files": {
+                "Hello.framework": {
+                  "files": {
+                    "Headers": {
+                      "link": "hello-world/lib/Release/Hello.framework/Versions/Current/Headers",
+                    },
+                    "Hello": {
+                      "link": "hello-world/lib/Release/Hello.framework/Versions/Current/Hello",
+                    },
+                    "Info.plist": {
+                      "link": "hello-world/lib/Release/Hello.framework/Versions/Current/Info.plist",
+                    },
+                    "Modules": {
+                      "link": "hello-world/lib/Release/Hello.framework/Versions/Current/Modules",
+                    },
+                    "Versions": {
+                      "files": {
+                        "A": {
+                          "files": {
+                            "Headers": {
+                              "files": {
+                                "HelloFramework.h": {
+                                  "size": "<size>",
+                                  "unpacked": true,
+                                },
+                              },
+                            },
+                            "Hello": {
+                              "size": "<size>",
+                              "unpacked": true,
+                            },
+                            "Info.plist": {
+                              "size": "<size>",
+                              "unpacked": true,
+                            },
+                            "Modules": {
+                              "files": {
+                                "Hello.abi.json": {
+                                  "size": "<size>",
+                                  "unpacked": true,
+                                },
+                                "Hello.swiftdoc": {
+                                  "size": "<size>",
+                                  "unpacked": true,
+                                },
+                                "Hello.swiftmodule": {
+                                  "files": {
+                                    "arm64.private.swiftinterface": {
+                                      "size": "<size>",
+                                      "unpacked": true,
+                                    },
+                                    "arm64.swiftinterface": {
+                                      "size": "<size>",
+                                      "unpacked": true,
+                                    },
+                                    "arm64.swiftmodule": {
+                                      "size": "<size>",
+                                      "unpacked": true,
+                                    },
+                                    "x86_64.private.swiftinterface": {
+                                      "size": "<size>",
+                                      "unpacked": true,
+                                    },
+                                    "x86_64.swiftinterface": {
+                                      "size": "<size>",
+                                      "unpacked": true,
+                                    },
+                                    "x86_64.swiftmodule": {
+                                      "size": "<size>",
+                                      "unpacked": true,
+                                    },
+                                  },
+                                },
+                                "Hello.swiftsourceinfo": {
+                                  "size": "<size>",
+                                  "unpacked": true,
+                                },
+                                "module.modulemap": {
+                                  "size": "<size>",
+                                  "unpacked": true,
+                                },
+                              },
+                            },
+                          },
+                        },
+                        "Current": {
+                          "link": "hello-world/lib/Release/Hello.framework/Versions/A",
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        "package.json": {
+          "size": "<size>",
+          "unpacked": true,
+        },
+      },
+    },
     "index.js": {
       "size": "<size>",
     },
@@ -10026,6 +10137,31 @@ exports[`symlinks everywhere w/ static framework 3`] = `
 exports[`symlinks everywhere w/ static framework 4`] = `
 [
   "app.asar",
+  "app.asar.unpacked/hello-world/hello-world-framework.sh",
+  {
+    "content": "{
+    "name": "stripped-native-dep",
+    "version": "1.0.0",
+    "description": "",
+    "author": "",
+    "license": "ISC"
+  }
+  ",
+    "name": "app.asar.unpacked/hello-world/package.json",
+  },
+  "app.asar.unpacked/hello-world/lib/Release/Hello.framework/Versions/A/Hello",
+  "app.asar.unpacked/hello-world/lib/Release/Hello.framework/Versions/A/Info.plist",
+  "app.asar.unpacked/hello-world/lib/Release/Hello.framework/Versions/A/Modules/Hello.abi.json",
+  "app.asar.unpacked/hello-world/lib/Release/Hello.framework/Versions/A/Modules/Hello.swiftdoc",
+  "app.asar.unpacked/hello-world/lib/Release/Hello.framework/Versions/A/Modules/Hello.swiftsourceinfo",
+  "app.asar.unpacked/hello-world/lib/Release/Hello.framework/Versions/A/Modules/module.modulemap",
+  "app.asar.unpacked/hello-world/lib/Release/Hello.framework/Versions/A/Modules/Hello.swiftmodule/arm64.private.swiftinterface",
+  "app.asar.unpacked/hello-world/lib/Release/Hello.framework/Versions/A/Modules/Hello.swiftmodule/arm64.swiftinterface",
+  "app.asar.unpacked/hello-world/lib/Release/Hello.framework/Versions/A/Modules/Hello.swiftmodule/arm64.swiftmodule",
+  "app.asar.unpacked/hello-world/lib/Release/Hello.framework/Versions/A/Modules/Hello.swiftmodule/x86_64.private.swiftinterface",
+  "app.asar.unpacked/hello-world/lib/Release/Hello.framework/Versions/A/Modules/Hello.swiftmodule/x86_64.swiftinterface",
+  "app.asar.unpacked/hello-world/lib/Release/Hello.framework/Versions/A/Modules/Hello.swiftmodule/x86_64.swiftmodule",
+  "app.asar.unpacked/hello-world/lib/Release/Hello.framework/Versions/A/Headers/HelloFramework.h",
 ]
 `;
 

@@ -116,7 +116,7 @@ test.ifNotWindows("symlinks everywhere w/ static framework", () =>
     {
       targets: Platform.LINUX.createTarget(DIR_TARGET),
       config: {
-        files: ["!hello-world"],
+        asarUnpack: "hello-world/**/*"
       },
     },
     {
