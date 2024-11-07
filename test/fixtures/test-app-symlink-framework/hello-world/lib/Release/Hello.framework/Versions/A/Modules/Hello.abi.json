@@ -1,0 +1,82 @@
+{
+  "ABIRoot": {
+    "kind": "Root",
+    "name": "Hello",
+    "printedName": "Hello",
+    "children": [
+      {
+        "kind": "TypeDecl",
+        "name": "Greeter",
+        "printedName": "Greeter",
+        "children": [
+          {
+            "kind": "Constructor",
+            "name": "init",
+            "printedName": "init()",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Greeter",
+                "printedName": "Hello.Greeter",
+                "usr": "s:5Hello7GreeterC"
+              }
+            ],
+            "declKind": "Constructor",
+            "usr": "s:5Hello7GreeterCACycfc",
+            "mangledName": "$s5Hello7GreeterCACycfc",
+            "moduleName": "Hello",
+            "declAttributes": [
+              "AccessControl"
+            ],
+            "init_kind": "Designated"
+          },
+          {
+            "kind": "Function",
+            "name": "hello",
+            "printedName": "hello()",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:5Hello7GreeterC5helloyyF",
+            "mangledName": "$s5Hello7GreeterC5helloyyF",
+            "moduleName": "Hello",
+            "declAttributes": [
+              "AccessControl"
+            ],
+            "funcSelfKind": "NonMutating"
+          }
+        ],
+        "declKind": "Class",
+        "usr": "s:5Hello7GreeterC",
+        "mangledName": "$s5Hello7GreeterC",
+        "moduleName": "Hello",
+        "declAttributes": [
+          "AccessControl"
+        ],
+        "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          }
+        ]
+      }
+    ],
+    "json_format_version": 8
+  },
+  "ConstValues": []
+}
