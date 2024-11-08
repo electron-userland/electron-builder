@@ -144,6 +144,12 @@ exports[`one-package 2`] = `
 }
 `;
 
+exports[`symlinks everywhere w/ static framework 1`] = `
+{
+  "mac": [],
+}
+`;
+
 exports[`two-package 1`] = `
 {
   "mac": [

@@ -3,8 +3,9 @@ import { Arch, createTargets, DIR_TARGET, Platform } from "electron-builder"
 import * as fs from "fs/promises"
 import * as path from "path"
 import { assertThat } from "../helpers/fileAssert"
-import { app, appThrows, assertPack, platform } from "../helpers/packTester"
+import { app, appThrows, assertPack, modifyPackageJson, platform } from "../helpers/packTester"
 import { verifySmartUnpack } from "../helpers/verifySmartUnpack"
+import { readAsar } from "app-builder-lib/out/asar/asar"
 
 test.ifMac.ifAll("two-package", () =>
   assertPack(
@@ -141,3 +142,33 @@ test.ifMac.ifAll(
 )
 
 test.ifWinCi("Build macOS on Windows is not supported", appThrows(platform(Platform.MAC)))
+
+test.ifMac("symlinks everywhere w/ static framework", () =>
+  assertPack(
+    "test-app-symlink-framework",
+    {
+      targets: Platform.MAC.createTarget(DIR_TARGET, Arch.x64),
+      config: {
+        asarUnpack: "hello-world/**/*"
+      },
+    },
+    {
+      signed: true,
+      isInstallDepsBefore: true,
+      projectDirCreated: async projectDir => {
+        await modifyPackageJson(projectDir, data => {
+          data.dependencies = {
+            debug: "4.1.1",
+            ...data.dependencies,
+          }
+        })
+        return fs.symlink(path.join(projectDir, "index.js"), path.join(projectDir, "foo.js"))
+      },
+      packed: async context => {
+        const resources = context.getResources(Platform.LINUX)
+        expect((await readAsar(path.join(resources, "app.asar"))).getFile("foo.js", false)).toMatchSnapshot()
+        await verifySmartUnpack(resources)
+      },
+    }
+  )
+)
