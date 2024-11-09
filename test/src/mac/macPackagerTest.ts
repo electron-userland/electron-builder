@@ -165,7 +165,7 @@ test.ifMac("symlinks everywhere w/ static framework", () =>
         return fs.symlink(path.join(projectDir, "index.js"), path.join(projectDir, "foo.js"))
       },
       packed: async context => {
-        const resources = context.getResources(Platform.LINUX)
+        const resources = context.getResources(Platform.MAC)
         expect((await readAsar(path.join(resources, "app.asar"))).getFile("foo.js", false)).toMatchSnapshot()
         await verifySmartUnpack(resources)
       },

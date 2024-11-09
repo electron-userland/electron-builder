@@ -150,6 +150,345 @@ exports[`symlinks everywhere w/ static framework 1`] = `
 }
 `;
 
+exports[`symlinks everywhere w/ static framework 2`] = `
+{
+  "link": "index.js",
+}
+`;
+
+exports[`symlinks everywhere w/ static framework 3`] = `
+{
+  "files": {
+    "foo.js": {
+      "link": "index.js",
+    },
+    "hello-world": {
+      "files": {
+        "hello-world-framework.sh": {
+          "size": "<size>",
+          "unpacked": true,
+        },
+        "lib": {
+          "files": {
+            "Release": {
+              "files": {
+                "Hello.framework": {
+                  "files": {
+                    "Headers": {
+                      "link": "hello-world/lib/Release/Hello.framework/Versions/Current/Headers",
+                      "unpacked": true,
+                    },
+                    "Hello": {
+                      "link": "hello-world/lib/Release/Hello.framework/Versions/Current/Hello",
+                      "unpacked": true,
+                    },
+                    "Info.plist": {
+                      "link": "hello-world/lib/Release/Hello.framework/Versions/Current/Info.plist",
+                      "unpacked": true,
+                    },
+                    "Modules": {
+                      "link": "hello-world/lib/Release/Hello.framework/Versions/Current/Modules",
+                      "unpacked": true,
+                    },
+                    "Versions": {
+                      "files": {
+                        "A": {
+                          "files": {
+                            "Headers": {
+                              "files": {
+                                "HelloFramework.h": {
+                                  "size": "<size>",
+                                  "unpacked": true,
+                                },
+                              },
+                            },
+                            "Hello": {
+                              "size": "<size>",
+                              "unpacked": true,
+                            },
+                            "Info.plist": {
+                              "size": "<size>",
+                              "unpacked": true,
+                            },
+                            "Modules": {
+                              "files": {
+                                "Hello.abi.json": {
+                                  "size": "<size>",
+                                  "unpacked": true,
+                                },
+                                "Hello.swiftdoc": {
+                                  "size": "<size>",
+                                  "unpacked": true,
+                                },
+                                "Hello.swiftmodule": {
+                                  "files": {
+                                    "arm64.private.swiftinterface": {
+                                      "size": "<size>",
+                                      "unpacked": true,
+                                    },
+                                    "arm64.swiftinterface": {
+                                      "size": "<size>",
+                                      "unpacked": true,
+                                    },
+                                    "arm64.swiftmodule": {
+                                      "size": "<size>",
+                                      "unpacked": true,
+                                    },
+                                    "x86_64.private.swiftinterface": {
+                                      "size": "<size>",
+                                      "unpacked": true,
+                                    },
+                                    "x86_64.swiftinterface": {
+                                      "size": "<size>",
+                                      "unpacked": true,
+                                    },
+                                    "x86_64.swiftmodule": {
+                                      "size": "<size>",
+                                      "unpacked": true,
+                                    },
+                                  },
+                                },
+                                "Hello.swiftsourceinfo": {
+                                  "size": "<size>",
+                                  "unpacked": true,
+                                },
+                                "module.modulemap": {
+                                  "size": "<size>",
+                                  "unpacked": true,
+                                },
+                              },
+                            },
+                          },
+                        },
+                        "Current": {
+                          "link": "hello-world/lib/Release/Hello.framework/Versions/A",
+                          "unpacked": true,
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        "package.json": {
+          "size": "<size>",
+          "unpacked": true,
+        },
+      },
+    },
+    "index.js": {
+      "size": "<size>",
+    },
+    "node_modules": {
+      "files": {
+        "debug": {
+          "files": {
+            "LICENSE": {
+              "size": "<size>",
+            },
+            "dist": {
+              "files": {
+                "debug.js": {
+                  "size": "<size>",
+                },
+              },
+            },
+            "package.json": {
+              "size": "<size>",
+            },
+            "src": {
+              "files": {
+                "browser.js": {
+                  "size": "<size>",
+                },
+                "common.js": {
+                  "size": "<size>",
+                },
+                "index.js": {
+                  "size": "<size>",
+                },
+                "node.js": {
+                  "size": "<size>",
+                },
+              },
+            },
+          },
+        },
+        "hello-world": {
+          "files": {
+            "hello-world-framework.sh": {
+              "size": "<size>",
+            },
+            "lib": {
+              "files": {
+                "Release": {
+                  "files": {
+                    "Hello.framework": {
+                      "files": {
+                        "Headers": {
+                          "link": "node_modules/hello-world/lib/Release/Hello.framework/Versions/Current/Headers",
+                        },
+                        "Hello": {
+                          "link": "node_modules/hello-world/lib/Release/Hello.framework/Versions/Current/Hello",
+                        },
+                        "Info.plist": {
+                          "link": "node_modules/hello-world/lib/Release/Hello.framework/Versions/Current/Info.plist",
+                        },
+                        "Modules": {
+                          "link": "node_modules/hello-world/lib/Release/Hello.framework/Versions/Current/Modules",
+                        },
+                        "Versions": {
+                          "files": {
+                            "A": {
+                              "files": {
+                                "Headers": {
+                                  "files": {
+                                    "HelloFramework.h": {
+                                      "executable": true,
+                                      "size": "<size>",
+                                    },
+                                  },
+                                },
+                                "Hello": {
+                                  "executable": true,
+                                  "size": "<size>",
+                                },
+                                "Info.plist": {
+                                  "executable": true,
+                                  "size": "<size>",
+                                },
+                                "Modules": {
+                                  "files": {
+                                    "Hello.abi.json": {
+                                      "executable": true,
+                                      "size": "<size>",
+                                    },
+                                    "Hello.swiftdoc": {
+                                      "executable": true,
+                                      "size": "<size>",
+                                    },
+                                    "Hello.swiftmodule": {
+                                      "files": {
+                                        "arm64.private.swiftinterface": {
+                                          "executable": true,
+                                          "size": "<size>",
+                                        },
+                                        "arm64.swiftinterface": {
+                                          "executable": true,
+                                          "size": "<size>",
+                                        },
+                                        "arm64.swiftmodule": {
+                                          "executable": true,
+                                          "size": "<size>",
+                                        },
+                                        "x86_64.private.swiftinterface": {
+                                          "executable": true,
+                                          "size": "<size>",
+                                        },
+                                        "x86_64.swiftinterface": {
+                                          "executable": true,
+                                          "size": "<size>",
+                                        },
+                                        "x86_64.swiftmodule": {
+                                          "executable": true,
+                                          "size": "<size>",
+                                        },
+                                      },
+                                    },
+                                    "Hello.swiftsourceinfo": {
+                                      "executable": true,
+                                      "size": "<size>",
+                                    },
+                                    "module.modulemap": {
+                                      "executable": true,
+                                      "size": "<size>",
+                                    },
+                                  },
+                                },
+                              },
+                            },
+                            "Current": {
+                              "link": "node_modules/hello-world/lib/Release/Hello.framework/Versions/A",
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            "package.json": {
+              "size": "<size>",
+            },
+          },
+        },
+        "ms": {
+          "files": {
+            "index.js": {
+              "size": "<size>",
+            },
+            "license.md": {
+              "size": "<size>",
+            },
+            "package.json": {
+              "size": "<size>",
+            },
+          },
+        },
+      },
+    },
+    "package.json": {
+      "size": "<size>",
+    },
+  },
+}
+`;
+
+exports[`symlinks everywhere w/ static framework 4`] = `
+[
+  "app.asar",
+  "electron.icns",
+  "app.asar.unpacked/hello-world/hello-world-framework.sh",
+  {
+    "content": "{
+    "name": "stripped-native-dep",
+    "version": "1.0.0",
+    "description": "",
+    "author": "",
+    "license": "ISC"
+  }
+  ",
+    "name": "app.asar.unpacked/hello-world/package.json",
+  },
+  "app.asar.unpacked/hello-world/lib/Release/Hello.framework/Headers",
+  "app.asar.unpacked/hello-world/lib/Release/Hello.framework/Hello",
+  "app.asar.unpacked/hello-world/lib/Release/Hello.framework/Info.plist",
+  "app.asar.unpacked/hello-world/lib/Release/Hello.framework/Modules",
+  "app.asar.unpacked/hello-world/lib/Release/Hello.framework/Versions/Current",
+  "app.asar.unpacked/hello-world/lib/Release/Hello.framework/Versions/A/Hello",
+  "app.asar.unpacked/hello-world/lib/Release/Hello.framework/Versions/A/Info.plist",
+  "app.asar.unpacked/hello-world/lib/Release/Hello.framework/Versions/A/_CodeSignature/CodeDirectory",
+  "app.asar.unpacked/hello-world/lib/Release/Hello.framework/Versions/A/_CodeSignature/CodeRequirements",
+  "app.asar.unpacked/hello-world/lib/Release/Hello.framework/Versions/A/_CodeSignature/CodeRequirements-1",
+  "app.asar.unpacked/hello-world/lib/Release/Hello.framework/Versions/A/_CodeSignature/CodeResources",
+  "app.asar.unpacked/hello-world/lib/Release/Hello.framework/Versions/A/_CodeSignature/CodeSignature",
+  "app.asar.unpacked/hello-world/lib/Release/Hello.framework/Versions/A/Modules/Hello.abi.json",
+  "app.asar.unpacked/hello-world/lib/Release/Hello.framework/Versions/A/Modules/Hello.swiftdoc",
+  "app.asar.unpacked/hello-world/lib/Release/Hello.framework/Versions/A/Modules/Hello.swiftsourceinfo",
+  "app.asar.unpacked/hello-world/lib/Release/Hello.framework/Versions/A/Modules/module.modulemap",
+  "app.asar.unpacked/hello-world/lib/Release/Hello.framework/Versions/A/Modules/Hello.swiftmodule/arm64.private.swiftinterface",
+  "app.asar.unpacked/hello-world/lib/Release/Hello.framework/Versions/A/Modules/Hello.swiftmodule/arm64.swiftinterface",
+  "app.asar.unpacked/hello-world/lib/Release/Hello.framework/Versions/A/Modules/Hello.swiftmodule/arm64.swiftmodule",
+  "app.asar.unpacked/hello-world/lib/Release/Hello.framework/Versions/A/Modules/Hello.swiftmodule/x86_64.private.swiftinterface",
+  "app.asar.unpacked/hello-world/lib/Release/Hello.framework/Versions/A/Modules/Hello.swiftmodule/x86_64.swiftinterface",
+  "app.asar.unpacked/hello-world/lib/Release/Hello.framework/Versions/A/Modules/Hello.swiftmodule/x86_64.swiftmodule",
+  "app.asar.unpacked/hello-world/lib/Release/Hello.framework/Versions/A/Headers/HelloFramework.h",
+]
+`;
+
 exports[`two-package 1`] = `
 {
   "mac": [
