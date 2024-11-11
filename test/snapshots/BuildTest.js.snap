@@ -5219,10 +5219,8 @@ exports[`win smart unpack 2`] = `
               "files": {
                 "package.json": {
                   "size": "<size>",
-                  "unpacked": true,
                 },
               },
-              "unpacked": true,
             },
           },
         },
@@ -5423,14 +5421,6 @@ exports[`win smart unpack 3`] = `
   "app.asar.unpacked/node_modules/edge-cs/lib/edge-cs.js",
   "app.asar.unpacked/node_modules/edge-cs/lib/bootstrap/Dummy.cs",
   "app.asar.unpacked/node_modules/edge-cs/lib/bootstrap/project.json",
-  {
-    "content": "{
-  "name": "@electron-builder/test-smart-unpack-empty",
-  "version": "1.0.0"
-}
-",
-    "name": "app.asar.unpacked/node_modules/@electron-builder/test-smart-unpack-empty/package.json",
-  },
   "app.asar.unpacked/node_modules/@electron-builder/test-smart-unpack/foo.dll",
   {
     "content": "{
