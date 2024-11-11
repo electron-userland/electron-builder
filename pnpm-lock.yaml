@@ -9706,7 +9706,7 @@ snapshots:
 
   electron-winstaller@5.4.0:
     dependencies:
-      '@electron/asar': 3.2.13
+      '@electron/asar': 3.2.17
       debug: 4.3.7
       fs-extra: 7.0.1
       lodash: 4.17.21
