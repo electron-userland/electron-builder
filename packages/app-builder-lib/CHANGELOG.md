@@ -1,5 +1,21 @@
 # app-builder-lib
 
+## 26.0.0-alpha.6
+
+### Minor Changes
+
+- [#8636](https://github.com/electron-userland/electron-builder/pull/8636) [`88cc0b06`](https://github.com/electron-userland/electron-builder/commit/88cc0b06dba22139721fd1e04f6a1cf2d447edbd) Thanks [@mmaietta](https://github.com/mmaietta)! - feat: add support for AppArmor with template profile and configuration property
+
+### Patch Changes
+
+- [#8671](https://github.com/electron-userland/electron-builder/pull/8671) [`a4505a37`](https://github.com/electron-userland/electron-builder/commit/a4505a3785c17fc1aaaeaa91ba2653787219d74a) Thanks [@beyondkmp](https://github.com/beyondkmp)! - chore(deps): update electron/asar to 3.2.17
+
+- [`a1ee0419`](https://github.com/electron-userland/electron-builder/commit/a1ee04191f12920585fea8fa648cd0c4b0ed0558) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: use FileCopier for copying files and queue creation of symlinks
+
+- Updated dependencies []:
+  - dmg-builder@26.0.0-alpha.6
+  - electron-builder-squirrel-windows@26.0.0-alpha.6
+
 ## 26.0.0-alpha.5
 
 ### Patch Changes
