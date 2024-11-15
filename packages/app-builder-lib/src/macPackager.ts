@@ -332,7 +332,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
       provisioningProfile: customSignOptions.provisioningProfile || undefined,
     }
 
-    await this.doSign(signOptions, customSignOptions)
+    await this.doSign(signOptions, customSignOptions, identity)
 
     // https://github.com/electron-userland/electron-builder/issues/1196#issuecomment-312310209
     if (masOptions != null && !isDevelopment) {
@@ -411,16 +411,17 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
   }
 
   //noinspection JSMethodCanBeStatic
-  protected async doSign(opts: SignOptions, customSignOptions: MacConfiguration): Promise<void> {
+  protected async doSign(opts: SignOptions, customSignOptions: MacConfiguration, identity: Identity): Promise<void> {
     const customSign = await resolveFunction(this.appInfo.type, customSignOptions.sign, "sign")
 
-    const { app, platform, type, identity, provisioningProfile } = opts
+    const { app, platform, type, provisioningProfile } = opts
     log.info(
       {
         file: log.filePath(app),
         platform,
         type,
-        identity: identity || "none",
+        identityName: identity.name || "none",
+        identityHash: identity.hash || "none",
         provisioningProfile: provisioningProfile || "none",
       },
       customSign ? "executing custom sign" : "signing"
