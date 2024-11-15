@@ -411,7 +411,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
   }
 
   //noinspection JSMethodCanBeStatic
-  protected async doSign(opts: SignOptions, customSignOptions: MacConfiguration, identity: Identity): Promise<void> {
+  protected async doSign(opts: SignOptions, customSignOptions: MacConfiguration, identity: Identity | null): Promise<void> {
     const customSign = await resolveFunction(this.appInfo.type, customSignOptions.sign, "sign")
 
     const { app, platform, type, provisioningProfile } = opts
@@ -420,8 +420,8 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
         file: log.filePath(app),
         platform,
         type,
-        identityName: identity.name || "none",
-        identityHash: identity.hash || "none",
+        identityName: identity?.name || "none",
+        identityHash: identity?.hash || "none",
         provisioningProfile: provisioningProfile || "none",
       },
       customSign ? "executing custom sign" : "signing"
