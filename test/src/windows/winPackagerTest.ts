@@ -36,6 +36,18 @@ test.ifNotCiMac(
   })
 )
 
+test.ifNotCiMac(
+  "win electron-mirror",
+  app({
+    targets: Platform.WINDOWS.createTarget(["zip"], Arch.x64),
+    config: {
+      electronDownload: {
+        mirror: "https://npmmirror.com/mirrors/electron/",
+      },
+    },
+  })
+)
+
 test.ifNotCiMac.ifAll(
   "zip artifactName",
   app({
