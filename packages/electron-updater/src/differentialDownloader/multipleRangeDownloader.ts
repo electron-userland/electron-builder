@@ -4,13 +4,15 @@ import { Writable } from "stream"
 import { copyData, DataSplitter, PartListDataTask } from "./DataSplitter"
 import { DifferentialDownloader } from "./DifferentialDownloader"
 import { Operation, OperationKind } from "./downloadPlanBuilder"
+import { ProgressDifferentialDownloadCallbackTransform } from "./ProgressDifferentialDownloadCallbackTransform"
 
 export function executeTasksUsingMultipleRangeRequests(
   differentialDownloader: DifferentialDownloader,
   tasks: Array<Operation>,
   out: Writable,
   oldFileFd: number,
-  reject: (error: Error) => void
+  reject: (error: Error) => void,
+  downloadInfoTransform?: ProgressDifferentialDownloadCallbackTransform
 ): (taskOffset: number) => void {
   const w = (taskOffset: number): void => {
     if (taskOffset >= tasks.length) {
@@ -32,13 +34,21 @@ export function executeTasksUsingMultipleRangeRequests(
       },
       out,
       () => w(nextOffset),
-      reject
+      reject,
+      downloadInfoTransform
     )
   }
   return w
 }
 
-function doExecuteTasks(differentialDownloader: DifferentialDownloader, options: PartListDataTask, out: Writable, resolve: () => void, reject: (error: Error) => void): void {
+function doExecuteTasks(
+  differentialDownloader: DifferentialDownloader,
+  options: PartListDataTask,
+  out: Writable,
+  resolve: () => void,
+  reject: (error: Error) => void,
+  downloadInfoTransform?: ProgressDifferentialDownloadCallbackTransform
+): void {
   let ranges = "bytes="
   let partCount = 0
   const partIndexToTaskIndex = new Map<number, number>()
@@ -65,7 +75,8 @@ function doExecuteTasks(differentialDownloader: DifferentialDownloader, options:
 
       if (task.kind === OperationKind.COPY) {
         copyData(task, out, options.oldFileFd, reject, () => w(index))
-      } else {
+      }
+      else {
         const requestOptions = differentialDownloader.createRequestOptions()
         requestOptions.headers!.Range = `bytes=${task.start}-${task.end - 1}`
         const request = differentialDownloader.httpExecutor.createRequest(requestOptions, response => {
@@ -89,6 +100,10 @@ function doExecuteTasks(differentialDownloader: DifferentialDownloader, options:
 
   const requestOptions = differentialDownloader.createRequestOptions()
   requestOptions.headers!.Range = ranges.substring(0, ranges.length - 2)
+
+  console.log("beginRangeDownload")
+  downloadInfoTransform?.beginRangeDownload()
+
   const request = differentialDownloader.httpExecutor.createRequest(requestOptions, response => {
     if (!checkIsRangesSupported(response, reject)) {
       return
@@ -114,6 +129,7 @@ function doExecuteTasks(differentialDownloader: DifferentialDownloader, options:
   })
   differentialDownloader.httpExecutor.addErrorAndTimeoutHandlers(request, reject)
   request.end()
+  downloadInfoTransform?.endRangeDownload()
 }
 
 export function checkIsRangesSupported(response: IncomingMessage, reject: (error: Error) => void): boolean {
