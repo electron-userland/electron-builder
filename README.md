@@ -148,7 +148,7 @@ For an app that will be shipped to production, you should sign your application.
 ## Programmatic Usage
 See `node_modules/electron-builder/out/index.d.ts`. Typings for TypeScript are provided and also can be found [here](./electron-builder.md).
 
-Code snippit provided below is also shown "in action" [here](./programmatic-usage.md) as well.
+Code snippet provided below is also shown "in action" [here](./programmatic-usage.md) as well.
 ```js
 "use strict"
 
