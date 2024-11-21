@@ -41,27 +41,29 @@ export class AppImageUpdater extends BaseUpdater {
           throw newError("APPIMAGE env is not defined", "ERR_UPDATER_OLD_FILE_NOT_FOUND")
         }
 
-        let isDownloadFull = false
-        try {
-          const downloadOptions: DifferentialDownloaderOptions = {
-            newUrl: fileInfo.url,
-            oldFile,
-            logger: this._logger,
-            newFile: updateFile,
-            isUseMultipleRangeRequest: provider.isUseMultipleRangeRequest,
-            requestHeaders: downloadUpdateOptions.requestHeaders,
-            cancellationToken: downloadUpdateOptions.cancellationToken,
-          }
+        let isDownloadFull = downloadUpdateOptions.disableDifferentialDownload
+        if (!isDownloadFull) {
+          try {
+            const downloadOptions: DifferentialDownloaderOptions = {
+              newUrl: fileInfo.url,
+              oldFile,
+              logger: this._logger,
+              newFile: updateFile,
+              isUseMultipleRangeRequest: provider.isUseMultipleRangeRequest,
+              requestHeaders: downloadUpdateOptions.requestHeaders,
+              cancellationToken: downloadUpdateOptions.cancellationToken,
+            }
 
-          if (this.listenerCount(DOWNLOAD_PROGRESS) > 0) {
-            downloadOptions.onProgress = it => this.emit(DOWNLOAD_PROGRESS, it)
-          }
+            if (this.listenerCount(DOWNLOAD_PROGRESS) > 0) {
+              downloadOptions.onProgress = it => this.emit(DOWNLOAD_PROGRESS, it)
+            }
 
-          await new FileWithEmbeddedBlockMapDifferentialDownloader(fileInfo.info, this.httpExecutor, downloadOptions).download()
-        } catch (e: any) {
-          this._logger.error(`Cannot download differentially, fallback to full download: ${e.stack || e}`)
-          // during test (developer machine mac) we must throw error
-          isDownloadFull = process.platform === "linux"
+            await new FileWithEmbeddedBlockMapDifferentialDownloader(fileInfo.info, this.httpExecutor, downloadOptions).download()
+          } catch (e: any) {
+            this._logger.error(`Cannot download differentially, fallback to full download: ${e.stack || e}`)
+            // during test (developer machine mac) we must throw error
+            isDownloadFull = process.platform === "linux"
+          }
         }
 
         if (isDownloadFull) {
