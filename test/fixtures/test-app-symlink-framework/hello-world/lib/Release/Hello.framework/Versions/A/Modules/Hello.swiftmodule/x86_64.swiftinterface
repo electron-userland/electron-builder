@@ -1,0 +1,12 @@
+// swift-interface-format-version: 1.0
+// swift-compiler-version: Apple Swift version 6.0.2 effective-5.10 (swiftlang-6.0.2.1.2 clang-1600.0.26.4)
+// swift-module-flags: -target x86_64-apple-macosx10.9.0 -enable-objc-interop -enable-library-evolution -module-name Hello
+import Swift
+import _Concurrency
+import _StringProcessing
+import _SwiftConcurrencyShims
+public class Greeter {
+  public init()
+  public func hello()
+  @objc deinit
+}

@@ -1,3 +1,18 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v26.0.0-alpha.5...v) (2024-11-07)
+
+
+### Bug Fixes
+
+* docker build script unable to build node 18 image ([#8665](https://github.com/electron-userland/electron-builder/issues/8665)) ([fb26f6a](https://github.com/electron-userland/electron-builder/commit/fb26f6ae32503df46523f5e986ce40f3e3f8dfff))
+* use FileCopier for copying files and queue creation of symlinks ([#8663](https://github.com/electron-userland/electron-builder/issues/8663)) ([866b0ca](https://github.com/electron-userland/electron-builder/commit/866b0caa2859ccff90ec8654f82263569cd2465d))
+
+
+### Features
+
+* add AppArmor profile to FPM targets to pair with `afterInstall` and `afterRemove` template scripts ([#8636](https://github.com/electron-userland/electron-builder/issues/8636)) ([88cc0b0](https://github.com/electron-userland/electron-builder/commit/88cc0b06dba22139721fd1e04f6a1cf2d447edbd))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v26.0.0-alpha.4...v) (2024-11-01)
 
 
