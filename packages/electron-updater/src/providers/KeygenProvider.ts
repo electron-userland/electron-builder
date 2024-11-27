@@ -16,7 +16,7 @@ export class KeygenProvider extends Provider<UpdateInfo> {
       ...runtimeOptions,
       isUseMultipleRangeRequest: false,
     })
-    this.baseUrl = newBaseUrl(`https://api.keygen.sh/v1/accounts/${this.configuration.account}/artifacts?product=${this.configuration.product}`)
+    this.baseUrl = newBaseUrl(`https://${this.configuration.host || "api.keygen.sh"}/v1/accounts/${this.configuration.account}/artifacts?product=${this.configuration.product}`)
   }
 
   private get channel(): string {

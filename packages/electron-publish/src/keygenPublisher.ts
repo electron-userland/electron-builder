@@ -80,7 +80,7 @@ export interface KeygenArtifact {
 
 export class KeygenPublisher extends HttpPublisher {
   readonly providerName = "keygen"
-  readonly hostname = "api.keygen.sh"
+  readonly hostname: string = "api.keygen.sh"
 
   private readonly info: KeygenOptions
   private readonly auth: string
@@ -96,6 +96,7 @@ export class KeygenPublisher extends HttpPublisher {
     }
 
     this.info = info
+    if (info.host) this.hostname = info.host
     this.auth = `Bearer ${token.trim()}`
     this.version = version
     this.basePath = `/v1/accounts/${this.info.account}`

@@ -180,6 +180,11 @@ export interface KeygenOptions extends PublishConfiguration {
   readonly provider: "keygen"
 
   /**
+   * Keygen host
+   */
+  readonly host?: string
+
+  /**
    * Keygen account's UUID
    */
   readonly account: string

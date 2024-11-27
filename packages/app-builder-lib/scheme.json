@@ -1564,6 +1564,10 @@
           "default": "stable",
           "description": "The channel."
         },
+        "host": {
+          "description": "Keygen host",
+          "type": "string"
+        },
         "platform": {
           "description": "The target Platform. Is set programmatically explicitly during publishing.",
           "type": [
