@@ -4920,6 +4920,255 @@ exports[`relative index 1`] = `
 }
 `;
 
+exports[`smart unpack local module with dll file 1`] = `
+{
+  "win": [],
+}
+`;
+
+exports[`smart unpack local module with dll file 2`] = `
+{
+  "files": {
+    "app": {
+      "files": {
+        "package.json": {
+          "files": {
+            "readme.md": {
+              "size": "<size>",
+            },
+          },
+        },
+        "readme.md": {
+          "size": "<size>",
+        },
+      },
+    },
+    "index.html": {
+      "size": "<size>",
+    },
+    "index.js": {
+      "size": "<size>",
+    },
+    "node_modules": {
+      "files": {
+        "debug": {
+          "files": {
+            "LICENSE": {
+              "size": "<size>",
+            },
+            "Makefile": {
+              "size": "<size>",
+            },
+            "node.js": {
+              "size": "<size>",
+            },
+            "package.json": {
+              "size": "<size>",
+            },
+            "src": {
+              "files": {
+                "browser.js": {
+                  "size": "<size>",
+                },
+                "debug.js": {
+                  "size": "<size>",
+                },
+                "index.js": {
+                  "size": "<size>",
+                },
+                "node.js": {
+                  "size": "<size>",
+                },
+              },
+            },
+          },
+        },
+        "edge-cs": {
+          "files": {
+            "LICENSE.txt": {
+              "size": "<size>",
+              "unpacked": true,
+            },
+            "lib": {
+              "files": {
+                "bootstrap": {
+                  "files": {
+                    "Dummy.cs": {
+                      "size": "<size>",
+                      "unpacked": true,
+                    },
+                    "project.json": {
+                      "size": "<size>",
+                      "unpacked": true,
+                    },
+                  },
+                  "unpacked": true,
+                },
+                "edge-cs.dll": {
+                  "size": "<size>",
+                  "unpacked": true,
+                },
+                "edge-cs.js": {
+                  "size": "<size>",
+                  "unpacked": true,
+                },
+              },
+              "unpacked": true,
+            },
+            "package.json": {
+              "size": "<size>",
+              "unpacked": true,
+            },
+            "src": {
+              "files": {
+                "Edge.js.CSharp": {
+                  "files": {
+                    "EdgeCompiler.cs": {
+                      "size": "<size>",
+                      "unpacked": true,
+                    },
+                    "gulpfile.js": {
+                      "size": "<size>",
+                      "unpacked": true,
+                    },
+                    "package.json": {
+                      "size": "<size>",
+                      "unpacked": true,
+                    },
+                    "project.json": {
+                      "size": "<size>",
+                      "unpacked": true,
+                    },
+                  },
+                  "unpacked": true,
+                },
+                "edge-cs": {
+                  "files": {
+                    "EdgeCompiler.cs": {
+                      "size": "<size>",
+                      "unpacked": true,
+                    },
+                    "Properties": {
+                      "files": {
+                        "AssemblyInfo.cs": {
+                          "size": "<size>",
+                          "unpacked": true,
+                        },
+                      },
+                      "unpacked": true,
+                    },
+                  },
+                  "unpacked": true,
+                },
+              },
+              "unpacked": true,
+            },
+            "tools": {
+              "files": {
+                "install.js": {
+                  "size": "<size>",
+                  "unpacked": true,
+                },
+              },
+              "unpacked": true,
+            },
+          },
+          "unpacked": true,
+        },
+        "foo": {
+          "files": {
+            "package.json": {
+              "size": "<size>",
+              "unpacked": true,
+            },
+            "test.dll": {
+              "size": "<size>",
+              "unpacked": true,
+            },
+          },
+          "unpacked": true,
+        },
+        "ms": {
+          "files": {
+            "index.js": {
+              "size": "<size>",
+            },
+            "license.md": {
+              "size": "<size>",
+            },
+            "package.json": {
+              "size": "<size>",
+            },
+          },
+        },
+      },
+    },
+    "package.json": {
+      "size": "<size>",
+    },
+  },
+}
+`;
+
+exports[`smart unpack local module with dll file 3`] = `
+[
+  "app.asar",
+  {
+    "content": "{"name":"foo","version":"9.0.0","main":"index.js","license":"MIT","dependencies":{"ms":"2.0.0"}}",
+    "name": "app.asar.unpacked/node_modules/foo/package.json",
+  },
+  "app.asar.unpacked/node_modules/foo/test.dll",
+  "app.asar.unpacked/node_modules/edge-cs/LICENSE.txt",
+  {
+    "content": "{
+  "name": "edge-cs",
+  "author": {
+    "name": "Tomasz Janczuk <tomasz@janczuk.org>",
+    "url": "http://tomasz.janczuk.org",
+    "twitter": "tjanczuk"
+  },
+  "version": "1.2.1",
+  "description": "Edge-cs: run C# and node.js code in-process with edge.js",
+  "main": "./lib/edge-cs.js",
+  "engines": {
+    "node": ">= 0.8"
+  },
+  "licenses": [
+    {
+      "type": "Apache",
+      "url": "http://www.apache.org/licenses/LICENSE-2.0"
+    }
+  ],
+  "dependencies": {},
+  "homepage": "http://tjanczuk.github.com/edge",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:tjanczuk/edge-cs.git"
+  }
+}",
+    "name": "app.asar.unpacked/node_modules/edge-cs/package.json",
+  },
+  "app.asar.unpacked/node_modules/edge-cs/tools/install.js",
+  "app.asar.unpacked/node_modules/edge-cs/src/edge-cs/EdgeCompiler.cs",
+  "app.asar.unpacked/node_modules/edge-cs/src/edge-cs/Properties/AssemblyInfo.cs",
+  "app.asar.unpacked/node_modules/edge-cs/src/Edge.js.CSharp/EdgeCompiler.cs",
+  "app.asar.unpacked/node_modules/edge-cs/src/Edge.js.CSharp/gulpfile.js",
+  {
+    "content": "{
+    "devDependencies": {
+        "gulp": "3.9.0"
+    }
+}",
+    "name": "app.asar.unpacked/node_modules/edge-cs/src/Edge.js.CSharp/package.json",
+  },
+  "app.asar.unpacked/node_modules/edge-cs/src/Edge.js.CSharp/project.json",
+  "app.asar.unpacked/node_modules/edge-cs/lib/edge-cs.dll",
+  "app.asar.unpacked/node_modules/edge-cs/lib/edge-cs.js",
+  "app.asar.unpacked/node_modules/edge-cs/lib/bootstrap/Dummy.cs",
+  "app.asar.unpacked/node_modules/edge-cs/lib/bootstrap/project.json",
+]
+`;
+
 exports[`win smart unpack 1`] = `
 {
   "win": [],

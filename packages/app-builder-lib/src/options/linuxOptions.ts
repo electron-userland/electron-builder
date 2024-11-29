@@ -98,6 +98,8 @@ export interface CommonLinuxOptions {
 export interface LinuxTargetSpecificOptions extends CommonLinuxOptions, TargetSpecificOptions {
   /**
    * Package dependencies.
+   * `rpm` defaults to `["gtk3", "libnotify", "nss", "libXScrnSaver", "(libXtst or libXtst6)", "xdg-utils", "at-spi2-core", "(libuuid or libuuid1)"]`
+   * `pacman` defaults to `["c-ares", "ffmpeg", "gtk3", "http-parser", "libevent", "libvpx", "libxslt", "libxss", "minizip", "nss", "re2", "snappy", "libnotify", "libappindicator-gtk3"]`
    */
   readonly depends?: Array<string> | null
 
@@ -144,14 +146,16 @@ export interface LinuxTargetSpecificOptions extends CommonLinuxOptions, TargetSp
 }
 export interface DebOptions extends LinuxTargetSpecificOptions {
   /**
-   * Package dependencies. Defaults to `["gconf2", "gconf-service", "libnotify4", "libappindicator1", "libxtst6", "libnss3"]`.
+   * Package dependencies.
    * If need to support Debian, `libappindicator1` should be removed, it is [deprecated in Debian](https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=895037).
    * If need to support KDE, `gconf2` and `gconf-service` should be removed as it's no longer used [by GNOME](https://packages.debian.org/bullseye/gconf2).
+   * @default ["libgtk-3-0", "libnotify4", "libnss3", "libxss1", "libxtst6", "xdg-utils", "libatspi2.0-0", "libuuid1", "libsecret-1-0"]
    */
   readonly depends?: Array<string> | null
 
   /**
-   * The [recommended package dependencies](https://www.debian.org/doc/debian-policy/ch-relationships.html#s-binarydeps)..
+   * The [recommended package dependencies](https://www.debian.org/doc/debian-policy/ch-relationships.html#s-binarydeps).
+   * @default ["libappindicator3-1"]
    */
   readonly recommends?: Array<string> | null
 
