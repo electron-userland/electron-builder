@@ -38,7 +38,7 @@
     "@types/cross-spawn": "6.0.2",
     "@types/fs-extra": "^9.0.11",
     "@types/is-ci": "3.0.0",
-    "@types/js-yaml": "4.0.3",
+    "@types/js-yaml": "4.0.9",
     "@types/source-map-support": "0.5.4"
   }
 }
