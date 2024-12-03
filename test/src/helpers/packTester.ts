@@ -1,17 +1,18 @@
 import { addValue, deepAssign, exec, log, spawn, getPath7x, getPath7za, copyDir, FileCopier, USE_HARD_LINKS, walk } from "builder-util"
 import { CancellationToken, UpdateFileInfo } from "builder-util-runtime"
 import { executeFinally } from "builder-util"
-import DecompressZip from "decompress-zip"
 import { Arch, ArtifactCreated, Configuration, DIR_TARGET, getArchSuffix, MacOsTargetName, Packager, PackagerOptions, Platform, Target } from "electron-builder"
 import { PublishManager } from "app-builder-lib"
 import { computeArchToTargetNamesMap } from "app-builder-lib/out/targets/targetFactory"
 import { getLinuxToolsPath } from "app-builder-lib/out/targets/tools"
-import { convertVersion } from "electron-builder-squirrel-windows/out/squirrelPack"
+import { convertVersion } from "electron-winstaller"
 import { PublishPolicy } from "electron-publish"
 import { emptyDir, writeJson } from "fs-extra"
 import * as fs from "fs/promises"
 import { load } from "js-yaml"
 import * as path from "path"
+import AdmZip from "adm-zip"
+import { decode } from "iconv-lite"
 import { promisify } from "util"
 import pathSorter from "path-sort"
 import { TmpDir } from "temp-file"
@@ -390,15 +391,20 @@ async function checkWindowsResult(packager: Packager, checkOptions: AssertPackOp
   }
 
   const packageFile = artifacts.find(it => it.file.endsWith("-full.nupkg"))!.file
-  const unZipper = new DecompressZip(packageFile)
-  const fileDescriptors = await unZipper.getFiles()
-
-  // we test app-update.yml separately, don't want to complicate general assert (yes, it is not good that we write app-update.yml for squirrel.windows if we build nsis and squirrel.windows in parallel, but as squirrel.windows is deprecated, it is ok)
+  const zip = new AdmZip(packageFile)
+  const zipEntries = zip.getEntries()
+  const allFiles: string[] = []
+  zipEntries.forEach(function (zipEntry) {
+    let name = decode(zipEntry.rawEntryName, "cp437")
+    if (!name.endsWith("/")) {
+      allFiles.push(name)
+    }
+  })
   const files = pathSorter(
-    fileDescriptors
-      .map(it => toSystemIndependentPath(it.path))
+    allFiles
+      .map((it: string) => toSystemIndependentPath(it))
       .filter(
-        it =>
+        (it: string) =>
           (!it.startsWith("lib/net45/locales/") || it === "lib/net45/locales/en-US.pak") && !it.endsWith(".psmdcp") && !it.endsWith("app-update.yml") && !it.includes("/inspector/")
       )
   )
@@ -406,11 +412,8 @@ async function checkWindowsResult(packager: Packager, checkOptions: AssertPackOp
   expect(files).toMatchSnapshot()
 
   if (checkOptions == null) {
-    await unZipper.extractFile(fileDescriptors.filter(it => it.path === "TestApp.nuspec")[0], {
-      path: path.dirname(packageFile),
-    })
-    const expectedSpec = (await fs.readFile(path.join(path.dirname(packageFile), "TestApp.nuspec"), "utf8")).replace(/\r\n/g, "\n")
-    // console.log(expectedSpec)
+    const expectedSpec = zip.readAsText("TestApp.nuspec").replace(/\r\n/g, "\n")
+
     expect(expectedSpec).toEqual(`<?xml version="1.0"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
   <metadata>
