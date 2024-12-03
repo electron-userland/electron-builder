@@ -55,7 +55,7 @@
     "@typescript-eslint/eslint-plugin": "^8.7.0",
     "@typescript-eslint/parser": "^8.7.0",
     "conventional-changelog-cli": "5.0.0",
-    "eslint": "^9.0.0",
+    "eslint": "9.16.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-prettier": "^5.2.1",
     "fs-extra": "10.1.0",
