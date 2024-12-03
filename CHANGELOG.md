@@ -1,3 +1,30 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v26.0.0-alpha.6...v) (2024-12-03)
+
+
+### Bug Fixes
+
+* **deps:** update dependency cross-spawn to v7.0.5 [security] ([#8693](https://github.com/electron-userland/electron-builder/issues/8693)) ([6a6bed4](https://github.com/electron-userland/electron-builder/commit/6a6bed46c428b45105ada071a9cb89b5d4f93d9e))
+* **deps:** update dependency eslint to v9.16.0 [security] ([#8717](https://github.com/electron-userland/electron-builder/issues/8717)) ([9381513](https://github.com/electron-userland/electron-builder/commit/9381513df8c2888ebcd999283991bed64b7058e0))
+* smart unpack for local module with dll ([#8645](https://github.com/electron-userland/electron-builder/issues/8645)) ([f4d40f9](https://github.com/electron-userland/electron-builder/commit/f4d40f91f1511fc55cbef7c9e7edfddaf6ab67bc))
+* **win:** corrupt `.exe` asar integrity file path from cross-platform build ([#8689](https://github.com/electron-userland/electron-builder/issues/8689)) ([1d7f87c](https://github.com/electron-userland/electron-builder/commit/1d7f87c1028fa94c9bb80c167bb1fb87cbc84817))
+
+
+
+# [](https://github.com/electron-userland/electron-builder/compare/v26.0.0-alpha.5...v) (2024-11-07)
+
+
+### Bug Fixes
+
+* docker build script unable to build node 18 image ([#8665](https://github.com/electron-userland/electron-builder/issues/8665)) ([fb26f6a](https://github.com/electron-userland/electron-builder/commit/fb26f6ae32503df46523f5e986ce40f3e3f8dfff))
+* use FileCopier for copying files and queue creation of symlinks ([#8663](https://github.com/electron-userland/electron-builder/issues/8663)) ([866b0ca](https://github.com/electron-userland/electron-builder/commit/866b0caa2859ccff90ec8654f82263569cd2465d))
+
+
+### Features
+
+* add AppArmor profile to FPM targets to pair with `afterInstall` and `afterRemove` template scripts ([#8636](https://github.com/electron-userland/electron-builder/issues/8636)) ([88cc0b0](https://github.com/electron-userland/electron-builder/commit/88cc0b06dba22139721fd1e04f6a1cf2d447edbd))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v26.0.0-alpha.4...v) (2024-11-01)
 
 

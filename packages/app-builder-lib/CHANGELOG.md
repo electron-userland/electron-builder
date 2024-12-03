@@ -1,5 +1,39 @@
 # app-builder-lib
 
+## 26.0.0-alpha.7
+
+### Patch Changes
+
+- [#8645](https://github.com/electron-userland/electron-builder/pull/8645) [`f4d40f91`](https://github.com/electron-userland/electron-builder/commit/f4d40f91f1511fc55cbef7c9e7edfddaf6ab67bc) Thanks [@beyondkmp](https://github.com/beyondkmp)! - fix: smart unpack for local module with dll
+
+- [#8691](https://github.com/electron-userland/electron-builder/pull/8691) [`5a9141f6`](https://github.com/electron-userland/electron-builder/commit/5a9141f60ac6d51a4b839b73271274bef5c6ca70) Thanks [@mmaietta](https://github.com/mmaietta)! - chore(mac): add back logging of identity name and hash as opposed to just hash
+
+- [#8637](https://github.com/electron-userland/electron-builder/pull/8637) [`667ab2f8`](https://github.com/electron-userland/electron-builder/commit/667ab2f8d5d635b5ab03cd5de06561403135a7f6) Thanks [@mmaietta](https://github.com/mmaietta)! - chore: migrate default recommends and default depends for fpm from app-builder-bin to JS code
+
+- [#8689](https://github.com/electron-userland/electron-builder/pull/8689) [`1d7f87c1`](https://github.com/electron-userland/electron-builder/commit/1d7f87c1028fa94c9bb80c167bb1fb87cbc84817) Thanks [@Lemonexe](https://github.com/Lemonexe)! - fix(win): corrupt asar integrity file path on crossplatform build
+
+- Updated dependencies [[`f4d40f91`](https://github.com/electron-userland/electron-builder/commit/f4d40f91f1511fc55cbef7c9e7edfddaf6ab67bc), [`6a6bed46`](https://github.com/electron-userland/electron-builder/commit/6a6bed46c428b45105ada071a9cb89b5d4f93d9e)]:
+  - builder-util@26.0.0-alpha.7
+  - dmg-builder@26.0.0-alpha.7
+  - electron-builder-squirrel-windows@26.0.0-alpha.7
+  - electron-publish@26.0.0-alpha.7
+
+## 26.0.0-alpha.6
+
+### Minor Changes
+
+- [#8636](https://github.com/electron-userland/electron-builder/pull/8636) [`88cc0b06`](https://github.com/electron-userland/electron-builder/commit/88cc0b06dba22139721fd1e04f6a1cf2d447edbd) Thanks [@mmaietta](https://github.com/mmaietta)! - feat: add support for AppArmor with template profile and configuration property
+
+### Patch Changes
+
+- [#8671](https://github.com/electron-userland/electron-builder/pull/8671) [`a4505a37`](https://github.com/electron-userland/electron-builder/commit/a4505a3785c17fc1aaaeaa91ba2653787219d74a) Thanks [@beyondkmp](https://github.com/beyondkmp)! - chore(deps): update electron/asar to 3.2.17
+
+- [`a1ee0419`](https://github.com/electron-userland/electron-builder/commit/a1ee04191f12920585fea8fa648cd0c4b0ed0558) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: use FileCopier for copying files and queue creation of symlinks
+
+- Updated dependencies []:
+  - dmg-builder@26.0.0-alpha.6
+  - electron-builder-squirrel-windows@26.0.0-alpha.6
+
 ## 26.0.0-alpha.5
 
 ### Patch Changes

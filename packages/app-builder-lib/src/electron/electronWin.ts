@@ -1,6 +1,7 @@
 import { readFile, writeFile } from "fs/promises"
 import { log } from "builder-util"
 import { NtExecutable, NtExecutableResource, Resource } from "resedit"
+import * as path from "path"
 import { AsarIntegrity } from "../asar/integrity"
 
 /** @internal */
@@ -21,7 +22,7 @@ export async function addWinAsarIntegrity(executablePath: string, asarIntegrity:
 
   // See: https://github.com/electron/packager/blob/00d20b99cf4aa4621103dbbd09ff7de7d2f7f539/src/resedit.ts#L124
   const integrityList = Array.from(Object.entries(asarIntegrity)).map(([file, { algorithm: alg, hash: value }]) => ({
-    file,
+    file: path.win32.normalize(file),
     alg,
     value,
   }))
