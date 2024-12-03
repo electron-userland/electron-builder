@@ -211,12 +211,16 @@ export default class FpmTarget extends Target {
           throw new Error(`depends must be Array or String, but specified as: ${depends}`)
         }
       }
+    } else {
+      fpmConfiguration.customDepends = this.getDefaultDepends(target)
     }
 
     if (target === "deb") {
       const recommends = (options as DebOptions).recommends
       if (recommends) {
         fpmConfiguration.customRecommends = asArray(recommends)
+      } else {
+        fpmConfiguration.customRecommends = this.getDefaultRecommends(target)
       }
     }
 
@@ -291,6 +295,40 @@ export default class FpmTarget extends Target {
 
   private supportsAutoUpdate(target: string) {
     return ["deb", "rpm", "pacman"].includes(target)
+  }
+
+  private getDefaultDepends(target: string): string[] {
+    switch (target) {
+      case "deb":
+        return ["libgtk-3-0", "libnotify4", "libnss3", "libxss1", "libxtst6", "xdg-utils", "libatspi2.0-0", "libuuid1", "libsecret-1-0"]
+
+      case "rpm":
+        return [
+          "gtk3" /* for electron 2+ (electron 1 uses gtk2, but this old version is not supported anymore) */,
+          "libnotify",
+          "nss",
+          "libXScrnSaver",
+          "(libXtst or libXtst6)",
+          "xdg-utils",
+          "at-spi2-core" /* since 5.0.0 */,
+          "(libuuid or libuuid1)" /* since 4.0.0 */,
+        ]
+
+      case "pacman":
+        return ["c-ares", "ffmpeg", "gtk3", "http-parser", "libevent", "libvpx", "libxslt", "libxss", "minizip", "nss", "re2", "snappy", "libnotify", "libappindicator-gtk3"]
+
+      default:
+        return []
+    }
+  }
+
+  private getDefaultRecommends(target: string): string[] {
+    switch (target) {
+      case "deb":
+        return ["libappindicator3-1"]
+      default:
+        return []
+    }
   }
 }
 

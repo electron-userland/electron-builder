@@ -192,7 +192,7 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
     const source = dep.dir
     const matcher = new FileMatcher(source, destination, mainMatcher.macroExpander, mainMatcher.patterns)
     const copier = new NodeModuleCopyHelper(matcher, platformPackager.info)
-    const files = await copier.collectNodeModules(dep, nodeModuleExcludedExts)
+    const files = await copier.collectNodeModules(dep, nodeModuleExcludedExts, path.relative(mainMatcher.to, destination))
     result[index++] = validateFileSet({ src: source, destination, files, metadata: copier.metadata })
 
     if (dep.conflictDependency) {
