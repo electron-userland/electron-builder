@@ -5,4 +5,4 @@
 "electron-updater": minor
 ---
 
-add host option for keycloak provider
+Add `host` property to support self-hosted Keygen instances
