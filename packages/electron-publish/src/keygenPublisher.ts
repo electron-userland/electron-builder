@@ -80,12 +80,16 @@ export interface KeygenArtifact {
 
 export class KeygenPublisher extends HttpPublisher {
   readonly providerName = "keygen"
-  readonly hostname: string = "api.keygen.sh"
+  readonly defaultHostname = "api.keygen.sh"
 
   private readonly info: KeygenOptions
   private readonly auth: string
   private readonly version: string
   private readonly basePath: string
+
+  get hostname() {
+    return this.info.host || this.defaultHostname
+  }
 
   constructor(context: PublishContext, info: KeygenOptions, version: string) {
     super(context)
@@ -96,9 +100,6 @@ export class KeygenPublisher extends HttpPublisher {
     }
 
     this.info = info
-    if (info.host) {
-      this.hostname = info.host
-    }
     this.auth = `Bearer ${token.trim()}`
     this.version = version
     this.basePath = `/v1/accounts/${this.info.account}`

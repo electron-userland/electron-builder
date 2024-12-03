@@ -5,6 +5,7 @@ import { getChannelFilename, newBaseUrl, newUrlFromBase } from "../util"
 import { parseUpdateInfo, Provider, ProviderRuntimeOptions, resolveFiles } from "./Provider"
 
 export class KeygenProvider extends Provider<UpdateInfo> {
+  private readonly defaultHostname = "api.keygen.sh"
   private readonly baseUrl: URL
 
   constructor(
@@ -16,7 +17,7 @@ export class KeygenProvider extends Provider<UpdateInfo> {
       ...runtimeOptions,
       isUseMultipleRangeRequest: false,
     })
-    const host = this.configuration.host || "api.keygen.sh"
+    const host = this.configuration.host || this.defaultHostname
     this.baseUrl = newBaseUrl(`https://${host}/v1/accounts/${this.configuration.account}/artifacts?product=${this.configuration.product}`)
   }
 
