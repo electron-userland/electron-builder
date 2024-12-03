@@ -96,7 +96,9 @@ export class KeygenPublisher extends HttpPublisher {
     }
 
     this.info = info
-    if (info.host) this.hostname = info.host
+    if (info.host) {
+      this.hostname = info.host
+    }
     this.auth = `Bearer ${token.trim()}`
     this.version = version
     this.basePath = `/v1/accounts/${this.info.account}`
