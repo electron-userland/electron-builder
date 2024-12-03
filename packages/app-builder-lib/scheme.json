@@ -1579,7 +1579,8 @@
           "description": "The channel."
         },
         "host": {
-          "description": "Keygen host",
+          "default": "api.keygen.sh",
+          "description": "Keygen host for self-hosted instances",
           "type": "string"
         },
         "platform": {
