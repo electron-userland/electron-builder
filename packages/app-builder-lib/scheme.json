@@ -4620,6 +4620,9 @@
         "content-security-policy-report-only": {
           "type": "string"
         },
+        "content-type": {
+          "type": "string"
+        },
         "cookie": {
           "anyOf": [
             {
@@ -4710,7 +4713,7 @@
         "origin": {
           "type": "string"
         },
-        "prgama": {
+        "pragma": {
           "anyOf": [
             {
               "items": {

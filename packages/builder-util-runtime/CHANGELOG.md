@@ -1,5 +1,11 @@
 # builder-util-runtime
 
+## 9.3.0-alpha.0
+
+### Minor Changes
+
+- [#8711](https://github.com/electron-userland/electron-builder/pull/8711) [`6f0fb8e4`](https://github.com/electron-userland/electron-builder/commit/6f0fb8e44f035bcd6ff0d6f234b38c20fde066af) Thanks [@hrueger](https://github.com/hrueger)! - Add `host` property to support self-hosted Keygen instances
+
 ## 9.2.10
 
 ### Patch Changes

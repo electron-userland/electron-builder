@@ -1,5 +1,12 @@
 # builder-util
 
+## 26.0.0-alpha.8
+
+### Patch Changes
+
+- Updated dependencies [[`6f0fb8e4`](https://github.com/electron-userland/electron-builder/commit/6f0fb8e44f035bcd6ff0d6f234b38c20fde066af)]:
+  - builder-util-runtime@9.3.0-alpha.0
+
 ## 26.0.0-alpha.7
 
 ### Patch Changes
