@@ -7,8 +7,8 @@ import { DownloadUpdateOptions } from "./AppUpdater"
 import { BaseUpdater, InstallOptions } from "./BaseUpdater"
 import { DifferentialDownloaderOptions } from "./differentialDownloader/DifferentialDownloader"
 import { FileWithEmbeddedBlockMapDifferentialDownloader } from "./differentialDownloader/FileWithEmbeddedBlockMapDifferentialDownloader"
-import { DOWNLOAD_PROGRESS } from "./main"
-import { findFile } from "./providers/Provider"
+import { DOWNLOAD_PROGRESS, ResolvedUpdateFileInfo } from "./main"
+import { findFile, Provider } from "./providers/Provider"
 
 export class AppImageUpdater extends BaseUpdater {
   constructor(options?: AllPublishOptions | null, app?: any) {
@@ -41,38 +41,38 @@ export class AppImageUpdater extends BaseUpdater {
           throw newError("APPIMAGE env is not defined", "ERR_UPDATER_OLD_FILE_NOT_FOUND")
         }
 
-        let isDownloadFull = downloadUpdateOptions.disableDifferentialDownload
-        if (!isDownloadFull) {
-          try {
-            const downloadOptions: DifferentialDownloaderOptions = {
-              newUrl: fileInfo.url,
-              oldFile,
-              logger: this._logger,
-              newFile: updateFile,
-              isUseMultipleRangeRequest: provider.isUseMultipleRangeRequest,
-              requestHeaders: downloadUpdateOptions.requestHeaders,
-              cancellationToken: downloadUpdateOptions.cancellationToken,
-            }
-
-            if (this.listenerCount(DOWNLOAD_PROGRESS) > 0) {
-              downloadOptions.onProgress = it => this.emit(DOWNLOAD_PROGRESS, it)
-            }
-
-            await new FileWithEmbeddedBlockMapDifferentialDownloader(fileInfo.info, this.httpExecutor, downloadOptions).download()
-          } catch (e: any) {
-            this._logger.error(`Cannot download differentially, fallback to full download: ${e.stack || e}`)
-            // during test (developer machine mac) we must throw error
-            isDownloadFull = process.platform === "linux"
-          }
-        }
-
-        if (isDownloadFull) {
+        if (downloadUpdateOptions.disableDifferentialDownload || (await this.downloadDifferential(fileInfo, oldFile, updateFile, provider, downloadUpdateOptions))) {
           await this.httpExecutor.download(fileInfo.url, updateFile, downloadOptions)
         }
 
         await chmod(updateFile, 0o755)
       },
     })
+  }
+
+  private async downloadDifferential(fileInfo: ResolvedUpdateFileInfo, oldFile: string, updateFile: string, provider: Provider<any>, downloadUpdateOptions: DownloadUpdateOptions) {
+    try {
+      const downloadOptions: DifferentialDownloaderOptions = {
+        newUrl: fileInfo.url,
+        oldFile,
+        logger: this._logger,
+        newFile: updateFile,
+        isUseMultipleRangeRequest: provider.isUseMultipleRangeRequest,
+        requestHeaders: downloadUpdateOptions.requestHeaders,
+        cancellationToken: downloadUpdateOptions.cancellationToken,
+      }
+
+      if (this.listenerCount(DOWNLOAD_PROGRESS) > 0) {
+        downloadOptions.onProgress = it => this.emit(DOWNLOAD_PROGRESS, it)
+      }
+
+      await new FileWithEmbeddedBlockMapDifferentialDownloader(fileInfo.info, this.httpExecutor, downloadOptions).download()
+      return false
+    } catch (e: any) {
+      this._logger.error(`Cannot download differentially, fallback to full download: ${e.stack || e}`)
+      // during test (developer machine mac) we must throw error
+      return process.platform === "linux"
+    }
   }
 
   protected doInstall(options: InstallOptions): boolean {
