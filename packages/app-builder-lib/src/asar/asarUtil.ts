@@ -1,7 +1,7 @@
 import { CreateOptions, createPackageWithOptions } from "@electron/asar"
 import { AsyncTaskManager, log } from "builder-util"
 import { CancellationToken } from "builder-util-runtime"
-import { FileCopier, Filter, Link, MAX_FILE_REQUESTS } from "builder-util/out/fs"
+import { FileCopier, Link, MAX_FILE_REQUESTS } from "builder-util/out/fs"
 import * as fs from "fs-extra"
 import { mkdir, readlink, symlink } from "fs-extra"
 import { platform } from "os"
@@ -26,7 +26,7 @@ export class AsarPackager {
       defaultDestination: string
       resourcePath: string
       options: AsarOptions
-      unpackPattern: Filter | undefined
+      unpackPattern: Array<string>
     }
   ) {
     this.outFile = path.join(config.resourcePath, `app.asar`)
@@ -45,7 +45,8 @@ export class AsarPackager {
       fileSets[0],
     ].map(orderFileSet)
 
-    const { unpackedPaths, copiedFiles } = await this.detectAndCopy(orderedFileSets)
+    const { unpackedPaths: paths, copiedFiles } = await this.detectAndCopy(orderedFileSets)
+    const unpackedPaths = [...paths, ...this.config.unpackPattern]
     const unpackGlob = unpackedPaths.length > 1 ? `{${unpackedPaths.join(",")}}` : unpackedPaths.pop()
 
     await this.executeElectronAsar(copiedFiles, unpackGlob)
@@ -87,13 +88,6 @@ export class AsarPackager {
     const links: Array<Link> = []
     const symlinkType = platform() === "win32" ? "junction" : "file"
 
-    const matchUnpacker = (file: string, dest: string, stat: fs.Stats) => {
-      if (this.config.unpackPattern?.(file, stat)) {
-        log.debug({ file }, "unpacking")
-        unpackedPaths.add(dest)
-        return
-      }
-    }
     const writeFileOrProcessSymlink = async (options: {
       file: string
       destination: string
@@ -153,7 +147,6 @@ export class AsarPackager {
         const relative = path.relative(this.config.defaultDestination, getDestinationPath(file, fileSet))
         const destination = path.resolve(this.rootForAppFilesWithoutAsar, relative)
 
-        matchUnpacker(file, destination, stat)
         taskManager.addTask(writeFileOrProcessSymlink({ transformedData, file, destination, stat, fileSet }))
 
         if (taskManager.tasks.length > MAX_FILE_REQUESTS) {
