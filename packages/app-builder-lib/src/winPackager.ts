@@ -1,10 +1,11 @@
-import BluebirdPromise from "bluebird-lst"
-import { Arch, InvalidConfigurationError, log, use, executeAppBuilder, CopyFileTransformer, FileTransformer, walk, retry } from "builder-util"
+import { Arch, CopyFileTransformer, executeAppBuilder, FileTransformer, InvalidConfigurationError, use, walk } from "builder-util"
 import { createHash } from "crypto"
 import { readdir } from "fs/promises"
 import * as isCI from "is-ci"
 import { Lazy } from "lazy-val"
 import * as path from "path"
+import { signWindows, WindowsSignOptions } from "./codeSign/windowsCodeSign"
+import { WindowsSignAzureManager } from "./codeSign/windowsSignAzureManager"
 import { FileCodeSigningInfo, getSignVendorPath, WindowsSignToolManager } from "./codeSign/windowsSignToolManager"
 import { AfterPackContext } from "./configuration"
 import { DIR_TARGET, Platform, Target } from "./core"
@@ -23,22 +24,23 @@ import { isBuildCacheEnabled } from "./util/flags"
 import { time } from "./util/timer"
 import { getWindowsVm, VmManager } from "./vm/vm"
 import { execWine } from "./wine"
-import { signWindows } from "./codeSign/windowsCodeSign"
-import { WindowsSignOptions } from "./codeSign/windowsCodeSign"
-import { WindowsSignAzureManager } from "./codeSign/windowsSignAzureManager"
+import { SignManager } from "./codeSign/signManager"
 
 export class WinPackager extends PlatformPackager<WindowsConfiguration> {
   _iconPath = new Lazy(() => this.getOrConvertIcon("ico"))
 
   readonly vm = new Lazy<VmManager>(() => (process.platform === "win32" ? Promise.resolve(new VmManager()) : getWindowsVm(this.debugLogger)))
 
-  readonly signtoolManager = new Lazy<WindowsSignToolManager>(() => Promise.resolve(new WindowsSignToolManager(this)))
-  readonly azureSignManager = new Lazy(() =>
-    Promise.resolve(new WindowsSignAzureManager(this)).then(async manager => {
-      await manager.initializeProviderModules()
-      return manager
-    })
-  )
+  readonly signingManager = new Lazy(async () => {
+    let manager: SignManager
+    if (this.platformSpecificBuildOptions.azureSignOptions != null) {
+      manager = new WindowsSignAzureManager(this)
+    } else {
+      manager = new WindowsSignToolManager(this)
+    }
+    await manager.initialize()
+    return manager
+  })
 
   get isForceCodeSigningVerification(): boolean {
     return this.platformSpecificBuildOptions.verifyUpdateCodeSignature !== false
@@ -128,32 +130,13 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
       options: this.platformSpecificBuildOptions,
     }
 
-    const didSignSuccessfully = await this.doSign(signOptions)
+    const didSignSuccessfully = await signWindows(signOptions, this)
     if (!didSignSuccessfully && this.forceCodeSigning) {
       throw new InvalidConfigurationError(
         `App is not signed and "forceCodeSigning" is set to true, please ensure that code signing configuration is correct, please see https://electron.build/code-signing`
       )
     }
     return didSignSuccessfully
-  }
-
-  private async doSign(options: WindowsSignOptions) {
-    return retry(
-      () => signWindows(options, this),
-      3,
-      500,
-      500,
-      0,
-      (e: any) => {
-        // https://github.com/electron-userland/electron-builder/issues/1414
-        const message = e.message
-        if (message != null && message.includes("Couldn't resolve host name")) {
-          log.warn({ error: message }, `cannot sign`)
-          return true
-        }
-        return false
-      }
-    )
   }
 
   async signAndEditResources(file: string, arch: Arch, outDir: string, internalName?: string | null, requestedExecutionLevel?: RequestedExecutionLevel | null) {
@@ -195,7 +178,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     })
 
     const config = this.config
-    const cscInfoForCacheDigest = !isBuildCacheEnabled() || isCI || config.electronDist != null ? null : await (await this.signtoolManager.value).cscInfo.value
+    const cscInfoForCacheDigest = !isBuildCacheEnabled() || isCI || config.electronDist != null ? null : await (await this.signingManager.value).cscInfo.value
     let buildCacheManager: BuildCacheManager | null = null
     // resources editing doesn't change executable for the same input and executed quickly - no need to complicate
     if (cscInfoForCacheDigest != null) {
@@ -267,9 +250,10 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
       return false
     }
 
-    await BluebirdPromise.map(readdir(packContext.appOutDir), (file: string): any => {
+    const files = await readdir(packContext.appOutDir)
+    for (const file of files) {
       if (file === exeFileName) {
-        return this.signAndEditResources(
+        await this.signAndEditResources(
           path.join(packContext.appOutDir, exeFileName),
           packContext.arch,
           packContext.outDir,
@@ -277,10 +261,9 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
           this.platformSpecificBuildOptions.requestedExecutionLevel
         )
       } else if (this.shouldSignFile(file)) {
-        return this.sign(path.join(packContext.appOutDir, file))
+        await this.sign(path.join(packContext.appOutDir, file))
       }
-      return null
-    })
+    }
 
     if (!isAsar) {
       return true
@@ -291,7 +274,9 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
       return walk(outDir, (file, stat) => stat.isDirectory() || this.shouldSignFile(file))
     }
     const filesToSign = await Promise.all([filesPromise(["resources", "app.asar.unpacked"]), filesPromise(["swiftshader"])])
-    await BluebirdPromise.map(filesToSign.flat(1), file => this.sign(file), { concurrency: 4 })
+    for (const file of filesToSign.flat(1)) {
+      await this.sign(file)
+    }
 
     return true
   }

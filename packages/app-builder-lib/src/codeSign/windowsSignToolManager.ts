@@ -16,6 +16,9 @@ import { getPSCmd } from "./windowsCodeSign"
 import { MemoLazy, parseDn } from "builder-util-runtime"
 import { Lazy } from "lazy-val"
 import { importCertificate } from "./codesign"
+import { SignManager } from "./signManager"
+import { Target } from "../core"
+import AppXTarget from "../targets/AppxTarget"
 
 export function getSignVendorPath() {
   return getBin("winCodeSign")
@@ -65,7 +68,7 @@ interface CertInfo {
   PSParentPath: string
 }
 
-export class WindowsSignToolManager {
+export class WindowsSignToolManager implements SignManager {
   private readonly platformSpecificBuildOptions: WindowsConfiguration
 
   constructor(private readonly packager: WinPackager) {
@@ -161,7 +164,26 @@ export class WindowsSignToolManager {
     }
   )
 
-  async signUsingSigntool(options: WindowsSignOptions): Promise<boolean> {
+  initialize(): Promise<void> {
+    return Promise.resolve()
+  }
+
+  // https://github.com/electron-userland/electron-builder/issues/2108#issuecomment-333200711
+  async computePublisherName(target: Target, publisherName: string) {
+    if (target instanceof AppXTarget && (await this.cscInfo.value) == null) {
+      log.info({ reason: "Windows Store only build" }, "AppX is not signed")
+      return publisherName || "CN=ms"
+    }
+
+    const certInfo = await this.lazyCertInfo.value
+    const publisher = publisherName || (certInfo == null ? null : certInfo.bloodyMicrosoftSubjectDn)
+    if (publisher == null) {
+      throw new Error("Internal error: cannot compute subject using certificate info")
+    }
+    return publisher
+  }
+
+  async signFile(options: WindowsSignOptions): Promise<boolean> {
     let hashes = chooseNotNull(options.options.signtoolOptions?.signingHashAlgorithms, options.options.signingHashAlgorithms)
     // msi does not support dual-signing
     if (options.path.endsWith(".msi")) {
@@ -416,11 +438,11 @@ export class WindowsSignToolManager {
     let args: Array<string>
     let env = process.env
     let vm: VmManager
-    const vmRequired = configuration.path.endsWith(".appx") || !("file" in configuration.cscInfo!) /* certificateSubjectName and other such options */
-    const isWin = process.platform === "win32" || vmRequired
+    const useVmIfNotOnWin = configuration.path.endsWith(".appx") || !("file" in configuration.cscInfo!) /* certificateSubjectName and other such options */
+    const isWin = process.platform === "win32" || useVmIfNotOnWin
     const toolInfo = await this.getToolPath(isWin)
     const tool = toolInfo.path
-    if (vmRequired) {
+    if (useVmIfNotOnWin) {
       vm = await packager.vm.value
       args = this.computeSignToolArgs(configuration, isWin, vm)
     } else {

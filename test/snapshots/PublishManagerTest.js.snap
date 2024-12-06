@@ -58,6 +58,7 @@ exports[`custom provider 2`] = `
   "/opt/Test App ßW/resources/",
   "/opt/Test App ßW/resources/app-update.yml",
   "/opt/Test App ßW/resources/app.asar",
+  "/opt/Test App ßW/resources/apparmor-profile",
   "/opt/Test App ßW/resources/package-type",
   "/usr/share/applications/",
   "/usr/share/applications/testapp.desktop",

@@ -1,5 +1,15 @@
 ## 4.3.0
 
+## 6.4.0-alpha.1
+
+### Minor Changes
+
+- [#8633](https://github.com/electron-userland/electron-builder/pull/8633) [`96f5c3eb`](https://github.com/electron-userland/electron-builder/commit/96f5c3ebbd6b3b58c9c5d3e777577d49edcb6e5a) Thanks [@mmaietta](https://github.com/mmaietta)! - feat(updater): allow usage of `autoRunAppAfterInstall` on mac updater
+
+### Patch Changes
+
+- [#8623](https://github.com/electron-userland/electron-builder/pull/8623) [`cfa67c01`](https://github.com/electron-userland/electron-builder/commit/cfa67c01827a44c88fb8448562dbe928ba37494f) Thanks [@q837477816](https://github.com/q837477816)! - fix: copyFileSync operation will block the main thread
+
 ## 6.4.0-alpha.0
 
 ### Minor Changes

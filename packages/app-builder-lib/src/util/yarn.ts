@@ -100,7 +100,6 @@ async function installDependencies(config: Configuration, appDir: string, option
     if (process.env.NPM_NO_BIN_LINKS === "true") {
       execArgs.push("--no-bin-links")
     }
-    execArgs.push("--production")
   }
 
   if (!isRunningYarn(execPath)) {

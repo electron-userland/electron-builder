@@ -3,5 +3,5 @@ Inherits [macOS options](mac.md).
 
 ## Configuration
 
-{!./app-builder-lib.Interface.MasConfiguration.md!}
+  {!./app-builder-lib.Interface.MasConfiguration.md!}
 

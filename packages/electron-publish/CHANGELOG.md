@@ -1,5 +1,18 @@
 # electron-publish
 
+## 26.0.0-alpha.7
+
+### Patch Changes
+
+- Updated dependencies [[`f4d40f91`](https://github.com/electron-userland/electron-builder/commit/f4d40f91f1511fc55cbef7c9e7edfddaf6ab67bc), [`6a6bed46`](https://github.com/electron-userland/electron-builder/commit/6a6bed46c428b45105ada071a9cb89b5d4f93d9e)]:
+  - builder-util@26.0.0-alpha.7
+
+## 26.0.0-alpha.4
+
+### Patch Changes
+
+- [#8631](https://github.com/electron-userland/electron-builder/pull/8631) [`dcd91a1f`](https://github.com/electron-userland/electron-builder/commit/dcd91a1f79be5bde7bb418b0eaa83d03f11d41fe) Thanks [@olivereisenhut](https://github.com/olivereisenhut)! - fix: Remove path from published binaries
+
 ## 26.0.0-alpha.3
 
 ### Patch Changes

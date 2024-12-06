@@ -1,6 +1,6 @@
 import { Arch, executeAppBuilder, getArchSuffix, log, TmpDir, toLinuxArchString, use, serializeToYaml, asArray } from "builder-util"
 import { unlinkIfExists } from "builder-util"
-import { outputFile, stat } from "fs-extra"
+import { copyFile, outputFile, stat } from "fs-extra"
 import { mkdir, readFile } from "fs/promises"
 import * as path from "path"
 import { smarten } from "../appInfo"
@@ -26,10 +26,16 @@ interface FpmOptions {
   url: string
 }
 
+interface ScriptFiles {
+  afterRemove: string
+  afterInstall: string
+  appArmor: string
+}
+
 export default class FpmTarget extends Target {
   readonly options: LinuxTargetSpecificOptions = { ...this.packager.platformSpecificBuildOptions, ...(this.packager.config as any)[this.name] }
 
-  private readonly scriptFiles: Promise<Array<string>>
+  private readonly scriptFiles: Promise<ScriptFiles>
 
   constructor(
     name: string,
@@ -42,7 +48,7 @@ export default class FpmTarget extends Target {
     this.scriptFiles = this.createScripts()
   }
 
-  private async createScripts(): Promise<Array<string>> {
+  private async createScripts(): Promise<ScriptFiles> {
     const defaultTemplatesDir = getTemplatePath("linux")
 
     const packager = this.packager
@@ -61,10 +67,11 @@ export default class FpmTarget extends Target {
       return path.resolve(packager.projectDir, value)
     }
 
-    return await Promise.all<string>([
-      writeConfigFile(packager.info.tempDirManager, getResource(this.options.afterInstall, "after-install.tpl"), templateOptions),
-      writeConfigFile(packager.info.tempDirManager, getResource(this.options.afterRemove, "after-remove.tpl"), templateOptions),
-    ])
+    return {
+      afterInstall: await writeConfigFile(packager.info.tempDirManager, getResource(this.options.afterInstall, "after-install.tpl"), templateOptions),
+      afterRemove: await writeConfigFile(packager.info.tempDirManager, getResource(this.options.afterRemove, "after-remove.tpl"), templateOptions),
+      appArmor: await writeConfigFile(packager.info.tempDirManager, getResource(this.options.appArmorProfile, "apparmor-profile.tpl"), templateOptions),
+    }
   }
 
   checkOptions(): Promise<any> {
@@ -130,13 +137,13 @@ export default class FpmTarget extends Target {
     if (packager.packagerOptions.prepackaged != null) {
       await mkdir(this.outDir, { recursive: true })
     }
+    const linuxDistType = packager.packagerOptions.prepackaged || path.join(this.outDir, `linux${getArchSuffix(arch)}-unpacked`)
+    const resourceDir = packager.getResourcesDir(linuxDistType)
 
     const publishConfig = this.supportsAutoUpdate(target)
       ? await getAppUpdatePublishConfiguration(packager, arch, false /* in any case validation will be done on publish */)
       : null
     if (publishConfig != null) {
-      const linuxDistType = this.packager.packagerOptions.prepackaged || path.join(this.outDir, `linux${getArchSuffix(arch)}-unpacked`)
-      const resourceDir = packager.getResourcesDir(linuxDistType)
       log.info({ resourceDir: log.filePath(resourceDir) }, `adding autoupdate files for: ${target}. (Beta feature)`)
       await outputFile(path.join(resourceDir, "app-update.yml"), serializeToYaml(publishConfig))
       // Extra file needed for auto-updater to detect installation method
@@ -144,6 +151,11 @@ export default class FpmTarget extends Target {
     }
 
     const scripts = await this.scriptFiles
+
+    // Install AppArmor support for ubuntu 24+
+    // https://github.com/electron-userland/electron-builder/issues/8635
+    await copyFile(scripts.appArmor, path.join(resourceDir, "apparmor-profile"))
+
     const appInfo = packager.appInfo
     const options = this.options
     const synopsis = options.synopsis
@@ -151,9 +163,9 @@ export default class FpmTarget extends Target {
       "--architecture",
       toLinuxArchString(arch, target),
       "--after-install",
-      scripts[0],
+      scripts.afterInstall,
       "--after-remove",
-      scripts[1],
+      scripts.afterRemove,
       "--description",
       smarten(target === "rpm" ? this.helper.getDescription(options) : `${synopsis || ""}\n ${this.helper.getDescription(options)}`),
       "--version",
@@ -199,12 +211,16 @@ export default class FpmTarget extends Target {
           throw new Error(`depends must be Array or String, but specified as: ${depends}`)
         }
       }
+    } else {
+      fpmConfiguration.customDepends = this.getDefaultDepends(target)
     }
 
     if (target === "deb") {
       const recommends = (options as DebOptions).recommends
       if (recommends) {
         fpmConfiguration.customRecommends = asArray(recommends)
+      } else {
+        fpmConfiguration.customRecommends = this.getDefaultRecommends(target)
       }
     }
 
@@ -279,6 +295,40 @@ export default class FpmTarget extends Target {
 
   private supportsAutoUpdate(target: string) {
     return ["deb", "rpm", "pacman"].includes(target)
+  }
+
+  private getDefaultDepends(target: string): string[] {
+    switch (target) {
+      case "deb":
+        return ["libgtk-3-0", "libnotify4", "libnss3", "libxss1", "libxtst6", "xdg-utils", "libatspi2.0-0", "libuuid1", "libsecret-1-0"]
+
+      case "rpm":
+        return [
+          "gtk3" /* for electron 2+ (electron 1 uses gtk2, but this old version is not supported anymore) */,
+          "libnotify",
+          "nss",
+          "libXScrnSaver",
+          "(libXtst or libXtst6)",
+          "xdg-utils",
+          "at-spi2-core" /* since 5.0.0 */,
+          "(libuuid or libuuid1)" /* since 4.0.0 */,
+        ]
+
+      case "pacman":
+        return ["c-ares", "ffmpeg", "gtk3", "http-parser", "libevent", "libvpx", "libxslt", "libxss", "minizip", "nss", "re2", "snappy", "libnotify", "libappindicator-gtk3"]
+
+      default:
+        return []
+    }
+  }
+
+  private getDefaultRecommends(target: string): string[] {
+    switch (target) {
+      case "deb":
+        return ["libappindicator3-1"]
+      default:
+        return []
+    }
   }
 }
 
