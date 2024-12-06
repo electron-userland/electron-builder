@@ -86,14 +86,14 @@ export class NsisTarget extends Target {
     NsisTargetOptions.resolve(this.options)
   }
 
-  protected buildUniversalInstaller() {
+  get shouldBuildUniversalInstaller() {
     const buildSeparateInstallers = this.options.buildUniversalInstaller === false
     return !buildSeparateInstallers
   }
 
   build(appOutDir: string, arch: Arch) {
     this.archs.set(arch, appOutDir)
-    if (!this.buildUniversalInstaller()) {
+    if (!this.shouldBuildUniversalInstaller) {
       return this.buildInstaller(new Map<Arch, string>().set(arch, appOutDir))
     }
     return Promise.resolve()
@@ -139,11 +139,10 @@ export class NsisTarget extends Target {
   }
 
   protected installerFilenamePattern(primaryArch?: Arch | null, defaultArch?: string): string {
-    if (!this.buildUniversalInstaller()) {
-      return "${productName} " + (this.isPortable ? "" : "Setup ") + "${version}" + (primaryArch != null ? getArchSuffix(primaryArch, defaultArch) : "") + ".${ext}"
-    }
-    // tslint:disable:no-invalid-template-strings
-    return "${productName} " + (this.isPortable ? "" : "Setup ") + "${version}.${ext}"
+    const setupText = this.isPortable ? "" : "Setup "
+    const archSuffix = !this.shouldBuildUniversalInstaller && primaryArch != null ? getArchSuffix(primaryArch, defaultArch) : ""
+
+    return "${productName} " + setupText + "${version}" + archSuffix + ".${ext}";
   }
 
   private get isPortable(): boolean {
@@ -151,7 +150,7 @@ export class NsisTarget extends Target {
   }
 
   async finishBuild(): Promise<any> {
-    if (!this.buildUniversalInstaller()) {
+    if (!this.shouldBuildUniversalInstaller) {
       return this.packageHelper.finishBuild()
     }
     try {
@@ -375,7 +374,7 @@ export class NsisTarget extends Target {
   protected generateGitHubInstallerName(primaryArch: Arch | null, defaultArch: string | undefined): string {
     const appInfo = this.packager.appInfo
     const classifier = appInfo.name.toLowerCase() === appInfo.name ? "setup-" : "Setup-"
-    const archSuffix = !this.buildUniversalInstaller() && primaryArch != null ? getArchSuffix(primaryArch, defaultArch) : ""
+    const archSuffix = !this.shouldBuildUniversalInstaller && primaryArch != null ? getArchSuffix(primaryArch, defaultArch) : ""
     return `${appInfo.name}-${this.isPortable ? "" : classifier}${appInfo.version}${archSuffix}.exe`
   }
 

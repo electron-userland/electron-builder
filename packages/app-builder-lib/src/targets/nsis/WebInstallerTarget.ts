@@ -36,7 +36,7 @@ export class WebInstallerTarget extends NsisTarget {
     defines.APP_PACKAGE_URL = appPackageUrl
   }
 
-  protected buildUniversalInstaller(): boolean {
+  get shouldBuildUniversalInstaller() {
     if (this.options.buildUniversalInstaller === false) {
       log.warn({ buildUniversalInstaller: true }, "only universal builds are supported for nsis-web installers, overriding setting")
     }
