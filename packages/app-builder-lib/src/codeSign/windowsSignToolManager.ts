@@ -435,11 +435,11 @@ export class WindowsSignToolManager implements SignManager {
     let args: Array<string>
     let env = process.env
     let vm: VmManager
-    const vmRequired = configuration.path.endsWith(".appx") || !("file" in configuration.cscInfo!) /* certificateSubjectName and other such options */
-    const isWin = process.platform === "win32" || vmRequired
+    const useVmIfNotOnWin = configuration.path.endsWith(".appx") || !("file" in configuration.cscInfo!) /* certificateSubjectName and other such options */
+    const isWin = process.platform === "win32" || useVmIfNotOnWin
     const toolInfo = await this.getToolPath(isWin)
     const tool = toolInfo.path
-    if (vmRequired) {
+    if (useVmIfNotOnWin) {
       vm = await packager.vm.value
       args = this.computeSignToolArgs(configuration, isWin, vm)
     } else {

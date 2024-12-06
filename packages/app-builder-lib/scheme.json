@@ -1578,6 +1578,11 @@
           "default": "stable",
           "description": "The channel."
         },
+        "host": {
+          "default": "api.keygen.sh",
+          "description": "Keygen host for self-hosted instances",
+          "type": "string"
+        },
         "platform": {
           "description": "The target Platform. Is set programmatically explicitly during publishing.",
           "type": [
