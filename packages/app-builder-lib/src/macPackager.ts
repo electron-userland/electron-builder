@@ -8,7 +8,7 @@ import { AppInfo } from "./appInfo"
 import { CertType, CodeSigningInfo, createKeychain, CreateKeychainOptions, findIdentity, Identity, isSignAllowed, removeKeychain, reportError, sign } from "./codeSign/macCodeSign"
 import { DIR_TARGET, Platform, Target } from "./core"
 import { AfterPackContext, ElectronPlatformName } from "./index"
-import { MacConfiguration, MasConfiguration, NotarizeNotaryOptions } from "./options/macOptions"
+import { MacConfiguration, MasConfiguration } from "./options/macOptions"
 import { Packager } from "./packager"
 import { chooseNotNull, PlatformPackager } from "./platformPackager"
 import { ArchiveTarget } from "./targets/ArchiveTarget"
@@ -531,17 +531,10 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
   }
 
   private getNotarizeOptions(appPath: string): NotarizeOptionsNotaryTool | undefined {
-    let teamId = process.env.APPLE_TEAM_ID
+    const teamId = process.env.APPLE_TEAM_ID
     const appleId = process.env.APPLE_ID
     const appleIdPassword = process.env.APPLE_APP_SPECIFIC_PASSWORD
-    const options = this.platformSpecificBuildOptions.notarize
     const tool = "notarytool"
-
-    const optionsTeamId = (options as NotarizeNotaryOptions)?.teamId
-    if (optionsTeamId) {
-      log.warn(null, "Please specify notarization Team ID in the `APPLE_TEAM_ID` env var instead of `notarize.teamId`")
-      teamId = optionsTeamId
-    }
 
     // option 1: app specific password
     if (appleId || appleIdPassword) {
