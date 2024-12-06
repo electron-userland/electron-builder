@@ -215,6 +215,10 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
 
   protected _isUpdateSupported: VerifyUpdateSupport = (updateInfo: UpdateInfo): boolean | Promise<boolean> => this.checkIfUpdateSupported(updateInfo)
 
+  /**
+   * Allows developer to override default logic for determining if an update is supported.
+   * The default logic compares the `UpdateInfo` minimum system version against the `os.release()` with `semver` package
+   */
   get isUpdateSupported(): VerifyUpdateSupport {
     return this._isUpdateSupported
   }
