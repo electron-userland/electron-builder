@@ -180,6 +180,12 @@ export interface KeygenOptions extends PublishConfiguration {
   readonly provider: "keygen"
 
   /**
+   * Keygen host for self-hosted instances
+   * @default "api.keygen.sh"
+   */
+  readonly host?: string
+
+  /**
    * Keygen account's UUID
    */
   readonly account: string
