@@ -583,7 +583,18 @@
               "type": "null"
             }
           ],
-          "description": "Package dependencies. Defaults to `[\"gconf2\", \"gconf-service\", \"libnotify4\", \"libappindicator1\", \"libxtst6\", \"libnss3\"]`.\nIf need to support Debian, `libappindicator1` should be removed, it is [deprecated in Debian](https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=895037).\nIf need to support KDE, `gconf2` and `gconf-service` should be removed as it's no longer used [by GNOME](https://packages.debian.org/bullseye/gconf2)."
+          "default": [
+            "libgtk-3-0",
+            "libnotify4",
+            "libnss3",
+            "libxss1",
+            "libxtst6",
+            "xdg-utils",
+            "libatspi2.0-0",
+            "libuuid1",
+            "libsecret-1-0"
+          ],
+          "description": "Package dependencies.\nIf need to support Debian, `libappindicator1` should be removed, it is [deprecated in Debian](https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=895037).\nIf need to support KDE, `gconf2` and `gconf-service` should be removed as it's no longer used [by GNOME](https://packages.debian.org/bullseye/gconf2)."
         },
         "description": {
           "description": "As [description](./configuration.md#description) from application package.json, but allows you to specify different for Linux.",
@@ -727,7 +738,10 @@
               "type": "null"
             }
           ],
-          "description": "The [recommended package dependencies](https://www.debian.org/doc/debian-policy/ch-relationships.html#s-binarydeps).."
+          "default": [
+            "libappindicator3-1"
+          ],
+          "description": "The [recommended package dependencies](https://www.debian.org/doc/debian-policy/ch-relationships.html#s-binarydeps)."
         },
         "synopsis": {
           "description": "The [short description](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Description).",
@@ -1564,6 +1578,11 @@
           "default": "stable",
           "description": "The channel."
         },
+        "host": {
+          "default": "api.keygen.sh",
+          "description": "Keygen host for self-hosted instances",
+          "type": "string"
+        },
         "platform": {
           "description": "The target Platform. Is set programmatically explicitly during publishing.",
           "type": [
@@ -2123,7 +2142,7 @@
               "type": "null"
             }
           ],
-          "description": "Package dependencies."
+          "description": "Package dependencies.\n`rpm` defaults to `[\"gtk3\", \"libnotify\", \"nss\", \"libXScrnSaver\", \"(libXtst or libXtst6)\", \"xdg-utils\", \"at-spi2-core\", \"(libuuid or libuuid1)\"]`\n`pacman` defaults to `[\"c-ares\", \"ffmpeg\", \"gtk3\", \"http-parser\", \"libevent\", \"libvpx\", \"libxslt\", \"libxss\", \"minizip\", \"nss\", \"re2\", \"snappy\", \"libnotify\", \"libappindicator-gtk3\"]`"
         },
         "description": {
           "description": "As [description](./configuration.md#description) from application package.json, but allows you to specify different for Linux.",
