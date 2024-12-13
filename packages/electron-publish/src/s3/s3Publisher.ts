@@ -61,6 +61,10 @@ export class S3Publisher extends BaseS3Publisher {
     if (this.info.encryption != null) {
       args.push("--encryption", this.info.encryption)
     }
+
+    if (this.info.forcePathStyle != undefined) {
+      args.push("--forcePathStyle", this.info.forcePathStyle ? "true" : "false")
+    }
   }
 
   toString() {
