@@ -26,6 +26,6 @@ To disable Code Signing when building for macOS leave all the above vars unset e
 Another way — set `mac.identity` to `null`. You can pass aditional configuration using CLI as well: `-c.mac.identity=null`.
 
 ## Code Signing and Notarization Tutorial
-Props to @Chetan11-dev for putting this together!
+Thank you to a community member for putting this together.
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/hYBLfjT57hU?si=lADhxKdYM_5mHsPo" title="MacOS Code Signing in Electron" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
