@@ -1,5 +1,18 @@
 import BluebirdPromise from "bluebird-lst"
-import { Arch, asArray, AsyncTaskManager, exec, executeAppBuilder, getPlatformIconFileName, InvalidConfigurationError, log, spawnAndWrite, use, getPath7za } from "builder-util"
+import {
+  Arch,
+  asArray,
+  AsyncTaskManager,
+  exec,
+  executeAppBuilder,
+  getPlatformIconFileName,
+  InvalidConfigurationError,
+  log,
+  spawnAndWrite,
+  use,
+  getPath7za,
+  getArchSuffix,
+} from "builder-util"
 import { CURRENT_APP_INSTALLER_FILE_NAME, CURRENT_APP_PACKAGE_FILE_NAME, PackageFileInfo, UUID } from "builder-util-runtime"
 import { exists, statOrNull, walk } from "builder-util"
 import _debug from "debug"
@@ -9,7 +22,7 @@ import * as path from "path"
 import { getBinFromUrl } from "../../binDownload"
 import { Target } from "../../core"
 import { DesktopShortcutCreationPolicy, getEffectiveOptions } from "../../options/CommonWindowsInstallerConfiguration"
-import { computeSafeArtifactNameIfNeeded, normalizeExt } from "../../platformPackager"
+import { chooseNotNull, computeSafeArtifactNameIfNeeded, normalizeExt } from "../../platformPackager"
 import { hashFile } from "../../util/hash"
 import { isMacOsCatalina } from "../../util/macosVersion"
 import { time } from "../../util/timer"
@@ -73,8 +86,16 @@ export class NsisTarget extends Target {
     NsisTargetOptions.resolve(this.options)
   }
 
+  get shouldBuildUniversalInstaller() {
+    const buildSeparateInstallers = this.options.buildUniversalInstaller === false
+    return !buildSeparateInstallers
+  }
+
   build(appOutDir: string, arch: Arch) {
     this.archs.set(arch, appOutDir)
+    if (!this.shouldBuildUniversalInstaller) {
+      return this.buildInstaller(new Map<Arch, string>().set(arch, appOutDir))
+    }
     return Promise.resolve()
   }
 
@@ -117,9 +138,11 @@ export class NsisTarget extends Target {
     }
   }
 
-  protected get installerFilenamePattern(): string {
-    // tslint:disable:no-invalid-template-strings
-    return "${productName} " + (this.isPortable ? "" : "Setup ") + "${version}.${ext}"
+  protected installerFilenamePattern(primaryArch?: Arch | null, defaultArch?: string): string {
+    const setupText = this.isPortable ? "" : "Setup "
+    const archSuffix = !this.shouldBuildUniversalInstaller && primaryArch != null ? getArchSuffix(primaryArch, defaultArch) : ""
+
+    return "${productName} " + setupText + "${version}" + archSuffix + ".${ext}";
   }
 
   private get isPortable(): boolean {
@@ -127,8 +150,11 @@ export class NsisTarget extends Target {
   }
 
   async finishBuild(): Promise<any> {
+    if (!this.shouldBuildUniversalInstaller) {
+      return this.packageHelper.finishBuild()
+    }
     try {
-      const { pattern } = this.packager.artifactPatternConfig(this.options, this.installerFilenamePattern)
+      const { pattern } = this.packager.artifactPatternConfig(this.options, this.installerFilenamePattern())
       const builds = new Set([this.archs])
       if (pattern.includes("${arch}") && this.archs.size > 1) {
         ;[...this.archs].forEach(([arch, appOutDir]) => builds.add(new Map().set(arch, appOutDir)))
@@ -147,14 +173,8 @@ export class NsisTarget extends Target {
     const packager = this.packager
     const appInfo = packager.appInfo
     const options = this.options
-    const installerFilename = packager.expandArtifactNamePattern(
-      options,
-      "exe",
-      primaryArch,
-      this.installerFilenamePattern,
-      false,
-      this.packager.platformSpecificBuildOptions.defaultArch
-    )
+    const defaultArch = chooseNotNull(this.packager.platformSpecificBuildOptions.defaultArch, this.packager.config.defaultArch) ?? undefined
+    const installerFilename = packager.expandArtifactNamePattern(options, "exe", primaryArch, this.installerFilenamePattern(primaryArch, defaultArch), false, defaultArch)
     const oneClick = options.oneClick !== false
     const installerPath = path.join(this.outDir, installerFilename)
 
@@ -328,7 +348,7 @@ export class NsisTarget extends Target {
     await this.executeMakensis(defines, commands, sharedHeader + (await this.computeFinalScript(script, true, archs)))
     await Promise.all<any>([packager.sign(installerPath), defines.UNINSTALLER_OUT_FILE == null ? Promise.resolve() : unlink(defines.UNINSTALLER_OUT_FILE)])
 
-    const safeArtifactName = computeSafeArtifactNameIfNeeded(installerFilename, () => this.generateGitHubInstallerName())
+    const safeArtifactName = computeSafeArtifactNameIfNeeded(installerFilename, () => this.generateGitHubInstallerName(primaryArch, defaultArch))
     let updateInfo: any
     if (this.isWebInstaller) {
       updateInfo = createNsisWebDifferentialUpdateInfo(installerPath, packageFiles)
@@ -351,10 +371,11 @@ export class NsisTarget extends Target {
     })
   }
 
-  protected generateGitHubInstallerName(): string {
+  protected generateGitHubInstallerName(primaryArch: Arch | null, defaultArch: string | undefined): string {
     const appInfo = this.packager.appInfo
     const classifier = appInfo.name.toLowerCase() === appInfo.name ? "setup-" : "Setup-"
-    return `${appInfo.name}-${this.isPortable ? "" : classifier}${appInfo.version}.exe`
+    const archSuffix = !this.shouldBuildUniversalInstaller && primaryArch != null ? getArchSuffix(primaryArch, defaultArch) : ""
+    return `${appInfo.name}-${this.isPortable ? "" : classifier}${appInfo.version}${archSuffix}.exe`
   }
 
   private get isUnicodeEnabled(): boolean {
