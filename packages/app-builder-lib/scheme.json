@@ -4620,6 +4620,9 @@
         "content-security-policy-report-only": {
           "type": "string"
         },
+        "content-type": {
+          "type": "string"
+        },
         "cookie": {
           "anyOf": [
             {
@@ -4710,7 +4713,7 @@
         "origin": {
           "type": "string"
         },
-        "prgama": {
+        "pragma": {
           "anyOf": [
             {
               "items": {
@@ -5386,6 +5389,10 @@
             "null",
             "string"
           ]
+        },
+        "forcePathStyle": {
+          "description": "When true, force a path-style endpoint to be used where the bucket name is part of the path.\n[Path-style Access](https://docs.aws.amazon.com/AmazonS3/latest/userguide/VirtualHosting.html#path-style-access)",
+          "type": "boolean"
         },
         "path": {
           "default": "/",
