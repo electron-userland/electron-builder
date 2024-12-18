@@ -508,7 +508,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
             defaultDestination,
             resourcePath,
             options: asarOptions,
-            unpackPattern: fileMatcher?.createFilter(),
+            unpackPattern: fileMatcher?.patterns || [],
           }).pack(fileSets)
         })
       )
