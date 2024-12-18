@@ -5114,7 +5114,7 @@ exports[`smart unpack local module with dll file 3`] = `
 [
   "app.asar",
   {
-    "content": "{"name":"foo","version":"9.0.0","main":"index.js","license":"MIT","dependencies":{"ms":"2.0.0"}}",
+    "content": "{"name":"foo","version":"9.0.0","main":"index.js","license":"MIT"}",
     "name": "app.asar.unpacked/node_modules/foo/package.json",
   },
   "app.asar.unpacked/node_modules/foo/test.dll",
