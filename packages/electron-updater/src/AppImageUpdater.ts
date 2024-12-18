@@ -1,7 +1,7 @@
 import { AllPublishOptions, newError } from "builder-util-runtime"
 import { execFileSync } from "child_process"
 import { chmod } from "fs-extra"
-import { unlinkSync } from "fs"
+import { unlinkSync, renameSync } from "fs"
 import * as path from "path"
 import { DownloadUpdateOptions } from "./AppUpdater"
 import { BaseUpdater, InstallOptions } from "./BaseUpdater"
@@ -93,7 +93,7 @@ export class AppImageUpdater extends BaseUpdater {
       destination = path.join(path.dirname(appImageFile), path.basename(options.installerPath))
     }
 
-    execFileSync("mv", ["-f", options.installerPath, destination])
+    renameSync(options.installerPath, destination)
     if (destination !== appImageFile) {
       this.emit("appimage-filename-updated", destination)
     }
