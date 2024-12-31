@@ -1,5 +1,21 @@
 # app-builder-lib
 
+## 26.0.0-alpha.9
+
+### Minor Changes
+
+- [#8609](https://github.com/electron-userland/electron-builder/pull/8609) [`d672b04b`](https://github.com/electron-userland/electron-builder/commit/d672b04b4746170c07bc39b7b049ab0c584e7a19) Thanks [@iongion](https://github.com/iongion)! - feat: support completely custom AppxManifest.xml
+
+- [#8607](https://github.com/electron-userland/electron-builder/pull/8607) [`f123628c`](https://github.com/electron-userland/electron-builder/commit/f123628ce400b5e65d0e4f0966e5cc65a1f3b8a5) Thanks [@mmaietta](https://github.com/mmaietta)! - feat: allow disabling of building a universal windows installer
+
+### Patch Changes
+
+- [#8749](https://github.com/electron-userland/electron-builder/pull/8749) [`ee2c6dc1`](https://github.com/electron-userland/electron-builder/commit/ee2c6dc133ed31fd82ad8fdf864651494c88fcf8) Thanks [@kethinov](https://github.com/kethinov)! - fix: typo in urls in tsdoc
+
+- Updated dependencies []:
+  - dmg-builder@26.0.0-alpha.9
+  - electron-builder-squirrel-windows@26.0.0-alpha.9
+
 ## 26.0.0-alpha.8
 
 ### Minor Changes
