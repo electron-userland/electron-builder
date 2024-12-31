@@ -1,3 +1,20 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v26.0.0-alpha.8...v) (2024-12-31)
+
+
+### Bug Fixes
+
+* **docs:** downgrade typedoc-plugin-markdown to fix docs site generation ([#8755](https://github.com/electron-userland/electron-builder/issues/8755)) ([5c44725](https://github.com/electron-userland/electron-builder/commit/5c4472510a9dbefbe781aaa50252d9ad78b9f8ed))
+* typo in urls in tsdoc ([#8749](https://github.com/electron-userland/electron-builder/issues/8749)) ([ee2c6dc](https://github.com/electron-userland/electron-builder/commit/ee2c6dc133ed31fd82ad8fdf864651494c88fcf8))
+* use `disableDifferentialDownload` flag in the AppImageBuilder ([#8695](https://github.com/electron-userland/electron-builder/issues/8695)) ([819eff7](https://github.com/electron-userland/electron-builder/commit/819eff7bf7f319275d70faf3a64a5a18a3793a7c))
+
+
+### Features
+
+* **nsis:** allow disabling of building a universal nsis installer  ([#8607](https://github.com/electron-userland/electron-builder/issues/8607)) ([f123628](https://github.com/electron-userland/electron-builder/commit/f123628ce400b5e65d0e4f0966e5cc65a1f3b8a5))
+* support completely custom AppxManifest.xml ([#8609](https://github.com/electron-userland/electron-builder/issues/8609)) ([d672b04](https://github.com/electron-userland/electron-builder/commit/d672b04b4746170c07bc39b7b049ab0c584e7a19))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v26.0.0-alpha.7...v) (2024-12-16)
 
 

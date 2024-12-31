@@ -142,7 +142,7 @@ export class NsisTarget extends Target {
     const setupText = this.isPortable ? "" : "Setup "
     const archSuffix = !this.shouldBuildUniversalInstaller && primaryArch != null ? getArchSuffix(primaryArch, defaultArch) : ""
 
-    return "${productName} " + setupText + "${version}" + archSuffix + ".${ext}";
+    return "${productName} " + setupText + "${version}" + archSuffix + ".${ext}"
   }
 
   private get isPortable(): boolean {
