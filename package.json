@@ -59,7 +59,7 @@
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-prettier": "^5.2.1",
     "fs-extra": "10.1.0",
-    "husky": "7.0.4",
+    "husky": "9.1.7",
     "lint-staged": "15.2.10",
     "prettier": "3.3.3",
     "typedoc": "^0.26.7",
