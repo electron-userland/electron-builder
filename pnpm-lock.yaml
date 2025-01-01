@@ -332,8 +332,8 @@ importers:
         specifier: 4.0.3
         version: 4.0.3
       '@types/source-map-support':
-        specifier: 0.5.4
-        version: 0.5.4
+        specifier: 0.5.10
+        version: 0.5.10
 
   packages/builder-util-runtime:
     dependencies:
@@ -2119,8 +2119,8 @@ packages:
   '@types/semver@7.5.8':
     resolution: {integrity: sha512-I8EUhyrgfLrcTkzV3TSsGyl1tSuPrEDzr0yd5m90UgNxQkyDXULk3b6MlQqTCpZpNtWe1K0hzclnZkTcLBe2UQ==}
 
-  '@types/source-map-support@0.5.4':
-    resolution: {integrity: sha512-9zGujX1sOPg32XLyfgEB/0G9ZnrjthL/Iv1ZfuAjj8LEilHZEpQSQs1scpRXPhHzGYgWiLz9ldF1cI8JhL+yMw==}
+  '@types/source-map-support@0.5.10':
+    resolution: {integrity: sha512-tgVP2H469x9zq34Z0m/fgPewGhg/MLClalNOiPIzQlXrSS2YrKu/xCdSCKnEDwkFha51VKEKB6A9wW26/ZNwzA==}
 
   '@types/stack-utils@2.0.3':
     resolution: {integrity: sha512-9aEbYZ3TbYMznPdcdr3SmIrLXwC/AKZXQeCf9Pgao5CKb8CyHuEX5jzWPTkvregvhRJHcpRO6BFoGW9ycaOkYw==}
@@ -8016,7 +8016,7 @@ snapshots:
 
   '@types/semver@7.5.8': {}
 
-  '@types/source-map-support@0.5.4':
+  '@types/source-map-support@0.5.10':
     dependencies:
       source-map: 0.6.1
 
