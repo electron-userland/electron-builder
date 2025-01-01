@@ -37,7 +37,7 @@
   "devDependencies": {
     "@types/cross-spawn": "6.0.2",
     "@types/fs-extra": "^9.0.11",
-    "@types/is-ci": "3.0.0",
+    "@types/is-ci": "3.0.4",
     "@types/js-yaml": "4.0.3",
     "@types/source-map-support": "0.5.4"
   }
