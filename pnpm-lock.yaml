@@ -235,8 +235,8 @@ importers:
         specifier: 7.24.7
         version: 7.24.7(@babel/core@7.24.9)
       '@types/debug':
-        specifier: 4.1.7
-        version: 4.1.7
+        specifier: 4.1.12
+        version: 4.1.12
       '@types/ejs':
         specifier: 3.1.0
         version: 3.1.0
@@ -345,8 +345,8 @@ importers:
         version: 1.4.1
     devDependencies:
       '@types/debug':
-        specifier: 4.1.7
-        version: 4.1.7
+        specifier: 4.1.12
+        version: 4.1.12
       '@types/sax':
         specifier: 1.2.3
         version: 1.2.3
@@ -1998,6 +1998,9 @@ packages:
 
   '@types/cross-spawn@6.0.2':
     resolution: {integrity: sha512-KuwNhp3eza+Rhu8IFI5HUXRP0LIhqH5cAjubUvGXXthh4YYBuP2ntwEX+Cz8GJoZUHlKo247wPWOfA9LYEq4cw==}
+
+  '@types/debug@4.1.12':
+    resolution: {integrity: sha512-vIChWdVG3LG1SMxEvI/AK+FWJthlrqlTu7fbrlywTkkaONwk/UAGaULXRlf8vkzFBLVm0zkMdCquhL5aOjhXPQ==}
 
   '@types/debug@4.1.7':
     resolution: {integrity: sha512-9AonUzyTjXXhEOa0DnqpzZi6VHlqKMswga9EXjpXnnqxwLtdvPPtlO8evrI5D9S6asFRCQ6v+wpiUKbw+vKqyg==}
@@ -7891,6 +7894,10 @@ snapshots:
   '@types/cross-spawn@6.0.2':
     dependencies:
       '@types/node': 22.10.1
+
+  '@types/debug@4.1.12':
+    dependencies:
+      '@types/ms': 0.7.34
 
   '@types/debug@4.1.7':
     dependencies:
