@@ -131,8 +131,7 @@ export abstract class DifferentialDownloader {
 
       // Create our download info transformer if we have one
       let downloadInfoTransform: ProgressDifferentialDownloadCallbackTransform | undefined = undefined
-      if (!this.options.isUseMultipleRangeRequest && this.options.onProgress) {
-        // TODO: Does not support multiple ranges (someone feel free to PR this!)
+      if (this.options.onProgress) {
         const expectedByteCounts: Array<number> = []
         let grandTotalBytes = 0
 
@@ -189,7 +188,7 @@ export abstract class DifferentialDownloader {
 
       let w: any
       if (this.options.isUseMultipleRangeRequest) {
-        w = executeTasksUsingMultipleRangeRequests(this, tasks, firstStream, oldFileFd, reject)
+        w = executeTasksUsingMultipleRangeRequests(this, tasks, firstStream, oldFileFd, reject, downloadInfoTransform)
         w(0)
         return
       }
