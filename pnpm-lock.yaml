@@ -84,8 +84,8 @@ importers:
         specifier: ~2.6.5
         version: 2.6.5
       '@electron/asar':
-        specifier: 3.2.17
-        version: 3.2.17
+        specifier: 3.2.18
+        version: 3.2.18
       '@electron/fuses':
         specifier: ^1.8.0
         version: 1.8.0
@@ -1594,8 +1594,8 @@ packages:
     resolution: {integrity: sha512-0cp4PsWQ/9avqTVMCtZ+GirikIA36ikvjtHweU4/j8yLtgObI0+JUPhYFScgwlteveGB1rt3Cm8UhN04XayDig==}
     engines: {node: '>= 8.9.0'}
 
-  '@electron/asar@3.2.17':
-    resolution: {integrity: sha512-OcWImUI686w8LkghQj9R2ynZ2ME693Ek6L1SiaAgqGKzBaTIZw3fHDqN82Rcl+EU1Gm9EgkJ5KLIY/q5DCRbbA==}
+  '@electron/asar@3.2.18':
+    resolution: {integrity: sha512-2XyvMe3N3Nrs8cV39IKELRHTYUWFKrmqqSY1U+GMlc0jvqjIVnoxhNd2H4JolWQncbJi1DCvb5TNxZuI2fEjWg==}
     engines: {node: '>=10.12.0'}
     hasBin: true
 
@@ -7294,7 +7294,7 @@ snapshots:
       ajv: 6.12.6
       ajv-keywords: 3.5.2(ajv@6.12.6)
 
-  '@electron/asar@3.2.17':
+  '@electron/asar@3.2.18':
     dependencies:
       commander: 5.1.0
       glob: 7.2.3
@@ -7377,7 +7377,7 @@ snapshots:
 
   '@electron/universal@2.0.1':
     dependencies:
-      '@electron/asar': 3.2.17
+      '@electron/asar': 3.2.18
       '@malept/cross-spawn-promise': 2.0.0
       debug: 4.3.7
       dir-compare: 4.2.0
