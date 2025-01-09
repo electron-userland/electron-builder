@@ -102,11 +102,6 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
   const helperGPUPlist = plistContent[6]
   const helperLoginPlist = plistContent[7]
 
-  // if an extend-info file was supplied, copy its contents in first
-  if (plistContent[8] != null) {
-    Object.assign(appPlist, plistContent[8])
-  }
-
   const buildMetadata = packager.config
 
   /**

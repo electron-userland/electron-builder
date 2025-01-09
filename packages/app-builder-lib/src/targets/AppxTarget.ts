@@ -100,6 +100,7 @@ export default class AppXTarget extends Target {
 
     const manifestFile = stageDir.getTempFile("AppxManifest.xml")
     await this.writeManifest(manifestFile, arch, await this.computePublisherName(), userAssets)
+
     await packager.info.callAppxManifestCreated(manifestFile)
     mappingList.push(assetInfo.mappings)
     mappingList.push([`"${vm.toVmFile(manifestFile)}" "AppxManifest.xml"`])
@@ -198,7 +199,12 @@ export default class AppXTarget extends Target {
     const extensions = await this.getExtensions(executable, displayName)
     const archSpecificMinVersion = arch === Arch.arm64 ? "10.0.16299.0" : "10.0.14316.0"
 
-    const manifest = (await readFile(path.join(getTemplatePath("appx"), "appxmanifest.xml"), "utf8")).replace(/\${([a-zA-Z0-9]+)}/g, (match, p1): string => {
+    const customManifestPath = await this.packager.getResource(this.options.customManifestPath)
+    if (customManifestPath) {
+      log.info({ manifestPath: log.filePath(customManifestPath) }, "custom appx manifest found")
+    }
+    const manifestFileContent = await readFile(customManifestPath || path.join(getTemplatePath("appx"), "appxmanifest.xml"), "utf8")
+    const manifest = manifestFileContent.replace(/\${([a-zA-Z0-9]+)}/g, (match, p1): string => {
       switch (p1) {
         case "publisher":
           return publisher

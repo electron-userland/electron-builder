@@ -1,3 +1,30 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v26.0.0-alpha.7...v) (2024-12-16)
+
+
+### Bug Fixes
+
+* install all dependencies to fix building within NPM workspaces ([#8715](https://github.com/electron-userland/electron-builder/issues/8715)) ([4c394d5](https://github.com/electron-userland/electron-builder/commit/4c394d54689f03bbca54a083c7e126d9c83e6ed7))
+
+
+### Features
+
+* **keygen:** Add `host` property to support self-hosted Keygen instances ([#8711](https://github.com/electron-userland/electron-builder/issues/8711)) ([6f0fb8e](https://github.com/electron-userland/electron-builder/commit/6f0fb8e44f035bcd6ff0d6f234b38c20fde066af))
+* **publish:** add `forcePathStyle` option to `S3Options` ([#8741](https://github.com/electron-userland/electron-builder/issues/8741)) ([eacbbf5](https://github.com/electron-userland/electron-builder/commit/eacbbf593f6ea01a92ffb41d8d28ee5e4e480ea1))
+
+
+
+# [](https://github.com/electron-userland/electron-builder/compare/v26.0.0-alpha.6...v) (2024-12-03)
+
+
+### Bug Fixes
+
+* **deps:** update dependency cross-spawn to v7.0.5 [security] ([#8693](https://github.com/electron-userland/electron-builder/issues/8693)) ([6a6bed4](https://github.com/electron-userland/electron-builder/commit/6a6bed46c428b45105ada071a9cb89b5d4f93d9e))
+* **deps:** update dependency eslint to v9.16.0 [security] ([#8717](https://github.com/electron-userland/electron-builder/issues/8717)) ([9381513](https://github.com/electron-userland/electron-builder/commit/9381513df8c2888ebcd999283991bed64b7058e0))
+* smart unpack for local module with dll ([#8645](https://github.com/electron-userland/electron-builder/issues/8645)) ([f4d40f9](https://github.com/electron-userland/electron-builder/commit/f4d40f91f1511fc55cbef7c9e7edfddaf6ab67bc))
+* **win:** corrupt `.exe` asar integrity file path from cross-platform build ([#8689](https://github.com/electron-userland/electron-builder/issues/8689)) ([1d7f87c](https://github.com/electron-userland/electron-builder/commit/1d7f87c1028fa94c9bb80c167bb1fb87cbc84817))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v26.0.0-alpha.5...v) (2024-11-07)
 
 
