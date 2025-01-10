@@ -1637,8 +1637,8 @@ packages:
     resolution: {integrity: sha512-fKpv9kg4SPmt+hY7SVBnIYULE9QJl8L3sCfcBsnqbJwwBwAeTLokJ9TRt9y7bK0JAzIW2y78TVVjvnQEms/yyA==}
     engines: {node: '>=16.4'}
 
-  '@electron/windows-sign@1.1.3':
-    resolution: {integrity: sha512-OqVSdAe+/88fIjvTDWiy+5Ho1nXsiBhE5RTsIQ6M/zcxcDAEP2TlQCkOyusItnmzXRN+XTFaK9gKhiZ6KGyXQw==}
+  '@electron/windows-sign@1.2.0':
+    resolution: {integrity: sha512-5zfLHfD6kGgsXzuYlKwlWWO8w6dboKy4dhd7rGnR4rQYumuDgPAF2TYjEa8LUi89KdHxtDy2btq02KvbjhK9Iw==}
     engines: {node: '>=14.14'}
     hasBin: true
 
@@ -7311,7 +7311,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@electron/windows-sign@1.1.3':
+  '@electron/windows-sign@1.2.0':
     dependencies:
       cross-dirname: 0.1.0
       debug: 4.3.7
@@ -9031,7 +9031,7 @@ snapshots:
       lodash: 4.17.21
       temp: 0.9.4
     optionalDependencies:
-      '@electron/windows-sign': 1.1.3
+      '@electron/windows-sign': 1.2.0
     transitivePeerDependencies:
       - supports-color
 
