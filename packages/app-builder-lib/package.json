@@ -1,7 +1,7 @@
 {
   "name": "app-builder-lib",
   "description": "electron-builder lib",
-  "version": "26.0.0-alpha.7",
+  "version": "26.0.0-alpha.8",
   "main": "out/index.js",
   "files": [
     "out",
@@ -48,7 +48,7 @@
   "dependencies": {
     "@develar/schema-utils": "~2.6.5",
     "@electron/fuses": "^1.8.0",
-    "@electron/asar": "3.2.17",
+    "@electron/asar": "3.2.18",
     "@electron/notarize": "2.5.0",
     "@electron/osx-sign": "1.3.1",
     "@electron/rebuild": "3.7.0",

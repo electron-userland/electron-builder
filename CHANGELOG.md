@@ -1,3 +1,18 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v26.0.0-alpha.7...v) (2024-12-16)
+
+
+### Bug Fixes
+
+* install all dependencies to fix building within NPM workspaces ([#8715](https://github.com/electron-userland/electron-builder/issues/8715)) ([4c394d5](https://github.com/electron-userland/electron-builder/commit/4c394d54689f03bbca54a083c7e126d9c83e6ed7))
+
+
+### Features
+
+* **keygen:** Add `host` property to support self-hosted Keygen instances ([#8711](https://github.com/electron-userland/electron-builder/issues/8711)) ([6f0fb8e](https://github.com/electron-userland/electron-builder/commit/6f0fb8e44f035bcd6ff0d6f234b38c20fde066af))
+* **publish:** add `forcePathStyle` option to `S3Options` ([#8741](https://github.com/electron-userland/electron-builder/issues/8741)) ([eacbbf5](https://github.com/electron-userland/electron-builder/commit/eacbbf593f6ea01a92ffb41d8d28ee5e4e480ea1))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v26.0.0-alpha.6...v) (2024-12-03)
 
 
