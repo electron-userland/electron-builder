@@ -139,7 +139,7 @@ export class AsarPackager {
       links.push({ file: destination, link })
     }
 
-    for await (const fileSet of fileSets) {
+    for (const fileSet of fileSets) {
       if (this.config.options.smartUnpack !== false) {
         detectUnpackedDirs(fileSet, unpackedPaths)
       }
