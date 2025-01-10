@@ -180,6 +180,12 @@ export interface KeygenOptions extends PublishConfiguration {
   readonly provider: "keygen"
 
   /**
+   * Keygen host for self-hosted instances
+   * @default "api.keygen.sh"
+   */
+  readonly host?: string
+
+  /**
    * Keygen account's UUID
    */
   readonly account: string
@@ -356,6 +362,12 @@ export interface S3Options extends BaseS3Options {
    *  ${bucketname}.s3-accelerate.amazonaws.com
    */
   readonly accelerate?: boolean
+
+  /**
+   * When true, force a path-style endpoint to be used where the bucket name is part of the path.
+   * [Path-style Access](https://docs.aws.amazon.com/AmazonS3/latest/userguide/VirtualHosting.html#path-style-access)
+   */
+  readonly forcePathStyle?: boolean
 }
 
 /**

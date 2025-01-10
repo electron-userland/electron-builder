@@ -139,9 +139,9 @@ export class AsarPackager {
       links.push({ file: destination, link })
     }
 
-    for await (const fileSet of fileSets) {
+    for (const fileSet of fileSets) {
       if (this.config.options.smartUnpack !== false) {
-        detectUnpackedDirs(fileSet, unpackedPaths, this.config.defaultDestination)
+        detectUnpackedDirs(fileSet, unpackedPaths)
       }
 
       // Don't use BluebirdPromise, we need to retain order of execution/iteration through the ordered fileset

@@ -198,6 +198,13 @@ export interface NsisOptions extends CommonNsisOptions, CommonWindowsInstallerCo
    * @default [".avi", ".mov", ".m4v", ".mp4", ".m4p", ".qt", ".mkv", ".webm", ".vmdk"]
    */
   readonly preCompressedFileExtensions?: Array<string> | string | null
+
+  /**
+   * Disable building an universal installer of the archs specified in the target configuration
+   * *Not supported for nsis-web*
+   * @default true
+   */
+  readonly buildUniversalInstaller?: boolean
 }
 
 /**

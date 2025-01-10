@@ -183,6 +183,10 @@
           "description": "Relative path to custom extensions xml to be included in an `appmanifest.xml`.",
           "type": "string"
         },
+        "customManifestPath": {
+          "description": "(Advanced Option) Relative path to custom `appmanifest.xml` (file name doesn't matter, it'll be renamed) located in build resources directory.\nSupports the following template macros:\n\n- ${publisher}\n- ${publisherDisplayName}\n- ${version}\n- ${applicationId}\n- ${identityName}\n- ${executable}\n- ${displayName}\n- ${description}\n- ${backgroundColor}\n- ${logo}\n- ${square150x150Logo}\n- ${square44x44Logo}\n- ${lockScreen}\n- ${defaultTile}\n- ${splashScreen}\n- ${arch}\n- ${resourceLanguages}\n- ${extensions}\n- ${minVersion}\n- ${maxVersionTested}",
+          "type": "string"
+        },
         "displayName": {
           "description": "A friendly name that can be displayed to users. Corresponds to [Properties.DisplayName](https://msdn.microsoft.com/en-us/library/windows/apps/br211432.aspx).\nDefaults to the application product name.",
           "type": [
@@ -1021,7 +1025,7 @@
     },
     "FileAssociation": {
       "additionalProperties": false,
-      "description": "File associations.\n\nmacOS (corresponds to [CFBundleDocumentTypes](https://developer.apple.com/library/content/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-101685)), NSIS, and MSI only.\n\nOn Windows (NSIS) works only if [nsis.perMachine](https://electron.build./configuration.md#NsisOptions-perMachine) is set to `true`.",
+      "description": "File associations.\n\nmacOS (corresponds to [CFBundleDocumentTypes](https://developer.apple.com/library/content/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-101685)), NSIS, and MSI only.\n\nOn Windows (NSIS) works only if [nsis.perMachine](https://www.electron.build/nsis) is set to `true`.",
       "properties": {
         "description": {
           "description": "*windows-only.* The description.",
@@ -1577,6 +1581,11 @@
           ],
           "default": "stable",
           "description": "The channel."
+        },
+        "host": {
+          "default": "api.keygen.sh",
+          "description": "Keygen host for self-hosted instances",
+          "type": "string"
         },
         "platform": {
           "description": "The target Platform. Is set programmatically explicitly during publishing.",
@@ -3891,6 +3900,11 @@
             "string"
           ]
         },
+        "buildUniversalInstaller": {
+          "default": true,
+          "description": "Disable building an universal installer of the archs specified in the target configuration\n*Not supported for nsis-web*",
+          "type": "boolean"
+        },
         "createDesktopShortcut": {
           "default": true,
           "description": "Whether to create desktop shortcut. Set to `always` if to recreate also on reinstall (even if removed by user).",
@@ -4190,6 +4204,11 @@
             "null",
             "string"
           ]
+        },
+        "buildUniversalInstaller": {
+          "default": true,
+          "description": "Disable building an universal installer of the archs specified in the target configuration\n*Not supported for nsis-web*",
+          "type": "boolean"
         },
         "createDesktopShortcut": {
           "default": true,
@@ -4615,6 +4634,9 @@
         "content-security-policy-report-only": {
           "type": "string"
         },
+        "content-type": {
+          "type": "string"
+        },
         "cookie": {
           "anyOf": [
             {
@@ -4705,7 +4727,7 @@
         "origin": {
           "type": "string"
         },
-        "prgama": {
+        "pragma": {
           "anyOf": [
             {
               "items": {
@@ -5381,6 +5403,10 @@
             "null",
             "string"
           ]
+        },
+        "forcePathStyle": {
+          "description": "When true, force a path-style endpoint to be used where the bucket name is part of the path.\n[Path-style Access](https://docs.aws.amazon.com/AmazonS3/latest/userguide/VirtualHosting.html#path-style-access)",
+          "type": "boolean"
         },
         "path": {
           "default": "/",
