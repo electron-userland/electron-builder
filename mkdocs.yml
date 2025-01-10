@@ -123,7 +123,10 @@ nav:
       - Build Hooks: hooks.md
       - Icons: icons.md
       - Auto Update: auto-update.md
-      - Code Signing: code-signing.md
+      - Code Signing:
+        - Setup: code-signing-root.md
+        - Windows: code-signing-win.md
+        - MacOS: code-signing-mac.md
       - Multi Platform Build: multi-platform-build.md
 
   - Tutorials:

@@ -1,13 +1,5 @@
 macOS and Windows code signing is supported. If the configuration values are provided correctly in your package.json, then signing should be automatically executed.
 
-Windows is dual code-signed (SHA1 & SHA256 hashing algorithms).
-
-On a macOS development machine, a valid and appropriate identity from your keychain will be automatically used.
-
-!!! tip
-    See article [Notarizing your Electron application](https://kilianvalkhof.com/2019/electron/notarizing-your-electron-application/).
-
-
 | Env Name       |  Description
 | -------------- | -----------
 | `CSC_LINK`                   | The HTTPS link (or base64-encoded data, or `file://` link, or local path) to certificate (`*.p12` or `*.pfx` file). Shorthand `~/` is supported (home directory).
@@ -21,21 +13,6 @@ On a macOS development machine, a valid and appropriate identity from your keych
 
 !!! tip
     If you are building Windows on macOS and need to set a different certificate and password (than the ones set in `CSC_*` env vars) you can use `WIN_CSC_LINK` and `WIN_CSC_KEY_PASSWORD`.
-
-## Windows
-
-To sign an app on Windows, there are two types of certificates:
-
-* EV Code Signing Certificate
-* Code Signing Certificate
-
-Both certificates work with auto-update. The regular (and often cheaper) Code Signing Certificate shows a warning during installation that goes away once enough users installed your application and you've built up trust. The EV Certificate has more trust and thus works immediately without any warnings. However, it is not possible to export the EV Certificate as it is bound to a physical USB dongle. Thus, you can't export the certificate for signing code on a CI, such as AppVeyor.
-
-If you are using an EV Certificate, you need to provide [win.certificateSubjectName](./win.md#WindowsConfiguration-certificateSubjectName) in your electron-builder configuration.
-
-If you use Windows 7, please ensure that [PowerShell](https://blogs.technet.microsoft.com/heyscriptingguy/2013/06/02/weekend-scripter-install-powershell-3-0-on-windows-7/) is updated to version 3.0.
-
-If you are on Linux or Mac and you want sign a Windows app using EV Code Signing Certificate, please use [the guide for Unix systems](tutorials/code-signing-windows-apps-on-unix.md).
 
 ## Travis, AppVeyor and other CI Servers
 To sign app on build server you need to set `CSC_LINK`, `CSC_KEY_PASSWORD`:
@@ -58,45 +35,6 @@ To sign app on build server you need to set `CSC_LINK`, `CSC_KEY_PASSWORD`:
 ## Where to Buy Code Signing Certificate
 See [Get a code signing certificate](https://msdn.microsoft.com/windows/hardware/drivers/dashboard/get-a-code-signing-certificate) for Windows (platform: "Microsoft Authenticode").
 Please note — Gatekeeper only recognises [Apple digital certificates](http://stackoverflow.com/questions/11833481/non-apple-issued-code-signing-certificate-can-it-work-with-mac-os-10-8-gatekeep).
-
-## How to Export Certificate on macOS
-
-1. Open Keychain.
-2. Select `login` keychain, and `My Certificates` category.
-3. Select all required certificates (hint: use cmd-click to select several):
-   * `Developer ID Application:` to sign app for macOS.
-   * `3rd Party Mac Developer Installer:` and either `Apple Distribution` or `3rd Party Mac Developer Application:` to sign app for MAS (Mac App Store).
-   * `Developer ID Application:` and `Developer ID Installer` to sign app and installer for distribution outside of the Mac App Store.
-   * `Apple Development:` or `Mac Developer:` to sign development builds for testing Mac App Store submissions (`mas-dev` target). You also need a provisioning profile in the working directory that matches this certificate and the device being used for testing.
-
-   Please note – you can select as many certificates as needed. No restrictions on electron-builder side.
-   All selected certificates will be imported into temporary keychain on CI server.
-4. Open context menu and `Export`.
-
-## How to Disable Code Signing During the Build Process on macOS
-
-To disable Code Signing when building for macOS leave all the above vars unset except for `CSC_IDENTITY_AUTO_DISCOVERY` which needs to be set to `false`. This can be done by running `export CSC_IDENTITY_AUTO_DISCOVERY=false`.
-
-Another way — set `mac.identity` to `null`. You can pass aditional configuration using CLI as well: `-c.mac.identity=null`.
-
-## Using with Azure Trusted Signing (beta)
-
-To sign using Azure Tenant account, you'll need the following env variables set that are read directly by `Invoke-TrustedSigning` module; they are not parsed or resolved by electron-builder.
-
-!!! tip
-  Descriptions of each field can be found here: [Azure.Identity class - EnvironmentCredential Class](https://learn.microsoft.com/en-us/dotnet/api/azure.identity.environmentcredential?view=azure-dotnet#definition)
-
-| Env Name       |  Description
-| -------------- | -----------
-| `AZURE_TENANT_ID`           | See the Tip mentioned above.
-| `AZURE_CLIENT_ID`           |
-| `AZURE_CLIENT_SECRET`       |
-| `AZURE_CLIENT_CERTIFICATE_PATH`           |
-| `AZURE_CLIENT_SEND_CERTIFICATE_CHAIN`           |
-| `AZURE_USERNAME`            |
-| `AZURE_PASSWORD`            |
-
-`win.azureSignOptions` needs to be configured per [Microsoft's instructions](https://learn.microsoft.com/en-us/azure/trusted-signing/how-to-signing-integrations#create-a-json-file) directly in electron-builder's configuration. Additional fields can be provided that are passed directly to `Invoke-TrustedSigning` powershell command.
 
 ## Alternative methods of codesigning
 
