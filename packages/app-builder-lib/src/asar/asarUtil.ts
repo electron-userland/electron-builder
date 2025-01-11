@@ -164,8 +164,7 @@ export class AsarPackager {
 
       if (tmpUnpackedPaths.size === fileSet.files.length) {
         const relative = path.relative(this.config.defaultDestination, fileSet.destination)
-        const destination = path.resolve(this.rootForAppFilesWithoutAsar, relative)
-        unpackedPaths.add(`${destination}${path.sep}**`)
+        unpackedPaths.add(`**${path.sep}${relative}${path.sep}**`)
       } else {
         // add all tmpUnpackedPaths to unpackedPaths
         for (const it of tmpUnpackedPaths) {
