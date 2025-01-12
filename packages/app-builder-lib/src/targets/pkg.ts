@@ -68,6 +68,9 @@ export class PkgTarget extends Target {
 
     const args = prepareProductBuildArgs(identity, keychainFile)
     args.push("--distribution", distInfoFile)
+    if (options.extraPkgsDir && options.extraPkgs && options.extraPkgs.length > 0) {
+      args.push("--package-path", path.join(this.packager.info.buildResourcesDir, options.extraPkgsDir))
+    }
     args.push(artifactPath)
     use(options.productbuild, it => args.push(...(it as any)))
     await exec("productbuild", args, {
@@ -79,11 +82,20 @@ export class PkgTarget extends Target {
   }
 
   private async customizeDistributionConfiguration(distInfoFile: string, appPath: string) {
-    await exec("productbuild", ["--synthesize", "--component", appPath, distInfoFile], {
+    const options = this.options
+    const args = ["--synthesize", "--component", appPath]
+    if (options.extraPkgsDir && options.extraPkgs && options.extraPkgs.length > 0) {
+      const extraPkgsDir = path.join(this.packager.info.buildResourcesDir, options.extraPkgsDir)
+      options.extraPkgs.forEach(pkg => {
+        args.push("--package", path.join(extraPkgsDir, pkg));
+      });
+    }
+    args.push(distInfoFile);
+    await exec("productbuild", args, {
       cwd: this.outDir,
     })
 
-    const options = this.options
+    
     let distInfo = await readFile(distInfoFile, "utf-8")
 
     if (options.mustClose != null && options.mustClose.length !== 0) {

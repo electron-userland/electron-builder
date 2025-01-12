@@ -5144,6 +5144,27 @@
             "null",
             "string"
           ]
+        },
+        "extraPkgsDir": {
+          "description": "Add extra component packages for MacOs product archive.\nThe extra component packages directory, relative to `build` (build resources directory).\nExample: `pkg-components`.",
+            "type": [
+              "null",
+              "string"
+            ]
+        },
+        "extraPkgs": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The list of extra component packages, relative to `extraPkgsDir`.\nExample: `['virtual-audio-driver.pkg', 'obs-lib.pkg']`."
         }
       },
       "type": "object"
