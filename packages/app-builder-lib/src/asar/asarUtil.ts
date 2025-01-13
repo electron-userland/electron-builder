@@ -90,7 +90,7 @@ export class AsarPackager {
     const matchUnpacker = (file: string, dest: string, stat: fs.Stats, tmpUnpackedPaths: Set<string>) => {
       if (this.config.unpackPattern?.(file, stat)) {
         log.debug({ file }, "unpacking")
-        tmpUnpackedPaths.add(`**${path.sep}${dest}`)
+        tmpUnpackedPaths.add(dest)
         return
       }
     }
@@ -154,7 +154,7 @@ export class AsarPackager {
         const relative = path.relative(this.config.defaultDestination, getDestinationPath(file, fileSet))
         const destination = path.resolve(this.rootForAppFilesWithoutAsar, relative)
 
-        matchUnpacker(file, relative, stat, tmpUnpackedPaths)
+        matchUnpacker(file, destination, stat, tmpUnpackedPaths)
         taskManager.addTask(writeFileOrProcessSymlink({ transformedData, file, destination, stat, fileSet }))
 
         if (taskManager.tasks.length > MAX_FILE_REQUESTS) {
@@ -164,7 +164,7 @@ export class AsarPackager {
 
       if (tmpUnpackedPaths.size === fileSet.files.length) {
         const relative = path.relative(this.config.defaultDestination, fileSet.destination)
-        unpackedPaths.add(`**${path.sep}${relative}${path.sep}**`)
+        unpackedPaths.add(relative)
       } else {
         // add all tmpUnpackedPaths to unpackedPaths
         for (const it of tmpUnpackedPaths) {

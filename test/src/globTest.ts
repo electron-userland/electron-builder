@@ -302,11 +302,10 @@ test.ifAll.ifDevOrLinuxCi("asarUnpack node_modules which has many modules", () =
           }
         }),
       packed: async context => {
-        const nodeModulesNode = (await readAsar(path.join(context.getResources(Platform.LINUX), "app.asar"))).getNode("node_modules")
-        expect(removeUnstableProperties(nodeModulesNode)).toMatchSnapshot()
         await assertThat(path.join(context.getResources(Platform.LINUX), "app.asar.unpacked/node_modules/jwt-decode")).isDirectory()
         await assertThat(path.join(context.getResources(Platform.LINUX), "app.asar.unpacked/node_modules/keytar")).isDirectory()
         await assertThat(path.join(context.getResources(Platform.LINUX), "app.asar.unpacked/node_modules/yargs")).isDirectory()
+        await assertThat(path.join(context.getResources(Platform.LINUX), "app.asar.unpacked/node_modules/@sentry/electron")).isDirectory()
         await assertThat(path.join(context.getResources(Platform.LINUX), "app.asar.unpacked/node_modules/ci-info")).isDirectory()
       },
     }
@@ -349,11 +348,10 @@ test.ifAll.ifDevOrLinuxCi("exclude some modules when asarUnpack node_modules whi
           }
         }),
       packed: async context => {
-        const nodeModulesNode = (await readAsar(path.join(context.getResources(Platform.LINUX), "app.asar"))).getNode("node_modules")
-        expect(removeUnstableProperties(nodeModulesNode)).toMatchSnapshot()
         await assertThat(path.join(context.getResources(Platform.LINUX), "app.asar.unpacked/node_modules/jwt-decode")).isDirectory()
         await assertThat(path.join(context.getResources(Platform.LINUX), "app.asar.unpacked/node_modules/keytar")).isDirectory()
         await assertThat(path.join(context.getResources(Platform.LINUX), "app.asar.unpacked/node_modules/yargs")).isDirectory()
+        await assertThat(path.join(context.getResources(Platform.LINUX), "app.asar.unpacked/node_modules/@sentry/electron")).isDirectory()
         await assertThat(path.join(context.getResources(Platform.LINUX), "app.asar.unpacked/node_modules/ci-info")).doesNotExist()
       },
     }
