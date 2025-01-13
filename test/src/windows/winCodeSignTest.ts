@@ -40,9 +40,6 @@ function testCustomSign(sign: any) {
     platformPackagerFactory: (packager, platform) => new CheckingWinPackager(packager),
     config: {
       win: {
-        certificateFile: "deprecated",
-        certificatePassword: "deprecated",
-        sign: "deprecated",
         signtoolOptions: {
           certificatePassword: "pass",
           certificateFile: "secretFile",
@@ -79,8 +76,10 @@ test.ifAll.ifNotCiMac("custom sign if no code sign info", () => {
         win: {
           // to be sure that sign code will be executed
           forceCodeSigning: true,
-          sign: async () => {
-            called = true
+          signtoolOptions: {
+            sign: async () => {
+              called = true
+            },
           },
         },
       },
