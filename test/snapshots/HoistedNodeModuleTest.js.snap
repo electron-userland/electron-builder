@@ -403,6 +403,7 @@ exports[`yarn several workspaces and asarUnpack 2`] = `
               "unpacked": true,
             },
           },
+          "unpacked": true,
         },
       },
     },
