@@ -1,5 +1,11 @@
 ## 4.3.0
 
+## 6.4.0-alpha.3
+
+### Patch Changes
+
+- [#8695](https://github.com/electron-userland/electron-builder/pull/8695) [`819eff7b`](https://github.com/electron-userland/electron-builder/commit/819eff7bf7f319275d70faf3a64a5a18a3793a7c) Thanks [@peter-sanderson](https://github.com/peter-sanderson)! - fix: respect `disableDifferentialDownload` flag for AppImage
+
 ## 6.4.0-alpha.2
 
 ### Minor Changes
