@@ -10,7 +10,6 @@ import { resolveFunction } from "../util/resolve"
 import { isUseSystemSigncode } from "../util/flags"
 import { VmManager } from "../vm/vm"
 import { WinPackager } from "../winPackager"
-import { chooseNotNull } from "../platformPackager"
 import { WindowsSignOptions } from "./windowsCodeSign"
 import { getPSCmd } from "./windowsCodeSign"
 import { MemoLazy, parseDn } from "builder-util-runtime"
@@ -76,7 +75,7 @@ export class WindowsSignToolManager implements SignManager {
   }
 
   readonly computedPublisherName = new Lazy<Array<string> | null>(async () => {
-    const publisherName = chooseNotNull(this.platformSpecificBuildOptions.signtoolOptions?.publisherName, this.platformSpecificBuildOptions.publisherName)
+    const publisherName = this.platformSpecificBuildOptions.signtoolOptions?.publisherName
     if (publisherName === null) {
       return null
     } else if (publisherName != null) {
@@ -114,14 +113,14 @@ export class WindowsSignToolManager implements SignManager {
   readonly cscInfo = new MemoLazy<WindowsConfiguration, FileCodeSigningInfo | CertificateFromStoreInfo | null>(
     () => this.platformSpecificBuildOptions,
     platformSpecificBuildOptions => {
-      const subjectName = chooseNotNull(platformSpecificBuildOptions.signtoolOptions?.certificateSubjectName, platformSpecificBuildOptions.certificateSubjectName)
-      const shaType = chooseNotNull(platformSpecificBuildOptions.signtoolOptions?.certificateSha1, platformSpecificBuildOptions.certificateSha1)
+      const subjectName = platformSpecificBuildOptions.signtoolOptions?.certificateSubjectName
+      const shaType = platformSpecificBuildOptions.signtoolOptions?.certificateSha1
       if (subjectName != null || shaType != null) {
         return this.packager.vm.value
           .then(vm => this.getCertificateFromStoreInfo(platformSpecificBuildOptions, vm))
           .catch((e: any) => {
             // https://github.com/electron-userland/electron-builder/pull/2397
-            if (chooseNotNull(platformSpecificBuildOptions.signtoolOptions?.sign, platformSpecificBuildOptions.sign) == null) {
+            if (platformSpecificBuildOptions.signtoolOptions?.sign == null) {
               throw e
             } else {
               log.debug({ error: e }, "getCertificateFromStoreInfo error")
@@ -130,7 +129,7 @@ export class WindowsSignToolManager implements SignManager {
           })
       }
 
-      const certificateFile = chooseNotNull(platformSpecificBuildOptions.signtoolOptions?.certificateFile, platformSpecificBuildOptions.certificateFile)
+      const certificateFile = platformSpecificBuildOptions.signtoolOptions?.certificateFile
       if (certificateFile != null) {
         const certificatePassword = this.packager.getCscPassword()
         return Promise.resolve({
@@ -184,7 +183,7 @@ export class WindowsSignToolManager implements SignManager {
   }
 
   async signFile(options: WindowsSignOptions): Promise<boolean> {
-    let hashes = chooseNotNull(options.options.signtoolOptions?.signingHashAlgorithms, options.options.signingHashAlgorithms)
+    let hashes = options.options.signtoolOptions?.signingHashAlgorithms
     // msi does not support dual-signing
     if (options.path.endsWith(".msi")) {
       hashes = [hashes != null && !hashes.includes("sha1") ? "sha256" : "sha1"]
@@ -199,7 +198,7 @@ export class WindowsSignToolManager implements SignManager {
     const name = this.packager.appInfo.productName
     const site = await this.packager.appInfo.computePackageUrl()
 
-    const customSign = await resolveFunction(this.packager.appInfo.type, chooseNotNull(options.options.signtoolOptions?.sign, options.options.sign), "sign")
+    const customSign = await resolveFunction(this.packager.appInfo.type, options.options.signtoolOptions?.sign, "sign")
 
     const cscInfo = await this.cscInfo.value
     if (cscInfo) {
@@ -275,13 +274,11 @@ export class WindowsSignToolManager implements SignManager {
     const args = isWin ? ["sign"] : ["-in", inputFile, "-out", outputPath]
 
     if (process.env.ELECTRON_BUILDER_OFFLINE !== "true") {
-      const timestampingServiceUrl = chooseNotNull(options.options.signtoolOptions?.timeStampServer, options.options.timeStampServer) || "http://timestamp.digicert.com"
+      const timestampingServiceUrl = options.options.signtoolOptions?.timeStampServer || "http://timestamp.digicert.com"
       if (isWin) {
         args.push(
           options.isNest || options.hash === "sha256" ? "/tr" : "/t",
-          options.isNest || options.hash === "sha256"
-            ? chooseNotNull(options.options.signtoolOptions?.rfc3161TimeStampServer, options.options.rfc3161TimeStampServer) || "http://timestamp.digicert.com"
-            : timestampingServiceUrl
+          options.isNest || options.hash === "sha256" ? options.options.signtoolOptions?.rfc3161TimeStampServer || "http://timestamp.digicert.com" : timestampingServiceUrl
         )
       } else {
         args.push("-t", timestampingServiceUrl)
@@ -335,7 +332,7 @@ export class WindowsSignToolManager implements SignManager {
       args.push(isWin ? "/p" : "-pass", password)
     }
 
-    const additionalCert = chooseNotNull(options.options.signtoolOptions?.additionalCertificateFile, options.options.additionalCertificateFile)
+    const additionalCert = options.options.signtoolOptions?.additionalCertificateFile
     if (additionalCert) {
       args.push(isWin ? "/ac" : "-ac", vm.toVmFile(additionalCert))
     }
@@ -395,8 +392,8 @@ export class WindowsSignToolManager implements SignManager {
   }
 
   async getCertificateFromStoreInfo(options: WindowsConfiguration, vm: VmManager): Promise<CertificateFromStoreInfo> {
-    const certificateSubjectName = chooseNotNull(options.signtoolOptions?.certificateSubjectName, options.certificateSubjectName)
-    const certificateSha1 = chooseNotNull(options.signtoolOptions?.certificateSha1, options.certificateSha1)?.toUpperCase()
+    const certificateSubjectName = options.signtoolOptions?.certificateSubjectName
+    const certificateSha1 = options.signtoolOptions?.certificateSha1?.toUpperCase()
 
     const ps = await getPSCmd(vm)
     const rawResult = await vm.exec(ps, [

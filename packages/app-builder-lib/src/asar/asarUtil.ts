@@ -87,10 +87,10 @@ export class AsarPackager {
     const links: Array<Link> = []
     const symlinkType = platform() === "win32" ? "junction" : "file"
 
-    const matchUnpacker = (file: string, dest: string, stat: fs.Stats) => {
+    const matchUnpacker = (file: string, dest: string, stat: fs.Stats, tmpUnpackedPaths: Set<string>) => {
       if (this.config.unpackPattern?.(file, stat)) {
         log.debug({ file }, "unpacking")
-        unpackedPaths.add(dest)
+        tmpUnpackedPaths.add(dest)
         return
       }
     }
@@ -145,6 +145,7 @@ export class AsarPackager {
       }
 
       // Don't use BluebirdPromise, we need to retain order of execution/iteration through the ordered fileset
+      const tmpUnpackedPaths = new Set<string>()
       for (let i = 0; i < fileSet.files.length; i++) {
         const file = fileSet.files[i]
         const transformedData = fileSet.transformedFiles?.get(i)
@@ -153,11 +154,21 @@ export class AsarPackager {
         const relative = path.relative(this.config.defaultDestination, getDestinationPath(file, fileSet))
         const destination = path.resolve(this.rootForAppFilesWithoutAsar, relative)
 
-        matchUnpacker(file, destination, stat)
+        matchUnpacker(file, destination, stat, tmpUnpackedPaths)
         taskManager.addTask(writeFileOrProcessSymlink({ transformedData, file, destination, stat, fileSet }))
 
         if (taskManager.tasks.length > MAX_FILE_REQUESTS) {
           await taskManager.awaitTasks()
+        }
+      }
+
+      if (tmpUnpackedPaths.size === fileSet.files.length) {
+        const relative = path.relative(this.config.defaultDestination, fileSet.destination)
+        unpackedPaths.add(relative)
+      } else {
+        // add all tmpUnpackedPaths to unpackedPaths
+        for (const it of tmpUnpackedPaths) {
+          unpackedPaths.add(it)
         }
       }
     }
