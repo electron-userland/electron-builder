@@ -1,5 +1,5 @@
 ARG IMAGE_VERSION=wine
-FROM electronuserland/builder:$IMAGE_VERSION
+FROM --platform=linux/x86_64 electronuserland/builder:$IMAGE_VERSION
 
 # since mono is required only for deprecated target Squirrel.Windows, extracted to separate docker image to reduce size
 

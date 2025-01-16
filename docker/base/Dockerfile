@@ -1,6 +1,8 @@
-FROM buildpack-deps:focal-curl
+# hardcoding `--platform` with a constant throws a warning during build.
+# That's OK as this image can't be built on arm64 machines due to gcc-multilib & g++-multilib only provided for amd64
+FROM --platform=linux/x86_64 buildpack-deps:bookworm-curl
 
-ENV DEBIAN_FRONTEND noninteractive
+ENV DEBIAN_FRONTEND=noninteractive
 
 RUN curl -L https://yarnpkg.com/latest.tar.gz | tar xvz && mv yarn-* /yarn && ln -s /yarn/bin/yarn /usr/bin/yarn
 RUN apt-get -qq update && apt-get -qq dist-upgrade && \
@@ -12,23 +14,23 @@ RUN apt-get -qq update && apt-get -qq dist-upgrade && \
   # libsecret-1-dev is required even for prebuild keytar (https://atom.github.io/node-keytar/)
   apt-get -qq install --no-install-recommends \
         qtbase5-dev build-essential autoconf libssl-dev gcc-multilib g++-multilib \
-        lzip rpm python libcurl4 git git-lfs ssh unzip libarchive-tools \
+        lzip rpm python3 libcurl4 git git-lfs ssh unzip libarchive-tools \
         libxtst6 libsecret-1-dev libopenjp2-tools liblzo2-2 \
   && \
   # git-lfs
   git lfs install && \
   apt-get purge -y --auto-remove && rm -rf /var/lib/apt/lists/*
 
-COPY test.sh /test.sh
+COPY ./test.sh /test.sh
 
 WORKDIR /project
 
 # fix error /usr/local/bundle/gems/fpm-1.5.0/lib/fpm/package/freebsd.rb:72:in `encode': "\xE2" from ASCII-8BIT to UTF-8 (Encoding::UndefinedConversionError)
 # http://jaredmarkell.com/docker-and-locales/
 # http://askubuntu.com/a/601498
-ENV LANG C.UTF-8
-ENV LANGUAGE C.UTF-8
-ENV LC_ALL C.UTF-8
+ENV LANG=C.UTF-8
+ENV LANGUAGE=C.UTF-8
+ENV LC_ALL=C.UTF-8
 
-ENV DEBUG_COLORS true
-ENV FORCE_COLOR true
+ENV DEBUG_COLORS=true
+ENV FORCE_COLOR=true
