@@ -16,4 +16,4 @@ ENV DISPLAY=:0
 ENV WINEDEBUG=-all,err+all
 ENV WINEDLLOVERRIDES=winemenubuilder.exe=d
 
-RUN winecfg
+RUN xvfb-run winecfg
