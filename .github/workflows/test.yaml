@@ -21,6 +21,9 @@ jobs:
         with:
           fetch-depth: 2
 
+      - name: Setup pnpm
+        uses: ./.github/actions/pnpm
+
       - name: Determine if Dockerfiles changed
         id: changed-files-specific
         uses: tj-actions/changed-files@c65cd883420fd2eb864698a825fc4162dd94482c # v44
@@ -28,14 +31,14 @@ jobs:
           files: docker/**/*
 
       - name: Verify docker builds all images
-        if: steps.changed-files-specific.outputs.any_changed == 'true'
+        # if: steps.changed-files-specific.outputs.any_changed == 'true'
         run: |
           pnpm docker-images
           docker images --filter=reference="electronuserland/builder:*"
           docker save -o ${{ runner.temp }}/test-runner.tar electronuserland/builder:20-wine-mono
 
       - name: Artifact the image we use to run tests on
-        if: steps.changed-files-specific.outputs.any_changed == 'true'
+        # if: steps.changed-files-specific.outputs.any_changed == 'true'
         uses: actions/upload-artifact@v3
         with:
           name: test-runner
