@@ -12,17 +12,28 @@ on:
 permissions:
   contents: read
 
+env:
+  TEST_IMAGE_NODE_MAJOR_VERSION: 20
+
 jobs:
-  test-docker:
+  test-docker-build:
     runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        nodeVersion: [
+          20.18.1,
+          18.20.5,
+          16.20.2,
+          14.21.3
+        ]
     steps:
       - name: Checkout code repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
         with:
-          fetch-depth: 2
+          fetch-depth: 0
 
-      - name: Setup pnpm
-        uses: ./.github/actions/pnpm
+      - name: Extract node major version to tag docker image
+        run: echo "NODE_TAG=$(cut -d '.' -f 1 <<< ${{ matrix.nodeVersion }})" >> $GITHUB_ENV
 
       - name: Determine if Dockerfiles changed
         id: changed-files-specific
@@ -33,20 +44,20 @@ jobs:
       - name: Verify docker builds all images
         # if: steps.changed-files-specific.outputs.any_changed == 'true'
         run: |
-          pnpm docker-images
-          docker images --filter=reference="electronuserland/builder:*"
-          docker save -o ${{ runner.temp }}/test-runner.tar electronuserland/builder:20-wine-mono
+          sh docker/build.sh ${{ matrix.nodeVersion }}
+          docker save -o ${{ runner.temp }}/test-runner-node-${{ env.NODE_TAG }}.tar test-runner:${{ env.NODE_TAG }}
 
-      - name: Artifact the image we use to run tests on
+      - name: Save test runner image
         # if: steps.changed-files-specific.outputs.any_changed == 'true'
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v3 # must stay as v3 for xSAVIKx/artifact-exists-action@v0 compatibility
         with:
-          name: test-runner
-          path: ${{ runner.temp }}/test-runner.tar
+          name: test-runner-node-${{ env.NODE_TAG }}
+          path: ${{ runner.temp }}/test-runner-node-${{ env.NODE_TAG }}.tar
+          retention-days: 1
 
   test-linux:
     runs-on: ubuntu-22.04
-    needs: test-docker
+    needs: test-docker-build
     strategy:
       fail-fast: false
       matrix:
@@ -72,23 +83,25 @@ jobs:
         uses: xSAVIKx/artifact-exists-action@v0
         id: check-for-test-image
         with:
-          name: test-runner
+          name: test-runner-node-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}
 
       - name: Download test-runner if exists
         if: steps.check-for-test-image.outputs.exists == 'true'
         uses: actions/download-artifact@v4
         with:
-          name: test-runner
+          name: test-runner-node-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}
           path: ${{ runner.temp }}
 
       - name: Load test runner image if needed
         if: steps.check-for-test-image.outputs.exists == 'true'
         run: |
-          docker load --input ${{ runner.temp }}/test-runner.tar
+          docker load --input ${{ runner.temp }} test-runner-node-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}.tar
           docker image ls -a
 
       - name: Run tests in docker image
-        run: pnpm test-linux
+        run: |
+          export TEST_RUNNER_IMAGE_TAG=test-runner:${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}
+          pnpm test-linux
         env:
           TEST_FILES: ${{ matrix.testFiles }}
           FORCE_COLOR: 1
@@ -111,30 +124,59 @@ jobs:
   #         TEST_FILES: masTest,dmgTest,filesTest,macPackagerTest,differentialUpdateTest
   #         FORCE_COLOR: 1
 
-  # # Need to separate from other tests because logic is specific to when TOKEN env vars are set
-  # test-updater:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout code repository
-  #       uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
+  # Need to separate from other tests because logic is specific to when TOKEN env vars are set
+  test-updater:
+    runs-on: ubuntu-22.04
+    needs: test-docker-build
+    strategy:
+      matrix:
+        nodeVersion: [
+          20,
+          18,
+          16,
+          14
+        ]
+    steps:
+      - name: Checkout code repository
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
 
-  #     - name: Setup Tests
-  #       uses: ./.github/actions/pretest
-  #       with:
-  #         cache-path: ~/.cache/electron
-  #         cache-key: v-23.3.10-update-electron
+      - name: Setup Tests
+        uses: ./.github/actions/pretest
+        with:
+          cache-path: ~/.cache/electron
+          cache-key: v-23.3.10-update-electron
 
-  #     - name: Test
-  #       run: pnpm ci:test
-  #       env:
-  #         TEST_FILES: nsisUpdaterTest,linuxUpdaterTest,PublishManagerTest,differentialUpdateTest
-  #         KEYGEN_TOKEN: ${{ secrets.KEYGEN_TOKEN }}
-  #         BITBUCKET_TOKEN: ${{ secrets.BITBUCKET_TOKEN }}
-  #         GH_TOKEN: ${{ secrets.GH_TOKEN }}
-  #         FORCE_COLOR: 1
+      - name: Check if a newly built docker test image exists
+        uses: xSAVIKx/artifact-exists-action@v0
+        id: check-for-test-image
+        with:
+          name: electronuserland/builder:${{ matrix.nodeVersion }}-wine-mono
 
-  #     - name: Verify Docs Generation
-  #       run: pnpm generate-all
+      - name: Download test-runner if exists
+        if: steps.check-for-test-image.outputs.exists == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: electronuserland/builder:${{ matrix.nodeVersion }}-wine-mono
+          path: ${{ runner.temp }}
+
+      - name: Load test runner image if needed
+        if: steps.check-for-test-image.outputs.exists == 'true'
+        run: |
+          docker load --input ${{ runner.temp }} electronuserland/builder:${{ matrix.nodeVersion }}-wine-mono
+          docker image ls -a
+
+      - name: Test
+        run: pnpm ci:test
+        env:
+          TEST_FILES: nsisUpdaterTest,linuxUpdaterTest,PublishManagerTest,differentialUpdateTest
+          KEYGEN_TOKEN: ${{ secrets.KEYGEN_TOKEN }}
+          BITBUCKET_TOKEN: ${{ secrets.BITBUCKET_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          FORCE_COLOR: 1
+          TEST_RUNNER_IMAGE_TAG: electronuserland/builder:${{ matrix.nodeVersion }}-wine-mono
+
+      - name: Verify Docs Generation
+        run: pnpm generate-all
 
   # test-windows:
   #   runs-on: windows-latest
