@@ -43,6 +43,7 @@ jobs:
 
       - name: Verify docker builds all images
         # if: steps.changed-files-specific.outputs.any_changed == 'true'
+        shell: bash
         run: |
           sh docker/build.sh ${{ matrix.nodeVersion }}
           docker save -o ${{ runner.temp }}/test-runner-node-${{ env.NODE_TAG }}.tar test-runner:${{ env.NODE_TAG }}
@@ -99,12 +100,11 @@ jobs:
           docker image ls -a
 
       - name: Run tests in docker image
-        run: |
-          export TEST_RUNNER_IMAGE_TAG=test-runner:${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}
-          pnpm test-linux
+        run: pnpm test-linux
         env:
           TEST_FILES: ${{ matrix.testFiles }}
           FORCE_COLOR: 1
+          TEST_RUNNER_IMAGE_TAG: test-runner:${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}
 
   # test-mac:
   #   runs-on: macos-latest
