@@ -6,7 +6,7 @@ RUN dpkg --add-architecture i386 && \
   wget -qO /etc/apt/keyrings/winehq-archive.key https://dl.winehq.org/wine-builds/winehq.key && \
   wget -qNP /etc/apt/sources.list.d/ https://dl.winehq.org/wine-builds/debian/dists/bookworm/winehq-bookworm.sources && \
   apt-get update && \
-  apt-get install -y --no-install-recommends winehq-stable \
+  apt-get install -y --no-install-recommends winehq-stable xvfb-run \
   && \
   # clean
   apt-get clean && rm -rf /var/lib/apt/lists/*

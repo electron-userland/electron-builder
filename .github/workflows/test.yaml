@@ -13,8 +13,37 @@ permissions:
   contents: read
 
 jobs:
+  test-docker:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout code repository
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
+        with:
+          fetch-depth: 2
+
+      - name: Determine if Dockerfiles changed
+        id: changed-files-specific
+        uses: tj-actions/changed-files@c65cd883420fd2eb864698a825fc4162dd94482c # v44
+        with:
+          files: docker/**/*
+
+      - name: Verify docker builds all images
+        if: steps.changed-files-specific.outputs.any_changed == 'true'
+        run: |
+          pnpm docker-images
+          docker images --filter=reference="electronuserland/builder:*"
+          docker save -o ${{ runner.temp }}/test-runner.tar electronuserland/builder:20-wine-mono
+
+      - name: Artifact the image we use to run tests on
+        if: steps.changed-files-specific.outputs.any_changed == 'true'
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-runner
+          path: ${{ runner.temp }}/test-runner.tar
+
   test-linux:
     runs-on: ubuntu-22.04
+    needs: test-docker
     strategy:
       fail-fast: false
       matrix:
@@ -36,20 +65,24 @@ jobs:
       - name: Lint
         run: pnpm pretest
 
-      - name: Determine if Dockerfiles changed
-        id: changed-files-specific
-        uses: tj-actions/changed-files@c65cd883420fd2eb864698a825fc4162dd94482c # v44
+      - name: Check if a newly built docker test image exists
+        uses: xSAVIKx/artifact-exists-action@v0
+        id: check-for-test-image
         with:
-          files: docker/**/*
+          name: test-runner
 
-      - name: Verify docker builds all images, then purge unneeded ones
-        if: steps.changed-files-specific.outputs.any_changed == 'true'
-        # We must purge the unneeded images to avoid "Out of space" error on github runners
-        # We only run tests on the newly built image that uses latest node version in `./docker/build.sh`
+      - name: Download test-runner if exists
+        if: steps.check-for-test-image.outputs.exists == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: test-runner
+          path: ${{ runner.temp }}
+
+      - name: Load test runner image if needed
+        if: steps.check-for-test-image.outputs.exists == 'true'
         run: |
-          pnpm docker-images
-          docker images --filter=reference="electronuserland/builder:1*"
-          docker rmi $(docker images --filter=reference="electronuserland/builder:1*" -q)
+          docker load --input ${{ runner.temp }}/test-runner.tar
+          docker image ls -a
 
       - name: Run tests in docker image
         run: pnpm test-linux
