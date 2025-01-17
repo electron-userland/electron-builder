@@ -1,6 +1,6 @@
 # hardcoding `--platform` with a constant throws a warning during build.
 # That's OK as this image can't be built on arm64 machines due to gcc-multilib & g++-multilib only provided for amd64
-FROM --platform=linux/x86_64 buildpack-deps:bookworm-curl
+FROM --platform=linux/x86_64 buildpack-deps:22.04-curl
 
 ENV DEBIAN_FRONTEND=noninteractive
 
