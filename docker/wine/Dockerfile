@@ -11,7 +11,9 @@ RUN dpkg --add-architecture i386 && \
   # clean
   apt-get clean && rm -rf /var/lib/apt/lists/*
 
-RUN winecfg
+ENV DISPLAY=:0
 
 ENV WINEDEBUG=-all,err+all
 ENV WINEDLLOVERRIDES=winemenubuilder.exe=d
+
+RUN winecfg

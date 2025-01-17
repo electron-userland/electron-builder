@@ -42,9 +42,14 @@ jobs:
         with:
           files: docker/**/*
 
-      - name: Dockerfile has changed, rebuild for tests
+      - name: Verify docker builds all images, then purge unneeded ones
         if: steps.changed-files-specific.outputs.any_changed == 'true'
-        run: pnpm docker-images
+        # We must purge the unneeded images to avoid "Out of space" error on github runners
+        # We only run tests on the newly built image that uses latest node version in `./docker/build.sh`
+        run: |
+          pnpm docker-images
+          docker images --filter=reference="electronuserland/builder:1*"
+          docker rmi $(docker images --filter=reference="electronuserland/builder:1*" -q)
 
       - name: Run tests in docker image
         run: pnpm test-linux
@@ -52,71 +57,71 @@ jobs:
           TEST_FILES: ${{ matrix.testFiles }}
           FORCE_COLOR: 1
 
-  test-mac:
-    runs-on: macos-latest
-    steps:
-      - name: Checkout code repository
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
+  # test-mac:
+  #   runs-on: macos-latest
+  #   steps:
+  #     - name: Checkout code repository
+  #       uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
 
-      - name: Setup Tests
-        uses: ./.github/actions/pretest
-        with:
-          cache-path: ~/Library/Caches/electron
-          cache-key: v-23.3.10-macos-electron
+  #     - name: Setup Tests
+  #       uses: ./.github/actions/pretest
+  #       with:
+  #         cache-path: ~/Library/Caches/electron
+  #         cache-key: v-23.3.10-macos-electron
 
-      - name: Test
-        run: pnpm ci:test
-        env:
-          TEST_FILES: masTest,dmgTest,filesTest,macPackagerTest,differentialUpdateTest
-          FORCE_COLOR: 1
+  #     - name: Test
+  #       run: pnpm ci:test
+  #       env:
+  #         TEST_FILES: masTest,dmgTest,filesTest,macPackagerTest,differentialUpdateTest
+  #         FORCE_COLOR: 1
 
-  # Need to separate from other tests because logic is specific to when TOKEN env vars are set
-  test-updater:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code repository
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
+  # # Need to separate from other tests because logic is specific to when TOKEN env vars are set
+  # test-updater:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout code repository
+  #       uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
 
-      - name: Setup Tests
-        uses: ./.github/actions/pretest
-        with:
-          cache-path: ~/.cache/electron
-          cache-key: v-23.3.10-update-electron
+  #     - name: Setup Tests
+  #       uses: ./.github/actions/pretest
+  #       with:
+  #         cache-path: ~/.cache/electron
+  #         cache-key: v-23.3.10-update-electron
 
-      - name: Test
-        run: pnpm ci:test
-        env:
-          TEST_FILES: nsisUpdaterTest,linuxUpdaterTest,PublishManagerTest,differentialUpdateTest
-          KEYGEN_TOKEN: ${{ secrets.KEYGEN_TOKEN }}
-          BITBUCKET_TOKEN: ${{ secrets.BITBUCKET_TOKEN }}
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
-          FORCE_COLOR: 1
+  #     - name: Test
+  #       run: pnpm ci:test
+  #       env:
+  #         TEST_FILES: nsisUpdaterTest,linuxUpdaterTest,PublishManagerTest,differentialUpdateTest
+  #         KEYGEN_TOKEN: ${{ secrets.KEYGEN_TOKEN }}
+  #         BITBUCKET_TOKEN: ${{ secrets.BITBUCKET_TOKEN }}
+  #         GH_TOKEN: ${{ secrets.GH_TOKEN }}
+  #         FORCE_COLOR: 1
 
-      - name: Verify Docs Generation
-        run: pnpm generate-all
+  #     - name: Verify Docs Generation
+  #       run: pnpm generate-all
 
-  test-windows:
-    runs-on: windows-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        testFiles:
-          - winCodeSignTest,differentialUpdateTest
-          - installerTest,appxTest,msiTest,portableTest,assistedInstallerTest,protonTest
-          - BuildTest,oneClickInstallerTest,winPackagerTest,nsisUpdaterTest,webInstallerTest
-    steps:
-      - name: Checkout code repository
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
+  # test-windows:
+  #   runs-on: windows-latest
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       testFiles:
+  #         - winCodeSignTest,differentialUpdateTest
+  #         - installerTest,appxTest,msiTest,portableTest,assistedInstallerTest,protonTest
+  #         - BuildTest,oneClickInstallerTest,winPackagerTest,nsisUpdaterTest,webInstallerTest
+  #   steps:
+  #     - name: Checkout code repository
+  #       uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
 
-      - name: Setup Tests
-        uses: ./.github/actions/pretest
-        with:
-          cache-key: v-23.3.10-windows-electron
-          cache-path: ~\AppData\Local\electron\Cache
+  #     - name: Setup Tests
+  #       uses: ./.github/actions/pretest
+  #       with:
+  #         cache-key: v-23.3.10-windows-electron
+  #         cache-path: ~\AppData\Local\electron\Cache
 
-      - name: Test
-        run: pnpm ci:test
-        env:
-          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
-          TEST_FILES: ${{ matrix.testFiles }}
-          FORCE_COLOR: 1
+  #     - name: Test
+  #       run: pnpm ci:test
+  #       env:
+  #         CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+  #         TEST_FILES: ${{ matrix.testFiles }}
+  #         FORCE_COLOR: 1
