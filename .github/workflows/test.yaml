@@ -88,7 +88,7 @@ jobs:
 
       - name: Download test-runner if exists
         if: steps.check-for-test-image.outputs.exists == 'true'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v3
         with:
           name: test-runner-node-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}
           path: ${{ runner.temp }}
@@ -100,7 +100,9 @@ jobs:
           docker image ls -a
 
       - name: Run tests in docker image
-        run: pnpm test-linux
+        run: |
+          echo $TEST_RUNNER_IMAGE_TAG
+          pnpm test-linux
         env:
           TEST_FILES: ${{ matrix.testFiles }}
           FORCE_COLOR: 1
@@ -150,30 +152,32 @@ jobs:
         uses: xSAVIKx/artifact-exists-action@v0
         id: check-for-test-image
         with:
-          name: electronuserland/builder:${{ matrix.nodeVersion }}-wine-mono
+          name: test-runner-node-${{ matrix.nodeVersion }}
 
       - name: Download test-runner if exists
         if: steps.check-for-test-image.outputs.exists == 'true'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v3
         with:
-          name: electronuserland/builder:${{ matrix.nodeVersion }}-wine-mono
+          name: test-runner-node-{{ matrix.nodeVersion }}
           path: ${{ runner.temp }}
 
       - name: Load test runner image if needed
         if: steps.check-for-test-image.outputs.exists == 'true'
         run: |
-          docker load --input ${{ runner.temp }} electronuserland/builder:${{ matrix.nodeVersion }}-wine-mono
+          docker load --input ${{ runner.temp }} test-runner-node-${{ matrix.nodeVersion }}
           docker image ls -a
 
       - name: Test
-        run: pnpm ci:test
+        run: |
+          echo $TEST_RUNNER_IMAGE_TAG
+          pnpm test-linux
         env:
           TEST_FILES: nsisUpdaterTest,linuxUpdaterTest,PublishManagerTest,differentialUpdateTest
           KEYGEN_TOKEN: ${{ secrets.KEYGEN_TOKEN }}
           BITBUCKET_TOKEN: ${{ secrets.BITBUCKET_TOKEN }}
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
           FORCE_COLOR: 1
-          TEST_RUNNER_IMAGE_TAG: electronuserland/builder:${{ matrix.nodeVersion }}-wine-mono
+          TEST_RUNNER_IMAGE_TAG: test-runner:${{ matrix.nodeVersion }}
 
       - name: Verify Docs Generation
         run: pnpm generate-all
