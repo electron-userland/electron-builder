@@ -45,7 +45,7 @@ jobs:
         # if: steps.changed-files-specific.outputs.any_changed == 'true'
         shell: bash
         run: |
-          sh docker/build.sh ${{ matrix.nodeVersion }}
+          bash docker/build.sh ${{ matrix.nodeVersion }}
           docker save -o ${{ runner.temp }}/test-runner-node-${{ env.NODE_TAG }}.tar test-runner:${{ env.NODE_TAG }}
 
       - name: Save test runner image
