@@ -22,7 +22,7 @@ permissions:
   contents: read
 
 env:
-  TEST_IMAGE_NODE_MAJOR_VERSION: 20
+  TEST_IMAGE_NODE_MAJOR_VERSION: 22
 
 jobs:
   check-if-docker-build:
