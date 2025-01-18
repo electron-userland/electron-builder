@@ -46,14 +46,14 @@ jobs:
         shell: bash
         run: |
           bash docker/build.sh ${{ matrix.nodeVersion }}
-          docker save -o ${{ runner.temp }}/test-runner-node-${{ env.NODE_TAG }}-$GITHUB_SHA.tar test-runner:${{ env.NODE_TAG }}
+          docker save -o ${{ runner.temp }}/test-runner-node-${{ env.NODE_TAG }}-${{ github.run_id }}-${{ github.run_number }}.tar test-runner:${{ env.NODE_TAG }}
 
       - name: Upload test runner image
         # if: steps.changed-files-specific.outputs.any_changed == 'true'
         uses: actions/upload-artifact@v3 # must stay as v3 for xSAVIKx/artifact-exists-action@v0 compatibility
         with:
           name: test-runner-node-${{ env.NODE_TAG }}
-          path: ${{ runner.temp }}/test-runner-node-${{ env.NODE_TAG }}-$GITHUB_SHA.tar
+          path: ${{ runner.temp }}/test-runner-node-${{ env.NODE_TAG }}-${{ github.run_id }}-${{ github.run_number }}.tar
           retention-days: 1
 
   test-linux:
@@ -81,7 +81,7 @@ jobs:
         uses: xSAVIKx/artifact-exists-action@v0
         id: check-for-test-image
         with:
-          name: test-runner-node-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}-$GITHUB_SHA
+          name: test-runner-node-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}-${{ github.run_id }}-${{ github.run_number }}
 
       - name: Download test-runner if exists
         if: steps.check-for-test-image.outputs.exists == 'true'
@@ -93,7 +93,7 @@ jobs:
       - name: Load test runner image if needed
         if: steps.check-for-test-image.outputs.exists == 'true'
         run: |
-          docker image load -i ${{ runner.temp }}/test-runner-node-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}-$GITHUB_SHA.tar
+          docker image load -i ${{ runner.temp }}/test-runner-node-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}-${{ github.run_id }}-${{ github.run_number }}.tar
           docker image ls -a
 
       - name: Lint
@@ -153,19 +153,19 @@ jobs:
         uses: xSAVIKx/artifact-exists-action@v0
         id: check-for-test-image
         with:
-          name: test-runner-node-${{ matrix.nodeVersion }}-$GITHUB_SHA
+          name: test-runner-node-${{ matrix.nodeVersion }}-${{ github.run_id }}-${{ github.run_number }}
 
       - name: Download test-runner if exists
         if: steps.check-for-test-image.outputs.exists == 'true'
         uses: actions/download-artifact@v3
         with:
-          name: test-runner-node-${{ matrix.nodeVersion }}-$GITHUB_SHA
+          name: test-runner-node-${{ matrix.nodeVersion }}-${{ github.run_id }}-${{ github.run_number }}
           path: ${{ runner.temp }}
 
       - name: Load test runner image if needed
         if: steps.check-for-test-image.outputs.exists == 'true'
         run: |
-          docker image load -i ${{ runner.temp }}/test-runner-node-${{ matrix.nodeVersion }}-$GITHUB_SHA
+          docker image load -i ${{ runner.temp }}/test-runner-node-${{ matrix.nodeVersion }}-${{ github.run_id }}-${{ github.run_number }}
           docker image ls -a
 
       - name: Test
