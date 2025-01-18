@@ -34,7 +34,7 @@ jobs:
   run-docker-build:
     needs: check-if-docker-build
     if: needs.check-if-docker-build.outputs.force-docker-build == 'true'
-    uses: ./.github/workflows/docker-build.yaml
+    uses: ./.github/workflows/docker-build.yml
 
   test-linux:
     runs-on: ubuntu-22.04
