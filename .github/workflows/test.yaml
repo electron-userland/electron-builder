@@ -95,7 +95,7 @@ jobs:
       - name: Load test runner image if needed
         if: steps.check-for-test-image.outputs.exists == 'true'
         run: |
-          docker image load -i ${{ steps.download-test-runner-image.outputs.download-path }}.tar
+          docker image load --input ${{ runner.temp }}/test-runner-node-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}-${{ github.run_id }}-${{ github.run_number }}.tar
           docker image ls -a
 
       - name: Lint
@@ -167,7 +167,7 @@ jobs:
       - name: Load test runner image if needed
         if: steps.check-for-test-image.outputs.exists == 'true'
         run: |
-          docker image load -i ${{ steps.download-test-runner-image.outputs.download-path }}
+          docker image load --input ${{ runner.temp }}/test-runner-node-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}-${{ github.run_id }}-${{ github.run_number }}
           docker image ls -a
 
       - name: Test
