@@ -11,6 +11,9 @@ on:
 permissions:
   contents: read
 
+env:
+  LATEST_IMAGE_NODE_MAJOR_VERSION: 20
+
 jobs:
   run-docker-build-and-test:
     uses: ./.github/workflows/test.yaml
@@ -23,16 +26,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Download images artifact - node20
+      - name: Download images artifact - node14
         uses: actions/download-artifact@v4
         with:
-          name: electron-builder-all-20
-          path: ${{ runner.temp }}
-
-      - name: Download images artifact - node18
-        uses: actions/download-artifact@v4
-        with:
-          name: electron-builder-all-18
+          name: electron-builder-all-14
           path: ${{ runner.temp }}
 
       - name: Download images artifact - node16
@@ -41,16 +38,30 @@ jobs:
           name: electron-builder-all-16
           path: ${{ runner.temp }}
 
-      - name: Download images artifact - node14
+      - name: Download images artifact - node18
         uses: actions/download-artifact@v4
         with:
-          name: electron-builder-all-14
+          name: electron-builder-all-18
+          path: ${{ runner.temp }}
+
+      - name: Download images artifact - node20
+        uses: actions/download-artifact@v4
+        with:
+          name: electron-builder-all-20
           path: ${{ runner.temp }}
 
       - name: Load all images
+        run: find -type f -name "${{ runner.temp }}/electron-builder-all-*.tar" -exec docker image load --input "{}" \;
+
+      - name: Tag LTS images for electron-builder latest/wine/wine-chrome/wine-mono
         run: |
-          find -type f -name "${{ runner.temp }}/electron-builder-all-*.tar" -exec docker image load --input "{}" \;
-          docker image ls -a
+          docker image tag electronuserland/builder:${{ env.LATEST_IMAGE_NODE_MAJOR_VERSION }} electronuserland/builder:latest
+          docker image tag electronuserland/builder:${{ env.LATEST_IMAGE_NODE_MAJOR_VERSION }}-wine electronuserland/builder:wine
+          docker image tag electronuserland/builder:${{ env.LATEST_IMAGE_NODE_MAJOR_VERSION }}-wine-mono electronuserland/builder:wine-mono
+          docker image tag electronuserland/builder:${{ env.LATEST_IMAGE_NODE_MAJOR_VERSION }}-wine-chrome electronuserland/builder:wine-chrome
+
+      - name: List all images and tags
+        run: docker image ls -a
 
       - name: Login to DockerHub
         uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3
