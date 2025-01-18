@@ -46,14 +46,14 @@ jobs:
         shell: bash
         run: |
           bash docker/build.sh ${{ matrix.nodeVersion }}
-          docker save -o ${{ runner.temp }}/test-runner-node-${{ env.NODE_TAG }}-${{ env.GITHUB_SHA }}.tar test-runner:${{ env.NODE_TAG }}
+          docker save -o ${{ runner.temp }}/test-runner-node-${{ env.NODE_TAG }}-$GITHUB_SHA.tar test-runner:${{ env.NODE_TAG }}
 
-      - name: Save test runner image
+      - name: Upload test runner image
         # if: steps.changed-files-specific.outputs.any_changed == 'true'
         uses: actions/upload-artifact@v3 # must stay as v3 for xSAVIKx/artifact-exists-action@v0 compatibility
         with:
           name: test-runner-node-${{ env.NODE_TAG }}
-          path: ${{ runner.temp }}/test-runner-node-${{ env.NODE_TAG }}-${{ env.GITHUB_SHA }}.tar
+          path: ${{ runner.temp }}/test-runner-node-${{ env.NODE_TAG }}-$GITHUB_SHA.tar
           retention-days: 1
 
   test-linux:
@@ -77,14 +77,11 @@ jobs:
           cache-path: ~/.cache/electron
           cache-key: v-23.3.10-linux-electron
 
-      - name: Lint
-        run: pnpm pretest
-
       - name: Check if a newly built docker test image exists
         uses: xSAVIKx/artifact-exists-action@v0
         id: check-for-test-image
         with:
-          name: test-runner-node-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}
+          name: test-runner-node-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}-$GITHUB_SHA
 
       - name: Download test-runner if exists
         if: steps.check-for-test-image.outputs.exists == 'true'
@@ -96,8 +93,11 @@ jobs:
       - name: Load test runner image if needed
         if: steps.check-for-test-image.outputs.exists == 'true'
         run: |
-          docker image load -i ${{ runner.temp }}/test-runner-node-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}-${{ env.GITHUB_SHA }}.tar
+          docker image load -i ${{ runner.temp }}/test-runner-node-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}-$GITHUB_SHA.tar
           docker image ls -a
+
+      - name: Lint
+        run: pnpm pretest
 
       - name: Run tests in docker image
         run: |
@@ -131,6 +131,7 @@ jobs:
     runs-on: ubuntu-22.04
     needs: test-docker-build
     strategy:
+      fail-fast: false
       matrix:
         nodeVersion: [
           20,
@@ -152,19 +153,19 @@ jobs:
         uses: xSAVIKx/artifact-exists-action@v0
         id: check-for-test-image
         with:
-          name: test-runner-node-${{ matrix.nodeVersion }}-${{ env.GITHUB_SHA }}
+          name: test-runner-node-${{ matrix.nodeVersion }}-$GITHUB_SHA
 
       - name: Download test-runner if exists
         if: steps.check-for-test-image.outputs.exists == 'true'
         uses: actions/download-artifact@v3
         with:
-          name: test-runner-node-${{ matrix.nodeVersion }}-${{ env.GITHUB_SHA }}
+          name: test-runner-node-${{ matrix.nodeVersion }}-$GITHUB_SHA
           path: ${{ runner.temp }}
 
       - name: Load test runner image if needed
         if: steps.check-for-test-image.outputs.exists == 'true'
         run: |
-          docker image load -i ${{ runner.temp }}/test-runner-node-${{ matrix.nodeVersion }}-${{ env.GITHUB_SHA }}
+          docker image load -i ${{ runner.temp }}/test-runner-node-${{ matrix.nodeVersion }}-$GITHUB_SHA
           docker image ls -a
 
       - name: Test
