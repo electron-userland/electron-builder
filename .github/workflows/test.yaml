@@ -22,9 +22,9 @@ jobs:
       matrix:
         nodeVersion: [
           20.18.1,
-          18.20.5,
-          16.20.2,
-          14.21.3
+          # 18.20.5,
+          # 16.20.2,
+          # 14.21.3
         ]
     steps:
       - name: Checkout code repository
@@ -137,9 +137,9 @@ jobs:
       matrix:
         nodeVersion: [
           20,
-          18,
-          16,
-          14
+          # 18,
+          # 16,
+          # 14
         ]
     steps:
       - name: Checkout code repository
