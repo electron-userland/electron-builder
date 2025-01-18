@@ -12,8 +12,7 @@ RUN dpkg --add-architecture i386 && \
   # powershell
   # https://learn.microsoft.com/en-us/powershell/scripting/install/install-ubuntu?view=powershell-7.4
   apt-get install -yq apt-transport-https software-properties-common && \
-  source /etc/os-release && \
-  wget -q https://packages.microsoft.com/config/ubuntu/$VERSION_ID/packages-microsoft-prod.deb && \
+  wget -q https://packages.microsoft.com/config/ubuntu/22.04/packages-microsoft-prod.deb && \
   dpkg -i packages-microsoft-prod.deb && \
   rm packages-microsoft-prod.deb && \
   apt-get -qq update && \
