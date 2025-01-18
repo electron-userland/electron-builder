@@ -7,6 +7,11 @@ on:
   pull_request:
   workflow_dispatch: # Allows you to run this workflow manually from the Actions tab
   workflow_call: # Allow this workflow to be called from other workflows
+    inputs:
+      rebuild-docker-images:
+        description: 'Rebuild all Docker images'
+        default: false
+        type: 'boolean'
 
 permissions:
   contents: read
@@ -33,7 +38,7 @@ jobs:
 
   run-docker-build:
     needs: check-if-docker-build
-    if: needs.check-if-docker-build.outputs.force-docker-build == 'true'
+    if: ${{ needs.check-if-docker-build.outputs.force-docker-build == 'true' || github.event.inputs.rebuild-docker-images == 'true' }}
     uses: ./.github/workflows/docker-build.yml
 
   test-linux:
