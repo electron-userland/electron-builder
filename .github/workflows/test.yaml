@@ -17,7 +17,7 @@ permissions:
   contents: read
 
 env:
-  TEST_IMAGE_NODE_MAJOR_VERSION: 22
+  TEST_IMAGE_NODE_MAJOR_VERSION: 20
 
 jobs:
   check-if-docker-build:
@@ -50,7 +50,12 @@ jobs:
 
   test-linux:
     runs-on: ubuntu-22.04
-    needs: run-docker-build
+    needs: [check-if-docker-build, run-docker-build]
+    # Wonky if-conditional to allow this step to run AFTER docker images are rebuilt OR if the build stage skipped and we want to use dockerhub registry for images
+    if: |
+      always() &&
+      needs.check-if-docker-build.result == 'success' &&
+      (needs.run-docker-build.result == 'success' || needs.run-docker-build.result == 'skipped')
     strategy:
       fail-fast: false
       matrix:
@@ -69,14 +74,8 @@ jobs:
           cache-path: ~/.cache/electron
           cache-key: v-23.3.10-linux-electron
 
-      - name: Check if a newly built docker test image exists
-        uses: softwareforgood/check-artifact-v4-existence@v0
-        id: check-for-test-image
-        with:
-          name: electron-builder-all-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}
-
       - name: Download test-runner if exists
-        if: steps.check-for-test-image.outputs.exists == 'true'
+        if: needs.run-docker-build.result == 'success'
         id: download-test-runner-image
         uses: actions/download-artifact@v4
         with:
@@ -84,7 +83,7 @@ jobs:
           path: ${{ runner.temp }}
 
       - name: Load test runner image if needed
-        if: steps.check-for-test-image.outputs.exists == 'true'
+        if: needs.run-docker-build.result == 'success'
         run: |
           docker image load --input ${{ runner.temp }}/electron-builder-all-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}.tar
           docker image ls -a
@@ -104,7 +103,12 @@ jobs:
   # Need to separate from other tests because logic is specific to when TOKEN env vars are set
   test-updater:
     runs-on: ubuntu-22.04
-    needs: run-docker-build
+    needs: [check-if-docker-build, run-docker-build]
+    # Wonky if-conditional to allow this step to run AFTER docker images are rebuilt OR if the build stage skipped and we want to use dockerhub registry for images
+    if: |
+      always() &&
+      needs.check-if-docker-build.result == 'success' &&
+      (needs.run-docker-build.result == 'success' || needs.run-docker-build.result == 'skipped')
     steps:
       - name: Checkout code repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
@@ -115,21 +119,15 @@ jobs:
           cache-path: ~/.cache/electron
           cache-key: v-23.3.10-update-electron
 
-      - name: Check if a newly built docker test image exists
-        uses: softwareforgood/check-artifact-v4-existence@v0
-        id: check-for-test-image
-        with:
-          name: electron-builder-all-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}
-
       - name: Download test-runner if exists
-        if: steps.check-for-test-image.outputs.exists == 'true'
+        if: needs.run-docker-build.result == 'success'
         uses: actions/download-artifact@v4
         with:
           name: electron-builder-all-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}
           path: ${{ runner.temp }}
 
       - name: Load test runner image if needed
-        if: steps.check-for-test-image.outputs.exists == 'true'
+        if: needs.run-docker-build.result == 'success'
         run: |
           docker image load --input ${{ runner.temp }}/electron-builder-all-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}.tar
           docker image ls -a
