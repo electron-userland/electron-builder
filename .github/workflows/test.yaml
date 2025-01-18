@@ -172,7 +172,7 @@ jobs:
           BITBUCKET_TOKEN: ${{ secrets.BITBUCKET_TOKEN }}
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
           FORCE_COLOR: 1
-          TEST_RUNNER_IMAGE_TAG: test-runner:${{ matrix.nodeVersion }}
+          TEST_RUNNER_IMAGE_TAG: test-runner:${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}
 
       - name: Verify Docs Generation
         run: pnpm generate-all
