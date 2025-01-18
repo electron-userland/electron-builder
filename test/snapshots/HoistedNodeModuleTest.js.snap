@@ -482,6 +482,15 @@ exports[`yarn two package.json w/ native module 2`] = `
               "files": {
                 "Release": {
                   "files": {
+                    "node-addon-api": {
+                      "files": {
+                        "node_addon_api_except.stamp": {
+                          "size": 0,
+                          "unpacked": true,
+                        },
+                      },
+                      "unpacked": true,
+                    },
                     "pty.node": {
                       "size": 76144,
                       "unpacked": true,
@@ -1065,6 +1074,15 @@ exports[`yarn two package.json w/ native module 2`] = `
                       "unpacked": true,
                     },
                   },
+                  "unpacked": true,
+                },
+              },
+              "unpacked": true,
+            },
+            "node-addon-api": {
+              "files": {
+                "node_addon_api.Makefile": {
+                  "size": 159,
                   "unpacked": true,
                 },
               },
