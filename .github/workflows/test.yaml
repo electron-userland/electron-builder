@@ -5,9 +5,8 @@ on:
     branches:
       master
   pull_request:
-
-  # Allows you to run this workflow manually from the Actions tab
-  workflow_dispatch:
+  workflow_dispatch: # Allows you to run this workflow manually from the Actions tab
+  workflow_call: # Allow this workflow to be called from other workflows
 
 permissions:
   contents: read
@@ -16,25 +15,15 @@ env:
   TEST_IMAGE_NODE_MAJOR_VERSION: 20
 
 jobs:
-  test-docker-build:
+  check-if-docker-build:
     runs-on: ubuntu-22.04
-    strategy:
-      matrix:
-        nodeVersion: [
-          22.13.0,
-          20.18.1,
-          18.20.5,
-          16.20.2,
-          14.21.3
-        ]
+    outputs:
+      force-docker-build: 'true' # steps.changed-files-specific.outputs.any_changed
     steps:
       - name: Checkout code repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
         with:
           fetch-depth: 0
-
-      - name: Extract node major version to tag docker image
-        run: echo "NODE_TAG=$(cut -d '.' -f 1 <<< ${{ matrix.nodeVersion }})" >> $GITHUB_ENV
 
       - name: Determine if Dockerfiles changed
         id: changed-files-specific
@@ -42,25 +31,14 @@ jobs:
         with:
           files: docker/**/*
 
-      - name: Verify docker builds all images
-        # if: steps.changed-files-specific.outputs.any_changed == 'true'
-        shell: bash
-        run: |
-          bash docker/build.sh ${{ matrix.nodeVersion }}
-          docker save -o ${{ runner.temp }}/test-runner-node-${{ env.NODE_TAG }}-${{ github.run_id }}-${{ github.run_number }}.tar test-runner:${{ env.NODE_TAG }}
-
-      - name: Upload test runner image
-        # if: steps.changed-files-specific.outputs.any_changed == 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-runner-node-${{ env.NODE_TAG }}-${{ github.run_id }}-${{ github.run_number }}
-          path: ${{ runner.temp }}/test-runner-node-${{ env.NODE_TAG }}-${{ github.run_id }}-${{ github.run_number }}.tar
-          retention-days: 1
-          if-no-files-found: error
+  run-docker-build:
+    needs: check-if-docker-build
+    if: needs.check-if-docker-build.outputs.force-docker-build == 'true'
+    uses: ./.github/workflows/docker-build.yaml
 
   test-linux:
     runs-on: ubuntu-22.04
-    needs: test-docker-build
+    needs: run-docker-build
     strategy:
       fail-fast: false
       matrix:
@@ -83,20 +61,20 @@ jobs:
         uses: softwareforgood/check-artifact-v4-existence@v0
         id: check-for-test-image
         with:
-          name: test-runner-node-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}-${{ github.run_id }}-${{ github.run_number }}
+          name: electron-builder-all-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}
 
       - name: Download test-runner if exists
         if: steps.check-for-test-image.outputs.exists == 'true'
         id: download-test-runner-image
         uses: actions/download-artifact@v4
         with:
-          name: test-runner-node-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}-${{ github.run_id }}-${{ github.run_number }}
+          name: electron-builder-all-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}
           path: ${{ runner.temp }}
 
       - name: Load test runner image if needed
         if: steps.check-for-test-image.outputs.exists == 'true'
         run: |
-          docker image load --input ${{ runner.temp }}/test-runner-node-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}-${{ github.run_id }}-${{ github.run_number }}.tar
+          docker image load --input ${{ runner.temp }}/electron-builder-all-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}.tar
           docker image ls -a
 
       - name: Lint
@@ -109,7 +87,7 @@ jobs:
         env:
           TEST_FILES: ${{ matrix.testFiles }}
           FORCE_COLOR: 1
-          TEST_RUNNER_IMAGE_TAG: test-runner:${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}
+          TEST_RUNNER_IMAGE_TAG: electronuserland/builder:${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}-wine-mono
 
   test-mac:
     runs-on: macos-latest
@@ -132,7 +110,7 @@ jobs:
   # Need to separate from other tests because logic is specific to when TOKEN env vars are set
   test-updater:
     runs-on: ubuntu-22.04
-    needs: test-docker-build
+    needs: run-docker-build
     steps:
       - name: Checkout code repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
@@ -147,19 +125,19 @@ jobs:
         uses: softwareforgood/check-artifact-v4-existence@v0
         id: check-for-test-image
         with:
-          name: test-runner-node-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}-${{ github.run_id }}-${{ github.run_number }}
+          name: electron-builder-all-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}
 
       - name: Download test-runner if exists
         if: steps.check-for-test-image.outputs.exists == 'true'
         uses: actions/download-artifact@v4
         with:
-          name: test-runner-node-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}-${{ github.run_id }}-${{ github.run_number }}
+          name: electron-builder-all-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}
           path: ${{ runner.temp }}
 
       - name: Load test runner image if needed
         if: steps.check-for-test-image.outputs.exists == 'true'
         run: |
-          docker image load --input ${{ runner.temp }}/test-runner-node-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}-${{ github.run_id }}-${{ github.run_number }}.tar
+          docker image load --input ${{ runner.temp }}/electron-builder-all-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}.tar
           docker image ls -a
 
       - name: Test

@@ -41,7 +41,6 @@ docker build \
   --build-arg IMAGE_VERSION="$NODE_TAG-wine-$DATE" \
   -t "electronuserland/builder:$NODE_TAG-wine-mono" \
   -t "electronuserland/builder:$NODE_TAG-wine-mono-$DATE" \
-  -t "test-runner:$NODE_TAG" \
   docker/wine-mono
 
 # Generate report
