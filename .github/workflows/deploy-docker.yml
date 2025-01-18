@@ -18,7 +18,7 @@ jobs:
   run-docker-build-and-test:
     uses: ./.github/workflows/test.yaml
     with:
-      rebuild-docker-images: true
+      rebuild-docker-images-call: true
 
   deploy:
     name: Build and Push Docker
