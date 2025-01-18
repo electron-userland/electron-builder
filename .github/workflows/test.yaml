@@ -13,10 +13,10 @@ on:
         type: 'boolean'
   workflow_call: # Allow this workflow to be called from other workflows
     inputs:
-      rebuild-docker-images:
+      rebuild-docker-images-call:
         description: 'Rebuild all Docker images'
-        default: false
-        type: 'boolean'
+        required: true
+        type: boolean
 
 permissions:
   contents: read
@@ -50,7 +50,11 @@ jobs:
 
   run-docker-build:
     needs: check-if-docker-build
-    if: ${{ needs.check-if-docker-build.outputs.force-docker-build == 'true' || github.event.inputs.rebuild-docker-images == 'true' }}
+    if: |
+      always() &&
+      (needs.check-if-docker-build.outputs.force-docker-build == 'true' ||
+      inputs.rebuild-docker-images == 'true' || inputs.rebuild-docker-images == true ||
+      inputs.rebuild-docker-images-call == 'true' || inputs.rebuild-docker-images-call == true)
     uses: ./.github/workflows/docker-build.yml
 
   test-linux:
