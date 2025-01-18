@@ -5,7 +5,7 @@ FROM --platform=linux/x86_64 buildpack-deps:22.04-curl
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN curl -L https://yarnpkg.com/latest.tar.gz | tar xvz && mv yarn-* /yarn && ln -s /yarn/bin/yarn /usr/bin/yarn
-RUN apt-get -qq update && apt-get -qq dist-upgrade && \
+RUN apt-get update -yqq && apt-get -qq dist-upgrade && \
   # add repo for git-lfs
   curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | bash && \
   # git ssh for using as docker image on CircleCI

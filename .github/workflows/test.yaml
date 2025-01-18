@@ -21,6 +21,7 @@ jobs:
     strategy:
       matrix:
         nodeVersion: [
+          22.13.0,
           20.18.1,
           18.20.5,
           16.20.2,
@@ -132,15 +133,6 @@ jobs:
   test-updater:
     runs-on: ubuntu-22.04
     needs: test-docker-build
-    strategy:
-      fail-fast: false
-      matrix:
-        nodeVersion: [
-          20,
-          18,
-          16,
-          14
-        ]
     steps:
       - name: Checkout code repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
@@ -155,19 +147,19 @@ jobs:
         uses: softwareforgood/check-artifact-v4-existence@v0
         id: check-for-test-image
         with:
-          name: test-runner-node-${{ matrix.nodeVersion }}-${{ github.run_id }}-${{ github.run_number }}
+          name: test-runner-node-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}-${{ github.run_id }}-${{ github.run_number }}
 
       - name: Download test-runner if exists
         if: steps.check-for-test-image.outputs.exists == 'true'
         uses: actions/download-artifact@v4
         with:
-          name: test-runner-node-${{ matrix.nodeVersion }}-${{ github.run_id }}-${{ github.run_number }}
+          name: test-runner-node-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}-${{ github.run_id }}-${{ github.run_number }}
           path: ${{ runner.temp }}
 
       - name: Load test runner image if needed
         if: steps.check-for-test-image.outputs.exists == 'true'
         run: |
-          docker image load --input ${{ runner.temp }}/test-runner-node-${{ matrix.nodeVersion }}-${{ github.run_id }}-${{ github.run_number }}.tar
+          docker image load --input ${{ runner.temp }}/test-runner-node-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}-${{ github.run_id }}-${{ github.run_number }}.tar
           docker image ls -a
 
       - name: Test
@@ -185,28 +177,28 @@ jobs:
       - name: Verify Docs Generation
         run: pnpm generate-all
 
-  # test-windows:
-  #   runs-on: windows-latest
-  #   strategy:
-  #     fail-fast: false
-  #     matrix:
-  #       testFiles:
-  #         - winCodeSignTest,differentialUpdateTest
-  #         - installerTest,appxTest,msiTest,portableTest,assistedInstallerTest,protonTest
-  #         - BuildTest,oneClickInstallerTest,winPackagerTest,nsisUpdaterTest,webInstallerTest
-  #   steps:
-  #     - name: Checkout code repository
-  #       uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
+  test-windows:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        testFiles:
+          - winCodeSignTest,differentialUpdateTest
+          - installerTest,appxTest,msiTest,portableTest,assistedInstallerTest,protonTest
+          - BuildTest,oneClickInstallerTest,winPackagerTest,nsisUpdaterTest,webInstallerTest
+    steps:
+      - name: Checkout code repository
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
 
-  #     - name: Setup Tests
-  #       uses: ./.github/actions/pretest
-  #       with:
-  #         cache-key: v-23.3.10-windows-electron
-  #         cache-path: ~\AppData\Local\electron\Cache
+      - name: Setup Tests
+        uses: ./.github/actions/pretest
+        with:
+          cache-key: v-23.3.10-windows-electron
+          cache-path: ~\AppData\Local\electron\Cache
 
-  #     - name: Test
-  #       run: pnpm ci:test
-  #       env:
-  #         CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
-  #         TEST_FILES: ${{ matrix.testFiles }}
-  #         FORCE_COLOR: 1
+      - name: Test
+        run: pnpm ci:test
+        env:
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          TEST_FILES: ${{ matrix.testFiles }}
+          FORCE_COLOR: 1

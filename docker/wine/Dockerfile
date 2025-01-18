@@ -6,8 +6,8 @@ RUN dpkg --add-architecture i386 && \
   # https://gitlab.winehq.org/wine/wine/-/wikis/Debian-Ubuntu#install-wine
   wget -O - https://dl.winehq.org/wine-builds/winehq.key | gpg --dearmor -o /etc/apt/keyrings/winehq-archive.key - && \
   wget -NP /etc/apt/sources.list.d/ https://dl.winehq.org/wine-builds/ubuntu/dists/jammy/winehq-jammy.sources && \
-  apt-get update -yq && \
-  apt-get install -yq --install-recommends winehq-stable \
+  apt-get -qq update && \
+  apt-get -qq install -y --install-recommends winehq-stable \
   && \
   # clean
   apt-get clean && rm -rf /var/lib/apt/lists/*
