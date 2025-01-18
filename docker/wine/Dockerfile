@@ -8,19 +8,19 @@ RUN dpkg --add-architecture i386 && \
   wget -O - https://dl.winehq.org/wine-builds/winehq.key | gpg --dearmor -o /etc/apt/keyrings/winehq-archive.key - && \
   wget -NP /etc/apt/sources.list.d/ https://dl.winehq.org/wine-builds/ubuntu/dists/jammy/winehq-jammy.sources && \
   apt-get -qq update && \
-  apt-get -qq install -y --install-recommends winehq-stable \
+  apt-get -qq install -y --install-recommends winehq-stable && \
   # powershell
   # https://learn.microsoft.com/en-us/powershell/scripting/install/install-ubuntu?view=powershell-7.4
-  apt-get install -yq wget apt-transport-https software-properties-common && \
+  apt-get install -yq apt-transport-https software-properties-common && \
   source /etc/os-release && \
   wget -q https://packages.microsoft.com/config/ubuntu/$VERSION_ID/packages-microsoft-prod.deb && \
   dpkg -i packages-microsoft-prod.deb && \
   rm packages-microsoft-prod.deb && \
   apt-get -qq update && \
   apt-get install -y powershell && \
-  && \
   # clean
-  apt-get clean && rm -rf /var/lib/apt/lists/*
+  apt-get clean && \
+  rm -rf /var/lib/apt/lists/*
 
 ENV WINEDEBUG=-all,err+all
 ENV WINEDLLOVERRIDES=winemenubuilder.exe=d
