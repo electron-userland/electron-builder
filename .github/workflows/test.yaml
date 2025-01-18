@@ -51,9 +51,10 @@ jobs:
   run-docker-build:
     needs: check-if-docker-build
     if: |
-      needs.check-if-docker-build.outputs.force-docker-build == 'true' ||
+      always() &&
+      (needs.check-if-docker-build.outputs.force-docker-build == 'true' ||
       github.event.inputs.rebuild-docker-images == 'true' || github.event.inputs.rebuild-docker-images == true ||
-      github.event.inputs.rebuild-docker-images-call == 'true' || github.event.inputs.rebuild-docker-images-call == true
+      github.event.inputs.rebuild-docker-images-call == 'true' || github.event.inputs.rebuild-docker-images-call == true)
     uses: ./.github/workflows/docker-build.yml
 
   test-linux:
