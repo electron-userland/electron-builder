@@ -22,9 +22,9 @@ jobs:
       matrix:
         nodeVersion: [
           20.18.1,
-          # 18.20.5,
-          # 16.20.2,
-          # 14.21.3
+          18.20.5,
+          16.20.2,
+          14.21.3
         ]
     steps:
       - name: Checkout code repository
@@ -110,23 +110,23 @@ jobs:
           FORCE_COLOR: 1
           TEST_RUNNER_IMAGE_TAG: test-runner:${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}
 
-  # test-mac:
-  #   runs-on: macos-latest
-  #   steps:
-  #     - name: Checkout code repository
-  #       uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
+  test-mac:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout code repository
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
 
-  #     - name: Setup Tests
-  #       uses: ./.github/actions/pretest
-  #       with:
-  #         cache-path: ~/Library/Caches/electron
-  #         cache-key: v-23.3.10-macos-electron
+      - name: Setup Tests
+        uses: ./.github/actions/pretest
+        with:
+          cache-path: ~/Library/Caches/electron
+          cache-key: v-23.3.10-macos-electron
 
-  #     - name: Test
-  #       run: pnpm ci:test
-  #       env:
-  #         TEST_FILES: masTest,dmgTest,filesTest,macPackagerTest,differentialUpdateTest
-  #         FORCE_COLOR: 1
+      - name: Test
+        run: pnpm ci:test
+        env:
+          TEST_FILES: masTest,dmgTest,filesTest,macPackagerTest,differentialUpdateTest
+          FORCE_COLOR: 1
 
   # Need to separate from other tests because logic is specific to when TOKEN env vars are set
   test-updater:
@@ -137,9 +137,9 @@ jobs:
       matrix:
         nodeVersion: [
           20,
-          # 18,
-          # 16,
-          # 14
+          18,
+          16,
+          14
         ]
     steps:
       - name: Checkout code repository
@@ -167,7 +167,7 @@ jobs:
       - name: Load test runner image if needed
         if: steps.check-for-test-image.outputs.exists == 'true'
         run: |
-          docker image load --input ${{ runner.temp }}/test-runner-node-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}-${{ github.run_id }}-${{ github.run_number }}
+          docker image load --input ${{ runner.temp }}/test-runner-node-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}-${{ github.run_id }}-${{ github.run_number }}.tar
           docker image ls -a
 
       - name: Test
