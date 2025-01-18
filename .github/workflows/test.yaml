@@ -18,7 +18,7 @@ jobs:
   check-if-docker-build:
     runs-on: ubuntu-22.04
     outputs:
-      force-docker-build: ${{ steps.changed-files-specific.outputs.any_changed }}
+      force-docker-build: 'true' # steps.changed-files-specific.outputs.any_changed }}
     steps:
       - name: Checkout code repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
