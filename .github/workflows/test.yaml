@@ -16,7 +16,7 @@ on:
       rebuild-docker-images-call:
         description: 'Rebuild all Docker images'
         required: true
-        type: 'boolean'
+        type: boolean
 
 permissions:
   contents: read
@@ -53,8 +53,8 @@ jobs:
     if: |
       always() &&
       (needs.check-if-docker-build.outputs.force-docker-build == 'true' ||
-      github.event.inputs.rebuild-docker-images == 'true' || github.event.inputs.rebuild-docker-images == true ||
-      github.event.inputs.rebuild-docker-images-call == 'true' || github.event.inputs.rebuild-docker-images-call == true)
+      inputs.rebuild-docker-images == 'true' || inputs.rebuild-docker-images == true ||
+      inputs.rebuild-docker-images-call == 'true' || inputs.rebuild-docker-images-call == true)
     uses: ./.github/workflows/docker-build.yml
 
   test-linux:
