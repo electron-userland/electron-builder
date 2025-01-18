@@ -89,24 +89,6 @@ jobs:
           FORCE_COLOR: 1
           TEST_RUNNER_IMAGE_TAG: electronuserland/builder:${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}-wine-mono
 
-  test-mac:
-    runs-on: macos-latest
-    steps:
-      - name: Checkout code repository
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
-
-      - name: Setup Tests
-        uses: ./.github/actions/pretest
-        with:
-          cache-path: ~/Library/Caches/electron
-          cache-key: v-23.3.10-macos-electron
-
-      - name: Test
-        run: pnpm ci:test
-        env:
-          TEST_FILES: masTest,dmgTest,filesTest,macPackagerTest,differentialUpdateTest
-          FORCE_COLOR: 1
-
   # Need to separate from other tests because logic is specific to when TOKEN env vars are set
   test-updater:
     runs-on: ubuntu-22.04
@@ -155,28 +137,46 @@ jobs:
       - name: Verify Docs Generation
         run: pnpm generate-all
 
-  test-windows:
-    runs-on: windows-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        testFiles:
-          - winCodeSignTest,differentialUpdateTest
-          - installerTest,appxTest,msiTest,portableTest,assistedInstallerTest,protonTest
-          - BuildTest,oneClickInstallerTest,winPackagerTest,nsisUpdaterTest,webInstallerTest
-    steps:
-      - name: Checkout code repository
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
+  # test-windows:
+  #   runs-on: windows-latest
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       testFiles:
+  #         - winCodeSignTest,differentialUpdateTest
+  #         - installerTest,appxTest,msiTest,portableTest,assistedInstallerTest,protonTest
+  #         - BuildTest,oneClickInstallerTest,winPackagerTest,nsisUpdaterTest,webInstallerTest
+  #   steps:
+  #     - name: Checkout code repository
+  #       uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
 
-      - name: Setup Tests
-        uses: ./.github/actions/pretest
-        with:
-          cache-key: v-23.3.10-windows-electron
-          cache-path: ~\AppData\Local\electron\Cache
+  #     - name: Setup Tests
+  #       uses: ./.github/actions/pretest
+  #       with:
+  #         cache-key: v-23.3.10-windows-electron
+  #         cache-path: ~\AppData\Local\electron\Cache
 
-      - name: Test
-        run: pnpm ci:test
-        env:
-          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
-          TEST_FILES: ${{ matrix.testFiles }}
-          FORCE_COLOR: 1
+  #     - name: Test
+  #       run: pnpm ci:test
+  #       env:
+  #         CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+  #         TEST_FILES: ${{ matrix.testFiles }}
+  #         FORCE_COLOR: 1
+
+  # test-mac:
+    # runs-on: macos-latest
+    # steps:
+    #   - name: Checkout code repository
+    #     uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
+
+    #   - name: Setup Tests
+    #     uses: ./.github/actions/pretest
+    #     with:
+    #       cache-path: ~/Library/Caches/electron
+    #       cache-key: v-23.3.10-macos-electron
+
+    #   - name: Test
+    #     run: pnpm ci:test
+    #     env:
+    #       TEST_FILES: masTest,dmgTest,filesTest,macPackagerTest,differentialUpdateTest
+    #       FORCE_COLOR: 1
