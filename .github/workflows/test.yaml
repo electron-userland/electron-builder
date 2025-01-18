@@ -15,7 +15,7 @@ on:
     inputs:
       rebuild-docker-images-call:
         description: 'Rebuild all Docker images'
-        default: false
+        required: true
         type: 'boolean'
 
 permissions:
