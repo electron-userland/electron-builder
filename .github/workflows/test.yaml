@@ -50,11 +50,12 @@ jobs:
 
       - name: Upload test runner image
         # if: steps.changed-files-specific.outputs.any_changed == 'true'
-        uses: actions/upload-artifact@v3 # must stay as v3 for xSAVIKx/artifact-exists-action@v0 compatibility
+        uses: actions/upload-artifact@v4
         with:
-          name: test-runner-node-${{ env.NODE_TAG }}
+          name: test-runner-node-${{ env.NODE_TAG }}-${{ github.run_id }}-${{ github.run_number }}
           path: ${{ runner.temp }}/test-runner-node-${{ env.NODE_TAG }}-${{ github.run_id }}-${{ github.run_number }}.tar
           retention-days: 1
+          if-no-files-found: error
 
   test-linux:
     runs-on: ubuntu-22.04
@@ -78,22 +79,23 @@ jobs:
           cache-key: v-23.3.10-linux-electron
 
       - name: Check if a newly built docker test image exists
-        uses: xSAVIKx/artifact-exists-action@v0
+        uses: softwareforgood/check-artifact-v4-existence@v0
         id: check-for-test-image
         with:
           name: test-runner-node-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}-${{ github.run_id }}-${{ github.run_number }}
 
       - name: Download test-runner if exists
         if: steps.check-for-test-image.outputs.exists == 'true'
-        uses: actions/download-artifact@v3
+        id: download-test-runner-image
+        uses: actions/download-artifact@v4
         with:
-          name: test-runner-node-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}
+          name: test-runner-node-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}-${{ github.run_id }}-${{ github.run_number }}
           path: ${{ runner.temp }}
 
       - name: Load test runner image if needed
         if: steps.check-for-test-image.outputs.exists == 'true'
         run: |
-          docker image load -i ${{ runner.temp }}/test-runner-node-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}-${{ github.run_id }}-${{ github.run_number }}.tar
+          docker image load -i ${{ steps.download-test-runner-image.outputs.download-path }}.tar
           docker image ls -a
 
       - name: Lint
@@ -150,14 +152,14 @@ jobs:
           cache-key: v-23.3.10-update-electron
 
       - name: Check if a newly built docker test image exists
-        uses: xSAVIKx/artifact-exists-action@v0
+        uses: softwareforgood/check-artifact-v4-existence@v0
         id: check-for-test-image
         with:
           name: test-runner-node-${{ matrix.nodeVersion }}-${{ github.run_id }}-${{ github.run_number }}
 
       - name: Download test-runner if exists
         if: steps.check-for-test-image.outputs.exists == 'true'
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: test-runner-node-${{ matrix.nodeVersion }}-${{ github.run_id }}-${{ github.run_number }}
           path: ${{ runner.temp }}
@@ -165,7 +167,7 @@ jobs:
       - name: Load test runner image if needed
         if: steps.check-for-test-image.outputs.exists == 'true'
         run: |
-          docker image load -i ${{ runner.temp }}/test-runner-node-${{ matrix.nodeVersion }}-${{ github.run_id }}-${{ github.run_number }}
+          docker image load -i ${{ steps.download-test-runner-image.outputs.download-path }}
           docker image ls -a
 
       - name: Test
