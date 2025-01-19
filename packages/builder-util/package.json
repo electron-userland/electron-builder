@@ -35,6 +35,7 @@
   },
   "typings": "./out/util.d.ts",
   "devDependencies": {
+    "@types/cross-spawn": "6.0.6",
     "@types/fs-extra": "^9.0.11",
     "@types/is-ci": "3.0.0",
     "@types/js-yaml": "4.0.3",
