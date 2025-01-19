@@ -1,22 +1,27 @@
-import { Platform, DIR_TARGET, Arch } from "electron-builder"
+import { Arch, DIR_TARGET, Platform } from "electron-builder"
+import * as fs from "fs/promises"
 import * as path from "path"
 import { CheckingWinPackager } from "../helpers/CheckingPackager"
 import { app, appThrows, assertPack, platform } from "../helpers/packTester"
-import * as fs from "fs/promises"
 
 test.ifNotCiMac(
   "beta version",
-  app({
-    targets: Platform.WINDOWS.createTarget(["nsis"], Arch.x64, Arch.arm64),
-    config: {
-      extraMetadata: {
-        version: "3.0.0-beta.2",
-      },
-      nsis: {
-        buildUniversalInstaller: false,
+  app(
+    {
+      targets: Platform.WINDOWS.createTarget(["nsis"], Arch.x64, Arch.arm64),
+      config: {
+        extraMetadata: {
+          version: "3.0.0-beta.2",
+        },
+        nsis: {
+          buildUniversalInstaller: false,
+        },
       },
     },
-  })
+    {
+      signedWin: true,
+    }
+  )
 )
 
 test.ifNotCiMac(

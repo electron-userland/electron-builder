@@ -1,7 +1,7 @@
-import { DebugLogger, exec, ExtraSpawnOptions, InvalidConfigurationError, spawn } from "builder-util"
+import { DebugLogger, exec, ExtraSpawnOptions, InvalidConfigurationError, log, spawn } from "builder-util"
 import { ExecFileOptions, SpawnOptions } from "child_process"
+import { Lazy } from "lazy-val"
 import * as path from "path"
-
 export class VmManager {
   get pathSep(): string {
     return path.sep
@@ -18,9 +18,25 @@ export class VmManager {
   toVmFile(file: string): string {
     return file
   }
+
+  readonly powershellCommand = new Lazy(() => {
+    return this.exec("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", `Get-Command pwsh.exe`])
+      .then(() => {
+        log.info(null, "identified pwsh.exe")
+        return "pwsh.exe"
+      })
+      .catch(() => {
+        log.info(null, "unable to find pwsh.exe, falling back to powershell.exe")
+        return "powershell.exe"
+      })
+  })
 }
 
 export async function getWindowsVm(debugLogger: DebugLogger): Promise<VmManager> {
+  if (await isLinuxPwshAvailable.value) {
+    const vmModule = await import("./PwshVm")
+    return new vmModule.PwshVmManager()
+  }
   const parallelsVmModule = await import("./ParallelsVm")
   const vmList = (await parallelsVmModule.parseVmList(debugLogger)).filter(it => ["win-10", "win-11"].includes(it.os))
   if (vmList.length === 0) {
@@ -29,4 +45,17 @@ export async function getWindowsVm(debugLogger: DebugLogger): Promise<VmManager>
 
   // prefer running or suspended vm
   return new parallelsVmModule.ParallelsVmManager(vmList.find(it => it.state === "running") || vmList.find(it => it.state === "suspended") || vmList[0])
+}
+
+export const isLinuxPwshAvailable = new Lazy(async () => {
+  return isCommandAvailable("pwsh", ["--version"])
+})
+
+export const isCommandAvailable = async (command: string, args: string[]) => {
+  try {
+    await exec(command, args)
+    return true
+  } catch {
+    return false
+  }
 }

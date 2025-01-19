@@ -14,7 +14,7 @@ test("parseDn", () => {
 
 const windowsDirTarget = Platform.WINDOWS.createTarget(["dir"])
 
-test.ifNotCiMac(
+test.ifNotMac(
   "sign nested asar unpacked executables",
   appThrows(
     {
@@ -30,7 +30,13 @@ test.ifNotCiMac(
         await outputFile(path.join(projectDir, "assets", "nested", "nested", "file.exe"), "invalid PE file")
       },
     },
-    error => expect(error.message).toContain("This file format cannot be signed because it is not recognized.")
+    error => {
+      if (process.platform === "linux") {
+        expect(error.message).toContain("Unrecognized file type")
+      } else {
+        expect(error.message).toContain("This file format cannot be signed because it is not recognized.")
+      }
+    }
   )
 )
 
@@ -114,18 +120,34 @@ test.ifAll.ifNotCiMac(
 
 test.ifAll.ifNotCiMac(
   "azure signing without credentials",
-  appThrows({
-    targets: windowsDirTarget,
-    config: {
-      forceCodeSigning: true,
-      win: {
-        azureSignOptions: {
-          publisherName: "test",
-          endpoint: "https://weu.codesigning.azure.net/",
-          certificateProfileName: "profilenamehere",
-          codeSigningAccountName: "codesigningnamehere",
+  appThrows(
+    {
+      targets: windowsDirTarget,
+      config: {
+        forceCodeSigning: true,
+        win: {
+          azureSignOptions: {
+            publisherName: "test",
+            endpoint: "https://weu.codesigning.azure.net/",
+            certificateProfileName: "profilenamehere",
+            codeSigningAccountName: "codesigningnamehere",
+          },
         },
       },
     },
-  })
+    {},
+    error => expect(error.message).toContain("Unable to find valid azure env field AZURE_TENANT_ID for signing.")
+  )
+)
+
+test.ifLinux(
+  "win code sign using pwsh",
+  app(
+    {
+      targets: Platform.WINDOWS.createTarget(DIR_TARGET),
+    },
+    {
+      signedWin: true,
+    }
+  )
 )

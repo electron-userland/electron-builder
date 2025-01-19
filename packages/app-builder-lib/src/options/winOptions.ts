@@ -25,11 +25,13 @@ export interface WindowsConfiguration extends PlatformSpecificBuildOptions {
 
   /**
    * Options for usage with signtool.exe
+   * Cannot be used in conjunction with `azureSignOptions`, signing will default to Azure Trusted Signing
    */
   readonly signtoolOptions?: WindowsSigntoolConfiguration | null
 
   /**
    * Options for usage of Azure Trusted Signing (beta)
+   * Cannot be used in conjunction with `signtoolOptions`, signing will default to Azure Trusted Signing
    */
   readonly azureSignOptions?: WindowsAzureSigningConfiguration | null
 
