@@ -13,7 +13,7 @@ jobs:
       fail-fast: false
       matrix:
         nodeVersion: [
-          # 22.13.0,
+          22.13.0,
           20.18.1,
           18.20.5,
           16.20.2,

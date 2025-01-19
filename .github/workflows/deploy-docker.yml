@@ -12,7 +12,7 @@ permissions:
   contents: read
 
 env:
-  LATEST_IMAGE_NODE_MAJOR_VERSION: 20
+  LATEST_IMAGE_NODE_MAJOR_VERSION: 22
 
 jobs:
   run-docker-build-and-test:
@@ -48,6 +48,12 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: electron-builder-all-20
+          path: ${{ runner.temp }}
+
+      - name: Download images artifact - node22
+        uses: actions/download-artifact@v4
+        with:
+          name: electron-builder-all-22
           path: ${{ runner.temp }}
 
       - name: Load all images
