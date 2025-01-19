@@ -18,7 +18,7 @@ jobs:
   run-docker-build-and-test:
     uses: ./.github/workflows/test.yaml
     with:
-      rebuild-docker-images: true
+      rebuild-docker-images-call: true
 
   deploy:
     name: Build and Push Docker
@@ -57,7 +57,7 @@ jobs:
           path: ${{ runner.temp }}
 
       - name: Load all images
-        run: find -type f -name "${{ runner.temp }}/electron-builder-all-*.tar" -exec docker image load --input "{}" \;
+        run: find ${{ runner.temp }} -type f -name "electron-builder-all-*.tar" -exec docker image load --input "{}" \;
 
       - name: Tag LTS images for electron-builder latest/wine/wine-chrome/wine-mono
         run: |
@@ -75,8 +75,11 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      - name: Push all Docker images (workflow_dispatch test)
+        if: github.event_name == 'workflow_dispatch'
+        run: echo "TESTING step logic. (this would normally trigger docker push)"
+
       - name: Push all Docker images
         if: github.event_name != 'workflow_dispatch'
-        run: echo "TESTING step logic. (this will trigger docker push)"
-        # run: docker image push --all-tags electronuserland/builder
+        run: docker image push --all-tags electronuserland/builder
 

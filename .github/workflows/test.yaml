@@ -13,10 +13,10 @@ on:
         type: 'boolean'
   workflow_call: # Allow this workflow to be called from other workflows
     inputs:
-      rebuild-docker-images:
+      rebuild-docker-images-call:
         description: 'Rebuild all Docker images'
-        default: false
-        type: 'boolean'
+        required: true
+        type: boolean
 
 permissions:
   contents: read
@@ -50,7 +50,11 @@ jobs:
 
   run-docker-build:
     needs: check-if-docker-build
-    if: ${{ needs.check-if-docker-build.outputs.force-docker-build == 'true' || github.event.inputs.rebuild-docker-images == 'true' }}
+    if: |
+      always() &&
+      (needs.check-if-docker-build.outputs.force-docker-build == 'true' ||
+      inputs.rebuild-docker-images == 'true' || inputs.rebuild-docker-images == true ||
+      inputs.rebuild-docker-images-call == 'true' || inputs.rebuild-docker-images-call == true)
     uses: ./.github/workflows/docker-build.yml
 
   test-linux:
@@ -67,6 +71,7 @@ jobs:
         testFiles:
           - ArtifactPublisherTest,BuildTest,ExtraBuildTest,RepoSlugTest,binDownloadTest,configurationValidationTest,filenameUtilTest,filesTest,globTest,ignoreTest,macroExpanderTest,mainEntryTest,urlUtilTest,extraMetadataTest,linuxArchiveTest,linuxPackagerTest,HoistedNodeModuleTest,MemoLazyTest
           - snapTest,debTest,fpmTest,protonTest
+          - winPackagerTest,installerTest,BuildTest
     steps:
       - name: Checkout code repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
@@ -101,6 +106,7 @@ jobs:
           echo $TEST_RUNNER_IMAGE_TAG
           pnpm test-linux
         env:
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
           TEST_FILES: ${{ matrix.testFiles }}
           FORCE_COLOR: 1
           TEST_RUNNER_IMAGE_TAG: electronuserland/builder:${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}-wine-mono
