@@ -128,17 +128,10 @@ export interface PkgOptions extends TargetSpecificOptions {
   readonly overwriteAction?: "upgrade" | "update" | null
 
   /**
-  * Add extra component packages for MacOs product archive.
-  * The extra component packages directory, relative to `build` (build resources directory).
-  * Example: `pkg-components`.
-  */
+   * The extra component packages directory for MacOS product archive
+   * Autoscans directory for any `.pkg` files and adds to `productbuild` command as `--package-path` and `--package` accordingly
+   */
   readonly extraPkgsDir?: string | null
-
-  /**
-  * The list of extra component packages, relative to `extraPkgsDir`.
-  * Example: `['virtual-audio-driver.pkg', 'obs-lib.pkg']`.
-  */
-  readonly extraPkgs?: Array<string> | null
 }
 
 /**

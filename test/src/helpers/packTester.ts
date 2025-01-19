@@ -491,7 +491,7 @@ export function signed(packagerOptions: PackagerOptions): PackagerOptions {
 export function createMacTargetTest(target: Array<MacOsTargetName>, config?: Configuration, isSigned = true) {
   return app(
     {
-      targets: Platform.MAC.createTarget(),
+      targets: Platform.MAC.createTarget(target, Arch.x64),
       config: {
         extraMetadata: {
           repository: "foo/bar",

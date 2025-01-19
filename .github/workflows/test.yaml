@@ -197,5 +197,5 @@ jobs:
       - name: Test
         run: pnpm ci:test
         env:
-          TEST_FILES: masTest,dmgTest,filesTest,macPackagerTest,differentialUpdateTest
+          TEST_FILES: masTest,dmgTest,filesTest,macPackagerTest,differentialUpdateTest,macArchiveTest
           FORCE_COLOR: 1
