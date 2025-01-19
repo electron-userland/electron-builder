@@ -1,0 +1,41 @@
+name: Build Docker Images
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  build-docker-images:
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        nodeVersion: [
+          # 22.13.0,
+          20.18.1,
+          18.20.5,
+          16.20.2,
+          14.21.3
+        ]
+    steps:
+      - name: Checkout code repository
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
+
+      - name: Extract node major version to tag docker images
+        run: echo "NODE_TAG=$(cut -d '.' -f 1 <<< ${{ matrix.nodeVersion }})" >> $GITHUB_ENV
+
+      - name: Builds all images
+        shell: bash
+        run: |
+          bash docker/build.sh ${{ matrix.nodeVersion }}
+          docker images --filter=reference="electronuserland/builder:*"
+          docker save -o ${{ runner.temp }}/electron-builder-all-${{ env.NODE_TAG }}.tar electronuserland/builder
+
+      - name: Bundle all images
+        uses: actions/upload-artifact@v4
+        with:
+          name: electron-builder-all-${{ env.NODE_TAG }}
+          path: ${{ runner.temp }}/electron-builder-all-${{ env.NODE_TAG }}.tar
+          retention-days: 1
+          if-no-files-found: error
