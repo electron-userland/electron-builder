@@ -10,6 +10,7 @@ jobs:
   build-docker-images:
     runs-on: ubuntu-22.04
     strategy:
+      fail-fast: false
       matrix:
         nodeVersion: [
           # 22.13.0,
