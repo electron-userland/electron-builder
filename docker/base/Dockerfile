@@ -14,12 +14,20 @@ RUN apt-get update -yqq && apt-get -qq dist-upgrade && \
   # libsecret-1-dev is required even for prebuild keytar (https://atom.github.io/node-keytar/)
   apt-get -qq install --no-install-recommends \
         qtbase5-dev build-essential autoconf libssl-dev gcc-multilib g++-multilib \
-        lzip rpm python3 libcurl4 git git-lfs ssh unzip libarchive-tools \
+        lzip rpm python2 python3 libcurl4 git git-lfs ssh unzip libarchive-tools \
         libxtst6 libsecret-1-dev libopenjp2-tools liblzo2-2 \
   && \
   # git-lfs
   git lfs install && \
   apt-get purge -y --auto-remove && rm -rf /var/lib/apt/lists/*
+
+# Resolves the following error due to dependency requirements
+# /root/.cache/electron-builder/winCodeSign/winCodeSign-2.6.0/linux/osslsigncode: error while loading shared libraries: libcrypto.so.1.1: cannot open shared object file: No such file or directory
+# The missing libcrypto.so.1.1 is part of libssl1.1 but Ubuntu 22.04 upgraded to libssl3, so we must install it manually
+ARG LIB_SSL1_VERSION=2.23
+RUN wget -q "http://security.ubuntu.com/ubuntu/pool/main/o/openssl/libssl1.1_1.1.1f-1ubuntu${LIB_SSL1_VERSION}_amd64.deb" && \
+  dpkg -i libssl1.1*.deb && \
+  rm libssl1.1*.deb
 
 COPY ./test.sh /test.sh
 
