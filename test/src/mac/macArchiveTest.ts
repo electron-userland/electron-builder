@@ -143,7 +143,8 @@ test.ifAll.ifMac(
         expect(info).toMatchSnapshot()
 
         const scriptDir = path.join(unpackedDir, "org.electron-builder.testApp.pkg", "Scripts")
-        await Promise.all([assertThat(path.join(scriptDir, "postinstall")).isFile(), assertThat(path.join(scriptDir, "preinstall")).isFile()])
+        await assertThat(path.join(scriptDir, "postinstall")).isFile()
+        await assertThat(path.join(scriptDir, "preinstall")).isFile()
       },
     }
   )
