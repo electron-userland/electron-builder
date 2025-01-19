@@ -5,16 +5,66 @@ on:
     branches:
       master
   pull_request:
-
-  # Allows you to run this workflow manually from the Actions tab
-  workflow_dispatch:
+  workflow_dispatch: # Allows you to run this workflow manually from the Actions tab
+    inputs:
+      rebuild-docker-images:
+        description: 'Rebuild all Docker images'
+        default: false
+        type: 'boolean'
+  workflow_call: # Allow this workflow to be called from other workflows
+    inputs:
+      rebuild-docker-images-call:
+        description: 'Rebuild all Docker images'
+        required: true
+        type: boolean
 
 permissions:
   contents: read
 
+env:
+  TEST_IMAGE_NODE_MAJOR_VERSION: 20
+
 jobs:
+  check-if-docker-build:
+    runs-on: ubuntu-22.04
+    outputs:
+      force-docker-build: ${{ steps.changed-files-specific.outputs.any_changed }}
+    steps:
+      - name: Checkout code repository
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
+        with:
+          fetch-depth: 0
+
+      - name: Determine if Dockerfiles changed
+        id: changed-files-specific
+        uses: tj-actions/changed-files@c65cd883420fd2eb864698a825fc4162dd94482c # v44
+        with:
+          files: docker/**/*
+
+      - name: Output all changed files
+        env:
+          ALL_CHANGED_FILES: ${{ steps.changed-files-specific.outputs.all_changed_files }}
+        run: |
+          echo "One or more test file(s) has changed."
+          echo "List all the files that have changed: $ALL_CHANGED_FILES"
+
+  run-docker-build:
+    needs: check-if-docker-build
+    if: |
+      always() &&
+      (needs.check-if-docker-build.outputs.force-docker-build == 'true' ||
+      inputs.rebuild-docker-images == 'true' || inputs.rebuild-docker-images == true ||
+      inputs.rebuild-docker-images-call == 'true' || inputs.rebuild-docker-images-call == true)
+    uses: ./.github/workflows/docker-build.yml
+
   test-linux:
     runs-on: ubuntu-22.04
+    needs: [check-if-docker-build, run-docker-build]
+    # Wonky if-conditional to allow this step to run AFTER docker images are rebuilt OR if the build stage skipped and we want to use dockerhub registry for images
+    if: |
+      always() &&
+      needs.check-if-docker-build.result == 'success' &&
+      (needs.run-docker-build.result == 'success' || needs.run-docker-build.result == 'skipped')
     strategy:
       fail-fast: false
       matrix:
@@ -33,46 +83,41 @@ jobs:
           cache-path: ~/.cache/electron
           cache-key: v-23.3.10-linux-electron
 
+      - name: Download test-runner if exists
+        if: needs.run-docker-build.result == 'success'
+        id: download-test-runner-image
+        uses: actions/download-artifact@v4
+        with:
+          name: electron-builder-all-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}
+          path: ${{ runner.temp }}
+
+      - name: Load test runner image if needed
+        if: needs.run-docker-build.result == 'success'
+        run: |
+          docker image load --input ${{ runner.temp }}/electron-builder-all-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}.tar
+          docker image ls -a
+
       - name: Lint
         run: pnpm pretest
 
-      - name: Determine if Dockerfiles changed
-        id: changed-files-specific
-        uses: tj-actions/changed-files@c65cd883420fd2eb864698a825fc4162dd94482c # v44
-        with:
-          files: docker/**/*
-
-      - name: Dockerfile has changed, rebuild for tests
-        if: steps.changed-files-specific.outputs.any_changed == 'true'
-        run: pnpm docker-images
-
       - name: Run tests in docker image
-        run: pnpm test-linux
+        run: |
+          echo $TEST_RUNNER_IMAGE_TAG
+          pnpm test-linux
         env:
           TEST_FILES: ${{ matrix.testFiles }}
           FORCE_COLOR: 1
-
-  test-mac:
-    runs-on: macos-latest
-    steps:
-      - name: Checkout code repository
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
-
-      - name: Setup Tests
-        uses: ./.github/actions/pretest
-        with:
-          cache-path: ~/Library/Caches/electron
-          cache-key: v-23.3.10-macos-electron
-
-      - name: Test
-        run: pnpm ci:test
-        env:
-          TEST_FILES: masTest,dmgTest,filesTest,macPackagerTest,differentialUpdateTest
-          FORCE_COLOR: 1
+          TEST_RUNNER_IMAGE_TAG: electronuserland/builder:${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}-wine-mono
 
   # Need to separate from other tests because logic is specific to when TOKEN env vars are set
   test-updater:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
+    needs: [check-if-docker-build, run-docker-build]
+    # Wonky if-conditional to allow this step to run AFTER docker images are rebuilt OR if the build stage skipped and we want to use dockerhub registry for images
+    if: |
+      always() &&
+      needs.check-if-docker-build.result == 'success' &&
+      (needs.run-docker-build.result == 'success' || needs.run-docker-build.result == 'skipped')
     steps:
       - name: Checkout code repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
@@ -83,14 +128,30 @@ jobs:
           cache-path: ~/.cache/electron
           cache-key: v-23.3.10-update-electron
 
+      - name: Download test-runner if exists
+        if: needs.run-docker-build.result == 'success'
+        uses: actions/download-artifact@v4
+        with:
+          name: electron-builder-all-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}
+          path: ${{ runner.temp }}
+
+      - name: Load test runner image if needed
+        if: needs.run-docker-build.result == 'success'
+        run: |
+          docker image load --input ${{ runner.temp }}/electron-builder-all-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}.tar
+          docker image ls -a
+
       - name: Test
-        run: pnpm ci:test
+        run: |
+          echo $TEST_RUNNER_IMAGE_TAG
+          pnpm test-linux
         env:
           TEST_FILES: nsisUpdaterTest,linuxUpdaterTest,PublishManagerTest,differentialUpdateTest
           KEYGEN_TOKEN: ${{ secrets.KEYGEN_TOKEN }}
           BITBUCKET_TOKEN: ${{ secrets.BITBUCKET_TOKEN }}
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
           FORCE_COLOR: 1
+          TEST_RUNNER_IMAGE_TAG: electronuserland/builder:${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}-wine-mono
 
       - name: Verify Docs Generation
         run: pnpm generate-all
@@ -119,4 +180,22 @@ jobs:
         env:
           CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
           TEST_FILES: ${{ matrix.testFiles }}
+          FORCE_COLOR: 1
+
+  test-mac:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout code repository
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
+
+      - name: Setup Tests
+        uses: ./.github/actions/pretest
+        with:
+          cache-path: ~/Library/Caches/electron
+          cache-key: v-23.3.10-macos-electron
+
+      - name: Test
+        run: pnpm ci:test
+        env:
+          TEST_FILES: masTest,dmgTest,filesTest,macPackagerTest,differentialUpdateTest
           FORCE_COLOR: 1

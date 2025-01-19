@@ -61,8 +61,21 @@ exports[`asarUnpack node_modules 2`] = `
           "unpacked": true,
         },
       },
+      "unpacked": true,
     },
   },
+}
+`;
+
+exports[`asarUnpack node_modules which has many modules 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`exclude some modules when asarUnpack node_modules which has many modules 1`] = `
+{
+  "linux": [],
 }
 `;
 
@@ -9906,15 +9919,19 @@ exports[`symlinks everywhere w/ static framework 3`] = `
                       "files": {
                         "Headers": {
                           "link": "node_modules/hello-world/lib/Release/Hello.framework/Versions/Current/Headers",
+                          "unpacked": true,
                         },
                         "Hello": {
                           "link": "node_modules/hello-world/lib/Release/Hello.framework/Versions/Current/Hello",
+                          "unpacked": true,
                         },
                         "Info.plist": {
                           "link": "node_modules/hello-world/lib/Release/Hello.framework/Versions/Current/Info.plist",
+                          "unpacked": true,
                         },
                         "Modules": {
                           "link": "node_modules/hello-world/lib/Release/Hello.framework/Versions/Current/Modules",
+                          "unpacked": true,
                         },
                         "Versions": {
                           "files": {
@@ -9992,6 +10009,7 @@ exports[`symlinks everywhere w/ static framework 3`] = `
                             },
                             "Current": {
                               "link": "node_modules/hello-world/lib/Release/Hello.framework/Versions/A",
+                              "unpacked": true,
                             },
                           },
                           "unpacked": true,
@@ -10049,6 +10067,11 @@ exports[`symlinks everywhere w/ static framework 4`] = `
   ",
     "name": "app.asar.unpacked/node_modules/hello-world/package.json",
   },
+  "app.asar.unpacked/node_modules/hello-world/lib/Release/Hello.framework/Headers",
+  "app.asar.unpacked/node_modules/hello-world/lib/Release/Hello.framework/Hello",
+  "app.asar.unpacked/node_modules/hello-world/lib/Release/Hello.framework/Info.plist",
+  "app.asar.unpacked/node_modules/hello-world/lib/Release/Hello.framework/Modules",
+  "app.asar.unpacked/node_modules/hello-world/lib/Release/Hello.framework/Versions/Current",
   "app.asar.unpacked/node_modules/hello-world/lib/Release/Hello.framework/Versions/A/Hello",
   "app.asar.unpacked/node_modules/hello-world/lib/Release/Hello.framework/Versions/A/Info.plist",
   "app.asar.unpacked/node_modules/hello-world/lib/Release/Hello.framework/Versions/A/Modules/Hello.abi.json",
@@ -10078,6 +10101,7 @@ exports[`unpackDir 2`] = `
       "files": {
         "file-symlink2": {
           "link": "assets/file2",
+          "unpacked": true,
         },
         "file1": {
           "size": 4,
@@ -10091,6 +10115,7 @@ exports[`unpackDir 2`] = `
           "files": {
             "file-symlink1": {
               "link": "assets/file1",
+              "unpacked": true,
             },
             "file3": {
               "size": 4,
@@ -10192,6 +10217,7 @@ exports[`unpackDir one 2`] = `
       "files": {
         "file-symlink2": {
           "link": "assets/file2",
+          "unpacked": true,
         },
         "file1": {
           "size": 4,
@@ -10205,6 +10231,7 @@ exports[`unpackDir one 2`] = `
           "files": {
             "file-symlink1": {
               "link": "assets/file1",
+              "unpacked": true,
             },
             "file3": {
               "size": 4,
