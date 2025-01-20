@@ -128,7 +128,7 @@ export interface PkgOptions extends TargetSpecificOptions {
   readonly overwriteAction?: "upgrade" | "update" | null
 
   /**
-   * The extra component packages directory for MacOS product archive
+   * The extra component packages directory (relative to build resources directory) for MacOS product archive
    * Autoscans directory for any `.pkg` files and adds to `productbuild` command as `--package-path` and `--package` accordingly
    */
   readonly extraPkgsDir?: string | null
