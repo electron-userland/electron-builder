@@ -197,7 +197,9 @@ jobs:
           cache-key: v-23.3.10-macos-electron
 
       - name: Install pwsh
-        run: brew install powershell/tap/powershell
+        run: |
+          brew install powershell/tap/powershell
+          brew install --cask wine-stable
 
       - name: Test
         run: pnpm ci:test
