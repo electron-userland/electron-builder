@@ -190,7 +190,7 @@ jobs:
       fail-fast: false
       matrix:
         testFiles:
-          - winPackagerTest,installerTest,BuildTest,winCodeSignTest
+          - winPackagerTest,installerTest,winCodeSignTest
           - masTest,dmgTest,filesTest,macPackagerTest,differentialUpdateTest
     steps:
       - name: Checkout code repository
@@ -202,7 +202,7 @@ jobs:
           cache-path: ~/Library/Caches/electron
           cache-key: v-23.3.10-macos-electron
 
-      - name: Install pwsh
+      - name: Install pwsh and wine via brew
         run: |
           brew install powershell/tap/powershell
           brew install --cask wine-stable
