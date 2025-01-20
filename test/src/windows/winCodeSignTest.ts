@@ -31,10 +31,10 @@ test.ifAll(
       },
     },
     error => {
-      if (process.platform === "linux") {
-        expect(error.message).toContain("Unrecognized file type")
-      } else {
+      if (process.platform === "win32") {
         expect(error.message).toContain("This file format cannot be signed because it is not recognized.")
+      } else {
+        expect(error.message).toContain("Unrecognized file type")
       }
     }
   )

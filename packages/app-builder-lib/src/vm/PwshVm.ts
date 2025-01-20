@@ -12,8 +12,14 @@ export class PwshVmManager extends VmManager {
     if (await isLinuxPwshAvailable.value) {
       return "pwsh"
     }
-    const errorMessage = `unable to find \`pwsh\` within docker container, please install per https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell-on-linux`
-    log.error(null, errorMessage)
+    const errorMessage = `unable to find \`pwsh\`, please install per instructions linked in logs`
+    log.error(
+      {
+        mac: "https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell-on-macos",
+        linux: "https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell-on-linux",
+      },
+      errorMessage
+    )
     throw new Error(errorMessage)
   })
 }
