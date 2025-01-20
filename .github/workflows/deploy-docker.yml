@@ -24,42 +24,24 @@ jobs:
     name: Build and Push Docker
     needs: run-docker-build-and-test
     runs-on: ubuntu-latest
-
+    strategy:
+      fail-fast: true
+      matrix:
+        nodeMajorVersion: [
+          14, 16, 18, 20, 22
+        ]
     steps:
-      - name: Download images artifact - node14
+      - name: Download images artifact - node${{ matrix.nodeMajorVersion }}
         uses: actions/download-artifact@v4
         with:
-          name: electron-builder-all-14
-          path: ${{ runner.temp }}
-
-      - name: Download images artifact - node16
-        uses: actions/download-artifact@v4
-        with:
-          name: electron-builder-all-16
-          path: ${{ runner.temp }}
-
-      - name: Download images artifact - node18
-        uses: actions/download-artifact@v4
-        with:
-          name: electron-builder-all-18
-          path: ${{ runner.temp }}
-
-      - name: Download images artifact - node20
-        uses: actions/download-artifact@v4
-        with:
-          name: electron-builder-all-20
-          path: ${{ runner.temp }}
-
-      - name: Download images artifact - node22
-        uses: actions/download-artifact@v4
-        with:
-          name: electron-builder-all-22
+          name: electron-builder-all-${{ matrix.nodeMajorVersion }}
           path: ${{ runner.temp }}
 
       - name: Load all images
-        run: find ${{ runner.temp }} -type f -name "electron-builder-all-*.tar" -exec docker image load --input "{}" \;
+        run: docker image load --input ${{ runner.temp }}/electron-builder-all-${{ matrix.nodeMajorVersion }}.tar
 
-      - name: Tag LTS images for electron-builder latest/wine/wine-chrome/wine-mono
+      - name: Tag LTS (${{ env.LATEST_IMAGE_NODE_MAJOR_VERSION }}) images for electron-builder latest/wine/wine-chrome/wine-mono
+        if: ${{ matrix.nodeMajorVersion == env.LATEST_IMAGE_NODE_MAJOR_VERSION }}
         run: |
           docker image tag electronuserland/builder:${{ env.LATEST_IMAGE_NODE_MAJOR_VERSION }} electronuserland/builder:latest
           docker image tag electronuserland/builder:${{ env.LATEST_IMAGE_NODE_MAJOR_VERSION }}-wine electronuserland/builder:wine
