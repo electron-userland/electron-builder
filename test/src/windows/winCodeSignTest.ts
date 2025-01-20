@@ -14,7 +14,7 @@ test("parseDn", () => {
 
 const windowsDirTarget = Platform.WINDOWS.createTarget(["dir"])
 
-test.ifNotMac(
+test.ifAll(
   "sign nested asar unpacked executables",
   appThrows(
     {
@@ -31,10 +31,10 @@ test.ifNotMac(
       },
     },
     error => {
-      if (process.platform === "linux") {
-        expect(error.message).toContain("Unrecognized file type")
-      } else {
+      if (process.platform === "win32") {
         expect(error.message).toContain("This file format cannot be signed because it is not recognized.")
+      } else {
+        expect(error.message).toContain("Unrecognized file type")
       }
     }
   )
@@ -59,20 +59,20 @@ function testCustomSign(sign: any) {
   })
 }
 
-test.ifAll.ifNotCiMac(
+test.ifAll(
   "certificateFile/password - sign as async/await",
   testCustomSign(async () => {
     return
   })
 )
-test.ifAll.ifNotCiMac(
+test.ifAll(
   "certificateFile/password - sign as Promise",
   testCustomSign(() => Promise.resolve())
 )
-test.ifAll.ifNotCiMac("certificateFile/password - sign as function", testCustomSign(require("../helpers/customWindowsSign").default))
-test.ifAll.ifNotCiMac("certificateFile/password - sign as path", testCustomSign(path.join(__dirname, "../helpers/customWindowsSign")))
+test.ifAll("certificateFile/password - sign as function", testCustomSign(require("../helpers/customWindowsSign").default))
+test.ifAll("certificateFile/password - sign as path", testCustomSign(path.join(__dirname, "../helpers/customWindowsSign")))
 
-test.ifAll.ifNotCiMac("custom sign if no code sign info", () => {
+test.ifAll("custom sign if no code sign info", () => {
   let called = false
   return app(
     {
@@ -98,7 +98,7 @@ test.ifAll.ifNotCiMac("custom sign if no code sign info", () => {
   )()
 })
 
-test.ifAll.ifNotCiMac(
+test.ifAll(
   "forceCodeSigning",
   appThrows({
     targets: windowsDirTarget,
@@ -108,7 +108,7 @@ test.ifAll.ifNotCiMac(
   })
 )
 
-test.ifAll.ifNotCiMac(
+test.ifAll(
   "electronDist",
   appThrows({
     targets: windowsDirTarget,
@@ -118,7 +118,7 @@ test.ifAll.ifNotCiMac(
   })
 )
 
-test.ifAll.ifNotCiMac(
+test.ifAll(
   "azure signing without credentials",
   appThrows(
     {
@@ -140,7 +140,7 @@ test.ifAll.ifNotCiMac(
   )
 )
 
-test.ifLinux(
+test.ifNotWindows(
   "win code sign using pwsh",
   app(
     {

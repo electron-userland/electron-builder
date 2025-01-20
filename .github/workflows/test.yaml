@@ -165,7 +165,7 @@ jobs:
       matrix:
         testFiles:
           - winCodeSignTest,differentialUpdateTest
-          - installerTest,appxTest,msiTest,portableTest,assistedInstallerTest,protonTest
+          - appxTest,msiTest,portableTest,assistedInstallerTest,protonTest
           - BuildTest,oneClickInstallerTest,winPackagerTest,nsisUpdaterTest,webInstallerTest
     steps:
       - name: Checkout code repository
@@ -186,6 +186,12 @@ jobs:
 
   test-mac:
     runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        testFiles:
+          - winPackagerTest,installerTest,winCodeSignTest
+          - masTest,dmgTest,filesTest,macPackagerTest,differentialUpdateTest
     steps:
       - name: Checkout code repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
@@ -196,8 +202,13 @@ jobs:
           cache-path: ~/Library/Caches/electron
           cache-key: v-23.3.10-macos-electron
 
+      - name: Install pwsh and wine via brew
+        run: |
+          brew install powershell/tap/powershell
+          brew install --cask wine-stable
+
       - name: Test
         run: pnpm ci:test
         env:
-          TEST_FILES: masTest,dmgTest,filesTest,macPackagerTest,differentialUpdateTest
+          TEST_FILES: ${{ matrix.testFiles }}
           FORCE_COLOR: 1

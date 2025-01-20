@@ -12,3 +12,9 @@ Map {
   "C" => "GB",
 }
 `;
+
+exports[`win code sign using pwsh 1`] = `
+{
+  "win": [],
+}
+`;
