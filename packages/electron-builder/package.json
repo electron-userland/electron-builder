@@ -44,7 +44,8 @@
   ],
   "author": "Vladimir Krivosheev",
   "contributors": [
-    "Stefan Judis"
+    "Stefan Judis",
+    "Mike Maietta"
   ],
   "license": "MIT",
   "bugs": "https://github.com/electron-userland/electron-builder/issues",
