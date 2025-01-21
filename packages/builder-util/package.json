@@ -21,7 +21,7 @@
     "bluebird-lst": "^1.0.9",
     "builder-util-runtime": "workspace:*",
     "chalk": "^4.1.2",
-    "cross-spawn": "^7.0.3",
+    "cross-spawn": "^7.0.6",
     "debug": "^4.3.4",
     "fs-extra": "^10.1.0",
     "http-proxy-agent": "^7.0.0",
