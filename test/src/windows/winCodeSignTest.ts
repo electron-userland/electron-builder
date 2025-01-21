@@ -140,7 +140,7 @@ test.ifAll(
   )
 )
 
-test.ifAll(
+test.ifNotWindows(
   "win code sign using pwsh",
   app(
     {

@@ -4,7 +4,7 @@ import * as path from "path"
 import { CheckingWinPackager } from "../helpers/CheckingPackager"
 import { app, appThrows, assertPack, platform } from "../helpers/packTester"
 
-test.ifNotCiMac(
+test.ifAll(
   "beta version",
   app(
     {
@@ -24,7 +24,7 @@ test.ifNotCiMac(
   )
 )
 
-test.ifNotCiMac(
+test.ifAll(
   "win zip",
   app({
     targets: Platform.WINDOWS.createTarget(["zip"], Arch.x64, Arch.arm64),
@@ -44,7 +44,7 @@ test.ifNotCiMac(
   })
 )
 
-test.ifNotCiMac.ifAll(
+test.ifAll(
   "zip artifactName",
   app({
     targets: Platform.WINDOWS.createTarget(["zip"], Arch.x64),
@@ -55,14 +55,14 @@ test.ifNotCiMac.ifAll(
   })
 )
 
-test.ifNotCiMac(
+test.ifAll(
   "icon < 256",
   appThrows(platform(Platform.WINDOWS), {
     projectDirCreated: projectDir => fs.rename(path.join(projectDir, "build", "incorrect.ico"), path.join(projectDir, "build", "icon.ico")),
   })
 )
 
-test.ifNotCiMac(
+test.ifAll(
   "icon not an image",
   appThrows(platform(Platform.WINDOWS), {
     projectDirCreated: async projectDir => {
