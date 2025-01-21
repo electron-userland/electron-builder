@@ -33,21 +33,25 @@ export class VmManager {
 }
 
 export async function getWindowsVm(debugLogger: DebugLogger): Promise<VmManager> {
-  if (await isLinuxPwshAvailable.value) {
-    const vmModule = await import("./PwshVm")
-    return new vmModule.PwshVmManager()
-  }
   const parallelsVmModule = await import("./ParallelsVm")
   const vmList = (await parallelsVmModule.parseVmList(debugLogger)).filter(it => ["win-10", "win-11"].includes(it.os))
   if (vmList.length === 0) {
-    throw new InvalidConfigurationError("Cannot find suitable Parallels Desktop virtual machine (Windows 10 is required)")
+    if ((await isPwshAvailable.value) && (await isWineAvailable.value)) {
+      const vmModule = await import("./PwshVm")
+      return new vmModule.PwshVmManager()
+    }
+    throw new InvalidConfigurationError("Cannot find suitable Parallels Desktop virtual machine (Windows 10 is required) and cannot access `pwsh` and `wine` locally")
   }
 
   // prefer running or suspended vm
   return new parallelsVmModule.ParallelsVmManager(vmList.find(it => it.state === "running") || vmList.find(it => it.state === "suspended") || vmList[0])
 }
 
-export const isLinuxPwshAvailable = new Lazy(async () => {
+const isWineAvailable = new Lazy(async () => {
+  return isCommandAvailable("wine", ["--version"])
+})
+
+export const isPwshAvailable = new Lazy(async () => {
   return isCommandAvailable("pwsh", ["--version"])
 })
 
