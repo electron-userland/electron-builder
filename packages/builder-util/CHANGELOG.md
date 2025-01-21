@@ -1,5 +1,11 @@
 # builder-util
 
+## 26.0.0-alpha.10
+
+### Patch Changes
+
+- [#8783](https://github.com/electron-userland/electron-builder/pull/8783) [`a5558e33`](https://github.com/electron-userland/electron-builder/commit/a5558e3380fdde4806c4c29694d4fe70fd11423a) Thanks [@mmaietta](https://github.com/mmaietta)! - chore(deps): upgrade cross spawn 7.0.6
+
 ## 26.0.0-alpha.8
 
 ### Minor Changes

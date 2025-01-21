@@ -1,5 +1,18 @@
 # electron-builder
 
+## 26.0.0-alpha.10
+
+### Major Changes
+
+- [#8779](https://github.com/electron-userland/electron-builder/pull/8779) [`74355da9`](https://github.com/electron-userland/electron-builder/commit/74355da9055113b243323cdc6bb800ce722be2df) Thanks [@mmaietta](https://github.com/mmaietta)! - chore: upgrade buildpack-deps base image from `focal` to `jammy`. This also forces upgrading `python`->`python3` package and wine-stable
+
+### Patch Changes
+
+- Updated dependencies [[`633490cb`](https://github.com/electron-userland/electron-builder/commit/633490cb395c0af8027116b345500c58a7616964), [`a5558e33`](https://github.com/electron-userland/electron-builder/commit/a5558e3380fdde4806c4c29694d4fe70fd11423a), [`cdf18d9a`](https://github.com/electron-userland/electron-builder/commit/cdf18d9a0f65068e179e43152699c366c4c29467)]:
+  - dmg-builder@26.0.0-alpha.10
+  - builder-util@26.0.0-alpha.10
+  - app-builder-lib@26.0.0-alpha.10
+
 ## 26.0.0-alpha.9
 
 ### Patch Changes
