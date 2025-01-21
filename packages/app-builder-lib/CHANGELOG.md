@@ -1,5 +1,19 @@
 # app-builder-lib
 
+## 26.0.0-alpha.10
+
+### Minor Changes
+
+- [#8787](https://github.com/electron-userland/electron-builder/pull/8787) [`cdf18d9a`](https://github.com/electron-userland/electron-builder/commit/cdf18d9a0f65068e179e43152699c366c4c29467) Thanks [@mmaietta](https://github.com/mmaietta)! - feat: add `pwsh` detection to enable azure trusted signing within docker image
+
+### Patch Changes
+
+- Updated dependencies [[`633490cb`](https://github.com/electron-userland/electron-builder/commit/633490cb395c0af8027116b345500c58a7616964), [`a5558e33`](https://github.com/electron-userland/electron-builder/commit/a5558e3380fdde4806c4c29694d4fe70fd11423a)]:
+  - dmg-builder@26.0.0-alpha.10
+  - builder-util@26.0.0-alpha.10
+  - electron-builder-squirrel-windows@26.0.0-alpha.10
+  - electron-publish@26.0.0-alpha.10
+
 ## 26.0.0-alpha.9
 
 ### Major Changes

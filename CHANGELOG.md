@@ -1,3 +1,19 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v26.0.0-alpha.9...v) (2025-01-21)
+
+
+### Bug Fixes
+
+* docker deploy script runs out of space on single runner ([#8788](https://github.com/electron-userland/electron-builder/issues/8788)) ([8d6a600](https://github.com/electron-userland/electron-builder/commit/8d6a600caf9740a7effd70e9c8c1dc73fd61382e))
+* docker image loader for deploy pipeline ([#8780](https://github.com/electron-userland/electron-builder/issues/8780)) ([6f6e272](https://github.com/electron-userland/electron-builder/commit/6f6e2726009d1c894bc9231eee4e9ffddb7c6ac4))
+* **mac:** always build dmg's with APFS (BREAKING) ([#8782](https://github.com/electron-userland/electron-builder/issues/8782)) ([633490c](https://github.com/electron-userland/electron-builder/commit/633490cb395c0af8027116b345500c58a7616964))
+
+
+### Features
+
+* **docker:** support `pwsh` for running codesigning ([#8787](https://github.com/electron-userland/electron-builder/issues/8787)) ([cdf18d9](https://github.com/electron-userland/electron-builder/commit/cdf18d9a0f65068e179e43152699c366c4c29467))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v26.0.0-alpha.8...v) (2025-01-14)
 
 
