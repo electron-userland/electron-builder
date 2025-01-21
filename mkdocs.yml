@@ -124,7 +124,7 @@ nav:
       - Icons: icons.md
       - Auto Update: auto-update.md
       - Code Signing:
-        - Setup: code-signing-root.md
+        - Setup: code-signing.md
         - Windows: code-signing-win.md
         - MacOS: code-signing-mac.md
       - Multi Platform Build: multi-platform-build.md
