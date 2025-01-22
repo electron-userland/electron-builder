@@ -196,7 +196,8 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     platformSpecificBuildOptions: DC,
     targets: Array<Target>,
     sign = true,
-    disableAsarIntegrity = false
+    disableAsarIntegrity = false,
+    disableFuses = false
   ) {
     if (this.packagerOptions.prepackaged != null) {
       return
@@ -331,14 +332,21 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     const isAsar = asarOptions != null
     await this.sanityCheckPackage(appOutDir, isAsar, framework, !!this.config.disableSanityCheckAsar)
 
-    // the fuses MUST be flipped right before signing
-    if (this.config.electronFuses != null) {
-      const fuseConfig = this.generateFuseConfig(this.config.electronFuses)
-      await this.addElectronFuses(packContext, fuseConfig)
+    if (!disableFuses) {
+      await this.doAddElectronFuses(packContext)
     }
     if (sign) {
       await this.doSignAfterPack(outDir, appOutDir, platformName, arch, platformSpecificBuildOptions, targets)
     }
+  }
+
+  // the fuses MUST be flipped right before signing
+  protected async doAddElectronFuses(packContext: AfterPackContext) {
+    if (this.config.electronFuses == null) {
+      return
+    }
+    const fuseConfig = this.generateFuseConfig(this.config.electronFuses)
+    await this.addElectronFuses(packContext, fuseConfig)
   }
 
   private generateFuseConfig(fuses: FuseOptionsV1): FuseV1Config {
