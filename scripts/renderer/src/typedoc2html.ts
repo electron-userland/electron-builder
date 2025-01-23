@@ -2,6 +2,7 @@ import { copy, exists } from "fs-extra"
 import { rm } from "fs/promises"
 import * as path from "path"
 import * as typedoc from "typedoc"
+import * as process from "process"
 
 async function main() {
   const outputDir = "docs"
@@ -35,4 +36,7 @@ async function main() {
   await app.generateDocs(project!, outputDir)
 }
 
-main().catch(console.error)
+main().catch((e) => {
+  console.error(e)
+  process.exit(1)
+})

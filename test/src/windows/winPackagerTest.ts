@@ -1,25 +1,33 @@
-import { Platform, DIR_TARGET, Arch } from "electron-builder"
+import { Arch, DIR_TARGET, Platform } from "electron-builder"
+import * as fs from "fs/promises"
 import * as path from "path"
 import { CheckingWinPackager } from "../helpers/CheckingPackager"
 import { app, appThrows, assertPack, platform } from "../helpers/packTester"
-import * as fs from "fs/promises"
 
-test.ifWinCi(
+test.ifAll(
   "beta version",
-  app({
-    targets: Platform.WINDOWS.createTarget(["nsis"], Arch.x64),
-    config: {
-      extraMetadata: {
-        version: "3.0.0-beta.2",
+  app(
+    {
+      targets: Platform.WINDOWS.createTarget(["nsis"], Arch.x64, Arch.arm64),
+      config: {
+        extraMetadata: {
+          version: "3.0.0-beta.2",
+        },
+        nsis: {
+          buildUniversalInstaller: false,
+        },
       },
     },
-  })
+    {
+      signedWin: true,
+    }
+  )
 )
 
-test.ifNotCiMac(
+test.ifAll(
   "win zip",
   app({
-    targets: Platform.WINDOWS.createTarget(["zip"], Arch.x64),
+    targets: Platform.WINDOWS.createTarget(["zip"], Arch.x64, Arch.arm64),
     config: {
       downloadAlternateFFmpeg: true,
       electronFuses: {
@@ -36,7 +44,7 @@ test.ifNotCiMac(
   })
 )
 
-test.ifNotCiMac.ifAll(
+test.ifAll(
   "zip artifactName",
   app({
     targets: Platform.WINDOWS.createTarget(["zip"], Arch.x64),
@@ -47,14 +55,14 @@ test.ifNotCiMac.ifAll(
   })
 )
 
-test.ifNotCiMac(
+test.ifAll(
   "icon < 256",
   appThrows(platform(Platform.WINDOWS), {
     projectDirCreated: projectDir => fs.rename(path.join(projectDir, "build", "incorrect.ico"), path.join(projectDir, "build", "icon.ico")),
   })
 )
 
-test.ifNotCiMac(
+test.ifAll(
   "icon not an image",
   appThrows(platform(Platform.WINDOWS), {
     projectDirCreated: async projectDir => {

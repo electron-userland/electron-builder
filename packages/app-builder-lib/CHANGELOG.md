@@ -1,5 +1,69 @@
 # app-builder-lib
 
+## 26.0.0-alpha.10
+
+### Minor Changes
+
+- [#8787](https://github.com/electron-userland/electron-builder/pull/8787) [`cdf18d9a`](https://github.com/electron-userland/electron-builder/commit/cdf18d9a0f65068e179e43152699c366c4c29467) Thanks [@mmaietta](https://github.com/mmaietta)! - feat: add `pwsh` detection to enable azure trusted signing within docker image
+
+### Patch Changes
+
+- Updated dependencies [[`633490cb`](https://github.com/electron-userland/electron-builder/commit/633490cb395c0af8027116b345500c58a7616964), [`a5558e33`](https://github.com/electron-userland/electron-builder/commit/a5558e3380fdde4806c4c29694d4fe70fd11423a)]:
+  - dmg-builder@26.0.0-alpha.10
+  - builder-util@26.0.0-alpha.10
+  - electron-builder-squirrel-windows@26.0.0-alpha.10
+  - electron-publish@26.0.0-alpha.10
+
+## 26.0.0-alpha.9
+
+### Major Changes
+
+- [#8582](https://github.com/electron-userland/electron-builder/pull/8582) [`6a9597b4`](https://github.com/electron-userland/electron-builder/commit/6a9597b4d739744fd9211fc07f55bb34211c7626) Thanks [@mmaietta](https://github.com/mmaietta)! - chore: remove deprecated fields from `winOptions` and `macOptions`
+
+  For `winOptions` signing configuration, it has been moved to `win.signtoolOptions` in order to support `azureOptions` as a separate field and avoid bloating `win` configuration object
+  For `macOptions`, notarize options has been deprecated in favor of env vars for quite some time. Env vars are much more secure
+
+### Minor Changes
+
+- [#8609](https://github.com/electron-userland/electron-builder/pull/8609) [`d672b04b`](https://github.com/electron-userland/electron-builder/commit/d672b04b4746170c07bc39b7b049ab0c584e7a19) Thanks [@iongion](https://github.com/iongion)! - feat: support completely custom AppxManifest.xml
+
+- [#8607](https://github.com/electron-userland/electron-builder/pull/8607) [`f123628c`](https://github.com/electron-userland/electron-builder/commit/f123628ce400b5e65d0e4f0966e5cc65a1f3b8a5) Thanks [@mmaietta](https://github.com/mmaietta)! - feat: allow disabling of building a universal windows installer
+
+### Patch Changes
+
+- [#8762](https://github.com/electron-userland/electron-builder/pull/8762) [`c4f54977`](https://github.com/electron-userland/electron-builder/commit/c4f54977045ad3f6f7637004f632c37bfb41e79a) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: update @electron/asar to 3.2.18 to resolve signing issue with framework symlinks
+
+- [#8725](https://github.com/electron-userland/electron-builder/pull/8725) [`ccbf0a5b`](https://github.com/electron-userland/electron-builder/commit/ccbf0a5be38e1d8e405ed9d2bc9f3b2755548182) Thanks [@beyondkmp](https://github.com/beyondkmp)! - fix: electron-builder fails when list of node_modules files is too big to pass in a glob
+
+- [#8749](https://github.com/electron-userland/electron-builder/pull/8749) [`ee2c6dc1`](https://github.com/electron-userland/electron-builder/commit/ee2c6dc133ed31fd82ad8fdf864651494c88fcf8) Thanks [@kethinov](https://github.com/kethinov)! - fix: typo in urls in tsdoc
+
+- Updated dependencies []:
+  - dmg-builder@26.0.0-alpha.9
+  - electron-builder-squirrel-windows@26.0.0-alpha.9
+
+## 26.0.0-alpha.8
+
+### Minor Changes
+
+- [#8711](https://github.com/electron-userland/electron-builder/pull/8711) [`6f0fb8e4`](https://github.com/electron-userland/electron-builder/commit/6f0fb8e44f035bcd6ff0d6f234b38c20fde066af) Thanks [@hrueger](https://github.com/hrueger)! - Add `host` property to support self-hosted Keygen instances
+
+### Patch Changes
+
+- [#8661](https://github.com/electron-userland/electron-builder/pull/8661) [`6a294c97`](https://github.com/electron-userland/electron-builder/commit/6a294c9725f30cf1b6151363a32b9d1395b0122e) Thanks [@t3chguy](https://github.com/t3chguy)! - chore: remove stale handler for `extend-info` in electronMac plist creation
+
+- [#8727](https://github.com/electron-userland/electron-builder/pull/8727) [`7268c2ee`](https://github.com/electron-userland/electron-builder/commit/7268c2eea3f4a5b5d4f88283585797ce5c41de1c) Thanks [@NoahAndrews](https://github.com/NoahAndrews)! - chore: Rename `vmRequired` variable to `useVmIfNotOnWin`
+
+- [#8714](https://github.com/electron-userland/electron-builder/pull/8714) [`66334502`](https://github.com/electron-userland/electron-builder/commit/66334502a50d1decb15eb3ac3bdcd197b3721036) Thanks [@kttmv](https://github.com/kttmv)! - chore: Remove informal Russian messages in the NSIS installer
+
+- [#8715](https://github.com/electron-userland/electron-builder/pull/8715) [`4c394d54`](https://github.com/electron-userland/electron-builder/commit/4c394d54689f03bbca54a083c7e126d9c83e6ed7) Thanks [@beyondkmp](https://github.com/beyondkmp)! - fix: does not work with NPM workspaces
+
+- Updated dependencies [[`eacbbf59`](https://github.com/electron-userland/electron-builder/commit/eacbbf593f6ea01a92ffb41d8d28ee5e4e480ea1), [`6f0fb8e4`](https://github.com/electron-userland/electron-builder/commit/6f0fb8e44f035bcd6ff0d6f234b38c20fde066af)]:
+  - builder-util@26.0.0-alpha.8
+  - builder-util-runtime@9.3.0-alpha.0
+  - electron-publish@26.0.0-alpha.8
+  - dmg-builder@26.0.0-alpha.8
+  - electron-builder-squirrel-windows@26.0.0-alpha.8
+
 ## 26.0.0-alpha.7
 
 ### Patch Changes

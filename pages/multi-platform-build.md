@@ -4,7 +4,7 @@
 * If your app has native dependency, it can be compiled only on the target platform unless [prebuild](https://www.npmjs.com/package/prebuild) is not used.
 
     [prebuild](https://www.npmjs.com/package/prebuild) is a solution, but most node modules [don't provide](https://github.com/atom/node-keytar/issues/27) prebuilt binaries.
-  
+
 * macOS Code Signing works only on macOS. [Cannot be fixed](http://stackoverflow.com/a/12156576).
 
 Free public [Electron Build Service](https://github.com/electron-userland/electron-build-service) is used to build Electron app for Linux on Windows. On macOS/Linux you can build Electron app for Windows locally, except Appx for Windows Store (in the future (feel free to file issue) electron-build-service will support Appx target).
@@ -34,17 +34,17 @@ You don't need to clean dist output before build — output directory is cleaned
           env:
             - ELECTRON_CACHE=$HOME/.cache/electron
             - ELECTRON_BUILDER_CACHE=$HOME/.cache/electron-builder
-    
+
         - os: linux
           services: docker
           language: generic
-    
+
     cache:
       directories:
         - node_modules
         - $HOME/.cache/electron
         - $HOME/.cache/electron-builder
-    
+
     script:
       - |
         if [ "$TRAVIS_OS_NAME" == "linux" ]; then
@@ -60,7 +60,7 @@ You don't need to clean dist output before build — output directory is cleaned
         fi
     before_cache:
       - rm -rf $HOME/.cache/electron-builder/wine
-    
+
     branches:
       except:
         - "/^v\\d+\\.\\d+\\.\\d+$/"
@@ -77,24 +77,24 @@ Otherwise see above sample `.travis.yml` to build Windows on Linux using provide
 ??? example "sample appveyor.yml"
     ```yaml
     image: Visual Studio 2017
-    
+
     platform:
       - x64
-    
+
     cache:
       - node_modules
       - '%USERPROFILE%\.electron'
-    
+
     init:
       - git config --global core.autocrlf input
-    
+
     install:
       - ps: Install-Product node 10 x64
       - yarn
-    
+
     build_script:
       - yarn dist
-    
+
     test: off
     ```
 
@@ -188,11 +188,16 @@ Or to avoid second step, append to first command `/bin/bash -c "yarn && yarn dis
 
 ### Provided Docker Images
 
-* `electronuserland/builder` or `electronuserland/builder:18` — NodeJS 18 and required system dependencies. Based on `builder:base`. Use this image if you need to build only Linux targets.
-* `electronuserland/builder:wine` — Wine, NodeJS 18 and required system dependencies. Based on `builder:18`. Use this image if you need to build Windows targets.
+!!! tip
+    It is best to lock your `FROM` to a specific date-tag (e.g. `builder:18-07.23`) or sha, as opposed to using a tag like `latest` which may have its toolset upgraded, such as upgrading the node version.
+
+* `electronuserland/builder` or `electronuserland/builder:20` — NodeJS 20 and required system dependencies. Based on `builder:base`. Use this image if you need to build only Linux targets.
+* `electronuserland/builder:wine` — Wine, NodeJS 20 and required system dependencies. Based on `builder:20`. Use this image if you need to build Windows targets.
 * `electronuserland/builder:wine-mono` — Mono for Squirrel.Windows. Based on `builder:wine`. Use this image if you need to build Squirrel.Windows target.
 * `electronuserland/builder:wine-chrome` — `google-chrome-stable` and `xvfb` are available — you can use this image for headless testing of Electron application. Based on `builder:wine`.
 * `electronuserland/builder:base` — Required system dependencies. Not supposed to be used directly.
-There are also iterations of these docker images for Node 16 (`builder:16`, `builder:16-wine`, etc.) and Node 16 (`builder:14`, `builder:14-wine`, etc.)
+
+There are also iterations of these docker images for Node 14/16/18 (`builder:14`, `builder:14-wine`, etc.)
 Docker images are also tagged with the Date suffix `-%m.%y` to statically reference an image, ex: `builder:18-07.23`.
-Full docker build, node version, and tag script can be found here: [build.sh](https://github.com/electron-userland/electron-builder/blob/master/docker/build.sh)
+Full docker build script can be found here: [build.sh](https://github.com/electron-userland/electron-builder/blob/master/docker/build.sh)
+Node versions being built: [test.yaml](https://github.com/electron-userland/electron-builder/blob/master/.github/workflows/test.yaml)

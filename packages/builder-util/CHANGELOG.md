@@ -1,5 +1,22 @@
 # builder-util
 
+## 26.0.0-alpha.10
+
+### Patch Changes
+
+- [#8783](https://github.com/electron-userland/electron-builder/pull/8783) [`a5558e33`](https://github.com/electron-userland/electron-builder/commit/a5558e3380fdde4806c4c29694d4fe70fd11423a) Thanks [@mmaietta](https://github.com/mmaietta)! - chore(deps): upgrade cross spawn 7.0.6
+
+## 26.0.0-alpha.8
+
+### Minor Changes
+
+- [#8741](https://github.com/electron-userland/electron-builder/pull/8741) [`eacbbf59`](https://github.com/electron-userland/electron-builder/commit/eacbbf593f6ea01a92ffb41d8d28ee5e4e480ea1) Thanks [@0xlau](https://github.com/0xlau)! - Add `forcePathStyle` option to S3Options
+
+### Patch Changes
+
+- Updated dependencies [[`eacbbf59`](https://github.com/electron-userland/electron-builder/commit/eacbbf593f6ea01a92ffb41d8d28ee5e4e480ea1), [`6f0fb8e4`](https://github.com/electron-userland/electron-builder/commit/6f0fb8e44f035bcd6ff0d6f234b38c20fde066af)]:
+  - builder-util-runtime@9.3.0-alpha.0
+
 ## 26.0.0-alpha.7
 
 ### Patch Changes

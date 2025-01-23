@@ -1,7 +1,7 @@
 {
   "name": "electron-builder",
   "description": "A complete solution to package and build a ready for distribution Electron app for MacOS, Windows and Linux with “auto update” support out of the box",
-  "version": "26.0.0-alpha.7",
+  "version": "26.0.0-alpha.10",
   "main": "out/index.js",
   "files": [
     "out"
@@ -44,7 +44,8 @@
   ],
   "author": "Vladimir Krivosheev",
   "contributors": [
-    "Stefan Judis"
+    "Stefan Judis",
+    "Mike Maietta"
   ],
   "license": "MIT",
   "bugs": "https://github.com/electron-userland/electron-builder/issues",

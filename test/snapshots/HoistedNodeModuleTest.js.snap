@@ -304,6 +304,7 @@ exports[`yarn several workspaces and asarUnpack 2`] = `
               "unpacked": true,
             },
           },
+          "unpacked": true,
         },
       },
     },
@@ -491,7 +492,7 @@ exports[`yarn two package.json w/ native module 2`] = `
                       "unpacked": true,
                     },
                     "pty.node": {
-                      "size": 72880,
+                      "size": 76144,
                       "unpacked": true,
                     },
                   },

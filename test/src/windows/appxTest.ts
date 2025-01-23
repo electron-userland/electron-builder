@@ -3,6 +3,7 @@ import { app, copyTestAsset } from "../helpers/packTester"
 import * as path from "path"
 import { mkdir } from "fs/promises"
 import { isEnvTrue } from "builder-util"
+import { readFile } from "fs-extra"
 
 // test that we can get info from protected pfx
 const protectedCscLink =
@@ -79,7 +80,9 @@ it2.ifNotCi(
     targets: Platform.WINDOWS.createTarget(["appx"], Arch.x64),
     config: {
       win: {
-        certificateSubjectName: "Foo",
+        signtoolOptions: {
+          certificateSubjectName: "Foo",
+        },
       },
     },
   })
@@ -97,6 +100,38 @@ it(
         languages: ["de-DE", "ru-RU"],
         minVersion: "10.0.16299.0",
         maxVersionTested: "10.0.16299.0",
+      },
+    },
+  })
+)
+
+it(
+  "custom template appmanifest.xml",
+  app({
+    targets: Platform.WINDOWS.createTarget(["appx"], Arch.x64),
+    config: {
+      appx: {
+        customManifestPath: "custom-template-manifest.xml",
+      },
+      appxManifestCreated: async filepath => {
+        const fileContent = await readFile(filepath, "utf-8")
+        expect(fileContent).toMatchSnapshot()
+      },
+    },
+  })
+)
+
+it(
+  "custom raw appmanifest.xml",
+  app({
+    targets: Platform.WINDOWS.createTarget(["appx"], Arch.x64),
+    config: {
+      appx: {
+        customManifestPath: "custom-manifest.xml",
+      },
+      appxManifestCreated: async filepath => {
+        const fileContent = await readFile(filepath, "utf-8")
+        expect(fileContent).toMatchSnapshot()
       },
     },
   })
