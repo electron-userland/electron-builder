@@ -111,6 +111,12 @@ exports[`one-package 2`] = `
   "CFBundleName": "Test App ßW",
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
+  "ElectronAsarIntegrity": {
+    "Resources/app.asar": {
+      "algorithm": "SHA256",
+      "hash": "hash",
+    },
+  },
   "LSApplicationCategoryType": "your.app.category.type",
   "LSEnvironment": {
     "MallocNanoZone": "0",
@@ -295,6 +301,12 @@ exports[`two-package 2`] = `
   "CFBundleName": "TestApp",
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
+  "ElectronAsarIntegrity": {
+    "Resources/app.asar": {
+      "algorithm": "SHA256",
+      "hash": "hash",
+    },
+  },
   "LSApplicationCategoryType": "your.app.category.type",
   "LSEnvironment": {
     "MallocNanoZone": "0",
@@ -346,6 +358,12 @@ exports[`two-package 4`] = `
   "CFBundleName": "TestApp",
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
+  "ElectronAsarIntegrity": {
+    "Resources/app.asar": {
+      "algorithm": "SHA256",
+      "hash": "hash",
+    },
+  },
   "LSApplicationCategoryType": "your.app.category.type",
   "LSEnvironment": {
     "MallocNanoZone": "0",
@@ -397,6 +415,12 @@ exports[`two-package 6`] = `
   "CFBundleName": "TestApp",
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
+  "ElectronAsarIntegrity": {
+    "Resources/app.asar": {
+      "algorithm": "SHA256",
+      "hash": "hash",
+    },
+  },
   "LSApplicationCategoryType": "your.app.category.type",
   "LSEnvironment": {
     "MallocNanoZone": "0",
@@ -471,6 +495,12 @@ exports[`yarn two package.json w/ native module 2`] = `
   "CFBundleName": "test-app-two-native-modules",
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.1",
+  "ElectronAsarIntegrity": {
+    "Resources/app.asar": {
+      "algorithm": "SHA256",
+      "hash": "hash",
+    },
+  },
   "LSApplicationCategoryType": "your.app.category.type",
   "LSEnvironment": {
     "MallocNanoZone": "0",
