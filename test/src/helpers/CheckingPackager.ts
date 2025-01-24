@@ -6,6 +6,7 @@ import { MacPackager } from "app-builder-lib/out/macPackager"
 import { DmgTarget } from "dmg-builder"
 import { WinPackager } from "app-builder-lib/out/winPackager"
 import { SignOptions as MacSignOptions } from "@electron/osx-sign/dist/cjs/types"
+import { DoPackOptions } from "app-builder-lib/out/platformPackager"
 
 export class CheckingWinPackager extends WinPackager {
   effectiveDistOptions: any
@@ -50,7 +51,7 @@ export class CheckingMacPackager extends MacPackager {
   }
 
   //noinspection JSUnusedLocalSymbols
-  async doPack(outDir: string, appOutDir: string, platformName: string, arch: Arch, customBuildOptions: MacConfiguration, targets: Array<Target>) {
+  async doPack(_options: DoPackOptions<MacConfiguration>) {
     // skip
   }
 
