@@ -421,8 +421,9 @@ export interface FuseOptionsV1 {
   onlyLoadAppFromAsar?: boolean
   /**
    * The loadBrowserProcessSpecificV8Snapshot fuse changes which V8 snapshot file is used for the browser process.  By default Electron's processes will all use the same V8 snapshot file.  When this fuse is enabled the browser process uses the file called `browser_v8_context_snapshot.bin` for its V8 snapshot. The other processes will use the V8 snapshot file that they normally do.
+   * (Advanced Option: Only use if you know what you're doing and are providing your own custom V8 snapshot)
    */
-  loadBrowserProcessSpecificV8Snapshot?: boolean
+  loadBrowserProcessSpecificV8Snapshot?: CustomV8Snapshot
   /**
    * The grantFileProtocolExtraPrivileges fuse changes whether pages loaded from the `file://` protocol are given privileges beyond what they would receive in a traditional web browser.  This behavior was core to Electron apps in original versions of Electron but is no longer required as apps should be [serving local files from custom protocols](https://github.com/electron/electron/blob/main/docs/tutorial/security.md#18-avoid-usage-of-the-file-protocol-and-prefer-usage-of-custom-protocols) now instead.  If you aren't serving pages from `file://` you should disable this fuse.
    * The extra privileges granted to the `file://` protocol by this fuse are incompletely documented below:
@@ -438,4 +439,15 @@ export interface FuseOptionsV1 {
    * Ref: https://github.com/electron/fuses?tab=readme-ov-file#apple-silicon
    */
   resetAdHocDarwinSignature?: boolean
+}
+
+export interface CustomV8Snapshot {
+  /**
+   * File path, relative to build resources directory, to the V8 snapshot file to be used for the browser process. This will be directly copied into the Electron unpacked app. By default, electron will fallback to it's provided default V8 snapshot
+   */
+  mainProcessSnapshotPath?: string
+  /**
+   * File path, relative to build resources directory, to the V8 snapshot file to be used for the browser process. This will be directly copied into the Electron unpacked app.
+   */
+  browserProcessSnapshotPath: string
 }

@@ -33,6 +33,7 @@ import { expandMacro as doExpandMacro } from "./util/macroExpander"
 import { resolveFunction } from "./util/resolve"
 import { flipFuses, FuseConfig, FuseV1Config, FuseV1Options, FuseVersion } from "@electron/fuses"
 import { FuseOptionsV1 } from "./configuration"
+import { copyFile } from "fs-extra"
 
 export type DoPackOptions<DC extends PlatformSpecificBuildOptions> = {
   outDir: string
@@ -307,6 +308,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
           : appOutDir
     const taskManager = new AsyncTaskManager(this.info.cancellationToken)
     this.copyAppFiles(taskManager, asarOptions, resourcesPath, path.join(resourcesPath, "app"), packContext, platformSpecificBuildOptions, excludePatterns, macroExpander)
+
     await taskManager.awaitTasks()
 
     if (this.info.cancellationToken.cancelled) {
@@ -345,8 +347,8 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     const isAsar = asarOptions != null
     await this.sanityCheckPackage(appOutDir, isAsar, framework, !!this.config.disableSanityCheckAsar)
 
-    if (!options?.disableFuses) {
-      await this.doAddElectronFuses(packContext)
+    if (isElectronBased(framework) && !options?.disableFuses) {
+      await this.doAddElectronFuses(taskManager, packContext)
     }
     if (options?.sign ?? true) {
       await this.doSignAfterPack(outDir, appOutDir, platformName, arch, platformSpecificBuildOptions, targets)
@@ -354,11 +356,32 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 
   // the fuses MUST be flipped right before signing
-  protected async doAddElectronFuses(packContext: AfterPackContext) {
-    if (this.config.electronFuses == null) {
+  protected async doAddElectronFuses(taskManager: AsyncTaskManager, packContext: AfterPackContext) {
+    const { electronFuses } = this.config
+    if (electronFuses == null) {
       return
     }
-    const fuseConfig = this.generateFuseConfig(this.config.electronFuses)
+    const fuseConfig = this.generateFuseConfig(electronFuses)
+    // custom snapshots required to be copied to add fuses
+    const { loadBrowserProcessSpecificV8Snapshot: customSnapshotConfig } = electronFuses
+    if (customSnapshotConfig != null) {
+      const { mainProcessSnapshotPath, browserProcessSnapshotPath } = customSnapshotConfig
+      const snapshots = {
+        "v8_context_snapshot.bin": mainProcessSnapshotPath,
+        "browser_v8_context_snapshot.bin": browserProcessSnapshotPath,
+      }
+      Object.entries(snapshots).forEach(([destFile, sourceFile]) => {
+        const promise = async () => {
+          const snapshot = await this.getResource(sourceFile)
+          if (snapshot) {
+            await copyFile(snapshot, path.join(packContext.appOutDir, destFile))
+          }
+        }
+        taskManager.addTask(promise())
+      })
+      await taskManager.awaitTasks()
+      fuseConfig[FuseV1Options.LoadBrowserProcessSpecificV8Snapshot] = true // requires the custom V8 snapshots to be copied BEFORE signing
+    }
     await this.addElectronFuses(packContext, fuseConfig)
   }
 
@@ -385,9 +408,6 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
     if (fuses.onlyLoadAppFromAsar != null) {
       config[FuseV1Options.OnlyLoadAppFromAsar] = fuses.onlyLoadAppFromAsar
-    }
-    if (fuses.loadBrowserProcessSpecificV8Snapshot != null) {
-      config[FuseV1Options.LoadBrowserProcessSpecificV8Snapshot] = fuses.loadBrowserProcessSpecificV8Snapshot
     }
     if (fuses.grantFileProtocolExtraPrivileges != null) {
       config[FuseV1Options.GrantFileProtocolExtraPrivileges] = fuses.grantFileProtocolExtraPrivileges

@@ -180,7 +180,8 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
           return
         }
 
-        await this.doAddElectronFuses(packContext)
+        const taskManager = new AsyncTaskManager(this.info.cancellationToken)
+        await this.doAddElectronFuses(taskManager, packContext)
 
         await this.doSignAfterPack(outDir, appOutDir, platformName, arch, platformSpecificBuildOptions, targets)
         break
