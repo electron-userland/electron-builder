@@ -362,24 +362,41 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       return
     }
     const fuseConfig = this.generateFuseConfig(electronFuses)
-    // custom snapshots required to be copied to add fuses
+    // custom snapshots required to be copied in order to enable the `LoadBrowserProcessSpecificV8Snapshot` fuse
     const { loadBrowserProcessSpecificV8Snapshot: customSnapshotConfig } = electronFuses
     if (customSnapshotConfig != null) {
       const { mainProcessSnapshotPath, browserProcessSnapshotPath } = customSnapshotConfig
-      const snapshots = {
-        "v8_context_snapshot.bin": mainProcessSnapshotPath,
-        "browser_v8_context_snapshot.bin": browserProcessSnapshotPath,
-      }
-      Object.entries(snapshots).forEach(([destFile, sourceFile]) => {
-        const promise = async () => {
-          const snapshot = await this.getResource(sourceFile)
-          if (snapshot) {
-            await copyFile(snapshot, path.join(packContext.appOutDir, destFile))
+      // log.debug(snapshots, "copying custom V8 snapshots and enabling `LoadBrowserProcessSpecificV8Snapshot` fuse")
+
+      taskManager.addTask(
+        (async () => {
+          const target = "browser_v8_context_snapshot.bin"
+          if (!isEmptyOrSpaces(browserProcessSnapshotPath)) {
+            const snapshot = await this.getResource(browserProcessSnapshotPath)
+            await copyFile(snapshot!, path.join(packContext.appOutDir, target))
+          } else {
+            const message = "custom V8 snapshot config provided, but renderer snapshot file path is empty"
+            log.error({ snapshot: target }, message)
+            throw new InvalidConfigurationError(message)
           }
-        }
-        taskManager.addTask(promise())
-      })
+        })()
+      )
+      taskManager.addTask(
+        (async () => {
+          const target = "v8_context_snapshot.bin"
+          if (!isEmptyOrSpaces(mainProcessSnapshotPath)) {
+            const snapshot = await this.getResource(mainProcessSnapshotPath)
+            await copyFile(snapshot!, path.join(packContext.appOutDir, target))
+          } else if (!isEmptyOrSpaces(browserProcessSnapshotPath)) {
+            log.warn(
+              { snapshot: target },
+              "custom V8 snapshot provided for renderer process, but not main process; it is advised to provide both to properly leverage the `LoadBrowserProcessSpecificV8Snapshot` fuse"
+            )
+          }
+        })()
+      )
       await taskManager.awaitTasks()
+
       fuseConfig[FuseV1Options.LoadBrowserProcessSpecificV8Snapshot] = true // requires the custom V8 snapshots to be copied BEFORE signing
     }
     await this.addElectronFuses(packContext, fuseConfig)

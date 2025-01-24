@@ -5,7 +5,7 @@ import { app, assertPack, copyTestAsset } from "../helpers/packTester"
 import { checkHelpers, doTest, expectUpdateMetadata } from "../helpers/winHelper"
 import { outputFile } from "fs-extra"
 
-const nsisTarget = Platform.WINDOWS.createTarget(["nsis"])
+const nsisTarget = Platform.WINDOWS.createTarget(["nsis"], Arch.x64)
 
 test.ifNotCiMac(
   "assisted",
