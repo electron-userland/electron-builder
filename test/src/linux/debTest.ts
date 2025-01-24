@@ -1,6 +1,8 @@
 import { Arch, Platform } from "electron-builder"
 import * as fs from "fs/promises"
-import { app, execShell, getTarExecutable } from "../helpers/packTester"
+import { app, appThrows, execShell, getTarExecutable } from "../helpers/packTester"
+import { outputFile } from "fs-extra"
+import { join } from "path"
 
 test.ifNotWindows(
   "deb",
@@ -21,16 +23,6 @@ test.ifNotWindows(
       },
       deb: {
         depends: ["foo"],
-      },
-      electronFuses: {
-        runAsNode: true,
-        enableCookieEncryption: true,
-        enableNodeOptionsEnvironmentVariable: true,
-        enableNodeCliInspectArguments: true,
-        enableEmbeddedAsarIntegrityValidation: true,
-        onlyLoadAppFromAsar: true,
-        loadBrowserProcessSpecificV8Snapshot: true,
-        grantFileProtocolExtraPrivileges: undefined, // unsupported on current electron version in our tests
       },
     },
   })
@@ -116,4 +108,45 @@ test.ifNotWindows.ifAll(
       },
     }
   )
+)
+
+test.ifNotWindows(
+  "electron fuses + test V8 snapshot",
+  app(
+    {
+      targets: Platform.LINUX.createTarget("deb"),
+      config: {
+        electronFuses: {
+          runAsNode: true,
+          enableCookieEncryption: true,
+          enableNodeOptionsEnvironmentVariable: true,
+          enableNodeCliInspectArguments: true,
+          enableEmbeddedAsarIntegrityValidation: true,
+          onlyLoadAppFromAsar: true,
+          loadBrowserProcessSpecificV8Snapshot: {
+            mainProcessSnapshotPath: "test-snapshot.bin",
+            browserProcessSnapshotPath: "test-snapshot.bin",
+          },
+          grantFileProtocolExtraPrivileges: undefined, // unsupported on current electron version in our tests
+        },
+      },
+    },
+    {
+      projectDirCreated: async projectDir => outputFile(join(projectDir, "build", "test-snapshot.bin"), "data"),
+    }
+  )
+)
+test.ifNotWindows(
+  "electron `loadBrowserProcessSpecificV8Snapshot` fuse - V8 snapshot not found",
+  appThrows({
+    targets: Platform.LINUX.createTarget("deb"),
+    config: {
+      electronFuses: {
+        loadBrowserProcessSpecificV8Snapshot: {
+          mainProcessSnapshotPath: undefined,
+          browserProcessSnapshotPath: "test-snapshot.bin",
+        },
+      },
+    },
+  })
 )

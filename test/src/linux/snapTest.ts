@@ -1,5 +1,7 @@
 import { Arch, Platform } from "electron-builder"
 import { app, assertPack, snapTarget } from "../helpers/packTester"
+import { outputFile } from "fs-extra"
+import { join } from "path"
 
 if (process.env.SNAP_TEST === "false") {
   fit("Skip snapTest suite — SNAP_TEST is set to false or Windows", () => {
@@ -13,25 +15,33 @@ if (process.env.SNAP_TEST === "false") {
 
 test.ifAll.ifDevOrLinuxCi(
   "snap",
-  app({
-    targets: snapTarget,
-    config: {
-      extraMetadata: {
-        name: "sep",
-      },
-      productName: "Sep",
-      electronFuses: {
-        runAsNode: true,
-        enableCookieEncryption: true,
-        enableNodeOptionsEnvironmentVariable: true,
-        enableNodeCliInspectArguments: true,
-        enableEmbeddedAsarIntegrityValidation: true,
-        onlyLoadAppFromAsar: true,
-        loadBrowserProcessSpecificV8Snapshot: true,
-        grantFileProtocolExtraPrivileges: undefined, // unsupported on current electron version in our tests
+  app(
+    {
+      targets: snapTarget,
+      config: {
+        extraMetadata: {
+          name: "sep",
+        },
+        productName: "Sep",
+        electronFuses: {
+          runAsNode: true,
+          enableCookieEncryption: true,
+          enableNodeOptionsEnvironmentVariable: true,
+          enableNodeCliInspectArguments: true,
+          enableEmbeddedAsarIntegrityValidation: true,
+          onlyLoadAppFromAsar: true,
+          loadBrowserProcessSpecificV8Snapshot: {
+            mainProcessSnapshotPath: undefined,
+            browserProcessSnapshotPath: "test-snapshot.bin",
+          },
+          grantFileProtocolExtraPrivileges: undefined, // unsupported on current electron version in our tests
+        },
       },
     },
-  })
+    {
+      projectDirCreated: async projectDir => outputFile(join(projectDir, "build", "test-snapshot.bin"), "data"),
+    }
+  )
 )
 
 test.ifAll.ifDevOrLinuxCi(

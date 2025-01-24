@@ -1,33 +1,43 @@
 import { Arch, Platform } from "electron-builder"
 import { app } from "../helpers/packTester"
+import { outputFile } from "fs-extra"
+import { join } from "path"
 
 // tests are heavy, to distribute tests across CircleCI machines evenly, these tests were moved from oneClickInstallerTest
 
 test.ifNotCiMac(
   "web installer",
-  app({
-    targets: Platform.WINDOWS.createTarget(["nsis-web"], Arch.x64, Arch.arm64),
-    config: {
-      publish: {
-        provider: "s3",
-        bucket: "develar",
-        path: "test",
-      },
-      electronFuses: {
-        runAsNode: true,
-        enableCookieEncryption: true,
-        enableNodeOptionsEnvironmentVariable: true,
-        enableNodeCliInspectArguments: true,
-        enableEmbeddedAsarIntegrityValidation: true,
-        onlyLoadAppFromAsar: true,
-        loadBrowserProcessSpecificV8Snapshot: true,
-        grantFileProtocolExtraPrivileges: undefined, // unsupported on current electron version in our tests
-      },
-      nsisWeb: {
-        buildUniversalInstaller: false,
+  app(
+    {
+      targets: Platform.WINDOWS.createTarget(["nsis-web"], Arch.x64, Arch.arm64),
+      config: {
+        publish: {
+          provider: "s3",
+          bucket: "develar",
+          path: "test",
+        },
+        electronFuses: {
+          runAsNode: true,
+          enableCookieEncryption: true,
+          enableNodeOptionsEnvironmentVariable: true,
+          enableNodeCliInspectArguments: true,
+          enableEmbeddedAsarIntegrityValidation: true,
+          onlyLoadAppFromAsar: true,
+          loadBrowserProcessSpecificV8Snapshot: {
+            mainProcessSnapshotPath: undefined,
+            browserProcessSnapshotPath: "test-snapshot.bin",
+          },
+          grantFileProtocolExtraPrivileges: undefined, // unsupported on current electron version in our tests
+        },
+        nsisWeb: {
+          buildUniversalInstaller: false,
+        },
       },
     },
-  })
+    {
+      projectDirCreated: async projectDir => outputFile(join(projectDir, "build", "test-snapshot.bin"), "data"),
+    }
+  )
 )
 
 test.ifAll.ifNotCiMac(

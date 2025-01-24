@@ -3,7 +3,7 @@ import { app, copyTestAsset } from "../helpers/packTester"
 import * as path from "path"
 import { mkdir } from "fs/promises"
 import { isEnvTrue } from "builder-util"
-import { readFile } from "fs-extra"
+import { outputFile, readFile } from "fs-extra"
 
 // test that we can get info from protected pfx
 const protectedCscLink =
@@ -24,7 +24,10 @@ it.ifDevOrWinCi(
           enableNodeCliInspectArguments: true,
           enableEmbeddedAsarIntegrityValidation: true,
           onlyLoadAppFromAsar: true,
-          loadBrowserProcessSpecificV8Snapshot: true,
+          loadBrowserProcessSpecificV8Snapshot: {
+            mainProcessSnapshotPath: undefined,
+            browserProcessSnapshotPath: "test-snapshot.bin",
+          },
           grantFileProtocolExtraPrivileges: undefined, // unsupported on current electron version in our tests
         },
       },
@@ -34,6 +37,7 @@ it.ifDevOrWinCi(
         const targetDir = path.join(projectDir, "build", "appx")
         await mkdir(targetDir, { recursive: true })
         await Promise.all(["BadgeLogo.scale-100.png", "BadgeLogo.scale-140.png", "BadgeLogo.scale-180.png"].map(it => copyTestAsset(`appx-assets/${it}`, path.join(targetDir, it))))
+        await outputFile(path.join(projectDir, "build", "test-snapshot.bin"), "data")
       },
       signedWin: true,
     }

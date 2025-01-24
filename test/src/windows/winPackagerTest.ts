@@ -3,6 +3,7 @@ import * as fs from "fs/promises"
 import * as path from "path"
 import { CheckingWinPackager } from "../helpers/CheckingPackager"
 import { app, appThrows, assertPack, platform } from "../helpers/packTester"
+import { outputFile } from "fs-extra"
 
 test.ifAll(
   "beta version",
@@ -26,22 +27,32 @@ test.ifAll(
 
 test.ifAll(
   "win zip",
-  app({
-    targets: Platform.WINDOWS.createTarget(["zip"], Arch.x64, Arch.arm64),
-    config: {
-      downloadAlternateFFmpeg: true,
-      electronFuses: {
-        runAsNode: true,
-        enableCookieEncryption: true,
-        enableNodeOptionsEnvironmentVariable: true,
-        enableNodeCliInspectArguments: true,
-        enableEmbeddedAsarIntegrityValidation: true,
-        onlyLoadAppFromAsar: true,
-        loadBrowserProcessSpecificV8Snapshot: true,
-        grantFileProtocolExtraPrivileges: undefined, // unsupported on current electron version in our tests
+  app(
+    {
+      targets: Platform.WINDOWS.createTarget(["zip"], Arch.x64, Arch.arm64),
+      config: {
+        downloadAlternateFFmpeg: true,
+        electronFuses: {
+          runAsNode: true,
+          enableCookieEncryption: true,
+          enableNodeOptionsEnvironmentVariable: true,
+          enableNodeCliInspectArguments: true,
+          enableEmbeddedAsarIntegrityValidation: true,
+          onlyLoadAppFromAsar: true,
+          loadBrowserProcessSpecificV8Snapshot: {
+            mainProcessSnapshotPath: undefined,
+            browserProcessSnapshotPath: "test-snapshot.bin",
+          },
+          grantFileProtocolExtraPrivileges: undefined, // unsupported on current electron version in our tests
+        },
       },
     },
-  })
+    {
+      projectDirCreated: async projectDir => {
+        await outputFile(path.join(projectDir, "build", "test-snapshot.bin"), "data")
+      },
+    }
+  )
 )
 
 test.ifAll(

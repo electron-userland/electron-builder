@@ -3,6 +3,7 @@ import * as fs from "fs/promises"
 import * as path from "path"
 import { app, assertPack, copyTestAsset } from "../helpers/packTester"
 import { checkHelpers, doTest, expectUpdateMetadata } from "../helpers/winHelper"
+import { outputFile } from "fs-extra"
 
 const nsisTarget = Platform.WINDOWS.createTarget(["nsis"])
 
@@ -26,14 +27,20 @@ test.ifNotCiMac(
           enableNodeCliInspectArguments: true,
           enableEmbeddedAsarIntegrityValidation: true,
           onlyLoadAppFromAsar: true,
-          loadBrowserProcessSpecificV8Snapshot: true,
+          loadBrowserProcessSpecificV8Snapshot: {
+            mainProcessSnapshotPath: undefined,
+            browserProcessSnapshotPath: "test-snapshot.bin",
+          },
           grantFileProtocolExtraPrivileges: undefined, // unsupported on current electron version in our tests
         },
       },
     },
     {
       signedWin: true,
-      projectDirCreated: projectDir => copyTestAsset("license.txt", path.join(projectDir, "build", "license.txt")),
+      projectDirCreated: async projectDir => {
+        await outputFile(path.join(projectDir, "build", "test-snapshot.bin"), "data")
+        await copyTestAsset("license.txt", path.join(projectDir, "build", "license.txt"))
+      },
     }
   )
 )

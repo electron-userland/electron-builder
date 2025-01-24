@@ -2,6 +2,7 @@ import { Arch, Platform } from "electron-builder"
 import * as path from "path"
 import { CheckingWinPackager } from "../helpers/CheckingPackager"
 import { app, assertPack, copyTestAsset } from "../helpers/packTester"
+import { outputFile } from "fs-extra"
 
 test.ifAll.ifNotCiMac(
   "Squirrel.Windows",
@@ -20,12 +21,20 @@ test.ifAll.ifNotCiMac(
           enableNodeCliInspectArguments: true,
           enableEmbeddedAsarIntegrityValidation: true,
           onlyLoadAppFromAsar: true,
-          loadBrowserProcessSpecificV8Snapshot: true,
+          loadBrowserProcessSpecificV8Snapshot: {
+            mainProcessSnapshotPath: undefined,
+            browserProcessSnapshotPath: "test-snapshot.bin",
+          },
           grantFileProtocolExtraPrivileges: undefined, // unsupported on current electron version in our tests
         },
       },
     },
-    { signedWin: true }
+    {
+      signedWin: true,
+      projectDirCreated: async projectDir => {
+        await outputFile(path.join(projectDir, "build", "test-snapshot.bin"), "data")
+      },
+    }
   )
 )
 

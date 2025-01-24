@@ -1,29 +1,40 @@
 import { Platform, Arch } from "electron-builder"
 import * as path from "path"
 import { app, copyTestAsset, getFixtureDir } from "../helpers/packTester"
+import { outputFile } from "fs-extra"
 
 // build in parallel - https://github.com/electron-userland/electron-builder/issues/1340#issuecomment-286061789
 test.ifAll.ifNotCiMac(
   "portable",
-  app({
-    targets: Platform.WINDOWS.createTarget(["portable", "nsis"]),
-    config: {
-      publish: null,
-      nsis: {
-        differentialPackage: false,
-      },
-      electronFuses: {
-        runAsNode: true,
-        enableCookieEncryption: true,
-        enableNodeOptionsEnvironmentVariable: true,
-        enableNodeCliInspectArguments: true,
-        enableEmbeddedAsarIntegrityValidation: true,
-        onlyLoadAppFromAsar: true,
-        loadBrowserProcessSpecificV8Snapshot: true,
-        grantFileProtocolExtraPrivileges: undefined, // unsupported on current electron version in our tests
+  app(
+    {
+      targets: Platform.WINDOWS.createTarget(["portable", "nsis"]),
+      config: {
+        publish: null,
+        nsis: {
+          differentialPackage: false,
+        },
+        electronFuses: {
+          runAsNode: true,
+          enableCookieEncryption: true,
+          enableNodeOptionsEnvironmentVariable: true,
+          enableNodeCliInspectArguments: true,
+          enableEmbeddedAsarIntegrityValidation: true,
+          onlyLoadAppFromAsar: true,
+          loadBrowserProcessSpecificV8Snapshot: {
+            mainProcessSnapshotPath: undefined,
+            browserProcessSnapshotPath: "test-snapshot.bin",
+          },
+          grantFileProtocolExtraPrivileges: undefined, // unsupported on current electron version in our tests
+        },
       },
     },
-  })
+    {
+      projectDirCreated: async projectDir => {
+        await outputFile(path.join(projectDir, "build", "test-snapshot.bin"), "data")
+      },
+    }
+  )
 )
 
 test.ifAll.ifDevOrWinCi(

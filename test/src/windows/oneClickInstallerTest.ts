@@ -1,5 +1,5 @@
 import { Arch, Platform } from "electron-builder"
-import { copyFile, writeFile } from "fs-extra"
+import { copyFile, outputFile, writeFile } from "fs-extra"
 import * as path from "path"
 import { assertThat } from "../helpers/fileAssert"
 import { app, assertPack, copyTestAsset, modifyPackageJson } from "../helpers/packTester"
@@ -52,7 +52,10 @@ test(
           enableNodeCliInspectArguments: true,
           enableEmbeddedAsarIntegrityValidation: true,
           onlyLoadAppFromAsar: true,
-          loadBrowserProcessSpecificV8Snapshot: true,
+          loadBrowserProcessSpecificV8Snapshot: {
+            mainProcessSnapshotPath: undefined,
+            browserProcessSnapshotPath: "test-snapshot.bin",
+          },
           grantFileProtocolExtraPrivileges: undefined, // unsupported on current electron version in our tests
         },
       },
@@ -63,6 +66,9 @@ test(
         await checkHelpers(context.getResources(Platform.WINDOWS, Arch.x64), false)
         await doTest(context.outDir, true, "TestApp Setup", "TestApp", null, false)
         await expectUpdateMetadata(context, Arch.x64, true)
+      },
+      projectDirCreated: async projectDir => {
+        outputFile(path.join(projectDir, "build", "test-snapshot.bin"), "data")
       },
     }
   )
@@ -337,29 +343,39 @@ test.ifDevOrLinuxCi(
 
 test.skip.ifWindows(
   "custom exec name",
-  app({
-    targets: nsisTarget,
-    config: {
-      productName: "foo",
-      win: {
-        executableName: "Boo",
+  app(
+    {
+      targets: nsisTarget,
+      config: {
+        productName: "foo",
+        win: {
+          executableName: "Boo",
+        },
+        electronFuses: {
+          runAsNode: true,
+          enableCookieEncryption: true,
+          enableNodeOptionsEnvironmentVariable: true,
+          enableNodeCliInspectArguments: true,
+          enableEmbeddedAsarIntegrityValidation: true,
+          onlyLoadAppFromAsar: true,
+          loadBrowserProcessSpecificV8Snapshot: {
+            mainProcessSnapshotPath: undefined,
+            browserProcessSnapshotPath: "test-snapshot.bin",
+          },
+          grantFileProtocolExtraPrivileges: undefined, // unsupported on current electron version in our tests
+        },
       },
-      electronFuses: {
-        runAsNode: true,
-        enableCookieEncryption: true,
-        enableNodeOptionsEnvironmentVariable: true,
-        enableNodeCliInspectArguments: true,
-        enableEmbeddedAsarIntegrityValidation: true,
-        onlyLoadAppFromAsar: true,
-        loadBrowserProcessSpecificV8Snapshot: true,
-        grantFileProtocolExtraPrivileges: undefined, // unsupported on current electron version in our tests
+      effectiveOptionComputed: async it => {
+        expect(pickSnapshotDefines(it[0])).toMatchSnapshot()
+        return false
       },
     },
-    effectiveOptionComputed: async it => {
-      expect(pickSnapshotDefines(it[0])).toMatchSnapshot()
-      return false
-    },
-  })
+    {
+      projectDirCreated: async projectDir => {
+        await outputFile(path.join(projectDir, "build", "test-snapshot.bin"), "data")
+      },
+    }
+  )
 )
 
 test.skip.ifWindows(

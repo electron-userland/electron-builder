@@ -2,6 +2,8 @@ import { app, appThrows } from "../helpers/packTester"
 import { Platform } from "electron-builder"
 import { XMLParser } from "fast-xml-parser"
 import * as fs from "fs"
+import { outputFile } from "fs-extra"
+import { join } from "path"
 
 const parser = new XMLParser({
   ignoreAttributes: false,
@@ -30,12 +32,17 @@ test.ifAll.ifDevOrWinCi(
           enableNodeCliInspectArguments: true,
           enableEmbeddedAsarIntegrityValidation: true,
           onlyLoadAppFromAsar: true,
-          loadBrowserProcessSpecificV8Snapshot: true,
+          loadBrowserProcessSpecificV8Snapshot: {
+            mainProcessSnapshotPath: undefined,
+            browserProcessSnapshotPath: "test-snapshot.bin",
+          },
           grantFileProtocolExtraPrivileges: undefined, // unsupported on current electron version in our tests
         },
       },
     },
-    {},
+    {
+      projectDirCreated: async projectDir => outputFile(join(projectDir, "build", "test-snapshot.bin"), "data"),
+    },
     error => {
       expect(error).toBeInstanceOf(Error)
       expect(error.message).toBe("No nsis target found! Please specify an nsis target")

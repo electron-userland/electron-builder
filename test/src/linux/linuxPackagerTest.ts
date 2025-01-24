@@ -17,27 +17,37 @@ const testPublishConfig: GenericServerOptions = {
 
 test.ifNotWindows(
   "AppImage",
-  app({
-    targets: appImageTarget,
-    config: {
-      directories: {
-        // tslint:disable:no-invalid-template-strings
-        output: "dist/${os}",
-      },
-      downloadAlternateFFmpeg: true,
-      publish: testPublishConfig,
-      electronFuses: {
-        runAsNode: true,
-        enableCookieEncryption: true,
-        enableNodeOptionsEnvironmentVariable: true,
-        enableNodeCliInspectArguments: true,
-        enableEmbeddedAsarIntegrityValidation: true,
-        onlyLoadAppFromAsar: true,
-        loadBrowserProcessSpecificV8Snapshot: true,
-        grantFileProtocolExtraPrivileges: undefined, // unsupported on current electron version in our tests
+  app(
+    {
+      targets: appImageTarget,
+      config: {
+        directories: {
+          // tslint:disable:no-invalid-template-strings
+          output: "dist/${os}",
+        },
+        downloadAlternateFFmpeg: true,
+        publish: testPublishConfig,
+        electronFuses: {
+          runAsNode: true,
+          enableCookieEncryption: true,
+          enableNodeOptionsEnvironmentVariable: true,
+          enableNodeCliInspectArguments: true,
+          enableEmbeddedAsarIntegrityValidation: true,
+          onlyLoadAppFromAsar: true,
+          loadBrowserProcessSpecificV8Snapshot: {
+            mainProcessSnapshotPath: undefined,
+            browserProcessSnapshotPath: "test-snapshot.bin",
+          },
+          grantFileProtocolExtraPrivileges: undefined, // unsupported on current electron version in our tests
+        },
       },
     },
-  })
+    {
+      projectDirCreated: async projectDir => {
+        outputFile(path.join(projectDir, "build", "test-snapshot.bin"), "data")
+      },
+    }
+  )
 )
 
 test.ifAll.ifNotWindows.ifNotCiMac(
@@ -154,7 +164,6 @@ test.ifNotWindows.ifNotCiMac(
           enableNodeCliInspectArguments: true,
           enableEmbeddedAsarIntegrityValidation: true,
           onlyLoadAppFromAsar: true,
-          loadBrowserProcessSpecificV8Snapshot: true,
           grantFileProtocolExtraPrivileges: undefined, // unsupported on current electron version in our tests
         },
       },

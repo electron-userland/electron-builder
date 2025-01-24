@@ -1,6 +1,8 @@
 import { app } from "../helpers/packTester"
 import { Platform } from "electron-builder"
 import * as fs from "fs"
+import { outputFile } from "fs-extra"
+import { join } from "path"
 
 test.ifAll.ifDevOrWinCi(
   "msi",
@@ -20,13 +22,16 @@ test.ifAll.ifDevOrWinCi(
           enableNodeCliInspectArguments: true,
           enableEmbeddedAsarIntegrityValidation: true,
           onlyLoadAppFromAsar: true,
-          loadBrowserProcessSpecificV8Snapshot: true,
+          loadBrowserProcessSpecificV8Snapshot: {
+            mainProcessSnapshotPath: undefined,
+            browserProcessSnapshotPath: "test-snapshot.bin",
+          },
           grantFileProtocolExtraPrivileges: undefined, // unsupported on current electron version in our tests
         },
       },
     },
     {
-      // signed: true,
+      projectDirCreated: async projectDir => outputFile(join(projectDir, "build", "test-snapshot.bin"), "data"),
     }
   )
 )

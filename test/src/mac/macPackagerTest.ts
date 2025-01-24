@@ -5,6 +5,7 @@ import * as path from "path"
 import { assertThat } from "../helpers/fileAssert"
 import { app, appThrows, assertPack, platform } from "../helpers/packTester"
 import { verifySmartUnpack } from "../helpers/verifySmartUnpack"
+import { outputFile } from "fs-extra"
 
 test.ifMac.ifAll("two-package", () =>
   assertPack(
@@ -31,7 +32,10 @@ test.ifMac.ifAll("two-package", () =>
           enableNodeCliInspectArguments: true,
           enableEmbeddedAsarIntegrityValidation: true,
           onlyLoadAppFromAsar: true,
-          loadBrowserProcessSpecificV8Snapshot: true,
+          loadBrowserProcessSpecificV8Snapshot: {
+            mainProcessSnapshotPath: undefined,
+            browserProcessSnapshotPath: "test-snapshot.bin",
+          },
           grantFileProtocolExtraPrivileges: undefined, // unsupported on current electron version in our tests
         },
       },
@@ -41,6 +45,9 @@ test.ifMac.ifAll("two-package", () =>
       checkMacApp: async appDir => {
         const resources = await fs.readdir(path.join(appDir, "Contents", "Resources"))
         expect(resources.filter(it => !it.startsWith(".")).sort()).toMatchSnapshot()
+      },
+      projectDirCreated: async projectDir => {
+        outputFile(path.join(projectDir, "build", "test-snapshot.bin"), "data")
       },
     }
   )

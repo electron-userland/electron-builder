@@ -1,5 +1,7 @@
 import { Platform } from "electron-builder"
-import { app } from "../helpers/packTester"
+import { app, appThrows } from "../helpers/packTester"
+import { outputFile } from "fs-extra"
+import { join } from "path"
 
 if (process.env.FLATPAK_TEST === "false") {
   fit("Skip flatpakTest suite — FLATPAK_TEST is set to false or Windows", () => {
@@ -13,18 +15,41 @@ if (process.env.FLATPAK_TEST === "false") {
 
 test.ifAll.ifDevOrLinuxCi(
   "flatpak",
-  app({
+  app(
+    {
+      targets: Platform.LINUX.createTarget("flatpak"),
+      config: {
+        electronFuses: {
+          runAsNode: true,
+          enableCookieEncryption: true,
+          enableNodeOptionsEnvironmentVariable: true,
+          enableNodeCliInspectArguments: true,
+          enableEmbeddedAsarIntegrityValidation: true,
+          onlyLoadAppFromAsar: true,
+          loadBrowserProcessSpecificV8Snapshot: {
+            mainProcessSnapshotPath: undefined,
+            browserProcessSnapshotPath: "test-snapshot.bin",
+          },
+          grantFileProtocolExtraPrivileges: undefined, // unsupported on current electron version in our tests
+        },
+      },
+    },
+    {
+      projectDirCreated: async projectDir => outputFile(join(projectDir, "build", "test-snapshot.bin"), "data"),
+    }
+  )
+)
+
+test.ifAll.ifDevOrLinuxCi(
+  "electron `loadBrowserProcessSpecificV8Snapshot` fuse - V8 snapshot not found",
+  appThrows({
     targets: Platform.LINUX.createTarget("flatpak"),
     config: {
       electronFuses: {
-        runAsNode: true,
-        enableCookieEncryption: true,
-        enableNodeOptionsEnvironmentVariable: true,
-        enableNodeCliInspectArguments: true,
-        enableEmbeddedAsarIntegrityValidation: true,
-        onlyLoadAppFromAsar: true,
-        loadBrowserProcessSpecificV8Snapshot: true,
-        grantFileProtocolExtraPrivileges: undefined, // unsupported on current electron version in our tests
+        loadBrowserProcessSpecificV8Snapshot: {
+          mainProcessSnapshotPath: "test-main-snapshot.bin",
+          browserProcessSnapshotPath: "test-browser-snapshot.bin",
+        },
       },
     },
   })
