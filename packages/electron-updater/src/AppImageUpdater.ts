@@ -86,16 +86,21 @@ export class AppImageUpdater extends BaseUpdater {
 
     let destination: string
     const existingBaseName = path.basename(appImageFile)
+    const installerPath = this.installerPath
+    if (installerPath == null) {
+      this.dispatchError(new Error("No valid update available, can't quit and install"))
+      return false
+    }
     // https://github.com/electron-userland/electron-builder/issues/2964
     // if no version in existing file name, it means that user wants to preserve current custom name
-    if (path.basename(options.installerPath) === existingBaseName || !/\d+\.\d+\.\d+/.test(existingBaseName)) {
+    if (path.basename(installerPath) === existingBaseName || !/\d+\.\d+\.\d+/.test(existingBaseName)) {
       // no version in the file name, overwrite existing
       destination = appImageFile
     } else {
-      destination = path.join(path.dirname(appImageFile), path.basename(options.installerPath))
+      destination = path.join(path.dirname(appImageFile), path.basename(installerPath))
     }
 
-    execFileSync("mv", ["-f", options.installerPath, destination])
+    execFileSync("mv", ["-f", installerPath, destination])
     if (destination !== appImageFile) {
       this.emit("appimage-filename-updated", destination)
     }

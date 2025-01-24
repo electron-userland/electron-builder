@@ -27,11 +27,19 @@ export class DebUpdater extends BaseUpdater {
     })
   }
 
+  protected get installerPath(): string | null {
+    return super.installerPath?.replace(/ /g, "\\ ") ?? null
+  }
+
   protected doInstall(options: InstallOptions): boolean {
     const sudo = this.wrapSudo()
     // pkexec doesn't want the command to be wrapped in " quotes
     const wrapper = /pkexec/i.test(sudo) ? "" : `"`
-    const installerPath = options.installerPath.replace(/ /g, "\\ ")
+    const installerPath = this.installerPath
+    if (installerPath == null) {
+      this.dispatchError(new Error("No valid update available, can't quit and install"))
+      return false
+    }
     const cmd = ["dpkg", "-i", installerPath, "||", "apt-get", "install", "-f", "-y"]
     this.spawnSyncLog(sudo, [`${wrapper}/bin/bash`, "-c", `'${cmd.join(" ")}'${wrapper}`])
     if (options.isForceRunAfter) {

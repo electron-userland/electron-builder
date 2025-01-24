@@ -37,6 +37,10 @@ export abstract class BaseUpdater extends AppUpdater {
     })
   }
 
+  protected get installerPath(): string | null {
+    return this.downloadedUpdateHelper == null ? null : this.downloadedUpdateHelper.file
+  }
+
   // must be sync
   protected abstract doInstall(options: InstallOptions): boolean
 
@@ -48,7 +52,7 @@ export abstract class BaseUpdater extends AppUpdater {
     }
 
     const downloadedUpdateHelper = this.downloadedUpdateHelper
-    const installerPath = downloadedUpdateHelper == null ? null : downloadedUpdateHelper.file
+    const installerPath = this.installerPath
     const downloadedFileInfo = downloadedUpdateHelper == null ? null : downloadedUpdateHelper.downloadedFileInfo
     if (installerPath == null || downloadedFileInfo == null) {
       this.dispatchError(new Error("No valid update available, can't quit and install"))
@@ -61,7 +65,6 @@ export abstract class BaseUpdater extends AppUpdater {
     try {
       this._logger.info(`Install: isSilent: ${isSilent}, isForceRunAfter: ${isForceRunAfter}`)
       return this.doInstall({
-        installerPath,
         isSilent,
         isForceRunAfter,
         isAdminRightsRequired: downloadedFileInfo.isAdminRightsRequired,
@@ -154,7 +157,6 @@ export abstract class BaseUpdater extends AppUpdater {
 }
 
 export interface InstallOptions {
-  readonly installerPath: string
   readonly isSilent: boolean
   readonly isForceRunAfter: boolean
   readonly isAdminRightsRequired: boolean
