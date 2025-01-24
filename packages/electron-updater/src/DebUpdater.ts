@@ -31,7 +31,8 @@ export class DebUpdater extends BaseUpdater {
     const sudo = this.wrapSudo()
     // pkexec doesn't want the command to be wrapped in " quotes
     const wrapper = /pkexec/i.test(sudo) ? "" : `"`
-    const cmd = ["dpkg", "-i", options.installerPath, "||", "apt-get", "install", "-f", "-y"]
+    const installerPath = options.installerPath.replace(/ /g, "\\ ")
+    const cmd = ["dpkg", "-i", installerPath, "||", "apt-get", "install", "-f", "-y"]
     this.spawnSyncLog(sudo, [`${wrapper}/bin/bash`, "-c", `'${cmd.join(" ")}'${wrapper}`])
     if (options.isForceRunAfter) {
       this.app.relaunch()

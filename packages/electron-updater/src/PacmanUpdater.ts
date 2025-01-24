@@ -31,7 +31,8 @@ export class PacmanUpdater extends BaseUpdater {
     const sudo = this.wrapSudo()
     // pkexec doesn't want the command to be wrapped in " quotes
     const wrapper = /pkexec/i.test(sudo) ? "" : `"`
-    const cmd = ["pacman", "-U", "--noconfirm", options.installerPath]
+    const installerPath = options.installerPath.replace(/ /g, "\\ ")
+    const cmd = ["pacman", "-U", "--noconfirm", installerPath]
     this.spawnSyncLog(sudo, [`${wrapper}/bin/bash`, "-c", `'${cmd.join(" ")}'${wrapper}`])
     if (options.isForceRunAfter) {
       this.app.relaunch()
