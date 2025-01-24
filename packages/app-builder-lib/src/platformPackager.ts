@@ -34,6 +34,20 @@ import { resolveFunction } from "./util/resolve"
 import { flipFuses, FuseConfig, FuseV1Config, FuseV1Options, FuseVersion } from "@electron/fuses"
 import { FuseOptionsV1 } from "./configuration"
 
+export type DoPackOptions<DC extends PlatformSpecificBuildOptions> = {
+  outDir: string
+  appOutDir: string
+  platformName: ElectronPlatformName
+  arch: Arch
+  platformSpecificBuildOptions: DC
+  targets: Array<Target>
+  options?: {
+    sign?: boolean
+    disableAsarIntegrity?: boolean
+    disableFuses?: boolean
+  }
+}
+
 export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> {
   get packagerOptions(): PackagerOptions {
     return this.info.options
@@ -138,7 +152,14 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
   async pack(outDir: string, arch: Arch, targets: Array<Target>, taskManager: AsyncTaskManager): Promise<any> {
     const appOutDir = this.computeAppOutDir(outDir, arch)
-    await this.doPack(outDir, appOutDir, this.platform.nodeName as ElectronPlatformName, arch, this.platformSpecificBuildOptions, targets)
+    await this.doPack({
+      outDir,
+      appOutDir,
+      platformName: this.platform.nodeName as ElectronPlatformName,
+      arch,
+      platformSpecificBuildOptions: this.platformSpecificBuildOptions,
+      targets,
+    })
     this.packageInDistributableFormat(appOutDir, arch, targets, taskManager)
   }
 
@@ -188,16 +209,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
   }
 
-  protected async doPack(
-    outDir: string,
-    appOutDir: string,
-    platformName: ElectronPlatformName,
-    arch: Arch,
-    platformSpecificBuildOptions: DC,
-    targets: Array<Target>,
-    sign = true,
-    disableAsarIntegrity = false
-  ) {
+  protected async doPack(packOptions: DoPackOptions<DC>) {
     if (this.packagerOptions.prepackaged != null) {
       return
     }
@@ -208,6 +220,8 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
     // Due to node-gyp rewriting GYP_MSVS_VERSION when reused across the same session, we must reset the env var: https://github.com/electron-userland/electron-builder/issues/7256
     delete process.env.GYP_MSVS_VERSION
+
+    const { outDir, appOutDir, platformName, arch, platformSpecificBuildOptions, targets, options } = packOptions
 
     const beforePack = await resolveFunction(this.appInfo.type, this.config.beforePack, "beforePack")
     if (beforePack != null) {
@@ -305,7 +319,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       await framework.beforeCopyExtraFiles({
         packager: this,
         appOutDir,
-        asarIntegrity: asarOptions == null || disableAsarIntegrity ? null : await computeData({ resourcesPath, resourcesRelativePath }),
+        asarIntegrity: asarOptions == null || options?.disableAsarIntegrity ? null : await computeData({ resourcesPath, resourcesRelativePath }),
         platformName,
       })
     }
@@ -331,14 +345,21 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     const isAsar = asarOptions != null
     await this.sanityCheckPackage(appOutDir, isAsar, framework, !!this.config.disableSanityCheckAsar)
 
-    // the fuses MUST be flipped right before signing
-    if (this.config.electronFuses != null) {
-      const fuseConfig = this.generateFuseConfig(this.config.electronFuses)
-      await this.addElectronFuses(packContext, fuseConfig)
+    if (!options?.disableFuses) {
+      await this.doAddElectronFuses(packContext)
     }
-    if (sign) {
+    if (options?.sign ?? true) {
       await this.doSignAfterPack(outDir, appOutDir, platformName, arch, platformSpecificBuildOptions, targets)
     }
+  }
+
+  // the fuses MUST be flipped right before signing
+  protected async doAddElectronFuses(packContext: AfterPackContext) {
+    if (this.config.electronFuses == null) {
+      return
+    }
+    const fuseConfig = this.generateFuseConfig(this.config.electronFuses)
+    await this.addElectronFuses(packContext, fuseConfig)
   }
 
   private generateFuseConfig(fuses: FuseOptionsV1): FuseV1Config {
