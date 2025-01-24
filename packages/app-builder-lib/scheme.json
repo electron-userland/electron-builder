@@ -519,6 +519,23 @@
       ],
       "type": "object"
     },
+    "CustomV8Snapshot": {
+      "additionalProperties": false,
+      "properties": {
+        "browserProcessSnapshotPath": {
+          "description": "File path, relative to build resources directory, to the V8 snapshot file to be used for the browser process. This will be directly copied into the Electron unpacked app.",
+          "type": "string"
+        },
+        "mainProcessSnapshotPath": {
+          "description": "File path, relative to build resources directory, to the V8 snapshot file to be used for the main process. This will be directly copied into the Electron unpacked app.\nBy default, electron provides a default V8 snapshot, which if used with this V8 snapshot fuse, defeats the point of using the fuse entirely.\n(It is highly recommended to provide your own main process V8 snapshot if you're providing a custom renderer V8 snapshot)",
+          "type": "string"
+        }
+      },
+      "required": [
+        "browserProcessSnapshotPath"
+      ],
+      "type": "object"
+    },
     "DebOptions": {
       "additionalProperties": false,
       "properties": {
@@ -1336,8 +1353,8 @@
           "type": "boolean"
         },
         "loadBrowserProcessSpecificV8Snapshot": {
-          "description": "The loadBrowserProcessSpecificV8Snapshot fuse changes which V8 snapshot file is used for the browser process.  By default Electron's processes will all use the same V8 snapshot file.  When this fuse is enabled the browser process uses the file called `browser_v8_context_snapshot.bin` for its V8 snapshot. The other processes will use the V8 snapshot file that they normally do.",
-          "type": "boolean"
+          "$ref": "#/definitions/CustomV8Snapshot",
+          "description": "The loadBrowserProcessSpecificV8Snapshot fuse changes which V8 snapshot file is used for the browser process.  By default Electron's processes will all use the same V8 snapshot file.  When this fuse is enabled the browser process uses the file called `browser_v8_context_snapshot.bin` for its V8 snapshot. The other processes will use the V8 snapshot file that they normally do.\n(Advanced Option: Only use if you know what you're doing and are providing your own custom V8 snapshot)"
         },
         "onlyLoadAppFromAsar": {
           "description": "The onlyLoadAppFromAsar fuse changes the search system that Electron uses to locate your app code.  By default Electron will search in the following order `app.asar` -> `app` -> `default_app.asar`.  When this fuse is enabled the search order becomes a single entry `app.asar` thus ensuring that when combined with the `embeddedAsarIntegrityValidation` fuse it is impossible to load non-validated code.",

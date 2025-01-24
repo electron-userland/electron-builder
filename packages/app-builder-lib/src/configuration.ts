@@ -443,7 +443,9 @@ export interface FuseOptionsV1 {
 
 export interface CustomV8Snapshot {
   /**
-   * File path, relative to build resources directory, to the V8 snapshot file to be used for the browser process. This will be directly copied into the Electron unpacked app. By default, electron will fallback to it's provided default V8 snapshot
+   * File path, relative to build resources directory, to the V8 snapshot file to be used for the main process. This will be directly copied into the Electron unpacked app.
+   * By default, electron provides a default V8 snapshot, which if used with this V8 snapshot fuse, defeats the point of using the fuse entirely.
+   * (It is highly recommended to provide your own main process V8 snapshot if you're providing a custom renderer V8 snapshot)
    */
   mainProcessSnapshotPath?: string
   /**
