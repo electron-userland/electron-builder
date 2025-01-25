@@ -93,8 +93,8 @@ importers:
         specifier: 2.5.0
         version: 2.5.0
       '@electron/osx-sign':
-        specifier: 1.3.1
-        version: 1.3.1
+        specifier: 1.3.2
+        version: 1.3.2
       '@electron/rebuild':
         specifier: 3.7.0
         version: 3.7.0
@@ -1622,6 +1622,11 @@ packages:
 
   '@electron/osx-sign@1.3.1':
     resolution: {integrity: sha512-BAfviURMHpmb1Yb50YbCxnOY0wfwaLXH5KJ4+80zS0gUkzDX3ec23naTlEqKsN+PwYn+a1cCzM7BJ4Wcd3sGzw==}
+    engines: {node: '>=12.0.0'}
+    hasBin: true
+
+  '@electron/osx-sign@1.3.2':
+    resolution: {integrity: sha512-KqVlm9WMWq19lBpCXQoThC/Koaiji2zotUDYwZDaZlZZym+FXY9mQW8wN6sUQ93nkVc42f3TQ1S/XN9S1kjM5Q==}
     engines: {node: '>=12.0.0'}
     hasBin: true
 
@@ -4308,6 +4313,7 @@ packages:
 
   lodash.isequal@4.5.0:
     resolution: {integrity: sha512-pDo3lu8Jhfjqls6GkMgpahsF9kCyayhgykjyLMNFTKWrpVdAQtYyB4muAMWozBB4ig/dtWAmsMxLEI8wuz+DYQ==}
+    deprecated: This package is deprecated. Use require('node:util').isDeepStrictEqual instead.
 
   lodash.isplainobject@4.0.6:
     resolution: {integrity: sha512-oSXzaWypCMHkPC3NvBEaPHf0KsA5mvPrOPgQWDsbg8n7orZ290M0BmC/jgRZ4vcJ6DTAhjrsSYgdsW/F+MFOBA==}
@@ -7352,6 +7358,17 @@ snapshots:
       - supports-color
 
   '@electron/osx-sign@1.3.1':
+    dependencies:
+      compare-version: 0.1.2
+      debug: 4.3.7
+      fs-extra: 10.1.0
+      isbinaryfile: 4.0.10
+      minimist: 1.2.8
+      plist: 3.1.0
+    transitivePeerDependencies:
+      - supports-color
+
+  '@electron/osx-sign@1.3.2':
     dependencies:
       compare-version: 0.1.2
       debug: 4.3.7
