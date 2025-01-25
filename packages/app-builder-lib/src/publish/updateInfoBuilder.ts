@@ -1,7 +1,7 @@
 import BluebirdPromise from "bluebird-lst"
 import { Arch, log, outputFile, outputJson, safeStringifyJson, serializeToYaml } from "builder-util"
 import { GenericServerOptions, PublishConfiguration, UpdateInfo, WindowsUpdateInfo } from "builder-util-runtime"
-import {  readFile } from "node:fs/promises"
+import { readFile } from "node:fs/promises"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import * as semver from "semver"

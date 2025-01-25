@@ -1,4 +1,14 @@
-import { Arch, deepAssign, executeAppBuilder, InvalidConfigurationError, log, replaceDefault as _replaceDefault, serializeToYaml, toLinuxArchString, outputFile } from "builder-util"
+import {
+  Arch,
+  deepAssign,
+  executeAppBuilder,
+  InvalidConfigurationError,
+  log,
+  replaceDefault as _replaceDefault,
+  serializeToYaml,
+  toLinuxArchString,
+  outputFile,
+} from "builder-util"
 import { SnapStoreOptions, asArray } from "builder-util-runtime"
 import { readFile } from "node:fs/promises"
 import { load } from "js-yaml"
