@@ -1,4 +1,4 @@
-import { Arch, executeAppBuilder, getArchSuffix, log, TmpDir, toLinuxArchString, use, serializeToYaml, asArray } from "builder-util"
+import { Arch, executeAppBuilder, getArchSuffix, log, TmpDir, toLinuxArchString, use, serializeToYaml, asArray, outputFile } from "builder-util"
 import { unlinkIfExists } from "builder-util"
 import { copyFile, stat } from "node:fs/promises"
 import { mkdir, readFile } from "fs/promises"

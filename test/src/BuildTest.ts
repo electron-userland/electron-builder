@@ -8,6 +8,7 @@ import { createYargs } from "electron-builder/out/builder"
 import { app, appTwo, appTwoThrows, assertPack, linuxDirTarget, modifyPackageJson, packageJson, toSystemIndependentPath } from "./helpers/packTester"
 import { ELECTRON_VERSION } from "./helpers/testConfig"
 import { verifySmartUnpack } from "./helpers/verifySmartUnpack"
+import { outputFile, outputJson } from "builder-util"
 
 test("cli", async () => {
   // because these methods are internal

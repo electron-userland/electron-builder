@@ -1,8 +1,9 @@
 import { Filter, FileConsumer, FilterStats } from "builder-util"
-import { readlink, stat, Stats } from "node:fs/promises"
+import { readlink, stat } from "node:fs/promises"
 import { FileMatcher } from "../fileMatcher"
 import { Packager } from "../packager"
 import * as path from "path"
+import { Stats } from "node:fs"
 
 function addAllPatternIfNeed(matcher: FileMatcher) {
   if (!matcher.isSpecifiedAsEmptyArray && (matcher.isEmpty() || matcher.containsOnlyIgnore())) {

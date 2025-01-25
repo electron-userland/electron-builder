@@ -1,4 +1,4 @@
-import { asArray } from "builder-util"
+import { asArray, outputFile } from "builder-util"
 import { bundledLanguages, langIdToName, lcid, toLangWithRegion } from "../../util/langs"
 import _debug from "debug"
 import { readFile } from "node:fs/promises"
