@@ -572,7 +572,7 @@ async function checkPathsAreValid(src: string, dest: string, opts?: { dereferenc
     }
   }
 
-  if (srcStat.isDirectory() && !path.relative(dest, src).includes("..")) {
+  if (srcStat.isDirectory() && !path.relative(src, dest).includes("..")) {
     throw new Error(`Cannot perform operation on '${src}' to a subdirectory of itself, '${dest}'.`)
   }
 
