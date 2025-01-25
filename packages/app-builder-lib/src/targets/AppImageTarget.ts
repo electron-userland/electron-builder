@@ -1,5 +1,4 @@
 import { Arch, outputFile, serializeToYaml } from "builder-util"
-import {} from "node:fs/promises"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { Target } from "../core"

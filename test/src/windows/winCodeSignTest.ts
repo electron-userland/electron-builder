@@ -1,5 +1,4 @@
 import { DIR_TARGET, Platform } from "electron-builder"
-import {} from "node:fs/promises"
 import * as path from "path"
 import { CheckingWinPackager } from "../helpers/CheckingPackager"
 import { app, appThrows } from "../helpers/packTester"
@@ -27,7 +26,7 @@ test.ifAll(
     },
     {
       signedWin: true,
-      projectDirCreated: async projectDir => outputFile(path.join(projectDir, "assets", "nested", "nested", "file.exe"), "invalid PE file")
+      projectDirCreated: async projectDir => outputFile(path.join(projectDir, "assets", "nested", "nested", "file.exe"), "invalid PE file"),
     },
     error => {
       if (process.platform === "win32") {

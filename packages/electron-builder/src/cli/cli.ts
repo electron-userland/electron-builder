@@ -2,7 +2,6 @@
 
 import { InvalidConfigurationError, log, ExecError, readJson } from "builder-util"
 import * as chalk from "chalk"
-import {} from "node:fs/promises"
 import * as isCi from "is-ci"
 import * as path from "path"
 import { loadEnv } from "app-builder-lib/out/util/config/load"

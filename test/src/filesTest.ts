@@ -1,6 +1,5 @@
 import { DIR_TARGET, Platform } from "electron-builder"
 import { TmpDir, archFromString, copyDir, outputFile } from "builder-util"
-import {} from "node:fs/promises"
 import * as fs from "fs/promises"
 import * as path from "path"
 import { Mode, RWX } from "stat-mode"

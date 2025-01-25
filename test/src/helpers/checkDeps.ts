@@ -1,7 +1,6 @@
 import * as chalk from "chalk"
 import type { Results } from "depcheck"
 import * as depCheck from "depcheck"
-import {} from "node:fs/promises"
 import * as fs from "fs/promises"
 import * as path from "path"
 import { printErrorAndExit, readJson } from "builder-util"

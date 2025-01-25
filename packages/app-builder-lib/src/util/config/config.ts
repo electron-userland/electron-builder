@@ -1,5 +1,4 @@
 import { DebugLogger, deepAssign, InvalidConfigurationError, log, readJson, safeStringifyJson, statOrNull } from "builder-util"
-import {} from "node:fs/promises"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { getConfig as _getConfig, loadParentConfig, orNullIfFileNotExist, ReadConfigRequest } from "./load"

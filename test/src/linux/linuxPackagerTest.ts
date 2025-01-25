@@ -1,5 +1,4 @@
 import { Arch, build, Platform } from "electron-builder"
-import {} from "node:fs/promises"
 import * as path from "path"
 import { GenericServerOptions } from "builder-util-runtime"
 import { assertThat } from "../helpers/fileAssert"
