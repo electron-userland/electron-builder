@@ -1,7 +1,7 @@
 import BluebirdPromise from "bluebird-lst"
 import { createHash } from "crypto"
 import { createReadStream } from "fs"
-import { readdir } from "fs/promises"
+import { readdir } from "node:fs/promises"
 import * as path from "path"
 import { readAsarHeader, NodeIntegrity } from "./asar"
 import { FileMatcher } from "../fileMatcher"

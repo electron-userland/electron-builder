@@ -1,7 +1,7 @@
 import { DIR_TARGET, Platform } from "app-builder-lib"
 import { readAsar } from "app-builder-lib/out/asar/asar"
 import { outputFile } from "builder-util/out/util"
-import * as fs from "fs/promises"
+import * as fs from "node:fs/promises"
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert"
 import { app, appThrows, assertPack, modifyPackageJson, PackedContext, removeUnstableProperties, verifyAsarFileTree } from "./helpers/packTester"

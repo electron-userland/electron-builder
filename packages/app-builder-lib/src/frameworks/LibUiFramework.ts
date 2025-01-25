@@ -1,5 +1,5 @@
 import {} from "node:fs/promises"
-import { mkdir, chmod, rename, writeFile } from "fs/promises"
+import { mkdir, chmod, rename, writeFile } from "node:fs/promises"
 import * as path from "path"
 import { emptyDir, executeAppBuilder } from "builder-util"
 import { AfterPackContext } from "../configuration"

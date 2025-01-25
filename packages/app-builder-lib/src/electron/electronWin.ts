@@ -1,4 +1,4 @@
-import { readFile, writeFile } from "fs/promises"
+import { readFile, writeFile } from "node:fs/promises"
 import { log } from "builder-util"
 import { NtExecutable, NtExecutableResource, Resource } from "resedit"
 import * as path from "path"

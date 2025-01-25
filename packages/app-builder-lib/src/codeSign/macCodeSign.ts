@@ -3,7 +3,7 @@ import { exec, InvalidConfigurationError, isEmptyOrSpaces, isEnvTrue, isPullRequ
 import { copyFile, unlinkIfExists } from "builder-util"
 import { Fields, Logger } from "builder-util"
 import { randomBytes, createHash } from "crypto"
-import { rename } from "fs/promises"
+import { rename } from "node:fs/promises"
 import { Lazy } from "lazy-val"
 import { homedir, tmpdir } from "os"
 import * as path from "path"

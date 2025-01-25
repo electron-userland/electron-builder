@@ -1,7 +1,7 @@
 import BluebirdPromise from "bluebird-lst"
 import { Arch, log, copyFile, orNullIfFileNotExist, readJson, outputJson } from "builder-util"
 import { Hash } from "crypto"
-import { mkdir, readFile } from "fs/promises"
+import { mkdir, readFile } from "node:fs/promises"
 import * as path from "path"
 
 export interface BuildCacheInfo {

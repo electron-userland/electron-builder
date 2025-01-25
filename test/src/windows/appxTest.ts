@@ -1,7 +1,7 @@
 import { Arch, Platform } from "electron-builder"
 import { app, copyTestAsset } from "../helpers/packTester"
 import * as path from "path"
-import { mkdir } from "fs/promises"
+import { mkdir } from "node:fs/promises"
 import { isEnvTrue } from "builder-util"
 import { readFile } from "node:fs/promises"
 

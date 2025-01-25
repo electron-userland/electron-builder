@@ -1,6 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
 import { asArray, log, copyDir, copyOrLinkFile, Filter, statOrNull, FileTransformer, USE_HARD_LINKS } from "builder-util"
-import { mkdir } from "fs/promises"
+import { mkdir } from "node:fs/promises"
 import { Minimatch } from "minimatch"
 import * as path from "path"
 import { Configuration, FileSet, Packager, PlatformSpecificBuildOptions } from "./index"

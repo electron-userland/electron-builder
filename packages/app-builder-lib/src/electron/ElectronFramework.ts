@@ -12,7 +12,7 @@ import { getTemplatePath } from "../util/pathManager"
 import { createMacApp } from "./electronMac"
 import { addWinAsarIntegrity } from "./electronWin"
 import { computeElectronVersion, getElectronVersionFromInstalled } from "./electronVersion"
-import * as fs from "fs/promises"
+import * as fs from "node:fs/promises"
 import injectFFMPEG from "./injectFFMPEG"
 import { resolveFunction } from "../util/resolve"
 

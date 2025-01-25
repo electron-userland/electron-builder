@@ -1,5 +1,5 @@
 import { copyFile, stat } from "node:fs/promises"
-import { rm } from "fs/promises"
+import { rm } from "node:fs/promises"
 import * as path from "path"
 import * as typedoc from "typedoc"
 import * as process from "process"

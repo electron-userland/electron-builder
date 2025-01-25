@@ -1,5 +1,5 @@
 import { debug, log, deepAssign, FileTransformer } from "builder-util"
-import { readFile } from "fs/promises"
+import { readFile } from "node:fs/promises"
 import * as path from "path"
 import { Configuration } from "./configuration"
 import { Packager } from "./packager"

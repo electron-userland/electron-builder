@@ -3,7 +3,7 @@ import { attachAndExecute, getDmgTemplatePath } from "dmg-builder/out/dmgUtil"
 import { Platform } from "electron-builder"
 import { PlatformPackager } from "app-builder-lib"
 import * as path from "path"
-import * as fs from "fs/promises"
+import * as fs from "node:fs/promises"
 import { assertThat } from "../helpers/fileAssert"
 import { app, assertPack, copyTestAsset } from "../helpers/packTester"
 

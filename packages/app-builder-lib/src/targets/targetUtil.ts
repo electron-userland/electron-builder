@@ -2,7 +2,7 @@ import * as path from "path"
 import { Target, AppInfo } from "../"
 import { Arch, debug } from "builder-util"
 import { PlatformPackager } from "../platformPackager"
-import * as fs from "fs/promises"
+import * as fs from "node:fs/promises"
 
 export class StageDir {
   constructor(readonly dir: string) {}

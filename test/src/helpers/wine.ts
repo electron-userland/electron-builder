@@ -1,5 +1,5 @@
 import { emptyDir, exec, safeStringifyJson, unlinkIfExists } from "builder-util"
-import * as fs from "fs/promises"
+import * as fs from "node:fs/promises"
 import { homedir } from "os"
 import * as path from "path"
 import pathSorter from "path-sort"

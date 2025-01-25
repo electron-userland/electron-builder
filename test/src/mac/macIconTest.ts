@@ -1,5 +1,5 @@
 import { Arch, DIR_TARGET, Platform } from "electron-builder"
-import * as fs from "fs/promises"
+import * as fs from "node:fs/promises"
 import * as path from "path"
 import { CheckingMacPackager } from "../helpers/CheckingPackager"
 import { app } from "../helpers/packTester"

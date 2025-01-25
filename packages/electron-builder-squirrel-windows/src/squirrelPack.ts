@@ -5,7 +5,7 @@ import { WinPackager } from "app-builder-lib/out/winPackager"
 import { stat, unlink, writeFile } from "node:fs/promises"
 import * as path from "path"
 import * as archiver from "archiver"
-import * as fs from "fs/promises"
+import * as fs from "node:fs/promises"
 import { createWriteStream } from "node:fs"
 
 export function convertVersion(version: string): string {

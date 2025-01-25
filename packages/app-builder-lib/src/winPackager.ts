@@ -1,6 +1,6 @@
 import { Arch, CopyFileTransformer, executeAppBuilder, FileTransformer, InvalidConfigurationError, use, walk } from "builder-util"
 import { createHash } from "crypto"
-import { readdir } from "fs/promises"
+import { readdir } from "node:fs/promises"
 import * as isCI from "is-ci"
 import { Lazy } from "lazy-val"
 import * as path from "path"

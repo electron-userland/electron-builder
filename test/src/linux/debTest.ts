@@ -1,5 +1,5 @@
 import { Arch, Platform } from "electron-builder"
-import * as fs from "fs/promises"
+import * as fs from "node:fs/promises"
 import { app, execShell, getTarExecutable } from "../helpers/packTester"
 
 test.ifNotWindows(

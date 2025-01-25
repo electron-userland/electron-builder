@@ -1,7 +1,7 @@
 import { Arch, executeAppBuilder, getArchSuffix, log, TmpDir, toLinuxArchString, use, serializeToYaml, asArray, outputFile } from "builder-util"
 import { unlinkIfExists } from "builder-util"
 import { copyFile, stat } from "node:fs/promises"
-import { mkdir, readFile } from "fs/promises"
+import { mkdir, readFile } from "node:fs/promises"
 import * as path from "path"
 import { smarten } from "../appInfo"
 import { Target } from "../core"

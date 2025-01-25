@@ -1,5 +1,5 @@
 import { exists, statOrNull } from "builder-util"
-import * as fs from "fs/promises"
+import * as fs from "node:fs/promises"
 import * as path from "path"
 
 // http://joel-costigliola.github.io/assertj/

@@ -5,7 +5,7 @@ import { copyFile, dirSize } from "builder-util"
 import * as path from "path"
 import { getTemplatePath } from "../../util/pathManager"
 import { NsisTarget } from "./NsisTarget"
-import * as fs from "fs/promises"
+import * as fs from "node:fs/promises"
 import * as zlib from "zlib"
 import { NsisOptions } from "./nsisOptions"
 

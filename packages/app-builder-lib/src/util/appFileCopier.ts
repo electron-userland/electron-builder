@@ -1,7 +1,7 @@
 import BluebirdPromise from "bluebird-lst"
 import { AsyncTaskManager, log, CONCURRENCY, FileCopier, FileTransformer, Link, MAX_FILE_REQUESTS, statOrNull, walk, ensureSymlink } from "builder-util"
 import { Stats } from "fs"
-import { mkdir, readlink } from "fs/promises"
+import { mkdir, readlink } from "node:fs/promises"
 import * as path from "path"
 import { isLibOrExe } from "../asar/unpackDetector"
 import { Platform } from "../core"

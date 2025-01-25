@@ -1,6 +1,6 @@
 import { isCI as isCi } from "ci-info"
 import * as path from "path"
-import * as fs from "fs/promises"
+import * as fs from "node:fs/promises"
 import { ELECTRON_VERSION, getElectronCacheDir } from "./testConfig"
 import { gte } from "semver"
 

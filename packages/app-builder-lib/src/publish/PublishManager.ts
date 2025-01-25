@@ -26,7 +26,7 @@ import {
   SpacesPublisher,
   UploadTask,
 } from "electron-publish"
-import { writeFile } from "fs/promises"
+import { writeFile } from "node:fs/promises"
 import * as isCi from "is-ci"
 import * as path from "path"
 import { WriteStream as TtyWriteStream } from "tty"
