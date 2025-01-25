@@ -1,5 +1,17 @@
 # app-builder-lib
 
+## 26.0.0-alpha.11
+
+### Patch Changes
+
+- [#8799](https://github.com/electron-userland/electron-builder/pull/8799) [`45a402b9`](https://github.com/electron-userland/electron-builder/commit/45a402b9786bcb8e71bfc12c9498552f597653ec) Thanks [@t3chguy](https://github.com/t3chguy)! - fix(mac): only fuse macOS universal builds on the combined universal package
+
+- [#8805](https://github.com/electron-userland/electron-builder/pull/8805) [`c6d6b6e5`](https://github.com/electron-userland/electron-builder/commit/c6d6b6e57be2c042dc586ae13f1af38a8a19af41) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: ASAR files in extraResources are not included in integrity calculations
+
+- Updated dependencies []:
+  - dmg-builder@26.0.0-alpha.11
+  - electron-builder-squirrel-windows@26.0.0-alpha.11
+
 ## 26.0.0-alpha.10
 
 ### Minor Changes

@@ -17,6 +17,7 @@
     "@electron-builder/test": "0.0.0"
   },
   "changesets": [
+    "beige-pillows-relate",
     "brave-snakes-unite",
     "brown-pears-beg",
     "cuddly-colts-laugh",
@@ -25,6 +26,7 @@
     "dull-eyes-check",
     "early-deers-suffer",
     "early-penguins-share",
+    "eighty-swans-hang",
     "fair-penguins-build",
     "fluffy-wolves-smile",
     "four-gorillas-nail",
@@ -42,6 +44,7 @@
     "nasty-mangos-yawn",
     "neat-buses-beg",
     "new-zoos-repair",
+    "nine-cats-eat",
     "ninety-candles-laugh",
     "ninety-cooks-listen",
     "odd-trees-battle",

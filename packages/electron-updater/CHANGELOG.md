@@ -1,5 +1,11 @@
 ## 4.3.0
 
+## 6.4.0-alpha.4
+
+### Patch Changes
+
+- [#8802](https://github.com/electron-userland/electron-builder/pull/8802) [`4a68fd2d`](https://github.com/electron-userland/electron-builder/commit/4a68fd2d3d529b0f854877a5415f9ccad00b61fd) Thanks [@erijo](https://github.com/erijo)! - fix(linux): AppImage update fails when filename contains spaces
+
 ## 6.4.0-alpha.3
 
 ### Patch Changes
