@@ -25,7 +25,7 @@ jobs:
       - name: Build typdoc site
         run: pnpm docs:all
 
-      - uses: jsmrcaga/action-netlify-deploy@v2.3.0
+      - uses: jsmrcaga/action-netlify-deploy@06b6a09e152823cce0d76c0dbb22b914934de198 # v2.3.0
         with:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
@@ -39,7 +39,7 @@ jobs:
 
       # Creates a status check with link to preview
       - name: Set Status check on commit
-        uses: guibranco/github-status-action-v2@v1.1.13
+        uses: guibranco/github-status-action-v2@0849440ec82c5fa69b2377725b9b7852a3977e76 # v1.1.13
         with:
           authToken: ${{ secrets.GITHUB_TOKEN }}
           state: success
