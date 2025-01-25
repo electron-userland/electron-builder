@@ -1,4 +1,4 @@
-import { walk } from "builder-util"
+import { outputFile, walk } from "builder-util"
 import { Arch, Platform } from "electron-builder"
 import { readAsarJson } from "app-builder-lib/out/asar/asar"
 import {} from "node:fs/promises"

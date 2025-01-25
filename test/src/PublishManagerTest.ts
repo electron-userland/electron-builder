@@ -4,6 +4,7 @@ import * as path from "path"
 import { GithubOptions, GenericServerOptions, SpacesOptions, KeygenOptions } from "builder-util-runtime"
 import { assertThat } from "./helpers/fileAssert"
 import { app, checkDirContents } from "./helpers/packTester"
+import { outputFile } from "builder-util"
 
 function spacesPublisher(publishAutoUpdate = true): SpacesOptions {
   return {

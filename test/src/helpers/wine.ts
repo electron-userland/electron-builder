@@ -1,4 +1,4 @@
-import { exec, safeStringifyJson, unlinkIfExists } from "builder-util"
+import { emptyDir, exec, safeStringifyJson, unlinkIfExists } from "builder-util"
 import {} from "node:fs/promises"
 import * as fs from "fs/promises"
 import { homedir } from "os"

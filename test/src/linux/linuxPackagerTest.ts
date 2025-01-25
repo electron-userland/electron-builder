@@ -6,6 +6,7 @@ import { assertThat } from "../helpers/fileAssert"
 import { app, appThrows, copyTestAsset, modifyPackageJson } from "../helpers/packTester"
 import { ELECTRON_VERSION } from "../helpers/testConfig"
 import * as fs from "fs/promises"
+import { outputFile } from "builder-util"
 
 const appImageTarget = Platform.LINUX.createTarget("appimage")
 

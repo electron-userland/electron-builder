@@ -581,3 +581,7 @@ export async function verifyAsarFileTree(resourceDir: string) {
 export function toSystemIndependentPath(s: string): string {
   return path.sep === "/" ? s : s.replace(/\\/g, "/")
 }
+
+function writeJson(file: string, data: any): any {
+  throw new Error("Function not implemented.")
+}

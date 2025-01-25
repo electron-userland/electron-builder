@@ -5,7 +5,7 @@ import { computeDefaultAppDirectory, getConfig } from "app-builder-lib/out/util/
 import { installOrRebuild } from "app-builder-lib/out/util/yarn"
 import { PACKAGE_VERSION } from "app-builder-lib/out/version"
 import { createLazyProductionDeps } from "app-builder-lib/out/util/packageDependencies"
-import { getArchCliNames, log, use, printErrorAndExit } from "builder-util"
+import { getArchCliNames, log, use, printErrorAndExit, readJson } from "builder-util"
 import {} from "node:fs/promises"
 import { Lazy } from "lazy-val"
 import * as path from "path"

@@ -1,3 +1,5 @@
+// Note to the developer: In migrating away from fs-extra to node:fs and node:fs/promises, some helper functions were copied from https://github.com/jprichardson/node-fs-extra to consolidate expected logic flow within electron-builder's packages
+
 import BluebirdPromise from "bluebird-lst"
 import { Stats } from "fs"
 import * as isCI from "is-ci"
@@ -37,83 +39,6 @@ export interface FilterStats extends Stats {
   linkRelativeToFile?: string
 }
 export type Filter = (file: string, stat: FilterStats) => boolean
-
-export async function readJson(file: PathLike) {
-  const data = await readFile(file, "utf-8")
-  return JSON.parse(data)
-}
-
-type OutputOptions = ObjectEncodingOptions & {
-  mode?: FsMode
-  flag?: OpenMode
-}
-
-export async function outputJson(file: PathLike, data: any, jsonOptions?: { spaces: number }, outputOptions?: OutputOptions) {
-  return outputFile(file, JSON.stringify(data, undefined, jsonOptions?.spaces), outputOptions)
-}
-
-export async function outputFile(
-  file: PathLike,
-  data: string | NodeJS.ArrayBufferView | Iterable<string | NodeJS.ArrayBufferView> | AsyncIterable<string | NodeJS.ArrayBufferView> | Stream,
-  options?: OutputOptions
-) {
-  const dir = path.dirname(file as string)
-
-  if (!(await exists(dir))) {
-    await mkdirs(dir)
-  }
-
-  return writeFile(file, data, options)
-}
-
-export async function emptyDir(dir: PathLike) {
-  await rm(dir, { recursive: true, force: true })
-  await mkdir(dir)
-}
-
-export async function mkdirs(dir: PathLike, mode?: FsMode) {
-  return mkdir(dir, { mode, recursive: true })
-}
-
-// export async function createSymlink(src: PathLike, dest: PathLike, type: any) {
-//   if ((await lstat(dest))?.isSymbolicLink() && isEqualStats(await stat(src), await stat(dest))) {
-//     return
-//   }
-
-//   const relative = await symlinkPaths(srcpath, dstpath)
-//   srcpath = relative.toDst
-//   const toType = await symlinkType(relative.toCwd, type)
-//   const dir = path.dirname(dstpath)
-
-//   if (!(await pathExists(dir))) {
-//     await mkdirs(dir)
-//   }
-
-//   return fs.symlink(srcpath, dstpath, toType)
-// }
-
-// export function isEqualStats(s1: Stats, s2: Stats) {
-//   return s2.ino && s2.dev && s2.ino === s1.ino && s2.dev === s1.dev
-// }
-
-export function unlinkIfExists(file: PathLike) {
-  return unlink(file).catch(() => {
-    /* ignore */
-  })
-}
-
-export async function statOrNull(file: PathLike): Promise<Stats | null> {
-  return orNullIfFileNotExist(stat(file))
-}
-
-export async function exists(file: PathLike): Promise<boolean> {
-  try {
-    await access(file)
-    return true
-  } catch (_e: any) {
-    return false
-  }
-}
 
 export interface FileConsumer {
   consume(file: string, fileStat: Stats, parent: string, siblingNames: Array<string>): any
@@ -413,4 +338,126 @@ export const USE_HARD_LINKS = (file: string) => true
 export interface Link {
   readonly link: string
   readonly file: string
+}
+
+export type OutputOptions = ObjectEncodingOptions & {
+  mode?: FsMode
+  flag?: OpenMode
+}
+
+// JSON helpers
+
+export async function readJson(file: PathLike) {
+  const data = await readFile(file, "utf-8")
+  return JSON.parse(data)
+}
+
+export async function outputJson(
+  file: PathLike,
+  data: any,
+  jsonOptions?: { spaces: number; replacer?: (this: any, key: string, value: any) => any },
+  outputOptions?: OutputOptions
+) {
+  return outputFile(file, JSON.stringify(data, jsonOptions?.replacer, jsonOptions?.spaces), outputOptions)
+}
+
+// File helpers
+
+export async function outputFile(
+  file: PathLike,
+  data: string | NodeJS.ArrayBufferView | Iterable<string | NodeJS.ArrayBufferView> | AsyncIterable<string | NodeJS.ArrayBufferView> | Stream,
+  options?: OutputOptions
+) {
+  const dir = path.dirname(file as string)
+
+  if (!(await exists(dir))) {
+    await mkdirs(dir)
+  }
+
+  return writeFile(file, data, options)
+}
+
+// Dir helpers
+
+export async function emptyDir(dir: PathLike) {
+  await rm(dir, { recursive: true, force: true })
+  await mkdir(dir)
+}
+
+export async function mkdirs(dir: PathLike, mode?: FsMode) {
+  return mkdir(dir, { mode, recursive: true })
+}
+
+// Symlink helpers
+
+export type SymlinkType = "file" | "dir"
+
+export async function ensureSymlink(src: PathLike, dest: PathLike, type?: SymlinkType) {
+  // If destination already exists and it's the same symlink, return early
+  try {
+    if ((await lstat(dest))?.isSymbolicLink() && isEqualStats(await stat(src), await stat(dest))) {
+      return
+    }
+  } catch {}
+
+  const dir = path.dirname(dest as string)
+  if (!(await exists(dir))) {
+    await mkdirs(dir)
+  }
+
+  const paths = await symlinkPaths(src as string, dest as string)
+  return symlink(paths.target, dest, type ?? (await symlinkType(paths.toCwd)))
+}
+
+// Adapted from https://github.com/jprichardson/node-fs-extra/blob/master/lib/ensure/symlink-paths.js
+async function symlinkPaths(target: string, dest: string) {
+  const isTargetAbsolute = path.isAbsolute(target)
+  const potentiallyRelativePathToSymlink = path.join(path.dirname(dest), target)
+  if (!isTargetAbsolute && (await exists(potentiallyRelativePathToSymlink))) {
+    return {
+      toCwd: potentiallyRelativePathToSymlink,
+      target,
+    }
+  }
+
+  await lstat(target) // make sure src exists, e.g. just throw an error
+
+  return {
+    toCwd: target,
+    target: isTargetAbsolute ? target : path.relative(dest, target),
+  }
+}
+
+async function symlinkType(src: PathLike) {
+  try {
+    return (await lstat(src))?.isDirectory() ? "dir" : "file"
+  } catch (e: any) {
+    log.error({ error: e.message || e.stack }, "unable to determine symlink type, falling back to 'file'")
+    return "file"
+  }
+}
+
+// File helpers
+
+export function unlinkIfExists(file: PathLike) {
+  return unlink(file).catch(() => {
+    /* ignore */
+  })
+}
+
+export async function statOrNull(file: PathLike): Promise<Stats | null> {
+  return orNullIfFileNotExist(stat(file))
+}
+
+export async function exists(file: PathLike): Promise<boolean> {
+  try {
+    await access(file)
+    return true
+  } catch (_e: any) {
+    return false
+  }
+}
+
+export function isEqualStats(s1: Stats, s2: Stats) {
+  return s2.ino && s2.dev && s2.ino === s1.ino && s2.dev === s1.dev
 }

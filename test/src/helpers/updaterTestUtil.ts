@@ -1,4 +1,4 @@
-import { serializeToYaml, TmpDir } from "builder-util"
+import { outputFile, serializeToYaml, TmpDir } from "builder-util"
 import { AllPublishOptions, DownloadOptions } from "builder-util-runtime"
 import { NodeHttpExecutor } from "builder-util"
 import { AppUpdater, MacUpdater, NoOpLogger, NsisUpdater } from "electron-updater"

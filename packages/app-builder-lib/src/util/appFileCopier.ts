@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { AsyncTaskManager, log, CONCURRENCY, FileCopier, FileTransformer, Link, MAX_FILE_REQUESTS, statOrNull, walk } from "builder-util"
+import { AsyncTaskManager, log, CONCURRENCY, FileCopier, FileTransformer, Link, MAX_FILE_REQUESTS, statOrNull, walk, ensureSymlink } from "builder-util"
 import { Stats } from "fs"
 import { mkdir, readlink } from "fs/promises"
 import * as path from "path"
@@ -70,9 +70,7 @@ export async function copyAppFiles(fileSet: ResolvedFileSet, packager: Packager,
   if (taskManager.tasks.length > 0) {
     await taskManager.awaitTasks()
   }
-  if (links.length > 0) {
-    await BluebirdPromise.map(links, it => ensureSymlink(it.link, it.file), CONCURRENCY)
-  }
+  await BluebirdPromise.map(links, it => ensureSymlink(it.link, it.file), CONCURRENCY)
 }
 
 // os path separator is used

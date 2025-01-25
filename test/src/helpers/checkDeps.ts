@@ -4,7 +4,7 @@ import * as depCheck from "depcheck"
 import {} from "node:fs/promises"
 import * as fs from "fs/promises"
 import * as path from "path"
-import { printErrorAndExit } from "builder-util"
+import { printErrorAndExit, readJson } from "builder-util"
 
 const knownUnusedDevDependencies = new Set<string>([
   "@babel/plugin-transform-modules-commonjs", // Not sure what this is used for, but keeping just in case (for now)

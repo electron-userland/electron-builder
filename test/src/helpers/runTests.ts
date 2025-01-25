@@ -1,10 +1,11 @@
 import { createHash } from "crypto"
-import { realpathSync } from "node:fs/promises"
+import { realpathSync } from "node:fs"
 import * as fs from "fs/promises"
 import { isCI as isCi } from "ci-info"
 import { tmpdir } from "os"
 import * as path from "path"
 import { deleteOldElectronVersion, downloadAllRequiredElectronVersions } from "./downloadElectron"
+import { readJson } from "builder-util"
 
 const baseDir = process.env.APP_BUILDER_TMP_DIR || realpathSync(tmpdir())
 const APP_BUILDER_TMP_DIR = path.join(baseDir, `et-${createHash("md5").update(__dirname).digest("hex")}`)

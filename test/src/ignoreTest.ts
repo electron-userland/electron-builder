@@ -3,6 +3,7 @@ import {} from "node:fs/promises"
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert"
 import { app, checkDirContents, modifyPackageJson } from "./helpers/packTester"
+import { outputFile } from "builder-util"
 
 test.ifDevOrLinuxCi(
   "ignore build resources",

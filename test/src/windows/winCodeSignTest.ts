@@ -5,6 +5,7 @@ import { CheckingWinPackager } from "../helpers/CheckingPackager"
 import { app, appThrows } from "../helpers/packTester"
 import { parseDn } from "builder-util-runtime"
 import { load } from "js-yaml"
+import { outputFile } from "builder-util"
 
 test("parseDn", () => {
   expect(parseDn("CN=7digital Limited, O=7digital Limited, L=London, C=GB")).toMatchSnapshot()
@@ -26,9 +27,7 @@ test.ifAll(
     },
     {
       signedWin: true,
-      projectDirCreated: async projectDir => {
-        await outputFile(path.join(projectDir, "assets", "nested", "nested", "file.exe"), "invalid PE file")
-      },
+      projectDirCreated: async projectDir => outputFile(path.join(projectDir, "assets", "nested", "nested", "file.exe"), "invalid PE file")
     },
     error => {
       if (process.platform === "win32") {

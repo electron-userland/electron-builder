@@ -7,6 +7,7 @@ import * as path from "path"
 import { assertThat } from "../helpers/fileAssert"
 import { removeUnstableProperties } from "../helpers/packTester"
 import { createNsisUpdater, trackEvents, validateDownload, writeUpdateConfig } from "../helpers/updaterTestUtil"
+import { outputFile } from "builder-util"
 
 // some tests are flaky
 jest.retryTimes(3)

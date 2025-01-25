@@ -1,6 +1,6 @@
 #! /usr/bin/env node
 
-import { InvalidConfigurationError, log, ExecError } from "builder-util"
+import { InvalidConfigurationError, log, ExecError, readJson } from "builder-util"
 import * as chalk from "chalk"
 import {} from "node:fs/promises"
 import * as isCi from "is-ci"

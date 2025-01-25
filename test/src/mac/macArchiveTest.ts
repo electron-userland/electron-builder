@@ -1,4 +1,4 @@
-import { Arch, exec } from "builder-util"
+import { Arch, exec, outputFile } from "builder-util"
 import { parseXml } from "builder-util-runtime"
 import { Platform } from "electron-builder"
 import {} from "node:fs/promises"
@@ -51,9 +51,7 @@ test.ifAll.ifMac(
     },
     {
       signed: false,
-      projectDirCreated: projectDir => {
-        return Promise.all([outputFile(path.join(projectDir, "extra.txt"), "test")])
-      },
+      projectDirCreated: projectDir => outputFile(path.join(projectDir, "extra.txt"), "test"),
     }
   )
 )

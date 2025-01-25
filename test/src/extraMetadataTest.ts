@@ -5,6 +5,7 @@ import {} from "node:fs/promises"
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert"
 import { app, modifyPackageJson } from "./helpers/packTester"
+import { readJson } from "builder-util"
 
 function createExtraMetadataTest(asar: boolean) {
   return app(
