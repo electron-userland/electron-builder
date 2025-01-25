@@ -30,6 +30,10 @@ test.ifAll(
     {
       targets: Platform.WINDOWS.createTarget(["zip"], Arch.x64, Arch.arm64),
       config: {
+        extraResources: [
+          { from: "build", to: "./", filter: "*.asar" },
+          { from: "build/subdir", to: "./subdir", filter: "*.asar" },
+        ],
         electronLanguages: "en",
         downloadAlternateFFmpeg: true,
         electronFuses: {
@@ -43,21 +47,31 @@ test.ifAll(
           grantFileProtocolExtraPrivileges: undefined, // unsupported on current electron version in our tests
         },
       },
+    },
+    {
+      signed: false,
+      projectDirCreated: async projectDir => {
+        await fs.mkdir(path.join(projectDir, "build", "subdir"))
+        await fs.copyFile(path.join(projectDir, "build", "extraAsar.asar"), path.join(projectDir, "build", "subdir", "extraAsar2.asar"))
+      },
     }
   )
 )
 
 test.ifAll(
   "zip artifactName",
-  app({
-    targets: Platform.WINDOWS.createTarget(["zip"], Arch.x64),
-    config: {
-      //tslint:disable-next-line:no-invalid-template-strings
-      artifactName: "${productName}-${version}-${os}-${arch}.${ext}",
+  app(
+    {
+      targets: Platform.WINDOWS.createTarget(["zip"], Arch.x64),
+      config: {
+        //tslint:disable-next-line:no-invalid-template-strings
+        artifactName: "${productName}-${version}-${os}-${arch}.${ext}",
+      },
     },
-  }, {
-    signed: true
-  })
+    {
+      signed: true,
+    }
+  )
 )
 
 test.ifAll(

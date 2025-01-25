@@ -75,6 +75,9 @@ exports[`win zip 2`] = `
   "locales/",
   "resources/",
   "resources/app.asar",
+  "resources/extraAsar.asar",
+  "resources/subdir/",
+  "resources/subdir/extraAsar2.asar",
   "resources.pak",
   "snapshot_blob.bin",
   "Test App ßW.exe",
@@ -90,6 +93,16 @@ exports[`win zip 3`] = `
   {
     "alg": "SHA256",
     "file": "resources\\app.asar",
+    "value": "hash",
+  },
+  {
+    "alg": "SHA256",
+    "file": "resources\\extraAsar.asar",
+    "value": "hash",
+  },
+  {
+    "alg": "SHA256",
+    "file": "resources\\subdir\\extraAsar2.asar",
     "value": "hash",
   },
 ]
@@ -108,6 +121,9 @@ exports[`win zip 4`] = `
   "locales/",
   "resources/",
   "resources/app.asar",
+  "resources/extraAsar.asar",
+  "resources/subdir/",
+  "resources/subdir/extraAsar2.asar",
   "resources.pak",
   "snapshot_blob.bin",
   "Test App ßW.exe",
@@ -123,6 +139,16 @@ exports[`win zip 5`] = `
   {
     "alg": "SHA256",
     "file": "resources\\app.asar",
+    "value": "hash",
+  },
+  {
+    "alg": "SHA256",
+    "file": "resources\\extraAsar.asar",
+    "value": "hash",
+  },
+  {
+    "alg": "SHA256",
+    "file": "resources\\subdir\\extraAsar2.asar",
     "value": "hash",
   },
 ]

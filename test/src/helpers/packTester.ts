@@ -432,7 +432,6 @@ async function checkWindowsResult(packager: Packager, checkOptions: AssertPackOp
   } else if (hasTarget("zip") && !(checkOptions.signed || checkOptions.signedWin)) {
     return checkZipResult()
   }
-
 }
 
 const checkResult = async (artifacts: Array<ArtifactCreated>, extension: string) => {

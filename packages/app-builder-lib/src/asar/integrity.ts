@@ -4,10 +4,14 @@ import { createReadStream } from "fs"
 import { readdir } from "fs/promises"
 import * as path from "path"
 import { readAsarHeader, NodeIntegrity } from "./asar"
+import { FileMatcher } from "../fileMatcher"
+import { statOrNull, walk, FilterStats, log } from "builder-util"
 
 export interface AsarIntegrityOptions {
   readonly resourcesPath: string
   readonly resourcesRelativePath: string
+  readonly resourcesDestinationPath: string
+  readonly extraResourceMatchers: Array<FileMatcher> | null
 }
 
 export interface HeaderHash {
@@ -19,16 +23,48 @@ export interface AsarIntegrity {
   [key: string]: HeaderHash
 }
 
-export async function computeData({ resourcesPath, resourcesRelativePath }: AsarIntegrityOptions): Promise<AsarIntegrity> {
-  // sort to produce constant result
-  const names = (await readdir(resourcesPath)).filter(it => it.endsWith(".asar")).sort()
-  const checksums = await BluebirdPromise.map(names, it => hashHeader(path.join(resourcesPath, it)))
+export async function computeData({ resourcesPath, resourcesRelativePath, resourcesDestinationPath, extraResourceMatchers }: AsarIntegrityOptions): Promise<AsarIntegrity> {
+  type Match = Pick<FileMatcher, "to" | "from">
+  const isAsar = (filepath: string) => filepath.endsWith(".asar")
 
   const result: AsarIntegrity = {}
-  for (let i = 0; i < names.length; i++) {
-    result[path.join(resourcesRelativePath, names[i])] = checksums[i]
-  }
-  return result
+
+  const resourceAsars = (await readdir(resourcesPath)).filter(isAsar)
+  await BluebirdPromise.each(resourceAsars, async (filename: string) => {
+    const key = path.join(resourcesRelativePath, filename)
+    const from = path.join(resourcesPath, filename)
+    result[key] = await hashHeader(from)
+  })
+
+  const extraResourceAsars = await BluebirdPromise.map(extraResourceMatchers ?? [], async (matcher: FileMatcher): Promise<Match[]> => {
+    const { from, to } = matcher
+
+    const stat = await statOrNull(from)
+    if (stat == null) {
+      log.warn({ from }, `file source doesn't exist`)
+      return []
+    }
+    if (stat.isFile()) {
+      return isAsar(from) ? [{ from, to }] : []
+    }
+
+    if (matcher.isEmpty() || matcher.containsOnlyIgnore()) {
+      matcher.prependPattern("**/*")
+    }
+    const matcherFilter = matcher.createFilter()
+    const extraResourceMatches = await walk(matcher.from, (file: string, stats: FilterStats) => matcherFilter(file, stats) || stats.isDirectory())
+    return extraResourceMatches.map(from => ({ from, to: matcher.to })).filter(match => isAsar(match.from))
+  })
+  await BluebirdPromise.each(extraResourceAsars.flat(1), async ({ from, to }) => {
+    const prefix = path.relative(resourcesDestinationPath, to)
+    const key = path.join(resourcesRelativePath, prefix, path.basename(from))
+    result[key] = await hashHeader(from)
+  })
+
+  // sort to produce constant result
+  return Object.entries(result)
+    .sort(([name1], [name2]) => name1.localeCompare(name2))
+    .reduce<AsarIntegrity>((prev, [name, hash]) => ({ ...prev, [name]: hash }), {})
 }
 
 async function hashHeader(file: string): Promise<HeaderHash> {
