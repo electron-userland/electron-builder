@@ -1,5 +1,4 @@
-import { outputFile } from "node:fs"
-import { serializeToYaml } from "./util"
+import { outputFile, serializeToYaml } from "./util"
 
 export class DebugLogger {
   readonly data: any = {}

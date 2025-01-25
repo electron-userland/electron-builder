@@ -2,8 +2,8 @@ import { CreateOptions, createPackageWithOptions } from "@electron/asar"
 import { AsyncTaskManager, log } from "builder-util"
 import { CancellationToken } from "builder-util-runtime"
 import { FileCopier, Filter, Link, MAX_FILE_REQUESTS } from "builder-util/out/fs"
-import * as fs from "node:fs"
-import { mkdir, readlink, symlink } from "node:fs"
+import * as fs from "node:fs/promises"
+import { mkdir, readlink, symlink } from "node:fs/promises"
 import { platform } from "os"
 import * as path from "path"
 import * as tempFile from "temp-file"
@@ -11,6 +11,7 @@ import { AsarOptions } from "../options/PlatformSpecificBuildOptions"
 import { PlatformPackager } from "../platformPackager"
 import { ResolvedFileSet, getDestinationPath } from "../util/appFileCopier"
 import { detectUnpackedDirs } from "./unpackDetector"
+import { Stats } from "node:fs"
 
 /** @internal */
 export class AsarPackager {
@@ -87,7 +88,7 @@ export class AsarPackager {
     const links: Array<Link> = []
     const symlinkType = platform() === "win32" ? "junction" : "file"
 
-    const matchUnpacker = (file: string, dest: string, stat: fs.Stats, tmpUnpackedPaths: Set<string>) => {
+    const matchUnpacker = (file: string, dest: string, stat: Stats, tmpUnpackedPaths: Set<string>) => {
       if (this.config.unpackPattern?.(file, stat)) {
         log.debug({ file }, "unpacking")
         tmpUnpackedPaths.add(dest)
@@ -97,7 +98,7 @@ export class AsarPackager {
     const writeFileOrProcessSymlink = async (options: {
       file: string
       destination: string
-      stat: fs.Stats
+      stat: Stats
       fileSet: ResolvedFileSet
       transformedData: string | Buffer | undefined
     }) => {

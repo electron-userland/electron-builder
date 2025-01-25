@@ -1,5 +1,6 @@
 import { createFromBuffer } from "chromium-pickle-js"
-import { close, open, read, readFile, Stats } from "node:fs"
+import { Stats } from "node:fs"
+import { open, readFile } from "node:fs/promises"
 import * as path from "path"
 
 export interface ReadAsarHeader {
@@ -139,18 +140,18 @@ export async function readAsarHeader(archive: string): Promise<ReadAsarHeader> {
   let headerBuf
   try {
     const sizeBuf = Buffer.allocUnsafe(8)
-    if ((await read(fd, sizeBuf, 0, 8, null as any)).bytesRead !== 8) {
+    if ((await fd.read( sizeBuf, 0, 8, null as any)).bytesRead !== 8) {
       throw new Error("Unable to read header size")
     }
 
     const sizePickle = createFromBuffer(sizeBuf)
     size = sizePickle.createIterator().readUInt32()
     headerBuf = Buffer.allocUnsafe(size)
-    if ((await read(fd, headerBuf, 0, size, null as any)).bytesRead !== size) {
+    if ((await fd.read(headerBuf, 0, size, null as any)).bytesRead !== size) {
       throw new Error("Unable to read header")
     }
   } finally {
-    await close(fd)
+    await fd.close()
   }
 
   const headerPickle = createFromBuffer(headerBuf)
@@ -181,9 +182,9 @@ async function readFileFromAsar(filesystem: AsarFilesystem, filename: string, in
   const fd = await open(filesystem.src, "r")
   try {
     const offset = 8 + filesystem.headerSize + parseInt(info.offset!, 10)
-    await read(fd, buffer, 0, size, offset)
+    await fd.read(buffer, 0, size, offset)
   } finally {
-    await close(fd)
+    await fd.close()
   }
   return buffer
 }

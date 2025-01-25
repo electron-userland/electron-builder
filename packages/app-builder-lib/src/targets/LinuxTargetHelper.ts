@@ -1,5 +1,5 @@
 import { asArray, isEmptyOrSpaces, log, exists } from "builder-util"
-import { outputFile } from "node:fs"
+import {} from "node:fs/promises"
 import { Lazy } from "lazy-val"
 import { LinuxPackager } from "../linuxPackager"
 import { LinuxTargetSpecificOptions } from "../options/linuxOptions"

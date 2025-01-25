@@ -1,5 +1,5 @@
 import { Arch, createTargets, Platform } from "electron-builder"
-import { outputFile } from "node:fs"
+import {} from "node:fs/promises"
 import * as path from "path"
 import { GithubOptions, GenericServerOptions, SpacesOptions, KeygenOptions } from "builder-util-runtime"
 import { assertThat } from "./helpers/fileAssert"

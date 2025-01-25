@@ -8,7 +8,7 @@ import { computeArchToTargetNamesMap } from "app-builder-lib/out/targets/targetF
 import { getLinuxToolsPath } from "app-builder-lib/out/targets/tools"
 import { convertVersion } from "electron-builder-squirrel-windows/out/squirrelPack"
 import { PublishPolicy } from "electron-publish"
-import { emptyDir, writeJson } from "node:fs"
+import { writeJson } from "node:fs/promises"
 import * as fs from "fs/promises"
 import { load } from "js-yaml"
 import * as path from "path"

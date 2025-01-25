@@ -1,5 +1,5 @@
 import { DIR_TARGET, Platform, archFromString } from "electron-builder"
-import { outputFile } from "node:fs"
+import {} from "node:fs/promises"
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert"
 import { app, checkDirContents, modifyPackageJson } from "./helpers/packTester"

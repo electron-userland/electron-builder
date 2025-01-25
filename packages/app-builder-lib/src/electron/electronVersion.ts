@@ -1,9 +1,9 @@
 import { getProjectRootPath } from "@electron/rebuild/lib/search-module"
 
-import { InvalidConfigurationError, log } from "builder-util"
+import { InvalidConfigurationError, log, readJson } from "builder-util"
 import { parseXml } from "builder-util-runtime"
 import { httpExecutor } from "builder-util"
-import { readJson } from "node:fs"
+import {} from "node:fs/promises"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { orNullIfFileNotExist } from "../util/config/load"

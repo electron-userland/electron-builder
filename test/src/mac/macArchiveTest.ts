@@ -1,7 +1,7 @@
 import { Arch, exec } from "builder-util"
 import { parseXml } from "builder-util-runtime"
 import { Platform } from "electron-builder"
-import { outputFile } from "node:fs"
+import {} from "node:fs/promises"
 import * as fs from "fs/promises"
 import * as path from "path"
 import pathSorter from "path-sort"

@@ -1,5 +1,5 @@
 import { Arch, Platform } from "electron-builder"
-import { copyFile, writeFile } from "node:fs"
+import { copyFile, writeFile } from "node:fs/promises"
 import * as path from "path"
 import { assertThat } from "../helpers/fileAssert"
 import { app, assertPack, copyTestAsset, modifyPackageJson } from "../helpers/packTester"

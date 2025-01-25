@@ -1,6 +1,6 @@
 import { bundle as bundleFlatpak, FlatpakBundlerBuildOptions, FlatpakManifest } from "@malept/flatpak-bundler"
 import { Arch, copyFile, toLinuxArchString } from "builder-util"
-import { chmod, outputFile } from "node:fs"
+import { chmod,} from "node:fs/promises"
 import * as path from "path"
 import { Target } from "../core"
 import { LinuxPackager } from "../linuxPackager"

@@ -1,5 +1,5 @@
 import { orNullIfFileNotExist } from "builder-util"
-import { readFile } from "node:fs"
+import { readFile } from "node:fs/promises"
 import GitHost, { fromUrl } from "hosted-git-info"
 import * as path from "path"
 import { SourceRepositoryInfo } from "../core"

@@ -2,7 +2,7 @@ import { log } from "builder-util"
 import { load } from "js-yaml"
 import { PlatformPackager } from "app-builder-lib"
 import { getLicenseFiles } from "app-builder-lib/out/util/license"
-import { readFile, readJson } from "node:fs"
+import { readFile,} from "node:fs/promises"
 import { getLicenseButtonsFile } from "./licenseButtons"
 import { dmgLicenseFromJSON } from "dmg-license"
 

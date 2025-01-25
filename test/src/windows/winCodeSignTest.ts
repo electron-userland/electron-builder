@@ -1,5 +1,5 @@
 import { DIR_TARGET, Platform } from "electron-builder"
-import { outputFile } from "node:fs"
+import {} from "node:fs/promises"
 import * as path from "path"
 import { CheckingWinPackager } from "../helpers/CheckingPackager"
 import { app, appThrows } from "../helpers/packTester"

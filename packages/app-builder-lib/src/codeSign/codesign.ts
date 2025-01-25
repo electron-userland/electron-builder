@@ -1,8 +1,7 @@
-import { outputFile } from "node:fs"
 import { homedir } from "os"
 import * as path from "path"
 import { TmpDir } from "temp-file"
-import { InvalidConfigurationError } from "builder-util"
+import { InvalidConfigurationError, outputFile,} from "builder-util"
 import { statOrNull } from "builder-util"
 import { download } from "../binDownload"
 

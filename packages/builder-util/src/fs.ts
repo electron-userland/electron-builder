@@ -1,13 +1,14 @@
 import BluebirdPromise from "bluebird-lst"
-import { copyFile as _nodeCopyFile } from "node:fs/promises"
 import { Stats } from "fs"
+import * as isCI from "is-ci"
+import { Mode as FsMode, ObjectEncodingOptions, OpenMode, PathLike } from "node:fs"
+import { copyFile as _nodeCopyFile, access, chmod, link, lstat, mkdir, readdir, readFile, readlink, rm, stat, symlink, unlink, writeFile } from "node:fs/promises"
 import { platform } from "os"
-import { access, chmod, mkdir, link, lstat, readdir, readlink, stat, symlink, unlink, writeFile } from "fs/promises"
 import * as path from "path"
-import { Mode } from "stat-mode"
 import { log } from "./log"
 import { orIfFileNotExist, orNullIfFileNotExist } from "./promise"
-import * as isCI from "is-ci"
+import { Mode } from "stat-mode"
+import { Stream } from "node:stream"
 
 export const MAX_FILE_REQUESTS = 8
 export const CONCURRENCY = { concurrency: MAX_FILE_REQUESTS }
@@ -37,17 +38,54 @@ export interface FilterStats extends Stats {
 }
 export type Filter = (file: string, stat: FilterStats) => boolean
 
-export function unlinkIfExists(file: string) {
+export async function readJson(file: PathLike) {
+  const data = await readFile(file, "utf-8")
+  return JSON.parse(data)
+}
+
+type OutputOptions = ObjectEncodingOptions & {
+  mode?: FsMode
+  flag?: OpenMode
+}
+
+export async function outputJson(file: PathLike, data: any, jsonOptions?: {  spaces: number }, outputOptions?: OutputOptions) {
+  return outputFile(file, JSON.stringify(data, undefined, jsonOptions?.spaces), outputOptions)
+}
+
+export async function outputFile(
+  file: PathLike,
+  data: string | NodeJS.ArrayBufferView | Iterable<string | NodeJS.ArrayBufferView> | AsyncIterable<string | NodeJS.ArrayBufferView> | Stream,
+  options?: OutputOptions
+) {
+  const dir = path.dirname(file as string)
+
+  if (!(await exists(dir))) {
+    await mkdirs(dir)
+  }
+
+  return writeFile(file, data, options)
+}
+
+export async function emptyDir(dir: PathLike) {
+  await rm(dir, { recursive: true, force: true })
+  await mkdir(dir)
+}
+
+export async function mkdirs(dir: PathLike, mode?: FsMode) {
+  return mkdir(dir, { mode, recursive: true })
+}
+
+export function unlinkIfExists(file: PathLike) {
   return unlink(file).catch(() => {
     /* ignore */
   })
 }
 
-export async function statOrNull(file: string): Promise<Stats | null> {
+export async function statOrNull(file: PathLike): Promise<Stats | null> {
   return orNullIfFileNotExist(stat(file))
 }
 
-export async function exists(file: string): Promise<boolean> {
+export async function exists(file: PathLike): Promise<boolean> {
   try {
     await access(file)
     return true

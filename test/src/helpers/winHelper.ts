@@ -1,7 +1,7 @@
 import { walk } from "builder-util"
 import { Arch, Platform } from "electron-builder"
 import { readAsarJson } from "app-builder-lib/out/asar/asar"
-import { outputFile } from "node:fs"
+import {} from "node:fs/promises"
 import * as fs from "fs/promises"
 import { load } from "js-yaml"
 import * as path from "path"

@@ -1,5 +1,5 @@
 import { createHash } from "crypto"
-import { readJson, realpathSync } from "node:fs"
+import { readJson, realpathSync } from "node:fs/promises"
 import * as fs from "fs/promises"
 import { isCI as isCi } from "ci-info"
 import { tmpdir } from "os"

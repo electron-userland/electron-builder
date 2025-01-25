@@ -13,10 +13,12 @@ import {
   executeFinally,
   orNullIfFileNotExist,
   getArtifactArchName,
+  mkdirs,
+  outputFile,
 } from "builder-util"
 import { CancellationToken } from "builder-util-runtime"
 import { EventEmitter } from "events"
-import { mkdirs, chmod, outputFile } from "node:fs"
+import { chmod } from "node:fs/promises"
 import * as isCI from "is-ci"
 import { Lazy } from "lazy-val"
 import * as path from "path"
