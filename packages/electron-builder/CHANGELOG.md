@@ -1,5 +1,13 @@
 # electron-builder
 
+## 26.0.0-alpha.11
+
+### Patch Changes
+
+- Updated dependencies [[`45a402b9`](https://github.com/electron-userland/electron-builder/commit/45a402b9786bcb8e71bfc12c9498552f597653ec), [`c6d6b6e5`](https://github.com/electron-userland/electron-builder/commit/c6d6b6e57be2c042dc586ae13f1af38a8a19af41)]:
+  - app-builder-lib@26.0.0-alpha.11
+  - dmg-builder@26.0.0-alpha.11
+
 ## 26.0.0-alpha.10
 
 ### Major Changes

@@ -1,3 +1,14 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v26.0.0-alpha.10...v) (2025-01-25)
+
+
+### Bug Fixes
+
+* ASAR files in `extraResources` are not included in integrity calculations ([#8805](https://github.com/electron-userland/electron-builder/issues/8805)) ([c6d6b6e](https://github.com/electron-userland/electron-builder/commit/c6d6b6e57be2c042dc586ae13f1af38a8a19af41))
+* **linux:** AppImage doesn't update when filename contains spaces ([#8802](https://github.com/electron-userland/electron-builder/issues/8802)) ([4a68fd2](https://github.com/electron-userland/electron-builder/commit/4a68fd2d3d529b0f854877a5415f9ccad00b61fd))
+* **mac:** only fuse macOS universal builds on the combined `universal` package ([#8799](https://github.com/electron-userland/electron-builder/issues/8799)) ([45a402b](https://github.com/electron-userland/electron-builder/commit/45a402b9786bcb8e71bfc12c9498552f597653ec))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v26.0.0-alpha.9...v) (2025-01-21)
 
 
