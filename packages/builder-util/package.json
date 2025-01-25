@@ -14,6 +14,9 @@
   "files": [
     "out"
   ],
+  "engines": {
+    "node": ">=22.12.0"
+  },
   "dependencies": {
     "7zip-bin": "~5.2.0",
     "@types/debug": "^4.1.6",
@@ -23,7 +26,6 @@
     "chalk": "^4.1.2",
     "cross-spawn": "^7.0.6",
     "debug": "^4.3.4",
-    "fs-extra": "^10.1.0",
     "http-proxy-agent": "^7.0.0",
     "https-proxy-agent": "^7.0.0",
     "is-ci": "^3.0.0",
@@ -36,7 +38,6 @@
   "typings": "./out/util.d.ts",
   "devDependencies": {
     "@types/cross-spawn": "6.0.6",
-    "@types/fs-extra": "^9.0.11",
     "@types/is-ci": "3.0.0",
     "@types/js-yaml": "4.0.3",
     "@types/source-map-support": "0.5.4"

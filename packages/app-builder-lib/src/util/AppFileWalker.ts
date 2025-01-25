@@ -1,5 +1,5 @@
 import { Filter, FileConsumer, FilterStats } from "builder-util"
-import { readlink, stat, Stats } from "fs-extra"
+import { readlink, stat, Stats } from "node:fs"
 import { FileMatcher } from "../fileMatcher"
 import { Packager } from "../packager"
 import * as path from "path"

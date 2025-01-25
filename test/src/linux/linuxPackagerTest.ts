@@ -1,5 +1,5 @@
 import { Arch, build, Platform } from "electron-builder"
-import { outputFile } from "fs-extra"
+import { outputFile } from "node:fs"
 import * as path from "path"
 import { GenericServerOptions } from "builder-util-runtime"
 import { assertThat } from "../helpers/fileAssert"

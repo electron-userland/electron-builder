@@ -1,6 +1,6 @@
 import { debug7z, exec, log } from "builder-util"
 import { exists, unlinkIfExists, statOrNull } from "builder-util"
-import { move } from "fs-extra"
+import { move } from "node:fs"
 import * as path from "path"
 import { create, CreateOptions, FileOptions } from "tar"
 import { TmpDir } from "temp-file"

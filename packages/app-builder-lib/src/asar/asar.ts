@@ -1,5 +1,5 @@
 import { createFromBuffer } from "chromium-pickle-js"
-import { close, open, read, readFile, Stats } from "fs-extra"
+import { close, open, read, readFile, Stats } from "node:fs"
 import * as path from "path"
 
 export interface ReadAsarHeader {

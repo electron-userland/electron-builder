@@ -1,6 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
 import { CONCURRENCY, FilterStats } from "builder-util"
-import { lstat, readdir, lstatSync } from "fs-extra"
+import { lstat, readdir, lstatSync } from "node:fs"
 import * as path from "path"
 import { excludedNames, FileMatcher } from "../fileMatcher"
 import { Packager } from "../packager"

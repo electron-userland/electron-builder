@@ -1,5 +1,5 @@
 import { Arch } from "builder-util"
-import { stat } from "fs-extra"
+import { stat } from "node:fs"
 import { ClientRequest } from "http"
 import { basename } from "path"
 import { Publisher } from "./publisher"

@@ -17,7 +17,7 @@ import { CURRENT_APP_INSTALLER_FILE_NAME, CURRENT_APP_PACKAGE_FILE_NAME, Package
 import { exists, statOrNull, walk } from "builder-util"
 import _debug from "debug"
 import * as fs from "fs"
-import { readFile, stat, unlink } from "fs-extra"
+import { readFile, stat, unlink } from "node:fs"
 import * as path from "path"
 import { getBinFromUrl } from "../../binDownload"
 import { Target } from "../../core"

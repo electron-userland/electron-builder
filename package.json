@@ -43,7 +43,6 @@
   "///": "All dependencies for all packages (hoisted)",
   "////": "All typings are added into root `package.json` to avoid duplication errors in the IDE compiler (several `node.d.ts` files).",
   "dependencies": {
-    "@types/fs-extra": "^11.0.4",
     "dmg-license": "1.0.11"
   },
   "devDependencies": {
@@ -58,7 +57,6 @@
     "eslint": "9.16.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-prettier": "^5.2.1",
-    "fs-extra": "10.1.0",
     "husky": "7.0.4",
     "lint-staged": "15.2.10",
     "prettier": "3.3.3",
@@ -69,7 +67,7 @@
   },
   "engines": {
     "node": ">=14.14",
-    "pnpm": ">=9"
+    "pnpm": ">=9.4.0"
   },
   "packageManager": "pnpm@9.4.0",
   "pnpm": {

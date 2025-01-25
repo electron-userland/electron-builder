@@ -1,5 +1,5 @@
 import { Arch, createTargets, Platform } from "electron-builder"
-import { outputFile } from "fs-extra"
+import { outputFile } from "node:fs"
 import * as path from "path"
 import { GithubOptions, GenericServerOptions, SpacesOptions, KeygenOptions } from "builder-util-runtime"
 import { assertThat } from "./helpers/fileAssert"
@@ -157,7 +157,7 @@ test.ifAll.ifNotWindows(
     async upload(task) {
     }
   }
-  
+
   module.exports = Publisher`
         ),
     }

@@ -1,5 +1,5 @@
 import { isEmptyOrSpaces, log, InvalidConfigurationError } from "builder-util"
-import { readFile, readJson } from "fs-extra"
+import { readFile, readJson } from "node:fs"
 import * as path from "path"
 import * as semver from "semver"
 import { Metadata } from "../options/metadata"

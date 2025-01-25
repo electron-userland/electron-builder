@@ -16,7 +16,7 @@ import {
 } from "builder-util"
 import { CancellationToken } from "builder-util-runtime"
 import { EventEmitter } from "events"
-import { mkdirs, chmod, outputFile } from "fs-extra"
+import { mkdirs, chmod, outputFile } from "node:fs"
 import * as isCI from "is-ci"
 import { Lazy } from "lazy-val"
 import * as path from "path"

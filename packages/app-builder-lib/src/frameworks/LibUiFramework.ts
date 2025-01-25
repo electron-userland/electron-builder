@@ -1,4 +1,4 @@
-import { emptyDir } from "fs-extra"
+import { emptyDir } from "node:fs"
 import { mkdir, chmod, rename, writeFile } from "fs/promises"
 import * as path from "path"
 import { executeAppBuilder } from "builder-util"

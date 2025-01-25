@@ -20,7 +20,6 @@
 		"app-builder-lib": "workspace:*",
 		"builder-util": "workspace:*",
 		"builder-util-runtime": "workspace:*",
-		"fs-extra": "^10.1.0",
 		"iconv-lite": "^0.6.2",
 		"js-yaml": "^4.1.0"
 	},
@@ -28,7 +27,6 @@
 		"dmg-license": "^1.0.11"
 	},
 	"devDependencies": {
-		"@types/fs-extra": "9.0.13",
 		"@types/js-yaml": "4.0.3",
 		"temp-file": "3.4.0"
 	},

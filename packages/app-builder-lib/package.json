@@ -15,7 +15,7 @@
     "directory": "packages/app-builder-lib"
   },
   "engines": {
-    "node": ">=14.0.0"
+    "node": ">=22.12.0"
   },
   "keywords": [
     "electron",
@@ -54,7 +54,6 @@
     "@electron/rebuild": "3.7.0",
     "@electron/universal": "2.0.1",
     "@malept/flatpak-bundler": "^0.4.0",
-    "@types/fs-extra": "9.0.13",
     "async-exit-hook": "^2.0.1",
     "bluebird-lst": "^1.0.9",
     "builder-util": "workspace:*",
@@ -66,7 +65,6 @@
     "dotenv-expand": "^11.0.6",
     "ejs": "^3.1.8",
     "electron-publish": "workspace:*",
-    "fs-extra": "^10.1.0",
     "hosted-git-info": "^4.1.0",
     "is-ci": "^3.0.0",
     "isbinaryfile": "^5.0.0",

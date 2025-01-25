@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { copyFile as _nodeCopyFile } from "fs-extra"
+import { copyFile as _nodeCopyFile } from "node:fs/promises"
 import { Stats } from "fs"
 import { platform } from "os"
 import { access, chmod, mkdir, link, lstat, readdir, readlink, stat, symlink, unlink, writeFile } from "fs/promises"

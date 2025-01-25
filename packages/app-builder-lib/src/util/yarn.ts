@@ -1,5 +1,5 @@
 import { asArray, log, spawn } from "builder-util"
-import { pathExists } from "fs-extra"
+import { pathExists } from "node:fs"
 import { Lazy } from "lazy-val"
 import { homedir } from "os"
 import * as path from "path"

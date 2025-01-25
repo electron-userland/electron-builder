@@ -1,6 +1,6 @@
 import { DIR_TARGET, Platform } from "app-builder-lib"
 import { readAsar } from "app-builder-lib/out/asar/asar"
-import { outputFile } from "fs-extra"
+import { outputFile } from "node:fs"
 import * as path from "path"
 import * as fs from "fs/promises"
 import { assertThat } from "./helpers/fileAssert"

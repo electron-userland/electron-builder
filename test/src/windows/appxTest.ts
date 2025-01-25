@@ -3,7 +3,7 @@ import { app, copyTestAsset } from "../helpers/packTester"
 import * as path from "path"
 import { mkdir } from "fs/promises"
 import { isEnvTrue } from "builder-util"
-import { readFile } from "fs-extra"
+import { readFile } from "node:fs"
 
 // test that we can get info from protected pfx
 const protectedCscLink =

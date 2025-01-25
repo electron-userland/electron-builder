@@ -1,5 +1,5 @@
 import { path7x, path7za } from "7zip-bin"
-import { chmod } from "fs-extra"
+import { chmod } from "node:fs/promises"
 import * as fs from "fs"
 
 export async function getPath7za(): Promise<string> {

@@ -1,4 +1,4 @@
-import { copy, exists } from "fs-extra"
+import { copyFile, stat } from "node:fs/promises"
 import { rm } from "fs/promises"
 import * as path from "path"
 import * as typedoc from "typedoc"
@@ -12,14 +12,14 @@ async function main() {
   console.log("copying from", origin, dest)
   const siteDir = path.resolve(process.cwd(), "site")
 
-  if (await exists(siteDir)) {
+  if (await stat(siteDir)) {
     await rm(siteDir, { recursive: true })
   }
-  if (await exists(dest)) {
+  if (await stat(dest)) {
     await rm(dest, { recursive: true })
   }
-  await copy(origin, dest)
-  await copy(path.resolve(process.cwd(), "./README.md"), path.resolve(dest, "README.md"))
+  await copyFile(origin, dest)
+  await copyFile(path.resolve(process.cwd(), "./README.md"), path.resolve(dest, "README.md"))
 
   const typedocConfig: Partial<typedoc.TypeDocOptions> = {
     options: "typedoc.config.js",

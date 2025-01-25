@@ -6,7 +6,7 @@ import { HttpPublisher } from "./httpPublisher"
 import { BitbucketOptions } from "builder-util-runtime/out/publishOptions"
 import { configureRequestOptions, HttpExecutor } from "builder-util-runtime"
 import * as FormData from "form-data"
-import { readFile } from "fs-extra"
+import { readFile } from "node:fs/promises"
 
 export class BitbucketPublisher extends HttpPublisher {
   readonly providerName = "bitbucket"

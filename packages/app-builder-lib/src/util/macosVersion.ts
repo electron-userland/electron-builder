@@ -1,4 +1,4 @@
-import { readFile } from "fs-extra"
+import { readFile } from "node:fs"
 import { Lazy } from "lazy-val"
 import * as semver from "semver"
 import { log } from "builder-util"

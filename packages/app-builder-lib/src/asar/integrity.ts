@@ -24,7 +24,6 @@ export interface AsarIntegrity {
 }
 
 export async function computeData({ resourcesPath, resourcesRelativePath, resourcesDestinationPath, extraResourceMatchers }: AsarIntegrityOptions): Promise<AsarIntegrity> {
-  type Match = Pick<FileMatcher, "to" | "from">
   type IntegrityMap = {
     [filepath: string]: string
   }
@@ -39,7 +38,7 @@ export async function computeData({ resourcesPath, resourcesRelativePath, resour
     {}
   )
 
-  const extraResources = await BluebirdPromise.map(extraResourceMatchers ?? [], async (matcher: FileMatcher): Promise<Match[]> => {
+  const extraResources = await BluebirdPromise.map(extraResourceMatchers ?? [], async (matcher: FileMatcher): Promise<Pick<FileMatcher, "to" | "from">[]> => {
     const { from, to } = matcher
     const stat = await statOrNull(from)
     if (stat == null) {

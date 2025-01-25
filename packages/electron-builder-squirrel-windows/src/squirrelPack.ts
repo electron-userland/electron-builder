@@ -2,7 +2,7 @@ import { Arch, debug, exec, log, spawn, isEmptyOrSpaces, getPath7za, copyFile, w
 import { compute7zCompressArgs } from "app-builder-lib/out/targets/archive"
 import { execWine, prepareWindowsExecutableArgs as prepareArgs } from "app-builder-lib/out/wine"
 import { WinPackager } from "app-builder-lib/out/winPackager"
-import { createWriteStream, stat, unlink, writeFile } from "fs-extra"
+import { createWriteStream, stat, unlink, writeFile } from "node:fs"
 import * as path from "path"
 import * as archiver from "archiver"
 import * as fs from "fs/promises"
