@@ -1,10 +1,9 @@
 import { Arch, Configuration, Platform } from "app-builder-lib"
 import { getBinFromUrl } from "app-builder-lib/out/binDownload"
-import { doSpawn, getArchSuffix } from "builder-util"
+import { doSpawn, getArchSuffix, move } from "builder-util"
 import { GenericServerOptions, S3Options } from "builder-util-runtime"
 import { AppImageUpdater, BaseUpdater, MacUpdater, NoOpLogger, NsisUpdater } from "electron-updater"
 import { EventEmitter } from "events"
-import { rename } from "node:fs/promises"
 import * as path from "path"
 import { TmpDir } from "temp-file"
 import { TestAppAdapter } from "../helpers/TestAppAdapter"
@@ -60,7 +59,7 @@ async function doBuild(outDirs: Array<string>, targets: Map<Platform, Map<Arch, 
     buildApp(version, targets, extraConfig, async context => {
       // move dist temporarily out of project dir so each downloader can reference it
       const newDir = await tmpDir.getTempDir({ prefix: version })
-      await rename(context.outDir, newDir)
+      await move(context.outDir, newDir)
       outDirs.push(newDir)
     })
   try {
@@ -78,7 +77,7 @@ test.ifWindows("web installer", async () => {
   await doBuild(outDirs, Platform.WINDOWS.createTarget(["nsis-web"], Arch.x64), tmpDir, true)
 
   const oldDir = outDirs[0]
-  await rename(path.join(oldDir, "nsis-web", `TestApp-${OLD_VERSION_NUMBER}-x64.nsis.7z`), path.join(getTestUpdaterCacheDir(oldDir), testAppCacheDirName, "package.7z"))
+  await move(path.join(oldDir, "nsis-web", `TestApp-${OLD_VERSION_NUMBER}-x64.nsis.7z`), path.join(getTestUpdaterCacheDir(oldDir), testAppCacheDirName, "package.7z"))
 
   await testBlockMap(outDirs[0], path.join(outDirs[1], "nsis-web"), NsisUpdater, Platform.WINDOWS, Arch.x64)
 })
@@ -90,8 +89,8 @@ test.ifWindows("nsis", async () => {
 
   const oldDir = outDirs[0]
   // move to new dir so that localhost server can read both blockmaps
-  await rename(path.join(oldDir, `Test App ßW Setup ${OLD_VERSION_NUMBER}.exe`), path.join(getTestUpdaterCacheDir(oldDir), testAppCacheDirName, "installer.exe"))
-  await rename(path.join(oldDir, `Test App ßW Setup ${OLD_VERSION_NUMBER}.exe.blockmap`), path.join(outDirs[1], "Test App ßW Setup 1.0.0.exe.blockmap"))
+  await move(path.join(oldDir, `Test App ßW Setup ${OLD_VERSION_NUMBER}.exe`), path.join(getTestUpdaterCacheDir(oldDir), testAppCacheDirName, "installer.exe"))
+  await move(path.join(oldDir, `Test App ßW Setup ${OLD_VERSION_NUMBER}.exe.blockmap`), path.join(outDirs[1], "Test App ßW Setup 1.0.0.exe.blockmap"))
 
   await testBlockMap(outDirs[0], outDirs[1], NsisUpdater, Platform.WINDOWS, Arch.x64)
 })
@@ -131,8 +130,8 @@ async function testMac(arch: Arch) {
     // move to new dir so that localhost server can read both blockmaps
     const oldDir = outDirs[0]
     const blockmap = `Test App ßW-${OLD_VERSION_NUMBER}${getArchSuffix(arch)}-mac.zip.blockmap`
-    await rename(path.join(oldDir, blockmap), path.join(outDirs[1], blockmap))
-    await rename(path.join(oldDir, `Test App ßW-${OLD_VERSION_NUMBER}${getArchSuffix(arch)}-mac.zip`), path.join(getTestUpdaterCacheDir(oldDir), testAppCacheDirName, "update.zip"))
+    await move(path.join(oldDir, blockmap), path.join(outDirs[1], blockmap))
+    await move(path.join(oldDir, `Test App ßW-${OLD_VERSION_NUMBER}${getArchSuffix(arch)}-mac.zip`), path.join(getTestUpdaterCacheDir(oldDir), testAppCacheDirName, "update.zip"))
 
     await testBlockMap(outDirs[0], outDirs[1], MacUpdater, Platform.MAC, arch, "Test App ßW")
   } finally {

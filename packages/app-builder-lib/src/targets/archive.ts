@@ -1,6 +1,5 @@
-import { debug7z, exec, log } from "builder-util"
+import { debug7z, exec, log, move } from "builder-util"
 import { exists, unlinkIfExists, statOrNull } from "builder-util"
-import { rename } from "node:fs/promises"
 import * as path from "path"
 import { create, CreateOptions, FileOptions } from "tar"
 import { TmpDir } from "temp-file"
@@ -38,7 +37,7 @@ export async function tar(compression: CompressionLevel | any, format: string, o
     }
     await exec(lzipPath, [compression === "store" ? "-1" : "-9", "--keep" /* keep (don't delete) input files */, tarFile])
     // bloody lzip creates file in the same dir where input file with postfix `.lz`, option --output doesn't work
-    await rename(`${tarFile}.lz`, outFile)
+    await move(`${tarFile}.lz`, outFile)
     return
   }
 

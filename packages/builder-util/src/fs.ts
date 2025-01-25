@@ -1,10 +1,10 @@
-// Note to the developer: In migrating away from fs-extra to node:fs and node:fs/promises, some helper functions were copied from https://github.com/jprichardson/node-fs-extra to consolidate expected logic flow within electron-builder's packages
+// Note to the developer: In migrating away from fs-extra to node 22 w/ node:fs and node:fs/promises, some helper functions were copied from https://github.com/jprichardson/node-fs-extra to consolidate/maintain expected logic flow within electron-builder's packages
 
 import BluebirdPromise from "bluebird-lst"
 import { Stats } from "fs"
 import * as isCI from "is-ci"
-import { Mode as FsMode, ObjectEncodingOptions, OpenMode, PathLike } from "node:fs"
-import { copyFile as _nodeCopyFile, access, chmod, link, lstat, mkdir, readdir, readFile, readlink, rm, stat, symlink, unlink, writeFile } from "node:fs/promises"
+import { BigIntStats, Mode as FsMode, ObjectEncodingOptions, OpenMode } from "node:fs"
+import { copyFile as _nodeCopyFile, access, chmod, link, lstat, mkdir, readdir, readFile, readlink, rename, rm, stat, symlink, unlink, writeFile } from "node:fs/promises"
 import { platform } from "os"
 import * as path from "path"
 import { log } from "./log"
@@ -347,28 +347,31 @@ export type OutputOptions = ObjectEncodingOptions & {
 
 // JSON helpers
 
-export async function readJson(file: PathLike) {
+export async function readJson(file: string) {
   const data = await readFile(file, "utf-8")
   return JSON.parse(data)
 }
 
 export async function outputJson(
-  file: PathLike,
+  file: string,
   data: any,
-  jsonOptions?: { spaces: number; replacer?: (this: any, key: string, value: any) => any },
+  jsonOptions?: {
+    prettyPrintIndent: number
+    replacer?: (this: any, key: string, value: any) => any
+  },
   outputOptions?: OutputOptions
 ) {
-  return outputFile(file, JSON.stringify(data, jsonOptions?.replacer, jsonOptions?.spaces), outputOptions)
+  return outputFile(file, JSON.stringify(data, jsonOptions?.replacer, jsonOptions?.prettyPrintIndent), outputOptions)
 }
 
 // File helpers
 
 export async function outputFile(
-  file: PathLike,
+  file: string,
   data: string | NodeJS.ArrayBufferView | Iterable<string | NodeJS.ArrayBufferView> | AsyncIterable<string | NodeJS.ArrayBufferView> | Stream,
   options?: OutputOptions
 ) {
-  const dir = path.dirname(file as string)
+  const dir = path.dirname(file)
 
   if (!(await exists(dir))) {
     await mkdirs(dir)
@@ -377,14 +380,96 @@ export async function outputFile(
   return writeFile(file, data, options)
 }
 
+export async function move(src: string, dest: string, options?: { overwrite: boolean; dereference?: boolean }) {
+  const overwrite = options?.overwrite ?? false
+
+  let isChangingCase = false
+  const { srcStat, destStat } = await checkPathsAreValid(src, dest, options)
+  if (isEqualStats(srcStat, destStat)) {
+    const srcBaseName = path.basename(src)
+    const destBaseName = path.basename(dest)
+    if (srcBaseName !== destBaseName && srcBaseName.toLowerCase() === destBaseName.toLowerCase()) {
+      isChangingCase = true
+    } else {
+      throw new Error("Source and destination must not be the same.")
+    }
+  }
+
+  // await stat.checkParentPaths(src, srcStat, dest, "move")
+
+  // If the parent of dest is not root, make sure it exists before proceeding
+  const destParent = path.dirname(dest)
+  const parsedParentPath = path.parse(destParent)
+  if (parsedParentPath.root !== destParent) {
+    await mkdirs(destParent)
+  }
+
+  if (!isChangingCase) {
+    if (overwrite) {
+      await remove(dest)
+    } else if (await exists(dest)) {
+      throw new Error("dest already exists.")
+    }
+  }
+
+  try {
+    // Try w/ rename first, and try copy + remove if EXDEV
+    await rename(src, dest)
+  } catch (err: any) {
+    if (err.code !== "EXDEV") {
+      throw err
+    }
+    if (srcStat.isDirectory()) {
+      return copyDir(src, dest)
+    }
+    if (srcStat.isFile() || srcStat.isSymbolicLink()) {
+      return copyOrLinkFile(src, dest, srcStat)
+    }
+    return remove(src)
+  }
+}
+
+// async function copy(src: string, dest: string) {
+//   // Warn about using preserveTimestamps on 32-bit node: https://github.com/jprichardson/node-fs-extra/issues/269
+//   if (options?.preserveTimestamps && process.arch === "ia32") {
+//     log.warn(null, "Using the preserveTimestamps option in 32-bit node is not recommended;\n\n\tsee https://github.com/jprichardson/node-fs-extra/issues/269")
+//   }
+
+//   const { srcStat } = await checkPathsAreValid(src, dest, options)
+
+//   // await stat.checkParentPaths(src, srcStat, dest, "copy")
+
+//   // const include = await runFilter(src, dest, options)
+
+//   // if (!include) return
+
+//   // check if the parent of dest exists, and create it if it doesn't exist
+//   // const destParent = path.dirname(dest)
+//   // if (!(await exists(destParent))) {
+//   //   await mkdirs(destParent)
+//   // }
+
+//   // await getStatsAndPerformCopy(destStat, src, dest, options)
+//   if (srcStat.isDirectory()) {
+//     return copyDir(src, dest)
+//   }
+//   if (srcStat.isFile() || srcStat.isSymbolicLink()) {
+//     return copyOrLinkFile(src, dest, srcStat)
+//   }
+// }
+
+export async function remove(path: string) {
+  return rm(path, { recursive: true, force: true })
+}
+
 // Dir helpers
 
-export async function emptyDir(dir: PathLike) {
+export async function emptyDir(dir: string) {
   await rm(dir, { recursive: true, force: true })
   await mkdir(dir)
 }
 
-export async function mkdirs(dir: PathLike, mode?: FsMode) {
+export async function mkdirs(dir: string, mode?: FsMode) {
   return mkdir(dir, { mode, recursive: true })
 }
 
@@ -392,7 +477,7 @@ export async function mkdirs(dir: PathLike, mode?: FsMode) {
 
 export type SymlinkType = "file" | "dir"
 
-export async function ensureSymlink(src: PathLike, dest: PathLike, type?: SymlinkType) {
+export async function ensureSymlink(src: string, dest: string, type?: SymlinkType): Promise<void> {
   // If destination already exists and it's the same symlink, return early
   try {
     if ((await lstat(dest))?.isSymbolicLink() && isEqualStats(await stat(src), await stat(dest))) {
@@ -402,12 +487,12 @@ export async function ensureSymlink(src: PathLike, dest: PathLike, type?: Symlin
     /* empty */
   }
 
-  const dir = path.dirname(dest as string)
+  const dir = path.dirname(dest)
   if (!(await exists(dir))) {
     await mkdirs(dir)
   }
 
-  const paths = await symlinkPaths(src as string, dest as string)
+  const paths = await symlinkPaths(src, dest)
   return symlink(paths.target, dest, type ?? (await symlinkType(paths.toCwd)))
 }
 
@@ -422,7 +507,7 @@ async function symlinkPaths(target: string, dest: string) {
     }
   }
 
-  await lstat(target) // make sure src exists, e.g. just throw an error
+  await lstat(target) // make sure src exists, e.g. just throw an error if not
 
   return {
     toCwd: target,
@@ -430,28 +515,30 @@ async function symlinkPaths(target: string, dest: string) {
   }
 }
 
-async function symlinkType(src: PathLike) {
+async function symlinkType(src: string) {
   try {
-    return (await lstat(src))?.isDirectory() ? "dir" : "file"
+    if ((await lstat(src))?.isDirectory()) {
+      return "dir"
+    }
   } catch (e: any) {
     log.error({ error: e.message || e.stack }, "unable to determine symlink type, falling back to 'file'")
-    return "file"
   }
+  return "file"
 }
 
 // File helpers
 
-export function unlinkIfExists(file: PathLike) {
+export function unlinkIfExists(file: string) {
   return unlink(file).catch(() => {
     /* ignore */
   })
 }
 
-export async function statOrNull(file: PathLike): Promise<Stats | null> {
+export async function statOrNull(file: string): Promise<Stats | null> {
   return orNullIfFileNotExist(stat(file))
 }
 
-export async function exists(file: PathLike): Promise<boolean> {
+export async function exists(file: string): Promise<boolean> {
   try {
     await access(file)
     return true
@@ -460,6 +547,142 @@ export async function exists(file: PathLike): Promise<boolean> {
   }
 }
 
-export function isEqualStats(s1: Stats, s2: Stats) {
-  return s2.ino && s2.dev && s2.ino === s1.ino && s2.dev === s1.dev
+export function isEqualStats(s1: Stats | BigIntStats, s2: Stats | BigIntStats | null) {
+  return s2?.ino && s2.dev && s2.ino === s1.ino && s2.dev === s1.dev
 }
+
+async function checkPathsAreValid(src: string, dest: string, opts?: { dereference?: boolean }): Promise<{ srcStat: Stats; destStat: Stats | null }> {
+  const getStats = (file: string) => (opts?.dereference ? stat(file) : lstat(file))
+  const [srcStat, destStat] = await Promise.all([
+    getStats(src),
+    getStats(dest).catch(err => {
+      // if file doesn' exist, that's fine since we're performing an fs operation (move/copy) to `dest`
+      if (err.code === "ENOENT") {
+        return null
+      }
+      throw err
+    }),
+  ])
+  if (destStat) {
+    if (srcStat.isDirectory() && !destStat.isDirectory()) {
+      throw new Error(`Cannot overwrite non-directory '${dest}' with directory '${src}'.`)
+    }
+    if (!srcStat.isDirectory() && destStat.isDirectory()) {
+      throw new Error(`Cannot overwrite directory '${dest}' with non-directory '${src}'.`)
+    }
+  }
+
+  if (srcStat.isDirectory() && !path.relative(dest, src).includes("..")) {
+    throw new Error(`Cannot perform operation on '${src}' to a subdirectory of itself, '${dest}'.`)
+  }
+
+  return { srcStat, destStat }
+}
+
+// async function getStatsAndPerformCopy(destStat: Stats, src: string, dest: string, opts: { dereference?: boolean }) {
+//   const getStat = opts.dereference ? stat : lstat
+//   const srcStat = await getStat(src)
+
+//   if (srcStat.isDirectory()) {
+//     return onDir(srcStat, destStat, src, dest, opts)
+//   }
+//   if (srcStat.isFile() || srcStat.isCharacterDevice() || srcStat.isBlockDevice())  {
+//     return onFile(srcStat, destStat, src, dest, opts)
+//   }
+//   if (srcStat.isSymbolicLink()) {
+//     return onLink(destStat, src, dest, opts)
+//   }
+//   if (srcStat.isSocket()) {
+//     throw new Error(`Cannot copy a socket file: ${src}`)
+//   }
+//   if (srcStat.isFIFO()) {
+//     throw new Error(`Cannot copy a FIFO pipe: ${src}`)
+//   }
+//   throw new Error(`Unknown file: ${src}`)
+// }
+
+// async function onFile(srcStat, destStat, src, dest, opts) {
+//   if (!destStat) {
+//   return copyFile(srcStat, src, dest, opts)
+// }
+
+//   if (opts.overwrite) {
+//     await unlink(dest)
+//     return copyFile(srcStat, src, dest, opts)
+//   }
+//   if (opts.errorOnExist) {
+//     throw new Error(`'${dest}' already exists`)
+//   }
+// }
+
+// async function onDir(srcStat, destStat, src, dest, opts) {
+//   // the dest directory might not exist, create it
+//   if (!(await exists(path.dirname(dest)))) {
+//     await mkdirs(dest)
+//   }
+
+//   const promises = []
+
+//   // loop through the files in the current directory to copy everything
+//   for await (const item of await fs.opendir(src)) {
+//     const srcItem = path.join(src, item.name)
+//     const destItem = path.join(dest, item.name)
+
+//     promises.push(
+//       runFilter(srcItem, destItem, opts).then(include => {
+//         if (include) {
+//           // only copy the item if it matches the filter function
+//           return stat.checkPaths(srcItem, destItem, "copy", opts).then(({ destStat }) => {
+//             // If the item is a copyable file, `getStatsAndPerformCopy` will copy it
+//             // If the item is a directory, `getStatsAndPerformCopy` will call `onDir` recursively
+//             return getStatsAndPerformCopy(destStat, srcItem, destItem, opts)
+//           })
+//         }
+//       })
+//     )
+//   }
+
+//   await Promise.all(promises)
+
+//   if (!destStat) {
+//     await fs.chmod(dest, srcStat.mode)
+//   }
+// }
+
+// async function onLink(destStat, src, dest, opts) {
+//   let resolvedSrc = await fs.readlink(src)
+//   if (opts.dereference) {
+//     resolvedSrc = path.resolve(process.cwd(), resolvedSrc)
+//   }
+//   if (!destStat) {
+//     return fs.symlink(resolvedSrc, dest)
+//   }
+
+//   let resolvedDest = null
+//   try {
+//     resolvedDest = await fs.readlink(dest)
+//   } catch (e) {
+//     // dest exists and is a regular file or directory,
+//     // Windows may throw UNKNOWN error. If dest already exists,
+//     // fs throws error anyway, so no need to guard against it here.
+//     if (e.code === "EINVAL" || e.code === "UNKNOWN") return fs.symlink(resolvedSrc, dest)
+//     throw e
+//   }
+//   if (opts.dereference) {
+//     resolvedDest = path.resolve(process.cwd(), resolvedDest)
+//   }
+//   if (stat.isSrcSubdir(resolvedSrc, resolvedDest)) {
+//     throw new Error(`Cannot copy '${resolvedSrc}' to a subdirectory of itself, '${resolvedDest}'.`)
+//   }
+
+//   // do not copy if src is a subdir of dest since unlinking
+//   // dest in this case would result in removing src contents
+//   // and therefore a broken symlink would be created.
+//   if (stat.isSrcSubdir(resolvedDest, resolvedSrc)) {
+//     throw new Error(`Cannot overwrite '${resolvedDest}' with '${resolvedSrc}'.`)
+//   }
+
+//   // copy the link
+//   await fs.unlink(dest)
+//   return fs.symlink(resolvedSrc, dest)
+// }

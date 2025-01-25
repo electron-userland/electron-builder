@@ -263,7 +263,7 @@ async function writeOldMacInfo(
         releaseDate: new Date().toISOString(),
         url: computeDownloadUrl(publishConfig, packager.generateName2("zip", "mac", isGitHub), packager),
       },
-      { spaces: 2 }
+      { prettyPrintIndent: 2 }
     )
 
     packager.info.dispatchArtifactCreated({
