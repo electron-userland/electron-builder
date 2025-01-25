@@ -1,4 +1,4 @@
-import { addValue, deepAssign, exec, log, spawn, getPath7x, getPath7za, copyDir, FileCopier, USE_HARD_LINKS, walk, emptyDir } from "builder-util"
+import { addValue, deepAssign, exec, log, spawn, getPath7x, getPath7za, copyDir, FileCopier, USE_HARD_LINKS, walk, emptyDir, outputJson } from "builder-util"
 import { CancellationToken, UpdateFileInfo } from "builder-util-runtime"
 import { executeFinally } from "builder-util"
 import DecompressZip from "decompress-zip"
@@ -491,7 +491,7 @@ export async function modifyPackageJson(projectDir: string, task: (data: any) =>
   await fs.unlink(file)
 
   await fs.writeFile(path.join(projectDir, ".yarnrc.yml"), "nodeLinker: node-modules")
-  return await writeJson(file, data)
+  return await outputJson(file, data)
 }
 
 export function platform(platform: Platform): PackagerOptions {
@@ -579,8 +579,4 @@ export async function verifyAsarFileTree(resourceDir: string) {
 
 export function toSystemIndependentPath(s: string): string {
   return path.sep === "/" ? s : s.replace(/\\/g, "/")
-}
-
-function writeJson(file: string, data: any): any {
-  throw new Error("Function not implemented.")
 }
