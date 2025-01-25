@@ -318,7 +318,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
       let asarIntegrity: AsarIntegrity | null = null
       if (!(asarOptions == null || options?.disableAsarIntegrity)) {
-        asarIntegrity = await computeData({ resourcesPath, resourcesRelativePath })
+        asarIntegrity = await computeData({ resourcesPath, resourcesRelativePath, resourcesDestinationPath: this.getResourcesDir(appOutDir), extraResourceMatchers })
       }
 
       await framework.beforeCopyExtraFiles({
