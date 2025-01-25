@@ -25,27 +25,29 @@ export interface AsarIntegrity {
 
 export async function computeData({ resourcesPath, resourcesRelativePath, resourcesDestinationPath, extraResourceMatchers }: AsarIntegrityOptions): Promise<AsarIntegrity> {
   type Match = Pick<FileMatcher, "to" | "from">
+  type IntegrityMap = {
+    [filepath: string]: string
+  }
   const isAsar = (filepath: string) => filepath.endsWith(".asar")
 
-  const result: AsarIntegrity = {}
+  const resources = await readdir(resourcesPath)
+  const resourceAsars = resources.filter(isAsar).reduce<IntegrityMap>(
+    (prev, filename) => ({
+      ...prev,
+      [path.join(resourcesRelativePath, filename)]: path.join(resourcesPath, filename),
+    }),
+    {}
+  )
 
-  const resourceAsars = (await readdir(resourcesPath)).filter(isAsar)
-  await BluebirdPromise.each(resourceAsars, async (filename: string) => {
-    const key = path.join(resourcesRelativePath, filename)
-    const from = path.join(resourcesPath, filename)
-    result[key] = await hashHeader(from)
-  })
-
-  const extraResourceAsars = await BluebirdPromise.map(extraResourceMatchers ?? [], async (matcher: FileMatcher): Promise<Match[]> => {
+  const extraResources = await BluebirdPromise.map(extraResourceMatchers ?? [], async (matcher: FileMatcher): Promise<Match[]> => {
     const { from, to } = matcher
-
     const stat = await statOrNull(from)
     if (stat == null) {
       log.warn({ from }, `file source doesn't exist`)
       return []
     }
     if (stat.isFile()) {
-      return isAsar(from) ? [{ from, to }] : []
+      return [{ from, to }]
     }
 
     if (matcher.isEmpty() || matcher.containsOnlyIgnore()) {
@@ -53,18 +55,22 @@ export async function computeData({ resourcesPath, resourcesRelativePath, resour
     }
     const matcherFilter = matcher.createFilter()
     const extraResourceMatches = await walk(matcher.from, (file: string, stats: FilterStats) => matcherFilter(file, stats) || stats.isDirectory())
-    return extraResourceMatches.map(from => ({ from, to: matcher.to })).filter(match => isAsar(match.from))
+    return extraResourceMatches.map(from => ({ from, to: matcher.to }))
   })
-  await BluebirdPromise.each(extraResourceAsars.flat(1), async ({ from, to }) => {
-    const prefix = path.relative(resourcesDestinationPath, to)
-    const key = path.join(resourcesRelativePath, prefix, path.basename(from))
-    result[key] = await hashHeader(from)
-  })
+  const extraResourceAsars = extraResources
+    .flat(1)
+    .filter(match => isAsar(match.from))
+    .reduce<IntegrityMap>((prev, { to, from }) => {
+      const prefix = path.relative(resourcesDestinationPath, to)
+      return {
+        ...prev,
+        [path.join(resourcesRelativePath, prefix, path.basename(from))]: from,
+      }
+    }, {})
 
   // sort to produce constant result
-  return Object.entries(result)
-    .sort(([name1], [name2]) => name1.localeCompare(name2))
-    .reduce<AsarIntegrity>((prev, [name, hash]) => ({ ...prev, [name]: hash }), {})
+  const allAsars = [...Object.entries(resourceAsars), ...Object.entries(extraResourceAsars)].sort(([name1], [name2]) => name1.localeCompare(name2))
+  return BluebirdPromise.reduce(allAsars, async (prev, [relativePathKey, from]) => ({ ...prev, [relativePathKey]: await hashHeader(from) }), {} as AsarIntegrity)
 }
 
 async function hashHeader(file: string): Promise<HeaderHash> {
