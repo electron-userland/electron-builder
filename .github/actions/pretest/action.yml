@@ -7,10 +7,6 @@ inputs:
   cache-path:
     description: 'The path to the electron cache'
     required: true
-  version:
-    description: 'The pnpm version to use'
-    required: false
-    default: 9.4.0
 
 runs:
   using: 'composite'
@@ -18,17 +14,17 @@ runs:
     - name: Setup pnpm
       uses: pnpm/action-setup@fe02b34f77f8bc703788d5817da081398fad5dd2 # v4.0.0
       with:
-        version: ${{ inputs.version }}
+        version: 9.4.0
 
     - name: Setup python
       uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5
       with:
-        python-version: '3.11'
+        python-version: 3.11
 
     - name: Setup node
       uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4
       with:
-        node-version: '22'
+        node-version: 22.12
         cache: 'pnpm'
 
     - name: Install dependencies

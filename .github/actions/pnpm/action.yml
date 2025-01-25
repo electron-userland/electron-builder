@@ -1,10 +1,5 @@
 name: 'pnpm installation'
 description: 'Install and audit dependencies via pnpm'
-inputs:
-  version: # id of input
-    description: 'The pnpm version to use'
-    required: false
-    default: 9.4.0
 
 runs:
   using: 'composite'
@@ -12,12 +7,12 @@ runs:
     - name: Setup pnpm
       uses: pnpm/action-setup@fe02b34f77f8bc703788d5817da081398fad5dd2 # v4.0.0
       with:
-        version: ${{ inputs.version }}
+        version: 9.4.0
 
     - name: Setup node
       uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4
       with:
-        node-version: '22'
+        node-version: 22.12
         cache: 'pnpm'
 
     - name: Install dependencies
