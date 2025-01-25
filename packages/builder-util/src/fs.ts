@@ -398,7 +398,9 @@ export async function ensureSymlink(src: PathLike, dest: PathLike, type?: Symlin
     if ((await lstat(dest))?.isSymbolicLink() && isEqualStats(await stat(src), await stat(dest))) {
       return
     }
-  } catch {}
+  } catch {
+    /* empty */
+  }
 
   const dir = path.dirname(dest as string)
   if (!(await exists(dir))) {
