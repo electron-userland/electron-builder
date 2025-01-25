@@ -140,7 +140,7 @@ export async function readAsarHeader(archive: string): Promise<ReadAsarHeader> {
   let headerBuf
   try {
     const sizeBuf = Buffer.allocUnsafe(8)
-    if ((await fd.read( sizeBuf, 0, 8, null as any)).bytesRead !== 8) {
+    if ((await fd.read(sizeBuf, 0, 8, null as any)).bytesRead !== 8) {
       throw new Error("Unable to read header size")
     }
 

@@ -1,4 +1,4 @@
-import { log } from "builder-util"
+import { log, readJson } from "builder-util"
 import { load } from "js-yaml"
 import { PlatformPackager } from "app-builder-lib"
 import { getLicenseFiles } from "app-builder-lib/out/util/license"

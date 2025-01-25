@@ -1,4 +1,4 @@
-import { DebugLogger, deepAssign, InvalidConfigurationError, log, safeStringifyJson, statOrNull } from "builder-util"
+import { DebugLogger, deepAssign, InvalidConfigurationError, log, readJson, safeStringifyJson, statOrNull } from "builder-util"
 import {} from "node:fs/promises"
 import { Lazy } from "lazy-val"
 import * as path from "path"

@@ -1,7 +1,7 @@
 import BluebirdPromise from "bluebird-lst"
-import { Arch, log, copyFile, orNullIfFileNotExist } from "builder-util"
+import { Arch, log, copyFile, orNullIfFileNotExist, readJson, outputJson } from "builder-util"
 import { Hash } from "crypto"
-import { readJson, writeJson } from "node:fs/promises"
+import { } from "node:fs/promises"
 import { mkdir, readFile } from "fs/promises"
 import * as path from "path"
 
@@ -67,7 +67,7 @@ export class BuildCacheManager {
 
     try {
       await mkdir(this.cacheDir, { recursive: true })
-      await Promise.all([writeJson(this.cacheInfoFile, this.cacheInfo), copyFile(this.executableFile, this.cacheFile, false)])
+      await Promise.all([outputJson(this.cacheInfoFile, this.cacheInfo), copyFile(this.executableFile, this.cacheFile, false)])
     } catch (e: any) {
       log.warn({ error: e.stack || e }, `cannot save build cache`)
     }

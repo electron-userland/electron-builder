@@ -1,4 +1,4 @@
-import { isEmptyOrSpaces, log, InvalidConfigurationError } from "builder-util"
+import { isEmptyOrSpaces, log, InvalidConfigurationError, readJson } from "builder-util"
 import { readFile,} from "node:fs/promises"
 import * as path from "path"
 import * as semver from "semver"

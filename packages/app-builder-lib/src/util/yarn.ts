@@ -1,5 +1,4 @@
-import { asArray, log, spawn } from "builder-util"
-import { pathExists } from "node:fs/promises"
+import { asArray, exists, log, spawn } from "builder-util"
 import { Lazy } from "lazy-val"
 import { homedir } from "os"
 import * as path from "path"
@@ -20,7 +19,7 @@ export async function installOrRebuild(config: Configuration, appDir: string, op
   let isDependenciesInstalled = false
 
   for (const fileOrDir of ["node_modules", ".pnp.js"]) {
-    if (await pathExists(path.join(appDir, fileOrDir))) {
+    if (await exists(path.join(appDir, fileOrDir))) {
       isDependenciesInstalled = true
 
       break

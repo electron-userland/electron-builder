@@ -1,6 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
 import { CONCURRENCY, FilterStats } from "builder-util"
-import { lstat, readdir, lstatSync } from "node:fs/promises"
+import { lstat, readdir } from "node:fs/promises"
 import * as path from "path"
 import { excludedNames, FileMatcher } from "../fileMatcher"
 import { Packager } from "../packager"
@@ -77,7 +77,7 @@ export class NodeModuleCopyHelper extends FileCopyHelper {
       // our handler is async, but we should add sorted files, so, we add file to result not in the mapper, but after map
       const sortedFilePaths = await BluebirdPromise.map(
         childNames,
-        name => {
+        async name => {
           const filePath = path.join(dirPath, name)
 
           const forceIncluded = onNodeModuleFile != null && !!onNodeModuleFile(filePath)
@@ -87,7 +87,7 @@ export class NodeModuleCopyHelper extends FileCopyHelper {
           }
 
           // check if filematcher matches the files array as more important than the default excluded files.
-          const fileMatched = filter != null && filter(dirPath, lstatSync(dirPath))
+          const fileMatched = filter != null && filter(dirPath, await lstat(dirPath))
           if (!fileMatched || !forceIncluded || !!this.packager.config.disableDefaultIgnoredFiles) {
             for (const ext of nodeModuleExcludedExts) {
               if (name.endsWith(ext)) {

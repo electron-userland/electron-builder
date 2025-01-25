@@ -48,7 +48,7 @@ type OutputOptions = ObjectEncodingOptions & {
   flag?: OpenMode
 }
 
-export async function outputJson(file: PathLike, data: any, jsonOptions?: {  spaces: number }, outputOptions?: OutputOptions) {
+export async function outputJson(file: PathLike, data: any, jsonOptions?: { spaces: number }, outputOptions?: OutputOptions) {
   return outputFile(file, JSON.stringify(data, undefined, jsonOptions?.spaces), outputOptions)
 }
 
@@ -74,6 +74,27 @@ export async function emptyDir(dir: PathLike) {
 export async function mkdirs(dir: PathLike, mode?: FsMode) {
   return mkdir(dir, { mode, recursive: true })
 }
+
+// export async function createSymlink(src: PathLike, dest: PathLike, type: any) {
+//   if ((await lstat(dest))?.isSymbolicLink() && isEqualStats(await stat(src), await stat(dest))) {
+//     return
+//   }
+
+//   const relative = await symlinkPaths(srcpath, dstpath)
+//   srcpath = relative.toDst
+//   const toType = await symlinkType(relative.toCwd, type)
+//   const dir = path.dirname(dstpath)
+
+//   if (!(await pathExists(dir))) {
+//     await mkdirs(dir)
+//   }
+
+//   return fs.symlink(srcpath, dstpath, toType)
+// }
+
+// export function isEqualStats(s1: Stats, s2: Stats) {
+//   return s2.ino && s2.dev && s2.ino === s1.ino && s2.dev === s1.dev
+// }
 
 export function unlinkIfExists(file: PathLike) {
   return unlink(file).catch(() => {
