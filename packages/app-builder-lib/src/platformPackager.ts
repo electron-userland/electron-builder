@@ -8,7 +8,7 @@ import * as path from "path"
 import { AppInfo } from "./appInfo"
 import { checkFileInArchive } from "./asar/asarFileChecker"
 import { AsarPackager } from "./asar/asarUtil"
-import { computeData } from "./asar/integrity"
+import { AsarIntegrity, computeData } from "./asar/integrity"
 import { copyFiles, FileMatcher, getFileMatchers, GetFileMatchersOptions, getMainFileMatchers, getNodeModuleFileMatcher } from "./fileMatcher"
 import { createTransformer, isElectronCompileUsed } from "./fileTransformer"
 import { Framework, isElectronBased } from "./Framework"
@@ -316,10 +316,15 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     if (framework.beforeCopyExtraFiles != null) {
       const resourcesRelativePath = this.platform === Platform.MAC ? "Resources" : isElectronBased(framework) ? "resources" : ""
 
+      let asarIntegrity: AsarIntegrity | null = null
+      if (!(asarOptions == null || options?.disableAsarIntegrity)) {
+        asarIntegrity = await computeData({ resourcesPath, resourcesRelativePath })
+      }
+
       await framework.beforeCopyExtraFiles({
         packager: this,
         appOutDir,
-        asarIntegrity: asarOptions == null || options?.disableAsarIntegrity ? null : await computeData({ resourcesPath, resourcesRelativePath }),
+        asarIntegrity,
         platformName,
       })
     }

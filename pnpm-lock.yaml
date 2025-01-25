@@ -614,6 +614,9 @@ importers:
       path-sort:
         specifier: ^0.1.0
         version: 0.1.0
+      resedit:
+        specifier: 1.7.0
+        version: 1.7.0
       semver:
         specifier: ^7.3.8
         version: 7.6.3
@@ -5087,6 +5090,10 @@ packages:
 
   require-package-name@2.0.1:
     resolution: {integrity: sha512-uuoJ1hU/k6M0779t3VMVIYpb2VMJk05cehCaABFhXaibcbvfgR8wKiozLjVFSzJPmQMRqIcO0HMyTFqfV09V6Q==}
+
+  resedit@1.7.0:
+    resolution: {integrity: sha512-dbsZ0gk5opWPFlKMqvxCrLCuMZUVmsW3yTPT0tT4mYwo5fjQM8c4HMN9ZJt6dRDqDV/78m9SU4rv24PN4NiYaA==}
+    engines: {node: '>=12', npm: '>=6'}
 
   resedit@1.7.2:
     resolution: {integrity: sha512-vHjcY2MlAITJhC0eRD/Vv8Vlgmu9Sd3LX9zZvtGzU5ZImdTN3+d6e/4mnTyV8vEbyf1sgNIrWxhWlrys52OkEA==}
@@ -11496,6 +11503,10 @@ snapshots:
   require-main-filename@2.0.0: {}
 
   require-package-name@2.0.1: {}
+
+  resedit@1.7.0:
+    dependencies:
+      pe-library: 0.4.1
 
   resedit@1.7.2:
     dependencies:

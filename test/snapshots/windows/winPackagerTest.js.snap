@@ -62,6 +62,72 @@ exports[`win zip 1`] = `
 }
 `;
 
+exports[`win zip 2`] = `
+[
+  "chrome_100_percent.pak",
+  "chrome_200_percent.pak",
+  "ffmpeg.dll",
+  "icudtl.dat",
+  "libEGL.dll",
+  "libGLESv2.dll",
+  "LICENSE.electron.txt",
+  "LICENSES.chromium.html",
+  "locales/",
+  "resources/",
+  "resources/app.asar",
+  "resources.pak",
+  "snapshot_blob.bin",
+  "Test App ßW.exe",
+  "v8_context_snapshot.bin",
+  "vk_swiftshader.dll",
+  "vk_swiftshader_icd.json",
+  "vulkan-1.dll",
+]
+`;
+
+exports[`win zip 3`] = `
+[
+  {
+    "alg": "SHA256",
+    "file": "resources\\app.asar",
+    "value": "hash",
+  },
+]
+`;
+
+exports[`win zip 4`] = `
+[
+  "chrome_100_percent.pak",
+  "chrome_200_percent.pak",
+  "ffmpeg.dll",
+  "icudtl.dat",
+  "libEGL.dll",
+  "libGLESv2.dll",
+  "LICENSE.electron.txt",
+  "LICENSES.chromium.html",
+  "locales/",
+  "resources/",
+  "resources/app.asar",
+  "resources.pak",
+  "snapshot_blob.bin",
+  "Test App ßW.exe",
+  "v8_context_snapshot.bin",
+  "vk_swiftshader.dll",
+  "vk_swiftshader_icd.json",
+  "vulkan-1.dll",
+]
+`;
+
+exports[`win zip 5`] = `
+[
+  {
+    "alg": "SHA256",
+    "file": "resources\\app.asar",
+    "value": "hash",
+  },
+]
+`;
+
 exports[`zip artifactName 1`] = `
 {
   "win": [

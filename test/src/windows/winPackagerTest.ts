@@ -26,22 +26,25 @@ test.ifAll(
 
 test.ifAll(
   "win zip",
-  app({
-    targets: Platform.WINDOWS.createTarget(["zip"], Arch.x64, Arch.arm64),
-    config: {
-      downloadAlternateFFmpeg: true,
-      electronFuses: {
-        runAsNode: true,
-        enableCookieEncryption: true,
-        enableNodeOptionsEnvironmentVariable: true,
-        enableNodeCliInspectArguments: true,
-        enableEmbeddedAsarIntegrityValidation: true,
-        onlyLoadAppFromAsar: true,
-        loadBrowserProcessSpecificV8Snapshot: true,
-        grantFileProtocolExtraPrivileges: undefined, // unsupported on current electron version in our tests
+  app(
+    {
+      targets: Platform.WINDOWS.createTarget(["zip"], Arch.x64, Arch.arm64),
+      config: {
+        electronLanguages: "en",
+        downloadAlternateFFmpeg: true,
+        electronFuses: {
+          runAsNode: true,
+          enableCookieEncryption: true,
+          enableNodeOptionsEnvironmentVariable: true,
+          enableNodeCliInspectArguments: true,
+          enableEmbeddedAsarIntegrityValidation: true,
+          onlyLoadAppFromAsar: true,
+          loadBrowserProcessSpecificV8Snapshot: true,
+          grantFileProtocolExtraPrivileges: undefined, // unsupported on current electron version in our tests
+        },
       },
-    },
-  })
+    }
+  )
 )
 
 test.ifAll(
@@ -52,6 +55,8 @@ test.ifAll(
       //tslint:disable-next-line:no-invalid-template-strings
       artifactName: "${productName}-${version}-${os}-${arch}.${ext}",
     },
+  }, {
+    signed: true
   })
 )
 
