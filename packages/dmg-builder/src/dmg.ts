@@ -5,7 +5,7 @@ import { createBlockmap } from "app-builder-lib/out/targets/differentialUpdateIn
 import { executeAppBuilderAsJson } from "app-builder-lib/out/util/appBuilder"
 import { sanitizeFileName } from "builder-util/out/filename"
 import { Arch, AsyncTaskManager, exec, getArchSuffix, InvalidConfigurationError, isEmptyOrSpaces, log, copyDir, copyFile, exists, statOrNull } from "builder-util"
-import { CancellationToken } from "builder-util-runtime"
+import { CancellationToken, Nullish } from "builder-util-runtime"
 import { stat } from "fs-extra"
 import * as path from "path"
 import { TmpDir } from "temp-file"
@@ -212,7 +212,7 @@ function addLogLevel(args: Array<string>): Array<string> {
   return args
 }
 
-async function computeAssetSize(cancellationToken: CancellationToken, dmgFile: string, specification: DmgOptions, backgroundFile: string | null | undefined) {
+async function computeAssetSize(cancellationToken: CancellationToken, dmgFile: string, specification: DmgOptions, backgroundFile: string | Nullish) {
   const asyncTaskManager = new AsyncTaskManager(cancellationToken)
   asyncTaskManager.addTask(stat(dmgFile))
 
@@ -233,7 +233,7 @@ async function computeAssetSize(cancellationToken: CancellationToken, dmgFile: s
   return result
 }
 
-async function customizeDmg(volumePath: string, specification: DmgOptions, packager: MacPackager, backgroundFile: string | null | undefined) {
+async function customizeDmg(volumePath: string, specification: DmgOptions, packager: MacPackager, backgroundFile: string | Nullish) {
   const window = specification.window
   const isValidIconTextSize = !!specification.iconTextSize && specification.iconTextSize >= 10 && specification.iconTextSize <= 16
   const iconTextSize = isValidIconTextSize ? specification.iconTextSize : 12

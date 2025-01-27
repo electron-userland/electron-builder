@@ -25,6 +25,7 @@ import { time } from "./util/timer"
 import { getWindowsVm, VmManager } from "./vm/vm"
 import { execWine } from "./wine"
 import { SignManager } from "./codeSign/signManager"
+import { Nullish } from "builder-util-runtime"
 
 export class WinPackager extends PlatformPackager<WindowsConfiguration> {
   _iconPath = new Lazy(() => this.getOrConvertIcon("ico"))
@@ -114,7 +115,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     return this._iconPath.value
   }
 
-  doGetCscPassword(): string | undefined | null {
+  doGetCscPassword(): string | Nullish {
     return chooseNotNull(chooseNotNull(this.platformSpecificBuildOptions.signtoolOptions?.certificatePassword, process.env.WIN_CSC_KEY_PASSWORD), super.doGetCscPassword())
   }
 

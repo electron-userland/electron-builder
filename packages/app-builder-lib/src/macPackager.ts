@@ -19,7 +19,7 @@ import { getTemplatePath } from "./util/pathManager"
 import * as fs from "fs/promises"
 import { notarize } from "@electron/notarize"
 import { NotarizeOptionsNotaryTool, NotaryToolKeychainCredentials } from "@electron/notarize/lib/types"
-import { MemoLazy } from "builder-util-runtime"
+import { MemoLazy, Nullish } from "builder-util-runtime"
 import { resolveFunction } from "./util/resolve"
 
 export type CustomMacSignOptions = SignOptions
@@ -443,7 +443,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
   }
 
   //noinspection JSMethodCanBeStatic
-  protected async doFlat(appPath: string, outFile: string, identity: Identity, keychain: string | null | undefined): Promise<any> {
+  protected async doFlat(appPath: string, outFile: string, identity: Identity, keychain: string | Nullish): Promise<any> {
     // productbuild doesn't created directory for out file
     await mkdir(path.dirname(outFile), { recursive: true })
 

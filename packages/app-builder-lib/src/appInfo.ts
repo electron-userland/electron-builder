@@ -4,6 +4,7 @@ import { PlatformSpecificBuildOptions } from "./options/PlatformSpecificBuildOpt
 import { Packager } from "./packager"
 import { expandMacro } from "./util/macroExpander"
 import { sanitizeFileName } from "builder-util/out/filename"
+import { Nullish } from "builder-util-runtime"
 
 // fpm bug - rpm build --description is not escaped, well... decided to replace quite to smart quote
 // http://leancrew.com/all-this/2010/11/smart-quotes-in-javascript/
@@ -35,7 +36,7 @@ export class AppInfo {
 
   constructor(
     private readonly info: Packager,
-    buildVersion: string | null | undefined,
+    buildVersion: string | Nullish,
     private readonly platformSpecificOptions: PlatformSpecificBuildOptions | null = null,
     normalizeNfd = false
   ) {
@@ -116,7 +117,7 @@ export class AppInfo {
   }
 
   get id(): string {
-    let appId: string | null | undefined = null
+    let appId: string | Nullish = null
     for (const options of [this.platformSpecificOptions, this.info.config]) {
       if (options != null && appId == null) {
         appId = options.appId

@@ -1,7 +1,7 @@
 import { getProjectRootPath } from "@electron/rebuild/lib/search-module"
 
 import { InvalidConfigurationError, log } from "builder-util"
-import { parseXml } from "builder-util-runtime"
+import { ObjectMap, parseXml } from "builder-util-runtime"
 import { httpExecutor } from "builder-util"
 import { readJson } from "fs-extra"
 import { Lazy } from "lazy-val"
@@ -11,7 +11,7 @@ import * as semver from "semver"
 import { Configuration } from "../configuration"
 import { getConfig } from "../util/config/config"
 
-export type MetadataValue = Lazy<{ [key: string]: any } | null>
+export type MetadataValue = Lazy<ObjectMap<any> | null>
 
 const electronPackages = ["electron", "electron-prebuilt", "electron-prebuilt-compile", "electron-nightly"]
 

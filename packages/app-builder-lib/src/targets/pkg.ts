@@ -9,6 +9,7 @@ import { findIdentity, Identity } from "../codeSign/macCodeSign"
 import { Target } from "../core"
 import { MacPackager } from "../macPackager"
 import { readdirSync } from "fs"
+import { Nullish } from "builder-util-runtime"
 
 const certType = "Developer ID Installer"
 
@@ -205,7 +206,7 @@ export class PkgTarget extends Target {
   }
 }
 
-export function prepareProductBuildArgs(identity: Identity | null, keychain: string | null | undefined): Array<string> {
+export function prepareProductBuildArgs(identity: Identity | null, keychain: string | Nullish): Array<string> {
   const args: Array<string> = []
   if (identity != null) {
     args.push("--sign", identity.hash!)

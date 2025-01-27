@@ -8,6 +8,7 @@ import { Mode } from "stat-mode"
 import { log } from "./log"
 import { orIfFileNotExist, orNullIfFileNotExist } from "./promise"
 import * as isCI from "is-ci"
+import { Nullish } from "builder-util-runtime"
 
 export const MAX_FILE_REQUESTS = 8
 export const CONCURRENCY = { concurrency: MAX_FILE_REQUESTS }
@@ -216,7 +217,7 @@ export function copyOrLinkFile(src: string, dest: string, stats?: Stats | null, 
   return doCopyFile(src, dest, stats)
 }
 
-function doCopyFile(src: string, dest: string, stats: Stats | null | undefined): Promise<any> {
+function doCopyFile(src: string, dest: string, stats: Stats | Nullish): Promise<any> {
   const promise = _nodeCopyFile(src, dest)
   if (stats == null) {
     return promise

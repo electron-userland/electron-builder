@@ -7,6 +7,7 @@ import { loadTsConfig } from "config-file-ts"
 import { DotenvParseInput, expand } from "dotenv-expand"
 import { resolveModule } from "../resolve"
 import { log } from "builder-util"
+import { ObjectMap } from "builder-util-runtime"
 
 export interface ReadConfigResult<T> {
   readonly result: T
@@ -73,7 +74,7 @@ export interface ReadConfigRequest {
   configFilename: string
 
   projectDir: string
-  packageMetadata: Lazy<{ [key: string]: any } | null> | null
+  packageMetadata: Lazy<ObjectMap<any> | null> | null
 }
 
 export async function loadConfig<T>(request: ReadConfigRequest): Promise<ReadConfigResult<T> | null> {

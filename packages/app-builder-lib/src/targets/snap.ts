@@ -1,5 +1,5 @@
 import { Arch, deepAssign, executeAppBuilder, InvalidConfigurationError, log, replaceDefault as _replaceDefault, serializeToYaml, toLinuxArchString } from "builder-util"
-import { SnapStoreOptions, asArray } from "builder-util-runtime"
+import { Nullish, ObjectMap, SnapStoreOptions, asArray } from "builder-util-runtime"
 import { outputFile, readFile } from "fs-extra"
 import { load } from "js-yaml"
 import * as path from "path"
@@ -28,7 +28,7 @@ export default class SnapTarget extends Target {
     super(name)
   }
 
-  private replaceDefault(inList: Array<string> | null | undefined, defaultList: Array<string>) {
+  private replaceDefault(inList: Array<string> | Nullish, defaultList: Array<string>) {
     const result = _replaceDefault(inList, defaultList)
     if (result !== defaultList) {
       this.isUseTemplateApp = false
@@ -350,7 +350,7 @@ function isArrayEqualRegardlessOfSort(a: Array<string>, b: Array<string>) {
   return a.length === b.length && a.every((value, index) => value === b[index])
 }
 
-function normalizePlugConfiguration(raw: Array<string | PlugDescriptor> | PlugDescriptor | null | undefined): { [key: string]: { [name: string]: any } | null } | null {
+function normalizePlugConfiguration(raw: Array<string | PlugDescriptor> | PlugDescriptor | Nullish): ObjectMap<ObjectMap<any> | null> | null {
   if (raw == null) {
     return null
   }

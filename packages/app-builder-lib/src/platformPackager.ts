@@ -33,6 +33,7 @@ import { expandMacro as doExpandMacro } from "./util/macroExpander"
 import { resolveFunction } from "./util/resolve"
 import { flipFuses, FuseConfig, FuseV1Config, FuseV1Options, FuseVersion } from "@electron/fuses"
 import { FuseOptionsV1 } from "./configuration"
+import { Nullish } from "builder-util-runtime"
 
 export type DoPackOptions<DC extends PlatformSpecificBuildOptions> = {
   outDir: string
@@ -103,7 +104,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return new AppInfo(this.info, null, this.platformSpecificBuildOptions)
   }
 
-  private static normalizePlatformSpecificBuildOptions(options: any | null | undefined): any {
+  private static normalizePlatformSpecificBuildOptions(options: any | Nullish): any {
     return options == null ? Object.create(null) : options
   }
 
@@ -119,13 +120,13 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
   }
 
-  getCscLink(extraEnvName?: string | null): string | null | undefined {
+  getCscLink(extraEnvName?: string | null): string | Nullish {
     // allow to specify as empty string
     const envValue = chooseNotNull(extraEnvName == null ? null : process.env[extraEnvName], process.env.CSC_LINK)
     return chooseNotNull(chooseNotNull(this.info.config.cscLink, this.platformSpecificBuildOptions.cscLink), envValue)
   }
 
-  doGetCscPassword(): string | null | undefined {
+  doGetCscPassword(): string | Nullish {
     // allow to specify as empty string
     return chooseNotNull(chooseNotNull(this.info.config.cscKeyPassword, this.platformSpecificBuildOptions.cscKeyPassword), process.env.CSC_KEY_PASSWORD)
   }
@@ -690,7 +691,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 
   expandArtifactNamePattern(
-    targetSpecificOptions: TargetSpecificOptions | null | undefined,
+    targetSpecificOptions: TargetSpecificOptions | Nullish,
     ext: string,
     arch?: Arch | null,
     defaultPattern?: string,
@@ -701,7 +702,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return this.computeArtifactName(pattern, ext, !isUserForced && skipDefaultArch && arch === defaultArchFromString(defaultArch) ? null : arch)
   }
 
-  artifactPatternConfig(targetSpecificOptions: TargetSpecificOptions | null | undefined, defaultPattern: string | undefined) {
+  artifactPatternConfig(targetSpecificOptions: TargetSpecificOptions | Nullish, defaultPattern: string | undefined) {
     const userSpecifiedPattern = targetSpecificOptions?.artifactName || this.platformSpecificBuildOptions.artifactName || this.config.artifactName
     return {
       isUserForced: !!userSpecifiedPattern,
@@ -709,12 +710,12 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
   }
 
-  expandArtifactBeautyNamePattern(targetSpecificOptions: TargetSpecificOptions | null | undefined, ext: string, arch?: Arch | null): string {
+  expandArtifactBeautyNamePattern(targetSpecificOptions: TargetSpecificOptions | Nullish, ext: string, arch?: Arch | null): string {
     // tslint:disable-next-line:no-invalid-template-strings
     return this.expandArtifactNamePattern(targetSpecificOptions, ext, arch, "${productName} ${version} ${arch}.${ext}", true)
   }
 
-  private computeArtifactName(pattern: any, ext: string, arch: Arch | null | undefined): string {
+  private computeArtifactName(pattern: any, ext: string, arch: Arch | Nullish): string {
     const archName = arch == null ? null : getArtifactArchName(arch, ext)
     return this.expandMacro(pattern, archName, {
       ext,
@@ -725,7 +726,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return doExpandMacro(pattern, arch, this.appInfo, { os: this.platform.buildConfigurationKey, ...extra }, isProductNameSanitized)
   }
 
-  generateName2(ext: string | null, classifier: string | null | undefined, deployment: boolean): string {
+  generateName2(ext: string | null, classifier: string | Nullish, deployment: boolean): string {
     const dotExt = ext == null ? "" : `.${ext}`
     const separator = ext === "deb" ? "_" : "-"
     return `${deployment ? this.appInfo.name : this.appInfo.productFilename}${separator}${this.appInfo.version}${classifier == null ? "" : `${separator}${classifier}`}${dotExt}`
@@ -739,7 +740,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return asArray(this.config.fileAssociations).concat(asArray(this.platformSpecificBuildOptions.fileAssociations))
   }
 
-  async getResource(custom: string | null | undefined, ...names: Array<string>): Promise<string | null> {
+  async getResource(custom: string | Nullish, ...names: Array<string>): Promise<string | null> {
     const resourcesDir = this.info.buildResourcesDir
     if (custom === undefined) {
       const resourceList = await this.resourceList
@@ -869,7 +870,7 @@ export function normalizeExt(ext: string) {
   return ext.startsWith(".") ? ext.substring(1) : ext
 }
 
-export function chooseNotNull<T>(v1: T | null | undefined, v2: T | null | undefined): T | null | undefined {
+export function chooseNotNull<T>(v1: T | Nullish, v2: T | Nullish): T | Nullish {
   return v1 == null ? v2 : v1
 }
 

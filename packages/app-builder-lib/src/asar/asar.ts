@@ -1,3 +1,4 @@
+import { ObjectMap } from "builder-util-runtime"
 import { createFromBuffer } from "chromium-pickle-js"
 import { close, open, read, readFile, Stats } from "fs-extra"
 import * as path from "path"
@@ -16,7 +17,7 @@ export interface NodeIntegrity {
 
 export class Node {
   // we don't use Map because later it will be stringified
-  files?: { [key: string]: Node }
+  files?: ObjectMap<Node>
 
   unpacked?: boolean
 
@@ -40,7 +41,7 @@ export class AsarFilesystem {
     readonly headerSize: number = -1
   ) {
     if (this.header.files == null) {
-      this.header.files = Object.create(null) as { [key: string]: Node }
+      this.header.files = this.newNode()
     }
   }
 
@@ -54,7 +55,7 @@ export class AsarFilesystem {
             return null
           }
           child = new Node()
-          child.files = Object.create(null) as { [key: string]: Node }
+          child.files = this.newNode()
           node.files![dir] = child
         }
         node = child
@@ -71,7 +72,7 @@ export class AsarFilesystem {
     const name = path.basename(p)
     const dirNode = this.searchNodeFromDirectory(path.dirname(p), true)!
     if (dirNode.files == null) {
-      dirNode.files = Object.create(null) as { [key: string]: Node }
+      dirNode.files = this.newNode()
     }
 
     let result = dirNode.files[name]
@@ -105,7 +106,7 @@ export class AsarFilesystem {
 
     let children = dirNode.files
     if (children == null) {
-      children = Object.create(null) as { [key: string]: Node }
+      children = this.newNode()
       dirNode.files = children
     }
     children[path.basename(file)] = node
@@ -130,6 +131,10 @@ export class AsarFilesystem {
 
   readFile(file: string): Promise<Buffer> {
     return readFileFromAsar(this, file, this.getFile(file))
+  }
+
+  private newNode() {
+    return Object.create(null) as ObjectMap<Node>
   }
 }
 

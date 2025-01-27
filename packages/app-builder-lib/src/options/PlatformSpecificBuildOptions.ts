@@ -1,3 +1,4 @@
+import { ObjectMap } from "builder-util-runtime"
 import { CompressionLevel, Publish, TargetConfiguration, TargetSpecificOptions } from "../core"
 import { FileAssociation } from "./FileAssociation"
 
@@ -224,7 +225,7 @@ export interface ReleaseInfo {
   /**
    * Vendor specific information.
    */
-  vendor?: { [key: string]: any } | null
+  vendor?: ObjectMap<any> | null
 }
 
 /**

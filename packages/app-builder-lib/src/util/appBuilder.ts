@@ -1,4 +1,5 @@
 import { executeAppBuilder } from "builder-util"
+import { ObjectMap } from "builder-util-runtime"
 import { SpawnOptions } from "child_process"
 
 export function executeAppBuilderAsJson<T>(args: Array<string>): Promise<T> {
@@ -28,7 +29,7 @@ export function executeAppBuilderAndWriteJson(args: Array<string>, data: any, ex
   )
 }
 
-export function objectToArgs(to: Array<string>, argNameToValue: { [key: string]: string | null }): void {
+export function objectToArgs(to: Array<string>, argNameToValue: ObjectMap<string | null>): void {
   for (const name of Object.keys(argNameToValue)) {
     const value = argNameToValue[name]
     if (value != null) {

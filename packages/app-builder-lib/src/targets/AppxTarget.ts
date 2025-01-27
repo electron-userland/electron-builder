@@ -10,10 +10,11 @@ import { getTemplatePath } from "../util/pathManager"
 import { VmManager } from "../vm/vm"
 import { WinPackager } from "../winPackager"
 import { createStageDir } from "./targetUtil"
+import { Nullish, ObjectMap } from "builder-util-runtime"
 
 const APPX_ASSETS_DIR_NAME = "appx"
 
-const vendorAssetsForDefaultAssets: { [key: string]: string } = {
+const vendorAssetsForDefaultAssets: ObjectMap<string> = {
   "StoreLogo.png": "SampleAppx.50x50.png",
   "Square150x150Logo.png": "SampleAppx.150x150.png",
   "Square44x44Logo.png": "SampleAppx.44x44.png",
@@ -386,7 +387,7 @@ export default class AppXTarget extends Target {
 }
 
 // get the resource - language tag, see https://docs.microsoft.com/en-us/windows/uwp/globalizing/manage-language-and-region#specify-the-supported-languages-in-the-apps-manifest
-function resourceLanguageTag(userLanguages: Array<string> | null | undefined): string {
+function resourceLanguageTag(userLanguages: Array<string> | Nullish): string {
   if (userLanguages == null || userLanguages.length === 0) {
     userLanguages = [DEFAULT_RESOURCE_LANG]
   }
