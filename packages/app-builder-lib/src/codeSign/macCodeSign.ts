@@ -191,16 +191,11 @@ export async function createKeychain({ tmpDir, cscLink, cscKeyPassword, cscILink
     securityCommands.push(["list-keychains", "-d", "user", "-s", keychainFile].concat(list))
   }
 
-  // queue each security command
-  let promiseSeries = new Promise<any>(resolve => resolve(null))
-  for (const cmd of securityCommands) {
-    promiseSeries = promiseSeries.then(() => exec("/usr/bin/security", cmd))
-  }
-
   await Promise.all([
     // we do not clear downloaded files - will be removed on tmpDir cleanup automatically. not a security issue since in any case data is available as env variables and protected by password.
     ...certLinks.map((link, i) => importCertificate(link, tmpDir, currentDir).then(it => (certPaths[i] = it))),
-    promiseSeries,
+    // queue each security command
+    securityCommands.reduce((promise, cmd) => promise.then(() => exec("/usr/bin/security", cmd)), new Promise(resolve => resolve(null))),
   ])
   const cscPasswords: Array<string> = [cscKeyPassword]
   if (cscIKeyPassword != null) {
