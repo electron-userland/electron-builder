@@ -1,4 +1,3 @@
-import BluebirdPromise from "bluebird-lst"
 import { deepAssign, Arch, AsyncTaskManager, exec, InvalidConfigurationError, log, use, getArchSuffix, copyFile, statOrNull, unlinkIfExists, orIfFileNotExist } from "builder-util"
 import { PerFileSignOptions, SignOptions } from "@electron/osx-sign/dist/cjs/types"
 import { mkdir, readdir } from "fs/promises"
@@ -505,13 +504,14 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
   }
 
   protected async signApp(packContext: AfterPackContext, isAsar: boolean): Promise<boolean> {
-    const readDirectoryAndSign = async (sourceDirectory: string, directories: string[], filter: (file: string) => boolean): Promise<boolean> => {
-      await BluebirdPromise.map(directories, async (file: string): Promise<null> => {
-        if (filter(file)) {
-          await this.sign(path.join(sourceDirectory, file), null, null, null)
-        }
-        return null
-      })
+    const readDirectoryAndSign = async (sourceDirectory: string, directories: string[], shouldSign: (file: string) => boolean): Promise<boolean> => {
+      await Promise.all(
+        directories.map(async (file: string) => {
+          if (shouldSign(file)) {
+            await this.sign(path.join(sourceDirectory, file), null, null, null)
+          }
+        })
+      )
       return true
     }
 

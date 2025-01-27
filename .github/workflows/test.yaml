@@ -27,6 +27,7 @@ env:
 jobs:
   check-if-docker-build:
     runs-on: ubuntu-22.04
+    timeout-minutes: 5
     outputs:
       force-docker-build: ${{ steps.changed-files-specific.outputs.any_changed }}
     steps:
@@ -59,6 +60,7 @@ jobs:
 
   test-linux:
     runs-on: ubuntu-22.04
+    timeout-minutes: 20
     needs: [check-if-docker-build, run-docker-build]
     # Wonky if-conditional to allow this step to run AFTER docker images are rebuilt OR if the build stage skipped and we want to use dockerhub registry for images
     if: |
@@ -71,7 +73,8 @@ jobs:
         testFiles:
           - ArtifactPublisherTest,BuildTest,ExtraBuildTest,RepoSlugTest,binDownloadTest,configurationValidationTest,filenameUtilTest,filesTest,globTest,ignoreTest,macroExpanderTest,mainEntryTest,urlUtilTest,extraMetadataTest,linuxArchiveTest,linuxPackagerTest,HoistedNodeModuleTest,MemoLazyTest
           - snapTest,debTest,fpmTest,protonTest
-          - winPackagerTest,installerTest,BuildTest,winCodeSignTest
+          - winPackagerTest,BuildTest,winCodeSignTest
+          - installerTest
     steps:
       - name: Checkout code repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
@@ -114,6 +117,7 @@ jobs:
   # Need to separate from other tests because logic is specific to when TOKEN env vars are set
   test-updater:
     runs-on: ubuntu-22.04
+    timeout-minutes: 20
     needs: [check-if-docker-build, run-docker-build]
     # Wonky if-conditional to allow this step to run AFTER docker images are rebuilt OR if the build stage skipped and we want to use dockerhub registry for images
     if: |
@@ -160,6 +164,7 @@ jobs:
 
   test-windows:
     runs-on: windows-latest
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
@@ -186,11 +191,13 @@ jobs:
 
   test-mac:
     runs-on: macos-latest
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
         testFiles:
-          - winPackagerTest,installerTest,winCodeSignTest
+          - installerTest
+          - winPackagerTest,winCodeSignTest
           - masTest,dmgTest,filesTest,macPackagerTest,differentialUpdateTest
     steps:
       - name: Checkout code repository

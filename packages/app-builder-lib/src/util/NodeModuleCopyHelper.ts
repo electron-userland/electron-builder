@@ -1,5 +1,5 @@
-import BluebirdPromise from "bluebird-lst"
-import { CONCURRENCY, FilterStats } from "builder-util"
+import asyncPool from "tiny-async-pool"
+import { FilterStats, MAX_FILE_REQUESTS } from "builder-util"
 import { lstat, readdir, lstatSync } from "fs-extra"
 import * as path from "path"
 import { excludedNames, FileMatcher } from "../fileMatcher"
@@ -75,78 +75,74 @@ export class NodeModuleCopyHelper extends FileCopyHelper {
       const isTopLevel = dirPath === depPath
       const dirs: Array<string> = []
       // our handler is async, but we should add sorted files, so, we add file to result not in the mapper, but after map
-      const sortedFilePaths = await BluebirdPromise.map(
-        childNames,
-        name => {
-          const filePath = path.join(dirPath, name)
+      const sortedFilePaths = await asyncPool(MAX_FILE_REQUESTS, childNames, async name => {
+        const filePath = path.join(dirPath, name)
 
-          const forceIncluded = onNodeModuleFile != null && !!onNodeModuleFile(filePath)
+        const forceIncluded = onNodeModuleFile != null && !!onNodeModuleFile(filePath)
 
-          if (excludedFiles.has(name) || name.startsWith("._")) {
+        if (excludedFiles.has(name) || name.startsWith("._")) {
+          return null
+        }
+
+        // check if filematcher matches the files array as more important than the default excluded files.
+        const fileMatched = filter != null && filter(dirPath, lstatSync(dirPath))
+        if (!fileMatched || !forceIncluded || !!this.packager.config.disableDefaultIgnoredFiles) {
+          for (const ext of nodeModuleExcludedExts) {
+            if (name.endsWith(ext)) {
+              return null
+            }
+          }
+
+          // noinspection SpellCheckingInspection
+          if (isTopLevel && (topLevelExcludedFiles.has(name) || (moduleName === "libui-node" && (name === "build" || name === "docs" || name === "src")))) {
             return null
           }
 
-          // check if filematcher matches the files array as more important than the default excluded files.
-          const fileMatched = filter != null && filter(dirPath, lstatSync(dirPath))
-          if (!fileMatched || !forceIncluded || !!this.packager.config.disableDefaultIgnoredFiles) {
-            for (const ext of nodeModuleExcludedExts) {
-              if (name.endsWith(ext)) {
-                return null
-              }
+          if (dirPath.endsWith("build")) {
+            if (name === "gyp-mac-tool" || name === "Makefile" || name.endsWith(".mk") || name.endsWith(".gypi") || name.endsWith(".Makefile")) {
+              return null
             }
+          } else if (dirPath.endsWith("Release") && (name === ".deps" || name === "obj.target")) {
+            return null
+          } else if (name === "src" && (dirPath.endsWith("keytar") || dirPath.endsWith("keytar-prebuild"))) {
+            return null
+          } else if (dirPath.endsWith("lzma-native") && (name === "build" || name === "deps")) {
+            return null
+          }
+        }
 
-            // noinspection SpellCheckingInspection
-            if (isTopLevel && (topLevelExcludedFiles.has(name) || (moduleName === "libui-node" && (name === "build" || name === "docs" || name === "src")))) {
-              return null
-            }
-
-            if (dirPath.endsWith("build")) {
-              if (name === "gyp-mac-tool" || name === "Makefile" || name.endsWith(".mk") || name.endsWith(".gypi") || name.endsWith(".Makefile")) {
-                return null
-              }
-            } else if (dirPath.endsWith("Release") && (name === ".deps" || name === "obj.target")) {
-              return null
-            } else if (name === "src" && (dirPath.endsWith("keytar") || dirPath.endsWith("keytar-prebuild"))) {
-              return null
-            } else if (dirPath.endsWith("lzma-native") && (name === "build" || name === "deps")) {
-              return null
-            }
+        return lstat(filePath).then((stat: FilterStats) => {
+          stat.moduleName = moduleName
+          stat.moduleRootPath = destination
+          stat.moduleFullFilePath = path.join(destination, path.relative(depPath, filePath))
+          if (filter != null && !filter(filePath, stat)) {
+            return null
           }
 
-          return lstat(filePath).then((stat: FilterStats) => {
-            stat.moduleName = moduleName
-            stat.moduleRootPath = destination
-            stat.moduleFullFilePath = path.join(destination, path.relative(depPath, filePath))
-            if (filter != null && !filter(filePath, stat)) {
+          if (!stat.isDirectory()) {
+            metadata.set(filePath, stat)
+          }
+          const consumerResult = this.handleFile(filePath, dirPath, stat)
+          if (consumerResult == null) {
+            if (stat.isDirectory()) {
+              dirs.push(name)
               return null
+            } else {
+              return filePath
             }
-
-            if (!stat.isDirectory()) {
-              metadata.set(filePath, stat)
-            }
-            const consumerResult = this.handleFile(filePath, dirPath, stat)
-            if (consumerResult == null) {
-              if (stat.isDirectory()) {
+          } else {
+            return consumerResult.then(it => {
+              // asarUtil can return modified stat (symlink handling)
+              if ((it == null ? stat : it).isDirectory()) {
                 dirs.push(name)
                 return null
               } else {
                 return filePath
               }
-            } else {
-              return consumerResult.then(it => {
-                // asarUtil can return modified stat (symlink handling)
-                if ((it == null ? stat : it).isDirectory()) {
-                  dirs.push(name)
-                  return null
-                } else {
-                  return filePath
-                }
-              })
-            }
-          })
-        },
-        CONCURRENCY
-      )
+            })
+          }
+        })
+      })
 
       let isEmpty = true
       for (const child of sortedFilePaths) {

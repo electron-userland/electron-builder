@@ -1,4 +1,3 @@
-import BluebirdPromise from "bluebird-lst"
 import { Arch, asArray, AsyncTaskManager, DebugLogger, deepAssign, getArchSuffix, InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
 import { defaultArchFromString, getArtifactArchName, FileTransformer, statOrNull, orIfFileNotExist } from "builder-util"
 import { readdir } from "fs/promises"
@@ -499,7 +498,11 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
 
     if (this.info.isPrepackedAppAsar) {
-      taskManager.addTask(BluebirdPromise.each(_computeFileSets([new FileMatcher(appDir, resourcePath, macroExpander)]), it => copyAppFiles(it, this.info, transformer)))
+      taskManager.addTask(
+        _computeFileSets([new FileMatcher(appDir, resourcePath, macroExpander)]).then(set => {
+          set.forEach(it => taskManager.addTask(copyAppFiles(it, this.info, transformer)))
+        })
+      )
     } else if (asarOptions == null) {
       // for ASAR all asar unpacked files will be extra transformed (e.g. sign of EXE and DLL) later,
       // for prepackaged asar extra transformation not supported yet,
@@ -515,7 +518,11 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
         return transformer(file)
       }
 
-      taskManager.addTask(BluebirdPromise.each(_computeFileSets(mainMatchers), it => copyAppFiles(it, this.info, combinedTransformer)))
+      taskManager.addTask(
+        _computeFileSets(mainMatchers).then(set => {
+          set.forEach(it => taskManager.addTask(copyAppFiles(it, this.info, combinedTransformer)))
+        })
+      )
     } else {
       const unpackPattern = getFileMatchers(config, "asarUnpack", defaultDestination, {
         macroExpander,

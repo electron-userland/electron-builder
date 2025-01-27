@@ -18,7 +18,6 @@
     "7zip-bin": "~5.2.0",
     "@types/debug": "^4.1.6",
     "app-builder-bin": "5.0.0-alpha.12",
-    "bluebird-lst": "^1.0.9",
     "builder-util-runtime": "workspace:*",
     "chalk": "^4.1.2",
     "cross-spawn": "^7.0.6",
@@ -31,7 +30,8 @@
     "sanitize-filename": "^1.6.3",
     "source-map-support": "^0.5.19",
     "stat-mode": "^1.0.0",
-    "temp-file": "^3.4.0"
+    "temp-file": "^3.4.0",
+    "tiny-async-pool": "1.3.0"
   },
   "typings": "./out/util.d.ts",
   "devDependencies": {
@@ -39,6 +39,7 @@
     "@types/fs-extra": "^9.0.11",
     "@types/is-ci": "3.0.0",
     "@types/js-yaml": "4.0.3",
-    "@types/source-map-support": "0.5.4"
+    "@types/source-map-support": "0.5.4",
+    "@types/tiny-async-pool": "^1.0.5"
   }
 }

@@ -1,6 +1,6 @@
-import BluebirdPromise from "bluebird-lst"
-import { asArray, executeAppBuilder, log } from "builder-util"
-import { CONCURRENCY, copyDir, DO_NOT_USE_HARD_LINKS, statOrNull, unlinkIfExists } from "builder-util"
+import asyncPool from "tiny-async-pool"
+import { asArray, executeAppBuilder, log, MAX_FILE_REQUESTS } from "builder-util"
+import { copyDir, DO_NOT_USE_HARD_LINKS, statOrNull, unlinkIfExists } from "builder-util"
 import { emptyDir, readdir, rename } from "fs-extra"
 import * as path from "path"
 import { Configuration } from "../configuration"
@@ -100,21 +100,17 @@ async function removeUnusedLanguagesIfNeeded(options: BeforeCopyExtraFilesOption
 
   const { dir, langFileExt } = getLocalesConfig(options)
   // noinspection SpellCheckingInspection
-  await BluebirdPromise.map(
-    readdir(dir),
-    file => {
-      if (!file.endsWith(langFileExt)) {
-        return
-      }
-
-      const language = file.substring(0, file.length - langFileExt.length)
-      if (!wantedLanguages.includes(language)) {
-        return fs.rm(path.join(dir, file), { recursive: true, force: true })
-      }
+  await asyncPool(MAX_FILE_REQUESTS, await readdir(dir), async file => {
+    if (!file.endsWith(langFileExt)) {
       return
-    },
-    CONCURRENCY
-  )
+    }
+
+    const language = file.substring(0, file.length - langFileExt.length)
+    if (!wantedLanguages.includes(language)) {
+      return fs.rm(path.join(dir, file), { recursive: true, force: true })
+    }
+    return
+  })
 
   function getLocalesConfig(options: BeforeCopyExtraFilesOptions) {
     const { appOutDir, packager } = options

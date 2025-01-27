@@ -1,4 +1,3 @@
-import BluebirdPromise from "bluebird-lst"
 import {
   Arch,
   asArray,
@@ -254,37 +253,39 @@ export class NsisTarget extends Target {
       const value: Arch | undefined = archs.keys().next().value
       use(value, v => (defines.APP_BUILD_DIR = archs.get(v)))
     } else {
-      await BluebirdPromise.map(archs.keys(), async arch => {
-        const { fileInfo, unpackedSize } = await this.packageHelper.packArch(arch, this)
-        const file = fileInfo.path
-        const defineKey = arch === Arch.x64 ? "APP_64" : arch === Arch.arm64 ? "APP_ARM64" : "APP_32"
-        defines[defineKey] = file
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-        const defineNameKey = `${defineKey}_NAME` as "APP_64_NAME" | "APP_ARM64_NAME" | "APP_32_NAME"
-        defines[defineNameKey] = path.basename(file)
-        // nsis expect a hexadecimal string
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-        const defineHashKey = `${defineKey}_HASH` as "APP_64_HASH" | "APP_ARM64_HASH" | "APP_32_HASH"
-        defines[defineHashKey] = Buffer.from(fileInfo.sha512, "base64").toString("hex").toUpperCase()
-        // NSIS accepts size in KiloBytes and supports only whole numbers
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-        const defineUnpackedSizeKey = `${defineKey}_UNPACKED_SIZE` as "APP_64_UNPACKED_SIZE" | "APP_ARM64_UNPACKED_SIZE" | "APP_32_UNPACKED_SIZE"
-        defines[defineUnpackedSizeKey] = Math.ceil(unpackedSize / 1024).toString()
+      await Promise.all(
+        Array.from(archs.keys()).map(async arch => {
+          const { fileInfo, unpackedSize } = await this.packageHelper.packArch(arch, this)
+          const file = fileInfo.path
+          const defineKey = arch === Arch.x64 ? "APP_64" : arch === Arch.arm64 ? "APP_ARM64" : "APP_32"
+          defines[defineKey] = file
+          // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+          const defineNameKey = `${defineKey}_NAME` as "APP_64_NAME" | "APP_ARM64_NAME" | "APP_32_NAME"
+          defines[defineNameKey] = path.basename(file)
+          // nsis expect a hexadecimal string
+          // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+          const defineHashKey = `${defineKey}_HASH` as "APP_64_HASH" | "APP_ARM64_HASH" | "APP_32_HASH"
+          defines[defineHashKey] = Buffer.from(fileInfo.sha512, "base64").toString("hex").toUpperCase()
+          // NSIS accepts size in KiloBytes and supports only whole numbers
+          // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+          const defineUnpackedSizeKey = `${defineKey}_UNPACKED_SIZE` as "APP_64_UNPACKED_SIZE" | "APP_ARM64_UNPACKED_SIZE" | "APP_32_UNPACKED_SIZE"
+          defines[defineUnpackedSizeKey] = Math.ceil(unpackedSize / 1024).toString()
 
-        if (this.isWebInstaller) {
-          await packager.dispatchArtifactCreated(file, this, arch)
-          packageFiles[Arch[arch]] = fileInfo
-        }
-        const path7za = await getPath7za()
-        const archiveInfo = (await exec(path7za, ["l", file])).trim()
-        // after adding blockmap data will be "Warnings: 1" in the end of output
-        const match = /(\d+)\s+\d+\s+\d+\s+files/.exec(archiveInfo)
-        if (match == null) {
-          log.warn({ output: archiveInfo }, "cannot compute size of app package")
-        } else {
-          estimatedSize += parseInt(match[1], 10)
-        }
-      })
+          if (this.isWebInstaller) {
+            await packager.dispatchArtifactCreated(file, this, arch)
+            packageFiles[Arch[arch]] = fileInfo
+          }
+          const path7za = await getPath7za()
+          const archiveInfo = (await exec(path7za, ["l", file])).trim()
+          // after adding blockmap data will be "Warnings: 1" in the end of output
+          const match = /(\d+)\s+\d+\s+\d+\s+files/.exec(archiveInfo)
+          if (match == null) {
+            log.warn({ output: archiveInfo }, "cannot compute size of app package")
+          } else {
+            estimatedSize += parseInt(match[1], 10)
+          }
+        })
+      )
     }
 
     this.configureDefinesForAllTypeOfInstaller(defines)

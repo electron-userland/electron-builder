@@ -1,4 +1,3 @@
-import BluebirdPromise from "bluebird-lst"
 import { createHash } from "crypto"
 import { createReadStream } from "fs"
 import { readdir } from "fs/promises"
@@ -39,24 +38,26 @@ export async function computeData({ resourcesPath, resourcesRelativePath, resour
     {}
   )
 
-  const extraResources = await BluebirdPromise.map(extraResourceMatchers ?? [], async (matcher: FileMatcher): Promise<Match[]> => {
-    const { from, to } = matcher
-    const stat = await statOrNull(from)
-    if (stat == null) {
-      log.warn({ from }, `file source doesn't exist`)
-      return []
-    }
-    if (stat.isFile()) {
-      return [{ from, to }]
-    }
+  const extraResources = await Promise.all(
+    (extraResourceMatchers ?? []).map(async (matcher: FileMatcher): Promise<Match[]> => {
+      const { from, to } = matcher
+      const stat = await statOrNull(from)
+      if (stat == null) {
+        log.warn({ from }, `file source doesn't exist`)
+        return []
+      }
+      if (stat.isFile()) {
+        return [{ from, to }]
+      }
 
-    if (matcher.isEmpty() || matcher.containsOnlyIgnore()) {
-      matcher.prependPattern("**/*")
-    }
-    const matcherFilter = matcher.createFilter()
-    const extraResourceMatches = await walk(matcher.from, (file: string, stats: FilterStats) => matcherFilter(file, stats) || stats.isDirectory())
-    return extraResourceMatches.map(from => ({ from, to: matcher.to }))
-  })
+      if (matcher.isEmpty() || matcher.containsOnlyIgnore()) {
+        matcher.prependPattern("**/*")
+      }
+      const matcherFilter = matcher.createFilter()
+      const extraResourceMatches = await walk(matcher.from, (file: string, stats: FilterStats) => matcherFilter(file, stats) || stats.isDirectory())
+      return extraResourceMatches.map(from => ({ from, to: matcher.to }))
+    })
+  )
   const extraResourceAsars = extraResources
     .flat(1)
     .filter(match => isAsar(match.from))
@@ -70,7 +71,13 @@ export async function computeData({ resourcesPath, resourcesRelativePath, resour
 
   // sort to produce constant result
   const allAsars = [...Object.entries(resourceAsars), ...Object.entries(extraResourceAsars)].sort(([name1], [name2]) => name1.localeCompare(name2))
-  return BluebirdPromise.reduce(allAsars, async (prev, [relativePathKey, from]) => ({ ...prev, [relativePathKey]: await hashHeader(from) }), {} as AsarIntegrity)
+  const hashes = await Promise.all(allAsars.map(async ([, from]) => hashHeader(from)))
+  const asarIntegrity: AsarIntegrity = {}
+  for (let i = 0; i < allAsars.length; i++) {
+    const [asar] = allAsars[i]
+    asarIntegrity[asar] = hashes[i]
+  }
+  return asarIntegrity
 }
 
 async function hashHeader(file: string): Promise<HeaderHash> {

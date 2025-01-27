@@ -1,4 +1,4 @@
-import BluebirdPromise from "bluebird-lst"
+import asyncPool from "tiny-async-pool"
 import { copyFile as _nodeCopyFile } from "fs-extra"
 import { Stats } from "fs"
 import { platform } from "os"
@@ -10,7 +10,6 @@ import { orIfFileNotExist, orNullIfFileNotExist } from "./promise"
 import * as isCI from "is-ci"
 
 export const MAX_FILE_REQUESTS = 8
-export const CONCURRENCY = { concurrency: MAX_FILE_REQUESTS }
 
 export type AfterCopyFileTransformer = (file: string) => Promise<boolean>
 
@@ -90,49 +89,45 @@ export async function walk(initialDirPath: string, filter?: Filter | null, consu
 
     const dirs: Array<string> = []
     // our handler is async, but we should add sorted files, so, we add file to result not in the mapper, but after map
-    const sortedFilePaths = await BluebirdPromise.map(
-      childNames,
-      name => {
-        if (name === ".DS_Store" || name === ".gitkeep") {
+    const sortedFilePaths = await asyncPool<string, string>(MAX_FILE_REQUESTS, childNames, async name => {
+      if (name === ".DS_Store" || name === ".gitkeep") {
+        return null
+      }
+
+      const filePath = dirPath + path.sep + name
+      return lstat(filePath).then(stat => {
+        if (filter != null && !filter(filePath, stat)) {
           return null
         }
 
-        const filePath = dirPath + path.sep + name
-        return lstat(filePath).then(stat => {
-          if (filter != null && !filter(filePath, stat)) {
+        const consumerResult = consumer == null ? null : consumer.consume(filePath, stat, dirPath, childNames)
+        if (consumerResult === true) {
+          return null
+        } else if (consumerResult === false || consumerResult == null || !("then" in consumerResult)) {
+          if (stat.isDirectory()) {
+            dirs.push(name)
             return null
+          } else {
+            return filePath
           }
+        } else {
+          return (consumerResult as Promise<any>).then((it): any => {
+            if (it != null && Array.isArray(it)) {
+              nodeModuleContent = it
+              return null
+            }
 
-          const consumerResult = consumer == null ? null : consumer.consume(filePath, stat, dirPath, childNames)
-          if (consumerResult === true) {
-            return null
-          } else if (consumerResult === false || consumerResult == null || !("then" in consumerResult)) {
-            if (stat.isDirectory()) {
+            // asarUtil can return modified stat (symlink handling)
+            if ((it != null && "isDirectory" in it ? (it as Stats) : stat).isDirectory()) {
               dirs.push(name)
               return null
             } else {
               return filePath
             }
-          } else {
-            return (consumerResult as Promise<any>).then((it): any => {
-              if (it != null && Array.isArray(it)) {
-                nodeModuleContent = it
-                return null
-              }
-
-              // asarUtil can return modified stat (symlink handling)
-              if ((it != null && "isDirectory" in it ? (it as Stats) : stat).isDirectory()) {
-                dirs.push(name)
-                return null
-              } else {
-                return filePath
-              }
-            })
-          }
-        })
-      },
-      CONCURRENCY
-    )
+          })
+        }
+      })
+    })
 
     for (const child of sortedFilePaths) {
       if (child != null) {
@@ -294,7 +289,7 @@ export interface CopyDirOptions {
  * Empty directories is never created.
  * Hard links is used if supported and allowed.
  */
-export function copyDir(src: string, destination: string, options: CopyDirOptions = {}): Promise<any> {
+export async function copyDir(src: string, destination: string, options: CopyDirOptions = {}): Promise<any> {
   const fileCopier = new FileCopier(options.isUseHardLink, options.transformer)
 
   if (log.isDebugEnabled) {
@@ -304,7 +299,7 @@ export function copyDir(src: string, destination: string, options: CopyDirOption
   const createdSourceDirs = new Set<string>()
   const links: Array<Link> = []
   const symlinkType = platform() === "win32" ? "junction" : "file"
-  return walk(src, options.filter, {
+  return await walk(src, options.filter, {
     consume: async (file, stat, parent) => {
       if (!stat.isFile() && !stat.isSymbolicLink()) {
         return
@@ -322,7 +317,7 @@ export function copyDir(src: string, destination: string, options: CopyDirOption
         links.push({ file: destFile, link: await readlink(file) })
       }
     },
-  }).then(() => BluebirdPromise.map(links, it => symlink(it.link, it.file, symlinkType), CONCURRENCY))
+  }).then(() => asyncPool(MAX_FILE_REQUESTS, links, it => symlink(it.link, it.file, symlinkType)))
 }
 
 export async function dirSize(dirPath: string): Promise<number> {

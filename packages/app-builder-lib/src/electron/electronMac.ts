@@ -1,4 +1,3 @@
-import BluebirdPromise from "bluebird-lst"
 import { asArray, getPlatformIconFileName, InvalidConfigurationError, log } from "builder-util"
 import { copyOrLinkFile, unlinkIfExists } from "builder-util"
 import { rename, utimes } from "fs/promises"
@@ -15,10 +14,12 @@ function doRename(basePath: string, oldName: string, newName: string) {
 }
 
 function moveHelpers(helperSuffixes: Array<string>, frameworksPath: string, appName: string, prefix: string): Promise<any> {
-  return BluebirdPromise.map(helperSuffixes, suffix => {
-    const executableBasePath = path.join(frameworksPath, `${prefix}${suffix}.app`, "Contents", "MacOS")
-    return doRename(executableBasePath, `${prefix}${suffix}`, appName + suffix).then(() => doRename(frameworksPath, `${prefix}${suffix}.app`, `${appName}${suffix}.app`))
-  })
+  return Promise.all(
+    helperSuffixes.map(suffix => {
+      const executableBasePath = path.join(frameworksPath, `${prefix}${suffix}.app`, "Contents", "MacOS")
+      return doRename(executableBasePath, `${prefix}${suffix}`, appName + suffix).then(() => doRename(frameworksPath, `${prefix}${suffix}.app`, `${appName}${suffix}.app`))
+    })
+  )
 }
 
 function getAvailableHelperSuffixes(
@@ -196,28 +197,30 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
 
   const fileAssociations = packager.fileAssociations
   if (fileAssociations.length > 0) {
-    const documentTypes = await BluebirdPromise.map(fileAssociations, async fileAssociation => {
-      const extensions = asArray(fileAssociation.ext).map(normalizeExt)
-      const customIcon = await packager.getResource(getPlatformIconFileName(fileAssociation.icon, true), `${extensions[0]}.icns`)
-      let iconFile = appPlist.CFBundleIconFile
-      if (customIcon != null) {
-        iconFile = path.basename(customIcon)
-        await copyOrLinkFile(customIcon, path.join(path.join(contentsPath, "Resources"), iconFile))
-      }
+    const documentTypes = await Promise.all(
+      fileAssociations.map(async fileAssociation => {
+        const extensions = asArray(fileAssociation.ext).map(normalizeExt)
+        const customIcon = await packager.getResource(getPlatformIconFileName(fileAssociation.icon, true), `${extensions[0]}.icns`)
+        let iconFile = appPlist.CFBundleIconFile
+        if (customIcon != null) {
+          iconFile = path.basename(customIcon)
+          await copyOrLinkFile(customIcon, path.join(path.join(contentsPath, "Resources"), iconFile))
+        }
 
-      const result = {
-        CFBundleTypeExtensions: extensions,
-        CFBundleTypeName: fileAssociation.name || extensions[0],
-        CFBundleTypeRole: fileAssociation.role || "Editor",
-        LSHandlerRank: fileAssociation.rank || "Default",
-        CFBundleTypeIconFile: iconFile,
-      } as any
+        const result = {
+          CFBundleTypeExtensions: extensions,
+          CFBundleTypeName: fileAssociation.name || extensions[0],
+          CFBundleTypeRole: fileAssociation.role || "Editor",
+          LSHandlerRank: fileAssociation.rank || "Default",
+          CFBundleTypeIconFile: iconFile,
+        } as any
 
-      if (fileAssociation.isPackage) {
-        result.LSTypeIsPackage = true
-      }
-      return result
-    })
+        if (fileAssociation.isPackage) {
+          result.LSTypeIsPackage = true
+        }
+        return result
+      })
+    )
 
     // `CFBundleDocumentTypes` may be defined in `mac.extendInfo`, so we need to merge it in that case
     appPlist.CFBundleDocumentTypes = [...(appPlist.CFBundleDocumentTypes || []), ...documentTypes]

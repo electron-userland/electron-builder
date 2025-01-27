@@ -1,4 +1,4 @@
-import BluebirdPromise from "bluebird-lst"
+import asyncPool from "tiny-async-pool"
 import { Arch, log, safeStringifyJson, serializeToYaml } from "builder-util"
 import { GenericServerOptions, PublishConfiguration, UpdateInfo, WindowsUpdateInfo } from "builder-util-runtime"
 import { outputFile, outputJson, readFile } from "fs-extra"
@@ -208,38 +208,35 @@ export async function writeUpdateInfoFiles(updateInfoFileTasks: Array<UpdateInfo
   }
 
   const releaseDate = new Date().toISOString()
-  await BluebirdPromise.map(
-    updateChannelFileToInfo.values(),
-    async task => {
-      const publishConfig = task.publishConfiguration
-      if (publishConfig.publishAutoUpdate === false) {
-        log.debug(
-          {
-            provider: publishConfig.provider,
-            reason: "publishAutoUpdate is set to false",
-          },
-          "auto update metadata file not published"
-        )
-        return
-      }
+  const concurrency = 4
+  await asyncPool<UpdateInfoFileTask, void>(concurrency, Array.from(updateChannelFileToInfo.values()), async task => {
+    const publishConfig = task.publishConfiguration
+    if (publishConfig.publishAutoUpdate === false) {
+      log.debug(
+        {
+          provider: publishConfig.provider,
+          reason: "publishAutoUpdate is set to false",
+        },
+        "auto update metadata file not published"
+      )
+      return
+    }
 
-      if (task.info.releaseDate == null) {
-        task.info.releaseDate = releaseDate
-      }
+    if (task.info.releaseDate == null) {
+      task.info.releaseDate = releaseDate
+    }
 
-      const fileContent = Buffer.from(serializeToYaml(task.info, false, true))
-      await outputFile(task.file, fileContent)
-      packager.dispatchArtifactCreated({
-        file: task.file,
-        fileContent,
-        arch: null,
-        packager: task.packager,
-        target: null,
-        publishConfig,
-      })
-    },
-    { concurrency: 4 }
-  )
+    const fileContent = Buffer.from(serializeToYaml(task.info, false, true))
+    await outputFile(task.file, fileContent)
+    packager.dispatchArtifactCreated({
+      file: task.file,
+      fileContent,
+      arch: null,
+      packager: task.packager,
+      target: null,
+      publishConfig,
+    })
+  })
 }
 
 // backward compatibility - write json file
