@@ -1,5 +1,6 @@
 import { PlatformSpecificBuildOptions, TargetConfigType } from "../index"
 import { CustomWindowsSign } from "../codeSign/windowsSignToolManager"
+import { Nullish } from "builder-util-runtime"
 
 export interface WindowsConfiguration extends PlatformSpecificBuildOptions {
   /**
@@ -167,5 +168,5 @@ export interface WindowsAzureSigningConfiguration {
    * Allow other CLI parameters (verbatim case-sensitive) to `Invoke-TrustedSigning`
    * Note: Key-Value pairs with `undefined`/`null` value are filtered out of the command.
    */
-  [k: string]: string | undefined | null
+  [k: string]: string | Nullish
 }

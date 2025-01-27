@@ -44,7 +44,7 @@ export const CURRENT_APP_INSTALLER_FILE_NAME = "installer.exe"
 // nsis-web
 export const CURRENT_APP_PACKAGE_FILE_NAME = "package.7z"
 
-export function asArray<T>(v: null | undefined | T | Array<T>): Array<T> {
+export function asArray<T>(v: Nullish | T | Array<T>): Array<T> {
   if (v == null) {
     return []
   } else if (Array.isArray(v)) {
@@ -53,3 +53,7 @@ export function asArray<T>(v: null | undefined | T | Array<T>): Array<T> {
     return [v]
   }
 }
+
+export type Nullish = null | undefined
+
+export type ObjectMap<ValueType> = { [key: string]: ValueType }

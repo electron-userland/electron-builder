@@ -13,6 +13,7 @@ import { importCertificate } from "./codesign"
 import { Identity as _Identity } from "@electron/osx-sign/dist/cjs/util-identities"
 import { SignOptions } from "@electron/osx-sign/dist/cjs/types"
 import { signAsync } from "@electron/osx-sign"
+import { Nullish } from "builder-util-runtime"
 
 export const appleCertificatePrefixes = ["Developer ID Application:", "Developer ID Installer:", "3rd Party Mac Developer Application:", "3rd Party Mac Developer Installer:"]
 
@@ -59,13 +60,7 @@ export function isSignAllowed(isPrintWarn = true): boolean {
   return true
 }
 
-export async function reportError(
-  isMas: boolean,
-  certificateTypes: CertType[],
-  qualifier: string | null | undefined,
-  keychainFile: string | null | undefined,
-  isForceCodeSigning: boolean
-) {
+export async function reportError(isMas: boolean, certificateTypes: CertType[], qualifier: string | Nullish, keychainFile: string | Nullish, isForceCodeSigning: boolean) {
   const logFields: Fields = {}
   if (qualifier == null) {
     logFields.reason = ""

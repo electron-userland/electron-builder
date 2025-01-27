@@ -6,6 +6,7 @@ import * as path from "path"
 import { Configuration, FileSet, Packager, PlatformSpecificBuildOptions } from "./index"
 import { PlatformPackager } from "./platformPackager"
 import { createFilter, hasMagic } from "./util/filter"
+import { Nullish } from "builder-util-runtime"
 
 // https://github.com/electron-userland/electron-builder/issues/733
 const minimatchOptions = { dot: true }
@@ -38,7 +39,6 @@ function ensureNoEndSlash(file: string): string {
   }
 }
 
-/** @internal */
 export class FileMatcher {
   readonly from: string
   readonly to: string
@@ -233,7 +233,7 @@ export function getNodeModuleFileMatcher(
   // grab only excludes
   const matcher = new FileMatcher(appDir, destination, macroExpander)
 
-  function addPatterns(patterns: Array<string | FileSet> | string | null | undefined | FileSet) {
+  function addPatterns(patterns: Array<string | FileSet> | string | Nullish | FileSet) {
     if (patterns == null) {
       return
     } else if (!Array.isArray(patterns)) {
@@ -295,7 +295,7 @@ export function getFileMatchers(
   const defaultMatcher = new FileMatcher(options.defaultSrc, defaultDestination, options.macroExpander)
   const fileMatchers: Array<FileMatcher> = []
 
-  function addPatterns(patterns: Array<string | FileSet> | string | null | undefined | FileSet) {
+  function addPatterns(patterns: Array<string | FileSet> | string | Nullish | FileSet) {
     if (patterns == null) {
       return
     } else if (!Array.isArray(patterns)) {

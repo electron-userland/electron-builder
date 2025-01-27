@@ -18,6 +18,7 @@ import { hashFile } from "../util/hash"
 import { ArtifactCreated } from "../packagerApi"
 import { getAppUpdatePublishConfiguration } from "../publish/PublishManager"
 import { getPath7za } from "builder-util"
+import { Nullish } from "builder-util-runtime"
 
 interface FpmOptions {
   name: string
@@ -60,7 +61,7 @@ export default class FpmTarget extends Target {
       ...packager.platformSpecificBuildOptions,
     }
 
-    function getResource(value: string | null | undefined, defaultFile: string) {
+    function getResource(value: string | Nullish, defaultFile: string) {
       if (value == null) {
         return path.join(defaultTemplatesDir, defaultFile)
       }

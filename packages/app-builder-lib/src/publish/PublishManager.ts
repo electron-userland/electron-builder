@@ -11,6 +11,7 @@ import {
   PublishConfiguration,
   PublishProvider,
   BitbucketOptions,
+  Nullish,
 } from "builder-util-runtime"
 import _debug from "debug"
 import {
@@ -390,7 +391,7 @@ export function computeDownloadUrl(publishConfiguration: PublishConfiguration, f
 
 export async function getPublishConfigs(
   platformPackager: PlatformPackager<any>,
-  targetSpecificOptions: PlatformSpecificBuildOptions | null | undefined,
+  targetSpecificOptions: PlatformSpecificBuildOptions | Nullish,
   arch: Arch | null,
   errorIfCannot: boolean
 ): Promise<Array<PublishConfiguration> | null> {

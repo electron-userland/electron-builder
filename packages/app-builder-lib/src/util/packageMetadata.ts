@@ -4,6 +4,7 @@ import * as path from "path"
 import * as semver from "semver"
 import { Metadata } from "../options/metadata"
 import { normalizePackageData } from "./normalizePackageData"
+import { Nullish, ObjectMap } from "builder-util-runtime"
 
 /** @internal */
 export async function readPackageJson(file: string): Promise<any> {
@@ -38,7 +39,7 @@ export function checkMetadata(metadata: Metadata, devMetadata: any | null, appPa
     errors.push(`Please specify '${missedFieldName}' in the package.json (${appPackageFile})`)
   }
 
-  const checkNotEmpty = (name: string, value: string | null | undefined) => {
+  const checkNotEmpty = (name: string, value: string | Nullish) => {
     if (isEmptyOrSpaces(value)) {
       reportError(name)
     }
@@ -92,7 +93,7 @@ function versionSatisfies(version: string | semver.SemVer | null, range: string 
   return semver.satisfies(coerced, range, loose)
 }
 
-function checkDependencies(dependencies: { [key: string]: string } | null | undefined, errors: Array<string>) {
+function checkDependencies(dependencies: ObjectMap<string> | Nullish, errors: Array<string>) {
   if (dependencies == null) {
     return
   }

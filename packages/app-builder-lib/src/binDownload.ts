@@ -1,4 +1,5 @@
 import { executeAppBuilder } from "builder-util"
+import { Nullish } from "builder-util-runtime"
 
 const versionToPromise = new Map<string, Promise<string>>()
 
@@ -54,7 +55,7 @@ export function getBin(name: string, url?: string | null, checksum?: string | nu
   return promise
 }
 
-function doGetBin(name: string, url: string | undefined | null, checksum: string | null | undefined): Promise<string> {
+function doGetBin(name: string, url: string | Nullish, checksum: string | Nullish): Promise<string> {
   const args = ["download-artifact", "--name", name]
   if (url != null) {
     args.push("--url", url)
