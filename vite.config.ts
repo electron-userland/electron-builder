@@ -11,7 +11,7 @@ export default () => {
       update: process.env.UPDATE_SNAPSHOT === "true",
       name: "node",
       environment: "node",
-      testTimeout: 20000,
+      testTimeout: 60000, // disk operations can be slow. We're generous with the timeout here to account for less-performant hardware
       coverage: {
         reporter: ["lcov", "text"],
       },
