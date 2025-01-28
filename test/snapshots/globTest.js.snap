@@ -1,4 +1,4 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
 exports[`asarUnpack and files ignore 1`] = `
 {
@@ -64,18 +64,6 @@ exports[`asarUnpack node_modules 2`] = `
       "unpacked": true,
     },
   },
-}
-`;
-
-exports[`asarUnpack node_modules which has many modules 1`] = `
-{
-  "linux": [],
-}
-`;
-
-exports[`exclude some modules when asarUnpack node_modules which has many modules 1`] = `
-{
-  "linux": [],
 }
 `;
 
