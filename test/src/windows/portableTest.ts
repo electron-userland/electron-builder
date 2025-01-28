@@ -1,4 +1,4 @@
-import { Platform, Arch } from "electron-builder"
+import { Arch, Platform } from "electron-builder"
 import * as path from "path"
 import { app, copyTestAsset, getFixtureDir } from "../helpers/packTester"
 

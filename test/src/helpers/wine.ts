@@ -58,7 +58,7 @@ export class WineManager {
     await fs.writeFile(path.join(wineDir, "system.reg"), systemReg)
 
     // remove links to host OS
-    const userDir = this.userDir!!
+    const userDir = this.userDir!
     const desktopDir = path.join(userDir, "Desktop")
     await Promise.all([
       unlinkIfExists(desktopDir),

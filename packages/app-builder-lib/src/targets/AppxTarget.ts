@@ -1,6 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
-import { Arch, asArray, deepAssign, InvalidConfigurationError, log } from "builder-util"
-import { copyOrLinkFile, walk } from "builder-util"
+import { Arch, asArray, copyOrLinkFile, deepAssign, InvalidConfigurationError, log, walk } from "builder-util"
+import { Nullish } from "builder-util-runtime"
 import { emptyDir, readdir, readFile, writeFile } from "fs-extra"
 import * as path from "path"
 import { AppXOptions } from "../"
@@ -13,7 +13,7 @@ import { createStageDir } from "./targetUtil"
 
 const APPX_ASSETS_DIR_NAME = "appx"
 
-const vendorAssetsForDefaultAssets: { [key: string]: string } = {
+const vendorAssetsForDefaultAssets: Record<string, string> = {
   "StoreLogo.png": "SampleAppx.50x50.png",
   "Square150x150Logo.png": "SampleAppx.150x150.png",
   "Square44x44Logo.png": "SampleAppx.44x44.png",
@@ -386,7 +386,7 @@ export default class AppXTarget extends Target {
 }
 
 // get the resource - language tag, see https://docs.microsoft.com/en-us/windows/uwp/globalizing/manage-language-and-region#specify-the-supported-languages-in-the-apps-manifest
-function resourceLanguageTag(userLanguages: Array<string> | null | undefined): string {
+function resourceLanguageTag(userLanguages: Array<string> | Nullish): string {
   if (userLanguages == null || userLanguages.length === 0) {
     userLanguages = [DEFAULT_RESOURCE_LANG]
   }

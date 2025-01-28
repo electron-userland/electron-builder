@@ -1,4 +1,5 @@
-import { isEmptyOrSpaces, log, InvalidConfigurationError } from "builder-util"
+import { InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
+import { Nullish } from "builder-util-runtime"
 import { readFile, readJson } from "fs-extra"
 import * as path from "path"
 import * as semver from "semver"
@@ -38,7 +39,7 @@ export function checkMetadata(metadata: Metadata, devMetadata: any | null, appPa
     errors.push(`Please specify '${missedFieldName}' in the package.json (${appPackageFile})`)
   }
 
-  const checkNotEmpty = (name: string, value: string | null | undefined) => {
+  const checkNotEmpty = (name: string, value: string | Nullish) => {
     if (isEmptyOrSpaces(value)) {
       reportError(name)
     }
@@ -92,7 +93,7 @@ function versionSatisfies(version: string | semver.SemVer | null, range: string 
   return semver.satisfies(coerced, range, loose)
 }
 
-function checkDependencies(dependencies: { [key: string]: string } | null | undefined, errors: Array<string>) {
+function checkDependencies(dependencies: Record<string, string> | Nullish, errors: Array<string>) {
   if (dependencies == null) {
     return
   }

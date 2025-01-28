@@ -88,7 +88,7 @@ class Assertions {
       if (customErrorAssert == null) {
         expect(m).toMatchSnapshot()
       } else {
-        customErrorAssert(actualError!!)
+        customErrorAssert(actualError!)
       }
     } catch (matchError) {
       throw new Error(matchError + " " + actualError)

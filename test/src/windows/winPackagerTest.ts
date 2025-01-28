@@ -26,33 +26,52 @@ test.ifAll(
 
 test.ifAll(
   "win zip",
-  app({
-    targets: Platform.WINDOWS.createTarget(["zip"], Arch.x64, Arch.arm64),
-    config: {
-      downloadAlternateFFmpeg: true,
-      electronFuses: {
-        runAsNode: true,
-        enableCookieEncryption: true,
-        enableNodeOptionsEnvironmentVariable: true,
-        enableNodeCliInspectArguments: true,
-        enableEmbeddedAsarIntegrityValidation: true,
-        onlyLoadAppFromAsar: true,
-        loadBrowserProcessSpecificV8Snapshot: true,
-        grantFileProtocolExtraPrivileges: undefined, // unsupported on current electron version in our tests
+  app(
+    {
+      targets: Platform.WINDOWS.createTarget(["zip"], Arch.x64, Arch.arm64),
+      config: {
+        extraResources: [
+          { from: "build", to: "./", filter: "*.asar" },
+          { from: "build/subdir", to: "./subdir", filter: "*.asar" },
+        ],
+        electronLanguages: "en",
+        downloadAlternateFFmpeg: true,
+        electronFuses: {
+          runAsNode: true,
+          enableCookieEncryption: true,
+          enableNodeOptionsEnvironmentVariable: true,
+          enableNodeCliInspectArguments: true,
+          enableEmbeddedAsarIntegrityValidation: true,
+          onlyLoadAppFromAsar: true,
+          loadBrowserProcessSpecificV8Snapshot: true,
+          grantFileProtocolExtraPrivileges: undefined, // unsupported on current electron version in our tests
+        },
       },
     },
-  })
+    {
+      signed: false,
+      projectDirCreated: async projectDir => {
+        await fs.mkdir(path.join(projectDir, "build", "subdir"))
+        await fs.copyFile(path.join(projectDir, "build", "extraAsar.asar"), path.join(projectDir, "build", "subdir", "extraAsar2.asar"))
+      },
+    }
+  )
 )
 
 test.ifAll(
   "zip artifactName",
-  app({
-    targets: Platform.WINDOWS.createTarget(["zip"], Arch.x64),
-    config: {
-      //tslint:disable-next-line:no-invalid-template-strings
-      artifactName: "${productName}-${version}-${os}-${arch}.${ext}",
+  app(
+    {
+      targets: Platform.WINDOWS.createTarget(["zip"], Arch.x64),
+      config: {
+        //tslint:disable-next-line:no-invalid-template-strings
+        artifactName: "${productName}-${version}-${os}-${arch}.${ext}",
+      },
     },
-  })
+    {
+      signed: true,
+    }
+  )
 )
 
 test.ifAll(
@@ -90,7 +109,7 @@ test.ifMac("custom icon", () => {
     {
       projectDirCreated: projectDir => fs.rename(path.join(projectDir, "build", "icon.ico"), path.join(projectDir, "customIcon.ico")),
       packed: async context => {
-        expect(await platformPackager!!.getIconPath()).toEqual(path.join(context.projectDir, "customIcon.ico"))
+        expect(await platformPackager!.getIconPath()).toEqual(path.join(context.projectDir, "customIcon.ico"))
       },
     }
   )
@@ -112,7 +131,7 @@ test.ifAll("win icon from icns", () => {
       projectDirCreated: projectDir =>
         Promise.all([fs.unlink(path.join(projectDir, "build", "icon.ico")), fs.rm(path.join(projectDir, "build", "icons"), { recursive: true, force: true })]),
       packed: async () => {
-        const file = await platformPackager!!.getIconPath()
+        const file = await platformPackager!.getIconPath()
         expect(file).toBeDefined()
       },
     }

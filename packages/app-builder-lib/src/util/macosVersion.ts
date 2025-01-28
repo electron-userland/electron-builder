@@ -1,8 +1,8 @@
+import { log } from "builder-util"
 import { readFile } from "fs-extra"
 import { Lazy } from "lazy-val"
-import * as semver from "semver"
-import { log } from "builder-util"
 import { release as osRelease } from "os"
+import * as semver from "semver"
 
 const macOsVersion = new Lazy<string>(async () => {
   const file = await readFile("/System/Library/CoreServices/SystemVersion.plist", "utf8")

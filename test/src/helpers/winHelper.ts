@@ -1,6 +1,6 @@
+import { readAsarJson } from "app-builder-lib/out/asar/asar"
 import { walk } from "builder-util"
 import { Arch, Platform } from "electron-builder"
-import { readAsarJson } from "app-builder-lib/out/asar/asar"
 import { outputFile } from "fs-extra"
 import * as fs from "fs/promises"
 import { load } from "js-yaml"
@@ -35,9 +35,9 @@ export async function doTest(outDir: string, perUser: boolean, productFilename =
 
   const wine = new WineManager()
   await wine.prepare()
-  const driveC = path.join(wine.wineDir!!, "drive_c")
-  const driveCWindows = path.join(wine.wineDir!!, "drive_c", "windows")
-  const perUserTempDir = path.join(wine.userDir!!, "Temp")
+  const driveC = path.join(wine.wineDir!, "drive_c")
+  const driveCWindows = path.join(wine.wineDir!, "drive_c", "windows")
+  const perUserTempDir = path.join(wine.userDir!, "Temp")
   const walkFilter = (it: string) => {
     return it !== driveCWindows && it !== perUserTempDir
   }
@@ -50,7 +50,7 @@ export async function doTest(outDir: string, perUser: boolean, productFilename =
 
   await wine.exec(path.join(outDir, `${productFilename} Setup 1.1.0.exe`), "/S")
 
-  let instDir = perUser ? path.join(wine.userDir!!, "Local Settings", "Application Data", "Programs") : path.join(driveC, "Program Files")
+  let instDir = perUser ? path.join(wine.userDir!, "Local Settings", "Application Data", "Programs") : path.join(driveC, "Program Files")
   if (menuCategory != null) {
     instDir = path.join(instDir, menuCategory)
   }
@@ -81,7 +81,7 @@ export async function doTest(outDir: string, perUser: boolean, productFilename =
   expect(fsChanges.deleted).toEqual([])
 
   // run installer again to test uninstall
-  const appDataFile = path.join(wine.userDir!!, "Application Data", name, "doNotDeleteMe")
+  const appDataFile = path.join(wine.userDir!, "Application Data", name, "doNotDeleteMe")
   await outputFile(appDataFile, "app data must be not removed")
   fsBefore = await listFiles()
   await wine.exec(path.join(outDir, `${productFilename} Setup 1.1.0.exe`), "/S")

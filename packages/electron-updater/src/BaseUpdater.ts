@@ -37,6 +37,10 @@ export abstract class BaseUpdater extends AppUpdater {
     })
   }
 
+  protected get installerPath(): string | null {
+    return this.downloadedUpdateHelper == null ? null : this.downloadedUpdateHelper.file
+  }
+
   // must be sync
   protected abstract doInstall(options: InstallOptions): boolean
 
@@ -48,17 +52,7 @@ export abstract class BaseUpdater extends AppUpdater {
     }
 
     const downloadedUpdateHelper = this.downloadedUpdateHelper
-
-    // Get the installer path, ensuring spaces are escaped on Linux
-    // 1. Check if downloadedUpdateHelper is not null
-    // 2. Check if downloadedUpdateHelper.file is not null
-    // 3. If both checks pass:
-    //    a. If the platform is Linux, replace spaces with '\ ' for shell compatibility
-    //    b. If the platform is not Linux, use the original path
-    // 4. If any check fails, set installerPath to null
-    const installerPath =
-      downloadedUpdateHelper && downloadedUpdateHelper.file ? (process.platform === "linux" ? downloadedUpdateHelper.file.replace(/ /g, "\\ ") : downloadedUpdateHelper.file) : null
-
+    const installerPath = this.installerPath
     const downloadedFileInfo = downloadedUpdateHelper == null ? null : downloadedUpdateHelper.downloadedFileInfo
     if (installerPath == null || downloadedFileInfo == null) {
       this.dispatchError(new Error("No valid update available, can't quit and install"))
@@ -71,7 +65,6 @@ export abstract class BaseUpdater extends AppUpdater {
     try {
       this._logger.info(`Install: isSilent: ${isSilent}, isForceRunAfter: ${isForceRunAfter}`)
       return this.doInstall({
-        installerPath,
         isSilent,
         isForceRunAfter,
         isAdminRightsRequired: downloadedFileInfo.isAdminRightsRequired,
@@ -164,7 +157,6 @@ export abstract class BaseUpdater extends AppUpdater {
 }
 
 export interface InstallOptions {
-  readonly installerPath: string
   readonly isSilent: boolean
   readonly isForceRunAfter: boolean
   readonly isAdminRightsRequired: boolean

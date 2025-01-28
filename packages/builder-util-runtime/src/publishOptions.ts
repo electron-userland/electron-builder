@@ -1,4 +1,5 @@
 import { OutgoingHttpHeaders } from "http"
+import { Nullish } from "."
 
 export type PublishProvider = "github" | "s3" | "spaces" | "generic" | "custom" | "snapStore" | "keygen" | "bitbucket"
 
@@ -427,7 +428,7 @@ function s3Url(options: S3Options) {
   return appendPath(url, options.path)
 }
 
-function appendPath(url: string, p: string | null | undefined): string {
+function appendPath(url: string, p: string | Nullish): string {
   if (p != null && p.length > 0) {
     if (!p.startsWith("/")) {
       url += "/"

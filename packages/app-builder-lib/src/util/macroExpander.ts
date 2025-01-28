@@ -1,7 +1,8 @@
 import { InvalidConfigurationError } from "builder-util"
+import { Nullish } from "builder-util-runtime"
 import { AppInfo } from "../appInfo"
 
-export function expandMacro(pattern: string, arch: string | null | undefined, appInfo: AppInfo, extra: any = {}, isProductNameSanitized = true): string {
+export function expandMacro(pattern: string, arch: string | Nullish, appInfo: AppInfo, extra: any = {}, isProductNameSanitized = true): string {
   if (arch == null) {
     pattern = pattern
       // tslint:disable-next-line:no-invalid-template-strings

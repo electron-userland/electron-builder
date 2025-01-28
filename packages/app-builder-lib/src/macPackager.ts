@@ -1,6 +1,10 @@
-import BluebirdPromise from "bluebird-lst"
-import { deepAssign, Arch, AsyncTaskManager, exec, InvalidConfigurationError, log, use, getArchSuffix, copyFile, statOrNull, unlinkIfExists, orIfFileNotExist } from "builder-util"
+import { notarize } from "@electron/notarize"
+import { NotarizeOptionsNotaryTool, NotaryToolKeychainCredentials } from "@electron/notarize/lib/types"
 import { PerFileSignOptions, SignOptions } from "@electron/osx-sign/dist/cjs/types"
+import BluebirdPromise from "bluebird-lst"
+import { Arch, AsyncTaskManager, copyFile, deepAssign, exec, getArchSuffix, InvalidConfigurationError, log, orIfFileNotExist, statOrNull, unlinkIfExists, use } from "builder-util"
+import { MemoLazy, Nullish } from "builder-util-runtime"
+import * as fs from "fs/promises"
 import { mkdir, readdir } from "fs/promises"
 import { Lazy } from "lazy-val"
 import * as path from "path"
@@ -10,16 +14,12 @@ import { DIR_TARGET, Platform, Target } from "./core"
 import { AfterPackContext, ElectronPlatformName } from "./index"
 import { MacConfiguration, MasConfiguration } from "./options/macOptions"
 import { Packager } from "./packager"
-import { chooseNotNull, PlatformPackager } from "./platformPackager"
+import { chooseNotNull, DoPackOptions, PlatformPackager } from "./platformPackager"
 import { ArchiveTarget } from "./targets/ArchiveTarget"
 import { PkgTarget, prepareProductBuildArgs } from "./targets/pkg"
 import { createCommonTarget, NoOpTarget } from "./targets/targetFactory"
 import { isMacOsHighSierra } from "./util/macosVersion"
 import { getTemplatePath } from "./util/pathManager"
-import * as fs from "fs/promises"
-import { notarize } from "@electron/notarize"
-import { NotarizeOptionsNotaryTool, NotaryToolKeychainCredentials } from "@electron/notarize/lib/types"
-import { MemoLazy } from "builder-util-runtime"
 import { resolveFunction } from "./util/resolve"
 
 export type CustomMacSignOptions = SignOptions
@@ -107,24 +107,27 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
     }
   }
 
-  protected async doPack(
-    outDir: string,
-    appOutDir: string,
-    platformName: ElectronPlatformName,
-    arch: Arch,
-    platformSpecificBuildOptions: MacConfiguration,
-    targets: Array<Target>
-  ): Promise<any> {
+  protected async doPack(config: DoPackOptions<MacConfiguration>): Promise<any> {
+    const { outDir, appOutDir, platformName, arch, platformSpecificBuildOptions, targets } = config
+
     switch (arch) {
       default: {
-        return super.doPack(outDir, appOutDir, platformName, arch, platformSpecificBuildOptions, targets)
+        return super.doPack(config)
       }
       case Arch.universal: {
         const outDirName = (arch: Arch) => `${appOutDir}-${Arch[arch]}-temp`
+        const options = {
+          ...config,
+          options: {
+            sign: false,
+            disableAsarIntegrity: true,
+            disableFuses: true,
+          },
+        }
 
         const x64Arch = Arch.x64
         const x64AppOutDir = outDirName(x64Arch)
-        await super.doPack(outDir, x64AppOutDir, platformName, x64Arch, platformSpecificBuildOptions, targets, false, true)
+        await super.doPack({ ...options, appOutDir: x64AppOutDir, arch: x64Arch })
 
         if (this.info.cancellationToken.cancelled) {
           return
@@ -132,7 +135,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
 
         const arm64Arch = Arch.arm64
         const arm64AppOutPath = outDirName(arm64Arch)
-        await super.doPack(outDir, arm64AppOutPath, platformName, arm64Arch, platformSpecificBuildOptions, targets, false, true)
+        await super.doPack({ ...options, appOutDir: arm64AppOutPath, arch: arm64Arch })
 
         if (this.info.cancellationToken.cancelled) {
           return
@@ -177,6 +180,8 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
           return
         }
 
+        await this.doAddElectronFuses(packContext)
+
         await this.doSignAfterPack(outDir, appOutDir, platformName, arch, platformSpecificBuildOptions, targets)
         break
       }
@@ -202,7 +207,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
 
       const targetOutDir = path.join(outDir, `${targetName}${getArchSuffix(arch, this.platformSpecificBuildOptions.defaultArch)}`)
       if (prepackaged == null) {
-        await this.doPack(outDir, targetOutDir, "mas", arch, masBuildOptions, [target])
+        await this.doPack({ outDir, appOutDir: targetOutDir, platformName: "mas", arch, platformSpecificBuildOptions: masBuildOptions, targets: [target] })
         await this.sign(path.join(targetOutDir, `${this.appInfo.productFilename}.app`), targetOutDir, masBuildOptions, arch)
       } else {
         await this.sign(prepackaged, targetOutDir, masBuildOptions, arch)
@@ -212,7 +217,14 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
     if (!hasMas || targets.length > 1) {
       const appPath = prepackaged == null ? path.join(this.computeAppOutDir(outDir, arch), `${this.appInfo.productFilename}.app`) : prepackaged
       if (prepackaged == null) {
-        await this.doPack(outDir, path.dirname(appPath), this.platform.nodeName as ElectronPlatformName, arch, this.platformSpecificBuildOptions, targets)
+        await this.doPack({
+          outDir,
+          appOutDir: path.dirname(appPath),
+          platformName: this.platform.nodeName as ElectronPlatformName,
+          arch,
+          platformSpecificBuildOptions: this.platformSpecificBuildOptions,
+          targets,
+        })
       }
       this.packageInDistributableFormat(appPath, arch, targets, taskManager)
     }
@@ -431,7 +443,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
   }
 
   //noinspection JSMethodCanBeStatic
-  protected async doFlat(appPath: string, outFile: string, identity: Identity, keychain: string | null | undefined): Promise<any> {
+  protected async doFlat(appPath: string, outFile: string, identity: Identity, keychain: string | Nullish): Promise<any> {
     // productbuild doesn't created directory for out file
     await mkdir(path.dirname(outFile), { recursive: true })
 

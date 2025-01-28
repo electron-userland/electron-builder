@@ -1,5 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
-import { asArray, log, copyDir, copyOrLinkFile, Filter, statOrNull, FileTransformer, USE_HARD_LINKS } from "builder-util"
+import { asArray, copyDir, copyOrLinkFile, FileTransformer, Filter, log, statOrNull, USE_HARD_LINKS } from "builder-util"
+import { Nullish } from "builder-util-runtime"
 import { mkdir } from "fs/promises"
 import { Minimatch } from "minimatch"
 import * as path from "path"
@@ -38,7 +39,6 @@ function ensureNoEndSlash(file: string): string {
   }
 }
 
-/** @internal */
 export class FileMatcher {
   readonly from: string
   readonly to: string
@@ -233,7 +233,7 @@ export function getNodeModuleFileMatcher(
   // grab only excludes
   const matcher = new FileMatcher(appDir, destination, macroExpander)
 
-  function addPatterns(patterns: Array<string | FileSet> | string | null | undefined | FileSet) {
+  function addPatterns(patterns: Array<string | FileSet> | string | Nullish | FileSet) {
     if (patterns == null) {
       return
     } else if (!Array.isArray(patterns)) {
@@ -295,7 +295,7 @@ export function getFileMatchers(
   const defaultMatcher = new FileMatcher(options.defaultSrc, defaultDestination, options.macroExpander)
   const fileMatchers: Array<FileMatcher> = []
 
-  function addPatterns(patterns: Array<string | FileSet> | string | null | undefined | FileSet) {
+  function addPatterns(patterns: Array<string | FileSet> | string | Nullish | FileSet) {
     if (patterns == null) {
       return
     } else if (!Array.isArray(patterns)) {

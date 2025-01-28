@@ -1,22 +1,23 @@
-import { addValue, deepAssign, exec, log, spawn, getPath7x, getPath7za, copyDir, FileCopier, USE_HARD_LINKS, walk } from "builder-util"
-import { CancellationToken, UpdateFileInfo } from "builder-util-runtime"
-import { executeFinally } from "builder-util"
-import DecompressZip from "decompress-zip"
-import { Arch, ArtifactCreated, Configuration, DIR_TARGET, getArchSuffix, MacOsTargetName, Packager, PackagerOptions, Platform, Target } from "electron-builder"
 import { PublishManager } from "app-builder-lib"
+import { readAsar } from "app-builder-lib/out/asar/asar"
 import { computeArchToTargetNamesMap } from "app-builder-lib/out/targets/targetFactory"
 import { getLinuxToolsPath } from "app-builder-lib/out/targets/tools"
+import { executeAppBuilderAsJson } from "app-builder-lib/out/util/appBuilder"
+import { AsarIntegrity } from "app-builder-lib/src/asar/integrity"
+import { addValue, copyDir, deepAssign, exec, executeFinally, FileCopier, getPath7x, getPath7za, log, spawn, USE_HARD_LINKS, walk } from "builder-util"
+import { CancellationToken, UpdateFileInfo } from "builder-util-runtime"
+import DecompressZip from "decompress-zip"
+import { Arch, ArtifactCreated, Configuration, DIR_TARGET, getArchSuffix, MacOsTargetName, Packager, PackagerOptions, Platform, Target } from "electron-builder"
 import { convertVersion } from "electron-builder-squirrel-windows/out/squirrelPack"
 import { PublishPolicy } from "electron-publish"
 import { emptyDir, writeJson } from "fs-extra"
 import * as fs from "fs/promises"
 import { load } from "js-yaml"
 import * as path from "path"
-import { promisify } from "util"
 import pathSorter from "path-sort"
+import { NtExecutable, NtExecutableResource } from "resedit"
 import { TmpDir } from "temp-file"
-import { readAsar } from "app-builder-lib/out/asar/asar"
-import { executeAppBuilderAsJson } from "app-builder-lib/out/util/appBuilder"
+import { promisify } from "util"
 import { CSC_LINK, WIN_CSC_LINK } from "./codeSignData"
 import { assertThat } from "./fileAssert"
 
@@ -333,7 +334,6 @@ async function checkMacResult(packager: Packager, packagerOptions: PackagerOptio
   })
 
   // checked manually, remove to avoid mismatch on CI server (where TRAVIS_BUILD_NUMBER is defined and different on each test run)
-  delete info.ElectronAsarIntegrity
   delete info.CFBundleVersion
   delete info.BuildMachineOSBuild
   delete info.NSHumanReadableCopyright
@@ -356,18 +356,18 @@ async function checkMacResult(packager: Packager, packagerOptions: PackagerOptio
     delete info.LSMinimumSystemVersion
   }
 
-  expect(info).toMatchSnapshot()
+  const { ElectronAsarIntegrity: checksumData, ...snapshot } = info
 
-  const checksumData = info.ElectronAsarIntegrity
   if (checksumData != null) {
     for (const name of Object.keys(checksumData)) {
       checksumData[name] = { algorithm: "SHA256", hash: "hash" }
     }
-    info.ElectronAsarIntegrity = JSON.stringify(checksumData)
+    snapshot.ElectronAsarIntegrity = checksumData
   }
+  expect(snapshot).toMatchSnapshot()
 
   if (checkOptions.checkMacApp != null) {
-    await checkOptions.checkMacApp(packedAppDir, info)
+    await checkOptions.checkMacApp(packedAppDir, snapshot)
   }
 
   if (packagerOptions.config != null && (packagerOptions.config as Configuration).cscLink != null) {
@@ -377,19 +377,64 @@ async function checkMacResult(packager: Packager, packagerOptions: PackagerOptio
 }
 
 async function checkWindowsResult(packager: Packager, checkOptions: AssertPackOptions, artifacts: Array<ArtifactCreated>, nameToTarget: Map<string, Target>) {
-  const appInfo = packager.appInfo
-  let squirrel = false
-  for (const target of nameToTarget.keys()) {
-    if (target === "squirrel") {
-      squirrel = true
-      break
+  async function checkSquirrelResult() {
+    const appInfo = packager.appInfo
+    const { packageFile, unZipper, fileDescriptors } = await checkResult(artifacts, "-full.nupkg")
+
+    if (checkOptions == null) {
+      await unZipper.extractFile(fileDescriptors.filter(it => it.path === "TestApp.nuspec")[0], {
+        path: path.dirname(packageFile),
+      })
+      const expectedSpec = (await fs.readFile(path.join(path.dirname(packageFile), "TestApp.nuspec"), "utf8")).replace(/\r\n/g, "\n")
+      // console.log(expectedSpec)
+      expect(expectedSpec).toEqual(`<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
+  <metadata>
+    <id>TestApp</id>
+    <version>${convertVersion(appInfo.version)}</version>
+    <title>${appInfo.productName}</title>
+    <authors>Foo Bar</authors>
+    <owners>Foo Bar</owners>
+    <iconUrl>https://raw.githubusercontent.com/szwacz/electron-boilerplate/master/resources/windows/icon.ico</iconUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>Test Application (test quite “ #378)</description>
+    <copyright>Copyright © ${new Date().getFullYear()} Foo Bar</copyright>
+    <projectUrl>http://foo.example.com</projectUrl>
+  </metadata>
+</package>`)
     }
   }
-  if (!squirrel) {
-    return
+
+  async function checkZipResult() {
+    const { packageFile, unZipper, fileDescriptors } = await checkResult(artifacts, ".zip")
+
+    const executable = fileDescriptors.filter(it => it.path.endsWith(".exe"))[0]
+    await unZipper.extractFile(executable, {
+      path: path.dirname(packageFile),
+    })
+    const buffer = await fs.readFile(path.join(path.dirname(packageFile), executable.path))
+    const resource = NtExecutableResource.from(NtExecutable.from(buffer))
+    const integrityBuffer = resource.entries.find(entry => entry.type === "INTEGRITY")
+    const asarIntegrity = new Uint8Array(integrityBuffer!.bin)
+    const decoder = new TextDecoder("utf-8")
+    const checksumData = decoder.decode(asarIntegrity)
+    const checksums = JSON.parse(checksumData).map((data: AsarIntegrity) => ({ ...data, alg: "SHA256", value: "hash" }))
+    expect(checksums).toMatchSnapshot()
   }
 
-  const packageFile = artifacts.find(it => it.file.endsWith("-full.nupkg"))!.file
+  const hasTarget = (target: string) => {
+    const targets = nameToTarget.get(target)
+    return targets != null
+  }
+  if (hasTarget("squirrel")) {
+    return checkSquirrelResult()
+  } else if (hasTarget("zip") && !(checkOptions.signed || checkOptions.signedWin)) {
+    return checkZipResult()
+  }
+}
+
+const checkResult = async (artifacts: Array<ArtifactCreated>, extension: string) => {
+  const packageFile = artifacts.find(it => it.file.endsWith(extension))!.file
   const unZipper = new DecompressZip(packageFile)
   const fileDescriptors = await unZipper.getFiles()
 
@@ -405,28 +450,7 @@ async function checkWindowsResult(packager: Packager, checkOptions: AssertPackOp
 
   expect(files).toMatchSnapshot()
 
-  if (checkOptions == null) {
-    await unZipper.extractFile(fileDescriptors.filter(it => it.path === "TestApp.nuspec")[0], {
-      path: path.dirname(packageFile),
-    })
-    const expectedSpec = (await fs.readFile(path.join(path.dirname(packageFile), "TestApp.nuspec"), "utf8")).replace(/\r\n/g, "\n")
-    // console.log(expectedSpec)
-    expect(expectedSpec).toEqual(`<?xml version="1.0"?>
-<package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
-  <metadata>
-    <id>TestApp</id>
-    <version>${convertVersion(appInfo.version)}</version>
-    <title>${appInfo.productName}</title>
-    <authors>Foo Bar</authors>
-    <owners>Foo Bar</owners>
-    <iconUrl>https://raw.githubusercontent.com/szwacz/electron-boilerplate/master/resources/windows/icon.ico</iconUrl>
-    <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <description>Test Application (test quite “ #378)</description>
-    <copyright>Copyright © ${new Date().getFullYear()} Foo Bar</copyright>
-    <projectUrl>http://foo.example.com</projectUrl>
-  </metadata>
-</package>`)
-  }
+  return { packageFile, unZipper, fileDescriptors }
 }
 
 export const execShell: any = promisify(require("child_process").exec)

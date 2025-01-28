@@ -1,8 +1,8 @@
-import { sanitizeFileName } from "builder-util/out/filename"
-import { InvalidConfigurationError, log, isEmptyOrSpaces } from "builder-util"
-import { getBinFromUrl } from "app-builder-lib/out/binDownload"
 import { Arch, getArchSuffix, SquirrelWindowsOptions, Target } from "app-builder-lib"
+import { getBinFromUrl } from "app-builder-lib/out/binDownload"
 import { WinPackager } from "app-builder-lib/out/winPackager"
+import { InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
+import { sanitizeFileName } from "builder-util/out/filename"
 import * as path from "path"
 import { convertVersion, SquirrelBuilder, SquirrelOptions } from "./squirrelPack"
 
