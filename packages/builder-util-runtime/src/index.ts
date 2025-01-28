@@ -55,3 +55,5 @@ export function asArray<T>(v: Nullish | T | Array<T>): Array<T> {
 }
 
 export type Nullish = null | undefined
+
+export type ObjectMap<ValueType> = { [key: string]: ValueType }

@@ -1,10 +1,8 @@
-import { signAsync } from "@electron/osx-sign"
-import { SignOptions } from "@electron/osx-sign/dist/cjs/types"
-import { Identity as _Identity } from "@electron/osx-sign/dist/cjs/util-identities"
 import BluebirdPromise from "bluebird-lst"
-import { copyFile, exec, Fields, InvalidConfigurationError, isEmptyOrSpaces, isEnvTrue, isPullRequest, log, Logger, retry, TmpDir, unlinkIfExists } from "builder-util"
-import { Nullish } from "builder-util-runtime"
-import { createHash, randomBytes } from "crypto"
+import { exec, InvalidConfigurationError, isEmptyOrSpaces, isEnvTrue, isPullRequest, log, TmpDir, retry } from "builder-util"
+import { copyFile, unlinkIfExists } from "builder-util"
+import { Fields, Logger } from "builder-util"
+import { randomBytes, createHash } from "crypto"
 import { rename } from "fs/promises"
 import { Lazy } from "lazy-val"
 import { homedir, tmpdir } from "os"
@@ -12,6 +10,10 @@ import * as path from "path"
 import { getTempName } from "temp-file"
 import { isAutoDiscoveryCodeSignIdentity } from "../util/flags"
 import { importCertificate } from "./codesign"
+import { Identity as _Identity } from "@electron/osx-sign/dist/cjs/util-identities"
+import { SignOptions } from "@electron/osx-sign/dist/cjs/types"
+import { signAsync } from "@electron/osx-sign"
+import { Nullish } from "builder-util-runtime"
 
 export const appleCertificatePrefixes = ["Developer ID Application:", "Developer ID Installer:", "3rd Party Mac Developer Application:", "3rd Party Mac Developer Installer:"]
 
@@ -200,7 +202,7 @@ export async function createKeychain({ tmpDir, cscLink, cscKeyPassword, cscILink
 async function importCerts(keychainFile: string, paths: Array<string>, keyPasswords: Array<string>): Promise<CodeSigningInfo> {
   for (let i = 0; i < paths.length; i++) {
     const password = keyPasswords[i]
-    await exec("/usr/bin/security", ["import ", paths[i], "-k", keychainFile, "-T", "/usr/bin/codesign", "-T", "/usr/bin/productbuild", "-P", password])
+    await exec("/usr/bin/security", ["import", paths[i], "-k", keychainFile, "-T", "/usr/bin/codesign", "-T", "/usr/bin/productbuild", "-P", password])
 
     // https://stackoverflow.com/questions/39868578/security-codesign-in-sierra-keychain-ignores-access-control-settings-and-ui-p
     // https://github.com/electron-userland/electron-packager/issues/701#issuecomment-322315996

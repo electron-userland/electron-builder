@@ -1,10 +1,10 @@
-import { InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
-import { Nullish } from "builder-util-runtime"
+import { isEmptyOrSpaces, log, InvalidConfigurationError } from "builder-util"
 import { readFile, readJson } from "fs-extra"
 import * as path from "path"
 import * as semver from "semver"
 import { Metadata } from "../options/metadata"
 import { normalizePackageData } from "./normalizePackageData"
+import { Nullish, ObjectMap } from "builder-util-runtime"
 
 /** @internal */
 export async function readPackageJson(file: string): Promise<any> {
@@ -93,7 +93,7 @@ function versionSatisfies(version: string | semver.SemVer | null, range: string 
   return semver.satisfies(coerced, range, loose)
 }
 
-function checkDependencies(dependencies: Record<string, string> | Nullish, errors: Array<string>) {
+function checkDependencies(dependencies: ObjectMap<string> | Nullish, errors: Array<string>) {
   if (dependencies == null) {
     return
   }

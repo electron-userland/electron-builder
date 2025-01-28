@@ -1,11 +1,9 @@
 import { Arch, CopyFileTransformer, executeAppBuilder, FileTransformer, InvalidConfigurationError, use, walk } from "builder-util"
-import { Nullish } from "builder-util-runtime"
 import { createHash } from "crypto"
 import { readdir } from "fs/promises"
 import * as isCI from "is-ci"
 import { Lazy } from "lazy-val"
 import * as path from "path"
-import { SignManager } from "./codeSign/signManager"
 import { signWindows, WindowsSignOptions } from "./codeSign/windowsCodeSign"
 import { WindowsSignAzureManager } from "./codeSign/windowsSignAzureManager"
 import { FileCodeSigningInfo, getSignVendorPath, WindowsSignToolManager } from "./codeSign/windowsSignToolManager"
@@ -26,6 +24,8 @@ import { isBuildCacheEnabled } from "./util/flags"
 import { time } from "./util/timer"
 import { getWindowsVm, VmManager } from "./vm/vm"
 import { execWine } from "./wine"
+import { SignManager } from "./codeSign/signManager"
+import { Nullish } from "builder-util-runtime"
 
 export class WinPackager extends PlatformPackager<WindowsConfiguration> {
   _iconPath = new Lazy(() => this.getOrConvertIcon("ico"))

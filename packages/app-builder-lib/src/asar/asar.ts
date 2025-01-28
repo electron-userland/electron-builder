@@ -1,3 +1,4 @@
+import { ObjectMap } from "builder-util-runtime"
 import { createFromBuffer } from "chromium-pickle-js"
 import { close, open, read, readFile, Stats } from "fs-extra"
 import * as path from "path"
@@ -16,7 +17,7 @@ export interface NodeIntegrity {
 
 export class Node {
   // we don't use Map because later it will be stringified
-  files?: Record<string, Node>
+  files?: ObjectMap<Node>
 
   unpacked?: boolean
 
@@ -133,7 +134,7 @@ export class AsarFilesystem {
   }
 
   private newNode() {
-    return Object.create(null) as Record<string, Node>
+    return Object.create(null) as ObjectMap<Node>
   }
 }
 

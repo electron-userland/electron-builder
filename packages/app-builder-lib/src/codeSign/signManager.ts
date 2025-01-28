@@ -1,9 +1,9 @@
-import { MemoLazy, Nullish } from "builder-util-runtime"
 import { Lazy } from "lazy-val"
-import { Target } from "../core"
-import { WindowsConfiguration } from "../options/winOptions"
 import { WindowsSignOptions } from "./windowsCodeSign"
-import { CertificateFromStoreInfo, FileCodeSigningInfo } from "./windowsSignToolManager"
+import { Target } from "../core"
+import { MemoLazy, Nullish } from "builder-util-runtime"
+import { FileCodeSigningInfo, CertificateFromStoreInfo } from "./windowsSignToolManager"
+import { WindowsConfiguration } from "../options/winOptions"
 
 export interface SignManager {
   readonly computedPublisherName: Lazy<Array<string> | null>
