@@ -1,12 +1,12 @@
 import BluebirdPromise from "bluebird-lst"
-import { asArray, log, copyDir, copyOrLinkFile, Filter, statOrNull, FileTransformer, USE_HARD_LINKS } from "builder-util"
+import { asArray, copyDir, copyOrLinkFile, FileTransformer, Filter, log, statOrNull, USE_HARD_LINKS } from "builder-util"
+import { Nullish } from "builder-util-runtime"
 import { mkdir } from "fs/promises"
 import { Minimatch } from "minimatch"
 import * as path from "path"
 import { Configuration, FileSet, Packager, PlatformSpecificBuildOptions } from "./index"
 import { PlatformPackager } from "./platformPackager"
 import { createFilter, hasMagic } from "./util/filter"
-import { Nullish } from "builder-util-runtime"
 
 // https://github.com/electron-userland/electron-builder/issues/733
 const minimatchOptions = { dot: true }

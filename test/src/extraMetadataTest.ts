@@ -1,5 +1,5 @@
-import { DIR_TARGET, Platform } from "electron-builder"
 import { readAsarJson } from "app-builder-lib/out/asar/asar"
+import { DIR_TARGET, Platform } from "electron-builder"
 import { coerceTypes } from "electron-builder/out/builder"
 import { readJson } from "fs-extra"
 import * as path from "path"

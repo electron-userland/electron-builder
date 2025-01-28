@@ -1,5 +1,5 @@
 import { appBuilderPath } from "app-builder-bin"
-import { safeStringifyJson, retry as _retry, ObjectMap, Nullish } from "builder-util-runtime"
+import { retry as _retry, Nullish, safeStringifyJson } from "builder-util-runtime"
 import * as chalk from "chalk"
 import { ChildProcess, execFile, ExecFileOptions, SpawnOptions } from "child_process"
 import { spawn as _spawn } from "cross-spawn"
@@ -7,9 +7,9 @@ import { createHash } from "crypto"
 import _debug from "debug"
 import { dump } from "js-yaml"
 import * as path from "path"
-import { debug, log } from "./log"
 import { install as installSourceMap } from "source-map-support"
 import { getPath7za } from "./7za"
+import { debug, log } from "./log"
 
 if (process.env.JEST_WORKER_ID == null) {
   installSourceMap()
@@ -17,20 +17,20 @@ if (process.env.JEST_WORKER_ID == null) {
 
 export { safeStringifyJson } from "builder-util-runtime"
 export { TmpDir } from "temp-file"
-export * from "./log"
-export { Arch, getArchCliNames, toLinuxArchString, getArchSuffix, ArchType, archFromString, defaultArchFromString } from "./arch"
+export * from "./arch"
+export { Arch, archFromString, ArchType, defaultArchFromString, getArchCliNames, getArchSuffix, toLinuxArchString } from "./arch"
 export { AsyncTaskManager } from "./asyncTaskManager"
 export { DebugLogger } from "./DebugLogger"
+export * from "./log"
 export { httpExecutor, NodeHttpExecutor } from "./nodeHttpExecutor"
 export * from "./promise"
-export * from "./arch"
 
-export * from "./fs"
 export { asArray } from "builder-util-runtime"
+export * from "./fs"
 
 export { deepAssign } from "./deepAssign"
 
-export { getPath7za, getPath7x } from "./7za"
+export { getPath7x, getPath7za } from "./7za"
 
 export const debug7z = _debug("electron-builder:7z")
 
@@ -52,7 +52,7 @@ export function removePassword(input: string) {
   })
 }
 
-function getProcessEnv(env: ObjectMap<string | undefined> | Nullish): NodeJS.ProcessEnv | undefined {
+function getProcessEnv(env: Record<string, string | undefined> | Nullish): NodeJS.ProcessEnv | undefined {
   if (process.platform === "win32") {
     return env == null ? undefined : env
   }

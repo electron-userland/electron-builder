@@ -1,4 +1,3 @@
-import { ObjectMap } from "builder-util-runtime"
 import { TargetSpecificOptions } from "../core"
 import { CommonLinuxOptions } from "./linuxOptions"
 
@@ -17,7 +16,7 @@ export interface SnapOptions extends CommonLinuxOptions, TargetSpecificOptions {
   /**
    * The custom environment. Defaults to `{"TMPDIR: "$XDG_RUNTIME_DIR"}`. If you set custom, it will be merged with default.
    */
-  readonly environment?: ObjectMap<string> | null
+  readonly environment?: { [key: string]: string } | null
 
   /**
    * The 78 character long summary. Defaults to [productName](./configuration.md#productName).
@@ -118,7 +117,7 @@ export interface SnapOptions extends CommonLinuxOptions, TargetSpecificOptions {
   /**
    * Specifies any files to make accessible from locations such as `/usr`, `/var`, and `/etc`. See [snap layouts](https://snapcraft.io/docs/snap-layouts) to learn more.
    */
-  readonly layout?: ObjectMap<ObjectMap<string>> | null
+  readonly layout?: { [key: string]: { [key: string]: string } } | null
 
   /**
    * Specifies which files from the app part to stage and which to exclude. Individual files, directories, wildcards, globstars, and exclusions are accepted. See [Snapcraft filesets](https://snapcraft.io/docs/snapcraft-filesets) to learn more about the format.
@@ -145,9 +144,9 @@ export interface SnapOptions extends CommonLinuxOptions, TargetSpecificOptions {
 }
 
 export interface PlugDescriptor {
-  [key: string]: ObjectMap<any> | null
+  [key: string]: { [key: string]: any } | null
 }
 
 export interface SlotDescriptor {
-  [key: string]: ObjectMap<any> | null
+  [key: string]: { [key: string]: any } | null
 }

@@ -1,4 +1,4 @@
-import { Platform, Arch } from "app-builder-lib"
+import { Arch, Platform } from "app-builder-lib"
 import { app, snapTarget } from "../helpers/packTester"
 
 // very slow

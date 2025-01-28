@@ -1,9 +1,8 @@
+import { InvalidConfigurationError, statOrNull } from "builder-util"
 import { outputFile } from "fs-extra"
 import { homedir } from "os"
 import * as path from "path"
 import { TmpDir } from "temp-file"
-import { InvalidConfigurationError } from "builder-util"
-import { statOrNull } from "builder-util"
 import { download } from "../binDownload"
 
 /** @private */

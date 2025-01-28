@@ -1,11 +1,11 @@
 import BluebirdPromise from "bluebird-lst"
+import { FilterStats, log, statOrNull, walk } from "builder-util"
 import { createHash } from "crypto"
 import { createReadStream } from "fs"
 import { readdir } from "fs/promises"
 import * as path from "path"
-import { readAsarHeader, NodeIntegrity } from "./asar"
 import { FileMatcher } from "../fileMatcher"
-import { statOrNull, walk, FilterStats, log } from "builder-util"
+import { NodeIntegrity, readAsarHeader } from "./asar"
 
 export interface AsarIntegrityOptions {
   readonly resourcesPath: string

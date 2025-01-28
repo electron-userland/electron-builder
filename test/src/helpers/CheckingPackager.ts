@@ -1,12 +1,12 @@
-import { AsyncTaskManager } from "builder-util"
-import { Arch, MacConfiguration, Packager, Target } from "electron-builder"
-import SquirrelWindowsTarget from "electron-builder-squirrel-windows"
+import { SignOptions as MacSignOptions } from "@electron/osx-sign/dist/cjs/types"
 import { Identity } from "app-builder-lib/out/codeSign/macCodeSign"
 import { MacPackager } from "app-builder-lib/out/macPackager"
-import { DmgTarget } from "dmg-builder"
-import { WinPackager } from "app-builder-lib/out/winPackager"
-import { SignOptions as MacSignOptions } from "@electron/osx-sign/dist/cjs/types"
 import { DoPackOptions } from "app-builder-lib/out/platformPackager"
+import { WinPackager } from "app-builder-lib/out/winPackager"
+import { AsyncTaskManager } from "builder-util"
+import { DmgTarget } from "dmg-builder"
+import { Arch, MacConfiguration, Packager, Target } from "electron-builder"
+import SquirrelWindowsTarget from "electron-builder-squirrel-windows"
 
 export class CheckingWinPackager extends WinPackager {
   effectiveDistOptions: any

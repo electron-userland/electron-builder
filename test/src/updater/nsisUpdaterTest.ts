@@ -1,5 +1,5 @@
-import { BitbucketPublisher } from "electron-publish"
 import { BitbucketOptions, GenericServerOptions, GithubOptions, KeygenOptions, S3Options, SpacesOptions } from "builder-util-runtime"
+import { BitbucketPublisher } from "electron-publish"
 import { UpdateCheckResult } from "electron-updater"
 import { outputFile } from "fs-extra"
 import { tmpdir } from "os"
@@ -186,7 +186,7 @@ test("file url github", async () => {
   updater.updateConfigPath = await writeUpdateConfig(options)
   updater.signals.updateDownloaded(info => {
     expect(info.downloadedFile).not.toBeNull()
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+
     delete (info as any).downloadedFile
     expect(info).toMatchSnapshot()
   })
@@ -204,7 +204,7 @@ test("file url github pre-release and fullChangelog", async () => {
   updater.updateConfigPath = await writeUpdateConfig(options)
   updater.signals.updateDownloaded(info => {
     expect(info.downloadedFile).not.toBeNull()
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+
     delete (info as any).downloadedFile
     expect(info).toMatchSnapshot()
   })

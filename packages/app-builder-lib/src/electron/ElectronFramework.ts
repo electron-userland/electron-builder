@@ -1,7 +1,7 @@
 import BluebirdPromise from "bluebird-lst"
-import { asArray, executeAppBuilder, log } from "builder-util"
-import { CONCURRENCY, copyDir, DO_NOT_USE_HARD_LINKS, statOrNull, unlinkIfExists } from "builder-util"
+import { asArray, CONCURRENCY, copyDir, DO_NOT_USE_HARD_LINKS, executeAppBuilder, log, statOrNull, unlinkIfExists } from "builder-util"
 import { emptyDir, readdir, rename } from "fs-extra"
+import * as fs from "fs/promises"
 import * as path from "path"
 import { Configuration } from "../configuration"
 import { BeforeCopyExtraFilesOptions, Framework, PrepareApplicationStageDirectoryOptions } from "../Framework"
@@ -9,12 +9,11 @@ import { Packager, Platform } from "../index"
 import { LinuxPackager } from "../linuxPackager"
 import { MacPackager } from "../macPackager"
 import { getTemplatePath } from "../util/pathManager"
-import { createMacApp } from "./electronMac"
-import { addWinAsarIntegrity } from "./electronWin"
-import { computeElectronVersion, getElectronVersionFromInstalled } from "./electronVersion"
-import * as fs from "fs/promises"
-import injectFFMPEG from "./injectFFMPEG"
 import { resolveFunction } from "../util/resolve"
+import { createMacApp } from "./electronMac"
+import { computeElectronVersion, getElectronVersionFromInstalled } from "./electronVersion"
+import { addWinAsarIntegrity } from "./electronWin"
+import injectFFMPEG from "./injectFFMPEG"
 
 export type ElectronPlatformName = "darwin" | "linux" | "win32" | "mas"
 
@@ -190,7 +189,7 @@ async function unpack(prepareOptions: PrepareApplicationStageDirectoryOptions, o
   // check if supplied a custom electron distributable/fork/predownloaded directory
   if (typeof electronDist === "string") {
     let resolvedDist: string
-    // check if custom electron hook file for import resolving
+    // check if custom electron hook file for import  resolving
     if ((await statOrNull(electronDist))?.isFile()) {
       const customElectronDist: any = await resolveFunction(packager.appInfo.type, electronDist, "electronDist")
       resolvedDist = await Promise.resolve(typeof customElectronDist === "function" ? customElectronDist(prepareOptions) : customElectronDist)

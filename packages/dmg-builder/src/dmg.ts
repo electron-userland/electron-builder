@@ -3,15 +3,15 @@ import { findIdentity, isSignAllowed } from "app-builder-lib/out/codeSign/macCod
 import { MacPackager } from "app-builder-lib/out/macPackager"
 import { createBlockmap } from "app-builder-lib/out/targets/differentialUpdateInfoBuilder"
 import { executeAppBuilderAsJson } from "app-builder-lib/out/util/appBuilder"
-import { sanitizeFileName } from "builder-util/out/filename"
-import { Arch, AsyncTaskManager, exec, getArchSuffix, InvalidConfigurationError, isEmptyOrSpaces, log, copyDir, copyFile, exists, statOrNull } from "builder-util"
+import { Arch, AsyncTaskManager, copyDir, copyFile, exec, exists, getArchSuffix, InvalidConfigurationError, isEmptyOrSpaces, log, statOrNull } from "builder-util"
 import { CancellationToken, Nullish } from "builder-util-runtime"
+import { sanitizeFileName } from "builder-util/out/filename"
 import { stat } from "fs-extra"
+import { release as getOsRelease } from "os"
 import * as path from "path"
 import { TmpDir } from "temp-file"
 import { addLicenseToDmg } from "./dmgLicense"
 import { attachAndExecute, computeBackground, detach, getDmgVendorPath } from "./dmgUtil"
-import { release as getOsRelease } from "os"
 import { hdiUtil } from "./hdiuil"
 
 export class DmgTarget extends Target {
