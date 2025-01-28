@@ -1,13 +1,13 @@
-import { promises as fs } from "fs"
-import { load } from "js-yaml"
-import * as path from "path"
-import { Lazy } from "lazy-val"
-import { parse as parseEnv } from "dotenv"
-import { loadTsConfig } from "config-file-ts"
-import { DotenvParseInput, expand } from "dotenv-expand"
-import { resolveModule } from "../resolve"
 import { log } from "builder-util"
 import { ObjectMap } from "builder-util-runtime"
+import { loadTsConfig } from "config-file-ts"
+import { parse as parseEnv } from "dotenv"
+import { DotenvParseInput, expand } from "dotenv-expand"
+import { promises as fs } from "fs"
+import { load } from "js-yaml"
+import { Lazy } from "lazy-val"
+import * as path from "path"
+import { resolveModule } from "../resolve"
 
 export interface ReadConfigResult<T> {
   readonly result: T

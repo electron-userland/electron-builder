@@ -1,16 +1,16 @@
-import { Arch, deepAssign, executeAppBuilder, InvalidConfigurationError, log, replaceDefault as _replaceDefault, serializeToYaml, toLinuxArchString } from "builder-util"
-import { Nullish, ObjectMap, SnapStoreOptions, asArray } from "builder-util-runtime"
+import { replaceDefault as _replaceDefault, Arch, deepAssign, executeAppBuilder, InvalidConfigurationError, log, serializeToYaml, toLinuxArchString } from "builder-util"
+import { asArray, Nullish, ObjectMap, SnapStoreOptions } from "builder-util-runtime"
 import { outputFile, readFile } from "fs-extra"
 import { load } from "js-yaml"
 import * as path from "path"
 import * as semver from "semver"
+import { Configuration } from "../configuration"
 import { Publish, Target } from "../core"
 import { LinuxPackager } from "../linuxPackager"
 import { PlugDescriptor, SnapOptions } from "../options/SnapOptions"
 import { getTemplatePath } from "../util/pathManager"
 import { LinuxTargetHelper } from "./LinuxTargetHelper"
 import { createStageDirPath } from "./targetUtil"
-import { Configuration } from "../configuration"
 
 const defaultPlugs = ["desktop", "desktop-legacy", "home", "x11", "wayland", "unity7", "browser-support", "network", "gsettings", "audio-playback", "pulseaudio", "opengl"]
 

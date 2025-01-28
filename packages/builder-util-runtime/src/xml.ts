@@ -1,6 +1,6 @@
 import * as sax from "sax"
-import { newError } from "./error"
 import { ObjectMap } from "./"
+import { newError } from "./error"
 
 export class XElement {
   value = ""

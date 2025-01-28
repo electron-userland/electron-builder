@@ -1,6 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
-import { Arch, asArray, deepAssign, InvalidConfigurationError, log } from "builder-util"
-import { copyOrLinkFile, walk } from "builder-util"
+import { Arch, asArray, copyOrLinkFile, deepAssign, InvalidConfigurationError, log, walk } from "builder-util"
+import { Nullish, ObjectMap } from "builder-util-runtime"
 import { emptyDir, readdir, readFile, writeFile } from "fs-extra"
 import * as path from "path"
 import { AppXOptions } from "../"
@@ -10,7 +10,6 @@ import { getTemplatePath } from "../util/pathManager"
 import { VmManager } from "../vm/vm"
 import { WinPackager } from "../winPackager"
 import { createStageDir } from "./targetUtil"
-import { Nullish, ObjectMap } from "builder-util-runtime"
 
 const APPX_ASSETS_DIR_NAME = "appx"
 

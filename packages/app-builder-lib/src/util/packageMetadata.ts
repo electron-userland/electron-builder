@@ -1,10 +1,10 @@
-import { isEmptyOrSpaces, log, InvalidConfigurationError } from "builder-util"
+import { InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
+import { Nullish, ObjectMap } from "builder-util-runtime"
 import { readFile, readJson } from "fs-extra"
 import * as path from "path"
 import * as semver from "semver"
 import { Metadata } from "../options/metadata"
 import { normalizePackageData } from "./normalizePackageData"
-import { Nullish, ObjectMap } from "builder-util-runtime"
 
 /** @internal */
 export async function readPackageJson(file: string): Promise<any> {

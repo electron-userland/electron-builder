@@ -1,7 +1,7 @@
-import * as path from "path"
-import { langIdToName, toLangWithRegion } from "./langs"
-import { PlatformPackager } from "../platformPackager"
 import { Nullish } from "builder-util-runtime"
+import * as path from "path"
+import { PlatformPackager } from "../platformPackager"
+import { langIdToName, toLangWithRegion } from "./langs"
 
 export function getLicenseAssets(fileNames: Array<string>, packager: PlatformPackager<any>) {
   return fileNames

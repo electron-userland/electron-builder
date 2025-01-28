@@ -1,11 +1,11 @@
-import { asArray, isEmptyOrSpaces, log, exists } from "builder-util"
+import { asArray, exists, isEmptyOrSpaces, log } from "builder-util"
+import { ObjectMap } from "builder-util-runtime"
 import { outputFile } from "fs-extra"
 import { Lazy } from "lazy-val"
+import { join } from "path"
 import { LinuxPackager } from "../linuxPackager"
 import { LinuxTargetSpecificOptions } from "../options/linuxOptions"
 import { IconInfo } from "../platformPackager"
-import { join } from "path"
-import { ObjectMap } from "builder-util-runtime"
 
 export const installPrefix = "/opt"
 
