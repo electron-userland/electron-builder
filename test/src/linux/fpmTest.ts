@@ -8,7 +8,8 @@ if (process.platform === "win32") {
   })
 }
 
-// "apk" is very slow, don't test for now
+const TIMEOUT = 240000
+
 test.ifAll.ifDevOrLinuxCi(
   "targets",
   app({
@@ -25,7 +26,8 @@ test.ifAll.ifDevOrLinuxCi(
         grantFileProtocolExtraPrivileges: undefined, // unsupported on current electron version in our tests
       },
     },
-  })
+  }),
+  { timeout: TIMEOUT }
 )
 
 // https://github.com/electron-userland/electron-builder/issues/460
@@ -46,5 +48,6 @@ test.ifAll.ifDevOrLinuxCi(
         grantFileProtocolExtraPrivileges: undefined, // unsupported on current electron version in our tests
       },
     },
-  })
+  }),
+  { timeout: TIMEOUT }
 )

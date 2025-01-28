@@ -108,13 +108,18 @@ our git [commit messages can be formatted](https://gist.github.com/develar/273e2
 
 ## Documentation
 
-Documentation files located in the `/docs`.
+Documentation files located in the `/pages`.
 
-`/docs` is deployed to Netlify on every release and available for all users.
+`/pages` is deployed to Netlify on every release and available for all users.
 
-`bash netlify-docs.sh` to setup local env (Python 3) and build.
+Docs are now built with our own (simple) docker image to fully own the build process both locally and CI/CD. (Netlify docker images are highly unstable w/ unannounced random buggy releases)
 
-Build command: `mkdocs build`.
+Build command:
+```
+pnpm docs:prebuild
+pnpm docs:build
+pnpm docs:mkdocs
+```
 
 ## Debug Tests
 
@@ -141,11 +146,10 @@ Or you can create the Node.js run configuration manually:
 
 ```sh
 pnpm compile
-TEST_APP_TMP_DIR=/tmp/electron-builder-test ./node_modules/.bin/jest --env jest-environment-node-debug -t 'assisted' '/oneClickInstallerTest\.\w+$'
+TEST_APP_TMP_DIR=/tmp/electron-builder-test TEST_FILES=fileNameWithoutSuffix,fileNameWithoutSuffix2 pnpm ci:test
 ```
 
-where `TEST_APP_TMP_DIR` is specified to easily inspect and use test build, `assisted` is the test name
-and `/oneClickInstallerTest\.\w+$` is the path to test file.
+where `TEST_APP_TMP_DIR` is specified to easily inspect and use test build
 
 ## Issues
 
@@ -154,7 +158,7 @@ When filing an issue please make sure, that you give all information needed.
 This includes:
 
 - description of what you're trying to do
-- `package.json`
+- `package.json` and/or `electron-builder-config`
 - log of the terminal output
 - node version
 - npm version
