@@ -224,7 +224,7 @@ export interface ReleaseInfo {
   /**
    * Vendor specific information.
    */
-  vendor?: Record<string, any> | null
+  vendor?: { [key: string]: any } | null
 }
 
 /**
