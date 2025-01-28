@@ -1,17 +1,19 @@
 import { defineConfig } from "vitest/config"
 
 export default () => {
+  const testRegex = process.env.TEST_FILES?.split(",") ?? ["*Test"]
+  const includeRegex = `(${testRegex.join("|")})`
   return defineConfig({
     test: {
       globals: true,
       setupFiles: "./test/vitest-setup.ts",
-      include: ["test/src/**/macPackagerTest.?(c|m)[jt]s?(x)"],
+      include: [`test/src/**/${includeRegex}.ts`],
       update: process.env.UPDATE_SNAPSHOT === "true",
       name: "node",
       environment: "node",
       testTimeout: 20000,
       snapshotFormat: {
-        // printBasicPrototype: true, // retain Jest snapshot format for now to reduce diff of PR
+        printBasicPrototype: false,
       },
       resolveSnapshotPath: (testPath, snapshotExtension) => {
         return testPath
