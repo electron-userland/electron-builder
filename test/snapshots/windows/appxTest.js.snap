@@ -1,4 +1,4 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
 exports[`AppX 1`] = `
 {
@@ -88,11 +88,11 @@ exports[`custom raw appmanifest.xml 1`] = `
        Square150x150Logo="assets\\Square150x150Logo.png"
        Square44x44Logo="assets\\Square44x44Logo.png"
        Description="Test Application (test quite “ #378)">
-        
+
         <uap:DefaultTile Wide310x150Logo="assets\\Wide310x150Logo.png" />
-        
+
       </uap:VisualElements>
-      
+
     </Application>
   </Applications>
 </Package>
@@ -148,9 +148,9 @@ exports[`custom template appmanifest.xml 1`] = `
        Square150x150Logo="assets\\Square150x150Logo.png"
        Square44x44Logo="assets\\Square44x44Logo.png"
        Description="Test Application (test quite “ #378)">
-        
+
         <uap:DefaultTile Wide310x150Logo="assets\\Wide310x150Logo.png" />
-        
+
       </uap:VisualElements>
       <!-- <Extensions>
         <desktop2:Extension Category="windows.firewallRules">
