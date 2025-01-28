@@ -1,5 +1,5 @@
-import * as semver from "semver"
 import { fromUrl } from "hosted-git-info"
+import * as semver from "semver"
 import * as url from "url"
 
 export function normalizePackageData(data: any) {

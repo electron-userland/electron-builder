@@ -1,5 +1,5 @@
-import { removePassword, TmpDir } from "builder-util"
 import { createKeychain } from "app-builder-lib/out/codeSign/macCodeSign"
+import { removePassword, TmpDir } from "builder-util"
 import { CSC_LINK } from "../helpers/codeSignData"
 
 if (process.env.CSC_KEY_PASSWORD == null) {

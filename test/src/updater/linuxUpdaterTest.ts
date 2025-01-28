@@ -1,5 +1,5 @@
 import { GithubOptions } from "builder-util-runtime"
-import { DebUpdater, RpmUpdater, PacmanUpdater } from "electron-updater"
+import { DebUpdater, PacmanUpdater, RpmUpdater } from "electron-updater"
 import { assertThat } from "../helpers/fileAssert"
 import { createTestAppAdapter, tuneTestUpdater, validateDownload, writeUpdateConfig } from "../helpers/updaterTestUtil"
 

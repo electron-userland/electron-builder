@@ -1,6 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { asArray, getPlatformIconFileName, InvalidConfigurationError, log } from "builder-util"
-import { copyOrLinkFile, unlinkIfExists } from "builder-util"
+import { asArray, copyOrLinkFile, getPlatformIconFileName, InvalidConfigurationError, log, unlinkIfExists } from "builder-util"
 import { rename, utimes } from "fs/promises"
 import * as path from "path"
 import { filterCFBundleIdentifier } from "../appInfo"

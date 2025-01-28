@@ -5,10 +5,10 @@ import { IncomingMessage, OutgoingHttpHeader, OutgoingHttpHeaders, RequestOption
 import { Socket } from "net"
 import { Transform } from "stream"
 import { URL } from "url"
+import { Nullish } from "."
 import { CancellationToken } from "./CancellationToken"
 import { newError } from "./error"
 import { ProgressCallbackTransform, ProgressInfo } from "./ProgressCallbackTransform"
-import { Nullish } from "."
 
 const debug = _debug("electron-builder")
 

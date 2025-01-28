@@ -1,6 +1,6 @@
+import { log } from "builder-util"
 import { Lazy } from "lazy-val"
 import { isPwshAvailable, VmManager } from "./vm"
-import { log } from "builder-util"
 
 export class PwshVmManager extends VmManager {
   constructor() {

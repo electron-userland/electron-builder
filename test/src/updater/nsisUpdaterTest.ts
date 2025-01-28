@@ -1,5 +1,5 @@
-import { BitbucketPublisher } from "electron-publish"
 import { BitbucketOptions, GenericServerOptions, GithubOptions, KeygenOptions, S3Options, SpacesOptions } from "builder-util-runtime"
+import { BitbucketPublisher } from "electron-publish"
 import { UpdateCheckResult } from "electron-updater"
 import { outputFile } from "fs-extra"
 import { tmpdir } from "os"

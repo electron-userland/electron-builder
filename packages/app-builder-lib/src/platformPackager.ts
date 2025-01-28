@@ -1,6 +1,22 @@
+import { flipFuses, FuseConfig, FuseV1Config, FuseV1Options, FuseVersion } from "@electron/fuses"
 import BluebirdPromise from "bluebird-lst"
-import { Arch, asArray, AsyncTaskManager, DebugLogger, deepAssign, getArchSuffix, InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
-import { defaultArchFromString, getArtifactArchName, FileTransformer, statOrNull, orIfFileNotExist } from "builder-util"
+import {
+  Arch,
+  asArray,
+  AsyncTaskManager,
+  DebugLogger,
+  deepAssign,
+  defaultArchFromString,
+  FileTransformer,
+  getArchSuffix,
+  getArtifactArchName,
+  InvalidConfigurationError,
+  isEmptyOrSpaces,
+  log,
+  orIfFileNotExist,
+  statOrNull,
+} from "builder-util"
+import { Nullish } from "builder-util-runtime"
 import { readdir } from "fs/promises"
 import { Lazy } from "lazy-val"
 import { Minimatch } from "minimatch"
@@ -9,6 +25,7 @@ import { AppInfo } from "./appInfo"
 import { checkFileInArchive } from "./asar/asarFileChecker"
 import { AsarPackager } from "./asar/asarUtil"
 import { AsarIntegrity, computeData } from "./asar/integrity"
+import { FuseOptionsV1 } from "./configuration"
 import { copyFiles, FileMatcher, getFileMatchers, GetFileMatchersOptions, getMainFileMatchers, getNodeModuleFileMatcher } from "./fileMatcher"
 import { createTransformer, isElectronCompileUsed } from "./fileTransformer"
 import { Framework, isElectronBased } from "./Framework"
@@ -31,9 +48,6 @@ import { executeAppBuilderAsJson } from "./util/appBuilder"
 import { computeFileSets, computeNodeModuleFileSets, copyAppFiles, ELECTRON_COMPILE_SHIM_FILENAME, transformFiles } from "./util/appFileCopier"
 import { expandMacro as doExpandMacro } from "./util/macroExpander"
 import { resolveFunction } from "./util/resolve"
-import { flipFuses, FuseConfig, FuseV1Config, FuseV1Options, FuseVersion } from "@electron/fuses"
-import { FuseOptionsV1 } from "./configuration"
-import { Nullish } from "builder-util-runtime"
 
 export type DoPackOptions<DC extends PlatformSpecificBuildOptions> = {
   outDir: string

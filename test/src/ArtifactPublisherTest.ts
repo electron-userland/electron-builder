@@ -1,11 +1,11 @@
-import { Arch } from "builder-util"
-import { BitbucketOptions, CancellationToken, HttpError, KeygenOptions, S3Options, SpacesOptions } from "builder-util-runtime"
-import { BitbucketPublisher, GitHubPublisher, KeygenPublisher, PublishContext } from "electron-publish"
-import { isCI as isCi } from "ci-info"
-import * as path from "path"
 import { Platform } from "app-builder-lib"
 import { createPublisher } from "app-builder-lib/out/publish/PublishManager"
+import { Arch } from "builder-util"
+import { BitbucketOptions, CancellationToken, HttpError, KeygenOptions, S3Options, SpacesOptions } from "builder-util-runtime"
+import { isCI as isCi } from "ci-info"
 import { publishArtifactsWithOptions } from "electron-builder"
+import { BitbucketPublisher, GitHubPublisher, KeygenPublisher, PublishContext } from "electron-publish"
+import * as path from "path"
 
 if (isCi && process.platform === "win32") {
   fit("Skip ArtifactPublisherTest suite on Windows CI", () => {

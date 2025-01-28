@@ -1,8 +1,8 @@
 import { isCI as isCi } from "ci-info"
-import * as path from "path"
 import * as fs from "fs/promises"
-import { ELECTRON_VERSION, getElectronCacheDir } from "./testConfig"
+import * as path from "path"
 import { gte } from "semver"
+import { ELECTRON_VERSION, getElectronCacheDir } from "./testConfig"
 
 const executeAppBuilder: (options: any) => Promise<any> = require(path.join(__dirname, "../../..", "packages/builder-util")).executeAppBuilder
 

@@ -1,14 +1,14 @@
 import BluebirdPromise from "bluebird-lst"
-import { copyFile as _nodeCopyFile } from "fs-extra"
+import { Nullish } from "builder-util-runtime"
 import { Stats } from "fs"
+import { copyFile as _nodeCopyFile } from "fs-extra"
+import { access, chmod, link, lstat, mkdir, readdir, readlink, stat, symlink, unlink, writeFile } from "fs/promises"
+import * as isCI from "is-ci"
 import { platform } from "os"
-import { access, chmod, mkdir, link, lstat, readdir, readlink, stat, symlink, unlink, writeFile } from "fs/promises"
 import * as path from "path"
 import { Mode } from "stat-mode"
 import { log } from "./log"
 import { orIfFileNotExist, orNullIfFileNotExist } from "./promise"
-import * as isCI from "is-ci"
-import { Nullish } from "builder-util-runtime"
 
 export const MAX_FILE_REQUESTS = 8
 export const CONCURRENCY = { concurrency: MAX_FILE_REQUESTS }
