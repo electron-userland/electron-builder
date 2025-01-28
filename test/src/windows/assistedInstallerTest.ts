@@ -4,7 +4,7 @@ import * as path from "path"
 import { app, assertPack, copyTestAsset } from "../helpers/packTester"
 import { checkHelpers, doTest, expectUpdateMetadata } from "../helpers/winHelper"
 
-const nsisTarget = Platform.WINDOWS.createTarget(["nsis"])
+const nsisTarget = Platform.WINDOWS.createTarget(["nsis"], Arch.x64)
 
 test.ifNotCiMac(
   "assisted",
@@ -127,7 +127,7 @@ test.ifAll.ifNotCiMac("assisted, MUI_HEADER as option", () => {
   )
 })
 
-test.skip.ifNotCiMac(
+test.ifNotCiMac.skip(
   "debug logging enabled",
   app({
     targets: nsisTarget,

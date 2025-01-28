@@ -147,7 +147,7 @@ test.ifAll.ifMac("retina background as 2 png", () => {
   )
 })
 
-test.skip.ifMac.ifAll("no Applications link", () => {
+test.ifMac.ifAll.skip("no Applications link", () => {
   return assertPack("test-app-one", {
     targets: defaultTarget,
     config: {

@@ -115,7 +115,7 @@ test.ifAll.ifDevOrWinCi(
   )
 )
 
-test.skip.ifAll(
+test.ifAll.skip(
   "assisted",
   app({
     targets: Platform.WINDOWS.createTarget("msi"),

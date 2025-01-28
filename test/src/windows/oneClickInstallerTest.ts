@@ -135,7 +135,7 @@ test.ifAll(
 test.ifAll.ifDevOrWinCi(
   "createDesktopShortcut always",
   app({
-    targets: Platform.WINDOWS.createTarget("nsis"),
+    targets: Platform.WINDOWS.createTarget("nsis", Arch.x64),
     config: {
       publish: null,
       nsis: {
@@ -335,7 +335,7 @@ test.ifDevOrLinuxCi(
   })
 )
 
-test.skip.ifWindows(
+test.ifWindows.skip(
   "custom exec name",
   app({
     targets: nsisTarget,
@@ -362,7 +362,7 @@ test.skip.ifWindows(
   })
 )
 
-test.skip.ifWindows(
+test.ifWindows.skip(
   "top-level custom exec name",
   app({
     targets: nsisTarget,

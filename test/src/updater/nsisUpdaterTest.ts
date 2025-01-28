@@ -105,7 +105,7 @@ test.skip("DigitalOcean Spaces", async () => {
   await validateDownload(updater)
 })
 
-test.skip.ifNotCiWin("sha512 mismatch error event", async () => {
+test.ifNotCiWin.skip("sha512 mismatch error event", async () => {
   const updater = await createNsisUpdater()
   updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({
     provider: "generic",
@@ -397,7 +397,7 @@ test.ifAll("test download and install", async () => {
   await validateDownload(updater)
 })
 
-test.skip.ifWindows("test downloaded installer", async () => {
+test.ifWindows.skip("test downloaded installer", async () => {
   const updater = await createNsisUpdater("1.0.1")
   updater.updateConfigPath = await writeUpdateConfig<GithubOptions>({
     provider: "github",

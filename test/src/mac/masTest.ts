@@ -26,7 +26,7 @@ const entitlementsConfig = {
 
 const targets = Platform.MAC.createTarget(undefined, Arch.x64)
 
-test.skip.ifAll("custom mas", () => {
+test.skip("custom mas", () => {
   let platformPackager: CheckingMacPackager | null = null
   return assertPack(
     "test-app-one",

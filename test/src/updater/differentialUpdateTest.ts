@@ -114,7 +114,7 @@ async function testLinux(arch: Arch) {
 test.ifDevOrLinuxCi("AppImage", () => testLinux(Arch.x64))
 
 // Skipped, electron no longer ships ia32 linux binaries
-test.skip.ifDevOrLinuxCi("AppImage ia32", () => testLinux(Arch.ia32))
+test.ifDevOrLinuxCi.skip("AppImage ia32", () => testLinux(Arch.ia32))
 
 async function testMac(arch: Arch) {
   process.env.TEST_UPDATER_ARCH = Arch[arch]

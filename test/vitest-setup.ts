@@ -1,4 +1,6 @@
-const isCi = require("ci-info").isCI
+import { describe, test } from "vitest"
+
+import { isCI as isCi } from "ci-info"
 
 const isWindows = process.platform === "win32"
 
