@@ -22,8 +22,16 @@ exports[`empty installLocation 2`] = `
   "CFBundleName": "Test App ßW",
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
+  "ElectronAsarIntegrity": {
+    "Resources/app.asar": {
+      "algorithm": "SHA256",
+      "hash": "hash",
+    },
+  },
   "LSApplicationCategoryType": "your.app.category.type",
-  "LSRequiresNativeExecution": true,
+  "LSEnvironment": {
+    "MallocNanoZone": "0",
+  },
   "NSAppTransportSecurity": {
     "NSAllowsLocalNetworking": true,
     "NSExceptionDomains": {
@@ -43,6 +51,8 @@ exports[`empty installLocation 2`] = `
       },
     },
   },
+  "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
+  "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
@@ -83,8 +93,16 @@ exports[`extraDistFiles 2`] = `
   "CFBundleName": "Test App ßW",
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
+  "ElectronAsarIntegrity": {
+    "Resources/app.asar": {
+      "algorithm": "SHA256",
+      "hash": "hash",
+    },
+  },
   "LSApplicationCategoryType": "your.app.category.type",
-  "LSRequiresNativeExecution": true,
+  "LSEnvironment": {
+    "MallocNanoZone": "0",
+  },
   "NSAppTransportSecurity": {
     "NSAllowsLocalNetworking": true,
     "NSExceptionDomains": {
@@ -104,6 +122,8 @@ exports[`extraDistFiles 2`] = `
       },
     },
   },
+  "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
+  "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
@@ -111,20 +131,17 @@ exports[`extraDistFiles 2`] = `
 `;
 
 exports[`invalid target 1`] = `
-"Invalid configuration object. electron-builder <appVersion> has been initialized using a configuration that does not match the API schema.
+"Invalid configuration object. electron-builder <appVersion> has been initialized using a configuration object that does not match the API schema.
  - configuration.mac should be one of these:
-   { appId?, artifactName?, asar?, asarUnpack?, binaries?, bundleShortVersion?, bundleVersion?, category?, compression?, cscInstallerKeyPassword?, cscInstallerLink?, cscKeyPassword?, cscLink?, darkModeSupport?, defaultArch?, detectUpdateChannel?, electronLanguages?, electronUpdaterCompatibility?, entitlements?, entitlementsInherit?, entitlementsLoginHelper?, executableName?, extendInfo?, extraDistFiles?, extraFiles?, extraResources?, fileAssociations?, files?, forceCodeSigning?, gatekeeperAssess?, generateUpdatesFilesForAllChannels?, hardenedRuntime?, helperBundleId?, helperEHBundleId?, helperGPUBundleId?, helperNPBundleId?, helperPluginBundleId?, helperRendererBundleId?, icon?, identity?, minimumSystemVersion?, protocols?, provisioningProfile?, publish?, releaseInfo?, requirements?, signIgnore?, strictVerify?, target?, type? } | null
+   object { additionalArguments?, appId?, artifactName?, asar?, asarUnpack?, binaries?, bundleShortVersion?, bundleVersion?, category?, compression?, cscInstallerKeyPassword?, cscInstallerLink?, cscKeyPassword?, cscLink?, darkModeSupport?, defaultArch?, detectUpdateChannel?, disableDefaultIgnoredFiles?, electronLanguages?, electronUpdaterCompatibility?, entitlements?, entitlementsInherit?, entitlementsLoginHelper?, executableName?, extendInfo?, extraDistFiles?, extraFiles?, extraResources?, fileAssociations?, files?, forceCodeSigning?, gatekeeperAssess?, generateUpdatesFilesForAllChannels?, hardenedRuntime?, helperBundleId?, helperEHBundleId?, helperGPUBundleId?, helperNPBundleId?, helperPluginBundleId?, helperRendererBundleId?, icon?, identity?, mergeASARs?, minimumSystemVersion?, notarize?, preAutoEntitlements?, protocols?, provisioningProfile?, publish?, releaseInfo?, requirements?, sign?, signIgnore?, singleArchFiles?, strictVerify?, target?, timestamp?, type?, x64ArchFiles? } | null
    -> Options related to how build macOS targets.
    Details:
+    * configuration.mac.target[0] should be an object:
+      object { target, arch? }
     * configuration.mac.target[0] should be one of these:
-      { target, arch? } | "7z" | "default" | "dir" | "dmg" | "mas" | "mas-dev" | "pkg" | "tar.bz2" | "tar.gz" | "tar.lz" | "tar.xz" | "zip"
-      Details:
-       * configuration.mac.target[0] should be an object:
-         { target, arch? }
-       * configuration.mac.target[0] should be one of these:
-         "7z" | "default" | "dir" | "dmg" | "mas" | "mas-dev" | "pkg" | "tar.bz2" | "tar.gz" | "tar.lz" | "tar.xz" | "zip"
+      "7z" | "default" | "dir" | "dmg" | "mas" | "mas-dev" | "pkg" | "tar.bz2" | "tar.gz" | "tar.lz" | "tar.xz" | "zip"
      How to fix:
-     1. Open https://www.electron.build/configuration/mac
+     1. Open https://www.electron.build/mac
      2. Search the option name on the page (or type in into Search to find across the docs).
        * Not found? The option was deprecated or not exists (check spelling).
        * Found? Check that the option in the appropriate place. e.g. "title" only in the "dmg", not in the root.
@@ -165,8 +182,16 @@ exports[`only zip 2`] = `
   "CFBundleName": "Test App ßW",
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
+  "ElectronAsarIntegrity": {
+    "Resources/app.asar": {
+      "algorithm": "SHA256",
+      "hash": "hash",
+    },
+  },
   "LSApplicationCategoryType": "your.app.category.type",
-  "LSRequiresNativeExecution": true,
+  "LSEnvironment": {
+    "MallocNanoZone": "0",
+  },
   "NSAppTransportSecurity": {
     "NSAllowsLocalNetworking": true,
     "NSExceptionDomains": {
@@ -186,6 +211,8 @@ exports[`only zip 2`] = `
       },
     },
   },
+  "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
+  "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
@@ -263,8 +290,16 @@ exports[`pkg extended configuration 2`] = `
   "CFBundleName": "Test App ßW",
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
+  "ElectronAsarIntegrity": {
+    "Resources/app.asar": {
+      "algorithm": "SHA256",
+      "hash": "hash",
+    },
+  },
   "LSApplicationCategoryType": "your.app.category.type",
-  "LSRequiresNativeExecution": true,
+  "LSEnvironment": {
+    "MallocNanoZone": "0",
+  },
   "NSAppTransportSecurity": {
     "NSAllowsLocalNetworking": true,
     "NSExceptionDomains": {
@@ -284,6 +319,8 @@ exports[`pkg extended configuration 2`] = `
       },
     },
   },
+  "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
+  "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
@@ -312,8 +349,16 @@ exports[`pkg scripts 2`] = `
   "CFBundleName": "Test App ßW",
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
+  "ElectronAsarIntegrity": {
+    "Resources/app.asar": {
+      "algorithm": "SHA256",
+      "hash": "hash",
+    },
+  },
   "LSApplicationCategoryType": "your.app.category.type",
-  "LSRequiresNativeExecution": true,
+  "LSEnvironment": {
+    "MallocNanoZone": "0",
+  },
   "NSAppTransportSecurity": {
     "NSAllowsLocalNetworking": true,
     "NSExceptionDomains": {
@@ -333,6 +378,8 @@ exports[`pkg scripts 2`] = `
       },
     },
   },
+  "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
+  "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
@@ -357,6 +404,7 @@ exports[`pkg scripts 3`] = `
   "Test App ßW.app/Contents/Frameworks/Test App ßW Helper (Renderer).app",
   "Test App ßW.app/Contents/Frameworks/Test App ßW Helper.app",
   "Test App ßW.app/Contents/MacOS/Test App ßW",
+  "Test App ßW.app/Contents/Resources/af.lproj",
   "Test App ßW.app/Contents/Resources/am.lproj",
   "Test App ßW.app/Contents/Resources/app.asar",
   "Test App ßW.app/Contents/Resources/ar.lproj",
@@ -381,6 +429,7 @@ exports[`pkg scripts 3`] = `
   "Test App ßW.app/Contents/Resources/hi.lproj",
   "Test App ßW.app/Contents/Resources/hr.lproj",
   "Test App ßW.app/Contents/Resources/hu.lproj",
+  "Test App ßW.app/Contents/Resources/icon.icns",
   "Test App ßW.app/Contents/Resources/id.lproj",
   "Test App ßW.app/Contents/Resources/it.lproj",
   "Test App ßW.app/Contents/Resources/ja.lproj",
@@ -405,10 +454,10 @@ exports[`pkg scripts 3`] = `
   "Test App ßW.app/Contents/Resources/sw.lproj",
   "Test App ßW.app/Contents/Resources/ta.lproj",
   "Test App ßW.app/Contents/Resources/te.lproj",
-  "Test App ßW.app/Contents/Resources/icon.icns",
   "Test App ßW.app/Contents/Resources/th.lproj",
   "Test App ßW.app/Contents/Resources/tr.lproj",
   "Test App ßW.app/Contents/Resources/uk.lproj",
+  "Test App ßW.app/Contents/Resources/ur.lproj",
   "Test App ßW.app/Contents/Resources/vi.lproj",
   "Test App ßW.app/Contents/Resources/zh_CN.lproj",
   "Test App ßW.app/Contents/Resources/zh_TW.lproj",
@@ -468,10 +517,9 @@ exports[`pkg scripts 3`] = `
   "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Libraries/libEGL.dylib",
   "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Libraries/libffmpeg.dylib",
   "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Libraries/libGLESv2.dylib",
-  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Libraries/libswiftshader_libEGL.dylib",
-  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Libraries/libswiftshader_libGLESv2.dylib",
   "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Libraries/libvk_swiftshader.dylib",
   "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Libraries/vk_swiftshader_icd.json",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/af.lproj",
   "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/am.lproj",
   "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/ar.lproj",
   "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/bg.lproj",
@@ -528,6 +576,7 @@ exports[`pkg scripts 3`] = `
   "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/th.lproj",
   "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/tr.lproj",
   "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/uk.lproj",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/ur.lproj",
   "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/v8_context_snapshot.x86_64.bin",
   "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/vi.lproj",
   "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/zh_CN.lproj",
@@ -536,6 +585,7 @@ exports[`pkg scripts 3`] = `
   "Test App ßW.app/Contents/Frameworks/ReactiveObjC.framework/Versions/A/Resources/Info.plist",
   "Test App ßW.app/Contents/Frameworks/Squirrel.framework/Versions/A/Resources/Info.plist",
   "Test App ßW.app/Contents/Frameworks/Squirrel.framework/Versions/A/Resources/ShipIt",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/af.lproj/locale.pak",
   "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/am.lproj/locale.pak",
   "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/ar.lproj/locale.pak",
   "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/bg.lproj/locale.pak",
@@ -586,6 +636,7 @@ exports[`pkg scripts 3`] = `
   "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/th.lproj/locale.pak",
   "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/tr.lproj/locale.pak",
   "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/uk.lproj/locale.pak",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/ur.lproj/locale.pak",
   "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/vi.lproj/locale.pak",
   "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/zh_CN.lproj/locale.pak",
   "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/zh_TW.lproj/locale.pak",
@@ -664,7 +715,7 @@ XElement {
           "elements": [
             XElement {
               "attributes": {
-                "min": "10.10.0",
+                "min": "10.13",
               },
               "elements": null,
               "isCData": false,
@@ -749,6 +800,7 @@ XElement {
       "attributes": {
         "id": "org.electron-builder.testApp",
         "onConclusion": "none",
+        "updateKBytes": "0",
         "version": "1.1.0",
       },
       "elements": null,
@@ -797,8 +849,16 @@ exports[`tar.gz 2`] = `
   "CFBundleName": "Test App ßW",
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
+  "ElectronAsarIntegrity": {
+    "Resources/app.asar": {
+      "algorithm": "SHA256",
+      "hash": "hash",
+    },
+  },
   "LSApplicationCategoryType": "your.app.category.type",
-  "LSRequiresNativeExecution": true,
+  "LSEnvironment": {
+    "MallocNanoZone": "0",
+  },
   "NSAppTransportSecurity": {
     "NSAllowsLocalNetworking": true,
     "NSExceptionDomains": {
@@ -818,6 +878,8 @@ exports[`tar.gz 2`] = `
       },
     },
   },
+  "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
+  "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
