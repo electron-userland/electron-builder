@@ -1,5 +1,5 @@
 import { appBuilderPath } from "app-builder-bin"
-import { retry as _retry, Nullish, ObjectMap, safeStringifyJson } from "builder-util-runtime"
+import { retry as _retry, Nullish, safeStringifyJson } from "builder-util-runtime"
 import * as chalk from "chalk"
 import { ChildProcess, execFile, ExecFileOptions, SpawnOptions } from "child_process"
 import { spawn as _spawn } from "cross-spawn"
@@ -52,7 +52,7 @@ export function removePassword(input: string) {
   })
 }
 
-function getProcessEnv(env: ObjectMap<string | undefined> | Nullish): NodeJS.ProcessEnv | undefined {
+function getProcessEnv(env: Record<string, string | undefined> | Nullish): NodeJS.ProcessEnv | undefined {
   if (process.platform === "win32") {
     return env == null ? undefined : env
   }

@@ -1,5 +1,5 @@
 import { InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
-import { Nullish, ObjectMap } from "builder-util-runtime"
+import { Nullish } from "builder-util-runtime"
 import { readFile, readJson } from "fs-extra"
 import * as path from "path"
 import * as semver from "semver"
@@ -93,7 +93,7 @@ function versionSatisfies(version: string | semver.SemVer | null, range: string 
   return semver.satisfies(coerced, range, loose)
 }
 
-function checkDependencies(dependencies: ObjectMap<string> | Nullish, errors: Array<string>) {
+function checkDependencies(dependencies: Record<string, string> | Nullish, errors: Array<string>) {
   if (dependencies == null) {
     return
   }

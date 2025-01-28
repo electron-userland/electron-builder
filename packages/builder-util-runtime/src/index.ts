@@ -1,43 +1,43 @@
-export { CancellationToken, CancellationError } from "./CancellationToken"
+export { BlockMap } from "./blockMapApi"
+export { CancellationError, CancellationToken } from "./CancellationToken"
+export { newError } from "./error"
 export {
-  HttpError,
-  createHttpError,
-  HttpExecutor,
-  DownloadOptions,
-  DigestTransform,
-  RequestHeaders,
-  safeGetHeader,
   configureRequestOptions,
   configureRequestOptionsFromUrl,
-  safeStringifyJson,
-  parseJson,
   configureRequestUrl,
+  createHttpError,
+  DigestTransform,
+  DownloadOptions,
+  HttpError,
+  HttpExecutor,
+  parseJson,
+  RequestHeaders,
+  safeGetHeader,
+  safeStringifyJson,
 } from "./httpExecutor"
+export { MemoLazy } from "./MemoLazy"
+export { ProgressCallbackTransform, ProgressInfo } from "./ProgressCallbackTransform"
 export {
+  AllPublishOptions,
+  BaseS3Options,
+  BitbucketOptions,
   CustomPublishOptions,
   GenericServerOptions,
-  GithubOptions,
-  KeygenOptions,
-  BitbucketOptions,
-  SnapStoreOptions,
-  PublishConfiguration,
-  S3Options,
-  SpacesOptions,
-  BaseS3Options,
   getS3LikeProviderBaseUrl,
+  GithubOptions,
   githubUrl,
+  KeygenOptions,
+  PublishConfiguration,
   PublishProvider,
-  AllPublishOptions,
+  S3Options,
+  SnapStoreOptions,
+  SpacesOptions,
 } from "./publishOptions"
-export { UpdateInfo, UpdateFileInfo, WindowsUpdateInfo, BlockMapDataHolder, PackageFileInfo, ReleaseNoteInfo } from "./updateInfo"
-export { parseDn } from "./rfc2253Parser"
-export { UUID } from "./uuid"
-export { ProgressCallbackTransform, ProgressInfo } from "./ProgressCallbackTransform"
-export { parseXml, XElement } from "./xml"
-export { BlockMap } from "./blockMapApi"
-export { newError } from "./error"
-export { MemoLazy } from "./MemoLazy"
 export { retry } from "./retry"
+export { parseDn } from "./rfc2253Parser"
+export { BlockMapDataHolder, PackageFileInfo, ReleaseNoteInfo, UpdateFileInfo, UpdateInfo, WindowsUpdateInfo } from "./updateInfo"
+export { UUID } from "./uuid"
+export { parseXml, XElement } from "./xml"
 
 // nsis
 export const CURRENT_APP_INSTALLER_FILE_NAME = "installer.exe"
@@ -55,5 +55,3 @@ export function asArray<T>(v: Nullish | T | Array<T>): Array<T> {
 }
 
 export type Nullish = null | undefined
-
-export type ObjectMap<ValueType> = { [key: string]: ValueType }

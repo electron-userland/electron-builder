@@ -1,6 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
 import { Arch, asArray, copyOrLinkFile, deepAssign, InvalidConfigurationError, log, walk } from "builder-util"
-import { Nullish, ObjectMap } from "builder-util-runtime"
+import { Nullish } from "builder-util-runtime"
 import { emptyDir, readdir, readFile, writeFile } from "fs-extra"
 import * as path from "path"
 import { AppXOptions } from "../"
@@ -13,7 +13,7 @@ import { createStageDir } from "./targetUtil"
 
 const APPX_ASSETS_DIR_NAME = "appx"
 
-const vendorAssetsForDefaultAssets: ObjectMap<string> = {
+const vendorAssetsForDefaultAssets: Record<string, string> = {
   "StoreLogo.png": "SampleAppx.50x50.png",
   "Square150x150Logo.png": "SampleAppx.150x150.png",
   "Square44x44Logo.png": "SampleAppx.44x44.png",

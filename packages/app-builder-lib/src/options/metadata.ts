@@ -1,4 +1,3 @@
-import { ObjectMap } from "builder-util-runtime"
 import { Configuration } from "../configuration"
 
 export interface Metadata {
@@ -38,7 +37,7 @@ export interface Metadata {
   readonly build?: Configuration
 
   /** @private */
-  readonly dependencies?: ObjectMap<string>
+  readonly dependencies?: Record<string, string>
   /** @private */
   readonly version?: string
   /** @private */

@@ -1,5 +1,5 @@
 import { DebugLogger, deepAssign, InvalidConfigurationError, log, safeStringifyJson, statOrNull } from "builder-util"
-import { Nullish, ObjectMap } from "builder-util-runtime"
+import { Nullish } from "builder-util-runtime"
 import { readJson } from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
@@ -37,7 +37,7 @@ export async function getConfig(
   projectDir: string,
   configPath: string | null,
   configFromOptions: Configuration | Nullish,
-  packageMetadata: Lazy<ObjectMap<any> | null> = new Lazy(() => orNullIfFileNotExist(readJson(path.join(projectDir, "package.json"))))
+  packageMetadata: Lazy<Record<string, any> | null> = new Lazy(() => orNullIfFileNotExist(readJson(path.join(projectDir, "package.json"))))
 ): Promise<Configuration> {
   const configRequest: ReadConfigRequest = { packageKey: "build", configFilename: "electron-builder", projectDir, packageMetadata }
   const configAndEffectiveFile = await _getConfig<Configuration>(configRequest, configPath)
