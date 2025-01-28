@@ -169,7 +169,7 @@ test.ifDevOrLinuxCi("local node module with file protocol", () => {
       isInstallDepsBefore: true,
       projectDirCreated: async (projectDir, tmpDir) => {
         const tempDir = await tmpDir.getTempDir()
-        let localPath = path.join(tempDir, "foo")
+        const localPath = path.join(tempDir, "foo")
         await outputFile(path.join(localPath, "package.json"), `{"name":"foo","version":"9.0.0","main":"index.js","license":"MIT","dependencies":{"ms":"2.0.0"}}`)
         await modifyPackageJson(projectDir, data => {
           data.dependencies = {

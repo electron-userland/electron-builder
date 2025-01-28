@@ -72,7 +72,7 @@ test.ifAll("detect install-spinner", () => {
         return copyTestAsset("install-spinner.gif", loadingGifPath)
       },
       packed: async () => {
-        expect(platformPackager!!.effectiveDistOptions.loadingGif).toEqual(loadingGifPath)
+        expect(platformPackager!.effectiveDistOptions.loadingGif).toEqual(loadingGifPath)
       },
     }
   )

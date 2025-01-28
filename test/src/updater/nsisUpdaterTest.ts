@@ -186,7 +186,7 @@ test("file url github", async () => {
   updater.updateConfigPath = await writeUpdateConfig(options)
   updater.signals.updateDownloaded(info => {
     expect(info.downloadedFile).not.toBeNull()
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+
     delete (info as any).downloadedFile
     expect(info).toMatchSnapshot()
   })
@@ -204,7 +204,7 @@ test("file url github pre-release and fullChangelog", async () => {
   updater.updateConfigPath = await writeUpdateConfig(options)
   updater.signals.updateDownloaded(info => {
     expect(info.downloadedFile).not.toBeNull()
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+
     delete (info as any).downloadedFile
     expect(info).toMatchSnapshot()
   })

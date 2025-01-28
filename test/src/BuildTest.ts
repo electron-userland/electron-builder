@@ -333,7 +333,7 @@ test.ifDevOrWinCi("smart unpack local module with dll file", () => {
       isInstallDepsBefore: true,
       projectDirCreated: async (projectDir, tmpDir) => {
         const tempDir = await tmpDir.getTempDir()
-        let localPath = path.join(tempDir, "foo")
+        const localPath = path.join(tempDir, "foo")
         await outputFile(path.join(localPath, "package.json"), `{"name":"foo","version":"9.0.0","main":"index.js","license":"MIT","dependencies":{"ms":"2.0.0"}}`)
         await outputFile(path.join(localPath, "test.dll"), `test`)
         await modifyPackageJson(projectDir, data => {
