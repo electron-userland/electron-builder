@@ -12,6 +12,10 @@ export default () => {
       name: "node",
       environment: "node",
       testTimeout: 20000,
+      coverage: {
+        reporter: ["lcov", "text"],
+      },
+      outputFile: "coverage/sonar-report.xml",
       snapshotFormat: {
         printBasicPrototype: false,
       },
