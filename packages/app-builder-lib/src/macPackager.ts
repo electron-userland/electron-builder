@@ -1,5 +1,9 @@
-import { deepAssign, Arch, AsyncTaskManager, exec, InvalidConfigurationError, log, use, getArchSuffix, copyFile, statOrNull, unlinkIfExists, orIfFileNotExist } from "builder-util"
+import { notarize } from "@electron/notarize"
+import { NotarizeOptionsNotaryTool, NotaryToolKeychainCredentials } from "@electron/notarize/lib/types"
 import { PerFileSignOptions, SignOptions } from "@electron/osx-sign/dist/cjs/types"
+import { Arch, AsyncTaskManager, copyFile, deepAssign, exec, getArchSuffix, InvalidConfigurationError, log, orIfFileNotExist, statOrNull, unlinkIfExists, use } from "builder-util"
+import { MemoLazy, Nullish } from "builder-util-runtime"
+import * as fs from "fs/promises"
 import { mkdir, readdir } from "fs/promises"
 import { Lazy } from "lazy-val"
 import * as path from "path"
@@ -15,10 +19,6 @@ import { PkgTarget, prepareProductBuildArgs } from "./targets/pkg"
 import { createCommonTarget, NoOpTarget } from "./targets/targetFactory"
 import { isMacOsHighSierra } from "./util/macosVersion"
 import { getTemplatePath } from "./util/pathManager"
-import * as fs from "fs/promises"
-import { notarize } from "@electron/notarize"
-import { NotarizeOptionsNotaryTool, NotaryToolKeychainCredentials } from "@electron/notarize/lib/types"
-import { MemoLazy } from "builder-util-runtime"
 import { resolveFunction } from "./util/resolve"
 
 export type CustomMacSignOptions = SignOptions
@@ -442,7 +442,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
   }
 
   //noinspection JSMethodCanBeStatic
-  protected async doFlat(appPath: string, outFile: string, identity: Identity, keychain: string | null | undefined): Promise<any> {
+  protected async doFlat(appPath: string, outFile: string, identity: Identity, keychain: string | Nullish): Promise<any> {
     // productbuild doesn't created directory for out file
     await mkdir(path.dirname(outFile), { recursive: true })
 

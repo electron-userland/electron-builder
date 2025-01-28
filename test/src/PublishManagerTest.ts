@@ -1,7 +1,7 @@
+import { GenericServerOptions, GithubOptions, KeygenOptions, SpacesOptions } from "builder-util-runtime"
 import { Arch, createTargets, Platform } from "electron-builder"
 import { outputFile } from "fs-extra"
 import * as path from "path"
-import { GithubOptions, GenericServerOptions, SpacesOptions, KeygenOptions } from "builder-util-runtime"
 import { assertThat } from "./helpers/fileAssert"
 import { app, checkDirContents } from "./helpers/packTester"
 
@@ -157,7 +157,7 @@ test.ifAll.ifNotWindows(
     async upload(task) {
     }
   }
-  
+
   module.exports = Publisher`
         ),
     }

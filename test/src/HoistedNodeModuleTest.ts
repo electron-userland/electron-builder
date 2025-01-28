@@ -1,5 +1,5 @@
-import { assertPack, linuxDirTarget, verifyAsarFileTree } from "./helpers/packTester"
 import { Platform } from "electron-builder"
+import { assertPack, linuxDirTarget, verifyAsarFileTree } from "./helpers/packTester"
 
 test.ifAll("yarn workspace", () =>
   assertPack(

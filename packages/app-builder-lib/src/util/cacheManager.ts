@@ -1,4 +1,4 @@
-import { Arch, log, copyFile, orNullIfFileNotExist } from "builder-util"
+import { Arch, copyFile, log, orNullIfFileNotExist } from "builder-util"
 import { Hash } from "crypto"
 import { readJson, writeJson } from "fs-extra"
 import { mkdir, readFile } from "fs/promises"

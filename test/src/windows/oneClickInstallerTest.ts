@@ -5,7 +5,7 @@ import { assertThat } from "../helpers/fileAssert"
 import { app, assertPack, copyTestAsset, modifyPackageJson } from "../helpers/packTester"
 import { checkHelpers, doTest, expectUpdateMetadata } from "../helpers/winHelper"
 
-const nsisTarget = Platform.WINDOWS.createTarget(["nsis"])
+const nsisTarget = Platform.WINDOWS.createTarget(["nsis"], Arch.x64)
 
 function pickSnapshotDefines(defines: any) {
   return {

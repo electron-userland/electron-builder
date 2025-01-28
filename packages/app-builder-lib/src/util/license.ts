@@ -1,6 +1,7 @@
+import { Nullish } from "builder-util-runtime"
 import * as path from "path"
-import { langIdToName, toLangWithRegion } from "./langs"
 import { PlatformPackager } from "../platformPackager"
+import { langIdToName, toLangWithRegion } from "./langs"
 
 export function getLicenseAssets(fileNames: Array<string>, packager: PlatformPackager<any>) {
   return fileNames
@@ -24,7 +25,7 @@ export function getLicenseAssets(fileNames: Array<string>, packager: PlatformPac
 }
 
 export async function getNotLocalizedLicenseFile(
-  custom: string | null | undefined,
+  custom: string | Nullish,
   packager: PlatformPackager<any>,
   supportedExtension: Array<string> = ["rtf", "txt", "html"]
 ): Promise<string | null> {

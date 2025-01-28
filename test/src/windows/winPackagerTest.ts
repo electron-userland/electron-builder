@@ -109,7 +109,7 @@ test.ifMac("custom icon", () => {
     {
       projectDirCreated: projectDir => fs.rename(path.join(projectDir, "build", "icon.ico"), path.join(projectDir, "customIcon.ico")),
       packed: async context => {
-        expect(await platformPackager!!.getIconPath()).toEqual(path.join(context.projectDir, "customIcon.ico"))
+        expect(await platformPackager!.getIconPath()).toEqual(path.join(context.projectDir, "customIcon.ico"))
       },
     }
   )
@@ -131,7 +131,7 @@ test.ifAll("win icon from icns", () => {
       projectDirCreated: projectDir =>
         Promise.all([fs.unlink(path.join(projectDir, "build", "icon.ico")), fs.rm(path.join(projectDir, "build", "icons"), { recursive: true, force: true })]),
       packed: async () => {
-        const file = await platformPackager!!.getIconPath()
+        const file = await platformPackager!.getIconPath()
         expect(file).toBeDefined()
       },
     }

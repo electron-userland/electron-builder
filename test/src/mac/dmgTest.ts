@@ -1,9 +1,9 @@
-import { Arch, exec, copyFile } from "builder-util"
+import { PlatformPackager } from "app-builder-lib"
+import { Arch, copyFile, exec } from "builder-util"
 import { attachAndExecute, getDmgTemplatePath } from "dmg-builder/out/dmgUtil"
 import { Platform } from "electron-builder"
-import { PlatformPackager } from "app-builder-lib"
-import * as path from "path"
 import * as fs from "fs/promises"
+import * as path from "path"
 import { assertThat } from "../helpers/fileAssert"
 import { app, assertPack, copyTestAsset } from "../helpers/packTester"
 

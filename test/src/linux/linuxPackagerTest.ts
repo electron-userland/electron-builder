@@ -1,11 +1,11 @@
+import { GenericServerOptions } from "builder-util-runtime"
 import { Arch, build, Platform } from "electron-builder"
 import { outputFile } from "fs-extra"
+import * as fs from "fs/promises"
 import * as path from "path"
-import { GenericServerOptions } from "builder-util-runtime"
 import { assertThat } from "../helpers/fileAssert"
 import { app, appThrows, copyTestAsset, modifyPackageJson } from "../helpers/packTester"
 import { ELECTRON_VERSION } from "../helpers/testConfig"
-import * as fs from "fs/promises"
 
 const appImageTarget = Platform.LINUX.createTarget("appimage")
 

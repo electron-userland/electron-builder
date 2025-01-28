@@ -1,15 +1,16 @@
+import * as electronRebuild from "@electron/rebuild"
+import { getProjectRootPath } from "@electron/rebuild/lib/search-module"
+import { RebuildMode } from "@electron/rebuild/lib/types"
 import { asArray, log, spawn } from "builder-util"
+import { Nullish } from "builder-util-runtime"
 import { pathExists } from "fs-extra"
 import { Lazy } from "lazy-val"
 import { homedir } from "os"
 import * as path from "path"
 import { Configuration } from "../configuration"
-import { NodeModuleDirInfo } from "./packageDependencies"
-import * as electronRebuild from "@electron/rebuild"
-import { getProjectRootPath } from "@electron/rebuild/lib/search-module"
-import { rebuild as remoteRebuild } from "./rebuild/rebuild"
 import { executeAppBuilderAndWriteJson } from "./appBuilder"
-import { RebuildMode } from "@electron/rebuild/lib/types"
+import { NodeModuleDirInfo } from "./packageDependencies"
+import { rebuild as remoteRebuild } from "./rebuild/rebuild"
 
 export async function installOrRebuild(config: Configuration, appDir: string, options: RebuildOptions, forceInstall = false) {
   const effectiveOptions: RebuildOptions = {
@@ -153,7 +154,7 @@ function getPackageToolPath() {
   }
 }
 
-function isRunningYarn(execPath: string | null | undefined) {
+function isRunningYarn(execPath: string | Nullish) {
   const userAgent = process.env.npm_config_user_agent
   return process.env.FORCE_YARN === "true" || (execPath != null && path.basename(execPath).startsWith("yarn")) || (userAgent != null && /\byarn\b/.test(userAgent))
 }

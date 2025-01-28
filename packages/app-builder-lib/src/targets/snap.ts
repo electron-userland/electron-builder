@@ -1,16 +1,16 @@
-import { Arch, deepAssign, executeAppBuilder, InvalidConfigurationError, log, replaceDefault as _replaceDefault, serializeToYaml, toLinuxArchString } from "builder-util"
-import { SnapStoreOptions, asArray } from "builder-util-runtime"
+import { replaceDefault as _replaceDefault, Arch, deepAssign, executeAppBuilder, InvalidConfigurationError, log, serializeToYaml, toLinuxArchString } from "builder-util"
+import { asArray, Nullish, SnapStoreOptions } from "builder-util-runtime"
 import { outputFile, readFile } from "fs-extra"
 import { load } from "js-yaml"
 import * as path from "path"
 import * as semver from "semver"
+import { Configuration } from "../configuration"
 import { Publish, Target } from "../core"
 import { LinuxPackager } from "../linuxPackager"
 import { PlugDescriptor, SnapOptions } from "../options/SnapOptions"
 import { getTemplatePath } from "../util/pathManager"
 import { LinuxTargetHelper } from "./LinuxTargetHelper"
 import { createStageDirPath } from "./targetUtil"
-import { Configuration } from "../configuration"
 
 const defaultPlugs = ["desktop", "desktop-legacy", "home", "x11", "wayland", "unity7", "browser-support", "network", "gsettings", "audio-playback", "pulseaudio", "opengl"]
 
@@ -28,7 +28,7 @@ export default class SnapTarget extends Target {
     super(name)
   }
 
-  private replaceDefault(inList: Array<string> | null | undefined, defaultList: Array<string>) {
+  private replaceDefault(inList: Array<string> | Nullish, defaultList: Array<string>) {
     const result = _replaceDefault(inList, defaultList)
     if (result !== defaultList) {
       this.isUseTemplateApp = false
@@ -350,7 +350,7 @@ function isArrayEqualRegardlessOfSort(a: Array<string>, b: Array<string>) {
   return a.length === b.length && a.every((value, index) => value === b[index])
 }
 
-function normalizePlugConfiguration(raw: Array<string | PlugDescriptor> | PlugDescriptor | null | undefined): { [key: string]: { [name: string]: any } | null } | null {
+function normalizePlugConfiguration(raw: Array<string | PlugDescriptor> | PlugDescriptor | Nullish): Record<string, Record<string, any> | null> | null {
   if (raw == null) {
     return null
   }

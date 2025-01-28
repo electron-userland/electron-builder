@@ -1,10 +1,10 @@
 import { checkBuildRequestOptions } from "app-builder-lib"
 import { doMergeConfigs } from "app-builder-lib/out/util/config/config"
 import { Arch, createTargets, DIR_TARGET, Platform } from "electron-builder"
-import { promises as fs } from "fs"
-import { outputJson ,outputFile} from "fs-extra"
-import * as path from "path"
 import { createYargs } from "electron-builder/out/builder"
+import { promises as fs } from "fs"
+import { outputFile, outputJson } from "fs-extra"
+import * as path from "path"
 import { app, appTwo, appTwoThrows, assertPack, linuxDirTarget, modifyPackageJson, packageJson, toSystemIndependentPath } from "./helpers/packTester"
 import { ELECTRON_VERSION } from "./helpers/testConfig"
 import { verifySmartUnpack } from "./helpers/verifySmartUnpack"
@@ -330,10 +330,10 @@ test.ifDevOrWinCi("smart unpack local module with dll file", () => {
       targets: Platform.WINDOWS.createTarget(DIR_TARGET),
     },
     {
-      isInstallDepsBefore:true,
+      isInstallDepsBefore: true,
       projectDirCreated: async (projectDir, tmpDir) => {
         const tempDir = await tmpDir.getTempDir()
-        let localPath = path.join(tempDir, "foo")
+        const localPath = path.join(tempDir, "foo")
         await outputFile(path.join(localPath, "package.json"), `{"name":"foo","version":"9.0.0","main":"index.js","license":"MIT","dependencies":{"ms":"2.0.0"}}`)
         await outputFile(path.join(localPath, "test.dll"), `test`)
         await modifyPackageJson(projectDir, data => {
@@ -350,7 +350,6 @@ test.ifDevOrWinCi("smart unpack local module with dll file", () => {
     }
   )()
 })
-
 
 // https://github.com/electron-userland/electron-builder/issues/1738
 test.ifDevOrLinuxCi(

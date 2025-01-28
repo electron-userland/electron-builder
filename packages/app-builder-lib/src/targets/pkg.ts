@@ -1,14 +1,15 @@
-import { Arch, debug, exec, use, statOrNull } from "builder-util"
-import { PkgOptions } from "../options/pkgOptions"
-import { executeAppBuilderAndWriteJson, executeAppBuilderAsJson } from "../util/appBuilder"
-import { getNotLocalizedLicenseFile } from "../util/license"
+import { Arch, debug, exec, statOrNull, use } from "builder-util"
+import { Nullish } from "builder-util-runtime"
+import { readdirSync } from "fs"
 import { readFile, unlink, writeFile } from "fs/promises"
 import * as path from "path"
 import { filterCFBundleIdentifier } from "../appInfo"
 import { findIdentity, Identity } from "../codeSign/macCodeSign"
 import { Target } from "../core"
 import { MacPackager } from "../macPackager"
-import { readdirSync } from "fs"
+import { PkgOptions } from "../options/pkgOptions"
+import { executeAppBuilderAndWriteJson, executeAppBuilderAsJson } from "../util/appBuilder"
+import { getNotLocalizedLicenseFile } from "../util/license"
 
 const certType = "Developer ID Installer"
 
@@ -205,7 +206,7 @@ export class PkgTarget extends Target {
   }
 }
 
-export function prepareProductBuildArgs(identity: Identity | null, keychain: string | null | undefined): Array<string> {
+export function prepareProductBuildArgs(identity: Identity | null, keychain: string | Nullish): Array<string> {
   const args: Array<string> = []
   if (identity != null) {
     args.push("--sign", identity.hash!)

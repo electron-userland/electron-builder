@@ -1,13 +1,13 @@
-import asyncPool from "tiny-async-pool"
 import { FilterStats, MAX_FILE_REQUESTS } from "builder-util"
-import { lstat, readdir, lstatSync } from "fs-extra"
+import { realpathSync } from "fs"
+import { lstat, lstatSync, readdir } from "fs-extra"
 import * as path from "path"
+import asyncPool from "tiny-async-pool"
 import { excludedNames, FileMatcher } from "../fileMatcher"
 import { Packager } from "../packager"
-import { resolveFunction } from "./resolve"
 import { FileCopyHelper } from "./AppFileWalker"
 import { NodeModuleInfo } from "./packageDependencies"
-import { realpathSync } from "fs"
+import { resolveFunction } from "./resolve"
 
 const excludedFiles = new Set(
   [

@@ -1,12 +1,11 @@
-import { Arch, InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
-import { httpExecutor } from "builder-util"
+import { Arch, httpExecutor, InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
+import { configureRequestOptions, HttpExecutor } from "builder-util-runtime"
+import { BitbucketOptions } from "builder-util-runtime/out/publishOptions"
+import * as FormData from "form-data"
+import { readFile } from "fs-extra"
 import { ClientRequest, RequestOptions } from "http"
 import { PublishContext } from "./"
 import { HttpPublisher } from "./httpPublisher"
-import { BitbucketOptions } from "builder-util-runtime/out/publishOptions"
-import { configureRequestOptions, HttpExecutor } from "builder-util-runtime"
-import * as FormData from "form-data"
-import { readFile } from "fs-extra"
 
 export class BitbucketPublisher extends HttpPublisher {
   readonly providerName = "bitbucket"

@@ -1,5 +1,5 @@
-import { TargetSpecificOptions } from "../../core"
 import { CommonWindowsInstallerConfiguration } from "../.."
+import { TargetSpecificOptions } from "../../core"
 
 export interface CustomNsisBinary {
   /**

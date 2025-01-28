@@ -4,16 +4,18 @@ import {
   AsyncTaskManager,
   exec,
   executeAppBuilder,
+  exists,
+  getArchSuffix,
+  getPath7za,
   getPlatformIconFileName,
   InvalidConfigurationError,
   log,
   spawnAndWrite,
+  statOrNull,
   use,
-  getPath7za,
-  getArchSuffix,
+  walk,
 } from "builder-util"
 import { CURRENT_APP_INSTALLER_FILE_NAME, CURRENT_APP_PACKAGE_FILE_NAME, PackageFileInfo, UUID } from "builder-util-runtime"
-import { exists, statOrNull, walk } from "builder-util"
 import _debug from "debug"
 import * as fs from "fs"
 import { readFile, stat, unlink } from "fs-extra"
@@ -36,7 +38,7 @@ import { addCustomMessageFileInclude, createAddLangsMacro, LangConfigurator } fr
 import { computeLicensePage } from "./nsisLicense"
 import { NsisOptions, PortableOptions } from "./nsisOptions"
 import { NsisScriptGenerator } from "./nsisScriptGenerator"
-import { AppPackageHelper, nsisTemplatesDir, NSIS_PATH, UninstallerReader, NsisTargetOptions } from "./nsisUtil"
+import { AppPackageHelper, NSIS_PATH, NsisTargetOptions, nsisTemplatesDir, UninstallerReader } from "./nsisUtil"
 
 const debug = _debug("electron-builder:nsis")
 

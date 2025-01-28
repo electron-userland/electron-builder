@@ -1,5 +1,5 @@
+import { blockmapFiles, newUrlFromBase } from "electron-updater/out/util"
 import { URL } from "url"
-import { newUrlFromBase, blockmapFiles } from "electron-updater/out/util"
 
 test("newUrlFromBase", () => {
   const fileUrl = new URL("https://AWS_S3_HOST/bucket-yashraj/electron%20Setup%2011.0.3.exe")

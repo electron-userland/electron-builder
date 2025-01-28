@@ -1,5 +1,4 @@
-import { log } from "builder-util"
-import { statOrNull } from "builder-util"
+import { log, statOrNull } from "builder-util"
 import * as path from "path"
 import { Configuration } from "../configuration"
 
