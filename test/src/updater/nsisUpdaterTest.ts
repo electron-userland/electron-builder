@@ -71,7 +71,7 @@ test("file url generic", async () => {
   await validateDownload(updater)
 })
 
-test.ifEnv(process.env.KEYGEN_TOKEN)("file url keygen", async () => {
+test.runIf(process.env.KEYGEN_TOKEN)("file url keygen", async () => {
   const updater = await createNsisUpdater()
   updater.addAuthHeader(`Bearer ${process.env.KEYGEN_TOKEN}`)
   updater.updateConfigPath = await writeUpdateConfig<KeygenOptions>({
@@ -82,7 +82,7 @@ test.ifEnv(process.env.KEYGEN_TOKEN)("file url keygen", async () => {
   await validateDownload(updater)
 })
 
-test.ifEnv(process.env.BITBUCKET_TOKEN)("file url bitbucket", async () => {
+test.runIf(process.env.BITBUCKET_TOKEN)("file url bitbucket", async () => {
   const updater = await createNsisUpdater()
   const options: BitbucketOptions = {
     provider: "bitbucket",
@@ -209,7 +209,7 @@ test("file url github pre-release and fullChangelog", async () => {
   expect(updateCheckResult?.updateInfo).toMatchSnapshot()
 })
 
-test.ifEnv(process.env.GH_TOKEN || process.env.GITHUB_TOKEN)("file url github private", async () => {
+test.runIf(process.env.GH_TOKEN || process.env.GITHUB_TOKEN)("file url github private", async () => {
   const updater = await createNsisUpdater("0.0.1")
   updater.updateConfigPath = await writeUpdateConfig<GithubOptions>({
     provider: "github",

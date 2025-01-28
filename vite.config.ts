@@ -3,6 +3,7 @@ import { defineConfig } from "vitest/config"
 export default () => {
   const testRegex = process.env.TEST_FILES?.split(",") ?? ["*Test"]
   const includeRegex = `(${testRegex.join("|")})`
+  const isWindows = process.platform === "win32"
   return defineConfig({
     test: {
       globals: true,
@@ -11,7 +12,7 @@ export default () => {
       update: process.env.UPDATE_SNAPSHOT === "true",
       name: "node",
       environment: "node",
-      testTimeout: 120000, // disk operations can be slow. We're generous with the timeout here to account for less-performant hardware
+      testTimeout: (isWindows ? 30 : 20) * 1000 * 60, // disk operations can be slow. We're generous with the timeout here to account for less-performant hardware
       coverage: {
         reporter: ["lcov", "text"],
       },

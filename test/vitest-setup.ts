@@ -1,25 +1,45 @@
-import { describe, test } from "vitest"
-
 import { isCI as isCi } from "ci-info"
+import { test } from "vitest"
 
 const isWindows = process.platform === "win32"
-
-// Squirrel.Windows msi is very slow
-// jest.setTimeout((isWindows ? 30 : 20) * 1000 * 60)
+const isMac = process.platform === "darwin"
+const isLinux = process.platform === "linux"
 
 const skip = test.skip
-const skipSuite = describe.skip
-
+// const skipSuite = describe.skip
 const isAllTests = process.env.ALL_TESTS !== "false"
+
+// describe.extend({})
+test.extend({
+  ifAll: isAllTests ? test : skip,
+  ifMac: isMac ? test : skip,
+  ifNotMac: isMac ? skip : test,
+
+  ifWindows: isWindows ? test : skip,
+  ifNotWindows: isWindows ? skip : test,
+
+  ifCi: isCi ? test : skip,
+  ifNotCi: !isCi ? test : skip,
+
+  ifNotCiMac: isCi && isMac ? skip : test,
+  ifNotCiWin: isCi && isWindows ? skip : test,
+
+  ifDevOrWinCi: !isCi || isWindows ? test : skip,
+  ifDevOrLinuxCi: !isCi || isLinux ? test : skip,
+
+  ifWinCi: isCi && isWindows ? test : skip,
+
+  ifLinux: isLinux ? test : skip,
+  ifLinuxOrDevMac: isLinux || (!isCi && isMac) ? test : skip,
+})
+
 describe.ifAll = isAllTests ? describe : skipSuite
 test.ifAll = isAllTests ? test : skip
 skip.ifAll = skip
 
-const execEnv = envVar => (!!envVar ? test : skip)
-test.ifEnv = execEnv
-skip.ifEnv = execEnv
+test.ifEnv = execIf
+skip.ifEnv = execIf
 
-const isMac = process.platform === "darwin"
 test.ifMac = isMac ? test : skip
 
 test.ifNotWindows = isWindows ? skip : test

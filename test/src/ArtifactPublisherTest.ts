@@ -82,14 +82,14 @@ testAndIgnoreApiRate("GitHub upload", async () => {
   }
 })
 
-test.ifEnv(process.env.AWS_ACCESS_KEY_ID != null && process.env.AWS_SECRET_ACCESS_KEY != null)("S3 upload", async () => {
+test.runIf(process.env.AWS_ACCESS_KEY_ID != null && process.env.AWS_SECRET_ACCESS_KEY != null)("S3 upload", async () => {
   const publisher = createPublisher(publishContext, "0.0.1", { provider: "s3", bucket: "electron-builder-test" } as S3Options, {}, {} as any)!
   await publisher.upload({ file: iconPath, arch: Arch.x64 })
   // test overwrite
   await publisher.upload({ file: iconPath, arch: Arch.x64 })
 })
 
-test.ifEnv(process.env.DO_KEY_ID != null && process.env.DO_SECRET_KEY != null)("DO upload", async () => {
+test.runIf(process.env.DO_KEY_ID != null && process.env.DO_SECRET_KEY != null)("DO upload", async () => {
   const configuration: SpacesOptions = {
     provider: "spaces",
     name: "electron-builder-test",
@@ -125,7 +125,7 @@ testAndIgnoreApiRate("GitHub upload org", async () => {
   }
 })
 
-test.ifEnv(process.env.KEYGEN_TOKEN)("Keygen upload", async () => {
+test.runIf(process.env.KEYGEN_TOKEN)("Keygen upload", async () => {
   const publisher = new KeygenPublisher(
     publishContext,
     {
@@ -146,7 +146,7 @@ test.ifEnv(process.env.KEYGEN_TOKEN)("Keygen upload", async () => {
   await publisher.deleteRelease(releaseId)
 })
 
-test.ifEnv(process.env.BITBUCKET_TOKEN)("Bitbucket upload", async () => {
+test.runIf(process.env.BITBUCKET_TOKEN)("Bitbucket upload", async () => {
   const timeout = 0
   const config: BitbucketOptions = {
     provider: "bitbucket",
@@ -164,7 +164,7 @@ test.ifEnv(process.env.BITBUCKET_TOKEN)("Bitbucket upload", async () => {
   }
 })
 
-test.ifEnv(process.env.BITBUCKET_TOKEN)("Bitbucket upload", async () => {
+test.runIf(process.env.BITBUCKET_TOKEN)("Bitbucket upload", async () => {
   const timeout = 100
   const publisher = new BitbucketPublisher(publishContext, {
     provider: "bitbucket",

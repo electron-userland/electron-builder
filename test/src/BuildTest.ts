@@ -149,7 +149,7 @@ test(
   )
 )
 
-it.ifDevOrLinuxCi(
+test.ifDevOrLinuxCi(
   "electron version from electron-prebuilt dependency",
   app(
     {

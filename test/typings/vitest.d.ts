@@ -1,25 +1,34 @@
-declare module vitest {
-  interface TestAPI {
-    ifNotWindows: vitest.TestAPI
+import * as vitest from 'vitest'
 
-    ifMac: vitest.TestAPI
-    ifNotMac: vitest.TestAPI
+type Test = typeof import('vitest')['test']
 
-    ifWindows: vitest.TestAPI
-    ifNotCi: vitest.TestAPI
-    ifCi: vitest.TestAPI
-    ifNotCiMac: vitest.TestAPI
-    ifNotCiWin: vitest.TestAPI
-    ifDevOrWinCi: vitest.TestAPI
-    ifWinCi: vitest.TestAPI
-    ifDevOrLinuxCi: vitest.TestAPI
-    ifLinux: vitest.TestAPI
-    ifLinuxOrDevMac: vitest.TestAPI
+interface CustomMatchers<R = unknown> {
+  toMatchObject: (object: any) => R
+}
+interface CustomTestMatcher extends Test {
+  ifNotWindows: CustomTestMatcher
+  ifMac: CustomTestMatcher
+  ifNotMac: CustomTestMatcher
+  ifWindows: CustomTestMatcher
+  ifNotCi: CustomTestMatcher
+  ifCi: CustomTestMatcher
+  ifNotCiMac: CustomTestMatcher
+  ifNotCiWin: CustomTestMatcher
+  ifDevOrWinCi: CustomTestMatcher
+  ifWinCi: CustomTestMatcher
+  ifDevOrLinuxCi: CustomTestMatcher
+  ifLinux: CustomTestMatcher
+  ifLinuxOrDevMac: CustomTestMatcher
+  ifAll: CustomTestMatcher
+  ifEnv: (envVar: any) => CustomTestMatcher
+}
 
-    ifAll: vitest.TestAPI
+declare module 'vitest' {
+  interface Assertion<T = any> extends CustomMatchers<T> {}
+  interface AsymmetricMatchersContaining extends CustomMatchers {}
 
-    ifEnv: (envVar: any) => vitest.TestAPI
-  }
+  interface TestAPI extends CustomTestMatcher {}
+  type TestAPI = CustomTestMatcher
 
   interface Describe {
     ifAll: vitest.Describe
@@ -28,4 +37,9 @@ declare module vitest {
   interface Matchers {
     toMatchObject(object: any)
   }
+}
+
+declare global {
+  const test: CustomTestMatcher
+  const describe: typeof import('vitest')['describe']
 }

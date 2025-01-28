@@ -191,15 +191,11 @@ async function testBlockMap(oldDir: string, newDir: string, updaterClass: any, p
 
   // Mac uses electron's native autoUpdater to serve updates to, we mock here since electron API isn't available within jest runtime
   const mockNativeUpdater = new TestNativeUpdater()
-  jest.mock(
-    "electron",
-    () => {
-      return {
-        autoUpdater: mockNativeUpdater,
-      }
-    },
-    { virtual: true }
-  )
+  vitest.doMock("electron", () => {
+    return {
+      autoUpdater: mockNativeUpdater,
+    }
+  })
 
   return await new Promise<void>((resolve, reject) => {
     httpServerProcess.on("error", reject)
