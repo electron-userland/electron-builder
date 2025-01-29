@@ -122,7 +122,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return options == null ? Object.create(null) : options
   }
 
-  abstract createTargets(targets: Array<string>, mapper: (name: string, factory: (outDir: string) => Target) => void): void
+  abstract createTargets(targets: Array<string>, mapper: (name: string, factory: (outDir: string) => Target) => void): Promise<void>
 
   getCscPassword(): string {
     const password = this.doGetCscPassword()
