@@ -2,6 +2,7 @@
   "name": "builder-util",
   "version": "26.0.0",
   "main": "out/util.js",
+  "type": "module",
   "author": "Vladimir Krivosheev",
   "license": "MIT",
   "repository": {

@@ -1,5 +1,5 @@
 import { Arch } from "builder-util"
-import { sanitizeFileName } from "builder-util/out/filename"
+import { sanitizeFileName } from "builder-util/src/filename"
 import { DIR_TARGET, Platform, Target } from "./core"
 import { LinuxConfiguration } from "./options/linuxOptions"
 import { Packager } from "./packager"

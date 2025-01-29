@@ -1,7 +1,7 @@
-import { BlockMap } from "builder-util-runtime/out/blockMapApi"
+import { BlockMap } from "builder-util-runtime/src/blockMapApi"
 import { close, fstat, open, read } from "fs-extra"
-import { DifferentialDownloader } from "./DifferentialDownloader"
 import { inflateRawSync } from "zlib"
+import { DifferentialDownloader } from "./DifferentialDownloader"
 
 export class FileWithEmbeddedBlockMapDifferentialDownloader extends DifferentialDownloader {
   async download(): Promise<void> {

@@ -3,6 +3,7 @@
   "description": "A complete solution to package and build a ready for distribution Electron app for MacOS, Windows and Linux with “auto update” support out of the box",
   "version": "26.0.0",
   "main": "out/index.js",
+  "type": "module",
   "files": [
     "out"
   ],

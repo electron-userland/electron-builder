@@ -1,12 +1,20 @@
-import { BlockMapDataHolder, createHttpError, DigestTransform, HttpExecutor, configureRequestUrl, configureRequestOptions } from "builder-util-runtime"
-import { BlockMap } from "builder-util-runtime/out/blockMapApi"
-import { close, open } from "fs-extra"
+import {
+  BlockMapDataHolder,
+  CancellationToken,
+  configureRequestOptions,
+  configureRequestUrl,
+  createHttpError,
+  DigestTransform,
+  HttpExecutor,
+  ProgressInfo,
+} from "builder-util-runtime"
+import { BlockMap } from "builder-util-runtime/src/blockMapApi"
 import { createWriteStream } from "fs"
+import { close, open } from "fs-extra"
 import { OutgoingHttpHeaders, RequestOptions } from "http"
-import { ProgressInfo, CancellationToken } from "builder-util-runtime"
+import { URL } from "url"
 import { Logger } from "../main"
 import { copyData } from "./DataSplitter"
-import { URL } from "url"
 import { computeOperations, Operation, OperationKind } from "./downloadPlanBuilder"
 import { checkIsRangesSupported, executeTasksUsingMultipleRangeRequests } from "./multipleRangeDownloader"
 import { ProgressDifferentialDownloadCallbackTransform, ProgressDifferentialDownloadInfo } from "./ProgressDifferentialDownloadCallbackTransform"

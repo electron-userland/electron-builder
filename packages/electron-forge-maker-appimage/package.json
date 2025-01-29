@@ -2,6 +2,7 @@
   "name": "electron-forge-maker-appimage",
   "version": "26.0.0",
   "main": "main.js",
+  "type": "module",
   "author": "Vladimir Krivosheev",
   "license": "MIT",
   "repository": {

@@ -1,4 +1,4 @@
-import { log } from "builder-util/out/log"
+import { log } from "builder-util/src/log"
 import debug from "debug"
 import * as path from "path"
 import { pathToFileURL } from "url"
