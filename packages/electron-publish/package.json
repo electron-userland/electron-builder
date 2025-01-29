@@ -15,6 +15,9 @@
   "files": [
     "out"
   ],
+  "scripts": {
+    "compile": "vite build", "compile2": "rollup -c rollup.config.ts --configPlugin typescript"
+  },
   "dependencies": {
     "@types/fs-extra": "^9.0.11",
     "builder-util": "workspace:*",

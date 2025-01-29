@@ -9,30 +9,6 @@ const skip = test.skip
 // const skipSuite = describe.skip
 const isAllTests = process.env.ALL_TESTS !== "false"
 
-// describe.extend({})
-// test.extend({
-//   ifAll: isAllTests ? test : skip,
-//   ifMac: isMac ? test : skip,
-//   ifNotMac: isMac ? skip : test,
-
-//   ifWindows: isWindows ? test : skip,
-//   ifNotWindows: isWindows ? skip : test,
-
-//   ifCi: isCi ? test : skip,
-//   ifNotCi: !isCi ? test : skip,
-
-//   ifNotCiMac: isCi && isMac ? skip : test,
-//   ifNotCiWin: isCi && isWindows ? skip : test,
-
-//   ifDevOrWinCi: !isCi || isWindows ? test : skip,
-//   ifDevOrLinuxCi: !isCi || isLinux ? test : skip,
-
-//   ifWinCi: isCi && isWindows ? test : skip,
-
-//   ifLinux: isLinux ? test : skip,
-//   ifLinuxOrDevMac: isLinux || (!isCi && isMac) ? test : skip,
-// })
-
 describe.ifAll = isAllTests ? describe : skipSuite
 test.ifAll = isAllTests ? test : skip
 skip.ifAll = skip
@@ -76,10 +52,10 @@ test.ifNotCiMac = isCi && isMac ? skip : test
 test.ifNotCiWin = isCi && isWindows ? skip : test
 
 test.ifDevOrWinCi = !isCi || isWindows ? test : skip
-test.ifDevOrLinuxCi = !isCi || process.platform === "linux" ? test : skip
+test.ifDevOrLinuxCi = !isCi || isLinux ? test : skip
 test.ifWinCi = isCi && isWindows ? test : skip
-test.ifLinux = process.platform === "linux" ? test : skip
-test.ifLinuxOrDevMac = process.platform === "linux" || (!isCi && isMac) ? test : skip
+test.ifLinux = isLinux ? test : skip
+test.ifLinuxOrDevMac = isLinux || (!isCi && isMac) ? test : skip
 
 delete process.env.CSC_NAME
 if (process.env.TEST_APP_TMP_DIR == null) {

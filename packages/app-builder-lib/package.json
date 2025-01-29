@@ -46,6 +46,9 @@
   "license": "MIT",
   "bugs": "https://github.com/electron-userland/electron-builder/issues",
   "homepage": "https://github.com/electron-userland/electron-builder",
+  "scripts": {
+    "compile": "vite build", "compile2": "rollup -c rollup.config.ts --configPlugin typescript"
+  },
   "dependencies": {
     "@develar/schema-utils": "~2.6.5",
     "@electron/fuses": "^1.8.0",

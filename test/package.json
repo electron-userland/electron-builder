@@ -2,6 +2,9 @@
   "name": "@electron-builder/test",
   "version": "0.0.0",
   "private": true,
+  "scripts": {
+    "ci:test": "vitest"
+  },
   "dependencies": {
     "@electron/osx-sign": "^1.0.4",
     "app-builder-lib": "workspace:*",
