@@ -4,8 +4,7 @@
     "rootDir": ".",
     "outDir": "out",
     "skipLibCheck": true,
-    "baseUrl": "../packages",
-    "noEmit": true,
+    "baseUrl": "../packages"
   },
   "references": [
     {

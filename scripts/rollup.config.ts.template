@@ -3,6 +3,7 @@ import typescript from "@rollup/plugin-typescript"
 import { defineConfig } from "rollup"
 import { cleandir } from "rollup-plugin-cleandir"
 import dts from "rollup-plugin-dts"
+import generateDeclarations from "rollup-plugin-generate-declarations"
 
 export default () => {
   const dir = "./out"
@@ -16,6 +17,7 @@ export default () => {
     },
     plugins: [
       cleandir(dir),
+      generateDeclarations(),
       commonjs({ extensions: [".js", ".ts"] }),
       typescript({
         tsconfig: "./tsconfig.json",
