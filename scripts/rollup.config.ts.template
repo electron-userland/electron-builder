@@ -1,23 +1,31 @@
 import commonjs from "@rollup/plugin-commonjs"
 import typescript from "@rollup/plugin-typescript"
 import { defineConfig } from "rollup"
+import { cleandir } from "rollup-plugin-cleandir"
+import dts from "rollup-plugin-dts"
 
 export default () => {
+  const dir = "./out"
   return defineConfig({
     input: "<input_key>",
     output: {
-      dir: "./out",
+      dir: dir,
       format: "cjs",
       sourcemap: true,
+      preserveModules: true, // Keep modules separate
     },
     plugins: [
+      // cleandir(dir),
+      commonjs({ extensions: [".js", ".ts"] }),
       typescript({
         tsconfig: "./tsconfig.json",
         checkJs: true,
+        declaration: true,
+        // useTsconfigDeclarationDir: true,
         // verbosity: 3,
         // clean: true,
       }),
-      commonjs({ extensions: [".js", ".ts"] }),
+      // dts(),
     ],
   })
 }

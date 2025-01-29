@@ -12,6 +12,7 @@
   "scripts": {
     "//": "do not wrap into single quotes - windows doesn't unwrap arg in this case",
     "compile": "node scripts/copyRollupConfigs.js && tsc --emitDeclarationOnly --declaration && pnpm -r run compile2",
+    "compile2": "tsc --build",
     "lint": "eslint packages",
     "lint-staged": "lint-staged",
     "lint-deps": "node ./test/out/helpers/checkDeps.js",
@@ -66,6 +67,7 @@
     "lint-staged": "15.2.10",
     "prettier": "3.3.3",
     "rollup": "^4.32.1",
+    "rollup-plugin-cleandir": "^3.0.0",
     "rollup-plugin-dts": "^6.1.1",
     "rollup-plugin-generate-declarations": "^1.1.2",
     "rollup-plugin-node-externals": "^8.0.0",

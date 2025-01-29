@@ -79,14 +79,14 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
     return this._iconPath.value
   }
 
-  async createTargets(targets: Array<string>, mapper: (name: string, factory: (outDir: string) => Target) => void): Promise<void> {
+  createTargets(targets: Array<string>, mapper: (name: string, factory: (outDir: string) => Target) => void): Promise<void> {
     for (const name of targets) {
       switch (name) {
         case DIR_TARGET:
           break
 
         case "dmg": {
-          const { DmgTarget } = await import("dmg-builder")
+          const { DmgTarget } = require("dmg-builder")
           mapper(name, outDir => new DmgTarget(this, outDir))
           break
         }
@@ -105,6 +105,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
           break
       }
     }
+    return Promise.resolve()
   }
 
   protected async doPack(config: DoPackOptions<MacConfiguration>): Promise<any> {
