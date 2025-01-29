@@ -7,6 +7,7 @@ export default defineConfig({
   output: {
     dir: "./out",
     format: "cjs",
+    sourcemap: true,
   },
   plugins: [commonjs({ extensions: [".js", ".ts"] }), typescript({ tsconfig: "./tsconfig.json" })],
 })
