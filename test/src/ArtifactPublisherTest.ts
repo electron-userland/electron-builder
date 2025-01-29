@@ -1,5 +1,5 @@
 import { Platform } from "app-builder-lib"
-import { createPublisher } from "app-builder-lib/out/publish/PublishManager"
+import { createPublisher } from "app-builder-lib/src/publish/PublishManager"
 import { Arch } from "builder-util"
 import { BitbucketOptions, CancellationToken, HttpError, KeygenOptions, S3Options, SpacesOptions } from "builder-util-runtime"
 import { publishArtifactsWithOptions } from "electron-builder"

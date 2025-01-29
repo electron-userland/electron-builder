@@ -11,8 +11,8 @@
   },
   "scripts": {
     "//": "do not wrap into single quotes - windows doesn't unwrap arg in this case",
-    "compile": "node scripts/copyRollupConfigs.js && tsc --emitDeclarationOnly --declaration && pnpm -r run compile2",
-    "compile2": "tsc --build",
+    "compile": "tsc --build",
+    "compile2": "node scripts/copyRollupConfigs.js && tsc --emitDeclarationOnly --declaration && pnpm -r run compile2",
     "lint": "eslint packages",
     "lint-staged": "lint-staged",
     "lint-deps": "node ./test/out/helpers/checkDeps.js",

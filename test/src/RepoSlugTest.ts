@@ -1,4 +1,4 @@
-import { getRepositoryInfo } from "app-builder-lib/out/util/repositoryInfo"
+import { getRepositoryInfo } from "app-builder-lib/src/util/repositoryInfo"
 
 function checkInfo(info: any) {
   delete info.pathmatch
