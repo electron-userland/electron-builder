@@ -126,6 +126,12 @@ export abstract class BaseUpdater extends AppUpdater {
       encoding: "utf-8",
       shell: true,
     })
+
+    if (response.error) {
+      this._logger.error(response.stderr)
+      throw response.error
+    }
+
     return response.stdout.trim()
   }
 
