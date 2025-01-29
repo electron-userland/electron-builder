@@ -2,12 +2,22 @@ import commonjs from "@rollup/plugin-commonjs"
 import typescript from "@rollup/plugin-typescript"
 import { defineConfig } from "rollup"
 
-export default defineConfig({
-  input: "<input_key>",
-  output: {
-    dir: "./out",
-    format: "cjs",
-    sourcemap: true,
-  },
-  plugins: [commonjs({ extensions: [".js", ".ts"] }), typescript({ tsconfig: "./tsconfig.json" })],
-})
+export default () => {
+  return defineConfig({
+    input: "<input_key>",
+    output: {
+      dir: "./out",
+      format: "cjs",
+      sourcemap: true,
+    },
+    plugins: [
+      typescript({
+        tsconfig: "./tsconfig.json",
+        checkJs: true,
+        // verbosity: 3,
+        // clean: true,
+      }),
+      commonjs({ extensions: [".js", ".ts"] }),
+    ],
+  })
+}
