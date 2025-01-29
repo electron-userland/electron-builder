@@ -69,7 +69,7 @@ export async function installAppDeps(args: any) {
 }
 
 function main() {
-  return installAppDeps(configureInstallAppDepsCommand(yargs).argv)
+  return installAppDeps(configureInstallAppDepsCommand(yargs.default()).argv)
 }
 
 if (require.main === module) {

@@ -3,21 +3,11 @@ import * as path from "path"
 import { CheckingMacPackager } from "../helpers/CheckingPackager"
 import { assertPack, createMacTargetTest, signed } from "../helpers/packTester"
 
-if (process.platform !== "darwin") {
-  fit("Skip mas tests because platform is not macOS", () => {
-    console.warn("[SKIP] Skip mas tests because platform is not macOS")
-  })
-} else if (process.env.CSC_KEY_PASSWORD == null) {
-  fit("Skip mas tests because CSC_KEY_PASSWORD is not defined", () => {
-    console.warn("[SKIP] Skip mas tests because CSC_KEY_PASSWORD is not defined")
-  })
-}
+const test = it.ifEnv(process.env.CSC_KEY_PASSWORD != null).ifMac
 
-const it = test.ifEnv(process.env.CSC_KEY_PASSWORD == null)
-
-it("mas", createMacTargetTest(["mas"]))
-it.ifNotCi.ifAll("dev", createMacTargetTest(["mas-dev"]))
-it.ifNotCi.ifAll("mas and 7z", createMacTargetTest(["mas", "7z"]))
+test("mas", createMacTargetTest(["mas"]))
+test("dev", createMacTargetTest(["mas-dev"]))
+test("mas and 7z", createMacTargetTest(["mas", "7z"]))
 
 const entitlement = (fileName: string) => path.join("build", fileName)
 const entitlementsConfig = {
@@ -28,7 +18,7 @@ const entitlementsConfig = {
 
 const targets = Platform.MAC.createTarget(undefined, Arch.x64)
 
-it.skip("custom mas", () => {
+test.skip("custom mas", () => {
   let platformPackager: CheckingMacPackager | null = null
   return assertPack(
     "test-app-one",
@@ -56,7 +46,7 @@ it.skip("custom mas", () => {
   )
 })
 
-it.ifAll("entitlements in the package.json", () => {
+test.ifAll("entitlements in the package.json", () => {
   let platformPackager: CheckingMacPackager | null = null
   return assertPack(
     "test-app-one",
@@ -81,7 +71,7 @@ it.ifAll("entitlements in the package.json", () => {
   )
 })
 
-it.ifAll("entitlements template", () => {
+test.ifAll("entitlements template", () => {
   let platformPackager: CheckingMacPackager | null = null
   return assertPack(
     "test-app-one",

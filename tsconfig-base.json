@@ -1,10 +1,10 @@
 {
   "compilerOptions": {
     "target": "es2019",
-    "module": "CommonJS",
+    "module": "ES2020",
     "esModuleInterop": false,
     "forceConsistentCasingInFileNames": true,
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "skipLibCheck": true,
     "strict": true,
     "noUnusedLocals": true,
@@ -20,11 +20,6 @@
     "newLine": "lf",
 
     "noEmitOnError": true,
-    "types": ["vitest/globals"],
-    "paths": {
-      // workaround for: https://github.com/vitest-dev/vitest/issues/4567
-      // notice that we'll need to update this when newer versions of vitest are used
-      // "rollup/parseAst": ["node_modules/.pnpm/rollup@4.21.1/node_modules/rollup/dist/parseAst"]
-    }
+    "types": ["vitest/globals"]
   }
 }

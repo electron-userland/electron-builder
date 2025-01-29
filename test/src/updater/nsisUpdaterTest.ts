@@ -8,12 +8,6 @@ import { assertThat } from "../helpers/fileAssert"
 import { removeUnstableProperties } from "../helpers/packTester"
 import { createNsisUpdater, trackEvents, validateDownload, writeUpdateConfig } from "../helpers/updaterTestUtil"
 
-if (process.env.ELECTRON_BUILDER_OFFLINE === "true") {
-  fit("Skip ArtifactPublisherTest suite — ELECTRON_BUILDER_OFFLINE is defined", () => {
-    console.warn("[SKIP] Skip ArtifactPublisherTest suite — ELECTRON_BUILDER_OFFLINE is defined")
-  })
-}
-
 test("downgrade (disallowed, beta)", async () => {
   const updater = await createNsisUpdater("1.5.2-beta.4")
   updater.updateConfigPath = await writeUpdateConfig<GithubOptions>({

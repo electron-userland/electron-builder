@@ -112,7 +112,7 @@ async function publishPackageWithTasks(
 }
 
 function main() {
-  return publish(configurePublishCommand(yargs).argv as any)
+  return publish(configurePublishCommand(yargs.default()).argv as any)
 }
 
 if (require.main === module) {

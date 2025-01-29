@@ -3,12 +3,6 @@ import { app, snapTarget } from "../helpers/packTester"
 
 // very slow
 
-if (process.env.SNAP_HEAVY_TEST !== "true") {
-  fit("Skip snapHeavyTest suite — SNAP_HEAVY_TEST is not set to true", () => {
-    console.warn("[SKIP] Skip snapTest suite — SNAP_HEAVY_TEST is not set to true")
-  })
-}
-
 test.ifAll(
   "snap full",
   app({

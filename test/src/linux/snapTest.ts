@@ -1,14 +1,8 @@
 import { Arch, Platform } from "electron-builder"
 import { app, assertPack, snapTarget } from "../helpers/packTester"
 
-if (process.env.SNAP_TEST === "false") {
-  fit("Skip snapTest suite — SNAP_TEST is set to false or Windows", () => {
-    console.warn("[SKIP] Skip snapTest suite — SNAP_TEST is set to false")
-  })
-} else if (process.platform === "win32") {
-  fit("Skip snapTest suite — Windows is not supported", () => {
-    console.warn("[SKIP] Skip snapTest suite — Windows is not supported")
-  })
+if (process.platform === "win32") {
+  console.warn("snapTest suite — Windows is not supported")
 }
 
 test.ifAll.ifDevOrLinuxCi(

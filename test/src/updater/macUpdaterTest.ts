@@ -29,15 +29,11 @@ class TestNativeUpdater extends EventEmitter {
 
 test.ifAll.ifNotCi.ifMac("mac updates", async () => {
   const mockNativeUpdater = new TestNativeUpdater()
-  jest.mock(
-    "electron",
-    () => {
-      return {
-        autoUpdater: mockNativeUpdater,
-      }
-    },
-    { virtual: true }
-  )
+  vitest.mock("electron", () => {
+    return {
+      autoUpdater: mockNativeUpdater,
+    }
+  })
 
   const updater = new MacUpdater(undefined, await createTestAppAdapter())
   const options: GithubOptions = {

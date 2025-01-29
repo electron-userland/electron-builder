@@ -12,6 +12,7 @@ export default () => {
       update: process.env.UPDATE_SNAPSHOT === "true",
       name: "node",
       environment: "node",
+      // pool: 'forks', // https://vitest.dev/guide/common-errors#segfaults-and-native-code-errors
       testTimeout: (isWindows ? 30 : 20) * 1000 * 60, // disk operations can be slow. We're generous with the timeout here to account for less-performant hardware
       coverage: {
         reporter: ["lcov", "text"],
