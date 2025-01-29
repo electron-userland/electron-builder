@@ -1,5 +1,7 @@
-import { AllPublishOptions, newError, PackageFileInfo, CURRENT_APP_INSTALLER_FILE_NAME, CURRENT_APP_PACKAGE_FILE_NAME } from "builder-util-runtime"
+import { AllPublishOptions, CURRENT_APP_INSTALLER_FILE_NAME, CURRENT_APP_PACKAGE_FILE_NAME, newError, PackageFileInfo } from "builder-util-runtime"
+import { unlink } from "fs-extra"
 import * as path from "path"
+import { URL } from "url"
 import { AppAdapter } from "./AppAdapter"
 import { DownloadUpdateOptions } from "./AppUpdater"
 import { BaseUpdater, InstallOptions } from "./BaseUpdater"
@@ -7,9 +9,7 @@ import { DifferentialDownloaderOptions } from "./differentialDownloader/Differen
 import { FileWithEmbeddedBlockMapDifferentialDownloader } from "./differentialDownloader/FileWithEmbeddedBlockMapDifferentialDownloader"
 import { DOWNLOAD_PROGRESS, verifyUpdateCodeSignature } from "./main"
 import { findFile, Provider } from "./providers/Provider"
-import { unlink } from "fs-extra"
 import { verifySignature } from "./windowsExecutableCodeSignatureVerifier"
-import { URL } from "url"
 
 export class NsisUpdater extends BaseUpdater {
   /**
@@ -27,7 +27,7 @@ export class NsisUpdater extends BaseUpdater {
 
   /**
    * The verifyUpdateCodeSignature. You can pass [win-verify-signature](https://github.com/beyondkmp/win-verify-trust) or another custom verify function: ` (publisherName: string[], path: string) => Promise<string | null>`.
-   * The default verify function uses [windowsExecutableCodeSignatureVerifier](https://github.com/electron-userland/electron-builder/blob/master/packages/electron-updater/src/windowsExecutableCodeSignatureVerifier.ts)
+   * The default verify function uses [windowsExecutableCodeSignatureVerifier](https://github.com/electron-userland/electron-builder/blob/master/packages/electron-updater/out/windowsExecutableCodeSignatureVerifier.ts)
    */
   get verifyUpdateCodeSignature(): verifyUpdateCodeSignature {
     return this._verifyUpdateCodeSignature

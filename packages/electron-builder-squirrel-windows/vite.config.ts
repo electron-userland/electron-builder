@@ -1,7 +1,8 @@
+import typescript from "@rollup/plugin-typescript"
 import path from "path"
+import { nodeExternals } from "rollup-plugin-node-externals"
 import { defineConfig } from "vite"
 import packageJson from "./package.json"
-import { nodeExternals } from "rollup-plugin-node-externals"
 
 export default defineConfig({
   build: {
@@ -9,10 +10,10 @@ export default defineConfig({
     lib: {
       entry: path.resolve(__dirname, "src/index.ts"),
       name: packageJson.name,
-      formats: ["es", "cjs"],
+      formats: ["cjs"],
     },
     rollupOptions: {
-      plugins: [nodeExternals()],
+      plugins: [nodeExternals(), typescript({ tsconfig: "./tsconfig.json" })],
     },
   },
 })

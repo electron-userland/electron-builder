@@ -1,7 +1,7 @@
 import { checkBuildRequestOptions } from "app-builder-lib"
-import { doMergeConfigs } from "app-builder-lib/src/util/config/config"
+import { doMergeConfigs } from "app-builder-lib/out/util/config/config"
 import { Arch, createTargets, DIR_TARGET, Platform } from "electron-builder"
-import { createYargs } from "electron-builder/src/builder"
+import { createYargs } from "electron-builder/out/builder"
 import { promises as fs } from "fs"
 import { outputFile, outputJson } from "fs-extra"
 import * as path from "path"
@@ -11,7 +11,7 @@ import { verifySmartUnpack } from "./helpers/verifySmartUnpack"
 
 test("cli", async () => {
   // because these methods are internal
-  const { configureBuildCommand, normalizeOptions } = require("electron-builder/src/builder")
+  const { configureBuildCommand, normalizeOptions } = require("electron-builder/out/builder")
   const yargs = createYargs()
   configureBuildCommand(yargs)
 

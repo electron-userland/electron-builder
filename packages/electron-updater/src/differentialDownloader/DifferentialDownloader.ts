@@ -8,7 +8,7 @@ import {
   HttpExecutor,
   ProgressInfo,
 } from "builder-util-runtime"
-import { BlockMap } from "builder-util-runtime/src/blockMapApi"
+import { BlockMap } from "builder-util-runtime/out/blockMapApi"
 import { createWriteStream } from "fs"
 import { close, open } from "fs-extra"
 import { OutgoingHttpHeaders, RequestOptions } from "http"

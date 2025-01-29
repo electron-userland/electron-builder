@@ -1,8 +1,8 @@
-import typescript from "@rollup/plugin-typescript"
 import commonjs from "@rollup/plugin-commonjs"
+import typescript from "@rollup/plugin-typescript"
 
 export default {
-  input: "src/index.ts",
+  input: "src/dmgUtil.ts",
   output: {
     dir: "./out",
     format: "cjs",
