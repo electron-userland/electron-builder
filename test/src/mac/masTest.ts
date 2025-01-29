@@ -13,9 +13,11 @@ if (process.platform !== "darwin") {
   })
 }
 
-test("mas", createMacTargetTest(["mas"]))
-test.ifNotCi.ifAll("dev", createMacTargetTest(["mas-dev"]))
-test.ifNotCi.ifAll("mas and 7z", createMacTargetTest(["mas", "7z"]))
+const it = test.ifEnv(process.env.CSC_KEY_PASSWORD == null)
+
+it("mas", createMacTargetTest(["mas"]))
+it.ifNotCi.ifAll("dev", createMacTargetTest(["mas-dev"]))
+it.ifNotCi.ifAll("mas and 7z", createMacTargetTest(["mas", "7z"]))
 
 const entitlement = (fileName: string) => path.join("build", fileName)
 const entitlementsConfig = {
@@ -26,7 +28,7 @@ const entitlementsConfig = {
 
 const targets = Platform.MAC.createTarget(undefined, Arch.x64)
 
-test.skip("custom mas", () => {
+it.skip("custom mas", () => {
   let platformPackager: CheckingMacPackager | null = null
   return assertPack(
     "test-app-one",
@@ -54,7 +56,7 @@ test.skip("custom mas", () => {
   )
 })
 
-test.ifAll("entitlements in the package.json", () => {
+it.ifAll("entitlements in the package.json", () => {
   let platformPackager: CheckingMacPackager | null = null
   return assertPack(
     "test-app-one",
@@ -79,7 +81,7 @@ test.ifAll("entitlements in the package.json", () => {
   )
 })
 
-test.ifAll("entitlements template", () => {
+it.ifAll("entitlements template", () => {
   let platformPackager: CheckingMacPackager | null = null
   return assertPack(
     "test-app-one",
