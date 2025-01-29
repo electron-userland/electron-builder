@@ -15,12 +15,13 @@ export default () => {
       preserveModules: true, // Keep modules separate
     },
     plugins: [
-      // cleandir(dir),
+      cleandir(dir),
       commonjs({ extensions: [".js", ".ts"] }),
       typescript({
         tsconfig: "./tsconfig.json",
         checkJs: true,
         declaration: true,
+        declarationDir: dir,
         // useTsconfigDeclarationDir: true,
         // verbosity: 3,
         // clean: true,
