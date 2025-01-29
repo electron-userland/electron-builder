@@ -1,7 +1,7 @@
 {
   "extends": "../tsconfig-base.json",
   "compilerOptions": {
-    "rootDir": ".",
+    "rootDir": "src",
     "outDir": "out",
     "skipLibCheck": true,
     "baseUrl": "../packages"
@@ -27,8 +27,7 @@
   "include": [
     "../typings/*.d.ts",
     "typings/*.d.ts",
-    "src/**/*.ts",
-    "vitest-setups.ts"
+    "src/**/*.ts"
   ],
   "exclude": [
   ]
