@@ -62,6 +62,10 @@
     "simple-update-notifier": "2.0.0",
     "yargs": "^17.6.2"
   },
+  "scripts": {
+    "compile": "vite build",
+    "compile2": "rollup -c rollup.config.ts --configPlugin typescript"
+  },
   "devDependencies": {
     "@types/fs-extra": "9.0.13",
     "@types/is-ci": "3.0.0",

@@ -9,6 +9,10 @@
     "scheme.json",
     "certs/root_certs.keychain"
   ],
+  "scripts": {
+    "compile": "vite build",
+    "compile2": "rollup -c rollup.config.ts --configPlugin typescript"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/electron-userland/electron-builder.git",
