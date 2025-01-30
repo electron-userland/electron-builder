@@ -130,6 +130,9 @@ export abstract class BaseUpdater extends AppUpdater {
     if (response.error) {
       this._logger.error(response.stderr)
       throw response.error
+    } else if (response.status !== 0) {
+      this._logger.error(response.stderr)
+      throw new Error(`Command ${cmd} exited with code ${response.status}`)
     }
 
     return response.stdout.trim()
