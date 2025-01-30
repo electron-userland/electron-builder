@@ -1,6 +1,7 @@
 import { Arch } from "builder-util"
 import { BeforeBuildContext, Target } from "./core"
-import { ElectronBrandingOptions, ElectronDownloadOptions } from "./electron/ElectronFramework"
+import { ElectronDownloadOptions } from "./electron/ElectronFramework"
+import { ElectronBrandingOptions } from "./electron/createBrandingOpts"
 import { PrepareApplicationStageDirectoryOptions } from "./Framework"
 import { AppXOptions } from "./options/AppXOptions"
 import { AppImageOptions, DebOptions, FlatpakOptions, LinuxConfiguration, LinuxTargetSpecificOptions } from "./options/linuxOptions"

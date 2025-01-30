@@ -11,7 +11,6 @@ import {
   log,
   orNullIfFileNotExist,
   safeStringifyJson,
-  serializeToYaml,
   TmpDir,
 } from "builder-util"
 import { CancellationToken } from "builder-util-runtime"
@@ -41,6 +40,7 @@ import { getRepositoryInfo } from "./util/repositoryInfo"
 import { resolveFunction } from "./util/resolve"
 import { installOrRebuild, nodeGypRebuild } from "./util/yarn"
 import { PACKAGE_VERSION } from "./version"
+import { serializeToYaml } from "builder-util"
 
 function addHandler(emitter: EventEmitter, event: string, handler: (...args: Array<any>) => void) {
   emitter.on(event, handler)

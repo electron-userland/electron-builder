@@ -22,7 +22,7 @@ export default () => {
     },
     plugins: [
       cleandir(outDir),
-      commonjs({ extensions: [".js", ".ts"] }),
+      // commonjs({ extensions: [".js", ".ts"] }),
       // dts({
       //   tsconfig: "./tsconfig.json",
       // }),

@@ -1,4 +1,4 @@
-import { getBinFromUrl } from "app-builder-lib/src/binDownload"
+import { getBinFromUrl } from "app-builder-lib/out/binDownload"
 
 test("download binary from Github", async () => {
   const bin = await getBinFromUrl("linux-tools", "mac-10.12.3", "SQ8fqIRVXuQVWnVgaMTDWyf2TLAJjJYw3tRSqQJECmgF6qdM7Kogfa6KD49RbGzzMYIFca9Uw3MdsxzOPRWcYw==")

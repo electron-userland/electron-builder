@@ -47,7 +47,7 @@ export function downloadAllRequiredElectronVersions(): Promise<any> {
         ? ["x64"]
         : platform === "win32"
           ? ["ia32", "x64"]
-          : require(`${path.join(__dirname, "../../..")}/packages/builder-util/src/util`).getArchCliNames()
+          : require(`${path.join(__dirname, "../../..")}/packages/builder-util/out/util`).getArchCliNames()
     for (const arch of archs) {
       if (gte(ELECTRON_VERSION, "19.0.0") && platform === "linux" && arch === "ia32") {
         // Chromium dropped support for ia32 linux binaries in 102.0.4999.0

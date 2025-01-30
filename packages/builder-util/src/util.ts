@@ -5,7 +5,6 @@ import { ChildProcess, execFile, ExecFileOptions, SpawnOptions } from "child_pro
 import { spawn as _spawn } from "cross-spawn"
 import { createHash } from "crypto"
 import _debug from "debug"
-import { dump } from "js-yaml"
 import * as path from "path"
 import { install as installSourceMap } from "source-map-support"
 import { getPath7za } from "./7za"
@@ -25,7 +24,7 @@ export * from "./log"
 export { httpExecutor, NodeHttpExecutor } from "./nodeHttpExecutor"
 export * from "./promise"
 export * from "./filename"
-
+export { serializeToYaml } from "./serializeToYaml"
 export { asArray } from "builder-util-runtime"
 export * from "./fs"
 
@@ -34,14 +33,6 @@ export { deepAssign } from "./deepAssign"
 export { getPath7x, getPath7za } from "./7za"
 
 export const debug7z = _debug("electron-builder:7z")
-
-export function serializeToYaml(object: any, skipInvalid = false, noRefs = false) {
-  return dump(object, {
-    lineWidth: 8000,
-    skipInvalid,
-    noRefs,
-  })
-}
 
 export function removePassword(input: string) {
   return input.replace(/(-String |-P |pass:| \/p |-pass |--secretKey |--accessKey |-p )([^ ]+)/g, (match, p1, p2) => {
