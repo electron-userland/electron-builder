@@ -2,22 +2,9 @@ import { Platform } from "app-builder-lib"
 import { createPublisher } from "app-builder-lib/src/publish/PublishManager"
 import { Arch } from "builder-util"
 import { BitbucketOptions, CancellationToken, HttpError, KeygenOptions, S3Options, SpacesOptions } from "builder-util-runtime"
-import { isCI as isCi } from "ci-info"
 import { publishArtifactsWithOptions } from "electron-builder"
 import { BitbucketPublisher, GitHubPublisher, KeygenPublisher, PublishContext } from "electron-publish"
 import * as path from "path"
-
-if (isCi && process.platform === "win32") {
-  fit("Skip ArtifactPublisherTest suite on Windows CI", () => {
-    console.warn("[SKIP] Skip ArtifactPublisherTest suite on Windows CI")
-  })
-}
-
-if (process.env.ELECTRON_BUILDER_OFFLINE === "true") {
-  fit("Skip ArtifactPublisherTest suite — ELECTRON_BUILDER_OFFLINE is defined", () => {
-    console.warn("[SKIP] Skip ArtifactPublisherTest suite — ELECTRON_BUILDER_OFFLINE is defined")
-  })
-}
 
 function getRandomInt(min: number, max: number) {
   return Math.floor(Math.random() * (max - min + 1)) + min

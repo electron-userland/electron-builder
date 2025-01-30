@@ -1,17 +1,7 @@
 import { Platform } from "electron-builder"
 import { app } from "../helpers/packTester"
 
-if (process.env.FLATPAK_TEST === "false") {
-  fit("Skip flatpakTest suite — FLATPAK_TEST is set to false or Windows", () => {
-    console.warn("[SKIP] Skip flatpakTest suite — FLATPAK_TEST is set to false")
-  })
-} else if (process.platform === "win32") {
-  fit("Skip flatpakTest suite — Windows is not supported", () => {
-    console.warn("[SKIP] Skip flatpakTest suite — Windows is not supported")
-  })
-}
-
-test.ifAll.ifDevOrLinuxCi(
+test.ifDevOrLinuxCi(
   "flatpak",
   app({
     targets: Platform.LINUX.createTarget("flatpak"),
@@ -30,7 +20,7 @@ test.ifAll.ifDevOrLinuxCi(
   })
 )
 
-test.ifAll.ifDevOrLinuxCi(
+test.ifDevOrLinuxCi(
   "enable Wayland flags",
   app({
     targets: Platform.LINUX.createTarget("flatpak"),
@@ -42,7 +32,7 @@ test.ifAll.ifDevOrLinuxCi(
   })
 )
 
-test.ifAll.ifDevOrLinuxCi(
+test.ifDevOrLinuxCi(
   "custom finishArgs",
   app({
     targets: Platform.LINUX.createTarget("flatpak"),
@@ -66,7 +56,7 @@ test.ifAll.ifDevOrLinuxCi(
   })
 )
 
-test.ifAll.ifDevOrLinuxCi(
+test.ifDevOrLinuxCi(
   "custom runtime and base app version",
   app({
     targets: Platform.LINUX.createTarget("flatpak"),

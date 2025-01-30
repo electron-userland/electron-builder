@@ -1,12 +1,7 @@
 import { createKeychain } from "app-builder-lib/src/codeSign/macCodeSign"
 import { removePassword, TmpDir } from "builder-util"
 import { CSC_LINK } from "../helpers/codeSignData"
-
-if (process.env.CSC_KEY_PASSWORD == null) {
-  fit("Skip keychain-specific tests because CSC_KEY_PASSWORD is not defined", () => {
-    console.warn("[SKIP] Skip keychain-specific tests because CSC_KEY_PASSWORD is not defined")
-  })
-}
+import { afterEach } from "vitest"
 
 const tmpDir = new TmpDir("mac-code-sign-test")
 

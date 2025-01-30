@@ -34,7 +34,8 @@
     "@types/js-yaml": "^4.0.1",
     "@types/semver": "^7.3.13",
     "babel-jest": "^29.7.0",
-    "fast-xml-parser": "4.4.1"
+    "fast-xml-parser": "4.4.1",
+    "vitest": "^3.0.4"
   },
   "jest": {
     "snapshotResolver": "<rootDir>/snapshotResolver.js",

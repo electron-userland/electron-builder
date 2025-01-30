@@ -666,6 +666,9 @@ importers:
       fast-xml-parser:
         specifier: 4.4.1
         version: 4.4.1
+      vitest:
+        specifier: ^3.0.4
+        version: 3.0.4(@types/node@22.10.1)(sass@1.82.0)(yaml@2.6.1)
 
 packages:
 

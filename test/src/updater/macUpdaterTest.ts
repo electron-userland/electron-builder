@@ -3,6 +3,7 @@ import { MacUpdater } from "electron-updater/src/MacUpdater"
 import { EventEmitter } from "events"
 import { assertThat } from "../helpers/fileAssert"
 import { createTestAppAdapter, httpExecutor, trackEvents, tuneTestUpdater, writeUpdateConfig } from "../helpers/updaterTestUtil"
+import { vitest } from "vitest"
 
 class TestNativeUpdater extends EventEmitter {
   private updateUrl: string | null = null
@@ -27,17 +28,13 @@ class TestNativeUpdater extends EventEmitter {
   }
 }
 
-test.ifAll.ifNotCi.ifMac("mac updates", async () => {
+test.ifNotCi.ifMac("mac updates", async () => {
   const mockNativeUpdater = new TestNativeUpdater()
-  jest.mock(
-    "electron",
-    () => {
-      return {
-        autoUpdater: mockNativeUpdater,
-      }
-    },
-    { virtual: true }
-  )
+  vitest.mock("electron", () => {
+    return {
+      autoUpdater: mockNativeUpdater,
+    }
+  })
 
   const updater = new MacUpdater(undefined, await createTestAppAdapter())
   const options: GithubOptions = {

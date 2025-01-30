@@ -40,7 +40,7 @@ test.ifNotWindows(
   })
 )
 
-test.ifAll.ifNotWindows.ifNotCiMac(
+test.ifNotWindows.ifNotCiMac(
   "AppImage arm, max compression",
   app({
     targets: Platform.LINUX.createTarget("Appimage", Arch.armv7l),
@@ -51,7 +51,7 @@ test.ifAll.ifNotWindows.ifNotCiMac(
   })
 )
 
-test.ifNotWindows.ifNotCiMac.ifAll(
+test.ifNotWindows.ifNotCiMac(
   "AppImage - deprecated systemIntegration",
   appThrows({
     targets: appImageTarget,
@@ -63,7 +63,7 @@ test.ifNotWindows.ifNotCiMac.ifAll(
   })
 )
 
-test.ifNotWindows.ifNotCiMac.ifAll(
+test.ifNotWindows.ifNotCiMac(
   "text license and file associations",
   app(
     {
@@ -92,7 +92,7 @@ test.ifNotWindows.ifNotCiMac.ifAll(
   )
 )
 
-test.ifNotWindows.ifNotCiMac.ifAll(
+test.ifNotWindows.ifNotCiMac(
   "html license",
   app(
     {

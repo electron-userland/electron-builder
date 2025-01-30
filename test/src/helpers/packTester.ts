@@ -8,7 +8,7 @@ import { addValue, copyDir, deepAssign, exec, executeFinally, FileCopier, getPat
 import { CancellationToken, UpdateFileInfo } from "builder-util-runtime"
 import DecompressZip from "decompress-zip"
 import { Arch, ArtifactCreated, Configuration, DIR_TARGET, getArchSuffix, MacOsTargetName, Packager, PackagerOptions, Platform, Target } from "electron-builder"
-import { convertVersion } from "electron-builder-squirrel-windows/src/squirrelPack"
+import { convertVersion } from "electron-builder-squirrel-windows/out/squirrelPack"
 import { PublishPolicy } from "electron-publish"
 import { emptyDir, writeJson } from "fs-extra"
 import * as fs from "fs/promises"

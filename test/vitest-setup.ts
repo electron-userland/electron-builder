@@ -7,11 +7,11 @@ const isLinux = process.platform === "linux"
 
 const skip = test.skip
 // const skipSuite = describe.skip
-const isAllTests = process.env.ALL_TESTS !== "false"
+// const isAllTests = process.env.ALL_TESTS !== "false"
 
-describe.ifAll = isAllTests ? describe : skipSuite
-test.ifAll = isAllTests ? test : skip
-skip.ifAll = skip
+// describe = isAllTests ? describe : skipSuite
+// test = isAllTests ? test : skip
+// skip = skip
 
 test.ifEnv = test.runIf
 skip.ifEnv = test.runIf

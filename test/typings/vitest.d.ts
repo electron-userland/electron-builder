@@ -1,4 +1,4 @@
-import * as vitest from 'vitest'
+import 'vitest'
 
 type Test = typeof import('vitest')['test']
 
@@ -30,17 +30,18 @@ declare module 'vitest' {
   interface TestAPI extends CustomTestMatcher {}
   type TestAPI = CustomTestMatcher
 
-  interface Describe {
-    ifAll: vitest.Describe
-  }
+  // interface Describe {
+  //   ifAll: vitest.Describe
+  // }
 
-  interface Matchers {
-    toMatchObject(object: any)
-  }
+  // interface Matchers {
+  //   toMatchObject(object: any)
+  // }
 }
 
 declare global {
   const it: CustomTestMatcher
   const test: CustomTestMatcher
   const describe: typeof import('vitest')['describe']
+  const expect: typeof import('vitest')['expect']
 }

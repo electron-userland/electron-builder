@@ -10,6 +10,7 @@ import { TmpDir } from "temp-file"
 import { TestAppAdapter } from "../helpers/TestAppAdapter"
 import { PackedContext, assertPack, removeUnstableProperties } from "../helpers/packTester"
 import { tuneTestUpdater, writeUpdateConfig } from "../helpers/updaterTestUtil"
+import { vitest } from "vitest"
 
 /*
 
@@ -114,7 +115,7 @@ async function testLinux(arch: Arch) {
 test.ifDevOrLinuxCi("AppImage", () => testLinux(Arch.x64))
 
 // Skipped, electron no longer ships ia32 linux binaries
-test.skip.ifDevOrLinuxCi("AppImage ia32", () => testLinux(Arch.ia32))
+test.ifDevOrLinuxCi.skip("AppImage ia32", () => testLinux(Arch.ia32))
 
 async function testMac(arch: Arch) {
   process.env.TEST_UPDATER_ARCH = Arch[arch]
@@ -191,15 +192,11 @@ async function testBlockMap(oldDir: string, newDir: string, updaterClass: any, p
 
   // Mac uses electron's native autoUpdater to serve updates to, we mock here since electron API isn't available within jest runtime
   const mockNativeUpdater = new TestNativeUpdater()
-  jest.mock(
-    "electron",
-    () => {
-      return {
-        autoUpdater: mockNativeUpdater,
-      }
-    },
-    { virtual: true }
-  )
+  vitest.mock("electron", () => {
+    return {
+      autoUpdater: mockNativeUpdater,
+    }
+  })
 
   return await new Promise<void>((resolve, reject) => {
     httpServerProcess.on("error", reject)
