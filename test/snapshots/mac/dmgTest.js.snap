@@ -41,6 +41,12 @@ exports[`background color 3`] = `
   "CFBundleName": "BackgroundColor",
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
+  "ElectronAsarIntegrity": {
+    "Resources/app.asar": {
+      "algorithm": "SHA256",
+      "hash": "hash",
+    },
+  },
   "LSApplicationCategoryType": "your.app.category.type",
   "LSEnvironment": {
     "MallocNanoZone": "0",
@@ -104,6 +110,12 @@ exports[`bundleShortVersion 2`] = `
   "CFBundleName": "BundleShortVersion",
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "2017.1-alpha5",
+  "ElectronAsarIntegrity": {
+    "Resources/app.asar": {
+      "algorithm": "SHA256",
+      "hash": "hash",
+    },
+  },
   "LSApplicationCategoryType": "your.app.category.type",
   "LSEnvironment": {
     "MallocNanoZone": "0",
@@ -169,6 +181,12 @@ exports[`custom background - new way 2`] = `
   "CFBundleName": "Test App ßW",
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
+  "ElectronAsarIntegrity": {
+    "Resources/app.asar": {
+      "algorithm": "SHA256",
+      "hash": "hash",
+    },
+  },
   "LSApplicationCategoryType": "your.app.category.type",
   "LSEnvironment": {
     "MallocNanoZone": "0",
@@ -234,6 +252,12 @@ exports[`disable dmg icon (light), bundleVersion 2`] = `
   "CFBundleName": "Test App ßW",
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
+  "ElectronAsarIntegrity": {
+    "Resources/app.asar": {
+      "algorithm": "SHA256",
+      "hash": "hash",
+    },
+  },
   "LSApplicationCategoryType": "your.app.category.type",
   "LSEnvironment": {
     "MallocNanoZone": "0",
@@ -297,6 +321,12 @@ exports[`dmg 2`] = `
   "CFBundleName": "DefaultDmg",
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
+  "ElectronAsarIntegrity": {
+    "Resources/app.asar": {
+      "algorithm": "SHA256",
+      "hash": "hash",
+    },
+  },
   "LSApplicationCategoryType": "your.app.category.type",
   "LSEnvironment": {
     "MallocNanoZone": "0",
@@ -420,6 +450,12 @@ exports[`license buttons config 3`] = `
   "CFBundleName": "Test App ßW",
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
+  "ElectronAsarIntegrity": {
+    "Resources/app.asar": {
+      "algorithm": "SHA256",
+      "hash": "hash",
+    },
+  },
   "LSApplicationCategoryType": "your.app.category.type",
   "LSEnvironment": {
     "MallocNanoZone": "0",
@@ -485,6 +521,12 @@ exports[`license en 2`] = `
   "CFBundleName": "Test App ßW",
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
+  "ElectronAsarIntegrity": {
+    "Resources/app.asar": {
+      "algorithm": "SHA256",
+      "hash": "hash",
+    },
+  },
   "LSApplicationCategoryType": "your.app.category.type",
   "LSEnvironment": {
     "MallocNanoZone": "0",
@@ -550,6 +592,12 @@ exports[`license ja 2`] = `
   "CFBundleName": "Test App ßW",
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
+  "ElectronAsarIntegrity": {
+    "Resources/app.asar": {
+      "algorithm": "SHA256",
+      "hash": "hash",
+    },
+  },
   "LSApplicationCategoryType": "your.app.category.type",
   "LSEnvironment": {
     "MallocNanoZone": "0",
@@ -615,6 +663,12 @@ exports[`license rtf 2`] = `
   "CFBundleName": "Test App ßW",
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
+  "ElectronAsarIntegrity": {
+    "Resources/app.asar": {
+      "algorithm": "SHA256",
+      "hash": "hash",
+    },
+  },
   "LSApplicationCategoryType": "your.app.category.type",
   "LSEnvironment": {
     "MallocNanoZone": "0",
@@ -680,6 +734,12 @@ exports[`multi language license 2`] = `
   "CFBundleName": "Test App ßW",
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
+  "ElectronAsarIntegrity": {
+    "Resources/app.asar": {
+      "algorithm": "SHA256",
+      "hash": "hash",
+    },
+  },
   "LSApplicationCategoryType": "your.app.category.type",
   "LSEnvironment": {
     "MallocNanoZone": "0",
@@ -826,6 +886,12 @@ exports[`no background 2`] = `
   "CFBundleName": "NoBackground",
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
+  "ElectronAsarIntegrity": {
+    "Resources/app.asar": {
+      "algorithm": "SHA256",
+      "hash": "hash",
+    },
+  },
   "LSApplicationCategoryType": "your.app.category.type",
   "LSEnvironment": {
     "MallocNanoZone": "0",
@@ -904,6 +970,12 @@ exports[`no build directory 3`] = `
   "CFBundleName": "NoBuildDirectory",
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
+  "ElectronAsarIntegrity": {
+    "Resources/app.asar": {
+      "algorithm": "SHA256",
+      "hash": "hash",
+    },
+  },
   "LSApplicationCategoryType": "your.app.category.type",
   "LSEnvironment": {
     "MallocNanoZone": "0",
@@ -969,6 +1041,12 @@ exports[`retina background as 2 png 2`] = `
   "CFBundleName": "Test App ßW",
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
+  "ElectronAsarIntegrity": {
+    "Resources/app.asar": {
+      "algorithm": "SHA256",
+      "hash": "hash",
+    },
+  },
   "LSApplicationCategoryType": "your.app.category.type",
   "LSEnvironment": {
     "MallocNanoZone": "0",
@@ -1034,6 +1112,12 @@ exports[`unset dmg icon 2`] = `
   "CFBundleName": "Test ß No Volume Icon",
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
+  "ElectronAsarIntegrity": {
+    "Resources/app.asar": {
+      "algorithm": "SHA256",
+      "hash": "hash",
+    },
+  },
   "LSApplicationCategoryType": "your.app.category.type",
   "LSEnvironment": {
     "MallocNanoZone": "0",

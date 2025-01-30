@@ -1,7 +1,7 @@
-import * as cp from "child_process"
-import * as path from "path"
 import { RebuildOptions } from "@electron/rebuild"
 import { log } from "builder-util"
+import * as cp from "child_process"
+import * as path from "path"
 
 export const rebuild = async (options: RebuildOptions): Promise<void> => {
   const { arch } = options

@@ -5,20 +5,21 @@ import {
   AsyncTaskManager,
   DebugLogger,
   deepAssign,
+  executeFinally,
+  getArtifactArchName,
   InvalidConfigurationError,
   log,
+  orNullIfFileNotExist,
   safeStringifyJson,
   serializeToYaml,
   TmpDir,
-  executeFinally,
-  orNullIfFileNotExist,
-  getArtifactArchName,
 } from "builder-util"
 import { CancellationToken } from "builder-util-runtime"
 import { EventEmitter } from "events"
-import { mkdirs, chmod, outputFile } from "fs-extra"
+import { chmod, mkdirs, outputFile } from "fs-extra"
 import * as isCI from "is-ci"
 import { Lazy } from "lazy-val"
+import { release as getOsRelease } from "os"
 import * as path from "path"
 import { AppInfo } from "./appInfo"
 import { readAsarJson } from "./asar/asar"
@@ -37,10 +38,9 @@ import { expandMacro } from "./util/macroExpander"
 import { createLazyProductionDeps, NodeModuleDirInfo, NodeModuleInfo } from "./util/packageDependencies"
 import { checkMetadata, readPackageJson } from "./util/packageMetadata"
 import { getRepositoryInfo } from "./util/repositoryInfo"
+import { resolveFunction } from "./util/resolve"
 import { installOrRebuild, nodeGypRebuild } from "./util/yarn"
 import { PACKAGE_VERSION } from "./version"
-import { release as getOsRelease } from "os"
-import { resolveFunction } from "./util/resolve"
 
 function addHandler(emitter: EventEmitter, event: string, handler: (...args: Array<any>) => void) {
   emitter.on(event, handler)

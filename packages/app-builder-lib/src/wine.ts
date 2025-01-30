@@ -1,5 +1,5 @@
-import { ExecFileOptions } from "child_process"
 import { exec, executeAppBuilder } from "builder-util"
+import { ExecFileOptions } from "child_process"
 
 /** @private */
 export function execWine(file: string, file64: string | null = null, appArgs: Array<string> = [], options: ExecFileOptions = {}): Promise<string> {

@@ -19,9 +19,10 @@ Read the remainder of this guide to configure everything.
 
 All these targets are default, custom configuration is not required. (Though it is possible to [pass in additional configuration, e.g. request headers](#custom-options-instantiating-updater-directly).)
 
-!!! info "Squirrel.Windows is not supported"
-    Simplified auto-update is supported on Windows if you use the default NSIS target, but is not supported for Squirrel.Windows.
+!!! info 
+    1. **Squirrel.Windows is not supported.** Simplified auto-update is supported on Windows if you use the default NSIS target, but is not supported for Squirrel.Windows.
     You can [easily migrate to NSIS](https://github.com/electron-userland/electron-builder/issues/837#issuecomment-355698368).
+    2. `zip` target for macOS is **required** for Squirrel.Mac, otherwise `latest-mac.yml` cannot be created, which causes `autoUpdater` error. Default [target](./mac.md#MacOptions-target) for macOS is `dmg`+`zip`, so there is no need to explicitly specify target.
 
 ## Differences between electron-updater and built-in autoUpdater
 
@@ -67,8 +68,7 @@ The `electron-updater` package offers a different functionality compared to Elec
 5. Call `autoUpdater.checkForUpdatesAndNotify()`. Or, if you need custom behaviour, implement `electron-updater` events, check examples below.
 
 !!! note
-    1. Do not call [setFeedURL](#appupdatersetfeedurloptions). electron-builder automatically creates `app-update.yml` file for you on build in the `resources` (this file is internal, you don't need to be aware of it).
-    2. `zip` target for macOS is **required** for Squirrel.Mac, otherwise `latest-mac.yml` cannot be created, which causes `autoUpdater` error. Default [target](./mac.md#MacOptions-target) for macOS is `dmg`+`zip`, so there is no need to explicitly specify target.
+    Do not call [setFeedURL](#appupdatersetfeedurloptions). electron-builder automatically creates `app-update.yml` file for you on build in the `resources` (this file is internal, you don't need to be aware of it).
 
 ## Examples
 

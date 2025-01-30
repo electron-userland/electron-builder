@@ -1,5 +1,5 @@
 import { Arch, archFromString, ArchType } from "builder-util"
-import { AllPublishOptions } from "builder-util-runtime"
+import { AllPublishOptions, Nullish } from "builder-util-runtime"
 
 // https://github.com/YousefED/typescript-json-schema/issues/80
 export type Publish = AllPublishOptions | Array<AllPublishOptions> | null
@@ -73,7 +73,7 @@ export class Platform {
 
 export abstract class Target {
   abstract readonly outDir: string
-  abstract readonly options: TargetSpecificOptions | null | undefined
+  abstract readonly options: TargetSpecificOptions | Nullish
 
   protected constructor(
     readonly name: string,

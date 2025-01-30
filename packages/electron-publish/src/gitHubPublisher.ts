@@ -1,13 +1,12 @@
-import { Arch, InvalidConfigurationError, isEmptyOrSpaces, isEnvTrue, isTokenCharValid, log, Fields } from "builder-util"
+import { Arch, Fields, httpExecutor, InvalidConfigurationError, isEmptyOrSpaces, isEnvTrue, isTokenCharValid, log } from "builder-util"
 import { configureRequestOptions, GithubOptions, HttpError, parseJson } from "builder-util-runtime"
-import { httpExecutor } from "builder-util"
 import { ClientRequest } from "http"
 import { Lazy } from "lazy-val"
 import * as mime from "mime"
 import { parse as parseUrl, UrlWithStringQuery } from "url"
-import { getCiTag } from "./publisher"
 import { HttpPublisher } from "./httpPublisher"
 import { PublishContext, PublishOptions } from "./index"
+import { getCiTag } from "./publisher"
 
 export interface Release {
   id: number

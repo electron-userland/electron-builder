@@ -1,7 +1,7 @@
-import { sanitizeFileName } from "builder-util/out/filename"
 import { InvalidConfigurationError, log, isEmptyOrSpaces } from "builder-util"
 import { Arch, getArchSuffix, SquirrelWindowsOptions, Target } from "app-builder-lib"
 import { WinPackager } from "app-builder-lib/out/winPackager"
+import { sanitizeFileName } from "builder-util/out/filename"
 import * as path from "path"
 import * as fs from "fs"
 import { Options as SquirrelOptions, createWindowsInstaller, convertVersion } from "electron-winstaller"

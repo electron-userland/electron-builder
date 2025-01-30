@@ -1,7 +1,7 @@
-import { readFile, writeFile } from "fs/promises"
 import { log } from "builder-util"
-import { NtExecutable, NtExecutableResource, Resource } from "resedit"
+import { readFile, writeFile } from "fs/promises"
 import * as path from "path"
+import { NtExecutable, NtExecutableResource, Resource } from "resedit"
 import { AsarIntegrity } from "../asar/integrity"
 
 /** @internal */

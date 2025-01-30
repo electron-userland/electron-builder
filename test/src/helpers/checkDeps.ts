@@ -1,10 +1,10 @@
+import { printErrorAndExit } from "builder-util"
 import * as chalk from "chalk"
 import type { Results } from "depcheck"
 import * as depCheck from "depcheck"
 import { readJson } from "fs-extra"
 import * as fs from "fs/promises"
 import * as path from "path"
-import { printErrorAndExit } from "builder-util"
 
 const knownUnusedDevDependencies = new Set<string>([
   "@babel/plugin-transform-modules-commonjs", // Not sure what this is used for, but keeping just in case (for now)

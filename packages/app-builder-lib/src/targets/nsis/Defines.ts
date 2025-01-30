@@ -1,5 +1,5 @@
-import { PortableOptions } from "./nsisOptions"
 import { PathLike } from "fs"
+import { PortableOptions } from "./nsisOptions"
 /**
  * Parameters declared as environment variables in NSIS scripts.
  * The documentation vaguely explains "All other electron-builder specific flags (e.g. ONE_CLICK) are still defined."

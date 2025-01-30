@@ -5,6 +5,7 @@ import { IncomingMessage, OutgoingHttpHeader, OutgoingHttpHeaders, RequestOption
 import { Socket } from "net"
 import { Transform } from "stream"
 import { URL } from "url"
+import { Nullish } from "."
 import { CancellationToken } from "./CancellationToken"
 import { newError } from "./error"
 import { ProgressCallbackTransform, ProgressInfo } from "./ProgressCallbackTransform"
@@ -424,7 +425,7 @@ export class DigestTransform extends Transform {
   }
 }
 
-function checkSha2(sha2Header: string | null | undefined, sha2: string | null | undefined, callback: (error: Error | null) => void): boolean {
+function checkSha2(sha2Header: string | Nullish, sha2: string | Nullish, callback: (error: Error | null) => void): boolean {
   if (sha2Header != null && sha2 != null && sha2Header !== sha2) {
     callback(new Error(`checksum mismatch: expected ${sha2} but got ${sha2Header} (X-Checksum-Sha2 header)`))
     return false

@@ -1,32 +1,67 @@
 name: Docker Deployment
 
 on:
-  # release: 
-  #   types: [published] 
- push:
-   tags:
-     - docker*
+  # release:
+  #   types: [published]
+  push:
+    tags:
+      - docker*
+  workflow_dispatch:
 
 permissions:
   contents: read
 
+env:
+  LATEST_IMAGE_NODE_MAJOR_VERSION: 22
+
 jobs:
+  run-docker-build-and-test:
+    uses: ./.github/workflows/test.yaml
+    with:
+      rebuild-docker-images-call: true
+
   deploy:
     name: Build and Push Docker
+    needs: run-docker-build-and-test
     runs-on: ubuntu-latest
-    
+    strategy:
+      fail-fast: true
+      matrix:
+        nodeMajorVersion: [
+          14, 16, 18, 20, 22
+        ]
     steps:
-      - name: Checkout code repository
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
-      
+      - name: Download images artifact - node${{ matrix.nodeMajorVersion }}
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4
+        with:
+          name: electron-builder-all-${{ matrix.nodeMajorVersion }}
+          path: ${{ runner.temp }}
+
+      - name: Load all images
+        run: docker image load --input ${{ runner.temp }}/electron-builder-all-${{ matrix.nodeMajorVersion }}.tar
+
+      - name: Tag LTS (${{ env.LATEST_IMAGE_NODE_MAJOR_VERSION }}) images for electron-builder latest/wine/wine-chrome/wine-mono
+        if: ${{ matrix.nodeMajorVersion == env.LATEST_IMAGE_NODE_MAJOR_VERSION }}
+        run: |
+          docker image tag electronuserland/builder:${{ env.LATEST_IMAGE_NODE_MAJOR_VERSION }} electronuserland/builder:latest
+          docker image tag electronuserland/builder:${{ env.LATEST_IMAGE_NODE_MAJOR_VERSION }}-wine electronuserland/builder:wine
+          docker image tag electronuserland/builder:${{ env.LATEST_IMAGE_NODE_MAJOR_VERSION }}-wine-mono electronuserland/builder:wine-mono
+          docker image tag electronuserland/builder:${{ env.LATEST_IMAGE_NODE_MAJOR_VERSION }}-wine-chrome electronuserland/builder:wine-chrome
+
+      - name: List all images and tags
+        run: docker image ls -a
+
       - name: Login to DockerHub
-        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3 
+        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build all Docker images
-        run: sh ./docker/build.sh
+      - name: Push all Docker images (workflow_dispatch test)
+        if: github.event_name == 'workflow_dispatch'
+        run: echo "TESTING step logic. (this would normally trigger docker push)"
 
       - name: Push all Docker images
-        run: sh ./docker/push.sh
+        if: github.event_name != 'workflow_dispatch'
+        run: docker image push --all-tags electronuserland/builder
+

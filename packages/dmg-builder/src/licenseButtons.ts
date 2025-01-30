@@ -1,6 +1,6 @@
-import { log } from "builder-util"
 import { PlatformPackager } from "app-builder-lib"
 import { getLicenseAssets } from "app-builder-lib/out/util/license"
+import { log } from "builder-util"
 import { readFile } from "fs-extra"
 import * as iconv from "iconv-lite"
 import { load } from "js-yaml"

@@ -1,25 +1,33 @@
 ARG IMAGE_VERSION=latest
-FROM electronuserland/builder:$IMAGE_VERSION
+FROM --platform=linux/x86_64 electronuserland/builder:$IMAGE_VERSION
 
 
 ENV WINEARCH=win64
 ENV WINEPREFIX=/root/.wine64
 
 RUN dpkg --add-architecture i386 && \
-  curl -Lo /usr/share/keyrings/winehq.asc https://dl.winehq.org/wine-builds/winehq.key && \
-  echo 'deb [signed-by=/usr/share/keyrings/winehq.asc] https://dl.winehq.org/wine-builds/ubuntu/ focal main' > /etc/apt/sources.list.d/winehq.list && \
-  apt-get update && \
-  apt-get install -y --no-install-recommends \
-    # We can't install `winehq-stable`, we must manually lock each dependency to v6 (ref: https://github.com/electron-userland/electron-builder/issues/6780),
-    winehq-stable=6.0.4~focal-1 \
-    wine-stable=6.0.4~focal-1 \
-    wine-stable-i386=6.0.4~focal-1 \
-    wine-stable-amd64=6.0.4~focal-1 \
-  && \
+  mkdir -pm755 /etc/apt/keyrings && \
+  # wine
+  # https://gitlab.winehq.org/wine/wine/-/wikis/Debian-Ubuntu#install-wine
+  wget -O - https://dl.winehq.org/wine-builds/winehq.key | gpg --dearmor -o /etc/apt/keyrings/winehq-archive.key - && \
+  wget -NP /etc/apt/sources.list.d/ https://dl.winehq.org/wine-builds/ubuntu/dists/jammy/winehq-jammy.sources && \
+  apt-get -qq update && \
+  apt-get -qq install -y --install-recommends winehq-stable && \
+  # powershell
+  # https://learn.microsoft.com/en-us/powershell/scripting/install/install-ubuntu?view=powershell-7.4
+  apt-get install -yq apt-transport-https software-properties-common && \
+  wget -q https://packages.microsoft.com/config/ubuntu/22.04/packages-microsoft-prod.deb && \
+  dpkg -i packages-microsoft-prod.deb && \
+  rm packages-microsoft-prod.deb && \
+  apt-get -qq update && \
+  apt-get install -y powershell && \
   # clean
-  apt-get clean && rm -rf /var/lib/apt/lists/*
+  apt-get clean && \
+  rm -rf /var/lib/apt/lists/*
 
-RUN curl -L https://github.com/electron-userland/electron-builder-binaries/releases/download/wine-2.0.3-mac-10.13/wine-home.zip > /tmp/wine-home.zip && unzip /tmp/wine-home.zip -d /root/.wine && unlink /tmp/wine-home.zip
+ENV WINEDEBUG=-all,err+all
+ENV WINEDLLOVERRIDES=winemenubuilder.exe=d
 
-ENV WINEDEBUG -all,err+all
-ENV WINEDLLOVERRIDES winemenubuilder.exe=d
+# We expect this to error in the logs due to no screen display, but it seems to be the only way to init a ~/.wine config dir
+# Note: We could run this via xvfb-run, but since `winecfg` is a GUI config tool, the docker build process hangs as the process never exits
+RUN winecfg

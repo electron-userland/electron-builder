@@ -1,10 +1,10 @@
 import { asArray, InvalidConfigurationError, log } from "builder-util"
+import { MemoLazy } from "builder-util-runtime"
+import { Lazy } from "lazy-val"
 import { WindowsAzureSigningConfiguration, WindowsConfiguration } from "../options/winOptions"
 import { WinPackager } from "../winPackager"
-import { getPSCmd, WindowsSignOptions } from "./windowsCodeSign"
-import { Lazy } from "lazy-val"
 import { SignManager } from "./signManager"
-import { MemoLazy } from "builder-util-runtime"
+import { WindowsSignOptions } from "./windowsCodeSign"
 import { CertificateFromStoreInfo, FileCodeSigningInfo } from "./windowsSignToolManager"
 
 export class WindowsSignAzureManager implements SignManager {
@@ -29,7 +29,7 @@ export class WindowsSignAzureManager implements SignManager {
 
   async initialize() {
     const vm = await this.packager.vm.value
-    const ps = await getPSCmd(vm)
+    const ps = await vm.powershellCommand.value
 
     log.info(null, "installing required module (TrustedSigning) with scope CurrentUser")
     try {
@@ -105,7 +105,7 @@ export class WindowsSignAzureManager implements SignManager {
   // prerequisite: requires `initializeProviderModules` to already have been executed
   async signFile(options: WindowsSignOptions): Promise<boolean> {
     const vm = await this.packager.vm.value
-    const ps = await getPSCmd(vm)
+    const ps = await vm.powershellCommand.value
 
     const {
       publisherName: _publisher, // extract from `extraSigningArgs`

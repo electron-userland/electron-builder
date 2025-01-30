@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-set -e
+set -ex
 
 pnpm i
-pnpm run test
+pnpm compile
+pnpm ci:test

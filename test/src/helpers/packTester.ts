@@ -1,25 +1,26 @@
-import { addValue, deepAssign, exec, log, spawn, getPath7x, getPath7za, copyDir, FileCopier, USE_HARD_LINKS, walk } from "builder-util"
-import { CancellationToken, UpdateFileInfo } from "builder-util-runtime"
-import { executeFinally } from "builder-util"
-import { Arch, ArtifactCreated, Configuration, DIR_TARGET, getArchSuffix, MacOsTargetName, Packager, PackagerOptions, Platform, Target } from "electron-builder"
 import { PublishManager } from "app-builder-lib"
+import { readAsar } from "app-builder-lib/out/asar/asar"
 import { computeArchToTargetNamesMap } from "app-builder-lib/out/targets/targetFactory"
 import { getLinuxToolsPath } from "app-builder-lib/out/targets/tools"
+import { executeAppBuilderAsJson } from "app-builder-lib/out/util/appBuilder"
+import { AsarIntegrity } from "app-builder-lib/src/asar/integrity"
+import { addValue, copyDir, deepAssign, exec, executeFinally, FileCopier, getPath7x, getPath7za, log, spawn, USE_HARD_LINKS, walk } from "builder-util"
+import { CancellationToken, UpdateFileInfo } from "builder-util-runtime"
+import { Arch, ArtifactCreated, Configuration, DIR_TARGET, getArchSuffix, MacOsTargetName, Packager, PackagerOptions, Platform, Target } from "electron-builder"
 import { convertVersion } from "electron-winstaller"
 import { PublishPolicy } from "electron-publish"
 import { emptyDir, writeJson } from "fs-extra"
 import * as fs from "fs/promises"
 import { load } from "js-yaml"
 import * as path from "path"
-import AdmZip from "adm-zip"
-import { decode } from "iconv-lite"
-import { promisify } from "util"
 import pathSorter from "path-sort"
+import { NtExecutable, NtExecutableResource } from "resedit"
 import { TmpDir } from "temp-file"
-import { readAsar } from "app-builder-lib/out/asar/asar"
-import { executeAppBuilderAsJson } from "app-builder-lib/out/util/appBuilder"
+import { promisify } from "util"
 import { CSC_LINK, WIN_CSC_LINK } from "./codeSignData"
 import { assertThat } from "./fileAssert"
+import AdmZip from "adm-zip"
+import { decode } from "iconv-lite"
 
 if (process.env.TRAVIS !== "true") {
   process.env.CIRCLE_BUILD_NUM = "42"
@@ -334,7 +335,6 @@ async function checkMacResult(packager: Packager, packagerOptions: PackagerOptio
   })
 
   // checked manually, remove to avoid mismatch on CI server (where TRAVIS_BUILD_NUMBER is defined and different on each test run)
-  delete info.ElectronAsarIntegrity
   delete info.CFBundleVersion
   delete info.BuildMachineOSBuild
   delete info.NSHumanReadableCopyright
@@ -357,18 +357,18 @@ async function checkMacResult(packager: Packager, packagerOptions: PackagerOptio
     delete info.LSMinimumSystemVersion
   }
 
-  expect(info).toMatchSnapshot()
+  const { ElectronAsarIntegrity: checksumData, ...snapshot } = info
 
-  const checksumData = info.ElectronAsarIntegrity
   if (checksumData != null) {
     for (const name of Object.keys(checksumData)) {
       checksumData[name] = { algorithm: "SHA256", hash: "hash" }
     }
-    info.ElectronAsarIntegrity = JSON.stringify(checksumData)
+    snapshot.ElectronAsarIntegrity = checksumData
   }
+  expect(snapshot).toMatchSnapshot()
 
   if (checkOptions.checkMacApp != null) {
-    await checkOptions.checkMacApp(packedAppDir, info)
+    await checkOptions.checkMacApp(packedAppDir, snapshot)
   }
 
   if (packagerOptions.config != null && (packagerOptions.config as Configuration).cscLink != null) {
@@ -378,43 +378,14 @@ async function checkMacResult(packager: Packager, packagerOptions: PackagerOptio
 }
 
 async function checkWindowsResult(packager: Packager, checkOptions: AssertPackOptions, artifacts: Array<ArtifactCreated>, nameToTarget: Map<string, Target>) {
-  const appInfo = packager.appInfo
-  let squirrel = false
-  for (const target of nameToTarget.keys()) {
-    if (target === "squirrel") {
-      squirrel = true
-      break
-    }
-  }
-  if (!squirrel) {
-    return
-  }
+  async function checkSquirrelResult() {
+    const appInfo = packager.appInfo
+    const { zip } = await checkResult(artifacts, "-full.nupkg")
 
-  const packageFile = artifacts.find(it => it.file.endsWith("-full.nupkg"))!.file
-  const zip = new AdmZip(packageFile)
-  const zipEntries = zip.getEntries()
-  const allFiles: string[] = []
-  zipEntries.forEach(function (zipEntry) {
-    let name = decode(zipEntry.rawEntryName, "cp437")
-    if (!name.endsWith("/")) {
-      allFiles.push(name)
-    }
-  })
-  const files = pathSorter(
-    allFiles
-      .map((it: string) => toSystemIndependentPath(it))
-      .filter(
-        (it: string) =>
-          (!it.startsWith("lib/net45/locales/") || it === "lib/net45/locales/en-US.pak") && !it.endsWith(".psmdcp") && !it.endsWith("app-update.yml") && !it.includes("/inspector/")
-      )
-  )
-
-  expect(files).toMatchSnapshot()
-
-  if (checkOptions == null) {
-    const expectedSpec = zip.readAsText("TestApp.nuspec").replace(/\r\n/g, "\n")
-
-    expect(expectedSpec).toEqual(`<?xml version="1.0"?>
+    if (checkOptions == null) {
+      const expectedSpec = zip.readAsText("TestApp.nuspec").replace(/\r\n/g, "\n")
+      // console.log(expectedSpec)
+      expect(expectedSpec).toEqual(`<?xml version="1.0"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
   <metadata>
     <id>TestApp</id>
@@ -429,7 +400,61 @@ async function checkWindowsResult(packager: Packager, checkOptions: AssertPackOp
     <projectUrl>http://foo.example.com</projectUrl>
   </metadata>
 </package>`)
+    }
   }
+
+  async function checkZipResult() {
+    const { packageFile, zip, allFiles } = await checkResult(artifacts, ".zip")
+
+    const executable = allFiles.filter(it => it.endsWith(".exe"))[0]
+    zip.extractEntryTo(executable, path.dirname(packageFile))
+    const buffer = await fs.readFile(path.join(path.dirname(packageFile), executable))
+    const resource = NtExecutableResource.from(NtExecutable.from(buffer))
+    const integrityBuffer = resource.entries.find(entry => entry.type === "INTEGRITY")
+    const asarIntegrity = new Uint8Array(integrityBuffer!.bin)
+    const decoder = new TextDecoder("utf-8")
+    const checksumData = decoder.decode(asarIntegrity)
+    const checksums = JSON.parse(checksumData).map((data: AsarIntegrity) => ({ ...data, alg: "SHA256", value: "hash" }))
+    expect(checksums).toMatchSnapshot()
+  }
+
+  const hasTarget = (target: string) => {
+    const targets = nameToTarget.get(target)
+    return targets != null
+  }
+  if (hasTarget("squirrel")) {
+    return checkSquirrelResult()
+  } else if (hasTarget("zip") && !(checkOptions.signed || checkOptions.signedWin)) {
+    return checkZipResult()
+  }
+}
+
+const checkResult = async (artifacts: Array<ArtifactCreated>, extension: string) => {
+  const packageFile = artifacts.find(it => it.file.endsWith(extension))!.file
+
+  const zip = new AdmZip(packageFile)
+  const zipEntries = zip.getEntries()
+  const allFiles: string[] = []
+  zipEntries.forEach(function (zipEntry) {
+    let name = decode(zipEntry.rawEntryName, "cp437")
+    if (!name.endsWith("/")) {
+      allFiles.push(name)
+    }
+  })
+
+  // we test app-update.yml separately, don't want to complicate general assert (yes, it is not good that we write app-update.yml for squirrel.windows if we build nsis and squirrel.windows in parallel, but as squirrel.windows is deprecated, it is ok)
+  const files = pathSorter(
+    allFiles
+      .map(it => toSystemIndependentPath(it))
+      .filter(
+        it =>
+          (!it.startsWith("lib/net45/locales/") || it === "lib/net45/locales/en-US.pak") && !it.endsWith(".psmdcp") && !it.endsWith("app-update.yml") && !it.includes("/inspector/")
+      )
+  )
+
+  expect(files).toMatchSnapshot()
+
+  return { packageFile, zip, allFiles }
 }
 
 export const execShell: any = promisify(require("child_process").exec)

@@ -22,6 +22,7 @@
     "js-yaml": "^4.1.0",
     "lazy-val": "^1.0.5",
     "path-sort": "^0.1.0",
+    "resedit": "1.7.0",
     "semver": "^7.3.8",
     "stat-mode": "^1.0.0",
     "temp-file": "^3.4.0",
