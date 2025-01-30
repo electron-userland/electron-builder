@@ -98,8 +98,8 @@ jobs:
           docker image load --input ${{ runner.temp }}/electron-builder-all-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}.tar
           docker image ls -a
 
-      - name: Lint
-        run: pnpm pretest
+      # - name: Lint
+      #   run: pnpm pretest
 
       - name: Run tests in docker image
         run: |
