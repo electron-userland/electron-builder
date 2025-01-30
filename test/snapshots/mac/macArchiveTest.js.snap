@@ -800,7 +800,6 @@ XElement {
       "attributes": {
         "id": "org.electron-builder.testApp",
         "onConclusion": "none",
-        "updateKBytes": "0",
         "version": "1.1.0",
       },
       "elements": null,
@@ -831,9 +830,9 @@ exports[`tar.gz 1`] = `
 {
   "mac": [
     {
-      "arch": "arm64",
-      "file": "Test App ßW-1.1.0-arm64-mac.tar.gz",
-      "safeArtifactName": "TestApp-1.1.0-arm64-mac.tar.gz",
+      "arch": "x64",
+      "file": "Test App ßW-1.1.0-mac.tar.gz",
+      "safeArtifactName": "TestApp-1.1.0-mac.tar.gz",
     },
   ],
 }
