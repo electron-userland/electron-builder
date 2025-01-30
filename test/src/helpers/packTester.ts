@@ -20,7 +20,6 @@ import { promisify } from "util"
 import { CSC_LINK, WIN_CSC_LINK } from "./codeSignData"
 import { assertThat } from "./fileAssert"
 import AdmZip from "adm-zip"
-import { decode } from "iconv-lite"
 
 if (process.env.TRAVIS !== "true") {
   process.env.CIRCLE_BUILD_NUM = "42"
@@ -407,7 +406,7 @@ async function checkWindowsResult(packager: Packager, checkOptions: AssertPackOp
     const { packageFile, zip, allFiles } = await checkResult(artifacts, ".zip")
 
     const executable = allFiles.filter(it => it.endsWith(".exe"))[0]
-    zip.extractEntryTo(executable, path.dirname(packageFile))
+    zip.extractEntryTo(executable, path.dirname(packageFile),true, true)
     const buffer = await fs.readFile(path.join(path.dirname(packageFile), executable))
     const resource = NtExecutableResource.from(NtExecutable.from(buffer))
     const integrityBuffer = resource.entries.find(entry => entry.type === "INTEGRITY")
@@ -436,10 +435,8 @@ const checkResult = async (artifacts: Array<ArtifactCreated>, extension: string)
   const zipEntries = zip.getEntries()
   const allFiles: string[] = []
   zipEntries.forEach(function (zipEntry) {
-    let name = decode(zipEntry.rawEntryName, "cp437")
-    if (!name.endsWith("/")) {
-      allFiles.push(name)
-    }
+    let name = zipEntry.rawEntryName.toString()
+    allFiles.push(name)
   })
 
   // we test app-update.yml separately, don't want to complicate general assert (yes, it is not good that we write app-update.yml for squirrel.windows if we build nsis and squirrel.windows in parallel, but as squirrel.windows is deprecated, it is ok)
