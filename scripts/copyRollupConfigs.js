@@ -4,7 +4,7 @@ const path = require("path")
 const packageMap = [
   {
     package: "electron-forge-maker-nsis",
-    entry: "src/index.ts",
+    entry: "main.js",
   },
   {
     package: "electron-updater",
@@ -12,7 +12,7 @@ const packageMap = [
   },
   {
     package: "electron-builder-squirrel-windows",
-    entry: "src/index.ts",
+    entry: "src/SquirrelWindowsTarget.ts",
   },
   {
     package: "app-builder-lib",
@@ -20,7 +20,7 @@ const packageMap = [
   },
   {
     package: "electron-forge-maker-appimage",
-    entry: "src/index.ts",
+    entry: "main.js",
   },
   {
     package: "builder-util",
@@ -32,7 +32,7 @@ const packageMap = [
   },
   {
     package: "electron-forge-maker-snap",
-    entry: "src/index.ts",
+    entry: "main.js",
   },
   {
     package: "electron-publish",
@@ -44,7 +44,7 @@ const packageMap = [
   },
   {
     package: "electron-forge-maker-nsis-web",
-    entry: "src/index.ts",
+    entry: "main.js",
   },
   {
     package: "dmg-builder",
