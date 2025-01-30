@@ -196,8 +196,8 @@ jobs:
       fail-fast: false
       matrix:
         testFiles:
-          - installerTest
-          - winPackagerTest,winCodeSignTest
+          - oneClickInstallerTest,assistedInstallerTest
+          - winPackagerTest,winCodeSignTest,webInstallerTest
           - masTest,dmgTest,filesTest,macPackagerTest,differentialUpdateTest
     steps:
       - name: Checkout code repository
