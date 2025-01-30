@@ -5,9 +5,6 @@ export default () => {
   const includeRegex = `(${testRegex.join("|")})`
   const isWindows = process.platform === "win32"
   return defineConfig({
-    build: {
-      target: "node",
-    },
     test: {
       globals: true,
       setupFiles: "./test/vitest-setup.ts",

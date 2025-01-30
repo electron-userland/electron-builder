@@ -4,6 +4,8 @@ import { defineConfig } from "rollup"
 import { cleandir } from "rollup-plugin-cleandir"
 import dts from "rollup-plugin-dts"
 import generateDeclarations from "rollup-plugin-generate-declarations"
+import { nodeResolve } from "@rollup/plugin-node-resolve"
+import json from "@rollup/plugin-json"
 
 export default () => {
   const dir = "./out"
@@ -22,6 +24,8 @@ export default () => {
       // dts({
       //   tsconfig: "./tsconfig.json",
       // }),
+      // nodeResolve(),
+      json(),
       typescript({
         tsconfig: "./tsconfig.json",
         checkJs: true,
