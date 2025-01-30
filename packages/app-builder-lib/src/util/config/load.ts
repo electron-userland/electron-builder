@@ -30,7 +30,14 @@ async function readConfig<T>(configFile: string, request: ReadConfigRequest): Pr
     }
     result = await Promise.resolve(result)
   } else if (configFile.endsWith(".ts")) {
+    // override logger temporarily to clean up console (config-file-ts does some internal logging that blogs up the default electron-builder log format)
+    const consoleLogger = console.log
+    console.log = (...args) => {
+      log.debug({ args }, "executing config-file-ts")
+    }
     result = loadTsConfig(configFile)
+    console.log = consoleLogger
+
     if (typeof result === "function") {
       result = result(request)
     }

@@ -1,4 +1,3 @@
-import BluebirdPromise from "bluebird-lst"
 import { Arch, asArray, copyOrLinkFile, deepAssign, InvalidConfigurationError, log, walk } from "builder-util"
 import { Nullish } from "builder-util-runtime"
 import { emptyDir, readdir, readFile, writeFile } from "fs-extra"
@@ -85,13 +84,15 @@ export default class AppXTarget extends Target {
 
     const mappingList: Array<Array<string>> = []
     mappingList.push(
-      await BluebirdPromise.map(walk(appOutDir), file => {
-        let appxPath = file.substring(appOutDir.length + 1)
-        if (path.sep !== "\\") {
-          appxPath = appxPath.replace(/\//g, "\\")
-        }
-        return `"${vm.toVmFile(file)}" "app\\${appxPath}"`
-      })
+      await Promise.all(
+        (await walk(appOutDir)).map(file => {
+          let appxPath = file.substring(appOutDir.length + 1)
+          if (path.sep !== "\\") {
+            appxPath = appxPath.replace(/\//g, "\\")
+          }
+          return `"${vm.toVmFile(file)}" "app\\${appxPath}"`
+        })
+      )
     )
 
     const userAssetDir = await this.packager.getResource(undefined, APPX_ASSETS_DIR_NAME)
@@ -112,7 +113,7 @@ export default class AppXTarget extends Target {
 
       const assetRoot = stageDir.getTempFile("appx/assets")
       await emptyDir(assetRoot)
-      await BluebirdPromise.map(assetInfo.allAssets, it => copyOrLinkFile(it, path.join(assetRoot, path.basename(it))))
+      await Promise.all(assetInfo.allAssets.map(it => copyOrLinkFile(it, path.join(assetRoot, path.basename(it)))))
 
       await vm.exec(makePriPath, [
         "new",

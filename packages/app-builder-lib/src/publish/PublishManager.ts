@@ -1,4 +1,3 @@
-import BluebirdPromise from "bluebird-lst"
 import { Arch, asArray, AsyncTaskManager, InvalidConfigurationError, isEmptyOrSpaces, isPullRequest, log, safeStringifyJson, serializeToYaml } from "builder-util"
 import {
   BitbucketOptions,
@@ -455,9 +454,9 @@ async function resolvePublishConfigurations(
   }
 
   debug(`Explicit publish provider: ${safeStringifyJson(publishers)}`)
-  return await (BluebirdPromise.map(asArray(publishers), it =>
-    getResolvedPublishConfig(platformPackager, packager, typeof it === "string" ? { provider: it } : it, arch, errorIfCannot)
-  ) as Promise<Array<PublishConfiguration>>)
+  return (await Promise.all(
+    asArray(publishers).map(it => getResolvedPublishConfig(platformPackager, packager, typeof it === "string" ? { provider: it } : it, arch, errorIfCannot))
+  )) as PublishConfiguration[]
 }
 
 function isSuitableWindowsTarget(target: Target) {
