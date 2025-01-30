@@ -8,15 +8,15 @@ const packageMap = [
   },
   {
     package: "electron-updater",
-    entry: "src/**/*.ts",
+    entry: "src/main.ts",
   },
   {
     package: "electron-builder-squirrel-windows",
-    entry: "src/**/*.ts",
+    entry: "src/SquirrelWindowsTarget.ts",
   },
   {
     package: "app-builder-lib",
-    entry: "src/**/*.ts",
+    entry: "src/index.ts",
   },
   {
     package: "electron-forge-maker-appimage",
@@ -24,11 +24,11 @@ const packageMap = [
   },
   {
     package: "builder-util",
-    entry: "src/**/*.ts",
+    entry: "src/util.ts",
   },
   {
     package: "electron-builder",
-    entry: "src/**/*.ts",
+    entry: "src/index.ts",
   },
   {
     package: "electron-forge-maker-snap",
@@ -36,11 +36,11 @@ const packageMap = [
   },
   {
     package: "electron-publish",
-    entry: "src/**/*.ts",
+    entry: "src/index.ts",
   },
   {
     package: "builder-util-runtime",
-    entry: "src/**/*.ts",
+    entry: "src/index.ts",
   },
   {
     package: "electron-forge-maker-nsis-web",
@@ -48,9 +48,60 @@ const packageMap = [
   },
   {
     package: "dmg-builder",
-    entry: "src/**/*.ts",
+    entry: "src/dmgUtil.ts",
   },
 ]
+
+// const packageMap = [
+//   {
+//     package: "electron-forge-maker-nsis",
+//     entry: "main.js",
+//   },
+//   {
+//     package: "electron-updater",
+//     entry: "src/**/*.ts",
+//   },
+//   {
+//     package: "electron-builder-squirrel-windows",
+//     entry: "src/**/*.ts",
+//   },
+//   {
+//     package: "app-builder-lib",
+//     entry: "src/**/*.ts",
+//   },
+//   {
+//     package: "electron-forge-maker-appimage",
+//     entry: "main.js",
+//   },
+//   {
+//     package: "builder-util",
+//     entry: "src/**/*.ts",
+//   },
+//   {
+//     package: "electron-builder",
+//     entry: "src/**/*.ts",
+//   },
+//   {
+//     package: "electron-forge-maker-snap",
+//     entry: "main.js",
+//   },
+//   {
+//     package: "electron-publish",
+//     entry: "src/**/*.ts",
+//   },
+//   {
+//     package: "builder-util-runtime",
+//     entry: "src/**/*.ts",
+//   },
+//   {
+//     package: "electron-forge-maker-nsis-web",
+//     entry: "main.js",
+//   },
+//   {
+//     package: "dmg-builder",
+//     entry: "src/**/*.ts",
+//   },
+// ]
 
 packageMap.forEach(async config => {
   const template = await readFile(path.resolve(__dirname, "rollup.config.ts.template"), "utf8")

@@ -13,6 +13,7 @@ export default () => {
   const inputFiles = glob.sync("<input_key>", { ignore: [outDir, "**/*/*.d.ts"] })
   return defineConfig({
     input: inputFiles,
+    treeshake: false,
     output: {
       dir: outDir,
       format: "cjs",
@@ -21,7 +22,7 @@ export default () => {
     },
     plugins: [
       cleandir(outDir),
-      // commonjs({ extensions: [".js", ".ts"] }),
+      commonjs({ extensions: [".js", ".ts"] }),
       // dts({
       //   tsconfig: "./tsconfig.json",
       // }),
