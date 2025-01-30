@@ -8,15 +8,15 @@ const packageMap = [
   },
   {
     package: "electron-updater",
-    entry: "src/main.ts",
+    entry: "src/**/*.ts",
   },
   {
     package: "electron-builder-squirrel-windows",
-    entry: "src/SquirrelWindowsTarget.ts",
+    entry: "src/**/*.ts",
   },
   {
     package: "app-builder-lib",
-    entry: "src/index.ts",
+    entry: "src/**/*.ts",
   },
   {
     package: "electron-forge-maker-appimage",
@@ -24,11 +24,11 @@ const packageMap = [
   },
   {
     package: "builder-util",
-    entry: "src/util.ts",
+    entry: "src/**/*.ts",
   },
   {
     package: "electron-builder",
-    entry: "src/index.ts",
+    entry: "src/**/*.ts",
   },
   {
     package: "electron-forge-maker-snap",
@@ -36,11 +36,11 @@ const packageMap = [
   },
   {
     package: "electron-publish",
-    entry: "src/index.ts",
+    entry: "src/**/*.ts",
   },
   {
     package: "builder-util-runtime",
-    entry: "src/index.ts",
+    entry: "src/**/*.ts",
   },
   {
     package: "electron-forge-maker-nsis-web",
@@ -48,7 +48,7 @@ const packageMap = [
   },
   {
     package: "dmg-builder",
-    entry: "src/dmgUtil.ts",
+    entry: "src/**/*.ts",
   },
 ]
 

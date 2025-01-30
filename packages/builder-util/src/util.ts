@@ -24,6 +24,7 @@ export { DebugLogger } from "./DebugLogger"
 export * from "./log"
 export { httpExecutor, NodeHttpExecutor } from "./nodeHttpExecutor"
 export * from "./promise"
+export * from "./filename"
 
 export { asArray } from "builder-util-runtime"
 export * from "./fs"
