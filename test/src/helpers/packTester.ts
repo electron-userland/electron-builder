@@ -406,7 +406,7 @@ async function checkWindowsResult(packager: Packager, checkOptions: AssertPackOp
     const { packageFile, zip, allFiles } = await checkResult(artifacts, ".zip")
 
     const executable = allFiles.filter(it => it.endsWith(".exe"))[0]
-    zip.extractEntryTo(executable, path.dirname(packageFile),true, true)
+    zip.extractEntryTo(executable, path.dirname(packageFile), true, true)
     const buffer = await fs.readFile(path.join(path.dirname(packageFile), executable))
     const resource = NtExecutableResource.from(NtExecutable.from(buffer))
     const integrityBuffer = resource.entries.find(entry => entry.type === "INTEGRITY")
