@@ -152,17 +152,17 @@ exports[`only zip 1`] = `
 {
   "mac": [
     {
-      "arch": "arm64",
-      "file": "Test App ßW-1.1.0-arm64-mac.zip",
-      "safeArtifactName": "TestApp-1.1.0-arm64-mac.zip",
+      "arch": "x64",
+      "file": "Test App ßW-1.1.0-mac.zip",
+      "safeArtifactName": "TestApp-1.1.0-mac.zip",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
     {
-      "file": "Test App ßW-1.1.0-arm64-mac.zip.blockmap",
-      "safeArtifactName": "Test App ßW-1.1.0-arm64-mac.zip.blockmap",
+      "file": "Test App ßW-1.1.0-mac.zip.blockmap",
+      "safeArtifactName": "Test App ßW-1.1.0-mac.zip.blockmap",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
@@ -800,6 +800,7 @@ XElement {
       "attributes": {
         "id": "org.electron-builder.testApp",
         "onConclusion": "none",
+        "updateKBytes": "0",
         "version": "1.1.0",
       },
       "elements": null,
