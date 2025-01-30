@@ -1,7 +1,6 @@
 import { signAsync } from "@electron/osx-sign"
 import { SignOptions } from "@electron/osx-sign/dist/cjs/types"
 import { Identity as _Identity } from "@electron/osx-sign/dist/cjs/util-identities"
-import BluebirdPromise from "bluebird-lst"
 import { copyFile, exec, Fields, InvalidConfigurationError, isEmptyOrSpaces, isEnvTrue, isPullRequest, log, Logger, retry, TmpDir, unlinkIfExists } from "builder-util"
 import { Nullish } from "builder-util-runtime"
 import { createHash, randomBytes } from "crypto"
@@ -187,8 +186,9 @@ export async function createKeychain({ tmpDir, cscLink, cscKeyPassword, cscILink
 
   await Promise.all([
     // we do not clear downloaded files - will be removed on tmpDir cleanup automatically. not a security issue since in any case data is available as env variables and protected by password.
-    BluebirdPromise.map(certLinks, (link, i) => importCertificate(link, tmpDir, currentDir).then(it => (certPaths[i] = it))),
-    BluebirdPromise.mapSeries(securityCommands, it => exec("/usr/bin/security", it)),
+    ...certLinks.map((link, i) => importCertificate(link, tmpDir, currentDir).then(it => (certPaths[i] = it))),
+    // queue each security command
+    securityCommands.reduce((promise, cmd) => promise.then(() => exec("/usr/bin/security", cmd)), new Promise(resolve => resolve(null))),
   ])
   const cscPasswords: Array<string> = [cscKeyPassword]
   if (cscIKeyPassword != null) {

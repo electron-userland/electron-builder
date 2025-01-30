@@ -1,4 +1,3 @@
-import BluebirdPromise from "bluebird-lst"
 import { Arch, asArray, deepAssign, log, walk } from "builder-util"
 import { UUID } from "builder-util-runtime"
 import { createHash } from "crypto"
@@ -213,7 +212,7 @@ export default class MsiTarget extends Target {
     const dirs: Array<string> = []
     const fileSpace = " ".repeat(6)
     const commonOptions = getEffectiveOptions(this.options, this.packager)
-    const files = await BluebirdPromise.map(walk(appOutDir), file => {
+    const files = (await walk(appOutDir)).map(file => {
       const packagePath = file.substring(appOutDir.length + 1)
 
       const lastSlash = packagePath.lastIndexOf(path.sep)

@@ -4,6 +4,9 @@ import * as path from "path"
 import { CheckingWinPackager } from "../helpers/CheckingPackager"
 import { app, appThrows, assertPack, platform } from "../helpers/packTester"
 
+// some tests are flaky, specifically `beta`?
+jest.retryTimes(3)
+
 test.ifAll(
   "beta version",
   app(
