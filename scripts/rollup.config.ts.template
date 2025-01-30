@@ -13,7 +13,7 @@ export default () => {
       dir: dir,
       format: "cjs",
       sourcemap: true,
-      preserveModules: true, // Keep modules separate
+      preserveModules: true, // Keep files separates instead of one bundled file
     },
     plugins: [
       cleandir(dir),
