@@ -1,10 +1,6 @@
 ARG IMAGE_VERSION=latest
 FROM --platform=linux/x86_64 electronuserland/builder:$IMAGE_VERSION
 
-
-ENV WINEARCH=win64
-ENV WINEPREFIX=/root/.wine64
-
 RUN dpkg --add-architecture i386 && \
   mkdir -pm755 /etc/apt/keyrings && \
   # wine
