@@ -6,6 +6,7 @@ export default () => {
   const isWindows = process.platform === "win32"
   return defineConfig({
     test: {
+      watch: false,
       globals: true,
       setupFiles: "./test/vitest-setup.ts",
       include: [`test/src/**/${includeRegex}.ts`],

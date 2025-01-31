@@ -62,15 +62,18 @@ export interface UpdateCheckResult {
   /** @deprecated */
   readonly versionInfo: UpdateInfo
 }
+
 export interface UpdateDownloadedEvent extends UpdateInfo {
   downloadedFile: string
 }
+
 export interface ResolvedUpdateFileInfo {
   readonly url: URL
   readonly info: UpdateFileInfo
 
   packageInfo?: PackageFileInfo
 }
+
 export type UpdaterEvents = "login" | "checking-for-update" | "update-available" | "update-not-available" | "update-cancelled" | "download-progress" | "update-downloaded" | "error"
 
 export type LoginHandler = (authInfo: any, callback: LoginCallback) => void
