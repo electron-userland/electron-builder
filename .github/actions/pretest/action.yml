@@ -36,7 +36,7 @@ runs:
       shell: bash
 
     - name: Compile
-      run: pnpm compile2
+      run: pnpm compile
       shell: bash
 
     - name: Cache Electron
