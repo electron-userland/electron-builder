@@ -141,7 +141,7 @@ async function testMac(arch: Arch) {
   }
 }
 
-test.ifMac.only("Mac Intel", () => testMac(Arch.x64))
+test.ifMac("Mac Intel", () => testMac(Arch.x64))
 test.ifMac("Mac universal", () => testMac(Arch.universal))
 
 // only run on arm64 macs, otherwise of course no files can be found to be updated to (due to arch mismatch)

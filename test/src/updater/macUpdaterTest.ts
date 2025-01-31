@@ -28,7 +28,7 @@ class TestNativeUpdater extends EventEmitter {
   }
 }
 
-test.ifNotCi.ifMac.only("mac updates", async () => {
+test.ifNotCi.ifMac("mac updates", async () => {
   const mockNativeUpdater = new TestNativeUpdater()
   // vitest.doMock("electron", () => {
   //   return {
