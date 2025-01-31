@@ -1,6 +1,7 @@
 // if baseUrl path doesn't ends with /, this path will be not prepended to passed pathname for new URL(input, base)
 import { URL } from "url"
-import * as escapeRegExp from "lodash.escaperegexp"
+// import * as escapeRegExp from "lodash.escaperegexp"
+const escapeRegExp = require("lodash.escaperegexp")
 
 /** @internal */
 export function newBaseUrl(url: string): URL {
