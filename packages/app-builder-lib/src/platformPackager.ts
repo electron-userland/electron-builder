@@ -38,6 +38,7 @@ import { FileAssociation } from "./options/FileAssociation"
 import { PlatformSpecificBuildOptions, AsarOptions } from "./options/PlatformSpecificBuildOptions"
 import { Packager } from "./packager"
 import { PackagerOptions } from "./packagerApi"
+import { LinuxPackager } from "./linuxPackager"
 
 export type DoPackOptions<DC extends PlatformSpecificBuildOptions> = {
   outDir: string
@@ -424,7 +425,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       linux: "",
     }[electronPlatformName]
 
-    const executableName = (this as any).executableName ?? this.appInfo.productFilename
+    const executableName = this instanceof LinuxPackager ? this.executableName : this.appInfo.productFilename
     const electronBinaryPath = path.join(appOutDir, `${executableName}${ext}`)
 
     log.info({ electronPath: log.filePath(electronBinaryPath) }, "executing @electron/fuses")
