@@ -68,5 +68,4 @@ Object.defineProperty(exports, "autoUpdater", {
 
 // return null if verify signature succeed
 // return error message if verify signature failed
-
 export type verifyUpdateCodeSignature = (publisherName: string[], path: string) => Promise<string | null>

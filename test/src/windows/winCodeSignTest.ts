@@ -62,7 +62,7 @@ function testCustomSign(sign: any) {
 test(
   "certificateFile/password - sign as async/await",
   testCustomSign(async () => {
-    return
+    return Promise.resolve()
   })
 )
 test(
