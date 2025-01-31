@@ -35,7 +35,8 @@
     "@types/semver": "^7.3.13",
     "babel-jest": "^29.7.0",
     "fast-xml-parser": "4.4.1",
-    "vitest": "^3.0.4"
+    "vitest": "^3.0.4",
+    "vitest-mock-commonjs": "^1.0.2"
   },
   "jest": {
     "snapshotResolver": "<rootDir>/snapshotResolver.js",

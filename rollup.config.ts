@@ -1,11 +1,5 @@
-import commonjs from "@rollup/plugin-commonjs"
 import typescript from "@rollup/plugin-typescript"
 import { defineConfig } from "rollup"
-import { cleandir } from "rollup-plugin-cleandir"
-import dts from "rollup-plugin-dts"
-import generateDeclarations from "rollup-plugin-generate-declarations"
-import { nodeResolve } from "@rollup/plugin-node-resolve"
-import json from "@rollup/plugin-json"
 import * as glob from "glob"
 
 const packageMap = [
@@ -74,24 +68,13 @@ export default () => {
         preserveModules: true, // Keep files separates instead of one bundled file
       },
       plugins: [
-        // cleandir(dir),
-        // dts({
-        //   tsconfig: "./tsconfig.json",
-        // }),
-        // nodeResolve(),
-        json(),
         typescript({
           tsconfig: `packages/${pkg.package}/tsconfig.json`,
           checkJs: true,
           declaration: true,
           declarationDir: dir,
           sourceMap: true,
-          // useTsconfigDeclarationDir: true,
-          // verbosity: 3,
-          // clean: true,
         }),
-        // commonjs({ extensions: [".js", ".ts"] }),
-        // generateDeclarations(),
       ],
     })
   })
