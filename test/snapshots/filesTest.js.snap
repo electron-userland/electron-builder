@@ -67,6 +67,7 @@ exports[`extraResources on Windows 2`] = `
   "lib/net45/resources/dir-relative/f.txt",
   "lib/net45/resources/foo/",
   "lib/net45/resources/foo/nameWithoutDot",
+  "lib/net45/resources/win/",
   "lib/net45/resources/win/x64.txt",
   "package/",
   "package/services/",
