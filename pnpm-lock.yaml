@@ -605,9 +605,6 @@ importers:
       fs-extra:
         specifier: ^10.1.0
         version: 10.1.0
-      iconv-lite:
-        specifier: 0.6.3
-        version: 0.6.3
       jest:
         specifier: 29.7.0
         version: 29.7.0(@types/node@22.10.1)(ts-node@10.9.2(@types/node@22.10.1)(typescript@5.7.2))
