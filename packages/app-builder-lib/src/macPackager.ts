@@ -1,7 +1,6 @@
 import { notarize } from "@electron/notarize"
 import { NotarizeOptionsNotaryTool, NotaryToolKeychainCredentials } from "@electron/notarize/lib/types"
 import { PerFileSignOptions, SignOptions } from "@electron/osx-sign/dist/cjs/types"
-import BluebirdPromise from "bluebird-lst"
 import { Arch, AsyncTaskManager, copyFile, deepAssign, exec, getArchSuffix, InvalidConfigurationError, log, orIfFileNotExist, statOrNull, unlinkIfExists, use } from "builder-util"
 import { MemoLazy, Nullish } from "builder-util-runtime"
 import * as fs from "fs/promises"
@@ -506,13 +505,14 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
   }
 
   protected async signApp(packContext: AfterPackContext, isAsar: boolean): Promise<boolean> {
-    const readDirectoryAndSign = async (sourceDirectory: string, directories: string[], filter: (file: string) => boolean): Promise<boolean> => {
-      await BluebirdPromise.map(directories, async (file: string): Promise<null> => {
-        if (filter(file)) {
-          await this.sign(path.join(sourceDirectory, file), null, null, null)
-        }
-        return null
-      })
+    const readDirectoryAndSign = async (sourceDirectory: string, directories: string[], shouldSign: (file: string) => boolean): Promise<boolean> => {
+      await Promise.all(
+        directories.map(async (file: string) => {
+          if (shouldSign(file)) {
+            await this.sign(path.join(sourceDirectory, file), null, null, null)
+          }
+        })
+      )
       return true
     }
 

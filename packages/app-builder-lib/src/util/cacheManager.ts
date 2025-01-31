@@ -1,4 +1,3 @@
-import BluebirdPromise from "bluebird-lst"
 import { Arch, copyFile, log, orNullIfFileNotExist } from "builder-util"
 import { Hash } from "crypto"
 import { readJson, writeJson } from "fs-extra"
@@ -76,7 +75,7 @@ export class BuildCacheManager {
 
 export async function digest(hash: Hash, files: Array<string>) {
   // do not use pipe - better do bulk file read (https://github.com/yarnpkg/yarn/commit/7a63e0d23c46a4564bc06645caf8a59690f04d01)
-  for (const content of await BluebirdPromise.map(files, it => readFile(it))) {
+  for (const content of await Promise.all(files.map(it => readFile(it)))) {
     hash.update(content)
   }
 

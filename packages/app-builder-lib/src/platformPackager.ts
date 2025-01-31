@@ -1,5 +1,4 @@
 import { flipFuses, FuseConfig, FuseV1Config, FuseV1Options, FuseVersion } from "@electron/fuses"
-import BluebirdPromise from "bluebird-lst"
 import {
   Arch,
   asArray,
@@ -505,7 +504,11 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
 
     if (this.info.isPrepackedAppAsar) {
-      taskManager.addTask(BluebirdPromise.each(_computeFileSets([new FileMatcher(appDir, resourcePath, macroExpander)]), it => copyAppFiles(it, this.info, transformer)))
+      taskManager.add(async () => {
+        const fileSets = await _computeFileSets([new FileMatcher(appDir, resourcePath, macroExpander)])
+        fileSets.forEach(it => taskManager.addTask(copyAppFiles(it, this.info, transformer)))
+        await taskManager.awaitTasks()
+      })
     } else if (asarOptions == null) {
       // for ASAR all asar unpacked files will be extra transformed (e.g. sign of EXE and DLL) later,
       // for prepackaged asar extra transformation not supported yet,
@@ -520,8 +523,11 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
         }
         return transformer(file)
       }
-
-      taskManager.addTask(BluebirdPromise.each(_computeFileSets(mainMatchers), it => copyAppFiles(it, this.info, combinedTransformer)))
+      taskManager.add(async () => {
+        const fileSets = await _computeFileSets(mainMatchers)
+        fileSets.forEach(it => taskManager.addTask(copyAppFiles(it, this.info, combinedTransformer)))
+        await taskManager.awaitTasks()
+      })
     } else {
       const unpackPattern = getFileMatchers(config, "asarUnpack", defaultDestination, {
         macroExpander,

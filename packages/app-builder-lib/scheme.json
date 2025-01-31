@@ -4176,8 +4176,9 @@
           ]
         },
         "buildUniversalInstaller": {
+          "const": true,
           "default": true,
-          "description": "Disable building an universal installer of the archs specified in the target configuration\n*Not supported for nsis-web*",
+          "description": "Override for `NsisOptions.buildUniversalInstaller`. nsis-web requires universal installer",
           "type": "boolean"
         },
         "createDesktopShortcut": {

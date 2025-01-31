@@ -1,7 +1,7 @@
 {
   "name": "app-builder-lib",
   "description": "electron-builder lib",
-  "version": "26.0.0",
+  "version": "26.0.1",
   "main": "out/index.js",
   "files": [
     "out",
@@ -9,10 +9,6 @@
     "scheme.json",
     "certs/root_certs.keychain"
   ],
-  "scripts": {
-    "compile": "vite build",
-    "compile2": "rollup -c rollup.config.ts --configPlugin typescript"
-  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/electron-userland/electron-builder.git",
@@ -51,8 +47,8 @@
   "homepage": "https://github.com/electron-userland/electron-builder",
   "dependencies": {
     "@develar/schema-utils": "~2.6.5",
-    "@electron/fuses": "^1.8.0",
     "@electron/asar": "3.2.18",
+    "@electron/fuses": "^1.8.0",
     "@electron/notarize": "2.5.0",
     "@electron/osx-sign": "1.3.1",
     "@electron/rebuild": "3.7.0",
@@ -60,7 +56,6 @@
     "@malept/flatpak-bundler": "^0.4.0",
     "@types/fs-extra": "9.0.13",
     "async-exit-hook": "^2.0.1",
-    "bluebird-lst": "^1.0.9",
     "builder-util": "workspace:*",
     "builder-util-runtime": "workspace:*",
     "chromium-pickle-js": "^0.2.0",
@@ -81,7 +76,8 @@
     "resedit": "^1.7.0",
     "semver": "^7.3.8",
     "tar": "^6.1.12",
-    "temp-file": "^3.4.0"
+    "temp-file": "^3.4.0",
+    "tiny-async-pool": "1.3.0"
   },
   "///": "babel in devDependencies for proton tests",
   "devDependencies": {
@@ -111,6 +107,9 @@
     "@types/js-yaml": "4.0.3",
     "@types/semver": "7.3.8",
     "@types/tar": "^6.1.3",
+    "@types/tiny-async-pool": "^1",
+    "dmg-builder": "workspace:*",
+    "electron-builder-squirrel-windows": "workspace:*",
     "toml": "^3.0.0"
   },
   "peerDependencies": {
@@ -118,7 +117,5 @@
     "electron-builder-squirrel-windows": "workspace:*"
   },
   "//": "electron-builder-squirrel-windows and dmg-builder added as dev dep for tests (as otherwise `require` doesn't work using Yarn 2)",
-
-
   "typings": "./out/index.d.ts"
 }

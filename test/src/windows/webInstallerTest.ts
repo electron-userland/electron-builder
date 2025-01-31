@@ -23,9 +23,6 @@ test.ifNotCiMac(
         loadBrowserProcessSpecificV8Snapshot: true,
         grantFileProtocolExtraPrivileges: undefined, // unsupported on current electron version in our tests
       },
-      nsisWeb: {
-        buildUniversalInstaller: false,
-      },
     },
   })
 )
