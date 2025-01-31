@@ -63,8 +63,9 @@ export default () => {
   const outDir = "out"
   return packageMap.map(pkg => {
     const dir = `packages/${pkg.package}/${outDir}`
+    const input = glob.sync(`packages/${pkg.package}/${pkg.entry}`, { ignore: [dir, "**/*/*.d.ts"] })
     return defineConfig({
-      input: glob.sync(`packages/${pkg.package}/${pkg.entry}`, { ignore: [outDir, "**/*/*.d.ts"] }),
+      input,
       treeshake: false,
       output: {
         dir: dir,
@@ -74,7 +75,6 @@ export default () => {
       },
       plugins: [
         // cleandir(dir),
-        commonjs({ extensions: [".js", ".ts"] }),
         // dts({
         //   tsconfig: "./tsconfig.json",
         // }),
@@ -90,6 +90,7 @@ export default () => {
           // verbosity: 3,
           // clean: true,
         }),
+        // commonjs({ extensions: [".js", ".ts"] }),
         // generateDeclarations(),
       ],
     })
