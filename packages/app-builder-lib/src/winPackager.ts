@@ -55,7 +55,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     return ["nsis"]
   }
 
-  createTargets(targets: Array<string>, mapper: (name: string, factory: (outDir: string) => Target) => void): void {
+  async createTargets(targets: Array<string>, mapper: (name: string, factory: (outDir: string) => Target) => void): Promise<void> {
     let copyElevateHelper: CopyElevateHelper | null
     const getCopyElevateHelper = () => {
       if (copyElevateHelper == null) {
@@ -83,23 +83,23 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
         // package file format differs from nsis target
         mapper(name, outDir => new WebInstallerTarget(this, path.join(outDir, name), name, new AppPackageHelper(getCopyElevateHelper())))
       } else {
-        const targetClass: typeof NsisTarget | typeof AppXTarget | typeof MsiTarget | typeof MsiWrappedTarget | null = (() => {
+        const targetClass: typeof NsisTarget | typeof AppXTarget | typeof MsiTarget | typeof MsiWrappedTarget | null = await (async () => {
           switch (name) {
             case "squirrel":
               try {
-                return require("electron-builder-squirrel-windows").default
+                return (await import("electron-builder-squirrel-windows")).default
               } catch (e: any) {
                 throw new InvalidConfigurationError(`Module electron-builder-squirrel-windows must be installed in addition to build Squirrel.Windows: ${e.stack || e}`)
               }
 
             case "appx":
-              return require("./targets/AppxTarget").default
+              return (await import("./targets/AppxTarget")).default
 
             case "msi":
-              return require("./targets/MsiTarget").default
+              return (await import("./targets/MsiTarget")).default
 
             case "msiwrapped":
-              return require("./targets/MsiWrappedTarget").default
+              return (await import("./targets/MsiWrappedTarget")).default
 
             default:
               return null
