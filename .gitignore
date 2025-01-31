@@ -28,4 +28,3 @@ tsconfig.tsbuildinfo
 
 .pnpm-store/
 **/node_modules
-packages/*/rollup.config.ts
