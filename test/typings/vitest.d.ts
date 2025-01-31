@@ -2,9 +2,6 @@ import 'vitest'
 
 type Test = typeof import('vitest')['test']
 
-interface CustomMatchers<R = unknown> {
-  toMatchObject: (object: any) => R
-}
 interface CustomTestMatcher extends Test {
   ifNotWindows: CustomTestMatcher
   ifMac: CustomTestMatcher
@@ -24,19 +21,8 @@ interface CustomTestMatcher extends Test {
 }
 
 declare module 'vitest' {
-  interface Assertion<T = any> extends CustomMatchers<T> {}
-  interface AsymmetricMatchersContaining extends CustomMatchers {}
-
   interface TestAPI extends CustomTestMatcher {}
   type TestAPI = CustomTestMatcher
-
-  // interface Describe {
-  //   ifAll: vitest.Describe
-  // }
-
-  // interface Matchers {
-  //   toMatchObject(object: any)
-  // }
 }
 
 declare global {

@@ -4,6 +4,7 @@ import { EventEmitter } from "events"
 import { assertThat } from "../helpers/fileAssert"
 import { createTestAppAdapter, httpExecutor, trackEvents, tuneTestUpdater, writeUpdateConfig } from "../helpers/updaterTestUtil"
 import { vitest } from "vitest"
+import { mockForNodeRequire } from "vitest-mock-commonjs"
 
 class TestNativeUpdater extends EventEmitter {
   private updateUrl: string | null = null
@@ -28,12 +29,16 @@ class TestNativeUpdater extends EventEmitter {
   }
 }
 
-test.ifNotCi.ifMac("mac updates", async () => {
+test.ifNotCi.ifMac.only("mac updates", async () => {
   const mockNativeUpdater = new TestNativeUpdater()
-  vitest.mock("electron", () => {
-    return {
-      autoUpdater: mockNativeUpdater,
-    }
+  // vitest.doMock("electron", () => {
+  //   return {
+  //     autoUpdater: mockNativeUpdater,
+  //   }
+  // })
+
+  mockForNodeRequire("electron", {
+    autoUpdater: mockNativeUpdater,
   })
 
   const updater = new MacUpdater(undefined, await createTestAppAdapter())

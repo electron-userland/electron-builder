@@ -107,6 +107,9 @@ importers:
       vitest:
         specifier: ^3.0.4
         version: 3.0.4(@types/node@22.10.1)(sass@1.82.0)(yaml@2.6.1)
+      vitest-mock-commonjs:
+        specifier: ^1.0.2
+        version: 1.0.2
 
   packages/app-builder-lib:
     dependencies:
@@ -5767,6 +5770,9 @@ packages:
         optional: true
       yaml:
         optional: true
+
+  vitest-mock-commonjs@1.0.2:
+    resolution: {integrity: sha512-vm/uIhhQRUqq8lxqDC8vAJZ1vOg/E6C/hxQM890niAG2OtF/N4IdYWFwtpR6ikxkIq76bLEaY6/Lej8SjeVPQw==}
 
   vitest@3.0.4:
     resolution: {integrity: sha512-6XG8oTKy2gnJIFTHP6LD7ExFeNLxiTkK3CfMvT7IfR8IN+BYICCf0lXUQmX7i7JoxUP8QmeP4mTnWXgflu4yjw==}
@@ -11880,6 +11886,8 @@ snapshots:
       fsevents: 2.3.3
       sass: 1.82.0
       yaml: 2.6.1
+
+  vitest-mock-commonjs@1.0.2: {}
 
   vitest@3.0.4(@types/node@22.10.1)(sass@1.82.0)(yaml@2.6.1):
     dependencies:

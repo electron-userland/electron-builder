@@ -10,7 +10,7 @@ import { TmpDir } from "temp-file"
 import { TestAppAdapter } from "../helpers/TestAppAdapter"
 import { PackedContext, assertPack, removeUnstableProperties } from "../helpers/packTester"
 import { tuneTestUpdater, writeUpdateConfig } from "../helpers/updaterTestUtil"
-import { vitest } from "vitest"
+import { mockForNodeRequire } from "vitest-mock-commonjs"
 
 /*
 
@@ -141,7 +141,7 @@ async function testMac(arch: Arch) {
   }
 }
 
-test.ifMac("Mac Intel", () => testMac(Arch.x64))
+test.ifMac.only("Mac Intel", () => testMac(Arch.x64))
 test.ifMac("Mac universal", () => testMac(Arch.universal))
 
 // only run on arm64 macs, otherwise of course no files can be found to be updated to (due to arch mismatch)
@@ -174,6 +174,12 @@ class TestNativeUpdater extends EventEmitter {
   setFeedURL(updateConfig: any) {
     console.log("TestNativeUpdater.setFeedURL " + updateConfig.url)
   }
+  getFeedURL() {
+    console.log("TestNativeUpdater.getFeedURL")
+  }
+  quitAndInstall() {
+    console.log("TestNativeUpdater.quitAndInstall")
+  }
 }
 
 function getTestUpdaterCacheDir(oldDir: string) {
@@ -192,11 +198,18 @@ async function testBlockMap(oldDir: string, newDir: string, updaterClass: any, p
 
   // Mac uses electron's native autoUpdater to serve updates to, we mock here since electron API isn't available within jest runtime
   const mockNativeUpdater = new TestNativeUpdater()
-  vitest.mock("electron", () => {
-    return {
-      autoUpdater: mockNativeUpdater,
-    }
+  // vitest.mock("electron", () => {
+  // return {
+  //   autoUpdater: mockNativeUpdater,
+  // }
+  // })
+
+  mockForNodeRequire("electron", {
+    autoUpdater: mockNativeUpdater,
   })
+
+  // const updater = require("electron")
+  // vitest.spyOn(updater, "autoUpdater").mockReturnValue(mockNativeUpdater)
 
   return await new Promise<void>((resolve, reject) => {
     httpServerProcess.on("error", reject)

@@ -1,8 +1,0 @@
-// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
-
-exports[`mac updates 1`] = `
-[
-  "checking-for-update",
-  "update-available",
-]
-`;

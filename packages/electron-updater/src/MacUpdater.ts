@@ -5,7 +5,7 @@ import * as path from "path"
 import { createServer, IncomingMessage, Server, ServerResponse } from "http"
 import { AppAdapter } from "./AppAdapter"
 import { AppUpdater, DownloadUpdateOptions } from "./AppUpdater"
-import { ResolvedUpdateFileInfo } from "./exports"
+import { ResolvedUpdateFileInfo } from "./main"
 import { UpdateDownloadedEvent } from "./exports"
 import { findFile } from "./providers/Provider"
 import AutoUpdater = Electron.AutoUpdater
