@@ -434,8 +434,24 @@ const checkResult = async (artifacts: Array<ArtifactCreated>, extension: string)
   const zip = new AdmZip(packageFile)
   const zipEntries = zip.getEntries()
   const allFiles: string[] = []
+  // https://github.com/thejoshwolfe/yauzl/blob/master/index.js#L900
+  const cp437 =
+    "\u0000☺☻♥♦♣♠•◘○◙♂♀♪♫☼►◄↕‼¶§▬↨↑↓→←∟↔▲▼ !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~⌂ÇüéâäàåçêëèïîìÄÅÉæÆôöòûùÿÖÜ¢£¥₧ƒáíóúñÑªº¿⌐¬½¼¡«»░▒▓│┤╡╢╖╕╣║╗╝╜╛┐└┴┬├─┼╞╟╚╔╩╦╠═╬╧╨╤╥╙╘╒╓╫╪┘┌█▄▌▐▀αßΓπΣσµτΦΘΩδ∞φε∩≡±≥≤⌠⌡÷≈°∙·√ⁿ²■ "
+  const decodeBuffer = (buffer: Buffer, isUtf8: boolean) => {
+    if (isUtf8) {
+      return buffer.toString("utf8")
+    } else {
+      let result = ""
+      for (let i = 0; i < buffer.length; i++) {
+        result += cp437[buffer[i]]
+      }
+      return result
+    }
+  }
+
   zipEntries.forEach(function (zipEntry) {
-    let name = zipEntry.rawEntryName.toString()
+    let isUtf8 = (zipEntry.header.flags & 0x800) !== 0
+    let name = decodeBuffer(zipEntry.rawEntryName, isUtf8)
     allFiles.push(name)
   })
 
