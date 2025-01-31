@@ -6,8 +6,7 @@
     },
     "include": [
         "src/**/*.ts",
-        "typings/*.d.ts",
-        "../../typings/*.d.ts"
+        "typings/*.d.ts"
     ],
     "exclude": [
     ]

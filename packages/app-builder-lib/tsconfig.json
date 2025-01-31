@@ -15,10 +15,7 @@
   },
   "include": [
       "src/**/*.ts",
-      "typings/index.d.ts",
-      "../typings/index.d.ts",
       "typings/*.d.ts",
-      "../../typings/*.d.ts"
   ],
   "exclude": [
   ],
