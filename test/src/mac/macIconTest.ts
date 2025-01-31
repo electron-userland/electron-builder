@@ -50,7 +50,7 @@ test.ifMac.ifAll("custom icon set", () => {
           fs.unlink(path.join(projectDir, "build", "icon.ico")),
           fs.rename(path.join(projectDir, "build", "icons"), path.join(projectDir, "customIconSet")),
         ]),
-      packed: () => assertIcon(platformPackager!!),
+      packed: () => assertIcon(platformPackager!),
     }
   )()
 })
@@ -75,7 +75,7 @@ test.ifMac.ifAll("custom icon set with only 512 and 128", () => {
           fs.copyFile(path.join(projectDir, "build", "icons", "512x512.png"), path.join(projectDir, "512x512.png")),
           fs.copyFile(path.join(projectDir, "build", "icons", "128x128.png"), path.join(projectDir, "128x128.png")),
         ]),
-      packed: () => assertIcon(platformPackager!!),
+      packed: () => assertIcon(platformPackager!),
     }
   )()
 })
@@ -94,7 +94,7 @@ test.ifMac.ifAll("png icon", () => {
     },
     {
       projectDirCreated: projectDir => Promise.all([fs.unlink(path.join(projectDir, "build", "icon.icns")), fs.unlink(path.join(projectDir, "build", "icon.ico"))]),
-      packed: () => assertIcon(platformPackager!!),
+      packed: () => assertIcon(platformPackager!),
     }
   )()
 })
@@ -115,7 +115,7 @@ test.ifMac.ifAll("default png icon", () => {
             .copyFile(path.join(projectDir, "build", "icons", "512x512.png"), path.join(projectDir, "build", "icon.png"))
             .then(() => fs.rm(path.join(projectDir, "build", "icons"), { recursive: true, force: true })),
         ]),
-      packed: () => assertIcon(platformPackager!!),
+      packed: () => assertIcon(platformPackager!),
     }
   )()
 })
@@ -136,7 +136,7 @@ test.ifMac.ifAll("png icon small", () => {
       projectDirCreated: projectDir => Promise.all([fs.unlink(path.join(projectDir, "build", "icon.icns")), fs.unlink(path.join(projectDir, "build", "icon.ico"))]),
       packed: async () => {
         try {
-          await platformPackager!!.getIconPath()
+          await platformPackager!.getIconPath()
         } catch (e: any) {
           if (!e.message.includes("must be at least 512x512")) {
             throw e

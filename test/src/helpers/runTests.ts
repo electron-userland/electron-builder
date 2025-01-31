@@ -1,7 +1,7 @@
+import { isCI as isCi } from "ci-info"
 import { createHash } from "crypto"
 import { readJson, realpathSync } from "fs-extra"
 import * as fs from "fs/promises"
-import { isCI as isCi } from "ci-info"
 import { tmpdir } from "os"
 import * as path from "path"
 import { deleteOldElectronVersion, downloadAllRequiredElectronVersions } from "./downloadElectron"

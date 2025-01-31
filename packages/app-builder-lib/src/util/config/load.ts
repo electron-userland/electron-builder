@@ -1,12 +1,12 @@
+import { log } from "builder-util"
+import { loadTsConfig } from "config-file-ts"
+import { parse as parseEnv } from "dotenv"
+import { DotenvParseInput, expand } from "dotenv-expand"
 import { promises as fs } from "fs"
 import { load } from "js-yaml"
-import * as path from "path"
 import { Lazy } from "lazy-val"
-import { parse as parseEnv } from "dotenv"
-import { loadTsConfig } from "config-file-ts"
-import { DotenvParseInput, expand } from "dotenv-expand"
+import * as path from "path"
 import { resolveModule } from "../resolve"
-import { log } from "builder-util"
 
 export interface ReadConfigResult<T> {
   readonly result: T
@@ -30,7 +30,14 @@ async function readConfig<T>(configFile: string, request: ReadConfigRequest): Pr
     }
     result = await Promise.resolve(result)
   } else if (configFile.endsWith(".ts")) {
+    // override logger temporarily to clean up console (config-file-ts does some internal logging that blogs up the default electron-builder log format)
+    const consoleLogger = console.log
+    console.log = (...args) => {
+      log.debug({ args }, "executing config-file-ts")
+    }
     result = loadTsConfig(configFile)
+    console.log = consoleLogger
+
     if (typeof result === "function") {
       result = result(request)
     }
@@ -73,7 +80,7 @@ export interface ReadConfigRequest {
   configFilename: string
 
   projectDir: string
-  packageMetadata: Lazy<{ [key: string]: any } | null> | null
+  packageMetadata: Lazy<Record<string, any> | null> | null
 }
 
 export async function loadConfig<T>(request: ReadConfigRequest): Promise<ReadConfigResult<T> | null> {

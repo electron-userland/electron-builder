@@ -1,9 +1,9 @@
-import BluebirdPromise from "bluebird-lst"
-import { AsyncTaskManager, log, CONCURRENCY, FileCopier, FileTransformer, Link, MAX_FILE_REQUESTS, statOrNull, walk } from "builder-util"
+import { AsyncTaskManager, FileCopier, FileTransformer, Link, log, MAX_FILE_REQUESTS, statOrNull, walk } from "builder-util"
 import { Stats } from "fs"
-import { mkdir, readlink } from "fs/promises"
 import { ensureSymlink } from "fs-extra"
+import { mkdir, readlink } from "fs/promises"
 import * as path from "path"
+import asyncPool from "tiny-async-pool"
 import { isLibOrExe } from "../asar/unpackDetector"
 import { Platform } from "../core"
 import { excludedExts, FileMatcher } from "../fileMatcher"
@@ -72,9 +72,8 @@ export async function copyAppFiles(fileSet: ResolvedFileSet, packager: Packager,
   if (taskManager.tasks.length > 0) {
     await taskManager.awaitTasks()
   }
-  if (links.length > 0) {
-    await BluebirdPromise.map(links, it => ensureSymlink(it.link, it.file), CONCURRENCY)
-  }
+
+  await asyncPool(MAX_FILE_REQUESTS, links, it => ensureSymlink(it.link, it.file))
 }
 
 // os path separator is used
@@ -100,32 +99,30 @@ export async function transformFiles(transformer: FileTransformer, fileSet: Reso
   }
 
   const metadata = fileSet.metadata
-  await BluebirdPromise.filter(
-    fileSet.files,
-    (it, index) => {
-      const fileStat = metadata.get(it)
-      if (fileStat == null || !fileStat.isFile()) {
-        return false
-      }
+  const filesPromise = fileSet.files.map(async (it, index) => {
+    const fileStat = metadata.get(it)
+    if (fileStat == null || !fileStat.isFile()) {
+      return
+    }
 
-      const transformedValue = transformer(it)
-      if (transformedValue == null) {
-        return false
-      }
+    const transformedValue = transformer(it)
+    if (transformedValue == null) {
+      return
+    }
 
-      if (typeof transformedValue === "object" && "then" in transformedValue) {
-        return (transformedValue as Promise<any>).then(it => {
-          if (it != null) {
-            transformedFiles!.set(index, it)
-          }
-          return false
-        })
-      }
-      transformedFiles!.set(index, transformedValue as string | Buffer)
-      return false
-    },
-    CONCURRENCY
-  )
+    if (typeof transformedValue === "object" && "then" in transformedValue) {
+      return (transformedValue as Promise<any>).then(it => {
+        if (it != null) {
+          transformedFiles!.set(index, it)
+        }
+        return
+      })
+    }
+    transformedFiles!.set(index, transformedValue as string | Buffer)
+    return
+  })
+  // `asyncPool` doesn't provide `index` in it's handler, so we `map` first before using it
+  await asyncPool(MAX_FILE_REQUESTS, filesPromise, promise => promise)
 }
 
 export async function computeFileSets(
@@ -222,22 +219,18 @@ async function compileUsingElectronCompile(mainFileSet: ResolvedFileSet, package
   const compilerHost = await createElectronCompilerHost(mainFileSet.src, cacheDir)
   const nextSlashIndex = mainFileSet.src.length + 1
   // pre-compute electron-compile to cache dir - we need to process only subdirectories, not direct files of app dir
-  await BluebirdPromise.map(
-    mainFileSet.files,
-    file => {
-      if (
-        file.includes(NODE_MODULES_PATTERN) ||
-        file.includes(BOWER_COMPONENTS_PATTERN) ||
-        !file.includes(path.sep, nextSlashIndex) || // ignore not root files
-        !mainFileSet.metadata.get(file)!.isFile()
-      ) {
-        return null
-      }
-      return compilerHost.compile(file).then(() => null)
-    },
-    CONCURRENCY
-  )
-
+  const filesPromise: Promise<any>[] = mainFileSet.files.map(file => {
+    if (
+      file.includes(NODE_MODULES_PATTERN) ||
+      file.includes(BOWER_COMPONENTS_PATTERN) ||
+      !file.includes(path.sep, nextSlashIndex) || // ignore not root files
+      !mainFileSet.metadata.get(file)!.isFile()
+    ) {
+      return
+    }
+    return compilerHost.compile(file)
+  })
+  await asyncPool(MAX_FILE_REQUESTS, filesPromise, promise => promise)
   await compilerHost.saveConfiguration()
 
   const metadata = new Map<string, Stats>()

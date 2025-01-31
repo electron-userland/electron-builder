@@ -144,7 +144,7 @@ export class AsarPackager {
         detectUnpackedDirs(fileSet, unpackedPaths)
       }
 
-      // Don't use BluebirdPromise, we need to retain order of execution/iteration through the ordered fileset
+      // Don't use Promise.all, we need to retain order of execution/iteration through the ordered fileset
       const tmpUnpackedPaths = new Set<string>()
       for (let i = 0; i < fileSet.files.length; i++) {
         const file = fileSet.files[i]

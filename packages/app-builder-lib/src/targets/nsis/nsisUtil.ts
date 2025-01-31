@@ -1,13 +1,12 @@
-import { Arch, log } from "builder-util"
+import { Arch, copyFile, dirSize, log } from "builder-util"
 import { PackageFileInfo } from "builder-util-runtime"
-import { getBinFromUrl, getBinFromCustomLoc } from "../../binDownload"
-import { copyFile, dirSize } from "builder-util"
-import * as path from "path"
-import { getTemplatePath } from "../../util/pathManager"
-import { NsisTarget } from "./NsisTarget"
 import * as fs from "fs/promises"
+import * as path from "path"
 import * as zlib from "zlib"
+import { getBinFromCustomLoc, getBinFromUrl } from "../../binDownload"
+import { getTemplatePath } from "../../util/pathManager"
 import { NsisOptions } from "./nsisOptions"
+import { NsisTarget } from "./NsisTarget"
 
 export const nsisTemplatesDir = getTemplatePath("nsis")
 

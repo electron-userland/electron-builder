@@ -1,14 +1,12 @@
-import BluebirdPromise from "bluebird-lst"
-import { Arch, asArray, log, deepAssign } from "builder-util"
+import { Arch, asArray, deepAssign, log, walk } from "builder-util"
 import { UUID } from "builder-util-runtime"
-import { getBinFromUrl } from "../binDownload"
-import { walk } from "builder-util"
 import { createHash } from "crypto"
 import * as ejs from "ejs"
 import { readFile, writeFile } from "fs/promises"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { MsiOptions } from "../"
+import { getBinFromUrl } from "../binDownload"
 import { Target } from "../core"
 import { DesktopShortcutCreationPolicy, FinalCommonWindowsInstallerOptions, getEffectiveOptions } from "../options/CommonWindowsInstallerConfiguration"
 import { normalizeExt } from "../platformPackager"
@@ -214,7 +212,7 @@ export default class MsiTarget extends Target {
     const dirs: Array<string> = []
     const fileSpace = " ".repeat(6)
     const commonOptions = getEffectiveOptions(this.options, this.packager)
-    const files = await BluebirdPromise.map(walk(appOutDir), file => {
+    const files = (await walk(appOutDir)).map(file => {
       const packagePath = file.substring(appOutDir.length + 1)
 
       const lastSlash = packagePath.lastIndexOf(path.sep)

@@ -1,12 +1,13 @@
 import { DebugLogger, deepAssign, InvalidConfigurationError, log, safeStringifyJson, statOrNull } from "builder-util"
+import { Nullish } from "builder-util-runtime"
 import { readJson } from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
-import { getConfig as _getConfig, loadParentConfig, orNullIfFileNotExist, ReadConfigRequest } from "./load"
 import { Configuration } from "../../configuration"
 import { FileSet } from "../../options/PlatformSpecificBuildOptions"
 import { reactCra } from "../../presets/rectCra"
 import { PACKAGE_VERSION } from "../../version"
+import { getConfig as _getConfig, loadParentConfig, orNullIfFileNotExist, ReadConfigRequest } from "./load"
 const validateSchema = require("@develar/schema-utils")
 
 // https://github.com/electron-userland/electron-builder/issues/1847
@@ -35,8 +36,8 @@ function mergePublish(config: Configuration, configFromOptions: Configuration) {
 export async function getConfig(
   projectDir: string,
   configPath: string | null,
-  configFromOptions: Configuration | null | undefined,
-  packageMetadata: Lazy<{ [key: string]: any } | null> = new Lazy(() => orNullIfFileNotExist(readJson(path.join(projectDir, "package.json"))))
+  configFromOptions: Configuration | Nullish,
+  packageMetadata: Lazy<Record<string, any> | null> = new Lazy(() => orNullIfFileNotExist(readJson(path.join(projectDir, "package.json"))))
 ): Promise<Configuration> {
   const configRequest: ReadConfigRequest = { packageKey: "build", configFilename: "electron-builder", projectDir, packageMetadata }
   const configAndEffectiveFile = await _getConfig<Configuration>(configRequest, configPath)
@@ -81,7 +82,7 @@ export async function getConfig(
   return doMergeConfigs([...parentConfigs, config])
 }
 
-function asArray(value: string[] | string | undefined | null): string[] {
+function asArray(value: string[] | string | Nullish): string[] {
   return Array.isArray(value) ? value : typeof value === "string" ? [value] : []
 }
 
@@ -263,7 +264,7 @@ export async function validateConfiguration(config: Configuration, debugLogger: 
 
 const DEFAULT_APP_DIR_NAMES = ["app", "www"]
 
-export async function computeDefaultAppDirectory(projectDir: string, userAppDir: string | null | undefined): Promise<string> {
+export async function computeDefaultAppDirectory(projectDir: string, userAppDir: string | Nullish): Promise<string> {
   if (userAppDir != null) {
     const absolutePath = path.resolve(projectDir, userAppDir)
     const stat = await statOrNull(absolutePath)

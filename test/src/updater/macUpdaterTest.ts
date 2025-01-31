@@ -16,7 +16,7 @@ class TestNativeUpdater extends EventEmitter {
   }
 
   private async download() {
-    const data = JSON.parse((await httpExecutor.request(configureRequestOptionsFromUrl(this.updateUrl!!, {})))!!)
+    const data = JSON.parse((await httpExecutor.request(configureRequestOptionsFromUrl(this.updateUrl!, {})))!)
     await httpExecutor.request(configureRequestOptionsFromUrl(data.url, {}))
   }
 

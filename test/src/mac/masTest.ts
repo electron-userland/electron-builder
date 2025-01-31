@@ -54,7 +54,7 @@ test.skip.ifAll("custom mas", () => {
   )
 })
 
-test.ifAll.ifNotCi("entitlements in the package.json", () => {
+test.ifAll("entitlements in the package.json", () => {
   let platformPackager: CheckingMacPackager | null = null
   return assertPack(
     "test-app-one",
@@ -79,7 +79,7 @@ test.ifAll.ifNotCi("entitlements in the package.json", () => {
   )
 })
 
-test.ifAll.ifNotCi("entitlements template", () => {
+test.ifAll("entitlements template", () => {
   let platformPackager: CheckingMacPackager | null = null
   return assertPack(
     "test-app-one",

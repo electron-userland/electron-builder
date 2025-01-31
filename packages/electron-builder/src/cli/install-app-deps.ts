@@ -2,14 +2,14 @@
 
 import { getElectronVersion } from "app-builder-lib/out/electron/electronVersion"
 import { computeDefaultAppDirectory, getConfig } from "app-builder-lib/out/util/config/config"
+import { orNullIfFileNotExist } from "app-builder-lib/out/util/config/load"
+import { createLazyProductionDeps } from "app-builder-lib/out/util/packageDependencies"
 import { installOrRebuild } from "app-builder-lib/out/util/yarn"
 import { PACKAGE_VERSION } from "app-builder-lib/out/version"
-import { createLazyProductionDeps } from "app-builder-lib/out/util/packageDependencies"
-import { getArchCliNames, log, use, printErrorAndExit } from "builder-util"
+import { getArchCliNames, log, printErrorAndExit, use } from "builder-util"
 import { readJson } from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
-import { orNullIfFileNotExist } from "app-builder-lib/out/util/config/load"
 import * as yargs from "yargs"
 
 /** @internal */
