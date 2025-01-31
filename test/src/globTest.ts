@@ -211,7 +211,7 @@ test.ifDevOrLinuxCi("failed peer dep", () => {
   )
 })
 
-test.ifAll.ifDevOrLinuxCi("ignore node_modules", () => {
+test.ifDevOrLinuxCi("ignore node_modules", () => {
   return assertPack(
     "test-app-one",
     {
@@ -240,7 +240,7 @@ test.ifAll.ifDevOrLinuxCi("ignore node_modules", () => {
   )
 })
 
-test.ifAll.ifDevOrLinuxCi("asarUnpack node_modules", () => {
+test.ifDevOrLinuxCi("asarUnpack node_modules", () => {
   return assertPack(
     "test-app-one",
     {
@@ -266,7 +266,7 @@ test.ifAll.ifDevOrLinuxCi("asarUnpack node_modules", () => {
   )
 })
 
-test.ifAll.ifDevOrLinuxCi("asarUnpack node_modules which has many modules", () => {
+test.ifDevOrLinuxCi("asarUnpack node_modules which has many modules", () => {
   return assertPack(
     "test-app-one",
     {
@@ -312,7 +312,7 @@ test.ifAll.ifDevOrLinuxCi("asarUnpack node_modules which has many modules", () =
   )
 })
 
-test.ifAll.ifDevOrLinuxCi("exclude some modules when asarUnpack node_modules which has many modules", () => {
+test.ifDevOrLinuxCi("exclude some modules when asarUnpack node_modules which has many modules", () => {
   return assertPack(
     "test-app-one",
     {

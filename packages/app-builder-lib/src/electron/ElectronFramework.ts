@@ -5,7 +5,6 @@ import * as path from "path"
 import asyncPool from "tiny-async-pool"
 import { Configuration } from "../configuration"
 import { BeforeCopyExtraFilesOptions, Framework, PrepareApplicationStageDirectoryOptions } from "../Framework"
-import { Packager, Platform } from "../index"
 import { LinuxPackager } from "../linuxPackager"
 import { MacPackager } from "../macPackager"
 import { getTemplatePath } from "../util/pathManager"
@@ -14,24 +13,11 @@ import { createMacApp } from "./electronMac"
 import { computeElectronVersion, getElectronVersionFromInstalled } from "./electronVersion"
 import { addWinAsarIntegrity } from "./electronWin"
 import injectFFMPEG from "./injectFFMPEG"
+import { Platform } from "../core"
+import { Packager } from "../packager"
+import { createBrandingOpts } from "./createBrandingOpts"
 
 export type ElectronPlatformName = "darwin" | "linux" | "win32" | "mas"
-
-/**
- * Electron distributables branding options.
- * @see [Electron BRANDING.json](https://github.com/electron/electron/blob/master/shell/app/BRANDING.json).
- */
-export interface ElectronBrandingOptions {
-  projectName?: string
-  productName?: string
-}
-
-export function createBrandingOpts(opts: Configuration): Required<ElectronBrandingOptions> {
-  return {
-    projectName: opts.electronBranding?.projectName || "electron",
-    productName: opts.electronBranding?.productName || "Electron",
-  }
-}
 
 export interface ElectronDownloadOptions {
   // https://github.com/electron-userland/electron-builder/issues/3077

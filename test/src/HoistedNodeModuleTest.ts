@@ -1,7 +1,7 @@
 import { Platform } from "electron-builder"
 import { assertPack, linuxDirTarget, verifyAsarFileTree } from "./helpers/packTester"
 
-test.ifAll("yarn workspace", () =>
+test("yarn workspace", () =>
   assertPack(
     "test-app-yarn-workspace",
     {
@@ -11,10 +11,9 @@ test.ifAll("yarn workspace", () =>
     {
       packed: context => verifyAsarFileTree(context.getResources(Platform.LINUX)),
     }
-  )
-)
+  ))
 
-test.ifAll("conflict versions", () =>
+test("conflict versions", () =>
   assertPack(
     "test-app-yarn-workspace-version-conflict",
     {
@@ -24,10 +23,9 @@ test.ifAll("conflict versions", () =>
     {
       packed: context => verifyAsarFileTree(context.getResources(Platform.LINUX)),
     }
-  )
-)
+  ))
 
-test.ifAll("yarn several workspaces", () =>
+test("yarn several workspaces", () =>
   assertPack(
     "test-app-yarn-several-workspace",
     {
@@ -37,10 +35,9 @@ test.ifAll("yarn several workspaces", () =>
     {
       packed: context => verifyAsarFileTree(context.getResources(Platform.LINUX)),
     }
-  )
-)
+  ))
 
-test.ifAll("yarn several workspaces and asarUnpack", () =>
+test("yarn several workspaces and asarUnpack", () =>
   assertPack(
     "test-app-yarn-several-workspace",
     {
@@ -53,10 +50,9 @@ test.ifAll("yarn several workspaces and asarUnpack", () =>
     {
       packed: context => verifyAsarFileTree(context.getResources(Platform.LINUX)),
     }
-  )
-)
+  ))
 
-test.ifAll("yarn two package.json w/ native module", () =>
+test("yarn two package.json w/ native module", () =>
   assertPack(
     "test-app-two-native-modules",
     {
@@ -65,5 +61,4 @@ test.ifAll("yarn two package.json w/ native module", () =>
     {
       packed: context => verifyAsarFileTree(context.getResources(Platform.LINUX)),
     }
-  )
-)
+  ))

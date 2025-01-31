@@ -24,29 +24,21 @@ import { AppInfo } from "./appInfo"
 import { checkFileInArchive } from "./asar/asarFileChecker"
 import { AsarPackager } from "./asar/asarUtil"
 import { AsarIntegrity, computeData } from "./asar/integrity"
-import { FuseOptionsV1 } from "./configuration"
+import { AfterPackContext, Configuration, FuseOptionsV1 } from "./configuration"
 import { copyFiles, FileMatcher, getFileMatchers, GetFileMatchersOptions, getMainFileMatchers, getNodeModuleFileMatcher } from "./fileMatcher"
 import { createTransformer, isElectronCompileUsed } from "./fileTransformer"
 import { Framework, isElectronBased } from "./Framework"
-import {
-  AfterPackContext,
-  AsarOptions,
-  CompressionLevel,
-  Configuration,
-  ElectronPlatformName,
-  FileAssociation,
-  LinuxPackager,
-  Packager,
-  PackagerOptions,
-  Platform,
-  PlatformSpecificBuildOptions,
-  Target,
-  TargetSpecificOptions,
-} from "./index"
 import { executeAppBuilderAsJson } from "./util/appBuilder"
 import { computeFileSets, computeNodeModuleFileSets, copyAppFiles, ELECTRON_COMPILE_SHIM_FILENAME, transformFiles } from "./util/appFileCopier"
 import { expandMacro as doExpandMacro } from "./util/macroExpander"
 import { resolveFunction } from "./util/resolve"
+import { Target, Platform, CompressionLevel, TargetSpecificOptions } from "./core"
+import { ElectronPlatformName } from "./electron/ElectronFramework"
+import { FileAssociation } from "./options/FileAssociation"
+import { PlatformSpecificBuildOptions, AsarOptions } from "./options/PlatformSpecificBuildOptions"
+import { Packager } from "./packager"
+import { PackagerOptions } from "./packagerApi"
+import { LinuxPackager } from "./linuxPackager"
 
 export type DoPackOptions<DC extends PlatformSpecificBuildOptions> = {
   outDir: string
@@ -121,7 +113,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return options == null ? Object.create(null) : options
   }
 
-  abstract createTargets(targets: Array<string>, mapper: (name: string, factory: (outDir: string) => Target) => void): void
+  abstract createTargets(targets: Array<string>, mapper: (name: string, factory: (outDir: string) => Target) => void): Promise<void>
 
   getCscPassword(): string {
     const password = this.doGetCscPassword()

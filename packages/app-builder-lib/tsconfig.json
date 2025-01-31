@@ -8,10 +8,14 @@
   "compilerOptions": {
     "outDir": "out",
     "rootDir": "src",
+    "typeRoots": [
+      "./typings",
+      "./node_modules/@types"
+    ]
   },
   "include": [
       "src/**/*.ts",
-      "../../typings/*.d.ts"
+      "typings/*.d.ts",
   ],
   "exclude": [
   ],

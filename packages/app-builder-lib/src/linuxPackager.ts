@@ -25,7 +25,7 @@ export class LinuxPackager extends PlatformPackager<LinuxConfiguration> {
     return ["snap", "appimage"]
   }
 
-  createTargets(targets: Array<string>, mapper: (name: string, factory: (outDir: string) => Target) => void): void {
+  async createTargets(targets: Array<string>, mapper: (name: string, factory: (outDir: string) => Target) => void): Promise<void> {
     let helper: LinuxTargetHelper | null
     const getHelper = () => {
       if (helper == null) {
@@ -39,14 +39,14 @@ export class LinuxPackager extends PlatformPackager<LinuxConfiguration> {
         continue
       }
 
-      const targetClass: typeof AppImageTarget | typeof SnapTarget | typeof FlatpakTarget | typeof FpmTarget | null = (() => {
+      const targetClass: typeof AppImageTarget | typeof SnapTarget | typeof FlatpakTarget | typeof FpmTarget | null = await (async () => {
         switch (name) {
           case "appimage":
-            return require("./targets/AppImageTarget").default
+            return (await import("./targets/AppImageTarget")).default
           case "snap":
-            return require("./targets/snap").default
+            return (await import("./targets/snap")).default
           case "flatpak":
-            return require("./targets/FlatpakTarget").default
+            return (await import("./targets/FlatpakTarget")).default
           case "deb":
           case "rpm":
           case "sh":
@@ -54,7 +54,7 @@ export class LinuxPackager extends PlatformPackager<LinuxConfiguration> {
           case "pacman":
           case "apk":
           case "p5p":
-            return require("./targets/FpmTarget").default
+            return (await import("./targets/FpmTarget")).default
           default:
             return null
         }

@@ -1,5 +1,5 @@
 import { outputFile } from "fs-extra"
-import { serializeToYaml } from "./util"
+import { serializeToYaml } from "./serializeToYaml"
 
 export class DebugLogger {
   readonly data: any = {}

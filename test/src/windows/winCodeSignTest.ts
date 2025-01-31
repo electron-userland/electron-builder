@@ -14,7 +14,7 @@ test("parseDn", () => {
 
 const windowsDirTarget = Platform.WINDOWS.createTarget(["dir"])
 
-test.ifAll(
+test(
   "sign nested asar unpacked executables",
   appThrows(
     {
@@ -59,20 +59,20 @@ function testCustomSign(sign: any) {
   })
 }
 
-test.ifAll(
+test(
   "certificateFile/password - sign as async/await",
   testCustomSign(async () => {
-    return
+    return Promise.resolve()
   })
 )
-test.ifAll(
+test(
   "certificateFile/password - sign as Promise",
   testCustomSign(() => Promise.resolve())
 )
-test.ifAll("certificateFile/password - sign as function", testCustomSign(require("../helpers/customWindowsSign").default))
-test.ifAll("certificateFile/password - sign as path", testCustomSign(path.join(__dirname, "../helpers/customWindowsSign")))
+test("certificateFile/password - sign as function", async () => testCustomSign((await import("../helpers/customWindowsSign")).default))
+test("certificateFile/password - sign as path", testCustomSign(path.join(__dirname, "../helpers/customWindowsSign")))
 
-test.ifAll("custom sign if no code sign info", () => {
+test("custom sign if no code sign info", () => {
   let called = false
   return app(
     {
@@ -98,7 +98,7 @@ test.ifAll("custom sign if no code sign info", () => {
   )()
 })
 
-test.ifAll(
+test(
   "forceCodeSigning",
   appThrows({
     targets: windowsDirTarget,
@@ -108,7 +108,7 @@ test.ifAll(
   })
 )
 
-test.ifAll(
+test(
   "electronDist",
   appThrows({
     targets: windowsDirTarget,
@@ -118,7 +118,7 @@ test.ifAll(
   })
 )
 
-test.ifAll(
+test(
   "azure signing without credentials",
   appThrows(
     {

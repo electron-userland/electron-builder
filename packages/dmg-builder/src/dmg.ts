@@ -11,7 +11,7 @@ import { release as getOsRelease } from "os"
 import * as path from "path"
 import { TmpDir } from "temp-file"
 import { addLicenseToDmg } from "./dmgLicense"
-import { attachAndExecute, computeBackground, detach, getDmgVendorPath } from "./dmgUtil"
+import { attachAndExecute, computeBackground, detach, getDmgVendorPath } from "./dmgHelpers"
 import { hdiUtil } from "./hdiuil"
 
 export class DmgTarget extends Target {

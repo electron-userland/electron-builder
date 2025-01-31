@@ -6,7 +6,7 @@ import { AsarIntegrity } from "../asar/integrity"
 import { MacPackager } from "../macPackager"
 import { normalizeExt } from "../platformPackager"
 import { executeAppBuilderAndWriteJson, executeAppBuilderAsJson } from "../util/appBuilder"
-import { createBrandingOpts } from "./ElectronFramework"
+import { createBrandingOpts } from "./createBrandingOpts"
 
 function doRename(basePath: string, oldName: string, newName: string) {
   return rename(path.join(basePath, oldName), path.join(basePath, newName))
