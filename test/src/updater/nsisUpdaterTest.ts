@@ -417,8 +417,7 @@ test.skip.ifWindows("test downloaded installer", async () => {
   expect(actualEvents).toMatchObject(["checking-for-update", "update-available", "update-downloaded", "before-quit-for-update"])
 })
 
-
-test.only("test windows signature", () => {
+test.ifWindows("test windows signature", () => {
   const artifactName = "test-app.exe"
   const publisherName = "CN=test-ci-cert"
   return assertPack(
@@ -428,7 +427,7 @@ test.only("test windows signature", () => {
       config: {
         artifactName,
         directories: {
-          output: "Humpenöder--ÝæƙƢǭቒႴሧᐇᢇXXX Pálfi ööö"
+          output: "Humpenöder--ÝæƙƢǭቒႴሧᐇᢇXXX Pálfi ööö",
         },
         win: {
           signtoolOptions: {
@@ -440,13 +439,13 @@ test.only("test windows signature", () => {
     {
       signedWin: true,
       packed: async (context: PackedContext) => {
-       // This will throw a warning about cert not being root-signed (expected, it's a local generated cert for CI)
-       // We're testing signature verification logic of checking LiteralPath specifically with non-english characters (e.g. usernames)
+        // This will throw a warning about cert not being root-signed (expected, it's a local generated cert for CI)
+        // We're testing signature verification logic of checking LiteralPath specifically with non-english characters (e.g. usernames)
         await verifySignature([publisherName], path.join(context.outDir, artifactName), console).catch(warning => {
           expect(warning.includes("LiteralPath")).toBeFalsy()
           expect(warning.includes("A certificate chain processed, but terminated in a root certificate which is not trusted by the trust provider")).toBeTruthy()
-      })
-      }
+        })
+      },
     }
   )
 })
