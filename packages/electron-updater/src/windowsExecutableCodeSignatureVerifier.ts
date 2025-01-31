@@ -50,19 +50,19 @@ export function verifySignature(publisherNames: Array<string>, unescapedTempUpda
             return
           }
           const data = parseOut(stdout)
-          if (data.Status === 0) {
-            try {
-              const normlaizedUpdateFilePath = path.normalize(data.Path)
-              const normalizedTempUpdateFile = path.normalize(unescapedTempUpdateFile)
-              logger.info(`LiteralPath: ${normlaizedUpdateFilePath}. Update Path: ${normalizedTempUpdateFile}`)
-              if (normlaizedUpdateFilePath !== normalizedTempUpdateFile) {
-                handleError(logger, new Error(`LiteralPath of ${normlaizedUpdateFilePath} is different than ${normalizedTempUpdateFile}`), stderr, reject)
-                resolve(null)
-                return
-              }
-            } catch (error: any) {
-              logger.warn(`Unable to verify LiteralPath of update asset due to missing data.Path. Skipping this step of validation. Message: ${error.message ?? error.stack}`)
+          try {
+            const normlaizedUpdateFilePath = path.normalize(data.Path)
+            const normalizedTempUpdateFile = path.normalize(unescapedTempUpdateFile)
+            logger.info(`LiteralPath: ${normlaizedUpdateFilePath}. Update Path: ${normalizedTempUpdateFile}`)
+            if (normlaizedUpdateFilePath !== normalizedTempUpdateFile) {
+              handleError(logger, new Error(`LiteralPath of ${normlaizedUpdateFilePath} is different than ${normalizedTempUpdateFile}`), stderr, reject)
+              resolve(null)
+              return
             }
+          } catch (error: any) {
+            logger.warn(`Unable to verify LiteralPath of update asset due to missing data.Path. Skipping this step of validation. Message: ${error.message ?? error.stack}`)
+          }
+          if (data.Status === 0) {
             const subject = parseDn(data.SignerCertificate.Subject)
             let match = false
             for (const name of publisherNames) {

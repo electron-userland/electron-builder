@@ -5,8 +5,10 @@ import { outputFile } from "fs-extra"
 import { tmpdir } from "os"
 import * as path from "path"
 import { assertThat } from "../helpers/fileAssert"
-import { removeUnstableProperties } from "../helpers/packTester"
+import { assertPack, PackedContext, removeUnstableProperties } from "../helpers/packTester"
 import { createNsisUpdater, trackEvents, validateDownload, writeUpdateConfig } from "../helpers/updaterTestUtil"
+import { verifySignature } from "electron-updater/out/windowsExecutableCodeSignatureVerifier"
+import { Arch, Platform } from "app-builder-lib"
 
 // some tests are flaky
 jest.retryTimes(3)
@@ -413,4 +415,38 @@ test.skip.ifWindows("test downloaded installer", async () => {
   // expect(actualEvents).toMatchObject(["checking-for-update", "update-available", "update-downloaded"])
   updater.quitAndInstall(true, false)
   expect(actualEvents).toMatchObject(["checking-for-update", "update-available", "update-downloaded", "before-quit-for-update"])
+})
+
+
+test.only("test windows signature", () => {
+  const artifactName = "test-app.exe"
+  const publisherName = "CN=test-ci-cert"
+  return assertPack(
+    "test-app-one",
+    {
+      targets: Platform.WINDOWS.createTarget(["nsis"], Arch.x64),
+      config: {
+        artifactName,
+        directories: {
+          output: "Humpenöder--ÝæƙƢǭቒႴሧᐇᢇXXX Pálfi ööö"
+        },
+        win: {
+          signtoolOptions: {
+            publisherName,
+          },
+        },
+      },
+    },
+    {
+      signedWin: true,
+      packed: async (context: PackedContext) => {
+       // This will throw a warning about cert not being root-signed (expected, it's a local generated cert for CI)
+       // We're testing signature verification logic of checking LiteralPath specifically with non-english characters (e.g. usernames)
+        await verifySignature([publisherName], path.join(context.outDir, artifactName), console).catch(warning => {
+          expect(warning.includes("LiteralPath")).toBeFalsy()
+          expect(warning.includes("A certificate chain processed, but terminated in a root certificate which is not trusted by the trust provider")).toBeTruthy()
+      })
+      }
+    }
+  )
 })

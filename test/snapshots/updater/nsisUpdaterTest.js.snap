@@ -533,6 +533,28 @@ exports[`test error 2`] = `
 ]
 `;
 
+exports[`test windows signature 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "test-app.exe",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "test-app.exe.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
 exports[`valid signature - multiple publisher DNs 1`] = `
 {
   "files": [
