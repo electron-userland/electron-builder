@@ -73,8 +73,8 @@ jobs:
         testFiles:
           - ArtifactPublisherTest,BuildTest,ExtraBuildTest,RepoSlugTest,binDownloadTest,configurationValidationTest,filenameUtilTest,filesTest,globTest,ignoreTest,macroExpanderTest,mainEntryTest,urlUtilTest,extraMetadataTest,linuxArchiveTest,linuxPackagerTest,HoistedNodeModuleTest,MemoLazyTest
           - snapTest,debTest,fpmTest,protonTest
-          - winPackagerTest,BuildTest,winCodeSignTest
-          - installerTest
+          - winPackagerTest,BuildTest,winCodeSignTest,webInstallerTest
+          - oneClickInstallerTest,assistedInstallerTest
     steps:
       - name: Checkout code repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
@@ -196,9 +196,9 @@ jobs:
       fail-fast: false
       matrix:
         testFiles:
-          - installerTest
-          - winPackagerTest,winCodeSignTest
-          - masTest,dmgTest,filesTest,macPackagerTest,differentialUpdateTest
+          - oneClickInstallerTest,assistedInstallerTest
+          - winPackagerTest,winCodeSignTest,webInstallerTest
+          - masTest,dmgTest,filesTest,macPackagerTest,differentialUpdateTest,macArchiveTest
     steps:
       - name: Checkout code repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
