@@ -1,7 +1,7 @@
 import { compute7zCompressArgs } from "app-builder-lib/out/targets/archive"
 import { execWine, prepareWindowsExecutableArgs as prepareArgs } from "app-builder-lib/out/wine"
 import { WinPackager } from "app-builder-lib/out/winPackager"
-import * as archiver from "archiver"
+import archiver from "archiver"
 import { Arch, copyFile, debug, exec, getPath7za, isEmptyOrSpaces, log, spawn, walk } from "builder-util"
 import { createWriteStream, stat, unlink, writeFile } from "fs-extra"
 import * as fs from "fs/promises"
