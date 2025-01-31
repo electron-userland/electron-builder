@@ -79,7 +79,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
     return this._iconPath.value
   }
 
-  createTargets(targets: Array<string>, mapper: (name: string, factory: (outDir: string) => Target) => void): Promise<void> {
+  async createTargets(targets: Array<string>, mapper: (name: string, factory: (outDir: string) => Target) => void): Promise<void> {
     for (const name of targets) {
       switch (name) {
         case DIR_TARGET:

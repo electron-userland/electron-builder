@@ -26,7 +26,15 @@ const packageMap = [
     entry: "src/**/*.ts",
   },
   {
+    package: "dmg-builder",
+    entry: "src/**/*.ts",
+  },
+  {
     package: "electron-updater",
+    entry: "src/**/*.ts",
+  },
+  {
+    package: "electron-builder",
     entry: "src/**/*.ts",
   },
   {
@@ -38,16 +46,8 @@ const packageMap = [
     entry: "main.js",
   },
   {
-    package: "electron-builder",
-    entry: "src/**/*.ts",
-  },
-  {
     package: "electron-forge-maker-snap",
     entry: "main.js",
-  },
-  {
-    package: "electron-publish",
-    entry: "src/**/*.ts",
   },
   {
     package: "electron-forge-maker-nsis",
@@ -57,26 +57,23 @@ const packageMap = [
     package: "electron-forge-maker-nsis-web",
     entry: "main.js",
   },
-  {
-    package: "dmg-builder",
-    entry: "src/**/*.ts",
-  },
 ]
 
 export default () => {
   const outDir = "out"
-  return packageMap.map(pkg =>
-    defineConfig({
+  return packageMap.map(pkg => {
+    const dir = `packages/${pkg.package}/${outDir}`
+    return defineConfig({
       input: glob.sync(`packages/${pkg.package}/${pkg.entry}`, { ignore: [outDir, "**/*/*.d.ts"] }),
       treeshake: false,
       output: {
-        dir: `packages/${pkg.package}/${outDir}`,
+        dir: dir,
         format: "cjs",
         sourcemap: true,
         preserveModules: true, // Keep files separates instead of one bundled file
       },
       plugins: [
-        cleandir(outDir),
+        // cleandir(dir),
         commonjs({ extensions: [".js", ".ts"] }),
         // dts({
         //   tsconfig: "./tsconfig.json",
@@ -87,7 +84,7 @@ export default () => {
           tsconfig: `packages/${pkg.package}/tsconfig.json`,
           checkJs: true,
           declaration: true,
-          declarationDir: `packages/${pkg.package}/${outDir}`,
+          declarationDir: dir,
           sourceMap: true,
           // useTsconfigDeclarationDir: true,
           // verbosity: 3,
@@ -96,5 +93,5 @@ export default () => {
         // generateDeclarations(),
       ],
     })
-  )
+  })
 }

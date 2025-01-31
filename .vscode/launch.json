@@ -10,7 +10,7 @@
           "console": "integratedTerminal",
           "internalConsoleOptions": "openOnFirstSessionStart",
           "env": {
-            "TEST_FILES": "differentialUpdateTest"
+            "TEST_FILES": "dmgTest"
           }
       }
   ]

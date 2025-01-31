@@ -161,6 +161,9 @@ importers:
       debug:
         specifier: ^4.3.4
         version: 4.3.7
+      dmg-builder:
+        specifier: workspace:*
+        version: link:../dmg-builder
       dotenv:
         specifier: ^16.4.5
         version: 16.4.7
@@ -170,6 +173,9 @@ importers:
       ejs:
         specifier: ^3.1.8
         version: 3.1.10
+      electron-builder-squirrel-windows:
+        specifier: workspace:*
+        version: link:../electron-builder-squirrel-windows
       electron-publish:
         specifier: workspace:*
         version: link:../electron-publish
