@@ -71,39 +71,3 @@ if (!process.env.SZA_COMPRESSION_LEVEL) {
 
 process.env.FORCE_YARN = "true"
 process.env.TEST_SET_BABEL_PRESET = "true"
-
-import "vitest-mock-commonjs"
-// async function mockForNodeRequire(module?: any, testDouble?: any) {
-//   // @ts-ignore
-//   if (!mockForNodeRequire.testDoubles) {
-//     // @ts-ignore
-//     mockForNodeRequire.testDoubles = {}
-
-//     // On the first call override the Module._load() method in Node.js. The override checks the
-//     // testDoubles to see if the module requested is overridden, and if it is the double is
-//     // returned, else the actual module.
-
-//     const { Module } = await import("module")
-//     // @ts-ignore
-//     Module._load_original = Module._load
-//     // @ts-ignore
-//     Module._load = (uri, parent) => {
-//       // @ts-ignore
-//       const result = mockForNodeRequire.testDoubles[uri] ?? Module._load_original(uri, parent)
-
-//       return result
-//     }
-//   }
-//   // @ts-ignore
-//   mockForNodeRequire.testDoubles[module] = testDouble
-
-//   // If the function is standalone, "this" will be undefined. If the function is used attached to
-//   // vi (VitestUtils) the function will return the object for chained method calls.
-
-//   return this
-// }
-
-// // Force overriding Module._load during the load; the reason the override is defined inside the function
-// // is to leverage closure for testDoubles.
-
-// mockForNodeRequire()

@@ -16,10 +16,6 @@
 		"templates",
 		"vendor"
 	],
-  "scripts": {
-    "compile": "vite build",
-    "compile2": "rollup -c rollup.config.ts --configPlugin typescript"
-  },
 	"dependencies": {
 		"app-builder-lib": "workspace:*",
 		"builder-util": "workspace:*",
