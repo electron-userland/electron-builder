@@ -18,7 +18,7 @@ export class CheckingWinPackager extends WinPackager {
   //noinspection JSUnusedLocalSymbols
   async pack(outDir: string, arch: Arch, targets: Array<Target>, taskManager: AsyncTaskManager): Promise<any> {
     // skip pack
-    const helperClass: typeof SquirrelWindowsTarget = require("electron-builder-squirrel-windows").default
+    const helperClass: typeof SquirrelWindowsTarget = (await import("electron-builder-squirrel-windows")).default
     this.effectiveDistOptions = await new helperClass(this, outDir).computeEffectiveDistOptions()
 
     await this.sign(this.computeAppOutDir(outDir, arch))
