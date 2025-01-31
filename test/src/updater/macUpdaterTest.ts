@@ -3,7 +3,6 @@ import { MacUpdater } from "electron-updater/out/MacUpdater"
 import { EventEmitter } from "events"
 import { assertThat } from "../helpers/fileAssert"
 import { createTestAppAdapter, httpExecutor, trackEvents, tuneTestUpdater, writeUpdateConfig } from "../helpers/updaterTestUtil"
-import { vitest } from "vitest"
 import { mockForNodeRequire } from "vitest-mock-commonjs"
 
 class TestNativeUpdater extends EventEmitter {
