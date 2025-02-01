@@ -48,12 +48,6 @@ export interface ElectronDownloadOptions {
    */
   mirror?: string | null
 
-  /**
-   * The mirror base URL for Electron headers.
-   * @default https://electronjs.org/headers
-   */
-  headersMirror?: string | 'https://electronjs.org/headers'
-
   /** @private */
   customDir?: string | null
   /** @private */

@@ -11,8 +11,6 @@ import { Configuration } from "../configuration"
 import { executeAppBuilderAndWriteJson } from "./appBuilder"
 import { NodeModuleDirInfo } from "./packageDependencies"
 import { rebuild as remoteRebuild } from "./rebuild/rebuild"
-import { ElectronDownloadOptions } from "../electron/ElectronFramework"
-import { getConfig } from "../util/config/config"
 
 export async function installOrRebuild(config: Configuration, appDir: string, options: RebuildOptions, forceInstall = false) {
   const effectiveOptions: RebuildOptions = {
@@ -42,21 +40,11 @@ export interface DesktopFrameworkInfo {
   useCustomDist: boolean
 }
 
-async function getDownloadConfig(config: Configuration | null = null): Promise<ElectronDownloadOptions> {
-  const projectDir = process.cwd()
-  if (config == null) {
-    config = await getConfig(projectDir, null, null)
-  }
-  return {
-    ...config.electronDownload,
-  }
-}
-
 function getElectronGypCacheDir() {
   return path.join(homedir(), ".electron-gyp")
 }
 
-export function getGypEnv(frameworkInfo: DesktopFrameworkInfo, platform: NodeJS.Platform, arch: string, buildFromSource: boolean, downloadConfig: ElectronDownloadOptions) {
+export function getGypEnv(frameworkInfo: DesktopFrameworkInfo, platform: NodeJS.Platform, arch: string, buildFromSource: boolean) {
   const npmConfigArch = arch === "armv7l" ? "arm" : arch
   const common: any = {
     ...process.env,
@@ -84,7 +72,7 @@ export function getGypEnv(frameworkInfo: DesktopFrameworkInfo, platform: NodeJS.
   // https://github.com/nodejs/node-gyp/issues/21
   return {
     ...common,
-    npm_config_disturl: downloadConfig.headersMirror,
+    npm_config_disturl: common.npm_config_electron_headers_disturl || "https://electronjs.org/headers",
     npm_config_target: frameworkInfo.version,
     npm_config_runtime: "electron",
     npm_config_devdir: getElectronGypCacheDir(),
@@ -131,7 +119,7 @@ async function installDependencies(config: Configuration, appDir: string, option
   }
   await spawn(execPath, execArgs, {
     cwd: appDir,
-    env: getGypEnv(options.frameworkInfo, platform, arch, options.buildFromSource === true, await getDownloadConfig(config)),
+    env: getGypEnv(options.frameworkInfo, platform, arch, options.buildFromSource === true),
   })
 
   // Some native dependencies no longer use `install` hook for building their native module, (yarn 3+ removed implicit link of `install` and `rebuild` steps)
@@ -155,7 +143,7 @@ export async function nodeGypRebuild(platform: NodeJS.Platform, arch: string, fr
   if (major <= 13 || (major == 14 && minor <= 1) || (major == 15 && minor <= 2)) {
     args.push("--force-process-config")
   }
-  await spawn(nodeGyp, args, { env: getGypEnv(frameworkInfo, platform, arch, true, await getDownloadConfig()) })
+  await spawn(nodeGyp, args, { env: getGypEnv(frameworkInfo, platform, arch, true) })
 }
 
 function getPackageToolPath() {
