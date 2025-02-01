@@ -70,7 +70,7 @@ test(
   testCustomSign(() => Promise.resolve())
 )
 test("certificateFile/password - sign as function", async () => testCustomSign((await import("../helpers/customWindowsSign")).default))
-test("certificateFile/password - sign as path", testCustomSign(path.join(__dirname, "../helpers/customWindowsSign")))
+test("certificateFile/password - sign as path", testCustomSign(path.join(__dirname, "../helpers/customWindowsSign.mjs")))
 
 test("custom sign if no code sign info", () => {
   let called = false

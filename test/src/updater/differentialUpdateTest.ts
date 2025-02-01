@@ -203,7 +203,6 @@ async function testBlockMap(oldDir: string, newDir: string, updaterClass: any, p
     autoUpdater: mockNativeUpdater,
   })
 
-
   return await new Promise<void>((resolve, reject) => {
     httpServerProcess.on("error", reject)
 

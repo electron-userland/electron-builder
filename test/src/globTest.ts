@@ -4,7 +4,7 @@ import { outputFile } from "fs-extra"
 import * as fs from "fs/promises"
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert"
-import { app, appThrows, assertPack, modifyPackageJson, PackedContext, removeUnstableProperties, verifyAsarFileTree } from "./helpers/packTester"
+import { app, appThrows, assertPack, linuxDirTarget, modifyPackageJson, PackedContext, removeUnstableProperties, verifyAsarFileTree } from "./helpers/packTester"
 import { verifySmartUnpack } from "./helpers/verifySmartUnpack"
 
 async function createFiles(appDir: string) {
@@ -29,7 +29,7 @@ test.ifNotWindows.ifDevOrLinuxCi(
   "unpackDir one",
   app(
     {
-      targets: Platform.LINUX.createTarget(DIR_TARGET),
+      targets: linuxDirTarget,
       config: {
         asarUnpack: ["assets", "b2", "do-not-unpack-dir/file.json"],
       },
@@ -58,7 +58,7 @@ test.ifNotWindows.ifDevOrLinuxCi("unpackDir", () => {
   return assertPack(
     "test-app",
     {
-      targets: Platform.LINUX.createTarget(DIR_TARGET),
+      targets: linuxDirTarget,
       config: {
         asarUnpack: ["assets", "b2", "do-not-unpack-dir/file.json"],
       },
@@ -74,7 +74,7 @@ test.ifDevOrLinuxCi("asarUnpack and files ignore", () => {
   return assertPack(
     "test-app",
     {
-      targets: Platform.LINUX.createTarget(DIR_TARGET),
+      targets: linuxDirTarget,
       config: {
         asarUnpack: ["!**/ffprobe-static/bin/darwin/x64/ffprobe"],
       },
@@ -95,7 +95,7 @@ test.ifNotWindows(
   "link",
   app(
     {
-      targets: Platform.LINUX.createTarget(DIR_TARGET),
+      targets: linuxDirTarget,
     },
     {
       projectDirCreated: projectDir => {
@@ -114,7 +114,7 @@ test.ifNotWindows("symlinks everywhere w/ static framework", () =>
   assertPack(
     "test-app-symlink-framework",
     {
-      targets: Platform.LINUX.createTarget(DIR_TARGET),
+      targets: linuxDirTarget,
       config: {
         files: ["!hello-world"],
       },
@@ -143,7 +143,7 @@ test.ifNotWindows(
   "outside link",
   appThrows(
     {
-      targets: Platform.LINUX.createTarget(DIR_TARGET),
+      targets: linuxDirTarget,
     },
     {
       projectDirCreated: async (projectDir, tmpDir) => {
@@ -160,7 +160,7 @@ test.ifDevOrLinuxCi("local node module with file protocol", () => {
   return assertPack(
     "test-app-one",
     {
-      targets: Platform.LINUX.createTarget(DIR_TARGET),
+      targets: linuxDirTarget,
       config: {
         asarUnpack: ["**/node_modules/foo/**/*"],
       },
@@ -190,7 +190,7 @@ test.ifDevOrLinuxCi("failed peer dep", () => {
   return assertPack(
     "test-app-one",
     {
-      targets: Platform.LINUX.createTarget(DIR_TARGET),
+      targets: linuxDirTarget,
     },
     {
       isInstallDepsBefore: true,
@@ -215,7 +215,7 @@ test.ifDevOrLinuxCi("ignore node_modules", () => {
   return assertPack(
     "test-app-one",
     {
-      targets: Platform.LINUX.createTarget(DIR_TARGET),
+      targets: linuxDirTarget,
       config: {
         asar: false,
         files: ["!node_modules/**/*"],
@@ -244,7 +244,7 @@ test.ifDevOrLinuxCi("asarUnpack node_modules", () => {
   return assertPack(
     "test-app-one",
     {
-      targets: Platform.LINUX.createTarget(DIR_TARGET),
+      targets: linuxDirTarget,
       config: {
         asarUnpack: "node_modules",
       },
@@ -270,7 +270,7 @@ test.ifDevOrLinuxCi("asarUnpack node_modules which has many modules", () => {
   return assertPack(
     "test-app-one",
     {
-      targets: Platform.LINUX.createTarget(DIR_TARGET),
+      targets: linuxDirTarget,
       config: {
         asarUnpack: "node_modules",
       },
@@ -316,7 +316,7 @@ test.ifDevOrLinuxCi("exclude some modules when asarUnpack node_modules which has
   return assertPack(
     "test-app-one",
     {
-      targets: Platform.LINUX.createTarget(DIR_TARGET),
+      targets: linuxDirTarget,
       config: {
         asarUnpack: ["node_modules", "!**/node_modules/ci-info/**/*"],
       },

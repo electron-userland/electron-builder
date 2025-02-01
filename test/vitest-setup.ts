@@ -1,5 +1,9 @@
 import { isCI as isCi } from "ci-info"
-import { test } from "vitest"
+import { afterEach, test, vitest } from "vitest"
+
+afterEach(() => {
+  vitest.clearAllMocks()
+})
 
 const isWindows = process.platform === "win32"
 const isMac = process.platform === "darwin"

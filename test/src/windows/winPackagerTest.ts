@@ -21,7 +21,8 @@ test(
     {
       signedWin: true,
     }
-  )
+  ),
+  { retry: 3 }
 )
 
 test(

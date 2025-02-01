@@ -1,5 +1,5 @@
 import { validateConfiguration } from "app-builder-lib/out/util/config/config"
-import { DebugLogger } from "builder-util"
+import { Arch, DebugLogger } from "builder-util"
 import { Configuration, Platform } from "electron-builder"
 import { CliOptions, configureBuildCommand, createYargs, normalizeOptions } from "electron-builder/out/builder"
 import { app, appThrows, linuxDirTarget } from "./helpers/packTester"
@@ -35,7 +35,7 @@ test.ifDevOrLinuxCi(
 test.ifDevOrLinuxCi(
   "extraFiles",
   app({
-    targets: Platform.LINUX.createTarget("appimage"),
+    targets: Platform.LINUX.createTarget("appimage", Arch.x64),
     config: {
       linux: {
         target: "zip:ia32",

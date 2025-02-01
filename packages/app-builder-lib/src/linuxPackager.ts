@@ -12,13 +12,13 @@ import SnapTarget from "./targets/snap"
 import { createCommonTarget } from "./targets/targetFactory"
 
 export class LinuxPackager extends PlatformPackager<LinuxConfiguration> {
-  readonly executableName: string
+  get executableName(): string {
+    const executableName = this.platformSpecificBuildOptions.executableName ?? this.info.config.executableName
+    return executableName == null ? this.appInfo.sanitizedName.toLowerCase() : sanitizeFileName(executableName)
+  }
 
   constructor(info: Packager) {
     super(info, Platform.LINUX)
-
-    const executableName = this.platformSpecificBuildOptions.executableName ?? info.config.executableName
-    this.executableName = executableName == null ? this.appInfo.sanitizedName.toLowerCase() : sanitizeFileName(executableName)
   }
 
   get defaultTarget(): Array<string> {
