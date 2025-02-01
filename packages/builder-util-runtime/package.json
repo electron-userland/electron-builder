@@ -2,6 +2,13 @@
   "name": "builder-util-runtime",
   "version": "9.3.1",
   "main": "out/index.js",
+  "module": "out/es/index.js",
+  "exports": {
+    ".": {
+      "require": "./out/index.js",
+      "import": "./out/es/index.js"
+    }
+  },
   "author": "Vladimir Krivosheev",
   "license": "MIT",
   "repository": {
