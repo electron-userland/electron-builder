@@ -11,7 +11,7 @@
   },
   "scripts": {
     "//": "do not wrap into single quotes - windows doesn't unwrap arg in this case",
-    "compile": "rollup -c rollup.config.ts --configPlugin typescript",
+    "compile": "rimraf packages/*/out && rollup -c rollup.config.ts --configPlugin typescript",
     "lint": "eslint packages",
     "lint-staged": "lint-staged",
     "lint-deps": "ts-node ./test/src/helpers/checkDeps.ts",
@@ -50,6 +50,7 @@
     "@babel/plugin-transform-modules-commonjs": "7.24.8",
     "@changesets/changelog-github": "0.4.7",
     "@changesets/cli": "2.25.0",
+    "@rollup/plugin-commonjs": "^28.0.2",
     "@rollup/plugin-typescript": "^12.1.2",
     "@stylistic/eslint-plugin": "^2.8.0",
     "@types/node": "^22.7.4",
@@ -65,12 +66,15 @@
     "husky": "7.0.4",
     "lint-staged": "15.2.10",
     "prettier": "3.3.3",
+    "rimraf": "^6.0.1",
     "rollup": "^4.32.1",
+    "rollup-plugin-cleandir": "^3.0.0",
     "ts-node": "^10.9.2",
     "typedoc": "^0.26.7",
     "typedoc-plugin-markdown": "4.2.8",
     "typescript": "^5.6.2",
     "typescript-json-schema": "0.64.0",
+    "vite": "^6.0.11",
     "vitest": "^3.0.4"
   },
   "engines": {
