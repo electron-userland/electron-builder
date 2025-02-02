@@ -79,7 +79,7 @@ export default () => {
     // @ts-ignore
     return defineConfig({
       watch: {
-        include: "**/*.ts",
+        include: dir("**/*.ts"),
         exclude: dir(outDir),
       },
       input,
