@@ -4,59 +4,60 @@ import * as fs from "fs"
 import * as glob from "glob"
 import { defineConfig } from "rollup"
 import { cleandir } from "rollup-plugin-cleandir"
+import path from "path"
 
 const packageMap = [
   {
     package: "builder-util-runtime",
     entry: "src/**/*.ts",
   },
-  // {
-  //   package: "builder-util",
-  //   entry: "src/**/*.ts",
-  // },
-  // {
-  //   package: "electron-publish",
-  //   entry: "src/**/*.ts",
-  // },
-  // {
-  //   package: "app-builder-lib",
-  //   entry: "src/**/*.ts",
-  // },
-  // {
-  //   package: "dmg-builder",
-  //   entry: "src/**/*.ts",
-  // },
-  // {
-  //   package: "electron-updater",
-  //   entry: "src/**/*.ts",
-  // },
-  // {
-  //   package: "electron-builder",
-  //   entry: "src/**/*.ts",
-  // },
-  // {
-  //   package: "electron-builder-squirrel-windows",
-  //   entry: "src/**/*.ts",
-  // },
-  // {
-  //   package: "electron-forge-maker-appimage",
-  //   entry: "main.js",
-  // },
-  // {
-  //   package: "electron-forge-maker-snap",
-  //   entry: "main.js",
-  // },
-  // {
-  //   package: "electron-forge-maker-nsis",
-  //   entry: "main.js",
-  // },
-  // {
-  //   package: "electron-forge-maker-nsis-web",
-  //   entry: "main.js",
-  // },
+  {
+    package: "builder-util",
+    entry: "src/**/*.ts",
+  },
+  {
+    package: "electron-publish",
+    entry: "src/**/*.ts",
+  },
+  {
+    package: "app-builder-lib",
+    entry: "src/**/*.ts",
+  },
+  {
+    package: "dmg-builder",
+    entry: "src/**/*.ts",
+  },
+  {
+    package: "electron-updater",
+    entry: "src/**/*.ts",
+  },
+  {
+    package: "electron-builder",
+    entry: "src/**/*.ts",
+  },
+  {
+    package: "electron-builder-squirrel-windows",
+    entry: "src/**/*.ts",
+  },
+  {
+    package: "electron-forge-maker-appimage",
+    entry: "main.js",
+  },
+  {
+    package: "electron-forge-maker-snap",
+    entry: "main.js",
+  },
+  {
+    package: "electron-forge-maker-nsis",
+    entry: "main.js",
+  },
+  {
+    package: "electron-forge-maker-nsis-web",
+    entry: "main.js",
+  },
 ]
 
-const outputOptions: any = {
+const outputOptions = {
   exports: "named",
   preserveModules: true,
   sourcemap: true,
@@ -69,10 +70,11 @@ const outputOptions: any = {
 export default () => {
   const outDir = "out"
   return packageMap.map(pkg => {
-    const dir = p => `packages/${pkg.package}/${p}`
+    const dir = p => path.resolve("packages", pkg.package, p)
     const input = glob.sync(dir(pkg.entry), { ignore: [dir(outDir), "**/*/*.d.ts"] })
     // const tsconfigJson = JSON.parse(fs.readFileSync(dir("tsconfig.json"), "utf-8"))
     return defineConfig({
+      // @ts-ignore
       input, //: dir(!pkg.package.includes("forge") ? input.replace(".js", ".ts") : input),
       treeshake: false,
       output: [
@@ -84,8 +86,7 @@ export default () => {
         {
           dir: dir("out/esm"),
           format: "esm",
-          preserveModules: true,
-          sourcemap: true,
+          ...outputOptions,
         },
       ],
       plugins: [
