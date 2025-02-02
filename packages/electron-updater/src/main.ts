@@ -11,6 +11,7 @@ export { PacmanUpdater } from "./PacmanUpdater"
 export { RpmUpdater } from "./RpmUpdater"
 export { MacUpdater } from "./MacUpdater"
 export { NsisUpdater } from "./NsisUpdater"
+export { ElectronAppAdapter } from "./ElectronAppAdapter"
 
 export * from "./exports"
 

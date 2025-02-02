@@ -14,9 +14,6 @@ import { DIR_TARGET, Platform, Target } from "./core"
 import { RequestedExecutionLevel, WindowsConfiguration } from "./options/winOptions"
 import { Packager } from "./packager"
 import { chooseNotNull, PlatformPackager } from "./platformPackager"
-import AppXTarget from "./targets/AppxTarget"
-import MsiTarget from "./targets/MsiTarget"
-import MsiWrappedTarget from "./targets/MsiWrappedTarget"
 import { NsisTarget } from "./targets/nsis/NsisTarget"
 import { AppPackageHelper, CopyElevateHelper } from "./targets/nsis/nsisUtil"
 import { WebInstallerTarget } from "./targets/nsis/WebInstallerTarget"
@@ -83,31 +80,30 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
         // package file format differs from nsis target
         mapper(name, outDir => new WebInstallerTarget(this, path.join(outDir, name), name, new AppPackageHelper(getCopyElevateHelper())))
       } else {
-        const targetClass: typeof NsisTarget | typeof AppXTarget | typeof MsiTarget | typeof MsiWrappedTarget | null = await (async () => {
+        const targetClass: any = await (async () => {
           switch (name) {
             case "squirrel":
               try {
-                const packageName = "electron-builder-squirrel-windows"
-                return (await import(packageName)).default
+                return (await import("electron-builder-squirrel-windows")).default
               } catch (e: any) {
                 throw new InvalidConfigurationError(`Module electron-builder-squirrel-windows must be installed in addition to build Squirrel.Windows: ${e.stack || e}`)
               }
 
             case "appx":
-              return (await import("./targets/AppxTarget")).default
+              return await import("./targets/AppxTarget")
 
             case "msi":
-              return (await import("./targets/MsiTarget")).default
+              return await import("./targets/MsiTarget")
 
             case "msiwrapped":
-              return (await import("./targets/MsiWrappedTarget")).default
+              return await import("./targets/MsiWrappedTarget")
 
             default:
               return null
           }
         })()
 
-        mapper(name, outDir => (targetClass === null ? createCommonTarget(name, outDir, this) : new (targetClass as any)(this, outDir, name)))
+        mapper(name, outDir => (targetClass === null ? createCommonTarget(name, outDir, this) : new targetClass.default(this, outDir, name)))
       }
     }
   }
