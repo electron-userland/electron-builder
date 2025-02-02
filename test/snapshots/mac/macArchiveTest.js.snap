@@ -22,6 +22,12 @@ exports[`empty installLocation 2`] = `
   "CFBundleName": "Test App ßW",
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
+  "ElectronAsarIntegrity": {
+    "Resources/app.asar": {
+      "algorithm": "SHA256",
+      "hash": "hash",
+    },
+  },
   "LSApplicationCategoryType": "your.app.category.type",
   "LSEnvironment": {
     "MallocNanoZone": "0",
@@ -87,6 +93,12 @@ exports[`extraDistFiles 2`] = `
   "CFBundleName": "Test App ßW",
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
+  "ElectronAsarIntegrity": {
+    "Resources/app.asar": {
+      "algorithm": "SHA256",
+      "hash": "hash",
+    },
+  },
   "LSApplicationCategoryType": "your.app.category.type",
   "LSEnvironment": {
     "MallocNanoZone": "0",
@@ -170,6 +182,12 @@ exports[`only zip 2`] = `
   "CFBundleName": "Test App ßW",
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
+  "ElectronAsarIntegrity": {
+    "Resources/app.asar": {
+      "algorithm": "SHA256",
+      "hash": "hash",
+    },
+  },
   "LSApplicationCategoryType": "your.app.category.type",
   "LSEnvironment": {
     "MallocNanoZone": "0",
@@ -272,6 +290,12 @@ exports[`pkg extended configuration 2`] = `
   "CFBundleName": "Test App ßW",
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
+  "ElectronAsarIntegrity": {
+    "Resources/app.asar": {
+      "algorithm": "SHA256",
+      "hash": "hash",
+    },
+  },
   "LSApplicationCategoryType": "your.app.category.type",
   "LSEnvironment": {
     "MallocNanoZone": "0",
@@ -325,6 +349,12 @@ exports[`pkg scripts 2`] = `
   "CFBundleName": "Test App ßW",
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
+  "ElectronAsarIntegrity": {
+    "Resources/app.asar": {
+      "algorithm": "SHA256",
+      "hash": "hash",
+    },
+  },
   "LSApplicationCategoryType": "your.app.category.type",
   "LSEnvironment": {
     "MallocNanoZone": "0",
@@ -818,6 +848,12 @@ exports[`tar.gz 2`] = `
   "CFBundleName": "Test App ßW",
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
+  "ElectronAsarIntegrity": {
+    "Resources/app.asar": {
+      "algorithm": "SHA256",
+      "hash": "hash",
+    },
+  },
   "LSApplicationCategoryType": "your.app.category.type",
   "LSEnvironment": {
     "MallocNanoZone": "0",

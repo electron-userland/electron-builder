@@ -1,5 +1,5 @@
-import { exec, spawn, DebugLogger, ExtraSpawnOptions, log } from "builder-util"
-import { SpawnOptions, execFileSync, ExecFileOptions } from "child_process"
+import { DebugLogger, ExtraSpawnOptions, exec, log, spawn } from "builder-util"
+import { ExecFileOptions, SpawnOptions, execFileSync } from "child_process"
 import { VmManager } from "./vm"
 
 /** @internal */

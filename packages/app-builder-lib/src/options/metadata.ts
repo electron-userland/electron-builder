@@ -37,7 +37,7 @@ export interface Metadata {
   readonly build?: Configuration
 
   /** @private */
-  readonly dependencies?: { [key: string]: string }
+  readonly dependencies?: Record<string, string>
   /** @private */
   readonly version?: string
   /** @private */

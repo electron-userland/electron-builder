@@ -1,13 +1,13 @@
+import { Arch } from "builder-util"
 import { CancellationToken } from "builder-util-runtime"
 import { MultiProgress } from "./multiProgress"
-import { Arch } from "builder-util"
 
-export { SpacesPublisher } from "./s3/spacesPublisher"
-export { KeygenPublisher } from "./keygenPublisher"
-export { SnapStorePublisher } from "./snapStorePublisher"
-export { S3Publisher } from "./s3/s3Publisher"
-export { GitHubPublisher } from "./gitHubPublisher"
 export { BitbucketPublisher } from "./bitbucketPublisher"
+export { GitHubPublisher } from "./gitHubPublisher"
+export { KeygenPublisher } from "./keygenPublisher"
+export { S3Publisher } from "./s3/s3Publisher"
+export { SpacesPublisher } from "./s3/spacesPublisher"
+export { SnapStorePublisher } from "./snapStorePublisher"
 
 export type PublishPolicy = "onTag" | "onTagOrDraft" | "always" | "never"
 
@@ -17,8 +17,8 @@ export interface PublishOptions {
   publish?: PublishPolicy | null
 }
 
-export { Publisher, getCiTag } from "./publisher"
 export { HttpPublisher } from "./httpPublisher"
+export { getCiTag, Publisher } from "./publisher"
 
 export interface PublishContext {
   readonly cancellationToken: CancellationToken

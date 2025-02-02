@@ -3,15 +3,15 @@ import { findIdentity, isSignAllowed } from "app-builder-lib/out/codeSign/macCod
 import { MacPackager } from "app-builder-lib/out/macPackager"
 import { createBlockmap } from "app-builder-lib/out/targets/differentialUpdateInfoBuilder"
 import { executeAppBuilderAsJson } from "app-builder-lib/out/util/appBuilder"
+import { Arch, AsyncTaskManager, copyDir, copyFile, exec, exists, getArchSuffix, InvalidConfigurationError, isEmptyOrSpaces, log, statOrNull } from "builder-util"
+import { CancellationToken, Nullish } from "builder-util-runtime"
 import { sanitizeFileName } from "builder-util/out/filename"
-import { Arch, AsyncTaskManager, exec, getArchSuffix, InvalidConfigurationError, isEmptyOrSpaces, log, copyDir, copyFile, exists, statOrNull } from "builder-util"
-import { CancellationToken } from "builder-util-runtime"
 import { stat } from "fs-extra"
+import { release as getOsRelease } from "os"
 import * as path from "path"
 import { TmpDir } from "temp-file"
 import { addLicenseToDmg } from "./dmgLicense"
 import { attachAndExecute, computeBackground, detach, getDmgVendorPath } from "./dmgUtil"
-import { release as getOsRelease } from "os"
 import { hdiUtil } from "./hdiuil"
 
 export class DmgTarget extends Target {
@@ -201,14 +201,7 @@ async function createStageDmg(tempDmg: string, appPath: string, volumeName: stri
     imageArgs.push("-debug")
   }
 
-  let filesystem = ["HFS+", "-fsargs", "-c c=64,a=16,e=16"]
-  if (process.arch === "arm64") {
-    // Apple Silicon `hdiutil` dropped support for HFS+, so we force the latest type
-    // https://github.com/electron-userland/electron-builder/issues/4606
-    filesystem = ["APFS"]
-    log.warn(null, "Detected arm64 process, HFS+ is unavailable. Creating dmg with APFS - supports Mac OSX 10.12+")
-  }
-  imageArgs.push("-fs", ...filesystem)
+  imageArgs.push("-fs", "APFS")
   imageArgs.push(tempDmg)
   await hdiUtil(imageArgs)
   return tempDmg
@@ -219,7 +212,7 @@ function addLogLevel(args: Array<string>): Array<string> {
   return args
 }
 
-async function computeAssetSize(cancellationToken: CancellationToken, dmgFile: string, specification: DmgOptions, backgroundFile: string | null | undefined) {
+async function computeAssetSize(cancellationToken: CancellationToken, dmgFile: string, specification: DmgOptions, backgroundFile: string | Nullish) {
   const asyncTaskManager = new AsyncTaskManager(cancellationToken)
   asyncTaskManager.addTask(stat(dmgFile))
 
@@ -240,7 +233,7 @@ async function computeAssetSize(cancellationToken: CancellationToken, dmgFile: s
   return result
 }
 
-async function customizeDmg(volumePath: string, specification: DmgOptions, packager: MacPackager, backgroundFile: string | null | undefined) {
+async function customizeDmg(volumePath: string, specification: DmgOptions, packager: MacPackager, backgroundFile: string | Nullish) {
   const window = specification.window
   const isValidIconTextSize = !!specification.iconTextSize && specification.iconTextSize >= 10 && specification.iconTextSize <= 16
   const iconTextSize = isValidIconTextSize ? specification.iconTextSize : 12

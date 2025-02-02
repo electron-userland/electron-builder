@@ -1,5 +1,5 @@
-import { SpawnOptions, ExecFileOptions } from "child_process"
 import { exec, ExtraSpawnOptions, spawn } from "builder-util"
+import { ExecFileOptions, SpawnOptions } from "child_process"
 import { VmManager } from "./vm"
 
 export class MonoVmManager extends VmManager {

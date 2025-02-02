@@ -1,7 +1,7 @@
 import { Arch, Configuration, Platform } from "app-builder-lib"
 import { getBinFromUrl } from "app-builder-lib/out/binDownload"
 import { doSpawn, getArchSuffix } from "builder-util"
-import { GenericServerOptions, S3Options } from "builder-util-runtime"
+import { GenericServerOptions, Nullish, S3Options } from "builder-util-runtime"
 import { AppImageUpdater, BaseUpdater, MacUpdater, NoOpLogger, NsisUpdater } from "electron-updater"
 import { EventEmitter } from "events"
 import { move } from "fs-extra"
@@ -29,7 +29,7 @@ async function doBuild(outDirs: Array<string>, targets: Map<Platform, Map<Arch, 
   async function buildApp(
     version: string,
     targets: Map<Platform, Map<Arch, Array<string>>>,
-    extraConfig: Configuration | null | undefined,
+    extraConfig: Configuration | Nullish,
     packed: (context: PackedContext) => Promise<any>
   ) {
     await assertPack(

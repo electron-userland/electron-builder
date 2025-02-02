@@ -110,9 +110,6 @@ importers:
       async-exit-hook:
         specifier: ^2.0.1
         version: 2.0.1
-      bluebird-lst:
-        specifier: ^1.0.9
-        version: 1.0.9
       builder-util:
         specifier: workspace:*
         version: link:../builder-util
@@ -176,6 +173,9 @@ importers:
       temp-file:
         specifier: ^3.4.0
         version: 3.4.0
+      tiny-async-pool:
+        specifier: 1.3.0
+        version: 1.3.0
     devDependencies:
       '@babel/core':
         specifier: 7.24.9
@@ -255,6 +255,9 @@ importers:
       '@types/tar':
         specifier: ^6.1.3
         version: 6.1.13
+      '@types/tiny-async-pool':
+        specifier: ^1
+        version: 1.0.5
       dmg-builder:
         specifier: workspace:*
         version: link:../dmg-builder
@@ -276,9 +279,6 @@ importers:
       app-builder-bin:
         specifier: 5.0.0-alpha.12
         version: 5.0.0-alpha.12
-      bluebird-lst:
-        specifier: ^1.0.9
-        version: 1.0.9
       builder-util-runtime:
         specifier: workspace:*
         version: link:../builder-util-runtime
@@ -286,7 +286,7 @@ importers:
         specifier: ^4.1.2
         version: 4.1.2
       cross-spawn:
-        specifier: ^7.0.3
+        specifier: ^7.0.6
         version: 7.0.6
       debug:
         specifier: ^4.3.4
@@ -318,10 +318,13 @@ importers:
       temp-file:
         specifier: ^3.4.0
         version: 3.4.0
+      tiny-async-pool:
+        specifier: 1.3.0
+        version: 1.3.0
     devDependencies:
       '@types/cross-spawn':
-        specifier: 6.0.2
-        version: 6.0.2
+        specifier: 6.0.6
+        version: 6.0.6
       '@types/fs-extra':
         specifier: ^9.0.11
         version: 9.0.13
@@ -334,6 +337,9 @@ importers:
       '@types/source-map-support':
         specifier: 0.5.4
         version: 0.5.4
+      '@types/tiny-async-pool':
+        specifier: ^1.0.5
+        version: 1.0.5
 
   packages/builder-util-runtime:
     dependencies:
@@ -614,6 +620,9 @@ importers:
       path-sort:
         specifier: ^0.1.0
         version: 0.1.0
+      resedit:
+        specifier: 1.7.0
+        version: 1.7.0
       semver:
         specifier: ^7.3.8
         version: 7.6.3
@@ -1996,8 +2005,8 @@ packages:
   '@types/cacheable-request@6.0.3':
     resolution: {integrity: sha512-IQ3EbTzGxIigb1I3qPZc1rWJnH0BmSKv5QYTalEwweFvyBDLSAe24zP0le/hyi7ecGfZVlIVAg4BZqb8WBwKqw==}
 
-  '@types/cross-spawn@6.0.2':
-    resolution: {integrity: sha512-KuwNhp3eza+Rhu8IFI5HUXRP0LIhqH5cAjubUvGXXthh4YYBuP2ntwEX+Cz8GJoZUHlKo247wPWOfA9LYEq4cw==}
+  '@types/cross-spawn@6.0.6':
+    resolution: {integrity: sha512-fXRhhUkG4H3TQk5dBhQ7m/JDdSNHKwR2BBia62lhwEIq9xGiQKLxd6LymNhn47SjXhsUEPmxi+PKw2OkW4LLjA==}
 
   '@types/debug@4.1.7':
     resolution: {integrity: sha512-9AonUzyTjXXhEOa0DnqpzZi6VHlqKMswga9EXjpXnnqxwLtdvPPtlO8evrI5D9S6asFRCQ6v+wpiUKbw+vKqyg==}
@@ -2127,6 +2136,9 @@ packages:
 
   '@types/tar@6.1.13':
     resolution: {integrity: sha512-IznnlmU5f4WcGTh2ltRu/Ijpmk8wiWXfF0VA4s+HPjHZgvFggk1YaIkbo5krX/zUCzWF8N/l4+W/LNxnvAJ8nw==}
+
+  '@types/tiny-async-pool@1.0.5':
+    resolution: {integrity: sha512-8hqr+s4rBthBtb+k02NXejl7BGVbj7CD/ZB2rMSvoSjXO52aXbtm9q/JEey5uDjzADs/zXEo7bU9iX+M6glAUA==}
 
   '@types/unist@3.0.3':
     resolution: {integrity: sha512-ko/gIFJRv177XgZsZcBwnqJN5x/Gien8qNOn0D5bQU/zAzVf9Zt3BlcUiLqhV9y4ARk0GbT3tnUiPNgnTXzc/Q==}
@@ -2517,12 +2529,6 @@ packages:
 
   bl@4.1.0:
     resolution: {integrity: sha512-1W07cM9gS6DcLperZfFSj+bWLtaPGSOHWhPiGzXmvVJbRLdG82sH/Kn8EtW1VqWVA54AKf2h5k5BbnIbwF3h6w==}
-
-  bluebird-lst@1.0.9:
-    resolution: {integrity: sha512-7B1Rtx82hjnSD4PGLAjVWeYH3tHAcVUmChh85a3lltKQm6FresXh9ErQo6oAv6CqxttczC3/kEg8SY5NluPuUw==}
-
-  bluebird@3.7.2:
-    resolution: {integrity: sha512-XpNj6GDQzdfW+r2Wnn7xiSAd7TM3jzkxGXBGTtWKuSXv1xUV+azxAm8jdWZN06QTQk+2N2XB9jRDkvbmQmcRtg==}
 
   boolean@3.2.0:
     resolution: {integrity: sha512-d0II/GO9uf9lfUHH2BQsjxzRJZBdsjgsBiW4BvhWk/3qoKwQFjIDVN19PfX8F2D/r9PCMTtLWjYVCFrpeYUzsw==}
@@ -5088,6 +5094,10 @@ packages:
   require-package-name@2.0.1:
     resolution: {integrity: sha512-uuoJ1hU/k6M0779t3VMVIYpb2VMJk05cehCaABFhXaibcbvfgR8wKiozLjVFSzJPmQMRqIcO0HMyTFqfV09V6Q==}
 
+  resedit@1.7.0:
+    resolution: {integrity: sha512-dbsZ0gk5opWPFlKMqvxCrLCuMZUVmsW3yTPT0tT4mYwo5fjQM8c4HMN9ZJt6dRDqDV/78m9SU4rv24PN4NiYaA==}
+    engines: {node: '>=12', npm: '>=6'}
+
   resedit@1.7.2:
     resolution: {integrity: sha512-vHjcY2MlAITJhC0eRD/Vv8Vlgmu9Sd3LX9zZvtGzU5ZImdTN3+d6e/4mnTyV8vEbyf1sgNIrWxhWlrys52OkEA==}
     engines: {node: '>=12', npm: '>=6'}
@@ -5532,6 +5542,9 @@ packages:
   test-exclude@6.0.0:
     resolution: {integrity: sha512-cAGWPIyOHU6zlmg88jwm7VRyXnMN7iV68OGAbYDk/Mh/xC/pzVPlQtY6ngoIH/5/tciuhGfvESU8GrHrcxD56w==}
     engines: {node: '>=8'}
+
+  tiny-async-pool@1.3.0:
+    resolution: {integrity: sha512-01EAw5EDrcVrdgyCLgoSPvqznC0sVxDSVeiOz09FUpjh71G79VCqneOr+xvt7T1r76CF6ZZfPjHorN2+d+3mqA==}
 
   tiny-typed-emitter@2.1.0:
     resolution: {integrity: sha512-qVtvMxeXbVej0cQWKqVSSAHmKZEHAvxdF8HEUBFWts8h+xEo5m/lEiPakuyZ3BnCBjOD8i24kzNOiOLLgsSxhA==}
@@ -7888,7 +7901,7 @@ snapshots:
       '@types/node': 22.10.1
       '@types/responselike': 1.0.3
 
-  '@types/cross-spawn@6.0.2':
+  '@types/cross-spawn@6.0.6':
     dependencies:
       '@types/node': 22.10.1
 
@@ -8026,6 +8039,8 @@ snapshots:
     dependencies:
       '@types/node': 22.10.1
       minipass: 4.2.8
+
+  '@types/tiny-async-pool@1.0.5': {}
 
   '@types/unist@3.0.3': {}
 
@@ -8515,12 +8530,6 @@ snapshots:
       buffer: 5.7.1
       inherits: 2.0.4
       readable-stream: 3.6.2
-
-  bluebird-lst@1.0.9:
-    dependencies:
-      bluebird: 3.7.2
-
-  bluebird@3.7.2: {}
 
   boolean@3.2.0:
     optional: true
@@ -11497,6 +11506,10 @@ snapshots:
 
   require-package-name@2.0.1: {}
 
+  resedit@1.7.0:
+    dependencies:
+      pe-library: 0.4.1
+
   resedit@1.7.2:
     dependencies:
       pe-library: 0.4.1
@@ -11985,6 +11998,10 @@ snapshots:
       '@istanbuljs/schema': 0.1.3
       glob: 7.2.3
       minimatch: 3.1.2
+
+  tiny-async-pool@1.3.0:
+    dependencies:
+      semver: 5.7.2
 
   tiny-typed-emitter@2.1.0: {}
 

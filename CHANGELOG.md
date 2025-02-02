@@ -1,3 +1,43 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v26.0.0...v) (2025-01-30)
+
+
+### Bug Fixes
+
+* allow `skipLibCheck: false` ([#8813](https://github.com/electron-userland/electron-builder/issues/8813)) ([0742966](https://github.com/electron-userland/electron-builder/commit/07429661c0da2248cec5b92eb03390ae19266328))
+
+
+
+# [](https://github.com/electron-userland/electron-builder/compare/v26.0.0-alpha.11...v) (2025-01-26)
+
+
+
+# [](https://github.com/electron-userland/electron-builder/compare/v26.0.0-alpha.10...v) (2025-01-25)
+
+
+### Bug Fixes
+
+* ASAR files in `extraResources` are not included in integrity calculations ([#8805](https://github.com/electron-userland/electron-builder/issues/8805)) ([c6d6b6e](https://github.com/electron-userland/electron-builder/commit/c6d6b6e57be2c042dc586ae13f1af38a8a19af41))
+* **linux:** AppImage doesn't update when filename contains spaces ([#8802](https://github.com/electron-userland/electron-builder/issues/8802)) ([4a68fd2](https://github.com/electron-userland/electron-builder/commit/4a68fd2d3d529b0f854877a5415f9ccad00b61fd))
+* **mac:** only fuse macOS universal builds on the combined `universal` package ([#8799](https://github.com/electron-userland/electron-builder/issues/8799)) ([45a402b](https://github.com/electron-userland/electron-builder/commit/45a402b9786bcb8e71bfc12c9498552f597653ec))
+
+
+
+# [](https://github.com/electron-userland/electron-builder/compare/v26.0.0-alpha.9...v) (2025-01-21)
+
+
+### Bug Fixes
+
+* docker deploy script runs out of space on single runner ([#8788](https://github.com/electron-userland/electron-builder/issues/8788)) ([8d6a600](https://github.com/electron-userland/electron-builder/commit/8d6a600caf9740a7effd70e9c8c1dc73fd61382e))
+* docker image loader for deploy pipeline ([#8780](https://github.com/electron-userland/electron-builder/issues/8780)) ([6f6e272](https://github.com/electron-userland/electron-builder/commit/6f6e2726009d1c894bc9231eee4e9ffddb7c6ac4))
+* **mac:** always build dmg's with APFS (BREAKING) ([#8782](https://github.com/electron-userland/electron-builder/issues/8782)) ([633490c](https://github.com/electron-userland/electron-builder/commit/633490cb395c0af8027116b345500c58a7616964))
+
+
+### Features
+
+* **docker:** support `pwsh` for running codesigning ([#8787](https://github.com/electron-userland/electron-builder/issues/8787)) ([cdf18d9](https://github.com/electron-userland/electron-builder/commit/cdf18d9a0f65068e179e43152699c366c4c29467))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v26.0.0-alpha.8...v) (2025-01-14)
 
 

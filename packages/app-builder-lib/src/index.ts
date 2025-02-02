@@ -1,73 +1,72 @@
-import { PublishOptions } from "electron-publish"
-import { log, InvalidConfigurationError, executeFinally } from "builder-util"
+import { InvalidConfigurationError, executeFinally, log } from "builder-util"
 import { asArray } from "builder-util-runtime"
+import { PublishOptions } from "electron-publish"
 import { Packager } from "./packager"
 import { PackagerOptions } from "./packagerApi"
-import { resolveFunction } from "./util/resolve"
 import { PublishManager } from "./publish/PublishManager"
+import { resolveFunction } from "./util/resolve"
 
-export { Packager, BuildResult } from "./packager"
-export { PackagerOptions, ArtifactCreated, ArtifactBuildStarted } from "./packagerApi"
+export { Arch, archFromString, getArchSuffix } from "builder-util"
+export { AppInfo } from "./appInfo"
 export {
-  TargetConfiguration,
-  Platform,
-  Target,
-  DIR_TARGET,
-  BeforeBuildContext,
-  SourceRepositoryInfo,
-  TargetSpecificOptions,
-  TargetConfigType,
-  DEFAULT_TARGET,
-  CompressionLevel,
-} from "./core"
-export { getArchSuffix, Arch, archFromString } from "builder-util"
-export {
+  AfterExtractContext,
+  AfterPackContext,
+  BeforePackContext,
   CommonConfiguration,
   Configuration,
-  AfterPackContext,
-  MetadataDirectories,
-  BeforePackContext,
-  AfterExtractContext,
-  Hooks,
-  Hook,
-  PackContext,
   FuseOptionsV1,
+  Hook,
+  Hooks,
+  MetadataDirectories,
+  PackContext,
 } from "./configuration"
+export {
+  BeforeBuildContext,
+  CompressionLevel,
+  DEFAULT_TARGET,
+  DIR_TARGET,
+  Platform,
+  SourceRepositoryInfo,
+  Target,
+  TargetConfigType,
+  TargetConfiguration,
+  TargetSpecificOptions,
+} from "./core"
 export { ElectronBrandingOptions, ElectronDownloadOptions, ElectronPlatformName } from "./electron/ElectronFramework"
-export { PlatformSpecificBuildOptions, AsarOptions, FileSet, Protocol, ReleaseInfo, FilesBuildOptions } from "./options/PlatformSpecificBuildOptions"
-export { FileAssociation } from "./options/FileAssociation"
-export { MacConfiguration, DmgOptions, MasConfiguration, MacOsTargetName, DmgContent, DmgWindow } from "./options/macOptions"
-export { PkgOptions, PkgBackgroundOptions, BackgroundAlignment, BackgroundScaling } from "./options/pkgOptions"
-export { WindowsConfiguration, WindowsAzureSigningConfiguration, WindowsSigntoolConfiguration } from "./options/winOptions"
 export { AppXOptions } from "./options/AppXOptions"
+export { CommonWindowsInstallerConfiguration } from "./options/CommonWindowsInstallerConfiguration"
+export { FileAssociation } from "./options/FileAssociation"
+export { AppImageOptions, CommonLinuxOptions, DebOptions, FlatpakOptions, LinuxConfiguration, LinuxDesktopFile, LinuxTargetSpecificOptions } from "./options/linuxOptions"
+export { DmgContent, DmgOptions, DmgWindow, MacConfiguration, MacOsTargetName, MasConfiguration } from "./options/macOptions"
+export { AuthorMetadata, Metadata, RepositoryInfo } from "./options/metadata"
 export { MsiOptions } from "./options/MsiOptions"
 export { MsiWrappedOptions } from "./options/MsiWrappedOptions"
-export { CommonWindowsInstallerConfiguration } from "./options/CommonWindowsInstallerConfiguration"
-export { NsisOptions, NsisWebOptions, PortableOptions, CommonNsisOptions, CustomNsisBinary } from "./targets/nsis/nsisOptions"
-export { LinuxConfiguration, DebOptions, CommonLinuxOptions, LinuxTargetSpecificOptions, AppImageOptions, FlatpakOptions, LinuxDesktopFile } from "./options/linuxOptions"
-export { SnapOptions, PlugDescriptor, SlotDescriptor } from "./options/SnapOptions"
-export { Metadata, AuthorMetadata, RepositoryInfo } from "./options/metadata"
-export { AppInfo } from "./appInfo"
+export { BackgroundAlignment, BackgroundScaling, PkgBackgroundOptions, PkgOptions } from "./options/pkgOptions"
+export { AsarOptions, FileSet, FilesBuildOptions, PlatformSpecificBuildOptions, Protocol, ReleaseInfo } from "./options/PlatformSpecificBuildOptions"
+export { PlugDescriptor, SlotDescriptor, SnapOptions } from "./options/SnapOptions"
 export { SquirrelWindowsOptions } from "./options/SquirrelWindowsOptions"
+export { WindowsAzureSigningConfiguration, WindowsConfiguration, WindowsSigntoolConfiguration } from "./options/winOptions"
+export { BuildResult, Packager } from "./packager"
+export { ArtifactBuildStarted, ArtifactCreated, PackagerOptions } from "./packagerApi"
+export { CommonNsisOptions, CustomNsisBinary, NsisOptions, NsisWebOptions, PortableOptions } from "./targets/nsis/nsisOptions"
 
-export { CustomMacSign, CustomMacSignOptions } from "./macPackager"
-export { WindowsSignOptions } from "./codeSign/windowsCodeSign"
-export {
-  CustomWindowsSignTaskConfiguration,
-  WindowsSignTaskConfiguration,
-  CustomWindowsSign,
-  FileCodeSigningInfo,
-  CertificateFromStoreInfo,
-} from "./codeSign/windowsSignToolManager"
 export { CancellationToken, ProgressInfo } from "builder-util-runtime"
 export { PublishOptions, UploadTask } from "electron-publish"
-export { PublishManager } from "./publish/PublishManager"
-export { PlatformPackager } from "./platformPackager"
+export { WindowsSignOptions } from "./codeSign/windowsCodeSign"
+export {
+  CertificateFromStoreInfo,
+  CustomWindowsSign,
+  CustomWindowsSignTaskConfiguration,
+  FileCodeSigningInfo,
+  WindowsSignTaskConfiguration,
+} from "./codeSign/windowsSignToolManager"
+export { ForgeOptions, buildForge } from "./forge-maker"
 export { Framework, PrepareApplicationStageDirectoryOptions } from "./Framework"
-export { buildForge, ForgeOptions } from "./forge-maker"
 export { LinuxPackager } from "./linuxPackager"
+export { CustomMacSign, CustomMacSignOptions, MacPackager } from "./macPackager"
+export { PlatformPackager } from "./platformPackager"
+export { PublishManager } from "./publish/PublishManager"
 export { WinPackager } from "./winPackager"
-export { MacPackager } from "./macPackager"
 
 const expectedOptions = new Set(["publish", "targets", "mac", "win", "linux", "projectDir", "platformPackagerFactory", "config", "effectiveOptionComputed", "prepackaged"])
 

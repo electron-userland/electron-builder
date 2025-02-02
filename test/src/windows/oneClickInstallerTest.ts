@@ -5,7 +5,7 @@ import { assertThat } from "../helpers/fileAssert"
 import { app, assertPack, copyTestAsset, modifyPackageJson } from "../helpers/packTester"
 import { checkHelpers, doTest, expectUpdateMetadata } from "../helpers/winHelper"
 
-const nsisTarget = Platform.WINDOWS.createTarget(["nsis"])
+const nsisTarget = Platform.WINDOWS.createTarget(["nsis"], Arch.x64)
 
 function pickSnapshotDefines(defines: any) {
   return {
@@ -83,11 +83,11 @@ test.ifAll(
   })
 )
 
-test.ifAll.ifNotCiMac(
+test.ifAll(
   "multi language license",
   app(
     {
-      targets: Platform.WINDOWS.createTarget("nsis"),
+      targets: Platform.WINDOWS.createTarget("nsis", Arch.x64),
       config: {
         publish: null,
         nsis: {
@@ -109,11 +109,11 @@ test.ifAll.ifNotCiMac(
   )
 )
 
-test.ifAll.ifNotCiMac(
+test.ifAll(
   "html license",
   app(
     {
-      targets: Platform.WINDOWS.createTarget("nsis"),
+      targets: Platform.WINDOWS.createTarget("nsis", Arch.x64),
       config: {
         publish: null,
         nsis: {
@@ -189,7 +189,7 @@ test.ifDevOrLinuxCi(
   )
 )
 
-test.skip.ifNotCiMac("installerHeaderIcon", () => {
+test.skip("installerHeaderIcon", () => {
   let headerIconPath: string | null = null
   return assertPack(
     "test-app-one",
@@ -257,7 +257,7 @@ test.ifDevOrLinuxCi(
   )
 )
 
-test.ifAll.ifNotCiMac(
+test.ifAll(
   "menuCategory",
   app(
     {
@@ -287,7 +287,7 @@ test.ifAll.ifNotCiMac(
   )
 )
 
-test.ifNotCiMac(
+test(
   "string menuCategory",
   app(
     {

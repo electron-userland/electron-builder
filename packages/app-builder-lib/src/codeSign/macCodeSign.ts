@@ -1,8 +1,9 @@
-import BluebirdPromise from "bluebird-lst"
-import { exec, InvalidConfigurationError, isEmptyOrSpaces, isEnvTrue, isPullRequest, log, TmpDir, retry } from "builder-util"
-import { copyFile, unlinkIfExists } from "builder-util"
-import { Fields, Logger } from "builder-util"
-import { randomBytes, createHash } from "crypto"
+import { signAsync } from "@electron/osx-sign"
+import { SignOptions } from "@electron/osx-sign/dist/cjs/types"
+import { Identity as _Identity } from "@electron/osx-sign/dist/cjs/util-identities"
+import { copyFile, exec, Fields, InvalidConfigurationError, isEmptyOrSpaces, isEnvTrue, isPullRequest, log, Logger, retry, TmpDir, unlinkIfExists } from "builder-util"
+import { Nullish } from "builder-util-runtime"
+import { createHash, randomBytes } from "crypto"
 import { rename } from "fs/promises"
 import { Lazy } from "lazy-val"
 import { homedir, tmpdir } from "os"
@@ -10,9 +11,6 @@ import * as path from "path"
 import { getTempName } from "temp-file"
 import { isAutoDiscoveryCodeSignIdentity } from "../util/flags"
 import { importCertificate } from "./codesign"
-import { Identity as _Identity } from "@electron/osx-sign/dist/cjs/util-identities"
-import { SignOptions } from "@electron/osx-sign/dist/cjs/types"
-import { signAsync } from "@electron/osx-sign"
 
 export const appleCertificatePrefixes = ["Developer ID Application:", "Developer ID Installer:", "3rd Party Mac Developer Application:", "3rd Party Mac Developer Installer:"]
 
@@ -59,13 +57,7 @@ export function isSignAllowed(isPrintWarn = true): boolean {
   return true
 }
 
-export async function reportError(
-  isMas: boolean,
-  certificateTypes: CertType[],
-  qualifier: string | null | undefined,
-  keychainFile: string | null | undefined,
-  isForceCodeSigning: boolean
-) {
+export async function reportError(isMas: boolean, certificateTypes: CertType[], qualifier: string | Nullish, keychainFile: string | Nullish, isForceCodeSigning: boolean) {
   const logFields: Fields = {}
   if (qualifier == null) {
     logFields.reason = ""
@@ -194,8 +186,9 @@ export async function createKeychain({ tmpDir, cscLink, cscKeyPassword, cscILink
 
   await Promise.all([
     // we do not clear downloaded files - will be removed on tmpDir cleanup automatically. not a security issue since in any case data is available as env variables and protected by password.
-    BluebirdPromise.map(certLinks, (link, i) => importCertificate(link, tmpDir, currentDir).then(it => (certPaths[i] = it))),
-    BluebirdPromise.mapSeries(securityCommands, it => exec("/usr/bin/security", it)),
+    ...certLinks.map((link, i) => importCertificate(link, tmpDir, currentDir).then(it => (certPaths[i] = it))),
+    // queue each security command
+    securityCommands.reduce((promise, cmd) => promise.then(() => exec("/usr/bin/security", cmd)), new Promise(resolve => resolve(null))),
   ])
   const cscPasswords: Array<string> = [cscKeyPassword]
   if (cscIKeyPassword != null) {

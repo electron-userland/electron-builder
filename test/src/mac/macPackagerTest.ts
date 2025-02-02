@@ -3,7 +3,7 @@ import { Arch, createTargets, DIR_TARGET, Platform } from "electron-builder"
 import * as fs from "fs/promises"
 import * as path from "path"
 import { assertThat } from "../helpers/fileAssert"
-import { app, appThrows, assertPack, platform } from "../helpers/packTester"
+import { app, appThrows, assertPack, checkDirContents, platform } from "../helpers/packTester"
 import { verifySmartUnpack } from "../helpers/verifySmartUnpack"
 
 test.ifMac.ifAll("two-package", () =>
@@ -141,3 +141,29 @@ test.ifMac.ifAll(
 )
 
 test.ifWinCi("Build macOS on Windows is not supported", appThrows(platform(Platform.MAC)))
+
+test.ifAll(
+  "multiple asar resources",
+  app(
+    {
+      targets: Platform.MAC.createTarget("zip", Arch.x64),
+      config: {
+        extraResources: [
+          { from: "build", to: "./", filter: "*.asar" },
+          { from: "build/subdir", to: "./subdir", filter: "*.asar" },
+        ],
+        electronLanguages: "en",
+      },
+    },
+    {
+      signed: true,
+      projectDirCreated: async projectDir => {
+        await fs.mkdir(path.join(projectDir, "build", "subdir"))
+        await fs.copyFile(path.join(projectDir, "build", "extraAsar.asar"), path.join(projectDir, "build", "subdir", "extraAsar2.asar"))
+      },
+      checkMacApp: async (appDir, info) => {
+        await checkDirContents(path.join(appDir, "Contents", "Resources"))
+      },
+    }
+  )
+)

@@ -1,5 +1,6 @@
-import { PlatformSpecificBuildOptions, TargetConfigType } from "../index"
+import { Nullish } from "builder-util-runtime"
 import { CustomWindowsSign } from "../codeSign/windowsSignToolManager"
+import { PlatformSpecificBuildOptions, TargetConfigType } from "../index"
 
 export interface WindowsConfiguration extends PlatformSpecificBuildOptions {
   /**
@@ -25,11 +26,13 @@ export interface WindowsConfiguration extends PlatformSpecificBuildOptions {
 
   /**
    * Options for usage with signtool.exe
+   * Cannot be used in conjunction with `azureSignOptions`, signing will default to Azure Trusted Signing
    */
   readonly signtoolOptions?: WindowsSigntoolConfiguration | null
 
   /**
    * Options for usage of Azure Trusted Signing (beta)
+   * Cannot be used in conjunction with `signtoolOptions`, signing will default to Azure Trusted Signing
    */
   readonly azureSignOptions?: WindowsAzureSigningConfiguration | null
 
@@ -165,5 +168,5 @@ export interface WindowsAzureSigningConfiguration {
    * Allow other CLI parameters (verbatim case-sensitive) to `Invoke-TrustedSigning`
    * Note: Key-Value pairs with `undefined`/`null` value are filtered out of the command.
    */
-  [k: string]: string | undefined | null
+  [k: string]: string | Nullish
 }

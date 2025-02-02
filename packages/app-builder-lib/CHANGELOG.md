@@ -1,5 +1,150 @@
 # app-builder-lib
 
+## 26.0.1
+
+### Patch Changes
+
+- [#8815](https://github.com/electron-userland/electron-builder/pull/8815) [`8e7811d1`](https://github.com/electron-userland/electron-builder/commit/8e7811d18de3acb39ce9253cf2cd9afa4e23f99c) Thanks [@mmaietta](https://github.com/mmaietta)! - chore: "organize imports" + change `ObjectMap` => `Record` for non-external properties (i.e. things that don't get processed for `scheme.json`)
+
+- [#8813](https://github.com/electron-userland/electron-builder/pull/8813) [`07429661`](https://github.com/electron-userland/electron-builder/commit/07429661c0da2248cec5b92eb03390ae19266328) Thanks [@mmaietta](https://github.com/mmaietta)! - chore: extract common `undefined | null` to reuse current (unexported) type `Nullish`. Expose `FileMatcher` instead of `@internal` flag
+
+- [#8810](https://github.com/electron-userland/electron-builder/pull/8810) [`62997b08`](https://github.com/electron-userland/electron-builder/commit/62997b087065650d263581fa17a2c0531039fcd9) Thanks [@mmaietta](https://github.com/mmaietta)! - chore: migrate from BluebirdPromise to vanilla Promise. use `tiny-async-pool` for setting concurrency limit
+
+- Updated dependencies [[`8e7811d1`](https://github.com/electron-userland/electron-builder/commit/8e7811d18de3acb39ce9253cf2cd9afa4e23f99c), [`07429661`](https://github.com/electron-userland/electron-builder/commit/07429661c0da2248cec5b92eb03390ae19266328), [`62997b08`](https://github.com/electron-userland/electron-builder/commit/62997b087065650d263581fa17a2c0531039fcd9)]:
+  - builder-util@26.0.1
+  - builder-util-runtime@9.3.1
+  - dmg-builder@26.0.1
+  - electron-builder-squirrel-windows@26.0.1
+  - electron-publish@26.0.1
+
+## 26.0.0
+
+### Major Changes
+
+- [#8582](https://github.com/electron-userland/electron-builder/pull/8582) [`6a9597b4`](https://github.com/electron-userland/electron-builder/commit/6a9597b4d739744fd9211fc07f55bb34211c7626) Thanks [@mmaietta](https://github.com/mmaietta)! - chore: remove deprecated fields from `winOptions` and `macOptions`
+
+  For `winOptions` signing configuration, it has been moved to `win.signtoolOptions` in order to support `azureOptions` as a separate field and avoid bloating `win` configuration object
+  For `macOptions`, notarize options has been deprecated in favor of env vars for quite some time. Env vars are much more secure
+
+- [#8572](https://github.com/electron-userland/electron-builder/pull/8572) [`0dbe357a`](https://github.com/electron-userland/electron-builder/commit/0dbe357ac5b4f3c51d9a6e9d7bbf0b1f142b5746) Thanks [@mmaietta](https://github.com/mmaietta)! - feat: allowing additional entries in .desktop file, such as `[Desktop Actions <actionName>]`. Requires changing configuration `desktop` property to object to be more extensible in the future
+
+- [#8562](https://github.com/electron-userland/electron-builder/pull/8562) [`b8185d48`](https://github.com/electron-userland/electron-builder/commit/b8185d48a75e65932196700e28bf71613dd141b4) Thanks [@beyondkmp](https://github.com/beyondkmp)! - support including node_modules in other subdirectories
+
+### Minor Changes
+
+- [#8609](https://github.com/electron-userland/electron-builder/pull/8609) [`d672b04b`](https://github.com/electron-userland/electron-builder/commit/d672b04b4746170c07bc39b7b049ab0c584e7a19) Thanks [@iongion](https://github.com/iongion)! - feat: support completely custom AppxManifest.xml
+
+- [#8607](https://github.com/electron-userland/electron-builder/pull/8607) [`f123628c`](https://github.com/electron-userland/electron-builder/commit/f123628ce400b5e65d0e4f0966e5cc65a1f3b8a5) Thanks [@mmaietta](https://github.com/mmaietta)! - feat: allow disabling of building a universal windows installer
+
+- [#8711](https://github.com/electron-userland/electron-builder/pull/8711) [`6f0fb8e4`](https://github.com/electron-userland/electron-builder/commit/6f0fb8e44f035bcd6ff0d6f234b38c20fde066af) Thanks [@hrueger](https://github.com/hrueger)! - Add `host` property to support self-hosted Keygen instances
+
+- [#8636](https://github.com/electron-userland/electron-builder/pull/8636) [`88cc0b06`](https://github.com/electron-userland/electron-builder/commit/88cc0b06dba22139721fd1e04f6a1cf2d447edbd) Thanks [@mmaietta](https://github.com/mmaietta)! - feat: add support for AppArmor with template profile and configuration property
+
+- [#8570](https://github.com/electron-userland/electron-builder/pull/8570) [`c8484305`](https://github.com/electron-userland/electron-builder/commit/c84843053a8f9e0b6af14c6b2ed33c5f82d495b3) Thanks [@mmaietta](https://github.com/mmaietta)! - feat: migrate to official `electron/asar` packaging
+
+- [#8525](https://github.com/electron-userland/electron-builder/pull/8525) [`13f55a3e`](https://github.com/electron-userland/electron-builder/commit/13f55a3ef070d946f5d80dd412a557bd38c98424) Thanks [@mmaietta](https://github.com/mmaietta)! - feat: migrate `electronDist` to be an electron-builder `Hook`
+
+- [#8588](https://github.com/electron-userland/electron-builder/pull/8588) [`8434e10d`](https://github.com/electron-userland/electron-builder/commit/8434e10dad0893ca11c5f3a17a70470065f96fa0) Thanks [@mmaietta](https://github.com/mmaietta)! - feat: adding integration with @electron/fuses
+
+- [#8787](https://github.com/electron-userland/electron-builder/pull/8787) [`cdf18d9a`](https://github.com/electron-userland/electron-builder/commit/cdf18d9a0f65068e179e43152699c366c4c29467) Thanks [@mmaietta](https://github.com/mmaietta)! - feat: add `pwsh` detection to enable azure trusted signing within docker image
+
+- [#8394](https://github.com/electron-userland/electron-builder/pull/8394) [`ae9221d9`](https://github.com/electron-userland/electron-builder/commit/ae9221d947c2dedff7b655ddafceb9746f9f4460) Thanks [@xyloflake](https://github.com/xyloflake)! - feat: Implement autoupdates for pacman
+
+### Patch Changes
+
+- [#8645](https://github.com/electron-userland/electron-builder/pull/8645) [`f4d40f91`](https://github.com/electron-userland/electron-builder/commit/f4d40f91f1511fc55cbef7c9e7edfddaf6ab67bc) Thanks [@beyondkmp](https://github.com/beyondkmp)! - fix: smart unpack for local module with dll
+
+- [#8762](https://github.com/electron-userland/electron-builder/pull/8762) [`c4f54977`](https://github.com/electron-userland/electron-builder/commit/c4f54977045ad3f6f7637004f632c37bfb41e79a) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: update @electron/asar to 3.2.18 to resolve signing issue with framework symlinks
+
+- [#8650](https://github.com/electron-userland/electron-builder/pull/8650) [`f84a0831`](https://github.com/electron-userland/electron-builder/commit/f84a0831d1d02b782ad07d4f7feff79d96dd45ec) Thanks [@mmaietta](https://github.com/mmaietta)! - fix(win): add required `publisherName` field to Azure Trusted Signing
+
+- [#8573](https://github.com/electron-userland/electron-builder/pull/8573) [`1fee87a2`](https://github.com/electron-userland/electron-builder/commit/1fee87a20e1bca88f185967ca540d60177e13653) Thanks [@mmaietta](https://github.com/mmaietta)! - chore(deps): update ejs to v3.1.10
+
+- [#8799](https://github.com/electron-userland/electron-builder/pull/8799) [`45a402b9`](https://github.com/electron-userland/electron-builder/commit/45a402b9786bcb8e71bfc12c9498552f597653ec) Thanks [@t3chguy](https://github.com/t3chguy)! - fix(mac): only fuse macOS universal builds on the combined universal package
+
+- [#8671](https://github.com/electron-userland/electron-builder/pull/8671) [`a4505a37`](https://github.com/electron-userland/electron-builder/commit/a4505a3785c17fc1aaaeaa91ba2653787219d74a) Thanks [@beyondkmp](https://github.com/beyondkmp)! - chore(deps): update electron/asar to 3.2.17
+
+- [#8596](https://github.com/electron-userland/electron-builder/pull/8596) [`e0b0e351`](https://github.com/electron-userland/electron-builder/commit/e0b0e351baecc29e08d9f7d90f4699150b229416) Thanks [@mmaietta](https://github.com/mmaietta)! - chore: refactor files for publishing to electron-publish
+
+- [#8653](https://github.com/electron-userland/electron-builder/pull/8653) [`796e1a07`](https://github.com/electron-userland/electron-builder/commit/796e1a072a2bbe97ced6f4be05325c704fc04b7f) Thanks [@IsaacAderogba](https://github.com/IsaacAderogba)! - fix: cscIKeyPassword must support empty string arguments
+
+- [#8627](https://github.com/electron-userland/electron-builder/pull/8627) [`2a3195d9`](https://github.com/electron-userland/electron-builder/commit/2a3195d99f42e9b4f70e5719525db046a327aeb7) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: add rfc3161 timestamp entry as default for azure signing to resolve Windows Defender alert
+
+- [#8725](https://github.com/electron-userland/electron-builder/pull/8725) [`ccbf0a5b`](https://github.com/electron-userland/electron-builder/commit/ccbf0a5be38e1d8e405ed9d2bc9f3b2755548182) Thanks [@beyondkmp](https://github.com/beyondkmp)! - fix: electron-builder fails when list of node_modules files is too big to pass in a glob
+
+- [#8661](https://github.com/electron-userland/electron-builder/pull/8661) [`6a294c97`](https://github.com/electron-userland/electron-builder/commit/6a294c9725f30cf1b6151363a32b9d1395b0122e) Thanks [@t3chguy](https://github.com/t3chguy)! - chore: remove stale handler for `extend-info` in electronMac plist creation
+
+- [#8577](https://github.com/electron-userland/electron-builder/pull/8577) [`e9eef0c1`](https://github.com/electron-userland/electron-builder/commit/e9eef0c1c7f73a5edfe3026f044c6278641077cb) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: add additional default exclusions to copy logic
+
+- [#8566](https://github.com/electron-userland/electron-builder/pull/8566) [`e45fecf0`](https://github.com/electron-userland/electron-builder/commit/e45fecf04d1ba758ed524391a1fc161e5c57d305) Thanks [@mmaietta](https://github.com/mmaietta)! - chore: change signing warning message to debug
+
+- [#8576](https://github.com/electron-userland/electron-builder/pull/8576) [`3eab7143`](https://github.com/electron-userland/electron-builder/commit/3eab7143d74262caace81ea05e97617d07daf336) Thanks [@beyondkmp](https://github.com/beyondkmp)! - fix: packages in the workspace not being under node_modules
+
+- [#8691](https://github.com/electron-userland/electron-builder/pull/8691) [`5a9141f6`](https://github.com/electron-userland/electron-builder/commit/5a9141f60ac6d51a4b839b73271274bef5c6ca70) Thanks [@mmaietta](https://github.com/mmaietta)! - chore(mac): add back logging of identity name and hash as opposed to just hash
+
+- [#8805](https://github.com/electron-userland/electron-builder/pull/8805) [`c6d6b6e5`](https://github.com/electron-userland/electron-builder/commit/c6d6b6e57be2c042dc586ae13f1af38a8a19af41) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: ASAR files in extraResources are not included in integrity calculations
+
+- [#8575](https://github.com/electron-userland/electron-builder/pull/8575) [`dfa35c32`](https://github.com/electron-userland/electron-builder/commit/dfa35c321f6e68c6a102ddc49aa64985fb11d396) Thanks [@doctolivier](https://github.com/doctolivier)! - chore(deps): update @electron/rebuild to v3.7.0
+
+- [#8637](https://github.com/electron-userland/electron-builder/pull/8637) [`667ab2f8`](https://github.com/electron-userland/electron-builder/commit/667ab2f8d5d635b5ab03cd5de06561403135a7f6) Thanks [@mmaietta](https://github.com/mmaietta)! - chore: migrate default recommends and default depends for fpm from app-builder-bin to JS code
+
+- [#8727](https://github.com/electron-userland/electron-builder/pull/8727) [`7268c2ee`](https://github.com/electron-userland/electron-builder/commit/7268c2eea3f4a5b5d4f88283585797ce5c41de1c) Thanks [@NoahAndrews](https://github.com/NoahAndrews)! - chore: Rename `vmRequired` variable to `useVmIfNotOnWin`
+
+- [#8714](https://github.com/electron-userland/electron-builder/pull/8714) [`66334502`](https://github.com/electron-userland/electron-builder/commit/66334502a50d1decb15eb3ac3bdcd197b3721036) Thanks [@kttmv](https://github.com/kttmv)! - chore: Remove informal Russian messages in the NSIS installer
+
+- [#8606](https://github.com/electron-userland/electron-builder/pull/8606) [`a0e635c1`](https://github.com/electron-userland/electron-builder/commit/a0e635c183633c291fd2e0a0e8c9a1c6b8e085a0) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: add quotes to surround file path during azure signing to handle files with spaces
+
+- [#8603](https://github.com/electron-userland/electron-builder/pull/8603) [`712a8bce`](https://github.com/electron-userland/electron-builder/commit/712a8bce56331cd89df270f182fa27bf365e985b) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: checking relative path without separator as that doesn't work on Windows
+
+- [#8639](https://github.com/electron-userland/electron-builder/pull/8639) [`28006623`](https://github.com/electron-userland/electron-builder/commit/28006623a1a344007e283cdc65ce1a81f42a136d) Thanks [@mmaietta](https://github.com/mmaietta)! - chore: refactor electron dist logic to avoid unnecessary console logs
+
+- [#8715](https://github.com/electron-userland/electron-builder/pull/8715) [`4c394d54`](https://github.com/electron-userland/electron-builder/commit/4c394d54689f03bbca54a083c7e126d9c83e6ed7) Thanks [@beyondkmp](https://github.com/beyondkmp)! - fix: does not work with NPM workspaces
+
+- [#8654](https://github.com/electron-userland/electron-builder/pull/8654) [`9e11358f`](https://github.com/electron-userland/electron-builder/commit/9e11358fc28249675cd7ec4f7037408cc18dfa8a) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: check ResolvedFileSet src when verifying symlinks to be within project directory
+
+- [#8632](https://github.com/electron-userland/electron-builder/pull/8632) [`645e2abd`](https://github.com/electron-userland/electron-builder/commit/645e2abd5ed604fe4f4d9475cf2cedf4fe78436c) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: only sign concurrently when using local signtool. azure can't be in parallel due to resources being locked during usage
+
+- [#8601](https://github.com/electron-userland/electron-builder/pull/8601) [`215fc36b`](https://github.com/electron-userland/electron-builder/commit/215fc36b5e8d243ef5bc77d31eb8e30d0e8bca9d) Thanks [@mmaietta](https://github.com/mmaietta)! - Revert "fix(win): use appInfo description as primary entry for FileDescription" to resolve https://github.com/electron-userland/electron-builder/issues/8599
+
+- [`a1ee0419`](https://github.com/electron-userland/electron-builder/commit/a1ee04191f12920585fea8fa648cd0c4b0ed0558) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: use FileCopier for copying files and queue creation of symlinks
+
+- [#8689](https://github.com/electron-userland/electron-builder/pull/8689) [`1d7f87c1`](https://github.com/electron-userland/electron-builder/commit/1d7f87c1028fa94c9bb80c167bb1fb87cbc84817) Thanks [@Lemonexe](https://github.com/Lemonexe)! - fix(win): corrupt asar integrity file path on crossplatform build
+
+- [#8749](https://github.com/electron-userland/electron-builder/pull/8749) [`ee2c6dc1`](https://github.com/electron-userland/electron-builder/commit/ee2c6dc133ed31fd82ad8fdf864651494c88fcf8) Thanks [@kethinov](https://github.com/kethinov)! - fix: typo in urls in tsdoc
+
+- Updated dependencies [[`f4d40f91`](https://github.com/electron-userland/electron-builder/commit/f4d40f91f1511fc55cbef7c9e7edfddaf6ab67bc), [`633490cb`](https://github.com/electron-userland/electron-builder/commit/633490cb395c0af8027116b345500c58a7616964), [`e0b0e351`](https://github.com/electron-userland/electron-builder/commit/e0b0e351baecc29e08d9f7d90f4699150b229416), [`eacbbf59`](https://github.com/electron-userland/electron-builder/commit/eacbbf593f6ea01a92ffb41d8d28ee5e4e480ea1), [`6f0fb8e4`](https://github.com/electron-userland/electron-builder/commit/6f0fb8e44f035bcd6ff0d6f234b38c20fde066af), [`6a6bed46`](https://github.com/electron-userland/electron-builder/commit/6a6bed46c428b45105ada071a9cb89b5d4f93d9e), [`3eab7143`](https://github.com/electron-userland/electron-builder/commit/3eab7143d74262caace81ea05e97617d07daf336), [`a5558e33`](https://github.com/electron-userland/electron-builder/commit/a5558e3380fdde4806c4c29694d4fe70fd11423a), [`d4ea0d99`](https://github.com/electron-userland/electron-builder/commit/d4ea0d998d0fb3ea3a75ca8d39a69a2f3c710962), [`b8185d48`](https://github.com/electron-userland/electron-builder/commit/b8185d48a75e65932196700e28bf71613dd141b4), [`dcd91a1f`](https://github.com/electron-userland/electron-builder/commit/dcd91a1f79be5bde7bb418b0eaa83d03f11d41fe)]:
+  - builder-util@26.0.0
+  - dmg-builder@26.0.0
+  - electron-builder-squirrel-windows@26.0.0
+  - electron-publish@26.0.0
+  - builder-util-runtime@9.3.0
+
+## 26.0.0-alpha.11
+
+### Patch Changes
+
+- [#8799](https://github.com/electron-userland/electron-builder/pull/8799) [`45a402b9`](https://github.com/electron-userland/electron-builder/commit/45a402b9786bcb8e71bfc12c9498552f597653ec) Thanks [@t3chguy](https://github.com/t3chguy)! - fix(mac): only fuse macOS universal builds on the combined universal package
+
+- [#8805](https://github.com/electron-userland/electron-builder/pull/8805) [`c6d6b6e5`](https://github.com/electron-userland/electron-builder/commit/c6d6b6e57be2c042dc586ae13f1af38a8a19af41) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: ASAR files in extraResources are not included in integrity calculations
+
+- Updated dependencies []:
+  - dmg-builder@26.0.0-alpha.11
+  - electron-builder-squirrel-windows@26.0.0-alpha.11
+
+## 26.0.0-alpha.10
+
+### Minor Changes
+
+- [#8787](https://github.com/electron-userland/electron-builder/pull/8787) [`cdf18d9a`](https://github.com/electron-userland/electron-builder/commit/cdf18d9a0f65068e179e43152699c366c4c29467) Thanks [@mmaietta](https://github.com/mmaietta)! - feat: add `pwsh` detection to enable azure trusted signing within docker image
+
+### Patch Changes
+
+- Updated dependencies [[`633490cb`](https://github.com/electron-userland/electron-builder/commit/633490cb395c0af8027116b345500c58a7616964), [`a5558e33`](https://github.com/electron-userland/electron-builder/commit/a5558e3380fdde4806c4c29694d4fe70fd11423a)]:
+  - dmg-builder@26.0.0-alpha.10
+  - builder-util@26.0.0-alpha.10
+  - electron-builder-squirrel-windows@26.0.0-alpha.10
+  - electron-publish@26.0.0-alpha.10
+
 ## 26.0.0-alpha.9
 
 ### Major Changes
