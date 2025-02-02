@@ -1,5 +1,5 @@
 import { InvalidConfigurationError, isEmptyOrSpaces } from "builder-util"
-import { sanitizeFileName } from "builder-util/out/cjs/filename"
+import { sanitizeFileName } from "builder-util"
 import { WinPackager } from "../winPackager"
 
 export interface CommonWindowsInstallerConfiguration {

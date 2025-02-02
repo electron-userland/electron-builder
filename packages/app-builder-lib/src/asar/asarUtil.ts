@@ -1,7 +1,7 @@
 import { CreateOptions, createPackageWithOptions } from "@electron/asar"
 import { AsyncTaskManager, log } from "builder-util"
 import { CancellationToken } from "builder-util-runtime"
-import { FileCopier, Filter, Link, MAX_FILE_REQUESTS } from "builder-util/out/cjs/fs"
+import { FileCopier, Filter, Link, MAX_FILE_REQUESTS } from "builder-util"
 import * as fs from "fs-extra"
 import { mkdir, readlink, symlink } from "fs-extra"
 import { platform } from "os"

@@ -26,7 +26,6 @@ import {
   SpacesPublisher,
   UploadTask,
 } from "electron-publish"
-import { MultiProgress } from "electron-publish/out/cjs/multiProgress"
 import { writeFile } from "fs/promises"
 import * as isCi from "is-ci"
 import * as path from "path"
@@ -42,6 +41,7 @@ import { Configuration } from "../configuration"
 import { Platform, Target } from "../core"
 import { PlatformSpecificBuildOptions } from "../options/PlatformSpecificBuildOptions"
 import { ArtifactCreated } from "../packagerApi"
+import { MultiProgress } from "electron-publish"
 
 const publishForPrWarning =
   "There are serious security concerns with PUBLISH_FOR_PULL_REQUEST=true (see the  CircleCI documentation (https://circleci.com/docs/1.0/fork-pr-builds/) for details)" +

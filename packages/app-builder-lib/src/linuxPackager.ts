@@ -1,5 +1,4 @@
-import { Arch } from "builder-util"
-import { sanitizeFileName } from "builder-util/out/cjs/filename"
+import { Arch, sanitizeFileName } from "builder-util"
 import { DIR_TARGET, Platform, Target } from "./core"
 import { LinuxConfiguration } from "./options/linuxOptions"
 import { Packager } from "./packager"

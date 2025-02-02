@@ -1,8 +1,8 @@
 import { Arch, getArchSuffix, SquirrelWindowsOptions, Target } from "app-builder-lib"
-import { getBinFromUrl } from "app-builder-lib/out/cjs/binDownload"
-import { WinPackager } from "app-builder-lib/out/cjs/winPackager"
+import { getBinFromUrl } from "app-builder-lib"
+import { WinPackager } from "app-builder-lib"
 import { deepAssign, InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
-import { sanitizeFileName } from "builder-util/out/cjs/filename"
+import { sanitizeFileName } from "builder-util"
 import * as path from "path"
 import { convertVersion, SquirrelBuilder, SquirrelOptions } from "./squirrelPack"
 

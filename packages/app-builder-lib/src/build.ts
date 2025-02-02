@@ -1,9 +1,6 @@
 import { asArray } from "builder-util-runtime"
-import { log } from "builder-util/out/cjs/log"
-import { executeFinally } from "builder-util/out/cjs/promise"
-import { InvalidConfigurationError } from "builder-util/out/cjs/util"
 import { PublishOptions } from "electron-publish"
-
+import { executeFinally, InvalidConfigurationError, log } from "builder-util"
 import { Packager } from "./packager"
 import { PackagerOptions } from "./packagerApi"
 import { PublishManager } from "./publish/PublishManager"

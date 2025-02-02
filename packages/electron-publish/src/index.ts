@@ -13,6 +13,8 @@ export type PublishPolicy = "onTag" | "onTagOrDraft" | "always" | "never"
 
 export { ProgressCallback } from "./progress"
 
+export { MultiProgress } from "./multiProgress"
+
 export interface PublishOptions {
   publish?: PublishPolicy | null
 }
