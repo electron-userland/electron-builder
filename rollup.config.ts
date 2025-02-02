@@ -39,6 +39,10 @@ const packageMap = [
     formats: ["cjs", "esm"],
   },
   // {
+  //   package: "test",
+  //   entry: "src/helpers/checkDeps.js",
+  // },
+  // {
   //   package: "electron-forge-maker-appimage",
   //   entry: "main.js",
   // },
@@ -73,6 +77,10 @@ export default () => {
     const input = glob.sync(dir(pkg.entry), { ignore: [dir(outDir), "**/*/*.d.ts"] })
     // @ts-ignore
     return defineConfig({
+      watch: {
+        include: "**/*.ts",
+        exclude: dir(outDir),
+      },
       input,
       treeshake: false,
       output: (pkg.formats ?? ["cjs"]).map(format => ({

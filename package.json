@@ -14,7 +14,7 @@
     "compile": "rimraf packages/*/out && rollup -c rollup.config.ts --configPlugin typescript",
     "lint": "eslint packages",
     "lint-staged": "lint-staged",
-    "lint-deps": "ts-node ./test/src/helpers/checkDeps.ts",
+    "lint-deps": "node ./scripts/checkDeps.js",
     "pretest": "pnpm lint-deps && pnpm lint",
     "prettier": "prettier 'packages/**/*.{ts,js}' test/src/**/*.ts --write",
     "///": "Please see https://github.com/electron-userland/electron-builder/blob/master/CONTRIBUTING.md#run-test-using-cli how to run particular test instead full (and very slow) run",
@@ -44,6 +44,7 @@
   "////": "All typings are added into root `package.json` to avoid duplication errors in the IDE compiler (several `node.d.ts` files).",
   "dependencies": {
     "@types/fs-extra": "^11.0.4",
+    "chalk": "^4.1.2",
     "dmg-license": "1.0.11"
   },
   "devDependencies": {
@@ -58,6 +59,7 @@
     "@typescript-eslint/parser": "8.17.0",
     "@vitest/ui": "3.0.4",
     "conventional-changelog-cli": "5.0.0",
+    "depcheck": "1.4.3",
     "eslint": "9.16.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-prettier": "^5.2.1",
