@@ -1,6 +1,6 @@
 import { notarize } from "@electron/notarize"
 import { NotarizeOptionsNotaryTool, NotaryToolKeychainCredentials } from "@electron/notarize/lib/types"
-import { PerFileSignOptions, SignOptions } from "@electron/osx-sign/dist/cjs/types"
+import { PerFileSignOptions, SignOptions } from "@electron/osx-sign/dist/esm/types"
 import { Arch, AsyncTaskManager, copyFile, deepAssign, exec, getArchSuffix, InvalidConfigurationError, log, orIfFileNotExist, statOrNull, unlinkIfExists, use } from "builder-util"
 import { MemoLazy, Nullish } from "builder-util-runtime"
 import * as fs from "fs/promises"
@@ -20,6 +20,7 @@ import { createCommonTarget, NoOpTarget } from "./targets/targetFactory"
 import { isMacOsHighSierra } from "./util/macosVersion"
 import { getTemplatePath } from "./util/pathManager"
 import { resolveFunction } from "./util/resolve"
+import { makeUniversalApp } from "@electron/universal"
 
 export type CustomMacSignOptions = SignOptions
 export type CustomMacSign = (configuration: CustomMacSignOptions, packager: MacPackager) => Promise<void>
@@ -85,8 +86,8 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
           break
 
         case "dmg": {
-          const { DmgTarget } = require("dmg-builder")
-          mapper(name, outDir => new DmgTarget(this, outDir))
+          const { DmgTarget } = await import("dmg-builder")
+          mapper(name, outDir => new DmgTarget(this as any, outDir))
           break
         }
 
@@ -152,15 +153,14 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
           `packaging`
         )
         const appFile = `${this.appInfo.productFilename}.app`
-        const { makeUniversalApp } = require("@electron/universal")
         await makeUniversalApp({
           x64AppPath: path.join(x64AppOutDir, appFile),
           arm64AppPath: path.join(arm64AppOutPath, appFile),
           outAppPath: path.join(appOutDir, appFile),
           force: true,
           mergeASARs: platformSpecificBuildOptions.mergeASARs ?? true,
-          singleArchFiles: platformSpecificBuildOptions.singleArchFiles,
-          x64ArchFiles: platformSpecificBuildOptions.x64ArchFiles,
+          singleArchFiles: platformSpecificBuildOptions.singleArchFiles || undefined,
+          x64ArchFiles: platformSpecificBuildOptions.x64ArchFiles || undefined,
         })
         await fs.rm(x64AppOutDir, { recursive: true, force: true })
         await fs.rm(arm64AppOutPath, { recursive: true, force: true })

@@ -1,6 +1,6 @@
 import { signAsync } from "@electron/osx-sign"
-import { SignOptions } from "@electron/osx-sign/dist/cjs/types"
-import { Identity as _Identity } from "@electron/osx-sign/dist/cjs/util-identities"
+import { SignOptions } from "@electron/osx-sign/dist/esm/types"
+import { Identity as _Identity } from "@electron/osx-sign/dist/esm/util-identities"
 import { copyFile, exec, Fields, InvalidConfigurationError, isEmptyOrSpaces, isEnvTrue, isPullRequest, log, Logger, retry, TmpDir, unlinkIfExists } from "builder-util"
 import { Nullish } from "builder-util-runtime"
 import { createHash, randomBytes } from "crypto"
@@ -302,11 +302,11 @@ async function _findIdentity(type: CertType, qualifier?: string | null, keychain
   return null
 }
 
-export declare class Identity {
-  readonly name: string
-  readonly hash?: string
-
-  constructor(name: string, hash?: string)
+export class Identity {
+  constructor(
+    readonly name: string,
+    readonly hash?: string
+  ) {}
 }
 
 function parseIdentity(line: string): Identity {

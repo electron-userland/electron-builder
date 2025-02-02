@@ -10,6 +10,7 @@
       "import": "./out/esm/index.js"
     }
   },
+  "type": "module",
   "files": [
     "out"
   ],

@@ -9,6 +9,7 @@
       "import": "./out/esm/dmgUtil.js"
     }
   },
+  "type": "module",
 	"author": "Vladimir Krivosheev",
 	"license": "MIT",
 	"repository": {

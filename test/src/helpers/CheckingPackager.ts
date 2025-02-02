@@ -1,4 +1,4 @@
-import { SignOptions as MacSignOptions } from "@electron/osx-sign/dist/cjs/types"
+import { SignOptions as MacSignOptions } from "@electron/osx-sign/dist/esm/types"
 import { Identity } from "app-builder-lib"
 import { MacPackager } from "app-builder-lib"
 import { DoPackOptions } from "app-builder-lib"

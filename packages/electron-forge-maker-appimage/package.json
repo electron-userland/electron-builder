@@ -8,7 +8,9 @@
       "require": "./cjs/main.js",
       "import": "./esm/main.js"
     }
-  },  "author": "Vladimir Krivosheev",
+  },
+  "type": "module",
+  "author": "Vladimir Krivosheev",
   "license": "MIT",
   "repository": {
     "type": "git",
