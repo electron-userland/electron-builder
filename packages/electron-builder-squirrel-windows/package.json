@@ -6,7 +6,7 @@
   "exports": {
     ".": {
       "require": "./out/SquirrelWindowsTarget.js",
-      "import": "./out/es/SquirrelWindowsTarget.js"
+      "import": "./out/esm/SquirrelWindowsTarget.js"
     }
   },
   "author": "Vladimir Krivosheev",

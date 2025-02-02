@@ -7,7 +7,7 @@
   "exports": {
     ".": {
       "require": "./out/main.js",
-      "import": "./out/es/main.js"
+      "import": "./out/esm/main.js"
     }
   },
   "author": "Vladimir Krivosheev",

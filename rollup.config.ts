@@ -1,10 +1,7 @@
-import typescript from "@rollup/plugin-typescript"
-import typescript2 from "rollup-plugin-typescript2"
-import * as fs from "fs"
 import * as glob from "glob"
-import { defineConfig } from "rollup"
-import { cleandir } from "rollup-plugin-cleandir"
 import path from "path"
+import { defineConfig } from "rollup"
+import typescript2 from "rollup-plugin-typescript2"
 
 const packageMap = [
   {
@@ -72,10 +69,9 @@ export default () => {
   return packageMap.map(pkg => {
     const dir = p => path.resolve("packages", pkg.package, p)
     const input = glob.sync(dir(pkg.entry), { ignore: [dir(outDir), "**/*/*.d.ts"] })
-    // const tsconfigJson = JSON.parse(fs.readFileSync(dir("tsconfig.json"), "utf-8"))
     return defineConfig({
       // @ts-ignore
-      input, //: dir(!pkg.package.includes("forge") ? input.replace(".js", ".ts") : input),
+      input,
       treeshake: false,
       output: [
         {

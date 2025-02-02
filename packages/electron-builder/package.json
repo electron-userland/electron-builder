@@ -2,12 +2,12 @@
   "name": "electron-builder",
   "description": "A complete solution to package and build a ready for distribution Electron app for MacOS, Windows and Linux with “auto update” support out of the box",
   "version": "26.0.1",
-  "main": "out/index.js",
+  "main": "out/cjs/index.js",
   "module": "out/es/index.js",
   "exports": {
     ".": {
-      "require": "./out/index.js",
-      "import": "./out/es/index.js"
+      "require": "./out/cjs/index.js",
+      "import": "./out/esm/index.js"
     }
   },
   "files": [
@@ -74,7 +74,7 @@
     "@types/is-ci": "3.0.0",
     "@types/yargs": "^17.0.16"
   },
-  "typings": "./out/index.d.ts",
+  "typings": "./out/cjs/index.d.ts",
   "publishConfig": {
     "tag": "next"
   }

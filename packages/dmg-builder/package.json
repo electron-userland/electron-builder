@@ -6,7 +6,7 @@
   "exports": {
     ".": {
       "require": "./out/dmgUtil.js",
-      "import": "./out/es/dmgUtil.js"
+      "import": "./out/esm/dmgUtil.js"
     }
   },
 	"author": "Vladimir Krivosheev",

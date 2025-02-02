@@ -2,12 +2,12 @@
   "name": "app-builder-lib",
   "description": "electron-builder lib",
   "version": "26.0.1",
-  "main": "out/index.js",
+  "main": "out/cjs/index.js",
   "module": "out/es/index.js",
   "exports": {
     ".": {
-      "require": "./out/index.js",
-      "import": "./out/es/index.js"
+      "require": "./out/cjs/index.js",
+      "import": "./out/esm/index.js"
     }
   },
   "files": [
@@ -124,5 +124,5 @@
     "electron-builder-squirrel-windows": "workspace:*"
   },
   "//": "electron-builder-squirrel-windows and dmg-builder added as dev dep for tests (as otherwise `require` doesn't work using Yarn 2)",
-  "typings": "./out/index.d.ts"
+  "typings": "./out/cjs/index.d.ts"
 }

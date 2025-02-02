@@ -1,12 +1,12 @@
 {
   "name": "electron-publish",
   "version": "26.0.1",
-  "main": "out/index.js",
+  "main": "out/cjs/index.js",
   "module": "out/es/index.js",
   "exports": {
     ".": {
-      "require": "./out/index.js",
-      "import": "./out/es/index.js"
+      "require": "./out/cjs/index.js",
+      "import": "./out/esm/index.js"
     }
   },
   "author": "Vladimir Krivosheev",
@@ -31,7 +31,7 @@
     "lazy-val": "^1.0.5",
     "mime": "^2.5.2"
   },
-  "typings": "./out/index.d.ts",
+  "typings": "./out/cjs/index.d.ts",
   "devDependencies": {
     "@types/mime": "2.0.3"
   }

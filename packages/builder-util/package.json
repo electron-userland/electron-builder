@@ -6,7 +6,7 @@
   "exports": {
     ".": {
       "require": "./out/util.js",
-      "import": "./out/es/util.js"
+      "import": "./out/esm/util.js"
     }
   },
   "author": "Vladimir Krivosheev",
