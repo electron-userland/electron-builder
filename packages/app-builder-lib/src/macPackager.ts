@@ -86,7 +86,8 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
           break
 
         case "dmg": {
-          const { DmgTarget } = await import("dmg-builder")
+          const dynamicImport = "dmg-builder"
+          const { DmgTarget } = await import(dynamicImport)
           mapper(name, outDir => new DmgTarget(this as any, outDir))
           break
         }
