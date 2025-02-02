@@ -10,7 +10,6 @@
       "import": "./out/esm/main.js"
     }
   },
-  "type": "module",
   "author": "Vladimir Krivosheev",
   "license": "MIT",
   "repository": {

@@ -302,11 +302,11 @@ async function _findIdentity(type: CertType, qualifier?: string | null, keychain
   return null
 }
 
-export declare class Identity {
-  readonly name: string
-  readonly hash?: string
-
-  constructor(name: string, hash?: string)
+export class Identity {
+  constructor(
+    readonly name: string,
+    readonly hash?: string
+  ) {}
 }
 
 function parseIdentity(line: string): Identity {

@@ -7,55 +7,53 @@ import { cleandir } from "rollup-plugin-cleandir"
 const packageMap = [
   {
     package: "builder-util-runtime",
-    entry: ["src/**/*.ts"],
+    entry: "src/**/*.ts",
   },
   {
     package: "builder-util",
-    entry: ["src/**/*.ts"],
+    entry: "src/**/*.ts",
   },
   {
     package: "electron-publish",
-    entry: ["src/**/*.ts"],
+    entry: "src/**/*.ts",
   },
   {
     package: "app-builder-lib",
-    entry: ["src/**/*.ts"],
+    entry: "src/**/*.ts",
   },
   {
     package: "dmg-builder",
-    entry: ["src/**/*.ts"],
-  },
-  {
-    package: "electron-updater",
-    entry: ["src/**/*.ts"],
+    entry: "src/**/*.ts",
   },
   {
     package: "electron-builder",
-    entry: [
-      "src/**/*.ts",
-      // "cli.js", "install-app-deps.js"
-    ],
+    entry: "src/**/*.ts",
   },
   {
     package: "electron-builder-squirrel-windows",
-    entry: ["src/**/*.ts"],
+    entry: "src/**/*.ts",
   },
   {
-    package: "electron-forge-maker-appimage",
-    entry: ["main.js"],
+    package: "electron-updater",
+    entry: "src/**/*.ts",
+    formats: ["cjs", "esm"],
   },
-  {
-    package: "electron-forge-maker-snap",
-    entry: ["main.js"],
-  },
-  {
-    package: "electron-forge-maker-nsis",
-    entry: ["main.js"],
-  },
-  {
-    package: "electron-forge-maker-nsis-web",
-    entry: ["main.js"],
-  },
+  // {
+  //   package: "electron-forge-maker-appimage",
+  //   entry: "main.js",
+  // },
+  // {
+  //   package: "electron-forge-maker-snap",
+  //   entry: "main.js",
+  // },
+  // {
+  //   package: "electron-forge-maker-nsis",
+  //   entry: "main.js",
+  // },
+  // {
+  //   package: "electron-forge-maker-nsis-web",
+  //   entry: "main.js",
+  // },
 ]
 
 const outputOptions = {
@@ -72,28 +70,18 @@ export default () => {
   const outDir = "out"
   return packageMap.map(pkg => {
     const dir = p => path.resolve("packages", pkg.package, p)
-    const input = glob.sync(
-      pkg.entry.map(p => dir(p)),
-      { ignore: [dir(outDir), "**/*/*.d.ts"] }
-    )
+    const input = glob.sync(dir(pkg.entry), { ignore: [dir(outDir), "**/*/*.d.ts"] })
+    // @ts-ignore
     return defineConfig({
-      // @ts-ignore
       input,
       treeshake: false,
-      output: [
-        {
-          dir: dir("out/cjs"),
-          format: "cjs",
-          ...outputOptions,
-        },
-        {
-          dir: dir("out/esm"),
-          format: "esm",
-          ...outputOptions,
-        },
-      ],
+      output: (pkg.formats ?? ["cjs"]).map(format => ({
+        dir: dir(path.join(outDir, pkg.formats?.length ? format : "")),
+        format,
+        ...outputOptions,
+      })),
       plugins: [
-        cleandir(dir("out")),
+        cleandir(dir(outDir)),
         typescript2({
           check: true,
           clean: true,
