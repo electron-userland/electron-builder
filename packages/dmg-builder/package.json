@@ -1,11 +1,11 @@
 {
 	"name": "dmg-builder",
 	"version": "26.0.1",
-  "main": "out/dmgUtil.js",
-  "module": "out/es/dmgUtil.js",
+  "main": "out/cjs/dmgUtil.js",
+  "module": "out/esm/dmgUtil.js",
   "exports": {
     ".": {
-      "require": "./out/dmgUtil.js",
+      "require": "./out/cjs/dmgUtil.js",
       "import": "./out/esm/dmgUtil.js"
     }
   },

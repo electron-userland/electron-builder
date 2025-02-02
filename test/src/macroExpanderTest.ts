@@ -1,4 +1,4 @@
-import { expandMacro } from "app-builder-lib/out/util/macroExpander"
+import { expandMacro } from "app-builder-lib/out/esm/util/macroExpander"
 
 const appInfoStub: any = {
   sanitizedProductName: "1",

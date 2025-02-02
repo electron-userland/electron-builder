@@ -26,7 +26,7 @@ import {
   SpacesPublisher,
   UploadTask,
 } from "electron-publish"
-import { MultiProgress } from "electron-publish/out/multiProgress"
+import { MultiProgress } from "electron-publish/out/esm/multiProgress"
 import { writeFile } from "fs/promises"
 import * as isCi from "is-ci"
 import * as path from "path"
@@ -581,7 +581,7 @@ async function getResolvedPublishConfig(
 
   if (isGithub) {
     if ((options as GithubOptions).token != null && !(options as GithubOptions).private) {
-      log.warn('"token" specified in the github publish options. It should be used only for [setFeedURL](module:electron-updater/out/AppUpdater.AppUpdater+setFeedURL).')
+      log.warn('"token" specified in the github publish options. It should be used only for [setFeedURL](module:electron-updater/out/esm/AppUpdater.AppUpdater+setFeedURL).')
     }
     //tslint:disable-next-line:no-object-literal-type-assertion
     return { owner, repo: project, ...options } as GithubOptions

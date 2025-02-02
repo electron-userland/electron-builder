@@ -357,7 +357,7 @@ Configuration in the same way as `afterPack` (see above).
   readonly beforeBuild?: Hook<BeforeBuildContext, boolean | void> | string | null
   /**
    * The function (or path to file or module id) to be run when staging the electron artifact environment.
-   * Returns the path to custom Electron build (e.g. `~/electron/out/R`) or folder of electron zips.
+   * Returns the path to custom Electron build (e.g. `~/electron/out/esm/R`) or folder of electron zips.
    *
    * Zip files must follow the pattern `electron-v${version}-${platformName}-${arch}.zip`, otherwise it will be assumed to be an unpacked Electron app directory
    */

@@ -2,7 +2,7 @@
   "name": "electron-publish",
   "version": "26.0.1",
   "main": "out/cjs/index.js",
-  "module": "out/es/index.js",
+  "module": "out/esm/index.js",
   "exports": {
     ".": {
       "require": "./out/cjs/index.js",

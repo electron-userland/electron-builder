@@ -1,7 +1,7 @@
 import { asArray } from "builder-util-runtime"
-import { log } from "builder-util/out/log"
-import { executeFinally } from "builder-util/out/promise"
-import { InvalidConfigurationError } from "builder-util/out/util"
+import { log } from "builder-util/out/esm/log"
+import { executeFinally } from "builder-util/out/esm/promise"
+import { InvalidConfigurationError } from "builder-util/out/esm/util"
 import { PublishOptions } from "electron-publish"
 
 import { Packager } from "./packager"

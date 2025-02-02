@@ -1,11 +1,11 @@
 {
   "name": "electron-builder-squirrel-windows",
   "version": "26.0.1",
-  "main": "out/SquirrelWindowsTarget.js",
-  "module": "out/es/SquirrelWindowsTarget.js",
+  "main": "out/cjs/SquirrelWindowsTarget.js",
+  "module": "out/esm/SquirrelWindowsTarget.js",
   "exports": {
     ".": {
-      "require": "./out/SquirrelWindowsTarget.js",
+      "require": "./out/cjs/SquirrelWindowsTarget.js",
       "import": "./out/esm/SquirrelWindowsTarget.js"
     }
   },
@@ -31,5 +31,5 @@
     "@types/archiver": "5.3.1",
     "@types/fs-extra": "9.0.13"
   },
-  "types": "./out/SquirrelWindowsTarget.d.ts"
+  "types": "./out/cjs/SquirrelWindowsTarget.d.ts"
 }

@@ -90,6 +90,9 @@ export default () => {
           check: true,
           clean: true,
           tsconfig: dir("tsconfig.json"),
+          // tsconfigOverride: {
+          //   declarationDir: dir("out/types"),
+          // },
         }),
       ],
       external: id => !/^[./]/.test(id), // don't package any node_modules

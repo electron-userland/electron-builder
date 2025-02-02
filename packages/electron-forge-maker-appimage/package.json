@@ -1,8 +1,14 @@
 {
   "name": "electron-forge-maker-appimage",
   "version": "26.0.1",
-  "main": "main.js",
-  "author": "Vladimir Krivosheev",
+  "main": "cjs/main.js",
+  "module": "esm/main.js",
+  "exports": {
+    ".": {
+      "require": "./cjs/main.js",
+      "import": "./esm/main.js"
+    }
+  },  "author": "Vladimir Krivosheev",
   "license": "MIT",
   "repository": {
     "type": "git",

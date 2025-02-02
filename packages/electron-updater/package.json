@@ -2,11 +2,11 @@
   "name": "electron-updater",
   "version": "6.4.1",
   "description": "Cross platform updater for electron applications",
-  "main": "out/main.js",
-  "module": "out/es/main.js",
+  "main": "out/cjs/main.js",
+  "module": "out/esm/main.js",
   "exports": {
     ".": {
-      "require": "./out/main.js",
+      "require": "./out/cjs/main.js",
       "import": "./out/esm/main.js"
     }
   },
@@ -40,7 +40,7 @@
     "@types/semver": "^7.3.13",
     "electron": "^31.2.1"
   },
-  "typings": "./out/main.d.ts",
+  "typings": "./out/cjs/main.d.ts",
   "publishConfig": {
     "tag": "next"
   }
