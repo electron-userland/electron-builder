@@ -1,4 +1,4 @@
-export { BlockMap } from "./blockMapApi"
+export { BlockMap, BlockMapFile } from "./blockMapApi"
 export { CancellationError, CancellationToken } from "./CancellationToken"
 export { newError } from "./error"
 export {

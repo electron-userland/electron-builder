@@ -6,6 +6,8 @@ import { sanitizeFileName } from "builder-util"
 import * as path from "path"
 import { convertVersion, SquirrelBuilder, SquirrelOptions } from "./squirrelPack"
 
+export * from "./squirrelPack"
+
 export default class SquirrelWindowsTarget extends Target {
   //tslint:disable-next-line:no-object-literal-type-assertion
   readonly options: SquirrelWindowsOptions
