@@ -1,4 +1,4 @@
-import { getCompleteExtname } from "builder-util/out/esm/filename"
+import { getCompleteExtname } from "builder-util/out/cjs/filename"
 
 // [inputFilename, expectedExtname]
 const tests = [

@@ -1,6 +1,6 @@
 import { isEmptyOrSpaces, log } from "builder-util"
 import { Nullish } from "builder-util-runtime"
-import { sanitizeFileName } from "builder-util/out/esm/filename"
+import { sanitizeFileName } from "builder-util/out/cjs/filename"
 import { prerelease } from "semver"
 import { PlatformSpecificBuildOptions } from "./options/PlatformSpecificBuildOptions"
 import { Packager } from "./packager"

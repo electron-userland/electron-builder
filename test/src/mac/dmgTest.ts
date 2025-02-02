@@ -1,6 +1,6 @@
 import { PlatformPackager } from "app-builder-lib"
 import { Arch, copyFile, exec } from "builder-util"
-import { attachAndExecute, getDmgTemplatePath } from "dmg-builder/out/esm/dmgUtil"
+import { attachAndExecute, getDmgTemplatePath } from "dmg-builder/out/cjs/dmgUtil"
 import { Platform } from "electron-builder"
 import * as fs from "fs/promises"
 import * as path from "path"

@@ -57,7 +57,7 @@ export async function getConfig(
     if ((dependencies != null && "react-scripts" in dependencies) || (devDependencies != null && "react-scripts" in devDependencies)) {
       config.extends = "react-cra"
     } else if (devDependencies != null && "electron-webpack" in devDependencies) {
-      let file = "electron-webpack/out/esm/electron-builder.js"
+      let file = "electron-webpack/out/cjs/electron-builder.js"
       try {
         file = require.resolve(file)
       } catch (_ignore) {

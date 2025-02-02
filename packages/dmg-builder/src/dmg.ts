@@ -1,11 +1,11 @@
 import { DmgOptions, Target } from "app-builder-lib"
-import { findIdentity, isSignAllowed } from "app-builder-lib/out/esm/codeSign/macCodeSign"
-import { MacPackager } from "app-builder-lib/out/esm/macPackager"
-import { createBlockmap } from "app-builder-lib/out/esm/targets/differentialUpdateInfoBuilder"
-import { executeAppBuilderAsJson } from "app-builder-lib/out/esm/util/appBuilder"
+import { findIdentity, isSignAllowed } from "app-builder-lib/out/cjs/codeSign/macCodeSign"
+import { MacPackager } from "app-builder-lib/out/cjs/macPackager"
+import { createBlockmap } from "app-builder-lib/out/cjs/targets/differentialUpdateInfoBuilder"
+import { executeAppBuilderAsJson } from "app-builder-lib/out/cjs/util/appBuilder"
 import { Arch, AsyncTaskManager, copyDir, copyFile, exec, exists, getArchSuffix, InvalidConfigurationError, isEmptyOrSpaces, log, statOrNull } from "builder-util"
 import { CancellationToken, Nullish } from "builder-util-runtime"
-import { sanitizeFileName } from "builder-util/out/esm/filename"
+import { sanitizeFileName } from "builder-util/out/cjs/filename"
 import { stat } from "fs-extra"
 import { release as getOsRelease } from "os"
 import * as path from "path"
@@ -15,13 +15,14 @@ import { attachAndExecute, computeBackground, detach, getDmgVendorPath } from ".
 import { hdiUtil } from "./hdiuil"
 
 export class DmgTarget extends Target {
-  readonly options: DmgOptions = this.packager.config.dmg || Object.create(null)
+  readonly options: DmgOptions
 
   constructor(
     private readonly packager: MacPackager,
     readonly outDir: string
   ) {
     super("dmg")
+    this.options = this.packager.config.dmg!
   }
 
   async build(appPath: string, arch: Arch) {

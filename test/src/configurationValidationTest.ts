@@ -1,7 +1,7 @@
-import { validateConfiguration } from "app-builder-lib/out/esm/util/config/config"
+import { validateConfiguration } from "app-builder-lib/out/cjs/util/config/config"
 import { Arch, DebugLogger } from "builder-util"
 import { Configuration, Platform } from "electron-builder"
-import { CliOptions, configureBuildCommand, createYargs, normalizeOptions } from "electron-builder/out/esm/builder"
+import { CliOptions, configureBuildCommand, createYargs, normalizeOptions } from "electron-builder/out/cjs/builder"
 import { app, appThrows, linuxDirTarget } from "./helpers/packTester"
 
 test.ifDevOrLinuxCi(

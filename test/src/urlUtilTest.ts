@@ -1,4 +1,4 @@
-import { blockmapFiles, newUrlFromBase } from "electron-updater/out/esm/util"
+import { blockmapFiles, newUrlFromBase } from "electron-updater/out/cjs/util"
 import { URL } from "url"
 
 test("newUrlFromBase", () => {

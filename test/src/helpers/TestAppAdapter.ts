@@ -1,4 +1,4 @@
-import { ElectronAppAdapter } from "electron-updater/out/esm/ElectronAppAdapter"
+import { ElectronAppAdapter } from "electron-updater/out/cjs/ElectronAppAdapter"
 
 // do not implement AppAdapter directly, test that our ElectronAppAdapter implementation is correct
 export class TestAppAdapter extends ElectronAppAdapter {

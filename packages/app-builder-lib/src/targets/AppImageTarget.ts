@@ -1,4 +1,4 @@
-import { Arch, serializeToYaml } from "builder-util"
+import { Arch, deepAssign, serializeToYaml } from "builder-util"
 import { outputFile } from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
@@ -13,7 +13,7 @@ import { createStageDir } from "./targetUtil"
 
 // https://unix.stackexchange.com/questions/375191/append-to-sub-directory-inside-squashfs-file
 export default class AppImageTarget extends Target {
-  readonly options: AppImageOptions = { ...this.packager.platformSpecificBuildOptions, ...(this.packager.config as any)[this.name] }
+  readonly options: AppImageOptions
   private readonly desktopEntry: Lazy<string>
 
   constructor(
@@ -23,6 +23,7 @@ export default class AppImageTarget extends Target {
     readonly outDir: string
   ) {
     super("appImage")
+    this.options = deepAssign({}, this.packager.platformSpecificBuildOptions, (this.packager.config as any)[this.name])
 
     this.desktopEntry = new Lazy<string>(() => {
       const args = this.options.executableArgs?.join(" ") || "--no-sandbox"

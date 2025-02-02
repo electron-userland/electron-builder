@@ -23,7 +23,7 @@ const ROOT_DIR_ID = "APPLICATIONFOLDER"
 export default class MsiTarget extends Target {
   protected readonly vm = process.platform === "win32" ? new VmManager() : new WineVmManager()
 
-  readonly options: MsiOptions = deepAssign(this.packager.platformSpecificBuildOptions, this.packager.config.msi)
+  readonly options: MsiOptions
 
   constructor(
     protected readonly packager: WinPackager,
@@ -32,6 +32,7 @@ export default class MsiTarget extends Target {
     isAsyncSupported = true
   ) {
     super(name, isAsyncSupported)
+    this.options = deepAssign(this.packager.platformSpecificBuildOptions, this.packager.config.msi)
   }
 
   protected projectTemplate = new Lazy<(data: any) => string>(async () => {

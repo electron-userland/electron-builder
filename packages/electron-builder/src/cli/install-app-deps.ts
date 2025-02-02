@@ -1,11 +1,11 @@
 #! /usr/bin/env node
 
-import { getElectronVersion } from "app-builder-lib/out/esm/electron/electronVersion"
-import { computeDefaultAppDirectory, getConfig } from "app-builder-lib/out/esm/util/config/config"
-import { orNullIfFileNotExist } from "app-builder-lib/out/esm/util/config/load"
-import { createLazyProductionDeps } from "app-builder-lib/out/esm/util/packageDependencies"
-import { installOrRebuild } from "app-builder-lib/out/esm/util/yarn"
-import { PACKAGE_VERSION } from "app-builder-lib/out/esm/version"
+import { getElectronVersion } from "app-builder-lib/out/cjs/electron/electronVersion"
+import { computeDefaultAppDirectory, getConfig } from "app-builder-lib/out/cjs/util/config/config"
+import { orNullIfFileNotExist } from "app-builder-lib/out/cjs/util/config/load"
+import { createLazyProductionDeps } from "app-builder-lib/out/cjs/util/packageDependencies"
+import { installOrRebuild } from "app-builder-lib/out/cjs/util/yarn"
+import { PACKAGE_VERSION } from "app-builder-lib/out/cjs/version"
 import { getArchCliNames, log, printErrorAndExit, use } from "builder-util"
 import { readJson } from "fs-extra"
 import { Lazy } from "lazy-val"

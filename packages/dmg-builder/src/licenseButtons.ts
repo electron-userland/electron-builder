@@ -1,5 +1,5 @@
 import { PlatformPackager } from "app-builder-lib"
-import { getLicenseAssets } from "app-builder-lib/out/esm/util/license"
+import { getLicenseAssets } from "app-builder-lib/out/cjs/util/license"
 import { log } from "builder-util"
 import { readFile } from "fs-extra"
 import * as iconv from "iconv-lite"

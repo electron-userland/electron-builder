@@ -1,4 +1,4 @@
-import { log } from "builder-util/out/esm/log"
+import { log } from "builder-util/out/cjs/log"
 import debug from "debug"
 import * as path from "path"
 import { pathToFileURL } from "url"
