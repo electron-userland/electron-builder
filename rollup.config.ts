@@ -74,7 +74,7 @@ const outputOptions = {
 export default () => {
   const outDir = "out"
   return packageMap.map(pkg => {
-    const dir = p => path.resolve("packages", pkg.package, p)
+    const dir = p => path.posix.resolve("packages", pkg.package, p)
     const input = glob.sync(dir(pkg.entry), { ignore: [dir(outDir), "**/*/*.d.ts"] })
     // @ts-ignore
     return defineConfig({
