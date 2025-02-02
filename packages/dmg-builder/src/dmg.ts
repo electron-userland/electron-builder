@@ -22,7 +22,7 @@ export class DmgTarget extends Target {
     readonly outDir: string
   ) {
     super("dmg")
-    this.options = this.packager.config.dmg!
+    this.options = this.packager.config.dmg || Object.create(null)
   }
 
   async build(appPath: string, arch: Arch) {
