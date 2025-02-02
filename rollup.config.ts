@@ -56,9 +56,10 @@ const packageMap = [
   // },
 ]
 
-const outputOptions = {
+const outputOptions: any = {
   exports: "named",
   preserveModules: true,
+  sourcemap: true,
   // Ensures that CJS default exports are imported properly (based on __esModule)
   // If needed, can switch to 'compat' which checks for .default prop on the default export instead
   // see https://rollupjs.org/configuration-options/#output-interop
@@ -78,33 +79,16 @@ export default () => {
         {
           dir: dir("out/cjs"),
           format: "cjs",
-          // exports: "named",
-          preserveModules: true,
-          sourcemap: true,
-          // interop: "auto",
+          ...outputOptions,
         },
         {
           dir: dir("out/esm"),
           format: "esm",
-          // exports: "named",
           preserveModules: true,
           sourcemap: true,
-          // interop: "auto",
         },
       ],
       plugins: [
-        // cleandir(dir(outDir)),
-        // typescript({
-        //   tsconfig: dir("tsconfig.json"),
-        //   checkJs: true,
-        //   // declaration: false,
-        //   // declarationDir: path.join(dir(""), "types"),
-        //   // outDir: dir(outDir),
-        //   sourceMap: true,
-        //   // compilerOptions: {
-        //   //   outDir: dir(outDir),
-        //   // },
-        // }),
         typescript2({
           check: true,
           clean: true,
