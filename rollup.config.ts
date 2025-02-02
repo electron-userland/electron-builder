@@ -8,6 +8,7 @@ const packageMap = [
   {
     package: "builder-util-runtime",
     entry: "src/**/*.ts",
+    formats: ["cjs", "esm"],
   },
   {
     package: "builder-util",
