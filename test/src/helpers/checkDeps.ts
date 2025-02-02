@@ -1,7 +1,6 @@
 import { printErrorAndExit } from "builder-util"
 import * as chalk from "chalk"
-import type { Results } from "depcheck"
-import * as depCheck from "depcheck"
+import depCheck from "depcheck"
 import { readJson } from "fs-extra"
 import * as fs from "fs/promises"
 import * as path from "path"
@@ -26,9 +25,7 @@ async function check(projectDir: string, devPackageData: any): Promise<boolean> 
   const packageName = path.basename(projectDir)
   // console.log(`Checking ${projectDir}`)
 
-  const result = await new Promise<Results>(resolve => {
-    depCheck(projectDir, { ignoreDirs: ["out", "test", "pages", "typings", "docker", "certs", "templates", "vendor"] }, resolve)
-  })
+  const result = await depCheck(projectDir, { ignoreDirs: ["out", "test", "pages", "typings", "docker", "certs", "templates", "vendor"] })
 
   let unusedDependencies = result.dependencies
   if (unusedDependencies.length > 0) {

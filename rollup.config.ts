@@ -2,55 +2,59 @@ import * as glob from "glob"
 import path from "path"
 import { defineConfig } from "rollup"
 import typescript2 from "rollup-plugin-typescript2"
+import { cleandir } from "rollup-plugin-cleandir"
 
 const packageMap = [
   {
     package: "builder-util-runtime",
-    entry: "src/**/*.ts",
+    entry: ["src/**/*.ts"],
   },
   {
     package: "builder-util",
-    entry: "src/**/*.ts",
+    entry: ["src/**/*.ts"],
   },
   {
     package: "electron-publish",
-    entry: "src/**/*.ts",
+    entry: ["src/**/*.ts"],
   },
   {
     package: "app-builder-lib",
-    entry: "src/**/*.ts",
+    entry: ["src/**/*.ts"],
   },
   {
     package: "dmg-builder",
-    entry: "src/**/*.ts",
+    entry: ["src/**/*.ts"],
   },
   {
     package: "electron-updater",
-    entry: "src/**/*.ts",
+    entry: ["src/**/*.ts"],
   },
   {
     package: "electron-builder",
-    entry: "src/**/*.ts",
+    entry: [
+      "src/**/*.ts",
+      // "cli.js", "install-app-deps.js"
+    ],
   },
   {
     package: "electron-builder-squirrel-windows",
-    entry: "src/**/*.ts",
+    entry: ["src/**/*.ts"],
   },
   {
     package: "electron-forge-maker-appimage",
-    entry: "main.js",
+    entry: ["main.js"],
   },
   {
     package: "electron-forge-maker-snap",
-    entry: "main.js",
+    entry: ["main.js"],
   },
   {
     package: "electron-forge-maker-nsis",
-    entry: "main.js",
+    entry: ["main.js"],
   },
   {
     package: "electron-forge-maker-nsis-web",
-    entry: "main.js",
+    entry: ["main.js"],
   },
 ]
 
@@ -68,7 +72,10 @@ export default () => {
   const outDir = "out"
   return packageMap.map(pkg => {
     const dir = p => path.resolve("packages", pkg.package, p)
-    const input = glob.sync(dir(pkg.entry), { ignore: [dir(outDir), "**/*/*.d.ts"] })
+    const input = glob.sync(
+      pkg.entry.map(p => dir(p)),
+      { ignore: [dir(outDir), "**/*/*.d.ts"] }
+    )
     return defineConfig({
       // @ts-ignore
       input,
@@ -86,6 +93,7 @@ export default () => {
         },
       ],
       plugins: [
+        cleandir(dir("out")),
         typescript2({
           check: true,
           clean: true,

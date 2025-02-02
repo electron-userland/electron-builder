@@ -15,8 +15,8 @@
     "out"
   ],
   "bin": {
-    "electron-builder": "./cli.js",
-    "install-app-deps": "./install-app-deps.js"
+    "electron-builder": "./out/cjs/cli/cli.js",
+    "install-app-deps": "./out/cjs/cli//install-app-deps.js"
   },
   "repository": {
     "type": "git",
