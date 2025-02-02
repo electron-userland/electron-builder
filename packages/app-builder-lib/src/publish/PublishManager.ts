@@ -581,7 +581,7 @@ async function getResolvedPublishConfig(
 
   if (isGithub) {
     if ((options as GithubOptions).token != null && !(options as GithubOptions).private) {
-      log.warn('"token" specified in the github publish options. It should be used only for [setFeedURL](module:electron-updater/out/cjs/AppUpdater.AppUpdater+setFeedURL).')
+      log.warn('"token" specified in the github publish options. It should be used only for [setFeedURL](module:electron-updater/"')
     }
     //tslint:disable-next-line:no-object-literal-type-assertion
     return { owner, repo: project, ...options } as GithubOptions

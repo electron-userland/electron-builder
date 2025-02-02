@@ -11,7 +11,7 @@ import { verifySmartUnpack } from "./helpers/verifySmartUnpack"
 
 test("cli", async () => {
   // because these methods are internal
-  const { configureBuildCommand, normalizeOptions } = require("electron-builder/out/cjs/builder")
+  const { configureBuildCommand, normalizeOptions } = require("electron-builder/"
   const yargs = createYargs()
   configureBuildCommand(yargs)
 

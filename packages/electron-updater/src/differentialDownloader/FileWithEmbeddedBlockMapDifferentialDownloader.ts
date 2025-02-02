@@ -1,4 +1,4 @@
-import { BlockMap } from "builder-util-runtime/out/cjs/blockMapApi"
+import { BlockMap } from "builder-util-runtime/"
 import { close, fstat, open, read } from "fs-extra"
 import { DifferentialDownloader } from "./DifferentialDownloader"
 import { inflateRawSync } from "zlib"
