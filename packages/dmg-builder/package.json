@@ -1,15 +1,7 @@
 {
 	"name": "dmg-builder",
 	"version": "26.0.1",
-  "main": "out/cjs/dmgUtil.js",
-  "module": "out/esm/dmgUtil.js",
-  "exports": {
-    ".": {
-      "require": "./out/cjs/dmgUtil.js",
-      "import": "./out/esm/dmgUtil.js"
-    }
-  },
-  "type": "module",
+	"main": "out/dmgUtil.js",
 	"author": "Vladimir Krivosheev",
 	"license": "MIT",
 	"repository": {
@@ -40,5 +32,5 @@
 		"@types/js-yaml": "4.0.3",
 		"temp-file": "3.4.0"
 	},
-	"typings": "./out/dmgUtil.d.ts"
+	"typings": "./out/dmg.d.ts"
 }

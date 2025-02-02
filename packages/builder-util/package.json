@@ -1,15 +1,7 @@
 {
   "name": "builder-util",
   "version": "26.0.1",
-  "main": "out/cjs/util.js",
-  "module": "out/esm/util.js",
-  "exports": {
-    ".": {
-      "require": "./out/cjs/util.js",
-      "import": "./out/esm/util.js"
-    }
-  },
-  "type": "module",
+  "main": "out/util.js",
   "author": "Vladimir Krivosheev",
   "license": "MIT",
   "repository": {
@@ -41,7 +33,7 @@
     "temp-file": "^3.4.0",
     "tiny-async-pool": "1.3.0"
   },
-  "typings": "./out/cjs/util.d.ts",
+  "typings": "./out/util.d.ts",
   "devDependencies": {
     "@types/cross-spawn": "6.0.6",
     "@types/fs-extra": "^9.0.11",

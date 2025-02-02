@@ -1,7 +1,6 @@
 {
   "name": "@electron-builder/test",
   "version": "0.0.0",
-  "type": "module",
   "private": true,
   "dependencies": {
     "@electron/osx-sign": "^1.0.4",

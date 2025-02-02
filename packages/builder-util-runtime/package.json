@@ -1,15 +1,7 @@
 {
   "name": "builder-util-runtime",
   "version": "9.3.1",
-  "main": "out/cjs/index.js",
-  "module": "out/es/index.js",
-  "exports": {
-    ".": {
-      "require": "./out/cjs/index.js",
-      "import": "./out/esm/index.js"
-    }
-  },
-  "type": "module",
+  "main": "out/index.js",
   "author": "Vladimir Krivosheev",
   "license": "MIT",
   "repository": {
@@ -33,5 +25,5 @@
     "@types/debug": "4.1.7",
     "@types/sax": "1.2.3"
   },
-  "types": "./out/cjs/index.d.ts"
+  "types": "./out/index.d.ts"
 }
