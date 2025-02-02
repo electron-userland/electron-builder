@@ -106,7 +106,7 @@ const bundledCertKeychainAdded = new Lazy<void>(async () => {
   const keychainPath = path.join(cacheDir, "electron-builder-root-certs.keychain")
   const results = await Promise.all<any>([
     listUserKeychains(),
-    copyFile(path.join(__dirname, "..", "..", "certs", "root_certs.keychain"), tmpKeychainPath).then(() => rename(tmpKeychainPath, keychainPath)),
+    copyFile(path.join(__dirname, "..", "..", "..", "certs", "root_certs.keychain"), tmpKeychainPath).then(() => rename(tmpKeychainPath, keychainPath)),
   ])
   const list = results[0]
   if (!list.includes(keychainPath)) {

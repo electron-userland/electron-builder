@@ -3,7 +3,7 @@ import { executeFinally } from "builder-util"
 import * as path from "path"
 import { hdiUtil } from "./hdiuil"
 
-const root = path.join(__dirname, "..")
+const root = path.join(__dirname, "..", "..")
 
 export function getDmgTemplatePath() {
   return path.join(root, "templates")

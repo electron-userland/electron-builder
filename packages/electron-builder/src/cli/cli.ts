@@ -68,7 +68,7 @@ async function checkIsOutdated() {
     return
   }
 
-  const pkg = await readJson(path.join(__dirname, "..", "..", "package.json"))
+  const pkg = await readJson(path.join(__dirname, "..", "..", "..", "package.json"))
   if (pkg.version === "0.0.0-semantic-release") {
     return
   }
