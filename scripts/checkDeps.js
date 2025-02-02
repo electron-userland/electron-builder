@@ -15,7 +15,7 @@ const knownUnusedDevDependencies = new Set([
   "eslint-config-prettier",
   "eslint-plugin-prettier",
 ])
-const knownMissedDependencies = new Set([("babel-core", "babel-preset-env", "babel-preset-stage-0", "babel-preset-react")])
+const knownMissedDependencies = new Set(["babel-core", "babel-preset-env", "babel-preset-stage-0", "babel-preset-react"])
 
 const rootDir = path.join(__dirname, "../")
 const packageDir = path.join(rootDir, "packages")
