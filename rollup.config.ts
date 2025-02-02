@@ -1,19 +1,19 @@
 import typescript from "@rollup/plugin-typescript"
-import { defineConfig } from "rollup"
-import * as glob from "glob"
-import { createRequire } from "node:module"
-import path from "node:path"
+import typescript2 from "rollup-plugin-typescript2"
 import * as fs from "fs"
+import * as glob from "glob"
+import { defineConfig } from "rollup"
+import { cleandir } from "rollup-plugin-cleandir"
 
 const packageMap = [
   {
     package: "builder-util-runtime",
     entry: "src/**/*.ts",
   },
-  {
-    package: "builder-util",
-    entry: "src/**/*.ts",
-  },
+  // {
+  //   package: "builder-util",
+  //   entry: "src/**/*.ts",
+  // },
   // {
   //   package: "electron-publish",
   //   entry: "src/**/*.ts",
@@ -69,48 +69,46 @@ export default () => {
   const outDir = "out"
   return packageMap.map(pkg => {
     const dir = p => `packages/${pkg.package}/${p}`
-    const input = glob.sync(`packages/${pkg.package}/${pkg.entry}`, { ignore: [dir(outDir), "**/*/*.d.ts"] })
-
-    const packageJson = JSON.parse(fs.readFileSync(dir("package.json"), "utf-8"))
-    // const input = filesGlob.reduce((prev, curr) => {
-
-    // })
-    // const input = packageJson.main.replace("out/", "src/")
+    const input = glob.sync(dir(pkg.entry), { ignore: [dir(outDir), "**/*/*.d.ts"] })
+    // const tsconfigJson = JSON.parse(fs.readFileSync(dir("tsconfig.json"), "utf-8"))
     return defineConfig({
       input, //: dir(!pkg.package.includes("forge") ? input.replace(".js", ".ts") : input),
       treeshake: false,
       output: [
-        // { file: packageJson.main, format: "cjs", sourcemap: true },
-        // { file: packageJson.module, format: "es", sourcemap: true },
-        // {
-        //   dir: dir("esm"),
-        //   format: "esm",
-        //   exports: "named",
-        //   preserveModules: true,
-        //   // Ensures that CJS default exports are imported properly (based on __esModule)
-        //   // If needed, can switch to 'compat' which checks for .default prop on the default export instead
-        //   // see https://rollupjs.org/configuration-options/#output-interop
-        //   interop: "auto",
-        // },
         {
-          dir: dir(outDir),
+          dir: dir("out/cjs"),
           format: "cjs",
-          exports: "named",
+          // exports: "named",
           preserveModules: true,
-          interop: "auto",
+          sourcemap: true,
+          // interop: "auto",
+        },
+        {
+          dir: dir("out/esm"),
+          format: "esm",
+          // exports: "named",
+          preserveModules: true,
+          sourcemap: true,
+          // interop: "auto",
         },
       ],
       plugins: [
-        typescript({
-          tsconfig: `packages/${pkg.package}/tsconfig.json`,
-          checkJs: true,
-          // declaration: false,
-          // declarationDir: path.join(dir(""), "types"),
-          outDir: dir(outDir),
-          sourceMap: true,
-          // compilerOptions: {
-          //   outDir: dir(outDir),
-          // },
+        // cleandir(dir(outDir)),
+        // typescript({
+        //   tsconfig: dir("tsconfig.json"),
+        //   checkJs: true,
+        //   // declaration: false,
+        //   // declarationDir: path.join(dir(""), "types"),
+        //   // outDir: dir(outDir),
+        //   sourceMap: true,
+        //   // compilerOptions: {
+        //   //   outDir: dir(outDir),
+        //   // },
+        // }),
+        typescript2({
+          check: true,
+          clean: true,
+          tsconfig: dir("tsconfig.json"),
         }),
       ],
       external: id => !/^[./]/.test(id), // don't package any node_modules

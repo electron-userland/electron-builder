@@ -7,6 +7,17 @@ export default () => {
   const isWindows = process.platform === "win32"
 
   return defineConfig({
+    build: {
+      lib: {
+        entry: "./src/index.ts",
+        formats: ["es"],
+        fileName: (format, entryName) => `${entryName}.${format}.js`,
+      },
+      // output: {
+      //   preserveModules: true,
+      //   preserveModulesRoot: "src",
+      // },
+    },
     server: {
       https: {
         cert: fs.readFileSync("./.vitest-cert/cert.pem"),
