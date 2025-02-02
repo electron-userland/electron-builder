@@ -1,5 +1,5 @@
 import { DIR_TARGET, Platform } from "app-builder-lib"
-import { readAsar } from "app-builder-lib/"
+import { readAsar } from "app-builder-lib"
 import { outputFile } from "fs-extra"
 import * as fs from "fs/promises"
 import * as path from "path"

@@ -1,4 +1,4 @@
-import { AsarFilesystem, readAsar } from "app-builder-lib/"
+import { AsarFilesystem, readAsar } from "app-builder-lib"
 import { walk } from "builder-util"
 import { readFileSync } from "fs"
 import * as path from "path"

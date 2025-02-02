@@ -1,5 +1,5 @@
 import { Arch, Configuration, Platform } from "app-builder-lib"
-import { getBinFromUrl } from "app-builder-lib/"
+import { getBinFromUrl } from "app-builder-lib"
 import { doSpawn, getArchSuffix } from "builder-util"
 import { GenericServerOptions, Nullish, S3Options } from "builder-util-runtime"
 import { AppImageUpdater, BaseUpdater, MacUpdater, NoOpLogger, NsisUpdater } from "electron-updater"

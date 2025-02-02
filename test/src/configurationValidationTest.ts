@@ -1,4 +1,4 @@
-import { validateConfiguration } from "app-builder-lib/"
+import { validateConfiguration } from "app-builder-lib"
 import { Arch, DebugLogger } from "builder-util"
 import { Configuration, Platform } from "electron-builder"
 import { CliOptions, configureBuildCommand, createYargs, normalizeOptions } from "electron-builder/"

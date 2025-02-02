@@ -1,4 +1,4 @@
-import { readAsarJson } from "app-builder-lib/"
+import { readAsarJson } from "app-builder-lib"
 import { Platform } from "electron-builder"
 import { coerceTypes } from "electron-builder/"
 import { readJson } from "fs-extra"
