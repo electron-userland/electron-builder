@@ -1,5 +1,5 @@
 export { getArchSuffix, Arch, archFromString, log } from "builder-util"
-export { build, CliOptions, createTargets } from "./builder"
+export { build, CliOptions, createTargets, configureBuildCommand, createYargs, normalizeOptions } from "./builder"
 export { publish, publishArtifactsWithOptions } from "./publish"
 export {
   TargetConfiguration,
