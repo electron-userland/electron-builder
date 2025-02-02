@@ -4,7 +4,6 @@
   "private": true,
   "dependencies": {
     "@electron/osx-sign": "^1.0.4",
-    "@jest/core": "29.7.0",
     "app-builder-lib": "workspace:*",
     "builder-util": "workspace:*",
     "builder-util-runtime": "workspace:*",
@@ -18,8 +17,6 @@
     "electron-publish": "workspace:*",
     "electron-updater": "workspace:*",
     "fs-extra": "^10.1.0",
-    "jest": "29.7.0",
-    "jest-junit": "^12.0.0",
     "js-yaml": "^4.1.0",
     "lazy-val": "^1.0.5",
     "path-sort": "^0.1.0",
@@ -34,39 +31,8 @@
     "@types/fs-extra": "^9.0.11",
     "@types/js-yaml": "^4.0.1",
     "@types/semver": "^7.3.13",
-    "babel-jest": "^29.7.0",
     "fast-xml-parser": "4.4.1",
     "vitest": "^3.0.4",
     "vitest-mock-commonjs": "^1.0.2"
-  },
-  "jest": {
-    "snapshotResolver": "<rootDir>/snapshotResolver.js",
-    "testEnvironment": "node",
-    "roots": [
-      "src"
-    ],
-    "transformIgnorePatterns": [
-      "./node_modules",
-      "../node_modules",
-      "../packages"
-    ],
-    "transform": {
-      "^.+\\.ts$": [
-        "esbuild-jest",
-        {
-          "sourcemap": "inline",
-          "loaders": {
-            ".ts": "ts"
-          }
-        }
-      ]
-    },
-    "testPathIgnorePatterns": [
-      "[\\/]{1}helpers[\\/]{1}"
-    ],
-    "testRegex": "\\.[jt]s$",
-    "setupFilesAfterEnv": [
-      "<rootDir>/jestSetup.js"
-    ]
   }
 }
