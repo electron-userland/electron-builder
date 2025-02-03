@@ -26,7 +26,17 @@ import { createTempUpdateFile, DownloadedUpdateHelper } from "./DownloadedUpdate
 import { ElectronAppAdapter } from "./ElectronAppAdapter"
 import { ElectronHttpExecutor, getNetSession, LoginCallback } from "./electronHttpExecutor"
 import { GenericProvider } from "./providers/GenericProvider"
-import { DOWNLOAD_PROGRESS, Logger, Provider, ResolvedUpdateFileInfo, UPDATE_DOWNLOADED, UpdateCheckResult, UpdateDownloadedEvent, UpdaterSignal } from "./main"
+import {
+  DOWNLOAD_PROGRESS,
+  Logger,
+  Provider,
+  ResolvedUpdateFileInfo,
+  UPDATE_DOWNLOADED,
+  UpdateCheckResult,
+  UpdateDownloadedEvent,
+  UpdaterSignal,
+  VerifyUpdateSupport,
+} from "./main"
 import { createClient, isUrlProbablySupportMultiRangeRequests } from "./providerFactory"
 import { ProviderPlatform } from "./providers/Provider"
 import type { TypedEmitter } from "tiny-typed-emitter"
@@ -203,6 +213,22 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     this.configOnDisk = new Lazy<any>(() => this.loadUpdateConfig())
   }
 
+  protected _isUpdateSupported: VerifyUpdateSupport = (updateInfo: UpdateInfo): boolean | Promise<boolean> => this.checkIfUpdateSupported(updateInfo)
+
+  /**
+   * Allows developer to override default logic for determining if an update is supported.
+   * The default logic compares the `UpdateInfo` minimum system version against the `os.release()` with `semver` package
+   */
+  get isUpdateSupported(): VerifyUpdateSupport {
+    return this._isUpdateSupported
+  }
+
+  set isUpdateSupported(value: VerifyUpdateSupport) {
+    if (value) {
+      this._isUpdateSupported = value
+    }
+  }
+
   private clientPromise: Promise<Provider<any>> | null = null
 
   protected readonly stagingUserIdPromise = new Lazy<string>(() => this.getOrCreateStagingUserId())
@@ -279,6 +305,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
 
   /**
    * Asks the server whether there is an update.
+   * @returns null if the updater is disabled, otherwise info about the latest version
    */
   checkForUpdates(): Promise<UpdateCheckResult | null> {
     if (!this.isUpdaterActive()) {
@@ -395,17 +422,8 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       return false
     }
 
-    const minimumSystemVersion = updateInfo?.minimumSystemVersion
-    const currentOSVersion = release()
-    if (minimumSystemVersion) {
-      try {
-        if (isVersionLessThan(currentOSVersion, minimumSystemVersion)) {
-          this._logger.info(`Current OS version ${currentOSVersion} is less than the minimum OS version required ${minimumSystemVersion} for version ${currentOSVersion}`)
-          return false
-        }
-      } catch (e: any) {
-        this._logger.warn(`Failed to compare current OS version(${currentOSVersion}) with minimum OS version(${minimumSystemVersion}): ${(e.message || e).toString()}`)
-      }
+    if (!(await Promise.resolve(this.isUpdateSupported(updateInfo)))) {
+      return false
     }
 
     const isStagingMatch = await this.isStagingMatch(updateInfo)
@@ -422,6 +440,22 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       return true
     }
     return this.allowDowngrade && isLatestVersionOlder
+  }
+
+  private checkIfUpdateSupported(updateInfo: UpdateInfo) {
+    const minimumSystemVersion = updateInfo?.minimumSystemVersion
+    const currentOSVersion = release()
+    if (minimumSystemVersion) {
+      try {
+        if (isVersionLessThan(currentOSVersion, minimumSystemVersion)) {
+          this._logger.info(`Current OS version ${currentOSVersion} is less than the minimum OS version required ${minimumSystemVersion} for version ${currentOSVersion}`)
+          return false
+        }
+      } catch (e: any) {
+        this._logger.warn(`Failed to compare current OS version(${currentOSVersion}) with minimum OS version(${minimumSystemVersion}): ${(e.message || e).toString()}`)
+      }
+    }
+    return true
   }
 
   protected async getUpdateInfoAndProvider(): Promise<UpdateInfoAndProvider> {
@@ -461,6 +495,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       )
       this.emit("update-not-available", updateInfo)
       return {
+        isUpdateAvailable: false,
         versionInfo: updateInfo,
         updateInfo,
       }
@@ -472,6 +507,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     const cancellationToken = new CancellationToken()
     //noinspection ES6MissingAwait
     return {
+      isUpdateAvailable: true,
       versionInfo: updateInfo,
       updateInfo,
       cancellationToken,

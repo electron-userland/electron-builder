@@ -14,6 +14,8 @@ test.ifNotWindows.ifAll("only zip", createMacTargetTest(["zip"], undefined, fals
 
 test.ifNotWindows.ifAll("tar.gz", createMacTargetTest(["tar.gz"]))
 
+// test.ifNotWindows.ifAll("tar.xz", createTargetTest(["tar.xz"], ["Test App ßW-1.1.0-mac.tar.xz"]))
+
 const it = process.env.CSC_KEY_PASSWORD == null ? test.skip : test.ifMac
 
 it("pkg", createMacTargetTest(["pkg"]))
@@ -141,11 +143,31 @@ test.ifAll.ifMac(
         expect(info).toMatchSnapshot()
 
         const scriptDir = path.join(unpackedDir, "org.electron-builder.testApp.pkg", "Scripts")
-        await Promise.all([assertThat(path.join(scriptDir, "postinstall")).isFile(), assertThat(path.join(scriptDir, "preinstall")).isFile()])
+        await assertThat(path.join(scriptDir, "postinstall")).isFile()
+        await assertThat(path.join(scriptDir, "preinstall")).isFile()
       },
     }
   )
 )
 
-// todo failed on Travis CI
-//test("tar.xz", createTargetTest(["tar.xz"], ["Test App ßW-1.1.0-mac.tar.xz"]))
+test.ifAll.ifMac("pkg extra packages", async () => {
+  const extraPackages = path.join("build", "extra-packages")
+  return app(
+    {
+      targets: Platform.MAC.createTarget("pkg", Arch.x64),
+      config: {
+        pkg: {
+          extraPkgsDir: extraPackages,
+        },
+      },
+    },
+    {
+      signed: false,
+      projectDirCreated: async projectDir => {
+        const extraPackagesDir = path.join(projectDir, extraPackages)
+        await fs.mkdir(extraPackagesDir)
+        await fs.writeFile(path.join(extraPackagesDir, "noop.pkg"), "data")
+      },
+    }
+  )
+})

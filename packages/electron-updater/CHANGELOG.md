@@ -1,5 +1,13 @@
 ## 4.3.0
 
+## 6.5.0
+
+### Minor Changes
+
+- [#8829](https://github.com/electron-userland/electron-builder/pull/8829) [`14ee2d6b`](https://github.com/electron-userland/electron-builder/commit/14ee2d6be32fd6e9165381e0709e5a2e8049ece2) Thanks [@Julusian](https://github.com/Julusian)! - feat: add `isUpdateAvailable` property to `checkForUpdates` result
+
+- [#8692](https://github.com/electron-userland/electron-builder/pull/8692) [`96c5d140`](https://github.com/electron-userland/electron-builder/commit/96c5d14027d56473ae5dd843c023709a01782963) Thanks [@mmaietta](https://github.com/mmaietta)! - feat: add support for custom `isUpdateSupported` hook for validating `UpdateInfo`, with fallback to previous `minimumSystemVersion` logic
+
 ## 6.4.1
 
 ### Patch Changes
