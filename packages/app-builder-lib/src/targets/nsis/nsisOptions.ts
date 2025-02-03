@@ -251,4 +251,10 @@ export interface NsisWebOptions extends NsisOptions {
    * The [artifact file name template](./configuration.md#artifact-file-name-template). Defaults to `${productName} Web Setup ${version}.${ext}`.
    */
   readonly artifactName?: string | null
+
+  /**
+   * Override for `NsisOptions.buildUniversalInstaller`. nsis-web requires universal installer
+   * @default true
+   */
+  readonly buildUniversalInstaller?: true
 }
