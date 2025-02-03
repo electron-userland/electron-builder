@@ -279,6 +279,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
 
   /**
    * Asks the server whether there is an update.
+   * @returns null if the updater is disabled, otherwise info about the latest version
    */
   checkForUpdates(): Promise<UpdateCheckResult | null> {
     if (!this.isUpdaterActive()) {
@@ -461,6 +462,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       )
       this.emit("update-not-available", updateInfo)
       return {
+        isUpdateAvailable: false,
         versionInfo: updateInfo,
         updateInfo,
       }
@@ -472,6 +474,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     const cancellationToken = new CancellationToken()
     //noinspection ES6MissingAwait
     return {
+      isUpdateAvailable: true,
       versionInfo: updateInfo,
       updateInfo,
       cancellationToken,
