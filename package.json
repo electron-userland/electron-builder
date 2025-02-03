@@ -14,7 +14,7 @@
     "compile": "rollup -c rollup.config.ts --configPlugin typescript",
     "lint": "eslint packages",
     "lint-staged": "lint-staged",
-    "lint-deps": "ts-node ./test/src/helpers/checkDeps.ts",
+    "lint-deps": "node ./scripts/checkDeps.js",
     "pretest": "pnpm lint-deps && pnpm lint",
     "prettier": "prettier 'packages/**/*.{ts,js}' test/src/**/*.ts --write",
     "///": "Please see https://github.com/electron-userland/electron-builder/blob/master/CONTRIBUTING.md#run-test-using-cli how to run particular test instead full (and very slow) run",
