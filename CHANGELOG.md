@@ -1,3 +1,21 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v26.0.1...v) (2025-02-03)
+
+
+### Bug Fixes
+
+* handle yarn berry `patch` format in electron-updater version check ([#8830](https://github.com/electron-userland/electron-builder/issues/8830)) ([44603f2](https://github.com/electron-userland/electron-builder/commit/44603f2f3cc0e00e1c2c2420c7d440d587f8feca))
+* upgrading TrustedSigning module to 0.5.0 ([#8833](https://github.com/electron-userland/electron-builder/issues/8833)) ([f5af99a](https://github.com/electron-userland/electron-builder/commit/f5af99ac87ef585a7f7ba548d3fb92811f845ba3))
+
+
+### Features
+
+* add `isUpdateAvailable` property to `checkForUpdates` result ([#8829](https://github.com/electron-userland/electron-builder/issues/8829)) ([14ee2d6](https://github.com/electron-userland/electron-builder/commit/14ee2d6be32fd6e9165381e0709e5a2e8049ece2))
+* Allow users to pass a custom headers URL via env var `npm_config_electron_mirror` ([#8785](https://github.com/electron-userland/electron-builder/issues/8785)) ([b3adf48](https://github.com/electron-userland/electron-builder/commit/b3adf4800b4ed240bb21a6a0a6ccdd57670e5d26))
+* **pkg:** support extra component packages (`.pkg`) for macos archives ([#8767](https://github.com/electron-userland/electron-builder/issues/8767)) ([f45a09e](https://github.com/electron-userland/electron-builder/commit/f45a09eeeb9d2fb5c4a45bd7bf3990c4acb3c538))
+* **updater:** add custom `isUpdateSupported` hook for validating update downloads ([#8692](https://github.com/electron-userland/electron-builder/issues/8692)) ([96c5d14](https://github.com/electron-userland/electron-builder/commit/96c5d14027d56473ae5dd843c023709a01782963))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v26.0.0...v) (2025-01-30)
 
 

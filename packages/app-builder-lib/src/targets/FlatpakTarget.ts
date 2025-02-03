@@ -1,5 +1,5 @@
 import { bundle as bundleFlatpak, FlatpakBundlerBuildOptions, FlatpakManifest } from "@malept/flatpak-bundler"
-import { Arch, copyFile, deepAssign, toLinuxArchString } from "builder-util"
+import { Arch, copyFile, toLinuxArchString } from "builder-util"
 import { chmod, outputFile } from "fs-extra"
 import * as path from "path"
 import { Target } from "../core"
@@ -19,7 +19,10 @@ export default class FlatpakTarget extends Target {
     readonly outDir: string
   ) {
     super(name)
-    this.options = deepAssign({}, this.packager.platformSpecificBuildOptions, (this.packager.config as any)[this.name])
+    this.options = {
+      ...this.packager.platformSpecificBuildOptions,
+      ...(this.packager.config as any)[this.name],
+    }
   }
 
   get appId(): string {

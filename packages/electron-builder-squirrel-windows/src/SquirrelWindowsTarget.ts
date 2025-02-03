@@ -1,12 +1,10 @@
 import { Arch, getArchSuffix, SquirrelWindowsOptions, Target } from "app-builder-lib"
-import { getBinFromUrl } from "app-builder-lib"
-import { WinPackager } from "app-builder-lib"
-import { deepAssign, InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
-import { sanitizeFileName } from "builder-util"
+import { getBinFromUrl } from "app-builder-lib/out/binDownload"
+import { WinPackager } from "app-builder-lib/out/winPackager"
+import { InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
+import { sanitizeFileName } from "builder-util/out/filename"
 import * as path from "path"
 import { convertVersion, SquirrelBuilder, SquirrelOptions } from "./squirrelPack"
-
-export * from "./squirrelPack"
 
 export default class SquirrelWindowsTarget extends Target {
   //tslint:disable-next-line:no-object-literal-type-assertion
@@ -17,7 +15,7 @@ export default class SquirrelWindowsTarget extends Target {
     readonly outDir: string
   ) {
     super("squirrel")
-    this.options = deepAssign(this.packager.platformSpecificBuildOptions, this.packager.config.squirrelWindows)
+    this.options = { ...this.packager.platformSpecificBuildOptions, ...this.packager.config.squirrelWindows }
   }
 
   async build(appOutDir: string, arch: Arch) {

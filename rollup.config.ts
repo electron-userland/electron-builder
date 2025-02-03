@@ -1,14 +1,12 @@
-import * as glob from "glob"
-import path from "path"
+import typescript from "rollup-plugin-typescript2"
 import { defineConfig } from "rollup"
-import typescript2 from "rollup-plugin-typescript2"
+import * as glob from "glob"
 import { cleandir } from "rollup-plugin-cleandir"
 
 const packageMap = [
   {
     package: "builder-util-runtime",
     entry: "src/**/*.ts",
-    formats: ["cjs", "esm"],
   },
   {
     package: "builder-util",
@@ -27,6 +25,10 @@ const packageMap = [
     entry: "src/**/*.ts",
   },
   {
+    package: "electron-updater",
+    entry: "src/**/*.ts",
+  },
+  {
     package: "electron-builder",
     entry: "src/**/*.ts",
   },
@@ -34,15 +36,6 @@ const packageMap = [
     package: "electron-builder-squirrel-windows",
     entry: "src/**/*.ts",
   },
-  {
-    package: "electron-updater",
-    entry: "src/**/*.ts",
-    formats: ["cjs", "esm"],
-  },
-  // {
-  //   package: "test",
-  //   entry: "src/helpers/checkDeps.js",
-  // },
   // {
   //   package: "electron-forge-maker-appimage",
   //   entry: "main.js",
@@ -61,46 +54,28 @@ const packageMap = [
   // },
 ]
 
-const outputOptions = {
-  exports: "named",
-  preserveModules: true,
-  sourcemap: true,
-  // Ensures that CJS default exports are imported properly (based on __esModule)
-  // If needed, can switch to 'compat' which checks for .default prop on the default export instead
-  // see https://rollupjs.org/configuration-options/#output-interop
-  interop: "auto",
-}
-
 export default () => {
   const outDir = "out"
   return packageMap.map(pkg => {
-    const dir = p => path.posix.resolve("packages", pkg.package, p)
-    const input = glob.sync(dir(pkg.entry), { ignore: [dir(outDir), "**/*/*.d.ts"] })
-    // @ts-ignore
+    const dir = `packages/${pkg.package}/${outDir}`
+    const input = glob.sync(`packages/${pkg.package}/${pkg.entry}`, { ignore: [dir, "**/*/*.d.ts"] })
     return defineConfig({
-      watch: {
-        include: dir("**/*.ts"),
-        exclude: dir(outDir),
-      },
       input,
       treeshake: false,
-      output: (pkg.formats ?? ["cjs"]).map(format => ({
-        dir: dir(path.join(outDir, pkg.formats?.length ? format : "")),
-        format,
-        ...outputOptions,
-      })),
+      output: {
+        dir: dir,
+        format: "cjs",
+        sourcemap: true,
+        preserveModules: true, // Keep files separates instead of one bundled file
+      },
       plugins: [
-        cleandir(dir(outDir)),
-        typescript2({
-          check: true,
+        cleandir(dir),
+        typescript({
+          tsconfig: `packages/${pkg.package}/tsconfig.json`,
           clean: true,
-          tsconfig: dir("tsconfig.json"),
-          // tsconfigOverride: {
-          //   declarationDir: dir("out/types"),
-          // },
+          check: true,
         }),
       ],
-      external: id => !/^[./]/.test(id), // don't package any node_modules
     })
   })
 }

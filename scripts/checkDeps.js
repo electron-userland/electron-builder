@@ -1,9 +1,7 @@
 const chalk = require("chalk")
 const depCheck = require("depcheck")
-const fsExtra = require("fs-extra")
-const fs = require("fs/promises")
+const fs = require("fs-extra")
 const path = require("path")
-
 const knownUnusedDevDependencies = new Set([
   "@babel/plugin-transform-modules-commonjs", // Not sure what this is used for, but keeping just in case (for now)
   "@changesets/changelog-github", // Used in package.json CI/CD logic
@@ -18,7 +16,7 @@ const knownUnusedDevDependencies = new Set([
 ])
 const knownMissedDependencies = new Set(["babel-core", "babel-preset-env", "babel-preset-stage-0", "babel-preset-react"])
 
-const rootDir = path.join(__dirname, "../")
+const rootDir = path.join(__dirname, "..")
 const packageDir = path.join(rootDir, "packages")
 
 async function check(projectDir, devPackageData) {
@@ -78,7 +76,7 @@ async function check(projectDir, devPackageData) {
     return false
   }
 
-  const packageData = await fsExtra.readJson(path.join(projectDir, "package.json"))
+  const packageData = await fs.readJson(path.join(projectDir, "package.json"))
   for (const name of devPackageData.devDependencies == null ? [] : Object.keys(devPackageData.devDependencies)) {
     if (packageData.dependencies != null && packageData.dependencies[name] != null) {
       continue
@@ -102,7 +100,7 @@ async function check(projectDir, devPackageData) {
 
 async function main() {
   const packages = (await fs.readdir(packageDir)).filter(it => !it.includes(".")).sort()
-  const devPackageData = JSON.parse(await fs.readFile(path.join(rootDir, "package.json"), "utf-8"))
+  const devPackageData = await fs.readJson(path.join(rootDir, "package.json"))
   const checkRoot = await check(process.cwd(), devPackageData)
   const checkPackages = await Promise.all(packages.map(it => check(path.join(packageDir, it), devPackageData)))
   if (checkRoot === false || checkPackages.includes(false)) {

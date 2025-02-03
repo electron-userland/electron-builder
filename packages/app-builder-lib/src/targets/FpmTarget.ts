@@ -1,4 +1,4 @@
-import { Arch, asArray, deepAssign, executeAppBuilder, getArchSuffix, getPath7za, log, serializeToYaml, TmpDir, toLinuxArchString, unlinkIfExists, use } from "builder-util"
+import { Arch, asArray, executeAppBuilder, getArchSuffix, getPath7za, log, serializeToYaml, TmpDir, toLinuxArchString, unlinkIfExists, use } from "builder-util"
 import { Nullish } from "builder-util-runtime"
 import { copyFile, outputFile, stat } from "fs-extra"
 import { mkdir, readFile } from "fs/promises"
@@ -43,7 +43,8 @@ export default class FpmTarget extends Target {
     readonly outDir: string
   ) {
     super(name, false)
-    this.options = deepAssign({}, this.packager.platformSpecificBuildOptions, (this.packager.config as any)[this.name])
+
+    this.options = { ...this.packager.platformSpecificBuildOptions, ...(this.packager.config as any)[this.name] }
     this.scriptFiles = this.createScripts()
   }
 
