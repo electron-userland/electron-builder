@@ -66,6 +66,8 @@
     "lint-staged": "15.2.10",
     "prettier": "3.3.3",
     "rollup": "^4.32.1",
+    "rollup-plugin-cleandir": "^3.0.0",
+    "rollup-plugin-typescript2": "^0.36.0",
     "ts-node": "^10.9.2",
     "typedoc": "^0.26.7",
     "typedoc-plugin-markdown": "4.2.8",

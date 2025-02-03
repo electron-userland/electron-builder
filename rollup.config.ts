@@ -1,6 +1,7 @@
-import typescript from "@rollup/plugin-typescript"
+import typescript from "rollup-plugin-typescript2"
 import { defineConfig } from "rollup"
 import * as glob from "glob"
+import { cleandir } from "rollup-plugin-cleandir"
 
 const packageMap = [
   {
@@ -68,12 +69,11 @@ export default () => {
         preserveModules: true, // Keep files separates instead of one bundled file
       },
       plugins: [
+        cleandir(dir),
         typescript({
           tsconfig: `packages/${pkg.package}/tsconfig.json`,
-          checkJs: true,
-          declaration: true,
-          declarationDir: dir,
-          sourceMap: true,
+          clean: true,
+          check: true,
         }),
       ],
     })

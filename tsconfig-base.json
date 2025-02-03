@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
-    "target": "es2019",
-    "module": "CommonJS",
+    "target": "ES2024",
+    "module": "ES2022",
     "esModuleInterop": false,
     "forceConsistentCasingInFileNames": true,
     "moduleResolution": "node",

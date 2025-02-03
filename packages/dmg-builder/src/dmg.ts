@@ -15,13 +15,14 @@ import { attachAndExecute, computeBackground, detach, getDmgVendorPath } from ".
 import { hdiUtil } from "./hdiuil"
 
 export class DmgTarget extends Target {
-  readonly options: DmgOptions = this.packager.config.dmg || Object.create(null)
+  readonly options: DmgOptions
 
   constructor(
     private readonly packager: MacPackager,
     readonly outDir: string
   ) {
     super("dmg")
+    this.options = this.packager.config.dmg || Object.create(null)
   }
 
   async build(appPath: string, arch: Arch) {

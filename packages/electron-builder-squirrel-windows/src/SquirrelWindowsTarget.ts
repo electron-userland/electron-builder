@@ -8,13 +8,14 @@ import { convertVersion, SquirrelBuilder, SquirrelOptions } from "./squirrelPack
 
 export default class SquirrelWindowsTarget extends Target {
   //tslint:disable-next-line:no-object-literal-type-assertion
-  readonly options: SquirrelWindowsOptions = { ...this.packager.platformSpecificBuildOptions, ...this.packager.config.squirrelWindows } as SquirrelWindowsOptions
+  readonly options: SquirrelWindowsOptions
 
   constructor(
     private readonly packager: WinPackager,
     readonly outDir: string
   ) {
     super("squirrel")
+    this.options = { ...this.packager.platformSpecificBuildOptions, ...this.packager.config.squirrelWindows }
   }
 
   async build(appOutDir: string, arch: Arch) {
