@@ -39,13 +39,13 @@ export default class SquirrelWindowsTarget extends Target {
       log.warn("For windows consider only distributing 64-bit or use nsis target, see https://github.com/electron-userland/electron-builder/issues/359#issuecomment-214851130")
     }
 
+    this.appDirectory = appOutDir
+    this.outputDirectory = installerOutDir
     const distOptions = await this.computeEffectiveDistOptions()
     if (distOptions.vendorDirectory) {
       this.select7zipArch(distOptions.vendorDirectory, arch)
     }
 
-    this.appDirectory = appOutDir
-    this.outputDirectory = installerOutDir
     await createWindowsInstaller(distOptions)
 
     await packager.info.callArtifactBuildCompleted({
