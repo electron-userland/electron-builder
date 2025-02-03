@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
   <metadata>
-    <id><%- appId %></id>
+    <id><%- name %></id>
     <title><%- title %></title>
     <version><%- version %></version>
     <authors><%- authors %></authors>
