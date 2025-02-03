@@ -910,6 +910,13 @@
           ]
         }
       ]
+    },
+    "$schema": {
+      "description": "JSON Schema for this document.",
+      "type": [
+        "null",
+        "string"
+      ]
     }
   },
   "additionalProperties": false,
@@ -2331,7 +2338,22 @@
           "type": "string"
         }
       },
-      "additionalProperties": false
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          {
+            "type": [
+              "string",
+              "number"
+            ]
+          }
+        ]
+      }
     },
     "S3Options": {
       "description": "[Amazon S3](https://aws.amazon.com/s3/) options.\nAWS credentials are required, please see [getting your credentials](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/getting-your-credentials.html).\nDefine `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` [environment variables](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/loading-node-credentials-environment.html).\nOr in the [~/.aws/credentials](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/loading-node-credentials-shared.html).\n\nExample configuration:\n\n```json\n{\n\"build\":\n \"publish\": {\n   \"provider\": \"s3\",\n   \"bucket\": \"bucket-name\"\n }\n}\n}\n```",
@@ -6662,7 +6684,10 @@
           "description": "The custom environment. Defaults to `{\"TMPDIR: \"$XDG_RUNTIME_DIR\"}`. If you set custom, it will be merged with default.",
           "anyOf": [
             {
-              "typeof": "function"
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
             },
             {
               "type": "null"
@@ -6985,7 +7010,7 @@
       "additionalProperties": {
         "anyOf": [
           {
-            "typeof": "function"
+            "type": "object"
           },
           {
             "type": "null"
