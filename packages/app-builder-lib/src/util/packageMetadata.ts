@@ -102,7 +102,7 @@ function checkDependencies(dependencies: Record<string, string> | Nullish, error
   if (updaterVersion != null) {
     // Pick the version out of yarn berry patch syntax
     // "patch:electron-updater@npm%3A6.4.1#~/.yarn/patches/electron-updater-npm-6.4.1-ef33e6cc39.patch"
-    if (updaterVersion.startsWith('patch:')) {
+    if (updaterVersion.startsWith("patch:")) {
       const match = updaterVersion.match(/@npm%3A(.+?)#/)
       if (match) {
         updaterVersion = match[1]
