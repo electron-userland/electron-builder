@@ -98,12 +98,23 @@ function checkDependencies(dependencies: Record<string, string> | Nullish, error
     return
   }
 
-  const updaterVersion = dependencies["electron-updater"]
-  const requiredElectronUpdaterVersion = "4.0.0"
-  if (updaterVersion != null && !versionSatisfies(updaterVersion, `>=${requiredElectronUpdaterVersion}`)) {
-    errors.push(
-      `At least electron-updater ${requiredElectronUpdaterVersion} is recommended by current electron-builder version. Please set electron-updater version to "^${requiredElectronUpdaterVersion}"`
-    )
+  let updaterVersion = dependencies["electron-updater"]
+  if (updaterVersion != null) {
+    // Pick the version out of yarn berry patch syntax
+    // "patch:electron-updater@npm%3A6.4.1#~/.yarn/patches/electron-updater-npm-6.4.1-ef33e6cc39.patch"
+    if (updaterVersion.startsWith("patch:")) {
+      const match = updaterVersion.match(/@npm%3A(.+?)#/)
+      if (match) {
+        updaterVersion = match[1]
+      }
+    }
+
+    const requiredElectronUpdaterVersion = "4.0.0"
+    if (!versionSatisfies(updaterVersion, `>=${requiredElectronUpdaterVersion}`)) {
+      errors.push(
+        `At least electron-updater ${requiredElectronUpdaterVersion} is recommended by current electron-builder version. Please set electron-updater version to "^${requiredElectronUpdaterVersion}"`
+      )
+    }
   }
 
   const swVersion = dependencies["electron-builder-squirrel-windows"]

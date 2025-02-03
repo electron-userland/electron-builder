@@ -77,6 +77,8 @@ export interface ResolvedUpdateFileInfo {
 }
 
 export interface UpdateCheckResult {
+  readonly isUpdateAvailable: boolean
+
   readonly updateInfo: UpdateInfo
 
   readonly downloadPromise?: Promise<Array<string>> | null
@@ -144,7 +146,10 @@ export interface Logger {
   debug?(message: string): void
 }
 
-// return null if verify signature succeed
-// return error message if verify signature failed
+/**
+ * return null if verify signature succeed
+ * return error message if verify signature failed
+ */
+export type VerifyUpdateCodeSignature = (publisherName: string[], path: string) => Promise<string | null>
 
-export type verifyUpdateCodeSignature = (publisherName: string[], path: string) => Promise<string | null>
+export type VerifyUpdateSupport = (updateInfo: UpdateInfo) => boolean | Promise<boolean>

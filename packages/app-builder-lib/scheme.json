@@ -4971,6 +4971,13 @@
             "string"
           ]
         },
+        "extraPkgsDir": {
+          "description": "The extra component packages directory (relative to build resources directory) for MacOS product archive\nAutoscans directory for any `.pkg` files and adds to `productbuild` command as `--package-path` and `--package` accordingly",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
         "hasStrictIdentifier": {
           "default": true,
           "description": "Require identical bundle identifiers at install path?",

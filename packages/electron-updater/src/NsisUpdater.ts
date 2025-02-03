@@ -5,7 +5,7 @@ import { DownloadUpdateOptions } from "./AppUpdater"
 import { BaseUpdater, InstallOptions } from "./BaseUpdater"
 import { DifferentialDownloaderOptions } from "./differentialDownloader/DifferentialDownloader"
 import { FileWithEmbeddedBlockMapDifferentialDownloader } from "./differentialDownloader/FileWithEmbeddedBlockMapDifferentialDownloader"
-import { DOWNLOAD_PROGRESS, verifyUpdateCodeSignature } from "./main"
+import { DOWNLOAD_PROGRESS, VerifyUpdateCodeSignature } from "./main"
 import { findFile, Provider } from "./providers/Provider"
 import { unlink } from "fs-extra"
 import { verifySignature } from "./windowsExecutableCodeSignatureVerifier"
@@ -22,18 +22,18 @@ export class NsisUpdater extends BaseUpdater {
     super(options, app)
   }
 
-  protected _verifyUpdateCodeSignature: verifyUpdateCodeSignature = (publisherNames: Array<string>, unescapedTempUpdateFile: string) =>
+  protected _verifyUpdateCodeSignature: VerifyUpdateCodeSignature = (publisherNames: Array<string>, unescapedTempUpdateFile: string) =>
     verifySignature(publisherNames, unescapedTempUpdateFile, this._logger)
 
   /**
    * The verifyUpdateCodeSignature. You can pass [win-verify-signature](https://github.com/beyondkmp/win-verify-trust) or another custom verify function: ` (publisherName: string[], path: string) => Promise<string | null>`.
    * The default verify function uses [windowsExecutableCodeSignatureVerifier](https://github.com/electron-userland/electron-builder/blob/master/packages/electron-updater/src/windowsExecutableCodeSignatureVerifier.ts)
    */
-  get verifyUpdateCodeSignature(): verifyUpdateCodeSignature {
+  get verifyUpdateCodeSignature(): VerifyUpdateCodeSignature {
     return this._verifyUpdateCodeSignature
   }
 
-  set verifyUpdateCodeSignature(value: verifyUpdateCodeSignature) {
+  set verifyUpdateCodeSignature(value: VerifyUpdateCodeSignature) {
     if (value) {
       this._verifyUpdateCodeSignature = value
     }
