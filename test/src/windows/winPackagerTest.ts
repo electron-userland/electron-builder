@@ -70,7 +70,7 @@ test(
       },
     },
     {
-      signed: true,
+      signedWin: true,
     }
   )
 )
