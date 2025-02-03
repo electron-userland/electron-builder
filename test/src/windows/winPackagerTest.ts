@@ -72,7 +72,7 @@ test.ifAll(
       },
     },
     {
-      signed: true,
+      signedWin: true,
     }
   )
 )
