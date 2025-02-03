@@ -77,6 +77,8 @@ export interface ResolvedUpdateFileInfo {
 }
 
 export interface UpdateCheckResult {
+  readonly isUpdateAvailable: boolean
+  
   readonly updateInfo: UpdateInfo
 
   readonly downloadPromise?: Promise<Array<string>> | null
