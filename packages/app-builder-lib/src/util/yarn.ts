@@ -72,7 +72,7 @@ export function getGypEnv(frameworkInfo: DesktopFrameworkInfo, platform: NodeJS.
   // https://github.com/nodejs/node-gyp/issues/21
   return {
     ...common,
-    npm_config_disturl: "https://electronjs.org/headers",
+    npm_config_disturl: common.npm_config_electron_mirror || "https://electronjs.org/headers",
     npm_config_target: frameworkInfo.version,
     npm_config_runtime: "electron",
     npm_config_devdir: getElectronGypCacheDir(),
