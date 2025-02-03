@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from "fs-extra"
 import * as path from "path"
 import { AppUpdater } from "./AppUpdater"
+import { UpdateInfo } from "builder-util-runtime"
 
 export { BaseUpdater } from "./BaseUpdater"
 export { AppUpdater, NoOpLogger } from "./AppUpdater"
@@ -67,6 +68,10 @@ Object.defineProperty(exports, "autoUpdater", {
   },
 })
 
-// return null if verify signature succeed
-// return error message if verify signature failed
-export type verifyUpdateCodeSignature = (publisherName: string[], path: string) => Promise<string | null>
+/**
+ * return null if verify signature succeed
+ * return error message if verify signature failed
+ */
+export type VerifyUpdateCodeSignature = (publisherName: string[], path: string) => Promise<string | null>
+
+export type VerifyUpdateSupport = (updateInfo: UpdateInfo) => boolean | Promise<boolean>
