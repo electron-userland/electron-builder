@@ -10,7 +10,6 @@
     "builder-util-runtime": "workspace:*",
     "chalk": "^4.1.2",
     "ci-info": "^3.7.0",
-    "decompress-zip": "^0.3.3",
     "depcheck": "1.4.3",
     "dmg-builder": "workspace:*",
     "electron-builder": "workspace:*",
@@ -27,7 +26,9 @@
     "semver": "^7.3.8",
     "stat-mode": "^1.0.0",
     "temp-file": "^3.4.0",
-    "yargs": "^17.6.2"
+    "yargs": "^17.6.2",
+    "electron-winstaller": "5.4.0",
+    "adm-zip": "0.5.16"
   },
   "devDependencies": {
     "@babel/core": "7.24.9",
@@ -38,6 +39,7 @@
     "@types/jest": "^26.0.23",
     "@types/js-yaml": "^4.0.1",
     "@types/semver": "^7.3.13",
+    "@types/adm-zip": "0.5.6",
     "babel-jest": "^29.7.0",
     "esbuild": "^0.12.14",
     "esbuild-jest": "^0.5.0",
