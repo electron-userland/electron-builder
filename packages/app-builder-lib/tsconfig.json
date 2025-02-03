@@ -1,10 +1,5 @@
 {
-  "extends": "./tsconfig-scheme.json",
-  "jsdoc": {
-    "out": "../../scripts/jsdoc/out/builder-lib",
-    "examples": "../../scripts/jsdoc/examples",
-    "access": "public"
-  },
+  "extends": "../tsconfig-base.json",
   "compilerOptions": {
     "outDir": "out",
     "rootDir": "src",

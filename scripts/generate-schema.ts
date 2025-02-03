@@ -16,7 +16,7 @@ const rootDir = path.resolve(__dirname, "../packages")
 // optionally pass ts compiler options
 const compilerOptions: TJS.CompilerOptions = {
   // outDir: "out",
-  rootDir: rootDir,
+  baseUrl: rootDir,
   target: TypeScript.ScriptTarget.ES2022,
   module: TypeScript.ModuleKind.ES2022,
   esModuleInterop: false,
@@ -41,18 +41,18 @@ const compilerOptions: TJS.CompilerOptions = {
   // typeRoots: ["./packages/app-builder-lib/typings", "./node_modules/@types/"],
   types: [
     "../../typings",
-    "../typings",
-    "./src/typings",
-    "./packages/typings",
-    path.join(rootDir, "../typings"),
+    // "../typings",
+    // "./src/typings",
+    // "./app-builder-lib/src/typings",
+    // "./packages/typings",
+    // path.join(rootDir, "../typings"),
+    // "typings/flatpak-bundler.d.ts"
     // "./packages/app-builder-lib/typings"
   ],
 }
 
 const program = TJS.getProgramFromFiles([path.resolve(rootDir, "app-builder-lib/src/configuration.ts")], compilerOptions, rootDir)
-
 const generator = TJS.buildGenerator(program, settings)
-
 const schema = TJS.generateSchema(program, "CommonConfiguration", settings, [], generator!)
 
 const schemaFile = path.join(__dirname, "../packages/app-builder-lib/scheme.json")
