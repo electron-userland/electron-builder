@@ -1,3 +1,13 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v26.0.2...v) (2025-02-03)
+
+
+### Features
+
+* **pkg:** support notarizing `pkg` for macos archives ([#8834](https://github.com/electron-userland/electron-builder/issues/8834)) ([6261c9a](https://github.com/electron-userland/electron-builder/commit/6261c9a038ecd73c55ac3909825d5d3d7fa43664))
+* use electron-winstaller instead of self module ([#8344](https://github.com/electron-userland/electron-builder/issues/8344)) ([27b2ba8](https://github.com/electron-userland/electron-builder/commit/27b2ba8129f0e9ad102ca3120c7d7a0f9d29b8eb))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v26.0.1...v) (2025-02-03)
 
 

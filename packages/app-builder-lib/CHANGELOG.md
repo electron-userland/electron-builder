@@ -1,5 +1,17 @@
 # app-builder-lib
 
+## 26.0.3
+
+### Patch Changes
+
+- [#8344](https://github.com/electron-userland/electron-builder/pull/8344) [`27b2ba81`](https://github.com/electron-userland/electron-builder/commit/27b2ba8129f0e9ad102ca3120c7d7a0f9d29b8eb) Thanks [@beyondkmp](https://github.com/beyondkmp)! - use electron-winstaller instead of self module
+
+- [#8834](https://github.com/electron-userland/electron-builder/pull/8834) [`6261c9a0`](https://github.com/electron-userland/electron-builder/commit/6261c9a038ecd73c55ac3909825d5d3d7fa43664) Thanks [@dominhhai](https://github.com/dominhhai)! - feat(pkg): support notarizing pkg for macos archives
+
+- Updated dependencies [[`27b2ba81`](https://github.com/electron-userland/electron-builder/commit/27b2ba8129f0e9ad102ca3120c7d7a0f9d29b8eb)]:
+  - electron-builder-squirrel-windows@26.0.3
+  - dmg-builder@26.0.3
+
 ## 26.0.2
 
 ### Patch Changes
