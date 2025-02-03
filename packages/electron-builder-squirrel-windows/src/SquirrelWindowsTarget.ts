@@ -4,11 +4,14 @@ import { WinPackager } from "app-builder-lib/out/winPackager"
 import { sanitizeFileName } from "builder-util/out/filename"
 import * as path from "path"
 import * as fs from "fs"
+import { readFile, writeFile } from "fs/promises"
 import { Options as SquirrelOptions, createWindowsInstaller, convertVersion } from "electron-winstaller"
 
 export default class SquirrelWindowsTarget extends Target {
   //tslint:disable-next-line:no-object-literal-type-assertion
   readonly options: SquirrelWindowsOptions = { ...this.packager.platformSpecificBuildOptions, ...this.packager.config.squirrelWindows } as SquirrelWindowsOptions
+  private appDirectory: string = ""
+  private outputDirectory: string = ""
 
   constructor(
     private readonly packager: WinPackager,
@@ -41,11 +44,9 @@ export default class SquirrelWindowsTarget extends Target {
       this.select7zipArch(distOptions.vendorDirectory, arch)
     }
 
-    await createWindowsInstaller({
-      ...distOptions,
-      appDirectory: appOutDir,
-      outputDirectory: installerOutDir,
-    })
+    this.appDirectory = appOutDir
+    this.outputDirectory = installerOutDir
+    await createWindowsInstaller(distOptions)
 
     await packager.info.callArtifactBuildCompleted({
       file: artifactPath,
@@ -107,25 +108,37 @@ export default class SquirrelWindowsTarget extends Target {
     checkConflictingOptions(this.options)
 
     const appInfo = packager.appInfo
-    const projectUrl = await appInfo.computePackageUrl()
-    const appName = this.appName
     // If not specified will use the Squirrel.Windows that is shipped with electron-installer(https://github.com/electron/windows-installer/tree/main/vendor)
     // After https://github.com/electron-userland/electron-builder-binaries/pull/56 merged, will add `electron-builder-binaries` to get the latest version of squirrel.
-    const vendorDirectory = this.options.customSquirrelExePath
+    let vendorDirectory = this.options.customSquirrelExePath
+    if (isEmptyOrSpaces(vendorDirectory) || !fs.existsSync(vendorDirectory)) {
+      log.warn({ vendorDirectory }, "unable to access Squirrel.Windows vendor directory, falling back to default electron-winstaller")
+      vendorDirectory = undefined
+    }
+
     const options: SquirrelOptions = {
-      name: appName,
-      appId: this.options.useAppIdAsId ? appInfo.id : appName,
+      appDirectory: this.appDirectory,
+      outputDirectory: this.outputDirectory,
+      name: this.options.useAppIdAsId ? appInfo.id : this.appName,
       version: appInfo.version,
       description: appInfo.description,
       exe: `${this.packager.platformSpecificBuildOptions.executableName || this.options.name || appInfo.productName}.exe`,
       authors: appInfo.companyName || "",
       iconUrl,
-      extraMetadataSpecs: projectUrl == null ? null : `\n    <projectUrl>${projectUrl}</projectUrl>`,
       copyright: appInfo.copyright,
-      packageCompressionLevel: parseInt((process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL || packager.compression === "store" ? 0 : 9) as any, 10),
       vendorDirectory,
       nuspecTemplate: path.join(__dirname, "..", "template.nuspectemplate"),
-      ...(this.options as any),
+      noMsi: !this.options.msi,
+    }
+
+    const projectUrl = await appInfo.computePackageUrl()
+    if (projectUrl != null) {
+      const nuspecTemplate = await this.packager.info.tempDirManager.getTempFile({ prefix: "template", suffix: ".nuspectemplate" })
+      let templateContent = await readFile(path.resolve(__dirname, "..", "template.nuspectemplate"), "utf8")
+      const searchString = "<copyright><%- copyright %></copyright>"
+      templateContent = templateContent.replace(searchString, `${searchString}\n    <projectUrl>${projectUrl}</projectUrl>`)
+      await writeFile(nuspecTemplate, templateContent)
+      options.nuspecTemplate = nuspecTemplate
     }
 
     if (await (await packager.signingManager.value).cscInfo.value) {
@@ -144,13 +157,6 @@ export default class SquirrelWindowsTarget extends Target {
       options.remoteToken = process.env.GH_TOKEN || process.env.GITHUB_TOKEN
     }
 
-    if (!("loadingGif" in options)) {
-      const resourceList = await packager.resourceList
-      if (resourceList.includes("install-spinner.gif")) {
-        options.loadingGif = path.join(packager.buildResourcesDir, "install-spinner.gif")
-      }
-    }
-
     if (this.options.remoteReleases === true) {
       const info = await packager.info.repositoryInfo
       if (info == null) {
@@ -158,6 +164,15 @@ export default class SquirrelWindowsTarget extends Target {
       } else {
         options.remoteReleases = `https://github.com/${info.user}/${info.project}`
         log.info({ remoteReleases: options.remoteReleases }, `remoteReleases is set`)
+      }
+    } else if (typeof this.options.remoteReleases === "string" && !isEmptyOrSpaces(this.options.remoteReleases)) {
+      options.remoteReleases = this.options.remoteReleases
+    }
+
+    if (!("loadingGif" in options)) {
+      const resourceList = await packager.resourceList
+      if (resourceList.includes("install-spinner.gif")) {
+        options.loadingGif = path.join(packager.buildResourcesDir, "install-spinner.gif")
       }
     }
 
