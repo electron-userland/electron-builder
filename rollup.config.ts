@@ -35,22 +35,22 @@ const packageMap = [
     package: "electron-builder-squirrel-windows",
     entry: "src/**/*.ts",
   },
-  {
-    package: "electron-forge-maker-appimage",
-    entry: "main.js",
-  },
-  {
-    package: "electron-forge-maker-snap",
-    entry: "main.js",
-  },
-  {
-    package: "electron-forge-maker-nsis",
-    entry: "main.js",
-  },
-  {
-    package: "electron-forge-maker-nsis-web",
-    entry: "main.js",
-  },
+  // {
+  //   package: "electron-forge-maker-appimage",
+  //   entry: "main.js",
+  // },
+  // {
+  //   package: "electron-forge-maker-snap",
+  //   entry: "main.js",
+  // },
+  // {
+  //   package: "electron-forge-maker-nsis",
+  //   entry: "main.js",
+  // },
+  // {
+  //   package: "electron-forge-maker-nsis-web",
+  //   entry: "main.js",
+  // },
 ]
 
 export default () => {
