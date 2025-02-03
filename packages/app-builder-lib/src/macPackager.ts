@@ -361,7 +361,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
     }
 
     if (!isMas) {
-      await this.notarizeIfProvided(appPath, options)
+      await this.notarizeIfProvided(appPath)
     }
     return true
   }
@@ -527,8 +527,8 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
     return true
   }
 
-  private async notarizeIfProvided(appPath: string, buildOptions: MacConfiguration) {
-    const notarizeOptions = buildOptions.notarize
+  async notarizeIfProvided(appPath: string) {
+    const notarizeOptions = this.platformSpecificBuildOptions.notarize
     if (notarizeOptions === false) {
       log.info({ reason: "`notarize` options were set explicitly `false`" }, "skipped macOS notarization")
       return
