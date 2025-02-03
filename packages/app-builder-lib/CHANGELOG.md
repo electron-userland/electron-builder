@@ -1,5 +1,21 @@
 # app-builder-lib
 
+## 26.0.2
+
+### Patch Changes
+
+- [#8785](https://github.com/electron-userland/electron-builder/pull/8785) [`b3adf480`](https://github.com/electron-userland/electron-builder/commit/b3adf4800b4ed240bb21a6a0a6ccdd57670e5d26) Thanks [@lamawithonel](https://github.com/lamawithonel)! - feat: Allow users to pass a custom electrons headers URL via env var
+
+- [#8767](https://github.com/electron-userland/electron-builder/pull/8767) [`f45a09ee`](https://github.com/electron-userland/electron-builder/commit/f45a09eeeb9d2fb5c4a45bd7bf3990c4acb3c538) Thanks [@dominhhai](https://github.com/dominhhai)! - feat(pkg): support extra component packages (`.pkg`) for macos archives
+
+- [#8833](https://github.com/electron-userland/electron-builder/pull/8833) [`f5af99ac`](https://github.com/electron-userland/electron-builder/commit/f5af99ac87ef585a7f7ba548d3fb92811f845ba3) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: upgrading TrustedSigning module and setting it as minimum version instead of required
+
+- [#8830](https://github.com/electron-userland/electron-builder/pull/8830) [`44603f2f`](https://github.com/electron-userland/electron-builder/commit/44603f2f3cc0e00e1c2c2420c7d440d587f8feca) Thanks [@Julusian](https://github.com/Julusian)! - fix: handle yarn berry patch format in electron-updater version check
+
+- Updated dependencies []:
+  - dmg-builder@26.0.2
+  - electron-builder-squirrel-windows@26.0.2
+
 ## 26.0.1
 
 ### Patch Changes
