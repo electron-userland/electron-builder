@@ -150,7 +150,7 @@ test.ifMac(
   )
 )
 
-test.ifAll.ifMac("pkg extra packages", async () => {
+test.ifMac("pkg extra packages", async () => {
   const extraPackages = path.join("build", "extra-packages")
   return app(
     {

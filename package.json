@@ -3,9 +3,9 @@
   "private": true,
   "license": "MIT",
   "lint-staged": {
-    "packages/**/*.ts": "eslint",
+    "packages/**/*.ts": "pnpm pretest",
     "**/package.json": "pnpm lint-deps",
-    "test/src/helpers/checkDeps.ts": "pnpm lint-deps",
+    "scripts/checkDeps.ts": "pnpm lint-deps",
     "docs/**/*": "pnpm generate-docs",
     "packages/app-builder-lib/src/options/**/*": "pnpm generate-schema"
   },
