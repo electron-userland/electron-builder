@@ -10,6 +10,6 @@ export class YarnNodeModulesCollector extends NodeModulesCollector {
   }
 
   getArgs(): string[] {
-    return ["list", "--omit", "dev", "-a", "--json", "--long", "--silent"]
+    return ["list", "--include", "prod", "--include", "optional", "--json", "--long", "--silent"]
   }
 }

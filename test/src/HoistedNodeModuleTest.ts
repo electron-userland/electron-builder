@@ -1,5 +1,5 @@
 import { assertPack, linuxDirTarget, verifyAsarFileTree, modifyPackageJson } from "./helpers/packTester"
-import { Platform } from "electron-builder"
+import { Platform, Arch, DIR_TARGET } from "electron-builder"
 import { outputFile } from "fs-extra"
 import * as path from "path"
 import { readAsarJson } from "app-builder-lib/out/asar/asar"
@@ -96,6 +96,27 @@ test.ifAll("pnpm es5-ext without hoisted config", () =>
     }
   )
 )
+
+test.only("yarn electron-clear-data", () =>
+  assertPack(
+    "test-app-hoisted",
+    {
+      targets: Platform.MAC.createTarget(DIR_TARGET, Arch.x64),
+    },
+    {
+      isInstallDepsBefore: true,
+      projectDirCreated: projectDir => {
+        return Promise.all([
+          modifyPackageJson(projectDir, data => {
+            data.dependencies = {
+              "electron-clear-data": "^1.0.5",
+            }
+          }),
+          outputFile(path.join(projectDir, "yarn.lock"), ""),
+        ])
+      },
+    }
+  ))
 
 //github.com/electron-userland/electron-builder/issues/8426
 https: test.ifAll("yarn parse-asn1", () =>
