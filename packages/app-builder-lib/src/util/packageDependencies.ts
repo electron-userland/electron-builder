@@ -23,5 +23,5 @@ export interface NodeModuleInfo {
   readonly name: string
   readonly version: string
   readonly dir: string
-  readonly conflictDependency: Array<NodeModuleInfo>
+  readonly dependencies?: Array<NodeModuleInfo>
 }
