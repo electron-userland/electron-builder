@@ -1,3 +1,12 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v26.0.3...v) (2025-02-04)
+
+
+### Features
+
+* switch app-builder-bin to node-module-collector to get all production node modules ([#8571](https://github.com/electron-userland/electron-builder/issues/8571)) ([04be569](https://github.com/electron-userland/electron-builder/commit/04be5699c664e6a93e093b820a16ad516355b5c7))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v26.0.2...v) (2025-02-03)
 
 
