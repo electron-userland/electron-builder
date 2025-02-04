@@ -26,6 +26,7 @@ if (process.env.TRAVIS !== "true") {
   process.env.CIRCLE_BUILD_NUM = "42"
 }
 
+export const EXTENDED_TIMEOUT = 10 * 60 * 1000
 export const linuxDirTarget = Platform.LINUX.createTarget(DIR_TARGET, Arch.x64)
 export const snapTarget = Platform.LINUX.createTarget("snap", Arch.x64)
 
