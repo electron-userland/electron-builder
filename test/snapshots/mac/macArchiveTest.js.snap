@@ -1,4 +1,4 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
 exports[`empty installLocation 1`] = `
 {
@@ -133,7 +133,7 @@ exports[`extraDistFiles 2`] = `
 exports[`invalid target 1`] = `
 "Invalid configuration object. electron-builder <appVersion> has been initialized using a configuration object that does not match the API schema.
  - configuration.mac should be one of these:
-   object { additionalArguments?, appId?, artifactName?, asar?, asarUnpack?, binaries?, bundleShortVersion?, bundleVersion?, category?, compression?, cscInstallerKeyPassword?, cscInstallerLink?, cscKeyPassword?, cscLink?, darkModeSupport?, defaultArch?, detectUpdateChannel?, disableDefaultIgnoredFiles?, electronLanguages?, electronUpdaterCompatibility?, entitlements?, entitlementsInherit?, entitlementsLoginHelper?, executableName?, extendInfo?, extraDistFiles?, extraFiles?, extraResources?, fileAssociations?, files?, forceCodeSigning?, gatekeeperAssess?, generateUpdatesFilesForAllChannels?, hardenedRuntime?, helperBundleId?, helperEHBundleId?, helperGPUBundleId?, helperNPBundleId?, helperPluginBundleId?, helperRendererBundleId?, icon?, identity?, mergeASARs?, minimumSystemVersion?, notarize?, preAutoEntitlements?, protocols?, provisioningProfile?, publish?, releaseInfo?, requirements?, sign?, signIgnore?, singleArchFiles?, strictVerify?, target?, timestamp?, type?, x64ArchFiles? } | null
+   object { category?, target?, identity?, icon?, entitlements?, entitlementsInherit?, entitlementsLoginHelper?, provisioningProfile?, bundleVersion?, bundleShortVersion?, darkModeSupport?, helperBundleId?, helperRendererBundleId?, helperPluginBundleId?, helperGPUBundleId?, helperEHBundleId?, helperNPBundleId?, type?, extendInfo?, binaries?, minimumSystemVersion?, requirements?, cscInstallerLink?, cscInstallerKeyPassword?, extraDistFiles?, hardenedRuntime?, gatekeeperAssess?, strictVerify?, preAutoEntitlements?, signIgnore?, sign?, timestamp?, mergeASARs?, singleArchFiles?, x64ArchFiles?, additionalArguments?, notarize?, appId?, artifactName?, executableName?, compression?, disableDefaultIgnoredFiles?, asar?, asarUnpack?, fileAssociations?, protocols?, electronLanguages?, forceCodeSigning?, electronUpdaterCompatibility?, publish?, detectUpdateChannel?, generateUpdatesFilesForAllChannels?, releaseInfo?, cscLink?, cscKeyPassword?, defaultArch?, files?, extraResources?, extraFiles? } | null
    -> Options related to how build macOS targets.
    Details:
     * configuration.mac.target[0] should be an object:

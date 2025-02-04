@@ -2,7 +2,7 @@ import { Platform } from "electron-builder"
 import * as fs from "fs"
 import { app } from "../helpers/packTester"
 
-test.ifAll.ifDevOrWinCi(
+test.ifDevOrWinCi(
   "msi",
   app(
     {
@@ -31,7 +31,7 @@ test.ifAll.ifDevOrWinCi(
   )
 )
 
-test.ifAll.ifDevOrWinCi(
+test.ifDevOrWinCi(
   "msi no asar",
   app(
     {
@@ -51,7 +51,7 @@ test.ifAll.ifDevOrWinCi(
   )
 )
 
-test.ifAll.ifDevOrWinCi(
+test.ifDevOrWinCi(
   "per-user",
   app(
     {
@@ -74,7 +74,7 @@ test.ifAll.ifDevOrWinCi(
 )
 
 const wixArgsProductName = "Test WiX Args"
-test.ifAll.ifDevOrWinCi(
+test.ifDevOrWinCi(
   "wix args",
   app(
     {
@@ -115,7 +115,7 @@ test.ifAll.ifDevOrWinCi(
   )
 )
 
-test.skip.ifAll(
+test.skip(
   "assisted",
   app({
     targets: Platform.WINDOWS.createTarget("msi"),

@@ -31,19 +31,14 @@
     "adm-zip": "0.5.16"
   },
   "devDependencies": {
-    "@babel/core": "7.24.9",
-    "@babel/preset-env": "7.15.6",
-    "@babel/preset-typescript": "^7.23.3",
-    "@jest/globals": "^29.7.0",
     "@types/fs-extra": "^9.0.11",
-    "@types/jest": "^26.0.23",
     "@types/js-yaml": "^4.0.1",
     "@types/semver": "^7.3.13",
     "@types/adm-zip": "0.5.6",
     "babel-jest": "^29.7.0",
-    "esbuild": "^0.12.14",
-    "esbuild-jest": "^0.5.0",
-    "fast-xml-parser": "4.4.1"
+    "fast-xml-parser": "4.4.1",
+    "vitest": "^3.0.4",
+    "vitest-mock-commonjs": "^1.0.2"
   },
   "jest": {
     "snapshotResolver": "<rootDir>/snapshotResolver.js",
