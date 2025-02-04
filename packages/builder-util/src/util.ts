@@ -122,7 +122,7 @@ export function exec(file: string, args?: Array<string> | null, options?: ExecFi
           resolve(stdout.toString())
         } else {
           // https://github.com/npm/npm/issues/17624
-          if ((file === "npm" || file === "npm.cmd") && args?.includes("--silent")) {
+          if ((file === "npm" || file === "npm.cmd") && args?.includes("list") && args?.includes("--silent")) {
             resolve(stdout.toString())
           }
           let message = chalk.red(removePassword(`Exit code: ${(error as any).code}. ${error.message}`))
