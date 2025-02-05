@@ -137,8 +137,37 @@ test.ifAll("yarn electron-clear-data", () =>
             data.dependencies = {
               "electron-clear-data": "^1.0.5",
             }
+              data.optionalDependencies = {
+            "edge-cs": "1.2.1",
+            }
           }),
           outputFile(path.join(projectDir, "yarn.lock"), ""),
+        ])
+      },
+       packed: context => verifyAsarFileTree(context.getResources(Platform.WINDOWS)),
+    }
+  )
+)
+
+test.ifAll("yarn electron-clear-data", () =>
+  assertPack(
+    "test-app-hoisted",
+    {
+      targets: Platform.WINDOWS.createTarget(DIR_TARGET, Arch.x64),
+    },
+    {
+      isInstallDepsBefore: true,
+      projectDirCreated: projectDir => {
+        return Promise.all([
+          modifyPackageJson(projectDir, data => {
+            data.dependencies = {
+              "electron-clear-data": "^1.0.5",
+            }
+              data.optionalDependencies = {
+            "edge-cs": "1.2.1",
+            }
+          }),
+          outputFile(path.join(projectDir, "package-lock.json"), ""),
         ])
       },
        packed: context => verifyAsarFileTree(context.getResources(Platform.WINDOWS)),
