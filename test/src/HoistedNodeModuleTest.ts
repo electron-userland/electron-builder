@@ -101,7 +101,7 @@ test.only("yarn electron-clear-data", () =>
   assertPack(
     "test-app-hoisted",
     {
-      targets: Platform.MAC.createTarget(DIR_TARGET, Arch.x64),
+      targets: Platform.WINDOWS.createTarget(DIR_TARGET, Arch.x64),
     },
     {
       isInstallDepsBefore: true,
@@ -114,12 +114,12 @@ test.only("yarn electron-clear-data", () =>
           }),
           outputFile(path.join(projectDir, "yarn.lock"), ""),
         ])
-      },
+      }
     }
   ))
 
 //github.com/electron-userland/electron-builder/issues/8426
-https: test.ifAll("yarn parse-asn1", () =>
+test.ifAll("yarn parse-asn1", () =>
   assertPack(
     "test-app-hoisted",
     {
@@ -145,7 +145,7 @@ https: test.ifAll("yarn parse-asn1", () =>
 )
 
 //github.com/electron-userland/electron-builder/issues/8431
-https: test.ifAll("npm tar", () =>
+test.ifAll("npm tar", () =>
   assertPack(
     "test-app-hoisted",
     {
