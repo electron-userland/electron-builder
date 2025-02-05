@@ -11,7 +11,7 @@ export class YarnNodeModulesCollector extends NodeModulesCollector {
   }
 
   getArgs(): string[] {
-    return ["list", "-a", "--include", "prod", "--include", "optional", "--json", "--long", "--silent"]
+    return ["list", "-a", "--include", "prod", "--include", "optional", "--omit", "dev", "--json", "--long", "--silent"]
   }
   deletePeerDeps(tree: DependencyTree) {
     const dependencies = tree.dependencies || {}
