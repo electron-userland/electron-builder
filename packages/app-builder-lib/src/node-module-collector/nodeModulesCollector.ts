@@ -33,7 +33,7 @@ export abstract class NodeModulesCollector {
     return node
   }
 
-  private resolvePath(filePath: string) {
+  protected resolvePath(filePath: string) {
     try {
       const stats = fs.lstatSync(filePath)
       if (stats.isSymbolicLink()) {
@@ -75,6 +75,7 @@ export abstract class NodeModulesCollector {
 
   abstract getCommand(): string
   abstract getArgs(): string[]
+  abstract removeNonProductionDependencie(tree: DependencyTree): void
 
   protected async getDependenciesTree(): Promise<DependencyTree> {
     const command = this.getCommand()
@@ -84,7 +85,18 @@ export abstract class NodeModulesCollector {
       shell: true,
     })
     const dependencyTree: DependencyTree | DependencyTree[] = JSON.parse(dependencies)
-    return Array.isArray(dependencyTree) ? dependencyTree[0] : dependencyTree
+
+    // pnpm returns an array of dependency trees
+    if (Array.isArray(dependencyTree)) {
+      const tree = dependencyTree[0]
+      if (tree.optionalDependencies) {
+        tree.dependencies = { ...tree.dependencies, ...tree.optionalDependencies }
+      }
+      return tree
+    }
+
+    // yarn and npm return a single dependency tree
+    return dependencyTree
   }
 
   private _getNodeModules(dependencies: Set<HoisterResult>, result: NodeModuleInfo[]) {
@@ -127,6 +139,7 @@ export abstract class NodeModulesCollector {
   public async getNodeModules(): Promise<NodeModuleInfo[]> {
     const tree = await this.getDependenciesTree()
     const realTree = this.getTreeFromWorkspaces(tree)
+    this.removeNonProductionDependencie(realTree)
     const dependencyGraph = this.convertToDependencyGraph(realTree)
     const hoisterResult = hoist(this.transToHoisterTree(dependencyGraph), { check: true })
     this._getNodeModules(hoisterResult.dependencies, this.nodeModules)

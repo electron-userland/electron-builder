@@ -1,5 +1,11 @@
 # builder-util
 
+## 26.0.4
+
+### Patch Changes
+
+- [#8839](https://github.com/electron-userland/electron-builder/pull/8839) [`8b059ad3`](https://github.com/electron-userland/electron-builder/commit/8b059ad3baad440acb0994b2c52f22ea0f1d987f) Thanks [@mmaietta](https://github.com/mmaietta)! - feat: switch app-builder-bin to node-module-collector to get all production node modules
+
 ## 26.0.1
 
 ### Patch Changes

@@ -1,10 +1,10 @@
 import { assertPack, linuxDirTarget, verifyAsarFileTree, modifyPackageJson } from "./helpers/packTester"
-import { Platform } from "electron-builder"
+import { Platform, Arch, DIR_TARGET } from "electron-builder"
 import { outputFile } from "fs-extra"
 import * as path from "path"
 import { readAsarJson } from "app-builder-lib/out/asar/asar"
 
-test("yarn workspace", () =>
+test.ifAll("yarn workspace", () =>
   assertPack(
     "test-app-yarn-workspace",
     {
@@ -14,9 +14,10 @@ test("yarn workspace", () =>
     {
       packed: context => verifyAsarFileTree(context.getResources(Platform.LINUX)),
     }
-  ))
+  )
+)
 
-test("conflict versions", () =>
+test.ifAll("conflict versions", () =>
   assertPack(
     "test-app-yarn-workspace-version-conflict",
     {
@@ -26,9 +27,10 @@ test("conflict versions", () =>
     {
       packed: context => verifyAsarFileTree(context.getResources(Platform.LINUX)),
     }
-  ))
+  )
+)
 
-test("yarn several workspaces", () =>
+test.ifAll("yarn several workspaces", () =>
   assertPack(
     "test-app-yarn-several-workspace",
     {
@@ -38,9 +40,10 @@ test("yarn several workspaces", () =>
     {
       packed: context => verifyAsarFileTree(context.getResources(Platform.LINUX)),
     }
-  ))
+  )
+)
 
-test("yarn several workspaces and asarUnpack", () =>
+test.ifAll("yarn several workspaces and asarUnpack", () =>
   assertPack(
     "test-app-yarn-several-workspace",
     {
@@ -53,9 +56,10 @@ test("yarn several workspaces and asarUnpack", () =>
     {
       packed: context => verifyAsarFileTree(context.getResources(Platform.LINUX)),
     }
-  ))
+  )
+)
 
-test("yarn two package.json w/ native module", () =>
+test.ifAll("yarn two package.json w/ native module", () =>
   assertPack(
     "test-app-two-native-modules",
     {
@@ -64,10 +68,11 @@ test("yarn two package.json w/ native module", () =>
     {
       packed: context => verifyAsarFileTree(context.getResources(Platform.LINUX)),
     }
-  ))
+  )
+)
 
 // https://github.com/electron-userland/electron-builder/issues/8493
-test("pnpm es5-ext without hoisted config", () =>
+test.ifAll("pnpm es5-ext without hoisted config", () =>
   assertPack(
     "test-app-hoisted",
     {
@@ -89,10 +94,112 @@ test("pnpm es5-ext without hoisted config", () =>
         expect(await readAsarJson(path.join(context.getResources(Platform.LINUX), "app.asar"), "node_modules/d/package.json")).toMatchSnapshot()
       },
     }
-  ))
+  )
+)
+
+test.ifAll("pnpm optional dependencies", () =>
+  assertPack(
+    "test-app-hoisted",
+    {
+      targets: linuxDirTarget,
+    },
+    {
+      isInstallDepsBefore: true,
+      projectDirCreated: projectDir => {
+        return Promise.all([
+          modifyPackageJson(projectDir, data => {
+            data.dependencies = {
+              "electron-clear-data": "^1.0.5",
+            }
+            data.optionalDependencies = {
+              debug: "3.1.0",
+            }
+          }),
+          outputFile(path.join(projectDir, "pnpm-lock.yaml"), ""),
+        ])
+      },
+      packed: context => verifyAsarFileTree(context.getResources(Platform.LINUX)),
+    }
+  )
+)
+
+test.ifAll("yarn electron-clear-data", () =>
+  assertPack(
+    "test-app-hoisted",
+    {
+      targets: Platform.WINDOWS.createTarget(DIR_TARGET, Arch.x64),
+    },
+    {
+      isInstallDepsBefore: true,
+      projectDirCreated: projectDir => {
+        return Promise.all([
+          modifyPackageJson(projectDir, data => {
+            data.dependencies = {
+              "electron-clear-data": "^1.0.5",
+            }
+            data.optionalDependencies = {
+              debug: "3.1.0",
+            }
+          }),
+          outputFile(path.join(projectDir, "yarn.lock"), ""),
+        ])
+      },
+      packed: context => verifyAsarFileTree(context.getResources(Platform.WINDOWS)),
+    }
+  )
+)
+
+test.ifAll("npm electron-clear-data", () =>
+  assertPack(
+    "test-app-hoisted",
+    {
+      targets: Platform.WINDOWS.createTarget(DIR_TARGET, Arch.x64),
+    },
+    {
+      isInstallDepsBefore: true,
+      projectDirCreated: projectDir => {
+        return Promise.all([
+          modifyPackageJson(projectDir, data => {
+            data.dependencies = {
+              "electron-clear-data": "^1.0.5",
+            }
+            data.optionalDependencies = {
+              debug: "3.1.0",
+            }
+          }),
+          outputFile(path.join(projectDir, "package-lock.json"), ""),
+        ])
+      },
+      packed: context => verifyAsarFileTree(context.getResources(Platform.WINDOWS)),
+    }
+  )
+)
+
+// https://github.com/electron-userland/electron-builder/issues/8842
+test.ifAll("yarn some module add by manual instead of install", () =>
+  assertPack(
+    "test-app-hoisted",
+    {
+      targets: Platform.WINDOWS.createTarget(DIR_TARGET, Arch.x64),
+    },
+    {
+      isInstallDepsBefore: true,
+      projectDirCreated: async (projectDir, tmpDir) => {
+        await outputFile(path.join(projectDir, "yarn.lock"), "")
+        await outputFile(path.join(projectDir, "node_modules", "foo", "package.json"), `{"name":"foo","version":"9.0.0","main":"index.js","license":"MIT"}`)
+        await modifyPackageJson(projectDir, data => {
+          data.dependencies = {
+            debug: "3.1.0",
+          }
+        })
+      },
+      packed: context => verifyAsarFileTree(context.getResources(Platform.WINDOWS)),
+    }
+  )
+)
 
 //github.com/electron-userland/electron-builder/issues/8426
-https: test("yarn parse-asn1", () =>
+test.ifAll("yarn parse-asn1", () =>
   assertPack(
     "test-app-hoisted",
     {
@@ -114,10 +221,11 @@ https: test("yarn parse-asn1", () =>
         expect(await readAsarJson(path.join(context.getResources(Platform.LINUX), "app.asar"), "node_modules/asn1.js/package.json")).toMatchSnapshot()
       },
     }
-  ))
+  )
+)
 
 //github.com/electron-userland/electron-builder/issues/8431
-https: test("npm tar", () =>
+test.ifAll("npm tar", () =>
   assertPack(
     "test-app-hoisted",
     {
@@ -144,4 +252,5 @@ https: test("npm tar", () =>
         expect(minizlib.version).toEqual("3.0.1")
       },
     }
-  ))
+  )
+)
