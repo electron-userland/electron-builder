@@ -12,7 +12,7 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector {
   }
 
   getArgs(): string[] {
-    return ["list", "--prod", "--json", "--long", "--depth", "Infinity"]
+    return ["list", "--prod", "--json", "--depth", "Infinity"]
   }
 
   deletePeerDeps(tree: DependencyTree) {

@@ -3,6 +3,7 @@ import { Platform, Arch, DIR_TARGET } from "electron-builder"
 import { outputFile } from "fs-extra"
 import * as path from "path"
 import { readAsarJson } from "app-builder-lib/out/asar/asar"
+import { assertThat } from "./helpers/fileAssert"
 
 test.ifAll("yarn workspace", () =>
   assertPack(
@@ -97,7 +98,36 @@ test.ifAll("pnpm es5-ext without hoisted config", () =>
   )
 )
 
-test.only("yarn electron-clear-data", () =>
+test.ifAll("pnpm optional dependencies", () =>
+  assertPack(
+    "test-app-hoisted",
+    {
+      targets: linuxDirTarget,
+    },
+    {
+      isInstallDepsBefore: true,
+      projectDirCreated: projectDir => {
+        return Promise.all([
+          modifyPackageJson(projectDir, data => {
+            data.dependencies = {
+              "edge-cs": "1.2.1",
+            }
+            data.optionalDependencies = {
+              "electron-clear-data": "^1.0.5",
+            }
+          }),
+          outputFile(path.join(projectDir, "pnpm-lock.yaml"), ""),
+        ])
+      },
+      packed: async context => {
+        expect(await readAsarJson(path.join(context.getResources(Platform.LINUX), "app.asar"), "node_modules/electron-clear-data/package.json")).toMatchSnapshot()
+        await assertThat(path.join(context.getResources(Platform.LINUX), "app", "node_modules", "electron")).doesNotExist()
+      },
+    }
+  )
+)
+
+test.ifAll("yarn electron-clear-data", () =>
   assertPack(
     "test-app-hoisted",
     {
@@ -116,7 +146,8 @@ test.only("yarn electron-clear-data", () =>
         ])
       },
     }
-  ))
+  )
+)
 
 //github.com/electron-userland/electron-builder/issues/8426
 test.ifAll("yarn parse-asn1", () =>

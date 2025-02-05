@@ -85,7 +85,18 @@ export abstract class NodeModulesCollector {
       shell: true,
     })
     const dependencyTree: DependencyTree | DependencyTree[] = JSON.parse(dependencies)
-    return Array.isArray(dependencyTree) ? dependencyTree[0] : dependencyTree
+
+    // pnpm returns an array of dependency trees
+    if (Array.isArray(dependencyTree)) {
+      const tree = dependencyTree[0]
+      if (tree.optionalDependencies) {
+        tree.dependencies = { ...tree.dependencies, ...tree.optionalDependencies }
+      }
+      return tree
+    }
+
+    // yarn and npm return a single dependency tree
+    return dependencyTree
   }
 
   private _getNodeModules(dependencies: Set<HoisterResult>, result: NodeModuleInfo[]) {
