@@ -112,7 +112,7 @@ test.ifAll("pnpm optional dependencies", () =>
               "electron-clear-data": "^1.0.5",
             }
             data.optionalDependencies = {
-              "edge-cs": "1.2.1",
+              debug: "3.1.0",
             }
           }),
           outputFile(path.join(projectDir, "pnpm-lock.yaml"), ""),
@@ -138,7 +138,7 @@ test.ifAll("yarn electron-clear-data", () =>
               "electron-clear-data": "^1.0.5",
             }
             data.optionalDependencies = {
-              "edge-cs": "1.2.1",
+              debug: "3.1.0",
             }
           }),
           outputFile(path.join(projectDir, "yarn.lock"), ""),
@@ -164,7 +164,7 @@ test.ifAll("npm electron-clear-data", () =>
               "electron-clear-data": "^1.0.5",
             }
             data.optionalDependencies = {
-              "edge-cs": "1.2.1",
+              debug: "3.1.0",
             }
           }),
           outputFile(path.join(projectDir, "package-lock.json"), ""),
@@ -175,6 +175,7 @@ test.ifAll("npm electron-clear-data", () =>
   )
 )
 
+// https://github.com/electron-userland/electron-builder/issues/8842
 test.ifAll("yarn some module add by manual instead of install", () =>
   assertPack(
     "test-app-hoisted",
@@ -188,7 +189,7 @@ test.ifAll("yarn some module add by manual instead of install", () =>
         await outputFile(path.join(projectDir, "node_modules", "package.json"), `{"name":"foo","version":"9.0.0","main":"index.js","license":"MIT"}`)
         await modifyPackageJson(projectDir, data => {
           data.dependencies = {
-            "edge-cs": "1.2.1",
+            debug: "3.1.0",
           }
         })
       },

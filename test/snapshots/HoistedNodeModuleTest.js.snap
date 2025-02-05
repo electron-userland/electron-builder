@@ -83,132 +83,96 @@ exports[`npm electron-clear-data 2`] = `
 {
   "files": {
     "index.html": {
-      "offset": "3753",
+      "offset": "26472",
       "size": 378,
     },
     "index.js": {
-      "offset": "4131",
+      "offset": "26850",
       "size": 619,
     },
     "node_modules": {
       "files": {
-        "edge-cs": {
+        "debug": {
           "files": {
-            "LICENSE.txt": {
-              "size": 565,
-              "unpacked": true,
+            "LICENSE": {
+              "offset": "0",
+              "size": 1107,
             },
-            "lib": {
-              "files": {
-                "bootstrap": {
-                  "files": {
-                    "Dummy.cs": {
-                      "size": 41,
-                      "unpacked": true,
-                    },
-                    "project.json": {
-                      "size": 175,
-                      "unpacked": true,
-                    },
-                  },
-                  "unpacked": true,
-                },
-                "edge-cs.dll": {
-                  "size": 10752,
-                  "unpacked": true,
-                },
-                "edge-cs.js": {
-                  "size": 363,
-                  "unpacked": true,
-                },
-              },
-              "unpacked": true,
+            "Makefile": {
+              "offset": "1107",
+              "size": 1234,
+            },
+            "node.js": {
+              "offset": "2341",
+              "size": 40,
             },
             "package.json": {
-              "size": 606,
-              "unpacked": true,
+              "offset": "2381",
+              "size": 830,
             },
             "src": {
               "files": {
-                "Edge.js.CSharp": {
-                  "files": {
-                    "EdgeCompiler.cs": {
-                      "size": 11533,
-                      "unpacked": true,
-                    },
-                    "gulpfile.js": {
-                      "size": 515,
-                      "unpacked": true,
-                    },
-                    "package.json": {
-                      "size": 62,
-                      "unpacked": true,
-                    },
-                    "project.json": {
-                      "size": 775,
-                      "unpacked": true,
-                    },
-                  },
-                  "unpacked": true,
+                "browser.js": {
+                  "offset": "3211",
+                  "size": 5707,
                 },
-                "edge-cs": {
-                  "files": {
-                    "EdgeCompiler.cs": {
-                      "size": 9315,
-                      "unpacked": true,
-                    },
-                    "Properties": {
-                      "files": {
-                        "AssemblyInfo.cs": {
-                          "size": 1426,
-                          "unpacked": true,
-                        },
-                      },
-                      "unpacked": true,
-                    },
-                  },
-                  "unpacked": true,
+                "debug.js": {
+                  "offset": "8918",
+                  "size": 4889,
+                },
+                "index.js": {
+                  "offset": "13807",
+                  "size": 263,
+                },
+                "node.js": {
+                  "offset": "14070",
+                  "size": 4339,
                 },
               },
-              "unpacked": true,
-            },
-            "tools": {
-              "files": {
-                "install.js": {
-                  "size": 968,
-                  "unpacked": true,
-                },
-              },
-              "unpacked": true,
             },
           },
-          "unpacked": true,
         },
         "electron-clear-data": {
           "files": {
             "LICENSE.md": {
-              "offset": "0",
+              "offset": "18409",
               "size": 1059,
             },
             "dist": {
               "files": {
                 "main.js": {
-                  "offset": "1059",
+                  "offset": "19468",
                   "size": 1734,
                 },
               },
             },
             "package.json": {
-              "offset": "2793",
+              "offset": "21202",
               "size": 960,
+            },
+          },
+        },
+        "ms": {
+          "files": {
+            "index.js": {
+              "offset": "22162",
+              "size": 2764,
+            },
+            "license.md": {
+              "offset": "24926",
+              "size": 1077,
+            },
+            "package.json": {
+              "offset": "26003",
+              "size": 469,
             },
           },
         },
       },
     },
     "package.json": {
-      "offset": "4750",
-      "size": 395,
+      "offset": "27469",
+      "size": 393,
     },
   },
 }
@@ -293,90 +257,50 @@ exports[`pnpm optional dependencies 2`] = `
 {
   "files": {
     "index.html": {
-      "offset": "30097",
+      "offset": "26472",
       "size": 378,
     },
     "index.js": {
-      "offset": "30475",
+      "offset": "26850",
       "size": 619,
     },
     "node_modules": {
       "files": {
-        "edge-cs": {
+        "debug": {
           "files": {
-            "LICENSE.txt": {
+            "LICENSE": {
               "offset": "0",
-              "size": 565,
+              "size": 1107,
             },
-            "lib": {
-              "files": {
-                "bootstrap": {
-                  "files": {
-                    "Dummy.cs": {
-                      "offset": "565",
-                      "size": 41,
-                    },
-                    "project.json": {
-                      "offset": "606",
-                      "size": 175,
-                    },
-                  },
-                },
-                "edge-cs.js": {
-                  "offset": "781",
-                  "size": 363,
-                },
-              },
+            "Makefile": {
+              "offset": "1107",
+              "size": 1234,
+            },
+            "node.js": {
+              "offset": "2341",
+              "size": 40,
             },
             "package.json": {
-              "offset": "1144",
-              "size": 606,
+              "offset": "2381",
+              "size": 830,
             },
             "src": {
               "files": {
-                "Edge.js.CSharp": {
-                  "files": {
-                    "EdgeCompiler.cs": {
-                      "offset": "1750",
-                      "size": 11533,
-                    },
-                    "gulpfile.js": {
-                      "offset": "13283",
-                      "size": 515,
-                    },
-                    "package.json": {
-                      "offset": "13798",
-                      "size": 62,
-                    },
-                    "project.json": {
-                      "offset": "13860",
-                      "size": 775,
-                    },
-                  },
+                "browser.js": {
+                  "offset": "3211",
+                  "size": 5707,
                 },
-                "edge-cs": {
-                  "files": {
-                    "EdgeCompiler.cs": {
-                      "offset": "14635",
-                      "size": 9315,
-                    },
-                    "Properties": {
-                      "files": {
-                        "AssemblyInfo.cs": {
-                          "offset": "23950",
-                          "size": 1426,
-                        },
-                      },
-                    },
-                  },
+                "debug.js": {
+                  "offset": "8918",
+                  "size": 4889,
                 },
-              },
-            },
-            "tools": {
-              "files": {
-                "install.js": {
-                  "offset": "25376",
-                  "size": 968,
+                "index.js": {
+                  "offset": "13807",
+                  "size": 263,
+                },
+                "node.js": {
+                  "offset": "14070",
+                  "size": 4339,
                 },
               },
             },
@@ -385,28 +309,44 @@ exports[`pnpm optional dependencies 2`] = `
         "electron-clear-data": {
           "files": {
             "LICENSE.md": {
-              "offset": "26344",
+              "offset": "18409",
               "size": 1059,
             },
             "dist": {
               "files": {
                 "main.js": {
-                  "offset": "27403",
+                  "offset": "19468",
                   "size": 1734,
                 },
               },
             },
             "package.json": {
-              "offset": "29137",
+              "offset": "21202",
               "size": 960,
+            },
+          },
+        },
+        "ms": {
+          "files": {
+            "index.js": {
+              "offset": "22162",
+              "size": 2764,
+            },
+            "license.md": {
+              "offset": "24926",
+              "size": 1077,
+            },
+            "package.json": {
+              "offset": "26003",
+              "size": 469,
             },
           },
         },
       },
     },
     "package.json": {
-      "offset": "31094",
-      "size": 395,
+      "offset": "27469",
+      "size": 393,
     },
   },
 }
@@ -422,132 +362,96 @@ exports[`yarn electron-clear-data 2`] = `
 {
   "files": {
     "index.html": {
-      "offset": "3753",
+      "offset": "26472",
       "size": 378,
     },
     "index.js": {
-      "offset": "4131",
+      "offset": "26850",
       "size": 619,
     },
     "node_modules": {
       "files": {
-        "edge-cs": {
+        "debug": {
           "files": {
-            "LICENSE.txt": {
-              "size": 565,
-              "unpacked": true,
+            "LICENSE": {
+              "offset": "0",
+              "size": 1107,
             },
-            "lib": {
-              "files": {
-                "bootstrap": {
-                  "files": {
-                    "Dummy.cs": {
-                      "size": 41,
-                      "unpacked": true,
-                    },
-                    "project.json": {
-                      "size": 175,
-                      "unpacked": true,
-                    },
-                  },
-                  "unpacked": true,
-                },
-                "edge-cs.dll": {
-                  "size": 10752,
-                  "unpacked": true,
-                },
-                "edge-cs.js": {
-                  "size": 363,
-                  "unpacked": true,
-                },
-              },
-              "unpacked": true,
+            "Makefile": {
+              "offset": "1107",
+              "size": 1234,
+            },
+            "node.js": {
+              "offset": "2341",
+              "size": 40,
             },
             "package.json": {
-              "size": 606,
-              "unpacked": true,
+              "offset": "2381",
+              "size": 830,
             },
             "src": {
               "files": {
-                "Edge.js.CSharp": {
-                  "files": {
-                    "EdgeCompiler.cs": {
-                      "size": 11533,
-                      "unpacked": true,
-                    },
-                    "gulpfile.js": {
-                      "size": 515,
-                      "unpacked": true,
-                    },
-                    "package.json": {
-                      "size": 62,
-                      "unpacked": true,
-                    },
-                    "project.json": {
-                      "size": 775,
-                      "unpacked": true,
-                    },
-                  },
-                  "unpacked": true,
+                "browser.js": {
+                  "offset": "3211",
+                  "size": 5707,
                 },
-                "edge-cs": {
-                  "files": {
-                    "EdgeCompiler.cs": {
-                      "size": 9315,
-                      "unpacked": true,
-                    },
-                    "Properties": {
-                      "files": {
-                        "AssemblyInfo.cs": {
-                          "size": 1426,
-                          "unpacked": true,
-                        },
-                      },
-                      "unpacked": true,
-                    },
-                  },
-                  "unpacked": true,
+                "debug.js": {
+                  "offset": "8918",
+                  "size": 4889,
+                },
+                "index.js": {
+                  "offset": "13807",
+                  "size": 263,
+                },
+                "node.js": {
+                  "offset": "14070",
+                  "size": 4339,
                 },
               },
-              "unpacked": true,
-            },
-            "tools": {
-              "files": {
-                "install.js": {
-                  "size": 968,
-                  "unpacked": true,
-                },
-              },
-              "unpacked": true,
             },
           },
-          "unpacked": true,
         },
         "electron-clear-data": {
           "files": {
             "LICENSE.md": {
-              "offset": "0",
+              "offset": "18409",
               "size": 1059,
             },
             "dist": {
               "files": {
                 "main.js": {
-                  "offset": "1059",
+                  "offset": "19468",
                   "size": 1734,
                 },
               },
             },
             "package.json": {
-              "offset": "2793",
+              "offset": "21202",
               "size": 960,
+            },
+          },
+        },
+        "ms": {
+          "files": {
+            "index.js": {
+              "offset": "22162",
+              "size": 2764,
+            },
+            "license.md": {
+              "offset": "24926",
+              "size": 1077,
+            },
+            "package.json": {
+              "offset": "26003",
+              "size": 469,
             },
           },
         },
       },
     },
     "package.json": {
-      "offset": "4750",
-      "size": 395,
+      "offset": "27469",
+      "size": 393,
     },
   },
 }
@@ -836,112 +740,76 @@ exports[`yarn some module add by manual instead of install 2`] = `
 {
   "files": {
     "index.html": {
-      "offset": "0",
+      "offset": "22719",
       "size": 378,
     },
     "index.js": {
-      "offset": "378",
+      "offset": "23097",
       "size": 619,
     },
     "node_modules": {
       "files": {
-        "edge-cs": {
+        "debug": {
           "files": {
-            "LICENSE.txt": {
-              "size": 565,
-              "unpacked": true,
+            "LICENSE": {
+              "offset": "0",
+              "size": 1107,
             },
-            "lib": {
-              "files": {
-                "bootstrap": {
-                  "files": {
-                    "Dummy.cs": {
-                      "size": 41,
-                      "unpacked": true,
-                    },
-                    "project.json": {
-                      "size": 175,
-                      "unpacked": true,
-                    },
-                  },
-                  "unpacked": true,
-                },
-                "edge-cs.dll": {
-                  "size": 10752,
-                  "unpacked": true,
-                },
-                "edge-cs.js": {
-                  "size": 363,
-                  "unpacked": true,
-                },
-              },
-              "unpacked": true,
+            "Makefile": {
+              "offset": "1107",
+              "size": 1234,
+            },
+            "node.js": {
+              "offset": "2341",
+              "size": 40,
             },
             "package.json": {
-              "size": 606,
-              "unpacked": true,
+              "offset": "2381",
+              "size": 830,
             },
             "src": {
               "files": {
-                "Edge.js.CSharp": {
-                  "files": {
-                    "EdgeCompiler.cs": {
-                      "size": 11533,
-                      "unpacked": true,
-                    },
-                    "gulpfile.js": {
-                      "size": 515,
-                      "unpacked": true,
-                    },
-                    "package.json": {
-                      "size": 62,
-                      "unpacked": true,
-                    },
-                    "project.json": {
-                      "size": 775,
-                      "unpacked": true,
-                    },
-                  },
-                  "unpacked": true,
+                "browser.js": {
+                  "offset": "3211",
+                  "size": 5707,
                 },
-                "edge-cs": {
-                  "files": {
-                    "EdgeCompiler.cs": {
-                      "size": 9315,
-                      "unpacked": true,
-                    },
-                    "Properties": {
-                      "files": {
-                        "AssemblyInfo.cs": {
-                          "size": 1426,
-                          "unpacked": true,
-                        },
-                      },
-                      "unpacked": true,
-                    },
-                  },
-                  "unpacked": true,
+                "debug.js": {
+                  "offset": "8918",
+                  "size": 4889,
+                },
+                "index.js": {
+                  "offset": "13807",
+                  "size": 263,
+                },
+                "node.js": {
+                  "offset": "14070",
+                  "size": 4339,
                 },
               },
-              "unpacked": true,
-            },
-            "tools": {
-              "files": {
-                "install.js": {
-                  "size": 968,
-                  "unpacked": true,
-                },
-              },
-              "unpacked": true,
             },
           },
-          "unpacked": true,
+        },
+        "ms": {
+          "files": {
+            "index.js": {
+              "offset": "18409",
+              "size": 2764,
+            },
+            "license.md": {
+              "offset": "21173",
+              "size": 1077,
+            },
+            "package.json": {
+              "offset": "22250",
+              "size": 469,
+            },
+          },
         },
       },
     },
     "package.json": {
-      "offset": "997",
-      "size": 326,
+      "offset": "23716",
+      "size": 324,
     },
   },
 }
