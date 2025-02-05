@@ -1,5 +1,5 @@
 import { NodeModulesCollector } from "./nodeModulesCollector"
-import { DependencyTree } from "./types"
+import { DependencyTree,Dependency } from "./types"
 import * as path from "path"
 
 export class PnpmNodeModulesCollector extends NodeModulesCollector {
@@ -18,15 +18,15 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector {
   deletePeerDeps(tree: DependencyTree) {
     const dependencies = tree.dependencies || {}
     const p = path.normalize(this.resolvePath(tree.path))
-    const pJson: DependencyTree = require(path.join(p, "package.json"))
-    const _dependencies = pJson.dependencies || {}
+    const pJson: Dependency= require(path.join(p, "package.json"))
+    const _dependencies = pJson.dependencies||{}
     const _optionalDependencies = pJson.optionalDependencies || {}
     const prodDependencies = { ..._dependencies, ..._optionalDependencies }
     for (const [key, value] of Object.entries(dependencies)) {
-      if (prodDependencies[key]) {
+      if (!prodDependencies[key]) {
+        delete dependencies[key]
         continue
       }
-      delete dependencies[key]
       this.deletePeerDeps(value)
     }
   }

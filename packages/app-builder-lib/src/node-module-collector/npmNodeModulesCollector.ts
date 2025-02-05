@@ -15,13 +15,13 @@ export class NpmNodeModulesCollector extends NodeModulesCollector {
   }
 
   deletePeerDeps(tree: DependencyTree) {
-    const _dependencies = tree._dependencies || {}
     const dependencies = tree.dependencies || {}
+    const _dependencies = tree._dependencies || {}
     for (const [key, value] of Object.entries(dependencies)) {
-      if (_dependencies[key]) {
+      if (!_dependencies[key]) {
+        delete dependencies[key]
         continue
       }
-      delete dependencies[key]
       this.deletePeerDeps(value)
     }
   }

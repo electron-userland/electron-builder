@@ -16,13 +16,22 @@ export interface DependencyTree {
   }
   // for npm list --json
   _dependencies?: {
-    [packageName: string]: DependencyTree
+    [packageName: string]:  string 
   }
   optionalDependencies?: {
     [packageName: string]: DependencyTree
   }
   peerDependencies?: {
     [packageName: string]: DependencyTree
+  }
+}
+
+export interface Dependency {
+  dependencies?: {
+    [packageName: string]: string 
+  }
+  optionalDependencies?: {
+    [packageName: string]: string 
   }
 }
 
