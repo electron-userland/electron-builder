@@ -11,7 +11,7 @@
   },
   "scripts": {
     "//": "do not wrap into single quotes - windows doesn't unwrap arg in this case",
-    "compile": "rollup -c rollup.config.ts --configPlugin typescript",
+    "compile": "ts-node scripts/generate-rollup.ts && pnpm -r compile",
     "lint": "eslint packages",
     "lint-staged": "lint-staged",
     "lint-deps": "node ./scripts/checkDeps.js",

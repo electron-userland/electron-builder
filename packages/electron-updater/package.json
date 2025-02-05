@@ -15,6 +15,9 @@
   "files": [
     "out"
   ],
+  "scripts": {
+    "compile": "rollup -c rollup.config.ts --configPlugin typescript"
+  },
   "dependencies": {
     "builder-util-runtime": "workspace:*",
     "fs-extra": "^10.1.0",

@@ -9,6 +9,9 @@
     "scheme.json",
     "certs/root_certs.keychain"
   ],
+  "scripts": {
+    "compile": "rollup -c rollup.config.ts --configPlugin typescript"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/electron-userland/electron-builder.git",
