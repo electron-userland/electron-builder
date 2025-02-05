@@ -554,7 +554,7 @@ importers:
         specifier: ^1.0.5
         version: 1.0.5
       lodash.escaperegexp:
-        specifier: ^4.1.2
+        specifier: 4.1.2
         version: 4.1.2
       lodash.isequal:
         specifier: ^4.5.0

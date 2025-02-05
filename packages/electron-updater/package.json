@@ -20,7 +20,7 @@
     "fs-extra": "^10.1.0",
     "js-yaml": "^4.1.0",
     "lazy-val": "^1.0.5",
-    "lodash.escaperegexp": "^4.1.2",
+    "lodash.escaperegexp": "4.1.2",
     "lodash.isequal": "^4.5.0",
     "semver": "^7.6.3",
     "tiny-typed-emitter": "^2.1.0"

@@ -2,6 +2,7 @@ import typescript from "rollup-plugin-typescript2"
 import { defineConfig } from "rollup"
 import * as glob from "glob"
 import { cleandir } from "rollup-plugin-cleandir"
+import path from "path"
 
 const packageMap = [
   {
@@ -57,7 +58,7 @@ const packageMap = [
 export default () => {
   const outDir = "out"
   return packageMap.map(pkg => {
-    const dir = `packages/${pkg.package}/${outDir}`
+    const dir = path.resolve(process.cwd(), `packages/${pkg.package}/${outDir}`)
     const input = glob.sync(`packages/${pkg.package}/${pkg.entry}`, { ignore: [dir, "**/*/*.d.ts"] })
     return defineConfig({
       input,
@@ -67,6 +68,9 @@ export default () => {
         format: "cjs",
         sourcemap: true,
         preserveModules: true, // Keep files separates instead of one bundled file
+      },
+      watch: {
+        exclude: [dir],
       },
       plugins: [
         cleandir(dir),
