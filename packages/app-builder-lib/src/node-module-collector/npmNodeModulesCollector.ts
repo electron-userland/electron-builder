@@ -14,7 +14,7 @@ export class NpmNodeModulesCollector extends NodeModulesCollector {
     return ["list", "-a", "--include", "prod", "--include", "optional", "--omit", "dev", "--json", "--long", "--silent"]
   }
 
-  deletePeerDeps(tree: DependencyTree) {
+  removeNonProductionDependencie(tree: DependencyTree) {
     const dependencies = tree.dependencies || {}
     const _dependencies = tree._dependencies || {}
     for (const [key, value] of Object.entries(dependencies)) {
@@ -22,7 +22,7 @@ export class NpmNodeModulesCollector extends NodeModulesCollector {
         delete dependencies[key]
         continue
       }
-      this.deletePeerDeps(value)
+      this.removeNonProductionDependencie(value)
     }
   }
 }

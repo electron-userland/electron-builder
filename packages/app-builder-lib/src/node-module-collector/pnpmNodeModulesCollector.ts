@@ -15,7 +15,7 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector {
     return ["list", "--prod", "--json", "--depth", "Infinity"]
   }
 
-  deletePeerDeps(tree: DependencyTree) {
+  removeNonProductionDependencie(tree: DependencyTree) {
     const dependencies = tree.dependencies || {}
     const p = path.normalize(this.resolvePath(tree.path))
     const pJson: Dependency = require(path.join(p, "package.json"))
@@ -27,7 +27,7 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector {
         delete dependencies[key]
         continue
       }
-      this.deletePeerDeps(value)
+      this.removeNonProductionDependencie(value)
     }
   }
 }

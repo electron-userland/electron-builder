@@ -186,7 +186,7 @@ test.ifAll("yarn some module add by manual instead of install", () =>
       isInstallDepsBefore: true,
       projectDirCreated: async (projectDir, tmpDir) => {
         await outputFile(path.join(projectDir, "yarn.lock"), "")
-        await outputFile(path.join(projectDir, "node_modules","foo","package.json"), `{"name":"foo","version":"9.0.0","main":"index.js","license":"MIT"}`)
+        await outputFile(path.join(projectDir, "node_modules", "foo", "package.json"), `{"name":"foo","version":"9.0.0","main":"index.js","license":"MIT"}`)
         await modifyPackageJson(projectDir, data => {
           data.dependencies = {
             debug: "3.1.0",

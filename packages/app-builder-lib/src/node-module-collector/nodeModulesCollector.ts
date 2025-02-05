@@ -75,7 +75,7 @@ export abstract class NodeModulesCollector {
 
   abstract getCommand(): string
   abstract getArgs(): string[]
-  abstract deletePeerDeps(tree: DependencyTree): void
+  abstract removeNonProductionDependencie(tree: DependencyTree): void
 
   protected async getDependenciesTree(): Promise<DependencyTree> {
     const command = this.getCommand()
@@ -139,7 +139,7 @@ export abstract class NodeModulesCollector {
   public async getNodeModules(): Promise<NodeModuleInfo[]> {
     const tree = await this.getDependenciesTree()
     const realTree = this.getTreeFromWorkspaces(tree)
-    this.deletePeerDeps(realTree)
+    this.removeNonProductionDependencie(realTree)
     const dependencyGraph = this.convertToDependencyGraph(realTree)
     const hoisterResult = hoist(this.transToHoisterTree(dependencyGraph), { check: true })
     this._getNodeModules(hoisterResult.dependencies, this.nodeModules)
