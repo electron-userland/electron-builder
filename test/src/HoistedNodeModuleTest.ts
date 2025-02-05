@@ -3,7 +3,6 @@ import { Platform, Arch, DIR_TARGET } from "electron-builder"
 import { outputFile } from "fs-extra"
 import * as path from "path"
 import { readAsarJson } from "app-builder-lib/out/asar/asar"
-import { assertThat } from "./helpers/fileAssert"
 
 test.ifAll("yarn workspace", () =>
   assertPack(
@@ -110,19 +109,16 @@ test.ifAll("pnpm optional dependencies", () =>
         return Promise.all([
           modifyPackageJson(projectDir, data => {
             data.dependencies = {
-              "edge-cs": "1.2.1",
+              "electron-clear-data": "^1.0.5",
             }
             data.optionalDependencies = {
-              "electron-clear-data": "^1.0.5",
+            "edge-cs": "1.2.1",
             }
           }),
           outputFile(path.join(projectDir, "pnpm-lock.yaml"), ""),
         ])
       },
-      packed: async context => {
-        expect(await readAsarJson(path.join(context.getResources(Platform.LINUX), "app.asar"), "node_modules/electron-clear-data/package.json")).toMatchSnapshot()
-        await assertThat(path.join(context.getResources(Platform.LINUX), "app", "node_modules", "electron")).doesNotExist()
-      },
+       packed: context => verifyAsarFileTree(context.getResources(Platform.LINUX)),
     }
   )
 )
@@ -145,6 +141,7 @@ test.ifAll("yarn electron-clear-data", () =>
           outputFile(path.join(projectDir, "yarn.lock"), ""),
         ])
       },
+       packed: context => verifyAsarFileTree(context.getResources(Platform.WINDOWS)),
     }
   )
 )

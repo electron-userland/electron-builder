@@ -142,9 +142,181 @@ exports[`pnpm es5-ext without hoisted config 2`] = `
 }
 `;
 
+exports[`pnpm optional dependencies 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`pnpm optional dependencies 2`] = `
+{
+  "files": {
+    "index.html": {
+      "offset": "30097",
+      "size": 378,
+    },
+    "index.js": {
+      "offset": "30475",
+      "size": 619,
+    },
+    "node_modules": {
+      "files": {
+        "edge-cs": {
+          "files": {
+            "LICENSE.txt": {
+              "offset": "0",
+              "size": 565,
+            },
+            "lib": {
+              "files": {
+                "bootstrap": {
+                  "files": {
+                    "Dummy.cs": {
+                      "offset": "565",
+                      "size": 41,
+                    },
+                    "project.json": {
+                      "offset": "606",
+                      "size": 175,
+                    },
+                  },
+                },
+                "edge-cs.js": {
+                  "offset": "781",
+                  "size": 363,
+                },
+              },
+            },
+            "package.json": {
+              "offset": "1144",
+              "size": 606,
+            },
+            "src": {
+              "files": {
+                "Edge.js.CSharp": {
+                  "files": {
+                    "EdgeCompiler.cs": {
+                      "offset": "1750",
+                      "size": 11533,
+                    },
+                    "gulpfile.js": {
+                      "offset": "13283",
+                      "size": 515,
+                    },
+                    "package.json": {
+                      "offset": "13798",
+                      "size": 62,
+                    },
+                    "project.json": {
+                      "offset": "13860",
+                      "size": 775,
+                    },
+                  },
+                },
+                "edge-cs": {
+                  "files": {
+                    "EdgeCompiler.cs": {
+                      "offset": "14635",
+                      "size": 9315,
+                    },
+                    "Properties": {
+                      "files": {
+                        "AssemblyInfo.cs": {
+                          "offset": "23950",
+                          "size": 1426,
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            "tools": {
+              "files": {
+                "install.js": {
+                  "offset": "25376",
+                  "size": 968,
+                },
+              },
+            },
+          },
+        },
+        "electron-clear-data": {
+          "files": {
+            "LICENSE.md": {
+              "offset": "26344",
+              "size": 1059,
+            },
+            "dist": {
+              "files": {
+                "main.js": {
+                  "offset": "27403",
+                  "size": 1734,
+                },
+              },
+            },
+            "package.json": {
+              "offset": "29137",
+              "size": 960,
+            },
+          },
+        },
+      },
+    },
+    "package.json": {
+      "offset": "31094",
+      "size": 395,
+    },
+  },
+}
+`;
+
 exports[`yarn electron-clear-data 1`] = `
 {
   "win": [],
+}
+`;
+
+exports[`yarn electron-clear-data 2`] = `
+{
+  "files": {
+    "index.html": {
+      "offset": "3753",
+      "size": 378,
+    },
+    "index.js": {
+      "offset": "4131",
+      "size": 619,
+    },
+    "node_modules": {
+      "files": {
+        "electron-clear-data": {
+          "files": {
+            "LICENSE.md": {
+              "offset": "0",
+              "size": 1059,
+            },
+            "dist": {
+              "files": {
+                "main.js": {
+                  "offset": "1059",
+                  "size": 1734,
+                },
+              },
+            },
+            "package.json": {
+              "offset": "2793",
+              "size": 960,
+            },
+          },
+        },
+      },
+    },
+    "package.json": {
+      "offset": "4750",
+      "size": 339,
+    },
+  },
 }
 `;
 
