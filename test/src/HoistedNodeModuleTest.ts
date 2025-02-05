@@ -114,7 +114,7 @@ test.only("yarn electron-clear-data", () =>
           }),
           outputFile(path.join(projectDir, "yarn.lock"), ""),
         ])
-      }
+      },
     }
   ))
 

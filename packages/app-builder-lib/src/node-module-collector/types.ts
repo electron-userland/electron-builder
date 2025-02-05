@@ -14,6 +14,12 @@ export interface DependencyTree {
   dependencies: {
     [packageName: string]: DependencyTree
   }
+  optionalDependencies?: {
+    [packageName: string]: DependencyTree
+  }
+  peerDependencies?: {
+    [packageName: string]: DependencyTree
+  }
 }
 
 export interface DependencyGraph {

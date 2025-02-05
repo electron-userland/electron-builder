@@ -33,7 +33,7 @@ export abstract class NodeModulesCollector {
     return node
   }
 
-  private resolvePath(filePath: string) {
+  protected resolvePath(filePath: string) {
     try {
       const stats = fs.lstatSync(filePath)
       if (stats.isSymbolicLink()) {
@@ -75,6 +75,7 @@ export abstract class NodeModulesCollector {
 
   abstract getCommand(): string
   abstract getArgs(): string[]
+  abstract deletePeerDeps(tree: DependencyTree): void
 
   protected async getDependenciesTree(): Promise<DependencyTree> {
     const command = this.getCommand()
@@ -127,6 +128,7 @@ export abstract class NodeModulesCollector {
   public async getNodeModules(): Promise<NodeModuleInfo[]> {
     const tree = await this.getDependenciesTree()
     const realTree = this.getTreeFromWorkspaces(tree)
+    this.deletePeerDeps(realTree)
     const dependencyGraph = this.convertToDependencyGraph(realTree)
     const hoisterResult = hoist(this.transToHoisterTree(dependencyGraph), { check: true })
     this._getNodeModules(hoisterResult.dependencies, this.nodeModules)

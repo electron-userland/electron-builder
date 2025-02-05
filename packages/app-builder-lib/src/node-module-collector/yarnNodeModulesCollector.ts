@@ -1,4 +1,5 @@
 import { NodeModulesCollector } from "./nodeModulesCollector"
+import { DependencyTree } from "./types"
 
 export class YarnNodeModulesCollector extends NodeModulesCollector {
   constructor(rootDir: string) {
@@ -10,6 +11,16 @@ export class YarnNodeModulesCollector extends NodeModulesCollector {
   }
 
   getArgs(): string[] {
-    return ["list", "--include", "prod", "--include", "optional", "--json", "--long", "--silent"]
+    return ["list", "-a", "--include", "prod", "--include", "optional", "--json", "--long", "--silent"]
+  }
+  deletePeerDeps(tree: DependencyTree) {
+    const dependencies = tree.dependencies || {}
+    const peerDependencies = tree.peerDependencies || {}
+    for (const [key, value] of Object.entries(dependencies)) {
+      if (peerDependencies[key]) {
+        delete dependencies[key]
+      }
+      this.deletePeerDeps(value)
+    }
   }
 }
