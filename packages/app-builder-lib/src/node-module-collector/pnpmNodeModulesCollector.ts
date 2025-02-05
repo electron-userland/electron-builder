@@ -19,11 +19,14 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector {
     const dependencies = tree.dependencies || {}
     const p = path.normalize(this.resolvePath(tree.path))
     const pJson: DependencyTree = require(path.join(p, "package.json"))
-    const peerDependencies = pJson.peerDependencies || {}
+    const _dependencies = pJson.dependencies || {}
+    const _optionalDependencies = pJson.optionalDependencies || {}
+    const prodDependencies = { ..._dependencies, ..._optionalDependencies }
     for (const [key, value] of Object.entries(dependencies)) {
-      if (peerDependencies[key]) {
-        delete dependencies[key]
+      if (prodDependencies[key]) {
+        continue
       }
+      delete dependencies[key]
       this.deletePeerDeps(value)
     }
   }

@@ -14,6 +14,10 @@ export interface DependencyTree {
   dependencies: {
     [packageName: string]: DependencyTree
   }
+  // for npm list --json
+  _dependencies?: {
+    [packageName: string]: DependencyTree
+  }
   optionalDependencies?: {
     [packageName: string]: DependencyTree
   }

@@ -13,13 +13,15 @@ export class YarnNodeModulesCollector extends NodeModulesCollector {
   getArgs(): string[] {
     return ["list", "-a", "--include", "prod", "--include", "optional", "--omit", "dev", "--json", "--long", "--silent"]
   }
+
   deletePeerDeps(tree: DependencyTree) {
+    const _dependencies = tree._dependencies || {}
     const dependencies = tree.dependencies || {}
-    const peerDependencies = tree.peerDependencies || {}
     for (const [key, value] of Object.entries(dependencies)) {
-      if (peerDependencies[key]) {
-        delete dependencies[key]
+      if (_dependencies[key]) {
+        continue
       }
+      delete dependencies[key]
       this.deletePeerDeps(value)
     }
   }
