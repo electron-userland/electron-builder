@@ -16,7 +16,7 @@ export interface DependencyTree {
   }
   // for npm list --json
   _dependencies?: {
-    [packageName: string]:  string 
+    [packageName: string]: string
   }
   optionalDependencies?: {
     [packageName: string]: DependencyTree
@@ -28,10 +28,10 @@ export interface DependencyTree {
 
 export interface Dependency {
   dependencies?: {
-    [packageName: string]: string 
+    [packageName: string]: string
   }
   optionalDependencies?: {
-    [packageName: string]: string 
+    [packageName: string]: string
   }
 }
 

@@ -98,30 +98,30 @@ test.ifAll("pnpm es5-ext without hoisted config", () =>
 )
 
 test.ifAll("pnpm optional dependencies", () =>
-   assertPack(
-     "test-app-hoisted",
-     {
-       targets: linuxDirTarget,
-     },
-     {
-       isInstallDepsBefore: true,
-       projectDirCreated: projectDir => {
-         return Promise.all([
-           modifyPackageJson(projectDir, data => {
-             data.dependencies = {
-               "electron-clear-data": "^1.0.5",
-             }
-             data.optionalDependencies = {
-               "edge-cs": "1.2.1",
-             }
-           }),
-           outputFile(path.join(projectDir, "pnpm-lock.yaml"), ""),
-         ])
-       },
-       packed: context => verifyAsarFileTree(context.getResources(Platform.LINUX)),
-     }
-   )
- )
+  assertPack(
+    "test-app-hoisted",
+    {
+      targets: linuxDirTarget,
+    },
+    {
+      isInstallDepsBefore: true,
+      projectDirCreated: projectDir => {
+        return Promise.all([
+          modifyPackageJson(projectDir, data => {
+            data.dependencies = {
+              "electron-clear-data": "^1.0.5",
+            }
+            data.optionalDependencies = {
+              "edge-cs": "1.2.1",
+            }
+          }),
+          outputFile(path.join(projectDir, "pnpm-lock.yaml"), ""),
+        ])
+      },
+      packed: context => verifyAsarFileTree(context.getResources(Platform.LINUX)),
+    }
+  )
+)
 
 test.ifAll("yarn electron-clear-data", () =>
   assertPack(
@@ -185,7 +185,7 @@ test.ifAll("yarn some module add by manual instead of install", () =>
       isInstallDepsBefore: true,
       projectDirCreated: async (projectDir, tmpDir) => {
         await outputFile(path.join(projectDir, "package-lock.json"), "")
-        await outputFile(path.join(projectDir,"node_modules", "package.json"), `{"name":"foo","version":"9.0.0","main":"index.js","license":"MIT"}`)
+        await outputFile(path.join(projectDir, "node_modules", "package.json"), `{"name":"foo","version":"9.0.0","main":"index.js","license":"MIT"}`)
         await modifyPackageJson(projectDir, data => {
           data.dependencies = {
             "edge-cs": "1.2.1",
@@ -196,7 +196,6 @@ test.ifAll("yarn some module add by manual instead of install", () =>
     }
   )
 )
-
 
 //github.com/electron-userland/electron-builder/issues/8426
 test.ifAll("yarn parse-asn1", () =>
