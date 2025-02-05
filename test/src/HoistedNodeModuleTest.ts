@@ -112,13 +112,13 @@ test.ifAll("pnpm optional dependencies", () =>
               "electron-clear-data": "^1.0.5",
             }
             data.optionalDependencies = {
-            "edge-cs": "1.2.1",
+              "edge-cs": "1.2.1",
             }
           }),
           outputFile(path.join(projectDir, "pnpm-lock.yaml"), ""),
         ])
       },
-       packed: context => verifyAsarFileTree(context.getResources(Platform.LINUX)),
+      packed: context => verifyAsarFileTree(context.getResources(Platform.LINUX)),
     }
   )
 )
@@ -137,14 +137,14 @@ test.ifAll("yarn electron-clear-data", () =>
             data.dependencies = {
               "electron-clear-data": "^1.0.5",
             }
-              data.optionalDependencies = {
-            "edge-cs": "1.2.1",
+            data.optionalDependencies = {
+              "edge-cs": "1.2.1",
             }
           }),
           outputFile(path.join(projectDir, "yarn.lock"), ""),
         ])
       },
-       packed: context => verifyAsarFileTree(context.getResources(Platform.WINDOWS)),
+      packed: context => verifyAsarFileTree(context.getResources(Platform.WINDOWS)),
     }
   )
 )
@@ -163,14 +163,14 @@ test.ifAll("yarn electron-clear-data", () =>
             data.dependencies = {
               "electron-clear-data": "^1.0.5",
             }
-              data.optionalDependencies = {
-            "edge-cs": "1.2.1",
+            data.optionalDependencies = {
+              "edge-cs": "1.2.1",
             }
           }),
           outputFile(path.join(projectDir, "package-lock.json"), ""),
         ])
       },
-       packed: context => verifyAsarFileTree(context.getResources(Platform.WINDOWS)),
+      packed: context => verifyAsarFileTree(context.getResources(Platform.WINDOWS)),
     }
   )
 )
