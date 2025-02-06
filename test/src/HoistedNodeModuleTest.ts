@@ -198,6 +198,36 @@ test.ifAll("yarn some module add by manual instead of install", () =>
   )
 )
 
+//github.com/electron-userland/electron-builder/issues/8842
+test.ifAll("yarn ms", () =>
+  assertPack(
+    "test-app-hoisted",
+    {
+      targets: linuxDirTarget,
+    },
+    {
+      isInstallDepsBefore: true,
+      projectDirCreated: projectDir => {
+        return Promise.all([
+          modifyPackageJson(projectDir, data => {
+            data.dependencies = {
+              "@sentry/electron": "5.11.0",
+              "electron-clear-data": "^1.0.5",
+            }
+            data.devDependencies = {
+              electron: "34.0.2",
+            }
+          }),
+          outputFile(path.join(projectDir, "yarn.lock"), ""),
+        ])
+      },
+      packed: async context => {
+        expect(await readAsarJson(path.join(context.getResources(Platform.LINUX), "app.asar"), "node_modules/ms/package.json")).toMatchSnapshot()
+      },
+    }
+  )
+)
+
 //github.com/electron-userland/electron-builder/issues/8426
 test.ifAll("yarn parse-asn1", () =>
   assertPack(
