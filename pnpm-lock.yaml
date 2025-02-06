@@ -279,6 +279,9 @@ importers:
       '@types/js-yaml':
         specifier: 4.0.3
         version: 4.0.3
+      '@types/minimatch':
+        specifier: ^5.1.2
+        version: 5.1.2
       '@types/semver':
         specifier: 7.3.8
         version: 7.3.8

@@ -1,5 +1,37 @@
 {
-  "files": [],
+  "compilerOptions": {
+    "target": "ES2024",
+    "module": "ES2022",
+    "esModuleInterop": false,
+    "forceConsistentCasingInFileNames": true,
+    "moduleResolution": "node",
+    "skipLibCheck": true,
+    "strict": true,
+    "noUnusedLocals": false,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitReturns": true,
+
+    "inlineSources": true,
+    "sourceMap": true,
+
+    "allowSyntheticDefaultImports": true,
+    "experimentalDecorators": true,
+
+    "newLine": "lf",
+
+    "noEmitOnError": true,
+    "typeRoots": [
+      "./typings",
+      "./**/typings",
+      "./packages/app-builder-lib/typings",
+      "./packages/app-builder-lib/src/typings",
+      "./packages/app-builder-lib/src/typings/index.d.ts",
+      "./typings/flatpak-bundler.d.ts",
+      "./node_modules/@types/",
+      "./**/node_modules/@types/",
+    ],
+  },
+  "files": ["rollup.config.ts"],
   "references": [
     {
       "path": "./packages/electron-builder"
@@ -12,12 +44,6 @@
     },
     {
       "path": "./packages/electron-builder-squirrel-windows"
-    },
-    {
-      "path": "./test"
-    },
-    {
-      "path": "./scripts/renderer"
     }
   ]
 }

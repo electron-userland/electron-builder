@@ -4,8 +4,7 @@ import { cleandir } from "rollup-plugin-cleandir"
 import typescript from "rollup-plugin-typescript2"
 
 export default () => {
-  const outDir = "out"
-  const dir = outDir
+  const dir = "out"
   const input = glob.sync("src/**/*.ts", { ignore: [dir, "**/*/*.d.ts"] })
   return defineConfig({
     input,
@@ -17,9 +16,9 @@ export default () => {
       preserveModules: true, // Keep files separates instead of one bundled file
     },
     external: id => !/^[./]/.test(id), // don't package any node_modules
-    watch: {
-      exclude: [dir],
-    },
+    // watch: {
+    //   exclude: [dir],
+    // },
     plugins: [
       cleandir(dir),
       typescript({
