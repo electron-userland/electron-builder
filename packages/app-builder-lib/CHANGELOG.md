@@ -1,5 +1,17 @@
 # app-builder-lib
 
+## 26.0.6
+
+### Patch Changes
+
+- [#8843](https://github.com/electron-userland/electron-builder/pull/8843) [`7fc78460`](https://github.com/electron-userland/electron-builder/commit/7fc784603d580fc6dc183e02118734ea4ffeb257) Thanks [@fiesh](https://github.com/fiesh)! - fix: Only update AppArmor profile if not chroot'ed
+
+- [#8851](https://github.com/electron-userland/electron-builder/pull/8851) [`0f2c9637`](https://github.com/electron-userland/electron-builder/commit/0f2c96379143e3dde960ed45bb3e1b74449540f1) Thanks [@beyondkmp](https://github.com/beyondkmp)! - Fix the issue of the missing ms package
+
+- Updated dependencies []:
+  - dmg-builder@26.0.6
+  - electron-builder-squirrel-windows@26.0.6
+
 ## 26.0.5
 
 ### Patch Changes
