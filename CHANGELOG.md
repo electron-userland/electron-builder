@@ -1,3 +1,13 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v26.0.5...v) (2025-02-06)
+
+
+### Bug Fixes
+
+* missing `ms` package when pruning non-prod dependencies ([#8851](https://github.com/electron-userland/electron-builder/issues/8851)) ([0f2c963](https://github.com/electron-userland/electron-builder/commit/0f2c96379143e3dde960ed45bb3e1b74449540f1))
+* Only update AppArmor profile if not chroot'ed ([#8843](https://github.com/electron-userland/electron-builder/issues/8843)) ([7fc7846](https://github.com/electron-userland/electron-builder/commit/7fc784603d580fc6dc183e02118734ea4ffeb257))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v26.0.4...v) (2025-02-05)
 
 
