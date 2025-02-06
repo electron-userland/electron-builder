@@ -22,7 +22,7 @@ export class NpmNodeModulesCollector extends NodeModulesCollector {
     }
     
     for (const [key, value] of Object.entries(dependencies)) {
-      if (!_dependencies[key]) {
+      if (!_dependencies[key] || Object.keys(value).length === 0) {
         delete dependencies[key]
         continue
       }
