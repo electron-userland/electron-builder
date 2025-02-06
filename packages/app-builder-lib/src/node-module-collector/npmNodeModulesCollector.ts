@@ -20,7 +20,7 @@ export class NpmNodeModulesCollector extends NodeModulesCollector {
     if (dependencies && Object.keys(dependencies).length === 0) {
       tree.dependencies = this.allDependencies.get(`${tree.name}@${tree.version}`)?.dependencies || {}
     }
-    
+
     for (const [key, value] of Object.entries(dependencies)) {
       if (!_dependencies[key] || Object.keys(value).length === 0) {
         delete dependencies[key]

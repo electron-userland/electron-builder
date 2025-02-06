@@ -215,7 +215,7 @@ test.ifAll("yarn ms", () =>
               "electron-clear-data": "^1.0.5",
             }
             data.devDependencies = {
-             "electron": "34.0.2"
+              electron: "34.0.2",
             }
           }),
           outputFile(path.join(projectDir, "yarn.lock"), ""),
