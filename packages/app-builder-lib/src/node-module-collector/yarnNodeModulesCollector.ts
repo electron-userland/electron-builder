@@ -17,7 +17,6 @@ export class YarnNodeModulesCollector extends NodeModulesCollector {
   removeNonProductionDependencie(tree: DependencyTree) {
     const dependencies = tree.dependencies || {}
     const _dependencies = tree._dependencies || {}
-
     if (dependencies && Object.keys(dependencies).length === 0) {
       tree.dependencies = this.allDependencies.get(`${tree.name}@${tree.version}`)?.dependencies || {}
     }

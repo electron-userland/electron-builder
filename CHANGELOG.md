@@ -1,3 +1,12 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v26.0.4...v) (2025-02-05)
+
+
+### Bug Fixes
+
+* ignore `peerDependencies` when collecting node modules tree ([#8845](https://github.com/electron-userland/electron-builder/issues/8845)) ([53ee6c6](https://github.com/electron-userland/electron-builder/commit/53ee6c6c498a4cc4e64d580c4ec6564137060eae))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v26.0.3...v) (2025-02-04)
 
 

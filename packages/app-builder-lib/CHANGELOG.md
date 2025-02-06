@@ -1,5 +1,15 @@
 # app-builder-lib
 
+## 26.0.5
+
+### Patch Changes
+
+- [#8845](https://github.com/electron-userland/electron-builder/pull/8845) [`53ee6c6c`](https://github.com/electron-userland/electron-builder/commit/53ee6c6c498a4cc4e64d580c4ec6564137060eae) Thanks [@beyondkmp](https://github.com/beyondkmp)! - delete peerDepenencies when collecting node modules
+
+- Updated dependencies []:
+  - dmg-builder@26.0.5
+  - electron-builder-squirrel-windows@26.0.5
+
 ## 26.0.4
 
 ### Patch Changes
