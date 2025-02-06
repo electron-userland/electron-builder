@@ -7,6 +7,7 @@ import { exec, log } from "builder-util"
 export abstract class NodeModulesCollector {
   private nodeModules: NodeModuleInfo[]
   protected dependencyPathMap: Map<string, string>
+  protected allDependencies: Map<string, DependencyTree> = new Map()
 
   constructor(private readonly rootDir: string) {
     this.dependencyPathMap = new Map()
@@ -47,7 +48,7 @@ export abstract class NodeModulesCollector {
     }
   }
 
-  public convertToDependencyGraph(tree: DependencyTree): DependencyGraph {
+  private convertToDependencyGraph(tree: DependencyTree): DependencyGraph {
     const result: DependencyGraph = { ".": {} }
 
     const flatten = (node: DependencyTree, parentKey = ".") => {
@@ -71,6 +72,16 @@ export abstract class NodeModulesCollector {
 
     flatten(tree)
     return result
+  }
+
+  getAllDependencies(tree: DependencyTree) {
+    const dependencies = tree.dependencies || {}
+    for (const [key, value] of Object.entries(dependencies)) {
+      if (value.dependencies && Object.keys(value.dependencies).length > 0) {
+        this.allDependencies.set(`${key}@${value.version}`, value)
+        this.getAllDependencies(value)
+      }
+    }
   }
 
   abstract getCommand(): string
@@ -139,6 +150,7 @@ export abstract class NodeModulesCollector {
   public async getNodeModules(): Promise<NodeModuleInfo[]> {
     const tree = await this.getDependenciesTree()
     const realTree = this.getTreeFromWorkspaces(tree)
+    this.getAllDependencies(realTree)
     this.removeNonProductionDependencie(realTree)
     const dependencyGraph = this.convertToDependencyGraph(realTree)
     const hoisterResult = hoist(this.transToHoisterTree(dependencyGraph), { check: true })
