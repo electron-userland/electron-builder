@@ -2,4 +2,4 @@
 "app-builder-lib": patch
 ---
 
-delete peerDepenencies when collecting node modules
+Fix the issue of the missing ms package
