@@ -36,11 +36,11 @@ function createBuildResourcesTest(packagerOptions: PackagerOptions) {
   )
 }
 
-test.ifAll.ifNotWindows("custom buildResources and output dirs: mac", createBuildResourcesTest({ mac: ["dir"] }))
-test.ifAll.ifNotCiMac("custom buildResources and output dirs: win", createBuildResourcesTest({ win: ["nsis"] }))
-test.ifAll.ifNotWindows("custom buildResources and output dirs: linux", createBuildResourcesTest({ linux: ["appimage"] }))
+test.ifNotWindows("custom buildResources and output dirs: mac", createBuildResourcesTest({ mac: ["dir"] }))
+test.ifNotCiMac("custom buildResources and output dirs: win", createBuildResourcesTest({ win: ["nsis"] }))
+test.ifNotWindows("custom buildResources and output dirs: linux", createBuildResourcesTest({ linux: ["appimage"] }))
 
-test.ifAll.ifLinuxOrDevMac(
+test.ifLinuxOrDevMac(
   "prepackaged",
   app(
     {
@@ -69,7 +69,7 @@ test.ifAll.ifLinuxOrDevMac(
   )
 )
 
-test.ifAll.ifLinuxOrDevMac(
+test.ifLinuxOrDevMac(
   "retrieve latest electron version",
   app(
     {
@@ -88,7 +88,7 @@ test.ifAll.ifLinuxOrDevMac(
   )
 )
 
-test.ifAll.ifLinuxOrDevMac(
+test.ifLinuxOrDevMac(
   "retrieve latest electron-nightly version",
   app(
     {
@@ -107,7 +107,7 @@ test.ifAll.ifLinuxOrDevMac(
   )
 )
 
-test.ifAll.ifNotWindows(
+test.ifNotWindows(
   "override targets in the config",
   app(
     {
@@ -133,7 +133,7 @@ test.ifAll.ifNotWindows(
 )
 
 // test https://github.com/electron-userland/electron-builder/issues/1182 also
-test.ifAll.ifDevOrWinCi(
+test.ifDevOrWinCi(
   "override targets in the config - only arch",
   app(
     {
@@ -167,7 +167,7 @@ test.ifAll.ifDevOrWinCi(
 )
 
 // test on all CI to check path separators
-test.ifAll("do not exclude build entirely (respect files)", () => assertPack("test-app-build-sub", { targets: linuxDirTarget }))
+test("do not exclude build entirely (respect files)", () => assertPack("test-app-build-sub", { targets: linuxDirTarget }))
 
 test.ifNotWindows(
   "electronDist as path to local folder with electron builds zipped ",
@@ -195,7 +195,7 @@ const overridePublishChannel: any = {
   channel: "beta",
 }
 
-test.ifAll.ifDevOrLinuxCi(
+test.ifDevOrLinuxCi(
   "overriding the publish channel",
   app(
     {

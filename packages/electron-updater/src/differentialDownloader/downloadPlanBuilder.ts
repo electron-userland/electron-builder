@@ -1,5 +1,5 @@
 import { BlockMap, BlockMapFile } from "builder-util-runtime/out/blockMapApi"
-import { Logger } from "../main"
+import { Logger } from "../exports"
 
 export enum OperationKind {
   COPY,

@@ -10,6 +10,7 @@ import { TmpDir } from "temp-file"
 import { TestAppAdapter } from "../helpers/TestAppAdapter"
 import { PackedContext, assertPack, removeUnstableProperties } from "../helpers/packTester"
 import { tuneTestUpdater, writeUpdateConfig } from "../helpers/updaterTestUtil"
+import { mockForNodeRequire } from "vitest-mock-commonjs"
 
 /*
 
@@ -72,16 +73,20 @@ async function doBuild(outDirs: Array<string>, targets: Map<Platform, Map<Arch, 
   }
 }
 
-test.ifWindows("web installer", async () => {
-  const outDirs: Array<string> = []
-  const tmpDir = new TmpDir("differential-updater-test")
-  await doBuild(outDirs, Platform.WINDOWS.createTarget(["nsis-web"], Arch.x64), tmpDir, true)
+test.ifWindows(
+  "web installer",
+  async () => {
+    const outDirs: Array<string> = []
+    const tmpDir = new TmpDir("differential-updater-test")
+    await doBuild(outDirs, Platform.WINDOWS.createTarget(["nsis-web"], Arch.x64), tmpDir, true)
 
-  const oldDir = outDirs[0]
-  await move(path.join(oldDir, "nsis-web", `TestApp-${OLD_VERSION_NUMBER}-x64.nsis.7z`), path.join(getTestUpdaterCacheDir(oldDir), testAppCacheDirName, "package.7z"))
+    const oldDir = outDirs[0]
+    await move(path.join(oldDir, "nsis-web", `TestApp-${OLD_VERSION_NUMBER}-x64.nsis.7z`), path.join(getTestUpdaterCacheDir(oldDir), testAppCacheDirName, "package.7z"))
 
-  await testBlockMap(outDirs[0], path.join(outDirs[1], "nsis-web"), NsisUpdater, Platform.WINDOWS, Arch.x64)
-})
+    await testBlockMap(outDirs[0], path.join(outDirs[1], "nsis-web"), NsisUpdater, Platform.WINDOWS, Arch.x64)
+  },
+  { retry: 2 }
+)
 
 test.ifWindows("nsis", async () => {
   const outDirs: Array<string> = []
@@ -114,7 +119,7 @@ async function testLinux(arch: Arch) {
 test.ifDevOrLinuxCi("AppImage", () => testLinux(Arch.x64))
 
 // Skipped, electron no longer ships ia32 linux binaries
-test.skip.ifDevOrLinuxCi("AppImage ia32", () => testLinux(Arch.ia32))
+test.ifDevOrLinuxCi.skip("AppImage ia32", () => testLinux(Arch.ia32))
 
 async function testMac(arch: Arch) {
   process.env.TEST_UPDATER_ARCH = Arch[arch]
@@ -173,6 +178,12 @@ class TestNativeUpdater extends EventEmitter {
   setFeedURL(updateConfig: any) {
     console.log("TestNativeUpdater.setFeedURL " + updateConfig.url)
   }
+  getFeedURL() {
+    console.log("TestNativeUpdater.getFeedURL")
+  }
+  quitAndInstall() {
+    console.log("TestNativeUpdater.quitAndInstall")
+  }
 }
 
 function getTestUpdaterCacheDir(oldDir: string) {
@@ -191,15 +202,10 @@ async function testBlockMap(oldDir: string, newDir: string, updaterClass: any, p
 
   // Mac uses electron's native autoUpdater to serve updates to, we mock here since electron API isn't available within jest runtime
   const mockNativeUpdater = new TestNativeUpdater()
-  jest.mock(
-    "electron",
-    () => {
-      return {
-        autoUpdater: mockNativeUpdater,
-      }
-    },
-    { virtual: true }
-  )
+
+  mockForNodeRequire("electron", {
+    autoUpdater: mockNativeUpdater,
+  })
 
   return await new Promise<void>((resolve, reject) => {
     httpServerProcess.on("error", reject)

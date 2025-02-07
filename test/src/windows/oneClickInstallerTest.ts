@@ -68,7 +68,7 @@ test(
   )
 )
 
-test.ifAll(
+test(
   "custom guid",
   app({
     targets: Platform.WINDOWS.createTarget(["nsis"], Arch.ia32),
@@ -83,7 +83,7 @@ test.ifAll(
   })
 )
 
-test.ifAll(
+test(
   "multi language license",
   app(
     {
@@ -109,7 +109,7 @@ test.ifAll(
   )
 )
 
-test.ifAll(
+test(
   "html license",
   app(
     {
@@ -132,7 +132,7 @@ test.ifAll(
   )
 )
 
-test.ifAll.ifDevOrWinCi(
+test.ifDevOrWinCi(
   "createDesktopShortcut always",
   app({
     targets: Platform.WINDOWS.createTarget("nsis"),
@@ -257,7 +257,7 @@ test.ifDevOrLinuxCi(
   )
 )
 
-test.ifAll(
+test(
   "menuCategory",
   app(
     {
@@ -335,7 +335,7 @@ test.ifDevOrLinuxCi(
   })
 )
 
-test.skip.ifWindows(
+test.ifWindows.skip(
   "custom exec name",
   app({
     targets: nsisTarget,
@@ -362,7 +362,7 @@ test.skip.ifWindows(
   })
 )
 
-test.skip.ifWindows(
+test.ifWindows.skip(
   "top-level custom exec name",
   app({
     targets: nsisTarget,

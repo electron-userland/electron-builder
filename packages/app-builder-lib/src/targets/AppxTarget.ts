@@ -47,13 +47,14 @@ const restrictedApplicationIdValues = [
 const DEFAULT_RESOURCE_LANG = "en-US"
 
 export default class AppXTarget extends Target {
-  readonly options: AppXOptions = deepAssign({}, this.packager.platformSpecificBuildOptions, this.packager.config.appx)
+  readonly options: AppXOptions
 
   constructor(
     private readonly packager: WinPackager,
     readonly outDir: string
   ) {
     super("appx")
+    this.options = deepAssign({}, this.packager.platformSpecificBuildOptions, this.packager.config.appx)
 
     if (process.platform !== "darwin" && (process.platform !== "win32" || isOldWin6())) {
       throw new Error("AppX is supported only on Windows 10 or Windows Server 2012 R2 (version number 6.3+)")

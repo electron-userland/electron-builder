@@ -6,7 +6,7 @@ import { assertThat } from "../helpers/fileAssert"
 import { app, appThrows, assertPack, checkDirContents, platform } from "../helpers/packTester"
 import { verifySmartUnpack } from "../helpers/verifySmartUnpack"
 
-test.ifMac.ifAll("two-package", () =>
+test.ifMac("two-package", () =>
   assertPack(
     "test-app",
     {
@@ -130,7 +130,7 @@ test.ifMac("yarn two package.json w/ native module", () =>
   )
 )
 
-test.ifMac.ifAll(
+test.ifMac(
   "electronDist",
   appThrows({
     targets: Platform.MAC.createTarget(DIR_TARGET, Arch.x64),
@@ -142,7 +142,7 @@ test.ifMac.ifAll(
 
 test.ifWinCi("Build macOS on Windows is not supported", appThrows(platform(Platform.MAC)))
 
-test.ifAll(
+test(
   "multiple asar resources",
   app(
     {

@@ -12,7 +12,7 @@ const checkOptions: AssertPackOptions = {
   isInstallDepsBefore: false,
 }
 
-test.ifAll.ifMac(
+test.ifMac(
   "mac",
   app(
     {
@@ -25,7 +25,7 @@ test.ifAll.ifMac(
   )
 )
 
-test.ifAll.ifLinuxOrDevMac(
+test.ifLinuxOrDevMac(
   "linux",
   app(
     {
@@ -38,7 +38,7 @@ test.ifAll.ifLinuxOrDevMac(
   )
 )
 
-test.ifAll.ifDevOrWinCi(
+test.ifDevOrWinCi(
   "win",
   app(
     {
@@ -51,7 +51,7 @@ test.ifAll.ifDevOrWinCi(
   )
 )
 
-test.ifAll.ifDevOrWinCi(
+test.ifDevOrWinCi(
   "win ia32",
   app(
     {

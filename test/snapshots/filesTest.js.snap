@@ -1,4 +1,4 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
 exports[`expand not defined env 1`] = `"ERR_ELECTRON_BUILDER_ENV_NOT_DEFINED"`;
 

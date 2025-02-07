@@ -24,8 +24,7 @@
     "access": "public"
   },
   "include": [
-    "src/**/*.ts",
-    "../../typings/*.d.ts"
+    "src/**/*.ts"
   ],
   "exclude": [
   ]

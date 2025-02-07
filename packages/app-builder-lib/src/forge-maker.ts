@@ -1,5 +1,5 @@
 import * as path from "path"
-import { build } from "./index"
+import { build } from "./build"
 import { PackagerOptions } from "./packagerApi"
 
 export interface ForgeOptions {

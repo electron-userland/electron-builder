@@ -1,4 +1,4 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
 exports[`appId as object 1`] = `
 "Invalid configuration object. electron-builder <appVersion> has been initialized using a configuration object that does not match the API schema.

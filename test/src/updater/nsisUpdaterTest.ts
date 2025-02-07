@@ -8,15 +8,6 @@ import { assertThat } from "../helpers/fileAssert"
 import { removeUnstableProperties } from "../helpers/packTester"
 import { createNsisUpdater, trackEvents, validateDownload, writeUpdateConfig } from "../helpers/updaterTestUtil"
 
-// some tests are flaky
-jest.retryTimes(3)
-
-if (process.env.ELECTRON_BUILDER_OFFLINE === "true") {
-  fit("Skip ArtifactPublisherTest suite — ELECTRON_BUILDER_OFFLINE is defined", () => {
-    console.warn("[SKIP] Skip ArtifactPublisherTest suite — ELECTRON_BUILDER_OFFLINE is defined")
-  })
-}
-
 test("downgrade (disallowed, beta)", async () => {
   const updater = await createNsisUpdater("1.5.2-beta.4")
   updater.updateConfigPath = await writeUpdateConfig<GithubOptions>({
@@ -108,7 +99,7 @@ test.skip("DigitalOcean Spaces", async () => {
   await validateDownload(updater)
 })
 
-test.skip.ifNotCiWin("sha512 mismatch error event", async () => {
+test.ifNotCiWin.skip("sha512 mismatch error event", async () => {
   const updater = await createNsisUpdater()
   updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({
     provider: "generic",
@@ -256,7 +247,7 @@ test.skip("test download progress", async () => {
   expect(lastEvent.transferred).toBe(lastEvent.total)
 })
 
-test.ifAll("valid signature", async () => {
+test("valid signature", async () => {
   const updater = await createNsisUpdater("0.0.1")
   updater.updateConfigPath = await writeUpdateConfig({
     provider: "github",
@@ -267,7 +258,7 @@ test.ifAll("valid signature", async () => {
   await validateDownload(updater)
 })
 
-test.ifAll("valid signature - multiple publisher DNs", async () => {
+test("valid signature - multiple publisher DNs", async () => {
   const updater = await createNsisUpdater("0.0.1")
   updater.updateConfigPath = await writeUpdateConfig({
     provider: "github",
@@ -278,7 +269,7 @@ test.ifAll("valid signature - multiple publisher DNs", async () => {
   await validateDownload(updater)
 })
 
-test.ifAll("valid signature using DN", async () => {
+test("valid signature using DN", async () => {
   const updater = await createNsisUpdater("0.0.1")
   updater.updateConfigPath = await writeUpdateConfig({
     provider: "github",
@@ -390,7 +381,7 @@ test("cancel download with progress", async () => {
   expect(cancelled).toBe(true)
 })
 
-test.ifAll("test download and install", async () => {
+test("test download and install", async () => {
   const updater = await createNsisUpdater()
   updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({
     provider: "generic",
@@ -400,7 +391,7 @@ test.ifAll("test download and install", async () => {
   await validateDownload(updater)
 })
 
-test.skip.ifWindows("test downloaded installer", async () => {
+test.ifWindows.skip("test downloaded installer", async () => {
   const updater = await createNsisUpdater("1.0.1")
   updater.updateConfigPath = await writeUpdateConfig<GithubOptions>({
     provider: "github",
