@@ -58,26 +58,38 @@ const packageMap = [
 export default () => {
   const outDir = "out"
   return packageMap.map(pkg => {
-    const dir = path.resolve(process.cwd(), `packages/${pkg.package}/${outDir}`)
-    const input = glob.sync(`packages/${pkg.package}/${pkg.entry}`, { ignore: [dir, "**/*/*.d.ts"] })
+    const dir = filepath => `packages/${pkg.package}/${filepath}`
+    const additionalWatchFiles = glob.sync([dir("tsconfig.json"), dir("package.json"), "**/typings"], { ignore: ["node_modules", "docker-node-modules"] })
+
+    const input = glob.sync(`packages/${pkg.package}/${pkg.entry}`, { ignore: [dir(outDir), "**/*.d.ts"] })
     return defineConfig({
       input,
       treeshake: false,
       output: {
-        dir: dir,
+        dir: dir(outDir),
         format: "cjs",
         sourcemap: true,
         preserveModules: true, // Keep files separates instead of one bundled file
       },
       watch: {
-        exclude: [dir],
+        exclude: [dir(outDir)],
       },
+      external: id => !/^[./]/.test(id),
       plugins: [
-        cleandir(dir),
+        {
+          name: "watch-external",
+          buildStart() {
+            additionalWatchFiles.forEach(file => {
+              this.addWatchFile(file)
+            })
+          },
+        },
+        cleandir(dir(outDir)),
         typescript({
-          tsconfig: `packages/${pkg.package}/tsconfig.json`,
+          tsconfig: dir("tsconfig.json"),
           clean: true,
           check: true,
+          abortOnError: true,
         }),
       ],
     })
