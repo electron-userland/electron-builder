@@ -4,13 +4,13 @@
     "outDir": "out",
     "rootDir": "src",
     "typeRoots": [
-      "./typings",
+      "./src/typings",
       "./node_modules/@types"
     ]
   },
   "include": [
       "src/**/*.ts",
-      "typings/*.d.ts",
+      "src/typings/*.d.ts",
       "../../typings/*.d.ts",
   ],
   "exclude": [

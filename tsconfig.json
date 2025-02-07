@@ -22,17 +22,31 @@
     "noEmitOnError": true,
     "typeRoots": [
       "./typings",
-      "./**/typings",
-      "./packages/app-builder-lib/typings",
+      "./test/typings",
+      "./test/node_modules/@types",
+      "./packages/electron-updater/node_modules/@types",
+      "./packages/electron-publish/node_modules/@types",
+      "./packages/electron-builder-squirrel-windows/node_modules/@types",
+      "./packages/electron-builder/node_modules/@types",
+      "./packages/dmg-builder/node_modules/@types",
+      "./packages/builder-util-runtime/node_modules/@types",
+      "./packages/builder-util/node_modules/@types",
       "./packages/app-builder-lib/src/typings",
-      "./packages/app-builder-lib/src/typings/index.d.ts",
-      "./typings/flatpak-bundler.d.ts",
-      "./node_modules/@types/",
-      "./**/node_modules/@types/",
-    ],
+      "./packages/app-builder-lib/node_modules/@types",
+      "./node_modules/@types"
+      ]
   },
   "files": ["rollup.config.ts"],
   "references": [
+    {
+      "path": "./packages/builder-util"
+    },
+    {
+      "path": "./packages/builder-util-runtime"
+    },
+    {
+      "path": "./packages/app-builder-lib"
+    },
     {
       "path": "./packages/electron-builder"
     },

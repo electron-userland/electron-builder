@@ -2,6 +2,7 @@ import typescript from "@rollup/plugin-typescript"
 import typescript2 from "rollup-plugin-typescript2"
 import { defineConfig } from "rollup"
 import * as glob from "glob"
+import typescriptCompiler from "typescript"
 // import { cleandir } from "rollup-plugin-cleandir"
 import path from "path"
 
@@ -85,26 +86,32 @@ const packageMap = [
 // })
 // }
 
-export default () => {
-  const files = packageMap
-    .map(pkg => {
-      const input = glob.sync(
-        `packages/${pkg.package}/${pkg.entry}`
-        //
-        // { ignore: ["**/*.d.ts"] }
-      )
-      return input
-    })
-    .flat()
+const additionalWatchFiles = glob.sync(["**/tsconfig.json", "**/package.json"], { ignore: ["node_modules", "docker-node-modules"] })
+const typeRoots = glob.sync(["**/node_modules/@types", "**/typings"])
+const files = packageMap
+  .map(pkg => {
+    const input = glob.sync(
+      `packages/${pkg.package}/${pkg.entry}`,
+      //
+      { ignore: ["**/*.d.ts"] }
+    )
+    return input
+  })
+  .flat()
 
-  const input = files.reduce((acc, curr) => {
-    const out = curr.replace(`${path.sep}src${path.sep}`, `${path.sep}out${path.sep}`).replace(".ts", "")
-    return {
-      ...acc,
-      [out]: curr,
-    }
-  }, {})
-  console.log(input)
+const input = files.reduce((acc, curr) => {
+  const out = curr.replace(`${path.sep}src${path.sep}`, `${path.sep}out${path.sep}`).replace(".ts", "")
+  return {
+    ...acc,
+    [out]: curr,
+  }
+}, {})
+
+const rootDirs = packageMap.map(pkg => {
+  return `packages/${pkg.package}/src`
+})
+
+export default () => {
   return defineConfig({
     input,
     treeshake: false,
@@ -124,35 +131,35 @@ export default () => {
     //     "**/package.json",
     //   ],
     // },
-    external: id => !/^[./]/.test(id), // [/node_modules/],
+    external: id => !/^[./]/.test(id),
+    // external(source, importer, isResolved) {
+    //   // console.log({ source, isResolved, importer })
+    //   return !/^[./]/.test(source) // || source.includes("/src/")
+    // },
     plugins: [
       {
         name: "watch-external",
         buildStart() {
-          this.addWatchFile("**/tsconfig.json")
-          this.addWatchFile("**/package.json")
+          additionalWatchFiles.forEach(file => {
+            this.addWatchFile(file)
+          })
         },
       },
       // cleandir(dir),
+      // typescript({
+      //   tsconfig: `./tsconfig.json`,
+      //   typeRoots,
+      //   rootDirs,
+      // }),
       typescript2({
-        // include: files,
-        // include: ["*.ts", "**/*.ts", "*.d.ts", "**/*.d.ts"],
         tsconfig: `tsconfig.json`,
-        // clean: true,
-        // check: true,
-        // types: ["@malept/flatpak-bundler"],
-        // tsconfigOverride: {
-        //   // baseUrl: "packages",
-        //   typeRoots: [
-        //     "./typings",
-        //     "./**/typings",
-        //     "./packages/app-builder-lib/src/typings",
-        //     "./packages/app-builder-lib/src/typings/index.d.ts",
-        //     "./typings/flatpak-bundler.d.ts",
-        //     "./node_modules/@types/",
-        //     "./**/node_modules/@types/",
-        //   ],
-        // },
+        clean: true,
+        check: true,
+        abortOnError: true,
+        tsconfigOverride: {
+          typeRoots,
+          rootDirs,
+        },
       }),
     ],
   })
