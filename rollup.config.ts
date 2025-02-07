@@ -2,7 +2,6 @@ import typescript from "rollup-plugin-typescript2"
 import { defineConfig } from "rollup"
 import * as glob from "glob"
 import { cleandir } from "rollup-plugin-cleandir"
-import path from "path"
 
 const packageMap = [
   {
@@ -74,7 +73,7 @@ export default () => {
       watch: {
         exclude: [dir(outDir)],
       },
-      external: id => !/^[./]/.test(id),
+      external: id => !/^[./\\]/.test(id),
       plugins: [
         {
           name: "watch-external",
