@@ -1,5 +1,5 @@
 import { asArray, copyOrLinkFile, getPlatformIconFileName, InvalidConfigurationError, log, unlinkIfExists } from "builder-util"
-import { rename, utimes } from "fs/promises"
+import { rename, rm, utimes } from "fs/promises"
 import * as path from "path"
 import { filterCFBundleIdentifier } from "../appInfo"
 import { AsarIntegrity } from "../asar/integrity"
@@ -8,7 +8,7 @@ import { normalizeExt } from "../platformPackager"
 import { executeAppBuilderAndWriteJson, executeAppBuilderAsJson } from "../util/appBuilder"
 import { createBrandingOpts } from "./ElectronFramework"
 
-function doRename(basePath: string, oldName: string, newName: string) {
+async function doRename(basePath: string, oldName: string, newName: string) {
   return rename(path.join(basePath, oldName), path.join(basePath, newName))
 }
 
@@ -56,7 +56,7 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
   const appFilename = appInfo.sanitizedProductName
   const electronBranding = createBrandingOpts(packager.config)
 
-  const contentsPath = path.join(appOutDir, packager.info.framework.distMacOsAppName, "Contents")
+  const contentsPath = path.join(appOutDir, `${packager.info.framework.productName}.app`, "Contents")
   const frameworksPath = path.join(contentsPath, "Frameworks")
   const loginItemPath = path.join(contentsPath, "Library", "LoginItems")
 
@@ -274,6 +274,7 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
   }
 
   const appPath = path.join(appOutDir, `${appInfo.productFilename}.app`)
+  await rm(appPath, { force: true, recursive: true })
   await rename(path.dirname(contentsPath), appPath)
   // https://github.com/electron-userland/electron-builder/issues/840
   const now = Date.now() / 1000

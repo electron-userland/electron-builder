@@ -271,7 +271,6 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       appOutDir,
       platformName,
       arch: Arch[arch],
-      version: framework.version,
     })
 
     const afterExtract = await resolveFunction(this.appInfo.type, this.config.afterExtract, "afterExtract")
@@ -315,7 +314,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     const asarOptions = await this.computeAsarOptions(platformSpecificBuildOptions)
     const resourcesPath =
       this.platform === Platform.MAC
-        ? path.join(appOutDir, framework.distMacOsAppName, "Contents", "Resources")
+        ? path.join(appOutDir, `${framework.productName}.app`, "Contents", "Resources")
         : isElectronBased(framework)
           ? path.join(appOutDir, "resources")
           : appOutDir
