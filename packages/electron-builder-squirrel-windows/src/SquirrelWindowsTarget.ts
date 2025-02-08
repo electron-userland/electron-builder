@@ -143,10 +143,16 @@ export default class SquirrelWindowsTarget extends Target {
       options.nuspecTemplate = nuspecTemplate
     }
 
-    options.windowsSign = {
-      hookFunction: async (file: string) => {
-        await packager.sign(file)
-      },
+    const certificateFile = packager.getCscLink()
+    if (certificateFile) {
+      options.certificateFile = certificateFile
+      options.certificatePassword = packager.getCscPassword()
+    } else {
+      options.windowsSign = {
+        hookFunction: async (file: string) => {
+          await packager.sign(file)
+        },
+      }
     }
 
     if (isEmptyOrSpaces(options.description)) {
