@@ -120,15 +120,17 @@ export default class SquirrelWindowsTarget extends Target {
       appDirectory: this.appDirectory,
       outputDirectory: this.outputDirectory,
       name: this.options.useAppIdAsId ? appInfo.id : this.appName,
+      title: appInfo.productName || appInfo.name,
       version: appInfo.version,
       description: appInfo.description,
-      exe: `${this.packager.platformSpecificBuildOptions.executableName || this.options.name || appInfo.productName}.exe`,
+      exe: `${appInfo.productFilename || this.options.name || appInfo.productName}.exe`,
       authors: appInfo.companyName || "",
       iconUrl,
       copyright: appInfo.copyright,
       vendorDirectory,
       nuspecTemplate: path.join(__dirname, "..", "template.nuspectemplate"),
       noMsi: !this.options.msi,
+      usePackageJson: false,
     }
 
     const projectUrl = await appInfo.computePackageUrl()
@@ -141,16 +143,10 @@ export default class SquirrelWindowsTarget extends Target {
       options.nuspecTemplate = nuspecTemplate
     }
 
-    const certificateFile = packager.getCscLink()
-    if (certificateFile) {
-      options.certificateFile = certificateFile
-      options.certificatePassword = packager.getCscPassword()
-    } else {
-      options.windowsSign = {
-        hookFunction: async (file: string) => {
-          await packager.sign(file)
-        },
-      }
+    options.windowsSign = {
+      hookFunction: async (file: string) => {
+        await packager.sign(file)
+      },
     }
 
     if (isEmptyOrSpaces(options.description)) {
