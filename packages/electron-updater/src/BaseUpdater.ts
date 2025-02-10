@@ -126,7 +126,17 @@ export abstract class BaseUpdater extends AppUpdater {
       encoding: "utf-8",
       shell: true,
     })
-    return response.stdout.trim()
+
+    const { error, status, stdout, stderr } = response
+    if (error != null) {
+      this._logger.error(stderr)
+      throw error
+    } else if (status != null && status !== 0) {
+      this._logger.error(stderr)
+      throw new Error(`Command ${cmd} exited with code ${status}`)
+    }
+
+    return stdout.trim()
   }
 
   /**
