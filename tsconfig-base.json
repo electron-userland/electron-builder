@@ -22,9 +22,7 @@
     "noEmitOnError": true,
     "typeRoots": [
       "./typings",
-      "./**/typings",
-      "./packages/app-builder-lib/src/typings",
-      "./packages/app-builder-lib/src/typings/index.d.ts",
-    ]
+      "./node_modules/@types/"
+    ],
   }
 }

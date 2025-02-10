@@ -87,7 +87,7 @@ const packageMap = [
 // }
 
 const additionalWatchFiles = glob.sync(["**/tsconfig.json", "**/package.json"], { ignore: ["node_modules", "docker-node-modules"] })
-const typeRoots = glob.sync(["**/node_modules/@types", "**/typings"])
+const typeRoots = glob.sync(["./node_modules/@types", "packages/*/node_modules/@types", "**/typings"])
 const files = packageMap
   .map(pkg => {
     const input = glob.sync(
@@ -112,11 +112,13 @@ const rootDirs = packageMap.map(pkg => {
 })
 
 export default () => {
+  console.log(typeRoots)
   return defineConfig({
     input,
     treeshake: false,
     output: {
       // dir: dir,
+      dir: 'out',
       format: "cjs",
       sourcemap: true,
       preserveModules: true, // Keep files separates instead of one bundled file
@@ -147,9 +149,24 @@ export default () => {
       },
       // cleandir(dir),
       // typescript({
-      //   tsconfig: `./tsconfig.json`,
-      //   typeRoots,
-      //   rootDirs,
+      //   // tsconfig: `./tsconfig.json`,
+      //   compilerOptions: {
+      //     typeRoots,
+      //     rootDirs,
+      //     target: "esnext",
+      //     module: "esnext",
+      //     esModuleInterop: true,
+      //     // esModuleInterop: false,
+      //     forceConsistentCasingInFileNames: true,
+      //     moduleResolution: "node",
+      //     skipLibCheck: true,
+      //     strict: true,
+
+      //     allowSyntheticDefaultImports: true,
+      //     experimentalDecorators: true,
+      //     noEmitOnError: true,
+      //     declaration: false
+      //   },
       // }),
       typescript2({
         tsconfig: `tsconfig.json`,
@@ -157,8 +174,31 @@ export default () => {
         check: true,
         abortOnError: true,
         tsconfigOverride: {
-          typeRoots,
-          rootDirs,
+          compilerOptions: {
+            // types: ["node", "@malept/flatpak-bundler"],
+            typeRoots,
+            rootDirs,
+            target: "ES2024",
+            module: "ES2022",
+            esModuleInterop: false,
+            // forceConsistentCasingInFileNames: true,
+            moduleResolution: "node",
+            skipLibCheck: true,
+            strict: true,
+            noUnusedLocals: false,
+            noFallthroughCasesInSwitch: true,
+            noImplicitReturns: true,
+
+            inlineSources: true,
+            sourceMap: true,
+
+            allowSyntheticDefaultImports: true,
+            experimentalDecorators: true,
+
+            newLine: "lf",
+
+            noEmitOnError: true,
+          },
         },
       }),
     ],
