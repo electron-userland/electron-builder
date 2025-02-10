@@ -11,8 +11,27 @@ export interface DependencyTree {
   readonly from?: string
   readonly workspaces?: string[]
   readonly path: string
-  dependencies: {
+  dependencies?: {
     [packageName: string]: DependencyTree
+  }
+  // for npm list --json
+  _dependencies?: {
+    [packageName: string]: string
+  }
+  optionalDependencies?: {
+    [packageName: string]: DependencyTree
+  }
+  peerDependencies?: {
+    [packageName: string]: DependencyTree
+  }
+}
+
+export interface Dependency {
+  dependencies?: {
+    [packageName: string]: string
+  }
+  optionalDependencies?: {
+    [packageName: string]: string
   }
 }
 

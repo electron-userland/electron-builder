@@ -73,16 +73,20 @@ async function doBuild(outDirs: Array<string>, targets: Map<Platform, Map<Arch, 
   }
 }
 
-test.ifWindows("web installer", async () => {
-  const outDirs: Array<string> = []
-  const tmpDir = new TmpDir("differential-updater-test")
-  await doBuild(outDirs, Platform.WINDOWS.createTarget(["nsis-web"], Arch.x64), tmpDir, true)
+test.ifWindows(
+  "web installer",
+  async () => {
+    const outDirs: Array<string> = []
+    const tmpDir = new TmpDir("differential-updater-test")
+    await doBuild(outDirs, Platform.WINDOWS.createTarget(["nsis-web"], Arch.x64), tmpDir, true)
 
-  const oldDir = outDirs[0]
-  await move(path.join(oldDir, "nsis-web", `TestApp-${OLD_VERSION_NUMBER}-x64.nsis.7z`), path.join(getTestUpdaterCacheDir(oldDir), testAppCacheDirName, "package.7z"))
+    const oldDir = outDirs[0]
+    await move(path.join(oldDir, "nsis-web", `TestApp-${OLD_VERSION_NUMBER}-x64.nsis.7z`), path.join(getTestUpdaterCacheDir(oldDir), testAppCacheDirName, "package.7z"))
 
-  await testBlockMap(outDirs[0], path.join(outDirs[1], "nsis-web"), NsisUpdater, Platform.WINDOWS, Arch.x64)
-})
+    await testBlockMap(outDirs[0], path.join(outDirs[1], "nsis-web"), NsisUpdater, Platform.WINDOWS, Arch.x64)
+  },
+  { retry: 2 }
+)
 
 test.ifWindows("nsis", async () => {
   const outDirs: Array<string> = []

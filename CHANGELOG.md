@@ -1,3 +1,31 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v26.0.5...v) (2025-02-06)
+
+
+### Bug Fixes
+
+* missing `ms` package when pruning non-prod dependencies ([#8851](https://github.com/electron-userland/electron-builder/issues/8851)) ([0f2c963](https://github.com/electron-userland/electron-builder/commit/0f2c96379143e3dde960ed45bb3e1b74449540f1))
+* Only update AppArmor profile if not chroot'ed ([#8843](https://github.com/electron-userland/electron-builder/issues/8843)) ([7fc7846](https://github.com/electron-userland/electron-builder/commit/7fc784603d580fc6dc183e02118734ea4ffeb257))
+
+
+
+# [](https://github.com/electron-userland/electron-builder/compare/v26.0.4...v) (2025-02-05)
+
+
+### Bug Fixes
+
+* ignore `peerDependencies` when collecting node modules tree ([#8845](https://github.com/electron-userland/electron-builder/issues/8845)) ([53ee6c6](https://github.com/electron-userland/electron-builder/commit/53ee6c6c498a4cc4e64d580c4ec6564137060eae))
+
+
+
+# [](https://github.com/electron-userland/electron-builder/compare/v26.0.3...v) (2025-02-04)
+
+
+### Features
+
+* switch app-builder-bin to node-module-collector to get all production node modules ([#8571](https://github.com/electron-userland/electron-builder/issues/8571)) ([04be569](https://github.com/electron-userland/electron-builder/commit/04be5699c664e6a93e093b820a16ad516355b5c7))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v26.0.2...v) (2025-02-03)
 
 

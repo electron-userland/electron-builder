@@ -1,5 +1,39 @@
 # app-builder-lib
 
+## 26.0.6
+
+### Patch Changes
+
+- [#8843](https://github.com/electron-userland/electron-builder/pull/8843) [`7fc78460`](https://github.com/electron-userland/electron-builder/commit/7fc784603d580fc6dc183e02118734ea4ffeb257) Thanks [@fiesh](https://github.com/fiesh)! - fix: Only update AppArmor profile if not chroot'ed
+
+- [#8851](https://github.com/electron-userland/electron-builder/pull/8851) [`0f2c9637`](https://github.com/electron-userland/electron-builder/commit/0f2c96379143e3dde960ed45bb3e1b74449540f1) Thanks [@beyondkmp](https://github.com/beyondkmp)! - Fix the issue of the missing ms package
+
+- Updated dependencies []:
+  - dmg-builder@26.0.6
+  - electron-builder-squirrel-windows@26.0.6
+
+## 26.0.5
+
+### Patch Changes
+
+- [#8845](https://github.com/electron-userland/electron-builder/pull/8845) [`53ee6c6c`](https://github.com/electron-userland/electron-builder/commit/53ee6c6c498a4cc4e64d580c4ec6564137060eae) Thanks [@beyondkmp](https://github.com/beyondkmp)! - delete peerDepenencies when collecting node modules
+
+- Updated dependencies []:
+  - dmg-builder@26.0.5
+  - electron-builder-squirrel-windows@26.0.5
+
+## 26.0.4
+
+### Patch Changes
+
+- [#8839](https://github.com/electron-userland/electron-builder/pull/8839) [`8b059ad3`](https://github.com/electron-userland/electron-builder/commit/8b059ad3baad440acb0994b2c52f22ea0f1d987f) Thanks [@mmaietta](https://github.com/mmaietta)! - feat: switch app-builder-bin to node-module-collector to get all production node modules
+
+- Updated dependencies [[`8b059ad3`](https://github.com/electron-userland/electron-builder/commit/8b059ad3baad440acb0994b2c52f22ea0f1d987f)]:
+  - builder-util@26.0.4
+  - dmg-builder@26.0.4
+  - electron-builder-squirrel-windows@26.0.4
+  - electron-publish@26.0.4
+
 ## 26.0.3
 
 ### Patch Changes

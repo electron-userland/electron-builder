@@ -16,21 +16,36 @@ If you use Windows 7, please ensure that [PowerShell](https://blogs.technet.micr
 
 If you are on Linux or Mac and you want sign a Windows app using EV Code Signing Certificate, please use [the guide for Unix systems](tutorials/code-signing-windows-apps-on-unix.md).
 
-## Using with Azure Trusted Signing (beta)
+## Using Azure Trusted Signing (beta)
 
-To sign using Azure Tenant account, you'll need the following env variables set that are read directly by `Invoke-TrustedSigning` module; they are not parsed or resolved by electron-builder.
+Microsoft itself offers a code signing service called Azure Trusted Signing which you can use to code-sign your applications.
+
+If you do not already have an Azure setup and only want to use their code signing service, set up an Azure "Trusted Signing Account" using [this quickstart guide](https://learn.microsoft.com/en-us/azure/trusted-signing/quickstart). Then, [set up an "App registration"](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app) in Azure, follow the steps to create a "Secret" for it, and [assign the role "Trusted Signing Certificate Profile Signer" to the App registration](https://learn.microsoft.com/en-us/azure/trusted-signing/tutorial-assign-roles).
+
+To sign using your certificate, you'll need to adapt electron-builder's configuration and set the environment variables used for authentication. The environment variables are read directly by the `Invoke-TrustedSigning` module; they are not parsed or resolved by electron-builder.
+
+First, to direct electron-builder to utilize Azure Trusted Signing, you'll need to set the property `win.azureSignOptions` in your electron-builder configuration. Configure it per [Microsoft's instructions](https://learn.microsoft.com/en-us/azure/trusted-signing/how-to-signing-integrations#create-a-json-file).
+
+| Property                 | Description                                                                                                         |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------- |
+| `publisherName`          | This must match exactly the CommonName (CN) property of the certificate you wish to use.                            |
+| `endpoint`               | This corresponds to the endpoint you selected when creating your certificate.                                       |
+| `certificateProfileName` | The name of the certificate profile within your Trusted Signing Account.                                            |
+| `codeSigningAccountName` | This is the name of the Trusted Signing Account (note that it is **not** the account name for the app registration. |
+
+Additional fields can be provided under `win.azureSignOptions` that are passed directly to the `Invoke-TrustedSigning` powershell module.
+
+Second, provide the appropriate environment variables to the build action. Descriptions of each variable can be found in [Azure.Identity class - EnvironmentCredential Class](https://learn.microsoft.com/en-us/dotnet/api/azure.identity.environmentcredential?view=azure-dotnet#definition). You only need to provide the environment variables that are listed in the table corresponding to which authentication method you choose to use.
 
 !!! tip
-  Descriptions of each field can be found here: [Azure.Identity class - EnvironmentCredential Class](https://learn.microsoft.com/en-us/dotnet/api/azure.identity.environmentcredential?view=azure-dotnet#definition)
+  If you use the minimal setup using an "App registration" that is described above, the section "Service principal with secret" applies to you. In this case, you only need the Tenant ID, Client ID, and Client Secret.
 
-| Env Name       |  Description
-| -------------- | -----------
-| `AZURE_TENANT_ID`           | See the Tip mentioned above.
-| `AZURE_CLIENT_ID`           |
-| `AZURE_CLIENT_SECRET`       |
-| `AZURE_CLIENT_CERTIFICATE_PATH`           |
-| `AZURE_CLIENT_SEND_CERTIFICATE_CHAIN`           |
-| `AZURE_USERNAME`            |
-| `AZURE_PASSWORD`            |
-
-`win.azureSignOptions` needs to be configured per [Microsoft's instructions](https://learn.microsoft.com/en-us/azure/trusted-signing/how-to-signing-integrations#create-a-json-file) directly in electron-builder's configuration. Additional fields can be provided that are passed directly to `Invoke-TrustedSigning` powershell command.
+| Env Name                              |  Description                                                                                            |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `AZURE_TENANT_ID`                     | Your Azure AD Tenant ID; can be found in the Entra ID portal.                                           |
+| `AZURE_CLIENT_ID`                     | The Application (Client) ID of your "App registration." Note that this is not the "object" ID.          |
+| `AZURE_CLIENT_SECRET`                 | The value of the "Secret" you created for your App registration. Note that this is not the secret's ID. |
+| `AZURE_CLIENT_CERTIFICATE_PATH`       | Required if you bring your own certificate.                                                             |
+| `AZURE_CLIENT_SEND_CERTIFICATE_CHAIN` | Required if you bring your own certificate.                                                             |
+| `AZURE_USERNAME`                      | The username for your Microsoft Entra account.                                                          |
+| `AZURE_PASSWORD`                      | The password for your Microsoft Entra account.                                                          |
