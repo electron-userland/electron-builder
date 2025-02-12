@@ -67,7 +67,7 @@ export abstract class NodeModulesCollector {
         }
         result[parentKey].dependencies!.push(newKey)
 
-        if (node.disableLoop) {
+        if (node.skipCircularDeps) {
           continue
         }
         flatten(value, newKey)

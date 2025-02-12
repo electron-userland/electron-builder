@@ -19,7 +19,7 @@ export class YarnNodeModulesCollector extends NodeModulesCollector {
     const _dependencies = tree._dependencies || {}
     if (Object.keys(_dependencies).length > 0 && Object.keys(dependencies).length === 0) {
       tree.dependencies = { ...this.allDependencies.get(`${tree.name}@${tree.version}`)?.dependencies }
-      tree.disableLoop = true
+      tree.skipCircularDeps = true
       return
     }
 
