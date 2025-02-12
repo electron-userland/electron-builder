@@ -198,6 +198,49 @@ test.ifAll("yarn some module add by manual instead of install", () =>
   )
 )
 
+//https://github.com/electron-userland/electron-builder/issues/8857
+test.ifAll("yarn max stack", () =>
+  assertPack(
+    "test-app-hoisted",
+    {
+      targets: Platform.WINDOWS.createTarget(DIR_TARGET, Arch.x64),
+    },
+    {
+      isInstallDepsBefore: true,
+      projectDirCreated: async (projectDir, tmpDir) => {
+        await outputFile(path.join(projectDir, "yarn.lock"), "")
+        await modifyPackageJson(projectDir, data => {
+          data.dependencies = {
+            "npm-run-all": "^4.1.5",
+          }
+        })
+      },
+      packed: context => verifyAsarFileTree(context.getResources(Platform.WINDOWS)),
+    }
+  )
+)
+
+test.ifAll("pnpm max stack", () =>
+  assertPack(
+    "test-app-hoisted",
+    {
+      targets: Platform.WINDOWS.createTarget(DIR_TARGET, Arch.x64),
+    },
+    {
+      isInstallDepsBefore: true,
+      projectDirCreated: async (projectDir, tmpDir) => {
+        await outputFile(path.join(projectDir, "pnpm-lock.yaml"), "")
+        await modifyPackageJson(projectDir, data => {
+          data.dependencies = {
+            "npm-run-all": "^4.1.5",
+          }
+        })
+      },
+      packed: context => verifyAsarFileTree(context.getResources(Platform.WINDOWS)),
+    }
+  )
+)
+
 //github.com/electron-userland/electron-builder/issues/8842
 test.ifAll("yarn ms", () =>
   assertPack(
