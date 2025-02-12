@@ -18,7 +18,7 @@ export class NpmNodeModulesCollector extends NodeModulesCollector {
     const dependencies = tree.dependencies || {}
     const _dependencies = tree._dependencies || {}
     if (Object.keys(_dependencies).length > 0 && Object.keys(dependencies).length === 0) {
-      tree.dependencies = { ...this.allDependencies.get(`${tree.name}@${tree.version}`)?.dependencies }
+      tree.dependencies = this.allDependencies.get(`${tree.name}@${tree.version}`)?.dependencies || {}
       tree.skipCircularDeps = true
       return
     }
