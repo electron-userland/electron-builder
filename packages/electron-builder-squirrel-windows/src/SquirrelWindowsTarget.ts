@@ -110,25 +110,27 @@ export default class SquirrelWindowsTarget extends Target {
     const appInfo = packager.appInfo
     // If not specified will use the Squirrel.Windows that is shipped with electron-installer(https://github.com/electron/windows-installer/tree/main/vendor)
     // After https://github.com/electron-userland/electron-builder-binaries/pull/56 merged, will add `electron-builder-binaries` to get the latest version of squirrel.
-    let vendorDirectory = this.options.customSquirrelVendorDir
+    let vendorDirectory = this.options.customSquirrelVendorDir || path.join(require.resolve("electron-winstaller/package.json"), "..", "vendor")
     if (isEmptyOrSpaces(vendorDirectory) || !fs.existsSync(vendorDirectory)) {
       log.warn({ vendorDirectory }, "unable to access Squirrel.Windows vendor directory, falling back to default electron-winstaller")
-      vendorDirectory = undefined
+      vendorDirectory = path.join(require.resolve("electron-winstaller/package.json"), "..", "vendor")
     }
 
     const options: SquirrelOptions = {
       appDirectory: this.appDirectory,
       outputDirectory: this.outputDirectory,
       name: this.options.useAppIdAsId ? appInfo.id : this.appName,
+      title: appInfo.productName || appInfo.name,
       version: appInfo.version,
       description: appInfo.description,
-      exe: `${this.packager.platformSpecificBuildOptions.executableName || this.options.name || appInfo.productName}.exe`,
+      exe: `${appInfo.productFilename || this.options.name || appInfo.productName}.exe`,
       authors: appInfo.companyName || "",
       iconUrl,
       copyright: appInfo.copyright,
       vendorDirectory,
       nuspecTemplate: path.join(__dirname, "..", "template.nuspectemplate"),
       noMsi: !this.options.msi,
+      usePackageJson: false,
     }
 
     const projectUrl = await appInfo.computePackageUrl()
@@ -141,13 +143,21 @@ export default class SquirrelWindowsTarget extends Target {
       options.nuspecTemplate = nuspecTemplate
     }
 
-    if (await (await packager.signingManager.value).cscInfo.value) {
-      options.windowsSign = {
-        hookFunction: async (file: string) => {
-          await packager.sign(file)
-        },
+    const tmpVendorDirectory = await packager.info.tempDirManager.createTempDir({ prefix: "squirrel-windows-vendor" })
+    // Copy entire vendor directory to temp directory
+    await fs.promises.cp(vendorDirectory, tmpVendorDirectory, { recursive: true })
+    log.debug({ from: vendorDirectory, to: tmpVendorDirectory }, "copied vendor directory")
+
+    // Find and sign all executables in the temp vendor directory
+    const files = await fs.promises.readdir(tmpVendorDirectory)
+    for (const file of files) {
+      if (file.endsWith(".exe") || file.endsWith(".dll")) {
+        const filePath = path.join(tmpVendorDirectory, file)
+        log.debug({ file: filePath }, "signing vendor executable")
+        await packager.sign(filePath)
       }
     }
+    options.vendorDirectory = tmpVendorDirectory
 
     if (isEmptyOrSpaces(options.description)) {
       options.description = this.options.name || appInfo.productName

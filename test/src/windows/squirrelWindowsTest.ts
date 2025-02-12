@@ -3,7 +3,7 @@ import * as path from "path"
 import { CheckingWinPackager } from "../helpers/CheckingPackager"
 import { app, assertPack, copyTestAsset } from "../helpers/packTester"
 
-test.ifAll.ifNotCiMac(
+test.ifAll.ifDevOrWinCi(
   "Squirrel.Windows",
   app(
     {
@@ -12,7 +12,7 @@ test.ifAll.ifNotCiMac(
         win: {
           compression: "normal",
         },
-        executableName: " test with spaces",
+        executableName: "test with spaces",
         electronFuses: {
           runAsNode: true,
           enableCookieEncryption: true,
@@ -29,7 +29,7 @@ test.ifAll.ifNotCiMac(
   )
 )
 
-test.ifAll.ifNotCiMac(
+test.ifAll.ifDevOrWinCi(
   "artifactName",
   app({
     targets: Platform.WINDOWS.createTarget(["squirrel", "zip"]),
