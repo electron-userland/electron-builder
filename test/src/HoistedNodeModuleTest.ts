@@ -203,19 +203,23 @@ test.ifAll("yarn max stack", () =>
   assertPack(
     "test-app-hoisted",
     {
-      targets: Platform.WINDOWS.createTarget(DIR_TARGET, Arch.x64),
+      targets: linuxDirTarget,
     },
     {
       isInstallDepsBefore: true,
-      projectDirCreated: async (projectDir, tmpDir) => {
-        await outputFile(path.join(projectDir, "yarn.lock"), "")
-        await modifyPackageJson(projectDir, data => {
-          data.dependencies = {
-            "npm-run-all": "^4.1.5",
-          }
-        })
+      projectDirCreated: projectDir => {
+        return Promise.all([
+          modifyPackageJson(projectDir, data => {
+            data.dependencies = {
+              "npm-run-all": "^4.1.5",
+            }
+          }),
+          outputFile(path.join(projectDir, "yarn.lock"), ""),
+        ])
       },
-      packed: context => verifyAsarFileTree(context.getResources(Platform.WINDOWS)),
+      packed: async context => {
+        expect(await readAsarJson(path.join(context.getResources(Platform.LINUX), "app.asar"), "node_modules/npm-run-all/package.json")).toMatchSnapshot()
+      },
     }
   )
 )
@@ -224,19 +228,23 @@ test.ifAll("pnpm max stack", () =>
   assertPack(
     "test-app-hoisted",
     {
-      targets: Platform.WINDOWS.createTarget(DIR_TARGET, Arch.x64),
+      targets: linuxDirTarget,
     },
     {
       isInstallDepsBefore: true,
-      projectDirCreated: async (projectDir, tmpDir) => {
-        await outputFile(path.join(projectDir, "pnpm-lock.yaml"), "")
-        await modifyPackageJson(projectDir, data => {
-          data.dependencies = {
-            "npm-run-all": "^4.1.5",
-          }
-        })
+      projectDirCreated: projectDir => {
+        return Promise.all([
+          modifyPackageJson(projectDir, data => {
+            data.dependencies = {
+              "npm-run-all": "^4.1.5",
+            }
+          }),
+          outputFile(path.join(projectDir, "pnpm-lock.yaml"), ""),
+        ])
       },
-      packed: context => verifyAsarFileTree(context.getResources(Platform.WINDOWS)),
+      packed: async context => {
+        expect(await readAsarJson(path.join(context.getResources(Platform.LINUX), "app.asar"), "node_modules/npm-run-all/package.json")).toMatchSnapshot()
+      },
     }
   )
 )
