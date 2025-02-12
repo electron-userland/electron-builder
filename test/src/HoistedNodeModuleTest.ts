@@ -198,6 +198,57 @@ test.ifAll("yarn some module add by manual instead of install", () =>
   )
 )
 
+//https://github.com/electron-userland/electron-builder/issues/8857
+test.ifAll("yarn max stack", () =>
+  assertPack(
+    "test-app-hoisted",
+    {
+      targets: linuxDirTarget,
+    },
+    {
+      isInstallDepsBefore: true,
+      projectDirCreated: projectDir => {
+        return Promise.all([
+          modifyPackageJson(projectDir, data => {
+            data.dependencies = {
+              "npm-run-all": "^4.1.5",
+            }
+          }),
+          outputFile(path.join(projectDir, "yarn.lock"), ""),
+        ])
+      },
+      packed: async context => {
+        expect(await readAsarJson(path.join(context.getResources(Platform.LINUX), "app.asar"), "node_modules/npm-run-all/package.json")).toMatchSnapshot()
+      },
+    }
+  )
+)
+
+test.ifAll("pnpm max stack", () =>
+  assertPack(
+    "test-app-hoisted",
+    {
+      targets: linuxDirTarget,
+    },
+    {
+      isInstallDepsBefore: true,
+      projectDirCreated: projectDir => {
+        return Promise.all([
+          modifyPackageJson(projectDir, data => {
+            data.dependencies = {
+              "npm-run-all": "^4.1.5",
+            }
+          }),
+          outputFile(path.join(projectDir, "pnpm-lock.yaml"), ""),
+        ])
+      },
+      packed: async context => {
+        expect(await readAsarJson(path.join(context.getResources(Platform.LINUX), "app.asar"), "node_modules/npm-run-all/package.json")).toMatchSnapshot()
+      },
+    }
+  )
+)
+
 //github.com/electron-userland/electron-builder/issues/8842
 test.ifAll("yarn ms", () =>
   assertPack(

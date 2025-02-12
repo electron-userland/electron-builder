@@ -11,6 +11,7 @@ export interface DependencyTree {
   readonly from?: string
   readonly workspaces?: string[]
   readonly path: string
+  skipCircularDeps?: boolean
   dependencies?: {
     [packageName: string]: DependencyTree
   }

@@ -66,6 +66,10 @@ export abstract class NodeModulesCollector {
           result[parentKey] = { dependencies: [] }
         }
         result[parentKey].dependencies!.push(newKey)
+
+        if (node.skipCircularDeps) {
+          continue
+        }
         flatten(value, newKey)
       }
     }

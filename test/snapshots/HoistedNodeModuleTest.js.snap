@@ -247,6 +247,65 @@ exports[`pnpm es5-ext without hoisted config 2`] = `
 }
 `;
 
+exports[`pnpm max stack 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`pnpm max stack 2`] = `
+{
+  "author": "Toru Nagashima",
+  "bin": {
+    "npm-run-all": "bin/npm-run-all/index.js",
+    "run-p": "bin/run-p/index.js",
+    "run-s": "bin/run-s/index.js",
+  },
+  "dependencies": {
+    "ansi-styles": "^3.2.1",
+    "chalk": "^2.4.1",
+    "cross-spawn": "^6.0.5",
+    "memorystream": "^0.3.1",
+    "minimatch": "^3.0.4",
+    "pidtree": "^0.3.0",
+    "read-pkg": "^3.0.0",
+    "shell-quote": "^1.6.1",
+    "string.prototype.padend": "^3.0.0",
+  },
+  "description": "A CLI tool to run multiple npm-scripts in parallel or sequential.",
+  "devDependencies": {
+    "@types/node": "^4.9.1",
+    "babel-plugin-transform-async-to-generator": "^6.24.1",
+    "babel-preset-power-assert": "^2.0.0",
+    "babel-register": "^6.26.0",
+    "codecov": "^3.1.0",
+    "eslint": "^4.19.1",
+    "eslint-config-mysticatea": "^12.0.0",
+    "fs-extra": "^7.0.1",
+    "mocha": "^5.2.0",
+    "nyc": "^11.9.0",
+    "p-queue": "^2.4.2",
+    "power-assert": "^1.6.1",
+    "rimraf": "^2.6.2",
+    "yarn": "^1.12.3",
+  },
+  "engines": {
+    "node": ">= 4",
+  },
+  "files": [
+    "bin",
+    "lib",
+    "docs",
+  ],
+  "homepage": "https://github.com/mysticatea/npm-run-all",
+  "license": "MIT",
+  "main": "lib/index.js",
+  "name": "npm-run-all",
+  "repository": "mysticatea/npm-run-all",
+  "version": "4.1.5",
+}
+`;
+
 exports[`pnpm optional dependencies 1`] = `
 {
   "linux": [],
@@ -454,6 +513,65 @@ exports[`yarn electron-clear-data 2`] = `
       "size": 393,
     },
   },
+}
+`;
+
+exports[`yarn max stack 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`yarn max stack 2`] = `
+{
+  "author": "Toru Nagashima",
+  "bin": {
+    "npm-run-all": "bin/npm-run-all/index.js",
+    "run-p": "bin/run-p/index.js",
+    "run-s": "bin/run-s/index.js",
+  },
+  "dependencies": {
+    "ansi-styles": "^3.2.1",
+    "chalk": "^2.4.1",
+    "cross-spawn": "^6.0.5",
+    "memorystream": "^0.3.1",
+    "minimatch": "^3.0.4",
+    "pidtree": "^0.3.0",
+    "read-pkg": "^3.0.0",
+    "shell-quote": "^1.6.1",
+    "string.prototype.padend": "^3.0.0",
+  },
+  "description": "A CLI tool to run multiple npm-scripts in parallel or sequential.",
+  "devDependencies": {
+    "@types/node": "^4.9.1",
+    "babel-plugin-transform-async-to-generator": "^6.24.1",
+    "babel-preset-power-assert": "^2.0.0",
+    "babel-register": "^6.26.0",
+    "codecov": "^3.1.0",
+    "eslint": "^4.19.1",
+    "eslint-config-mysticatea": "^12.0.0",
+    "fs-extra": "^7.0.1",
+    "mocha": "^5.2.0",
+    "nyc": "^11.9.0",
+    "p-queue": "^2.4.2",
+    "power-assert": "^1.6.1",
+    "rimraf": "^2.6.2",
+    "yarn": "^1.12.3",
+  },
+  "engines": {
+    "node": ">= 4",
+  },
+  "files": [
+    "bin",
+    "lib",
+    "docs",
+  ],
+  "homepage": "https://github.com/mysticatea/npm-run-all",
+  "license": "MIT",
+  "main": "lib/index.js",
+  "name": "npm-run-all",
+  "repository": "mysticatea/npm-run-all",
+  "version": "4.1.5",
 }
 `;
 
