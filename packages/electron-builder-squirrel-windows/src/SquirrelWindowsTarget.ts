@@ -148,11 +148,22 @@ export default class SquirrelWindowsTarget extends Target {
       options.certificateFile = certificateFile
       options.certificatePassword = packager.getCscPassword()
     } else {
-      options.windowsSign = {
-        hookFunction: async (file: string) => {
-          await packager.sign(file)
-        },
+      const vendorDirectory = this.options.customSquirrelVendorDir || path.join(require.resolve("electron-winstaller/package.json"), "..", "vendor")
+      const tmpVendorDirectory = await packager.info.tempDirManager.createTempDir({ prefix: "squirrel-windows-vendor" })
+      // Copy entire vendor directory to temp directory
+      await fs.promises.cp(vendorDirectory, tmpVendorDirectory, { recursive: true })
+      log.debug({ from: vendorDirectory, to: tmpVendorDirectory }, "copied vendor directory")
+
+      // Find and sign all executables in the temp vendor directory
+      const files = await fs.promises.readdir(tmpVendorDirectory)
+      for (const file of files) {
+        if (file.endsWith(".exe") || file.endsWith(".dll")) {
+          const filePath = path.join(tmpVendorDirectory, file)
+          log.debug({ file: filePath }, "signing vendor executable")
+          await packager.sign(filePath)
+        }
       }
+      options.vendorDirectory = tmpVendorDirectory
     }
 
     if (isEmptyOrSpaces(options.description)) {
