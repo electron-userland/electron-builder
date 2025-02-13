@@ -3,7 +3,7 @@ import * as path from "path"
 import { CheckingWinPackager } from "../helpers/CheckingPackager"
 import { app, assertPack, copyTestAsset } from "../helpers/packTester"
 
-test.ifAll.ifDevOrWinCi(
+test.ifAll.ifNotCiMac(
   "Squirrel.Windows",
   app(
     {
@@ -29,7 +29,7 @@ test.ifAll.ifDevOrWinCi(
   )
 )
 
-test.ifAll.ifDevOrWinCi(
+test.ifAll.ifNotCiMac(
   "artifactName",
   app({
     targets: Platform.WINDOWS.createTarget(["squirrel", "zip"]),
