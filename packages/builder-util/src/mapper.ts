@@ -15,10 +15,10 @@ export function mapToObject(map: RecursiveMap) {
   return obj
 }
 
-export function isValidKey(value: any) {
-  if (["string", "number", "symbol", "boolean"].includes(typeof value)) {
-    const protectedProperties = ["__proto__", "prototype", "constructor"]
-    return !protectedProperties.includes(value)
+export function isValidKey(key: any) {
+  const protectedProperties = ["__proto__", "prototype", "constructor"]
+  if (protectedProperties.includes(key)) {
+    return false
   }
-  return value === null
+  return ["string", "number", "symbol", "boolean"].includes(typeof key) || key === null
 }
