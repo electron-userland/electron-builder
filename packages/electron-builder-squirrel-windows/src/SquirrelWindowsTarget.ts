@@ -46,7 +46,16 @@ export default class SquirrelWindowsTarget extends Target {
       this.select7zipArch(distOptions.vendorDirectory, arch)
     }
 
+    distOptions.fixUpPaths = true
+    if (this.options.msi) {
+      distOptions.setupMsi = setupFile
+    } else {
+      distOptions.setupExe = setupFile
+    }
+
     await createWindowsInstaller(distOptions)
+
+    await packager.signAndEditResources(artifactPath, arch, installerOutDir)
 
     await packager.info.callArtifactBuildCompleted({
       file: artifactPath,
@@ -148,10 +157,9 @@ export default class SquirrelWindowsTarget extends Target {
     await fs.promises.cp(vendorDirectory, tmpVendorDirectory, { recursive: true })
     log.debug({ from: vendorDirectory, to: tmpVendorDirectory }, "copied vendor directory")
 
-    // Find and sign all executables in the temp vendor directory
     const files = await fs.promises.readdir(tmpVendorDirectory)
     for (const file of files) {
-      if (file.endsWith(".exe") || file.endsWith(".dll")) {
+      if (["Squirrel.exe", "StubExecutable.exe"].includes(file)) {
         const filePath = path.join(tmpVendorDirectory, file)
         log.debug({ file: filePath }, "signing vendor executable")
         await packager.sign(filePath)
