@@ -27,10 +27,20 @@ function assignKey(target: any, from: any, key: string) {
   }
 }
 
+function isValidKey(value: any) {
+  if (["string", "number", "symbol", "boolean"].includes(typeof value)) {
+    const protectedProperties = ["__proto__", "prototype", "constructor"]
+    return !protectedProperties.includes(value)
+  }
+  return value === null
+}
+
 function assign(to: any, from: any) {
   if (to !== from) {
     for (const key of Object.getOwnPropertyNames(from)) {
-      assignKey(to, from, key)
+      if (isValidKey(key)) {
+        assignKey(to, from, key)
+      }
     }
   }
   return to

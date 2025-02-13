@@ -2,7 +2,7 @@ import { outputFile } from "fs-extra"
 import { serializeToYaml } from "./util"
 
 export class DebugLogger {
-  readonly data: any = {}
+  readonly data = new Map<string, any>()
 
   constructor(readonly isEnabled = true) {}
 
@@ -19,19 +19,19 @@ export class DebugLogger {
         lastName = p
         break
       } else {
-        if (o[p] == null) {
-          o[p] = Object.create(null)
-        } else if (typeof o[p] === "string") {
-          o[p] = [o[p]]
+        if (!o.has(p)) {
+          o.set(p, new Map<string, any>())
+        } else if (typeof o.get(p) === "string") {
+          o.set(p, [o.get(p)])
         }
-        o = o[p]
+        o = o.get(p)
       }
     }
 
-    if (Array.isArray(o[lastName!])) {
-      o[lastName!] = [...o[lastName!], value]
+    if (Array.isArray(o.get(lastName!))) {
+      o.set(lastName!, [...o.get(lastName!), value])
     } else {
-      o[lastName!] = value
+      o.set(lastName!, value)
     }
   }
 
