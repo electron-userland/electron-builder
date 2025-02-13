@@ -1,3 +1,5 @@
+import { isValidKey } from "./mapper"
+
 function isObject(x: any) {
   if (Array.isArray(x)) {
     return false
@@ -25,14 +27,6 @@ function assignKey(target: any, from: any, key: string) {
   } else {
     target[key] = assign(prevValue, value)
   }
-}
-
-function isValidKey(value: any) {
-  if (["string", "number", "symbol", "boolean"].includes(typeof value)) {
-    const protectedProperties = ["__proto__", "prototype", "constructor"]
-    return !protectedProperties.includes(value)
-  }
-  return value === null
 }
 
 function assign(to: any, from: any) {

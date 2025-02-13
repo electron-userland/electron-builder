@@ -1,5 +1,6 @@
 import { outputFile } from "fs-extra"
 import { serializeToYaml } from "./util"
+import { mapToObject } from "./mapper"
 
 export class DebugLogger {
   readonly data = new Map<string, any>()
@@ -36,9 +37,10 @@ export class DebugLogger {
   }
 
   save(file: string) {
+    const data = mapToObject(this.data)
     // toml and json doesn't correctly output multiline string as multiline
-    if (this.isEnabled && Object.keys(this.data).length > 0) {
-      return outputFile(file, serializeToYaml(this.data))
+    if (this.isEnabled && Object.keys(data).length > 0) {
+      return outputFile(file, serializeToYaml(data))
     } else {
       return Promise.resolve()
     }
