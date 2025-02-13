@@ -2,7 +2,6 @@ import { assertPack, linuxDirTarget, verifyAsarFileTree, modifyPackageJson } fro
 import { Platform, Arch, DIR_TARGET } from "electron-builder"
 import { outputFile } from "fs-extra"
 import * as path from "path"
-import { readAsarJson } from "app-builder-lib/out/asar/asar"
 
 test.ifAll("yarn workspace", () =>
   assertPack(
@@ -90,9 +89,7 @@ test.ifAll("pnpm es5-ext without hoisted config", () =>
           outputFile(path.join(projectDir, "pnpm-lock.yaml"), ""),
         ])
       },
-      packed: async context => {
-        expect(await readAsarJson(path.join(context.getResources(Platform.LINUX), "app.asar"), "node_modules/d/package.json")).toMatchSnapshot()
-      },
+      packed: context => verifyAsarFileTree(context.getResources(Platform.LINUX)),
     }
   )
 )
@@ -217,9 +214,7 @@ test.ifAll("yarn max stack", () =>
           outputFile(path.join(projectDir, "yarn.lock"), ""),
         ])
       },
-      packed: async context => {
-        expect(await readAsarJson(path.join(context.getResources(Platform.LINUX), "app.asar"), "node_modules/npm-run-all/package.json")).toMatchSnapshot()
-      },
+      packed: context => verifyAsarFileTree(context.getResources(Platform.LINUX)),
     }
   )
 )
@@ -242,9 +237,7 @@ test.ifAll("pnpm max stack", () =>
           outputFile(path.join(projectDir, "pnpm-lock.yaml"), ""),
         ])
       },
-      packed: async context => {
-        expect(await readAsarJson(path.join(context.getResources(Platform.LINUX), "app.asar"), "node_modules/npm-run-all/package.json")).toMatchSnapshot()
-      },
+      packed: context => verifyAsarFileTree(context.getResources(Platform.LINUX)),
     }
   )
 )
@@ -272,9 +265,7 @@ test.ifAll("yarn ms", () =>
           outputFile(path.join(projectDir, "yarn.lock"), ""),
         ])
       },
-      packed: async context => {
-        expect(await readAsarJson(path.join(context.getResources(Platform.LINUX), "app.asar"), "node_modules/ms/package.json")).toMatchSnapshot()
-      },
+      packed: context => verifyAsarFileTree(context.getResources(Platform.LINUX)),
     }
   )
 )
@@ -298,9 +289,7 @@ test.ifAll("yarn parse-asn1", () =>
           outputFile(path.join(projectDir, "yarn.lock"), ""),
         ])
       },
-      packed: async context => {
-        expect(await readAsarJson(path.join(context.getResources(Platform.LINUX), "app.asar"), "node_modules/asn1.js/package.json")).toMatchSnapshot()
-      },
+      packed: context => verifyAsarFileTree(context.getResources(Platform.LINUX)),
     }
   )
 )
@@ -324,14 +313,7 @@ test.ifAll("npm tar", () =>
           outputFile(path.join(projectDir, "package-lock.json"), ""),
         ])
       },
-      packed: async context => {
-        let tar = await readAsarJson(path.join(context.getResources(Platform.LINUX), "app.asar"), "node_modules/tar/package.json")
-        let minipass = await readAsarJson(path.join(context.getResources(Platform.LINUX), "app.asar"), "node_modules/minipass/package.json")
-        let minizlib = await readAsarJson(path.join(context.getResources(Platform.LINUX), "app.asar"), "node_modules/minizlib/package.json")
-        expect(tar.version).toEqual("7.4.3")
-        expect(minipass.version).toEqual("7.1.2")
-        expect(minizlib.version).toEqual("3.0.1")
-      },
+      packed: context => verifyAsarFileTree(context.getResources(Platform.LINUX)),
     }
   )
 )
