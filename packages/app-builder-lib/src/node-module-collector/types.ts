@@ -6,11 +6,11 @@ export interface NodeModuleInfo {
 }
 
 export interface DependencyTree {
-  readonly version?: string
-  readonly name?: string
-  readonly from?: string
-  readonly workspaces?: string[]
+  readonly name: string
+  readonly version: string
   readonly path: string
+  readonly workspaces?: string[]
+  __circularDependencyDetected?: boolean
   dependencies?: {
     [packageName: string]: DependencyTree
   }

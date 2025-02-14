@@ -1,5 +1,6 @@
 import { NodeModulesCollector } from "./nodeModulesCollector"
 import { DependencyTree } from "./types"
+import { log } from "builder-util"
 
 export class NpmNodeModulesCollector extends NodeModulesCollector {
   constructor(rootDir: string) {
@@ -17,8 +18,11 @@ export class NpmNodeModulesCollector extends NodeModulesCollector {
   removeNonProductionDependencie(tree: DependencyTree) {
     const dependencies = tree.dependencies || {}
     const _dependencies = tree._dependencies || {}
-    if (dependencies && Object.keys(dependencies).length === 0) {
+    if (Object.keys(_dependencies).length > 0 && Object.keys(dependencies).length === 0) {
       tree.dependencies = this.allDependencies.get(`${tree.name}@${tree.version}`)?.dependencies || {}
+      tree.__circularDependencyDetected = true
+      log.debug({ name: tree.name, version: tree.version }, "circular dependency detected")
+      return
     }
 
     for (const [key, value] of Object.entries(dependencies)) {
