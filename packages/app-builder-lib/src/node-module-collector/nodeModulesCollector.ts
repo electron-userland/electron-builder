@@ -61,17 +61,6 @@ export abstract class NodeModulesCollector {
         }
         const version = value.version || ""
         const newKey = `${key}@${version}`
-        // Map dependency details: name, version and path to the dependency tree
-        log.debug(
-          {
-            dependency: key,
-            version,
-            path: value.path,
-            parentModule: node.name,
-            parentVersion: node.version,
-          },
-          "Adding dependency to module tree"
-        )
         this.dependencyPathMap.set(newKey, path.normalize(this.resolvePath(value.path)))
         if (!result[parentKey]?.dependencies) {
           result[parentKey] = { dependencies: [] }
