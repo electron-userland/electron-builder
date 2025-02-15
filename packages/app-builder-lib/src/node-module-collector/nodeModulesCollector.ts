@@ -7,7 +7,7 @@ import { exec, log } from "builder-util"
 export abstract class NodeModulesCollector {
   private nodeModules: NodeModuleInfo[]
   protected dependencyPathMap: Map<string, string>
-  protected allDependencies: Map<string, DependencyTree> = new Map()
+  protected allDependencies: Map<string, NpmDependency> = new Map()
 
   constructor(private readonly rootDir: string) {
     this.dependencyPathMap = new Map()
@@ -93,7 +93,8 @@ export abstract class NodeModulesCollector {
 
   protected abstract getCommand(): string
   protected abstract getArgs(): string[]
-  protected abstract removeNonProductionDependencies(tree: DependencyTree): void
+  protected abstract removeNonProductionDependencies(parsedTree: NpmDependency): DependencyTree
+  protected abstract parseDependenciesTree(jsonBlob: string): NpmDependency
 
   protected async getDependenciesTree(): Promise<NpmDependency> {
     const command = this.getCommand()
@@ -102,19 +103,7 @@ export abstract class NodeModulesCollector {
       cwd: this.rootDir,
       shell: true,
     })
-    const dependencyTree: NpmDependency | NpmDependency[] = JSON.parse(dependencies)
-
-    // pnpm returns an array of dependency trees
-    if (Array.isArray(dependencyTree)) {
-      const tree = dependencyTree[0]
-      if (tree.optionalDependencies) {
-        tree.dependencies = { ...tree.dependencies, ...tree.optionalDependencies }
-      }
-      return tree
-    }
-
-    // yarn and npm return a single dependency tree
-    return dependencyTree
+    return this.parseDependenciesTree(dependencies)
   }
 
   private _getNodeModules(dependencies: Set<HoisterResult>, result: NodeModuleInfo[]) {
@@ -143,7 +132,7 @@ export abstract class NodeModulesCollector {
     result.sort((a, b) => a.name.localeCompare(b.name))
   }
 
-  private getTreeFromWorkspaces(tree: DependencyTree): DependencyTree {
+  private getTreeFromWorkspaces(tree: NpmDependency): NpmDependency {
     if (tree.workspaces && tree.dependencies) {
       for (const [key, value] of Object.entries(tree.dependencies)) {
         if (this.rootDir.endsWith(path.normalize(key))) {
@@ -158,8 +147,8 @@ export abstract class NodeModulesCollector {
     const tree = await this.getDependenciesTree()
     const realTree = this.getTreeFromWorkspaces(tree)
     this.getAllDependencies(realTree)
-    this.removeNonProductionDependencies(realTree)
-    const dependencyGraph = this.convertToDependencyGraph(realTree)
+    const productionTree = this.removeNonProductionDependencies(realTree)
+    const dependencyGraph = this.convertToDependencyGraph(productionTree)
     const hoisterResult = hoist(this.transToHoisterTree(dependencyGraph), { check: true })
     this._getNodeModules(hoisterResult.dependencies, this.nodeModules)
     return this.nodeModules

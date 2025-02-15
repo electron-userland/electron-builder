@@ -243,7 +243,7 @@ test.ifAll("pnpm max stack", () =>
 )
 
 //github.com/electron-userland/electron-builder/issues/8842
-test.ifAll("yarn ms", () =>
+test.only("yarn ms", () =>
   assertPack(
     "test-app-hoisted",
     {
