@@ -1,7 +1,7 @@
 import { hoist, type HoisterTree, type HoisterResult } from "./hoist"
 import * as path from "path"
 import * as fs from "fs"
-import { NodeModuleInfo, DependencyTree, DependencyGraph } from "./types"
+import { NodeModuleInfo, DependencyTree, DependencyGraph, NpmDependency } from "./types"
 import { exec, log } from "builder-util"
 
 export abstract class NodeModulesCollector {
@@ -48,34 +48,37 @@ export abstract class NodeModulesCollector {
     }
   }
 
-  private convertToDependencyGraph(tree: DependencyTree): DependencyGraph {
-    const result: DependencyGraph = { ".": {} }
-
-    const flatten = (node: DependencyTree, parentKey = ".") => {
-      const dependencies = node.dependencies || {}
-
-      for (const [key, value] of Object.entries(dependencies)) {
-        // Skip empty dependencies(like some optionalDependencies)
-        if (Object.keys(value).length === 0) {
-          continue
-        }
-        const version = value.version || ""
-        const newKey = `${key}@${version}`
-        this.dependencyPathMap.set(newKey, path.normalize(this.resolvePath(value.path)))
-        if (!result[parentKey]?.dependencies) {
-          result[parentKey] = { dependencies: [] }
-        }
-        result[parentKey].dependencies!.push(newKey)
-
-        if (node.__circularDependencyDetected) {
-          continue
-        }
-        flatten(value, newKey)
+  private convertToDependencyGraph(tree: DependencyTree, parentKey = "."): DependencyGraph {
+    return Object.entries(tree.dependencies || {}).reduce<DependencyGraph>((acc, curr) => {
+      const [packageName, dependencies] = curr
+      // Skip empty dependencies(like some optionalDependencies)
+      if (Object.keys(dependencies).length === 0) {
+        return acc
       }
-    }
+      const version = dependencies.version || ""
+      const newKey = `${packageName}@${version}`
+      // Map dependency details: name, version and path to the dependency tree
+      this.dependencyPathMap.set(newKey, path.normalize(this.resolvePath(dependencies.path)))
+      if (!acc[parentKey]) {
+        acc[parentKey] = { dependencies: [] }
+      }
+      acc[parentKey].dependencies.push(newKey)
+      if (tree.circularDependencyDetected) {
+        log.debug(
+          {
+            dependency: packageName,
+            version,
+            path: dependencies.path,
+            parentModule: tree.name,
+            parentVersion: tree.version,
+          },
+          "evaluated circluar dependency; skipping dependency flattening step"
+        )
+        return acc
+      }
 
-    flatten(tree)
-    return result
+      return { ...acc, ...this.convertToDependencyGraph(dependencies, newKey) }
+    }, {})
   }
 
   getAllDependencies(tree: DependencyTree) {
@@ -88,18 +91,18 @@ export abstract class NodeModulesCollector {
     }
   }
 
-  abstract getCommand(): string
-  abstract getArgs(): string[]
-  abstract removeNonProductionDependencie(tree: DependencyTree): void
+  protected abstract getCommand(): string
+  protected abstract getArgs(): string[]
+  protected abstract removeNonProductionDependencies(tree: DependencyTree): void
 
-  protected async getDependenciesTree(): Promise<DependencyTree> {
+  protected async getDependenciesTree(): Promise<NpmDependency> {
     const command = this.getCommand()
     const args = this.getArgs()
     const dependencies = await exec(command, args, {
       cwd: this.rootDir,
       shell: true,
     })
-    const dependencyTree: DependencyTree | DependencyTree[] = JSON.parse(dependencies)
+    const dependencyTree: NpmDependency | NpmDependency[] = JSON.parse(dependencies)
 
     // pnpm returns an array of dependency trees
     if (Array.isArray(dependencyTree)) {
@@ -155,7 +158,7 @@ export abstract class NodeModulesCollector {
     const tree = await this.getDependenciesTree()
     const realTree = this.getTreeFromWorkspaces(tree)
     this.getAllDependencies(realTree)
-    this.removeNonProductionDependencie(realTree)
+    this.removeNonProductionDependencies(realTree)
     const dependencyGraph = this.convertToDependencyGraph(realTree)
     const hoisterResult = hoist(this.transToHoisterTree(dependencyGraph), { check: true })
     this._getNodeModules(hoisterResult.dependencies, this.nodeModules)

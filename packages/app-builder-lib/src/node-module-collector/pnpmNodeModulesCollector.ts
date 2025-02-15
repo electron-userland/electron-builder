@@ -15,10 +15,10 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector {
     return ["list", "--prod", "--json", "--depth", "Infinity"]
   }
 
-  removeNonProductionDependencie(tree: DependencyTree) {
+  removeNonProductionDependencies(tree: DependencyTree) {
     const dependencies = tree.dependencies || {}
     const p = path.normalize(this.resolvePath(tree.path))
-    const pJson: Dependency = require(path.join(p, "package.json"))
+    const pJson: Dependency<string> = require(path.join(p, "package.json"))
     const _dependencies = pJson.dependencies || {}
     const _optionalDependencies = pJson.optionalDependencies || {}
     const prodDependencies = { ..._dependencies, ..._optionalDependencies }
@@ -27,7 +27,7 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector {
         delete dependencies[key]
         continue
       }
-      this.removeNonProductionDependencie(value)
+      this.removeNonProductionDependencies(value)
     }
   }
 }
