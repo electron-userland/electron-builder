@@ -42,7 +42,10 @@ if test -d "/etc/apparmor.d"; then
   if apparmor_parser --skip-kernel-load --debug "$APPARMOR_PROFILE_SOURCE" > /dev/null 2>&1; then
     cp -f "$APPARMOR_PROFILE_SOURCE" "$APPARMOR_PROFILE_TARGET"
 
-    if hash apparmor_parser 2>/dev/null; then
+    # Updating the current AppArmor profile is not possible and probably not meaningful in a chroot'ed environment.
+    # Use cases are for example environments where images for clients are maintained.
+    # There, AppArmor might correctly be installed, but live updating makes no sense.
+    if ! { [ -x '/usr/bin/ischroot' ] && /usr/bin/ischroot; } && hash apparmor_parser 2>/dev/null; then
       # Extra flags taken from dh_apparmor:
       # > By using '-W -T' we ensure that any abstraction updates are also pulled in.
       # https://wiki.debian.org/AppArmor/Contribute/FirstTimeProfileImport

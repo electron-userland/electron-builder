@@ -1,15 +1,7 @@
-import { NodeModulesCollector } from "./nodeModulesCollector"
+import { NpmNodeModulesCollector } from "./npmNodeModulesCollector"
 
-export class YarnNodeModulesCollector extends NodeModulesCollector {
+export class YarnNodeModulesCollector extends NpmNodeModulesCollector {
   constructor(rootDir: string) {
     super(rootDir)
-  }
-
-  getCommand(): string {
-    return process.platform === "win32" ? "npm.cmd" : "npm"
-  }
-
-  getArgs(): string[] {
-    return ["list", "--omit", "dev", "-a", "--json", "--long", "--silent"]
   }
 }

@@ -6,13 +6,32 @@ export interface NodeModuleInfo {
 }
 
 export interface DependencyTree {
-  readonly version?: string
-  readonly name?: string
-  readonly from?: string
-  readonly workspaces?: string[]
+  readonly name: string
+  readonly version: string
   readonly path: string
-  dependencies: {
+  readonly workspaces?: string[]
+  __circularDependencyDetected?: boolean
+  dependencies?: {
     [packageName: string]: DependencyTree
+  }
+  // for npm list --json
+  _dependencies?: {
+    [packageName: string]: string
+  }
+  optionalDependencies?: {
+    [packageName: string]: DependencyTree
+  }
+  peerDependencies?: {
+    [packageName: string]: DependencyTree
+  }
+}
+
+export interface Dependency {
+  dependencies?: {
+    [packageName: string]: string
+  }
+  optionalDependencies?: {
+    [packageName: string]: string
   }
 }
 
