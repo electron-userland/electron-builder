@@ -5,33 +5,40 @@ import { NodeModuleInfo, DependencyTree, DependencyGraph, NpmDependency } from "
 import { exec, log } from "builder-util"
 
 export abstract class NodeModulesCollector {
-  private nodeModules: NodeModuleInfo[]
-  protected dependencyPathMap: Map<string, string>
-  protected allDependencies: Map<string, Required<DependencyTree>> = new Map()
+  private nodeModules: NodeModuleInfo[] = []
+  protected dependencyPathMap: Map<string, string> = new Map()
+  protected allDependencies: Map<string, NpmDependency> = new Map()
 
-  constructor(private readonly rootDir: string) {
-    this.dependencyPathMap = new Map()
-    this.nodeModules = []
+  constructor(private readonly rootDir: string) {}
+
+  public async getNodeModules(): Promise<NodeModuleInfo[]> {
+    const tree = await this.getDependenciesTree()
+    const realTree = this.getTreeFromWorkspaces(tree)
+
+    this.collectAllDependencies(realTree)
+
+    const productionTree = this.removeNonProductionDependencies(realTree)
+    const dependencyGraph = this.convertToDependencyGraph(productionTree)
+
+    const hoisterResult = hoist(this.transToHoisterTree(dependencyGraph), { check: true })
+    this._getNodeModules(hoisterResult.dependencies, this.nodeModules)
+
+    return this.nodeModules
   }
 
-  private transToHoisterTree(obj: DependencyGraph, key: string = `.`, nodes: Map<string, HoisterTree> = new Map()): HoisterTree {
-    let node = nodes.get(key)
-    const name = key.match(/@?[^@]+/)![0]
-    if (!node) {
-      node = {
-        name,
-        identName: name,
-        reference: key.match(/@?[^@]+@?(.+)?/)![1] || ``,
-        dependencies: new Set<HoisterTree>(),
-        peerNames: new Set<string>([]),
-      }
-      nodes.set(key, node)
+  protected abstract getCommand(): string
+  protected abstract getArgs(): string[]
+  protected abstract removeNonProductionDependencies(parsedTree: NpmDependency): DependencyTree
+  protected abstract parseDependenciesTree(jsonBlob: string): NpmDependency
 
-      for (const dep of (obj[key] || {}).dependencies || []) {
-        node.dependencies.add(this.transToHoisterTree(obj, dep, nodes))
-      }
-    }
-    return node
+  protected async getDependenciesTree(): Promise<NpmDependency> {
+    const command = this.getCommand()
+    const args = this.getArgs()
+    const dependencies = await exec(command, args, {
+      cwd: this.rootDir,
+      shell: true,
+    })
+    return this.parseDependenciesTree(dependencies)
   }
 
   protected resolvePath(filePath: string) {
@@ -81,73 +88,45 @@ export abstract class NodeModulesCollector {
     }, {})
   }
 
-  getAllDependencies(tree: NpmDependency) {
-    // const { name, version, path, workspaces = [], dependencies = {}, _dependencies = {}, optionalDependencies = {}, peerDependencies = {} } = tree
-    // const depTree: Required<DependencyTree> = {
-    //   name,
-    //   version,
-    //   path,
-    //   workspaces,
-    //   dependencies,
-    //   _dependencies,
-    //   optionalDependencies,
-    //   peerDependencies,
-    //   circularDependencyDetected: false,
-    // }
+  private collectAllDependencies(tree: NpmDependency) {
     const dependencies = tree.dependencies || {}
     for (const [key, value] of Object.entries(dependencies)) {
       if (value.dependencies && Object.keys(value.dependencies).length > 0) {
-        const { name, version, path, workspaces = [], dependencies = {}, _dependencies = {}, optionalDependencies = {}, peerDependencies = {} } = value
-        const tree: Required<DependencyTree> = {
-          name,
-          version,
-          path,
-          workspaces,
-          dependencies,
-          _dependencies,
-          optionalDependencies,
-          peerDependencies,
-          circularDependencyDetected: false,
-        }
-        this.allDependencies.set(`${key}@${value.version}`, tree)
-        this.getAllDependencies(tree)
+        this.allDependencies.set(`${key}@${value.version}`, value)
+        this.collectAllDependencies(value)
       }
     }
-    // return Object.entries(depTree.dependencies).reduce<Required<DependencyTree>>((accum, curr): Required<DependencyTree> => {
-    //   const [packageName, dependency] = curr
-    //   const { name, version, path, workspaces = [], dependencies = {}, _dependencies = {}, optionalDependencies = {}, peerDependencies = {} } = dependency
-    //   const tree: Required<DependencyTree> = {
-    //     name,
-    //     version,
-    //     path,
-    //     workspaces,
-    //     dependencies,
-    //     _dependencies,
-    //     optionalDependencies,
-    //     peerDependencies,
-    //     circularDependencyDetected: false,
-    //   }
-    //   this.allDependencies.set(`${packageName}@${tree.version}`, tree)
-    //   return {
-    //     ...accum,
-    //     [packageName]: this.getAllDependencies(tree)
-    //   }
-    // }, depTree)
   }
 
-  protected abstract getCommand(): string
-  protected abstract getArgs(): string[]
-  protected abstract removeNonProductionDependencies(parsedTree: NpmDependency): DependencyTree
-  protected abstract parseDependenciesTree(jsonBlob: string): NpmDependency
+  private getTreeFromWorkspaces(tree: NpmDependency): NpmDependency {
+    if (tree.workspaces && tree.dependencies) {
+      for (const [key, value] of Object.entries(tree.dependencies)) {
+        if (this.rootDir.endsWith(path.normalize(key))) {
+          return value
+        }
+      }
+    }
+    return tree
+  }
 
-  protected async getDependenciesTree(): Promise<NpmDependency> {
-    const command = this.getCommand()
-    const args = this.getArgs()
-    const dependencies = await exec(command, args, {
-      cwd: this.rootDir,
-      shell: true,
-    })
-    return this.parseDependenciesTree(dependencies)
+  private transToHoisterTree(obj: DependencyGraph, key: string = `.`, nodes: Map<string, HoisterTree> = new Map()): HoisterTree {
+    let node = nodes.get(key)
+    const name = key.match(/@?[^@]+/)![0]
+    if (!node) {
+      node = {
+        name,
+        identName: name,
+        reference: key.match(/@?[^@]+@?(.+)?/)![1] || ``,
+        dependencies: new Set<HoisterTree>(),
+        peerNames: new Set<string>([]),
+      }
+      nodes.set(key, node)
+
+      for (const dep of (obj[key] || {}).dependencies || []) {
+        node.dependencies.add(this.transToHoisterTree(obj, dep, nodes))
+      }
+    }
+    return node
   }
 
   private _getNodeModules(dependencies: Set<HoisterResult>, result: NodeModuleInfo[]) {
@@ -169,32 +148,10 @@ export abstract class NodeModulesCollector {
       }
       result.push(node)
       if (d.dependencies.size > 0) {
-        node["dependencies"] = []
-        this._getNodeModules(d.dependencies, node["dependencies"])
+        node.dependencies = []
+        this._getNodeModules(d.dependencies, node.dependencies)
       }
     }
     result.sort((a, b) => a.name.localeCompare(b.name))
-  }
-
-  private getTreeFromWorkspaces(tree: NpmDependency): NpmDependency {
-    if (tree.workspaces && tree.dependencies) {
-      for (const [key, value] of Object.entries(tree.dependencies)) {
-        if (this.rootDir.endsWith(path.normalize(key))) {
-          return value
-        }
-      }
-    }
-    return tree
-  }
-
-  public async getNodeModules(): Promise<NodeModuleInfo[]> {
-    const tree = await this.getDependenciesTree()
-    const realTree = this.getTreeFromWorkspaces(tree)
-    this.getAllDependencies(realTree)
-    const productionTree = this.removeNonProductionDependencies(realTree)
-    const dependencyGraph = this.convertToDependencyGraph(productionTree)
-    const hoisterResult = hoist(this.transToHoisterTree(dependencyGraph), { check: true })
-    this._getNodeModules(hoisterResult.dependencies, this.nodeModules)
-    return this.nodeModules
   }
 }
