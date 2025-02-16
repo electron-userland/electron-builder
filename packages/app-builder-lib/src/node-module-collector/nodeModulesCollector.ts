@@ -7,7 +7,7 @@ import { exec, log } from "builder-util"
 export abstract class NodeModulesCollector {
   private nodeModules: NodeModuleInfo[]
   protected dependencyPathMap: Map<string, string>
-  protected allDependencies: Map<string, NpmDependency> = new Map()
+  protected allDependencies: Map<string, Required<DependencyTree>> = new Map()
 
   constructor(private readonly rootDir: string) {
     this.dependencyPathMap = new Map()
@@ -81,14 +81,58 @@ export abstract class NodeModulesCollector {
     }, {})
   }
 
-  getAllDependencies(tree: DependencyTree) {
+  getAllDependencies(tree: NpmDependency) {
+    // const { name, version, path, workspaces = [], dependencies = {}, _dependencies = {}, optionalDependencies = {}, peerDependencies = {} } = tree
+    // const depTree: Required<DependencyTree> = {
+    //   name,
+    //   version,
+    //   path,
+    //   workspaces,
+    //   dependencies,
+    //   _dependencies,
+    //   optionalDependencies,
+    //   peerDependencies,
+    //   circularDependencyDetected: false,
+    // }
     const dependencies = tree.dependencies || {}
     for (const [key, value] of Object.entries(dependencies)) {
       if (value.dependencies && Object.keys(value.dependencies).length > 0) {
-        this.allDependencies.set(`${key}@${value.version}`, value)
-        this.getAllDependencies(value)
+        const { name, version, path, workspaces = [], dependencies = {}, _dependencies = {}, optionalDependencies = {}, peerDependencies = {} } = value
+        const tree: Required<DependencyTree> = {
+          name,
+          version,
+          path,
+          workspaces,
+          dependencies,
+          _dependencies,
+          optionalDependencies,
+          peerDependencies,
+          circularDependencyDetected: false,
+        }
+        this.allDependencies.set(`${key}@${value.version}`, tree)
+        this.getAllDependencies(tree)
       }
     }
+    // return Object.entries(depTree.dependencies).reduce<Required<DependencyTree>>((accum, curr): Required<DependencyTree> => {
+    //   const [packageName, dependency] = curr
+    //   const { name, version, path, workspaces = [], dependencies = {}, _dependencies = {}, optionalDependencies = {}, peerDependencies = {} } = dependency
+    //   const tree: Required<DependencyTree> = {
+    //     name,
+    //     version,
+    //     path,
+    //     workspaces,
+    //     dependencies,
+    //     _dependencies,
+    //     optionalDependencies,
+    //     peerDependencies,
+    //     circularDependencyDetected: false,
+    //   }
+    //   this.allDependencies.set(`${packageName}@${tree.version}`, tree)
+    //   return {
+    //     ...accum,
+    //     [packageName]: this.getAllDependencies(tree)
+    //   }
+    // }, depTree)
   }
 
   protected abstract getCommand(): string

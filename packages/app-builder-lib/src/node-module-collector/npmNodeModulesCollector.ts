@@ -16,10 +16,19 @@ export class NpmNodeModulesCollector extends NodeModulesCollector {
   }
 
   protected removeNonProductionDependencies(tree: DependencyTree): DependencyTree {
-
-    const dependencies = tree.dependencies || {}
-    const _dependencies = tree._dependencies || {}
-    if (Object.keys(_dependencies).length > 0 && Object.keys(dependencies).length === 0) {
+    // const { name, version, path, workspaces = [], dependencies = {}, _dependencies = {}, optionalDependencies = {}, peerDependencies = {} } = npmTree
+    // const tree: Required<DependencyTree> = {
+    //   name,
+    //   version,
+    //   path,
+    //   workspaces,
+    //   dependencies,
+    //   _dependencies,
+    //   optionalDependencies,
+    //   peerDependencies,
+    //   circularDependencyDetected: false,
+    // }
+    if (Object.keys(tree._dependencies ?? {}).length > 0 && Object.keys(tree.dependencies ?? {}).length === 0) {
       tree.dependencies = this.allDependencies.get(`${tree.name}@${tree.version}`)?.dependencies || {}
       tree.circularDependencyDetected = true
       log.debug({ name: tree.name, version: tree.version }, "circular dependency detected")
@@ -27,9 +36,9 @@ export class NpmNodeModulesCollector extends NodeModulesCollector {
     }
 
     // eslint-disable-next-line prefer-const
-    for (let [key, value] of Object.entries(dependencies)) {
-      if (!_dependencies[key] || Object.keys(value).length === 0) {
-        delete dependencies[key]
+    for (let [key, value] of Object.entries(tree.dependencies ?? {})) {
+      if (!tree._dependencies![key] || Object.keys(value).length === 0) {
+        delete tree.dependencies![key]
         continue
       }
       value = this.removeNonProductionDependencies(value)
