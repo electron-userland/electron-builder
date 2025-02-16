@@ -1,6 +1,5 @@
-import { InvalidConfigurationError, log, isEmptyOrSpaces, exec, getPath7za, debug } from "builder-util"
+import { InvalidConfigurationError, log, isEmptyOrSpaces } from "builder-util"
 import { sanitizeFileName } from "builder-util/out/filename"
-import { prepareWindowsExecutableArgs as prepareArgs } from "app-builder-lib/out/wine"
 import { Arch, getArchSuffix, SquirrelWindowsOptions, Target, WinPackager } from "app-builder-lib"
 import * as path from "path"
 import * as fs from "fs"
@@ -77,7 +76,6 @@ export default class SquirrelWindowsTarget extends Target {
     await packager.signAndEditResources(artifactPath, arch, installerOutDir)
     if (this.options.msi && process.platform === "win32") {
       const outFile = setupFile.replace(".exe", ".msi")
-      await this.msi(distOptions.vendorDirectory, path.join(installerOutDir, `${distOptions.name}.${distOptions.version}.full.nupkg`), setupFile, installerOutDir, outFile)
       await packager.sign(outFile)
     }
 
@@ -88,6 +86,16 @@ export default class SquirrelWindowsTarget extends Target {
       safeArtifactName: `${sanitizedName}-Setup-${version}${getArchSuffix(arch)}.exe`,
       packager: this.packager,
     })
+
+    if (this.options.msi) {
+      await packager.info.callArtifactBuildCompleted({
+        file: artifactPath.replace(".exe", ".msi"),
+        target: this,
+        arch,
+        safeArtifactName: `${sanitizedName}-Setup-${version}${getArchSuffix(arch)}.msi`,
+        packager: this.packager,
+      })
+    }
 
     const packagePrefix = `${this.appName}-${convertVersion(version)}-`
     packager.info.dispatchArtifactCreated({
@@ -117,40 +125,11 @@ export default class SquirrelWindowsTarget extends Target {
     return this.options.name || this.packager.appInfo.name
   }
 
-  private async execSw(vendorDirectory: string, args: Array<string>) {
-    return exec(process.platform === "win32" ? path.join(vendorDirectory, "Squirrel.com") : "mono", prepareArgs(args, path.join(vendorDirectory, "Squirrel-Mono.exe")), {
-      env: {
-        ...process.env,
-        SZA_PATH: await getPath7za(),
-      },
-    })
-  }
-
-  private async msi(vendorDirectory: string, nupkgPath: string, setupPath: string, outputDirectory: string, outFile: string) {
-    const args = ["--createMsi", nupkgPath, "--bootstrapperExe", setupPath]
-    await this.execSw(vendorDirectory, args)
-
-    //noinspection SpellCheckingInspection
-    await exec(path.join(vendorDirectory, "candle.exe"), ["-nologo", "-ext", "WixNetFxExtension", "-out", "Setup.wixobj", "Setup.wxs"], {
-      cwd: outputDirectory,
-    })
-    //noinspection SpellCheckingInspection
-    await exec(path.join(vendorDirectory, "light.exe"), ["-ext", "WixNetFxExtension", "-sval", "-out", outFile, "Setup.wixobj"], {
-      cwd: outputDirectory,
-    })
-    //noinspection SpellCheckingInspection
-    await Promise.all([
-      fs.promises.unlink(path.join(outputDirectory, "Setup.wxs")),
-      fs.promises.unlink(path.join(outputDirectory, "Setup.wixobj")),
-      fs.promises.unlink(path.join(outputDirectory, outFile.replace(".msi", ".wixpdb"))).catch((e: any) => debug(e.toString())),
-    ])
-  }
-
   private select7zipArch(vendorDirectory: string, arch: Arch) {
     // Copy the 7-Zip executable for the configured architecture.
-    const resolvedArch = getArchSuffix(arch) === "" ? process.arch : getArchSuffix(arch)
-    fs.copyFileSync(path.join(vendorDirectory, `7z-${resolvedArch}.exe`), path.join(vendorDirectory, "7z.exe"))
-    fs.copyFileSync(path.join(vendorDirectory, `7z-${resolvedArch}.dll`), path.join(vendorDirectory, "7z.dll"))
+    const resolvedArch = getArchSuffix(arch) === "" ? `-${process.arch}` : getArchSuffix(arch)
+    fs.copyFileSync(path.join(vendorDirectory, `7z${resolvedArch}.exe`), path.join(vendorDirectory, "7z.exe"))
+    fs.copyFileSync(path.join(vendorDirectory, `7z${resolvedArch}.dll`), path.join(vendorDirectory, "7z.dll"))
   }
 
   private async createNuspecTemplateWithProjectUrl() {

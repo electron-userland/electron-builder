@@ -56,6 +56,18 @@ test.skip(
   })
 )
 
+test.ifAll(
+  "squirrel window msi",
+  app({
+    targets: Platform.WINDOWS.createTarget("squirrel"),
+    config: {
+      squirrelWindows: {
+        msi: true,
+      },
+    },
+  })
+)
+
 test.ifAll("detect install-spinner", () => {
   let platformPackager: CheckingWinPackager | null = null
   let loadingGifPath: string | null = null
