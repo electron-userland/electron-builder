@@ -19,7 +19,7 @@ export default class SquirrelWindowsTarget extends Target {
     super("squirrel")
   }
 
-  private async getVendorDir(): Promise<string> {
+  private async prepareSignedVendorDirectory(): Promise<string> {
     // If not specified will use the Squirrel.Windows that is shipped with electron-installer(https://github.com/electron/windows-installer/tree/main/vendor)
     // After https://github.com/electron-userland/electron-builder-binaries/pull/56 merged, will add `electron-builder-binaries` to get the latest version of squirrel.
     let vendorDirectory = this.options.customSquirrelVendorDir || path.join(require.resolve("electron-winstaller/package.json"), "..", "vendor")
@@ -68,7 +68,7 @@ export default class SquirrelWindowsTarget extends Target {
     this.outputDirectory = installerOutDir
     const distOptions = await this.computeEffectiveDistOptions()
 
-    distOptions.vendorDirectory = await this.getVendorDir()
+    distOptions.vendorDirectory = await this.prepareSignedVendorDirectory()
     this.select7zipArch(distOptions.vendorDirectory, arch)
     distOptions.fixUpPaths = true
     distOptions.setupExe = setupFile
