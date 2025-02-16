@@ -191,13 +191,12 @@ export default class SquirrelWindowsTarget extends Target {
       description: appInfo.description,
       exe: `${appInfo.productFilename || this.options.name || appInfo.productName}.exe`,
       authors: appInfo.companyName || "",
+      nuspecTemplate: await this.createNuspecTemplateWithProjectUrl(),
       iconUrl,
       copyright: appInfo.copyright,
       noMsi: true,
       usePackageJson: false,
     }
-
-    options.nuspecTemplate = await this.createNuspecTemplateWithProjectUrl()
 
     if (isEmptyOrSpaces(options.description)) {
       options.description = this.options.name || appInfo.productName
