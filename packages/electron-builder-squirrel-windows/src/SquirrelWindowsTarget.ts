@@ -71,11 +71,14 @@ export default class SquirrelWindowsTarget extends Target {
     this.select7zipArch(distOptions.vendorDirectory, arch)
     distOptions.fixUpPaths = true
     distOptions.setupExe = setupFile
+    if (this.options.msi) {
+      distOptions.setupMsi = setupFile.replace(".exe", ".msi")
+    }
     await createWindowsInstaller(distOptions)
 
     await packager.signAndEditResources(artifactPath, arch, installerOutDir)
     if (this.options.msi && process.platform === "win32") {
-      const outFile = setupFile.replace(".exe", ".msi")
+      const outFile = artifactPath.replace(".exe", ".msi")
       await packager.sign(outFile)
     }
 

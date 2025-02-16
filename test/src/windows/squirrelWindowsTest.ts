@@ -58,14 +58,17 @@ test.skip(
 
 test.ifAll(
   "squirrel window msi",
-  app({
-    targets: Platform.WINDOWS.createTarget("squirrel"),
-    config: {
-      squirrelWindows: {
-        msi: true,
+  app(
+    {
+      targets: Platform.WINDOWS.createTarget("squirrel"),
+      config: {
+        squirrelWindows: {
+          msi: true,
+        },
       },
     },
-  })
+    { signedWin: true }
+  )
 )
 
 test.ifAll("detect install-spinner", () => {
