@@ -78,8 +78,7 @@ export default class SquirrelWindowsTarget extends Target {
 
     await packager.signAndEditResources(artifactPath, arch, installerOutDir)
     if (this.options.msi && process.platform === "win32") {
-      const outFile = artifactPath.replace(".exe", ".msi")
-      await packager.sign(outFile)
+      await packager.sign(artifactPath.replace(".exe", ".msi"))
     }
 
     await packager.info.callArtifactBuildCompleted({
@@ -176,7 +175,7 @@ export default class SquirrelWindowsTarget extends Target {
       nuspecTemplate: await this.createNuspecTemplateWithProjectUrl(),
       iconUrl,
       copyright: appInfo.copyright,
-      noMsi: true,
+      noMsi: !this.options.msi,
       usePackageJson: false,
     }
 
