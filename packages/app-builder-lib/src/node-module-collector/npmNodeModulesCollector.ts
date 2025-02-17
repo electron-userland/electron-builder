@@ -16,20 +16,8 @@ export class NpmNodeModulesCollector extends NodeModulesCollector {
   }
 
   protected removeNonProductionDependencies(tree: DependencyTree): DependencyTree {
-    // const { name, version, path, workspaces = [], dependencies = {}, _dependencies = {}, optionalDependencies = {}, peerDependencies = {} } = npmTree
-    // const tree: Required<DependencyTree> = {
-    //   name,
-    //   version,
-    //   path,
-    //   workspaces,
-    //   dependencies,
-    //   _dependencies,
-    //   optionalDependencies,
-    //   peerDependencies,
-    //   circularDependencyDetected: false,
-    // }
     if (Object.keys(tree._dependencies ?? {}).length > 0 && Object.keys(tree.dependencies ?? {}).length === 0) {
-      tree.dependencies = this.allDependencies.get(`${tree.name}@${tree.version}`)?.dependencies || {}
+      tree.dependencies = this.allDependencies.get(`${tree.name}@${tree.version}`)?.dependencies
       tree.circularDependencyDetected = true
       log.debug({ name: tree.name, version: tree.version }, "circular dependency detected")
       return tree

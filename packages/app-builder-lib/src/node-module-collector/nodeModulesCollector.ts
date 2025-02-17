@@ -7,16 +7,16 @@ import { exec, log, use } from "builder-util"
 export abstract class NodeModulesCollector {
   private nodeModules: NodeModuleInfo[] = []
   protected dependencyPathMap: Map<string, string> = new Map()
-  protected allDependencies: Map<string, ParsedDependencyTree> = new Map()
+  protected allDependencies: Map<string, DependencyTree> = new Map()
 
   constructor(private readonly rootDir: string) {}
 
   public async getNodeModules(): Promise<NodeModuleInfo[]> {
     const tree = await this.getDependenciesTree()
     const realTree = this.getTreeFromWorkspaces(tree)
-    const parsedTree = this.extract(realTree)
+    const parsedTree = this.extractDependencyTree(realTree)
 
-    // this.collectAllDependencies(parsedTree)
+    this.collectAllDependencies(parsedTree)
 
     const productionTree = this.removeNonProductionDependencies(parsedTree)
     const dependencyGraph = this.convertToDependencyGraph(productionTree)
@@ -42,22 +42,7 @@ export abstract class NodeModulesCollector {
     return this.parseDependenciesTree(dependencies)
   }
 
-  protected extractDependencyTree(tree: NpmDependency): DependencyTree {
-    // filter out all extraneous data and deep copy for the tree manipulation steps
-    const depTree = JSON.parse(JSON.stringify(tree), (key, value) => {
-      if (key === "") {
-        // preset value since we can't recursively iterate without `RangeError: Maximum call stack size exceeded`
-        // so we inject it here
-        value.circularDependencyDetected = false
-      } else if (key === "dependencies") {
-        console.log(value)
-      }
-      return value
-    })
-    return depTree
-  }
-
-  private extract(npmTree: NpmDependency) {
+  private extractDependencyTree(npmTree: NpmDependency): DependencyTree {
     const { name, version, path, workspaces, dependencies, _dependencies, optionalDependencies, peerDependencies } = npmTree
     const tree: DependencyTree = {
       name,
@@ -73,26 +58,21 @@ export abstract class NodeModulesCollector {
               ...accum,
               [packageName]:
                 typeof depObjectOrVersionString === "object" && Object.keys(depObjectOrVersionString).length > 0
-                  ? this.extract(depObjectOrVersionString as any)
+                  ? this.extractDependencyTree(depObjectOrVersionString as any)
                   : depObjectOrVersionString,
             }
           }, {})
         : undefined
 
-    // only set property if existing (at minimum, it helps in Variables debugger window)
+    // only set property if existing, skip undefined (at minimum, it helps in Variables debugger window)
     use(workspaces, v => (tree.workspaces = v))
     use(_dependencies, v => (tree._dependencies = v))
     use(optionalDependencies, v => (tree.optionalDependencies = v))
     use(peerDependencies, v => (tree.peerDependencies = v))
 
-    // extract subtree
+    // DFS extract subtree
     use(moreExtract(dependencies), v => (tree.dependencies = v))
 
-    for (const [key, value] of Object.entries(tree.dependencies || {})) {
-      if (Object.keys(value.dependencies ?? {}).length > 0) {
-        this.allDependencies.set(`${key}@${value.version}`, value)
-      }
-    }
     return tree
   }
 
@@ -143,10 +123,9 @@ export abstract class NodeModulesCollector {
     }, {})
   }
 
-  private collectAllDependencies(tree: NpmDependency) {
-    const dependencies = tree.dependencies || {}
-    for (const [key, value] of Object.entries(dependencies)) {
-      if (value.dependencies && Object.keys(value.dependencies).length > 0) {
+  private collectAllDependencies(tree: DependencyTree) {
+    for (const [key, value] of Object.entries(tree.dependencies || {})) {
+      if (Object.keys(value.dependencies ?? {}).length > 0) {
         this.allDependencies.set(`${key}@${value.version}`, value)
         this.collectAllDependencies(value)
       }

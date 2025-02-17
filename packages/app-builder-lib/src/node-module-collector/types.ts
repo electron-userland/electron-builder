@@ -30,7 +30,7 @@ export const PARSED_DEPENDENCY_TREE_KEYS = Object.keys(new ParsedDependencyTreeD
 export interface DependencyTree extends Dependency<DependencyTree>, Omit<ParsedDependencyTree, "dependencies"> {
   // I hate this, but this needs to be optional to convert NpmDependency=>DependencyTree before this value can get set
   // We can't set this with an initial value due to the need to set it recursively, and this can't be recursively applied beforehand without a `RangeError: Maximum call stack size exceeded`
-  circularDependencyDetected?: boolean
+  circularDependencyDetected: boolean
 }
 
 export interface NpmDependency extends Dependency<NpmDependency>, Omit<ParsedDependencyTree, "dependencies"> {
