@@ -69,18 +69,20 @@ async function createFrameworkInfo(configuration: Configuration, packager: Packa
 }
 
 type PackagerEvents = {
-  artifactCreated: Hook<ArtifactCreated, void>
+  artifactBuildStarted: Hook<ArtifactBuildStarted, void>
 
   beforePack: Hook<BeforePackContext, void>
   afterExtract: Hook<AfterExtractContext, void>
   afterPack: Hook<AfterPackContext, void>
-
   afterSign: Hook<AfterPackContext, void>
-  artifactBuildStarted: Hook<ArtifactBuildStarted, void>
+
   artifactBuildCompleted: Hook<ArtifactCreated, void>
 
   msiProjectCreated: Hook<string, void>
   appxManifestCreated: Hook<string, void>
+
+  // internal-use only, prefer usage of `artifactBuildCompleted`
+  artifactCreated: Hook<ArtifactCreated, void>
 }
 
 export class Packager {
@@ -267,6 +269,7 @@ export class Packager {
     this.eventEmitter.on("msiProjectCreated", resolveFunction(type, this.config.msiProjectCreated, "msiProjectCreated"), "user")
 
     this.eventEmitter.on("beforePack", resolveFunction(type, this.config.beforePack, "beforePack"), "user")
+    this.eventEmitter.on("afterExtract", resolveFunction(type, this.config.afterExtract, "afterExtract"), "user")
     this.eventEmitter.on("afterPack", resolveFunction(type, this.config.afterPack, "afterPack"), "user")
     this.eventEmitter.on("afterSign", resolveFunction(type, this.config.afterSign, "afterSign"), "user")
   }

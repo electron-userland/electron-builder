@@ -1,12 +1,5 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`afterPack 1`] = `
-{
-  "linux": [],
-  "mac": [],
-}
-`;
-
 exports[`afterSign 1`] = `
 {
   "linux": [],
@@ -209,6 +202,13 @@ exports[`electron version from electron dependency 1`] = `
 exports[`electron version from electron-prebuilt dependency 1`] = `
 {
   "linux": [],
+}
+`;
+
+exports[`hooks 1`] = `
+{
+  "linux": [],
+  "mac": [],
 }
 `;
 

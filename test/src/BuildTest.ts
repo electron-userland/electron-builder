@@ -219,22 +219,48 @@ test(
   )
 )
 
-test.ifLinuxOrDevMac("afterPack", () => {
-  let called = 0
+test.ifLinuxOrDevMac("hooks", () => {
+  let artifactBuildStartedCalled = 0
+  let artifactBuildCompletedCalled = 0
+  let beforePackCalled = 0
+  let afterPackCalled = 0
+  let afterExtractCalled = 0
   return assertPack(
     "test-app-one",
     {
       targets: createTargets([Platform.LINUX, Platform.MAC], DIR_TARGET),
       config: {
-        afterPack: () => {
-          called++
+        artifactBuildStarted: () => {
+          artifactBuildStartedCalled++
           return Promise.resolve()
         },
+        artifactBuildCompleted: () => {
+          artifactBuildCompletedCalled++
+          return Promise.resolve()
+        },
+        beforePack: () => {
+          beforePackCalled++
+          return Promise.resolve()
+        },
+        afterExtract: () => {
+          afterExtractCalled++
+          return Promise.resolve()
+        },
+        afterPack: () => {
+          afterPackCalled++
+          return Promise.resolve()
+        },
+
       },
     },
     {
       packed: async () => {
-        expect(called).toEqual(2)
+        expect(artifactBuildStartedCalled).toEqual(2)
+        expect(artifactBuildCompletedCalled).toEqual(2)
+        expect(beforePackCalled).toEqual(2)
+        expect(afterExtractCalled).toEqual(2)
+        expect(afterPackCalled).toEqual(2)
+        expect(afterPackCalled).toEqual(2)
         return Promise.resolve()
       },
     }
