@@ -2,6 +2,7 @@ import { Arch, Platform } from "electron-builder"
 import * as path from "path"
 import { CheckingWinPackager } from "../helpers/CheckingPackager"
 import { app, assertPack, copyTestAsset } from "../helpers/packTester"
+import { arch } from "os"
 
 test.ifAll.ifNotCiMac(
   "Squirrel.Windows",
@@ -60,7 +61,7 @@ test.ifAll(
   "squirrel window msi",
   app(
     {
-      targets: Platform.WINDOWS.createTarget("squirrel"),
+      targets: Platform.WINDOWS.createTarget("squirrel", Arch.arm64),
       config: {
         squirrelWindows: {
           msi: true,
