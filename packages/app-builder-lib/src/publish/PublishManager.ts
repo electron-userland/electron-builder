@@ -355,14 +355,17 @@ async function requireProviderClass(provider: string, packager: Packager): Promi
       return BitbucketPublisher
 
     default: {
-      const name = (ext: string) => `electron-publisher-${provider}.${ext}`
-      const validPublisherFiles = [".mjs", ".js", ".cjs"].map(ext => name(ext))
-      for (const publisherFilename of validPublisherFiles) {
-        const potentialFile = path.join(packager.buildResourcesDir, publisherFilename)
+      const extensions = [".mjs", ".js", ".cjs"]
+      const template = `electron-publisher-${provider}`
+      const name = (ext: string) => `${template}.${ext}`
+
+      const validPublisherFiles = extensions.map(ext => path.join(packager.buildResourcesDir, name(ext)))
+      for (const potentialFile of validPublisherFiles) {
         if (existsSync(potentialFile)) {
           return await resolveModule(packager.appInfo.type, potentialFile)
         }
       }
+      log.warn({ path: log.filePath(packager.buildResourcesDir), template, extensionsChecked: extensions }, "unable to find publish provider in build resources")
     }
   }
 }
