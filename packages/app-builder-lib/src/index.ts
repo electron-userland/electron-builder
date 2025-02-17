@@ -132,6 +132,9 @@ export function build(options: PackagerOptions & PublishOptions, packager: Packa
       promise = publishManager.awaitTasks()
     }
 
-    return promise.then(() => process.removeListener("SIGINT", sigIntHandler))
+    return promise.then(() => {
+      packager.clearPackagerEventListeners()
+      process.removeListener("SIGINT", sigIntHandler)
+    })
   })
 }

@@ -1,4 +1,4 @@
-import { log } from "builder-util";
+import { log } from "builder-util"
 import { CancellationToken, Nullish } from "builder-util-runtime"
 
 type Handler = (...args: any[]) => Promise<void> | void
@@ -6,8 +6,6 @@ type Handler = (...args: any[]) => Promise<void> | void
 export type HandlerType = "system" | "user"
 
 type Handle = { handler: Handler | Promise<Handler | Nullish>; type: HandlerType }
-
-export type Listener<E extends keyof T, T extends EventMap> = Promise<T[E] | Nullish> | T[E] | Nullish
 
 export type EventMap = {
   [key: string]: Handler
@@ -18,6 +16,7 @@ interface TypedEventEmitter<Events extends EventMap> {
   off<E extends keyof Events>(event: E, listener: Events[E] | Nullish): this
   emit<E extends keyof Events>(event: E, ...args: Parameters<Events[E]>): Promise<{ emittedSystem: boolean; emittedUser: boolean }>
   filterListeners<E extends keyof Events>(event: E, type: HandlerType): Handle[]
+  clear(): void
 }
 
 export class AsyncEventEmitter<T extends EventMap> implements TypedEventEmitter<T> {
@@ -66,11 +65,11 @@ export class AsyncEventEmitter<T extends EventMap> implements TypedEventEmitter<
       }
       return true
     }
-    if (!(await emitInternal(eventListeners.filter(l => l.type === "system")))) {
+    if (await emitInternal(eventListeners.filter(l => l.type === "system"))) {
       result.emittedSystem = true
     }
     // user handlers are always last
-    if (!(await emitInternal(eventListeners.filter(l => l.type === "user")))) {
+    if (await emitInternal(eventListeners.filter(l => l.type === "user"))) {
       result.emittedUser = true
     }
     return result
@@ -82,5 +81,9 @@ export class AsyncEventEmitter<T extends EventMap> implements TypedEventEmitter<
       return listeners.filter(l => l.type === type)
     }
     return listeners
+  }
+
+  clear() {
+    this.listeners.clear()
   }
 }

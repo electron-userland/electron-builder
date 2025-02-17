@@ -447,7 +447,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     const didSign = await this.signApp(packContext, isAsar)
     if (didSign) {
       await this.info.emitAfterSign(packContext)
-    } else if (this.info.filterEventListeners("afterSign", "user").length) {
+    } else if (this.info.filterPackagerEventListeners("afterSign", "user").length) {
       log.warn(null, `skipping "afterSign" hook as no signing occurred, perhaps you intended "afterPack"?`)
     }
   }

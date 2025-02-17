@@ -279,8 +279,12 @@ export class Packager {
     return this
   }
 
-  filterEventListeners(event: keyof PackagerEvents, type: HandlerType | undefined) {
+  filterPackagerEventListeners(event: keyof PackagerEvents, type: HandlerType | undefined) {
     return this.eventEmitter.filterListeners(event, type)
+  }
+
+  clearPackagerEventListeners() {
+    this.eventEmitter.clear()
   }
 
   async emitArtifactBuildStarted(event: ArtifactBuildStarted, logFields?: any): Promise<void> {
