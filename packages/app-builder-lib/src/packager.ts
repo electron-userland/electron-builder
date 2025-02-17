@@ -292,7 +292,7 @@ export class Packager {
     this.eventEmitter.clear()
   }
 
-  async emitArtifactBuildStarted(event: ArtifactBuildStarted, logFields?: any): Promise<void> {
+  async emitArtifactBuildStarted(event: ArtifactBuildStarted, logFields?: any) {
     log.info(
       logFields || {
         target: event.targetPresentableName,

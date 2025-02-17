@@ -228,7 +228,7 @@ test.ifLinuxOrDevMac("hooks", () => {
   return assertPack(
     "test-app-one",
     {
-      targets: createTargets([Platform.LINUX, Platform.MAC], DIR_TARGET),
+      targets: createTargets([Platform.LINUX, Platform.MAC], "zip", "x64"),
       config: {
         artifactBuildStarted: () => {
           artifactBuildStartedCalled++
@@ -250,13 +250,12 @@ test.ifLinuxOrDevMac("hooks", () => {
           afterPackCalled++
           return Promise.resolve()
         },
-
       },
     },
     {
       packed: async () => {
         expect(artifactBuildStartedCalled).toEqual(2)
-        expect(artifactBuildCompletedCalled).toEqual(2)
+        expect(artifactBuildCompletedCalled).toEqual(3) // 2 artifacts + blockmap
         expect(beforePackCalled).toEqual(2)
         expect(afterExtractCalled).toEqual(2)
         expect(afterPackCalled).toEqual(2)
