@@ -1,23 +1,24 @@
 import { hoist, type HoisterTree, type HoisterResult } from "./hoist"
 import * as path from "path"
 import * as fs from "fs"
-import { NodeModuleInfo, DependencyTree, DependencyGraph, NpmDependency } from "./types"
-import { exec, log } from "builder-util"
+import { NodeModuleInfo, DependencyTree, DependencyGraph, NpmDependency, ParsedDependencyTree, PARSED_DEPENDENCY_TREE_KEYS } from "./types"
+import { exec, log, use } from "builder-util"
 
 export abstract class NodeModulesCollector {
   private nodeModules: NodeModuleInfo[] = []
   protected dependencyPathMap: Map<string, string> = new Map()
-  protected allDependencies: Map<string, NpmDependency> = new Map()
+  protected allDependencies: Map<string, ParsedDependencyTree> = new Map()
 
   constructor(private readonly rootDir: string) {}
 
   public async getNodeModules(): Promise<NodeModuleInfo[]> {
     const tree = await this.getDependenciesTree()
     const realTree = this.getTreeFromWorkspaces(tree)
+    const parsedTree = this.extract(realTree)
 
-    this.collectAllDependencies(realTree)
+    // this.collectAllDependencies(parsedTree)
 
-    const productionTree = this.removeNonProductionDependencies(realTree)
+    const productionTree = this.removeNonProductionDependencies(parsedTree)
     const dependencyGraph = this.convertToDependencyGraph(productionTree)
 
     const hoisterResult = hoist(this.transToHoisterTree(dependencyGraph), { check: true })
@@ -41,6 +42,60 @@ export abstract class NodeModulesCollector {
     return this.parseDependenciesTree(dependencies)
   }
 
+  protected extractDependencyTree(tree: NpmDependency): DependencyTree {
+    // filter out all extraneous data and deep copy for the tree manipulation steps
+    const depTree = JSON.parse(JSON.stringify(tree), (key, value) => {
+      if (key === "") {
+        // preset value since we can't recursively iterate without `RangeError: Maximum call stack size exceeded`
+        // so we inject it here
+        value.circularDependencyDetected = false
+      } else if (key === "dependencies") {
+        console.log(value)
+      }
+      return value
+    })
+    return depTree
+  }
+
+  private extract(npmTree: NpmDependency) {
+    const { name, version, path, workspaces, dependencies, _dependencies, optionalDependencies, peerDependencies } = npmTree
+    const tree: DependencyTree = {
+      name,
+      version,
+      path,
+      circularDependencyDetected: false,
+    }
+
+    const moreExtract = (deps: NpmDependency["dependencies"]) =>
+      deps && Object.keys(deps).length > 0
+        ? Object.entries(deps).reduce((accum, [packageName, depObjectOrVersionString]) => {
+            return {
+              ...accum,
+              [packageName]:
+                typeof depObjectOrVersionString === "object" && Object.keys(depObjectOrVersionString).length > 0
+                  ? this.extract(depObjectOrVersionString as any)
+                  : depObjectOrVersionString,
+            }
+          }, {})
+        : undefined
+
+    // only set property if existing (at minimum, it helps in Variables debugger window)
+    use(workspaces, v => (tree.workspaces = v))
+    use(_dependencies, v => (tree._dependencies = v))
+    use(optionalDependencies, v => (tree.optionalDependencies = v))
+    use(peerDependencies, v => (tree.peerDependencies = v))
+
+    // extract subtree
+    use(moreExtract(dependencies), v => (tree.dependencies = v))
+
+    for (const [key, value] of Object.entries(tree.dependencies || {})) {
+      if (Object.keys(value.dependencies ?? {}).length > 0) {
+        this.allDependencies.set(`${key}@${value.version}`, value)
+      }
+    }
+    return tree
+  }
+
   protected resolvePath(filePath: string) {
     try {
       const stats = fs.lstatSync(filePath)
@@ -58,7 +113,7 @@ export abstract class NodeModulesCollector {
   private convertToDependencyGraph(tree: DependencyTree, parentKey = "."): DependencyGraph {
     return Object.entries(tree.dependencies || {}).reduce<DependencyGraph>((acc, curr) => {
       const [packageName, dependencies] = curr
-      // Skip empty dependencies(like some optionalDependencies)
+      // Skip empty dependencies (like some optionalDependencies)
       if (Object.keys(dependencies).length === 0) {
         return acc
       }

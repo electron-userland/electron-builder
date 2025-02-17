@@ -37,7 +37,7 @@ export class NpmNodeModulesCollector extends NodeModulesCollector {
 
     // eslint-disable-next-line prefer-const
     for (let [key, value] of Object.entries(tree.dependencies ?? {})) {
-      if (!tree._dependencies![key] || Object.keys(value).length === 0) {
+      if (!tree._dependencies?.[key] || Object.keys(value).length === 0) {
         delete tree.dependencies![key]
         continue
       }
