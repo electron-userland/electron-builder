@@ -235,6 +235,7 @@ test.ifLinuxOrDevMac("afterPack", () => {
     {
       packed: async () => {
         expect(called).toEqual(2)
+        return Promise.resolve()
       },
     }
   )
@@ -257,6 +258,7 @@ test.ifWindows("afterSign", () => {
       packed: async () => {
         // afterSign is only called when an app is actually signed and ignored otherwise.
         expect(called).toEqual(1)
+        return Promise.resolve()
       },
     }
   )
