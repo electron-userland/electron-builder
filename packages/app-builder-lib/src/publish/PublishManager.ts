@@ -1,4 +1,4 @@
-import { Arch, asArray, AsyncTaskManager, InvalidConfigurationError, isEmptyOrSpaces, isPullRequest, log, safeStringifyJson, serializeToYaml } from "builder-util"
+import { Arch, asArray, AsyncTaskManager, exists, InvalidConfigurationError, isEmptyOrSpaces, isPullRequest, log, safeStringifyJson, serializeToYaml } from "builder-util"
 import {
   BitbucketOptions,
   CancellationToken,
@@ -38,7 +38,6 @@ import { PlatformPackager } from "../platformPackager"
 import { expandMacro } from "../util/macroExpander"
 import { WinPackager } from "../winPackager"
 import { createUpdateInfoTasks, UpdateInfoFileTask, writeUpdateInfoFiles } from "./updateInfoBuilder"
-import { existsSync } from "fs-extra"
 import { resolveModule } from "../util/resolve"
 
 const publishForPrWarning =
@@ -361,7 +360,7 @@ async function requireProviderClass(provider: string, packager: Packager): Promi
 
       const validPublisherFiles = extensions.map(ext => path.join(packager.buildResourcesDir, name(ext)))
       for (const potentialFile of validPublisherFiles) {
-        if (existsSync(potentialFile)) {
+        if (await exists(potentialFile)) {
           return await resolveModule(packager.appInfo.type, potentialFile)
         }
       }

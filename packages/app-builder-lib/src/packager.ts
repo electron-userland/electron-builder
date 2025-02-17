@@ -15,7 +15,6 @@ import {
   TmpDir,
 } from "builder-util"
 import { CancellationToken } from "builder-util-runtime"
-import { EventEmitter } from "events"
 import { chmod, mkdirs, outputFile } from "fs-extra"
 import * as isCI from "is-ci"
 import { Lazy } from "lazy-val"
@@ -41,10 +40,7 @@ import { getRepositoryInfo } from "./util/repositoryInfo"
 import { resolveFunction } from "./util/resolve"
 import { installOrRebuild, nodeGypRebuild } from "./util/yarn"
 import { PACKAGE_VERSION } from "./version"
-
-function addHandler(emitter: EventEmitter, event: string, handler: (...args: Array<any>) => void) {
-  emitter.on(event, handler)
-}
+import { AsyncEventEmitter } from "./util/asyncEventEmitter"
 
 async function createFrameworkInfo(configuration: Configuration, packager: Packager): Promise<Framework> {
   let framework = configuration.framework
@@ -70,6 +66,10 @@ async function createFrameworkInfo(configuration: Configuration, packager: Packa
   } else {
     throw new InvalidConfigurationError(`Unknown framework: ${framework}`)
   }
+}
+
+type PackagerEvents = {
+  artifactCreated: (event: ArtifactCreated) => void | Promise<void>
 }
 
 export class Packager {
@@ -110,7 +110,7 @@ export class Packager {
 
   isTwoPackageJsonProjectLayoutUsed = false
 
-  readonly eventEmitter = new EventEmitter()
+  readonly eventEmitter = new AsyncEventEmitter<PackagerEvents>()
 
   _appInfo: AppInfo | null = null
   get appInfo(): AppInfo {
@@ -260,8 +260,8 @@ export class Packager {
     this.afterPackHandlers.push(handler)
   }
 
-  artifactCreated(handler: (event: ArtifactCreated) => void): Packager {
-    addHandler(this.eventEmitter, "artifactCreated", handler)
+  artifactCreated(handler: (event: ArtifactCreated) => void | Promise<void>): Packager {
+    this.eventEmitter.on("artifactCreated", handler)
     return this
   }
 
@@ -283,8 +283,8 @@ export class Packager {
   /**
    * Only for sub artifacts (update info), for main artifacts use `callArtifactBuildCompleted`.
    */
-  dispatchArtifactCreated(event: ArtifactCreated): void {
-    this.eventEmitter.emit("artifactCreated", event)
+  async dispatchArtifactCreated(event: ArtifactCreated): Promise<void> {
+    await this.eventEmitter.emit("artifactCreated", event)
   }
 
   async callArtifactBuildCompleted(event: ArtifactCreated): Promise<void> {
@@ -293,7 +293,7 @@ export class Packager {
       await Promise.resolve(handler(event))
     }
 
-    this.dispatchArtifactCreated(event)
+    await this.dispatchArtifactCreated(event)
   }
 
   async callAppxManifestCreated(path: string): Promise<void> {
