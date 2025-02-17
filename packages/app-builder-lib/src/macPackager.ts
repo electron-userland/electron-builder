@@ -173,7 +173,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
           packager: this,
           electronPlatformName: platformName,
         }
-        await this.info.afterPack(packContext)
+        await this.info.emitAfterPack(packContext)
 
         if (this.info.cancellationToken.cancelled) {
           return

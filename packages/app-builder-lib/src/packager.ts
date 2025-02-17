@@ -40,7 +40,7 @@ import { getRepositoryInfo } from "./util/repositoryInfo"
 import { resolveFunction } from "./util/resolve"
 import { installOrRebuild, nodeGypRebuild } from "./util/yarn"
 import { PACKAGE_VERSION } from "./version"
-import { AsyncEventEmitter } from "./util/asyncEventEmitter"
+import { AsyncEventEmitter, HandlerType } from "./util/asyncEventEmitter"
 
 async function createFrameworkInfo(configuration: Configuration, packager: Packager): Promise<Framework> {
   let framework = configuration.framework
@@ -121,7 +121,7 @@ export class Packager {
 
   isTwoPackageJsonProjectLayoutUsed = false
 
-  readonly eventEmitter = new AsyncEventEmitter<PackagerEvents>()
+  private readonly eventEmitter = new AsyncEventEmitter<PackagerEvents>()
 
   _appInfo: AppInfo | null = null
   get appInfo(): AppInfo {
@@ -258,15 +258,15 @@ export class Packager {
     log.info({ version: PACKAGE_VERSION, os: getOsRelease() }, "electron-builder")
   }
 
-  async addPackagerEventHandlers() {
-    this.eventEmitter.on("artifactBuildStarted", await resolveFunction(this.appInfo.type, this.config.artifactBuildStarted, "artifactBuildStarted"), "user")
-    this.eventEmitter.on("artifactBuildCompleted", await resolveFunction(this.appInfo.type, this.config.artifactBuildCompleted, "artifactBuildCompleted"), "user")
-    this.eventEmitter.on("appxManifestCreated", await resolveFunction(this.appInfo.type, this.config.appxManifestCreated, "appxManifestCreated"), "user")
-    this.eventEmitter.on("msiProjectCreated", await resolveFunction(this.appInfo.type, this.config.msiProjectCreated, "msiProjectCreated"), "user")
+  addPackagerEventHandlers() {
+    this.eventEmitter.on("artifactBuildStarted", resolveFunction(this.appInfo.type, this.config.artifactBuildStarted, "artifactBuildStarted"), "user")
+    this.eventEmitter.on("artifactBuildCompleted", resolveFunction(this.appInfo.type, this.config.artifactBuildCompleted, "artifactBuildCompleted"), "user")
 
-    this.eventEmitter.on("beforePack", await resolveFunction(this.appInfo.type, this.config.beforePack, "beforePack"), "user")
-    this.eventEmitter.on("afterSign", await resolveFunction(this.appInfo.type, this.config.afterSign, "afterSign"), "user")
+    this.eventEmitter.on("appxManifestCreated", resolveFunction(this.appInfo.type, this.config.appxManifestCreated, "appxManifestCreated"), "user")
+    this.eventEmitter.on("msiProjectCreated", resolveFunction(this.appInfo.type, this.config.msiProjectCreated, "msiProjectCreated"), "user")
 
+    this.eventEmitter.on("beforePack", resolveFunction(this.appInfo.type, this.config.beforePack, "beforePack"), "user")
+    this.eventEmitter.on("afterSign", resolveFunction(this.appInfo.type, this.config.afterSign, "afterSign"), "user")
   }
 
   onAfterPack(handler: PackagerEvents["afterPack"]): Packager {
@@ -277,6 +277,10 @@ export class Packager {
   onArtifactCreated(handler: PackagerEvents["artifactCreated"]): Packager {
     this.eventEmitter.on("artifactCreated", handler)
     return this
+  }
+
+  filterEventListeners(event: keyof PackagerEvents, type: HandlerType | undefined) {
+    return this.eventEmitter.filterListeners(event, type)
   }
 
   async emitArtifactBuildStarted(event: ArtifactBuildStarted, logFields?: any): Promise<void> {
@@ -294,21 +298,37 @@ export class Packager {
   /**
    * Only for sub artifacts (update info), for main artifacts use `callArtifactBuildCompleted`.
    */
-  async emitArtifactCreated(event: ArtifactCreated): Promise<void> {
+  async emitArtifactCreated(event: ArtifactCreated) {
     await this.eventEmitter.emit("artifactCreated", event)
   }
 
-  async emitArtifactBuildCompleted(event: ArtifactCreated): Promise<void> {
+  async emitArtifactBuildCompleted(event: ArtifactCreated) {
     await this.eventEmitter.emit("artifactBuildCompleted", event)
     await this.emitArtifactCreated(event)
   }
 
-  async emitAppxManifestCreated(path: string): Promise<void> {
+  async emitAppxManifestCreated(path: string) {
     await this.eventEmitter.emit("appxManifestCreated", path)
   }
 
-  async emitMsiProjectCreated(path: string): Promise<void> {
+  async emitMsiProjectCreated(path: string) {
     await this.eventEmitter.emit("msiProjectCreated", path)
+  }
+
+  async emitBeforePack(context: BeforePackContext) {
+    await this.eventEmitter.emit("beforePack", context)
+  }
+
+  async emitAfterPack(context: AfterPackContext) {
+    await this.eventEmitter.emit("afterPack", context)
+  }
+
+  async emitAfterSign(context: AfterPackContext) {
+    await this.eventEmitter.emit("afterSign", context)
+  }
+
+  async emitAfterExtract(context: AfterPackContext) {
+    await this.eventEmitter.emit("afterExtract", context)
   }
 
   async validateConfig(): Promise<void> {
@@ -367,6 +387,8 @@ export class Packager {
     }
 
     this._appInfo = new AppInfo(this, null)
+    this.addPackagerEventHandlers()
+
     this._framework = await createFrameworkInfo(this.config, this)
 
     const commonOutDirWithoutPossibleOsMacro = path.resolve(
@@ -395,6 +417,8 @@ export class Packager {
       if (this.debugLogger.isEnabled) {
         await this.debugLogger.save(path.join(commonOutDirWithoutPossibleOsMacro, "builder-debug.yml"))
       }
+
+      this.eventEmitter.clear()
 
       const toDispose = this.toDispose.slice()
       this.toDispose.length = 0
@@ -546,15 +570,6 @@ export class Packager {
         arch: Arch[arch],
         productionDeps: this.getNodeDependencyInfo(null, false) as Lazy<Array<NodeModuleDirInfo>>,
       })
-    }
-  }
-
-  async afterPack(context: AfterPackContext): Promise<any> {
-    await this.eventEmitter.emit("afterPack", context)
-    const afterPack = await resolveFunction(this.appInfo.type, this.config.afterPack, "afterPack")
-    if (afterPack != null) {
-      // user handler should be last
-      await Promise.resolve(afterPack(context))
     }
   }
 }

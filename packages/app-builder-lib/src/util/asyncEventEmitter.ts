@@ -1,26 +1,31 @@
+import { log } from "builder-util";
 import { CancellationToken, Nullish } from "builder-util-runtime"
 
 type Handler = (...args: any[]) => Promise<void> | void
 
-type HandlerType = "system" | "user"
+export type HandlerType = "system" | "user"
 
-type Handle = { handler: Handler; type: HandlerType }
+type Handle = { handler: Handler | Promise<Handler | Nullish>; type: HandlerType }
+
+export type Listener<E extends keyof T, T extends EventMap> = Promise<T[E] | Nullish> | T[E] | Nullish
 
 export type EventMap = {
-  [key: string]: Handle
+  [key: string]: Handler
 }
 
 interface TypedEventEmitter<Events extends EventMap> {
-  on<E extends keyof Events>(event: E, listener: Events[E]["handler"] | Nullish, priority: HandlerType): this
-  off<E extends keyof Events>(event: E, listener: Events[E]["handler"] | Nullish): this
-  emit<E extends keyof Events>(event: E, ...args: Parameters<Events[E]["handler"]>): Promise<boolean> | boolean
+  on<E extends keyof Events>(event: E, listener: Events[E] | Nullish, type: HandlerType): this
+  off<E extends keyof Events>(event: E, listener: Events[E] | Nullish): this
+  emit<E extends keyof Events>(event: E, ...args: Parameters<Events[E]>): Promise<{ emittedSystem: boolean; emittedUser: boolean }>
+  filterListeners<E extends keyof Events>(event: E, type: HandlerType): Handle[]
+  clear(): void
 }
 
 export class AsyncEventEmitter<T extends EventMap> implements TypedEventEmitter<T> {
   private readonly listeners: Map<keyof T, Handle[] | undefined> = new Map()
   private readonly cancellationToken = new CancellationToken()
 
-  on<E extends keyof T>(event: E, listener: T[E]["handler"] | Nullish, priority: HandlerType = "system"): this {
+  on<E extends keyof T>(event: E, listener: T[E] | Promise<T[E] | Nullish> | Nullish, type: HandlerType = "system"): this {
     if (!listener) {
       return this
     }
@@ -28,12 +33,12 @@ export class AsyncEventEmitter<T extends EventMap> implements TypedEventEmitter<
     if (!listeners) {
       listeners = []
     }
-    listeners.push({ handler: listener, type: priority })
+    listeners.push({ handler: listener, type })
     this.listeners.set(event, listeners)
     return this
   }
 
-  off<E extends keyof T>(event: E, listener: T[E]["handler"] | Nullish): this {
+  off<E extends keyof T>(event: E, listener: T[E] | Nullish): this {
     const listeners = this.listeners.get(event)?.filter(l => l.handler !== listener)
     if (!listeners?.length) {
       this.listeners.delete(event)
@@ -43,27 +48,44 @@ export class AsyncEventEmitter<T extends EventMap> implements TypedEventEmitter<
     return this
   }
 
-  async emit<E extends keyof T>(event: E, ...args: Parameters<T[E]["handler"]>): Promise<boolean> {
+  async emit<E extends keyof T>(event: E, ...args: Parameters<T[E]>): Promise<{ emittedSystem: boolean; emittedUser: boolean }> {
+    const result = { emittedSystem: false, emittedUser: false }
+
     const eventListeners = this.listeners.get(event) || []
     if (!eventListeners.length) {
-      return false
+      log.debug({ event }, "no event listeners found")
+      return result
     }
     const emitInternal = async (listeners: Handle[]) => {
       for (const listener of listeners) {
         if (this.cancellationToken.cancelled) {
           return false
         }
-        await listener.handler(...args)
+        await (
+          await listener.handler
+        )?.(...args)
       }
       return true
     }
     if (!(await emitInternal(eventListeners.filter(l => l.type === "system")))) {
-      return false
+      result.emittedSystem = true
     }
     // user handlers are always last
     if (!(await emitInternal(eventListeners.filter(l => l.type === "user")))) {
-      return false
+      result.emittedUser = true
     }
-    return true
+    return result
+  }
+
+  filterListeners<E extends keyof T>(event: E, type: HandlerType | undefined): Handle[] {
+    const listeners = this.listeners.get(event) ?? []
+    if (type) {
+      return listeners.filter(l => l.type === type)
+    }
+    return listeners
+  }
+
+  clear() {
+    this.listeners.clear()
   }
 }
