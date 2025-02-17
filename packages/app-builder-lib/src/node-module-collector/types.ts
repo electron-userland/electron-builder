@@ -10,9 +10,9 @@ export interface ParsedDependencyTree {
   readonly version: string
   readonly path: string
   workspaces?: string[]
-  dependencies?: {
-    [packageName: string]: ParsedDependencyTree
-  }
+  // dependencies?: {
+  //   [packageName: string]: ParsedDependencyTree
+  // }
 }
 
 export interface DependencyTree extends Dependency<DependencyTree>, Omit<ParsedDependencyTree, "dependencies"> {

@@ -16,8 +16,20 @@ export class NpmNodeModulesCollector extends NodeModulesCollector {
   }
 
   protected removeNonProductionDependencies(tree: DependencyTree): DependencyTree {
-    if (Object.keys(tree._dependencies ?? {}).length > 0 && Object.keys(tree.dependencies ?? {}).length === 0) {
+    const _dependencies = tree._dependencies ?? {}
+    if (Object.keys(_dependencies).length > 0 && Object.keys(tree.dependencies ?? {}).length === 0) {
       tree.dependencies = this.allDependencies.get(`${tree.name}@${tree.version}`)?.dependencies
+      // tree.dependencies = Object.entries(_dependencies).reduce<DependencyTree["dependencies"]>((accum, curr) => {
+      //   const [name, version] = curr
+      //   const dependency = this.allDependencies.get(`${name}@${version}`)
+      //   if (!dependency) {
+      //     return accum
+      //   }
+      //   return {
+      //     [name]: dependency,
+      //     ...accum,
+      //   }
+      // }, tree.dependencies ?? {})
       tree.implicitDependenciesInjected = true
       log.debug({ name: tree.name, version: tree.version }, "injecting implicit _dependencies")
       return tree
@@ -29,7 +41,9 @@ export class NpmNodeModulesCollector extends NodeModulesCollector {
         delete tree.dependencies![key]
         continue
       }
-      value = this.removeNonProductionDependencies(value)
+      if (!tree.implicitDependenciesInjected) {
+        value = this.removeNonProductionDependencies(value)
+      }
     }
     return tree
   }
