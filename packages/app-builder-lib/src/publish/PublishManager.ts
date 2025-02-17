@@ -299,7 +299,13 @@ export async function getPublishConfigsForUpdateInfo(
   return publishConfigs
 }
 
-export async function createPublisher(context: PublishContext, version: string, publishConfig: PublishConfiguration, options: PublishOptions, packager: Packager): Promise<Publisher | null> {
+export async function createPublisher(
+  context: PublishContext,
+  version: string,
+  publishConfig: PublishConfiguration,
+  options: PublishOptions,
+  packager: Packager
+): Promise<Publisher | null> {
   if (debug.enabled) {
     debug(`Create publisher: ${safeStringifyJson(publishConfig)}`)
   }
