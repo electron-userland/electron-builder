@@ -59,7 +59,7 @@ export default class SquirrelWindowsTarget extends Target {
       arch,
     })
 
-    const distOptions = await this.computeEffectiveDistOptions(appOutDir, installerOutDir, setupFile, arch)
+    const distOptions = await this.computeEffectiveDistOptions(appOutDir, installerOutDir, setupFile)
     await createWindowsInstaller(distOptions)
 
     await packager.signAndEditResources(artifactPath, arch, installerOutDir)
@@ -138,7 +138,7 @@ export default class SquirrelWindowsTarget extends Target {
     return templatePath
   }
 
-  async computeEffectiveDistOptions(appDirectory: string, outputDirectory: string, setupFile: string, arch: Arch): Promise<SquirrelOptions> {
+  async computeEffectiveDistOptions(appDirectory: string, outputDirectory: string, setupFile: string): Promise<SquirrelOptions> {
     const packager = this.packager
     let iconUrl = this.options.iconUrl
     if (iconUrl == null) {

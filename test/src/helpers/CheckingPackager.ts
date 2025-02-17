@@ -22,7 +22,7 @@ export class CheckingWinPackager extends WinPackager {
     const newClass = new helperClass(this, outDir)
     const setupFile = this.expandArtifactNamePattern(newClass.options, "exe", arch, "${productName} Setup ${version}.${ext}")
     const installerOutDir = path.join(outDir, `squirrel-windows${getArchSuffix(arch)}`)
-    this.effectiveDistOptions = await newClass.computeEffectiveDistOptions(installerOutDir, outDir, setupFile, arch)
+    this.effectiveDistOptions = await newClass.computeEffectiveDistOptions(installerOutDir, outDir, setupFile)
     await this.sign(this.computeAppOutDir(outDir, arch))
   }
 
