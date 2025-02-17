@@ -3,6 +3,7 @@ import { sanitizeFileName } from "builder-util/out/filename"
 import { Arch, getArchSuffix, SquirrelWindowsOptions, Target, WinPackager } from "app-builder-lib"
 import * as path from "path"
 import * as fs from "fs"
+import * as os from "os"
 import { Options as SquirrelOptions, createWindowsInstaller, convertVersion } from "electron-winstaller"
 
 export default class SquirrelWindowsTarget extends Target {
@@ -114,11 +115,13 @@ export default class SquirrelWindowsTarget extends Target {
     return this.options.name || this.packager.appInfo.name
   }
 
-  private select7zipArch(vendorDirectory: string, arch: Arch) {
-    // Copy the 7-Zip executable for the configured architecture.
-    const resolvedArch = getArchSuffix(arch) || `-${process.arch}`
-    fs.copyFileSync(path.join(vendorDirectory, `7z${resolvedArch}.exe`), path.join(vendorDirectory, "7z.exe"))
-    fs.copyFileSync(path.join(vendorDirectory, `7z${resolvedArch}.dll`), path.join(vendorDirectory, "7z.dll"))
+  private select7zipArch(vendorDirectory: string) {
+    // https://github.com/electron/windows-installer/blob/main/script/select-7z-arch.js
+    // Even if we're cross-compiling for a different arch like arm64,
+    // we still need to use the 7-Zip executable for the host arch
+    const resolvedArch = os.arch
+    fs.copyFileSync(path.join(vendorDirectory, `7z-${resolvedArch}.exe`), path.join(vendorDirectory, "7z.exe"))
+    fs.copyFileSync(path.join(vendorDirectory, `7z-${resolvedArch}.dll`), path.join(vendorDirectory, "7z.dll"))
   }
 
   private async createNuspecTemplateWithProjectUrl() {
@@ -168,7 +171,7 @@ export default class SquirrelWindowsTarget extends Target {
     }
 
     options.vendorDirectory = await this.prepareSignedVendorDirectory()
-    this.select7zipArch(options.vendorDirectory, arch)
+    this.select7zipArch(options.vendorDirectory)
     options.fixUpPaths = true
     options.setupExe = setupFile
     if (this.options.msi) {
