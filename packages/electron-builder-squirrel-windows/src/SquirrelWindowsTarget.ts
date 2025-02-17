@@ -8,8 +8,6 @@ import { Options as SquirrelOptions, createWindowsInstaller, convertVersion } fr
 export default class SquirrelWindowsTarget extends Target {
   //tslint:disable-next-line:no-object-literal-type-assertion
   readonly options: SquirrelWindowsOptions = { ...this.packager.platformSpecificBuildOptions, ...this.packager.config.squirrelWindows } as SquirrelWindowsOptions
-  private appDirectory: string = ""
-  private outputDirectory: string = ""
 
   constructor(
     private readonly packager: WinPackager,
@@ -52,6 +50,7 @@ export default class SquirrelWindowsTarget extends Target {
     const setupFile = packager.expandArtifactNamePattern(this.options, "exe", arch, "${productName} Setup ${version}.${ext}")
     const installerOutDir = path.join(this.outDir, `squirrel-windows${getArchSuffix(arch)}`)
     const artifactPath = path.join(installerOutDir, setupFile)
+    const msiArtifactPath = artifactPath.replace(".exe", ".msi")
 
     await packager.info.callArtifactBuildStarted({
       targetPresentableName: "Squirrel.Windows",
@@ -59,42 +58,30 @@ export default class SquirrelWindowsTarget extends Target {
       arch,
     })
 
-    if (arch === Arch.ia32) {
-      log.warn("For windows consider only distributing 64-bit or use nsis target, see https://github.com/electron-userland/electron-builder/issues/359#issuecomment-214851130")
-    }
-
-    this.appDirectory = appOutDir
-    this.outputDirectory = installerOutDir
-    const distOptions = await this.computeEffectiveDistOptions()
-
-    distOptions.vendorDirectory = await this.prepareSignedVendorDirectory()
-    this.select7zipArch(distOptions.vendorDirectory, arch)
-    distOptions.fixUpPaths = true
-    distOptions.setupExe = setupFile
-    if (this.options.msi) {
-      distOptions.setupMsi = setupFile.replace(".exe", ".msi")
-    }
+    const distOptions = await this.computeEffectiveDistOptions(appOutDir, installerOutDir, setupFile, arch)
     await createWindowsInstaller(distOptions)
 
     await packager.signAndEditResources(artifactPath, arch, installerOutDir)
-    if (this.options.msi && process.platform === "win32") {
-      await packager.sign(artifactPath.replace(".exe", ".msi"))
+    if (this.options.msi) {
+      await packager.sign(msiArtifactPath)
     }
+
+    const safeArtifactName = (ext: string) => `${sanitizedName}-Setup-${version}${getArchSuffix(arch)}.${ext}`
 
     await packager.info.callArtifactBuildCompleted({
       file: artifactPath,
       target: this,
       arch,
-      safeArtifactName: `${sanitizedName}-Setup-${version}${getArchSuffix(arch)}.exe`,
+      safeArtifactName: safeArtifactName("exe"),
       packager: this.packager,
     })
 
     if (this.options.msi) {
       await packager.info.callArtifactBuildCompleted({
-        file: artifactPath.replace(".exe", ".msi"),
+        file: msiArtifactPath,
         target: this,
         arch,
-        safeArtifactName: `${sanitizedName}-Setup-${version}${getArchSuffix(arch)}.msi`,
+        safeArtifactName: safeArtifactName("msi"),
         packager: this.packager,
       })
     }
@@ -129,7 +116,7 @@ export default class SquirrelWindowsTarget extends Target {
 
   private select7zipArch(vendorDirectory: string, arch: Arch) {
     // Copy the 7-Zip executable for the configured architecture.
-    const resolvedArch = getArchSuffix(arch) === "" ? `-${process.arch}` : getArchSuffix(arch)
+    const resolvedArch = getArchSuffix(arch) || `-${process.arch}`
     fs.copyFileSync(path.join(vendorDirectory, `7z${resolvedArch}.exe`), path.join(vendorDirectory, "7z.exe"))
     fs.copyFileSync(path.join(vendorDirectory, `7z${resolvedArch}.dll`), path.join(vendorDirectory, "7z.dll"))
   }
@@ -148,7 +135,7 @@ export default class SquirrelWindowsTarget extends Target {
     return templatePath
   }
 
-  async computeEffectiveDistOptions(): Promise<SquirrelOptions> {
+  async computeEffectiveDistOptions(appDirectory: string, outputDirectory: string, setupFile: string, arch: Arch): Promise<SquirrelOptions> {
     const packager = this.packager
     let iconUrl = this.options.iconUrl
     if (iconUrl == null) {
@@ -161,11 +148,12 @@ export default class SquirrelWindowsTarget extends Target {
         throw new InvalidConfigurationError("squirrelWindows.iconUrl is not specified, please see https://www.electron.build/squirrel-windows#SquirrelWindowsOptions-iconUrl")
       }
     }
+
     checkConflictingOptions(this.options)
     const appInfo = packager.appInfo
     const options: SquirrelOptions = {
-      appDirectory: this.appDirectory,
-      outputDirectory: this.outputDirectory,
+      appDirectory: appDirectory,
+      outputDirectory: outputDirectory,
       name: this.options.useAppIdAsId ? appInfo.id : this.appName,
       title: appInfo.productName || appInfo.name,
       version: appInfo.version,
@@ -177,6 +165,14 @@ export default class SquirrelWindowsTarget extends Target {
       copyright: appInfo.copyright,
       noMsi: !this.options.msi,
       usePackageJson: false,
+    }
+
+    options.vendorDirectory = await this.prepareSignedVendorDirectory()
+    this.select7zipArch(options.vendorDirectory, arch)
+    options.fixUpPaths = true
+    options.setupExe = setupFile
+    if (this.options.msi) {
+      options.setupMsi = setupFile.replace(".exe", ".msi")
     }
 
     if (isEmptyOrSpaces(options.description)) {
