@@ -180,7 +180,7 @@ async function packAndCheck(packagerOptions: PackagerOptions, checkOptions: Asse
   const publishManager = new PublishManager(packager, { publish: "publish" in checkOptions ? checkOptions.publish : "never" })
 
   const artifacts: Map<Platform, Array<ArtifactCreated>> = new Map()
-  packager.artifactCreated(event => {
+  packager.onArtifactCreated(event => {
     if (event.file == null) {
       return
     }

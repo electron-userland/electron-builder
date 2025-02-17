@@ -22,7 +22,7 @@ import { release as getOsRelease } from "os"
 import * as path from "path"
 import { AppInfo } from "./appInfo"
 import { readAsarJson } from "./asar/asar"
-import { AfterPackContext, Configuration } from "./configuration"
+import { AfterExtractContext, AfterPackContext, BeforePackContext, Configuration, Hook } from "./configuration"
 import { Platform, SourceRepositoryInfo, Target } from "./core"
 import { createElectronFrameworkSupport } from "./electron/ElectronFramework"
 import { Framework } from "./Framework"
@@ -69,7 +69,18 @@ async function createFrameworkInfo(configuration: Configuration, packager: Packa
 }
 
 type PackagerEvents = {
-  artifactCreated: (event: ArtifactCreated) => void | Promise<void>
+  artifactCreated: Hook<ArtifactCreated, void>
+
+  beforePack: Hook<BeforePackContext, void>
+  afterExtract: Hook<AfterExtractContext, void>
+  afterPack: Hook<AfterPackContext, void>
+
+  afterSign: Hook<AfterPackContext, void>
+  artifactBuildStarted: Hook<ArtifactBuildStarted, void>
+  artifactBuildCompleted: Hook<ArtifactCreated, void>
+
+  msiProjectCreated: Hook<string, void>
+  appxManifestCreated: Hook<string, void>
 }
 
 export class Packager {
@@ -120,8 +131,6 @@ export class Packager {
   readonly tempDirManager = new TmpDir("packager")
 
   private _repositoryInfo = new Lazy<SourceRepositoryInfo | null>(() => getRepositoryInfo(this.projectDir, this.metadata, this.devMetadata))
-
-  private readonly afterPackHandlers: Array<(context: AfterPackContext) => Promise<any> | null> = []
 
   readonly options: PackagerOptions
 
@@ -246,26 +255,27 @@ export class Packager {
       prepackaged: options.prepackaged == null ? null : path.resolve(this.projectDir, options.prepackaged),
     }
 
-    try {
-      log.info({ version: PACKAGE_VERSION, os: getOsRelease() }, "electron-builder")
-    } catch (e: any) {
-      // error in dev mode without babel
-      if (!(e instanceof ReferenceError)) {
-        throw e
-      }
-    }
+    log.info({ version: PACKAGE_VERSION, os: getOsRelease() }, "electron-builder")
   }
 
-  addAfterPackHandler(handler: (context: AfterPackContext) => Promise<any> | null) {
-    this.afterPackHandlers.push(handler)
+  async addPackagerEventHandlers() {
+    this.eventEmitter.on("artifactBuildStarted", await resolveFunction(this.appInfo.type, this.config.artifactBuildStarted, "artifactBuildStarted"))
+    this.eventEmitter.on("artifactBuildCompleted", await resolveFunction(this.appInfo.type, this.config.artifactBuildCompleted, "artifactBuildCompleted"))
+    this.eventEmitter.on("appxManifestCreated", await resolveFunction(this.appInfo.type, this.config.appxManifestCreated, "appxManifestCreated"))
+    this.eventEmitter.on("msiProjectCreated", await resolveFunction(this.appInfo.type, this.config.msiProjectCreated, "msiProjectCreated"))
   }
 
-  artifactCreated(handler: (event: ArtifactCreated) => void | Promise<void>): Packager {
+  onAfterPack(handler: PackagerEvents["afterPack"]): Packager {
+    this.eventEmitter.on("afterPack", handler)
+    return this
+  }
+
+  onArtifactCreated(handler: PackagerEvents["artifactCreated"]): Packager {
     this.eventEmitter.on("artifactCreated", handler)
     return this
   }
 
-  async callArtifactBuildStarted(event: ArtifactBuildStarted, logFields?: any): Promise<void> {
+  async emitArtifactBuildStarted(event: ArtifactBuildStarted, logFields?: any): Promise<void> {
     log.info(
       logFields || {
         target: event.targetPresentableName,
@@ -274,40 +284,27 @@ export class Packager {
       },
       "building"
     )
-    const handler = await resolveFunction(this.appInfo.type, this.config.artifactBuildStarted, "artifactBuildStarted")
-    if (handler != null) {
-      await Promise.resolve(handler(event))
-    }
+    await this.eventEmitter.emit("artifactBuildStarted", event)
   }
 
   /**
    * Only for sub artifacts (update info), for main artifacts use `callArtifactBuildCompleted`.
    */
-  async dispatchArtifactCreated(event: ArtifactCreated): Promise<void> {
+  async emitArtifactCreated(event: ArtifactCreated): Promise<void> {
     await this.eventEmitter.emit("artifactCreated", event)
   }
 
-  async callArtifactBuildCompleted(event: ArtifactCreated): Promise<void> {
-    const handler = await resolveFunction(this.appInfo.type, this.config.artifactBuildCompleted, "artifactBuildCompleted")
-    if (handler != null) {
-      await Promise.resolve(handler(event))
-    }
-
-    await this.dispatchArtifactCreated(event)
+  async emitArtifactBuildCompleted(event: ArtifactCreated): Promise<void> {
+    await this.eventEmitter.emit("artifactBuildCompleted", event)
+    await this.emitArtifactCreated(event)
   }
 
-  async callAppxManifestCreated(path: string): Promise<void> {
-    const handler = await resolveFunction(this.appInfo.type, this.config.appxManifestCreated, "appxManifestCreated")
-    if (handler != null) {
-      await Promise.resolve(handler(path))
-    }
+  async emitAppxManifestCreated(path: string): Promise<void> {
+    await this.eventEmitter.emit("appxManifestCreated", path)
   }
 
-  async callMsiProjectCreated(path: string): Promise<void> {
-    const handler = await resolveFunction(this.appInfo.type, this.config.msiProjectCreated, "msiProjectCreated")
-    if (handler != null) {
-      await Promise.resolve(handler(path))
-    }
+  async emitMsiProjectCreated(path: string): Promise<void> {
+    await this.eventEmitter.emit("msiProjectCreated", path)
   }
 
   async validateConfig(): Promise<void> {
@@ -383,7 +380,7 @@ export class Packager {
 
     // because artifact event maybe dispatched several times for different publish providers
     const artifactPaths = new Set<string>()
-    this.artifactCreated(event => {
+    this.onArtifactCreated(event => {
       if (event.file != null) {
         artifactPaths.add(event.file)
       }
@@ -549,15 +546,11 @@ export class Packager {
   }
 
   async afterPack(context: AfterPackContext): Promise<any> {
+    await this.eventEmitter.emit("afterPack", context)
     const afterPack = await resolveFunction(this.appInfo.type, this.config.afterPack, "afterPack")
-    const handlers = this.afterPackHandlers.slice()
     if (afterPack != null) {
       // user handler should be last
-      handlers.push(afterPack)
-    }
-
-    for (const handler of handlers) {
-      await Promise.resolve(handler(context))
+      await Promise.resolve(afterPack(context))
     }
   }
 }

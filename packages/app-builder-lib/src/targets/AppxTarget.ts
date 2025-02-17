@@ -65,7 +65,7 @@ export default class AppXTarget extends Target {
     const packager = this.packager
     const artifactName = packager.expandArtifactBeautyNamePattern(this.options, "appx", arch)
     const artifactPath = path.join(this.outDir, artifactName)
-    await packager.info.callArtifactBuildStarted({
+    await packager.info.emitArtifactBuildStarted({
       targetPresentableName: "AppX",
       file: artifactPath,
       arch,
@@ -102,7 +102,7 @@ export default class AppXTarget extends Target {
     const manifestFile = stageDir.getTempFile("AppxManifest.xml")
     await this.writeManifest(manifestFile, arch, await this.computePublisherName(), userAssets)
 
-    await packager.info.callAppxManifestCreated(manifestFile)
+    await packager.info.emitAppxManifestCreated(manifestFile)
     mappingList.push(assetInfo.mappings)
     mappingList.push([`"${vm.toVmFile(manifestFile)}" "AppxManifest.xml"`])
     const signToolArch = arch === Arch.arm64 ? "x64" : Arch[arch]
@@ -150,7 +150,7 @@ export default class AppXTarget extends Target {
 
     await stageDir.cleanup()
 
-    await packager.info.callArtifactBuildCompleted({
+    await packager.info.emitArtifactBuildCompleted({
       file: artifactPath,
       packager,
       arch,

@@ -155,7 +155,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 
   dispatchArtifactCreated(file: string, target: Target | null, arch: Arch | null, safeArtifactName?: string | null): Promise<void> {
-    return this.info.callArtifactBuildCompleted({
+    return this.info.emitArtifactBuildCompleted({
       file,
       safeArtifactName,
       target,

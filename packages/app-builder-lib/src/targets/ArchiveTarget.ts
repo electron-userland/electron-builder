@@ -36,7 +36,7 @@ export class ArchiveTarget extends Target {
     const artifactName = packager.expandArtifactNamePattern(this.options, format, arch, defaultPattern, false)
     const artifactPath = path.join(this.outDir, artifactName)
 
-    await packager.info.callArtifactBuildStarted({
+    await packager.info.emitArtifactBuildStarted({
       targetPresentableName: `${isMac ? "macOS " : ""}${format}`,
       file: artifactPath,
       arch,
@@ -78,7 +78,7 @@ export class ArchiveTarget extends Target {
       }
     }
 
-    await packager.info.callArtifactBuildCompleted({
+    await packager.info.emitArtifactBuildCompleted({
       updateInfo,
       file: artifactPath,
       // tslint:disable-next-line:no-invalid-template-strings

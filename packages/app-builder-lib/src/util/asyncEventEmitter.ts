@@ -1,3 +1,5 @@
+import { Nullish } from "builder-util-runtime"
+
 type Handler = (...args: any[]) => Promise<void> | void
 
 export type EventMap = {
@@ -5,15 +7,18 @@ export type EventMap = {
 }
 
 interface TypedEventEmitter<Events extends EventMap> {
-  on<E extends keyof Events>(event: E, listener: Events[E]): this
-  off<E extends keyof Events>(event: E, listener: Events[E]): this
+  on<E extends keyof Events>(event: E, listener: Events[E] | Nullish): this
+  off<E extends keyof Events>(event: E, listener: Events[E] | Nullish): this
   emit<E extends keyof Events>(event: E, ...args: Parameters<Events[E]>): Promise<boolean> | boolean
 }
 
 export class AsyncEventEmitter<T extends EventMap> implements TypedEventEmitter<T> {
   private readonly listeners: Map<keyof T, Handler[] | undefined> = new Map()
 
-  on<E extends keyof T>(event: E, listener: T[E]): this {
+  on<E extends keyof T>(event: E, listener: T[E] | Nullish): this {
+    if (!listener) {
+      return this
+    }
     let listeners = this.listeners.get(event)
     if (!listeners) {
       listeners = []
@@ -23,7 +28,7 @@ export class AsyncEventEmitter<T extends EventMap> implements TypedEventEmitter<
     return this
   }
 
-  off<E extends keyof T>(event: E, listener: T[E]): this {
+  off<E extends keyof T>(event: E, listener: T[E] | Nullish): this {
     const listeners = this.listeners.get(event)?.filter(l => l !== listener)
     if (!listeners?.length) {
       this.listeners.delete(event)

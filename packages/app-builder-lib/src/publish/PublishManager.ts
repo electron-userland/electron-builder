@@ -110,7 +110,7 @@ export class PublishManager implements PublishContext {
       )
     }
 
-    packager.addAfterPackHandler(async event => {
+    packager.onAfterPack(async event => {
       const packager = event.packager
       if (event.electronPlatformName === "darwin") {
         if (!event.targets.some(it => it.name === "dmg" || it.name === "zip")) {
@@ -128,7 +128,7 @@ export class PublishManager implements PublishContext {
       }
     })
 
-    packager.artifactCreated(event => {
+    packager.onArtifactCreated(event => {
       const publishConfiguration = event.publishConfig
       if (publishConfiguration == null) {
         this.taskManager.addTask(this.artifactCreatedWithoutExplicitPublishConfig(event))

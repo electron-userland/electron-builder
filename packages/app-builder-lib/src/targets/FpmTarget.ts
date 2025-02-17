@@ -126,7 +126,7 @@ export default class FpmTarget extends Target {
     const artifactName = packager.expandArtifactNamePattern(this.options, target, arch, nameFormat, !isUseArchIfX64)
     const artifactPath = path.join(this.outDir, artifactName)
 
-    await packager.info.callArtifactBuildStarted({
+    await packager.info.emitArtifactBuildStarted({
       targetPresentableName: target,
       file: artifactPath,
       arch,
@@ -289,7 +289,7 @@ export default class FpmTarget extends Target {
         },
       }
     }
-    await packager.info.callArtifactBuildCompleted(info)
+    await packager.info.emitArtifactBuildCompleted(info)
   }
 
   private supportsAutoUpdate(target: string) {
