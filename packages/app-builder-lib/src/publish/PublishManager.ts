@@ -128,7 +128,7 @@ export class PublishManager implements PublishContext {
       }
     })
 
-    packager.onArtifactCreated(event => {
+    packager.onArtifactCreated(async event => {
       const publishConfiguration = event.publishConfig
       if (publishConfiguration == null) {
         this.taskManager.addTask(this.artifactCreatedWithoutExplicitPublishConfig(event))
@@ -136,7 +136,7 @@ export class PublishManager implements PublishContext {
         if (debug.enabled) {
           debug(`artifactCreated (isPublish: ${this.isPublish}): ${safeStringifyJson(event, new Set(["packager"]))},\n  publishConfig: ${safeStringifyJson(publishConfiguration)}`)
         }
-        void this.scheduleUpload(publishConfiguration, event, this.getAppInfo(event.packager))
+        await this.scheduleUpload(publishConfiguration, event, this.getAppInfo(event.packager))
       }
     })
   }

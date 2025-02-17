@@ -18,7 +18,6 @@ interface TypedEventEmitter<Events extends EventMap> {
   off<E extends keyof Events>(event: E, listener: Events[E] | Nullish): this
   emit<E extends keyof Events>(event: E, ...args: Parameters<Events[E]>): Promise<{ emittedSystem: boolean; emittedUser: boolean }>
   filterListeners<E extends keyof Events>(event: E, type: HandlerType): Handle[]
-  clear(): void
 }
 
 export class AsyncEventEmitter<T extends EventMap> implements TypedEventEmitter<T> {
@@ -83,9 +82,5 @@ export class AsyncEventEmitter<T extends EventMap> implements TypedEventEmitter<
       return listeners.filter(l => l.type === type)
     }
     return listeners
-  }
-
-  clear() {
-    this.listeners.clear()
   }
 }

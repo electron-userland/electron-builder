@@ -418,8 +418,6 @@ export class Packager {
         await this.debugLogger.save(path.join(commonOutDirWithoutPossibleOsMacro, "builder-debug.yml"))
       }
 
-      this.eventEmitter.clear()
-
       const toDispose = this.toDispose.slice()
       this.toDispose.length = 0
       for (const disposer of toDispose) {
