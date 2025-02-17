@@ -1,5 +1,5 @@
 ---
-"app-builder-lib": minor
+"app-builder-lib": patch
 ---
 
-feat: allow usage of .cjs, .mjs, and type=module custom/generic publishers
+fix: allow usage of .cjs, .mjs, and type=module custom/generic publishers
