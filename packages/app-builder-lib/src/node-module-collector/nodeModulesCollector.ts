@@ -1,7 +1,7 @@
 import { hoist, type HoisterTree, type HoisterResult } from "./hoist"
 import * as path from "path"
 import * as fs from "fs"
-import { NodeModuleInfo, DependencyTree, DependencyGraph, NpmDependency, ParsedDependencyTree, PARSED_DEPENDENCY_TREE_KEYS } from "./types"
+import { NodeModuleInfo, DependencyTree, DependencyGraph, NpmDependency } from "./types"
 import { exec, log, use } from "builder-util"
 
 export abstract class NodeModulesCollector {
@@ -48,7 +48,7 @@ export abstract class NodeModulesCollector {
       name,
       version,
       path,
-      circularDependencyDetected: false,
+      implicitDependenciesInjected: false,
     }
 
     const moreExtract = (deps: NpmDependency["dependencies"]) =>
@@ -105,7 +105,7 @@ export abstract class NodeModulesCollector {
         acc[parentKey] = { dependencies: [] }
       }
       acc[parentKey].dependencies.push(newKey)
-      if (tree.circularDependencyDetected) {
+      if (tree.implicitDependenciesInjected) {
         log.debug(
           {
             dependency: packageName,
@@ -114,7 +114,7 @@ export abstract class NodeModulesCollector {
             parentModule: tree.name,
             parentVersion: tree.version,
           },
-          "evaluated circluar dependency; skipping dependency flattening step"
+          "converted implicit dependency"
         )
         return acc
       }

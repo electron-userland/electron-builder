@@ -15,22 +15,8 @@ export interface ParsedDependencyTree {
   }
 }
 
-class ParsedDependencyTreeDummy implements Required<NpmDependency> {
-  name = ""
-  version = ""
-  path = ""
-  workspaces = []
-  dependencies = {}
-  optionalDependencies = {}
-  peerDependencies = {}
-  _dependencies = {}
-}
-export const PARSED_DEPENDENCY_TREE_KEYS = Object.keys(new ParsedDependencyTreeDummy())
-
 export interface DependencyTree extends Dependency<DependencyTree>, Omit<ParsedDependencyTree, "dependencies"> {
-  // I hate this, but this needs to be optional to convert NpmDependency=>DependencyTree before this value can get set
-  // We can't set this with an initial value due to the need to set it recursively, and this can't be recursively applied beforehand without a `RangeError: Maximum call stack size exceeded`
-  circularDependencyDetected: boolean
+  implicitDependenciesInjected: boolean
 }
 
 export interface NpmDependency extends Dependency<NpmDependency>, Omit<ParsedDependencyTree, "dependencies"> {
@@ -48,7 +34,7 @@ export type Dependency<T> = {
   peerDependencies?: {
     [packageName: string]: string
   }
-  // npm-specific: for `npm list --json` to detect circular dependencies
+  // npm-specific: implicit dependencies from `npm list --json`
   _dependencies?: {
     [packageName: string]: string
   }
