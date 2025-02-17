@@ -237,17 +237,14 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
     const { outDir, appOutDir, platformName, arch, platformSpecificBuildOptions, targets, options } = packOptions
 
-    const beforePack = await resolveFunction(this.appInfo.type, this.config.beforePack, "beforePack")
-    if (beforePack != null) {
-      await beforePack({
-        appOutDir,
-        outDir,
-        arch,
-        targets,
-        packager: this,
-        electronPlatformName: platformName,
-      })
-    }
+    await this.info.eventEmitter.emit("beforePack", {
+      appOutDir,
+      outDir,
+      arch,
+      targets,
+      packager: this,
+      electronPlatformName: platformName,
+    })
 
     await this.info.installAppDependencies(this.platform, arch)
 

@@ -259,10 +259,14 @@ export class Packager {
   }
 
   async addPackagerEventHandlers() {
-    this.eventEmitter.on("artifactBuildStarted", await resolveFunction(this.appInfo.type, this.config.artifactBuildStarted, "artifactBuildStarted"))
-    this.eventEmitter.on("artifactBuildCompleted", await resolveFunction(this.appInfo.type, this.config.artifactBuildCompleted, "artifactBuildCompleted"))
-    this.eventEmitter.on("appxManifestCreated", await resolveFunction(this.appInfo.type, this.config.appxManifestCreated, "appxManifestCreated"))
-    this.eventEmitter.on("msiProjectCreated", await resolveFunction(this.appInfo.type, this.config.msiProjectCreated, "msiProjectCreated"))
+    this.eventEmitter.on("artifactBuildStarted", await resolveFunction(this.appInfo.type, this.config.artifactBuildStarted, "artifactBuildStarted"), "user")
+    this.eventEmitter.on("artifactBuildCompleted", await resolveFunction(this.appInfo.type, this.config.artifactBuildCompleted, "artifactBuildCompleted"), "user")
+    this.eventEmitter.on("appxManifestCreated", await resolveFunction(this.appInfo.type, this.config.appxManifestCreated, "appxManifestCreated"), "user")
+    this.eventEmitter.on("msiProjectCreated", await resolveFunction(this.appInfo.type, this.config.msiProjectCreated, "msiProjectCreated"), "user")
+
+    this.eventEmitter.on("beforePack", await resolveFunction(this.appInfo.type, this.config.beforePack, "beforePack"), "user")
+    this.eventEmitter.on("afterSign", await resolveFunction(this.appInfo.type, this.config.afterSign, "afterSign"), "user")
+
   }
 
   onAfterPack(handler: PackagerEvents["afterPack"]): Packager {
