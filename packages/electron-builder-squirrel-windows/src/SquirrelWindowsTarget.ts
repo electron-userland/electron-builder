@@ -29,7 +29,7 @@ export default class SquirrelWindowsTarget extends Target {
     const installerOutDir = path.join(this.outDir, `squirrel-windows${getArchSuffix(arch)}`)
     const artifactPath = path.join(installerOutDir, setupFile)
 
-    await packager.info.callArtifactBuildStarted({
+    await packager.info.emitArtifactBuildStarted({
       targetPresentableName: "Squirrel.Windows",
       file: artifactPath,
       arch,
@@ -48,7 +48,7 @@ export default class SquirrelWindowsTarget extends Target {
 
     await createWindowsInstaller(distOptions)
 
-    await packager.info.callArtifactBuildCompleted({
+    await packager.info.emitArtifactBuildCompleted({
       file: artifactPath,
       target: this,
       arch,
@@ -57,14 +57,14 @@ export default class SquirrelWindowsTarget extends Target {
     })
 
     const packagePrefix = `${this.appName}-${convertVersion(version)}-`
-    packager.info.dispatchArtifactCreated({
+    await packager.info.emitArtifactCreated({
       file: path.join(installerOutDir, `${packagePrefix}full.nupkg`),
       target: this,
       arch,
       packager,
     })
     if (distOptions.remoteReleases != null) {
-      packager.info.dispatchArtifactCreated({
+      await packager.info.emitArtifactCreated({
         file: path.join(installerOutDir, `${packagePrefix}delta.nupkg`),
         target: this,
         arch,
@@ -72,7 +72,7 @@ export default class SquirrelWindowsTarget extends Target {
       })
     }
 
-    packager.info.dispatchArtifactCreated({
+    await packager.info.emitArtifactCreated({
       file: path.join(installerOutDir, "RELEASES"),
       target: this,
       arch,
