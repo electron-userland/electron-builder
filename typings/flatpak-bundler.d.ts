@@ -55,5 +55,24 @@ declare module "@malept/flatpak-bundler" {
     repoDir?: string
     cleanTmpdirs?: boolean
     autoInstallRuntime?: boolean
+    autoInstallSdk?: boolean
+    autoInstallBase?: boolean
+    gpgSign?: string
+    gpgHomedir?: string
+    subject?: string
+    body?: string
+    files?: [string, string][]
+    symlinks?: [string, string][]
+    extraExports?: any
+    runtimeFlatpakref?: string
+    sdkFlatpakref?: string
+    baseFlatpakref?: string
+    bundleRepoUrl?: string
+    extraFlatpakBuilderArgs?: any
+    extraFlatpakBuildExportArgs?: any
+    extraFlatpakBuildBundleArgs?: any
   }
+
+  export function bundle(manifest: FlatpakManifest, options: FlatpakBundlerBuildOptions): Promise<void>
+  export function translateArch(arch: string): string
 }
