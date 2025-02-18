@@ -7067,6 +7067,11 @@
         "string"
       ]
     },
+    "excludeNodeModulesFromAsar": {
+      "default": false,
+      "description": "don't pack all node modules into asar.",
+      "type": "boolean"
+    },
     "executableName": {
       "description": "The executable name. Defaults to `productName`.",
       "type": [

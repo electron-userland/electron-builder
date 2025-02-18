@@ -398,8 +398,12 @@ test.ifDevOrLinuxCi(
   app(
     {
       targets: linuxDirTarget,
+      config:{
+        excludeNodeModulesFromAsar: true,
+      }
     },
     {
+      isInstallDepsBefore:true,
       projectDirCreated: packageJson(it => {
         it.dependencies = {
           debug: "4.1.1",

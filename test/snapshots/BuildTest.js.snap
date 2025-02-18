@@ -194,6 +194,47 @@ exports[`cli 11`] = `
 }
 `;
 
+exports[`don't pack node_modules into asar 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`don't pack node_modules into asar 2`] = `
+{
+  "files": {
+    "app": {
+      "files": {
+        "package.json": {
+          "files": {
+            "readme.md": {
+              "offset": "0",
+              "size": 32,
+            },
+          },
+        },
+        "readme.md": {
+          "offset": "32",
+          "size": 78,
+        },
+      },
+    },
+    "index.html": {
+      "offset": "110",
+      "size": 841,
+    },
+    "index.js": {
+      "offset": "951",
+      "size": 4184,
+    },
+    "package.json": {
+      "offset": "5135",
+      "size": 326,
+    },
+  },
+}
+`;
+
 exports[`electron version from build 1`] = `
 {
   "linux": [],
