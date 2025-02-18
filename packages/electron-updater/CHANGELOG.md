@@ -1,5 +1,11 @@
 ## 4.3.0
 
+## 6.6.0
+
+### Minor Changes
+
+- [#8817](https://github.com/electron-userland/electron-builder/pull/8817) [`ea3e0f5f`](https://github.com/electron-userland/electron-builder/commit/ea3e0f5ff8ac9a5e01bcd11585d9f5e6a57b076e) Thanks [@Akatroj](https://github.com/Akatroj)! - fix: Dispatch error in updater if `spawnSyncLog` fails
+
 ## 6.5.0
 
 ### Minor Changes

@@ -1,3 +1,19 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v26.0.6...v) (2025-02-18)
+
+
+### Bug Fixes
+
+* Detected circular dependencies and add debug logs for nodeModulesCollector ([#8864](https://github.com/electron-userland/electron-builder/issues/8864)) ([3fe27d7](https://github.com/electron-userland/electron-builder/commit/3fe27d77587a05a7d568b3b21f1df8f0a1650c92))
+* Sign the vendor directory instead of using Squirrel.Windows' signing method. ([#8855](https://github.com/electron-userland/electron-builder/issues/8855)) ([bee179b](https://github.com/electron-userland/electron-builder/commit/bee179b3cf8163041d280ed8dc5a5ce4f27786c6))
+* validate key before proceeding with deep assignment ([#8869](https://github.com/electron-userland/electron-builder/issues/8869)) ([c12f86f](https://github.com/electron-userland/electron-builder/commit/c12f86f2e254809e70d1f60d89cf9b7264278083))
+
+
+### Features
+
+* **updater:** Dispatch error in updater if `spawnSyncLog` fails ([#8817](https://github.com/electron-userland/electron-builder/issues/8817)) ([ea3e0f5](https://github.com/electron-userland/electron-builder/commit/ea3e0f5ff8ac9a5e01bcd11585d9f5e6a57b076e))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v26.0.5...v) (2025-02-06)
 
 
