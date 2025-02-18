@@ -1,5 +1,5 @@
 import { NodeModulesCollector } from "./nodeModulesCollector"
-import { DependencyTree, ParsedDependencyTree } from "./types"
+import { DependencyTree, NpmDependency, ParsedDependencyTree } from "./types"
 import { log } from "builder-util"
 
 export class NpmNodeModulesCollector extends NodeModulesCollector {
@@ -16,29 +16,38 @@ export class NpmNodeModulesCollector extends NodeModulesCollector {
   }
 
   protected removeNonProductionDependencies(tree: DependencyTree): DependencyTree {
-    const _dependencies = tree._dependencies ?? {}
-    const dependencies = tree.dependencies ?? {}
-    if (Object.keys(_dependencies).length > 0 && Object.keys(dependencies).length === 0) {
+    const _deps = tree._dependencies ?? {}
+    const deps = tree.dependencies ?? {}
+    if (Object.keys(_deps).length > 0 && Object.keys(deps).length === 0) {
       tree.dependencies = this.allDependencies.get(`${tree.name}@${tree.version}`)?.dependencies
       tree.implicitDependenciesInjected = true
       log.debug({ name: tree.name, version: tree.version }, "injecting implicit _dependencies")
+      return tree
     }
 
-    // eslint-disable-next-line prefer-const
-    for (let [key, value] of Object.entries(tree.dependencies ?? {})) {
-      if (!_dependencies[key] || Object.keys(value).length === 0) {
-        delete tree.dependencies![key]
-        continue
+    const dependencies = Object.entries(tree.dependencies || {}).reduce<DependencyTree["dependencies"]>((acc, curr) => {
+      const [packageName, dependency] = curr
+      if (!_deps[packageName] || Object.keys(dependency).length === 0) {
+        return acc
       }
-      if (!tree.implicitDependenciesInjected) {
-        value = this.removeNonProductionDependencies(value)
+      if (tree.implicitDependenciesInjected) {
+        const { name, version, path } = dependency
+        const simplifiedTree: ParsedDependencyTree = { name, version, path }
+        return {
+          ...acc,
+          [packageName]: { ...simplifiedTree, implicitDependenciesInjected: true },
+        }
       }
-    }
-    return tree
+      return {
+        ...acc,
+        [packageName]: this.removeNonProductionDependencies(dependency),
+      }
+    }, {})
+
+    return { ...tree, dependencies }
   }
 
-  protected parseDependenciesTree(jsonBlob: string): ParsedDependencyTree {
-    const dependencyTree = JSON.parse(jsonBlob)
-    return dependencyTree
+  protected parseDependenciesTree(jsonBlob: string): NpmDependency {
+    return JSON.parse(jsonBlob)
   }
 }

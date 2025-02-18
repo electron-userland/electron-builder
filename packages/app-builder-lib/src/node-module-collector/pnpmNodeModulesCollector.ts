@@ -16,34 +16,20 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector {
   }
 
   removeNonProductionDependencies(tree: DependencyTree): DependencyTree {
-    // const p = path.normalize(this.resolvePath(tree.path))
-    // const pJson: Dependency<string> = require(path.join(p, "package.json"))
-    // const prodDependencies = { ...(pJson.dependencies || {}), ...(pJson.optionalDependencies || {}) }
-    // return Object.entries(tree.dependencies || {}).reduce<DependencyTree>(
-    //   (acc, curr) => {
-    //     const [packageName, dependency] = curr
-    //     if (!prodDependencies[packageName]) {
-    //       return acc
-    //     }
-    //     return {
-    //       ...acc,
-    //       [packageName]: this.removeNonProductionDependencies(dependency),
-    //     }
-    //   },
-    //   { ...tree, circularDependencyDetected: false }
-    // )
-    const dependencies = tree.dependencies || {}
     const p = path.normalize(this.resolvePath(tree.path))
-    const pJson: Dependency<string> = require(path.join(p, "package.json"))
-    const prodDependencies = { ...(pJson.dependencies || {}), ...(pJson.optionalDependencies || {}) }
-    // eslint-disable-next-line prefer-const
-    for (let [key, value] of Object.entries(dependencies)) {
-      if (!prodDependencies[key]) {
-        delete dependencies[key]
-        continue
+    const packageJson: Dependency<string> = require(path.join(p, "package.json"))
+    const prodDependencies = { ...(packageJson.dependencies || {}), ...(packageJson.optionalDependencies || {}) }
+    const dependencies = Object.entries(tree.dependencies || {}).reduce<DependencyTree["dependencies"]>((acc, curr) => {
+      const [packageName, dependency] = curr
+      if (!prodDependencies[packageName]) {
+        return acc
       }
-      value = this.removeNonProductionDependencies(value)
-    }
+      return {
+        ...acc,
+        [packageName]: this.removeNonProductionDependencies(dependency),
+      }
+    }, {})
+
     return { ...tree, dependencies }
   }
 
