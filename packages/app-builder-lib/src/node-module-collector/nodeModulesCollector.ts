@@ -29,8 +29,8 @@ export abstract class NodeModulesCollector {
 
   protected abstract getCommand(): string
   protected abstract getArgs(): string[]
-  protected abstract removeNonProductionDependencies(parsedTree: NpmDependency): DependencyTree
   protected abstract parseDependenciesTree(jsonBlob: string): NpmDependency
+  protected abstract removeNonProductionDependencies(parsedTree: DependencyTree): DependencyTree
 
   protected async getDependenciesTree(): Promise<NpmDependency> {
     const command = this.getCommand()
@@ -48,10 +48,11 @@ export abstract class NodeModulesCollector {
       name,
       version,
       path,
+      workspaces,
       implicitDependenciesInjected: false,
     }
 
-    const moreExtract = (deps: NpmDependency["dependencies"]) =>
+    const extractInternal = (deps: NpmDependency["dependencies"]) =>
       deps && Object.keys(deps).length > 0
         ? Object.entries(deps).reduce((accum, [packageName, depObjectOrVersionString]) => {
             return {
@@ -65,13 +66,12 @@ export abstract class NodeModulesCollector {
         : undefined
 
     // only set property if existing, skip undefined (at minimum, it helps in Variables debugger window)
-    use(workspaces, v => (tree.workspaces = v))
     use(_dependencies, v => (tree._dependencies = v))
     use(optionalDependencies, v => (tree.optionalDependencies = v))
     use(peerDependencies, v => (tree.peerDependencies = v))
 
     // DFS extract subtree
-    use(moreExtract(dependencies), v => (tree.dependencies = v))
+    use(extractInternal(dependencies), v => (tree.dependencies = v))
 
     return tree
   }

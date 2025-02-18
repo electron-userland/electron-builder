@@ -9,17 +9,15 @@ export interface ParsedDependencyTree {
   readonly name: string
   readonly version: string
   readonly path: string
-  workspaces?: string[]
-  // dependencies?: {
-  //   [packageName: string]: ParsedDependencyTree
-  // }
+  readonly workspaces?: string[] // we only use this at root level
 }
 
-export interface DependencyTree extends Dependency<DependencyTree>, Omit<ParsedDependencyTree, "dependencies"> {
+export interface DependencyTree extends Dependency<DependencyTree>, ParsedDependencyTree {
   implicitDependenciesInjected: boolean
 }
 
-export interface NpmDependency extends Dependency<NpmDependency>, Omit<ParsedDependencyTree, "dependencies"> {
+export interface NpmDependency extends Dependency<NpmDependency>, ParsedDependencyTree {
+  // Output of `JSON.parse(...)` of `npm list` and `pnpm list`
   // This object has a TON of info - a majority, if not all, of the dependency's package.json
   // We extract only what we need when constructing DependencyTree
 }
