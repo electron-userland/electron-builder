@@ -1,12 +1,12 @@
 import { SignOptions as MacSignOptions } from "@electron/osx-sign/dist/cjs/types"
 import { Identity } from "app-builder-lib/out/codeSign/macCodeSign"
-import { MacPackager } from "app-builder-lib/out/macPackager"
 import { DoPackOptions } from "app-builder-lib/out/platformPackager"
-import { WinPackager } from "app-builder-lib/out/winPackager"
+import { WinPackager, getArchSuffix, MacPackager } from "app-builder-lib"
 import { AsyncTaskManager } from "builder-util"
 import { DmgTarget } from "dmg-builder"
 import { Arch, MacConfiguration, Packager, Target } from "electron-builder"
 import SquirrelWindowsTarget from "electron-builder-squirrel-windows"
+import * as path from "path"
 
 export class CheckingWinPackager extends WinPackager {
   effectiveDistOptions: any
@@ -19,8 +19,10 @@ export class CheckingWinPackager extends WinPackager {
   async pack(outDir: string, arch: Arch, targets: Array<Target>, taskManager: AsyncTaskManager): Promise<any> {
     // skip pack
     const helperClass: typeof SquirrelWindowsTarget = require("electron-builder-squirrel-windows").default
-    this.effectiveDistOptions = await new helperClass(this, outDir).computeEffectiveDistOptions()
-
+    const newClass = new helperClass(this, outDir)
+    const setupFile = this.expandArtifactNamePattern(newClass.options, "exe", arch, "${productName} Setup ${version}.${ext}")
+    const installerOutDir = path.join(outDir, `squirrel-windows${getArchSuffix(arch)}`)
+    this.effectiveDistOptions = await newClass.computeEffectiveDistOptions(installerOutDir, outDir, setupFile)
     await this.sign(this.computeAppOutDir(outDir, arch))
   }
 

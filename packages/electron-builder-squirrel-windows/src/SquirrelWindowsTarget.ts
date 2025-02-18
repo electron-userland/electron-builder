@@ -1,10 +1,10 @@
-import { Arch, getArchSuffix, SquirrelWindowsOptions, Target } from "app-builder-lib"
-import { getBinFromUrl } from "app-builder-lib/out/binDownload"
-import { WinPackager } from "app-builder-lib/out/winPackager"
-import { InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
+import { InvalidConfigurationError, log, isEmptyOrSpaces } from "builder-util"
 import { sanitizeFileName } from "builder-util/out/filename"
+import { Arch, getArchSuffix, SquirrelWindowsOptions, Target, WinPackager } from "app-builder-lib"
 import * as path from "path"
-import { convertVersion, SquirrelBuilder, SquirrelOptions } from "./squirrelPack"
+import * as fs from "fs"
+import * as os from "os"
+import { Options as SquirrelOptions, createWindowsInstaller, convertVersion } from "electron-winstaller"
 
 export default class SquirrelWindowsTarget extends Target {
   //tslint:disable-next-line:no-object-literal-type-assertion
@@ -17,17 +17,41 @@ export default class SquirrelWindowsTarget extends Target {
     super("squirrel")
   }
 
+  private async prepareSignedVendorDirectory(): Promise<string> {
+    // If not specified will use the Squirrel.Windows that is shipped with electron-installer(https://github.com/electron/windows-installer/tree/main/vendor)
+    // After https://github.com/electron-userland/electron-builder-binaries/pull/56 merged, will add `electron-builder-binaries` to get the latest version of squirrel.
+    let vendorDirectory = this.options.customSquirrelVendorDir || path.join(require.resolve("electron-winstaller/package.json"), "..", "vendor")
+    if (isEmptyOrSpaces(vendorDirectory) || !fs.existsSync(vendorDirectory)) {
+      log.warn({ vendorDirectory }, "unable to access Squirrel.Windows vendor directory, falling back to default electron-winstaller")
+      vendorDirectory = path.join(require.resolve("electron-winstaller/package.json"), "..", "vendor")
+    }
+
+    const tmpVendorDirectory = await this.packager.info.tempDirManager.createTempDir({ prefix: "squirrel-windows-vendor" })
+    // Copy entire vendor directory to temp directory
+    await fs.promises.cp(vendorDirectory, tmpVendorDirectory, { recursive: true })
+    log.debug({ from: vendorDirectory, to: tmpVendorDirectory }, "copied vendor directory")
+
+    const files = await fs.promises.readdir(tmpVendorDirectory)
+    for (const file of files) {
+      if (["Squirrel.exe", "StubExecutable.exe"].includes(file)) {
+        const filePath = path.join(tmpVendorDirectory, file)
+        log.debug({ file: filePath }, "signing vendor executable")
+        await this.packager.sign(filePath)
+      }
+    }
+
+    return tmpVendorDirectory
+  }
+
   async build(appOutDir: string, arch: Arch) {
     const packager = this.packager
     const version = packager.appInfo.version
     const sanitizedName = sanitizeFileName(this.appName)
 
-    // tslint:disable-next-line:no-invalid-template-strings
     const setupFile = packager.expandArtifactNamePattern(this.options, "exe", arch, "${productName} Setup ${version}.${ext}")
-    const packageFile = `${sanitizedName}-${convertVersion(version)}-full.nupkg`
-
     const installerOutDir = path.join(this.outDir, `squirrel-windows${getArchSuffix(arch)}`)
     const artifactPath = path.join(installerOutDir, setupFile)
+    const msiArtifactPath = path.join(installerOutDir, packager.expandArtifactNamePattern(this.options, "msi", arch, "${productName} Setup ${version}.${ext}"))
 
     await packager.info.callArtifactBuildStarted({
       targetPresentableName: "Squirrel.Windows",
@@ -35,21 +59,33 @@ export default class SquirrelWindowsTarget extends Target {
       arch,
     })
 
-    if (arch === Arch.ia32) {
-      log.warn("For windows consider only distributing 64-bit or use nsis target, see https://github.com/electron-userland/electron-builder/issues/359#issuecomment-214851130")
+    const distOptions = await this.computeEffectiveDistOptions(appOutDir, installerOutDir, setupFile)
+    await createWindowsInstaller(distOptions)
+
+    await packager.signAndEditResources(artifactPath, arch, installerOutDir)
+    if (this.options.msi) {
+      await packager.sign(msiArtifactPath)
     }
 
-    const distOptions = await this.computeEffectiveDistOptions()
-    const squirrelBuilder = new SquirrelBuilder(distOptions, installerOutDir, packager)
-    await squirrelBuilder.buildInstaller({ setupFile, packageFile }, appOutDir, this.outDir, arch)
+    const safeArtifactName = (ext: string) => `${sanitizedName}-Setup-${version}${getArchSuffix(arch)}.${ext}`
 
     await packager.info.callArtifactBuildCompleted({
       file: artifactPath,
       target: this,
       arch,
-      safeArtifactName: `${sanitizedName}-Setup-${version}${getArchSuffix(arch)}.exe`,
+      safeArtifactName: safeArtifactName("exe"),
       packager: this.packager,
     })
+
+    if (this.options.msi) {
+      await packager.info.callArtifactBuildCompleted({
+        file: msiArtifactPath,
+        target: this,
+        arch,
+        safeArtifactName: safeArtifactName("msi"),
+        packager: this.packager,
+      })
+    }
 
     const packagePrefix = `${this.appName}-${convertVersion(version)}-`
     packager.info.dispatchArtifactCreated({
@@ -79,7 +115,30 @@ export default class SquirrelWindowsTarget extends Target {
     return this.options.name || this.packager.appInfo.name
   }
 
-  async computeEffectiveDistOptions(): Promise<SquirrelOptions> {
+  private select7zipArch(vendorDirectory: string) {
+    // https://github.com/electron/windows-installer/blob/main/script/select-7z-arch.js
+    // Even if we're cross-compiling for a different arch like arm64,
+    // we still need to use the 7-Zip executable for the host arch
+    const resolvedArch = os.arch
+    fs.copyFileSync(path.join(vendorDirectory, `7z-${resolvedArch}.exe`), path.join(vendorDirectory, "7z.exe"))
+    fs.copyFileSync(path.join(vendorDirectory, `7z-${resolvedArch}.dll`), path.join(vendorDirectory, "7z.dll"))
+  }
+
+  private async createNuspecTemplateWithProjectUrl() {
+    const templatePath = path.resolve(__dirname, "..", "template.nuspectemplate")
+    const projectUrl = await this.packager.appInfo.computePackageUrl()
+    if (projectUrl != null) {
+      const nuspecTemplate = await this.packager.info.tempDirManager.getTempFile({ prefix: "template", suffix: ".nuspectemplate" })
+      let templateContent = await fs.promises.readFile(templatePath, "utf8")
+      const searchString = "<copyright><%- copyright %></copyright>"
+      templateContent = templateContent.replace(searchString, `${searchString}\n    <projectUrl>${projectUrl}</projectUrl>`)
+      await fs.promises.writeFile(nuspecTemplate, templateContent)
+      return nuspecTemplate
+    }
+    return templatePath
+  }
+
+  async computeEffectiveDistOptions(appDirectory: string, outputDirectory: string, setupFile: string): Promise<SquirrelOptions> {
     const packager = this.packager
     let iconUrl = this.options.iconUrl
     if (iconUrl == null) {
@@ -94,39 +153,37 @@ export default class SquirrelWindowsTarget extends Target {
     }
 
     checkConflictingOptions(this.options)
-
     const appInfo = packager.appInfo
-    const projectUrl = await appInfo.computePackageUrl()
-    const appName = this.appName
     const options: SquirrelOptions = {
-      name: appName,
-      productName: this.options.name || appInfo.productName,
-      appId: this.options.useAppIdAsId ? appInfo.id : appName,
+      appDirectory: appDirectory,
+      outputDirectory: outputDirectory,
+      name: this.options.useAppIdAsId ? appInfo.id : this.appName,
+      title: appInfo.productName || appInfo.name,
       version: appInfo.version,
       description: appInfo.description,
-      // better to explicitly set to empty string, to avoid any nugget errors
+      exe: `${appInfo.productFilename || this.options.name || appInfo.productName}.exe`,
       authors: appInfo.companyName || "",
+      nuspecTemplate: await this.createNuspecTemplateWithProjectUrl(),
       iconUrl,
-      extraMetadataSpecs: projectUrl == null ? null : `\n    <projectUrl>${projectUrl}</projectUrl>`,
       copyright: appInfo.copyright,
-      packageCompressionLevel: parseInt((process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL || packager.compression === "store" ? 0 : 9) as any, 10),
-      vendorPath: await getBinFromUrl("Squirrel.Windows", "1.9.0", "zJHk4CMATM7jHJ2ojRH1n3LkOnaIezDk5FAzJmlSEQSiEdRuB4GGLCegLDtsRCakfHIVfKh3ysJHLjynPkXwhQ=="),
-      ...(this.options as any),
+      noMsi: !this.options.msi,
+      usePackageJson: false,
+    }
+
+    options.vendorDirectory = await this.prepareSignedVendorDirectory()
+    this.select7zipArch(options.vendorDirectory)
+    options.fixUpPaths = true
+    options.setupExe = setupFile
+    if (this.options.msi) {
+      options.setupMsi = setupFile.replace(".exe", ".msi")
     }
 
     if (isEmptyOrSpaces(options.description)) {
-      options.description = options.productName
+      options.description = this.options.name || appInfo.productName
     }
 
     if (options.remoteToken == null) {
       options.remoteToken = process.env.GH_TOKEN || process.env.GITHUB_TOKEN
-    }
-
-    if (!("loadingGif" in options)) {
-      const resourceList = await packager.resourceList
-      if (resourceList.includes("install-spinner.gif")) {
-        options.loadingGif = path.join(packager.buildResourcesDir, "install-spinner.gif")
-      }
     }
 
     if (this.options.remoteReleases === true) {
@@ -136,6 +193,15 @@ export default class SquirrelWindowsTarget extends Target {
       } else {
         options.remoteReleases = `https://github.com/${info.user}/${info.project}`
         log.info({ remoteReleases: options.remoteReleases }, `remoteReleases is set`)
+      }
+    } else if (typeof this.options.remoteReleases === "string" && !isEmptyOrSpaces(this.options.remoteReleases)) {
+      options.remoteReleases = this.options.remoteReleases
+    }
+
+    if (!("loadingGif" in options)) {
+      const resourceList = await packager.resourceList
+      if (resourceList.includes("install-spinner.gif")) {
+        options.loadingGif = path.join(packager.buildResourcesDir, "install-spinner.gif")
       }
     }
 

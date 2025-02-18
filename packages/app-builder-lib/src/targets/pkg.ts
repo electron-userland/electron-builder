@@ -13,6 +13,11 @@ import { getNotLocalizedLicenseFile } from "../util/license"
 
 const certType = "Developer ID Installer"
 
+type ExtraPackages = {
+  packagePath: string
+  packages: string[]
+}
+
 // http://www.shanekirk.com/2013/10/creating-flat-packages-in-osx/
 // to use --scripts, we must build .app bundle separately using pkgbuild
 // productbuild --scripts doesn't work (because scripts in this case not added to our package)
@@ -53,12 +58,14 @@ export class PkgTarget extends Target {
     // https://developer.apple.com/library/content/documentation/DeveloperTools/Reference/DistributionDefinitionRef/Chapters/Distribution_XML_Ref.html
     const distInfoFile = path.join(appOutDir, "distribution.xml")
 
+    const extraPackages = this.getExtraPackages()
+
     const innerPackageFile = path.join(appOutDir, `${filterCFBundleIdentifier(appInfo.id)}.pkg`)
     const componentPropertyListFile = path.join(appOutDir, `${filterCFBundleIdentifier(appInfo.id)}.plist`)
     const identity = (
       await Promise.all([
         findIdentity(certType, options.identity || packager.platformSpecificBuildOptions.identity, keychainFile),
-        this.customizeDistributionConfiguration(distInfoFile, appPath),
+        this.customizeDistributionConfiguration(distInfoFile, appPath, extraPackages),
         this.buildComponentPackage(appPath, componentPropertyListFile, innerPackageFile),
       ])
     )[0]
@@ -69,22 +76,55 @@ export class PkgTarget extends Target {
 
     const args = prepareProductBuildArgs(identity, keychainFile)
     args.push("--distribution", distInfoFile)
+    if (extraPackages) {
+      args.push("--package-path", extraPackages.packagePath)
+    }
     args.push(artifactPath)
     use(options.productbuild, it => args.push(...(it as any)))
     await exec("productbuild", args, {
       cwd: appOutDir,
     })
     await Promise.all([unlink(innerPackageFile), unlink(distInfoFile)])
-
+    await packager.notarizeIfProvided(artifactPath)
     await packager.dispatchArtifactCreated(artifactPath, this, arch, packager.computeSafeArtifactName(artifactName, "pkg", arch))
   }
 
-  private async customizeDistributionConfiguration(distInfoFile: string, appPath: string) {
-    await exec("productbuild", ["--synthesize", "--component", appPath, distInfoFile], {
+  private getExtraPackages(): ExtraPackages | null {
+    const extraPkgsDir = this.options.extraPkgsDir
+    if (extraPkgsDir == null) {
+      return null
+    }
+    const packagePath = path.join(this.packager.info.buildResourcesDir, extraPkgsDir)
+    let files: Array<string>
+    try {
+      files = readdirSync(packagePath)
+    } catch (e: any) {
+      if (e.code === "ENOENT") {
+        return null
+      } else {
+        throw e
+      }
+    }
+    const packages = files.filter(file => file.endsWith(".pkg"))
+    if (packages.length === 0) {
+      return null
+    }
+    return { packagePath, packages }
+  }
+
+  private async customizeDistributionConfiguration(distInfoFile: string, appPath: string, extraPackages: ExtraPackages | null) {
+    const options = this.options
+    const args = ["--synthesize", "--component", appPath]
+    if (extraPackages) {
+      extraPackages.packages.forEach(pkg => {
+        args.push("--package", path.join(extraPackages.packagePath, pkg))
+      })
+    }
+    args.push(distInfoFile)
+    await exec("productbuild", args, {
       cwd: this.outDir,
     })
 
-    const options = this.options
     let distInfo = await readFile(distInfoFile, "utf-8")
 
     if (options.mustClose != null && options.mustClose.length !== 0) {

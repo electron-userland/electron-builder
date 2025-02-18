@@ -1,0 +1,31 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+  <metadata>
+    <id><%- name %></id>
+    <title><%- title %></title>
+    <version><%- version %></version>
+    <authors><%- authors %></authors>
+    <owners><%- owners %></owners>
+    <iconUrl><%- iconUrl %></iconUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description><%- description %></description>
+    <copyright><%- copyright %></copyright>
+  </metadata>
+  <files>
+    <file src="locales\**" target="lib\net45\locales" />
+    <file src="resources\**" target="lib\net45\resources" />
+    <file src="*.bin" target="lib\net45" />
+    <file src="*.dll" target="lib\net45" />
+    <file src="*.pak" target="lib\net45" />
+    <file src="*.exe.config" target="lib\net45" />
+    <file src="*.exe.sig" target="lib\net45" />
+    <file src="icudtl.dat" target="lib\net45\icudtl.dat" />
+    <file src="Squirrel.exe" target="lib\net45\squirrel.exe" />
+    <file src="LICENSE.electron.txt" target="lib\net45\LICENSE.electron.txt" />
+    <file src="LICENSES.chromium.html" target="lib\net45\LICENSES.chromium.html" />
+    <file src="<%- exe %>" target="lib\net45\<%- exe %>" />
+    <% additionalFiles.forEach(function(f) { %>
+    <file src="<%- f.src %>" target="<%- f.target %>" />
+    <% }); %>
+  </files>
+</package>

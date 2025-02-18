@@ -1,3 +1,59 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v26.0.5...v) (2025-02-06)
+
+
+### Bug Fixes
+
+* missing `ms` package when pruning non-prod dependencies ([#8851](https://github.com/electron-userland/electron-builder/issues/8851)) ([0f2c963](https://github.com/electron-userland/electron-builder/commit/0f2c96379143e3dde960ed45bb3e1b74449540f1))
+* Only update AppArmor profile if not chroot'ed ([#8843](https://github.com/electron-userland/electron-builder/issues/8843)) ([7fc7846](https://github.com/electron-userland/electron-builder/commit/7fc784603d580fc6dc183e02118734ea4ffeb257))
+
+
+
+# [](https://github.com/electron-userland/electron-builder/compare/v26.0.4...v) (2025-02-05)
+
+
+### Bug Fixes
+
+* ignore `peerDependencies` when collecting node modules tree ([#8845](https://github.com/electron-userland/electron-builder/issues/8845)) ([53ee6c6](https://github.com/electron-userland/electron-builder/commit/53ee6c6c498a4cc4e64d580c4ec6564137060eae))
+
+
+
+# [](https://github.com/electron-userland/electron-builder/compare/v26.0.3...v) (2025-02-04)
+
+
+### Features
+
+* switch app-builder-bin to node-module-collector to get all production node modules ([#8571](https://github.com/electron-userland/electron-builder/issues/8571)) ([04be569](https://github.com/electron-userland/electron-builder/commit/04be5699c664e6a93e093b820a16ad516355b5c7))
+
+
+
+# [](https://github.com/electron-userland/electron-builder/compare/v26.0.2...v) (2025-02-03)
+
+
+### Features
+
+* **pkg:** support notarizing `pkg` for macos archives ([#8834](https://github.com/electron-userland/electron-builder/issues/8834)) ([6261c9a](https://github.com/electron-userland/electron-builder/commit/6261c9a038ecd73c55ac3909825d5d3d7fa43664))
+* use electron-winstaller instead of self module ([#8344](https://github.com/electron-userland/electron-builder/issues/8344)) ([27b2ba8](https://github.com/electron-userland/electron-builder/commit/27b2ba8129f0e9ad102ca3120c7d7a0f9d29b8eb))
+
+
+
+# [](https://github.com/electron-userland/electron-builder/compare/v26.0.1...v) (2025-02-03)
+
+
+### Bug Fixes
+
+* handle yarn berry `patch` format in electron-updater version check ([#8830](https://github.com/electron-userland/electron-builder/issues/8830)) ([44603f2](https://github.com/electron-userland/electron-builder/commit/44603f2f3cc0e00e1c2c2420c7d440d587f8feca))
+* upgrading TrustedSigning module to 0.5.0 ([#8833](https://github.com/electron-userland/electron-builder/issues/8833)) ([f5af99a](https://github.com/electron-userland/electron-builder/commit/f5af99ac87ef585a7f7ba548d3fb92811f845ba3))
+
+
+### Features
+
+* add `isUpdateAvailable` property to `checkForUpdates` result ([#8829](https://github.com/electron-userland/electron-builder/issues/8829)) ([14ee2d6](https://github.com/electron-userland/electron-builder/commit/14ee2d6be32fd6e9165381e0709e5a2e8049ece2))
+* Allow users to pass a custom headers URL via env var `npm_config_electron_mirror` ([#8785](https://github.com/electron-userland/electron-builder/issues/8785)) ([b3adf48](https://github.com/electron-userland/electron-builder/commit/b3adf4800b4ed240bb21a6a0a6ccdd57670e5d26))
+* **pkg:** support extra component packages (`.pkg`) for macos archives ([#8767](https://github.com/electron-userland/electron-builder/issues/8767)) ([f45a09e](https://github.com/electron-userland/electron-builder/commit/f45a09eeeb9d2fb5c4a45bd7bf3990c4acb3c538))
+* **updater:** add custom `isUpdateSupported` hook for validating update downloads ([#8692](https://github.com/electron-userland/electron-builder/issues/8692)) ([96c5d14](https://github.com/electron-userland/electron-builder/commit/96c5d14027d56473ae5dd843c023709a01782963))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v26.0.0...v) (2025-01-30)
 
 

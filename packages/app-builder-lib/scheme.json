@@ -4971,6 +4971,13 @@
             "string"
           ]
         },
+        "extraPkgsDir": {
+          "description": "The extra component packages directory (relative to build resources directory) for MacOS product archive\nAutoscans directory for any `.pkg` files and adds to `productbuild` command as `--package-path` and `--package` accordingly",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
         "hasStrictIdentifier": {
           "default": true,
           "description": "Require identical bundle identifiers at install path?",
@@ -6001,6 +6008,10 @@
             "null",
             "string"
           ]
+        },
+        "customSquirrelVendorDir": {
+          "description": "The custom squirrel vender dir. If not specified will use the Squirrel.Windows that is shipped with electron-installer(https://github.com/electron/windows-installer/tree/main/vendor).\nAfter https://github.com/electron-userland/electron-builder-binaries/pull/56 merged, will add `electron-builder-binaries` to get the latest version of squirrel.",
+          "type": "string"
         },
         "iconUrl": {
           "description": "A URL to an ICO file to use as the application icon (displayed in Control Panel > Programs and Features). Defaults to the Electron icon.\n\nPlease note — [local icon file url is not accepted](https://github.com/atom/grunt-electron-installer/issues/73), must be https/http.\n\nIf you don't plan to build windows installer, you can omit it.\nIf your project repository is public on GitHub, it will be `https://github.com/${u}/${p}/blob/master/build/icon.ico?raw=true` by default.",

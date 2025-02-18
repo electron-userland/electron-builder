@@ -71,7 +71,7 @@ jobs:
       fail-fast: false
       matrix:
         testFiles:
-          - ArtifactPublisherTest,BuildTest,ExtraBuildTest,RepoSlugTest,binDownloadTest,configurationValidationTest,filenameUtilTest,filesTest,globTest,ignoreTest,macroExpanderTest,mainEntryTest,urlUtilTest,extraMetadataTest,linuxArchiveTest,linuxPackagerTest,HoistedNodeModuleTest,MemoLazyTest
+          - ArtifactPublisherTest,BuildTest,ExtraBuildTest,RepoSlugTest,binDownloadTest,configurationValidationTest,filenameUtilTest,filesTest,globTest,ignoreTest,macroExpanderTest,mainEntryTest,urlUtilTest,extraMetadataTest,linuxArchiveTest,linuxPackagerTest,HoistedNodeModuleTest,MemoLazyTest,HoistTest
           - snapTest,debTest,fpmTest,protonTest
           - winPackagerTest,BuildTest,winCodeSignTest,webInstallerTest
           - oneClickInstallerTest,assistedInstallerTest
@@ -169,7 +169,7 @@ jobs:
       fail-fast: false
       matrix:
         testFiles:
-          - winCodeSignTest,differentialUpdateTest
+          - winCodeSignTest,differentialUpdateTest,squirrelWindowsTest
           - appxTest,msiTest,portableTest,assistedInstallerTest,protonTest
           - BuildTest,oneClickInstallerTest,winPackagerTest,nsisUpdaterTest,webInstallerTest
     steps:

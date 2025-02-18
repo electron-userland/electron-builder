@@ -6,9 +6,8 @@ import { executeAppBuilderAsJson } from "app-builder-lib/out/util/appBuilder"
 import { AsarIntegrity } from "app-builder-lib/src/asar/integrity"
 import { addValue, copyDir, deepAssign, exec, executeFinally, FileCopier, getPath7x, getPath7za, log, spawn, USE_HARD_LINKS, walk } from "builder-util"
 import { CancellationToken, UpdateFileInfo } from "builder-util-runtime"
-import DecompressZip from "decompress-zip"
 import { Arch, ArtifactCreated, Configuration, DIR_TARGET, getArchSuffix, MacOsTargetName, Packager, PackagerOptions, Platform, Target } from "electron-builder"
-import { convertVersion } from "electron-builder-squirrel-windows/out/squirrelPack"
+import { convertVersion } from "electron-winstaller"
 import { PublishPolicy } from "electron-publish"
 import { emptyDir, writeJson } from "fs-extra"
 import * as fs from "fs/promises"
@@ -17,9 +16,11 @@ import * as path from "path"
 import pathSorter from "path-sort"
 import { NtExecutable, NtExecutableResource } from "resedit"
 import { TmpDir } from "temp-file"
+import { detect } from "app-builder-lib/out/node-module-collector"
 import { promisify } from "util"
 import { CSC_LINK, WIN_CSC_LINK } from "./codeSignData"
 import { assertThat } from "./fileAssert"
+import AdmZip from "adm-zip"
 
 if (process.env.TRAVIS !== "true") {
   process.env.CIRCLE_BUILD_NUM = "42"
@@ -121,7 +122,9 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
 
       if (checkOptions.isInstallDepsBefore) {
         // bin links required (e.g. for node-pre-gyp - if package refers to it in the install script)
-        await spawn(process.platform === "win32" ? "npm.cmd" : "npm", ["install", "--production", "--legacy-peer-deps"], {
+        const pm = await detect({ cwd: projectDir })
+        let cmd = process.platform === "win32" ? pm + ".cmd" : pm
+        await spawn(cmd, ["install"], {
           cwd: projectDir,
         })
       }
@@ -379,13 +382,10 @@ async function checkMacResult(packager: Packager, packagerOptions: PackagerOptio
 async function checkWindowsResult(packager: Packager, checkOptions: AssertPackOptions, artifacts: Array<ArtifactCreated>, nameToTarget: Map<string, Target>) {
   async function checkSquirrelResult() {
     const appInfo = packager.appInfo
-    const { packageFile, unZipper, fileDescriptors } = await checkResult(artifacts, "-full.nupkg")
+    const { zip } = await checkResult(artifacts, "-full.nupkg")
 
     if (checkOptions == null) {
-      await unZipper.extractFile(fileDescriptors.filter(it => it.path === "TestApp.nuspec")[0], {
-        path: path.dirname(packageFile),
-      })
-      const expectedSpec = (await fs.readFile(path.join(path.dirname(packageFile), "TestApp.nuspec"), "utf8")).replace(/\r\n/g, "\n")
+      const expectedSpec = zip.readAsText("TestApp.nuspec").replace(/\r\n/g, "\n")
       // console.log(expectedSpec)
       expect(expectedSpec).toEqual(`<?xml version="1.0"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
@@ -406,13 +406,11 @@ async function checkWindowsResult(packager: Packager, checkOptions: AssertPackOp
   }
 
   async function checkZipResult() {
-    const { packageFile, unZipper, fileDescriptors } = await checkResult(artifacts, ".zip")
+    const { packageFile, zip, allFiles } = await checkResult(artifacts, ".zip")
 
-    const executable = fileDescriptors.filter(it => it.path.endsWith(".exe"))[0]
-    await unZipper.extractFile(executable, {
-      path: path.dirname(packageFile),
-    })
-    const buffer = await fs.readFile(path.join(path.dirname(packageFile), executable.path))
+    const executable = allFiles.filter(it => it.endsWith(".exe"))[0]
+    zip.extractEntryTo(executable, path.dirname(packageFile), true, true)
+    const buffer = await fs.readFile(path.join(path.dirname(packageFile), executable))
     const resource = NtExecutableResource.from(NtExecutable.from(buffer))
     const integrityBuffer = resource.entries.find(entry => entry.type === "INTEGRITY")
     const asarIntegrity = new Uint8Array(integrityBuffer!.bin)
@@ -435,13 +433,35 @@ async function checkWindowsResult(packager: Packager, checkOptions: AssertPackOp
 
 const checkResult = async (artifacts: Array<ArtifactCreated>, extension: string) => {
   const packageFile = artifacts.find(it => it.file.endsWith(extension))!.file
-  const unZipper = new DecompressZip(packageFile)
-  const fileDescriptors = await unZipper.getFiles()
+
+  const zip = new AdmZip(packageFile)
+  const zipEntries = zip.getEntries()
+  const allFiles: string[] = []
+  // https://github.com/thejoshwolfe/yauzl/blob/master/index.js#L900
+  const cp437 =
+    "\u0000☺☻♥♦♣♠•◘○◙♂♀♪♫☼►◄↕‼¶§▬↨↑↓→←∟↔▲▼ !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~⌂ÇüéâäàåçêëèïîìÄÅÉæÆôöòûùÿÖÜ¢£¥₧ƒáíóúñÑªº¿⌐¬½¼¡«»░▒▓│┤╡╢╖╕╣║╗╝╜╛┐└┴┬├─┼╞╟╚╔╩╦╠═╬╧╨╤╥╙╘╒╓╫╪┘┌█▄▌▐▀αßΓπΣσµτΦΘΩδ∞φε∩≡±≥≤⌠⌡÷≈°∙·√ⁿ²■ "
+  const decodeBuffer = (buffer: Buffer, isUtf8: boolean) => {
+    if (isUtf8) {
+      return buffer.toString("utf8")
+    } else {
+      let result = ""
+      for (let i = 0; i < buffer.length; i++) {
+        result += cp437[buffer[i]]
+      }
+      return result
+    }
+  }
+
+  zipEntries.forEach(function (zipEntry) {
+    let isUtf8 = (zipEntry.header.flags & 0x800) !== 0
+    let name = decodeBuffer(zipEntry.rawEntryName, isUtf8)
+    allFiles.push(name)
+  })
 
   // we test app-update.yml separately, don't want to complicate general assert (yes, it is not good that we write app-update.yml for squirrel.windows if we build nsis and squirrel.windows in parallel, but as squirrel.windows is deprecated, it is ok)
   const files = pathSorter(
-    fileDescriptors
-      .map(it => toSystemIndependentPath(it.path))
+    allFiles
+      .map(it => toSystemIndependentPath(it))
       .filter(
         it =>
           (!it.startsWith("lib/net45/locales/") || it === "lib/net45/locales/en-US.pak") && !it.endsWith(".psmdcp") && !it.endsWith("app-update.yml") && !it.includes("/inspector/")
@@ -450,7 +470,7 @@ const checkResult = async (artifacts: Array<ArtifactCreated>, extension: string)
 
   expect(files).toMatchSnapshot()
 
-  return { packageFile, unZipper, fileDescriptors }
+  return { packageFile, zip, allFiles }
 }
 
 export const execShell: any = promisify(require("child_process").exec)

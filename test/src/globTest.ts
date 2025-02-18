@@ -6,6 +6,7 @@ import * as path from "path"
 import { assertThat } from "./helpers/fileAssert"
 import { app, appThrows, assertPack, modifyPackageJson, PackedContext, removeUnstableProperties, verifyAsarFileTree } from "./helpers/packTester"
 import { verifySmartUnpack } from "./helpers/verifySmartUnpack"
+import { spawnSync } from "child_process"
 
 async function createFiles(appDir: string) {
   await Promise.all([
@@ -171,6 +172,7 @@ test.ifDevOrLinuxCi("local node module with file protocol", () => {
         const tempDir = await tmpDir.getTempDir()
         const localPath = path.join(tempDir, "foo")
         await outputFile(path.join(localPath, "package.json"), `{"name":"foo","version":"9.0.0","main":"index.js","license":"MIT","dependencies":{"ms":"2.0.0"}}`)
+        spawnSync("npm", ["install"], { cwd: localPath })
         await modifyPackageJson(projectDir, data => {
           data.dependencies = {
             foo: `file:${localPath}`,
@@ -194,16 +196,20 @@ test.ifDevOrLinuxCi("failed peer dep", () => {
     },
     {
       isInstallDepsBefore: true,
-      projectDirCreated: projectDir =>
-        modifyPackageJson(projectDir, data => {
-          //noinspection SpellCheckingInspection
-          data.dependencies = {
-            debug: "4.1.1",
-            "rc-datepicker": "4.0.0",
-            react: "15.2.1",
-            "react-dom": "15.2.1",
-          }
-        }),
+      projectDirCreated: projectDir => {
+        return Promise.all([
+          modifyPackageJson(projectDir, data => {
+            //noinspection SpellCheckingInspection
+            data.dependencies = {
+              debug: "4.1.1",
+              "rc-datepicker": "4.0.0",
+              react: "15.2.1",
+              "react-dom": "15.2.1",
+            }
+          }),
+          outputFile(path.join(projectDir, "yarn.lock"), ""),
+        ])
+      },
       packed: context => {
         return verifySmartUnpack(context.getResources(Platform.LINUX))
       },
@@ -228,7 +234,6 @@ test.ifAll.ifDevOrLinuxCi("ignore node_modules", () => {
           //noinspection SpellCheckingInspection
           data.dependencies = {
             "ci-info": "2.0.0",
-            "@types/node": "14.17.0",
             // this contains string-width-cjs 4.2.3
             "@isaacs/cliui": "8.0.2",
           }
