@@ -189,7 +189,7 @@ export interface CommonConfiguration {
   readonly electronFuses?: FuseOptionsV1 | null
 
   /**
-   * don't pack all node modules into asar.
+   * don't pack node_modules into asar.
    *
    * @default false
    */

@@ -7069,7 +7069,7 @@
     },
     "excludeNodeModulesFromAsar": {
       "default": false,
-      "description": "don't pack all node modules into asar.",
+      "description": "don't pack node_modules into asar.",
       "type": "boolean"
     },
     "executableName": {
