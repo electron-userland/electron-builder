@@ -32,24 +32,19 @@ export class PacmanUpdater extends BaseUpdater {
   }
 
   protected doInstall(options: InstallOptions): boolean {
-    try {
-      const sudo = this.wrapSudo()
-      // pkexec doesn't want the command to be wrapped in " quotes
-      const wrapper = /pkexec/i.test(sudo) ? "" : `"`
-      const installerPath = this.installerPath
-      if (installerPath == null) {
-        this.dispatchError(new Error("No valid update available, can't quit and install"))
-        return false
-      }
-      const cmd = ["pacman", "-U", "--noconfirm", installerPath]
-      this.spawnSyncLog(sudo, [`${wrapper}/bin/bash`, "-c", `'${cmd.join(" ")}'${wrapper}`])
-      if (options.isForceRunAfter) {
-        this.app.relaunch()
-      }
-      return true
-    } catch (e) {
-      this.dispatchError(e as Error)
+    const sudo = this.wrapSudo()
+    // pkexec doesn't want the command to be wrapped in " quotes
+    const wrapper = /pkexec/i.test(sudo) ? "" : `"`
+    const installerPath = this.installerPath
+    if (installerPath == null) {
+      this.dispatchError(new Error("No valid update available, can't quit and install"))
       return false
     }
+    const cmd = ["pacman", "-U", "--noconfirm", installerPath]
+    this.spawnSyncLog(sudo, [`${wrapper}/bin/bash`, "-c", `'${cmd.join(" ")}'${wrapper}`])
+    if (options.isForceRunAfter) {
+      this.app.relaunch()
+    }
+    return true
   }
 }

@@ -32,31 +32,26 @@ export class RpmUpdater extends BaseUpdater {
   }
 
   protected doInstall(options: InstallOptions): boolean {
-    try {
-      const sudo = this.wrapSudo()
-      // pkexec doesn't want the command to be wrapped in " quotes
-      const wrapper = /pkexec/i.test(sudo) ? "" : `"`
-      const packageManager = this.spawnSyncLog("which zypper")
-      const installerPath = this.installerPath
-      if (installerPath == null) {
-        this.dispatchError(new Error("No valid update available, can't quit and install"))
-        return false
-      }
-      let cmd: string[]
-      if (!packageManager) {
-        const packageManager = this.spawnSyncLog("which dnf || which yum")
-        cmd = [packageManager, "-y", "install", installerPath]
-      } else {
-        cmd = [packageManager, "--no-refresh", "install", "--allow-unsigned-rpm", "-y", "-f", installerPath]
-      }
-      this.spawnSyncLog(sudo, [`${wrapper}/bin/bash`, "-c", `'${cmd.join(" ")}'${wrapper}`])
-      if (options.isForceRunAfter) {
-        this.app.relaunch()
-      }
-      return true
-    } catch (e) {
-      this.dispatchError(e as Error)
+    const sudo = this.wrapSudo()
+    // pkexec doesn't want the command to be wrapped in " quotes
+    const wrapper = /pkexec/i.test(sudo) ? "" : `"`
+    const packageManager = this.spawnSyncLog("which zypper")
+    const installerPath = this.installerPath
+    if (installerPath == null) {
+      this.dispatchError(new Error("No valid update available, can't quit and install"))
       return false
     }
+    let cmd: string[]
+    if (!packageManager) {
+      const packageManager = this.spawnSyncLog("which dnf || which yum")
+      cmd = [packageManager, "-y", "install", installerPath]
+    } else {
+      cmd = [packageManager, "--no-refresh", "install", "--allow-unsigned-rpm", "-y", "-f", installerPath]
+    }
+    this.spawnSyncLog(sudo, [`${wrapper}/bin/bash`, "-c", `'${cmd.join(" ")}'${wrapper}`])
+    if (options.isForceRunAfter) {
+      this.app.relaunch()
+    }
+    return true
   }
 }
