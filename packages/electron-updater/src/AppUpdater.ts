@@ -20,6 +20,7 @@ import { OutgoingHttpHeaders } from "http"
 import { load } from "js-yaml"
 import { Lazy } from "lazy-val"
 import * as path from "path"
+import * as fs from "fs"
 import { eq as isVersionsEqual, gt as isVersionGreaterThan, lt as isVersionLessThan, parse as parseVersion, prerelease as getVersionPreleaseComponents, SemVer } from "semver"
 import { AppAdapter } from "./AppAdapter"
 import { createTempUpdateFile, DownloadedUpdateHelper } from "./DownloadedUpdateHelper"
@@ -482,6 +483,22 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     }
   }
 
+  // delete the pending files to save space
+  private async deletePendingUpdate() {
+    if (this.downloadedUpdateHelper?.cacheDirForPendingUpdate) {
+      try {
+        const files = await fs.promises.readdir(this.downloadedUpdateHelper.cacheDirForPendingUpdate)
+        for (const file of files) {
+          await fs.promises.unlink(path.join(this.downloadedUpdateHelper.cacheDirForPendingUpdate, file))
+        }
+      } catch (e: any) {
+        if (e.code !== "ENOENT") {
+          this._logger.warn(`Failed to clear update cache: ${e.message}`)
+        }
+      }
+    }
+  }
+
   private async doCheckForUpdates(): Promise<UpdateCheckResult> {
     this.emit("checking-for-update")
 
@@ -494,6 +511,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         }).`
       )
       this.emit("update-not-available", updateInfo)
+      await this.deletePendingUpdate()
       return {
         isUpdateAvailable: false,
         versionInfo: updateInfo,
