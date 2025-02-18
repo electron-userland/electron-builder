@@ -187,6 +187,13 @@ export interface CommonConfiguration {
    * Ref: https://github.com/electron/fuses
    */
   readonly electronFuses?: FuseOptionsV1 | null
+
+  /**
+   * don't pack all node modules into asar.
+   *
+   * @default false
+   */
+  readonly excludeNodeModulesFromAsar?: boolean
 }
 export interface Configuration extends CommonConfiguration, PlatformSpecificBuildOptions, Hooks {
   /**

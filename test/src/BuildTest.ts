@@ -5,7 +5,7 @@ import { createYargs } from "electron-builder/out/builder"
 import { promises as fs } from "fs"
 import { outputFile, outputJson } from "fs-extra"
 import * as path from "path"
-import { app, appTwo, appTwoThrows, assertPack, linuxDirTarget, modifyPackageJson, packageJson, toSystemIndependentPath } from "./helpers/packTester"
+import { app, appTwo, appTwoThrows, assertPack, linuxDirTarget, modifyPackageJson, packageJson, toSystemIndependentPath, verifyAsarFileTree } from "./helpers/packTester"
 import { ELECTRON_VERSION } from "./helpers/testConfig"
 import { verifySmartUnpack } from "./helpers/verifySmartUnpack"
 
@@ -388,6 +388,26 @@ test.ifDevOrLinuxCi(
         await verifySmartUnpack(context.getResources(Platform.LINUX), async asarFs => {
           return expect(await asarFs.readFile(`node_modules${path.sep}three${path.sep}examples${path.sep}fonts${path.sep}README.md`)).toMatchSnapshot()
         })
+      },
+    }
+  )
+)
+
+test.ifDevOrLinuxCi(
+  "don't pack node_modules into asar",
+  app(
+    {
+      targets: linuxDirTarget,
+    },
+    {
+      projectDirCreated: packageJson(it => {
+        it.dependencies = {
+          debug: "4.1.1",
+          "edge-cs": "1.2.1",
+        }
+      }),
+      packed: async context => {
+        await verifyAsarFileTree(context.getResources(Platform.LINUX))
       },
     }
   )
