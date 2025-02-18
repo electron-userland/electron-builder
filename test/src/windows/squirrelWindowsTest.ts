@@ -12,7 +12,7 @@ test.ifAll.ifNotCiMac(
         win: {
           compression: "normal",
         },
-        executableName: " test with spaces",
+        executableName: "test with spaces",
         electronFuses: {
           runAsNode: true,
           enableCookieEncryption: true,
@@ -54,6 +54,51 @@ test.skip(
       },
     },
   })
+)
+
+test.ifAll(
+  "squirrel window arm64 msi",
+  app(
+    {
+      targets: Platform.WINDOWS.createTarget("squirrel", Arch.arm64),
+      config: {
+        squirrelWindows: {
+          msi: true,
+        },
+      },
+    },
+    { signedWin: true }
+  )
+)
+
+test.ifAll(
+  "squirrel window x64 msi",
+  app(
+    {
+      targets: Platform.WINDOWS.createTarget("squirrel", Arch.x64),
+      config: {
+        squirrelWindows: {
+          msi: true,
+        },
+      },
+    },
+    { signedWin: true }
+  )
+)
+
+test.ifAll(
+  "squirrel window ia32 msi",
+  app(
+    {
+      targets: Platform.WINDOWS.createTarget("squirrel", Arch.ia32),
+      config: {
+        squirrelWindows: {
+          msi: true,
+        },
+      },
+    },
+    { signedWin: true }
+  )
 )
 
 test.ifAll("detect install-spinner", () => {
