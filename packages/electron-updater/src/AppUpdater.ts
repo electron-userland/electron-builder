@@ -15,12 +15,11 @@ import {
 import { randomBytes } from "crypto"
 import { release } from "os"
 import { EventEmitter } from "events"
-import { mkdir, outputFile, readFile, rename, unlink } from "fs-extra"
+import { mkdir, outputFile, readFile, rename, unlink, pathExists, rmdir } from "fs-extra"
 import { OutgoingHttpHeaders } from "http"
 import { load } from "js-yaml"
 import { Lazy } from "lazy-val"
 import * as path from "path"
-import * as fs from "fs"
 import { eq as isVersionsEqual, gt as isVersionGreaterThan, lt as isVersionLessThan, parse as parseVersion, prerelease as getVersionPreleaseComponents, SemVer } from "semver"
 import { AppAdapter } from "./AppAdapter"
 import { createTempUpdateFile, DownloadedUpdateHelper } from "./DownloadedUpdateHelper"
@@ -487,11 +486,11 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   private async deletePendingUpdate() {
     if (this.downloadedUpdateHelper?.cacheDirForPendingUpdate) {
       try {
-        const files = await fs.promises.readdir(this.downloadedUpdateHelper.cacheDirForPendingUpdate)
-        for (const file of files) {
-          await fs.promises.unlink(path.join(this.downloadedUpdateHelper.cacheDirForPendingUpdate, file))
+        if (await pathExists(this.downloadedUpdateHelper.cacheDirForPendingUpdate)) {
+          await rmdir(this.downloadedUpdateHelper.cacheDirForPendingUpdate, { recursive: true })
         }
       } catch (e: any) {
+        // catch all errors, not throw to break the update checking
         if (e.code !== "ENOENT") {
           this._logger.warn(`Failed to clear update cache: ${e.message}`)
         }
