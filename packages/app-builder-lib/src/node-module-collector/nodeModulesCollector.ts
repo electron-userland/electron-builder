@@ -1,24 +1,24 @@
 import { hoist, type HoisterTree, type HoisterResult } from "./hoist"
 import * as path from "path"
 import * as fs from "fs"
-import { NodeModuleInfo, DependencyTree, DependencyGraph, NpmDependency } from "./types"
-import { exec, log, use } from "builder-util"
+import { NodeModuleInfo, DependencyTree, DependencyGraph, Dependency } from "./types"
+import { exec, log } from "builder-util"
 
-export abstract class NodeModulesCollector {
+export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType>, OptionalsType> {
   private nodeModules: NodeModuleInfo[] = []
   protected dependencyPathMap: Map<string, string> = new Map()
-  protected allDependencies: Map<string, DependencyTree> = new Map()
+  protected allDependencies: Map<string, T> = new Map()
 
   constructor(private readonly rootDir: string) {}
 
   public async getNodeModules(): Promise<NodeModuleInfo[]> {
     const tree = await this.getDependenciesTree()
     const realTree = this.getTreeFromWorkspaces(tree)
-    const parsedTree = this.extractDependencyTree(realTree)
+    const parsedTree = this.extractRelevantData(realTree)
 
     this.collectAllDependencies(parsedTree)
 
-    const productionTree = this.removeNonProductionDependencies(parsedTree)
+    const productionTree = this.extractProductionDependencyTree(parsedTree)
     const dependencyGraph = this.convertToDependencyGraph(productionTree)
 
     const hoisterResult = hoist(this.transToHoisterTree(dependencyGraph), { check: true })
@@ -29,10 +29,10 @@ export abstract class NodeModulesCollector {
 
   protected abstract getCommand(): string
   protected abstract getArgs(): string[]
-  protected abstract parseDependenciesTree(jsonBlob: string): NpmDependency
-  protected abstract removeNonProductionDependencies(parsedTree: DependencyTree): DependencyTree
+  protected abstract parseDependenciesTree(jsonBlob: string): T
+  protected abstract extractProductionDependencyTree(tree: Dependency<T, OptionalsType>): DependencyTree
 
-  protected async getDependenciesTree(): Promise<NpmDependency> {
+  protected async getDependenciesTree(): Promise<T> {
     const command = this.getCommand()
     const args = this.getArgs()
     const dependencies = await exec(command, args, {
@@ -42,41 +42,36 @@ export abstract class NodeModulesCollector {
     return this.parseDependenciesTree(dependencies)
   }
 
-  private extractDependencyTree(npmTree: NpmDependency): DependencyTree {
-    const { name, version, path, workspaces, dependencies, _dependencies, optionalDependencies, peerDependencies } = npmTree
-    const tree: DependencyTree = {
+  protected extractRelevantData(npmTree: T): Dependency<T, OptionalsType> {
+    // Do not use `...npmTree` as we are explicitly extracting the data we need
+    const { name, version, path, workspaces, dependencies } = npmTree
+    const tree: Dependency<T, OptionalsType> = {
       name,
       version,
       path,
       workspaces,
-      implicitDependenciesInjected: false,
+      // DFS extract subtree
+      dependencies: this.extractInternal(dependencies),
     }
-
-    const extractInternal = (deps: NpmDependency["dependencies"]) =>
-      deps && Object.keys(deps).length > 0
-        ? Object.entries(deps).reduce((accum, [packageName, depObjectOrVersionString]) => {
-            return {
-              ...accum,
-              [packageName]:
-                typeof depObjectOrVersionString === "object" && Object.keys(depObjectOrVersionString).length > 0
-                  ? this.extractDependencyTree(depObjectOrVersionString as any)
-                  : depObjectOrVersionString,
-            }
-          }, {})
-        : undefined
-
-    // only set property if existing, skip undefined (at minimum, it helps in Variables debugger window)
-    use(_dependencies, v => (tree._dependencies = v))
-    use(optionalDependencies, v => (tree.optionalDependencies = v))
-    use(peerDependencies, v => (tree.peerDependencies = v))
-
-    // DFS extract subtree
-    use(extractInternal(dependencies), v => (tree.dependencies = v))
 
     return tree
   }
 
-  protected resolvePath(filePath: string) {
+  protected extractInternal(deps: T["dependencies"]): T["dependencies"] {
+    return deps && Object.keys(deps).length > 0
+      ? Object.entries(deps).reduce((accum, [packageName, depObjectOrVersionString]) => {
+          return {
+            ...accum,
+            [packageName]:
+              typeof depObjectOrVersionString === "object" && Object.keys(depObjectOrVersionString).length > 0
+                ? this.extractRelevantData(depObjectOrVersionString)
+                : depObjectOrVersionString,
+          }
+        }, {})
+      : undefined
+  }
+
+  protected resolvePath(filePath: string): string {
     try {
       const stats = fs.lstatSync(filePath)
       if (stats.isSymbolicLink()) {
@@ -99,6 +94,16 @@ export abstract class NodeModulesCollector {
       }
       const version = dependencies.version || ""
       const newKey = `${packageName}@${version}`
+      const debugData = {
+        dependency: packageName,
+        version,
+        path: dependencies.path,
+        parentModule: tree.name,
+        parentVersion: tree.version,
+      }
+      if (!dependencies.path) {
+        log.error(debugData, "dependency path is undefined")
+      }
       // Map dependency details: name, version and path to the dependency tree
       this.dependencyPathMap.set(newKey, path.normalize(this.resolvePath(dependencies.path)))
       if (!acc[parentKey]) {
@@ -106,16 +111,7 @@ export abstract class NodeModulesCollector {
       }
       acc[parentKey].dependencies.push(newKey)
       if (tree.implicitDependenciesInjected) {
-        log.debug(
-          {
-            dependency: packageName,
-            version,
-            path: dependencies.path,
-            parentModule: tree.name,
-            parentVersion: tree.version,
-          },
-          "converted implicit dependency"
-        )
+        log.debug(debugData, "converted implicit dependency")
         return acc
       }
 
@@ -123,7 +119,7 @@ export abstract class NodeModulesCollector {
     }, {})
   }
 
-  private collectAllDependencies(tree: DependencyTree) {
+  protected collectAllDependencies(tree: Dependency<T, OptionalsType>) {
     for (const [key, value] of Object.entries(tree.dependencies || {})) {
       if (Object.keys(value.dependencies ?? {}).length > 0) {
         this.allDependencies.set(`${key}@${value.version}`, value)
@@ -132,7 +128,7 @@ export abstract class NodeModulesCollector {
     }
   }
 
-  private getTreeFromWorkspaces(tree: NpmDependency): NpmDependency {
+  private getTreeFromWorkspaces(tree: T): T {
     if (tree.workspaces && tree.dependencies) {
       for (const [key, value] of Object.entries(tree.dependencies)) {
         if (this.rootDir.endsWith(path.normalize(key))) {

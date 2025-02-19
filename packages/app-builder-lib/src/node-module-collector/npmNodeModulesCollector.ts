@@ -2,7 +2,7 @@ import { NodeModulesCollector } from "./nodeModulesCollector"
 import { DependencyTree, NpmDependency, ParsedDependencyTree } from "./types"
 import { log } from "builder-util"
 
-export class NpmNodeModulesCollector extends NodeModulesCollector {
+export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency, string> {
   constructor(rootDir: string) {
     super(rootDir)
   }
@@ -15,36 +15,53 @@ export class NpmNodeModulesCollector extends NodeModulesCollector {
     return ["list", "-a", "--include", "prod", "--include", "optional", "--omit", "dev", "--json", "--long", "--silent"]
   }
 
-  protected removeNonProductionDependencies(tree: DependencyTree): DependencyTree {
+  protected extractRelevantData(npmTree: NpmDependency): NpmDependency {
+    const tree = super.extractRelevantData(npmTree)
+    const { optionalDependencies, _dependencies } = npmTree
+    return { ...tree, optionalDependencies, _dependencies }
+  }
+
+  protected extractProductionDependencyTree(tree: NpmDependency): DependencyTree {
     const _deps = tree._dependencies ?? {}
-    const deps = tree.dependencies ?? {}
+
+    let deps = tree.dependencies ?? {}
+    let implicitDependenciesInjected = false
+
     if (Object.keys(_deps).length > 0 && Object.keys(deps).length === 0) {
-      tree.dependencies = this.allDependencies.get(`${tree.name}@${tree.version}`)?.dependencies
-      tree.implicitDependenciesInjected = true
       log.debug({ name: tree.name, version: tree.version }, "injecting implicit _dependencies")
-      return tree
+      deps = this.allDependencies.get(`${tree.name}@${tree.version}`)?.dependencies ?? {}
+      implicitDependenciesInjected = true
     }
 
-    const dependencies = Object.entries(tree.dependencies || {}).reduce<DependencyTree["dependencies"]>((acc, curr) => {
+    const dependencies = Object.entries(deps).reduce<DependencyTree["dependencies"]>((acc, curr) => {
       const [packageName, dependency] = curr
       if (!_deps[packageName] || Object.keys(dependency).length === 0) {
         return acc
       }
-      if (tree.implicitDependenciesInjected) {
-        const { name, version, path } = dependency
-        const simplifiedTree: ParsedDependencyTree = { name, version, path }
+      if (implicitDependenciesInjected) {
+        const { name, version, path, workspaces } = dependency
+        const simplifiedTree: ParsedDependencyTree = { name, version, path, workspaces }
         return {
           ...acc,
-          [packageName]: { ...simplifiedTree, implicitDependenciesInjected: true },
+          [packageName]: { ...simplifiedTree, implicitDependenciesInjected },
         }
       }
       return {
         ...acc,
-        [packageName]: this.removeNonProductionDependencies(dependency),
+        [packageName]: this.extractProductionDependencyTree(dependency),
       }
     }, {})
 
-    return { ...tree, dependencies }
+    const { name, version, path: packagePath, workspaces } = tree
+    const depTree: DependencyTree = {
+      name,
+      version,
+      path: packagePath,
+      workspaces,
+      dependencies,
+      implicitDependenciesInjected,
+    }
+    return depTree
   }
 
   protected parseDependenciesTree(jsonBlob: string): NpmDependency {
