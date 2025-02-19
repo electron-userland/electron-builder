@@ -1,7 +1,7 @@
 import { hoist, type HoisterTree, type HoisterResult } from "./hoist"
 import * as path from "path"
 import * as fs from "fs"
-import { NodeModuleInfo, DependencyTree, DependencyGraph, Dependency } from "./types"
+import type { NodeModuleInfo, DependencyTree, DependencyGraph, Dependency } from "./types"
 import { exec, log } from "builder-util"
 
 export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType>, OptionalsType> {
@@ -12,16 +12,16 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
   constructor(private readonly rootDir: string) {}
 
   public async getNodeModules(): Promise<NodeModuleInfo[]> {
-    const tree = await this.getDependenciesTree()
-    const realTree = this.getTreeFromWorkspaces(tree)
-    const parsedTree = this.extractRelevantData(realTree)
+    const tree: T = await this.getDependenciesTree()
+    const realTree: T = this.getTreeFromWorkspaces(tree)
+    const parsedTree: Dependency<T, OptionalsType> = this.extractRelevantData(realTree)
 
     this.collectAllDependencies(parsedTree)
 
-    const productionTree = this.extractProductionDependencyTree(parsedTree)
-    const dependencyGraph = this.convertToDependencyGraph(productionTree)
+    const productionTree: DependencyTree = this.extractProductionDependencyTree(parsedTree)
+    const dependencyGraph: DependencyGraph = this.convertToDependencyGraph(productionTree)
 
-    const hoisterResult = hoist(this.transToHoisterTree(dependencyGraph), { check: true })
+    const hoisterResult: HoisterResult = hoist(this.transToHoisterTree(dependencyGraph), { check: true })
     this._getNodeModules(hoisterResult.dependencies, this.nodeModules)
 
     return this.nodeModules
@@ -94,15 +94,17 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
       }
       const version = dependencies.version || ""
       const newKey = `${packageName}@${version}`
-      const debugData = {
-        dependency: packageName,
-        version,
-        path: dependencies.path,
-        parentModule: tree.name,
-        parentVersion: tree.version,
-      }
       if (!dependencies.path) {
-        log.error(debugData, "dependency path is undefined")
+        log.error(
+          {
+            packageName,
+            data: dependencies,
+            parentModule: tree.name,
+            parentVersion: tree.version,
+          },
+          "dependency path is undefined"
+        )
+        throw new Error("unable to parse `path` during `tree.dependencies` reduce")
       }
       // Map dependency details: name, version and path to the dependency tree
       this.dependencyPathMap.set(newKey, path.normalize(this.resolvePath(dependencies.path)))
@@ -111,7 +113,16 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
       }
       acc[parentKey].dependencies.push(newKey)
       if (tree.implicitDependenciesInjected) {
-        log.debug(debugData, "converted implicit dependency")
+        log.debug(
+          {
+            dependency: packageName,
+            version,
+            path: dependencies.path,
+            parentModule: tree.name,
+            parentVersion: tree.version,
+          },
+          "converted implicit dependency"
+        )
         return acc
       }
 
@@ -119,7 +130,7 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
     }, {})
   }
 
-  protected collectAllDependencies(tree: Dependency<T, OptionalsType>) {
+  private collectAllDependencies(tree: Dependency<T, OptionalsType>) {
     for (const [key, value] of Object.entries(tree.dependencies || {})) {
       if (Object.keys(value.dependencies ?? {}).length > 0) {
         this.allDependencies.set(`${key}@${value.version}`, value)
