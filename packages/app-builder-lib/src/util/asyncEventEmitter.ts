@@ -27,10 +27,7 @@ export class AsyncEventEmitter<T extends EventMap> implements TypedEventEmitter<
     if (!listener) {
       return this
     }
-    let listeners = this.listeners.get(event)
-    if (!listeners) {
-      listeners = []
-    }
+    const listeners = this.listeners.get(event) ?? []
     listeners.push({ handler: listener, type })
     this.listeners.set(event, listeners)
     return this
@@ -65,13 +62,11 @@ export class AsyncEventEmitter<T extends EventMap> implements TypedEventEmitter<
       }
       return true
     }
-    if (await emitInternal(eventListeners.filter(l => l.type === "system"))) {
-      result.emittedSystem = true
-    }
+
+    result.emittedSystem = await emitInternal(eventListeners.filter(l => l.type === "system"))
     // user handlers are always last
-    if (await emitInternal(eventListeners.filter(l => l.type === "user"))) {
-      result.emittedUser = true
-    }
+    result.emittedUser = await emitInternal(eventListeners.filter(l => l.type === "user"))
+
     return result
   }
 
