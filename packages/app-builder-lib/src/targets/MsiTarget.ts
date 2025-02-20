@@ -62,7 +62,7 @@ export default class MsiTarget extends Target {
     const packager = this.packager
     const artifactName = packager.expandArtifactBeautyNamePattern(this.options, "msi", arch)
     const artifactPath = path.join(this.outDir, artifactName)
-    await packager.info.callArtifactBuildStarted({
+    await packager.info.emitArtifactBuildStarted({
       targetPresentableName: "MSI",
       file: artifactPath,
       arch,
@@ -83,7 +83,7 @@ export default class MsiTarget extends Target {
     const objectFiles = ["project.wixobj"]
     await writeFile(projectFile, await this.writeManifest(appOutDir, wixArch, commonOptions))
 
-    await packager.info.callMsiProjectCreated(projectFile)
+    await packager.info.emitMsiProjectCreated(projectFile)
 
     // noinspection SpellCheckingInspection
     const vendorPath = await getBinFromUrl("wix", "4.0.0.5512.2", "/X5poahdCc3199Vt6AP7gluTlT1nxi9cbbHhZhCMEu+ngyP1LiBMn+oZX7QAZVaKeBMc2SjVp7fJqNLqsUnPNQ==")
@@ -101,7 +101,7 @@ export default class MsiTarget extends Target {
 
     await packager.sign(artifactPath)
 
-    await packager.info.callArtifactBuildCompleted({
+    await packager.info.emitArtifactBuildCompleted({
       file: artifactPath,
       packager,
       arch,

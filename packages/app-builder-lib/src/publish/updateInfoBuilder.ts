@@ -228,7 +228,7 @@ export async function writeUpdateInfoFiles(updateInfoFileTasks: Array<UpdateInfo
 
     const fileContent = Buffer.from(serializeToYaml(task.info, false, true))
     await outputFile(task.file, fileContent)
-    packager.dispatchArtifactCreated({
+    await packager.emitArtifactCreated({
       file: task.file,
       fileContent,
       arch: null,
@@ -263,7 +263,7 @@ async function writeOldMacInfo(
       { spaces: 2 }
     )
 
-    packager.info.dispatchArtifactCreated({
+    await packager.info.emitArtifactCreated({
       file: updateInfoFile,
       arch: null,
       packager,

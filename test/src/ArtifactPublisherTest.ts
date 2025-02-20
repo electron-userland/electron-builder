@@ -83,10 +83,10 @@ testAndIgnoreApiRate("GitHub upload", async () => {
 })
 
 test.ifEnv(process.env.AWS_ACCESS_KEY_ID != null && process.env.AWS_SECRET_ACCESS_KEY != null)("S3 upload", async () => {
-  const publisher = createPublisher(publishContext, "0.0.1", { provider: "s3", bucket: "electron-builder-test" } as S3Options, {}, {} as any)!
-  await publisher.upload({ file: iconPath, arch: Arch.x64 })
+  const publisher = await createPublisher(publishContext, "0.0.1", { provider: "s3", bucket: "electron-builder-test" } as S3Options, {}, {} as any)
+  await publisher!.upload({ file: iconPath, arch: Arch.x64 })
   // test overwrite
-  await publisher.upload({ file: iconPath, arch: Arch.x64 })
+  await publisher!.upload({ file: iconPath, arch: Arch.x64 })
 })
 
 test.ifEnv(process.env.DO_KEY_ID != null && process.env.DO_SECRET_KEY != null)("DO upload", async () => {
@@ -95,10 +95,10 @@ test.ifEnv(process.env.DO_KEY_ID != null && process.env.DO_SECRET_KEY != null)("
     name: "electron-builder-test",
     region: "nyc3",
   }
-  const publisher = createPublisher(publishContext, "0.0.1", configuration, {}, {} as any)!
-  await publisher.upload({ file: iconPath, arch: Arch.x64 })
+  const publisher = await createPublisher(publishContext, "0.0.1", configuration, {}, {} as any)
+  await publisher!.upload({ file: iconPath, arch: Arch.x64 })
   // test overwrite
-  await publisher.upload({ file: iconPath, arch: Arch.x64 })
+  await publisher!.upload({ file: iconPath, arch: Arch.x64 })
 })
 
 testAndIgnoreApiRate("prerelease", async () => {

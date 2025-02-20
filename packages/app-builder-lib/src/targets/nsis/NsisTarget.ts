@@ -193,7 +193,7 @@ export class NsisTarget extends Target {
       logFields.perMachine = isPerMachine
     }
 
-    await packager.info.callArtifactBuildStarted(
+    await packager.info.emitArtifactBuildStarted(
       {
         targetPresentableName: this.name,
         file: installerPath,
@@ -363,7 +363,7 @@ export class NsisTarget extends Target {
       updateInfo.isAdminRightsRequired = true
     }
 
-    await packager.info.callArtifactBuildCompleted({
+    await packager.info.emitArtifactBuildCompleted({
       file: installerPath,
       updateInfo,
       target: this,

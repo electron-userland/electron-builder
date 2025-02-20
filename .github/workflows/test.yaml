@@ -73,7 +73,7 @@ jobs:
         testFiles:
           - ArtifactPublisherTest,BuildTest,ExtraBuildTest,RepoSlugTest,binDownloadTest,configurationValidationTest,filenameUtilTest,filesTest,globTest,ignoreTest,macroExpanderTest,mainEntryTest,urlUtilTest,extraMetadataTest,linuxArchiveTest,linuxPackagerTest,HoistedNodeModuleTest,MemoLazyTest,HoistTest
           - snapTest,debTest,fpmTest,protonTest
-          - winPackagerTest,BuildTest,winCodeSignTest,webInstallerTest
+          - winPackagerTest,winCodeSignTest,webInstallerTest
           - oneClickInstallerTest,assistedInstallerTest
     steps:
       - name: Checkout code repository

@@ -24,6 +24,7 @@ export async function resolveModule<T>(type: string | undefined, name: string): 
 
 export async function resolveFunction<T>(type: string | undefined, executor: T | string, name: string): Promise<T> {
   if (executor == null || typeof executor !== "string") {
+    // is already function or explicitly ignored by user
     return executor
   }
 

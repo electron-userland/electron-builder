@@ -53,7 +53,7 @@ export default class SquirrelWindowsTarget extends Target {
     const artifactPath = path.join(installerOutDir, setupFile)
     const msiArtifactPath = path.join(installerOutDir, packager.expandArtifactNamePattern(this.options, "msi", arch, "${productName} Setup ${version}.${ext}"))
 
-    await packager.info.callArtifactBuildStarted({
+    await packager.info.emitArtifactBuildStarted({
       targetPresentableName: "Squirrel.Windows",
       file: artifactPath,
       arch,
@@ -69,7 +69,7 @@ export default class SquirrelWindowsTarget extends Target {
 
     const safeArtifactName = (ext: string) => `${sanitizedName}-Setup-${version}${getArchSuffix(arch)}.${ext}`
 
-    await packager.info.callArtifactBuildCompleted({
+    await packager.info.emitArtifactBuildCompleted({
       file: artifactPath,
       target: this,
       arch,
@@ -78,7 +78,7 @@ export default class SquirrelWindowsTarget extends Target {
     })
 
     if (this.options.msi) {
-      await packager.info.callArtifactBuildCompleted({
+      await packager.info.emitArtifactBuildCompleted({
         file: msiArtifactPath,
         target: this,
         arch,
@@ -88,14 +88,14 @@ export default class SquirrelWindowsTarget extends Target {
     }
 
     const packagePrefix = `${this.appName}-${convertVersion(version)}-`
-    packager.info.dispatchArtifactCreated({
+    await packager.info.emitArtifactCreated({
       file: path.join(installerOutDir, `${packagePrefix}full.nupkg`),
       target: this,
       arch,
       packager,
     })
     if (distOptions.remoteReleases != null) {
-      packager.info.dispatchArtifactCreated({
+      await packager.info.emitArtifactCreated({
         file: path.join(installerOutDir, `${packagePrefix}delta.nupkg`),
         target: this,
         arch,
@@ -103,7 +103,7 @@ export default class SquirrelWindowsTarget extends Target {
       })
     }
 
-    packager.info.dispatchArtifactCreated({
+    await packager.info.emitArtifactCreated({
       file: path.join(installerOutDir, "RELEASES"),
       target: this,
       arch,

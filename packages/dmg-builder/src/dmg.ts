@@ -36,7 +36,7 @@ export class DmgTarget extends Target {
       packager.platformSpecificBuildOptions.defaultArch
     )
     const artifactPath = path.join(this.outDir, artifactName)
-    await packager.info.callArtifactBuildStarted({
+    await packager.info.emitArtifactBuildStarted({
       targetPresentableName: "DMG",
       file: artifactPath,
       arch,
@@ -84,7 +84,7 @@ export class DmgTarget extends Target {
 
     const safeArtifactName = packager.computeSafeArtifactName(artifactName, "dmg")
     const updateInfo = this.options.writeUpdateInfo === false ? null : await createBlockmap(artifactPath, this, packager, safeArtifactName)
-    await packager.info.callArtifactBuildCompleted({
+    await packager.info.emitArtifactBuildCompleted({
       file: artifactPath,
       safeArtifactName,
       target: this,

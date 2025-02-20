@@ -46,7 +46,7 @@ export class PkgTarget extends Target {
     const artifactName = packager.expandArtifactNamePattern(options, "pkg", arch)
     const artifactPath = path.join(this.outDir, artifactName)
 
-    await packager.info.callArtifactBuildStarted({
+    await packager.info.emitArtifactBuildStarted({
       targetPresentableName: "pkg",
       file: artifactPath,
       arch,
