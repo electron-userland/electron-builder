@@ -1,5 +1,11 @@
 # builder-util
 
+## 26.0.7
+
+### Patch Changes
+
+- [#8869](https://github.com/electron-userland/electron-builder/pull/8869) [`c12f86f2`](https://github.com/electron-userland/electron-builder/commit/c12f86f2e254809e70d1f60d89cf9b7264278083) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: validate object key before deep assigning
+
 ## 26.0.4
 
 ### Patch Changes
