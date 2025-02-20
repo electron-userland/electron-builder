@@ -282,8 +282,8 @@ test.ifAll.ifDevOrLinuxCi("asarUnpack node_modules which has many modules", () =
     },
     {
       isInstallDepsBefore: true,
-      projectDirCreated: projectDir =>
-        modifyPackageJson(projectDir, data => {
+      projectDirCreated: async projectDir => {
+        await modifyPackageJson(projectDir, data => {
           data.dependencies = {
             "@react-navigation/stack": "^6.3.7",
             "@sentry/electron": "^4.4.0",
@@ -305,7 +305,9 @@ test.ifAll.ifDevOrLinuxCi("asarUnpack node_modules which has many modules", () =
             yargs: "^16.2.0",
             "ci-info": "2.0.0",
           }
-        }),
+        })
+        await outputFile(path.join(projectDir, "yarn.lock"), "")
+      },
       packed: async context => {
         await assertThat(path.join(context.getResources(Platform.LINUX), "app.asar.unpacked/node_modules/jwt-decode")).isDirectory()
         await assertThat(path.join(context.getResources(Platform.LINUX), "app.asar.unpacked/node_modules/keytar")).isDirectory()
@@ -328,8 +330,8 @@ test.ifAll.ifDevOrLinuxCi("exclude some modules when asarUnpack node_modules whi
     },
     {
       isInstallDepsBefore: true,
-      projectDirCreated: projectDir =>
-        modifyPackageJson(projectDir, data => {
+      projectDirCreated: async projectDir => {
+        await modifyPackageJson(projectDir, data => {
           data.dependencies = {
             "@react-navigation/stack": "^6.3.7",
             "@sentry/electron": "^4.4.0",
@@ -351,7 +353,9 @@ test.ifAll.ifDevOrLinuxCi("exclude some modules when asarUnpack node_modules whi
             yargs: "^16.2.0",
             "ci-info": "2.0.0",
           }
-        }),
+        })
+        await outputFile(path.join(projectDir, "yarn.lock"), "")
+      },
       packed: async context => {
         await assertThat(path.join(context.getResources(Platform.LINUX), "app.asar.unpacked/node_modules/jwt-decode")).isDirectory()
         await assertThat(path.join(context.getResources(Platform.LINUX), "app.asar.unpacked/node_modules/keytar")).isDirectory()
