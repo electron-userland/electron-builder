@@ -87,7 +87,7 @@ The `electron-updater` package offers a different functionality compared to Elec
     ```
 
 * A [complete example](https://github.com/iffy/electron-updater-example) showing how to use.
-* An [encapsulated manual update via menu](https://github.com/electron-userland/electron-builder/blob/docs/encapsulated%20manual%20update%20via%20menu.js).
+* An [encapsulated manual update via menu](https://github.com/electron-userland/electron-builder/blob/7f6c3fea6fea8cffa00a43413f5335097aca94b0/pages/encapsulated%20manual%20update%20via%20menu.js).
 
 ### Custom Options instantiating updater Directly
 
