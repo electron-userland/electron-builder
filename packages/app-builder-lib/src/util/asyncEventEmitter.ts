@@ -51,14 +51,14 @@ export class AsyncEventEmitter<T extends EventMap> implements TypedEventEmitter<
       log.debug({ event }, "no event listeners found")
       return result
     }
+
     const emitInternal = async (listeners: Handle[]) => {
       for (const listener of listeners) {
         if (this.cancellationToken.cancelled) {
           return false
         }
-        await (
-          await listener.handler
-        )?.(...args)
+        const handler = await listener.handler
+        await Promise.resolve(handler?.(...args))
       }
       return true
     }
