@@ -1,3 +1,7 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v26.0.7...v) (2025-02-20)
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v26.0.6...v) (2025-02-18)
 
 
