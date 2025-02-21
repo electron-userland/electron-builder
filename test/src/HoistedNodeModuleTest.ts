@@ -317,3 +317,27 @@ test.ifAll("npm tar", () =>
     }
   )
 )
+
+test.ifAll("pnpm hoist config", () =>
+  assertPack(
+    "test-app-hoisted",
+    {
+      targets: linuxDirTarget,
+    },
+    {
+      isInstallDepsBefore: true,
+      projectDirCreated: projectDir => {
+        return Promise.all([
+          modifyPackageJson(projectDir, data => {
+            data.dependencies = {
+              "npm-run-all": "^4.1.5",
+            }
+          }),
+          outputFile(path.join(projectDir, "pnpm-lock.yaml"), ""),
+          outputFile(path.join(projectDir, ".npmrc"), "node-linker=hoisted"),
+        ])
+      },
+      packed: context => verifyAsarFileTree(context.getResources(Platform.LINUX)),
+    }
+  )
+)
