@@ -5,11 +5,11 @@ import { createYargs } from "electron-builder/out/builder"
 import { promises as fs } from "fs"
 import { outputFile, outputJson } from "fs-extra"
 import * as path from "path"
-import { app, appTwo, appTwoThrows, assertPack, linuxDirTarget, modifyPackageJson, packageJson, toSystemIndependentPath } from "./helpers/packTester"
+import { app, appTwo, appTwoThrows, assertPack, getFixtureDir, linuxDirTarget, modifyPackageJson, packageJson, toSystemIndependentPath } from "./helpers/packTester"
 import { ELECTRON_VERSION } from "./helpers/testConfig"
 import { verifySmartUnpack } from "./helpers/verifySmartUnpack"
 
-test("cli", async () => {
+test("cli", () => {
   // because these methods are internal
   const { configureBuildCommand, normalizeOptions } = require("electron-builder/out/builder")
   const yargs = createYargs()
@@ -219,26 +219,78 @@ test(
   )
 )
 
-test.ifLinuxOrDevMac("afterPack", () => {
-  let called = 0
+test.ifLinuxOrDevMac("hooks as functions", () => {
+  let artifactBuildStartedCalled = 0
+  let artifactBuildCompletedCalled = 0
+  let beforePackCalled = 0
+  let afterPackCalled = 0
+  let afterExtractCalled = 0
   return assertPack(
     "test-app-one",
     {
-      targets: createTargets([Platform.LINUX, Platform.MAC], DIR_TARGET),
+      targets: createTargets([Platform.LINUX, Platform.MAC], "zip", "x64"),
       config: {
+        artifactBuildStarted: () => {
+          artifactBuildStartedCalled++
+        },
+        artifactBuildCompleted: () => {
+          artifactBuildCompletedCalled++
+        },
+        beforePack: () => {
+          beforePackCalled++
+          return Promise.resolve()
+        },
+        afterExtract: () => {
+          afterExtractCalled++
+          return Promise.resolve()
+        },
         afterPack: () => {
-          called++
+          afterPackCalled++
           return Promise.resolve()
         },
       },
     },
     {
       packed: async () => {
-        expect(called).toEqual(2)
+        expect(artifactBuildStartedCalled).toEqual(2)
+        expect(artifactBuildCompletedCalled).toEqual(3) // 2 artifacts + blockmap
+        expect(beforePackCalled).toEqual(2)
+        expect(afterExtractCalled).toEqual(2)
+        expect(afterPackCalled).toEqual(2)
+        expect(afterPackCalled).toEqual(2)
+        return Promise.resolve()
       },
     }
   )
 })
+
+test.ifLinuxOrDevMac("hooks as file - cjs", async () => {
+  const hookScript = path.join(getFixtureDir(), "build-hook.cjs")
+  return assertPack("test-app-one", {
+    targets: createTargets([Platform.LINUX, Platform.MAC], "zip", "x64"),
+    config: {
+      artifactBuildStarted: hookScript,
+      artifactBuildCompleted: hookScript,
+      beforePack: hookScript,
+      afterExtract: hookScript,
+      afterPack: hookScript,
+    },
+  })
+})
+
+// test.only("hooks as file - mjs exported functions", async () => {
+//   const hookScript = path.join(getFixtureDir(), "build-hook.mjs")
+//   return assertPack("test-app-one", {
+//     targets: createTargets([Platform.LINUX, Platform.MAC], "zip", "x64"),
+//     config: {
+//       artifactBuildStarted: hookScript,
+//       artifactBuildCompleted: hookScript,
+//       beforePack: hookScript,
+//       afterExtract: hookScript,
+//       afterPack: hookScript,
+//     },
+//   })
+// })
 
 test.ifWindows("afterSign", () => {
   let called = 0
@@ -257,6 +309,7 @@ test.ifWindows("afterSign", () => {
       packed: async () => {
         // afterSign is only called when an app is actually signed and ignored otherwise.
         expect(called).toEqual(1)
+        return Promise.resolve()
       },
     }
   )
@@ -272,12 +325,14 @@ test.ifLinuxOrDevMac("beforeBuild", () => {
         npmRebuild: true,
         beforeBuild: async () => {
           called++
+          return Promise.resolve()
         },
       },
     },
     {
       packed: async () => {
         expect(called).toEqual(2)
+        return Promise.resolve()
       },
     }
   )

@@ -40,7 +40,7 @@ export default class AppImageTarget extends Target {
     // tslint:disable-next-line:no-invalid-template-strings
     const artifactName = packager.expandArtifactNamePattern(options, "AppImage", arch)
     const artifactPath = path.join(this.outDir, artifactName)
-    await packager.info.callArtifactBuildStarted({
+    await packager.info.emitArtifactBuildStarted({
       targetPresentableName: "AppImage",
       file: artifactPath,
       arch,
@@ -96,7 +96,7 @@ export default class AppImageTarget extends Target {
       args.push("--compression", "xz")
     }
 
-    await packager.info.callArtifactBuildCompleted({
+    await packager.info.emitArtifactBuildCompleted({
       file: artifactPath,
       safeArtifactName: packager.computeSafeArtifactName(artifactName, "AppImage", arch, false),
       target: this,

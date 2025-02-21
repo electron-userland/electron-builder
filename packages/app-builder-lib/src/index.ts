@@ -109,7 +109,7 @@ export function build(options: PackagerOptions & PublishOptions, packager: Packa
         }
         buildResult.artifactPaths.push(newArtifact)
         for (const publishConfiguration of publishConfigurations) {
-          publishManager.scheduleUpload(
+          await publishManager.scheduleUpload(
             publishConfiguration,
             {
               file: newArtifact,
@@ -132,6 +132,9 @@ export function build(options: PackagerOptions & PublishOptions, packager: Packa
       promise = publishManager.awaitTasks()
     }
 
-    return promise.then(() => process.removeListener("SIGINT", sigIntHandler))
+    return promise.then(() => {
+      packager.clearPackagerEventListeners()
+      process.removeListener("SIGINT", sigIntHandler)
+    })
   })
 }
