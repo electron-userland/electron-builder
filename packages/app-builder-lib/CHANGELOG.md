@@ -1,5 +1,19 @@
 # app-builder-lib
 
+## 26.0.8
+
+### Patch Changes
+
+- [#8872](https://github.com/electron-userland/electron-builder/pull/8872) [`7f6c3fea`](https://github.com/electron-userland/electron-builder/commit/7f6c3fea6fea8cffa00a43413f5335097aca94b0) Thanks [@mmaietta](https://github.com/mmaietta)! - chore: refactor node module collector, extract explicit `DependencyTree`, update types to be generic and respective to `npm list` vs `pnpm list` dependency trees
+
+- [#8868](https://github.com/electron-userland/electron-builder/pull/8868) [`48c9f88b`](https://github.com/electron-userland/electron-builder/commit/48c9f88b185cbc4a52926e6e10791bf293ecda6f) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: allow usage of .cjs, .mjs, and type=module custom/generic publishers
+
+- [#8872](https://github.com/electron-userland/electron-builder/pull/8872) [`7f6c3fea`](https://github.com/electron-userland/electron-builder/commit/7f6c3fea6fea8cffa00a43413f5335097aca94b0) Thanks [@mmaietta](https://github.com/mmaietta)! - chore: refactor node module collector to reduce recursion, extract explicit DependencyTree, update types
+
+- Updated dependencies []:
+  - dmg-builder@26.0.8
+  - electron-builder-squirrel-windows@26.0.8
+
 ## 26.0.7
 
 ### Patch Changes
