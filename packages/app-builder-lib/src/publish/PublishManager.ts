@@ -361,7 +361,8 @@ async function requireProviderClass(provider: string, packager: Packager): Promi
       const validPublisherFiles = extensions.map(ext => path.join(packager.buildResourcesDir, name(ext)))
       for (const potentialFile of validPublisherFiles) {
         if (await exists(potentialFile)) {
-          return await resolveModule(packager.appInfo.type, potentialFile)
+          const module: any = await resolveModule(packager.appInfo.type, potentialFile)
+          return module.default || module
         }
       }
       log.warn({ path: log.filePath(packager.buildResourcesDir), template, extensionsChecked: extensions }, "unable to find publish provider in build resources")
