@@ -57,7 +57,7 @@ export class AsyncEventEmitter<T extends EventMap> implements TypedEventEmitter<
         if (this.cancellationToken.cancelled) {
           return false
         }
-        const handler = await listener.handler
+        const handler = await Promise.resolve(listener.handler)
         await Promise.resolve(handler?.(...args))
       }
       return true

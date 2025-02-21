@@ -232,11 +232,9 @@ test.ifLinuxOrDevMac("hooks as functions", () => {
       config: {
         artifactBuildStarted: () => {
           artifactBuildStartedCalled++
-          return Promise.resolve()
         },
         artifactBuildCompleted: () => {
           artifactBuildCompletedCalled++
-          return Promise.resolve()
         },
         beforePack: () => {
           beforePackCalled++

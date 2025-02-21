@@ -1,3 +1,3 @@
 module.exports = (event) => {
-  return
+  return Promise.resolve('foobar');
 }
