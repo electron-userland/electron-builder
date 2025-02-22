@@ -5,7 +5,7 @@ import { filterCFBundleIdentifier } from "../appInfo"
 import { AsarIntegrity } from "../asar/integrity"
 import { MacPackager } from "../macPackager"
 import { normalizeExt } from "../platformPackager"
-import * as plist from "simple-plist"
+import SimplePlist from "simple-plist"
 import { executeAppBuilderAsJson } from "../util/appBuilder"
 import { createBrandingOpts } from "./ElectronFramework"
 
@@ -231,31 +231,31 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
   }
 
   if (helperEHPlist != null) {
-    plist.default.writeFileSync(helperEHPlistFilename, helperEHPlist)
+    SimplePlist.writeFileSync(helperEHPlistFilename, helperEHPlist)
   }
 
   if (helperNPPlist != null) {
-    plist.default.writeFileSync(helperNPPlistFilename, helperNPPlist)
+    SimplePlist.writeFileSync(helperNPPlistFilename, helperNPPlist)
   }
 
   if (helperRendererPlist != null) {
-    plist.default.writeFileSync(helperRendererPlistFilename, helperRendererPlist)
+    SimplePlist.writeFileSync(helperRendererPlistFilename, helperRendererPlist)
   }
 
   if (helperPluginPlist != null) {
-    plist.default.writeFileSync(helperPluginPlistFilename, helperPluginPlist)
+    SimplePlist.writeFileSync(helperPluginPlistFilename, helperPluginPlist)
   }
 
   if (helperGPUPlist != null) {
-    plist.default.writeFileSync(helperGPUPlistFilename, helperGPUPlist)
+    SimplePlist.writeFileSync(helperGPUPlistFilename, helperGPUPlist)
   }
 
   if (helperLoginPlist != null) {
-    plist.default.writeFileSync(helperLoginPlistFilename, helperLoginPlist)
+    SimplePlist.writeFileSync(helperLoginPlistFilename, helperLoginPlist)
   }
 
-  plist.default.writeFileSync(appPlistFilename, appPlist)
-  plist.default.writeFileSync(helperPlistFilename, helperPlist)
+  SimplePlist.writeFileSync(appPlistFilename, appPlist)
+  SimplePlist.writeFileSync(helperPlistFilename, helperPlist)
 
   await Promise.all([
     doRename(path.join(contentsPath, "MacOS"), electronBranding.productName, appPlist.CFBundleExecutable),

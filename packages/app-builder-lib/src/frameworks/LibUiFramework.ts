@@ -7,7 +7,7 @@ import { Platform } from "../core"
 import { Framework, PrepareApplicationStageDirectoryOptions } from "../Framework"
 import { LinuxPackager } from "../linuxPackager"
 import { MacPackager } from "../macPackager"
-import * as plist from "simple-plist"
+import SimplePlist from "simple-plist"
 
 export class LibUiFramework implements Framework {
   readonly name: string = "libui"
@@ -71,7 +71,7 @@ export class LibUiFramework implements Framework {
       NSHighResolutionCapable: true,
     }
     await packager.applyCommonInfo(appPlist, appContentsDir)
-    plist.default.writeFileSync(path.join(appContentsDir, "Info.plist"), appPlist)
+    SimplePlist.writeFileSync(path.join(appContentsDir, "Info.plist"), appPlist)
     await writeExecutableMain(
       path.join(appContentsDir, "MacOS", appPlist.CFBundleExecutable),
       `#!/bin/sh

@@ -8,7 +8,7 @@ import { findIdentity, Identity } from "../codeSign/macCodeSign"
 import { Target } from "../core"
 import { MacPackager } from "../macPackager"
 import { PkgOptions } from "../options/pkgOptions"
-import * as plist from "simple-plist"
+import SimplePlist from "simple-plist"
 import { executeAppBuilderAsJson } from "../util/appBuilder"
 import { getNotLocalizedLicenseFile } from "../util/license"
 
@@ -238,7 +238,7 @@ export class PkgTarget extends Target {
       args.push("--scripts", scriptsDir)
     }
     if (plistInfo.length > 0) {
-      plist.default.writeFileSync(propertyListOutputFile, packageInfo)
+      SimplePlist.writeFileSync(propertyListOutputFile, packageInfo)
     }
 
     args.push(packageOutputFile)
