@@ -3,7 +3,12 @@ import { PnpmNodeModulesCollector } from "./pnpmNodeModulesCollector"
 import { YarnNodeModulesCollector } from "./yarnNodeModulesCollector"
 import { detect, PM, getPackageManagerVersion } from "./packageManager"
 import { NodeModuleInfo } from "./types"
-import { log } from "builder-util"
+import { log, exec } from "builder-util"
+
+async function getPnpmConfig(key: string, rootDir: string): Promise<string> {
+  const command = process.platform === "win32" ? "pnpm.cmd" : "pnpm"
+  return await exec(command, ["config", "get", key], { cwd: rootDir, shell: true })
+}
 
 async function getCollectorByPackageManager(rootDir: string) {
   const manager: PM = await detect({ cwd: rootDir })
@@ -11,9 +16,12 @@ async function getCollectorByPackageManager(rootDir: string) {
     case "npm":
       return new NpmNodeModulesCollector(rootDir)
     case "pnpm":
-      if (process.env.NPM_CONFIG_NODE_LINKER === "hoisted") {
-        log.warn("pnpm hoisted mode will be not supported. Please use pnpm --no-hoist")
-        return new NpmNodeModulesCollector(rootDir)
+      {
+        const nodeLinker = await getPnpmConfig("node-linker", rootDir)
+        if (nodeLinker.trim() === "hoisted") {
+          log.warn("pnpm hoisted mode use more disk space and is slower to install. It is recommended to use pnpm without hoisted")
+          return new NpmNodeModulesCollector(rootDir)
+        }
       }
       return new PnpmNodeModulesCollector(rootDir)
     case "yarn":

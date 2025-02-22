@@ -256,7 +256,7 @@ test.ifAll("yarn ms", () =>
           modifyPackageJson(projectDir, data => {
             data.dependencies = {
               "@sentry/electron": "5.11.0",
-              "electron-clear-data": "^1.0.5",
+              "electron-clear-data": "1.0.5",
             }
             data.devDependencies = {
               electron: "34.0.2",
@@ -335,6 +335,54 @@ test.ifAll("pnpm hoist config", () =>
           }),
           outputFile(path.join(projectDir, "pnpm-lock.yaml"), ""),
           outputFile(path.join(projectDir, ".npmrc"), "node-linker=hoisted"),
+        ])
+      },
+      packed: context => verifyAsarFileTree(context.getResources(Platform.LINUX)),
+    }
+  )
+)
+
+test.ifAll("pnpm shamefully hoist config", () =>
+  assertPack(
+    "test-app-hoisted",
+    {
+      targets: linuxDirTarget,
+    },
+    {
+      isInstallDepsBefore: true,
+      projectDirCreated: projectDir => {
+        return Promise.all([
+          modifyPackageJson(projectDir, data => {
+            data.dependencies = {
+              "npm-run-all": "^4.1.5",
+            }
+          }),
+          outputFile(path.join(projectDir, "pnpm-lock.yaml"), ""),
+          outputFile(path.join(projectDir, ".npmrc"), "shamefully-hoist=true"),
+        ])
+      },
+      packed: context => verifyAsarFileTree(context.getResources(Platform.LINUX)),
+    }
+  )
+)
+
+test.ifAll("pnpm public-hoist-pattern config", () =>
+  assertPack(
+    "test-app-hoisted",
+    {
+      targets: linuxDirTarget,
+    },
+    {
+      isInstallDepsBefore: true,
+      projectDirCreated: projectDir => {
+        return Promise.all([
+          modifyPackageJson(projectDir, data => {
+            data.dependencies = {
+              "npm-run-all": "^4.1.5",
+            }
+          }),
+          outputFile(path.join(projectDir, "pnpm-lock.yaml"), ""),
+          outputFile(path.join(projectDir, ".npmrc"), "public-hoist-pattern=*"),
         ])
       },
       packed: context => verifyAsarFileTree(context.getResources(Platform.LINUX)),
