@@ -18,7 +18,7 @@ async function isPnpmProjectHoisted(rootDir: string) {
         [key]: value,
       }
     }, {})
-  return lines["node-linker"] === "hoisted" || lines["shamefully-hoist"] === "true" || lines["public-hoist-pattern"] === "*"
+  return lines["node-linker"] === "hoisted"
 }
 
 async function getCollectorByPackageManager(rootDir: string) {
