@@ -8,16 +8,7 @@ import { exec } from "builder-util"
 async function isPnpmProjectHoisted(rootDir: string) {
   const command = process.platform === "win32" ? "pnpm.cmd" : "pnpm"
   const config = await exec(command, ["config", "list"], { cwd: rootDir, shell: true })
-  const lines = config
-    .split("\n")
-    .map(line => line.trim().split("="))
-    .reduce<Record<string, string>>((accum, curr) => {
-      const [key, value] = curr
-      return {
-        ...accum,
-        [key.trim()]: value?.trim(),
-      }
-    }, {})
+  const lines = Object.fromEntries(config.split("\n").map(line => line.split("=").map(s => s.trim())))
   return lines["node-linker"] === "hoisted"
 }
 
