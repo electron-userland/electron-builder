@@ -5,7 +5,8 @@ import { filterCFBundleIdentifier } from "../appInfo"
 import { AsarIntegrity } from "../asar/integrity"
 import { MacPackager } from "../macPackager"
 import { normalizeExt } from "../platformPackager"
-import { executeAppBuilderAndWriteJson, executeAppBuilderAsJson } from "../util/appBuilder"
+import * as plist from "simple-plist"
+import { executeAppBuilderAsJson } from "../util/appBuilder"
 import { createBrandingOpts } from "./ElectronFramework"
 
 function doRename(basePath: string, oldName: string, newName: string) {
@@ -229,31 +230,34 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
     appPlist.ElectronAsarIntegrity = asarIntegrity
   }
 
-  const plistDataToWrite: any = {
-    [appPlistFilename]: appPlist,
-    [helperPlistFilename]: helperPlist,
-  }
   if (helperEHPlist != null) {
-    plistDataToWrite[helperEHPlistFilename] = helperEHPlist
-  }
-  if (helperNPPlist != null) {
-    plistDataToWrite[helperNPPlistFilename] = helperNPPlist
-  }
-  if (helperRendererPlist != null) {
-    plistDataToWrite[helperRendererPlistFilename] = helperRendererPlist
-  }
-  if (helperPluginPlist != null) {
-    plistDataToWrite[helperPluginPlistFilename] = helperPluginPlist
-  }
-  if (helperGPUPlist != null) {
-    plistDataToWrite[helperGPUPlistFilename] = helperGPUPlist
-  }
-  if (helperLoginPlist != null) {
-    plistDataToWrite[helperLoginPlistFilename] = helperLoginPlist
+    plist.default.writeFileSync(helperEHPlistFilename, helperEHPlist)
   }
 
+  if (helperNPPlist != null) {
+    plist.default.writeFileSync(helperNPPlistFilename, helperNPPlist)
+  }
+
+  if (helperRendererPlist != null) {
+    plist.default.writeFileSync(helperRendererPlistFilename, helperRendererPlist)
+  }
+
+  if (helperPluginPlist != null) {
+    plist.default.writeFileSync(helperPluginPlistFilename, helperPluginPlist)
+  }
+
+  if (helperGPUPlist != null) {
+    plist.default.writeFileSync(helperGPUPlistFilename, helperGPUPlist)
+  }
+
+  if (helperLoginPlist != null) {
+    plist.default.writeFileSync(helperLoginPlistFilename, helperLoginPlist)
+  }
+
+  plist.default.writeFileSync(appPlistFilename, appPlist)
+  plist.default.writeFileSync(helperPlistFilename, helperPlist)
+
   await Promise.all([
-    executeAppBuilderAndWriteJson(["encode-plist"], plistDataToWrite),
     doRename(path.join(contentsPath, "MacOS"), electronBranding.productName, appPlist.CFBundleExecutable),
     unlinkIfExists(path.join(appOutDir, "LICENSE")),
     unlinkIfExists(path.join(appOutDir, "LICENSES.chromium.html")),

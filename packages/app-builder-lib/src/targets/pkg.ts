@@ -8,7 +8,8 @@ import { findIdentity, Identity } from "../codeSign/macCodeSign"
 import { Target } from "../core"
 import { MacPackager } from "../macPackager"
 import { PkgOptions } from "../options/pkgOptions"
-import { executeAppBuilderAndWriteJson, executeAppBuilderAsJson } from "../util/appBuilder"
+import * as plist from "simple-plist"
+import { executeAppBuilderAsJson } from "../util/appBuilder"
 import { getNotLocalizedLicenseFile } from "../util/license"
 
 const certType = "Developer ID Installer"
@@ -237,7 +238,7 @@ export class PkgTarget extends Target {
       args.push("--scripts", scriptsDir)
     }
     if (plistInfo.length > 0) {
-      await executeAppBuilderAndWriteJson(["encode-plist"], { [propertyListOutputFile]: plistInfo })
+      plist.default.writeFileSync(propertyListOutputFile, packageInfo)
     }
 
     args.push(packageOutputFile)
