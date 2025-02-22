@@ -15,7 +15,7 @@ async function isPnpmProjectHoisted(rootDir: string) {
       const [key, value] = curr
       return {
         ...accum,
-        [key.trim()]: value.trim(),
+        [key.trim()]: value?.trim(),
       }
     }, {})
   return lines["node-linker"] === "hoisted"
