@@ -10,12 +10,12 @@ async function isPnpmProjectHoisted(rootDir: string) {
   const config = await exec(command, ["config", "list"], { cwd: rootDir, shell: true })
   const lines = config
     .split("\n")
-    .map(line => line.split("="))
+    .map(line => line.trim().split("="))
     .reduce<Record<string, string>>((accum, curr) => {
       const [key, value] = curr
       return {
         ...accum,
-        [key]: value,
+        [key.trim()]: value.trim(),
       }
     }, {})
   return lines["node-linker"] === "hoisted"
