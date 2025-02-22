@@ -35840,11 +35840,11 @@ exports[`yarn ms 2`] = `
 {
   "files": {
     "index.html": {
-      "offset": "48002893",
+      "offset": "48003059",
       "size": 378,
     },
     "index.js": {
-      "offset": "48003271",
+      "offset": "48003437",
       "size": 619,
     },
     "node_modules": {
@@ -58393,10 +58393,10 @@ exports[`yarn ms 2`] = `
             },
             "index.js": {
               "offset": "47870069",
-              "size": 13982,
+              "size": 14148,
             },
             "package.json": {
-              "offset": "47884051",
+              "offset": "47884217",
               "size": 970,
             },
           },
@@ -58404,80 +58404,80 @@ exports[`yarn ms 2`] = `
         "resolve": {
           "files": {
             ".editorconfig": {
-              "offset": "47885021",
+              "offset": "47885187",
               "size": 605,
             },
             "LICENSE": {
-              "offset": "47885626",
+              "offset": "47885792",
               "size": 1071,
             },
             "SECURITY.md": {
-              "offset": "47886697",
+              "offset": "47886863",
               "size": 157,
             },
             "async.js": {
-              "offset": "47886854",
+              "offset": "47887020",
               "size": 56,
             },
             "bin": {
               "files": {
                 "resolve": {
                   "executable": true,
-                  "offset": "47886910",
+                  "offset": "47887076",
                   "size": 1535,
                 },
               },
             },
             "index.js": {
-              "offset": "47888445",
+              "offset": "47888611",
               "size": 174,
             },
             "lib": {
               "files": {
                 "async.js": {
-                  "offset": "47888619",
+                  "offset": "47888785",
                   "size": 11391,
                 },
                 "caller.js": {
-                  "offset": "47900010",
+                  "offset": "47900176",
                   "size": 354,
                 },
                 "core.js": {
-                  "offset": "47900364",
+                  "offset": "47900530",
                   "size": 309,
                 },
                 "core.json": {
-                  "offset": "47900673",
+                  "offset": "47900839",
                   "size": 5931,
                 },
                 "homedir.js": {
-                  "offset": "47906604",
+                  "offset": "47906770",
                   "size": 805,
                 },
                 "is-core.js": {
-                  "offset": "47907409",
+                  "offset": "47907575",
                   "size": 116,
                 },
                 "node-modules-paths.js": {
-                  "offset": "47907525",
+                  "offset": "47907691",
                   "size": 1294,
                 },
                 "normalize-options.js": {
-                  "offset": "47908819",
+                  "offset": "47908985",
                   "size": 348,
                 },
                 "sync.js": {
-                  "offset": "47909167",
+                  "offset": "47909333",
                   "size": 7025,
                 },
               },
             },
             "package.json": {
-              "offset": "47916192",
+              "offset": "47916358",
               "size": 1318,
             },
             "sync.js": {
-              "offset": "47917510",
+              "offset": "47917676",
               "size": 55,
             },
           },
@@ -58485,14 +58485,14 @@ exports[`yarn ms 2`] = `
         "semver": {
           "files": {
             "LICENSE": {
-              "offset": "47917565",
+              "offset": "47917731",
               "size": 765,
             },
             "bin": {
               "files": {
                 "semver.js": {
                   "executable": true,
-                  "offset": "47918330",
+                  "offset": "47918496",
                   "size": 4725,
                 },
               },
@@ -58500,19 +58500,19 @@ exports[`yarn ms 2`] = `
             "classes": {
               "files": {
                 "comparator.js": {
-                  "offset": "47923055",
+                  "offset": "47923221",
                   "size": 3617,
                 },
                 "index.js": {
-                  "offset": "47926672",
+                  "offset": "47926838",
                   "size": 129,
                 },
                 "range.js": {
-                  "offset": "47926801",
+                  "offset": "47926967",
                   "size": 14924,
                 },
                 "semver.js": {
-                  "offset": "47941725",
+                  "offset": "47941891",
                   "size": 9338,
                 },
               },
@@ -58520,191 +58520,191 @@ exports[`yarn ms 2`] = `
             "functions": {
               "files": {
                 "clean.js": {
-                  "offset": "47951063",
+                  "offset": "47951229",
                   "size": 191,
                 },
                 "cmp.js": {
-                  "offset": "47951254",
+                  "offset": "47951420",
                   "size": 947,
                 },
                 "coerce.js": {
-                  "offset": "47952201",
+                  "offset": "47952367",
                   "size": 1990,
                 },
                 "compare-build.js": {
-                  "offset": "47954191",
+                  "offset": "47954357",
                   "size": 267,
                 },
                 "compare-loose.js": {
-                  "offset": "47954458",
+                  "offset": "47954624",
                   "size": 118,
                 },
                 "compare.js": {
-                  "offset": "47954576",
+                  "offset": "47954742",
                   "size": 156,
                 },
                 "diff.js": {
-                  "offset": "47954732",
+                  "offset": "47954898",
                   "size": 1407,
                 },
                 "eq.js": {
-                  "offset": "47956139",
+                  "offset": "47956305",
                   "size": 112,
                 },
                 "gt.js": {
-                  "offset": "47956251",
+                  "offset": "47956417",
                   "size": 110,
                 },
                 "gte.js": {
-                  "offset": "47956361",
+                  "offset": "47956527",
                   "size": 113,
                 },
                 "inc.js": {
-                  "offset": "47956474",
+                  "offset": "47956640",
                   "size": 464,
                 },
                 "lt.js": {
-                  "offset": "47956938",
+                  "offset": "47957104",
                   "size": 110,
                 },
                 "lte.js": {
-                  "offset": "47957048",
+                  "offset": "47957214",
                   "size": 113,
                 },
                 "major.js": {
-                  "offset": "47957161",
+                  "offset": "47957327",
                   "size": 122,
                 },
                 "minor.js": {
-                  "offset": "47957283",
+                  "offset": "47957449",
                   "size": 122,
                 },
                 "neq.js": {
-                  "offset": "47957405",
+                  "offset": "47957571",
                   "size": 114,
                 },
                 "parse.js": {
-                  "offset": "47957519",
+                  "offset": "47957685",
                   "size": 317,
                 },
                 "patch.js": {
-                  "offset": "47957836",
+                  "offset": "47958002",
                   "size": 122,
                 },
                 "prerelease.js": {
-                  "offset": "47957958",
+                  "offset": "47958124",
                   "size": 220,
                 },
                 "rcompare.js": {
-                  "offset": "47958178",
+                  "offset": "47958344",
                   "size": 118,
                 },
                 "rsort.js": {
-                  "offset": "47958296",
+                  "offset": "47958462",
                   "size": 149,
                 },
                 "satisfies.js": {
-                  "offset": "47958445",
+                  "offset": "47958611",
                   "size": 233,
                 },
                 "sort.js": {
-                  "offset": "47958678",
+                  "offset": "47958844",
                   "size": 147,
                 },
                 "valid.js": {
-                  "offset": "47958825",
+                  "offset": "47958991",
                   "size": 162,
                 },
               },
             },
             "index.js": {
-              "offset": "47958987",
+              "offset": "47959153",
               "size": 2616,
             },
             "internal": {
               "files": {
                 "constants.js": {
-                  "offset": "47961603",
+                  "offset": "47961769",
                   "size": 859,
                 },
                 "debug.js": {
-                  "offset": "47962462",
+                  "offset": "47962628",
                   "size": 226,
                 },
                 "identifiers.js": {
-                  "offset": "47962688",
+                  "offset": "47962854",
                   "size": 410,
                 },
                 "lrucache.js": {
-                  "offset": "47963098",
+                  "offset": "47963264",
                   "size": 788,
                 },
                 "parse-options.js": {
-                  "offset": "47963886",
+                  "offset": "47964052",
                   "size": 324,
                 },
                 "re.js": {
-                  "offset": "47964210",
+                  "offset": "47964376",
                   "size": 7998,
                 },
               },
             },
             "package.json": {
-              "offset": "47972208",
+              "offset": "47972374",
               "size": 1350,
             },
             "preload.js": {
-              "offset": "47973558",
+              "offset": "47973724",
               "size": 69,
             },
             "range.bnf": {
-              "offset": "47973627",
+              "offset": "47973793",
               "size": 619,
             },
             "ranges": {
               "files": {
                 "gtr.js": {
-                  "offset": "47974246",
+                  "offset": "47974412",
                   "size": 217,
                 },
                 "intersects.js": {
-                  "offset": "47974463",
+                  "offset": "47974629",
                   "size": 210,
                 },
                 "ltr.js": {
-                  "offset": "47974673",
+                  "offset": "47974839",
                   "size": 213,
                 },
                 "max-satisfying.js": {
-                  "offset": "47974886",
+                  "offset": "47975052",
                   "size": 579,
                 },
                 "min-satisfying.js": {
-                  "offset": "47975465",
+                  "offset": "47975631",
                   "size": 577,
                 },
                 "min-version.js": {
-                  "offset": "47976042",
+                  "offset": "47976208",
                   "size": 1500,
                 },
                 "outside.js": {
-                  "offset": "47977542",
+                  "offset": "47977708",
                   "size": 2190,
                 },
                 "simplify.js": {
-                  "offset": "47979732",
+                  "offset": "47979898",
                   "size": 1341,
                 },
                 "subset.js": {
-                  "offset": "47981073",
+                  "offset": "47981239",
                   "size": 7510,
                 },
                 "to-comparators.js": {
-                  "offset": "47988583",
+                  "offset": "47988749",
                   "size": 268,
                 },
                 "valid.js": {
-                  "offset": "47988851",
+                  "offset": "47989017",
                   "size": 312,
                 },
               },
@@ -58714,15 +58714,15 @@ exports[`yarn ms 2`] = `
         "shimmer": {
           "files": {
             "LICENSE": {
-              "offset": "47989163",
+              "offset": "47989329",
               "size": 1327,
             },
             "index.js": {
-              "offset": "47990490",
+              "offset": "47990656",
               "size": 2943,
             },
             "package.json": {
-              "offset": "47993433",
+              "offset": "47993599",
               "size": 403,
             },
           },
@@ -58730,23 +58730,23 @@ exports[`yarn ms 2`] = `
         "supports-preserve-symlinks-flag": {
           "files": {
             ".nycrc": {
-              "offset": "47993836",
+              "offset": "47994002",
               "size": 139,
             },
             "LICENSE": {
-              "offset": "47993975",
+              "offset": "47994141",
               "size": 1067,
             },
             "browser.js": {
-              "offset": "47995042",
+              "offset": "47995208",
               "size": 38,
             },
             "index.js": {
-              "offset": "47995080",
+              "offset": "47995246",
               "size": 293,
             },
             "package.json": {
-              "offset": "47995373",
+              "offset": "47995539",
               "size": 1266,
             },
           },
@@ -58754,11 +58754,11 @@ exports[`yarn ms 2`] = `
         "undici-types": {
           "files": {
             "LICENSE": {
-              "offset": "47996639",
+              "offset": "47996805",
               "size": 1090,
             },
             "package.json": {
-              "offset": "47997729",
+              "offset": "47997895",
               "size": 325,
             },
           },
@@ -58766,23 +58766,23 @@ exports[`yarn ms 2`] = `
         "xtend": {
           "files": {
             "LICENSE": {
-              "offset": "47998054",
+              "offset": "47998220",
               "size": 1078,
             },
             "immutable.js": {
-              "offset": "47999132",
+              "offset": "47999298",
               "size": 384,
             },
             "mutable.js": {
-              "offset": "47999516",
+              "offset": "47999682",
               "size": 369,
             },
             "package.json": {
-              "offset": "47999885",
+              "offset": "48000051",
               "size": 701,
             },
             "test.js": {
-              "offset": "48000586",
+              "offset": "48000752",
               "size": 2307,
             },
           },
@@ -58790,7 +58790,7 @@ exports[`yarn ms 2`] = `
       },
     },
     "package.json": {
-      "offset": "48003890",
+      "offset": "48004056",
       "size": 373,
     },
   },
