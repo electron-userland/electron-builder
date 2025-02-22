@@ -342,3 +342,49 @@ test.ifAll("pnpm node-linker=hoisted", () =>
     }
   )
 )
+test.ifAll("pnpm shamefully-hoist=true", () =>
+  assertPack(
+    "test-app-hoisted",
+    {
+      targets: linuxDirTarget,
+    },
+    {
+      isInstallDepsBefore: true,
+      projectDirCreated: projectDir => {
+        return Promise.all([
+          modifyPackageJson(projectDir, data => {
+            data.dependencies = {
+              dayjs: "1.11.13",
+            }
+          }),
+          outputFile(path.join(projectDir, "pnpm-lock.yaml"), ""),
+          outputFile(path.join(projectDir, ".npmrc"), "shamefully-hoist=true"),
+        ])
+      },
+      packed: context => verifyAsarFileTree(context.getResources(Platform.LINUX)),
+    }
+  )
+)
+test.ifAll("pnpm node-linker=hoisted", () =>
+  assertPack(
+    "test-app-hoisted",
+    {
+      targets: linuxDirTarget,
+    },
+    {
+      isInstallDepsBefore: true,
+      projectDirCreated: projectDir => {
+        return Promise.all([
+          modifyPackageJson(projectDir, data => {
+            data.dependencies = {
+              dayjs: "1.11.13",
+            }
+          }),
+          outputFile(path.join(projectDir, "pnpm-lock.yaml"), ""),
+          outputFile(path.join(projectDir, ".npmrc"), "public-hoist-pattern=*"),
+        ])
+      },
+      packed: context => verifyAsarFileTree(context.getResources(Platform.LINUX)),
+    }
+  )
+)
