@@ -5,7 +5,7 @@ import { filterCFBundleIdentifier } from "../appInfo"
 import { AsarIntegrity } from "../asar/integrity"
 import { MacPackager } from "../macPackager"
 import { normalizeExt } from "../platformPackager"
-import SimplePlist from "simple-plist"
+import { savePlistFile } from "../util/plist"
 import { executeAppBuilderAsJson } from "../util/appBuilder"
 import { createBrandingOpts } from "./ElectronFramework"
 
@@ -231,31 +231,31 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
   }
 
   if (helperEHPlist != null) {
-    SimplePlist.writeFileSync(helperEHPlistFilename, helperEHPlist)
+    await savePlistFile(helperEHPlistFilename, helperEHPlist)
   }
 
   if (helperNPPlist != null) {
-    SimplePlist.writeFileSync(helperNPPlistFilename, helperNPPlist)
+    await savePlistFile(helperNPPlistFilename, helperNPPlist)
   }
 
   if (helperRendererPlist != null) {
-    SimplePlist.writeFileSync(helperRendererPlistFilename, helperRendererPlist)
+    await savePlistFile(helperRendererPlistFilename, helperRendererPlist)
   }
 
   if (helperPluginPlist != null) {
-    SimplePlist.writeFileSync(helperPluginPlistFilename, helperPluginPlist)
+    await savePlistFile(helperPluginPlistFilename, helperPluginPlist)
   }
 
   if (helperGPUPlist != null) {
-    SimplePlist.writeFileSync(helperGPUPlistFilename, helperGPUPlist)
+    await savePlistFile(helperGPUPlistFilename, helperGPUPlist)
   }
 
   if (helperLoginPlist != null) {
-    SimplePlist.writeFileSync(helperLoginPlistFilename, helperLoginPlist)
+    await savePlistFile(helperLoginPlistFilename, helperLoginPlist)
   }
 
-  SimplePlist.writeFileSync(appPlistFilename, appPlist)
-  SimplePlist.writeFileSync(helperPlistFilename, helperPlist)
+  await savePlistFile(appPlistFilename, appPlist)
+  await savePlistFile(helperPlistFilename, helperPlist)
 
   await Promise.all([
     doRename(path.join(contentsPath, "MacOS"), electronBranding.productName, appPlist.CFBundleExecutable),
