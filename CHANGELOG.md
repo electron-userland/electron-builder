@@ -1,3 +1,12 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v26.0.7...v) (2025-02-21)
+
+
+### Features
+
+* allow usage of `.cjs`, `.mjs`, and `type=module` custom publishers. Adds `AsyncEventEmitter`. ([#8868](https://github.com/electron-userland/electron-builder/issues/8868)) ([48c9f88](https://github.com/electron-userland/electron-builder/commit/48c9f88b185cbc4a52926e6e10791bf293ecda6f))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v26.0.6...v) (2025-02-18)
 
 
