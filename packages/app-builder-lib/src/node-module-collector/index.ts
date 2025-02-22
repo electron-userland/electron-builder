@@ -6,7 +6,7 @@ import { NodeModuleInfo } from "./types"
 import { exec } from "builder-util"
 
 async function isPnpmProjectHoisted(rootDir: string) {
-  const command = process.platform === "win32" ? "pnpm.cmd" : "pnpm"
+  const command = await PnpmNodeModulesCollector.pmCommand.value
   const config = await exec(command, ["config", "list"], { cwd: rootDir, shell: true })
   const lines = Object.fromEntries(config.split("\n").map(line => line.split("=").map(s => s.trim())))
   return lines["node-linker"] === "hoisted"
