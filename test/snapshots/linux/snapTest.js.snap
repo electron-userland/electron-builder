@@ -587,7 +587,12 @@ exports[`compression option 1`] = `
 
 exports[`compression option 2`] = `
 {
-  "linux": [],
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
 }
 `;
 
@@ -1813,7 +1818,12 @@ exports[`plugs option 1`] = `
 
 exports[`plugs option 2`] = `
 {
-  "linux": [],
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp_1.1.0_amd64.snap",
+    },
+  ],
 }
 `;
 
@@ -2014,7 +2024,12 @@ exports[`plugs option 3`] = `
 
 exports[`plugs option 4`] = `
 {
-  "linux": [],
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp_1.1.0_amd64.snap",
+    },
+  ],
 }
 `;
 
