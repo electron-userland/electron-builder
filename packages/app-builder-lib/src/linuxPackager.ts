@@ -44,7 +44,7 @@ export class LinuxPackager extends PlatformPackager<LinuxConfiguration> {
           case "appimage":
             return require("./targets/AppImageTarget").default
           case "snap":
-            return require("./targets/snap").default
+            return require("./targets/snap/snap").default
           case "flatpak":
             return require("./targets/FlatpakTarget").default
           case "deb":

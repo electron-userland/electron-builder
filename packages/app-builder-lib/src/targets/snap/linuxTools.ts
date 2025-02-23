@@ -1,6 +1,6 @@
-import { getBinFromUrl } from "app-builder-lib/src/binDownload"
-import os from "os"
-import path from "path"
+import { getBinFromUrl } from "../../binDownload"
+import * as os from "os"
+import * as path from "path"
 
 async function getAppImageToolDir(): Promise<string> {
   return await getBinFromUrl("appimage", "12.0.1", "3el6RUh6XoYJCI/ZOApyb0LLU/gSxDntVZ46R6+JNEANzfSo7/TfrzCRp5KlDo35c24r3ZOP7nnw4RqHwkMRLw==")

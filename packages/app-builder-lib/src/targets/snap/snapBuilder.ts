@@ -1,6 +1,6 @@
-import { getBinFromUrl, getBin } from "app-builder-lib/src/binDownload"
-import { exec, log, isEmptyOrSpaces, copyDir } from "builder-util"
-import { rmdir, copyFile, mkdir, unlink, writeFile, rename } from "fs-extra"
+import { getBinFromUrl, getBin } from "../../binDownload"
+import { exec, log, isEmptyOrSpaces, copyDir, exists } from "builder-util"
+import { rmdir, copyFile, mkdir, unlink, writeFile, rename, chmod, rm } from "fs-extra"
 import * as path from "path"
 import * as semver from "semver"
 import { assets } from "./snapScripts"
@@ -48,7 +48,7 @@ export interface SnapBuilderOptions {
 export async function createSnap(options: SnapBuilderOptions) {
   const resolvedTemplateDir = await resolveTemplateDir(options.template)
   await snap(resolvedTemplateDir, options)
-  await rmdir(options.stageDir)
+  await rm(options.stageDir, { recursive: true })
 }
 
 async function resolveTemplateDir(options: SnapBuilderOptions["template"]) {
@@ -79,8 +79,9 @@ async function resolveTemplateDir(options: SnapBuilderOptions["template"]) {
 }
 
 async function snap(templateDir: string, options: SnapBuilderOptions): Promise<void> {
+  const isUseTemplateApp = !isEmptyOrSpaces(templateDir)
   const stageDir = options.stageDir
-  const snapMetaDir = templateDir ? path.join(stageDir, "meta") : path.join(stageDir, "snap")
+  const snapMetaDir = isUseTemplateApp ? path.join(stageDir, "meta") : path.join(stageDir, "snap")
 
   if (options.icon) {
     await copyFile(options.icon, path.join(snapMetaDir, "gui", "icon" + path.extname(options.icon)))
@@ -93,36 +94,51 @@ async function snap(templateDir: string, options: SnapBuilderOptions): Promise<v
   await mkdir(scriptDir, { recursive: true })
 
   if (options.executableName) {
-    await writeCommandWrapper(options, scriptDir)
+    await writeCommandWrapper(options, isUseTemplateApp, scriptDir)
   }
 
   const chromeSandbox = path.join(options.appDir, "app", "chrome-sandbox")
-  await unlink(chromeSandbox).catch((_e: any) => {
-    // ignore
-  })
+  if (await exists(chromeSandbox)) {
+    await unlink(chromeSandbox)
+  }
 
-  if (templateDir) {
+  if (isUseTemplateApp) {
     await buildUsingTemplate(templateDir, options)
   } else {
     await buildWithoutTemplate(options, scriptDir)
   }
 }
 
-async function writeCommandWrapper(options: SnapBuilderOptions, scriptDir: string): Promise<void> {
-  const commandWrapperFile = path.join(scriptDir, "command.sh")
-  let text = `#!/bin/bash -e\nexec "$SNAP/desktop-init.sh" "$SNAP/desktop-common.sh" "$SNAP/desktop-gnome-specific.sh" "$SNAP/${options.executableName}"`
+type CommandWrapperOptions = {
+  stageDir?: string
+  executableName: string
+  extraAppArgs?: string[]
+}
+
+async function writeCommandWrapper(options: CommandWrapperOptions, isUseTemplateApp: boolean, scriptDir: string): Promise<void> {
+  const appPrefix = isUseTemplateApp ? "" : "app/"
+  const dir = isUseTemplateApp ? options.stageDir || "" : scriptDir
+
+  const commandWrapperFile = path.join(dir, "command.sh")
+  let text = `#!/bin/bash -e\nexec "$SNAP/desktop-init.sh" "$SNAP/desktop-common.sh" "$SNAP/desktop-gnome-specific.sh" "$SNAP/${appPrefix}${options.executableName}"`
 
   if (options.extraAppArgs) {
-    text += ` ${options.extraAppArgs}`
+    text += ` ${options.extraAppArgs.join(" ")}`
   }
   text += ' "$@"'
 
   await writeFile(commandWrapperFile, text, { mode: 0o755 })
+  await chmod(commandWrapperFile, 0o755)
 }
 
 async function buildUsingTemplate(templateDir: string, options: SnapBuilderOptions): Promise<void> {
-  const args = ["-no-progress", "-quiet", "-noappend", "-comp", options.compression || "xz", "-no-xattrs", "-no-fragments", "-all-root", options.output]
-  await exec(await getMksquashfs(), [templateDir, options.stageDir, ...args])
+  const args = ["-no-progress", "-noappend", "-comp", options.compression || "xz", "-no-xattrs", "-no-fragments", "-all-root"]
+  // const args = ["-no-progress", "-noappend", "-comp", options.compression || "xz", "-no-xattrs", "-no-fragments", "-all-root"]
+  if (!log.isDebugEnabled) {
+    args.unshift("-quiet")
+  }
+  const mksquash = await getMksquashfs()
+  await exec(mksquash, [templateDir, options.stageDir, options.output, ...args])
 }
 
 async function buildWithoutTemplate(options: SnapBuilderOptions, scriptDir: string): Promise<void> {

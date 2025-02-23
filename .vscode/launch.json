@@ -10,7 +10,7 @@
           "console": "integratedTerminal",
           "internalConsoleOptions": "openOnFirstSessionStart",
           "env": {
-            "TEST_FILES": "BuildTest"
+            "TEST_FILES": "snapTest"
           }
       }
   ]
