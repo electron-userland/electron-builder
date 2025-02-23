@@ -26,29 +26,21 @@ type AssetInfo = {
   modTime: number
 }
 
-function desktopScriptsDesktopCommonShBytes(): Buffer {
-  return _desktopScriptsDesktopCommonSh;
-}
-
 function desktopScriptsDesktopCommonSh(): Asset {
   return {
-    bytes: desktopScriptsDesktopCommonShBytes(),
+    bytes: _desktopScriptsDesktopCommonSh,
     info: {
-      name: 'desktop-scripts/desktop-common.sh',
-      size: 1401,
+      name: "desktop-scripts/desktop-common.sh",
+      size: 16604,
       mode: 0o644,
       modTime: 1731819267,
     },
-  };
-}
-
-function desktopScriptsDesktopGnomeSpecificShBytes(): Buffer {
-  return _desktopScriptsDesktopGnomeSpecificSh
+  }
 }
 
 export function desktopScriptsDesktopGnomeSpecificSh(): Asset {
   return {
-    bytes: desktopScriptsDesktopGnomeSpecificShBytes(),
+    bytes: _desktopScriptsDesktopGnomeSpecificSh,
     info: {
       name: "desktop-scripts/desktop-gnome-specific.sh",
       size: 1401,
@@ -58,13 +50,9 @@ export function desktopScriptsDesktopGnomeSpecificSh(): Asset {
   }
 }
 
-function desktopScriptsDesktopInitShBytes(): Buffer {
-  return _desktopScriptsDesktopInitSh
-}
-
 export function desktopScriptsDesktopInitSh(): Asset {
   return {
-    bytes: desktopScriptsDesktopInitShBytes(),
+    bytes: _desktopScriptsDesktopInitSh,
     info: {
       name: "desktop-scripts/desktop-init.sh",
       size: 1530,
@@ -74,26 +62,10 @@ export function desktopScriptsDesktopInitSh(): Asset {
   }
 }
 
-function bindataRead(data: Buffer, name: string): Buffer {
-  try {
-    return gunzipSync(data)
-  } catch (err) {
-    throw new Error(`Read ${name}: ${err}`)
-  }
-}
-
 export const assets: Record<string, () => Asset> = {
   "desktop-scripts/desktop-common.sh": desktopScriptsDesktopCommonSh,
   "desktop-scripts/desktop-gnome-specific.sh": desktopScriptsDesktopGnomeSpecificSh,
   "desktop-scripts/desktop-init.sh": desktopScriptsDesktopInitSh,
-}
-
-function createAsset(name: string, size: number, mode: number, modTime: number): Asset {
-  const data = readFileSync(name)
-  return {
-    bytes: bindataRead(data, name),
-    info: { name, size, mode, modTime: new Date(modTime * 1000) },
-  }
 }
 
 export function asset(name: string): Buffer {
