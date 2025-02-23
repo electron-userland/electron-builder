@@ -28,14 +28,6 @@ export class SnapStorePublisher extends Publisher {
     }
 
     return this.publishToStore(task.file, channels)
-
-    // const args = ["publish-snap", "-f", task.file]
-
-    // for (const channel of channels) {
-    //   args.push("-c", channel)
-    // }
-
-    // return executeAppBuilder(args)
   }
 
   toString(): string {
@@ -51,5 +43,4 @@ export class SnapStorePublisher extends Publisher {
     await checkSnapcraftVersion()
     await exec("snapcraft", args)
   }
-
 }

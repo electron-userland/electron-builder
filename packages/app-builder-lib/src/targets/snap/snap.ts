@@ -191,7 +191,6 @@ export default class SnapTarget extends Target {
 
     const stageDir = await createStageDirPath(this, packager, arch)
     const snapArch = toLinuxArchString(arch, "snap")
-    // const args = ["snap", "--app", appOutDir, "--stage", stageDir, "--arch", snapArch, "--output", artifactPath, "--executable", this.packager.executableName]
     const args: SnapBuilderOptions = {
       appDir: appOutDir,
       stageDir: stageDir,
@@ -206,7 +205,6 @@ export default class SnapTarget extends Target {
         snap.icon = "snap/gui/icon.png"
       }
       args.icon = this.helper.maxIconPath
-      // args.push("--icon", this.helper.maxIconPath)
     }
 
     // snapcraft.yaml inside a snap directory
@@ -225,17 +223,14 @@ export default class SnapTarget extends Target {
       }
       if (this.isUseTemplateApp) {
         args.excludedAppFiles = ["chrome-sandbox"]
-        // args.push("--exclude", "chrome-sandbox")
       }
     }
     if (extraAppArgs.length > 0) {
       args.extraAppArgs = extraAppArgs
-      // args.push("--extraAppArgs=" + extraAppArgs.join(" "))
     }
 
     if (snap.compression != null) {
       args.compression = snap.compression
-      // args.push("--compression", snap.compression)
     }
 
     if (this.isUseTemplateApp) {

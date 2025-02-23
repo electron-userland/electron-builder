@@ -6,7 +6,7 @@ export async function checkSnapcraftVersion() {
   const installMessage = process.platform === "darwin" ? "brew install snapcraft" : "sudo snap install snapcraft --classic"
   const errorMessage = `snapcraft is not installed, please: ${installMessage}`
 
-  const doCheckSnapVersion = (rawVersion: string, installMessage: string) => {
+  const doCheckSnapVersion = (rawVersion: string) => {
     if (rawVersion === "snapcraft, version edge") {
       return
     }
@@ -26,5 +26,5 @@ export async function checkSnapcraftVersion() {
     log.error({ message: err.message }, errorMessage)
     throw new Error(errorMessage)
   }
-  doCheckSnapVersion(out, installMessage)
+  doCheckSnapVersion(out)
 }
