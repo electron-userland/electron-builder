@@ -72,7 +72,7 @@ jobs:
       matrix:
         testFiles:
           - ArtifactPublisherTest,BuildTest,ExtraBuildTest,RepoSlugTest,binDownloadTest,configurationValidationTest,filenameUtilTest,filesTest,globTest,ignoreTest,macroExpanderTest,mainEntryTest,urlUtilTest,extraMetadataTest,linuxArchiveTest,linuxPackagerTest,HoistedNodeModuleTest,MemoLazyTest,HoistTest
-          - snapTest,debTest,fpmTest,protonTest
+          - debTest,fpmTest,protonTest
           - winPackagerTest,winCodeSignTest,webInstallerTest
           - oneClickInstallerTest,assistedInstallerTest
     steps:
@@ -199,6 +199,7 @@ jobs:
           - oneClickInstallerTest,assistedInstallerTest
           - winPackagerTest,winCodeSignTest,webInstallerTest
           - masTest,dmgTest,filesTest,macPackagerTest,differentialUpdateTest,macArchiveTest
+          - snapTest # super "heavy" test
     steps:
       - name: Checkout code repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
@@ -209,10 +210,10 @@ jobs:
           cache-path: ~/Library/Caches/electron
           cache-key: v-23.3.10-macos-electron
 
-      - name: Install pwsh and wine via brew
+      - name: Install brew deps - powershell, wine, snapcraft (w/ multipass)
         run: |
-          brew install powershell/tap/powershell
-          brew install --cask wine-stable
+          brew install powershell/tap/powershell snapcraft
+          brew install --cask wine-stable multipass
 
       - name: Test
         run: pnpm ci:test

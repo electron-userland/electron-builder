@@ -77,7 +77,12 @@ exports[`auto start 1`] = `
 
 exports[`auto start 2`] = `
 {
-  "linux": [],
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
 }
 `;
 
@@ -146,7 +151,12 @@ exports[`base option 1`] = `
 
 exports[`base option 2`] = `
 {
-  "linux": [],
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp_1.1.0_amd64.snap",
+    },
+  ],
 }
 `;
 
@@ -646,7 +656,12 @@ exports[`custom after, no desktop 1`] = `
 
 exports[`custom after, no desktop 2`] = `
 {
-  "linux": [],
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
 }
 `;
 
@@ -716,7 +731,12 @@ exports[`custom env 1`] = `
 
 exports[`custom env 2`] = `
 {
-  "linux": [],
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
 }
 `;
 
@@ -785,7 +805,12 @@ exports[`default base 1`] = `
 
 exports[`default base 2`] = `
 {
-  "linux": [],
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp_1.1.0_amd64.snap",
+    },
+  ],
 }
 `;
 
@@ -854,7 +879,12 @@ exports[`default compression 1`] = `
 
 exports[`default compression 2`] = `
 {
-  "linux": [],
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
 }
 `;
 
@@ -1577,7 +1607,12 @@ exports[`no desktop plugs 1`] = `
 
 exports[`no desktop plugs 2`] = `
 {
-  "linux": [],
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
 }
 `;
 
@@ -2052,7 +2087,12 @@ exports[`slots option 1`] = `
 
 exports[`slots option 2`] = `
 {
-  "linux": [],
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
 }
 `;
 
@@ -2131,7 +2171,12 @@ exports[`slots option 3`] = `
 
 exports[`slots option 4`] = `
 {
-  "linux": [],
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
 }
 `;
 
@@ -2211,6 +2256,11 @@ exports[`use template app 1`] = `
 
 exports[`use template app 2`] = `
 {
-  "linux": [],
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp_1.1.0_amd64.snap",
+    },
+  ],
 }
 `;

@@ -154,15 +154,15 @@ async function readDirContents(dir: string, filter?: (filename: string) => boole
 
 async function buildWithoutTemplate(options: SnapBuilderOptions, scriptDir: string): Promise<void> {
   await checkSnapcraftVersion()
-  if (options.arch && options.arch !== process.arch) {
-    throw new Error(`snapcraft does not currently support building ${options.arch} on ${process.arch}`)
-  }
+  // if (options.arch && options.arch !== process.arch) {
+  //   throw new Error(`snapcraft does not currently support building ${options.arch} on ${process.arch}`)
+  // }
 
   const stageDir = options.stageDir
 
   for (const [name, assetGenerator] of Object.entries(SNAP_ASSETS)) {
     if (name.startsWith("desktop-scripts/")) {
-      await writeFile(path.join(scriptDir, path.basename(name)), assetGenerator(), { mode: 0o755 })
+      await writeFile(path.join(scriptDir, path.basename(name)), assetGenerator().bytes, { mode: 0o755 })
     }
   }
 

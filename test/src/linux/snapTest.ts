@@ -67,7 +67,7 @@ test.ifAll.ifDevOrLinuxCi("default stagePackages", async () => {
       effectiveOptionComputed: async ({ snap, args }) => {
         delete snap.parts.app.source
         expect(snap).toMatchSnapshot()
-        return Promise.resolve(true)
+        return Promise.resolve(false)
       },
     })
   }
@@ -106,7 +106,7 @@ test.ifAll.ifDevOrLinuxCi("buildPackages", async () => {
     effectiveOptionComputed: async ({ snap }) => {
       delete snap.parts.app.source
       expect(snap).toMatchSnapshot()
-      return Promise.resolve(true)
+      return Promise.resolve(false)
     },
   })
 })
@@ -142,7 +142,7 @@ test.ifDevOrLinuxCi("plugs option", async () => {
       effectiveOptionComputed: async ({ snap, args }) => {
         delete snap.parts.app.source
         expect(snap).toMatchSnapshot()
-        return Promise.resolve(true)
+        return Promise.resolve(false)
       },
     })
   }
@@ -174,7 +174,7 @@ test.ifDevOrLinuxCi("slots option", async () => {
       },
       effectiveOptionComputed: async ({ snap, args }) => {
         expect(snap).toMatchSnapshot()
-        return Promise.resolve(true)
+        return Promise.resolve(false)
       },
     })
   }
@@ -197,7 +197,7 @@ test.ifDevOrLinuxCi(
     },
     effectiveOptionComputed: async ({ snap }) => {
       expect(snap).toMatchSnapshot()
-      return Promise.resolve(true)
+      return Promise.resolve(false)
     },
   })
 )
@@ -217,7 +217,7 @@ test.ifDevOrLinuxCi(
     },
     effectiveOptionComputed: async ({ snap }) => {
       expect(snap).toMatchSnapshot()
-      return Promise.resolve(true)
+      return Promise.resolve(false)
     },
   })
 )
@@ -237,7 +237,7 @@ test.ifDevOrLinuxCi(
     },
     effectiveOptionComputed: async ({ snap, args }) => {
       expect(snap).toMatchSnapshot()
-      return Promise.resolve(true)
+      return Promise.resolve(false)
     },
   })
 )
@@ -258,7 +258,7 @@ test.ifAll.ifDevOrLinuxCi(
     effectiveOptionComputed: async ({ snap, args }) => {
       expect(snap).toMatchSnapshot()
       expect(snap.apps.sep.autostart).toEqual("sep.desktop")
-      return Promise.resolve(true)
+      return Promise.resolve(false)
     },
   })
 )
@@ -275,7 +275,7 @@ test.ifDevOrLinuxCi(
     },
     effectiveOptionComputed: async ({ snap, args }) => {
       expect(snap).toMatchSnapshot()
-      return Promise.resolve(true)
+      return Promise.resolve(false)
     },
   })
 )
@@ -297,7 +297,7 @@ test.ifDevOrLinuxCi(
     effectiveOptionComputed: async ({ snap, args }) => {
       expect(snap).toMatchSnapshot()
       expect(snap.compression).toBe("xz")
-      return Promise.resolve(true)
+      return Promise.resolve(false)
     },
   })
 )
@@ -312,7 +312,7 @@ test.ifDevOrLinuxCi(
     effectiveOptionComputed: async ({ snap }) => {
       expect(snap).toMatchSnapshot()
       expect(snap.base).toBe("core20")
-      return Promise.resolve(true)
+      return Promise.resolve(false)
     },
   })
 )
@@ -330,7 +330,7 @@ test.ifDevOrLinuxCi(
     effectiveOptionComputed: async ({ snap }) => {
       expect(snap).toMatchSnapshot()
       expect(snap.base).toBe("core22")
-      return Promise.resolve(true)
+      return Promise.resolve(false)
     },
   })
 )
@@ -355,7 +355,7 @@ test.ifDevOrLinuxCi(
       expect(snap.parts).toBeUndefined()
       expect(snap["source-code"]).toBeUndefined()
       expect(snap.website).toBeUndefined()
-      return Promise.resolve(true)
+      return Promise.resolve(false)
     },
   })
 )
