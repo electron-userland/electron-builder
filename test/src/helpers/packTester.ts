@@ -2,7 +2,7 @@ import { PublishManager } from "app-builder-lib"
 import { readAsar } from "app-builder-lib/out/asar/asar"
 import { computeArchToTargetNamesMap } from "app-builder-lib/out/targets/targetFactory"
 import { getLinuxToolsPath } from "app-builder-lib/out/targets/tools"
-import { executeAppBuilderAsJson } from "app-builder-lib/out/util/appBuilder"
+import { parsePlistFile } from "app-builder-lib/out/util/plist"
 import { AsarIntegrity } from "app-builder-lib/src/asar/integrity"
 import { addValue, copyDir, deepAssign, exec, executeFinally, FileCopier, getPath7x, getPath7za, log, spawn, USE_HARD_LINKS, walk } from "builder-util"
 import { CancellationToken, UpdateFileInfo } from "builder-util-runtime"
@@ -330,7 +330,7 @@ function parseDebControl(info: string): any {
 async function checkMacResult(packager: Packager, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions, packedAppDir: string) {
   const appInfo = packager.appInfo
   const plistPath = path.join(packedAppDir, "Contents", "Info.plist")
-  const info = (await executeAppBuilderAsJson<Array<any>>(["decode-plist", "-f", plistPath]))[0]
+  const info = await parsePlistFile(plistPath)
 
   expect(info).toMatchObject({
     CFBundleVersion: info.CFBundleVersion === "50" ? "50" : `${appInfo.version}.${process.env.TRAVIS_BUILD_NUMBER || process.env.CIRCLE_BUILD_NUM}`,

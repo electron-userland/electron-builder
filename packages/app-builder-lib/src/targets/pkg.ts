@@ -8,8 +8,7 @@ import { findIdentity, Identity } from "../codeSign/macCodeSign"
 import { Target } from "../core"
 import { MacPackager } from "../macPackager"
 import { PkgOptions } from "../options/pkgOptions"
-import { savePlistFile } from "../util/plist"
-import { executeAppBuilderAsJson } from "../util/appBuilder"
+import { savePlistFile, parsePlistFile } from "../util/plist"
 import { getNotLocalizedLicenseFile } from "../util/license"
 
 const certType = "Developer ID Installer"
@@ -183,9 +182,7 @@ export class PkgTarget extends Target {
     await exec("pkgbuild", ["--analyze", "--root", rootPath, propertyListOutputFile])
 
     // process the template plist
-    const plistInfo = (await executeAppBuilderAsJson<Array<any>>(["decode-plist", "-f", propertyListOutputFile]))[0].filter(
-      (it: any) => it.RootRelativeBundlePath !== "Electron.dSYM"
-    )
+    const plistInfo = (await parsePlistFile(propertyListOutputFile)).filter((it: any) => it.RootRelativeBundlePath !== "Electron.dSYM")
     let packageInfo: any = {}
     if (plistInfo.length > 0) {
       packageInfo = plistInfo[0]
