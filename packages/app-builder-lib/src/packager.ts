@@ -260,18 +260,18 @@ export class Packager {
     log.info({ version: PACKAGE_VERSION, os: getOsRelease() }, "electron-builder")
   }
 
-  addPackagerEventHandlers() {
+  async addPackagerEventHandlers() {
     const { type } = this.appInfo
-    this.eventEmitter.on("artifactBuildStarted", resolveFunction(type, this.config.artifactBuildStarted, "artifactBuildStarted"), "user")
-    this.eventEmitter.on("artifactBuildCompleted", resolveFunction(type, this.config.artifactBuildCompleted, "artifactBuildCompleted"), "user")
+    this.eventEmitter.on("artifactBuildStarted", await resolveFunction(type, this.config.artifactBuildStarted, "artifactBuildStarted"), "user")
+    this.eventEmitter.on("artifactBuildCompleted", await resolveFunction(type, this.config.artifactBuildCompleted, "artifactBuildCompleted"), "user")
 
-    this.eventEmitter.on("appxManifestCreated", resolveFunction(type, this.config.appxManifestCreated, "appxManifestCreated"), "user")
-    this.eventEmitter.on("msiProjectCreated", resolveFunction(type, this.config.msiProjectCreated, "msiProjectCreated"), "user")
+    this.eventEmitter.on("appxManifestCreated", await resolveFunction(type, this.config.appxManifestCreated, "appxManifestCreated"), "user")
+    this.eventEmitter.on("msiProjectCreated", await resolveFunction(type, this.config.msiProjectCreated, "msiProjectCreated"), "user")
 
-    this.eventEmitter.on("beforePack", resolveFunction(type, this.config.beforePack, "beforePack"), "user")
-    this.eventEmitter.on("afterExtract", resolveFunction(type, this.config.afterExtract, "afterExtract"), "user")
-    this.eventEmitter.on("afterPack", resolveFunction(type, this.config.afterPack, "afterPack"), "user")
-    this.eventEmitter.on("afterSign", resolveFunction(type, this.config.afterSign, "afterSign"), "user")
+    this.eventEmitter.on("beforePack", await resolveFunction(type, this.config.beforePack, "beforePack"), "user")
+    this.eventEmitter.on("afterExtract", await resolveFunction(type, this.config.afterExtract, "afterExtract"), "user")
+    this.eventEmitter.on("afterPack", await resolveFunction(type, this.config.afterPack, "afterPack"), "user")
+    this.eventEmitter.on("afterSign", await resolveFunction(type, this.config.afterSign, "afterSign"), "user")
   }
 
   onAfterPack(handler: PackagerEvents["afterPack"]): Packager {
@@ -396,7 +396,7 @@ export class Packager {
     }
 
     this._appInfo = new AppInfo(this, null)
-    this.addPackagerEventHandlers()
+    await this.addPackagerEventHandlers()
 
     this._framework = await createFrameworkInfo(this.config, this)
 

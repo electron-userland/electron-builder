@@ -5,7 +5,7 @@ type Handler = (...args: any[]) => Promise<void> | void
 
 export type HandlerType = "system" | "user"
 
-type Handle = { handler: Handler | Promise<Handler | Nullish>; type: HandlerType }
+type Handle = { handler: Handler; type: HandlerType }
 
 export type EventMap = {
   [key: string]: Handler
@@ -23,7 +23,7 @@ export class AsyncEventEmitter<T extends EventMap> implements TypedEventEmitter<
   private readonly listeners: Map<keyof T, Handle[] | undefined> = new Map()
   private readonly cancellationToken = new CancellationToken()
 
-  on<E extends keyof T>(event: E, listener: T[E] | Promise<T[E] | Nullish> | Nullish, type: HandlerType = "system"): this {
+  on<E extends keyof T>(event: E, listener: T[E] | Nullish, type: HandlerType = "system"): this {
     if (!listener) {
       return this
     }
@@ -72,10 +72,7 @@ export class AsyncEventEmitter<T extends EventMap> implements TypedEventEmitter<
 
   filterListeners<E extends keyof T>(event: E, type: HandlerType | undefined): Handle[] {
     const listeners = this.listeners.get(event) ?? []
-    if (type) {
-      return listeners.filter(l => l.type === type)
-    }
-    return listeners
+    return type ? listeners.filter(l => l.type === type) : listeners
   }
 
   clear() {
