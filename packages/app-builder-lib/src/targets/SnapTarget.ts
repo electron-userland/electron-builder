@@ -203,14 +203,22 @@ export default class SnapTarget extends Target {
 
     const stageDir = await createStageDirPath(this, packager, arch)
     const snapArch = toLinuxArchString(arch, "snap")
-    const args = ["snap", "--app", appOutDir, "--stage", stageDir, "--arch", snapArch, "--output", artifactPath, "--executable", this.packager.executableName]
+    // const args = ["snap", "--app", appOutDir, "--stage", stageDir, "--arch", snapArch, "--output", artifactPath, "--executable", this.packager.executableName]
+    const args: SnapBuilderOptions = {
+      appDir: appOutDir,
+      stageDir: stageDir,
+      arch: snapArch,
+      output: artifactPath,
+      executableName: this.packager.executableName
+    }
 
     await this.helper.icons
     if (this.helper.maxIconPath != null) {
       if (!this.isUseTemplateApp) {
         snap.icon = "snap/gui/icon.png"
       }
-      args.push("--icon", this.helper.maxIconPath)
+      args.icon = this.helper.maxIconPath
+      // args.push("--icon", this.helper.maxIconPath)
     }
 
     // snapcraft.yaml inside a snap directory
@@ -228,15 +236,19 @@ export default class SnapTarget extends Target {
         extraAppArgs.push(noSandboxArg)
       }
       if (this.isUseTemplateApp) {
-        args.push("--exclude", "chrome-sandbox")
+        args.excludedAppFiles = ["chrome-sandbox"]
+        // args.push("--exclude", "chrome-sandbox")
       }
     }
     if (extraAppArgs.length > 0) {
-      args.push("--extraAppArgs=" + extraAppArgs.join(" "))
+      args.extraAppArgs = extraAppArgs
+      // args.push("--extraAppArgs=" + extraAppArgs.join(" "))
     }
 
+    args.compression = "xz"
     if (snap.compression != null) {
-      args.push("--compression", snap.compression)
+      args.compression = snap.compression
+      // args.push("--compression", snap.compression)
     }
 
     if (this.isUseTemplateApp) {
@@ -255,14 +267,17 @@ export default class SnapTarget extends Target {
 
     const hooksDir = await packager.getResource(options.hooks, "snap-hooks")
     if (hooksDir != null) {
-      args.push("--hooks", hooksDir)
+      args.hooksDir = hooksDir
+      // args.push("--hooks", hooksDir)
     }
 
     if (this.isUseTemplateApp) {
-      args.push("--template-url", `electron4:${snapArch}`)
+      args.template = { templateUrl: `electron4:${snapArch}` }
+      // args.push("--template-url", `electron4:${snapArch}`)
     }
 
-    await executeAppBuilder(args)
+    // await executeAppBuilder(args)
+    await createSnap(args)
 
     const publishConfig = findSnapPublishConfig(this.packager.config)
 
@@ -432,15 +447,15 @@ interface SnapBuilderOptions {
   appDir: string
   stageDir: string
   output: string
+  executableName: string
   icon?: string
   hooksDir?: string
-  executableName?: string
-  extraAppArgs?: string
+  extraAppArgs?: string[]
   excludedAppFiles?: string[]
   arch?: string
   compression?: "xz" | "lzo"
 
-  template: { template?: string; templateUrl?: string; templateSha512?: string }
+  template?: { template?: string; templateUrl?: string; templateSha512?: string }
 }
 
 async function createSnap(options: SnapBuilderOptions) {
@@ -449,7 +464,7 @@ async function createSnap(options: SnapBuilderOptions) {
 }
 
 async function resolveTemplateDir(options: SnapBuilderOptions["template"]) {
-  const { template, templateUrl, templateSha512 } = options
+  const { template, templateUrl, templateSha512 } = options || {}
   if (!isEmptyOrSpaces(template) || isEmptyOrSpaces(templateUrl)) {
     return template || ""
   }

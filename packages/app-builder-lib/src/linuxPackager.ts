@@ -8,7 +8,7 @@ import AppImageTarget from "./targets/AppImageTarget"
 import FlatpakTarget from "./targets/FlatpakTarget"
 import FpmTarget from "./targets/FpmTarget"
 import { LinuxTargetHelper } from "./targets/LinuxTargetHelper"
-import SnapTarget from "./targets/snap"
+import SnapTarget from "./targets/SnapTarget"
 import { createCommonTarget } from "./targets/targetFactory"
 
 export class LinuxPackager extends PlatformPackager<LinuxConfiguration> {
