@@ -1,6 +1,6 @@
 import { log } from "./log"
 import { exec } from "./util"
-import semver from "semver"
+import * as semver from "semver"
 
 export async function checkSnapcraftVersion() {
   const installMessage = process.platform === "darwin" ? "brew install snapcraft" : "sudo snap install snapcraft --classic"

@@ -2,7 +2,7 @@ import { getBinFromUrl, getBin } from "../../binDownload"
 import { exec, log, isEmptyOrSpaces, copyDir, exists } from "builder-util"
 import { copyFile, mkdir, unlink, writeFile, rename, chmod, rm, readdir } from "fs-extra"
 import * as path from "path"
-import { assets } from "./snapScripts"
+import { assets as SNAP_ASSETS } from "./snapScripts"
 import { getMksquashfs } from "./linuxTools"
 import { checkSnapcraftVersion } from "builder-util/out/snap"
 
@@ -124,11 +124,10 @@ async function buildUsingTemplate(templateDir: string, options: SnapBuilderOptio
   await Promise.all(
     dirs
       .filter(dir => !!dir)
-      .map(
-        async dir =>
-          await exec(`chmod -R g-s ${dir}`).catch((err: any) => {
-            log.debug({ dir, message: err.message }, `cannot execute chmod`)
-          })
+      .map(dir =>
+        exec(`chmod -R g-s ${dir}`).catch((err: any) => {
+          log.debug({ dir, message: err.message }, `cannot execute chmod`)
+        })
       )
   )
 
@@ -161,7 +160,7 @@ async function buildWithoutTemplate(options: SnapBuilderOptions, scriptDir: stri
 
   const stageDir = options.stageDir
 
-  for (const [name, assetGenerator] of Object.entries(assets)) {
+  for (const [name, assetGenerator] of Object.entries(SNAP_ASSETS)) {
     if (name.startsWith("desktop-scripts/")) {
       await writeFile(path.join(scriptDir, path.basename(name)), assetGenerator(), { mode: 0o755 })
     }
