@@ -28,6 +28,7 @@
     "is-ci": "^3.0.0",
     "js-yaml": "^4.1.0",
     "sanitize-filename": "^1.6.3",
+    "semver": "^7.7.1",
     "source-map-support": "^0.5.19",
     "stat-mode": "^1.0.0",
     "temp-file": "^3.4.0",
@@ -39,6 +40,7 @@
     "@types/fs-extra": "^9.0.11",
     "@types/is-ci": "3.0.0",
     "@types/js-yaml": "4.0.3",
+    "@types/semver": "^7.5.8",
     "@types/source-map-support": "0.5.4",
     "@types/tiny-async-pool": "^1.0.5"
   }

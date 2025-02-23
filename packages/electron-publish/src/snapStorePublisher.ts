@@ -1,4 +1,5 @@
-import { executeAppBuilder } from "builder-util"
+import { exec, executeAppBuilder } from "builder-util"
+import { checkSnapcraftVersion } from "builder-util/out/snap"
 import { SnapStoreOptions } from "builder-util-runtime/out/publishOptions"
 import * as path from "path"
 import { PublishContext, UploadTask } from "."
@@ -17,8 +18,6 @@ export class SnapStorePublisher extends Publisher {
   upload(task: UploadTask): Promise<any> {
     this.createProgressBar(path.basename(task.file), -1)
 
-    const args = ["publish-snap", "-f", task.file]
-
     let channels = this.options.channels
     if (channels == null) {
       channels = ["edge"]
@@ -28,14 +27,29 @@ export class SnapStorePublisher extends Publisher {
       }
     }
 
-    for (const channel of channels) {
-      args.push("-c", channel)
-    }
+    return this.publishToStore(task.file, channels)
 
-    return executeAppBuilder(args)
+    // const args = ["publish-snap", "-f", task.file]
+
+    // for (const channel of channels) {
+    //   args.push("-c", channel)
+    // }
+
+    // return executeAppBuilder(args)
   }
 
   toString(): string {
     return "Snap Store"
   }
+
+  async publishToStore(file: string, channels: string[]): Promise<void> {
+    const args = ["upload", file]
+    if (channels.length > 0) {
+      args.push("--release", channels.join(","))
+    }
+
+    await checkSnapcraftVersion()
+    await exec("snapcraft", args)
+  }
+
 }
