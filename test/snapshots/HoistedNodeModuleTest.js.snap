@@ -10702,11 +10702,11 @@ exports[`pnpm max stack 2`] = `
 {
   "files": {
     "index.html": {
-      "offset": "3328186",
+      "offset": "3328269",
       "size": 378,
     },
     "index.js": {
-      "offset": "3328564",
+      "offset": "3328647",
       "size": 619,
     },
     "node_modules": {
@@ -20399,10 +20399,10 @@ exports[`pnpm max stack 2`] = `
             },
             "index.js": {
               "offset": "2532383",
-              "size": 14356,
+              "size": 14439,
             },
             "package.json": {
-              "offset": "2546739",
+              "offset": "2546822",
               "size": 1864,
             },
           },
@@ -20410,31 +20410,31 @@ exports[`pnpm max stack 2`] = `
         "get-proto": {
           "files": {
             ".nycrc": {
-              "offset": "2548603",
+              "offset": "2548686",
               "size": 139,
             },
             "LICENSE": {
-              "offset": "2548742",
+              "offset": "2548825",
               "size": 1071,
             },
             "Object.getPrototypeOf.js": {
-              "offset": "2549813",
+              "offset": "2549896",
               "size": 156,
             },
             "Reflect.getPrototypeOf.js": {
-              "offset": "2549969",
+              "offset": "2550052",
               "size": 150,
             },
             "index.js": {
-              "offset": "2550119",
+              "offset": "2550202",
               "size": 821,
             },
             "package.json": {
-              "offset": "2550940",
+              "offset": "2551023",
               "size": 1425,
             },
             "tsconfig.json": {
-              "offset": "2552365",
+              "offset": "2552448",
               "size": 118,
             },
           },
@@ -20442,27 +20442,27 @@ exports[`pnpm max stack 2`] = `
         "get-symbol-description": {
           "files": {
             ".nycrc": {
-              "offset": "2552483",
+              "offset": "2552566",
               "size": 139,
             },
             "LICENSE": {
-              "offset": "2552622",
+              "offset": "2552705",
               "size": 1067,
             },
             "getInferredName.js": {
-              "offset": "2553689",
+              "offset": "2553772",
               "size": 474,
             },
             "index.js": {
-              "offset": "2554163",
+              "offset": "2554246",
               "size": 1563,
             },
             "package.json": {
-              "offset": "2555726",
+              "offset": "2555809",
               "size": 1758,
             },
             "tsconfig.json": {
-              "offset": "2557484",
+              "offset": "2557567",
               "size": 116,
             },
           },
@@ -20470,39 +20470,39 @@ exports[`pnpm max stack 2`] = `
         "globalthis": {
           "files": {
             ".nycrc": {
-              "offset": "2557600",
+              "offset": "2557683",
               "size": 149,
             },
             "LICENSE": {
-              "offset": "2557749",
+              "offset": "2557832",
               "size": 1081,
             },
             "auto.js": {
-              "offset": "2558830",
+              "offset": "2558913",
               "size": 36,
             },
             "implementation.browser.js": {
-              "offset": "2558866",
+              "offset": "2558949",
               "size": 254,
             },
             "implementation.js": {
-              "offset": "2559120",
+              "offset": "2559203",
               "size": 40,
             },
             "index.js": {
-              "offset": "2559160",
+              "offset": "2559243",
               "size": 408,
             },
             "package.json": {
-              "offset": "2559568",
+              "offset": "2559651",
               "size": 1676,
             },
             "polyfill.js": {
-              "offset": "2561244",
+              "offset": "2561327",
               "size": 251,
             },
             "shim.js": {
-              "offset": "2561495",
+              "offset": "2561578",
               "size": 715,
             },
           },
@@ -20510,23 +20510,23 @@ exports[`pnpm max stack 2`] = `
         "gopd": {
           "files": {
             "LICENSE": {
-              "offset": "2562210",
+              "offset": "2562293",
               "size": 1071,
             },
             "gOPD.js": {
-              "offset": "2563281",
+              "offset": "2563364",
               "size": 97,
             },
             "index.js": {
-              "offset": "2563378",
+              "offset": "2563461",
               "size": 206,
             },
             "package.json": {
-              "offset": "2563584",
+              "offset": "2563667",
               "size": 1309,
             },
             "tsconfig.json": {
-              "offset": "2564893",
+              "offset": "2564976",
               "size": 116,
             },
           },
@@ -20534,27 +20534,27 @@ exports[`pnpm max stack 2`] = `
         "graceful-fs": {
           "files": {
             "LICENSE": {
-              "offset": "2565009",
+              "offset": "2565092",
               "size": 791,
             },
             "clone.js": {
-              "offset": "2565800",
+              "offset": "2565883",
               "size": 496,
             },
             "graceful-fs.js": {
-              "offset": "2566296",
+              "offset": "2566379",
               "size": 12680,
             },
             "legacy-streams.js": {
-              "offset": "2578976",
+              "offset": "2579059",
               "size": 2655,
             },
             "package.json": {
-              "offset": "2581631",
+              "offset": "2581714",
               "size": 600,
             },
             "polyfills.js": {
-              "offset": "2582231",
+              "offset": "2582314",
               "size": 10141,
             },
           },
@@ -20562,23 +20562,23 @@ exports[`pnpm max stack 2`] = `
         "has-bigints": {
           "files": {
             ".nycrc": {
-              "offset": "2592372",
+              "offset": "2592455",
               "size": 139,
             },
             "LICENSE": {
-              "offset": "2592511",
+              "offset": "2592594",
               "size": 1071,
             },
             "index.js": {
-              "offset": "2593582",
+              "offset": "2593665",
               "size": 374,
             },
             "package.json": {
-              "offset": "2593956",
+              "offset": "2594039",
               "size": 1166,
             },
             "tsconfig.json": {
-              "offset": "2595122",
+              "offset": "2595205",
               "size": 123,
             },
           },
@@ -20586,15 +20586,15 @@ exports[`pnpm max stack 2`] = `
         "has-flag": {
           "files": {
             "index.js": {
-              "offset": "2595245",
+              "offset": "2595328",
               "size": 320,
             },
             "license": {
-              "offset": "2595565",
+              "offset": "2595648",
               "size": 1109,
             },
             "package.json": {
-              "offset": "2596674",
+              "offset": "2596757",
               "size": 407,
             },
           },
@@ -20602,19 +20602,19 @@ exports[`pnpm max stack 2`] = `
         "has-property-descriptors": {
           "files": {
             ".nycrc": {
-              "offset": "2597081",
+              "offset": "2597164",
               "size": 139,
             },
             "LICENSE": {
-              "offset": "2597220",
+              "offset": "2597303",
               "size": 1067,
             },
             "index.js": {
-              "offset": "2598287",
+              "offset": "2598370",
               "size": 588,
             },
             "package.json": {
-              "offset": "2598875",
+              "offset": "2598958",
               "size": 1329,
             },
           },
@@ -20622,27 +20622,27 @@ exports[`pnpm max stack 2`] = `
         "has-proto": {
           "files": {
             "LICENSE": {
-              "offset": "2600204",
+              "offset": "2600287",
               "size": 1067,
             },
             "accessor.js": {
-              "offset": "2601271",
+              "offset": "2601354",
               "size": 549,
             },
             "index.js": {
-              "offset": "2601820",
+              "offset": "2601903",
               "size": 298,
             },
             "mutator.js": {
-              "offset": "2602118",
+              "offset": "2602201",
               "size": 533,
             },
             "package.json": {
-              "offset": "2602651",
+              "offset": "2602734",
               "size": 1610,
             },
             "tsconfig.json": {
-              "offset": "2604261",
+              "offset": "2604344",
               "size": 128,
             },
           },
@@ -20650,27 +20650,27 @@ exports[`pnpm max stack 2`] = `
         "has-symbols": {
           "files": {
             ".nycrc": {
-              "offset": "2604389",
+              "offset": "2604472",
               "size": 139,
             },
             "LICENSE": {
-              "offset": "2604528",
+              "offset": "2604611",
               "size": 1071,
             },
             "index.js": {
-              "offset": "2605599",
+              "offset": "2605682",
               "size": 447,
             },
             "package.json": {
-              "offset": "2606046",
+              "offset": "2606129",
               "size": 1792,
             },
             "shams.js": {
-              "offset": "2607838",
+              "offset": "2607921",
               "size": 1922,
             },
             "tsconfig.json": {
-              "offset": "2609760",
+              "offset": "2609843",
               "size": 143,
             },
           },
@@ -20678,27 +20678,27 @@ exports[`pnpm max stack 2`] = `
         "has-tostringtag": {
           "files": {
             ".nycrc": {
-              "offset": "2609903",
+              "offset": "2609986",
               "size": 216,
             },
             "LICENSE": {
-              "offset": "2610119",
+              "offset": "2610202",
               "size": 1067,
             },
             "index.js": {
-              "offset": "2611186",
+              "offset": "2611269",
               "size": 196,
             },
             "package.json": {
-              "offset": "2611382",
+              "offset": "2611465",
               "size": 1698,
             },
             "shams.js": {
-              "offset": "2613080",
+              "offset": "2613163",
               "size": 189,
             },
             "tsconfig.json": {
-              "offset": "2613269",
+              "offset": "2613352",
               "size": 3611,
             },
           },
@@ -20706,23 +20706,23 @@ exports[`pnpm max stack 2`] = `
         "hasown": {
           "files": {
             ".nycrc": {
-              "offset": "2616880",
+              "offset": "2616963",
               "size": 216,
             },
             "LICENSE": {
-              "offset": "2617096",
+              "offset": "2617179",
               "size": 1083,
             },
             "index.js": {
-              "offset": "2618179",
+              "offset": "2618262",
               "size": 206,
             },
             "package.json": {
-              "offset": "2618385",
+              "offset": "2618468",
               "size": 1474,
             },
             "tsconfig.json": {
-              "offset": "2619859",
+              "offset": "2619942",
               "size": 73,
             },
           },
@@ -20730,23 +20730,23 @@ exports[`pnpm max stack 2`] = `
         "hosted-git-info": {
           "files": {
             "LICENSE": {
-              "offset": "2619932",
+              "offset": "2620015",
               "size": 733,
             },
             "git-host-info.js": {
-              "offset": "2620665",
+              "offset": "2620748",
               "size": 3790,
             },
             "git-host.js": {
-              "offset": "2624455",
+              "offset": "2624538",
               "size": 4635,
             },
             "index.js": {
-              "offset": "2629090",
+              "offset": "2629173",
               "size": 5148,
             },
             "package.json": {
-              "offset": "2634238",
+              "offset": "2634321",
               "size": 617,
             },
           },
@@ -20754,31 +20754,31 @@ exports[`pnpm max stack 2`] = `
         "internal-slot": {
           "files": {
             ".attw.json": {
-              "offset": "2634855",
+              "offset": "2634938",
               "size": 43,
             },
             ".editorconfig": {
-              "offset": "2634898",
+              "offset": "2634981",
               "size": 286,
             },
             ".nycrc": {
-              "offset": "2635184",
+              "offset": "2635267",
               "size": 139,
             },
             "LICENSE": {
-              "offset": "2635323",
+              "offset": "2635406",
               "size": 1071,
             },
             "index.js": {
-              "offset": "2636394",
+              "offset": "2636477",
               "size": 2042,
             },
             "package.json": {
-              "offset": "2638436",
+              "offset": "2638519",
               "size": 1259,
             },
             "tsconfig.json": {
-              "offset": "2639695",
+              "offset": "2639778",
               "size": 118,
             },
           },
@@ -20786,23 +20786,23 @@ exports[`pnpm max stack 2`] = `
         "is-array-buffer": {
           "files": {
             ".nycrc": {
-              "offset": "2639813",
+              "offset": "2639896",
               "size": 139,
             },
             "LICENSE": {
-              "offset": "2639952",
+              "offset": "2640035",
               "size": 1082,
             },
             "index.js": {
-              "offset": "2641034",
+              "offset": "2641117",
               "size": 1407,
             },
             "package.json": {
-              "offset": "2642441",
+              "offset": "2642524",
               "size": 1720,
             },
             "tsconfig.json": {
-              "offset": "2644161",
+              "offset": "2644244",
               "size": 125,
             },
           },
@@ -20810,23 +20810,23 @@ exports[`pnpm max stack 2`] = `
         "is-arrayish": {
           "files": {
             ".editorconfig": {
-              "offset": "2644286",
+              "offset": "2644369",
               "size": 264,
             },
             ".istanbul.yml": {
-              "offset": "2644550",
+              "offset": "2644633",
               "size": 59,
             },
             "LICENSE": {
-              "offset": "2644609",
+              "offset": "2644692",
               "size": 1077,
             },
             "index.js": {
-              "offset": "2645686",
+              "offset": "2645769",
               "size": 204,
             },
             "package.json": {
-              "offset": "2645890",
+              "offset": "2645973",
               "size": 461,
             },
           },
@@ -20834,23 +20834,23 @@ exports[`pnpm max stack 2`] = `
         "is-async-function": {
           "files": {
             ".nycrc": {
-              "offset": "2646351",
+              "offset": "2646434",
               "size": 139,
             },
             "LICENSE": {
-              "offset": "2646490",
+              "offset": "2646573",
               "size": 1081,
             },
             "index.js": {
-              "offset": "2647571",
+              "offset": "2647654",
               "size": 830,
             },
             "package.json": {
-              "offset": "2648401",
+              "offset": "2648484",
               "size": 2057,
             },
             "tsconfig.json": {
-              "offset": "2650458",
+              "offset": "2650541",
               "size": 156,
             },
           },
@@ -20858,23 +20858,23 @@ exports[`pnpm max stack 2`] = `
         "is-bigint": {
           "files": {
             ".nycrc": {
-              "offset": "2650614",
+              "offset": "2650697",
               "size": 139,
             },
             "LICENSE": {
-              "offset": "2650753",
+              "offset": "2650836",
               "size": 1071,
             },
             "index.js": {
-              "offset": "2651824",
+              "offset": "2651907",
               "size": 844,
             },
             "package.json": {
-              "offset": "2652668",
+              "offset": "2652751",
               "size": 1397,
             },
             "tsconfig.json": {
-              "offset": "2654065",
+              "offset": "2654148",
               "size": 114,
             },
           },
@@ -20882,27 +20882,27 @@ exports[`pnpm max stack 2`] = `
         "is-boolean-object": {
           "files": {
             ".editorconfig": {
-              "offset": "2654179",
+              "offset": "2654262",
               "size": 353,
             },
             ".nycrc": {
-              "offset": "2654532",
+              "offset": "2654615",
               "size": 159,
             },
             "LICENSE": {
-              "offset": "2654691",
+              "offset": "2654774",
               "size": 1082,
             },
             "index.js": {
-              "offset": "2655773",
+              "offset": "2655856",
               "size": 711,
             },
             "package.json": {
-              "offset": "2656484",
+              "offset": "2656567",
               "size": 1839,
             },
             "tsconfig.json": {
-              "offset": "2658323",
+              "offset": "2658406",
               "size": 114,
             },
           },
@@ -20910,23 +20910,23 @@ exports[`pnpm max stack 2`] = `
         "is-callable": {
           "files": {
             ".editorconfig": {
-              "offset": "2658437",
+              "offset": "2658520",
               "size": 457,
             },
             ".nycrc": {
-              "offset": "2658894",
+              "offset": "2658977",
               "size": 139,
             },
             "LICENSE": {
-              "offset": "2659033",
+              "offset": "2659116",
               "size": 1082,
             },
             "index.js": {
-              "offset": "2660115",
+              "offset": "2660198",
               "size": 3224,
             },
             "package.json": {
-              "offset": "2663339",
+              "offset": "2663422",
               "size": 1837,
             },
           },
@@ -20934,23 +20934,23 @@ exports[`pnpm max stack 2`] = `
         "is-core-module": {
           "files": {
             ".nycrc": {
-              "offset": "2665176",
+              "offset": "2665259",
               "size": 139,
             },
             "LICENSE": {
-              "offset": "2665315",
+              "offset": "2665398",
               "size": 1078,
             },
             "core.json": {
-              "offset": "2666393",
+              "offset": "2666476",
               "size": 5953,
             },
             "index.js": {
-              "offset": "2672346",
+              "offset": "2672429",
               "size": 1766,
             },
             "package.json": {
-              "offset": "2674112",
+              "offset": "2674195",
               "size": 1236,
             },
           },
@@ -20958,27 +20958,27 @@ exports[`pnpm max stack 2`] = `
         "is-data-view": {
           "files": {
             ".editorconfig": {
-              "offset": "2675348",
+              "offset": "2675431",
               "size": 286,
             },
             ".nycrc": {
-              "offset": "2675634",
+              "offset": "2675717",
               "size": 139,
             },
             "LICENSE": {
-              "offset": "2675773",
+              "offset": "2675856",
               "size": 1067,
             },
             "index.js": {
-              "offset": "2676840",
+              "offset": "2676923",
               "size": 847,
             },
             "package.json": {
-              "offset": "2677687",
+              "offset": "2677770",
               "size": 2061,
             },
             "tsconfig.json": {
-              "offset": "2679748",
+              "offset": "2679831",
               "size": 116,
             },
           },
@@ -20986,27 +20986,27 @@ exports[`pnpm max stack 2`] = `
         "is-date-object": {
           "files": {
             ".editorconfig": {
-              "offset": "2679864",
+              "offset": "2679947",
               "size": 286,
             },
             ".nycrc": {
-              "offset": "2680150",
+              "offset": "2680233",
               "size": 159,
             },
             "LICENSE": {
-              "offset": "2680309",
+              "offset": "2680392",
               "size": 1082,
             },
             "index.js": {
-              "offset": "2681391",
+              "offset": "2681474",
               "size": 674,
             },
             "package.json": {
-              "offset": "2682065",
+              "offset": "2682148",
               "size": 1893,
             },
             "tsconfig.json": {
-              "offset": "2683958",
+              "offset": "2684041",
               "size": 72,
             },
           },
@@ -21014,23 +21014,23 @@ exports[`pnpm max stack 2`] = `
         "is-finalizationregistry": {
           "files": {
             ".nycrc": {
-              "offset": "2684030",
+              "offset": "2684113",
               "size": 139,
             },
             "LICENSE": {
-              "offset": "2684169",
+              "offset": "2684252",
               "size": 1067,
             },
             "index.js": {
-              "offset": "2685236",
+              "offset": "2685319",
               "size": 826,
             },
             "package.json": {
-              "offset": "2686062",
+              "offset": "2686145",
               "size": 1582,
             },
             "tsconfig.json": {
-              "offset": "2687644",
+              "offset": "2687727",
               "size": 123,
             },
           },
@@ -21038,27 +21038,27 @@ exports[`pnpm max stack 2`] = `
         "is-generator-function": {
           "files": {
             ".nvmrc": {
-              "offset": "2687767",
+              "offset": "2687850",
               "size": 5,
             },
             ".nycrc": {
-              "offset": "2687772",
+              "offset": "2687855",
               "size": 139,
             },
             "LICENSE": {
-              "offset": "2687911",
+              "offset": "2687994",
               "size": 1081,
             },
             "index.js": {
-              "offset": "2688992",
+              "offset": "2689075",
               "size": 1275,
             },
             "package.json": {
-              "offset": "2690267",
+              "offset": "2690350",
               "size": 1910,
             },
             "tsconfig.json": {
-              "offset": "2692177",
+              "offset": "2692260",
               "size": 129,
             },
           },
@@ -21066,27 +21066,27 @@ exports[`pnpm max stack 2`] = `
         "is-map": {
           "files": {
             ".editorconfig": {
-              "offset": "2692306",
+              "offset": "2692389",
               "size": 231,
             },
             ".nycrc": {
-              "offset": "2692537",
+              "offset": "2692620",
               "size": 139,
             },
             "LICENSE": {
-              "offset": "2692676",
+              "offset": "2692759",
               "size": 1067,
             },
             "index.js": {
-              "offset": "2693743",
+              "offset": "2693826",
               "size": 1075,
             },
             "package.json": {
-              "offset": "2694818",
+              "offset": "2694901",
               "size": 1409,
             },
             "tsconfig.json": {
-              "offset": "2696227",
+              "offset": "2696310",
               "size": 3611,
             },
           },
@@ -21094,27 +21094,27 @@ exports[`pnpm max stack 2`] = `
         "is-number-object": {
           "files": {
             ".editorconfig": {
-              "offset": "2699838",
+              "offset": "2699921",
               "size": 324,
             },
             ".nycrc": {
-              "offset": "2700162",
+              "offset": "2700245",
               "size": 159,
             },
             "LICENSE": {
-              "offset": "2700321",
+              "offset": "2700404",
               "size": 1082,
             },
             "index.js": {
-              "offset": "2701403",
+              "offset": "2701486",
               "size": 698,
             },
             "package.json": {
-              "offset": "2702101",
+              "offset": "2702184",
               "size": 1520,
             },
             "tsconfig.json": {
-              "offset": "2703621",
+              "offset": "2703704",
               "size": 114,
             },
           },
@@ -21122,27 +21122,27 @@ exports[`pnpm max stack 2`] = `
         "is-regex": {
           "files": {
             ".editorconfig": {
-              "offset": "2703735",
+              "offset": "2703818",
               "size": 324,
             },
             ".nycrc": {
-              "offset": "2704059",
+              "offset": "2704142",
               "size": 159,
             },
             "LICENSE": {
-              "offset": "2704218",
+              "offset": "2704301",
               "size": 1081,
             },
             "index.js": {
-              "offset": "2705299",
+              "offset": "2705382",
               "size": 2221,
             },
             "package.json": {
-              "offset": "2707520",
+              "offset": "2707603",
               "size": 1915,
             },
             "tsconfig.json": {
-              "offset": "2709435",
+              "offset": "2709518",
               "size": 114,
             },
           },
@@ -21150,27 +21150,27 @@ exports[`pnpm max stack 2`] = `
         "is-set": {
           "files": {
             ".editorconfig": {
-              "offset": "2709549",
+              "offset": "2709632",
               "size": 231,
             },
             ".nycrc": {
-              "offset": "2709780",
+              "offset": "2709863",
               "size": 139,
             },
             "LICENSE": {
-              "offset": "2709919",
+              "offset": "2710002",
               "size": 1067,
             },
             "index.js": {
-              "offset": "2710986",
+              "offset": "2711069",
               "size": 1061,
             },
             "package.json": {
-              "offset": "2712047",
+              "offset": "2712130",
               "size": 1293,
             },
             "tsconfig.json": {
-              "offset": "2713340",
+              "offset": "2713423",
               "size": 3611,
             },
           },
@@ -21178,23 +21178,23 @@ exports[`pnpm max stack 2`] = `
         "is-shared-array-buffer": {
           "files": {
             ".nycrc": {
-              "offset": "2716951",
+              "offset": "2717034",
               "size": 139,
             },
             "LICENSE": {
-              "offset": "2717090",
+              "offset": "2717173",
               "size": 1067,
             },
             "index.js": {
-              "offset": "2718157",
+              "offset": "2718240",
               "size": 671,
             },
             "package.json": {
-              "offset": "2718828",
+              "offset": "2718911",
               "size": 1698,
             },
             "tsconfig.json": {
-              "offset": "2720526",
+              "offset": "2720609",
               "size": 116,
             },
           },
@@ -21202,23 +21202,23 @@ exports[`pnpm max stack 2`] = `
         "is-string": {
           "files": {
             ".nycrc": {
-              "offset": "2720642",
+              "offset": "2720725",
               "size": 159,
             },
             "LICENSE": {
-              "offset": "2720801",
+              "offset": "2720884",
               "size": 1082,
             },
             "index.js": {
-              "offset": "2721883",
+              "offset": "2721966",
               "size": 1056,
             },
             "package.json": {
-              "offset": "2722939",
+              "offset": "2723022",
               "size": 1771,
             },
             "tsconfig.json": {
-              "offset": "2724710",
+              "offset": "2724793",
               "size": 123,
             },
           },
@@ -21226,27 +21226,27 @@ exports[`pnpm max stack 2`] = `
         "is-symbol": {
           "files": {
             ".editorconfig": {
-              "offset": "2724833",
+              "offset": "2724916",
               "size": 276,
             },
             ".nycrc": {
-              "offset": "2725109",
+              "offset": "2725192",
               "size": 139,
             },
             "LICENSE": {
-              "offset": "2725248",
+              "offset": "2725331",
               "size": 1082,
             },
             "index.js": {
-              "offset": "2726330",
+              "offset": "2726413",
               "size": 1030,
             },
             "package.json": {
-              "offset": "2727360",
+              "offset": "2727443",
               "size": 1844,
             },
             "tsconfig.json": {
-              "offset": "2729204",
+              "offset": "2729287",
               "size": 114,
             },
           },
@@ -21254,27 +21254,27 @@ exports[`pnpm max stack 2`] = `
         "is-typed-array": {
           "files": {
             ".editorconfig": {
-              "offset": "2729318",
+              "offset": "2729401",
               "size": 286,
             },
             ".nycrc": {
-              "offset": "2729604",
+              "offset": "2729687",
               "size": 139,
             },
             "LICENSE": {
-              "offset": "2729743",
+              "offset": "2729826",
               "size": 1082,
             },
             "index.js": {
-              "offset": "2730825",
+              "offset": "2730908",
               "size": 180,
             },
             "package.json": {
-              "offset": "2731005",
+              "offset": "2731088",
               "size": 2307,
             },
             "tsconfig.json": {
-              "offset": "2733312",
+              "offset": "2733395",
               "size": 68,
             },
           },
@@ -21282,27 +21282,27 @@ exports[`pnpm max stack 2`] = `
         "is-weakmap": {
           "files": {
             ".editorconfig": {
-              "offset": "2733380",
+              "offset": "2733463",
               "size": 231,
             },
             ".nycrc": {
-              "offset": "2733611",
+              "offset": "2733694",
               "size": 139,
             },
             "LICENSE": {
-              "offset": "2733750",
+              "offset": "2733833",
               "size": 1067,
             },
             "index.js": {
-              "offset": "2734817",
+              "offset": "2734900",
               "size": 1157,
             },
             "package.json": {
-              "offset": "2735974",
+              "offset": "2736057",
               "size": 1409,
             },
             "tsconfig.json": {
-              "offset": "2737383",
+              "offset": "2737466",
               "size": 3611,
             },
           },
@@ -21310,23 +21310,23 @@ exports[`pnpm max stack 2`] = `
         "is-weakref": {
           "files": {
             ".nycrc": {
-              "offset": "2740994",
+              "offset": "2741077",
               "size": 139,
             },
             "LICENSE": {
-              "offset": "2741133",
+              "offset": "2741216",
               "size": 1067,
             },
             "index.js": {
-              "offset": "2742200",
+              "offset": "2742283",
               "size": 599,
             },
             "package.json": {
-              "offset": "2742799",
+              "offset": "2742882",
               "size": 1506,
             },
             "tsconfig.json": {
-              "offset": "2744305",
+              "offset": "2744388",
               "size": 123,
             },
           },
@@ -21334,27 +21334,27 @@ exports[`pnpm max stack 2`] = `
         "is-weakset": {
           "files": {
             ".editorconfig": {
-              "offset": "2744428",
+              "offset": "2744511",
               "size": 223,
             },
             ".nycrc": {
-              "offset": "2744651",
+              "offset": "2744734",
               "size": 139,
             },
             "LICENSE": {
-              "offset": "2744790",
+              "offset": "2744873",
               "size": 1067,
             },
             "index.js": {
-              "offset": "2745857",
+              "offset": "2745940",
               "size": 1254,
             },
             "package.json": {
-              "offset": "2747111",
+              "offset": "2747194",
               "size": 1572,
             },
             "tsconfig.json": {
-              "offset": "2748683",
+              "offset": "2748766",
               "size": 116,
             },
           },
@@ -21362,15 +21362,15 @@ exports[`pnpm max stack 2`] = `
         "isarray": {
           "files": {
             "LICENSE": {
-              "offset": "2748799",
+              "offset": "2748882",
               "size": 1096,
             },
             "index.js": {
-              "offset": "2749895",
+              "offset": "2749978",
               "size": 132,
             },
             "package.json": {
-              "offset": "2750027",
+              "offset": "2750110",
               "size": 880,
             },
           },
@@ -21378,23 +21378,23 @@ exports[`pnpm max stack 2`] = `
         "isexe": {
           "files": {
             "LICENSE": {
-              "offset": "2750907",
+              "offset": "2750990",
               "size": 765,
             },
             "index.js": {
-              "offset": "2751672",
+              "offset": "2751755",
               "size": 1192,
             },
             "mode.js": {
-              "offset": "2752864",
+              "offset": "2752947",
               "size": 909,
             },
             "package.json": {
-              "offset": "2753773",
+              "offset": "2753856",
               "size": 512,
             },
             "windows.js": {
-              "offset": "2754285",
+              "offset": "2754368",
               "size": 890,
             },
           },
@@ -21402,15 +21402,15 @@ exports[`pnpm max stack 2`] = `
         "json-parse-better-errors": {
           "files": {
             "LICENSE.md": {
-              "offset": "2755175",
+              "offset": "2755258",
               "size": 1052,
             },
             "index.js": {
-              "offset": "2756227",
+              "offset": "2756310",
               "size": 1086,
             },
             "package.json": {
-              "offset": "2757313",
+              "offset": "2757396",
               "size": 673,
             },
           },
@@ -21418,15 +21418,15 @@ exports[`pnpm max stack 2`] = `
         "load-json-file": {
           "files": {
             "index.js": {
-              "offset": "2757986",
+              "offset": "2758069",
               "size": 422,
             },
             "license": {
-              "offset": "2758408",
+              "offset": "2758491",
               "size": 1119,
             },
             "package.json": {
-              "offset": "2759527",
+              "offset": "2759610",
               "size": 542,
             },
           },
@@ -21434,79 +21434,79 @@ exports[`pnpm max stack 2`] = `
         "math-intrinsics": {
           "files": {
             "LICENSE": {
-              "offset": "2760069",
+              "offset": "2760152",
               "size": 1073,
             },
             "abs.js": {
-              "offset": "2761142",
+              "offset": "2761225",
               "size": 73,
             },
             "constants": {
               "files": {
                 "maxArrayLength.js": {
-                  "offset": "2761215",
+                  "offset": "2761298",
                   "size": 110,
                 },
                 "maxSafeInteger.js": {
-                  "offset": "2761325",
+                  "offset": "2761408",
                   "size": 231,
                 },
                 "maxValue.js": {
-                  "offset": "2761556",
+                  "offset": "2761639",
                   "size": 197,
                 },
               },
             },
             "floor.js": {
-              "offset": "2761753",
+              "offset": "2761836",
               "size": 77,
             },
             "isFinite.js": {
-              "offset": "2761830",
+              "offset": "2761913",
               "size": 262,
             },
             "isInteger.js": {
-              "offset": "2762092",
+              "offset": "2762175",
               "size": 410,
             },
             "isNaN.js": {
-              "offset": "2762502",
+              "offset": "2762585",
               "size": 121,
             },
             "isNegativeZero.js": {
-              "offset": "2762623",
+              "offset": "2762706",
               "size": 143,
             },
             "max.js": {
-              "offset": "2762766",
+              "offset": "2762849",
               "size": 73,
             },
             "min.js": {
-              "offset": "2762839",
+              "offset": "2762922",
               "size": 73,
             },
             "mod.js": {
-              "offset": "2762912",
+              "offset": "2762995",
               "size": 218,
             },
             "package.json": {
-              "offset": "2763130",
+              "offset": "2763213",
               "size": 1933,
             },
             "pow.js": {
-              "offset": "2765063",
+              "offset": "2765146",
               "size": 73,
             },
             "round.js": {
-              "offset": "2765136",
+              "offset": "2765219",
               "size": 77,
             },
             "sign.js": {
-              "offset": "2765213",
+              "offset": "2765296",
               "size": 214,
             },
             "tsconfig.json": {
-              "offset": "2765427",
+              "offset": "2765510",
               "size": 36,
             },
           },
@@ -21514,19 +21514,19 @@ exports[`pnpm max stack 2`] = `
         "memorystream": {
           "files": {
             "Gruntfile.js": {
-              "offset": "2765463",
+              "offset": "2765546",
               "size": 548,
             },
             "LICENSE": {
-              "offset": "2766011",
+              "offset": "2766094",
               "size": 1059,
             },
             "index.js": {
-              "offset": "2767070",
+              "offset": "2767153",
               "size": 6125,
             },
             "package.json": {
-              "offset": "2773195",
+              "offset": "2773278",
               "size": 747,
             },
           },
@@ -21534,15 +21534,15 @@ exports[`pnpm max stack 2`] = `
         "minimatch": {
           "files": {
             "LICENSE": {
-              "offset": "2773942",
+              "offset": "2774025",
               "size": 765,
             },
             "minimatch.js": {
-              "offset": "2774707",
+              "offset": "2774790",
               "size": 26266,
             },
             "package.json": {
-              "offset": "2800973",
+              "offset": "2801056",
               "size": 529,
             },
           },
@@ -21550,17 +21550,17 @@ exports[`pnpm max stack 2`] = `
         "nice-try": {
           "files": {
             "LICENSE": {
-              "offset": "2801502",
+              "offset": "2801585",
               "size": 1079,
             },
             "package.json": {
-              "offset": "2802581",
+              "offset": "2802664",
               "size": 544,
             },
             "src": {
               "files": {
                 "index.js": {
-                  "offset": "2803125",
+                  "offset": "2803208",
                   "size": 303,
                 },
               },
@@ -21570,47 +21570,47 @@ exports[`pnpm max stack 2`] = `
         "normalize-package-data": {
           "files": {
             "AUTHORS": {
-              "offset": "2803428",
+              "offset": "2803511",
               "size": 152,
             },
             "LICENSE": {
-              "offset": "2803580",
+              "offset": "2803663",
               "size": 1394,
             },
             "lib": {
               "files": {
                 "extract_description.js": {
-                  "offset": "2804974",
+                  "offset": "2805057",
                   "size": 509,
                 },
                 "fixer.js": {
-                  "offset": "2805483",
+                  "offset": "2805566",
                   "size": 11802,
                 },
                 "make_warning.js": {
-                  "offset": "2817285",
+                  "offset": "2817368",
                   "size": 710,
                 },
                 "normalize.js": {
-                  "offset": "2817995",
+                  "offset": "2818078",
                   "size": 1341,
                 },
                 "safe_format.js": {
-                  "offset": "2819336",
+                  "offset": "2819419",
                   "size": 246,
                 },
                 "typos.json": {
-                  "offset": "2819582",
+                  "offset": "2819665",
                   "size": 747,
                 },
                 "warning_messages.json": {
-                  "offset": "2820329",
+                  "offset": "2820412",
                   "size": 1798,
                 },
               },
             },
             "package.json": {
-              "offset": "2822127",
+              "offset": "2822210",
               "size": 676,
             },
           },
@@ -21618,7 +21618,7 @@ exports[`pnpm max stack 2`] = `
         "npm-run-all": {
           "files": {
             "LICENSE": {
-              "offset": "2822803",
+              "offset": "2822886",
               "size": 1082,
             },
             "bin": {
@@ -21626,15 +21626,15 @@ exports[`pnpm max stack 2`] = `
                 "common": {
                   "files": {
                     "bootstrap.js": {
-                      "offset": "2823885",
+                      "offset": "2823968",
                       "size": 1482,
                     },
                     "parse-cli-args.js": {
-                      "offset": "2825367",
+                      "offset": "2825450",
                       "size": 7280,
                     },
                     "version.js": {
-                      "offset": "2832647",
+                      "offset": "2832730",
                       "size": 684,
                     },
                   },
@@ -21642,16 +21642,16 @@ exports[`pnpm max stack 2`] = `
                 "npm-run-all": {
                   "files": {
                     "help.js": {
-                      "offset": "2833331",
+                      "offset": "2833414",
                       "size": 3180,
                     },
                     "index.js": {
                       "executable": true,
-                      "offset": "2836511",
+                      "offset": "2836594",
                       "size": 397,
                     },
                     "main.js": {
-                      "offset": "2836908",
+                      "offset": "2836991",
                       "size": 2655,
                     },
                   },
@@ -21659,16 +21659,16 @@ exports[`pnpm max stack 2`] = `
                 "run-p": {
                   "files": {
                     "help.js": {
-                      "offset": "2839563",
+                      "offset": "2839646",
                       "size": 2609,
                     },
                     "index.js": {
                       "executable": true,
-                      "offset": "2842172",
+                      "offset": "2842255",
                       "size": 391,
                     },
                     "main.js": {
-                      "offset": "2842563",
+                      "offset": "2842646",
                       "size": 2369,
                     },
                   },
@@ -21676,16 +21676,16 @@ exports[`pnpm max stack 2`] = `
                 "run-s": {
                   "files": {
                     "help.js": {
-                      "offset": "2844932",
+                      "offset": "2845015",
                       "size": 2192,
                     },
                     "index.js": {
                       "executable": true,
-                      "offset": "2847124",
+                      "offset": "2847207",
                       "size": 391,
                     },
                     "main.js": {
-                      "offset": "2847515",
+                      "offset": "2847598",
                       "size": 2235,
                     },
                   },
@@ -21695,19 +21695,19 @@ exports[`pnpm max stack 2`] = `
             "docs": {
               "files": {
                 "node-api.md": {
-                  "offset": "2849750",
+                  "offset": "2849833",
                   "size": 5062,
                 },
                 "npm-run-all.md": {
-                  "offset": "2854812",
+                  "offset": "2854895",
                   "size": 7064,
                 },
                 "run-p.md": {
-                  "offset": "2861876",
+                  "offset": "2861959",
                   "size": 5504,
                 },
                 "run-s.md": {
-                  "offset": "2867380",
+                  "offset": "2867463",
                   "size": 4882,
                 },
               },
@@ -21715,53 +21715,53 @@ exports[`pnpm max stack 2`] = `
             "lib": {
               "files": {
                 "create-header.js": {
-                  "offset": "2872262",
+                  "offset": "2872345",
                   "size": 1758,
                 },
                 "create-prefix-transform-stream.js": {
-                  "offset": "2874020",
+                  "offset": "2874103",
                   "size": 3205,
                 },
                 "index.js": {
-                  "offset": "2877225",
+                  "offset": "2877308",
                   "size": 10015,
                 },
                 "match-tasks.js": {
-                  "offset": "2887240",
+                  "offset": "2887323",
                   "size": 4028,
                 },
                 "npm-run-all-error.js": {
-                  "offset": "2891268",
+                  "offset": "2891351",
                   "size": 1419,
                 },
                 "read-package-json.js": {
-                  "offset": "2892687",
+                  "offset": "2892770",
                   "size": 980,
                 },
                 "run-task.js": {
-                  "offset": "2893667",
+                  "offset": "2893750",
                   "size": 7330,
                 },
                 "run-tasks.js": {
-                  "offset": "2900997",
+                  "offset": "2901080",
                   "size": 5131,
                 },
                 "spawn-posix.js": {
-                  "offset": "2906128",
+                  "offset": "2906211",
                   "size": 1845,
                 },
                 "spawn-win32.js": {
-                  "offset": "2907973",
+                  "offset": "2908056",
                   "size": 1564,
                 },
                 "spawn.js": {
-                  "offset": "2909537",
+                  "offset": "2909620",
                   "size": 603,
                 },
               },
             },
             "package.json": {
-              "offset": "2910140",
+              "offset": "2910223",
               "size": 1275,
             },
           },
@@ -21769,31 +21769,31 @@ exports[`pnpm max stack 2`] = `
         "object-inspect": {
           "files": {
             ".nycrc": {
-              "offset": "2911415",
+              "offset": "2911498",
               "size": 236,
             },
             "LICENSE": {
-              "offset": "2911651",
+              "offset": "2911734",
               "size": 1071,
             },
             "index.js": {
-              "offset": "2912722",
+              "offset": "2912805",
               "size": 19059,
             },
             "package-support.json": {
-              "offset": "2931781",
+              "offset": "2931864",
               "size": 365,
             },
             "package.json": {
-              "offset": "2932146",
+              "offset": "2932229",
               "size": 1991,
             },
             "test-core-js.js": {
-              "offset": "2934137",
+              "offset": "2934220",
               "size": 534,
             },
             "util.inspect.js": {
-              "offset": "2934671",
+              "offset": "2934754",
               "size": 42,
             },
           },
@@ -21801,27 +21801,27 @@ exports[`pnpm max stack 2`] = `
         "object-keys": {
           "files": {
             ".editorconfig": {
-              "offset": "2934713",
+              "offset": "2934796",
               "size": 276,
             },
             "LICENSE": {
-              "offset": "2934989",
+              "offset": "2935072",
               "size": 1080,
             },
             "implementation.js": {
-              "offset": "2936069",
+              "offset": "2936152",
               "size": 3218,
             },
             "index.js": {
-              "offset": "2939287",
+              "offset": "2939370",
               "size": 823,
             },
             "isArguments.js": {
-              "offset": "2940110",
+              "offset": "2940193",
               "size": 422,
             },
             "package.json": {
-              "offset": "2940532",
+              "offset": "2940615",
               "size": 1122,
             },
           },
@@ -21829,51 +21829,51 @@ exports[`pnpm max stack 2`] = `
         "object.assign": {
           "files": {
             ".editorconfig": {
-              "offset": "2941654",
+              "offset": "2941737",
               "size": 286,
             },
             ".nycrc": {
-              "offset": "2941940",
+              "offset": "2942023",
               "size": 139,
             },
             "LICENSE": {
-              "offset": "2942079",
+              "offset": "2942162",
               "size": 1080,
             },
             "auto.js": {
-              "offset": "2943159",
+              "offset": "2943242",
               "size": 36,
             },
             "dist": {
               "files": {
                 "browser.js": {
-                  "offset": "2943195",
+                  "offset": "2943278",
                   "size": 41567,
                 },
               },
             },
             "hasSymbols.js": {
-              "offset": "2984762",
+              "offset": "2984845",
               "size": 1618,
             },
             "implementation.js": {
-              "offset": "2986380",
+              "offset": "2986463",
               "size": 1424,
             },
             "index.js": {
-              "offset": "2987804",
+              "offset": "2987887",
               "size": 532,
             },
             "package.json": {
-              "offset": "2988336",
+              "offset": "2988419",
               "size": 1624,
             },
             "polyfill.js": {
-              "offset": "2989960",
+              "offset": "2990043",
               "size": 1299,
             },
             "shim.js": {
-              "offset": "2991259",
+              "offset": "2991342",
               "size": 305,
             },
           },
@@ -21881,23 +21881,23 @@ exports[`pnpm max stack 2`] = `
         "own-keys": {
           "files": {
             ".nycrc": {
-              "offset": "2991564",
+              "offset": "2991647",
               "size": 139,
             },
             "LICENSE": {
-              "offset": "2991703",
+              "offset": "2991786",
               "size": 1071,
             },
             "index.js": {
-              "offset": "2992774",
+              "offset": "2992857",
               "size": 583,
             },
             "package.json": {
-              "offset": "2993357",
+              "offset": "2993440",
               "size": 1636,
             },
             "tsconfig.json": {
-              "offset": "2994993",
+              "offset": "2995076",
               "size": 125,
             },
           },
@@ -21905,15 +21905,15 @@ exports[`pnpm max stack 2`] = `
         "parse-json": {
           "files": {
             "index.js": {
-              "offset": "2995118",
+              "offset": "2995201",
               "size": 617,
             },
             "license": {
-              "offset": "2995735",
+              "offset": "2995818",
               "size": 1109,
             },
             "package.json": {
-              "offset": "2996844",
+              "offset": "2996927",
               "size": 541,
             },
           },
@@ -21921,15 +21921,15 @@ exports[`pnpm max stack 2`] = `
         "path-key": {
           "files": {
             "index.js": {
-              "offset": "2997385",
+              "offset": "2997468",
               "size": 281,
             },
             "license": {
-              "offset": "2997666",
+              "offset": "2997749",
               "size": 1119,
             },
             "package.json": {
-              "offset": "2998785",
+              "offset": "2998868",
               "size": 426,
             },
           },
@@ -21937,15 +21937,15 @@ exports[`pnpm max stack 2`] = `
         "path-parse": {
           "files": {
             "LICENSE": {
-              "offset": "2999211",
+              "offset": "2999294",
               "size": 1080,
             },
             "index.js": {
-              "offset": "3000291",
+              "offset": "3000374",
               "size": 1893,
             },
             "package.json": {
-              "offset": "3002184",
+              "offset": "3002267",
               "size": 362,
             },
           },
@@ -21953,15 +21953,15 @@ exports[`pnpm max stack 2`] = `
         "path-type": {
           "files": {
             "index.js": {
-              "offset": "3002546",
+              "offset": "3002629",
               "size": 989,
             },
             "license": {
-              "offset": "3003535",
+              "offset": "3003618",
               "size": 1109,
             },
             "package.json": {
-              "offset": "3004644",
+              "offset": "3004727",
               "size": 470,
             },
           },
@@ -21972,45 +21972,45 @@ exports[`pnpm max stack 2`] = `
               "files": {
                 "pidtree.js": {
                   "executable": true,
-                  "offset": "3005114",
+                  "offset": "3005197",
                   "size": 2859,
                 },
               },
             },
             "index.js": {
-              "offset": "3007973",
+              "offset": "3008056",
               "size": 1346,
             },
             "lib": {
               "files": {
                 "bin.js": {
-                  "offset": "3009319",
+                  "offset": "3009402",
                   "size": 1025,
                 },
                 "get.js": {
-                  "offset": "3010344",
+                  "offset": "3010427",
                   "size": 721,
                 },
                 "pidtree.js": {
-                  "offset": "3011065",
+                  "offset": "3011148",
                   "size": 2684,
                 },
                 "ps.js": {
-                  "offset": "3013749",
+                  "offset": "3013832",
                   "size": 1067,
                 },
                 "wmic.js": {
-                  "offset": "3014816",
+                  "offset": "3014899",
                   "size": 1178,
                 },
               },
             },
             "license": {
-              "offset": "3015994",
+              "offset": "3016077",
               "size": 1073,
             },
             "package.json": {
-              "offset": "3017067",
+              "offset": "3017150",
               "size": 807,
             },
           },
@@ -22018,15 +22018,15 @@ exports[`pnpm max stack 2`] = `
         "pify": {
           "files": {
             "index.js": {
-              "offset": "3017874",
+              "offset": "3017957",
               "size": 1808,
             },
             "license": {
-              "offset": "3019682",
+              "offset": "3019765",
               "size": 1109,
             },
             "package.json": {
-              "offset": "3020791",
+              "offset": "3020874",
               "size": 461,
             },
           },
@@ -22034,19 +22034,19 @@ exports[`pnpm max stack 2`] = `
         "possible-typed-array-names": {
           "files": {
             "LICENSE": {
-              "offset": "3021252",
+              "offset": "3021335",
               "size": 1071,
             },
             "index.js": {
-              "offset": "3022323",
+              "offset": "3022406",
               "size": 264,
             },
             "package.json": {
-              "offset": "3022587",
+              "offset": "3022670",
               "size": 1291,
             },
             "tsconfig.json": {
-              "offset": "3023878",
+              "offset": "3023961",
               "size": 116,
             },
           },
@@ -22054,15 +22054,15 @@ exports[`pnpm max stack 2`] = `
         "read-pkg": {
           "files": {
             "index.js": {
-              "offset": "3023994",
+              "offset": "3024077",
               "size": 816,
             },
             "license": {
-              "offset": "3024810",
+              "offset": "3024893",
               "size": 1109,
             },
             "package.json": {
-              "offset": "3025919",
+              "offset": "3026002",
               "size": 521,
             },
           },
@@ -22070,35 +22070,35 @@ exports[`pnpm max stack 2`] = `
         "reflect.getprototypeof": {
           "files": {
             ".nycrc": {
-              "offset": "3026440",
+              "offset": "3026523",
               "size": 139,
             },
             "LICENSE": {
-              "offset": "3026579",
+              "offset": "3026662",
               "size": 1073,
             },
             "auto.js": {
-              "offset": "3027652",
+              "offset": "3027735",
               "size": 36,
             },
             "implementation.js": {
-              "offset": "3027688",
+              "offset": "3027771",
               "size": 1091,
             },
             "index.js": {
-              "offset": "3028779",
+              "offset": "3028862",
               "size": 421,
             },
             "package.json": {
-              "offset": "3029200",
+              "offset": "3029283",
               "size": 1804,
             },
             "polyfill.js": {
-              "offset": "3031004",
+              "offset": "3031087",
               "size": 350,
             },
             "shim.js": {
-              "offset": "3031354",
+              "offset": "3031437",
               "size": 462,
             },
           },
@@ -22106,39 +22106,39 @@ exports[`pnpm max stack 2`] = `
         "regexp.prototype.flags": {
           "files": {
             ".editorconfig": {
-              "offset": "3031816",
+              "offset": "3031899",
               "size": 276,
             },
             ".nycrc": {
-              "offset": "3032092",
+              "offset": "3032175",
               "size": 139,
             },
             "LICENSE": {
-              "offset": "3032231",
+              "offset": "3032314",
               "size": 1082,
             },
             "auto.js": {
-              "offset": "3033313",
+              "offset": "3033396",
               "size": 36,
             },
             "implementation.js": {
-              "offset": "3033349",
+              "offset": "3033432",
               "size": 710,
             },
             "index.js": {
-              "offset": "3034059",
+              "offset": "3034142",
               "size": 388,
             },
             "package.json": {
-              "offset": "3034447",
+              "offset": "3034530",
               "size": 1917,
             },
             "polyfill.js": {
-              "offset": "3036364",
+              "offset": "3036447",
               "size": 864,
             },
             "shim.js": {
-              "offset": "3037228",
+              "offset": "3037311",
               "size": 779,
             },
           },
@@ -22146,80 +22146,80 @@ exports[`pnpm max stack 2`] = `
         "resolve": {
           "files": {
             ".editorconfig": {
-              "offset": "3038007",
+              "offset": "3038090",
               "size": 605,
             },
             "LICENSE": {
-              "offset": "3038612",
+              "offset": "3038695",
               "size": 1071,
             },
             "SECURITY.md": {
-              "offset": "3039683",
+              "offset": "3039766",
               "size": 157,
             },
             "async.js": {
-              "offset": "3039840",
+              "offset": "3039923",
               "size": 56,
             },
             "bin": {
               "files": {
                 "resolve": {
                   "executable": true,
-                  "offset": "3039896",
+                  "offset": "3039979",
                   "size": 1535,
                 },
               },
             },
             "index.js": {
-              "offset": "3041431",
+              "offset": "3041514",
               "size": 174,
             },
             "lib": {
               "files": {
                 "async.js": {
-                  "offset": "3041605",
+                  "offset": "3041688",
                   "size": 11391,
                 },
                 "caller.js": {
-                  "offset": "3052996",
+                  "offset": "3053079",
                   "size": 354,
                 },
                 "core.js": {
-                  "offset": "3053350",
+                  "offset": "3053433",
                   "size": 309,
                 },
                 "core.json": {
-                  "offset": "3053659",
+                  "offset": "3053742",
                   "size": 5931,
                 },
                 "homedir.js": {
-                  "offset": "3059590",
+                  "offset": "3059673",
                   "size": 805,
                 },
                 "is-core.js": {
-                  "offset": "3060395",
+                  "offset": "3060478",
                   "size": 116,
                 },
                 "node-modules-paths.js": {
-                  "offset": "3060511",
+                  "offset": "3060594",
                   "size": 1294,
                 },
                 "normalize-options.js": {
-                  "offset": "3061805",
+                  "offset": "3061888",
                   "size": 348,
                 },
                 "sync.js": {
-                  "offset": "3062153",
+                  "offset": "3062236",
                   "size": 7025,
                 },
               },
             },
             "package.json": {
-              "offset": "3069178",
+              "offset": "3069261",
               "size": 1318,
             },
             "sync.js": {
-              "offset": "3070496",
+              "offset": "3070579",
               "size": 55,
             },
           },
@@ -22227,23 +22227,23 @@ exports[`pnpm max stack 2`] = `
         "safe-array-concat": {
           "files": {
             ".nycrc": {
-              "offset": "3070551",
+              "offset": "3070634",
               "size": 216,
             },
             "LICENSE": {
-              "offset": "3070767",
+              "offset": "3070850",
               "size": 1071,
             },
             "index.js": {
-              "offset": "3071838",
+              "offset": "3071921",
               "size": 1877,
             },
             "package.json": {
-              "offset": "3073715",
+              "offset": "3073798",
               "size": 1712,
             },
             "tsconfig.json": {
-              "offset": "3075427",
+              "offset": "3075510",
               "size": 125,
             },
           },
@@ -22251,23 +22251,23 @@ exports[`pnpm max stack 2`] = `
         "safe-push-apply": {
           "files": {
             ".nycrc": {
-              "offset": "3075552",
+              "offset": "3075635",
               "size": 216,
             },
             "LICENSE": {
-              "offset": "3075768",
+              "offset": "3075851",
               "size": 1071,
             },
             "index.js": {
-              "offset": "3076839",
+              "offset": "3076922",
               "size": 386,
             },
             "package.json": {
-              "offset": "3077225",
+              "offset": "3077308",
               "size": 1453,
             },
             "tsconfig.json": {
-              "offset": "3078678",
+              "offset": "3078761",
               "size": 125,
             },
           },
@@ -22275,23 +22275,23 @@ exports[`pnpm max stack 2`] = `
         "safe-regex-test": {
           "files": {
             ".nycrc": {
-              "offset": "3078803",
+              "offset": "3078886",
               "size": 216,
             },
             "LICENSE": {
-              "offset": "3079019",
+              "offset": "3079102",
               "size": 1071,
             },
             "index.js": {
-              "offset": "3080090",
+              "offset": "3080173",
               "size": 405,
             },
             "package.json": {
-              "offset": "3080495",
+              "offset": "3080578",
               "size": 1582,
             },
             "tsconfig.json": {
-              "offset": "3082077",
+              "offset": "3082160",
               "size": 118,
             },
           },
@@ -22299,28 +22299,28 @@ exports[`pnpm max stack 2`] = `
         "semver": {
           "files": {
             "LICENSE": {
-              "offset": "3082195",
+              "offset": "3082278",
               "size": 765,
             },
             "bin": {
               "files": {
                 "semver": {
                   "executable": true,
-                  "offset": "3082960",
+                  "offset": "3083043",
                   "size": 4418,
                 },
               },
             },
             "package.json": {
-              "offset": "3087378",
+              "offset": "3087461",
               "size": 667,
             },
             "range.bnf": {
-              "offset": "3088045",
+              "offset": "3088128",
               "size": 619,
             },
             "semver.js": {
-              "offset": "3088664",
+              "offset": "3088747",
               "size": 40812,
             },
           },
@@ -22328,27 +22328,27 @@ exports[`pnpm max stack 2`] = `
         "set-function-length": {
           "files": {
             ".nycrc": {
-              "offset": "3129476",
+              "offset": "3129559",
               "size": 216,
             },
             "LICENSE": {
-              "offset": "3129692",
+              "offset": "3129775",
               "size": 1083,
             },
             "env.js": {
-              "offset": "3130775",
+              "offset": "3130858",
               "size": 867,
             },
             "index.js": {
-              "offset": "3131642",
+              "offset": "3131725",
               "size": 1273,
             },
             "package.json": {
-              "offset": "3132915",
+              "offset": "3132998",
               "size": 1953,
             },
             "tsconfig.json": {
-              "offset": "3134868",
+              "offset": "3134951",
               "size": 116,
             },
           },
@@ -22356,19 +22356,19 @@ exports[`pnpm max stack 2`] = `
         "set-function-name": {
           "files": {
             "LICENSE": {
-              "offset": "3134984",
+              "offset": "3135067",
               "size": 1083,
             },
             "index.js": {
-              "offset": "3136067",
+              "offset": "3136150",
               "size": 744,
             },
             "package.json": {
-              "offset": "3136811",
+              "offset": "3136894",
               "size": 2128,
             },
             "tsconfig.json": {
-              "offset": "3138939",
+              "offset": "3139022",
               "size": 4887,
             },
           },
@@ -22376,31 +22376,31 @@ exports[`pnpm max stack 2`] = `
         "set-proto": {
           "files": {
             ".nycrc": {
-              "offset": "3143826",
+              "offset": "3143909",
               "size": 139,
             },
             "LICENSE": {
-              "offset": "3143965",
+              "offset": "3144048",
               "size": 1071,
             },
             "Object.setPrototypeOf.js": {
-              "offset": "3145036",
+              "offset": "3145119",
               "size": 156,
             },
             "Reflect.setPrototypeOf.js": {
-              "offset": "3145192",
+              "offset": "3145275",
               "size": 150,
             },
             "index.js": {
-              "offset": "3145342",
+              "offset": "3145425",
               "size": 733,
             },
             "package.json": {
-              "offset": "3146075",
+              "offset": "3146158",
               "size": 1452,
             },
             "tsconfig.json": {
-              "offset": "3147527",
+              "offset": "3147610",
               "size": 118,
             },
           },
@@ -22408,15 +22408,15 @@ exports[`pnpm max stack 2`] = `
         "shebang-command": {
           "files": {
             "index.js": {
-              "offset": "3147645",
+              "offset": "3147728",
               "size": 346,
             },
             "license": {
-              "offset": "3147991",
+              "offset": "3148074",
               "size": 1125,
             },
             "package.json": {
-              "offset": "3149116",
+              "offset": "3149199",
               "size": 477,
             },
           },
@@ -22424,15 +22424,15 @@ exports[`pnpm max stack 2`] = `
         "shebang-regex": {
           "files": {
             "index.js": {
-              "offset": "3149593",
+              "offset": "3149676",
               "size": 40,
             },
             "license": {
-              "offset": "3149633",
+              "offset": "3149716",
               "size": 1119,
             },
             "package.json": {
-              "offset": "3150752",
+              "offset": "3150835",
               "size": 419,
             },
           },
@@ -22440,31 +22440,31 @@ exports[`pnpm max stack 2`] = `
         "shell-quote": {
           "files": {
             ".nycrc": {
-              "offset": "3151171",
+              "offset": "3151254",
               "size": 229,
             },
             "LICENSE": {
-              "offset": "3151400",
+              "offset": "3151483",
               "size": 1109,
             },
             "index.js": {
-              "offset": "3152509",
+              "offset": "3152592",
               "size": 87,
             },
             "package.json": {
-              "offset": "3152596",
+              "offset": "3152679",
               "size": 1194,
             },
             "parse.js": {
-              "offset": "3153790",
+              "offset": "3153873",
               "size": 5188,
             },
             "quote.js": {
-              "offset": "3158978",
+              "offset": "3159061",
               "size": 497,
             },
             "security.md": {
-              "offset": "3159475",
+              "offset": "3159558",
               "size": 295,
             },
           },
@@ -22472,27 +22472,27 @@ exports[`pnpm max stack 2`] = `
         "side-channel": {
           "files": {
             ".editorconfig": {
-              "offset": "3159770",
+              "offset": "3159853",
               "size": 145,
             },
             ".nycrc": {
-              "offset": "3159915",
+              "offset": "3159998",
               "size": 216,
             },
             "LICENSE": {
-              "offset": "3160131",
+              "offset": "3160214",
               "size": 1071,
             },
             "index.js": {
-              "offset": "3161202",
+              "offset": "3161285",
               "size": 1189,
             },
             "package.json": {
-              "offset": "3162391",
+              "offset": "3162474",
               "size": 1564,
             },
             "tsconfig.json": {
-              "offset": "3163955",
+              "offset": "3164038",
               "size": 116,
             },
           },
@@ -22500,27 +22500,27 @@ exports[`pnpm max stack 2`] = `
         "side-channel-list": {
           "files": {
             ".editorconfig": {
-              "offset": "3164071",
+              "offset": "3164154",
               "size": 145,
             },
             ".nycrc": {
-              "offset": "3164216",
+              "offset": "3164299",
               "size": 216,
             },
             "LICENSE": {
-              "offset": "3164432",
+              "offset": "3164515",
               "size": 1071,
             },
             "index.js": {
-              "offset": "3165503",
+              "offset": "3165586",
               "size": 3391,
             },
             "package.json": {
-              "offset": "3168894",
+              "offset": "3168977",
               "size": 1490,
             },
             "tsconfig.json": {
-              "offset": "3170384",
+              "offset": "3170467",
               "size": 116,
             },
           },
@@ -22528,27 +22528,27 @@ exports[`pnpm max stack 2`] = `
         "side-channel-map": {
           "files": {
             ".editorconfig": {
-              "offset": "3170500",
+              "offset": "3170583",
               "size": 145,
             },
             ".nycrc": {
-              "offset": "3170645",
+              "offset": "3170728",
               "size": 216,
             },
             "LICENSE": {
-              "offset": "3170861",
+              "offset": "3170944",
               "size": 1071,
             },
             "index.js": {
-              "offset": "3171932",
+              "offset": "3172015",
               "size": 1981,
             },
             "package.json": {
-              "offset": "3173913",
+              "offset": "3173996",
               "size": 1576,
             },
             "tsconfig.json": {
-              "offset": "3175489",
+              "offset": "3175572",
               "size": 116,
             },
           },
@@ -22556,27 +22556,27 @@ exports[`pnpm max stack 2`] = `
         "side-channel-weakmap": {
           "files": {
             ".editorconfig": {
-              "offset": "3175605",
+              "offset": "3175688",
               "size": 145,
             },
             ".nycrc": {
-              "offset": "3175750",
+              "offset": "3175833",
               "size": 216,
             },
             "LICENSE": {
-              "offset": "3175966",
+              "offset": "3176049",
               "size": 1071,
             },
             "index.js": {
-              "offset": "3177037",
+              "offset": "3177120",
               "size": 2708,
             },
             "package.json": {
-              "offset": "3179745",
+              "offset": "3179828",
               "size": 1646,
             },
             "tsconfig.json": {
-              "offset": "3181391",
+              "offset": "3181474",
               "size": 116,
             },
           },
@@ -22584,15 +22584,15 @@ exports[`pnpm max stack 2`] = `
         "spdx-correct": {
           "files": {
             "LICENSE": {
-              "offset": "3181507",
+              "offset": "3181590",
               "size": 11358,
             },
             "index.js": {
-              "offset": "3192865",
+              "offset": "3192948",
               "size": 10753,
             },
             "package.json": {
-              "offset": "3203618",
+              "offset": "3203701",
               "size": 483,
             },
           },
@@ -22600,15 +22600,15 @@ exports[`pnpm max stack 2`] = `
         "spdx-exceptions": {
           "files": {
             "deprecated.json": {
-              "offset": "3204101",
+              "offset": "3204184",
               "size": 31,
             },
             "index.json": {
-              "offset": "3204132",
+              "offset": "3204215",
               "size": 1731,
             },
             "package.json": {
-              "offset": "3205863",
+              "offset": "3205946",
               "size": 285,
             },
           },
@@ -22616,27 +22616,27 @@ exports[`pnpm max stack 2`] = `
         "spdx-expression-parse": {
           "files": {
             "AUTHORS": {
-              "offset": "3206148",
+              "offset": "3206231",
               "size": 203,
             },
             "LICENSE": {
-              "offset": "3206351",
+              "offset": "3206434",
               "size": 1111,
             },
             "index.js": {
-              "offset": "3207462",
+              "offset": "3207545",
               "size": 143,
             },
             "package.json": {
-              "offset": "3207605",
+              "offset": "3207688",
               "size": 554,
             },
             "parse.js": {
-              "offset": "3208159",
+              "offset": "3208242",
               "size": 2901,
             },
             "scan.js": {
-              "offset": "3211060",
+              "offset": "3211143",
               "size": 2754,
             },
           },
@@ -22644,15 +22644,15 @@ exports[`pnpm max stack 2`] = `
         "spdx-license-ids": {
           "files": {
             "deprecated.json": {
-              "offset": "3213814",
+              "offset": "3213897",
               "size": 512,
             },
             "index.json": {
-              "offset": "3214326",
+              "offset": "3214409",
               "size": 10438,
             },
             "package.json": {
-              "offset": "3224764",
+              "offset": "3224847",
               "size": 301,
             },
           },
@@ -22660,39 +22660,39 @@ exports[`pnpm max stack 2`] = `
         "string.prototype.padend": {
           "files": {
             ".editorconfig": {
-              "offset": "3225065",
+              "offset": "3225148",
               "size": 286,
             },
             ".nycrc": {
-              "offset": "3225351",
+              "offset": "3225434",
               "size": 139,
             },
             "LICENSE": {
-              "offset": "3225490",
+              "offset": "3225573",
               "size": 1084,
             },
             "auto.js": {
-              "offset": "3226574",
+              "offset": "3226657",
               "size": 36,
             },
             "implementation.js": {
-              "offset": "3226610",
+              "offset": "3226693",
               "size": 1109,
             },
             "index.js": {
-              "offset": "3227719",
+              "offset": "3227802",
               "size": 659,
             },
             "package.json": {
-              "offset": "3228378",
+              "offset": "3228461",
               "size": 1694,
             },
             "polyfill.js": {
-              "offset": "3230072",
+              "offset": "3230155",
               "size": 209,
             },
             "shim.js": {
-              "offset": "3230281",
+              "offset": "3230364",
               "size": 334,
             },
           },
@@ -22700,39 +22700,39 @@ exports[`pnpm max stack 2`] = `
         "string.prototype.trim": {
           "files": {
             ".editorconfig": {
-              "offset": "3230615",
+              "offset": "3230698",
               "size": 286,
             },
             ".nycrc": {
-              "offset": "3230901",
+              "offset": "3230984",
               "size": 139,
             },
             "LICENSE": {
-              "offset": "3231040",
+              "offset": "3231123",
               "size": 1081,
             },
             "auto.js": {
-              "offset": "3232121",
+              "offset": "3232204",
               "size": 36,
             },
             "implementation.js": {
-              "offset": "3232157",
+              "offset": "3232240",
               "size": 1173,
             },
             "index.js": {
-              "offset": "3233330",
+              "offset": "3233413",
               "size": 572,
             },
             "package.json": {
-              "offset": "3233902",
+              "offset": "3233985",
               "size": 1863,
             },
             "polyfill.js": {
-              "offset": "3235765",
+              "offset": "3235848",
               "size": 547,
             },
             "shim.js": {
-              "offset": "3236312",
+              "offset": "3236395",
               "size": 494,
             },
           },
@@ -22740,39 +22740,39 @@ exports[`pnpm max stack 2`] = `
         "string.prototype.trimend": {
           "files": {
             ".editorconfig": {
-              "offset": "3236806",
+              "offset": "3236889",
               "size": 286,
             },
             ".nycrc": {
-              "offset": "3237092",
+              "offset": "3237175",
               "size": 139,
             },
             "LICENSE": {
-              "offset": "3237231",
+              "offset": "3237314",
               "size": 1073,
             },
             "auto.js": {
-              "offset": "3238304",
+              "offset": "3238387",
               "size": 36,
             },
             "implementation.js": {
-              "offset": "3238340",
+              "offset": "3238423",
               "size": 635,
             },
             "index.js": {
-              "offset": "3238975",
+              "offset": "3239058",
               "size": 572,
             },
             "package.json": {
-              "offset": "3239547",
+              "offset": "3239630",
               "size": 1247,
             },
             "polyfill.js": {
-              "offset": "3240794",
+              "offset": "3240877",
               "size": 458,
             },
             "shim.js": {
-              "offset": "3241252",
+              "offset": "3241335",
               "size": 329,
             },
           },
@@ -22780,39 +22780,39 @@ exports[`pnpm max stack 2`] = `
         "string.prototype.trimstart": {
           "files": {
             ".editorconfig": {
-              "offset": "3241581",
+              "offset": "3241664",
               "size": 286,
             },
             ".nycrc": {
-              "offset": "3241867",
+              "offset": "3241950",
               "size": 139,
             },
             "LICENSE": {
-              "offset": "3242006",
+              "offset": "3242089",
               "size": 1073,
             },
             "auto.js": {
-              "offset": "3243079",
+              "offset": "3243162",
               "size": 36,
             },
             "implementation.js": {
-              "offset": "3243115",
+              "offset": "3243198",
               "size": 650,
             },
             "index.js": {
-              "offset": "3243765",
+              "offset": "3243848",
               "size": 572,
             },
             "package.json": {
-              "offset": "3244337",
+              "offset": "3244420",
               "size": 1219,
             },
             "polyfill.js": {
-              "offset": "3245556",
+              "offset": "3245639",
               "size": 463,
             },
             "shim.js": {
-              "offset": "3246019",
+              "offset": "3246102",
               "size": 337,
             },
           },
@@ -22820,15 +22820,15 @@ exports[`pnpm max stack 2`] = `
         "strip-bom": {
           "files": {
             "index.js": {
-              "offset": "3246356",
+              "offset": "3246439",
               "size": 317,
             },
             "license": {
-              "offset": "3246673",
+              "offset": "3246756",
               "size": 1119,
             },
             "package.json": {
-              "offset": "3247792",
+              "offset": "3247875",
               "size": 423,
             },
           },
@@ -22836,19 +22836,19 @@ exports[`pnpm max stack 2`] = `
         "supports-color": {
           "files": {
             "browser.js": {
-              "offset": "3248215",
+              "offset": "3248298",
               "size": 67,
             },
             "index.js": {
-              "offset": "3248282",
+              "offset": "3248365",
               "size": 2771,
             },
             "license": {
-              "offset": "3251053",
+              "offset": "3251136",
               "size": 1109,
             },
             "package.json": {
-              "offset": "3252162",
+              "offset": "3252245",
               "size": 556,
             },
           },
@@ -22856,23 +22856,23 @@ exports[`pnpm max stack 2`] = `
         "supports-preserve-symlinks-flag": {
           "files": {
             ".nycrc": {
-              "offset": "3252718",
+              "offset": "3252801",
               "size": 139,
             },
             "LICENSE": {
-              "offset": "3252857",
+              "offset": "3252940",
               "size": 1067,
             },
             "browser.js": {
-              "offset": "3253924",
+              "offset": "3254007",
               "size": 38,
             },
             "index.js": {
-              "offset": "3253962",
+              "offset": "3254045",
               "size": 293,
             },
             "package.json": {
-              "offset": "3254255",
+              "offset": "3254338",
               "size": 1266,
             },
           },
@@ -22880,23 +22880,23 @@ exports[`pnpm max stack 2`] = `
         "typed-array-buffer": {
           "files": {
             ".nycrc": {
-              "offset": "3255521",
+              "offset": "3255604",
               "size": 216,
             },
             "LICENSE": {
-              "offset": "3255737",
+              "offset": "3255820",
               "size": 1071,
             },
             "index.js": {
-              "offset": "3256808",
+              "offset": "3256891",
               "size": 591,
             },
             "package.json": {
-              "offset": "3257399",
+              "offset": "3257482",
               "size": 1593,
             },
             "tsconfig.json": {
-              "offset": "3258992",
+              "offset": "3259075",
               "size": 116,
             },
           },
@@ -22904,23 +22904,23 @@ exports[`pnpm max stack 2`] = `
         "typed-array-byte-length": {
           "files": {
             ".nycrc": {
-              "offset": "3259108",
+              "offset": "3259191",
               "size": 216,
             },
             "LICENSE": {
-              "offset": "3259324",
+              "offset": "3259407",
               "size": 1067,
             },
             "index.js": {
-              "offset": "3260391",
+              "offset": "3260474",
               "size": 2746,
             },
             "package.json": {
-              "offset": "3263137",
+              "offset": "3263220",
               "size": 2015,
             },
             "tsconfig.json": {
-              "offset": "3265152",
+              "offset": "3265235",
               "size": 116,
             },
           },
@@ -22928,23 +22928,23 @@ exports[`pnpm max stack 2`] = `
         "typed-array-byte-offset": {
           "files": {
             ".nycrc": {
-              "offset": "3265268",
+              "offset": "3265351",
               "size": 216,
             },
             "LICENSE": {
-              "offset": "3265484",
+              "offset": "3265567",
               "size": 1067,
             },
             "index.js": {
-              "offset": "3266551",
+              "offset": "3266634",
               "size": 2486,
             },
             "package.json": {
-              "offset": "3269037",
+              "offset": "3269120",
               "size": 2124,
             },
             "tsconfig.json": {
-              "offset": "3271161",
+              "offset": "3271244",
               "size": 145,
             },
           },
@@ -22952,23 +22952,23 @@ exports[`pnpm max stack 2`] = `
         "typed-array-length": {
           "files": {
             ".nycrc": {
-              "offset": "3271306",
+              "offset": "3271389",
               "size": 216,
             },
             "LICENSE": {
-              "offset": "3271522",
+              "offset": "3271605",
               "size": 1067,
             },
             "index.js": {
-              "offset": "3272589",
+              "offset": "3272672",
               "size": 2942,
             },
             "package.json": {
-              "offset": "3275531",
+              "offset": "3275614",
               "size": 2000,
             },
             "tsconfig.json": {
-              "offset": "3277531",
+              "offset": "3277614",
               "size": 145,
             },
           },
@@ -22976,27 +22976,27 @@ exports[`pnpm max stack 2`] = `
         "unbox-primitive": {
           "files": {
             ".editorconfig": {
-              "offset": "3277676",
+              "offset": "3277759",
               "size": 286,
             },
             ".nycrc": {
-              "offset": "3277962",
+              "offset": "3278045",
               "size": 216,
             },
             "LICENSE": {
-              "offset": "3278178",
+              "offset": "3278261",
               "size": 1071,
             },
             "index.js": {
-              "offset": "3279249",
+              "offset": "3279332",
               "size": 1532,
             },
             "package.json": {
-              "offset": "3280781",
+              "offset": "3280864",
               "size": 1537,
             },
             "tsconfig.json": {
-              "offset": "3282318",
+              "offset": "3282401",
               "size": 68,
             },
           },
@@ -23004,15 +23004,15 @@ exports[`pnpm max stack 2`] = `
         "validate-npm-package-license": {
           "files": {
             "LICENSE": {
-              "offset": "3282386",
+              "offset": "3282469",
               "size": 11358,
             },
             "index.js": {
-              "offset": "3293744",
+              "offset": "3293827",
               "size": 1925,
             },
             "package.json": {
-              "offset": "3295669",
+              "offset": "3295752",
               "size": 519,
             },
           },
@@ -23020,24 +23020,24 @@ exports[`pnpm max stack 2`] = `
         "which": {
           "files": {
             "LICENSE": {
-              "offset": "3296188",
+              "offset": "3296271",
               "size": 765,
             },
             "bin": {
               "files": {
                 "which": {
                   "executable": true,
-                  "offset": "3296953",
+                  "offset": "3297036",
                   "size": 985,
                 },
               },
             },
             "package.json": {
-              "offset": "3297938",
+              "offset": "3298021",
               "size": 565,
             },
             "which.js": {
-              "offset": "3298503",
+              "offset": "3298586",
               "size": 3184,
             },
           },
@@ -23045,27 +23045,27 @@ exports[`pnpm max stack 2`] = `
         "which-boxed-primitive": {
           "files": {
             ".editorconfig": {
-              "offset": "3301687",
+              "offset": "3301770",
               "size": 286,
             },
             ".nycrc": {
-              "offset": "3301973",
+              "offset": "3302056",
               "size": 216,
             },
             "LICENSE": {
-              "offset": "3302189",
+              "offset": "3302272",
               "size": 1071,
             },
             "index.js": {
-              "offset": "3303260",
+              "offset": "3303343",
               "size": 718,
             },
             "package.json": {
-              "offset": "3303978",
+              "offset": "3304061",
               "size": 1535,
             },
             "tsconfig.json": {
-              "offset": "3305513",
+              "offset": "3305596",
               "size": 114,
             },
           },
@@ -23073,23 +23073,23 @@ exports[`pnpm max stack 2`] = `
         "which-builtin-type": {
           "files": {
             ".nycrc": {
-              "offset": "3305627",
+              "offset": "3305710",
               "size": 139,
             },
             "LICENSE": {
-              "offset": "3305766",
+              "offset": "3305849",
               "size": 1073,
             },
             "index.js": {
-              "offset": "3306839",
+              "offset": "3306922",
               "size": 3952,
             },
             "package.json": {
-              "offset": "3310791",
+              "offset": "3310874",
               "size": 2562,
             },
             "tsconfig.json": {
-              "offset": "3313353",
+              "offset": "3313436",
               "size": 123,
             },
           },
@@ -23097,23 +23097,23 @@ exports[`pnpm max stack 2`] = `
         "which-collection": {
           "files": {
             ".nycrc": {
-              "offset": "3313476",
+              "offset": "3313559",
               "size": 216,
             },
             "LICENSE": {
-              "offset": "3313692",
+              "offset": "3313775",
               "size": 1067,
             },
             "index.js": {
-              "offset": "3314759",
+              "offset": "3314842",
               "size": 509,
             },
             "package.json": {
-              "offset": "3315268",
+              "offset": "3315351",
               "size": 1615,
             },
             "tsconfig.json": {
-              "offset": "3316883",
+              "offset": "3316966",
               "size": 3611,
             },
           },
@@ -23121,27 +23121,27 @@ exports[`pnpm max stack 2`] = `
         "which-typed-array": {
           "files": {
             ".editorconfig": {
-              "offset": "3320494",
+              "offset": "3320577",
               "size": 286,
             },
             ".nycrc": {
-              "offset": "3320780",
+              "offset": "3320863",
               "size": 216,
             },
             "LICENSE": {
-              "offset": "3320996",
+              "offset": "3321079",
               "size": 1082,
             },
             "index.js": {
-              "offset": "3322078",
+              "offset": "3322161",
               "size": 3727,
             },
             "package.json": {
-              "offset": "3325805",
+              "offset": "3325888",
               "size": 2258,
             },
             "tsconfig.json": {
-              "offset": "3328063",
+              "offset": "3328146",
               "size": 123,
             },
           },
@@ -23149,7 +23149,7 @@ exports[`pnpm max stack 2`] = `
       },
     },
     "package.json": {
-      "offset": "3329183",
+      "offset": "3329266",
       "size": 331,
     },
   },
@@ -28419,11 +28419,11 @@ exports[`yarn max stack 2`] = `
 {
   "files": {
     "index.html": {
-      "offset": "3328186",
+      "offset": "3328269",
       "size": 378,
     },
     "index.js": {
-      "offset": "3328564",
+      "offset": "3328647",
       "size": 619,
     },
     "node_modules": {
@@ -38116,10 +38116,10 @@ exports[`yarn max stack 2`] = `
             },
             "index.js": {
               "offset": "2532383",
-              "size": 14356,
+              "size": 14439,
             },
             "package.json": {
-              "offset": "2546739",
+              "offset": "2546822",
               "size": 1864,
             },
           },
@@ -38127,31 +38127,31 @@ exports[`yarn max stack 2`] = `
         "get-proto": {
           "files": {
             ".nycrc": {
-              "offset": "2548603",
+              "offset": "2548686",
               "size": 139,
             },
             "LICENSE": {
-              "offset": "2548742",
+              "offset": "2548825",
               "size": 1071,
             },
             "Object.getPrototypeOf.js": {
-              "offset": "2549813",
+              "offset": "2549896",
               "size": 156,
             },
             "Reflect.getPrototypeOf.js": {
-              "offset": "2549969",
+              "offset": "2550052",
               "size": 150,
             },
             "index.js": {
-              "offset": "2550119",
+              "offset": "2550202",
               "size": 821,
             },
             "package.json": {
-              "offset": "2550940",
+              "offset": "2551023",
               "size": 1425,
             },
             "tsconfig.json": {
-              "offset": "2552365",
+              "offset": "2552448",
               "size": 118,
             },
           },
@@ -38159,27 +38159,27 @@ exports[`yarn max stack 2`] = `
         "get-symbol-description": {
           "files": {
             ".nycrc": {
-              "offset": "2552483",
+              "offset": "2552566",
               "size": 139,
             },
             "LICENSE": {
-              "offset": "2552622",
+              "offset": "2552705",
               "size": 1067,
             },
             "getInferredName.js": {
-              "offset": "2553689",
+              "offset": "2553772",
               "size": 474,
             },
             "index.js": {
-              "offset": "2554163",
+              "offset": "2554246",
               "size": 1563,
             },
             "package.json": {
-              "offset": "2555726",
+              "offset": "2555809",
               "size": 1758,
             },
             "tsconfig.json": {
-              "offset": "2557484",
+              "offset": "2557567",
               "size": 116,
             },
           },
@@ -38187,39 +38187,39 @@ exports[`yarn max stack 2`] = `
         "globalthis": {
           "files": {
             ".nycrc": {
-              "offset": "2557600",
+              "offset": "2557683",
               "size": 149,
             },
             "LICENSE": {
-              "offset": "2557749",
+              "offset": "2557832",
               "size": 1081,
             },
             "auto.js": {
-              "offset": "2558830",
+              "offset": "2558913",
               "size": 36,
             },
             "implementation.browser.js": {
-              "offset": "2558866",
+              "offset": "2558949",
               "size": 254,
             },
             "implementation.js": {
-              "offset": "2559120",
+              "offset": "2559203",
               "size": 40,
             },
             "index.js": {
-              "offset": "2559160",
+              "offset": "2559243",
               "size": 408,
             },
             "package.json": {
-              "offset": "2559568",
+              "offset": "2559651",
               "size": 1676,
             },
             "polyfill.js": {
-              "offset": "2561244",
+              "offset": "2561327",
               "size": 251,
             },
             "shim.js": {
-              "offset": "2561495",
+              "offset": "2561578",
               "size": 715,
             },
           },
@@ -38227,23 +38227,23 @@ exports[`yarn max stack 2`] = `
         "gopd": {
           "files": {
             "LICENSE": {
-              "offset": "2562210",
+              "offset": "2562293",
               "size": 1071,
             },
             "gOPD.js": {
-              "offset": "2563281",
+              "offset": "2563364",
               "size": 97,
             },
             "index.js": {
-              "offset": "2563378",
+              "offset": "2563461",
               "size": 206,
             },
             "package.json": {
-              "offset": "2563584",
+              "offset": "2563667",
               "size": 1309,
             },
             "tsconfig.json": {
-              "offset": "2564893",
+              "offset": "2564976",
               "size": 116,
             },
           },
@@ -38251,27 +38251,27 @@ exports[`yarn max stack 2`] = `
         "graceful-fs": {
           "files": {
             "LICENSE": {
-              "offset": "2565009",
+              "offset": "2565092",
               "size": 791,
             },
             "clone.js": {
-              "offset": "2565800",
+              "offset": "2565883",
               "size": 496,
             },
             "graceful-fs.js": {
-              "offset": "2566296",
+              "offset": "2566379",
               "size": 12680,
             },
             "legacy-streams.js": {
-              "offset": "2578976",
+              "offset": "2579059",
               "size": 2655,
             },
             "package.json": {
-              "offset": "2581631",
+              "offset": "2581714",
               "size": 600,
             },
             "polyfills.js": {
-              "offset": "2582231",
+              "offset": "2582314",
               "size": 10141,
             },
           },
@@ -38279,23 +38279,23 @@ exports[`yarn max stack 2`] = `
         "has-bigints": {
           "files": {
             ".nycrc": {
-              "offset": "2592372",
+              "offset": "2592455",
               "size": 139,
             },
             "LICENSE": {
-              "offset": "2592511",
+              "offset": "2592594",
               "size": 1071,
             },
             "index.js": {
-              "offset": "2593582",
+              "offset": "2593665",
               "size": 374,
             },
             "package.json": {
-              "offset": "2593956",
+              "offset": "2594039",
               "size": 1166,
             },
             "tsconfig.json": {
-              "offset": "2595122",
+              "offset": "2595205",
               "size": 123,
             },
           },
@@ -38303,15 +38303,15 @@ exports[`yarn max stack 2`] = `
         "has-flag": {
           "files": {
             "index.js": {
-              "offset": "2595245",
+              "offset": "2595328",
               "size": 320,
             },
             "license": {
-              "offset": "2595565",
+              "offset": "2595648",
               "size": 1109,
             },
             "package.json": {
-              "offset": "2596674",
+              "offset": "2596757",
               "size": 407,
             },
           },
@@ -38319,19 +38319,19 @@ exports[`yarn max stack 2`] = `
         "has-property-descriptors": {
           "files": {
             ".nycrc": {
-              "offset": "2597081",
+              "offset": "2597164",
               "size": 139,
             },
             "LICENSE": {
-              "offset": "2597220",
+              "offset": "2597303",
               "size": 1067,
             },
             "index.js": {
-              "offset": "2598287",
+              "offset": "2598370",
               "size": 588,
             },
             "package.json": {
-              "offset": "2598875",
+              "offset": "2598958",
               "size": 1329,
             },
           },
@@ -38339,27 +38339,27 @@ exports[`yarn max stack 2`] = `
         "has-proto": {
           "files": {
             "LICENSE": {
-              "offset": "2600204",
+              "offset": "2600287",
               "size": 1067,
             },
             "accessor.js": {
-              "offset": "2601271",
+              "offset": "2601354",
               "size": 549,
             },
             "index.js": {
-              "offset": "2601820",
+              "offset": "2601903",
               "size": 298,
             },
             "mutator.js": {
-              "offset": "2602118",
+              "offset": "2602201",
               "size": 533,
             },
             "package.json": {
-              "offset": "2602651",
+              "offset": "2602734",
               "size": 1610,
             },
             "tsconfig.json": {
-              "offset": "2604261",
+              "offset": "2604344",
               "size": 128,
             },
           },
@@ -38367,27 +38367,27 @@ exports[`yarn max stack 2`] = `
         "has-symbols": {
           "files": {
             ".nycrc": {
-              "offset": "2604389",
+              "offset": "2604472",
               "size": 139,
             },
             "LICENSE": {
-              "offset": "2604528",
+              "offset": "2604611",
               "size": 1071,
             },
             "index.js": {
-              "offset": "2605599",
+              "offset": "2605682",
               "size": 447,
             },
             "package.json": {
-              "offset": "2606046",
+              "offset": "2606129",
               "size": 1792,
             },
             "shams.js": {
-              "offset": "2607838",
+              "offset": "2607921",
               "size": 1922,
             },
             "tsconfig.json": {
-              "offset": "2609760",
+              "offset": "2609843",
               "size": 143,
             },
           },
@@ -38395,27 +38395,27 @@ exports[`yarn max stack 2`] = `
         "has-tostringtag": {
           "files": {
             ".nycrc": {
-              "offset": "2609903",
+              "offset": "2609986",
               "size": 216,
             },
             "LICENSE": {
-              "offset": "2610119",
+              "offset": "2610202",
               "size": 1067,
             },
             "index.js": {
-              "offset": "2611186",
+              "offset": "2611269",
               "size": 196,
             },
             "package.json": {
-              "offset": "2611382",
+              "offset": "2611465",
               "size": 1698,
             },
             "shams.js": {
-              "offset": "2613080",
+              "offset": "2613163",
               "size": 189,
             },
             "tsconfig.json": {
-              "offset": "2613269",
+              "offset": "2613352",
               "size": 3611,
             },
           },
@@ -38423,23 +38423,23 @@ exports[`yarn max stack 2`] = `
         "hasown": {
           "files": {
             ".nycrc": {
-              "offset": "2616880",
+              "offset": "2616963",
               "size": 216,
             },
             "LICENSE": {
-              "offset": "2617096",
+              "offset": "2617179",
               "size": 1083,
             },
             "index.js": {
-              "offset": "2618179",
+              "offset": "2618262",
               "size": 206,
             },
             "package.json": {
-              "offset": "2618385",
+              "offset": "2618468",
               "size": 1474,
             },
             "tsconfig.json": {
-              "offset": "2619859",
+              "offset": "2619942",
               "size": 73,
             },
           },
@@ -38447,23 +38447,23 @@ exports[`yarn max stack 2`] = `
         "hosted-git-info": {
           "files": {
             "LICENSE": {
-              "offset": "2619932",
+              "offset": "2620015",
               "size": 733,
             },
             "git-host-info.js": {
-              "offset": "2620665",
+              "offset": "2620748",
               "size": 3790,
             },
             "git-host.js": {
-              "offset": "2624455",
+              "offset": "2624538",
               "size": 4635,
             },
             "index.js": {
-              "offset": "2629090",
+              "offset": "2629173",
               "size": 5148,
             },
             "package.json": {
-              "offset": "2634238",
+              "offset": "2634321",
               "size": 617,
             },
           },
@@ -38471,31 +38471,31 @@ exports[`yarn max stack 2`] = `
         "internal-slot": {
           "files": {
             ".attw.json": {
-              "offset": "2634855",
+              "offset": "2634938",
               "size": 43,
             },
             ".editorconfig": {
-              "offset": "2634898",
+              "offset": "2634981",
               "size": 286,
             },
             ".nycrc": {
-              "offset": "2635184",
+              "offset": "2635267",
               "size": 139,
             },
             "LICENSE": {
-              "offset": "2635323",
+              "offset": "2635406",
               "size": 1071,
             },
             "index.js": {
-              "offset": "2636394",
+              "offset": "2636477",
               "size": 2042,
             },
             "package.json": {
-              "offset": "2638436",
+              "offset": "2638519",
               "size": 1259,
             },
             "tsconfig.json": {
-              "offset": "2639695",
+              "offset": "2639778",
               "size": 118,
             },
           },
@@ -38503,23 +38503,23 @@ exports[`yarn max stack 2`] = `
         "is-array-buffer": {
           "files": {
             ".nycrc": {
-              "offset": "2639813",
+              "offset": "2639896",
               "size": 139,
             },
             "LICENSE": {
-              "offset": "2639952",
+              "offset": "2640035",
               "size": 1082,
             },
             "index.js": {
-              "offset": "2641034",
+              "offset": "2641117",
               "size": 1407,
             },
             "package.json": {
-              "offset": "2642441",
+              "offset": "2642524",
               "size": 1720,
             },
             "tsconfig.json": {
-              "offset": "2644161",
+              "offset": "2644244",
               "size": 125,
             },
           },
@@ -38527,23 +38527,23 @@ exports[`yarn max stack 2`] = `
         "is-arrayish": {
           "files": {
             ".editorconfig": {
-              "offset": "2644286",
+              "offset": "2644369",
               "size": 264,
             },
             ".istanbul.yml": {
-              "offset": "2644550",
+              "offset": "2644633",
               "size": 59,
             },
             "LICENSE": {
-              "offset": "2644609",
+              "offset": "2644692",
               "size": 1077,
             },
             "index.js": {
-              "offset": "2645686",
+              "offset": "2645769",
               "size": 204,
             },
             "package.json": {
-              "offset": "2645890",
+              "offset": "2645973",
               "size": 461,
             },
           },
@@ -38551,23 +38551,23 @@ exports[`yarn max stack 2`] = `
         "is-async-function": {
           "files": {
             ".nycrc": {
-              "offset": "2646351",
+              "offset": "2646434",
               "size": 139,
             },
             "LICENSE": {
-              "offset": "2646490",
+              "offset": "2646573",
               "size": 1081,
             },
             "index.js": {
-              "offset": "2647571",
+              "offset": "2647654",
               "size": 830,
             },
             "package.json": {
-              "offset": "2648401",
+              "offset": "2648484",
               "size": 2057,
             },
             "tsconfig.json": {
-              "offset": "2650458",
+              "offset": "2650541",
               "size": 156,
             },
           },
@@ -38575,23 +38575,23 @@ exports[`yarn max stack 2`] = `
         "is-bigint": {
           "files": {
             ".nycrc": {
-              "offset": "2650614",
+              "offset": "2650697",
               "size": 139,
             },
             "LICENSE": {
-              "offset": "2650753",
+              "offset": "2650836",
               "size": 1071,
             },
             "index.js": {
-              "offset": "2651824",
+              "offset": "2651907",
               "size": 844,
             },
             "package.json": {
-              "offset": "2652668",
+              "offset": "2652751",
               "size": 1397,
             },
             "tsconfig.json": {
-              "offset": "2654065",
+              "offset": "2654148",
               "size": 114,
             },
           },
@@ -38599,27 +38599,27 @@ exports[`yarn max stack 2`] = `
         "is-boolean-object": {
           "files": {
             ".editorconfig": {
-              "offset": "2654179",
+              "offset": "2654262",
               "size": 353,
             },
             ".nycrc": {
-              "offset": "2654532",
+              "offset": "2654615",
               "size": 159,
             },
             "LICENSE": {
-              "offset": "2654691",
+              "offset": "2654774",
               "size": 1082,
             },
             "index.js": {
-              "offset": "2655773",
+              "offset": "2655856",
               "size": 711,
             },
             "package.json": {
-              "offset": "2656484",
+              "offset": "2656567",
               "size": 1839,
             },
             "tsconfig.json": {
-              "offset": "2658323",
+              "offset": "2658406",
               "size": 114,
             },
           },
@@ -38627,23 +38627,23 @@ exports[`yarn max stack 2`] = `
         "is-callable": {
           "files": {
             ".editorconfig": {
-              "offset": "2658437",
+              "offset": "2658520",
               "size": 457,
             },
             ".nycrc": {
-              "offset": "2658894",
+              "offset": "2658977",
               "size": 139,
             },
             "LICENSE": {
-              "offset": "2659033",
+              "offset": "2659116",
               "size": 1082,
             },
             "index.js": {
-              "offset": "2660115",
+              "offset": "2660198",
               "size": 3224,
             },
             "package.json": {
-              "offset": "2663339",
+              "offset": "2663422",
               "size": 1837,
             },
           },
@@ -38651,23 +38651,23 @@ exports[`yarn max stack 2`] = `
         "is-core-module": {
           "files": {
             ".nycrc": {
-              "offset": "2665176",
+              "offset": "2665259",
               "size": 139,
             },
             "LICENSE": {
-              "offset": "2665315",
+              "offset": "2665398",
               "size": 1078,
             },
             "core.json": {
-              "offset": "2666393",
+              "offset": "2666476",
               "size": 5953,
             },
             "index.js": {
-              "offset": "2672346",
+              "offset": "2672429",
               "size": 1766,
             },
             "package.json": {
-              "offset": "2674112",
+              "offset": "2674195",
               "size": 1236,
             },
           },
@@ -38675,27 +38675,27 @@ exports[`yarn max stack 2`] = `
         "is-data-view": {
           "files": {
             ".editorconfig": {
-              "offset": "2675348",
+              "offset": "2675431",
               "size": 286,
             },
             ".nycrc": {
-              "offset": "2675634",
+              "offset": "2675717",
               "size": 139,
             },
             "LICENSE": {
-              "offset": "2675773",
+              "offset": "2675856",
               "size": 1067,
             },
             "index.js": {
-              "offset": "2676840",
+              "offset": "2676923",
               "size": 847,
             },
             "package.json": {
-              "offset": "2677687",
+              "offset": "2677770",
               "size": 2061,
             },
             "tsconfig.json": {
-              "offset": "2679748",
+              "offset": "2679831",
               "size": 116,
             },
           },
@@ -38703,27 +38703,27 @@ exports[`yarn max stack 2`] = `
         "is-date-object": {
           "files": {
             ".editorconfig": {
-              "offset": "2679864",
+              "offset": "2679947",
               "size": 286,
             },
             ".nycrc": {
-              "offset": "2680150",
+              "offset": "2680233",
               "size": 159,
             },
             "LICENSE": {
-              "offset": "2680309",
+              "offset": "2680392",
               "size": 1082,
             },
             "index.js": {
-              "offset": "2681391",
+              "offset": "2681474",
               "size": 674,
             },
             "package.json": {
-              "offset": "2682065",
+              "offset": "2682148",
               "size": 1893,
             },
             "tsconfig.json": {
-              "offset": "2683958",
+              "offset": "2684041",
               "size": 72,
             },
           },
@@ -38731,23 +38731,23 @@ exports[`yarn max stack 2`] = `
         "is-finalizationregistry": {
           "files": {
             ".nycrc": {
-              "offset": "2684030",
+              "offset": "2684113",
               "size": 139,
             },
             "LICENSE": {
-              "offset": "2684169",
+              "offset": "2684252",
               "size": 1067,
             },
             "index.js": {
-              "offset": "2685236",
+              "offset": "2685319",
               "size": 826,
             },
             "package.json": {
-              "offset": "2686062",
+              "offset": "2686145",
               "size": 1582,
             },
             "tsconfig.json": {
-              "offset": "2687644",
+              "offset": "2687727",
               "size": 123,
             },
           },
@@ -38755,27 +38755,27 @@ exports[`yarn max stack 2`] = `
         "is-generator-function": {
           "files": {
             ".nvmrc": {
-              "offset": "2687767",
+              "offset": "2687850",
               "size": 5,
             },
             ".nycrc": {
-              "offset": "2687772",
+              "offset": "2687855",
               "size": 139,
             },
             "LICENSE": {
-              "offset": "2687911",
+              "offset": "2687994",
               "size": 1081,
             },
             "index.js": {
-              "offset": "2688992",
+              "offset": "2689075",
               "size": 1275,
             },
             "package.json": {
-              "offset": "2690267",
+              "offset": "2690350",
               "size": 1910,
             },
             "tsconfig.json": {
-              "offset": "2692177",
+              "offset": "2692260",
               "size": 129,
             },
           },
@@ -38783,27 +38783,27 @@ exports[`yarn max stack 2`] = `
         "is-map": {
           "files": {
             ".editorconfig": {
-              "offset": "2692306",
+              "offset": "2692389",
               "size": 231,
             },
             ".nycrc": {
-              "offset": "2692537",
+              "offset": "2692620",
               "size": 139,
             },
             "LICENSE": {
-              "offset": "2692676",
+              "offset": "2692759",
               "size": 1067,
             },
             "index.js": {
-              "offset": "2693743",
+              "offset": "2693826",
               "size": 1075,
             },
             "package.json": {
-              "offset": "2694818",
+              "offset": "2694901",
               "size": 1409,
             },
             "tsconfig.json": {
-              "offset": "2696227",
+              "offset": "2696310",
               "size": 3611,
             },
           },
@@ -38811,27 +38811,27 @@ exports[`yarn max stack 2`] = `
         "is-number-object": {
           "files": {
             ".editorconfig": {
-              "offset": "2699838",
+              "offset": "2699921",
               "size": 324,
             },
             ".nycrc": {
-              "offset": "2700162",
+              "offset": "2700245",
               "size": 159,
             },
             "LICENSE": {
-              "offset": "2700321",
+              "offset": "2700404",
               "size": 1082,
             },
             "index.js": {
-              "offset": "2701403",
+              "offset": "2701486",
               "size": 698,
             },
             "package.json": {
-              "offset": "2702101",
+              "offset": "2702184",
               "size": 1520,
             },
             "tsconfig.json": {
-              "offset": "2703621",
+              "offset": "2703704",
               "size": 114,
             },
           },
@@ -38839,27 +38839,27 @@ exports[`yarn max stack 2`] = `
         "is-regex": {
           "files": {
             ".editorconfig": {
-              "offset": "2703735",
+              "offset": "2703818",
               "size": 324,
             },
             ".nycrc": {
-              "offset": "2704059",
+              "offset": "2704142",
               "size": 159,
             },
             "LICENSE": {
-              "offset": "2704218",
+              "offset": "2704301",
               "size": 1081,
             },
             "index.js": {
-              "offset": "2705299",
+              "offset": "2705382",
               "size": 2221,
             },
             "package.json": {
-              "offset": "2707520",
+              "offset": "2707603",
               "size": 1915,
             },
             "tsconfig.json": {
-              "offset": "2709435",
+              "offset": "2709518",
               "size": 114,
             },
           },
@@ -38867,27 +38867,27 @@ exports[`yarn max stack 2`] = `
         "is-set": {
           "files": {
             ".editorconfig": {
-              "offset": "2709549",
+              "offset": "2709632",
               "size": 231,
             },
             ".nycrc": {
-              "offset": "2709780",
+              "offset": "2709863",
               "size": 139,
             },
             "LICENSE": {
-              "offset": "2709919",
+              "offset": "2710002",
               "size": 1067,
             },
             "index.js": {
-              "offset": "2710986",
+              "offset": "2711069",
               "size": 1061,
             },
             "package.json": {
-              "offset": "2712047",
+              "offset": "2712130",
               "size": 1293,
             },
             "tsconfig.json": {
-              "offset": "2713340",
+              "offset": "2713423",
               "size": 3611,
             },
           },
@@ -38895,23 +38895,23 @@ exports[`yarn max stack 2`] = `
         "is-shared-array-buffer": {
           "files": {
             ".nycrc": {
-              "offset": "2716951",
+              "offset": "2717034",
               "size": 139,
             },
             "LICENSE": {
-              "offset": "2717090",
+              "offset": "2717173",
               "size": 1067,
             },
             "index.js": {
-              "offset": "2718157",
+              "offset": "2718240",
               "size": 671,
             },
             "package.json": {
-              "offset": "2718828",
+              "offset": "2718911",
               "size": 1698,
             },
             "tsconfig.json": {
-              "offset": "2720526",
+              "offset": "2720609",
               "size": 116,
             },
           },
@@ -38919,23 +38919,23 @@ exports[`yarn max stack 2`] = `
         "is-string": {
           "files": {
             ".nycrc": {
-              "offset": "2720642",
+              "offset": "2720725",
               "size": 159,
             },
             "LICENSE": {
-              "offset": "2720801",
+              "offset": "2720884",
               "size": 1082,
             },
             "index.js": {
-              "offset": "2721883",
+              "offset": "2721966",
               "size": 1056,
             },
             "package.json": {
-              "offset": "2722939",
+              "offset": "2723022",
               "size": 1771,
             },
             "tsconfig.json": {
-              "offset": "2724710",
+              "offset": "2724793",
               "size": 123,
             },
           },
@@ -38943,27 +38943,27 @@ exports[`yarn max stack 2`] = `
         "is-symbol": {
           "files": {
             ".editorconfig": {
-              "offset": "2724833",
+              "offset": "2724916",
               "size": 276,
             },
             ".nycrc": {
-              "offset": "2725109",
+              "offset": "2725192",
               "size": 139,
             },
             "LICENSE": {
-              "offset": "2725248",
+              "offset": "2725331",
               "size": 1082,
             },
             "index.js": {
-              "offset": "2726330",
+              "offset": "2726413",
               "size": 1030,
             },
             "package.json": {
-              "offset": "2727360",
+              "offset": "2727443",
               "size": 1844,
             },
             "tsconfig.json": {
-              "offset": "2729204",
+              "offset": "2729287",
               "size": 114,
             },
           },
@@ -38971,27 +38971,27 @@ exports[`yarn max stack 2`] = `
         "is-typed-array": {
           "files": {
             ".editorconfig": {
-              "offset": "2729318",
+              "offset": "2729401",
               "size": 286,
             },
             ".nycrc": {
-              "offset": "2729604",
+              "offset": "2729687",
               "size": 139,
             },
             "LICENSE": {
-              "offset": "2729743",
+              "offset": "2729826",
               "size": 1082,
             },
             "index.js": {
-              "offset": "2730825",
+              "offset": "2730908",
               "size": 180,
             },
             "package.json": {
-              "offset": "2731005",
+              "offset": "2731088",
               "size": 2307,
             },
             "tsconfig.json": {
-              "offset": "2733312",
+              "offset": "2733395",
               "size": 68,
             },
           },
@@ -38999,27 +38999,27 @@ exports[`yarn max stack 2`] = `
         "is-weakmap": {
           "files": {
             ".editorconfig": {
-              "offset": "2733380",
+              "offset": "2733463",
               "size": 231,
             },
             ".nycrc": {
-              "offset": "2733611",
+              "offset": "2733694",
               "size": 139,
             },
             "LICENSE": {
-              "offset": "2733750",
+              "offset": "2733833",
               "size": 1067,
             },
             "index.js": {
-              "offset": "2734817",
+              "offset": "2734900",
               "size": 1157,
             },
             "package.json": {
-              "offset": "2735974",
+              "offset": "2736057",
               "size": 1409,
             },
             "tsconfig.json": {
-              "offset": "2737383",
+              "offset": "2737466",
               "size": 3611,
             },
           },
@@ -39027,23 +39027,23 @@ exports[`yarn max stack 2`] = `
         "is-weakref": {
           "files": {
             ".nycrc": {
-              "offset": "2740994",
+              "offset": "2741077",
               "size": 139,
             },
             "LICENSE": {
-              "offset": "2741133",
+              "offset": "2741216",
               "size": 1067,
             },
             "index.js": {
-              "offset": "2742200",
+              "offset": "2742283",
               "size": 599,
             },
             "package.json": {
-              "offset": "2742799",
+              "offset": "2742882",
               "size": 1506,
             },
             "tsconfig.json": {
-              "offset": "2744305",
+              "offset": "2744388",
               "size": 123,
             },
           },
@@ -39051,27 +39051,27 @@ exports[`yarn max stack 2`] = `
         "is-weakset": {
           "files": {
             ".editorconfig": {
-              "offset": "2744428",
+              "offset": "2744511",
               "size": 223,
             },
             ".nycrc": {
-              "offset": "2744651",
+              "offset": "2744734",
               "size": 139,
             },
             "LICENSE": {
-              "offset": "2744790",
+              "offset": "2744873",
               "size": 1067,
             },
             "index.js": {
-              "offset": "2745857",
+              "offset": "2745940",
               "size": 1254,
             },
             "package.json": {
-              "offset": "2747111",
+              "offset": "2747194",
               "size": 1572,
             },
             "tsconfig.json": {
-              "offset": "2748683",
+              "offset": "2748766",
               "size": 116,
             },
           },
@@ -39079,15 +39079,15 @@ exports[`yarn max stack 2`] = `
         "isarray": {
           "files": {
             "LICENSE": {
-              "offset": "2748799",
+              "offset": "2748882",
               "size": 1096,
             },
             "index.js": {
-              "offset": "2749895",
+              "offset": "2749978",
               "size": 132,
             },
             "package.json": {
-              "offset": "2750027",
+              "offset": "2750110",
               "size": 880,
             },
           },
@@ -39095,23 +39095,23 @@ exports[`yarn max stack 2`] = `
         "isexe": {
           "files": {
             "LICENSE": {
-              "offset": "2750907",
+              "offset": "2750990",
               "size": 765,
             },
             "index.js": {
-              "offset": "2751672",
+              "offset": "2751755",
               "size": 1192,
             },
             "mode.js": {
-              "offset": "2752864",
+              "offset": "2752947",
               "size": 909,
             },
             "package.json": {
-              "offset": "2753773",
+              "offset": "2753856",
               "size": 512,
             },
             "windows.js": {
-              "offset": "2754285",
+              "offset": "2754368",
               "size": 890,
             },
           },
@@ -39119,15 +39119,15 @@ exports[`yarn max stack 2`] = `
         "json-parse-better-errors": {
           "files": {
             "LICENSE.md": {
-              "offset": "2755175",
+              "offset": "2755258",
               "size": 1052,
             },
             "index.js": {
-              "offset": "2756227",
+              "offset": "2756310",
               "size": 1086,
             },
             "package.json": {
-              "offset": "2757313",
+              "offset": "2757396",
               "size": 673,
             },
           },
@@ -39135,15 +39135,15 @@ exports[`yarn max stack 2`] = `
         "load-json-file": {
           "files": {
             "index.js": {
-              "offset": "2757986",
+              "offset": "2758069",
               "size": 422,
             },
             "license": {
-              "offset": "2758408",
+              "offset": "2758491",
               "size": 1119,
             },
             "package.json": {
-              "offset": "2759527",
+              "offset": "2759610",
               "size": 542,
             },
           },
@@ -39151,79 +39151,79 @@ exports[`yarn max stack 2`] = `
         "math-intrinsics": {
           "files": {
             "LICENSE": {
-              "offset": "2760069",
+              "offset": "2760152",
               "size": 1073,
             },
             "abs.js": {
-              "offset": "2761142",
+              "offset": "2761225",
               "size": 73,
             },
             "constants": {
               "files": {
                 "maxArrayLength.js": {
-                  "offset": "2761215",
+                  "offset": "2761298",
                   "size": 110,
                 },
                 "maxSafeInteger.js": {
-                  "offset": "2761325",
+                  "offset": "2761408",
                   "size": 231,
                 },
                 "maxValue.js": {
-                  "offset": "2761556",
+                  "offset": "2761639",
                   "size": 197,
                 },
               },
             },
             "floor.js": {
-              "offset": "2761753",
+              "offset": "2761836",
               "size": 77,
             },
             "isFinite.js": {
-              "offset": "2761830",
+              "offset": "2761913",
               "size": 262,
             },
             "isInteger.js": {
-              "offset": "2762092",
+              "offset": "2762175",
               "size": 410,
             },
             "isNaN.js": {
-              "offset": "2762502",
+              "offset": "2762585",
               "size": 121,
             },
             "isNegativeZero.js": {
-              "offset": "2762623",
+              "offset": "2762706",
               "size": 143,
             },
             "max.js": {
-              "offset": "2762766",
+              "offset": "2762849",
               "size": 73,
             },
             "min.js": {
-              "offset": "2762839",
+              "offset": "2762922",
               "size": 73,
             },
             "mod.js": {
-              "offset": "2762912",
+              "offset": "2762995",
               "size": 218,
             },
             "package.json": {
-              "offset": "2763130",
+              "offset": "2763213",
               "size": 1933,
             },
             "pow.js": {
-              "offset": "2765063",
+              "offset": "2765146",
               "size": 73,
             },
             "round.js": {
-              "offset": "2765136",
+              "offset": "2765219",
               "size": 77,
             },
             "sign.js": {
-              "offset": "2765213",
+              "offset": "2765296",
               "size": 214,
             },
             "tsconfig.json": {
-              "offset": "2765427",
+              "offset": "2765510",
               "size": 36,
             },
           },
@@ -39231,19 +39231,19 @@ exports[`yarn max stack 2`] = `
         "memorystream": {
           "files": {
             "Gruntfile.js": {
-              "offset": "2765463",
+              "offset": "2765546",
               "size": 548,
             },
             "LICENSE": {
-              "offset": "2766011",
+              "offset": "2766094",
               "size": 1059,
             },
             "index.js": {
-              "offset": "2767070",
+              "offset": "2767153",
               "size": 6125,
             },
             "package.json": {
-              "offset": "2773195",
+              "offset": "2773278",
               "size": 747,
             },
           },
@@ -39251,15 +39251,15 @@ exports[`yarn max stack 2`] = `
         "minimatch": {
           "files": {
             "LICENSE": {
-              "offset": "2773942",
+              "offset": "2774025",
               "size": 765,
             },
             "minimatch.js": {
-              "offset": "2774707",
+              "offset": "2774790",
               "size": 26266,
             },
             "package.json": {
-              "offset": "2800973",
+              "offset": "2801056",
               "size": 529,
             },
           },
@@ -39267,17 +39267,17 @@ exports[`yarn max stack 2`] = `
         "nice-try": {
           "files": {
             "LICENSE": {
-              "offset": "2801502",
+              "offset": "2801585",
               "size": 1079,
             },
             "package.json": {
-              "offset": "2802581",
+              "offset": "2802664",
               "size": 544,
             },
             "src": {
               "files": {
                 "index.js": {
-                  "offset": "2803125",
+                  "offset": "2803208",
                   "size": 303,
                 },
               },
@@ -39287,47 +39287,47 @@ exports[`yarn max stack 2`] = `
         "normalize-package-data": {
           "files": {
             "AUTHORS": {
-              "offset": "2803428",
+              "offset": "2803511",
               "size": 152,
             },
             "LICENSE": {
-              "offset": "2803580",
+              "offset": "2803663",
               "size": 1394,
             },
             "lib": {
               "files": {
                 "extract_description.js": {
-                  "offset": "2804974",
+                  "offset": "2805057",
                   "size": 509,
                 },
                 "fixer.js": {
-                  "offset": "2805483",
+                  "offset": "2805566",
                   "size": 11802,
                 },
                 "make_warning.js": {
-                  "offset": "2817285",
+                  "offset": "2817368",
                   "size": 710,
                 },
                 "normalize.js": {
-                  "offset": "2817995",
+                  "offset": "2818078",
                   "size": 1341,
                 },
                 "safe_format.js": {
-                  "offset": "2819336",
+                  "offset": "2819419",
                   "size": 246,
                 },
                 "typos.json": {
-                  "offset": "2819582",
+                  "offset": "2819665",
                   "size": 747,
                 },
                 "warning_messages.json": {
-                  "offset": "2820329",
+                  "offset": "2820412",
                   "size": 1798,
                 },
               },
             },
             "package.json": {
-              "offset": "2822127",
+              "offset": "2822210",
               "size": 676,
             },
           },
@@ -39335,7 +39335,7 @@ exports[`yarn max stack 2`] = `
         "npm-run-all": {
           "files": {
             "LICENSE": {
-              "offset": "2822803",
+              "offset": "2822886",
               "size": 1082,
             },
             "bin": {
@@ -39343,15 +39343,15 @@ exports[`yarn max stack 2`] = `
                 "common": {
                   "files": {
                     "bootstrap.js": {
-                      "offset": "2823885",
+                      "offset": "2823968",
                       "size": 1482,
                     },
                     "parse-cli-args.js": {
-                      "offset": "2825367",
+                      "offset": "2825450",
                       "size": 7280,
                     },
                     "version.js": {
-                      "offset": "2832647",
+                      "offset": "2832730",
                       "size": 684,
                     },
                   },
@@ -39359,16 +39359,16 @@ exports[`yarn max stack 2`] = `
                 "npm-run-all": {
                   "files": {
                     "help.js": {
-                      "offset": "2833331",
+                      "offset": "2833414",
                       "size": 3180,
                     },
                     "index.js": {
                       "executable": true,
-                      "offset": "2836511",
+                      "offset": "2836594",
                       "size": 397,
                     },
                     "main.js": {
-                      "offset": "2836908",
+                      "offset": "2836991",
                       "size": 2655,
                     },
                   },
@@ -39376,16 +39376,16 @@ exports[`yarn max stack 2`] = `
                 "run-p": {
                   "files": {
                     "help.js": {
-                      "offset": "2839563",
+                      "offset": "2839646",
                       "size": 2609,
                     },
                     "index.js": {
                       "executable": true,
-                      "offset": "2842172",
+                      "offset": "2842255",
                       "size": 391,
                     },
                     "main.js": {
-                      "offset": "2842563",
+                      "offset": "2842646",
                       "size": 2369,
                     },
                   },
@@ -39393,16 +39393,16 @@ exports[`yarn max stack 2`] = `
                 "run-s": {
                   "files": {
                     "help.js": {
-                      "offset": "2844932",
+                      "offset": "2845015",
                       "size": 2192,
                     },
                     "index.js": {
                       "executable": true,
-                      "offset": "2847124",
+                      "offset": "2847207",
                       "size": 391,
                     },
                     "main.js": {
-                      "offset": "2847515",
+                      "offset": "2847598",
                       "size": 2235,
                     },
                   },
@@ -39412,19 +39412,19 @@ exports[`yarn max stack 2`] = `
             "docs": {
               "files": {
                 "node-api.md": {
-                  "offset": "2849750",
+                  "offset": "2849833",
                   "size": 5062,
                 },
                 "npm-run-all.md": {
-                  "offset": "2854812",
+                  "offset": "2854895",
                   "size": 7064,
                 },
                 "run-p.md": {
-                  "offset": "2861876",
+                  "offset": "2861959",
                   "size": 5504,
                 },
                 "run-s.md": {
-                  "offset": "2867380",
+                  "offset": "2867463",
                   "size": 4882,
                 },
               },
@@ -39432,53 +39432,53 @@ exports[`yarn max stack 2`] = `
             "lib": {
               "files": {
                 "create-header.js": {
-                  "offset": "2872262",
+                  "offset": "2872345",
                   "size": 1758,
                 },
                 "create-prefix-transform-stream.js": {
-                  "offset": "2874020",
+                  "offset": "2874103",
                   "size": 3205,
                 },
                 "index.js": {
-                  "offset": "2877225",
+                  "offset": "2877308",
                   "size": 10015,
                 },
                 "match-tasks.js": {
-                  "offset": "2887240",
+                  "offset": "2887323",
                   "size": 4028,
                 },
                 "npm-run-all-error.js": {
-                  "offset": "2891268",
+                  "offset": "2891351",
                   "size": 1419,
                 },
                 "read-package-json.js": {
-                  "offset": "2892687",
+                  "offset": "2892770",
                   "size": 980,
                 },
                 "run-task.js": {
-                  "offset": "2893667",
+                  "offset": "2893750",
                   "size": 7330,
                 },
                 "run-tasks.js": {
-                  "offset": "2900997",
+                  "offset": "2901080",
                   "size": 5131,
                 },
                 "spawn-posix.js": {
-                  "offset": "2906128",
+                  "offset": "2906211",
                   "size": 1845,
                 },
                 "spawn-win32.js": {
-                  "offset": "2907973",
+                  "offset": "2908056",
                   "size": 1564,
                 },
                 "spawn.js": {
-                  "offset": "2909537",
+                  "offset": "2909620",
                   "size": 603,
                 },
               },
             },
             "package.json": {
-              "offset": "2910140",
+              "offset": "2910223",
               "size": 1275,
             },
           },
@@ -39486,31 +39486,31 @@ exports[`yarn max stack 2`] = `
         "object-inspect": {
           "files": {
             ".nycrc": {
-              "offset": "2911415",
+              "offset": "2911498",
               "size": 236,
             },
             "LICENSE": {
-              "offset": "2911651",
+              "offset": "2911734",
               "size": 1071,
             },
             "index.js": {
-              "offset": "2912722",
+              "offset": "2912805",
               "size": 19059,
             },
             "package-support.json": {
-              "offset": "2931781",
+              "offset": "2931864",
               "size": 365,
             },
             "package.json": {
-              "offset": "2932146",
+              "offset": "2932229",
               "size": 1991,
             },
             "test-core-js.js": {
-              "offset": "2934137",
+              "offset": "2934220",
               "size": 534,
             },
             "util.inspect.js": {
-              "offset": "2934671",
+              "offset": "2934754",
               "size": 42,
             },
           },
@@ -39518,27 +39518,27 @@ exports[`yarn max stack 2`] = `
         "object-keys": {
           "files": {
             ".editorconfig": {
-              "offset": "2934713",
+              "offset": "2934796",
               "size": 276,
             },
             "LICENSE": {
-              "offset": "2934989",
+              "offset": "2935072",
               "size": 1080,
             },
             "implementation.js": {
-              "offset": "2936069",
+              "offset": "2936152",
               "size": 3218,
             },
             "index.js": {
-              "offset": "2939287",
+              "offset": "2939370",
               "size": 823,
             },
             "isArguments.js": {
-              "offset": "2940110",
+              "offset": "2940193",
               "size": 422,
             },
             "package.json": {
-              "offset": "2940532",
+              "offset": "2940615",
               "size": 1122,
             },
           },
@@ -39546,51 +39546,51 @@ exports[`yarn max stack 2`] = `
         "object.assign": {
           "files": {
             ".editorconfig": {
-              "offset": "2941654",
+              "offset": "2941737",
               "size": 286,
             },
             ".nycrc": {
-              "offset": "2941940",
+              "offset": "2942023",
               "size": 139,
             },
             "LICENSE": {
-              "offset": "2942079",
+              "offset": "2942162",
               "size": 1080,
             },
             "auto.js": {
-              "offset": "2943159",
+              "offset": "2943242",
               "size": 36,
             },
             "dist": {
               "files": {
                 "browser.js": {
-                  "offset": "2943195",
+                  "offset": "2943278",
                   "size": 41567,
                 },
               },
             },
             "hasSymbols.js": {
-              "offset": "2984762",
+              "offset": "2984845",
               "size": 1618,
             },
             "implementation.js": {
-              "offset": "2986380",
+              "offset": "2986463",
               "size": 1424,
             },
             "index.js": {
-              "offset": "2987804",
+              "offset": "2987887",
               "size": 532,
             },
             "package.json": {
-              "offset": "2988336",
+              "offset": "2988419",
               "size": 1624,
             },
             "polyfill.js": {
-              "offset": "2989960",
+              "offset": "2990043",
               "size": 1299,
             },
             "shim.js": {
-              "offset": "2991259",
+              "offset": "2991342",
               "size": 305,
             },
           },
@@ -39598,23 +39598,23 @@ exports[`yarn max stack 2`] = `
         "own-keys": {
           "files": {
             ".nycrc": {
-              "offset": "2991564",
+              "offset": "2991647",
               "size": 139,
             },
             "LICENSE": {
-              "offset": "2991703",
+              "offset": "2991786",
               "size": 1071,
             },
             "index.js": {
-              "offset": "2992774",
+              "offset": "2992857",
               "size": 583,
             },
             "package.json": {
-              "offset": "2993357",
+              "offset": "2993440",
               "size": 1636,
             },
             "tsconfig.json": {
-              "offset": "2994993",
+              "offset": "2995076",
               "size": 125,
             },
           },
@@ -39622,15 +39622,15 @@ exports[`yarn max stack 2`] = `
         "parse-json": {
           "files": {
             "index.js": {
-              "offset": "2995118",
+              "offset": "2995201",
               "size": 617,
             },
             "license": {
-              "offset": "2995735",
+              "offset": "2995818",
               "size": 1109,
             },
             "package.json": {
-              "offset": "2996844",
+              "offset": "2996927",
               "size": 541,
             },
           },
@@ -39638,15 +39638,15 @@ exports[`yarn max stack 2`] = `
         "path-key": {
           "files": {
             "index.js": {
-              "offset": "2997385",
+              "offset": "2997468",
               "size": 281,
             },
             "license": {
-              "offset": "2997666",
+              "offset": "2997749",
               "size": 1119,
             },
             "package.json": {
-              "offset": "2998785",
+              "offset": "2998868",
               "size": 426,
             },
           },
@@ -39654,15 +39654,15 @@ exports[`yarn max stack 2`] = `
         "path-parse": {
           "files": {
             "LICENSE": {
-              "offset": "2999211",
+              "offset": "2999294",
               "size": 1080,
             },
             "index.js": {
-              "offset": "3000291",
+              "offset": "3000374",
               "size": 1893,
             },
             "package.json": {
-              "offset": "3002184",
+              "offset": "3002267",
               "size": 362,
             },
           },
@@ -39670,15 +39670,15 @@ exports[`yarn max stack 2`] = `
         "path-type": {
           "files": {
             "index.js": {
-              "offset": "3002546",
+              "offset": "3002629",
               "size": 989,
             },
             "license": {
-              "offset": "3003535",
+              "offset": "3003618",
               "size": 1109,
             },
             "package.json": {
-              "offset": "3004644",
+              "offset": "3004727",
               "size": 470,
             },
           },
@@ -39689,45 +39689,45 @@ exports[`yarn max stack 2`] = `
               "files": {
                 "pidtree.js": {
                   "executable": true,
-                  "offset": "3005114",
+                  "offset": "3005197",
                   "size": 2859,
                 },
               },
             },
             "index.js": {
-              "offset": "3007973",
+              "offset": "3008056",
               "size": 1346,
             },
             "lib": {
               "files": {
                 "bin.js": {
-                  "offset": "3009319",
+                  "offset": "3009402",
                   "size": 1025,
                 },
                 "get.js": {
-                  "offset": "3010344",
+                  "offset": "3010427",
                   "size": 721,
                 },
                 "pidtree.js": {
-                  "offset": "3011065",
+                  "offset": "3011148",
                   "size": 2684,
                 },
                 "ps.js": {
-                  "offset": "3013749",
+                  "offset": "3013832",
                   "size": 1067,
                 },
                 "wmic.js": {
-                  "offset": "3014816",
+                  "offset": "3014899",
                   "size": 1178,
                 },
               },
             },
             "license": {
-              "offset": "3015994",
+              "offset": "3016077",
               "size": 1073,
             },
             "package.json": {
-              "offset": "3017067",
+              "offset": "3017150",
               "size": 807,
             },
           },
@@ -39735,15 +39735,15 @@ exports[`yarn max stack 2`] = `
         "pify": {
           "files": {
             "index.js": {
-              "offset": "3017874",
+              "offset": "3017957",
               "size": 1808,
             },
             "license": {
-              "offset": "3019682",
+              "offset": "3019765",
               "size": 1109,
             },
             "package.json": {
-              "offset": "3020791",
+              "offset": "3020874",
               "size": 461,
             },
           },
@@ -39751,19 +39751,19 @@ exports[`yarn max stack 2`] = `
         "possible-typed-array-names": {
           "files": {
             "LICENSE": {
-              "offset": "3021252",
+              "offset": "3021335",
               "size": 1071,
             },
             "index.js": {
-              "offset": "3022323",
+              "offset": "3022406",
               "size": 264,
             },
             "package.json": {
-              "offset": "3022587",
+              "offset": "3022670",
               "size": 1291,
             },
             "tsconfig.json": {
-              "offset": "3023878",
+              "offset": "3023961",
               "size": 116,
             },
           },
@@ -39771,15 +39771,15 @@ exports[`yarn max stack 2`] = `
         "read-pkg": {
           "files": {
             "index.js": {
-              "offset": "3023994",
+              "offset": "3024077",
               "size": 816,
             },
             "license": {
-              "offset": "3024810",
+              "offset": "3024893",
               "size": 1109,
             },
             "package.json": {
-              "offset": "3025919",
+              "offset": "3026002",
               "size": 521,
             },
           },
@@ -39787,35 +39787,35 @@ exports[`yarn max stack 2`] = `
         "reflect.getprototypeof": {
           "files": {
             ".nycrc": {
-              "offset": "3026440",
+              "offset": "3026523",
               "size": 139,
             },
             "LICENSE": {
-              "offset": "3026579",
+              "offset": "3026662",
               "size": 1073,
             },
             "auto.js": {
-              "offset": "3027652",
+              "offset": "3027735",
               "size": 36,
             },
             "implementation.js": {
-              "offset": "3027688",
+              "offset": "3027771",
               "size": 1091,
             },
             "index.js": {
-              "offset": "3028779",
+              "offset": "3028862",
               "size": 421,
             },
             "package.json": {
-              "offset": "3029200",
+              "offset": "3029283",
               "size": 1804,
             },
             "polyfill.js": {
-              "offset": "3031004",
+              "offset": "3031087",
               "size": 350,
             },
             "shim.js": {
-              "offset": "3031354",
+              "offset": "3031437",
               "size": 462,
             },
           },
@@ -39823,39 +39823,39 @@ exports[`yarn max stack 2`] = `
         "regexp.prototype.flags": {
           "files": {
             ".editorconfig": {
-              "offset": "3031816",
+              "offset": "3031899",
               "size": 276,
             },
             ".nycrc": {
-              "offset": "3032092",
+              "offset": "3032175",
               "size": 139,
             },
             "LICENSE": {
-              "offset": "3032231",
+              "offset": "3032314",
               "size": 1082,
             },
             "auto.js": {
-              "offset": "3033313",
+              "offset": "3033396",
               "size": 36,
             },
             "implementation.js": {
-              "offset": "3033349",
+              "offset": "3033432",
               "size": 710,
             },
             "index.js": {
-              "offset": "3034059",
+              "offset": "3034142",
               "size": 388,
             },
             "package.json": {
-              "offset": "3034447",
+              "offset": "3034530",
               "size": 1917,
             },
             "polyfill.js": {
-              "offset": "3036364",
+              "offset": "3036447",
               "size": 864,
             },
             "shim.js": {
-              "offset": "3037228",
+              "offset": "3037311",
               "size": 779,
             },
           },
@@ -39863,80 +39863,80 @@ exports[`yarn max stack 2`] = `
         "resolve": {
           "files": {
             ".editorconfig": {
-              "offset": "3038007",
+              "offset": "3038090",
               "size": 605,
             },
             "LICENSE": {
-              "offset": "3038612",
+              "offset": "3038695",
               "size": 1071,
             },
             "SECURITY.md": {
-              "offset": "3039683",
+              "offset": "3039766",
               "size": 157,
             },
             "async.js": {
-              "offset": "3039840",
+              "offset": "3039923",
               "size": 56,
             },
             "bin": {
               "files": {
                 "resolve": {
                   "executable": true,
-                  "offset": "3039896",
+                  "offset": "3039979",
                   "size": 1535,
                 },
               },
             },
             "index.js": {
-              "offset": "3041431",
+              "offset": "3041514",
               "size": 174,
             },
             "lib": {
               "files": {
                 "async.js": {
-                  "offset": "3041605",
+                  "offset": "3041688",
                   "size": 11391,
                 },
                 "caller.js": {
-                  "offset": "3052996",
+                  "offset": "3053079",
                   "size": 354,
                 },
                 "core.js": {
-                  "offset": "3053350",
+                  "offset": "3053433",
                   "size": 309,
                 },
                 "core.json": {
-                  "offset": "3053659",
+                  "offset": "3053742",
                   "size": 5931,
                 },
                 "homedir.js": {
-                  "offset": "3059590",
+                  "offset": "3059673",
                   "size": 805,
                 },
                 "is-core.js": {
-                  "offset": "3060395",
+                  "offset": "3060478",
                   "size": 116,
                 },
                 "node-modules-paths.js": {
-                  "offset": "3060511",
+                  "offset": "3060594",
                   "size": 1294,
                 },
                 "normalize-options.js": {
-                  "offset": "3061805",
+                  "offset": "3061888",
                   "size": 348,
                 },
                 "sync.js": {
-                  "offset": "3062153",
+                  "offset": "3062236",
                   "size": 7025,
                 },
               },
             },
             "package.json": {
-              "offset": "3069178",
+              "offset": "3069261",
               "size": 1318,
             },
             "sync.js": {
-              "offset": "3070496",
+              "offset": "3070579",
               "size": 55,
             },
           },
@@ -39944,23 +39944,23 @@ exports[`yarn max stack 2`] = `
         "safe-array-concat": {
           "files": {
             ".nycrc": {
-              "offset": "3070551",
+              "offset": "3070634",
               "size": 216,
             },
             "LICENSE": {
-              "offset": "3070767",
+              "offset": "3070850",
               "size": 1071,
             },
             "index.js": {
-              "offset": "3071838",
+              "offset": "3071921",
               "size": 1877,
             },
             "package.json": {
-              "offset": "3073715",
+              "offset": "3073798",
               "size": 1712,
             },
             "tsconfig.json": {
-              "offset": "3075427",
+              "offset": "3075510",
               "size": 125,
             },
           },
@@ -39968,23 +39968,23 @@ exports[`yarn max stack 2`] = `
         "safe-push-apply": {
           "files": {
             ".nycrc": {
-              "offset": "3075552",
+              "offset": "3075635",
               "size": 216,
             },
             "LICENSE": {
-              "offset": "3075768",
+              "offset": "3075851",
               "size": 1071,
             },
             "index.js": {
-              "offset": "3076839",
+              "offset": "3076922",
               "size": 386,
             },
             "package.json": {
-              "offset": "3077225",
+              "offset": "3077308",
               "size": 1453,
             },
             "tsconfig.json": {
-              "offset": "3078678",
+              "offset": "3078761",
               "size": 125,
             },
           },
@@ -39992,23 +39992,23 @@ exports[`yarn max stack 2`] = `
         "safe-regex-test": {
           "files": {
             ".nycrc": {
-              "offset": "3078803",
+              "offset": "3078886",
               "size": 216,
             },
             "LICENSE": {
-              "offset": "3079019",
+              "offset": "3079102",
               "size": 1071,
             },
             "index.js": {
-              "offset": "3080090",
+              "offset": "3080173",
               "size": 405,
             },
             "package.json": {
-              "offset": "3080495",
+              "offset": "3080578",
               "size": 1582,
             },
             "tsconfig.json": {
-              "offset": "3082077",
+              "offset": "3082160",
               "size": 118,
             },
           },
@@ -40016,28 +40016,28 @@ exports[`yarn max stack 2`] = `
         "semver": {
           "files": {
             "LICENSE": {
-              "offset": "3082195",
+              "offset": "3082278",
               "size": 765,
             },
             "bin": {
               "files": {
                 "semver": {
                   "executable": true,
-                  "offset": "3082960",
+                  "offset": "3083043",
                   "size": 4418,
                 },
               },
             },
             "package.json": {
-              "offset": "3087378",
+              "offset": "3087461",
               "size": 667,
             },
             "range.bnf": {
-              "offset": "3088045",
+              "offset": "3088128",
               "size": 619,
             },
             "semver.js": {
-              "offset": "3088664",
+              "offset": "3088747",
               "size": 40812,
             },
           },
@@ -40045,27 +40045,27 @@ exports[`yarn max stack 2`] = `
         "set-function-length": {
           "files": {
             ".nycrc": {
-              "offset": "3129476",
+              "offset": "3129559",
               "size": 216,
             },
             "LICENSE": {
-              "offset": "3129692",
+              "offset": "3129775",
               "size": 1083,
             },
             "env.js": {
-              "offset": "3130775",
+              "offset": "3130858",
               "size": 867,
             },
             "index.js": {
-              "offset": "3131642",
+              "offset": "3131725",
               "size": 1273,
             },
             "package.json": {
-              "offset": "3132915",
+              "offset": "3132998",
               "size": 1953,
             },
             "tsconfig.json": {
-              "offset": "3134868",
+              "offset": "3134951",
               "size": 116,
             },
           },
@@ -40073,19 +40073,19 @@ exports[`yarn max stack 2`] = `
         "set-function-name": {
           "files": {
             "LICENSE": {
-              "offset": "3134984",
+              "offset": "3135067",
               "size": 1083,
             },
             "index.js": {
-              "offset": "3136067",
+              "offset": "3136150",
               "size": 744,
             },
             "package.json": {
-              "offset": "3136811",
+              "offset": "3136894",
               "size": 2128,
             },
             "tsconfig.json": {
-              "offset": "3138939",
+              "offset": "3139022",
               "size": 4887,
             },
           },
@@ -40093,31 +40093,31 @@ exports[`yarn max stack 2`] = `
         "set-proto": {
           "files": {
             ".nycrc": {
-              "offset": "3143826",
+              "offset": "3143909",
               "size": 139,
             },
             "LICENSE": {
-              "offset": "3143965",
+              "offset": "3144048",
               "size": 1071,
             },
             "Object.setPrototypeOf.js": {
-              "offset": "3145036",
+              "offset": "3145119",
               "size": 156,
             },
             "Reflect.setPrototypeOf.js": {
-              "offset": "3145192",
+              "offset": "3145275",
               "size": 150,
             },
             "index.js": {
-              "offset": "3145342",
+              "offset": "3145425",
               "size": 733,
             },
             "package.json": {
-              "offset": "3146075",
+              "offset": "3146158",
               "size": 1452,
             },
             "tsconfig.json": {
-              "offset": "3147527",
+              "offset": "3147610",
               "size": 118,
             },
           },
@@ -40125,15 +40125,15 @@ exports[`yarn max stack 2`] = `
         "shebang-command": {
           "files": {
             "index.js": {
-              "offset": "3147645",
+              "offset": "3147728",
               "size": 346,
             },
             "license": {
-              "offset": "3147991",
+              "offset": "3148074",
               "size": 1125,
             },
             "package.json": {
-              "offset": "3149116",
+              "offset": "3149199",
               "size": 477,
             },
           },
@@ -40141,15 +40141,15 @@ exports[`yarn max stack 2`] = `
         "shebang-regex": {
           "files": {
             "index.js": {
-              "offset": "3149593",
+              "offset": "3149676",
               "size": 40,
             },
             "license": {
-              "offset": "3149633",
+              "offset": "3149716",
               "size": 1119,
             },
             "package.json": {
-              "offset": "3150752",
+              "offset": "3150835",
               "size": 419,
             },
           },
@@ -40157,31 +40157,31 @@ exports[`yarn max stack 2`] = `
         "shell-quote": {
           "files": {
             ".nycrc": {
-              "offset": "3151171",
+              "offset": "3151254",
               "size": 229,
             },
             "LICENSE": {
-              "offset": "3151400",
+              "offset": "3151483",
               "size": 1109,
             },
             "index.js": {
-              "offset": "3152509",
+              "offset": "3152592",
               "size": 87,
             },
             "package.json": {
-              "offset": "3152596",
+              "offset": "3152679",
               "size": 1194,
             },
             "parse.js": {
-              "offset": "3153790",
+              "offset": "3153873",
               "size": 5188,
             },
             "quote.js": {
-              "offset": "3158978",
+              "offset": "3159061",
               "size": 497,
             },
             "security.md": {
-              "offset": "3159475",
+              "offset": "3159558",
               "size": 295,
             },
           },
@@ -40189,27 +40189,27 @@ exports[`yarn max stack 2`] = `
         "side-channel": {
           "files": {
             ".editorconfig": {
-              "offset": "3159770",
+              "offset": "3159853",
               "size": 145,
             },
             ".nycrc": {
-              "offset": "3159915",
+              "offset": "3159998",
               "size": 216,
             },
             "LICENSE": {
-              "offset": "3160131",
+              "offset": "3160214",
               "size": 1071,
             },
             "index.js": {
-              "offset": "3161202",
+              "offset": "3161285",
               "size": 1189,
             },
             "package.json": {
-              "offset": "3162391",
+              "offset": "3162474",
               "size": 1564,
             },
             "tsconfig.json": {
-              "offset": "3163955",
+              "offset": "3164038",
               "size": 116,
             },
           },
@@ -40217,27 +40217,27 @@ exports[`yarn max stack 2`] = `
         "side-channel-list": {
           "files": {
             ".editorconfig": {
-              "offset": "3164071",
+              "offset": "3164154",
               "size": 145,
             },
             ".nycrc": {
-              "offset": "3164216",
+              "offset": "3164299",
               "size": 216,
             },
             "LICENSE": {
-              "offset": "3164432",
+              "offset": "3164515",
               "size": 1071,
             },
             "index.js": {
-              "offset": "3165503",
+              "offset": "3165586",
               "size": 3391,
             },
             "package.json": {
-              "offset": "3168894",
+              "offset": "3168977",
               "size": 1490,
             },
             "tsconfig.json": {
-              "offset": "3170384",
+              "offset": "3170467",
               "size": 116,
             },
           },
@@ -40245,27 +40245,27 @@ exports[`yarn max stack 2`] = `
         "side-channel-map": {
           "files": {
             ".editorconfig": {
-              "offset": "3170500",
+              "offset": "3170583",
               "size": 145,
             },
             ".nycrc": {
-              "offset": "3170645",
+              "offset": "3170728",
               "size": 216,
             },
             "LICENSE": {
-              "offset": "3170861",
+              "offset": "3170944",
               "size": 1071,
             },
             "index.js": {
-              "offset": "3171932",
+              "offset": "3172015",
               "size": 1981,
             },
             "package.json": {
-              "offset": "3173913",
+              "offset": "3173996",
               "size": 1576,
             },
             "tsconfig.json": {
-              "offset": "3175489",
+              "offset": "3175572",
               "size": 116,
             },
           },
@@ -40273,27 +40273,27 @@ exports[`yarn max stack 2`] = `
         "side-channel-weakmap": {
           "files": {
             ".editorconfig": {
-              "offset": "3175605",
+              "offset": "3175688",
               "size": 145,
             },
             ".nycrc": {
-              "offset": "3175750",
+              "offset": "3175833",
               "size": 216,
             },
             "LICENSE": {
-              "offset": "3175966",
+              "offset": "3176049",
               "size": 1071,
             },
             "index.js": {
-              "offset": "3177037",
+              "offset": "3177120",
               "size": 2708,
             },
             "package.json": {
-              "offset": "3179745",
+              "offset": "3179828",
               "size": 1646,
             },
             "tsconfig.json": {
-              "offset": "3181391",
+              "offset": "3181474",
               "size": 116,
             },
           },
@@ -40301,15 +40301,15 @@ exports[`yarn max stack 2`] = `
         "spdx-correct": {
           "files": {
             "LICENSE": {
-              "offset": "3181507",
+              "offset": "3181590",
               "size": 11358,
             },
             "index.js": {
-              "offset": "3192865",
+              "offset": "3192948",
               "size": 10753,
             },
             "package.json": {
-              "offset": "3203618",
+              "offset": "3203701",
               "size": 483,
             },
           },
@@ -40317,15 +40317,15 @@ exports[`yarn max stack 2`] = `
         "spdx-exceptions": {
           "files": {
             "deprecated.json": {
-              "offset": "3204101",
+              "offset": "3204184",
               "size": 31,
             },
             "index.json": {
-              "offset": "3204132",
+              "offset": "3204215",
               "size": 1731,
             },
             "package.json": {
-              "offset": "3205863",
+              "offset": "3205946",
               "size": 285,
             },
           },
@@ -40333,27 +40333,27 @@ exports[`yarn max stack 2`] = `
         "spdx-expression-parse": {
           "files": {
             "AUTHORS": {
-              "offset": "3206148",
+              "offset": "3206231",
               "size": 203,
             },
             "LICENSE": {
-              "offset": "3206351",
+              "offset": "3206434",
               "size": 1111,
             },
             "index.js": {
-              "offset": "3207462",
+              "offset": "3207545",
               "size": 143,
             },
             "package.json": {
-              "offset": "3207605",
+              "offset": "3207688",
               "size": 554,
             },
             "parse.js": {
-              "offset": "3208159",
+              "offset": "3208242",
               "size": 2901,
             },
             "scan.js": {
-              "offset": "3211060",
+              "offset": "3211143",
               "size": 2754,
             },
           },
@@ -40361,15 +40361,15 @@ exports[`yarn max stack 2`] = `
         "spdx-license-ids": {
           "files": {
             "deprecated.json": {
-              "offset": "3213814",
+              "offset": "3213897",
               "size": 512,
             },
             "index.json": {
-              "offset": "3214326",
+              "offset": "3214409",
               "size": 10438,
             },
             "package.json": {
-              "offset": "3224764",
+              "offset": "3224847",
               "size": 301,
             },
           },
@@ -40377,39 +40377,39 @@ exports[`yarn max stack 2`] = `
         "string.prototype.padend": {
           "files": {
             ".editorconfig": {
-              "offset": "3225065",
+              "offset": "3225148",
               "size": 286,
             },
             ".nycrc": {
-              "offset": "3225351",
+              "offset": "3225434",
               "size": 139,
             },
             "LICENSE": {
-              "offset": "3225490",
+              "offset": "3225573",
               "size": 1084,
             },
             "auto.js": {
-              "offset": "3226574",
+              "offset": "3226657",
               "size": 36,
             },
             "implementation.js": {
-              "offset": "3226610",
+              "offset": "3226693",
               "size": 1109,
             },
             "index.js": {
-              "offset": "3227719",
+              "offset": "3227802",
               "size": 659,
             },
             "package.json": {
-              "offset": "3228378",
+              "offset": "3228461",
               "size": 1694,
             },
             "polyfill.js": {
-              "offset": "3230072",
+              "offset": "3230155",
               "size": 209,
             },
             "shim.js": {
-              "offset": "3230281",
+              "offset": "3230364",
               "size": 334,
             },
           },
@@ -40417,39 +40417,39 @@ exports[`yarn max stack 2`] = `
         "string.prototype.trim": {
           "files": {
             ".editorconfig": {
-              "offset": "3230615",
+              "offset": "3230698",
               "size": 286,
             },
             ".nycrc": {
-              "offset": "3230901",
+              "offset": "3230984",
               "size": 139,
             },
             "LICENSE": {
-              "offset": "3231040",
+              "offset": "3231123",
               "size": 1081,
             },
             "auto.js": {
-              "offset": "3232121",
+              "offset": "3232204",
               "size": 36,
             },
             "implementation.js": {
-              "offset": "3232157",
+              "offset": "3232240",
               "size": 1173,
             },
             "index.js": {
-              "offset": "3233330",
+              "offset": "3233413",
               "size": 572,
             },
             "package.json": {
-              "offset": "3233902",
+              "offset": "3233985",
               "size": 1863,
             },
             "polyfill.js": {
-              "offset": "3235765",
+              "offset": "3235848",
               "size": 547,
             },
             "shim.js": {
-              "offset": "3236312",
+              "offset": "3236395",
               "size": 494,
             },
           },
@@ -40457,39 +40457,39 @@ exports[`yarn max stack 2`] = `
         "string.prototype.trimend": {
           "files": {
             ".editorconfig": {
-              "offset": "3236806",
+              "offset": "3236889",
               "size": 286,
             },
             ".nycrc": {
-              "offset": "3237092",
+              "offset": "3237175",
               "size": 139,
             },
             "LICENSE": {
-              "offset": "3237231",
+              "offset": "3237314",
               "size": 1073,
             },
             "auto.js": {
-              "offset": "3238304",
+              "offset": "3238387",
               "size": 36,
             },
             "implementation.js": {
-              "offset": "3238340",
+              "offset": "3238423",
               "size": 635,
             },
             "index.js": {
-              "offset": "3238975",
+              "offset": "3239058",
               "size": 572,
             },
             "package.json": {
-              "offset": "3239547",
+              "offset": "3239630",
               "size": 1247,
             },
             "polyfill.js": {
-              "offset": "3240794",
+              "offset": "3240877",
               "size": 458,
             },
             "shim.js": {
-              "offset": "3241252",
+              "offset": "3241335",
               "size": 329,
             },
           },
@@ -40497,39 +40497,39 @@ exports[`yarn max stack 2`] = `
         "string.prototype.trimstart": {
           "files": {
             ".editorconfig": {
-              "offset": "3241581",
+              "offset": "3241664",
               "size": 286,
             },
             ".nycrc": {
-              "offset": "3241867",
+              "offset": "3241950",
               "size": 139,
             },
             "LICENSE": {
-              "offset": "3242006",
+              "offset": "3242089",
               "size": 1073,
             },
             "auto.js": {
-              "offset": "3243079",
+              "offset": "3243162",
               "size": 36,
             },
             "implementation.js": {
-              "offset": "3243115",
+              "offset": "3243198",
               "size": 650,
             },
             "index.js": {
-              "offset": "3243765",
+              "offset": "3243848",
               "size": 572,
             },
             "package.json": {
-              "offset": "3244337",
+              "offset": "3244420",
               "size": 1219,
             },
             "polyfill.js": {
-              "offset": "3245556",
+              "offset": "3245639",
               "size": 463,
             },
             "shim.js": {
-              "offset": "3246019",
+              "offset": "3246102",
               "size": 337,
             },
           },
@@ -40537,15 +40537,15 @@ exports[`yarn max stack 2`] = `
         "strip-bom": {
           "files": {
             "index.js": {
-              "offset": "3246356",
+              "offset": "3246439",
               "size": 317,
             },
             "license": {
-              "offset": "3246673",
+              "offset": "3246756",
               "size": 1119,
             },
             "package.json": {
-              "offset": "3247792",
+              "offset": "3247875",
               "size": 423,
             },
           },
@@ -40553,19 +40553,19 @@ exports[`yarn max stack 2`] = `
         "supports-color": {
           "files": {
             "browser.js": {
-              "offset": "3248215",
+              "offset": "3248298",
               "size": 67,
             },
             "index.js": {
-              "offset": "3248282",
+              "offset": "3248365",
               "size": 2771,
             },
             "license": {
-              "offset": "3251053",
+              "offset": "3251136",
               "size": 1109,
             },
             "package.json": {
-              "offset": "3252162",
+              "offset": "3252245",
               "size": 556,
             },
           },
@@ -40573,23 +40573,23 @@ exports[`yarn max stack 2`] = `
         "supports-preserve-symlinks-flag": {
           "files": {
             ".nycrc": {
-              "offset": "3252718",
+              "offset": "3252801",
               "size": 139,
             },
             "LICENSE": {
-              "offset": "3252857",
+              "offset": "3252940",
               "size": 1067,
             },
             "browser.js": {
-              "offset": "3253924",
+              "offset": "3254007",
               "size": 38,
             },
             "index.js": {
-              "offset": "3253962",
+              "offset": "3254045",
               "size": 293,
             },
             "package.json": {
-              "offset": "3254255",
+              "offset": "3254338",
               "size": 1266,
             },
           },
@@ -40597,23 +40597,23 @@ exports[`yarn max stack 2`] = `
         "typed-array-buffer": {
           "files": {
             ".nycrc": {
-              "offset": "3255521",
+              "offset": "3255604",
               "size": 216,
             },
             "LICENSE": {
-              "offset": "3255737",
+              "offset": "3255820",
               "size": 1071,
             },
             "index.js": {
-              "offset": "3256808",
+              "offset": "3256891",
               "size": 591,
             },
             "package.json": {
-              "offset": "3257399",
+              "offset": "3257482",
               "size": 1593,
             },
             "tsconfig.json": {
-              "offset": "3258992",
+              "offset": "3259075",
               "size": 116,
             },
           },
@@ -40621,23 +40621,23 @@ exports[`yarn max stack 2`] = `
         "typed-array-byte-length": {
           "files": {
             ".nycrc": {
-              "offset": "3259108",
+              "offset": "3259191",
               "size": 216,
             },
             "LICENSE": {
-              "offset": "3259324",
+              "offset": "3259407",
               "size": 1067,
             },
             "index.js": {
-              "offset": "3260391",
+              "offset": "3260474",
               "size": 2746,
             },
             "package.json": {
-              "offset": "3263137",
+              "offset": "3263220",
               "size": 2015,
             },
             "tsconfig.json": {
-              "offset": "3265152",
+              "offset": "3265235",
               "size": 116,
             },
           },
@@ -40645,23 +40645,23 @@ exports[`yarn max stack 2`] = `
         "typed-array-byte-offset": {
           "files": {
             ".nycrc": {
-              "offset": "3265268",
+              "offset": "3265351",
               "size": 216,
             },
             "LICENSE": {
-              "offset": "3265484",
+              "offset": "3265567",
               "size": 1067,
             },
             "index.js": {
-              "offset": "3266551",
+              "offset": "3266634",
               "size": 2486,
             },
             "package.json": {
-              "offset": "3269037",
+              "offset": "3269120",
               "size": 2124,
             },
             "tsconfig.json": {
-              "offset": "3271161",
+              "offset": "3271244",
               "size": 145,
             },
           },
@@ -40669,23 +40669,23 @@ exports[`yarn max stack 2`] = `
         "typed-array-length": {
           "files": {
             ".nycrc": {
-              "offset": "3271306",
+              "offset": "3271389",
               "size": 216,
             },
             "LICENSE": {
-              "offset": "3271522",
+              "offset": "3271605",
               "size": 1067,
             },
             "index.js": {
-              "offset": "3272589",
+              "offset": "3272672",
               "size": 2942,
             },
             "package.json": {
-              "offset": "3275531",
+              "offset": "3275614",
               "size": 2000,
             },
             "tsconfig.json": {
-              "offset": "3277531",
+              "offset": "3277614",
               "size": 145,
             },
           },
@@ -40693,27 +40693,27 @@ exports[`yarn max stack 2`] = `
         "unbox-primitive": {
           "files": {
             ".editorconfig": {
-              "offset": "3277676",
+              "offset": "3277759",
               "size": 286,
             },
             ".nycrc": {
-              "offset": "3277962",
+              "offset": "3278045",
               "size": 216,
             },
             "LICENSE": {
-              "offset": "3278178",
+              "offset": "3278261",
               "size": 1071,
             },
             "index.js": {
-              "offset": "3279249",
+              "offset": "3279332",
               "size": 1532,
             },
             "package.json": {
-              "offset": "3280781",
+              "offset": "3280864",
               "size": 1537,
             },
             "tsconfig.json": {
-              "offset": "3282318",
+              "offset": "3282401",
               "size": 68,
             },
           },
@@ -40721,15 +40721,15 @@ exports[`yarn max stack 2`] = `
         "validate-npm-package-license": {
           "files": {
             "LICENSE": {
-              "offset": "3282386",
+              "offset": "3282469",
               "size": 11358,
             },
             "index.js": {
-              "offset": "3293744",
+              "offset": "3293827",
               "size": 1925,
             },
             "package.json": {
-              "offset": "3295669",
+              "offset": "3295752",
               "size": 519,
             },
           },
@@ -40737,24 +40737,24 @@ exports[`yarn max stack 2`] = `
         "which": {
           "files": {
             "LICENSE": {
-              "offset": "3296188",
+              "offset": "3296271",
               "size": 765,
             },
             "bin": {
               "files": {
                 "which": {
                   "executable": true,
-                  "offset": "3296953",
+                  "offset": "3297036",
                   "size": 985,
                 },
               },
             },
             "package.json": {
-              "offset": "3297938",
+              "offset": "3298021",
               "size": 565,
             },
             "which.js": {
-              "offset": "3298503",
+              "offset": "3298586",
               "size": 3184,
             },
           },
@@ -40762,27 +40762,27 @@ exports[`yarn max stack 2`] = `
         "which-boxed-primitive": {
           "files": {
             ".editorconfig": {
-              "offset": "3301687",
+              "offset": "3301770",
               "size": 286,
             },
             ".nycrc": {
-              "offset": "3301973",
+              "offset": "3302056",
               "size": 216,
             },
             "LICENSE": {
-              "offset": "3302189",
+              "offset": "3302272",
               "size": 1071,
             },
             "index.js": {
-              "offset": "3303260",
+              "offset": "3303343",
               "size": 718,
             },
             "package.json": {
-              "offset": "3303978",
+              "offset": "3304061",
               "size": 1535,
             },
             "tsconfig.json": {
-              "offset": "3305513",
+              "offset": "3305596",
               "size": 114,
             },
           },
@@ -40790,23 +40790,23 @@ exports[`yarn max stack 2`] = `
         "which-builtin-type": {
           "files": {
             ".nycrc": {
-              "offset": "3305627",
+              "offset": "3305710",
               "size": 139,
             },
             "LICENSE": {
-              "offset": "3305766",
+              "offset": "3305849",
               "size": 1073,
             },
             "index.js": {
-              "offset": "3306839",
+              "offset": "3306922",
               "size": 3952,
             },
             "package.json": {
-              "offset": "3310791",
+              "offset": "3310874",
               "size": 2562,
             },
             "tsconfig.json": {
-              "offset": "3313353",
+              "offset": "3313436",
               "size": 123,
             },
           },
@@ -40814,23 +40814,23 @@ exports[`yarn max stack 2`] = `
         "which-collection": {
           "files": {
             ".nycrc": {
-              "offset": "3313476",
+              "offset": "3313559",
               "size": 216,
             },
             "LICENSE": {
-              "offset": "3313692",
+              "offset": "3313775",
               "size": 1067,
             },
             "index.js": {
-              "offset": "3314759",
+              "offset": "3314842",
               "size": 509,
             },
             "package.json": {
-              "offset": "3315268",
+              "offset": "3315351",
               "size": 1615,
             },
             "tsconfig.json": {
-              "offset": "3316883",
+              "offset": "3316966",
               "size": 3611,
             },
           },
@@ -40838,27 +40838,27 @@ exports[`yarn max stack 2`] = `
         "which-typed-array": {
           "files": {
             ".editorconfig": {
-              "offset": "3320494",
+              "offset": "3320577",
               "size": 286,
             },
             ".nycrc": {
-              "offset": "3320780",
+              "offset": "3320863",
               "size": 216,
             },
             "LICENSE": {
-              "offset": "3320996",
+              "offset": "3321079",
               "size": 1082,
             },
             "index.js": {
-              "offset": "3322078",
+              "offset": "3322161",
               "size": 3727,
             },
             "package.json": {
-              "offset": "3325805",
+              "offset": "3325888",
               "size": 2258,
             },
             "tsconfig.json": {
-              "offset": "3328063",
+              "offset": "3328146",
               "size": 123,
             },
           },
@@ -40866,7 +40866,7 @@ exports[`yarn max stack 2`] = `
       },
     },
     "package.json": {
-      "offset": "3329183",
+      "offset": "3329266",
       "size": 331,
     },
   },
