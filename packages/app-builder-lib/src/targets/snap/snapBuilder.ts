@@ -117,51 +117,40 @@ async function writeCommandWrapper(options: CommandWrapperOptions, isUseTemplate
 async function buildUsingTemplate(templateDir: string, options: SnapBuilderOptions): Promise<void> {
   const stageDir = options.stageDir
 
-  let args: string[] = []
-  args = await readDirContentTo(templateDir, args)
-  args = await readDirContentTo(stageDir, args)
-
   // https://github.com/electron-userland/electron-builder/issues/3608
   // even if electron-builder will correctly unset setgid/setuid, still, quite a lot of possibilities for user to create such incorrect permissions,
   // so, just unset it using chmod right before packaging
   const dirs = [stageDir, options.appDir, templateDir]
   await Promise.all(
-    dirs.map(async dir => {
-      if (dir) {
-        try {
-          await exec(`chmod -R g-s ${dir}`)
-        } catch (err: any) {
-          log.debug({ dir, message: err.message }, `cannot execute chmod`)
-        }
-      }
-    })
+    dirs
+      .filter(dir => !!dir)
+      .map(
+        async dir =>
+          await exec(`chmod -R g-s ${dir}`).catch((err: any) => {
+            log.debug({ dir, message: err.message }, `cannot execute chmod`)
+          })
+      )
   )
 
-  args = await readDirContentTo(options.appDir || "", args, name => {
-    return !["LICENSES.chromium.html", "LICENSE.electron.txt", ...(options.excludedAppFiles ?? [])].includes(name)
+  const templateContents = await readDirContents(templateDir)
+  const stageContents = await readDirContents(stageDir)
+  const appContents = await readDirContents(options.appDir, filename => {
+    return !["LICENSES.chromium.html", "LICENSE.electron.txt", ...(options.excludedAppFiles ?? [])].includes(filename)
   })
 
-  args.push(options.output, ...["-no-progress", "-noappend", "-comp", options.compression || "xz", "-no-xattrs", "-no-fragments", "-all-root"])
-  // const args = ["-no-progress", "-noappend", "-comp", options.compression || "xz", "-no-xattrs", "-no-fragments", "-all-root"]
+  const contents = [...templateContents, ...stageContents, ...appContents]
+  const params = ["-no-progress", "-noappend", "-comp", options.compression || "xz", "-no-xattrs", "-no-fragments", "-all-root"]
   if (!log.isDebugEnabled) {
-    args.push("-quiet")
+    params.push("-quiet")
   }
   const mksquashfs = await getMksquashfs()
-  await exec(mksquashfs, [templateDir, options.stageDir, ...args])
+  await exec(mksquashfs, [templateDir, stageDir, ...contents, options.output, ...params])
 }
 
-async function readDirContentTo(dir: string, paths: string[], filter?: (name: string) => boolean): Promise<string[]> {
-  try {
-    const content = await readdir(dir)
-    for (const value of content) {
-      if (!filter || filter(value)) {
-        paths.push(path.join(dir, value))
-      }
-    }
-  } catch (err) {
-    throw new Error(`Error reading directory content: ${err}`)
-  }
-  return paths
+async function readDirContents(dir: string, filter?: (filename: string) => boolean): Promise<string[]> {
+  return (await readdir(dir)).reduce<string[]>((acc, curr) => {
+    return filter?.(curr) ? [...acc, path.join(dir, curr)] : acc
+  }, [])
 }
 
 async function buildWithoutTemplate(options: SnapBuilderOptions, scriptDir: string): Promise<void> {
