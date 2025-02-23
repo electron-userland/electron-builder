@@ -6,7 +6,6 @@ import { AsarIntegrity } from "../asar/integrity"
 import { MacPackager } from "../macPackager"
 import { normalizeExt } from "../platformPackager"
 import { savePlistFile, parsePlistFile } from "../util/plist"
-import { executeAppBuilderAsJson } from "../util/appBuilder"
 import { createBrandingOpts } from "./ElectronFramework"
 
 function doRename(basePath: string, oldName: string, newName: string) {
