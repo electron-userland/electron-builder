@@ -5,7 +5,7 @@ import { filterCFBundleIdentifier } from "../appInfo"
 import { AsarIntegrity } from "../asar/integrity"
 import { MacPackager } from "../macPackager"
 import { normalizeExt } from "../platformPackager"
-import { savePlistFile } from "../util/plist"
+import { savePlistFile, parsePlistFile } from "../util/plist"
 import { executeAppBuilderAsJson } from "../util/appBuilder"
 import { createBrandingOpts } from "./ElectronFramework"
 
@@ -70,38 +70,17 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
   const helperGPUPlistFilename = path.join(frameworksPath, `${electronBranding.productName} Helper (GPU).app`, "Contents", "Info.plist")
   const helperLoginPlistFilename = path.join(loginItemPath, `${electronBranding.productName} Login Helper.app`, "Contents", "Info.plist")
 
-  const plistContent: Array<any> = await executeAppBuilderAsJson([
-    "decode-plist",
-    "-f",
-    appPlistFilename,
-    "-f",
-    helperPlistFilename,
-    "-f",
-    helperEHPlistFilename,
-    "-f",
-    helperNPPlistFilename,
-    "-f",
-    helperRendererPlistFilename,
-    "-f",
-    helperPluginPlistFilename,
-    "-f",
-    helperGPUPlistFilename,
-    "-f",
-    helperLoginPlistFilename,
-  ])
-
-  if (plistContent[0] == null) {
+  const appPlist = await parsePlistFile(appPlistFilename)
+  if (appPlist == null) {
     throw new Error("corrupted Electron dist")
   }
-
-  const appPlist = plistContent[0]!
-  const helperPlist = plistContent[1]!
-  const helperEHPlist = plistContent[2]
-  const helperNPPlist = plistContent[3]
-  const helperRendererPlist = plistContent[4]
-  const helperPluginPlist = plistContent[5]
-  const helperGPUPlist = plistContent[6]
-  const helperLoginPlist = plistContent[7]
+  const helperPlist = await parsePlistFile(helperPlistFilename)
+  const helperEHPlist = await parsePlistFile(helperEHPlistFilename)
+  const helperNPPlist = await parsePlistFile(helperNPPlistFilename)
+  const helperRendererPlist = await parsePlistFile(helperRendererPlistFilename)
+  const helperPluginPlist = await parsePlistFile(helperPluginPlistFilename)
+  const helperGPUPlist = await parsePlistFile(helperGPUPlistFilename)
+  const helperLoginPlist = await parsePlistFile(helperLoginPlistFilename)
 
   const buildMetadata = packager.config
 
