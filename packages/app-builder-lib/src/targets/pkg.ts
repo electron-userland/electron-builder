@@ -235,7 +235,7 @@ export class PkgTarget extends Target {
       args.push("--scripts", scriptsDir)
     }
     if (plistInfo.length > 0) {
-      await savePlistFile(propertyListOutputFile, packageInfo)
+      await savePlistFile(propertyListOutputFile, plistInfo)
     }
 
     args.push(packageOutputFile)
