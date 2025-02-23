@@ -25,6 +25,13 @@ export async function savePlistFile(path: string, data: any): Promise<void> {
 }
 
 export async function parsePlistFile(file: string): Promise<any> {
-  const data = await fs.promises.readFile(file, "utf8")
-  return parse(data)
+  try {
+    const data = await fs.promises.readFile(file, "utf8")
+    return parse(data)
+  } catch (e: any) {
+    if (e.code === "ENOENT") {
+      return null
+    }
+    throw e
+  }
 }
