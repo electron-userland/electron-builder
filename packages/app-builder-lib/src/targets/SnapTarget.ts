@@ -1,6 +1,18 @@
-import { replaceDefault as _replaceDefault, Arch, copyDir, deepAssign, exec, executeAppBuilder, InvalidConfigurationError, log, serializeToYaml, toLinuxArchString } from "builder-util"
+import {
+  replaceDefault as _replaceDefault,
+  Arch,
+  copyDir,
+  deepAssign,
+  exec,
+  executeAppBuilder,
+  InvalidConfigurationError,
+  isEmptyOrSpaces,
+  log,
+  serializeToYaml,
+  toLinuxArchString,
+} from "builder-util"
 import { asArray, Nullish, SnapStoreOptions } from "builder-util-runtime"
-import { copyFile, mkdir, outputFile, readFile, unlink } from "fs-extra"
+import { copyFile, mkdir, outputFile, readFile, unlink, writeFile } from "fs-extra"
 import { load } from "js-yaml"
 import * as path from "path"
 import * as semver from "semver"
@@ -416,7 +428,7 @@ function doCheckSnapVersion(rawVersion: string, installMessage: string): Error |
   return null
 }
 
-interface SnapOptions {
+interface SnapBuilderOptions {
   appDir: string
   stageDir: string
   output: string
@@ -427,34 +439,43 @@ interface SnapOptions {
   excludedAppFiles?: string[]
   arch?: string
   compression?: "xz" | "lzo"
+
+  template: { template?: string; templateUrl?: string; templateSha512?: string }
 }
 
-function createSnap(options: SnapOptions) {
-  try {
-    const resolvedTemplateDir = resolveTemplateDir(options)
-    snap(resolvedTemplateDir, options)
-  } catch (error) {
-    console.error("Error:", error.message)
-    process.exit(1)
+async function createSnap(options: SnapBuilderOptions) {
+  const resolvedTemplateDir = await resolveTemplateDir(options.template)
+  await snap(resolvedTemplateDir, options)
+}
+
+async function resolveTemplateDir(options: SnapBuilderOptions["template"]) {
+  const { template, templateUrl, templateSha512 } = options
+  if (!isEmptyOrSpaces(template) || isEmptyOrSpaces(templateUrl)) {
+    return template || ""
   }
-}
-
-function resolveTemplateDir(templateUrl: string, templateSha512: string) {
   switch (templateUrl) {
     case "electron4":
     case "electron4:amd64":
-      return getBinFromUrl("snap-template", "4.0-2", "PYhiQQ5KE4ezraLE7TOT2aFPGkBNjHLRN7C8qAPaC6VckHU3H+0m+JA/Wmx683fKUT2ZBwo9Mp82EuhmQo5WOQ==")
-    // ( download.DownloadArtifact("", download.GetGithubBaseUrl()+"snap-template-4.0-2/snap-template-electron-4.0-2-amd64.tar.7z", "PYhiQQ5KE4ezraLE7TOT2aFPGkBNjHLRN7C8qAPaC6VckHU3H+0m+JA/Wmx683fKUT2ZBwo9Mp82EuhmQo5WOQ==")
+      return await getBinFromUrl(
+        "snap-template",
+        "4.0-2",
+        "PYhiQQ5KE4ezraLE7TOT2aFPGkBNjHLRN7C8qAPaC6VckHU3H+0m+JA/Wmx683fKUT2ZBwo9Mp82EuhmQo5WOQ==",
+        "snap-template-electron-4.0-2-amd64.tar"
+      )
     case "electron4:armhf":
     case "electron4:arm":
-      return getBinFromUrl("snap-template", "4.0-1", "jK+E0d0kyzBEsFmTEUIsumtikH4XZp8NVs6DBtIBJqXAmVCuNHcmvDa0wcaigk8foU4uGZXsLlJtNj11X100Bg==")
-    // return download.DownloadArtifact("", download.GetGithubBaseUrl()+"snap-template-4.0-1/snap-template-electron-4.0-1-armhf.tar.7z", "jK+E0d0kyzBEsFmTEUIsumtikH4XZp8NVs6DBtIBJqXAmVCuNHcmvDa0wcaigk8foU4uGZXsLlJtNj11X100Bg==")
+      return await getBinFromUrl(
+        "snap-template",
+        "4.0-1",
+        "jK+E0d0kyzBEsFmTEUIsumtikH4XZp8NVs6DBtIBJqXAmVCuNHcmvDa0wcaigk8foU4uGZXsLlJtNj11X100Bg==",
+        "snap-template-electron-4.0-1-armhf.tar"
+      )
     default:
-      return getBin("snap-template-custom", templateUrl, templateSha512) // download.DownloadArtifact("", templateUrl, templateSha512)
+      return await getBin("snap-template-custom", templateUrl, templateSha512)
   }
 }
 
-async function snap(templateDir: string, options: SnapOptions): Promise<void> {
+async function snap(templateDir: string, options: SnapBuilderOptions): Promise<void> {
   const stageDir = options.stageDir
   const snapMetaDir = templateDir ? path.join(stageDir, "meta") : path.join(stageDir, "snap")
 
@@ -469,7 +490,7 @@ async function snap(templateDir: string, options: SnapOptions): Promise<void> {
   await mkdir(scriptDir, { recursive: true })
 
   if (options.executableName) {
-    writeCommandWrapper(options, scriptDir)
+    await writeCommandWrapper(options, scriptDir)
   }
 
   const chromeSandbox = path.join(options.appDir, "app", "chrome-sandbox")
@@ -480,7 +501,7 @@ async function snap(templateDir: string, options: SnapOptions): Promise<void> {
   await buildUsingTemplate(templateDir, options)
 }
 
-function writeCommandWrapper(options: SnapOptions, scriptDir: string): void {
+async function writeCommandWrapper(options: SnapBuilderOptions, scriptDir: string): Promise<void> {
   const commandWrapperFile = path.join(scriptDir, "command.sh")
   let text = `#!/bin/bash -e\nexec "$SNAP/desktop-init.sh" "$SNAP/desktop-common.sh" "$SNAP/desktop-gnome-specific.sh" "$SNAP/${options.executableName}"`
 
@@ -489,10 +510,10 @@ function writeCommandWrapper(options: SnapOptions, scriptDir: string): void {
   }
   text += ' "$@"'
 
-  fs.writeFileSync(commandWrapperFile, text, { mode: 0o755 })
+  await writeFile(commandWrapperFile, text, { mode: 0o755 })
 }
 
-async function buildUsingTemplate(templateDir: string, options: SnapOptions): Promise<void> {
+async function buildUsingTemplate(templateDir: string, options: SnapBuilderOptions): Promise<void> {
   const args = ["-no-progress", "-quiet", "-noappend", "-comp", options.compression || "xz", "-no-xattrs", "-no-fragments", "-all-root", options.output]
   await exec("mksquashfs", [templateDir, options.stageDir, ...args])
 }
