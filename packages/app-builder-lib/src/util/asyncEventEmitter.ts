@@ -5,7 +5,7 @@ type Handler = (...args: any[]) => Promise<void> | void
 
 export type HandlerType = "system" | "user"
 
-type Handle = { handler: Handler | Nullish; type: HandlerType }
+type Handle = { handler: Handler; type: HandlerType }
 
 export type EventMap = {
   [key: string]: Handler
