@@ -1,29 +1,17 @@
-import {
-  replaceDefault as _replaceDefault,
-  Arch,
-  copyDir,
-  deepAssign,
-  exec,
-  executeAppBuilder,
-  InvalidConfigurationError,
-  isEmptyOrSpaces,
-  log,
-  serializeToYaml,
-  toLinuxArchString,
-} from "builder-util"
+import { replaceDefault as _replaceDefault, Arch, deepAssign, InvalidConfigurationError, log, serializeToYaml, toLinuxArchString } from "builder-util"
 import { asArray, Nullish, SnapStoreOptions } from "builder-util-runtime"
-import { copyFile, mkdir, outputFile, readFile, unlink, writeFile } from "fs-extra"
+import { outputFile, readFile } from "fs-extra"
 import { load } from "js-yaml"
 import * as path from "path"
 import * as semver from "semver"
-import { Configuration } from "../configuration"
-import { Publish, Target } from "../core"
-import { LinuxPackager } from "../linuxPackager"
-import { PlugDescriptor, SnapOptions } from "../options/SnapOptions"
-import { getTemplatePath } from "../util/pathManager"
-import { LinuxTargetHelper } from "./LinuxTargetHelper"
-import { createStageDirPath } from "./targetUtil"
-import { getBin, getBinFromUrl } from "../binDownload"
+import { Configuration } from "../../configuration"
+import { Publish, Target } from "../../core"
+import { LinuxPackager } from "../../linuxPackager"
+import { PlugDescriptor, SnapOptions } from "../../options/SnapOptions"
+import { getTemplatePath } from "../../util/pathManager"
+import { LinuxTargetHelper } from "../LinuxTargetHelper"
+import { createStageDirPath } from "../targetUtil"
+import { SnapBuilderOptions, createSnap } from "./snapBuilder"
 
 const defaultPlugs = ["desktop", "desktop-legacy", "home", "x11", "wayland", "unity7", "browser-support", "network", "gsettings", "audio-playback", "pulseaudio", "opengl"]
 
@@ -209,7 +197,7 @@ export default class SnapTarget extends Target {
       stageDir: stageDir,
       arch: snapArch,
       output: artifactPath,
-      executableName: this.packager.executableName
+      executableName: this.packager.executableName,
     }
 
     await this.helper.icons
@@ -245,7 +233,6 @@ export default class SnapTarget extends Target {
       // args.push("--extraAppArgs=" + extraAppArgs.join(" "))
     }
 
-    args.compression = "xz"
     if (snap.compression != null) {
       args.compression = snap.compression
       // args.push("--compression", snap.compression)
@@ -410,125 +397,4 @@ function getDefaultStagePackages() {
   // libxss1 - was "error while loading shared libraries: libXss.so.1" on Xubuntu 16.04
   // noinspection SpellCheckingInspection
   return ["libnspr4", "libnss3", "libxss1", "libappindicator3-1", "libsecret-1-0"]
-}
-
-async function checkSnapcraftVersion(isRequireToBeInstalled: boolean): Promise<Error | null> {
-  const installMessage: string = process.platform === "darwin" ? "brew install snapcraft" : "sudo snap install snapcraft --classic"
-
-  try {
-    const out = await exec("snapcraft", ["--version"])
-    return doCheckSnapVersion(out, installMessage)
-  } catch (err) {
-    console.debug((err as Error).message)
-  }
-
-  if (isRequireToBeInstalled) {
-    return new Error(`snapcraft is not installed, please: ${installMessage}`)
-  }
-
-  return null
-}
-
-function doCheckSnapVersion(rawVersion: string, installMessage: string): Error | null {
-  if (rawVersion === "snapcraft, version edge") {
-    return null
-  }
-
-  const s = rawVersion.replace("snapcraft", "").replace(",", "").replace("version", "").trim().replace(/'/g, "")
-
-  if (semver.lt(s, "4.0.0")) {
-    return new Error(`at least snapcraft 4.0.0 is required, but ${rawVersion} installed, please: ${installMessage}`)
-  }
-
-  return null
-}
-
-interface SnapBuilderOptions {
-  appDir: string
-  stageDir: string
-  output: string
-  executableName: string
-  icon?: string
-  hooksDir?: string
-  extraAppArgs?: string[]
-  excludedAppFiles?: string[]
-  arch?: string
-  compression?: "xz" | "lzo"
-
-  template?: { template?: string; templateUrl?: string; templateSha512?: string }
-}
-
-async function createSnap(options: SnapBuilderOptions) {
-  const resolvedTemplateDir = await resolveTemplateDir(options.template)
-  await snap(resolvedTemplateDir, options)
-}
-
-async function resolveTemplateDir(options: SnapBuilderOptions["template"]) {
-  const { template, templateUrl, templateSha512 } = options || {}
-  if (!isEmptyOrSpaces(template) || isEmptyOrSpaces(templateUrl)) {
-    return template || ""
-  }
-  switch (templateUrl) {
-    case "electron4":
-    case "electron4:amd64":
-      return await getBinFromUrl(
-        "snap-template",
-        "4.0-2",
-        "PYhiQQ5KE4ezraLE7TOT2aFPGkBNjHLRN7C8qAPaC6VckHU3H+0m+JA/Wmx683fKUT2ZBwo9Mp82EuhmQo5WOQ==",
-        "snap-template-electron-4.0-2-amd64.tar"
-      )
-    case "electron4:armhf":
-    case "electron4:arm":
-      return await getBinFromUrl(
-        "snap-template",
-        "4.0-1",
-        "jK+E0d0kyzBEsFmTEUIsumtikH4XZp8NVs6DBtIBJqXAmVCuNHcmvDa0wcaigk8foU4uGZXsLlJtNj11X100Bg==",
-        "snap-template-electron-4.0-1-armhf.tar"
-      )
-    default:
-      return await getBin("snap-template-custom", templateUrl, templateSha512)
-  }
-}
-
-async function snap(templateDir: string, options: SnapBuilderOptions): Promise<void> {
-  const stageDir = options.stageDir
-  const snapMetaDir = templateDir ? path.join(stageDir, "meta") : path.join(stageDir, "snap")
-
-  if (options.icon) {
-    await copyFile(options.icon, path.join(snapMetaDir, "gui", "icon" + path.extname(options.icon)))
-  }
-  if (options.hooksDir) {
-    await copyDir(options.hooksDir, path.join(snapMetaDir, "hooks"))
-  }
-
-  const scriptDir = path.join(stageDir, "scripts")
-  await mkdir(scriptDir, { recursive: true })
-
-  if (options.executableName) {
-    await writeCommandWrapper(options, scriptDir)
-  }
-
-  const chromeSandbox = path.join(options.appDir, "app", "chrome-sandbox")
-  await unlink(chromeSandbox).catch((_e: any) => {
-    // ignore
-  })
-
-  await buildUsingTemplate(templateDir, options)
-}
-
-async function writeCommandWrapper(options: SnapBuilderOptions, scriptDir: string): Promise<void> {
-  const commandWrapperFile = path.join(scriptDir, "command.sh")
-  let text = `#!/bin/bash -e\nexec "$SNAP/desktop-init.sh" "$SNAP/desktop-common.sh" "$SNAP/desktop-gnome-specific.sh" "$SNAP/${options.executableName}"`
-
-  if (options.extraAppArgs) {
-    text += ` ${options.extraAppArgs}`
-  }
-  text += ' "$@"'
-
-  await writeFile(commandWrapperFile, text, { mode: 0o755 })
-}
-
-async function buildUsingTemplate(templateDir: string, options: SnapBuilderOptions): Promise<void> {
-  const args = ["-no-progress", "-quiet", "-noappend", "-comp", options.compression || "xz", "-no-xattrs", "-no-fragments", "-all-root", options.output]
-  await exec("mksquashfs", [templateDir, options.stageDir, ...args])
 }
