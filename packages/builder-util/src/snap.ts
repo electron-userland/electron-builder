@@ -13,15 +13,18 @@ export async function checkSnapcraftVersion() {
 
     const s = rawVersion.replace("snapcraft", "").replace(",", "").replace("version", "").trim().replace(/'/g, "")
     if (semver.lt(s, "4.0.0")) {
-      throw new Error(`at least snapcraft 4.0.0 is required, but ${rawVersion} installed, please: ${installMessage}`)
+      const errorMessage = `at least snapcraft 4.0.0 is required, but ${rawVersion} installed, please: ${installMessage}`
+      log.error(null, errorMessage)
+      throw new Error(errorMessage)
     }
   }
 
+  let out: string
   try {
-    const out = await exec("snapcraft", ["--version"])
-    doCheckSnapVersion(out, installMessage)
+    out = await exec("snapcraft", ["--version"])
   } catch (err: any) {
     log.error({ message: err.message }, errorMessage)
     throw new Error(errorMessage)
   }
+  doCheckSnapVersion(out, installMessage)
 }

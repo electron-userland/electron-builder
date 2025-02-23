@@ -1,38 +1,50 @@
 import { getBinFromUrl, getBin } from "../../binDownload"
 import { exec, log, isEmptyOrSpaces, copyDir, exists } from "builder-util"
-import { copyFile, mkdir, unlink, writeFile, rename, chmod, rm } from "fs-extra"
+import { copyFile, mkdir, unlink, writeFile, rename, chmod, rm, readdir } from "fs-extra"
 import * as path from "path"
 import { assets } from "./snapScripts"
 import { getMksquashfs } from "./linuxTools"
 import { checkSnapcraftVersion } from "builder-util/out/snap"
 
-export interface SnapBuilderOptions {
+export interface SnapBuilderOptions extends CommandWrapperOptions {
   appDir: string
-  stageDir: string
   output: string
-  executableName: string
   arch: string
 
   icon?: string
   hooksDir?: string
-  extraAppArgs?: string[]
   excludedAppFiles?: string[]
 
   compression?: "xz" | "lzo"
 
-  template?: { template?: string; templateUrl?: string; templateSha512?: string }
+  template?: string | SnapBuilderTemplate
 }
+
+type CommandWrapperOptions = {
+  executableName: string
+  stageDir: string
+  extraAppArgs?: string[]
+}
+
+type SnapBuilderTemplate = {
+  templateUrl: string
+  templateSha512?: string
+}
+
 export async function createSnap(options: SnapBuilderOptions) {
   const resolvedTemplateDir = await resolveTemplateDir(options.template)
-  await snap(resolvedTemplateDir, options)
+  await snap(options, resolvedTemplateDir)
   await rm(options.stageDir, { recursive: true })
 }
 
-async function resolveTemplateDir(options: SnapBuilderOptions["template"]) {
-  const { template, templateUrl, templateSha512 } = options || {}
-  if (!isEmptyOrSpaces(template) || isEmptyOrSpaces(templateUrl)) {
-    return template || ""
+async function resolveTemplateDir(template: SnapBuilderOptions["template"]) {
+  if (template == null) {
+    return undefined
   }
+  if (typeof template === "string" && !isEmptyOrSpaces(template)) {
+    return template
+  }
+  const { templateUrl, templateSha512 } = template as SnapBuilderTemplate
   switch (templateUrl) {
     case "electron4":
     case "electron4:amd64":
@@ -55,7 +67,7 @@ async function resolveTemplateDir(options: SnapBuilderOptions["template"]) {
   }
 }
 
-async function snap(templateDir: string, options: SnapBuilderOptions): Promise<void> {
+async function snap(options: SnapBuilderOptions, templateDir?: string): Promise<void> {
   const isUseTemplateApp = !isEmptyOrSpaces(templateDir)
   const stageDir = options.stageDir
   const snapMetaDir = isUseTemplateApp ? path.join(stageDir, "meta") : path.join(stageDir, "snap")
@@ -86,12 +98,6 @@ async function snap(templateDir: string, options: SnapBuilderOptions): Promise<v
   }
 }
 
-type CommandWrapperOptions = {
-  stageDir?: string
-  executableName: string
-  extraAppArgs?: string[]
-}
-
 async function writeCommandWrapper(options: CommandWrapperOptions, isUseTemplateApp: boolean, scriptDir: string): Promise<void> {
   const appPrefix = isUseTemplateApp ? "" : "app/"
   const dir = isUseTemplateApp ? options.stageDir || "" : scriptDir
@@ -99,7 +105,7 @@ async function writeCommandWrapper(options: CommandWrapperOptions, isUseTemplate
   const commandWrapperFile = path.join(dir, "command.sh")
   let text = `#!/bin/bash -e\nexec "$SNAP/desktop-init.sh" "$SNAP/desktop-common.sh" "$SNAP/desktop-gnome-specific.sh" "$SNAP/${appPrefix}${options.executableName}"`
 
-  if (options.extraAppArgs) {
+  if (options.extraAppArgs?.length) {
     text += ` ${options.extraAppArgs.join(" ")}`
   }
   text += ' "$@"'
@@ -109,17 +115,60 @@ async function writeCommandWrapper(options: CommandWrapperOptions, isUseTemplate
 }
 
 async function buildUsingTemplate(templateDir: string, options: SnapBuilderOptions): Promise<void> {
-  const args = ["-no-progress", "-noappend", "-comp", options.compression || "xz", "-no-xattrs", "-no-fragments", "-all-root"]
+  const stageDir = options.stageDir
+
+  let args: string[] = []
+  args = await readDirContentTo(templateDir, args)
+  args = await readDirContentTo(stageDir, args)
+
+  // https://github.com/electron-userland/electron-builder/issues/3608
+  // even if electron-builder will correctly unset setgid/setuid, still, quite a lot of possibilities for user to create such incorrect permissions,
+  // so, just unset it using chmod right before packaging
+  const dirs = [stageDir, options.appDir, templateDir]
+  await Promise.all(
+    dirs.map(async dir => {
+      if (dir) {
+        try {
+          await exec(`chmod -R g-s ${dir}`)
+        } catch (err: any) {
+          log.debug({ dir, message: err.message }, `cannot execute chmod`)
+        }
+      }
+    })
+  )
+
+  args = await readDirContentTo(options.appDir || "", args, name => {
+    return !["LICENSES.chromium.html", "LICENSE.electron.txt", ...(options.excludedAppFiles ?? [])].includes(name)
+  })
+
+  args.push(options.output, ...["-no-progress", "-noappend", "-comp", options.compression || "xz", "-no-xattrs", "-no-fragments", "-all-root"])
   // const args = ["-no-progress", "-noappend", "-comp", options.compression || "xz", "-no-xattrs", "-no-fragments", "-all-root"]
   if (!log.isDebugEnabled) {
-    args.unshift("-quiet")
+    args.push("-quiet")
   }
-  const mksquash = await getMksquashfs()
-  await exec(mksquash, [templateDir, options.stageDir, options.output, ...args])
+  const mksquashfs = await getMksquashfs()
+  await exec(mksquashfs, [templateDir, options.stageDir, ...args])
+}
+
+async function readDirContentTo(dir: string, paths: string[], filter?: (name: string) => boolean): Promise<string[]> {
+  try {
+    const content = await readdir(dir)
+    for (const value of content) {
+      if (!filter || filter(value)) {
+        paths.push(path.join(dir, value))
+      }
+    }
+  } catch (err) {
+    throw new Error(`Error reading directory content: ${err}`)
+  }
+  return paths
 }
 
 async function buildWithoutTemplate(options: SnapBuilderOptions, scriptDir: string): Promise<void> {
   await checkSnapcraftVersion()
+  if (options.arch && options.arch !== process.arch) {
+    throw new Error(`snapcraft does not currently support building ${options.arch} on ${process.arch}`)
+  }
 
   const stageDir = options.stageDir
 
@@ -138,10 +187,6 @@ async function buildWithoutTemplate(options: SnapBuilderOptions, scriptDir: stri
   const snapEffectiveOutput = isDestructiveMode ? options.output : "out.snap"
 
   const args = ["snap", "--output", snapEffectiveOutput]
-  if (options.arch && options.arch !== process.arch) {
-    throw new Error(`snapcraft does not currently support building ${options.arch} on ${process.arch}`)
-  }
-
   if (isDestructiveMode) {
     args.push("--destructive-mode")
   }
