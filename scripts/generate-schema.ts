@@ -44,7 +44,7 @@ const settings: TJS.PartialArgs = {
   noExtraProps: true,
   typeOfKeyword: true,
   strictNullChecks: true,
-  // skipLibCheck: true,
+  skipLibCheck: true,
 }
 
 const definitionFile = path.resolve(rootDir, "app-builder-lib/src/configuration.ts")
