@@ -50,7 +50,7 @@ export function build(options: PackagerOptions & PublishOptions, packager: Packa
         }
         buildResult.artifactPaths.push(newArtifact)
         for (const publishConfiguration of publishConfigurations) {
-          publishManager.scheduleUpload(
+          await publishManager.scheduleUpload(
             publishConfiguration,
             {
               file: newArtifact,
