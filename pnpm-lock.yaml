@@ -107,9 +107,6 @@ importers:
       '@types/fs-extra':
         specifier: 9.0.13
         version: 9.0.13
-      '@types/plist':
-        specifier: 3.0.5
-        version: 3.0.5
       async-exit-hook:
         specifier: ^2.0.1
         version: 2.0.1
@@ -255,6 +252,9 @@ importers:
       '@types/js-yaml':
         specifier: 4.0.3
         version: 4.0.3
+      '@types/plist':
+        specifier: 3.0.5
+        version: 3.0.5
       '@types/semver':
         specifier: 7.3.8
         version: 7.3.8
