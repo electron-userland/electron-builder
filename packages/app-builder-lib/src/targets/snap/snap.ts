@@ -241,6 +241,11 @@ export default class SnapTarget extends Target {
       }
     }
 
+    if (this.isUseTemplateApp) {
+      args.template = { templateUrl: `electron4:${snapArch}` }
+      // args.push("--template-url", `electron4:${snapArch}`)
+    }
+
     if (packager.packagerOptions.effectiveOptionComputed != null && (await packager.packagerOptions.effectiveOptionComputed({ snap, desktopFile, args }))) {
       return
     }
@@ -251,11 +256,6 @@ export default class SnapTarget extends Target {
     if (hooksDir != null) {
       args.hooksDir = hooksDir
       // args.push("--hooks", hooksDir)
-    }
-
-    if (this.isUseTemplateApp) {
-      args.template = { templateUrl: `electron4:${snapArch}` }
-      // args.push("--template-url", `electron4:${snapArch}`)
     }
 
     // await executeAppBuilder(args)

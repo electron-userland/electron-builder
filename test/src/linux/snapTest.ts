@@ -67,7 +67,8 @@ test.ifAll.ifDevOrLinuxCi("default stagePackages", async () => {
       effectiveOptionComputed: async ({ snap, args }) => {
         delete snap.parts.app.source
         expect(snap).toMatchSnapshot()
-        return Promise.resolve(false)
+        expect(args).toMatchSnapshot()
+        return Promise.resolve(true)
       },
     })
   }
@@ -103,10 +104,11 @@ test.ifAll.ifDevOrLinuxCi("buildPackages", async () => {
         useTemplateApp: false,
       },
     },
-    effectiveOptionComputed: async ({ snap }) => {
+    effectiveOptionComputed: async ({ snap, args }) => {
       delete snap.parts.app.source
       expect(snap).toMatchSnapshot()
-      return Promise.resolve(false)
+      expect(args).toMatchSnapshot()
+      return Promise.resolve(true)
     },
   })
 })
@@ -142,7 +144,8 @@ test.ifDevOrLinuxCi("plugs option", async () => {
       effectiveOptionComputed: async ({ snap, args }) => {
         delete snap.parts.app.source
         expect(snap).toMatchSnapshot()
-        return Promise.resolve(false)
+        expect(args).toMatchSnapshot()
+        return Promise.resolve(true)
       },
     })
   }
@@ -297,7 +300,8 @@ test.ifDevOrLinuxCi(
     effectiveOptionComputed: async ({ snap, args }) => {
       expect(snap).toMatchSnapshot()
       expect(snap.compression).toBe("xz")
-      return Promise.resolve(false)
+      expect(args).toMatchSnapshot()
+      return Promise.resolve(true)
     },
   })
 )
