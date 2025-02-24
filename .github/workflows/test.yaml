@@ -236,7 +236,9 @@ jobs:
         run: |
           sudo apt-get update -yq
           sudo apt-get install snapcraft
+          sudo snap set system experimental.parallel-instances=true
           sudo snap install multipass
+          sudo snap install multipass_socket
 
       - name: Test
         run: |
