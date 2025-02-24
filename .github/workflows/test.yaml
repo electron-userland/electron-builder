@@ -230,12 +230,13 @@ jobs:
         uses: ./.github/actions/pretest
         with:
           cache-path: ~/.cache/electron
-          cache-key: v-23.3.10-update-electron
+          cache-key: v-23.3.10-snap-electron
 
       - name: Install snapcraft
         run: |
-          apt-get update -yq
-          apt-get install snapcraft
+          sudo apt-get update -yq
+          sudo apt-get install snapcraft
+          sudo snap install multipass
 
       - name: Test
         run: |
