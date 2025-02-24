@@ -1,4 +1,4 @@
-import { Arch, asArray, AsyncTaskManager, InvalidConfigurationError, isEmptyOrSpaces, isPullRequest, log, safeStringifyJson, serializeToYaml } from "builder-util"
+import { Arch, asArray, AsyncTaskManager, exists, InvalidConfigurationError, isEmptyOrSpaces, isPullRequest, log, safeStringifyJson, serializeToYaml } from "builder-util"
 import {
   BitbucketOptions,
   CancellationToken,
@@ -37,11 +37,15 @@ import { PlatformPackager } from "../platformPackager"
 import { expandMacro } from "../util/macroExpander"
 import { WinPackager } from "../winPackager"
 import { createUpdateInfoTasks, UpdateInfoFileTask, writeUpdateInfoFiles } from "./updateInfoBuilder"
+<<<<<<< HEAD
 import { AppInfo } from "../appInfo"
 import { Configuration } from "../configuration"
 import { Platform, Target } from "../core"
 import { PlatformSpecificBuildOptions } from "../options/PlatformSpecificBuildOptions"
 import { ArtifactCreated } from "../packagerApi"
+=======
+import { resolveModule } from "../util/resolve"
+>>>>>>> master
 
 const publishForPrWarning =
   "There are serious security concerns with PUBLISH_FOR_PULL_REQUEST=true (see the  CircleCI documentation (https://circleci.com/docs/1.0/fork-pr-builds/) for details)" +
@@ -113,7 +117,7 @@ export class PublishManager implements PublishContext {
       )
     }
 
-    packager.addAfterPackHandler(async event => {
+    packager.onAfterPack(async event => {
       const packager = event.packager
       if (event.electronPlatformName === "darwin") {
         if (!event.targets.some(it => it.name === "dmg" || it.name === "zip")) {
@@ -131,7 +135,7 @@ export class PublishManager implements PublishContext {
       }
     })
 
-    packager.artifactCreated(event => {
+    packager.onArtifactCreated(async event => {
       const publishConfiguration = event.publishConfig
       if (publishConfiguration == null) {
         this.taskManager.addTask(this.artifactCreatedWithoutExplicitPublishConfig(event))
@@ -139,7 +143,7 @@ export class PublishManager implements PublishContext {
         if (debug.enabled) {
           debug(`artifactCreated (isPublish: ${this.isPublish}): ${safeStringifyJson(event, new Set(["packager"]))},\n  publishConfig: ${safeStringifyJson(publishConfiguration)}`)
         }
-        this.scheduleUpload(publishConfiguration, event, this.getAppInfo(event.packager))
+        await this.scheduleUpload(publishConfiguration, event, this.getAppInfo(event.packager))
       }
     })
   }
@@ -153,12 +157,12 @@ export class PublishManager implements PublishContext {
     return await resolvePublishConfigurations(publishers, null, this.packager, null, true)
   }
 
-  scheduleUpload(publishConfig: PublishConfiguration, event: UploadTask, appInfo: AppInfo): void {
+  async scheduleUpload(publishConfig: PublishConfiguration, event: UploadTask, appInfo: AppInfo): Promise<void> {
     if (publishConfig.provider === "generic") {
       return
     }
 
-    const publisher = this.getOrCreatePublisher(publishConfig, appInfo)
+    const publisher = await this.getOrCreatePublisher(publishConfig, appInfo)
     if (publisher == null) {
       log.debug(
         {
@@ -208,7 +212,7 @@ export class PublishManager implements PublishContext {
           break
         }
 
-        this.scheduleUpload(publishConfig, event, this.getAppInfo(platformPackager))
+        await this.scheduleUpload(publishConfig, event, this.getAppInfo(platformPackager))
       }
     }
 
@@ -223,12 +227,12 @@ export class PublishManager implements PublishContext {
     }
   }
 
-  private getOrCreatePublisher(publishConfig: PublishConfiguration, appInfo: AppInfo): Publisher | null {
+  private async getOrCreatePublisher(publishConfig: PublishConfiguration, appInfo: AppInfo): Promise<Publisher | null> {
     // to not include token into cache key
     const providerCacheKey = safeStringifyJson(publishConfig)
     let publisher = this.nameToPublisher.get(providerCacheKey)
     if (publisher == null) {
-      publisher = createPublisher(this, appInfo.version, publishConfig, this.publishOptions, this.packager)
+      publisher = await createPublisher(this, appInfo.version, publishConfig, this.publishOptions, this.packager)
       this.nameToPublisher.set(providerCacheKey, publisher)
       log.info({ publisher: publisher!.toString() }, "publishing")
     }
@@ -301,7 +305,13 @@ export async function getPublishConfigsForUpdateInfo(
   return publishConfigs
 }
 
-export function createPublisher(context: PublishContext, version: string, publishConfig: PublishConfiguration, options: PublishOptions, packager: Packager): Publisher | null {
+export async function createPublisher(
+  context: PublishContext,
+  version: string,
+  publishConfig: PublishConfiguration,
+  options: PublishOptions,
+  packager: Packager
+): Promise<Publisher | null> {
   if (debug.enabled) {
     debug(`Create publisher: ${safeStringifyJson(publishConfig)}`)
   }
@@ -321,13 +331,13 @@ export function createPublisher(context: PublishContext, version: string, publis
       return null
 
     default: {
-      const clazz = requireProviderClass(provider, packager)
+      const clazz = await requireProviderClass(provider, packager)
       return clazz == null ? null : new clazz(context, publishConfig)
     }
   }
 }
 
-function requireProviderClass(provider: string, packager: Packager): any | null {
+async function requireProviderClass(provider: string, packager: Packager): Promise<any | null> {
   switch (provider) {
     case "github":
       return GitHubPublisher
@@ -351,18 +361,18 @@ function requireProviderClass(provider: string, packager: Packager): any | null 
       return BitbucketPublisher
 
     default: {
-      const name = `electron-publisher-${provider}`
-      let module: any = null
-      try {
-        module = require(path.join(packager.buildResourcesDir, name + ".js"))
-      } catch (_ignored) {
-        log.debug({ path: path.join(packager.buildResourcesDir, name + ".js") }, "Unable to find publish provider in build resources")
-      }
+      const extensions = [".mjs", ".js", ".cjs"]
+      const template = `electron-publisher-${provider}`
+      const name = (ext: string) => `${template}.${ext}`
 
-      if (module == null) {
-        module = require(name)
+      const validPublisherFiles = extensions.map(ext => path.join(packager.buildResourcesDir, name(ext)))
+      for (const potentialFile of validPublisherFiles) {
+        if (await exists(potentialFile)) {
+          const module: any = await resolveModule(packager.appInfo.type, potentialFile)
+          return module.default || module
+        }
       }
-      return module.default || module
+      log.warn({ path: log.filePath(packager.buildResourcesDir), template, extensionsChecked: extensions }, "unable to find publish provider in build resources")
     }
   }
 }
@@ -519,7 +529,7 @@ async function getResolvedPublishConfig(
     return options
   }
 
-  const providerClass = requireProviderClass(options.provider, packager)
+  const providerClass = await requireProviderClass(options.provider, packager)
   if (providerClass != null && providerClass.checkAndResolveOptions != null) {
     await providerClass.checkAndResolveOptions(options, channelFromAppVersion, errorIfCannot)
     return options

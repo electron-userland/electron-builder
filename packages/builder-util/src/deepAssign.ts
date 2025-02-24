@@ -1,3 +1,5 @@
+import { isValidKey } from "./mapper"
+
 function isObject(x: any) {
   if (Array.isArray(x)) {
     return false
@@ -30,7 +32,9 @@ function assignKey(target: any, from: any, key: string) {
 function assign(to: any, from: any) {
   if (to !== from) {
     for (const key of Object.getOwnPropertyNames(from)) {
-      assignKey(to, from, key)
+      if (isValidKey(key)) {
+        assignKey(to, from, key)
+      }
     }
   }
   return to

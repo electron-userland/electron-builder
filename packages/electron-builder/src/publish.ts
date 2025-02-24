@@ -96,7 +96,7 @@ async function publishPackageWithTasks(
 
     for (const newArtifact of uploadTasks) {
       for (const publishConfiguration of publishConfigurations) {
-        publishManager.scheduleUpload(publishConfiguration, newArtifact, appInfo)
+        await publishManager.scheduleUpload(publishConfiguration, newArtifact, appInfo)
       }
     }
 

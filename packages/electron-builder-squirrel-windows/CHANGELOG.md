@@ -1,5 +1,22 @@
 # electron-builder-squirrel-windows
 
+## 26.0.8
+
+### Patch Changes
+
+- Updated dependencies [[`7f6c3fea`](https://github.com/electron-userland/electron-builder/commit/7f6c3fea6fea8cffa00a43413f5335097aca94b0), [`48c9f88b`](https://github.com/electron-userland/electron-builder/commit/48c9f88b185cbc4a52926e6e10791bf293ecda6f), [`7f6c3fea`](https://github.com/electron-userland/electron-builder/commit/7f6c3fea6fea8cffa00a43413f5335097aca94b0)]:
+  - app-builder-lib@26.0.8
+
+## 26.0.7
+
+### Patch Changes
+
+- [#8855](https://github.com/electron-userland/electron-builder/pull/8855) [`bee179b3`](https://github.com/electron-userland/electron-builder/commit/bee179b3cf8163041d280ed8dc5a5ce4f27786c6) Thanks [@beyondkmp](https://github.com/beyondkmp)! - Sign the vendor directory instead of using Squirrel.Windows' signing method
+
+- Updated dependencies [[`c12f86f2`](https://github.com/electron-userland/electron-builder/commit/c12f86f2e254809e70d1f60d89cf9b7264278083), [`3fe27d77`](https://github.com/electron-userland/electron-builder/commit/3fe27d77587a05a7d568b3b21f1df8f0a1650c92)]:
+  - builder-util@26.0.7
+  - app-builder-lib@26.0.7
+
 ## 26.0.6
 
 ### Patch Changes

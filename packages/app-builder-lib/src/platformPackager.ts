@@ -31,6 +31,7 @@ import { Framework, isElectronBased } from "./Framework"
 import { executeAppBuilderAsJson } from "./util/appBuilder"
 import { computeFileSets, computeNodeModuleFileSets, copyAppFiles, ELECTRON_COMPILE_SHIM_FILENAME, transformFiles } from "./util/appFileCopier"
 import { expandMacro as doExpandMacro } from "./util/macroExpander"
+<<<<<<< HEAD
 import { resolveFunction } from "./util/resolve"
 import { Target, Platform, CompressionLevel, TargetSpecificOptions } from "./core"
 import { ElectronPlatformName } from "./electron/ElectronFramework"
@@ -38,6 +39,8 @@ import { FileAssociation } from "./options/FileAssociation"
 import { PlatformSpecificBuildOptions, AsarOptions } from "./options/PlatformSpecificBuildOptions"
 import { Packager } from "./packager"
 import { PackagerOptions } from "./packagerApi"
+=======
+>>>>>>> master
 
 export type DoPackOptions<DC extends PlatformSpecificBuildOptions> = {
   outDir: string
@@ -150,7 +153,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 
   dispatchArtifactCreated(file: string, target: Target | null, arch: Arch | null, safeArtifactName?: string | null): Promise<void> {
-    return this.info.callArtifactBuildCompleted({
+    return this.info.emitArtifactBuildCompleted({
       file,
       safeArtifactName,
       target,
@@ -232,17 +235,14 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
     const { outDir, appOutDir, platformName, arch, platformSpecificBuildOptions, targets, options } = packOptions
 
-    const beforePack = await resolveFunction(this.appInfo.type, this.config.beforePack, "beforePack")
-    if (beforePack != null) {
-      await beforePack({
-        appOutDir,
-        outDir,
-        arch,
-        targets,
-        packager: this,
-        electronPlatformName: platformName,
-      })
-    }
+    await this.info.emitBeforePack({
+      appOutDir,
+      outDir,
+      arch,
+      targets,
+      packager: this,
+      electronPlatformName: platformName,
+    })
 
     await this.info.installAppDependencies(this.platform, arch)
 
@@ -269,17 +269,14 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       version: framework.version,
     })
 
-    const afterExtract = await resolveFunction(this.appInfo.type, this.config.afterExtract, "afterExtract")
-    if (afterExtract != null) {
-      await afterExtract({
-        appOutDir,
-        outDir,
-        arch,
-        targets,
-        packager: this,
-        electronPlatformName: platformName,
-      })
-    }
+    await this.info.emitAfterExtract({
+      appOutDir,
+      outDir,
+      arch,
+      targets,
+      packager: this,
+      electronPlatformName: platformName,
+    })
 
     const excludePatterns: Array<Minimatch> = []
 
@@ -350,7 +347,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       return
     }
 
-    await this.info.afterPack(packContext)
+    await this.info.emitAfterPack(packContext)
 
     if (framework.afterPack != null) {
       await framework.afterPack(packContext)
@@ -447,13 +444,10 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       electronPlatformName: platformName,
     }
     const didSign = await this.signApp(packContext, isAsar)
-    const afterSign = await resolveFunction(this.appInfo.type, this.config.afterSign, "afterSign")
-    if (afterSign != null) {
-      if (didSign) {
-        await Promise.resolve(afterSign(packContext))
-      } else {
-        log.warn(null, `skipping "afterSign" hook as no signing occurred, perhaps you intended "afterPack"?`)
-      }
+    if (didSign) {
+      await this.info.emitAfterSign(packContext)
+    } else if (this.info.filterPackagerEventListeners("afterSign", "user").length) {
+      log.warn(null, `skipping "afterSign" hook as no signing occurred, perhaps you intended "afterPack"?`)
     }
   }
 

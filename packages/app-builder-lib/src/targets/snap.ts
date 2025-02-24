@@ -181,7 +181,7 @@ export default class SnapTarget extends Target {
     // tslint:disable-next-line:no-invalid-template-strings
     const artifactName = packager.expandArtifactNamePattern(this.options, "snap", arch, "${name}_${version}_${arch}.${ext}", false)
     const artifactPath = path.join(this.outDir, artifactName)
-    await packager.info.callArtifactBuildStarted({
+    await packager.info.emitArtifactBuildStarted({
       targetPresentableName: "snap",
       file: artifactPath,
       arch,
@@ -254,7 +254,7 @@ export default class SnapTarget extends Target {
 
     const publishConfig = findSnapPublishConfig(this.packager.config)
 
-    await packager.info.callArtifactBuildCompleted({
+    await packager.info.emitArtifactBuildCompleted({
       file: artifactPath,
       safeArtifactName: packager.computeSafeArtifactName(artifactName, "snap", arch, false),
       target: this,

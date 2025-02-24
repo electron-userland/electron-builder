@@ -289,36 +289,36 @@ File `myBeforePackHook.js` in the project root directory:
     }
     ```
    */
-  readonly beforePack?: Hook<BeforePackContext, any> | string | null
+  readonly beforePack?: Hook<BeforePackContext, void> | string | null
 
   /**
    * The function (or path to file or module id) to be [run after the prebuilt Electron binary has been extracted to the output directory](#afterextract)
    * Same setup as {@link beforePack}
    */
-  readonly afterExtract?: Hook<AfterExtractContext, any> | string | null
+  readonly afterExtract?: Hook<AfterExtractContext, void> | string | null
 
   /**
    * The function (or path to file or module id) to be [run after pack](#afterpack) (but before pack into distributable format and sign).
    * Same setup as {@link beforePack}
    */
-  readonly afterPack?: Hook<AfterPackContext, any> | string | null
+  readonly afterPack?: Hook<AfterPackContext, void> | string | null
 
   /**
    * The function (or path to file or module id) to be [run after pack and sign](#aftersign) (but before pack into distributable format).
    * Same setup as {@link beforePack}
    */
-  readonly afterSign?: Hook<AfterPackContext, any> | string | null
+  readonly afterSign?: Hook<AfterPackContext, void> | string | null
 
   /**
    * The function (or path to file or module id) to be run on artifact build start.
    * Same setup as {@link beforePack}
    */
-  readonly artifactBuildStarted?: Hook<ArtifactBuildStarted, any> | string | null
+  readonly artifactBuildStarted?: Hook<ArtifactBuildStarted, void> | string | null
   /**
    * The function (or path to file or module id) to be run on artifact build completed.
    * Same setup as {@link beforePack}
    */
-  readonly artifactBuildCompleted?: Hook<ArtifactCreated, any> | string | null
+  readonly artifactBuildCompleted?: Hook<ArtifactCreated, void> | string | null
   /**
    * The function (or path to file or module id) to be run after all artifacts are built.
 
@@ -340,11 +340,11 @@ Configuration in the same way as `afterPack` (see above).
   /**
    * The function (or path to file or module id) to be run after MSI project created on disk - not packed into .msi package yet.
    */
-  readonly msiProjectCreated?: Hook<string, any> | string | null
+  readonly msiProjectCreated?: Hook<string, void> | string | null
   /**
    * The function (or path to file or module id) to be run after Appx manifest created on disk - not packed into .appx package yet.
    */
-  readonly appxManifestCreated?: Hook<string, any> | string | null
+  readonly appxManifestCreated?: Hook<string, void> | string | null
   /**
    * The function (or path to file or module id) to be [run on each node module](#onnodemodulefile) file. Returning `true`/`false` will determine whether to force include or to use the default copier logic
    */

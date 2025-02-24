@@ -2,7 +2,6 @@ import { assertPack, linuxDirTarget, verifyAsarFileTree, modifyPackageJson } fro
 import { Platform, Arch, DIR_TARGET } from "electron-builder"
 import { outputFile } from "fs-extra"
 import * as path from "path"
-import { readAsarJson } from "app-builder-lib/out/asar/asar"
 
 test("yarn workspace", () =>
   assertPack(
@@ -85,9 +84,7 @@ test("pnpm es5-ext without hoisted config", () =>
           outputFile(path.join(projectDir, "pnpm-lock.yaml"), ""),
         ])
       },
-      packed: async context => {
-        expect(await readAsarJson(path.join(context.getResources(Platform.LINUX), "app.asar"), "node_modules/d/package.json")).toMatchSnapshot()
-      },
+      packed: context => verifyAsarFileTree(context.getResources(Platform.LINUX)),
     }
   ))
 
@@ -188,6 +185,53 @@ test("yarn some module add by manual instead of install", () =>
     }
   ))
 
+//https://github.com/electron-userland/electron-builder/issues/8857
+test.ifAll("yarn max stack", () =>
+  assertPack(
+    "test-app-hoisted",
+    {
+      targets: linuxDirTarget,
+    },
+    {
+      isInstallDepsBefore: true,
+      projectDirCreated: projectDir => {
+        return Promise.all([
+          modifyPackageJson(projectDir, data => {
+            data.dependencies = {
+              "npm-run-all": "^4.1.5",
+            }
+          }),
+          outputFile(path.join(projectDir, "yarn.lock"), ""),
+        ])
+      },
+      packed: context => verifyAsarFileTree(context.getResources(Platform.LINUX)),
+    }
+  )
+)
+
+test.ifAll("pnpm max stack", () =>
+  assertPack(
+    "test-app-hoisted",
+    {
+      targets: linuxDirTarget,
+    },
+    {
+      isInstallDepsBefore: true,
+      projectDirCreated: projectDir => {
+        return Promise.all([
+          modifyPackageJson(projectDir, data => {
+            data.dependencies = {
+              "npm-run-all": "^4.1.5",
+            }
+          }),
+          outputFile(path.join(projectDir, "pnpm-lock.yaml"), ""),
+        ])
+      },
+      packed: context => verifyAsarFileTree(context.getResources(Platform.LINUX)),
+    }
+  )
+)
+
 //github.com/electron-userland/electron-builder/issues/8842
 test.ifAll("yarn ms", () =>
   assertPack(
@@ -211,9 +255,7 @@ test.ifAll("yarn ms", () =>
           outputFile(path.join(projectDir, "yarn.lock"), ""),
         ])
       },
-      packed: async context => {
-        expect(await readAsarJson(path.join(context.getResources(Platform.LINUX), "app.asar"), "node_modules/ms/package.json")).toMatchSnapshot()
-      },
+      packed: context => verifyAsarFileTree(context.getResources(Platform.LINUX)),
     }
   )
 )
@@ -237,9 +279,7 @@ test("yarn parse-asn1", () =>
           outputFile(path.join(projectDir, "yarn.lock"), ""),
         ])
       },
-      packed: async context => {
-        expect(await readAsarJson(path.join(context.getResources(Platform.LINUX), "app.asar"), "node_modules/asn1.js/package.json")).toMatchSnapshot()
-      },
+      packed: context => verifyAsarFileTree(context.getResources(Platform.LINUX)),
     }
   ))
 
@@ -262,6 +302,7 @@ test("npm tar", () =>
           outputFile(path.join(projectDir, "package-lock.json"), ""),
         ])
       },
+<<<<<<< HEAD
       packed: async context => {
         const tar = await readAsarJson(path.join(context.getResources(Platform.LINUX), "app.asar"), "node_modules/tar/package.json")
         const minipass = await readAsarJson(path.join(context.getResources(Platform.LINUX), "app.asar"), "node_modules/minipass/package.json")
@@ -270,5 +311,79 @@ test("npm tar", () =>
         expect(minipass.version).toEqual("7.1.2")
         expect(minizlib.version).toEqual("3.0.1")
       },
+=======
+      packed: context => verifyAsarFileTree(context.getResources(Platform.LINUX)),
+    }
+  )
+)
+
+//github.com/electron-userland/electron-builder/issues/8881
+test.ifAll("pnpm node-linker=hoisted", () =>
+  assertPack(
+    "test-app-hoisted",
+    {
+      targets: linuxDirTarget,
+    },
+    {
+      isInstallDepsBefore: true,
+      projectDirCreated: projectDir => {
+        return Promise.all([
+          modifyPackageJson(projectDir, data => {
+            data.dependencies = {
+              dayjs: "1.11.13",
+            }
+          }),
+          outputFile(path.join(projectDir, "pnpm-lock.yaml"), ""),
+          outputFile(path.join(projectDir, ".npmrc"), "node-linker=hoisted"),
+        ])
+      },
+      packed: context => verifyAsarFileTree(context.getResources(Platform.LINUX)),
+    }
+  )
+)
+test.ifAll("pnpm shamefully-hoist=true", () =>
+  assertPack(
+    "test-app-hoisted",
+    {
+      targets: linuxDirTarget,
+    },
+    {
+      isInstallDepsBefore: true,
+      projectDirCreated: projectDir => {
+        return Promise.all([
+          modifyPackageJson(projectDir, data => {
+            data.dependencies = {
+              dayjs: "1.11.13",
+            }
+          }),
+          outputFile(path.join(projectDir, "pnpm-lock.yaml"), ""),
+          outputFile(path.join(projectDir, ".npmrc"), "shamefully-hoist=true"),
+        ])
+      },
+      packed: context => verifyAsarFileTree(context.getResources(Platform.LINUX)),
+    }
+  )
+)
+test.ifAll("pnpm node-linker=hoisted", () =>
+  assertPack(
+    "test-app-hoisted",
+    {
+      targets: linuxDirTarget,
+    },
+    {
+      isInstallDepsBefore: true,
+      projectDirCreated: projectDir => {
+        return Promise.all([
+          modifyPackageJson(projectDir, data => {
+            data.dependencies = {
+              dayjs: "1.11.13",
+            }
+          }),
+          outputFile(path.join(projectDir, "pnpm-lock.yaml"), ""),
+          outputFile(path.join(projectDir, ".npmrc"), "public-hoist-pattern=*"),
+        ])
+      },
+      packed: context => verifyAsarFileTree(context.getResources(Platform.LINUX)),
+>>>>>>> master
     }
   ))

@@ -33,7 +33,7 @@ export default class FlatpakTarget extends Target {
     const { packager, options } = this
     const artifactName = packager.expandArtifactNamePattern(options, "flatpak", arch, undefined, false)
     const artifactPath = path.join(this.outDir, artifactName)
-    await packager.info.callArtifactBuildStarted({
+    await packager.info.emitArtifactBuildStarted({
       targetPresentableName: "flatpak",
       file: artifactPath,
       arch,
@@ -46,7 +46,7 @@ export default class FlatpakTarget extends Target {
 
     await stageDir.cleanup()
 
-    await packager.info.callArtifactBuildCompleted({
+    await packager.info.emitArtifactBuildCompleted({
       file: artifactPath,
       safeArtifactName: packager.computeSafeArtifactName(artifactName, "flatpak", arch, false),
       target: this,
