@@ -1054,7 +1054,12 @@ exports[`default stagePackages 1`] = `
 
 exports[`default stagePackages 2`] = `
 {
-  "linux": [],
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
 }
 `;
 

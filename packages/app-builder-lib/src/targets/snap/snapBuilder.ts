@@ -2,7 +2,7 @@ import { getBinFromUrl, getBin } from "../../binDownload"
 import { exec, log, isEmptyOrSpaces, copyDir, exists } from "builder-util"
 import { copyFile, mkdir, unlink, writeFile, rename, chmod, rm, readdir } from "fs-extra"
 import * as path from "path"
-import { assets as SNAP_ASSETS } from "./snapScripts"
+import { SNAP_ASSETS } from "./snapScripts"
 import { getMksquashfs } from "./linuxTools"
 import { checkSnapcraftVersion } from "builder-util/out/snap"
 

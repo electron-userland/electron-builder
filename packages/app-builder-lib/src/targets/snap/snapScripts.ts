@@ -62,20 +62,20 @@ export function desktopScriptsDesktopInitSh(): Asset {
   }
 }
 
-export const assets: Record<string, () => Asset> = {
+export const SNAP_ASSETS: Record<string, () => Asset> = {
   "desktop-scripts/desktop-common.sh": desktopScriptsDesktopCommonSh,
   "desktop-scripts/desktop-gnome-specific.sh": desktopScriptsDesktopGnomeSpecificSh,
   "desktop-scripts/desktop-init.sh": desktopScriptsDesktopInitSh,
 }
 
 export function asset(name: string): Buffer {
-  const assetFunc = assets[name.replace(/\\/g, "/")]
+  const assetFunc = SNAP_ASSETS[name.replace(/\\/g, "/")]
   if (!assetFunc) throw new Error(`Asset ${name} not found`)
   return assetFunc().bytes
 }
 
 export function AssetInfo(name: string): AssetInfo {
-  const assetFunc = assets[name.replace(/\\/g, "/")]
+  const assetFunc = SNAP_ASSETS[name.replace(/\\/g, "/")]
   if (!assetFunc) throw new Error(`AssetInfo ${name} not found`)
   return assetFunc().info
 }
@@ -90,7 +90,7 @@ export function RestoreAsset(dir: string, name: string): void {
 
 export function RestoreAssets(dir: string, name: string): void {
   try {
-    const children = Object.keys(assets).filter(asset => asset.startsWith(name + "/"))
+    const children = Object.keys(SNAP_ASSETS).filter(asset => asset.startsWith(name + "/"))
     if (!children.length) {
       RestoreAsset(dir, name)
     } else {
