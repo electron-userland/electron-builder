@@ -211,7 +211,7 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
     )
 
     // `CFBundleDocumentTypes` may be defined in `mac.extendInfo`, so we need to merge it in that case
-    appPlist.CFBundleDocumentTypes = [...((appPlist.CFBundleDocumentTypes as any[]) || []), ...documentTypes]
+    appPlist.CFBundleDocumentTypes = [...((appPlist.CFBundleDocumentTypes as PlistValue[]) || []), ...documentTypes]
   }
 
   if (asarIntegrity != null) {
