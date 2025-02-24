@@ -269,8 +269,8 @@ export default class SnapTarget extends Target {
 }
 
 function findSnapPublishConfig(config?: Configuration): SnapStoreOptions | null {
-  const fallback = { provider: "snapStore" }
-  
+  const fallback: SnapStoreOptions = { provider: "snapStore" }
+
   if (!config) {
     return fallback
   }
