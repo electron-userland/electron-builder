@@ -6,9 +6,6 @@
   "files": [
     "out"
   ],
-  "scripts": {
-    "compile": "rollup -c rollup.config.ts --configPlugin typescript"
-  },
   "bin": {
     "electron-builder": "./cli.js",
     "install-app-deps": "./install-app-deps.js"

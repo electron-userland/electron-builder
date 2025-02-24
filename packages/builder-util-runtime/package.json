@@ -14,9 +14,6 @@
   "files": [
     "out"
   ],
-  "scripts": {
-    "compile": "rollup -c rollup.config.ts --configPlugin typescript"
-  },
   "engines": {
     "node": ">=12.0.0"
   },

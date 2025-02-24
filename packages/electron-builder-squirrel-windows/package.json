@@ -15,9 +15,6 @@
     "out",
     "template.nuspectemplate"
   ],
-  "scripts": {
-    "compile": "rollup -c rollup.config.ts --configPlugin typescript"
-  },
   "dependencies": {
     "app-builder-lib": "workspace:*",
     "builder-util": "workspace:*",
