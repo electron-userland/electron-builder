@@ -77,7 +77,7 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
     return await parsePlistFile(filePath)
   }
 
-  const appPlist: PlistObject = (await parsePlistFile(appPlistFilename)) as PlistObject
+  const appPlist = (await safeParsePlistFile(appPlistFilename)) as PlistObject
   if (appPlist == null) {
     throw new Error("corrupted Electron dist")
   }
