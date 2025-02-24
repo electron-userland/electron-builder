@@ -1,5 +1,5 @@
 import * as path from "path"
-//@ts-ignore
+// @ts-ignore
 import * as _sanitizeFileName from "sanitize-filename"
 
 export function sanitizeFileName(s: string, normalizeNfd = false): string {

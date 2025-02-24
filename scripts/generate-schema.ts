@@ -6,10 +6,10 @@ import * as TJS from "typescript-json-schema"
 const rootDir = path.resolve(__dirname, "../packages")
 
 const compilerOptions: TJS.CompilerOptions = {
-  // outDir: "out",
-  baseUrl: rootDir,
   target: TypeScript.ScriptTarget.ES2022,
   module: TypeScript.ModuleKind.ES2022,
+  // outDir: "out",
+  baseUrl: rootDir,
   esModuleInterop: false,
   forceConsistentCasingInFileNames: true,
   moduleResolution: TypeScript.ModuleResolutionKind.Node10,
@@ -29,7 +29,13 @@ const compilerOptions: TJS.CompilerOptions = {
   newLine: TypeScript.NewLineKind.LineFeed,
 
   noEmitOnError: true,
-  types: ["../../typings"],
+  typesRoots: [
+    "../typings",
+    "../../typings",
+    //
+    "../node_module/@types",
+    "node_module/@types"
+  ],
 }
 
 // schema generator args
@@ -38,7 +44,7 @@ const settings: TJS.PartialArgs = {
   noExtraProps: true,
   typeOfKeyword: true,
   strictNullChecks: true,
-  skipLibCheck: true,
+  // skipLibCheck: true,
 }
 
 const definitionFile = path.resolve(rootDir, "app-builder-lib/src/configuration.ts")

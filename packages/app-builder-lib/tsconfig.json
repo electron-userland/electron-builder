@@ -1,13 +1,17 @@
 {
-  "extends": "../tsconfig-base.json",
+  "extends": "./tsconfig-scheme.json",
+  "jsdoc": {
+    "out": "../../scripts/jsdoc/out/builder-lib",
+    "examples": "../../scripts/jsdoc/examples",
+    "access": "public"
+  },
   "compilerOptions": {
     "outDir": "out",
-    "rootDir": "src"
+    "rootDir": "src",
   },
   "include": [
       "src/**/*.ts",
-      "src/typings/*.d.ts",
-      "../../typings/*.d.ts",
+      "../../typings/*.d.ts"
   ],
   "exclude": [
   ],
