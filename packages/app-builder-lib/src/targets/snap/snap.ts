@@ -249,7 +249,10 @@ export default class SnapTarget extends Target {
     // snapshot tests verify `args`, but we need to extract the dynamic/temp paths from the object first
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { appDir, icon, output, stageDir: _stageDir, ...argsForSnapshotTests } = args
-    if (packager.packagerOptions.effectiveOptionComputed != null && (await packager.packagerOptions.effectiveOptionComputed({ snap, desktopFile, args: argsForSnapshotTests }))) {
+    if (
+      packager.packagerOptions.effectiveOptionComputed != null &&
+      (await packager.packagerOptions.effectiveOptionComputed({ snap, desktopFile, args: { argsForSnapshotTests, isUseTemplateApp: this.isUseTemplateApp } }))
+    ) {
       return
     }
 

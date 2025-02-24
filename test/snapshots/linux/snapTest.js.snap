@@ -368,11 +368,14 @@ exports[`buildPackages 1`] = `
 
 exports[`buildPackages 2`] = `
 {
-  "arch": "amd64",
-  "executableName": "sep",
-  "extraAppArgs": [
-    "--no-sandbox",
-  ],
+  "argsForSnapshotTests": {
+    "arch": "amd64",
+    "executableName": "sep",
+    "extraAppArgs": [
+      "--no-sandbox",
+    ],
+  },
+  "isUseTemplateApp": false,
 }
 `;
 
@@ -597,12 +600,15 @@ exports[`compression option 1`] = `
 
 exports[`compression option 2`] = `
 {
-  "arch": "amd64",
-  "compression": "xz",
-  "executableName": "sep",
-  "extraAppArgs": [
-    "--no-sandbox",
-  ],
+  "argsForSnapshotTests": {
+    "arch": "amd64",
+    "compression": "xz",
+    "executableName": "sep",
+    "extraAppArgs": [
+      "--no-sandbox",
+    ],
+  },
+  "isUseTemplateApp": false,
 }
 `;
 
@@ -1070,11 +1076,14 @@ exports[`default stagePackages 1`] = `
 
 exports[`default stagePackages 2`] = `
 {
-  "arch": "amd64",
-  "executableName": "sep",
-  "extraAppArgs": [
-    "--no-sandbox",
-  ],
+  "argsForSnapshotTests": {
+    "arch": "amd64",
+    "executableName": "sep",
+    "extraAppArgs": [
+      "--no-sandbox",
+    ],
+  },
+  "isUseTemplateApp": false,
 }
 `;
 
@@ -1246,11 +1255,14 @@ exports[`default stagePackages 4`] = `
 
 exports[`default stagePackages 5`] = `
 {
-  "arch": "amd64",
-  "executableName": "sep",
-  "extraAppArgs": [
-    "--no-sandbox",
-  ],
+  "argsForSnapshotTests": {
+    "arch": "amd64",
+    "executableName": "sep",
+    "extraAppArgs": [
+      "--no-sandbox",
+    ],
+  },
+  "isUseTemplateApp": false,
 }
 `;
 
@@ -1422,11 +1434,14 @@ exports[`default stagePackages 7`] = `
 
 exports[`default stagePackages 8`] = `
 {
-  "arch": "amd64",
-  "executableName": "sep",
-  "extraAppArgs": [
-    "--no-sandbox",
-  ],
+  "argsForSnapshotTests": {
+    "arch": "amd64",
+    "executableName": "sep",
+    "extraAppArgs": [
+      "--no-sandbox",
+    ],
+  },
+  "isUseTemplateApp": false,
 }
 `;
 
@@ -1599,11 +1614,14 @@ exports[`default stagePackages 10`] = `
 
 exports[`default stagePackages 11`] = `
 {
-  "arch": "amd64",
-  "executableName": "sep",
-  "extraAppArgs": [
-    "--no-sandbox",
-  ],
+  "argsForSnapshotTests": {
+    "arch": "amd64",
+    "executableName": "sep",
+    "extraAppArgs": [
+      "--no-sandbox",
+    ],
+  },
+  "isUseTemplateApp": false,
 }
 `;
 
@@ -1874,8 +1892,11 @@ exports[`plugs option 1`] = `
 
 exports[`plugs option 2`] = `
 {
-  "arch": "amd64",
-  "executableName": "testapp",
+  "argsForSnapshotTests": {
+    "arch": "amd64",
+    "executableName": "testapp",
+  },
+  "isUseTemplateApp": false,
 }
 `;
 
@@ -2082,8 +2103,11 @@ exports[`plugs option 4`] = `
 
 exports[`plugs option 5`] = `
 {
-  "arch": "amd64",
-  "executableName": "testapp",
+  "argsForSnapshotTests": {
+    "arch": "amd64",
+    "executableName": "testapp",
+  },
+  "isUseTemplateApp": false,
 }
 `;
 
