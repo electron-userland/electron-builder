@@ -246,7 +246,10 @@ export default class SnapTarget extends Target {
       // args.push("--template-url", `electron4:${snapArch}`)
     }
 
-    if (packager.packagerOptions.effectiveOptionComputed != null && (await packager.packagerOptions.effectiveOptionComputed({ snap, desktopFile, args }))) {
+    // snapshot tests verify `args`, but we need to extract the dynamic/temp paths from the object first
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { appDir, icon, output, stageDir: _stageDir, ...argsForSnapshotTests } = args
+    if (packager.packagerOptions.effectiveOptionComputed != null && (await packager.packagerOptions.effectiveOptionComputed({ snap, desktopFile, args: argsForSnapshotTests }))) {
       return
     }
 
