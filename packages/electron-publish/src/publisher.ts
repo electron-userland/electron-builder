@@ -1,6 +1,6 @@
 import { log, PADDING } from "builder-util"
 import { ProgressCallbackTransform, PublishProvider } from "builder-util-runtime"
-import chalk from "chalk"
+import * as chalk from "chalk"
 import { createReadStream, Stats } from "fs-extra"
 import { PublishContext, UploadTask } from "."
 import { ProgressBar } from "./progress"

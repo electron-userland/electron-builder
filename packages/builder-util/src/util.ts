@@ -1,6 +1,6 @@
 import { appBuilderPath } from "app-builder-bin"
 import { retry as _retry, Nullish, safeStringifyJson } from "builder-util-runtime"
-import chalk from "chalk"
+import * as chalk from "chalk"
 import { ChildProcess, execFile, ExecFileOptions, SpawnOptions } from "child_process"
 import { spawn as _spawn } from "cross-spawn"
 import { createHash } from "crypto"

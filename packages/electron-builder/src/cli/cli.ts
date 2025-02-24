@@ -4,7 +4,7 @@ import { getElectronVersion } from "app-builder-lib/out/electron/electronVersion
 import { loadEnv } from "app-builder-lib/out/util/config/load"
 import { nodeGypRebuild } from "app-builder-lib/out/util/yarn"
 import { ExecError, InvalidConfigurationError, log } from "builder-util"
-import chalk from "chalk"
+import * as chalk from "chalk"
 import { readJson } from "fs-extra"
 import * as isCi from "is-ci"
 import * as path from "path"

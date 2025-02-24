@@ -1,6 +1,6 @@
 import { build as _build, Configuration, DIR_TARGET, Packager, PackagerOptions, Platform } from "app-builder-lib"
 import { addValue, Arch, archFromString, deepAssign } from "builder-util"
-import chalk from "chalk"
+import * as chalk from "chalk"
 import { PublishOptions } from "electron-publish"
 import * as yargs from "yargs"
 
