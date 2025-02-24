@@ -241,7 +241,7 @@ jobs:
       - name: Test
         run: |
           echo $TEST_RUNNER_IMAGE_TAG
-          pnpm ci:test
+          pnpm ci:test -- --runInBand
         env:
           TEST_FILES: snapTest
           FORCE_COLOR: 1
