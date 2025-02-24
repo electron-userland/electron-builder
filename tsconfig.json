@@ -2,15 +2,6 @@
   "files": [],
   "references": [
     {
-      "path": "./packages/builder-util"
-    },
-    {
-      "path": "./packages/builder-util-runtime"
-    },
-    {
-      "path": "./packages/app-builder-lib"
-    },
-    {
       "path": "./packages/electron-builder"
     },
     {
@@ -21,6 +12,12 @@
     },
     {
       "path": "./packages/electron-builder-squirrel-windows"
+    },
+    {
+      "path": "./test"
+    },
+    {
+      "path": "./scripts/renderer"
     }
   ]
 }

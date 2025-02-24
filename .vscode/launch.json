@@ -6,7 +6,7 @@
           "request": "launch",
           "name": "Vitest TEST_FILES",
           "runtimeExecutable": "pnpm",
-          "program": "vitest",
+          "program": "ci:test",
           "console": "integratedTerminal",
           "internalConsoleOptions": "openOnFirstSessionStart",
           "env": {
