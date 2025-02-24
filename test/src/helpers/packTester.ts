@@ -2,7 +2,7 @@ import { PublishManager } from "app-builder-lib"
 import { readAsar } from "app-builder-lib/out/asar/asar"
 import { computeArchToTargetNamesMap } from "app-builder-lib/out/targets/targetFactory"
 import { getLinuxToolsPath } from "app-builder-lib/out/targets/tools"
-import { parsePlistFile } from "app-builder-lib/out/util/plist"
+import { parsePlistFile, PlistObject } from "app-builder-lib/out/util/plist"
 import { AsarIntegrity } from "app-builder-lib/src/asar/integrity"
 import { addValue, copyDir, deepAssign, exec, executeFinally, FileCopier, getPath7x, getPath7za, log, spawn, USE_HARD_LINKS, walk } from "builder-util"
 import { CancellationToken, UpdateFileInfo } from "builder-util-runtime"
@@ -330,7 +330,7 @@ function parseDebControl(info: string): any {
 async function checkMacResult(packager: Packager, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions, packedAppDir: string) {
   const appInfo = packager.appInfo
   const plistPath = path.join(packedAppDir, "Contents", "Info.plist")
-  const info = await parsePlistFile(plistPath)
+  const info = (await parsePlistFile(plistPath)) as PlistObject
 
   expect(info).toMatchObject({
     CFBundleVersion: info.CFBundleVersion === "50" ? "50" : `${appInfo.version}.${process.env.TRAVIS_BUILD_NUMBER || process.env.CIRCLE_BUILD_NUM}`,
@@ -352,7 +352,7 @@ async function checkMacResult(packager: Packager, packagerOptions: PackagerOptio
   delete info.NSRequiresAquaSystemAppearance
   delete info.NSQuitAlwaysKeepsWindows
   if (info.NSAppTransportSecurity != null) {
-    delete info.NSAppTransportSecurity.NSAllowsArbitraryLoads
+    delete (info.NSAppTransportSecurity as PlistObject).NSAllowsArbitraryLoads
   }
   // test value
   if (info.LSMinimumSystemVersion !== "10.12.0") {
@@ -363,7 +363,7 @@ async function checkMacResult(packager: Packager, packagerOptions: PackagerOptio
 
   if (checksumData != null) {
     for (const name of Object.keys(checksumData)) {
-      checksumData[name] = { algorithm: "SHA256", hash: "hash" }
+      ;(checksumData as Record<string, any>)[name] = { algorithm: "SHA256", hash: "hash" }
     }
     snapshot.ElectronAsarIntegrity = checksumData
   }

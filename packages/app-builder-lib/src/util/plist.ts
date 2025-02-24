@@ -1,7 +1,13 @@
 import { build, parse } from "plist"
 import * as fs from "fs"
 
-function sortObjectKeys(obj: any): any {
+type PlistValue = string | number | boolean | Date | PlistObject | PlistValue[]
+
+interface PlistObject {
+  [key: string]: PlistValue
+}
+
+function sortObjectKeys(obj: PlistValue): PlistValue {
   if (obj === null || typeof obj !== "object") {
     return obj
   }
@@ -10,28 +16,24 @@ function sortObjectKeys(obj: any): any {
     return obj.map(sortObjectKeys)
   }
 
-  return Object.keys(obj)
+  const result: PlistObject = {}
+  Object.keys(obj)
     .sort()
-    .reduce((result: any, key: string) => {
-      result[key] = sortObjectKeys(obj[key])
-      return result
-    }, {})
+    .forEach(key => {
+      result[key] = sortObjectKeys((obj as PlistObject)[key])
+    })
+  return result
 }
 
-export async function savePlistFile(path: string, data: any): Promise<void> {
+export async function savePlistFile(path: string, data: PlistValue): Promise<void> {
   const sortedData = sortObjectKeys(data)
   const plist = build(sortedData)
   await fs.promises.writeFile(path, plist)
 }
 
-export async function parsePlistFile(file: string): Promise<any> {
-  try {
-    const data = await fs.promises.readFile(file, "utf8")
-    return parse(data)
-  } catch (e: any) {
-    if (e.code === "ENOENT") {
-      return null
-    }
-    throw e
-  }
+export async function parsePlistFile(file: string): Promise<PlistValue> {
+  const data = await fs.promises.readFile(file, "utf8")
+  return parse(data) as PlistValue
 }
+
+export type { PlistValue, PlistObject }

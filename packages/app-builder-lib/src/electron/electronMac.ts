@@ -5,7 +5,7 @@ import { filterCFBundleIdentifier } from "../appInfo"
 import { AsarIntegrity } from "../asar/integrity"
 import { MacPackager } from "../macPackager"
 import { normalizeExt } from "../platformPackager"
-import { savePlistFile, parsePlistFile } from "../util/plist"
+import { savePlistFile, parsePlistFile, PlistObject } from "../util/plist"
 import { createBrandingOpts } from "./ElectronFramework"
 
 function doRename(basePath: string, oldName: string, newName: string) {
@@ -69,17 +69,17 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
   const helperGPUPlistFilename = path.join(frameworksPath, `${electronBranding.productName} Helper (GPU).app`, "Contents", "Info.plist")
   const helperLoginPlistFilename = path.join(loginItemPath, `${electronBranding.productName} Login Helper.app`, "Contents", "Info.plist")
 
-  const appPlist = await parsePlistFile(appPlistFilename)
+  const appPlist: PlistObject = (await parsePlistFile(appPlistFilename)) as PlistObject
   if (appPlist == null) {
     throw new Error("corrupted Electron dist")
   }
-  const helperPlist = await parsePlistFile(helperPlistFilename)
-  const helperEHPlist = await parsePlistFile(helperEHPlistFilename)
-  const helperNPPlist = await parsePlistFile(helperNPPlistFilename)
-  const helperRendererPlist = await parsePlistFile(helperRendererPlistFilename)
-  const helperPluginPlist = await parsePlistFile(helperPluginPlistFilename)
-  const helperGPUPlist = await parsePlistFile(helperGPUPlistFilename)
-  const helperLoginPlist = await parsePlistFile(helperLoginPlistFilename)
+  const helperPlist = (await parsePlistFile(helperPlistFilename)) as PlistObject
+  const helperEHPlist = (await parsePlistFile(helperEHPlistFilename)) as string
+  const helperNPPlist = (await parsePlistFile(helperNPPlistFilename)) as string
+  const helperRendererPlist = (await parsePlistFile(helperRendererPlistFilename)) as string
+  const helperPluginPlist = (await parsePlistFile(helperPluginPlistFilename)) as string
+  const helperGPUPlist = (await parsePlistFile(helperGPUPlistFilename)) as string
+  const helperLoginPlist = (await parsePlistFile(helperLoginPlistFilename)) as PlistObject
 
   const buildMetadata = packager.config
 
@@ -201,11 +201,11 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
     )
 
     // `CFBundleDocumentTypes` may be defined in `mac.extendInfo`, so we need to merge it in that case
-    appPlist.CFBundleDocumentTypes = [...(appPlist.CFBundleDocumentTypes || []), ...documentTypes]
+    appPlist.CFBundleDocumentTypes = [...((appPlist.CFBundleDocumentTypes as any[]) || []), ...documentTypes]
   }
 
   if (asarIntegrity != null) {
-    appPlist.ElectronAsarIntegrity = asarIntegrity
+    appPlist.ElectronAsarIntegrity = JSON.parse(JSON.stringify(asarIntegrity))
   }
 
   if (helperEHPlist != null) {
@@ -236,7 +236,7 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
   await savePlistFile(helperPlistFilename, helperPlist)
 
   await Promise.all([
-    doRename(path.join(contentsPath, "MacOS"), electronBranding.productName, appPlist.CFBundleExecutable),
+    doRename(path.join(contentsPath, "MacOS"), electronBranding.productName, appPlist.CFBundleExecutable as string),
     unlinkIfExists(path.join(appOutDir, "LICENSE")),
     unlinkIfExists(path.join(appOutDir, "LICENSES.chromium.html")),
   ])
