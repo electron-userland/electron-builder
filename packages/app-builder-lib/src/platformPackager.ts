@@ -31,16 +31,12 @@ import { Framework, isElectronBased } from "./Framework"
 import { executeAppBuilderAsJson } from "./util/appBuilder"
 import { computeFileSets, computeNodeModuleFileSets, copyAppFiles, ELECTRON_COMPILE_SHIM_FILENAME, transformFiles } from "./util/appFileCopier"
 import { expandMacro as doExpandMacro } from "./util/macroExpander"
-<<<<<<< HEAD
-import { resolveFunction } from "./util/resolve"
 import { Target, Platform, CompressionLevel, TargetSpecificOptions } from "./core"
 import { ElectronPlatformName } from "./electron/ElectronFramework"
 import { FileAssociation } from "./options/FileAssociation"
 import { PlatformSpecificBuildOptions, AsarOptions } from "./options/PlatformSpecificBuildOptions"
 import { Packager } from "./packager"
 import { PackagerOptions } from "./packagerApi"
-=======
->>>>>>> master
 
 export type DoPackOptions<DC extends PlatformSpecificBuildOptions> = {
   outDir: string

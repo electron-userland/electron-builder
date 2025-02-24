@@ -65,7 +65,7 @@ class Assertions {
       actualError = e
     }
 
-    let m
+    let m: any
     if (actualError == null) {
       m = result
     } else {
@@ -90,8 +90,8 @@ class Assertions {
       } else {
         customErrorAssert(actualError!)
       }
-    } catch (matchError) {
-      throw new Error(matchError + " " + actualError)
+    } catch (matchError: any) {
+      throw new Error(matchError + " " + actualError?.message)
     }
   }
 }

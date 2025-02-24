@@ -39,15 +39,8 @@ import { getRepositoryInfo } from "./util/repositoryInfo"
 import { resolveFunction } from "./util/resolve"
 import { installOrRebuild, nodeGypRebuild } from "./util/yarn"
 import { PACKAGE_VERSION } from "./version"
-<<<<<<< HEAD
 import { serializeToYaml } from "builder-util"
-
-function addHandler(emitter: EventEmitter, event: string, handler: (...args: Array<any>) => void) {
-  emitter.on(event, handler)
-}
-=======
 import { AsyncEventEmitter, HandlerType } from "./util/asyncEventEmitter"
->>>>>>> master
 
 async function createFrameworkInfo(configuration: Configuration, packager: Packager): Promise<Framework> {
   let framework = configuration.framework

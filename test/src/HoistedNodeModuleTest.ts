@@ -302,16 +302,6 @@ test("npm tar", () =>
           outputFile(path.join(projectDir, "package-lock.json"), ""),
         ])
       },
-<<<<<<< HEAD
-      packed: async context => {
-        const tar = await readAsarJson(path.join(context.getResources(Platform.LINUX), "app.asar"), "node_modules/tar/package.json")
-        const minipass = await readAsarJson(path.join(context.getResources(Platform.LINUX), "app.asar"), "node_modules/minipass/package.json")
-        const minizlib = await readAsarJson(path.join(context.getResources(Platform.LINUX), "app.asar"), "node_modules/minizlib/package.json")
-        expect(tar.version).toEqual("7.4.3")
-        expect(minipass.version).toEqual("7.1.2")
-        expect(minizlib.version).toEqual("3.0.1")
-      },
-=======
       packed: context => verifyAsarFileTree(context.getResources(Platform.LINUX)),
     }
   )
@@ -384,6 +374,5 @@ test.ifAll("pnpm node-linker=hoisted", () =>
         ])
       },
       packed: context => verifyAsarFileTree(context.getResources(Platform.LINUX)),
->>>>>>> master
     }
   ))

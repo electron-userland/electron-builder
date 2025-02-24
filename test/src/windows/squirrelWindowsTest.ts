@@ -56,9 +56,6 @@ test.skip(
   })
 )
 
-<<<<<<< HEAD
-test("detect install-spinner", () => {
-=======
 test.ifAll(
   "squirrel window arm64 msi",
   app(
@@ -105,7 +102,6 @@ test.ifAll(
 )
 
 test.ifAll("detect install-spinner", () => {
->>>>>>> master
   let platformPackager: CheckingWinPackager | null = null
   let loadingGifPath: string | null = null
 

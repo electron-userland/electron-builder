@@ -4,7 +4,7 @@ import { outputFile } from "fs-extra"
 import * as fs from "fs/promises"
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert"
-import { app, appThrows, assertPack, EXTENDED_TIMEOUT, linuxDirTarget, modifyPackageJson, PackedContext, removeUnstableProperties, verifyAsarFileTree } from "./helpers/packTester"
+import { app, appThrows, assertPack, linuxDirTarget, modifyPackageJson, PackedContext, removeUnstableProperties, verifyAsarFileTree } from "./helpers/packTester"
 import { verifySmartUnpack } from "./helpers/verifySmartUnpack"
 import { spawnSync } from "child_process"
 
@@ -271,57 +271,14 @@ test.ifDevOrLinuxCi("asarUnpack node_modules", () => {
   )
 })
 
-test.ifDevOrLinuxCi(
-  "asarUnpack node_modules which has many modules",
-  () => {
-    return assertPack(
-      "test-app-one",
-      {
-        targets: linuxDirTarget,
-        config: {
-          asarUnpack: "node_modules",
-        },
+test.ifDevOrLinuxCi("asarUnpack node_modules which has many modules", () => {
+  return assertPack(
+    "test-app-one",
+    {
+      targets: linuxDirTarget,
+      config: {
+        asarUnpack: "node_modules",
       },
-<<<<<<< HEAD
-      {
-        isInstallDepsBefore: true,
-        projectDirCreated: projectDir =>
-          modifyPackageJson(projectDir, data => {
-            data.dependencies = {
-              "@react-navigation/stack": "^6.3.7",
-              "@sentry/electron": "^4.4.0",
-              axios: "^1.1.3",
-              "deep-equal": "^2.1.0",
-              dotenv: "^16.4.5",
-              "electron-log": "^4.4.8",
-              "electron-updater": "^6.0.4",
-              "electron-window-state": "^5.0.3",
-              "jwt-decode": "^3.1.2",
-              keytar: "^7.9.0",
-              webpack: "^5.74.0",
-              "pubsub-js": "^1.9.4",
-              react: "^18.2.0",
-              "react-dom": "^18.2.0",
-              "react-native-web": "^0.18.10",
-              "react-router-dom": "^6.4.0",
-              "source-map-support": "^0.5.16",
-              yargs: "^16.2.0",
-              "ci-info": "2.0.0",
-            }
-          }),
-        packed: async context => {
-          await assertThat(path.join(context.getResources(Platform.LINUX), "app.asar.unpacked/node_modules/jwt-decode")).isDirectory()
-          await assertThat(path.join(context.getResources(Platform.LINUX), "app.asar.unpacked/node_modules/keytar")).isDirectory()
-          await assertThat(path.join(context.getResources(Platform.LINUX), "app.asar.unpacked/node_modules/yargs")).isDirectory()
-          await assertThat(path.join(context.getResources(Platform.LINUX), "app.asar.unpacked/node_modules/@sentry/electron")).isDirectory()
-          await assertThat(path.join(context.getResources(Platform.LINUX), "app.asar.unpacked/node_modules/ci-info")).isDirectory()
-        },
-      }
-    )
-  },
-  { timeout: EXTENDED_TIMEOUT }
-)
-=======
     },
     {
       isInstallDepsBefore: true,
@@ -361,59 +318,15 @@ test.ifDevOrLinuxCi(
     }
   )
 })
->>>>>>> master
 
-test.ifDevOrLinuxCi(
-  "exclude some modules when asarUnpack node_modules which has many modules",
-  () => {
-    return assertPack(
-      "test-app-one",
-      {
-        targets: linuxDirTarget,
-        config: {
-          asarUnpack: ["node_modules", "!**/node_modules/ci-info/**/*"],
-        },
+test.ifDevOrLinuxCi("exclude some modules when asarUnpack node_modules which has many modules", () => {
+  return assertPack(
+    "test-app-one",
+    {
+      targets: linuxDirTarget,
+      config: {
+        asarUnpack: ["node_modules", "!**/node_modules/ci-info/**/*"],
       },
-<<<<<<< HEAD
-      {
-        isInstallDepsBefore: true,
-        projectDirCreated: projectDir =>
-          modifyPackageJson(projectDir, data => {
-            data.dependencies = {
-              "@react-navigation/stack": "^6.3.7",
-              "@sentry/electron": "^4.4.0",
-              axios: "^1.1.3",
-              "deep-equal": "^2.1.0",
-              dotenv: "^16.4.5",
-              "electron-log": "^4.4.8",
-              "electron-updater": "^6.0.4",
-              "electron-window-state": "^5.0.3",
-              "jwt-decode": "^3.1.2",
-              keytar: "^7.9.0",
-              webpack: "^5.74.0",
-              "pubsub-js": "^1.9.4",
-              react: "^18.2.0",
-              "react-dom": "^18.2.0",
-              "react-native-web": "^0.18.10",
-              "react-router-dom": "^6.4.0",
-              "source-map-support": "^0.5.16",
-              yargs: "^16.2.0",
-              "ci-info": "2.0.0",
-            }
-          }),
-        packed: async context => {
-          await assertThat(path.join(context.getResources(Platform.LINUX), "app.asar.unpacked/node_modules/jwt-decode")).isDirectory()
-          await assertThat(path.join(context.getResources(Platform.LINUX), "app.asar.unpacked/node_modules/keytar")).isDirectory()
-          await assertThat(path.join(context.getResources(Platform.LINUX), "app.asar.unpacked/node_modules/yargs")).isDirectory()
-          await assertThat(path.join(context.getResources(Platform.LINUX), "app.asar.unpacked/node_modules/@sentry/electron")).isDirectory()
-          await assertThat(path.join(context.getResources(Platform.LINUX), "app.asar.unpacked/node_modules/ci-info")).doesNotExist()
-        },
-      }
-    )
-  },
-  { timeout: EXTENDED_TIMEOUT }
-)
-=======
     },
     {
       isInstallDepsBefore: true,
@@ -453,4 +366,3 @@ test.ifDevOrLinuxCi(
     }
   )
 })
->>>>>>> master

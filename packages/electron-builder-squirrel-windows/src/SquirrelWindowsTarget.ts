@@ -8,13 +8,7 @@ import { Options as SquirrelOptions, createWindowsInstaller, convertVersion } fr
 
 export default class SquirrelWindowsTarget extends Target {
   //tslint:disable-next-line:no-object-literal-type-assertion
-<<<<<<< HEAD
   readonly options: SquirrelWindowsOptions
-  private appDirectory: string = ""
-  private outputDirectory: string = ""
-=======
-  readonly options: SquirrelWindowsOptions = { ...this.packager.platformSpecificBuildOptions, ...this.packager.config.squirrelWindows } as SquirrelWindowsOptions
->>>>>>> master
 
   constructor(
     private readonly packager: WinPackager,

@@ -1,10 +1,6 @@
 import { outputFile } from "fs-extra"
-<<<<<<< HEAD
 import { serializeToYaml } from "./serializeToYaml"
-=======
-import { serializeToYaml } from "./util"
 import { mapToObject } from "./mapper"
->>>>>>> master
 
 export class DebugLogger {
   readonly data = new Map<string, any>()
