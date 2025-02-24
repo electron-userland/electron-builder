@@ -186,7 +186,7 @@ test("yarn some module add by manual instead of install", () =>
   ))
 
 //https://github.com/electron-userland/electron-builder/issues/8857
-test.ifAll("yarn max stack", () =>
+test("yarn max stack", () =>
   assertPack(
     "test-app-hoisted",
     {
@@ -209,7 +209,7 @@ test.ifAll("yarn max stack", () =>
   )
 )
 
-test.ifAll("pnpm max stack", () =>
+test("pnpm max stack", () =>
   assertPack(
     "test-app-hoisted",
     {
@@ -233,7 +233,7 @@ test.ifAll("pnpm max stack", () =>
 )
 
 //github.com/electron-userland/electron-builder/issues/8842
-test.ifAll("yarn ms", () =>
+test("yarn ms", () =>
   assertPack(
     "test-app-hoisted",
     {
@@ -308,7 +308,7 @@ test("npm tar", () =>
 )
 
 //github.com/electron-userland/electron-builder/issues/8881
-test.ifAll("pnpm node-linker=hoisted", () =>
+test("pnpm node-linker=hoisted", () =>
   assertPack(
     "test-app-hoisted",
     {
@@ -331,7 +331,7 @@ test.ifAll("pnpm node-linker=hoisted", () =>
     }
   )
 )
-test.ifAll("pnpm shamefully-hoist=true", () =>
+test("pnpm shamefully-hoist=true", () =>
   assertPack(
     "test-app-hoisted",
     {
@@ -354,7 +354,7 @@ test.ifAll("pnpm shamefully-hoist=true", () =>
     }
   )
 )
-test.ifAll("pnpm node-linker=hoisted", () =>
+test("pnpm node-linker=hoisted", () =>
   assertPack(
     "test-app-hoisted",
     {
