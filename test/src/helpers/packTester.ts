@@ -9,7 +9,7 @@ import { CancellationToken, UpdateFileInfo } from "builder-util-runtime"
 import { Arch, ArtifactCreated, Configuration, DIR_TARGET, getArchSuffix, MacOsTargetName, Packager, PackagerOptions, Platform, Target } from "electron-builder"
 import { convertVersion } from "electron-winstaller"
 import { PublishPolicy } from "electron-publish"
-import { copyFileSync, emptyDir, mkdir, writeJson } from "fs-extra"
+import { copyFile, emptyDir, mkdir, writeJson } from "fs-extra"
 import * as fs from "fs/promises"
 import { load } from "js-yaml"
 import * as path from "path"
@@ -104,7 +104,6 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
     log.info({ customTmpDir }, "custom temp dir used")
   }
 
-
   const state = expect.getState()
   const lockfileFixtureName = `${path.basename(state.testPath, ".ts")}`
   const lockfilePathPrefix = path.join(__dirname, "..", "..", "fixtures", "lockfiles", lockfileFixtureName)
@@ -127,24 +126,27 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
 
       if (checkOptions.isInstallDepsBefore) {
         const pm = await getCollectorByPackageManager(projectDir)
-        const packageLockfileName = pm.lockfileName
-        const installArgs = ["install"]
+        const pmOptions = await pm.installOptions
+        let installArgs = ["install"]
 
         const testFixtureLockfile = path.join(lockfilePathPrefix, `${state.currentTestName}.txt`).replace(/\s+/g, "-")
-        const destLockfile = path.join(projectDir, packageLockfileName)
+        const destLockfile = path.join(projectDir, pmOptions.lockfile)
 
         const shouldUpdateLockfiles = !!process.env.UPDATE_LOCKFILE_FIXTURES
         // check for lockfile fixture so we can use `--frozen-lockfile`
-        if (await exists(testFixtureLockfile)) {
-          copyFileSync(testFixtureLockfile, destLockfile)
-          if (!shouldUpdateLockfiles) {
-            installArgs.push("--frozen-lockfile")
-          }
+        if ((await exists(testFixtureLockfile)) && !shouldUpdateLockfiles) {
+          await copyFile(testFixtureLockfile, destLockfile)
+          installArgs = pmOptions.args
         }
 
         // bin links required (e.g. for node-pre-gyp - if package refers to it in the install script)
-        await spawn(await pm.testsPmCommand.value, installArgs, {
+        await spawn(pmOptions.cmd, installArgs, {
           cwd: projectDir,
+        }).catch((err: any) => {
+          if (err.message.includes("npm ci")) {
+            log.error({}, "npm ci failed, check if fixture dependencies were changed. If intentional, rerun with env var UPDATE_LOCKFILE_FIXTURES=true.")
+          }
+          throw err
         })
 
         if (!(await exists(testFixtureLockfile)) || shouldUpdateLockfiles) {
@@ -152,7 +154,7 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
           if (!(await exists(fixtureDir))) {
             await mkdir(fixtureDir)
           }
-          copyFileSync(destLockfile, testFixtureLockfile)
+          await copyFile(destLockfile, testFixtureLockfile)
         }
       }
 

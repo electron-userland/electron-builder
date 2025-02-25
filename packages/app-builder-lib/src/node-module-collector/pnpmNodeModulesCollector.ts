@@ -21,9 +21,8 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
     return "pnpm"
   })
 
-  public readonly lockfileName: string = "pnpm-lock.yaml"
   protected readonly pmCommand: Lazy<string> = PnpmNodeModulesCollector.pmCommand
-  public readonly testsPmCommand: Lazy<string> = this.pmCommand
+  public readonly installOptions = this.pmCommand.value.then(cmd => ({ cmd, args: ["install", "--frozen-lockfile"], lockfile: "pnpm-lock.yaml" }))
 
   protected getArgs(): string[] {
     return ["list", "--prod", "--json", "--depth", "Infinity"]

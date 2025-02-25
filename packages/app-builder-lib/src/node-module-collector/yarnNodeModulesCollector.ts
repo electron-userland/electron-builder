@@ -1,4 +1,3 @@
-import { Lazy } from "lazy-val"
 import { NpmNodeModulesCollector } from "./npmNodeModulesCollector"
 
 export class YarnNodeModulesCollector extends NpmNodeModulesCollector {
@@ -6,6 +5,9 @@ export class YarnNodeModulesCollector extends NpmNodeModulesCollector {
     super(rootDir)
   }
 
-  public readonly testsPmCommand: Lazy<string> = new Lazy<string>(() => Promise.resolve(process.platform === "win32" ? "yarn.cmd" : "yarn"))
-  public readonly lockfileName: string = "yarn.lock"
+  public readonly installOptions = Promise.resolve({
+    cmd: process.platform === "win32" ? "yarn.cmd" : "yarn",
+    args: ["install", "--frozen-lockfile"],
+    lockfile: "yarn.lock",
+  })
 }
