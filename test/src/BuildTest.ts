@@ -8,6 +8,7 @@ import * as path from "path"
 import { app, appTwo, appTwoThrows, assertPack, getFixtureDir, linuxDirTarget, modifyPackageJson, packageJson, toSystemIndependentPath } from "./helpers/packTester"
 import { ELECTRON_VERSION } from "./helpers/testConfig"
 import { verifySmartUnpack } from "./helpers/verifySmartUnpack"
+import { spawn } from "builder-util/out/util"
 
 test("cli", () => {
   // because these methods are internal
@@ -385,7 +386,6 @@ test.ifDevOrWinCi("smart unpack local module with dll file", () => {
       targets: Platform.WINDOWS.createTarget(DIR_TARGET),
     },
     {
-      isInstallDepsBefore: true,
       projectDirCreated: async (projectDir, tmpDir) => {
         const tempDir = await tmpDir.getTempDir()
         const localPath = path.join(tempDir, "foo")
@@ -397,6 +397,11 @@ test.ifDevOrWinCi("smart unpack local module with dll file", () => {
             "edge-cs": "1.2.1",
             foo: `file:${localPath}`,
           }
+        })
+
+        // we can't use `isInstallDepsBefore` as `localPath` is dynamic and changes for every which causes `--frozen-lockfile` and `npm ci` to fail
+        await spawn("npm", ["install"], {
+          cwd: projectDir,
         })
       },
       packed: async context => {

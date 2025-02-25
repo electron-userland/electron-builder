@@ -32,7 +32,7 @@ jobs:
       force-docker-build: ${{ steps.changed-files-specific.outputs.any_changed }}
     steps:
       - name: Checkout code repository
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
         with:
           fetch-depth: 0
 
@@ -77,7 +77,7 @@ jobs:
           - oneClickInstallerTest,assistedInstallerTest
     steps:
       - name: Checkout code repository
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
         with:
           fetch-depth: 2
 
@@ -126,7 +126,7 @@ jobs:
       (needs.run-docker-build.result == 'success' || needs.run-docker-build.result == 'skipped')
     steps:
       - name: Checkout code repository
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
       - name: Setup Tests
         uses: ./.github/actions/pretest
@@ -174,7 +174,7 @@ jobs:
           - BuildTest,oneClickInstallerTest,winPackagerTest,nsisUpdaterTest,webInstallerTest
     steps:
       - name: Checkout code repository
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
       - name: Setup Tests
         uses: ./.github/actions/pretest
@@ -201,7 +201,7 @@ jobs:
           - masTest,dmgTest,filesTest,macPackagerTest,differentialUpdateTest,macArchiveTest
     steps:
       - name: Checkout code repository
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
       - name: Setup Tests
         uses: ./.github/actions/pretest
