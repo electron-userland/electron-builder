@@ -21,7 +21,7 @@ jobs:
         ]
     steps:
       - name: Checkout code repository
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
       - name: Extract node major version to tag docker images
         run: echo "NODE_TAG=$(cut -d '.' -f 1 <<< ${{ matrix.nodeVersion }})" >> $GITHUB_ENV
@@ -34,7 +34,7 @@ jobs:
           docker save -o ${{ runner.temp }}/electron-builder-all-${{ env.NODE_TAG }}.tar electronuserland/builder
 
       - name: Bundle all images
-        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4
+        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4
         with:
           name: electron-builder-all-${{ env.NODE_TAG }}
           path: ${{ runner.temp }}/electron-builder-all-${{ env.NODE_TAG }}.tar

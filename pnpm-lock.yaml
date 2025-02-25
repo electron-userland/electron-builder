@@ -681,6 +681,9 @@ importers:
       fast-xml-parser:
         specifier: 4.4.1
         version: 4.4.1
+      sanitize-filename:
+        specifier: ^1.6.3
+        version: 1.6.3
 
 packages:
 

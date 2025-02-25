@@ -365,7 +365,7 @@ test.ifAll("pnpm shamefully-hoist=true", () =>
     }
   )
 )
-test.ifAll("pnpm node-linker=hoisted", () =>
+test.ifAll("pnpm public-hoist-pattern=*", () =>
   assertPack(
     "test-app-hoisted",
     {
