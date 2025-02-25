@@ -133,10 +133,13 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
         const testFixtureLockfile = path.join(lockfilePathPrefix, `${state.currentTestName}-${packageLockfileName}`).replace(/\s+/g, "-")
         const destLockfile = path.join(projectDir, packageLockfileName)
 
+        const shouldUpdateLockfiles = !!process.env.UPDATE_LOCKFILE_FIXTURES
         // check for lockfile fixture so we can use `--frozen-lockfile`
         if (await exists(testFixtureLockfile)) {
           copyFileSync(testFixtureLockfile, destLockfile)
-          installArgs.push("--frozen-lockfile")
+          if (!shouldUpdateLockfiles) {
+            installArgs.push("--frozen-lockfile")
+          }
         }
 
         // bin links required (e.g. for node-pre-gyp - if package refers to it in the install script)
@@ -144,7 +147,7 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
           cwd: projectDir,
         })
 
-        if (!(await exists(testFixtureLockfile)) || process.env.UPDATE_LOCKFILE_FIXTURES) {
+        if (!(await exists(testFixtureLockfile)) || shouldUpdateLockfiles) {
           const fixtureDir = path.dirname(testFixtureLockfile)
           if (!(await exists(fixtureDir))) {
             await mkdir(fixtureDir)
