@@ -9,7 +9,7 @@ import { CancellationToken, UpdateFileInfo } from "builder-util-runtime"
 import { Arch, ArtifactCreated, Configuration, DIR_TARGET, getArchSuffix, MacOsTargetName, Packager, PackagerOptions, Platform, Target } from "electron-builder"
 import { convertVersion } from "electron-winstaller"
 import { PublishPolicy } from "electron-publish"
-import { copyFile, emptyDir, mkdir, writeJson } from "fs-extra"
+import { copyFile, emptyDir, mkdir, remove, writeJson } from "fs-extra"
 import * as fs from "fs/promises"
 import { load } from "js-yaml"
 import * as path from "path"
@@ -109,6 +109,7 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
   const state = expect.getState()
   const lockfileFixtureName = `${path.basename(state.testPath, ".ts")}`
   const lockfilePathPrefix = path.join(__dirname, "..", "..", "fixtures", "lockfiles", lockfileFixtureName)
+  const testFixtureLockfile = path.join(lockfilePathPrefix, `${sanitizeFileName(state.currentTestName)}.txt`)
 
   await copyDir(projectDir, dir, {
     filter: it => {
@@ -131,7 +132,6 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
         const pmOptions = await pm.installOptions
         let installArgs = ["install"]
 
-        const testFixtureLockfile = path.join(lockfilePathPrefix, `${sanitizeFileName(state.currentTestName)}.txt`)
         const destLockfile = path.join(projectDir, pmOptions.lockfile)
 
         const shouldUpdateLockfiles = !!process.env.UPDATE_LOCKFILE_FIXTURES
@@ -151,12 +151,18 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
           throw err
         })
 
+        // save lockfile fixture
         if (!(await exists(testFixtureLockfile)) || shouldUpdateLockfiles) {
           const fixtureDir = path.dirname(testFixtureLockfile)
           if (!(await exists(fixtureDir))) {
             await mkdir(fixtureDir)
           }
           await copyFile(destLockfile, testFixtureLockfile)
+        }
+      } else {
+        // if no deps installed, make sure no leftover lockfile fixture
+        if (await exists(testFixtureLockfile)) {
+          await remove(testFixtureLockfile)
         }
       }
 
