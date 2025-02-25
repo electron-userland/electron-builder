@@ -15,7 +15,7 @@ describe.ifAll = isAllTests ? describe : skipSuite
 test.ifAll = isAllTests ? test : skip
 skip.ifAll = skip
 
-const execEnv = (envVar) => !!envVar ? test : skip
+const execEnv = envVar => (!!envVar ? test : skip)
 test.ifEnv = execEnv
 skip.ifEnv = execEnv
 
@@ -47,8 +47,7 @@ skip.ifLinuxOrDevMac = skip
 if (isCi) {
   test.ifCi = test
   test.ifNotCi = skip
-}
-else {
+} else {
   test.ifCi = skip
   test.ifNotCi = test
 }
