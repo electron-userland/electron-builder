@@ -7,7 +7,7 @@ import { Platform } from "../core"
 import { Framework, PrepareApplicationStageDirectoryOptions } from "../Framework"
 import { LinuxPackager } from "../linuxPackager"
 import { MacPackager } from "../macPackager"
-import { executeAppBuilderAndWriteJson } from "../util/appBuilder"
+import { savePlistFile } from "../util/plist"
 
 export class LibUiFramework implements Framework {
   readonly name: string = "libui"
@@ -71,16 +71,14 @@ export class LibUiFramework implements Framework {
       NSHighResolutionCapable: true,
     }
     await packager.applyCommonInfo(appPlist, appContentsDir)
-    await Promise.all([
-      executeAppBuilderAndWriteJson(["encode-plist"], { [path.join(appContentsDir, "Info.plist")]: appPlist }),
-      writeExecutableMain(
-        path.join(appContentsDir, "MacOS", appPlist.CFBundleExecutable),
-        `#!/bin/sh
+    await savePlistFile(path.join(appContentsDir, "Info.plist"), appPlist)
+    await writeExecutableMain(
+      path.join(appContentsDir, "MacOS", appPlist.CFBundleExecutable),
+      `#!/bin/sh
   DIR=$(dirname "$0")
   "$DIR/node" "$DIR/../Resources/app/${options.packager.info.metadata.main || "index.js"}"
   `
-      ),
-    ])
+    )
   }
 
   private async prepareLinuxApplicationStageDirectory(options: PrepareApplicationStageDirectoryOptions) {
