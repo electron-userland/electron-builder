@@ -330,7 +330,7 @@ function parseDebControl(info: string): any {
 async function checkMacResult(packager: Packager, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions, packedAppDir: string) {
   const appInfo = packager.appInfo
   const plistPath = path.join(packedAppDir, "Contents", "Info.plist")
-  const info = (await parsePlistFile(plistPath)) as PlistObject
+  const info = await parsePlistFile<PlistObject>(plistPath)
 
   expect(info).toMatchObject({
     CFBundleVersion: info.CFBundleVersion === "50" ? "50" : `${appInfo.version}.${process.env.TRAVIS_BUILD_NUMBER || process.env.CIRCLE_BUILD_NUM}`,

@@ -31,9 +31,9 @@ export async function savePlistFile(path: string, data: PlistValue): Promise<voi
   await fs.promises.writeFile(path, plist)
 }
 
-export async function parsePlistFile(file: string): Promise<PlistValue> {
+export async function parsePlistFile<T>(file: string): Promise<T> {
   const data = await fs.promises.readFile(file, "utf8")
-  return parse(data) as PlistValue
+  return parse(data) as T
 }
 
 export type { PlistValue, PlistObject }

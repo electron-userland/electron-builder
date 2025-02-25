@@ -182,7 +182,7 @@ export class PkgTarget extends Target {
     await exec("pkgbuild", ["--analyze", "--root", rootPath, propertyListOutputFile])
 
     // process the template plist
-    const plistInfo = ((await parsePlistFile(propertyListOutputFile)) as PlistObject[]).filter((it: PlistObject) => it.RootRelativeBundlePath !== "Electron.dSYM")
+    const plistInfo = (await parsePlistFile<PlistObject[]>(propertyListOutputFile)).filter((it: PlistObject) => it.RootRelativeBundlePath !== "Electron.dSYM")
     let packageInfo: any = {}
     if (plistInfo.length > 0) {
       packageInfo = plistInfo[0]
