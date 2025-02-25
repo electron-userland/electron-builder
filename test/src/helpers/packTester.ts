@@ -21,6 +21,8 @@ import { promisify } from "util"
 import { CSC_LINK, WIN_CSC_LINK } from "./codeSignData"
 import { assertThat } from "./fileAssert"
 import AdmZip from "adm-zip"
+// @ts-ignore
+import sanitizeFileName from "sanitize-filename"
 
 if (process.env.TRAVIS !== "true") {
   process.env.CIRCLE_BUILD_NUM = "42"
@@ -129,7 +131,7 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
         const pmOptions = await pm.installOptions
         let installArgs = ["install"]
 
-        const testFixtureLockfile = path.join(lockfilePathPrefix, `${state.currentTestName}.txt`).replace(/\s+/g, "-")
+        const testFixtureLockfile = path.join(lockfilePathPrefix, `${sanitizeFileName(state.currentTestName)}.txt`)
         const destLockfile = path.join(projectDir, pmOptions.lockfile)
 
         const shouldUpdateLockfiles = !!process.env.UPDATE_LOCKFILE_FIXTURES

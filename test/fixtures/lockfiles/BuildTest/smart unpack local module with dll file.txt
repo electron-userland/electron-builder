@@ -11,7 +11,7 @@
       "dependencies": {
         "debug": "3.1.0",
         "edge-cs": "1.2.1",
-        "foo": "file:/tmp/et-db411cd21f3bbd882f3a5a30c58db6ff/t-wOhVRx/z/foo"
+        "foo": "file:/tmp/et-db411cd21f3bbd882f3a5a30c58db6ff/t-rTpeW5/z/foo"
       }
     },
     "../z/foo": {
