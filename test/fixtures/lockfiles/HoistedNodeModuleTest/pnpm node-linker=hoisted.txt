@@ -1,0 +1,22 @@
+{
+  "name": "TestApp",
+  "version": "1.1.0",
+  "lockfileVersion": 3,
+  "requires": true,
+  "packages": {
+    "": {
+      "name": "TestApp",
+      "version": "1.1.0",
+      "license": "MIT",
+      "dependencies": {
+        "dayjs": "1.11.13"
+      }
+    },
+    "node_modules/dayjs": {
+      "version": "1.11.13",
+      "resolved": "https://registry.npmjs.org/dayjs/-/dayjs-1.11.13.tgz",
+      "integrity": "sha512-oaMBel6gjolK862uaPQOVTA7q3TZhuSvuMQAAglQDOWYO9A91IrAOUJEyKVlqJlHE0vq5p5UXxzdPfMH/x6xNg==",
+      "license": "MIT"
+    }
+  }
+}

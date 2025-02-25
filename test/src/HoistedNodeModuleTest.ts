@@ -229,7 +229,7 @@ test("pnpm max stack", () =>
       },
       packed: context => verifyAsarFileTree(context.getResources(Platform.LINUX)),
     }
-  )
+  ),
 )
 
 //github.com/electron-userland/electron-builder/issues/8842
@@ -354,7 +354,7 @@ test("pnpm shamefully-hoist=true", () =>
     }
   )
 )
-test("pnpm node-linker=hoisted", () =>
+test("pnpm public-hoist-pattern=*", () =>
   assertPack(
     "test-app-hoisted",
     {
