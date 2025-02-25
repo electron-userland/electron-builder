@@ -9,10 +9,10 @@
       "version": "1.1.0",
       "license": "MIT",
       "dependencies": {
-        "foo": "file:/tmp/et-db411cd21f3bbd882f3a5a30c58db6ff/t-vTP36p/h/foo"
+        "foo": "file:/tmp/et-db411cd21f3bbd882f3a5a30c58db6ff/t-OPxUdI/j/foo"
       }
     },
-    "../h/foo": {
+    "../j/foo": {
       "version": "9.0.0",
       "license": "MIT",
       "dependencies": {
@@ -20,7 +20,7 @@
       }
     },
     "node_modules/foo": {
-      "resolved": "../h/foo",
+      "resolved": "../j/foo",
       "link": true
     }
   }

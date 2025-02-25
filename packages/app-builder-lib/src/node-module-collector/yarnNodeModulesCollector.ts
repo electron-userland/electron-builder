@@ -6,6 +6,6 @@ export class YarnNodeModulesCollector extends NpmNodeModulesCollector {
     super(rootDir)
   }
 
-  public testsPmCommand: Lazy<string> = new Lazy<string>(() => Promise.resolve(process.platform === "win32" ? "yarn.cmd" : "yarn"))
-  public lockfileName: string = "yarn.lock"
+  public readonly testsPmCommand: Lazy<string> = new Lazy<string>(() => Promise.resolve(process.platform === "win32" ? "yarn.cmd" : "yarn"))
+  public readonly lockfileName: string = "yarn.lock"
 }

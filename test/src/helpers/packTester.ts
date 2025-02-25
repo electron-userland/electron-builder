@@ -130,7 +130,7 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
         const packageLockfileName = pm.lockfileName
         const installArgs = ["install"]
 
-        const testFixtureLockfile = path.join(lockfilePathPrefix, `${state.currentTestName}-${packageLockfileName}`).replace(/\s+/g, "-")
+        const testFixtureLockfile = path.join(lockfilePathPrefix, `${state.currentTestName}.txt`).replace(/\s+/g, "-")
         const destLockfile = path.join(projectDir, packageLockfileName)
 
         const shouldUpdateLockfiles = !!process.env.UPDATE_LOCKFILE_FIXTURES

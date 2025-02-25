@@ -9,9 +9,8 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
   }
 
   public readonly pmCommand = new Lazy<string>(() => Promise.resolve(process.platform === "win32" ? "npm.cmd" : "npm"))
-
-  public testsPmCommand: Lazy<string> = this.pmCommand
-  public lockfileName: string = "package-lock.json"
+  public readonly testsPmCommand: Lazy<string> = this.pmCommand
+  public readonly lockfileName: string = "package-lock.json"
 
   protected getArgs(): string[] {
     return ["list", "-a", "--include", "prod", "--include", "optional", "--omit", "dev", "--json", "--long", "--silent"]

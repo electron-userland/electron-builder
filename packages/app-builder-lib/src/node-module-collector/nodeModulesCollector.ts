@@ -28,9 +28,9 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
     return this.nodeModules
   }
 
-  protected abstract readonly pmCommand: Lazy<string>
-  public abstract readonly testsPmCommand: Lazy<string>
   public abstract readonly lockfileName: string
+  public abstract readonly testsPmCommand: Lazy<string>
+  protected abstract readonly pmCommand: Lazy<string>
   protected abstract getArgs(): string[]
   protected abstract parseDependenciesTree(jsonBlob: string): T
   protected abstract extractProductionDependencyTree(tree: Dependency<T, OptionalsType>): DependencyTree

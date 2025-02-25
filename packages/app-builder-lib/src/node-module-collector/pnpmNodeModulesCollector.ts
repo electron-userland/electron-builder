@@ -21,10 +21,9 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
     return "pnpm"
   })
 
-  public testsPmCommand: Lazy<string> = PnpmNodeModulesCollector.pmCommand
-  public lockfileName: string = "pnpm-lock.yaml"
-
-  public readonly pmCommand: Lazy<string> = PnpmNodeModulesCollector.pmCommand
+  public readonly lockfileName: string = "pnpm-lock.yaml"
+  protected readonly pmCommand: Lazy<string> = PnpmNodeModulesCollector.pmCommand
+  public readonly testsPmCommand: Lazy<string> = this.pmCommand
 
   protected getArgs(): string[] {
     return ["list", "--prod", "--json", "--depth", "Infinity"]
