@@ -4,19 +4,19 @@ import { computeArchToTargetNamesMap } from "app-builder-lib/out/targets/targetF
 import { getLinuxToolsPath } from "app-builder-lib/out/targets/tools"
 import { executeAppBuilderAsJson } from "app-builder-lib/out/util/appBuilder"
 import { AsarIntegrity } from "app-builder-lib/src/asar/integrity"
-import { addValue, copyDir, deepAssign, exec, executeFinally, FileCopier, getPath7x, getPath7za, log, spawn, USE_HARD_LINKS, walk } from "builder-util"
+import { addValue, copyDir, deepAssign, exec, executeFinally, exists, FileCopier, getPath7x, getPath7za, log, spawn, USE_HARD_LINKS, walk } from "builder-util"
 import { CancellationToken, UpdateFileInfo } from "builder-util-runtime"
 import { Arch, ArtifactCreated, Configuration, DIR_TARGET, getArchSuffix, MacOsTargetName, Packager, PackagerOptions, Platform, Target } from "electron-builder"
 import { convertVersion } from "electron-winstaller"
 import { PublishPolicy } from "electron-publish"
-import { emptyDir, writeJson } from "fs-extra"
+import { copyFileSync, emptyDir, mkdir, writeJson } from "fs-extra"
 import * as fs from "fs/promises"
 import { load } from "js-yaml"
 import * as path from "path"
 import pathSorter from "path-sort"
 import { NtExecutable, NtExecutableResource } from "resedit"
 import { TmpDir } from "temp-file"
-import { detect } from "app-builder-lib/out/node-module-collector"
+import { getCollectorByPackageManager } from "app-builder-lib/out/node-module-collector"
 import { promisify } from "util"
 import { CSC_LINK, WIN_CSC_LINK } from "./codeSignData"
 import { assertThat } from "./fileAssert"
@@ -104,6 +104,11 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
     log.info({ customTmpDir }, "custom temp dir used")
   }
 
+
+  const state = expect.getState()
+  const lockfileFixtureName = `${path.basename(state.testPath, ".ts")}`
+  const lockfilePathPrefix = path.join(__dirname, "..", "..", "fixtures", "lockfiles", lockfileFixtureName)
+
   await copyDir(projectDir, dir, {
     filter: it => {
       const basename = path.basename(it)
@@ -121,12 +126,31 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
       }
 
       if (checkOptions.isInstallDepsBefore) {
+        const pm = await getCollectorByPackageManager(projectDir)
+        const packageLockfileName = pm.lockfileName
+        const installArgs = ["install"]
+
+        const testFixtureLockfile = path.join(lockfilePathPrefix, `${state.currentTestName}-${packageLockfileName}`).replace(/\s+/g, "-")
+        const destLockfile = path.join(projectDir, packageLockfileName)
+
+        // check for lockfile fixture so we can use `--frozen-lockfile`
+        if (await exists(testFixtureLockfile)) {
+          copyFileSync(testFixtureLockfile, destLockfile)
+          installArgs.push("--frozen-lockfile")
+        }
+
         // bin links required (e.g. for node-pre-gyp - if package refers to it in the install script)
-        const pm = await detect({ cwd: projectDir })
-        let cmd = process.platform === "win32" ? pm + ".cmd" : pm
-        await spawn(cmd, ["install"], {
+        await spawn(await pm.testsPmCommand.value, installArgs, {
           cwd: projectDir,
         })
+
+        if (!(await exists(testFixtureLockfile)) || process.env.UPDATE_LOCKFILE_FIXTURES) {
+          const fixtureDir = path.dirname(testFixtureLockfile)
+          if (!(await exists(fixtureDir))) {
+            await mkdir(fixtureDir)
+          }
+          copyFileSync(destLockfile, testFixtureLockfile)
+        }
       }
 
       if (packagerOptions.projectDir != null) {
