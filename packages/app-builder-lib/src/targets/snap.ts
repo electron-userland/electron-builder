@@ -260,7 +260,7 @@ export default class SnapTarget extends Target {
       target: this,
       arch,
       packager,
-      publishConfig: publishConfig == null ? { provider: "snapStore" } : publishConfig,
+      publishConfig,
     })
   }
 
@@ -270,16 +270,14 @@ export default class SnapTarget extends Target {
 }
 
 function findSnapPublishConfig(config?: Configuration): SnapStoreOptions | null {
+  const fallback: SnapStoreOptions = { provider: "snapStore" }
+
   if (!config) {
-    return null
+    return fallback
   }
 
   if (config.snap?.publish) {
-    const configCandidate = findSnapPublishConfigInPublishNode(config.snap.publish)
-
-    if (configCandidate) {
-      return configCandidate
-    }
+    return findSnapPublishConfigInPublishNode(config.snap.publish)
   }
 
   if (config.linux?.publish) {
@@ -298,7 +296,7 @@ function findSnapPublishConfig(config?: Configuration): SnapStoreOptions | null 
     }
   }
 
-  return null
+  return fallback
 }
 
 function findSnapPublishConfigInPublishNode(configPublishNode: Publish): SnapStoreOptions | null {
