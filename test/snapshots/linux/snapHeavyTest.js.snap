@@ -1,0 +1,23 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`snap full (armhf) 1`] = `
+{
+  "linux": [
+    {
+      "arch": "armv7l",
+      "file": "se-wo-template_1.1.0_armhf.snap",
+    },
+  ],
+}
+`;
+
+exports[`snap full 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "se-wo-template_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;

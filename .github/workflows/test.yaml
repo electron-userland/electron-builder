@@ -240,8 +240,7 @@ jobs:
 
       - name: Test
         run: |
-          echo $TEST_RUNNER_IMAGE_TAG
           pnpm ci:test
         env:
-          TEST_FILES: snapTest
+          TEST_FILES: snapTest,snapHeavyTest
           FORCE_COLOR: 1
