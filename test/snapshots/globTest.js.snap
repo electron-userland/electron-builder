@@ -9849,19 +9849,19 @@ exports[`local node module with file protocol 1`] = `
 }
 `;
 
-exports[`symlinks everywhere w/ static framework 1`] = `
+exports[`symlinks everywhere with static framework 1`] = `
 {
   "linux": [],
 }
 `;
 
-exports[`symlinks everywhere w/ static framework 2`] = `
+exports[`symlinks everywhere with static framework 2`] = `
 {
   "link": "index.js",
 }
 `;
 
-exports[`symlinks everywhere w/ static framework 3`] = `
+exports[`symlinks everywhere with static framework 3`] = `
 {
   "files": {
     "foo.js": {
@@ -10052,7 +10052,7 @@ exports[`symlinks everywhere w/ static framework 3`] = `
 }
 `;
 
-exports[`symlinks everywhere w/ static framework 4`] = `
+exports[`symlinks everywhere with static framework 4`] = `
 [
   "app.asar",
   "app.asar.unpacked/node_modules/hello-world/hello-world-framework.sh",

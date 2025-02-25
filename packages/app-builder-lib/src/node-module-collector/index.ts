@@ -12,7 +12,7 @@ async function isPnpmProjectHoisted(rootDir: string) {
   return lines["node-linker"] === "hoisted"
 }
 
-async function getCollectorByPackageManager(rootDir: string) {
+export async function getCollectorByPackageManager(rootDir: string) {
   const manager: PM = await detect({ cwd: rootDir })
   switch (manager) {
     case "pnpm":
