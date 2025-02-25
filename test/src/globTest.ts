@@ -111,7 +111,7 @@ test.ifNotWindows(
   )
 )
 
-test.ifNotWindows("symlinks everywhere w/ static framework", () =>
+test.ifNotWindows("symlinks everywhere with static framework", () =>
   assertPack(
     "test-app-symlink-framework",
     {

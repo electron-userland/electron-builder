@@ -4,23 +4,25 @@ import { computeArchToTargetNamesMap } from "app-builder-lib/out/targets/targetF
 import { getLinuxToolsPath } from "app-builder-lib/out/targets/tools"
 import { executeAppBuilderAsJson } from "app-builder-lib/out/util/appBuilder"
 import { AsarIntegrity } from "app-builder-lib/src/asar/integrity"
-import { addValue, copyDir, deepAssign, exec, executeFinally, FileCopier, getPath7x, getPath7za, log, spawn, USE_HARD_LINKS, walk } from "builder-util"
+import { addValue, copyDir, deepAssign, exec, executeFinally, exists, FileCopier, getPath7x, getPath7za, log, spawn, USE_HARD_LINKS, walk } from "builder-util"
 import { CancellationToken, UpdateFileInfo } from "builder-util-runtime"
 import { Arch, ArtifactCreated, Configuration, DIR_TARGET, getArchSuffix, MacOsTargetName, Packager, PackagerOptions, Platform, Target } from "electron-builder"
 import { convertVersion } from "electron-winstaller"
 import { PublishPolicy } from "electron-publish"
-import { emptyDir, writeJson } from "fs-extra"
+import { copyFile, emptyDir, mkdir, remove, writeJson } from "fs-extra"
 import * as fs from "fs/promises"
 import { load } from "js-yaml"
 import * as path from "path"
 import pathSorter from "path-sort"
 import { NtExecutable, NtExecutableResource } from "resedit"
 import { TmpDir } from "temp-file"
-import { detect } from "app-builder-lib/out/node-module-collector"
+import { getCollectorByPackageManager } from "app-builder-lib/out/node-module-collector"
 import { promisify } from "util"
 import { CSC_LINK, WIN_CSC_LINK } from "./codeSignData"
 import { assertThat } from "./fileAssert"
 import AdmZip from "adm-zip"
+// @ts-ignore
+import sanitizeFileName from "sanitize-filename"
 
 if (process.env.TRAVIS !== "true") {
   process.env.CIRCLE_BUILD_NUM = "42"
@@ -104,6 +106,11 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
     log.info({ customTmpDir }, "custom temp dir used")
   }
 
+  const state = expect.getState()
+  const lockfileFixtureName = `${path.basename(state.testPath, ".ts")}`
+  const lockfilePathPrefix = path.join(__dirname, "..", "..", "fixtures", "lockfiles", lockfileFixtureName)
+  const testFixtureLockfile = path.join(lockfilePathPrefix, `${sanitizeFileName(state.currentTestName)}.txt`)
+
   await copyDir(projectDir, dir, {
     filter: it => {
       const basename = path.basename(it)
@@ -121,12 +128,42 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
       }
 
       if (checkOptions.isInstallDepsBefore) {
+        const pm = await getCollectorByPackageManager(projectDir)
+        const pmOptions = await pm.installOptions
+        let installArgs = ["install"]
+
+        const destLockfile = path.join(projectDir, pmOptions.lockfile)
+
+        const shouldUpdateLockfiles = !!process.env.UPDATE_LOCKFILE_FIXTURES
+        // check for lockfile fixture so we can use `--frozen-lockfile`
+        if ((await exists(testFixtureLockfile)) && !shouldUpdateLockfiles) {
+          await copyFile(testFixtureLockfile, destLockfile)
+          installArgs = pmOptions.args
+        }
+
         // bin links required (e.g. for node-pre-gyp - if package refers to it in the install script)
-        const pm = await detect({ cwd: projectDir })
-        let cmd = process.platform === "win32" ? pm + ".cmd" : pm
-        await spawn(cmd, ["install"], {
+        await spawn(pmOptions.cmd, installArgs, {
           cwd: projectDir,
+        }).catch((err: any) => {
+          if (err.message.includes("npm ci")) {
+            log.error({}, "npm ci failed, check if fixture dependencies were changed. If intentional, rerun with env var UPDATE_LOCKFILE_FIXTURES=true.")
+          }
+          throw err
         })
+
+        // save lockfile fixture
+        if (!(await exists(testFixtureLockfile)) || shouldUpdateLockfiles) {
+          const fixtureDir = path.dirname(testFixtureLockfile)
+          if (!(await exists(fixtureDir))) {
+            await mkdir(fixtureDir)
+          }
+          await copyFile(destLockfile, testFixtureLockfile)
+        }
+      } else {
+        // if no deps installed, make sure no leftover lockfile fixture
+        if (await exists(testFixtureLockfile)) {
+          await remove(testFixtureLockfile)
+        }
       }
 
       if (packagerOptions.projectDir != null) {
