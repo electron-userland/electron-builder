@@ -13,10 +13,6 @@ function getAppImageToolBin(toolDir: string): string {
 function goArchToArchSuffix(): string {
   const arch = os.arch()
   switch (arch) {
-    // case "x64":
-    //   return "x64"
-    // case "ia32":
-    //   return "ia32"
     case "arm":
       return "arm32"
     default:

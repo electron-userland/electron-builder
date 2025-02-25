@@ -1,4 +1,4 @@
-import { exec, executeAppBuilder } from "builder-util"
+import { exec } from "builder-util"
 import { checkSnapcraftVersion } from "builder-util/out/snap"
 import { SnapStoreOptions } from "builder-util-runtime/out/publishOptions"
 import * as path from "path"
