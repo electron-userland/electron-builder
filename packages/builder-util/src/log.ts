@@ -61,6 +61,12 @@ export class Logger {
   }
 
   private _doLog(message: string | Error, fields: Fields | null, level: LogLevel) {
+    // clean up logs so that we can actually visualize the vitest test output w/ snapshot readouts.
+    // necessary when in concurrent mode
+    if (process.env.VITEST) {
+      return
+    }
+
     // noinspection SuspiciousInstanceOfGuard
     if (message instanceof Error) {
       message = message.stack || message.toString()
