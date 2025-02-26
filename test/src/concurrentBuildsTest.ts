@@ -20,7 +20,7 @@ const projectDirCreated = async (projectDir: string, tmpDir: TmpDir) => {
   )
 }
 
-test.only("win/linux concurrent", () => {
+test.ifAll("win/linux concurrent", () => {
   const targets = new Map([...winTargets, ...linuxTargets])
   return assertPack(
     "test-app",
