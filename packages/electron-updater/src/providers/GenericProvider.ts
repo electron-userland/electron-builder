@@ -1,11 +1,11 @@
 import { GenericServerOptions, HttpError, newError, UpdateInfo } from "builder-util-runtime"
 import { AppUpdater } from "../AppUpdater"
-import { ResolvedUpdateFileInfo } from "../main"
+import { ResolvedUpdateFileInfo } from "../exports"
 import { getChannelFilename, newBaseUrl, newUrlFromBase } from "../util"
 import { parseUpdateInfo, Provider, ProviderRuntimeOptions, resolveFiles } from "./Provider"
 
 export class GenericProvider extends Provider<UpdateInfo> {
-  private readonly baseUrl = newBaseUrl(this.configuration.url)
+  private readonly baseUrl: URL
 
   constructor(
     private readonly configuration: GenericServerOptions,
@@ -13,6 +13,7 @@ export class GenericProvider extends Provider<UpdateInfo> {
     runtimeOptions: ProviderRuntimeOptions
   ) {
     super(runtimeOptions)
+    this.baseUrl = newBaseUrl(this.configuration.url)
   }
 
   private get channel(): string {

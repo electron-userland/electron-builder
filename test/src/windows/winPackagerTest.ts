@@ -4,10 +4,7 @@ import * as path from "path"
 import { CheckingWinPackager } from "../helpers/CheckingPackager"
 import { app, appThrows, assertPack, platform } from "../helpers/packTester"
 
-// some tests are flaky, specifically `beta`?
-jest.retryTimes(3)
-
-test.ifAll(
+test(
   "beta version",
   app(
     {
@@ -24,10 +21,11 @@ test.ifAll(
     {
       signedWin: true,
     }
-  )
+  ),
+  { retry: 3 }
 )
 
-test.ifAll(
+test(
   "win zip",
   app(
     {
@@ -61,7 +59,7 @@ test.ifAll(
   )
 )
 
-test.ifAll(
+test(
   "zip artifactName",
   app(
     {
@@ -77,14 +75,14 @@ test.ifAll(
   )
 )
 
-test.ifAll(
+test(
   "icon < 256",
   appThrows(platform(Platform.WINDOWS), {
     projectDirCreated: projectDir => fs.rename(path.join(projectDir, "build", "incorrect.ico"), path.join(projectDir, "build", "icon.ico")),
   })
 )
 
-test.ifAll(
+test(
   "icon not an image",
   appThrows(platform(Platform.WINDOWS), {
     projectDirCreated: async projectDir => {
@@ -118,7 +116,7 @@ test.ifMac("custom icon", () => {
   )
 })
 
-test.ifAll("win icon from icns", () => {
+test("win icon from icns", () => {
   let platformPackager: CheckingWinPackager | null = null
   return app(
     {

@@ -27,7 +27,6 @@ export class PkgTarget extends Target {
     allowAnywhere: true,
     allowCurrentUserHome: true,
     allowRootDirectory: true,
-    ...this.packager.config.pkg,
   }
 
   constructor(
@@ -35,6 +34,10 @@ export class PkgTarget extends Target {
     readonly outDir: string
   ) {
     super("pkg")
+    this.options = {
+      ...this.options,
+      ...this.packager.config.pkg,
+    }
   }
 
   async build(appPath: string, arch: Arch): Promise<any> {

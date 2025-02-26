@@ -1,5 +1,5 @@
 import { outputFile } from "fs-extra"
-import { serializeToYaml } from "./util"
+import { serializeToYaml } from "./serializeToYaml"
 import { mapToObject } from "./mapper"
 
 export class DebugLogger {

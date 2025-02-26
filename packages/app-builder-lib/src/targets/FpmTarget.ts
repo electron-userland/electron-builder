@@ -32,7 +32,7 @@ interface ScriptFiles {
 }
 
 export default class FpmTarget extends Target {
-  readonly options: LinuxTargetSpecificOptions = { ...this.packager.platformSpecificBuildOptions, ...(this.packager.config as any)[this.name] }
+  readonly options: LinuxTargetSpecificOptions
 
   private readonly scriptFiles: Promise<ScriptFiles>
 
@@ -44,6 +44,7 @@ export default class FpmTarget extends Target {
   ) {
     super(name, false)
 
+    this.options = { ...this.packager.platformSpecificBuildOptions, ...(this.packager.config as any)[this.name] }
     this.scriptFiles = this.createScripts()
   }
 

@@ -8,19 +8,19 @@ import pathSorter from "path-sort"
 import { assertThat } from "../helpers/fileAssert"
 import { app, copyTestAsset, createMacTargetTest, getFixtureDir, parseFileList } from "../helpers/packTester"
 
-test.ifMac.ifAll("invalid target", () => assertThat(createMacTargetTest(["ttt" as any])()).throws())
+test.ifMac("invalid target", () => assertThat(createMacTargetTest(["ttt" as any])()).throws())
 
-test.ifNotWindows.ifAll("only zip", createMacTargetTest(["zip"], undefined, false /* no need to test sign */))
+test.ifNotWindows("only zip", createMacTargetTest(["zip"], undefined, false /* no need to test sign */))
 
-test.ifNotWindows.ifAll("tar.gz", createMacTargetTest(["tar.gz"]))
+test.ifNotWindows("tar.gz", createMacTargetTest(["tar.gz"]))
 
-// test.ifNotWindows.ifAll("tar.xz", createTargetTest(["tar.xz"], ["Test App ßW-1.1.0-mac.tar.xz"]))
+// test.ifNotWindows("tar.xz", createTargetTest(["tar.xz"], ["Test App ßW-1.1.0-mac.tar.xz"]))
 
 const it = process.env.CSC_KEY_PASSWORD == null ? test.skip : test.ifMac
 
 it("pkg", createMacTargetTest(["pkg"]))
 
-test.ifAll.ifMac(
+test.ifMac(
   "empty installLocation",
   app(
     {
@@ -40,7 +40,7 @@ test.ifAll.ifMac(
   )
 )
 
-test.ifAll.ifMac(
+test.ifMac(
   "extraDistFiles",
   app(
     {
@@ -60,7 +60,7 @@ test.ifAll.ifMac(
   )
 )
 
-test.ifAll.ifMac(
+test.ifMac(
   "pkg extended configuration",
   app(
     {
@@ -108,7 +108,7 @@ test.ifAll.ifMac(
   )
 )
 
-test.ifAll.ifMac(
+test.ifMac(
   "pkg scripts",
   app(
     {
@@ -150,7 +150,7 @@ test.ifAll.ifMac(
   )
 )
 
-test.ifAll.ifMac("pkg extra packages", async () => {
+test.ifMac("pkg extra packages", () => {
   const extraPackages = path.join("build", "extra-packages")
   return app(
     {
