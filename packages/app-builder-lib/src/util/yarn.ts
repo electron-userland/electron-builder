@@ -3,13 +3,10 @@ import { getProjectRootPath } from "@electron/rebuild/lib/search-module"
 import { RebuildMode } from "@electron/rebuild/lib/types"
 import { asArray, log, spawn } from "builder-util"
 import { pathExists } from "fs-extra"
-import { Lazy } from "lazy-val"
 import { homedir } from "os"
 import * as path from "path"
 import { Configuration } from "../configuration"
-import { executeAppBuilderAndWriteJson } from "./appBuilder"
 import { PM, detect, getPackageManagerVersion } from "../node-module-collector"
-import { NodeModuleDirInfo } from "./packageDependencies"
 import { rebuild as remoteRebuild } from "./rebuild/rebuild"
 
 export async function installOrRebuild(config: Configuration, appDir: string, options: RebuildOptions, forceInstall = false) {
@@ -159,8 +156,6 @@ function isRunningYarn(pm: PM) {
 
 export interface RebuildOptions {
   frameworkInfo: DesktopFrameworkInfo
-  productionDeps: Lazy<Array<NodeModuleDirInfo>>
-
   platform?: NodeJS.Platform
   arch?: string
 
@@ -172,7 +167,6 @@ export interface RebuildOptions {
 /** @internal */
 export async function rebuild(config: Configuration, appDir: string, options: RebuildOptions) {
   const configuration = {
-    dependencies: await options.productionDeps.value,
     nodeExecPath: process.execPath,
     platform: options.platform || process.platform,
     arch: options.arch || process.arch,
@@ -181,11 +175,6 @@ export async function rebuild(config: Configuration, appDir: string, options: Re
     buildFromSource: options.buildFromSource === true,
   }
   const { arch, buildFromSource, platform } = configuration
-
-  if (config.nativeRebuilder === "legacy") {
-    const env = getGypEnv(options.frameworkInfo, platform, arch, buildFromSource)
-    return executeAppBuilderAndWriteJson(["rebuild-node-modules"], configuration, { env, cwd: appDir })
-  }
 
   const {
     frameworkInfo: { version: electronVersion },
