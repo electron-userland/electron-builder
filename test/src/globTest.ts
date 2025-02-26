@@ -8,6 +8,7 @@ import { app, appThrows, assertPack, linuxDirTarget, modifyPackageJson, PackedCo
 import { verifySmartUnpack } from "./helpers/verifySmartUnpack"
 import { spawnSync } from "child_process"
 import { ExpectStatic } from "vitest"
+import { spawn } from "builder-util/out/util"
 
 async function createFiles(appDir: string) {
   await Promise.all([
@@ -27,9 +28,9 @@ async function createFiles(appDir: string) {
   await fs.symlink(path.join(appDir, "assets", "subdir", "file3"), path.join(appDir, "file-symlink3")) // symlink down
 }
 
-test.ifNotWindows.ifDevOrLinuxCi(
-  "unpackDir one",
-  ({ expect }) => app(expect,
+test.ifNotWindows.ifDevOrLinuxCi("unpackDir one", ({ expect }) =>
+  app(
+    expect,
     {
       targets: linuxDirTarget,
       config: {
@@ -57,7 +58,8 @@ async function assertDirs(expect: ExpectStatic, context: PackedContext) {
 }
 
 test.ifNotWindows.ifDevOrLinuxCi("unpackDir", ({ expect }) => {
-  return assertPack(expect,
+  return assertPack(
+    expect,
     "test-app",
     {
       targets: linuxDirTarget,
@@ -73,7 +75,8 @@ test.ifNotWindows.ifDevOrLinuxCi("unpackDir", ({ expect }) => {
 })
 
 test.ifDevOrLinuxCi("asarUnpack and files ignore", ({ expect }) => {
-  return assertPack(expect,
+  return assertPack(
+    expect,
     "test-app",
     {
       targets: linuxDirTarget,
@@ -93,9 +96,9 @@ test.ifDevOrLinuxCi("asarUnpack and files ignore", ({ expect }) => {
   )
 })
 
-test.ifNotWindows(
-  "link",
-  ({ expect }) => app(expect,
+test.ifNotWindows("link", ({ expect }) =>
+  app(
+    expect,
     {
       targets: linuxDirTarget,
     },
@@ -142,9 +145,9 @@ test.ifNotWindows("symlinks everywhere with static framework", ({ expect }) =>
   )
 )
 
-test.ifNotWindows(
-  "outside link",
-   ({ expect }) =>  appThrows(expect,
+test.ifNotWindows("outside link", ({ expect }) =>
+  appThrows(
+    expect,
     {
       targets: linuxDirTarget,
     },
@@ -160,7 +163,8 @@ test.ifNotWindows(
 )
 
 test.ifDevOrLinuxCi("local node module with file protocol", ({ expect }) => {
-  return assertPack(expect,
+  return assertPack(
+    expect,
     "test-app-one",
     {
       targets: linuxDirTarget,
@@ -169,7 +173,6 @@ test.ifDevOrLinuxCi("local node module with file protocol", ({ expect }) => {
       },
     },
     {
-      isInstallDepsBefore: true,
       projectDirCreated: async (projectDir, tmpDir) => {
         const tempDir = await tmpDir.getTempDir()
         const localPath = path.join(tempDir, "foo")
@@ -180,6 +183,12 @@ test.ifDevOrLinuxCi("local node module with file protocol", ({ expect }) => {
             foo: `file:${localPath}`,
           }
         })
+
+        // we can't use `isInstallDepsBefore` as `localPath` is dynamic and changes for every which causes `--frozen-lockfile` and `npm ci` to fail
+        await spawn("npm", ["install"], {
+          cwd: projectDir,
+        })
+
       },
       packed: async context => {
         await assertThat(expect, path.join(path.join(context.getResources(Platform.LINUX), "app.asar.unpacked", "node_modules", "foo", "package.json"))).isFile()
@@ -191,7 +200,8 @@ test.ifDevOrLinuxCi("local node module with file protocol", ({ expect }) => {
 // cannot be enabled
 // https://github.com/electron-userland/electron-builder/issues/611
 test.ifDevOrLinuxCi("failed peer dep", ({ expect }) => {
-  return assertPack(expect,
+  return assertPack(
+    expect,
     "test-app-one",
     {
       targets: linuxDirTarget,
@@ -220,7 +230,8 @@ test.ifDevOrLinuxCi("failed peer dep", ({ expect }) => {
 })
 
 test.ifDevOrLinuxCi("ignore node_modules", ({ expect }) => {
-  return assertPack(expect,
+  return assertPack(
+    expect,
     "test-app-one",
     {
       targets: linuxDirTarget,
@@ -248,7 +259,8 @@ test.ifDevOrLinuxCi("ignore node_modules", ({ expect }) => {
 })
 
 test.ifDevOrLinuxCi("asarUnpack node_modules", ({ expect }) => {
-  return assertPack(expect,
+  return assertPack(
+    expect,
     "test-app-one",
     {
       targets: linuxDirTarget,
@@ -274,7 +286,8 @@ test.ifDevOrLinuxCi("asarUnpack node_modules", ({ expect }) => {
 })
 
 test.ifDevOrLinuxCi("asarUnpack node_modules which has many modules", ({ expect }) => {
-  return assertPack(expect,
+  return assertPack(
+    expect,
     "test-app-one",
     {
       targets: linuxDirTarget,
@@ -322,7 +335,8 @@ test.ifDevOrLinuxCi("asarUnpack node_modules which has many modules", ({ expect 
 })
 
 test.ifDevOrLinuxCi("exclude some modules when asarUnpack node_modules which has many modules", ({ expect }) => {
-  return assertPack(expect,
+  return assertPack(
+    expect,
     "test-app-one",
     {
       targets: linuxDirTarget,
