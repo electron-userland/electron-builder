@@ -3,9 +3,9 @@ import * as path from "path"
 import { CheckingWinPackager } from "../helpers/CheckingPackager"
 import { app, assertPack, copyTestAsset } from "../helpers/packTester"
 
-test.ifNotCiMac(
-  "Squirrel.Windows",
-  ({ expect }) => app(expect,
+test.ifNotCiMac("Squirrel.Windows", ({ expect }) =>
+  app(
+    expect,
     {
       targets: Platform.WINDOWS.createTarget(["squirrel"]),
       config: {
@@ -29,9 +29,8 @@ test.ifNotCiMac(
   )
 )
 
-test.ifNotCiMac(
-  "artifactName",
-  ({ expect }) => app(expect,{
+test.ifNotCiMac("artifactName", ({ expect }) =>
+  app(expect, {
     targets: Platform.WINDOWS.createTarget(["squirrel", "zip"]),
     config: {
       win: {
@@ -43,9 +42,8 @@ test.ifNotCiMac(
 )
 
 // very slow
-test.skip(
-  "delta and msi",
-  ({ expect }) => app(expect,{
+test.skip("delta and msi", ({ expect }) =>
+  app(expect, {
     targets: Platform.WINDOWS.createTarget("squirrel", Arch.ia32),
     config: {
       squirrelWindows: {
@@ -53,12 +51,11 @@ test.skip(
         msi: true,
       },
     },
-  })
-)
+  }))
 
-test(
-  "squirrel window arm64 msi",
-  ({ expect }) => app(expect,
+test("squirrel window arm64 msi", ({ expect }) =>
+  app(
+    expect,
     {
       targets: Platform.WINDOWS.createTarget("squirrel", Arch.arm64),
       config: {
@@ -68,12 +65,11 @@ test(
       },
     },
     { signedWin: true }
-  )
-)
+  ))
 
-test(
-  "squirrel window x64 msi",
-  ({ expect }) => app(expect,
+test("squirrel window x64 msi", ({ expect }) =>
+  app(
+    expect,
     {
       targets: Platform.WINDOWS.createTarget("squirrel", Arch.x64),
       config: {
@@ -83,12 +79,11 @@ test(
       },
     },
     { signedWin: true }
-  )
-)
+  ))
 
-test(
-  "squirrel window ia32 msi",
-  ({ expect }) => app(expect,
+test("squirrel window ia32 msi", ({ expect }) =>
+  app(
+    expect,
     {
       targets: Platform.WINDOWS.createTarget("squirrel", Arch.ia32),
       config: {
@@ -98,14 +93,14 @@ test(
       },
     },
     { signedWin: true }
-  )
-)
+  ))
 
 test("detect install-spinner", ({ expect }) => {
   let platformPackager: CheckingWinPackager | null = null
   let loadingGifPath: string | null = null
 
-  return assertPack(expect,
+  return assertPack(
+    expect,
     "test-app-one",
     {
       targets: Platform.WINDOWS.createTarget("squirrel"),

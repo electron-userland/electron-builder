@@ -7,7 +7,8 @@ import { app, appThrows, assertPack, checkDirContents, platform } from "../helpe
 import { verifySmartUnpack } from "../helpers/verifySmartUnpack"
 
 test.ifMac("two-package", ({ expect }) =>
-  assertPack(expect,
+  assertPack(
+    expect,
     "test-app",
     {
       targets: createTargets([Platform.MAC], null, "all"),
@@ -46,9 +47,9 @@ test.ifMac("two-package", ({ expect }) =>
   )
 )
 
-test.ifMac(
-  "one-package",
-  ({ expect }) => app(expect,
+test.ifMac("one-package", ({ expect }) =>
+  app(
+    expect,
     {
       targets: Platform.MAC.createTarget(undefined, Arch.x64),
       config: {
@@ -114,7 +115,8 @@ test.ifMac(
 )
 
 test.ifMac("yarn two package.json w/ native module", ({ expect }) =>
-  assertPack(expect,
+  assertPack(
+    expect,
     "test-app-two-native-modules",
     {
       targets: Platform.MAC.createTarget("zip", Arch.universal),
@@ -130,9 +132,8 @@ test.ifMac("yarn two package.json w/ native module", ({ expect }) =>
   )
 )
 
-test.ifMac(
-  "electronDist",
-   ({ expect }) =>  appThrows(expect, {
+test.ifMac("electronDist", ({ expect }) =>
+  appThrows(expect, {
     targets: Platform.MAC.createTarget(DIR_TARGET, Arch.x64),
     config: {
       electronDist: "foo",
@@ -140,11 +141,11 @@ test.ifMac(
   })
 )
 
-test.ifWinCi("Build macOS on Windows is not supported",  ({ expect }) =>  appThrows(expect, platform(Platform.MAC)))
+test.ifWinCi("Build macOS on Windows is not supported", ({ expect }) => appThrows(expect, platform(Platform.MAC)))
 
-test(
-  "multiple asar resources",
-  ({ expect }) => app(expect,
+test("multiple asar resources", ({ expect }) =>
+  app(
+    expect,
     {
       targets: Platform.MAC.createTarget("zip", Arch.x64),
       config: {
@@ -165,5 +166,4 @@ test(
         await checkDirContents(expect, path.join(appDir, "Contents", "Resources"))
       },
     }
-  )
-)
+  ))

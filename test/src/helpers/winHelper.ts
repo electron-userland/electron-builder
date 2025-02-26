@@ -29,7 +29,15 @@ export async function checkHelpers(expect: ExpectStatic, resourceDir: string, is
   }
 }
 
-export async function doTest(expect: ExpectStatic, outDir: string, perUser: boolean, productFilename = "TestApp Setup", name = "TestApp", menuCategory: string | null = null, packElevateHelper = true) {
+export async function doTest(
+  expect: ExpectStatic,
+  outDir: string,
+  perUser: boolean,
+  productFilename = "TestApp Setup",
+  name = "TestApp",
+  menuCategory: string | null = null,
+  packElevateHelper = true
+) {
   if (process.env.DO_WINE !== "true") {
     return Promise.resolve()
   }

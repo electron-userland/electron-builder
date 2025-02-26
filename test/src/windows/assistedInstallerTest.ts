@@ -6,9 +6,9 @@ import { checkHelpers, doTest, expectUpdateMetadata } from "../helpers/winHelper
 
 const nsisTarget = Platform.WINDOWS.createTarget(["nsis"])
 
-test.ifNotCiMac(
-  "assisted",
-  ({ expect }) => app(expect,
+test.ifNotCiMac("assisted", ({ expect }) =>
+  app(
+    expect,
     {
       targets: nsisTarget,
       config: {
@@ -38,9 +38,8 @@ test.ifNotCiMac(
   )
 )
 
-test.ifNotCiMac(
-  "allowElevation false, app requestedExecutionLevel admin",
-  ({ expect }) => app(expect,{
+test.ifNotCiMac("allowElevation false, app requestedExecutionLevel admin", ({ expect }) =>
+  app(expect, {
     targets: nsisTarget,
     config: {
       publish: null,
@@ -66,7 +65,8 @@ test.ifNotCiMac(
 
 test.ifNotCiMac("assisted, MUI_HEADER", ({ expect }) => {
   let installerHeaderPath: string | null = null
-  return assertPack(expect,
+  return assertPack(
+    expect,
     "test-app-one",
     {
       targets: nsisTarget,
@@ -97,7 +97,8 @@ test.ifNotCiMac("assisted, MUI_HEADER", ({ expect }) => {
 
 test.ifNotCiMac("assisted, MUI_HEADER as option", ({ expect }) => {
   let installerHeaderPath: string | null = null
-  return assertPack(expect,
+  return assertPack(
+    expect,
     "test-app-one",
     {
       targets: Platform.WINDOWS.createTarget(["nsis"], Arch.ia32, Arch.x64),
@@ -127,9 +128,8 @@ test.ifNotCiMac("assisted, MUI_HEADER as option", ({ expect }) => {
   )
 })
 
-test.ifNotCiMac.skip(
-  "debug logging enabled",
-  ({ expect }) => app(expect,{
+test.ifNotCiMac.skip("debug logging enabled", ({ expect }) =>
+  app(expect, {
     targets: nsisTarget,
     config: {
       nsis: {
@@ -144,9 +144,8 @@ test.ifNotCiMac.skip(
   })
 )
 
-test.ifNotCiMac(
-  "assisted, only perMachine",
-  ({ expect }) => app(expect,{
+test.ifNotCiMac("assisted, only perMachine", ({ expect }) =>
+  app(expect, {
     targets: nsisTarget,
     config: {
       nsis: {
@@ -157,9 +156,8 @@ test.ifNotCiMac(
   })
 )
 
-test.ifNotCiMac(
-  "assisted, only perMachine and elevated",
-  ({ expect }) => app(expect,{
+test.ifNotCiMac("assisted, only perMachine and elevated", ({ expect }) =>
+  app(expect, {
     targets: nsisTarget,
     config: {
       nsis: {
@@ -172,9 +170,9 @@ test.ifNotCiMac(
 )
 
 // test release notes also
-test.ifNotCiMac(
-  "allowToChangeInstallationDirectory",
-  ({ expect }) => app(expect,
+test.ifNotCiMac("allowToChangeInstallationDirectory", ({ expect }) =>
+  app(
+    expect,
     {
       targets: nsisTarget,
       config: {

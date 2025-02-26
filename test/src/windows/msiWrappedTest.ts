@@ -9,9 +9,9 @@ const parser = new XMLParser({
   parseTagValue: true,
 })
 
-test.ifDevOrWinCi(
-  "msiWrapped requires nsis",
-   ({ expect }) =>  appThrows(expect,
+test.ifDevOrWinCi("msiWrapped requires nsis", ({ expect }) =>
+  appThrows(
+    expect,
     {
       targets: Platform.WINDOWS.createTarget("msiWrapped"),
       config: {
@@ -43,9 +43,9 @@ test.ifDevOrWinCi(
   )
 )
 
-test.ifDevOrWinCi(
-  "msiWrapped allows capitalized nsis target",
-  ({ expect }) => app(expect,
+test.ifDevOrWinCi("msiWrapped allows capitalized nsis target", ({ expect }) =>
+  app(
+    expect,
     {
       targets: Platform.WINDOWS.createTarget(["msiWrapped", "NSIS"]),
       config: {
@@ -63,9 +63,8 @@ test.ifDevOrWinCi(
   )
 )
 
-test.ifDevOrWinCi(
-  "msiWrapped includes packaged exe",
-  ({ expect }) => app(expect,{
+test.ifDevOrWinCi("msiWrapped includes packaged exe", ({ expect }) =>
+  app(expect, {
     targets: Platform.WINDOWS.createTarget(["msiWrapped", "nsis"]),
     config: {
       appId: "build.electron.test.msi.oneClick.perMachine",
@@ -88,9 +87,8 @@ test.ifDevOrWinCi(
   })
 )
 
-test.ifDevOrWinCi(
-  "msiWrapped impersonate no if not provided",
-  ({ expect }) => app(expect,{
+test.ifDevOrWinCi("msiWrapped impersonate no if not provided", ({ expect }) =>
+  app(expect, {
     targets: Platform.WINDOWS.createTarget(["msiWrapped", "nsis"]),
     config: {
       appId: "build.electron.test.msi.oneClick.perMachine",
@@ -112,9 +110,8 @@ test.ifDevOrWinCi(
   })
 )
 
-test.ifDevOrWinCi(
-  "msiWrapped impersonate yes if true",
-  ({ expect }) => app(expect,{
+test.ifDevOrWinCi("msiWrapped impersonate yes if true", ({ expect }) =>
+  app(expect, {
     targets: Platform.WINDOWS.createTarget(["msiWrapped", "nsis"]),
     config: {
       appId: "build.electron.test.msi.oneClick.perMachine",
@@ -139,9 +136,8 @@ test.ifDevOrWinCi(
   })
 )
 
-test.ifDevOrWinCi(
-  "msiWrapped wrappedInstallerArgs provided",
-  ({ expect }) => app(expect,{
+test.ifDevOrWinCi("msiWrapped wrappedInstallerArgs provided", ({ expect }) =>
+  app(expect, {
     targets: Platform.WINDOWS.createTarget(["msiWrapped", "nsis"]),
     config: {
       appId: "build.electron.test.msi.oneClick.perMachine",

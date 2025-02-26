@@ -11,7 +11,10 @@ export function assertThat(expect: ExpectStatic, actual: any): Assertions {
 const appVersion = require(path.join(__dirname, "../../../packages/app-builder-lib/package.json")).version
 
 class Assertions {
-  constructor(private readonly expect: ExpectStatic, private actual: any) {}
+  constructor(
+    private readonly expect: ExpectStatic,
+    private actual: any
+  ) {}
 
   containsAll<T>(expected: Iterable<T>) {
     this.expect(this.actual.slice().sort()).toEqual(Array.from(expected).slice().sort())

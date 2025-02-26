@@ -24,7 +24,7 @@ export function removeUnstableProperties(data: any) {
   )
 }
 
-export async function verifySmartUnpack( expect: ExpectStatic, resourceDir: string, additionalVerifications?: (asarFs: AsarFilesystem) => Promise<void>) {
+export async function verifySmartUnpack(expect: ExpectStatic, resourceDir: string, additionalVerifications?: (asarFs: AsarFilesystem) => Promise<void>) {
   const asarFs = await readAsar(path.join(resourceDir, "app.asar"))
   expect(await asarFs.readJson(`node_modules${path.sep}debug${path.sep}package.json`)).toMatchObject({
     name: "debug",

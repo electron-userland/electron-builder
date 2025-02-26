@@ -15,9 +15,8 @@ const testPublishConfig: GenericServerOptions = {
   url: "https://example.com/download",
 }
 
-test.ifNotWindows(
-  "AppImage",
-  ({ expect }) => app(expect,{
+test.ifNotWindows("AppImage", ({ expect }) =>
+  app(expect, {
     targets: appImageTarget,
     config: {
       directories: {
@@ -40,9 +39,8 @@ test.ifNotWindows(
   })
 )
 
-test.ifNotWindows.ifNotCiMac(
-  "AppImage arm, max compression",
-  ({ expect }) => app(expect,{
+test.ifNotWindows.ifNotCiMac("AppImage arm, max compression", ({ expect }) =>
+  app(expect, {
     targets: Platform.LINUX.createTarget("Appimage", Arch.armv7l),
     config: {
       publish: testPublishConfig,
@@ -51,9 +49,8 @@ test.ifNotWindows.ifNotCiMac(
   })
 )
 
-test.ifNotWindows.ifNotCiMac(
-  "AppImage - deprecated systemIntegration",
-   ({ expect }) =>  appThrows(expect, {
+test.ifNotWindows.ifNotCiMac("AppImage - deprecated systemIntegration", ({ expect }) =>
+  appThrows(expect, {
     targets: appImageTarget,
     config: {
       appImage: {
@@ -63,9 +60,9 @@ test.ifNotWindows.ifNotCiMac(
   })
 )
 
-test.ifNotWindows.ifNotCiMac(
-  "text license and file associations",
-  ({ expect }) => app(expect,
+test.ifNotWindows.ifNotCiMac("text license and file associations", ({ expect }) =>
+  app(
+    expect,
     {
       targets: appImageTarget,
       config: {
@@ -92,9 +89,9 @@ test.ifNotWindows.ifNotCiMac(
   )
 )
 
-test.ifNotWindows.ifNotCiMac(
-  "html license",
-  ({ expect }) => app(expect,
+test.ifNotWindows.ifNotCiMac("html license", ({ expect }) =>
+  app(
+    expect,
     {
       targets: appImageTarget,
     },
@@ -114,9 +111,9 @@ test.ifNotWindows.ifNotCiMac(
   )
 )
 
-test.ifNotWindows.ifNotCiMac(
-  "AppImage - default icon, custom executable and custom desktop",
-  ({ expect }) => app(expect,
+test.ifNotWindows.ifNotCiMac("AppImage - default icon, custom executable and custom desktop", ({ expect }) =>
+  app(
+    expect,
     {
       targets: appImageTarget,
       config: {
@@ -179,9 +176,9 @@ test.ifNotWindows.ifNotCiMac(
   )
 )
 
-test.ifNotWindows(
-  "icons from ICNS (mac)",
-  ({ expect }) => app(expect,
+test.ifNotWindows("icons from ICNS (mac)", ({ expect }) =>
+  app(
+    expect,
     {
       targets: appImageTarget,
       config: {
@@ -210,9 +207,9 @@ test.ifNotWindows(
   )
 )
 
-test.ifNotWindows(
-  "icons from ICNS if nothing specified",
-  ({ expect }) => app(expect,
+test.ifNotWindows("icons from ICNS if nothing specified", ({ expect }) =>
+  app(
+    expect,
     {
       targets: appImageTarget,
       config: {
@@ -227,9 +224,9 @@ test.ifNotWindows(
   )
 )
 
-test.ifNotWindows(
-  "icons from dir and one icon with suffix",
-  ({ expect }) => app(expect,
+test.ifNotWindows("icons from dir and one icon with suffix", ({ expect }) =>
+  app(
+    expect,
     {
       targets: appImageTarget,
       config: {
@@ -248,9 +245,9 @@ test.ifNotWindows(
   )
 )
 
-test.ifNotWindows(
-  "icons dir with images without size in the filename",
-  ({ expect }) => app(expect,
+test.ifNotWindows("icons dir with images without size in the filename", ({ expect }) =>
+  app(
+    expect,
     {
       targets: appImageTarget,
       config: {
@@ -276,9 +273,9 @@ test.ifNotWindows(
 )
 
 // test prepacked asar also https://github.com/electron-userland/electron-builder/issues/1102
-test.ifNotWindows(
-  "icons from ICNS",
-  ({ expect }) => app(expect,
+test.ifNotWindows("icons from ICNS", ({ expect }) =>
+  app(
+    expect,
     {
       targets: appImageTarget,
       config: {
@@ -309,9 +306,9 @@ test.ifNotWindows(
   )
 )
 
-test.ifNotWindows(
-  "no-author-email",
-   ({ expect }) =>  appThrows(expect,
+test.ifNotWindows("no-author-email", ({ expect }) =>
+  appThrows(
+    expect,
     { targets: Platform.LINUX.createTarget("deb", Arch.x64) },
     {
       projectDirCreated: projectDir =>
@@ -322,9 +319,8 @@ test.ifNotWindows(
   )
 )
 
-test.ifNotWindows(
-  "forbid desktop.Exec",
-   ({ expect }) =>  appThrows(expect, {
+test.ifNotWindows("forbid desktop.Exec", ({ expect }) =>
+  appThrows(expect, {
     targets: appImageTarget,
     config: {
       linux: {

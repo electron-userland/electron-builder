@@ -25,9 +25,9 @@ function pickSnapshotDefines(defines: any) {
   }
 }
 
-test(
-  "one-click",
-  ({ expect }) => app(expect,
+test("one-click", ({ expect }) =>
+  app(
+    expect,
     {
       targets: Platform.WINDOWS.createTarget(["nsis"], Arch.x64),
       config: {
@@ -65,12 +65,10 @@ test(
         await expectUpdateMetadata(expect, context, Arch.x64, true)
       },
     }
-  )
-)
+  ))
 
-test(
-  "custom guid",
-  ({ expect }) => app(expect,{
+test("custom guid", ({ expect }) =>
+  app(expect, {
     targets: Platform.WINDOWS.createTarget(["nsis"], Arch.ia32),
     config: {
       appId: "boo",
@@ -80,12 +78,11 @@ test(
         guid: "Foo Technologies\\Bar",
       },
     },
-  })
-)
+  }))
 
-test(
-  "multi language license",
-  ({ expect }) => app(expect,
+test("multi language license", ({ expect }) =>
+  app(
+    expect,
     {
       targets: Platform.WINDOWS.createTarget("nsis", Arch.x64),
       config: {
@@ -106,12 +103,11 @@ test(
         ])
       },
     }
-  )
-)
+  ))
 
-test(
-  "html license",
-  ({ expect }) => app(expect,
+test("html license", ({ expect }) =>
+  app(
+    expect,
     {
       targets: Platform.WINDOWS.createTarget("nsis", Arch.x64),
       config: {
@@ -129,12 +125,10 @@ test(
         ])
       },
     }
-  )
-)
+  ))
 
-test.ifDevOrWinCi(
-  "createDesktopShortcut always",
-  ({ expect }) => app(expect,{
+test.ifDevOrWinCi("createDesktopShortcut always", ({ expect }) =>
+  app(expect, {
     targets: Platform.WINDOWS.createTarget("nsis"),
     config: {
       publish: null,
@@ -145,9 +139,9 @@ test.ifDevOrWinCi(
   })
 )
 
-test.ifDevOrLinuxCi(
-  "perMachine, no run after finish",
-  ({ expect }) => app(expect,
+test.ifDevOrLinuxCi("perMachine, no run after finish", ({ expect }) =>
+  app(
+    expect,
     {
       targets: Platform.WINDOWS.createTarget(["nsis"], Arch.ia32),
       config: {
@@ -191,7 +185,8 @@ test.ifDevOrLinuxCi(
 
 test.skip("installerHeaderIcon", ({ expect }) => {
   let headerIconPath: string | null = null
-  return assertPack(expect,
+  return assertPack(
+    expect,
     "test-app-one",
     {
       targets: nsisTarget,
@@ -210,9 +205,9 @@ test.skip("installerHeaderIcon", ({ expect }) => {
   )
 })
 
-test.ifDevOrLinuxCi(
-  "custom include",
-  ({ expect }) => app(expect,
+test.ifDevOrLinuxCi("custom include", ({ expect }) =>
+  app(
+    expect,
     { targets: nsisTarget },
     {
       projectDirCreated: projectDir => copyTestAsset("installer.nsh", path.join(projectDir, "build", "installer.nsh")),
@@ -226,9 +221,9 @@ test.ifDevOrLinuxCi(
   )
 )
 
-test.skip(
-  "big file pack",
-  ({ expect }) => app(expect,
+test.skip("big file pack", ({ expect }) =>
+  app(
+    expect,
     {
       targets: nsisTarget,
       config: {
@@ -243,12 +238,11 @@ test.skip(
         await copyFile("/Volumes/Pegasus/15.02.18.m4v", path.join(projectDir, "foo/bar/video.mov"))
       },
     }
-  )
-)
+  ))
 
-test.ifDevOrLinuxCi(
-  "custom script",
-  ({ expect }) => app(expect,
+test.ifDevOrLinuxCi("custom script", ({ expect }) =>
+  app(
+    expect,
     { targets: nsisTarget },
     {
       projectDirCreated: projectDir => copyTestAsset("installer.nsi", path.join(projectDir, "build", "installer.nsi")),
@@ -257,9 +251,9 @@ test.ifDevOrLinuxCi(
   )
 )
 
-test(
-  "menuCategory",
-  ({ expect }) => app(expect,
+test("menuCategory", ({ expect }) =>
+  app(
+    expect,
     {
       targets: Platform.WINDOWS.createTarget(["nsis"], Arch.ia32),
       config: {
@@ -284,12 +278,11 @@ test(
         return doTest(expect, context.outDir, false, "Test Menu Category", "test-menu-category", "Foo Bar")
       },
     }
-  )
-)
+  ))
 
-test(
-  "string menuCategory",
-  ({ expect }) => app(expect,
+test("string menuCategory", ({ expect }) =>
+  app(
+    expect,
     {
       targets: Platform.WINDOWS.createTarget(["nsis"], Arch.ia32),
       config: {
@@ -316,12 +309,10 @@ test(
         await doTest(expect, context.outDir, false, "Test Menu Category", "test-menu-category", "Foo Bar")
       },
     }
-  )
-)
+  ))
 
-test.ifDevOrLinuxCi(
-  "file associations per user",
-  ({ expect }) => app(expect,{
+test.ifDevOrLinuxCi("file associations per user", ({ expect }) =>
+  app(expect, {
     targets: Platform.WINDOWS.createTarget(["nsis"], Arch.ia32),
     config: {
       publish: null,
@@ -335,9 +326,8 @@ test.ifDevOrLinuxCi(
   })
 )
 
-test.ifWindows.skip(
-  "custom exec name",
-  ({ expect }) => app(expect,{
+test.ifWindows.skip("custom exec name", ({ expect }) =>
+  app(expect, {
     targets: nsisTarget,
     config: {
       productName: "foo",
@@ -362,9 +352,8 @@ test.ifWindows.skip(
   })
 )
 
-test.ifWindows.skip(
-  "top-level custom exec name",
-  ({ expect }) => app(expect,{
+test.ifWindows.skip("top-level custom exec name", ({ expect }) =>
+  app(expect, {
     targets: nsisTarget,
     config: {
       publish: null,

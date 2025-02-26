@@ -291,7 +291,10 @@ test.ifWindows("invalid signature", async ({ expect }) => {
     publisherName: ["Foo Bar"],
   })
   const actualEvents = trackEvents(updater)
-  await assertThat(expect, updater.checkForUpdates().then((it): any => it?.downloadPromise)).throws()
+  await assertThat(
+    expect,
+    updater.checkForUpdates().then((it): any => it?.downloadPromise)
+  ).throws()
   expect(actualEvents).toMatchSnapshot()
 })
 
@@ -321,7 +324,10 @@ test.ifWindows("test custom signature verifier - signing error message", async (
     return Promise.resolve("signature verification failed")
   }
   const actualEvents = trackEvents(updater)
-  await assertThat(expect, updater.checkForUpdates().then((it): any => it?.downloadPromise)).throws()
+  await assertThat(
+    expect,
+    updater.checkForUpdates().then((it): any => it?.downloadPromise)
+  ).throws()
   expect(actualEvents).toMatchSnapshot()
 })
 

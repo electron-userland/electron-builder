@@ -63,7 +63,7 @@ export interface PackedContext {
   readonly tmpDir: TmpDir
 }
 
-export function appThrows( expect: ExpectStatic, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions = {}, customErrorAssert?: (error: Error) => void) {
+export function appThrows(expect: ExpectStatic, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions = {}, customErrorAssert?: (error: Error) => void) {
   return assertThat(expect, assertPack(expect, "test-app-one", packagerOptions, checkOptions)).throws(customErrorAssert)
 }
 
@@ -172,7 +172,8 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
         packagerOptions.projectDir = path.resolve(projectDir, packagerOptions.projectDir)
       }
 
-      const { packager, outDir } = await packAndCheck(expect,
+      const { packager, outDir } = await packAndCheck(
+        expect,
         {
           projectDir,
           ...packagerOptions,
@@ -572,7 +573,8 @@ export function signed(packagerOptions: PackagerOptions): PackagerOptions {
 }
 
 export function createMacTargetTest(expect: ExpectStatic, target: Array<MacOsTargetName>, config?: Configuration, isSigned = true) {
-  return app(expect,
+  return app(
+    expect,
     {
       targets: Platform.MAC.createTarget(target, Arch.x64),
       config: {

@@ -10,19 +10,19 @@ import { app, copyTestAsset, createMacTargetTest, getFixtureDir, parseFileList }
 
 test.ifMac.skip("invalid target", ({ expect }) => createMacTargetTest(expect, ["ttt" as any]))
 
-test.ifNotWindows("only zip",  ({ expect }) => createMacTargetTest(expect, ["zip"], undefined, false /* no need to test sign */))
+test.ifNotWindows("only zip", ({ expect }) => createMacTargetTest(expect, ["zip"], undefined, false /* no need to test sign */))
 
-test.ifNotWindows("tar.gz",  ({ expect }) => createMacTargetTest(expect, ["tar.gz"]))
+test.ifNotWindows("tar.gz", ({ expect }) => createMacTargetTest(expect, ["tar.gz"]))
 
 // test.ifNotWindows("tar.xz", createTargetTest(["tar.xz"], ["Test App ßW-1.1.0-mac.tar.xz"]))
 
 const it = process.env.CSC_KEY_PASSWORD == null ? test.skip : test.ifMac
 
-it("pkg",  ({ expect }) => createMacTargetTest(expect, ["pkg"]))
+it("pkg", ({ expect }) => createMacTargetTest(expect, ["pkg"]))
 
-test.ifMac(
-  "empty installLocation",
-  ({ expect }) => app(expect,
+test.ifMac("empty installLocation", ({ expect }) =>
+  app(
+    expect,
     {
       targets: Platform.MAC.createTarget("pkg", Arch.x64),
       config: {
@@ -40,9 +40,9 @@ test.ifMac(
   )
 )
 
-test.ifMac(
-  "extraDistFiles",
-  ({ expect }) => app(expect,
+test.ifMac("extraDistFiles", ({ expect }) =>
+  app(
+    expect,
     {
       targets: Platform.MAC.createTarget("zip", Arch.x64),
       config: {
@@ -60,9 +60,9 @@ test.ifMac(
   )
 )
 
-test.ifMac(
-  "pkg extended configuration",
-  ({ expect }) => app(expect,
+test.ifMac("pkg extended configuration", ({ expect }) =>
+  app(
+    expect,
     {
       targets: Platform.MAC.createTarget("pkg", Arch.x64),
       config: {
@@ -108,9 +108,9 @@ test.ifMac(
   )
 )
 
-test.ifMac(
-  "pkg scripts",
-  ({ expect }) => app(expect,
+test.ifMac("pkg scripts", ({ expect }) =>
+  app(
+    expect,
     {
       targets: Platform.MAC.createTarget("pkg", Arch.x64),
     },
@@ -152,7 +152,8 @@ test.ifMac(
 
 test.ifMac("pkg extra packages", async ({ expect }) => {
   const extraPackages = path.join("build", "extra-packages")
-  return app(expect,
+  return app(
+    expect,
     {
       targets: Platform.MAC.createTarget("pkg", Arch.x64),
       config: {

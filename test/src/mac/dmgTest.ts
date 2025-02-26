@@ -10,9 +10,8 @@ import { app, assertPack, copyTestAsset } from "../helpers/packTester"
 const dmgTarget = Platform.MAC.createTarget("dmg", Arch.x64)
 const defaultTarget = Platform.MAC.createTarget(undefined, Arch.x64)
 
-test.ifMac(
-  "dmg",
-  ({ expect }) => app(expect,{
+test.ifMac("dmg", ({ expect }) =>
+  app(expect, {
     targets: dmgTarget,
     config: {
       productName: "DefaultDmg",
@@ -21,9 +20,9 @@ test.ifMac(
   })
 )
 
-test.ifMac(
-  "no build directory",
-  ({ expect }) => app(expect,
+test.ifMac("no build directory", ({ expect }) =>
+  app(
+    expect,
     {
       targets: dmgTarget,
       config: {
@@ -49,9 +48,8 @@ test.ifMac(
   )
 )
 
-test.ifMac(
-  "background color",
-  ({ expect }) => app(expect,{
+test.ifMac("background color", ({ expect }) =>
+  app(expect, {
     targets: dmgTarget,
     config: {
       // dmg can mount only one volume name, so, to test in parallel, we set different product name
@@ -76,7 +74,8 @@ test.ifMac(
 
 test.ifMac("custom background - new way", ({ expect }) => {
   const customBackground = "customBackground.png"
-  return assertPack(expect,
+  return assertPack(
+    expect,
     "test-app-one",
     {
       targets: defaultTarget,
@@ -113,7 +112,8 @@ test.ifMac("custom background - new way", ({ expect }) => {
 })
 
 test.ifMac("retina background as 2 png", ({ expect }) => {
-  return assertPack(expect,
+  return assertPack(
+    expect,
     "test-app-one",
     {
       targets: defaultTarget,
@@ -148,7 +148,7 @@ test.ifMac("retina background as 2 png", ({ expect }) => {
 })
 
 test.ifMac.skip("no Applications link", ({ expect }) => {
-  return assertPack(expect,"test-app-one", {
+  return assertPack(expect, "test-app-one", {
     targets: defaultTarget,
     config: {
       publish: null,
@@ -186,9 +186,9 @@ test.ifMac.skip("no Applications link", ({ expect }) => {
   })
 })
 
-test.ifMac(
-  "unset dmg icon",
-  ({ expect }) => app(expect,
+test.ifMac("unset dmg icon", ({ expect }) =>
+  app(
+    expect,
     {
       targets: dmgTarget,
       config: {
@@ -214,9 +214,9 @@ test.ifMac(
 )
 
 // test also "only dmg"
-test.ifMac(
-  "no background",
-  ({ expect }) => app(expect,
+test.ifMac("no background", ({ expect }) =>
+  app(
+    expect,
     {
       targets: dmgTarget,
       config: {
@@ -240,9 +240,8 @@ test.ifMac(
 )
 
 // test also darkModeSupport
-test.ifMac(
-  "bundleShortVersion",
-  ({ expect }) => app(expect,{
+test.ifMac("bundleShortVersion", ({ expect }) =>
+  app(expect, {
     targets: dmgTarget,
     config: {
       publish: null,
@@ -257,7 +256,7 @@ test.ifMac(
 )
 
 test.ifMac("disable dmg icon (light), bundleVersion", ({ expect }) => {
-  return assertPack(expect,"test-app-one", {
+  return assertPack(expect, "test-app-one", {
     targets: defaultTarget,
     config: {
       publish: null,
@@ -284,9 +283,8 @@ const packagerOptions = {
   },
 }
 
-test.ifMac(
-  "multi language license",
-  ({ expect }) => app(expect,packagerOptions, {
+test.ifMac("multi language license", ({ expect }) =>
+  app(expect, packagerOptions, {
     projectDirCreated: projectDir => {
       return Promise.all([
         // writeFile(path.join(projectDir, "build", "license_en.txt"), "Hi"),
@@ -297,36 +295,33 @@ test.ifMac(
   })
 )
 
-test.ifMac(
-  "license ja",
-  ({ expect }) => app(expect,packagerOptions, {
+test.ifMac("license ja", ({ expect }) =>
+  app(expect, packagerOptions, {
     projectDirCreated: projectDir => {
       return fs.writeFile(path.join(projectDir, "build", "license_ja.txt"), "こんにちは".repeat(12))
     },
   })
 )
 
-test.ifMac(
-  "license en",
-  ({ expect }) => app(expect,packagerOptions, {
+test.ifMac("license en", ({ expect }) =>
+  app(expect, packagerOptions, {
     projectDirCreated: projectDir => {
       return copyTestAsset("license_en.txt", path.join(projectDir, "build", "license_en.txt"))
     },
   })
 )
 
-test.ifMac(
-  "license rtf",
-  ({ expect }) => app(expect,packagerOptions, {
+test.ifMac("license rtf", ({ expect }) =>
+  app(expect, packagerOptions, {
     projectDirCreated: projectDir => {
       return copyTestAsset("license_de.rtf", path.join(projectDir, "build", "license_de.rtf"))
     },
   })
 )
 
-test.ifMac(
-  "license buttons config",
-  ({ expect }) => app(expect,
+test.ifMac("license buttons config", ({ expect }) =>
+  app(
+    expect,
     {
       ...packagerOptions,
       effectiveOptionComputed: async it => {

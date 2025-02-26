@@ -20,7 +20,8 @@ const targets = Platform.MAC.createTarget(DIR_TARGET, Arch.x64)
 
 test.ifMac("icon set", ({ expect }) => {
   let platformPackager: CheckingMacPackager | null = null
-  return app(expect,
+  return app(
+    expect,
     {
       targets,
       platformPackagerFactory: packager => (platformPackager = new CheckingMacPackager(packager)),
@@ -34,7 +35,8 @@ test.ifMac("icon set", ({ expect }) => {
 
 test.ifMac("custom icon set", ({ expect }) => {
   let platformPackager: CheckingMacPackager | null = null
-  return app(expect,
+  return app(
+    expect,
     {
       targets,
       config: {
@@ -58,7 +60,8 @@ test.ifMac("custom icon set", ({ expect }) => {
 
 test.ifMac("custom icon set with only 512 and 128", ({ expect }) => {
   let platformPackager: CheckingMacPackager | null = null
-  return app(expect,
+  return app(
+    expect,
     {
       targets,
       config: {
@@ -83,7 +86,8 @@ test.ifMac("custom icon set with only 512 and 128", ({ expect }) => {
 
 test.ifMac("png icon", ({ expect }) => {
   let platformPackager: CheckingMacPackager | null = null
-  return app(expect,
+  return app(
+    expect,
     {
       targets,
       config: {
@@ -102,7 +106,8 @@ test.ifMac("png icon", ({ expect }) => {
 
 test.ifMac("default png icon", ({ expect }) => {
   let platformPackager: CheckingMacPackager | null = null
-  return app(expect,
+  return app(
+    expect,
     {
       targets,
       platformPackagerFactory: packager => (platformPackager = new CheckingMacPackager(packager)),
@@ -123,7 +128,8 @@ test.ifMac("default png icon", ({ expect }) => {
 
 test.ifMac("png icon small", ({ expect }) => {
   let platformPackager: CheckingMacPackager | null = null
-  return app(expect,
+  return app(
+    expect,
     {
       targets,
       config: {

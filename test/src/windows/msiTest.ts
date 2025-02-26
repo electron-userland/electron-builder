@@ -2,9 +2,9 @@ import { Platform } from "electron-builder"
 import * as fs from "fs"
 import { app } from "../helpers/packTester"
 
-test.ifDevOrWinCi(
-  "msi",
-  ({ expect }) => app(expect,
+test.ifDevOrWinCi("msi", ({ expect }) =>
+  app(
+    expect,
     {
       targets: Platform.WINDOWS.createTarget("msi"),
       config: {
@@ -31,9 +31,9 @@ test.ifDevOrWinCi(
   )
 )
 
-test.ifDevOrWinCi(
-  "msi no asar",
-  ({ expect }) => app(expect,
+test.ifDevOrWinCi("msi no asar", ({ expect }) =>
+  app(
+    expect,
     {
       targets: Platform.WINDOWS.createTarget("msi"),
       config: {
@@ -51,9 +51,9 @@ test.ifDevOrWinCi(
   )
 )
 
-test.ifDevOrWinCi(
-  "per-user",
-  ({ expect }) => app(expect,
+test.ifDevOrWinCi("per-user", ({ expect }) =>
+  app(
+    expect,
     {
       targets: Platform.WINDOWS.createTarget("msi"),
       config: {
@@ -74,9 +74,9 @@ test.ifDevOrWinCi(
 )
 
 const wixArgsProductName = "Test WiX Args"
-test.ifDevOrWinCi(
-  "wix args",
-  ({ expect }) => app(expect,
+test.ifDevOrWinCi("wix args", ({ expect }) =>
+  app(
+    expect,
     {
       targets: Platform.WINDOWS.createTarget("msi"),
       config: {
@@ -115,9 +115,8 @@ test.ifDevOrWinCi(
   )
 )
 
-test.skip(
-  "assisted",
-  ({ expect }) => app(expect,{
+test.skip("assisted", ({ expect }) =>
+  app(expect, {
     targets: Platform.WINDOWS.createTarget("msi"),
     config: {
       appId: "build.electron.test.msi.assisted",
@@ -132,5 +131,4 @@ test.skip(
         menuCategory: "TestMenuDirectory",
       },
     },
-  })
-)
+  }))
