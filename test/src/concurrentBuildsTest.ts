@@ -128,8 +128,9 @@ test.ifDevOrLinuxCi("linux concurrent", () => {
 })
 
 test.ifWindows("win concurrent - all targets", () => {
+  const targetList = [DIR_TARGET, `appx`, `msi`, `msiwrapped`, `nsis`, `portable`, `squirrel`, `7z`, `zip`, `tar.xz`, `tar.gz`, `tar.bz2`]
   const targets = Platform.WINDOWS.createTarget(
-    [DIR_TARGET, `appx`, `msi`, `msiwrapped`, `nsis`, `portable`, `squirrel`, `7z`, `zip`, `tar.xz`, `tar.gz`, `tar.bz2`],
+    targetList,
     Arch.x64,
     Arch.arm64
   )
@@ -141,6 +142,7 @@ test.ifWindows("win concurrent - all targets", () => {
         concurrency: {
           jobs: jobConcurrency,
         },
+        win: { target: targetList }
       },
     },
     {
