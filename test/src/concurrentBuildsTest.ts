@@ -109,7 +109,7 @@ test.ifNotMac("win concurrent", () => {
   )
 })
 
-test.ifDevOrLinuxCi("linux concurrent", () => {
+test.ifLinuxOrDevMac("linux concurrent", () => {
   const targets = linuxTargets
   return assertPack(
     "test-app",

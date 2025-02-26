@@ -10,7 +10,8 @@
           "console": "integratedTerminal",
           "internalConsoleOptions": "openOnFirstSessionStart",
           "env": {
-            "TEST_FILES": "BuildTest"
+            "TEST_FILES": "concurrentBuildsTest",
+            "UPDATE_SNAPSHOT": "true"
           }
       }
   ]
