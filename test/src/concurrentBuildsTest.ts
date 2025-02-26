@@ -10,15 +10,18 @@ const linuxTargets = Platform.LINUX.createTarget([DIR_TARGET, "deb", "rpm", "App
 const jobConcurrency = 5
 
 const projectDirCreated = async (projectDir: string, tmpDir: TmpDir) => {
+  const buildConfig = (data: any) => ({
+    ...data.build,
+    artifactName: "${productName}-${version}-${arch}.${ext}",
+    compression: "store",
+  })
   await modifyPackageJson(
     projectDir,
     (data: any) => ({
       ...data,
       name: "test-concurrent",
       version: "1.0.0",
-      build: {
-        artifactName: "${productName}-${version}-${arch}.${ext}",
-      }
+      build: buildConfig(data),
     }),
     true
   )
@@ -26,9 +29,7 @@ const projectDirCreated = async (projectDir: string, tmpDir: TmpDir) => {
     projectDir,
     (data: any) => ({
       ...data,
-      build: {
-        artifactName: "${productName}-${version}-${arch}.${ext}",
-      }
+      build: buildConfig(data),
     }),
     false
   )
