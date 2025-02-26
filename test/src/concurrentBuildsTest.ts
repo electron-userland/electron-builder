@@ -7,7 +7,7 @@ const winTargets = Platform.WINDOWS.createTarget([DIR_TARGET, "nsis"], Arch.x64,
 const macTargets = Platform.MAC.createTarget([DIR_TARGET, "zip", "dmg", "mas"], Arch.x64, Arch.universal)
 const linuxTargets = Platform.LINUX.createTarget([DIR_TARGET, "deb", "rpm", "AppImage"], Arch.x64, Arch.arm64)
 
-const jobConcurrency = 1
+const jobConcurrency = 5
 
 const projectDirCreated = async (projectDir: string, tmpDir: TmpDir) => {
   await modifyPackageJson(
@@ -125,7 +125,11 @@ test.ifDevOrLinuxCi("linux concurrent", () => {
 })
 
 test.ifWindows("win concurrent - all targets", () => {
-  const targets = Platform.WINDOWS.createTarget([DIR_TARGET, `appx`, `msi`, `msi-wrapped`, `squirrel`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`], Arch.x64, Arch.arm64)
+  const targets = Platform.WINDOWS.createTarget(
+    [DIR_TARGET, `appx`, `msi`, `msiwrapped`, `nsis`, `portable`, `squirrel`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`],
+    Arch.x64,
+    Arch.arm64
+  )
   return assertPack(
     "test-app",
     {
