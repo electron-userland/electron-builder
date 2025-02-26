@@ -14,7 +14,10 @@ export default () => {
       },
     },
     test: {
-      globals: false,
+      // if using `toMatchSnapshot`, it MUST be passed in through the test context
+      // e.g. test("name", ({ expect }) => { ... })
+      globals: true,
+
       setupFiles: "./test/vitest-setup.ts",
       include: [`test/src/**/${includeRegex}.ts`],
       update: process.env.UPDATE_SNAPSHOT === "true",
