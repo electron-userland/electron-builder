@@ -23,7 +23,7 @@ import { assertThat } from "./fileAssert"
 import AdmZip from "adm-zip"
 // @ts-ignore
 import sanitizeFileName from "sanitize-filename"
-import type { ExpectStatic, RunnerTestCase, Test, TestAPI } from "vitest"
+import type { ExpectStatic } from "vitest"
 
 if (process.env.TRAVIS !== "true") {
   process.env.CIRCLE_BUILD_NUM = "42"
