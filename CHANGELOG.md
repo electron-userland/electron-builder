@@ -1,3 +1,15 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v26.0.8...v) (2025-02-26)
+
+
+### Bug Fixes
+
+* `AsyncEventEmitter` `filterListeners` doesn't work with promises ([#8895](https://github.com/electron-userland/electron-builder/issues/8895)) ([22da644](https://github.com/electron-userland/electron-builder/commit/22da64425182456eb4d1243138dde27c80d6adac))
+* allow publishing to Snap Store to be disabled with snap-specific `snap.publish` options ([#8896](https://github.com/electron-userland/electron-builder/issues/8896)) ([67b6f71](https://github.com/electron-userland/electron-builder/commit/67b6f71f85798dba4ce51dfb2cd012e04cd391db))
+* allow usage of `node-linker=hoisted` with pnpm ([#8885](https://github.com/electron-userland/electron-builder/issues/8885)) ([4cc475e](https://github.com/electron-userland/electron-builder/commit/4cc475ed214861b99075d4639c92686803420174))
+* **mac:** when using default `osx-sign`, specifically pass in identity name instead of hash ([#8908](https://github.com/electron-userland/electron-builder/issues/8908)) ([62029b0](https://github.com/electron-userland/electron-builder/commit/62029b08c10a6b12d8ef30bf57ae61a877f297f4))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v26.0.7...v) (2025-02-21)
 
 
