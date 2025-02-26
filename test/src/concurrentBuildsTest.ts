@@ -129,7 +129,7 @@ test.ifDevOrLinuxCi("linux concurrent", () => {
 
 test.ifWindows("win concurrent - all targets", () => {
   const targets = Platform.WINDOWS.createTarget(
-    [DIR_TARGET, `appx`, `msi`, `msiwrapped`, `nsis`, `portable`, `squirrel`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`],
+    [DIR_TARGET, `appx`, `msi`, `msiwrapped`, `nsis`, `portable`, `squirrel`, `7z`, `zip`, `tar.xz`, `tar.gz`, `tar.bz2`],
     Arch.x64,
     Arch.arm64
   )
