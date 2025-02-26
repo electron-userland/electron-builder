@@ -43,15 +43,15 @@ export default () => {
         concurrent: true
       },
 
-      // Speed things up a bit -- these help but probably won't be needed someday
-      maxConcurrency: 20,
-      pool: "forks",
-      poolOptions: {
-        forks: {
-          isolate: false,
-        },
-      },
-      isolate: false, // only safe with the poolOptions above
+      // // Speed things up a bit -- these help but probably won't be needed someday
+      // maxConcurrency: 20,
+      // pool: "forks",
+      // poolOptions: {
+      //   forks: {
+      //     isolate: false,
+      //   },
+      // },
+      // isolate: false, // only safe with the poolOptions above
 
       testTimeout: (isWindows ? 4 : 3) * 1000 * 60, // disk operations can be slow. We're generous with the timeout here to account for less-performant hardware
       coverage: {

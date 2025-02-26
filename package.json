@@ -12,7 +12,7 @@
   "scripts": {
     "//": "do not wrap into single quotes - windows doesn't unwrap arg in this case",
     "compile": "tsc --build",
-    "lint": "eslint packages",
+    "lint": "eslint packages && prettier 'packages/**/*.{ts,js}' test/src/**/*.ts --check",
     "lint-staged": "lint-staged",
     "lint-deps": "node ./scripts/checkDeps.js",
     "pretest": "pnpm lint-deps && pnpm lint",
