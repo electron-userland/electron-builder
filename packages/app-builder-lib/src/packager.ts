@@ -494,7 +494,7 @@ export class Packager {
         packPromises.push(packager.pack(outDir, arch, targetList, taskManager))
       }
 
-      await asyncPool(MAX_FILE_REQUESTS, packPromises, it => it)
+      await asyncPool(packager.platformSpecificBuildOptions.concurrency?.jobs || packager.config.concurrency?.jobs || 5, packPromises, it => it)
 
       if (this.cancellationToken.cancelled) {
         break
