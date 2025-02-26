@@ -1,12 +1,13 @@
 import { Platform, DIR_TARGET, Arch } from "app-builder-lib"
-import { app, assertPack, modifyPackageJson } from "./helpers/packTester"
-import { MAX_FILE_REQUESTS } from "builder-util/out/fs"
+import { assertPack, modifyPackageJson } from "./helpers/packTester"
 import { TmpDir } from "temp-file"
 
 const winTargets = Platform.WINDOWS.createTarget([DIR_TARGET, "nsis"], Arch.x64, Arch.arm64)
 // const winTargets = Platform.WINDOWS.createTarget([DIR_TARGET, "msi", "msi-wrapped", "nsis", "nsis-web"], Arch.x64, Arch.arm64)
 const macTargets = Platform.MAC.createTarget([DIR_TARGET, "zip", "dmg", "mas"], Arch.x64, Arch.universal)
 const linuxTargets = Platform.LINUX.createTarget([DIR_TARGET, "deb", "rpm", "AppImage"], Arch.x64, Arch.arm64)
+
+const jobConcurrency = 1
 
 const projectDirCreated = async (projectDir: string, tmpDir: TmpDir) => {
   await modifyPackageJson(
@@ -41,7 +42,7 @@ test.ifAll("win/linux concurrent", () => {
       targets,
       config: {
         concurrency: {
-          jobs: MAX_FILE_REQUESTS,
+          jobs: jobConcurrency,
         },
       },
     },
@@ -59,7 +60,7 @@ test.ifMac("mac/win/linux concurrent", () => {
       targets,
       config: {
         concurrency: {
-          jobs: MAX_FILE_REQUESTS,
+          jobs: jobConcurrency,
         },
       },
     },
@@ -77,7 +78,7 @@ test.ifMac("mac concurrent", () => {
       targets,
       config: {
         concurrency: {
-          jobs: MAX_FILE_REQUESTS,
+          jobs: jobConcurrency,
         },
       },
     },
@@ -95,7 +96,7 @@ test.ifNotMac("win concurrent", () => {
       targets,
       config: {
         concurrency: {
-          jobs: MAX_FILE_REQUESTS,
+          jobs: jobConcurrency,
         },
       },
     },
@@ -113,7 +114,7 @@ test.ifDevOrLinuxCi("linux concurrent", () => {
       targets,
       config: {
         concurrency: {
-          jobs: MAX_FILE_REQUESTS,
+          jobs: jobConcurrency,
         },
       },
     },
@@ -131,7 +132,7 @@ test.ifWindows("win concurrent - all targets", () => {
       targets,
       config: {
         concurrency: {
-          jobs: MAX_FILE_REQUESTS,
+          jobs: jobConcurrency,
         },
       },
     },
