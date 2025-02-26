@@ -2,13 +2,15 @@ import { DIR_TARGET, Platform, archFromString } from "electron-builder"
 import { outputFile } from "fs-extra"
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert"
-import { app, checkDirContents, modifyPackageJson } from "./helpers/packTester"
+import { app, checkDirContents, linuxDirTarget, modifyPackageJson } from "./helpers/packTester"
+
+const currentProcessTarget = Platform.LINUX.createTarget(DIR_TARGET, archFromString(process.arch))
 
 test.ifDevOrLinuxCi(
   "ignore build resources",
   app(
     {
-      targets: Platform.LINUX.createTarget(DIR_TARGET),
+      targets: linuxDirTarget,
       config: {
         asar: false,
       },
@@ -28,7 +30,7 @@ test.ifDevOrLinuxCi(
   "2 ignore",
   app(
     {
-      targets: Platform.LINUX.createTarget(DIR_TARGET),
+      targets: linuxDirTarget,
       config: {
         asar: false,
         files: [
@@ -57,7 +59,7 @@ test.ifDevOrLinuxCi(
   "ignore known ignored files",
   app(
     {
-      targets: Platform.LINUX.createTarget(DIR_TARGET),
+      targets: linuxDirTarget,
       config: {
         asar: false,
       },
@@ -80,7 +82,7 @@ test.ifNotCiMac(
   "ignore node_modules dev dep",
   app(
     {
-      targets: Platform.LINUX.createTarget(DIR_TARGET),
+      targets: linuxDirTarget,
       config: {
         asar: false,
         files: ["**/*", "**/submodule-1-test/node_modules/**"],
@@ -109,7 +111,7 @@ test.ifDevOrLinuxCi(
   "copied sub node_modules of the rootDir/node_modules",
   app(
     {
-      targets: Platform.LINUX.createTarget(DIR_TARGET),
+      targets: currentProcessTarget,
       config: {
         asar: false,
         files: ["**/*", "**/submodule-1-test/node_modules/**"],
@@ -146,7 +148,7 @@ test.ifDevOrLinuxCi(
   "Don't copy sub node_modules of the other dir instead of rootDir",
   app(
     {
-      targets: Platform.LINUX.createTarget(DIR_TARGET),
+      targets: currentProcessTarget,
       config: {
         asar: false,
       },
@@ -183,7 +185,7 @@ test.ifDevOrLinuxCi(
   "copied select submodule node_modules",
   app(
     {
-      targets: Platform.LINUX.createTarget(DIR_TARGET),
+      targets: currentProcessTarget,
       config: {
         asar: false,
         // should use **/ instead of */,
@@ -219,7 +221,7 @@ test.ifDevOrLinuxCi(
   "cannot copied select submodule node_modules by */",
   app(
     {
-      targets: Platform.LINUX.createTarget(DIR_TARGET),
+      targets: currentProcessTarget,
       config: {
         asar: false,
         files: ["**/*", "*/submodule-1-test/node_modules/**"],
@@ -247,7 +249,7 @@ test.ifDevOrLinuxCi(
   "cannot copied select submodule node_modules by **/submodule-1-test/node_modules",
   app(
     {
-      targets: Platform.LINUX.createTarget(DIR_TARGET),
+      targets: currentProcessTarget,
       config: {
         asar: false,
         files: ["**/*", "**/submodule-1-test/node_modules"],

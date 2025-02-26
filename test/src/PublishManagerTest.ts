@@ -86,7 +86,7 @@ test.ifMac(
 // otherwise test "os macro" always failed for pull requests
 process.env.PUBLISH_FOR_PULL_REQUEST = "true"
 
-test.ifAll.ifNotWindows(
+test.ifNotWindows(
   "os macro",
   app(
     {
@@ -117,7 +117,7 @@ test.ifAll.ifNotWindows(
 // disable on ifNotCi for now - slow on CircleCI
 // error should be ignored because publish: never
 // https://github.com/electron-userland/electron-builder/issues/2670
-test.ifAll.ifNotCi(
+test.ifNotCi(
   "dotted s3 bucket",
   app(
     {
@@ -136,7 +136,7 @@ test.ifAll.ifNotCi(
 )
 
 // https://github.com/electron-userland/electron-builder/issues/3261
-test.ifAll.ifNotWindows(
+test.ifNotWindows(
   "custom provider",
   app(
     {

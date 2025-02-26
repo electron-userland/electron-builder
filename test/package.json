@@ -37,13 +37,14 @@
     "@jest/globals": "^29.7.0",
     "@types/adm-zip": "0.5.6",
     "@types/fs-extra": "^9.0.11",
-    "@types/jest": "^26.0.23",
     "@types/js-yaml": "^4.0.1",
     "@types/semver": "^7.3.13",
     "babel-jest": "^29.7.0",
+    "fast-xml-parser": "4.4.1",
+    "vitest": "^3.0.4",
+    "vitest-mock-commonjs": "^1.0.2",
     "esbuild": "^0.12.14",
     "esbuild-jest": "^0.5.0",
-    "fast-xml-parser": "4.4.1",
     "sanitize-filename": "^1.6.3"
   },
   "jest": {
