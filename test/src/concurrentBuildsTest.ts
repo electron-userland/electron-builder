@@ -5,23 +5,25 @@ import { TmpDir } from "temp-file"
 const winTargets = Platform.WINDOWS.createTarget([DIR_TARGET, "nsis"], Arch.x64, Arch.arm64)
 // const winTargets = Platform.WINDOWS.createTarget([DIR_TARGET, "msi", "msi-wrapped", "nsis", "nsis-web"], Arch.x64, Arch.arm64)
 const macTargets = Platform.MAC.createTarget([DIR_TARGET, "zip", "dmg", "mas"], Arch.x64, Arch.universal)
-const linuxTargets = Platform.LINUX.createTarget([DIR_TARGET, "deb", "rpm", "AppImage"], Arch.x64, Arch.arm64)
+const linuxTargets = Platform.LINUX.createTarget([DIR_TARGET, "deb", "rpm", "AppImage"], Arch.x64, Arch.armv7l)
 
 const jobConcurrency = 5
 
 const projectDirCreated = async (projectDir: string, tmpDir: TmpDir) => {
   const buildConfig = (data: any) => ({
-    ...data.build,
-    artifactName: "${productName}-${version}-${arch}.${ext}",
-    compression: "store",
+    name: "test-concurrent",
+    version: "1.0.0",
+    build: {
+      ...data.build,
+      artifactName: "${productName}-${version}-${arch}.${ext}",
+      compression: "store",
+    },
   })
   await modifyPackageJson(
     projectDir,
     (data: any) => ({
       ...data,
-      name: "test-concurrent",
-      version: "1.0.0",
-      build: buildConfig(data),
+      ...buildConfig(data),
     }),
     true
   )
@@ -29,7 +31,7 @@ const projectDirCreated = async (projectDir: string, tmpDir: TmpDir) => {
     projectDir,
     (data: any) => ({
       ...data,
-      build: buildConfig(data),
+      ...buildConfig(data),
     }),
     false
   )
