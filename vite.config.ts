@@ -44,6 +44,10 @@ export default () => {
       sequence: {
         concurrent: true
       },
+      poolMatchGlobs: [
+        // This test prevents worker_thread from terminating
+        ["/test/**/*.ts", "child_process"],
+      ],
 
       // // Speed things up a bit -- these help but probably won't be needed someday
       // maxConcurrency: 20,
@@ -56,7 +60,7 @@ export default () => {
       // isolate: false, // only safe with the poolOptions above
 
       slowTestThreshold: 10 * 1000,
-      testTimeout: (isWindows ? 4 : 3) * 1000 * 60, // disk operations can be slow. We're generous with the timeout here to account for less-performant hardware
+      testTimeout: (isWindows ? 8 : 6) * 1000 * 60, // disk operations can be slow. We're generous with the timeout here to account for less-performant hardware
       coverage: {
         reporter: ["lcov", "text"],
       },

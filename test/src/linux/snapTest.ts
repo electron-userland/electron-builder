@@ -78,7 +78,7 @@ test.ifDevOrLinuxCi("classic confinement", ({ expect }) =>
 )
 
 test.ifDevOrLinuxCi("buildPackages", async ({ expect }) => {
-  await assertPack(expect, " test-app-one", {
+  await assertPack(expect, "test-app-one", {
     targets: snapTarget,
     config: {
       extraMetadata: {
@@ -118,7 +118,7 @@ test.ifDevOrLinuxCi("plugs option", async ({ expect }) => {
       "another-simple-plug-name": null,
     },
   ]) {
-    await assertPack(expect, " test-app-one", {
+    await assertPack(expect, "test-app-one", {
       targets: snapTarget,
       config: {
         snap: {
@@ -150,7 +150,7 @@ test.ifDevOrLinuxCi("slots option", async ({ expect }) => {
       "another-simple-slot-name",
     ],
   ]) {
-    await assertPack(expect, " test-app-one", {
+    await assertPack(expect, "test-app-one", {
       targets: snapTarget,
       config: {
         extraMetadata: {
