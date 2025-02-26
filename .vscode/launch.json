@@ -10,7 +10,8 @@
           "console": "integratedTerminal",
           "internalConsoleOptions": "openOnFirstSessionStart",
           "env": {
-            "TEST_FILES": "dmgTest"
+            "TEST_FILES": "msiTest",
+            "UPDATE_SNAPSHOT": "true"
           }
       }
   ]
