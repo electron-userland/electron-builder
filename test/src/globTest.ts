@@ -188,7 +188,6 @@ test.ifDevOrLinuxCi("local node module with file protocol", ({ expect }) => {
         await spawn("npm", ["install"], {
           cwd: projectDir,
         })
-
       },
       packed: async context => {
         await assertThat(expect, path.join(path.join(context.getResources(Platform.LINUX), "app.asar.unpacked", "node_modules", "foo", "package.json"))).isFile()

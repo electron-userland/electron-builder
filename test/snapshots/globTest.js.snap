@@ -67,18 +67,6 @@ exports[`asarUnpack node_modules 2`] = `
 }
 `;
 
-exports[`asarUnpack node_modules which has many modules 1`] = `
-{
-  "linux": [],
-}
-`;
-
-exports[`exclude some modules when asarUnpack node_modules which has many modules 1`] = `
-{
-  "linux": [],
-}
-`;
-
 exports[`failed peer dep 1`] = `
 {
   "linux": [],

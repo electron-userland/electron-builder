@@ -8,7 +8,8 @@ import { app, linuxDirTarget, modifyPackageJson } from "./helpers/packTester"
 import { ExpectStatic } from "vitest"
 
 function createExtraMetadataTest(expect: ExpectStatic, asar: boolean) {
-  return app(expect,
+  return app(
+    expect,
     {
       targets: linuxDirTarget,
       config: coerceTypes({
@@ -51,8 +52,8 @@ function createExtraMetadataTest(expect: ExpectStatic, asar: boolean) {
   )
 }
 
-test.ifDevOrLinuxCi("extra metadata",  ({ expect }) => createExtraMetadataTest(expect, true))
-test.ifDevOrLinuxCi("extra metadata (no asar)",  ({ expect }) => createExtraMetadataTest(expect, false))
+test.ifDevOrLinuxCi("extra metadata", ({ expect }) => createExtraMetadataTest(expect, true))
+test.ifDevOrLinuxCi("extra metadata (no asar)", ({ expect }) => createExtraMetadataTest(expect, false))
 
 test("cli", ({ expect }) => {
   // because these methods are internal

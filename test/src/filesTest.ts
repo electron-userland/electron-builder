@@ -8,9 +8,8 @@ import { assertThat } from "./helpers/fileAssert"
 import { app, appThrows, assertPack, checkDirContents, linuxDirTarget, modifyPackageJson } from "./helpers/packTester"
 import { ExpectStatic } from "vitest"
 
-test.ifDevOrLinuxCi(
-  "expand not defined env",
-   ({ expect }) =>  appThrows(expect, {
+test.ifDevOrLinuxCi("expand not defined env", ({ expect }) =>
+  appThrows(expect, {
     targets: linuxDirTarget,
     config: {
       asar: false,
@@ -22,9 +21,9 @@ test.ifDevOrLinuxCi(
 
 process.env.__NOT_BAR__ = "!**/bar"
 
-test.ifDevOrLinuxCi(
-  "files",
-  ({ expect }) => app(expect,
+test.ifDevOrLinuxCi("files", ({ expect }) =>
+  app(
+    expect,
     {
       targets: linuxDirTarget,
       config: {
@@ -49,9 +48,9 @@ test.ifDevOrLinuxCi(
   )
 )
 
-test.ifDevOrLinuxCi(
-  "files.from asar",
-  ({ expect }) => app(expect,
+test.ifDevOrLinuxCi("files.from asar", ({ expect }) =>
+  app(
+    expect,
     {
       targets: linuxDirTarget,
       config: {
@@ -81,9 +80,9 @@ test.ifDevOrLinuxCi(
   )
 )
 
-test.ifNotWindows(
-  "map resources",
-  ({ expect }) => app(expect,
+test.ifNotWindows("map resources", ({ expect }) =>
+  app(
+    expect,
     {
       targets: linuxDirTarget,
       config: {
@@ -116,7 +115,8 @@ test.ifNotWindows(
 
 async function doExtraResourcesTest(expect: ExpectStatic, platform: Platform) {
   const osName = platform.buildConfigurationKey
-  await assertPack(expect,
+  await assertPack(
+    expect,
     "test-app-one",
     {
       // to check NuGet package
@@ -171,7 +171,8 @@ test.ifNotWindows.ifNotCiWin("extraResources - two-package", ({ expect }) => {
   const osName = platform.buildConfigurationKey
 
   //noinspection SpellCheckingInspection
-  return assertPack(expect,
+  return assertPack(
+    expect,
     "test-app",
     {
       // to check NuGet package

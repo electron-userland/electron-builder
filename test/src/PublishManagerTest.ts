@@ -36,9 +36,8 @@ function keygenPublisher(): KeygenOptions {
   }
 }
 
-test.ifNotWindows.ifDevOrLinuxCi(
-  "generic, github and spaces",
-  ({ expect }) => app(expect,{
+test.ifNotWindows.ifDevOrLinuxCi("generic, github and spaces", ({ expect }) =>
+  app(expect, {
     targets: Platform.MAC.createTarget("zip", Arch.x64),
     config: {
       generateUpdatesFilesForAllChannels: true,
@@ -50,9 +49,8 @@ test.ifNotWindows.ifDevOrLinuxCi(
   })
 )
 
-test.ifNotWindows.ifDevOrLinuxCi(
-  "github and spaces (publishAutoUpdate)",
-  ({ expect }) => app(expect,{
+test.ifNotWindows.ifDevOrLinuxCi("github and spaces (publishAutoUpdate)", ({ expect }) =>
+  app(expect, {
     targets: Platform.LINUX.createTarget("AppImage"),
     config: {
       mac: {
@@ -63,9 +61,9 @@ test.ifNotWindows.ifDevOrLinuxCi(
   })
 )
 
-test.ifMac(
-  "mac artifactName ",
-  ({ expect }) => app(expect,
+test.ifMac("mac artifactName ", ({ expect }) =>
+  app(
+    expect,
     {
       targets: Platform.MAC.createTarget("zip", Arch.x64),
       config: {
@@ -86,9 +84,9 @@ test.ifMac(
 // otherwise test "os macro" always failed for pull requests
 process.env.PUBLISH_FOR_PULL_REQUEST = "true"
 
-test.ifNotWindows(
-  "os macro",
-  ({ expect }) => app(expect,
+test.ifNotWindows("os macro", ({ expect }) =>
+  app(
+    expect,
     {
       targets: createTargets([Platform.LINUX, Platform.MAC], "zip"),
       config: {
@@ -117,9 +115,9 @@ test.ifNotWindows(
 // disable on ifNotCi for now - slow on CircleCI
 // error should be ignored because publish: never
 // https://github.com/electron-userland/electron-builder/issues/2670
-test.ifNotCi(
-  "dotted s3 bucket",
-  ({ expect }) => app(expect,
+test.ifNotCi("dotted s3 bucket", ({ expect }) =>
+  app(
+    expect,
     {
       targets: createTargets([Platform.LINUX], "zip"),
       config: {
@@ -136,9 +134,9 @@ test.ifNotCi(
 )
 
 // https://github.com/electron-userland/electron-builder/issues/3261
-test.ifNotWindows(
-  "custom provider",
-  ({ expect }) => app(expect,
+test.ifNotWindows("custom provider", ({ expect }) =>
+  app(
+    expect,
     {
       targets: createTargets([Platform.LINUX], "deb"),
       config: {

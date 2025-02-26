@@ -4,7 +4,8 @@ import { outputFile } from "fs-extra"
 import * as path from "path"
 
 test("yarn workspace", ({ expect }) =>
-  assertPack(expect,
+  assertPack(
+    expect,
     "test-app-yarn-workspace",
     {
       targets: linuxDirTarget,
@@ -16,7 +17,8 @@ test("yarn workspace", ({ expect }) =>
   ))
 
 test("conflict versions", ({ expect }) =>
-  assertPack(expect,
+  assertPack(
+    expect,
     "test-app-yarn-workspace-version-conflict",
     {
       targets: linuxDirTarget,
@@ -28,7 +30,8 @@ test("conflict versions", ({ expect }) =>
   ))
 
 test("yarn several workspaces", ({ expect }) =>
-  assertPack(expect,
+  assertPack(
+    expect,
     "test-app-yarn-several-workspace",
     {
       targets: linuxDirTarget,
@@ -40,7 +43,8 @@ test("yarn several workspaces", ({ expect }) =>
   ))
 
 test("yarn several workspaces and asarUnpack", ({ expect }) =>
-  assertPack(expect,
+  assertPack(
+    expect,
     "test-app-yarn-several-workspace",
     {
       targets: linuxDirTarget,
@@ -55,7 +59,8 @@ test("yarn several workspaces and asarUnpack", ({ expect }) =>
   ))
 
 test("yarn two package.json w/ native module", ({ expect }) =>
-  assertPack(expect,
+  assertPack(
+    expect,
     "test-app-two-native-modules",
     {
       targets: linuxDirTarget,
@@ -67,7 +72,8 @@ test("yarn two package.json w/ native module", ({ expect }) =>
 
 // https://github.com/electron-userland/electron-builder/issues/8493
 test("pnpm es5-ext without hoisted config", ({ expect }) =>
-  assertPack(expect,
+  assertPack(
+    expect,
     "test-app-hoisted",
     {
       targets: linuxDirTarget,
@@ -89,7 +95,8 @@ test("pnpm es5-ext without hoisted config", ({ expect }) =>
   ))
 
 test("pnpm optional dependencies", ({ expect }) =>
-  assertPack(expect,
+  assertPack(
+    expect,
     "test-app-hoisted",
     {
       targets: linuxDirTarget,
@@ -114,7 +121,8 @@ test("pnpm optional dependencies", ({ expect }) =>
   ))
 
 test("yarn electron-clear-data", ({ expect }) =>
-  assertPack(expect,
+  assertPack(
+    expect,
     "test-app-hoisted",
     {
       targets: Platform.WINDOWS.createTarget(DIR_TARGET, Arch.x64),
@@ -139,7 +147,8 @@ test("yarn electron-clear-data", ({ expect }) =>
   ))
 
 test("npm electron-clear-data", ({ expect }) =>
-  assertPack(expect,
+  assertPack(
+    expect,
     "test-app-hoisted",
     {
       targets: Platform.WINDOWS.createTarget(DIR_TARGET, Arch.x64),
@@ -165,7 +174,8 @@ test("npm electron-clear-data", ({ expect }) =>
 
 // https://github.com/electron-userland/electron-builder/issues/8842
 test("yarn some module add by manual instead of install", ({ expect }) =>
-  assertPack(expect,
+  assertPack(
+    expect,
     "test-app-hoisted",
     {
       targets: Platform.WINDOWS.createTarget(DIR_TARGET, Arch.x64),
@@ -187,7 +197,8 @@ test("yarn some module add by manual instead of install", ({ expect }) =>
 
 //https://github.com/electron-userland/electron-builder/issues/8857
 test("yarn max stack", ({ expect }) =>
-  assertPack(expect,
+  assertPack(
+    expect,
     "test-app-hoisted",
     {
       targets: linuxDirTarget,
@@ -206,11 +217,11 @@ test("yarn max stack", ({ expect }) =>
       },
       packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
     }
-  )
-)
+  ))
 
 test("pnpm max stack", ({ expect }) =>
-  assertPack(expect,
+  assertPack(
+    expect,
     "test-app-hoisted",
     {
       targets: linuxDirTarget,
@@ -229,12 +240,12 @@ test("pnpm max stack", ({ expect }) =>
       },
       packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
     }
-  ),
-)
+  ))
 
 //github.com/electron-userland/electron-builder/issues/8842
 test("yarn ms", ({ expect }) =>
-  assertPack(expect,
+  assertPack(
+    expect,
     "test-app-hoisted",
     {
       targets: linuxDirTarget,
@@ -257,12 +268,12 @@ test("yarn ms", ({ expect }) =>
       },
       packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
     }
-  )
-)
+  ))
 
 //github.com/electron-userland/electron-builder/issues/8426
 test("yarn parse-asn1", ({ expect }) =>
-  assertPack(expect,
+  assertPack(
+    expect,
     "test-app-hoisted",
     {
       targets: linuxDirTarget,
@@ -285,7 +296,8 @@ test("yarn parse-asn1", ({ expect }) =>
 
 //github.com/electron-userland/electron-builder/issues/8431
 test("npm tar", ({ expect }) =>
-  assertPack(expect,
+  assertPack(
+    expect,
     "test-app-hoisted",
     {
       targets: linuxDirTarget,
@@ -304,12 +316,12 @@ test("npm tar", ({ expect }) =>
       },
       packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
     }
-  )
-)
+  ))
 
 //github.com/electron-userland/electron-builder/issues/8881
 test("pnpm node-linker=hoisted", ({ expect }) =>
-  assertPack(expect,
+  assertPack(
+    expect,
     "test-app-hoisted",
     {
       targets: linuxDirTarget,
@@ -329,10 +341,10 @@ test("pnpm node-linker=hoisted", ({ expect }) =>
       },
       packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
     }
-  )
-)
+  ))
 test("pnpm shamefully-hoist=true", ({ expect }) =>
-  assertPack(expect,
+  assertPack(
+    expect,
     "test-app-hoisted",
     {
       targets: linuxDirTarget,
@@ -352,10 +364,10 @@ test("pnpm shamefully-hoist=true", ({ expect }) =>
       },
       packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
     }
-  )
-)
+  ))
 test("pnpm public-hoist-pattern=*", ({ expect }) =>
-  assertPack(expect,
+  assertPack(
+    expect,
     "test-app-hoisted",
     {
       targets: linuxDirTarget,

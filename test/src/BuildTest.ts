@@ -112,9 +112,9 @@ test("merge configurations", ({ expect }) => {
   })
 })
 
-test(
-  "build in the app package.json",
-   ({ expect }) => appTwoThrows(expect,
+test("build in the app package.json", ({ expect }) =>
+  appTwoThrows(
+    expect,
     { targets: linuxDirTarget },
     {
       projectDirCreated: it =>
@@ -128,12 +128,11 @@ test(
           true
         ),
     }
-  )
-)
+  ))
 
-test(
-  "relative index",
-  ({ expect }) => appTwo(expect,
+test("relative index", ({ expect }) =>
+  appTwo(
+    expect,
     {
       targets: linuxDirTarget,
     },
@@ -147,12 +146,11 @@ test(
           true
         ),
     }
-  )
-)
+  ))
 
-it.ifDevOrLinuxCi(
-  "electron version from electron-prebuilt dependency",
-  ({ expect }) => app(expect,
+it.ifDevOrLinuxCi("electron version from electron-prebuilt dependency", ({ expect }) =>
+  app(
+    expect,
     {
       targets: linuxDirTarget,
     },
@@ -171,9 +169,9 @@ it.ifDevOrLinuxCi(
   )
 )
 
-test.ifDevOrLinuxCi(
-  "electron version from electron dependency",
-  ({ expect }) => app(expect,
+test.ifDevOrLinuxCi("electron version from electron dependency", ({ expect }) =>
+  app(
+    expect,
     {
       targets: linuxDirTarget,
     },
@@ -192,9 +190,9 @@ test.ifDevOrLinuxCi(
   )
 )
 
-test.ifDevOrLinuxCi(
-  "electron version from build",
-  ({ expect }) => app(expect,
+test.ifDevOrLinuxCi("electron version from build", ({ expect }) =>
+  app(
+    expect,
     {
       targets: linuxDirTarget,
     },
@@ -208,17 +206,16 @@ test.ifDevOrLinuxCi(
   )
 )
 
-test(
-  "www as default dir",
-  ({ expect }) => appTwo(expect,
+test("www as default dir", ({ expect }) =>
+  appTwo(
+    expect,
     {
       targets: Platform.LINUX.createTarget(DIR_TARGET),
     },
     {
       projectDirCreated: projectDir => fs.rename(path.join(projectDir, "app"), path.join(projectDir, "www")),
     }
-  )
-)
+  ))
 
 test.ifLinuxOrDevMac("hooks as functions", ({ expect }) => {
   let artifactBuildStartedCalled = 0
@@ -226,7 +223,8 @@ test.ifLinuxOrDevMac("hooks as functions", ({ expect }) => {
   let beforePackCalled = 0
   let afterPackCalled = 0
   let afterExtractCalled = 0
-  return assertPack(expect,
+  return assertPack(
+    expect,
     "test-app-one",
     {
       targets: createTargets([Platform.LINUX, Platform.MAC], "zip", "x64"),
@@ -267,7 +265,7 @@ test.ifLinuxOrDevMac("hooks as functions", ({ expect }) => {
 
 test.ifLinuxOrDevMac("hooks as file - cjs", async ({ expect }) => {
   const hookScript = path.join(getFixtureDir(), "build-hook.cjs")
-  return assertPack(expect,"test-app-one", {
+  return assertPack(expect, "test-app-one", {
     targets: createTargets([Platform.LINUX, Platform.MAC], "zip", "x64"),
     config: {
       artifactBuildStarted: hookScript,
@@ -295,7 +293,8 @@ test.ifLinuxOrDevMac("hooks as file - cjs", async ({ expect }) => {
 
 test.ifWindows("afterSign", ({ expect }) => {
   let called = 0
-  return assertPack(expect,
+  return assertPack(
+    expect,
     "test-app-one",
     {
       targets: createTargets([Platform.LINUX, Platform.WINDOWS], DIR_TARGET),
@@ -318,7 +317,8 @@ test.ifWindows("afterSign", ({ expect }) => {
 
 test.ifLinuxOrDevMac("beforeBuild", ({ expect }) => {
   let called = 0
-  return assertPack(expect,
+  return assertPack(
+    expect,
     "test-app-one",
     {
       targets: createTargets([Platform.LINUX, Platform.MAC], DIR_TARGET),
@@ -344,7 +344,8 @@ test.ifDevOrLinuxCi("win smart unpack", ({ expect }) => {
   // test onNodeModuleFile hook
   const nodeModuleFiles: Array<string> = []
   let p = ""
-  return app(expect,
+  return app(
+    expect,
     {
       targets: Platform.WINDOWS.createTarget(DIR_TARGET, Arch.x64),
       config: {
@@ -381,7 +382,8 @@ test.ifDevOrLinuxCi("win smart unpack", ({ expect }) => {
 })
 
 test.ifDevOrWinCi("smart unpack local module with dll file", ({ expect }) => {
-  return app(expect,
+  return app(
+    expect,
     {
       targets: Platform.WINDOWS.createTarget(DIR_TARGET, Arch.x64),
     },
@@ -412,9 +414,9 @@ test.ifDevOrWinCi("smart unpack local module with dll file", ({ expect }) => {
 })
 
 // https://github.com/electron-userland/electron-builder/issues/1738
-test.ifDevOrLinuxCi(
-  "posix smart unpack",
-  ({ expect }) => app(expect,
+test.ifDevOrLinuxCi("posix smart unpack", ({ expect }) =>
+  app(
+    expect,
     {
       targets: linuxDirTarget,
       config: {

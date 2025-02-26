@@ -25,7 +25,7 @@ const publishContext: PublishContext = {
   progress: null,
 }
 
-test("GitHub unauthorized", async  ({ expect }) => {
+test("GitHub unauthorized", async ({ expect }) => {
   try {
     await new GitHubPublisher(publishContext, { provider: "github", owner: "actperepo", repo: "ecb2", token: "incorrect token" }, versionNumber())._release.value
   } catch (e: any) {
@@ -89,7 +89,7 @@ test.ifEnv(process.env.DO_KEY_ID != null && process.env.DO_SECRET_KEY != null)("
   await publisher!.upload({ file: iconPath, arch: Arch.x64 })
 })
 
-testAndIgnoreApiRate("prerelease", async (expect) => {
+testAndIgnoreApiRate("prerelease", async expect => {
   const publisher = new GitHubPublisher(publishContext, { provider: "github", owner: "actperepo", repo: "ecb2", token, releaseType: "prerelease" }, versionNumber())
   try {
     await publisher.upload({ file: iconPath, arch: Arch.x64 })

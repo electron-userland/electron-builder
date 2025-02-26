@@ -7,9 +7,8 @@ const packagerOptions = {
   targets: createTargets([Platform.LINUX, Platform.MAC], DIR_TARGET),
 }
 
-test.ifLinuxOrDevMac(
-  "invalid main in the app package.json",
-   ({ expect }) => appTwoThrows(expect, packagerOptions, {
+test.ifLinuxOrDevMac("invalid main in the app package.json", ({ expect }) =>
+  appTwoThrows(expect, packagerOptions, {
     projectDirCreated: projectDir =>
       modifyPackageJson(
         projectDir,
@@ -21,9 +20,8 @@ test.ifLinuxOrDevMac(
   })
 )
 
-test.ifLinuxOrDevMac(
-  "invalid main in the app package.json (no asar)",
-   ({ expect }) => appTwoThrows(expect, packagerOptions, {
+test.ifLinuxOrDevMac("invalid main in the app package.json (no asar)", ({ expect }) =>
+  appTwoThrows(expect, packagerOptions, {
     projectDirCreated: projectDir => {
       return Promise.all([
         modifyPackageJson(
@@ -41,9 +39,8 @@ test.ifLinuxOrDevMac(
   })
 )
 
-test.ifLinuxOrDevMac(
-  "invalid main in the app package.json (custom asar)",
-   ({ expect }) => appTwoThrows(expect, packagerOptions, {
+test.ifLinuxOrDevMac("invalid main in the app package.json (custom asar)", ({ expect }) =>
+  appTwoThrows(expect, packagerOptions, {
     projectDirCreated: projectDir => {
       return Promise.all([
         modifyPackageJson(

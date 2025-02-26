@@ -12,9 +12,9 @@ const checkOptions: AssertPackOptions = {
   isInstallDepsBefore: false,
 }
 
-test.ifMac(
-  "mac",
-  ({ expect }) => app(expect,
+test.ifMac("mac", ({ expect }) =>
+  app(
+    expect,
     {
       targets: Platform.MAC.createTarget(),
       config: {
@@ -25,9 +25,9 @@ test.ifMac(
   )
 )
 
-test.ifLinuxOrDevMac(
-  "linux",
-  ({ expect }) => app(expect,
+test.ifLinuxOrDevMac("linux", ({ expect }) =>
+  app(
+    expect,
     {
       targets: Platform.LINUX.createTarget("appimage"),
       config: {
@@ -38,9 +38,9 @@ test.ifLinuxOrDevMac(
   )
 )
 
-test.ifDevOrWinCi(
-  "win",
-  ({ expect }) => app(expect,
+test.ifDevOrWinCi("win", ({ expect }) =>
+  app(
+    expect,
     {
       targets: Platform.WINDOWS.createTarget("nsis"),
       config: {
@@ -51,9 +51,9 @@ test.ifDevOrWinCi(
   )
 )
 
-test.ifDevOrWinCi(
-  "win ia32",
-  ({ expect }) => app(expect,
+test.ifDevOrWinCi("win ia32", ({ expect }) =>
+  app(
+    expect,
     {
       targets: Platform.WINDOWS.createTarget("nsis", Arch.ia32),
       config: {

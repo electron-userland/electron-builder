@@ -4,9 +4,9 @@ import { Configuration, Platform } from "electron-builder"
 import { CliOptions, configureBuildCommand, createYargs, normalizeOptions } from "electron-builder/out/builder"
 import { app, appThrows, linuxDirTarget } from "./helpers/packTester"
 
-test.ifDevOrLinuxCi(
-  "validation",
-   ({ expect }) =>  appThrows(expect,
+test.ifDevOrLinuxCi("validation", ({ expect }) =>
+  appThrows(
+    expect,
     {
       targets: linuxDirTarget,
       config: {
@@ -21,9 +21,8 @@ test.ifDevOrLinuxCi(
   )
 )
 
-test.ifDevOrLinuxCi(
-  "appId as object",
-   ({ expect }) =>  appThrows(expect, {
+test.ifDevOrLinuxCi("appId as object", ({ expect }) =>
+  appThrows(expect, {
     targets: linuxDirTarget,
     config: {
       appId: {},
@@ -32,9 +31,8 @@ test.ifDevOrLinuxCi(
 )
 
 // https://github.com/electron-userland/electron-builder/issues/1302
-test.ifDevOrLinuxCi(
-  "extraFiles",
-  ({ expect }) => app(expect, {
+test.ifDevOrLinuxCi("extraFiles", ({ expect }) =>
+  app(expect, {
     targets: Platform.LINUX.createTarget("appimage", Arch.x64),
     config: {
       linux: {

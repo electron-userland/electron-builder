@@ -16,7 +16,7 @@ test("repo slug from TRAVIS_REPO_SLUG", async ({ expect }) => {
   try {
     process.env.TRAVIS_REPO_SLUG = "travis-ci/travis-build"
     const info: any = await getRepositoryInfo(process.cwd())
-    checkInfo(expect,info)
+    checkInfo(expect, info)
   } finally {
     if (oldValue != null) {
       restoreEnv("TRAVIS_REPO_SLUG", oldValue)
@@ -34,7 +34,7 @@ test("repo slug from APPVEYOR", async ({ expect }) => {
 
     process.env.APPVEYOR_REPO_NAME = "travis-ci/travis-build"
     const info = await getRepositoryInfo(process.cwd())
-    checkInfo(expect,info)
+    checkInfo(expect, info)
   } finally {
     restoreEnv("APPVEYOR_REPO_NAME", oldAppveyorRepoName)
     if (travisSlug != null) {

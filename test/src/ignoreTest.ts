@@ -6,9 +6,9 @@ import { app, checkDirContents, linuxDirTarget, modifyPackageJson } from "./help
 
 const currentProcessTarget = Platform.LINUX.createTarget(DIR_TARGET, archFromString(process.arch))
 
-test.ifDevOrLinuxCi(
-  "ignore build resources",
-  ({ expect }) => app(expect,
+test.ifDevOrLinuxCi("ignore build resources", ({ expect }) =>
+  app(
+    expect,
     {
       targets: linuxDirTarget,
       config: {
@@ -26,9 +26,9 @@ test.ifDevOrLinuxCi(
   )
 )
 
-test.ifDevOrLinuxCi(
-  "2 ignore",
-  ({ expect }) => app(expect,
+test.ifDevOrLinuxCi("2 ignore", ({ expect }) =>
+  app(
+    expect,
     {
       targets: linuxDirTarget,
       config: {
@@ -55,9 +55,9 @@ test.ifDevOrLinuxCi(
   )
 )
 
-test.ifDevOrLinuxCi(
-  "ignore known ignored files",
-  ({ expect }) => app(expect,
+test.ifDevOrLinuxCi("ignore known ignored files", ({ expect }) =>
+  app(
+    expect,
     {
       targets: linuxDirTarget,
       config: {
@@ -78,9 +78,9 @@ test.ifDevOrLinuxCi(
 )
 
 // skip on macOS because we want test only / and \
-test.ifNotCiMac(
-  "ignore node_modules dev dep",
-  ({ expect }) => app(expect,
+test.ifNotCiMac("ignore node_modules dev dep", ({ expect }) =>
+  app(
+    expect,
     {
       targets: linuxDirTarget,
       config: {
@@ -107,9 +107,9 @@ test.ifNotCiMac(
   )
 )
 
-test.ifDevOrLinuxCi(
-  "copied sub node_modules of the rootDir/node_modules",
-  ({ expect }) => app(expect,
+test.ifDevOrLinuxCi("copied sub node_modules of the rootDir/node_modules", ({ expect }) =>
+  app(
+    expect,
     {
       targets: currentProcessTarget,
       config: {
@@ -134,7 +134,10 @@ test.ifDevOrLinuxCi(
       },
       packed: context => {
         return Promise.all([
-          assertThat(expect, path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "node_modules", "electron-updater", "node_modules")).isDirectory(),
+          assertThat(
+            expect,
+            path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "node_modules", "electron-updater", "node_modules")
+          ).isDirectory(),
           assertThat(expect, path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "others", "node_modules")).doesNotExist(),
           assertThat(expect, path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "submodule-1-test", "node_modules")).isDirectory(),
           assertThat(expect, path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "submodule-1-test", "node_modules", "package.json")).isFile(),
@@ -144,9 +147,9 @@ test.ifDevOrLinuxCi(
   )
 )
 
-test.ifDevOrLinuxCi(
-  "Don't copy sub node_modules of the other dir instead of rootDir",
-  ({ expect }) => app(expect,
+test.ifDevOrLinuxCi("Don't copy sub node_modules of the other dir instead of rootDir", ({ expect }) =>
+  app(
+    expect,
     {
       targets: currentProcessTarget,
       config: {
@@ -181,9 +184,9 @@ test.ifDevOrLinuxCi(
   )
 )
 
-test.ifDevOrLinuxCi(
-  "copied select submodule node_modules",
-  ({ expect }) => app(expect,
+test.ifDevOrLinuxCi("copied select submodule node_modules", ({ expect }) =>
+  app(
+    expect,
     {
       targets: currentProcessTarget,
       config: {
@@ -217,9 +220,9 @@ test.ifDevOrLinuxCi(
   )
 )
 
-test.ifDevOrLinuxCi(
-  "cannot copied select submodule node_modules by */",
-  ({ expect }) => app(expect,
+test.ifDevOrLinuxCi("cannot copied select submodule node_modules by */", ({ expect }) =>
+  app(
+    expect,
     {
       targets: currentProcessTarget,
       config: {
@@ -239,15 +242,17 @@ test.ifDevOrLinuxCi(
         ])
       },
       packed: context => {
-        return Promise.all([assertThat(expect, path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "submodule-1-test", "node_modules")).doesNotExist()])
+        return Promise.all([
+          assertThat(expect, path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "submodule-1-test", "node_modules")).doesNotExist(),
+        ])
       },
     }
   )
 )
 
-test.ifDevOrLinuxCi(
-  "cannot copied select submodule node_modules by **/submodule-1-test/node_modules",
-  ({ expect }) => app(expect,
+test.ifDevOrLinuxCi("cannot copied select submodule node_modules by **/submodule-1-test/node_modules", ({ expect }) =>
+  app(
+    expect,
     {
       targets: currentProcessTarget,
       config: {
@@ -267,7 +272,9 @@ test.ifDevOrLinuxCi(
         ])
       },
       packed: context => {
-        return Promise.all([assertThat(expect, path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "submodule-1-test", "node_modules")).doesNotExist()])
+        return Promise.all([
+          assertThat(expect, path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "submodule-1-test", "node_modules")).doesNotExist(),
+        ])
       },
     }
   )

@@ -7,8 +7,9 @@ import { getElectronCacheDir } from "./helpers/testConfig"
 import { expectUpdateMetadata } from "./helpers/winHelper"
 import { ExpectStatic } from "vitest"
 
-function  createBuildResourcesTest(expect: ExpectStatic,packagerOptions: PackagerOptions) {
-  return app(expect,
+function createBuildResourcesTest(expect: ExpectStatic, packagerOptions: PackagerOptions) {
+  return app(
+    expect,
     {
       ...packagerOptions,
       config: {
@@ -37,13 +38,13 @@ function  createBuildResourcesTest(expect: ExpectStatic,packagerOptions: Package
   )
 }
 
-test.ifNotWindows("custom buildResources and output dirs: mac",  ({ expect }) =>  createBuildResourcesTest(expect,{ mac: ["dir"] }))
-test.ifNotCiMac("custom buildResources and output dirs: win",  ({ expect }) =>  createBuildResourcesTest(expect,{ win: ["nsis"] }))
-test.ifNotWindows("custom buildResources and output dirs: linux",  ({ expect }) =>  createBuildResourcesTest(expect,{ linux: ["appimage"] }))
+test.ifNotWindows("custom buildResources and output dirs: mac", ({ expect }) => createBuildResourcesTest(expect, { mac: ["dir"] }))
+test.ifNotCiMac("custom buildResources and output dirs: win", ({ expect }) => createBuildResourcesTest(expect, { win: ["nsis"] }))
+test.ifNotWindows("custom buildResources and output dirs: linux", ({ expect }) => createBuildResourcesTest(expect, { linux: ["appimage"] }))
 
-test.ifLinuxOrDevMac(
-  "prepackaged",
-  ({ expect }) => app(expect,
+test.ifLinuxOrDevMac("prepackaged", ({ expect }) =>
+  app(
+    expect,
     {
       targets: linuxDirTarget,
     },
@@ -70,9 +71,9 @@ test.ifLinuxOrDevMac(
   )
 )
 
-test.ifLinuxOrDevMac(
-  "retrieve latest electron version",
-  ({ expect }) => app(expect,
+test.ifLinuxOrDevMac("retrieve latest electron version", ({ expect }) =>
+  app(
+    expect,
     {
       targets: linuxDirTarget,
     },
@@ -89,9 +90,9 @@ test.ifLinuxOrDevMac(
   )
 )
 
-test.ifLinuxOrDevMac(
-  "retrieve latest electron-nightly version",
-  ({ expect }) => app(expect,
+test.ifLinuxOrDevMac("retrieve latest electron-nightly version", ({ expect }) =>
+  app(
+    expect,
     {
       targets: linuxDirTarget,
     },
@@ -108,9 +109,9 @@ test.ifLinuxOrDevMac(
   )
 )
 
-test.ifNotWindows(
-  "override targets in the config",
-  ({ expect }) => app(expect,
+test.ifNotWindows("override targets in the config", ({ expect }) =>
+  app(
+    expect,
     {
       targets: linuxDirTarget,
     },
@@ -134,9 +135,9 @@ test.ifNotWindows(
 )
 
 // test https://github.com/electron-userland/electron-builder/issues/1182 also
-test.ifDevOrWinCi(
-  "override targets in the config - only arch",
-  ({ expect }) => app(expect,
+test.ifDevOrWinCi("override targets in the config - only arch", ({ expect }) =>
+  app(
+    expect,
     {
       targets: Platform.WINDOWS.createTarget(null, Arch.ia32),
       config: {
@@ -168,11 +169,10 @@ test.ifDevOrWinCi(
 )
 
 // test on all CI to check path separators
-test("do not exclude build entirely (respect files)", ({expect}) => assertPack(expect,"test-app-build-sub", { targets: linuxDirTarget }))
+test("do not exclude build entirely (respect files)", ({ expect }) => assertPack(expect, "test-app-build-sub", { targets: linuxDirTarget }))
 
-test.ifNotWindows(
-  "electronDist as path to local folder with electron builds zipped ",
-  ({ expect }) => app(expect,{
+test.ifNotWindows("electronDist as path to local folder with electron builds zipped ", ({ expect }) =>
+  app(expect, {
     targets: linuxDirTarget,
     config: {
       electronDist: getElectronCacheDir(),
@@ -180,9 +180,8 @@ test.ifNotWindows(
   })
 )
 
-test.ifNotWindows(
-  "electronDist as callback function for path to local folder with electron builds zipped ",
-  ({ expect }) => app(expect,{
+test.ifNotWindows("electronDist as callback function for path to local folder with electron builds zipped ", ({ expect }) =>
+  app(expect, {
     targets: linuxDirTarget,
     config: {
       electronDist: _context => {
@@ -196,9 +195,9 @@ const overridePublishChannel: any = {
   channel: "beta",
 }
 
-test.ifDevOrLinuxCi(
-  "overriding the publish channel",
-  ({ expect }) => app(expect,
+test.ifDevOrLinuxCi("overriding the publish channel", ({ expect }) =>
+  app(
+    expect,
     {
       targets: linuxDirTarget,
       config: {
