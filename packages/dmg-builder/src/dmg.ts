@@ -17,6 +17,8 @@ import { hdiUtil } from "./hdiuil"
 export class DmgTarget extends Target {
   readonly options: DmgOptions = this.packager.config.dmg || Object.create(null)
 
+  isAsyncSupported = false
+
   constructor(
     private readonly packager: MacPackager,
     readonly outDir: string

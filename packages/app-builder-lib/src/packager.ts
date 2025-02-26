@@ -9,6 +9,7 @@ import {
   getArtifactArchName,
   InvalidConfigurationError,
   log,
+  MAX_FILE_REQUESTS,
   orNullIfFileNotExist,
   safeStringifyJson,
   serializeToYaml,
@@ -41,6 +42,7 @@ import { resolveFunction } from "./util/resolve"
 import { installOrRebuild, nodeGypRebuild } from "./util/yarn"
 import { PACKAGE_VERSION } from "./version"
 import { AsyncEventEmitter, HandlerType } from "./util/asyncEventEmitter"
+import asyncPool from "tiny-async-pool"
 
 async function createFrameworkInfo(configuration: Configuration, packager: Packager): Promise<Framework> {
   let framework = configuration.framework
@@ -479,6 +481,7 @@ export class Packager {
       const nameToTarget: Map<string, Target> = new Map()
       platformToTarget.set(platform, nameToTarget)
 
+      const packPromises = [] as Array<Promise<any>>
       for (const [arch, targetNames] of computeArchToTargetNamesMap(archToType, packager, platform)) {
         if (this.cancellationToken.cancelled) {
           break
@@ -488,8 +491,10 @@ export class Packager {
         const outDir = path.resolve(this.projectDir, packager.expandMacro(this.config.directories!.output!, Arch[arch]))
         const targetList = createTargets(nameToTarget, targetNames.length === 0 ? packager.defaultTarget : targetNames, outDir, packager)
         await createOutDirIfNeed(targetList, createdOutDirs)
-        await packager.pack(outDir, arch, targetList, taskManager)
+        packPromises.push(packager.pack(outDir, arch, targetList, taskManager))
       }
+
+      await asyncPool(MAX_FILE_REQUESTS, packPromises, it => it)
 
       if (this.cancellationToken.cancelled) {
         break
