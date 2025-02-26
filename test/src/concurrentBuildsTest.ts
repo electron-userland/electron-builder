@@ -1,5 +1,5 @@
 import { Platform, DIR_TARGET, Arch } from "app-builder-lib"
-import { app, modifyPackageJson } from "./helpers/packTester"
+import { app, assertPack, modifyPackageJson } from "./helpers/packTester"
 import { MAX_FILE_REQUESTS } from "builder-util/out/fs"
 import { TmpDir } from "temp-file"
 
@@ -9,15 +9,21 @@ const macTargets = Platform.MAC.createTarget([DIR_TARGET, "zip", "pkg", "dmg"], 
 const linuxTargets = Platform.LINUX.createTarget([DIR_TARGET, "deb", "rpm", "AppImage"], Arch.x64, Arch.arm64)
 
 const projectDirCreated = async (projectDir: string, tmpDir: TmpDir) => {
-  await modifyPackageJson(projectDir, (data: any) => ({
-    name: "test-concurrent",
-    version: "1.0.0",
-    ...data,
-  }))
+  await modifyPackageJson(
+    projectDir,
+    (data: any) => ({
+      name: "test-concurrent",
+      version: "1.0.0",
+      ...data,
+    }),
+    true
+  )
+}
 
-test.ifAll("win/linux concurrent", () => {
+test.only("win/linux concurrent", () => {
   const targets = new Map([...winTargets, ...linuxTargets])
-  return app(
+  return assertPack(
+    "test-app",
     {
       targets,
       config: {
@@ -27,14 +33,15 @@ test.ifAll("win/linux concurrent", () => {
       },
     },
     {
-      projectDirCreated
+      projectDirCreated,
     }
-  )()
+  )
 })
 
 test.ifMac("mac/win/linux concurrent", () => {
   const targets = new Map([...winTargets, ...macTargets, ...linuxTargets])
-  return app(
+  return assertPack(
+    "test-app",
     {
       targets,
       config: {
@@ -44,14 +51,15 @@ test.ifMac("mac/win/linux concurrent", () => {
       },
     },
     {
-      projectDirCreated
+      projectDirCreated,
     }
-  )()
+  )
 })
 
 test.ifMac("mac concurrent", () => {
   const targets = macTargets
-  return app(
+  return assertPack(
+    "test-app",
     {
       targets,
       config: {
@@ -61,14 +69,15 @@ test.ifMac("mac concurrent", () => {
       },
     },
     {
-      projectDirCreated
+      projectDirCreated,
     }
-  )()
+  )
 })
 
 test.ifNotMac("win concurrent", () => {
   const targets = winTargets
-  return app(
+  return assertPack(
+    "test-app",
     {
       targets,
       config: {
@@ -78,14 +87,15 @@ test.ifNotMac("win concurrent", () => {
       },
     },
     {
-      projectDirCreated
+      projectDirCreated,
     }
-  )()
+  )
 })
 
 test.ifDevOrLinuxCi("linux concurrent", () => {
   const targets = linuxTargets
-  return app(
+  return assertPack(
+    "test-app",
     {
       targets,
       config: {
@@ -95,14 +105,15 @@ test.ifDevOrLinuxCi("linux concurrent", () => {
       },
     },
     {
-      projectDirCreated
+      projectDirCreated,
     }
-  )()
+  )
 })
 
 test.ifWindows("win concurrent", () => {
   const targets = Platform.WINDOWS.createTarget([DIR_TARGET, `appx`, `msi`, `msi-wrapped`, `squirrel`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`], Arch.x64, Arch.arm64)
-  return app(
+  return assertPack(
+    "test-app",
     {
       targets,
       config: {
@@ -112,7 +123,7 @@ test.ifWindows("win concurrent", () => {
       },
     },
     {
-      projectDirCreated
+      projectDirCreated,
     }
-  )()
+  )
 })
