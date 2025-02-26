@@ -1,5 +1,5 @@
 import { getBinFromUrl, getBin } from "../../binDownload"
-import { exec, log, isEmptyOrSpaces, copyDir, exists } from "builder-util"
+import { exec, log, isEmptyOrSpaces, copyDir, exists, walk } from "builder-util"
 import { copyFile, mkdir, unlink, writeFile, rename, chmod, rm, readdir } from "fs-extra"
 import * as path from "path"
 import { SNAP_ASSETS } from "./snapScripts"
@@ -126,8 +126,21 @@ async function buildUsingTemplate(templateDir: string, options: SnapBuilderOptio
     dirs
       .filter(dir => !!dir)
       .map(dir =>
-        exec(`chmod -R g-s ${dir}`).catch((err: any) => {
-          log.debug({ dir, message: err.message }, `cannot execute chmod`)
+        walk(dir, undefined, {
+          consume: async (it, stat) => {
+            if (stat.isDirectory() && (stat.mode & 0o2000) !== 0) {
+              // clear setgid
+              await chmod(it, stat.mode & ~0o2000).catch((err: any) => {
+                log.warn({ dir: it, message: err.message }, `cannot clear uid from directory`)
+              })
+            }
+            if (stat.isFile() && (stat.mode & 0o4000) !== 0) {
+              // clear setuid
+              await chmod(it, stat.mode & ~0o4000).catch((err: any) => {
+                log.warn({ file: it, message: err.message }, `cannot execute uid from file`)
+              })
+            }
+          },
         })
       )
   )
