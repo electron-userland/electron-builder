@@ -5,6 +5,7 @@ import * as path from "path"
 import { SNAP_ASSETS } from "./snapScripts"
 import { getMksquashfs } from "./linuxTools"
 import { checkSnapcraftVersion } from "builder-util/out/snap"
+import { SnapOptions } from "../../options/SnapOptions"
 
 export interface SnapBuilderOptions extends CommandWrapperOptions {
   appDir: string
@@ -15,7 +16,7 @@ export interface SnapBuilderOptions extends CommandWrapperOptions {
   hooksDir?: string
   excludedAppFiles?: string[]
 
-  compression?: "xz" | "lzo"
+  compression?: SnapOptions["compression"]
 
   template?: string | SnapBuilderTemplate
 }
@@ -154,9 +155,6 @@ async function readDirContents(dir: string, filter?: (filename: string) => boole
 
 async function buildWithoutTemplate(options: SnapBuilderOptions, scriptDir: string): Promise<void> {
   await checkSnapcraftVersion()
-  // if (options.arch && options.arch !== process.arch) {
-  //   throw new Error(`snapcraft does not currently support building ${options.arch} on ${process.arch}`)
-  // }
 
   const stageDir = options.stageDir
 

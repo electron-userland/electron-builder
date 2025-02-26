@@ -243,7 +243,6 @@ export default class SnapTarget extends Target {
 
     if (this.isUseTemplateApp) {
       args.template = { templateUrl: `electron4:${snapArch}` }
-      // args.push("--template-url", `electron4:${snapArch}`)
     }
 
     // snapshot tests verify `args`, but we need to extract the dynamic/temp paths from the object first
@@ -261,10 +260,8 @@ export default class SnapTarget extends Target {
     const hooksDir = await packager.getResource(options.hooks, "snap-hooks")
     if (hooksDir != null) {
       args.hooksDir = hooksDir
-      // args.push("--hooks", hooksDir)
     }
 
-    // await executeAppBuilder(args)
     await createSnap(args)
 
     const publishConfig = findSnapPublishConfig(this.packager.config)
