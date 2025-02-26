@@ -25,18 +25,18 @@ const runTest = async (updaterClass: any, expectedExtension: "deb" | "rpm" | "Ap
   // updater.quitAndInstall(true, false)
 }
 
-test("test rpm download", async () => {
+test("test rpm download", async ({ expect }) => {
   await runTest(RpmUpdater, "rpm")
 })
 
-test("test pacman download", async () => {
+test("test pacman download", async ({ expect }) => {
   await runTest(PacmanUpdater, "pacman")
 })
 
-test("test deb download", async () => {
+test("test deb download", async ({ expect }) => {
   await runTest(DebUpdater, "deb")
 })
 
-// test.ifLinux("test AppImage download", async () => {
+// test.ifLinux("test AppImage download", async ({ expect }) => {
 //   await runTest(AppImageUpdater, "AppImage")
 // })

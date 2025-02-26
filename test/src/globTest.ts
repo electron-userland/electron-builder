@@ -55,7 +55,7 @@ async function assertDirs(context: PackedContext) {
   await verifyAsarFileTree(resourceDir)
 }
 
-test.ifNotWindows.ifDevOrLinuxCi("unpackDir", () => {
+test.ifNotWindows.ifDevOrLinuxCi("unpackDir", ({ expect }) => {
   return assertPack(
     "test-app",
     {
@@ -71,7 +71,7 @@ test.ifNotWindows.ifDevOrLinuxCi("unpackDir", () => {
   )
 })
 
-test.ifDevOrLinuxCi("asarUnpack and files ignore", () => {
+test.ifDevOrLinuxCi("asarUnpack and files ignore", ({ expect }) => {
   return assertPack(
     "test-app",
     {
@@ -157,7 +157,7 @@ test.ifNotWindows(
   )
 )
 
-test.ifDevOrLinuxCi("local node module with file protocol", () => {
+test.ifDevOrLinuxCi("local node module with file protocol", ({ expect }) => {
   return assertPack(
     "test-app-one",
     {
@@ -188,7 +188,7 @@ test.ifDevOrLinuxCi("local node module with file protocol", () => {
 
 // cannot be enabled
 // https://github.com/electron-userland/electron-builder/issues/611
-test.ifDevOrLinuxCi("failed peer dep", () => {
+test.ifDevOrLinuxCi("failed peer dep", ({ expect }) => {
   return assertPack(
     "test-app-one",
     {
@@ -217,7 +217,7 @@ test.ifDevOrLinuxCi("failed peer dep", () => {
   )
 })
 
-test.ifDevOrLinuxCi("ignore node_modules", () => {
+test.ifDevOrLinuxCi("ignore node_modules", ({ expect }) => {
   return assertPack(
     "test-app-one",
     {
@@ -245,7 +245,7 @@ test.ifDevOrLinuxCi("ignore node_modules", () => {
   )
 })
 
-test.ifDevOrLinuxCi("asarUnpack node_modules", () => {
+test.ifDevOrLinuxCi("asarUnpack node_modules", ({ expect }) => {
   return assertPack(
     "test-app-one",
     {
@@ -271,7 +271,7 @@ test.ifDevOrLinuxCi("asarUnpack node_modules", () => {
   )
 })
 
-test.ifDevOrLinuxCi("asarUnpack node_modules which has many modules", () => {
+test.ifDevOrLinuxCi("asarUnpack node_modules which has many modules", ({ expect }) => {
   return assertPack(
     "test-app-one",
     {
@@ -319,7 +319,7 @@ test.ifDevOrLinuxCi("asarUnpack node_modules which has many modules", () => {
   )
 })
 
-test.ifDevOrLinuxCi("exclude some modules when asarUnpack node_modules which has many modules", () => {
+test.ifDevOrLinuxCi("exclude some modules when asarUnpack node_modules which has many modules", ({ expect }) => {
   return assertPack(
     "test-app-one",
     {

@@ -14,7 +14,7 @@ export default () => {
       },
     },
     test: {
-      globals: true,
+      globals: false,
       setupFiles: "./test/vitest-setup.ts",
       include: [`test/src/**/${includeRegex}.ts`],
       update: process.env.UPDATE_SNAPSHOT === "true",
@@ -34,6 +34,10 @@ export default () => {
             enabled: true,
           },
         },
+      },
+
+      sequence: {
+        concurrent: true
       },
 
       // Speed things up a bit -- these help but probably won't be needed someday

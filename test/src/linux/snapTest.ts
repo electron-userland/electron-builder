@@ -37,7 +37,7 @@ test.ifDevOrLinuxCi(
   })
 )
 
-test.ifDevOrLinuxCi("default stagePackages", async () => {
+test.ifDevOrLinuxCi("default stagePackages", async ({ expect }) => {
   for (const p of [["default"], ["default", "custom"], ["custom", "default"], ["foo1", "default", "foo2"]]) {
     await assertPack("test-app-one", {
       targets: snapTarget,
@@ -80,7 +80,7 @@ test.ifDevOrLinuxCi(
   })
 )
 
-test.ifDevOrLinuxCi("buildPackages", async () => {
+test.ifDevOrLinuxCi("buildPackages", async ({ expect }) => {
   await assertPack("test-app-one", {
     targets: snapTarget,
     config: {
@@ -102,7 +102,7 @@ test.ifDevOrLinuxCi("buildPackages", async () => {
   })
 })
 
-test.ifDevOrLinuxCi("plugs option", async () => {
+test.ifDevOrLinuxCi("plugs option", async ({ expect }) => {
   for (const p of [
     [
       {
@@ -140,7 +140,7 @@ test.ifDevOrLinuxCi("plugs option", async () => {
   }
 })
 
-test.ifDevOrLinuxCi("slots option", async () => {
+test.ifDevOrLinuxCi("slots option", async ({ expect }) => {
   for (const slots of [
     ["foo", "bar"],
     [

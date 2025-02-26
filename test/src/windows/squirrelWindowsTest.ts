@@ -101,7 +101,7 @@ test(
   )
 )
 
-test("detect install-spinner", () => {
+test("detect install-spinner", ({ expect }) => {
   let platformPackager: CheckingWinPackager | null = null
   let loadingGifPath: string | null = null
 

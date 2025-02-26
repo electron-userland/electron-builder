@@ -189,7 +189,7 @@ test.ifDevOrLinuxCi(
   )
 )
 
-test.skip("installerHeaderIcon", () => {
+test.skip("installerHeaderIcon", ({ expect }) => {
   let headerIconPath: string | null = null
   return assertPack(
     "test-app-one",

@@ -63,7 +63,7 @@ test.ifDevOrLinuxCi(
   })
 )
 
-test.ifDevOrLinuxCi("files", () => {
+test.ifDevOrLinuxCi("files", ({ expect }) => {
   return validateConfiguration(
     {
       appId: "com.example.myapp",
@@ -77,7 +77,7 @@ test.ifDevOrLinuxCi("files", () => {
   )
 })
 
-test.ifDevOrLinuxCi("null string as null", async () => {
+test.ifDevOrLinuxCi("null string as null", async ({ expect }) => {
   const yargs = configureBuildCommand(createYargs())
   const options = normalizeOptions(yargs.parse(["-c.mac.identity=null", "--config.mac.hardenedRuntime=false"]) as CliOptions)
   const config = options.config as Configuration

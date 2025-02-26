@@ -74,7 +74,7 @@ test.ifMac(
   })
 )
 
-test.ifMac("custom background - new way", () => {
+test.ifMac("custom background - new way", ({ expect }) => {
   const customBackground = "customBackground.png"
   return assertPack(
     "test-app-one",
@@ -112,7 +112,7 @@ test.ifMac("custom background - new way", () => {
   )
 })
 
-test.ifMac("retina background as 2 png", () => {
+test.ifMac("retina background as 2 png", ({ expect }) => {
   return assertPack(
     "test-app-one",
     {
@@ -147,7 +147,7 @@ test.ifMac("retina background as 2 png", () => {
   )
 })
 
-test.ifMac.skip("no Applications link", () => {
+test.ifMac.skip("no Applications link", ({ expect }) => {
   return assertPack("test-app-one", {
     targets: defaultTarget,
     config: {
@@ -256,7 +256,7 @@ test.ifMac(
   })
 )
 
-test.ifMac("disable dmg icon (light), bundleVersion", () => {
+test.ifMac("disable dmg icon (light), bundleVersion", ({ expect }) => {
   return assertPack("test-app-one", {
     targets: defaultTarget,
     config: {

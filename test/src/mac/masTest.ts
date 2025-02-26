@@ -16,7 +16,7 @@ const entitlementsConfig = {
 
 const targets = Platform.MAC.createTarget(undefined, Arch.x64)
 
-test.skip("custom mas", () => {
+test.skip("custom mas", ({ expect }) => {
   let platformPackager: CheckingMacPackager | null = null
   return assertPack(
     "test-app-one",
@@ -44,7 +44,7 @@ test.skip("custom mas", () => {
   )
 })
 
-test("entitlements in the package.json", () => {
+test("entitlements in the package.json", ({ expect }) => {
   let platformPackager: CheckingMacPackager | null = null
   return assertPack(
     "test-app-one",
@@ -69,7 +69,7 @@ test("entitlements in the package.json", () => {
   )
 })
 
-test("entitlements template", () => {
+test("entitlements template", ({ expect }) => {
   let platformPackager: CheckingMacPackager | null = null
   return assertPack(
     "test-app-one",

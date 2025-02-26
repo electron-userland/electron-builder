@@ -165,7 +165,7 @@ test.ifLinux("extraResources on Windows", () => doExtraResourcesTest(Platform.WI
 
 test.ifMac("extraResources on macOS", () => doExtraResourcesTest(Platform.MAC))
 
-test.ifNotWindows.ifNotCiWin("extraResources - two-package", () => {
+test.ifNotWindows.ifNotCiWin("extraResources - two-package", ({ expect }) => {
   const platform = Platform.LINUX
   const osName = platform.buildConfigurationKey
 
@@ -230,7 +230,7 @@ test.ifNotWindows.ifNotCiWin("extraResources - two-package", () => {
 
 // https://github.com/electron-userland/electron-builder/pull/998
 // copyDir walks to a symlink referencing a file that has not yet been copied by postponing the linking step until after the full walk is complete
-test.ifNotWindows("postpone symlink", async () => {
+test.ifNotWindows("postpone symlink", async ({ expect }) => {
   const tmpDir = new TmpDir("files-test")
   const source = await tmpDir.getTempDir()
   const aSourceFile = path.join(source, "z", "Z")

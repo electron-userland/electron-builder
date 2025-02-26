@@ -10,7 +10,7 @@ function checkInfo(info: any) {
   expect(info).toMatchSnapshot()
 }
 
-test("repo slug from TRAVIS_REPO_SLUG", async () => {
+test("repo slug from TRAVIS_REPO_SLUG", async ({ expect }) => {
   const oldValue = process.env.TRAVIS_REPO_SLUG
   try {
     process.env.TRAVIS_REPO_SLUG = "travis-ci/travis-build"
@@ -23,7 +23,7 @@ test("repo slug from TRAVIS_REPO_SLUG", async () => {
   }
 })
 
-test("repo slug from APPVEYOR", async () => {
+test("repo slug from APPVEYOR", async ({ expect }) => {
   const oldAppveyorRepoName = process.env.APPVEYOR_REPO_NAME
   const travisSlug = process.env.TRAVIS_REPO_SLUG
   try {

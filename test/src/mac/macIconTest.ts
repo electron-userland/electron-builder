@@ -17,7 +17,7 @@ async function assertIcon(platformPackager: CheckingMacPackager) {
 
 const targets = Platform.MAC.createTarget(DIR_TARGET, Arch.x64)
 
-test.ifMac("icon set", () => {
+test.ifMac("icon set", ({ expect }) => {
   let platformPackager: CheckingMacPackager | null = null
   return app(
     {
@@ -31,7 +31,7 @@ test.ifMac("icon set", () => {
   )()
 })
 
-test.ifMac("custom icon set", () => {
+test.ifMac("custom icon set", ({ expect }) => {
   let platformPackager: CheckingMacPackager | null = null
   return app(
     {
@@ -55,7 +55,7 @@ test.ifMac("custom icon set", () => {
   )()
 })
 
-test.ifMac("custom icon set with only 512 and 128", () => {
+test.ifMac("custom icon set with only 512 and 128", ({ expect }) => {
   let platformPackager: CheckingMacPackager | null = null
   return app(
     {
@@ -80,7 +80,7 @@ test.ifMac("custom icon set with only 512 and 128", () => {
   )()
 })
 
-test.ifMac("png icon", () => {
+test.ifMac("png icon", ({ expect }) => {
   let platformPackager: CheckingMacPackager | null = null
   return app(
     {
@@ -99,7 +99,7 @@ test.ifMac("png icon", () => {
   )()
 })
 
-test.ifMac("default png icon", () => {
+test.ifMac("default png icon", ({ expect }) => {
   let platformPackager: CheckingMacPackager | null = null
   return app(
     {
@@ -120,7 +120,7 @@ test.ifMac("default png icon", () => {
   )()
 })
 
-test.ifMac("png icon small", () => {
+test.ifMac("png icon small", ({ expect }) => {
   let platformPackager: CheckingMacPackager | null = null
   return app(
     {

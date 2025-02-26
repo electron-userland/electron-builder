@@ -6,7 +6,7 @@ import * as path from "path"
 import { CheckingWinPackager } from "../helpers/CheckingPackager"
 import { app, appThrows } from "../helpers/packTester"
 
-test("parseDn", () => {
+test("parseDn", ({ expect }) => {
   expect(parseDn("CN=7digital Limited, O=7digital Limited, L=London, C=GB")).toMatchSnapshot()
 
   expect(load("publisherName:\n  - 7digital Limited")).toMatchObject({ publisherName: ["7digital Limited"] })
@@ -72,7 +72,7 @@ test(
 test("certificateFile/password - sign as function", async () => testCustomSign((await import("../helpers/customWindowsSign")).default))
 test("certificateFile/password - sign as path", testCustomSign(path.join(__dirname, "../helpers/customWindowsSign.mjs")))
 
-test("custom sign if no code sign info", () => {
+test("custom sign if no code sign info", ({ expect }) => {
   let called = false
   return app(
     {

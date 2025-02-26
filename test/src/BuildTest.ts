@@ -10,7 +10,7 @@ import { ELECTRON_VERSION } from "./helpers/testConfig"
 import { verifySmartUnpack } from "./helpers/verifySmartUnpack"
 import { spawn } from "builder-util/out/util"
 
-test("cli", () => {
+test("cli", ({ expect }) => {
   // because these methods are internal
   const { configureBuildCommand, normalizeOptions } = require("electron-builder/out/builder")
   const yargs = createYargs()
@@ -50,7 +50,7 @@ test("cli", () => {
   })
 })
 
-test("merge configurations", () => {
+test("merge configurations", ({ expect }) => {
   const result = doMergeConfigs([
     {
       files: [
@@ -220,7 +220,7 @@ test(
   )
 )
 
-test.ifLinuxOrDevMac("hooks as functions", () => {
+test.ifLinuxOrDevMac("hooks as functions", ({ expect }) => {
   let artifactBuildStartedCalled = 0
   let artifactBuildCompletedCalled = 0
   let beforePackCalled = 0
@@ -265,7 +265,7 @@ test.ifLinuxOrDevMac("hooks as functions", () => {
   )
 })
 
-test.ifLinuxOrDevMac("hooks as file - cjs", async () => {
+test.ifLinuxOrDevMac("hooks as file - cjs", async ({ expect }) => {
   const hookScript = path.join(getFixtureDir(), "build-hook.cjs")
   return assertPack("test-app-one", {
     targets: createTargets([Platform.LINUX, Platform.MAC], "zip", "x64"),
@@ -279,7 +279,7 @@ test.ifLinuxOrDevMac("hooks as file - cjs", async () => {
   })
 })
 
-// test.only("hooks as file - mjs exported functions", async () => {
+// test.only("hooks as file - mjs exported functions", async ({ expect }) => {
 //   const hookScript = path.join(getFixtureDir(), "build-hook.mjs")
 //   return assertPack("test-app-one", {
 //     targets: createTargets([Platform.LINUX, Platform.MAC], "zip", "x64"),
@@ -293,7 +293,7 @@ test.ifLinuxOrDevMac("hooks as file - cjs", async () => {
 //   })
 // })
 
-test.ifWindows("afterSign", () => {
+test.ifWindows("afterSign", ({ expect }) => {
   let called = 0
   return assertPack(
     "test-app-one",
@@ -316,7 +316,7 @@ test.ifWindows("afterSign", () => {
   )
 })
 
-test.ifLinuxOrDevMac("beforeBuild", () => {
+test.ifLinuxOrDevMac("beforeBuild", ({ expect }) => {
   let called = 0
   return assertPack(
     "test-app-one",
@@ -340,7 +340,7 @@ test.ifLinuxOrDevMac("beforeBuild", () => {
 })
 
 // https://github.com/electron-userland/electron-builder/issues/1738
-test.ifDevOrLinuxCi("win smart unpack", () => {
+test.ifDevOrLinuxCi("win smart unpack", ({ expect }) => {
   // test onNodeModuleFile hook
   const nodeModuleFiles: Array<string> = []
   let p = ""
@@ -380,7 +380,7 @@ test.ifDevOrLinuxCi("win smart unpack", () => {
   )()
 })
 
-test.ifDevOrWinCi("smart unpack local module with dll file", () => {
+test.ifDevOrWinCi("smart unpack local module with dll file", ({ expect }) => {
   return app(
     {
       targets: Platform.WINDOWS.createTarget(DIR_TARGET, Arch.x64),

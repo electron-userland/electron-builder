@@ -8,7 +8,7 @@ import { assertThat } from "../helpers/fileAssert"
 import { removeUnstableProperties } from "../helpers/packTester"
 import { createNsisUpdater, trackEvents, validateDownload, writeUpdateConfig } from "../helpers/updaterTestUtil"
 
-test("downgrade (disallowed, beta)", async () => {
+test("downgrade (disallowed, beta)", async ({ expect }) => {
   const updater = await createNsisUpdater("1.5.2-beta.4")
   updater.updateConfigPath = await writeUpdateConfig<GithubOptions>({
     provider: "github",
@@ -32,7 +32,7 @@ test("downgrade (disallowed, beta)", async () => {
   expect(actualEvents).toEqual(expectedEvents)
 })
 
-test("github allowPrerelease=true", async () => {
+test("github allowPrerelease=true", async ({ expect }) => {
   const updater = await createNsisUpdater("1.0.1")
   updater.allowPrerelease = true
   updater.updateConfigPath = await writeUpdateConfig<GithubOptions>({
@@ -44,7 +44,7 @@ test("github allowPrerelease=true", async () => {
   expect(removeUnstableProperties(updateCheckResult?.updateInfo)).toMatchSnapshot()
 })
 
-test("github allowPrerelease=false", async () => {
+test("github allowPrerelease=false", async ({ expect }) => {
   const updater = await createNsisUpdater("1.0.1")
   updater.allowPrerelease = false
   updater.updateConfigPath = await writeUpdateConfig<GithubOptions>({
@@ -56,7 +56,7 @@ test("github allowPrerelease=false", async () => {
   expect(removeUnstableProperties(updateCheckResult?.updateInfo)).toMatchSnapshot()
 })
 
-test("file url generic", async () => {
+test("file url generic", async ({ expect }) => {
   const updater = await createNsisUpdater()
   updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({
     provider: "generic",
@@ -65,7 +65,7 @@ test("file url generic", async () => {
   await validateDownload(updater)
 })
 
-test.ifEnv(process.env.KEYGEN_TOKEN)("file url keygen", async () => {
+test.ifEnv(process.env.KEYGEN_TOKEN)("file url keygen", async ({ expect }) => {
   const updater = await createNsisUpdater()
   updater.addAuthHeader(`Bearer ${process.env.KEYGEN_TOKEN}`)
   updater.updateConfigPath = await writeUpdateConfig<KeygenOptions>({
@@ -76,7 +76,7 @@ test.ifEnv(process.env.KEYGEN_TOKEN)("file url keygen", async () => {
   await validateDownload(updater)
 })
 
-test.ifEnv(process.env.BITBUCKET_TOKEN)("file url bitbucket", async () => {
+test.ifEnv(process.env.BITBUCKET_TOKEN)("file url bitbucket", async ({ expect }) => {
   const updater = await createNsisUpdater()
   const options: BitbucketOptions = {
     provider: "bitbucket",
@@ -88,7 +88,7 @@ test.ifEnv(process.env.BITBUCKET_TOKEN)("file url bitbucket", async () => {
   await validateDownload(updater)
 })
 
-test.skip("DigitalOcean Spaces", async () => {
+test.skip("DigitalOcean Spaces", async ({ expect }) => {
   const updater = await createNsisUpdater()
   updater.updateConfigPath = await writeUpdateConfig<SpacesOptions>({
     provider: "spaces",
@@ -99,7 +99,7 @@ test.skip("DigitalOcean Spaces", async () => {
   await validateDownload(updater)
 })
 
-test.ifNotCiWin.skip("sha512 mismatch error event", async () => {
+test.ifNotCiWin.skip("sha512 mismatch error event", async ({ expect }) => {
   const updater = await createNsisUpdater()
   updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({
     provider: "generic",
@@ -116,7 +116,7 @@ test.ifNotCiWin.skip("sha512 mismatch error event", async () => {
   expect(actualEvents).toMatchSnapshot()
 })
 
-test("file url generic - manual download", async () => {
+test("file url generic - manual download", async ({ expect }) => {
   const updater = await createNsisUpdater()
   updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({
     provider: "generic",
@@ -136,7 +136,7 @@ test("file url generic - manual download", async () => {
 })
 
 // https://github.com/electron-userland/electron-builder/issues/1045
-test("checkForUpdates several times", async () => {
+test("checkForUpdates several times", async ({ expect }) => {
   const updater = await createNsisUpdater()
   updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({
     provider: "generic",
@@ -167,7 +167,7 @@ async function checkDownloadPromise(updateCheckResult: UpdateCheckResult | null)
   return await assertThat(path.join((await updateCheckResult?.downloadPromise)![0])).isFile()
 }
 
-test("file url github", async () => {
+test("file url github", async ({ expect }) => {
   const updater = await createNsisUpdater()
   const options: GithubOptions = {
     provider: "github",
@@ -184,7 +184,7 @@ test("file url github", async () => {
   await validateDownload(updater)
 })
 
-test("file url github pre-release and fullChangelog", async () => {
+test("file url github pre-release and fullChangelog", async ({ expect }) => {
   const updater = await createNsisUpdater("1.5.0-beta.1")
   const options: GithubOptions = {
     provider: "github",
@@ -203,7 +203,7 @@ test("file url github pre-release and fullChangelog", async () => {
   expect(updateCheckResult?.updateInfo).toMatchSnapshot()
 })
 
-test.ifEnv(process.env.GH_TOKEN || process.env.GITHUB_TOKEN)("file url github private", async () => {
+test.ifEnv(process.env.GH_TOKEN || process.env.GITHUB_TOKEN)("file url github private", async ({ expect }) => {
   const updater = await createNsisUpdater("0.0.1")
   updater.updateConfigPath = await writeUpdateConfig<GithubOptions>({
     provider: "github",
@@ -214,7 +214,7 @@ test.ifEnv(process.env.GH_TOKEN || process.env.GITHUB_TOKEN)("file url github pr
   await validateDownload(updater)
 })
 
-test("test error", async () => {
+test("test error", async ({ expect }) => {
   const updater = await createNsisUpdater("0.0.1")
   const actualEvents = trackEvents(updater)
 
@@ -222,7 +222,7 @@ test("test error", async () => {
   expect(actualEvents).toMatchSnapshot()
 })
 
-test.skip("test download progress", async () => {
+test.skip("test download progress", async ({ expect }) => {
   const updater = await createNsisUpdater("0.0.1")
   updater.updateConfigPath = await writeUpdateConfig({
     provider: "github",
@@ -247,7 +247,7 @@ test.skip("test download progress", async () => {
   expect(lastEvent.transferred).toBe(lastEvent.total)
 })
 
-test("valid signature", async () => {
+test("valid signature", async ({ expect }) => {
   const updater = await createNsisUpdater("0.0.1")
   updater.updateConfigPath = await writeUpdateConfig({
     provider: "github",
@@ -258,7 +258,7 @@ test("valid signature", async () => {
   await validateDownload(updater)
 })
 
-test("valid signature - multiple publisher DNs", async () => {
+test("valid signature - multiple publisher DNs", async ({ expect }) => {
   const updater = await createNsisUpdater("0.0.1")
   updater.updateConfigPath = await writeUpdateConfig({
     provider: "github",
@@ -269,7 +269,7 @@ test("valid signature - multiple publisher DNs", async () => {
   await validateDownload(updater)
 })
 
-test("valid signature using DN", async () => {
+test("valid signature using DN", async ({ expect }) => {
   const updater = await createNsisUpdater("0.0.1")
   updater.updateConfigPath = await writeUpdateConfig({
     provider: "github",
@@ -281,7 +281,7 @@ test("valid signature using DN", async () => {
   await validateDownload(updater)
 })
 
-test.ifWindows("invalid signature", async () => {
+test.ifWindows("invalid signature", async ({ expect }) => {
   const updater = await createNsisUpdater("0.0.1")
   updater.updateConfigPath = await writeUpdateConfig({
     provider: "github",
@@ -294,7 +294,7 @@ test.ifWindows("invalid signature", async () => {
   expect(actualEvents).toMatchSnapshot()
 })
 
-test.ifWindows("test custom signature verifier", async () => {
+test.ifWindows("test custom signature verifier", async ({ expect }) => {
   const updater = await createNsisUpdater("1.0.2")
   updater.updateConfigPath = await writeUpdateConfig<GithubOptions>({
     provider: "github",
@@ -308,7 +308,7 @@ test.ifWindows("test custom signature verifier", async () => {
   await validateDownload(updater)
 })
 
-test.ifWindows("test custom signature verifier - signing error message", async () => {
+test.ifWindows("test custom signature verifier - signing error message", async ({ expect }) => {
   const updater = await createNsisUpdater("1.0.2")
   updater.updateConfigPath = await writeUpdateConfig<GithubOptions>({
     provider: "github",
@@ -325,7 +325,7 @@ test.ifWindows("test custom signature verifier - signing error message", async (
 })
 
 // disable for now
-test("90 staging percentage", async () => {
+test("90 staging percentage", async ({ expect }) => {
   const userIdFile = path.join(tmpdir(), "electron-updater-test", "userData", ".updaterId")
   await outputFile(userIdFile, "1wa70172-80f8-5cc4-8131-28f5e0edd2a1")
 
@@ -339,7 +339,7 @@ test("90 staging percentage", async () => {
   await validateDownload(updater)
 })
 
-test("1 staging percentage", async () => {
+test("1 staging percentage", async ({ expect }) => {
   const userIdFile = path.join(tmpdir(), "electron-updater-test", "userData", ".updaterId")
   await outputFile(userIdFile, "12a70172-80f8-5cc4-8131-28f5e0edd2a1")
 
@@ -353,7 +353,7 @@ test("1 staging percentage", async () => {
   await validateDownload(updater, false)
 })
 
-test("cancel download with progress", async () => {
+test("cancel download with progress", async ({ expect }) => {
   const updater = await createNsisUpdater()
   updater.updateConfigPath = await writeUpdateConfig({
     provider: "generic",
@@ -381,7 +381,7 @@ test("cancel download with progress", async () => {
   expect(cancelled).toBe(true)
 })
 
-test("test download and install", async () => {
+test("test download and install", async ({ expect }) => {
   const updater = await createNsisUpdater()
   updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({
     provider: "generic",
@@ -391,7 +391,7 @@ test("test download and install", async () => {
   await validateDownload(updater)
 })
 
-test.ifWindows.skip("test downloaded installer", async () => {
+test.ifWindows.skip("test downloaded installer", async ({ expect }) => {
   const updater = await createNsisUpdater("1.0.1")
   updater.updateConfigPath = await writeUpdateConfig<GithubOptions>({
     provider: "github",

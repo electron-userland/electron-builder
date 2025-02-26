@@ -53,7 +53,7 @@ function createExtraMetadataTest(asar: boolean) {
 test.ifDevOrLinuxCi("extra metadata", createExtraMetadataTest(true))
 test.ifDevOrLinuxCi("extra metadata (no asar)", createExtraMetadataTest(false))
 
-test("cli", async () => {
+test("cli", async ({ expect }) => {
   // because these methods are internal
   const { configureBuildCommand, normalizeOptions } = require("electron-builder/out/builder")
   const yargs = require("yargs")

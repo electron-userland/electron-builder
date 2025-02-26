@@ -64,7 +64,7 @@ test.ifNotCiMac(
   })
 )
 
-test.ifNotCiMac("assisted, MUI_HEADER", () => {
+test.ifNotCiMac("assisted, MUI_HEADER", ({ expect }) => {
   let installerHeaderPath: string | null = null
   return assertPack(
     "test-app-one",
@@ -95,7 +95,7 @@ test.ifNotCiMac("assisted, MUI_HEADER", () => {
   )
 })
 
-test.ifNotCiMac("assisted, MUI_HEADER as option", () => {
+test.ifNotCiMac("assisted, MUI_HEADER as option", ({ expect }) => {
   let installerHeaderPath: string | null = null
   return assertPack(
     "test-app-one",

@@ -88,7 +88,7 @@ test.ifWindows(
   { retry: 2 }
 )
 
-test.ifWindows("nsis", async () => {
+test.ifWindows("nsis", async ({ expect }) => {
   const outDirs: Array<string> = []
   const tmpDir = new TmpDir("differential-updater-test")
   await doBuild(outDirs, Platform.WINDOWS.createTarget(["nsis"], Arch.x64), tmpDir, true)

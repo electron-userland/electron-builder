@@ -94,7 +94,7 @@ test(
   })
 )
 
-test.ifMac("custom icon", () => {
+test.ifMac("custom icon", ({ expect }) => {
   let platformPackager: CheckingWinPackager | null = null
   return assertPack(
     "test-app-one",
@@ -116,7 +116,7 @@ test.ifMac("custom icon", () => {
   )
 })
 
-test("win icon from icns", () => {
+test("win icon from icns", ({ expect }) => {
   let platformPackager: CheckingWinPackager | null = null
   return app(
     {
