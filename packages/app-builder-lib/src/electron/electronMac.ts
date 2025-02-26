@@ -23,11 +23,11 @@ function moveHelpers(helperSuffixes: Array<string>, frameworksPath: string, appN
 }
 
 function getAvailableHelperSuffixes(
-  helperEHPlist: string | null,
-  helperNPPlist: string | null,
-  helperRendererPlist: string | null,
-  helperPluginPlist: string | null,
-  helperGPUPlist: string | null
+  helperEHPlist: PlistObject | null,
+  helperNPPlist: PlistObject | null,
+  helperRendererPlist: PlistObject | null,
+  helperPluginPlist: PlistObject | null,
+  helperGPUPlist: PlistObject | null
 ) {
   const result = [" Helper"]
   if (helperEHPlist != null) {
@@ -70,26 +70,26 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
   const helperGPUPlistFilename = path.join(frameworksPath, `${electronBranding.productName} Helper (GPU).app`, "Contents", "Info.plist")
   const helperLoginPlistFilename = path.join(loginItemPath, `${electronBranding.productName} Login Helper.app`, "Contents", "Info.plist")
 
-  const safeParsePlistFile = async <T>(filePath: string) => {
+  const safeParsePlistFile = async (filePath: string): Promise<PlistObject | null> => {
     if (!fs.existsSync(filePath)) {
       return null
     }
-    return await parsePlistFile<T>(filePath)
+    return await parsePlistFile(filePath)
   }
 
-  const appPlist = (await safeParsePlistFile<PlistObject>(appPlistFilename))!
+  const appPlist = (await safeParsePlistFile(appPlistFilename))!
   if (appPlist == null) {
     throw new Error("corrupted Electron dist")
   }
 
   // Replace the multiple parsePlistFile calls with:
-  const helperPlist = await parsePlistFile<PlistObject>(helperPlistFilename)
-  const helperEHPlist = await safeParsePlistFile<string>(helperEHPlistFilename)
-  const helperNPPlist = await safeParsePlistFile<string>(helperNPPlistFilename)
-  const helperRendererPlist = await safeParsePlistFile<string>(helperRendererPlistFilename)
-  const helperPluginPlist = await safeParsePlistFile<string>(helperPluginPlistFilename)
-  const helperGPUPlist = await safeParsePlistFile<string>(helperGPUPlistFilename)
-  const helperLoginPlist = await safeParsePlistFile<PlistObject>(helperLoginPlistFilename)
+  const helperPlist = await safeParsePlistFile(helperPlistFilename)
+  const helperEHPlist = await safeParsePlistFile(helperEHPlistFilename)
+  const helperNPPlist = await safeParsePlistFile(helperNPPlistFilename)
+  const helperRendererPlist = await safeParsePlistFile(helperRendererPlistFilename)
+  const helperPluginPlist = await safeParsePlistFile(helperPluginPlistFilename)
+  const helperGPUPlist = await safeParsePlistFile(helperGPUPlistFilename)
+  const helperLoginPlist = await safeParsePlistFile(helperLoginPlistFilename)
 
   const buildMetadata = packager.config
 
@@ -245,7 +245,9 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
   }
 
   await savePlistFile(appPlistFilename, appPlist)
-  await savePlistFile(helperPlistFilename, helperPlist)
+  if (helperPlist != null) {
+    await savePlistFile(helperPlistFilename, helperPlist)
+  }
 
   await Promise.all([
     doRename(path.join(contentsPath, "MacOS"), electronBranding.productName, appPlist.CFBundleExecutable as string),
