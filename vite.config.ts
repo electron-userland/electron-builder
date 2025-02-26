@@ -44,11 +44,7 @@ export default () => {
       sequence: {
         concurrent: true
       },
-      poolMatchGlobs: [
-        // This test prevents worker_thread from terminating
-        ["/test/**/*.ts", "child_process"],
-      ],
-
+      
       // // Speed things up a bit -- these help but probably won't be needed someday
       // maxConcurrency: 20,
       // pool: "forks",
