@@ -37,8 +37,7 @@ const projectDirCreated = async (projectDir: string, tmpDir: TmpDir) => {
   )
 }
 
-test.ifAll("win/linux concurrent", () => {
-  const linuxTargets = Platform.LINUX.createTarget([DIR_TARGET, "deb", "rpm"], Arch.x64, Arch.armv7l)
+test.ifNotWindows("win/linux concurrent", () => {
   const targets = new Map([...winTargets, ...linuxTargets])
   return assertPack(
     "test-app",
