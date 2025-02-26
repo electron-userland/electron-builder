@@ -2,8 +2,9 @@ import { GithubOptions } from "builder-util-runtime"
 import { DebUpdater, PacmanUpdater, RpmUpdater } from "electron-updater"
 import { assertThat } from "../helpers/fileAssert"
 import { createTestAppAdapter, tuneTestUpdater, validateDownload, writeUpdateConfig } from "../helpers/updaterTestUtil"
+import { ExpectStatic } from "vitest"
 
-const runTest = async (updaterClass: any, expectedExtension: "deb" | "rpm" | "AppImage" | "pacman") => {
+const runTest = async (expect: ExpectStatic, updaterClass: any, expectedExtension: "deb" | "rpm" | "AppImage" | "pacman") => {
   const testAppAdapter = await createTestAppAdapter("1.0.1")
   const updater = new updaterClass(null, testAppAdapter)
   tuneTestUpdater(updater, { platform: "linux" })
@@ -14,29 +15,29 @@ const runTest = async (updaterClass: any, expectedExtension: "deb" | "rpm" | "Ap
     repo: "electron-builder-test",
   })
 
-  const updateCheckResult = await validateDownload(updater)
+  const updateCheckResult = await validateDownload(expect, updater)
 
   const files = await updateCheckResult?.downloadPromise
   expect(files!.length).toEqual(1)
   const installer = files![0]
   expect(installer.endsWith(`.${expectedExtension}`)).toBeTruthy()
-  await assertThat(installer).isFile()
+  await assertThat(expect, installer).isFile()
 
   // updater.quitAndInstall(true, false)
 }
 
 test("test rpm download", async ({ expect }) => {
-  await runTest(RpmUpdater, "rpm")
+  await runTest(expect, RpmUpdater, "rpm")
 })
 
 test("test pacman download", async ({ expect }) => {
-  await runTest(PacmanUpdater, "pacman")
+  await runTest(expect, PacmanUpdater, "pacman")
 })
 
 test("test deb download", async ({ expect }) => {
-  await runTest(DebUpdater, "deb")
+  await runTest(expect, DebUpdater, "deb")
 })
 
 // test.ifLinux("test AppImage download", async ({ expect }) => {
-//   await runTest(AppImageUpdater, "AppImage")
+//   await runTest(expect, AppImageUpdater, "AppImage")
 // })

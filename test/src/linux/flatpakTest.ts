@@ -3,7 +3,7 @@ import { app } from "../helpers/packTester"
 
 test.ifDevOrLinuxCi(
   "flatpak",
-  app({
+  ({ expect }) => app(expect,{
     targets: Platform.LINUX.createTarget("flatpak"),
     config: {
       electronFuses: {
@@ -22,7 +22,7 @@ test.ifDevOrLinuxCi(
 
 test.ifDevOrLinuxCi(
   "enable Wayland flags",
-  app({
+  ({ expect }) => app(expect,{
     targets: Platform.LINUX.createTarget("flatpak"),
     config: {
       flatpak: {
@@ -34,7 +34,7 @@ test.ifDevOrLinuxCi(
 
 test.ifDevOrLinuxCi(
   "custom finishArgs",
-  app({
+  ({ expect }) => app(expect,{
     targets: Platform.LINUX.createTarget("flatpak"),
     config: {
       flatpak: {
@@ -58,7 +58,7 @@ test.ifDevOrLinuxCi(
 
 test.ifDevOrLinuxCi(
   "custom runtime and base app version",
-  app({
+  ({ expect }) => app(expect,{
     targets: Platform.LINUX.createTarget("flatpak"),
     config: {
       flatpak: {

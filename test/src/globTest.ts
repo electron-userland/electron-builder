@@ -7,6 +7,7 @@ import { assertThat } from "./helpers/fileAssert"
 import { app, appThrows, assertPack, linuxDirTarget, modifyPackageJson, PackedContext, removeUnstableProperties, verifyAsarFileTree } from "./helpers/packTester"
 import { verifySmartUnpack } from "./helpers/verifySmartUnpack"
 import { spawnSync } from "child_process"
+import { ExpectStatic } from "vitest"
 
 async function createFiles(appDir: string) {
   await Promise.all([
@@ -28,7 +29,7 @@ async function createFiles(appDir: string) {
 
 test.ifNotWindows.ifDevOrLinuxCi(
   "unpackDir one",
-  app(
+  ({ expect }) => app(expect,
     {
       targets: linuxDirTarget,
       config: {
@@ -37,26 +38,26 @@ test.ifNotWindows.ifDevOrLinuxCi(
     },
     {
       projectDirCreated: createFiles,
-      packed: assertDirs,
+      packed: context => assertDirs(expect, context),
     }
   )
 )
 
-async function assertDirs(context: PackedContext) {
+async function assertDirs(expect: ExpectStatic, context: PackedContext) {
   const resourceDir = context.getResources(Platform.LINUX)
   await Promise.all([
-    assertThat(path.join(resourceDir, "app.asar.unpacked", "assets")).isDirectory(),
-    assertThat(path.join(resourceDir, "app.asar.unpacked", "b2")).isDirectory(),
-    assertThat(path.join(resourceDir, "app.asar.unpacked", "do-not-unpack-dir", "file.json")).isFile(),
-    assertThat(path.join(resourceDir, "app.asar.unpacked", "do-not-unpack-dir", "must-be-not-unpacked")).doesNotExist(),
-    assertThat(path.join(resourceDir, "app.asar.unpacked", "do-not-unpack-dir", "dir-2")).doesNotExist(),
+    assertThat(expect, path.join(resourceDir, "app.asar.unpacked", "assets")).isDirectory(),
+    assertThat(expect, path.join(resourceDir, "app.asar.unpacked", "b2")).isDirectory(),
+    assertThat(expect, path.join(resourceDir, "app.asar.unpacked", "do-not-unpack-dir", "file.json")).isFile(),
+    assertThat(expect, path.join(resourceDir, "app.asar.unpacked", "do-not-unpack-dir", "must-be-not-unpacked")).doesNotExist(),
+    assertThat(expect, path.join(resourceDir, "app.asar.unpacked", "do-not-unpack-dir", "dir-2")).doesNotExist(),
   ])
 
-  await verifyAsarFileTree(resourceDir)
+  await verifyAsarFileTree(expect, resourceDir)
 }
 
 test.ifNotWindows.ifDevOrLinuxCi("unpackDir", ({ expect }) => {
-  return assertPack(
+  return assertPack(expect,
     "test-app",
     {
       targets: linuxDirTarget,
@@ -66,13 +67,13 @@ test.ifNotWindows.ifDevOrLinuxCi("unpackDir", ({ expect }) => {
     },
     {
       projectDirCreated: projectDir => createFiles(path.join(projectDir, "app")),
-      packed: assertDirs,
+      packed: context => assertDirs(expect, context),
     }
   )
 })
 
 test.ifDevOrLinuxCi("asarUnpack and files ignore", ({ expect }) => {
-  return assertPack(
+  return assertPack(expect,
     "test-app",
     {
       targets: linuxDirTarget,
@@ -84,9 +85,9 @@ test.ifDevOrLinuxCi("asarUnpack and files ignore", ({ expect }) => {
       projectDirCreated: projectDir => outputFile(path.join(projectDir, "node_modules/ffprobe-static/bin/darwin/x64/ffprobe"), "data"),
       packed: async context => {
         const resourceDir = context.getResources(Platform.LINUX)
-        await Promise.all([assertThat(path.join(resourceDir, "app.asar.unpacked", "node_modules/ffprobe-static/bin/darwin/x64/ffprobe")).doesNotExist()])
+        await Promise.all([assertThat(expect, path.join(resourceDir, "app.asar.unpacked", "node_modules/ffprobe-static/bin/darwin/x64/ffprobe")).doesNotExist()])
 
-        await verifyAsarFileTree(resourceDir)
+        await verifyAsarFileTree(expect, resourceDir)
       },
     }
   )
@@ -94,7 +95,7 @@ test.ifDevOrLinuxCi("asarUnpack and files ignore", ({ expect }) => {
 
 test.ifNotWindows(
   "link",
-  app(
+  ({ expect }) => app(expect,
     {
       targets: linuxDirTarget,
     },
@@ -105,14 +106,15 @@ test.ifNotWindows(
       packed: async context => {
         const resources = context.getResources(Platform.LINUX)
         expect((await readAsar(path.join(resources, "app.asar"))).getFile("foo.js", false)).toMatchSnapshot()
-        await verifyAsarFileTree(resources)
+        await verifyAsarFileTree(expect, resources)
       },
     }
   )
 )
 
-test.ifNotWindows("symlinks everywhere with static framework", () =>
+test.ifNotWindows("symlinks everywhere with static framework", ({ expect }) =>
   assertPack(
+    expect,
     "test-app-symlink-framework",
     {
       targets: linuxDirTarget,
@@ -134,7 +136,7 @@ test.ifNotWindows("symlinks everywhere with static framework", () =>
       packed: async context => {
         const resources = context.getResources(Platform.LINUX)
         expect((await readAsar(path.join(resources, "app.asar"))).getFile("foo.js", false)).toMatchSnapshot()
-        await verifySmartUnpack(resources)
+        await verifySmartUnpack(expect, resources)
       },
     }
   )
@@ -142,7 +144,7 @@ test.ifNotWindows("symlinks everywhere with static framework", () =>
 
 test.ifNotWindows(
   "outside link",
-  appThrows(
+   ({ expect }) =>  appThrows(expect,
     {
       targets: linuxDirTarget,
     },
@@ -158,7 +160,7 @@ test.ifNotWindows(
 )
 
 test.ifDevOrLinuxCi("local node module with file protocol", ({ expect }) => {
-  return assertPack(
+  return assertPack(expect,
     "test-app-one",
     {
       targets: linuxDirTarget,
@@ -180,7 +182,7 @@ test.ifDevOrLinuxCi("local node module with file protocol", ({ expect }) => {
         })
       },
       packed: async context => {
-        await assertThat(path.join(path.join(context.getResources(Platform.LINUX), "app.asar.unpacked", "node_modules", "foo", "package.json"))).isFile()
+        await assertThat(expect, path.join(path.join(context.getResources(Platform.LINUX), "app.asar.unpacked", "node_modules", "foo", "package.json"))).isFile()
       },
     }
   )
@@ -189,7 +191,7 @@ test.ifDevOrLinuxCi("local node module with file protocol", ({ expect }) => {
 // cannot be enabled
 // https://github.com/electron-userland/electron-builder/issues/611
 test.ifDevOrLinuxCi("failed peer dep", ({ expect }) => {
-  return assertPack(
+  return assertPack(expect,
     "test-app-one",
     {
       targets: linuxDirTarget,
@@ -211,14 +213,14 @@ test.ifDevOrLinuxCi("failed peer dep", ({ expect }) => {
         ])
       },
       packed: context => {
-        return verifySmartUnpack(context.getResources(Platform.LINUX))
+        return verifySmartUnpack(expect, context.getResources(Platform.LINUX))
       },
     }
   )
 })
 
 test.ifDevOrLinuxCi("ignore node_modules", ({ expect }) => {
-  return assertPack(
+  return assertPack(expect,
     "test-app-one",
     {
       targets: linuxDirTarget,
@@ -239,14 +241,14 @@ test.ifDevOrLinuxCi("ignore node_modules", ({ expect }) => {
           }
         }),
       packed: context => {
-        return assertThat(path.join(context.getResources(Platform.LINUX), "app", "node_modules")).doesNotExist()
+        return assertThat(expect, path.join(context.getResources(Platform.LINUX), "app", "node_modules")).doesNotExist()
       },
     }
   )
 })
 
 test.ifDevOrLinuxCi("asarUnpack node_modules", ({ expect }) => {
-  return assertPack(
+  return assertPack(expect,
     "test-app-one",
     {
       targets: linuxDirTarget,
@@ -265,14 +267,14 @@ test.ifDevOrLinuxCi("asarUnpack node_modules", ({ expect }) => {
       packed: async context => {
         const nodeModulesNode = (await readAsar(path.join(context.getResources(Platform.LINUX), "app.asar"))).getNode("node_modules")
         expect(removeUnstableProperties(nodeModulesNode)).toMatchSnapshot()
-        await assertThat(path.join(context.getResources(Platform.LINUX), "app.asar.unpacked/node_modules/ci-info")).isDirectory()
+        await assertThat(expect, path.join(context.getResources(Platform.LINUX), "app.asar.unpacked/node_modules/ci-info")).isDirectory()
       },
     }
   )
 })
 
 test.ifDevOrLinuxCi("asarUnpack node_modules which has many modules", ({ expect }) => {
-  return assertPack(
+  return assertPack(expect,
     "test-app-one",
     {
       targets: linuxDirTarget,
@@ -309,18 +311,18 @@ test.ifDevOrLinuxCi("asarUnpack node_modules which has many modules", ({ expect 
         await outputFile(path.join(projectDir, "yarn.lock"), "")
       },
       packed: async context => {
-        await assertThat(path.join(context.getResources(Platform.LINUX), "app.asar.unpacked/node_modules/jwt-decode")).isDirectory()
-        await assertThat(path.join(context.getResources(Platform.LINUX), "app.asar.unpacked/node_modules/keytar")).isDirectory()
-        await assertThat(path.join(context.getResources(Platform.LINUX), "app.asar.unpacked/node_modules/yargs")).isDirectory()
-        await assertThat(path.join(context.getResources(Platform.LINUX), "app.asar.unpacked/node_modules/@sentry/electron")).isDirectory()
-        await assertThat(path.join(context.getResources(Platform.LINUX), "app.asar.unpacked/node_modules/ci-info")).isDirectory()
+        await assertThat(expect, path.join(context.getResources(Platform.LINUX), "app.asar.unpacked/node_modules/jwt-decode")).isDirectory()
+        await assertThat(expect, path.join(context.getResources(Platform.LINUX), "app.asar.unpacked/node_modules/keytar")).isDirectory()
+        await assertThat(expect, path.join(context.getResources(Platform.LINUX), "app.asar.unpacked/node_modules/yargs")).isDirectory()
+        await assertThat(expect, path.join(context.getResources(Platform.LINUX), "app.asar.unpacked/node_modules/@sentry/electron")).isDirectory()
+        await assertThat(expect, path.join(context.getResources(Platform.LINUX), "app.asar.unpacked/node_modules/ci-info")).isDirectory()
       },
     }
   )
 })
 
 test.ifDevOrLinuxCi("exclude some modules when asarUnpack node_modules which has many modules", ({ expect }) => {
-  return assertPack(
+  return assertPack(expect,
     "test-app-one",
     {
       targets: linuxDirTarget,
@@ -357,11 +359,11 @@ test.ifDevOrLinuxCi("exclude some modules when asarUnpack node_modules which has
         await outputFile(path.join(projectDir, "yarn.lock"), "")
       },
       packed: async context => {
-        await assertThat(path.join(context.getResources(Platform.LINUX), "app.asar.unpacked/node_modules/jwt-decode")).isDirectory()
-        await assertThat(path.join(context.getResources(Platform.LINUX), "app.asar.unpacked/node_modules/keytar")).isDirectory()
-        await assertThat(path.join(context.getResources(Platform.LINUX), "app.asar.unpacked/node_modules/yargs")).isDirectory()
-        await assertThat(path.join(context.getResources(Platform.LINUX), "app.asar.unpacked/node_modules/@sentry/electron")).isDirectory()
-        await assertThat(path.join(context.getResources(Platform.LINUX), "app.asar.unpacked/node_modules/ci-info")).doesNotExist()
+        await assertThat(expect, path.join(context.getResources(Platform.LINUX), "app.asar.unpacked/node_modules/jwt-decode")).isDirectory()
+        await assertThat(expect, path.join(context.getResources(Platform.LINUX), "app.asar.unpacked/node_modules/keytar")).isDirectory()
+        await assertThat(expect, path.join(context.getResources(Platform.LINUX), "app.asar.unpacked/node_modules/yargs")).isDirectory()
+        await assertThat(expect, path.join(context.getResources(Platform.LINUX), "app.asar.unpacked/node_modules/@sentry/electron")).isDirectory()
+        await assertThat(expect, path.join(context.getResources(Platform.LINUX), "app.asar.unpacked/node_modules/ci-info")).doesNotExist()
       },
     }
   )

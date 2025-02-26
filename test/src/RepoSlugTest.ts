@@ -1,6 +1,7 @@
 import { getRepositoryInfo } from "app-builder-lib/out/util/repositoryInfo"
+import { ExpectStatic } from "vitest"
 
-function checkInfo(info: any) {
+function checkInfo(expect: ExpectStatic, info: any) {
   delete info.pathmatch
   delete info.pathtemplate
   delete info.httpstemplate
@@ -15,7 +16,7 @@ test("repo slug from TRAVIS_REPO_SLUG", async ({ expect }) => {
   try {
     process.env.TRAVIS_REPO_SLUG = "travis-ci/travis-build"
     const info: any = await getRepositoryInfo(process.cwd())
-    checkInfo(info)
+    checkInfo(expect,info)
   } finally {
     if (oldValue != null) {
       restoreEnv("TRAVIS_REPO_SLUG", oldValue)
@@ -33,7 +34,7 @@ test("repo slug from APPVEYOR", async ({ expect }) => {
 
     process.env.APPVEYOR_REPO_NAME = "travis-ci/travis-build"
     const info = await getRepositoryInfo(process.cwd())
-    checkInfo(info)
+    checkInfo(expect,info)
   } finally {
     restoreEnv("APPVEYOR_REPO_NAME", oldAppveyorRepoName)
     if (travisSlug != null) {

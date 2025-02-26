@@ -11,7 +11,7 @@ const parser = new XMLParser({
 
 test.ifDevOrWinCi(
   "msiWrapped requires nsis",
-  appThrows(
+   ({ expect }) =>  appThrows(expect,
     {
       targets: Platform.WINDOWS.createTarget("msiWrapped"),
       config: {
@@ -45,7 +45,7 @@ test.ifDevOrWinCi(
 
 test.ifDevOrWinCi(
   "msiWrapped allows capitalized nsis target",
-  app(
+  ({ expect }) => app(expect,
     {
       targets: Platform.WINDOWS.createTarget(["msiWrapped", "NSIS"]),
       config: {
@@ -65,7 +65,7 @@ test.ifDevOrWinCi(
 
 test.ifDevOrWinCi(
   "msiWrapped includes packaged exe",
-  app({
+  ({ expect }) => app(expect,{
     targets: Platform.WINDOWS.createTarget(["msiWrapped", "nsis"]),
     config: {
       appId: "build.electron.test.msi.oneClick.perMachine",
@@ -90,7 +90,7 @@ test.ifDevOrWinCi(
 
 test.ifDevOrWinCi(
   "msiWrapped impersonate no if not provided",
-  app({
+  ({ expect }) => app(expect,{
     targets: Platform.WINDOWS.createTarget(["msiWrapped", "nsis"]),
     config: {
       appId: "build.electron.test.msi.oneClick.perMachine",
@@ -114,7 +114,7 @@ test.ifDevOrWinCi(
 
 test.ifDevOrWinCi(
   "msiWrapped impersonate yes if true",
-  app({
+  ({ expect }) => app(expect,{
     targets: Platform.WINDOWS.createTarget(["msiWrapped", "nsis"]),
     config: {
       appId: "build.electron.test.msi.oneClick.perMachine",
@@ -141,7 +141,7 @@ test.ifDevOrWinCi(
 
 test.ifDevOrWinCi(
   "msiWrapped wrappedInstallerArgs provided",
-  app({
+  ({ expect }) => app(expect,{
     targets: Platform.WINDOWS.createTarget(["msiWrapped", "nsis"]),
     config: {
       appId: "build.electron.test.msi.oneClick.perMachine",

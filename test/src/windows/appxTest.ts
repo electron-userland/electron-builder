@@ -10,7 +10,7 @@ const protectedCscLink =
 
 it.ifDevOrWinCi(
   "AppX",
-  app(
+  ({ expect }) => app(expect,
     {
       targets: Platform.WINDOWS.createTarget(["appx"], Arch.x64),
       config: {
@@ -39,7 +39,7 @@ it.ifDevOrWinCi(
 
 it.ifDevOrWinCi(
   "auto launch",
-  app(
+  ({ expect }) => app(expect,
     {
       targets: Platform.WINDOWS.createTarget(["appx"], Arch.x64),
       config: {
@@ -55,7 +55,7 @@ it.ifDevOrWinCi(
 // use identityName and same setting for applicationId
 it.ifDevOrWinCi(
   "application id",
-  app(
+  ({ expect }) => app(expect,
     {
       targets: Platform.WINDOWS.createTarget(["appx"], Arch.x64),
       config: {
@@ -72,7 +72,7 @@ it.ifDevOrWinCi(
 
 test.ifEnv(!!process.env.DO_APPX_CERT_STORE_AWARE_TEST)(
   "certificateSubjectName",
-  app({
+  ({ expect }) => app(expect,{
     targets: Platform.WINDOWS.createTarget(["appx"], Arch.x64),
     config: {
       win: {
@@ -87,7 +87,7 @@ test.ifEnv(!!process.env.DO_APPX_CERT_STORE_AWARE_TEST)(
 // todo - check manifest
 it(
   "languages and not signed (windows store only)",
-  app({
+  ({ expect }) => app(expect,{
     targets: Platform.WINDOWS.createTarget(["appx"], Arch.ia32, Arch.x64),
     config: {
       cscLink: protectedCscLink,
@@ -103,7 +103,7 @@ it(
 
 it(
   "custom template appmanifest.xml",
-  app({
+  ({ expect }) => app(expect,{
     targets: Platform.WINDOWS.createTarget(["appx"], Arch.x64),
     config: {
       appx: {
@@ -119,7 +119,7 @@ it(
 
 it(
   "custom raw appmanifest.xml",
-  app({
+  ({ expect }) => app(expect,{
     targets: Platform.WINDOWS.createTarget(["appx"], Arch.x64),
     config: {
       appx: {

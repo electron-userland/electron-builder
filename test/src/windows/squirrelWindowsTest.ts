@@ -5,7 +5,7 @@ import { app, assertPack, copyTestAsset } from "../helpers/packTester"
 
 test.ifNotCiMac(
   "Squirrel.Windows",
-  app(
+  ({ expect }) => app(expect,
     {
       targets: Platform.WINDOWS.createTarget(["squirrel"]),
       config: {
@@ -31,7 +31,7 @@ test.ifNotCiMac(
 
 test.ifNotCiMac(
   "artifactName",
-  app({
+  ({ expect }) => app(expect,{
     targets: Platform.WINDOWS.createTarget(["squirrel", "zip"]),
     config: {
       win: {
@@ -45,7 +45,7 @@ test.ifNotCiMac(
 // very slow
 test.skip(
   "delta and msi",
-  app({
+  ({ expect }) => app(expect,{
     targets: Platform.WINDOWS.createTarget("squirrel", Arch.ia32),
     config: {
       squirrelWindows: {
@@ -58,7 +58,7 @@ test.skip(
 
 test(
   "squirrel window arm64 msi",
-  app(
+  ({ expect }) => app(expect,
     {
       targets: Platform.WINDOWS.createTarget("squirrel", Arch.arm64),
       config: {
@@ -73,7 +73,7 @@ test(
 
 test(
   "squirrel window x64 msi",
-  app(
+  ({ expect }) => app(expect,
     {
       targets: Platform.WINDOWS.createTarget("squirrel", Arch.x64),
       config: {
@@ -88,7 +88,7 @@ test(
 
 test(
   "squirrel window ia32 msi",
-  app(
+  ({ expect }) => app(expect,
     {
       targets: Platform.WINDOWS.createTarget("squirrel", Arch.ia32),
       config: {
@@ -105,7 +105,7 @@ test("detect install-spinner", ({ expect }) => {
   let platformPackager: CheckingWinPackager | null = null
   let loadingGifPath: string | null = null
 
-  return assertPack(
+  return assertPack(expect,
     "test-app-one",
     {
       targets: Platform.WINDOWS.createTarget("squirrel"),

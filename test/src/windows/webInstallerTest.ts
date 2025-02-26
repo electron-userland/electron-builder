@@ -5,7 +5,7 @@ import { app } from "../helpers/packTester"
 
 test.ifNotCiMac(
   "web installer",
-  app({
+  ({ expect }) => app(expect,{
     targets: Platform.WINDOWS.createTarget(["nsis-web"], Arch.x64, Arch.arm64),
     config: {
       publish: {
@@ -29,7 +29,7 @@ test.ifNotCiMac(
 
 test.ifNotCiMac(
   "web installer (default github)",
-  app({
+  ({ expect }) => app(expect,{
     targets: Platform.WINDOWS.createTarget(["nsis-web"], Arch.ia32, Arch.x64, Arch.arm64),
     config: {
       publish: {
@@ -43,7 +43,7 @@ test.ifNotCiMac(
 
 test.ifNotCiMac(
   "web installer, safe name on github",
-  app({
+  ({ expect }) => app(expect,{
     targets: Platform.WINDOWS.createTarget(["nsis-web"], Arch.x64),
     config: {
       productName: "WorkFlowy",

@@ -5,6 +5,7 @@ import { load } from "js-yaml"
 import * as path from "path"
 import { CheckingWinPackager } from "../helpers/CheckingPackager"
 import { app, appThrows } from "../helpers/packTester"
+import { ExpectStatic } from "vitest"
 
 test("parseDn", ({ expect }) => {
   expect(parseDn("CN=7digital Limited, O=7digital Limited, L=London, C=GB")).toMatchSnapshot()
@@ -16,7 +17,7 @@ const windowsDirTarget = Platform.WINDOWS.createTarget(["dir"])
 
 test(
   "sign nested asar unpacked executables",
-  appThrows(
+   ({ expect }) =>  appThrows(expect,
     {
       targets: Platform.WINDOWS.createTarget(DIR_TARGET),
       config: {
@@ -40,8 +41,8 @@ test(
   )
 )
 
-function testCustomSign(sign: any) {
-  return app({
+function testCustomSign(expect: ExpectStatic, sign: any) {
+  return app(expect,{
     targets: Platform.WINDOWS.createTarget(DIR_TARGET),
     platformPackagerFactory: (packager, platform) => new CheckingWinPackager(packager),
     config: {
@@ -61,20 +62,20 @@ function testCustomSign(sign: any) {
 
 test(
   "certificateFile/password - sign as async/await",
-  testCustomSign(async () => {
+  ({ expect }) => testCustomSign(expect,async () => {
     return Promise.resolve()
   })
 )
 test(
   "certificateFile/password - sign as Promise",
-  testCustomSign(() => Promise.resolve())
+  ({ expect }) => testCustomSign(expect,() => Promise.resolve())
 )
-test("certificateFile/password - sign as function", async () => testCustomSign((await import("../helpers/customWindowsSign")).default))
-test("certificateFile/password - sign as path", testCustomSign(path.join(__dirname, "../helpers/customWindowsSign.mjs")))
+test("certificateFile/password - sign as function", async ({ expect }) => testCustomSign(expect,(await import("../helpers/customWindowsSign")).default))
+test("certificateFile/password - sign as path", ({ expect }) => testCustomSign(expect,path.join(__dirname, "../helpers/customWindowsSign.mjs")))
 
 test("custom sign if no code sign info", ({ expect }) => {
   let called = false
-  return app(
+  return app(expect,
     {
       targets: Platform.WINDOWS.createTarget(DIR_TARGET),
       platformPackagerFactory: (packager, platform) => new CheckingWinPackager(packager),
@@ -95,12 +96,12 @@ test("custom sign if no code sign info", ({ expect }) => {
         expect(called).toBe(true)
       },
     }
-  )()
+  )
 })
 
 test(
   "forceCodeSigning",
-  appThrows({
+   ({ expect }) =>  appThrows(expect, {
     targets: windowsDirTarget,
     config: {
       forceCodeSigning: true,
@@ -110,7 +111,7 @@ test(
 
 test(
   "electronDist",
-  appThrows({
+   ({ expect }) =>  appThrows(expect, {
     targets: windowsDirTarget,
     config: {
       electronDist: "foo",
@@ -120,7 +121,7 @@ test(
 
 test(
   "azure signing without credentials",
-  appThrows(
+   ({ expect }) =>  appThrows(expect,
     {
       targets: windowsDirTarget,
       config: {
@@ -142,7 +143,7 @@ test(
 
 test.ifNotWindows(
   "win code sign using pwsh",
-  app(
+  ({ expect }) => app(expect,
     {
       targets: Platform.WINDOWS.createTarget(DIR_TARGET),
     },

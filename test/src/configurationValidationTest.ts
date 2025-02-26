@@ -6,7 +6,7 @@ import { app, appThrows, linuxDirTarget } from "./helpers/packTester"
 
 test.ifDevOrLinuxCi(
   "validation",
-  appThrows(
+   ({ expect }) =>  appThrows(expect,
     {
       targets: linuxDirTarget,
       config: {
@@ -23,7 +23,7 @@ test.ifDevOrLinuxCi(
 
 test.ifDevOrLinuxCi(
   "appId as object",
-  appThrows({
+   ({ expect }) =>  appThrows(expect, {
     targets: linuxDirTarget,
     config: {
       appId: {},
@@ -34,7 +34,7 @@ test.ifDevOrLinuxCi(
 // https://github.com/electron-userland/electron-builder/issues/1302
 test.ifDevOrLinuxCi(
   "extraFiles",
-  app({
+  ({ expect }) => app(expect, {
     targets: Platform.LINUX.createTarget("appimage", Arch.x64),
     config: {
       linux: {

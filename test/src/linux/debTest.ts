@@ -4,16 +4,16 @@ import { app, execShell, getTarExecutable } from "../helpers/packTester"
 
 test.ifNotWindows(
   "deb",
-  app({
+  ({ expect }) => app(expect,{
     targets: Platform.LINUX.createTarget("deb"),
   })
 )
 
-test.ifNotWindows("arm", app({ targets: Platform.LINUX.createTarget("deb", Arch.armv7l, Arch.arm64) }))
+test.ifNotWindows("arm", ({ expect }) => app(expect,{ targets: Platform.LINUX.createTarget("deb", Arch.armv7l, Arch.arm64) }))
 
 test.ifNotWindows(
   "custom depends",
-  app({
+  ({ expect }) => app(expect,{
     targets: Platform.LINUX.createTarget("deb"),
     config: {
       linux: {
@@ -38,7 +38,7 @@ test.ifNotWindows(
 
 test.ifNotWindows(
   "top-level exec name",
-  app({
+  ({ expect }) => app(expect,{
     targets: Platform.LINUX.createTarget("deb"),
     config: {
       productName: "foo",
@@ -49,7 +49,7 @@ test.ifNotWindows(
 
 test.ifNotWindows(
   "no quotes for safe exec name",
-  app({
+  ({ expect }) => app(expect,{
     targets: Platform.LINUX.createTarget("deb"),
     config: {
       productName: "foo",
@@ -67,7 +67,7 @@ test.ifNotWindows(
 
 test.ifNotWindows(
   "executable path in postinst script",
-  app(
+  ({ expect }) => app(expect,
     {
       targets: Platform.LINUX.createTarget("deb"),
       config: {
@@ -92,7 +92,7 @@ test.ifNotWindows(
 
 test.ifNotWindows(
   "deb file associations",
-  app(
+  ({ expect }) => app(expect,
     {
       targets: Platform.LINUX.createTarget("deb"),
       config: {

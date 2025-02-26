@@ -17,7 +17,7 @@ const testPublishConfig: GenericServerOptions = {
 
 test.ifNotWindows(
   "AppImage",
-  app({
+  ({ expect }) => app(expect,{
     targets: appImageTarget,
     config: {
       directories: {
@@ -42,7 +42,7 @@ test.ifNotWindows(
 
 test.ifNotWindows.ifNotCiMac(
   "AppImage arm, max compression",
-  app({
+  ({ expect }) => app(expect,{
     targets: Platform.LINUX.createTarget("Appimage", Arch.armv7l),
     config: {
       publish: testPublishConfig,
@@ -53,7 +53,7 @@ test.ifNotWindows.ifNotCiMac(
 
 test.ifNotWindows.ifNotCiMac(
   "AppImage - deprecated systemIntegration",
-  appThrows({
+   ({ expect }) =>  appThrows(expect, {
     targets: appImageTarget,
     config: {
       appImage: {
@@ -65,7 +65,7 @@ test.ifNotWindows.ifNotCiMac(
 
 test.ifNotWindows.ifNotCiMac(
   "text license and file associations",
-  app(
+  ({ expect }) => app(expect,
     {
       targets: appImageTarget,
       config: {
@@ -94,7 +94,7 @@ test.ifNotWindows.ifNotCiMac(
 
 test.ifNotWindows.ifNotCiMac(
   "html license",
-  app(
+  ({ expect }) => app(expect,
     {
       targets: appImageTarget,
     },
@@ -116,7 +116,7 @@ test.ifNotWindows.ifNotCiMac(
 
 test.ifNotWindows.ifNotCiMac(
   "AppImage - default icon, custom executable and custom desktop",
-  app(
+  ({ expect }) => app(expect,
     {
       targets: appImageTarget,
       config: {
@@ -173,7 +173,7 @@ test.ifNotWindows.ifNotCiMac(
       projectDirCreated: it => fs.rm(path.join(it, "build"), { recursive: true, force: true }),
       packed: async context => {
         const projectDir = context.getContent(Platform.LINUX)
-        await assertThat(path.join(projectDir, "Foo")).isFile()
+        await assertThat(expect, path.join(projectDir, "Foo")).isFile()
       },
     }
   )
@@ -181,7 +181,7 @@ test.ifNotWindows.ifNotCiMac(
 
 test.ifNotWindows(
   "icons from ICNS (mac)",
-  app(
+  ({ expect }) => app(expect,
     {
       targets: appImageTarget,
       config: {
@@ -204,7 +204,7 @@ test.ifNotWindows(
       },
       packed: async context => {
         const projectDir = context.getResources(Platform.LINUX)
-        await assertThat(projectDir).isDirectory()
+        await assertThat(expect, projectDir).isDirectory()
       },
     }
   )
@@ -212,7 +212,7 @@ test.ifNotWindows(
 
 test.ifNotWindows(
   "icons from ICNS if nothing specified",
-  app(
+  ({ expect }) => app(expect,
     {
       targets: appImageTarget,
       config: {
@@ -229,7 +229,7 @@ test.ifNotWindows(
 
 test.ifNotWindows(
   "icons from dir and one icon with suffix",
-  app(
+  ({ expect }) => app(expect,
     {
       targets: appImageTarget,
       config: {
@@ -242,7 +242,7 @@ test.ifNotWindows(
       },
       packed: async context => {
         const projectDir = context.getResources(Platform.LINUX)
-        await assertThat(projectDir).isDirectory()
+        await assertThat(expect, projectDir).isDirectory()
       },
     }
   )
@@ -250,7 +250,7 @@ test.ifNotWindows(
 
 test.ifNotWindows(
   "icons dir with images without size in the filename",
-  app(
+  ({ expect }) => app(expect,
     {
       targets: appImageTarget,
       config: {
@@ -269,7 +269,7 @@ test.ifNotWindows(
       },
       packed: async context => {
         const projectDir = context.getResources(Platform.LINUX)
-        await assertThat(projectDir).isDirectory()
+        await assertThat(expect, projectDir).isDirectory()
       },
     }
   )
@@ -278,7 +278,7 @@ test.ifNotWindows(
 // test prepacked asar also https://github.com/electron-userland/electron-builder/issues/1102
 test.ifNotWindows(
   "icons from ICNS",
-  app(
+  ({ expect }) => app(expect,
     {
       targets: appImageTarget,
       config: {
@@ -303,7 +303,7 @@ test.ifNotWindows(
           },
         })
 
-        await assertThat(path.join(projectDir, "dist")).isDirectory()
+        await assertThat(expect, path.join(projectDir, "dist")).isDirectory()
       },
     }
   )
@@ -311,7 +311,7 @@ test.ifNotWindows(
 
 test.ifNotWindows(
   "no-author-email",
-  appThrows(
+   ({ expect }) =>  appThrows(expect,
     { targets: Platform.LINUX.createTarget("deb", Arch.x64) },
     {
       projectDirCreated: projectDir =>
@@ -324,7 +324,7 @@ test.ifNotWindows(
 
 test.ifNotWindows(
   "forbid desktop.Exec",
-  appThrows({
+   ({ expect }) =>  appThrows(expect, {
     targets: appImageTarget,
     config: {
       linux: {

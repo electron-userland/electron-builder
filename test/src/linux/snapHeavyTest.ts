@@ -5,7 +5,7 @@ import { app, snapTarget } from "../helpers/packTester"
 
 test(
   "snap full",
-  app({
+  ({ expect }) => app(expect,{
     targets: snapTarget,
     config: {
       extraMetadata: {
@@ -32,7 +32,7 @@ test(
 // very slow
 test(
   "snap full (armhf)",
-  app({
+  ({ expect }) => app(expect,{
     targets: Platform.LINUX.createTarget("snap", Arch.armv7l),
     config: {
       extraMetadata: {

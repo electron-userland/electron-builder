@@ -38,7 +38,7 @@ function keygenPublisher(): KeygenOptions {
 
 test.ifNotWindows.ifDevOrLinuxCi(
   "generic, github and spaces",
-  app({
+  ({ expect }) => app(expect,{
     targets: Platform.MAC.createTarget("zip", Arch.x64),
     config: {
       generateUpdatesFilesForAllChannels: true,
@@ -52,7 +52,7 @@ test.ifNotWindows.ifDevOrLinuxCi(
 
 test.ifNotWindows.ifDevOrLinuxCi(
   "github and spaces (publishAutoUpdate)",
-  app({
+  ({ expect }) => app(expect,{
     targets: Platform.LINUX.createTarget("AppImage"),
     config: {
       mac: {
@@ -65,7 +65,7 @@ test.ifNotWindows.ifDevOrLinuxCi(
 
 test.ifMac(
   "mac artifactName ",
-  app(
+  ({ expect }) => app(expect,
     {
       targets: Platform.MAC.createTarget("zip", Arch.x64),
       config: {
@@ -88,7 +88,7 @@ process.env.PUBLISH_FOR_PULL_REQUEST = "true"
 
 test.ifNotWindows(
   "os macro",
-  app(
+  ({ expect }) => app(expect,
     {
       targets: createTargets([Platform.LINUX, Platform.MAC], "zip"),
       config: {
@@ -107,8 +107,8 @@ test.ifNotWindows(
       },
       packed: async context => {
         const dir = path.join(context.projectDir, "dist/s3")
-        await assertThat(dir).isDirectory()
-        await checkDirContents(dir)
+        await assertThat(expect, dir).isDirectory()
+        await checkDirContents(expect, dir)
       },
     }
   )
@@ -119,7 +119,7 @@ test.ifNotWindows(
 // https://github.com/electron-userland/electron-builder/issues/2670
 test.ifNotCi(
   "dotted s3 bucket",
-  app(
+  ({ expect }) => app(expect,
     {
       targets: createTargets([Platform.LINUX], "zip"),
       config: {
@@ -138,7 +138,7 @@ test.ifNotCi(
 // https://github.com/electron-userland/electron-builder/issues/3261
 test.ifNotWindows(
   "custom provider",
-  app(
+  ({ expect }) => app(expect,
     {
       targets: createTargets([Platform.LINUX], "deb"),
       config: {

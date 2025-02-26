@@ -7,6 +7,7 @@ import * as path from "path"
 import { assertThat } from "../helpers/fileAssert"
 import { removeUnstableProperties } from "../helpers/packTester"
 import { createNsisUpdater, trackEvents, validateDownload, writeUpdateConfig } from "../helpers/updaterTestUtil"
+import { ExpectStatic } from "vitest"
 
 test("downgrade (disallowed, beta)", async ({ expect }) => {
   const updater = await createNsisUpdater("1.5.2-beta.4")
@@ -62,7 +63,7 @@ test("file url generic", async ({ expect }) => {
     provider: "generic",
     url: "https://develar.s3.amazonaws.com/test",
   })
-  await validateDownload(updater)
+  await validateDownload(expect, updater)
 })
 
 test.ifEnv(process.env.KEYGEN_TOKEN)("file url keygen", async ({ expect }) => {
@@ -73,7 +74,7 @@ test.ifEnv(process.env.KEYGEN_TOKEN)("file url keygen", async ({ expect }) => {
     product: process.env.KEYGEN_PRODUCT || "43981278-96e7-47de-b8c2-98d59987206b",
     account: process.env.KEYGEN_ACCOUNT || "cdecda36-3ef0-483e-ad88-97e7970f3149",
   })
-  await validateDownload(updater)
+  await validateDownload(expect, updater)
 })
 
 test.ifEnv(process.env.BITBUCKET_TOKEN)("file url bitbucket", async ({ expect }) => {
@@ -85,7 +86,7 @@ test.ifEnv(process.env.BITBUCKET_TOKEN)("file url bitbucket", async ({ expect })
   }
   updater.addAuthHeader(BitbucketPublisher.convertAppPassword(options.owner, process.env.BITBUCKET_TOKEN!))
   updater.updateConfigPath = await writeUpdateConfig(options)
-  await validateDownload(updater)
+  await validateDownload(expect, updater)
 })
 
 test.skip("DigitalOcean Spaces", async ({ expect }) => {
@@ -96,7 +97,7 @@ test.skip("DigitalOcean Spaces", async ({ expect }) => {
     path: "light-updater-test",
     region: "nyc3",
   })
-  await validateDownload(updater)
+  await validateDownload(expect, updater)
 })
 
 test.ifNotCiWin.skip("sha512 mismatch error event", async ({ expect }) => {
@@ -111,7 +112,7 @@ test.ifNotCiWin.skip("sha512 mismatch error event", async ({ expect }) => {
 
   const updateCheckResult = await updater.checkForUpdates()
   expect(removeUnstableProperties(updateCheckResult?.updateInfo)).toMatchSnapshot()
-  await assertThat(updateCheckResult?.downloadPromise).throws()
+  await assertThat(expect, updateCheckResult?.downloadPromise).throws()
 
   expect(actualEvents).toMatchSnapshot()
 })
@@ -132,7 +133,7 @@ test("file url generic - manual download", async ({ expect }) => {
   expect(updateCheckResult?.downloadPromise).toBeNull()
   expect(actualEvents).toMatchSnapshot()
 
-  await assertThat(path.join((await updater.downloadUpdate())[0])).isFile()
+  await assertThat(expect, path.join((await updater.downloadUpdate())[0])).isFile()
 })
 
 // https://github.com/electron-userland/electron-builder/issues/1045
@@ -153,7 +154,7 @@ test("checkForUpdates several times", async ({ expect }) => {
   async function checkForUpdates() {
     const updateCheckResult = await updater.checkForUpdates()
     expect(removeUnstableProperties(updateCheckResult?.updateInfo)).toMatchSnapshot()
-    await checkDownloadPromise(updateCheckResult)
+    await checkDownloadPromise(expect, updateCheckResult)
   }
 
   await checkForUpdates()
@@ -163,8 +164,8 @@ test("checkForUpdates several times", async ({ expect }) => {
   expect(actualEvents).toMatchSnapshot()
 })
 
-async function checkDownloadPromise(updateCheckResult: UpdateCheckResult | null) {
-  return await assertThat(path.join((await updateCheckResult?.downloadPromise)![0])).isFile()
+async function checkDownloadPromise(expect: ExpectStatic, updateCheckResult: UpdateCheckResult | null) {
+  return await assertThat(expect, path.join((await updateCheckResult?.downloadPromise)![0])).isFile()
 }
 
 test("file url github", async ({ expect }) => {
@@ -181,7 +182,7 @@ test("file url github", async ({ expect }) => {
     delete (info as any).downloadedFile
     expect(info).toMatchSnapshot()
   })
-  await validateDownload(updater)
+  await validateDownload(expect, updater)
 })
 
 test("file url github pre-release and fullChangelog", async ({ expect }) => {
@@ -199,7 +200,7 @@ test("file url github pre-release and fullChangelog", async ({ expect }) => {
     delete (info as any).downloadedFile
     expect(info).toMatchSnapshot()
   })
-  const updateCheckResult = await validateDownload(updater)
+  const updateCheckResult = await validateDownload(expect, updater)
   expect(updateCheckResult?.updateInfo).toMatchSnapshot()
 })
 
@@ -211,14 +212,14 @@ test.ifEnv(process.env.GH_TOKEN || process.env.GITHUB_TOKEN)("file url github pr
     repo: "__test_nsis_release_private",
     private: true,
   })
-  await validateDownload(updater)
+  await validateDownload(expect, updater)
 })
 
 test("test error", async ({ expect }) => {
   const updater = await createNsisUpdater("0.0.1")
   const actualEvents = trackEvents(updater)
 
-  await assertThat(updater.checkForUpdates()).throws()
+  await assertThat(expect, updater.checkForUpdates()).throws()
   expect(actualEvents).toMatchSnapshot()
 })
 
@@ -255,7 +256,7 @@ test("valid signature", async ({ expect }) => {
     repo: "__test_nsis_release",
     publisherName: ["Vladimir Krivosheev"],
   })
-  await validateDownload(updater)
+  await validateDownload(expect, updater)
 })
 
 test("valid signature - multiple publisher DNs", async ({ expect }) => {
@@ -266,7 +267,7 @@ test("valid signature - multiple publisher DNs", async ({ expect }) => {
     repo: "__test_nsis_release",
     publisherName: ["Foo Bar", "CN=Vladimir Krivosheev, O=Vladimir Krivosheev, L=Grunwald, S=Bayern, C=DE", "Bar Foo"],
   })
-  await validateDownload(updater)
+  await validateDownload(expect, updater)
 })
 
 test("valid signature using DN", async ({ expect }) => {
@@ -278,7 +279,7 @@ test("valid signature using DN", async ({ expect }) => {
     publisherName: ["CN=Vladimir Krivosheev, O=Vladimir Krivosheev, L=Grunwald, S=Bayern, C=DE"],
   })
 
-  await validateDownload(updater)
+  await validateDownload(expect, updater)
 })
 
 test.ifWindows("invalid signature", async ({ expect }) => {
@@ -290,7 +291,7 @@ test.ifWindows("invalid signature", async ({ expect }) => {
     publisherName: ["Foo Bar"],
   })
   const actualEvents = trackEvents(updater)
-  await assertThat(updater.checkForUpdates().then((it): any => it?.downloadPromise)).throws()
+  await assertThat(expect, updater.checkForUpdates().then((it): any => it?.downloadPromise)).throws()
   expect(actualEvents).toMatchSnapshot()
 })
 
@@ -305,7 +306,7 @@ test.ifWindows("test custom signature verifier", async ({ expect }) => {
   updater.verifyUpdateCodeSignature = (publisherName: string[], path: string) => {
     return Promise.resolve(null)
   }
-  await validateDownload(updater)
+  await validateDownload(expect, updater)
 })
 
 test.ifWindows("test custom signature verifier - signing error message", async ({ expect }) => {
@@ -320,7 +321,7 @@ test.ifWindows("test custom signature verifier - signing error message", async (
     return Promise.resolve("signature verification failed")
   }
   const actualEvents = trackEvents(updater)
-  await assertThat(updater.checkForUpdates().then((it): any => it?.downloadPromise)).throws()
+  await assertThat(expect, updater.checkForUpdates().then((it): any => it?.downloadPromise)).throws()
   expect(actualEvents).toMatchSnapshot()
 })
 
@@ -336,7 +337,7 @@ test("90 staging percentage", async ({ expect }) => {
     bucket: "develar",
     path: "test",
   })
-  await validateDownload(updater)
+  await validateDownload(expect, updater)
 })
 
 test("1 staging percentage", async ({ expect }) => {
@@ -350,7 +351,7 @@ test("1 staging percentage", async ({ expect }) => {
     bucket: "develar",
     path: "test",
   })
-  await validateDownload(updater, false)
+  await validateDownload(expect, updater, false)
 })
 
 test("cancel download with progress", async ({ expect }) => {
@@ -377,7 +378,7 @@ test("cancel download with progress", async ({ expect }) => {
   }
 
   const downloadPromise = checkResult?.downloadPromise
-  await assertThat(downloadPromise).throws()
+  await assertThat(expect, downloadPromise).throws()
   expect(cancelled).toBe(true)
 })
 
@@ -388,7 +389,7 @@ test("test download and install", async ({ expect }) => {
     url: "https://develar.s3.amazonaws.com/test",
   })
 
-  await validateDownload(updater)
+  await validateDownload(expect, updater)
 })
 
 test.ifWindows.skip("test downloaded installer", async ({ expect }) => {
@@ -400,7 +401,7 @@ test.ifWindows.skip("test downloaded installer", async ({ expect }) => {
   })
 
   const actualEvents = trackEvents(updater)
-  await validateDownload(updater)
+  await validateDownload(expect, updater)
   // expect(actualEvents).toMatchObject(["checking-for-update", "update-available", "update-downloaded"])
   updater.quitAndInstall(true, false)
   expect(actualEvents).toMatchObject(["checking-for-update", "update-available", "update-downloaded", "before-quit-for-update"])

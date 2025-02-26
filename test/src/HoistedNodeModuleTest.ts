@@ -3,44 +3,44 @@ import { Platform, Arch, DIR_TARGET } from "electron-builder"
 import { outputFile } from "fs-extra"
 import * as path from "path"
 
-test("yarn workspace", () =>
-  assertPack(
+test("yarn workspace", ({ expect }) =>
+  assertPack(expect,
     "test-app-yarn-workspace",
     {
       targets: linuxDirTarget,
       projectDir: "packages/test-app",
     },
     {
-      packed: context => verifyAsarFileTree(context.getResources(Platform.LINUX)),
+      packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
     }
   ))
 
-test("conflict versions", () =>
-  assertPack(
+test("conflict versions", ({ expect }) =>
+  assertPack(expect,
     "test-app-yarn-workspace-version-conflict",
     {
       targets: linuxDirTarget,
       projectDir: "packages/test-app",
     },
     {
-      packed: context => verifyAsarFileTree(context.getResources(Platform.LINUX)),
+      packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
     }
   ))
 
-test("yarn several workspaces", () =>
-  assertPack(
+test("yarn several workspaces", ({ expect }) =>
+  assertPack(expect,
     "test-app-yarn-several-workspace",
     {
       targets: linuxDirTarget,
       projectDir: "packages/test-app",
     },
     {
-      packed: context => verifyAsarFileTree(context.getResources(Platform.LINUX)),
+      packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
     }
   ))
 
-test("yarn several workspaces and asarUnpack", () =>
-  assertPack(
+test("yarn several workspaces and asarUnpack", ({ expect }) =>
+  assertPack(expect,
     "test-app-yarn-several-workspace",
     {
       targets: linuxDirTarget,
@@ -50,24 +50,24 @@ test("yarn several workspaces and asarUnpack", () =>
       },
     },
     {
-      packed: context => verifyAsarFileTree(context.getResources(Platform.LINUX)),
+      packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
     }
   ))
 
-test("yarn two package.json w/ native module", () =>
-  assertPack(
+test("yarn two package.json w/ native module", ({ expect }) =>
+  assertPack(expect,
     "test-app-two-native-modules",
     {
       targets: linuxDirTarget,
     },
     {
-      packed: context => verifyAsarFileTree(context.getResources(Platform.LINUX)),
+      packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
     }
   ))
 
 // https://github.com/electron-userland/electron-builder/issues/8493
-test("pnpm es5-ext without hoisted config", () =>
-  assertPack(
+test("pnpm es5-ext without hoisted config", ({ expect }) =>
+  assertPack(expect,
     "test-app-hoisted",
     {
       targets: linuxDirTarget,
@@ -84,12 +84,12 @@ test("pnpm es5-ext without hoisted config", () =>
           outputFile(path.join(projectDir, "pnpm-lock.yaml"), ""),
         ])
       },
-      packed: context => verifyAsarFileTree(context.getResources(Platform.LINUX)),
+      packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
     }
   ))
 
-test("pnpm optional dependencies", () =>
-  assertPack(
+test("pnpm optional dependencies", ({ expect }) =>
+  assertPack(expect,
     "test-app-hoisted",
     {
       targets: linuxDirTarget,
@@ -109,12 +109,12 @@ test("pnpm optional dependencies", () =>
           outputFile(path.join(projectDir, "pnpm-lock.yaml"), ""),
         ])
       },
-      packed: context => verifyAsarFileTree(context.getResources(Platform.LINUX)),
+      packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
     }
   ))
 
-test("yarn electron-clear-data", () =>
-  assertPack(
+test("yarn electron-clear-data", ({ expect }) =>
+  assertPack(expect,
     "test-app-hoisted",
     {
       targets: Platform.WINDOWS.createTarget(DIR_TARGET, Arch.x64),
@@ -134,12 +134,12 @@ test("yarn electron-clear-data", () =>
           outputFile(path.join(projectDir, "yarn.lock"), ""),
         ])
       },
-      packed: context => verifyAsarFileTree(context.getResources(Platform.WINDOWS)),
+      packed: context => verifyAsarFileTree(expect, context.getResources(Platform.WINDOWS)),
     }
   ))
 
-test("npm electron-clear-data", () =>
-  assertPack(
+test("npm electron-clear-data", ({ expect }) =>
+  assertPack(expect,
     "test-app-hoisted",
     {
       targets: Platform.WINDOWS.createTarget(DIR_TARGET, Arch.x64),
@@ -159,13 +159,13 @@ test("npm electron-clear-data", () =>
           outputFile(path.join(projectDir, "package-lock.json"), ""),
         ])
       },
-      packed: context => verifyAsarFileTree(context.getResources(Platform.WINDOWS)),
+      packed: context => verifyAsarFileTree(expect, context.getResources(Platform.WINDOWS)),
     }
   ))
 
 // https://github.com/electron-userland/electron-builder/issues/8842
-test("yarn some module add by manual instead of install", () =>
-  assertPack(
+test("yarn some module add by manual instead of install", ({ expect }) =>
+  assertPack(expect,
     "test-app-hoisted",
     {
       targets: Platform.WINDOWS.createTarget(DIR_TARGET, Arch.x64),
@@ -181,13 +181,13 @@ test("yarn some module add by manual instead of install", () =>
           }
         })
       },
-      packed: context => verifyAsarFileTree(context.getResources(Platform.WINDOWS)),
+      packed: context => verifyAsarFileTree(expect, context.getResources(Platform.WINDOWS)),
     }
   ))
 
 //https://github.com/electron-userland/electron-builder/issues/8857
-test("yarn max stack", () =>
-  assertPack(
+test("yarn max stack", ({ expect }) =>
+  assertPack(expect,
     "test-app-hoisted",
     {
       targets: linuxDirTarget,
@@ -204,13 +204,13 @@ test("yarn max stack", () =>
           outputFile(path.join(projectDir, "yarn.lock"), ""),
         ])
       },
-      packed: context => verifyAsarFileTree(context.getResources(Platform.LINUX)),
+      packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
     }
   )
 )
 
-test("pnpm max stack", () =>
-  assertPack(
+test("pnpm max stack", ({ expect }) =>
+  assertPack(expect,
     "test-app-hoisted",
     {
       targets: linuxDirTarget,
@@ -227,14 +227,14 @@ test("pnpm max stack", () =>
           outputFile(path.join(projectDir, "pnpm-lock.yaml"), ""),
         ])
       },
-      packed: context => verifyAsarFileTree(context.getResources(Platform.LINUX)),
+      packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
     }
   ),
 )
 
 //github.com/electron-userland/electron-builder/issues/8842
-test("yarn ms", () =>
-  assertPack(
+test("yarn ms", ({ expect }) =>
+  assertPack(expect,
     "test-app-hoisted",
     {
       targets: linuxDirTarget,
@@ -255,14 +255,14 @@ test("yarn ms", () =>
           outputFile(path.join(projectDir, "yarn.lock"), ""),
         ])
       },
-      packed: context => verifyAsarFileTree(context.getResources(Platform.LINUX)),
+      packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
     }
   )
 )
 
 //github.com/electron-userland/electron-builder/issues/8426
-test("yarn parse-asn1", () =>
-  assertPack(
+test("yarn parse-asn1", ({ expect }) =>
+  assertPack(expect,
     "test-app-hoisted",
     {
       targets: linuxDirTarget,
@@ -279,13 +279,13 @@ test("yarn parse-asn1", () =>
           outputFile(path.join(projectDir, "yarn.lock"), ""),
         ])
       },
-      packed: context => verifyAsarFileTree(context.getResources(Platform.LINUX)),
+      packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
     }
   ))
 
 //github.com/electron-userland/electron-builder/issues/8431
-test("npm tar", () =>
-  assertPack(
+test("npm tar", ({ expect }) =>
+  assertPack(expect,
     "test-app-hoisted",
     {
       targets: linuxDirTarget,
@@ -302,14 +302,14 @@ test("npm tar", () =>
           outputFile(path.join(projectDir, "package-lock.json"), ""),
         ])
       },
-      packed: context => verifyAsarFileTree(context.getResources(Platform.LINUX)),
+      packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
     }
   )
 )
 
 //github.com/electron-userland/electron-builder/issues/8881
-test("pnpm node-linker=hoisted", () =>
-  assertPack(
+test("pnpm node-linker=hoisted", ({ expect }) =>
+  assertPack(expect,
     "test-app-hoisted",
     {
       targets: linuxDirTarget,
@@ -327,12 +327,12 @@ test("pnpm node-linker=hoisted", () =>
           outputFile(path.join(projectDir, ".npmrc"), "node-linker=hoisted"),
         ])
       },
-      packed: context => verifyAsarFileTree(context.getResources(Platform.LINUX)),
+      packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
     }
   )
 )
-test("pnpm shamefully-hoist=true", () =>
-  assertPack(
+test("pnpm shamefully-hoist=true", ({ expect }) =>
+  assertPack(expect,
     "test-app-hoisted",
     {
       targets: linuxDirTarget,
@@ -350,12 +350,12 @@ test("pnpm shamefully-hoist=true", () =>
           outputFile(path.join(projectDir, ".npmrc"), "shamefully-hoist=true"),
         ])
       },
-      packed: context => verifyAsarFileTree(context.getResources(Platform.LINUX)),
+      packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
     }
   )
 )
-test("pnpm public-hoist-pattern=*", () =>
-  assertPack(
+test("pnpm public-hoist-pattern=*", ({ expect }) =>
+  assertPack(expect,
     "test-app-hoisted",
     {
       targets: linuxDirTarget,
@@ -373,6 +373,6 @@ test("pnpm public-hoist-pattern=*", () =>
           outputFile(path.join(projectDir, ".npmrc"), "public-hoist-pattern=*"),
         ])
       },
-      packed: context => verifyAsarFileTree(context.getResources(Platform.LINUX)),
+      packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
     }
   ))

@@ -9,7 +9,7 @@ const packagerOptions = {
 
 test.ifLinuxOrDevMac(
   "invalid main in the app package.json",
-  appTwoThrows(packagerOptions, {
+   ({ expect }) => appTwoThrows(expect, packagerOptions, {
     projectDirCreated: projectDir =>
       modifyPackageJson(
         projectDir,
@@ -23,7 +23,7 @@ test.ifLinuxOrDevMac(
 
 test.ifLinuxOrDevMac(
   "invalid main in the app package.json (no asar)",
-  appTwoThrows(packagerOptions, {
+   ({ expect }) => appTwoThrows(expect, packagerOptions, {
     projectDirCreated: projectDir => {
       return Promise.all([
         modifyPackageJson(
@@ -43,7 +43,7 @@ test.ifLinuxOrDevMac(
 
 test.ifLinuxOrDevMac(
   "invalid main in the app package.json (custom asar)",
-  appTwoThrows(packagerOptions, {
+   ({ expect }) => appTwoThrows(expect, packagerOptions, {
     projectDirCreated: projectDir => {
       return Promise.all([
         modifyPackageJson(
@@ -61,8 +61,8 @@ test.ifLinuxOrDevMac(
   })
 )
 
-test.ifLinuxOrDevMac("main in the app package.json (no asar)", () =>
-  assertPack("test-app", packagerOptions, {
+test.ifLinuxOrDevMac("main in the app package.json (no asar)", ({ expect }) =>
+  assertPack(expect, "test-app", packagerOptions, {
     projectDirCreated: projectDir => {
       return Promise.all([
         fs.rename(path.join(projectDir, "app", "index.js"), path.join(projectDir, "app", "main.js")),
@@ -81,8 +81,8 @@ test.ifLinuxOrDevMac("main in the app package.json (no asar)", () =>
   })
 )
 
-test.ifLinuxOrDevMac("main in the app package.json (custom asar)", () =>
-  assertPack("test-app", packagerOptions, {
+test.ifLinuxOrDevMac("main in the app package.json (custom asar)", ({ expect }) =>
+  assertPack(expect, "test-app", packagerOptions, {
     projectDirCreated: projectDir => {
       return Promise.all([
         modifyPackageJson(

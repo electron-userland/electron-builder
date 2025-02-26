@@ -14,7 +14,7 @@ const checkOptions: AssertPackOptions = {
 
 test.ifMac(
   "mac",
-  app(
+  ({ expect }) => app(expect,
     {
       targets: Platform.MAC.createTarget(),
       config: {
@@ -27,7 +27,7 @@ test.ifMac(
 
 test.ifLinuxOrDevMac(
   "linux",
-  app(
+  ({ expect }) => app(expect,
     {
       targets: Platform.LINUX.createTarget("appimage"),
       config: {
@@ -40,7 +40,7 @@ test.ifLinuxOrDevMac(
 
 test.ifDevOrWinCi(
   "win",
-  app(
+  ({ expect }) => app(expect,
     {
       targets: Platform.WINDOWS.createTarget("nsis"),
       config: {
@@ -53,7 +53,7 @@ test.ifDevOrWinCi(
 
 test.ifDevOrWinCi(
   "win ia32",
-  app(
+  ({ expect }) => app(expect,
     {
       targets: Platform.WINDOWS.createTarget("nsis", Arch.ia32),
       config: {

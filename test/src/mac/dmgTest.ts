@@ -12,7 +12,7 @@ const defaultTarget = Platform.MAC.createTarget(undefined, Arch.x64)
 
 test.ifMac(
   "dmg",
-  app({
+  ({ expect }) => app(expect,{
     targets: dmgTarget,
     config: {
       productName: "DefaultDmg",
@@ -23,7 +23,7 @@ test.ifMac(
 
 test.ifMac(
   "no build directory",
-  app(
+  ({ expect }) => app(expect,
     {
       targets: dmgTarget,
       config: {
@@ -37,8 +37,8 @@ test.ifMac(
         }
 
         const volumePath = it.volumePath
-        await assertThat(path.join(volumePath, ".background", "background.tiff")).isFile()
-        await assertThat(path.join(volumePath, "Applications")).isSymbolicLink()
+        await assertThat(expect, path.join(volumePath, ".background", "background.tiff")).isFile()
+        await assertThat(expect, path.join(volumePath, "Applications")).isSymbolicLink()
         expect(it.specification.contents).toMatchSnapshot()
         return false
       },
@@ -51,7 +51,7 @@ test.ifMac(
 
 test.ifMac(
   "background color",
-  app({
+  ({ expect }) => app(expect,{
     targets: dmgTarget,
     config: {
       // dmg can mount only one volume name, so, to test in parallel, we set different product name
@@ -76,7 +76,7 @@ test.ifMac(
 
 test.ifMac("custom background - new way", ({ expect }) => {
   const customBackground = "customBackground.png"
-  return assertPack(
+  return assertPack(expect,
     "test-app-one",
     {
       targets: defaultTarget,
@@ -113,7 +113,7 @@ test.ifMac("custom background - new way", ({ expect }) => {
 })
 
 test.ifMac("retina background as 2 png", ({ expect }) => {
-  return assertPack(
+  return assertPack(expect,
     "test-app-one",
     {
       targets: defaultTarget,
@@ -148,7 +148,7 @@ test.ifMac("retina background as 2 png", ({ expect }) => {
 })
 
 test.ifMac.skip("no Applications link", ({ expect }) => {
-  return assertPack("test-app-one", {
+  return assertPack(expect,"test-app-one", {
     targets: defaultTarget,
     config: {
       publish: null,
@@ -175,10 +175,10 @@ test.ifMac.skip("no Applications link", ({ expect }) => {
 
       const volumePath = it.volumePath
       await Promise.all([
-        assertThat(path.join(volumePath, ".background", "background.tiff")).isFile(),
-        assertThat(path.join(volumePath, "Applications")).doesNotExist(),
-        assertThat(path.join(volumePath, "TextEdit.app")).isSymbolicLink(),
-        assertThat(path.join(volumePath, "TextEdit.app")).isDirectory(),
+        assertThat(expect, path.join(volumePath, ".background", "background.tiff")).isFile(),
+        assertThat(expect, path.join(volumePath, "Applications")).doesNotExist(),
+        assertThat(expect, path.join(volumePath, "TextEdit.app")).isSymbolicLink(),
+        assertThat(expect, path.join(volumePath, "TextEdit.app")).isDirectory(),
       ])
       expect(it.specification.contents).toMatchSnapshot()
       return false
@@ -188,7 +188,7 @@ test.ifMac.skip("no Applications link", ({ expect }) => {
 
 test.ifMac(
   "unset dmg icon",
-  app(
+  ({ expect }) => app(expect,
     {
       targets: dmgTarget,
       config: {
@@ -204,8 +204,8 @@ test.ifMac(
       packed: context => {
         return attachAndExecute(path.join(context.outDir, "Test ß No Volume Icon-1.1.0.dmg"), false, () => {
           return Promise.all([
-            assertThat(path.join("/Volumes/Test ß No Volume Icon 1.1.0/.background/background.tiff")).isFile(),
-            assertThat(path.join("/Volumes/Test ß No Volume Icon 1.1.0/.VolumeIcon.icns")).doesNotExist(),
+            assertThat(expect, path.join("/Volumes/Test ß No Volume Icon 1.1.0/.background/background.tiff")).isFile(),
+            assertThat(expect, path.join("/Volumes/Test ß No Volume Icon 1.1.0/.VolumeIcon.icns")).doesNotExist(),
           ])
         })
       },
@@ -216,7 +216,7 @@ test.ifMac(
 // test also "only dmg"
 test.ifMac(
   "no background",
-  app(
+  ({ expect }) => app(expect,
     {
       targets: dmgTarget,
       config: {
@@ -232,7 +232,7 @@ test.ifMac(
     {
       packed: context => {
         return attachAndExecute(path.join(context.outDir, "NoBackground-1.1.0.dmg"), false, () => {
-          return assertThat(path.join("/Volumes/NoBackground 1.1.0/.background")).doesNotExist()
+          return assertThat(expect, path.join("/Volumes/NoBackground 1.1.0/.background")).doesNotExist()
         })
       },
     }
@@ -242,7 +242,7 @@ test.ifMac(
 // test also darkModeSupport
 test.ifMac(
   "bundleShortVersion",
-  app({
+  ({ expect }) => app(expect,{
     targets: dmgTarget,
     config: {
       publish: null,
@@ -257,7 +257,7 @@ test.ifMac(
 )
 
 test.ifMac("disable dmg icon (light), bundleVersion", ({ expect }) => {
-  return assertPack("test-app-one", {
+  return assertPack(expect,"test-app-one", {
     targets: defaultTarget,
     config: {
       publish: null,
@@ -286,7 +286,7 @@ const packagerOptions = {
 
 test.ifMac(
   "multi language license",
-  app(packagerOptions, {
+  ({ expect }) => app(expect,packagerOptions, {
     projectDirCreated: projectDir => {
       return Promise.all([
         // writeFile(path.join(projectDir, "build", "license_en.txt"), "Hi"),
@@ -299,7 +299,7 @@ test.ifMac(
 
 test.ifMac(
   "license ja",
-  app(packagerOptions, {
+  ({ expect }) => app(expect,packagerOptions, {
     projectDirCreated: projectDir => {
       return fs.writeFile(path.join(projectDir, "build", "license_ja.txt"), "こんにちは".repeat(12))
     },
@@ -308,7 +308,7 @@ test.ifMac(
 
 test.ifMac(
   "license en",
-  app(packagerOptions, {
+  ({ expect }) => app(expect,packagerOptions, {
     projectDirCreated: projectDir => {
       return copyTestAsset("license_en.txt", path.join(projectDir, "build", "license_en.txt"))
     },
@@ -317,7 +317,7 @@ test.ifMac(
 
 test.ifMac(
   "license rtf",
-  app(packagerOptions, {
+  ({ expect }) => app(expect,packagerOptions, {
     projectDirCreated: projectDir => {
       return copyTestAsset("license_de.rtf", path.join(projectDir, "build", "license_de.rtf"))
     },
@@ -326,7 +326,7 @@ test.ifMac(
 
 test.ifMac(
   "license buttons config",
-  app(
+  ({ expect }) => app(expect,
     {
       ...packagerOptions,
       effectiveOptionComputed: async it => {

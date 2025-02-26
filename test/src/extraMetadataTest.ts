@@ -5,9 +5,10 @@ import { readJson } from "fs-extra"
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert"
 import { app, linuxDirTarget, modifyPackageJson } from "./helpers/packTester"
+import { ExpectStatic } from "vitest"
 
-function createExtraMetadataTest(asar: boolean) {
-  return app(
+function createExtraMetadataTest(expect: ExpectStatic, asar: boolean) {
+  return app(expect,
     {
       targets: linuxDirTarget,
       config: coerceTypes({
@@ -39,7 +40,7 @@ function createExtraMetadataTest(asar: boolean) {
           }
         }),
       packed: async context => {
-        await assertThat(path.join(context.getContent(Platform.LINUX), "new-name")).isFile()
+        await assertThat(expect, path.join(context.getContent(Platform.LINUX), "new-name")).isFile()
         if (asar) {
           expect(await readAsarJson(path.join(context.getResources(Platform.LINUX), "app.asar"), "package.json")).toMatchSnapshot()
         } else {
@@ -50,10 +51,10 @@ function createExtraMetadataTest(asar: boolean) {
   )
 }
 
-test.ifDevOrLinuxCi("extra metadata", createExtraMetadataTest(true))
-test.ifDevOrLinuxCi("extra metadata (no asar)", createExtraMetadataTest(false))
+test.ifDevOrLinuxCi("extra metadata",  ({ expect }) => createExtraMetadataTest(expect, true))
+test.ifDevOrLinuxCi("extra metadata (no asar)",  ({ expect }) => createExtraMetadataTest(expect, false))
 
-test("cli", async ({ expect }) => {
+test("cli", ({ expect }) => {
   // because these methods are internal
   const { configureBuildCommand, normalizeOptions } = require("electron-builder/out/builder")
   const yargs = require("yargs")

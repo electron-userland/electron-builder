@@ -4,7 +4,7 @@ import { app } from "../helpers/packTester"
 
 test.ifDevOrWinCi(
   "msi",
-  app(
+  ({ expect }) => app(expect,
     {
       targets: Platform.WINDOWS.createTarget("msi"),
       config: {
@@ -33,7 +33,7 @@ test.ifDevOrWinCi(
 
 test.ifDevOrWinCi(
   "msi no asar",
-  app(
+  ({ expect }) => app(expect,
     {
       targets: Platform.WINDOWS.createTarget("msi"),
       config: {
@@ -53,7 +53,7 @@ test.ifDevOrWinCi(
 
 test.ifDevOrWinCi(
   "per-user",
-  app(
+  ({ expect }) => app(expect,
     {
       targets: Platform.WINDOWS.createTarget("msi"),
       config: {
@@ -76,7 +76,7 @@ test.ifDevOrWinCi(
 const wixArgsProductName = "Test WiX Args"
 test.ifDevOrWinCi(
   "wix args",
-  app(
+  ({ expect }) => app(expect,
     {
       targets: Platform.WINDOWS.createTarget("msi"),
       config: {
@@ -117,7 +117,7 @@ test.ifDevOrWinCi(
 
 test.skip(
   "assisted",
-  app({
+  ({ expect }) => app(expect,{
     targets: Platform.WINDOWS.createTarget("msi"),
     config: {
       appId: "build.electron.test.msi.assisted",

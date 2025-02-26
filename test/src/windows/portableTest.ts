@@ -5,7 +5,7 @@ import { app, copyTestAsset, getFixtureDir } from "../helpers/packTester"
 // build in parallel - https://github.com/electron-userland/electron-builder/issues/1340#issuecomment-286061789
 test.ifNotCiMac(
   "portable",
-  app({
+  ({ expect }) => app(expect,{
     targets: Platform.WINDOWS.createTarget(["portable", "nsis"]),
     config: {
       publish: null,
@@ -28,7 +28,7 @@ test.ifNotCiMac(
 
 test.ifDevOrWinCi(
   "portable zip",
-  app({
+  ({ expect }) => app(expect,{
     targets: Platform.WINDOWS.createTarget("portable"),
     config: {
       publish: null,
@@ -43,7 +43,7 @@ test.ifDevOrWinCi(
 
 test.ifNotCi(
   "portable zip several archs",
-  app({
+  ({ expect }) => app(expect,{
     targets: Platform.WINDOWS.createTarget("portable", Arch.ia32, Arch.x64),
     config: {
       publish: null,
@@ -58,7 +58,7 @@ test.ifNotCi(
 
 test.ifNotCiMac(
   "portable - artifactName and request execution level",
-  app(
+  ({ expect }) => app(expect,
     {
       targets: Platform.WINDOWS.createTarget(["portable"]),
       config: {
@@ -85,7 +85,7 @@ test.ifNotCiMac(
 
 test.ifDevOrWinCi(
   "portable - splashImage",
-  app({
+  ({ expect }) => app(expect,{
     targets: Platform.WINDOWS.createTarget(["portable"]),
     config: {
       publish: null,

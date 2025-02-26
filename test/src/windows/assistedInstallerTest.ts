@@ -8,7 +8,7 @@ const nsisTarget = Platform.WINDOWS.createTarget(["nsis"])
 
 test.ifNotCiMac(
   "assisted",
-  app(
+  ({ expect }) => app(expect,
     {
       targets: nsisTarget,
       config: {
@@ -40,7 +40,7 @@ test.ifNotCiMac(
 
 test.ifNotCiMac(
   "allowElevation false, app requestedExecutionLevel admin",
-  app({
+  ({ expect }) => app(expect,{
     targets: nsisTarget,
     config: {
       publish: null,
@@ -66,7 +66,7 @@ test.ifNotCiMac(
 
 test.ifNotCiMac("assisted, MUI_HEADER", ({ expect }) => {
   let installerHeaderPath: string | null = null
-  return assertPack(
+  return assertPack(expect,
     "test-app-one",
     {
       targets: nsisTarget,
@@ -97,7 +97,7 @@ test.ifNotCiMac("assisted, MUI_HEADER", ({ expect }) => {
 
 test.ifNotCiMac("assisted, MUI_HEADER as option", ({ expect }) => {
   let installerHeaderPath: string | null = null
-  return assertPack(
+  return assertPack(expect,
     "test-app-one",
     {
       targets: Platform.WINDOWS.createTarget(["nsis"], Arch.ia32, Arch.x64),
@@ -129,7 +129,7 @@ test.ifNotCiMac("assisted, MUI_HEADER as option", ({ expect }) => {
 
 test.ifNotCiMac.skip(
   "debug logging enabled",
-  app({
+  ({ expect }) => app(expect,{
     targets: nsisTarget,
     config: {
       nsis: {
@@ -146,7 +146,7 @@ test.ifNotCiMac.skip(
 
 test.ifNotCiMac(
   "assisted, only perMachine",
-  app({
+  ({ expect }) => app(expect,{
     targets: nsisTarget,
     config: {
       nsis: {
@@ -159,7 +159,7 @@ test.ifNotCiMac(
 
 test.ifNotCiMac(
   "assisted, only perMachine and elevated",
-  app({
+  ({ expect }) => app(expect,{
     targets: nsisTarget,
     config: {
       nsis: {
@@ -174,7 +174,7 @@ test.ifNotCiMac(
 // test release notes also
 test.ifNotCiMac(
   "allowToChangeInstallationDirectory",
-  app(
+  ({ expect }) => app(expect,
     {
       targets: nsisTarget,
       config: {
@@ -196,9 +196,9 @@ test.ifNotCiMac(
         await copyTestAsset("license.txt", path.join(projectDir, "build", "license.txt"))
       },
       packed: async context => {
-        await expectUpdateMetadata(context, archFromString(process.arch))
-        await checkHelpers(context.getResources(Platform.WINDOWS), true)
-        await doTest(context.outDir, false)
+        await expectUpdateMetadata(expect, context, archFromString(process.arch))
+        await checkHelpers(expect, context.getResources(Platform.WINDOWS), true)
+        await doTest(expect, context.outDir, false)
       },
     }
   )

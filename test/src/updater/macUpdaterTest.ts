@@ -56,6 +56,6 @@ test.ifMac("mac updates", async ({ expect }) => {
   // expect(removeUnstableProperties(updateCheckResult?.updateInfo.files)).toMatchSnapshot()
   const files = await updateCheckResult?.downloadPromise
   expect(files!.length).toEqual(1)
-  await assertThat(files![0]).isFile()
+  await assertThat(expect, files![0]).isFile()
   expect(actualEvents).toMatchSnapshot()
 })

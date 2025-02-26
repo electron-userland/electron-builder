@@ -3,7 +3,7 @@ import { app } from "../helpers/packTester"
 
 test.ifNotWindows.ifDevOrLinuxCi(
   "tar",
-  app({
+  ({ expect }) => app(expect,{
     targets: Platform.LINUX.createTarget(["tar.xz", "tar.lz", "tar.bz2"]),
     config: {
       electronFuses: {

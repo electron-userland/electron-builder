@@ -6,7 +6,7 @@ import { app, appThrows, assertPack, platform } from "../helpers/packTester"
 
 test(
   "beta version",
-  app(
+  ({ expect }) => app(expect,
     {
       targets: Platform.WINDOWS.createTarget(["nsis"], Arch.x64, Arch.arm64),
       config: {
@@ -27,7 +27,7 @@ test(
 
 test(
   "win zip",
-  app(
+  ({ expect }) => app(expect,
     {
       targets: Platform.WINDOWS.createTarget(["zip"], Arch.x64, Arch.arm64),
       config: {
@@ -61,7 +61,7 @@ test(
 
 test(
   "zip artifactName",
-  app(
+  ({ expect }) => app(expect,
     {
       targets: Platform.WINDOWS.createTarget(["zip"], Arch.x64),
       config: {
@@ -77,14 +77,14 @@ test(
 
 test(
   "icon < 256",
-  appThrows(platform(Platform.WINDOWS), {
+   ({ expect }) =>  appThrows(expect, platform(Platform.WINDOWS), {
     projectDirCreated: projectDir => fs.rename(path.join(projectDir, "build", "incorrect.ico"), path.join(projectDir, "build", "icon.ico")),
   })
 )
 
 test(
   "icon not an image",
-  appThrows(platform(Platform.WINDOWS), {
+   ({ expect }) =>  appThrows(expect, platform(Platform.WINDOWS), {
     projectDirCreated: async projectDir => {
       const file = path.join(projectDir, "build", "icon.ico")
       // because we use hardlinks
@@ -96,7 +96,7 @@ test(
 
 test.ifMac("custom icon", ({ expect }) => {
   let platformPackager: CheckingWinPackager | null = null
-  return assertPack(
+  return assertPack(expect,
     "test-app-one",
     {
       targets: Platform.WINDOWS.createTarget("squirrel", Arch.x64),
@@ -118,7 +118,7 @@ test.ifMac("custom icon", ({ expect }) => {
 
 test("win icon from icns", ({ expect }) => {
   let platformPackager: CheckingWinPackager | null = null
-  return app(
+  return app(expect,
     {
       targets: Platform.WINDOWS.createTarget(DIR_TARGET, Arch.x64),
       config: {
@@ -136,5 +136,5 @@ test("win icon from icns", ({ expect }) => {
         expect(file).toBeDefined()
       },
     }
-  )()
+  )
 })

@@ -11,6 +11,7 @@ import { TestAppAdapter } from "../helpers/TestAppAdapter"
 import { PackedContext, assertPack, removeUnstableProperties } from "../helpers/packTester"
 import { tuneTestUpdater, writeUpdateConfig } from "../helpers/updaterTestUtil"
 import { mockForNodeRequire } from "vitest-mock-commonjs"
+import { expect, ExpectStatic } from "vitest"
 
 /*
 
@@ -26,7 +27,14 @@ const OLD_VERSION_NUMBER = "1.0.0"
 
 const testAppCacheDirName = "testapp-updater"
 
-async function doBuild(outDirs: Array<string>, targets: Map<Platform, Map<Arch, Array<string>>>, tmpDir: TmpDir, isWindows: boolean, extraConfig?: Configuration | null) {
+async function doBuild(
+  expect: ExpectStatic,
+  outDirs: Array<string>,
+  targets: Map<Platform, Map<Arch, Array<string>>>,
+  tmpDir: TmpDir,
+  isWindows: boolean,
+  extraConfig?: Configuration | null
+) {
   async function buildApp(
     version: string,
     targets: Map<Platform, Map<Arch, Array<string>>>,
@@ -34,6 +42,7 @@ async function doBuild(outDirs: Array<string>, targets: Map<Platform, Map<Arch, 
     packed: (context: PackedContext) => Promise<any>
   ) {
     await assertPack(
+      expect,
       "test-app-one",
       {
         targets,
@@ -75,10 +84,10 @@ async function doBuild(outDirs: Array<string>, targets: Map<Platform, Map<Arch, 
 
 test.ifWindows(
   "web installer",
-  async () => {
+  async ({ expect }) => {
     const outDirs: Array<string> = []
     const tmpDir = new TmpDir("differential-updater-test")
-    await doBuild(outDirs, Platform.WINDOWS.createTarget(["nsis-web"], Arch.x64), tmpDir, true)
+    await doBuild(expect, outDirs, Platform.WINDOWS.createTarget(["nsis-web"], Arch.x64), tmpDir, true)
 
     const oldDir = outDirs[0]
     await move(path.join(oldDir, "nsis-web", `TestApp-${OLD_VERSION_NUMBER}-x64.nsis.7z`), path.join(getTestUpdaterCacheDir(oldDir), testAppCacheDirName, "package.7z"))
@@ -91,7 +100,7 @@ test.ifWindows(
 test.ifWindows("nsis", async ({ expect }) => {
   const outDirs: Array<string> = []
   const tmpDir = new TmpDir("differential-updater-test")
-  await doBuild(outDirs, Platform.WINDOWS.createTarget(["nsis"], Arch.x64), tmpDir, true)
+  await doBuild(expect, outDirs, Platform.WINDOWS.createTarget(["nsis"], Arch.x64), tmpDir, true)
 
   const oldDir = outDirs[0]
   // move to new dir so that localhost server can read both blockmaps
@@ -107,7 +116,7 @@ async function testLinux(arch: Arch) {
   const outDirs: Array<string> = []
   const tmpDir = new TmpDir("differential-updater-test")
   try {
-    await doBuild(outDirs, Platform.LINUX.createTarget(["appimage"], arch), tmpDir, false)
+    await doBuild(expect, outDirs, Platform.LINUX.createTarget(["appimage"], arch), tmpDir, false)
 
     process.env.APPIMAGE = path.join(outDirs[0], `Test App ßW-${OLD_VERSION_NUMBER}${arch === Arch.ia32 ? "-i386" : ""}.AppImage`)
     await testBlockMap(outDirs[0], outDirs[1], AppImageUpdater, Platform.LINUX, arch)
@@ -127,7 +136,7 @@ async function testMac(arch: Arch) {
   const outDirs: Array<string> = []
   const tmpDir = new TmpDir("differential-updater-test")
   try {
-    await doBuild(outDirs, Platform.MAC.createTarget(["zip"], arch), tmpDir, false, {
+    await doBuild(expect, outDirs, Platform.MAC.createTarget(["zip"], arch), tmpDir, false, {
       mac: {
         electronUpdaterCompatibility: ">=2.17.0",
       },
@@ -151,7 +160,7 @@ test.ifMac("Mac universal", () => testMac(Arch.universal))
 // only run on arm64 macs, otherwise of course no files can be found to be updated to (due to arch mismatch)
 test.ifMac.ifEnv(process.arch === "arm64")("Mac arm64", () => testMac(Arch.arm64))
 
-async function checkResult(updater: BaseUpdater) {
+async function checkResult(expect: ExpectStatic, updater: BaseUpdater) {
   // disable automatic install otherwise mac updater will permanently wait on mocked electron's native updater to receive update (mocked server can't install)
   updater.autoInstallOnAppQuit = false
 
@@ -234,7 +243,7 @@ async function testBlockMap(oldDir: string, newDir: string, updaterClass: any, p
         url: `http://127.0.0.1:${port}`,
       })
 
-      await checkResult(updater)
+      await checkResult(expect, updater)
     }
 
     doTest().then(resolve).catch(reject)
