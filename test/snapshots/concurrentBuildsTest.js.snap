@@ -116,11 +116,138 @@ exports[`linux concurrent 3`] = `
 
 exports[`linux concurrent 4`] = `"Test Application (test quite “ #378)"`;
 
+exports[`mac concurrent 1`] = `
+{
+  "mac": [
+    {
+      "arch": "universal",
+      "file": "TestApp-1.1.0-universal.dmg",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "TestApp-1.1.0-universal.dmg.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "arch": "x64",
+      "file": "TestApp-1.1.0.dmg",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "TestApp-1.1.0.dmg.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "arch": "x64",
+      "file": "TestApp-1.1.0-mac.zip",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "TestApp-1.1.0-mac.zip.blockmap",
+      "safeArtifactName": "TestApp-1.1.0-mac.zip.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "arch": "universal",
+      "file": "TestApp-1.1.0-universal-mac.zip",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "TestApp-1.1.0-universal-mac.zip.blockmap",
+      "safeArtifactName": "TestApp-1.1.0-universal-mac.zip.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`mac concurrent 2`] = `
+{
+  "CFBundleDisplayName": "TestApp",
+  "CFBundleExecutable": "TestApp",
+  "CFBundleIconFile": "icon.icns",
+  "CFBundleIdentifier": "org.electron-builder.testApp",
+  "CFBundleInfoDictionaryVersion": "6.0",
+  "CFBundleName": "TestApp",
+  "CFBundlePackageType": "APPL",
+  "CFBundleShortVersionString": "1.1.0",
+  "ElectronAsarIntegrity": {
+    "Resources/app.asar": {
+      "algorithm": "SHA256",
+      "hash": "hash",
+    },
+  },
+  "LSApplicationCategoryType": "your.app.category.type",
+  "LSEnvironment": {
+    "MallocNanoZone": "0",
+  },
+  "NSAppTransportSecurity": {},
+  "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
+  "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
+  "NSHighResolutionCapable": true,
+  "NSPrincipalClass": "AtomApplication",
+  "NSSupportsAutomaticGraphicsSwitching": true,
+}
+`;
+
+exports[`mac concurrent 3`] = `
+{
+  "CFBundleDisplayName": "TestApp",
+  "CFBundleExecutable": "TestApp",
+  "CFBundleIconFile": "icon.icns",
+  "CFBundleIdentifier": "org.electron-builder.testApp",
+  "CFBundleInfoDictionaryVersion": "6.0",
+  "CFBundleName": "TestApp",
+  "CFBundlePackageType": "APPL",
+  "CFBundleShortVersionString": "1.1.0",
+  "ElectronAsarIntegrity": {
+    "Resources/app.asar": {
+      "algorithm": "SHA256",
+      "hash": "hash",
+    },
+  },
+  "LSApplicationCategoryType": "your.app.category.type",
+  "LSEnvironment": {
+    "MallocNanoZone": "0",
+  },
+  "NSAppTransportSecurity": {},
+  "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
+  "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
+  "NSHighResolutionCapable": true,
+  "NSPrincipalClass": "AtomApplication",
+  "NSSupportsAutomaticGraphicsSwitching": true,
+}
+`;
+
 exports[`win concurrent 1`] = `
 {
   "win": [
     {
-      "file": "Test App ßW Setup 1.1.0.exe",
+      "file": "TestApp Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe",
       "updateInfo": {
         "sha512": "@sha512",
@@ -128,7 +255,7 @@ exports[`win concurrent 1`] = `
       },
     },
     {
-      "file": "Test App ßW Setup 1.1.0.exe.blockmap",
+      "file": "TestApp Setup 1.1.0.exe.blockmap",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
       "updateInfo": {
         "sha512": "@sha512",

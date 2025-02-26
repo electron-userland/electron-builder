@@ -5,18 +5,31 @@ import { TmpDir } from "temp-file"
 
 const winTargets = Platform.WINDOWS.createTarget([DIR_TARGET, "nsis"], Arch.x64, Arch.arm64)
 // const winTargets = Platform.WINDOWS.createTarget([DIR_TARGET, "msi", "msi-wrapped", "nsis", "nsis-web"], Arch.x64, Arch.arm64)
-const macTargets = Platform.MAC.createTarget([DIR_TARGET, "zip", "pkg", "dmg"], Arch.x64, Arch.universal)
+const macTargets = Platform.MAC.createTarget([DIR_TARGET, "zip", "dmg", "mas"], Arch.x64, Arch.universal)
 const linuxTargets = Platform.LINUX.createTarget([DIR_TARGET, "deb", "rpm", "AppImage"], Arch.x64, Arch.arm64)
 
 const projectDirCreated = async (projectDir: string, tmpDir: TmpDir) => {
   await modifyPackageJson(
     projectDir,
     (data: any) => ({
+      ...data,
       name: "test-concurrent",
       version: "1.0.0",
-      ...data,
+      build: {
+        artifactName: "${productName}-${version}-${arch}.${ext}",
+      }
     }),
     true
+  )
+  await modifyPackageJson(
+    projectDir,
+    (data: any) => ({
+      ...data,
+      build: {
+        artifactName: "${productName}-${version}-${arch}.${ext}",
+      }
+    }),
+    false
   )
 }
 
@@ -110,7 +123,7 @@ test.ifDevOrLinuxCi("linux concurrent", () => {
   )
 })
 
-test.ifWindows("win concurrent", () => {
+test.ifWindows("win concurrent - all targets", () => {
   const targets = Platform.WINDOWS.createTarget([DIR_TARGET, `appx`, `msi`, `msi-wrapped`, `squirrel`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`], Arch.x64, Arch.arm64)
   return assertPack(
     "test-app",
