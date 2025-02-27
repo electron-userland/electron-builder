@@ -10,55 +10,37 @@ type Asset = {
 
 type AssetInfo = {
   name: string
-  size: number
   mode: number
   modTime: number
 }
 
-function desktopScriptsDesktopCommonSh(): Asset {
-  const name = "desktop-scripts/desktop-common.sh"
-  return {
-    bytes: readFileSync(getTemplatePath(join("snap", name))),
-    info: {
-      name: name,
-      size: 16604,
+export const SNAP_ASSETS: Record<string, () => Asset> = (() => {
+  const files = {
+    "desktop-scripts/desktop-common.sh": {
+      mode: 0o644,
+      modTime: 1731819267,
+    },
+    "desktop-scripts/desktop-gnome-specific.sh": {
+      mode: 0o644,
+      modTime: 1731819267,
+    },
+    "desktop-scripts/desktop-init.sh": {
       mode: 0o644,
       modTime: 1731819267,
     },
   }
-}
-
-export function desktopScriptsDesktopGnomeSpecificSh(): Asset {
-  const name = "desktop-scripts/desktop-gnome-specific.sh"
-  return {
-    bytes: readFileSync(getTemplatePath(join("snap", name))),
-    info: {
-      name: name,
-      size: 1401,
-      mode: 0o644,
-      modTime: 1731819267,
-    },
-  }
-}
-
-export function desktopScriptsDesktopInitSh(): Asset {
-  const name = "desktop-scripts/desktop-init.sh"
-  return {
-    bytes: readFileSync(getTemplatePath(join("snap", name))),
-    info: {
-      name: name,
-      size: 1530,
-      mode: 0o644,
-      modTime: 1731819267,
-    },
-  }
-}
-
-export const SNAP_ASSETS: Record<string, () => Asset> = {
-  "desktop-scripts/desktop-common.sh": desktopScriptsDesktopCommonSh,
-  "desktop-scripts/desktop-gnome-specific.sh": desktopScriptsDesktopGnomeSpecificSh,
-  "desktop-scripts/desktop-init.sh": desktopScriptsDesktopInitSh,
-}
+  return Object.entries(files).reduce<Record<string, () => Asset>>((acc, [name, info]) => {
+    acc[name] = () => ({
+      bytes: readFileSync(getTemplatePath(join("snap", name))),
+      info: {
+        name,
+        mode: info.mode,
+        modTime: info.modTime,
+      },
+    })
+    return acc
+  }, {})
+})()
 
 export function asset(name: string): Buffer {
   const assetFunc = SNAP_ASSETS[name.replace(/\\/g, "/")]
