@@ -216,8 +216,21 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
     appPlist.CFBundleDocumentTypes = [...((appPlist.CFBundleDocumentTypes as PlistValue[]) || []), ...documentTypes]
   }
 
+  const toPlistObject = (asarIntegrity: AsarIntegrity): PlistObject => {
+    const result: PlistObject = {}
+
+    for (const [filePath, headerHash] of Object.entries(asarIntegrity)) {
+      result[filePath] = {
+        algorithm: headerHash.algorithm,
+        hash: headerHash.hash,
+      }
+    }
+
+    return result
+  }
+
   if (asarIntegrity != null) {
-    appPlist.ElectronAsarIntegrity = JSON.parse(JSON.stringify(asarIntegrity))
+    appPlist.ElectronAsarIntegrity = toPlistObject(asarIntegrity)
   }
 
   if (helperEHPlist != null) {
