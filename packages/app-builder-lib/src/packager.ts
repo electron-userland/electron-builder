@@ -9,7 +9,6 @@ import {
   getArtifactArchName,
   InvalidConfigurationError,
   log,
-  MAX_FILE_REQUESTS,
   orNullIfFileNotExist,
   safeStringifyJson,
   serializeToYaml,

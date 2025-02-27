@@ -1,5 +1,5 @@
-import { Arch, archFromString, ArchType, AsyncTaskManager } from "builder-util"
-import { AllPublishOptions, CancellationToken, Nullish } from "builder-util-runtime"
+import { Arch, archFromString, ArchType } from "builder-util"
+import { AllPublishOptions, Nullish } from "builder-util-runtime"
 
 // https://github.com/YousefED/typescript-json-schema/issues/80
 export type Publish = AllPublishOptions | Array<AllPublishOptions> | null
