@@ -134,6 +134,9 @@ export class Packager {
 
   readonly tempDirManager = new TmpDir("packager")
 
+  // use only for tasks that cannot be executed in parallel (such as  signing on windows)
+  readonly signingQueueManager = new AsyncTaskManager(new CancellationToken())
+
   private _repositoryInfo = new Lazy<SourceRepositoryInfo | null>(() => getRepositoryInfo(this.projectDir, this.metadata, this.devMetadata))
 
   readonly options: PackagerOptions
@@ -499,6 +502,8 @@ export class Packager {
       if (this.cancellationToken.cancelled) {
         break
       }
+
+      await this.signingQueueManager.awaitTasksSequentially()
 
       for (const target of nameToTarget.values()) {
         if (target.isAsyncSupported) {

@@ -55,12 +55,12 @@ export default class SquirrelWindowsTarget extends Target {
     const artifactPath = path.join(installerOutDir, setupFile)
     const msiArtifactPath = path.join(installerOutDir, packager.expandArtifactNamePattern(this.options, "msi", arch, "${productName} Setup ${version}.${ext}"))
 
-    await packager.info.emitArtifactBuildStarted({
-      targetPresentableName: "Squirrel.Windows",
-      file: artifactPath,
-      arch,
-    })
-    this.signingQueueManager.add(async () => {
+    this.packager.info.signingQueueManager.add(async () => {
+      await packager.info.emitArtifactBuildStarted({
+        targetPresentableName: "Squirrel.Windows",
+        file: artifactPath,
+        arch,
+      })
       const distOptions = await this.computeEffectiveDistOptions(appOutDir, installerOutDir, setupFile)
       await createWindowsInstaller(distOptions)
 
