@@ -90,7 +90,7 @@ export abstract class Target {
   abstract build(appOutDir: string, arch: Arch): Promise<any>
 
   async finishBuild(): Promise<any> {
-    await this.signingQueueManager.awaitTasksSequentially()
+    await this.signingQueueManager.awaitTasks()
   }
 }
 
