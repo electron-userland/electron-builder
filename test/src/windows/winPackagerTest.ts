@@ -120,28 +120,25 @@ test.ifMac("custom icon", () => {
   )
 })
 
-test("win icon from icns", () => {
+test("win icon from icns", config, () => {
   let platformPackager: CheckingWinPackager | null = null
-  return (
-    config,
-    app(
-      {
-        targets: Platform.WINDOWS.createTarget(DIR_TARGET, Arch.x64),
-        config: {
-          mac: {
-            icon: "icons/icon.icns",
-          },
+  return app(
+    {
+      targets: Platform.WINDOWS.createTarget(DIR_TARGET, Arch.x64),
+      config: {
+        mac: {
+          icon: "icons/icon.icns",
         },
-        platformPackagerFactory: packager => (platformPackager = new CheckingWinPackager(packager)),
       },
-      {
-        projectDirCreated: projectDir =>
-          Promise.all([fs.unlink(path.join(projectDir, "build", "icon.ico")), fs.rm(path.join(projectDir, "build", "icons"), { recursive: true, force: true })]),
-        packed: async () => {
-          const file = await platformPackager!.getIconPath()
-          expect(file).toBeDefined()
-        },
-      }
-    )()
-  )
+      platformPackagerFactory: packager => (platformPackager = new CheckingWinPackager(packager)),
+    },
+    {
+      projectDirCreated: projectDir =>
+        Promise.all([fs.unlink(path.join(projectDir, "build", "icon.ico")), fs.rm(path.join(projectDir, "build", "icons"), { recursive: true, force: true })]),
+      packed: async () => {
+        const file = await platformPackager!.getIconPath()
+        expect(file).toBeDefined()
+      },
+    }
+  )()
 })

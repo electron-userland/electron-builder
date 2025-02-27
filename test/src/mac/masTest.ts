@@ -3,7 +3,7 @@ import * as path from "path"
 import { CheckingMacPackager } from "../helpers/CheckingPackager"
 import { assertPack, createMacTargetTest, signed } from "../helpers/packTester"
 
-describe.runIf(process.platform !== "darwin" && process.env.CSC_KEY_PASSWORD != null)("mas", () => {
+describe.runIf(process.platform === "darwin" && process.env.CSC_KEY_PASSWORD != null)("mas", () => {
   test("mas", createMacTargetTest(["mas"]))
   test.ifNotCi("dev", createMacTargetTest(["mas-dev"]))
   test.ifNotCi("mas and 7z", createMacTargetTest(["mas", "7z"]))
