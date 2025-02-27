@@ -13,7 +13,7 @@ export { RpmUpdater } from "./RpmUpdater"
 export { MacUpdater } from "./MacUpdater"
 export { NsisUpdater } from "./NsisUpdater"
 
-export * from "./exports"
+export * from "./types"
 
 // autoUpdater to mimic electron bundled autoUpdater
 let _autoUpdater: any
