@@ -1,25 +1,25 @@
-"use strict"
+import { isCI as isCi } from "ci-info"
+import { afterEach, test, vitest } from "vitest"
 
-const isCi = require("ci-info").isCI
+afterEach(() => {
+  vitest.clearAllMocks()
+})
 
 const isWindows = process.platform === "win32"
-
-// Squirrel.Windows msi is very slow
-jest.setTimeout((isWindows ? 30 : 20) * 1000 * 60)
+const isMac = process.platform === "darwin"
+const isLinux = process.platform === "linux"
 
 const skip = test.skip
-const skipSuite = describe.skip
+// const skipSuite = describe.skip
+// const isAllTests = process.env.ALL_TESTS !== "false"
 
-const isAllTests = process.env.ALL_TESTS !== "false"
-describe.ifAll = isAllTests ? describe : skipSuite
-test.ifAll = isAllTests ? test : skip
-skip.ifAll = skip
+// describe = isAllTests ? describe : skipSuite
+// test = isAllTests ? test : skip
+// skip = skip
 
-const execEnv = (envVar) => !!envVar ? test : skip
-test.ifEnv = execEnv
-skip.ifEnv = execEnv
+test.ifEnv = test.runIf
+skip.ifEnv = test.runIf
 
-const isMac = process.platform === "darwin"
 test.ifMac = isMac ? test : skip
 
 test.ifNotWindows = isWindows ? skip : test
@@ -47,8 +47,7 @@ skip.ifLinuxOrDevMac = skip
 if (isCi) {
   test.ifCi = test
   test.ifNotCi = skip
-}
-else {
+} else {
   test.ifCi = skip
   test.ifNotCi = test
 }
@@ -57,10 +56,10 @@ test.ifNotCiMac = isCi && isMac ? skip : test
 test.ifNotCiWin = isCi && isWindows ? skip : test
 
 test.ifDevOrWinCi = !isCi || isWindows ? test : skip
-test.ifDevOrLinuxCi = !isCi || process.platform === "linux" ? test : skip
+test.ifDevOrLinuxCi = !isCi || isLinux ? test : skip
 test.ifWinCi = isCi && isWindows ? test : skip
-test.ifLinux = process.platform === "linux" ? test : skip
-test.ifLinuxOrDevMac = process.platform === "linux" || (!isCi && isMac) ? test : skip
+test.ifLinux = isLinux ? test : skip
+test.ifLinuxOrDevMac = isLinux || (!isCi && isMac) ? test : skip
 
 delete process.env.CSC_NAME
 if (process.env.TEST_APP_TMP_DIR == null) {

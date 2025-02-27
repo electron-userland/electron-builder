@@ -7,7 +7,7 @@ import { assertThat } from "../helpers/fileAssert"
 import { app, appThrows, copyTestAsset, modifyPackageJson } from "../helpers/packTester"
 import { ELECTRON_VERSION } from "../helpers/testConfig"
 
-const appImageTarget = Platform.LINUX.createTarget("appimage")
+const appImageTarget = Platform.LINUX.createTarget("appimage", Arch.x64)
 
 // test update info file name
 const testPublishConfig: GenericServerOptions = {
@@ -40,7 +40,7 @@ test.ifNotWindows(
   })
 )
 
-test.ifAll.ifNotWindows.ifNotCiMac(
+test.ifNotWindows.ifNotCiMac(
   "AppImage arm, max compression",
   app({
     targets: Platform.LINUX.createTarget("Appimage", Arch.armv7l),
@@ -51,7 +51,7 @@ test.ifAll.ifNotWindows.ifNotCiMac(
   })
 )
 
-test.ifNotWindows.ifNotCiMac.ifAll(
+test.ifNotWindows.ifNotCiMac(
   "AppImage - deprecated systemIntegration",
   appThrows({
     targets: appImageTarget,
@@ -63,7 +63,7 @@ test.ifNotWindows.ifNotCiMac.ifAll(
   })
 )
 
-test.ifNotWindows.ifNotCiMac.ifAll(
+test.ifNotWindows.ifNotCiMac(
   "text license and file associations",
   app(
     {
@@ -92,7 +92,7 @@ test.ifNotWindows.ifNotCiMac.ifAll(
   )
 )
 
-test.ifNotWindows.ifNotCiMac.ifAll(
+test.ifNotWindows.ifNotCiMac(
   "html license",
   app(
     {
@@ -312,7 +312,7 @@ test.ifNotWindows(
 test.ifNotWindows(
   "no-author-email",
   appThrows(
-    { targets: Platform.LINUX.createTarget("deb") },
+    { targets: Platform.LINUX.createTarget("deb", Arch.x64) },
     {
       projectDirCreated: projectDir =>
         modifyPackageJson(projectDir, data => {
@@ -325,7 +325,7 @@ test.ifNotWindows(
 test.ifNotWindows(
   "forbid desktop.Exec",
   appThrows({
-    targets: Platform.LINUX.createTarget("AppImage"),
+    targets: appImageTarget,
     config: {
       linux: {
         desktop: {

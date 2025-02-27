@@ -28,3 +28,4 @@ tsconfig.tsbuildinfo
 
 .pnpm-store/
 **/node_modules
+coverage

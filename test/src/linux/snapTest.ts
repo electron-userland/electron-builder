@@ -1,17 +1,7 @@
 import { Arch, Platform } from "electron-builder"
 import { app, assertPack, snapTarget } from "../helpers/packTester"
 
-if (process.env.SNAP_TEST === "false") {
-  fit("Skip snapTest suite — SNAP_TEST is set to false or Windows", () => {
-    console.warn("[SKIP] Skip snapTest suite — SNAP_TEST is set to false")
-  })
-} else if (process.platform === "win32") {
-  fit("Skip snapTest suite — Windows is not supported", () => {
-    console.warn("[SKIP] Skip snapTest suite — Windows is not supported")
-  })
-}
-
-test.ifAll.ifDevOrLinuxCi(
+test.ifDevOrLinuxCi(
   "snap",
   app({
     targets: snapTarget,
@@ -34,7 +24,7 @@ test.ifAll.ifDevOrLinuxCi(
   })
 )
 
-test.ifAll.ifDevOrLinuxCi(
+test.ifDevOrLinuxCi(
   "arm",
   app({
     targets: Platform.LINUX.createTarget("snap", Arch.armv7l),
@@ -47,7 +37,7 @@ test.ifAll.ifDevOrLinuxCi(
   })
 )
 
-test.ifAll.ifDevOrLinuxCi("default stagePackages", async () => {
+test.ifDevOrLinuxCi("default stagePackages", async () => {
   for (const p of [["default"], ["default", "custom"], ["custom", "default"], ["foo1", "default", "foo2"]]) {
     await assertPack("test-app-one", {
       targets: snapTarget,
@@ -74,7 +64,7 @@ test.ifAll.ifDevOrLinuxCi("default stagePackages", async () => {
   }
 })
 
-test.ifAll.ifDevOrLinuxCi(
+test.ifDevOrLinuxCi(
   "classic confinement",
   app({
     targets: snapTarget,
@@ -90,7 +80,7 @@ test.ifAll.ifDevOrLinuxCi(
   })
 )
 
-test.ifAll.ifDevOrLinuxCi("buildPackages", async () => {
+test.ifDevOrLinuxCi("buildPackages", async () => {
   await assertPack("test-app-one", {
     targets: snapTarget,
     config: {
@@ -245,7 +235,7 @@ test.ifDevOrLinuxCi(
   })
 )
 
-test.ifAll.ifDevOrLinuxCi(
+test.ifDevOrLinuxCi(
   "auto start",
   app({
     targets: snapTarget,

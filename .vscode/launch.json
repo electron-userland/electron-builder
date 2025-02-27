@@ -4,7 +4,7 @@
       {
           "type": "node",
           "request": "launch",
-          "name": "Jest TEST_FILES",
+          "name": "Vitest TEST_FILES",
           "runtimeExecutable": "pnpm",
           "program": "ci:test",
           "console": "integratedTerminal",

@@ -1,4 +1,4 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
 exports[`arm 1`] = `
 {
@@ -431,7 +431,7 @@ exports[`deb file associations 5`] = `
 <mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">
 <mime-type type="application/x-example">
   <glob pattern="*.my-app"/>
-    
+
   <icon name="x-office-document" />
 </mime-type>
 </mime-info>"
