@@ -71,10 +71,10 @@ jobs:
       fail-fast: false
       matrix:
         testFiles:
-          # - ArtifactPublisherTest,BuildTest,ExtraBuildTest,RepoSlugTest,binDownloadTest,configurationValidationTest,filenameUtilTest,filesTest,globTest,ignoreTest,macroExpanderTest,mainEntryTest,urlUtilTest,extraMetadataTest,linuxArchiveTest,linuxPackagerTest,HoistedNodeModuleTest,MemoLazyTest,HoistTest
-          # - snapTest,debTest,fpmTest,protonTest
-          # - winPackagerTest,winCodeSignTest,webInstallerTest
-          # - oneClickInstallerTest,assistedInstallerTest
+          - ArtifactPublisherTest,BuildTest,ExtraBuildTest,RepoSlugTest,binDownloadTest,configurationValidationTest,filenameUtilTest,filesTest,globTest,ignoreTest,macroExpanderTest,mainEntryTest,urlUtilTest,extraMetadataTest,linuxArchiveTest,linuxPackagerTest,HoistedNodeModuleTest,MemoLazyTest,HoistTest
+          - snapTest,debTest,fpmTest,protonTest
+          - winPackagerTest,winCodeSignTest,webInstallerTest
+          - oneClickInstallerTest,assistedInstallerTest
           - concurrentBuildsTest
     steps:
       - name: Checkout code repository
@@ -170,9 +170,9 @@ jobs:
       fail-fast: false
       matrix:
         testFiles:
-          # - winCodeSignTest,differentialUpdateTest,squirrelWindowsTest
-          # - appxTest,msiTest,portableTest,assistedInstallerTest,protonTest
-          # - BuildTest,oneClickInstallerTest,winPackagerTest,nsisUpdaterTest,webInstallerTest
+          - winCodeSignTest,differentialUpdateTest,squirrelWindowsTest
+          - appxTest,msiTest,portableTest,assistedInstallerTest,protonTest
+          - BuildTest,oneClickInstallerTest,winPackagerTest,nsisUpdaterTest,webInstallerTest
           - concurrentBuildsTest
     steps:
       - name: Checkout code repository
@@ -198,9 +198,9 @@ jobs:
       fail-fast: false
       matrix:
         testFiles:
-          # - oneClickInstallerTest,assistedInstallerTest
-          # - winPackagerTest,winCodeSignTest,webInstallerTest
-          # - masTest,dmgTest,filesTest,macPackagerTest,differentialUpdateTest,macArchiveTest
+          - oneClickInstallerTest,assistedInstallerTest
+          - winPackagerTest,winCodeSignTest,webInstallerTest
+          - masTest,dmgTest,filesTest,macPackagerTest,differentialUpdateTest,macArchiveTest
           - concurrentBuildsTest
     steps:
       - name: Checkout code repository
