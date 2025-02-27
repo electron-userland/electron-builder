@@ -7,8 +7,6 @@ const winTargets = Platform.WINDOWS.createTarget([DIR_TARGET, "nsis"], Arch.x64,
 const macTargets = Platform.MAC.createTarget([DIR_TARGET, "zip", "dmg", "mas"], Arch.x64, Arch.universal)
 const linuxTargets = Platform.LINUX.createTarget([DIR_TARGET, "deb", "rpm", "AppImage"], Arch.x64, Arch.armv7l)
 
-const jobConcurrency = 5
-
 const projectDirCreated = async (projectDir: string, tmpDir: TmpDir) => {
   const buildConfig = (data: any) => ({
     name: "test-concurrent",
@@ -45,7 +43,7 @@ test.ifNotWindows("win/linux concurrent", () => {
       targets,
       config: {
         concurrency: {
-          jobs: jobConcurrency,
+          jobs: Object.keys(targets).length,
         },
       },
     },
@@ -63,7 +61,7 @@ test.ifMac("mac/win/linux concurrent", () => {
       targets,
       config: {
         concurrency: {
-          jobs: jobConcurrency,
+          jobs: Object.keys(targets).length,
         },
       },
     },
@@ -81,7 +79,7 @@ test.ifMac("mac concurrent", () => {
       targets,
       config: {
         concurrency: {
-          jobs: jobConcurrency,
+          jobs: Object.keys(targets).length,
         },
       },
     },
@@ -99,7 +97,7 @@ test.ifNotMac("win concurrent", () => {
       targets,
       config: {
         concurrency: {
-          jobs: jobConcurrency,
+          jobs: Object.keys(targets).length,
         },
       },
     },
@@ -117,7 +115,7 @@ test.ifLinuxOrDevMac("linux concurrent", () => {
       targets,
       config: {
         concurrency: {
-          jobs: jobConcurrency,
+          jobs: Object.keys(targets).length,
         },
       },
     },
@@ -136,7 +134,7 @@ test.ifWindows("win concurrent - all targets", () => {
       targets,
       config: {
         concurrency: {
-          jobs: jobConcurrency,
+          jobs: Object.keys(targets).length,
         },
         win: { target: targetList },
       },
