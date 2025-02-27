@@ -131,13 +131,13 @@ async function buildUsingTemplate(templateDir: string, options: SnapBuilderOptio
             if (stat.isDirectory() && (stat.mode & 0o2000) !== 0) {
               // clear setgid
               await chmod(it, stat.mode & ~0o2000).catch((err: any) => {
-                log.warn({ dir: it, message: err.message }, `cannot clear uid from directory`)
+                log.warn({ dir: it, message: err.message }, `cannot clear gid from directory`)
               })
             }
             if (stat.isFile() && (stat.mode & 0o4000) !== 0) {
               // clear setuid
               await chmod(it, stat.mode & ~0o4000).catch((err: any) => {
-                log.warn({ file: it, message: err.message }, `cannot execute uid from file`)
+                log.warn({ file: it, message: err.message }, `cannot clear uid from file`)
               })
             }
           },
