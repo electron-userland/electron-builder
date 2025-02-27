@@ -2,8 +2,8 @@ import { AllPublishOptions } from "builder-util-runtime"
 import { AppAdapter } from "./AppAdapter"
 import { DownloadUpdateOptions } from "./AppUpdater"
 import { BaseUpdater, InstallOptions } from "./BaseUpdater"
-import { DOWNLOAD_PROGRESS } from "./main"
 import { findFile } from "./providers/Provider"
+import { DOWNLOAD_PROGRESS } from "./types"
 
 export class DebUpdater extends BaseUpdater {
   constructor(options?: AllPublishOptions | null, app?: AppAdapter) {
