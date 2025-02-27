@@ -4,8 +4,11 @@ import * as path from "path"
 import { CheckingWinPackager } from "../helpers/CheckingPackager"
 import { app, appThrows, assertPack, platform } from "../helpers/packTester"
 
+const config = { retry: 3 }
+
 test(
   "beta version",
+  config,
   app(
     {
       targets: Platform.WINDOWS.createTarget(["nsis"], Arch.x64, Arch.arm64),
@@ -21,12 +24,12 @@ test(
     {
       signedWin: true,
     }
-  ),
-  { retry: 3 }
+  )
 )
 
 test(
   "win zip",
+  config,
   app(
     {
       targets: Platform.WINDOWS.createTarget(["zip"], Arch.x64, Arch.arm64),
@@ -61,6 +64,7 @@ test(
 
 test(
   "zip artifactName",
+  config,
   app(
     {
       targets: Platform.WINDOWS.createTarget(["zip"], Arch.x64),
@@ -118,23 +122,26 @@ test.ifMac("custom icon", () => {
 
 test("win icon from icns", () => {
   let platformPackager: CheckingWinPackager | null = null
-  return app(
-    {
-      targets: Platform.WINDOWS.createTarget(DIR_TARGET, Arch.x64),
-      config: {
-        mac: {
-          icon: "icons/icon.icns",
+  return (
+    config,
+    app(
+      {
+        targets: Platform.WINDOWS.createTarget(DIR_TARGET, Arch.x64),
+        config: {
+          mac: {
+            icon: "icons/icon.icns",
+          },
         },
+        platformPackagerFactory: packager => (platformPackager = new CheckingWinPackager(packager)),
       },
-      platformPackagerFactory: packager => (platformPackager = new CheckingWinPackager(packager)),
-    },
-    {
-      projectDirCreated: projectDir =>
-        Promise.all([fs.unlink(path.join(projectDir, "build", "icon.ico")), fs.rm(path.join(projectDir, "build", "icons"), { recursive: true, force: true })]),
-      packed: async () => {
-        const file = await platformPackager!.getIconPath()
-        expect(file).toBeDefined()
-      },
-    }
-  )()
+      {
+        projectDirCreated: projectDir =>
+          Promise.all([fs.unlink(path.join(projectDir, "build", "icon.ico")), fs.rm(path.join(projectDir, "build", "icons"), { recursive: true, force: true })]),
+        packed: async () => {
+          const file = await platformPackager!.getIconPath()
+          expect(file).toBeDefined()
+        },
+      }
+    )()
+  )
 })
