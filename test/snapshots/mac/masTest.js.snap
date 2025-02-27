@@ -37,7 +37,13 @@ exports[`dev 2`] = `
 
 exports[`mas 1`] = `
 {
-  "mac": [],
+  "mac": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW-1.1.0.pkg",
+      "safeArtifactName": "TestApp-1.1.0.pkg",
+    },
+  ],
 }
 `;
 
