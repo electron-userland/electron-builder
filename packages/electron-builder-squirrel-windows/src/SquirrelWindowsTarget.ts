@@ -113,6 +113,7 @@ export default class SquirrelWindowsTarget extends Target {
         packager,
       })
     })
+    return Promise.resolve()
   }
 
   private get appName() {
