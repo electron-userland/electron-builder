@@ -1,5 +1,5 @@
-import { Arch, archFromString, ArchType } from "builder-util"
-import { AllPublishOptions, Nullish } from "builder-util-runtime"
+import { Arch, archFromString, ArchType, AsyncTaskManager } from "builder-util"
+import { AllPublishOptions, CancellationToken, Nullish } from "builder-util-runtime"
 
 // https://github.com/YousefED/typescript-json-schema/issues/80
 export type Publish = AllPublishOptions | Array<AllPublishOptions> | null
@@ -76,7 +76,7 @@ export abstract class Target {
   abstract readonly options: TargetSpecificOptions | Nullish
 
   // // use only for tasks that cannot be executed in parallel (such as  signing on windows)
-  // readonly signingQueueManager = new AsyncTaskManager(new CancellationToken())
+  readonly taskQueueManager = new AsyncTaskManager(new CancellationToken())
 
   protected constructor(
     readonly name: string,
@@ -90,7 +90,7 @@ export abstract class Target {
   abstract build(appOutDir: string, arch: Arch): Promise<any>
 
   async finishBuild(): Promise<any> {
-    // await this.packager.info.signingQueueManager.awaitTasks()
+    await this.taskQueueManager.awaitTasks()
   }
 }
 
