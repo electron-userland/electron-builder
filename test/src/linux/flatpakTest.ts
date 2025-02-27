@@ -1,9 +1,8 @@
 import { Platform } from "electron-builder"
 import { app } from "../helpers/packTester"
 
-test.ifDevOrLinuxCi(
-  "flatpak",
-  app({
+test.ifDevOrLinuxCi("flatpak", ({ expect }) =>
+  app(expect, {
     targets: Platform.LINUX.createTarget("flatpak"),
     config: {
       electronFuses: {
@@ -20,9 +19,8 @@ test.ifDevOrLinuxCi(
   })
 )
 
-test.ifDevOrLinuxCi(
-  "enable Wayland flags",
-  app({
+test.ifDevOrLinuxCi("enable Wayland flags", ({ expect }) =>
+  app(expect, {
     targets: Platform.LINUX.createTarget("flatpak"),
     config: {
       flatpak: {
@@ -32,9 +30,8 @@ test.ifDevOrLinuxCi(
   })
 )
 
-test.ifDevOrLinuxCi(
-  "custom finishArgs",
-  app({
+test.ifDevOrLinuxCi("custom finishArgs", ({ expect }) =>
+  app(expect, {
     targets: Platform.LINUX.createTarget("flatpak"),
     config: {
       flatpak: {
@@ -56,9 +53,8 @@ test.ifDevOrLinuxCi(
   })
 )
 
-test.ifDevOrLinuxCi(
-  "custom runtime and base app version",
-  app({
+test.ifDevOrLinuxCi("custom runtime and base app version", ({ expect }) =>
+  app(expect, {
     targets: Platform.LINUX.createTarget("flatpak"),
     config: {
       flatpak: {
