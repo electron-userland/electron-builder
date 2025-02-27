@@ -8,6 +8,7 @@
     "templates",
     "scheme.json",
     "certs/root_certs.keychain"
+
   ],
   "repository": {
     "type": "git",
