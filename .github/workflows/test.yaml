@@ -217,6 +217,5 @@ jobs:
       - name: Test
         run: pnpm ci:test
         env:
-          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
           TEST_FILES: ${{ matrix.testFiles }}
           FORCE_COLOR: 1
