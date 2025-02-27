@@ -218,14 +218,12 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
 
   const toPlistObject = (asarIntegrity: AsarIntegrity): PlistObject => {
     const result: PlistObject = {}
-
     for (const [filePath, headerHash] of Object.entries(asarIntegrity)) {
       result[filePath] = {
         algorithm: headerHash.algorithm,
         hash: headerHash.hash,
       }
     }
-
     return result
   }
 
