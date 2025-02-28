@@ -1,6 +1,14 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`electron mirror 1`] = `
+{
+  "mac": [],
+}
+`;
+
 exports[`electronDist 1`] = `"corrupted Electron dist"`;
+
+exports[`invalid electron mirror 1`] = `"ERR_NON_2XX_3XX_RESPONSE"`;
 
 exports[`multiple asar resources 1`] = `
 {
