@@ -438,7 +438,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
       customSign ? "executing custom sign" : "signing"
     )
 
-    return customSign ? Promise.resolve(customSign(opts, this)) : sign(opts)
+    return customSign ? Promise.resolve(customSign(opts, this)) : sign({ ...opts, identity: identity ? identity.name : undefined })
   }
 
   //noinspection JSMethodCanBeStatic

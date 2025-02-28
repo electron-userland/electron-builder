@@ -26,19 +26,8 @@ import { createTempUpdateFile, DownloadedUpdateHelper } from "./DownloadedUpdate
 import { ElectronAppAdapter } from "./ElectronAppAdapter"
 import { ElectronHttpExecutor, getNetSession, LoginCallback } from "./electronHttpExecutor"
 import { GenericProvider } from "./providers/GenericProvider"
-import {
-  DOWNLOAD_PROGRESS,
-  Logger,
-  Provider,
-  ResolvedUpdateFileInfo,
-  UPDATE_DOWNLOADED,
-  UpdateCheckResult,
-  UpdateDownloadedEvent,
-  UpdaterSignal,
-  VerifyUpdateSupport,
-} from "./main"
 import { createClient, isUrlProbablySupportMultiRangeRequests } from "./providerFactory"
-import { ProviderPlatform } from "./providers/Provider"
+import { Provider, ProviderPlatform } from "./providers/Provider"
 import type { TypedEmitter } from "tiny-typed-emitter"
 import Session = Electron.Session
 import type { AuthInfo } from "electron"
@@ -46,6 +35,8 @@ import { gunzipSync } from "zlib"
 import { blockmapFiles } from "./util"
 import { DifferentialDownloaderOptions } from "./differentialDownloader/DifferentialDownloader"
 import { GenericDifferentialDownloader } from "./differentialDownloader/GenericDifferentialDownloader"
+import { DOWNLOAD_PROGRESS, Logger, ResolvedUpdateFileInfo, UPDATE_DOWNLOADED, UpdateCheckResult, UpdateDownloadedEvent, UpdaterSignal } from "./types"
+import { VerifyUpdateSupport } from "./main"
 
 export type AppUpdaterEvents = {
   error: (error: Error, message?: string) => void

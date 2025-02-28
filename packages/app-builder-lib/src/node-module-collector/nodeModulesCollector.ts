@@ -3,6 +3,7 @@ import * as path from "path"
 import * as fs from "fs"
 import type { NodeModuleInfo, DependencyTree, DependencyGraph, Dependency } from "./types"
 import { exec, log } from "builder-util"
+import { Lazy } from "lazy-val"
 
 export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType>, OptionalsType> {
   private nodeModules: NodeModuleInfo[] = []
@@ -27,13 +28,18 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
     return this.nodeModules
   }
 
-  protected abstract getCommand(): string
+  public abstract readonly installOptions: Promise<{
+    cmd: string
+    args: string[]
+    lockfile: string
+  }>
+  protected abstract readonly pmCommand: Lazy<string>
   protected abstract getArgs(): string[]
   protected abstract parseDependenciesTree(jsonBlob: string): T
   protected abstract extractProductionDependencyTree(tree: Dependency<T, OptionalsType>): DependencyTree
 
   protected async getDependenciesTree(): Promise<T> {
-    const command = this.getCommand()
+    const command = await this.pmCommand.value
     const args = this.getArgs()
     const dependencies = await exec(command, args, {
       cwd: this.rootDir,

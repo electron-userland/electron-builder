@@ -1,5 +1,23 @@
 # app-builder-lib
 
+## 26.0.9
+
+### Patch Changes
+
+- [#8895](https://github.com/electron-userland/electron-builder/pull/8895) [`22da6442`](https://github.com/electron-userland/electron-builder/commit/22da64425182456eb4d1243138dde27c80d6adac) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: remove Promise ability from AsyncEventEmitter as it's impossible to filter listeners by without being async
+
+- [#8885](https://github.com/electron-userland/electron-builder/pull/8885) [`4cc475ed`](https://github.com/electron-userland/electron-builder/commit/4cc475ed214861b99075d4639c92686803420174) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: `node-linker=hoisted` fallback to utilize Npm module collector
+
+- [#8908](https://github.com/electron-userland/electron-builder/pull/8908) [`62029b08`](https://github.com/electron-userland/electron-builder/commit/62029b08c10a6b12d8ef30bf57ae61a877f297f4) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: when using osx-sign, specifically pass in identity name instead of hash
+
+- [#8896](https://github.com/electron-userland/electron-builder/pull/8896) [`67b6f71f`](https://github.com/electron-userland/electron-builder/commit/67b6f71f85798dba4ce51dfb2cd012e04cd391db) Thanks [@BrandonXLF](https://github.com/BrandonXLF)! - fix: allow publishing to Snap Store to be disabled with snap specific publish options
+
+- [#8899](https://github.com/electron-userland/electron-builder/pull/8899) [`69184315`](https://github.com/electron-userland/electron-builder/commit/6918431560c6c4621e0dccf72b461872b74462ac) Thanks [@mmaietta](https://github.com/mmaietta)! - test: adding fixtures for lockfiles to support `--frozen-lockfile` (yarn, pnpm) and `ci` (npm)
+
+- Updated dependencies []:
+  - dmg-builder@26.0.9
+  - electron-builder-squirrel-windows@26.0.9
+
 ## 26.0.8
 
 ### Patch Changes

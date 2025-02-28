@@ -111,7 +111,7 @@ test.ifNotWindows(
   )
 )
 
-test.ifNotWindows("symlinks everywhere w/ static framework", () =>
+test.ifNotWindows("symlinks everywhere with static framework", () =>
   assertPack(
     "test-app-symlink-framework",
     {
@@ -180,7 +180,7 @@ test.ifDevOrLinuxCi("local node module with file protocol", () => {
         })
       },
       packed: async context => {
-        assertThat(path.join(path.join(context.getResources(Platform.LINUX), "app.asar.unpacked", "node_modules", "foo", "package.json"))).isFile()
+        return assertThat(path.join(path.join(context.getResources(Platform.LINUX), "app.asar.unpacked", "node_modules", "foo", "package.json"))).isFile()
       },
     }
   )
@@ -285,24 +285,24 @@ test.ifAll.ifDevOrLinuxCi("asarUnpack node_modules which has many modules", () =
       projectDirCreated: async projectDir => {
         await modifyPackageJson(projectDir, data => {
           data.dependencies = {
-            "@react-navigation/stack": "^6.3.7",
-            "@sentry/electron": "^4.4.0",
-            axios: "^1.1.3",
-            "deep-equal": "^2.1.0",
-            dotenv: "^16.4.5",
-            "electron-log": "^4.4.8",
-            "electron-updater": "^6.0.4",
-            "electron-window-state": "^5.0.3",
-            "jwt-decode": "^3.1.2",
-            keytar: "^7.9.0",
-            webpack: "^5.74.0",
-            "pubsub-js": "^1.9.4",
-            react: "^18.2.0",
-            "react-dom": "^18.2.0",
-            "react-native-web": "^0.18.10",
-            "react-router-dom": "^6.4.0",
-            "source-map-support": "^0.5.16",
-            yargs: "^16.2.0",
+            "@react-navigation/stack": "6.3.7",
+            "@sentry/electron": "4.4.0",
+            axios: "1.1.3",
+            "deep-equal": "2.1.0",
+            dotenv: "16.4.5",
+            "electron-log": "4.4.8",
+            "electron-updater": "6.0.4",
+            "electron-window-state": "5.0.3",
+            "jwt-decode": "3.1.2",
+            keytar: "7.9.0",
+            webpack: "5.74.0",
+            "pubsub-js": "1.9.4",
+            react: "18.2.0",
+            "react-dom": "18.2.0",
+            "react-native-web": "0.18.10",
+            "react-router-dom": "6.4.0",
+            "source-map-support": "0.5.16",
+            yargs: "16.2.0",
             "ci-info": "2.0.0",
           }
         })
@@ -333,24 +333,24 @@ test.ifAll.ifDevOrLinuxCi("exclude some modules when asarUnpack node_modules whi
       projectDirCreated: async projectDir => {
         await modifyPackageJson(projectDir, data => {
           data.dependencies = {
-            "@react-navigation/stack": "^6.3.7",
-            "@sentry/electron": "^4.4.0",
-            axios: "^1.1.3",
-            "deep-equal": "^2.1.0",
-            dotenv: "^16.4.5",
-            "electron-log": "^4.4.8",
-            "electron-updater": "^6.0.4",
-            "electron-window-state": "^5.0.3",
-            "jwt-decode": "^3.1.2",
-            keytar: "^7.9.0",
-            webpack: "^5.74.0",
-            "pubsub-js": "^1.9.4",
-            react: "^18.2.0",
-            "react-dom": "^18.2.0",
-            "react-native-web": "^0.18.10",
-            "react-router-dom": "^6.4.0",
-            "source-map-support": "^0.5.16",
-            yargs: "^16.2.0",
+            "@react-navigation/stack": "6.3.7",
+            "@sentry/electron": "4.4.0",
+            axios: "1.1.3",
+            "deep-equal": "2.1.0",
+            dotenv: "16.4.5",
+            "electron-log": "4.4.8",
+            "electron-updater": "6.0.4",
+            "electron-window-state": "5.0.3",
+            "jwt-decode": "3.1.2",
+            keytar: "7.9.0",
+            webpack: "5.74.0",
+            "pubsub-js": "1.9.4",
+            react: "18.2.0",
+            "react-dom": "18.2.0",
+            "react-native-web": "0.18.10",
+            "react-router-dom": "6.4.0",
+            "source-map-support": "0.5.16",
+            yargs: "16.2.0",
             "ci-info": "2.0.0",
           }
         })

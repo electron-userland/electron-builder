@@ -1,7 +1,7 @@
 import { parseDn } from "builder-util-runtime"
 import { execFile, execFileSync } from "child_process"
 import * as os from "os"
-import { Logger } from "./main"
+import { Logger } from "./types"
 import * as path from "path"
 
 // $certificateInfo = (Get-AuthenticodeSignature 'xxx\yyy.exe'
