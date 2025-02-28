@@ -177,6 +177,7 @@ test.ifDevOrLinuxCi("slots option", async () => {
       },
       effectiveOptionComputed: async ({ snap, args }) => {
         expect(snap).toMatchSnapshot()
+        expect(args).toMatchSnapshot()
         return Promise.resolve(false)
       },
     })
@@ -198,8 +199,9 @@ test.ifDevOrLinuxCi(
         },
       },
     },
-    effectiveOptionComputed: async ({ snap }) => {
+    effectiveOptionComputed: async ({ snap, args }) => {
       expect(snap).toMatchSnapshot()
+      expect(args).toMatchSnapshot()
       return Promise.resolve(false)
     },
   })
@@ -218,8 +220,9 @@ test.ifDevOrLinuxCi(
         after: ["bar"],
       },
     },
-    effectiveOptionComputed: async ({ snap }) => {
+    effectiveOptionComputed: async ({ snap, args }) => {
       expect(snap).toMatchSnapshot()
+      expect(args).toMatchSnapshot()
       return Promise.resolve(false)
     },
   })
@@ -240,6 +243,7 @@ test.ifDevOrLinuxCi(
     },
     effectiveOptionComputed: async ({ snap, args }) => {
       expect(snap).toMatchSnapshot()
+      expect(args).toMatchSnapshot()
       return Promise.resolve(false)
     },
   })
@@ -261,6 +265,7 @@ test.ifAll.ifDevOrLinuxCi(
     effectiveOptionComputed: async ({ snap, args }) => {
       expect(snap).toMatchSnapshot()
       expect(snap.apps.sep.autostart).toEqual("sep.desktop")
+      expect(args).toMatchSnapshot()
       return Promise.resolve(false)
     },
   })
@@ -278,6 +283,7 @@ test.ifDevOrLinuxCi(
     },
     effectiveOptionComputed: async ({ snap, args }) => {
       expect(snap).toMatchSnapshot()
+      expect(args).toMatchSnapshot()
       return Promise.resolve(false)
     },
   })
@@ -313,9 +319,10 @@ test.ifDevOrLinuxCi(
     config: {
       productName: "Sep",
     },
-    effectiveOptionComputed: async ({ snap }) => {
+    effectiveOptionComputed: async ({ snap, args }) => {
       expect(snap).toMatchSnapshot()
       expect(snap.base).toBe("core20")
+      expect(args).toMatchSnapshot()
       return Promise.resolve(false)
     },
   })
@@ -331,9 +338,10 @@ test.ifDevOrLinuxCi(
         base: "core22",
       },
     },
-    effectiveOptionComputed: async ({ snap }) => {
+    effectiveOptionComputed: async ({ snap, args }) => {
       expect(snap).toMatchSnapshot()
       expect(snap.base).toBe("core22")
+      expect(args).toMatchSnapshot()
       return Promise.resolve(false)
     },
   })
@@ -359,6 +367,7 @@ test.ifDevOrLinuxCi(
       expect(snap.parts).toBeUndefined()
       expect(snap["source-code"]).toBeUndefined()
       expect(snap.website).toBeUndefined()
+      expect(args).toMatchSnapshot()
       return Promise.resolve(false)
     },
   })

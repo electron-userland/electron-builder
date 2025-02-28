@@ -77,6 +77,25 @@ exports[`auto start 1`] = `
 
 exports[`auto start 2`] = `
 {
+  "argsForSnapshotTests": {
+    "arch": "amd64",
+    "excludedAppFiles": [
+      "chrome-sandbox",
+    ],
+    "executableName": "sep",
+    "extraAppArgs": [
+      "--no-sandbox",
+    ],
+    "template": {
+      "templateUrl": "electron4:amd64",
+    },
+  },
+  "isUseTemplateApp": true,
+}
+`;
+
+exports[`auto start 3`] = `
+{
   "linux": [
     {
       "arch": "x64",
@@ -150,6 +169,25 @@ exports[`base option 1`] = `
 `;
 
 exports[`base option 2`] = `
+{
+  "argsForSnapshotTests": {
+    "arch": "amd64",
+    "excludedAppFiles": [
+      "chrome-sandbox",
+    ],
+    "executableName": "testapp",
+    "extraAppArgs": [
+      "--no-sandbox",
+    ],
+    "template": {
+      "templateUrl": "electron4:amd64",
+    },
+  },
+  "isUseTemplateApp": true,
+}
+`;
+
+exports[`base option 3`] = `
 {
   "linux": [
     {
@@ -683,6 +721,25 @@ exports[`custom after, no desktop 1`] = `
 
 exports[`custom after, no desktop 2`] = `
 {
+  "argsForSnapshotTests": {
+    "arch": "amd64",
+    "excludedAppFiles": [
+      "chrome-sandbox",
+    ],
+    "executableName": "sep",
+    "extraAppArgs": [
+      "--no-sandbox",
+    ],
+    "template": {
+      "templateUrl": "electron4:amd64",
+    },
+  },
+  "isUseTemplateApp": true,
+}
+`;
+
+exports[`custom after, no desktop 3`] = `
+{
   "linux": [
     {
       "arch": "x64",
@@ -758,6 +815,25 @@ exports[`custom env 1`] = `
 
 exports[`custom env 2`] = `
 {
+  "argsForSnapshotTests": {
+    "arch": "amd64",
+    "excludedAppFiles": [
+      "chrome-sandbox",
+    ],
+    "executableName": "sep",
+    "extraAppArgs": [
+      "--no-sandbox",
+    ],
+    "template": {
+      "templateUrl": "electron4:amd64",
+    },
+  },
+  "isUseTemplateApp": true,
+}
+`;
+
+exports[`custom env 3`] = `
+{
   "linux": [
     {
       "arch": "x64",
@@ -832,6 +908,25 @@ exports[`default base 1`] = `
 
 exports[`default base 2`] = `
 {
+  "argsForSnapshotTests": {
+    "arch": "amd64",
+    "excludedAppFiles": [
+      "chrome-sandbox",
+    ],
+    "executableName": "testapp",
+    "extraAppArgs": [
+      "--no-sandbox",
+    ],
+    "template": {
+      "templateUrl": "electron4:amd64",
+    },
+  },
+  "isUseTemplateApp": true,
+}
+`;
+
+exports[`default base 3`] = `
+{
   "linux": [
     {
       "arch": "x64",
@@ -905,6 +1000,25 @@ exports[`default compression 1`] = `
 `;
 
 exports[`default compression 2`] = `
+{
+  "argsForSnapshotTests": {
+    "arch": "amd64",
+    "excludedAppFiles": [
+      "chrome-sandbox",
+    ],
+    "executableName": "sep",
+    "extraAppArgs": [
+      "--no-sandbox",
+    ],
+    "template": {
+      "templateUrl": "electron4:amd64",
+    },
+  },
+  "isUseTemplateApp": true,
+}
+`;
+
+exports[`default compression 3`] = `
 {
   "linux": [
     {
@@ -1686,6 +1800,25 @@ exports[`no desktop plugs 1`] = `
 
 exports[`no desktop plugs 2`] = `
 {
+  "argsForSnapshotTests": {
+    "arch": "amd64",
+    "excludedAppFiles": [
+      "chrome-sandbox",
+    ],
+    "executableName": "sep",
+    "extraAppArgs": [
+      "--no-sandbox",
+    ],
+    "template": {
+      "templateUrl": "electron4:amd64",
+    },
+  },
+  "isUseTemplateApp": true,
+}
+`;
+
+exports[`no desktop plugs 3`] = `
+{
   "linux": [
     {
       "arch": "x64",
@@ -2186,6 +2319,25 @@ exports[`slots option 1`] = `
 
 exports[`slots option 2`] = `
 {
+  "argsForSnapshotTests": {
+    "arch": "amd64",
+    "excludedAppFiles": [
+      "chrome-sandbox",
+    ],
+    "executableName": "sep",
+    "extraAppArgs": [
+      "--no-sandbox",
+    ],
+    "template": {
+      "templateUrl": "electron4:amd64",
+    },
+  },
+  "isUseTemplateApp": true,
+}
+`;
+
+exports[`slots option 3`] = `
+{
   "linux": [
     {
       "arch": "x64",
@@ -2195,7 +2347,7 @@ exports[`slots option 2`] = `
 }
 `;
 
-exports[`slots option 3`] = `
+exports[`slots option 4`] = `
 {
   "apps": {
     "sep": {
@@ -2268,7 +2420,26 @@ exports[`slots option 3`] = `
 }
 `;
 
-exports[`slots option 4`] = `
+exports[`slots option 5`] = `
+{
+  "argsForSnapshotTests": {
+    "arch": "amd64",
+    "excludedAppFiles": [
+      "chrome-sandbox",
+    ],
+    "executableName": "sep",
+    "extraAppArgs": [
+      "--no-sandbox",
+    ],
+    "template": {
+      "templateUrl": "electron4:amd64",
+    },
+  },
+  "isUseTemplateApp": true,
+}
+`;
+
+exports[`slots option 6`] = `
 {
   "linux": [
     {
@@ -2354,6 +2525,26 @@ exports[`use template app 1`] = `
 `;
 
 exports[`use template app 2`] = `
+{
+  "argsForSnapshotTests": {
+    "arch": "amd64",
+    "compression": "xz",
+    "excludedAppFiles": [
+      "chrome-sandbox",
+    ],
+    "executableName": "testapp",
+    "extraAppArgs": [
+      "--no-sandbox",
+    ],
+    "template": {
+      "templateUrl": "electron4:amd64",
+    },
+  },
+  "isUseTemplateApp": true,
+}
+`;
+
+exports[`use template app 3`] = `
 {
   "linux": [
     {
