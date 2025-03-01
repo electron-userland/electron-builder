@@ -457,3 +457,255 @@ exports[`mac/win/linux concurrent 8`] = `
 `;
 
 exports[`mac/win/linux concurrent 9`] = `"Test Application (test quite “ #378)"`;
+
+exports[`win concurrent - all targets 1`] = `
+{
+  "win": [
+    {
+      "arch": "arm64",
+      "file": "Test Concurrent-1.1.0-arm64.7z",
+      "safeArtifactName": "Test-Concurrent-1.1.0-arm64.7z",
+    },
+    {
+      "arch": "x64",
+      "file": "Test Concurrent-1.1.0-x64.7z",
+      "safeArtifactName": "Test-Concurrent-1.1.0-x64.7z",
+    },
+    {
+      "arch": "arm64",
+      "file": "Test Concurrent-1.1.0-arm64.appx",
+      "safeArtifactName": "Test-Concurrent-1.1.0-arm64.appx",
+    },
+    {
+      "arch": "x64",
+      "file": "Test Concurrent-1.1.0-x64.appx",
+      "safeArtifactName": "Test-Concurrent-1.1.0-x64.appx",
+    },
+    {
+      "arch": "arm64",
+      "file": "Test Concurrent-1.1.0-arm64.exe",
+      "safeArtifactName": "Test-Concurrent-1.1.0-arm64.exe",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "Test Concurrent-1.1.0-arm64.exe.blockmap",
+      "safeArtifactName": "Test-Concurrent-1.1.0-arm64.exe.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "arch": "x64",
+      "file": "Test Concurrent-1.1.0-x64.exe",
+      "safeArtifactName": "Test-Concurrent-1.1.0-x64.exe",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "Test Concurrent-1.1.0-x64.exe.blockmap",
+      "safeArtifactName": "Test-Concurrent-1.1.0-x64.exe.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "Test Concurrent-1.1.0.exe",
+      "safeArtifactName": "Test-Concurrent-1.1.0.exe",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "Test Concurrent-1.1.0.exe.blockmap",
+      "safeArtifactName": "Test-Concurrent-1.1.0.exe.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "arch": "arm64",
+      "file": "Test Concurrent-1.1.0-arm64.exe",
+      "safeArtifactName": "Test-Concurrent-1.1.0-arm64.exe",
+    },
+    {
+      "arch": "x64",
+      "file": "Test Concurrent-1.1.0-x64.exe",
+      "safeArtifactName": "Test-Concurrent-1.1.0-x64.exe",
+    },
+    {
+      "file": "Test Concurrent-1.1.0.exe",
+      "safeArtifactName": "Test-Concurrent-1.1.0.exe",
+    },
+    {
+      "arch": "x64",
+      "file": "RELEASES",
+    },
+    {
+      "arch": "arm64",
+      "file": "RELEASES",
+    },
+    {
+      "arch": "arm64",
+      "file": "Test Concurrent-1.1.0-arm64.exe",
+      "safeArtifactName": "TestApp-Setup-1.1.0-arm64.exe",
+    },
+    {
+      "arch": "x64",
+      "file": "Test Concurrent-1.1.0-x64.exe",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe",
+    },
+    {
+      "arch": "x64",
+      "file": "TestApp-1.1.0-full.nupkg",
+    },
+    {
+      "arch": "arm64",
+      "file": "TestApp-1.1.0-full.nupkg",
+    },
+    {
+      "arch": "arm64",
+      "file": "Test Concurrent-1.1.0-arm64.tar.bz2",
+      "safeArtifactName": "Test-Concurrent-1.1.0-arm64.tar.bz2",
+    },
+    {
+      "arch": "x64",
+      "file": "Test Concurrent-1.1.0-x64.tar.bz2",
+      "safeArtifactName": "Test-Concurrent-1.1.0-x64.tar.bz2",
+    },
+    {
+      "arch": "arm64",
+      "file": "Test Concurrent-1.1.0-arm64.tar.gz",
+      "safeArtifactName": "Test-Concurrent-1.1.0-arm64.tar.gz",
+    },
+    {
+      "arch": "x64",
+      "file": "Test Concurrent-1.1.0-x64.tar.gz",
+      "safeArtifactName": "Test-Concurrent-1.1.0-x64.tar.gz",
+    },
+    {
+      "arch": "arm64",
+      "file": "Test Concurrent-1.1.0-arm64.tar.xz",
+      "safeArtifactName": "Test-Concurrent-1.1.0-arm64.tar.xz",
+    },
+    {
+      "arch": "x64",
+      "file": "Test Concurrent-1.1.0-x64.tar.xz",
+      "safeArtifactName": "Test-Concurrent-1.1.0-x64.tar.xz",
+    },
+    {
+      "arch": "arm64",
+      "file": "Test Concurrent-1.1.0-arm64.zip",
+      "safeArtifactName": "Test-Concurrent-1.1.0-arm64.zip",
+    },
+    {
+      "arch": "x64",
+      "file": "Test Concurrent-1.1.0-x64.zip",
+      "safeArtifactName": "Test-Concurrent-1.1.0-x64.zip",
+    },
+  ],
+}
+`;
+
+exports[`win concurrent - all targets 2`] = `
+[
+  "lib/",
+  "lib/net45/",
+  "lib/net45/chrome_100_percent.pak",
+  "lib/net45/chrome_200_percent.pak",
+  "lib/net45/d3dcompiler_47.dll",
+  "lib/net45/ffmpeg.dll",
+  "lib/net45/icudtl.dat",
+  "lib/net45/libEGL.dll",
+  "lib/net45/libGLESv2.dll",
+  "lib/net45/LICENSE.electron.txt",
+  "lib/net45/LICENSES.chromium.html",
+  "lib/net45/resources.pak",
+  "lib/net45/snapshot_blob.bin",
+  "lib/net45/squirrel.exe",
+  "lib/net45/Test Concurrent.exe",
+  "lib/net45/Test Concurrent_ExecutionStub.exe",
+  "lib/net45/v8_context_snapshot.bin",
+  "lib/net45/vk_swiftshader.dll",
+  "lib/net45/vk_swiftshader_icd.json",
+  "lib/net45/vulkan-1.dll",
+  "lib/net45/locales/en-US.pak",
+  "lib/net45/resources/",
+  "lib/net45/resources/app.asar",
+  "package/",
+  "package/services/",
+  "package/services/metadata/",
+  "package/services/metadata/core-properties/",
+  "TestApp.nuspec",
+  "[Content_Types].xml",
+  "_rels/",
+  "_rels/.rels",
+]
+`;
+
+exports[`win concurrent - all targets 3`] = `
+[
+  "lib/",
+  "lib/net45/",
+  "lib/net45/chrome_100_percent.pak",
+  "lib/net45/chrome_200_percent.pak",
+  "lib/net45/d3dcompiler_47.dll",
+  "lib/net45/ffmpeg.dll",
+  "lib/net45/icudtl.dat",
+  "lib/net45/libEGL.dll",
+  "lib/net45/libGLESv2.dll",
+  "lib/net45/LICENSE.electron.txt",
+  "lib/net45/LICENSES.chromium.html",
+  "lib/net45/resources.pak",
+  "lib/net45/snapshot_blob.bin",
+  "lib/net45/squirrel.exe",
+  "lib/net45/Test Concurrent.exe",
+  "lib/net45/Test Concurrent_ExecutionStub.exe",
+  "lib/net45/v8_context_snapshot.bin",
+  "lib/net45/vk_swiftshader.dll",
+  "lib/net45/vk_swiftshader_icd.json",
+  "lib/net45/vulkan-1.dll",
+  "lib/net45/locales/en-US.pak",
+  "lib/net45/resources/",
+  "lib/net45/resources/app.asar",
+  "package/",
+  "package/services/",
+  "package/services/metadata/",
+  "package/services/metadata/core-properties/",
+  "TestApp.nuspec",
+  "[Content_Types].xml",
+  "_rels/",
+  "_rels/.rels",
+]
+`;
+
+exports[`win concurrent 1`] = `
+{
+  "win": [
+    {
+      "file": "TestApp Setup 1.1.0.exe",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "TestApp Setup 1.1.0.exe.blockmap",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
