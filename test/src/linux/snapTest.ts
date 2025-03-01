@@ -67,8 +67,8 @@ test.ifAll.ifDevOrLinuxCi("default stagePackages", async () => {
       effectiveOptionComputed: async ({ snap, args }) => {
         delete snap.parts.app.source
         expect(snap).toMatchSnapshot()
-        expect(args).not.toContain("--exclude")
-        return true
+        expect(args).toMatchSnapshot()
+        return Promise.resolve(true)
       },
     })
   }
@@ -104,10 +104,11 @@ test.ifAll.ifDevOrLinuxCi("buildPackages", async () => {
         useTemplateApp: false,
       },
     },
-    effectiveOptionComputed: async ({ snap }) => {
+    effectiveOptionComputed: async ({ snap, args }) => {
       delete snap.parts.app.source
       expect(snap).toMatchSnapshot()
-      return true
+      expect(args).toMatchSnapshot()
+      return Promise.resolve(true)
     },
   })
 })
@@ -143,8 +144,8 @@ test.ifDevOrLinuxCi("plugs option", async () => {
       effectiveOptionComputed: async ({ snap, args }) => {
         delete snap.parts.app.source
         expect(snap).toMatchSnapshot()
-        expect(args).not.toContain("--exclude")
-        return true
+        expect(args).toMatchSnapshot()
+        return Promise.resolve(true)
       },
     })
   }
@@ -176,7 +177,8 @@ test.ifDevOrLinuxCi("slots option", async () => {
       },
       effectiveOptionComputed: async ({ snap, args }) => {
         expect(snap).toMatchSnapshot()
-        return true
+        expect(args).toMatchSnapshot()
+        return Promise.resolve(false)
       },
     })
   }
@@ -197,9 +199,10 @@ test.ifDevOrLinuxCi(
         },
       },
     },
-    effectiveOptionComputed: async ({ snap }) => {
+    effectiveOptionComputed: async ({ snap, args }) => {
       expect(snap).toMatchSnapshot()
-      return true
+      expect(args).toMatchSnapshot()
+      return Promise.resolve(false)
     },
   })
 )
@@ -217,9 +220,10 @@ test.ifDevOrLinuxCi(
         after: ["bar"],
       },
     },
-    effectiveOptionComputed: async ({ snap }) => {
+    effectiveOptionComputed: async ({ snap, args }) => {
       expect(snap).toMatchSnapshot()
-      return true
+      expect(args).toMatchSnapshot()
+      return Promise.resolve(false)
     },
   })
 )
@@ -239,8 +243,8 @@ test.ifDevOrLinuxCi(
     },
     effectiveOptionComputed: async ({ snap, args }) => {
       expect(snap).toMatchSnapshot()
-      expect(args).toContain("--exclude")
-      return true
+      expect(args).toMatchSnapshot()
+      return Promise.resolve(false)
     },
   })
 )
@@ -261,7 +265,8 @@ test.ifAll.ifDevOrLinuxCi(
     effectiveOptionComputed: async ({ snap, args }) => {
       expect(snap).toMatchSnapshot()
       expect(snap.apps.sep.autostart).toEqual("sep.desktop")
-      return true
+      expect(args).toMatchSnapshot()
+      return Promise.resolve(false)
     },
   })
 )
@@ -278,7 +283,8 @@ test.ifDevOrLinuxCi(
     },
     effectiveOptionComputed: async ({ snap, args }) => {
       expect(snap).toMatchSnapshot()
-      return true
+      expect(args).toMatchSnapshot()
+      return Promise.resolve(false)
     },
   })
 )
@@ -300,8 +306,8 @@ test.ifDevOrLinuxCi(
     effectiveOptionComputed: async ({ snap, args }) => {
       expect(snap).toMatchSnapshot()
       expect(snap.compression).toBe("xz")
-      expect(args).toEqual(expect.arrayContaining(["--compression", "xz"]))
-      return true
+      expect(args).toMatchSnapshot()
+      return Promise.resolve(true)
     },
   })
 )
@@ -313,10 +319,11 @@ test.ifDevOrLinuxCi(
     config: {
       productName: "Sep",
     },
-    effectiveOptionComputed: async ({ snap }) => {
+    effectiveOptionComputed: async ({ snap, args }) => {
       expect(snap).toMatchSnapshot()
       expect(snap.base).toBe("core20")
-      return true
+      expect(args).toMatchSnapshot()
+      return Promise.resolve(false)
     },
   })
 )
@@ -331,10 +338,11 @@ test.ifDevOrLinuxCi(
         base: "core22",
       },
     },
-    effectiveOptionComputed: async ({ snap }) => {
+    effectiveOptionComputed: async ({ snap, args }) => {
       expect(snap).toMatchSnapshot()
       expect(snap.base).toBe("core22")
-      return true
+      expect(args).toMatchSnapshot()
+      return Promise.resolve(false)
     },
   })
 )
@@ -359,8 +367,8 @@ test.ifDevOrLinuxCi(
       expect(snap.parts).toBeUndefined()
       expect(snap["source-code"]).toBeUndefined()
       expect(snap.website).toBeUndefined()
-      expect(args).toEqual(expect.arrayContaining(["--exclude", "chrome-sandbox", "--compression", "xz"]))
-      return true
+      expect(args).toMatchSnapshot()
+      return Promise.resolve(false)
     },
   })
 )
