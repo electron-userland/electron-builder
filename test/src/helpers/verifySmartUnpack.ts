@@ -3,6 +3,7 @@ import { walk } from "builder-util"
 import { readFileSync } from "fs"
 import * as path from "path"
 import { toSystemIndependentPath } from "./packTester"
+import { ExpectStatic } from "vitest"
 
 export function removeUnstableProperties(data: any) {
   return JSON.parse(
@@ -23,7 +24,7 @@ export function removeUnstableProperties(data: any) {
   )
 }
 
-export async function verifySmartUnpack(resourceDir: string, additionalVerifications?: (asarFs: AsarFilesystem) => Promise<void>) {
+export async function verifySmartUnpack(expect: ExpectStatic, resourceDir: string, additionalVerifications?: (asarFs: AsarFilesystem) => Promise<void>) {
   const asarFs = await readAsar(path.join(resourceDir, "app.asar"))
   expect(await asarFs.readJson(`node_modules${path.sep}debug${path.sep}package.json`)).toMatchObject({
     name: "debug",

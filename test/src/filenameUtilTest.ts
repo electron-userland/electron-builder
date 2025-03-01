@@ -32,7 +32,7 @@ const tests = [
 
 describe("getCompleteExtname", () => {
   for (const [filename, expected] of tests) {
-    test(`get complete extname for ${filename}`, () => {
+    test(`get complete extname for ${filename}`, ({ expect }) => {
       const extname = getCompleteExtname(filename)
 
       expect(extname).toBe(expected)

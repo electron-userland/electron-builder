@@ -5,19 +5,19 @@ import { afterEach } from "vitest"
 
 const tmpDir = new TmpDir("mac-code-sign-test")
 
-test.ifMac("create keychain", async () => {
+test.ifMac("create keychain", async ({ expect }) => {
   const result = await createKeychain({ tmpDir, cscLink: CSC_LINK, cscKeyPassword: process.env.CSC_KEY_PASSWORD!, currentDir: process.cwd() })
   expect(result.keychainFile).not.toEqual("")
 })
 
 afterEach(() => tmpDir.cleanup())
 
-test.ifMac("create keychain with installers", async () => {
+test.ifMac("create keychain with installers", async ({ expect }) => {
   const result = await createKeychain({ tmpDir, cscLink: CSC_LINK, cscKeyPassword: process.env.CSC_KEY_PASSWORD!, currentDir: process.cwd() })
   expect(result.keychainFile).not.toEqual("")
 })
 
-test.ifDevOrLinuxCi("remove password from log", async () => {
+test.ifDevOrLinuxCi("remove password from log", async ({ expect }) => {
   expect(removePassword("seq -P foo -B")).toMatchSnapshot()
   expect(removePassword("pass:foo")).toMatchSnapshot()
   // noinspection SpellCheckingInspection

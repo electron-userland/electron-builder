@@ -6,10 +6,10 @@ import * as path from "path"
 import { Mode, RWX } from "stat-mode"
 import { assertThat } from "./helpers/fileAssert"
 import { app, appThrows, assertPack, checkDirContents, linuxDirTarget, modifyPackageJson } from "./helpers/packTester"
+import { ExpectStatic } from "vitest"
 
-test.ifDevOrLinuxCi(
-  "expand not defined env",
-  appThrows({
+test.ifDevOrLinuxCi("expand not defined env", ({ expect }) =>
+  appThrows(expect, {
     targets: linuxDirTarget,
     config: {
       asar: false,
@@ -21,9 +21,9 @@ test.ifDevOrLinuxCi(
 
 process.env.__NOT_BAR__ = "!**/bar"
 
-test.ifDevOrLinuxCi(
-  "files",
+test.ifDevOrLinuxCi("files", ({ expect }) =>
   app(
+    expect,
     {
       targets: linuxDirTarget,
       config: {
@@ -42,15 +42,15 @@ test.ifDevOrLinuxCi(
         ]),
       packed: context => {
         const resources = path.join(context.getResources(Platform.LINUX), "app")
-        return checkDirContents(resources)
+        return checkDirContents(expect, resources)
       },
     }
   )
 )
 
-test.ifDevOrLinuxCi(
-  "files.from asar",
+test.ifDevOrLinuxCi("files.from asar", ({ expect }) =>
   app(
+    expect,
     {
       targets: linuxDirTarget,
       config: {
@@ -80,9 +80,9 @@ test.ifDevOrLinuxCi(
   )
 )
 
-test.ifNotWindows(
-  "map resources",
+test.ifNotWindows("map resources", ({ expect }) =>
   app(
+    expect,
     {
       targets: linuxDirTarget,
       config: {
@@ -104,18 +104,19 @@ test.ifNotWindows(
       packed: context => {
         const resources = context.getResources(Platform.LINUX)
         return Promise.all([
-          assertThat(path.join(resources, "app", "foo", "old")).doesNotExist(),
-          assertThat(path.join(resources, "foo", "new")).isFile(),
-          assertThat(path.join(resources, "license.txt")).isFile(),
+          assertThat(expect, path.join(resources, "app", "foo", "old")).doesNotExist(),
+          assertThat(expect, path.join(resources, "foo", "new")).isFile(),
+          assertThat(expect, path.join(resources, "license.txt")).isFile(),
         ])
       },
     }
   )
 )
 
-async function doExtraResourcesTest(platform: Platform) {
+async function doExtraResourcesTest(expect: ExpectStatic, platform: Platform) {
   const osName = platform.buildConfigurationKey
   await assertPack(
+    expect,
     "test-app-one",
     {
       // to check NuGet package
@@ -143,34 +144,35 @@ async function doExtraResourcesTest(platform: Platform) {
       packed: async context => {
         const resourcesDir = context.getResources(platform, archFromString(process.arch))
         return Promise.all([
-          assertThat(path.resolve(resourcesDir, "foo")).isDirectory(),
-          assertThat(path.resolve(resourcesDir, "foo", "nameWithoutDot")).isFile(),
-          assertThat(path.resolve(resourcesDir, "bar", "hello.txt")).isFile(),
-          assertThat(path.resolve(resourcesDir, "dir-relative", "f.txt")).isFile(),
-          assertThat(path.resolve(resourcesDir, "bar", `${process.arch}.txt`)).isFile(),
-          assertThat(path.resolve(resourcesDir, osName, `${process.arch}.txt`)).isFile(),
-          assertThat(path.resolve(resourcesDir, "platformSpecificR")).isFile(),
-          assertThat(path.resolve(resourcesDir, "ignoreMe.txt")).doesNotExist(),
+          assertThat(expect, path.resolve(resourcesDir, "foo")).isDirectory(),
+          assertThat(expect, path.resolve(resourcesDir, "foo", "nameWithoutDot")).isFile(),
+          assertThat(expect, path.resolve(resourcesDir, "bar", "hello.txt")).isFile(),
+          assertThat(expect, path.resolve(resourcesDir, "dir-relative", "f.txt")).isFile(),
+          assertThat(expect, path.resolve(resourcesDir, "bar", `${process.arch}.txt`)).isFile(),
+          assertThat(expect, path.resolve(resourcesDir, osName, `${process.arch}.txt`)).isFile(),
+          assertThat(expect, path.resolve(resourcesDir, "platformSpecificR")).isFile(),
+          assertThat(expect, path.resolve(resourcesDir, "ignoreMe.txt")).doesNotExist(),
         ])
       },
     }
   )
 }
 
-test.ifDevOrLinuxCi("extraResources on Linux", () => doExtraResourcesTest(Platform.LINUX))
+test.ifDevOrLinuxCi("extraResources on Linux", ({ expect }) => doExtraResourcesTest(expect, Platform.LINUX))
 
 // Squirrel.Windows is not supported on macOS anymore (32-bit)
 // Skipped due to bug in rimraf on Windows: `at fixWinEPERM (../node_modules/.pnpm/fs-extra@8.1.0/node_modules/fs-extra/lib/remove/rimraf.js:117:5)`
-test.ifLinux("extraResources on Windows", () => doExtraResourcesTest(Platform.WINDOWS))
+test.ifLinux("extraResources on Windows", ({ expect }) => doExtraResourcesTest(expect, Platform.WINDOWS))
 
-test.ifMac("extraResources on macOS", () => doExtraResourcesTest(Platform.MAC))
+test.ifMac("extraResources on macOS", ({ expect }) => doExtraResourcesTest(expect, Platform.MAC))
 
-test.ifNotWindows.ifNotCiWin("extraResources - two-package", () => {
+test.ifNotWindows.ifNotCiWin("extraResources - two-package", ({ expect }) => {
   const platform = Platform.LINUX
   const osName = platform.buildConfigurationKey
 
   //noinspection SpellCheckingInspection
   return assertPack(
+    expect,
     "test-app",
     {
       // to check NuGet package
@@ -202,19 +204,19 @@ test.ifNotWindows.ifNotCiWin("extraResources - two-package", () => {
         const appDir = path.join(resourcesDir, "app")
 
         await Promise.all([
-          assertThat(path.join(resourcesDir, "foo")).isDirectory(),
-          assertThat(path.join(appDir, "foo")).doesNotExist(),
+          assertThat(expect, path.join(resourcesDir, "foo")).isDirectory(),
+          assertThat(expect, path.join(appDir, "foo")).doesNotExist(),
 
-          assertThat(path.join(resourcesDir, "foo", "nameWithoutDot")).isFile(),
-          assertThat(path.join(appDir, "foo", "nameWithoutDot")).doesNotExist(),
+          assertThat(expect, path.join(resourcesDir, "foo", "nameWithoutDot")).isFile(),
+          assertThat(expect, path.join(appDir, "foo", "nameWithoutDot")).doesNotExist(),
 
-          assertThat(path.join(resourcesDir, "bar", "hello.txt")).isFile(),
-          assertThat(path.join(resourcesDir, "bar", `${process.arch}.txt`)).isFile(),
-          assertThat(path.join(appDir, "bar", `${process.arch}.txt`)).doesNotExist(),
+          assertThat(expect, path.join(resourcesDir, "bar", "hello.txt")).isFile(),
+          assertThat(expect, path.join(resourcesDir, "bar", `${process.arch}.txt`)).isFile(),
+          assertThat(expect, path.join(appDir, "bar", `${process.arch}.txt`)).doesNotExist(),
 
-          assertThat(path.join(resourcesDir, osName, `${process.arch}.txt`)).isFile(),
-          assertThat(path.join(resourcesDir, "platformSpecificR")).isFile(),
-          assertThat(path.join(resourcesDir, "ignoreMe.txt")).doesNotExist(),
+          assertThat(expect, path.join(resourcesDir, osName, `${process.arch}.txt`)).isFile(),
+          assertThat(expect, path.join(resourcesDir, "platformSpecificR")).isFile(),
+          assertThat(expect, path.join(resourcesDir, "ignoreMe.txt")).doesNotExist(),
 
           allCan(path.join(resourcesDir, "executable"), true),
           allCan(path.join(resourcesDir, "executableOnlyOwner"), true),
@@ -230,7 +232,7 @@ test.ifNotWindows.ifNotCiWin("extraResources - two-package", () => {
 
 // https://github.com/electron-userland/electron-builder/pull/998
 // copyDir walks to a symlink referencing a file that has not yet been copied by postponing the linking step until after the full walk is complete
-test.ifNotWindows("postpone symlink", async () => {
+test.ifNotWindows("postpone symlink", async ({ expect }) => {
   const tmpDir = new TmpDir("files-test")
   const source = await tmpDir.getTempDir()
   const aSourceFile = path.join(source, "z", "Z")

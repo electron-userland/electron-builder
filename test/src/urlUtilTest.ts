@@ -1,19 +1,19 @@
 import { blockmapFiles, newUrlFromBase } from "electron-updater/out/util"
 import { URL } from "url"
 
-test("newUrlFromBase", () => {
+test("newUrlFromBase", ({ expect }) => {
   const fileUrl = new URL("https://AWS_S3_HOST/bucket-yashraj/electron%20Setup%2011.0.3.exe")
   const newBlockMapUrl = newUrlFromBase(`${fileUrl.pathname}.blockmap`, fileUrl)
   expect(newBlockMapUrl.href).toBe("https://aws_s3_host/bucket-yashraj/electron%20Setup%2011.0.3.exe.blockmap")
 })
 
-test("add no cache", () => {
+test("add no cache", ({ expect }) => {
   const baseUrl = new URL("https://gitlab.com/artifacts/master/raw/dist?job=build_electron_win")
   const newBlockMapUrl = newUrlFromBase("latest.yml", baseUrl, true)
   expect(newBlockMapUrl.href).toBe("https://gitlab.com/artifacts/master/raw/latest.yml?job=build_electron_win")
 })
 
-test("create blockmap urls", () => {
+test("create blockmap urls", ({ expect }) => {
   const oldVersion = "1.1.9-2+ed8ccd"
   const newVersion = "1.1.9-3+be4a1f"
   const baseUrlString = `https://gitlab.com/artifacts/master/raw/electron%20Setup%20${newVersion}.exe`
