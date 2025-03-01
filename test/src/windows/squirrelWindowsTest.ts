@@ -3,7 +3,7 @@ import * as path from "path"
 import { CheckingWinPackager } from "../helpers/CheckingPackager"
 import { app, assertPack, copyTestAsset } from "../helpers/packTester"
 
-test.ifAll.ifNotCiMac(
+test.ifNotCiMac(
   "Squirrel.Windows",
   app(
     {
@@ -29,7 +29,7 @@ test.ifAll.ifNotCiMac(
   )
 )
 
-test.ifAll.ifNotCiMac(
+test.ifNotCiMac(
   "artifactName",
   app({
     targets: Platform.WINDOWS.createTarget(["squirrel", "zip"]),
@@ -56,7 +56,7 @@ test.skip(
   })
 )
 
-test.ifAll(
+test(
   "squirrel window arm64 msi",
   app(
     {
@@ -71,7 +71,7 @@ test.ifAll(
   )
 )
 
-test.ifAll(
+test(
   "squirrel window x64 msi",
   app(
     {
@@ -86,7 +86,7 @@ test.ifAll(
   )
 )
 
-test.ifAll(
+test(
   "squirrel window ia32 msi",
   app(
     {
@@ -101,7 +101,7 @@ test.ifAll(
   )
 )
 
-test.ifAll("detect install-spinner", () => {
+test("detect install-spinner", () => {
   let platformPackager: CheckingWinPackager | null = null
   let loadingGifPath: string | null = null
 

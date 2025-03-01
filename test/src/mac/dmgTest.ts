@@ -112,7 +112,7 @@ test.ifMac("custom background - new way", () => {
   )
 })
 
-test.ifAll.ifMac("retina background as 2 png", () => {
+test.ifMac("retina background as 2 png", () => {
   return assertPack(
     "test-app-one",
     {
@@ -147,7 +147,7 @@ test.ifAll.ifMac("retina background as 2 png", () => {
   )
 })
 
-test.skip.ifMac.ifAll("no Applications link", () => {
+test.ifMac.skip("no Applications link", () => {
   return assertPack("test-app-one", {
     targets: defaultTarget,
     config: {
@@ -240,7 +240,7 @@ test.ifMac(
 )
 
 // test also darkModeSupport
-test.ifAll.ifMac(
+test.ifMac(
   "bundleShortVersion",
   app({
     targets: dmgTarget,
@@ -256,7 +256,7 @@ test.ifAll.ifMac(
   })
 )
 
-test.ifAll.ifMac("disable dmg icon (light), bundleVersion", () => {
+test.ifMac("disable dmg icon (light), bundleVersion", () => {
   return assertPack("test-app-one", {
     targets: defaultTarget,
     config: {
@@ -284,7 +284,7 @@ const packagerOptions = {
   },
 }
 
-test.ifAll.ifMac(
+test.ifMac(
   "multi language license",
   app(packagerOptions, {
     projectDirCreated: projectDir => {
@@ -297,7 +297,7 @@ test.ifAll.ifMac(
   })
 )
 
-test.ifAll.ifMac(
+test.ifMac(
   "license ja",
   app(packagerOptions, {
     projectDirCreated: projectDir => {
@@ -306,7 +306,7 @@ test.ifAll.ifMac(
   })
 )
 
-test.ifAll.ifMac(
+test.ifMac(
   "license en",
   app(packagerOptions, {
     projectDirCreated: projectDir => {
@@ -315,7 +315,7 @@ test.ifAll.ifMac(
   })
 )
 
-test.ifAll.ifMac(
+test.ifMac(
   "license rtf",
   app(packagerOptions, {
     projectDirCreated: projectDir => {
@@ -324,7 +324,7 @@ test.ifAll.ifMac(
   })
 )
 
-test.ifAll.ifMac(
+test.ifMac(
   "license buttons config",
   app(
     {

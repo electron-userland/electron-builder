@@ -29,6 +29,7 @@
     "typings/*.d.ts",
     "src/**/*.ts"
   ],
+  "types": ["vitest/globals"],
   "exclude": [
   ]
 }

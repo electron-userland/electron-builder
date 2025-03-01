@@ -3,7 +3,7 @@ import * as path from "path"
 import { app, copyTestAsset, getFixtureDir } from "../helpers/packTester"
 
 // build in parallel - https://github.com/electron-userland/electron-builder/issues/1340#issuecomment-286061789
-test.ifAll.ifNotCiMac(
+test.ifNotCiMac(
   "portable",
   app({
     targets: Platform.WINDOWS.createTarget(["portable", "nsis"]),
@@ -26,7 +26,7 @@ test.ifAll.ifNotCiMac(
   })
 )
 
-test.ifAll.ifDevOrWinCi(
+test.ifDevOrWinCi(
   "portable zip",
   app({
     targets: Platform.WINDOWS.createTarget("portable"),
@@ -41,7 +41,7 @@ test.ifAll.ifDevOrWinCi(
   })
 )
 
-test.ifAll.ifNotCi(
+test.ifNotCi(
   "portable zip several archs",
   app({
     targets: Platform.WINDOWS.createTarget("portable", Arch.ia32, Arch.x64),

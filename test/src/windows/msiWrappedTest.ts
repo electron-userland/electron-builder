@@ -9,7 +9,7 @@ const parser = new XMLParser({
   parseTagValue: true,
 })
 
-test.ifAll.ifDevOrWinCi(
+test.ifDevOrWinCi(
   "msiWrapped requires nsis",
   appThrows(
     {
@@ -43,7 +43,7 @@ test.ifAll.ifDevOrWinCi(
   )
 )
 
-test.ifAll.ifDevOrWinCi(
+test.ifDevOrWinCi(
   "msiWrapped allows capitalized nsis target",
   app(
     {
@@ -63,7 +63,7 @@ test.ifAll.ifDevOrWinCi(
   )
 )
 
-test.ifAll.ifDevOrWinCi(
+test.ifDevOrWinCi(
   "msiWrapped includes packaged exe",
   app({
     targets: Platform.WINDOWS.createTarget(["msiWrapped", "nsis"]),
@@ -88,7 +88,7 @@ test.ifAll.ifDevOrWinCi(
   })
 )
 
-test.ifAll.ifDevOrWinCi(
+test.ifDevOrWinCi(
   "msiWrapped impersonate no if not provided",
   app({
     targets: Platform.WINDOWS.createTarget(["msiWrapped", "nsis"]),
@@ -112,7 +112,7 @@ test.ifAll.ifDevOrWinCi(
   })
 )
 
-test.ifAll.ifDevOrWinCi(
+test.ifDevOrWinCi(
   "msiWrapped impersonate yes if true",
   app({
     targets: Platform.WINDOWS.createTarget(["msiWrapped", "nsis"]),
@@ -139,7 +139,7 @@ test.ifAll.ifDevOrWinCi(
   })
 )
 
-test.ifAll.ifDevOrWinCi(
+test.ifDevOrWinCi(
   "msiWrapped wrappedInstallerArgs provided",
   app({
     targets: Platform.WINDOWS.createTarget(["msiWrapped", "nsis"]),
