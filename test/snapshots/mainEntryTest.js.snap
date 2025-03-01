@@ -1,4 +1,4 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
 exports[`invalid main in the app package.json (custom asar) 1`] = `"Application entry file "main.js" in the "<path>/app.asar" is corrupted: Error: "main.js" was not found in this archive"`;
 

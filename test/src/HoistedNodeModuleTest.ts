@@ -3,7 +3,7 @@ import { Platform, Arch, DIR_TARGET } from "electron-builder"
 import { outputFile } from "fs-extra"
 import * as path from "path"
 
-test.ifAll("yarn workspace", () =>
+test("yarn workspace", () =>
   assertPack(
     "test-app-yarn-workspace",
     {
@@ -13,10 +13,9 @@ test.ifAll("yarn workspace", () =>
     {
       packed: context => verifyAsarFileTree(context.getResources(Platform.LINUX)),
     }
-  )
-)
+  ))
 
-test.ifAll("conflict versions", () =>
+test("conflict versions", () =>
   assertPack(
     "test-app-yarn-workspace-version-conflict",
     {
@@ -26,10 +25,9 @@ test.ifAll("conflict versions", () =>
     {
       packed: context => verifyAsarFileTree(context.getResources(Platform.LINUX)),
     }
-  )
-)
+  ))
 
-test.ifAll("yarn several workspaces", () =>
+test("yarn several workspaces", () =>
   assertPack(
     "test-app-yarn-several-workspace",
     {
@@ -39,10 +37,9 @@ test.ifAll("yarn several workspaces", () =>
     {
       packed: context => verifyAsarFileTree(context.getResources(Platform.LINUX)),
     }
-  )
-)
+  ))
 
-test.ifAll("yarn several workspaces and asarUnpack", () =>
+test("yarn several workspaces and asarUnpack", () =>
   assertPack(
     "test-app-yarn-several-workspace",
     {
@@ -55,10 +52,9 @@ test.ifAll("yarn several workspaces and asarUnpack", () =>
     {
       packed: context => verifyAsarFileTree(context.getResources(Platform.LINUX)),
     }
-  )
-)
+  ))
 
-test.ifAll("yarn two package.json w/ native module", () =>
+test("yarn two package.json w/ native module", () =>
   assertPack(
     "test-app-two-native-modules",
     {
@@ -67,11 +63,10 @@ test.ifAll("yarn two package.json w/ native module", () =>
     {
       packed: context => verifyAsarFileTree(context.getResources(Platform.LINUX)),
     }
-  )
-)
+  ))
 
 // https://github.com/electron-userland/electron-builder/issues/8493
-test.ifAll("pnpm es5-ext without hoisted config", () =>
+test("pnpm es5-ext without hoisted config", () =>
   assertPack(
     "test-app-hoisted",
     {
@@ -91,10 +86,9 @@ test.ifAll("pnpm es5-ext without hoisted config", () =>
       },
       packed: context => verifyAsarFileTree(context.getResources(Platform.LINUX)),
     }
-  )
-)
+  ))
 
-test.ifAll("pnpm optional dependencies", () =>
+test("pnpm optional dependencies", () =>
   assertPack(
     "test-app-hoisted",
     {
@@ -117,10 +111,9 @@ test.ifAll("pnpm optional dependencies", () =>
       },
       packed: context => verifyAsarFileTree(context.getResources(Platform.LINUX)),
     }
-  )
-)
+  ))
 
-test.ifAll("yarn electron-clear-data", () =>
+test("yarn electron-clear-data", () =>
   assertPack(
     "test-app-hoisted",
     {
@@ -143,10 +136,9 @@ test.ifAll("yarn electron-clear-data", () =>
       },
       packed: context => verifyAsarFileTree(context.getResources(Platform.WINDOWS)),
     }
-  )
-)
+  ))
 
-test.ifAll("npm electron-clear-data", () =>
+test("npm electron-clear-data", () =>
   assertPack(
     "test-app-hoisted",
     {
@@ -169,11 +161,10 @@ test.ifAll("npm electron-clear-data", () =>
       },
       packed: context => verifyAsarFileTree(context.getResources(Platform.WINDOWS)),
     }
-  )
-)
+  ))
 
 // https://github.com/electron-userland/electron-builder/issues/8842
-test.ifAll("yarn some module add by manual instead of install", () =>
+test("yarn some module add by manual instead of install", () =>
   assertPack(
     "test-app-hoisted",
     {
@@ -192,11 +183,10 @@ test.ifAll("yarn some module add by manual instead of install", () =>
       },
       packed: context => verifyAsarFileTree(context.getResources(Platform.WINDOWS)),
     }
-  )
-)
+  ))
 
 //https://github.com/electron-userland/electron-builder/issues/8857
-test.ifAll("yarn max stack", () =>
+test("yarn max stack", () =>
   assertPack(
     "test-app-hoisted",
     {
@@ -219,7 +209,7 @@ test.ifAll("yarn max stack", () =>
   )
 )
 
-test.ifAll("pnpm max stack", () =>
+test("pnpm max stack", () =>
   assertPack(
     "test-app-hoisted",
     {
@@ -239,11 +229,11 @@ test.ifAll("pnpm max stack", () =>
       },
       packed: context => verifyAsarFileTree(context.getResources(Platform.LINUX)),
     }
-  )
+  ),
 )
 
 //github.com/electron-userland/electron-builder/issues/8842
-test.ifAll("yarn ms", () =>
+test("yarn ms", () =>
   assertPack(
     "test-app-hoisted",
     {
@@ -271,7 +261,7 @@ test.ifAll("yarn ms", () =>
 )
 
 //github.com/electron-userland/electron-builder/issues/8426
-test.ifAll("yarn parse-asn1", () =>
+test("yarn parse-asn1", () =>
   assertPack(
     "test-app-hoisted",
     {
@@ -291,11 +281,10 @@ test.ifAll("yarn parse-asn1", () =>
       },
       packed: context => verifyAsarFileTree(context.getResources(Platform.LINUX)),
     }
-  )
-)
+  ))
 
 //github.com/electron-userland/electron-builder/issues/8431
-test.ifAll("npm tar", () =>
+test("npm tar", () =>
   assertPack(
     "test-app-hoisted",
     {
@@ -319,7 +308,7 @@ test.ifAll("npm tar", () =>
 )
 
 //github.com/electron-userland/electron-builder/issues/8881
-test.ifAll("pnpm node-linker=hoisted", () =>
+test("pnpm node-linker=hoisted", () =>
   assertPack(
     "test-app-hoisted",
     {
@@ -342,7 +331,7 @@ test.ifAll("pnpm node-linker=hoisted", () =>
     }
   )
 )
-test.ifAll("pnpm shamefully-hoist=true", () =>
+test("pnpm shamefully-hoist=true", () =>
   assertPack(
     "test-app-hoisted",
     {
@@ -365,7 +354,7 @@ test.ifAll("pnpm shamefully-hoist=true", () =>
     }
   )
 )
-test.ifAll("pnpm public-hoist-pattern=*", () =>
+test("pnpm public-hoist-pattern=*", () =>
   assertPack(
     "test-app-hoisted",
     {
@@ -386,5 +375,4 @@ test.ifAll("pnpm public-hoist-pattern=*", () =>
       },
       packed: context => verifyAsarFileTree(context.getResources(Platform.LINUX)),
     }
-  )
-)
+  ))

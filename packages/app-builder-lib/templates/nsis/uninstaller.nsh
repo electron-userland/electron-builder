@@ -141,6 +141,10 @@ Section "un.install"
 
   !insertmacro setLinkVars
 
+  !ifmacrodef customUnInstall
+    !insertmacro customUnInstall
+  !endif
+
   # delete the installed files
   !ifmacrodef customRemoveFiles
     !insertmacro customRemoveFiles
@@ -234,10 +238,6 @@ Section "un.install"
     DeleteRegKey SHELL_CONTEXT "${UNINSTALL_REGISTRY_KEY_2}"
   !endif
   DeleteRegKey SHELL_CONTEXT "${INSTALL_REGISTRY_KEY}"
-
-  !ifmacrodef customUnInstall
-    !insertmacro customUnInstall
-  !endif
 
   !ifdef ONE_CLICK
     !insertmacro quitSuccess
