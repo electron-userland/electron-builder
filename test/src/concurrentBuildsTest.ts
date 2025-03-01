@@ -15,24 +15,19 @@ const config: Configuration = {
 }
 const projectDirCreated = async (projectDir: string, tmpDir: TmpDir) => {
   const buildConfig = (data: any) => ({
-    name: "test-concurrent",
+    ...data,
+    name: "test-concurrent", // needs to be lowercase for fpm targets
     version: "1.0.0",
     build: {   ...data.build, ...config},
   })
   await modifyPackageJson(
     projectDir,
-    (data: any) => ({
-      ...data,
-      ...buildConfig(data),
-    }),
+    (data: any) => data = buildConfig(data),
     true
   )
   await modifyPackageJson(
     projectDir,
-    (data: any) => ({
-      ...data,
-      ...buildConfig(data),
-    }),
+    (data: any) => data = buildConfig(data),
     false
   )
 }
@@ -93,7 +88,7 @@ test.ifNotMac("win concurrent", () => {
   )
 })
 
-test.ifLinuxOrDevMac("linux concurrent", () => {
+test.ifNotWindows("linux concurrent", () => {
   const targets = linuxTargets
   return assertPack(
     "test-app",
@@ -107,7 +102,7 @@ test.ifLinuxOrDevMac("linux concurrent", () => {
   )
 })
 
-test.only("win concurrent - all targets", () => {
+test.ifWindows("win concurrent - all targets", () => {
   const targetList = [DIR_TARGET, `appx`, `nsis`, `portable`, `squirrel`, `7z`, `zip`, `tar.xz`, `tar.gz`, `tar.bz2`]
   const targets = Platform.WINDOWS.createTarget(targetList, Arch.x64, Arch.arm64)
   return assertPack(

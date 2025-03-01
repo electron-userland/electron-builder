@@ -11,7 +11,7 @@
           "internalConsoleOptions": "openOnFirstSessionStart",
           "env": {
             "TEST_FILES": "concurrentBuildsTest",
-            "UPDATE_SNAPSHOT": "true"
+            "UPDATE_SNAPSHOT": "false"
           }
       }
   ]

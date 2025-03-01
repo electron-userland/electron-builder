@@ -5,29 +5,16 @@ exports[`mac concurrent 1`] = `
   "mac": [
     {
       "arch": "universal",
-      "file": "TestApp-1.1.0-universal.dmg",
+      "file": "Test Concurrent-1.1.0-universal.dmg",
+      "safeArtifactName": "Test-Concurrent-1.1.0-universal.dmg",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
     {
-      "file": "TestApp-1.1.0-universal.dmg.blockmap",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "arch": "x64",
-      "file": "TestApp-1.1.0.dmg",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "file": "TestApp-1.1.0.dmg.blockmap",
+      "file": "Test Concurrent-1.1.0-universal.dmg.blockmap",
+      "safeArtifactName": "Test-Concurrent-1.1.0-universal.dmg.blockmap",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
@@ -35,15 +22,16 @@ exports[`mac concurrent 1`] = `
     },
     {
       "arch": "x64",
-      "file": "TestApp-1.1.0-mac.zip",
+      "file": "Test Concurrent-1.1.0-x64.dmg",
+      "safeArtifactName": "Test-Concurrent-1.1.0-x64.dmg",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
     {
-      "file": "TestApp-1.1.0-mac.zip.blockmap",
-      "safeArtifactName": "TestApp-1.1.0-mac.zip.blockmap",
+      "file": "Test Concurrent-1.1.0-x64.dmg.blockmap",
+      "safeArtifactName": "Test-Concurrent-1.1.0-x64.dmg.blockmap",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
@@ -51,15 +39,33 @@ exports[`mac concurrent 1`] = `
     },
     {
       "arch": "universal",
-      "file": "TestApp-1.1.0-universal-mac.zip",
+      "file": "Test Concurrent-1.1.0-universal.zip",
+      "safeArtifactName": "Test-Concurrent-1.1.0-universal.zip",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
     {
-      "file": "TestApp-1.1.0-universal-mac.zip.blockmap",
-      "safeArtifactName": "TestApp-1.1.0-universal-mac.zip.blockmap",
+      "file": "Test Concurrent-1.1.0-universal.zip.blockmap",
+      "safeArtifactName": "Test Concurrent-1.1.0-universal.zip.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "arch": "x64",
+      "file": "Test Concurrent-1.1.0-x64.zip",
+      "safeArtifactName": "Test-Concurrent-1.1.0-x64.zip",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "Test Concurrent-1.1.0-x64.zip.blockmap",
+      "safeArtifactName": "Test Concurrent-1.1.0-x64.zip.blockmap",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
@@ -71,12 +77,12 @@ exports[`mac concurrent 1`] = `
 
 exports[`mac concurrent 2`] = `
 {
-  "CFBundleDisplayName": "TestApp",
-  "CFBundleExecutable": "TestApp",
+  "CFBundleDisplayName": "Test Concurrent",
+  "CFBundleExecutable": "Test Concurrent",
   "CFBundleIconFile": "icon.icns",
-  "CFBundleIdentifier": "org.electron-builder.testApp",
+  "CFBundleIdentifier": "test-concurrent",
   "CFBundleInfoDictionaryVersion": "6.0",
-  "CFBundleName": "TestApp",
+  "CFBundleName": "Test Concurrent",
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
   "ElectronAsarIntegrity": {
@@ -100,12 +106,12 @@ exports[`mac concurrent 2`] = `
 
 exports[`mac concurrent 3`] = `
 {
-  "CFBundleDisplayName": "TestApp",
-  "CFBundleExecutable": "TestApp",
+  "CFBundleDisplayName": "Test Concurrent",
+  "CFBundleExecutable": "Test Concurrent",
   "CFBundleIconFile": "icon.icns",
-  "CFBundleIdentifier": "org.electron-builder.testApp",
+  "CFBundleIdentifier": "test-concurrent",
   "CFBundleInfoDictionaryVersion": "6.0",
-  "CFBundleName": "TestApp",
+  "CFBundleName": "Test Concurrent",
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
   "ElectronAsarIntegrity": {
@@ -132,7 +138,8 @@ exports[`mac/win/linux concurrent 1`] = `
   "linux": [
     {
       "arch": "armv7l",
-      "file": "TestApp-1.1.0-armv7l.AppImage",
+      "file": "Test Concurrent-1.1.0-armv7l.AppImage",
+      "safeArtifactName": "Test-Concurrent-1.1.0-armv7l.AppImage",
       "updateInfo": {
         "blockMapSize": "@blockMapSize",
         "sha512": "@sha512",
@@ -141,7 +148,8 @@ exports[`mac/win/linux concurrent 1`] = `
     },
     {
       "arch": "x64",
-      "file": "TestApp-1.1.0.AppImage",
+      "file": "Test Concurrent-1.1.0-x86_64.AppImage",
+      "safeArtifactName": "Test-Concurrent-1.1.0-x86_64.AppImage",
       "updateInfo": {
         "blockMapSize": "@blockMapSize",
         "sha512": "@sha512",
@@ -150,47 +158,34 @@ exports[`mac/win/linux concurrent 1`] = `
     },
     {
       "arch": "x64",
-      "file": "TestApp_1.1.0_amd64.deb",
+      "file": "Test Concurrent-1.1.0-amd64.deb",
     },
     {
       "arch": "armv7l",
-      "file": "TestApp_1.1.0_armv7l.deb",
+      "file": "Test Concurrent-1.1.0-armv7l.deb",
     },
     {
       "arch": "armv7l",
-      "file": "TestApp-1.1.0.armv7l.rpm",
+      "file": "Test Concurrent-1.1.0-armv7l.rpm",
     },
     {
       "arch": "x64",
-      "file": "TestApp-1.1.0.x86_64.rpm",
+      "file": "Test Concurrent-1.1.0-x86_64.rpm",
     },
   ],
   "mac": [
     {
       "arch": "universal",
-      "file": "TestApp-1.1.0-universal.dmg",
+      "file": "Test Concurrent-1.1.0-universal.dmg",
+      "safeArtifactName": "Test-Concurrent-1.1.0-universal.dmg",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
     {
-      "file": "TestApp-1.1.0-universal.dmg.blockmap",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "arch": "x64",
-      "file": "TestApp-1.1.0.dmg",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "file": "TestApp-1.1.0.dmg.blockmap",
+      "file": "Test Concurrent-1.1.0-universal.dmg.blockmap",
+      "safeArtifactName": "Test-Concurrent-1.1.0-universal.dmg.blockmap",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
@@ -198,15 +193,16 @@ exports[`mac/win/linux concurrent 1`] = `
     },
     {
       "arch": "x64",
-      "file": "TestApp-1.1.0-mac.zip",
+      "file": "Test Concurrent-1.1.0-x64.dmg",
+      "safeArtifactName": "Test-Concurrent-1.1.0-x64.dmg",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
     {
-      "file": "TestApp-1.1.0-mac.zip.blockmap",
-      "safeArtifactName": "TestApp-1.1.0-mac.zip.blockmap",
+      "file": "Test Concurrent-1.1.0-x64.dmg.blockmap",
+      "safeArtifactName": "Test-Concurrent-1.1.0-x64.dmg.blockmap",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
@@ -214,15 +210,33 @@ exports[`mac/win/linux concurrent 1`] = `
     },
     {
       "arch": "universal",
-      "file": "TestApp-1.1.0-universal-mac.zip",
+      "file": "Test Concurrent-1.1.0-universal.zip",
+      "safeArtifactName": "Test-Concurrent-1.1.0-universal.zip",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
     {
-      "file": "TestApp-1.1.0-universal-mac.zip.blockmap",
-      "safeArtifactName": "TestApp-1.1.0-universal-mac.zip.blockmap",
+      "file": "Test Concurrent-1.1.0-universal.zip.blockmap",
+      "safeArtifactName": "Test Concurrent-1.1.0-universal.zip.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "arch": "x64",
+      "file": "Test Concurrent-1.1.0-x64.zip",
+      "safeArtifactName": "Test-Concurrent-1.1.0-x64.zip",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "Test Concurrent-1.1.0-x64.zip.blockmap",
+      "safeArtifactName": "Test Concurrent-1.1.0-x64.zip.blockmap",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
@@ -231,16 +245,50 @@ exports[`mac/win/linux concurrent 1`] = `
   ],
   "win": [
     {
-      "file": "TestApp Setup 1.1.0.exe",
-      "safeArtifactName": "TestApp-Setup-1.1.0.exe",
+      "arch": "arm64",
+      "file": "Test Concurrent-1.1.0-arm64.exe",
+      "safeArtifactName": "Test-Concurrent-1.1.0-arm64.exe",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
     {
-      "file": "TestApp Setup 1.1.0.exe.blockmap",
-      "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
+      "file": "Test Concurrent-1.1.0-arm64.exe.blockmap",
+      "safeArtifactName": "Test-Concurrent-1.1.0-arm64.exe.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "arch": "x64",
+      "file": "Test Concurrent-1.1.0-x64.exe",
+      "safeArtifactName": "Test-Concurrent-1.1.0-x64.exe",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "Test Concurrent-1.1.0-x64.exe.blockmap",
+      "safeArtifactName": "Test-Concurrent-1.1.0-x64.exe.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "Test Concurrent-1.1.0.exe",
+      "safeArtifactName": "Test-Concurrent-1.1.0.exe",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "Test Concurrent-1.1.0.exe.blockmap",
+      "safeArtifactName": "Test-Concurrent-1.1.0.exe.blockmap",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
@@ -252,12 +300,12 @@ exports[`mac/win/linux concurrent 1`] = `
 
 exports[`mac/win/linux concurrent 2`] = `
 {
-  "CFBundleDisplayName": "TestApp",
-  "CFBundleExecutable": "TestApp",
+  "CFBundleDisplayName": "Test Concurrent",
+  "CFBundleExecutable": "Test Concurrent",
   "CFBundleIconFile": "icon.icns",
-  "CFBundleIdentifier": "org.electron-builder.testApp",
+  "CFBundleIdentifier": "test-concurrent",
   "CFBundleInfoDictionaryVersion": "6.0",
-  "CFBundleName": "TestApp",
+  "CFBundleName": "Test Concurrent",
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
   "ElectronAsarIntegrity": {
@@ -281,12 +329,12 @@ exports[`mac/win/linux concurrent 2`] = `
 
 exports[`mac/win/linux concurrent 3`] = `
 {
-  "CFBundleDisplayName": "TestApp",
-  "CFBundleExecutable": "TestApp",
+  "CFBundleDisplayName": "Test Concurrent",
+  "CFBundleExecutable": "Test Concurrent",
   "CFBundleIconFile": "icon.icns",
-  "CFBundleIdentifier": "org.electron-builder.testApp",
+  "CFBundleIdentifier": "test-concurrent",
   "CFBundleInfoDictionaryVersion": "6.0",
-  "CFBundleName": "TestApp",
+  "CFBundleName": "Test Concurrent",
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
   "ElectronAsarIntegrity": {
