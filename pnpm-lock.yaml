@@ -289,8 +289,8 @@ importers:
         specifier: workspace:*
         version: link:../builder-util-runtime
       chalk:
-        specifier: ^4.1.2
-        version: 4.1.2
+        specifier: ^5.0.0
+        version: 5.3.0
       cross-spawn:
         specifier: ^7.0.6
         version: 7.0.6
@@ -410,8 +410,8 @@ importers:
         specifier: workspace:*
         version: link:../builder-util-runtime
       chalk:
-        specifier: ^4.1.2
-        version: 4.1.2
+        specifier: ^5.0.0
+        version: 5.3.0
       dmg-builder:
         specifier: workspace:*
         version: link:../dmg-builder
@@ -496,8 +496,8 @@ importers:
         specifier: workspace:*
         version: link:../builder-util-runtime
       chalk:
-        specifier: ^4.1.2
-        version: 4.1.2
+        specifier: ^5.0.0
+        version: 5.3.0
       form-data:
         specifier: ^4.0.0
         version: 4.0.1
@@ -4284,6 +4284,7 @@ packages:
 
   lodash.isequal@4.5.0:
     resolution: {integrity: sha512-pDo3lu8Jhfjqls6GkMgpahsF9kCyayhgykjyLMNFTKWrpVdAQtYyB4muAMWozBB4ig/dtWAmsMxLEI8wuz+DYQ==}
+    deprecated: This package is deprecated. Use require('node:util').isDeepStrictEqual instead.
 
   lodash.merge@4.6.2:
     resolution: {integrity: sha512-0KpjqXRVvrYyCsX1swR/XTK0va6VQkQM6MNo7PqW77ByjAhoARA8EfrP1N4+KlKj8YS0ZUCtRT/YUuhyYDujIQ==}
