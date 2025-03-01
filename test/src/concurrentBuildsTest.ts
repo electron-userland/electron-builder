@@ -1,6 +1,7 @@
 import { Platform, DIR_TARGET, Arch, Configuration } from "app-builder-lib"
 import { assertPack, modifyPackageJson } from "./helpers/packTester"
 import { TmpDir } from "temp-file"
+import { deepAssign } from "builder-util"
 
 const winTargets = Platform.WINDOWS.createTarget([DIR_TARGET, "nsis"], Arch.x64, Arch.arm64)
 // const winTargets = Platform.WINDOWS.createTarget([DIR_TARGET, "msi", "msi-wrapped", "nsis", "nsis-web"], Arch.x64, Arch.arm64)
@@ -14,20 +15,21 @@ const config: Configuration = {
   compression: "store",
 }
 const projectDirCreated = async (projectDir: string, tmpDir: TmpDir) => {
-  const buildConfig = (data: any) => ({
-    ...data,
-    name: "test-concurrent", // needs to be lowercase for fpm targets
-    version: "1.0.0",
-    build: {   ...data.build, ...config},
-  })
+  const buildConfig = (data: any, isApp: boolean) => {
+    deepAssign(data, {
+      name: "concurrent", // needs to be lowercase for fpm targets (can't use default fixture TestApp)
+      version: "1.1.0",
+      ...(!isApp ? { build: config } : {}), // build config is only allowed in "dev" (root) package.json in two-package.json setups
+    })
+  }
   await modifyPackageJson(
     projectDir,
-    (data: any) => data = buildConfig(data),
+    (data: any) => buildConfig(data, true),
     true
   )
   await modifyPackageJson(
     projectDir,
-    (data: any) => data = buildConfig(data),
+    (data: any) => buildConfig(data, false),
     false
   )
 }

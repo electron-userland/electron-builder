@@ -322,10 +322,10 @@ async function checkLinuxResult(outDir: string, packager: Packager, arch: Arch, 
   }
 
   const appInfo = packager.appInfo
-  const packageFile = `${outDir}/TestApp_${appInfo.version}_${arch === Arch.ia32 ? "i386" : arch === Arch.x64 ? "amd64" : "armv7l"}.deb`
+  const packageFile = `${outDir}/${appInfo.name}_${appInfo.version}_${arch === Arch.ia32 ? "i386" : arch === Arch.x64 ? "amd64" : "armv7l"}.deb`
   expect(await getContents(packageFile)).toMatchSnapshot()
   if (arch === Arch.ia32) {
-    expect(await getContents(`${outDir}/TestApp_${appInfo.version}_i386.deb`)).toMatchSnapshot()
+    expect(await getContents(`${outDir}/${appInfo.name}_${appInfo.version}_i386.deb`)).toMatchSnapshot()
   }
 
   const control = parseDebControl(
