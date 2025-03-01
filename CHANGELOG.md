@@ -1,3 +1,12 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v26.0.9...v) (2025-03-01)
+
+
+### Bug Fixes
+
+* **win:** execute `customUnInstall` before `atomicRMDir` function in NSIS uninstaller ([#8915](https://github.com/electron-userland/electron-builder/issues/8915)) ([8903c5d](https://github.com/electron-userland/electron-builder/commit/8903c5df046b74411f3b1fa958cef9a5955d01ef))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v26.0.8...v) (2025-02-26)
 
 

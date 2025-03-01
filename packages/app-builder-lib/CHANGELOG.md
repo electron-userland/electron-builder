@@ -1,5 +1,17 @@
 # app-builder-lib
 
+## 26.0.10
+
+### Patch Changes
+
+- [#8890](https://github.com/electron-userland/electron-builder/pull/8890) [`3ce33edb`](https://github.com/electron-userland/electron-builder/commit/3ce33edbe0c809a8a3834577a8df41ba58ae9003) Thanks [@beyondkmp](https://github.com/beyondkmp)! - chore: replace the plist functionality in app-builder-bin with plist
+
+- [#8915](https://github.com/electron-userland/electron-builder/pull/8915) [`8903c5df`](https://github.com/electron-userland/electron-builder/commit/8903c5df046b74411f3b1fa958cef9a5955d01ef) Thanks [@beyondkmp](https://github.com/beyondkmp)! - fix: improve atomicRMDir function in NSIS uninstaller
+
+- Updated dependencies []:
+  - dmg-builder@26.0.10
+  - electron-builder-squirrel-windows@26.0.10
+
 ## 26.0.9
 
 ### Patch Changes
