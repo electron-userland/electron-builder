@@ -346,7 +346,7 @@ test.ifDevOrLinuxCi("win smart unpack", () => {
   let p = ""
   return app(
     {
-      targets: Platform.WINDOWS.createTarget(DIR_TARGET),
+      targets: Platform.WINDOWS.createTarget(DIR_TARGET, Arch.x64),
       config: {
         npmRebuild: true,
         onNodeModuleFile: file => {
@@ -383,7 +383,7 @@ test.ifDevOrLinuxCi("win smart unpack", () => {
 test.ifDevOrWinCi("smart unpack local module with dll file", () => {
   return app(
     {
-      targets: Platform.WINDOWS.createTarget(DIR_TARGET),
+      targets: Platform.WINDOWS.createTarget(DIR_TARGET, Arch.x64),
     },
     {
       projectDirCreated: async (projectDir, tmpDir) => {

@@ -27,7 +27,7 @@ test.ifNotCiMac(
   })
 )
 
-test.ifAll.ifNotCiMac(
+test.ifNotCiMac(
   "web installer (default github)",
   app({
     targets: Platform.WINDOWS.createTarget(["nsis-web"], Arch.ia32, Arch.x64, Arch.arm64),
@@ -41,7 +41,7 @@ test.ifAll.ifNotCiMac(
   })
 )
 
-test.ifAll.ifNotCiMac(
+test.ifNotCiMac(
   "web installer, safe name on github",
   app({
     targets: Platform.WINDOWS.createTarget(["nsis-web"], Arch.x64),

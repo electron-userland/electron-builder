@@ -1,12 +1,8 @@
-import { printErrorAndExit } from "builder-util"
-import * as chalk from "chalk"
-import type { Results } from "depcheck"
-import * as depCheck from "depcheck"
-import { readJson } from "fs-extra"
-import * as fs from "fs/promises"
-import * as path from "path"
-
-const knownUnusedDevDependencies = new Set<string>([
+const chalk = require("chalk")
+const depCheck = require("depcheck")
+const fs = require("fs-extra")
+const path = require("path")
+const knownUnusedDevDependencies = new Set([
   "@babel/plugin-transform-modules-commonjs", // Not sure what this is used for, but keeping just in case (for now)
   "@changesets/changelog-github", // Used in package.json CI/CD logic
   "typedoc-plugin-markdown", // Used in typedoc config
@@ -16,17 +12,18 @@ const knownUnusedDevDependencies = new Set<string>([
   "@typescript-eslint/parser",
   "eslint-config-prettier",
   "eslint-plugin-prettier",
+  "@rollup/plugin-typescript",
 ])
-const knownMissedDependencies = new Set<string>(["babel-core", "babel-preset-env", "babel-preset-stage-0", "babel-preset-react"])
+const knownMissedDependencies = new Set(["babel-core", "babel-preset-env", "babel-preset-stage-0", "babel-preset-react"])
 
-const rootDir = path.join(__dirname, "../../..")
+const rootDir = path.join(__dirname, "..")
 const packageDir = path.join(rootDir, "packages")
 
-async function check(projectDir: string, devPackageData: any): Promise<boolean> {
+async function check(projectDir, devPackageData) {
   const packageName = path.basename(projectDir)
   // console.log(`Checking ${projectDir}`)
 
-  const result = await new Promise<Results>(resolve => {
+  const result = await new Promise(resolve => {
     depCheck(projectDir, { ignoreDirs: ["out", "test", "pages", "typings", "docker", "certs", "templates", "vendor"] }, resolve)
   })
 
@@ -54,14 +51,14 @@ async function check(projectDir: string, devPackageData: any): Promise<boolean> 
     return false
   }
 
-  delete (result.missing as any).electron
-  const toml = (result.missing as any).toml
+  delete result.missing.electron
+  const toml = result.missing.toml
   if (toml != null && toml.length === 1 && toml[0].endsWith("config.js")) {
-    delete (result.missing as any).toml
+    delete result.missing.toml
   }
 
   if (packageName === "electron-builder") {
-    delete (result.missing as any)["electron-publish"]
+    delete result.missing["electron-publish"]
   }
 
   for (const name of Object.keys(result.missing)) {
@@ -70,7 +67,7 @@ async function check(projectDir: string, devPackageData: any): Promise<boolean> 
       name === "electron-webpack" ||
       (packageName === "app-builder-lib" && (name === "dmg-builder" || knownMissedDependencies.has(name) || name.startsWith("@babel/")))
     ) {
-      delete (result.missing as any)[name]
+      delete result.missing[name]
     }
   }
 
@@ -79,7 +76,7 @@ async function check(projectDir: string, devPackageData: any): Promise<boolean> 
     return false
   }
 
-  const packageData = await readJson(path.join(projectDir, "package.json"))
+  const packageData = await fs.readJson(path.join(projectDir, "package.json"))
   for (const name of devPackageData.devDependencies == null ? [] : Object.keys(devPackageData.devDependencies)) {
     if (packageData.dependencies != null && packageData.dependencies[name] != null) {
       continue
@@ -101,9 +98,9 @@ async function check(projectDir: string, devPackageData: any): Promise<boolean> 
   return true
 }
 
-async function main(): Promise<void> {
+async function main() {
   const packages = (await fs.readdir(packageDir)).filter(it => !it.includes(".")).sort()
-  const devPackageData = await readJson(path.join(rootDir, "package.json"))
+  const devPackageData = await fs.readJson(path.join(rootDir, "package.json"))
   const checkRoot = await check(process.cwd(), devPackageData)
   const checkPackages = await Promise.all(packages.map(it => check(path.join(packageDir, it), devPackageData)))
   if (checkRoot === false || checkPackages.includes(false)) {
@@ -111,4 +108,7 @@ async function main(): Promise<void> {
   }
 }
 
-main().catch(printErrorAndExit)
+main().catch(error => {
+  console.error(chalk.red((error.stack || error).toString()))
+  process.exit(1)
+})
