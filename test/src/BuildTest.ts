@@ -362,6 +362,7 @@ test.ifDevOrLinuxCi("win smart unpack", ({ expect }) => {
       },
     },
     {
+      isInstallDepsBefore: true,
       projectDirCreated: projectDir => {
         p = projectDir
         return packageJson(it => {
@@ -388,6 +389,7 @@ test.ifDevOrWinCi("smart unpack local module with dll file", ({ expect }) => {
       targets: Platform.WINDOWS.createTarget(DIR_TARGET, Arch.x64),
     },
     {
+      isInstallDepsBefore: true,
       projectDirCreated: async (projectDir, tmpDir) => {
         const tempDir = await tmpDir.getTempDir()
         const localPath = path.join(tempDir, "foo")
@@ -437,6 +439,7 @@ test.ifDevOrLinuxCi("posix smart unpack", ({ expect }) =>
       },
     },
     {
+      isInstallDepsBefore: true,
       projectDirCreated: packageJson(it => {
         it.dependencies = {
           debug: "4.1.1",
