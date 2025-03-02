@@ -57,7 +57,7 @@
     "@vitest/ui": "3.0.4",
     "chalk": "^4.1.2",
     "conventional-changelog-cli": "5.0.0",
-    "depcheck": "1.4.3",
+    "depcheck": "1.4.7",
     "eslint": "9.16.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-prettier": "^5.2.1",
