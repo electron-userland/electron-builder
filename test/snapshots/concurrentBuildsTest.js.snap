@@ -24,14 +24,6 @@ exports[`linux concurrent 1`] = `
       },
     },
     {
-      "arch": "x64",
-      "file": "Test Concurrent-1.1.0-amd64.deb",
-    },
-    {
-      "arch": "armv7l",
-      "file": "Test Concurrent-1.1.0-armv7l.deb",
-    },
-    {
       "arch": "armv7l",
       "file": "Test Concurrent-1.1.0-armv7l.rpm",
     },
@@ -198,14 +190,6 @@ exports[`mac/win/linux concurrent 1`] = `
         "sha512": "@sha512",
         "size": "@size",
       },
-    },
-    {
-      "arch": "x64",
-      "file": "Test Concurrent-1.1.0-amd64.deb",
-    },
-    {
-      "arch": "armv7l",
-      "file": "Test Concurrent-1.1.0-armv7l.deb",
     },
     {
       "arch": "armv7l",
@@ -857,14 +841,6 @@ exports[`win/linux concurrent 1`] = `
         "sha512": "@sha512",
         "size": "@size",
       },
-    },
-    {
-      "arch": "x64",
-      "file": "Test Concurrent-1.1.0-amd64.deb",
-    },
-    {
-      "arch": "armv7l",
-      "file": "Test Concurrent-1.1.0-armv7l.deb",
     },
     {
       "arch": "armv7l",

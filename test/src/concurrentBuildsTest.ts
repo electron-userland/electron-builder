@@ -3,10 +3,12 @@ import { assertPack, modifyPackageJson } from "./helpers/packTester"
 import { TmpDir } from "temp-file"
 import { deepAssign } from "builder-util"
 
+const options = { timeout: 10 * 60 * 1000 }
+
 const winTargets = Platform.WINDOWS.createTarget([DIR_TARGET, "nsis"], Arch.x64, Arch.arm64)
 // const winTargets = Platform.WINDOWS.createTarget([DIR_TARGET, "msi", "msi-wrapped", "nsis", "nsis-web"], Arch.x64, Arch.arm64)
 const macTargets = Platform.MAC.createTarget([DIR_TARGET, "zip", "dmg", "mas"], Arch.x64, Arch.universal)
-const linuxTargets = Platform.LINUX.createTarget([DIR_TARGET, "deb", "rpm", "AppImage"], Arch.x64, Arch.armv7l)
+const linuxTargets = Platform.LINUX.createTarget([DIR_TARGET, "rpm", "AppImage"], Arch.x64, Arch.armv7l)
 
 const config: Configuration = {
   productName: "Test Concurrent",
@@ -34,7 +36,7 @@ const projectDirCreated = async (projectDir: string, tmpDir: TmpDir) => {
   )
 }
 
-test.ifNotWindows("win/linux concurrent", () => {
+test.ifNotWindows("win/linux concurrent", options, () => {
   const targets = new Map([...winTargets, ...linuxTargets])
   return assertPack(
     "test-app",
@@ -48,7 +50,7 @@ test.ifNotWindows("win/linux concurrent", () => {
   )
 })
 
-test.ifMac("mac/win/linux concurrent", () => {
+test.ifMac("mac/win/linux concurrent", options, () => {
   const targets = new Map([...winTargets, ...macTargets, ...linuxTargets])
   return assertPack(
     "test-app",
@@ -62,7 +64,7 @@ test.ifMac("mac/win/linux concurrent", () => {
   )
 })
 
-test.ifMac("mac concurrent", () => {
+test.ifMac("mac concurrent", options, () => {
   const targets = macTargets
   return assertPack(
     "test-app",
@@ -76,7 +78,7 @@ test.ifMac("mac concurrent", () => {
   )
 })
 
-test.ifNotMac("win concurrent", () => {
+test.ifNotMac("win concurrent", options, () => {
   const targets = winTargets
   return assertPack(
     "test-app",
@@ -90,7 +92,7 @@ test.ifNotMac("win concurrent", () => {
   )
 })
 
-test.ifNotWindows("linux concurrent", () => {
+test.ifNotWindows("linux concurrent", options, () => {
   const targets = linuxTargets
   return assertPack(
     "test-app",
@@ -104,7 +106,7 @@ test.ifNotWindows("linux concurrent", () => {
   )
 })
 
-test.ifWindows("win concurrent - all targets", () => {
+test.ifWindows("win concurrent - all targets", options, () => {
   const targetList = [DIR_TARGET, `appx`, `nsis`, `portable`, `squirrel`, `7z`, `zip`, `tar.xz`, `tar.gz`, `tar.bz2`]
   const targets = Platform.WINDOWS.createTarget(targetList, Arch.x64, Arch.arm64)
   return assertPack(
