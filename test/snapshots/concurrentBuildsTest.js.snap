@@ -558,67 +558,7 @@ exports[`win concurrent - all targets 1`] = `
     },
     {
       "arch": "arm64",
-      "file": "Test Concurrent-1.1.0-arm64.exe",
-      "safeArtifactName": "Test-Concurrent-1.1.0-arm64.exe",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "file": "Test Concurrent-1.1.0-arm64.exe.blockmap",
-      "safeArtifactName": "Test-Concurrent-1.1.0-arm64.exe.blockmap",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "arch": "x64",
-      "file": "Test Concurrent-1.1.0-x64.exe",
-      "safeArtifactName": "Test-Concurrent-1.1.0-x64.exe",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "file": "Test Concurrent-1.1.0-x64.exe.blockmap",
-      "safeArtifactName": "Test-Concurrent-1.1.0-x64.exe.blockmap",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "file": "Test Concurrent-1.1.0.exe",
-      "safeArtifactName": "Test-Concurrent-1.1.0.exe",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "file": "Test Concurrent-1.1.0.exe.blockmap",
-      "safeArtifactName": "Test-Concurrent-1.1.0.exe.blockmap",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "arch": "arm64",
-      "file": "Test Concurrent-1.1.0-arm64.exe",
-      "safeArtifactName": "Test-Concurrent-1.1.0-arm64.exe",
-    },
-    {
-      "arch": "x64",
-      "file": "Test Concurrent-1.1.0-x64.exe",
-      "safeArtifactName": "Test-Concurrent-1.1.0-x64.exe",
-    },
-    {
-      "file": "Test Concurrent-1.1.0.exe",
-      "safeArtifactName": "Test-Concurrent-1.1.0.exe",
+      "file": "concurrent-1.1.0-full.nupkg",
     },
     {
       "arch": "x64",
@@ -626,14 +566,10 @@ exports[`win concurrent - all targets 1`] = `
     },
     {
       "arch": "arm64",
-      "file": "concurrent-1.1.0-full.nupkg",
-    },
-    {
-      "arch": "x64",
       "file": "RELEASES",
     },
     {
-      "arch": "arm64",
+      "arch": "x64",
       "file": "RELEASES",
     },
     {
@@ -697,7 +633,6 @@ exports[`win concurrent - all targets 2`] = `
   "lib/net45/",
   "lib/net45/chrome_100_percent.pak",
   "lib/net45/chrome_200_percent.pak",
-  "lib/net45/d3dcompiler_47.dll",
   "lib/net45/ffmpeg.dll",
   "lib/net45/icudtl.dat",
   "lib/net45/libEGL.dll",
@@ -733,7 +668,6 @@ exports[`win concurrent - all targets 3`] = `
   "lib/net45/",
   "lib/net45/chrome_100_percent.pak",
   "lib/net45/chrome_200_percent.pak",
-  "lib/net45/d3dcompiler_47.dll",
   "lib/net45/ffmpeg.dll",
   "lib/net45/icudtl.dat",
   "lib/net45/libEGL.dll",
@@ -764,58 +698,7 @@ exports[`win concurrent - all targets 3`] = `
 
 exports[`win concurrent 1`] = `
 {
-  "win": [
-    {
-      "arch": "arm64",
-      "file": "Test Concurrent-1.1.0-arm64.exe",
-      "safeArtifactName": "Test-Concurrent-1.1.0-arm64.exe",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "file": "Test Concurrent-1.1.0-arm64.exe.blockmap",
-      "safeArtifactName": "Test-Concurrent-1.1.0-arm64.exe.blockmap",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "arch": "x64",
-      "file": "Test Concurrent-1.1.0-x64.exe",
-      "safeArtifactName": "Test-Concurrent-1.1.0-x64.exe",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "file": "Test Concurrent-1.1.0-x64.exe.blockmap",
-      "safeArtifactName": "Test-Concurrent-1.1.0-x64.exe.blockmap",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "file": "Test Concurrent-1.1.0.exe",
-      "safeArtifactName": "Test-Concurrent-1.1.0.exe",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "file": "Test Concurrent-1.1.0.exe.blockmap",
-      "safeArtifactName": "Test-Concurrent-1.1.0.exe.blockmap",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-  ],
+  "win": [],
 }
 `;
 
