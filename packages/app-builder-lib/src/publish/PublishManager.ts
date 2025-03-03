@@ -62,6 +62,7 @@ export class PublishManager implements PublishContext {
   private readonly nameToPublisher = new Map<string, Publisher | null>()
 
   private readonly taskManager: AsyncTaskManager
+  private readonly artifactCreatedEvents: ArtifactCreated[] = []
 
   readonly isPublish: boolean = false
 
@@ -128,16 +129,8 @@ export class PublishManager implements PublishContext {
       }
     })
 
-    packager.onArtifactCreated(async event => {
-      const publishConfiguration = event.publishConfig
-      if (publishConfiguration == null) {
-        this.taskManager.addTask(this.artifactCreatedWithoutExplicitPublishConfig(event))
-      } else if (this.isPublish) {
-        if (debug.enabled) {
-          debug(`artifactCreated (isPublish: ${this.isPublish}): ${safeStringifyJson(event, new Set(["packager"]))},\n  publishConfig: ${safeStringifyJson(publishConfiguration)}`)
-        }
-        await this.scheduleUpload(publishConfiguration, event, this.getAppInfo(event.packager))
-      }
+    packager.onArtifactCreated(event => {
+      this.artifactCreatedEvents.push(event)
     })
   }
 
@@ -239,6 +232,27 @@ export class PublishManager implements PublishContext {
   }
 
   async awaitTasks(): Promise<void> {
+    const handler = async (event: ArtifactCreated) => {
+      const publishConfiguration = event.publishConfig
+      if (publishConfiguration == null) {
+        this.taskManager.addTask(this.artifactCreatedWithoutExplicitPublishConfig(event))
+      } else if (this.isPublish) {
+        if (debug.enabled) {
+          debug(`artifactCreated (isPublish: ${this.isPublish}): ${safeStringifyJson(event, new Set(["packager"]))},\n  publishConfig: ${safeStringifyJson(publishConfiguration)}`)
+        }
+        await this.scheduleUpload(publishConfiguration, event, this.getAppInfo(event.packager))
+      }
+    }
+
+    const archOrder = this.packager.determinePublisherArchitectureOrder()
+    for (const arch of archOrder) {
+      for (const event of this.artifactCreatedEvents) {
+        if (event.arch === arch) {
+          await handler(event)
+        }
+      }
+    }
+
     await this.taskManager.awaitTasks()
 
     const updateInfoFileTasks = this.updateFileWriteTask

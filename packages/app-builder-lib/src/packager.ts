@@ -9,6 +9,7 @@ import {
   getArtifactArchName,
   InvalidConfigurationError,
   log,
+  MAX_FILE_REQUESTS,
   orNullIfFileNotExist,
   safeStringifyJson,
   serializeToYaml,
@@ -41,6 +42,7 @@ import { resolveFunction } from "./util/resolve"
 import { installOrRebuild, nodeGypRebuild } from "./util/yarn"
 import { PACKAGE_VERSION } from "./version"
 import { AsyncEventEmitter, HandlerType } from "./util/asyncEventEmitter"
+import asyncPool from "tiny-async-pool"
 
 async function createFrameworkInfo(configuration: Configuration, packager: Packager): Promise<Framework> {
   let framework = configuration.framework
@@ -414,10 +416,10 @@ export class Packager {
     }
 
     // because artifact event maybe dispatched several times for different publish providers
-    const artifactPaths = new Set<string>()
+    const artifactPaths = new Set<ArtifactCreated>()
     this.onArtifactCreated(event => {
       if (event.file != null) {
-        artifactPaths.add(event.file)
+        artifactPaths.add(event)
       }
     })
 
@@ -436,9 +438,19 @@ export class Packager {
       }
     })
 
+    const archOrder: Arch[] = this.determinePublisherArchitectureOrder()
+    const result: string[] = []
+    for (const arch of archOrder) {
+      for (const event of artifactPaths) {
+        if (event.arch === arch) {
+          result.push(event.file)
+        }
+      }
+    }
+
     return {
       outDir: commonOutDirWithoutPossibleOsMacro,
-      artifactPaths: Array.from(artifactPaths),
+      artifactPaths: Array.from(result),
       platformToTargets,
       configuration: this.config,
     }
@@ -479,6 +491,7 @@ export class Packager {
       const nameToTarget: Map<string, Target> = new Map()
       platformToTarget.set(platform, nameToTarget)
 
+      const packPromises = [] as Array<Promise<any>>
       for (const [arch, targetNames] of computeArchToTargetNamesMap(archToType, packager, platform)) {
         if (this.cancellationToken.cancelled) {
           break
@@ -488,8 +501,25 @@ export class Packager {
         const outDir = path.resolve(this.projectDir, packager.expandMacro(this.config.directories!.output!, Arch[arch]))
         const targetList = createTargets(nameToTarget, targetNames.length === 0 ? packager.defaultTarget : targetNames, outDir, packager)
         await createOutDirIfNeed(targetList, createdOutDirs)
-        await packager.pack(outDir, arch, targetList, taskManager)
+        packPromises.push(packager.pack(outDir, arch, targetList, taskManager))
       }
+      let poolCount = 1 // packager.platformSpecificBuildOptions.concurrency?.jobs || packager.config.concurrency?.jobs || 1
+      if (poolCount < 1) {
+        log.warn({ concurrency: poolCount }, "concurrency is invalid, overriding with job count: 1")
+        poolCount = 1
+      } else if (poolCount > MAX_FILE_REQUESTS) {
+        log.warn(
+          { concurrency: poolCount, MAX_FILE_REQUESTS },
+          `job concurrency is greater than recommended MAX_FILE_REQUESTS, this may lead to File Descriptor errors (too many files open). Proceed with caution (e.g. this is an experimental feature)`
+        )
+      }
+      await asyncPool(poolCount, packPromises, async it => {
+        if (this.cancellationToken.cancelled) {
+          return
+        }
+        await it
+        // return { arch: it.arch, targetList: it.targetList }
+      })
 
       if (this.cancellationToken.cancelled) {
         break
@@ -507,6 +537,9 @@ export class Packager {
     await taskManager.awaitTasks()
 
     for (const target of syncTargetsIfAny) {
+      if (this.cancellationToken.cancelled) {
+        break
+      }
       await target.finishBuild()
     }
     return platformToTarget
@@ -578,6 +611,16 @@ export class Packager {
         productionDeps: this.getNodeDependencyInfo(null, false) as Lazy<Array<NodeModuleDirInfo>>,
       })
     }
+  }
+
+  determinePublisherArchitectureOrder() {
+    const archOrder: Arch[] = []
+    for (const [, archToType] of this.options.targets!) {
+      for (const [arch] of archToType) {
+        archOrder.push(arch)
+      }
+    }
+    return archOrder
   }
 }
 

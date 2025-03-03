@@ -41,21 +41,22 @@ export class AsyncTaskManager {
     this.tasks.length = 0
   }
 
+  checkErrors() {
+    if (this.errors.length > 0) {
+      this.cancelTasks()
+      throwError(this.errors)
+      return true
+    }
+    return false
+  }
+
   async awaitTasks(): Promise<Array<any>> {
     if (this.cancellationToken.cancelled) {
       this.cancelTasks()
       return []
     }
 
-    const checkErrors = () => {
-      if (this.errors.length > 0) {
-        this.cancelTasks()
-        throwError(this.errors)
-        return
-      }
-    }
-
-    checkErrors()
+    this.checkErrors()
 
     let result: Array<any> | null = null
     const tasks = this.tasks
@@ -64,7 +65,7 @@ export class AsyncTaskManager {
     while (list.length > 0) {
       const subResult = await Promise.all(list)
       result = result == null ? subResult : result.concat(subResult)
-      checkErrors()
+      this.checkErrors()
       if (tasks.length === 0) {
         break
       } else {
