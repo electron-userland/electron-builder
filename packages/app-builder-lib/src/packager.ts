@@ -491,18 +491,6 @@ export class Packager {
       const nameToTarget: Map<string, Target> = new Map()
       platformToTarget.set(platform, nameToTarget)
 
-      const packPromises = [] as Array<Promise<any>>
-      for (const [arch, targetNames] of computeArchToTargetNamesMap(archToType, packager, platform)) {
-        if (this.cancellationToken.cancelled) {
-          break
-        }
-
-        // support os and arch macro in output value
-        const outDir = path.resolve(this.projectDir, packager.expandMacro(this.config.directories!.output!, Arch[arch]))
-        const targetList = createTargets(nameToTarget, targetNames.length === 0 ? packager.defaultTarget : targetNames, outDir, packager)
-        await createOutDirIfNeed(targetList, createdOutDirs)
-        packPromises.push(packager.pack(outDir, arch, targetList, taskManager))
-      }
 
       let poolCount = packager.platformSpecificBuildOptions.concurrency?.jobs || packager.config.concurrency?.jobs || 1
       if (poolCount < 1) {
@@ -514,12 +502,30 @@ export class Packager {
           `job concurrency is greater than recommended MAX_FILE_REQUESTS, this may lead to File Descriptor errors (too many files open). Proceed with caution (e.g. this is an experimental feature)`
         )
       }
+      const packPromises: Promise<any>[] = []
+
+      for (const [arch, targetNames] of computeArchToTargetNamesMap(archToType, packager, platform)) {
+        if (this.cancellationToken.cancelled) {
+          break
+        }
+
+        // support os and arch macro in output value
+        const outDir = path.resolve(this.projectDir, packager.expandMacro(this.config.directories!.output!, Arch[arch]))
+        const targetList = createTargets(nameToTarget, targetNames.length === 0 ? packager.defaultTarget : targetNames, outDir, packager)
+        await createOutDirIfNeed(targetList, createdOutDirs)
+        const promise = packager.pack(outDir, arch, targetList, taskManager)
+        if (poolCount === 1) {
+          await promise
+        } else {
+          packPromises.push(promise)
+        }
+      }
+
       await asyncPool(poolCount, packPromises, async it => {
         if (this.cancellationToken.cancelled) {
           return
         }
         await it
-        // return { arch: it.arch, targetList: it.targetList }
       })
 
       if (this.cancellationToken.cancelled) {
@@ -617,7 +623,7 @@ export class Packager {
   determinePublisherArchitectureOrder() {
     const archOrder: Arch[] = []
     for (const [, archToType] of this.options.targets!) {
-      for (const [arch] of archToType) {
+      for (const [arch, type] of archToType) {
         archOrder.push(arch)
       }
     }
