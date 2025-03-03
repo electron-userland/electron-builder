@@ -7,8 +7,8 @@ import { DownloadUpdateOptions } from "./AppUpdater"
 import { BaseUpdater, InstallOptions } from "./BaseUpdater"
 import { DifferentialDownloaderOptions } from "./differentialDownloader/DifferentialDownloader"
 import { FileWithEmbeddedBlockMapDifferentialDownloader } from "./differentialDownloader/FileWithEmbeddedBlockMapDifferentialDownloader"
-import { DOWNLOAD_PROGRESS, ResolvedUpdateFileInfo } from "./main"
 import { findFile, Provider } from "./providers/Provider"
+import { DOWNLOAD_PROGRESS, ResolvedUpdateFileInfo } from "./types"
 
 export class AppImageUpdater extends BaseUpdater {
   constructor(options?: AllPublishOptions | null, app?: any) {

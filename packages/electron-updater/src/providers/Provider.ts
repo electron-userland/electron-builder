@@ -3,7 +3,7 @@ import { OutgoingHttpHeaders, RequestOptions } from "http"
 import { load } from "js-yaml"
 import { URL } from "url"
 import { ElectronHttpExecutor } from "../electronHttpExecutor"
-import { ResolvedUpdateFileInfo } from "../main"
+import { ResolvedUpdateFileInfo } from "../types"
 import { newUrlFromBase } from "../util"
 
 export type ProviderPlatform = "darwin" | "linux" | "win32"

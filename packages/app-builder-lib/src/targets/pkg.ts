@@ -8,7 +8,7 @@ import { findIdentity, Identity } from "../codeSign/macCodeSign"
 import { Target } from "../core"
 import { MacPackager } from "../macPackager"
 import { PkgOptions } from "../options/pkgOptions"
-import { executeAppBuilderAndWriteJson, executeAppBuilderAsJson } from "../util/appBuilder"
+import { savePlistFile, parsePlistFile, PlistObject } from "../util/plist"
 import { getNotLocalizedLicenseFile } from "../util/license"
 
 const certType = "Developer ID Installer"
@@ -86,7 +86,13 @@ export class PkgTarget extends Target {
     })
     await Promise.all([unlink(innerPackageFile), unlink(distInfoFile)])
     await packager.notarizeIfProvided(artifactPath)
-    await packager.dispatchArtifactCreated(artifactPath, this, arch, packager.computeSafeArtifactName(artifactName, "pkg", arch))
+    await packager.info.emitArtifactCreated({
+      file: artifactPath,
+      target: this,
+      arch,
+      safeArtifactName: packager.computeSafeArtifactName(artifactName, "pkg", arch),
+      packager,
+    })
   }
 
   private getExtraPackages(): ExtraPackages | null {
@@ -182,9 +188,7 @@ export class PkgTarget extends Target {
     await exec("pkgbuild", ["--analyze", "--root", rootPath, propertyListOutputFile])
 
     // process the template plist
-    const plistInfo = (await executeAppBuilderAsJson<Array<any>>(["decode-plist", "-f", propertyListOutputFile]))[0].filter(
-      (it: any) => it.RootRelativeBundlePath !== "Electron.dSYM"
-    )
+    const plistInfo = (await parsePlistFile<PlistObject[]>(propertyListOutputFile)).filter((it: PlistObject) => it.RootRelativeBundlePath !== "Electron.dSYM")
     let packageInfo: any = {}
     if (plistInfo.length > 0) {
       packageInfo = plistInfo[0]
@@ -237,7 +241,7 @@ export class PkgTarget extends Target {
       args.push("--scripts", scriptsDir)
     }
     if (plistInfo.length > 0) {
-      await executeAppBuilderAndWriteJson(["encode-plist"], { [propertyListOutputFile]: plistInfo })
+      await savePlistFile(propertyListOutputFile, plistInfo)
     }
 
     args.push(packageOutputFile)

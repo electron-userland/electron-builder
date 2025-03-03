@@ -38,7 +38,7 @@ test.ifNotCiMac(
   )
 )
 
-test.ifAll.ifNotCiMac(
+test.ifNotCiMac(
   "allowElevation false, app requestedExecutionLevel admin",
   app({
     targets: nsisTarget,
@@ -95,7 +95,7 @@ test.ifNotCiMac("assisted, MUI_HEADER", () => {
   )
 })
 
-test.ifAll.ifNotCiMac("assisted, MUI_HEADER as option", () => {
+test.ifNotCiMac("assisted, MUI_HEADER as option", () => {
   let installerHeaderPath: string | null = null
   return assertPack(
     "test-app-one",
@@ -127,7 +127,7 @@ test.ifAll.ifNotCiMac("assisted, MUI_HEADER as option", () => {
   )
 })
 
-test.skip.ifNotCiMac(
+test.ifNotCiMac.skip(
   "debug logging enabled",
   app({
     targets: nsisTarget,
@@ -172,7 +172,7 @@ test.ifNotCiMac(
 )
 
 // test release notes also
-test.ifAll.ifNotCiMac(
+test.ifNotCiMac(
   "allowToChangeInstallationDirectory",
   app(
     {

@@ -6,20 +6,11 @@ import * as fs from "fs"
 import * as os from "os"
 import { Options as SquirrelOptions, createWindowsInstaller, convertVersion } from "electron-winstaller"
 
-type SigningQueue = {
-  msiArtifactPath: string
-  artifactPath: string
-  arch: Arch
-  installerOutDir: string
-  remoteReleases: string | undefined | null
-}
-
 export default class SquirrelWindowsTarget extends Target {
   //tslint:disable-next-line:no-object-literal-type-assertion
   readonly options: SquirrelWindowsOptions = { ...this.packager.platformSpecificBuildOptions, ...this.packager.config.squirrelWindows } as SquirrelWindowsOptions
 
   isAsyncSupported = false
-  private readonly signingQueue: SigningQueue[] = []
 
   constructor(
     private readonly packager: WinPackager,
@@ -56,38 +47,25 @@ export default class SquirrelWindowsTarget extends Target {
 
   async build(appOutDir: string, arch: Arch) {
     const packager = this.packager
+    const version = packager.appInfo.version
+    const sanitizedName = sanitizeFileName(this.appName)
 
     const setupFile = packager.expandArtifactNamePattern(this.options, "exe", arch, "${productName} Setup ${version}.${ext}")
     const installerOutDir = path.join(this.outDir, `squirrel-windows${getArchSuffix(arch)}`)
     const artifactPath = path.join(installerOutDir, setupFile)
     const msiArtifactPath = path.join(installerOutDir, packager.expandArtifactNamePattern(this.options, "msi", arch, "${productName} Setup ${version}.${ext}"))
 
-    await packager.info.emitArtifactBuildStarted({
-      targetPresentableName: "Squirrel.Windows",
-      file: artifactPath,
-      arch,
-    })
+    this.taskQueueManager.add(async () => {
+      await packager.info.emitArtifactBuildStarted({
+        targetPresentableName: "Squirrel.Windows",
+        file: artifactPath,
+        arch,
+      })
+      const distOptions = await this.computeEffectiveDistOptions(appOutDir, installerOutDir, setupFile)
+      await createWindowsInstaller(distOptions)
 
-    const distOptions = await this.computeEffectiveDistOptions(appOutDir, installerOutDir, setupFile)
-    await createWindowsInstaller(distOptions)
-
-    this.signingQueue.push({
-      artifactPath,
-      arch,
-      installerOutDir,
-      msiArtifactPath,
-      remoteReleases: distOptions.remoteReleases,
-    })
-  }
-
-  async finishBuild() {
-    const packager = this.packager
-    const version = packager.appInfo.version
-    const sanitizedName = sanitizeFileName(this.appName)
-
-    for (const signingOptions of this.signingQueue) {
-      const { artifactPath, arch, installerOutDir, msiArtifactPath, remoteReleases } = signingOptions
       await packager.signAndEditResources(artifactPath, arch, installerOutDir)
+
       if (this.options.msi) {
         await packager.sign(msiArtifactPath)
       }
@@ -103,7 +81,7 @@ export default class SquirrelWindowsTarget extends Target {
       })
 
       if (this.options.msi) {
-        await packager.info.emitArtifactBuildCompleted({
+        await packager.info.emitArtifactCreated({
           file: msiArtifactPath,
           target: this,
           arch,
@@ -119,7 +97,7 @@ export default class SquirrelWindowsTarget extends Target {
         arch,
         packager,
       })
-      if (remoteReleases != null) {
+      if (distOptions.remoteReleases != null) {
         await packager.info.emitArtifactCreated({
           file: path.join(installerOutDir, `${packagePrefix}delta.nupkg`),
           target: this,
@@ -134,7 +112,8 @@ export default class SquirrelWindowsTarget extends Target {
         arch,
         packager,
       })
-    }
+    })
+    return Promise.resolve()
   }
 
   private get appName() {

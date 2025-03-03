@@ -1,4 +1,4 @@
-import { Arch, asArray, copyOrLinkFile, deepAssign, InvalidConfigurationError, log, TmpDir, walk } from "builder-util"
+import { Arch, asArray, copyOrLinkFile, deepAssign, InvalidConfigurationError, log, walk } from "builder-util"
 import { Nullish } from "builder-util-runtime"
 import { emptyDir, readdir, readFile, writeFile } from "fs-extra"
 import * as path from "path"
@@ -8,7 +8,7 @@ import { Target } from "../core"
 import { getTemplatePath } from "../util/pathManager"
 import { VmManager } from "../vm/vm"
 import { WinPackager } from "../winPackager"
-import { createStageDir, StageDir } from "./targetUtil"
+import { createStageDir } from "./targetUtil"
 
 const APPX_ASSETS_DIR_NAME = "appx"
 
@@ -46,16 +46,8 @@ const restrictedApplicationIdValues = [
 
 const DEFAULT_RESOURCE_LANG = "en-US"
 
-type SigningQueue = {
-  artifactPath: string
-  stageDir: StageDir
-  arch: Arch
-  artifactName: string
-}
-
 export default class AppXTarget extends Target {
   readonly options: AppXOptions = deepAssign({}, this.packager.platformSpecificBuildOptions, this.packager.config.appx)
-  private readonly signingQueue: SigningQueue[] = []
 
   isAsyncSupported = false
 
@@ -155,20 +147,8 @@ export default class AppXTarget extends Target {
     if (this.options.makeappxArgs != null) {
       makeAppXArgs.push(...this.options.makeappxArgs)
     }
-    await vm.exec(vm.toVmFile(path.join(vendorPath, "windows-10", signToolArch, "makeappx.exe")), makeAppXArgs)
-
-    this.signingQueue.push({
-      artifactPath,
-      stageDir,
-      arch,
-      artifactName,
-    })
-  }
-  async finishBuild() {
-    const packager = this.packager
-    for (const signingOptions of this.signingQueue) {
-      const { artifactPath, stageDir, arch, artifactName } = signingOptions
-
+    this.taskQueueManager.add(async () => {
+      await vm.exec(vm.toVmFile(path.join(vendorPath, "windows-10", signToolArch, "makeappx.exe")), makeAppXArgs)
       await packager.sign(artifactPath)
 
       await stageDir.cleanup()
@@ -181,7 +161,7 @@ export default class AppXTarget extends Target {
         target: this,
         isWriteUpdateInfo: this.options.electronUpdaterAware,
       })
-    }
+    })
   }
 
   private static async computeUserAssets(vm: VmManager, vendorPath: string, userAssetDir: string | null) {

@@ -6,7 +6,7 @@ import { AppUpdater } from "../AppUpdater"
 import { URL } from "url"
 import { getChannelFilename, newUrlFromBase } from "../util"
 import { BaseGitHubProvider } from "./GitHubProvider"
-import { ResolvedUpdateFileInfo } from "../main"
+import { ResolvedUpdateFileInfo } from "../types"
 import { getFileList, ProviderRuntimeOptions } from "./Provider"
 
 export interface PrivateGitHubUpdateInfo extends UpdateInfo {

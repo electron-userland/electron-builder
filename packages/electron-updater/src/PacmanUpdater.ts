@@ -2,7 +2,7 @@ import { AllPublishOptions } from "builder-util-runtime"
 import { AppAdapter } from "./AppAdapter"
 import { DownloadUpdateOptions } from "./AppUpdater"
 import { BaseUpdater, InstallOptions } from "./BaseUpdater"
-import { DOWNLOAD_PROGRESS } from "./main"
+import { DOWNLOAD_PROGRESS } from "./types"
 import { findFile } from "./providers/Provider"
 
 export class PacmanUpdater extends BaseUpdater {
