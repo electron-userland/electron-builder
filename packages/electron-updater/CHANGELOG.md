@@ -1,5 +1,11 @@
 ## 4.3.0
 
+## 6.6.1
+
+### Patch Changes
+
+- [#8913](https://github.com/electron-userland/electron-builder/pull/8913) [`065c6a45`](https://github.com/electron-userland/electron-builder/commit/065c6a456e34e7f8c13cba483d433502b9325168) Thanks [@mmaietta](https://github.com/mmaietta)! - chore(refactor): refactoring code to reduce cyclical imports in order to migrate to rollup + vite (which have much more strict module resolutions)
+
 ## 6.6.0
 
 ### Minor Changes
