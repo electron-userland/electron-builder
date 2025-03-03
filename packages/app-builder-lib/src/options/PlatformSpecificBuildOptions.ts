@@ -170,6 +170,7 @@ export interface PlatformSpecificBuildOptions extends TargetSpecificOptions, Fil
 
   /**
    * Whether to infer update channel from application version pre-release components. e.g. if version `0.12.1-alpha.1`, channel will be set to `alpha`. Otherwise to `latest`.
+   * This does *not* apply to github publishing, which will [never auto-detect the update channel](https://github.com/electron-userland/electron-builder/issues/8589).
    * @default true
    */
   readonly detectUpdateChannel?: boolean
