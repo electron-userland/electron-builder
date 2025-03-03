@@ -147,7 +147,7 @@ export default class AppXTarget extends Target {
     if (this.options.makeappxArgs != null) {
       makeAppXArgs.push(...this.options.makeappxArgs)
     }
-    this.packager.info.signingQueueManager.add(async () => {
+    this.taskQueueManager.add(async () => {
       await vm.exec(vm.toVmFile(path.join(vendorPath, "windows-10", signToolArch, "makeappx.exe")), makeAppXArgs)
       await packager.sign(artifactPath)
 

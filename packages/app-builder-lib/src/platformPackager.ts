@@ -153,16 +153,6 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     )
   }
 
-  dispatchArtifactCreated(file: string, target: Target | null, arch: Arch | null, safeArtifactName?: string | null): Promise<void> {
-    return this.info.emitArtifactBuildCompleted({
-      file,
-      safeArtifactName,
-      target,
-      arch,
-      packager: this,
-    })
-  }
-
   async pack(outDir: string, arch: Arch, targets: Array<Target>, taskManager: AsyncTaskManager): Promise<any> {
     const appOutDir = this.computeAppOutDir(outDir, arch)
     await this.doPack({

@@ -65,7 +65,7 @@ test.ifNotWindows(
   })
 )
 
-test.ifNotWindows.ifAll(
+test.ifNotWindows(
   "executable path in postinst script",
   app(
     {
@@ -90,7 +90,7 @@ test.ifNotWindows.ifAll(
   )
 )
 
-test.ifNotWindows.ifAll(
+test.ifNotWindows(
   "deb file associations",
   app(
     {
