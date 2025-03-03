@@ -2,7 +2,6 @@ import { Arch, Platform } from "app-builder-lib"
 import { app, snapTarget } from "../helpers/packTester"
 
 // very slow
-
 test(
   "snap full",
   app({
