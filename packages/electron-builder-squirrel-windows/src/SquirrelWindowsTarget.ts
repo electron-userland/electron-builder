@@ -81,7 +81,7 @@ export default class SquirrelWindowsTarget extends Target {
       })
 
       if (this.options.msi) {
-        await packager.info.emitArtifactBuildCompleted({
+        await packager.info.emitArtifactCreated({
           file: msiArtifactPath,
           target: this,
           arch,

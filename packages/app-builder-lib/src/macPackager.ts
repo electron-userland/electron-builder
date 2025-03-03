@@ -357,7 +357,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
       const artifactName = this.expandArtifactNamePattern(masOptions, "pkg", arch)
       const artifactPath = path.join(outDir!, artifactName)
       await this.doFlat(appPath, artifactPath, masInstallerIdentity, keychainFile)
-      await this.info.emitArtifactBuildCompleted({
+      await this.info.emitArtifactCreated({
         file: artifactPath,
         target: null,
         arch: Arch.x64,
