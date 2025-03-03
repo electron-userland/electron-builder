@@ -245,17 +245,19 @@ export class PublishManager implements PublishContext {
     }
 
     const archOrder = this.packager.determinePublisherArchitectureOrder()
-    log.debug(
+    log.warn(
       { artifactsCreated: this.artifactCreatedEvents.map(it => it.safeArtifactName), ordering: archOrder.map(it => Arch[it]) },
       "processing artifact created events in order of architecture"
     )
-    for (const arch of archOrder) {
+    // for (const arch of archOrder) {
       for (const event of this.artifactCreatedEvents) {
-        if (event.arch === arch) {
+        // if (event.arch === arch) {
+        if (event.file != null) {
           await handler(event)
         }
+        // }
       }
-    }
+    // }
 
     await this.taskManager.awaitTasks()
 

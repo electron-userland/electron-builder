@@ -514,11 +514,11 @@ export class Packager {
         const targetList = createTargets(nameToTarget, targetNames.length === 0 ? packager.defaultTarget : targetNames, outDir, packager)
         await createOutDirIfNeed(targetList, createdOutDirs)
         const promise = packager.pack(outDir, arch, targetList, taskManager)
-        if (poolCount === 1) {
-          await promise
-        } else {
+        // if (poolCount === 1) {
+        //   await promise
+        // } else {
           packPromises.push(promise)
-        }
+        // }
       }
 
       await asyncPool(poolCount, packPromises, async it => {
