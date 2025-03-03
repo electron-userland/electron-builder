@@ -1,15 +1,15 @@
 import { readAsarJson } from "app-builder-lib/out/asar/asar"
-import { DIR_TARGET, Platform } from "electron-builder"
+import { Platform } from "electron-builder"
 import { coerceTypes } from "electron-builder/out/builder"
 import { readJson } from "fs-extra"
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert"
-import { app, modifyPackageJson } from "./helpers/packTester"
+import { app, linuxDirTarget, modifyPackageJson } from "./helpers/packTester"
 
 function createExtraMetadataTest(asar: boolean) {
   return app(
     {
-      targets: Platform.LINUX.createTarget(DIR_TARGET),
+      targets: linuxDirTarget,
       config: coerceTypes({
         asar,
         linux: {

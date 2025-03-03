@@ -2,7 +2,7 @@ import { Arch, Platform } from "app-builder-lib"
 import { app, snapTarget } from "../helpers/packTester"
 
 // very slow
-test.ifAll(
+test(
   "snap full",
   app({
     targets: snapTarget,
@@ -29,7 +29,7 @@ test.ifAll(
 )
 
 // very slow
-test.ifAll(
+test(
   "snap full (armhf)",
   app({
     targets: Platform.LINUX.createTarget("snap", Arch.armv7l),
