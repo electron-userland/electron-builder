@@ -1,3 +1,13 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v26.0.9...v) (2025-03-03)
+
+
+### Bug Fixes
+
+* custom publisher extension check and throw error if not found ([#8926](https://github.com/electron-userland/electron-builder/issues/8926)) ([3caab3c](https://github.com/electron-userland/electron-builder/commit/3caab3c4226a73ab458ac5a315aff160c5500b94))
+* **win:** execute `customUnInstall` before `atomicRMDir` function in NSIS uninstaller ([#8915](https://github.com/electron-userland/electron-builder/issues/8915)) ([8903c5d](https://github.com/electron-userland/electron-builder/commit/8903c5df046b74411f3b1fa958cef9a5955d01ef))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v26.0.8...v) (2025-02-26)
 
 

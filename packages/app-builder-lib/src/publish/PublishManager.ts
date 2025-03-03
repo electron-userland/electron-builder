@@ -354,7 +354,7 @@ async function requireProviderClass(provider: string, packager: Packager): Promi
       return BitbucketPublisher
 
     default: {
-      const extensions = [".mjs", ".js", ".cjs"]
+      const extensions = ["mjs", "js", "cjs"]
       const template = `electron-publisher-${provider}`
       const name = (ext: string) => `${template}.${ext}`
 
@@ -365,7 +365,8 @@ async function requireProviderClass(provider: string, packager: Packager): Promi
           return module.default || module
         }
       }
-      log.warn({ path: log.filePath(packager.buildResourcesDir), template, extensionsChecked: extensions }, "unable to find publish provider in build resources")
+      log.error({ path: log.filePath(packager.buildResourcesDir), template, extensionsChecked: extensions }, "unable to find publish provider in build resources")
+      throw new InvalidConfigurationError(`Cannot find module for publisher "${provider}" with any extension: ${extensions.join(", ")}`)
     }
   }
 }
