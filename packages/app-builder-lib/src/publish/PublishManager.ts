@@ -245,6 +245,10 @@ export class PublishManager implements PublishContext {
     }
 
     const archOrder = this.packager.determinePublisherArchitectureOrder()
+    log.debug(
+      { artifactsCreated: this.artifactCreatedEvents.map(it => it.safeArtifactName), ordering: archOrder.map(it => Arch[it]) },
+      "processing artifact created events in order of architecture"
+    )
     for (const arch of archOrder) {
       for (const event of this.artifactCreatedEvents) {
         if (event.arch === arch) {

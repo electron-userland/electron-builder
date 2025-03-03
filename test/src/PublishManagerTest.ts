@@ -104,6 +104,7 @@ test.ifNotWindows(
       publish: "always",
       projectDirCreated: async projectDir => {
         process.env.__TEST_S3_PUBLISHER__ = path.join(projectDir, "dist/s3")
+        return Promise.resolve()
       },
       packed: async context => {
         const dir = path.join(context.projectDir, "dist/s3")

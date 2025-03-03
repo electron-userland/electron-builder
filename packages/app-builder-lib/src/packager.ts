@@ -439,11 +439,11 @@ export class Packager {
     })
 
     const archOrder: Arch[] = this.determinePublisherArchitectureOrder()
-    const result: string[] = []
+    const result = new Set<string>()
     for (const arch of archOrder) {
       for (const event of artifactPaths) {
-        if (event.arch === arch) {
-          result.push(event.file)
+        if (event.arch === arch && event.file != null) {
+          result.add(event.file)
         }
       }
     }
@@ -503,7 +503,8 @@ export class Packager {
         await createOutDirIfNeed(targetList, createdOutDirs)
         packPromises.push(packager.pack(outDir, arch, targetList, taskManager))
       }
-      let poolCount = 1 // packager.platformSpecificBuildOptions.concurrency?.jobs || packager.config.concurrency?.jobs || 1
+
+      let poolCount = packager.platformSpecificBuildOptions.concurrency?.jobs || packager.config.concurrency?.jobs || 1
       if (poolCount < 1) {
         log.warn({ concurrency: poolCount }, "concurrency is invalid, overriding with job count: 1")
         poolCount = 1
