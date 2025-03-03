@@ -4,9 +4,9 @@ import { CheckingMacPackager } from "../helpers/CheckingPackager"
 import { assertPack, createMacTargetTest, signed } from "../helpers/packTester"
 
 describe.runIf(process.platform === "darwin" && process.env.CSC_KEY_PASSWORD != null)("mas", () => {
-  test("mas", createMacTargetTest(["mas"]))
-  test.ifNotCi("dev", createMacTargetTest(["mas-dev"]))
-  test.ifNotCi("mas and 7z", createMacTargetTest(["mas", "7z"]))
+  test("mas", ({ expect }) => createMacTargetTest(expect, ["mas"]))
+  test.ifNotCi("dev", ({ expect }) => createMacTargetTest(expect, ["mas-dev"]))
+  test.ifNotCi("mas and 7z", ({ expect }) => createMacTargetTest(expect, ["mas", "7z"]))
 
   const entitlement = (fileName: string) => path.join("build", fileName)
   const entitlementsConfig = {
@@ -17,9 +17,10 @@ describe.runIf(process.platform === "darwin" && process.env.CSC_KEY_PASSWORD != 
 
   const targets = Platform.MAC.createTarget(undefined, Arch.x64)
 
-  test.skip("custom mas", () => {
+  test.skip("custom mas", ({ expect }) => {
     let platformPackager: CheckingMacPackager | null = null
     return assertPack(
+      expect,
       "test-app-one",
       signed({
         targets,
@@ -45,9 +46,10 @@ describe.runIf(process.platform === "darwin" && process.env.CSC_KEY_PASSWORD != 
     )
   })
 
-  test("entitlements in the package.json", () => {
+  test("entitlements in the package.json", ({ expect }) => {
     let platformPackager: CheckingMacPackager | null = null
     return assertPack(
+      expect,
       "test-app-one",
       signed({
         targets,
@@ -70,9 +72,10 @@ describe.runIf(process.platform === "darwin" && process.env.CSC_KEY_PASSWORD != 
     )
   })
 
-  test("entitlements template", () => {
+  test("entitlements template", ({ expect }) => {
     let platformPackager: CheckingMacPackager | null = null
     return assertPack(
+      expect,
       "test-app-one",
       signed({
         targets,

@@ -3,9 +3,8 @@ import { app, snapTarget } from "../helpers/packTester"
 
 // very slow
 
-test(
-  "snap full",
-  app({
+test("snap full", ({ expect }) =>
+  app(expect, {
     targets: snapTarget,
     config: {
       extraMetadata: {
@@ -26,13 +25,11 @@ test(
         grantFileProtocolExtraPrivileges: undefined, // unsupported on current electron version in our tests
       },
     },
-  })
-)
+  }))
 
 // very slow
-test(
-  "snap full (armhf)",
-  app({
+test("snap full (armhf)", ({ expect }) =>
+  app(expect, {
     targets: Platform.LINUX.createTarget("snap", Arch.armv7l),
     config: {
       extraMetadata: {
@@ -43,5 +40,4 @@ test(
         useTemplateApp: false,
       },
     },
-  })
-)
+  }))
