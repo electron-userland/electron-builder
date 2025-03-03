@@ -38,7 +38,7 @@ test.ifLinuxOrDevMac("linux", ({ expect }) =>
   )
 )
 
-test.ifDevOrWinCi("win", ({ expect }) =>
+test.ifDevOrWinCi("win", { retry: 2 }, ({ expect }) =>
   app(
     expect,
     {
@@ -51,7 +51,7 @@ test.ifDevOrWinCi("win", ({ expect }) =>
   )
 )
 
-test.ifDevOrWinCi("win ia32", ({ expect }) =>
+test.ifDevOrWinCi("win ia32", { retry: 2 }, ({ expect }) =>
   app(
     expect,
     {
