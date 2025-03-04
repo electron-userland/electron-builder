@@ -36,9 +36,9 @@ fi
 #
 # Unfortunately, at the moment AppArmor doesn't have a good story for backwards compatibility.
 # https://askubuntu.com/questions/1517272/writing-a-backwards-compatible-apparmor-profile
-APPARMOR_PROFILE_SOURCE='/opt/${sanitizedProductName}/resources/apparmor-profile'
-APPARMOR_PROFILE_TARGET='/etc/apparmor.d/${executable}'
-if test -d "/etc/apparmor.d"; then
+if apparmor_status --enabled > /dev/null 2>&1; then
+  APPARMOR_PROFILE_SOURCE='/opt/${sanitizedProductName}/resources/apparmor-profile'
+  APPARMOR_PROFILE_TARGET='/etc/apparmor.d/${executable}'
   if apparmor_parser --skip-kernel-load --debug "$APPARMOR_PROFILE_SOURCE" > /dev/null 2>&1; then
     cp -f "$APPARMOR_PROFILE_SOURCE" "$APPARMOR_PROFILE_TARGET"
 
