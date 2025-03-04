@@ -21,11 +21,11 @@ export const PADDING = 2
 
 export class Logger {
   // clean up logs since concurrent tests are impossible to track logic execution with console concurrency "noise"
-  private readonly shouldDisableVitestInfoLogging = process.env.VITEST && !this.isDebugEnabled
+  private readonly shouldDisableNonErrorLoggingVitest = process.env.VITEST && !this.isDebugEnabled
 
   constructor(protected readonly stream: WritableStream) {
-    if (this.shouldDisableVitestInfoLogging) {
-      this.log(`"info" logging is disabled during VITEST workfloww when DEBUG=electron-builder flag is not set`)
+    if (this.shouldDisableNonErrorLoggingVitest) {
+      this.log(`non-error logging is silenced during VITEST workfloww when DEBUG=electron-builder flag is not set`)
     }
   }
 
@@ -68,8 +68,8 @@ export class Logger {
   }
 
   private _doLog(message: string | Error, fields: Fields | null, level: LogLevel) {
-    if (this.shouldDisableVitestInfoLogging && level === "info") {
-      return // ignore info message during VITEST workflow if debug flag is disabled
+    if (this.shouldDisableNonErrorLoggingVitest && level !== "error") {
+      return // ignore info/warn message during VITEST workflow if debug flag is disabled
     }
 
     // noinspection SuspiciousInstanceOfGuard
