@@ -1,5 +1,17 @@
 # app-builder-lib
 
+## 26.0.11
+
+### Patch Changes
+
+- [#8928](https://github.com/electron-userland/electron-builder/pull/8928) [`70d7c855`](https://github.com/electron-userland/electron-builder/commit/70d7c855360eb66b429f67a976709a52ce193a59) Thanks [@rotu](https://github.com/rotu)! - chore(docs): Document that detectUpdateChannel doesn't work when publishing to github
+
+- [#8932](https://github.com/electron-userland/electron-builder/pull/8932) [`e1ea62b0`](https://github.com/electron-userland/electron-builder/commit/e1ea62b0029c4adca20196ef060948777caeac37) Thanks [@gaaf](https://github.com/gaaf)! - fix: `after-install.tpl`: Detect if apparmor is enabled instead of just file-exists check
+
+- Updated dependencies []:
+  - dmg-builder@26.0.11
+  - electron-builder-squirrel-windows@26.0.11
+
 ## 26.0.10
 
 ### Patch Changes
