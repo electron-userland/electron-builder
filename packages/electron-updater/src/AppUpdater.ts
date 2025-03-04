@@ -15,7 +15,7 @@ import {
 import { randomBytes } from "crypto"
 import { release } from "os"
 import { EventEmitter } from "events"
-import { mkdir, outputFile, readFile, rename, unlink } from "fs-extra"
+import { mkdir, outputFile, readFile, rename, unlink, pathExists, rmdir } from "fs-extra"
 import { OutgoingHttpHeaders } from "http"
 import { load } from "js-yaml"
 import { Lazy } from "lazy-val"
@@ -473,6 +473,22 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     }
   }
 
+  // delete the pending files to save space
+  private async deletePendingUpdate() {
+    if (this.downloadedUpdateHelper?.cacheDirForPendingUpdate) {
+      try {
+        if (await pathExists(this.downloadedUpdateHelper.cacheDirForPendingUpdate)) {
+          await rmdir(this.downloadedUpdateHelper.cacheDirForPendingUpdate, { recursive: true })
+        }
+      } catch (e: any) {
+        // catch all errors, not throw to break the update checking
+        if (e.code !== "ENOENT") {
+          this._logger.warn(`Failed to clear update cache: ${e.message}`)
+        }
+      }
+    }
+  }
+
   private async doCheckForUpdates(): Promise<UpdateCheckResult> {
     this.emit("checking-for-update")
 
@@ -485,6 +501,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         }).`
       )
       this.emit("update-not-available", updateInfo)
+      await this.deletePendingUpdate()
       return {
         isUpdateAvailable: false,
         versionInfo: updateInfo,
