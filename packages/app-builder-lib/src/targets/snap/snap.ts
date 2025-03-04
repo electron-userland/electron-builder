@@ -1,16 +1,17 @@
-import { replaceDefault as _replaceDefault, Arch, deepAssign, executeAppBuilder, InvalidConfigurationError, log, serializeToYaml, toLinuxArchString } from "builder-util"
+import { replaceDefault as _replaceDefault, Arch, deepAssign, InvalidConfigurationError, log, serializeToYaml, toLinuxArchString } from "builder-util"
 import { asArray, Nullish, SnapStoreOptions } from "builder-util-runtime"
 import { outputFile, readFile } from "fs-extra"
 import { load } from "js-yaml"
 import * as path from "path"
 import * as semver from "semver"
-import { Configuration } from "../configuration"
-import { Publish, Target } from "../core"
-import { LinuxPackager } from "../linuxPackager"
-import { PlugDescriptor, SnapOptions } from "../options/SnapOptions"
-import { getTemplatePath } from "../util/pathManager"
-import { LinuxTargetHelper } from "./LinuxTargetHelper"
-import { createStageDirPath } from "./targetUtil"
+import { Configuration } from "../../configuration"
+import { Publish, Target } from "../../core"
+import { LinuxPackager } from "../../linuxPackager"
+import { PlugDescriptor, SnapOptions } from "../../options/SnapOptions"
+import { getTemplatePath } from "../../util/pathManager"
+import { LinuxTargetHelper } from "../LinuxTargetHelper"
+import { createStageDirPath } from "../targetUtil"
+import { SnapBuilderOptions, createSnap } from "./snapBuilder"
 
 const defaultPlugs = ["desktop", "desktop-legacy", "home", "x11", "wayland", "unity7", "browser-support", "network", "gsettings", "audio-playback", "pulseaudio", "opengl"]
 
@@ -190,14 +191,20 @@ export default class SnapTarget extends Target {
 
     const stageDir = await createStageDirPath(this, packager, arch)
     const snapArch = toLinuxArchString(arch, "snap")
-    const args = ["snap", "--app", appOutDir, "--stage", stageDir, "--arch", snapArch, "--output", artifactPath, "--executable", this.packager.executableName]
+    const args: SnapBuilderOptions = {
+      appDir: appOutDir,
+      stageDir: stageDir,
+      arch: snapArch,
+      output: artifactPath,
+      executableName: this.packager.executableName,
+    }
 
     await this.helper.icons
     if (this.helper.maxIconPath != null) {
       if (!this.isUseTemplateApp) {
         snap.icon = "snap/gui/icon.png"
       }
-      args.push("--icon", this.helper.maxIconPath)
+      args.icon = this.helper.maxIconPath
     }
 
     // snapcraft.yaml inside a snap directory
@@ -215,15 +222,15 @@ export default class SnapTarget extends Target {
         extraAppArgs.push(noSandboxArg)
       }
       if (this.isUseTemplateApp) {
-        args.push("--exclude", "chrome-sandbox")
+        args.excludedAppFiles = ["chrome-sandbox"]
       }
     }
     if (extraAppArgs.length > 0) {
-      args.push("--extraAppArgs=" + extraAppArgs.join(" "))
+      args.extraAppArgs = extraAppArgs
     }
 
     if (snap.compression != null) {
-      args.push("--compression", snap.compression)
+      args.compression = snap.compression
     }
 
     if (this.isUseTemplateApp) {
@@ -234,7 +241,17 @@ export default class SnapTarget extends Target {
       }
     }
 
-    if (packager.packagerOptions.effectiveOptionComputed != null && (await packager.packagerOptions.effectiveOptionComputed({ snap, desktopFile, args }))) {
+    if (this.isUseTemplateApp) {
+      args.template = { templateUrl: `electron4:${snapArch}` }
+    }
+
+    // snapshot tests verify `args`, but we need to extract the dynamic/temp paths from the object first
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { appDir, icon, output, stageDir: _stageDir, ...argsForSnapshotTests } = args
+    if (
+      packager.packagerOptions.effectiveOptionComputed != null &&
+      (await packager.packagerOptions.effectiveOptionComputed({ snap, desktopFile, args: { argsForSnapshotTests, isUseTemplateApp: this.isUseTemplateApp } }))
+    ) {
       return
     }
 
@@ -242,14 +259,10 @@ export default class SnapTarget extends Target {
 
     const hooksDir = await packager.getResource(options.hooks, "snap-hooks")
     if (hooksDir != null) {
-      args.push("--hooks", hooksDir)
+      args.hooksDir = hooksDir
     }
 
-    if (this.isUseTemplateApp) {
-      args.push("--template-url", `electron4:${snapArch}`)
-    }
-
-    await executeAppBuilder(args)
+    await createSnap(args)
 
     const publishConfig = findSnapPublishConfig(this.packager.config)
 
