@@ -40,7 +40,9 @@ jobs:
         id: changed-files-specific
         uses: tj-actions/changed-files@c65cd883420fd2eb864698a825fc4162dd94482c # v44
         with:
-          files: docker/**/*
+          files: |
+            docker/**/*
+            .github/workflows/docker*
 
       - name: Output all changed files
         env:
