@@ -276,8 +276,7 @@ export class NsisTarget extends Target {
           defines[defineUnpackedSizeKey] = Math.ceil(unpackedSize / 1024).toString()
 
           if (this.isWebInstaller) {
-            // await packager.dispatchArtifactCreated(file, this, arch)
-            await packager.info.emitArtifactBuildCompleted({
+            await packager.info.emitArtifactCreated({
               file,
               target: this,
               arch,
