@@ -24,6 +24,7 @@ export default () => {
 
       name: "node",
       environment: "node",
+      printConsoleTrace: true,
 
       server: {
         deps: {
