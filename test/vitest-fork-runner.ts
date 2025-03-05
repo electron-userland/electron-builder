@@ -153,7 +153,12 @@ export default function createForksPool(ctx: Vitest, { execArgv, env }): Process
       // This is a workaround until we can find a better solution. For now, just slot in a 500ms delay and retry once.
       const isSupposedToRetry = (error: Error) => {
         const { message } = error
-        const isOsError = /Command failed: hdiutil/.test(message) || /ERR_ELECTRON_BUILDER_CANNOT_EXECUTE/.test(message) || /EPERM: operation not permitted/.test(message)
+        const isOsError =
+        /Command failed: hdiutil/.test(message) ||
+        /ERR_ELECTRON_BUILDER_CANNOT_EXECUTE/.test(message) ||
+        /EPERM: operation not permitted/.test(message) ||
+        /yarn-tarball.tgz/.test(message) ||
+        /Error: yarn process failed/.test(message)
         return isOsError && shouldRetry
       }
 
