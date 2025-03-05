@@ -151,20 +151,30 @@ export default function createForksPool(ctx: Vitest, { execArgv, env }): Process
     ) {
       // Handle electron-builder flaky (due to parallel file operations such as hdiutil and EPERM file locks) tests by retrying
       // This is a workaround until we can find a better solution. For now, just slot in a 500ms delay and retry once.
-      const isSupposedToRetry = (error: Error) => {
-        const { message } = error
-        const isOsError =
-        /Command failed: hdiutil/.test(message) ||
-        /ERR_ELECTRON_BUILDER_CANNOT_EXECUTE/.test(message) ||
-        /EPERM: operation not permitted/.test(message) ||
-        /yarn-tarball.tgz/.test(message) ||
-        /Error: yarn process failed/.test(message)
-        return isOsError && shouldRetry
+      const isSupposedToRetry = (errorMessage: string) => {
+        try {
+          const isOsError =
+            /Command failed: hdiutil/.test(errorMessage) ||
+            /ERR_ELECTRON_BUILDER_CANNOT_EXECUTE/.test(errorMessage) ||
+            /EPERM: operation not permitted/.test(errorMessage) ||
+            /yarn-tarball.tgz/.test(errorMessage) ||
+            /Error: yarn process failed/.test(errorMessage)
+          return isOsError && shouldRetry
+        } catch { }
+        return false
       }
 
       try {
         await pool.run(data, { name, channel })
       } catch (error) {
+        // Flaky test failure
+        if (isSupposedToRetry(error.message ?? error)) {
+          await new Promise<void>(resolve => setTimeout(resolve, 500))
+          ctx.logger.log(`Retrying test(s) ${files.join(", ")} due to flaky test failure:`, error.message)
+          await runTestWithPotentialRetry(data, channel, files, project, cleanup, false)
+          return
+        }
+
         if (!(error instanceof Error)) {
           throw error
         }
@@ -179,12 +189,6 @@ export default function createForksPool(ctx: Vitest, { execArgv, env }): Process
           /The task has been cancelled/.test(error.message)
         ) {
           ctx.state.cancelFiles(files, project)
-        }
-        // Flaky test failure
-        else if (isSupposedToRetry(error)) {
-          await new Promise<void>(resolve => setTimeout(resolve, 500))
-          ctx.logger.log(`Retrying test ${files.join(", ")} due to flaky test failure:`, error.message)
-          await runTestWithPotentialRetry(data, channel, files, project, cleanup, false)
         } else {
           throw error
         }
