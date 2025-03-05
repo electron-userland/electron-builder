@@ -24,7 +24,7 @@ RUN apt-get update -yqq && apt-get -qq dist-upgrade && \
 # Resolves the following error due to dependency requirements
 # /root/.cache/electron-builder/winCodeSign/winCodeSign-2.6.0/linux/osslsigncode: error while loading shared libraries: libcrypto.so.1.1: cannot open shared object file: No such file or directory
 # The missing libcrypto.so.1.1 is part of libssl1.1 but Ubuntu 22.04 upgraded to libssl3, so we must install it manually
-ARG LIB_SSL1_VERSION=2.23
+ARG LIB_SSL1_VERSION=2.24
 RUN wget -q "http://security.ubuntu.com/ubuntu/pool/main/o/openssl/libssl1.1_1.1.1f-1ubuntu${LIB_SSL1_VERSION}_amd64.deb" && \
   dpkg -i libssl1.1*.deb && \
   rm libssl1.1*.deb
