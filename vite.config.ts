@@ -44,6 +44,9 @@ export default () => {
         concurrent: true
       },
 
+      // Note: only implemented isolated workers
+      pool: './test/vitest-fork-runner.ts',
+
       slowTestThreshold: 60 * 1000,
       testTimeout: 8 * 60 * 1000, // disk operations can be slow. We're generous with the timeout here to account for less-performant hardware
       coverage: {
