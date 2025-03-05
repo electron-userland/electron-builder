@@ -1,5 +1,5 @@
 import asyncPool from "tiny-async-pool"
-import { Arch, log, safeStringifyJson, serializeToYaml } from "builder-util"
+import { Arch, getArchSuffix, log, safeStringifyJson, serializeToYaml } from "builder-util"
 import { GenericServerOptions, PublishConfiguration, UpdateInfo, WindowsUpdateInfo } from "builder-util-runtime"
 import { outputFile, outputJson, readFile } from "fs-extra"
 import { Lazy } from "lazy-val"
@@ -191,6 +191,15 @@ async function createUpdateInfo(version: string, event: ArtifactCreated, release
 }
 
 export async function writeUpdateInfoFiles(updateInfoFileTasks: Array<UpdateInfoFileTask>, packager: Packager) {
+  const targets = packager.determinePublisherArchitectureOrder()
+  const primaryTarget = targets[0]
+  log.warn(
+    {
+      targets: targets.map(it => Arch[it]).join(", "),
+      primaryTarget: Arch[primaryTarget],
+    },
+    "update info file order"
+  )
   // zip must be first and zip info must be used for old path/sha512 properties in the update info
   updateInfoFileTasks.sort((a, b) => (a.info.files[0].url.endsWith(".zip") ? 0 : 100) - (b.info.files[0].url.endsWith(".zip") ? 0 : 100))
 

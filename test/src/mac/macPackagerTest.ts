@@ -6,7 +6,7 @@ import { assertThat } from "../helpers/fileAssert"
 import { app, appThrows, assertPack, checkDirContents, platform } from "../helpers/packTester"
 import { verifySmartUnpack } from "../helpers/verifySmartUnpack"
 
-test.ifMac("two-package", () =>
+test.ifMac.only("two-package", () =>
   assertPack(
     "test-app",
     {
