@@ -4,9 +4,11 @@ import * as path from "path"
 import { app, assertPack, copyTestAsset } from "../helpers/packTester"
 import { checkHelpers, doTest, expectUpdateMetadata } from "../helpers/winHelper"
 
-const nsisTarget = Platform.WINDOWS.createTarget(["nsis"])
+import { test } from "../vitest/vitest-test-wrapper"
 
-test.ifNotCiMac("assisted", ({ expect }) =>
+const nsisTarget = Platform.WINDOWS.createTarget(["nsis"], Arch.x64)
+
+test.only("assisted", ({ expect }) =>
   app(
     expect,
     {

@@ -18,12 +18,12 @@ export default () => {
       // e.g. test("name", ({ expect }) => { ... })
       globals: true,
 
-      setupFiles: "./test/vitest-setup.ts",
+      setupFiles: "./test/src/vitest/vitest-setup.ts",
       include: [`test/src/**/${includeRegex}.ts`],
       update: process.env.UPDATE_SNAPSHOT === "true",
 
       // Note: only implemented isolated workers
-      pool: './test/vitest-fork-runner.ts',
+      // pool: './test/vitest-fork-runner.ts',
       sequence: {
         concurrent: true
       },
