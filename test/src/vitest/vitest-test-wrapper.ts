@@ -46,7 +46,7 @@ const customTestMatchers = [
 
 const testMatchers = ["concurrent", "sequential", "skip", "only", "todo", "fails"]
 
-export const test = createChainable([...testMatchers, ...customTestMatchers], function (name, runTest: () => void | Promise<void>) {
+export const test = createChainable([...testMatchers, ...customTestMatchers], function (name, runTest: (context: TestContext) => void | Promise<void>) {
   const suite = getCurrentSuite()
   const task = suite.task(name)
 
@@ -73,22 +73,17 @@ export const test = createChainable([...testMatchers, ...customTestMatchers], fu
   test.ifLinuxOrDevMac = isLinux || (!isCi && isMac) ? test : skip
 
   let alreadyRetried = false
-
-  const wrapped = async () => {
-    await Promise.resolve(runTest()).catch(error => {
+  const wrapped = async (context: TestContext) => {
+    await Promise.resolve(runTest(context)).catch(error => {
       alreadyRetried = isSupposedToRetry(error.message ?? error, alreadyRetried)
       if (alreadyRetried) {
-        return new Promise(resolve => setTimeout(resolve, 500)).then(() => wrapped())
+        console.warn(`Retrying test "${suite.name ? suite.name + "  -  " : ""}${name}" due to flaky error: ${error.message ?? error}`)
+        return new Promise(resolve => setTimeout(resolve, 100)).then(() => wrapped(context))
       }
       throw error
     })
   }
-  const customTask = {
-    ...task,
-    name,
-    // context: { ...task.context, expect: createExpect(test) },
-  }
-  setFn(customTask, wrapped)
+  setFn(task, () => wrapped(task.context))
 })
 
 export { afterAll, beforeAll, describe } from "vitest"
