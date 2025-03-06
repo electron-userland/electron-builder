@@ -168,12 +168,12 @@ export default function createForksPool(ctx: Vitest, { execArgv, env }): Process
         await pool.run(data, { name, channel })
       } catch (error) {
         // Flaky test failure
-        if (isSupposedToRetry(error.message ?? error)) {
-          await new Promise<void>(resolve => setTimeout(resolve, 500))
-          ctx.logger.log(`Retrying test(s) ${files.join(", ")} due to flaky test failure:`, error.message)
-          await runTestWithPotentialRetry(data, channel, files, project, cleanup, false)
-          return
-        }
+        // if (isSupposedToRetry(error.message ?? error)) {
+        //   await new Promise<void>(resolve => setTimeout(resolve, 500))
+        //   ctx.logger.log(`Retrying test(s) ${files.join(", ")} due to flaky test failure:`, error.message)
+        //   await runTestWithPotentialRetry(data, channel, files, project, cleanup, false)
+        //   return
+        // }
 
         if (!(error instanceof Error)) {
           throw error

@@ -27,7 +27,8 @@
   "include": [
     "../typings/*.d.ts",
     "typings/*.d.ts",
-    "src/**/*.ts"
+    "src/**/*.ts",
+    "../vitest-*.ts"
   ],
   "types": ["vitest/globals"],
   "exclude": [

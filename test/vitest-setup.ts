@@ -1,5 +1,6 @@
 import { isCI as isCi } from "ci-info"
-import { afterEach, test, vitest } from "vitest"
+import { afterEach, vitest } from "vitest"
+import { test } from "./vitest-test-wrapper"
 
 afterEach(() => {
   vitest.clearAllMocks()
