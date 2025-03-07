@@ -4,7 +4,7 @@ import * as path from "path"
 import { app, assertPack, copyTestAsset } from "../helpers/packTester"
 import { checkHelpers, doTest, expectUpdateMetadata } from "../helpers/winHelper"
 
-import { test } from "../vitest/vitest-test-wrapper"
+import { test } from "@test/vitest/vitest-test-wrapper"
 
 const nsisTarget = Platform.WINDOWS.createTarget(["nsis"], Arch.x64)
 

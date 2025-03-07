@@ -1,5 +1,6 @@
 import { defineConfig } from "vitest/config"
 import fs from "fs"
+import path from "path"
 
 export default () => {
   const testRegex = process.env.TEST_FILES?.split(",") ?? ["*Test"]
@@ -7,6 +8,11 @@ export default () => {
   console.log("TEST_FILES pattern", includeRegex)
 
   return defineConfig({
+    resolve: {
+      alias: {
+        '@test': path.resolve(__dirname, './test/src'),
+      },
+    },
     server: {
       https: {
         cert: fs.readFileSync("./.vitest-cert/cert.pem"),

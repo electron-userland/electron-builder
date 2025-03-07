@@ -93,74 +93,74 @@ export const test = createChainable([...testMatchers, ...customTestMatchers], fu
 
 export { afterAll, beforeAll, describe } from "vitest"
 
-// this function will be called during collection phase:
-// don't call function handler here, add it to suite tasks
-// with "getCurrentSuite().task()" method
-// note: createTaskCollector provides support for "todo"/"each"/...
-export const test2 = createTaskCollector(function (name, runTest, timeout) {
-  const suite = getCurrentSuite()
+// // this function will be called during collection phase:
+// // don't call function handler here, add it to suite tasks
+// // with "getCurrentSuite().task()" method
+// // note: createTaskCollector provides support for "todo"/"each"/...
+// export const test2 = createTaskCollector(function (name, runTest, timeout) {
+//   const suite = getCurrentSuite()
 
-  const test: any = suite.test
+//   const test: any = suite.test
 
-  const skip = test.skip
-  // test.ifEnv = test.runIf
-  test.ifMac = isMac ? test : skip
-  test.ifNotMac = isMac ? skip : test
+//   const skip = test.skip
+//   // test.ifEnv = test.runIf
+//   test.ifMac = isMac ? test : skip
+//   test.ifNotMac = isMac ? skip : test
 
-  test.ifWindows = isWindows ? test : skip
-  test.ifNotWindows = isWindows ? skip : test
-  test.ifWinCi = isCi && isWindows ? test : skip
+//   test.ifWindows = isWindows ? test : skip
+//   test.ifNotWindows = isWindows ? skip : test
+//   test.ifWinCi = isCi && isWindows ? test : skip
 
-  test.ifCi = isCi ? test : skip
-  test.ifNotCi = isCi ? skip : test
-  test.ifNotCiMac = isCi && isMac ? skip : test
-  test.ifNotCiWin = isCi && isWindows ? skip : test
+//   test.ifCi = isCi ? test : skip
+//   test.ifNotCi = isCi ? skip : test
+//   test.ifNotCiMac = isCi && isMac ? skip : test
+//   test.ifNotCiWin = isCi && isWindows ? skip : test
 
-  test.ifDevOrWinCi = !isCi || isWindows ? test : skip
-  test.ifDevOrLinuxCi = !isCi || isLinux ? test : skip
+//   test.ifDevOrWinCi = !isCi || isWindows ? test : skip
+//   test.ifDevOrLinuxCi = !isCi || isLinux ? test : skip
 
-  test.ifLinux = isLinux ? test : skip
-  test.ifLinuxOrDevMac = isLinux || (!isCi && isMac) ? test : skip
+//   test.ifLinux = isLinux ? test : skip
+//   test.ifLinuxOrDevMac = isLinux || (!isCi && isMac) ? test : skip
 
-  // createChainable([...testMatchers, ...customTestMatchers], function (this, name, runTest) {
-  //   const suite = getCurrentSuite()
-  //   const task = suite.task(name)
+//   // createChainable([...testMatchers, ...customTestMatchers], function (this, name, runTest) {
+//   //   const suite = getCurrentSuite()
+//   //   const task = suite.task(name)
 
-  let alreadyRetried = false
-  const wrapped = async (context: TestContext) => {
-    await Promise.resolve(runTest(context)).catch(error => {
-      alreadyRetried = isSupposedToRetry(error.message ?? error, alreadyRetried)
-      if (alreadyRetried) {
-        return new Promise(resolve => setTimeout(resolve, 100)).then(() => wrapped(context))
-      }
-      throw error
-    })
-  }
+//   let alreadyRetried = false
+//   const wrapped = async (context: TestContext) => {
+//     await Promise.resolve(runTest(context)).catch(error => {
+//       alreadyRetried = isSupposedToRetry(error.message ?? error, alreadyRetried)
+//       if (alreadyRetried) {
+//         return new Promise(resolve => setTimeout(resolve, 100)).then(() => wrapped(context))
+//       }
+//       throw error
+//     })
+//   }
 
-  const config = {
-    ...this, // so "todo"/"skip"/... is tracked correctly
-    ifMac: isMac ? test : skip,
-    ifNotMac: isMac ? skip : test,
+//   const config = {
+//     ...this, // so "todo"/"skip"/... is tracked correctly
+//     ifMac: isMac ? test : skip,
+//     ifNotMac: isMac ? skip : test,
 
-    ifWindows: isWindows ? test : skip,
-    ifNotWindows: isWindows ? skip : test,
-    ifWinCi: isCi && isWindows ? test : skip,
+//     ifWindows: isWindows ? test : skip,
+//     ifNotWindows: isWindows ? skip : test,
+//     ifWinCi: isCi && isWindows ? test : skip,
 
-    ifCi: isCi ? test : skip,
-    ifNotCi: isCi ? skip : test,
-    ifNotCiMac: isCi && isMac ? skip : test,
-    ifNotCiWin: isCi && isWindows ? skip : test,
+//     ifCi: isCi ? test : skip,
+//     ifNotCi: isCi ? skip : test,
+//     ifNotCiMac: isCi && isMac ? skip : test,
+//     ifNotCiWin: isCi && isWindows ? skip : test,
 
-    ifDevOrWinCi: !isCi || isWindows ? test : skip,
-    ifDevOrLinuxCi: !isCi || isLinux ? test : skip,
+//     ifDevOrWinCi: !isCi || isWindows ? test : skip,
+//     ifDevOrLinuxCi: !isCi || isLinux ? test : skip,
 
-    ifLinux: isLinux ? test : skip,
-    ifLinuxOrDevMac: isLinux || (!isCi && isMac) ? test : skip,
-    meta: {
-      customPropertyToDifferentiateTask: true,
-    },
-    handler: wrapped,
-    timeout,
-  }
-  suite.task(name, config)
-})
+//     ifLinux: isLinux ? test : skip,
+//     ifLinuxOrDevMac: isLinux || (!isCi && isMac) ? test : skip,
+//     meta: {
+//       customPropertyToDifferentiateTask: true,
+//     },
+//     handler: wrapped,
+//     timeout,
+//   }
+//   suite.task(name, config)
+// })
