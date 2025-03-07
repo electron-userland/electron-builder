@@ -72,7 +72,7 @@ jobs:
       matrix:
         testFiles:
           - ArtifactPublisherTest,BuildTest,ExtraBuildTest,RepoSlugTest,binDownloadTest,configurationValidationTest,filenameUtilTest,filesTest,globTest,ignoreTest,macroExpanderTest,mainEntryTest,urlUtilTest,extraMetadataTest,linuxArchiveTest,linuxPackagerTest,HoistedNodeModuleTest,MemoLazyTest,HoistTest
-          - snapTest,debTest,fpmTest,protonTest
+          - debTest,fpmTest,protonTest
           - winPackagerTest,winCodeSignTest,webInstallerTest
           - oneClickInstallerTest,assistedInstallerTest
     steps:
@@ -218,4 +218,29 @@ jobs:
         run: pnpm ci:test
         env:
           TEST_FILES: ${{ matrix.testFiles }}
+          FORCE_COLOR: 1
+
+  test-snap:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout code repository
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
+
+      - name: Setup Tests
+        uses: ./.github/actions/pretest
+        with:
+          cache-path: ~/.cache/electron
+          cache-key: v-23.3.10-snap-electron
+
+      - name: Install snapcraft
+        run: |
+          sudo apt-get update -yq
+          sudo apt-get install snapcraft
+
+      - name: Test
+        run: |
+          pnpm ci:test
+        env:
+          TEST_FILES: snapTest
           FORCE_COLOR: 1
