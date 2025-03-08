@@ -18,7 +18,7 @@ function hasGlobalInstallation(pm: PM): Promise<boolean> {
     return Promise.resolve(globalInstallationCache.get(key)!)
   }
 
-  return exec(pm, ["--version"])
+  return exec(pm, ["--version"], { shell: true })
     .then(res => {
       return /^\d+.\d+.\d+$/.test(res)
     })
@@ -87,7 +87,7 @@ export const detect = async ({ cwd, includeGlobalBun }: { cwd?: string; includeG
 }
 
 export function getPackageManagerVersion(pm: PM) {
-  return exec(pm, ["--version"]).then(res => res.trim())
+  return exec(pm, ["--version"], { shell: true }).then(res => res.trim())
 }
 
 export function clearCache() {
