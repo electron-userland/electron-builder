@@ -6,8 +6,6 @@ export default () => {
   const includeRegex = `(${testRegex.join("|")})`
   console.log("TEST_FILES pattern", includeRegex)
 
-  const isWindows = process.platform === "win32"
-
   return defineConfig({
     server: {
       https: {
@@ -20,6 +18,9 @@ export default () => {
       setupFiles: "./test/vitest-setup.ts",
       include: [`test/src/**/${includeRegex}.ts`],
       update: process.env.UPDATE_SNAPSHOT === "true",
+
+      // Note: only implemented isolated workers
+      pool: './test/vitest-fork-runner.ts',
 
       name: "node",
       environment: "node",
@@ -38,26 +39,15 @@ export default () => {
         },
       },
 
-      // Speed things up a bit -- these help but probably won't be needed someday
-      maxConcurrency: 20,
-      pool: "forks",
-      poolOptions: {
-        forks: {
-          isolate: false,
-        },
-      },
-      isolate: false, // only safe with the poolOptions above
 
-      slowTestThreshold: 10 * 1000,
-      testTimeout: (isWindows ? 8 : 5) * 1000 * 60, // disk operations can be slow. We're generous with the timeout here to account for less-performant hardware
+
+      slowTestThreshold: 60 * 1000,
+      testTimeout: 8 * 60 * 1000, // disk operations can be slow. We're generous with the timeout here to account for less-performant hardware
       coverage: {
         reporter: ["lcov", "text"],
       },
       reporters: ["default", "html"],
       outputFile: "coverage/sonar-report.xml",
-      snapshotFormat: {
-        printBasicPrototype: false,
-      },
       resolveSnapshotPath: (testPath, snapshotExtension) => {
         return testPath
           .replace(/\.[tj]s$/, `.js${snapshotExtension}`)
