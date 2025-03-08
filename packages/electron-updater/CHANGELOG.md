@@ -1,5 +1,11 @@
 ## 4.3.0
 
+## 6.6.2
+
+### Patch Changes
+
+- [#8933](https://github.com/electron-userland/electron-builder/pull/8933) [`324032c5`](https://github.com/electron-userland/electron-builder/commit/324032c5ea94b983cda8a5510fcc1a3fb752a1a1) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: re-export `CancellationToken`, `PackageFileInfo`, `ProgressInfo`, `UpdateFileInfo`, `UpdateInfo` from electron-updater
+
 ## 6.6.1
 
 ### Patch Changes
