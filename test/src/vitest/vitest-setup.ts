@@ -1,5 +1,6 @@
 import { isCI as isCi } from "ci-info"
 import { afterEach, test, vitest } from "vitest"
+import { CustomTestMatcher } from "./vitest"
 
 afterEach(() => {
   vitest.clearAllMocks()
@@ -9,16 +10,28 @@ const isWindows = process.platform === "win32"
 const isMac = process.platform === "darwin"
 const isLinux = process.platform === "linux"
 
-const skip = test.skip
-// const skipSuite = describe.skip
-// const isAllTests = process.env.ALL_TESTS !== "false"
+// test.ifEnv = test.runIf
+// test.ifMac = test.runIf(isMac)
+// test.ifNotMac = test.runIf(!isMac)
 
-// describe = isAllTests ? describe : skipSuite
-// test = isAllTests ? test : skip
-// skip = skip
+// test.ifWindows = test.runIf(isWindows)
+// test.ifNotWindows = test.runIf(!isWindows)
+// test.ifWinCi = test.runIf(isCi && isWindows)
+
+// test.ifCi = test.runIf(isCi)
+// test.ifNotCi = test.runIf(!isCi)
+// test.ifNotCiMac = test.runIf(!isCi && !isMac)
+// test.ifNotCiWin = test.runIf(!isCi && !isWindows)
+
+// test.ifDevOrWinCi = test.runIf(!isCi || isWindows)
+// test.ifDevOrLinuxCi = test.runIf(!isCi || isLinux)
+
+// test.ifLinux = test.runIf(isLinux)
+// test.ifLinuxOrDevMac = test.runIf(isLinux || (!isCi && isMac))
+
+// const skip = test.skip
 
 // test.ifEnv = test.runIf
-// skip.ifEnv = test.runIf
 
 // test.ifMac = isMac ? test : skip
 

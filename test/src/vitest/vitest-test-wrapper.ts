@@ -1,6 +1,7 @@
 import { isCI as isCi } from "ci-info"
 import { createExpect, TestContext } from "vitest"
 import { createChainable, createTaskCollector, getCurrentSuite, setFn } from "vitest/suite"
+import { CustomTestMatcher } from "./vitest"
 // import "./typings/vitest"
 
 // type Test = (...args) => void | Promise<void>
@@ -27,8 +28,7 @@ const isSupposedToRetry = (errorMessage: string, alreadyRetried: boolean) => {
 }
 
 const customTestMatchers = [
-  // "ifEnv",
-  // "runIf",
+  "ifEnv",
   "ifMac",
   "ifNotWindows",
   "ifNotMac",
@@ -44,52 +44,74 @@ const customTestMatchers = [
   "ifLinuxOrDevMac",
 ]
 
-const testMatchers = ["concurrent", "sequential", "skip", "only", "todo", "fails"]
+const testMatchers = ["concurrent", "sequential", "skip", "only", "todo", "fails", "runIf"]
 
-export const test = createChainable([...testMatchers, ...customTestMatchers], function (name, runTest: (context: TestContext) => void | Promise<void>) {
-  const suite = getCurrentSuite()
-  const task = suite.task(name)
-  const test: any = suite.test
+export const test = createChainable(
+  [
+    "concurrent",
+    "sequential",
+    "skip",
+    "only",
+    "todo",
+    "fails",
+    "runIF",
+    "ifEnv",
+    "ifMac",
+    "ifNotWindows",
+    "ifNotMac",
+    "ifNotCiMac",
+    "ifWindows",
+    "ifLinux",
+    "ifCi",
+    "ifNotCi",
+    "ifNotCiWin",
+    "ifDevOrWinCi",
+    "ifDevOrLinuxCi",
+    "ifWinCi",
+    "ifLinuxOrDevMac",
+  ],
+  function (name, runTest: (context: TestContext) => void | Promise<void>) {
+    const suite = getCurrentSuite()
 
-  const isOnly = this.only
-  // if (isOnly !== undefined && !isOnly) {
-  //   setFn(task, test.skip)
-  //   return
-  // }
+    const task = suite.task(name)
+    const test = suite.test
+    suite.test = {
+      ...suite.test,
+      mode: this.only ? "only" : this.skip ? "skip" : this.todo ? "todo" : "run",
+      // ifEnv: test.runIf,
+      ifMac: test.runIf(isMac),
+      ifNotMac: test.runIf(!isMac),
 
-  const skip = test.skip
-  test.ifEnv = test.runIf
-  test.ifMac = isMac ? test : skip
-  test.ifNotMac = isMac ? skip : test
+      ifWindows: test.runIf(isWindows),
+      ifNotWindows: test.runIf(!isWindows),
+      ifWinCi: test.runIf(isCi && isWindows),
 
-  test.ifWindows = isWindows ? test : skip
-  test.ifNotWindows = isWindows ? skip : test
-  test.ifWinCi = isCi && isWindows ? test : skip
+      ifCi: test.runIf(isCi),
+      ifNotCi: test.runIf(!isCi),
+      ifNotCiMac: test.runIf(!isCi && !isMac),
+      ifNotCiWin: test.runIf(!isCi && !isWindows),
 
-  test.ifCi = isCi ? test : skip
-  test.ifNotCi = isCi ? skip : test
-  test.ifNotCiMac = isCi && isMac ? skip : test
-  test.ifNotCiWin = isCi && isWindows ? skip : test
+      ifDevOrWinCi: test.runIf(!isCi || isWindows),
+      ifDevOrLinuxCi: test.runIf(!isCi || isLinux),
 
-  test.ifDevOrWinCi = !isCi || isWindows ? test : skip
-  test.ifDevOrLinuxCi = !isCi || isLinux ? test : skip
+      ifLinux: test.runIf(isLinux),
+      ifLinuxOrDevMac: test.runIf(isLinux || (!isCi && isMac)),
+    } as any
 
-  test.ifLinux = isLinux ? test : skip
-  test.ifLinuxOrDevMac = isLinux || (!isCi && isMac) ? test : skip
-
-  let alreadyRetried = false
-  const wrapped = async (context: TestContext) => {
-    await Promise.resolve(runTest(context)).catch(error => {
-      alreadyRetried = isSupposedToRetry(error.message ?? error, alreadyRetried)
-      if (alreadyRetried) {
-        console.warn(`Retrying test "${suite.name ? suite.name + "  -  " : ""}${name}" due to flaky error:\n\n${error.message ?? error}`)
-        return new Promise(resolve => setTimeout(resolve, 100)).then(() => wrapped(context))
-      }
-      throw error
-    })
+    let alreadyRetried = false
+    const wrapped = async (context: TestContext) => {
+      await Promise.resolve(runTest(context)).catch(error => {
+        alreadyRetried = isSupposedToRetry(error.message ?? error, alreadyRetried)
+        if (alreadyRetried) {
+          console.warn(`Retrying test "${suite.name ? suite.name + "  -  " : ""}${name}" due to flaky error:\n\n${error.message ?? error}`)
+          return new Promise(resolve => setTimeout(resolve, 100)).then(() => wrapped(context))
+        }
+        throw error
+      })
+    }
+    setFn(task, () => wrapped(task.context))
   }
-  setFn(task, () => wrapped(task.context))
-})
+)
 
 export { afterAll, beforeAll, describe } from "vitest"
 
