@@ -1,3 +1,4 @@
+import { test, describe } from "@test/vitest/vitest-test-wrapper"
 import { Arch, build, PackagerOptions, Platform } from "electron-builder"
 import * as fs from "fs/promises"
 import * as path from "path"

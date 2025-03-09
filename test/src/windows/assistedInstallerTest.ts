@@ -1,10 +1,9 @@
+import { test, describe } from "@test/vitest/vitest-test-wrapper"
 import { Arch, archFromString, Platform } from "electron-builder"
 import * as fs from "fs/promises"
 import * as path from "path"
 import { app, assertPack, copyTestAsset } from "../helpers/packTester"
 import { checkHelpers, doTest, expectUpdateMetadata } from "../helpers/winHelper"
-
-import { test } from "@test/vitest/vitest-test-wrapper"
 
 const nsisTarget = Platform.WINDOWS.createTarget(["nsis"], Arch.x64)
 

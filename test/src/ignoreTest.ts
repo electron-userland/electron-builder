@@ -1,3 +1,4 @@
+import { test, describe } from "@test/vitest/vitest-test-wrapper"
 import { DIR_TARGET, Platform, archFromString } from "electron-builder"
 import { outputFile } from "fs-extra"
 import * as path from "path"

@@ -1,3 +1,4 @@
+import { test, describe } from "@test/vitest/vitest-test-wrapper"
 import { PlatformPackager } from "app-builder-lib"
 import { Arch, copyFile, exec } from "builder-util"
 import { attachAndExecute, getDmgTemplatePath } from "dmg-builder/out/dmgUtil"

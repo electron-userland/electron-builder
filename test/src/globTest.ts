@@ -1,3 +1,4 @@
+import { test, describe } from "@test/vitest/vitest-test-wrapper"
 import { Platform } from "app-builder-lib"
 import { readAsar } from "app-builder-lib/out/asar/asar"
 import { outputFile } from "fs-extra"

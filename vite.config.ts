@@ -20,9 +20,8 @@ export default () => {
       },
     },
     test: {
-      // if using `toMatchSnapshot`, it MUST be passed in through the test context
-      // e.g. test("name", ({ expect }) => { ... })
-      globals: true,
+      // Use instead: import { test, describe } from "@test/vitest/vitest-test-wrapper"
+      globals: false,
 
       setupFiles: "./test/src/vitest/vitest-setup.ts",
       include: [`test/src/**/${includeRegex}.ts`],
