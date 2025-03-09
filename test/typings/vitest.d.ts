@@ -29,5 +29,4 @@ declare global {
   const it: CustomTestMatcher
   const test: CustomTestMatcher
   const describe: typeof import('vitest')['describe']
-  const expect: typeof import('vitest')['expect']
 }
