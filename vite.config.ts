@@ -32,6 +32,8 @@ export default () => {
       sequence: {
         concurrent: true
       },
+      disableConsoleIntercept: true,
+      reporters: ["basic", "json"],
 
       name: "node",
       environment: "node",
@@ -53,11 +55,7 @@ export default () => {
 
       slowTestThreshold: 60 * 1000,
       testTimeout: 8 * 60 * 1000, // disk operations can be slow. We're generous with the timeout here to account for less-performant hardware
-      coverage: {
-        reporter: ["lcov", "text"],
-      },
-      reporters: ["default", "html"],
-      outputFile: "coverage/sonar-report.xml",
+
       resolveSnapshotPath: (testPath, snapshotExtension) => {
         return testPath
           .replace(/\.[tj]s$/, `.js${snapshotExtension}`)
