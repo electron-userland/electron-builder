@@ -77,6 +77,7 @@ jobs:
           - snapTest,debTest,fpmTest,protonTest
           - winPackagerTest,winCodeSignTest,webInstallerTest
           - oneClickInstallerTest,assistedInstallerTest
+          - concurrentBuildsTest
     steps:
       - name: Checkout code repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -174,6 +175,7 @@ jobs:
           - winCodeSignTest,differentialUpdateTest,squirrelWindowsTest
           - appxTest,msiTest,portableTest,assistedInstallerTest,protonTest
           - BuildTest,oneClickInstallerTest,winPackagerTest,nsisUpdaterTest,webInstallerTest
+          - concurrentBuildsTest
     steps:
       - name: Checkout code repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -201,6 +203,7 @@ jobs:
           - oneClickInstallerTest,assistedInstallerTest
           - winPackagerTest,winCodeSignTest,webInstallerTest
           - masTest,dmgTest,filesTest,macPackagerTest,differentialUpdateTest,macArchiveTest
+          - concurrentBuildsTest
     steps:
       - name: Checkout code repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -215,6 +218,7 @@ jobs:
         run: |
           brew install powershell/tap/powershell
           brew install --cask wine-stable
+          brew install rpm
 
       - name: Test
         run: pnpm ci:test
