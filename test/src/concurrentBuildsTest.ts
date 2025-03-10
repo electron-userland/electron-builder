@@ -27,9 +27,10 @@ const projectDirCreated = async (projectDir: string, tmpDir: TmpDir) => {
   await modifyPackageJson(projectDir, (data: any) => buildConfig(data, false), false)
 }
 
-test.ifNotWindows("win/linux concurrent", options, () => {
+test.ifNotWindows("win/linux concurrent", options, ({ expect }) => {
   const targets = new Map([...winTargets, ...linuxTargets])
   return assertPack(
+    expect,
     "test-app",
     {
       targets,
@@ -46,9 +47,10 @@ test.ifNotWindows("win/linux concurrent", options, () => {
   )
 })
 
-test.ifMac("mac/win/linux concurrent", options, () => {
+test.ifMac("mac/win/linux concurrent", options, ({ expect }) => {
   const targets = new Map([...winTargets, ...macTargets, ...linuxTargets])
   return assertPack(
+    expect,
     "test-app",
     {
       targets,
@@ -65,9 +67,10 @@ test.ifMac("mac/win/linux concurrent", options, () => {
   )
 })
 
-test.ifMac("mac concurrent", options, () => {
+test.ifMac("mac concurrent", options, ({ expect }) => {
   const targets = macTargets
   return assertPack(
+    expect,
     "test-app",
     {
       targets,
@@ -84,9 +87,10 @@ test.ifMac("mac concurrent", options, () => {
   )
 })
 
-test.ifNotMac("win concurrent", options, () => {
+test.ifNotMac("win concurrent", options, ({ expect }) => {
   const targets = winTargets
   return assertPack(
+    expect,
     "test-app",
     {
       targets,
@@ -103,9 +107,10 @@ test.ifNotMac("win concurrent", options, () => {
   )
 })
 
-test.ifNotWindows("linux concurrent", options, () => {
+test.ifNotWindows("linux concurrent", options, ({ expect }) => {
   const targets = linuxTargets
   return assertPack(
+    expect,
     "test-app",
     {
       targets,
@@ -122,10 +127,11 @@ test.ifNotWindows("linux concurrent", options, () => {
   )
 })
 
-test.ifWindows("win concurrent - all targets", options, () => {
+test.ifWindows("win concurrent - all targets", options, ({ expect }) => {
   const targetList = [DIR_TARGET, `appx`, `nsis`, `portable`, `squirrel`, `7z`, `zip`, `tar.xz`, `tar.gz`, `tar.bz2`]
   const targets = Platform.WINDOWS.createTarget(targetList, Arch.x64, Arch.arm64)
   return assertPack(
+    expect,
     "test-app",
     {
       targets,
