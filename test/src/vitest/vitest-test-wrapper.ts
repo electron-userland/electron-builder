@@ -24,10 +24,10 @@ export const test = createTaskCollector(function (this: TaskCustomOptions, name:
 
   let alreadyRetried = false
   const wrapped = async (context: TestContext) => {
-    await Promise.resolve(runTest(context)).catch(error => {
-      console.log(`Error in test "${suite.name ? suite.name + "  -  " : ""}${name}"`)
+    console.log(`Test "${suite.name ? suite.name + "  -  " : ""}${name}"`)
+    console.log({ this: this, name, options, runTest })
+    await Promise.resolve(() => runTest(context)).catch(error => {
       console.log(JSON.stringify(error))
-      console.log(JSON.stringify({ this: this, name, options, runTest }))
       alreadyRetried = isSupposedToRetry(error.message ?? error, alreadyRetried)
       if (alreadyRetried) {
         console.log(`retrying unit test due to flaky error:\n${error.message ?? error}`)
