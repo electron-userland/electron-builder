@@ -1,4 +1,4 @@
-import { test, describe } from "@test/vitest/vitest-test-wrapper"
+import { it, describe } from "@test/vitest/vitest-test-wrapper"
 // copy from https://github.com/yarnpkg/berry/blob/master/packages/yarnpkg-nm/tests/hoist.test.ts
 import { hoist, HoisterTree, HoisterResult, HoisterDependencyKind } from "app-builder-lib/out/node-module-collector/hoist"
 import { expect } from "vitest"

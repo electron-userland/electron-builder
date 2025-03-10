@@ -1,4 +1,4 @@
-import { TaskCustomOptions, TestContext } from "vitest"
+import { Awaitable, TaskCustomOptions, TestContext } from "vitest"
 import { createTaskCollector, getCurrentSuite } from "vitest/suite"
 import { CustomTestMatcher } from "./vitest"
 
@@ -19,7 +19,7 @@ const isSupposedToRetry = (errorMessage: string, alreadyRetried: boolean) => {
   return false
 }
 
-export const test = createTaskCollector(function (this: TaskCustomOptions, name, runTest, options) {
+export const test = createTaskCollector(function (this: TaskCustomOptions, name: string, runTest: (context: TestContext) => Awaitable<void>, options) {
   const suite = getCurrentSuite()
 
   let alreadyRetried = false
@@ -27,7 +27,8 @@ export const test = createTaskCollector(function (this: TaskCustomOptions, name,
     await Promise.resolve(runTest(context)).catch(error => {
       alreadyRetried = isSupposedToRetry(error.message ?? error, alreadyRetried)
       if (alreadyRetried) {
-        return new Promise(resolve => setTimeout(resolve, 100)).then(() => wrapped(context))
+        console.warn(`retrying unit test due to flaky error:\n${error.message ?? error}`)
+        return new Promise(resolve => setTimeout(resolve, 500)).then(() => runTest(context))
       }
       throw error
     })
@@ -40,4 +41,4 @@ export const test = createTaskCollector(function (this: TaskCustomOptions, name,
   })
 }) as CustomTestMatcher
 
-export { afterAll, beforeAll, describe, vitest } from "vitest"
+export { afterAll, beforeAll, describe, vitest, test as it } from "vitest"
