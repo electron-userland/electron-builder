@@ -25,12 +25,12 @@ export const test = createTaskCollector(function (this: TaskCustomOptions, name:
   let alreadyRetried = false
   const wrapped = async (context: TestContext) => {
     await Promise.resolve(runTest(context)).catch(error => {
-      console.error(`Error in test "${suite.name ? suite.name + "  -  " : ""}${name}"`)
-      console.error(JSON.stringify(error))
-      console.error(JSON.stringify({ this: this, name, options, runTest }))
+      console.log(`Error in test "${suite.name ? suite.name + "  -  " : ""}${name}"`)
+      console.log(JSON.stringify(error))
+      console.log(JSON.stringify({ this: this, name, options, runTest }))
       alreadyRetried = isSupposedToRetry(error.message ?? error, alreadyRetried)
       if (alreadyRetried) {
-        console.error(`retrying unit test due to flaky error:\n${error.message ?? error}`)
+        console.log(`retrying unit test due to flaky error:\n${error.message ?? error}`)
         return new Promise(resolve => setTimeout(resolve, 500)).then(() => runTest(context))
       }
       throw error
@@ -39,8 +39,8 @@ export const test = createTaskCollector(function (this: TaskCustomOptions, name:
 
   suite.task(name, {
     ...this, // so "todo"/"skip"/... is tracked correctly
-    handler: wrapped,
     ...options,
+    handler: wrapped,
   })
 }) as CustomTestMatcher
 
