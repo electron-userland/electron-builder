@@ -1,4 +1,4 @@
-import { test, describe } from "@test/vitest/vitest-test-wrapper"
+import { test, it } from "@test/vitest/vitest-test-wrapper"
 import { Arch, Platform } from "electron-builder"
 import { readFile } from "fs-extra"
 import { mkdir } from "fs/promises"

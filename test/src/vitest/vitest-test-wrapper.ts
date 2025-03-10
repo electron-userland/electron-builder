@@ -41,4 +41,5 @@ export const test = createTaskCollector(function (this: TaskCustomOptions, name:
   })
 }) as CustomTestMatcher
 
-export { afterAll, beforeAll, describe, vitest, test as it } from "vitest"
+export { test as it }
+export { afterAll, beforeAll, describe, vitest } from "vitest"
