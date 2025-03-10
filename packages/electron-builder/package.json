@@ -54,7 +54,7 @@
     "app-builder-lib": "workspace:*",
     "builder-util": "workspace:*",
     "builder-util-runtime": "workspace:*",
-    "chalk": "^4.1.2",
+    "chalk": "^5.0.0",
     "dmg-builder": "workspace:*",
     "fs-extra": "^10.1.0",
     "is-ci": "^3.0.0",
