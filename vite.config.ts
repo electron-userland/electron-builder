@@ -6,8 +6,6 @@ export default () => {
   const includeRegex = `(${testRegex.join("|")})`
   console.log("TEST_FILES pattern", includeRegex)
 
-  const isWindows = process.platform === "win32"
-
   return defineConfig({
     server: {
       https: {
@@ -16,14 +14,17 @@ export default () => {
       },
     },
     test: {
+      // if using `toMatchSnapshot`, it MUST be passed in through the test context
+      // e.g. test("name", ({ expect }) => { ... })
       globals: true,
+
       setupFiles: "./test/vitest-setup.ts",
       include: [`test/src/**/${includeRegex}.ts`],
       update: process.env.UPDATE_SNAPSHOT === "true",
-      printConsoleTrace: true,
 
       name: "node",
       environment: "node",
+      printConsoleTrace: true,
 
       server: {
         deps: {
@@ -39,8 +40,12 @@ export default () => {
         },
       },
 
-      slowTestThreshold: 20 * 1000,
-      testTimeout: (isWindows ? 8 : 5) * 1000 * 60, // disk operations can be slow. We're generous with the timeout here to account for less-performant hardware
+      sequence: {
+        concurrent: true
+      },
+
+      slowTestThreshold: 60 * 1000,
+      testTimeout: 8 * 60 * 1000, // disk operations can be slow. We're generous with the timeout here to account for less-performant hardware
       coverage: {
         reporter: ["lcov", "text"],
       },

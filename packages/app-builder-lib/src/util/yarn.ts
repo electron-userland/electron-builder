@@ -96,8 +96,9 @@ async function installDependencies(config: Configuration, appDir: string, option
   const arch = options.arch || process.arch
   const additionalArgs = options.additionalArgs
 
-  log.info({ platform, arch, appDir }, `installing production dependencies`)
-  const pm = await detect({ cwd: appDir })
+  const projectDir = await getProjectRootPath(appDir)
+  const pm = await detect({ cwd: projectDir })
+  log.info({ pm, platform, arch, projectDir, appDir }, `installing production dependencies`)
   const execArgs = ["install"]
   const isYarnBerry = await checkYarnBerry(pm)
   if (!isYarnBerry) {

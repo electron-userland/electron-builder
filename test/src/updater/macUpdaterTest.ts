@@ -28,7 +28,7 @@ class TestNativeUpdater extends EventEmitter {
   }
 }
 
-test.ifMac("mac updates", async () => {
+test.ifMac("mac updates", async ({ expect }) => {
   const mockNativeUpdater = new TestNativeUpdater()
 
   mockForNodeRequire("electron", {
@@ -56,6 +56,6 @@ test.ifMac("mac updates", async () => {
   // expect(removeUnstableProperties(updateCheckResult?.updateInfo.files)).toMatchSnapshot()
   const files = await updateCheckResult?.downloadPromise
   expect(files!.length).toEqual(1)
-  await assertThat(files![0]).isFile()
+  await assertThat(expect, files![0]).isFile()
   expect(actualEvents).toMatchSnapshot()
 })

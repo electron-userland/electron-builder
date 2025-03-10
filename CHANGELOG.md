@@ -1,3 +1,14 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v26.0.10...v) (2025-03-09)
+
+
+### Bug Fixes
+
+* `after-install.tpl` - Detect if `apparmor` is enabled instead of just file-exists check ([#8932](https://github.com/electron-userland/electron-builder/issues/8932)) ([e1ea62b](https://github.com/electron-userland/electron-builder/commit/e1ea62b0029c4adca20196ef060948777caeac37))
+* find cwd using `getProjectRootPath` for detecting package manager ([#8941](https://github.com/electron-userland/electron-builder/issues/8941)) ([14b96df](https://github.com/electron-userland/electron-builder/commit/14b96dfcbb7e4fd114169c35b50932bf5777fcf1))
+* re-export various types from electron-updater ([#8933](https://github.com/electron-userland/electron-builder/issues/8933)) ([324032c](https://github.com/electron-userland/electron-builder/commit/324032c5ea94b983cda8a5510fcc1a3fb752a1a1))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v26.0.9...v) (2025-03-03)
 
 
