@@ -149,7 +149,7 @@ test("relative index", ({ expect }) =>
     }
   ))
 
-it.ifDevOrLinuxCi("electron version from electron-prebuilt dependency", ({ expect }) =>
+test.ifDevOrLinuxCi("electron version from electron-prebuilt dependency", ({ expect }) =>
   app(
     expect,
     {

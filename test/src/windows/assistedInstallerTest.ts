@@ -7,7 +7,7 @@ import { checkHelpers, doTest, expectUpdateMetadata } from "../helpers/winHelper
 
 const nsisTarget = Platform.WINDOWS.createTarget(["nsis"], Arch.x64)
 
-test.only("assisted", ({ expect }) =>
+test.ifNotCiMac("assisted", ({ expect }) =>
   app(
     expect,
     {
@@ -36,8 +36,7 @@ test.only("assisted", ({ expect }) =>
       signedWin: true,
       projectDirCreated: projectDir => copyTestAsset("license.txt", path.join(projectDir, "build", "license.txt")),
     }
-  )
-)
+  ))
 
 test.ifNotCiMac("allowElevation false, app requestedExecutionLevel admin", ({ expect }) =>
   app(expect, {

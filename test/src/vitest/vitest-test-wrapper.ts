@@ -19,7 +19,7 @@ const isSupposedToRetry = (errorMessage: string, alreadyRetried: boolean) => {
   return false
 }
 
-export const test = createTaskCollector(function (this: TaskCustomOptions, name, runTest, timeout) {
+export const test = createTaskCollector(function (this: TaskCustomOptions, name, runTest, options) {
   const suite = getCurrentSuite()
 
   let alreadyRetried = false
@@ -36,7 +36,7 @@ export const test = createTaskCollector(function (this: TaskCustomOptions, name,
   suite.task(name, {
     ...this, // so "todo"/"skip"/... is tracked correctly
     handler: wrapped,
-    timeout,
+    ...options,
   })
 }) as CustomTestMatcher
 
