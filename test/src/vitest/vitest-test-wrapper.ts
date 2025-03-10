@@ -1,5 +1,5 @@
 import { Awaitable, TaskCustomOptions, TestContext } from "vitest"
-import { createChainable, createTaskCollector, getCurrentSuite, setFn } from "vitest/suite"
+import { createChainable, createTaskCollector, getCurrentSuite, getFn, setFn } from "vitest/suite"
 import { CustomTestMatcher } from "./vitest"
 
 // Handle electron-builder flaky (due to parallel file operations such as hdiutil and EPERM file locks) tests by retrying
@@ -21,17 +21,18 @@ const isSupposedToRetry = (errorMessage: string, alreadyRetried: boolean) => {
 
 export const test = createTaskCollector(function (this: TaskCustomOptions, name: string, runTest: (context: TestContext) => Awaitable<void>, options) {
   const suite = getCurrentSuite()
+  const fn: any = getFn(name)
 
   let alreadyRetried = false
   const wrapped = async (context: TestContext) => {
     console.log(`Test "${suite.name ? suite.name + "  -  " : ""}${name}"`)
-    console.log({ this: this, name, options, runTest })
-    await Promise.resolve(() => runTest(context)).catch(error => {
+    console.log({ this: this, name, options, runTest, fn })
+    await Promise.resolve(() => fn(context)).catch(error => {
       console.log(JSON.stringify(error))
       alreadyRetried = isSupposedToRetry(error.message ?? error, alreadyRetried)
       if (alreadyRetried) {
         console.log(`retrying unit test due to flaky error:\n${error.message ?? error}`)
-        return new Promise(resolve => setTimeout(resolve, 500)).then(() => runTest(context))
+        return new Promise(resolve => setTimeout(resolve, 500)).then(() => fn(context))
       }
       throw error
     })
