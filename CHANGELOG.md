@@ -1,3 +1,12 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v26.0.11...v) (2025-03-10)
+
+
+### Bug Fixes
+
+* support `mas` packages for flipping fuses ([#8947](https://github.com/electron-userland/electron-builder/issues/8947)) ([7ba4fea](https://github.com/electron-userland/electron-builder/commit/7ba4fea95825650f02749949632b351c75d3019a))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v26.0.10...v) (2025-03-09)
 
 
