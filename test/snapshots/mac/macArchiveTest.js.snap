@@ -1,4 +1,4 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
 exports[`empty installLocation 1`] = `
 {
@@ -281,6 +281,65 @@ exports[`pkg extended configuration 1`] = `
 `;
 
 exports[`pkg extended configuration 2`] = `
+{
+  "CFBundleDisplayName": "Test App ßW",
+  "CFBundleExecutable": "Test App ßW",
+  "CFBundleIconFile": "icon.icns",
+  "CFBundleIdentifier": "org.electron-builder.testApp",
+  "CFBundleInfoDictionaryVersion": "6.0",
+  "CFBundleName": "Test App ßW",
+  "CFBundlePackageType": "APPL",
+  "CFBundleShortVersionString": "1.1.0",
+  "ElectronAsarIntegrity": {
+    "Resources/app.asar": {
+      "algorithm": "SHA256",
+      "hash": "hash",
+    },
+  },
+  "LSApplicationCategoryType": "your.app.category.type",
+  "LSEnvironment": {
+    "MallocNanoZone": "0",
+  },
+  "NSAppTransportSecurity": {
+    "NSAllowsLocalNetworking": true,
+    "NSExceptionDomains": {
+      "127.0.0.1": {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+      "localhost": {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+    },
+  },
+  "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
+  "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
+  "NSHighResolutionCapable": true,
+  "NSPrincipalClass": "AtomApplication",
+  "NSSupportsAutomaticGraphicsSwitching": true,
+}
+`;
+
+exports[`pkg extra packages 1`] = `
+{
+  "mac": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW-1.1.0.pkg",
+      "safeArtifactName": "TestApp-1.1.0.pkg",
+    },
+  ],
+}
+`;
+
+exports[`pkg extra packages 2`] = `
 {
   "CFBundleDisplayName": "Test App ßW",
   "CFBundleExecutable": "Test App ßW",

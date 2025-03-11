@@ -2,18 +2,16 @@ import { Arch, Platform } from "electron-builder"
 import * as fs from "fs/promises"
 import { app, execShell, getTarExecutable } from "../helpers/packTester"
 
-test.ifNotWindows(
-  "deb",
-  app({
+test.ifNotWindows("deb", ({ expect }) =>
+  app(expect, {
     targets: Platform.LINUX.createTarget("deb"),
   })
 )
 
-test.ifNotWindows("arm", app({ targets: Platform.LINUX.createTarget("deb", Arch.armv7l, Arch.arm64) }))
+test.ifNotWindows("arm", ({ expect }) => app(expect, { targets: Platform.LINUX.createTarget("deb", Arch.armv7l, Arch.arm64) }))
 
-test.ifNotWindows(
-  "custom depends",
-  app({
+test.ifNotWindows("custom depends", ({ expect }) =>
+  app(expect, {
     targets: Platform.LINUX.createTarget("deb"),
     config: {
       linux: {
@@ -36,9 +34,8 @@ test.ifNotWindows(
   })
 )
 
-test.ifNotWindows(
-  "top-level exec name",
-  app({
+test.ifNotWindows("top-level exec name", ({ expect }) =>
+  app(expect, {
     targets: Platform.LINUX.createTarget("deb"),
     config: {
       productName: "foo",
@@ -47,9 +44,8 @@ test.ifNotWindows(
   })
 )
 
-test.ifNotWindows(
-  "no quotes for safe exec name",
-  app({
+test.ifNotWindows("no quotes for safe exec name", ({ expect }) =>
+  app(expect, {
     targets: Platform.LINUX.createTarget("deb"),
     config: {
       productName: "foo",
@@ -65,9 +61,9 @@ test.ifNotWindows(
   })
 )
 
-test.ifNotWindows.ifAll(
-  "executable path in postinst script",
+test.ifNotWindows("executable path in postinst script", ({ expect }) =>
   app(
+    expect,
     {
       targets: Platform.LINUX.createTarget("deb"),
       config: {
@@ -90,9 +86,9 @@ test.ifNotWindows.ifAll(
   )
 )
 
-test.ifNotWindows.ifAll(
-  "deb file associations",
+test.ifNotWindows("deb file associations", ({ expect }) =>
   app(
+    expect,
     {
       targets: Platform.LINUX.createTarget("deb"),
       config: {

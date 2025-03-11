@@ -422,6 +422,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
     const ext = {
       darwin: ".app",
+      mas: ".app",
       win32: ".exe",
       linux: "",
     }[electronPlatformName]

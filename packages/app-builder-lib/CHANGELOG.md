@@ -1,5 +1,35 @@
 # app-builder-lib
 
+## 26.0.11
+
+### Patch Changes
+
+- [#8941](https://github.com/electron-userland/electron-builder/pull/8941) [`14b96dfc`](https://github.com/electron-userland/electron-builder/commit/14b96dfcbb7e4fd114169c35b50932bf5777fcf1) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: find cwd using getProjectRootPath for detecting package manager
+
+- [#8928](https://github.com/electron-userland/electron-builder/pull/8928) [`70d7c855`](https://github.com/electron-userland/electron-builder/commit/70d7c855360eb66b429f67a976709a52ce193a59) Thanks [@rotu](https://github.com/rotu)! - chore(docs): Document that detectUpdateChannel doesn't work when publishing to github
+
+- [#8932](https://github.com/electron-userland/electron-builder/pull/8932) [`e1ea62b0`](https://github.com/electron-userland/electron-builder/commit/e1ea62b0029c4adca20196ef060948777caeac37) Thanks [@gaaf](https://github.com/gaaf)! - fix: `after-install.tpl`: Detect if apparmor is enabled instead of just file-exists check
+
+- Updated dependencies [[`53a81939`](https://github.com/electron-userland/electron-builder/commit/53a81939b8c46061027ab36d8f9114c35b250a7e)]:
+  - builder-util@26.0.11
+  - dmg-builder@26.0.11
+  - electron-builder-squirrel-windows@26.0.11
+  - electron-publish@26.0.11
+
+## 26.0.10
+
+### Patch Changes
+
+- [#8890](https://github.com/electron-userland/electron-builder/pull/8890) [`3ce33edb`](https://github.com/electron-userland/electron-builder/commit/3ce33edbe0c809a8a3834577a8df41ba58ae9003) Thanks [@beyondkmp](https://github.com/beyondkmp)! - chore: replace the plist functionality in app-builder-bin with plist
+
+- [#8926](https://github.com/electron-userland/electron-builder/pull/8926) [`3caab3c4`](https://github.com/electron-userland/electron-builder/commit/3caab3c4226a73ab458ac5a315aff160c5500b94) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: fix custom publisher check and throw error if not found
+
+- [#8915](https://github.com/electron-userland/electron-builder/pull/8915) [`8903c5df`](https://github.com/electron-userland/electron-builder/commit/8903c5df046b74411f3b1fa958cef9a5955d01ef) Thanks [@beyondkmp](https://github.com/beyondkmp)! - fix: improve atomicRMDir function in NSIS uninstaller
+
+- Updated dependencies []:
+  - dmg-builder@26.0.10
+  - electron-builder-squirrel-windows@26.0.10
+
 ## 26.0.9
 
 ### Patch Changes

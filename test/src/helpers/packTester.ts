@@ -3,7 +3,7 @@ import { readAsar } from "app-builder-lib/out/asar/asar"
 import { computeArchToTargetNamesMap } from "app-builder-lib/out/targets/targetFactory"
 import { getLinuxToolsPath } from "app-builder-lib/out/targets/tools"
 import { parsePlistFile, PlistObject } from "app-builder-lib/out/util/plist"
-import { AsarIntegrity } from "app-builder-lib/src/asar/integrity"
+import { AsarIntegrity } from "app-builder-lib/out/asar/integrity"
 import { addValue, copyDir, deepAssign, exec, executeFinally, exists, FileCopier, getPath7x, getPath7za, log, spawn, USE_HARD_LINKS, walk } from "builder-util"
 import { CancellationToken, UpdateFileInfo } from "builder-util-runtime"
 import { Arch, ArtifactCreated, Configuration, DIR_TARGET, getArchSuffix, MacOsTargetName, Packager, PackagerOptions, Platform, Target } from "electron-builder"
@@ -23,11 +23,13 @@ import { assertThat } from "./fileAssert"
 import AdmZip from "adm-zip"
 // @ts-ignore
 import sanitizeFileName from "sanitize-filename"
+import type { ExpectStatic } from "vitest"
 
 if (process.env.TRAVIS !== "true") {
   process.env.CIRCLE_BUILD_NUM = "42"
 }
 
+export const EXTENDED_TIMEOUT = 10 * 60 * 1000
 export const linuxDirTarget = Platform.LINUX.createTarget(DIR_TARGET, Arch.x64)
 export const snapTarget = Platform.LINUX.createTarget("snap", Arch.x64)
 
@@ -61,23 +63,23 @@ export interface PackedContext {
   readonly tmpDir: TmpDir
 }
 
-export function appThrows(packagerOptions: PackagerOptions, checkOptions: AssertPackOptions = {}, customErrorAssert?: (error: Error) => void) {
-  return () => assertThat(assertPack("test-app-one", packagerOptions, checkOptions)).throws(customErrorAssert)
+export function appThrows(expect: ExpectStatic, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions = {}, customErrorAssert?: (error: Error) => void) {
+  return assertThat(expect, assertPack(expect, "test-app-one", packagerOptions, checkOptions)).throws(customErrorAssert)
 }
 
-export function appTwoThrows(packagerOptions: PackagerOptions, checkOptions: AssertPackOptions = {}) {
-  return () => assertThat(assertPack("test-app", packagerOptions, checkOptions)).throws()
+export function appTwoThrows(expect: ExpectStatic, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions = {}) {
+  return assertThat(expect, assertPack(expect, "test-app", packagerOptions, checkOptions)).throws()
 }
 
-export function app(packagerOptions: PackagerOptions, checkOptions: AssertPackOptions = {}) {
-  return () => assertPack(packagerOptions.config != null && (packagerOptions.config as any).protonNodeVersion != null ? "proton" : "test-app-one", packagerOptions, checkOptions)
+export function app(expect: ExpectStatic, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions = {}) {
+  return assertPack(expect, packagerOptions.config != null && (packagerOptions.config as any).protonNodeVersion != null ? "proton" : "test-app-one", packagerOptions, checkOptions)
 }
 
-export function appTwo(packagerOptions: PackagerOptions, checkOptions: AssertPackOptions = {}) {
-  return () => assertPack("test-app", packagerOptions, checkOptions)
+export function appTwo(expect: ExpectStatic, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions = {}) {
+  return assertPack(expect, "test-app", packagerOptions, checkOptions)
 }
 
-export async function assertPack(fixtureName: string, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions = {}): Promise<void> {
+export async function assertPack(expect: ExpectStatic, fixtureName: string, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions = {}): Promise<void> {
   let configuration = packagerOptions.config as Configuration
   if (configuration == null) {
     configuration = {}
@@ -107,9 +109,9 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
   }
 
   const state = expect.getState()
-  const lockfileFixtureName = `${path.basename(state.testPath, ".ts")}`
+  const lockfileFixtureName = `${path.basename(state.testPath!, ".ts")}`
   const lockfilePathPrefix = path.join(__dirname, "..", "..", "fixtures", "lockfiles", lockfileFixtureName)
-  const testFixtureLockfile = path.join(lockfilePathPrefix, `${sanitizeFileName(state.currentTestName)}.txt`)
+  const testFixtureLockfile = path.join(lockfilePathPrefix, `${sanitizeFileName(state.currentTestName!)}.txt`)
 
   await copyDir(projectDir, dir, {
     filter: it => {
@@ -171,6 +173,7 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
       }
 
       const { packager, outDir } = await packAndCheck(
+        expect,
         {
           projectDir,
           ...packagerOptions,
@@ -211,7 +214,7 @@ export function getFixtureDir() {
   return path.join(__dirname, "..", "..", "fixtures")
 }
 
-async function packAndCheck(packagerOptions: PackagerOptions, checkOptions: AssertPackOptions) {
+async function packAndCheck(expect: ExpectStatic, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions) {
   const cancellationToken = new CancellationToken()
   const packager = new Packager(packagerOptions, cancellationToken)
   const publishManager = new PublishManager(packager, { publish: "publish" in checkOptions ? checkOptions.publish : "never" })
@@ -222,7 +225,7 @@ async function packAndCheck(packagerOptions: PackagerOptions, checkOptions: Asse
       return
     }
 
-    assertThat(event.file).isAbsolute()
+    assertThat(expect, event.file).isAbsolute()
     addValue(artifacts, event.packager.platform, event)
   })
 
@@ -304,11 +307,11 @@ async function packAndCheck(packagerOptions: PackagerOptions, checkOptions: Asse
       if (platform === Platform.MAC) {
         const subDir = nameToTarget.has("mas-dev") ? "mas-dev" : nameToTarget.has("mas") ? "mas" : "mac"
         const packedAppDir = path.join(outDir, `${subDir}${getArchSuffix(arch)}`, `${packager.appInfo.productFilename}.app`)
-        await checkMacResult(packager, packagerOptions, checkOptions, packedAppDir)
+        await checkMacResult(expect, packager, packagerOptions, checkOptions, packedAppDir)
       } else if (platform === Platform.LINUX) {
-        await checkLinuxResult(outDir, packager, arch, nameToTarget)
+        await checkLinuxResult(expect, outDir, packager, arch, nameToTarget)
       } else if (platform === Platform.WINDOWS) {
-        await checkWindowsResult(packager, checkOptions, artifacts.get(platform)!, nameToTarget)
+        await checkWindowsResult(expect, packager, checkOptions, artifacts.get(platform)!, nameToTarget)
       }
     }
   }
@@ -316,7 +319,7 @@ async function packAndCheck(packagerOptions: PackagerOptions, checkOptions: Asse
   return { packager, outDir }
 }
 
-async function checkLinuxResult(outDir: string, packager: Packager, arch: Arch, nameToTarget: Map<string, Target>) {
+async function checkLinuxResult(expect: ExpectStatic, outDir: string, packager: Packager, arch: Arch, nameToTarget: Map<string, Target>) {
   if (!nameToTarget.has("deb")) {
     return
   }
@@ -364,7 +367,7 @@ function parseDebControl(info: string): any {
   return metadata
 }
 
-async function checkMacResult(packager: Packager, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions, packedAppDir: string) {
+async function checkMacResult(expect: ExpectStatic, packager: Packager, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions, packedAppDir: string) {
   const appInfo = packager.appInfo
   const plistPath = path.join(packedAppDir, "Contents", "Info.plist")
   const info = await parsePlistFile<PlistObject>(plistPath)
@@ -416,10 +419,10 @@ async function checkMacResult(packager: Packager, packagerOptions: PackagerOptio
   }
 }
 
-async function checkWindowsResult(packager: Packager, checkOptions: AssertPackOptions, artifacts: Array<ArtifactCreated>, nameToTarget: Map<string, Target>) {
-  async function checkSquirrelResult() {
+async function checkWindowsResult(expect: ExpectStatic, packager: Packager, checkOptions: AssertPackOptions, artifacts: Array<ArtifactCreated>, nameToTarget: Map<string, Target>) {
+  function checkSquirrelResult() {
     const appInfo = packager.appInfo
-    const { zip } = await checkResult(artifacts, "-full.nupkg")
+    const { zip } = checkResult(expect, artifacts, "-full.nupkg")
 
     if (checkOptions == null) {
       const expectedSpec = zip.readAsText("TestApp.nuspec").replace(/\r\n/g, "\n")
@@ -443,7 +446,7 @@ async function checkWindowsResult(packager: Packager, checkOptions: AssertPackOp
   }
 
   async function checkZipResult() {
-    const { packageFile, zip, allFiles } = await checkResult(artifacts, ".zip")
+    const { packageFile, zip, allFiles } = checkResult(expect, artifacts, ".zip")
 
     const executable = allFiles.filter(it => it.endsWith(".exe"))[0]
     zip.extractEntryTo(executable, path.dirname(packageFile), true, true)
@@ -468,7 +471,7 @@ async function checkWindowsResult(packager: Packager, checkOptions: AssertPackOp
   }
 }
 
-const checkResult = async (artifacts: Array<ArtifactCreated>, extension: string) => {
+const checkResult = (expect: ExpectStatic, artifacts: Array<ArtifactCreated>, extension: string) => {
   const packageFile = artifacts.find(it => it.file.endsWith(extension))!.file
 
   const zip = new AdmZip(packageFile)
@@ -490,8 +493,8 @@ const checkResult = async (artifacts: Array<ArtifactCreated>, extension: string)
   }
 
   zipEntries.forEach(function (zipEntry) {
-    let isUtf8 = (zipEntry.header.flags & 0x800) !== 0
-    let name = decodeBuffer(zipEntry.rawEntryName, isUtf8)
+    const isUtf8 = (zipEntry.header.flags & 0x800) !== 0
+    const name = decodeBuffer(zipEntry.rawEntryName, isUtf8)
     allFiles.push(name)
   })
 
@@ -569,8 +572,9 @@ export function signed(packagerOptions: PackagerOptions): PackagerOptions {
   return packagerOptions
 }
 
-export function createMacTargetTest(target: Array<MacOsTargetName>, config?: Configuration, isSigned = true) {
+export function createMacTargetTest(expect: ExpectStatic, target: Array<MacOsTargetName>, config?: Configuration, isSigned = true) {
   return app(
+    expect,
     {
       targets: Platform.MAC.createTarget(target, Arch.x64),
       config: {
@@ -593,13 +597,13 @@ export function createMacTargetTest(target: Array<MacOsTargetName>, config?: Con
 
         const tempDir = await context.tmpDir.createTempDir({ prefix: "mac-target-test" })
         await exec("tar", ["xf", path.join(context.outDir, "Test App ßW-1.1.0-mac.tar.gz")], { cwd: tempDir })
-        await assertThat(path.join(tempDir, "Test App ßW.app")).isDirectory()
+        await assertThat(expect, path.join(tempDir, "Test App ßW.app")).isDirectory()
       },
     }
   )
 }
 
-export async function checkDirContents(dir: string) {
+export async function checkDirContents(expect: ExpectStatic, dir: string) {
   expect((await walk(dir, file => !path.basename(file).startsWith("."))).map(it => toSystemIndependentPath(it.substring(dir.length + 1)))).toMatchSnapshot()
 }
 
@@ -619,7 +623,7 @@ export function removeUnstableProperties(data: any) {
   )
 }
 
-export async function verifyAsarFileTree(resourceDir: string) {
+export async function verifyAsarFileTree(expect: ExpectStatic, resourceDir: string) {
   const fs = await readAsar(path.join(resourceDir, "app.asar"))
 
   const stableHeader = JSON.parse(

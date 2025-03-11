@@ -1,19 +1,23 @@
 import { exists, statOrNull } from "builder-util"
 import * as fs from "fs/promises"
 import * as path from "path"
+import { ExpectStatic } from "vitest"
 
 // http://joel-costigliola.github.io/assertj/
-export function assertThat(actual: any): Assertions {
-  return new Assertions(actual)
+export function assertThat(expect: ExpectStatic, actual: any): Assertions {
+  return new Assertions(expect, actual)
 }
 
 const appVersion = require(path.join(__dirname, "../../../packages/app-builder-lib/package.json")).version
 
 class Assertions {
-  constructor(private actual: any) {}
+  constructor(
+    private readonly expect: ExpectStatic,
+    private actual: any
+  ) {}
 
   containsAll<T>(expected: Iterable<T>) {
-    expect(this.actual.slice().sort()).toEqual(Array.from(expected).slice().sort())
+    this.expect(this.actual.slice().sort()).toEqual(Array.from(expected).slice().sort())
   }
 
   isAbsolute() {
@@ -65,7 +69,7 @@ class Assertions {
       actualError = e
     }
 
-    let m
+    let m: any
     if (actualError == null) {
       m = result
     } else {
@@ -86,12 +90,12 @@ class Assertions {
     }
     try {
       if (customErrorAssert == null) {
-        expect(m).toMatchSnapshot()
+        this.expect(m).toMatchSnapshot()
       } else {
         customErrorAssert(actualError!)
       }
-    } catch (matchError) {
-      throw new Error(matchError + " " + actualError)
+    } catch (matchError: any) {
+      throw new Error(matchError + " " + actualError?.message)
     }
   }
 }

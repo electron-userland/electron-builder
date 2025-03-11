@@ -4,32 +4,32 @@ import * as path from "path"
 import { CheckingWinPackager } from "../helpers/CheckingPackager"
 import { app, appThrows, assertPack, platform } from "../helpers/packTester"
 
-// some tests are flaky, specifically `beta`?
-jest.retryTimes(3)
-
-test.ifAll(
+test(
   "beta version",
-  app(
-    {
-      targets: Platform.WINDOWS.createTarget(["nsis"], Arch.x64, Arch.arm64),
-      config: {
-        extraMetadata: {
-          version: "3.0.0-beta.2",
-        },
-        nsis: {
-          buildUniversalInstaller: false,
+  ({ expect }) =>
+    app(
+      expect,
+      {
+        targets: Platform.WINDOWS.createTarget(["nsis"], Arch.x64, Arch.arm64),
+        config: {
+          extraMetadata: {
+            version: "3.0.0-beta.2",
+          },
+          nsis: {
+            buildUniversalInstaller: false,
+          },
         },
       },
-    },
-    {
-      signedWin: true,
-    }
-  )
+      {
+        signedWin: true,
+      }
+    ),
+  { retry: 3 }
 )
 
-test.ifAll(
-  "win zip",
+test("win zip", ({ expect }) =>
   app(
+    expect,
     {
       targets: Platform.WINDOWS.createTarget(["zip"], Arch.x64, Arch.arm64),
       config: {
@@ -58,12 +58,11 @@ test.ifAll(
         await fs.copyFile(path.join(projectDir, "build", "extraAsar.asar"), path.join(projectDir, "build", "subdir", "extraAsar2.asar"))
       },
     }
-  )
-)
+  ))
 
-test.ifAll(
-  "zip artifactName",
+test("zip artifactName", ({ expect }) =>
   app(
+    expect,
     {
       targets: Platform.WINDOWS.createTarget(["zip"], Arch.x64),
       config: {
@@ -74,31 +73,27 @@ test.ifAll(
     {
       signedWin: true,
     }
-  )
-)
+  ))
 
-test.ifAll(
-  "icon < 256",
-  appThrows(platform(Platform.WINDOWS), {
+test("icon < 256", ({ expect }) =>
+  appThrows(expect, platform(Platform.WINDOWS), {
     projectDirCreated: projectDir => fs.rename(path.join(projectDir, "build", "incorrect.ico"), path.join(projectDir, "build", "icon.ico")),
-  })
-)
+  }))
 
-test.ifAll(
-  "icon not an image",
-  appThrows(platform(Platform.WINDOWS), {
+test("icon not an image", ({ expect }) =>
+  appThrows(expect, platform(Platform.WINDOWS), {
     projectDirCreated: async projectDir => {
       const file = path.join(projectDir, "build", "icon.ico")
       // because we use hardlinks
       await fs.unlink(file)
       await fs.writeFile(file, "foo")
     },
-  })
-)
+  }))
 
-test.ifMac("custom icon", () => {
+test.ifMac("custom icon", ({ expect }) => {
   let platformPackager: CheckingWinPackager | null = null
   return assertPack(
+    expect,
     "test-app-one",
     {
       targets: Platform.WINDOWS.createTarget("squirrel", Arch.x64),
@@ -118,9 +113,10 @@ test.ifMac("custom icon", () => {
   )
 })
 
-test.ifAll("win icon from icns", () => {
+test("win icon from icns", ({ expect }) => {
   let platformPackager: CheckingWinPackager | null = null
   return app(
+    expect,
     {
       targets: Platform.WINDOWS.createTarget(DIR_TARGET, Arch.x64),
       config: {
@@ -138,5 +134,5 @@ test.ifAll("win icon from icns", () => {
         expect(file).toBeDefined()
       },
     }
-  )()
+  )
 })

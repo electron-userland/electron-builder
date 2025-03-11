@@ -1,4 +1,4 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
 exports[`asarUnpack and files ignore 1`] = `
 {
@@ -33,13 +33,13 @@ exports[`asarUnpack and files ignore 2`] = `
 }
 `;
 
-exports[`asarUnpack node_modules 1`] = `
+exports[`isInstallDepsBefore=true > asarUnpack node_modules 1`] = `
 {
   "linux": [],
 }
 `;
 
-exports[`asarUnpack node_modules 2`] = `
+exports[`isInstallDepsBefore=true > asarUnpack node_modules 2`] = `
 {
   "files": {
     "ci-info": {
@@ -67,25 +67,25 @@ exports[`asarUnpack node_modules 2`] = `
 }
 `;
 
-exports[`asarUnpack node_modules which has many modules 1`] = `
+exports[`isInstallDepsBefore=true > asarUnpack node_modules which has many modules 1`] = `
 {
   "linux": [],
 }
 `;
 
-exports[`exclude some modules when asarUnpack node_modules which has many modules 1`] = `
+exports[`isInstallDepsBefore=true > exclude some modules when asarUnpack node_modules which has many modules 1`] = `
 {
   "linux": [],
 }
 `;
 
-exports[`failed peer dep 1`] = `
+exports[`isInstallDepsBefore=true > failed peer dep 1`] = `
 {
   "linux": [],
 }
 `;
 
-exports[`failed peer dep 2`] = `
+exports[`isInstallDepsBefore=true > failed peer dep 2`] = `
 {
   "files": {
     "app": {
@@ -9781,87 +9781,37 @@ exports[`failed peer dep 2`] = `
 }
 `;
 
-exports[`failed peer dep 3`] = `
+exports[`isInstallDepsBefore=true > failed peer dep 3`] = `
 [
   "app.asar",
 ]
 `;
 
-exports[`ignore node_modules 1`] = `
+exports[`isInstallDepsBefore=true > ignore node_modules 1`] = `
 {
   "linux": [],
 }
 `;
 
-exports[`link 1`] = `
+exports[`isInstallDepsBefore=true > local node module with file protocol 1`] = `
 {
   "linux": [],
 }
 `;
 
-exports[`link 2`] = `
+exports[`isInstallDepsBefore=true > symlinks everywhere with static framework 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`isInstallDepsBefore=true > symlinks everywhere with static framework 2`] = `
 {
   "link": "index.js",
 }
 `;
 
-exports[`link 3`] = `
-{
-  "files": {
-    "app": {
-      "files": {
-        "package.json": {
-          "files": {
-            "readme.md": {
-              "offset": "0",
-              "size": 32,
-            },
-          },
-        },
-        "readme.md": {
-          "offset": "32",
-          "size": 78,
-        },
-      },
-    },
-    "foo.js": {
-      "link": "index.js",
-    },
-    "index.html": {
-      "offset": "110",
-      "size": 841,
-    },
-    "index.js": {
-      "offset": "951",
-      "size": 4184,
-    },
-    "package.json": {
-      "offset": "5135",
-      "size": 256,
-    },
-  },
-}
-`;
-
-exports[`local node module with file protocol 1`] = `
-{
-  "linux": [],
-}
-`;
-
-exports[`symlinks everywhere with static framework 1`] = `
-{
-  "linux": [],
-}
-`;
-
-exports[`symlinks everywhere with static framework 2`] = `
-{
-  "link": "index.js",
-}
-`;
-
-exports[`symlinks everywhere with static framework 3`] = `
+exports[`isInstallDepsBefore=true > symlinks everywhere with static framework 3`] = `
 {
   "files": {
     "foo.js": {
@@ -10052,7 +10002,7 @@ exports[`symlinks everywhere with static framework 3`] = `
 }
 `;
 
-exports[`symlinks everywhere with static framework 4`] = `
+exports[`isInstallDepsBefore=true > symlinks everywhere with static framework 4`] = `
 [
   "app.asar",
   "app.asar.unpacked/node_modules/hello-world/hello-world-framework.sh",
@@ -10086,6 +10036,56 @@ exports[`symlinks everywhere with static framework 4`] = `
   "app.asar.unpacked/node_modules/hello-world/lib/Release/Hello.framework/Versions/A/Modules/Hello.swiftmodule/x86_64.swiftmodule",
   "app.asar.unpacked/node_modules/hello-world/lib/Release/Hello.framework/Versions/A/Headers/HelloFramework.h",
 ]
+`;
+
+exports[`link 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`link 2`] = `
+{
+  "link": "index.js",
+}
+`;
+
+exports[`link 3`] = `
+{
+  "files": {
+    "app": {
+      "files": {
+        "package.json": {
+          "files": {
+            "readme.md": {
+              "offset": "0",
+              "size": 32,
+            },
+          },
+        },
+        "readme.md": {
+          "offset": "32",
+          "size": 78,
+        },
+      },
+    },
+    "foo.js": {
+      "link": "index.js",
+    },
+    "index.html": {
+      "offset": "110",
+      "size": 841,
+    },
+    "index.js": {
+      "offset": "951",
+      "size": 4184,
+    },
+    "package.json": {
+      "offset": "5135",
+      "size": 256,
+    },
+  },
+}
 `;
 
 exports[`unpackDir 1`] = `

@@ -3,9 +3,8 @@ import * as path from "path"
 import { app, copyTestAsset, getFixtureDir } from "../helpers/packTester"
 
 // build in parallel - https://github.com/electron-userland/electron-builder/issues/1340#issuecomment-286061789
-test.ifAll.ifNotCiMac(
-  "portable",
-  app({
+test.ifNotCiMac("portable", ({ expect }) =>
+  app(expect, {
     targets: Platform.WINDOWS.createTarget(["portable", "nsis"]),
     config: {
       publish: null,
@@ -26,9 +25,8 @@ test.ifAll.ifNotCiMac(
   })
 )
 
-test.ifAll.ifDevOrWinCi(
-  "portable zip",
-  app({
+test.ifDevOrWinCi("portable zip", ({ expect }) =>
+  app(expect, {
     targets: Platform.WINDOWS.createTarget("portable"),
     config: {
       publish: null,
@@ -41,9 +39,8 @@ test.ifAll.ifDevOrWinCi(
   })
 )
 
-test.ifAll.ifNotCi(
-  "portable zip several archs",
-  app({
+test.ifNotCi("portable zip several archs", ({ expect }) =>
+  app(expect, {
     targets: Platform.WINDOWS.createTarget("portable", Arch.ia32, Arch.x64),
     config: {
       publish: null,
@@ -56,9 +53,9 @@ test.ifAll.ifNotCi(
   })
 )
 
-test.ifNotCiMac(
-  "portable - artifactName and request execution level",
+test.ifNotCiMac("portable - artifactName and request execution level", ({ expect }) =>
   app(
+    expect,
     {
       targets: Platform.WINDOWS.createTarget(["portable"]),
       config: {
@@ -83,9 +80,8 @@ test.ifNotCiMac(
   )
 )
 
-test.ifDevOrWinCi(
-  "portable - splashImage",
-  app({
+test.ifDevOrWinCi("portable - splashImage", ({ expect }) =>
+  app(expect, {
     targets: Platform.WINDOWS.createTarget(["portable"]),
     config: {
       publish: null,

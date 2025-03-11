@@ -5,8 +5,9 @@ import { load } from "js-yaml"
 import * as path from "path"
 import { CheckingWinPackager } from "../helpers/CheckingPackager"
 import { app, appThrows } from "../helpers/packTester"
+import { ExpectStatic } from "vitest"
 
-test("parseDn", () => {
+test("parseDn", ({ expect }) => {
   expect(parseDn("CN=7digital Limited, O=7digital Limited, L=London, C=GB")).toMatchSnapshot()
 
   expect(load("publisherName:\n  - 7digital Limited")).toMatchObject({ publisherName: ["7digital Limited"] })
@@ -14,9 +15,9 @@ test("parseDn", () => {
 
 const windowsDirTarget = Platform.WINDOWS.createTarget(["dir"])
 
-test.ifAll(
-  "sign nested asar unpacked executables",
+test("sign nested asar unpacked executables", ({ expect }) =>
   appThrows(
+    expect,
     {
       targets: Platform.WINDOWS.createTarget(DIR_TARGET),
       config: {
@@ -37,11 +38,10 @@ test.ifAll(
         expect(error.message).toContain("Unrecognized file type")
       }
     }
-  )
-)
+  ))
 
-function testCustomSign(sign: any) {
-  return app({
+function testCustomSign(expect: ExpectStatic, sign: any) {
+  return app(expect, {
     targets: Platform.WINDOWS.createTarget(DIR_TARGET),
     platformPackagerFactory: (packager, platform) => new CheckingWinPackager(packager),
     config: {
@@ -59,22 +59,18 @@ function testCustomSign(sign: any) {
   })
 }
 
-test.ifAll(
-  "certificateFile/password - sign as async/await",
-  testCustomSign(async () => {
-    return
-  })
-)
-test.ifAll(
-  "certificateFile/password - sign as Promise",
-  testCustomSign(() => Promise.resolve())
-)
-test.ifAll("certificateFile/password - sign as function", testCustomSign(require("../helpers/customWindowsSign").default))
-test.ifAll("certificateFile/password - sign as path", testCustomSign(path.join(__dirname, "../helpers/customWindowsSign")))
+test("certificateFile/password - sign as async/await", ({ expect }) =>
+  testCustomSign(expect, async () => {
+    return Promise.resolve()
+  }))
+test("certificateFile/password - sign as Promise", ({ expect }) => testCustomSign(expect, () => Promise.resolve()))
+test("certificateFile/password - sign as function", async ({ expect }) => testCustomSign(expect, (await import("../helpers/customWindowsSign")).default))
+test("certificateFile/password - sign as path", ({ expect }) => testCustomSign(expect, path.join(__dirname, "../helpers/customWindowsSign.mjs")))
 
-test.ifAll("custom sign if no code sign info", () => {
+test("custom sign if no code sign info", ({ expect }) => {
   let called = false
   return app(
+    expect,
     {
       targets: Platform.WINDOWS.createTarget(DIR_TARGET),
       platformPackagerFactory: (packager, platform) => new CheckingWinPackager(packager),
@@ -95,32 +91,28 @@ test.ifAll("custom sign if no code sign info", () => {
         expect(called).toBe(true)
       },
     }
-  )()
+  )
 })
 
-test.ifAll(
-  "forceCodeSigning",
-  appThrows({
+test("forceCodeSigning", ({ expect }) =>
+  appThrows(expect, {
     targets: windowsDirTarget,
     config: {
       forceCodeSigning: true,
     },
-  })
-)
+  }))
 
-test.ifAll(
-  "electronDist",
-  appThrows({
+test("electronDist", ({ expect }) =>
+  appThrows(expect, {
     targets: windowsDirTarget,
     config: {
       electronDist: "foo",
     },
-  })
-)
+  }))
 
-test.ifAll(
-  "azure signing without credentials",
+test("azure signing without credentials", ({ expect }) =>
   appThrows(
+    expect,
     {
       targets: windowsDirTarget,
       config: {
@@ -137,12 +129,11 @@ test.ifAll(
     },
     {},
     error => expect(error.message).toContain("Unable to find valid azure env field AZURE_TENANT_ID for signing.")
-  )
-)
+  ))
 
-test.ifNotWindows(
-  "win code sign using pwsh",
+test.ifNotWindows("win code sign using pwsh", ({ expect }) =>
   app(
+    expect,
     {
       targets: Platform.WINDOWS.createTarget(DIR_TARGET),
     },

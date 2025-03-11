@@ -1,28 +1,23 @@
 import { createKeychain } from "app-builder-lib/out/codeSign/macCodeSign"
 import { removePassword, TmpDir } from "builder-util"
 import { CSC_LINK } from "../helpers/codeSignData"
-
-if (process.env.CSC_KEY_PASSWORD == null) {
-  fit("Skip keychain-specific tests because CSC_KEY_PASSWORD is not defined", () => {
-    console.warn("[SKIP] Skip keychain-specific tests because CSC_KEY_PASSWORD is not defined")
-  })
-}
+import { afterEach } from "vitest"
 
 const tmpDir = new TmpDir("mac-code-sign-test")
 
-test.ifMac("create keychain", async () => {
+test.ifMac("create keychain", async ({ expect }) => {
   const result = await createKeychain({ tmpDir, cscLink: CSC_LINK, cscKeyPassword: process.env.CSC_KEY_PASSWORD!, currentDir: process.cwd() })
   expect(result.keychainFile).not.toEqual("")
 })
 
 afterEach(() => tmpDir.cleanup())
 
-test.ifMac("create keychain with installers", async () => {
+test.ifMac("create keychain with installers", async ({ expect }) => {
   const result = await createKeychain({ tmpDir, cscLink: CSC_LINK, cscKeyPassword: process.env.CSC_KEY_PASSWORD!, currentDir: process.cwd() })
   expect(result.keychainFile).not.toEqual("")
 })
 
-test.ifDevOrLinuxCi("remove password from log", async () => {
+test.ifDevOrLinuxCi("remove password from log", async ({ expect }) => {
   expect(removePassword("seq -P foo -B")).toMatchSnapshot()
   expect(removePassword("pass:foo")).toMatchSnapshot()
   // noinspection SpellCheckingInspection

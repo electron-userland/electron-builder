@@ -3,6 +3,8 @@ import { EventEmitter } from "events"
 import { URL } from "url"
 import { LoginCallback } from "./electronHttpExecutor"
 
+export { CancellationToken, PackageFileInfo, ProgressInfo, UpdateFileInfo, UpdateInfo }
+
 export const DOWNLOAD_PROGRESS = "download-progress"
 export const UPDATE_DOWNLOADED = "update-downloaded"
 

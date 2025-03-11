@@ -1,19 +1,8 @@
 import { Arch, Platform } from "electron-builder"
 import { app, assertPack, snapTarget } from "../helpers/packTester"
 
-if (process.env.SNAP_TEST === "false") {
-  fit("Skip snapTest suite — SNAP_TEST is set to false or Windows", () => {
-    console.warn("[SKIP] Skip snapTest suite — SNAP_TEST is set to false")
-  })
-} else if (process.platform === "win32") {
-  fit("Skip snapTest suite — Windows is not supported", () => {
-    console.warn("[SKIP] Skip snapTest suite — Windows is not supported")
-  })
-}
-
-test.ifAll.ifDevOrLinuxCi(
-  "snap",
-  app({
+test.ifDevOrLinuxCi("snap", ({ expect }) =>
+  app(expect, {
     targets: snapTarget,
     config: {
       extraMetadata: {
@@ -34,9 +23,8 @@ test.ifAll.ifDevOrLinuxCi(
   })
 )
 
-test.ifAll.ifDevOrLinuxCi(
-  "arm",
-  app({
+test.ifDevOrLinuxCi("arm", ({ expect }) =>
+  app(expect, {
     targets: Platform.LINUX.createTarget("snap", Arch.armv7l),
     config: {
       extraMetadata: {
@@ -47,9 +35,9 @@ test.ifAll.ifDevOrLinuxCi(
   })
 )
 
-test.ifAll.ifDevOrLinuxCi("default stagePackages", async () => {
+test.ifDevOrLinuxCi("default stagePackages", async ({ expect }) => {
   for (const p of [["default"], ["default", "custom"], ["custom", "default"], ["foo1", "default", "foo2"]]) {
-    await assertPack("test-app-one", {
+    await assertPack(expect, "test-app-one", {
       targets: snapTarget,
       config: {
         extraMetadata: {
@@ -74,9 +62,8 @@ test.ifAll.ifDevOrLinuxCi("default stagePackages", async () => {
   }
 })
 
-test.ifAll.ifDevOrLinuxCi(
-  "classic confinement",
-  app({
+test.ifDevOrLinuxCi("classic confinement", ({ expect }) =>
+  app(expect, {
     targets: snapTarget,
     config: {
       extraMetadata: {
@@ -90,8 +77,8 @@ test.ifAll.ifDevOrLinuxCi(
   })
 )
 
-test.ifAll.ifDevOrLinuxCi("buildPackages", async () => {
-  await assertPack("test-app-one", {
+test.ifDevOrLinuxCi("buildPackages", async ({ expect }) => {
+  await assertPack(expect, "test-app-one", {
     targets: snapTarget,
     config: {
       extraMetadata: {
@@ -112,7 +99,7 @@ test.ifAll.ifDevOrLinuxCi("buildPackages", async () => {
   })
 })
 
-test.ifDevOrLinuxCi("plugs option", async () => {
+test.ifDevOrLinuxCi("plugs option", async ({ expect }) => {
   for (const p of [
     [
       {
@@ -131,7 +118,7 @@ test.ifDevOrLinuxCi("plugs option", async () => {
       "another-simple-plug-name": null,
     },
   ]) {
-    await assertPack("test-app-one", {
+    await assertPack(expect, "test-app-one", {
       targets: snapTarget,
       config: {
         snap: {
@@ -150,7 +137,7 @@ test.ifDevOrLinuxCi("plugs option", async () => {
   }
 })
 
-test.ifDevOrLinuxCi("slots option", async () => {
+test.ifDevOrLinuxCi("slots option", async ({ expect }) => {
   for (const slots of [
     ["foo", "bar"],
     [
@@ -163,7 +150,7 @@ test.ifDevOrLinuxCi("slots option", async () => {
       "another-simple-slot-name",
     ],
   ]) {
-    await assertPack("test-app-one", {
+    await assertPack(expect, "test-app-one", {
       targets: snapTarget,
       config: {
         extraMetadata: {
@@ -182,9 +169,8 @@ test.ifDevOrLinuxCi("slots option", async () => {
   }
 })
 
-test.ifDevOrLinuxCi(
-  "custom env",
-  app({
+test.ifDevOrLinuxCi("custom env", ({ expect }) =>
+  app(expect, {
     targets: snapTarget,
     config: {
       extraMetadata: {
@@ -204,9 +190,8 @@ test.ifDevOrLinuxCi(
   })
 )
 
-test.ifDevOrLinuxCi(
-  "custom after, no desktop",
-  app({
+test.ifDevOrLinuxCi("custom after, no desktop", ({ expect }) =>
+  app(expect, {
     targets: snapTarget,
     config: {
       extraMetadata: {
@@ -224,9 +209,8 @@ test.ifDevOrLinuxCi(
   })
 )
 
-test.ifDevOrLinuxCi(
-  "no desktop plugs",
-  app({
+test.ifDevOrLinuxCi("no desktop plugs", ({ expect }) =>
+  app(expect, {
     targets: snapTarget,
     config: {
       extraMetadata: {
@@ -245,9 +229,8 @@ test.ifDevOrLinuxCi(
   })
 )
 
-test.ifAll.ifDevOrLinuxCi(
-  "auto start",
-  app({
+test.ifDevOrLinuxCi("auto start", ({ expect }) =>
+  app(expect, {
     targets: snapTarget,
     config: {
       extraMetadata: {
@@ -266,9 +249,8 @@ test.ifAll.ifDevOrLinuxCi(
   })
 )
 
-test.ifDevOrLinuxCi(
-  "default compression",
-  app({
+test.ifDevOrLinuxCi("default compression", ({ expect }) =>
+  app(expect, {
     targets: snapTarget,
     config: {
       extraMetadata: {
@@ -283,9 +265,8 @@ test.ifDevOrLinuxCi(
   })
 )
 
-test.ifDevOrLinuxCi(
-  "compression option",
-  app({
+test.ifDevOrLinuxCi("compression option", ({ expect }) =>
+  app(expect, {
     targets: snapTarget,
     config: {
       extraMetadata: {
@@ -306,9 +287,8 @@ test.ifDevOrLinuxCi(
   })
 )
 
-test.ifDevOrLinuxCi(
-  "default base",
-  app({
+test.ifDevOrLinuxCi("default base", ({ expect }) =>
+  app(expect, {
     targets: snapTarget,
     config: {
       productName: "Sep",
@@ -321,9 +301,8 @@ test.ifDevOrLinuxCi(
   })
 )
 
-test.ifDevOrLinuxCi(
-  "base option",
-  app({
+test.ifDevOrLinuxCi("base option", ({ expect }) =>
+  app(expect, {
     targets: snapTarget,
     config: {
       productName: "Sep",
@@ -339,9 +318,8 @@ test.ifDevOrLinuxCi(
   })
 )
 
-test.ifDevOrLinuxCi(
-  "use template app",
-  app({
+test.ifDevOrLinuxCi("use template app", ({ expect }) =>
+  app(expect, {
     targets: snapTarget,
     config: {
       snap: {

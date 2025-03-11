@@ -1,9 +1,8 @@
 import { Platform } from "electron-builder"
 import { app } from "../helpers/packTester"
 
-test.ifAll.ifNotWindows.ifDevOrLinuxCi(
-  "tar",
-  app({
+test.ifNotWindows.ifDevOrLinuxCi("tar", ({ expect }) =>
+  app(expect, {
     targets: Platform.LINUX.createTarget(["tar.xz", "tar.lz", "tar.bz2"]),
     config: {
       electronFuses: {

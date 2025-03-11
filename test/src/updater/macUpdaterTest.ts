@@ -3,6 +3,7 @@ import { MacUpdater } from "electron-updater/out/MacUpdater"
 import { EventEmitter } from "events"
 import { assertThat } from "../helpers/fileAssert"
 import { createTestAppAdapter, httpExecutor, trackEvents, tuneTestUpdater, writeUpdateConfig } from "../helpers/updaterTestUtil"
+import { mockForNodeRequire } from "vitest-mock-commonjs"
 
 class TestNativeUpdater extends EventEmitter {
   private updateUrl: string | null = null
@@ -27,17 +28,12 @@ class TestNativeUpdater extends EventEmitter {
   }
 }
 
-test.ifAll.ifNotCi.ifMac("mac updates", async () => {
+test.ifMac("mac updates", async ({ expect }) => {
   const mockNativeUpdater = new TestNativeUpdater()
-  jest.mock(
-    "electron",
-    () => {
-      return {
-        autoUpdater: mockNativeUpdater,
-      }
-    },
-    { virtual: true }
-  )
+
+  mockForNodeRequire("electron", {
+    autoUpdater: mockNativeUpdater,
+  })
 
   const updater = new MacUpdater(undefined, await createTestAppAdapter())
   const options: GithubOptions = {
@@ -60,6 +56,6 @@ test.ifAll.ifNotCi.ifMac("mac updates", async () => {
   // expect(removeUnstableProperties(updateCheckResult?.updateInfo.files)).toMatchSnapshot()
   const files = await updateCheckResult?.downloadPromise
   expect(files!.length).toEqual(1)
-  await assertThat(files![0]).isFile()
+  await assertThat(expect, files![0]).isFile()
   expect(actualEvents).toMatchSnapshot()
 })

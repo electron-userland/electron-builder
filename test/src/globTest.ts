@@ -1,12 +1,14 @@
-import { DIR_TARGET, Platform } from "app-builder-lib"
+import { Platform } from "app-builder-lib"
 import { readAsar } from "app-builder-lib/out/asar/asar"
 import { outputFile } from "fs-extra"
 import * as fs from "fs/promises"
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert"
-import { app, appThrows, assertPack, modifyPackageJson, PackedContext, removeUnstableProperties, verifyAsarFileTree } from "./helpers/packTester"
+import { app, appThrows, assertPack, linuxDirTarget, modifyPackageJson, PackedContext, removeUnstableProperties, verifyAsarFileTree } from "./helpers/packTester"
 import { verifySmartUnpack } from "./helpers/verifySmartUnpack"
 import { spawnSync } from "child_process"
+import { ExpectStatic } from "vitest"
+import { spawn } from "builder-util/out/util"
 
 async function createFiles(appDir: string) {
   await Promise.all([
@@ -26,56 +28,58 @@ async function createFiles(appDir: string) {
   await fs.symlink(path.join(appDir, "assets", "subdir", "file3"), path.join(appDir, "file-symlink3")) // symlink down
 }
 
-test.ifNotWindows.ifDevOrLinuxCi(
-  "unpackDir one",
+test.ifNotWindows.ifDevOrLinuxCi("unpackDir one", ({ expect }) =>
   app(
+    expect,
     {
-      targets: Platform.LINUX.createTarget(DIR_TARGET),
+      targets: linuxDirTarget,
       config: {
         asarUnpack: ["assets", "b2", "do-not-unpack-dir/file.json"],
       },
     },
     {
       projectDirCreated: createFiles,
-      packed: assertDirs,
+      packed: context => assertDirs(expect, context),
     }
   )
 )
 
-async function assertDirs(context: PackedContext) {
+async function assertDirs(expect: ExpectStatic, context: PackedContext) {
   const resourceDir = context.getResources(Platform.LINUX)
   await Promise.all([
-    assertThat(path.join(resourceDir, "app.asar.unpacked", "assets")).isDirectory(),
-    assertThat(path.join(resourceDir, "app.asar.unpacked", "b2")).isDirectory(),
-    assertThat(path.join(resourceDir, "app.asar.unpacked", "do-not-unpack-dir", "file.json")).isFile(),
-    assertThat(path.join(resourceDir, "app.asar.unpacked", "do-not-unpack-dir", "must-be-not-unpacked")).doesNotExist(),
-    assertThat(path.join(resourceDir, "app.asar.unpacked", "do-not-unpack-dir", "dir-2")).doesNotExist(),
+    assertThat(expect, path.join(resourceDir, "app.asar.unpacked", "assets")).isDirectory(),
+    assertThat(expect, path.join(resourceDir, "app.asar.unpacked", "b2")).isDirectory(),
+    assertThat(expect, path.join(resourceDir, "app.asar.unpacked", "do-not-unpack-dir", "file.json")).isFile(),
+    assertThat(expect, path.join(resourceDir, "app.asar.unpacked", "do-not-unpack-dir", "must-be-not-unpacked")).doesNotExist(),
+    assertThat(expect, path.join(resourceDir, "app.asar.unpacked", "do-not-unpack-dir", "dir-2")).doesNotExist(),
   ])
 
-  await verifyAsarFileTree(resourceDir)
+  await verifyAsarFileTree(expect, resourceDir)
 }
 
-test.ifNotWindows.ifDevOrLinuxCi("unpackDir", () => {
+test.ifNotWindows.ifDevOrLinuxCi("unpackDir", ({ expect }) => {
   return assertPack(
+    expect,
     "test-app",
     {
-      targets: Platform.LINUX.createTarget(DIR_TARGET),
+      targets: linuxDirTarget,
       config: {
         asarUnpack: ["assets", "b2", "do-not-unpack-dir/file.json"],
       },
     },
     {
       projectDirCreated: projectDir => createFiles(path.join(projectDir, "app")),
-      packed: assertDirs,
+      packed: context => assertDirs(expect, context),
     }
   )
 })
 
-test.ifDevOrLinuxCi("asarUnpack and files ignore", () => {
+test.ifDevOrLinuxCi("asarUnpack and files ignore", ({ expect }) => {
   return assertPack(
+    expect,
     "test-app",
     {
-      targets: Platform.LINUX.createTarget(DIR_TARGET),
+      targets: linuxDirTarget,
       config: {
         asarUnpack: ["!**/ffprobe-static/bin/darwin/x64/ffprobe"],
       },
@@ -84,19 +88,19 @@ test.ifDevOrLinuxCi("asarUnpack and files ignore", () => {
       projectDirCreated: projectDir => outputFile(path.join(projectDir, "node_modules/ffprobe-static/bin/darwin/x64/ffprobe"), "data"),
       packed: async context => {
         const resourceDir = context.getResources(Platform.LINUX)
-        await Promise.all([assertThat(path.join(resourceDir, "app.asar.unpacked", "node_modules/ffprobe-static/bin/darwin/x64/ffprobe")).doesNotExist()])
+        await Promise.all([assertThat(expect, path.join(resourceDir, "app.asar.unpacked", "node_modules/ffprobe-static/bin/darwin/x64/ffprobe")).doesNotExist()])
 
-        await verifyAsarFileTree(resourceDir)
+        await verifyAsarFileTree(expect, resourceDir)
       },
     }
   )
 })
 
-test.ifNotWindows(
-  "link",
+test.ifNotWindows("link", ({ expect }) =>
   app(
+    expect,
     {
-      targets: Platform.LINUX.createTarget(DIR_TARGET),
+      targets: linuxDirTarget,
     },
     {
       projectDirCreated: projectDir => {
@@ -105,46 +109,17 @@ test.ifNotWindows(
       packed: async context => {
         const resources = context.getResources(Platform.LINUX)
         expect((await readAsar(path.join(resources, "app.asar"))).getFile("foo.js", false)).toMatchSnapshot()
-        await verifyAsarFileTree(resources)
+        await verifyAsarFileTree(expect, resources)
       },
     }
   )
 )
 
-test.ifNotWindows("symlinks everywhere with static framework", () =>
-  assertPack(
-    "test-app-symlink-framework",
-    {
-      targets: Platform.LINUX.createTarget(DIR_TARGET),
-      config: {
-        files: ["!hello-world"],
-      },
-    },
-    {
-      isInstallDepsBefore: true,
-      projectDirCreated: async projectDir => {
-        await modifyPackageJson(projectDir, data => {
-          data.dependencies = {
-            debug: "4.1.1",
-            ...data.dependencies,
-          }
-        })
-        return fs.symlink(path.join(projectDir, "index.js"), path.join(projectDir, "foo.js"))
-      },
-      packed: async context => {
-        const resources = context.getResources(Platform.LINUX)
-        expect((await readAsar(path.join(resources, "app.asar"))).getFile("foo.js", false)).toMatchSnapshot()
-        await verifySmartUnpack(resources)
-      },
-    }
-  )
-)
-
-test.ifNotWindows(
-  "outside link",
+test.ifNotWindows("outside link", ({ expect }) =>
   appThrows(
+    expect,
     {
-      targets: Platform.LINUX.createTarget(DIR_TARGET),
+      targets: linuxDirTarget,
     },
     {
       projectDirCreated: async (projectDir, tmpDir) => {
@@ -156,213 +131,254 @@ test.ifNotWindows(
     error => expect(error.message).toContain("violates asar security integrity")
   )
 )
-
-test.ifDevOrLinuxCi("local node module with file protocol", () => {
-  return assertPack(
-    "test-app-one",
-    {
-      targets: Platform.LINUX.createTarget(DIR_TARGET),
-      config: {
-        asarUnpack: ["**/node_modules/foo/**/*"],
+describe("isInstallDepsBefore=true", { sequential: true }, () => {
+  test.ifNotWindows("symlinks everywhere with static framework", ({ expect }) =>
+    assertPack(
+      expect,
+      "test-app-symlink-framework",
+      {
+        targets: linuxDirTarget,
+        config: {
+          files: ["!hello-world"],
+        },
       },
-    },
-    {
-      isInstallDepsBefore: true,
-      projectDirCreated: async (projectDir, tmpDir) => {
-        const tempDir = await tmpDir.getTempDir()
-        const localPath = path.join(tempDir, "foo")
-        await outputFile(path.join(localPath, "package.json"), `{"name":"foo","version":"9.0.0","main":"index.js","license":"MIT","dependencies":{"ms":"2.0.0"}}`)
-        spawnSync("npm", ["install"], { cwd: localPath })
-        await modifyPackageJson(projectDir, data => {
-          data.dependencies = {
-            foo: `file:${localPath}`,
-          }
-        })
-      },
-      packed: async context => {
-        return assertThat(path.join(path.join(context.getResources(Platform.LINUX), "app.asar.unpacked", "node_modules", "foo", "package.json"))).isFile()
-      },
-    }
+      {
+        isInstallDepsBefore: true,
+        projectDirCreated: async projectDir => {
+          await modifyPackageJson(projectDir, data => {
+            data.dependencies = {
+              debug: "4.1.1",
+              ...data.dependencies,
+            }
+          })
+          return fs.symlink(path.join(projectDir, "index.js"), path.join(projectDir, "foo.js"))
+        },
+        packed: async context => {
+          const resources = context.getResources(Platform.LINUX)
+          expect((await readAsar(path.join(resources, "app.asar"))).getFile("foo.js", false)).toMatchSnapshot()
+          await verifySmartUnpack(expect, resources)
+        },
+      }
+    )
   )
-})
 
-// cannot be enabled
-// https://github.com/electron-userland/electron-builder/issues/611
-test.ifDevOrLinuxCi("failed peer dep", () => {
-  return assertPack(
-    "test-app-one",
-    {
-      targets: Platform.LINUX.createTarget(DIR_TARGET),
-    },
-    {
-      isInstallDepsBefore: true,
-      projectDirCreated: projectDir => {
-        return Promise.all([
+  test.ifDevOrLinuxCi("local node module with file protocol", ({ expect }) => {
+    return assertPack(
+      expect,
+      "test-app-one",
+      {
+        targets: linuxDirTarget,
+        config: {
+          asarUnpack: ["**/node_modules/foo/**/*"],
+        },
+      },
+      {
+        projectDirCreated: async (projectDir, tmpDir) => {
+          const tempDir = await tmpDir.getTempDir()
+          const localPath = path.join(tempDir, "foo")
+          await outputFile(path.join(localPath, "package.json"), `{"name":"foo","version":"9.0.0","main":"index.js","license":"MIT","dependencies":{"ms":"2.0.0"}}`)
+          spawnSync("npm", ["install"], { cwd: localPath })
+          await modifyPackageJson(projectDir, data => {
+            data.dependencies = {
+              foo: `file:${localPath}`,
+            }
+          })
+
+          // we can't use `isInstallDepsBefore` as `localPath` is dynamic and changes for every which causes `--frozen-lockfile` and `npm ci` to fail
+          await spawn("npm", ["install"], {
+            cwd: projectDir,
+          })
+        },
+        packed: async context => {
+          await assertThat(expect, path.join(path.join(context.getResources(Platform.LINUX), "app.asar.unpacked", "node_modules", "foo", "package.json"))).isFile()
+        },
+      }
+    )
+  })
+
+  // cannot be enabled
+  // https://github.com/electron-userland/electron-builder/issues/611
+  test.ifDevOrLinuxCi("failed peer dep", ({ expect }) => {
+    return assertPack(
+      expect,
+      "test-app-one",
+      {
+        targets: linuxDirTarget,
+      },
+      {
+        isInstallDepsBefore: true,
+        projectDirCreated: projectDir => {
+          return Promise.all([
+            modifyPackageJson(projectDir, data => {
+              //noinspection SpellCheckingInspection
+              data.dependencies = {
+                debug: "4.1.1",
+                "rc-datepicker": "4.0.0",
+                react: "15.2.1",
+                "react-dom": "15.2.1",
+              }
+            }),
+            outputFile(path.join(projectDir, "yarn.lock"), ""),
+          ])
+        },
+        packed: context => {
+          return verifySmartUnpack(expect, context.getResources(Platform.LINUX))
+        },
+      }
+    )
+  })
+
+  test.ifDevOrLinuxCi("ignore node_modules", ({ expect }) => {
+    return assertPack(
+      expect,
+      "test-app-one",
+      {
+        targets: linuxDirTarget,
+        config: {
+          asar: false,
+          files: ["!node_modules/**/*"],
+        },
+      },
+      {
+        isInstallDepsBefore: true,
+        projectDirCreated: projectDir =>
           modifyPackageJson(projectDir, data => {
             //noinspection SpellCheckingInspection
             data.dependencies = {
-              debug: "4.1.1",
-              "rc-datepicker": "4.0.0",
-              react: "15.2.1",
-              "react-dom": "15.2.1",
+              "ci-info": "2.0.0",
+              // this contains string-width-cjs 4.2.3
+              "@isaacs/cliui": "8.0.2",
             }
           }),
-          outputFile(path.join(projectDir, "yarn.lock"), ""),
-        ])
-      },
-      packed: context => {
-        return verifySmartUnpack(context.getResources(Platform.LINUX))
-      },
-    }
-  )
-})
+        packed: context => {
+          return assertThat(expect, path.join(context.getResources(Platform.LINUX), "app", "node_modules")).doesNotExist()
+        },
+      }
+    )
+  })
 
-test.ifAll.ifDevOrLinuxCi("ignore node_modules", () => {
-  return assertPack(
-    "test-app-one",
-    {
-      targets: Platform.LINUX.createTarget(DIR_TARGET),
-      config: {
-        asar: false,
-        files: ["!node_modules/**/*"],
+  test.ifDevOrLinuxCi("asarUnpack node_modules", ({ expect }) => {
+    return assertPack(
+      expect,
+      "test-app-one",
+      {
+        targets: linuxDirTarget,
+        config: {
+          asarUnpack: "node_modules",
+        },
       },
-    },
-    {
-      isInstallDepsBefore: true,
-      projectDirCreated: projectDir =>
-        modifyPackageJson(projectDir, data => {
-          //noinspection SpellCheckingInspection
-          data.dependencies = {
-            "ci-info": "2.0.0",
-            // this contains string-width-cjs 4.2.3
-            "@isaacs/cliui": "8.0.2",
-          }
-        }),
-      packed: context => {
-        return assertThat(path.join(context.getResources(Platform.LINUX), "app", "node_modules")).doesNotExist()
-      },
-    }
-  )
-})
+      {
+        isInstallDepsBefore: true,
+        projectDirCreated: projectDir =>
+          modifyPackageJson(projectDir, data => {
+            data.dependencies = {
+              "ci-info": "2.0.0",
+            }
+          }),
+        packed: async context => {
+          const nodeModulesNode = (await readAsar(path.join(context.getResources(Platform.LINUX), "app.asar"))).getNode("node_modules")
+          expect(removeUnstableProperties(nodeModulesNode)).toMatchSnapshot()
+          await assertThat(expect, path.join(context.getResources(Platform.LINUX), "app.asar.unpacked/node_modules/ci-info")).isDirectory()
+        },
+      }
+    )
+  })
 
-test.ifAll.ifDevOrLinuxCi("asarUnpack node_modules", () => {
-  return assertPack(
-    "test-app-one",
-    {
-      targets: Platform.LINUX.createTarget(DIR_TARGET),
-      config: {
-        asarUnpack: "node_modules",
+  test.ifDevOrLinuxCi("asarUnpack node_modules which has many modules", ({ expect }) => {
+    return assertPack(
+      expect,
+      "test-app-one",
+      {
+        targets: linuxDirTarget,
+        config: {
+          asarUnpack: "node_modules",
+        },
       },
-    },
-    {
-      isInstallDepsBefore: true,
-      projectDirCreated: projectDir =>
-        modifyPackageJson(projectDir, data => {
-          data.dependencies = {
-            "ci-info": "2.0.0",
-          }
-        }),
-      packed: async context => {
-        const nodeModulesNode = (await readAsar(path.join(context.getResources(Platform.LINUX), "app.asar"))).getNode("node_modules")
-        expect(removeUnstableProperties(nodeModulesNode)).toMatchSnapshot()
-        await assertThat(path.join(context.getResources(Platform.LINUX), "app.asar.unpacked/node_modules/ci-info")).isDirectory()
-      },
-    }
-  )
-})
+      {
+        isInstallDepsBefore: true,
+        projectDirCreated: async projectDir => {
+          await modifyPackageJson(projectDir, data => {
+            data.dependencies = {
+              "@react-navigation/stack": "6.3.7",
+              "@sentry/electron": "4.4.0",
+              axios: "1.1.3",
+              "deep-equal": "2.1.0",
+              dotenv: "16.4.5",
+              "electron-log": "4.4.8",
+              "electron-updater": "6.0.4",
+              "electron-window-state": "5.0.3",
+              "jwt-decode": "3.1.2",
+              keytar: "7.9.0",
+              webpack: "5.74.0",
+              "pubsub-js": "1.9.4",
+              react: "18.2.0",
+              "react-dom": "18.2.0",
+              "react-native-web": "0.18.10",
+              "react-router-dom": "6.4.0",
+              "source-map-support": "0.5.16",
+              yargs: "16.2.0",
+              "ci-info": "2.0.0",
+            }
+          })
+          await outputFile(path.join(projectDir, "yarn.lock"), "")
+        },
+        packed: async context => {
+          await assertThat(expect, path.join(context.getResources(Platform.LINUX), "app.asar.unpacked/node_modules/jwt-decode")).isDirectory()
+          await assertThat(expect, path.join(context.getResources(Platform.LINUX), "app.asar.unpacked/node_modules/keytar")).isDirectory()
+          await assertThat(expect, path.join(context.getResources(Platform.LINUX), "app.asar.unpacked/node_modules/yargs")).isDirectory()
+          await assertThat(expect, path.join(context.getResources(Platform.LINUX), "app.asar.unpacked/node_modules/@sentry/electron")).isDirectory()
+          await assertThat(expect, path.join(context.getResources(Platform.LINUX), "app.asar.unpacked/node_modules/ci-info")).isDirectory()
+        },
+      }
+    )
+  })
 
-test.ifAll.ifDevOrLinuxCi("asarUnpack node_modules which has many modules", () => {
-  return assertPack(
-    "test-app-one",
-    {
-      targets: Platform.LINUX.createTarget(DIR_TARGET),
-      config: {
-        asarUnpack: "node_modules",
+  test.ifDevOrLinuxCi("exclude some modules when asarUnpack node_modules which has many modules", ({ expect }) => {
+    return assertPack(
+      expect,
+      "test-app-one",
+      {
+        targets: linuxDirTarget,
+        config: {
+          asarUnpack: ["node_modules", "!**/node_modules/ci-info/**/*"],
+        },
       },
-    },
-    {
-      isInstallDepsBefore: true,
-      projectDirCreated: async projectDir => {
-        await modifyPackageJson(projectDir, data => {
-          data.dependencies = {
-            "@react-navigation/stack": "6.3.7",
-            "@sentry/electron": "4.4.0",
-            axios: "1.1.3",
-            "deep-equal": "2.1.0",
-            dotenv: "16.4.5",
-            "electron-log": "4.4.8",
-            "electron-updater": "6.0.4",
-            "electron-window-state": "5.0.3",
-            "jwt-decode": "3.1.2",
-            keytar: "7.9.0",
-            webpack: "5.74.0",
-            "pubsub-js": "1.9.4",
-            react: "18.2.0",
-            "react-dom": "18.2.0",
-            "react-native-web": "0.18.10",
-            "react-router-dom": "6.4.0",
-            "source-map-support": "0.5.16",
-            yargs: "16.2.0",
-            "ci-info": "2.0.0",
-          }
-        })
-        await outputFile(path.join(projectDir, "yarn.lock"), "")
-      },
-      packed: async context => {
-        await assertThat(path.join(context.getResources(Platform.LINUX), "app.asar.unpacked/node_modules/jwt-decode")).isDirectory()
-        await assertThat(path.join(context.getResources(Platform.LINUX), "app.asar.unpacked/node_modules/keytar")).isDirectory()
-        await assertThat(path.join(context.getResources(Platform.LINUX), "app.asar.unpacked/node_modules/yargs")).isDirectory()
-        await assertThat(path.join(context.getResources(Platform.LINUX), "app.asar.unpacked/node_modules/@sentry/electron")).isDirectory()
-        await assertThat(path.join(context.getResources(Platform.LINUX), "app.asar.unpacked/node_modules/ci-info")).isDirectory()
-      },
-    }
-  )
-})
-
-test.ifAll.ifDevOrLinuxCi("exclude some modules when asarUnpack node_modules which has many modules", () => {
-  return assertPack(
-    "test-app-one",
-    {
-      targets: Platform.LINUX.createTarget(DIR_TARGET),
-      config: {
-        asarUnpack: ["node_modules", "!**/node_modules/ci-info/**/*"],
-      },
-    },
-    {
-      isInstallDepsBefore: true,
-      projectDirCreated: async projectDir => {
-        await modifyPackageJson(projectDir, data => {
-          data.dependencies = {
-            "@react-navigation/stack": "6.3.7",
-            "@sentry/electron": "4.4.0",
-            axios: "1.1.3",
-            "deep-equal": "2.1.0",
-            dotenv: "16.4.5",
-            "electron-log": "4.4.8",
-            "electron-updater": "6.0.4",
-            "electron-window-state": "5.0.3",
-            "jwt-decode": "3.1.2",
-            keytar: "7.9.0",
-            webpack: "5.74.0",
-            "pubsub-js": "1.9.4",
-            react: "18.2.0",
-            "react-dom": "18.2.0",
-            "react-native-web": "0.18.10",
-            "react-router-dom": "6.4.0",
-            "source-map-support": "0.5.16",
-            yargs: "16.2.0",
-            "ci-info": "2.0.0",
-          }
-        })
-        await outputFile(path.join(projectDir, "yarn.lock"), "")
-      },
-      packed: async context => {
-        await assertThat(path.join(context.getResources(Platform.LINUX), "app.asar.unpacked/node_modules/jwt-decode")).isDirectory()
-        await assertThat(path.join(context.getResources(Platform.LINUX), "app.asar.unpacked/node_modules/keytar")).isDirectory()
-        await assertThat(path.join(context.getResources(Platform.LINUX), "app.asar.unpacked/node_modules/yargs")).isDirectory()
-        await assertThat(path.join(context.getResources(Platform.LINUX), "app.asar.unpacked/node_modules/@sentry/electron")).isDirectory()
-        await assertThat(path.join(context.getResources(Platform.LINUX), "app.asar.unpacked/node_modules/ci-info")).doesNotExist()
-      },
-    }
-  )
+      {
+        isInstallDepsBefore: true,
+        projectDirCreated: async projectDir => {
+          await modifyPackageJson(projectDir, data => {
+            data.dependencies = {
+              "@react-navigation/stack": "6.3.7",
+              "@sentry/electron": "4.4.0",
+              axios: "1.1.3",
+              "deep-equal": "2.1.0",
+              dotenv: "16.4.5",
+              "electron-log": "4.4.8",
+              "electron-updater": "6.0.4",
+              "electron-window-state": "5.0.3",
+              "jwt-decode": "3.1.2",
+              keytar: "7.9.0",
+              webpack: "5.74.0",
+              "pubsub-js": "1.9.4",
+              react: "18.2.0",
+              "react-dom": "18.2.0",
+              "react-native-web": "0.18.10",
+              "react-router-dom": "6.4.0",
+              "source-map-support": "0.5.16",
+              yargs: "16.2.0",
+              "ci-info": "2.0.0",
+            }
+          })
+          await outputFile(path.join(projectDir, "yarn.lock"), "")
+        },
+        packed: async context => {
+          await assertThat(expect, path.join(context.getResources(Platform.LINUX), "app.asar.unpacked/node_modules/jwt-decode")).isDirectory()
+          await assertThat(expect, path.join(context.getResources(Platform.LINUX), "app.asar.unpacked/node_modules/keytar")).isDirectory()
+          await assertThat(expect, path.join(context.getResources(Platform.LINUX), "app.asar.unpacked/node_modules/yargs")).isDirectory()
+          await assertThat(expect, path.join(context.getResources(Platform.LINUX), "app.asar.unpacked/node_modules/@sentry/electron")).isDirectory()
+          await assertThat(expect, path.join(context.getResources(Platform.LINUX), "app.asar.unpacked/node_modules/ci-info")).doesNotExist()
+        },
+      }
+    )
+  })
 })

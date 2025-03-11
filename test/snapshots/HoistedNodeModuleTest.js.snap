@@ -1,4 +1,4 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
 exports[`conflict versions 1`] = `
 {
@@ -73,13 +73,13 @@ exports[`conflict versions 2`] = `
 }
 `;
 
-exports[`npm electron-clear-data 1`] = `
+exports[`isInstallDepsBefore=true > npm electron-clear-data 1`] = `
 {
   "win": [],
 }
 `;
 
-exports[`npm electron-clear-data 2`] = `
+exports[`isInstallDepsBefore=true > npm electron-clear-data 2`] = `
 {
   "files": {
     "index.html": {
@@ -178,13 +178,13 @@ exports[`npm electron-clear-data 2`] = `
 }
 `;
 
-exports[`npm tar 1`] = `
+exports[`isInstallDepsBefore=true > npm tar 1`] = `
 {
   "linux": [],
 }
 `;
 
-exports[`npm tar 2`] = `
+exports[`isInstallDepsBefore=true > npm tar 2`] = `
 {
   "files": {
     "index.html": {
@@ -3453,13 +3453,13 @@ exports[`npm tar 2`] = `
 }
 `;
 
-exports[`pnpm es5-ext without hoisted config 1`] = `
+exports[`isInstallDepsBefore=true > pnpm es5-ext without hoisted config 1`] = `
 {
   "linux": [],
 }
 `;
 
-exports[`pnpm es5-ext without hoisted config 2`] = `
+exports[`isInstallDepsBefore=true > pnpm es5-ext without hoisted config 2`] = `
 {
   "files": {
     "index.html": {
@@ -10692,13 +10692,13 @@ exports[`pnpm es5-ext without hoisted config 2`] = `
 }
 `;
 
-exports[`pnpm max stack 1`] = `
+exports[`isInstallDepsBefore=true > pnpm max stack 1`] = `
 {
   "linux": [],
 }
 `;
 
-exports[`pnpm max stack 2`] = `
+exports[`isInstallDepsBefore=true > pnpm max stack 2`] = `
 {
   "files": {
     "index.html": {
@@ -23156,13 +23156,13 @@ exports[`pnpm max stack 2`] = `
 }
 `;
 
-exports[`pnpm node-linker=hoisted 1`] = `
+exports[`isInstallDepsBefore=true > pnpm node-linker=hoisted 1`] = `
 {
   "linux": [],
 }
 `;
 
-exports[`pnpm node-linker=hoisted 2`] = `
+exports[`isInstallDepsBefore=true > pnpm node-linker=hoisted 2`] = `
 {
   "files": {
     ".npmrc": {
@@ -24837,13 +24837,13 @@ exports[`pnpm node-linker=hoisted 2`] = `
 }
 `;
 
-exports[`pnpm optional dependencies 1`] = `
+exports[`isInstallDepsBefore=true > pnpm optional dependencies 1`] = `
 {
   "linux": [],
 }
 `;
 
-exports[`pnpm optional dependencies 2`] = `
+exports[`isInstallDepsBefore=true > pnpm optional dependencies 2`] = `
 {
   "files": {
     "index.html": {
@@ -24942,13 +24942,13 @@ exports[`pnpm optional dependencies 2`] = `
 }
 `;
 
-exports[`pnpm public-hoist-pattern=* 1`] = `
+exports[`isInstallDepsBefore=true > pnpm public-hoist-pattern=* 1`] = `
 {
   "linux": [],
 }
 `;
 
-exports[`pnpm public-hoist-pattern=* 2`] = `
+exports[`isInstallDepsBefore=true > pnpm public-hoist-pattern=* 2`] = `
 {
   "files": {
     ".npmrc": {
@@ -26623,13 +26623,13 @@ exports[`pnpm public-hoist-pattern=* 2`] = `
 }
 `;
 
-exports[`pnpm shamefully-hoist=true 1`] = `
+exports[`isInstallDepsBefore=true > pnpm shamefully-hoist=true 1`] = `
 {
   "linux": [],
 }
 `;
 
-exports[`pnpm shamefully-hoist=true 2`] = `
+exports[`isInstallDepsBefore=true > pnpm shamefully-hoist=true 2`] = `
 {
   "files": {
     ".npmrc": {
@@ -28304,13 +28304,13 @@ exports[`pnpm shamefully-hoist=true 2`] = `
 }
 `;
 
-exports[`yarn electron-clear-data 1`] = `
+exports[`isInstallDepsBefore=true > yarn electron-clear-data 1`] = `
 {
   "win": [],
 }
 `;
 
-exports[`yarn electron-clear-data 2`] = `
+exports[`isInstallDepsBefore=true > yarn electron-clear-data 2`] = `
 {
   "files": {
     "index.html": {
@@ -28409,13 +28409,13 @@ exports[`yarn electron-clear-data 2`] = `
 }
 `;
 
-exports[`yarn max stack 1`] = `
+exports[`isInstallDepsBefore=true > yarn max stack 1`] = `
 {
   "linux": [],
 }
 `;
 
-exports[`yarn max stack 2`] = `
+exports[`isInstallDepsBefore=true > yarn max stack 2`] = `
 {
   "files": {
     "index.html": {
@@ -40873,13 +40873,13 @@ exports[`yarn max stack 2`] = `
 }
 `;
 
-exports[`yarn ms 1`] = `
+exports[`isInstallDepsBefore=true > yarn ms 1`] = `
 {
   "linux": [],
 }
 `;
 
-exports[`yarn ms 2`] = `
+exports[`isInstallDepsBefore=true > yarn ms 2`] = `
 {
   "files": {
     "index.html": {
@@ -63840,13 +63840,13 @@ exports[`yarn ms 2`] = `
 }
 `;
 
-exports[`yarn parse-asn1 1`] = `
+exports[`isInstallDepsBefore=true > yarn parse-asn1 1`] = `
 {
   "linux": [],
 }
 `;
 
-exports[`yarn parse-asn1 2`] = `
+exports[`isInstallDepsBefore=true > yarn parse-asn1 2`] = `
 {
   "files": {
     "index.html": {
@@ -64590,6 +64590,91 @@ exports[`yarn parse-asn1 2`] = `
 }
 `;
 
+exports[`isInstallDepsBefore=true > yarn some module add by manual instead of install 1`] = `
+{
+  "win": [],
+}
+`;
+
+exports[`isInstallDepsBefore=true > yarn some module add by manual instead of install 2`] = `
+{
+  "files": {
+    "index.html": {
+      "offset": "22719",
+      "size": 378,
+    },
+    "index.js": {
+      "offset": "23097",
+      "size": 619,
+    },
+    "node_modules": {
+      "files": {
+        "debug": {
+          "files": {
+            "LICENSE": {
+              "offset": "0",
+              "size": 1107,
+            },
+            "Makefile": {
+              "offset": "1107",
+              "size": 1234,
+            },
+            "node.js": {
+              "offset": "2341",
+              "size": 40,
+            },
+            "package.json": {
+              "offset": "2381",
+              "size": 830,
+            },
+            "src": {
+              "files": {
+                "browser.js": {
+                  "offset": "3211",
+                  "size": 5707,
+                },
+                "debug.js": {
+                  "offset": "8918",
+                  "size": 4889,
+                },
+                "index.js": {
+                  "offset": "13807",
+                  "size": 263,
+                },
+                "node.js": {
+                  "offset": "14070",
+                  "size": 4339,
+                },
+              },
+            },
+          },
+        },
+        "ms": {
+          "files": {
+            "index.js": {
+              "offset": "18409",
+              "size": 2764,
+            },
+            "license.md": {
+              "offset": "21173",
+              "size": 1077,
+            },
+            "package.json": {
+              "offset": "22250",
+              "size": 469,
+            },
+          },
+        },
+      },
+    },
+    "package.json": {
+      "offset": "23716",
+      "size": 324,
+    },
+  },
+}
+`;
+
 exports[`yarn several workspaces 1`] = `
 {
   "linux": [],
@@ -64828,91 +64913,6 @@ exports[`yarn several workspaces and asarUnpack 2`] = `
     "package.json": {
       "offset": "18219",
       "size": 326,
-    },
-  },
-}
-`;
-
-exports[`yarn some module add by manual instead of install 1`] = `
-{
-  "win": [],
-}
-`;
-
-exports[`yarn some module add by manual instead of install 2`] = `
-{
-  "files": {
-    "index.html": {
-      "offset": "22719",
-      "size": 378,
-    },
-    "index.js": {
-      "offset": "23097",
-      "size": 619,
-    },
-    "node_modules": {
-      "files": {
-        "debug": {
-          "files": {
-            "LICENSE": {
-              "offset": "0",
-              "size": 1107,
-            },
-            "Makefile": {
-              "offset": "1107",
-              "size": 1234,
-            },
-            "node.js": {
-              "offset": "2341",
-              "size": 40,
-            },
-            "package.json": {
-              "offset": "2381",
-              "size": 830,
-            },
-            "src": {
-              "files": {
-                "browser.js": {
-                  "offset": "3211",
-                  "size": 5707,
-                },
-                "debug.js": {
-                  "offset": "8918",
-                  "size": 4889,
-                },
-                "index.js": {
-                  "offset": "13807",
-                  "size": 263,
-                },
-                "node.js": {
-                  "offset": "14070",
-                  "size": 4339,
-                },
-              },
-            },
-          },
-        },
-        "ms": {
-          "files": {
-            "index.js": {
-              "offset": "18409",
-              "size": 2764,
-            },
-            "license.md": {
-              "offset": "21173",
-              "size": 1077,
-            },
-            "package.json": {
-              "offset": "22250",
-              "size": 469,
-            },
-          },
-        },
-      },
-    },
-    "package.json": {
-      "offset": "23716",
-      "size": 324,
     },
   },
 }

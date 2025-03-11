@@ -1,6 +1,6 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`Squirrel.Windows 1`] = `
+exports[`squirrel.windows > Squirrel.Windows 1`] = `
 {
   "win": [
     {
@@ -20,7 +20,7 @@ exports[`Squirrel.Windows 1`] = `
 }
 `;
 
-exports[`Squirrel.Windows 2`] = `
+exports[`squirrel.windows > Squirrel.Windows 2`] = `
 [
   "lib/",
   "lib/net45/",
@@ -56,7 +56,7 @@ exports[`Squirrel.Windows 2`] = `
 ]
 `;
 
-exports[`artifactName 1`] = `
+exports[`squirrel.windows > artifactName 1`] = `
 {
   "win": [
     {
@@ -81,7 +81,7 @@ exports[`artifactName 1`] = `
 }
 `;
 
-exports[`artifactName 2`] = `
+exports[`squirrel.windows > artifactName 2`] = `
 [
   "lib/",
   "lib/net45/",
@@ -117,7 +117,7 @@ exports[`artifactName 2`] = `
 ]
 `;
 
-exports[`squirrel window arm64 msi 1`] = `
+exports[`squirrel.windows > squirrel window arm64 msi 1`] = `
 {
   "win": [
     {
@@ -142,7 +142,7 @@ exports[`squirrel window arm64 msi 1`] = `
 }
 `;
 
-exports[`squirrel window arm64 msi 2`] = `
+exports[`squirrel.windows > squirrel window arm64 msi 2`] = `
 [
   "lib/",
   "lib/net45/",
@@ -177,7 +177,7 @@ exports[`squirrel window arm64 msi 2`] = `
 ]
 `;
 
-exports[`squirrel window ia32 msi 1`] = `
+exports[`squirrel.windows > squirrel window ia32 msi 1`] = `
 {
   "win": [
     {
@@ -202,7 +202,7 @@ exports[`squirrel window ia32 msi 1`] = `
 }
 `;
 
-exports[`squirrel window ia32 msi 2`] = `
+exports[`squirrel.windows > squirrel window ia32 msi 2`] = `
 [
   "lib/",
   "lib/net45/",
@@ -238,7 +238,7 @@ exports[`squirrel window ia32 msi 2`] = `
 ]
 `;
 
-exports[`squirrel window x64 msi 1`] = `
+exports[`squirrel.windows > squirrel window x64 msi 1`] = `
 {
   "win": [
     {
@@ -263,7 +263,7 @@ exports[`squirrel window x64 msi 1`] = `
 }
 `;
 
-exports[`squirrel window x64 msi 2`] = `
+exports[`squirrel.windows > squirrel window x64 msi 2`] = `
 [
   "lib/",
   "lib/net45/",

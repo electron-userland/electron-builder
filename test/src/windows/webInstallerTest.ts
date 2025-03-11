@@ -3,9 +3,8 @@ import { app } from "../helpers/packTester"
 
 // tests are heavy, to distribute tests across CircleCI machines evenly, these tests were moved from oneClickInstallerTest
 
-test.ifNotCiMac(
-  "web installer",
-  app({
+test.ifNotCiMac("web installer", ({ expect }) =>
+  app(expect, {
     targets: Platform.WINDOWS.createTarget(["nsis-web"], Arch.x64, Arch.arm64),
     config: {
       publish: {
@@ -27,9 +26,8 @@ test.ifNotCiMac(
   })
 )
 
-test.ifAll.ifNotCiMac(
-  "web installer (default github)",
-  app({
+test.ifNotCiMac("web installer (default github)", ({ expect }) =>
+  app(expect, {
     targets: Platform.WINDOWS.createTarget(["nsis-web"], Arch.ia32, Arch.x64, Arch.arm64),
     config: {
       publish: {
@@ -41,9 +39,8 @@ test.ifAll.ifNotCiMac(
   })
 )
 
-test.ifAll.ifNotCiMac(
-  "web installer, safe name on github",
-  app({
+test.ifNotCiMac("web installer, safe name on github", ({ expect }) =>
+  app(expect, {
     targets: Platform.WINDOWS.createTarget(["nsis-web"], Arch.x64),
     config: {
       productName: "WorkFlowy",

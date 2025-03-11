@@ -1,18 +1,6 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`assisted 1`] = `
-{
-  "win": [
-    {
-      "arch": "x64",
-      "file": "Test MSI Assisted-1.1.0.msi",
-      "safeArtifactName": "TestApp-1.1.0.msi",
-    },
-  ],
-}
-`;
-
-exports[`msi 1`] = `
+exports[`msi > msi 1`] = `
 {
   "win": [
     {
@@ -24,7 +12,7 @@ exports[`msi 1`] = `
 }
 `;
 
-exports[`msi no asar 1`] = `
+exports[`msi > msi no asar 1`] = `
 {
   "win": [
     {
@@ -36,7 +24,7 @@ exports[`msi no asar 1`] = `
 }
 `;
 
-exports[`per-user 1`] = `
+exports[`msi > per-user 1`] = `
 {
   "win": [
     {
@@ -48,7 +36,7 @@ exports[`per-user 1`] = `
 }
 `;
 
-exports[`wix args 1`] = `
+exports[`msi > wix args 1`] = `
 {
   "win": [
     {

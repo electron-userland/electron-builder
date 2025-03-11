@@ -1,12 +1,12 @@
 import { validateConfiguration } from "app-builder-lib/out/util/config/config"
-import { DebugLogger } from "builder-util"
+import { Arch, DebugLogger } from "builder-util"
 import { Configuration, Platform } from "electron-builder"
 import { CliOptions, configureBuildCommand, createYargs, normalizeOptions } from "electron-builder/out/builder"
 import { app, appThrows, linuxDirTarget } from "./helpers/packTester"
 
-test.ifAll.ifDevOrLinuxCi(
-  "validation",
+test.ifDevOrLinuxCi("validation", ({ expect }) =>
   appThrows(
+    expect,
     {
       targets: linuxDirTarget,
       config: {
@@ -21,9 +21,8 @@ test.ifAll.ifDevOrLinuxCi(
   )
 )
 
-test.ifDevOrLinuxCi(
-  "appId as object",
-  appThrows({
+test.ifDevOrLinuxCi("appId as object", ({ expect }) =>
+  appThrows(expect, {
     targets: linuxDirTarget,
     config: {
       appId: {},
@@ -32,10 +31,9 @@ test.ifDevOrLinuxCi(
 )
 
 // https://github.com/electron-userland/electron-builder/issues/1302
-test.ifAll.ifDevOrLinuxCi(
-  "extraFiles",
-  app({
-    targets: Platform.LINUX.createTarget("appimage"),
+test.ifDevOrLinuxCi("extraFiles", ({ expect }) =>
+  app(expect, {
+    targets: Platform.LINUX.createTarget("appimage", Arch.x64),
     config: {
       linux: {
         target: "zip:ia32",
@@ -63,7 +61,7 @@ test.ifAll.ifDevOrLinuxCi(
   })
 )
 
-test.ifAll.ifDevOrLinuxCi("files", () => {
+test.ifDevOrLinuxCi("files", ({ expect }) => {
   return validateConfiguration(
     {
       appId: "com.example.myapp",
@@ -77,7 +75,7 @@ test.ifAll.ifDevOrLinuxCi("files", () => {
   )
 })
 
-test.ifAll.ifDevOrLinuxCi("null string as null", async () => {
+test.ifDevOrLinuxCi("null string as null", async ({ expect }) => {
   const yargs = configureBuildCommand(createYargs())
   const options = normalizeOptions(yargs.parse(["-c.mac.identity=null", "--config.mac.hardenedRuntime=false"]) as CliOptions)
   const config = options.config as Configuration
