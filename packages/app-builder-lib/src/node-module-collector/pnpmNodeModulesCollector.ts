@@ -39,17 +39,30 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
   extractProductionDependencyTree(tree: PnpmDependency): DependencyTree {
     const p = path.normalize(this.resolvePath(tree.path))
     const packageJson: Dependency<string, string> = require(path.join(p, "package.json"))
-    const prodDependencies = { ...(packageJson.dependencies || {}), ...(packageJson.optionalDependencies || {}) }
 
     const deps = { ...(tree.dependencies || {}), ...(tree.optionalDependencies || {}) }
     const dependencies = Object.entries(deps).reduce<DependencyTree["dependencies"]>((acc, curr) => {
       const [packageName, dependency] = curr
-      if (!prodDependencies[packageName]) {
+
+      let isOptional: boolean
+      if (packageJson.dependencies?.[packageName]) {
+        isOptional = false
+      } else if (packageJson.optionalDependencies?.[packageName]) {
+        isOptional = true
+      } else {
         return acc
       }
-      return {
-        ...acc,
-        [packageName]: this.extractProductionDependencyTree(dependency),
+
+      try {
+        return {
+          ...acc,
+          [packageName]: this.extractProductionDependencyTree(dependency),
+        }
+      } catch (error) {
+        if (isOptional) {
+          return acc
+        }
+        throw error
       }
     }, {})
 
