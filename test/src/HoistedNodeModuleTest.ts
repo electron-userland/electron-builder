@@ -42,6 +42,26 @@ test("yarn several workspaces", ({ expect }) =>
     }
   ))
 
+test("yarn several workspaces for scope package name", ({ expect }) =>
+  assertPack(
+    expect,
+    "test-app-yarn-several-workspace",
+    {
+      targets: linuxDirTarget,
+      projectDir: "packages/test-app",
+    },
+    {
+       projectDirCreated: projectDir => {
+          return Promise.all([
+            modifyPackageJson(projectDir, data => {
+              data.name = "@scope/test-app"
+            }),
+          ])
+        },
+      packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
+    }
+  ))
+
 test("yarn several workspaces and asarUnpack", ({ expect }) =>
   assertPack(
     expect,
