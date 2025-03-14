@@ -1,4 +1,5 @@
-import { InvalidConfigurationError, log, isEmptyOrSpaces } from "builder-util"
+import { InvalidConfigurationError, log, isEmptyOrSpaces, copyFile } from "builder-util"
+import { execWine } from "app-builder-lib/out/wine"
 import { sanitizeFileName } from "builder-util/out/filename"
 import { Arch, getArchSuffix, SquirrelWindowsOptions, Target, WinPackager } from "app-builder-lib"
 import * as path from "path"
@@ -33,14 +34,31 @@ export default class SquirrelWindowsTarget extends Target {
 
     const files = await fs.promises.readdir(tmpVendorDirectory)
     for (const file of files) {
-      if (["Squirrel.exe", "StubExecutable.exe"].includes(file)) {
+      if (file === "Squirrel.exe") {
         const filePath = path.join(tmpVendorDirectory, file)
         log.debug({ file: filePath }, "signing vendor executable")
         await this.packager.sign(filePath)
       }
     }
-
     return tmpVendorDirectory
+  }
+
+  private async generateStubExecutableExe(appOutDir: string, vendorDir: string) {
+    const files = await fs.promises.readdir(appOutDir, { withFileTypes: true })
+    for (const file of files) {
+      if (file.isFile() && file.name.endsWith(".exe") && file.name.toLocaleLowerCase() !== "squirrel.exe") {
+        const filePath = path.join(appOutDir, file.name)
+        log.debug({ file: filePath }, "generating stub executable for exe")
+        const fileNameWithoutExt = file.name.slice(0, -4)
+        const stubExePath = path.join(appOutDir, `${fileNameWithoutExt}_ExecutionStub.exe`)
+        await copyFile(path.join(vendorDir, "StubExecutable.exe"), stubExePath)
+        await execWine(path.join(vendorDir, "WriteZipToSetup.exe"), null, ["--copy-stub-resources", filePath, stubExePath])
+        await this.packager.sign(stubExePath)
+      }
+    }
+
+    // delete the original stub executable exe to avoid squirrel window from using it
+    await fs.promises.unlink(path.join(vendorDir, "StubExecutable.exe"))
   }
 
   async build(appOutDir: string, arch: Arch) {
@@ -60,6 +78,8 @@ export default class SquirrelWindowsTarget extends Target {
     })
 
     const distOptions = await this.computeEffectiveDistOptions(appOutDir, installerOutDir, setupFile)
+    await this.generateStubExecutableExe(appOutDir, distOptions.vendorDirectory!)
+
     await createWindowsInstaller(distOptions)
 
     await packager.signAndEditResources(artifactPath, arch, installerOutDir)
