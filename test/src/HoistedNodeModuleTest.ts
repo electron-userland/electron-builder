@@ -16,6 +16,19 @@ test("yarn workspace", ({ expect }) =>
     }
   ))
 
+test("yarn workspace for scope name", ({ expect }) =>
+  assertPack(
+    expect,
+    "test-app-yarn-workspace-scope",
+    {
+      targets: linuxDirTarget,
+      projectDir: "packages/test-app",
+    },
+    {
+      packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
+    }
+  ))
+
 test("conflict versions", ({ expect }) =>
   assertPack(
     expect,
