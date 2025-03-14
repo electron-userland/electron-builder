@@ -147,12 +147,16 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
 
   private getTreeFromWorkspaces(tree: T): T {
     if (tree.workspaces && tree.dependencies) {
+      const dependencyName = path.basename(this.rootDir)
+      const packagesName = path.basename(path.dirname(this.rootDir))
+      const scopedPackagesName = `@${packagesName}/${dependencyName}`
       for (const [key, value] of Object.entries(tree.dependencies)) {
-        if (this.rootDir.endsWith(path.normalize(key))) {
+        if (key === dependencyName || key === scopedPackagesName) {
           return value
         }
       }
     }
+
     return tree
   }
 
