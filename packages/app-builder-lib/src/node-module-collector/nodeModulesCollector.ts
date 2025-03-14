@@ -147,11 +147,10 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
 
   private getTreeFromWorkspaces(tree: T): T {
     if (tree.workspaces && tree.dependencies) {
-      const dependencyName = path.basename(this.rootDir)
-      const packagesName = path.basename(path.dirname(this.rootDir))
-      const scopedPackagesName = `@${packagesName}/${dependencyName}`
+      const packageJson: Dependency<string, string> = require(path.join(this.rootDir, "package.json"))
+      const dependencyName = packageJson.name
       for (const [key, value] of Object.entries(tree.dependencies)) {
-        if (key === dependencyName || key === scopedPackagesName) {
+        if (key === dependencyName) {
           return value
         }
       }
