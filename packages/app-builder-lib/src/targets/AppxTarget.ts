@@ -49,6 +49,8 @@ const DEFAULT_RESOURCE_LANG = "en-US"
 export default class AppXTarget extends Target {
   readonly options: AppXOptions = deepAssign({}, this.packager.platformSpecificBuildOptions, this.packager.config.appx)
 
+  isAsyncSupported = false
+
   constructor(
     private readonly packager: WinPackager,
     readonly outDir: string
@@ -145,18 +147,20 @@ export default class AppXTarget extends Target {
     if (this.options.makeappxArgs != null) {
       makeAppXArgs.push(...this.options.makeappxArgs)
     }
-    await vm.exec(vm.toVmFile(path.join(vendorPath, "windows-10", signToolArch, "makeappx.exe")), makeAppXArgs)
-    await packager.sign(artifactPath)
+    this.taskQueueManager.add(async () => {
+      await vm.exec(vm.toVmFile(path.join(vendorPath, "windows-10", signToolArch, "makeappx.exe")), makeAppXArgs)
+      await packager.sign(artifactPath)
 
-    await stageDir.cleanup()
+      await stageDir.cleanup()
 
-    await packager.info.emitArtifactBuildCompleted({
-      file: artifactPath,
-      packager,
-      arch,
-      safeArtifactName: packager.computeSafeArtifactName(artifactName, "appx"),
-      target: this,
-      isWriteUpdateInfo: this.options.electronUpdaterAware,
+      await packager.info.emitArtifactBuildCompleted({
+        file: artifactPath,
+        packager,
+        arch,
+        safeArtifactName: packager.computeSafeArtifactName(artifactName, "appx"),
+        target: this,
+        isWriteUpdateInfo: this.options.electronUpdaterAware,
+      })
     })
   }
 

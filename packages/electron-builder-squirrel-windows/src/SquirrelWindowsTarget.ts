@@ -10,6 +10,8 @@ export default class SquirrelWindowsTarget extends Target {
   //tslint:disable-next-line:no-object-literal-type-assertion
   readonly options: SquirrelWindowsOptions = { ...this.packager.platformSpecificBuildOptions, ...this.packager.config.squirrelWindows } as SquirrelWindowsOptions
 
+  isAsyncSupported = false
+
   constructor(
     private readonly packager: WinPackager,
     readonly outDir: string
@@ -53,62 +55,65 @@ export default class SquirrelWindowsTarget extends Target {
     const artifactPath = path.join(installerOutDir, setupFile)
     const msiArtifactPath = path.join(installerOutDir, packager.expandArtifactNamePattern(this.options, "msi", arch, "${productName} Setup ${version}.${ext}"))
 
-    await packager.info.emitArtifactBuildStarted({
-      targetPresentableName: "Squirrel.Windows",
-      file: artifactPath,
-      arch,
-    })
+    this.taskQueueManager.add(async () => {
+      await packager.info.emitArtifactBuildStarted({
+        targetPresentableName: "Squirrel.Windows",
+        file: artifactPath,
+        arch,
+      })
+      const distOptions = await this.computeEffectiveDistOptions(appOutDir, installerOutDir, setupFile)
+      await createWindowsInstaller(distOptions)
 
-    const distOptions = await this.computeEffectiveDistOptions(appOutDir, installerOutDir, setupFile)
-    await createWindowsInstaller(distOptions)
+      await packager.signAndEditResources(artifactPath, arch, installerOutDir)
 
-    await packager.signAndEditResources(artifactPath, arch, installerOutDir)
-    if (this.options.msi) {
-      await packager.sign(msiArtifactPath)
-    }
+      if (this.options.msi) {
+        await packager.sign(msiArtifactPath)
+      }
 
-    const safeArtifactName = (ext: string) => `${sanitizedName}-Setup-${version}${getArchSuffix(arch)}.${ext}`
+      const safeArtifactName = (ext: string) => `${sanitizedName}-Setup-${version}${getArchSuffix(arch)}.${ext}`
 
-    await packager.info.emitArtifactBuildCompleted({
-      file: artifactPath,
-      target: this,
-      arch,
-      safeArtifactName: safeArtifactName("exe"),
-      packager: this.packager,
-    })
-
-    if (this.options.msi) {
       await packager.info.emitArtifactBuildCompleted({
-        file: msiArtifactPath,
+        file: artifactPath,
         target: this,
         arch,
-        safeArtifactName: safeArtifactName("msi"),
+        safeArtifactName: safeArtifactName("exe"),
         packager: this.packager,
       })
-    }
 
-    const packagePrefix = `${this.appName}-${convertVersion(version)}-`
-    await packager.info.emitArtifactCreated({
-      file: path.join(installerOutDir, `${packagePrefix}full.nupkg`),
-      target: this,
-      arch,
-      packager,
-    })
-    if (distOptions.remoteReleases != null) {
+      if (this.options.msi) {
+        await packager.info.emitArtifactCreated({
+          file: msiArtifactPath,
+          target: this,
+          arch,
+          safeArtifactName: safeArtifactName("msi"),
+          packager: this.packager,
+        })
+      }
+
+      const packagePrefix = `${this.appName}-${convertVersion(version)}-`
       await packager.info.emitArtifactCreated({
-        file: path.join(installerOutDir, `${packagePrefix}delta.nupkg`),
+        file: path.join(installerOutDir, `${packagePrefix}full.nupkg`),
         target: this,
         arch,
         packager,
       })
-    }
+      if (distOptions.remoteReleases != null) {
+        await packager.info.emitArtifactCreated({
+          file: path.join(installerOutDir, `${packagePrefix}delta.nupkg`),
+          target: this,
+          arch,
+          packager,
+        })
+      }
 
-    await packager.info.emitArtifactCreated({
-      file: path.join(installerOutDir, "RELEASES"),
-      target: this,
-      arch,
-      packager,
+      await packager.info.emitArtifactCreated({
+        file: path.join(installerOutDir, "RELEASES"),
+        target: this,
+        arch,
+        packager,
+      })
     })
+    return Promise.resolve()
   }
 
   private get appName() {

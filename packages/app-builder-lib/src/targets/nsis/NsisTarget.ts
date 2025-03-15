@@ -152,6 +152,7 @@ export class NsisTarget extends Target {
 
   async finishBuild(): Promise<any> {
     if (!this.shouldBuildUniversalInstaller) {
+      await super.finishBuild()
       return this.packageHelper.finishBuild()
     }
     try {
@@ -165,6 +166,7 @@ export class NsisTarget extends Target {
         await this.buildInstaller(archs)
       }
     } finally {
+      await super.finishBuild()
       await this.packageHelper.finishBuild()
     }
   }
@@ -274,7 +276,12 @@ export class NsisTarget extends Target {
           defines[defineUnpackedSizeKey] = Math.ceil(unpackedSize / 1024).toString()
 
           if (this.isWebInstaller) {
-            await packager.dispatchArtifactCreated(file, this, arch)
+            await packager.info.emitArtifactCreated({
+              file,
+              target: this,
+              arch,
+              packager,
+            })
             packageFiles[Arch[arch]] = fileInfo
           }
           const path7za = await getPath7za()
@@ -340,37 +347,39 @@ export class NsisTarget extends Target {
       commandsUninstaller.VIAddVersionKey = this.computeVersionKey(true)
     }
 
-    const sharedHeader = await this.computeCommonInstallerScriptHeader()
-    const script = isPortable
-      ? await readFile(path.join(nsisTemplatesDir, "portable.nsi"), "utf8")
-      : await this.computeScriptAndSignUninstaller(definesUninstaller, commandsUninstaller, installerPath, sharedHeader, archs)
+    this.taskQueueManager.add(async () => {
+      const sharedHeader = await this.computeCommonInstallerScriptHeader()
+      const script = isPortable
+        ? await readFile(path.join(nsisTemplatesDir, "portable.nsi"), "utf8")
+        : await this.computeScriptAndSignUninstaller(definesUninstaller, commandsUninstaller, installerPath, sharedHeader, archs)
 
-    // copy outfile name into main options, as the computeScriptAndSignUninstaller function was kind enough to add important data to temporary defines.
-    defines.UNINSTALLER_OUT_FILE = definesUninstaller.UNINSTALLER_OUT_FILE
+      // copy outfile name into main options, as the computeScriptAndSignUninstaller function was kind enough to add important data to temporary defines.
+      defines.UNINSTALLER_OUT_FILE = definesUninstaller.UNINSTALLER_OUT_FILE
 
-    await this.executeMakensis(defines, commands, sharedHeader + (await this.computeFinalScript(script, true, archs)))
-    await Promise.all<any>([packager.sign(installerPath), defines.UNINSTALLER_OUT_FILE == null ? Promise.resolve() : unlink(defines.UNINSTALLER_OUT_FILE)])
+      await this.executeMakensis(defines, commands, sharedHeader + (await this.computeFinalScript(script, true, archs)))
+      await Promise.all<any>([packager.sign(installerPath), defines.UNINSTALLER_OUT_FILE == null ? Promise.resolve() : unlink(defines.UNINSTALLER_OUT_FILE)])
 
-    const safeArtifactName = computeSafeArtifactNameIfNeeded(installerFilename, () => this.generateGitHubInstallerName(primaryArch, defaultArch))
-    let updateInfo: any
-    if (this.isWebInstaller) {
-      updateInfo = createNsisWebDifferentialUpdateInfo(installerPath, packageFiles)
-    } else if (this.isBuildDifferentialAware) {
-      updateInfo = await createBlockmap(installerPath, this, packager, safeArtifactName)
-    }
+      const safeArtifactName = computeSafeArtifactNameIfNeeded(installerFilename, () => this.generateGitHubInstallerName(primaryArch, defaultArch))
+      let updateInfo: any
+      if (this.isWebInstaller) {
+        updateInfo = createNsisWebDifferentialUpdateInfo(installerPath, packageFiles)
+      } else if (this.isBuildDifferentialAware) {
+        updateInfo = await createBlockmap(installerPath, this, packager, safeArtifactName)
+      }
 
-    if (updateInfo != null && isPerMachine && (oneClick || options.packElevateHelper)) {
-      updateInfo.isAdminRightsRequired = true
-    }
+      if (updateInfo != null && isPerMachine && (oneClick || options.packElevateHelper)) {
+        updateInfo.isAdminRightsRequired = true
+      }
 
-    await packager.info.emitArtifactBuildCompleted({
-      file: installerPath,
-      updateInfo,
-      target: this,
-      packager,
-      arch: primaryArch,
-      safeArtifactName,
-      isWriteUpdateInfo: !this.isPortable,
+      await packager.info.emitArtifactBuildCompleted({
+        file: installerPath,
+        updateInfo,
+        target: this,
+        packager,
+        arch: primaryArch,
+        safeArtifactName,
+        isWriteUpdateInfo: !this.isPortable,
+      })
     })
   }
 
@@ -401,7 +410,8 @@ export class NsisTarget extends Target {
 
     // https://github.com/electron-userland/electron-builder/issues/2103
     // it is more safe and reliable to write uninstaller to our out dir
-    const uninstallerPath = path.join(this.outDir, `__uninstaller-${this.name}-${this.packager.appInfo.sanitizedName}.exe`)
+    // to support parallel builds, the uninstaller path must be unique to each target and arch combination
+    const uninstallerPath = path.join(this.outDir, `__uninstaller-${Math.floor(Math.random() * Date.now())}-${this.name}-${this.packager.appInfo.sanitizedName}.exe`)
     const isWin = process.platform === "win32"
     defines.BUILD_UNINSTALLER = null
     defines.UNINSTALLER_OUT_FILE = isWin ? uninstallerPath : path.win32.join("Z:", uninstallerPath)
