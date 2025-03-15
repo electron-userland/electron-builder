@@ -1,0 +1,39 @@
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi" xmlns:util="http://schemas.microsoft.com/wix/UtilExtension" xmlns:netfx="http://schemas.microsoft.com/wix/NetFxExtension">
+  <Product Id="*" Name="{{Title}} Deployment Tool" Language="1033" Codepage="{{Codepage}}" Version="!(bind.FileVersion.{{Id}}.exe)" UpgradeCode="{{IdAsGuid1}}" Manufacturer="{{Author}}">
+
+    <Package Description="This package installs a deployment tool for {{Title}}. Not {{Title}} itself. {{Title}} is only installed if a user logs into the machine." InstallScope="perMachine" Comments="Comments" InstallerVersion="200" Compressed="yes" Platform="{{Platform}}"/>
+    <MajorUpgrade AllowSameVersionUpgrades="yes" DowngradeErrorMessage="A later version of this product is already installed. Setup will now exit."/>
+    <Media Id="1" Cabinet="contents.cab" EmbedCab="yes" CompressionLevel="high"/>
+
+    <PropertyRef Id="NETFRAMEWORK45" />
+
+    <Condition Message="This application requires .NET Framework 4.5 or higher. Please install the latest .NET Framework then run this installer again.">
+      <![CDATA[Installed OR NETFRAMEWORK45]]>
+    </Condition>
+
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="{{ProgramFilesFolder}}">
+        <Directory Id="APPLICATIONROOTDIRECTORY" Name="{{Title}} Deployment" />
+      </Directory>
+    </Directory>
+
+    <DirectoryRef Id="APPLICATIONROOTDIRECTORY">
+      <Component Id="{{Id}}.exe" Guid="{{IdAsGuid2}}" Win64="{{Win64YesNo}}">
+        <File Id="{{Id}}.exe" Name="{{Id}}DeploymentTool.exe" Source="./Setup.exe" KeyPath="yes"/>
+      </Component>
+    </DirectoryRef>
+
+    <DirectoryRef Id="TARGETDIR">
+      <Component Id="RegistryEntries" Guid="{{IdAsGuid3}}" Win64="{{Win64YesNo}}">
+        <RegistryKey Root="HKLM" Key="SOFTWARE\Microsoft\Windows\CurrentVersion\Run">
+          <RegistryValue Type="expandable" Name="{{Id}}Deployment" Value="&quot;[#{{Id}}.exe]&quot; --checkInstall" />
+        </RegistryKey>
+      </Component>
+    </DirectoryRef>
+
+    <Feature Id="MainApplication" Title="Main Application" Level="1">
+      <ComponentRef Id="{{Id}}.exe" />
+      <ComponentRef Id="RegistryEntries" />
+    </Feature>
+  </Product>
+</Wix>
