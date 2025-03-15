@@ -26,10 +26,10 @@ env:
 
 jobs:
   check-if-docker-build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:
-      force-docker-build: ${{ steps.changed-files-specific.outputs.any_changed }}
+      force-docker-build: ${{ steps.changes.outputs.docker == 'true' || steps.changes.outputs.workflow == 'true' }}
     steps:
       - name: Checkout code repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -37,19 +37,14 @@ jobs:
           fetch-depth: 0
 
       - name: Determine if Dockerfiles changed
-        id: changed-files-specific
-        uses: tj-actions/changed-files@c65cd883420fd2eb864698a825fc4162dd94482c # v44
-        with:
-          files: |
-            docker/**/*
-            .github/workflows/docker*
-
-      - name: Output all changed files
-        env:
-          ALL_CHANGED_FILES: ${{ steps.changed-files-specific.outputs.all_changed_files }}
-        run: |
-          echo "One or more test file(s) has changed."
-          echo "List all the files that have changed: $ALL_CHANGED_FILES"
+        uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
+          id: changes
+          with:
+            filters: |
+              docker:
+                - 'docker/**'
+              workflow:
+                - '.github/workflows/docker*'
 
   run-docker-build:
     needs: check-if-docker-build
