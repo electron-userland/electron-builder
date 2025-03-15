@@ -75,6 +75,7 @@ export default class SquirrelWindowsTarget extends Target {
     })
 
     const distOptions = await this.computeEffectiveDistOptions(appOutDir, installerOutDir, setupFile)
+    await this.generateStubExecutableExe(appOutDir, distOptions.vendorDirectory!)
     await createWindowsInstaller(distOptions)
 
     await packager.signAndEditResources(artifactPath, arch, installerOutDir)
@@ -186,7 +187,6 @@ export default class SquirrelWindowsTarget extends Target {
     }
 
     options.vendorDirectory = await this.prepareSignedVendorDirectory()
-    await this.generateStubExecutableExe(appDirectory, options.vendorDirectory)
     this.select7zipArch(options.vendorDirectory)
     options.fixUpPaths = true
     options.setupExe = setupFile
