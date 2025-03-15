@@ -64675,6 +64675,67 @@ exports[`isInstallDepsBefore=true > yarn some module add by manual instead of in
 }
 `;
 
+exports[`isInstallDepsBefore=true > yarn workspace for scope name 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`isInstallDepsBefore=true > yarn workspace for scope name 2`] = `
+{
+  "files": {
+    "index.html": {
+      "offset": "5150",
+      "size": 841,
+    },
+    "index.js": {
+      "offset": "5991",
+      "size": 2501,
+    },
+    "node_modules": {
+      "files": {
+        "is-number": {
+          "files": {
+            "LICENSE": {
+              "offset": "0",
+              "size": 1088,
+            },
+            "index.js": {
+              "offset": "1088",
+              "size": 662,
+            },
+            "package.json": {
+              "offset": "1750",
+              "size": 871,
+            },
+          },
+        },
+        "is-odd": {
+          "files": {
+            "LICENSE": {
+              "offset": "2621",
+              "size": 1091,
+            },
+            "index.js": {
+              "offset": "3712",
+              "size": 543,
+            },
+            "package.json": {
+              "offset": "4255",
+              "size": 895,
+            },
+          },
+        },
+      },
+    },
+    "package.json": {
+      "offset": "8492",
+      "size": 291,
+    },
+  },
+}
+`;
+
 exports[`yarn several workspaces 1`] = `
 {
   "linux": [],

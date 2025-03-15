@@ -16,6 +16,7 @@ test("yarn workspace", ({ expect }) =>
     }
   ))
 
+
 test("conflict versions", ({ expect }) =>
   assertPack(
     expect,
@@ -71,6 +72,30 @@ test("yarn two package.json w/ native module", ({ expect }) =>
   ))
 
 describe("isInstallDepsBefore=true", { sequential: true }, () => {
+
+  test("yarn workspace for scope name", ({ expect }) =>
+    assertPack(
+      expect,
+      "test-app-yarn-several-workspace",
+      {
+        targets: linuxDirTarget,
+        projectDir: "packages/test-app",
+      },
+      {
+        isInstallDepsBefore: true,
+        projectDirCreated: projectDir => {
+              let subAppDir = path.join(projectDir , "packages","test-app")
+              return modifyPackageJson(subAppDir, data => {
+                data.name = "@scope/xxx-app"
+                data.dependencies = {
+                  "is-odd": "3.0.1"
+                }
+              })
+          },
+        packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
+      }
+    ))
+
   // https://github.com/electron-userland/electron-builder/issues/8493
   test("pnpm es5-ext without hoisted config", ({ expect }) =>
     assertPack(
