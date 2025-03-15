@@ -19,11 +19,10 @@ export default class SquirrelWindowsTarget extends Target {
   }
 
   private async prepareSignedVendorDirectory(): Promise<string> {
-    // If not specified will use the Squirrel.Windows that is shipped with electron-installer(https://github.com/electron/windows-installer/tree/main/vendor)
-    // After https://github.com/electron-userland/electron-builder-binaries/pull/56 merged, will add `electron-builder-binaries` to get the latest version of squirrel.
-    const vendorDirectory = this.options.customSquirrelVendorDir || path.resolve(__dirname, "..", "vendor")
+    let vendorDirectory = this.options.customSquirrelVendorDir
     if (isEmptyOrSpaces(vendorDirectory) || !fs.existsSync(vendorDirectory)) {
-      log.warn({ vendorDirectory }, "unable to access Squirrel.Windows vendor directory, falling back to default electron-winstaller")
+      log.warn({ vendorDirectory }, "unable to access custom Squirrel.Windows vendor directory, falling back to default vendor ")
+      vendorDirectory = path.resolve(__dirname, "..", "vendor")
     }
 
     const tmpVendorDirectory = await this.packager.info.tempDirManager.createTempDir({ prefix: "squirrel-windows-vendor" })
