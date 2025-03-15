@@ -21,10 +21,9 @@ export default class SquirrelWindowsTarget extends Target {
   private async prepareSignedVendorDirectory(): Promise<string> {
     // If not specified will use the Squirrel.Windows that is shipped with electron-installer(https://github.com/electron/windows-installer/tree/main/vendor)
     // After https://github.com/electron-userland/electron-builder-binaries/pull/56 merged, will add `electron-builder-binaries` to get the latest version of squirrel.
-    let vendorDirectory = this.options.customSquirrelVendorDir || path.join(require.resolve("electron-winstaller/package.json"), "..", "vendor")
+    const vendorDirectory = this.options.customSquirrelVendorDir || path.resolve(__dirname, "..", "vendor")
     if (isEmptyOrSpaces(vendorDirectory) || !fs.existsSync(vendorDirectory)) {
       log.warn({ vendorDirectory }, "unable to access Squirrel.Windows vendor directory, falling back to default electron-winstaller")
-      vendorDirectory = path.join(require.resolve("electron-winstaller/package.json"), "..", "vendor")
     }
 
     const tmpVendorDirectory = await this.packager.info.tempDirManager.createTempDir({ prefix: "squirrel-windows-vendor" })
@@ -38,6 +37,7 @@ export default class SquirrelWindowsTarget extends Target {
         const filePath = path.join(tmpVendorDirectory, file)
         log.debug({ file: filePath }, "signing vendor executable")
         await this.packager.sign(filePath)
+        break
       }
     }
     return tmpVendorDirectory
@@ -56,9 +56,6 @@ export default class SquirrelWindowsTarget extends Target {
         await this.packager.sign(stubExePath)
       }
     }
-
-    // delete the original stub executable exe to avoid squirrel window from using it
-    await fs.promises.unlink(path.join(vendorDir, "StubExecutable.exe"))
   }
 
   async build(appOutDir: string, arch: Arch) {
