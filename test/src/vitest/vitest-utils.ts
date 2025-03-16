@@ -106,6 +106,7 @@ export const isSupposedToRetry = (errorMessage: string) => {
     "EPERM: operation not permitted",
     "The Windows Installer service failed to start",
     "yarn process failed",
+    "dmgbuild/core.py",
   ].some(msg => errorMessage.includes(msg))
   process.stdout.write(`isSupposedToRetry: ${isOsError}\n${errorMessage}\n\n`)
   return isOsError
