@@ -1,5 +1,6 @@
 import { defineConfig } from "vitest/config"
 import fs from "fs"
+import path from "path"
 
 export default () => {
   const testRegex = process.env.TEST_FILES?.split(",") ?? ["*Test"]
@@ -7,6 +8,11 @@ export default () => {
   console.log("TEST_FILES pattern", includeRegex)
 
   return defineConfig({
+    resolve: {
+      alias: {
+        '@test': path.resolve(__dirname, './test/src'),
+      },
+    },
     server: {
       https: {
         cert: fs.readFileSync("./.vitest-cert/cert.pem"),
@@ -14,13 +20,19 @@ export default () => {
       },
     },
     test: {
-      // if using `toMatchSnapshot`, it MUST be passed in through the test context
-      // e.g. test("name", ({ expect }) => { ... })
-      globals: true,
+      // Use instead: import { test, describe } from "@test/vitest/vitest-test-wrapper"
+      globals: false,
 
-      setupFiles: "./test/vitest-setup.ts",
+      setupFiles: "./test/src/vitest/vitest-setup.ts",
       include: [`test/src/**/${includeRegex}.ts`],
       update: process.env.UPDATE_SNAPSHOT === "true",
+
+      // Note: only implemented isolated workers
+      // pool: './test/src/vitest/vitest-fork-runner.ts',
+      sequence: {
+        concurrent: true
+      },
+      disableConsoleIntercept: true,
 
       name: "node",
       environment: "node",
@@ -40,20 +52,9 @@ export default () => {
         },
       },
 
-      sequence: {
-        concurrent: true
-      },
-
       slowTestThreshold: 60 * 1000,
       testTimeout: 8 * 60 * 1000, // disk operations can be slow. We're generous with the timeout here to account for less-performant hardware
-      coverage: {
-        reporter: ["lcov", "text"],
-      },
-      reporters: ["default", "html"],
-      outputFile: "coverage/sonar-report.xml",
-      snapshotFormat: {
-        printBasicPrototype: false,
-      },
+
       resolveSnapshotPath: (testPath, snapshotExtension) => {
         return testPath
           .replace(/\.[tj]s$/, `.js${snapshotExtension}`)

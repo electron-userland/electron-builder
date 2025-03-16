@@ -1,3 +1,4 @@
+import { test, describe } from "@test/vitest/vitest-test-wrapper"
 import { MemoLazy } from "builder-util-runtime"
 import { Lazy } from "lazy-val"
 

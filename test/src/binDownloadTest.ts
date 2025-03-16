@@ -1,3 +1,4 @@
+import { test, describe } from "@test/vitest/vitest-test-wrapper"
 import { getBinFromUrl } from "app-builder-lib/out/binDownload"
 
 test("download binary from Github", async ({ expect }) => {

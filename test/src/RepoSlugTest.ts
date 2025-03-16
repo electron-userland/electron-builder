@@ -1,3 +1,4 @@
+import { test, describe } from "@test/vitest/vitest-test-wrapper"
 import { getRepositoryInfo } from "app-builder-lib/out/util/repositoryInfo"
 import { ExpectStatic } from "vitest"
 

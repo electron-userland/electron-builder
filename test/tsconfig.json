@@ -4,7 +4,10 @@
     "rootDir": "src",
     "outDir": "out",
     "skipLibCheck": true,
-    "baseUrl": "../packages"
+    "baseUrl": "../packages",
+    "paths": {
+      "@test/*": ["../test/src/*"]
+    }
   },
   "references": [
     {

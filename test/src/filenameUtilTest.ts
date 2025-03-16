@@ -1,3 +1,4 @@
+import { test, describe } from "@test/vitest/vitest-test-wrapper"
 import { getCompleteExtname } from "builder-util/out/filename"
 
 // [inputFilename, expectedExtname]

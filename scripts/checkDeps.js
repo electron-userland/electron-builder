@@ -24,7 +24,7 @@ async function check(projectDir, devPackageData) {
   // console.log(`Checking ${projectDir}`)
 
   const result = await new Promise(resolve => {
-    depCheck(projectDir, { ignoreDirs: ["out", "test", "pages", "typings", "docker", "certs", "templates", "vendor"] }, resolve)
+    depCheck(projectDir, { ignoreDirs: ["out", "pages", "typings", "docker", "certs", "templates", "vendor"] }, resolve)
   })
 
   let unusedDependencies = result.dependencies

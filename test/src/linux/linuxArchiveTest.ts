@@ -1,3 +1,4 @@
+import { test, describe } from "@test/vitest/vitest-test-wrapper"
 import { Platform } from "electron-builder"
 import { app } from "../helpers/packTester"
 

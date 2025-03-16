@@ -1,3 +1,4 @@
+import { test, describe } from "@test/vitest/vitest-test-wrapper"
 import { Arch, Platform } from "app-builder-lib"
 import { app, snapTarget } from "../helpers/packTester"
 

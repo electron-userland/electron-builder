@@ -1,3 +1,4 @@
+import { test, describe } from "@test/vitest/vitest-test-wrapper"
 import { parseDn } from "builder-util-runtime"
 import { DIR_TARGET, Platform } from "electron-builder"
 import { outputFile } from "fs-extra"

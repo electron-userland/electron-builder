@@ -1,3 +1,4 @@
+import { test, describe } from "@test/vitest/vitest-test-wrapper"
 import { TmpDir, archFromString, copyDir } from "builder-util"
 import { DIR_TARGET, Platform } from "electron-builder"
 import { outputFile } from "fs-extra"

@@ -1,3 +1,4 @@
+import { test, describe } from "@test/vitest/vitest-test-wrapper"
 import { blockmapFiles, newUrlFromBase } from "electron-updater/out/util"
 import { URL } from "url"
 

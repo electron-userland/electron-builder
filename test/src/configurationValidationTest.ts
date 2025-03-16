@@ -1,3 +1,4 @@
+import { test, describe } from "@test/vitest/vitest-test-wrapper"
 import { validateConfiguration } from "app-builder-lib/out/util/config/config"
 import { Arch, DebugLogger } from "builder-util"
 import { Configuration, Platform } from "electron-builder"

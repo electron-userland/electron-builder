@@ -1,3 +1,4 @@
+import { test, describe } from "@test/vitest/vitest-test-wrapper"
 import { readAsarJson } from "app-builder-lib/out/asar/asar"
 import { Platform } from "electron-builder"
 import { coerceTypes } from "electron-builder/out/builder"

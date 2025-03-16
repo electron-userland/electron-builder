@@ -1,5 +1,6 @@
 import { isCI as isCi } from "ci-info"
-import { afterEach, test, vitest } from "vitest"
+import { afterEach, vitest } from "vitest"
+import * as wrappedTest from "@test/vitest/vitest-test-wrapper"
 
 afterEach(() => {
   vitest.clearAllMocks()
@@ -9,16 +10,11 @@ const isWindows = process.platform === "win32"
 const isMac = process.platform === "darwin"
 const isLinux = process.platform === "linux"
 
-const skip = test.skip
-// const skipSuite = describe.skip
-// const isAllTests = process.env.ALL_TESTS !== "false"
+const test: any = wrappedTest.test
 
-// describe = isAllTests ? describe : skipSuite
-// test = isAllTests ? test : skip
-// skip = skip
+const skip = test.skip
 
 test.ifEnv = test.runIf
-skip.ifEnv = test.runIf
 
 test.ifMac = isMac ? test : skip
 

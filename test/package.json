@@ -19,8 +19,6 @@
     "electron-updater": "workspace:*",
     "electron-winstaller": "5.4.0",
     "fs-extra": "^10.1.0",
-    "jest": "29.7.0",
-    "jest-junit": "^12.0.0",
     "js-yaml": "^4.1.0",
     "lazy-val": "^1.0.5",
     "path-sort": "^0.1.0",
@@ -38,43 +36,18 @@
     "@types/adm-zip": "0.5.6",
     "@types/fs-extra": "^9.0.11",
     "@types/js-yaml": "^4.0.1",
+    "@types/micromatch": "^4.0.9",
     "@types/semver": "^7.3.13",
+    "@vitest/runner": "^3.0.7",
     "babel-jest": "^29.7.0",
-    "fast-xml-parser": "4.4.1",
-    "vitest": "^3.0.4",
-    "vitest-mock-commonjs": "^1.0.2",
+    "birpc": "^2.2.0",
     "esbuild": "^0.12.14",
     "esbuild-jest": "^0.5.0",
-    "sanitize-filename": "^1.6.3"
-  },
-  "jest": {
-    "snapshotResolver": "<rootDir>/snapshotResolver.js",
-    "testEnvironment": "node",
-    "roots": [
-      "src"
-    ],
-    "transformIgnorePatterns": [
-      "./node_modules",
-      "../node_modules",
-      "../packages"
-    ],
-    "transform": {
-      "^.+\\.ts$": [
-        "esbuild-jest",
-        {
-          "sourcemap": "inline",
-          "loaders": {
-            ".ts": "ts"
-          }
-        }
-      ]
-    },
-    "testPathIgnorePatterns": [
-      "[\\/]{1}helpers[\\/]{1}"
-    ],
-    "testRegex": "\\.[jt]s$",
-    "setupFilesAfterEnv": [
-      "<rootDir>/jestSetup.js"
-    ]
+    "fast-xml-parser": "4.4.1",
+    "micromatch": "^4.0.8",
+    "sanitize-filename": "^1.6.3",
+    "tinypool": "^1.0.2",
+    "vitest": "^3.0.4",
+    "vitest-mock-commonjs": "^1.0.2"
   }
 }

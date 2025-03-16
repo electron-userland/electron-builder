@@ -1,3 +1,4 @@
+import { test, describe } from "@test/vitest/vitest-test-wrapper"
 import { Arch, Platform } from "electron-builder"
 import * as path from "path"
 import { CheckingWinPackager } from "../helpers/CheckingPackager"
