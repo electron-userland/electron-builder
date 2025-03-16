@@ -16,7 +16,6 @@ test("yarn workspace", ({ expect }) =>
     }
   ))
 
-
 test("conflict versions", ({ expect }) =>
   assertPack(
     expect,
@@ -72,7 +71,6 @@ test("yarn two package.json w/ native module", ({ expect }) =>
   ))
 
 describe("isInstallDepsBefore=true", { sequential: true }, () => {
-
   test("yarn workspace for scope name", ({ expect }) =>
     assertPack(
       expect,
@@ -84,14 +82,14 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
       {
         isInstallDepsBefore: true,
         projectDirCreated: projectDir => {
-              let subAppDir = path.join(projectDir , "packages","test-app")
-              return modifyPackageJson(subAppDir, data => {
-                data.name = "@scope/xxx-app"
-                data.dependencies = {
-                  "is-odd": "3.0.1"
-                }
-              })
-          },
+          const subAppDir = path.join(projectDir, "packages", "test-app")
+          return modifyPackageJson(subAppDir, data => {
+            data.name = "@scope/xxx-app"
+            data.dependencies = {
+              "is-odd": "3.0.1",
+            }
+          })
+        },
         packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
       }
     ))
@@ -137,6 +135,32 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
               }
               data.optionalDependencies = {
                 debug: "3.1.0",
+              }
+            }),
+            outputFile(path.join(projectDir, "pnpm-lock.yaml"), ""),
+          ])
+        },
+        packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
+      }
+    ))
+
+  test.ifLinux("pnpm optional dependency not installable on linux", ({ expect }) =>
+    assertPack(
+      expect,
+      "test-app-hoisted",
+      {
+        targets: linuxDirTarget,
+      },
+      {
+        isInstallDepsBefore: true,
+        projectDirCreated: projectDir => {
+          return Promise.all([
+            modifyPackageJson(projectDir, data => {
+              data.dependencies = {
+                "electron-clear-data": "^1.0.5",
+              }
+              data.optionalDependencies = {
+                "node-mac-permissions": "2.3.0",
               }
             }),
             outputFile(path.join(projectDir, "pnpm-lock.yaml"), ""),

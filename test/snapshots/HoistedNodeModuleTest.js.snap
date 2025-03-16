@@ -24942,6 +24942,55 @@ exports[`isInstallDepsBefore=true > pnpm optional dependencies 2`] = `
 }
 `;
 
+exports[`isInstallDepsBefore=true > pnpm optional dependency not installable on linux 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`isInstallDepsBefore=true > pnpm optional dependency not installable on linux 2`] = `
+{
+  "files": {
+    "index.html": {
+      "offset": "3753",
+      "size": 378,
+    },
+    "index.js": {
+      "offset": "4131",
+      "size": 619,
+    },
+    "node_modules": {
+      "files": {
+        "electron-clear-data": {
+          "files": {
+            "LICENSE.md": {
+              "offset": "0",
+              "size": 1059,
+            },
+            "dist": {
+              "files": {
+                "main.js": {
+                  "offset": "1059",
+                  "size": 1734,
+                },
+              },
+            },
+            "package.json": {
+              "offset": "2793",
+              "size": 960,
+            },
+          },
+        },
+      },
+    },
+    "package.json": {
+      "offset": "4750",
+      "size": 408,
+    },
+  },
+}
+`;
+
 exports[`isInstallDepsBefore=true > pnpm public-hoist-pattern=* 1`] = `
 {
   "linux": [],
