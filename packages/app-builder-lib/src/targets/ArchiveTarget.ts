@@ -33,7 +33,7 @@ export class ArchiveTarget extends Target {
       defaultPattern = "${productName}-${version}" + (arch === defaultArch ? "" : "-${arch}") + "-${os}.${ext}"
     }
 
-    this.taskQueueManager.add(async () => {
+    this.buildQueueManager.add(async () => {
       const artifactName = packager.expandArtifactNamePattern(this.options, format, arch, defaultPattern, false)
       const artifactPath = path.join(this.outDir, artifactName)
 

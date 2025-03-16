@@ -347,7 +347,7 @@ export class NsisTarget extends Target {
       commandsUninstaller.VIAddVersionKey = this.computeVersionKey(true)
     }
 
-    this.taskQueueManager.add(async () => {
+    this.buildQueueManager.add(async () => {
       const sharedHeader = await this.computeCommonInstallerScriptHeader()
       const script = isPortable
         ? await readFile(path.join(nsisTemplatesDir, "portable.nsi"), "utf8")

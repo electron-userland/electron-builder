@@ -39,17 +39,17 @@ exports[`mac concurrent 1`] = `
 {
   "mac": [
     {
-      "arch": "universal",
-      "file": "Test Concurrent-1.1.0-universal.dmg",
-      "safeArtifactName": "Test-Concurrent-1.1.0-universal.dmg",
+      "arch": "arm64",
+      "file": "Test Concurrent-1.1.0-arm64.dmg",
+      "safeArtifactName": "Test-Concurrent-1.1.0-arm64.dmg",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
     {
-      "file": "Test Concurrent-1.1.0-universal.dmg.blockmap",
-      "safeArtifactName": "Test-Concurrent-1.1.0-universal.dmg.blockmap",
+      "file": "Test Concurrent-1.1.0-arm64.dmg.blockmap",
+      "safeArtifactName": "Test-Concurrent-1.1.0-arm64.dmg.blockmap",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
@@ -73,17 +73,17 @@ exports[`mac concurrent 1`] = `
       },
     },
     {
-      "arch": "universal",
-      "file": "Test Concurrent-1.1.0-universal.zip",
-      "safeArtifactName": "Test-Concurrent-1.1.0-universal.zip",
+      "arch": "arm64",
+      "file": "Test Concurrent-1.1.0-arm64.zip",
+      "safeArtifactName": "Test-Concurrent-1.1.0-arm64.zip",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
     {
-      "file": "Test Concurrent-1.1.0-universal.zip.blockmap",
-      "safeArtifactName": "Test Concurrent-1.1.0-universal.zip.blockmap",
+      "file": "Test Concurrent-1.1.0-arm64.zip.blockmap",
+      "safeArtifactName": "Test Concurrent-1.1.0-arm64.zip.blockmap",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
@@ -202,17 +202,17 @@ exports[`mac/win/linux concurrent 1`] = `
   ],
   "mac": [
     {
-      "arch": "universal",
-      "file": "Test Concurrent-1.1.0-universal.dmg",
-      "safeArtifactName": "Test-Concurrent-1.1.0-universal.dmg",
+      "arch": "arm64",
+      "file": "Test Concurrent-1.1.0-arm64.dmg",
+      "safeArtifactName": "Test-Concurrent-1.1.0-arm64.dmg",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
     {
-      "file": "Test Concurrent-1.1.0-universal.dmg.blockmap",
-      "safeArtifactName": "Test-Concurrent-1.1.0-universal.dmg.blockmap",
+      "file": "Test Concurrent-1.1.0-arm64.dmg.blockmap",
+      "safeArtifactName": "Test-Concurrent-1.1.0-arm64.dmg.blockmap",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
@@ -236,17 +236,17 @@ exports[`mac/win/linux concurrent 1`] = `
       },
     },
     {
-      "arch": "universal",
-      "file": "Test Concurrent-1.1.0-universal.zip",
-      "safeArtifactName": "Test-Concurrent-1.1.0-universal.zip",
+      "arch": "arm64",
+      "file": "Test Concurrent-1.1.0-arm64.zip",
+      "safeArtifactName": "Test-Concurrent-1.1.0-arm64.zip",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
     {
-      "file": "Test Concurrent-1.1.0-universal.zip.blockmap",
-      "safeArtifactName": "Test Concurrent-1.1.0-universal.zip.blockmap",
+      "file": "Test Concurrent-1.1.0-arm64.zip.blockmap",
+      "safeArtifactName": "Test Concurrent-1.1.0-arm64.zip.blockmap",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",

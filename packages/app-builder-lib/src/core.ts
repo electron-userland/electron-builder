@@ -75,8 +75,8 @@ export abstract class Target {
   abstract readonly outDir: string
   abstract readonly options: TargetSpecificOptions | Nullish
 
-  // // use only for tasks that cannot be executed in parallel (such as  signing on windows)
-  readonly taskQueueManager = new AsyncTaskManager(new CancellationToken())
+  // use only for tasks that cannot be executed in parallel (such as signing on windows and hdiutil on macOS due to file locking)
+  readonly buildQueueManager = new AsyncTaskManager(new CancellationToken())
 
   protected constructor(
     readonly name: string,
@@ -90,7 +90,7 @@ export abstract class Target {
   abstract build(appOutDir: string, arch: Arch): Promise<any>
 
   async finishBuild(): Promise<any> {
-    await this.taskQueueManager.awaitTasks()
+    await this.buildQueueManager.awaitTasks()
   }
 }
 
