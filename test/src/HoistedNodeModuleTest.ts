@@ -134,6 +134,32 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
                 "electron-clear-data": "^1.0.5",
               }
               data.optionalDependencies = {
+                debug: "3.1.0",
+              }
+            }),
+            outputFile(path.join(projectDir, "pnpm-lock.yaml"), ""),
+          ])
+        },
+        packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
+      }
+    ))
+
+  test.ifLinux("pnpm optional dependency not installable on linux", ({ expect }) =>
+    assertPack(
+      expect,
+      "test-app-hoisted",
+      {
+        targets: linuxDirTarget,
+      },
+      {
+        isInstallDepsBefore: true,
+        projectDirCreated: projectDir => {
+          return Promise.all([
+            modifyPackageJson(projectDir, data => {
+              data.dependencies = {
+                "electron-clear-data": "^1.0.5",
+              }
+              data.optionalDependencies = {
                 "node-mac-permissions": "2.3.0",
               }
             }),
