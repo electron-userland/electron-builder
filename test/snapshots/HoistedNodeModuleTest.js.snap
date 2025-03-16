@@ -24942,6 +24942,55 @@ exports[`isInstallDepsBefore=true > pnpm optional dependencies 2`] = `
 }
 `;
 
+exports[`isInstallDepsBefore=true > pnpm optional dependency not installable on linux 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`isInstallDepsBefore=true > pnpm optional dependency not installable on linux 2`] = `
+{
+  "files": {
+    "index.html": {
+      "offset": "3753",
+      "size": 378,
+    },
+    "index.js": {
+      "offset": "4131",
+      "size": 619,
+    },
+    "node_modules": {
+      "files": {
+        "electron-clear-data": {
+          "files": {
+            "LICENSE.md": {
+              "offset": "0",
+              "size": 1059,
+            },
+            "dist": {
+              "files": {
+                "main.js": {
+                  "offset": "1059",
+                  "size": 1734,
+                },
+              },
+            },
+            "package.json": {
+              "offset": "2793",
+              "size": 960,
+            },
+          },
+        },
+      },
+    },
+    "package.json": {
+      "offset": "4750",
+      "size": 408,
+    },
+  },
+}
+`;
+
 exports[`isInstallDepsBefore=true > pnpm public-hoist-pattern=* 1`] = `
 {
   "linux": [],
@@ -64670,6 +64719,67 @@ exports[`isInstallDepsBefore=true > yarn some module add by manual instead of in
     "package.json": {
       "offset": "23716",
       "size": 324,
+    },
+  },
+}
+`;
+
+exports[`isInstallDepsBefore=true > yarn workspace for scope name 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`isInstallDepsBefore=true > yarn workspace for scope name 2`] = `
+{
+  "files": {
+    "index.html": {
+      "offset": "5150",
+      "size": 841,
+    },
+    "index.js": {
+      "offset": "5991",
+      "size": 2501,
+    },
+    "node_modules": {
+      "files": {
+        "is-number": {
+          "files": {
+            "LICENSE": {
+              "offset": "0",
+              "size": 1088,
+            },
+            "index.js": {
+              "offset": "1088",
+              "size": 662,
+            },
+            "package.json": {
+              "offset": "1750",
+              "size": 871,
+            },
+          },
+        },
+        "is-odd": {
+          "files": {
+            "LICENSE": {
+              "offset": "2621",
+              "size": 1091,
+            },
+            "index.js": {
+              "offset": "3712",
+              "size": 543,
+            },
+            "package.json": {
+              "offset": "4255",
+              "size": 895,
+            },
+          },
+        },
+      },
+    },
+    "package.json": {
+      "offset": "8492",
+      "size": 291,
     },
   },
 }
