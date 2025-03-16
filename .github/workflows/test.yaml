@@ -214,11 +214,10 @@ jobs:
           cache-path: ~/Library/Caches/electron
           cache-key: v-23.3.10-macos-electron
 
-      - name: Install pwsh and wine via brew
+      - name: Install toolsets via brew
         run: |
           brew install powershell/tap/powershell
           brew install --cask wine-stable
-          brew install rpm
 
       - name: Test
         run: pnpm ci:test

@@ -7,7 +7,7 @@ const options = { timeout: 15 * 60 * 1000 }
 
 const winTargets = Platform.WINDOWS.createTarget([DIR_TARGET, "nsis"], Arch.x64, Arch.arm64)
 const macTargets = Platform.MAC.createTarget([DIR_TARGET, "zip", "dmg", "mas"], Arch.arm64, Arch.x64)
-const linuxTargets = Platform.LINUX.createTarget([DIR_TARGET, "rpm", "AppImage"], Arch.x64, Arch.armv7l)
+const linuxTargets = Platform.LINUX.createTarget([DIR_TARGET, "AppImage"], Arch.x64, Arch.armv7l)
 
 const config: Configuration = {
   productName: "Test Concurrent",
@@ -27,7 +27,7 @@ const projectDirCreated = async (projectDir: string, tmpDir: TmpDir) => {
   await modifyPackageJson(projectDir, (data: any) => buildConfig(data, false), false)
 }
 
-test.ifNotWindows("win/linux concurrent", options, ({ expect }) => {
+test.ifLinux("win/linux concurrent", options, ({ expect }) => {
   const targets = new Map([...winTargets, ...linuxTargets])
   return assertPack(
     expect,
@@ -108,7 +108,7 @@ test.ifNotMac("win concurrent", options, ({ expect }) => {
 })
 
 test.ifNotWindows("linux concurrent", options, ({ expect }) => {
-  const targets = linuxTargets
+  const targets = Platform.LINUX.createTarget([DIR_TARGET, "rpm", "AppImage"], Arch.x64, Arch.armv7l)
   return assertPack(
     expect,
     "test-app",

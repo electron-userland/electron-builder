@@ -191,14 +191,6 @@ exports[`mac/win/linux concurrent 1`] = `
         "size": "@size",
       },
     },
-    {
-      "arch": "armv7l",
-      "file": "Test Concurrent-1.1.0-armv7l.rpm",
-    },
-    {
-      "arch": "x64",
-      "file": "Test Concurrent-1.1.0-x86_64.rpm",
-    },
   ],
   "mac": [
     {
@@ -621,19 +613,19 @@ exports[`win concurrent - all targets 1`] = `
       "safeArtifactName": "Test-Concurrent-1.1.0.exe",
     },
     {
-      "arch": "arm64",
-      "file": "concurrent-1.1.0-full.nupkg",
-    },
-    {
       "arch": "x64",
       "file": "concurrent-1.1.0-full.nupkg",
     },
     {
       "arch": "arm64",
+      "file": "concurrent-1.1.0-full.nupkg",
+    },
+    {
+      "arch": "x64",
       "file": "RELEASES",
     },
     {
-      "arch": "x64",
+      "arch": "arm64",
       "file": "RELEASES",
     },
     {
@@ -839,14 +831,6 @@ exports[`win/linux concurrent 1`] = `
         "sha512": "@sha512",
         "size": "@size",
       },
-    },
-    {
-      "arch": "armv7l",
-      "file": "Test Concurrent-1.1.0-armv7l.rpm",
-    },
-    {
-      "arch": "x64",
-      "file": "Test Concurrent-1.1.0-x86_64.rpm",
     },
   ],
   "win": [
