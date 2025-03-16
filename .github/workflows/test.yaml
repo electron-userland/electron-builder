@@ -26,10 +26,10 @@ env:
 
 jobs:
   check-if-docker-build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:
-      force-docker-build: ${{ steps.changed-files-specific.outputs.any_changed }}
+      force-docker-build: ${{ steps.changes.outputs.docker == 'true' || steps.changes.outputs.workflow == 'true' }}
     steps:
       - name: Checkout code repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -37,17 +37,14 @@ jobs:
           fetch-depth: 0
 
       - name: Determine if Dockerfiles changed
-        id: changed-files-specific
-        uses: tj-actions/changed-files@c65cd883420fd2eb864698a825fc4162dd94482c # v44
+        uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
+        id: changes
         with:
-          files: docker/**/*
-
-      - name: Output all changed files
-        env:
-          ALL_CHANGED_FILES: ${{ steps.changed-files-specific.outputs.all_changed_files }}
-        run: |
-          echo "One or more test file(s) has changed."
-          echo "List all the files that have changed: $ALL_CHANGED_FILES"
+          filters: |
+            docker:
+              - 'docker/**'
+            workflow:
+              - '.github/workflows/docker*'
 
   run-docker-build:
     needs: check-if-docker-build
@@ -91,7 +88,7 @@ jobs:
       - name: Download test-runner if exists
         if: needs.run-docker-build.result == 'success'
         id: download-test-runner-image
-        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4
+        uses: actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806 # v4
         with:
           name: electron-builder-all-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}
           path: ${{ runner.temp }}
@@ -137,7 +134,7 @@ jobs:
 
       - name: Download test-runner if exists
         if: needs.run-docker-build.result == 'success'
-        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4
+        uses: actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806 # v4
         with:
           name: electron-builder-all-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}
           path: ${{ runner.temp }}

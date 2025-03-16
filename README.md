@@ -112,9 +112,9 @@ will declare to use node-modules instead of PnP.
 
 [electron-webpack-quick-start](https://github.com/electron-userland/electron-webpack-quick-start) is a recommended way to create a new Electron application. See [Boilerplates](https://www.electron.build/#boilerplates).
 
-1. Specify the standard fields in the application `package.json` — [name](https://electron.build./configuration.md#metadata), `description`, `version` and [author](https://docs.npmjs.com/files/package.json#people-fields-author-contributors).
+1. Specify the standard fields in the application `package.json` — [name](https://electron.build/configuration.html#metadata), `description`, `version` and [author](https://docs.npmjs.com/files/package.json#people-fields-author-contributors).
 
-2. Specify the [build](https://electron.build./configuration.md#build) configuration in the `package.json` as follows:
+2. Specify the [build](https://www.electron.build/configuration.html#build) configuration in the `package.json` as follows:
     ```json
     "build": {
       "appId": "your.id",
@@ -124,7 +124,7 @@ will declare to use node-modules instead of PnP.
     }
     ```
    See [all options](https://www.electron.build/configuration). Option [files](https://www.electron.build/contents#files) to indicate which files should be packed in the final application, including the entry file, maybe required.
-   You can also use separate configuration files, such as `js`, `ts`, `yml`, and `json`/`json5`. See [read-config-file](https://www.npmjs.com/package/read-config-file) for supported extensions. [JS Example for programmatic API](https://www.electron.build/api/programmatic-usage)
+   You can also use separate configuration files, such as `js`, `ts`, `yml`, and `json`/`json5`. See [read-config-file](https://www.npmjs.com/package/read-config-file) for supported extensions. [JS Example for programmatic API](https://www.electron.build/programmatic-usage)
 
 3. Add [icons](https://www.electron.build/icons).
 
@@ -139,16 +139,16 @@ will declare to use node-modules instead of PnP.
 
     To ensure your native dependencies are always matched electron version, simply add script `"postinstall": "electron-builder install-app-deps"` to your `package.json`.
 
-5. If you have native addons of your own that are part of the application (not as a dependency), set [nodeGypRebuild](https://www.electron.build./configuration.md#nodeGypRebuild) to `true`.
+5. If you have native addons of your own that are part of the application (not as a dependency), set [nodeGypRebuild](https://www.electron.build/configuration.html#nodegyprebuild) to `true`.
 
-Please note that everything is packaged into an asar archive [by default](https://electron.build./configuration.md#asar).
+Please note that everything is packaged into an asar archive [by default](https://electron.build/configuration.html#asar).
 
 For an app that will be shipped to production, you should sign your application. See [Where to buy code signing certificates](https://www.electron.build/code-signing#where-to-buy-code-signing-certificate).
 
 ## Programmatic Usage
-See `node_modules/electron-builder/out/index.d.ts`. Typings for TypeScript are provided and also can be found [here](./electron-builder.md).
+See `node_modules/electron-builder/out/index.d.ts`. Typings for TypeScript are provided and also can be found [here](https://www.electron.build/electron-builder/globals).
 
-Code snippet provided below is also shown "in action" [here](./programmatic-usage.md) as well.
+Code snippet provided below is also shown "in action" [here](https://www.electron.build/programmatic-usage) as well.
 ```js
 "use strict"
 

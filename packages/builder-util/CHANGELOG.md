@@ -1,5 +1,11 @@
 # builder-util
 
+## 26.0.11
+
+### Patch Changes
+
+- [#8919](https://github.com/electron-userland/electron-builder/pull/8919) [`53a81939`](https://github.com/electron-userland/electron-builder/commit/53a81939b8c46061027ab36d8f9114c35b250a7e) Thanks [@mmaietta](https://github.com/mmaietta)! - chore(test): parallel test execution! Updates base Logger to squelch noisy/concurrent logging when VITEST env var and DEBUG=electron-builder are set.
+
 ## 26.0.7
 
 ### Patch Changes
