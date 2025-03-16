@@ -481,7 +481,6 @@ export class Packager {
       const nameToTarget: Map<string, Target> = new Map()
       platformToTarget.set(platform, nameToTarget)
 
-
       let poolCount = packager.platformSpecificBuildOptions.concurrency?.jobs || packager.config.concurrency?.jobs || 1
       if (poolCount < 1) {
         log.warn({ concurrency: poolCount }, "concurrency is invalid, overriding with job count: 1")
