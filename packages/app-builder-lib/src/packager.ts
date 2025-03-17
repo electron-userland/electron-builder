@@ -481,7 +481,7 @@ export class Packager {
       const nameToTarget: Map<string, Target> = new Map()
       platformToTarget.set(platform, nameToTarget)
 
-      let poolCount = packager.platformSpecificBuildOptions.concurrency?.jobs || packager.config.concurrency?.jobs || 1
+      let poolCount = Math.floor(packager.config.concurrency?.jobs || 1)
       if (poolCount < 1) {
         log.warn({ concurrency: poolCount }, "concurrency is invalid, overriding with job count: 1")
         poolCount = 1
@@ -503,7 +503,7 @@ export class Packager {
         const targetList = createTargets(nameToTarget, targetNames.length === 0 ? packager.defaultTarget : targetNames, outDir, packager)
         await createOutDirIfNeed(targetList, createdOutDirs)
         const promise = packager.pack(outDir, arch, targetList, taskManager)
-        if (poolCount === 1) {
+        if (poolCount < 2) {
           await promise
         } else {
           packPromises.push(promise)

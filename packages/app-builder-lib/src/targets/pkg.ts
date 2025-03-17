@@ -86,7 +86,7 @@ export class PkgTarget extends Target {
     })
     await Promise.all([unlink(innerPackageFile), unlink(distInfoFile)])
     await packager.notarizeIfProvided(artifactPath)
-    await packager.info.emitArtifactCreated({
+    await packager.info.emitArtifactBuildCompleted({
       file: artifactPath,
       target: this,
       arch,
