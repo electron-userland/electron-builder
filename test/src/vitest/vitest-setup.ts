@@ -1,16 +1,23 @@
 import { isCI as isCi } from "ci-info"
-import { afterEach, vitest } from "vitest"
-import * as wrappedTest from "@test/vitest/vitest-test-wrapper"
+import { afterEach, beforeEach, vitest, test as wrappedTest } from "@test/vitest/vitest-test-wrapper"
+import { TmpDir } from "temp-file"
 
+const tmpDir = new TmpDir()
+
+beforeEach(async () => {
+  // must set custom yarn cache dir due to concurrency of tests sometimes colliding in the yarn cache (
+  process.env.YARN_CACHE_FOLDER = await tmpDir.getTempDir()
+})
 afterEach(() => {
   vitest.clearAllMocks()
+  tmpDir.cleanupSync()
 })
 
 const isWindows = process.platform === "win32"
 const isMac = process.platform === "darwin"
 const isLinux = process.platform === "linux"
 
-const test: any = wrappedTest.test
+const test: any = wrappedTest
 
 const skip = test.skip
 
