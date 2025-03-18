@@ -13,7 +13,8 @@
   "homepage": "https://github.com/electron-userland/electron-builder",
   "files": [
     "out",
-    "template.nuspectemplate"
+    "template.nuspectemplate",
+    "vendor"
   ],
   "dependencies": {
     "app-builder-lib": "workspace:*",
