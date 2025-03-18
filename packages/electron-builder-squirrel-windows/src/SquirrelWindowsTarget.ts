@@ -45,7 +45,7 @@ export default class SquirrelWindowsTarget extends Target {
   private async generateStubExecutableExe(appOutDir: string, vendorDir: string) {
     const files = await fs.promises.readdir(appOutDir, { withFileTypes: true })
     for (const file of files) {
-      const fileNameWithoutExt = path.basename(file.name, "exe")
+      const fileNameWithoutExt = path.basename(file.name, ".exe")
       if (path.extname(file.name) === ".exe" && fileNameWithoutExt !== "Squirrel") {
         const filePath = path.join(appOutDir, file.name)
         log.filePath(filePath)
