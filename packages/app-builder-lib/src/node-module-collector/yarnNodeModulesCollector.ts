@@ -7,7 +7,7 @@ export class YarnNodeModulesCollector extends NpmNodeModulesCollector {
 
   public readonly installOptions = Promise.resolve({
     cmd: process.platform === "win32" ? "yarn.cmd" : "yarn",
-    args: ["install", "--frozen-lockfile"],
+    args: ["install", "--frozen-lockfile", "--network-concurrency 1"],
     lockfile: "yarn.lock",
   })
 }
