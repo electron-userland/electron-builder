@@ -79,7 +79,7 @@ export function getGypEnv(frameworkInfo: DesktopFrameworkInfo, platform: NodeJS.
   }
 }
 
-async function checkYarnBerry(pm: PM) {
+export async function checkYarnBerry(pm: PM) {
   if (pm !== "yarn") {
     return false
   }
