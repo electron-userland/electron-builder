@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, vitest, test as wrappedTest } from "@test/vitest/vitest-test-wrapper";
+import { afterAll, afterEach, beforeEach, vitest, test as wrappedTest } from "@test/vitest/vitest-test-wrapper";
 import { isCI as isCi } from "ci-info";
 import { TmpDir } from "temp-file";
 
@@ -10,7 +10,9 @@ beforeEach(async () => {
 })
 afterEach(() => {
   vitest.clearAllMocks()
-  tmpDir.cleanupSync()
+})
+afterAll(async () => {
+  await tmpDir.cleanup()
 })
 
 const isWindows = process.platform === "win32"
