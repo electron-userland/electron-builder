@@ -1,11 +1,11 @@
-import { isCI as isCi } from "ci-info"
-import { afterEach, beforeEach, vitest, test as wrappedTest } from "@test/vitest/vitest-test-wrapper"
-import { TmpDir } from "temp-file"
+import { afterEach, beforeEach, vitest, test as wrappedTest } from "@test/vitest/vitest-test-wrapper";
+import { isCI as isCi } from "ci-info";
+import { TmpDir } from "temp-file";
 
 const tmpDir = new TmpDir()
 
 beforeEach(async () => {
-  // must set custom yarn cache dir due to concurrency of tests sometimes colliding in the yarn cache (
+  // must set custom yarn cache dir due to concurrency of tests sometimes colliding in the yarn cache
   process.env.YARN_CACHE_FOLDER = await tmpDir.getTempDir()
 })
 afterEach(() => {

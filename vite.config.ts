@@ -22,7 +22,7 @@ export default () => {
     test: {
       // Use instead: import { test, describe } from "@test/vitest/vitest-test-wrapper"
       globals: false,
-
+      globalSetup: "./test/src/vitest/vitest-global-setup.ts",
       setupFiles: "./test/src/vitest/vitest-setup.ts",
       include: [`test/src/**/${includeRegex}.ts`],
       update: process.env.UPDATE_SNAPSHOT === "true",
