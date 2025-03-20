@@ -1,15 +1,19 @@
 import { afterAll, afterEach, beforeEach, vitest, test as wrappedTest } from "@test/vitest/vitest-test-wrapper";
 import { isCI as isCi } from "ci-info";
+import { rm } from "fs-extra";
 import { TmpDir } from "temp-file";
 
 const tmpDir = new TmpDir()
 
 beforeEach(async () => {
-  // must set custom yarn cache dir due to concurrency of tests sometimes colliding in the yarn cache
-  process.env.YARN_CACHE_FOLDER = await tmpDir.getTempDir()
+  // // must set custom yarn cache dir due to concurrency of tests sometimes colliding in the yarn cache
+  // process.env.YARN_CACHE_FOLDER = await tmpDir.getTempDir()
+  // console.log(process.env.YARN_CACHE_FOLDER)
 })
-afterEach(() => {
+afterEach(async () => {
+
   vitest.clearAllMocks()
+  // await rm(process.env.YARN_CACHE_FOLDER!, { force: true, recursive: true })
 })
 afterAll(async () => {
   await tmpDir.cleanup()
