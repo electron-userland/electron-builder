@@ -130,7 +130,8 @@ export class WindowsSignAzureManager implements SignManager {
     const paramsString = Object.entries(params)
       .filter(([_, value]) => value != null)
       .reduce((res, [field, value]) => {
-        return [...res, `-${field}`, value]
+        const escapedValue = String(value).replace(/'/g, "''")
+        return [...res, `-${field}`, `'${escapedValue}'`]
       }, [] as string[])
       .join(" ")
     await vm.exec(ps, ["-NoProfile", "-NonInteractive", "-Command", `Invoke-TrustedSigning ${paramsString}`])
