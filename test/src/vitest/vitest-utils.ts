@@ -102,11 +102,12 @@ export function loadEnvironment(ctx: ContextRPC): Environment {
 export const isSupposedToRetry = (errorMessage: string) => {
   const isOsError = [
     "Command failed: hdiutil",
+    "dmgbuild/core.py",
+    "yarn process failed",
     "ERR_ELECTRON_BUILDER_CANNOT_EXECUTE",
     "EPERM: operation not permitted",
     "The Windows Installer service failed to start",
-    "yarn process failed",
-    "dmgbuild/core.py",
+    "being used by another process",
   ].some(msg => errorMessage.includes(msg))
   process.stdout.write(`isSupposedToRetry: ${isOsError}\n${errorMessage}\n\n`)
   return isOsError
