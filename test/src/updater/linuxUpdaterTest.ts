@@ -1,3 +1,4 @@
+import { test, describe } from "@test/vitest/vitest-test-wrapper"
 import { GithubOptions } from "builder-util-runtime"
 import { DebUpdater, PacmanUpdater, RpmUpdater } from "electron-updater"
 import { assertThat } from "../helpers/fileAssert"

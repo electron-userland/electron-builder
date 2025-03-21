@@ -1,3 +1,4 @@
+import { test, describe } from "@test/vitest/vitest-test-wrapper"
 import { Platform } from "app-builder-lib"
 import { createPublisher } from "app-builder-lib/out/publish/PublishManager"
 import { Arch } from "builder-util"

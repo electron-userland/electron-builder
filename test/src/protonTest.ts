@@ -1,3 +1,4 @@
+import { test, describe } from "@test/vitest/vitest-test-wrapper"
 import { copyDir } from "builder-util"
 import { Arch, Platform } from "electron-builder"
 import { app, AssertPackOptions } from "./helpers/packTester"

@@ -1,3 +1,4 @@
+import { test, describe } from "@test/vitest/vitest-test-wrapper"
 import { assertPack, linuxDirTarget, verifyAsarFileTree, modifyPackageJson } from "./helpers/packTester"
 import { Platform, Arch, DIR_TARGET } from "electron-builder"
 import { outputFile } from "fs-extra"

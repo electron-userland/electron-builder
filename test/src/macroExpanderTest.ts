@@ -1,3 +1,4 @@
+import { test, describe } from "@test/vitest/vitest-test-wrapper"
 import { expandMacro } from "app-builder-lib/out/util/macroExpander"
 
 const appInfoStub: any = {
