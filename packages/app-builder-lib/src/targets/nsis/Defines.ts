@@ -1,4 +1,3 @@
-import { PathLike } from "fs"
 import { PortableOptions } from "./nsisOptions"
 /**
  * Parameters declared as environment variables in NSIS scripts.
@@ -59,7 +58,7 @@ export type Defines = {
   COMPRESS?: "auto"
 
   BUILD_UNINSTALLER?: null
-  UNINSTALLER_OUT_FILE?: PathLike
+  UNINSTALLER_OUT_FILE?: string
 
   ONE_CLICK?: null
   RUN_AFTER_FINISH?: null
