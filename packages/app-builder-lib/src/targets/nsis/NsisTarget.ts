@@ -18,7 +18,7 @@ import {
 import { CURRENT_APP_INSTALLER_FILE_NAME, CURRENT_APP_PACKAGE_FILE_NAME, PackageFileInfo, UUID } from "builder-util-runtime"
 import _debug from "debug"
 import * as fs from "fs"
-import { mkdir, readFile, rm, stat } from "fs-extra"
+import { readFile, stat, unlink } from "fs-extra"
 import * as path from "path"
 import { getBinFromUrl } from "../../binDownload"
 import { Target } from "../../core"
@@ -357,7 +357,7 @@ export class NsisTarget extends Target {
       defines.UNINSTALLER_OUT_FILE = definesUninstaller.UNINSTALLER_OUT_FILE
 
       await this.executeMakensis(defines, commands, sharedHeader + (await this.computeFinalScript(script, true, archs)))
-      await Promise.all<any>([packager.sign(installerPath), defines.UNINSTALLER_OUT_FILE == null ? Promise.resolve() : rm(path.dirname(defines.UNINSTALLER_OUT_FILE), { recursive: true })])
+      await Promise.all<any>([packager.sign(installerPath), defines.UNINSTALLER_OUT_FILE == null ? Promise.resolve() : unlink(defines.UNINSTALLER_OUT_FILE)])
 
       const safeArtifactName = computeSafeArtifactNameIfNeeded(installerFilename, () => this.generateGitHubInstallerName(primaryArch, defaultArch))
       let updateInfo: any
@@ -411,9 +411,7 @@ export class NsisTarget extends Target {
     // https://github.com/electron-userland/electron-builder/issues/2103
     // it is more safe and reliable to write uninstaller to our out dir
     // to support parallel builds, the uninstaller path must be unique to each target and arch combination
-    const uninstallDir = path.join(this.outDir, `__uninstaller-${Math.floor(Math.random() * Date.now())}`)
-    await mkdir(uninstallDir)
-    const uninstallerPath = path.join(uninstallDir, `__uninstaller-${this.name}-${this.packager.appInfo.sanitizedName}.exe`)
+    const uninstallerPath = path.join(this.outDir, `${path.basename(installerPath, "exe")}__uninstaller.exe`)
     const isWin = process.platform === "win32"
     defines.BUILD_UNINSTALLER = null
     defines.UNINSTALLER_OUT_FILE = isWin ? uninstallerPath : path.win32.join("Z:", uninstallerPath)
