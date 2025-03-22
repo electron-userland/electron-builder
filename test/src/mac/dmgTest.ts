@@ -207,7 +207,6 @@ describe("dmg", { sequential: true }, () => {
           productName: "Test ß No Volume Icon",
           dmg: {
             icon: null,
-            title : "Unset",
           },
         },
       },
@@ -236,7 +235,6 @@ describe("dmg", { sequential: true }, () => {
           productName: "NoBackground",
           dmg: {
             background: null,
-            title: "No Background",
           },
         },
       },
