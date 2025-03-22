@@ -1,3 +1,16 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v26.0.11...v) (2025-03-20)
+
+
+### Bug Fixes
+
+* Azure trust signing fails with spaces in parameters ([#8979](https://github.com/electron-userland/electron-builder/issues/8979)) ([f24a2ce](https://github.com/electron-userland/electron-builder/commit/f24a2ce05cfbc88b79c1d743d13c898d70be99df))
+* optimize workspace package resolution in dependency tree ([#8958](https://github.com/electron-userland/electron-builder/issues/8958)) ([81e0c47](https://github.com/electron-userland/electron-builder/commit/81e0c472fe2691b716aba5428dedc5da1c57e773))
+* pnpm collection of optional dependencies ([#8957](https://github.com/electron-userland/electron-builder/issues/8957)) ([ad151b9](https://github.com/electron-userland/electron-builder/commit/ad151b9dbefa746514dd15471e5ef8bf5eed1d9b))
+* re-enable CI build workflow by swapping in `dorny/paths-filter` ([#8961](https://github.com/electron-userland/electron-builder/issues/8961)) ([1d47cb1](https://github.com/electron-userland/electron-builder/commit/1d47cb1dfcc77e5f21628623720a7948401548c4))
+* support `mas` packages for flipping fuses ([#8947](https://github.com/electron-userland/electron-builder/issues/8947)) ([7ba4fea](https://github.com/electron-userland/electron-builder/commit/7ba4fea95825650f02749949632b351c75d3019a))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v26.0.10...v) (2025-03-09)
 
 
