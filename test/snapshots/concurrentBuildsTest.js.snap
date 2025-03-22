@@ -613,19 +613,19 @@ exports[`win concurrent - all targets 1`] = `
       "safeArtifactName": "Test-Concurrent-1.1.0.exe",
     },
     {
-      "arch": "arm64",
-      "file": "concurrent-1.1.0-full.nupkg",
-    },
-    {
       "arch": "x64",
       "file": "concurrent-1.1.0-full.nupkg",
     },
     {
       "arch": "arm64",
+      "file": "concurrent-1.1.0-full.nupkg",
+    },
+    {
+      "arch": "x64",
       "file": "RELEASES",
     },
     {
-      "arch": "x64",
+      "arch": "arm64",
       "file": "RELEASES",
     },
     {
