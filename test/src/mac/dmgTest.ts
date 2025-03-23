@@ -235,6 +235,7 @@ describe("dmg", { sequential: true }, () => {
           productName: "NoBackground",
           dmg: {
             background: null,
+            title: "Foo",
           },
         },
       },
