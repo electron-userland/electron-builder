@@ -125,7 +125,7 @@ export class WindowsSignAzureManager implements SignManager {
       TimestampRfc3161: timestampRfc3161 || "http://timestamp.acs.microsoft.com",
       TimestampDigest: timestampDigest || "SHA256",
       FileDigest: fileDigest || "SHA256",
-      Files: `"${options.path}"`,
+      Files: options.path,
     }
     const paramsString = Object.entries(params)
       .filter(([_, value]) => value != null)
