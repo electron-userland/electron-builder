@@ -1,5 +1,11 @@
 # builder-util
 
+## 26.0.13
+
+### Patch Changes
+
+- [#8962](https://github.com/electron-userland/electron-builder/pull/8962) [`106640dd`](https://github.com/electron-userland/electron-builder/commit/106640dd42a3db08bfbe3a3a32fe333e93ba5c10) Thanks [@mmaietta](https://github.com/mmaietta)! - chore(refactor): enable parallel packaging of archs and targets with `concurrency` config prop
+
 ## 26.0.11
 
 ### Patch Changes

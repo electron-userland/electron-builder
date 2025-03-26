@@ -1,3 +1,12 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v26.0.12...v) (2025-03-26)
+
+
+### Bug Fixes
+
+* malformed `Files` param when using Azure Trusted Signing ([#8987](https://github.com/electron-userland/electron-builder/issues/8987)) ([9fb2895](https://github.com/electron-userland/electron-builder/commit/9fb2895cd008ea6fc6210078decabc15a5c0144a))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v26.0.11...v) (2025-03-20)
 
 
