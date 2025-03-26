@@ -1,10 +1,11 @@
+import { test, describe } from "@test/vitest/vitest-test-wrapper"
 import { Arch, archFromString, Platform } from "electron-builder"
 import * as fs from "fs/promises"
 import * as path from "path"
 import { app, assertPack, copyTestAsset } from "../helpers/packTester"
 import { checkHelpers, doTest, expectUpdateMetadata } from "../helpers/winHelper"
 
-const nsisTarget = Platform.WINDOWS.createTarget(["nsis"])
+const nsisTarget = Platform.WINDOWS.createTarget(["nsis"], Arch.x64)
 
 test.ifNotCiMac("assisted", ({ expect }) =>
   app(
@@ -35,8 +36,7 @@ test.ifNotCiMac("assisted", ({ expect }) =>
       signedWin: true,
       projectDirCreated: projectDir => copyTestAsset("license.txt", path.join(projectDir, "build", "license.txt")),
     }
-  )
-)
+  ))
 
 test.ifNotCiMac("allowElevation false, app requestedExecutionLevel admin", ({ expect }) =>
   app(expect, {

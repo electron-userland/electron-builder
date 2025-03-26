@@ -1,3 +1,4 @@
+import { test, describe } from "@test/vitest/vitest-test-wrapper"
 import { createKeychain } from "app-builder-lib/out/codeSign/macCodeSign"
 import { removePassword, TmpDir } from "builder-util"
 import { CSC_LINK } from "../helpers/codeSignData"
