@@ -33,67 +33,70 @@ export class ArchiveTarget extends Target {
       defaultPattern = "${productName}-${version}" + (arch === defaultArch ? "" : "-${arch}") + "-${os}.${ext}"
     }
 
-    const artifactName = packager.expandArtifactNamePattern(this.options, format, arch, defaultPattern, false)
-    const artifactPath = path.join(this.outDir, artifactName)
+    this.buildQueueManager.add(async () => {
+      const artifactName = packager.expandArtifactNamePattern(this.options, format, arch, defaultPattern, false)
+      const artifactPath = path.join(this.outDir, artifactName)
 
-    await packager.info.emitArtifactBuildStarted({
-      targetPresentableName: `${isMac ? "macOS " : ""}${format}`,
-      file: artifactPath,
-      arch,
-    })
-    let updateInfo: any = null
-    if (format.startsWith("tar.")) {
-      await tar(packager.compression, format, artifactPath, appOutDir, isMac, packager.info.tempDirManager)
-    } else {
-      let withoutDir = !isMac
-      let dirToArchive = appOutDir
-      if (isMac) {
-        dirToArchive = path.dirname(appOutDir)
-        const fileMatchers = getFileMatchers(
-          packager.config,
-          "extraDistFiles",
-          dirToArchive,
-          packager.createGetFileMatchersOptions(this.outDir, arch, packager.platformSpecificBuildOptions)
-        )
-        if (fileMatchers == null) {
-          dirToArchive = appOutDir
-        } else {
-          await copyFiles(fileMatchers, null, true)
-          withoutDir = true
-        }
-      }
-
-      const archiveOptions = {
-        compression: packager.compression,
-        withoutDir,
-      }
-      await archive(format, artifactPath, dirToArchive, archiveOptions)
-
-      if (this.isWriteUpdateInfo && format === "zip") {
-        if (isMac) {
-          updateInfo = await createBlockmap(artifactPath, this, packager, artifactName)
-        } else {
-          updateInfo = await appendBlockmap(artifactPath)
-        }
-      }
-    }
-
-    await packager.info.emitArtifactBuildCompleted({
-      updateInfo,
-      file: artifactPath,
-      // tslint:disable-next-line:no-invalid-template-strings
-      safeArtifactName: packager.computeSafeArtifactName(
-        artifactName,
-        format,
+      await packager.info.emitArtifactBuildStarted({
+        targetPresentableName: `${isMac ? "macOS " : ""}${format}`,
+        file: artifactPath,
         arch,
-        false,
-        packager.platformSpecificBuildOptions.defaultArch,
-        defaultPattern.replace("${productName}", "${name}")
-      ),
-      target: this,
-      arch,
-      packager,
-      isWriteUpdateInfo: this.isWriteUpdateInfo,
+      })
+      let updateInfo: any = null
+      if (format.startsWith("tar.")) {
+        await tar(packager.compression, format, artifactPath, appOutDir, isMac, packager.info.tempDirManager)
+      } else {
+        let withoutDir = !isMac
+        let dirToArchive = appOutDir
+        if (isMac) {
+          dirToArchive = path.dirname(appOutDir)
+          const fileMatchers = getFileMatchers(
+            packager.config,
+            "extraDistFiles",
+            dirToArchive,
+            packager.createGetFileMatchersOptions(this.outDir, arch, packager.platformSpecificBuildOptions)
+          )
+          if (fileMatchers == null) {
+            dirToArchive = appOutDir
+          } else {
+            await copyFiles(fileMatchers, null, true)
+            withoutDir = true
+          }
+        }
+
+        const archiveOptions = {
+          compression: packager.compression,
+          withoutDir,
+        }
+        await archive(format, artifactPath, dirToArchive, archiveOptions)
+
+        if (this.isWriteUpdateInfo && format === "zip") {
+          if (isMac) {
+            updateInfo = await createBlockmap(artifactPath, this, packager, artifactName)
+          } else {
+            updateInfo = await appendBlockmap(artifactPath)
+          }
+        }
+      }
+
+      await packager.info.emitArtifactBuildCompleted({
+        updateInfo,
+        file: artifactPath,
+        // tslint:disable-next-line:no-invalid-template-strings
+        safeArtifactName: packager.computeSafeArtifactName(
+          artifactName,
+          format,
+          arch,
+          false,
+          packager.platformSpecificBuildOptions.defaultArch,
+          defaultPattern.replace("${productName}", "${name}")
+        ),
+        target: this,
+        arch,
+        packager,
+        isWriteUpdateInfo: this.isWriteUpdateInfo,
+      })
     })
+    return Promise.resolve()
   }
 }

@@ -23,6 +23,9 @@ test.ifMac("two-package", ({ expect }) =>
           timestamp: undefined,
           notarize: false,
         },
+        dmg: {
+          title: "Foo1",
+        },
         //tslint:disable-next-line:no-invalid-template-strings
         artifactName: "${name}-${version}-${os}-${arch}.${ext}",
         electronFuses: {
@@ -60,6 +63,9 @@ test.ifMac("one-package", ({ expect }) =>
           url: "https://develar.s3.amazonaws.com/test/${os}/${arch}",
         },
         downloadAlternateFFmpeg: false,
+        dmg: {
+          title: "Bar2",
+        },
         mac: {
           // test appId per platform
           appId: "foo",

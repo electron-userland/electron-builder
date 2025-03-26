@@ -428,6 +428,20 @@
       ],
       "type": "object"
     },
+    "Concurrency": {
+      "additionalProperties": false,
+      "properties": {
+        "jobs": {
+          "default": 1,
+          "description": "The maximum number of concurrent jobs to run.",
+          "type": "number"
+        }
+      },
+      "required": [
+        "jobs"
+      ],
+      "type": "object"
+    },
     "CustomNsisBinary": {
       "additionalProperties": false,
       "properties": {
@@ -6923,6 +6937,17 @@
       ],
       "default": "normal",
       "description": "The compression level. If you want to rapidly test build, `store` can reduce build time significantly. `maximum` doesn't lead to noticeable size difference, but increase build time."
+    },
+    "concurrency": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/Concurrency"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "[Experimental] Configuration for concurrent builds."
     },
     "copyright": {
       "default": "Copyright © year ${author}",

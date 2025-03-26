@@ -187,7 +187,13 @@ export interface CommonConfiguration {
    * Ref: https://github.com/electron/fuses
    */
   readonly electronFuses?: FuseOptionsV1 | null
+
+  /**
+   * [Experimental] Configuration for concurrent builds.
+   */
+  readonly concurrency?: Concurrency | null
 }
+
 export interface Configuration extends CommonConfiguration, PlatformSpecificBuildOptions, Hooks {
   /**
    * Whether to use [electron-compile](http://github.com/electron/electron-compile) to compile app. Defaults to `true` if `electron-compile` in the dependencies. And `false` if in the `devDependencies` or doesn't specified.
@@ -438,4 +444,12 @@ export interface FuseOptionsV1 {
    * Ref: https://github.com/electron/fuses?tab=readme-ov-file#apple-silicon
    */
   resetAdHocDarwinSignature?: boolean
+}
+
+export interface Concurrency {
+  /**
+   * The maximum number of concurrent jobs to run.
+   * @default 1
+   */
+  jobs: number
 }
