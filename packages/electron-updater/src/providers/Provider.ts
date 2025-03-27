@@ -85,13 +85,13 @@ export function findFile(files: Array<ResolvedUpdateFileInfo>, extension: string
     throw newError("No files provided", "ERR_UPDATER_NO_FILES_PROVIDED")
   }
 
-  const result = files.find(it => it.url.pathname.toLowerCase().endsWith(`.${extension}`))
+  const result = files.find(it => it.url.pathname.toLowerCase().endsWith(`.${extension.toLowerCase()}`))
   if (result != null) {
     return result
   } else if (not == null) {
     return files[0]
   } else {
-    return files.find(fileInfo => !not.some(ext => fileInfo.url.pathname.toLowerCase().endsWith(`.${ext}`)))
+    return files.find(fileInfo => !not.some(ext => fileInfo.url.pathname.toLowerCase().endsWith(`.${ext.toLowerCase()}`)))
   }
 }
 
