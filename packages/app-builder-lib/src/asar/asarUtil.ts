@@ -101,7 +101,7 @@ export class AsarPackager {
           },
         })
       }
-      return { filePath: destination, streamGenerator, properties: { unpacked, type: "file", stat } }
+      return { filePath: destination, streamGenerator, properties: { unpacked, type: "file", stat: { ...stat, size: transformedData.length } } }
     }
 
     const realPathFile = await fs.realpath(file)
@@ -112,9 +112,15 @@ export class AsarPackager {
       throw new Error(`Cannot copy file (${path.basename(file)}) symlinked to file (${path.basename(realPathFile)}) outside the package as that violates asar security integrity`)
     }
 
+    const config: (type: Filestream["properties"]["type"]) => Filestream = type => ({
+      filePath: destination,
+      streamGenerator: () => fs.createReadStream(file),
+      properties: { unpacked, type, stat },
+    })
+
     // not a symlink, copy directly
     if (file === realPathFile) {
-      return { filePath: destination, streamGenerator: () => fs.createReadStream(file), properties: { unpacked, type: "file", stat } }
+      return config("file")
     }
 
     // okay, it must be a symlink. evaluate link to be relative to source file in asar
@@ -122,7 +128,7 @@ export class AsarPackager {
     if (path.isAbsolute(link)) {
       link = path.relative(path.dirname(file), link)
     }
-    return { filePath: destination, streamGenerator: () => fs.createReadStream(file), properties: { unpacked, type: "link", stat, symlink: link } }
+    return config("link")
   }
 
   private orderFileSet(fileSet: ResolvedFileSet): ResolvedFileSet {
