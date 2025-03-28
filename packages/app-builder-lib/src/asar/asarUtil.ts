@@ -15,7 +15,7 @@ export class AsarPackager {
   private readonly outFile: string
 
   constructor(
-    readonly packager: PlatformPackager<any>,
+    private readonly packager: PlatformPackager<any>,
     private readonly config: {
       defaultDestination: string
       resourcePath: string
@@ -85,7 +85,7 @@ export class AsarPackager {
     unpackedPaths: Set<string>
   }): Promise<Filestream | null> {
     const { unpackedPaths, transformedData, file, destination, stat, fileSet } = options
-    const unpacked = unpackedPaths.has(file) ?? this.config.unpackPattern?.(file, stat) ?? false
+    const unpacked = unpackedPaths.has(file) || (this.config.unpackPattern?.(file, stat) ?? false)
 
     if (!stat.isFile() && !stat.isSymbolicLink()) {
       return null
@@ -93,13 +93,21 @@ export class AsarPackager {
 
     // write any data if provided, skip symlink check
     if (transformedData != null) {
-      const transformStream = new Readable({
-        read() {
-          this.push(transformedData)
-          this.push(null)
-        },
-      })
-      return { filePath: file, streamGenerator: () => transformStream, properties: { unpacked, type: "file", stat } }
+      // const transformStream = new Readable({
+      //   read() {
+      //     this.push(transformedData)
+      //     this.push(null)
+      //   },
+      // })
+      // const transformStream = new Readable()
+      // transformStream.push(transformedData, "utf-8")
+      // transformStream.push(null)
+      // const transformStream = Readable.from(transformedData)
+      const file = await this.packager.info.tempDirManager.getTempFile({})
+      await fs.writeFile(file, transformedData)
+      return { filePath: destination, streamGenerator: () => fs.createReadStream(file), properties: { unpacked, type: "file", stat } }
+      // return null
+      // return { filePath: destination, streamGenerator: () => transformStream, properties: { unpacked, type: "file", stat } }
     }
 
     const realPathFile = await fs.realpath(file)
@@ -112,7 +120,7 @@ export class AsarPackager {
 
     // not a symlink, copy directly
     if (file === realPathFile) {
-      return { filePath: file, streamGenerator: () => fs.createReadStream(file), properties: { unpacked, type: "file", stat } }
+      return { filePath: destination, streamGenerator: () => fs.createReadStream(file), properties: { unpacked, type: "file", stat } }
     }
 
     // okay, it must be a symlink. evaluate link to be relative to source file in asar
