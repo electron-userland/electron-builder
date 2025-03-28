@@ -1,8 +1,10 @@
 import { NpmNodeModulesCollector } from "./npmNodeModulesCollector"
 import { PnpmNodeModulesCollector } from "./pnpmNodeModulesCollector"
 import { YarnNodeModulesCollector } from "./yarnNodeModulesCollector"
+import { Yarn2NodeModulesCollector } from "./yarn2NodeModulesCollector"
 import { detect, PM, getPackageManagerVersion } from "./packageManager"
 import { NodeModuleInfo } from "./types"
+import { checkYarnBerry } from "../util/yarn"
 import { exec } from "builder-util"
 
 async function isPnpmProjectHoisted(rootDir: string) {
@@ -23,6 +25,9 @@ export async function getCollectorByPackageManager(rootDir: string) {
     case "npm":
       return new NpmNodeModulesCollector(rootDir)
     case "yarn":
+      if (await checkYarnBerry(manager)) {
+        return new Yarn2NodeModulesCollector(rootDir)
+      }
       return new YarnNodeModulesCollector(rootDir)
     default:
       return new NpmNodeModulesCollector(rootDir)
