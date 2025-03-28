@@ -93,21 +93,15 @@ export class AsarPackager {
 
     // write any data if provided, skip symlink check
     if (transformedData != null) {
-      // const transformStream = new Readable({
-      //   read() {
-      //     this.push(transformedData)
-      //     this.push(null)
-      //   },
-      // })
-      // const transformStream = new Readable()
-      // transformStream.push(transformedData, "utf-8")
-      // transformStream.push(null)
-      // const transformStream = Readable.from(transformedData)
-      const file = await this.packager.info.tempDirManager.getTempFile({})
-      await fs.writeFile(file, transformedData)
-      return { filePath: destination, streamGenerator: () => fs.createReadStream(file), properties: { unpacked, type: "file", stat } }
-      // return null
-      // return { filePath: destination, streamGenerator: () => transformStream, properties: { unpacked, type: "file", stat } }
+      const streamGenerator = () => {
+        return new Readable({
+          read() {
+            this.push(transformedData)
+            this.push(null)
+          },
+        })
+      }
+      return { filePath: destination, streamGenerator, properties: { unpacked, type: "file", stat } }
     }
 
     const realPathFile = await fs.realpath(file)
