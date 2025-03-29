@@ -68,7 +68,14 @@ export class AsarPackager {
         const stat = fileSet.metadata.get(file)!
         const destination = path.relative(this.config.defaultDestination, getDestinationPath(file, fileSet))
 
-        const result = await this.processFileOrSymlink({ unpackedPaths: Array.from(unpackedPaths), transformedData, file, destination, stat, fileSet })
+        const result = await this.processFileOrSymlink({
+          file,
+          destination,
+          fileSet,
+          transformedData,
+          stat,
+          unpackedPaths: Array.from(unpackedPaths).map(p => path.normalize(p)),
+        })
         if (result != null) {
           results.push(result)
         }
