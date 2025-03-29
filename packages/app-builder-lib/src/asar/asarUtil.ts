@@ -89,7 +89,7 @@ export class AsarPackager {
 
     const isChildDirectory = unpackedPaths.includes(destination) || unpackedPaths.some(unpackedPath => destination.startsWith(unpackedPath + path.sep))
     const unpacked = isChildDirectory || (this.config.unpackPattern?.(file, stat) ?? false)
-    process.stdout.write(`Paths ${unpackedPaths}}\n`)
+    process.stdout.write(`Paths ${JSON.stringify(unpackedPaths)}\n`)
     process.stdout.write(`Packing ${file} -> ${destination} ${isChildDirectory ? " (unpacked)" : ""}\n`)
 
     if (!stat.isFile() && !stat.isSymbolicLink()) {
