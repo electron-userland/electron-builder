@@ -54,20 +54,21 @@ export class AsarPackager {
 
   private async processFileSets(fileSets: ResolvedFileSet[]): Promise<Filestream[]> {
     const unpackedPaths = new Set<string>()
+    if (this.config.options.smartUnpack !== false) {
+      for (const fileSet of fileSets) {
+        detectUnpackedDirs(fileSet, unpackedPaths)
+      }
+    }
 
     const results: Filestream[] = []
     for (const fileSet of fileSets) {
-      if (this.config.options.smartUnpack !== false) {
-        detectUnpackedDirs(fileSet, unpackedPaths)
-      }
-
       // Don't use Promise.all, we need to retain order of execution/iteration through the already-ordered fileset
       for (const [index, file] of fileSet.files.entries()) {
         const transformedData = fileSet.transformedFiles?.get(index)
         const stat = fileSet.metadata.get(file)!
         const destination = path.relative(this.config.defaultDestination, getDestinationPath(file, fileSet))
 
-        const result = await this.processFileOrSymlink({ unpackedPaths, transformedData, file, destination, stat, fileSet })
+        const result = await this.processFileOrSymlink({ unpackedPaths: Array.from(unpackedPaths), transformedData, file, destination, stat, fileSet })
         if (result != null) {
           results.push(result)
         }
@@ -82,10 +83,12 @@ export class AsarPackager {
     stat: fs.Stats
     fileSet: ResolvedFileSet
     transformedData: string | Buffer | undefined
-    unpackedPaths: Set<string>
+    unpackedPaths: string[]
   }): Promise<Filestream | null> {
     const { unpackedPaths, transformedData, file, destination, stat, fileSet } = options
-    const unpacked = unpackedPaths.has(file) || (this.config.unpackPattern?.(file, stat) ?? false)
+
+    const isChildDirectory = unpackedPaths.includes(destination) || unpackedPaths.some(unpackedPath => destination.startsWith(unpackedPath + path.sep))
+    const unpacked = isChildDirectory || (this.config.unpackPattern?.(file, stat) ?? false)
 
     if (!stat.isFile() && !stat.isSymbolicLink()) {
       return null
