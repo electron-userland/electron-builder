@@ -1,3 +1,4 @@
+import { test, describe } from "@test/vitest/vitest-test-wrapper"
 import { Arch, Configuration, Platform } from "app-builder-lib"
 import { getBinFromUrl } from "app-builder-lib/out/binDownload"
 import { doSpawn, getArchSuffix } from "builder-util"
@@ -154,7 +155,7 @@ test.ifMac("Mac Intel", ({ expect }) => testMac(expect, Arch.x64))
 test.ifMac("Mac universal", ({ expect }) => testMac(expect, Arch.universal))
 
 // only run on arm64 macs, otherwise of course no files can be found to be updated to (due to arch mismatch)
-test.ifMac.ifEnv(process.arch === "arm64")("Mac arm64", ({ expect }) => testMac(expect, Arch.arm64))
+test.ifEnv(process.platform === "darwin" && process.arch === "arm64")("Mac arm64", ({ expect }) => testMac(expect, Arch.arm64))
 
 async function checkResult(expect: ExpectStatic, updater: BaseUpdater) {
   // disable automatic install otherwise mac updater will permanently wait on mocked electron's native updater to receive update (mocked server can't install)

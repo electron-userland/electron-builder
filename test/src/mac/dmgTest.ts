@@ -1,4 +1,5 @@
-import { PlatformPackager } from "app-builder-lib"
+import { test, describe } from "@test/vitest/vitest-test-wrapper"
+import { Configuration, PackagerOptions, PlatformPackager } from "app-builder-lib"
 import { Arch, copyFile, exec } from "builder-util"
 import { attachAndExecute, getDmgTemplatePath } from "dmg-builder/out/dmgUtil"
 import { Platform } from "electron-builder"
@@ -290,7 +291,7 @@ describe("dmg", { sequential: true }, () => {
     })
   })
 
-  const packagerOptions = {
+  const packagerOptions: () => PackagerOptions = () => ({
     targets: dmgTarget,
     config: {
       publish: null,
@@ -298,10 +299,13 @@ describe("dmg", { sequential: true }, () => {
         title: "Foo" + Math.floor(Math.random() * 1000),
       },
     },
-  }
+    dmg: {
+      artifactName: "${productName}-${version}-" + Date.now() + ".${ext}",
+    },
+  })
 
   test.ifMac("multi language license", ({ expect }) =>
-    app(expect, packagerOptions, {
+    app(expect, packagerOptions(), {
       projectDirCreated: projectDir => {
         return Promise.all([
           // writeFile(path.join(projectDir, "build", "license_en.txt"), "Hi"),
@@ -313,7 +317,7 @@ describe("dmg", { sequential: true }, () => {
   )
 
   test.ifMac("license ja", ({ expect }) =>
-    app(expect, packagerOptions, {
+    app(expect, packagerOptions(), {
       projectDirCreated: projectDir => {
         return fs.writeFile(path.join(projectDir, "build", "license_ja.txt"), "こんにちは".repeat(12))
       },
@@ -321,7 +325,7 @@ describe("dmg", { sequential: true }, () => {
   )
 
   test.ifMac("license en", ({ expect }) =>
-    app(expect, packagerOptions, {
+    app(expect, packagerOptions(), {
       projectDirCreated: projectDir => {
         return copyTestAsset("license_en.txt", path.join(projectDir, "build", "license_en.txt"))
       },
@@ -329,7 +333,7 @@ describe("dmg", { sequential: true }, () => {
   )
 
   test.ifMac("license rtf", ({ expect }) =>
-    app(expect, packagerOptions, {
+    app(expect, packagerOptions(), {
       projectDirCreated: projectDir => {
         return copyTestAsset("license_de.rtf", path.join(projectDir, "build", "license_de.rtf"))
       },
@@ -340,7 +344,7 @@ describe("dmg", { sequential: true }, () => {
     app(
       expect,
       {
-        ...packagerOptions,
+        ...packagerOptions(),
         effectiveOptionComputed: async it => {
           if ("licenseData" in it) {
             // Clean `file` path from the data because the path is dynamic at runtime
@@ -349,7 +353,7 @@ describe("dmg", { sequential: true }, () => {
             })
             expect(it.licenseData).toMatchSnapshot()
           }
-          return false
+          return Promise.resolve(false)
         },
       },
       {

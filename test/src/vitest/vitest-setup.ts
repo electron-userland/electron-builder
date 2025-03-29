@@ -1,24 +1,33 @@
-import { isCI as isCi } from "ci-info"
-import { afterEach, test, vitest } from "vitest"
+import { afterAll, afterEach, beforeEach, vitest, test as wrappedTest } from "@test/vitest/vitest-test-wrapper";
+import { isCI as isCi } from "ci-info";
+import { rm } from "fs-extra";
+import { TmpDir } from "temp-file";
 
-afterEach(() => {
+const tmpDir = new TmpDir()
+
+beforeEach(async () => {
+  // // must set custom yarn cache dir due to concurrency of tests sometimes colliding in the yarn cache
+  // process.env.YARN_CACHE_FOLDER = await tmpDir.getTempDir()
+  // console.log(process.env.YARN_CACHE_FOLDER)
+})
+afterEach(async () => {
+
   vitest.clearAllMocks()
+  // await rm(process.env.YARN_CACHE_FOLDER!, { force: true, recursive: true })
+})
+afterAll(async () => {
+  await tmpDir.cleanup()
 })
 
 const isWindows = process.platform === "win32"
 const isMac = process.platform === "darwin"
 const isLinux = process.platform === "linux"
 
-const skip = test.skip
-// const skipSuite = describe.skip
-// const isAllTests = process.env.ALL_TESTS !== "false"
+const test: any = wrappedTest
 
-// describe = isAllTests ? describe : skipSuite
-// test = isAllTests ? test : skip
-// skip = skip
+const skip = test.skip
 
 test.ifEnv = test.runIf
-skip.ifEnv = test.runIf
 
 test.ifMac = isMac ? test : skip
 
