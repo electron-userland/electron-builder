@@ -91,7 +91,7 @@ importers:
         version: 0.64.0
       vitest:
         specifier: ^3.0.4
-        version: 3.0.5(@types/node@22.10.1)(@vitest/ui@3.0.4)(sass@1.82.0)(yaml@2.6.1)
+        version: 3.0.5(@types/node@22.10.1)(@vitest/ui@3.0.4(vitest@3.0.5))(sass@1.82.0)(yaml@2.6.1)
 
   packages/app-builder-lib:
     dependencies:
@@ -99,8 +99,8 @@ importers:
         specifier: ~2.6.5
         version: 2.6.5
       '@electron/asar':
-        specifier: github:mmaietta/asar#fix-asar-symlink
-        version: https://codeload.github.com/mmaietta/asar/tar.gz/b62cefa1fc28a0fffe32591625a761afad6e4453
+        specifier: github:mmaietta/asar#bfaa9c2900bb60d2c7cbf44ff78484be5591234a
+        version: https://codeload.github.com/mmaietta/asar/tar.gz/bfaa9c2900bb60d2c7cbf44ff78484be5591234a
       '@electron/fuses':
         specifier: ^1.8.0
         version: 1.8.0
@@ -698,7 +698,7 @@ importers:
         version: 1.6.3
       vitest:
         specifier: ^3.0.4
-        version: 3.0.5(@types/node@22.10.1)(@vitest/ui@3.0.4)(sass@1.82.0)(yaml@2.6.1)
+        version: 3.0.5(@types/node@22.10.1)(@vitest/ui@3.0.4(vitest@3.0.5))(sass@1.82.0)(yaml@2.6.1)
       vitest-mock-commonjs:
         specifier: ^1.0.2
         version: 1.0.2
@@ -1642,8 +1642,8 @@ packages:
     engines: {node: '>=10.12.0'}
     hasBin: true
 
-  '@electron/asar@https://codeload.github.com/mmaietta/asar/tar.gz/b62cefa1fc28a0fffe32591625a761afad6e4453':
-    resolution: {tarball: https://codeload.github.com/mmaietta/asar/tar.gz/b62cefa1fc28a0fffe32591625a761afad6e4453}
+  '@electron/asar@https://codeload.github.com/mmaietta/asar/tar.gz/bfaa9c2900bb60d2c7cbf44ff78484be5591234a':
+    resolution: {tarball: https://codeload.github.com/mmaietta/asar/tar.gz/bfaa9c2900bb60d2c7cbf44ff78484be5591234a}
     version: 0.0.0-development
     engines: {node: '>=10.12.0'}
     hasBin: true
@@ -2318,9 +2318,6 @@ packages:
 
   '@types/fs-extra@9.0.13':
     resolution: {integrity: sha512-nEnwB++1u5lVDM2UI4c1+5R+FYaKfaAzS4OococimjVm3nQw3TuzH5UNsocrcTBbhnerblyHj4A49qXbIiZdpA==}
-
-  '@types/glob@7.2.0':
-    resolution: {integrity: sha512-ZUxbzKl0IfJILTS6t7ip5fQQM/J3TJYubDm3nMbgubNNYS62eXeUpoLUC8/7fJNiFYHTrGPQn7hspDUzIHX3UA==}
 
   '@types/glob@8.1.0':
     resolution: {integrity: sha512-IO+MJPVhoqz+28h1qLAcBEH2+xHMK6MTyHJc7MTnnYb6wsoLR29POVGJ7LycmVXIqyy/4/2ShP5sUwTXuOwb/w==}
@@ -7751,9 +7748,8 @@ snapshots:
       glob: 7.2.3
       minimatch: 3.1.2
 
-  '@electron/asar@https://codeload.github.com/mmaietta/asar/tar.gz/b62cefa1fc28a0fffe32591625a761afad6e4453':
+  '@electron/asar@https://codeload.github.com/mmaietta/asar/tar.gz/bfaa9c2900bb60d2c7cbf44ff78484be5591234a':
     dependencies:
-      '@types/glob': 7.2.0
       commander: 5.1.0
       glob: 7.2.3
       minimatch: 3.1.2
@@ -8516,11 +8512,6 @@ snapshots:
     dependencies:
       '@types/node': 22.10.1
 
-  '@types/glob@7.2.0':
-    dependencies:
-      '@types/minimatch': 5.1.2
-      '@types/node': 22.10.1
-
   '@types/glob@8.1.0':
     dependencies:
       '@types/minimatch': 5.1.2
@@ -8790,7 +8781,7 @@ snapshots:
       sirv: 3.0.0
       tinyglobby: 0.2.10
       tinyrainbow: 2.0.0
-      vitest: 3.0.5(@types/node@22.10.1)(@vitest/ui@3.0.4)(sass@1.82.0)(yaml@2.6.1)
+      vitest: 3.0.5(@types/node@22.10.1)(@vitest/ui@3.0.4(vitest@3.0.5))(sass@1.82.0)(yaml@2.6.1)
 
   '@vitest/utils@3.0.4':
     dependencies:
@@ -13013,7 +13004,7 @@ snapshots:
 
   vitest-mock-commonjs@1.0.2: {}
 
-  vitest@3.0.5(@types/node@22.10.1)(@vitest/ui@3.0.4)(sass@1.82.0)(yaml@2.6.1):
+  vitest@3.0.5(@types/node@22.10.1)(@vitest/ui@3.0.4(vitest@3.0.5))(sass@1.82.0)(yaml@2.6.1):
     dependencies:
       '@vitest/expect': 3.0.5
       '@vitest/mocker': 3.0.5(vite@6.2.0(@types/node@22.10.1)(sass@1.82.0)(yaml@2.6.1))
