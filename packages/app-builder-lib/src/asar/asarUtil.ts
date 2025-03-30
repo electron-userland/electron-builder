@@ -75,7 +75,7 @@ export class AsarPackager {
           fileSet,
           transformedData,
           stat,
-          unpackedPaths: Array.from(unpackedPaths).map(p => ensureNoEndSlash(p)),
+          unpackedPaths: Array.from(unpackedPaths).map(p => path.normalize(p)),
         })
         if (result != null) {
           results.push(result)
@@ -95,10 +95,10 @@ export class AsarPackager {
   }): Promise<Filestream | null> {
     const { unpackedPaths, transformedData, file, destination, stat, fileSet } = options
 
-    const isChildDirectory = unpackedPaths.includes(destination) || unpackedPaths.some(unpackedPath => destination.startsWith(unpackedPath + path.sep))
+    const isChildDirectory = unpackedPaths.includes(destination) || unpackedPaths.some(unpackedPath => path.normalize(destination).startsWith(unpackedPath + path.sep))
     const unpacked = isChildDirectory || (this.config.unpackPattern?.(file, stat) ?? false)
     process.stdout.write(`Paths ${JSON.stringify(unpackedPaths)}\n`)
-    process.stdout.write(`Packing ${file} -> ${destination} ${isChildDirectory ? " (unpacked)" : ""}\n`)
+    process.stdout.write(`Packing ${file} -> ${destination} - ${path.normalize(destination)} ${isChildDirectory ? " (unpacked)" : ""}\n`)
 
     if (!stat.isFile() && !stat.isSymbolicLink()) {
       return null
