@@ -92,7 +92,7 @@ export class AsarPackager {
     fileSet: ResolvedFileSet
     transformedData: string | Buffer | undefined
     unpackedPaths: string[]
-  }): Promise<Filestream | null> {
+  }): Promise<Filestream> {
     const { unpackedPaths, transformedData, file, destination, stat, fileSet } = options
 
     const isChildDirectory = unpackedPaths.includes(destination) || unpackedPaths.some(unpackedPath => path.normalize(destination).startsWith(unpackedPath + path.sep))
@@ -101,7 +101,7 @@ export class AsarPackager {
     process.stdout.write(`Packing ${file} -> ${destination} - ${path.normalize(destination)} ${isChildDirectory ? " (unpacked)" : ""}\n`)
 
     if (!stat.isFile() && !stat.isSymbolicLink()) {
-      return null
+      return { filePath: destination, properties: { unpacked, type: "directory", stat } }
     }
 
     // write any data if provided, skip symlink check
