@@ -9,6 +9,7 @@ import { PlatformPackager } from "../platformPackager"
 import { ResolvedFileSet, getDestinationPath } from "../util/appFileCopier"
 import { detectUnpackedDirs } from "./unpackDetector"
 import { Readable } from "stream"
+import { ensureNoEndSlash } from "../fileMatcher"
 
 /** @internal */
 export class AsarPackager {
@@ -74,7 +75,7 @@ export class AsarPackager {
           fileSet,
           transformedData,
           stat,
-          unpackedPaths: Array.from(unpackedPaths).map(p => path.normalize(p)),
+          unpackedPaths: Array.from(unpackedPaths).map(p => ensureNoEndSlash(p)),
         })
         if (result != null) {
           results.push(result)
