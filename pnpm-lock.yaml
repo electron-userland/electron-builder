@@ -99,8 +99,8 @@ importers:
         specifier: ~2.6.5
         version: 2.6.5
       '@electron/asar':
-        specifier: github:mmaietta/asar#bfaa9c2900bb60d2c7cbf44ff78484be5591234a
-        version: https://codeload.github.com/mmaietta/asar/tar.gz/bfaa9c2900bb60d2c7cbf44ff78484be5591234a
+        specifier: github:mmaietta/asar#4f50d76287d419ee862d898c448f175df9c373de
+        version: https://codeload.github.com/mmaietta/asar/tar.gz/4f50d76287d419ee862d898c448f175df9c373de
       '@electron/fuses':
         specifier: ^1.8.0
         version: 1.8.0
@@ -1642,8 +1642,8 @@ packages:
     engines: {node: '>=10.12.0'}
     hasBin: true
 
-  '@electron/asar@https://codeload.github.com/mmaietta/asar/tar.gz/bfaa9c2900bb60d2c7cbf44ff78484be5591234a':
-    resolution: {tarball: https://codeload.github.com/mmaietta/asar/tar.gz/bfaa9c2900bb60d2c7cbf44ff78484be5591234a}
+  '@electron/asar@https://codeload.github.com/mmaietta/asar/tar.gz/4f50d76287d419ee862d898c448f175df9c373de':
+    resolution: {tarball: https://codeload.github.com/mmaietta/asar/tar.gz/4f50d76287d419ee862d898c448f175df9c373de}
     version: 0.0.0-development
     engines: {node: '>=10.12.0'}
     hasBin: true
@@ -7748,7 +7748,7 @@ snapshots:
       glob: 7.2.3
       minimatch: 3.1.2
 
-  '@electron/asar@https://codeload.github.com/mmaietta/asar/tar.gz/bfaa9c2900bb60d2c7cbf44ff78484be5591234a':
+  '@electron/asar@https://codeload.github.com/mmaietta/asar/tar.gz/4f50d76287d419ee862d898c448f175df9c373de':
     dependencies:
       commander: 5.1.0
       glob: 7.2.3

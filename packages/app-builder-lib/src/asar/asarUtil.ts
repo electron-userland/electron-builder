@@ -1,4 +1,4 @@
-import { createPackageFromStreams, Filestream } from "@electron/asar"
+import { createPackageFromStreams, AsarStreamType, AsarDirectory, AsarStream } from "@electron/asar"
 import { log } from "builder-util"
 import { Filter } from "builder-util/out/fs"
 import * as fs from "fs-extra"
@@ -40,7 +40,7 @@ export class AsarPackager {
     await this.executeElectronAsar(streams)
   }
 
-  private async executeElectronAsar(streams: Filestream[]) {
+  private async executeElectronAsar(streams: AsarStreamType[]) {
     // override logger temporarily to clean up console (electron/asar does some internal logging that blogs up the default electron-builder logs)
     const consoleLogger = console.log
     console.log = (...args) => {
@@ -53,7 +53,7 @@ export class AsarPackager {
     console.log = consoleLogger
   }
 
-  private async processFileSets(fileSets: ResolvedFileSet[]): Promise<Filestream[]> {
+  private async processFileSets(fileSets: ResolvedFileSet[]): Promise<AsarStreamType[]> {
     const unpackedPaths = new Set<string>()
     if (this.config.options.smartUnpack !== false) {
       for (const fileSet of fileSets) {
@@ -61,7 +61,7 @@ export class AsarPackager {
       }
     }
 
-    const results: Filestream[] = []
+    const results: AsarStreamType[] = []
     for (const fileSet of fileSets) {
       // Don't use Promise.all, we need to retain order of execution/iteration through the already-ordered fileset
       for (const [index, file] of fileSet.files.entries()) {
@@ -80,20 +80,22 @@ export class AsarPackager {
 
         const isDirUnpacked = unpacked(path.dirname(destination))
         results.push({
-          filePath: path.dirname(destination),
-          properties: { unpacked: isDirUnpacked, type: "directory", stat },
+          type: "directory",
+          path: path.dirname(destination),
+          unpacked: isDirUnpacked,
         })
 
         let superDir = path.dirname(file)
         // if subdir is unpacked, then mark all parent paths as unpacked
         while (superDir.includes(this.packager.info.appDir)) {
           if (paths.some(unpackedPath => path.normalize(superDir).includes(unpackedPath + path.sep))) {
-            const filestream: Filestream = {
-              filePath: superDir.substring(this.packager.info.appDir.length + 1),
-              properties: { unpacked: true, type: "directory", stat },
+            const dir: AsarDirectory = {
+              type: "directory",
+              path: superDir.substring(this.packager.info.appDir.length + 1),
+              unpacked: true,
             }
-            if (!results.some(r => r.filePath === filestream.filePath)) {
-              results.push(filestream)
+            if (!results.some(r => r.path === dir.path)) {
+              results.push(dir)
             }
           }
           superDir = path.dirname(superDir)
@@ -123,11 +125,11 @@ export class AsarPackager {
     fileSet: ResolvedFileSet
     transformedData: string | Buffer | undefined
     unpacked: boolean
-  }): Promise<Filestream> {
+  }): Promise<AsarStreamType> {
     const { unpacked, transformedData, file, destination, stat, fileSet } = options
 
     if (!stat.isFile() && !stat.isSymbolicLink()) {
-      return { filePath: destination, properties: { unpacked, type: "directory", stat } }
+      return { path: destination, unpacked, type: "directory" }
     }
 
     // write any data if provided, skip symlink check
@@ -140,7 +142,7 @@ export class AsarPackager {
           },
         })
       }
-      return { filePath: destination, streamGenerator, properties: { unpacked, type: "file", stat: { ...stat, size: transformedData.length } } }
+      return { path: destination, streamGenerator, unpacked, type: "file", stat: { ...stat, size: transformedData.length } }
     }
 
     const realPathFile = await fs.realpath(file)
@@ -151,15 +153,19 @@ export class AsarPackager {
       throw new Error(`Cannot copy file (${path.basename(file)}) symlinked to file (${path.basename(realPathFile)}) outside the package as that violates asar security integrity`)
     }
 
-    const config: (type: Filestream["properties"]["type"]) => Filestream = type => ({
-      filePath: destination,
+    const config = {
+      path: destination,
       streamGenerator: () => fs.createReadStream(file),
-      properties: { unpacked, type, stat },
-    })
+      unpacked,
+      stat,
+    }
 
-    // not a symlink, copy directly
+    // not a symlink, stream directly
     if (file === realPathFile) {
-      return config("file")
+      return {
+        ...config,
+        type: "file",
+      }
     }
 
     // okay, it must be a symlink. evaluate link to be relative to source file in asar
@@ -167,7 +173,11 @@ export class AsarPackager {
     if (path.isAbsolute(link)) {
       link = path.relative(path.dirname(file), link)
     }
-    return config("link")
+    return {
+      ...config,
+      type: "link",
+      symlink: link,
+    }
   }
 
   private orderFileSet(fileSet: ResolvedFileSet): ResolvedFileSet {
