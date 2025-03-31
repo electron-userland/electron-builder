@@ -69,13 +69,44 @@ export class AsarPackager {
         const stat = fileSet.metadata.get(file)!
         const destination = path.relative(this.config.defaultDestination, getDestinationPath(file, fileSet))
 
+        const paths = Array.from(unpackedPaths).map(p => path.normalize(p))
+
+        const isChildDirectory = (fileOrDirPath: string) =>
+          paths.includes(path.normalize(fileOrDirPath)) || paths.some(unpackedPath => path.normalize(fileOrDirPath).startsWith(unpackedPath + path.sep))
+        const unpacked = (dir: string) => isChildDirectory(dir) || (this.config.unpackPattern?.(file, stat) ?? false)
+
+        // process.stdout.write(`Paths ${JSON.stringify(unpackedPaths)}\n`)
+        // process.stdout.write(`Packing ${file} -> ${destination} - ${path.normalize(destination)} ${isChildDirectory(destination) ? " (unpacked)" : ""}\n`)
+
+        const isDirUnpacked = unpacked(path.dirname(destination))
+        results.push({
+          filePath: path.dirname(destination),
+          properties: { unpacked: isDirUnpacked, type: "directory", stat },
+        })
+
+        let superDir = path.dirname(file)
+        // if subdir is unpacked, then mark all parent paths as unpacked
+        while (superDir.includes(this.packager.info.appDir)) {
+          if (paths.some(unpackedPath => path.normalize(superDir).includes(unpackedPath + path.sep))) {
+            const filestream: Filestream = {
+              filePath: superDir.substring(this.packager.info.appDir.length + 1),
+              properties: { unpacked: true, type: "directory", stat },
+            }
+            if (!results.some(r => r.filePath === filestream.filePath)) {
+              results.push(filestream)
+            }
+          }
+          superDir = path.dirname(superDir)
+        }
+
+        // }
         const result = await this.processFileOrSymlink({
           file,
           destination,
           fileSet,
           transformedData,
           stat,
-          unpackedPaths: Array.from(unpackedPaths).map(p => path.normalize(p)),
+          unpacked: unpacked(destination),
         })
         if (result != null) {
           results.push(result)
@@ -91,14 +122,9 @@ export class AsarPackager {
     stat: fs.Stats
     fileSet: ResolvedFileSet
     transformedData: string | Buffer | undefined
-    unpackedPaths: string[]
+    unpacked: boolean
   }): Promise<Filestream> {
-    const { unpackedPaths, transformedData, file, destination, stat, fileSet } = options
-
-    const isChildDirectory = unpackedPaths.includes(destination) || unpackedPaths.some(unpackedPath => path.normalize(destination).startsWith(unpackedPath + path.sep))
-    const unpacked = isChildDirectory || (this.config.unpackPattern?.(file, stat) ?? false)
-    process.stdout.write(`Paths ${JSON.stringify(unpackedPaths)}\n`)
-    process.stdout.write(`Packing ${file} -> ${destination} - ${path.normalize(destination)} ${isChildDirectory ? " (unpacked)" : ""}\n`)
+    const { unpacked, transformedData, file, destination, stat, fileSet } = options
 
     if (!stat.isFile() && !stat.isSymbolicLink()) {
       return { filePath: destination, properties: { unpacked, type: "directory", stat } }
