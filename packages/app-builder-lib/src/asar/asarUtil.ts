@@ -1,4 +1,4 @@
-import { createPackageFromStreams, AsarStreamType, AsarDirectory, AsarStream } from "@electron/asar"
+import { createPackageFromStreams, AsarStreamType, AsarDirectory } from "@electron/asar"
 import { log } from "builder-util"
 import { Filter } from "builder-util/out/fs"
 import * as fs from "fs-extra"
@@ -9,7 +9,6 @@ import { PlatformPackager } from "../platformPackager"
 import { ResolvedFileSet, getDestinationPath } from "../util/appFileCopier"
 import { detectUnpackedDirs } from "./unpackDetector"
 import { Readable } from "stream"
-import { ensureNoEndSlash } from "../fileMatcher"
 
 /** @internal */
 export class AsarPackager {
@@ -83,7 +82,7 @@ export class AsarPackager {
           fileSet,
           transformedData,
           stat,
-          unpacked: isUnpacked(destination),
+          isUnpacked,
         })
         if (result != null) {
           results.push(result)
@@ -117,9 +116,10 @@ export class AsarPackager {
     stat: fs.Stats
     fileSet: ResolvedFileSet
     transformedData: string | Buffer | undefined
-    unpacked: boolean
+    isUnpacked: (path: string) => boolean
   }): Promise<AsarStreamType> {
-    const { unpacked, transformedData, file, destination, stat, fileSet } = options
+    const { isUnpacked, transformedData, file, destination, stat, fileSet } = options
+    const unpacked = isUnpacked(destination)
 
     if (!stat.isFile() && !stat.isSymbolicLink()) {
       return { path: destination, unpacked, type: "directory" }
