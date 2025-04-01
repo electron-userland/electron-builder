@@ -73,42 +73,17 @@ export class AsarPackager {
 
         const isChildDirectory = (fileOrDirPath: string) =>
           paths.includes(path.normalize(fileOrDirPath)) || paths.some(unpackedPath => path.normalize(fileOrDirPath).startsWith(unpackedPath + path.sep))
-        const unpacked = (dir: string) => isChildDirectory(dir) || (this.config.unpackPattern?.(file, stat) ?? false)
+        const isUnpacked = (dir: string) => isChildDirectory(dir) || (this.config.unpackPattern?.(file, stat) ?? false)
 
-        // process.stdout.write(`Paths ${JSON.stringify(unpackedPaths)}\n`)
-        // process.stdout.write(`Packing ${file} -> ${destination} - ${path.normalize(destination)} ${isChildDirectory(destination) ? " (unpacked)" : ""}\n`)
+        this.processParentDirectories({ isUnpacked, destination, results, file, paths })
 
-        const isDirUnpacked = unpacked(path.dirname(destination))
-        results.push({
-          type: "directory",
-          path: path.dirname(destination),
-          unpacked: isDirUnpacked,
-        })
-
-        let superDir = path.dirname(file)
-        // if subdir is unpacked, then mark all parent paths as unpacked
-        while (superDir.includes(this.packager.info.appDir)) {
-          if (paths.some(unpackedPath => path.normalize(superDir).includes(unpackedPath + path.sep))) {
-            const dir: AsarDirectory = {
-              type: "directory",
-              path: superDir.substring(this.packager.info.appDir.length + 1),
-              unpacked: true,
-            }
-            if (!results.some(r => r.path === dir.path)) {
-              results.push(dir)
-            }
-          }
-          superDir = path.dirname(superDir)
-        }
-
-        // }
         const result = await this.processFileOrSymlink({
           file,
           destination,
           fileSet,
           transformedData,
           stat,
-          unpacked: unpacked(destination),
+          unpacked: isUnpacked(destination),
         })
         if (result != null) {
           results.push(result)
@@ -116,6 +91,38 @@ export class AsarPackager {
       }
     }
     return results
+  }
+
+  private processParentDirectories(options: { isUnpacked: (path: string) => boolean; destination: string; results: AsarStreamType[]; file: string; paths: string[] }) {
+    const { isUnpacked, destination, results, file, paths } = options
+    // process parent directories of destination
+    // const isDirUnpacked = isUnpacked(path.dirname(destination))
+    // results.push({
+    //   type: "directory",
+    //   path: path.dirname(destination),
+    //   unpacked: isDirUnpacked,
+    // })
+
+    // process parent directories
+    let superDir = path.dirname(path.normalize(destination))
+    // while (superDir.startsWith(this.packager.info.appDir)) {
+    while (superDir !== ".") {
+      // const pathInsideAsar = superDir.substring(this.packager.info.appDir.length + 1)
+      const unpacked = isUnpacked(superDir)
+      // const unpacked =  paths.some(unpackedPath => superDir.includes(unpackedPath + path.sep))
+
+      const dir: AsarDirectory = {
+        type: "directory",
+        path: superDir,
+        unpacked,
+      }
+      // add to results if not already present
+      if (!results.some(r => r.path === dir.path)) {
+        results.push(dir)
+      }
+
+      superDir = path.dirname(superDir)
+    }
   }
 
   private async processFileOrSymlink(options: {
