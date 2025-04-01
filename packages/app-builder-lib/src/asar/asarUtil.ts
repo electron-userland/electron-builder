@@ -75,7 +75,7 @@ export class AsarPackager {
           paths.includes(path.normalize(fileOrDirPath)) || paths.some(unpackedPath => path.normalize(fileOrDirPath).startsWith(unpackedPath + path.sep))
         const isUnpacked = (dir: string) => isChildDirectory(dir) || (this.config.unpackPattern?.(file, stat) ?? false)
 
-        this.processParentDirectories({ isUnpacked, destination, results, file, paths })
+        this.processParentDirectories(isUnpacked, destination, results)
 
         const result = await this.processFileOrSymlink({
           file,
@@ -93,28 +93,14 @@ export class AsarPackager {
     return results
   }
 
-  private processParentDirectories(options: { isUnpacked: (path: string) => boolean; destination: string; results: AsarStreamType[]; file: string; paths: string[] }) {
-    const { isUnpacked, destination, results, file, paths } = options
-    // process parent directories of destination
-    // const isDirUnpacked = isUnpacked(path.dirname(destination))
-    // results.push({
-    //   type: "directory",
-    //   path: path.dirname(destination),
-    //   unpacked: isDirUnpacked,
-    // })
-
+  private processParentDirectories(isUnpacked: (path: string) => boolean, destination: string, results: AsarStreamType[]) {
     // process parent directories
     let superDir = path.dirname(path.normalize(destination))
-    // while (superDir.startsWith(this.packager.info.appDir)) {
     while (superDir !== ".") {
-      // const pathInsideAsar = superDir.substring(this.packager.info.appDir.length + 1)
-      const unpacked = isUnpacked(superDir)
-      // const unpacked =  paths.some(unpackedPath => superDir.includes(unpackedPath + path.sep))
-
       const dir: AsarDirectory = {
         type: "directory",
         path: superDir,
-        unpacked,
+        unpacked: isUnpacked(superDir),
       }
       // add to results if not already present
       if (!results.some(r => r.path === dir.path)) {
