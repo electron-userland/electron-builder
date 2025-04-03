@@ -99,8 +99,8 @@ importers:
         specifier: ~2.6.5
         version: 2.6.5
       '@electron/asar':
-        specifier: 3.4.0
-        version: 3.4.0
+        specifier: github:mmaietta/asar#fix/stream-symlinks
+        version: https://codeload.github.com/mmaietta/asar/tar.gz/15ecf13b82b3fbbc08cde61b10c9c478435ebb55
       '@electron/fuses':
         specifier: ^1.8.0
         version: 1.8.0
@@ -1631,6 +1631,12 @@ packages:
 
   '@electron/asar@3.4.0':
     resolution: {integrity: sha512-8ZAmXjsQ17wJxdv4755hZ1Xiw85dwETlWYQwl+imww18CaEK4bxPvAotJEfIZGbRMrNEJOTMyuVQD+yDY03N5Q==}
+    engines: {node: '>=10.12.0'}
+    hasBin: true
+
+  '@electron/asar@https://codeload.github.com/mmaietta/asar/tar.gz/15ecf13b82b3fbbc08cde61b10c9c478435ebb55':
+    resolution: {tarball: https://codeload.github.com/mmaietta/asar/tar.gz/15ecf13b82b3fbbc08cde61b10c9c478435ebb55}
+    version: 0.0.0-development
     engines: {node: '>=10.12.0'}
     hasBin: true
 
@@ -7800,6 +7806,12 @@ snapshots:
       ajv-keywords: 3.5.2(ajv@6.12.6)
 
   '@electron/asar@3.4.0':
+    dependencies:
+      commander: 5.1.0
+      glob: 7.2.3
+      minimatch: 3.1.2
+
+  '@electron/asar@https://codeload.github.com/mmaietta/asar/tar.gz/15ecf13b82b3fbbc08cde61b10c9c478435ebb55':
     dependencies:
       commander: 5.1.0
       glob: 7.2.3
