@@ -57,7 +57,14 @@ export function isSignAllowed(isPrintWarn = true): boolean {
   return true
 }
 
-export async function reportError(isMas: boolean, certificateTypes: CertType[], qualifier: string | Nullish, keychainFile: string | Nullish, isForceCodeSigning: boolean) {
+export async function reportError(
+  isMas: boolean,
+  certificateTypes: CertType[],
+  qualifier: string | Nullish,
+  keychainFile: string | Nullish,
+  isForceCodeSigning: boolean,
+  usingAdHocFallback: boolean
+) {
   const logFields: Fields = {}
   if (qualifier == null) {
     logFields.reason = ""
@@ -88,10 +95,11 @@ export async function reportError(isMas: boolean, certificateTypes: CertType[], 
       .join("\n")
   }
 
+  const skipMessage = usingAdHocFallback ? "falling back to ad-hoc signature for macOS application code signing" : "skipped macOS application code signing"
   if (isMas || isForceCodeSigning) {
-    throw new Error(Logger.createMessage("skipped macOS application code signing", logFields, "error", it => it))
+    throw new Error(Logger.createMessage(skipMessage, logFields, "error", it => it))
   } else {
-    log.warn(logFields, "skipped macOS application code signing")
+    log.warn(logFields, skipMessage)
   }
 }
 
