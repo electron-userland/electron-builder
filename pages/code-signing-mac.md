@@ -1,6 +1,6 @@
 macOS code signing is supported. If the configuration values are provided correctly in your package.json, then signing should be automatically executed.
 
-On a macOS development machine, a valid and appropriate identity from your keychain will be automatically used.
+On a macOS development machine, a valid and appropriate identity from your keychain will be automatically used. If no such identity exists, the default behavior depends on the target architecture. On ARM or universal builds, an ad-hoc signature will be applied by default. On Intel-only builds, the default behavior is to not sign at all.
 
 !!! tip
     See article [Notarizing your Electron application](https://kilianvalkhof.com/2019/electron/notarizing-your-electron-application/).
@@ -23,7 +23,7 @@ On a macOS development machine, a valid and appropriate identity from your keych
 
 To disable Code Signing when building for macOS leave all the above vars unset except for `CSC_IDENTITY_AUTO_DISCOVERY` which needs to be set to `false`. This can be done by running `export CSC_IDENTITY_AUTO_DISCOVERY=false`.
 
-Another way — set `mac.identity` to `null`. You can pass aditional configuration using CLI as well: `-c.mac.identity=null`.
+Another way — set `mac.identity` to `null`. You can pass additional configuration using CLI as well: `-c.mac.identity=null`. If you are building for ARM, you likely actually want to use ad-hoc signing, in which case you should set `mac.identity` to `-`.
 
 ## Code Signing and Notarization Tutorial
 Thank you to a community member for putting this together.
