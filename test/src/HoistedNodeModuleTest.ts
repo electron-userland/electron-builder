@@ -168,7 +168,8 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
         },
         packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
       }
-    ))
+    )
+  )
 
   test("yarn electron-clear-data", ({ expect }) =>
     assertPack(

@@ -1,6 +1,6 @@
 import { Lazy } from "lazy-val"
 import { NodeModulesCollector } from "./nodeModulesCollector"
-import { DependencyTree, NpmDependency, ParsedDependencyTree } from "./types"
+import { DependencyTree, NpmDependency } from "./types"
 import { log } from "builder-util"
 
 export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency, string> {
@@ -25,26 +25,16 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
     const _deps = tree._dependencies ?? {}
 
     let deps = tree.dependencies ?? {}
-    let implicitDependenciesInjected = false
 
     if (Object.keys(_deps).length > 0 && Object.keys(deps).length === 0) {
       log.debug({ name: tree.name, version: tree.version }, "injecting implicit _dependencies")
       deps = this.allDependencies.get(`${tree.name}@${tree.version}`)?.dependencies ?? {}
-      implicitDependenciesInjected = true
     }
 
     const dependencies = Object.entries(deps).reduce<DependencyTree["dependencies"]>((acc, curr) => {
       const [packageName, dependency] = curr
       if (!_deps[packageName] || Object.keys(dependency).length === 0) {
         return acc
-      }
-      if (implicitDependenciesInjected) {
-        const { name, version, path, workspaces } = dependency
-        const simplifiedTree: ParsedDependencyTree = { name, version, path, workspaces }
-        return {
-          ...acc,
-          [packageName]: { ...simplifiedTree, implicitDependenciesInjected },
-        }
       }
       return {
         ...acc,
@@ -59,7 +49,6 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
       path: packagePath,
       workspaces,
       dependencies,
-      implicitDependenciesInjected,
     }
     return depTree
   }

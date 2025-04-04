@@ -12,8 +12,10 @@ export type ParsedDependencyTree = {
   readonly workspaces?: string[] // we only use this at root level
 }
 
-export interface DependencyTree extends Omit<Dependency<DependencyTree, DependencyTree>, "optionalDependencies"> {
-  readonly implicitDependenciesInjected: boolean
+export interface DependencyTree extends ParsedDependencyTree {
+  readonly dependencies?: {
+    [packageName: string]: DependencyTree
+  }
 }
 
 // Note: `PnpmDependency` and `NpmDependency` include the output of `JSON.parse(...)` of `pnpm list` and `npm list` respectively

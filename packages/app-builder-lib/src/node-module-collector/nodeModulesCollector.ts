@@ -112,26 +112,17 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
         )
         throw new Error("unable to parse `path` during `tree.dependencies` reduce")
       }
+
+      if (this.dependencyPathMap.has(newKey)) {
+        return acc
+      }
+
       // Map dependency details: name, version and path to the dependency tree
       this.dependencyPathMap.set(newKey, path.normalize(this.resolvePath(dependencies.path)))
       if (!acc[parentKey]) {
         acc[parentKey] = { dependencies: [] }
       }
       acc[parentKey].dependencies.push(newKey)
-      if (tree.implicitDependenciesInjected) {
-        log.debug(
-          {
-            dependency: packageName,
-            version,
-            path: dependencies.path,
-            parentModule: tree.name,
-            parentVersion: tree.version,
-          },
-          "converted implicit dependency"
-        )
-        return acc
-      }
-
       return { ...acc, ...this.convertToDependencyGraph(dependencies, newKey) }
     }, {})
   }

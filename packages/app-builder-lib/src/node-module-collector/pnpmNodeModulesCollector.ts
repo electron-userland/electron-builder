@@ -73,7 +73,6 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
       path: packagePath,
       workspaces,
       dependencies,
-      implicitDependenciesInjected: false,
     }
     return depTree
   }
