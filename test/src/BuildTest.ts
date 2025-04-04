@@ -10,7 +10,7 @@ import { ELECTRON_VERSION } from "./helpers/testConfig"
 import { verifySmartUnpack } from "./helpers/verifySmartUnpack"
 import { spawn } from "builder-util/out/util"
 
-test("cli", ({ expect }) => {
+test.ifLinux("cli", ({ expect }) => {
   // because these methods are internal
   const { configureBuildCommand, normalizeOptions } = require("electron-builder/out/builder")
   const yargs = createYargs()
