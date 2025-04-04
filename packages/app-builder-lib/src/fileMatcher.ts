@@ -23,7 +23,7 @@ export const excludedExts =
   // https://github.com/electron-userland/electron-builder/issues/7512
   "mk,a,o,obj,forge-meta"
 
-export function ensureNoEndSlash(file: string): string {
+function ensureNoEndSlash(file: string): string {
   if (path.sep !== "/") {
     file = file.replace(/\//g, path.sep)
   }

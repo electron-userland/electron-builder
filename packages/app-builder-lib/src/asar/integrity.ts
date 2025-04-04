@@ -1,10 +1,9 @@
 import { FilterStats, log, statOrNull, walk } from "builder-util"
 import { createHash } from "crypto"
-import { createReadStream } from "fs"
 import { readdir } from "fs/promises"
 import * as path from "path"
 import { FileMatcher } from "../fileMatcher"
-import { NodeIntegrity, readAsarHeader } from "./asar"
+import { readAsarHeader } from "./asar"
 
 export interface AsarIntegrityOptions {
   readonly resourcesPath: string

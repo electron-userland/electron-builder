@@ -15,7 +15,7 @@ export class AsarPackager {
   private readonly outFile: string
 
   constructor(
-    private readonly packager: PlatformPackager<any>,
+    readonly packager: PlatformPackager<any>,
     private readonly config: {
       defaultDestination: string
       resourcePath: string
