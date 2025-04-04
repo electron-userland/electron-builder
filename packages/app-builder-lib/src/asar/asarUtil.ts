@@ -72,7 +72,11 @@ export class AsarPackager {
 
         const isChildDirectory = (fileOrDirPath: string) =>
           paths.includes(path.normalize(fileOrDirPath)) || paths.some(unpackedPath => path.normalize(fileOrDirPath).startsWith(unpackedPath + path.sep))
-        const isUnpacked = (dir: string) => isChildDirectory(dir) || (this.config.unpackPattern?.(file, stat) ?? false)
+        const isUnpacked = (dir: string) => {
+          const isChild = isChildDirectory(dir)
+          const isFileUnpacked = this.config.unpackPattern?.(file, stat) ?? false
+          return isChild || isFileUnpacked
+        }
 
         this.processParentDirectories(isUnpacked, destination, results)
 
@@ -135,7 +139,8 @@ export class AsarPackager {
           },
         })
       }
-      return { path: destination, streamGenerator, unpacked, type: "file", stat: { ...stat, size: transformedData.length } }
+      const size = Buffer.byteLength(transformedData)
+      return { path: destination, streamGenerator, unpacked, type: "file", stat: { mode: stat.mode, size } }
     }
 
     const realPathFile = await fs.realpath(file)
