@@ -22,16 +22,16 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
 
   protected collectAllDependencies(tree: NpmDependency) {
     for (const [key, value] of Object.entries(tree.dependencies || {})) {
-      const hasNestedDependencies = Object.keys(value.dependencies ?? {}).length > 0;
-      const hasNoDependencies = Object.keys(value._dependencies ?? {}).length === 0;
+      const hasNestedDependencies = Object.keys(value.dependencies ?? {}).length > 0
+      const hasNoDependencies = Object.keys(value._dependencies ?? {}).length === 0
 
       if (hasNestedDependencies) {
-        this.allDependencies.set(`${key}@${value.version}`, value);
-        this.collectAllDependencies(value);
+        this.allDependencies.set(`${key}@${value.version}`, value)
+        this.collectAllDependencies(value)
       }
 
       if (hasNoDependencies) {
-        this.allDependencies.set(`${key}@${value.version}`, value);
+        this.allDependencies.set(`${key}@${value.version}`, value)
       }
     }
   }

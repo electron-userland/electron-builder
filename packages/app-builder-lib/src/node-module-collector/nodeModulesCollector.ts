@@ -89,10 +89,10 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
     }
   }
 
- protected collectAllDependencies(tree: Dependency<T, OptionalsType>) {
+  protected collectAllDependencies(tree: Dependency<T, OptionalsType>) {
     for (const [key, value] of Object.entries(tree.dependencies || {})) {
-        this.allDependencies.set(`${key}@${value.version}`, value)
-        this.collectAllDependencies(value)
+      this.allDependencies.set(`${key}@${value.version}`, value)
+      this.collectAllDependencies(value)
     }
   }
 
