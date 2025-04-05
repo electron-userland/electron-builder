@@ -20,6 +20,22 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
     return { ...tree, optionalDependencies, _dependencies }
   }
 
+  protected collectAllDependencies(tree: NpmDependency) {
+    for (const [key, value] of Object.entries(tree.dependencies || {})) {
+      const hasNestedDependencies = Object.keys(value.dependencies ?? {}).length > 0;
+      const hasNoDependencies = Object.keys(value._dependencies ?? {}).length === 0;
+
+      if (hasNestedDependencies) {
+        this.allDependencies.set(`${key}@${value.version}`, value);
+        this.collectAllDependencies(value);
+      }
+
+      if (hasNoDependencies) {
+        this.allDependencies.set(`${key}@${value.version}`, value);
+      }
+    }
+  }
+
   protected extractProductionDependencyGraph(tree: NpmDependency, isRoot: boolean = false): void {
     const _deps = tree._dependencies ?? {}
     let deps = tree.dependencies ?? {}

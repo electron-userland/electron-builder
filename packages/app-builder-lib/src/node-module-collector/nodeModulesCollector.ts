@@ -89,12 +89,10 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
     }
   }
 
-  private collectAllDependencies(tree: Dependency<T, OptionalsType>) {
+ protected collectAllDependencies(tree: Dependency<T, OptionalsType>) {
     for (const [key, value] of Object.entries(tree.dependencies || {})) {
-      if (Object.keys(value.dependencies ?? {}).length > 0) {
         this.allDependencies.set(`${key}@${value.version}`, value)
         this.collectAllDependencies(value)
-      }
     }
   }
 
@@ -147,7 +145,7 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
       const node: NodeModuleInfo = {
         name: d.name,
         version: reference,
-        dir: p,
+        dir: this.resolvePath(p),
       }
       result.push(node)
       if (d.dependencies.size > 0) {
