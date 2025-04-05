@@ -22,16 +22,16 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
 
   protected collectAllDependencies(tree: NpmDependency) {
     for (const [key, value] of Object.entries(tree.dependencies || {})) {
-      const hasNestedDependencies = Object.keys(value.dependencies ?? {}).length > 0
-      const hasNoDependencies = Object.keys(value._dependencies ?? {}).length === 0
+      const hasNestedDependencies = Object.keys(value.dependencies ?? {}).length > 0;
+      const hasNoDependencies = Object.keys(value._dependencies ?? {}).length === 0;
 
       if (hasNestedDependencies) {
-        this.allDependencies.set(`${key}@${value.version}`, value)
-        this.collectAllDependencies(value)
+        this.allDependencies.set(`${key}@${value.version}`, value);
+        this.collectAllDependencies(value);
       }
 
       if (hasNoDependencies) {
-        this.allDependencies.set(`${key}@${value.version}`, value)
+        this.allDependencies.set(`${key}@${value.version}`, value);
       }
     }
   }
@@ -52,15 +52,23 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
       deps = this.allDependencies.get(newKey)?.dependencies ?? {}
     }
 
+    this.productionGraph[newKey] = { dependencies: [] };
     const dependencies = Object.entries(deps)
       .filter(([packageName]) => _deps[packageName])
       .map(([packageName, dependency]) => {
         const dependencyKey = `${packageName}@${dependency.version}`
+        if (this.productionGraph[dependencyKey]) {
+          return dependencyKey
+        }
         this.extractProductionDependencyGraph(dependency)
         return dependencyKey
       })
 
-    this.productionGraph[newKey] = { dependencies }
+    if (dependencies.length === 0) {
+      delete this.productionGraph[newKey]
+    } else {
+      this.productionGraph[newKey] = { dependencies }
+    }
   }
 
   protected parseDependenciesTree(jsonBlob: string): NpmDependency {
