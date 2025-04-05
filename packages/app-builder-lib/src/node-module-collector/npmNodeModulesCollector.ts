@@ -52,6 +52,7 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
       deps = this.allDependencies.get(newKey)?.dependencies ?? {}
     }
 
+    // resolve yarn max stack issue
     this.productionGraph[newKey] = { dependencies: [] }
     const dependencies = Object.entries(deps)
       .filter(([packageName]) => _deps[packageName])
