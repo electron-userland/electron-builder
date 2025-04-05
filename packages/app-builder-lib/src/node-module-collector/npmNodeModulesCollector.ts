@@ -20,10 +20,13 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
     return { ...tree, optionalDependencies, _dependencies }
   }
 
-  protected extractProductionDependencyGraph(tree: NpmDependency) {
+  protected extractProductionDependencyGraph(tree: NpmDependency, isRoot: boolean = false): void {
     const _deps = tree._dependencies ?? {}
     let deps = tree.dependencies ?? {}
-    const newKey = `${tree.name}@${tree.version}`
+    let newKey = `${tree.name}@${tree.version}`
+    if (isRoot) {
+      newKey = "."
+    }
 
     if (this.productionGraph[newKey]) {
       return

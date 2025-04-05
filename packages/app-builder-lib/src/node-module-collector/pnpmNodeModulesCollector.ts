@@ -36,8 +36,12 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
     }
   }
 
-  extractProductionDependencyGraph(tree: PnpmDependency) {
-    const newKey = `${tree.name}@${tree.version}`
+  extractProductionDependencyGraph(tree: PnpmDependency, isRoot: boolean = false): void {
+    let newKey = `${tree.name}@${tree.version}`
+    if (isRoot) {
+      newKey = "."
+    }
+
     if (this.productionGraph[newKey]) {
       return
     }

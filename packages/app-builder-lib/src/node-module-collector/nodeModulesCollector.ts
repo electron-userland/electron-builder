@@ -18,7 +18,7 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
     const parsedTree: Dependency<T, OptionalsType> = this.extractRelevantData(realTree)
 
     this.collectAllDependencies(parsedTree)
-    this.extractProductionDependencyGraph(parsedTree)
+    this.extractProductionDependencyGraph(parsedTree, true /*isRoot=true*/)
 
     const hoisterResult: HoisterResult = hoist(this.transToHoisterTree(this.productionGraph), { check: true })
     this._getNodeModules(hoisterResult.dependencies, this.nodeModules)
@@ -34,7 +34,7 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
   protected abstract readonly pmCommand: Lazy<string>
   protected abstract getArgs(): string[]
   protected abstract parseDependenciesTree(jsonBlob: string): T
-  protected abstract extractProductionDependencyGraph(tree: Dependency<T, OptionalsType>): void
+  protected abstract extractProductionDependencyGraph(tree: Dependency<T, OptionalsType>, isRoot: boolean): void
 
   protected async getDependenciesTree(): Promise<T> {
     const command = await this.pmCommand.value
