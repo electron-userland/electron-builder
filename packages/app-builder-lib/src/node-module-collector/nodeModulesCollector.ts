@@ -1,14 +1,14 @@
 import { hoist, type HoisterTree, type HoisterResult } from "./hoist"
 import * as path from "path"
 import * as fs from "fs"
-import type { NodeModuleInfo, DependencyTree, DependencyGraph, Dependency } from "./types"
+import type { NodeModuleInfo, DependencyGraph, Dependency } from "./types"
 import { exec, log } from "builder-util"
 import { Lazy } from "lazy-val"
 
 export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType>, OptionalsType> {
   private nodeModules: NodeModuleInfo[] = []
-  protected dependencyPathMap: Map<string, string> = new Map()
   protected allDependencies: Map<string, T> = new Map()
+  protected productionGraph: DependencyGraph = {}
 
   constructor(private readonly rootDir: string) {}
 
@@ -18,11 +18,9 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
     const parsedTree: Dependency<T, OptionalsType> = this.extractRelevantData(realTree)
 
     this.collectAllDependencies(parsedTree)
+    this.extractProductionDependencyGraph(parsedTree)
 
-    const productionTree: DependencyTree = this.extractProductionDependencyTree(parsedTree)
-    const dependencyGraph: DependencyGraph = this.convertToDependencyGraph(productionTree)
-
-    const hoisterResult: HoisterResult = hoist(this.transToHoisterTree(dependencyGraph), { check: true })
+    const hoisterResult: HoisterResult = hoist(this.transToHoisterTree(this.productionGraph), { check: true })
     this._getNodeModules(hoisterResult.dependencies, this.nodeModules)
 
     return this.nodeModules
@@ -36,7 +34,7 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
   protected abstract readonly pmCommand: Lazy<string>
   protected abstract getArgs(): string[]
   protected abstract parseDependenciesTree(jsonBlob: string): T
-  protected abstract extractProductionDependencyTree(tree: Dependency<T, OptionalsType>): DependencyTree
+  protected abstract extractProductionDependencyGraph(tree: Dependency<T, OptionalsType>): void
 
   protected async getDependenciesTree(): Promise<T> {
     const command = await this.pmCommand.value
@@ -91,42 +89,6 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
     }
   }
 
-  private convertToDependencyGraph(tree: DependencyTree, parentKey = "."): DependencyGraph {
-    return Object.entries(tree.dependencies || {}).reduce<DependencyGraph>((acc, curr) => {
-      const [packageName, dependencies] = curr
-      // Skip empty dependencies (like some optionalDependencies)
-      if (Object.keys(dependencies).length === 0) {
-        return acc
-      }
-      const version = dependencies.version || ""
-      const newKey = `${packageName}@${version}`
-      if (!dependencies.path) {
-        log.error(
-          {
-            packageName,
-            data: dependencies,
-            parentModule: tree.name,
-            parentVersion: tree.version,
-          },
-          "dependency path is undefined"
-        )
-        throw new Error("unable to parse `path` during `tree.dependencies` reduce")
-      }
-
-      if (this.dependencyPathMap.has(newKey)) {
-        return acc
-      }
-
-      // Map dependency details: name, version and path to the dependency tree
-      this.dependencyPathMap.set(newKey, path.normalize(this.resolvePath(dependencies.path)))
-      if (!acc[parentKey]) {
-        acc[parentKey] = { dependencies: [] }
-      }
-      acc[parentKey].dependencies.push(newKey)
-      return { ...acc, ...this.convertToDependencyGraph(dependencies, newKey) }
-    }, {})
-  }
-
   private collectAllDependencies(tree: Dependency<T, OptionalsType>) {
     for (const [key, value] of Object.entries(tree.dependencies || {})) {
       if (Object.keys(value.dependencies ?? {}).length > 0) {
@@ -177,7 +139,7 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
 
     for (const d of dependencies.values()) {
       const reference = [...d.references][0]
-      const p = this.dependencyPathMap.get(`${d.name}@${reference}`)
+      const p = this.allDependencies.get(`${d.name}@${reference}`)?.path
       if (p === undefined) {
         log.debug({ name: d.name, reference }, "cannot find path for dependency")
         continue

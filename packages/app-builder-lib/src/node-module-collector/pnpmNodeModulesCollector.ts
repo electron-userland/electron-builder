@@ -1,6 +1,6 @@
 import { Lazy } from "lazy-val"
 import { NodeModulesCollector } from "./nodeModulesCollector"
-import { Dependency, DependencyTree, PnpmDependency } from "./types"
+import { Dependency, PnpmDependency } from "./types"
 import * as path from "path"
 import { exec, log } from "builder-util"
 
@@ -36,45 +36,32 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
     }
   }
 
-  extractProductionDependencyTree(tree: PnpmDependency): DependencyTree {
+  extractProductionDependencyGraph(tree: PnpmDependency) {
+    const newKey = `${tree.name}@${tree.version}`
+    if (this.productionGraph[newKey]) {
+      return
+    }
+
     const p = path.normalize(this.resolvePath(tree.path))
     const packageJson: Dependency<string, string> = require(path.join(p, "package.json"))
-
     const deps = { ...(tree.dependencies || {}), ...(tree.optionalDependencies || {}) }
-    const dependencies = Object.entries(deps).reduce<DependencyTree["dependencies"]>((acc, curr) => {
-      const [packageName, dependency] = curr
-
-      let isOptional: boolean
-      if (packageJson.dependencies?.[packageName]) {
-        isOptional = false
-      } else if (packageJson.optionalDependencies?.[packageName]) {
-        isOptional = true
-      } else {
-        return acc
-      }
-
-      try {
-        return {
-          ...acc,
-          [packageName]: this.extractProductionDependencyTree(dependency),
+    const dependencies = Object.entries(deps)
+      .map(([packageName, dependency]) => {
+        const dependencyKey = `${packageName}@${dependency.version}`
+        const isOptional = packageJson.optionalDependencies?.[packageName] !== undefined
+        try {
+          this.extractProductionDependencyGraph(dependency)
+        } catch (error) {
+          if (isOptional) {
+            return null
+          }
+          throw error
         }
-      } catch (error) {
-        if (isOptional) {
-          return acc
-        }
-        throw error
-      }
-    }, {})
+        return dependencyKey
+      })
+      .filter(Boolean) as string[]
 
-    const { name, version, path: packagePath, workspaces } = tree
-    const depTree: DependencyTree = {
-      name,
-      version,
-      path: packagePath,
-      workspaces,
-      dependencies,
-    }
-    return depTree
+    this.productionGraph[newKey] = { dependencies }
   }
 
   protected parseDependenciesTree(jsonBlob: string): PnpmDependency {

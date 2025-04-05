@@ -12,12 +12,6 @@ export type ParsedDependencyTree = {
   readonly workspaces?: string[] // we only use this at root level
 }
 
-export interface DependencyTree extends ParsedDependencyTree {
-  readonly dependencies?: {
-    [packageName: string]: DependencyTree
-  }
-}
-
 // Note: `PnpmDependency` and `NpmDependency` include the output of `JSON.parse(...)` of `pnpm list` and `npm list` respectively
 // This object has a TON of info - a majority, if not all, of each dependency's package.json
 // We extract only what we need when constructing DependencyTree in `extractProductionDependencyTree`

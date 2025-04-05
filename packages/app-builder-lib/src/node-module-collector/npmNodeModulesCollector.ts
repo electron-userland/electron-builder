@@ -1,7 +1,6 @@
 import { Lazy } from "lazy-val"
 import { NodeModulesCollector } from "./nodeModulesCollector"
-import { DependencyTree, NpmDependency } from "./types"
-import { log } from "builder-util"
+import { NpmDependency } from "./types"
 
 export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency, string> {
   constructor(rootDir: string) {
@@ -21,36 +20,28 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
     return { ...tree, optionalDependencies, _dependencies }
   }
 
-  protected extractProductionDependencyTree(tree: NpmDependency): DependencyTree {
+  protected extractProductionDependencyGraph(tree: NpmDependency) {
     const _deps = tree._dependencies ?? {}
-
     let deps = tree.dependencies ?? {}
+    const newKey = `${tree.name}@${tree.version}`
+
+    if (this.productionGraph[newKey]) {
+      return
+    }
 
     if (Object.keys(_deps).length > 0 && Object.keys(deps).length === 0) {
-      log.debug({ name: tree.name, version: tree.version }, "injecting implicit _dependencies")
-      deps = this.allDependencies.get(`${tree.name}@${tree.version}`)?.dependencies ?? {}
+      deps = this.allDependencies.get(newKey)?.dependencies ?? {}
     }
 
-    const dependencies = Object.entries(deps).reduce<DependencyTree["dependencies"]>((acc, curr) => {
-      const [packageName, dependency] = curr
-      if (!_deps[packageName] || Object.keys(dependency).length === 0) {
-        return acc
-      }
-      return {
-        ...acc,
-        [packageName]: this.extractProductionDependencyTree(dependency),
-      }
-    }, {})
+    const dependencies = Object.entries(deps)
+      .filter(([packageName]) => _deps[packageName])
+      .map(([packageName, dependency]) => {
+        const dependencyKey = `${packageName}@${dependency.version}`
+        this.extractProductionDependencyGraph(dependency)
+        return dependencyKey
+      })
 
-    const { name, version, path: packagePath, workspaces } = tree
-    const depTree: DependencyTree = {
-      name,
-      version,
-      path: packagePath,
-      workspaces,
-      dependencies,
-    }
-    return depTree
+    this.productionGraph[newKey] = { dependencies }
   }
 
   protected parseDependenciesTree(jsonBlob: string): NpmDependency {
