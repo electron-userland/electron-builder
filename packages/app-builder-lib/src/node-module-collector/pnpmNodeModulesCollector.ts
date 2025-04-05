@@ -49,6 +49,7 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
     const p = path.normalize(this.resolvePath(tree.path))
     const packageJson: Dependency<string, string> = require(path.join(p, "package.json"))
     const deps = { ...(tree.dependencies || {}), ...(tree.optionalDependencies || {}) }
+    this.productionGraph[newKey] = { dependencies: [] }
     const dependencies = Object.entries(deps)
       .map(([packageName, dependency]) => {
         const dependencyKey = `${packageName}@${dependency.version}`
