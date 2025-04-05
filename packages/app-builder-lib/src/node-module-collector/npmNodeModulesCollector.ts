@@ -57,18 +57,11 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
       .filter(([packageName]) => _deps[packageName])
       .map(([packageName, dependency]) => {
         const dependencyKey = `${packageName}@${dependency.version}`
-        if (this.productionGraph[dependencyKey]) {
-          return dependencyKey
-        }
         this.extractProductionDependencyGraph(dependency)
         return dependencyKey
       })
 
-    if (dependencies.length === 0) {
-      delete this.productionGraph[newKey]
-    } else {
-      this.productionGraph[newKey] = { dependencies }
-    }
+    this.productionGraph[newKey] = { dependencies }
   }
 
   protected parseDependenciesTree(jsonBlob: string): NpmDependency {
