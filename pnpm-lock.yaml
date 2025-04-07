@@ -99,8 +99,8 @@ importers:
         specifier: ~2.6.5
         version: 2.6.5
       '@electron/asar':
-        specifier: github:mmaietta/asar#fix/stream-symlinks
-        version: https://codeload.github.com/mmaietta/asar/tar.gz/15ecf13b82b3fbbc08cde61b10c9c478435ebb55
+        specifier: 3.4.1
+        version: 3.4.1
       '@electron/fuses':
         specifier: ^1.8.0
         version: 1.8.0
@@ -1629,14 +1629,8 @@ packages:
     resolution: {integrity: sha512-0cp4PsWQ/9avqTVMCtZ+GirikIA36ikvjtHweU4/j8yLtgObI0+JUPhYFScgwlteveGB1rt3Cm8UhN04XayDig==}
     engines: {node: '>= 8.9.0'}
 
-  '@electron/asar@3.4.0':
-    resolution: {integrity: sha512-8ZAmXjsQ17wJxdv4755hZ1Xiw85dwETlWYQwl+imww18CaEK4bxPvAotJEfIZGbRMrNEJOTMyuVQD+yDY03N5Q==}
-    engines: {node: '>=10.12.0'}
-    hasBin: true
-
-  '@electron/asar@https://codeload.github.com/mmaietta/asar/tar.gz/15ecf13b82b3fbbc08cde61b10c9c478435ebb55':
-    resolution: {tarball: https://codeload.github.com/mmaietta/asar/tar.gz/15ecf13b82b3fbbc08cde61b10c9c478435ebb55}
-    version: 0.0.0-development
+  '@electron/asar@3.4.1':
+    resolution: {integrity: sha512-i4/rNPRS84t0vSRa2HorerGRXWyF4vThfHesw0dmcWHp+cspK743UanA0suA5Q5y8kzY2y6YKrvbIUn69BCAiA==}
     engines: {node: '>=10.12.0'}
     hasBin: true
 
@@ -7805,13 +7799,7 @@ snapshots:
       ajv: 6.12.6
       ajv-keywords: 3.5.2(ajv@6.12.6)
 
-  '@electron/asar@3.4.0':
-    dependencies:
-      commander: 5.1.0
-      glob: 7.2.3
-      minimatch: 3.1.2
-
-  '@electron/asar@https://codeload.github.com/mmaietta/asar/tar.gz/15ecf13b82b3fbbc08cde61b10c9c478435ebb55':
+  '@electron/asar@3.4.1':
     dependencies:
       commander: 5.1.0
       glob: 7.2.3
@@ -7894,7 +7882,7 @@ snapshots:
 
   '@electron/universal@2.0.1':
     dependencies:
-      '@electron/asar': 3.4.0
+      '@electron/asar': 3.4.1
       '@malept/cross-spawn-promise': 2.0.0
       debug: 4.4.0
       dir-compare: 4.2.0
@@ -9888,7 +9876,7 @@ snapshots:
 
   electron-winstaller@5.4.0:
     dependencies:
-      '@electron/asar': 3.4.0
+      '@electron/asar': 3.4.1
       debug: 4.4.0
       fs-extra: 7.0.1
       lodash: 4.17.21
