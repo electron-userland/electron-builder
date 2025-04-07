@@ -238,7 +238,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
     const isMas = masOptions != null
     const options = masOptions == null ? this.platformSpecificBuildOptions : masOptions
     const qualifier = options.identity
-    const fallBackToAdhoc = arch === Arch.arm64 || arch === Arch.universal
+    const fallBackToAdhoc = (arch === Arch.arm64 || arch === Arch.universal) && !this.forceCodeSigning
 
     if (qualifier === null) {
       if (this.forceCodeSigning) {
@@ -273,17 +273,15 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
         }
       }
 
+      const noIdentity = !options.sign && identity == null
       if (qualifier === "-") {
         identity = new Identity("-", undefined)
-      }
-
-      if (!options.sign && identity == null) {
-        await reportError(isMas, certificateTypes, qualifier, keychainFile, this.forceCodeSigning, fallBackToAdhoc)
-        if (fallBackToAdhoc) {
-          identity = new Identity("-", undefined)
-        } else {
-          return false
-        }
+      } else if (noIdentity && fallBackToAdhoc) {
+        log.warn(null, "falling back to ad-hoc signature for macOS application code signing")
+        identity = new Identity("-", undefined)
+      } else if (noIdentity) {
+        await reportError(isMas, certificateTypes, qualifier, keychainFile, this.forceCodeSigning)
+        return false
       }
     }
 
