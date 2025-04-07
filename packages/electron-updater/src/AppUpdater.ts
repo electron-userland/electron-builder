@@ -35,7 +35,7 @@ import { gunzipSync } from "zlib"
 import { blockmapFiles } from "./util"
 import { DifferentialDownloaderOptions } from "./differentialDownloader/DifferentialDownloader"
 import { GenericDifferentialDownloader } from "./differentialDownloader/GenericDifferentialDownloader"
-import { DOWNLOAD_PROGRESS, Logger, ResolvedUpdateFileInfo, UPDATE_DOWNLOADED, UpdateCheckResult, UpdateDownloadedEvent, UpdaterSignal } from "./types"
+import { CheckForUpdatesOptions, DOWNLOAD_PROGRESS, Logger, ResolvedUpdateFileInfo, UPDATE_DOWNLOADED, UpdateCheckResult, UpdateDownloadedEvent, UpdaterSignal } from "./types"
 import { VerifyUpdateSupport } from "./main"
 
 export type AppUpdaterEvents = {
@@ -298,7 +298,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    * Asks the server whether there is an update.
    * @returns null if the updater is disabled, otherwise info about the latest version
    */
-  checkForUpdates(): Promise<UpdateCheckResult | null> {
+  checkForUpdates(options?: CheckForUpdatesOptions): Promise<UpdateCheckResult | null> {
     if (!this.isUpdaterActive()) {
       return Promise.resolve(null)
     }
@@ -312,7 +312,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     const nullizePromise = () => (this.checkForUpdatesPromise = null)
 
     this._logger.info("Checking for update")
-    checkForUpdatesPromise = this.doCheckForUpdates()
+    checkForUpdatesPromise = this.doCheckForUpdates(options)
       .then(it => {
         nullizePromise()
         return it
@@ -399,7 +399,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     return headers
   }
 
-  private async isUpdateAvailable(updateInfo: UpdateInfo): Promise<boolean> {
+  private async isUpdateAvailable(updateInfo: UpdateInfo, options?: CheckForUpdatesOptions): Promise<boolean> {
     const latestVersion = parseVersion(updateInfo.version)
     if (latestVersion == null) {
       throw newError(
@@ -415,6 +415,10 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
 
     if (!(await Promise.resolve(this.isUpdateSupported(updateInfo)))) {
       return false
+    }
+
+    if (options?.ignoreStagingPercentage === true) {
+      return true
     }
 
     const isStagingMatch = await this.isStagingMatch(updateInfo)
@@ -473,12 +477,12 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     }
   }
 
-  private async doCheckForUpdates(): Promise<UpdateCheckResult> {
+  private async doCheckForUpdates(options?: CheckForUpdatesOptions): Promise<UpdateCheckResult> {
     this.emit("checking-for-update")
 
     const result = await this.getUpdateInfoAndProvider()
     const updateInfo = result.info
-    if (!(await this.isUpdateAvailable(updateInfo))) {
+    if (!(await this.isUpdateAvailable(updateInfo, options))) {
       this._logger.info(
         `Update for version ${this.currentVersion.format()} is not available (latest version: ${updateInfo.version}, downgrade is ${
           this.allowDowngrade ? "allowed" : "disallowed"

@@ -81,3 +81,7 @@ export interface ResolvedUpdateFileInfo {
 export type UpdaterEvents = "login" | "checking-for-update" | "update-available" | "update-not-available" | "update-cancelled" | "download-progress" | "update-downloaded" | "error"
 
 export type LoginHandler = (authInfo: any, callback: LoginCallback) => void
+
+export type CheckForUpdatesOptions = {
+  ignoreStagingPercentage?: boolean
+}
