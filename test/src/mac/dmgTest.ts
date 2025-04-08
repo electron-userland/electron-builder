@@ -31,6 +31,9 @@ describe("dmg", { sequential: true }, () => {
           // dmg can mount only one volume name, so, to test in parallel, we set different product name
           productName: "NoBuildDirectory",
           publish: null,
+          dmg: {
+            title: "Foo",
+          },
         },
         effectiveOptionComputed: async it => {
           if (!("volumePath" in it)) {
@@ -61,6 +64,7 @@ describe("dmg", { sequential: true }, () => {
           backgroundColor: "orange",
           // speed-up test
           writeUpdateInfo: false,
+          title: "Bar",
         },
       },
       effectiveOptionComputed: async it => {
@@ -91,6 +95,7 @@ describe("dmg", { sequential: true }, () => {
             icon: "foo.icns",
             // speed-up test
             writeUpdateInfo: false,
+            title: "Custom Background",
           },
         },
         effectiveOptionComputed: async it => {
@@ -121,6 +126,9 @@ describe("dmg", { sequential: true }, () => {
         targets: defaultTarget,
         config: {
           publish: null,
+          dmg: {
+            title: "Retina Background",
+          },
         },
         effectiveOptionComputed: async it => {
           expect(it.specification.background).toMatch(/\.tiff$/)
@@ -156,6 +164,7 @@ describe("dmg", { sequential: true }, () => {
         publish: null,
         productName: "NoApplicationsLink",
         dmg: {
+          title: "No Applications",
           contents: [
             {
               x: 110,
@@ -253,6 +262,9 @@ describe("dmg", { sequential: true }, () => {
           bundleShortVersion: "2017.1-alpha5",
           darkModeSupport: true,
         },
+        dmg: {
+          title: "bundleShortVersion",
+        },
       },
     })
   )
@@ -264,6 +276,7 @@ describe("dmg", { sequential: true }, () => {
         publish: null,
         dmg: {
           icon: null,
+          title: "Disable Icon",
         },
         mac: {
           bundleVersion: "50",
@@ -282,6 +295,9 @@ describe("dmg", { sequential: true }, () => {
     targets: dmgTarget,
     config: {
       publish: null,
+      dmg: {
+        title: "Foo" + Math.floor(Math.random() * 1000),
+      },
     },
     dmg: {
       artifactName: "${productName}-${version}-" + Date.now() + ".${ext}",

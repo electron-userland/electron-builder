@@ -58,7 +58,8 @@ export default class MsiWrappedTarget extends MsiTarget {
     return Promise.resolve()
   }
 
-  finishBuild(): Promise<any> {
+  async finishBuild(): Promise<any> {
+    await super.finishBuild()
     // this target invokes `build` in `finishBuild` to guarantee
     // that the dependent target has already been built
     // this also affords us re-usability
