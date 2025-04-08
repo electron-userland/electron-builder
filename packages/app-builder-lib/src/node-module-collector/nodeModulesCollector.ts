@@ -35,6 +35,7 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
   protected abstract getArgs(): string[]
   protected abstract parseDependenciesTree(jsonBlob: string): T
   protected abstract extractProductionDependencyGraph(tree: Dependency<T, OptionalsType>, isRoot: boolean): void
+  protected abstract collectAllDependencies(tree: Dependency<T, OptionalsType>): void
 
   protected async getDependenciesTree(): Promise<T> {
     const command = await this.pmCommand.value
@@ -87,13 +88,6 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
     } catch (error: any) {
       log.debug({ message: error.message || error.stack }, "error resolving path")
       return filePath
-    }
-  }
-
-  protected collectAllDependencies(tree: Dependency<T, OptionalsType>) {
-    for (const [key, value] of Object.entries(tree.dependencies || {})) {
-      this.allDependencies.set(`${key}@${value.version}`, value)
-      this.collectAllDependencies(value)
     }
   }
 

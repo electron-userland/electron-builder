@@ -67,6 +67,20 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
     this.productionGraph[newKey] = { dependencies }
   }
 
+  protected collectAllDependencies(tree: PnpmDependency) {
+    // Collect regular dependencies
+    for (const [key, value] of Object.entries(tree.dependencies || {})) {
+      this.allDependencies.set(`${key}@${value.version}`, value)
+      this.collectAllDependencies(value)
+    }
+
+    // Collect optional dependencies if they exist
+    for (const [key, value] of Object.entries(tree.optionalDependencies || {})) {
+      this.allDependencies.set(`${key}@${value.version}`, value)
+      this.collectAllDependencies(value)
+    }
+  }
+
   protected parseDependenciesTree(jsonBlob: string): PnpmDependency {
     const dependencyTree: PnpmDependency[] = JSON.parse(jsonBlob)
     // pnpm returns an array of dependency trees
