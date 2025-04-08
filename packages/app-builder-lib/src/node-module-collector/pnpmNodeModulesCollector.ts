@@ -50,8 +50,8 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
       .map(([packageName, dependency]) => {
         // check if the optional dependency's path is existing
         if (packageJson.optionalDependencies && packageJson.optionalDependencies[packageName] && !fs.existsSync(dependency.path)) {
-            log.debug(null, `Dependency ${packageName}@${dependency.version} path doesn't exist: ${dependency.path}`)
-            return null
+          log.debug(null, `Dependency ${packageName}@${dependency.version} path doesn't exist: ${dependency.path}`)
+          return null
         }
 
         if (prodDependencies[packageName]) {
