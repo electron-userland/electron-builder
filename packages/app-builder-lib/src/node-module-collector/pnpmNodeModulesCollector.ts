@@ -1,7 +1,6 @@
 import { Lazy } from "lazy-val"
 import { NodeModulesCollector } from "./nodeModulesCollector"
-import { Dependency, PnpmDependency } from "./types"
-import * as path from "path"
+import { PnpmDependency } from "./types"
 import { exec, log } from "builder-util"
 
 export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependency, PnpmDependency> {
@@ -37,28 +36,15 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
   }
 
   extractProductionDependencyGraph(tree: PnpmDependency, isRoot: boolean = false): void {
-    const newKey = isRoot ? "." : `${tree.name}@${tree.version}`
+    const newKey = isRoot ? "." : `${tree.from}@${tree.version}`
     if (this.productionGraph[newKey]) return
 
-    const p = path.normalize(this.resolvePath(tree.path))
-    const packageJson: Dependency<string, string> = require(path.join(p, "package.json"))
     const deps = { ...(tree.dependencies || {}), ...(tree.optionalDependencies || {}) }
-    this.productionGraph[newKey] = { dependencies: [] }
-    const dependencies = Object.entries(deps)
-      .map(([packageName, dependency]) => {
-        const dependencyKey = `${packageName}@${dependency.version}`
-        const isOptional = packageJson.optionalDependencies?.[packageName] !== undefined
-        try {
-          this.extractProductionDependencyGraph(dependency)
-        } catch (error) {
-          if (isOptional) {
-            return null
-          }
-          throw error
-        }
-        return dependencyKey
-      })
-      .filter(Boolean) as string[]
+    const dependencies = Object.entries(deps).map(([packageName, dependency]) => {
+      const depKey = `${packageName}@${dependency.version}`
+      this.extractProductionDependencyGraph(dependency)
+      return depKey
+    })
 
     this.productionGraph[newKey] = { dependencies }
   }

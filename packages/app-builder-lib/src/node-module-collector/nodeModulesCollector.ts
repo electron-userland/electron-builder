@@ -48,9 +48,10 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
 
   protected extractRelevantData(npmTree: T): Dependency<T, OptionalsType> {
     // Do not use `...npmTree` as we are explicitly extracting the data we need
-    const { name, version, path, workspaces, dependencies } = npmTree
+    const { name, from, version, path, workspaces, dependencies } = npmTree
     const tree: Dependency<T, OptionalsType> = {
       name,
+      from,
       version,
       path,
       workspaces,

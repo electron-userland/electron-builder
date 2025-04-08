@@ -7,6 +7,7 @@ export interface NodeModuleInfo {
 
 export type ParsedDependencyTree = {
   readonly name: string
+  readonly from: string // for pnpm
   readonly version: string
   readonly path: string
   readonly workspaces?: string[] // we only use this at root level
