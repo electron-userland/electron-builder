@@ -37,14 +37,8 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
   }
 
   extractProductionDependencyGraph(tree: PnpmDependency, isRoot: boolean = false): void {
-    let newKey = `${tree.name}@${tree.version}`
-    if (isRoot) {
-      newKey = "."
-    }
-
-    if (this.productionGraph[newKey]) {
-      return
-    }
+    const newKey = isRoot ? "." : `${tree.name}@${tree.version}`
+    if (this.productionGraph[newKey]) return
 
     const p = path.normalize(this.resolvePath(tree.path))
     const packageJson: Dependency<string, string> = require(path.join(p, "package.json"))

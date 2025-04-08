@@ -22,47 +22,33 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
 
   protected collectAllDependencies(tree: NpmDependency) {
     for (const [key, value] of Object.entries(tree.dependencies || {})) {
-      const hasNestedDependencies = Object.keys(value.dependencies ?? {}).length > 0
-      const hasNoDependencies = Object.keys(value._dependencies ?? {}).length === 0
-
-      if (hasNestedDependencies) {
-        this.allDependencies.set(`${key}@${value.version}`, value)
-        this.collectAllDependencies(value)
+      const { _dependencies = {}, dependencies = {} } = value
+      const isDuplicateDep = Object.keys(_dependencies).length > 0 && Object.keys(dependencies).length === 0
+      if (isDuplicateDep) {
+        continue
       }
-
-      if (hasNoDependencies) {
-        this.allDependencies.set(`${key}@${value.version}`, value)
-      }
+      this.allDependencies.set(`${key}@${value.version}`, value)
+      this.collectAllDependencies(value)
     }
   }
 
   protected extractProductionDependencyGraph(tree: NpmDependency, isRoot: boolean = false): void {
-    const _deps = tree._dependencies ?? {}
-    let deps = tree.dependencies ?? {}
-    let newKey = `${tree.name}@${tree.version}`
-    if (isRoot) {
-      newKey = "."
-    }
+    const newKey = isRoot ? "." : `${tree.name}@${tree.version}`
+    if (this.productionGraph[newKey]) return
 
-    if (this.productionGraph[newKey]) {
-      return
-    }
-
-    if (Object.keys(_deps).length > 0 && Object.keys(deps).length === 0) {
-      deps = this.allDependencies.get(newKey)?.dependencies ?? {}
-    }
-
-    // resolve yarn max stack issue
+    const { _dependencies = {}, dependencies = {} } = tree
+    const isDuplicateDep = Object.keys(_dependencies).length > 0 && Object.keys(dependencies).length === 0
+    const resolvedDeps = isDuplicateDep ? (this.allDependencies.get(newKey)?.dependencies ?? {}) : dependencies
+    // don't delete this, it's used to prevent infinite loops
     this.productionGraph[newKey] = { dependencies: [] }
-    const dependencies = Object.entries(deps)
-      .filter(([packageName]) => _deps[packageName])
-      .map(([packageName, dependency]) => {
-        const dependencyKey = `${packageName}@${dependency.version}`
-        this.extractProductionDependencyGraph(dependency)
-        return dependencyKey
+    const productionDeps = Object.entries(resolvedDeps)
+      .filter(([pkg]) => _dependencies[pkg])
+      .map(([pkg, dep]) => {
+        const depKey = `${pkg}@${dep.version}`
+        this.extractProductionDependencyGraph(dep)
+        return depKey
       })
-
-    this.productionGraph[newKey] = { dependencies }
+    this.productionGraph[newKey] = { dependencies: productionDeps }
   }
 
   protected parseDependenciesTree(jsonBlob: string): NpmDependency {

@@ -1,6 +1,6 @@
 import { assertPack, linuxDirTarget, verifyAsarFileTree, modifyPackageJson } from "./helpers/packTester"
 import { Platform, Arch, DIR_TARGET } from "electron-builder"
-import { outputFile,copySync,rmSync } from "fs-extra"
+import { outputFile, copySync, rmSync } from "fs-extra"
 import * as path from "path"
 import { spawn } from "builder-util/out/util"
 
@@ -71,7 +71,6 @@ test("yarn two package.json w/ native module", ({ expect }) =>
     }
   ))
 
-
 test("yarn two package.json", ({ expect }) =>
   assertPack(
     expect,
@@ -81,12 +80,12 @@ test("yarn two package.json", ({ expect }) =>
     },
     {
       isInstallDepsBefore: false,
-      projectDirCreated: async (projectDir) => {
+      projectDirCreated: async projectDir => {
         await spawn("npm", ["install"], {
           cwd: projectDir,
         })
-        rmSync(path.join(projectDir, "app", "node_modules"), { recursive: true, force: true });
-        copySync(path.join(projectDir, "node_modules"), path.join(projectDir, "app", "node_modules"));
+        rmSync(path.join(projectDir, "app", "node_modules"), { recursive: true, force: true })
+        copySync(path.join(projectDir, "node_modules"), path.join(projectDir, "app", "node_modules"))
       },
       packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
     }
