@@ -15,7 +15,6 @@ export type ParsedDependencyTree = {
 // Note: `PnpmDependency` and `NpmDependency` include the output of `JSON.parse(...)` of `pnpm list` and `npm list` respectively
 // This object has a TON of info - a majority, if not all, of each dependency's package.json
 // We extract only what we need when constructing DependencyTree in `extractProductionDependencyTree`
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface PnpmDependency extends Dependency<PnpmDependency, PnpmDependency> {
   readonly from: string
 }
