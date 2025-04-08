@@ -64,17 +64,18 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
   }
 
   protected extractInternal(deps: T["dependencies"]): T["dependencies"] {
-    return deps && Object.keys(deps).length > 0
-      ? Object.entries(deps).reduce((accum, [packageName, depObjectOrVersionString]) => {
-          return {
-            ...accum,
-            [packageName]:
-              typeof depObjectOrVersionString === "object" && Object.keys(depObjectOrVersionString).length > 0
-                ? this.extractRelevantData(depObjectOrVersionString)
-                : depObjectOrVersionString,
-          }
-        }, {})
-      : undefined
+    if (!deps || Object.keys(deps).length === 0) {
+      return undefined
+    }
+
+    return Object.fromEntries(
+      Object.entries(deps).map(([packageName, depObjectOrVersionString]) => [
+        packageName,
+        typeof depObjectOrVersionString === "object" && Object.keys(depObjectOrVersionString).length > 0
+          ? this.extractRelevantData(depObjectOrVersionString)
+          : depObjectOrVersionString,
+      ])
+    ) as T["dependencies"]
   }
 
   protected resolvePath(filePath: string): string {

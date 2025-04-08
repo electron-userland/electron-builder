@@ -46,6 +46,7 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
     const prodDependencies = { ...packageJson.dependencies, ...packageJson.optionalDependencies }
 
     const deps = { ...(tree.dependencies || {}), ...(tree.optionalDependencies || {}) }
+    this.productionGraph[newKey] = { dependencies: [] }
     const dependencies = Object.entries(deps)
       .map(([packageName, dependency]) => {
         // check if the optional dependency's path is existing
