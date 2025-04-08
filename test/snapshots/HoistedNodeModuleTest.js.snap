@@ -47297,11 +47297,11 @@ exports[`yarn two package.json 2`] = `
   "files": {
     "index.html": {
       "offset": "4601668",
-      "size": 841,
+      "size": 378,
     },
     "index.js": {
-      "offset": "4602509",
-      "size": 2501,
+      "offset": "4602046",
+      "size": 619,
     },
     "node_modules": {
       "files": {
@@ -52388,8 +52388,8 @@ exports[`yarn two package.json 2`] = `
       },
     },
     "package.json": {
-      "offset": "4605010",
-      "size": 240,
+      "offset": "4602665",
+      "size": 321,
     },
   },
 }
