@@ -31,8 +31,10 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
 
   protected extractRelevantData(npmTree: PnpmDependency): PnpmDependency {
     const tree = super.extractRelevantData(npmTree)
+    const { from } = npmTree
     return {
       ...tree,
+      from,
       optionalDependencies: this.extractInternal(npmTree.optionalDependencies),
     }
   }

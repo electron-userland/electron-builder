@@ -7,7 +7,6 @@ export interface NodeModuleInfo {
 
 export type ParsedDependencyTree = {
   readonly name: string
-  readonly from: string // for pnpm
   readonly version: string
   readonly path: string
   readonly workspaces?: string[] // we only use this at root level
@@ -17,7 +16,10 @@ export type ParsedDependencyTree = {
 // This object has a TON of info - a majority, if not all, of each dependency's package.json
 // We extract only what we need when constructing DependencyTree in `extractProductionDependencyTree`
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface PnpmDependency extends Dependency<PnpmDependency, PnpmDependency> {}
+export interface PnpmDependency extends Dependency<PnpmDependency, PnpmDependency> {
+  readonly from: string
+}
+
 export interface NpmDependency extends Dependency<NpmDependency, string> {
   // implicit dependencies
   readonly _dependencies?: {
