@@ -29,46 +29,37 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
     return ["list", "--prod", "--json", "--depth", "Infinity"]
   }
 
-  protected extractRelevantData(npmTree: PnpmDependency): PnpmDependency {
-    const tree = super.extractRelevantData(npmTree)
-    const { name, from } = npmTree
-    return {
-      ...tree,
-      name: name || from,
-      from,
-      optionalDependencies: this.extractInternal(npmTree.optionalDependencies),
-    }
-  }
-
-  extractProductionDependencyGraph(tree: PnpmDependency, isRoot: boolean = false): void {
-    const newKey = isRoot ? "." : `${tree.name}@${tree.version}`
-    if (this.productionGraph[newKey]) return
+  extractProductionDependencyGraph(tree: PnpmDependency, dependencyId: string): void {
+    if (this.productionGraph[dependencyId]) return
 
     const p = path.normalize(this.resolvePath(tree.path))
     const packageJson: Dependency<string, string> = require(path.join(p, "package.json"))
     const prodDependencies = { ...packageJson.dependencies, ...packageJson.optionalDependencies }
 
     const deps = { ...(tree.dependencies || {}), ...(tree.optionalDependencies || {}) }
-    this.productionGraph[newKey] = { dependencies: [] }
+    this.productionGraph[dependencyId] = { dependencies: [] }
     const dependencies = Object.entries(deps)
-      .map(([packageName, dependency]) => {
-        // check if the optional dependency's path is existing
+      .filter(([packageName, dependency]) => {
+        // First check if it's in production dependencies
+        if (!prodDependencies[packageName]) {
+          return false
+        }
+
+        // Then check if optional dependency path exists
         if (packageJson.optionalDependencies && packageJson.optionalDependencies[packageName] && !fs.existsSync(dependency.path)) {
-          log.debug(null, `Dependency ${packageName}@${dependency.version} path doesn't exist: ${dependency.path}`)
-          return null
+          log.debug(null, `Optional dependency ${packageName}@${dependency.version} path doesn't exist: ${dependency.path}`)
+          return false
         }
 
-        if (prodDependencies[packageName]) {
-          const depKey = `${packageName}@${dependency.version}`
-          this.extractProductionDependencyGraph(dependency)
-          return depKey
-        }
-
-        return null
+        return true
       })
-      .filter(Boolean) as string[]
+      .map(([packageName, dependency]) => {
+        const childDependencyId = `${packageName}@${dependency.version}`
+        this.extractProductionDependencyGraph(dependency, childDependencyId)
+        return childDependencyId
+      })
 
-    this.productionGraph[newKey] = { dependencies }
+    this.productionGraph[dependencyId] = { dependencies }
   }
 
   protected collectAllDependencies(tree: PnpmDependency) {

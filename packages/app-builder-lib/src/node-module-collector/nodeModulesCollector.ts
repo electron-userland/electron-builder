@@ -15,10 +15,8 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
   public async getNodeModules(): Promise<NodeModuleInfo[]> {
     const tree: T = await this.getDependenciesTree()
     const realTree: T = this.getTreeFromWorkspaces(tree)
-    const parsedTree: Dependency<T, OptionalsType> = this.extractRelevantData(realTree)
-
-    this.collectAllDependencies(parsedTree)
-    this.extractProductionDependencyGraph(parsedTree, true /*isRoot=true*/)
+    this.collectAllDependencies(realTree)
+    this.extractProductionDependencyGraph(realTree, "." /*root project name*/)
 
     const hoisterResult: HoisterResult = hoist(this.transToHoisterTree(this.productionGraph), { check: true })
     this._getNodeModules(hoisterResult.dependencies, this.nodeModules)
@@ -34,7 +32,7 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
   protected abstract readonly pmCommand: Lazy<string>
   protected abstract getArgs(): string[]
   protected abstract parseDependenciesTree(jsonBlob: string): T
-  protected abstract extractProductionDependencyGraph(tree: Dependency<T, OptionalsType>, isRoot: boolean): void
+  protected abstract extractProductionDependencyGraph(tree: Dependency<T, OptionalsType>, dependencyId: string): void
   protected abstract collectAllDependencies(tree: Dependency<T, OptionalsType>): void
 
   protected async getDependenciesTree(): Promise<T> {
@@ -45,36 +43,6 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
       shell: true,
     })
     return this.parseDependenciesTree(dependencies)
-  }
-
-  protected extractRelevantData(npmTree: T): Dependency<T, OptionalsType> {
-    // Do not use `...npmTree` as we are explicitly extracting the data we need
-    const { name, version, path, workspaces, dependencies } = npmTree
-    const tree: Dependency<T, OptionalsType> = {
-      name,
-      version,
-      path,
-      workspaces,
-      // DFS extract subtree
-      dependencies: this.extractInternal(dependencies),
-    }
-
-    return tree
-  }
-
-  protected extractInternal(deps: T["dependencies"]): T["dependencies"] {
-    if (!deps || Object.keys(deps).length === 0) {
-      return undefined
-    }
-
-    return Object.fromEntries(
-      Object.entries(deps).map(([packageName, depObjectOrVersionString]) => [
-        packageName,
-        typeof depObjectOrVersionString === "object" && Object.keys(depObjectOrVersionString).length > 0
-          ? this.extractRelevantData(depObjectOrVersionString)
-          : depObjectOrVersionString,
-      ])
-    ) as T["dependencies"]
   }
 
   protected resolvePath(filePath: string): string {
