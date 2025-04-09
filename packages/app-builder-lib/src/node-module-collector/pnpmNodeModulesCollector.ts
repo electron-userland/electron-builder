@@ -31,16 +31,17 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
 
   protected extractRelevantData(npmTree: PnpmDependency): PnpmDependency {
     const tree = super.extractRelevantData(npmTree)
-    const { from } = npmTree
+    const { name, from } = npmTree
     return {
       ...tree,
+      name: name || from,
       from,
       optionalDependencies: this.extractInternal(npmTree.optionalDependencies),
     }
   }
 
   extractProductionDependencyGraph(tree: PnpmDependency, isRoot: boolean = false): void {
-    const newKey = isRoot ? "." : `${tree.from}@${tree.version}`
+    const newKey = isRoot ? "." : `${tree.name}@${tree.version}`
     if (this.productionGraph[newKey]) return
 
     const p = path.normalize(this.resolvePath(tree.path))
