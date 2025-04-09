@@ -188,21 +188,93 @@ exports[`isInstallDepsBefore=true > npm tar 2`] = `
 {
   "files": {
     "index.html": {
-      "offset": "1674751",
+      "offset": "4567635",
       "size": 378,
     },
     "index.js": {
-      "offset": "1675129",
+      "offset": "4568013",
       "size": 619,
     },
     "node_modules": {
       "files": {
         "@isaacs": {
           "files": {
+            "cliui": {
+              "files": {
+                "LICENSE.txt": {
+                  "offset": "0",
+                  "size": 731,
+                },
+                "build": {
+                  "files": {
+                    "index.cjs": {
+                      "offset": "731",
+                      "size": 10398,
+                    },
+                    "index.d.cts": {
+                      "offset": "11129",
+                      "size": 1050,
+                    },
+                    "lib": {
+                      "files": {
+                        "index.js": {
+                          "offset": "12179",
+                          "size": 10100,
+                        },
+                      },
+                    },
+                  },
+                },
+                "index.mjs": {
+                  "offset": "22279",
+                  "size": 299,
+                },
+                "node_modules": {
+                  "files": {
+                    "ansi-regex": {
+                      "files": {
+                        "index.js": {
+                          "offset": "24005",
+                          "size": 458,
+                        },
+                        "license": {
+                          "offset": "24463",
+                          "size": 1117,
+                        },
+                        "package.json": {
+                          "offset": "25580",
+                          "size": 671,
+                        },
+                      },
+                    },
+                    "strip-ansi": {
+                      "files": {
+                        "index.js": {
+                          "offset": "26251",
+                          "size": 468,
+                        },
+                        "license": {
+                          "offset": "26719",
+                          "size": 1117,
+                        },
+                        "package.json": {
+                          "offset": "27836",
+                          "size": 630,
+                        },
+                      },
+                    },
+                  },
+                },
+                "package.json": {
+                  "offset": "22578",
+                  "size": 1427,
+                },
+              },
+            },
             "fs-minipass": {
               "files": {
                 "LICENSE": {
-                  "offset": "0",
+                  "offset": "28466",
                   "size": 765,
                 },
                 "dist": {
@@ -210,19 +282,19 @@ exports[`isInstallDepsBefore=true > npm tar 2`] = `
                     "commonjs": {
                       "files": {
                         "index.d.ts.map": {
-                          "offset": "765",
+                          "offset": "29231",
                           "size": 4163,
                         },
                         "index.js": {
-                          "offset": "4928",
+                          "offset": "33394",
                           "size": 12791,
                         },
                         "index.js.map": {
-                          "offset": "17719",
+                          "offset": "46185",
                           "size": 27213,
                         },
                         "package.json": {
-                          "offset": "44932",
+                          "offset": "73398",
                           "size": 25,
                         },
                       },
@@ -230,19 +302,19 @@ exports[`isInstallDepsBefore=true > npm tar 2`] = `
                     "esm": {
                       "files": {
                         "index.d.ts.map": {
-                          "offset": "44957",
+                          "offset": "73423",
                           "size": 4163,
                         },
                         "index.js": {
-                          "offset": "49120",
+                          "offset": "77586",
                           "size": 12129,
                         },
                         "index.js.map": {
-                          "offset": "61249",
+                          "offset": "89715",
                           "size": 27237,
                         },
                         "package.json": {
-                          "offset": "88486",
+                          "offset": "116952",
                           "size": 23,
                         },
                       },
@@ -250,17 +322,129 @@ exports[`isInstallDepsBefore=true > npm tar 2`] = `
                   },
                 },
                 "package.json": {
-                  "offset": "88509",
+                  "offset": "116975",
                   "size": 1327,
                 },
               },
             },
           },
         },
+        "@pkgjs": {
+          "files": {
+            "parseargs": {
+              "files": {
+                ".editorconfig": {
+                  "offset": "118302",
+                  "size": 299,
+                },
+                "LICENSE": {
+                  "offset": "118601",
+                  "size": 11357,
+                },
+                "index.js": {
+                  "offset": "129958",
+                  "size": 12936,
+                },
+                "internal": {
+                  "files": {
+                    "errors.js": {
+                      "offset": "142894",
+                      "size": 1431,
+                    },
+                    "primordials.js": {
+                      "offset": "144325",
+                      "size": 11947,
+                    },
+                    "util.js": {
+                      "offset": "156272",
+                      "size": 235,
+                    },
+                    "validators.js": {
+                      "offset": "156507",
+                      "size": 2243,
+                    },
+                  },
+                },
+                "package.json": {
+                  "offset": "158750",
+                  "size": 612,
+                },
+                "utils.js": {
+                  "offset": "159362",
+                  "size": 6251,
+                },
+              },
+            },
+          },
+        },
+        "ansi-regex": {
+          "files": {
+            "index.js": {
+              "offset": "165613",
+              "size": 350,
+            },
+            "license": {
+              "offset": "165963",
+              "size": 1109,
+            },
+            "package.json": {
+              "offset": "167072",
+              "size": 470,
+            },
+          },
+        },
+        "ansi-styles": {
+          "files": {
+            "index.js": {
+              "offset": "167542",
+              "size": 4139,
+            },
+            "license": {
+              "offset": "171681",
+              "size": 1109,
+            },
+            "package.json": {
+              "offset": "172790",
+              "size": 663,
+            },
+          },
+        },
+        "balanced-match": {
+          "files": {
+            "LICENSE.md": {
+              "offset": "173453",
+              "size": 1096,
+            },
+            "index.js": {
+              "offset": "174549",
+              "size": 1219,
+            },
+            "package.json": {
+              "offset": "175768",
+              "size": 891,
+            },
+          },
+        },
+        "brace-expansion": {
+          "files": {
+            "LICENSE": {
+              "offset": "176659",
+              "size": 1096,
+            },
+            "index.js": {
+              "offset": "177755",
+              "size": 4992,
+            },
+            "package.json": {
+              "offset": "182747",
+              "size": 942,
+            },
+          },
+        },
         "chownr": {
           "files": {
             "LICENSE.md": {
-              "offset": "89836",
+              "offset": "183689",
               "size": 1764,
             },
             "dist": {
@@ -268,19 +452,19 @@ exports[`isInstallDepsBefore=true > npm tar 2`] = `
                 "commonjs": {
                   "files": {
                     "index.d.ts.map": {
-                      "offset": "91600",
+                      "offset": "185453",
                       "size": 251,
                     },
                     "index.js": {
-                      "offset": "91851",
+                      "offset": "185704",
                       "size": 3059,
                     },
                     "index.js.map": {
-                      "offset": "94910",
+                      "offset": "188763",
                       "size": 6020,
                     },
                     "package.json": {
-                      "offset": "100930",
+                      "offset": "194783",
                       "size": 25,
                     },
                   },
@@ -288,19 +472,19 @@ exports[`isInstallDepsBefore=true > npm tar 2`] = `
                 "esm": {
                   "files": {
                     "index.d.ts.map": {
-                      "offset": "100955",
+                      "offset": "194808",
                       "size": 251,
                     },
                     "index.js": {
-                      "offset": "101206",
+                      "offset": "195059",
                       "size": 2534,
                     },
                     "index.js.map": {
-                      "offset": "103740",
+                      "offset": "197593",
                       "size": 6005,
                     },
                     "package.json": {
-                      "offset": "109745",
+                      "offset": "203598",
                       "size": 23,
                     },
                   },
@@ -308,15 +492,856 @@ exports[`isInstallDepsBefore=true > npm tar 2`] = `
               },
             },
             "package.json": {
-              "offset": "109768",
+              "offset": "203621",
               "size": 1291,
+            },
+          },
+        },
+        "color-convert": {
+          "files": {
+            "LICENSE": {
+              "offset": "204912",
+              "size": 1087,
+            },
+            "conversions.js": {
+              "offset": "205999",
+              "size": 17040,
+            },
+            "index.js": {
+              "offset": "223039",
+              "size": 1708,
+            },
+            "package.json": {
+              "offset": "224747",
+              "size": 451,
+            },
+            "route.js": {
+              "offset": "225198",
+              "size": 2257,
+            },
+          },
+        },
+        "color-name": {
+          "files": {
+            "LICENSE": {
+              "offset": "227455",
+              "size": 1085,
+            },
+            "index.js": {
+              "offset": "228540",
+              "size": 4617,
+            },
+            "package.json": {
+              "offset": "233157",
+              "size": 369,
+            },
+          },
+        },
+        "cross-spawn": {
+          "files": {
+            "LICENSE": {
+              "offset": "233526",
+              "size": 1105,
+            },
+            "index.js": {
+              "offset": "234631",
+              "size": 1192,
+            },
+            "lib": {
+              "files": {
+                "enoent.js": {
+                  "offset": "235823",
+                  "size": 1471,
+                },
+                "parse.js": {
+                  "offset": "237294",
+                  "size": 3065,
+                },
+                "util": {
+                  "files": {
+                    "escape.js": {
+                      "offset": "240359",
+                      "size": 1383,
+                    },
+                    "readShebang.js": {
+                      "offset": "241742",
+                      "size": 549,
+                    },
+                    "resolveCommand.js": {
+                      "offset": "242291",
+                      "size": 1557,
+                    },
+                  },
+                },
+              },
+            },
+            "package.json": {
+              "offset": "243848",
+              "size": 1275,
+            },
+          },
+        },
+        "eastasianwidth": {
+          "files": {
+            "eastasianwidth.js": {
+              "offset": "245123",
+              "size": 12067,
+            },
+            "package.json": {
+              "offset": "257190",
+              "size": 349,
+            },
+          },
+        },
+        "emoji-regex": {
+          "files": {
+            "LICENSE-MIT.txt": {
+              "offset": "257539",
+              "size": 1077,
+            },
+            "es2015": {
+              "files": {
+                "index.js": {
+                  "offset": "258616",
+                  "size": 11104,
+                },
+                "text.js": {
+                  "offset": "269720",
+                  "size": 11105,
+                },
+              },
+            },
+            "index.js": {
+              "offset": "280825",
+              "size": 10286,
+            },
+            "package.json": {
+              "offset": "291111",
+              "size": 852,
+            },
+            "text.js": {
+              "offset": "291963",
+              "size": 10287,
+            },
+          },
+        },
+        "foreground-child": {
+          "files": {
+            "LICENSE": {
+              "offset": "302250",
+              "size": 775,
+            },
+            "dist": {
+              "files": {
+                "commonjs": {
+                  "files": {
+                    "all-signals.d.ts.map": {
+                      "offset": "303025",
+                      "size": 169,
+                    },
+                    "all-signals.js": {
+                      "offset": "303194",
+                      "size": 1553,
+                    },
+                    "all-signals.js.map": {
+                      "offset": "304747",
+                      "size": 2231,
+                    },
+                    "index.d.ts.map": {
+                      "offset": "306978",
+                      "size": 1921,
+                    },
+                    "index.js": {
+                      "offset": "308899",
+                      "size": 4076,
+                    },
+                    "index.js.map": {
+                      "offset": "312975",
+                      "size": 9835,
+                    },
+                    "package.json": {
+                      "offset": "322810",
+                      "size": 25,
+                    },
+                    "proxy-signals.d.ts.map": {
+                      "offset": "322835",
+                      "size": 221,
+                    },
+                    "proxy-signals.js": {
+                      "offset": "323056",
+                      "size": 1159,
+                    },
+                    "proxy-signals.js.map": {
+                      "offset": "324215",
+                      "size": 1884,
+                    },
+                    "watchdog.d.ts.map": {
+                      "offset": "326099",
+                      "size": 211,
+                    },
+                    "watchdog.js": {
+                      "offset": "326310",
+                      "size": 1574,
+                    },
+                    "watchdog.js.map": {
+                      "offset": "327884",
+                      "size": 2214,
+                    },
+                  },
+                },
+                "esm": {
+                  "files": {
+                    "all-signals.d.ts.map": {
+                      "offset": "330098",
+                      "size": 169,
+                    },
+                    "all-signals.js": {
+                      "offset": "330267",
+                      "size": 1269,
+                    },
+                    "all-signals.js.map": {
+                      "offset": "331536",
+                      "size": 2254,
+                    },
+                    "index.d.ts.map": {
+                      "offset": "333790",
+                      "size": 1921,
+                    },
+                    "index.js": {
+                      "offset": "335711",
+                      "size": 3613,
+                    },
+                    "index.js.map": {
+                      "offset": "339324",
+                      "size": 9922,
+                    },
+                    "package.json": {
+                      "offset": "349246",
+                      "size": 23,
+                    },
+                    "proxy-signals.d.ts.map": {
+                      "offset": "349269",
+                      "size": 221,
+                    },
+                    "proxy-signals.js": {
+                      "offset": "349490",
+                      "size": 997,
+                    },
+                    "proxy-signals.js.map": {
+                      "offset": "350487",
+                      "size": 1896,
+                    },
+                    "watchdog.d.ts.map": {
+                      "offset": "352383",
+                      "size": 211,
+                    },
+                    "watchdog.js": {
+                      "offset": "352594",
+                      "size": 1416,
+                    },
+                    "watchdog.js.map": {
+                      "offset": "354010",
+                      "size": 2223,
+                    },
+                  },
+                },
+              },
+            },
+            "package.json": {
+              "offset": "356233",
+              "size": 2329,
+            },
+          },
+        },
+        "glob": {
+          "files": {
+            "LICENSE": {
+              "offset": "358562",
+              "size": 775,
+            },
+            "dist": {
+              "files": {
+                "commonjs": {
+                  "files": {
+                    "glob.d.ts.map": {
+                      "offset": "359337",
+                      "size": 4038,
+                    },
+                    "glob.js": {
+                      "offset": "363375",
+                      "size": 8546,
+                    },
+                    "glob.js.map": {
+                      "offset": "371921",
+                      "size": 28218,
+                    },
+                    "has-magic.d.ts.map": {
+                      "offset": "400139",
+                      "size": 246,
+                    },
+                    "has-magic.js": {
+                      "offset": "400385",
+                      "size": 1058,
+                    },
+                    "has-magic.js.map": {
+                      "offset": "401443",
+                      "size": 1482,
+                    },
+                    "ignore.d.ts.map": {
+                      "offset": "402925",
+                      "size": 886,
+                    },
+                    "ignore.js": {
+                      "offset": "403811",
+                      "size": 4267,
+                    },
+                    "ignore.js.map": {
+                      "offset": "408078",
+                      "size": 7471,
+                    },
+                    "index.d.ts.map": {
+                      "offset": "415549",
+                      "size": 4085,
+                    },
+                    "index.js": {
+                      "offset": "419634",
+                      "size": 2876,
+                    },
+                    "index.js.map": {
+                      "offset": "422510",
+                      "size": 8370,
+                    },
+                    "package.json": {
+                      "offset": "430880",
+                      "size": 25,
+                    },
+                    "pattern.d.ts.map": {
+                      "offset": "430905",
+                      "size": 1314,
+                    },
+                    "pattern.js": {
+                      "offset": "432219",
+                      "size": 7300,
+                    },
+                    "pattern.js.map": {
+                      "offset": "439519",
+                      "size": 13391,
+                    },
+                    "processor.d.ts.map": {
+                      "offset": "452910",
+                      "size": 1748,
+                    },
+                    "processor.js": {
+                      "offset": "454658",
+                      "size": 10760,
+                    },
+                    "processor.js.map": {
+                      "offset": "465418",
+                      "size": 19044,
+                    },
+                    "walker.d.ts.map": {
+                      "offset": "484462",
+                      "size": 4195,
+                    },
+                    "walker.js": {
+                      "offset": "488657",
+                      "size": 12869,
+                    },
+                    "walker.js.map": {
+                      "offset": "501526",
+                      "size": 27899,
+                    },
+                  },
+                },
+                "esm": {
+                  "files": {
+                    "bin.d.mts": {
+                      "offset": "529425",
+                      "size": 65,
+                    },
+                    "bin.d.mts.map": {
+                      "offset": "529490",
+                      "size": 105,
+                    },
+                    "bin.mjs": {
+                      "executable": true,
+                      "offset": "529595",
+                      "size": 9520,
+                    },
+                    "bin.mjs.map": {
+                      "offset": "539115",
+                      "size": 14152,
+                    },
+                    "glob.d.ts.map": {
+                      "offset": "553267",
+                      "size": 4038,
+                    },
+                    "glob.js": {
+                      "offset": "557305",
+                      "size": 8339,
+                    },
+                    "glob.js.map": {
+                      "offset": "565644",
+                      "size": 28377,
+                    },
+                    "has-magic.d.ts.map": {
+                      "offset": "594021",
+                      "size": 246,
+                    },
+                    "has-magic.js": {
+                      "offset": "594267",
+                      "size": 917,
+                    },
+                    "has-magic.js.map": {
+                      "offset": "595184",
+                      "size": 1495,
+                    },
+                    "ignore.d.ts.map": {
+                      "offset": "596679",
+                      "size": 886,
+                    },
+                    "ignore.js": {
+                      "offset": "597565",
+                      "size": 4101,
+                    },
+                    "ignore.js.map": {
+                      "offset": "601666",
+                      "size": 7514,
+                    },
+                    "index.d.ts.map": {
+                      "offset": "609180",
+                      "size": 4085,
+                    },
+                    "index.js": {
+                      "offset": "613265",
+                      "size": 1647,
+                    },
+                    "index.js.map": {
+                      "offset": "614912",
+                      "size": 8404,
+                    },
+                    "package.json": {
+                      "offset": "623316",
+                      "size": 23,
+                    },
+                    "pattern.d.ts.map": {
+                      "offset": "623339",
+                      "size": 1314,
+                    },
+                    "pattern.js": {
+                      "offset": "624653",
+                      "size": 7161,
+                    },
+                    "pattern.js.map": {
+                      "offset": "631814",
+                      "size": 13407,
+                    },
+                    "processor.d.ts.map": {
+                      "offset": "645221",
+                      "size": 1748,
+                    },
+                    "processor.js": {
+                      "offset": "646969",
+                      "size": 10453,
+                    },
+                    "processor.js.map": {
+                      "offset": "657422",
+                      "size": 19037,
+                    },
+                    "walker.d.ts.map": {
+                      "offset": "676459",
+                      "size": 4195,
+                    },
+                    "walker.js": {
+                      "offset": "680654",
+                      "size": 12569,
+                    },
+                    "walker.js.map": {
+                      "offset": "693223",
+                      "size": 27953,
+                    },
+                  },
+                },
+              },
+            },
+            "package.json": {
+              "offset": "721176",
+              "size": 1848,
+            },
+          },
+        },
+        "is-fullwidth-code-point": {
+          "files": {
+            "index.js": {
+              "offset": "723024",
+              "size": 1756,
+            },
+            "license": {
+              "offset": "724780",
+              "size": 1109,
+            },
+            "package.json": {
+              "offset": "725889",
+              "size": 537,
+            },
+          },
+        },
+        "isexe": {
+          "files": {
+            "LICENSE": {
+              "offset": "726426",
+              "size": 765,
+            },
+            "index.js": {
+              "offset": "727191",
+              "size": 1192,
+            },
+            "mode.js": {
+              "offset": "728383",
+              "size": 909,
+            },
+            "package.json": {
+              "offset": "729292",
+              "size": 512,
+            },
+            "windows.js": {
+              "offset": "729804",
+              "size": 890,
+            },
+          },
+        },
+        "jackspeak": {
+          "files": {
+            "LICENSE.md": {
+              "offset": "730694",
+              "size": 1550,
+            },
+            "dist": {
+              "files": {
+                "commonjs": {
+                  "files": {
+                    "index.d.ts.map": {
+                      "offset": "732244",
+                      "size": 8554,
+                    },
+                    "index.js": {
+                      "offset": "740798",
+                      "size": 36491,
+                    },
+                    "index.js.map": {
+                      "offset": "777289",
+                      "size": 80455,
+                    },
+                    "package.json": {
+                      "offset": "857744",
+                      "size": 25,
+                    },
+                    "parse-args-cjs.cjs.map": {
+                      "offset": "857769",
+                      "size": 1545,
+                    },
+                    "parse-args-cjs.d.cts.map": {
+                      "offset": "859314",
+                      "size": 195,
+                    },
+                    "parse-args.js": {
+                      "offset": "859509",
+                      "size": 1775,
+                    },
+                  },
+                },
+                "esm": {
+                  "files": {
+                    "index.d.ts.map": {
+                      "offset": "861284",
+                      "size": 8554,
+                    },
+                    "index.js": {
+                      "offset": "869838",
+                      "size": 35919,
+                    },
+                    "index.js.map": {
+                      "offset": "905757",
+                      "size": 80458,
+                    },
+                    "package.json": {
+                      "offset": "986215",
+                      "size": 23,
+                    },
+                    "parse-args.d.ts.map": {
+                      "offset": "986238",
+                      "size": 186,
+                    },
+                    "parse-args.js": {
+                      "offset": "986424",
+                      "size": 723,
+                    },
+                    "parse-args.js.map": {
+                      "offset": "987147",
+                      "size": 1781,
+                    },
+                  },
+                },
+              },
+            },
+            "package.json": {
+              "offset": "988928",
+              "size": 1580,
+            },
+          },
+        },
+        "lru-cache": {
+          "files": {
+            "LICENSE": {
+              "offset": "990508",
+              "size": 775,
+            },
+            "dist": {
+              "files": {
+                "commonjs": {
+                  "files": {
+                    "index.d.ts.map": {
+                      "offset": "991283",
+                      "size": 13941,
+                    },
+                    "index.js": {
+                      "offset": "1005224",
+                      "size": 55020,
+                    },
+                    "index.js.map": {
+                      "offset": "1060244",
+                      "size": 135954,
+                    },
+                    "index.min.js": {
+                      "offset": "1196198",
+                      "size": 17085,
+                    },
+                    "index.min.js.map": {
+                      "offset": "1213283",
+                      "size": 118359,
+                    },
+                    "package.json": {
+                      "offset": "1331642",
+                      "size": 25,
+                    },
+                  },
+                },
+                "esm": {
+                  "files": {
+                    "index.d.ts.map": {
+                      "offset": "1331667",
+                      "size": 13941,
+                    },
+                    "index.js": {
+                      "offset": "1345608",
+                      "size": 54894,
+                    },
+                    "index.js.map": {
+                      "offset": "1400502",
+                      "size": 135941,
+                    },
+                    "index.min.js": {
+                      "offset": "1536443",
+                      "size": 16996,
+                    },
+                    "index.min.js.map": {
+                      "offset": "1553439",
+                      "size": 118347,
+                    },
+                    "package.json": {
+                      "offset": "1671786",
+                      "size": 23,
+                    },
+                  },
+                },
+              },
+            },
+            "package.json": {
+              "offset": "1671809",
+              "size": 2118,
+            },
+          },
+        },
+        "minimatch": {
+          "files": {
+            "LICENSE": {
+              "offset": "1673927",
+              "size": 775,
+            },
+            "dist": {
+              "files": {
+                "commonjs": {
+                  "files": {
+                    "assert-valid-pattern.d.ts.map": {
+                      "offset": "1674702",
+                      "size": 199,
+                    },
+                    "assert-valid-pattern.js": {
+                      "offset": "1674901",
+                      "size": 492,
+                    },
+                    "assert-valid-pattern.js.map": {
+                      "offset": "1675393",
+                      "size": 802,
+                    },
+                    "ast.d.ts.map": {
+                      "offset": "1676195",
+                      "size": 868,
+                    },
+                    "ast.js": {
+                      "offset": "1677063",
+                      "size": 22822,
+                    },
+                    "ast.js.map": {
+                      "offset": "1699885",
+                      "size": 40021,
+                    },
+                    "brace-expressions.d.ts.map": {
+                      "offset": "1739906",
+                      "size": 304,
+                    },
+                    "brace-expressions.js": {
+                      "offset": "1740210",
+                      "size": 5763,
+                    },
+                    "brace-expressions.js.map": {
+                      "offset": "1745973",
+                      "size": 10371,
+                    },
+                    "escape.d.ts.map": {
+                      "offset": "1756344",
+                      "size": 244,
+                    },
+                    "escape.js": {
+                      "offset": "1756588",
+                      "size": 968,
+                    },
+                    "escape.js.map": {
+                      "offset": "1757556",
+                      "size": 1378,
+                    },
+                    "index.d.ts.map": {
+                      "offset": "1758934",
+                      "size": 3194,
+                    },
+                    "index.js": {
+                      "offset": "1762128",
+                      "size": 40557,
+                    },
+                    "index.js.map": {
+                      "offset": "1802685",
+                      "size": 71631,
+                    },
+                    "package.json": {
+                      "offset": "1874316",
+                      "size": 25,
+                    },
+                    "unescape.d.ts.map": {
+                      "offset": "1874341",
+                      "size": 254,
+                    },
+                    "unescape.js": {
+                      "offset": "1874595",
+                      "size": 973,
+                    },
+                    "unescape.js.map": {
+                      "offset": "1875568",
+                      "size": 1403,
+                    },
+                  },
+                },
+                "esm": {
+                  "files": {
+                    "assert-valid-pattern.d.ts.map": {
+                      "offset": "1876971",
+                      "size": 199,
+                    },
+                    "assert-valid-pattern.js": {
+                      "offset": "1877170",
+                      "size": 336,
+                    },
+                    "assert-valid-pattern.js.map": {
+                      "offset": "1877506",
+                      "size": 785,
+                    },
+                    "ast.d.ts.map": {
+                      "offset": "1878291",
+                      "size": 868,
+                    },
+                    "ast.js": {
+                      "offset": "1879159",
+                      "size": 22588,
+                    },
+                    "ast.js.map": {
+                      "offset": "1901747",
+                      "size": 40036,
+                    },
+                    "brace-expressions.d.ts.map": {
+                      "offset": "1941783",
+                      "size": 304,
+                    },
+                    "brace-expressions.js": {
+                      "offset": "1942087",
+                      "size": 5631,
+                    },
+                    "brace-expressions.js.map": {
+                      "offset": "1947718",
+                      "size": 10355,
+                    },
+                    "escape.d.ts.map": {
+                      "offset": "1958073",
+                      "size": 244,
+                    },
+                    "escape.js": {
+                      "offset": "1958317",
+                      "size": 848,
+                    },
+                    "escape.js.map": {
+                      "offset": "1959165",
+                      "size": 1364,
+                    },
+                    "index.d.ts.map": {
+                      "offset": "1960529",
+                      "size": 3194,
+                    },
+                    "index.js": {
+                      "offset": "1963723",
+                      "size": 39098,
+                    },
+                    "index.js.map": {
+                      "offset": "2002821",
+                      "size": 71657,
+                    },
+                    "package.json": {
+                      "offset": "2074478",
+                      "size": 23,
+                    },
+                    "unescape.d.ts.map": {
+                      "offset": "2074501",
+                      "size": 254,
+                    },
+                    "unescape.js": {
+                      "offset": "2074755",
+                      "size": 847,
+                    },
+                    "unescape.js.map": {
+                      "offset": "2075602",
+                      "size": 1389,
+                    },
+                  },
+                },
+              },
+            },
+            "package.json": {
+              "offset": "2076991",
+              "size": 1573,
             },
           },
         },
         "minipass": {
           "files": {
             "LICENSE": {
-              "offset": "111059",
+              "offset": "2078564",
               "size": 787,
             },
             "dist": {
@@ -324,19 +1349,19 @@ exports[`isInstallDepsBefore=true > npm tar 2`] = `
                 "commonjs": {
                   "files": {
                     "index.d.ts.map": {
-                      "offset": "111846",
+                      "offset": "2079351",
                       "size": 8761,
                     },
                     "index.js": {
-                      "offset": "120607",
+                      "offset": "2088112",
                       "size": 33796,
                     },
                     "index.js.map": {
-                      "offset": "154403",
+                      "offset": "2121908",
                       "size": 66332,
                     },
                     "package.json": {
-                      "offset": "220735",
+                      "offset": "2188240",
                       "size": 25,
                     },
                   },
@@ -344,19 +1369,19 @@ exports[`isInstallDepsBefore=true > npm tar 2`] = `
                 "esm": {
                   "files": {
                     "index.d.ts.map": {
-                      "offset": "220760",
+                      "offset": "2188265",
                       "size": 8761,
                     },
                     "index.js": {
-                      "offset": "229521",
+                      "offset": "2197026",
                       "size": 33228,
                     },
                     "index.js.map": {
-                      "offset": "262749",
+                      "offset": "2230254",
                       "size": 66339,
                     },
                     "package.json": {
-                      "offset": "329088",
+                      "offset": "2296593",
                       "size": 23,
                     },
                   },
@@ -364,7 +1389,7 @@ exports[`isInstallDepsBefore=true > npm tar 2`] = `
               },
             },
             "package.json": {
-              "offset": "329111",
+              "offset": "2296616",
               "size": 1497,
             },
           },
@@ -372,7 +1397,7 @@ exports[`isInstallDepsBefore=true > npm tar 2`] = `
         "minizlib": {
           "files": {
             "LICENSE": {
-              "offset": "330608",
+              "offset": "2298113",
               "size": 1339,
             },
             "dist": {
@@ -380,31 +1405,31 @@ exports[`isInstallDepsBefore=true > npm tar 2`] = `
                 "commonjs": {
                   "files": {
                     "constants.d.ts.map": {
-                      "offset": "331947",
+                      "offset": "2299452",
                       "size": 146,
                     },
                     "constants.js": {
-                      "offset": "332093",
+                      "offset": "2299598",
                       "size": 4299,
                     },
                     "constants.js.map": {
-                      "offset": "336392",
+                      "offset": "2303897",
                       "size": 7298,
                     },
                     "index.d.ts.map": {
-                      "offset": "343690",
-                      "size": 2775,
+                      "offset": "2311195",
+                      "size": 2773,
                     },
                     "index.js": {
-                      "offset": "346465",
-                      "size": 13988,
+                      "offset": "2313968",
+                      "size": 12370,
                     },
                     "index.js.map": {
-                      "offset": "360453",
-                      "size": 22635,
+                      "offset": "2326338",
+                      "size": 21939,
                     },
                     "package.json": {
-                      "offset": "383088",
+                      "offset": "2348277",
                       "size": 25,
                     },
                   },
@@ -412,31 +1437,31 @@ exports[`isInstallDepsBefore=true > npm tar 2`] = `
                 "esm": {
                   "files": {
                     "constants.d.ts.map": {
-                      "offset": "383113",
+                      "offset": "2348302",
                       "size": 146,
                     },
                     "constants.js": {
-                      "offset": "383259",
+                      "offset": "2348448",
                       "size": 4034,
                     },
                     "constants.js.map": {
-                      "offset": "387293",
+                      "offset": "2352482",
                       "size": 7321,
                     },
                     "index.d.ts.map": {
-                      "offset": "394614",
-                      "size": 2775,
+                      "offset": "2359803",
+                      "size": 2773,
                     },
                     "index.js": {
-                      "offset": "397389",
-                      "size": 11487,
+                      "offset": "2362576",
+                      "size": 11207,
                     },
                     "index.js.map": {
-                      "offset": "408876",
-                      "size": 22627,
+                      "offset": "2373783",
+                      "size": 21959,
                     },
                     "package.json": {
-                      "offset": "431503",
+                      "offset": "2395742",
                       "size": 23,
                     },
                   },
@@ -444,15 +1469,15 @@ exports[`isInstallDepsBefore=true > npm tar 2`] = `
               },
             },
             "package.json": {
-              "offset": "431526",
-              "size": 1383,
+              "offset": "2395765",
+              "size": 1398,
             },
           },
         },
         "mkdirp": {
           "files": {
             "LICENSE": {
-              "offset": "432909",
+              "offset": "2397163",
               "size": 1180,
             },
             "dist": {
@@ -460,106 +1485,106 @@ exports[`isInstallDepsBefore=true > npm tar 2`] = `
                 "cjs": {
                   "files": {
                     "package.json": {
-                      "offset": "434089",
+                      "offset": "2398343",
                       "size": 1453,
                     },
                     "src": {
                       "files": {
                         "bin.d.ts.map": {
-                          "offset": "435542",
+                          "offset": "2399796",
                           "size": 106,
                         },
                         "bin.js": {
                           "executable": true,
-                          "offset": "435648",
+                          "offset": "2399902",
                           "size": 2430,
                         },
                         "bin.js.map": {
-                          "offset": "438078",
+                          "offset": "2402332",
                           "size": 4434,
                         },
                         "find-made.d.ts.map": {
-                          "offset": "442512",
+                          "offset": "2406766",
                           "size": 328,
                         },
                         "find-made.js": {
-                          "offset": "442840",
+                          "offset": "2407094",
                           "size": 1144,
                         },
                         "find-made.js.map": {
-                          "offset": "443984",
+                          "offset": "2408238",
                           "size": 2290,
                         },
                         "index.d.ts.map": {
-                          "offset": "446274",
+                          "offset": "2410528",
                           "size": 664,
                         },
                         "index.js": {
-                          "offset": "446938",
+                          "offset": "2411192",
                           "size": 3190,
                         },
                         "index.js.map": {
-                          "offset": "450128",
+                          "offset": "2414382",
                           "size": 3055,
                         },
                         "mkdirp-manual.d.ts.map": {
-                          "offset": "453183",
+                          "offset": "2417437",
                           "size": 487,
                         },
                         "mkdirp-manual.js": {
-                          "offset": "453670",
+                          "offset": "2417924",
                           "size": 2618,
                         },
                         "mkdirp-manual.js.map": {
-                          "offset": "456288",
+                          "offset": "2420542",
                           "size": 5079,
                         },
                         "mkdirp-native.d.ts.map": {
-                          "offset": "461367",
+                          "offset": "2425621",
                           "size": 394,
                         },
                         "mkdirp-native.js": {
-                          "offset": "461761",
+                          "offset": "2426015",
                           "size": 1689,
                         },
                         "mkdirp-native.js.map": {
-                          "offset": "463450",
+                          "offset": "2427704",
                           "size": 3184,
                         },
                         "opts-arg.d.ts.map": {
-                          "offset": "466634",
+                          "offset": "2430888",
                           "size": 1981,
                         },
                         "opts-arg.js": {
-                          "offset": "468615",
+                          "offset": "2432869",
                           "size": 1364,
                         },
                         "opts-arg.js.map": {
-                          "offset": "469979",
+                          "offset": "2434233",
                           "size": 4791,
                         },
                         "path-arg.d.ts.map": {
-                          "offset": "474770",
+                          "offset": "2439024",
                           "size": 157,
                         },
                         "path-arg.js": {
-                          "offset": "474927",
+                          "offset": "2439181",
                           "size": 953,
                         },
                         "path-arg.js.map": {
-                          "offset": "475880",
+                          "offset": "2440134",
                           "size": 1621,
                         },
                         "use-native.d.ts.map": {
-                          "offset": "477501",
+                          "offset": "2441755",
                           "size": 254,
                         },
                         "use-native.js": {
-                          "offset": "477755",
+                          "offset": "2442009",
                           "size": 763,
                         },
                         "use-native.js.map": {
-                          "offset": "478518",
+                          "offset": "2442772",
                           "size": 1478,
                         },
                       },
@@ -569,91 +1594,91 @@ exports[`isInstallDepsBefore=true > npm tar 2`] = `
                 "mjs": {
                   "files": {
                     "find-made.d.ts.map": {
-                      "offset": "479996",
+                      "offset": "2444250",
                       "size": 325,
                     },
                     "find-made.js": {
-                      "offset": "480321",
+                      "offset": "2444575",
                       "size": 915,
                     },
                     "find-made.js.map": {
-                      "offset": "481236",
+                      "offset": "2445490",
                       "size": 2263,
                     },
                     "index.d.ts.map": {
-                      "offset": "483499",
+                      "offset": "2447753",
                       "size": 661,
                     },
                     "index.js": {
-                      "offset": "484160",
+                      "offset": "2448414",
                       "size": 1490,
                     },
                     "index.js.map": {
-                      "offset": "485650",
+                      "offset": "2449904",
                       "size": 3126,
                     },
                     "mkdirp-manual.d.ts.map": {
-                      "offset": "488776",
+                      "offset": "2453030",
                       "size": 484,
                     },
                     "mkdirp-manual.js": {
-                      "offset": "489260",
+                      "offset": "2453514",
                       "size": 2321,
                     },
                     "mkdirp-manual.js.map": {
-                      "offset": "491581",
+                      "offset": "2455835",
                       "size": 5080,
                     },
                     "mkdirp-native.d.ts.map": {
-                      "offset": "496661",
+                      "offset": "2460915",
                       "size": 391,
                     },
                     "mkdirp-native.js": {
-                      "offset": "497052",
+                      "offset": "2461306",
                       "size": 1374,
                     },
                     "mkdirp-native.js.map": {
-                      "offset": "498426",
+                      "offset": "2462680",
                       "size": 3266,
                     },
                     "opts-arg.d.ts.map": {
-                      "offset": "501692",
+                      "offset": "2465946",
                       "size": 1978,
                     },
                     "opts-arg.js": {
-                      "offset": "503670",
+                      "offset": "2467924",
                       "size": 1249,
                     },
                     "opts-arg.js.map": {
-                      "offset": "504919",
+                      "offset": "2469173",
                       "size": 4831,
                     },
                     "package.json": {
-                      "offset": "509750",
+                      "offset": "2474004",
                       "size": 23,
                     },
                     "path-arg.d.ts.map": {
-                      "offset": "509773",
+                      "offset": "2474027",
                       "size": 154,
                     },
                     "path-arg.js": {
-                      "offset": "509927",
+                      "offset": "2474181",
                       "size": 813,
                     },
                     "path-arg.js.map": {
-                      "offset": "510740",
+                      "offset": "2474994",
                       "size": 1630,
                     },
                     "use-native.d.ts.map": {
-                      "offset": "512370",
+                      "offset": "2476624",
                       "size": 251,
                     },
                     "use-native.js": {
-                      "offset": "512621",
+                      "offset": "2476875",
                       "size": 592,
                     },
                     "use-native.js.map": {
-                      "offset": "513213",
+                      "offset": "2477467",
                       "size": 1546,
                     },
                   },
@@ -661,743 +1686,15 @@ exports[`isInstallDepsBefore=true > npm tar 2`] = `
               },
             },
             "package.json": {
-              "offset": "514759",
+              "offset": "2479013",
               "size": 1453,
             },
           },
         },
-        "tar": {
-          "files": {
-            "LICENSE": {
-              "offset": "516212",
-              "size": 765,
-            },
-            "dist": {
-              "files": {
-                "commonjs": {
-                  "files": {
-                    "create.d.ts.map": {
-                      "offset": "516977",
-                      "size": 192,
-                    },
-                    "create.js": {
-                      "offset": "517169",
-                      "size": 2574,
-                    },
-                    "create.js.map": {
-                      "offset": "519743",
-                      "size": 5193,
-                    },
-                    "cwd-error.d.ts.map": {
-                      "offset": "524936",
-                      "size": 283,
-                    },
-                    "cwd-error.js": {
-                      "offset": "525219",
-                      "size": 436,
-                    },
-                    "cwd-error.js.map": {
-                      "offset": "525655",
-                      "size": 736,
-                    },
-                    "extract.d.ts.map": {
-                      "offset": "526391",
-                      "size": 194,
-                    },
-                    "extract.js": {
-                      "offset": "526585",
-                      "size": 3115,
-                    },
-                    "extract.js.map": {
-                      "offset": "529700",
-                      "size": 3532,
-                    },
-                    "get-write-flag.d.ts.map": {
-                      "offset": "533232",
-                      "size": 168,
-                    },
-                    "get-write-flag.js": {
-                      "offset": "533400",
-                      "size": 1304,
-                    },
-                    "get-write-flag.js.map": {
-                      "offset": "534704",
-                      "size": 1909,
-                    },
-                    "header.d.ts.map": {
-                      "offset": "536613",
-                      "size": 1830,
-                    },
-                    "header.js": {
-                      "offset": "538443",
-                      "size": 11814,
-                    },
-                    "header.js.map": {
-                      "offset": "550257",
-                      "size": 24151,
-                    },
-                    "index.d.ts.map": {
-                      "offset": "574408",
-                      "size": 827,
-                    },
-                    "index.js": {
-                      "offset": "575235",
-                      "size": 2805,
-                    },
-                    "index.js.map": {
-                      "offset": "578040",
-                      "size": 1457,
-                    },
-                    "large-numbers.d.ts.map": {
-                      "offset": "579497",
-                      "size": 217,
-                    },
-                    "large-numbers.js": {
-                      "offset": "579714",
-                      "size": 2733,
-                    },
-                    "large-numbers.js.map": {
-                      "offset": "582447",
-                      "size": 5930,
-                    },
-                    "list.d.ts.map": {
-                      "offset": "588377",
-                      "size": 287,
-                    },
-                    "list.js": {
-                      "offset": "588664",
-                      "size": 4894,
-                    },
-                    "list.js.map": {
-                      "offset": "593558",
-                      "size": 7006,
-                    },
-                    "make-command.d.ts.map": {
-                      "offset": "600564",
-                      "size": 4407,
-                    },
-                    "make-command.js": {
-                      "offset": "604971",
-                      "size": 2046,
-                    },
-                    "make-command.js.map": {
-                      "offset": "607017",
-                      "size": 9053,
-                    },
-                    "mkdir.d.ts.map": {
-                      "offset": "616070",
-                      "size": 800,
-                    },
-                    "mkdir.js": {
-                      "offset": "616870",
-                      "size": 7476,
-                    },
-                    "mkdir.js.map": {
-                      "offset": "624346",
-                      "size": 15069,
-                    },
-                    "mode-fix.d.ts.map": {
-                      "offset": "639415",
-                      "size": 174,
-                    },
-                    "mode-fix.js": {
-                      "offset": "639589",
-                      "size": 876,
-                    },
-                    "mode-fix.js.map": {
-                      "offset": "640465",
-                      "size": 1409,
-                    },
-                    "normalize-unicode.d.ts.map": {
-                      "offset": "641874",
-                      "size": 173,
-                    },
-                    "normalize-unicode.js": {
-                      "offset": "642047",
-                      "size": 639,
-                    },
-                    "normalize-unicode.js.map": {
-                      "offset": "642686",
-                      "size": 1021,
-                    },
-                    "normalize-windows-path.d.ts.map": {
-                      "offset": "643707",
-                      "size": 184,
-                    },
-                    "normalize-windows-path.js": {
-                      "offset": "643891",
-                      "size": 601,
-                    },
-                    "normalize-windows-path.js.map": {
-                      "offset": "644492",
-                      "size": 943,
-                    },
-                    "options.d.ts.map": {
-                      "offset": "645435",
-                      "size": 5832,
-                    },
-                    "options.js": {
-                      "offset": "651267",
-                      "size": 2117,
-                    },
-                    "options.js.map": {
-                      "offset": "653384",
-                      "size": 26512,
-                    },
-                    "pack.d.ts.map": {
-                      "offset": "679896",
-                      "size": 3795,
-                    },
-                    "pack.js": {
-                      "offset": "683691",
-                      "size": 14697,
-                    },
-                    "pack.js.map": {
-                      "offset": "698388",
-                      "size": 28002,
-                    },
-                    "package.json": {
-                      "offset": "726390",
-                      "size": 25,
-                    },
-                    "parse.d.ts.map": {
-                      "offset": "726415",
-                      "size": 3705,
-                    },
-                    "parse.js": {
-                      "offset": "730120",
-                      "size": 21999,
-                    },
-                    "parse.js.map": {
-                      "offset": "752119",
-                      "size": 39932,
-                    },
-                    "path-reservations.d.ts.map": {
-                      "offset": "792051",
-                      "size": 419,
-                    },
-                    "path-reservations.js": {
-                      "offset": "792470",
-                      "size": 5729,
-                    },
-                    "path-reservations.js.map": {
-                      "offset": "798199",
-                      "size": 10885,
-                    },
-                    "pax.d.ts.map": {
-                      "offset": "809084",
-                      "size": 882,
-                    },
-                    "pax.js": {
-                      "offset": "809966",
-                      "size": 4904,
-                    },
-                    "pax.js.map": {
-                      "offset": "814870",
-                      "size": 10047,
-                    },
-                    "read-entry.d.ts.map": {
-                      "offset": "824917",
-                      "size": 1180,
-                    },
-                    "read-entry.js": {
-                      "offset": "826097",
-                      "size": 4458,
-                    },
-                    "read-entry.js.map": {
-                      "offset": "830555",
-                      "size": 8160,
-                    },
-                    "replace.d.ts.map": {
-                      "offset": "838715",
-                      "size": 144,
-                    },
-                    "replace.js": {
-                      "offset": "838859",
-                      "size": 7855,
-                    },
-                    "replace.js.map": {
-                      "offset": "846714",
-                      "size": 15068,
-                    },
-                    "strip-absolute-path.d.ts.map": {
-                      "offset": "861782",
-                      "size": 178,
-                    },
-                    "strip-absolute-path.js": {
-                      "offset": "861960",
-                      "size": 1232,
-                    },
-                    "strip-absolute-path.js.map": {
-                      "offset": "863192",
-                      "size": 1915,
-                    },
-                    "strip-trailing-slashes.d.ts.map": {
-                      "offset": "865107",
-                      "size": 183,
-                    },
-                    "strip-trailing-slashes.js": {
-                      "offset": "865290",
-                      "size": 651,
-                    },
-                    "strip-trailing-slashes.js.map": {
-                      "offset": "865941",
-                      "size": 1073,
-                    },
-                    "symlink-error.d.ts.map": {
-                      "offset": "867014",
-                      "size": 321,
-                    },
-                    "symlink-error.js": {
-                      "offset": "867335",
-                      "size": 528,
-                    },
-                    "symlink-error.js.map": {
-                      "offset": "867863",
-                      "size": 846,
-                    },
-                    "types.d.ts.map": {
-                      "offset": "868709",
-                      "size": 767,
-                    },
-                    "types.js": {
-                      "offset": "869476",
-                      "size": 1476,
-                    },
-                    "types.js.map": {
-                      "offset": "870952",
-                      "size": 3506,
-                    },
-                    "unpack.d.ts.map": {
-                      "offset": "874458",
-                      "size": 3985,
-                    },
-                    "unpack.js": {
-                      "offset": "878443",
-                      "size": 35213,
-                    },
-                    "unpack.js.map": {
-                      "offset": "913656",
-                      "size": 61895,
-                    },
-                    "update.d.ts.map": {
-                      "offset": "975551",
-                      "size": 140,
-                    },
-                    "update.js": {
-                      "offset": "975691",
-                      "size": 1229,
-                    },
-                    "update.js.map": {
-                      "offset": "976920",
-                      "size": 2260,
-                    },
-                    "warn-method.d.ts.map": {
-                      "offset": "979180",
-                      "size": 1111,
-                    },
-                    "warn-method.js": {
-                      "offset": "980291",
-                      "size": 927,
-                    },
-                    "warn-method.js.map": {
-                      "offset": "981218",
-                      "size": 2609,
-                    },
-                    "winchars.d.ts.map": {
-                      "offset": "983827",
-                      "size": 195,
-                    },
-                    "winchars.js": {
-                      "offset": "984022",
-                      "size": 704,
-                    },
-                    "winchars.js.map": {
-                      "offset": "984726",
-                      "size": 1669,
-                    },
-                    "write-entry.d.ts.map": {
-                      "offset": "986395",
-                      "size": 4833,
-                    },
-                    "write-entry.js": {
-                      "offset": "991228",
-                      "size": 25038,
-                    },
-                    "write-entry.js.map": {
-                      "offset": "1016266",
-                      "size": 48218,
-                    },
-                  },
-                },
-                "esm": {
-                  "files": {
-                    "create.d.ts.map": {
-                      "offset": "1064484",
-                      "size": 192,
-                    },
-                    "create.js": {
-                      "offset": "1064676",
-                      "size": 2163,
-                    },
-                    "create.js.map": {
-                      "offset": "1066839",
-                      "size": 5329,
-                    },
-                    "cwd-error.d.ts.map": {
-                      "offset": "1072168",
-                      "size": 283,
-                    },
-                    "cwd-error.js": {
-                      "offset": "1072451",
-                      "size": 310,
-                    },
-                    "cwd-error.js.map": {
-                      "offset": "1072761",
-                      "size": 727,
-                    },
-                    "extract.d.ts.map": {
-                      "offset": "1073488",
-                      "size": 194,
-                    },
-                    "extract.js": {
-                      "offset": "1073682",
-                      "size": 1692,
-                    },
-                    "extract.js.map": {
-                      "offset": "1075374",
-                      "size": 3634,
-                    },
-                    "get-write-flag.d.ts.map": {
-                      "offset": "1079008",
-                      "size": 168,
-                    },
-                    "get-write-flag.js": {
-                      "offset": "1079176",
-                      "size": 1018,
-                    },
-                    "get-write-flag.js.map": {
-                      "offset": "1080194",
-                      "size": 1931,
-                    },
-                    "header.d.ts.map": {
-                      "offset": "1082125",
-                      "size": 1830,
-                    },
-                    "header.js": {
-                      "offset": "1083955",
-                      "size": 10604,
-                    },
-                    "header.js.map": {
-                      "offset": "1094559",
-                      "size": 24197,
-                    },
-                    "index.d.ts.map": {
-                      "offset": "1118756",
-                      "size": 827,
-                    },
-                    "index.js": {
-                      "offset": "1119583",
-                      "size": 647,
-                    },
-                    "index.js.map": {
-                      "offset": "1120230",
-                      "size": 1631,
-                    },
-                    "large-numbers.d.ts.map": {
-                      "offset": "1121861",
-                      "size": 217,
-                    },
-                    "large-numbers.js": {
-                      "offset": "1122078",
-                      "size": 2581,
-                    },
-                    "large-numbers.js.map": {
-                      "offset": "1124659",
-                      "size": 5903,
-                    },
-                    "list.d.ts.map": {
-                      "offset": "1130562",
-                      "size": 287,
-                    },
-                    "list.js": {
-                      "offset": "1130849",
-                      "size": 3234,
-                    },
-                    "list.js.map": {
-                      "offset": "1134083",
-                      "size": 7098,
-                    },
-                    "make-command.d.ts.map": {
-                      "offset": "1141181",
-                      "size": 4407,
-                    },
-                    "make-command.js": {
-                      "offset": "1145588",
-                      "size": 1870,
-                    },
-                    "make-command.js.map": {
-                      "offset": "1147458",
-                      "size": 9075,
-                    },
-                    "mkdir.d.ts.map": {
-                      "offset": "1156533",
-                      "size": 800,
-                    },
-                    "mkdir.js": {
-                      "offset": "1157333",
-                      "size": 6452,
-                    },
-                    "mkdir.js.map": {
-                      "offset": "1163785",
-                      "size": 15156,
-                    },
-                    "mode-fix.d.ts.map": {
-                      "offset": "1178941",
-                      "size": 174,
-                    },
-                    "mode-fix.js": {
-                      "offset": "1179115",
-                      "size": 753,
-                    },
-                    "mode-fix.js.map": {
-                      "offset": "1179868",
-                      "size": 1393,
-                    },
-                    "normalize-unicode.d.ts.map": {
-                      "offset": "1181261",
-                      "size": 173,
-                    },
-                    "normalize-unicode.js": {
-                      "offset": "1181434",
-                      "size": 489,
-                    },
-                    "normalize-unicode.js.map": {
-                      "offset": "1181923",
-                      "size": 1004,
-                    },
-                    "normalize-windows-path.d.ts.map": {
-                      "offset": "1182927",
-                      "size": 184,
-                    },
-                    "normalize-windows-path.js": {
-                      "offset": "1183111",
-                      "size": 490,
-                    },
-                    "normalize-windows-path.js.map": {
-                      "offset": "1183601",
-                      "size": 950,
-                    },
-                    "options.d.ts.map": {
-                      "offset": "1184551",
-                      "size": 5832,
-                    },
-                    "options.js": {
-                      "offset": "1190383",
-                      "size": 1639,
-                    },
-                    "options.js.map": {
-                      "offset": "1192022",
-                      "size": 26398,
-                    },
-                    "pack.d.ts.map": {
-                      "offset": "1218420",
-                      "size": 3795,
-                    },
-                    "pack.js": {
-                      "offset": "1222215",
-                      "size": 13005,
-                    },
-                    "pack.js.map": {
-                      "offset": "1235220",
-                      "size": 28182,
-                    },
-                    "package.json": {
-                      "offset": "1263402",
-                      "size": 23,
-                    },
-                    "parse.d.ts.map": {
-                      "offset": "1263425",
-                      "size": 3705,
-                    },
-                    "parse.js": {
-                      "offset": "1267130",
-                      "size": 21741,
-                    },
-                    "parse.js.map": {
-                      "offset": "1288871",
-                      "size": 40129,
-                    },
-                    "path-reservations.d.ts.map": {
-                      "offset": "1329000",
-                      "size": 419,
-                    },
-                    "path-reservations.js": {
-                      "offset": "1329419",
-                      "size": 5461,
-                    },
-                    "path-reservations.js.map": {
-                      "offset": "1334880",
-                      "size": 10944,
-                    },
-                    "pax.d.ts.map": {
-                      "offset": "1345824",
-                      "size": 882,
-                    },
-                    "pax.js": {
-                      "offset": "1346706",
-                      "size": 4754,
-                    },
-                    "pax.js.map": {
-                      "offset": "1351460",
-                      "size": 10085,
-                    },
-                    "read-entry.d.ts.map": {
-                      "offset": "1361545",
-                      "size": 1180,
-                    },
-                    "read-entry.js": {
-                      "offset": "1362725",
-                      "size": 4175,
-                    },
-                    "read-entry.js.map": {
-                      "offset": "1366900",
-                      "size": 8188,
-                    },
-                    "replace.d.ts.map": {
-                      "offset": "1375088",
-                      "size": 144,
-                    },
-                    "replace.js": {
-                      "offset": "1375232",
-                      "size": 7185,
-                    },
-                    "replace.js.map": {
-                      "offset": "1382417",
-                      "size": 15258,
-                    },
-                    "strip-absolute-path.d.ts.map": {
-                      "offset": "1397675",
-                      "size": 178,
-                    },
-                    "strip-absolute-path.js": {
-                      "offset": "1397853",
-                      "size": 1060,
-                    },
-                    "strip-absolute-path.js.map": {
-                      "offset": "1398913",
-                      "size": 1923,
-                    },
-                    "strip-trailing-slashes.d.ts.map": {
-                      "offset": "1400836",
-                      "size": 183,
-                    },
-                    "strip-trailing-slashes.js": {
-                      "offset": "1401019",
-                      "size": 489,
-                    },
-                    "strip-trailing-slashes.js.map": {
-                      "offset": "1401508",
-                      "size": 1056,
-                    },
-                    "symlink-error.d.ts.map": {
-                      "offset": "1402564",
-                      "size": 321,
-                    },
-                    "symlink-error.js": {
-                      "offset": "1402885",
-                      "size": 390,
-                    },
-                    "symlink-error.js.map": {
-                      "offset": "1403275",
-                      "size": 837,
-                    },
-                    "types.d.ts.map": {
-                      "offset": "1404112",
-                      "size": 767,
-                    },
-                    "types.js": {
-                      "offset": "1404879",
-                      "size": 1277,
-                    },
-                    "types.js.map": {
-                      "offset": "1406156",
-                      "size": 3502,
-                    },
-                    "unpack.d.ts.map": {
-                      "offset": "1409658",
-                      "size": 3985,
-                    },
-                    "unpack.js": {
-                      "offset": "1413643",
-                      "size": 32445,
-                    },
-                    "unpack.js.map": {
-                      "offset": "1446088",
-                      "size": 62081,
-                    },
-                    "update.d.ts.map": {
-                      "offset": "1508169",
-                      "size": 140,
-                    },
-                    "update.js": {
-                      "offset": "1508309",
-                      "size": 1006,
-                    },
-                    "update.js.map": {
-                      "offset": "1509315",
-                      "size": 2324,
-                    },
-                    "warn-method.d.ts.map": {
-                      "offset": "1511639",
-                      "size": 1111,
-                    },
-                    "warn-method.js": {
-                      "offset": "1512750",
-                      "size": 795,
-                    },
-                    "warn-method.js.map": {
-                      "offset": "1513545",
-                      "size": 2593,
-                    },
-                    "winchars.d.ts.map": {
-                      "offset": "1516138",
-                      "size": 195,
-                    },
-                    "winchars.js": {
-                      "offset": "1516333",
-                      "size": 549,
-                    },
-                    "winchars.js.map": {
-                      "offset": "1516882",
-                      "size": 1642,
-                    },
-                    "write-entry.d.ts.map": {
-                      "offset": "1518524",
-                      "size": 4833,
-                    },
-                    "write-entry.js": {
-                      "offset": "1523357",
-                      "size": 22781,
-                    },
-                    "write-entry.js.map": {
-                      "offset": "1546138",
-                      "size": 48386,
-                    },
-                  },
-                },
-              },
-            },
-            "package.json": {
-              "offset": "1594524",
-              "size": 8322,
-            },
-          },
-        },
-        "yallist": {
+        "package-json-from-dist": {
           "files": {
             "LICENSE.md": {
-              "offset": "1602846",
+              "offset": "2480466",
               "size": 1764,
             },
             "dist": {
@@ -1405,19 +1702,19 @@ exports[`isInstallDepsBefore=true > npm tar 2`] = `
                 "commonjs": {
                   "files": {
                     "index.d.ts.map": {
-                      "offset": "1604610",
-                      "size": 2413,
+                      "offset": "2482230",
+                      "size": 342,
                     },
                     "index.js": {
-                      "offset": "1607023",
-                      "size": 9914,
+                      "offset": "2482572",
+                      "size": 5017,
                     },
                     "index.js.map": {
-                      "offset": "1616937",
-                      "size": 22191,
+                      "offset": "2487589",
+                      "size": 6769,
                     },
                     "package.json": {
-                      "offset": "1639128",
+                      "offset": "2494358",
                       "size": 25,
                     },
                   },
@@ -1425,19 +1722,19 @@ exports[`isInstallDepsBefore=true > npm tar 2`] = `
                 "esm": {
                   "files": {
                     "index.d.ts.map": {
-                      "offset": "1639153",
-                      "size": 2413,
+                      "offset": "2494383",
+                      "size": 342,
                     },
                     "index.js": {
-                      "offset": "1641566",
-                      "size": 9762,
+                      "offset": "2494725",
+                      "size": 4572,
                     },
                     "index.js.map": {
-                      "offset": "1651328",
-                      "size": 22172,
+                      "offset": "2499297",
+                      "size": 6795,
                     },
                     "package.json": {
-                      "offset": "1673500",
+                      "offset": "2506092",
                       "size": 23,
                     },
                   },
@@ -1445,7 +1742,1703 @@ exports[`isInstallDepsBefore=true > npm tar 2`] = `
               },
             },
             "package.json": {
-              "offset": "1673523",
+              "offset": "2506115",
+              "size": 1343,
+            },
+          },
+        },
+        "path-key": {
+          "files": {
+            "index.js": {
+              "offset": "2507458",
+              "size": 415,
+            },
+            "license": {
+              "offset": "2507873",
+              "size": 1109,
+            },
+            "package.json": {
+              "offset": "2508982",
+              "size": 507,
+            },
+          },
+        },
+        "path-scurry": {
+          "files": {
+            "LICENSE.md": {
+              "offset": "2509489",
+              "size": 1552,
+            },
+            "dist": {
+              "files": {
+                "commonjs": {
+                  "files": {
+                    "index.d.ts.map": {
+                      "offset": "2511041",
+                      "size": 18164,
+                    },
+                    "index.js": {
+                      "offset": "2529205",
+                      "size": 66122,
+                    },
+                    "index.js.map": {
+                      "offset": "2595327",
+                      "size": 131555,
+                    },
+                    "package.json": {
+                      "offset": "2726882",
+                      "size": 25,
+                    },
+                  },
+                },
+                "esm": {
+                  "files": {
+                    "index.d.ts.map": {
+                      "offset": "2726907",
+                      "size": 18164,
+                    },
+                    "index.js": {
+                      "offset": "2745071",
+                      "size": 64317,
+                    },
+                    "index.js.map": {
+                      "offset": "2809388",
+                      "size": 131684,
+                    },
+                    "package.json": {
+                      "offset": "2941072",
+                      "size": 23,
+                    },
+                  },
+                },
+              },
+            },
+            "package.json": {
+              "offset": "2941095",
+              "size": 1746,
+            },
+          },
+        },
+        "rimraf": {
+          "files": {
+            "LICENSE": {
+              "offset": "2942841",
+              "size": 775,
+            },
+            "dist": {
+              "files": {
+                "commonjs": {
+                  "files": {
+                    "default-tmp.d.ts.map": {
+                      "offset": "2943616",
+                      "size": 206,
+                    },
+                    "default-tmp.js": {
+                      "offset": "2943822",
+                      "size": 2482,
+                    },
+                    "default-tmp.js.map": {
+                      "offset": "2946304",
+                      "size": 4022,
+                    },
+                    "fix-eperm.d.ts.map": {
+                      "offset": "2950326",
+                      "size": 285,
+                    },
+                    "fix-eperm.js": {
+                      "offset": "2950611",
+                      "size": 1449,
+                    },
+                    "fix-eperm.js.map": {
+                      "offset": "2952060",
+                      "size": 2703,
+                    },
+                    "fs.d.ts.map": {
+                      "offset": "2954763",
+                      "size": 993,
+                    },
+                    "fs.js": {
+                      "offset": "2955756",
+                      "size": 3165,
+                    },
+                    "fs.js.map": {
+                      "offset": "2958921",
+                      "size": 5671,
+                    },
+                    "ignore-enoent.d.ts.map": {
+                      "offset": "2964592",
+                      "size": 227,
+                    },
+                    "ignore-enoent.js": {
+                      "offset": "2964819",
+                      "size": 535,
+                    },
+                    "ignore-enoent.js.map": {
+                      "offset": "2965354",
+                      "size": 922,
+                    },
+                    "index.d.ts.map": {
+                      "offset": "2966276",
+                      "size": 2617,
+                    },
+                    "index.js": {
+                      "offset": "2968893",
+                      "size": 4091,
+                    },
+                    "index.js.map": {
+                      "offset": "2972984",
+                      "size": 6283,
+                    },
+                    "opt-arg.d.ts.map": {
+                      "offset": "2979267",
+                      "size": 1177,
+                    },
+                    "opt-arg.js": {
+                      "offset": "2980444",
+                      "size": 1788,
+                    },
+                    "opt-arg.js.map": {
+                      "offset": "2982232",
+                      "size": 4129,
+                    },
+                    "package.json": {
+                      "offset": "2986361",
+                      "size": 25,
+                    },
+                    "path-arg.d.ts.map": {
+                      "offset": "2986386",
+                      "size": 229,
+                    },
+                    "path-arg.js": {
+                      "offset": "2986615",
+                      "size": 1964,
+                    },
+                    "path-arg.js.map": {
+                      "offset": "2988579",
+                      "size": 3291,
+                    },
+                    "platform.d.ts.map": {
+                      "offset": "2991870",
+                      "size": 125,
+                    },
+                    "platform.js": {
+                      "offset": "2991995",
+                      "size": 192,
+                    },
+                    "platform.js.map": {
+                      "offset": "2992187",
+                      "size": 273,
+                    },
+                    "readdir-or-error.d.ts.map": {
+                      "offset": "2992460",
+                      "size": 214,
+                    },
+                    "readdir-or-error.js": {
+                      "offset": "2992674",
+                      "size": 655,
+                    },
+                    "readdir-or-error.js.map": {
+                      "offset": "2993329",
+                      "size": 1024,
+                    },
+                    "retry-busy.d.ts.map": {
+                      "offset": "2994353",
+                      "size": 488,
+                    },
+                    "retry-busy.js": {
+                      "offset": "2994841",
+                      "size": 2335,
+                    },
+                    "retry-busy.js.map": {
+                      "offset": "2997176",
+                      "size": 4047,
+                    },
+                    "rimraf-manual.d.ts.map": {
+                      "offset": "3001223",
+                      "size": 189,
+                    },
+                    "rimraf-manual.js": {
+                      "offset": "3001412",
+                      "size": 760,
+                    },
+                    "rimraf-manual.js.map": {
+                      "offset": "3002172",
+                      "size": 713,
+                    },
+                    "rimraf-move-remove.d.ts.map": {
+                      "offset": "3002885",
+                      "size": 302,
+                    },
+                    "rimraf-move-remove.js": {
+                      "offset": "3003187",
+                      "size": 6655,
+                    },
+                    "rimraf-move-remove.js.map": {
+                      "offset": "3009842",
+                      "size": 13079,
+                    },
+                    "rimraf-native.d.ts.map": {
+                      "offset": "3022921",
+                      "size": 313,
+                    },
+                    "rimraf-native.js": {
+                      "offset": "3023234",
+                      "size": 646,
+                    },
+                    "rimraf-native.js.map": {
+                      "offset": "3023880",
+                      "size": 1167,
+                    },
+                    "rimraf-posix.d.ts.map": {
+                      "offset": "3025047",
+                      "size": 283,
+                    },
+                    "rimraf-posix.js": {
+                      "offset": "3025330",
+                      "size": 4310,
+                    },
+                    "rimraf-posix.js.map": {
+                      "offset": "3029640",
+                      "size": 8091,
+                    },
+                    "rimraf-windows.d.ts.map": {
+                      "offset": "3037731",
+                      "size": 290,
+                    },
+                    "rimraf-windows.js": {
+                      "offset": "3038021",
+                      "size": 6622,
+                    },
+                    "rimraf-windows.js.map": {
+                      "offset": "3044643",
+                      "size": 12287,
+                    },
+                    "use-native.d.ts.map": {
+                      "offset": "3056930",
+                      "size": 302,
+                    },
+                    "use-native.js": {
+                      "offset": "3057232",
+                      "size": 1082,
+                    },
+                    "use-native.js.map": {
+                      "offset": "3058314",
+                      "size": 1836,
+                    },
+                  },
+                },
+                "esm": {
+                  "files": {
+                    "bin.d.mts": {
+                      "offset": "3060150",
+                      "size": 194,
+                    },
+                    "bin.d.mts.map": {
+                      "offset": "3060344",
+                      "size": 207,
+                    },
+                    "bin.mjs": {
+                      "executable": true,
+                      "offset": "3060551",
+                      "size": 8729,
+                    },
+                    "bin.mjs.map": {
+                      "offset": "3069280",
+                      "size": 15918,
+                    },
+                    "default-tmp.d.ts.map": {
+                      "offset": "3085198",
+                      "size": 206,
+                    },
+                    "default-tmp.js": {
+                      "offset": "3085404",
+                      "size": 2054,
+                    },
+                    "default-tmp.js.map": {
+                      "offset": "3087458",
+                      "size": 4099,
+                    },
+                    "fix-eperm.d.ts.map": {
+                      "offset": "3091557",
+                      "size": 285,
+                    },
+                    "fix-eperm.js": {
+                      "offset": "3091842",
+                      "size": 1260,
+                    },
+                    "fix-eperm.js.map": {
+                      "offset": "3093102",
+                      "size": 2704,
+                    },
+                    "fs.d.ts.map": {
+                      "offset": "3095806",
+                      "size": 993,
+                    },
+                    "fs.js": {
+                      "offset": "3096799",
+                      "size": 1796,
+                    },
+                    "fs.js.map": {
+                      "offset": "3098595",
+                      "size": 5645,
+                    },
+                    "ignore-enoent.d.ts.map": {
+                      "offset": "3104240",
+                      "size": 227,
+                    },
+                    "ignore-enoent.js": {
+                      "offset": "3104467",
+                      "size": 332,
+                    },
+                    "ignore-enoent.js.map": {
+                      "offset": "3104799",
+                      "size": 893,
+                    },
+                    "index.d.ts.map": {
+                      "offset": "3105692",
+                      "size": 2617,
+                    },
+                    "index.js": {
+                      "offset": "3108309",
+                      "size": 2688,
+                    },
+                    "index.js.map": {
+                      "offset": "3110997",
+                      "size": 6548,
+                    },
+                    "opt-arg.d.ts.map": {
+                      "offset": "3117545",
+                      "size": 1177,
+                    },
+                    "opt-arg.js": {
+                      "offset": "3118722",
+                      "size": 1459,
+                    },
+                    "opt-arg.js.map": {
+                      "offset": "3120181",
+                      "size": 4065,
+                    },
+                    "package.json": {
+                      "offset": "3124246",
+                      "size": 23,
+                    },
+                    "path-arg.d.ts.map": {
+                      "offset": "3124269",
+                      "size": 229,
+                    },
+                    "path-arg.js": {
+                      "offset": "3124498",
+                      "size": 1664,
+                    },
+                    "path-arg.js.map": {
+                      "offset": "3126162",
+                      "size": 3348,
+                    },
+                    "platform.d.ts.map": {
+                      "offset": "3129510",
+                      "size": 125,
+                    },
+                    "platform.js": {
+                      "offset": "3129635",
+                      "size": 112,
+                    },
+                    "platform.js.map": {
+                      "offset": "3129747",
+                      "size": 270,
+                    },
+                    "readdir-or-error.d.ts.map": {
+                      "offset": "3130017",
+                      "size": 214,
+                    },
+                    "readdir-or-error.js": {
+                      "offset": "3130231",
+                      "size": 432,
+                    },
+                    "readdir-or-error.js.map": {
+                      "offset": "3130663",
+                      "size": 1025,
+                    },
+                    "retry-busy.d.ts.map": {
+                      "offset": "3131688",
+                      "size": 488,
+                    },
+                    "retry-busy.js": {
+                      "offset": "3132176",
+                      "size": 2049,
+                    },
+                    "retry-busy.js.map": {
+                      "offset": "3134225",
+                      "size": 4056,
+                    },
+                    "rimraf-manual.d.ts.map": {
+                      "offset": "3138281",
+                      "size": 189,
+                    },
+                    "rimraf-manual.js": {
+                      "offset": "3138470",
+                      "size": 389,
+                    },
+                    "rimraf-manual.js.map": {
+                      "offset": "3138859",
+                      "size": 822,
+                    },
+                    "rimraf-move-remove.d.ts.map": {
+                      "offset": "3139681",
+                      "size": 302,
+                    },
+                    "rimraf-move-remove.js": {
+                      "offset": "3139983",
+                      "size": 6181,
+                    },
+                    "rimraf-move-remove.js.map": {
+                      "offset": "3146164",
+                      "size": 13193,
+                    },
+                    "rimraf-native.d.ts.map": {
+                      "offset": "3159357",
+                      "size": 313,
+                    },
+                    "rimraf-native.js": {
+                      "offset": "3159670",
+                      "size": 430,
+                    },
+                    "rimraf-native.js.map": {
+                      "offset": "3160100",
+                      "size": 1170,
+                    },
+                    "rimraf-posix.d.ts.map": {
+                      "offset": "3161270",
+                      "size": 283,
+                    },
+                    "rimraf-posix.js": {
+                      "offset": "3161553",
+                      "size": 3932,
+                    },
+                    "rimraf-posix.js.map": {
+                      "offset": "3165485",
+                      "size": 8173,
+                    },
+                    "rimraf-windows.d.ts.map": {
+                      "offset": "3173658",
+                      "size": 290,
+                    },
+                    "rimraf-windows.js": {
+                      "offset": "3173948",
+                      "size": 6049,
+                    },
+                    "rimraf-windows.js.map": {
+                      "offset": "3179997",
+                      "size": 12442,
+                    },
+                    "use-native.d.ts.map": {
+                      "offset": "3192439",
+                      "size": 302,
+                    },
+                    "use-native.js": {
+                      "offset": "3192741",
+                      "size": 771,
+                    },
+                    "use-native.js.map": {
+                      "offset": "3193512",
+                      "size": 1866,
+                    },
+                  },
+                },
+              },
+            },
+            "package.json": {
+              "offset": "3195378",
+              "size": 1527,
+            },
+          },
+        },
+        "shebang-command": {
+          "files": {
+            "index.js": {
+              "offset": "3196905",
+              "size": 387,
+            },
+            "license": {
+              "offset": "3197292",
+              "size": 1116,
+            },
+            "package.json": {
+              "offset": "3198408",
+              "size": 484,
+            },
+          },
+        },
+        "shebang-regex": {
+          "files": {
+            "index.js": {
+              "offset": "3198892",
+              "size": 42,
+            },
+            "license": {
+              "offset": "3198934",
+              "size": 1109,
+            },
+            "package.json": {
+              "offset": "3200043",
+              "size": 480,
+            },
+          },
+        },
+        "signal-exit": {
+          "files": {
+            "LICENSE.txt": {
+              "offset": "3200523",
+              "size": 790,
+            },
+            "dist": {
+              "files": {
+                "cjs": {
+                  "files": {
+                    "browser.d.ts.map": {
+                      "offset": "3201313",
+                      "size": 349,
+                    },
+                    "browser.js": {
+                      "offset": "3201662",
+                      "size": 322,
+                    },
+                    "browser.js.map": {
+                      "offset": "3201984",
+                      "size": 703,
+                    },
+                    "index.d.ts.map": {
+                      "offset": "3202687",
+                      "size": 460,
+                    },
+                    "index.js": {
+                      "offset": "3203147",
+                      "size": 9435,
+                    },
+                    "index.js.map": {
+                      "offset": "3212582",
+                      "size": 17544,
+                    },
+                    "package.json": {
+                      "offset": "3230126",
+                      "size": 25,
+                    },
+                    "signals.d.ts.map": {
+                      "offset": "3230151",
+                      "size": 196,
+                    },
+                    "signals.js": {
+                      "offset": "3230347",
+                      "size": 1560,
+                    },
+                    "signals.js.map": {
+                      "offset": "3231907",
+                      "size": 2091,
+                    },
+                  },
+                },
+                "mjs": {
+                  "files": {
+                    "browser.d.ts.map": {
+                      "offset": "3233998",
+                      "size": 349,
+                    },
+                    "browser.js": {
+                      "offset": "3234347",
+                      "size": 138,
+                    },
+                    "browser.js.map": {
+                      "offset": "3234485",
+                      "size": 668,
+                    },
+                    "index.d.ts.map": {
+                      "offset": "3235153",
+                      "size": 460,
+                    },
+                    "index.js": {
+                      "offset": "3235613",
+                      "size": 9090,
+                    },
+                    "index.js.map": {
+                      "offset": "3244703",
+                      "size": 17592,
+                    },
+                    "package.json": {
+                      "offset": "3262295",
+                      "size": 23,
+                    },
+                    "signals.d.ts.map": {
+                      "offset": "3262318",
+                      "size": 196,
+                    },
+                    "signals.js": {
+                      "offset": "3262514",
+                      "size": 1438,
+                    },
+                    "signals.js.map": {
+                      "offset": "3263952",
+                      "size": 2098,
+                    },
+                  },
+                },
+              },
+            },
+            "package.json": {
+              "offset": "3266050",
+              "size": 2031,
+            },
+          },
+        },
+        "string-width": {
+          "files": {
+            "index.js": {
+              "offset": "3268081",
+              "size": 1064,
+            },
+            "license": {
+              "offset": "3269145",
+              "size": 1117,
+            },
+            "node_modules": {
+              "files": {
+                "ansi-regex": {
+                  "files": {
+                    "index.js": {
+                      "offset": "3271001",
+                      "size": 458,
+                    },
+                    "license": {
+                      "offset": "3271459",
+                      "size": 1117,
+                    },
+                    "package.json": {
+                      "offset": "3272576",
+                      "size": 671,
+                    },
+                  },
+                },
+                "emoji-regex": {
+                  "files": {
+                    "LICENSE-MIT.txt": {
+                      "offset": "3273247",
+                      "size": 1077,
+                    },
+                    "RGI_Emoji.js": {
+                      "offset": "3274324",
+                      "size": 12976,
+                    },
+                    "es2015": {
+                      "files": {
+                        "RGI_Emoji.js": {
+                          "offset": "3287300",
+                          "size": 14024,
+                        },
+                        "index.js": {
+                          "offset": "3301324",
+                          "size": 17405,
+                        },
+                        "text.js": {
+                          "offset": "3318729",
+                          "size": 15796,
+                        },
+                      },
+                    },
+                    "index.js": {
+                      "offset": "3334525",
+                      "size": 15735,
+                    },
+                    "package.json": {
+                      "offset": "3350260",
+                      "size": 889,
+                    },
+                    "text.js": {
+                      "offset": "3351149",
+                      "size": 14468,
+                    },
+                  },
+                },
+                "strip-ansi": {
+                  "files": {
+                    "index.js": {
+                      "offset": "3365617",
+                      "size": 468,
+                    },
+                    "license": {
+                      "offset": "3366085",
+                      "size": 1117,
+                    },
+                    "package.json": {
+                      "offset": "3367202",
+                      "size": 630,
+                    },
+                  },
+                },
+              },
+            },
+            "package.json": {
+              "offset": "3270262",
+              "size": 739,
+            },
+          },
+        },
+        "string-width-cjs": {
+          "files": {
+            "index.js": {
+              "offset": "3367832",
+              "size": 923,
+            },
+            "license": {
+              "offset": "3368755",
+              "size": 1109,
+            },
+            "package.json": {
+              "offset": "3369864",
+              "size": 633,
+            },
+          },
+        },
+        "strip-ansi": {
+          "files": {
+            "index.js": {
+              "offset": "3370497",
+              "size": 154,
+            },
+            "license": {
+              "offset": "3370651",
+              "size": 1109,
+            },
+            "package.json": {
+              "offset": "3371760",
+              "size": 511,
+            },
+          },
+        },
+        "strip-ansi-cjs": {
+          "files": {
+            "index.js": {
+              "offset": "3372271",
+              "size": 154,
+            },
+            "license": {
+              "offset": "3372425",
+              "size": 1109,
+            },
+            "package.json": {
+              "offset": "3373534",
+              "size": 511,
+            },
+          },
+        },
+        "tar": {
+          "files": {
+            "LICENSE": {
+              "offset": "3374045",
+              "size": 765,
+            },
+            "dist": {
+              "files": {
+                "commonjs": {
+                  "files": {
+                    "create.d.ts.map": {
+                      "offset": "3374810",
+                      "size": 192,
+                    },
+                    "create.js": {
+                      "offset": "3375002",
+                      "size": 2574,
+                    },
+                    "create.js.map": {
+                      "offset": "3377576",
+                      "size": 5193,
+                    },
+                    "cwd-error.d.ts.map": {
+                      "offset": "3382769",
+                      "size": 283,
+                    },
+                    "cwd-error.js": {
+                      "offset": "3383052",
+                      "size": 436,
+                    },
+                    "cwd-error.js.map": {
+                      "offset": "3383488",
+                      "size": 736,
+                    },
+                    "extract.d.ts.map": {
+                      "offset": "3384224",
+                      "size": 194,
+                    },
+                    "extract.js": {
+                      "offset": "3384418",
+                      "size": 3115,
+                    },
+                    "extract.js.map": {
+                      "offset": "3387533",
+                      "size": 3532,
+                    },
+                    "get-write-flag.d.ts.map": {
+                      "offset": "3391065",
+                      "size": 168,
+                    },
+                    "get-write-flag.js": {
+                      "offset": "3391233",
+                      "size": 1304,
+                    },
+                    "get-write-flag.js.map": {
+                      "offset": "3392537",
+                      "size": 1909,
+                    },
+                    "header.d.ts.map": {
+                      "offset": "3394446",
+                      "size": 1830,
+                    },
+                    "header.js": {
+                      "offset": "3396276",
+                      "size": 11814,
+                    },
+                    "header.js.map": {
+                      "offset": "3408090",
+                      "size": 24151,
+                    },
+                    "index.d.ts.map": {
+                      "offset": "3432241",
+                      "size": 827,
+                    },
+                    "index.js": {
+                      "offset": "3433068",
+                      "size": 2805,
+                    },
+                    "index.js.map": {
+                      "offset": "3435873",
+                      "size": 1457,
+                    },
+                    "large-numbers.d.ts.map": {
+                      "offset": "3437330",
+                      "size": 217,
+                    },
+                    "large-numbers.js": {
+                      "offset": "3437547",
+                      "size": 2733,
+                    },
+                    "large-numbers.js.map": {
+                      "offset": "3440280",
+                      "size": 5930,
+                    },
+                    "list.d.ts.map": {
+                      "offset": "3446210",
+                      "size": 287,
+                    },
+                    "list.js": {
+                      "offset": "3446497",
+                      "size": 4894,
+                    },
+                    "list.js.map": {
+                      "offset": "3451391",
+                      "size": 7006,
+                    },
+                    "make-command.d.ts.map": {
+                      "offset": "3458397",
+                      "size": 4407,
+                    },
+                    "make-command.js": {
+                      "offset": "3462804",
+                      "size": 2046,
+                    },
+                    "make-command.js.map": {
+                      "offset": "3464850",
+                      "size": 9053,
+                    },
+                    "mkdir.d.ts.map": {
+                      "offset": "3473903",
+                      "size": 800,
+                    },
+                    "mkdir.js": {
+                      "offset": "3474703",
+                      "size": 7476,
+                    },
+                    "mkdir.js.map": {
+                      "offset": "3482179",
+                      "size": 15069,
+                    },
+                    "mode-fix.d.ts.map": {
+                      "offset": "3497248",
+                      "size": 174,
+                    },
+                    "mode-fix.js": {
+                      "offset": "3497422",
+                      "size": 876,
+                    },
+                    "mode-fix.js.map": {
+                      "offset": "3498298",
+                      "size": 1409,
+                    },
+                    "normalize-unicode.d.ts.map": {
+                      "offset": "3499707",
+                      "size": 173,
+                    },
+                    "normalize-unicode.js": {
+                      "offset": "3499880",
+                      "size": 639,
+                    },
+                    "normalize-unicode.js.map": {
+                      "offset": "3500519",
+                      "size": 1021,
+                    },
+                    "normalize-windows-path.d.ts.map": {
+                      "offset": "3501540",
+                      "size": 184,
+                    },
+                    "normalize-windows-path.js": {
+                      "offset": "3501724",
+                      "size": 601,
+                    },
+                    "normalize-windows-path.js.map": {
+                      "offset": "3502325",
+                      "size": 943,
+                    },
+                    "options.d.ts.map": {
+                      "offset": "3503268",
+                      "size": 5832,
+                    },
+                    "options.js": {
+                      "offset": "3509100",
+                      "size": 2117,
+                    },
+                    "options.js.map": {
+                      "offset": "3511217",
+                      "size": 26512,
+                    },
+                    "pack.d.ts.map": {
+                      "offset": "3537729",
+                      "size": 3795,
+                    },
+                    "pack.js": {
+                      "offset": "3541524",
+                      "size": 14697,
+                    },
+                    "pack.js.map": {
+                      "offset": "3556221",
+                      "size": 28002,
+                    },
+                    "package.json": {
+                      "offset": "3584223",
+                      "size": 25,
+                    },
+                    "parse.d.ts.map": {
+                      "offset": "3584248",
+                      "size": 3705,
+                    },
+                    "parse.js": {
+                      "offset": "3587953",
+                      "size": 21999,
+                    },
+                    "parse.js.map": {
+                      "offset": "3609952",
+                      "size": 39932,
+                    },
+                    "path-reservations.d.ts.map": {
+                      "offset": "3649884",
+                      "size": 419,
+                    },
+                    "path-reservations.js": {
+                      "offset": "3650303",
+                      "size": 5729,
+                    },
+                    "path-reservations.js.map": {
+                      "offset": "3656032",
+                      "size": 10885,
+                    },
+                    "pax.d.ts.map": {
+                      "offset": "3666917",
+                      "size": 882,
+                    },
+                    "pax.js": {
+                      "offset": "3667799",
+                      "size": 4904,
+                    },
+                    "pax.js.map": {
+                      "offset": "3672703",
+                      "size": 10047,
+                    },
+                    "read-entry.d.ts.map": {
+                      "offset": "3682750",
+                      "size": 1180,
+                    },
+                    "read-entry.js": {
+                      "offset": "3683930",
+                      "size": 4458,
+                    },
+                    "read-entry.js.map": {
+                      "offset": "3688388",
+                      "size": 8160,
+                    },
+                    "replace.d.ts.map": {
+                      "offset": "3696548",
+                      "size": 144,
+                    },
+                    "replace.js": {
+                      "offset": "3696692",
+                      "size": 7855,
+                    },
+                    "replace.js.map": {
+                      "offset": "3704547",
+                      "size": 15068,
+                    },
+                    "strip-absolute-path.d.ts.map": {
+                      "offset": "3719615",
+                      "size": 178,
+                    },
+                    "strip-absolute-path.js": {
+                      "offset": "3719793",
+                      "size": 1232,
+                    },
+                    "strip-absolute-path.js.map": {
+                      "offset": "3721025",
+                      "size": 1915,
+                    },
+                    "strip-trailing-slashes.d.ts.map": {
+                      "offset": "3722940",
+                      "size": 183,
+                    },
+                    "strip-trailing-slashes.js": {
+                      "offset": "3723123",
+                      "size": 651,
+                    },
+                    "strip-trailing-slashes.js.map": {
+                      "offset": "3723774",
+                      "size": 1073,
+                    },
+                    "symlink-error.d.ts.map": {
+                      "offset": "3724847",
+                      "size": 321,
+                    },
+                    "symlink-error.js": {
+                      "offset": "3725168",
+                      "size": 528,
+                    },
+                    "symlink-error.js.map": {
+                      "offset": "3725696",
+                      "size": 846,
+                    },
+                    "types.d.ts.map": {
+                      "offset": "3726542",
+                      "size": 767,
+                    },
+                    "types.js": {
+                      "offset": "3727309",
+                      "size": 1476,
+                    },
+                    "types.js.map": {
+                      "offset": "3728785",
+                      "size": 3506,
+                    },
+                    "unpack.d.ts.map": {
+                      "offset": "3732291",
+                      "size": 3985,
+                    },
+                    "unpack.js": {
+                      "offset": "3736276",
+                      "size": 35213,
+                    },
+                    "unpack.js.map": {
+                      "offset": "3771489",
+                      "size": 61895,
+                    },
+                    "update.d.ts.map": {
+                      "offset": "3833384",
+                      "size": 140,
+                    },
+                    "update.js": {
+                      "offset": "3833524",
+                      "size": 1229,
+                    },
+                    "update.js.map": {
+                      "offset": "3834753",
+                      "size": 2260,
+                    },
+                    "warn-method.d.ts.map": {
+                      "offset": "3837013",
+                      "size": 1111,
+                    },
+                    "warn-method.js": {
+                      "offset": "3838124",
+                      "size": 927,
+                    },
+                    "warn-method.js.map": {
+                      "offset": "3839051",
+                      "size": 2609,
+                    },
+                    "winchars.d.ts.map": {
+                      "offset": "3841660",
+                      "size": 195,
+                    },
+                    "winchars.js": {
+                      "offset": "3841855",
+                      "size": 704,
+                    },
+                    "winchars.js.map": {
+                      "offset": "3842559",
+                      "size": 1669,
+                    },
+                    "write-entry.d.ts.map": {
+                      "offset": "3844228",
+                      "size": 4833,
+                    },
+                    "write-entry.js": {
+                      "offset": "3849061",
+                      "size": 25038,
+                    },
+                    "write-entry.js.map": {
+                      "offset": "3874099",
+                      "size": 48218,
+                    },
+                  },
+                },
+                "esm": {
+                  "files": {
+                    "create.d.ts.map": {
+                      "offset": "3922317",
+                      "size": 192,
+                    },
+                    "create.js": {
+                      "offset": "3922509",
+                      "size": 2163,
+                    },
+                    "create.js.map": {
+                      "offset": "3924672",
+                      "size": 5329,
+                    },
+                    "cwd-error.d.ts.map": {
+                      "offset": "3930001",
+                      "size": 283,
+                    },
+                    "cwd-error.js": {
+                      "offset": "3930284",
+                      "size": 310,
+                    },
+                    "cwd-error.js.map": {
+                      "offset": "3930594",
+                      "size": 727,
+                    },
+                    "extract.d.ts.map": {
+                      "offset": "3931321",
+                      "size": 194,
+                    },
+                    "extract.js": {
+                      "offset": "3931515",
+                      "size": 1692,
+                    },
+                    "extract.js.map": {
+                      "offset": "3933207",
+                      "size": 3634,
+                    },
+                    "get-write-flag.d.ts.map": {
+                      "offset": "3936841",
+                      "size": 168,
+                    },
+                    "get-write-flag.js": {
+                      "offset": "3937009",
+                      "size": 1018,
+                    },
+                    "get-write-flag.js.map": {
+                      "offset": "3938027",
+                      "size": 1931,
+                    },
+                    "header.d.ts.map": {
+                      "offset": "3939958",
+                      "size": 1830,
+                    },
+                    "header.js": {
+                      "offset": "3941788",
+                      "size": 10604,
+                    },
+                    "header.js.map": {
+                      "offset": "3952392",
+                      "size": 24197,
+                    },
+                    "index.d.ts.map": {
+                      "offset": "3976589",
+                      "size": 827,
+                    },
+                    "index.js": {
+                      "offset": "3977416",
+                      "size": 647,
+                    },
+                    "index.js.map": {
+                      "offset": "3978063",
+                      "size": 1631,
+                    },
+                    "large-numbers.d.ts.map": {
+                      "offset": "3979694",
+                      "size": 217,
+                    },
+                    "large-numbers.js": {
+                      "offset": "3979911",
+                      "size": 2581,
+                    },
+                    "large-numbers.js.map": {
+                      "offset": "3982492",
+                      "size": 5903,
+                    },
+                    "list.d.ts.map": {
+                      "offset": "3988395",
+                      "size": 287,
+                    },
+                    "list.js": {
+                      "offset": "3988682",
+                      "size": 3234,
+                    },
+                    "list.js.map": {
+                      "offset": "3991916",
+                      "size": 7098,
+                    },
+                    "make-command.d.ts.map": {
+                      "offset": "3999014",
+                      "size": 4407,
+                    },
+                    "make-command.js": {
+                      "offset": "4003421",
+                      "size": 1870,
+                    },
+                    "make-command.js.map": {
+                      "offset": "4005291",
+                      "size": 9075,
+                    },
+                    "mkdir.d.ts.map": {
+                      "offset": "4014366",
+                      "size": 800,
+                    },
+                    "mkdir.js": {
+                      "offset": "4015166",
+                      "size": 6452,
+                    },
+                    "mkdir.js.map": {
+                      "offset": "4021618",
+                      "size": 15156,
+                    },
+                    "mode-fix.d.ts.map": {
+                      "offset": "4036774",
+                      "size": 174,
+                    },
+                    "mode-fix.js": {
+                      "offset": "4036948",
+                      "size": 753,
+                    },
+                    "mode-fix.js.map": {
+                      "offset": "4037701",
+                      "size": 1393,
+                    },
+                    "normalize-unicode.d.ts.map": {
+                      "offset": "4039094",
+                      "size": 173,
+                    },
+                    "normalize-unicode.js": {
+                      "offset": "4039267",
+                      "size": 489,
+                    },
+                    "normalize-unicode.js.map": {
+                      "offset": "4039756",
+                      "size": 1004,
+                    },
+                    "normalize-windows-path.d.ts.map": {
+                      "offset": "4040760",
+                      "size": 184,
+                    },
+                    "normalize-windows-path.js": {
+                      "offset": "4040944",
+                      "size": 490,
+                    },
+                    "normalize-windows-path.js.map": {
+                      "offset": "4041434",
+                      "size": 950,
+                    },
+                    "options.d.ts.map": {
+                      "offset": "4042384",
+                      "size": 5832,
+                    },
+                    "options.js": {
+                      "offset": "4048216",
+                      "size": 1639,
+                    },
+                    "options.js.map": {
+                      "offset": "4049855",
+                      "size": 26398,
+                    },
+                    "pack.d.ts.map": {
+                      "offset": "4076253",
+                      "size": 3795,
+                    },
+                    "pack.js": {
+                      "offset": "4080048",
+                      "size": 13005,
+                    },
+                    "pack.js.map": {
+                      "offset": "4093053",
+                      "size": 28182,
+                    },
+                    "package.json": {
+                      "offset": "4121235",
+                      "size": 23,
+                    },
+                    "parse.d.ts.map": {
+                      "offset": "4121258",
+                      "size": 3705,
+                    },
+                    "parse.js": {
+                      "offset": "4124963",
+                      "size": 21741,
+                    },
+                    "parse.js.map": {
+                      "offset": "4146704",
+                      "size": 40129,
+                    },
+                    "path-reservations.d.ts.map": {
+                      "offset": "4186833",
+                      "size": 419,
+                    },
+                    "path-reservations.js": {
+                      "offset": "4187252",
+                      "size": 5461,
+                    },
+                    "path-reservations.js.map": {
+                      "offset": "4192713",
+                      "size": 10944,
+                    },
+                    "pax.d.ts.map": {
+                      "offset": "4203657",
+                      "size": 882,
+                    },
+                    "pax.js": {
+                      "offset": "4204539",
+                      "size": 4754,
+                    },
+                    "pax.js.map": {
+                      "offset": "4209293",
+                      "size": 10085,
+                    },
+                    "read-entry.d.ts.map": {
+                      "offset": "4219378",
+                      "size": 1180,
+                    },
+                    "read-entry.js": {
+                      "offset": "4220558",
+                      "size": 4175,
+                    },
+                    "read-entry.js.map": {
+                      "offset": "4224733",
+                      "size": 8188,
+                    },
+                    "replace.d.ts.map": {
+                      "offset": "4232921",
+                      "size": 144,
+                    },
+                    "replace.js": {
+                      "offset": "4233065",
+                      "size": 7185,
+                    },
+                    "replace.js.map": {
+                      "offset": "4240250",
+                      "size": 15258,
+                    },
+                    "strip-absolute-path.d.ts.map": {
+                      "offset": "4255508",
+                      "size": 178,
+                    },
+                    "strip-absolute-path.js": {
+                      "offset": "4255686",
+                      "size": 1060,
+                    },
+                    "strip-absolute-path.js.map": {
+                      "offset": "4256746",
+                      "size": 1923,
+                    },
+                    "strip-trailing-slashes.d.ts.map": {
+                      "offset": "4258669",
+                      "size": 183,
+                    },
+                    "strip-trailing-slashes.js": {
+                      "offset": "4258852",
+                      "size": 489,
+                    },
+                    "strip-trailing-slashes.js.map": {
+                      "offset": "4259341",
+                      "size": 1056,
+                    },
+                    "symlink-error.d.ts.map": {
+                      "offset": "4260397",
+                      "size": 321,
+                    },
+                    "symlink-error.js": {
+                      "offset": "4260718",
+                      "size": 390,
+                    },
+                    "symlink-error.js.map": {
+                      "offset": "4261108",
+                      "size": 837,
+                    },
+                    "types.d.ts.map": {
+                      "offset": "4261945",
+                      "size": 767,
+                    },
+                    "types.js": {
+                      "offset": "4262712",
+                      "size": 1277,
+                    },
+                    "types.js.map": {
+                      "offset": "4263989",
+                      "size": 3502,
+                    },
+                    "unpack.d.ts.map": {
+                      "offset": "4267491",
+                      "size": 3985,
+                    },
+                    "unpack.js": {
+                      "offset": "4271476",
+                      "size": 32445,
+                    },
+                    "unpack.js.map": {
+                      "offset": "4303921",
+                      "size": 62081,
+                    },
+                    "update.d.ts.map": {
+                      "offset": "4366002",
+                      "size": 140,
+                    },
+                    "update.js": {
+                      "offset": "4366142",
+                      "size": 1006,
+                    },
+                    "update.js.map": {
+                      "offset": "4367148",
+                      "size": 2324,
+                    },
+                    "warn-method.d.ts.map": {
+                      "offset": "4369472",
+                      "size": 1111,
+                    },
+                    "warn-method.js": {
+                      "offset": "4370583",
+                      "size": 795,
+                    },
+                    "warn-method.js.map": {
+                      "offset": "4371378",
+                      "size": 2593,
+                    },
+                    "winchars.d.ts.map": {
+                      "offset": "4373971",
+                      "size": 195,
+                    },
+                    "winchars.js": {
+                      "offset": "4374166",
+                      "size": 549,
+                    },
+                    "winchars.js.map": {
+                      "offset": "4374715",
+                      "size": 1642,
+                    },
+                    "write-entry.d.ts.map": {
+                      "offset": "4376357",
+                      "size": 4833,
+                    },
+                    "write-entry.js": {
+                      "offset": "4381190",
+                      "size": 22781,
+                    },
+                    "write-entry.js.map": {
+                      "offset": "4403971",
+                      "size": 48386,
+                    },
+                  },
+                },
+              },
+            },
+            "package.json": {
+              "offset": "4452357",
+              "size": 8322,
+            },
+          },
+        },
+        "which": {
+          "files": {
+            "LICENSE": {
+              "offset": "4460679",
+              "size": 765,
+            },
+            "bin": {
+              "files": {
+                "node-which": {
+                  "executable": true,
+                  "offset": "4461444",
+                  "size": 985,
+                },
+              },
+            },
+            "package.json": {
+              "offset": "4462429",
+              "size": 681,
+            },
+            "which.js": {
+              "offset": "4463110",
+              "size": 3163,
+            },
+          },
+        },
+        "wrap-ansi": {
+          "files": {
+            "index.js": {
+              "executable": true,
+              "offset": "4466273",
+              "size": 5778,
+            },
+            "license": {
+              "offset": "4472051",
+              "size": 1117,
+            },
+            "node_modules": {
+              "files": {
+                "ansi-regex": {
+                  "files": {
+                    "index.js": {
+                      "offset": "4474005",
+                      "size": 458,
+                    },
+                    "license": {
+                      "offset": "4474463",
+                      "size": 1117,
+                    },
+                    "package.json": {
+                      "offset": "4475580",
+                      "size": 671,
+                    },
+                  },
+                },
+                "ansi-styles": {
+                  "files": {
+                    "index.js": {
+                      "offset": "4476251",
+                      "size": 5267,
+                    },
+                    "license": {
+                      "offset": "4481518",
+                      "size": 1117,
+                    },
+                    "package.json": {
+                      "offset": "4482635",
+                      "size": 627,
+                    },
+                  },
+                },
+                "strip-ansi": {
+                  "files": {
+                    "index.js": {
+                      "offset": "4483262",
+                      "size": 468,
+                    },
+                    "license": {
+                      "offset": "4483730",
+                      "size": 1117,
+                    },
+                    "package.json": {
+                      "offset": "4484847",
+                      "size": 630,
+                    },
+                  },
+                },
+              },
+            },
+            "package.json": {
+              "offset": "4473168",
+              "size": 837,
+            },
+          },
+        },
+        "wrap-ansi-cjs": {
+          "files": {
+            "index.js": {
+              "executable": true,
+              "offset": "4485477",
+              "size": 5772,
+            },
+            "license": {
+              "offset": "4491249",
+              "size": 1117,
+            },
+            "node_modules": {
+              "files": {
+                "string-width": {
+                  "files": {
+                    "index.js": {
+                      "offset": "4493065",
+                      "size": 923,
+                    },
+                    "license": {
+                      "offset": "4493988",
+                      "size": 1109,
+                    },
+                    "package.json": {
+                      "offset": "4495097",
+                      "size": 633,
+                    },
+                  },
+                },
+              },
+            },
+            "package.json": {
+              "offset": "4492366",
+              "size": 699,
+            },
+          },
+        },
+        "yallist": {
+          "files": {
+            "LICENSE.md": {
+              "offset": "4495730",
+              "size": 1764,
+            },
+            "dist": {
+              "files": {
+                "commonjs": {
+                  "files": {
+                    "index.d.ts.map": {
+                      "offset": "4497494",
+                      "size": 2413,
+                    },
+                    "index.js": {
+                      "offset": "4499907",
+                      "size": 9914,
+                    },
+                    "index.js.map": {
+                      "offset": "4509821",
+                      "size": 22191,
+                    },
+                    "package.json": {
+                      "offset": "4532012",
+                      "size": 25,
+                    },
+                  },
+                },
+                "esm": {
+                  "files": {
+                    "index.d.ts.map": {
+                      "offset": "4532037",
+                      "size": 2413,
+                    },
+                    "index.js": {
+                      "offset": "4534450",
+                      "size": 9762,
+                    },
+                    "index.js.map": {
+                      "offset": "4544212",
+                      "size": 22172,
+                    },
+                    "package.json": {
+                      "offset": "4566384",
+                      "size": 23,
+                    },
+                  },
+                },
+              },
+            },
+            "package.json": {
+              "offset": "4566407",
               "size": 1228,
             },
           },
@@ -1453,7 +3446,7 @@ exports[`isInstallDepsBefore=true > npm tar 2`] = `
       },
     },
     "package.json": {
-      "offset": "1675748",
+      "offset": "4568632",
       "size": 322,
     },
   },
