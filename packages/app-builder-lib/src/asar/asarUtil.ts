@@ -131,14 +131,7 @@ export class AsarPackager {
 
     // write any data if provided, skip symlink check
     if (transformedData != null) {
-      const streamGenerator = () => {
-        return new Readable({
-          read() {
-            this.push(transformedData)
-            this.push(null)
-          },
-        })
-      }
+      const streamGenerator = () => Readable.from([transformedData])
       const size = Buffer.byteLength(transformedData)
       return { path: destination, streamGenerator, unpacked, type: "file", stat: { mode: stat.mode, size } }
     }
