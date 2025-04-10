@@ -1,28 +1,24 @@
 import { hoist, type HoisterTree, type HoisterResult } from "./hoist"
 import * as path from "path"
 import * as fs from "fs"
-import type { NodeModuleInfo, DependencyTree, DependencyGraph, Dependency } from "./types"
+import type { NodeModuleInfo, DependencyGraph, Dependency } from "./types"
 import { exec, log } from "builder-util"
 import { Lazy } from "lazy-val"
 
 export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType>, OptionalsType> {
   private nodeModules: NodeModuleInfo[] = []
-  protected dependencyPathMap: Map<string, string> = new Map()
   protected allDependencies: Map<string, T> = new Map()
+  protected productionGraph: DependencyGraph = {}
 
   constructor(private readonly rootDir: string) {}
 
   public async getNodeModules(): Promise<NodeModuleInfo[]> {
     const tree: T = await this.getDependenciesTree()
     const realTree: T = this.getTreeFromWorkspaces(tree)
-    const parsedTree: Dependency<T, OptionalsType> = this.extractRelevantData(realTree)
+    this.collectAllDependencies(realTree)
+    this.extractProductionDependencyGraph(realTree, "." /*root project name*/)
 
-    this.collectAllDependencies(parsedTree)
-
-    const productionTree: DependencyTree = this.extractProductionDependencyTree(parsedTree)
-    const dependencyGraph: DependencyGraph = this.convertToDependencyGraph(productionTree)
-
-    const hoisterResult: HoisterResult = hoist(this.transToHoisterTree(dependencyGraph), { check: true })
+    const hoisterResult: HoisterResult = hoist(this.transToHoisterTree(this.productionGraph), { check: true })
     this._getNodeModules(hoisterResult.dependencies, this.nodeModules)
 
     return this.nodeModules
@@ -36,7 +32,8 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
   protected abstract readonly pmCommand: Lazy<string>
   protected abstract getArgs(): string[]
   protected abstract parseDependenciesTree(jsonBlob: string): T
-  protected abstract extractProductionDependencyTree(tree: Dependency<T, OptionalsType>): DependencyTree
+  protected abstract extractProductionDependencyGraph(tree: Dependency<T, OptionalsType>, dependencyId: string): void
+  protected abstract collectAllDependencies(tree: Dependency<T, OptionalsType>): void
 
   protected async getDependenciesTree(): Promise<T> {
     const command = await this.pmCommand.value
@@ -46,35 +43,6 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
       shell: true,
     })
     return this.parseDependenciesTree(dependencies)
-  }
-
-  protected extractRelevantData(npmTree: T): Dependency<T, OptionalsType> {
-    // Do not use `...npmTree` as we are explicitly extracting the data we need
-    const { name, version, path, workspaces, dependencies } = npmTree
-    const tree: Dependency<T, OptionalsType> = {
-      name,
-      version,
-      path,
-      workspaces,
-      // DFS extract subtree
-      dependencies: this.extractInternal(dependencies),
-    }
-
-    return tree
-  }
-
-  protected extractInternal(deps: T["dependencies"]): T["dependencies"] {
-    return deps && Object.keys(deps).length > 0
-      ? Object.entries(deps).reduce((accum, [packageName, depObjectOrVersionString]) => {
-          return {
-            ...accum,
-            [packageName]:
-              typeof depObjectOrVersionString === "object" && Object.keys(depObjectOrVersionString).length > 0
-                ? this.extractRelevantData(depObjectOrVersionString)
-                : depObjectOrVersionString,
-          }
-        }, {})
-      : undefined
   }
 
   protected resolvePath(filePath: string): string {
@@ -88,60 +56,6 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
     } catch (error: any) {
       log.debug({ message: error.message || error.stack }, "error resolving path")
       return filePath
-    }
-  }
-
-  private convertToDependencyGraph(tree: DependencyTree, parentKey = "."): DependencyGraph {
-    return Object.entries(tree.dependencies || {}).reduce<DependencyGraph>((acc, curr) => {
-      const [packageName, dependencies] = curr
-      // Skip empty dependencies (like some optionalDependencies)
-      if (Object.keys(dependencies).length === 0) {
-        return acc
-      }
-      const version = dependencies.version || ""
-      const newKey = `${packageName}@${version}`
-      if (!dependencies.path) {
-        log.error(
-          {
-            packageName,
-            data: dependencies,
-            parentModule: tree.name,
-            parentVersion: tree.version,
-          },
-          "dependency path is undefined"
-        )
-        throw new Error("unable to parse `path` during `tree.dependencies` reduce")
-      }
-      // Map dependency details: name, version and path to the dependency tree
-      this.dependencyPathMap.set(newKey, path.normalize(this.resolvePath(dependencies.path)))
-      if (!acc[parentKey]) {
-        acc[parentKey] = { dependencies: [] }
-      }
-      acc[parentKey].dependencies.push(newKey)
-      if (tree.implicitDependenciesInjected) {
-        log.debug(
-          {
-            dependency: packageName,
-            version,
-            path: dependencies.path,
-            parentModule: tree.name,
-            parentVersion: tree.version,
-          },
-          "converted implicit dependency"
-        )
-        return acc
-      }
-
-      return { ...acc, ...this.convertToDependencyGraph(dependencies, newKey) }
-    }, {})
-  }
-
-  private collectAllDependencies(tree: Dependency<T, OptionalsType>) {
-    for (const [key, value] of Object.entries(tree.dependencies || {})) {
-      if (Object.keys(value.dependencies ?? {}).length > 0) {
-        this.allDependencies.set(`${key}@${value.version}`, value)
-        this.collectAllDependencies(value)
-      }
     }
   }
 
@@ -186,7 +100,7 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
 
     for (const d of dependencies.values()) {
       const reference = [...d.references][0]
-      const p = this.dependencyPathMap.get(`${d.name}@${reference}`)
+      const p = this.allDependencies.get(`${d.name}@${reference}`)?.path
       if (p === undefined) {
         log.debug({ name: d.name, reference }, "cannot find path for dependency")
         continue
@@ -194,7 +108,7 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
       const node: NodeModuleInfo = {
         name: d.name,
         version: reference,
-        dir: p,
+        dir: this.resolvePath(p),
       }
       result.push(node)
       if (d.dependencies.size > 0) {
