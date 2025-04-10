@@ -68,18 +68,6 @@ exports[`isInstallDepsBefore=true > asarUnpack node_modules 2`] = `
 }
 `;
 
-exports[`isInstallDepsBefore=true > asarUnpack node_modules which has many modules 1`] = `
-{
-  "linux": [],
-}
-`;
-
-exports[`isInstallDepsBefore=true > exclude some modules when asarUnpack node_modules which has many modules 1`] = `
-{
-  "linux": [],
-}
-`;
-
 exports[`isInstallDepsBefore=true > failed peer dep 1`] = `
 {
   "linux": [],
