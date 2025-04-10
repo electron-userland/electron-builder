@@ -35,7 +35,8 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
     const isDuplicateDep = Object.keys(prodDependencies).length > 0 && Object.keys(dependencies).length === 0
     const resolvedDeps = isDuplicateDep ? (this.allDependencies.get(dependencyId)?.dependencies ?? {}) : dependencies
     // Initialize with empty dependencies array first to mark this dependency as "in progress"
-    // This prevents infinite loops when circular dependencies are encountered
+    // After initialization, if there are libraries with the same name+version later, they will not be searched recursively again
+    // This will prevents infinite loops when circular dependencies are encountered.
     this.productionGraph[dependencyId] = { dependencies: [] }
     const productionDeps = Object.entries(resolvedDeps)
       .filter(([packageName]) => prodDependencies[packageName])
