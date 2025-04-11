@@ -12,7 +12,7 @@ import {
   BlockMap,
   retry,
 } from "builder-util-runtime"
-import { randomBytes, createHash } from "crypto"
+import { randomBytes } from "crypto"
 import { release } from "os"
 import { EventEmitter } from "events"
 import { mkdir, outputFile, readFile, rename, unlink } from "fs-extra"
@@ -701,10 +701,8 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       if (urlPath.toLowerCase().endsWith(`.${taskOptions.fileExtension.toLowerCase()}`)) {
         return path.basename(urlPath)
       } else {
-        // url like /latest, generate stable name
-        const hash = createHash("sha1")
-        hash.update(taskOptions.fileInfo.url.toString())
-        return hash.digest("hex")
+        // url like /latest, generate name
+        return taskOptions.fileInfo.info.url
       }
     }
 
