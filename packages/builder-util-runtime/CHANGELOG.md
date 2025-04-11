@@ -1,5 +1,11 @@
 # builder-util-runtime
 
+## 9.3.2
+
+### Patch Changes
+
+- [#9018](https://github.com/electron-userland/electron-builder/pull/9018) [`a2f7f735`](https://github.com/electron-userland/electron-builder/commit/a2f7f7350be2379c4917417c92ece5a6ab241708) Thanks [@gtluszcz](https://github.com/gtluszcz)! - Add information how to use electron-publish s3 with credentials stored in ~/.aws/config file.
+
 ## 9.3.1
 
 ### Patch Changes
