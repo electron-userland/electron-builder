@@ -64,18 +64,7 @@ exports[`isInstallDepsBefore=true > asarUnpack node_modules 2`] = `
       "unpacked": true,
     },
   },
-}
-`;
-
-exports[`isInstallDepsBefore=true > asarUnpack node_modules which has many modules 1`] = `
-{
-  "linux": [],
-}
-`;
-
-exports[`isInstallDepsBefore=true > exclude some modules when asarUnpack node_modules which has many modules 1`] = `
-{
-  "linux": [],
+  "unpacked": true,
 }
 `;
 
@@ -10122,8 +10111,10 @@ exports[`unpackDir 2`] = `
               "unpacked": true,
             },
           },
+          "unpacked": true,
         },
       },
+      "unpacked": true,
     },
     "b2": {
       "files": {
@@ -10132,6 +10123,7 @@ exports[`unpackDir 2`] = `
           "unpacked": true,
         },
       },
+      "unpacked": true,
     },
     "do-not-unpack-dir": {
       "files": {
@@ -10238,8 +10230,10 @@ exports[`unpackDir one 2`] = `
               "unpacked": true,
             },
           },
+          "unpacked": true,
         },
       },
+      "unpacked": true,
     },
     "b2": {
       "files": {
@@ -10248,6 +10242,7 @@ exports[`unpackDir one 2`] = `
           "unpacked": true,
         },
       },
+      "unpacked": true,
     },
     "do-not-unpack-dir": {
       "files": {
