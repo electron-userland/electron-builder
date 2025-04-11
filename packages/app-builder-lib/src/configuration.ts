@@ -129,10 +129,10 @@ export interface CommonConfiguration {
    */
   readonly npmRebuild?: boolean
   /**
-   * Use `legacy` app-builder binary for installing native dependencies, or `@electron/rebuild` in `sequential` or `parallel` compilation modes.
+   * Use `@electron/rebuild` in `sequential` or `parallel` compilation modes.
    * @default sequential
    */
-  readonly nativeRebuilder?: "legacy" | "sequential" | "parallel" | null
+  readonly nativeRebuilder?: "sequential" | "parallel" | null
 
   /**
    * The build number. Maps to the `--iteration` flag for builds using FPM on Linux.

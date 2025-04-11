@@ -7353,7 +7353,6 @@
       "anyOf": [
         {
           "enum": [
-            "legacy",
             "parallel",
             "sequential"
           ],
@@ -7364,7 +7363,7 @@
         }
       ],
       "default": "sequential",
-      "description": "Use `legacy` app-builder binary for installing native dependencies, or `@electron/rebuild` in `sequential` or `parallel` compilation modes."
+      "description": "Use `@electron/rebuild` in `sequential` or `parallel` compilation modes."
     },
     "nodeGypRebuild": {
       "default": false,
