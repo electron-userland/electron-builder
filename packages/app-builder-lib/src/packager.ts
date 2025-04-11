@@ -600,7 +600,7 @@ export class Packager {
     if (config.buildDependenciesFromSource === true && platform.nodeName !== process.platform) {
       log.info({ reason: "platform is different and buildDependenciesFromSource is set to true" }, "skipped dependencies rebuild")
     } else {
-      await installOrRebuild(config, this.appDir, {
+      await installOrRebuild(config, this.appDir, this.projectDir, {
         frameworkInfo,
         platform: platform.nodeName,
         arch: Arch[arch],

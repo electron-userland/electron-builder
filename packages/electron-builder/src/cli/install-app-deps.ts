@@ -58,6 +58,7 @@ export async function installAppDeps(args: any) {
   await installOrRebuild(
     config,
     appDir,
+    projectDir,
     {
       frameworkInfo: { version, useCustomDist: true },
       platform: args.platform,
