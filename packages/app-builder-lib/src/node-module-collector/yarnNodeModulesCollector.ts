@@ -1,3 +1,5 @@
+import { findExecutable } from "builder-util"
+import { Lazy } from "lazy-val"
 import { NpmNodeModulesCollector } from "./npmNodeModulesCollector"
 
 export class YarnNodeModulesCollector extends NpmNodeModulesCollector {
@@ -5,9 +7,18 @@ export class YarnNodeModulesCollector extends NpmNodeModulesCollector {
     super(rootDir)
   }
 
-  public readonly installOptions = Promise.resolve({
-    cmd: process.platform === "win32" ? "yarn.cmd" : "yarn",
+  static readonly yarnCommand = new Lazy<string>(() =>
+    findExecutable({
+      name: "yarn",
+      executables: ["yarn"],
+      win32: ["yarn.cmd"],
+      arguments: ["--version"],
+    })
+  )
+
+  public readonly installOptions = YarnNodeModulesCollector.yarnCommand.value.then(cmd => ({
+    cmd: cmd,
     args: ["install", "--frozen-lockfile"],
     lockfile: "yarn.lock",
-  })
+  }))
 }

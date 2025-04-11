@@ -1,26 +1,23 @@
-import { Lazy } from "lazy-val"
-import { NodeModulesCollector } from "./nodeModulesCollector"
-import { PnpmDependency, Dependency } from "./types"
-import { exec, log } from "builder-util"
-import * as path from "path"
+import { findExecutable, log } from "builder-util"
 import * as fs from "fs"
+import { Lazy } from "lazy-val"
+import * as path from "path"
+import { NodeModulesCollector } from "./nodeModulesCollector"
+import { Dependency, PnpmDependency } from "./types"
 
 export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependency, PnpmDependency> {
   constructor(rootDir: string) {
     super(rootDir)
   }
 
-  static readonly pmCommand = new Lazy<string>(async () => {
-    if (process.platform === "win32") {
-      try {
-        await exec("pnpm", ["--version"])
-      } catch (_error: any) {
-        log.debug(null, "pnpm not detected, falling back to pnpm.cmd")
-        return "pnpm.cmd"
-      }
-    }
-    return "pnpm"
-  })
+  static readonly pmCommand = new Lazy<string>(() =>
+    findExecutable({
+      name: "pnpm",
+      executables: ["pnpm"],
+      win32: ["pnpm.cmd"],
+      arguments: ["--version"],
+    })
+  )
 
   protected readonly pmCommand: Lazy<string> = PnpmNodeModulesCollector.pmCommand
   public readonly installOptions = this.pmCommand.value.then(cmd => ({ cmd, args: ["install", "--frozen-lockfile"], lockfile: "pnpm-lock.yaml" }))

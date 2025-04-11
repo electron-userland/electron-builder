@@ -58,7 +58,7 @@ function getTypeofLockFile(cwd = process.cwd()): Promise<PM> {
   })
 }
 
-export const detect = async ({ cwd, includeGlobalBun }: { cwd?: string; includeGlobalBun?: boolean } = {}) => {
+export const detect = async ({ cwd, includeGlobalBun }: { cwd?: string; includeGlobalBun?: boolean } = {}): Promise<PM> => {
   let type = await getTypeofLockFile(cwd)
   if (type) {
     return type
