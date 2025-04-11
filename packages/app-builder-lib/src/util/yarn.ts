@@ -1,14 +1,14 @@
 import * as electronRebuild from "@electron/rebuild"
 import { getProjectRootPath } from "@electron/rebuild/lib/search-module"
 import { RebuildMode } from "@electron/rebuild/lib/types"
-import { asArray, log, spawn } from "builder-util"
+import { asArray, findExecutable, log, spawn } from "builder-util"
 import { pathExists } from "fs-extra"
 import { Lazy } from "lazy-val"
 import { homedir } from "os"
 import * as path from "path"
 import { Configuration } from "../configuration"
+import { detect, getPackageManagerVersion, PM } from "../node-module-collector"
 import { executeAppBuilderAndWriteJson } from "./appBuilder"
-import { PM, detect, getPackageManagerVersion } from "../node-module-collector"
 import { NodeModuleDirInfo } from "./packageDependencies"
 import { rebuild as remoteRebuild } from "./rebuild/rebuild"
 
@@ -111,7 +111,7 @@ async function installDependencies(config: Configuration, appDir: string, option
     execArgs.push("--prefer-offline")
   }
 
-  const execPath = getPackageToolPath(pm)
+  const execPath = await getPackageToolPath(pm)
 
   if (additionalArgs != null) {
     execArgs.push(...additionalArgs)
@@ -126,10 +126,19 @@ async function installDependencies(config: Configuration, appDir: string, option
   return rebuild(config, appDir, options)
 }
 
+const nodeGypExecutable = new Lazy(() =>
+  findExecutable({
+    name: "node-gyp",
+    executables: ["node-gyp"],
+    win32: ["node-gyp.cmd"],
+    arguments: ["--version"],
+  })
+)
+
 export async function nodeGypRebuild(platform: NodeJS.Platform, arch: string, frameworkInfo: DesktopFrameworkInfo) {
   log.info({ platform, arch }, "executing node-gyp rebuild")
   // this script must be used only for electron
-  const nodeGyp = `node-gyp${process.platform === "win32" ? ".cmd" : ""}`
+  const nodeGyp = await nodeGypExecutable.value
   const args = ["rebuild"]
   // headers of old Electron versions do not have a valid config.gypi file
   // and --force-process-config must be passed to node-gyp >= 8.4.0 to
@@ -145,12 +154,18 @@ export async function nodeGypRebuild(platform: NodeJS.Platform, arch: string, fr
   await spawn(nodeGyp, args, { env: getGypEnv(frameworkInfo, platform, arch, true) })
 }
 
-function getPackageToolPath(pm: PM) {
-  let cmd = pm
+function getPackageToolPath(pm: PM): Promise<string> {
+  let executable = pm
   if (process.env.FORCE_YARN === "true") {
-    cmd = "yarn"
+    executable = "yarn"
   }
-  return `${cmd}${process.platform === "win32" ? ".cmd" : ""}`
+
+  return findExecutable({
+    name: executable,
+    executables: [executable],
+    win32: [`${executable}.cmd`],
+    arguments: ["--version"],
+  })
 }
 
 function isRunningYarn(pm: PM) {
