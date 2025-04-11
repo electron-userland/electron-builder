@@ -178,7 +178,18 @@ function validateFileSet(fileSet: ResolvedFileSet): ResolvedFileSet {
 
 /** @internal */
 export async function computeNodeModuleFileSets(platformPackager: PlatformPackager<any>, mainMatcher: FileMatcher): Promise<Array<ResolvedFileSet>> {
-  const deps = await getNodeModules(platformPackager.info.appDir)
+  const projectDir = platformPackager.info.projectDir
+  const appDir = platformPackager.info.appDir
+
+  let deps = await getNodeModules(appDir)
+  if (projectDir !== appDir && deps.length === 0) {
+    const packageJson = require(path.join(appDir, "package.json"))
+    if (Object.keys(packageJson.dependencies || {}).length > 0) {
+      log.debug({ projectDir, appDir }, "no node_modules in app dir, trying to find in project dir")
+      deps = await getNodeModules(projectDir)
+    }
+  }
+
   log.debug({ nodeModules: deps }, "collected node modules")
 
   const nodeModuleExcludedExts = getNodeModuleExcludedExts(platformPackager)
