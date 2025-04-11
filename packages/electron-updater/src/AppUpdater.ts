@@ -715,7 +715,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     function getCacheUpdateFileName(): string {
       // NodeJS URL doesn't decode automatically
       const urlPath = decodeURIComponent(taskOptions.fileInfo.url.pathname)
-      if (urlPath.endsWith(`.${taskOptions.fileExtension}`)) {
+      if (urlPath.toLowerCase().endsWith(`.${taskOptions.fileExtension.toLowerCase()}`)) {
         return path.basename(urlPath)
       } else {
         // url like /latest, generate name
