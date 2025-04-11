@@ -41,7 +41,7 @@ export function getBinFromUrl(name: string, version: string, checksum: string): 
   return getBin(dirName, url, checksum)
 }
 
-export function getBin(name: string, url?: string | null, checksum?: string | null): Promise<string> {
+export function getBin(name: string, url?: string | null, checksum?: string | null, extractExcludePatterns?: string[] | null): Promise<string> {
   // Old cache is ignored if cache environment variable changes
   const cacheName = `${process.env.ELECTRON_BUILDER_CACHE}${name}`
   let promise = versionToPromise.get(cacheName) // if rejected, we will try to download again
@@ -50,18 +50,22 @@ export function getBin(name: string, url?: string | null, checksum?: string | nu
     return promise
   }
 
-  promise = doGetBin(name, url, checksum)
+  promise = doGetBin(name, url, checksum, extractExcludePatterns)
   versionToPromise.set(cacheName, promise)
   return promise
 }
 
-function doGetBin(name: string, url: string | Nullish, checksum: string | Nullish): Promise<string> {
+function doGetBin(name: string, url: string | Nullish, checksum: string | Nullish, extractExcludePatterns: string[] | Nullish): Promise<string> {
   const args = ["download-artifact", "--name", name]
   if (url != null) {
     args.push("--url", url)
   }
   if (checksum != null) {
     args.push("--sha512", checksum)
+  }
+
+  if (extractExcludePatterns != null) {
+    args.push("--extract-exclude-patterns", extractExcludePatterns.join(","))
   }
   return executeAppBuilder(args)
 }

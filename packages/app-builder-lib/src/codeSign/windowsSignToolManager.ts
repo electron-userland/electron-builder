@@ -19,6 +19,10 @@ import { SignManager } from "./signManager"
 import { WindowsSignOptions } from "./windowsCodeSign"
 
 export function getSignVendorPath() {
+  if (process.platform === "win32") {
+    // exclude darwin folder from 7z archive
+    return getBin("winCodeSign", null, null, ["darwin/*", "*/darwin/*"])
+  }
   return getBin("winCodeSign")
 }
 
