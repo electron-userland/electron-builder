@@ -11,7 +11,7 @@ import { PM, detect, getPackageManagerVersion } from "../node-module-collector"
 import { NodeModuleDirInfo } from "./packageDependencies"
 import { rebuild as remoteRebuild } from "./rebuild/rebuild"
 
-export async function installOrRebuild(config: Configuration, appDir: string, projectDir: string, options: RebuildOptions, forceInstall = false) {
+export async function installOrRebuild(config: Configuration, { appDir, projectDir }: DirectoryPaths, options: RebuildOptions, forceInstall = false) {
   const effectiveOptions: RebuildOptions = {
     buildFromSource: config.buildDependenciesFromSource === true,
     additionalArgs: asArray(config.npmArgs),
@@ -28,9 +28,9 @@ export async function installOrRebuild(config: Configuration, appDir: string, pr
   }
 
   if (forceInstall || !isDependenciesInstalled) {
-    await installDependencies(config, appDir, projectDir, effectiveOptions)
+    await installDependencies(config, { appDir, projectDir }, effectiveOptions)
   } else {
-    await rebuild(config, appDir, projectDir, effectiveOptions)
+    await rebuild(config, { appDir, projectDir }, effectiveOptions)
   }
 }
 
@@ -90,7 +90,7 @@ async function checkYarnBerry(pm: PM) {
   return version.split(".")[0] >= "2"
 }
 
-async function installDependencies(config: Configuration, appDir: string, projectDir: string, options: RebuildOptions): Promise<any> {
+async function installDependencies(config: Configuration, { appDir, projectDir }: DirectoryPaths, options: RebuildOptions): Promise<any> {
   const platform = options.platform || process.platform
   const arch = options.arch || process.arch
   const additionalArgs = options.additionalArgs
@@ -121,7 +121,7 @@ async function installDependencies(config: Configuration, appDir: string, projec
 
   // Some native dependencies no longer use `install` hook for building their native module, (yarn 3+ removed implicit link of `install` and `rebuild` steps)
   // https://github.com/electron-userland/electron-builder/issues/8024
-  return rebuild(config, appDir, projectDir, options)
+  return rebuild(config, { appDir, projectDir }, options)
 }
 
 export async function nodeGypRebuild(platform: NodeJS.Platform, arch: string, frameworkInfo: DesktopFrameworkInfo) {
@@ -168,8 +168,13 @@ export interface RebuildOptions {
   additionalArgs?: Array<string> | null
 }
 
+export interface DirectoryPaths {
+  appDir: string
+  projectDir: string
+}
+
 /** @internal */
-export async function rebuild(config: Configuration, appDir: string, projectDir: string, options: RebuildOptions) {
+export async function rebuild(config: Configuration, { appDir, projectDir }: DirectoryPaths, options: RebuildOptions) {
   const configuration = {
     dependencies: await options.productionDeps.value,
     nodeExecPath: process.execPath,
