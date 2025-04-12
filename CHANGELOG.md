@@ -1,3 +1,21 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v26.0.12...v) (2025-04-12)
+
+
+### Bug Fixes
+
+* dependency path is undefined ([#9013](https://github.com/electron-userland/electron-builder/issues/9013)) ([c223866](https://github.com/electron-userland/electron-builder/commit/c223866e366ef1aeeefec0d1a61a14b3d526f23e)), closes [/github.com/electron/rebuild/blob/ff1ec40f82ca64e014079b246053f039b3cf4f23/src/search-module.ts#L76-L86](https://github.com//github.com/electron/rebuild/blob/ff1ec40f82ca64e014079b246053f039b3cf4f23/src/search-module.ts/issues/L76-L86)
+* **mac:** allow ad-hoc identities for codesigning ([#9007](https://github.com/electron-userland/electron-builder/issues/9007)) ([bff46ec](https://github.com/electron-userland/electron-builder/commit/bff46ec41c4a7715cc06f7dfd6ff95f8e4bbe869))
+* malformed `Files` param when using Azure Trusted Signing ([#8987](https://github.com/electron-userland/electron-builder/issues/8987)) ([9fb2895](https://github.com/electron-userland/electron-builder/commit/9fb2895cd008ea6fc6210078decabc15a5c0144a))
+* missing lowercase comparison in electron-updater ([#8992](https://github.com/electron-userland/electron-builder/issues/8992)) ([1f50540](https://github.com/electron-userland/electron-builder/commit/1f5054004468f76d316cee33ef6cc8717987b146))
+* remove implicit dependencies handling ([#9010](https://github.com/electron-userland/electron-builder/issues/9010)) ([8bd1a10](https://github.com/electron-userland/electron-builder/commit/8bd1a10a2dcdee080e3b5a0359453d5d34b3ffbf)), closes [#9000](https://github.com/electron-userland/electron-builder/issues/9000)
+
+
+### Features
+
+* **electron-updater:** allow overriding `AppUpdater.isStagingMatch` with hook `isUserWithinRollout` ([#9021](https://github.com/electron-userland/electron-builder/issues/9021)) ([cf43f05](https://github.com/electron-userland/electron-builder/commit/cf43f0567c6addaf3cefd7eadada95bd543165e1))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v26.0.11...v) (2025-03-20)
 
 
