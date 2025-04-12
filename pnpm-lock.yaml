@@ -111,8 +111,8 @@ importers:
         specifier: 1.3.1
         version: 1.3.1
       '@electron/rebuild':
-        specifier: 3.7.0
-        version: 3.7.0
+        specifier: 3.7.2
+        version: 3.7.2
       '@electron/universal':
         specifier: 2.0.1
         version: 2.0.1
@@ -1657,8 +1657,8 @@ packages:
     engines: {node: '>=12.0.0'}
     hasBin: true
 
-  '@electron/rebuild@3.7.0':
-    resolution: {integrity: sha512-VW++CNSlZwMYP7MyXEbrKjpzEwhB5kDNbzGtiPEjwYysqyTCF+YbNJ210Dj3AjWsGSV4iEEwNkmJN9yGZmVvmw==}
+  '@electron/rebuild@3.7.2':
+    resolution: {integrity: sha512-19/KbIR/DAxbsCkiaGMXIdPnMCJLkcf8AvGnduJtWBs/CBwiAjY1apCqOLVxrXg+rtXFCngbXhBanWjxLUt1Mg==}
     engines: {node: '>=12.13.0'}
     hasBin: true
 
@@ -7860,7 +7860,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@electron/rebuild@3.7.0':
+  '@electron/rebuild@3.7.2':
     dependencies:
       '@electron/node-gyp': https://codeload.github.com/electron/node-gyp/tar.gz/06b29aafb7708acef8b3669835c8a7857ebc92d2
       '@malept/cross-spawn-promise': 2.0.0
