@@ -79,7 +79,7 @@ export type FindExecutableOptions = {
 }
 
 export async function findExecutable(options: FindExecutableOptions): Promise<string> {
-  const executables = [...options.executables, ...(options[process.platform] ?? [])]
+  const executables = [...(options[process.platform] ?? []), ...options.executables]
 
   for (const executable of executables) {
     try {
