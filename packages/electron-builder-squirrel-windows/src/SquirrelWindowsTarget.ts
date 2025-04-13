@@ -1,4 +1,5 @@
 import { InvalidConfigurationError, log, isEmptyOrSpaces } from "builder-util"
+import { execWine } from "app-builder-lib/out/wine"
 import { sanitizeFileName } from "builder-util/out/filename"
 import { Arch, getArchSuffix, SquirrelWindowsOptions, Target, WinPackager } from "app-builder-lib"
 import * as path from "path"
@@ -20,12 +21,10 @@ export default class SquirrelWindowsTarget extends Target {
   }
 
   private async prepareSignedVendorDirectory(): Promise<string> {
-    // If not specified will use the Squirrel.Windows that is shipped with electron-installer(https://github.com/electron/windows-installer/tree/main/vendor)
-    // After https://github.com/electron-userland/electron-builder-binaries/pull/56 merged, will add `electron-builder-binaries` to get the latest version of squirrel.
-    let vendorDirectory = this.options.customSquirrelVendorDir || path.join(require.resolve("electron-winstaller/package.json"), "..", "vendor")
+    let vendorDirectory = this.options.customSquirrelVendorDir
     if (isEmptyOrSpaces(vendorDirectory) || !fs.existsSync(vendorDirectory)) {
-      log.warn({ vendorDirectory }, "unable to access Squirrel.Windows vendor directory, falling back to default electron-winstaller")
-      vendorDirectory = path.join(require.resolve("electron-winstaller/package.json"), "..", "vendor")
+      log.warn({ vendorDirectory }, "unable to access custom Squirrel.Windows vendor directory, falling back to default vendor ")
+      vendorDirectory = path.resolve(__dirname, "..", "vendor")
     }
 
     const tmpVendorDirectory = await this.packager.info.tempDirManager.createTempDir({ prefix: "squirrel-windows-vendor" })
@@ -35,14 +34,29 @@ export default class SquirrelWindowsTarget extends Target {
 
     const files = await fs.promises.readdir(tmpVendorDirectory)
     for (const file of files) {
-      if (["Squirrel.exe", "StubExecutable.exe"].includes(file)) {
+      if (file === "Squirrel.exe") {
         const filePath = path.join(tmpVendorDirectory, file)
         log.debug({ file: filePath }, "signing vendor executable")
         await this.packager.sign(filePath)
+        break
       }
     }
-
     return tmpVendorDirectory
+  }
+
+  private async generateStubExecutableExe(appOutDir: string, vendorDir: string) {
+    const files = await fs.promises.readdir(appOutDir, { withFileTypes: true })
+    for (const file of files) {
+      const fileNameWithoutExt = path.basename(file.name, ".exe")
+      if (path.extname(file.name) === ".exe" && fileNameWithoutExt !== "Squirrel") {
+        const filePath = path.join(appOutDir, file.name)
+        log.filePath(filePath)
+        const stubExePath = path.join(appOutDir, `${fileNameWithoutExt}_ExecutionStub.exe`)
+        await fs.promises.copyFile(path.join(vendorDir, "StubExecutable.exe"), stubExePath)
+        await execWine(path.join(vendorDir, "WriteZipToSetup.exe"), null, ["--copy-stub-resources", filePath, stubExePath])
+        await this.packager.sign(stubExePath)
+      }
+    }
   }
 
   async build(appOutDir: string, arch: Arch) {
@@ -62,6 +76,7 @@ export default class SquirrelWindowsTarget extends Target {
         arch,
       })
       const distOptions = await this.computeEffectiveDistOptions(appOutDir, installerOutDir, setupFile)
+      await this.generateStubExecutableExe(appOutDir, distOptions.vendorDirectory!)
       await createWindowsInstaller(distOptions)
 
       await packager.signAndEditResources(artifactPath, arch, installerOutDir)
