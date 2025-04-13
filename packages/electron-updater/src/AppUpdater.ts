@@ -15,7 +15,7 @@ import {
 import { randomBytes } from "crypto"
 import { release } from "os"
 import { EventEmitter } from "events"
-import { mkdir, outputFile, readFile, rename, unlink } from "fs-extra"
+import { pathExists, mkdir, outputFile, readFile, rename, unlink } from "fs-extra"
 import { OutgoingHttpHeaders } from "http"
 import { load } from "js-yaml"
 import { Lazy } from "lazy-val"
@@ -31,7 +31,7 @@ import { Provider, ProviderPlatform } from "./providers/Provider"
 import type { TypedEmitter } from "tiny-typed-emitter"
 import Session = Electron.Session
 import type { AuthInfo } from "electron"
-import { gunzipSync } from "zlib"
+import { gunzipSync, gzipSync } from "zlib"
 import { blockmapFiles } from "./util"
 import { DifferentialDownloaderOptions } from "./differentialDownloader/DifferentialDownloader"
 import { GenericDifferentialDownloader } from "./differentialDownloader/GenericDifferentialDownloader"
@@ -773,6 +773,9 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       if (this._testOnlyOptions != null && !this._testOnlyOptions.isUseDifferentialDownload) {
         return true
       }
+      const CURRENT_BLOCKMAP_FILE = "current.blockmap"
+      const currentBlockMapFile = path.join(this.downloadedUpdateHelper!.cacheDir, CURRENT_BLOCKMAP_FILE)
+
       const blockmapFileUrls = blockmapFiles(fileInfo.url, this.app.version, downloadUpdateOptions.updateInfoAndProvider.info.version)
       this._logger.info(`Download block maps (old: "${blockmapFileUrls[0]}", new: ${blockmapFileUrls[1]})`)
 
@@ -807,8 +810,18 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         downloadOptions.onProgress = it => this.emit(DOWNLOAD_PROGRESS, it)
       }
 
-      const blockMapDataList = await Promise.all(blockmapFileUrls.map(u => downloadBlockMap(u)))
-      await new GenericDifferentialDownloader(fileInfo.info, this.httpExecutor, downloadOptions).download(blockMapDataList[0], blockMapDataList[1])
+      let oldBlockMapData: BlockMap
+      let newBlockMapData: BlockMap
+      if (await pathExists(currentBlockMapFile)) {
+        oldBlockMapData = JSON.parse(gunzipSync(await readFile(currentBlockMapFile)).toString())
+        newBlockMapData = await downloadBlockMap(blockmapFileUrls[1])
+        await new GenericDifferentialDownloader(fileInfo.info, this.httpExecutor, downloadOptions).download(oldBlockMapData, newBlockMapData)
+        return false
+      }
+
+      ;[oldBlockMapData, newBlockMapData] = await Promise.all(blockmapFileUrls.map(u => downloadBlockMap(u)))
+      await new GenericDifferentialDownloader(fileInfo.info, this.httpExecutor, downloadOptions).download(oldBlockMapData, newBlockMapData)
+      await outputFile(currentBlockMapFile, gzipSync(JSON.stringify(newBlockMapData)))
       return false
     } catch (e: any) {
       this._logger.error(`Cannot download differentially, fallback to full download: ${e.stack || e}`)
