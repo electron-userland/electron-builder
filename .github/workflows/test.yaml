@@ -195,8 +195,8 @@ jobs:
       fail-fast: false
       matrix:
         testFiles:
-          - oneClickInstallerTest,assistedInstallerTest
-          - winPackagerTest,winCodeSignTest,webInstallerTest
+          - oneClickInstallerTest,assistedInstallerTest,webInstallerTest
+          - winPackagerTest,winCodeSignTest,BuildTest
           - masTest,dmgTest,filesTest,macPackagerTest,differentialUpdateTest,macArchiveTest
           - concurrentBuildsTest
     steps:
