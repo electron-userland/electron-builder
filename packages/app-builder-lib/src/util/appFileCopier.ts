@@ -84,6 +84,7 @@ export interface ResolvedFileSet {
   files: Array<string>
   metadata: Map<string, Stats>
   transformedFiles?: Map<number, string | Buffer> | null
+  shouldCheckSymlink?: boolean
 }
 
 // used only for ASAR, if no asar, file transformed on the fly
@@ -203,7 +204,7 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
     const matcher = new FileMatcher(source, destination, mainMatcher.macroExpander, mainMatcher.patterns)
     const copier = new NodeModuleCopyHelper(matcher, platformPackager.info)
     const files = await copier.collectNodeModules(dep, nodeModuleExcludedExts, path.relative(mainMatcher.to, destination))
-    result[index++] = validateFileSet({ src: source, destination, files, metadata: copier.metadata })
+    result[index++] = validateFileSet({ src: source, destination, files, metadata: copier.metadata, shouldCheckSymlink: true })
 
     if (dep.dependencies) {
       for (const c of dep.dependencies) {
