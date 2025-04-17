@@ -31,12 +31,6 @@ Var oldMenuDirectory
   !insertmacro customHeader
 !endif
 
-!ifdef ONE_CLICK
-  !include "oneClick.nsh"
-!else
-  !include "assistedInstaller.nsh"
-!endif
-
 !insertmacro addLangs
 
 Function .onInit
@@ -47,6 +41,12 @@ Function .onInit
 
   !ifmacrodef preInit
     !insertmacro preInit
+  !endif
+
+  !ifdef ONE_CLICK
+    !include "oneClick.nsh"
+  !else
+    !include "assistedInstaller.nsh"
   !endif
 
   !ifdef DISPLAY_LANG_SELECTOR
