@@ -27,6 +27,10 @@ Var oldMenuDirectory
   Var launchLink
 !endif
 
+!ifmacrodef customHeader
+  !insertmacro customHeader
+!endif
+
 !ifdef ONE_CLICK
   !include "oneClick.nsh"
 !else
@@ -34,10 +38,6 @@ Var oldMenuDirectory
 !endif
 
 !insertmacro addLangs
-
-!ifmacrodef customHeader
-  !insertmacro customHeader
-!endif
 
 Function .onInit
   Call setInstallSectionSpaceRequired
