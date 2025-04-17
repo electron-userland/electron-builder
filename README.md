@@ -106,7 +106,7 @@ Yarn 3 use PnP by default, but electron-builder still need node-modules(ref: [ya
 ```
 nodeLinker: "node-modules"
 ```
-will declare to use node-modules instead of PnP.
+The above command will declare to use node-modules instead of PnP.
 
 ## Quick Setup Guide
 
