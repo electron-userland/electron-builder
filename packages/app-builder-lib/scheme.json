@@ -5164,6 +5164,11 @@
             "string"
           ]
         },
+        "buildUniversalInstaller": {
+          "default": true,
+          "description": "Disable building an universal installer of the archs specified in the target configuration",
+          "type": "boolean"
+        },
         "customNsisBinary": {
           "anyOf": [
             {
