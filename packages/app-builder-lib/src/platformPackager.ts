@@ -608,13 +608,16 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   getResourcesDir(appOutDir: string): string {
     if (this.platform === Platform.MAC) {
       return this.getMacOsResourcesDir(appOutDir)
-    } else if (isElectronBased(this.info.framework)) {
-      return path.join(appOutDir, "resources")
-    } else {
-      return appOutDir
     }
+    if (isElectronBased(this.info.framework)) {
+      return path.join(appOutDir, "resources")
+    }
+    return appOutDir
   }
 
+  public getMacOsElectronFrameworkResourcesDir(appOutDir: string): string {
+    return path.join(appOutDir, `${this.appInfo.productFilename}.app`, "Contents", "Frameworks", "Electron Framework.framework", "Resources")
+  }
   public getMacOsResourcesDir(appOutDir: string): string {
     return path.join(appOutDir, `${this.appInfo.productFilename}.app`, "Contents", "Resources")
   }
