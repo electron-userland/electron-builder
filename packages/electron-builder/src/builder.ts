@@ -86,6 +86,10 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
     processTargets(Platform.LINUX, args.linux)
   }
 
+  if (args.freebsd != null) {
+    processTargets(Platform.FREEBSD, args.freebsd)
+  }
+
   if (args.win != null) {
     processTargets(Platform.WINDOWS, args.win)
   }
@@ -100,6 +104,7 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
   delete result.dir
   delete result.mac
   delete result.linux
+  delete result.freebsd
   delete result.win
 
   const r = result
@@ -229,6 +234,12 @@ export function configureBuildCommand(yargs: yargs.Argv): yargs.Argv {
       group: buildGroup,
       alias: "l",
       description: `Build for Linux, accepts target list (see ${chalk.underline("https://goo.gl/4vwQad")})`,
+      type: "array",
+    })
+    .option("freebsd", {
+      group: buildGroup,
+      alias: "l",
+      description: `Build for FreeBSD, accepts target list (see ${chalk.underline("https://goo.gl/4vwQad")})`,
       type: "array",
     })
     .option("win", {

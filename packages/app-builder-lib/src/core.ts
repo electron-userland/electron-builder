@@ -21,6 +21,7 @@ export interface TargetConfiguration {
 export class Platform {
   static MAC = new Platform("mac", "mac", "darwin")
   static LINUX = new Platform("linux", "linux", "linux")
+  static FREEBSD = new Platform("freebsd", "freebsd", "freebsd")
   static WINDOWS = new Platform("windows", "win", "win32")
 
   constructor(
@@ -64,6 +65,9 @@ export class Platform {
 
       case Platform.LINUX.nodeName:
         return Platform.LINUX
+
+      case Platform.FREEBSD.nodeName:
+          return Platform.FREEBSD
 
       default:
         throw new Error(`Unknown platform: ${name}`)

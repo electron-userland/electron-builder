@@ -21,7 +21,7 @@ export function configureInstallAppDepsCommand(yargs: yargs.Argv): yargs.Argv {
       "camel-case-expansion": false,
     })
     .option("platform", {
-      choices: ["linux", "darwin", "win32"],
+      choices: ["linux", "darwin", "win32", "freebsd"],
       default: process.platform,
       description: "The target platform",
     })

@@ -11,6 +11,7 @@ export interface PackagerOptions {
 
   mac?: Array<string>
   linux?: Array<string>
+  freebsd?: Array<string>
   win?: Array<string>
 
   projectDir?: string | null
