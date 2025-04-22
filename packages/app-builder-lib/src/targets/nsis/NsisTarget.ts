@@ -371,6 +371,10 @@ export class NsisTarget extends Target {
         updateInfo.isAdminRightsRequired = true
       }
 
+      if (updateInfo != null && this.packager.platformSpecificBuildOptions.minimumSystemVersion) {
+        updateInfo.minimumSystemVersion = this.packager.platformSpecificBuildOptions.minimumSystemVersion
+      }
+
       await packager.info.emitArtifactBuildCompleted({
         file: installerPath,
         updateInfo,

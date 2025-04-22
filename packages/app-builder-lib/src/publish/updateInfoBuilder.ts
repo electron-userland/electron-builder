@@ -169,7 +169,9 @@ export async function createUpdateInfoTasks(event: ArtifactCreated, _publishConf
 async function createUpdateInfo(version: string, event: ArtifactCreated, releaseInfo: ReleaseInfo): Promise<UpdateInfo> {
   const customUpdateInfo = event.updateInfo
   const url = path.basename(event.file)
+  console.log("customUpdateInfo xxxxxxxxxxxxxxx", JSON.stringify(customUpdateInfo, null, 2))
   const sha512 = (customUpdateInfo == null ? null : customUpdateInfo.sha512) || (await hashFile(event.file))
+  const minimumSystemVersion = customUpdateInfo == null ? null : customUpdateInfo.minimumSystemVersion
   const files = [{ url, sha512 }]
   const result: UpdateInfo = {
     // @ts-ignore
@@ -180,6 +182,7 @@ async function createUpdateInfo(version: string, event: ArtifactCreated, release
     path: url /* backward compatibility, electron-updater 1.x - electron-updater 2.15.0 */,
     // @ts-ignore
     sha512 /* backward compatibility, electron-updater 1.x - electron-updater 2.15.0 */,
+    minimumSystemVersion,
     ...(releaseInfo as UpdateInfo),
   }
 

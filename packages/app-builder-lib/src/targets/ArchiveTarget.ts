@@ -79,6 +79,10 @@ export class ArchiveTarget extends Target {
         }
       }
 
+      if (this.packager.platformSpecificBuildOptions.minimumSystemVersion) {
+        updateInfo.minimumSystemVersion = this.packager.platformSpecificBuildOptions.minimumSystemVersion
+      }
+
       await packager.info.emitArtifactBuildCompleted({
         updateInfo,
         file: artifactPath,

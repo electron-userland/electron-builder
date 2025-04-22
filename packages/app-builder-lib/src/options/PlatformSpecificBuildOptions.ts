@@ -199,6 +199,11 @@ export interface PlatformSpecificBuildOptions extends TargetSpecificOptions, Fil
   cscKeyPassword?: string | null
 
   readonly defaultArch?: string
+
+  /**
+   * The minimum system version required to install the application.
+   */
+  readonly minimumSystemVersion?: string | null
 }
 
 export interface ReleaseInfo {
