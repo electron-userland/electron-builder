@@ -165,7 +165,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       authorization: token,
 
       // for gitlab private token
-      'PRIVATE-TOKEN': token,
+      "PRIVATE-TOKEN": token,
     })
   }
 
