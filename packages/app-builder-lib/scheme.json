@@ -1952,8 +1952,8 @@
           ],
           "description": "The mime types in addition to specified in the file associations. Use it if you don't want to register a new mime type, but reuse existing."
         },
-        "minimumSystemVersion": {
-          "description": "The minimum system version required to install the application.",
+        "minimumOSVersion": {
+          "description": "The minimum os kernel version required to install the application.",
           "type": [
             "null",
             "string"
@@ -2720,6 +2720,13 @@
           "description": "Whether to merge ASAR files for different architectures or not.\n\nThis option has no effect unless building for \"universal\" arch.",
           "type": "boolean"
         },
+        "minimumOSVersion": {
+          "description": "The minimum os kernel version required to install the application.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
         "minimumSystemVersion": {
           "description": "The minimum version of macOS required for the app to run. Corresponds to `LSMinimumSystemVersion`.",
           "type": [
@@ -3351,6 +3358,13 @@
           "default": true,
           "description": "Whether to merge ASAR files for different architectures or not.\n\nThis option has no effect unless building for \"universal\" arch.",
           "type": "boolean"
+        },
+        "minimumOSVersion": {
+          "description": "The minimum os kernel version required to install the application.",
+          "type": [
+            "null",
+            "string"
+          ]
         },
         "minimumSystemVersion": {
           "description": "The minimum version of macOS required for the app to run. Corresponds to `LSMinimumSystemVersion`.",
@@ -6453,8 +6467,8 @@
             "string"
           ]
         },
-        "minimumSystemVersion": {
-          "description": "The minimum system version required to install the application.",
+        "minimumOSVersion": {
+          "description": "The minimum os kernel version required to install the application.",
           "type": [
             "null",
             "string"
@@ -7329,8 +7343,8 @@
       ],
       "description": "MAS (Mac Application Store) development options (`mas-dev` target)."
     },
-    "minimumSystemVersion": {
-      "description": "The minimum system version required to install the application.",
+    "minimumOSVersion": {
+      "description": "The minimum os kernel version required to install the application.",
       "type": [
         "null",
         "string"
