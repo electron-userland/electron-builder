@@ -46,7 +46,7 @@ const debug = _debug("electron-builder:nsis")
 const ELECTRON_BUILDER_NS_UUID = UUID.parse("50e065bc-3134-11e6-9bab-38c9862bdaf3")
 
 // noinspection SpellCheckingInspection
-const nsisResourcePathPromise = () => getBinFromUrl("nsis-resources", "3.4.1", "Dqd6g+2buwwvoG1Vyf6BHR1b+25QMmPcwZx40atOT57gH27rkjOei1L0JTldxZu4NFoEmW4kJgZ3DlSWVON3+Q==")
+const nsisResourcePathPromise = () => getBinFromUrl("nsis-resources", "3.4.1", "pi91FD6cWJ+GlMEf7B1O7Iyq4kWtm0cq6Ur1LlNTfPVdj+XyZ1zJkZMLR0RfNty8YaejqcKA4vI1R0+eHHgKGg==")
 
 const USE_NSIS_BUILT_IN_COMPRESSOR = false
 

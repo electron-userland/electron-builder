@@ -16,8 +16,7 @@ export function getBinFromCustomLoc(name: string, version: string, binariesLocUr
   return getBin(dirName, binariesLocUrl, checksum)
 }
 
-export function getBinFromUrl(name: string, version: string, checksum: string): Promise<string> {
-  const dirName = `${name}-${version}`
+export function getBinFromUrl(name: string, version: string, checksum: string, dirName = `${name}-${version}`): Promise<string> {
   let url: string
   if (process.env.ELECTRON_BUILDER_BINARIES_DOWNLOAD_OVERRIDE_URL) {
     url = process.env.ELECTRON_BUILDER_BINARIES_DOWNLOAD_OVERRIDE_URL + "/" + dirName + ".7z"
