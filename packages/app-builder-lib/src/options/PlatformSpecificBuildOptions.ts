@@ -201,9 +201,9 @@ export interface PlatformSpecificBuildOptions extends TargetSpecificOptions, Fil
   readonly defaultArch?: string
 
   /**
-   * The minimum system version required to install the application.
+   * The minimum os kernel version required to install the application.
    */
-  readonly minimumSystemVersion?: string | null
+  readonly minimumOSVersion?: string | null
 }
 
 export interface ReleaseInfo {
