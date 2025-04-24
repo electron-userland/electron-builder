@@ -21,18 +21,18 @@ export function getBinFromUrl(name: string, version: string, checksum: string, d
   if (process.env.ELECTRON_BUILDER_BINARIES_DOWNLOAD_OVERRIDE_URL) {
     url = process.env.ELECTRON_BUILDER_BINARIES_DOWNLOAD_OVERRIDE_URL + "/" + dirName + ".7z"
   } else {
-    const baseUrl =
-      process.env.NPM_CONFIG_ELECTRON_BUILDER_BINARIES_MIRROR ||
-      process.env.npm_config_electron_builder_binaries_mirror ||
-      process.env.npm_package_config_electron_builder_binaries_mirror ||
-      process.env.ELECTRON_BUILDER_BINARIES_MIRROR ||
-      "https://github.com/electron-userland/electron-builder-binaries/releases/download/"
-    const middleUrl =
-      process.env.NPM_CONFIG_ELECTRON_BUILDER_BINARIES_CUSTOM_DIR ||
-      process.env.npm_config_electron_builder_binaries_custom_dir ||
-      process.env.npm_package_config_electron_builder_binaries_custom_dir ||
-      process.env.ELECTRON_BUILDER_BINARIES_CUSTOM_DIR ||
-      dirName
+    const baseUrl = "https://github.com/mmaietta/electron-builder-binaries/releases/download/"
+      // process.env.NPM_CONFIG_ELECTRON_BUILDER_BINARIES_MIRROR ||
+      // process.env.npm_config_electron_builder_binaries_mirror ||
+      // process.env.npm_package_config_electron_builder_binaries_mirror ||
+      // process.env.ELECTRON_BUILDER_BINARIES_MIRROR ||
+      // "https://github.com/electron-userland/electron-builder-binaries/releases/download/"
+    const middleUrl = "v1.0.1"
+      // process.env.NPM_CONFIG_ELECTRON_BUILDER_BINARIES_CUSTOM_DIR ||
+      // process.env.npm_config_electron_builder_binaries_custom_dir ||
+      // process.env.npm_package_config_electron_builder_binaries_custom_dir ||
+      // process.env.ELECTRON_BUILDER_BINARIES_CUSTOM_DIR ||
+      // dirName
     const urlSuffix = dirName + ".7z"
     url = `${baseUrl}${middleUrl}/${urlSuffix}`
   }
