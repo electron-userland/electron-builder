@@ -255,6 +255,7 @@ export default class FpmTarget extends Target {
       ...process.env,
       SZA_PATH: await getPath7za(),
       SZA_COMPRESSION_LEVEL: packager.compression === "store" ? "0" : "9",
+      SZA_ARCHIVE_TYPE: "xz",
     }
 
     // rpmbuild wants directory rpm with some default config files. Even if we can use dylibbundler, path to such config files are not changed (we need to replace in the binary)
@@ -308,6 +309,15 @@ export default class FpmTarget extends Target {
     await exec(fpmPath, fpmArgs, {
       cwd: resourceDir,
       env,
+    }).catch(e => {
+      if (e.message.includes("Need executable 'rpmbuild' to convert dir to rpm")) {
+        const hint = "to build rpm, executable rpmbuild is required, please install rpm package on your system. "
+        if (process.platform === "darwin") {
+          log.error(null, hint + "(brew install rpm)")
+        }
+        log.error(null, hint + "(sudo apt-get install rpm)")
+      }
+      throw e
     })
   }
 
