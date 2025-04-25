@@ -1,4 +1,4 @@
-import { Arch, asArray, executeAppBuilder, getArchSuffix, getPath7za, log, serializeToYaml, TmpDir, toLinuxArchString, unlinkIfExists, use } from "builder-util"
+import { Arch, asArray, exec, getArchSuffix, getPath7za, log, serializeToYaml, TmpDir, toLinuxArchString, unlinkIfExists, use } from "builder-util"
 import { Nullish } from "builder-util-runtime"
 import { copyFile, outputFile, stat } from "fs-extra"
 import { mkdir, readFile } from "fs/promises"
@@ -16,7 +16,7 @@ import { hashFile } from "../util/hash"
 import { isMacOsSierra } from "../util/macosVersion"
 import { getTemplatePath } from "../util/pathManager"
 import { installPrefix, LinuxTargetHelper } from "./LinuxTargetHelper"
-import { getLinuxToolsPath } from "./tools"
+import { getFpmPath, getLinuxToolsPath } from "./tools"
 
 interface FpmOptions {
   name: string
@@ -202,13 +202,10 @@ export default class FpmTarget extends Target {
     if (depends != null) {
       if (Array.isArray(depends)) {
         fpmConfiguration.customDepends = depends
+      } else if (typeof depends === "string") {
+        fpmConfiguration.customDepends = [depends as string]
       } else {
-        // noinspection SuspiciousTypeOfGuard
-        if (typeof depends === "string") {
-          fpmConfiguration.customDepends = [depends as string]
-        } else {
-          throw new Error(`depends must be Array or String, but specified as: ${depends}`)
-        }
+        throw new Error(`depends must be Array or String, but specified as: ${depends}`)
       }
     } else {
       fpmConfiguration.customDepends = this.getDefaultDepends(target)
@@ -270,7 +267,7 @@ export default class FpmTarget extends Target {
       })
     }
 
-    await executeAppBuilder(["fpm", "--configuration", JSON.stringify(fpmConfiguration)], undefined, { env })
+    await this.executeFpm(target, fpmConfiguration, resourceDir, env)
 
     let info: ArtifactCreated = {
       file: artifactPath,
@@ -290,6 +287,28 @@ export default class FpmTarget extends Target {
       }
     }
     await packager.info.emitArtifactBuildCompleted(info)
+  }
+
+  private async executeFpm(target: string, fpmConfiguration: FpmConfiguration, resourceDir: string, env: { SZA_PATH: string; SZA_COMPRESSION_LEVEL: string; TZ?: string }) {
+    const fpmArgs = ["-s", "dir", "--force", "-t", target]
+    if (process.env.FPM_DEBUG === "true") {
+      fpmArgs.push("--debug")
+    }
+    if (log.isDebugEnabled) {
+      fpmArgs.push("--log", "debug")
+    }
+    fpmConfiguration.customDepends?.forEach(it => fpmArgs.push("-d", it))
+    if (target === "deb") {
+      fpmConfiguration.customRecommends?.forEach(it => fpmArgs.push("--deb-recommends", it))
+    }
+
+    fpmArgs.push(...this.configureTargetSpecificOptions(target, fpmConfiguration.compression ?? "xz"))
+    fpmArgs.push(...fpmConfiguration.args)
+    const fpmPath = await getFpmPath()
+    await exec(fpmPath, fpmArgs, {
+      cwd: resourceDir,
+      env,
+    })
   }
 
   private supportsAutoUpdate(target: string) {
@@ -328,6 +347,25 @@ export default class FpmTarget extends Target {
       default:
         return []
     }
+  }
+
+  private configureTargetSpecificOptions(target: string, compression: string): string[] {
+    switch (target) {
+      case "rpm": {
+        let args = ["--rpm-os", "linux"]
+        if (compression == "xz") {
+          args = [...args, "--rpm-compression", "xzmt"]
+        } else {
+          args = [...args, "--rpm-compression", compression]
+        }
+        return args
+      }
+      case "deb":
+        return ["--deb-compression", compression]
+      case "pacman":
+        return ["--pacman-compression", compression]
+    }
+    return []
   }
 }
 
