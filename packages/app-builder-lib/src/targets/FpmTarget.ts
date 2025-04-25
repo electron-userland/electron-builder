@@ -361,15 +361,8 @@ export default class FpmTarget extends Target {
 
   private configureTargetSpecificOptions(target: string, compression: string): string[] {
     switch (target) {
-      case "rpm": {
-        let args = ["--rpm-os", "linux"]
-        if (compression == "xz") {
-          args = [...args, "--rpm-compression", "xzmt"]
-        } else {
-          args = [...args, "--rpm-compression", compression]
-        }
-        return args
-      }
+      case "rpm":
+        return ["--rpm-os", "linux", "--rpm-compression", compression == "xz" ? "xzmt" : compression]
       case "deb":
         return ["--deb-compression", compression]
       case "pacman":
