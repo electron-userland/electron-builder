@@ -158,6 +158,7 @@ exports[`dmg > background color 1`] = `
     },
   ],
   "format": "UDRO",
+  "title": "Bar",
   "writeUpdateInfo": false,
 }
 `;

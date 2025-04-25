@@ -204,7 +204,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     this.configOnDisk = new Lazy<any>(() => this.loadUpdateConfig())
   }
 
-  protected _isUpdateSupported: VerifyUpdateSupport = (updateInfo: UpdateInfo): boolean | Promise<boolean> => this.checkIfUpdateSupported(updateInfo)
+  protected _isUpdateSupported: VerifyUpdateSupport = updateInfo => this.checkIfUpdateSupported(updateInfo)
 
   /**
    * Allows developer to override default logic for determining if an update is supported.
@@ -217,6 +217,23 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   set isUpdateSupported(value: VerifyUpdateSupport) {
     if (value) {
       this._isUpdateSupported = value
+    }
+  }
+
+  protected _isUserWithinRollout: VerifyUpdateSupport = updateInfo => this.isStagingMatch(updateInfo)
+
+  /**
+   * Allows developer to override default logic for determining if the user is below the rollout threshold.
+   * The default logic compares the staging percentage with numerical representation of user ID.
+   * An override can define custom logic, or bypass it if needed.
+   */
+  get isUserWithinRollout(): VerifyUpdateSupport {
+    return this._isUserWithinRollout
+  }
+
+  set isUserWithinRollout(value: VerifyUpdateSupport) {
+    if (value) {
+      this._isUserWithinRollout = value
     }
   }
 
@@ -417,8 +434,8 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       return false
     }
 
-    const isStagingMatch = await this.isStagingMatch(updateInfo)
-    if (!isStagingMatch) {
+    const isUserWithinRollout = await Promise.resolve(this.isUserWithinRollout(updateInfo))
+    if (!isUserWithinRollout) {
       return false
     }
 
@@ -698,7 +715,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     function getCacheUpdateFileName(): string {
       // NodeJS URL doesn't decode automatically
       const urlPath = decodeURIComponent(taskOptions.fileInfo.url.pathname)
-      if (urlPath.endsWith(`.${taskOptions.fileExtension}`)) {
+      if (urlPath.toLowerCase().endsWith(`.${taskOptions.fileExtension.toLowerCase()}`)) {
         return path.basename(urlPath)
       } else {
         // url like /latest, generate name
