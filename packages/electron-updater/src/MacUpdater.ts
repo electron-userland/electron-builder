@@ -87,7 +87,7 @@ export class MacUpdater extends AppUpdater {
       files = files.filter(file => !isArm64(file))
     }
 
-    const zipFileInfo = findFile(files, "zip", ["pkg", "dmg"])
+    const zipFileInfo = findFile(files, "zip", ["pkg", "dmg"], false /*has been filtered by myself*/)
 
     if (zipFileInfo == null) {
       throw newError(`ZIP file not provided: ${safeStringifyJson(files)}`, "ERR_UPDATER_ZIP_FILE_NOT_FOUND")

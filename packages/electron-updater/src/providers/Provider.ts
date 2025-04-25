@@ -80,12 +80,19 @@ export abstract class Provider<T extends UpdateInfo> {
   }
 }
 
-export function findFile(files: Array<ResolvedUpdateFileInfo>, extension: string, not?: Array<string>): ResolvedUpdateFileInfo | null | undefined {
+export function findFile(files: Array<ResolvedUpdateFileInfo>, extension: string, not?: Array<string>, filterByArmArch: boolean = true): ResolvedUpdateFileInfo | null | undefined {
   if (files.length === 0) {
     throw newError("No files provided", "ERR_UPDATER_NO_FILES_PROVIDED")
   }
 
-  const result = files.find(it => it.url.pathname.toLowerCase().endsWith(`.${extension.toLowerCase()}`))
+  const result = files
+    .filter(file => {
+      if (!filterByArmArch) {
+        return true
+      }
+      return (process.arch == "arm64") === (file.url.pathname.includes("arm64") || file.info.url.includes("arm64"))
+    })
+    .find(it => it.url.pathname.toLowerCase().endsWith(`.${extension.toLowerCase()}`))
   if (result != null) {
     return result
   } else if (not == null) {
