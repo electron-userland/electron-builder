@@ -268,7 +268,7 @@ export default class FpmTarget extends Target {
       })
     }
 
-    await this.executeFpm(target, fpmConfiguration, resourceDir, env)
+    await this.executeFpm(target, fpmConfiguration, env)
 
     let info: ArtifactCreated = {
       file: artifactPath,
@@ -290,7 +290,7 @@ export default class FpmTarget extends Target {
     await packager.info.emitArtifactBuildCompleted(info)
   }
 
-  private async executeFpm(target: string, fpmConfiguration: FpmConfiguration, resourceDir: string, env: { SZA_PATH: string; SZA_COMPRESSION_LEVEL: string; TZ?: string }) {
+  private async executeFpm(target: string, fpmConfiguration: FpmConfiguration, env: any) {
     const fpmArgs = ["-s", "dir", "--force", "-t", target]
     if (process.env.FPM_DEBUG === "true") {
       fpmArgs.push("--debug")
@@ -305,11 +305,10 @@ export default class FpmTarget extends Target {
 
     fpmArgs.push(...this.configureTargetSpecificOptions(target, fpmConfiguration.compression ?? "xz"))
     fpmArgs.push(...fpmConfiguration.args)
+
     const fpmPath = await getFpmPath()
-    await exec(fpmPath, fpmArgs, {
-      cwd: resourceDir,
-      env,
-    }).catch(e => {
+
+    await exec(fpmPath, fpmArgs, { env }).catch(e => {
       if (e.message.includes("Need executable 'rpmbuild' to convert dir to rpm")) {
         const hint = "to build rpm, executable rpmbuild is required, please install rpm package on your system. "
         if (process.platform === "darwin") {
