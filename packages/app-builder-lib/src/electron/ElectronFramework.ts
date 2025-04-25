@@ -101,11 +101,11 @@ async function removeUnusedLanguagesIfNeeded(options: BeforeCopyExtraFilesOption
   // noinspection SpellCheckingInspection
   const deletedFiles = async (dir: string) => {
     await asyncPool(MAX_FILE_REQUESTS, await readdir(dir), async file => {
-      if (!file.endsWith(langFileExt)) {
+      if (path.extname(file) !== langFileExt) {
         return
       }
 
-      const language = file.substring(0, file.length - langFileExt.length)
+      const language = path.basename(file, langFileExt)
       if (!wantedLanguages.includes(language)) {
         return fs.rm(path.join(dir, file), { recursive: true, force: true })
       }
@@ -117,9 +117,9 @@ async function removeUnusedLanguagesIfNeeded(options: BeforeCopyExtraFilesOption
   function getLocalesConfig(options: BeforeCopyExtraFilesOptions) {
     const { appOutDir, packager } = options
     if (packager.platform === Platform.MAC) {
-      return { dirs: [packager.getResourcesDir(appOutDir), packager.getMacOsElectronFrameworkResourcesDir(appOutDir)], langFileExt: ".lproj" }
+      return { dirs: [packager.getResourcesDir(appOutDir), packager.getMacOsElectronFrameworkResourcesDir(appOutDir)], langFileExt: "lproj" }
     }
-    return { dirs: [path.join(packager.getResourcesDir(appOutDir), "..", "locales")], langFileExt: ".pak" }
+    return { dirs: [path.join(packager.getResourcesDir(appOutDir), "..", "locales")], langFileExt: "pak" }
   }
 }
 

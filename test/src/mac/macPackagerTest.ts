@@ -46,8 +46,8 @@ test.ifMac("two-package", ({ expect }) =>
         const resources = await fs.readdir(path.join(appDir, "Contents", "Resources"))
         expect(resources.filter(it => !it.startsWith(".")).sort()).toMatchSnapshot()
 
-        const ElectronFrameworkResources = await fs.readdir(path.join(appDir, "Contents", "Frameworks", "Electron Framework.framework", "Resources"))
-        expect(ElectronFrameworkResources.filter(it => !it.startsWith(".")).sort()).toMatchSnapshot()
+        const electronFrameworkResources = await fs.readdir(path.join(appDir, "Contents", "Frameworks", "Electron Framework.framework", "Resources"))
+        expect(electronFrameworkResources.filter(it => !it.startsWith(".")).sort()).toMatchSnapshot()
       },
     }
   )
