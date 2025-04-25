@@ -117,9 +117,9 @@ async function removeUnusedLanguagesIfNeeded(options: BeforeCopyExtraFilesOption
   function getLocalesConfig(options: BeforeCopyExtraFilesOptions) {
     const { appOutDir, packager } = options
     if (packager.platform === Platform.MAC) {
-      return { dirs: [packager.getResourcesDir(appOutDir), packager.getMacOsElectronFrameworkResourcesDir(appOutDir)], langFileExt: "lproj" }
+      return { dirs: [packager.getResourcesDir(appOutDir), packager.getMacOsElectronFrameworkResourcesDir(appOutDir)], langFileExt: ".lproj" }
     }
-    return { dirs: [path.join(packager.getResourcesDir(appOutDir), "..", "locales")], langFileExt: "pak" }
+    return { dirs: [path.join(packager.getResourcesDir(appOutDir), "..", "locales")], langFileExt: ".pak" }
   }
 }
 
