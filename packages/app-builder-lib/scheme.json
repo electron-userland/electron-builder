@@ -460,7 +460,7 @@
           ]
         },
         "url": {
-          "default": "https://github.com/electron-userland/electron-builder-binaries/releases/download",
+          "default": "https://github.com/electron-userland/electron-builder-binaries/releases/download/nsis-3.0.4.1/nsis-3.0.4.1.7z",
           "type": [
             "null",
             "string"
@@ -476,6 +476,29 @@
       },
       "required": [
         "url"
+      ],
+      "type": "object"
+    },
+    "CustomNsisResources": {
+      "additionalProperties": false,
+      "properties": {
+        "checksum": {
+          "default": "Dqd6g+2buwwvoG1Vyf6BHR1b+25QMmPcwZx40atOT57gH27rkjOei1L0JTldxZu4NFoEmW4kJgZ3DlSWVON3+Q==",
+          "type": "string"
+        },
+        "url": {
+          "default": "https://github.com/electron-userland/electron-builder-binaries/releases/download/nsis-resources-3.4.1/nsis-resources-3.4.1.7z",
+          "type": "string"
+        },
+        "version": {
+          "default": "3.4.1",
+          "type": "string"
+        }
+      },
+      "required": [
+        "checksum",
+        "url",
+        "version"
       ],
       "type": "object"
     },
@@ -3914,6 +3937,17 @@
           ],
           "description": "Allows you to provide your own `makensis`, such as one with support for debug logging via LogSet and LogText. (Logging also requires option `debugLogging = true`)"
         },
+        "customNsisResources": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/CustomNsisResources"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Allows you to provide your own `nsis-resources`"
+        },
         "deleteAppDataOnUninstall": {
           "default": false,
           "description": "*one-click installer only.* Whether to delete app data on uninstall.",
@@ -4219,6 +4253,17 @@
             }
           ],
           "description": "Allows you to provide your own `makensis`, such as one with support for debug logging via LogSet and LogText. (Logging also requires option `debugLogging = true`)"
+        },
+        "customNsisResources": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/CustomNsisResources"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Allows you to provide your own `nsis-resources`"
         },
         "deleteAppDataOnUninstall": {
           "default": false,
@@ -5164,6 +5209,11 @@
             "string"
           ]
         },
+        "buildUniversalInstaller": {
+          "default": true,
+          "description": "Disable building an universal installer of the archs specified in the target configuration",
+          "type": "boolean"
+        },
         "customNsisBinary": {
           "anyOf": [
             {
@@ -5174,6 +5224,17 @@
             }
           ],
           "description": "Allows you to provide your own `makensis`, such as one with support for debug logging via LogSet and LogText. (Logging also requires option `debugLogging = true`)"
+        },
+        "customNsisResources": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/CustomNsisResources"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Allows you to provide your own `nsis-resources`"
         },
         "guid": {
           "description": "See [GUID vs Application Name](./nsis.md#guid-vs-application-name).",
