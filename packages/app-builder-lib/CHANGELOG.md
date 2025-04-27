@@ -1,5 +1,21 @@
 # app-builder-lib
 
+## 26.0.14
+
+### Patch Changes
+
+- [#9032](https://github.com/electron-userland/electron-builder/pull/9032) [`3d65267a`](https://github.com/electron-userland/electron-builder/commit/3d65267a6c53ca824f70e5b0f5d8f4ba8be38237) Thanks [@indutny-signal](https://github.com/indutny-signal)! - Add customNsisResources override to nsis options
+
+- [#9061](https://github.com/electron-userland/electron-builder/pull/9061) [`5545e132`](https://github.com/electron-userland/electron-builder/commit/5545e1325457bf4c493166faaf533528d336e76f) Thanks [@mmaietta](https://github.com/mmaietta)! - chore: migrate fpm packaging from app builder
+
+- [#9034](https://github.com/electron-userland/electron-builder/pull/9034) [`80fbf5a6`](https://github.com/electron-userland/electron-builder/commit/80fbf5a6d8f308415469d4ee96a954932e6f19b7) Thanks [@beyondkmp](https://github.com/beyondkmp)! - feat: add buildUniversalInstaller option to NSIS portable configuration
+
+- [#8995](https://github.com/electron-userland/electron-builder/pull/8995) [`524fb6e0`](https://github.com/electron-userland/electron-builder/commit/524fb6e042446f741eaf77a8eb65485074186b96) Thanks [@mmaietta](https://github.com/mmaietta)! - chore(asar): use streaming API for `electron/asar` for constructing asar package
+
+- Updated dependencies []:
+  - dmg-builder@26.0.14
+  - electron-builder-squirrel-windows@26.0.14
+
 ## 26.0.13
 
 ### Patch Changes

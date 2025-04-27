@@ -1,3 +1,13 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v26.0.13...v) (2025-04-27)
+
+
+### Features
+
+* `customNsisResources` override in nsis options ([#9032](https://github.com/electron-userland/electron-builder/issues/9032)) ([3d65267](https://github.com/electron-userland/electron-builder/commit/3d65267a6c53ca824f70e5b0f5d8f4ba8be38237))
+* add `buildUniversalInstaller` option to NSIS portable configuration ([#9034](https://github.com/electron-userland/electron-builder/issues/9034)) ([80fbf5a](https://github.com/electron-userland/electron-builder/commit/80fbf5a6d8f308415469d4ee96a954932e6f19b7))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v26.0.12...v) (2025-04-12)
 
 
