@@ -27,7 +27,7 @@ export function getBinFromUrl(name: string, version: string, checksum: string, d
       // process.env.npm_package_config_electron_builder_binaries_mirror ||
       // process.env.ELECTRON_BUILDER_BINARIES_MIRROR ||
       // "https://github.com/electron-userland/electron-builder-binaries/releases/download/"
-    const middleUrl = "v1.0.1"
+    const middleUrl = "v1.0.2"
       // process.env.NPM_CONFIG_ELECTRON_BUILDER_BINARIES_CUSTOM_DIR ||
       // process.env.npm_config_electron_builder_binaries_custom_dir ||
       // process.env.npm_package_config_electron_builder_binaries_custom_dir ||

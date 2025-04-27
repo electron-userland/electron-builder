@@ -202,7 +202,7 @@ async function testBlockMap(expect: ExpectStatic, oldDir: string, newDir: string
   )
   const port = 8000 + (updaterClass.name.charCodeAt(0) as number) + Math.floor(Math.random() * 10000)
 
-  const serverBin = await getBinFromUrl("ran", "0.1.3", "nEUy3qjAm7u2luXYJc9lA8aERsxqGgrA6UrcQnK06Ff4ufxOXFDp9JP634JWfK0+8bem5shjhCMNOJglzj4YcA==")
+  const serverBin = await getBinFromUrl("ran", "0.1.3", "imfA3LtT6umMM0BuQ29MgO3CJ9uleN5zRBi3sXzcTbMOeYZ6SQeN7eKr3kXZikKnVOIwbH+DDO43wkiR/qTdkg==")
   const httpServerProcess = doSpawn(path.join(serverBin, process.platform, "ran"), [`-root=${newDir}`, `-port=${port}`, "-gzip=false", "-listdir=true"])
 
   // Mac uses electron's native autoUpdater to serve updates to, we mock here since electron API isn't available within jest runtime
