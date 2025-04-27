@@ -313,8 +313,9 @@ export default class FpmTarget extends Target {
         const hint = "to build rpm, executable rpmbuild is required, please install rpm package on your system. "
         if (process.platform === "darwin") {
           log.error(null, hint + "(brew install rpm)")
+        } else {
+          log.error(null, hint + "(sudo apt-get install rpm)")
         }
-        log.error(null, hint + "(sudo apt-get install rpm)")
       }
       throw e
     })
