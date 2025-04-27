@@ -38,6 +38,16 @@ export const NSIS_PATH = () => {
   })
 }
 
+export const NSIS_RESOURCES_PATH = () => {
+  return NsisTargetOptions.then((options: NsisOptions) => {
+    if (options.customNsisResources) {
+      const { checksum, url, version } = options.customNsisResources
+      return getBinFromCustomLoc("nsis-resources", version, url, checksum)
+    }
+    return getBinFromUrl("nsis-resources", "3.4.1", "Dqd6g+2buwwvoG1Vyf6BHR1b+25QMmPcwZx40atOT57gH27rkjOei1L0JTldxZu4NFoEmW4kJgZ3DlSWVON3+Q==")
+  })
+}
+
 export interface PackArchResult {
   fileInfo: PackageFileInfo
   unpackedSize: number

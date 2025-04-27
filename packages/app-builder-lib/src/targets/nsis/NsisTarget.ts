@@ -20,7 +20,6 @@ import _debug from "debug"
 import * as fs from "fs"
 import { readFile, stat, unlink } from "fs-extra"
 import * as path from "path"
-import { getBinFromUrl } from "../../binDownload"
 import { Target } from "../../core"
 import { DesktopShortcutCreationPolicy, getEffectiveOptions } from "../../options/CommonWindowsInstallerConfiguration"
 import { chooseNotNull, computeSafeArtifactNameIfNeeded, normalizeExt } from "../../platformPackager"
@@ -38,15 +37,12 @@ import { addCustomMessageFileInclude, createAddLangsMacro, LangConfigurator } fr
 import { computeLicensePage } from "./nsisLicense"
 import { NsisOptions, PortableOptions } from "./nsisOptions"
 import { NsisScriptGenerator } from "./nsisScriptGenerator"
-import { AppPackageHelper, NSIS_PATH, NsisTargetOptions, nsisTemplatesDir, UninstallerReader } from "./nsisUtil"
+import { AppPackageHelper, NSIS_PATH, NSIS_RESOURCES_PATH, NsisTargetOptions, nsisTemplatesDir, UninstallerReader } from "./nsisUtil"
 
 const debug = _debug("electron-builder:nsis")
 
 // noinspection SpellCheckingInspection
 const ELECTRON_BUILDER_NS_UUID = UUID.parse("50e065bc-3134-11e6-9bab-38c9862bdaf3")
-
-// noinspection SpellCheckingInspection
-const nsisResourcePathPromise = () => getBinFromUrl("nsis-resources", "3.4.1", "pi91FD6cWJ+GlMEf7B1O7Iyq4kWtm0cq6Ur1LlNTfPVdj+XyZ1zJkZMLR0RfNty8YaejqcKA4vI1R0+eHHgKGg==")
 
 const USE_NSIS_BUILT_IN_COMPRESSOR = false
 
@@ -666,7 +662,7 @@ export class NsisTarget extends Target {
 
     const pluginArch = this.isUnicodeEnabled ? "x86-unicode" : "x86-ansi"
     taskManager.add(async () => {
-      scriptGenerator.addPluginDir(pluginArch, path.join(await nsisResourcePathPromise(), "plugins", pluginArch))
+      scriptGenerator.addPluginDir(pluginArch, path.join(await NSIS_RESOURCES_PATH(), "plugins", pluginArch))
     })
 
     taskManager.add(async () => {
