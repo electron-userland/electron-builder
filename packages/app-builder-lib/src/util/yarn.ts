@@ -7,7 +7,7 @@ import { homedir } from "os"
 import * as path from "path"
 import { Configuration } from "../configuration"
 import { executeAppBuilderAndWriteJson } from "./appBuilder"
-import { PM, detect, getPackageManagerVersion } from "../node-module-collector"
+import { PM, detectPackageManager } from "../node-module-collector"
 import { NodeModuleDirInfo } from "./packageDependencies"
 import { rebuild as remoteRebuild } from "./rebuild/rebuild"
 
@@ -78,34 +78,22 @@ export function getGypEnv(frameworkInfo: DesktopFrameworkInfo, platform: NodeJS.
   }
 }
 
-async function checkYarnBerry(pm: PM) {
-  if (pm !== "yarn") {
-    return false
-  }
-  const version = await getPackageManagerVersion(pm)
-  if (version == null || version.split(".").length < 1) {
-    return false
-  }
-
-  return version.split(".")[0] >= "2"
-}
-
 async function installDependencies(config: Configuration, { appDir, projectDir }: DirectoryPaths, options: RebuildOptions): Promise<any> {
   const platform = options.platform || process.platform
   const arch = options.arch || process.arch
   const additionalArgs = options.additionalArgs
 
-  const pm = await detect({ cwd: projectDir })
+  const pm = detectPackageManager(projectDir)
   log.info({ pm, platform, arch, projectDir, appDir }, `installing production dependencies`)
   const execArgs = ["install"]
-  const isYarnBerry = await checkYarnBerry(pm)
+  const isYarnBerry = pm === PM.YARN_BERRY
   if (!isYarnBerry) {
     if (process.env.NPM_NO_BIN_LINKS === "true") {
       execArgs.push("--no-bin-links")
     }
   }
 
-  if (!isRunningYarn(pm)) {
+  if (pm === PM.YARN) {
     execArgs.push("--prefer-offline")
   }
 
@@ -146,14 +134,9 @@ export async function nodeGypRebuild(platform: NodeJS.Platform, arch: string, fr
 function getPackageToolPath(pm: PM) {
   let cmd = pm
   if (process.env.FORCE_YARN === "true") {
-    cmd = "yarn"
+    cmd = PM.YARN
   }
   return `${cmd}${process.platform === "win32" ? ".cmd" : ""}`
-}
-
-function isRunningYarn(pm: PM) {
-  const userAgent = process.env.npm_config_user_agent
-  return process.env.FORCE_YARN === "true" || pm === "yarn" || (userAgent != null && /\byarn\b/.test(userAgent))
 }
 
 export interface RebuildOptions {
