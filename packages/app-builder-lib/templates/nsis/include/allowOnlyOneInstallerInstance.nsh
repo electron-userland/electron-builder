@@ -7,6 +7,11 @@
   Var pid
 !endif
 
+Var CmdPath
+Var FindPath
+Var PowerShellPath
+Var IsPowerShellAvailable
+
 # http://nsis.sourceforge.net/Allow_only_one_installer_instance
 !macro ALLOW_ONLY_ONE_INSTALLER_INSTANCE
   BringToFront
@@ -33,18 +38,56 @@
     !ifmacrodef customCheckAppRunning
       !insertmacro customCheckAppRunning
     !else
+      StrCpy $CmdPath "$SYSDIR\cmd.exe"
+      StrCpy $FindPath "$SYSDIR\find.exe"
+      StrCpy $PowerShellPath "$SYSDIR\WindowsPowerShell\v1.0\powershell.exe"
+      !insertmacro IS_POWERSHELL_AVAILABLE $IsPowerShellAvailable
       !insertmacro _CHECK_APP_RUNNING
     !endif
 !macroend
 
-!macro FIND_PROCESS _FILE _ERR
-  !ifdef INSTALL_MODE_PER_ALL_USERS
-    ${nsProcess::FindProcess} "${_FILE}" ${_ERR}
-  !else
-    # find process owned by current user
-    nsExec::Exec `"$SYSDIR\cmd.exe" /c tasklist /FI "USERNAME eq %USERNAME%" /FI "IMAGENAME eq ${_FILE}" /FO csv | "$SYSDIR\find.exe" "${_FILE}"`
-    Pop ${_ERR}
-  !endif
+!macro IS_POWERSHELL_AVAILABLE _RETURN
+  # Try running PowerShell with a simple command
+  nsExec::ExecToStack `"$PowerShellPath" -NoProfile -NonInteractive -Command "exit 0"`
+  Pop ${_RETURN}  # Return code (0 = success, other = error)
+  
+  ${If} ${_RETURN} == 0
+    # PowerShell is available, check if it's not blocked by policies
+    nsExec::ExecToStack `"$PowerShellPath" -NoProfile -NonInteractive -Command "if ((Get-ExecutionPolicy -Scope Process) -eq 'Restricted') { exit 1 } else { exit 0 }"`
+    Pop ${_RETURN}
+  ${EndIf}
+  
+  # For safety, convert any non-zero result to 1
+  ${If} ${_RETURN} != 0
+    StrCpy ${_RETURN} 1
+  ${EndIf}
+!macroend
+
+!macro FIND_PROCESS _PATH _FILENAME _RETURN
+  ${If} $IsPowerShellAvailable == True
+    nsExec::Exec `"$PowerShellPath" -Command "if ((Get-Process | Where-Object {$$_.Path -and $$_.Path.StartsWith('${_PATH}')}).Count -gt 0) { exit 0 } else { exit 1 }"`
+    Pop ${_RETURN}
+  ${Else}
+    !ifdef INSTALL_MODE_PER_ALL_USERS
+      ${nsProcess::FindProcess} "${_FILENAME}" ${_RETURN}
+    !else
+      # find process owned by current user
+      nsExec::Exec `"$CmdPath" /c tasklist /fi "USERNAME eq %USERNAME%" /fi "IMAGENAME eq ${_FILENAME}" /fo csv | "$FindPath" "${_FILENAME}"`
+      Pop ${_RETURN}
+    !endif
+  ${EndIf}
+!macroend
+
+!macro KILL_PROCESS _PATH _FILENAME
+  ${If} $IsPowerShellAvailable == 0
+    nsExec::Exec `"$PowerShellPath" -Command "Get-Process | ?{$$_.Path -and $$_.Path.StartsWith('${_PATH}')} | Stop-Process -Force"`
+  ${Else}
+    !ifdef INSTALL_MODE_PER_ALL_USERS
+      nsExec::Exec `taskkill /im "${_FILENAME}" /fi "PID ne $pid"`
+    !else
+      nsExec::Exec `"$CmdPath" /c taskkill /im "${_FILENAME}" /fi "PID ne $pid" /fi "USERNAME eq %USERNAME%"`
+    !endif
+  ${EndIf}
 !macroend
 
 !macro _CHECK_APP_RUNNING
@@ -55,7 +98,7 @@
       Sleep 300
     ${endIf}
 
-    !insertmacro FIND_PROCESS "${APP_EXECUTABLE_FILENAME}" $R0
+    !insertmacro FIND_PROCESS "$INSTDIR" "${APP_EXECUTABLE_FILENAME}" $R0
     ${if} $R0 == 0
       ${if} ${isUpdated}
         # allow app to exit without explicit kill
@@ -69,12 +112,7 @@
 
       DetailPrint `Closing running "${PRODUCT_NAME}"...`
 
-      # https://github.com/electron-userland/electron-builder/issues/2516#issuecomment-372009092
-      !ifdef INSTALL_MODE_PER_ALL_USERS
-        nsExec::Exec `taskkill /im "${APP_EXECUTABLE_FILENAME}" /fi "PID ne $pid"`
-      !else
-        nsExec::Exec `"$SYSDIR\cmd.exe" /c taskkill /im "${APP_EXECUTABLE_FILENAME}" /fi "PID ne $pid" /fi "USERNAME eq %USERNAME%"`
-      !endif
+      !insertmacro KILL_PROCESS "$INSTDIR" "${APP_EXECUTABLE_FILENAME}"
       # to ensure that files are not "in-use"
       Sleep 300
 
@@ -84,16 +122,12 @@
       loop:
         IntOp $R1 $R1 + 1
 
-        !insertmacro FIND_PROCESS "${APP_EXECUTABLE_FILENAME}" $R0
+        !insertmacro FIND_PROCESS "$INSTDIR" "${APP_EXECUTABLE_FILENAME}" $R0
         ${if} $R0 == 0
           # wait to give a chance to exit gracefully
           Sleep 1000
-          !ifdef INSTALL_MODE_PER_ALL_USERS
-            nsExec::Exec `taskkill /f /im "${APP_EXECUTABLE_FILENAME}" /fi "PID ne $pid"`
-          !else
-            nsExec::Exec `"$SYSDIR\cmd.exe" /c taskkill /f /im "${APP_EXECUTABLE_FILENAME}" /fi "PID ne $pid" /fi "USERNAME eq %USERNAME%"`
-          !endif
-          !insertmacro FIND_PROCESS "${APP_EXECUTABLE_FILENAME}" $R0
+          !insertmacro KILL_PROCESS "$INSTDIR" "${APP_EXECUTABLE_FILENAME}"
+          !insertmacro FIND_PROCESS "$INSTDIR" "${APP_EXECUTABLE_FILENAME}" $R0
           ${If} $R0 == 0
             DetailPrint `Waiting for "${PRODUCT_NAME}" to close.`
             Sleep 2000
