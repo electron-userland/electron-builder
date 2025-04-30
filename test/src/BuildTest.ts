@@ -365,7 +365,7 @@ test.ifDevOrLinuxCi("win smart unpack", ({ expect }) => {
       isInstallDepsBefore: true,
       projectDirCreated: async projectDir => {
         p = projectDir
-        await outputFile(path.join(projectDir, "package-lock.json"), "")
+        process.env.npm_config_user_agent = "npm"
         return packageJson(it => {
           it.dependencies = {
             debug: "3.1.0",
@@ -441,8 +441,8 @@ test.ifDevOrLinuxCi("posix smart unpack", ({ expect }) =>
     },
     {
       isInstallDepsBefore: true,
-      projectDirCreated: async projectDir => {
-        await outputFile(path.join(projectDir, "package-lock.json"), "")
+      projectDirCreated: projectDir => {
+        process.env.npm_config_user_agent = "npm"
         return packageJson(it => {
           it.dependencies = {
             debug: "4.1.1",
@@ -450,7 +450,7 @@ test.ifDevOrLinuxCi("posix smart unpack", ({ expect }) =>
             keytar: "7.9.0",
             three: "0.160.0",
           }
-        })
+        })(projectDir)
       },
       packed: async context => {
         expect(context.packager.appInfo.copyright).toBe("Copyright © 2018 Foo Bar")
