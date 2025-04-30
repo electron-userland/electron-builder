@@ -86,7 +86,7 @@ export default class MsiTarget extends Target {
     await packager.info.emitMsiProjectCreated(projectFile)
 
     // noinspection SpellCheckingInspection
-    const vendorPath = await getBinFromUrl("wix@1.0.1", "wix-4.0.0.5512.2.7z", "NY2z8TuqmXMXq+eI1PRa9+PPK9SfSrKYFMxtWBhFxARzLWgyNkRknqf62JD2rh56/Isd+K1goiSBiAXh8a3DHw==")
+    const vendorPath = await getBinFromUrl("wix@1.0.1", "wix-4.0.0.5512.2.7z", "/X5poahdCc3199Vt6AP7gluTlT1nxi9cbbHhZhCMEu+ngyP1LiBMn+oZX7QAZVaKeBMc2SjVp7fJqNLqsUnPNQ==")
 
     // noinspection SpellCheckingInspection
     const candleArgs = ["-arch", wixArch === Arch.ia32 ? "x86" : "x64", `-dappDir=${vm.toVmFile(appOutDir)}`].concat(this.getCommonWixArgs())
