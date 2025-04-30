@@ -89,30 +89,50 @@ function doExecuteTasks(differentialDownloader: DifferentialDownloader, options:
 
   const requestOptions = differentialDownloader.createRequestOptions()
   requestOptions.headers!.Range = ranges.substring(0, ranges.length - 2)
+
+  let timeoutId: NodeJS.Timeout | null = null
+
+  const wrappedResolve = () => {
+    if (timeoutId !== null) {
+      clearTimeout(timeoutId)
+      timeoutId = null
+    }
+    resolve()
+  }
+
+  const wrappedReject = (error: Error) => {
+    if (timeoutId !== null) {
+      clearTimeout(timeoutId)
+      timeoutId = null
+    }
+    reject(error)
+  }
+
   const request = differentialDownloader.httpExecutor.createRequest(requestOptions, response => {
-    if (!checkIsRangesSupported(response, reject)) {
+    if (!checkIsRangesSupported(response, wrappedReject)) {
       return
     }
 
     const contentType = safeGetHeader(response, "content-type")
     const m = /^multipart\/.+?(?:; boundary=(?:(?:"(.+)")|(?:([^\s]+))))$/i.exec(contentType)
     if (m == null) {
-      reject(new Error(`Content-Type "multipart/byteranges" is expected, but got "${contentType}"`))
+      wrappedReject(new Error(`Content-Type "multipart/byteranges" is expected, but got "${contentType}"`))
       return
     }
 
-    const dicer = new DataSplitter(out, options, partIndexToTaskIndex, m[1] || m[2], partIndexToLength, resolve)
-    dicer.on("error", reject)
+    const dicer = new DataSplitter(out, options, partIndexToTaskIndex, m[1] || m[2], partIndexToLength, wrappedResolve)
+    dicer.on("error", wrappedReject)
     response.pipe(dicer)
 
     response.on("end", () => {
-      setTimeout(() => {
+      timeoutId = setTimeout(() => {
+        timeoutId = null
         request.abort()
         reject(new Error("Response ends without calling any handlers"))
-      }, 10000)
+      }, 30000)
     })
   })
-  differentialDownloader.httpExecutor.addErrorAndTimeoutHandlers(request, reject)
+  differentialDownloader.httpExecutor.addErrorAndTimeoutHandlers(request, wrappedReject)
   request.end()
 }
 
