@@ -363,8 +363,9 @@ test.ifDevOrLinuxCi("win smart unpack", ({ expect }) => {
     },
     {
       isInstallDepsBefore: true,
-      projectDirCreated: projectDir => {
+      projectDirCreated: async projectDir => {
         p = projectDir
+        await outputFile(path.join(projectDir, "package-lock.json"), "")
         return packageJson(it => {
           it.dependencies = {
             debug: "3.1.0",
@@ -440,14 +441,17 @@ test.ifDevOrLinuxCi("posix smart unpack", ({ expect }) =>
     },
     {
       isInstallDepsBefore: true,
-      projectDirCreated: packageJson(it => {
-        it.dependencies = {
-          debug: "4.1.1",
-          "edge-cs": "1.2.1",
-          keytar: "7.9.0",
-          three: "0.160.0",
-        }
-      }),
+      projectDirCreated: async projectDir => {
+        await outputFile(path.join(projectDir, "package-lock.json"), "")
+        return packageJson(it => {
+          it.dependencies = {
+            debug: "4.1.1",
+            "edge-cs": "1.2.1",
+            keytar: "7.9.0",
+            three: "0.160.0",
+          }
+        })
+      },
       packed: async context => {
         expect(context.packager.appInfo.copyright).toBe("Copyright © 2018 Foo Bar")
         await verifySmartUnpack(expect, context.getResources(Platform.LINUX), async asarFs => {
