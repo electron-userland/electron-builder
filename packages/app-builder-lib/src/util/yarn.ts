@@ -86,8 +86,7 @@ async function installDependencies(config: Configuration, { appDir, projectDir }
   const pm = detectPackageManager(projectDir)
   log.info({ pm, platform, arch, projectDir, appDir }, `installing production dependencies`)
   const execArgs = ["install"]
-  const isYarnBerry = pm === PM.YARN_BERRY
-  if (!isYarnBerry) {
+  if (pm === PM.YARN_BERRY) {
     if (process.env.NPM_NO_BIN_LINKS === "true") {
       execArgs.push("--no-bin-links")
     }

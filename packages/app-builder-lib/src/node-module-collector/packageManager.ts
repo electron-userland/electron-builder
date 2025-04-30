@@ -8,7 +8,7 @@ export enum PM {
   YARN_BERRY = "yarn-berry",
 }
 
-export function detectPackageManager(cwd: string): PM {
+function detectPackageManagerByEnv(): PM {
   if (process.env.npm_config_user_agent) {
     const userAgent = process.env.npm_config_user_agent
 
@@ -65,20 +65,31 @@ export function detectPackageManager(cwd: string): PM {
     return PM.NPM
   }
 
-  return getPackageManagerCommandByLockFile(cwd)
+  // return default
+  return PM.NPM
 }
 
-function getPackageManagerCommandByLockFile(cwd: string) {
-  const yarnLockFile = path.join(cwd, "yarn.lock")
-  const pnpmLockFile = path.join(cwd, "pnpm-lock.yaml")
+export function detectPackageManager(cwd: string) {
+  const isYarnLockFileExists = fs.existsSync(path.join(cwd, "yarn.lock"))
+  const isPnpmLockFileExists = fs.existsSync(path.join(cwd, "pnpm-lock.yaml"))
+  const isNpmLockFileExists = fs.existsSync(path.join(cwd, "package-lock.json"))
 
-  if (fs.existsSync(yarnLockFile)) {
+  if (isYarnLockFileExists && !isPnpmLockFileExists && !isNpmLockFileExists) {
+    // check if yarn is berry
+    const pm = detectPackageManagerByEnv()
+    if (pm === PM.YARN_BERRY) {
+      return PM.YARN_BERRY
+    }
     return PM.YARN
   }
 
-  if (fs.existsSync(pnpmLockFile)) {
+  if (isPnpmLockFileExists && !isYarnLockFileExists && !isNpmLockFileExists) {
     return PM.PNPM
   }
 
-  return PM.NPM
+  if (isNpmLockFileExists && !isYarnLockFileExists && !isPnpmLockFileExists) {
+    return PM.NPM
+  }
+  // if there are no lock files or multiple lock files, return the package manager from env
+  return detectPackageManagerByEnv()
 }
