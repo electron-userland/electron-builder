@@ -32,6 +32,6 @@ test("download binary from Mirror with Url override", async ({ expect }) => {
   expect(bin).toBeTruthy()
 })
 async function getBin() {
-  return await getBinFromUrl("linux-tools", "mac-10.12.4", "CMiM/6mWOUghHkvgB2PmJdyGoblMdlGD+VBqbxiIea51ExDDe7GrZ82/wBy3KI0d5Wrrkc1Hkd1/lWMcbWUfuA==")
+  return await getBinFromUrl("linux-tools@1.0.1", "linux-tools-mac-10.12.4.7z", "CMiM/6mWOUghHkvgB2PmJdyGoblMdlGD+VBqbxiIea51ExDDe7GrZ82/wBy3KI0d5Wrrkc1Hkd1/lWMcbWUfuA==")
 }
 

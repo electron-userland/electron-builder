@@ -19,7 +19,7 @@ import { SignManager } from "./signManager"
 import { WindowsSignOptions } from "./windowsCodeSign"
 
 export function getSignVendorPath() {
-  return getBinFromUrl("winCodeSign", "2.6.0", "BuCJjLI//J55uJmriCeEu7jJqwKHseRtFlPw0EH6WKcWTVmUhsNpP1L4aqi73Fv5uLTeJtQopH1KSl5IsVNvvA==")
+  return getBinFromUrl("win-codesign@1.0.1", "win-codesign-2.6.0.7z", "BuCJjLI//J55uJmriCeEu7jJqwKHseRtFlPw0EH6WKcWTVmUhsNpP1L4aqi73Fv5uLTeJtQopH1KSl5IsVNvvA==")
 }
 
 export type CustomWindowsSign = (configuration: CustomWindowsSignTaskConfiguration, packager?: WinPackager) => Promise<any>
