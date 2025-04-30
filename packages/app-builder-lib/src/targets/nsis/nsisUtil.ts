@@ -34,7 +34,7 @@ export const NSIS_PATH = () => {
     }
     // Warning: Don't use v3.0.4.2 - https://github.com/electron-userland/electron-builder/issues/6334
     // noinspection SpellCheckingInspection
-    return getBinFromUrl("nsis@1.0.1", "nsis-3.0.5.0.7z", "cTeQgtymnETCMGZa89l5A790zw4otqFThfQbm52AbhUtPUD2yp2lmmu/T9Hd6fG/rDej0o6X6OTupxZB3n8HbA==")
+    return getBinFromUrl("nsis@2.0.0", "nsis-3.0.4.1.7z", "VKMiizYdmNdJOWpRGz4trl4lD++BvYP2irAXpMilheUP0pc93iKlWAoP843Vlraj8YG19CVn0j+dCo/hURz9+Q==")
   })
 }
 
