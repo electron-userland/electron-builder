@@ -100,28 +100,20 @@ function doExecuteTasks(differentialDownloader: DifferentialDownloader, options:
     resolve()
   }
 
-  const wrappedReject = (error: Error) => {
-    if (timeoutId !== null) {
-      clearTimeout(timeoutId)
-      timeoutId = null
-    }
-    reject(error)
-  }
-
   const request = differentialDownloader.httpExecutor.createRequest(requestOptions, response => {
-    if (!checkIsRangesSupported(response, wrappedReject)) {
+    if (!checkIsRangesSupported(response, reject)) {
       return
     }
 
     const contentType = safeGetHeader(response, "content-type")
     const m = /^multipart\/.+?(?:; boundary=(?:(?:"(.+)")|(?:([^\s]+))))$/i.exec(contentType)
     if (m == null) {
-      wrappedReject(new Error(`Content-Type "multipart/byteranges" is expected, but got "${contentType}"`))
+      reject(new Error(`Content-Type "multipart/byteranges" is expected, but got "${contentType}"`))
       return
     }
 
     const dicer = new DataSplitter(out, options, partIndexToTaskIndex, m[1] || m[2], partIndexToLength, wrappedResolve)
-    dicer.on("error", wrappedReject)
+    dicer.on("error", reject)
     response.pipe(dicer)
 
     response.on("end", () => {
@@ -132,7 +124,7 @@ function doExecuteTasks(differentialDownloader: DifferentialDownloader, options:
       }, 30000)
     })
   })
-  differentialDownloader.httpExecutor.addErrorAndTimeoutHandlers(request, wrappedReject)
+  differentialDownloader.httpExecutor.addErrorAndTimeoutHandlers(request, reject)
   request.end()
 }
 
