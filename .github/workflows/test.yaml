@@ -195,8 +195,8 @@ jobs:
       fail-fast: false
       matrix:
         testFiles:
-          - oneClickInstallerTest,assistedInstallerTest
-          - winPackagerTest,winCodeSignTest,webInstallerTest
+          - oneClickInstallerTest,assistedInstallerTest,webInstallerTest
+          - winPackagerTest,winCodeSignTest,BuildTest
           - masTest,dmgTest,filesTest,macPackagerTest,differentialUpdateTest,macArchiveTest
           - concurrentBuildsTest
     steps:
@@ -214,9 +214,11 @@ jobs:
           brew install powershell/tap/powershell
           brew install --cask wine-stable
           brew install rpm
+          gem install fpm
 
       - name: Test
         run: pnpm ci:test
         env:
           TEST_FILES: ${{ matrix.testFiles }}
           FORCE_COLOR: 1
+          USE_SYSTEM_FPM: true
