@@ -1,0 +1,20 @@
+{
+  "mode": "pre",
+  "tag": "alpha",
+  "initialVersions": {
+    "app-builder-lib": "26.0.14",
+    "builder-util": "26.0.13",
+    "builder-util-runtime": "9.3.2",
+    "dmg-builder": "26.0.14",
+    "electron-builder": "26.0.14",
+    "electron-builder-squirrel-windows": "26.0.14",
+    "electron-forge-maker-appimage": "26.0.14",
+    "electron-forge-maker-nsis": "26.0.14",
+    "electron-forge-maker-nsis-web": "26.0.14",
+    "electron-forge-maker-snap": "26.0.14",
+    "electron-publish": "26.0.13",
+    "electron-updater": "6.6.3",
+    "@electron-builder/test": "0.0.0"
+  },
+  "changesets": []
+}
