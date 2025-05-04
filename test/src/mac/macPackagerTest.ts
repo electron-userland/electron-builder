@@ -82,7 +82,7 @@ test.ifMac("one-package", ({ expect }) =>
               },
             ],
           },
-          minimumSystemVersion: "10.12.0",
+          LSMinimumSystemVersion: "10.12.0",
           fileAssociations: [
             {
               ext: "foo",
