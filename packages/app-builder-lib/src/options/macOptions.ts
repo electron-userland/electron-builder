@@ -132,7 +132,7 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
   /**
    * The minimum version of macOS required for the app to run. Corresponds to `LSMinimumSystemVersion`.
    */
-  readonly minimumSystemVersion?: string | null
+  readonly LSMinimumSystemVersion?: string | null
 
   /**
    * Path of [requirements file](https://developer.apple.com/library/mac/documentation/Security/Conceptual/CodeSigningGuide/RequirementLang/RequirementLang.html) used in signing. Not applicable for MAS.

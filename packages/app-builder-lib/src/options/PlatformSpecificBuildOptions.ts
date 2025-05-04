@@ -203,7 +203,7 @@ export interface PlatformSpecificBuildOptions extends TargetSpecificOptions, Fil
   /**
    * The minimum os kernel version required to install the application.
    */
-  readonly minimumOSVersion?: string | null
+  readonly minimumSystemVersion?: string | null
 }
 
 export interface ReleaseInfo {

@@ -170,7 +170,7 @@ async function createUpdateInfo(version: string, event: ArtifactCreated, release
   const customUpdateInfo = event.updateInfo
   const url = path.basename(event.file)
   const sha512 = (customUpdateInfo == null ? null : customUpdateInfo.sha512) || (await hashFile(event.file))
-  const minimumSystemVersion = customUpdateInfo == null ? null : customUpdateInfo.mininumOSVersion
+  const minimumSystemVersion = customUpdateInfo == null ? null : customUpdateInfo.minimumSystemVersion
   const files = [{ url, sha512 }]
   const result: UpdateInfo = {
     // @ts-ignore

@@ -499,7 +499,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
     appPlist.CFBundleName = appInfo.productName
     appPlist.CFBundleDisplayName = appInfo.productName
 
-    const minimumSystemVersion = this.platformSpecificBuildOptions.minimumSystemVersion
+    const minimumSystemVersion = this.platformSpecificBuildOptions.LSMinimumSystemVersion
     if (minimumSystemVersion != null) {
       appPlist.LSMinimumSystemVersion = minimumSystemVersion
     }
