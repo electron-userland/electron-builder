@@ -1,8 +1,7 @@
 import { UpdateInfo } from "builder-util-runtime"
 import { createHash } from "crypto"
 import { createReadStream } from "fs"
-// @ts-ignore
-import * as isEqual from "lodash.isequal"
+import isEqual from "lodash.isequal"
 import { ResolvedUpdateFileInfo } from "./types"
 import { Logger } from "./types"
 import { pathExists, readJson, emptyDir, outputJson, unlink } from "fs-extra"
