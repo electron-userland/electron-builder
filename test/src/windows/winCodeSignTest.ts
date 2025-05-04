@@ -64,7 +64,7 @@ test("certificateFile/password - sign as async/await", ({ expect }) =>
     return Promise.resolve()
   }))
 test("certificateFile/password - sign as Promise", ({ expect }) => testCustomSign(expect, () => Promise.resolve()))
-test("certificateFile/password - sign as function", async ({ expect }) => testCustomSign(expect, (await import("../helpers/customWindowsSign")).default))
+test("certificateFile/password - sign as function", async ({ expect }) => testCustomSign(expect, (await import("../helpers/customWindowsSign.js")).default))
 test("certificateFile/password - sign as path", ({ expect }) => testCustomSign(expect, path.join(__dirname, "../helpers/customWindowsSign.mjs")))
 
 test("custom sign if no code sign info", ({ expect }) => {

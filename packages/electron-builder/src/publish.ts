@@ -5,9 +5,9 @@ import { Publish } from "app-builder-lib/out/core"
 import { computeSafeArtifactNameIfNeeded } from "app-builder-lib/out/platformPackager"
 import { getConfig } from "app-builder-lib/out/util/config/config"
 import { InvalidConfigurationError, archFromString, log, printErrorAndExit } from "builder-util"
-import * as chalk from "chalk"
+import chalk from "chalk"
 import * as path from "path"
-import * as yargs from "yargs"
+import yargs from "yargs"
 import { BuildOptions, normalizeOptions } from "./builder"
 
 /** @internal */

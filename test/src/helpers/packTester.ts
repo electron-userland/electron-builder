@@ -21,7 +21,6 @@ import { promisify } from "util"
 import { CSC_LINK, WIN_CSC_LINK } from "./codeSignData"
 import { assertThat } from "./fileAssert"
 import AdmZip from "adm-zip"
-// @ts-ignore
 import sanitizeFileName from "sanitize-filename"
 import type { ExpectStatic } from "vitest"
 

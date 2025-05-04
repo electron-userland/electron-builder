@@ -10,7 +10,7 @@ import { getArchCliNames, log, printErrorAndExit, use } from "builder-util"
 import { readJson } from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
-import * as yargs from "yargs"
+import yargs from "yargs"
 
 /** @internal */
 export function configureInstallAppDepsCommand(yargs: yargs.Argv): yargs.Argv {

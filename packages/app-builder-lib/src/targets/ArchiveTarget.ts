@@ -7,7 +7,7 @@ import { archive, tar } from "./archive"
 import { appendBlockmap, createBlockmap } from "./differentialUpdateInfoBuilder"
 
 export class ArchiveTarget extends Target {
-  readonly options: TargetSpecificOptions = (this.packager.config as any)[this.name]
+  readonly options: TargetSpecificOptions
 
   constructor(
     name: string,
@@ -16,6 +16,7 @@ export class ArchiveTarget extends Target {
     private readonly isWriteUpdateInfo = false
   ) {
     super(name)
+    this.options  = (this.packager.config as any)[this.name]
   }
 
   async build(appOutDir: string, arch: Arch): Promise<any> {

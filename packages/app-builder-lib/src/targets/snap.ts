@@ -15,7 +15,7 @@ import { createStageDirPath } from "./targetUtil"
 const defaultPlugs = ["desktop", "desktop-legacy", "home", "x11", "wayland", "unity7", "browser-support", "network", "gsettings", "audio-playback", "pulseaudio", "opengl"]
 
 export default class SnapTarget extends Target {
-  readonly options: SnapOptions = { ...this.packager.platformSpecificBuildOptions, ...(this.packager.config as any)[this.name] }
+  readonly options: SnapOptions
 
   public isUseTemplateApp = false
 
@@ -26,6 +26,7 @@ export default class SnapTarget extends Target {
     readonly outDir: string
   ) {
     super(name)
+    this.options = { ...this.packager.platformSpecificBuildOptions, ...(this.packager.config as any)[this.name] }
   }
 
   private replaceDefault(inList: Array<string> | Nullish, defaultList: Array<string>) {
