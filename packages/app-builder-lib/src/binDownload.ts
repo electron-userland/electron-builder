@@ -16,7 +16,7 @@ export function getBinFromCustomLoc(name: string, version: string, binariesLocUr
   return getBin(dirName, binariesLocUrl, checksum)
 }
 
-export function getBinFromUrl(releaseName: string, filenameWithExt: string, checksum: string): Promise<string> {
+export function getBinFromUrl(releaseName: string, filenameWithExt: string, checksum: string, githubOrgRepo = "mmaietta/electron-builder-binaries"): Promise<string> {
   let url: string
   if (process.env.ELECTRON_BUILDER_BINARIES_DOWNLOAD_OVERRIDE_URL) {
     url = process.env.ELECTRON_BUILDER_BINARIES_DOWNLOAD_OVERRIDE_URL + "/" + filenameWithExt
@@ -26,7 +26,7 @@ export function getBinFromUrl(releaseName: string, filenameWithExt: string, chec
       process.env.npm_config_electron_builder_binaries_mirror ||
       process.env.npm_package_config_electron_builder_binaries_mirror ||
       process.env.ELECTRON_BUILDER_BINARIES_MIRROR ||
-      "https://github.com/mmaietta/electron-builder-binaries/releases/download/"
+      `https://github.com/${githubOrgRepo}/releases/download/`
     const middleUrl =
       process.env.NPM_CONFIG_ELECTRON_BUILDER_BINARIES_CUSTOM_DIR ||
       process.env.npm_config_electron_builder_binaries_custom_dir ||

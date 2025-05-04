@@ -7,24 +7,27 @@ export function getLinuxToolsPath() {
 }
 
 export async function getFpmPath() {
+  if (process.env.CUSTOM_FPM_PATH != null) {
+    return path.resolve(process.env.CUSTOM_FPM_PATH)
+  }
   const exec = "fpm"
   if (process.platform === "win32" || process.env.USE_SYSTEM_FPM === "true") {
     return exec
   }
   if (process.platform === "linux") {
-    let checksum: string
-    let archSuffix: string
     if (process.arch == "x64") {
-      checksum = "fcKdXPJSso3xFs5JyIJHG1TfHIRTGDP0xhSBGZl7pPZlz4/TJ4rD/q3wtO/uaBBYeX0qFFQAFjgu1uJ6HLHghA=="
-      archSuffix = "-x86_64.7z"
-    } else {
-      checksum = "OnzvBdsHE5djcXcAT87rwbnZwS789ZAd2ehuIO42JWtBAHNzXKxV4o/24XFX5No4DJWGO2YSGQttW+zn7d/4rQ=="
-      archSuffix = "-x86.7z"
+      return path.join(
+        await getBinFromUrl("fpm@2.0.2", "fpm-1.16.0-ruby3.3.0-linux-x64.7z", "RO2SvVHJVpG68dMzsc7s5UkqMGp2UqOHBsDSTKFFOUMN16VXoL1mya4ZvngCXiWQbkeMxQIo3HE1cL3XXe8gXQ=="),
+        exec
+      )
     }
-    return path.join(await getBinFromUrl("fpm@1.0.1", "fpm-1.9.3-2.3.1-linux" + archSuffix, checksum), exec)
+    return path.join(
+      await getBinFromUrl("fpm@2.0.2", "fpm-1.16.0-ruby3.3.0-linux-ia32.7z", "/y2XGooSBvm6DgXuMA/0ucslhJ7mPKk9WBReVKOgmabzJVffuhApZhiCuy4+3d0BQUX1KmIwxAAYmUXVyZ2UJA=="),
+      exec
+    )
   }
   return path.join(
-    await getBinFromUrl("fpm@1.0.1", "fpm-1.9.3-20150715-2.2.2-mac.7z", "oXfq+0H2SbdrbMik07mYloAZ8uHrmf6IJk+Q3P1kwywuZnKTXSaaeZUJNlWoVpRDWNu537YxxpBQWuTcF+6xfw=="),
+    await getBinFromUrl("fpm@2.0.2", "fpm-1.16.0-ruby3.3.0-darwin.7z", "+e3KL+cojXmMFja8tipK1yNIaAtOk1DGqNVkoX8fBFI5nv2mHFZInrEfrCRfeDBWCJyOBsSFjTaW/ZHtPAIYTQ=="),
     exec
   )
 }
