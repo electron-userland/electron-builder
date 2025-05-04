@@ -10,10 +10,7 @@ import { LinuxTargetHelper } from "./LinuxTargetHelper"
 import { createStageDir, StageDir } from "./targetUtil"
 
 export default class FlatpakTarget extends Target {
-  readonly options: FlatpakOptions = {
-    ...this.packager.platformSpecificBuildOptions,
-    ...(this.packager.config as any)[this.name],
-  }
+  readonly options: FlatpakOptions
 
   constructor(
     name: string,
@@ -22,6 +19,10 @@ export default class FlatpakTarget extends Target {
     readonly outDir: string
   ) {
     super(name)
+    this.options  = {
+      ...this.packager.platformSpecificBuildOptions,
+      ...(this.packager.config as any)[this.name],
+    }
   }
 
   get appId(): string {

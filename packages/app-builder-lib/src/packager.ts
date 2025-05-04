@@ -548,17 +548,17 @@ export class Packager {
 
     switch (platform) {
       case Platform.MAC: {
-        const helperClass = (await import("./macPackager")).MacPackager
+        const helperClass = (await import("./macPackager.js")).MacPackager
         return new helperClass(this)
       }
 
       case Platform.WINDOWS: {
-        const helperClass = (await import("./winPackager")).WinPackager
+        const helperClass = (await import("./winPackager.js")).WinPackager
         return new helperClass(this)
       }
 
       case Platform.LINUX:
-        return new (await import("./linuxPackager")).LinuxPackager(this)
+        return new (await import("./linuxPackager.js")).LinuxPackager(this)
 
       default:
         throw new Error(`Unknown platform: ${platform}`)

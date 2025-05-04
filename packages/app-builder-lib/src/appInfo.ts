@@ -21,7 +21,7 @@ export function smarten(s: string): string {
 }
 
 export class AppInfo {
-  readonly description = smarten(this.info.metadata.description || "")
+  readonly description: string
   readonly version: string
   readonly type: string | undefined
   readonly shortVersion: string | undefined
@@ -75,6 +75,8 @@ export class AppInfo {
 
     const executableName = platformSpecificOptions?.executableName ?? info.config.executableName
     this.productFilename = executableName != null ? sanitizeFileName(executableName, normalizeNfd) : this.sanitizedProductName
+
+    this.description = smarten(this.info.metadata.description || "")
   }
 
   get channel(): string | null {
