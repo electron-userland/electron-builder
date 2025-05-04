@@ -13,6 +13,7 @@ const knownUnusedDevDependencies = new Set([
   "eslint-config-prettier",
   "eslint-plugin-prettier",
   "@rollup/plugin-typescript",
+  "@tsconfig/node22",
 ])
 const knownMissedDependencies = new Set(["babel-core", "babel-preset-env", "babel-preset-stage-0", "babel-preset-react"])
 
