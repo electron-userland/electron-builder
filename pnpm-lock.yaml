@@ -114,8 +114,8 @@ importers:
         specifier: 3.7.2
         version: 3.7.2
       '@electron/universal':
-        specifier: 2.0.1
-        version: 2.0.1
+        specifier: 2.0.3
+        version: 2.0.3
       '@malept/flatpak-bundler':
         specifier: ^0.4.0
         version: 0.4.0
@@ -1667,8 +1667,8 @@ packages:
     engines: {node: '>=12.13.0'}
     hasBin: true
 
-  '@electron/universal@2.0.1':
-    resolution: {integrity: sha512-fKpv9kg4SPmt+hY7SVBnIYULE9QJl8L3sCfcBsnqbJwwBwAeTLokJ9TRt9y7bK0JAzIW2y78TVVjvnQEms/yyA==}
+  '@electron/universal@2.0.3':
+    resolution: {integrity: sha512-Wn9sPYIVFRFl5HmwMJkARCCf7rqK/EurkfQ/rJZ14mHP3iYTjZSIOSVonEAnhWeAXwtw7zOekGRlc6yTtZ0t+g==}
     engines: {node: '>=16.4'}
 
   '@electron/windows-sign@1.2.1':
@@ -7896,7 +7896,7 @@ snapshots:
       - bluebird
       - supports-color
 
-  '@electron/universal@2.0.1':
+  '@electron/universal@2.0.3':
     dependencies:
       '@electron/asar': 3.4.1
       '@malept/cross-spawn-promise': 2.0.0
