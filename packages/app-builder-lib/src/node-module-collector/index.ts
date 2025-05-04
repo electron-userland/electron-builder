@@ -1,7 +1,7 @@
 import { NpmNodeModulesCollector } from "./npmNodeModulesCollector"
 import { PnpmNodeModulesCollector } from "./pnpmNodeModulesCollector"
 import { YarnNodeModulesCollector } from "./yarnNodeModulesCollector"
-import { detect, PM, getPackageManagerVersion } from "./packageManager"
+import { detectPackageManager, PM, getPackageManagerCommand } from "./packageManager"
 import { NodeModuleInfo } from "./types"
 import { exec } from "builder-util"
 
@@ -13,16 +13,16 @@ async function isPnpmProjectHoisted(rootDir: string) {
 }
 
 export async function getCollectorByPackageManager(rootDir: string) {
-  const manager: PM = await detect({ cwd: rootDir })
+  const manager: PM = detectPackageManager(rootDir)
   switch (manager) {
-    case "pnpm":
+    case PM.PNPM:
       if (await isPnpmProjectHoisted(rootDir)) {
         return new NpmNodeModulesCollector(rootDir)
       }
       return new PnpmNodeModulesCollector(rootDir)
-    case "npm":
+    case PM.NPM:
       return new NpmNodeModulesCollector(rootDir)
-    case "yarn":
+    case PM.YARN:
       return new YarnNodeModulesCollector(rootDir)
     default:
       return new NpmNodeModulesCollector(rootDir)
@@ -34,4 +34,4 @@ export async function getNodeModules(rootDir: string): Promise<NodeModuleInfo[]>
   return collector.getNodeModules()
 }
 
-export { detect, getPackageManagerVersion, PM }
+export { detectPackageManager, PM, getPackageManagerCommand }
