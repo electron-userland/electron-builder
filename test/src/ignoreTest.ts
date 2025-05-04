@@ -90,7 +90,8 @@ test.ifNotCiMac.sequential("ignore node_modules dev dep", ({ expect }) =>
     },
     {
       isInstallDepsBefore: true,
-      projectDirCreated: projectDir => {
+      projectDirCreated: async projectDir => {
+        await outputFile(path.join(projectDir, "package-lock.json"), "")
         return Promise.all([
           modifyPackageJson(projectDir, data => {
             data.devDependencies = {
@@ -119,7 +120,8 @@ test.ifDevOrLinuxCi.sequential("copied sub node_modules of the rootDir/node_modu
     },
     {
       isInstallDepsBefore: true,
-      projectDirCreated: projectDir => {
+      projectDirCreated: async projectDir => {
+        await outputFile(path.join(projectDir, "package-lock.json"), "")
         return Promise.all([
           modifyPackageJson(projectDir, data => {
             data.dependencies = {
