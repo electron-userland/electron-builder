@@ -186,7 +186,7 @@ async function createUpdateInfo(version: string, event: ArtifactCreated, release
   }
 
   if (customUpdateInfo != null) {
-    if(customUpdateInfo.minimumSystemVersion){
+    if (customUpdateInfo.minimumSystemVersion) {
       delete customUpdateInfo.minimumSystemVersion
     }
     // file info or nsis web installer packages info
