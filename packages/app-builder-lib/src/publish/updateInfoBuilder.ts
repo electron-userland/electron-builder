@@ -186,6 +186,9 @@ async function createUpdateInfo(version: string, event: ArtifactCreated, release
   }
 
   if (customUpdateInfo != null) {
+    if(customUpdateInfo.minimumSystemVersion){
+      delete customUpdateInfo.minimumSystemVersion
+    }
     // file info or nsis web installer packages info
     Object.assign("sha512" in customUpdateInfo ? files[0] : result, customUpdateInfo)
   }

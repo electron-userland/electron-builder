@@ -115,7 +115,6 @@ exports[`one-package 1`] = `
       "fileContent": {
         "files": [
           {
-            "minimumSystemVersion": "22.0.4",
             "sha512": "@sha512",
             "size": "@size",
             "url": "Test App ßW-1.1.0-mac.zip",
@@ -138,7 +137,6 @@ exports[`one-package 1`] = `
       "file": "Test App ßW-1.1.0-mac.zip",
       "safeArtifactName": "TestApp-1.1.0-mac.zip",
       "updateInfo": {
-        "minimumSystemVersion": "22.0.4",
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -147,7 +145,6 @@ exports[`one-package 1`] = `
       "file": "Test App ßW-1.1.0-mac.zip.blockmap",
       "safeArtifactName": "Test App ßW-1.1.0-mac.zip.blockmap",
       "updateInfo": {
-        "minimumSystemVersion": "22.0.4",
         "sha512": "@sha512",
         "size": "@size",
       },
