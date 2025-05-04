@@ -32,7 +32,8 @@ export {
   TargetConfiguration,
   TargetSpecificOptions,
 } from "./core"
-export { ElectronBrandingOptions, ElectronDownloadOptions, ElectronPlatformName } from "./electron/ElectronFramework"
+export { ElectronBrandingOptions, ElectronPlatformName } from "./electron/ElectronFramework"
+export { ElectronDownloadOptions } from "./util/electronGet"
 export { AppXOptions } from "./options/AppXOptions"
 export { CommonWindowsInstallerConfiguration } from "./options/CommonWindowsInstallerConfiguration"
 export { FileAssociation } from "./options/FileAssociation"

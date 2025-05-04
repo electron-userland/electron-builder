@@ -5,7 +5,7 @@ import { AfterPackContext, ElectronPlatformName, Platform, PlatformPackager } fr
 export interface Framework {
   readonly name: string
   readonly version: string
-  readonly distMacOsAppName: string
+  readonly productName: string
   readonly macOsDefaultTargets: Array<string>
   readonly defaultAppIdPrefix: string
 
@@ -46,7 +46,6 @@ export interface PrepareApplicationStageDirectoryOptions {
   readonly appOutDir: string
   readonly platformName: ElectronPlatformName
   readonly arch: string
-  readonly version: string
 }
 
 export function isElectronBased(framework: Framework): boolean {
