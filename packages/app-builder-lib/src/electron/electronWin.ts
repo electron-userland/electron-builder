@@ -30,7 +30,7 @@ export async function addWinAsarIntegrity(executablePath: string, asarIntegrity:
   resource.entries.push({
     type: "INTEGRITY",
     id: "ELECTRONASAR",
-    bin: Buffer.from(JSON.stringify(integrityList)),
+    bin: Buffer.from(JSON.stringify(integrityList)).buffer,
     lang: languages[0].lang,
     codepage: languages[0].codepage,
   })
