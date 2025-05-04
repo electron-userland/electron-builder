@@ -1,7 +1,7 @@
 import { NpmNodeModulesCollector } from "./npmNodeModulesCollector"
 import { PnpmNodeModulesCollector } from "./pnpmNodeModulesCollector"
 import { YarnNodeModulesCollector } from "./yarnNodeModulesCollector"
-import { detectPackageManager, PM } from "./packageManager"
+import { detectPackageManager, PM, getPackageManagerCommand } from "./packageManager"
 import { NodeModuleInfo } from "./types"
 import { exec } from "builder-util"
 
@@ -34,4 +34,4 @@ export async function getNodeModules(rootDir: string): Promise<NodeModuleInfo[]>
   return collector.getNodeModules()
 }
 
-export { detectPackageManager, PM }
+export { detectPackageManager, PM, getPackageManagerCommand }

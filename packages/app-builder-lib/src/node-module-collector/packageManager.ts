@@ -69,6 +69,14 @@ function detectPackageManagerByEnv(): PM {
   return PM.NPM
 }
 
+export function getPackageManagerCommand(pm: PM) {
+  let cmd = pm
+  if (pm === PM.YARN_BERRY || process.env.FORCE_YARN === "true") {
+    cmd = PM.YARN
+  }
+  return `${cmd}${process.platform === "win32" ? ".cmd" : ""}`
+}
+
 export function detectPackageManager(cwd: string) {
   const isYarnLockFileExists = fs.existsSync(path.join(cwd, "yarn.lock"))
   const isPnpmLockFileExists = fs.existsSync(path.join(cwd, "pnpm-lock.yaml"))

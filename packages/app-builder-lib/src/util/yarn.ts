@@ -7,7 +7,7 @@ import { homedir } from "os"
 import * as path from "path"
 import { Configuration } from "../configuration"
 import { executeAppBuilderAndWriteJson } from "./appBuilder"
-import { PM, detectPackageManager } from "../node-module-collector"
+import { PM, detectPackageManager, getPackageManagerCommand } from "../node-module-collector"
 import { NodeModuleDirInfo } from "./packageDependencies"
 import { rebuild as remoteRebuild } from "./rebuild/rebuild"
 
@@ -96,7 +96,7 @@ async function installDependencies(config: Configuration, { appDir, projectDir }
     execArgs.push("--prefer-offline")
   }
 
-  const execPath = getPackageToolPath(pm)
+  const execPath = getPackageManagerCommand(pm)
 
   if (additionalArgs != null) {
     execArgs.push(...additionalArgs)
@@ -129,15 +129,6 @@ export async function nodeGypRebuild(platform: NodeJS.Platform, arch: string, fr
   }
   await spawn(nodeGyp, args, { env: getGypEnv(frameworkInfo, platform, arch, true) })
 }
-
-function getPackageToolPath(pm: PM) {
-  let cmd = pm
-  if (process.env.FORCE_YARN === "true") {
-    cmd = PM.YARN
-  }
-  return `${cmd}${process.platform === "win32" ? ".cmd" : ""}`
-}
-
 export interface RebuildOptions {
   frameworkInfo: DesktopFrameworkInfo
   productionDeps: Lazy<Array<NodeModuleDirInfo>>
