@@ -437,6 +437,20 @@ exports[`two-package 3`] = `
 `;
 
 exports[`two-package 4`] = `
+[
+  "Info.plist",
+  "MainMenu.nib",
+  "bn.lproj",
+  "chrome_100_percent.pak",
+  "chrome_200_percent.pak",
+  "en.lproj",
+  "icudtl.dat",
+  "resources.pak",
+  "v8_context_snapshot.x86_64.bin",
+]
+`;
+
+exports[`two-package 5`] = `
 {
   "CFBundleDisplayName": "TestApp",
   "CFBundleExecutable": "TestApp",
@@ -483,7 +497,7 @@ exports[`two-package 4`] = `
 }
 `;
 
-exports[`two-package 5`] = `
+exports[`two-package 6`] = `
 [
   "app-update.yml",
   "app.asar",
@@ -493,7 +507,21 @@ exports[`two-package 5`] = `
 ]
 `;
 
-exports[`two-package 6`] = `
+exports[`two-package 7`] = `
+[
+  "Info.plist",
+  "MainMenu.nib",
+  "bn.lproj",
+  "chrome_100_percent.pak",
+  "chrome_200_percent.pak",
+  "en.lproj",
+  "icudtl.dat",
+  "resources.pak",
+  "v8_context_snapshot.arm64.bin",
+]
+`;
+
+exports[`two-package 8`] = `
 {
   "CFBundleDisplayName": "TestApp",
   "CFBundleExecutable": "TestApp",
@@ -540,13 +568,28 @@ exports[`two-package 6`] = `
 }
 `;
 
-exports[`two-package 7`] = `
+exports[`two-package 9`] = `
 [
   "app-update.yml",
   "app.asar",
   "bn.lproj",
   "en.lproj",
   "icon.icns",
+]
+`;
+
+exports[`two-package 10`] = `
+[
+  "Info.plist",
+  "MainMenu.nib",
+  "bn.lproj",
+  "chrome_100_percent.pak",
+  "chrome_200_percent.pak",
+  "en.lproj",
+  "icudtl.dat",
+  "resources.pak",
+  "v8_context_snapshot.arm64.bin",
+  "v8_context_snapshot.x86_64.bin",
 ]
 `;
 
