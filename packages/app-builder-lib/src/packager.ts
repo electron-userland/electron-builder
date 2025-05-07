@@ -248,6 +248,9 @@ export class Packager {
     if (options.linux != null) {
       processTargets(Platform.LINUX, options.linux)
     }
+    if (options.freebsd != null) {
+      processTargets(Platform.FREEBSD, options.freebsd)
+    }
     if (options.win != null) {
       processTargets(Platform.WINDOWS, options.win)
     }
