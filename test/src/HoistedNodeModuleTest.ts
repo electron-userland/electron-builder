@@ -178,7 +178,7 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
       },
       {
         isInstallDepsBefore: true,
-        projectDirCreated: projectDir => {
+        projectDirCreated: async projectDir => {
           const subAppDir = path.join(projectDir, "packages", "test-app")
           return modifyPackageJson(subAppDir, data => {
             data.name = "@scope/xxx-app"

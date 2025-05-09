@@ -145,6 +145,7 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
       {
         isInstallDepsBefore: true,
         projectDirCreated: async projectDir => {
+          await outputFile(path.join(projectDir, "package-lock.json"), "")
           await modifyPackageJson(projectDir, data => {
             data.dependencies = {
               debug: "4.1.1",
@@ -207,7 +208,7 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
       },
       {
         isInstallDepsBefore: true,
-        projectDirCreated: projectDir => {
+        projectDirCreated: async projectDir => {
           return Promise.all([
             modifyPackageJson(projectDir, data => {
               //noinspection SpellCheckingInspection
@@ -241,15 +242,17 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
       },
       {
         isInstallDepsBefore: true,
-        projectDirCreated: projectDir =>
-          modifyPackageJson(projectDir, data => {
+        projectDirCreated: async projectDir => {
+          await outputFile(path.join(projectDir, "package-lock.json"), "")
+          return modifyPackageJson(projectDir, data => {
             //noinspection SpellCheckingInspection
             data.dependencies = {
               "ci-info": "2.0.0",
               // this contains string-width-cjs 4.2.3
               "@isaacs/cliui": "8.0.2",
             }
-          }),
+          })
+        },
         packed: context => {
           return assertThat(expect, path.join(context.getResources(Platform.LINUX), "app", "node_modules")).doesNotExist()
         },
@@ -269,12 +272,14 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
       },
       {
         isInstallDepsBefore: true,
-        projectDirCreated: projectDir =>
-          modifyPackageJson(projectDir, data => {
+        projectDirCreated: async projectDir => {
+          await outputFile(path.join(projectDir, "package-lock.json"), "")
+          return modifyPackageJson(projectDir, data => {
             data.dependencies = {
               "ci-info": "2.0.0",
             }
-          }),
+          })
+        },
         packed: async context => {
           const nodeModulesNode = (await readAsar(path.join(context.getResources(Platform.LINUX), "app.asar"))).getNode("node_modules")
           expect(removeUnstableProperties(nodeModulesNode)).toMatchSnapshot()
