@@ -396,6 +396,7 @@ test.ifDevOrWinCi("exclude some modules from rebuild", ({ expect }) => {
     {
       isInstallDepsBefore: true,
       projectDirCreated: async (projectDir, tmpDir) => {
+        process.env.npm_config_user_agent = "npm"
         await modifyPackageJson(projectDir, data => {
           data.dependencies = {
             debug: "3.1.0",
