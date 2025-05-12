@@ -383,6 +383,33 @@ test.ifDevOrLinuxCi("win smart unpack", ({ expect }) => {
   )
 })
 
+test.ifDevOrWinCi("exclude some modules from rebuild", ({ expect }) => {
+  return app(
+    expect,
+    {
+      targets: Platform.WINDOWS.createTarget(DIR_TARGET, Arch.x64),
+      config: {
+        npmRebuild: true,
+        excludeReBuildModules: ["selection-hook"],
+      }
+    },
+    {
+      isInstallDepsBefore: true,
+      projectDirCreated: async (projectDir, tmpDir) => {
+        await modifyPackageJson(projectDir, data => {
+          data.dependencies = {
+            debug: "3.1.0",
+            "selection-hook": "0.9.9",
+          }
+        })
+      },
+      packed: async context => {
+        await verifySmartUnpack(expect, context.getResources(Platform.WINDOWS))
+      },
+    }
+  )
+})
+
 test.ifDevOrWinCi("smart unpack local module with dll file", ({ expect }) => {
   return app(
     expect,

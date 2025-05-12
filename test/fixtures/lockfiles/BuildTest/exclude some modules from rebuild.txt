@@ -1,0 +1,59 @@
+{
+  "name": "TestApp",
+  "version": "1.1.0",
+  "lockfileVersion": 3,
+  "requires": true,
+  "packages": {
+    "": {
+      "name": "TestApp",
+      "version": "1.1.0",
+      "license": "MIT",
+      "dependencies": {
+        "debug": "3.1.0",
+        "selection-hook": "0.9.9"
+      }
+    },
+    "node_modules/debug": {
+      "version": "3.1.0",
+      "resolved": "https://registry.npmjs.org/debug/-/debug-3.1.0.tgz",
+      "integrity": "sha512-OX8XqP7/1a9cqkxYw2yXss15f26NKWBpDXQd0/uK/KPqdQhxbPa994hnzjcE2VqQpDslf55723cKPUOGSmMY3g==",
+      "license": "MIT",
+      "dependencies": {
+        "ms": "2.0.0"
+      }
+    },
+    "node_modules/ms": {
+      "version": "2.0.0",
+      "resolved": "https://registry.npmjs.org/ms/-/ms-2.0.0.tgz",
+      "integrity": "sha512-Tpp60P6IUJDTuOq/5Z8cdskzJujfwqfOTkrwIwj7IRISpnkJnT6SyJ4PCPnGMoFjC9ddhal5KVIYtAt97ix05A==",
+      "license": "MIT"
+    },
+    "node_modules/node-gyp-build": {
+      "version": "4.8.4",
+      "resolved": "https://registry.npmjs.org/node-gyp-build/-/node-gyp-build-4.8.4.tgz",
+      "integrity": "sha512-LA4ZjwlnUblHVgq0oBF3Jl/6h/Nvs5fzBLwdEF4nuxnFdsfajde4WfxtJr3CaiH+F6ewcIB/q4jQ4UzPyid+CQ==",
+      "license": "MIT",
+      "bin": {
+        "node-gyp-build": "bin.js",
+        "node-gyp-build-optional": "optional.js",
+        "node-gyp-build-test": "build-test.js"
+      }
+    },
+    "node_modules/selection-hook": {
+      "version": "0.9.9",
+      "resolved": "https://registry.npmjs.org/selection-hook/-/selection-hook-0.9.9.tgz",
+      "integrity": "sha512-CZfyBpPnq0Qx0uyCQxeZJxtiikOo83sHJSsdZJ8DgJs6OOf9yBUTgGoV/H304UDsXVPUQe6Oc1QUN860+S2pow==",
+      "hasInstallScript": true,
+      "license": "MIT",
+      "os": [
+        "win32"
+      ],
+      "dependencies": {
+        "node-gyp-build": "^4.7.1"
+      },
+      "engines": {
+        "node": ">=18.0.0"
+      }
+    }
+  }
+}
