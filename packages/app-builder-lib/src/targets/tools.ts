@@ -17,17 +17,17 @@ export async function getFpmPath() {
   if (process.platform === "linux") {
     if (process.arch == "x64") {
       return path.join(
-        await getBinFromUrl("fpm@2.0.2", "fpm-1.16.0-ruby3.3.0-linux-x64.7z", "RO2SvVHJVpG68dMzsc7s5UkqMGp2UqOHBsDSTKFFOUMN16VXoL1mya4ZvngCXiWQbkeMxQIo3HE1cL3XXe8gXQ=="),
+        await getBinFromUrl("fpm@3.0.1", "fpm-1.16.0-ruby-3.4.3-linux-x86_64.7z", "mrUG/bw3pj3SCWCveXhlh2Nh1aNX8y/ihkuIZ3IYHc9uC64/6ipe/VEs1TtH6CocrxtkszfWVChywFF1OB205Q=="),
         exec
       )
     }
     return path.join(
-      await getBinFromUrl("fpm@2.0.2", "fpm-1.16.0-ruby3.3.0-linux-ia32.7z", "/y2XGooSBvm6DgXuMA/0ucslhJ7mPKk9WBReVKOgmabzJVffuhApZhiCuy4+3d0BQUX1KmIwxAAYmUXVyZ2UJA=="),
+      await getBinFromUrl("fpm@3.0.1", "fpm-1.16.0-ruby-3.4.3-linux-386.7z", "Uwn8gc08tzkob4Iyve9SPOaAC6O+Z4Mvgc+FyLH9PKbF3M5L/DUlFHSWPHdUgi+4tCK2/RJL9LYJ2ZoeXPBFDQ=="),
       exec
     )
   }
   return path.join(
-    await getBinFromUrl("fpm@2.0.2", "fpm-1.16.0-ruby3.3.0-darwin.7z", "+e3KL+cojXmMFja8tipK1yNIaAtOk1DGqNVkoX8fBFI5nv2mHFZInrEfrCRfeDBWCJyOBsSFjTaW/ZHtPAIYTQ=="),
+    await getBinFromUrl("fpm@3.0.1", "fpm-1.16.0-ruby-3.4.3-darwin-x86_64.7z", "nZlZD+J054OfjKVC0+WXgvrpUaHiyudwsAinJLSmEBlaNqn7QaayTwEA0vg2Mh2x4nzhQRBkSojtl93TV5EA8g=="),
     exec
   )
 }
