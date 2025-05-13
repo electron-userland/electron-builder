@@ -28,7 +28,7 @@ All these targets are default, custom configuration is not required. (Though it 
 
 The `electron-updater` package offers a different functionality compared to Electron's built-in auto-updater. Here are the differences:
 
-* A dedicated release server is not required.
+* Linux is supported (not only macOS and Windows).
 * Code signature validation not only on macOS, but also on Windows.
 * All required metadata files and artifacts are produced and published automatically.
 * Download progress and [staged rollouts](#staged-rollouts) supported on all platforms.
