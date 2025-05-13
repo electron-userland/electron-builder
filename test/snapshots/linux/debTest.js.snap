@@ -431,7 +431,7 @@ exports[`deb file associations 5`] = `
 <mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">
 <mime-type type="application/x-example">
   <glob pattern="*.my-app"/>
-
+    
   <icon name="x-office-document" />
 </mime-type>
 </mime-info>"
@@ -562,9 +562,9 @@ fi
 #
 # Unfortunately, at the moment AppArmor doesn't have a good story for backwards compatibility.
 # https://askubuntu.com/questions/1517272/writing-a-backwards-compatible-apparmor-profile
-APPARMOR_PROFILE_SOURCE='/opt/foo/resources/apparmor-profile'
-APPARMOR_PROFILE_TARGET='/etc/apparmor.d/Boo'
-if test -d "/etc/apparmor.d"; then
+if apparmor_status --enabled > /dev/null 2>&1; then
+  APPARMOR_PROFILE_SOURCE='/opt/foo/resources/apparmor-profile'
+  APPARMOR_PROFILE_TARGET='/etc/apparmor.d/Boo'
   if apparmor_parser --skip-kernel-load --debug "$APPARMOR_PROFILE_SOURCE" > /dev/null 2>&1; then
     cp -f "$APPARMOR_PROFILE_SOURCE" "$APPARMOR_PROFILE_TARGET"
 
