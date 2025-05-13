@@ -218,4 +218,3 @@ jobs:
         env:
           TEST_FILES: ${{ matrix.testFiles }}
           FORCE_COLOR: 1
-          USE_SYSTEM_FPM: true
