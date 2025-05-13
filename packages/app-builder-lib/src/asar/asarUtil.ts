@@ -99,7 +99,7 @@ export class AsarPackager {
   private processParentDirectories(isUnpacked: (path: string) => boolean, destination: string, results: AsarStreamType[]) {
     // process parent directories
     let superDir = path.dirname(path.normalize(destination))
-    while (superDir !== ".") {
+    while (superDir.includes(path.sep)) {
       const dir: AsarDirectory = {
         type: "directory",
         path: superDir,
