@@ -75,6 +75,3 @@ if (!process.env.SZA_COMPRESSION_LEVEL) {
 
 process.env.FORCE_YARN = "true"
 process.env.TEST_SET_BABEL_PRESET = "true"
-
-// process.env.ELECTRON_BUILDER_BINARIES_MIRROR = "https://github.com/mmaietta/electron-builder-binaries/releases/download/"
-// process.env.ELECTRON_BUILDER_BINARIES_CUSTOM_DIR = "v1.0.1"
