@@ -8,7 +8,7 @@ import { Target } from "../core"
 import { getTemplatePath } from "../util/pathManager"
 import { VmManager } from "../vm/vm"
 import { WinPackager } from "../winPackager"
-import { createStageDir } from "./targetUtil"
+import { createStageDir } from "./targetUtil.js"
 
 const APPX_ASSETS_DIR_NAME = "appx"
 

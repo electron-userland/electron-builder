@@ -29,6 +29,9 @@ export default [{
     "plugin:@typescript-eslint/recommended",
     "plugin:prettier/recommended",
     "plugin:@typescript-eslint/recommended-requiring-type-checking",
+    "plugin:import/recommended",
+    // the following lines do the trick
+        "plugin:import/typescript",
 ), {
     plugins: {
         "@typescript-eslint": typescriptEslint,
@@ -46,6 +49,10 @@ export default [{
     },
 
     rules: {
+        "import/extensions": ["error", "ignorePackages", {
+          "ts": "never",
+          "js": "always"
+        }],
         "@typescript-eslint/no-require-imports": "off",
         semi: "off",
         "prettier/prettier": "warn",

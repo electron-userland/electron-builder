@@ -14,9 +14,9 @@ import { isUseSystemSigncode } from "../util/flags"
 import { resolveFunction } from "../util/resolve"
 import { VmManager } from "../vm/vm"
 import { WinPackager } from "../winPackager"
-import { importCertificate } from "./codesign"
-import { SignManager } from "./signManager"
-import { WindowsSignOptions } from "./windowsCodeSign"
+import { importCertificate } from "./codesign.js"
+import { SignManager } from "./signManager.js"
+import { WindowsSignOptions } from "./windowsCodeSign.js"
 
 export function getSignVendorPath() {
   return getBin("winCodeSign")

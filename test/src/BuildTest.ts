@@ -5,9 +5,9 @@ import { createYargs } from "electron-builder/out/builder"
 import { promises as fs } from "fs"
 import { outputFile, outputJson } from "fs-extra"
 import * as path from "path"
-import { app, appTwo, appTwoThrows, assertPack, getFixtureDir, linuxDirTarget, modifyPackageJson, packageJson, toSystemIndependentPath } from "./helpers/packTester"
-import { ELECTRON_VERSION } from "./helpers/testConfig"
-import { verifySmartUnpack } from "./helpers/verifySmartUnpack"
+import { app, appTwo, appTwoThrows, assertPack, getFixtureDir, linuxDirTarget, modifyPackageJson, packageJson, toSystemIndependentPath } from "./helpers/packTester.js"
+import { ELECTRON_VERSION } from "./helpers/testConfig.js"
+import { verifySmartUnpack } from "./helpers/verifySmartUnpack.js"
 import { spawn } from "builder-util/out/util"
 
 test.ifLinux("cli", ({ expect }) => {

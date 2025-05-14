@@ -5,8 +5,8 @@ import * as path from "path"
 import * as zlib from "zlib"
 import { getBinFromCustomLoc, getBinFromUrl } from "../../binDownload"
 import { getTemplatePath } from "../../util/pathManager"
-import { NsisOptions } from "./nsisOptions"
-import { NsisTarget } from "./NsisTarget"
+import { NsisOptions } from "./nsisOptions.js"
+import { NsisTarget } from "./NsisTarget.js"
 
 export const nsisTemplatesDir = getTemplatePath("nsis")
 

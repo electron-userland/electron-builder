@@ -4,7 +4,7 @@ import { readJson, realpathSync } from "fs-extra"
 import * as fs from "fs/promises"
 import { tmpdir } from "os"
 import * as path from "path"
-import { deleteOldElectronVersion, downloadAllRequiredElectronVersions } from "./downloadElectron"
+import { deleteOldElectronVersion, downloadAllRequiredElectronVersions } from "./downloadElectron.js"
 
 const baseDir = process.env.APP_BUILDER_TMP_DIR || realpathSync(tmpdir())
 const APP_BUILDER_TMP_DIR = path.join(baseDir, `et-${createHash("md5").update(__dirname).digest("hex")}`)

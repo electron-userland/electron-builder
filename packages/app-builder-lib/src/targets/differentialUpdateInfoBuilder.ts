@@ -4,7 +4,7 @@ import * as path from "path"
 import { Target } from "../core"
 import { PlatformPackager } from "../platformPackager"
 import { executeAppBuilderAsJson } from "../util/appBuilder"
-import { ArchiveOptions } from "./archive"
+import { ArchiveOptions } from "./archive.js"
 
 export const BLOCK_MAP_FILE_SUFFIX = ".blockmap"
 

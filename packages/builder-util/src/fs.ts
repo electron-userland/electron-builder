@@ -7,8 +7,8 @@ import { platform } from "os"
 import * as path from "path"
 import { Mode } from "stat-mode"
 import asyncPool from "tiny-async-pool"
-import { log } from "./log"
-import { orIfFileNotExist, orNullIfFileNotExist } from "./promise"
+import { log } from "./log.js"
+import { orIfFileNotExist, orNullIfFileNotExist } from "./promise.js"
 
 export const MAX_FILE_REQUESTS = 8
 
@@ -149,7 +149,7 @@ export async function walk(initialDirPath: string, filter?: Filter | null, consu
   return result
 }
 
-const _isUseHardLink = process.platform !== "win32" && process.env.USE_HARD_LINKS !== "false" && (isCI || process.env.USE_HARD_LINKS === "true")
+const _isUseHardLink: boolean = process.platform !== "win32" && process.env.USE_HARD_LINKS !== "false" && (isCI.default || process.env.USE_HARD_LINKS === "true")
 
 export function copyFile(src: string, dest: string, isEnsureDir = true) {
   return (isEnsureDir ? mkdir(path.dirname(dest), { recursive: true }) : Promise.resolve()).then(() => copyOrLinkFile(src, dest, null, false))

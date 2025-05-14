@@ -10,9 +10,9 @@ import { excludedExts, FileMatcher } from "../fileMatcher"
 import { createElectronCompilerHost, NODE_MODULES_PATTERN } from "../fileTransformer"
 import { Packager } from "../packager"
 import { PlatformPackager } from "../platformPackager"
-import { AppFileWalker } from "./AppFileWalker"
-import { NodeModuleCopyHelper } from "./NodeModuleCopyHelper"
-import { NodeModuleInfo } from "./packageDependencies"
+import { AppFileWalker } from "./AppFileWalker.js"
+import { NodeModuleCopyHelper } from "./NodeModuleCopyHelper.js"
+import { NodeModuleInfo } from "./packageDependencies.js"
 import { getNodeModules } from "../node-module-collector"
 
 const BOWER_COMPONENTS_PATTERN = `${path.sep}bower_components${path.sep}`

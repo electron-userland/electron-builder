@@ -4,8 +4,8 @@ import { outputFile } from "fs-extra"
 import * as fs from "fs/promises"
 import * as path from "path"
 import { Mode, RWX } from "stat-mode"
-import { assertThat } from "./helpers/fileAssert"
-import { app, appThrows, assertPack, checkDirContents, linuxDirTarget, modifyPackageJson } from "./helpers/packTester"
+import { assertThat } from "./helpers/fileAssert.js"
+import { app, appThrows, assertPack, checkDirContents, linuxDirTarget, modifyPackageJson } from "./helpers/packTester.js"
 import { ExpectStatic } from "vitest"
 
 test.ifDevOrLinuxCi("expand not defined env", ({ expect }) =>

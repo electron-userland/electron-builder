@@ -7,7 +7,7 @@ import * as path from "path"
 import { AsarOptions } from "../options/PlatformSpecificBuildOptions"
 import { PlatformPackager } from "../platformPackager"
 import { ResolvedFileSet, getDestinationPath } from "../util/appFileCopier"
-import { detectUnpackedDirs } from "./unpackDetector"
+import { detectUnpackedDirs } from "./unpackDetector.js"
 import { Readable } from "stream"
 
 /** @internal */

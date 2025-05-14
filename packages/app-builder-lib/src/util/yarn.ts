@@ -6,10 +6,10 @@ import { Lazy } from "lazy-val"
 import { homedir } from "os"
 import * as path from "path"
 import { Configuration } from "../configuration"
-import { executeAppBuilderAndWriteJson } from "./appBuilder"
+import { executeAppBuilderAndWriteJson } from "./appBuilder.js"
 import { PM, detectPackageManager, getPackageManagerCommand } from "../node-module-collector"
-import { NodeModuleDirInfo } from "./packageDependencies"
-import { rebuild as remoteRebuild } from "./rebuild/rebuild"
+import { NodeModuleDirInfo } from "./packageDependencies.js"
+import { rebuild as remoteRebuild } from "./rebuild/rebuild.js"
 
 export async function installOrRebuild(config: Configuration, { appDir, projectDir }: DirectoryPaths, options: RebuildOptions, forceInstall = false) {
   const effectiveOptions: RebuildOptions = {

@@ -14,7 +14,7 @@ import { getTemplatePath } from "../util/pathManager"
 import { VmManager } from "../vm/vm"
 import { WineVmManager } from "../vm/WineVm"
 import { WinPackager } from "../winPackager"
-import { createStageDir, getWindowsInstallationDirName } from "./targetUtil"
+import { createStageDir, getWindowsInstallationDirName } from "./targetUtil.js"
 
 const ELECTRON_BUILDER_UPGRADE_CODE_NS_UUID = UUID.parse("d752fe43-5d44-44d5-9fc9-6dd1bf19d5cc")
 const ROOT_DIR_ID = "APPLICATIONFOLDER"

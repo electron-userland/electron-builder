@@ -9,8 +9,8 @@ import { Publish, Target } from "../core"
 import { LinuxPackager } from "../linuxPackager"
 import { PlugDescriptor, SnapOptions } from "../options/SnapOptions"
 import { getTemplatePath } from "../util/pathManager"
-import { LinuxTargetHelper } from "./LinuxTargetHelper"
-import { createStageDirPath } from "./targetUtil"
+import { LinuxTargetHelper } from "./LinuxTargetHelper.js"
+import { createStageDirPath } from "./targetUtil.js"
 
 const defaultPlugs = ["desktop", "desktop-legacy", "home", "x11", "wayland", "unity7", "browser-support", "network", "gsettings", "audio-playback", "pulseaudio", "opengl"]
 

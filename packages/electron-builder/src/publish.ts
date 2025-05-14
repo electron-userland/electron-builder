@@ -8,7 +8,7 @@ import { InvalidConfigurationError, archFromString, log, printErrorAndExit } fro
 import chalk from "chalk"
 import * as path from "path"
 import yargs from "yargs"
-import { BuildOptions, normalizeOptions } from "./builder"
+import { BuildOptions, normalizeOptions } from "./builder.js"
 
 /** @internal */
 export function configurePublishCommand(yargs: yargs.Argv): yargs.Argv {

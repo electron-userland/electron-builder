@@ -7,7 +7,7 @@ import { AsarIntegrity } from "../asar/integrity"
 import { MacPackager } from "../macPackager"
 import { normalizeExt } from "../platformPackager"
 import { savePlistFile, parsePlistFile, PlistObject, PlistValue } from "../util/plist"
-import { createBrandingOpts } from "./ElectronFramework"
+import { createBrandingOpts } from "./ElectronFramework.js"
 
 function doRename(basePath: string, oldName: string, newName: string) {
   return rename(path.join(basePath, oldName), path.join(basePath, newName))

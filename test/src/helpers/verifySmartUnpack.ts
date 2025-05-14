@@ -2,7 +2,7 @@ import { AsarFilesystem, readAsar } from "app-builder-lib/out/asar/asar"
 import { walk } from "builder-util"
 import { readFileSync } from "fs"
 import * as path from "path"
-import { toSystemIndependentPath } from "./packTester"
+import { toSystemIndependentPath } from "./packTester.js"
 import { ExpectStatic } from "vitest"
 
 export function removeUnstableProperties(data: any) {

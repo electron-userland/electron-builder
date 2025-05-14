@@ -1,9 +1,9 @@
 import { AllPublishOptions } from "builder-util-runtime"
-import { AppAdapter } from "./AppAdapter"
-import { DownloadUpdateOptions } from "./AppUpdater"
-import { BaseUpdater, InstallOptions } from "./BaseUpdater"
-import { findFile } from "./providers/Provider"
-import { DOWNLOAD_PROGRESS } from "./types"
+import { AppAdapter } from "./AppAdapter.js"
+import { DownloadUpdateOptions } from "./AppUpdater.js"
+import { BaseUpdater, InstallOptions } from "./BaseUpdater.js"
+import { findFile } from "./providers/Provider.js"
+import { DOWNLOAD_PROGRESS } from "./types.js"
 
 export class DebUpdater extends BaseUpdater {
   constructor(options?: AllPublishOptions | null, app?: AppAdapter) {

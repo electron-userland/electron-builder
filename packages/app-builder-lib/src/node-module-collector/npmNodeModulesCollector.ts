@@ -1,6 +1,6 @@
 import { Lazy } from "lazy-val"
-import { NodeModulesCollector } from "./nodeModulesCollector"
-import { NpmDependency } from "./types"
+import { NodeModulesCollector } from "./nodeModulesCollector.js"
+import { NpmDependency } from "./types.js"
 
 export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency, string> {
   constructor(rootDir: string) {

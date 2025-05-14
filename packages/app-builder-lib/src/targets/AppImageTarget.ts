@@ -8,8 +8,8 @@ import { AppImageOptions } from "../options/linuxOptions"
 import { getAppUpdatePublishConfiguration } from "../publish/PublishManager"
 import { executeAppBuilderAsJson, objectToArgs } from "../util/appBuilder"
 import { getNotLocalizedLicenseFile } from "../util/license"
-import { LinuxTargetHelper } from "./LinuxTargetHelper"
-import { createStageDir } from "./targetUtil"
+import { LinuxTargetHelper } from "./LinuxTargetHelper.js"
+import { createStageDir } from "./targetUtil.js"
 
 // https://unix.stackexchange.com/questions/375191/append-to-sub-directory-inside-squashfs-file
 export default class AppImageTarget extends Target {
