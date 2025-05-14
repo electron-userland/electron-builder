@@ -92,19 +92,19 @@ Var IsPowerShellAvailable
 
 !macro _CHECK_APP_RUNNING
   ${GetProcessInfo} 0 $pid $1 $2 $3 $4
-  ${if} $3 != "${APP_EXECUTABLE_FILENAME}"
-    ${if} ${isUpdated}
+  ${If} $3 != "${APP_EXECUTABLE_FILENAME}"
+    ${If} ${isUpdated}
       # allow app to exit without explicit kill
       Sleep 300
-    ${endIf}
+    ${EndIf}
 
     !insertmacro FIND_PROCESS "$INSTDIR" "${APP_EXECUTABLE_FILENAME}" $R0
-    ${if} $R0 == 0
-      ${if} ${isUpdated}
+    ${If} $R0 == 0
+      ${If} ${isUpdated}
         # allow app to exit without explicit kill
         Sleep 1000
         Goto doStopProcess
-      ${endIf}
+      ${EndIf}
       MessageBox MB_OKCANCEL|MB_ICONEXCLAMATION "$(appRunning)" /SD IDOK IDOK doStopProcess
       Quit
 
@@ -123,7 +123,7 @@ Var IsPowerShellAvailable
         IntOp $R1 $R1 + 1
 
         !insertmacro FIND_PROCESS "$INSTDIR" "${APP_EXECUTABLE_FILENAME}" $R0
-        ${if} $R0 == 0
+        ${If} $R0 == 0
           # wait to give a chance to exit gracefully
           Sleep 1000
           !insertmacro KILL_PROCESS "$INSTDIR" "${APP_EXECUTABLE_FILENAME}"
@@ -131,22 +131,22 @@ Var IsPowerShellAvailable
           ${If} $R0 == 0
             DetailPrint `Waiting for "${PRODUCT_NAME}" to close.`
             Sleep 2000
-          ${else}
+          ${Else}
             Goto not_running
-          ${endIf}
-        ${else}
+          ${EndIf}
+        ${Else}
           Goto not_running
-        ${endIf}
+        ${EndIf}
 
         # App likely running with elevated permissions.
         # Ask user to close it manually
-        ${if} $R1 > 1
+        ${If} $R1 > 1
           MessageBox MB_RETRYCANCEL|MB_ICONEXCLAMATION "$(appCannotBeClosed)" /SD IDCANCEL IDRETRY loop
           Quit
-        ${else}
+        ${Else}
           Goto loop
-        ${endIf}
+        ${EndIf}
       not_running:
-    ${endIf}
-  ${endIf}
+    ${EndIf}
+  ${EndIf}
 !macroend
