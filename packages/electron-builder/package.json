@@ -2,6 +2,7 @@
   "name": "electron-builder",
   "description": "A complete solution to package and build a ready for distribution Electron app for MacOS, Windows and Linux with “auto update” support out of the box",
   "version": "26.0.15",
+  "type": "module",
   "main": "out/index.js",
   "files": [
     "out"
