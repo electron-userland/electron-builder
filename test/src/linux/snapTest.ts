@@ -1,5 +1,5 @@
 import { Arch, Platform } from "electron-builder"
-import { app, assertPack, snapTarget } from "../helpers/packTester"
+import { app, assertPack, snapTarget } from "../helpers/packTester.js"
 
 test.ifDevOrLinuxCi("snap", ({ expect }) =>
   app(expect, {

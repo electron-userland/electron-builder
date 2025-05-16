@@ -1,6 +1,6 @@
-import { createKeychain } from "app-builder-lib/out/codeSign/macCodeSign"
+import { createKeychain } from "app-builder-lib/out/codeSign/macCodeSign.js"
 import { removePassword, TmpDir } from "builder-util"
-import { CSC_LINK } from "../helpers/codeSignData"
+import { CSC_LINK } from "../helpers/codeSignData.js"
 import { afterEach } from "vitest"
 
 const tmpDir = new TmpDir("mac-code-sign-test")

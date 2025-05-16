@@ -1,6 +1,6 @@
 import { SignOptions as MacSignOptions } from "@electron/osx-sign/dist/cjs/types"
-import { Identity } from "app-builder-lib/out/codeSign/macCodeSign"
-import { DoPackOptions } from "app-builder-lib/out/platformPackager"
+import { Identity } from "app-builder-lib/out/codeSign/macCodeSign.js"
+import { DoPackOptions } from "app-builder-lib/out/platformPackager.js"
 import { WinPackager, getArchSuffix, MacPackager } from "app-builder-lib"
 import { AsyncTaskManager } from "builder-util"
 import { DmgTarget } from "dmg-builder"

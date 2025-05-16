@@ -13,7 +13,7 @@ import { PlatformPackager } from "../platformPackager.js"
 import { AppFileWalker } from "./AppFileWalker.js"
 import { NodeModuleCopyHelper } from "./NodeModuleCopyHelper.js"
 import { NodeModuleInfo } from "./packageDependencies.js"
-import { getNodeModules } from "../node-module-collector.js"
+import { getNodeModules } from "../node-module-collector/index.js"
 
 const BOWER_COMPONENTS_PATTERN = `${path.sep}bower_components${path.sep}`
 /** @internal */

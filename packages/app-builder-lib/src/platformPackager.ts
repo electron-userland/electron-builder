@@ -42,7 +42,7 @@ import {
   PlatformSpecificBuildOptions,
   Target,
   TargetSpecificOptions,
-} from "./index"
+} from "./index.js"
 import { executeAppBuilderAsJson } from "./util/appBuilder.js"
 import { computeFileSets, computeNodeModuleFileSets, copyAppFiles, ELECTRON_COMPILE_SHIM_FILENAME, transformFiles } from "./util/appFileCopier.js"
 import { expandMacro as doExpandMacro } from "./util/macroExpander.js"

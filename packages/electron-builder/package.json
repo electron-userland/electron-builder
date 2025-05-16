@@ -71,7 +71,7 @@
   "devDependencies": {
     "@types/fs-extra": "9.0.13",
     "@types/is-ci": "3.0.0",
-    "@types/yargs": "^17.0.16"
+    "@types/yargs": "^17.0.33"
   },
   "typings": "./out/index.d.ts",
   "publishConfig": {

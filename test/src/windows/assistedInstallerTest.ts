@@ -1,8 +1,8 @@
 import { Arch, archFromString, Platform } from "electron-builder"
 import * as fs from "fs/promises"
 import * as path from "path"
-import { app, assertPack, copyTestAsset } from "../helpers/packTester"
-import { checkHelpers, doTest, expectUpdateMetadata } from "../helpers/winHelper"
+import { app, assertPack, copyTestAsset } from "../helpers/packTester.js"
+import { checkHelpers, doTest, expectUpdateMetadata } from "../helpers/winHelper.js"
 
 const nsisTarget = Platform.WINDOWS.createTarget(["nsis"])
 

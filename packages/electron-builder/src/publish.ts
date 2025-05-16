@@ -7,11 +7,11 @@ import { getConfig } from "app-builder-lib/out/util/config/config.js"
 import { InvalidConfigurationError, archFromString, log, printErrorAndExit } from "builder-util"
 import chalk from "chalk"
 import * as path from "path"
-import yargs from "yargs"
+import yargs, { Argv } from "yargs"
 import { BuildOptions, normalizeOptions } from "./builder.js"
 
 /** @internal */
-export function configurePublishCommand(yargs: yargs.Argv): yargs.Argv {
+export function configurePublishCommand(yargs: Argv): Argv {
   // https://github.com/yargs/yargs/issues/760
   // demandOption is required to be set
   return yargs
@@ -112,7 +112,7 @@ async function publishPackageWithTasks(
 }
 
 function main() {
-  return publish(configurePublishCommand(yargs).argv as any)
+  return publish(configurePublishCommand(yargs()).argv as any)
 }
 
 if (require.main === module) {

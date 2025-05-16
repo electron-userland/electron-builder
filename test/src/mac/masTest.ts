@@ -1,7 +1,7 @@
 import { Arch, Platform } from "electron-builder"
 import * as path from "path"
-import { CheckingMacPackager } from "../helpers/CheckingPackager"
-import { assertPack, createMacTargetTest, signed } from "../helpers/packTester"
+import { CheckingMacPackager } from "../helpers/CheckingPackager.js"
+import { assertPack, createMacTargetTest, signed } from "../helpers/packTester.js"
 
 describe.runIf(process.platform === "darwin" && process.env.CSC_KEY_PASSWORD != null)("mas", () => {
   test("mas", ({ expect }) => createMacTargetTest(expect, ["mas"]))

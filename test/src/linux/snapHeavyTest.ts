@@ -1,5 +1,5 @@
 import { Arch, Platform } from "app-builder-lib"
-import { app, snapTarget } from "../helpers/packTester"
+import { app, snapTarget } from "../helpers/packTester.js"
 
 // very slow
 

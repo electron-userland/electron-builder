@@ -10,10 +10,10 @@ import { getArchCliNames, log, printErrorAndExit, use } from "builder-util"
 import { readJson } from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
-import yargs from "yargs"
+import yargs, { Argv } from "yargs"
 
 /** @internal */
-export function configureInstallAppDepsCommand(yargs: yargs.Argv): yargs.Argv {
+export function configureInstallAppDepsCommand(yargs: Argv): Argv {
   // https://github.com/yargs/yargs/issues/760
   // demandOption is required to be set
   return yargs
@@ -72,7 +72,7 @@ export async function installAppDeps(args: any) {
 }
 
 function main() {
-  return installAppDeps(configureInstallAppDepsCommand(yargs).argv)
+  return installAppDeps(configureInstallAppDepsCommand(yargs()).argv)
 }
 
 if (require.main === module) {

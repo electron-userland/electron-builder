@@ -3,8 +3,8 @@ import { DIR_TARGET, Platform } from "electron-builder"
 import { outputFile } from "fs-extra"
 import { load } from "js-yaml"
 import * as path from "path"
-import { CheckingWinPackager } from "../helpers/CheckingPackager"
-import { app, appThrows } from "../helpers/packTester"
+import { CheckingWinPackager } from "../helpers/CheckingPackager.js"
+import { app, appThrows } from "../helpers/packTester.js"
 import { ExpectStatic } from "vitest"
 
 test("parseDn", ({ expect }) => {

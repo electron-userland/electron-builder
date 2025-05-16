@@ -4,9 +4,9 @@ import { UpdateCheckResult } from "electron-updater"
 import { outputFile } from "fs-extra"
 import { tmpdir } from "os"
 import * as path from "path"
-import { assertThat } from "../helpers/fileAssert"
-import { removeUnstableProperties } from "../helpers/packTester"
-import { createNsisUpdater, trackEvents, validateDownload, writeUpdateConfig } from "../helpers/updaterTestUtil"
+import { assertThat } from "../helpers/fileAssert.js"
+import { removeUnstableProperties } from "../helpers/packTester.js"
+import { createNsisUpdater, trackEvents, validateDownload, writeUpdateConfig } from "../helpers/updaterTestUtil.js"
 import { ExpectStatic } from "vitest"
 
 const config = { retry: 3 }

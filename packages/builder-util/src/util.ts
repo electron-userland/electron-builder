@@ -24,6 +24,7 @@ export { DebugLogger } from "./DebugLogger.js"
 export * from "./log.js"
 export { httpExecutor, NodeHttpExecutor } from "./nodeHttpExecutor.js"
 export * from "./promise.js"
+export { sanitizeFileName } from "./filename.js"
 
 export { asArray } from "builder-util-runtime"
 export * from "./fs.js"
