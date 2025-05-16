@@ -2,7 +2,7 @@ import { Arch, asArray, copyOrLinkFile, deepAssign, InvalidConfigurationError, l
 import { Nullish } from "builder-util-runtime"
 import { emptyDir, readdir, readFile, writeFile } from "fs-extra"
 import * as path from "path"
-import { AppXOptions } from "../"
+import { AppXOptions } from "../index.js"
 import { getSignVendorPath, isOldWin6 } from "../codeSign/windowsSignToolManager"
 import { Target } from "../core"
 import { getTemplatePath } from "../util/pathManager"

@@ -1,7 +1,7 @@
 import { Arch, deepAssign } from "builder-util"
 import { UUID } from "builder-util-runtime"
 import * as path from "path"
-import { MsiWrappedOptions } from "../"
+import { MsiWrappedOptions } from "../index.js"
 import { TargetConfiguration } from "../core"
 import { FinalCommonWindowsInstallerOptions } from "../options/CommonWindowsInstallerConfiguration"
 import { WinPackager } from "../winPackager"
