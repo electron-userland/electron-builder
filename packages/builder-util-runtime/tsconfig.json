@@ -2,8 +2,10 @@
   "extends": "../tsconfig-base.json",
   "compilerOptions": {
     "composite": true,
+    "declarationDir": "./out",
     "outDir": "out",
-    "rootDir": "src"
+        "rootDir": "src"
+
   },
   "jsdoc": {
     "out": "../../scripts/jsdoc/out/builder-util-runtime",

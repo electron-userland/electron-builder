@@ -3,7 +3,12 @@
   "description": "electron-builder lib",
   "version": "26.0.15",
   "type": "module",
-  "main": "out/index.js",
+  "exports": {
+    ".": {
+      "import": "./out/index.js"
+    },
+    "./out/*": "./out/*"
+  },
   "files": [
     "out",
     "templates",

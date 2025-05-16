@@ -1,9 +1,9 @@
 import { Arch, httpExecutor, InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
 import { configureRequestOptions, HttpExecutor, parseJson } from "builder-util-runtime"
-import { KeygenOptions } from "builder-util-runtime/out/publishOptions"
-import { getCompleteExtname } from "builder-util/out/filename"
+import { KeygenOptions } from "builder-util-runtime/out/publishOptions.js"
+import { getCompleteExtname } from "builder-util/out/filename.js"
 import { ClientRequest, RequestOptions } from "http"
-import { PublishContext } from "./"
+import { PublishContext } from "./index.js"
 import { HttpPublisher } from "./httpPublisher.js"
 
 type RecursivePartial<T> = {
