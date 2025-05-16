@@ -60,6 +60,7 @@
     "app-builder-lib": "workspace:*",
     "builder-util": "workspace:*",
     "builder-util-runtime": "workspace:*",
+    "electron-publish": "workspace:*",
     "chalk": "^4.1.2",
     "dmg-builder": "workspace:*",
     "fs-extra": "^10.1.0",
