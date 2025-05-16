@@ -1,5 +1,6 @@
 import { executeAppBuilder } from "builder-util"
 import { Nullish } from "builder-util-runtime"
+import { sanitizeFileName } from "builder-util/out/filename"
 
 const versionToPromise = new Map<string, Promise<string>>()
 
@@ -41,14 +42,14 @@ export function getBinFromUrl(releaseName: string, filenameWithExt: string, chec
 
 export function getBin(name: string, url?: string | null, checksum?: string | null): Promise<string> {
   // Old cache is ignored if cache environment variable changes
-  const cacheName = `${process.env.ELECTRON_BUILDER_CACHE}${name}`
+  const cacheName = sanitizeFileName(`${process.env.ELECTRON_BUILDER_CACHE}${name}-${checksum || ""}`)
   let promise = versionToPromise.get(cacheName) // if rejected, we will try to download again
 
   if (promise != null) {
     return promise
   }
 
-  promise = doGetBin(name, url, checksum)
+  promise = doGetBin(cacheName, url, checksum)
   versionToPromise.set(cacheName, promise)
   return promise
 }
