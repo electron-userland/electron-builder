@@ -4,11 +4,11 @@
   "type": "module",
   "exports": {
     ".": {
-      "import": "./out/index.js", "types": "./out/index.d.ts"
-    },
-    "./out/*": "./out/*"
+      "import": "./out/index.js",
+      "types": "./out/index.d.ts"
+    }
   },
-    "author": "Vladimir Krivosheev",
+  "author": "Vladimir Krivosheev",
   "license": "MIT",
   "repository": {
     "type": "git",

@@ -2,13 +2,12 @@
   "name": "electron-builder-squirrel-windows",
   "version": "26.0.15",
   "type": "module",
-    "exports": {
+  "exports": {
     ".": {
-      "import": "./out/SquirrelWindowsTarget.js", "types": "./out/SquirrelWindowsTarget.d.ts"
-    },
-    "./out/*": "./out/*"
+      "import": "./out/SquirrelWindowsTarget.js",
+      "types": "./out/SquirrelWindowsTarget.d.ts"
+    }
   },
-
   "author": "Vladimir Krivosheev",
   "license": "MIT",
   "repository": {

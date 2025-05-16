@@ -2,11 +2,11 @@
   "name": "builder-util",
   "version": "26.0.13",
   "type": "module",
-    "exports": {
+  "exports": {
     ".": {
-      "import": "./out/util.js", "types": "./out/util.d.ts"
-    },
-    "./out/*": "./out/*"
+      "import": "./out/util.js",
+      "types": "./out/util.d.ts"
+    }
   },
   "author": "Vladimir Krivosheev",
   "license": "MIT",
