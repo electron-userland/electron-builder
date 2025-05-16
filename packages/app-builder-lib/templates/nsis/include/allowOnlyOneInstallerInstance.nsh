@@ -64,7 +64,7 @@ Var IsPowerShellAvailable
 !macroend
 
 !macro FIND_PROCESS _PATH _FILENAME _RETURN
-  ${If} $IsPowerShellAvailable == True
+  ${If} $IsPowerShellAvailable == 0
     nsExec::Exec `"$PowerShellPath" -Command "if ((Get-Process | Where-Object {$$_.Path -and $$_.Path.StartsWith('${_PATH}')}).Count -gt 0) { exit 0 } else { exit 1 }"`
     Pop ${_RETURN}
   ${Else}
