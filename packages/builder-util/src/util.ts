@@ -25,6 +25,9 @@ export * from "./log.js"
 export { httpExecutor, NodeHttpExecutor } from "./nodeHttpExecutor.js"
 export * from "./promise.js"
 export { sanitizeFileName } from "./filename.js"
+export { Filter } from "./fs.js"
+
+export { getCompleteExtname } from "./filename.js"
 
 export { asArray } from "builder-util-runtime"
 export * from "./fs.js"
