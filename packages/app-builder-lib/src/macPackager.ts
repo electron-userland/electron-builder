@@ -79,14 +79,14 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
     return this._iconPath.value
   }
 
-  createTargets(targets: Array<string>, mapper: (name: string, factory: (outDir: string) => Target) => void): void {
+  async createTargets(targets: Array<string>, mapper: (name: string, factory: (outDir: string) => Target) => void): Promise<void> {
     for (const name of targets) {
       switch (name) {
         case DIR_TARGET:
           break
 
         case "dmg": {
-          const { DmgTarget } = require("dmg-builder")
+          const { DmgTarget } = await import("dmg-builder")
           mapper(name, outDir => new DmgTarget(this, outDir))
           break
         }
@@ -152,15 +152,15 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
           `packaging`
         )
         const appFile = `${this.appInfo.productFilename}.app`
-        const { makeUniversalApp } = require("@electron/universal")
+        const { makeUniversalApp } = await import("@electron/universal")
         await makeUniversalApp({
           x64AppPath: path.join(x64AppOutDir, appFile),
           arm64AppPath: path.join(arm64AppOutPath, appFile),
           outAppPath: path.join(appOutDir, appFile),
           force: true,
           mergeASARs: platformSpecificBuildOptions.mergeASARs ?? true,
-          singleArchFiles: platformSpecificBuildOptions.singleArchFiles,
-          x64ArchFiles: platformSpecificBuildOptions.x64ArchFiles,
+          singleArchFiles: platformSpecificBuildOptions.singleArchFiles ?? undefined,
+          x64ArchFiles: platformSpecificBuildOptions.x64ArchFiles ?? undefined,
         })
         await fs.rm(x64AppOutDir, { recursive: true, force: true })
         await fs.rm(arm64AppOutPath, { recursive: true, force: true })

@@ -28,7 +28,7 @@ import { getWindowsVm, VmManager } from "./vm/vm.js"
 import { execWine } from "./wine.js"
 
 export class WinPackager extends PlatformPackager<WindowsConfiguration> {
-  _iconPath = new Lazy(() => this.getOrConvertIcon("ico"))
+  private _iconPath = new Lazy(() => this.getOrConvertIcon("ico"))
 
   readonly vm = new Lazy<VmManager>(() => (process.platform === "win32" ? Promise.resolve(new VmManager()) : getWindowsVm(this.debugLogger)))
 
@@ -55,7 +55,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     return ["nsis"]
   }
 
-  createTargets(targets: Array<string>, mapper: (name: string, factory: (outDir: string) => Target) => void): void {
+  async createTargets(targets: Array<string>, mapper: (name: string, factory: (outDir: string) => Target) => void): Promise<void> {
     let copyElevateHelper: CopyElevateHelper | null
     const getCopyElevateHelper = () => {
       if (copyElevateHelper == null) {
@@ -83,23 +83,23 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
         // package file format differs from nsis target
         mapper(name, outDir => new WebInstallerTarget(this, path.join(outDir, name), name, new AppPackageHelper(getCopyElevateHelper())))
       } else {
-        const targetClass: typeof NsisTarget | typeof AppXTarget | typeof MsiTarget | typeof MsiWrappedTarget | null = (() => {
+        const targetClass: typeof NsisTarget | typeof AppXTarget | typeof MsiTarget | typeof MsiWrappedTarget | null = await (() => {
           switch (name) {
             case "squirrel":
               try {
-                return require("electron-builder-squirrel-windows").default
+                return import("electron-builder-squirrel-windows").then(m => m.SquirrelWindowsTarget)
               } catch (e: any) {
                 throw new InvalidConfigurationError(`Module electron-builder-squirrel-windows must be installed in addition to build Squirrel.Windows: ${e.stack || e}`)
               }
 
             case "appx":
-              return require("./targets/AppxTarget").default
+              return import("./targets/AppxTarget.js").then(m => m.default)
 
             case "msi":
-              return require("./targets/MsiTarget").default
+              return import("./targets/MsiTarget.js").then(m => m.default)
 
             case "msiwrapped":
-              return require("./targets/MsiWrappedTarget").default
+              return import("./targets/MsiWrappedTarget.js").then(m => m.default)
 
             default:
               return null

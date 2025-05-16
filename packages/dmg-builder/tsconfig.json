@@ -1,15 +1,11 @@
 {
   "extends": "../tsconfig-base.json",
   "compilerOptions": {
-        "declarationDir": "./out",
-        "outDir": "out",
+    "declarationDir": "./out",
+    "outDir": "out",
     "rootDir": "src"
   },
-  "jsdoc": {
-    "out": "../../scripts/jsdoc/out/dmg-builder",
-    "examples": "../../scripts/jsdoc/examples",
-    "access": "public"
-  },
+
   "references": [
     {
       "path": "../app-builder-lib"
@@ -21,7 +17,5 @@
       "path": "../builder-util-runtime"
     }
   ],
-  "include": [
-    "src/**/*.ts"
-  ]
+  "include": ["src/**/*.ts"]
 }

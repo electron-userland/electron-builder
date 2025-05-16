@@ -25,7 +25,7 @@ export class LinuxPackager extends PlatformPackager<LinuxConfiguration> {
     return ["snap", "appimage"]
   }
 
-  createTargets(targets: Array<string>, mapper: (name: string, factory: (outDir: string) => Target) => void): void {
+  async createTargets(targets: Array<string>, mapper: (name: string, factory: (outDir: string) => Target) => void): Promise<void> {
     let helper: LinuxTargetHelper | null
     const getHelper = () => {
       if (helper == null) {
@@ -39,14 +39,14 @@ export class LinuxPackager extends PlatformPackager<LinuxConfiguration> {
         continue
       }
 
-      const targetClass: typeof AppImageTarget | typeof SnapTarget | typeof FlatpakTarget | typeof FpmTarget | null = (() => {
+      const targetClass: typeof AppImageTarget | typeof SnapTarget | typeof FlatpakTarget | typeof FpmTarget = await (() => {
         switch (name) {
           case "appimage":
-            return require("./targets/AppImageTarget").default
+            return import("./targets/AppImageTarget.js")
           case "snap":
-            return require("./targets/snap").default
+            return import("./targets/snap.js")
           case "flatpak":
-            return require("./targets/FlatpakTarget").default
+            return import("./targets/FlatpakTarget.js")
           case "deb":
           case "rpm":
           case "sh":
@@ -54,11 +54,11 @@ export class LinuxPackager extends PlatformPackager<LinuxConfiguration> {
           case "pacman":
           case "apk":
           case "p5p":
-            return require("./targets/FpmTarget").default
+            return import("./targets/FpmTarget.js")
           default:
             return null
         }
-      })()
+      })()!.then(m => m.default)
 
       mapper(name, outDir => {
         if (targetClass === null) {
