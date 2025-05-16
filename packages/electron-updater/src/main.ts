@@ -12,6 +12,10 @@ export { PacmanUpdater } from "./PacmanUpdater.js"
 export { RpmUpdater } from "./RpmUpdater.js"
 export { MacUpdater } from "./MacUpdater.js"
 export { NsisUpdater } from "./NsisUpdater.js"
+export { ElectronAppAdapter } from "./ElectronAppAdapter.js"
+
+export { TestOnlyUpdaterOptions } from "./AppUpdater.js"
+export { blockmapFiles, newUrlFromBase } from "./util.js"
 
 export * from "./types.js"
 

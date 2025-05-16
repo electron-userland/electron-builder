@@ -1,6 +1,6 @@
-import { readAsarJson } from "app-builder-lib/out/asar/asar.js"
+import { readAsarJson } from "app-builder-lib"
 import { Platform } from "electron-builder"
-import { coerceTypes } from "electron-builder/out/builder.js"
+import { coerceTypes } from "electron-builder"
 import { readJson } from "fs-extra"
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert.js"

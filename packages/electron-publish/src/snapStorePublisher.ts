@@ -1,5 +1,5 @@
 import { executeAppBuilder } from "builder-util"
-import { SnapStoreOptions } from "builder-util-runtime/out/publishOptions.js"
+import { SnapStoreOptions } from "builder-util-runtime"
 import * as path from "path"
 import { PublishContext, UploadTask } from "./index.js"
 import { Publisher } from "./publisher.js"

@@ -1,5 +1,5 @@
 import { Platform } from "app-builder-lib"
-import { readAsar } from "app-builder-lib/out/asar/asar.js"
+import { readAsar } from "app-builder-lib"
 import { outputFile } from "fs-extra"
 import * as fs from "fs/promises"
 import * as path from "path"
@@ -8,7 +8,7 @@ import { app, appThrows, assertPack, linuxDirTarget, modifyPackageJson, PackedCo
 import { verifySmartUnpack } from "./helpers/verifySmartUnpack.js"
 import { spawnSync } from "child_process"
 import { ExpectStatic } from "vitest"
-import { spawn } from "builder-util/out/util.js"
+import { spawn } from "builder-util"
 
 async function createFiles(appDir: string) {
   await Promise.all([

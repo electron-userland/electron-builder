@@ -1,6 +1,6 @@
 import { Arch, httpExecutor, InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
 import { configureRequestOptions, HttpExecutor } from "builder-util-runtime"
-import { BitbucketOptions } from "builder-util-runtime/out/publishOptions.js"
+import { BitbucketOptions } from "builder-util-runtime"
 import FormData from "form-data"
 import { readFile } from "fs-extra"
 import { ClientRequest, RequestOptions } from "http"

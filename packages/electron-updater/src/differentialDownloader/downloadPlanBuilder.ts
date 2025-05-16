@@ -1,4 +1,4 @@
-import { BlockMap, BlockMapFile } from "builder-util-runtime/out/blockMapApi.js"
+import { BlockMap, BlockMapFile } from "builder-util-runtime"
 import { Logger } from "../types.js"
 
 export enum OperationKind {

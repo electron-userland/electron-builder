@@ -37,6 +37,5 @@
     "@types/fs-extra": "9.0.13",
     "@types/js-yaml": "4.0.3",
     "temp-file": "3.4.0"
-  },
-  "typings": "./out/dmg.d.ts"
+  }
 }

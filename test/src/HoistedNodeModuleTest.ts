@@ -2,7 +2,7 @@ import { assertPack, linuxDirTarget, verifyAsarFileTree, modifyPackageJson } fro
 import { Platform, Arch, DIR_TARGET } from "electron-builder"
 import { outputFile, copySync, rmSync, readJsonSync, writeJsonSync, mkdirSync } from "fs-extra"
 import * as path from "path"
-import { spawn } from "builder-util/out/util.js"
+import { spawn } from "builder-util"
 
 test("yarn workspace", ({ expect }) =>
   assertPack(

@@ -89,6 +89,8 @@ export { getLinuxToolsPath } from "./targets/tools.js"
 export { getRepositoryInfo } from "./util/repositoryInfo.js"
 export { getSignVendorPath } from "./codeSign/windowsSignToolManager.js"
 export { hoist, HoisterTree, HoisterResult, HoisterDependencyKind } from "./node-module-collector/hoist.js"
+export { detectPackageManager, getPackageManagerCommand } from "./node-module-collector/packageManager.js"
+export { getCollectorByPackageManager } from "./node-module-collector/index.js"
 export { Identity } from "./codeSign/macCodeSign.js"
 export { installOrRebuild } from "./util/yarn.js"
 export { loadEnv } from "./util/config/load.js"
@@ -100,6 +102,7 @@ export { Publish } from "./core.js"
 export { readAsarJson } from "./asar/asar.js"
 export { validateConfiguration } from "./util/config/config.js"
 
+export { doMergeConfigs } from "./util/config/config.js"
 
 const expectedOptions = new Set(["publish", "targets", "mac", "win", "linux", "projectDir", "platformPackagerFactory", "config", "effectiveOptionComputed", "prepackaged"])
 
