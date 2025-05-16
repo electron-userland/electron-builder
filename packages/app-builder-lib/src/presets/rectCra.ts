@@ -1,6 +1,6 @@
 import { log, statOrNull } from "builder-util"
 import * as path from "path"
-import { Configuration } from "../configuration"
+import { Configuration } from "../configuration.js"
 
 /** @internal */
 export async function reactCra(projectDir: string): Promise<Configuration> {

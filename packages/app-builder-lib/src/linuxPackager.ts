@@ -1,5 +1,5 @@
 import { Arch } from "builder-util"
-import { sanitizeFileName } from "builder-util/out/filename"
+import { sanitizeFileName } from "builder-util/out/filename.js"
 import { DIR_TARGET, Platform, Target } from "./core.js"
 import { LinuxConfiguration } from "./options/linuxOptions.js"
 import { Packager } from "./packager.js"

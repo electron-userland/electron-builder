@@ -1,8 +1,8 @@
 import { Arch, defaultArchFromString } from "builder-util"
 import * as path from "path"
-import { Platform, Target, TargetSpecificOptions } from "../core"
-import { copyFiles, getFileMatchers } from "../fileMatcher"
-import { PlatformPackager } from "../platformPackager"
+import { Platform, Target, TargetSpecificOptions } from "../core.js"
+import { copyFiles, getFileMatchers } from "../fileMatcher.js"
+import { PlatformPackager } from "../platformPackager.js"
 import { archive, tar } from "./archive.js"
 import { appendBlockmap, createBlockmap } from "./differentialUpdateInfoBuilder.js"
 

@@ -21,13 +21,17 @@ function fixImports(filePath) {
   let changed = false;
 
   const fixedContent = content.replace(
-    /(import|export)\s+(.*?\s+from\s+)?['"](\.\/[^'"]+?)['"]/g,
+    /(import|export)\s+(.*?\s+from\s+)?['"]([^'"]+?)['"]/g,
     (match, type, specifier, modulePath) => {
       const ext = path.extname(modulePath);
       if (ext || modulePath.endsWith('/')) {
         return match; // Already has extension or is a folder import
       }
-      if (modulePath.startsWith('./') || modulePath.startsWith('../')) {
+      if (modulePath === "." || modulePath === "..") {
+        changed = true;
+        return modulePath + "/index.js"
+      }
+      if (modulePath.startsWith('./') || modulePath.startsWith('../') || modulePath.includes('/out/')) {
         changed = true;
         return match.replace(modulePath, modulePath + '.js');
       }

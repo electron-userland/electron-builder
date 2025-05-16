@@ -1,4 +1,4 @@
-import { BlockMap } from "builder-util-runtime/out/blockMapApi"
+import { BlockMap } from "builder-util-runtime/out/blockMapApi.js"
 import { DifferentialDownloader } from "./DifferentialDownloader.js"
 
 export class GenericDifferentialDownloader extends DifferentialDownloader {

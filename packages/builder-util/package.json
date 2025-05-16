@@ -4,7 +4,7 @@
   "type": "module",
     "exports": {
     ".": {
-      "import": "./out/util.js"
+      "import": "./out/util.js", "types": "./out/util.d.ts"
     },
     "./out/*": "./out/*"
   },

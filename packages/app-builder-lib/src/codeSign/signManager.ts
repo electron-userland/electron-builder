@@ -1,7 +1,7 @@
 import { MemoLazy, Nullish } from "builder-util-runtime"
 import { Lazy } from "lazy-val"
-import { Target } from "../core"
-import { WindowsConfiguration } from "../options/winOptions"
+import { Target } from "../core.js"
+import { WindowsConfiguration } from "../options/winOptions.js"
 import { WindowsSignOptions } from "./windowsCodeSign.js"
 import { CertificateFromStoreInfo, FileCodeSigningInfo } from "./windowsSignToolManager.js"
 

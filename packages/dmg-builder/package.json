@@ -3,7 +3,7 @@
 	"version": "26.0.15",
     "exports": {
     ".": {
-      "import": "./out/dmgUtil.js"
+      "import": "./out/dmgUtil.js", "types": "./out/dmgUtil.d.ts"
     },
     "./out/*": "./out/*"
   },

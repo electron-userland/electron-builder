@@ -1,5 +1,5 @@
 import { InvalidConfigurationError, log, isEmptyOrSpaces } from "builder-util"
-import { sanitizeFileName } from "builder-util/out/filename"
+import { sanitizeFileName } from "builder-util/out/filename.js"
 import { Arch, getArchSuffix, SquirrelWindowsOptions, Target, WinPackager } from "app-builder-lib"
 import * as path from "path"
 import * as fs from "fs"

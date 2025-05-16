@@ -4,7 +4,7 @@
   "type": "module",
     "exports": {
     ".": {
-      "import": "./out/SquirrelWindowsTarget.js"
+      "import": "./out/SquirrelWindowsTarget.js", "types": "./out/SquirrelWindowsTarget.d.ts"
     },
     "./out/*": "./out/*"
   },

@@ -1,5 +1,5 @@
-import { CommonWindowsInstallerConfiguration } from "../.."
-import { TargetSpecificOptions } from "../../core"
+import { CommonWindowsInstallerConfiguration } from "../...js"
+import { TargetSpecificOptions } from "../../core.js"
 
 export interface CustomNsisBinary {
   /**

@@ -2,9 +2,9 @@ import { asArray, exists, isEmptyOrSpaces, log } from "builder-util"
 import { outputFile } from "fs-extra"
 import { Lazy } from "lazy-val"
 import { join } from "path"
-import { LinuxPackager } from "../linuxPackager"
-import { LinuxTargetSpecificOptions } from "../options/linuxOptions"
-import { IconInfo } from "../platformPackager"
+import { LinuxPackager } from "../linuxPackager.js"
+import { LinuxTargetSpecificOptions } from "../options/linuxOptions.js"
+import { IconInfo } from "../platformPackager.js"
 
 export const installPrefix = "/opt"
 

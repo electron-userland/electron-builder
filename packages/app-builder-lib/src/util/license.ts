@@ -1,6 +1,6 @@
 import { Nullish } from "builder-util-runtime"
 import * as path from "path"
-import { PlatformPackager } from "../platformPackager"
+import { PlatformPackager } from "../platformPackager.js"
 import { langIdToName, toLangWithRegion } from "./langs.js"
 
 export function getLicenseAssets(fileNames: Array<string>, packager: PlatformPackager<any>) {

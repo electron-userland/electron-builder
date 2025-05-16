@@ -1,4 +1,4 @@
-import { TargetSpecificOptions } from "../core"
+import { TargetSpecificOptions } from "../core.js"
 import { CommonWindowsInstallerConfiguration } from "./CommonWindowsInstallerConfiguration.js"
 
 export interface MsiOptions extends CommonWindowsInstallerConfiguration, TargetSpecificOptions {
