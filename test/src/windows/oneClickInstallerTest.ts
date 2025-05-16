@@ -1,9 +1,9 @@
 import { Arch, Platform } from "electron-builder"
 import { copyFile, writeFile } from "fs-extra"
 import * as path from "path"
-import { assertThat } from "../helpers/fileAssert"
-import { app, assertPack, copyTestAsset, modifyPackageJson } from "../helpers/packTester"
-import { checkHelpers, doTest, expectUpdateMetadata } from "../helpers/winHelper"
+import { assertThat } from "../helpers/fileAssert.js"
+import { app, assertPack, copyTestAsset, modifyPackageJson } from "../helpers/packTester.js"
+import { checkHelpers, doTest, expectUpdateMetadata } from "../helpers/winHelper.js"
 
 const nsisTarget = Platform.WINDOWS.createTarget(["nsis"], Arch.x64)
 

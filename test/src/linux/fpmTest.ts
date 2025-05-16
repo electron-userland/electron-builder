@@ -1,5 +1,5 @@
 import { Platform } from "electron-builder"
-import { app } from "../helpers/packTester"
+import { app } from "../helpers/packTester.js"
 
 // "apk" is very slow, don't test for now
 test.ifDevOrLinuxCi("targets", ({ expect }) =>

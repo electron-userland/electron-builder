@@ -1,6 +1,6 @@
 import { InvalidConfigurationError, isEmptyOrSpaces } from "builder-util"
-import { sanitizeFileName } from "builder-util/out/filename"
-import { WinPackager } from "../winPackager"
+import { sanitizeFileName } from "builder-util"
+import { WinPackager } from "../winPackager.js"
 
 export interface CommonWindowsInstallerConfiguration {
   readonly oneClick?: boolean

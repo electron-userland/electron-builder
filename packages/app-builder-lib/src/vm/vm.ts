@@ -2,7 +2,7 @@ import { DebugLogger, exec, ExtraSpawnOptions, InvalidConfigurationError, log, s
 import { ExecFileOptions, SpawnOptions } from "child_process"
 import { Lazy } from "lazy-val"
 import * as path from "path"
-import { ParallelsVm } from "./ParallelsVm"
+import { ParallelsVm } from "./ParallelsVm.js"
 export class VmManager {
   get pathSep(): string {
     return path.sep
@@ -34,13 +34,13 @@ export class VmManager {
 }
 
 export async function getWindowsVm(debugLogger: DebugLogger): Promise<VmManager> {
-  const parallelsVmModule = await import("./ParallelsVm")
+  const parallelsVmModule = await import("./ParallelsVm.js")
   let vmList: ParallelsVm[] = []
   try {
     vmList = (await parallelsVmModule.parseVmList(debugLogger)).filter(it => ["win-10", "win-11"].includes(it.os))
   } catch (_error) {
     if ((await isPwshAvailable.value) && (await isWineAvailable.value)) {
-      const vmModule = await import("./PwshVm")
+      const vmModule = await import("./PwshVm.js")
       return new vmModule.PwshVmManager()
     }
   }

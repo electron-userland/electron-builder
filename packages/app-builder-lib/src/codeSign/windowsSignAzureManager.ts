@@ -1,11 +1,11 @@
 import { asArray, InvalidConfigurationError, log } from "builder-util"
 import { MemoLazy } from "builder-util-runtime"
 import { Lazy } from "lazy-val"
-import { WindowsAzureSigningConfiguration, WindowsConfiguration } from "../options/winOptions"
-import { WinPackager } from "../winPackager"
-import { SignManager } from "./signManager"
-import { WindowsSignOptions } from "./windowsCodeSign"
-import { CertificateFromStoreInfo, FileCodeSigningInfo } from "./windowsSignToolManager"
+import { WindowsAzureSigningConfiguration, WindowsConfiguration } from "../options/winOptions.js"
+import { WinPackager } from "../winPackager.js"
+import { SignManager } from "./signManager.js"
+import { WindowsSignOptions } from "./windowsCodeSign.js"
+import { CertificateFromStoreInfo, FileCodeSigningInfo } from "./windowsSignToolManager.js"
 
 export class WindowsSignAzureManager implements SignManager {
   private readonly platformSpecificBuildOptions: WindowsConfiguration

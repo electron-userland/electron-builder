@@ -2,12 +2,12 @@ import { CancellationToken, GithubOptions, HttpError, newError, UpdateInfo } fro
 import { OutgoingHttpHeaders, RequestOptions } from "http"
 import { load } from "js-yaml"
 import * as path from "path"
-import { AppUpdater } from "../AppUpdater"
+import { AppUpdater } from "../AppUpdater.js"
 import { URL } from "url"
-import { getChannelFilename, newUrlFromBase } from "../util"
-import { BaseGitHubProvider } from "./GitHubProvider"
-import { ResolvedUpdateFileInfo } from "../types"
-import { getFileList, ProviderRuntimeOptions } from "./Provider"
+import { getChannelFilename, newUrlFromBase } from "../util.js"
+import { BaseGitHubProvider } from "./GitHubProvider.js"
+import { ResolvedUpdateFileInfo } from "../types.js"
+import { getFileList, ProviderRuntimeOptions } from "./Provider.js"
 
 export interface PrivateGitHubUpdateInfo extends UpdateInfo {
   assets: Array<Asset>

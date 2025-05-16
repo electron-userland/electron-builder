@@ -6,7 +6,7 @@ import { promises as fs } from "fs"
 import { load } from "js-yaml"
 import { Lazy } from "lazy-val"
 import * as path from "path"
-import { resolveModule } from "../resolve"
+import { resolveModule } from "../resolve.js"
 
 export interface ReadConfigResult<T> {
   readonly result: T

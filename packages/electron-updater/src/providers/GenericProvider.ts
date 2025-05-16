@@ -1,11 +1,11 @@
 import { GenericServerOptions, HttpError, newError, UpdateInfo } from "builder-util-runtime"
-import { AppUpdater } from "../AppUpdater"
-import { ResolvedUpdateFileInfo } from "../types"
-import { getChannelFilename, newBaseUrl, newUrlFromBase } from "../util"
-import { parseUpdateInfo, Provider, ProviderRuntimeOptions, resolveFiles } from "./Provider"
+import { AppUpdater } from "../AppUpdater.js"
+import { ResolvedUpdateFileInfo } from "../types.js"
+import { getChannelFilename, newBaseUrl, newUrlFromBase } from "../util.js"
+import { parseUpdateInfo, Provider, ProviderRuntimeOptions, resolveFiles } from "./Provider.js"
 
 export class GenericProvider extends Provider<UpdateInfo> {
-  private readonly baseUrl = newBaseUrl(this.configuration.url)
+  private readonly baseUrl: URL
 
   constructor(
     private readonly configuration: GenericServerOptions,
@@ -13,6 +13,7 @@ export class GenericProvider extends Provider<UpdateInfo> {
     runtimeOptions: ProviderRuntimeOptions
   ) {
     super(runtimeOptions)
+    this.baseUrl = newBaseUrl(this.configuration.url)
   }
 
   private get channel(): string {
@@ -31,9 +32,9 @@ export class GenericProvider extends Provider<UpdateInfo> {
           throw newError(`Cannot find channel "${channelFile}" update info: ${e.stack || e.message}`, "ERR_UPDATER_CHANNEL_FILE_NOT_FOUND")
         } else if (e.code === "ECONNREFUSED") {
           if (attemptNumber < 3) {
-            await new Promise((resolve, reject) => {
+            await new Promise<void>((resolve, reject) => {
               try {
-                setTimeout(resolve, 1000 * attemptNumber)
+                setTimeout(() => resolve(), 1000 * attemptNumber)
               } catch (e: any) {
                 reject(e)
               }

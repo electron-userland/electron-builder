@@ -1,6 +1,6 @@
 import { SignOptions as MacSignOptions } from "@electron/osx-sign/dist/cjs/types"
-import { Identity } from "app-builder-lib/out/codeSign/macCodeSign"
-import { DoPackOptions } from "app-builder-lib/out/platformPackager"
+import { Identity } from "app-builder-lib"
+import { DoPackOptions } from "app-builder-lib"
 import { WinPackager, getArchSuffix, MacPackager } from "app-builder-lib"
 import { AsyncTaskManager } from "builder-util"
 import { DmgTarget } from "dmg-builder"
@@ -18,8 +18,7 @@ export class CheckingWinPackager extends WinPackager {
   //noinspection JSUnusedLocalSymbols
   async pack(outDir: string, arch: Arch, targets: Array<Target>, taskManager: AsyncTaskManager): Promise<any> {
     // skip pack
-    const helperClass: typeof SquirrelWindowsTarget = (await import("electron-builder-squirrel-windows")).default
-    const newClass = new helperClass(this, outDir)
+    const newClass = new SquirrelWindowsTarget(this, outDir)
     const setupFile = this.expandArtifactNamePattern(newClass.options, "exe", arch, "${productName} Setup ${version}.${ext}")
     const installerOutDir = path.join(outDir, `squirrel-windows${getArchSuffix(arch)}`)
     this.effectiveDistOptions = await newClass.computeEffectiveDistOptions(installerOutDir, outDir, setupFile)

@@ -1,5 +1,5 @@
 import { Platform } from "electron-builder"
-import { app } from "../helpers/packTester"
+import { app } from "../helpers/packTester.js"
 
 test.ifNotWindows.ifDevOrLinuxCi("tar", ({ expect }) =>
   app(expect, {

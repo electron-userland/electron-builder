@@ -1,9 +1,9 @@
 import { PlatformPackager } from "app-builder-lib"
 import { executeFinally } from "builder-util"
 import * as path from "path"
-import { hdiUtil } from "./hdiuil"
+import { hdiUtil } from "./hdiuil.js"
 
-export { DmgTarget } from "./dmg"
+export { DmgTarget } from "./dmg.js"
 
 const root = path.join(__dirname, "..")
 

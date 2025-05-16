@@ -2,7 +2,13 @@
   "name": "electron-builder",
   "description": "A complete solution to package and build a ready for distribution Electron app for MacOS, Windows and Linux with “auto update” support out of the box",
   "version": "26.0.15",
-  "main": "out/index.js",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./out/index.js",
+      "types": "./out/index.d.ts"
+    }
+  },
   "files": [
     "out"
   ],
@@ -54,6 +60,7 @@
     "app-builder-lib": "workspace:*",
     "builder-util": "workspace:*",
     "builder-util-runtime": "workspace:*",
+    "electron-publish": "workspace:*",
     "chalk": "^4.1.2",
     "dmg-builder": "workspace:*",
     "fs-extra": "^10.1.0",
@@ -65,7 +72,7 @@
   "devDependencies": {
     "@types/fs-extra": "9.0.13",
     "@types/is-ci": "3.0.0",
-    "@types/yargs": "^17.0.16"
+    "@types/yargs": "^17.0.33"
   },
   "typings": "./out/index.d.ts",
   "publishConfig": {

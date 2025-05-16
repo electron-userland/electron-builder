@@ -2,8 +2,8 @@ import { executeAppBuilder, log } from "builder-util"
 import { BaseS3Options } from "builder-util-runtime"
 import { mkdir, symlink } from "fs/promises"
 import * as path from "path"
-import { PublishContext, UploadTask } from ".."
-import { Publisher } from "../publisher"
+import { PublishContext, UploadTask } from "../index.js"
+import { Publisher } from "../publisher.js"
 
 export abstract class BaseS3Publisher extends Publisher {
   protected constructor(

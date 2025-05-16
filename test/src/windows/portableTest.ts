@@ -1,6 +1,6 @@
 import { Arch, Platform } from "electron-builder"
 import * as path from "path"
-import { app, copyTestAsset, getFixtureDir } from "../helpers/packTester"
+import { app, copyTestAsset, getFixtureDir } from "../helpers/packTester.js"
 
 // build in parallel - https://github.com/electron-userland/electron-builder/issues/1340#issuecomment-286061789
 test.ifNotCiMac("portable", ({ expect }) =>

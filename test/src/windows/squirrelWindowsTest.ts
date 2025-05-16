@@ -1,7 +1,7 @@
 import { Arch, Platform } from "electron-builder"
 import * as path from "path"
-import { CheckingWinPackager } from "../helpers/CheckingPackager"
-import { app, assertPack, copyTestAsset } from "../helpers/packTester"
+import { CheckingWinPackager } from "../helpers/CheckingPackager.js"
+import { app, assertPack, copyTestAsset } from "../helpers/packTester.js"
 
 describe("squirrel.windows", { sequential: true }, () => {
   test.ifNotCiMac("Squirrel.Windows", ({ expect }) =>

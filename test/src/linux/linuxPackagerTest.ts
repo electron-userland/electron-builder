@@ -3,9 +3,9 @@ import { Arch, build, Platform } from "electron-builder"
 import { outputFile } from "fs-extra"
 import * as fs from "fs/promises"
 import * as path from "path"
-import { assertThat } from "../helpers/fileAssert"
-import { app, appThrows, copyTestAsset, modifyPackageJson } from "../helpers/packTester"
-import { ELECTRON_VERSION } from "../helpers/testConfig"
+import { assertThat } from "../helpers/fileAssert.js"
+import { app, appThrows, copyTestAsset, modifyPackageJson } from "../helpers/packTester.js"
+import { ELECTRON_VERSION } from "../helpers/testConfig.js"
 
 const appImageTarget = Platform.LINUX.createTarget("appimage", Arch.x64)
 

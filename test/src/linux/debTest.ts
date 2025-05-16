@@ -1,6 +1,6 @@
 import { Arch, Platform } from "electron-builder"
 import * as fs from "fs/promises"
-import { app, execShell, getTarExecutable } from "../helpers/packTester"
+import { app, execShell, getTarExecutable } from "../helpers/packTester.js"
 
 test.ifNotWindows("deb", ({ expect }) =>
   app(expect, {

@@ -1,10 +1,10 @@
 import { Arch, build, PackagerOptions, Platform } from "electron-builder"
 import * as fs from "fs/promises"
 import * as path from "path"
-import { assertThat } from "./helpers/fileAssert"
-import { app, assertPack, linuxDirTarget, modifyPackageJson } from "./helpers/packTester"
-import { getElectronCacheDir } from "./helpers/testConfig"
-import { expectUpdateMetadata } from "./helpers/winHelper"
+import { assertThat } from "./helpers/fileAssert.js"
+import { app, assertPack, linuxDirTarget, modifyPackageJson } from "./helpers/packTester.js"
+import { getElectronCacheDir } from "./helpers/testConfig.js"
+import { expectUpdateMetadata } from "./helpers/winHelper.js"
 import { ExpectStatic } from "vitest"
 
 function createBuildResourcesTest(expect: ExpectStatic, packagerOptions: PackagerOptions) {

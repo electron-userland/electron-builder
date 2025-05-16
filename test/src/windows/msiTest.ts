@@ -1,6 +1,6 @@
 import { Platform } from "electron-builder"
 import * as fs from "fs"
-import { app } from "../helpers/packTester"
+import { app } from "../helpers/packTester.js"
 
 describe("msi", { sequential: true }, () => {
   test.ifDevOrWinCi("msi", ({ expect }) =>

@@ -1,15 +1,17 @@
 {
+  "extends": "@tsconfig/node22/tsconfig.json",
   "compilerOptions": {
-    "target": "es2019",
-    "module": "CommonJS",
-    "esModuleInterop": false,
+    "lib": [
+      "esnext",
+      "dom"
+    ],
     "forceConsistentCasingInFileNames": true,
-    "moduleResolution": "node",
     "skipLibCheck": true,
-    "strict": true,
     "noUnusedLocals": true,
     "noFallthroughCasesInSwitch": true,
     "noImplicitReturns": true,
+
+    "declaration": true,
 
     "inlineSources": true,
     "sourceMap": true,
