@@ -31,7 +31,7 @@ export abstract class LinuxUpdater extends BaseUpdater {
     }
     // pkexec doesn't want the command to be wrapped in " quotes
     const wrapper = /pkexec/i.test(sudo[0]) ? "" : `"`
-    return this.spawnSyncLog(sudo[0], [...sudo.slice(1), `${wrapper}/bin/bash`, "-c", `'${commandWithArgs.join(" ")}'${wrapper}`])
+    return this.spawnSyncLog(sudo[0], [...(sudo.length > 1 ? sudo.slice(1) : []), `${wrapper}/bin/bash`, "-c", `'${commandWithArgs.join(" ")}'${wrapper}`])
   }
 
   protected sudoWithArgs(installComment: string): string[] {
