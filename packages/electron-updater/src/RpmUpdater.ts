@@ -1,11 +1,12 @@
 import { AllPublishOptions } from "builder-util-runtime"
 import { AppAdapter } from "./AppAdapter"
 import { DownloadUpdateOptions } from "./AppUpdater"
-import { BaseUpdater, InstallOptions } from "./BaseUpdater"
+import { InstallOptions } from "./BaseUpdater"
 import { DOWNLOAD_PROGRESS } from "./types"
 import { findFile } from "./providers/Provider"
+import { LinuxUpdater } from "./LinuxUpdater"
 
-export class RpmUpdater extends BaseUpdater {
+export class RpmUpdater extends LinuxUpdater {
   constructor(options?: AllPublishOptions | null, app?: AppAdapter) {
     super(options, app)
   }
@@ -62,10 +63,10 @@ export class RpmUpdater extends BaseUpdater {
       // due to missing dependencies.
       // This is not a perfect solution, but it should work in most cases.
       this._logger.warn("rpm installation failed, trying to fix broken dependencies with apt-get")
-      this.runCommandWithSudoIfNeeded(["apt", "install", "-y", installerPath])
+      return runInstallationCommand(["apt", "install", "-y", installerPath])
     }
-
-    this.dispatchError(new Error("No supported package manager available, can't quit and install. Please install zypper or dnf/yum"))
+    // If no supported package manager is found, log an error and return false
+    this.dispatchError(new Error(`Package manager ${packageManager} not supported`))
     return false
   }
 }

@@ -1,11 +1,12 @@
 import { AllPublishOptions } from "builder-util-runtime"
 import { AppAdapter } from "./AppAdapter"
 import { DownloadUpdateOptions } from "./AppUpdater"
-import { BaseUpdater, InstallOptions } from "./BaseUpdater"
+import { InstallOptions } from "./BaseUpdater"
 import { findFile } from "./providers/Provider"
 import { DOWNLOAD_PROGRESS } from "./types"
+import { LinuxUpdater } from "./LinuxUpdater"
 
-export class DebUpdater extends BaseUpdater {
+export class DebUpdater extends LinuxUpdater {
   constructor(options?: AllPublishOptions | null, app?: AppAdapter) {
     super(options, app)
   }

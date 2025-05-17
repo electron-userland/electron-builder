@@ -11,14 +11,6 @@ export abstract class BaseUpdater extends AppUpdater {
     super(options, app)
   }
 
-  /**
-   * Returns true if the current process is running as root.
-   * (linux only)
-   */
-  protected isRunningAsRoot(): boolean {
-    return process.getuid?.() === 0
-  }
-
   quitAndInstall(isSilent = false, isForceRunAfter = false): void {
     this._logger.info(`Install on explicit quitAndInstall`)
     // If NOT in silent mode use `autoRunAppAfterInstall` to determine whether to force run the app
@@ -109,69 +101,6 @@ export abstract class BaseUpdater extends AppUpdater {
       this._logger.info("Auto install update on quit")
       this.install(true, false)
     })
-  }
-
-  protected runCommandWithSudoIfNeeded(commandWithArgs: string[]) {
-    if (this.isRunningAsRoot()) {
-      this._logger.info("Running as root, no need to use sudo")
-      return this.spawnSyncLog(commandWithArgs[0], commandWithArgs.slice(1))
-    }
-
-    const { name } = this.app
-    const installComment = `"${name} would like to update"`
-    let sudo: string[]
-    if (process.env.CI) {
-      sudo = ["sudo"]
-    } else {
-      sudo = this.sudoWithArgs(installComment)
-      this._logger.info(`Running as non-root user, using sudo to install: ${sudo}`)
-    }
-    // pkexec doesn't want the command to be wrapped in " quotes
-    const wrapper = /pkexec/i.test(sudo[0]) ? "" : `"`
-    return this.spawnSyncLog(sudo[0], [...sudo.slice(1), `${wrapper}/bin/bash`, "-c", `'${commandWithArgs.join(" ")}'${wrapper}`])
-  }
-
-  protected sudoWithArgs(installComment: string): string[] {
-    const sudo = this.spawnSyncLog("which gksudo || which kdesudo || which pkexec || which beesu")
-    const command = [sudo]
-    if (/kdesudo/i.test(sudo)) {
-      command.push("--comment", installComment)
-      command.push("-c")
-    } else if (/gksudo/i.test(sudo)) {
-      command.push("--message", installComment)
-    } else if (/pkexec/i.test(sudo)) {
-      command.push("--disable-internal-agent")
-    }
-    return command
-  }
-
-  protected hasCommand(cmd: string): boolean {
-    try {
-      this.spawnSyncLog(`command`, ["-v", cmd])
-      return true
-    } catch {
-      return false
-    }
-  }
-
-  protected detectPackageManager(): string {
-    const pms = [
-      // RPM
-      "zypper",
-      "dnf",
-      "yum",
-      // Arch
-      "pacman",
-      // Debian/Ubuntu
-      "apt",
-      "dpkg",
-    ]
-    for (const pm of pms) {
-      if (this.hasCommand(pm)) {
-        return pm
-      }
-    }
-    return "unknown"
   }
 
   protected spawnSyncLog(cmd: string, args: string[] = [], env = {}): string {
