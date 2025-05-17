@@ -76,6 +76,9 @@ export function tuneTestUpdater(updater: AppUpdater, options?: TestOnlyUpdaterOp
     ...options,
   }
   updater.logger = new NoOpLogger()
+  updater.logger.error = (message) => {
+    console.error(message)
+  }
 }
 
 export function trackEvents(updater: AppUpdater) {
