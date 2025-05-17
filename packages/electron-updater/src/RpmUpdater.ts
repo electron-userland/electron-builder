@@ -46,23 +46,25 @@ export class RpmUpdater extends BaseUpdater {
       return true
     }
 
-    try {
-      const packageManager = this.spawnSyncLog("which zypper")
-      if (packageManager) {
-        return runInstallationCommand([packageManager, "--no-refresh", "install", "--allow-unsigned-rpm", "-y", "-f", installerPath])
-      }
-    } catch (_error) {
-      // ignore, already logged
-      // fallback to dnf/yum
+    const packageManager = this.detectPackageManager()
+    if (packageManager === "rpm") {
+      return runInstallationCommand(["rpm", "-U", "--replacepkgs", "--replacefiles", "--nodeps", installerPath])
+    } else if (packageManager === "dnf") {
+      return runInstallationCommand(["dnf", "install", "-y", "--best", "--allowerasing", installerPath])
+    } else if (packageManager === "yum") {
+      return runInstallationCommand(["yum", "install", "-y", "--best", "--allowerasing", installerPath])
+    } else if (packageManager === "zypper") {
+      return runInstallationCommand(["zypper", "--no-refresh", "install", "--allow-unsigned-rpm", "-y", "-f", installerPath])
+    } else if (packageManager === "apt") {
+      // apt is not a supported package manager for rpm files, but some systems have it installed
+      // and it can be used to install rpm files
+      // this is a workaround for the case when rpm fails to install the package
+      // due to missing dependencies.
+      // This is not a perfect solution, but it should work in most cases.
+      this._logger.warn("rpm installation failed, trying to fix broken dependencies with apt-get")
+      this.runCommandWithSudoIfNeeded(["apt", "install", "-y", installerPath])
     }
-    try {
-      const packageManager = this.spawnSyncLog("which dnf || which yum")
-      if (packageManager) {
-        return runInstallationCommand([packageManager, "-y", "install", installerPath])
-      }
-    } catch (_error) {
-      // ignore, already logged
-    }
+
     this.dispatchError(new Error("No supported package manager available, can't quit and install. Please install zypper or dnf/yum"))
     return false
   }

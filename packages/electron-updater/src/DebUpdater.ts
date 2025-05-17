@@ -37,7 +37,26 @@ export class DebUpdater extends BaseUpdater {
       this.dispatchError(new Error("No valid update available, can't quit and install"))
       return false
     }
-    this.runCommandWithSudoIfNeeded(["dpkg", "-i", installerPath, "||", "apt-get", "install", "-f", "-y"])
+    const packageManager = this.detectPackageManager()
+    if (packageManager === "apt") {
+      this.runCommandWithSudoIfNeeded(["apt", "install", "-y", installerPath])
+    } else if (packageManager === "dpkg") {
+      try {
+        this.runCommandWithSudoIfNeeded(["dpkg", "-i", installerPath])
+      } catch (error: any) {
+        // If the installation fails, try to fix broken dependencies
+        // by running apt-get install -f -y
+        // This is a workaround for the case when dpkg fails to install the package
+        // due to missing dependencies.
+        // This is not a perfect solution, but it should work in most cases.
+        this._logger.warn("dpkg installation failed, trying to fix broken dependencies with apt-get")
+        this._logger.warn(error.message ?? error)
+        this.runCommandWithSudoIfNeeded(["dpkg", "-i", installerPath, "||", "apt-get", "install", "-f", "-y"])
+      }
+    } else {
+      this._logger.error(`Package manager ${packageManager} not supported`)
+      return false
+    }
     if (options.isForceRunAfter) {
       this.app.relaunch()
     }

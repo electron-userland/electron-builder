@@ -145,6 +145,35 @@ export abstract class BaseUpdater extends AppUpdater {
     return command
   }
 
+  protected hasCommand(cmd: string): boolean {
+    try {
+      this.spawnSyncLog(`command`, ["-v", cmd])
+      return true
+    } catch {
+      return false
+    }
+  }
+
+  protected detectPackageManager(): string {
+    const pms = [
+      // RPM
+      "zypper",
+      "dnf",
+      "yum",
+      // Arch
+      "pacman",
+      // Debian/Ubuntu
+      "apt",
+      "dpkg",
+    ]
+    for (const pm of pms) {
+      if (this.hasCommand(pm)) {
+        return pm
+      }
+    }
+    return "unknown"
+  }
+
   protected spawnSyncLog(cmd: string, args: string[] = [], env = {}): string {
     this._logger.info(`Executing: ${cmd} with args: ${args}`)
     const response = spawnSync(cmd, args, {
