@@ -3,7 +3,7 @@ import { DebUpdater, PacmanUpdater, RpmUpdater } from "electron-updater"
 import { assertThat } from "../helpers/fileAssert"
 import { createTestAppAdapter, tuneTestUpdater, validateDownload, writeUpdateConfig } from "../helpers/updaterTestUtil"
 import { ExpectStatic } from "vitest"
-import { execSync, spawnSync } from "child_process"
+import { execSync } from "child_process"
 
 const runTest = async (expect: ExpectStatic, updaterClass: any, expectedExtension: "deb" | "rpm" | "AppImage" | "pacman") => {
   const testAppAdapter = await createTestAppAdapter("1.0.1")
