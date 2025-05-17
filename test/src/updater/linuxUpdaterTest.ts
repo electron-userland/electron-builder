@@ -30,7 +30,7 @@ const runTest = async (expect: ExpectStatic, updaterClass: any, expectedExtensio
 
 test.ifEnv(
   (() => {
-    const isCentos = spawnSync(`grep -q -i "centos" /etc/os-release`).status === 0
+    const isCentos = spawnSync(`grep -q -i "fedora" /etc/os-release`).status === 0
     console.error("isCentos", isCentos)
     return isCentos
   })()

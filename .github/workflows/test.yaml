@@ -159,12 +159,33 @@ jobs:
           docker build --platform=linux/amd64 -f ./test/src/updater/Dockerfile-rpm . -t rpm-updater-test
           TEST_RUNNER_IMAGE_TAG=rpm-updater-test TEST_FILES=linuxUpdaterTest pnpm test-linux
         env:
-          TEST_FILES: nsisUpdaterTest,linuxUpdaterTest,PublishManagerTest,differentialUpdateTest
+          TEST_FILES: nsisUpdaterTest,PublishManagerTest,differentialUpdateTest
           KEYGEN_TOKEN: ${{ secrets.KEYGEN_TOKEN }}
           BITBUCKET_TOKEN: ${{ secrets.BITBUCKET_TOKEN }}
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
           FORCE_COLOR: 1
           TEST_RUNNER_IMAGE_TAG: electronuserland/builder:${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}-wine-mono
+
+      - name: Test Linux Updater (archlinux)
+        run: |
+          docker build --platform=linux/amd64 -f ./test/src/updater/Dockerfile-archlinux . -t archlinux-updater-test
+          TEST_RUNNER_IMAGE_TAG=archlinux-updater-test TEST_FILES=linuxUpdaterTest pnpm test-linux
+        env:
+          TEST_FILES: linuxUpdaterTest
+
+      - name: Test Linux Updater (rpm)
+        run: |
+          docker build --platform=linux/amd64 -f ./test/src/updater/Dockerfile-rpm . -t rpm-updater-test
+          TEST_RUNNER_IMAGE_TAG=rpm-updater-test TEST_FILES=linuxUpdaterTest pnpm test-linux
+        env:
+          TEST_FILES: linuxUpdaterTest
+
+      - name: Test Linux Updater (debian)
+        run: |
+          docker build --platform=linux/amd64 -f ./test/src/updater/Dockerfile-debian . -t debian-updater-test
+          TEST_RUNNER_IMAGE_TAG=debian-updater-test TEST_FILES=linuxUpdaterTest pnpm test-linux
+        env:
+          TEST_FILES: linuxUpdaterTest
 
       - name: Verify Docs Generation
         run: pnpm generate-all
