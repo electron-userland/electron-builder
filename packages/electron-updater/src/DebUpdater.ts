@@ -1,11 +1,12 @@
 import { AllPublishOptions } from "builder-util-runtime"
 import { AppAdapter } from "./AppAdapter"
 import { DownloadUpdateOptions } from "./AppUpdater"
-import { BaseUpdater, InstallOptions } from "./BaseUpdater"
+import { InstallOptions } from "./BaseUpdater"
 import { findFile } from "./providers/Provider"
 import { DOWNLOAD_PROGRESS } from "./types"
+import { LinuxUpdater } from "./LinuxUpdater"
 
-export class DebUpdater extends BaseUpdater {
+export class DebUpdater extends LinuxUpdater {
   constructor(options?: AllPublishOptions | null, app?: AppAdapter) {
     super(options, app)
   }
@@ -32,16 +33,31 @@ export class DebUpdater extends BaseUpdater {
   }
 
   protected doInstall(options: InstallOptions): boolean {
-    const sudo = this.wrapSudo()
-    // pkexec doesn't want the command to be wrapped in " quotes
-    const wrapper = /pkexec/i.test(sudo) ? "" : `"`
     const installerPath = this.installerPath
     if (installerPath == null) {
       this.dispatchError(new Error("No valid update available, can't quit and install"))
       return false
     }
-    const cmd = ["dpkg", "-i", installerPath, "||", "apt-get", "install", "-f", "-y"]
-    this.spawnSyncLog(sudo, [`${wrapper}/bin/bash`, "-c", `'${cmd.join(" ")}'${wrapper}`])
+    const packageManager = this.detectPackageManager()
+    if (packageManager === "apt") {
+      this.runCommandWithSudoIfNeeded(["apt", "install", "-y", installerPath])
+    } else if (packageManager === "dpkg") {
+      try {
+        this.runCommandWithSudoIfNeeded(["dpkg", "-i", installerPath])
+      } catch (error: any) {
+        // If the installation fails, try to fix broken dependencies
+        // by running apt-get install -f -y
+        // This is a workaround for the case when dpkg fails to install the package
+        // due to missing dependencies.
+        // This is not a perfect solution, but it should work in most cases.
+        this._logger.warn("dpkg installation failed, trying to fix broken dependencies with apt-get")
+        this._logger.warn(error.message ?? error)
+        this.runCommandWithSudoIfNeeded(["dpkg", "-i", installerPath, "||", "apt-get", "install", "-f", "-y"])
+      }
+    } else {
+      this._logger.error(`Package manager ${packageManager} not supported`)
+      return false
+    }
     if (options.isForceRunAfter) {
       this.app.relaunch()
     }

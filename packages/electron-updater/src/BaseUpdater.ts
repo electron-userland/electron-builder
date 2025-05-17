@@ -103,22 +103,6 @@ export abstract class BaseUpdater extends AppUpdater {
     })
   }
 
-  protected wrapSudo() {
-    const { name } = this.app
-    const installComment = `"${name} would like to update"`
-    const sudo = this.spawnSyncLog("which gksudo || which kdesudo || which pkexec || which beesu")
-    const command = [sudo]
-    if (/kdesudo/i.test(sudo)) {
-      command.push("--comment", installComment)
-      command.push("-c")
-    } else if (/gksudo/i.test(sudo)) {
-      command.push("--message", installComment)
-    } else if (/pkexec/i.test(sudo)) {
-      command.push("--disable-internal-agent")
-    }
-    return command.join(" ")
-  }
-
   protected spawnSyncLog(cmd: string, args: string[] = [], env = {}): string {
     this._logger.info(`Executing: ${cmd} with args: ${args}`)
     const response = spawnSync(cmd, args, {

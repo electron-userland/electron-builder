@@ -1,11 +1,12 @@
 import { AllPublishOptions } from "builder-util-runtime"
 import { AppAdapter } from "./AppAdapter"
 import { DownloadUpdateOptions } from "./AppUpdater"
-import { BaseUpdater, InstallOptions } from "./BaseUpdater"
+import { InstallOptions } from "./BaseUpdater"
 import { DOWNLOAD_PROGRESS } from "./types"
 import { findFile } from "./providers/Provider"
+import { LinuxUpdater } from "./LinuxUpdater"
 
-export class PacmanUpdater extends BaseUpdater {
+export class PacmanUpdater extends LinuxUpdater {
   constructor(options?: AllPublishOptions | null, app?: AppAdapter) {
     super(options, app)
   }
@@ -32,18 +33,14 @@ export class PacmanUpdater extends BaseUpdater {
   }
 
   protected doInstall(options: InstallOptions): boolean {
-    const sudo = this.wrapSudo()
-    // pkexec doesn't want the command to be wrapped in " quotes
-    const wrapper = /pkexec/i.test(sudo) ? "" : `"`
     const installerPath = this.installerPath
     if (installerPath == null) {
       this.dispatchError(new Error("No valid update available, can't quit and install"))
       return false
     }
-    const cmd = ["pacman", "-U", "--noconfirm", installerPath]
-    this.spawnSyncLog(sudo, [`${wrapper}/bin/bash`, "-c", `'${cmd.join(" ")}'${wrapper}`])
+    this.runCommandWithSudoIfNeeded(["pacman", "-U", "--noconfirm", installerPath])
     if (options.isForceRunAfter) {
-      this.app.relaunch()
+      this.app.relaunch() // note: `app` is undefined in tests since vite doesn't run in electron
     }
     return true
   }

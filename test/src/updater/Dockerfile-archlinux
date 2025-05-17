@@ -1,0 +1,7 @@
+FROM archlinux:latest
+
+RUN pacman -Sy --noconfirm nodejs npm
+
+RUN npm --silent install --global --depth 0 pnpm
+
+WORKDIR /project

@@ -3,6 +3,7 @@ import { DebUpdater, PacmanUpdater, RpmUpdater } from "electron-updater"
 import { assertThat } from "../helpers/fileAssert"
 import { createTestAppAdapter, tuneTestUpdater, validateDownload, writeUpdateConfig } from "../helpers/updaterTestUtil"
 import { ExpectStatic } from "vitest"
+import { execSync, spawnSync } from "child_process"
 
 const runTest = async (expect: ExpectStatic, updaterClass: any, expectedExtension: "deb" | "rpm" | "AppImage" | "pacman") => {
   const testAppAdapter = await createTestAppAdapter("1.0.1")
@@ -23,18 +24,23 @@ const runTest = async (expect: ExpectStatic, updaterClass: any, expectedExtensio
   expect(installer.endsWith(`.${expectedExtension}`)).toBeTruthy()
   await assertThat(expect, installer).isFile()
 
-  // updater.quitAndInstall(true, false)
+  const didUpdate = updater.install(true, false)
+  expect(didUpdate).toBeTruthy()
 }
 
-test("test rpm download", async ({ expect }) => {
+const determineEnvironment = (target: string) => {
+  return execSync(`cat /etc/*release | grep "^ID="`).toString().includes(target)
+}
+
+test.ifEnv((() => determineEnvironment("fedora"))())("test rpm download", async ({ expect }) => {
   await runTest(expect, RpmUpdater, "rpm")
 })
 
-test("test pacman download", async ({ expect }) => {
+test.ifEnv((() => determineEnvironment("arch"))())("test pacman download and install", async ({ expect }) => {
   await runTest(expect, PacmanUpdater, "pacman")
 })
 
-test("test deb download", async ({ expect }) => {
+test.ifEnv((() => determineEnvironment("debian"))())("test debian download and install", async ({ expect }) => {
   await runTest(expect, DebUpdater, "deb")
 })
 

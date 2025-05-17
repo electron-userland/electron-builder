@@ -1,0 +1,10 @@
+FROM debian:bookworm-slim
+# Update package lists and install necessary packages
+RUN apt-get update && apt-get install -y curl gnupg
+# Download and install Node.js
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+RUN apt-get install -y nodejs
+
+RUN npm --silent install --global --depth 0 pnpm
+
+WORKDIR /project

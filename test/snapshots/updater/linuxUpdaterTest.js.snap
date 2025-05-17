@@ -1,6 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`test deb download 1`] = `
+exports[`test debian download and install 1`] = `
 {
   "files": [
     {
@@ -35,7 +35,7 @@ exports[`test deb download 1`] = `
 }
 `;
 
-exports[`test deb download 2`] = `
+exports[`test debian download and install 2`] = `
 [
   "checking-for-update",
   "update-available",
@@ -43,7 +43,7 @@ exports[`test deb download 2`] = `
 ]
 `;
 
-exports[`test pacman download 1`] = `
+exports[`test pacman download and install 1`] = `
 {
   "files": [
     {
@@ -78,7 +78,7 @@ exports[`test pacman download 1`] = `
 }
 `;
 
-exports[`test pacman download 2`] = `
+exports[`test pacman download and install 2`] = `
 [
   "checking-for-update",
   "update-available",

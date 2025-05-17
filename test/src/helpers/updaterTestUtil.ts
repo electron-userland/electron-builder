@@ -75,7 +75,7 @@ export function tuneTestUpdater(updater: AppUpdater, options?: TestOnlyUpdaterOp
     platform: "win32",
     ...options,
   }
-  updater.logger = new NoOpLogger()
+  updater.logger = console
 }
 
 export function trackEvents(updater: AppUpdater) {
