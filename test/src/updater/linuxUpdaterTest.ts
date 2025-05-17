@@ -23,7 +23,7 @@ const runTest = async (expect: ExpectStatic, updaterClass: any, expectedExtensio
   expect(installer.endsWith(`.${expectedExtension}`)).toBeTruthy()
   await assertThat(expect, installer).isFile()
 
-  // updater.quitAndInstall(true, false)
+  updater.quitAndInstall(true, false)
 }
 
 test("test rpm download", async ({ expect }) => {

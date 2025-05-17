@@ -10,6 +10,13 @@ export class RpmUpdater extends BaseUpdater {
     super(options, app)
   }
 
+  /**
+   * Returns true if the current process is running as root.
+   */
+  protected isRunningAsRoot(): boolean {
+    return process.getuid?.() === 0
+  }
+
   /*** @private */
   protected doDownloadUpdate(downloadUpdateOptions: DownloadUpdateOptions): Promise<Array<string>> {
     const provider = downloadUpdateOptions.updateInfoAndProvider.provider
@@ -38,19 +45,25 @@ export class RpmUpdater extends BaseUpdater {
       return false
     }
 
-    const sudo = this.wrapSudo()
-    // pkexec doesn't want the command to be wrapped in " quotes
-    const wrapper = /pkexec/i.test(sudo) ? "" : `"`
+    const runInstallationCommand = (cmd: string[]) => {
+      if (this.isRunningAsRoot()) {
+        this.spawnSyncLog(cmd[0], cmd.slice(1))
+      } else {
+        const sudo = this.wrapSudo()
+        // pkexec doesn't want the command to be wrapped in " quotes
+        const wrapper = /pkexec/i.test(sudo) ? "" : `"`
+        this.spawnSyncLog(sudo, [`${wrapper}/bin/bash`, "-c", `'${cmd.join(" ")}'${wrapper}`])
+      }
+      if (options.isForceRunAfter) {
+        this.app.relaunch()
+      }
+      return true
+    }
 
     try {
       const packageManager = this.spawnSyncLog("which zypper")
       if (packageManager) {
-        const cmd = [packageManager, "--no-refresh", "install", "--allow-unsigned-rpm", "-y", "-f", installerPath]
-        this.spawnSyncLog(sudo, [`${wrapper}/bin/bash`, "-c", `'${cmd.join(" ")}'${wrapper}`])
-        if (options.isForceRunAfter) {
-          this.app.relaunch()
-        }
-        return true
+        return runInstallationCommand([packageManager, "--no-refresh", "install", "--allow-unsigned-rpm", "-y", "-f", installerPath])
       }
     } catch (_error) {
       // ignore, already logged
@@ -59,18 +72,12 @@ export class RpmUpdater extends BaseUpdater {
     try {
       const packageManager = this.spawnSyncLog("which dnf || which yum")
       if (packageManager) {
-        const cmd = [packageManager, "-y", "install", installerPath]
-        this.spawnSyncLog(sudo, [`${wrapper}/bin/bash`, "-c", `'${cmd.join(" ")}'${wrapper}`])
-        if (options.isForceRunAfter) {
-          this.app.relaunch()
-        }
-        return true
+        return runInstallationCommand([packageManager, "-y", "install", installerPath])
       }
     } catch (_error) {
       // ignore, already logged
     }
     this.dispatchError(new Error("No supported package manager available, can't quit and install. Please install zypper or dnf/yum"))
     return false
-
   }
 }
