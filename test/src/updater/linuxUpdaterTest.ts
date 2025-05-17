@@ -29,7 +29,7 @@ const runTest = async (expect: ExpectStatic, updaterClass: any, expectedExtensio
 }
 
 const determineEnvironment = (target: string) => {
-  return spawnSync(`cat /etc/*release | grep "^ID="`).stdout.includes(target)
+  return spawnSync(`cat /etc/*release | grep "^ID="`).stdout.toString().includes(target)
 }
 
 test.ifEnv(
