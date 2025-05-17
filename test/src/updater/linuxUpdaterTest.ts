@@ -28,11 +28,15 @@ const runTest = async (expect: ExpectStatic, updaterClass: any, expectedExtensio
   expect(didUpdate).toBeTruthy()
 }
 
+const determineEnvironment = (target: string) => {
+  return spawnSync(`cat /etc/*release | grep "^ID="`).stdout.includes(target)
+}
+
 test.ifEnv(
   (() => {
-    const isCentos = spawnSync(`grep -q -i "fedora" /etc/os-release`).status === 0
-    console.error("isCentos", isCentos)
-    return isCentos
+    const fedora = determineEnvironment("fedora")
+    console.error("fedora", fedora)
+    return fedora
   })()
 )("test rpm download", async ({ expect }) => {
   await runTest(expect, RpmUpdater, "rpm")
@@ -40,7 +44,7 @@ test.ifEnv(
 
 test.ifEnv(
   (() => {
-    const isArchLinux = spawnSync(`grep -q -i "archlinux" /etc/os-release`).status === 0
+    const isArchLinux = determineEnvironment("arch")
     console.error("isArchLinux", isArchLinux)
     return isArchLinux
   })()
@@ -50,7 +54,7 @@ test.ifEnv(
 
 test.ifEnv(
   (() => {
-    const isDeb = spawnSync(`grep -q -i "debian" /etc/os-release`).status === 0
+    const isDeb = determineEnvironment("debian")
     console.error("isDeb", isDeb)
     return isDeb
   })()
