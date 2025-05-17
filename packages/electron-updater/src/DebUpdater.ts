@@ -35,7 +35,7 @@ export class DebUpdater extends LinuxUpdater {
   protected doInstall(options: InstallOptions): boolean {
     const installerPath = this.installerPath
     if (installerPath == null) {
-      this.dispatchError(new Error("No valid update available, can't quit and install"))
+      this.dispatchError(new Error("No update filepath provided, can't quit and install"))
       return false
     }
     const packageManager = this.detectPackageManager()
@@ -45,17 +45,13 @@ export class DebUpdater extends LinuxUpdater {
       try {
         this.runCommandWithSudoIfNeeded(["dpkg", "-i", installerPath])
       } catch (error: any) {
-        // If the installation fails, try to fix broken dependencies
-        // by running apt-get install -f -y
-        // This is a workaround for the case when dpkg fails to install the package
-        // due to missing dependencies.
-        // This is not a perfect solution, but it should work in most cases.
+        // If dpkg fails, try to fix broken dependencies
         this._logger.warn("dpkg installation failed, trying to fix broken dependencies with apt-get")
         this._logger.warn(error.message ?? error)
-        this.runCommandWithSudoIfNeeded(["dpkg", "-i", installerPath, "||", "apt-get", "install", "-f", "-y"])
+        this.runCommandWithSudoIfNeeded(["apt-get", "install", "-f", "-y"])
       }
     } else {
-      this._logger.error(`Package manager ${packageManager} not supported`)
+      this.dispatchError(new Error(`Package manager ${packageManager} not supported`))
       return false
     }
     if (options.isForceRunAfter) {

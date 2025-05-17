@@ -55,7 +55,7 @@ export abstract class BaseUpdater extends AppUpdater {
     const installerPath = this.installerPath
     const downloadedFileInfo = downloadedUpdateHelper == null ? null : downloadedUpdateHelper.downloadedFileInfo
     if (installerPath == null || downloadedFileInfo == null) {
-      this.dispatchError(new Error("No valid update available, can't quit and install"))
+      this.dispatchError(new Error("No update filepath provided, can't quit and install"))
       return false
     }
 
