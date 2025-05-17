@@ -11,6 +11,14 @@ export abstract class BaseUpdater extends AppUpdater {
     super(options, app)
   }
 
+  /**
+   * Returns true if the current process is running as root.
+   * (linux only)
+   */
+  protected isRunningAsRoot(): boolean {
+    return process.getuid?.() === 0
+  }
+
   quitAndInstall(isSilent = false, isForceRunAfter = false): void {
     this._logger.info(`Install on explicit quitAndInstall`)
     // If NOT in silent mode use `autoRunAppAfterInstall` to determine whether to force run the app
@@ -103,9 +111,27 @@ export abstract class BaseUpdater extends AppUpdater {
     })
   }
 
-  protected wrapSudo() {
+  protected runCommandWithSudoIfNeeded(commandWithArgs: string[]) {
+    if (this.isRunningAsRoot()) {
+      this._logger.info("Running as root, no need to use sudo")
+      return this.spawnSyncLog(commandWithArgs[0], commandWithArgs.slice(1))
+    }
+
     const { name } = this.app
     const installComment = `"${name} would like to update"`
+    let sudo: string[]
+    if (process.env.CI) {
+      sudo = ["sudo"]
+    } else {
+      sudo = this.sudoWithArgs(installComment)
+      this._logger.info(`Running as non-root user, using sudo to install: ${sudo}`)
+    }
+    // pkexec doesn't want the command to be wrapped in " quotes
+    const wrapper = /pkexec/i.test(sudo[0]) ? "" : `"`
+    return this.spawnSyncLog(sudo[0], [...sudo.slice(1), `${wrapper}/bin/bash`, "-c", `'${commandWithArgs.join(" ")}'${wrapper}`])
+  }
+
+  protected sudoWithArgs(installComment: string): string[] {
     const sudo = this.spawnSyncLog("which gksudo || which kdesudo || which pkexec || which beesu")
     const command = [sudo]
     if (/kdesudo/i.test(sudo)) {
@@ -116,7 +142,7 @@ export abstract class BaseUpdater extends AppUpdater {
     } else if (/pkexec/i.test(sudo)) {
       command.push("--disable-internal-agent")
     }
-    return command.join(" ")
+    return command
   }
 
   protected spawnSyncLog(cmd: string, args: string[] = [], env = {}): string {

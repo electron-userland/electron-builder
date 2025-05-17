@@ -2,19 +2,18 @@ name: Test
 
 on:
   push:
-    branches:
-      master
+    branches: master
   pull_request:
   workflow_dispatch: # Allows you to run this workflow manually from the Actions tab
     inputs:
       rebuild-docker-images:
-        description: 'Rebuild all Docker images'
+        description: "Rebuild all Docker images"
         default: false
-        type: 'boolean'
+        type: "boolean"
   workflow_call: # Allow this workflow to be called from other workflows
     inputs:
       rebuild-docker-images-call:
-        description: 'Rebuild all Docker images'
+        description: "Rebuild all Docker images"
         required: true
         type: boolean
 
@@ -145,10 +144,20 @@ jobs:
           docker image load --input ${{ runner.temp }}/electron-builder-all-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}.tar
           docker image ls -a
 
+      - name: Lint
+        run: pnpm pretest
+
       - name: Test
         run: |
           echo $TEST_RUNNER_IMAGE_TAG
           pnpm test-linux
+
+          docker build --platform=linux/amd64 -f ./test/src/updater/Dockerfile-archlinux . -t archlinux-updater-test
+          TEST_RUNNER_IMAGE_TAG=archlinux-updater-test TEST_FILES=linuxUpdaterTest pnpm test-linux
+          docker build --platform=linux/amd64 -f ./test/src/updater/Dockerfile-debian . -t debian-updater-test
+          TEST_RUNNER_IMAGE_TAG=debian-updater-test TEST_FILES=linuxUpdaterTest pnpm test-linux
+          docker build --platform=linux/amd64 -f ./test/src/updater/Dockerfile-rpm . -t rpm-updater-test
+          TEST_RUNNER_IMAGE_TAG=rpm-updater-test TEST_FILES=linuxUpdaterTest pnpm test-linux
         env:
           TEST_FILES: nsisUpdaterTest,linuxUpdaterTest,PublishManagerTest,differentialUpdateTest
           KEYGEN_TOKEN: ${{ secrets.KEYGEN_TOKEN }}

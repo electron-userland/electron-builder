@@ -10,13 +10,6 @@ export class RpmUpdater extends BaseUpdater {
     super(options, app)
   }
 
-  /**
-   * Returns true if the current process is running as root.
-   */
-  protected isRunningAsRoot(): boolean {
-    return process.getuid?.() === 0
-  }
-
   /*** @private */
   protected doDownloadUpdate(downloadUpdateOptions: DownloadUpdateOptions): Promise<Array<string>> {
     const provider = downloadUpdateOptions.updateInfoAndProvider.provider
@@ -46,14 +39,7 @@ export class RpmUpdater extends BaseUpdater {
     }
 
     const runInstallationCommand = (cmd: string[]) => {
-      if (this.isRunningAsRoot()) {
-        this.spawnSyncLog(cmd[0], cmd.slice(1))
-      } else {
-        const sudo = this.wrapSudo()
-        // pkexec doesn't want the command to be wrapped in " quotes
-        const wrapper = /pkexec/i.test(sudo) ? "" : `"`
-        this.spawnSyncLog(sudo, [`${wrapper}/bin/bash`, "-c", `'${cmd.join(" ")}'${wrapper}`])
-      }
+      this.runCommandWithSudoIfNeeded(cmd)
       if (options.isForceRunAfter) {
         this.app.relaunch()
       }
