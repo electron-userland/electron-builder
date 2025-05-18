@@ -38,14 +38,14 @@ export class LinuxPackager extends PlatformPackager<LinuxConfiguration> {
         continue
       }
 
-      const targetClass: typeof AppImageTarget | typeof SnapTarget | typeof FlatpakTarget | typeof FpmTarget = await (() => {
+      const targetClass: typeof AppImageTarget | typeof SnapTarget | typeof FlatpakTarget | typeof FpmTarget | null = await (() => {
         switch (name) {
           case "appimage":
-            return import("./targets/AppImageTarget.js")
+            return import("./targets/AppImageTarget.js").then(it => it.default)
           case "snap":
-            return import("./targets/snap.js")
+            return import("./targets/snap.js").then(it => it.default)
           case "flatpak":
-            return import("./targets/FlatpakTarget.js")
+            return import("./targets/FlatpakTarget.js").then(it => it.default)
           case "deb":
           case "rpm":
           case "sh":
@@ -53,11 +53,11 @@ export class LinuxPackager extends PlatformPackager<LinuxConfiguration> {
           case "pacman":
           case "apk":
           case "p5p":
-            return import("./targets/FpmTarget.js")
+            return import("./targets/FpmTarget.js").then(it => it.default)
           default:
             return null
         }
-      })()!.then(m => m.default)
+      })()
 
       mapper(name, outDir => {
         if (targetClass === null) {

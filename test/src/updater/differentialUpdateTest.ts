@@ -10,8 +10,7 @@ import { TmpDir } from "temp-file"
 import { TestAppAdapter } from "../helpers/TestAppAdapter.js"
 import { PackedContext, assertPack, removeUnstableProperties } from "../helpers/packTester.js"
 import { tuneTestUpdater, writeUpdateConfig } from "../helpers/updaterTestUtil.js"
-import { mockForNodeRequire } from "vitest-mock-commonjs"
-import { ExpectStatic } from "vitest"
+import { ExpectStatic, vitest } from "vitest"
 
 /*
 
@@ -208,8 +207,14 @@ async function testBlockMap(expect: ExpectStatic, oldDir: string, newDir: string
   // Mac uses electron's native autoUpdater to serve updates to, we mock here since electron API isn't available within jest runtime
   const mockNativeUpdater = new TestNativeUpdater()
 
-  mockForNodeRequire("electron", {
-    autoUpdater: mockNativeUpdater,
+  // mockForNodeRequire("electron", {
+  //   autoUpdater: mockNativeUpdater,
+  // })
+
+  vitest.mock("electron", () => {
+    return {
+      autoUpdater: mockNativeUpdater,
+    }
   })
 
   return await new Promise<void>((resolve, reject) => {
