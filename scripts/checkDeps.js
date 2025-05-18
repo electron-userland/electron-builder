@@ -13,6 +13,8 @@ const knownUnusedDevDependencies = new Set([
   "eslint-config-prettier",
   "eslint-plugin-prettier",
   "eslint-plugin-import",
+  "eslint-import-resolver-node",
+  "eslint-import-resolver-typescript",
   "@rollup/plugin-typescript",
   "@tsconfig/node22"
 ])
