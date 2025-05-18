@@ -49,6 +49,11 @@ export default [{
     },
 
     rules: {
+        "import/resolver": ["error", {
+            "typescript": {
+                "project": "./tsconfig.json"
+            }
+        }],
         "import/extensions": ["error", "ignorePackages", {
           "ts": "never",
           "js": "always"
