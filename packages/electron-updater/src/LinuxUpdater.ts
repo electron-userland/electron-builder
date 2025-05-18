@@ -67,18 +67,12 @@ export abstract class LinuxUpdater extends BaseUpdater {
     return "sudo"
   }
 
-  protected detectPackageManager(): string {
-    const pms = [
-      // RPM
-      "zypper",
-      "dnf",
-      "yum",
-      // Arch
-      "pacman",
-      // Debian/Ubuntu
-      "apt",
-      "dpkg",
-    ]
+  /**
+   * Detects the package manager to use based on the available commands.
+   * @param pms - An array of package manager commands to check for, in priority order.
+   * @returns The detected package manager command or "unknown" if none are found.
+   */
+  protected detectPackageManager(pms: string[]): string {
     for (const pm of pms) {
       if (this.hasCommand(pm)) {
         return pm

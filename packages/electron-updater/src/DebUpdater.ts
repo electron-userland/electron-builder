@@ -38,18 +38,31 @@ export class DebUpdater extends LinuxUpdater {
       this.dispatchError(new Error("No update filepath provided, can't quit and install"))
       return false
     }
-    const packageManager = this.detectPackageManager()
-    if (packageManager === "apt") {
-      this.runCommandWithSudoIfNeeded(["apt", "install", "-y", installerPath])
-    } else if (packageManager === "dpkg") {
+    const priorityList = ["dpkg", "apt"]
+    const packageManager = this.detectPackageManager(priorityList)
+
+    if (packageManager === "dpkg") {
       try {
+        // Primary: Install unsigned .deb directly with dpkg
         this.runCommandWithSudoIfNeeded(["dpkg", "-i", installerPath])
       } catch (error: any) {
-        // If dpkg fails, try to fix broken dependencies
+        // Handle missing dependencies via apt-get
         this._logger.warn("dpkg installation failed, trying to fix broken dependencies with apt-get")
         this._logger.warn(error.message ?? error)
         this.runCommandWithSudoIfNeeded(["apt-get", "install", "-f", "-y"])
       }
+    } else if (packageManager === "apt") {
+      // Fallback: Use apt for direct install (less safe for unsigned .deb)
+      this._logger.warn("Using apt to install a local .deb. This may fail for unsigned packages unless properly configured.")
+      this.runCommandWithSudoIfNeeded([
+        "apt",
+        "install",
+        "-y",
+        "--allow-unauthenticated", // needed for unsigned .debs
+        "--allow-downgrades", // allow lower version installs
+        "--allow-change-held-packages",
+        installerPath,
+      ])
     } else {
       this.dispatchError(new Error(`Package manager ${packageManager} not supported`))
       return false

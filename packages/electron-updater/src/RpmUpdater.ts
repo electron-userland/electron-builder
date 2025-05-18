@@ -47,16 +47,20 @@ export class RpmUpdater extends LinuxUpdater {
       return true
     }
 
-    const packageManager = this.detectPackageManager()
+    const priorityList = ["zypper", "dnf", "yum", "rpm"]
+    const packageManager = this.detectPackageManager(priorityList)
+    if (packageManager === "zypper") {
+      return runInstallationCommand(["zypper", "--non-interactive", "--no-refresh", "install", "--allow-unsigned-rpm", "-f", installerPath])
+    }
     if (packageManager === "dnf") {
-      return runInstallationCommand(["dnf", "install", "-y", "--best", "--allowerasing", installerPath]);
-    } else if (packageManager === "yum") {
-      return runInstallationCommand(["yum", "install", "-y", installerPath]);
-    } else if (packageManager === "zypper") {
-      return runInstallationCommand(["zypper", "--non-interactive", "--no-refresh", "install", "--allow-unsigned-rpm", "-f", installerPath]);
-    } else if (packageManager === "rpm") {
-      this._logger.warn("Installing with rpm only (no dependency resolution).");
-      return runInstallationCommand(["rpm", "-Uvh", "--replacepkgs", "--replacefiles", "--nodeps", installerPath]);
+      return runInstallationCommand(["dnf", "install", "--nogpgcheck", "-y", installerPath])
+    }
+    if (packageManager === "yum") {
+      return runInstallationCommand(["yum", "install", "--nogpgcheck", "-y", installerPath])
+    }
+    if (packageManager === "rpm") {
+      this._logger.warn("Installing with rpm only (no dependency resolution).")
+      return runInstallationCommand(["rpm", "-Uvh", "--replacepkgs", "--replacefiles", "--nodeps", installerPath])
     }
     // If no supported package manager is found, log an error and return false
     this.dispatchError(new Error(`Package manager ${packageManager} not supported`))
