@@ -16,7 +16,7 @@ export class ArchiveTarget extends Target {
     private readonly isWriteUpdateInfo = false
   ) {
     super(name)
-    this.options  = (this.packager.config as any)[this.name]
+    this.options = (this.packager.config as any)[this.name]
   }
 
   async build(appOutDir: string, arch: Arch): Promise<any> {

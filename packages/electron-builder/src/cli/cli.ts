@@ -5,14 +5,15 @@ import { loadEnv } from "app-builder-lib"
 import { nodeGypRebuild } from "app-builder-lib"
 import { ExecError, InvalidConfigurationError, log } from "builder-util"
 import chalk from "chalk"
-import { readJson } from "fs-extra"
-import * as isCi from "is-ci"
 import * as path from "path"
 import { build, configureBuildCommand, createYargs } from "../builder.js"
 import { configurePublishCommand, publish } from "../publish.js"
 import { createSelfSignedCert } from "./create-self-signed-cert.js"
 import { configureInstallAppDepsCommand, installAppDeps } from "./install-app-deps.js"
 import { start } from "./start.js"
+import updateNotifier from "update-notifier"
+
+import packageJson from "../../package.json" with { type: "json" }
 
 // tslint:disable:no-unused-expression
 void createYargs()
@@ -47,7 +48,7 @@ void createYargs()
 
 function wrap(task: (args: any) => Promise<any>) {
   return (args: any) => {
-    checkIsOutdated().catch((e: any) => log.warn({ error: e }, "cannot check updates"))
+    checkIsOutdated()
     loadEnv(path.join(process.cwd(), "electron-builder.env"))
       .then(() => task(args))
       .catch(error => {
@@ -59,21 +60,28 @@ function wrap(task: (args: any) => Promise<any>) {
         } else if (!(error instanceof ExecError) || !error.alreadyLogged) {
           log.error({ failedTask: task.name, stackTrace: error.stack }, error.message)
         }
+        const nextTagAvailable = checkIsOutdated("next", false)
+        if (nextTagAvailable != null) {
+          log.info(nextTagAvailable, `if experiencing issues, please consider trying ${chalk.bold("npm i electron-builder@next")}`)
+        }
       })
   }
 }
 
-async function checkIsOutdated() {
-  if (isCi || process.env.NO_UPDATE_NOTIFIER != null) {
-    return
+function checkIsOutdated(distTag = "latest", shouldNotify = true) {
+  if (process.env.NO_UPDATE_NOTIFIER != null) {
+    return null
   }
-
-  const pkg = await readJson(path.join(__dirname, "..", "..", "package.json"))
-  if (pkg.version === "0.0.0-semantic-release") {
-    return
+  try {
+    const notify = updateNotifier({ pkg: packageJson, distTag, shouldNotifyInNpmScript: true })
+    if (shouldNotify) {
+      notify.notify({ isGlobal: false, defer: false })
+    }
+    return notify.update
+  } catch (error: any) {
+    log.warn({ error: error.message ?? error }, "cannot check is update is available")
   }
-  const UpdateNotifier = require("simple-update-notifier")
-  await UpdateNotifier({ pkg })
+  return null
 }
 
 async function rebuildAppNativeCode(args: any) {

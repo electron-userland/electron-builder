@@ -11,6 +11,7 @@ import { findFile, Provider } from "./providers/Provider.js"
 import { unlink } from "fs-extra"
 import { verifySignature } from "./windowsExecutableCodeSignatureVerifier.js"
 import { URL } from "url"
+import { shell } from "electron"
 
 export class NsisUpdater extends BaseUpdater {
   /**
@@ -170,9 +171,7 @@ export class NsisUpdater extends BaseUpdater {
       if (errorCode === "UNKNOWN" || errorCode === "EACCES") {
         callUsingElevation()
       } else if (errorCode === "ENOENT") {
-        require("electron")
-          .shell.openPath(installerPath)
-          .catch((err: Error) => this.dispatchError(err))
+        shell.openPath(installerPath).catch((err: Error) => this.dispatchError(err))
       } else {
         this.dispatchError(e)
       }

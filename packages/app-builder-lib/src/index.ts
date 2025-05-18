@@ -71,7 +71,7 @@ export { WinPackager } from "./winPackager.js"
 export { findIdentity, isSignAllowed } from "./codeSign/macCodeSign.js"
 export { createBlockmap } from "./targets/differentialUpdateInfoBuilder.js"
 export { executeAppBuilderAsJson } from "./util/appBuilder.js"
-export { getLicenseAssets  ,getLicenseFiles } from "./util/license.js"
+export { getLicenseAssets, getLicenseFiles } from "./util/license.js"
 
 export { AsarFilesystem, readAsar } from "./asar/asar.js"
 export { AsarIntegrity } from "./asar/integrity.js"

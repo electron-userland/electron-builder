@@ -24,6 +24,9 @@ import AdmZip from "adm-zip"
 import sanitizeFileName from "sanitize-filename"
 import type { ExpectStatic } from "vitest"
 
+import { exec as execCp } from "child_process"
+export const execShell: any = promisify(execCp)
+
 if (process.env.TRAVIS !== "true") {
   process.env.CIRCLE_BUILD_NUM = "42"
 }
@@ -511,8 +514,6 @@ const checkResult = (expect: ExpectStatic, artifacts: Array<ArtifactCreated>, ex
 
   return { packageFile, zip, allFiles }
 }
-
-export const execShell: any = promisify(require("child_process").exec)
 
 export async function getTarExecutable() {
   return process.platform === "darwin" ? path.join(await getLinuxToolsPath(), "bin", "gtar") : "tar"

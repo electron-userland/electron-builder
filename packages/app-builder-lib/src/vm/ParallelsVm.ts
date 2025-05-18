@@ -80,7 +80,8 @@ export class ParallelsVmManager extends VmManager {
 
     if (!this.isExitHookAdded) {
       this.isExitHookAdded = true
-      require("async-exit-hook")((callback: (() => void) | null) => {
+      const asyncHook = await import("async-exit-hook")
+      asyncHook.default(callback => {
         const stopArgs = ["suspend", vmId]
         if (callback == null) {
           execFileSync("prlctl", stopArgs)

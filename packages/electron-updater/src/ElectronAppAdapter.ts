@@ -1,8 +1,10 @@
 import * as path from "path"
+import { app as appInstance } from "electron"
+
 import { AppAdapter, getAppCacheDir } from "./AppAdapter.js"
 
 export class ElectronAppAdapter implements AppAdapter {
-  constructor(private readonly app = require("electron").app) {}
+  constructor(private readonly app = appInstance) {}
 
   whenReady(): Promise<void> {
     return this.app.whenReady()

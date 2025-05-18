@@ -10,14 +10,15 @@ import { ELECTRON_VERSION } from "./helpers/testConfig.js"
 import { verifySmartUnpack } from "./helpers/verifySmartUnpack.js"
 import { spawn } from "builder-util"
 
-test.ifLinux("cli", ({ expect }) => {
+test.ifLinux("cli", async ({ expect }) => {
   // because these methods are internal
-  const { configureBuildCommand, normalizeOptions } = require("electron-builder/out/builder")
+  const { configureBuildCommand, normalizeOptions } = await import("electron-builder/out/builder.js")
   const yargs = createYargs()
   configureBuildCommand(yargs)
 
   function parse(input: string): any {
-    const options = normalizeOptions(yargs.parse(input))
+    const parsedArguments: any = yargs.parse(input)
+    const options = normalizeOptions(parsedArguments)
     checkBuildRequestOptions(options)
     return options
   }

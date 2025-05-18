@@ -2,6 +2,7 @@ import { AllPublishOptions } from "builder-util-runtime"
 import { spawn, SpawnOptions, spawnSync, StdioOptions } from "child_process"
 import { AppAdapter } from "./AppAdapter.js"
 import { AppUpdater, DownloadExecutorTask } from "./AppUpdater.js"
+import { autoUpdater as nativeUpdater } from "electron"
 
 export abstract class BaseUpdater extends AppUpdater {
   protected quitAndInstallCalled = false
@@ -18,7 +19,7 @@ export abstract class BaseUpdater extends AppUpdater {
     if (isInstalled) {
       setImmediate(() => {
         // this event is normally emitted when calling quitAndInstall, this emulates that
-        require("electron").autoUpdater.emit("before-quit-for-update")
+        nativeUpdater.emit("before-quit-for-update")
         this.app.quit()
       })
     } else {

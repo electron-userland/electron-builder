@@ -1,18 +1,25 @@
+import { UpdateInfo } from "builder-util-runtime"
 import { existsSync, readFileSync } from "fs-extra"
 import * as path from "path"
-import { AppUpdater } from "./AppUpdater.js"
-import { UpdateInfo } from "builder-util-runtime"
 
-export { BaseUpdater } from "./BaseUpdater.js"
-export { AppUpdater, NoOpLogger } from "./AppUpdater.js"
-export { Provider } from "./providers/Provider.js"
+import type { AppUpdater } from "./AppUpdater.js"
+import { AppImageUpdater } from "./AppImageUpdater.js"
+import { DebUpdater } from "./DebUpdater.js"
+import { PacmanUpdater } from "./PacmanUpdater.js"
+import { RpmUpdater } from "./RpmUpdater.js"
+import { MacUpdater } from "./MacUpdater.js"
+import { NsisUpdater } from "./NsisUpdater.js"
+
 export { AppImageUpdater } from "./AppImageUpdater.js"
+export { AppUpdater, NoOpLogger } from "./AppUpdater.js"
+export { BaseUpdater } from "./BaseUpdater.js"
 export { DebUpdater } from "./DebUpdater.js"
-export { PacmanUpdater } from "./PacmanUpdater.js"
-export { RpmUpdater } from "./RpmUpdater.js"
+export { ElectronAppAdapter } from "./ElectronAppAdapter.js"
 export { MacUpdater } from "./MacUpdater.js"
 export { NsisUpdater } from "./NsisUpdater.js"
-export { ElectronAppAdapter } from "./ElectronAppAdapter.js"
+export { PacmanUpdater } from "./PacmanUpdater.js"
+export { Provider } from "./providers/Provider.js"
+export { RpmUpdater } from "./RpmUpdater.js"
 
 export { TestOnlyUpdaterOptions } from "./AppUpdater.js"
 export { blockmapFiles, newUrlFromBase } from "./util.js"
@@ -28,11 +35,11 @@ export declare const autoUpdater: AppUpdater
 function doLoadAutoUpdater(): AppUpdater {
   // tslint:disable:prefer-conditional-expression
   if (process.platform === "win32") {
-    _autoUpdater = new (require("./NsisUpdater").NsisUpdater)()
+    _autoUpdater = new NsisUpdater()
   } else if (process.platform === "darwin") {
-    _autoUpdater = new (require("./MacUpdater").MacUpdater)()
+    _autoUpdater = new MacUpdater()
   } else {
-    _autoUpdater = new (require("./AppImageUpdater").AppImageUpdater)()
+    _autoUpdater = new AppImageUpdater()
     try {
       const identity = path.join(process.resourcesPath, "package-type")
       if (!existsSync(identity)) {
@@ -43,13 +50,13 @@ function doLoadAutoUpdater(): AppUpdater {
       console.info("Found package-type:", fileType)
       switch (fileType) {
         case "deb":
-          _autoUpdater = new (require("./DebUpdater").DebUpdater)()
+          _autoUpdater = new DebUpdater()
           break
         case "rpm":
-          _autoUpdater = new (require("./RpmUpdater").RpmUpdater)()
+          _autoUpdater = new RpmUpdater()
           break
         case "pacman":
-          _autoUpdater = new (require("./PacmanUpdater").PacmanUpdater)()
+          _autoUpdater = new PacmanUpdater()
           break
         default:
           break

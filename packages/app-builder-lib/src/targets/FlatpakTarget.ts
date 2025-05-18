@@ -19,7 +19,7 @@ export default class FlatpakTarget extends Target {
     readonly outDir: string
   ) {
     super(name)
-    this.options  = {
+    this.options = {
       ...this.packager.platformSpecificBuildOptions,
       ...(this.packager.config as any)[this.name],
     }

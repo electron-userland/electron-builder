@@ -18,6 +18,7 @@
 
     "allowSyntheticDefaultImports": true,
     "experimentalDecorators": true,
+    "resolveJsonModule": true,
 
     "newLine": "lf",
 

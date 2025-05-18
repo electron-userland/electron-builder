@@ -87,7 +87,8 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
           switch (name) {
             case "squirrel":
               try {
-                return import("electron-builder-squirrel-windows").then(m => m.SquirrelWindowsTarget)
+                const squirrelWindowsPeer = "electron-builder-squirrel-windows"
+                return import(squirrelWindowsPeer).then(m => m.default)
               } catch (e: any) {
                 throw new InvalidConfigurationError(`Module electron-builder-squirrel-windows must be installed in addition to build Squirrel.Windows: ${e.stack || e}`)
               }
