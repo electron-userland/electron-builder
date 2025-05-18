@@ -31,7 +31,7 @@ export default [{
     "plugin:@typescript-eslint/recommended-requiring-type-checking",
     "plugin:import/recommended",
     // the following lines do the trick
-        "plugin:import/typescript",
+    "plugin:import/typescript",
 ), {
     plugins: {
         "@typescript-eslint": typescriptEslint,
@@ -48,17 +48,21 @@ export default [{
         },
     },
 
+    settings: {
+      'import/resolver': {
+        typescript: {
+          project: './tsconfig.json'
+        }
+      }
+    },
+    
     rules: {
-        "import/resolver": ["error", {
-            "typescript": {
-                "project": "./tsconfig.json"
-            }
-        }],
-        "import/extensions": ["error", "ignorePackages", {
-          "ts": "never",
-          "js": "always"
-        }],
-        "@typescript-eslint/no-require-imports": "off",
+      'import/extensions': ['error', 'ignorePackages', {
+        ts: 'never',
+        js: 'always'
+    }],
+    'import/no-unresolved': 'error',
+    "@typescript-eslint/no-require-imports": "off",
         semi: "off",
         "prettier/prettier": "warn",
         "@typescript-eslint/prefer-promise-reject-errors": "off",

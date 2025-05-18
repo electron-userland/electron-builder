@@ -61,6 +61,8 @@
     "depcheck": "1.4.3",
     "eslint": "9.16.0",
     "eslint-config-prettier": "^9.1.0",
+    "eslint-import-resolver-node": "^0.3.9",
+    "eslint-import-resolver-typescript": "^4.3.5",
     "eslint-plugin-import": "^2.31.0",
     "eslint-plugin-prettier": "^5.2.1",
     "fs-extra": "10.1.0",
