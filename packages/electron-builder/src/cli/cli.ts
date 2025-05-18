@@ -1,8 +1,6 @@
 #! /usr/bin/env node
 
-import { getElectronVersion } from "app-builder-lib"
-import { loadEnv } from "app-builder-lib"
-import { nodeGypRebuild } from "app-builder-lib"
+import { getElectronVersion, loadEnv, nodeGypRebuild } from "app-builder-lib"
 import { ExecError, InvalidConfigurationError, log } from "builder-util"
 import chalk from "chalk"
 import * as path from "path"

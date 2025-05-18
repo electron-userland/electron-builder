@@ -1,9 +1,18 @@
 #! /usr/bin/env node
 
-import { AppInfo, CancellationToken, Packager, PackagerOptions, PublishManager, PublishOptions, UploadTask, checkBuildRequestOptions } from "app-builder-lib"
-import { Publish } from "app-builder-lib"
-import { computeSafeArtifactNameIfNeeded } from "app-builder-lib"
-import { getConfig } from "app-builder-lib"
+import {
+  AppInfo,
+  CancellationToken,
+  Packager,
+  PackagerOptions,
+  PublishManager,
+  PublishOptions,
+  UploadTask,
+  checkBuildRequestOptions,
+  Publish,
+  computeSafeArtifactNameIfNeeded,
+  getConfig,
+} from "app-builder-lib"
 import { InvalidConfigurationError, archFromString, log, printErrorAndExit } from "builder-util"
 import chalk from "chalk"
 import * as path from "path"

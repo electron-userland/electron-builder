@@ -1,6 +1,5 @@
-import { isEmptyOrSpaces, log } from "builder-util"
+import { isEmptyOrSpaces, log, sanitizeFileName } from "builder-util"
 import { Nullish } from "builder-util-runtime"
-import { sanitizeFileName } from "builder-util"
 import { prerelease } from "semver"
 import { PlatformSpecificBuildOptions } from "./options/PlatformSpecificBuildOptions.js"
 import { Packager } from "./packager.js"

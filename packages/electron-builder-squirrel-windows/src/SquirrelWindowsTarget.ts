@@ -1,5 +1,4 @@
-import { InvalidConfigurationError, log, isEmptyOrSpaces } from "builder-util"
-import { sanitizeFileName } from "builder-util"
+import { InvalidConfigurationError, log, isEmptyOrSpaces, sanitizeFileName } from "builder-util"
 import { Arch, getArchSuffix, SquirrelWindowsOptions, Target, WinPackager } from "app-builder-lib"
 import * as path from "path"
 import * as fs from "fs"

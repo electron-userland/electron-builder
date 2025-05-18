@@ -1,6 +1,5 @@
 import { getSignVendorPath } from "app-builder-lib"
-import { exec, log, spawn, TmpDir, unlinkIfExists } from "builder-util"
-import { sanitizeFileName } from "builder-util"
+import { exec, log, spawn, TmpDir, unlinkIfExists, sanitizeFileName } from "builder-util"
 import chalk from "chalk"
 import { mkdir } from "fs/promises"
 import * as path from "path"

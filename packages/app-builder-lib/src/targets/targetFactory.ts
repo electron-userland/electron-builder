@@ -47,7 +47,7 @@ export function computeArchToTargetNamesMap(raw: Map<Arch, Array<string>>, platf
   return result
 }
 
-export function createTargets(nameToTarget: Map<string, Target>, rawList: Array<string>, outDir: string, packager: PlatformPackager<any>): Array<Target> {
+export async function createTargets(nameToTarget: Map<string, Target>, rawList: Array<string>, outDir: string, packager: PlatformPackager<any>): Promise<Array<Target>> {
   const result: Array<Target> = []
 
   const mapper = (name: string, factory: (outDir: string) => Target) => {
@@ -60,7 +60,7 @@ export function createTargets(nameToTarget: Map<string, Target>, rawList: Array<
   }
 
   const targets = normalizeTargets(rawList, packager.defaultTarget)
-  packager.createTargets(targets, mapper)
+  await packager.createTargets(targets, mapper)
   return result
 }
 

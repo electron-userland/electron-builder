@@ -25,8 +25,8 @@ import {
   SnapStorePublisher,
   SpacesPublisher,
   UploadTask,
+  MultiProgress,
 } from "electron-publish"
-import { MultiProgress } from "electron-publish"
 import { writeFile } from "fs/promises"
 import * as isCi from "is-ci"
 import * as path from "path"

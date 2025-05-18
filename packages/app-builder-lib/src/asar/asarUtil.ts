@@ -1,6 +1,5 @@
 import { createPackageFromStreams, AsarStreamType, AsarDirectory } from "@electron/asar"
-import { log } from "builder-util"
-import { Filter } from "builder-util"
+import { log, Filter } from "builder-util"
 import * as fs from "fs-extra"
 import { readlink } from "fs-extra"
 import * as path from "path"

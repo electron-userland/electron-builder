@@ -1,11 +1,6 @@
 #! /usr/bin/env node
 
-import { getElectronVersion } from "app-builder-lib"
-import { computeDefaultAppDirectory, getConfig } from "app-builder-lib"
-import { orNullIfFileNotExist } from "app-builder-lib"
-import { createLazyProductionDeps } from "app-builder-lib"
-import { installOrRebuild } from "app-builder-lib"
-import { PACKAGE_VERSION } from "app-builder-lib"
+import { getElectronVersion, computeDefaultAppDirectory, getConfig, orNullIfFileNotExist, createLazyProductionDeps, installOrRebuild, PACKAGE_VERSION } from "app-builder-lib"
 import { getArchCliNames, log, printErrorAndExit, use } from "builder-util"
 import { readJson } from "fs-extra"
 import { Lazy } from "lazy-val"

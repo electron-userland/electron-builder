@@ -1,5 +1,4 @@
-import { PlatformPackager } from "app-builder-lib"
-import { getLicenseFiles } from "app-builder-lib"
+import { PlatformPackager, getLicenseFiles } from "app-builder-lib"
 import { log } from "builder-util"
 import { dmgLicenseFromJSON } from "dmg-license"
 import { readFile, readJson } from "fs-extra"
