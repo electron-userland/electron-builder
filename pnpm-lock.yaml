@@ -134,6 +134,9 @@ importers:
       chromium-pickle-js:
         specifier: ^0.2.0
         version: 0.2.0
+      ci-info:
+        specifier: ^3.7.0
+        version: 3.9.0
       config-file-ts:
         specifier: 0.2.8-rc1
         version: 0.2.8-rc1
@@ -158,9 +161,6 @@ importers:
       hosted-git-info:
         specifier: ^4.1.0
         version: 4.1.0
-      is-ci:
-        specifier: ^3.0.0
-        version: 3.0.1
       isbinaryfile:
         specifier: ^5.0.0
         version: 5.0.4
@@ -261,9 +261,6 @@ importers:
       '@types/hosted-git-info':
         specifier: 3.0.2
         version: 3.0.2
-      '@types/is-ci':
-        specifier: 3.0.0
-        version: 3.0.0
       '@types/js-yaml':
         specifier: 4.0.3
         version: 4.0.3
@@ -306,6 +303,9 @@ importers:
       chalk:
         specifier: ^4.1.2
         version: 4.1.2
+      ci-info:
+        specifier: ^3.7.0
+        version: 3.9.0
       cross-spawn:
         specifier: ^7.0.6
         version: 7.0.6
@@ -321,9 +321,6 @@ importers:
       https-proxy-agent:
         specifier: ^7.0.0
         version: 7.0.6
-      is-ci:
-        specifier: ^3.0.0
-        version: 3.0.1
       js-yaml:
         specifier: ^4.1.0
         version: 4.1.0
@@ -349,9 +346,6 @@ importers:
       '@types/fs-extra':
         specifier: ^9.0.11
         version: 9.0.13
-      '@types/is-ci':
-        specifier: 3.0.0
-        version: 3.0.0
       '@types/js-yaml':
         specifier: 4.0.3
         version: 4.0.3
@@ -427,15 +421,15 @@ importers:
       chalk:
         specifier: ^4.1.2
         version: 4.1.2
+      ci-info:
+        specifier: ^3.7.0
+        version: 3.9.0
       dmg-builder:
         specifier: workspace:*
         version: link:../dmg-builder
       fs-extra:
         specifier: ^10.1.0
         version: 10.1.0
-      is-ci:
-        specifier: ^3.0.0
-        version: 3.0.1
       lazy-val:
         specifier: ^1.0.5
         version: 1.0.5
@@ -449,9 +443,6 @@ importers:
       '@types/fs-extra':
         specifier: 9.0.13
         version: 9.0.13
-      '@types/is-ci':
-        specifier: 3.0.0
-        version: 3.0.0
       '@types/yargs':
         specifier: ^17.0.16
         version: 17.0.33

@@ -55,16 +55,15 @@
     "builder-util": "workspace:*",
     "builder-util-runtime": "workspace:*",
     "chalk": "^4.1.2",
+    "ci-info": "^3.7.0",
     "dmg-builder": "workspace:*",
     "fs-extra": "^10.1.0",
-    "is-ci": "^3.0.0",
     "lazy-val": "^1.0.5",
     "simple-update-notifier": "2.0.0",
     "yargs": "^17.6.2"
   },
   "devDependencies": {
     "@types/fs-extra": "9.0.13",
-    "@types/is-ci": "3.0.0",
     "@types/yargs": "^17.0.16"
   },
   "typings": "./out/index.d.ts",
