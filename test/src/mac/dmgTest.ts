@@ -72,7 +72,7 @@ describe("dmg", { sequential: true }, () => {
         }
         delete it.specification.icon
         expect(it.specification).toMatchSnapshot()
-        return false
+        return Promise.resolve(false)
       },
     })
   )
@@ -85,6 +85,7 @@ describe("dmg", { sequential: true }, () => {
       {
         targets: defaultTarget,
         config: {
+          productName: "CustomBackground",
           publish: null,
           mac: {
             icon: "customIcon",
@@ -102,7 +103,7 @@ describe("dmg", { sequential: true }, () => {
           expect(it.specification.icon).toEqual("foo.icns")
           const packager: PlatformPackager<any> = it.packager
           expect(await packager.getIconPath()).toEqual(path.join(packager.projectDir, "build", "customIcon.icns"))
-          return true
+          return Promise.resolve(true)
         },
       },
       {
@@ -124,6 +125,7 @@ describe("dmg", { sequential: true }, () => {
       {
         targets: defaultTarget,
         config: {
+          productName: "RetinaBackground",
           publish: null,
           dmg: {
             title: "Retina Background",
@@ -131,7 +133,7 @@ describe("dmg", { sequential: true }, () => {
         },
         effectiveOptionComputed: async it => {
           expect(it.specification.background).toMatch(/\.tiff$/)
-          return true
+          return Promise.resolve(true)
         },
       },
       {
@@ -273,6 +275,7 @@ describe("dmg", { sequential: true }, () => {
       targets: defaultTarget,
       config: {
         publish: null,
+        productName: "DisableIcon",
         dmg: {
           icon: null,
           title: "Disable Icon",
@@ -285,7 +288,7 @@ describe("dmg", { sequential: true }, () => {
         expect(it.specification.icon).toBeNull()
         expect(it.packager.appInfo.buildVersion).toEqual("50")
         expect(await it.packager.getIconPath()).not.toBeNull()
-        return true
+        return Promise.resolve(true)
       },
     })
   })
@@ -294,6 +297,7 @@ describe("dmg", { sequential: true }, () => {
     targets: dmgTarget,
     config: {
       publish: null,
+      productName: "Foo" + Math.floor(Math.random() * 1000),
       dmg: {
         title: "Foo" + Math.floor(Math.random() * 1000),
       },
@@ -349,7 +353,7 @@ describe("dmg", { sequential: true }, () => {
             })
             expect(it.licenseData).toMatchSnapshot()
           }
-          return false
+          return Promise.resolve(false)
         },
       },
       {
