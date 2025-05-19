@@ -8,6 +8,9 @@ patchedDependencies:
   '@changesets/cli@2.25.0':
     hash: nye7dcohy6yzxjscpnrszvchra
     path: patches/@changesets__cli@2.25.0.patch
+  typescript-json-schema:
+    hash: wm2cyfxhipyauubq72gz53decq
+    path: patches/typescript-json-schema.patch
 
 importers:
 
@@ -103,7 +106,7 @@ importers:
         version: 5.8.2
       typescript-json-schema:
         specifier: 0.64.0
-        version: 0.64.0
+        version: 0.64.0(patch_hash=wm2cyfxhipyauubq72gz53decq)
       vitest:
         specifier: ^3.0.4
         version: 3.1.1(@types/node@22.13.17)(@vitest/ui@3.0.4(vitest@3.1.1))(sass@1.86.1)(yaml@2.7.1)
@@ -14291,7 +14294,7 @@ snapshots:
       typescript: 5.8.2
       yaml: 2.7.1
 
-  typescript-json-schema@0.64.0:
+  typescript-json-schema@0.64.0(patch_hash=wm2cyfxhipyauubq72gz53decq):
     dependencies:
       '@types/json-schema': 7.0.15
       '@types/node': 16.18.126

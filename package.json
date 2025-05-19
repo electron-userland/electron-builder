@@ -85,7 +85,8 @@
   "packageManager": "pnpm@9.4.0",
   "pnpm": {
     "patchedDependencies": {
-      "@changesets/cli@2.25.0": "patches/@changesets__cli@2.25.0.patch"
+      "@changesets/cli@2.25.0": "patches/@changesets__cli@2.25.0.patch",
+      "typescript-json-schema": "patches/typescript-json-schema.patch"
     }
   }
 }

@@ -16,11 +16,9 @@ const settings = {
   skipLibCheck: true,
 }
 
-const definitionFile = path.resolve(rootDir, "app-builder-lib/src/configuration.ts")
 const tsconfig = path.resolve(rootDir, "app-builder-lib/tsconfig.json")
 const program = TJS.programFromConfig(tsconfig)
-const generator = TJS.buildGenerator(program, settings)
-const schema = TJS.generateSchema(program, "Configuration", settings, [], generator)
+const schema = TJS.generateSchema(program, "Configuration", settings)
 
 const PlugDescriptor = schema.definitions.PlugDescriptor
 PlugDescriptor.additionalProperties.anyOf[0] = {
