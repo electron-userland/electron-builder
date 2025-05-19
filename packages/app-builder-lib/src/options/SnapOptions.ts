@@ -143,7 +143,6 @@ export interface SnapOptions extends CommonLinuxOptions, TargetSpecificOptions {
   readonly allowNativeWayland?: boolean | null
 }
 
-
 /**
  * The plug descriptor is a map of attributes to be used in the snapcraft.yaml file.
  * The key is the name of the plug, and the value is an object with the attributes.
