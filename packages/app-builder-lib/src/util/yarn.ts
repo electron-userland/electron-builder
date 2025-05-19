@@ -1,5 +1,4 @@
 import * as electronRebuild from "@electron/rebuild"
-import { RebuildMode } from "@electron/rebuild/lib/types.js"
 import { asArray, log, spawn } from "builder-util"
 import { pathExists } from "fs-extra"
 import { Lazy } from "lazy-val"
@@ -182,7 +181,7 @@ export async function rebuild(config: Configuration, { appDir, projectDir }: Dir
     platform,
     buildFromSource,
     projectRootPath: projectDir,
-    mode: (config.nativeRebuilder as RebuildMode) || "sequential",
+    mode: (config.nativeRebuilder as electronRebuild.RebuildOptions["mode"]) || "sequential",
     disablePreGypCopy: true,
   }
   return remoteRebuild(rebuildOptions)

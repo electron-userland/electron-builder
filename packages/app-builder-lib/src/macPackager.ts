@@ -1,7 +1,6 @@
-import { notarize } from "@electron/notarize"
-import { NotarizeOptionsNotaryTool, NotaryToolKeychainCredentials } from "@electron/notarize/lib/types.js"
-import { PerFileSignOptions, SignOptions } from "@electron/osx-sign/dist/cjs/types.js"
-import { Identity } from "@electron/osx-sign/dist/cjs/util-identities.js"
+import { notarize, NotarizeOptions } from "@electron/notarize"
+import { NotaryToolKeychainCredentials } from "../node_modules/@electron/notarize/lib/types.js"
+import { PerFileSignOptions, SignOptions } from "@electron/osx-sign"
 import { Arch, AsyncTaskManager, copyFile, deepAssign, exec, getArchSuffix, InvalidConfigurationError, log, orIfFileNotExist, statOrNull, unlinkIfExists, use } from "builder-util"
 import { MemoLazy, Nullish } from "builder-util-runtime"
 import * as fs from "fs/promises"
@@ -9,7 +8,18 @@ import { mkdir, readdir } from "fs/promises"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { AppInfo } from "./appInfo.js"
-import { CertType, CodeSigningInfo, createKeychain, CreateKeychainOptions, findIdentity, isSignAllowed, removeKeychain, reportError, sign } from "./codeSign/macCodeSign.js"
+import {
+  CertType,
+  CodeSigningInfo,
+  createKeychain,
+  CreateKeychainOptions,
+  findIdentity,
+  Identity,
+  isSignAllowed,
+  removeKeychain,
+  reportError,
+  sign,
+} from "./codeSign/macCodeSign.js"
 import { DIR_TARGET, Platform, Target } from "./core.js"
 import { AfterPackContext, ElectronPlatformName } from "./index.js"
 import { MacConfiguration, MasConfiguration } from "./options/macOptions.js"
@@ -560,11 +570,10 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
     log.info(null, "notarization successful")
   }
 
-  private getNotarizeOptions(appPath: string): NotarizeOptionsNotaryTool | undefined {
+  private getNotarizeOptions(appPath: string): NotarizeOptions | undefined {
     const teamId = process.env.APPLE_TEAM_ID
     const appleId = process.env.APPLE_ID
     const appleIdPassword = process.env.APPLE_APP_SPECIFIC_PASSWORD
-    const tool = "notarytool"
 
     // option 1: app specific password
     if (appleId || appleIdPassword) {
@@ -577,7 +586,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
       if (!teamId) {
         throw new InvalidConfigurationError(`APPLE_TEAM_ID env var needs to be set`)
       }
-      return { tool, appPath, appleId, appleIdPassword, teamId }
+      return { appPath, appleId, appleIdPassword, teamId }
     }
 
     // option 2: API key
@@ -588,7 +597,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
       if (!appleApiKey || !appleApiKeyId || !appleApiIssuer) {
         throw new InvalidConfigurationError(`Env vars APPLE_API_KEY, APPLE_API_KEY_ID and APPLE_API_ISSUER need to be set`)
       }
-      return { tool, appPath, appleApiKey, appleApiKeyId, appleApiIssuer }
+      return { appPath, appleApiKey, appleApiKeyId, appleApiIssuer }
     }
 
     // option 3: keychain
@@ -599,7 +608,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
       if (keychain) {
         args = { ...args, keychain }
       }
-      return { tool, appPath, ...args }
+      return { appPath, ...args }
     }
 
     // if no credentials provided, skip silently
