@@ -1,5 +1,5 @@
 import { readAsarJson } from "app-builder-lib"
-import { Platform, coerceTypes } from "electron-builder"
+import { Platform, coerceTypes, configureBuildCommand, normalizeOptions } from "electron-builder"
 import { readJson } from "fs-extra"
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert.js"
@@ -55,12 +55,13 @@ function createExtraMetadataTest(expect: ExpectStatic, asar: boolean) {
 test.ifDevOrLinuxCi("extra metadata", ({ expect }) => createExtraMetadataTest(expect, true))
 test.ifDevOrLinuxCi("extra metadata (no asar)", ({ expect }) => createExtraMetadataTest(expect, false))
 
-test("cli", async ({ expect }) => {
+test("cli", ({ expect }) => {
   // because these methods are internal
-  const { configureBuildCommand, normalizeOptions } = await import("electron-builder/out/builder.js")
-  const yargs = y.strict().fail((message: string, error: Error | null) => {
-    throw error || new Error(message)
-  })
+  const yargs = y()
+    .strict()
+    .fail((message: string, error: Error | null) => {
+      throw error || new Error(message)
+    })
   configureBuildCommand(yargs)
 
   function parse(input: string): any {

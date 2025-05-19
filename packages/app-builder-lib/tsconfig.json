@@ -3,13 +3,8 @@
   "compilerOptions": {
     "outDir": "out",
     "rootDir": "src",
-    "declarationDir": "./out",
-    "paths": {
-      "dmg-builder": ["../dmg-builder/src/index.ts"],
-      "electron-builder-squirrel-windows": ["../electron-builder-squirrel-windows/src/index.ts"]
-    }
+    "declarationDir": "./out"
   },
-
   "include": ["src/**/*.ts", "../../typings/*.d.ts"],
   "exclude": [],
   "references": [

@@ -7,7 +7,7 @@
     ],
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
-    "noUnusedLocals": true,
+    "noUnusedLocals": false,
     "noFallthroughCasesInSwitch": true,
     "noImplicitReturns": true,
 

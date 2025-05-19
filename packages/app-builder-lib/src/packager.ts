@@ -33,7 +33,7 @@ import { ArtifactBuildStarted, ArtifactCreated, PackagerOptions } from "./packag
 import { PlatformPackager } from "./platformPackager.js"
 import { ProtonFramework } from "./ProtonFramework.js"
 import { computeArchToTargetNamesMap, createTargets, NoOpTarget } from "./targets/targetFactory.js"
-import { computeDefaultAppDirectory, getConfig, validateConfiguration } from "./util/config/config.js"
+import { computeDefaultAppDirectory, getConfig } from "./util/config/config.js"
 import { expandMacro } from "./util/macroExpander.js"
 import { createLazyProductionDeps, NodeModuleDirInfo, NodeModuleInfo } from "./util/packageDependencies.js"
 import { checkMetadata, readPackageJson } from "./util/packageMetadata.js"
@@ -43,6 +43,7 @@ import { installOrRebuild, nodeGypRebuild } from "./util/yarn.js"
 import { PACKAGE_VERSION } from "./version.js"
 import { AsyncEventEmitter, HandlerType } from "./util/asyncEventEmitter.js"
 import asyncPool from "tiny-async-pool"
+import { validateConfiguration } from "./util/config/validate.js"
 
 async function createFrameworkInfo(configuration: Configuration, packager: Packager): Promise<Framework> {
   let framework = configuration.framework

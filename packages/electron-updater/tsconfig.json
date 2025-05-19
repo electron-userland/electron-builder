@@ -1,18 +1,10 @@
 {
   "extends": "../tsconfig-base.json",
   "compilerOptions": {
-        "declarationDir": "./out",
+    "declarationDir": "./out",
     "outDir": "out",
     "rootDir": "src"
   },
-  "jsdoc": {
-    "out": "../../scripts/jsdoc/out/updater",
-    "examples": "../../scripts/jsdoc/examples",
-    "access": "public"
-  },
-  "files": [
-  ],
-  "include": [
-    "src/**/*.ts"
-  ]
+  "files": [],
+  "include": ["src/**/*.ts"]
 }
