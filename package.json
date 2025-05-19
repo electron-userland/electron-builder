@@ -70,7 +70,6 @@
     "husky": "7.0.4",
     "lint-staged": "15.2.10",
     "prettier": "3.3.3",
-    "ts-json-schema-generator": "^2.4.0",
     "ts-node": "^10.9.2",
     "typedoc": "^0.26.7",
     "typedoc-plugin-markdown": "4.2.8",
