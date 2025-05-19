@@ -1,4 +1,4 @@
-import { createPackageFromStreams, AsarStreamType, AsarDirectory } from "@electron/asar"
+import { createPackageFromStreams, AsarStreamType } from "@electron/asar"
 import { log } from "builder-util"
 import { Filter } from "builder-util/out/fs"
 import * as fs from "fs-extra"
@@ -78,8 +78,6 @@ export class AsarPackager {
           return isChild || isFileUnpacked
         }
 
-        this.processParentDirectories(isUnpacked, destination, results)
-
         const result = await this.processFileOrSymlink({
           file,
           destination,
@@ -94,24 +92,6 @@ export class AsarPackager {
       }
     }
     return results
-  }
-
-  private processParentDirectories(isUnpacked: (path: string) => boolean, destination: string, results: AsarStreamType[]) {
-    // process parent directories
-    let superDir = path.dirname(path.normalize(destination))
-    while (superDir.includes(path.sep)) {
-      const dir: AsarDirectory = {
-        type: "directory",
-        path: superDir,
-        unpacked: isUnpacked(superDir),
-      }
-      // add to results if not already present
-      if (!results.some(r => r.path === dir.path)) {
-        results.push(dir)
-      }
-
-      superDir = path.dirname(superDir)
-    }
   }
 
   private async processFileOrSymlink(options: {
