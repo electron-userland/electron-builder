@@ -3,16 +3,16 @@ import type { AuthInfo } from "electron"
 import { RequestOptions } from "http"
 import Session = Electron.Session
 import ClientRequest = Electron.ClientRequest
+import { session, net } from "electron"
 
 export type LoginCallback = (username: string, password: string) => void
 export const NET_SESSION_NAME = "electron-updater"
 
 export function getNetSession(): Session {
-  return require("electron").session.fromPartition(NET_SESSION_NAME, {
+  return session.fromPartition(NET_SESSION_NAME, {
     cache: false,
   })
 }
-
 export class ElectronHttpExecutor extends HttpExecutor<Electron.ClientRequest> {
   private cachedSession: Session | null = null
 
@@ -62,7 +62,7 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.ClientRequest> {
       this.cachedSession = getNetSession()
     }
 
-    const request = require("electron").net.request({
+    const request = net.request({
       ...options,
       session: this.cachedSession,
     })

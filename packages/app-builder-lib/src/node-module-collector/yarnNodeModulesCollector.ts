@@ -1,4 +1,4 @@
-import { NpmNodeModulesCollector } from "./npmNodeModulesCollector"
+import { NpmNodeModulesCollector } from "./npmNodeModulesCollector.js"
 
 export class YarnNodeModulesCollector extends NpmNodeModulesCollector {
   constructor(rootDir: string) {

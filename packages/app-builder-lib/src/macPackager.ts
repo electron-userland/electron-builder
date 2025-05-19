@@ -1,26 +1,26 @@
 import { notarize } from "@electron/notarize"
-import { NotarizeOptionsNotaryTool, NotaryToolKeychainCredentials } from "@electron/notarize/lib/types"
-import { PerFileSignOptions, SignOptions } from "@electron/osx-sign/dist/cjs/types"
-import { Identity } from "@electron/osx-sign/dist/cjs/util-identities"
+import { NotarizeOptionsNotaryTool, NotaryToolKeychainCredentials } from "@electron/notarize/lib/types.js"
+import { PerFileSignOptions, SignOptions } from "@electron/osx-sign/dist/cjs/types.js"
+import { Identity } from "@electron/osx-sign/dist/cjs/util-identities.js"
 import { Arch, AsyncTaskManager, copyFile, deepAssign, exec, getArchSuffix, InvalidConfigurationError, log, orIfFileNotExist, statOrNull, unlinkIfExists, use } from "builder-util"
 import { MemoLazy, Nullish } from "builder-util-runtime"
 import * as fs from "fs/promises"
 import { mkdir, readdir } from "fs/promises"
 import { Lazy } from "lazy-val"
 import * as path from "path"
-import { AppInfo } from "./appInfo"
-import { CertType, CodeSigningInfo, createKeychain, CreateKeychainOptions, findIdentity, isSignAllowed, removeKeychain, reportError, sign } from "./codeSign/macCodeSign"
-import { DIR_TARGET, Platform, Target } from "./core"
-import { AfterPackContext, ElectronPlatformName } from "./index"
-import { MacConfiguration, MasConfiguration } from "./options/macOptions"
-import { Packager } from "./packager"
-import { chooseNotNull, DoPackOptions, PlatformPackager } from "./platformPackager"
-import { ArchiveTarget } from "./targets/ArchiveTarget"
-import { PkgTarget, prepareProductBuildArgs } from "./targets/pkg"
-import { createCommonTarget, NoOpTarget } from "./targets/targetFactory"
-import { isMacOsHighSierra } from "./util/macosVersion"
-import { getTemplatePath } from "./util/pathManager"
-import { resolveFunction } from "./util/resolve"
+import { AppInfo } from "./appInfo.js"
+import { CertType, CodeSigningInfo, createKeychain, CreateKeychainOptions, findIdentity, isSignAllowed, removeKeychain, reportError, sign } from "./codeSign/macCodeSign.js"
+import { DIR_TARGET, Platform, Target } from "./core.js"
+import { AfterPackContext, ElectronPlatformName } from "./index.js"
+import { MacConfiguration, MasConfiguration } from "./options/macOptions.js"
+import { Packager } from "./packager.js"
+import { chooseNotNull, DoPackOptions, PlatformPackager } from "./platformPackager.js"
+import { ArchiveTarget } from "./targets/ArchiveTarget.js"
+import { PkgTarget, prepareProductBuildArgs } from "./targets/pkg.js"
+import { createCommonTarget, NoOpTarget } from "./targets/targetFactory.js"
+import { isMacOsHighSierra } from "./util/macosVersion.js"
+import { getTemplatePath } from "./util/pathManager.js"
+import { resolveFunction } from "./util/resolve.js"
 
 export type CustomMacSignOptions = SignOptions
 export type CustomMacSign = (configuration: CustomMacSignOptions, packager: MacPackager) => Promise<void>
@@ -79,14 +79,15 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
     return this._iconPath.value
   }
 
-  createTargets(targets: Array<string>, mapper: (name: string, factory: (outDir: string) => Target) => void): void {
+  async createTargets(targets: Array<string>, mapper: (name: string, factory: (outDir: string) => Target) => void): Promise<void> {
     for (const name of targets) {
       switch (name) {
         case DIR_TARGET:
           break
 
         case "dmg": {
-          const { DmgTarget } = require("dmg-builder")
+          const dmgBuilderPeerModule = "dmg-builder"
+          const { DmgTarget } = await import(dmgBuilderPeerModule)
           mapper(name, outDir => new DmgTarget(this, outDir))
           break
         }
@@ -152,15 +153,15 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
           `packaging`
         )
         const appFile = `${this.appInfo.productFilename}.app`
-        const { makeUniversalApp } = require("@electron/universal")
+        const { makeUniversalApp } = await import("@electron/universal")
         await makeUniversalApp({
           x64AppPath: path.join(x64AppOutDir, appFile),
           arm64AppPath: path.join(arm64AppOutPath, appFile),
           outAppPath: path.join(appOutDir, appFile),
           force: true,
           mergeASARs: platformSpecificBuildOptions.mergeASARs ?? true,
-          singleArchFiles: platformSpecificBuildOptions.singleArchFiles,
-          x64ArchFiles: platformSpecificBuildOptions.x64ArchFiles,
+          singleArchFiles: platformSpecificBuildOptions.singleArchFiles ?? undefined,
+          x64ArchFiles: platformSpecificBuildOptions.x64ArchFiles ?? undefined,
         })
         await fs.rm(x64AppOutDir, { recursive: true, force: true })
         await fs.rm(arm64AppOutPath, { recursive: true, force: true })

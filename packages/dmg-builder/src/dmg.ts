@@ -1,21 +1,16 @@
-import { DmgOptions, Target } from "app-builder-lib"
-import { findIdentity, isSignAllowed } from "app-builder-lib/out/codeSign/macCodeSign"
-import { MacPackager } from "app-builder-lib/out/macPackager"
-import { createBlockmap } from "app-builder-lib/out/targets/differentialUpdateInfoBuilder"
-import { executeAppBuilderAsJson } from "app-builder-lib/out/util/appBuilder"
-import { Arch, AsyncTaskManager, copyDir, copyFile, exec, exists, getArchSuffix, InvalidConfigurationError, isEmptyOrSpaces, log, statOrNull } from "builder-util"
+import { DmgOptions, Target, findIdentity, isSignAllowed, MacPackager, createBlockmap, executeAppBuilderAsJson } from "app-builder-lib"
+import { Arch, AsyncTaskManager, copyDir, copyFile, exec, exists, getArchSuffix, InvalidConfigurationError, isEmptyOrSpaces, log, statOrNull, sanitizeFileName } from "builder-util"
 import { CancellationToken, Nullish } from "builder-util-runtime"
-import { sanitizeFileName } from "builder-util/out/filename"
 import { stat } from "fs-extra"
 import { release as getOsRelease } from "os"
 import * as path from "path"
 import { TmpDir } from "temp-file"
-import { addLicenseToDmg } from "./dmgLicense"
-import { attachAndExecute, computeBackground, detach, getDmgVendorPath } from "./dmgUtil"
-import { hdiUtil } from "./hdiuil"
+import { addLicenseToDmg } from "./dmgLicense.js"
+import { attachAndExecute, computeBackground, detach, getDmgVendorPath } from "./dmgUtil.js"
+import { hdiUtil } from "./hdiuil.js"
 
 export class DmgTarget extends Target {
-  readonly options: DmgOptions = this.packager.config.dmg || Object.create(null)
+  readonly options: DmgOptions
 
   isAsyncSupported = false
 
@@ -24,6 +19,7 @@ export class DmgTarget extends Target {
     readonly outDir: string
   ) {
     super("dmg")
+    this.options = this.packager.config.dmg || Object.create(null)
   }
 
   async build(appPath: string, arch: Arch) {

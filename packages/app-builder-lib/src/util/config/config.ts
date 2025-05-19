@@ -3,12 +3,12 @@ import { Nullish } from "builder-util-runtime"
 import { readJson } from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
-import { Configuration } from "../../configuration"
-import { FileSet } from "../../options/PlatformSpecificBuildOptions"
-import { reactCra } from "../../presets/rectCra"
-import { PACKAGE_VERSION } from "../../version"
-import { getConfig as _getConfig, loadParentConfig, orNullIfFileNotExist, ReadConfigRequest } from "./load"
-const validateSchema = require("@develar/schema-utils")
+import { Configuration } from "../../configuration.js"
+import { FileSet } from "../../options/PlatformSpecificBuildOptions.js"
+import { reactCra } from "../../presets/rectCra.js"
+import { PACKAGE_VERSION } from "../../version.js"
+import { getConfig as _getConfig, loadParentConfig, orNullIfFileNotExist, ReadConfigRequest } from "./load.js"
+import validateSchema from "@develar/schema-utils"
 
 // https://github.com/electron-userland/electron-builder/issues/1847
 function mergePublish(config: Configuration, configFromOptions: Configuration) {

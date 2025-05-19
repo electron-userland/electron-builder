@@ -1,7 +1,7 @@
 import { createTargets, DIR_TARGET, Platform } from "electron-builder"
 import * as fs from "fs/promises"
 import * as path from "path"
-import { appTwoThrows, assertPack, modifyPackageJson } from "./helpers/packTester"
+import { appTwoThrows, assertPack, modifyPackageJson } from "./helpers/packTester.js"
 
 const packagerOptions = {
   targets: createTargets([Platform.LINUX, Platform.MAC], DIR_TARGET),

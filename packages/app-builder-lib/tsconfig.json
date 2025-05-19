@@ -1,20 +1,17 @@
 {
   "extends": "./tsconfig-scheme.json",
-  "jsdoc": {
-    "out": "../../scripts/jsdoc/out/builder-lib",
-    "examples": "../../scripts/jsdoc/examples",
-    "access": "public"
-  },
   "compilerOptions": {
     "outDir": "out",
     "rootDir": "src",
+    "declarationDir": "./out",
+    "paths": {
+      "dmg-builder": ["../dmg-builder/src/index.ts"],
+      "electron-builder-squirrel-windows": ["../electron-builder-squirrel-windows/src/index.ts"]
+    }
   },
-  "include": [
-      "src/**/*.ts",
-      "../../typings/*.d.ts"
-  ],
-  "exclude": [
-  ],
+
+  "include": ["src/**/*.ts", "../../typings/*.d.ts"],
+  "exclude": [],
   "references": [
     {
       "path": "../builder-util"

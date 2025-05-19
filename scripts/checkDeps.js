@@ -12,7 +12,11 @@ const knownUnusedDevDependencies = new Set([
   "@typescript-eslint/parser",
   "eslint-config-prettier",
   "eslint-plugin-prettier",
+  "eslint-plugin-import",
+  "eslint-import-resolver-node",
+  "eslint-import-resolver-typescript",
   "@rollup/plugin-typescript",
+  "@tsconfig/node22"
 ])
 const knownMissedDependencies = new Set(["babel-core", "babel-preset-env", "babel-preset-stage-0", "babel-preset-react"])
 
@@ -34,7 +38,7 @@ async function check(projectDir, devPackageData) {
       unusedDependencies = unusedDependencies.filter(it => it !== "dmg-license")
     }
     if (packageName === "electron-builder") {
-      unusedDependencies = unusedDependencies.filter(it => it !== "dmg-builder")
+      unusedDependencies = unusedDependencies.filter(it => it !== "dmg-builder" && it !== "update-notifier")
     }
     if (unusedDependencies.length > 0) {
       console.error(`${chalk.bold(packageName)} Unused dependencies: ${JSON.stringify(unusedDependencies, null, 2)}`)

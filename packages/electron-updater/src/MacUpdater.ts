@@ -3,24 +3,26 @@ import { pathExistsSync, stat, copyFile } from "fs-extra"
 import { createReadStream } from "fs"
 import * as path from "path"
 import { createServer, IncomingMessage, Server, ServerResponse } from "http"
-import { AppAdapter } from "./AppAdapter"
-import { AppUpdater, DownloadUpdateOptions } from "./AppUpdater"
-import { ResolvedUpdateFileInfo } from "./main"
-import { UpdateDownloadedEvent } from "./types"
-import { findFile } from "./providers/Provider"
-import AutoUpdater = Electron.AutoUpdater
+import { ElectronAppAdapter } from "./ElectronAppAdapter.js"
+import { AppUpdater, DownloadUpdateOptions } from "./AppUpdater.js"
+import { ResolvedUpdateFileInfo } from "./main.js"
+import { UpdateDownloadedEvent } from "./types.js"
+import { findFile } from "./providers/Provider.js"
+import { type AutoUpdater } from "electron"
 import { execFileSync } from "child_process"
 import { randomBytes } from "crypto"
 
 export class MacUpdater extends AppUpdater {
-  private readonly nativeUpdater: AutoUpdater = require("electron").autoUpdater
+  private readonly nativeUpdater: AutoUpdater
 
   private squirrelDownloadedUpdate = false
 
   private server?: Server
 
-  constructor(options?: AllPublishOptions, app?: AppAdapter) {
+  constructor(options?: AllPublishOptions, app?: ElectronAppAdapter) {
     super(options, app)
+
+    this.nativeUpdater = this.app.nativeUpdater
 
     this.nativeUpdater.on("error", it => {
       this._logger.warn(it)

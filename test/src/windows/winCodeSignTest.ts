@@ -3,8 +3,8 @@ import { DIR_TARGET, Platform } from "electron-builder"
 import { outputFile } from "fs-extra"
 import { load } from "js-yaml"
 import * as path from "path"
-import { CheckingWinPackager } from "../helpers/CheckingPackager"
-import { app, appThrows } from "../helpers/packTester"
+import { CheckingWinPackager } from "../helpers/CheckingPackager.js"
+import { app, appThrows } from "../helpers/packTester.js"
 import { ExpectStatic } from "vitest"
 
 test("parseDn", ({ expect }) => {
@@ -64,7 +64,7 @@ test("certificateFile/password - sign as async/await", ({ expect }) =>
     return Promise.resolve()
   }))
 test("certificateFile/password - sign as Promise", ({ expect }) => testCustomSign(expect, () => Promise.resolve()))
-test("certificateFile/password - sign as function", async ({ expect }) => testCustomSign(expect, (await import("../helpers/customWindowsSign")).default))
+test("certificateFile/password - sign as function", async ({ expect }) => testCustomSign(expect, (await import("../helpers/customWindowsSign.js")).default))
 test("certificateFile/password - sign as path", ({ expect }) => testCustomSign(expect, path.join(__dirname, "../helpers/customWindowsSign.mjs")))
 
 test("custom sign if no code sign info", ({ expect }) => {

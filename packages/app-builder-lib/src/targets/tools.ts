@@ -1,5 +1,5 @@
 import * as path from "path"
-import { getBinFromUrl } from "../binDownload"
+import { getBinFromUrl } from "../binDownload.js"
 
 export function getLinuxToolsPath() {
   //noinspection SpellCheckingInspection

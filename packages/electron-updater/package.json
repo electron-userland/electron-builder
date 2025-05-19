@@ -2,7 +2,13 @@
   "name": "electron-updater",
   "version": "6.6.4",
   "description": "Cross platform updater for electron applications",
-  "main": "out/main.js",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./out/main.js",
+      "types": "./out/main.d.ts"
+    }
+  },
   "author": "Vladimir Krivosheev",
   "license": "MIT",
   "repository": {

@@ -1,11 +1,11 @@
-import { readAsarJson } from "app-builder-lib/out/asar/asar"
-import { Platform } from "electron-builder"
-import { coerceTypes } from "electron-builder/out/builder"
+import { readAsarJson } from "app-builder-lib"
+import { Platform, coerceTypes } from "electron-builder"
 import { readJson } from "fs-extra"
 import * as path from "path"
-import { assertThat } from "./helpers/fileAssert"
-import { app, linuxDirTarget, modifyPackageJson } from "./helpers/packTester"
+import { assertThat } from "./helpers/fileAssert.js"
+import { app, linuxDirTarget, modifyPackageJson } from "./helpers/packTester.js"
 import { ExpectStatic } from "vitest"
+import y from "yargs"
 
 function createExtraMetadataTest(expect: ExpectStatic, asar: boolean) {
   return app(
@@ -55,18 +55,17 @@ function createExtraMetadataTest(expect: ExpectStatic, asar: boolean) {
 test.ifDevOrLinuxCi("extra metadata", ({ expect }) => createExtraMetadataTest(expect, true))
 test.ifDevOrLinuxCi("extra metadata (no asar)", ({ expect }) => createExtraMetadataTest(expect, false))
 
-test("cli", ({ expect }) => {
+test("cli", async ({ expect }) => {
   // because these methods are internal
-  const { configureBuildCommand, normalizeOptions } = require("electron-builder/out/builder")
-  const yargs = require("yargs")
-    .strict()
-    .fail((message: string, error: Error | null) => {
-      throw error || new Error(message)
-    })
+  const { configureBuildCommand, normalizeOptions } = await import("electron-builder/out/builder.js")
+  const yargs = y.strict().fail((message: string, error: Error | null) => {
+    throw error || new Error(message)
+  })
   configureBuildCommand(yargs)
 
   function parse(input: string): any {
-    return normalizeOptions(yargs.parse(input.split(" ")))
+    const parsedArguments: any = yargs.parse(input.split(" "))
+    return normalizeOptions(parsedArguments)
   }
 
   function parseExtraMetadata(input: string) {

@@ -1,19 +1,14 @@
 #! /usr/bin/env node
 
-import { getElectronVersion } from "app-builder-lib/out/electron/electronVersion"
-import { computeDefaultAppDirectory, getConfig } from "app-builder-lib/out/util/config/config"
-import { orNullIfFileNotExist } from "app-builder-lib/out/util/config/load"
-import { createLazyProductionDeps } from "app-builder-lib/out/util/packageDependencies"
-import { installOrRebuild } from "app-builder-lib/out/util/yarn"
-import { PACKAGE_VERSION } from "app-builder-lib/out/version"
+import { getElectronVersion, computeDefaultAppDirectory, getConfig, orNullIfFileNotExist, createLazyProductionDeps, installOrRebuild, PACKAGE_VERSION } from "app-builder-lib"
 import { getArchCliNames, log, printErrorAndExit, use } from "builder-util"
 import { readJson } from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
-import * as yargs from "yargs"
+import yargs, { Argv } from "yargs"
 
 /** @internal */
-export function configureInstallAppDepsCommand(yargs: yargs.Argv): yargs.Argv {
+export function configureInstallAppDepsCommand(yargs: Argv): Argv {
   // https://github.com/yargs/yargs/issues/760
   // demandOption is required to be set
   return yargs
@@ -72,7 +67,7 @@ export async function installAppDeps(args: any) {
 }
 
 function main() {
-  return installAppDeps(configureInstallAppDepsCommand(yargs).argv)
+  return installAppDeps(configureInstallAppDepsCommand(yargs()).argv)
 }
 
 if (require.main === module) {

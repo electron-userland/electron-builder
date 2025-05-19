@@ -1,12 +1,12 @@
 import { log } from "builder-util"
 import * as fs from "fs"
 import * as path from "path"
-import { lcid } from "../../util/langs"
-import { getLicenseFiles, getNotLocalizedLicenseFile } from "../../util/license"
-import { WinPackager } from "../../winPackager"
-import { NsisOptions } from "./nsisOptions"
-import { NsisScriptGenerator } from "./nsisScriptGenerator"
-import { nsisTemplatesDir } from "./nsisUtil"
+import { lcid } from "../../util/langs.js"
+import { getLicenseFiles, getNotLocalizedLicenseFile } from "../../util/license.js"
+import { WinPackager } from "../../winPackager.js"
+import { NsisOptions } from "./nsisOptions.js"
+import { NsisScriptGenerator } from "./nsisScriptGenerator.js"
+import { nsisTemplatesDir } from "./nsisUtil.js"
 
 function convertFileToUtf8WithBOMSync(filePath: string): boolean {
   try {

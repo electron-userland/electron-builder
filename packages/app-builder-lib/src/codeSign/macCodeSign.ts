@@ -1,6 +1,6 @@
 import { signAsync } from "@electron/osx-sign"
-import { SignOptions } from "@electron/osx-sign/dist/cjs/types"
-import { Identity as _Identity } from "@electron/osx-sign/dist/cjs/util-identities"
+import { SignOptions } from "@electron/osx-sign/dist/cjs/types.js"
+import { Identity as _Identity } from "@electron/osx-sign/dist/cjs/util-identities.js"
 import { copyFile, exec, Fields, InvalidConfigurationError, isEmptyOrSpaces, isEnvTrue, isPullRequest, log, Logger, retry, TmpDir, unlinkIfExists } from "builder-util"
 import { Nullish } from "builder-util-runtime"
 import { createHash, randomBytes } from "crypto"
@@ -9,8 +9,8 @@ import { Lazy } from "lazy-val"
 import { homedir, tmpdir } from "os"
 import * as path from "path"
 import { getTempName } from "temp-file"
-import { isAutoDiscoveryCodeSignIdentity } from "../util/flags"
-import { importCertificate } from "./codesign"
+import { isAutoDiscoveryCodeSignIdentity } from "../util/flags.js"
+import { importCertificate } from "./codesign.js"
 
 export const appleCertificatePrefixes = ["Developer ID Application:", "Developer ID Installer:", "3rd Party Mac Developer Application:", "3rd Party Mac Developer Installer:"]
 

@@ -3,11 +3,11 @@ import _debug from "debug"
 import { outputFile, readFile } from "fs-extra"
 import { load } from "js-yaml"
 import * as path from "path"
-import { PlatformPackager } from "../../platformPackager"
-import { bundledLanguages, langIdToName, lcid, toLangWithRegion } from "../../util/langs"
-import { NsisOptions } from "./nsisOptions"
-import { NsisScriptGenerator } from "./nsisScriptGenerator"
-import { nsisTemplatesDir } from "./nsisUtil"
+import { PlatformPackager } from "../../platformPackager.js"
+import { bundledLanguages, langIdToName, lcid, toLangWithRegion } from "../../util/langs.js"
+import { NsisOptions } from "./nsisOptions.js"
+import { NsisScriptGenerator } from "./nsisScriptGenerator.js"
+import { nsisTemplatesDir } from "./nsisUtil.js"
 
 const debug = _debug("electron-builder:nsis")
 

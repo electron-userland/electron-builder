@@ -1,5 +1,4 @@
-import { InvalidConfigurationError, log, isEmptyOrSpaces } from "builder-util"
-import { sanitizeFileName } from "builder-util/out/filename"
+import { InvalidConfigurationError, log, isEmptyOrSpaces, sanitizeFileName } from "builder-util"
 import { Arch, getArchSuffix, SquirrelWindowsOptions, Target, WinPackager } from "app-builder-lib"
 import * as path from "path"
 import * as fs from "fs"
@@ -8,7 +7,7 @@ import { Options as SquirrelOptions, createWindowsInstaller, convertVersion } fr
 
 export default class SquirrelWindowsTarget extends Target {
   //tslint:disable-next-line:no-object-literal-type-assertion
-  readonly options: SquirrelWindowsOptions = { ...this.packager.platformSpecificBuildOptions, ...this.packager.config.squirrelWindows } as SquirrelWindowsOptions
+  readonly options: SquirrelWindowsOptions
 
   isAsyncSupported = false
 
@@ -17,6 +16,7 @@ export default class SquirrelWindowsTarget extends Target {
     readonly outDir: string
   ) {
     super("squirrel")
+    this.options = { ...this.packager.platformSpecificBuildOptions, ...this.packager.config.squirrelWindows }
   }
 
   private async prepareSignedVendorDirectory(): Promise<string> {

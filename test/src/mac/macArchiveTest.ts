@@ -5,8 +5,8 @@ import { outputFile } from "fs-extra"
 import * as fs from "fs/promises"
 import * as path from "path"
 import pathSorter from "path-sort"
-import { assertThat } from "../helpers/fileAssert"
-import { app, copyTestAsset, createMacTargetTest, getFixtureDir, parseFileList } from "../helpers/packTester"
+import { assertThat } from "../helpers/fileAssert.js"
+import { app, copyTestAsset, createMacTargetTest, getFixtureDir, parseFileList } from "../helpers/packTester.js"
 
 test.ifMac("invalid target", ({ expect }) => expect(createMacTargetTest(expect, ["ttt" as any])).rejects.toThrow())
 

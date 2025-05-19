@@ -1,8 +1,8 @@
-import { assertPack, linuxDirTarget, verifyAsarFileTree, modifyPackageJson } from "./helpers/packTester"
+import { assertPack, linuxDirTarget, verifyAsarFileTree, modifyPackageJson } from "./helpers/packTester.js"
 import { Platform, Arch, DIR_TARGET } from "electron-builder"
 import { outputFile, copySync, rmSync, readJsonSync, writeJsonSync, mkdirSync } from "fs-extra"
 import * as path from "path"
-import { spawn } from "builder-util/out/util"
+import { spawn } from "builder-util"
 
 test("yarn workspace", ({ expect }) =>
   assertPack(

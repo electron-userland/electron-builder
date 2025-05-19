@@ -1,7 +1,13 @@
 {
   "name": "electron-publish",
   "version": "26.0.13",
-  "main": "out/index.js",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./out/index.js",
+      "types": "./out/index.d.ts"
+    }
+  },
   "author": "Vladimir Krivosheev",
   "license": "MIT",
   "repository": {

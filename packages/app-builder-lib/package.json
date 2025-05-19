@@ -2,7 +2,13 @@
   "name": "app-builder-lib",
   "description": "electron-builder lib",
   "version": "26.0.15",
-  "main": "out/index.js",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./out/index.js",
+      "types": "./out/index.d.ts"
+    }
+  },
   "files": [
     "out",
     "templates",
@@ -101,6 +107,7 @@
     "@babel/plugin-syntax-import-meta": "7.10.4",
     "@babel/preset-env": "7.24.8",
     "@babel/preset-react": "7.24.7",
+    "@types/async-exit-hook": "^2.0.2",
     "@types/debug": "4.1.7",
     "@types/ejs": "3.1.0",
     "@types/hosted-git-info": "3.0.2",

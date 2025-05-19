@@ -1,7 +1,7 @@
 import { GithubOptions } from "builder-util-runtime"
 import { DebUpdater, PacmanUpdater, RpmUpdater } from "electron-updater"
-import { assertThat } from "../helpers/fileAssert"
-import { createTestAppAdapter, tuneTestUpdater, validateDownload, writeUpdateConfig } from "../helpers/updaterTestUtil"
+import { assertThat } from "../helpers/fileAssert.js"
+import { createTestAppAdapter, tuneTestUpdater, validateDownload, writeUpdateConfig } from "../helpers/updaterTestUtil.js"
 import { ExpectStatic } from "vitest"
 
 const runTest = async (expect: ExpectStatic, updaterClass: any, expectedExtension: "deb" | "rpm" | "AppImage" | "pacman") => {

@@ -1,6 +1,6 @@
 import { Lazy } from "lazy-val"
-import { NodeModulesCollector } from "./nodeModulesCollector"
-import { PnpmDependency, Dependency } from "./types"
+import { NodeModulesCollector } from "./nodeModulesCollector.js"
+import { PnpmDependency, Dependency } from "./types.js"
 import { exec, log } from "builder-util"
 import * as path from "path"
 import * as fs from "fs"

@@ -2,9 +2,9 @@ import { copyOrLinkFile } from "builder-util"
 import { Arch, createTargets, DIR_TARGET, Platform } from "electron-builder"
 import * as fs from "fs/promises"
 import * as path from "path"
-import { assertThat } from "../helpers/fileAssert"
-import { app, appThrows, assertPack, checkDirContents, platform } from "../helpers/packTester"
-import { verifySmartUnpack } from "../helpers/verifySmartUnpack"
+import { assertThat } from "../helpers/fileAssert.js"
+import { app, appThrows, assertPack, checkDirContents, platform } from "../helpers/packTester.js"
+import { verifySmartUnpack } from "../helpers/verifySmartUnpack.js"
 
 test.ifMac("two-package", ({ expect }) =>
   assertPack(

@@ -1,9 +1,4 @@
-import { PublishManager } from "app-builder-lib"
-import { readAsar } from "app-builder-lib/out/asar/asar"
-import { computeArchToTargetNamesMap } from "app-builder-lib/out/targets/targetFactory"
-import { getLinuxToolsPath } from "app-builder-lib/out/targets/tools"
-import { parsePlistFile, PlistObject } from "app-builder-lib/out/util/plist"
-import { AsarIntegrity } from "app-builder-lib/out/asar/integrity"
+import { PublishManager, readAsar, computeArchToTargetNamesMap, getLinuxToolsPath, parsePlistFile, PlistObject, AsarIntegrity, getCollectorByPackageManager } from "app-builder-lib"
 import { addValue, copyDir, deepAssign, exec, executeFinally, exists, FileCopier, getPath7x, getPath7za, log, spawn, USE_HARD_LINKS, walk } from "builder-util"
 import { CancellationToken, UpdateFileInfo } from "builder-util-runtime"
 import { Arch, ArtifactCreated, Configuration, DIR_TARGET, getArchSuffix, MacOsTargetName, Packager, PackagerOptions, Platform, Target } from "electron-builder"
@@ -16,14 +11,15 @@ import * as path from "path"
 import pathSorter from "path-sort"
 import { NtExecutable, NtExecutableResource } from "resedit"
 import { TmpDir } from "temp-file"
-import { getCollectorByPackageManager } from "app-builder-lib/out/node-module-collector"
 import { promisify } from "util"
-import { CSC_LINK, WIN_CSC_LINK } from "./codeSignData"
-import { assertThat } from "./fileAssert"
+import { CSC_LINK, WIN_CSC_LINK } from "./codeSignData.js"
+import { assertThat } from "./fileAssert.js"
 import AdmZip from "adm-zip"
-// @ts-ignore
 import sanitizeFileName from "sanitize-filename"
 import type { ExpectStatic } from "vitest"
+
+import { exec as execCp } from "child_process"
+export const execShell: any = promisify(execCp)
 
 if (process.env.TRAVIS !== "true") {
   process.env.CIRCLE_BUILD_NUM = "42"
@@ -512,8 +508,6 @@ const checkResult = (expect: ExpectStatic, artifacts: Array<ArtifactCreated>, ex
 
   return { packageFile, zip, allFiles }
 }
-
-export const execShell: any = promisify(require("child_process").exec)
 
 export async function getTarExecutable() {
   return process.platform === "darwin" ? path.join(await getLinuxToolsPath(), "bin", "gtar") : "tar"

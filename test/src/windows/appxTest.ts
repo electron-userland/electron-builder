@@ -2,7 +2,7 @@ import { Arch, Platform } from "electron-builder"
 import { readFile } from "fs-extra"
 import { mkdir } from "fs/promises"
 import * as path from "path"
-import { app, copyTestAsset } from "../helpers/packTester"
+import { app, copyTestAsset } from "../helpers/packTester.js"
 
 // test that we can get info from protected pfx
 const protectedCscLink =

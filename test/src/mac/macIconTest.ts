@@ -1,8 +1,8 @@
 import { Arch, DIR_TARGET, Platform } from "electron-builder"
 import * as fs from "fs/promises"
 import * as path from "path"
-import { CheckingMacPackager } from "../helpers/CheckingPackager"
-import { app } from "../helpers/packTester"
+import { CheckingMacPackager } from "../helpers/CheckingPackager.js"
+import { app } from "../helpers/packTester.js"
 import { ExpectStatic } from "vitest"
 
 async function assertIcon(expect: ExpectStatic, platformPackager: CheckingMacPackager) {

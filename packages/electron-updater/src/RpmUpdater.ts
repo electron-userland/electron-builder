@@ -1,12 +1,12 @@
 import { AllPublishOptions } from "builder-util-runtime"
-import { AppAdapter } from "./AppAdapter"
-import { DownloadUpdateOptions } from "./AppUpdater"
-import { BaseUpdater, InstallOptions } from "./BaseUpdater"
-import { DOWNLOAD_PROGRESS } from "./types"
-import { findFile } from "./providers/Provider"
+import { ElectronAppAdapter } from "./ElectronAppAdapter.js"
+import { DownloadUpdateOptions } from "./AppUpdater.js"
+import { BaseUpdater, InstallOptions } from "./BaseUpdater.js"
+import { DOWNLOAD_PROGRESS } from "./types.js"
+import { findFile } from "./providers/Provider.js"
 
 export class RpmUpdater extends BaseUpdater {
-  constructor(options?: AllPublishOptions | null, app?: AppAdapter) {
+  constructor(options?: AllPublishOptions | null, app?: ElectronAppAdapter) {
     super(options, app)
   }
 

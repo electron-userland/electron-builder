@@ -1,6 +1,7 @@
 {
   "extends": "../tsconfig-base.json",
   "compilerOptions": {
+    "declarationDir": "./out",
     "outDir": "out",
     "rootDir": "src"
   },
@@ -12,12 +13,5 @@
       "path": "../builder-util-runtime"
     }
   ],
-  "jsdoc": {
-    "out": "../../scripts/jsdoc/out/index",
-    "access": "public"
-  },
-  "include": [
-    "src/**/*.ts",
-    "../../typings/mime.d.ts"
-  ]
+  "include": ["src/**/*.ts", "../../typings/mime.d.ts"]
 }
