@@ -25,7 +25,7 @@
     "docker-push": "docker/push.sh",
     "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s && git add CHANGELOG.md",
     "generate-changeset": "pnpm changeset",
-    "generate-schema": "typescript-json-schema packages/app-builder-lib/tsconfig-scheme.json Configuration --out packages/app-builder-lib/scheme.json --noExtraProps --useTypeOfKeyword --strictNullChecks --required && node ./scripts/fix-schema.js",
+    "generate-schema": "node ./scripts/generate-schema.js",
     "generate-all": "pnpm generate-schema && pnpm prettier",
     "ci:test": "vitest run",
     "ci:test:ui": "vitest --ui",
@@ -73,7 +73,7 @@
     "typedoc": "^0.26.7",
     "typedoc-plugin-markdown": "4.2.8",
     "typescript": "^5.6.2",
-    "typescript-json-schema": "0.64.0",
+    "typescript-json-schema": "0.65.1",
     "vitest": "^3.0.4"
   },
   "engines": {
