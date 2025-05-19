@@ -1,12 +1,14 @@
+import { AutoUpdater } from "electron"
 import { ElectronAppAdapter } from "electron-updater"
 
 // do not implement AppAdapter directly, test that our ElectronAppAdapter implementation is correct
 export class TestAppAdapter extends ElectronAppAdapter {
   constructor(
     version: string,
-    private _baseCachePath: string
+    private _baseCachePath: string,
+    nativeUpdater: AutoUpdater
   ) {
-    super(new MockApp(version) as any)
+    super(new MockApp(version) as any, nativeUpdater)
   }
 
   get baseCachePath(): string {

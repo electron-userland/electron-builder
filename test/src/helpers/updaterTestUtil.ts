@@ -7,11 +7,33 @@ import * as path from "path"
 import { assertThat } from "./fileAssert.js"
 import { TestAppAdapter } from "./TestAppAdapter.js"
 import { ExpectStatic } from "vitest"
+import { EventEmitter } from "stream"
+import { AutoUpdater } from "electron"
 
 const tmpDir = new TmpDir("updater-test-util")
 
+// Mac uses electron's native autoUpdater to serve updates to, we mock here since electron API isn't available within jest runtime
+class TestNativeUpdater extends EventEmitter implements AutoUpdater {
+  checkForUpdates() {
+    console.log("TestNativeUpdater.checkForUpdates")
+    // MacUpdater expects this to emit corresponding update-downloaded event
+    this.emit("update-downloaded")
+  }
+  setFeedURL(updateConfig: any) {
+    console.log("TestNativeUpdater.setFeedURL " + updateConfig.url)
+  }
+  getFeedURL() {
+    console.log("TestNativeUpdater.getFeedURL")
+    return ""
+  }
+  quitAndInstall() {
+    console.log("TestNativeUpdater.quitAndInstall")
+  }
+}
+export const mockNativeUpdater = new TestNativeUpdater()
+
 export async function createTestAppAdapter(version = "0.0.1") {
-  return new TestAppAdapter(version, await tmpDir.getTempDir())
+  return new TestAppAdapter(version, await tmpDir.getTempDir(), mockNativeUpdater)
 }
 
 export async function createNsisUpdater(version = "0.0.1") {

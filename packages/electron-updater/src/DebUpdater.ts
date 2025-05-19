@@ -1,12 +1,12 @@
 import { AllPublishOptions } from "builder-util-runtime"
-import { AppAdapter } from "./AppAdapter.js"
+import { ElectronAppAdapter } from "./ElectronAppAdapter.js"
 import { DownloadUpdateOptions } from "./AppUpdater.js"
 import { BaseUpdater, InstallOptions } from "./BaseUpdater.js"
 import { findFile } from "./providers/Provider.js"
 import { DOWNLOAD_PROGRESS } from "./types.js"
 
 export class DebUpdater extends BaseUpdater {
-  constructor(options?: AllPublishOptions | null, app?: AppAdapter) {
+  constructor(options?: AllPublishOptions | null, app?: ElectronAppAdapter) {
     super(options, app)
   }
 

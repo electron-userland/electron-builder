@@ -3,27 +3,32 @@ import { pathExistsSync, stat, copyFile } from "fs-extra"
 import { createReadStream } from "fs"
 import * as path from "path"
 import { createServer, IncomingMessage, Server, ServerResponse } from "http"
-import { AppAdapter } from "./AppAdapter.js"
+import { ElectronAppAdapter } from "./ElectronAppAdapter.js"
 import { AppUpdater, DownloadUpdateOptions } from "./AppUpdater.js"
 import { ResolvedUpdateFileInfo } from "./main.js"
 import { UpdateDownloadedEvent } from "./types.js"
 import { findFile } from "./providers/Provider.js"
+import { type AutoUpdater } from "electron"
 import { execFileSync } from "child_process"
 import { randomBytes } from "crypto"
-import { autoUpdater as nativeUpdater } from "electron"
+
 export class MacUpdater extends AppUpdater {
+  private readonly nativeUpdater: AutoUpdater
+
   private squirrelDownloadedUpdate = false
 
   private server?: Server
 
-  constructor(options?: AllPublishOptions, app?: AppAdapter) {
+  constructor(options?: AllPublishOptions, app?: ElectronAppAdapter) {
     super(options, app)
 
-    nativeUpdater.on("error", it => {
+    this.nativeUpdater = this.app.nativeUpdater
+
+    this.nativeUpdater.on("error", it => {
       this._logger.warn(it)
       this.emit("error", it)
     })
-    nativeUpdater.on("update-downloaded", () => {
+    this.nativeUpdater.on("update-downloaded", () => {
       this.squirrelDownloadedUpdate = true
       this.debug("nativeUpdater.update-downloaded")
     })
@@ -201,7 +206,7 @@ export class MacUpdater extends AppUpdater {
         let errorOccurred = false
         response.on("finish", () => {
           if (!errorOccurred) {
-            nativeUpdater.removeListener("error", reject)
+            this.nativeUpdater.removeListener("error", reject)
             resolve([])
           }
         })
@@ -214,7 +219,7 @@ export class MacUpdater extends AppUpdater {
             log.warn(`cannot end response: ${e}`)
           }
           errorOccurred = true
-          nativeUpdater.removeListener("error", reject)
+          this.nativeUpdater.removeListener("error", reject)
           reject(new Error(`Cannot pipe "${downloadedFile}": ${error}`))
         })
 
@@ -229,7 +234,7 @@ export class MacUpdater extends AppUpdater {
 
       this.server!.listen(0, "127.0.0.1", () => {
         this.debug(`Proxy server for native Squirrel.Mac is listening (address=${getServerUrl(this.server!)}, ${logContext})`)
-        nativeUpdater.setFeedURL({
+        this.nativeUpdater.setFeedURL({
           url: getServerUrl(this.server!),
           headers: {
             "Cache-Control": "no-cache",
@@ -241,9 +246,9 @@ export class MacUpdater extends AppUpdater {
         this.dispatchUpdateDownloaded(event)
 
         if (this.autoInstallOnAppQuit) {
-          nativeUpdater.once("error", reject)
+          this.nativeUpdater.once("error", reject)
           // This will trigger fetching and installing the file on Squirrel side
-          nativeUpdater.checkForUpdates()
+          this.nativeUpdater.checkForUpdates()
         } else {
           resolve([])
         }
@@ -253,7 +258,7 @@ export class MacUpdater extends AppUpdater {
 
   private handleUpdateDownloaded() {
     if (this.autoRunAppAfterInstall) {
-      nativeUpdater.quitAndInstall()
+      this.nativeUpdater.quitAndInstall()
     } else {
       this.app.quit()
     }
@@ -266,14 +271,14 @@ export class MacUpdater extends AppUpdater {
       this.handleUpdateDownloaded()
     } else {
       // Quit and install as soon as Squirrel get the update
-      nativeUpdater.on("update-downloaded", () => this.handleUpdateDownloaded())
+      this.nativeUpdater.on("update-downloaded", () => this.handleUpdateDownloaded())
 
       if (!this.autoInstallOnAppQuit) {
         /**
          * If this was not `true` previously then MacUpdater.doDownloadUpdate()
          * would not actually initiate the downloading by electron's autoUpdater
          */
-        nativeUpdater.checkForUpdates()
+        this.nativeUpdater.checkForUpdates()
       }
     }
   }

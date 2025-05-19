@@ -21,7 +21,6 @@ import { load } from "js-yaml"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { eq as isVersionsEqual, gt as isVersionGreaterThan, lt as isVersionLessThan, parse as parseVersion, prerelease as getVersionPreleaseComponents, SemVer } from "semver"
-import { AppAdapter } from "./AppAdapter.js"
 import { createTempUpdateFile, DownloadedUpdateHelper } from "./DownloadedUpdateHelper.js"
 import { ElectronAppAdapter } from "./ElectronAppAdapter.js"
 import { ElectronHttpExecutor, getNetSession, LoginCallback } from "./electronHttpExecutor.js"
@@ -248,14 +247,14 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   private checkForUpdatesPromise: Promise<UpdateCheckResult> | null = null
   private downloadPromise: Promise<Array<string>> | null = null
 
-  protected readonly app: AppAdapter
+  protected readonly app: ElectronAppAdapter
 
   protected updateInfoAndProvider: UpdateInfoAndProvider | null = null
 
   /** @internal */
   readonly httpExecutor: ElectronHttpExecutor
 
-  protected constructor(options: AllPublishOptions | null | undefined, app?: AppAdapter) {
+  protected constructor(options: AllPublishOptions | null | undefined, app?: ElectronAppAdapter) {
     super()
 
     this.on("error", (error: Error) => {

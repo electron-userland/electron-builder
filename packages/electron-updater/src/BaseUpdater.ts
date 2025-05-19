@@ -1,6 +1,6 @@
 import { AllPublishOptions } from "builder-util-runtime"
 import { spawn, SpawnOptions, spawnSync, StdioOptions } from "child_process"
-import { AppAdapter } from "./AppAdapter.js"
+import { ElectronAppAdapter } from "./ElectronAppAdapter.js"
 import { AppUpdater, DownloadExecutorTask } from "./AppUpdater.js"
 import { autoUpdater as nativeUpdater } from "electron"
 
@@ -8,7 +8,7 @@ export abstract class BaseUpdater extends AppUpdater {
   protected quitAndInstallCalled = false
   private quitHandlerAdded = false
 
-  protected constructor(options?: AllPublishOptions | null, app?: AppAdapter) {
+  protected constructor(options?: AllPublishOptions | null, app?: ElectronAppAdapter) {
     super(options, app)
   }
 

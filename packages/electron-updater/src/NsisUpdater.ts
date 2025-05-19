@@ -1,6 +1,6 @@
 import { AllPublishOptions, newError, PackageFileInfo, CURRENT_APP_INSTALLER_FILE_NAME, CURRENT_APP_PACKAGE_FILE_NAME } from "builder-util-runtime"
 import * as path from "path"
-import { AppAdapter } from "./AppAdapter.js"
+import { ElectronAppAdapter } from "./ElectronAppAdapter.js"
 import { DownloadUpdateOptions } from "./AppUpdater.js"
 import { BaseUpdater, InstallOptions } from "./BaseUpdater.js"
 import { DifferentialDownloaderOptions } from "./differentialDownloader/DifferentialDownloader.js"
@@ -20,7 +20,7 @@ export class NsisUpdater extends BaseUpdater {
    */
   installDirectory?: string
 
-  constructor(options?: AllPublishOptions | null, app?: AppAdapter) {
+  constructor(options?: AllPublishOptions | null, app?: ElectronAppAdapter) {
     super(options, app)
   }
 

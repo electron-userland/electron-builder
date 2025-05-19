@@ -41,12 +41,13 @@
     "@types/semver": "^7.3.13",
     "@types/yargs": "^17.0.33",
     "babel-jest": "^29.7.0",
-    "fast-xml-parser": "4.4.1",
-    "vitest": "^3.0.4",
-    "vitest-mock-commonjs": "^1.0.2",
+    "electron": "^31.2.1",
     "esbuild": "^0.12.14",
     "esbuild-jest": "^0.5.0",
-    "sanitize-filename": "^1.6.3"
+    "fast-xml-parser": "4.4.1",
+    "sanitize-filename": "^1.6.3",
+    "vitest": "^3.0.4",
+    "vitest-mock-commonjs": "^1.0.2"
   },
   "jest": {
     "snapshotResolver": "<rootDir>/snapshotResolver.js",
