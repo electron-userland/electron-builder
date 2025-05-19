@@ -12,9 +12,9 @@ const program = TJS.programFromConfig(tsconfig)
 const schema = TJS.generateSchema(program, "Configuration", {
     required: true,
     noExtraProps: true,
-    typeOfKeyword: true,
     strictNullChecks: true,
     skipLibCheck: true,
+    typeOfKeyword: true, // non-standard JSON schema, but used to include `typeOf` keyword in the schema for validation of `function` types
   })
 
 
