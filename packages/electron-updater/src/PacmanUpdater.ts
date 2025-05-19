@@ -38,7 +38,23 @@ export class PacmanUpdater extends LinuxUpdater {
       this.dispatchError(new Error("No update filepath provided, can't quit and install"))
       return false
     }
-    this.runCommandWithSudoIfNeeded(["pacman", "-U", "--noconfirm", installerPath])
+    try {
+      this.runCommandWithSudoIfNeeded(["pacman", "-U", "--noconfirm", installerPath])
+    } catch (error: any) {
+      this._logger.warn("pacman installation failed, attempting to update package database and retry")
+      this._logger.warn(error.message ?? error)
+
+      try {
+        // Update package database (not a full upgrade, just sync)
+        this.runCommandWithSudoIfNeeded(["pacman", "-Sy", "--noconfirm"])
+        // Retry installation
+        this.runCommandWithSudoIfNeeded(["pacman", "-U", "--noconfirm", installerPath])
+      } catch (retryError: any) {
+        this._logger.error("Retry after pacman -Sy failed")
+        this._logger.error(retryError.message ?? retryError)
+        throw retryError // bubble up the failure
+      }
+    }
     if (options.isForceRunAfter) {
       this.app.relaunch() // note: `app` is undefined in tests since vite doesn't run in electron
     }

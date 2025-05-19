@@ -165,23 +165,9 @@ jobs:
           FORCE_COLOR: 1
           TEST_RUNNER_IMAGE_TAG: electronuserland/builder:${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}-wine-mono
 
-      - name: Test Linux Updater (archlinux)
+      - name: Test Linux Updater
         run: |
-          TEST_RUNNER_IMAGE_TAG=archlinux-updater-test TEST_FILES=linuxUpdaterTest pnpm test-linux
-        env:
-          TEST_FILES: linuxUpdaterTest
-
-      - name: Test Linux Updater (rpm)
-        run: |
-          TEST_RUNNER_IMAGE_TAG=rpm-updater-test TEST_FILES=linuxUpdaterTest pnpm test-linux
-        env:
-          TEST_FILES: linuxUpdaterTest
-
-      - name: Test Linux Updater (debian)
-        run: |
-          TEST_RUNNER_IMAGE_TAG=debian-updater-test TEST_FILES=linuxUpdaterTest pnpm test-linux
-        env:
-          TEST_FILES: linuxUpdaterTest
+           sh test/src/updater/test-specific-platforms.sh
 
       - name: Verify Docs Generation
         run: pnpm generate-all

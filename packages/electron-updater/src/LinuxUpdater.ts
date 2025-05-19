@@ -69,10 +69,18 @@ export abstract class LinuxUpdater extends BaseUpdater {
 
   /**
    * Detects the package manager to use based on the available commands.
+   * Allows overriding the default behavior by setting the ELECTRON_BUILDER_LINUX_PACKAGE_MANAGER environment variable.
+   * If the environment variable is set, it will be used directly. (This is useful for testing each package manager logic path.)
+   * Otherwise, it checks for the presence of the specified package manager commands in the order provided.
    * @param pms - An array of package manager commands to check for, in priority order.
    * @returns The detected package manager command or "unknown" if none are found.
    */
   protected detectPackageManager(pms: string[]): string {
+    const pmOverride = process.env.ELECTRON_BUILDER_LINUX_PACKAGE_MANAGER?.trim()
+    if (pmOverride) {
+      return pmOverride
+    }
+    // Check for the package manager in the order of priority
     for (const pm of pms) {
       if (this.hasCommand(pm)) {
         return pm
