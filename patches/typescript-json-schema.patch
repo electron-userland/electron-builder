@@ -1,0 +1,15 @@
+diff --git a/dist/typescript-json-schema.js b/dist/typescript-json-schema.js
+index 3eab4015d90b3d6873cdf5b84ad1bac9176e96ae..fd0db744b8df0718759f6d0c996599021e3abc11 100644
+--- a/dist/typescript-json-schema.js
++++ b/dist/typescript-json-schema.js
+@@ -62,7 +62,9 @@ var crypto_1 = require("crypto");
+ var ts = require("typescript");
+ var path_equal_1 = require("path-equal");
+ var vm = require("vm");
+-var REGEX_FILE_NAME_OR_SPACE = /(\bimport\(".*?"\)|".*?")\.| /g;
++// const REGEX_FILE_NAME_OR_SPACE = /(\bimport\(".*?"\)|".*?")\.| /g;
++const REGEX_FILE_NAME_OR_SPACE =/(\bimport\(".*?"(, [^)]+)?\)|".*?")\.| /g;
++// const REGEX_FILE_NAME_OR_SPACE = /(\bimport\(".*?"(,\{with:\{"resolution-mode":"(import|require)"\}\})?\)|".*?")\.| /g;
+ var REGEX_TSCONFIG_NAME = /^.*\.json$/;
+ var REGEX_TJS_JSDOC = /^-([\w]+)\s+(\S|\S[\s\S]*\S)\s*$/g;
+ var REGEX_GROUP_JSDOC = /^[.]?([\w]+)\s+(\S|\S[\s\S]*\S)\s*$/g;

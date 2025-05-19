@@ -1,16 +1,9 @@
 {
   "extends": "../tsconfig-base.json",
-  "jsdoc": {
-    "out": "../../scripts/jsdoc/out/builder-lib",
-    "examples": "../../scripts/jsdoc/examples",
-    "access": "public"
-  },
   "compilerOptions": {
-        "declarationDir": "./out",
+    "declarationDir": "./out",
     "outDir": "out",
     "rootDir": "src"
   },
-  "include": [
-    "src/**/*.ts"
-  ]
+  "include": ["src/**/*.ts"]
 }

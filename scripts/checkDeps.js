@@ -1,7 +1,9 @@
-const chalk = require("chalk")
-const depCheck = require("depcheck")
-const fs = require("fs-extra")
-const path = require("path")
+import chalk from "chalk"
+import depCheck from "depcheck"
+import fs from "fs-extra"
+import path from "path"
+import { fileURLToPath } from "url"
+
 const knownUnusedDevDependencies = new Set([
   "@babel/plugin-transform-modules-commonjs", // Not sure what this is used for, but keeping just in case (for now)
   "@changesets/changelog-github", // Used in package.json CI/CD logic
@@ -20,6 +22,8 @@ const knownUnusedDevDependencies = new Set([
 ])
 const knownMissedDependencies = new Set(["babel-core", "babel-preset-env", "babel-preset-stage-0", "babel-preset-react"])
 
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 const rootDir = path.join(__dirname, "..")
 const packageDir = path.join(rootDir, "packages")
 

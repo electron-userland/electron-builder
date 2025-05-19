@@ -100,7 +100,7 @@ export { PACKAGE_VERSION } from "./version.js"
 export { parsePlistFile, PlistObject } from "./util/plist.js"
 export { Publish } from "./core.js"
 export { readAsarJson } from "./asar/asar.js"
-export { validateConfiguration } from "./util/config/config.js"
+export { validateConfiguration } from "./util/config/validate.js"
 
 export { doMergeConfigs } from "./util/config/config.js"
 

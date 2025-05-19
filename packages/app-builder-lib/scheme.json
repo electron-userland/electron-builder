@@ -7,11 +7,11 @@
     },
     "electronDownload": {
       "description": "The [electron-download](https://github.com/electron-userland/electron-download#usage) options.",
-      "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/electron/ElectronFramework\",{with:{\"resolution-mode\":\"import\"}}).ElectronDownloadOptions"
+      "$ref": "#/definitions/ElectronDownloadOptions"
     },
     "electronBranding": {
       "description": "The branding used by Electron's distributables. This is needed if a fork has modified Electron's BRANDING.json file.",
-      "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/electron/ElectronFramework\",{with:{\"resolution-mode\":\"import\"}}).ElectronBrandingOptions"
+      "$ref": "#/definitions/ElectronBrandingOptions"
     },
     "electronVersion": {
       "description": "The version of electron you are packaging for. Defaults to version of `electron`, `electron-prebuilt` or `electron-prebuilt-compile` dependency.",
@@ -91,7 +91,7 @@
       "description": "Directories for build resources",
       "anyOf": [
         {
-          "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/configuration\",{with:{\"resolution-mode\":\"import\"}}).MetadataDirectories"
+          "$ref": "#/definitions/MetadataDirectories"
         },
         {
           "type": "null"
@@ -102,7 +102,7 @@
       "description": "Options related to how build macOS targets.",
       "anyOf": [
         {
-          "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/macOptions\",{with:{\"resolution-mode\":\"import\"}}).MacConfiguration"
+          "$ref": "#/definitions/MacConfiguration"
         },
         {
           "type": "null"
@@ -113,7 +113,7 @@
       "description": "MAS (Mac Application Store) options.",
       "anyOf": [
         {
-          "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/macOptions\",{with:{\"resolution-mode\":\"import\"}}).MasConfiguration"
+          "$ref": "#/definitions/MasConfiguration"
         },
         {
           "type": "null"
@@ -124,7 +124,7 @@
       "description": "MAS (Mac Application Store) development options (`mas-dev` target).",
       "anyOf": [
         {
-          "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/macOptions\",{with:{\"resolution-mode\":\"import\"}}).MasConfiguration"
+          "$ref": "#/definitions/MasConfiguration"
         },
         {
           "type": "null"
@@ -135,7 +135,7 @@
       "description": "macOS DMG options.",
       "anyOf": [
         {
-          "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/macOptions\",{with:{\"resolution-mode\":\"import\"}}).DmgOptions"
+          "$ref": "#/definitions/DmgOptions"
         },
         {
           "type": "null"
@@ -146,7 +146,7 @@
       "description": "macOS PKG options.",
       "anyOf": [
         {
-          "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/pkgOptions\",{with:{\"resolution-mode\":\"import\"}}).PkgOptions"
+          "$ref": "#/definitions/PkgOptions"
         },
         {
           "type": "null"
@@ -157,7 +157,7 @@
       "description": "Options related to how build Windows targets.",
       "anyOf": [
         {
-          "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/winOptions\",{with:{\"resolution-mode\":\"import\"}}).WindowsConfiguration"
+          "$ref": "#/definitions/WindowsConfiguration"
         },
         {
           "type": "null"
@@ -167,7 +167,7 @@
     "nsis": {
       "anyOf": [
         {
-          "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/targets/nsis/nsisOptions\",{with:{\"resolution-mode\":\"import\"}}).NsisOptions"
+          "$ref": "#/definitions/NsisOptions"
         },
         {
           "type": "null"
@@ -177,7 +177,7 @@
     "nsisWeb": {
       "anyOf": [
         {
-          "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/targets/nsis/nsisOptions\",{with:{\"resolution-mode\":\"import\"}}).NsisWebOptions"
+          "$ref": "#/definitions/NsisWebOptions"
         },
         {
           "type": "null"
@@ -187,7 +187,7 @@
     "portable": {
       "anyOf": [
         {
-          "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/targets/nsis/nsisOptions\",{with:{\"resolution-mode\":\"import\"}}).PortableOptions"
+          "$ref": "#/definitions/PortableOptions"
         },
         {
           "type": "null"
@@ -197,7 +197,7 @@
     "appx": {
       "anyOf": [
         {
-          "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/AppXOptions\",{with:{\"resolution-mode\":\"import\"}}).AppXOptions"
+          "$ref": "#/definitions/AppXOptions"
         },
         {
           "type": "null"
@@ -207,7 +207,7 @@
     "msi": {
       "anyOf": [
         {
-          "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/MsiOptions\",{with:{\"resolution-mode\":\"import\"}}).MsiOptions"
+          "$ref": "#/definitions/MsiOptions"
         },
         {
           "type": "null"
@@ -217,7 +217,7 @@
     "msiWrapped": {
       "anyOf": [
         {
-          "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/MsiWrappedOptions\",{with:{\"resolution-mode\":\"import\"}}).MsiWrappedOptions"
+          "$ref": "#/definitions/MsiWrappedOptions"
         },
         {
           "type": "null"
@@ -227,7 +227,7 @@
     "squirrelWindows": {
       "anyOf": [
         {
-          "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/SquirrelWindowsOptions\",{with:{\"resolution-mode\":\"import\"}}).SquirrelWindowsOptions"
+          "$ref": "#/definitions/SquirrelWindowsOptions"
         },
         {
           "type": "null"
@@ -238,7 +238,7 @@
       "description": "Options related to how build Linux targets.",
       "anyOf": [
         {
-          "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/linuxOptions\",{with:{\"resolution-mode\":\"import\"}}).LinuxConfiguration"
+          "$ref": "#/definitions/LinuxConfiguration"
         },
         {
           "type": "null"
@@ -249,7 +249,7 @@
       "description": "Debian package options.",
       "anyOf": [
         {
-          "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/linuxOptions\",{with:{\"resolution-mode\":\"import\"}}).DebOptions"
+          "$ref": "#/definitions/DebOptions"
         },
         {
           "type": "null"
@@ -260,7 +260,7 @@
       "description": "Snap options.",
       "anyOf": [
         {
-          "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/SnapOptions\",{with:{\"resolution-mode\":\"import\"}}).SnapOptions"
+          "$ref": "#/definitions/SnapOptions"
         },
         {
           "type": "null"
@@ -271,7 +271,7 @@
       "description": "AppImage options.",
       "anyOf": [
         {
-          "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/linuxOptions\",{with:{\"resolution-mode\":\"import\"}}).AppImageOptions"
+          "$ref": "#/definitions/AppImageOptions"
         },
         {
           "type": "null"
@@ -282,7 +282,7 @@
       "description": "Flatpak options.",
       "anyOf": [
         {
-          "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/linuxOptions\",{with:{\"resolution-mode\":\"import\"}}).FlatpakOptions"
+          "$ref": "#/definitions/FlatpakOptions"
         },
         {
           "type": "null"
@@ -292,7 +292,7 @@
     "pacman": {
       "anyOf": [
         {
-          "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/linuxOptions\",{with:{\"resolution-mode\":\"import\"}}).LinuxTargetSpecificOptions"
+          "$ref": "#/definitions/LinuxTargetSpecificOptions"
         },
         {
           "type": "null"
@@ -302,7 +302,7 @@
     "rpm": {
       "anyOf": [
         {
-          "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/linuxOptions\",{with:{\"resolution-mode\":\"import\"}}).LinuxTargetSpecificOptions"
+          "$ref": "#/definitions/LinuxTargetSpecificOptions"
         },
         {
           "type": "null"
@@ -312,7 +312,7 @@
     "freebsd": {
       "anyOf": [
         {
-          "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/linuxOptions\",{with:{\"resolution-mode\":\"import\"}}).LinuxTargetSpecificOptions"
+          "$ref": "#/definitions/LinuxTargetSpecificOptions"
         },
         {
           "type": "null"
@@ -322,7 +322,7 @@
     "p5p": {
       "anyOf": [
         {
-          "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/linuxOptions\",{with:{\"resolution-mode\":\"import\"}}).LinuxTargetSpecificOptions"
+          "$ref": "#/definitions/LinuxTargetSpecificOptions"
         },
         {
           "type": "null"
@@ -332,7 +332,7 @@
     "apk": {
       "anyOf": [
         {
-          "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/linuxOptions\",{with:{\"resolution-mode\":\"import\"}}).LinuxTargetSpecificOptions"
+          "$ref": "#/definitions/LinuxTargetSpecificOptions"
         },
         {
           "type": "null"
@@ -433,7 +433,7 @@
       "description": "Options to pass to `@electron/fuses`\nRef: https://github.com/electron/fuses",
       "anyOf": [
         {
-          "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/configuration\",{with:{\"resolution-mode\":\"import\"}}).FuseOptionsV1"
+          "$ref": "#/definitions/FuseOptionsV1"
         },
         {
           "type": "null"
@@ -444,7 +444,7 @@
       "description": "[Experimental] Configuration for concurrent builds.",
       "anyOf": [
         {
-          "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/configuration\",{with:{\"resolution-mode\":\"import\"}}).Concurrency"
+          "$ref": "#/definitions/Concurrency"
         },
         {
           "type": "null"
@@ -495,7 +495,7 @@
       "default": true,
       "anyOf": [
         {
-          "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/PlatformSpecificBuildOptions\",{with:{\"resolution-mode\":\"import\"}}).AsarOptions"
+          "$ref": "#/definitions/AsarOptions"
         },
         {
           "type": [
@@ -532,12 +532,12 @@
       "description": "The file associations.",
       "anyOf": [
         {
-          "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/FileAssociation\",{with:{\"resolution-mode\":\"import\"}}).FileAssociation"
+          "$ref": "#/definitions/FileAssociation"
         },
         {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/FileAssociation\",{with:{\"resolution-mode\":\"import\"}}).FileAssociation"
+            "$ref": "#/definitions/FileAssociation"
           }
         }
       ]
@@ -546,12 +546,12 @@
       "description": "The URL protocol schemes.",
       "anyOf": [
         {
-          "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/PlatformSpecificBuildOptions\",{with:{\"resolution-mode\":\"import\"}}).Protocol"
+          "$ref": "#/definitions/Protocol"
         },
         {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/PlatformSpecificBuildOptions\",{with:{\"resolution-mode\":\"import\"}}).Protocol"
+            "$ref": "#/definitions/Protocol"
           }
         }
       ]
@@ -581,33 +581,33 @@
       "description": "Publisher configuration. See [Auto Update](./publish.md) for more information.",
       "anyOf": [
         {
-          "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).GithubOptions"
+          "$ref": "#/definitions/GithubOptions"
         },
         {
-          "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).S3Options"
+          "$ref": "#/definitions/S3Options"
         },
         {
-          "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).SpacesOptions"
+          "$ref": "#/definitions/SpacesOptions"
         },
         {
-          "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).GenericServerOptions"
+          "$ref": "#/definitions/GenericServerOptions"
         },
         {
-          "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).CustomPublishOptions"
+          "$ref": "#/definitions/CustomPublishOptions"
         },
         {
-          "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).KeygenOptions"
+          "$ref": "#/definitions/KeygenOptions"
         },
         {
-          "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).SnapStoreOptions"
+          "$ref": "#/definitions/SnapStoreOptions"
         },
         {
-          "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).BitbucketOptions"
+          "$ref": "#/definitions/BitbucketOptions"
         },
         {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).AllPublishOptions"
+            "$ref": "#/definitions/AllPublishOptions"
           }
         },
         {
@@ -630,19 +630,19 @@
     },
     "releaseInfo": {
       "description": "The release info. Intended for command line usage:\n\n```\n-c.releaseInfo.releaseNotes=\"new features\"\n```",
-      "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/PlatformSpecificBuildOptions\",{with:{\"resolution-mode\":\"import\"}}).ReleaseInfo"
+      "$ref": "#/definitions/ReleaseInfo"
     },
     "target": {
       "anyOf": [
         {
-          "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/core\",{with:{\"resolution-mode\":\"import\"}}).TargetConfiguration"
+          "$ref": "#/definitions/TargetConfiguration"
         },
         {
           "type": "array",
           "items": {
             "anyOf": [
               {
-                "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/core\",{with:{\"resolution-mode\":\"import\"}}).TargetConfiguration"
+                "$ref": "#/definitions/TargetConfiguration"
               },
               {
                 "type": "string"
@@ -677,14 +677,14 @@
       "description": "A [glob patterns](./file-patterns.md) relative to the [app directory](configuration.md#directories), which specifies which files to include when copying files to create the package.\n\nDefaults to:\n```json\n[\n\"**\\/*\",\n\"!**\\/node_modules/*\\/{CHANGELOG.md,README.md,README,readme.md,readme}\",\n\"!**\\/node_modules/*\\/{test,__tests__,tests,powered-test,example,examples}\",\n\"!**\\/node_modules/*.d.ts\",\n\"!**\\/node_modules/.bin\",\n\"!**\\/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}\",\n\"!.editorconfig\",\n\"!**\\/._*\",\n\"!**\\/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}\",\n\"!**\\/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}\",\n\"!**\\/{appveyor.yml,.travis.yml,circle.yml}\",\n\"!**\\/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}\"\n]\n```\n\nDevelopment dependencies are never copied in any case. You don't need to ignore it explicitly. Hidden files are not ignored by default, but all files that should be ignored, are ignored by default.\n\nDefault pattern \\`**\\/*\\` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`). `package.json` and \\`**\\/node_modules/**\\/*` (only production dependencies will be copied) is added to your custom in any case. All default ignores are added in any case — you don't need to repeat it if you configure own patterns.\n\nMay be specified in the platform options (e.g. in the [mac](mac.md)).\n\nYou may also specify custom source and destination directories by using `FileSet` objects instead of simple glob patterns.\n\n```json\n[\n{\n\"from\": \"path/to/source\",\n\"to\": \"path/to/destination\",\n\"filter\": [\"**\\/*\", \"!foo/*.js\"]\n}\n]\n```\n\nYou can use [file macros](./file-patterns.md#file-macros) in the `from` and `to` fields as well. `from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging.",
       "anyOf": [
         {
-          "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/PlatformSpecificBuildOptions\",{with:{\"resolution-mode\":\"import\"}}).FileSet"
+          "$ref": "#/definitions/FileSet"
         },
         {
           "type": "array",
           "items": {
             "anyOf": [
               {
-                "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/PlatformSpecificBuildOptions\",{with:{\"resolution-mode\":\"import\"}}).FileSet"
+                "$ref": "#/definitions/FileSet"
               },
               {
                 "type": "string"
@@ -704,14 +704,14 @@
       "description": "A [glob patterns](./file-patterns.md) relative to the project directory, when specified, copy the file or directory with matching names directly into the app's resources directory (`Contents/Resources` for MacOS, `resources` for Linux and Windows).\n\nFile patterns (and support for `from` and `to` fields) the same as for [files](#files).",
       "anyOf": [
         {
-          "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/PlatformSpecificBuildOptions\",{with:{\"resolution-mode\":\"import\"}}).FileSet"
+          "$ref": "#/definitions/FileSet"
         },
         {
           "type": "array",
           "items": {
             "anyOf": [
               {
-                "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/PlatformSpecificBuildOptions\",{with:{\"resolution-mode\":\"import\"}}).FileSet"
+                "$ref": "#/definitions/FileSet"
               },
               {
                 "type": "string"
@@ -731,14 +731,14 @@
       "description": "The same as [extraResources](#extraresources) but copy into the app's content directory (`Contents` for MacOS, root directory for Linux and Windows).",
       "anyOf": [
         {
-          "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/PlatformSpecificBuildOptions\",{with:{\"resolution-mode\":\"import\"}}).FileSet"
+          "$ref": "#/definitions/FileSet"
         },
         {
           "type": "array",
           "items": {
             "anyOf": [
               {
-                "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/PlatformSpecificBuildOptions\",{with:{\"resolution-mode\":\"import\"}}).FileSet"
+                "$ref": "#/definitions/FileSet"
               },
               {
                 "type": "string"
@@ -758,8 +758,7 @@
       "description": "The function (or path to file or module id) to be run before pack.\n\n```typescript\n(context: BeforePackContext): Promise<any> | any\n```\n\n!!! example \"As function\"\n\n ```js\n beforePack: async (context) => {\n   // your code\n }\n ```\n\nBecause in a configuration file you cannot use JavaScript, can be specified as a path to file or module id. Function must be exported as default export.\n\n```json\n\"build\": {\n\"beforePack\": \"./myBeforePackHook.js\"\n}\n```\n\nFile `myBeforePackHook.js` in the project root directory:\n\n!!! example \"myBeforePackHook.js\"\n ```js\n exports.default = async function(context) {\n   // your custom code\n }\n ```",
       "anyOf": [
         {
-          "type": "object",
-          "additionalProperties": false
+          "typeof": "function"
         },
         {
           "type": [
@@ -773,8 +772,7 @@
       "description": "The function (or path to file or module id) to be [run after the prebuilt Electron binary has been extracted to the output directory](#afterextract)\nSame setup as {@link beforePack}",
       "anyOf": [
         {
-          "type": "object",
-          "additionalProperties": false
+          "typeof": "function"
         },
         {
           "type": [
@@ -788,8 +786,7 @@
       "description": "The function (or path to file or module id) to be [run after pack](#afterpack) (but before pack into distributable format and sign).\nSame setup as {@link beforePack}",
       "anyOf": [
         {
-          "type": "object",
-          "additionalProperties": false
+          "typeof": "function"
         },
         {
           "type": [
@@ -803,8 +800,7 @@
       "description": "The function (or path to file or module id) to be [run after pack and sign](#aftersign) (but before pack into distributable format).\nSame setup as {@link beforePack}",
       "anyOf": [
         {
-          "type": "object",
-          "additionalProperties": false
+          "typeof": "function"
         },
         {
           "type": [
@@ -818,8 +814,7 @@
       "description": "The function (or path to file or module id) to be run on artifact build start.\nSame setup as {@link beforePack}",
       "anyOf": [
         {
-          "type": "object",
-          "additionalProperties": false
+          "typeof": "function"
         },
         {
           "type": [
@@ -833,8 +828,7 @@
       "description": "The function (or path to file or module id) to be run on artifact build completed.\nSame setup as {@link beforePack}",
       "anyOf": [
         {
-          "type": "object",
-          "additionalProperties": false
+          "typeof": "function"
         },
         {
           "type": [
@@ -848,8 +842,7 @@
       "description": "The function (or path to file or module id) to be run after all artifacts are built.\n\n```typescript\n(buildResult: BuildResult): Promise<Array<string>> | Array<string>\n```\n\nConfiguration in the same way as `afterPack` (see above).\n\n!!! example \"myAfterAllArtifactBuild.js\"\n```js\nexports.default = function () {\n // you can return additional files to publish\n return [\"/path/to/additional/result/file\"]\n}\n```",
       "anyOf": [
         {
-          "type": "object",
-          "additionalProperties": false
+          "typeof": "function"
         },
         {
           "type": [
@@ -863,8 +856,7 @@
       "description": "The function (or path to file or module id) to be run after MSI project created on disk - not packed into .msi package yet.",
       "anyOf": [
         {
-          "type": "object",
-          "additionalProperties": false
+          "typeof": "function"
         },
         {
           "type": [
@@ -878,8 +870,7 @@
       "description": "The function (or path to file or module id) to be run after Appx manifest created on disk - not packed into .appx package yet.",
       "anyOf": [
         {
-          "type": "object",
-          "additionalProperties": false
+          "typeof": "function"
         },
         {
           "type": [
@@ -893,8 +884,7 @@
       "description": "The function (or path to file or module id) to be [run on each node module](#onnodemodulefile) file. Returning `true`/`false` will determine whether to force include or to use the default copier logic",
       "anyOf": [
         {
-          "type": "object",
-          "additionalProperties": false
+          "typeof": "function"
         },
         {
           "type": [
@@ -908,8 +898,7 @@
       "description": "The function (or path to file or module id) to be run before dependencies are installed or rebuilt. Works when `npmRebuild` is set to `true`. Resolving to `false` will skip dependencies install or rebuild.\n\nIf provided and `node_modules` are missing, it will not invoke production dependencies check.",
       "anyOf": [
         {
-          "type": "object",
-          "additionalProperties": false
+          "typeof": "function"
         },
         {
           "type": [
@@ -923,8 +912,7 @@
       "description": "The function (or path to file or module id) to be run when staging the electron artifact environment.\nReturns the path to custom Electron build (e.g. `~/electron/out/R`) or folder of electron zips.\n\nZip files must follow the pattern `electron-v${version}-${platformName}-${arch}.zip`, otherwise it will be assumed to be an unpacked Electron app directory",
       "anyOf": [
         {
-          "type": "object",
-          "additionalProperties": false
+          "typeof": "function"
         },
         {
           "type": [
@@ -944,6 +932,1026 @@
   },
   "additionalProperties": false,
   "definitions": {
+    "ElectronDownloadOptions": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "string"
+        },
+        "cache": {
+          "description": "The [cache location](https://github.com/electron-userland/electron-download#cache-location).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "mirror": {
+          "description": "The mirror.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "customDir": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "customFilename": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "strictSSL": {
+          "type": "boolean"
+        },
+        "isVerifyChecksum": {
+          "type": "boolean"
+        },
+        "platform": {
+          "enum": [
+            "darwin",
+            "linux",
+            "mas",
+            "win32"
+          ],
+          "type": "string"
+        },
+        "arch": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "ElectronBrandingOptions": {
+      "description": "Electron distributables branding options.",
+      "type": "object",
+      "properties": {
+        "projectName": {
+          "type": "string"
+        },
+        "productName": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "MetadataDirectories": {
+      "type": "object",
+      "properties": {
+        "buildResources": {
+          "description": "The path to build resources.\n\nPlease note — build resources are not packed into the app. If you need to use some files, e.g. as tray icon, please include required files explicitly: `\"files\": [\"**\\/*\", \"build/icon.*\"]`",
+          "default": "build",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "output": {
+          "description": "The output directory. [File macros](./file-patterns.md#file-macros) are supported.",
+          "default": "dist",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "app": {
+          "description": "The application directory (containing the application package.json), defaults to `app`, `www` or working directory.",
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "MacConfiguration": {
+      "type": "object",
+      "properties": {
+        "category": {
+          "description": "The application category type, as shown in the Finder via *View -> Arrange by Application Category* when viewing the Applications directory.\n\nFor example, `\"category\": \"public.app-category.developer-tools\"` will set the application category to *Developer Tools*.\n\nValid values are listed in [Apple's documentation](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/LaunchServicesKeys.html#//apple_ref/doc/uid/TP40009250-SW8).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "target": {
+          "description": "The target package type: list of `default`, `dmg`, `mas`, `mas-dev`, `pkg`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`. Defaults to `default` (`dmg` and `zip` for Squirrel.Mac). Note: Squirrel.Mac auto update mechanism requires both `dmg` and `zip` to be enabled, even when only `dmg` is used. Disabling `zip` will break auto update in `dmg` packages.",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/TargetConfiguration"
+            },
+            {
+              "type": "array",
+              "items": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/TargetConfiguration"
+                  },
+                  {
+                    "enum": [
+                      "7z",
+                      "default",
+                      "dir",
+                      "dmg",
+                      "mas",
+                      "mas-dev",
+                      "pkg",
+                      "tar.bz2",
+                      "tar.gz",
+                      "tar.lz",
+                      "tar.xz",
+                      "zip"
+                    ],
+                    "type": "string"
+                  }
+                ]
+              }
+            },
+            {
+              "enum": [
+                "7z",
+                "default",
+                "dir",
+                "dmg",
+                "mas",
+                "mas-dev",
+                "pkg",
+                "tar.bz2",
+                "tar.gz",
+                "tar.lz",
+                "tar.xz",
+                "zip"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "identity": {
+          "description": "The name of certificate to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](./code-signing.md) instead of specifying this option.\nMAS installer identity is specified in the [mas](./mas.md).\n\nSet to `-` to use an ad-hoc identity for signing. Set to `null` to skip signing entirely.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "icon": {
+          "description": "The path to application icon.",
+          "default": "build/icon.icns",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "entitlements": {
+          "description": "The path to entitlements file for signing the app. `build/entitlements.mac.plist` will be used if exists (it is a recommended way to set).\nMAS entitlements is specified in the [mas](./mas.md).\nSee [this folder in osx-sign's repository](https://github.com/electron/osx-sign/tree/main/entitlements) for examples.\nBe aware that your app may crash if the right entitlements are not set like `com.apple.security.cs.allow-jit` for example on arm64 builds with Electron 20+.\nSee [Signing and Notarizing macOS Builds from the Electron documentation](https://www.electronjs.org/docs/latest/tutorial/code-signing#signing--notarizing-macos-builds) for more information.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "entitlementsInherit": {
+          "description": "The path to child entitlements which inherit the security settings for signing frameworks and bundles of a distribution. `build/entitlements.mac.inherit.plist` will be used if exists (it is a recommended way to set).\nSee [this folder in osx-sign's repository](https://github.com/electron/osx-sign/tree/main/entitlements) for examples.\n\nThis option only applies when signing with `entitlements` provided.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "entitlementsLoginHelper": {
+          "description": "Path to login helper entitlement file.\nWhen using App Sandbox, the the `com.apple.security.inherit` key that is normally in the inherited entitlements cannot be inherited since the login helper is a standalone executable.\nDefaults to the value provided for `entitlements`. This option only applies when signing with `entitlements` provided.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "provisioningProfile": {
+          "description": "The path to the provisioning profile to use when signing, absolute or relative to the app root.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "bundleVersion": {
+          "description": "The `CFBundleVersion`. Do not use it unless [you need to](https://github.com/electron-userland/electron-builder/issues/565#issuecomment-230678643).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "bundleShortVersion": {
+          "description": "The `CFBundleShortVersionString`. Do not use it unless you need to.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "darkModeSupport": {
+          "description": "Whether a dark mode is supported. If your app does have a dark mode, you can make your app follow the system-wide dark mode setting.",
+          "default": false,
+          "type": "boolean"
+        },
+        "helperBundleId": {
+          "description": "The bundle identifier to use in the application helper's plist.",
+          "default": "${appBundleIdentifier}.helper",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "helperRendererBundleId": {
+          "description": "The bundle identifier to use in the Renderer helper's plist.",
+          "default": "${appBundleIdentifier}.helper.Renderer",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "helperPluginBundleId": {
+          "description": "The bundle identifier to use in the Plugin helper's plist.",
+          "default": "${appBundleIdentifier}.helper.Plugin",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "helperGPUBundleId": {
+          "description": "The bundle identifier to use in the GPU helper's plist.",
+          "default": "${appBundleIdentifier}.helper.GPU",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "helperEHBundleId": {
+          "description": "The bundle identifier to use in the EH helper's plist.",
+          "default": "${appBundleIdentifier}.helper.EH",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "helperNPBundleId": {
+          "description": "The bundle identifier to use in the NP helper's plist.",
+          "default": "${appBundleIdentifier}.helper.NP",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "type": {
+          "description": "Whether to sign app for development or for distribution.",
+          "default": "distribution",
+          "anyOf": [
+            {
+              "enum": [
+                "development",
+                "distribution"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "extendInfo": {
+          "description": "The extra entries for `Info.plist`."
+        },
+        "binaries": {
+          "description": "Paths of any extra binaries that need to be signed.",
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "minimumSystemVersion": {
+          "description": "The minimum version of macOS required for the app to run. Corresponds to `LSMinimumSystemVersion`.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "requirements": {
+          "description": "Path of [requirements file](https://developer.apple.com/library/mac/documentation/Security/Conceptual/CodeSigningGuide/RequirementLang/RequirementLang.html) used in signing. Not applicable for MAS.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "cscInstallerLink": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "cscInstallerKeyPassword": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "extraDistFiles": {
+          "description": "Extra files to put in archive. Not applicable for `tar.*`.",
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ]
+        },
+        "hardenedRuntime": {
+          "description": "Whether your app has to be signed with hardened runtime.",
+          "default": true,
+          "type": "boolean"
+        },
+        "gatekeeperAssess": {
+          "description": "Whether to let `@electron/osx-sign` validate the signing or not.",
+          "default": false,
+          "type": "boolean"
+        },
+        "strictVerify": {
+          "description": "Whether to let `@electron/osx-sign` verify the contents or not.",
+          "default": true,
+          "type": "boolean"
+        },
+        "preAutoEntitlements": {
+          "description": "Whether to enable entitlements automation from `@electron/osx-sign`.",
+          "default": true,
+          "type": "boolean"
+        },
+        "signIgnore": {
+          "description": "Regex or an array of regex's that signal skipping signing a file.",
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ]
+        },
+        "sign": {
+          "description": "The custom function (or path to file or module id) to sign an app bundle.",
+          "anyOf": [
+            {
+              "typeof": "function"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ]
+        },
+        "timestamp": {
+          "description": "Specify the URL of the timestamp authority server",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "mergeASARs": {
+          "description": "Whether to merge ASAR files for different architectures or not.\n\nThis option has no effect unless building for \"universal\" arch.",
+          "default": true,
+          "type": "boolean"
+        },
+        "singleArchFiles": {
+          "description": "Minimatch pattern of paths that are allowed to be present in one of the\nASAR files, but not in the other.\n\nThis option has no effect unless building for \"universal\" arch and applies\nonly if `mergeASARs` is `true`.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "x64ArchFiles": {
+          "description": "Minimatch pattern of paths that are allowed to be x64 binaries in both\nASAR files\n\nThis option has no effect unless building for \"universal\" arch and applies\nonly if `mergeASARs` is `true`.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "additionalArguments": {
+          "description": "Array of strings specifying additional arguments to pass to the `codesign` command used to sign a specific file.\n\nSome subresources that you may include in your Electron app may need to be signed with --deep, this is not typically safe to apply to the entire Electron app and therefore should be applied to just your file.\nUsage Example: `['--deep']`",
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "notarize": {
+          "description": "Whether to disable electron-builder's [@electron/notarize](https://github.com/electron/notarize) integration.\n\nNote: In order to activate the notarization step You MUST specify one of the following via environment variables:\n\n1. `APPLE_API_KEY`, `APPLE_API_KEY_ID` and `APPLE_API_ISSUER`.\n2. `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD`, and `APPLE_TEAM_ID`\n3. `APPLE_KEYCHAIN` and `APPLE_KEYCHAIN_PROFILE`\n\nFor security reasons it is recommended to use the first option (see https://github.com/electron-userland/electron-builder/issues/7859)",
+          "type": "boolean"
+        },
+        "appId": {
+          "description": "The application id. Used as [CFBundleIdentifier](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070) for MacOS and as\n[Application User Model ID](https://msdn.microsoft.com/en-us/library/windows/desktop/dd378459(v=vs.85).aspx) for Windows (NSIS target only, Squirrel.Windows not supported). It is strongly recommended that an explicit ID is set.",
+          "default": "com.electron.${name}",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "artifactName": {
+          "description": "The [artifact file name template](./configuration.md#artifact-file-name-template). Defaults to `${productName}-${version}.${ext}` (some target can have other defaults, see corresponding options).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "executableName": {
+          "description": "The executable name. Defaults to `productName`.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "compression": {
+          "description": "The compression level. If you want to rapidly test build, `store` can reduce build time significantly. `maximum` doesn't lead to noticeable size difference, but increase build time.",
+          "default": "normal",
+          "anyOf": [
+            {
+              "enum": [
+                "maximum",
+                "normal",
+                "store"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "disableDefaultIgnoredFiles": {
+          "description": "Whether to exclude all default ignored files(https://www.electron.build/contents#files) and options. Defaults to `false`.",
+          "default": false,
+          "type": [
+            "null",
+            "boolean"
+          ]
+        },
+        "asar": {
+          "description": "Whether to package the application's source code into an archive, using [Electron's archive format](http://electron.atom.io/docs/tutorial/application-packaging/).\n\nNode modules, that must be unpacked, will be detected automatically, you don't need to explicitly set [asarUnpack](#asarUnpack) - please file an issue if this doesn't work.",
+          "default": true,
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AsarOptions"
+            },
+            {
+              "type": [
+                "null",
+                "boolean"
+              ]
+            }
+          ]
+        },
+        "asarUnpack": {
+          "description": "A [glob patterns](./file-patterns.md) relative to the [app directory](#directories), which specifies which files to unpack when creating the [asar](http://electron.atom.io/docs/tutorial/application-packaging/) archive.",
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ]
+        },
+        "fileAssociations": {
+          "description": "The file associations.",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/FileAssociation"
+            },
+            {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/FileAssociation"
+              }
+            }
+          ]
+        },
+        "protocols": {
+          "description": "The URL protocol schemes.",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Protocol"
+            },
+            {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Protocol"
+              }
+            }
+          ]
+        },
+        "electronLanguages": {
+          "description": "The electron locales to keep. By default, all Electron locales used as-is.",
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "forceCodeSigning": {
+          "description": "Whether to fail if app will be not code signed.",
+          "type": "boolean"
+        },
+        "electronUpdaterCompatibility": {
+          "description": "The [electron-updater compatibility](./auto-update.md#compatibility) semver range.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "publish": {
+          "description": "Publisher configuration. See [Auto Update](./publish.md) for more information.",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/GithubOptions"
+            },
+            {
+              "$ref": "#/definitions/S3Options"
+            },
+            {
+              "$ref": "#/definitions/SpacesOptions"
+            },
+            {
+              "$ref": "#/definitions/GenericServerOptions"
+            },
+            {
+              "$ref": "#/definitions/CustomPublishOptions"
+            },
+            {
+              "$ref": "#/definitions/KeygenOptions"
+            },
+            {
+              "$ref": "#/definitions/SnapStoreOptions"
+            },
+            {
+              "$ref": "#/definitions/BitbucketOptions"
+            },
+            {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/AllPublishOptions"
+              }
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ]
+        },
+        "detectUpdateChannel": {
+          "description": "Whether to infer update channel from application version pre-release components. e.g. if version `0.12.1-alpha.1`, channel will be set to `alpha`. Otherwise to `latest`.\nThis does *not* apply to github publishing, which will [never auto-detect the update channel](https://github.com/electron-userland/electron-builder/issues/8589).",
+          "default": true,
+          "type": "boolean"
+        },
+        "generateUpdatesFilesForAllChannels": {
+          "description": "Please see [Building and Releasing using Channels](https://github.com/electron-userland/electron-builder/issues/1182#issuecomment-324947139).",
+          "default": false,
+          "type": "boolean"
+        },
+        "releaseInfo": {
+          "description": "The release info. Intended for command line usage:\n\n```\n-c.releaseInfo.releaseNotes=\"new features\"\n```",
+          "$ref": "#/definitions/ReleaseInfo"
+        },
+        "cscLink": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "cscKeyPassword": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "defaultArch": {
+          "type": "string"
+        },
+        "files": {
+          "description": "A [glob patterns](./file-patterns.md) relative to the [app directory](configuration.md#directories), which specifies which files to include when copying files to create the package.\n\nDefaults to:\n```json\n[\n\"**\\/*\",\n\"!**\\/node_modules/*\\/{CHANGELOG.md,README.md,README,readme.md,readme}\",\n\"!**\\/node_modules/*\\/{test,__tests__,tests,powered-test,example,examples}\",\n\"!**\\/node_modules/*.d.ts\",\n\"!**\\/node_modules/.bin\",\n\"!**\\/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}\",\n\"!.editorconfig\",\n\"!**\\/._*\",\n\"!**\\/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}\",\n\"!**\\/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}\",\n\"!**\\/{appveyor.yml,.travis.yml,circle.yml}\",\n\"!**\\/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}\"\n]\n```\n\nDevelopment dependencies are never copied in any case. You don't need to ignore it explicitly. Hidden files are not ignored by default, but all files that should be ignored, are ignored by default.\n\nDefault pattern \\`**\\/*\\` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`). `package.json` and \\`**\\/node_modules/**\\/*` (only production dependencies will be copied) is added to your custom in any case. All default ignores are added in any case — you don't need to repeat it if you configure own patterns.\n\nMay be specified in the platform options (e.g. in the [mac](mac.md)).\n\nYou may also specify custom source and destination directories by using `FileSet` objects instead of simple glob patterns.\n\n```json\n[\n{\n\"from\": \"path/to/source\",\n\"to\": \"path/to/destination\",\n\"filter\": [\"**\\/*\", \"!foo/*.js\"]\n}\n]\n```\n\nYou can use [file macros](./file-patterns.md#file-macros) in the `from` and `to` fields as well. `from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging.",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/FileSet"
+            },
+            {
+              "type": "array",
+              "items": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/FileSet"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              }
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ]
+        },
+        "extraResources": {
+          "description": "A [glob patterns](./file-patterns.md) relative to the project directory, when specified, copy the file or directory with matching names directly into the app's resources directory (`Contents/Resources` for MacOS, `resources` for Linux and Windows).\n\nFile patterns (and support for `from` and `to` fields) the same as for [files](#files).",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/FileSet"
+            },
+            {
+              "type": "array",
+              "items": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/FileSet"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              }
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ]
+        },
+        "extraFiles": {
+          "description": "The same as [extraResources](#extraresources) but copy into the app's content directory (`Contents` for MacOS, root directory for Linux and Windows).",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/FileSet"
+            },
+            {
+              "type": "array",
+              "items": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/FileSet"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              }
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "TargetConfiguration": {
+      "type": "object",
+      "properties": {
+        "target": {
+          "description": "The target name. e.g. `snap`.",
+          "type": "string"
+        },
+        "arch": {
+          "description": "The arch or list of archs.",
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/ArchType"
+              }
+            },
+            {
+              "enum": [
+                "arm64",
+                "armv7l",
+                "ia32",
+                "universal",
+                "x64"
+              ],
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "target"
+      ]
+    },
+    "ArchType": {
+      "enum": [
+        "arm64",
+        "armv7l",
+        "ia32",
+        "universal",
+        "x64"
+      ],
+      "type": "string"
+    },
+    "AsarOptions": {
+      "type": "object",
+      "properties": {
+        "smartUnpack": {
+          "description": "Whether to automatically unpack executables files.",
+          "default": true,
+          "type": "boolean"
+        },
+        "ordering": {
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "FileAssociation": {
+      "description": "File associations.\n\nmacOS (corresponds to [CFBundleDocumentTypes](https://developer.apple.com/library/content/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-101685)), NSIS, and MSI only.\n\nOn Windows (NSIS) works only if [nsis.perMachine](https://www.electron.build/nsis) is set to `true`.",
+      "type": "object",
+      "properties": {
+        "ext": {
+          "description": "The extension (minus the leading period). e.g. `png`.",
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "name": {
+          "description": "The name. e.g. `PNG`. Defaults to `ext`.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "description": {
+          "description": "*windows-only.* The description.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "mimeType": {
+          "description": "*linux-only.* The mime-type.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "icon": {
+          "description": "The path to icon (`.icns` for MacOS and `.ico` for Windows), relative to `build` (build resources directory). Defaults to `${firstExt}.icns`/`${firstExt}.ico` (if several extensions specified, first is used) or to application icon.\n\nNot supported on Linux, file issue if need (default icon will be `x-office-document`). Not supported on MSI.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "role": {
+          "description": "*macOS-only* The app’s role with respect to the type. The value can be `Editor`, `Viewer`, `Shell`, or `None`. Corresponds to `CFBundleTypeRole`.",
+          "default": "Editor",
+          "type": "string"
+        },
+        "isPackage": {
+          "description": "*macOS-only* Whether the document is distributed as a bundle. If set to true, the bundle directory is treated as a file. Corresponds to `LSTypeIsPackage`.",
+          "type": "boolean"
+        },
+        "rank": {
+          "description": "*macOS-only* The app’s rank with respect to the type. The value can be `Owner`, `Default`, `Alternate`, or `None`. Corresponds to `LSHandlerRank`.",
+          "default": "Default",
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "ext"
+      ]
+    },
+    "Protocol": {
+      "description": "URL Protocol Schemes. Protocols to associate the app with. macOS only.\n\nPlease note — on macOS [you need to register an `open-url` event handler](http://electron.atom.io/docs/api/app/#event-open-url-macos).",
+      "type": "object",
+      "properties": {
+        "name": {
+          "description": "The name. e.g. `IRC server URL`.",
+          "type": "string"
+        },
+        "schemes": {
+          "description": "The schemes. e.g. `[\"irc\", \"ircs\"]`.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "role": {
+          "description": "*macOS-only* The app’s role with respect to the type.",
+          "default": "Editor",
+          "enum": [
+            "Editor",
+            "None",
+            "Shell",
+            "Viewer"
+          ],
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "schemes"
+      ]
+    },
+    "GithubOptions": {
+      "description": "[GitHub](https://help.github.com/articles/about-releases/) options.\n\nGitHub [personal access token](https://help.github.com/articles/creating-an-access-token-for-command-line-use/) is required. You can generate by going to [https://github.com/settings/tokens/new](https://github.com/settings/tokens/new). The access token should have the repo scope/permission.\nDefine `GH_TOKEN` environment variable.",
+      "type": "object",
+      "properties": {
+        "provider": {
+          "description": "The provider. Must be `github`.",
+          "type": "string",
+          "const": "github"
+        },
+        "repo": {
+          "description": "The repository name. [Detected automatically](#github-repository-and-bintray-package).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "owner": {
+          "description": "The owner.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "vPrefixedTagName": {
+          "description": "Whether to use `v`-prefixed tag name.",
+          "default": true,
+          "type": "boolean"
+        },
+        "host": {
+          "description": "The host (including the port if need).",
+          "default": "github.com",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "protocol": {
+          "description": "The protocol. GitHub Publisher supports only `https`.",
+          "default": "https",
+          "anyOf": [
+            {
+              "enum": [
+                "http",
+                "https"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "token": {
+          "description": "The access token to support auto-update from private github repositories. Never specify it in the configuration files. Only for [setFeedURL](./auto-update.md#appupdatersetfeedurloptions).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "private": {
+          "description": "Whether to use private github auto-update provider if `GH_TOKEN` environment variable is defined. See [Private GitHub Update Repo](./auto-update.md#private-github-update-repo).",
+          "type": [
+            "null",
+            "boolean"
+          ]
+        },
+        "channel": {
+          "description": "The channel.",
+          "default": "latest",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "releaseType": {
+          "description": "The type of release. By default `draft` release will be created.\n\nAlso you can set release type using environment variable. If `EP_DRAFT`is set to `true` — `draft`, if `EP_PRE_RELEASE`is set to `true` — `prerelease`.",
+          "default": "draft",
+          "anyOf": [
+            {
+              "enum": [
+                "draft",
+                "prerelease",
+                "release"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "publisherName": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "updaterCacheDirName": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "publishAutoUpdate": {
+          "description": "Whether to publish auto update info files.\n\nAuto update relies only on the first provider in the list (you can specify several publishers).\nThus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.",
+          "default": true,
+          "type": "boolean"
+        },
+        "requestHeaders": {
+          "description": "Any custom request headers",
+          "$ref": "#/definitions/OutgoingHttpHeaders"
+        },
+        "timeout": {
+          "description": "Request timeout in milliseconds. (Default is 2 minutes; O is ignored)",
+          "default": 120000,
+          "type": [
+            "null",
+            "number"
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "provider"
+      ]
+    },
     "OutgoingHttpHeaders": {
       "type": "object",
       "properties": {
@@ -1358,1027 +2366,6 @@
         ]
       }
     },
-    "ElectronDownloadOptions": {
-      "type": "object",
-      "properties": {
-        "version": {
-          "type": "string"
-        },
-        "cache": {
-          "description": "The [cache location](https://github.com/electron-userland/electron-download#cache-location).",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "mirror": {
-          "description": "The mirror.",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "customDir": {
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "customFilename": {
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "strictSSL": {
-          "type": "boolean"
-        },
-        "isVerifyChecksum": {
-          "type": "boolean"
-        },
-        "platform": {
-          "enum": [
-            "darwin",
-            "linux",
-            "mas",
-            "win32"
-          ],
-          "type": "string"
-        },
-        "arch": {
-          "type": "string"
-        }
-      },
-      "additionalProperties": false
-    },
-    "ElectronBrandingOptions": {
-      "description": "Electron distributables branding options.",
-      "type": "object",
-      "properties": {
-        "projectName": {
-          "type": "string"
-        },
-        "productName": {
-          "type": "string"
-        }
-      },
-      "additionalProperties": false
-    },
-    "MetadataDirectories": {
-      "type": "object",
-      "properties": {
-        "buildResources": {
-          "description": "The path to build resources.\n\nPlease note — build resources are not packed into the app. If you need to use some files, e.g. as tray icon, please include required files explicitly: `\"files\": [\"**\\/*\", \"build/icon.*\"]`",
-          "default": "build",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "output": {
-          "description": "The output directory. [File macros](./file-patterns.md#file-macros) are supported.",
-          "default": "dist",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "app": {
-          "description": "The application directory (containing the application package.json), defaults to `app`, `www` or working directory.",
-          "type": [
-            "null",
-            "string"
-          ]
-        }
-      },
-      "additionalProperties": false
-    },
-    "MacConfiguration": {
-      "type": "object",
-      "properties": {
-        "category": {
-          "description": "The application category type, as shown in the Finder via *View -> Arrange by Application Category* when viewing the Applications directory.\n\nFor example, `\"category\": \"public.app-category.developer-tools\"` will set the application category to *Developer Tools*.\n\nValid values are listed in [Apple's documentation](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/LaunchServicesKeys.html#//apple_ref/doc/uid/TP40009250-SW8).",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "target": {
-          "description": "The target package type: list of `default`, `dmg`, `mas`, `mas-dev`, `pkg`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`. Defaults to `default` (`dmg` and `zip` for Squirrel.Mac). Note: Squirrel.Mac auto update mechanism requires both `dmg` and `zip` to be enabled, even when only `dmg` is used. Disabling `zip` will break auto update in `dmg` packages.",
-          "anyOf": [
-            {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/core\",{with:{\"resolution-mode\":\"import\"}}).TargetConfiguration"
-            },
-            {
-              "type": "array",
-              "items": {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/core\",{with:{\"resolution-mode\":\"import\"}}).TargetConfiguration"
-                  },
-                  {
-                    "enum": [
-                      "7z",
-                      "default",
-                      "dir",
-                      "dmg",
-                      "mas",
-                      "mas-dev",
-                      "pkg",
-                      "tar.bz2",
-                      "tar.gz",
-                      "tar.lz",
-                      "tar.xz",
-                      "zip"
-                    ],
-                    "type": "string"
-                  }
-                ]
-              }
-            },
-            {
-              "enum": [
-                "7z",
-                "default",
-                "dir",
-                "dmg",
-                "mas",
-                "mas-dev",
-                "pkg",
-                "tar.bz2",
-                "tar.gz",
-                "tar.lz",
-                "tar.xz",
-                "zip"
-              ],
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "identity": {
-          "description": "The name of certificate to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](./code-signing.md) instead of specifying this option.\nMAS installer identity is specified in the [mas](./mas.md).\n\nSet to `-` to use an ad-hoc identity for signing. Set to `null` to skip signing entirely.",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "icon": {
-          "description": "The path to application icon.",
-          "default": "build/icon.icns",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "entitlements": {
-          "description": "The path to entitlements file for signing the app. `build/entitlements.mac.plist` will be used if exists (it is a recommended way to set).\nMAS entitlements is specified in the [mas](./mas.md).\nSee [this folder in osx-sign's repository](https://github.com/electron/osx-sign/tree/main/entitlements) for examples.\nBe aware that your app may crash if the right entitlements are not set like `com.apple.security.cs.allow-jit` for example on arm64 builds with Electron 20+.\nSee [Signing and Notarizing macOS Builds from the Electron documentation](https://www.electronjs.org/docs/latest/tutorial/code-signing#signing--notarizing-macos-builds) for more information.",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "entitlementsInherit": {
-          "description": "The path to child entitlements which inherit the security settings for signing frameworks and bundles of a distribution. `build/entitlements.mac.inherit.plist` will be used if exists (it is a recommended way to set).\nSee [this folder in osx-sign's repository](https://github.com/electron/osx-sign/tree/main/entitlements) for examples.\n\nThis option only applies when signing with `entitlements` provided.",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "entitlementsLoginHelper": {
-          "description": "Path to login helper entitlement file.\nWhen using App Sandbox, the the `com.apple.security.inherit` key that is normally in the inherited entitlements cannot be inherited since the login helper is a standalone executable.\nDefaults to the value provided for `entitlements`. This option only applies when signing with `entitlements` provided.",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "provisioningProfile": {
-          "description": "The path to the provisioning profile to use when signing, absolute or relative to the app root.",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "bundleVersion": {
-          "description": "The `CFBundleVersion`. Do not use it unless [you need to](https://github.com/electron-userland/electron-builder/issues/565#issuecomment-230678643).",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "bundleShortVersion": {
-          "description": "The `CFBundleShortVersionString`. Do not use it unless you need to.",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "darkModeSupport": {
-          "description": "Whether a dark mode is supported. If your app does have a dark mode, you can make your app follow the system-wide dark mode setting.",
-          "default": false,
-          "type": "boolean"
-        },
-        "helperBundleId": {
-          "description": "The bundle identifier to use in the application helper's plist.",
-          "default": "${appBundleIdentifier}.helper",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "helperRendererBundleId": {
-          "description": "The bundle identifier to use in the Renderer helper's plist.",
-          "default": "${appBundleIdentifier}.helper.Renderer",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "helperPluginBundleId": {
-          "description": "The bundle identifier to use in the Plugin helper's plist.",
-          "default": "${appBundleIdentifier}.helper.Plugin",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "helperGPUBundleId": {
-          "description": "The bundle identifier to use in the GPU helper's plist.",
-          "default": "${appBundleIdentifier}.helper.GPU",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "helperEHBundleId": {
-          "description": "The bundle identifier to use in the EH helper's plist.",
-          "default": "${appBundleIdentifier}.helper.EH",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "helperNPBundleId": {
-          "description": "The bundle identifier to use in the NP helper's plist.",
-          "default": "${appBundleIdentifier}.helper.NP",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "type": {
-          "description": "Whether to sign app for development or for distribution.",
-          "default": "distribution",
-          "anyOf": [
-            {
-              "enum": [
-                "development",
-                "distribution"
-              ],
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "extendInfo": {
-          "description": "The extra entries for `Info.plist`."
-        },
-        "binaries": {
-          "description": "Paths of any extra binaries that need to be signed.",
-          "anyOf": [
-            {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "minimumSystemVersion": {
-          "description": "The minimum version of macOS required for the app to run. Corresponds to `LSMinimumSystemVersion`.",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "requirements": {
-          "description": "Path of [requirements file](https://developer.apple.com/library/mac/documentation/Security/Conceptual/CodeSigningGuide/RequirementLang/RequirementLang.html) used in signing. Not applicable for MAS.",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "cscInstallerLink": {
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "cscInstallerKeyPassword": {
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "extraDistFiles": {
-          "description": "Extra files to put in archive. Not applicable for `tar.*`.",
-          "anyOf": [
-            {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            },
-            {
-              "type": [
-                "null",
-                "string"
-              ]
-            }
-          ]
-        },
-        "hardenedRuntime": {
-          "description": "Whether your app has to be signed with hardened runtime.",
-          "default": true,
-          "type": "boolean"
-        },
-        "gatekeeperAssess": {
-          "description": "Whether to let `@electron/osx-sign` validate the signing or not.",
-          "default": false,
-          "type": "boolean"
-        },
-        "strictVerify": {
-          "description": "Whether to let `@electron/osx-sign` verify the contents or not.",
-          "default": true,
-          "type": "boolean"
-        },
-        "preAutoEntitlements": {
-          "description": "Whether to enable entitlements automation from `@electron/osx-sign`.",
-          "default": true,
-          "type": "boolean"
-        },
-        "signIgnore": {
-          "description": "Regex or an array of regex's that signal skipping signing a file.",
-          "anyOf": [
-            {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            },
-            {
-              "type": [
-                "null",
-                "string"
-              ]
-            }
-          ]
-        },
-        "sign": {
-          "description": "The custom function (or path to file or module id) to sign an app bundle.",
-          "anyOf": [
-            {
-              "type": "object",
-              "additionalProperties": false
-            },
-            {
-              "type": [
-                "null",
-                "string"
-              ]
-            }
-          ]
-        },
-        "timestamp": {
-          "description": "Specify the URL of the timestamp authority server",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "mergeASARs": {
-          "description": "Whether to merge ASAR files for different architectures or not.\n\nThis option has no effect unless building for \"universal\" arch.",
-          "default": true,
-          "type": "boolean"
-        },
-        "singleArchFiles": {
-          "description": "Minimatch pattern of paths that are allowed to be present in one of the\nASAR files, but not in the other.\n\nThis option has no effect unless building for \"universal\" arch and applies\nonly if `mergeASARs` is `true`.",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "x64ArchFiles": {
-          "description": "Minimatch pattern of paths that are allowed to be x64 binaries in both\nASAR files\n\nThis option has no effect unless building for \"universal\" arch and applies\nonly if `mergeASARs` is `true`.",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "additionalArguments": {
-          "description": "Array of strings specifying additional arguments to pass to the `codesign` command used to sign a specific file.\n\nSome subresources that you may include in your Electron app may need to be signed with --deep, this is not typically safe to apply to the entire Electron app and therefore should be applied to just your file.\nUsage Example: `['--deep']`",
-          "anyOf": [
-            {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "notarize": {
-          "description": "Whether to disable electron-builder's [@electron/notarize](https://github.com/electron/notarize) integration.\n\nNote: In order to activate the notarization step You MUST specify one of the following via environment variables:\n\n1. `APPLE_API_KEY`, `APPLE_API_KEY_ID` and `APPLE_API_ISSUER`.\n2. `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD`, and `APPLE_TEAM_ID`\n3. `APPLE_KEYCHAIN` and `APPLE_KEYCHAIN_PROFILE`\n\nFor security reasons it is recommended to use the first option (see https://github.com/electron-userland/electron-builder/issues/7859)",
-          "type": "boolean"
-        },
-        "appId": {
-          "description": "The application id. Used as [CFBundleIdentifier](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070) for MacOS and as\n[Application User Model ID](https://msdn.microsoft.com/en-us/library/windows/desktop/dd378459(v=vs.85).aspx) for Windows (NSIS target only, Squirrel.Windows not supported). It is strongly recommended that an explicit ID is set.",
-          "default": "com.electron.${name}",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "artifactName": {
-          "description": "The [artifact file name template](./configuration.md#artifact-file-name-template). Defaults to `${productName}-${version}.${ext}` (some target can have other defaults, see corresponding options).",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "executableName": {
-          "description": "The executable name. Defaults to `productName`.",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "compression": {
-          "description": "The compression level. If you want to rapidly test build, `store` can reduce build time significantly. `maximum` doesn't lead to noticeable size difference, but increase build time.",
-          "default": "normal",
-          "anyOf": [
-            {
-              "enum": [
-                "maximum",
-                "normal",
-                "store"
-              ],
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "disableDefaultIgnoredFiles": {
-          "description": "Whether to exclude all default ignored files(https://www.electron.build/contents#files) and options. Defaults to `false`.",
-          "default": false,
-          "type": [
-            "null",
-            "boolean"
-          ]
-        },
-        "asar": {
-          "description": "Whether to package the application's source code into an archive, using [Electron's archive format](http://electron.atom.io/docs/tutorial/application-packaging/).\n\nNode modules, that must be unpacked, will be detected automatically, you don't need to explicitly set [asarUnpack](#asarUnpack) - please file an issue if this doesn't work.",
-          "default": true,
-          "anyOf": [
-            {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/PlatformSpecificBuildOptions\",{with:{\"resolution-mode\":\"import\"}}).AsarOptions"
-            },
-            {
-              "type": [
-                "null",
-                "boolean"
-              ]
-            }
-          ]
-        },
-        "asarUnpack": {
-          "description": "A [glob patterns](./file-patterns.md) relative to the [app directory](#directories), which specifies which files to unpack when creating the [asar](http://electron.atom.io/docs/tutorial/application-packaging/) archive.",
-          "anyOf": [
-            {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            },
-            {
-              "type": [
-                "null",
-                "string"
-              ]
-            }
-          ]
-        },
-        "fileAssociations": {
-          "description": "The file associations.",
-          "anyOf": [
-            {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/FileAssociation\",{with:{\"resolution-mode\":\"import\"}}).FileAssociation"
-            },
-            {
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/FileAssociation\",{with:{\"resolution-mode\":\"import\"}}).FileAssociation"
-              }
-            }
-          ]
-        },
-        "protocols": {
-          "description": "The URL protocol schemes.",
-          "anyOf": [
-            {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/PlatformSpecificBuildOptions\",{with:{\"resolution-mode\":\"import\"}}).Protocol"
-            },
-            {
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/PlatformSpecificBuildOptions\",{with:{\"resolution-mode\":\"import\"}}).Protocol"
-              }
-            }
-          ]
-        },
-        "electronLanguages": {
-          "description": "The electron locales to keep. By default, all Electron locales used as-is.",
-          "anyOf": [
-            {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
-        "forceCodeSigning": {
-          "description": "Whether to fail if app will be not code signed.",
-          "type": "boolean"
-        },
-        "electronUpdaterCompatibility": {
-          "description": "The [electron-updater compatibility](./auto-update.md#compatibility) semver range.",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "publish": {
-          "description": "Publisher configuration. See [Auto Update](./publish.md) for more information.",
-          "anyOf": [
-            {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).GithubOptions"
-            },
-            {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).S3Options"
-            },
-            {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).SpacesOptions"
-            },
-            {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).GenericServerOptions"
-            },
-            {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).CustomPublishOptions"
-            },
-            {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).KeygenOptions"
-            },
-            {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).SnapStoreOptions"
-            },
-            {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).BitbucketOptions"
-            },
-            {
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).AllPublishOptions"
-              }
-            },
-            {
-              "type": [
-                "null",
-                "string"
-              ]
-            }
-          ]
-        },
-        "detectUpdateChannel": {
-          "description": "Whether to infer update channel from application version pre-release components. e.g. if version `0.12.1-alpha.1`, channel will be set to `alpha`. Otherwise to `latest`.\nThis does *not* apply to github publishing, which will [never auto-detect the update channel](https://github.com/electron-userland/electron-builder/issues/8589).",
-          "default": true,
-          "type": "boolean"
-        },
-        "generateUpdatesFilesForAllChannels": {
-          "description": "Please see [Building and Releasing using Channels](https://github.com/electron-userland/electron-builder/issues/1182#issuecomment-324947139).",
-          "default": false,
-          "type": "boolean"
-        },
-        "releaseInfo": {
-          "description": "The release info. Intended for command line usage:\n\n```\n-c.releaseInfo.releaseNotes=\"new features\"\n```",
-          "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/PlatformSpecificBuildOptions\",{with:{\"resolution-mode\":\"import\"}}).ReleaseInfo"
-        },
-        "cscLink": {
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "cscKeyPassword": {
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "defaultArch": {
-          "type": "string"
-        },
-        "files": {
-          "description": "A [glob patterns](./file-patterns.md) relative to the [app directory](configuration.md#directories), which specifies which files to include when copying files to create the package.\n\nDefaults to:\n```json\n[\n\"**\\/*\",\n\"!**\\/node_modules/*\\/{CHANGELOG.md,README.md,README,readme.md,readme}\",\n\"!**\\/node_modules/*\\/{test,__tests__,tests,powered-test,example,examples}\",\n\"!**\\/node_modules/*.d.ts\",\n\"!**\\/node_modules/.bin\",\n\"!**\\/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}\",\n\"!.editorconfig\",\n\"!**\\/._*\",\n\"!**\\/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}\",\n\"!**\\/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}\",\n\"!**\\/{appveyor.yml,.travis.yml,circle.yml}\",\n\"!**\\/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}\"\n]\n```\n\nDevelopment dependencies are never copied in any case. You don't need to ignore it explicitly. Hidden files are not ignored by default, but all files that should be ignored, are ignored by default.\n\nDefault pattern \\`**\\/*\\` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`). `package.json` and \\`**\\/node_modules/**\\/*` (only production dependencies will be copied) is added to your custom in any case. All default ignores are added in any case — you don't need to repeat it if you configure own patterns.\n\nMay be specified in the platform options (e.g. in the [mac](mac.md)).\n\nYou may also specify custom source and destination directories by using `FileSet` objects instead of simple glob patterns.\n\n```json\n[\n{\n\"from\": \"path/to/source\",\n\"to\": \"path/to/destination\",\n\"filter\": [\"**\\/*\", \"!foo/*.js\"]\n}\n]\n```\n\nYou can use [file macros](./file-patterns.md#file-macros) in the `from` and `to` fields as well. `from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging.",
-          "anyOf": [
-            {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/PlatformSpecificBuildOptions\",{with:{\"resolution-mode\":\"import\"}}).FileSet"
-            },
-            {
-              "type": "array",
-              "items": {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/PlatformSpecificBuildOptions\",{with:{\"resolution-mode\":\"import\"}}).FileSet"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              }
-            },
-            {
-              "type": [
-                "null",
-                "string"
-              ]
-            }
-          ]
-        },
-        "extraResources": {
-          "description": "A [glob patterns](./file-patterns.md) relative to the project directory, when specified, copy the file or directory with matching names directly into the app's resources directory (`Contents/Resources` for MacOS, `resources` for Linux and Windows).\n\nFile patterns (and support for `from` and `to` fields) the same as for [files](#files).",
-          "anyOf": [
-            {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/PlatformSpecificBuildOptions\",{with:{\"resolution-mode\":\"import\"}}).FileSet"
-            },
-            {
-              "type": "array",
-              "items": {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/PlatformSpecificBuildOptions\",{with:{\"resolution-mode\":\"import\"}}).FileSet"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              }
-            },
-            {
-              "type": [
-                "null",
-                "string"
-              ]
-            }
-          ]
-        },
-        "extraFiles": {
-          "description": "The same as [extraResources](#extraresources) but copy into the app's content directory (`Contents` for MacOS, root directory for Linux and Windows).",
-          "anyOf": [
-            {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/PlatformSpecificBuildOptions\",{with:{\"resolution-mode\":\"import\"}}).FileSet"
-            },
-            {
-              "type": "array",
-              "items": {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/PlatformSpecificBuildOptions\",{with:{\"resolution-mode\":\"import\"}}).FileSet"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              }
-            },
-            {
-              "type": [
-                "null",
-                "string"
-              ]
-            }
-          ]
-        }
-      },
-      "additionalProperties": false
-    },
-    "TargetConfiguration": {
-      "type": "object",
-      "properties": {
-        "target": {
-          "description": "The target name. e.g. `snap`.",
-          "type": "string"
-        },
-        "arch": {
-          "description": "The arch or list of archs.",
-          "anyOf": [
-            {
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util/out/arch\",{with:{\"resolution-mode\":\"import\"}}).ArchType"
-              }
-            },
-            {
-              "enum": [
-                "arm64",
-                "armv7l",
-                "ia32",
-                "universal",
-                "x64"
-              ],
-              "type": "string"
-            }
-          ]
-        }
-      },
-      "additionalProperties": false,
-      "required": [
-        "target"
-      ]
-    },
-    "ArchType": {
-      "enum": [
-        "arm64",
-        "armv7l",
-        "ia32",
-        "universal",
-        "x64"
-      ],
-      "type": "string"
-    },
-    "AsarOptions": {
-      "type": "object",
-      "properties": {
-        "smartUnpack": {
-          "description": "Whether to automatically unpack executables files.",
-          "default": true,
-          "type": "boolean"
-        },
-        "ordering": {
-          "type": [
-            "null",
-            "string"
-          ]
-        }
-      },
-      "additionalProperties": false
-    },
-    "FileAssociation": {
-      "description": "File associations.\n\nmacOS (corresponds to [CFBundleDocumentTypes](https://developer.apple.com/library/content/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-101685)), NSIS, and MSI only.\n\nOn Windows (NSIS) works only if [nsis.perMachine](https://www.electron.build/nsis) is set to `true`.",
-      "type": "object",
-      "properties": {
-        "ext": {
-          "description": "The extension (minus the leading period). e.g. `png`.",
-          "anyOf": [
-            {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
-        "name": {
-          "description": "The name. e.g. `PNG`. Defaults to `ext`.",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "description": {
-          "description": "*windows-only.* The description.",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "mimeType": {
-          "description": "*linux-only.* The mime-type.",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "icon": {
-          "description": "The path to icon (`.icns` for MacOS and `.ico` for Windows), relative to `build` (build resources directory). Defaults to `${firstExt}.icns`/`${firstExt}.ico` (if several extensions specified, first is used) or to application icon.\n\nNot supported on Linux, file issue if need (default icon will be `x-office-document`). Not supported on MSI.",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "role": {
-          "description": "*macOS-only* The app’s role with respect to the type. The value can be `Editor`, `Viewer`, `Shell`, or `None`. Corresponds to `CFBundleTypeRole`.",
-          "default": "Editor",
-          "type": "string"
-        },
-        "isPackage": {
-          "description": "*macOS-only* Whether the document is distributed as a bundle. If set to true, the bundle directory is treated as a file. Corresponds to `LSTypeIsPackage`.",
-          "type": "boolean"
-        },
-        "rank": {
-          "description": "*macOS-only* The app’s rank with respect to the type. The value can be `Owner`, `Default`, `Alternate`, or `None`. Corresponds to `LSHandlerRank`.",
-          "default": "Default",
-          "type": "string"
-        }
-      },
-      "additionalProperties": false,
-      "required": [
-        "ext"
-      ]
-    },
-    "Protocol": {
-      "description": "URL Protocol Schemes. Protocols to associate the app with. macOS only.\n\nPlease note — on macOS [you need to register an `open-url` event handler](http://electron.atom.io/docs/api/app/#event-open-url-macos).",
-      "type": "object",
-      "properties": {
-        "name": {
-          "description": "The name. e.g. `IRC server URL`.",
-          "type": "string"
-        },
-        "schemes": {
-          "description": "The schemes. e.g. `[\"irc\", \"ircs\"]`.",
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "role": {
-          "description": "*macOS-only* The app’s role with respect to the type.",
-          "default": "Editor",
-          "enum": [
-            "Editor",
-            "None",
-            "Shell",
-            "Viewer"
-          ],
-          "type": "string"
-        }
-      },
-      "additionalProperties": false,
-      "required": [
-        "name",
-        "schemes"
-      ]
-    },
-    "GithubOptions": {
-      "description": "[GitHub](https://help.github.com/articles/about-releases/) options.\n\nGitHub [personal access token](https://help.github.com/articles/creating-an-access-token-for-command-line-use/) is required. You can generate by going to [https://github.com/settings/tokens/new](https://github.com/settings/tokens/new). The access token should have the repo scope/permission.\nDefine `GH_TOKEN` environment variable.",
-      "type": "object",
-      "properties": {
-        "provider": {
-          "description": "The provider. Must be `github`.",
-          "type": "string",
-          "const": "github"
-        },
-        "repo": {
-          "description": "The repository name. [Detected automatically](#github-repository-and-bintray-package).",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "owner": {
-          "description": "The owner.",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "vPrefixedTagName": {
-          "description": "Whether to use `v`-prefixed tag name.",
-          "default": true,
-          "type": "boolean"
-        },
-        "host": {
-          "description": "The host (including the port if need).",
-          "default": "github.com",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "protocol": {
-          "description": "The protocol. GitHub Publisher supports only `https`.",
-          "default": "https",
-          "anyOf": [
-            {
-              "enum": [
-                "http",
-                "https"
-              ],
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "token": {
-          "description": "The access token to support auto-update from private github repositories. Never specify it in the configuration files. Only for [setFeedURL](./auto-update.md#appupdatersetfeedurloptions).",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "private": {
-          "description": "Whether to use private github auto-update provider if `GH_TOKEN` environment variable is defined. See [Private GitHub Update Repo](./auto-update.md#private-github-update-repo).",
-          "type": [
-            "null",
-            "boolean"
-          ]
-        },
-        "channel": {
-          "description": "The channel.",
-          "default": "latest",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "releaseType": {
-          "description": "The type of release. By default `draft` release will be created.\n\nAlso you can set release type using environment variable. If `EP_DRAFT`is set to `true` — `draft`, if `EP_PRE_RELEASE`is set to `true` — `prerelease`.",
-          "default": "draft",
-          "anyOf": [
-            {
-              "enum": [
-                "draft",
-                "prerelease",
-                "release"
-              ],
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "publisherName": {
-          "anyOf": [
-            {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "updaterCacheDirName": {
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "publishAutoUpdate": {
-          "description": "Whether to publish auto update info files.\n\nAuto update relies only on the first provider in the list (you can specify several publishers).\nThus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.",
-          "default": true,
-          "type": "boolean"
-        },
-        "requestHeaders": {
-          "description": "Any custom request headers",
-          "$ref": "#/definitions/OutgoingHttpHeaders"
-        },
-        "timeout": {
-          "description": "Request timeout in milliseconds. (Default is 2 minutes; O is ignored)",
-          "default": 120000,
-          "type": [
-            "null",
-            "number"
-          ]
-        }
-      },
-      "additionalProperties": false,
-      "required": [
-        "provider"
-      ]
-    },
     "S3Options": {
       "description": "[Amazon S3](https://aws.amazon.com/s3/) options.\nAWS credentials are required, please see [getting your credentials](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/getting-your-credentials.html).\nTo set credentials define `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` [environment variables](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/loading-node-credentials-environment.html) directly,\nor use [~/.aws/credentials](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/loading-node-credentials-shared.html) file,\nor use [~/.aws/config](https://docs.aws.amazon.com/sdkref/latest/guide/file-format.html) file. For the last method to work you will also need to define `AWS_SDK_LOAD_CONFIG=1` environment variable.\n\nExample configuration:\n\n```json\n{\n\"build\":\n \"publish\": {\n   \"provider\": \"s3\",\n   \"bucket\": \"bucket-name\"\n }\n}\n}\n```",
       "type": "object",
@@ -2693,44 +2680,7 @@
         },
         "updateProvider": {
           "description": "The Provider to provide UpdateInfo regarding available updates.  Required\nto use custom providers with electron-updater.",
-          "type": "object",
-          "additionalProperties": false
-        },
-        "publisherName": {
-          "anyOf": [
-            {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "updaterCacheDirName": {
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "publishAutoUpdate": {
-          "description": "Whether to publish auto update info files.\n\nAuto update relies only on the first provider in the list (you can specify several publishers).\nThus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.",
-          "default": true,
-          "type": "boolean"
-        },
-        "requestHeaders": {
-          "description": "Any custom request headers",
-          "$ref": "#/definitions/OutgoingHttpHeaders"
-        },
-        "timeout": {
-          "description": "Request timeout in milliseconds. (Default is 2 minutes; O is ignored)",
-          "default": 120000,
-          "type": [
-            "null",
-            "number"
-          ]
+          "typeof": "function"
         }
       },
       "required": [
@@ -2990,28 +2940,28 @@
     "AllPublishOptions": {
       "anyOf": [
         {
-          "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).GithubOptions"
+          "$ref": "#/definitions/GithubOptions"
         },
         {
-          "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).S3Options"
+          "$ref": "#/definitions/S3Options"
         },
         {
-          "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).SpacesOptions"
+          "$ref": "#/definitions/SpacesOptions"
         },
         {
-          "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).GenericServerOptions"
+          "$ref": "#/definitions/GenericServerOptions"
         },
         {
-          "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).CustomPublishOptions"
+          "$ref": "#/definitions/CustomPublishOptions"
         },
         {
-          "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).KeygenOptions"
+          "$ref": "#/definitions/KeygenOptions"
         },
         {
-          "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).SnapStoreOptions"
+          "$ref": "#/definitions/SnapStoreOptions"
         },
         {
-          "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).BitbucketOptions"
+          "$ref": "#/definitions/BitbucketOptions"
         },
         {
           "type": "string"
@@ -3050,8 +3000,7 @@
           "description": "Vendor specific information.",
           "anyOf": [
             {
-              "type": "object",
-              "additionalProperties": {}
+              "typeof": "function"
             },
             {
               "type": "null"
@@ -3131,14 +3080,14 @@
           "description": "The target package type: list of `default`, `dmg`, `mas`, `mas-dev`, `pkg`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`. Defaults to `default` (`dmg` and `zip` for Squirrel.Mac). Note: Squirrel.Mac auto update mechanism requires both `dmg` and `zip` to be enabled, even when only `dmg` is used. Disabling `zip` will break auto update in `dmg` packages.",
           "anyOf": [
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/core\",{with:{\"resolution-mode\":\"import\"}}).TargetConfiguration"
+              "$ref": "#/definitions/TargetConfiguration"
             },
             {
               "type": "array",
               "items": {
                 "anyOf": [
                   {
-                    "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/core\",{with:{\"resolution-mode\":\"import\"}}).TargetConfiguration"
+                    "$ref": "#/definitions/TargetConfiguration"
                   },
                   {
                     "enum": [
@@ -3381,8 +3330,7 @@
           "description": "The custom function (or path to file or module id) to sign an app bundle.",
           "anyOf": [
             {
-              "type": "object",
-              "additionalProperties": false
+              "typeof": "function"
             },
             {
               "type": [
@@ -3488,7 +3436,7 @@
           "default": true,
           "anyOf": [
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/PlatformSpecificBuildOptions\",{with:{\"resolution-mode\":\"import\"}}).AsarOptions"
+              "$ref": "#/definitions/AsarOptions"
             },
             {
               "type": [
@@ -3519,12 +3467,12 @@
           "description": "The file associations.",
           "anyOf": [
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/FileAssociation\",{with:{\"resolution-mode\":\"import\"}}).FileAssociation"
+              "$ref": "#/definitions/FileAssociation"
             },
             {
               "type": "array",
               "items": {
-                "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/FileAssociation\",{with:{\"resolution-mode\":\"import\"}}).FileAssociation"
+                "$ref": "#/definitions/FileAssociation"
               }
             }
           ]
@@ -3533,12 +3481,12 @@
           "description": "The URL protocol schemes.",
           "anyOf": [
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/PlatformSpecificBuildOptions\",{with:{\"resolution-mode\":\"import\"}}).Protocol"
+              "$ref": "#/definitions/Protocol"
             },
             {
               "type": "array",
               "items": {
-                "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/PlatformSpecificBuildOptions\",{with:{\"resolution-mode\":\"import\"}}).Protocol"
+                "$ref": "#/definitions/Protocol"
               }
             }
           ]
@@ -3572,33 +3520,33 @@
           "description": "Publisher configuration. See [Auto Update](./publish.md) for more information.",
           "anyOf": [
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).GithubOptions"
+              "$ref": "#/definitions/GithubOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).S3Options"
+              "$ref": "#/definitions/S3Options"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).SpacesOptions"
+              "$ref": "#/definitions/SpacesOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).GenericServerOptions"
+              "$ref": "#/definitions/GenericServerOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).CustomPublishOptions"
+              "$ref": "#/definitions/CustomPublishOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).KeygenOptions"
+              "$ref": "#/definitions/KeygenOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).SnapStoreOptions"
+              "$ref": "#/definitions/SnapStoreOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).BitbucketOptions"
+              "$ref": "#/definitions/BitbucketOptions"
             },
             {
               "type": "array",
               "items": {
-                "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).AllPublishOptions"
+                "$ref": "#/definitions/AllPublishOptions"
               }
             },
             {
@@ -3621,7 +3569,7 @@
         },
         "releaseInfo": {
           "description": "The release info. Intended for command line usage:\n\n```\n-c.releaseInfo.releaseNotes=\"new features\"\n```",
-          "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/PlatformSpecificBuildOptions\",{with:{\"resolution-mode\":\"import\"}}).ReleaseInfo"
+          "$ref": "#/definitions/ReleaseInfo"
         },
         "cscLink": {
           "type": [
@@ -3642,14 +3590,14 @@
           "description": "A [glob patterns](./file-patterns.md) relative to the [app directory](configuration.md#directories), which specifies which files to include when copying files to create the package.\n\nDefaults to:\n```json\n[\n\"**\\/*\",\n\"!**\\/node_modules/*\\/{CHANGELOG.md,README.md,README,readme.md,readme}\",\n\"!**\\/node_modules/*\\/{test,__tests__,tests,powered-test,example,examples}\",\n\"!**\\/node_modules/*.d.ts\",\n\"!**\\/node_modules/.bin\",\n\"!**\\/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}\",\n\"!.editorconfig\",\n\"!**\\/._*\",\n\"!**\\/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}\",\n\"!**\\/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}\",\n\"!**\\/{appveyor.yml,.travis.yml,circle.yml}\",\n\"!**\\/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}\"\n]\n```\n\nDevelopment dependencies are never copied in any case. You don't need to ignore it explicitly. Hidden files are not ignored by default, but all files that should be ignored, are ignored by default.\n\nDefault pattern \\`**\\/*\\` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`). `package.json` and \\`**\\/node_modules/**\\/*` (only production dependencies will be copied) is added to your custom in any case. All default ignores are added in any case — you don't need to repeat it if you configure own patterns.\n\nMay be specified in the platform options (e.g. in the [mac](mac.md)).\n\nYou may also specify custom source and destination directories by using `FileSet` objects instead of simple glob patterns.\n\n```json\n[\n{\n\"from\": \"path/to/source\",\n\"to\": \"path/to/destination\",\n\"filter\": [\"**\\/*\", \"!foo/*.js\"]\n}\n]\n```\n\nYou can use [file macros](./file-patterns.md#file-macros) in the `from` and `to` fields as well. `from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging.",
           "anyOf": [
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/PlatformSpecificBuildOptions\",{with:{\"resolution-mode\":\"import\"}}).FileSet"
+              "$ref": "#/definitions/FileSet"
             },
             {
               "type": "array",
               "items": {
                 "anyOf": [
                   {
-                    "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/PlatformSpecificBuildOptions\",{with:{\"resolution-mode\":\"import\"}}).FileSet"
+                    "$ref": "#/definitions/FileSet"
                   },
                   {
                     "type": "string"
@@ -3669,14 +3617,14 @@
           "description": "A [glob patterns](./file-patterns.md) relative to the project directory, when specified, copy the file or directory with matching names directly into the app's resources directory (`Contents/Resources` for MacOS, `resources` for Linux and Windows).\n\nFile patterns (and support for `from` and `to` fields) the same as for [files](#files).",
           "anyOf": [
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/PlatformSpecificBuildOptions\",{with:{\"resolution-mode\":\"import\"}}).FileSet"
+              "$ref": "#/definitions/FileSet"
             },
             {
               "type": "array",
               "items": {
                 "anyOf": [
                   {
-                    "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/PlatformSpecificBuildOptions\",{with:{\"resolution-mode\":\"import\"}}).FileSet"
+                    "$ref": "#/definitions/FileSet"
                   },
                   {
                     "type": "string"
@@ -3696,14 +3644,14 @@
           "description": "The same as [extraResources](#extraresources) but copy into the app's content directory (`Contents` for MacOS, root directory for Linux and Windows).",
           "anyOf": [
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/PlatformSpecificBuildOptions\",{with:{\"resolution-mode\":\"import\"}}).FileSet"
+              "$ref": "#/definitions/FileSet"
             },
             {
               "type": "array",
               "items": {
                 "anyOf": [
                   {
-                    "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/PlatformSpecificBuildOptions\",{with:{\"resolution-mode\":\"import\"}}).FileSet"
+                    "$ref": "#/definitions/FileSet"
                   },
                   {
                     "type": "string"
@@ -3774,7 +3722,7 @@
           "description": "The content — to customize icon locations. The x and y coordinates refer to the position of the **center** of the icon (at 1x scale), and do not take the label into account.",
           "type": "array",
           "items": {
-            "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/macOptions\",{with:{\"resolution-mode\":\"import\"}}).DmgContent"
+            "$ref": "#/definitions/DmgContent"
           }
         },
         "format": {
@@ -3792,7 +3740,7 @@
         },
         "window": {
           "description": "The DMG window position and size. With y co-ordinates running from bottom to top.\n\nThe Finder makes sure that the window will be on the user’s display, so if you want your window at the top left of the display you could use `\"x\": 0, \"y\": 100000` as the x, y co-ordinates.\nIt is not to be possible to position the window relative to the [top left](https://github.com/electron-userland/electron-builder/issues/3990#issuecomment-512960957) or relative to the center of the user’s screen.",
-          "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/macOptions\",{with:{\"resolution-mode\":\"import\"}}).DmgWindow"
+          "$ref": "#/definitions/DmgWindow"
         },
         "internetEnabled": {
           "description": "Whether to create internet-enabled disk image (when it is downloaded using a browser it will automatically decompress the image, put the application on the desktop, unmount and remove the disk image file).",
@@ -3818,33 +3766,33 @@
         "publish": {
           "anyOf": [
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).GithubOptions"
+              "$ref": "#/definitions/GithubOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).S3Options"
+              "$ref": "#/definitions/S3Options"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).SpacesOptions"
+              "$ref": "#/definitions/SpacesOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).GenericServerOptions"
+              "$ref": "#/definitions/GenericServerOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).CustomPublishOptions"
+              "$ref": "#/definitions/CustomPublishOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).KeygenOptions"
+              "$ref": "#/definitions/KeygenOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).SnapStoreOptions"
+              "$ref": "#/definitions/SnapStoreOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).BitbucketOptions"
+              "$ref": "#/definitions/BitbucketOptions"
             },
             {
               "type": "array",
               "items": {
-                "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).AllPublishOptions"
+                "$ref": "#/definitions/AllPublishOptions"
               }
             },
             {
@@ -3992,7 +3940,7 @@
           "description": "Options for the background image for the installer.",
           "anyOf": [
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/pkgOptions\",{with:{\"resolution-mode\":\"import\"}}).PkgBackgroundOptions"
+              "$ref": "#/definitions/PkgBackgroundOptions"
             },
             {
               "type": "null"
@@ -4084,33 +4032,33 @@
         "publish": {
           "anyOf": [
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).GithubOptions"
+              "$ref": "#/definitions/GithubOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).S3Options"
+              "$ref": "#/definitions/S3Options"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).SpacesOptions"
+              "$ref": "#/definitions/SpacesOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).GenericServerOptions"
+              "$ref": "#/definitions/GenericServerOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).CustomPublishOptions"
+              "$ref": "#/definitions/CustomPublishOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).KeygenOptions"
+              "$ref": "#/definitions/KeygenOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).SnapStoreOptions"
+              "$ref": "#/definitions/SnapStoreOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).BitbucketOptions"
+              "$ref": "#/definitions/BitbucketOptions"
             },
             {
               "type": "array",
               "items": {
-                "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).AllPublishOptions"
+                "$ref": "#/definitions/AllPublishOptions"
               }
             },
             {
@@ -4183,14 +4131,14 @@
           "default": "nsis",
           "anyOf": [
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/core\",{with:{\"resolution-mode\":\"import\"}}).TargetConfiguration"
+              "$ref": "#/definitions/TargetConfiguration"
             },
             {
               "type": "array",
               "items": {
                 "anyOf": [
                   {
-                    "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/core\",{with:{\"resolution-mode\":\"import\"}}).TargetConfiguration"
+                    "$ref": "#/definitions/TargetConfiguration"
                   },
                   {
                     "type": "string"
@@ -4225,7 +4173,7 @@
           "description": "Options for usage with signtool.exe\nCannot be used in conjunction with `azureSignOptions`, signing will default to Azure Trusted Signing",
           "anyOf": [
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/winOptions\",{with:{\"resolution-mode\":\"import\"}}).WindowsSigntoolConfiguration"
+              "$ref": "#/definitions/WindowsSigntoolConfiguration"
             },
             {
               "type": "null"
@@ -4236,7 +4184,7 @@
           "description": "Options for usage of Azure Trusted Signing (beta)\nCannot be used in conjunction with `signtoolOptions`, signing will default to Azure Trusted Signing",
           "anyOf": [
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/winOptions\",{with:{\"resolution-mode\":\"import\"}}).WindowsAzureSigningConfiguration"
+              "$ref": "#/definitions/WindowsAzureSigningConfiguration"
             },
             {
               "type": "null"
@@ -4337,7 +4285,7 @@
           "default": true,
           "anyOf": [
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/PlatformSpecificBuildOptions\",{with:{\"resolution-mode\":\"import\"}}).AsarOptions"
+              "$ref": "#/definitions/AsarOptions"
             },
             {
               "type": [
@@ -4368,12 +4316,12 @@
           "description": "The file associations.",
           "anyOf": [
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/FileAssociation\",{with:{\"resolution-mode\":\"import\"}}).FileAssociation"
+              "$ref": "#/definitions/FileAssociation"
             },
             {
               "type": "array",
               "items": {
-                "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/FileAssociation\",{with:{\"resolution-mode\":\"import\"}}).FileAssociation"
+                "$ref": "#/definitions/FileAssociation"
               }
             }
           ]
@@ -4382,12 +4330,12 @@
           "description": "The URL protocol schemes.",
           "anyOf": [
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/PlatformSpecificBuildOptions\",{with:{\"resolution-mode\":\"import\"}}).Protocol"
+              "$ref": "#/definitions/Protocol"
             },
             {
               "type": "array",
               "items": {
-                "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/PlatformSpecificBuildOptions\",{with:{\"resolution-mode\":\"import\"}}).Protocol"
+                "$ref": "#/definitions/Protocol"
               }
             }
           ]
@@ -4421,33 +4369,33 @@
           "description": "Publisher configuration. See [Auto Update](./publish.md) for more information.",
           "anyOf": [
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).GithubOptions"
+              "$ref": "#/definitions/GithubOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).S3Options"
+              "$ref": "#/definitions/S3Options"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).SpacesOptions"
+              "$ref": "#/definitions/SpacesOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).GenericServerOptions"
+              "$ref": "#/definitions/GenericServerOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).CustomPublishOptions"
+              "$ref": "#/definitions/CustomPublishOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).KeygenOptions"
+              "$ref": "#/definitions/KeygenOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).SnapStoreOptions"
+              "$ref": "#/definitions/SnapStoreOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).BitbucketOptions"
+              "$ref": "#/definitions/BitbucketOptions"
             },
             {
               "type": "array",
               "items": {
-                "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).AllPublishOptions"
+                "$ref": "#/definitions/AllPublishOptions"
               }
             },
             {
@@ -4470,7 +4418,7 @@
         },
         "releaseInfo": {
           "description": "The release info. Intended for command line usage:\n\n```\n-c.releaseInfo.releaseNotes=\"new features\"\n```",
-          "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/PlatformSpecificBuildOptions\",{with:{\"resolution-mode\":\"import\"}}).ReleaseInfo"
+          "$ref": "#/definitions/ReleaseInfo"
         },
         "cscLink": {
           "type": [
@@ -4491,14 +4439,14 @@
           "description": "A [glob patterns](./file-patterns.md) relative to the [app directory](configuration.md#directories), which specifies which files to include when copying files to create the package.\n\nDefaults to:\n```json\n[\n\"**\\/*\",\n\"!**\\/node_modules/*\\/{CHANGELOG.md,README.md,README,readme.md,readme}\",\n\"!**\\/node_modules/*\\/{test,__tests__,tests,powered-test,example,examples}\",\n\"!**\\/node_modules/*.d.ts\",\n\"!**\\/node_modules/.bin\",\n\"!**\\/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}\",\n\"!.editorconfig\",\n\"!**\\/._*\",\n\"!**\\/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}\",\n\"!**\\/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}\",\n\"!**\\/{appveyor.yml,.travis.yml,circle.yml}\",\n\"!**\\/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}\"\n]\n```\n\nDevelopment dependencies are never copied in any case. You don't need to ignore it explicitly. Hidden files are not ignored by default, but all files that should be ignored, are ignored by default.\n\nDefault pattern \\`**\\/*\\` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`). `package.json` and \\`**\\/node_modules/**\\/*` (only production dependencies will be copied) is added to your custom in any case. All default ignores are added in any case — you don't need to repeat it if you configure own patterns.\n\nMay be specified in the platform options (e.g. in the [mac](mac.md)).\n\nYou may also specify custom source and destination directories by using `FileSet` objects instead of simple glob patterns.\n\n```json\n[\n{\n\"from\": \"path/to/source\",\n\"to\": \"path/to/destination\",\n\"filter\": [\"**\\/*\", \"!foo/*.js\"]\n}\n]\n```\n\nYou can use [file macros](./file-patterns.md#file-macros) in the `from` and `to` fields as well. `from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging.",
           "anyOf": [
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/PlatformSpecificBuildOptions\",{with:{\"resolution-mode\":\"import\"}}).FileSet"
+              "$ref": "#/definitions/FileSet"
             },
             {
               "type": "array",
               "items": {
                 "anyOf": [
                   {
-                    "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/PlatformSpecificBuildOptions\",{with:{\"resolution-mode\":\"import\"}}).FileSet"
+                    "$ref": "#/definitions/FileSet"
                   },
                   {
                     "type": "string"
@@ -4518,14 +4466,14 @@
           "description": "A [glob patterns](./file-patterns.md) relative to the project directory, when specified, copy the file or directory with matching names directly into the app's resources directory (`Contents/Resources` for MacOS, `resources` for Linux and Windows).\n\nFile patterns (and support for `from` and `to` fields) the same as for [files](#files).",
           "anyOf": [
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/PlatformSpecificBuildOptions\",{with:{\"resolution-mode\":\"import\"}}).FileSet"
+              "$ref": "#/definitions/FileSet"
             },
             {
               "type": "array",
               "items": {
                 "anyOf": [
                   {
-                    "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/PlatformSpecificBuildOptions\",{with:{\"resolution-mode\":\"import\"}}).FileSet"
+                    "$ref": "#/definitions/FileSet"
                   },
                   {
                     "type": "string"
@@ -4545,14 +4493,14 @@
           "description": "The same as [extraResources](#extraresources) but copy into the app's content directory (`Contents` for MacOS, root directory for Linux and Windows).",
           "anyOf": [
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/PlatformSpecificBuildOptions\",{with:{\"resolution-mode\":\"import\"}}).FileSet"
+              "$ref": "#/definitions/FileSet"
             },
             {
               "type": "array",
               "items": {
                 "anyOf": [
                   {
-                    "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/PlatformSpecificBuildOptions\",{with:{\"resolution-mode\":\"import\"}}).FileSet"
+                    "$ref": "#/definitions/FileSet"
                   },
                   {
                     "type": "string"
@@ -4578,8 +4526,7 @@
           "description": "The custom function (or path to file or module id) to sign Windows executables",
           "anyOf": [
             {
-              "type": "object",
-              "additionalProperties": false
+              "typeof": "function"
             },
             {
               "type": [
@@ -4940,7 +4887,7 @@
           "description": "Allows you to provide your own `makensis`, such as one with support for debug logging via LogSet and LogText. (Logging also requires option `debugLogging = true`)",
           "anyOf": [
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/targets/nsis/nsisOptions\",{with:{\"resolution-mode\":\"import\"}}).CustomNsisBinary"
+              "$ref": "#/definitions/CustomNsisBinary"
             },
             {
               "type": "null"
@@ -4951,7 +4898,7 @@
           "description": "Allows you to provide your own `nsis-resources`",
           "anyOf": [
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/targets/nsis/nsisOptions\",{with:{\"resolution-mode\":\"import\"}}).CustomNsisResources"
+              "$ref": "#/definitions/CustomNsisResources"
             },
             {
               "type": "null"
@@ -4995,33 +4942,33 @@
         "publish": {
           "anyOf": [
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).GithubOptions"
+              "$ref": "#/definitions/GithubOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).S3Options"
+              "$ref": "#/definitions/S3Options"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).SpacesOptions"
+              "$ref": "#/definitions/SpacesOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).GenericServerOptions"
+              "$ref": "#/definitions/GenericServerOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).CustomPublishOptions"
+              "$ref": "#/definitions/CustomPublishOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).KeygenOptions"
+              "$ref": "#/definitions/KeygenOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).SnapStoreOptions"
+              "$ref": "#/definitions/SnapStoreOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).BitbucketOptions"
+              "$ref": "#/definitions/BitbucketOptions"
             },
             {
               "type": "array",
               "items": {
-                "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).AllPublishOptions"
+                "$ref": "#/definitions/AllPublishOptions"
               }
             },
             {
@@ -5317,7 +5264,7 @@
           "description": "Allows you to provide your own `makensis`, such as one with support for debug logging via LogSet and LogText. (Logging also requires option `debugLogging = true`)",
           "anyOf": [
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/targets/nsis/nsisOptions\",{with:{\"resolution-mode\":\"import\"}}).CustomNsisBinary"
+              "$ref": "#/definitions/CustomNsisBinary"
             },
             {
               "type": "null"
@@ -5328,7 +5275,7 @@
           "description": "Allows you to provide your own `nsis-resources`",
           "anyOf": [
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/targets/nsis/nsisOptions\",{with:{\"resolution-mode\":\"import\"}}).CustomNsisResources"
+              "$ref": "#/definitions/CustomNsisResources"
             },
             {
               "type": "null"
@@ -5372,33 +5319,33 @@
         "publish": {
           "anyOf": [
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).GithubOptions"
+              "$ref": "#/definitions/GithubOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).S3Options"
+              "$ref": "#/definitions/S3Options"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).SpacesOptions"
+              "$ref": "#/definitions/SpacesOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).GenericServerOptions"
+              "$ref": "#/definitions/GenericServerOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).CustomPublishOptions"
+              "$ref": "#/definitions/CustomPublishOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).KeygenOptions"
+              "$ref": "#/definitions/KeygenOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).SnapStoreOptions"
+              "$ref": "#/definitions/SnapStoreOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).BitbucketOptions"
+              "$ref": "#/definitions/BitbucketOptions"
             },
             {
               "type": "array",
               "items": {
-                "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).AllPublishOptions"
+                "$ref": "#/definitions/AllPublishOptions"
               }
             },
             {
@@ -5455,33 +5402,33 @@
         "publish": {
           "anyOf": [
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).GithubOptions"
+              "$ref": "#/definitions/GithubOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).S3Options"
+              "$ref": "#/definitions/S3Options"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).SpacesOptions"
+              "$ref": "#/definitions/SpacesOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).GenericServerOptions"
+              "$ref": "#/definitions/GenericServerOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).CustomPublishOptions"
+              "$ref": "#/definitions/CustomPublishOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).KeygenOptions"
+              "$ref": "#/definitions/KeygenOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).SnapStoreOptions"
+              "$ref": "#/definitions/SnapStoreOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).BitbucketOptions"
+              "$ref": "#/definitions/BitbucketOptions"
             },
             {
               "type": "array",
               "items": {
-                "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).AllPublishOptions"
+                "$ref": "#/definitions/AllPublishOptions"
               }
             },
             {
@@ -5517,7 +5464,7 @@
           "description": "Allows you to provide your own `makensis`, such as one with support for debug logging via LogSet and LogText. (Logging also requires option `debugLogging = true`)",
           "anyOf": [
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/targets/nsis/nsisOptions\",{with:{\"resolution-mode\":\"import\"}}).CustomNsisBinary"
+              "$ref": "#/definitions/CustomNsisBinary"
             },
             {
               "type": "null"
@@ -5528,7 +5475,7 @@
           "description": "Allows you to provide your own `nsis-resources`",
           "anyOf": [
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/targets/nsis/nsisOptions\",{with:{\"resolution-mode\":\"import\"}}).CustomNsisResources"
+              "$ref": "#/definitions/CustomNsisResources"
             },
             {
               "type": "null"
@@ -5663,33 +5610,33 @@
         "publish": {
           "anyOf": [
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).GithubOptions"
+              "$ref": "#/definitions/GithubOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).S3Options"
+              "$ref": "#/definitions/S3Options"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).SpacesOptions"
+              "$ref": "#/definitions/SpacesOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).GenericServerOptions"
+              "$ref": "#/definitions/GenericServerOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).CustomPublishOptions"
+              "$ref": "#/definitions/CustomPublishOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).KeygenOptions"
+              "$ref": "#/definitions/KeygenOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).SnapStoreOptions"
+              "$ref": "#/definitions/SnapStoreOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).BitbucketOptions"
+              "$ref": "#/definitions/BitbucketOptions"
             },
             {
               "type": "array",
               "items": {
-                "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).AllPublishOptions"
+                "$ref": "#/definitions/AllPublishOptions"
               }
             },
             {
@@ -5800,33 +5747,33 @@
         "publish": {
           "anyOf": [
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).GithubOptions"
+              "$ref": "#/definitions/GithubOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).S3Options"
+              "$ref": "#/definitions/S3Options"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).SpacesOptions"
+              "$ref": "#/definitions/SpacesOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).GenericServerOptions"
+              "$ref": "#/definitions/GenericServerOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).CustomPublishOptions"
+              "$ref": "#/definitions/CustomPublishOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).KeygenOptions"
+              "$ref": "#/definitions/KeygenOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).SnapStoreOptions"
+              "$ref": "#/definitions/SnapStoreOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).BitbucketOptions"
+              "$ref": "#/definitions/BitbucketOptions"
             },
             {
               "type": "array",
               "items": {
-                "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).AllPublishOptions"
+                "$ref": "#/definitions/AllPublishOptions"
               }
             },
             {
@@ -5933,33 +5880,33 @@
         "publish": {
           "anyOf": [
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).GithubOptions"
+              "$ref": "#/definitions/GithubOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).S3Options"
+              "$ref": "#/definitions/S3Options"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).SpacesOptions"
+              "$ref": "#/definitions/SpacesOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).GenericServerOptions"
+              "$ref": "#/definitions/GenericServerOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).CustomPublishOptions"
+              "$ref": "#/definitions/CustomPublishOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).KeygenOptions"
+              "$ref": "#/definitions/KeygenOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).SnapStoreOptions"
+              "$ref": "#/definitions/SnapStoreOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).BitbucketOptions"
+              "$ref": "#/definitions/BitbucketOptions"
             },
             {
               "type": "array",
               "items": {
-                "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).AllPublishOptions"
+                "$ref": "#/definitions/AllPublishOptions"
               }
             },
             {
@@ -6031,33 +5978,33 @@
         "publish": {
           "anyOf": [
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).GithubOptions"
+              "$ref": "#/definitions/GithubOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).S3Options"
+              "$ref": "#/definitions/S3Options"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).SpacesOptions"
+              "$ref": "#/definitions/SpacesOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).GenericServerOptions"
+              "$ref": "#/definitions/GenericServerOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).CustomPublishOptions"
+              "$ref": "#/definitions/CustomPublishOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).KeygenOptions"
+              "$ref": "#/definitions/KeygenOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).SnapStoreOptions"
+              "$ref": "#/definitions/SnapStoreOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).BitbucketOptions"
+              "$ref": "#/definitions/BitbucketOptions"
             },
             {
               "type": "array",
               "items": {
-                "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).AllPublishOptions"
+                "$ref": "#/definitions/AllPublishOptions"
               }
             },
             {
@@ -6079,14 +6026,14 @@
           "default": "AppImage",
           "anyOf": [
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/core\",{with:{\"resolution-mode\":\"import\"}}).TargetConfiguration"
+              "$ref": "#/definitions/TargetConfiguration"
             },
             {
               "type": "array",
               "items": {
                 "anyOf": [
                   {
-                    "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/core\",{with:{\"resolution-mode\":\"import\"}}).TargetConfiguration"
+                    "$ref": "#/definitions/TargetConfiguration"
                   },
                   {
                     "type": "string"
@@ -6166,7 +6113,7 @@
           "description": "The [Desktop file](https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files)",
           "anyOf": [
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/linuxOptions\",{with:{\"resolution-mode\":\"import\"}}).LinuxDesktopFile"
+              "$ref": "#/definitions/LinuxDesktopFile"
             },
             {
               "type": "null"
@@ -6239,7 +6186,7 @@
           "default": true,
           "anyOf": [
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/PlatformSpecificBuildOptions\",{with:{\"resolution-mode\":\"import\"}}).AsarOptions"
+              "$ref": "#/definitions/AsarOptions"
             },
             {
               "type": [
@@ -6270,12 +6217,12 @@
           "description": "The file associations.",
           "anyOf": [
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/FileAssociation\",{with:{\"resolution-mode\":\"import\"}}).FileAssociation"
+              "$ref": "#/definitions/FileAssociation"
             },
             {
               "type": "array",
               "items": {
-                "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/FileAssociation\",{with:{\"resolution-mode\":\"import\"}}).FileAssociation"
+                "$ref": "#/definitions/FileAssociation"
               }
             }
           ]
@@ -6284,12 +6231,12 @@
           "description": "The URL protocol schemes.",
           "anyOf": [
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/PlatformSpecificBuildOptions\",{with:{\"resolution-mode\":\"import\"}}).Protocol"
+              "$ref": "#/definitions/Protocol"
             },
             {
               "type": "array",
               "items": {
-                "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/PlatformSpecificBuildOptions\",{with:{\"resolution-mode\":\"import\"}}).Protocol"
+                "$ref": "#/definitions/Protocol"
               }
             }
           ]
@@ -6323,33 +6270,33 @@
           "description": "Publisher configuration. See [Auto Update](./publish.md) for more information.",
           "anyOf": [
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).GithubOptions"
+              "$ref": "#/definitions/GithubOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).S3Options"
+              "$ref": "#/definitions/S3Options"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).SpacesOptions"
+              "$ref": "#/definitions/SpacesOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).GenericServerOptions"
+              "$ref": "#/definitions/GenericServerOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).CustomPublishOptions"
+              "$ref": "#/definitions/CustomPublishOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).KeygenOptions"
+              "$ref": "#/definitions/KeygenOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).SnapStoreOptions"
+              "$ref": "#/definitions/SnapStoreOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).BitbucketOptions"
+              "$ref": "#/definitions/BitbucketOptions"
             },
             {
               "type": "array",
               "items": {
-                "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).AllPublishOptions"
+                "$ref": "#/definitions/AllPublishOptions"
               }
             },
             {
@@ -6372,7 +6319,7 @@
         },
         "releaseInfo": {
           "description": "The release info. Intended for command line usage:\n\n```\n-c.releaseInfo.releaseNotes=\"new features\"\n```",
-          "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/PlatformSpecificBuildOptions\",{with:{\"resolution-mode\":\"import\"}}).ReleaseInfo"
+          "$ref": "#/definitions/ReleaseInfo"
         },
         "cscLink": {
           "type": [
@@ -6393,14 +6340,14 @@
           "description": "A [glob patterns](./file-patterns.md) relative to the [app directory](configuration.md#directories), which specifies which files to include when copying files to create the package.\n\nDefaults to:\n```json\n[\n\"**\\/*\",\n\"!**\\/node_modules/*\\/{CHANGELOG.md,README.md,README,readme.md,readme}\",\n\"!**\\/node_modules/*\\/{test,__tests__,tests,powered-test,example,examples}\",\n\"!**\\/node_modules/*.d.ts\",\n\"!**\\/node_modules/.bin\",\n\"!**\\/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}\",\n\"!.editorconfig\",\n\"!**\\/._*\",\n\"!**\\/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}\",\n\"!**\\/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}\",\n\"!**\\/{appveyor.yml,.travis.yml,circle.yml}\",\n\"!**\\/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}\"\n]\n```\n\nDevelopment dependencies are never copied in any case. You don't need to ignore it explicitly. Hidden files are not ignored by default, but all files that should be ignored, are ignored by default.\n\nDefault pattern \\`**\\/*\\` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`). `package.json` and \\`**\\/node_modules/**\\/*` (only production dependencies will be copied) is added to your custom in any case. All default ignores are added in any case — you don't need to repeat it if you configure own patterns.\n\nMay be specified in the platform options (e.g. in the [mac](mac.md)).\n\nYou may also specify custom source and destination directories by using `FileSet` objects instead of simple glob patterns.\n\n```json\n[\n{\n\"from\": \"path/to/source\",\n\"to\": \"path/to/destination\",\n\"filter\": [\"**\\/*\", \"!foo/*.js\"]\n}\n]\n```\n\nYou can use [file macros](./file-patterns.md#file-macros) in the `from` and `to` fields as well. `from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging.",
           "anyOf": [
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/PlatformSpecificBuildOptions\",{with:{\"resolution-mode\":\"import\"}}).FileSet"
+              "$ref": "#/definitions/FileSet"
             },
             {
               "type": "array",
               "items": {
                 "anyOf": [
                   {
-                    "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/PlatformSpecificBuildOptions\",{with:{\"resolution-mode\":\"import\"}}).FileSet"
+                    "$ref": "#/definitions/FileSet"
                   },
                   {
                     "type": "string"
@@ -6420,14 +6367,14 @@
           "description": "A [glob patterns](./file-patterns.md) relative to the project directory, when specified, copy the file or directory with matching names directly into the app's resources directory (`Contents/Resources` for MacOS, `resources` for Linux and Windows).\n\nFile patterns (and support for `from` and `to` fields) the same as for [files](#files).",
           "anyOf": [
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/PlatformSpecificBuildOptions\",{with:{\"resolution-mode\":\"import\"}}).FileSet"
+              "$ref": "#/definitions/FileSet"
             },
             {
               "type": "array",
               "items": {
                 "anyOf": [
                   {
-                    "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/PlatformSpecificBuildOptions\",{with:{\"resolution-mode\":\"import\"}}).FileSet"
+                    "$ref": "#/definitions/FileSet"
                   },
                   {
                     "type": "string"
@@ -6447,14 +6394,14 @@
           "description": "The same as [extraResources](#extraresources) but copy into the app's content directory (`Contents` for MacOS, root directory for Linux and Windows).",
           "anyOf": [
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/PlatformSpecificBuildOptions\",{with:{\"resolution-mode\":\"import\"}}).FileSet"
+              "$ref": "#/definitions/FileSet"
             },
             {
               "type": "array",
               "items": {
                 "anyOf": [
                   {
-                    "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/PlatformSpecificBuildOptions\",{with:{\"resolution-mode\":\"import\"}}).FileSet"
+                    "$ref": "#/definitions/FileSet"
                   },
                   {
                     "type": "string"
@@ -6481,10 +6428,7 @@
           "description": "`[Desktop Entry]` metadata entries (name to value). Overwrites default values calculated by electron-builder",
           "anyOf": [
             {
-              "type": "object",
-              "additionalProperties": {
-                "type": "string"
-              }
+              "typeof": "function"
             },
             {
               "type": "null"
@@ -6495,8 +6439,7 @@
           "description": "`[Desktop Actions <ActionName>]` metadata entries (name to value).\n\nConfig Example:\n```js\ndesktopActions: {\n   NewWindow: {\n      Name: 'New Window',\n      Exec: 'app --new-window',\n   }\n}\n```",
           "anyOf": [
             {
-              "type": "object",
-              "additionalProperties": {}
+              "typeof": "function"
             },
             {
               "type": "null"
@@ -6679,7 +6622,7 @@
           "description": "The [Desktop file](https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files)",
           "anyOf": [
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/linuxOptions\",{with:{\"resolution-mode\":\"import\"}}).LinuxDesktopFile"
+              "$ref": "#/definitions/LinuxDesktopFile"
             },
             {
               "type": "null"
@@ -6710,33 +6653,33 @@
         "publish": {
           "anyOf": [
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).GithubOptions"
+              "$ref": "#/definitions/GithubOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).S3Options"
+              "$ref": "#/definitions/S3Options"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).SpacesOptions"
+              "$ref": "#/definitions/SpacesOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).GenericServerOptions"
+              "$ref": "#/definitions/GenericServerOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).CustomPublishOptions"
+              "$ref": "#/definitions/CustomPublishOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).KeygenOptions"
+              "$ref": "#/definitions/KeygenOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).SnapStoreOptions"
+              "$ref": "#/definitions/SnapStoreOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).BitbucketOptions"
+              "$ref": "#/definitions/BitbucketOptions"
             },
             {
               "type": "array",
               "items": {
-                "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).AllPublishOptions"
+                "$ref": "#/definitions/AllPublishOptions"
               }
             },
             {
@@ -6871,14 +6814,14 @@
           "description": "The list of [plugs](https://snapcraft.io/docs/reference/interfaces).\nDefaults to `[\"desktop\", \"desktop-legacy\", \"home\", \"x11\", \"wayland\", \"unity7\", \"browser-support\", \"network\", \"gsettings\", \"audio-playback\", \"pulseaudio\", \"opengl\"]`.\n\nIf list contains `default`, it will be replaced to default list, so, `[\"default\", \"foo\"]` can be used to add custom plug `foo` in addition to defaults.\n\nAdditional attributes can be specified using object instead of just name of plug:\n```\n[\n {\n   \"browser-sandbox\": {\n     \"interface\": \"browser-support\",\n     \"allow-sandbox\": true\n   },\n },\n \"another-simple-plug-name\"\n]\n```",
           "anyOf": [
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/SnapOptions\",{with:{\"resolution-mode\":\"import\"}}).PlugDescriptor"
+              "$ref": "#/definitions/PlugDescriptor"
             },
             {
               "type": "array",
               "items": {
                 "anyOf": [
                   {
-                    "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/SnapOptions\",{with:{\"resolution-mode\":\"import\"}}).PlugDescriptor"
+                    "$ref": "#/definitions/PlugDescriptor"
                   },
                   {
                     "type": "string"
@@ -6895,14 +6838,14 @@
           "description": "The list of [slots](https://snapcraft.io/docs/reference/interfaces).\n\nAdditional attributes can be specified using object instead of just name of slot:\n```\n[\n {\n   \"mpris\": {\n     \"name\": \"chromium\"\n   },\n }\n]\n\nIn case you want your application to be a compliant MPris player, you will need to definie\nThe mpris slot with \"chromium\" name.\nThis electron has it [hardcoded](https://source.chromium.org/chromium/chromium/src/+/master:components/system_media_controls/linux/system_media_controls_linux.cc;l=51;bpv=0;bpt=1),\nand we need to pass this name so snap [will allow it](https://forum.snapcraft.io/t/unable-to-use-mpris-interface/15360/7) in strict confinement.",
           "anyOf": [
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/SnapOptions\",{with:{\"resolution-mode\":\"import\"}}).PlugDescriptor"
+              "$ref": "#/definitions/PlugDescriptor"
             },
             {
               "type": "array",
               "items": {
                 "anyOf": [
                   {
-                    "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/SnapOptions\",{with:{\"resolution-mode\":\"import\"}}).SlotDescriptor"
+                    "$ref": "#/definitions/SlotDescriptor"
                   },
                   {
                     "type": "string"
@@ -6942,13 +6885,7 @@
           "description": "Specifies any files to make accessible from locations such as `/usr`, `/var`, and `/etc`. See [snap layouts](https://snapcraft.io/docs/snap-layouts) to learn more.",
           "anyOf": [
             {
-              "type": "object",
-              "additionalProperties": {
-                "type": "object",
-                "additionalProperties": {
-                  "type": "string"
-                }
-              }
+              "typeof": "function"
             },
             {
               "type": "null"
@@ -7037,7 +6974,7 @@
           "description": "The [Desktop file](https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files)",
           "anyOf": [
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/linuxOptions\",{with:{\"resolution-mode\":\"import\"}}).LinuxDesktopFile"
+              "$ref": "#/definitions/LinuxDesktopFile"
             },
             {
               "type": "null"
@@ -7068,33 +7005,33 @@
         "publish": {
           "anyOf": [
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).GithubOptions"
+              "$ref": "#/definitions/GithubOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).S3Options"
+              "$ref": "#/definitions/S3Options"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).SpacesOptions"
+              "$ref": "#/definitions/SpacesOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).GenericServerOptions"
+              "$ref": "#/definitions/GenericServerOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).CustomPublishOptions"
+              "$ref": "#/definitions/CustomPublishOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).KeygenOptions"
+              "$ref": "#/definitions/KeygenOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).SnapStoreOptions"
+              "$ref": "#/definitions/SnapStoreOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).BitbucketOptions"
+              "$ref": "#/definitions/BitbucketOptions"
             },
             {
               "type": "array",
               "items": {
-                "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).AllPublishOptions"
+                "$ref": "#/definitions/AllPublishOptions"
               }
             },
             {
@@ -7113,8 +7050,7 @@
       "additionalProperties": {
         "anyOf": [
           {
-            "type": "object",
-            "additionalProperties": {}
+            "type": "object"
           },
           {
             "type": "null"
@@ -7127,8 +7063,7 @@
       "additionalProperties": {
         "anyOf": [
           {
-            "type": "object",
-            "additionalProperties": {}
+            "typeof": "function"
           },
           {
             "type": "null"
@@ -7185,7 +7120,7 @@
           "description": "The [Desktop file](https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files)",
           "anyOf": [
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/linuxOptions\",{with:{\"resolution-mode\":\"import\"}}).LinuxDesktopFile"
+              "$ref": "#/definitions/LinuxDesktopFile"
             },
             {
               "type": "null"
@@ -7216,33 +7151,33 @@
         "publish": {
           "anyOf": [
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).GithubOptions"
+              "$ref": "#/definitions/GithubOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).S3Options"
+              "$ref": "#/definitions/S3Options"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).SpacesOptions"
+              "$ref": "#/definitions/SpacesOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).GenericServerOptions"
+              "$ref": "#/definitions/GenericServerOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).CustomPublishOptions"
+              "$ref": "#/definitions/CustomPublishOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).KeygenOptions"
+              "$ref": "#/definitions/KeygenOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).SnapStoreOptions"
+              "$ref": "#/definitions/SnapStoreOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).BitbucketOptions"
+              "$ref": "#/definitions/BitbucketOptions"
             },
             {
               "type": "array",
               "items": {
-                "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).AllPublishOptions"
+                "$ref": "#/definitions/AllPublishOptions"
               }
             },
             {
@@ -7379,7 +7314,7 @@
           "description": "The [Desktop file](https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files)",
           "anyOf": [
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/linuxOptions\",{with:{\"resolution-mode\":\"import\"}}).LinuxDesktopFile"
+              "$ref": "#/definitions/LinuxDesktopFile"
             },
             {
               "type": "null"
@@ -7410,33 +7345,33 @@
         "publish": {
           "anyOf": [
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).GithubOptions"
+              "$ref": "#/definitions/GithubOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).S3Options"
+              "$ref": "#/definitions/S3Options"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).SpacesOptions"
+              "$ref": "#/definitions/SpacesOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).GenericServerOptions"
+              "$ref": "#/definitions/GenericServerOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).CustomPublishOptions"
+              "$ref": "#/definitions/CustomPublishOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).KeygenOptions"
+              "$ref": "#/definitions/KeygenOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).SnapStoreOptions"
+              "$ref": "#/definitions/SnapStoreOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).BitbucketOptions"
+              "$ref": "#/definitions/BitbucketOptions"
             },
             {
               "type": "array",
               "items": {
-                "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).AllPublishOptions"
+                "$ref": "#/definitions/AllPublishOptions"
               }
             },
             {
@@ -7588,7 +7523,7 @@
           "description": "The [Desktop file](https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files)",
           "anyOf": [
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/app-builder-lib/src/options/linuxOptions\",{with:{\"resolution-mode\":\"import\"}}).LinuxDesktopFile"
+              "$ref": "#/definitions/LinuxDesktopFile"
             },
             {
               "type": "null"
@@ -7619,33 +7554,33 @@
         "publish": {
           "anyOf": [
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).GithubOptions"
+              "$ref": "#/definitions/GithubOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).S3Options"
+              "$ref": "#/definitions/S3Options"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).SpacesOptions"
+              "$ref": "#/definitions/SpacesOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).GenericServerOptions"
+              "$ref": "#/definitions/GenericServerOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).CustomPublishOptions"
+              "$ref": "#/definitions/CustomPublishOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).KeygenOptions"
+              "$ref": "#/definitions/KeygenOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).SnapStoreOptions"
+              "$ref": "#/definitions/SnapStoreOptions"
             },
             {
-              "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).BitbucketOptions"
+              "$ref": "#/definitions/BitbucketOptions"
             },
             {
               "type": "array",
               "items": {
-                "$ref": "#/definitions/import(\"/Users/mikemaietta/Development/electron-builder/packages/builder-util-runtime/out/publishOptions\",{with:{\"resolution-mode\":\"import\"}}).AllPublishOptions"
+                "$ref": "#/definitions/AllPublishOptions"
               }
             },
             {

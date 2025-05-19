@@ -4,15 +4,7 @@
     "composite": true,
     "declarationDir": "./out",
     "outDir": "out",
-        "rootDir": "src"
-
+    "rootDir": "src"
   },
-  "jsdoc": {
-    "out": "../../scripts/jsdoc/out/builder-util-runtime",
-    "examples": "../../scripts/jsdoc/examples",
-    "access": "public"
-  },
-  "include": [
-    "src/**/*.ts"
-  ]
+  "include": ["src/**/*.ts"]
 }

@@ -1,4 +1,4 @@
-import { SignOptions as MacSignOptions } from "@electron/osx-sign/dist/cjs/types"
+import { SignOptions as MacSignOptions } from "@electron/osx-sign"
 import { Identity, DoPackOptions, WinPackager, getArchSuffix, MacPackager } from "app-builder-lib"
 import { AsyncTaskManager } from "builder-util"
 import { DmgTarget } from "dmg-builder"
@@ -57,6 +57,7 @@ export class CheckingMacPackager extends MacPackager {
   //noinspection JSUnusedGlobalSymbols
   async doSign(opts: MacSignOptions): Promise<any> {
     this.effectiveSignOptions = opts
+    return Promise.resolve()
   }
 
   //noinspection JSUnusedGlobalSymbols,JSUnusedLocalSymbols

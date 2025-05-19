@@ -9,7 +9,7 @@ export async function resolveModule<T>(type: string | undefined, name: string): 
   try {
     if (extension === ".mjs" || (extension === ".js" && isModuleType)) {
       const fileUrl = pathToFileURL(name).href
-      return await eval("import ('" + fileUrl + "')")
+      return await import(fileUrl)
     }
   } catch (error: any) {
     log.debug({ moduleName: name, message: error.message ?? error.stack }, "Unable to dynamically import , falling back to `require`")

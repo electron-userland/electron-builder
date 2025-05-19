@@ -1,3 +1,4 @@
+/* eslint-disable curly */
 // copy from https://github.com/yarnpkg/berry/blob/master/packages/yarnpkg-nm/sources/hoist.ts
 /**
 BSD 2-Clause License

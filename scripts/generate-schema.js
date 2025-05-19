@@ -1,65 +1,31 @@
-const fs = require("fs")
-const path = require("path")
+import * as fs from "fs"
+import * as path from "path"
+import * as TJS from "typescript-json-schema"
+import { fileURLToPath } from "url"
 
-const TJS = require("typescript-json-schema")
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+const rootDir = path.resolve(__dirname, "../packages")
 
-// Path to your tsconfig file
-const basePath = path.join(__dirname, "../packages/app-builder-lib")
-const schemaFile = path.join(basePath, "scheme.json")
-const configPath = path.join(basePath, "tsconfig-scheme.json")
-
-// Load TypeScript configuration
 const settings = {
   required: true,
   noExtraProps: true,
-  useTypeOfKeyword: true,
+  typeOfKeyword: true,
   strictNullChecks: true,
+  skipLibCheck: true,
 }
 
-// Create the program from the file patterns and compiler options
-const program = TJS.programFromConfig(configPath)
-
-// Generate the schema for all types (or specify a particular type)
+const tsconfig = path.resolve(rootDir, "app-builder-lib/tsconfig.json")
+const program = TJS.programFromConfig(tsconfig)
 const schema = TJS.generateSchema(program, "Configuration", settings)
 
-// Fix the schema to remove absolute paths
-function cleanRefs(obj) {
-  if (typeof obj !== "object" || obj === null) {
-    return
-  }
-  if (Array.isArray(obj)) {
-    for (const item of obj) {
-      cleanRefs(item)
-    }
-    return
-  }
-
-  for (const key in obj) {
-    const value = obj[key]
-
-    // Fix keys in $defs or definitions
-    if (key === "$defs" || key === "definitions") {
-      for (const defKey in value) {
-        if (/^import\(.*\)\.(\w+)$/.test(defKey)) {
-          const match = defKey.match(/^import\(.*\)\.(\w+)$/)
-          const newKey = match[1]
-          value[newKey] = value[defKey]
-          delete value[defKey]
-        }
-      }
-    }
-
-    cleanRefs(value)
-  }
+const PlugDescriptor = schema.definitions.PlugDescriptor
+PlugDescriptor.additionalProperties.anyOf[0] = {
+  type: "object",
 }
 
-cleanRefs(schema)
-
-let o = schema.definitions.PlugDescriptor.additionalProperties.anyOf[0]
-delete o.typeof
-o.type = "object"
-
-schema.definitions.OutgoingHttpHeaders.additionalProperties = {
+const OutgoingHttpHeaders = schema.definitions.OutgoingHttpHeaders
+OutgoingHttpHeaders.additionalProperties = {
   anyOf: [
     {
       items: {
@@ -73,14 +39,16 @@ schema.definitions.OutgoingHttpHeaders.additionalProperties = {
   ],
 }
 
-o = schema.definitions.SnapOptions.properties.environment.anyOf[0] = {
+const SnapOptions = schema.definitions.SnapOptions
+SnapOptions.properties.environment.anyOf[0] = {
   additionalProperties: { type: "string" },
   type: "object",
 }
 
-o = schema.properties["$schema"] = {
+schema.properties["$schema"] = {
   description: "JSON Schema for this document.",
   type: ["null", "string"],
 }
 
+const schemaFile = path.join(__dirname, "../packages/app-builder-lib/scheme.json")
 fs.writeFileSync(schemaFile, JSON.stringify(schema, null, 2))

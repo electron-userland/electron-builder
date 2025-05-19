@@ -4,20 +4,15 @@ import { Configuration, Platform, CliOptions, configureBuildCommand, createYargs
 import { app, appThrows, linuxDirTarget } from "./helpers/packTester.js"
 
 test.ifDevOrLinuxCi("validation", ({ expect }) =>
-  appThrows(
-    expect,
-    {
-      targets: linuxDirTarget,
-      config: {
-        foo: 123,
-        mac: {
-          foo: 12123,
-        },
-      } as any,
-    },
-    undefined,
-    error => error.message.includes("configuration has an unknown property 'foo'")
-  )
+  appThrows(expect, {
+    targets: linuxDirTarget,
+    config: {
+      foo: 123,
+      mac: {
+        foo: 12123,
+      },
+    } as any,
+  })
 )
 
 test.ifDevOrLinuxCi("appId as object", ({ expect }) =>

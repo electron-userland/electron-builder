@@ -9,7 +9,7 @@ exports[`appId as object 1`] = `
      How to fix:
      1. Open https://www.electron.build/configuration
      2. Search the option name on the page (or type in into Search to find across the docs).
-       * Not found? The option was deprecated or not exists (check spelling).
+       * Not found? The option may have been deprecated or no longer exists (check spelling).
        * Found? Check that the option in the appropriate place. e.g. "title" only in the "dmg", not in the root.
 "
 `;
@@ -29,4 +29,24 @@ exports[`extraFiles 1`] = `
     },
   ],
 }
+`;
+
+exports[`validation 1`] = `
+"Invalid configuration object. electron-builder <appVersion> has been initialized using a configuration object that does not match the API schema.
+ - configuration has an unknown property 'foo'. These properties are valid:
+   object { electronCompile?, electronDownload?, electronBranding?, electronVersion?, extends?, nodeVersion?, launchUiVersion?, framework?, disableSanityCheckAsar?, appId?, productName?, copyright?, directories?, mac?, mas?, masDev?, dmg?, pkg?, win?, nsis?, nsisWeb?, portable?, appx?, msi?, msiWrapped?, squirrelWindows?, linux?, deb?, snap?, appImage?, flatpak?, pacman?, rpm?, freebsd?, p5p?, apk?, buildDependenciesFromSource?, nodeGypRebuild?, npmArgs?, npmRebuild?, nativeRebuilder?, buildNumber?, buildVersion?, downloadAlternateFFmpeg?, extraMetadata?, forceCodeSigning?, includePdb?, removePackageScripts?, removePackageKeywords?, electronFuses?, concurrency?, artifactName?, executableName?, compression?, disableDefaultIgnoredFiles?, asar?, asarUnpack?, icon?, fileAssociations?, protocols?, electronLanguages?, electronUpdaterCompatibility?, publish?, detectUpdateChannel?, generateUpdatesFilesForAllChannels?, releaseInfo?, target?, cscLink?, cscKeyPassword?, defaultArch?, files?, extraResources?, extraFiles?, beforePack?, afterExtract?, afterPack?, afterSign?, artifactBuildStarted?, artifactBuildCompleted?, afterAllArtifactBuild?, msiProjectCreated?, appxManifestCreated?, onNodeModuleFile?, beforeBuild?, electronDist?, $schema? }
+     How to fix:
+     1. Open https://www.electron.build/configuration
+     2. Search the option name on the page (or type in into Search to find across the docs).
+       * Not found? The option may have been deprecated or no longer exists (check spelling).
+       * Found? Check that the option in the appropriate place. e.g. "title" only in the "dmg", not in the root.
+
+ - configuration.mac has an unknown property 'foo'. These properties are valid:
+   object { category?, target?, identity?, icon?, entitlements?, entitlementsInherit?, entitlementsLoginHelper?, provisioningProfile?, bundleVersion?, bundleShortVersion?, darkModeSupport?, helperBundleId?, helperRendererBundleId?, helperPluginBundleId?, helperGPUBundleId?, helperEHBundleId?, helperNPBundleId?, type?, extendInfo?, binaries?, minimumSystemVersion?, requirements?, cscInstallerLink?, cscInstallerKeyPassword?, extraDistFiles?, hardenedRuntime?, gatekeeperAssess?, strictVerify?, preAutoEntitlements?, signIgnore?, sign?, timestamp?, mergeASARs?, singleArchFiles?, x64ArchFiles?, additionalArguments?, notarize?, appId?, artifactName?, executableName?, compression?, disableDefaultIgnoredFiles?, asar?, asarUnpack?, fileAssociations?, protocols?, electronLanguages?, forceCodeSigning?, electronUpdaterCompatibility?, publish?, detectUpdateChannel?, generateUpdatesFilesForAllChannels?, releaseInfo?, cscLink?, cscKeyPassword?, defaultArch?, files?, extraResources?, extraFiles? }
+     How to fix:
+     1. Open https://www.electron.build/mac
+     2. Search the option name on the page (or type in into Search to find across the docs).
+       * Not found? The option may have been deprecated or no longer exists (check spelling).
+       * Found? Check that the option in the appropriate place. e.g. "title" only in the "dmg", not in the root.
+"
 `;
