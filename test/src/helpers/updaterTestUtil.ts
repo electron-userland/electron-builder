@@ -1,7 +1,6 @@
 import { NodeHttpExecutor, serializeToYaml, TmpDir } from "builder-util"
 import { AllPublishOptions, DownloadOptions } from "builder-util-runtime"
-import { AppUpdater, MacUpdater, NoOpLogger, NsisUpdater } from "electron-updater"
-import { TestOnlyUpdaterOptions } from "electron-updater"
+import { AppUpdater, MacUpdater, NoOpLogger, NsisUpdater, TestOnlyUpdaterOptions } from "electron-updater"
 import { outputFile, writeFile } from "fs-extra"
 import * as path from "path"
 import { assertThat } from "./fileAssert.js"

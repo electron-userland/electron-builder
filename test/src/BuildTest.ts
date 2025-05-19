@@ -1,7 +1,5 @@
-import { checkBuildRequestOptions } from "app-builder-lib"
-import { doMergeConfigs } from "app-builder-lib"
-import { Arch, createTargets, DIR_TARGET, Platform } from "electron-builder"
-import { createYargs } from "electron-builder"
+import { checkBuildRequestOptions, doMergeConfigs } from "app-builder-lib"
+import { Arch, createTargets, DIR_TARGET, Platform, createYargs } from "electron-builder"
 import { promises as fs } from "fs"
 import { outputFile, outputJson } from "fs-extra"
 import * as path from "path"
@@ -9,10 +7,10 @@ import { app, appTwo, appTwoThrows, assertPack, getFixtureDir, linuxDirTarget, m
 import { ELECTRON_VERSION } from "./helpers/testConfig.js"
 import { verifySmartUnpack } from "./helpers/verifySmartUnpack.js"
 import { spawn } from "builder-util"
+import { configureBuildCommand, normalizeOptions } from "electron-builder/out/builder.js"
 
-test.ifLinux("cli", async ({ expect }) => {
+test.ifLinux("cli", ({ expect }) => {
   // because these methods are internal
-  const { configureBuildCommand, normalizeOptions } = await import("electron-builder/out/builder.js")
   const yargs = createYargs()
   configureBuildCommand(yargs)
 
