@@ -72,6 +72,8 @@ export interface CustomPublishOptions extends CustomPublishOptionsBase {
    * to use custom providers with electron-updater.
    */
   updateProvider?: new (options: CustomPublishOptionsBase, updater: any, runtimeOptions: any) => any
+
+  [index: string]: any
 }
 
 /**

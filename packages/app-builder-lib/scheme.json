@@ -2671,6 +2671,7 @@
     },
     "CustomPublishOptions": {
       "type": "object",
+      "additionalProperties": {},
       "properties": {
         "provider": {
           "description": "The provider. Must be `custom`.",
@@ -2682,7 +2683,6 @@
           "typeof": "function"
         }
       },
-      "additionalProperties": false,
       "required": [
         "provider"
       ]
