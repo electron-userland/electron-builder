@@ -1,24 +1,16 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
 exports[`appId as object 1`] = `
-"
-Invalid Configuration.
-electron-builder v<appVersion> has been initialized using a configuration that does not match the API schema:
- • configuration.appId should be of type: string,null
-   ↳ Description: The application id. Used as [CFBundleIdentifier](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070) for MacOS and as [Application User Model ID](https://msdn.microsoft.com/en-us/library/windows/desktop/dd378459(v=vs.85).aspx) for Windows (NSIS target only, Squirrel.Windows not supported). It is strongly recommended that an explicit ID is set.
-   ↳ Type: string,null
-   ↳ Default: com.electron.\${name}
-
-    How to fix:
-    1. Open https://www.electron.build
-    2. Search the option name on the page (or type it into Search to find across the docs).
-      * Not found? The option might be deprecated or no longer exists (check spelling).
-      * Found? Check that the option is in the appropriate place. e.g. "title" only in the "dmg", not in the root
-    
-
-    Please ensure that you are using the latest tag of electron-builder and refer to the documentation for the correct configuration options.
-    If continuing to experience issues, consider trying next tag of electron-builder
-    
+"Invalid configuration object. electron-builder <appVersion> has been initialized using a configuration object that does not match the API schema.
+ - configuration.appId should be:
+   null | string
+   -> The application id. Used as [CFBundleIdentifier](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070) for MacOS and as
+   [Application User Model ID](https://msdn.microsoft.com/en-us/library/windows/desktop/dd378459(v=vs.85).aspx) for Windows (NSIS target only, Squirrel.Windows not supported). It is strongly recommended that an explicit ID is set.
+     How to fix:
+     1. Open https://www.electron.build/configuration
+     2. Search the option name on the page (or type in into Search to find across the docs).
+       * Not found? The option may have been deprecated or no longer exists (check spelling).
+       * Found? Check that the option in the appropriate place. e.g. "title" only in the "dmg", not in the root.
 "
 `;
 
@@ -40,30 +32,21 @@ exports[`extraFiles 1`] = `
 `;
 
 exports[`validation 1`] = `
-"
-Invalid Configuration.
-electron-builder v<appVersion> has been initialized using a configuration that does not match the API schema:
- • configuration has unknown property 'foo'
-   ↳ Type: object
- • configuration.mac has unknown property 'foo'
-   ↳ Description: Options related to how build macOS targets.
- • configuration.mac should be of type: null
-   ↳ Description: Options related to how build macOS targets.
- • configuration.mac 
-   ↳  Property follows type "anyOf":
-    - 0: reference to #/definitions/MacConfiguration
-    - 1: type: null
-   ↳ Description: Options related to how build macOS targets.
+"Invalid configuration object. electron-builder <appVersion> has been initialized using a configuration object that does not match the API schema.
+ - configuration has an unknown property 'foo'. These properties are valid:
+   object { electronCompile?, electronDownload?, electronBranding?, electronVersion?, extends?, nodeVersion?, launchUiVersion?, framework?, disableSanityCheckAsar?, appId?, productName?, copyright?, directories?, mac?, mas?, masDev?, dmg?, pkg?, win?, nsis?, nsisWeb?, portable?, appx?, msi?, msiWrapped?, squirrelWindows?, linux?, deb?, snap?, appImage?, flatpak?, pacman?, rpm?, freebsd?, p5p?, apk?, buildDependenciesFromSource?, nodeGypRebuild?, npmArgs?, npmRebuild?, nativeRebuilder?, buildNumber?, buildVersion?, downloadAlternateFFmpeg?, extraMetadata?, forceCodeSigning?, includePdb?, removePackageScripts?, removePackageKeywords?, electronFuses?, concurrency?, artifactName?, executableName?, compression?, disableDefaultIgnoredFiles?, asar?, asarUnpack?, icon?, fileAssociations?, protocols?, electronLanguages?, electronUpdaterCompatibility?, publish?, detectUpdateChannel?, generateUpdatesFilesForAllChannels?, releaseInfo?, target?, cscLink?, cscKeyPassword?, defaultArch?, files?, extraResources?, extraFiles?, beforePack?, afterExtract?, afterPack?, afterSign?, artifactBuildStarted?, artifactBuildCompleted?, afterAllArtifactBuild?, msiProjectCreated?, appxManifestCreated?, onNodeModuleFile?, beforeBuild?, electronDist?, $schema? }
+     How to fix:
+     1. Open https://www.electron.build/configuration
+     2. Search the option name on the page (or type in into Search to find across the docs).
+       * Not found? The option may have been deprecated or no longer exists (check spelling).
+       * Found? Check that the option in the appropriate place. e.g. "title" only in the "dmg", not in the root.
 
-    How to fix:
-    1. Open https://www.electron.build
-    2. Search the option name on the page (or type it into Search to find across the docs).
-      * Not found? The option might be deprecated or no longer exists (check spelling).
-      * Found? Check that the option is in the appropriate place. e.g. "title" only in the "dmg", not in the root
-    
-
-    Please ensure that you are using the latest tag of electron-builder and refer to the documentation for the correct configuration options.
-    If continuing to experience issues, consider trying next tag of electron-builder
-    
+ - configuration.mac has an unknown property 'foo'. These properties are valid:
+   object { category?, target?, identity?, icon?, entitlements?, entitlementsInherit?, entitlementsLoginHelper?, provisioningProfile?, bundleVersion?, bundleShortVersion?, darkModeSupport?, helperBundleId?, helperRendererBundleId?, helperPluginBundleId?, helperGPUBundleId?, helperEHBundleId?, helperNPBundleId?, type?, extendInfo?, binaries?, minimumSystemVersion?, requirements?, cscInstallerLink?, cscInstallerKeyPassword?, extraDistFiles?, hardenedRuntime?, gatekeeperAssess?, strictVerify?, preAutoEntitlements?, signIgnore?, sign?, timestamp?, mergeASARs?, singleArchFiles?, x64ArchFiles?, additionalArguments?, notarize?, appId?, artifactName?, executableName?, compression?, disableDefaultIgnoredFiles?, asar?, asarUnpack?, fileAssociations?, protocols?, electronLanguages?, forceCodeSigning?, electronUpdaterCompatibility?, publish?, detectUpdateChannel?, generateUpdatesFilesForAllChannels?, releaseInfo?, cscLink?, cscKeyPassword?, defaultArch?, files?, extraResources?, extraFiles? }
+     How to fix:
+     1. Open https://www.electron.build/mac
+     2. Search the option name on the page (or type in into Search to find across the docs).
+       * Not found? The option may have been deprecated or no longer exists (check spelling).
+       * Found? Check that the option in the appropriate place. e.g. "title" only in the "dmg", not in the root.
 "
 `;
