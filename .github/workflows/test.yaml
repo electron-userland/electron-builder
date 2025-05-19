@@ -158,7 +158,7 @@ jobs:
           TEST_RUNNER_IMAGE_TAG: electronuserland/builder:${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}-wine-mono
 
   test-windows:
-    runs-on: windows-latest
+    runs-on: windows-2022
     timeout-minutes: 20
     strategy:
       fail-fast: false
