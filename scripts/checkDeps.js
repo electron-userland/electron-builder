@@ -1,7 +1,7 @@
-const chalk = require("chalk")
-const depCheck = require("depcheck")
-const fs = require("fs-extra")
-const path = require("path")
+import { bold, red } from "chalk"
+import depCheck from "depcheck"
+import { readJson, readdir } from "fs-extra"
+import { join, basename, sep } from "path"
 const knownUnusedDevDependencies = new Set([
   "@babel/plugin-transform-modules-commonjs", // Not sure what this is used for, but keeping just in case (for now)
   "@changesets/changelog-github", // Used in package.json CI/CD logic
@@ -20,11 +20,11 @@ const knownUnusedDevDependencies = new Set([
 ])
 const knownMissedDependencies = new Set(["babel-core", "babel-preset-env", "babel-preset-stage-0", "babel-preset-react"])
 
-const rootDir = path.join(__dirname, "..")
-const packageDir = path.join(rootDir, "packages")
+const rootDir = join(__dirname, "..")
+const packageDir = join(rootDir, "packages")
 
 async function check(projectDir, devPackageData) {
-  const packageName = path.basename(projectDir)
+  const packageName = basename(projectDir)
   // console.log(`Checking ${projectDir}`)
 
   const result = await new Promise(resolve => {
@@ -34,14 +34,14 @@ async function check(projectDir, devPackageData) {
   let unusedDependencies = result.dependencies
   if (unusedDependencies.length > 0) {
     // Check root for unused deps (which could be cloned to any folder name, so we check basename of cwd)
-    if (packageName === path.basename(process.cwd())) {
+    if (packageName === basename(process.cwd())) {
       unusedDependencies = unusedDependencies.filter(it => it !== "dmg-license")
     }
     if (packageName === "electron-builder") {
       unusedDependencies = unusedDependencies.filter(it => it !== "dmg-builder" && it !== "update-notifier")
     }
     if (unusedDependencies.length > 0) {
-      console.error(`${chalk.bold(packageName)} Unused dependencies: ${JSON.stringify(unusedDependencies, null, 2)}`)
+      console.error(`${bold(packageName)} Unused dependencies: ${JSON.stringify(unusedDependencies, null, 2)}`)
       return false
     }
   }
@@ -51,7 +51,7 @@ async function check(projectDir, devPackageData) {
     unusedDevDependencies = unusedDevDependencies.filter(it => it !== "temp-file")
   }
   if (unusedDevDependencies.length > 0) {
-    console.error(`${chalk.bold(packageName)} Unused devDependencies: ${JSON.stringify(unusedDevDependencies, null, 2)}`)
+    console.error(`${bold(packageName)} Unused devDependencies: ${JSON.stringify(unusedDevDependencies, null, 2)}`)
     return false
   }
 
@@ -76,11 +76,11 @@ async function check(projectDir, devPackageData) {
   }
 
   if (Object.keys(result.missing).length > 0) {
-    console.error(`${chalk.bold(packageName)} Missing dependencies: ${JSON.stringify(result.missing, null, 2)}`)
+    console.error(`${bold(packageName)} Missing dependencies: ${JSON.stringify(result.missing, null, 2)}`)
     return false
   }
 
-  const packageData = await fs.readJson(path.join(projectDir, "package.json"))
+  const packageData = await readJson(join(projectDir, "package.json"))
   for (const name of devPackageData.devDependencies == null ? [] : Object.keys(devPackageData.devDependencies)) {
     if (packageData.dependencies != null && packageData.dependencies[name] != null) {
       continue
@@ -92,8 +92,8 @@ async function check(projectDir, devPackageData) {
     }
 
     for (const file of usages) {
-      if (file.startsWith(path.join(projectDir, "src") + path.sep)) {
-        console.error(`${chalk.bold(packageName)} Dev dependency ${name} is used in the sources`)
+      if (file.startsWith(join(projectDir, "src") + sep)) {
+        console.error(`${bold(packageName)} Dev dependency ${name} is used in the sources`)
         return false
       }
     }
@@ -103,16 +103,16 @@ async function check(projectDir, devPackageData) {
 }
 
 async function main() {
-  const packages = (await fs.readdir(packageDir)).filter(it => !it.includes(".")).sort()
-  const devPackageData = await fs.readJson(path.join(rootDir, "package.json"))
+  const packages = (await readdir(packageDir)).filter(it => !it.includes(".")).sort()
+  const devPackageData = await readJson(join(rootDir, "package.json"))
   const checkRoot = await check(process.cwd(), devPackageData)
-  const checkPackages = await Promise.all(packages.map(it => check(path.join(packageDir, it), devPackageData)))
+  const checkPackages = await Promise.all(packages.map(it => check(join(packageDir, it), devPackageData)))
   if (checkRoot === false || checkPackages.includes(false)) {
     process.exitCode = 1
   }
 }
 
 main().catch(error => {
-  console.error(chalk.red((error.stack || error).toString()))
+  console.error(red((error.stack || error).toString()))
   process.exit(1)
 })
