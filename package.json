@@ -2,6 +2,7 @@
   "name": "@electron-builder/monorepo",
   "private": true,
   "license": "MIT",
+  "type": "module",
   "lint-staged": {
     "packages/**/*.ts": "pnpm pretest",
     "**/package.json": "pnpm lint-deps",
@@ -74,6 +75,7 @@
     "typedoc": "^0.26.7",
     "typedoc-plugin-markdown": "4.2.8",
     "typescript": "^5.6.2",
+    "typescript-json-schema": "0.64.0",
     "vitest": "^3.0.4"
   },
   "engines": {

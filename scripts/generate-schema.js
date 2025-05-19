@@ -1,21 +1,57 @@
-const fs = require("fs")
-const path = require("path")
+import * as fs from "fs"
+import * as path from "path"
+import { TypeScript } from "typedoc"
+import * as TJS from "typescript-json-schema"
+import { fileURLToPath } from "url"
 
-const basePath = path.join(__dirname, "../packages/app-builder-lib")
-const schemaFile = path.join(basePath, "scheme.json")
-const configPath = path.join(basePath, "tsconfig-scheme.json")
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+const rootDir = path.resolve(__dirname, "../packages")
 
-const tsj = require("ts-json-schema-generator")
-
-/** @type {import('ts-json-schema-generator/dist/src/Config').Config} */
-const config = {
-  tsconfig: configPath,
-  type: "Configuration",
+const settings = {
+  required: true,
+  noExtraProps: true,
+  typeOfKeyword: true,
+  strictNullChecks: true,
+  skipLibCheck: true,
 }
 
-const schema = tsj.createGenerator(config).createSchema(config.type)
+const definitionFile = path.resolve(rootDir, "app-builder-lib/src/configuration.ts")
+const tsconfig = path.resolve(rootDir, "app-builder-lib/tsconfig.json")
+const program = TJS.programFromConfig(tsconfig)
+const generator = TJS.buildGenerator(program, settings)
+const schema = TJS.generateSchema(program, "Configuration", settings, [], generator)
 
-const schemaString = JSON.stringify(schema, null, 2)
-fs.writeFile(schemaFile, schemaString, err => {
-  if (err) throw err
-})
+const PlugDescriptor = schema.definitions.PlugDescriptor
+PlugDescriptor.additionalProperties.anyOf[0] = {
+  type: "object",
+}
+
+const OutgoingHttpHeaders = schema.definitions.OutgoingHttpHeaders
+OutgoingHttpHeaders.additionalProperties = {
+  anyOf: [
+    {
+      items: {
+        type: "string",
+      },
+      type: "array",
+    },
+    {
+      type: ["string", "number"],
+    },
+  ],
+}
+
+const SnapOptions = schema.definitions.SnapOptions
+SnapOptions.properties.environment.anyOf[0] = {
+  additionalProperties: { type: "string" },
+  type: "object",
+}
+
+schema.properties["$schema"] = {
+  description: "JSON Schema for this document.",
+  type: ["null", "string"],
+}
+
+const schemaFile = path.join(__dirname, "../packages/app-builder-lib/scheme.json")
+fs.writeFileSync(schemaFile, JSON.stringify(schema, null, 2))
