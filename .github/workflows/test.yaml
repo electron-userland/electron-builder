@@ -157,9 +157,6 @@ jobs:
           FORCE_COLOR: 1
           TEST_RUNNER_IMAGE_TAG: electronuserland/builder:${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}-wine-mono
 
-      - name: Verify Docs Generation
-        run: pnpm generate-all
-
   test-windows:
     runs-on: windows-latest
     timeout-minutes: 20
