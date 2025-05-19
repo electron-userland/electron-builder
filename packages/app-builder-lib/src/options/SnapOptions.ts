@@ -143,6 +143,7 @@ export interface SnapOptions extends CommonLinuxOptions, TargetSpecificOptions {
   readonly allowNativeWayland?: boolean | null
 }
 
+
 /**
  * The plug descriptor is a map of attributes to be used in the snapcraft.yaml file.
  * The key is the name of the plug, and the value is an object with the attributes.
@@ -150,7 +151,7 @@ export interface SnapOptions extends CommonLinuxOptions, TargetSpecificOptions {
  * If the value is a string, it means that the plug has only one attribute with that name.
  */
 export interface PlugDescriptor {
-  [key: string]: Record<string, string[] | string | number> | null
+  [key: string]: { [key: string]: any } | null
 }
 
 /**
@@ -160,5 +161,5 @@ export interface PlugDescriptor {
  * If the value is a string, it means that the slot has only one attribute with that name.
  */
 export interface SlotDescriptor {
-  [key: string]: Record<string, string[] | string | number> | null
+  [key: string]: { [key: string]: any } | null
 }

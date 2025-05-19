@@ -6724,7 +6724,10 @@
           "description": "The custom environment. Defaults to `{\"TMPDIR: \"$XDG_RUNTIME_DIR\"}`. If you set custom, it will be merged with default.",
           "anyOf": [
             {
-              "typeof": "function"
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
             },
             {
               "type": "null"
@@ -7048,7 +7051,7 @@
       "additionalProperties": {
         "anyOf": [
           {
-            "typeof": "function"
+            "type": "object"
           },
           {
             "type": "null"
