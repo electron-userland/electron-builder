@@ -7,8 +7,7 @@
     ".": {
       "import": "./out/index.js",
       "types": "./out/index.d.ts"
-    },
-    "./out/builder.js": "./out/builder.js"
+    }
   },
   "files": [
     "out"

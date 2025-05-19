@@ -7,7 +7,7 @@ import { app, appTwo, appTwoThrows, assertPack, getFixtureDir, linuxDirTarget, m
 import { ELECTRON_VERSION } from "./helpers/testConfig.js"
 import { verifySmartUnpack } from "./helpers/verifySmartUnpack.js"
 import { spawn } from "builder-util"
-import { configureBuildCommand, normalizeOptions } from "electron-builder/out/builder.js"
+import { configureBuildCommand, normalizeOptions } from "electron-builder"
 
 test.ifLinux("cli", ({ expect }) => {
   // because these methods are internal
