@@ -344,15 +344,23 @@ export class Packager {
   }
 
   async validateConfig(): Promise<void> {
+    const config = this.options.config
     let configPath: string | null = null
-    let configFromOptions = this.options.config
-    if (typeof configFromOptions === "string") {
+    if (config == null) {
+      return
+    }
+    let configFromOptions: Configuration | null
+    if (typeof config === "string") {
       // it is a path to config file
-      configPath = configFromOptions
+      configPath = config
       configFromOptions = null
-    } else if (configFromOptions != null && typeof configFromOptions.extends === "string" && configFromOptions.extends.includes(".")) {
-      configPath = configFromOptions.extends
-      delete configFromOptions.extends
+    } else if (typeof config?.extends === "string" && config.extends.includes(".")) {
+      configPath = config.extends
+      delete config.extends
+      configFromOptions = config
+    } else {
+      configPath = null
+      configFromOptions = config
     }
 
     const projectDir = this.projectDir

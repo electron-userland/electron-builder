@@ -299,8 +299,10 @@ export class NsisTarget extends Target {
       defines.REQUEST_EXECUTION_LEVEL = requestExecutionLevel || "user"
 
       // https://github.com/electron-userland/electron-builder/issues/5764
-      if (typeof unpackDirName === "string" || !unpackDirName) {
-        defines.UNPACK_DIR_NAME = unpackDirName || (await executeAppBuilder(["ksuid"]))
+      if (typeof unpackDirName === "string") {
+        defines.UNPACK_DIR_NAME = unpackDirName
+      } else if (unpackDirName !== false) {
+        defines.UNPACK_DIR_NAME = (await executeAppBuilder(["ksuid"]))
       }
 
       if (splashImage != null) {

@@ -3,7 +3,7 @@ import { NotarizeOptionsNotaryTool, NotaryToolKeychainCredentials } from "@elect
 import { PerFileSignOptions, SignOptions } from "@electron/osx-sign/dist/cjs/types.js"
 import { Identity } from "@electron/osx-sign/dist/cjs/util-identities.js"
 import { Arch, AsyncTaskManager, copyFile, deepAssign, exec, getArchSuffix, InvalidConfigurationError, log, orIfFileNotExist, statOrNull, unlinkIfExists, use } from "builder-util"
-import { MemoLazy, Nullish } from "builder-util-runtime"
+import { asArray, MemoLazy, Nullish } from "builder-util-runtime"
 import * as fs from "fs/promises"
 import { mkdir, readdir } from "fs/promises"
 import { Lazy } from "lazy-val"
@@ -290,16 +290,8 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
       throw new InvalidConfigurationError("macOS High Sierra 10.13.6 is required to sign")
     }
 
-    let filter = options.signIgnore
-    if (Array.isArray(filter)) {
-      if (filter.length == 0) {
-        filter = null
-      }
-    } else if (filter != null) {
-      filter = filter.length === 0 ? null : [filter]
-    }
-
-    const filterRe = filter == null ? null : filter.map(it => new RegExp(it))
+    const filter = asArray(options.signIgnore)
+    const filterRe = filter.length === 0 ? null : filter.map(it => new RegExp(it))
 
     let binaries = options.binaries || undefined
     if (binaries) {

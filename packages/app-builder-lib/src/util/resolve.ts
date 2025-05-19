@@ -1,4 +1,5 @@
 import { log } from "builder-util"
+import { Nullish } from "builder-util-runtime"
 import debug from "debug"
 import * as path from "path"
 import { pathToFileURL } from "url"
@@ -22,9 +23,13 @@ export async function resolveModule<T>(type: string | undefined, name: string): 
   }
 }
 
-export async function resolveFunction<T>(type: string | undefined, executor: T | string, name: string): Promise<T> {
-  if (executor == null || typeof executor !== "string") {
-    // is already function or explicitly ignored by user
+export async function resolveFunction<T>(type: string | undefined, executor: T | string | Nullish, name: string): Promise<T | Nullish> {
+  if (executor == null) {
+    // explicitly ignored by user
+    return null
+  }
+  if (typeof executor !== "string") {
+    // already a function
     return executor
   }
 
