@@ -18,10 +18,10 @@ const schema = TJS.generateSchema(program, "Configuration", {
   })
 
 
-const PlugDescriptor = schema.definitions.PlugDescriptor
-PlugDescriptor.additionalProperties.anyOf[0] = {
-  type: "object",
-}
+// const PlugDescriptor = schema.definitions.PlugDescriptor
+// PlugDescriptor.additionalProperties.anyOf[0] = {
+//   type: "object",
+// }
 
 const OutgoingHttpHeaders = schema.definitions.OutgoingHttpHeaders
 OutgoingHttpHeaders.additionalProperties = {
@@ -38,11 +38,11 @@ OutgoingHttpHeaders.additionalProperties = {
   ],
 }
 
-const SnapOptions = schema.definitions.SnapOptions
-SnapOptions.properties.environment.anyOf[0] = {
-  additionalProperties: { type: "string" },
-  type: "object",
-}
+// const SnapOptions = schema.definitions.SnapOptions
+// SnapOptions.properties.environment.anyOf[0] = {
+//   additionalProperties: { type: "string" },
+//   type: "object",
+// }
 
 schema.properties["$schema"] = {
   description: "JSON Schema for this document.",

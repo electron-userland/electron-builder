@@ -6724,10 +6724,7 @@
           "description": "The custom environment. Defaults to `{\"TMPDIR: \"$XDG_RUNTIME_DIR\"}`. If you set custom, it will be merged with default.",
           "anyOf": [
             {
-              "additionalProperties": {
-                "type": "string"
-              },
-              "type": "object"
+              "$ref": "#/definitions/Record<string,string>"
             },
             {
               "type": "null"
@@ -7045,12 +7042,17 @@
       },
       "additionalProperties": false
     },
+    "Record<string,string>": {
+      "type": "object",
+      "additionalProperties": false
+    },
     "PlugDescriptor": {
+      "description": "The plug descriptor is a map of attributes to be used in the snapcraft.yaml file.\nThe key is the name of the plug, and the value is an object with the attributes.\nIf the value is null, it means that the plug has no attributes.\nIf the value is a string, it means that the plug has only one attribute with that name.",
       "type": "object",
       "additionalProperties": {
         "anyOf": [
           {
-            "type": "object"
+            "$ref": "#/definitions/Record<string,string|number|string[]>"
           },
           {
             "type": "null"
@@ -7058,12 +7060,17 @@
         ]
       }
     },
+    "Record<string,string|number|string[]>": {
+      "type": "object",
+      "additionalProperties": false
+    },
     "SlotDescriptor": {
+      "description": "The slot descriptor is a map of attributes to be used in the snapcraft.yaml file.\nThe key is the name of the slot, and the value is an object with the attributes.\nIf the value is null, it means that the slot has no attributes.\nIf the value is a string, it means that the slot has only one attribute with that name.",
       "type": "object",
       "additionalProperties": {
         "anyOf": [
           {
-            "typeof": "function"
+            "$ref": "#/definitions/Record<string,string|number|string[]>"
           },
           {
             "type": "null"
