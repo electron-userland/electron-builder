@@ -15,7 +15,7 @@ describe("dmg", { sequential: true }, () => {
     app(expect, {
       targets: dmgTarget,
       config: {
-        productName: "DefaultDmg",
+        productName: "Default Dmg",
         publish: null,
       },
     })
@@ -163,9 +163,9 @@ describe("dmg", { sequential: true }, () => {
       targets: defaultTarget,
       config: {
         publish: null,
-        productName: "NoApplicationsLink",
+        productName: "No ApplicationsLink",
         dmg: {
-          title: "No Applications",
+          title: "No Applications Link",
           contents: [
             {
               x: 110,
@@ -234,7 +234,7 @@ describe("dmg", { sequential: true }, () => {
         config: {
           publish: null,
           // dmg can mount only one volume name, so, to test in parallel, we set different product name
-          productName: "NoBackground",
+          productName: "No Background",
           dmg: {
             background: null,
             title: "Foo",
@@ -243,8 +243,8 @@ describe("dmg", { sequential: true }, () => {
       },
       {
         packed: context => {
-          return attachAndExecute(path.join(context.outDir, "NoBackground-1.1.0.dmg"), false, () => {
-            return assertThat(expect, path.join("/Volumes/NoBackground 1.1.0/.background")).doesNotExist()
+          return attachAndExecute(path.join(context.outDir, "No Background-1.1.0.dmg"), false, () => {
+            return assertThat(expect, path.join("/Volumes/No Background 1.1.0/.background")).doesNotExist()
           })
         },
       }
@@ -258,7 +258,7 @@ describe("dmg", { sequential: true }, () => {
       config: {
         publish: null,
         // dmg can mount only one volume name, so, to test in parallel, we set different product name
-        productName: "BundleShortVersion",
+        productName: "Bundle ShortVersion",
         mac: {
           bundleShortVersion: "2017.1-alpha5",
           darkModeSupport: true,
@@ -275,7 +275,7 @@ describe("dmg", { sequential: true }, () => {
       targets: defaultTarget,
       config: {
         publish: null,
-        productName: "DisableIcon",
+        productName: "Disable Icon",
         dmg: {
           icon: null,
           title: "Disable Icon",
@@ -297,9 +297,9 @@ describe("dmg", { sequential: true }, () => {
     targets: dmgTarget,
     config: {
       publish: null,
-      productName: "Foo" + uniqueKey,
+      productName: "Foo " + uniqueKey,
       dmg: {
-        title: "Foo" + uniqueKey,
+        title: "Foo " + uniqueKey,
       },
     },
   })
