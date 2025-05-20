@@ -1,11 +1,11 @@
 import { PlatformPackager } from "app-builder-lib"
 import { Arch, copyFile, exec } from "builder-util"
-import { attachAndExecute, getDmgTemplatePath } from "dmg-builder/out/dmgUtil"
 import { Platform } from "electron-builder"
 import * as fs from "fs/promises"
 import * as path from "path"
 import { assertThat } from "../helpers/fileAssert"
 import { app, assertPack, copyTestAsset } from "../helpers/packTester"
+import { attachAndExecute, getDmgTemplatePath } from "dmg-builder/out/dmgUtil"
 
 const dmgTarget = Platform.MAC.createTarget("dmg", Arch.x64)
 const defaultTarget = Platform.MAC.createTarget(undefined, Arch.x64)
@@ -72,7 +72,7 @@ describe("dmg", { sequential: true }, () => {
         }
         delete it.specification.icon
         expect(it.specification).toMatchSnapshot()
-        return false
+        return Promise.resolve(false)
       },
     })
   )
@@ -85,6 +85,7 @@ describe("dmg", { sequential: true }, () => {
       {
         targets: defaultTarget,
         config: {
+          productName: "CustomBackground",
           publish: null,
           mac: {
             icon: "customIcon",
@@ -102,7 +103,7 @@ describe("dmg", { sequential: true }, () => {
           expect(it.specification.icon).toEqual("foo.icns")
           const packager: PlatformPackager<any> = it.packager
           expect(await packager.getIconPath()).toEqual(path.join(packager.projectDir, "build", "customIcon.icns"))
-          return true
+          return Promise.resolve(true)
         },
       },
       {
@@ -124,6 +125,7 @@ describe("dmg", { sequential: true }, () => {
       {
         targets: defaultTarget,
         config: {
+          productName: "RetinaBackground",
           publish: null,
           dmg: {
             title: "Retina Background",
@@ -131,7 +133,7 @@ describe("dmg", { sequential: true }, () => {
         },
         effectiveOptionComputed: async it => {
           expect(it.specification.background).toMatch(/\.tiff$/)
-          return true
+          return Promise.resolve(true)
         },
       },
       {
@@ -273,6 +275,7 @@ describe("dmg", { sequential: true }, () => {
       targets: defaultTarget,
       config: {
         publish: null,
+        productName: "DisableIcon",
         dmg: {
           icon: null,
           title: "Disable Icon",
@@ -285,23 +288,24 @@ describe("dmg", { sequential: true }, () => {
         expect(it.specification.icon).toBeNull()
         expect(it.packager.appInfo.buildVersion).toEqual("50")
         expect(await it.packager.getIconPath()).not.toBeNull()
-        return true
+        return Promise.resolve(true)
       },
     })
   })
 
-  const packagerOptions = {
+  const packagerOptions = (uniqueKey: number) => ({
     targets: dmgTarget,
     config: {
       publish: null,
+      productName: "Foo" + uniqueKey,
       dmg: {
-        title: "Foo" + Math.floor(Math.random() * 1000),
+        title: "Foo" + uniqueKey,
       },
     },
-  }
+  })
 
   test.ifMac("multi language license", ({ expect }) =>
-    app(expect, packagerOptions, {
+    app(expect, packagerOptions(1), {
       projectDirCreated: projectDir => {
         return Promise.all([
           // writeFile(path.join(projectDir, "build", "license_en.txt"), "Hi"),
@@ -313,7 +317,7 @@ describe("dmg", { sequential: true }, () => {
   )
 
   test.ifMac("license ja", ({ expect }) =>
-    app(expect, packagerOptions, {
+    app(expect, packagerOptions(2), {
       projectDirCreated: projectDir => {
         return fs.writeFile(path.join(projectDir, "build", "license_ja.txt"), "こんにちは".repeat(12))
       },
@@ -321,7 +325,7 @@ describe("dmg", { sequential: true }, () => {
   )
 
   test.ifMac("license en", ({ expect }) =>
-    app(expect, packagerOptions, {
+    app(expect, packagerOptions(3), {
       projectDirCreated: projectDir => {
         return copyTestAsset("license_en.txt", path.join(projectDir, "build", "license_en.txt"))
       },
@@ -329,7 +333,7 @@ describe("dmg", { sequential: true }, () => {
   )
 
   test.ifMac("license rtf", ({ expect }) =>
-    app(expect, packagerOptions, {
+    app(expect, packagerOptions(4), {
       projectDirCreated: projectDir => {
         return copyTestAsset("license_de.rtf", path.join(projectDir, "build", "license_de.rtf"))
       },
@@ -340,7 +344,7 @@ describe("dmg", { sequential: true }, () => {
     app(
       expect,
       {
-        ...packagerOptions,
+        ...packagerOptions(5),
         effectiveOptionComputed: async it => {
           if ("licenseData" in it) {
             // Clean `file` path from the data because the path is dynamic at runtime
@@ -349,7 +353,7 @@ describe("dmg", { sequential: true }, () => {
             })
             expect(it.licenseData).toMatchSnapshot()
           }
-          return false
+          return Promise.resolve(false)
         },
       },
       {
