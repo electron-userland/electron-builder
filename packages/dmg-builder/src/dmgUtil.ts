@@ -36,7 +36,6 @@ export async function attachAndExecute(dmgPath: string, readWrite: boolean, task
 export async function detach(name: string) {
   return hdiUtil(["detach", "-quiet", name]).catch(async e => {
     if (e.code === 16) {
-      // Resource busy — the volume is currently in use and cannot be unmounted.
       // Delay then force unmount with verbose output
       await new Promise(resolve => setTimeout(resolve, 3000))
       return hdiUtil(["detach", "--force", name])
