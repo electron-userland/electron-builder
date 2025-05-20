@@ -11,6 +11,26 @@ import { ExpectStatic } from "vitest"
 
 const config = { retry: 3 }
 
+test.ifWindows("test nsis updater: full install", config, async ({ expect }) => {
+  const updater = await createNsisUpdater("1.0.1")
+  updater.updateConfigPath = await writeUpdateConfig<GithubOptions>({
+    provider: "github",
+    owner: "mmaietta",
+    repo: "electron-builder-test",
+  })
+  const updateCheckResult = await validateDownload(expect, updater)
+  expect(removeUnstableProperties(updateCheckResult?.updateInfo)).toMatchSnapshot()
+  expect(updateCheckResult?.downloadPromise).toBeDefined()
+  const files = await updateCheckResult?.downloadPromise
+  expect(files!.length).toEqual(1)
+  const installer = files![0]
+  expect(installer.endsWith(".exe")).toBeTruthy()
+  await assertThat(expect, installer).isFile()
+
+  const didInstall = updater.quitAndInstall(true, false)
+  expect(didInstall).toBe(true)
+})
+
 test("downgrade (disallowed, beta)", config, async ({ expect }) => {
   const updater = await createNsisUpdater("1.5.2-beta.4")
   updater.updateConfigPath = await writeUpdateConfig<GithubOptions>({
