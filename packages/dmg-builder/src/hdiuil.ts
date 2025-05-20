@@ -15,7 +15,7 @@ import { exec, log, retry } from "builder-util"
 | `-5342` | Specified size too small         | Same as above — retry if size is corrected.          |
  *
  */
-const transientExitCodes = new Set([1, 16, 35, 256, 49153])
+export const hdiutilTransientExitCodes = new Set([1, 16, 35, 256, 49153])
 
 export function explainHdiutilError(errorCode: number): string {
   const code = errorCode.toString()
@@ -23,6 +23,7 @@ export function explainHdiutilError(errorCode: number): string {
     "0": "Success: The hdiutil command completed without error.",
     "1": "Generic error: The operation failed, but the reason is not specific. Check command syntax or permissions.",
     "2": "No such file or directory: Check if the specified path exists.",
+    "6": "Disk image to resize is not currently attached or not recognized as a valid block device by macOS.",
     "8": "Exec format error: The file might not be a valid disk image.",
     "16": "Resource busy: The volume is in use. Try closing files or processes and retry.",
     "22": "Invalid argument: One or more arguments passed to hdiutil are incorrect.",
@@ -44,7 +45,7 @@ const shouldRetry = (args: string[]) => (error: any) => {
   const stdout = error.stdout?.toString() || ""
   const output = `${stdout} ${stderr}`.trim()
 
-  const willRetry = transientExitCodes.has(code)
+  const willRetry = hdiutilTransientExitCodes.has(code)
   log.warn({ willRetry, args, code, output }, `hdiutil error: ${explainHdiutilError(code)}`)
 
   return willRetry
