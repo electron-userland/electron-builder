@@ -1,5 +1,5 @@
 import { Transform } from "stream"
-import { CancellationToken } from "./CancellationToken"
+import { CancellationToken } from "./CancellationToken.js"
 
 export interface ProgressInfo {
   total: number

@@ -1,10 +1,9 @@
-import { PlatformPackager } from "app-builder-lib"
-import { getLicenseFiles } from "app-builder-lib/out/util/license"
+import { PlatformPackager, getLicenseFiles } from "app-builder-lib"
 import { log } from "builder-util"
 import { dmgLicenseFromJSON } from "dmg-license"
 import { readFile, readJson } from "fs-extra"
 import { load } from "js-yaml"
-import { getLicenseButtonsFile } from "./licenseButtons"
+import { getLicenseButtonsFile } from "./licenseButtons.js"
 
 // License Specifications
 // https://github.com/argv-minus-one/dmg-license/blob/HEAD/docs/License%20Specifications.md

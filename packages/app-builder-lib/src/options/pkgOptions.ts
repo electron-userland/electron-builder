@@ -1,4 +1,4 @@
-import { TargetSpecificOptions } from "../core"
+import { TargetSpecificOptions } from "../core.js"
 
 // noinspection SpellCheckingInspection
 export type BackgroundAlignment = "center" | "left" | "right" | "top" | "bottom" | "topleft" | "topright" | "bottomleft" | "bottomright"

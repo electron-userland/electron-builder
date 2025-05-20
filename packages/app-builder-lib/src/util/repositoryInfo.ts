@@ -2,8 +2,8 @@ import { orNullIfFileNotExist } from "builder-util"
 import { readFile } from "fs-extra"
 import GitHost, { fromUrl } from "hosted-git-info"
 import * as path from "path"
-import { SourceRepositoryInfo } from "../core"
-import { Metadata, RepositoryInfo } from "../options/metadata"
+import { SourceRepositoryInfo } from "../core.js"
+import { Metadata, RepositoryInfo } from "../options/metadata.js"
 
 export function getRepositoryInfo(projectDir: string, metadata?: Metadata, devMetadata?: Metadata | null): Promise<SourceRepositoryInfo | null> {
   return _getInfo(projectDir, (devMetadata == null ? null : devMetadata.repository) || (metadata == null ? null : metadata.repository))

@@ -1,4 +1,4 @@
-import { getProjectRootPath } from "@electron/rebuild/lib/search-module"
+import { getProjectRootPath } from "@electron/rebuild/lib/search-module.js"
 
 import { httpExecutor, InvalidConfigurationError, log } from "builder-util"
 import { parseXml } from "builder-util-runtime"
@@ -6,9 +6,9 @@ import { readJson } from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import * as semver from "semver"
-import { Configuration } from "../configuration"
-import { getConfig } from "../util/config/config"
-import { orNullIfFileNotExist } from "../util/config/load"
+import { Configuration } from "../configuration.js"
+import { getConfig } from "../util/config/config.js"
+import { orNullIfFileNotExist } from "../util/config/load.js"
 
 export type MetadataValue = Lazy<Record<string, any> | null>
 

@@ -5,30 +5,30 @@ import { readdir } from "fs/promises"
 import * as isCI from "is-ci"
 import { Lazy } from "lazy-val"
 import * as path from "path"
-import { SignManager } from "./codeSign/signManager"
-import { signWindows, WindowsSignOptions } from "./codeSign/windowsCodeSign"
-import { WindowsSignAzureManager } from "./codeSign/windowsSignAzureManager"
-import { FileCodeSigningInfo, getSignVendorPath, WindowsSignToolManager } from "./codeSign/windowsSignToolManager"
-import { AfterPackContext } from "./configuration"
-import { DIR_TARGET, Platform, Target } from "./core"
-import { RequestedExecutionLevel, WindowsConfiguration } from "./options/winOptions"
-import { Packager } from "./packager"
-import { chooseNotNull, PlatformPackager } from "./platformPackager"
-import AppXTarget from "./targets/AppxTarget"
-import MsiTarget from "./targets/MsiTarget"
-import MsiWrappedTarget from "./targets/MsiWrappedTarget"
-import { NsisTarget } from "./targets/nsis/NsisTarget"
-import { AppPackageHelper, CopyElevateHelper } from "./targets/nsis/nsisUtil"
-import { WebInstallerTarget } from "./targets/nsis/WebInstallerTarget"
-import { createCommonTarget } from "./targets/targetFactory"
-import { BuildCacheManager, digest } from "./util/cacheManager"
-import { isBuildCacheEnabled } from "./util/flags"
-import { time } from "./util/timer"
-import { getWindowsVm, VmManager } from "./vm/vm"
-import { execWine } from "./wine"
+import { SignManager } from "./codeSign/signManager.js"
+import { signWindows, WindowsSignOptions } from "./codeSign/windowsCodeSign.js"
+import { WindowsSignAzureManager } from "./codeSign/windowsSignAzureManager.js"
+import { FileCodeSigningInfo, getSignVendorPath, WindowsSignToolManager } from "./codeSign/windowsSignToolManager.js"
+import { AfterPackContext } from "./configuration.js"
+import { DIR_TARGET, Platform, Target } from "./core.js"
+import { RequestedExecutionLevel, WindowsConfiguration } from "./options/winOptions.js"
+import { Packager } from "./packager.js"
+import { chooseNotNull, PlatformPackager } from "./platformPackager.js"
+import AppXTarget from "./targets/AppxTarget.js"
+import MsiTarget from "./targets/MsiTarget.js"
+import MsiWrappedTarget from "./targets/MsiWrappedTarget.js"
+import { NsisTarget } from "./targets/nsis/NsisTarget.js"
+import { AppPackageHelper, CopyElevateHelper } from "./targets/nsis/nsisUtil.js"
+import { WebInstallerTarget } from "./targets/nsis/WebInstallerTarget.js"
+import { createCommonTarget } from "./targets/targetFactory.js"
+import { BuildCacheManager, digest } from "./util/cacheManager.js"
+import { isBuildCacheEnabled } from "./util/flags.js"
+import { time } from "./util/timer.js"
+import { getWindowsVm, VmManager } from "./vm/vm.js"
+import { execWine } from "./wine.js"
 
 export class WinPackager extends PlatformPackager<WindowsConfiguration> {
-  _iconPath = new Lazy(() => this.getOrConvertIcon("ico"))
+  private _iconPath = new Lazy(() => this.getOrConvertIcon("ico"))
 
   readonly vm = new Lazy<VmManager>(() => (process.platform === "win32" ? Promise.resolve(new VmManager()) : getWindowsVm(this.debugLogger)))
 
@@ -55,7 +55,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     return ["nsis"]
   }
 
-  createTargets(targets: Array<string>, mapper: (name: string, factory: (outDir: string) => Target) => void): void {
+  async createTargets(targets: Array<string>, mapper: (name: string, factory: (outDir: string) => Target) => void): Promise<void> {
     let copyElevateHelper: CopyElevateHelper | null
     const getCopyElevateHelper = () => {
       if (copyElevateHelper == null) {
@@ -83,23 +83,24 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
         // package file format differs from nsis target
         mapper(name, outDir => new WebInstallerTarget(this, path.join(outDir, name), name, new AppPackageHelper(getCopyElevateHelper())))
       } else {
-        const targetClass: typeof NsisTarget | typeof AppXTarget | typeof MsiTarget | typeof MsiWrappedTarget | null = (() => {
+        const targetClass: typeof NsisTarget | typeof AppXTarget | typeof MsiTarget | typeof MsiWrappedTarget | null = await (() => {
           switch (name) {
             case "squirrel":
               try {
-                return require("electron-builder-squirrel-windows").default
+                const squirrelWindowsPeer = "electron-builder-squirrel-windows"
+                return import(squirrelWindowsPeer).then(m => m.default)
               } catch (e: any) {
                 throw new InvalidConfigurationError(`Module electron-builder-squirrel-windows must be installed in addition to build Squirrel.Windows: ${e.stack || e}`)
               }
 
             case "appx":
-              return require("./targets/AppxTarget").default
+              return import("./targets/AppxTarget.js").then(m => m.default)
 
             case "msi":
-              return require("./targets/MsiTarget").default
+              return import("./targets/MsiTarget.js").then(m => m.default)
 
             case "msiwrapped":
-              return require("./targets/MsiWrappedTarget").default
+              return import("./targets/MsiWrappedTarget.js").then(m => m.default)
 
             default:
               return null

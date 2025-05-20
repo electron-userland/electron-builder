@@ -21,22 +21,21 @@ import { load } from "js-yaml"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { eq as isVersionsEqual, gt as isVersionGreaterThan, lt as isVersionLessThan, parse as parseVersion, prerelease as getVersionPreleaseComponents, SemVer } from "semver"
-import { AppAdapter } from "./AppAdapter"
-import { createTempUpdateFile, DownloadedUpdateHelper } from "./DownloadedUpdateHelper"
-import { ElectronAppAdapter } from "./ElectronAppAdapter"
-import { ElectronHttpExecutor, getNetSession, LoginCallback } from "./electronHttpExecutor"
-import { GenericProvider } from "./providers/GenericProvider"
-import { createClient, isUrlProbablySupportMultiRangeRequests } from "./providerFactory"
-import { Provider, ProviderPlatform } from "./providers/Provider"
+import { createTempUpdateFile, DownloadedUpdateHelper } from "./DownloadedUpdateHelper.js"
+import { ElectronAppAdapter } from "./ElectronAppAdapter.js"
+import { ElectronHttpExecutor, getNetSession, LoginCallback } from "./electronHttpExecutor.js"
+import { GenericProvider } from "./providers/GenericProvider.js"
+import { createClient, isUrlProbablySupportMultiRangeRequests } from "./providerFactory.js"
+import { Provider, ProviderPlatform } from "./providers/Provider.js"
 import type { TypedEmitter } from "tiny-typed-emitter"
 import Session = Electron.Session
 import type { AuthInfo } from "electron"
 import { gunzipSync } from "zlib"
-import { blockmapFiles } from "./util"
-import { DifferentialDownloaderOptions } from "./differentialDownloader/DifferentialDownloader"
-import { GenericDifferentialDownloader } from "./differentialDownloader/GenericDifferentialDownloader"
-import { DOWNLOAD_PROGRESS, Logger, ResolvedUpdateFileInfo, UPDATE_DOWNLOADED, UpdateCheckResult, UpdateDownloadedEvent, UpdaterSignal } from "./types"
-import { VerifyUpdateSupport } from "./main"
+import { blockmapFiles } from "./util.js"
+import { DifferentialDownloaderOptions } from "./differentialDownloader/DifferentialDownloader.js"
+import { GenericDifferentialDownloader } from "./differentialDownloader/GenericDifferentialDownloader.js"
+import { DOWNLOAD_PROGRESS, Logger, ResolvedUpdateFileInfo, UPDATE_DOWNLOADED, UpdateCheckResult, UpdateDownloadedEvent, UpdaterSignal } from "./types.js"
+import { VerifyUpdateSupport } from "./main.js"
 
 export type AppUpdaterEvents = {
   error: (error: Error, message?: string) => void
@@ -248,14 +247,14 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   private checkForUpdatesPromise: Promise<UpdateCheckResult> | null = null
   private downloadPromise: Promise<Array<string>> | null = null
 
-  protected readonly app: AppAdapter
+  protected readonly app: ElectronAppAdapter
 
   protected updateInfoAndProvider: UpdateInfoAndProvider | null = null
 
   /** @internal */
   readonly httpExecutor: ElectronHttpExecutor
 
-  protected constructor(options: AllPublishOptions | null | undefined, app?: AppAdapter) {
+  protected constructor(options: AllPublishOptions | null | undefined, app?: ElectronAppAdapter) {
     super()
 
     this.on("error", (error: Error) => {
@@ -363,9 +362,9 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         return it
       }
 
-      void it.downloadPromise.then(() => {
+      void it.downloadPromise.then(async () => {
         const notificationContent = AppUpdater.formatDownloadNotification(it.updateInfo.version, this.app.name, downloadNotification)
-        new (require("electron").Notification)(notificationContent).show()
+        new (await import("electron")).Notification(notificationContent).show()
       })
 
       return it

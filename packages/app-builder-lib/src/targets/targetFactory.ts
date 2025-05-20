@@ -1,7 +1,7 @@
 import { addValue, Arch, archFromString, ArchType, asArray } from "builder-util"
-import { DEFAULT_TARGET, DIR_TARGET, Platform, Target, TargetConfiguration } from "../core"
-import { PlatformPackager } from "../platformPackager"
-import { ArchiveTarget } from "./ArchiveTarget"
+import { DEFAULT_TARGET, DIR_TARGET, Platform, Target, TargetConfiguration } from "../core.js"
+import { PlatformPackager } from "../platformPackager.js"
+import { ArchiveTarget } from "./ArchiveTarget.js"
 
 const archiveTargets = new Set(["zip", "7z", "tar.xz", "tar.lz", "tar.gz", "tar.bz2"])
 
@@ -47,7 +47,7 @@ export function computeArchToTargetNamesMap(raw: Map<Arch, Array<string>>, platf
   return result
 }
 
-export function createTargets(nameToTarget: Map<string, Target>, rawList: Array<string>, outDir: string, packager: PlatformPackager<any>): Array<Target> {
+export async function createTargets(nameToTarget: Map<string, Target>, rawList: Array<string>, outDir: string, packager: PlatformPackager<any>): Promise<Array<Target>> {
   const result: Array<Target> = []
 
   const mapper = (name: string, factory: (outDir: string) => Target) => {
@@ -60,7 +60,7 @@ export function createTargets(nameToTarget: Map<string, Target>, rawList: Array<
   }
 
   const targets = normalizeTargets(rawList, packager.defaultTarget)
-  packager.createTargets(targets, mapper)
+  await packager.createTargets(targets, mapper)
   return result
 }
 

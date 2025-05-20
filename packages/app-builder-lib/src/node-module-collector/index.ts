@@ -1,8 +1,8 @@
-import { NpmNodeModulesCollector } from "./npmNodeModulesCollector"
-import { PnpmNodeModulesCollector } from "./pnpmNodeModulesCollector"
-import { YarnNodeModulesCollector } from "./yarnNodeModulesCollector"
-import { detectPackageManager, PM, getPackageManagerCommand } from "./packageManager"
-import { NodeModuleInfo } from "./types"
+import { NpmNodeModulesCollector } from "./npmNodeModulesCollector.js"
+import { PnpmNodeModulesCollector } from "./pnpmNodeModulesCollector.js"
+import { YarnNodeModulesCollector } from "./yarnNodeModulesCollector.js"
+import { detectPackageManager, PM, getPackageManagerCommand } from "./packageManager.js"
+import { NodeModuleInfo } from "./types.js"
 import { exec } from "builder-util"
 
 async function isPnpmProjectHoisted(rootDir: string) {

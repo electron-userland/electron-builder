@@ -1,15 +1,14 @@
-import { Arch } from "builder-util"
-import { sanitizeFileName } from "builder-util/out/filename"
-import { DIR_TARGET, Platform, Target } from "./core"
-import { LinuxConfiguration } from "./options/linuxOptions"
-import { Packager } from "./packager"
-import { PlatformPackager } from "./platformPackager"
-import AppImageTarget from "./targets/AppImageTarget"
-import FlatpakTarget from "./targets/FlatpakTarget"
-import FpmTarget from "./targets/FpmTarget"
-import { LinuxTargetHelper } from "./targets/LinuxTargetHelper"
-import SnapTarget from "./targets/snap"
-import { createCommonTarget } from "./targets/targetFactory"
+import { Arch, sanitizeFileName } from "builder-util"
+import { DIR_TARGET, Platform, Target } from "./core.js"
+import { LinuxConfiguration } from "./options/linuxOptions.js"
+import { Packager } from "./packager.js"
+import { PlatformPackager } from "./platformPackager.js"
+import AppImageTarget from "./targets/AppImageTarget.js"
+import FlatpakTarget from "./targets/FlatpakTarget.js"
+import FpmTarget from "./targets/FpmTarget.js"
+import { LinuxTargetHelper } from "./targets/LinuxTargetHelper.js"
+import SnapTarget from "./targets/snap.js"
+import { createCommonTarget } from "./targets/targetFactory.js"
 
 export class LinuxPackager extends PlatformPackager<LinuxConfiguration> {
   readonly executableName: string
@@ -25,7 +24,7 @@ export class LinuxPackager extends PlatformPackager<LinuxConfiguration> {
     return ["snap", "appimage"]
   }
 
-  createTargets(targets: Array<string>, mapper: (name: string, factory: (outDir: string) => Target) => void): void {
+  async createTargets(targets: Array<string>, mapper: (name: string, factory: (outDir: string) => Target) => void): Promise<void> {
     let helper: LinuxTargetHelper | null
     const getHelper = () => {
       if (helper == null) {
@@ -39,14 +38,14 @@ export class LinuxPackager extends PlatformPackager<LinuxConfiguration> {
         continue
       }
 
-      const targetClass: typeof AppImageTarget | typeof SnapTarget | typeof FlatpakTarget | typeof FpmTarget | null = (() => {
+      const targetClass: typeof AppImageTarget | typeof SnapTarget | typeof FlatpakTarget | typeof FpmTarget | null = await (() => {
         switch (name) {
           case "appimage":
-            return require("./targets/AppImageTarget").default
+            return import("./targets/AppImageTarget.js").then(it => it.default)
           case "snap":
-            return require("./targets/snap").default
+            return import("./targets/snap.js").then(it => it.default)
           case "flatpak":
-            return require("./targets/FlatpakTarget").default
+            return import("./targets/FlatpakTarget.js").then(it => it.default)
           case "deb":
           case "rpm":
           case "sh":
@@ -54,7 +53,7 @@ export class LinuxPackager extends PlatformPackager<LinuxConfiguration> {
           case "pacman":
           case "apk":
           case "p5p":
-            return require("./targets/FpmTarget").default
+            return import("./targets/FpmTarget.js").then(it => it.default)
           default:
             return null
         }

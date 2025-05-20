@@ -1,16 +1,17 @@
 import { AllPublishOptions, newError, PackageFileInfo, CURRENT_APP_INSTALLER_FILE_NAME, CURRENT_APP_PACKAGE_FILE_NAME } from "builder-util-runtime"
 import * as path from "path"
-import { AppAdapter } from "./AppAdapter"
-import { DownloadUpdateOptions } from "./AppUpdater"
-import { BaseUpdater, InstallOptions } from "./BaseUpdater"
-import { DifferentialDownloaderOptions } from "./differentialDownloader/DifferentialDownloader"
-import { FileWithEmbeddedBlockMapDifferentialDownloader } from "./differentialDownloader/FileWithEmbeddedBlockMapDifferentialDownloader"
-import { DOWNLOAD_PROGRESS } from "./types"
-import { VerifyUpdateCodeSignature } from "./main"
-import { findFile, Provider } from "./providers/Provider"
+import { ElectronAppAdapter } from "./ElectronAppAdapter.js"
+import { DownloadUpdateOptions } from "./AppUpdater.js"
+import { BaseUpdater, InstallOptions } from "./BaseUpdater.js"
+import { DifferentialDownloaderOptions } from "./differentialDownloader/DifferentialDownloader.js"
+import { FileWithEmbeddedBlockMapDifferentialDownloader } from "./differentialDownloader/FileWithEmbeddedBlockMapDifferentialDownloader.js"
+import { DOWNLOAD_PROGRESS } from "./types.js"
+import { VerifyUpdateCodeSignature } from "./main.js"
+import { findFile, Provider } from "./providers/Provider.js"
 import { unlink } from "fs-extra"
-import { verifySignature } from "./windowsExecutableCodeSignatureVerifier"
+import { verifySignature } from "./windowsExecutableCodeSignatureVerifier.js"
 import { URL } from "url"
+import { shell } from "electron"
 
 export class NsisUpdater extends BaseUpdater {
   /**
@@ -19,7 +20,7 @@ export class NsisUpdater extends BaseUpdater {
    */
   installDirectory?: string
 
-  constructor(options?: AllPublishOptions | null, app?: AppAdapter) {
+  constructor(options?: AllPublishOptions | null, app?: ElectronAppAdapter) {
     super(options, app)
   }
 
@@ -170,9 +171,7 @@ export class NsisUpdater extends BaseUpdater {
       if (errorCode === "UNKNOWN" || errorCode === "EACCES") {
         callUsingElevation()
       } else if (errorCode === "ENOENT") {
-        require("electron")
-          .shell.openPath(installerPath)
-          .catch((err: Error) => this.dispatchError(err))
+        shell.openPath(installerPath).catch((err: Error) => this.dispatchError(err))
       } else {
         this.dispatchError(e)
       }

@@ -1,7 +1,7 @@
-import { hoist, type HoisterTree, type HoisterResult } from "./hoist"
+import { hoist, type HoisterTree, type HoisterResult } from "./hoist.js"
 import * as path from "path"
 import * as fs from "fs"
-import type { NodeModuleInfo, DependencyGraph, Dependency } from "./types"
+import type { NodeModuleInfo, DependencyGraph, Dependency } from "./types.js"
 import { exec, log } from "builder-util"
 import { Lazy } from "lazy-val"
 

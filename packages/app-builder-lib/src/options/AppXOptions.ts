@@ -1,4 +1,4 @@
-import { TargetSpecificOptions } from "../core"
+import { TargetSpecificOptions } from "../core.js"
 
 export interface AppXOptions extends TargetSpecificOptions {
   /**

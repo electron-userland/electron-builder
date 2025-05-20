@@ -20,14 +20,14 @@ import { readdir } from "fs/promises"
 import { Lazy } from "lazy-val"
 import { Minimatch } from "minimatch"
 import * as path from "path"
-import { AppInfo } from "./appInfo"
-import { checkFileInArchive } from "./asar/asarFileChecker"
-import { AsarPackager } from "./asar/asarUtil"
-import { AsarIntegrity, computeData } from "./asar/integrity"
-import { FuseOptionsV1 } from "./configuration"
-import { copyFiles, FileMatcher, getFileMatchers, GetFileMatchersOptions, getMainFileMatchers, getNodeModuleFileMatcher } from "./fileMatcher"
-import { createTransformer, isElectronCompileUsed } from "./fileTransformer"
-import { Framework, isElectronBased } from "./Framework"
+import { AppInfo } from "./appInfo.js"
+import { checkFileInArchive } from "./asar/asarFileChecker.js"
+import { AsarPackager } from "./asar/asarUtil.js"
+import { AsarIntegrity, computeData } from "./asar/integrity.js"
+import { FuseOptionsV1 } from "./configuration.js"
+import { copyFiles, FileMatcher, getFileMatchers, GetFileMatchersOptions, getMainFileMatchers, getNodeModuleFileMatcher } from "./fileMatcher.js"
+import { createTransformer, isElectronCompileUsed } from "./fileTransformer.js"
+import { Framework, isElectronBased } from "./Framework.js"
 import {
   AfterPackContext,
   AsarOptions,
@@ -42,10 +42,10 @@ import {
   PlatformSpecificBuildOptions,
   Target,
   TargetSpecificOptions,
-} from "./index"
-import { executeAppBuilderAsJson } from "./util/appBuilder"
-import { computeFileSets, computeNodeModuleFileSets, copyAppFiles, ELECTRON_COMPILE_SHIM_FILENAME, transformFiles } from "./util/appFileCopier"
-import { expandMacro as doExpandMacro } from "./util/macroExpander"
+} from "./index.js"
+import { executeAppBuilderAsJson } from "./util/appBuilder.js"
+import { computeFileSets, computeNodeModuleFileSets, copyAppFiles, ELECTRON_COMPILE_SHIM_FILENAME, transformFiles } from "./util/appFileCopier.js"
+import { expandMacro as doExpandMacro } from "./util/macroExpander.js"
 
 export type DoPackOptions<DC extends PlatformSpecificBuildOptions> = {
   outDir: string
@@ -120,7 +120,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return options == null ? Object.create(null) : options
   }
 
-  abstract createTargets(targets: Array<string>, mapper: (name: string, factory: (outDir: string) => Target) => void): void
+  abstract createTargets(targets: Array<string>, mapper: (name: string, factory: (outDir: string) => Target) => void): Promise<void>
 
   getCscPassword(): string {
     const password = this.doGetCscPassword()

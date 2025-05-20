@@ -295,16 +295,15 @@ exports[`dmg > custom background - new way 1`] = `
   "mac": [
     {
       "arch": "x64",
-      "file": "Test App ßW-1.1.0-mac.zip",
-      "safeArtifactName": "TestApp-1.1.0-mac.zip",
+      "file": "CustomBackground-1.1.0-mac.zip",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
     {
-      "file": "Test App ßW-1.1.0-mac.zip.blockmap",
-      "safeArtifactName": "Test App ßW-1.1.0-mac.zip.blockmap",
+      "file": "CustomBackground-1.1.0-mac.zip.blockmap",
+      "safeArtifactName": "CustomBackground-1.1.0-mac.zip.blockmap",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
@@ -316,12 +315,12 @@ exports[`dmg > custom background - new way 1`] = `
 
 exports[`dmg > custom background - new way 2`] = `
 {
-  "CFBundleDisplayName": "Test App ßW",
-  "CFBundleExecutable": "Test App ßW",
+  "CFBundleDisplayName": "CustomBackground",
+  "CFBundleExecutable": "CustomBackground",
   "CFBundleIconFile": "icon.icns",
   "CFBundleIdentifier": "org.electron-builder.testApp",
   "CFBundleInfoDictionaryVersion": "6.0",
-  "CFBundleName": "Test App ßW",
+  "CFBundleName": "CustomBackground",
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
   "ElectronAsarIntegrity": {
@@ -366,16 +365,15 @@ exports[`dmg > disable dmg icon (light), bundleVersion 1`] = `
   "mac": [
     {
       "arch": "x64",
-      "file": "Test App ßW-1.1.0-mac.zip",
-      "safeArtifactName": "TestApp-1.1.0-mac.zip",
+      "file": "DisableIcon-1.1.0-mac.zip",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
     {
-      "file": "Test App ßW-1.1.0-mac.zip.blockmap",
-      "safeArtifactName": "Test App ßW-1.1.0-mac.zip.blockmap",
+      "file": "DisableIcon-1.1.0-mac.zip.blockmap",
+      "safeArtifactName": "DisableIcon-1.1.0-mac.zip.blockmap",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
@@ -387,12 +385,12 @@ exports[`dmg > disable dmg icon (light), bundleVersion 1`] = `
 
 exports[`dmg > disable dmg icon (light), bundleVersion 2`] = `
 {
-  "CFBundleDisplayName": "Test App ßW",
-  "CFBundleExecutable": "Test App ßW",
+  "CFBundleDisplayName": "DisableIcon",
+  "CFBundleExecutable": "DisableIcon",
   "CFBundleIconFile": "icon.icns",
   "CFBundleIdentifier": "org.electron-builder.testApp",
   "CFBundleInfoDictionaryVersion": "6.0",
-  "CFBundleName": "Test App ßW",
+  "CFBundleName": "DisableIcon",
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
   "ElectronAsarIntegrity": {
@@ -564,16 +562,14 @@ exports[`dmg > license buttons config 2`] = `
   "mac": [
     {
       "arch": "x64",
-      "file": "Test App ßW-1.1.0.dmg",
-      "safeArtifactName": "TestApp-1.1.0.dmg",
+      "file": "Foo5-1.1.0.dmg",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
     {
-      "file": "Test App ßW-1.1.0.dmg.blockmap",
-      "safeArtifactName": "TestApp-1.1.0.dmg.blockmap",
+      "file": "Foo5-1.1.0.dmg.blockmap",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
@@ -585,12 +581,12 @@ exports[`dmg > license buttons config 2`] = `
 
 exports[`dmg > license buttons config 3`] = `
 {
-  "CFBundleDisplayName": "Test App ßW",
-  "CFBundleExecutable": "Test App ßW",
+  "CFBundleDisplayName": "Foo5",
+  "CFBundleExecutable": "Foo5",
   "CFBundleIconFile": "icon.icns",
   "CFBundleIdentifier": "org.electron-builder.testApp",
   "CFBundleInfoDictionaryVersion": "6.0",
-  "CFBundleName": "Test App ßW",
+  "CFBundleName": "Foo5",
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
   "ElectronAsarIntegrity": {
@@ -635,16 +631,14 @@ exports[`dmg > license en 1`] = `
   "mac": [
     {
       "arch": "x64",
-      "file": "Test App ßW-1.1.0.dmg",
-      "safeArtifactName": "TestApp-1.1.0.dmg",
+      "file": "Foo3-1.1.0.dmg",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
     {
-      "file": "Test App ßW-1.1.0.dmg.blockmap",
-      "safeArtifactName": "TestApp-1.1.0.dmg.blockmap",
+      "file": "Foo3-1.1.0.dmg.blockmap",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
@@ -656,12 +650,12 @@ exports[`dmg > license en 1`] = `
 
 exports[`dmg > license en 2`] = `
 {
-  "CFBundleDisplayName": "Test App ßW",
-  "CFBundleExecutable": "Test App ßW",
+  "CFBundleDisplayName": "Foo3",
+  "CFBundleExecutable": "Foo3",
   "CFBundleIconFile": "icon.icns",
   "CFBundleIdentifier": "org.electron-builder.testApp",
   "CFBundleInfoDictionaryVersion": "6.0",
-  "CFBundleName": "Test App ßW",
+  "CFBundleName": "Foo3",
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
   "ElectronAsarIntegrity": {
@@ -706,16 +700,14 @@ exports[`dmg > license ja 1`] = `
   "mac": [
     {
       "arch": "x64",
-      "file": "Test App ßW-1.1.0.dmg",
-      "safeArtifactName": "TestApp-1.1.0.dmg",
+      "file": "Foo2-1.1.0.dmg",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
     {
-      "file": "Test App ßW-1.1.0.dmg.blockmap",
-      "safeArtifactName": "TestApp-1.1.0.dmg.blockmap",
+      "file": "Foo2-1.1.0.dmg.blockmap",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
@@ -727,12 +719,12 @@ exports[`dmg > license ja 1`] = `
 
 exports[`dmg > license ja 2`] = `
 {
-  "CFBundleDisplayName": "Test App ßW",
-  "CFBundleExecutable": "Test App ßW",
+  "CFBundleDisplayName": "Foo2",
+  "CFBundleExecutable": "Foo2",
   "CFBundleIconFile": "icon.icns",
   "CFBundleIdentifier": "org.electron-builder.testApp",
   "CFBundleInfoDictionaryVersion": "6.0",
-  "CFBundleName": "Test App ßW",
+  "CFBundleName": "Foo2",
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
   "ElectronAsarIntegrity": {
@@ -777,16 +769,14 @@ exports[`dmg > license rtf 1`] = `
   "mac": [
     {
       "arch": "x64",
-      "file": "Test App ßW-1.1.0.dmg",
-      "safeArtifactName": "TestApp-1.1.0.dmg",
+      "file": "Foo4-1.1.0.dmg",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
     {
-      "file": "Test App ßW-1.1.0.dmg.blockmap",
-      "safeArtifactName": "TestApp-1.1.0.dmg.blockmap",
+      "file": "Foo4-1.1.0.dmg.blockmap",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
@@ -798,12 +788,12 @@ exports[`dmg > license rtf 1`] = `
 
 exports[`dmg > license rtf 2`] = `
 {
-  "CFBundleDisplayName": "Test App ßW",
-  "CFBundleExecutable": "Test App ßW",
+  "CFBundleDisplayName": "Foo4",
+  "CFBundleExecutable": "Foo4",
   "CFBundleIconFile": "icon.icns",
   "CFBundleIdentifier": "org.electron-builder.testApp",
   "CFBundleInfoDictionaryVersion": "6.0",
-  "CFBundleName": "Test App ßW",
+  "CFBundleName": "Foo4",
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
   "ElectronAsarIntegrity": {
@@ -848,16 +838,14 @@ exports[`dmg > multi language license 1`] = `
   "mac": [
     {
       "arch": "x64",
-      "file": "Test App ßW-1.1.0.dmg",
-      "safeArtifactName": "TestApp-1.1.0.dmg",
+      "file": "Foo1-1.1.0.dmg",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
     {
-      "file": "Test App ßW-1.1.0.dmg.blockmap",
-      "safeArtifactName": "TestApp-1.1.0.dmg.blockmap",
+      "file": "Foo1-1.1.0.dmg.blockmap",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
@@ -869,12 +857,12 @@ exports[`dmg > multi language license 1`] = `
 
 exports[`dmg > multi language license 2`] = `
 {
-  "CFBundleDisplayName": "Test App ßW",
-  "CFBundleExecutable": "Test App ßW",
+  "CFBundleDisplayName": "Foo1",
+  "CFBundleExecutable": "Foo1",
   "CFBundleIconFile": "icon.icns",
   "CFBundleIdentifier": "org.electron-builder.testApp",
   "CFBundleInfoDictionaryVersion": "6.0",
-  "CFBundleName": "Test App ßW",
+  "CFBundleName": "Foo1",
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
   "ElectronAsarIntegrity": {
@@ -1072,16 +1060,15 @@ exports[`dmg > retina background as 2 png 1`] = `
   "mac": [
     {
       "arch": "x64",
-      "file": "Test App ßW-1.1.0-mac.zip",
-      "safeArtifactName": "TestApp-1.1.0-mac.zip",
+      "file": "RetinaBackground-1.1.0-mac.zip",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
     {
-      "file": "Test App ßW-1.1.0-mac.zip.blockmap",
-      "safeArtifactName": "Test App ßW-1.1.0-mac.zip.blockmap",
+      "file": "RetinaBackground-1.1.0-mac.zip.blockmap",
+      "safeArtifactName": "RetinaBackground-1.1.0-mac.zip.blockmap",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
@@ -1093,12 +1080,12 @@ exports[`dmg > retina background as 2 png 1`] = `
 
 exports[`dmg > retina background as 2 png 2`] = `
 {
-  "CFBundleDisplayName": "Test App ßW",
-  "CFBundleExecutable": "Test App ßW",
+  "CFBundleDisplayName": "RetinaBackground",
+  "CFBundleExecutable": "RetinaBackground",
   "CFBundleIconFile": "icon.icns",
   "CFBundleIdentifier": "org.electron-builder.testApp",
   "CFBundleInfoDictionaryVersion": "6.0",
-  "CFBundleName": "Test App ßW",
+  "CFBundleName": "RetinaBackground",
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
   "ElectronAsarIntegrity": {

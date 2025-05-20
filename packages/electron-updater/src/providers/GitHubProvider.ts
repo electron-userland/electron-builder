@@ -1,10 +1,10 @@
 import { CancellationToken, GithubOptions, githubUrl, HttpError, newError, parseXml, ReleaseNoteInfo, UpdateInfo, XElement } from "builder-util-runtime"
 import * as semver from "semver"
 import { URL } from "url"
-import { AppUpdater } from "../AppUpdater"
-import { ResolvedUpdateFileInfo } from "../types"
-import { getChannelFilename, newBaseUrl, newUrlFromBase } from "../util"
-import { parseUpdateInfo, Provider, ProviderRuntimeOptions, resolveFiles } from "./Provider"
+import { AppUpdater } from "../AppUpdater.js"
+import { ResolvedUpdateFileInfo } from "../types.js"
+import { getChannelFilename, newBaseUrl, newUrlFromBase } from "../util.js"
+import { parseUpdateInfo, Provider, ProviderRuntimeOptions, resolveFiles } from "./Provider.js"
 
 const hrefRegExp = /\/tag\/([^/]+)$/
 
@@ -81,7 +81,9 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
             const hrefElement = hrefRegExp.exec(element.element("link").attribute("href"))!
 
             // If this is null then something is wrong and skip this release
-            if (hrefElement === null) continue
+            if (hrefElement === null) {
+              continue
+            }
 
             // This Release's Tag
             const hrefTag = hrefElement[1]

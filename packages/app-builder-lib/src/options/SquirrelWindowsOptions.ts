@@ -1,7 +1,7 @@
 /**
  * Squirrel.Windows options.
  */
-import { TargetSpecificOptions } from "../core"
+import { TargetSpecificOptions } from "../core.js"
 
 export interface SquirrelWindowsOptions extends TargetSpecificOptions {
   /**

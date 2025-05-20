@@ -4,18 +4,18 @@ import { outputFile, readFile } from "fs-extra"
 import { load } from "js-yaml"
 import * as path from "path"
 import * as semver from "semver"
-import { Configuration } from "../configuration"
-import { Publish, Target } from "../core"
-import { LinuxPackager } from "../linuxPackager"
-import { PlugDescriptor, SnapOptions } from "../options/SnapOptions"
-import { getTemplatePath } from "../util/pathManager"
-import { LinuxTargetHelper } from "./LinuxTargetHelper"
-import { createStageDirPath } from "./targetUtil"
+import { Configuration } from "../configuration.js"
+import { Publish, Target } from "../core.js"
+import { LinuxPackager } from "../linuxPackager.js"
+import { PlugDescriptor, SnapOptions } from "../options/SnapOptions.js"
+import { getTemplatePath } from "../util/pathManager.js"
+import { LinuxTargetHelper } from "./LinuxTargetHelper.js"
+import { createStageDirPath } from "./targetUtil.js"
 
 const defaultPlugs = ["desktop", "desktop-legacy", "home", "x11", "wayland", "unity7", "browser-support", "network", "gsettings", "audio-playback", "pulseaudio", "opengl"]
 
 export default class SnapTarget extends Target {
-  readonly options: SnapOptions = { ...this.packager.platformSpecificBuildOptions, ...(this.packager.config as any)[this.name] }
+  readonly options: SnapOptions
 
   public isUseTemplateApp = false
 
@@ -26,6 +26,7 @@ export default class SnapTarget extends Target {
     readonly outDir: string
   ) {
     super(name)
+    this.options = { ...this.packager.platformSpecificBuildOptions, ...(this.packager.config as any)[this.name] }
   }
 
   private replaceDefault(inList: Array<string> | Nullish, defaultList: Array<string>) {

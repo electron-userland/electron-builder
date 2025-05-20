@@ -1,14 +1,13 @@
-import { Platform } from "app-builder-lib"
-import { readAsar } from "app-builder-lib/out/asar/asar"
+import { Platform, readAsar } from "app-builder-lib"
 import { outputFile } from "fs-extra"
 import * as fs from "fs/promises"
 import * as path from "path"
-import { assertThat } from "./helpers/fileAssert"
-import { app, appThrows, assertPack, linuxDirTarget, modifyPackageJson, PackedContext, removeUnstableProperties, verifyAsarFileTree } from "./helpers/packTester"
-import { verifySmartUnpack } from "./helpers/verifySmartUnpack"
+import { assertThat } from "./helpers/fileAssert.js"
+import { app, appThrows, assertPack, linuxDirTarget, modifyPackageJson, PackedContext, removeUnstableProperties, verifyAsarFileTree } from "./helpers/packTester.js"
+import { verifySmartUnpack } from "./helpers/verifySmartUnpack.js"
 import { spawnSync } from "child_process"
 import { ExpectStatic } from "vitest"
-import { spawn } from "builder-util/out/util"
+import { spawn } from "builder-util"
 
 async function createFiles(appDir: string) {
   await Promise.all([

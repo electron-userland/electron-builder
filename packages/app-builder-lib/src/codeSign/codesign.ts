@@ -3,7 +3,7 @@ import { outputFile } from "fs-extra"
 import { homedir } from "os"
 import * as path from "path"
 import { TmpDir } from "temp-file"
-import { download } from "../binDownload"
+import { download } from "../binDownload.js"
 
 /** @private */
 export async function importCertificate(cscLink: string, tmpDir: TmpDir, currentDir: string): Promise<string> {

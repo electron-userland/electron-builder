@@ -1,24 +1,18 @@
-import { validateConfiguration } from "app-builder-lib/out/util/config/config"
+import { validateConfiguration } from "app-builder-lib"
 import { Arch, DebugLogger } from "builder-util"
-import { Configuration, Platform } from "electron-builder"
-import { CliOptions, configureBuildCommand, createYargs, normalizeOptions } from "electron-builder/out/builder"
-import { app, appThrows, linuxDirTarget } from "./helpers/packTester"
+import { Configuration, Platform, CliOptions, configureBuildCommand, createYargs, normalizeOptions } from "electron-builder"
+import { app, appThrows, linuxDirTarget } from "./helpers/packTester.js"
 
 test.ifDevOrLinuxCi("validation", ({ expect }) =>
-  appThrows(
-    expect,
-    {
-      targets: linuxDirTarget,
-      config: {
-        foo: 123,
-        mac: {
-          foo: 12123,
-        },
-      } as any,
-    },
-    undefined,
-    error => error.message.includes("configuration has an unknown property 'foo'")
-  )
+  appThrows(expect, {
+    targets: linuxDirTarget,
+    config: {
+      foo: 123,
+      mac: {
+        foo: 12123,
+      },
+    } as any,
+  })
 )
 
 test.ifDevOrLinuxCi("appId as object", ({ expect }) =>

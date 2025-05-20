@@ -2,8 +2,8 @@ import { GenericServerOptions, GithubOptions, KeygenOptions, SpacesOptions } fro
 import { Arch, createTargets, Platform } from "electron-builder"
 import { outputFile } from "fs-extra"
 import * as path from "path"
-import { assertThat } from "./helpers/fileAssert"
-import { app, checkDirContents } from "./helpers/packTester"
+import { assertThat } from "./helpers/fileAssert.js"
+import { app, checkDirContents } from "./helpers/packTester.js"
 
 function spacesPublisher(publishAutoUpdate = true): SpacesOptions {
   return {

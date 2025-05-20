@@ -1,5 +1,5 @@
-import { TargetSpecificOptions } from "../core"
-import { CommonLinuxOptions } from "./linuxOptions"
+import { TargetSpecificOptions } from "../core.js"
+import { CommonLinuxOptions } from "./linuxOptions.js"
 
 export interface SnapOptions extends CommonLinuxOptions, TargetSpecificOptions {
   /**
@@ -143,10 +143,22 @@ export interface SnapOptions extends CommonLinuxOptions, TargetSpecificOptions {
   readonly allowNativeWayland?: boolean | null
 }
 
+/**
+ * The plug descriptor is a map of attributes to be used in the snapcraft.yaml file.
+ * The key is the name of the plug, and the value is an object with the attributes.
+ * If the value is null, it means that the plug has no attributes.
+ * If the value is a string, it means that the plug has only one attribute with that name.
+ */
 export interface PlugDescriptor {
   [key: string]: { [key: string]: any } | null
 }
 
+/**
+ * The slot descriptor is a map of attributes to be used in the snapcraft.yaml file.
+ * The key is the name of the slot, and the value is an object with the attributes.
+ * If the value is null, it means that the slot has no attributes.
+ * If the value is a string, it means that the slot has only one attribute with that name.
+ */
 export interface SlotDescriptor {
   [key: string]: { [key: string]: any } | null
 }

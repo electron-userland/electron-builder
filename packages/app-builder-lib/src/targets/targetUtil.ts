@@ -1,8 +1,8 @@
 import { Arch, debug } from "builder-util"
 import * as fs from "fs/promises"
 import * as path from "path"
-import { AppInfo, Target } from "../"
-import { PlatformPackager } from "../platformPackager"
+import { AppInfo, Target } from "../index.js"
+import { PlatformPackager } from "../platformPackager.js"
 
 export class StageDir {
   constructor(readonly dir: string) {}

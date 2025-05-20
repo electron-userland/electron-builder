@@ -1,6 +1,6 @@
 import { DebugLogger, ExtraSpawnOptions, exec, log, spawn } from "builder-util"
 import { ExecFileOptions, SpawnOptions, execFileSync } from "child_process"
-import { VmManager } from "./vm"
+import { VmManager } from "./vm.js"
 
 /** @internal */
 export async function parseVmList(debugLogger: DebugLogger) {
@@ -80,7 +80,8 @@ export class ParallelsVmManager extends VmManager {
 
     if (!this.isExitHookAdded) {
       this.isExitHookAdded = true
-      require("async-exit-hook")((callback: (() => void) | null) => {
+      const asyncHook = await import("async-exit-hook")
+      asyncHook.default(callback => {
         const stopArgs = ["suspend", vmId]
         if (callback == null) {
           execFileSync("prlctl", stopArgs)

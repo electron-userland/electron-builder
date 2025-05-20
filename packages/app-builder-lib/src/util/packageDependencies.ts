@@ -1,10 +1,12 @@
 import { Lazy } from "lazy-val"
-import { executeAppBuilderAsJson } from "./appBuilder"
+import { executeAppBuilderAsJson } from "./appBuilder.js"
 
 export function createLazyProductionDeps<T extends boolean>(projectDir: string, excludedDependencies: Array<string> | null, flatten: T) {
   return new Lazy(async () => {
     const args = ["node-dep-tree", "--dir", projectDir]
-    if (flatten) args.push("--flatten")
+    if (flatten) {
+      args.push("--flatten")
+    }
     if (excludedDependencies != null) {
       for (const name of excludedDependencies) {
         args.push("--exclude-dep", name)
