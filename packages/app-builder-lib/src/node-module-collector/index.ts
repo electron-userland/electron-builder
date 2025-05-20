@@ -34,4 +34,4 @@ export async function getNodeModules(rootDir: string): Promise<NodeModuleInfo[]>
   return collector.getNodeModules()
 }
 
-export { detectPackageManager, PM, getPackageManagerCommand,NodeModuleInfo }
+export { detectPackageManager, PM, getPackageManagerCommand, NodeModuleInfo }
