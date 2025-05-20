@@ -15,7 +15,7 @@ import {
   serializeToYaml,
   TmpDir,
 } from "builder-util"
-import { CancellationToken } from "builder-util-runtime"
+import { CancellationToken, Nullish } from "builder-util-runtime"
 import { chmod, mkdirs, outputFile } from "fs-extra"
 import * as isCI from "is-ci"
 import { Lazy } from "lazy-val"
@@ -344,23 +344,15 @@ export class Packager {
   }
 
   async validateConfig(): Promise<void> {
-    const config = this.options.config
     let configPath: string | null = null
-    if (config == null) {
-      return
-    }
-    let configFromOptions: Configuration | null
-    if (typeof config === "string") {
+    let configFromOptions = this.options.config
+    if (typeof configFromOptions === "string") {
       // it is a path to config file
-      configPath = config
+      configPath = configFromOptions
       configFromOptions = null
-    } else if (typeof config?.extends === "string" && config.extends.includes(".")) {
-      configPath = config.extends
-      delete config.extends
-      configFromOptions = config
-    } else {
-      configPath = null
-      configFromOptions = config
+    } else if (configFromOptions != null && typeof configFromOptions.extends === "string" && configFromOptions.extends.includes(".")) {
+      configPath = configFromOptions.extends
+      delete configFromOptions.extends
     }
 
     const projectDir = this.projectDir
