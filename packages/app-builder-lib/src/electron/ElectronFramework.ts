@@ -97,27 +97,29 @@ async function removeUnusedLanguagesIfNeeded(options: BeforeCopyExtraFilesOption
     return
   }
 
-  const { dir, langFileExt } = getLocalesConfig(options)
+  const { dirs, langFileExt } = getLocalesConfig(options)
   // noinspection SpellCheckingInspection
-  await asyncPool(MAX_FILE_REQUESTS, await readdir(dir), async file => {
-    if (!file.endsWith(langFileExt)) {
-      return
-    }
+  const deletedFiles = async (dir: string) => {
+    await asyncPool(MAX_FILE_REQUESTS, await readdir(dir), async file => {
+      if (path.extname(file) !== langFileExt) {
+        return
+      }
 
-    const language = file.substring(0, file.length - langFileExt.length)
-    if (!wantedLanguages.includes(language)) {
-      return fs.rm(path.join(dir, file), { recursive: true, force: true })
-    }
-    return
-  })
+      const language = path.basename(file, langFileExt)
+      if (!wantedLanguages.includes(language)) {
+        return fs.rm(path.join(dir, file), { recursive: true, force: true })
+      }
+      return
+    })
+  }
+  await Promise.all(dirs.map(deletedFiles))
 
   function getLocalesConfig(options: BeforeCopyExtraFilesOptions) {
     const { appOutDir, packager } = options
     if (packager.platform === Platform.MAC) {
-      return { dir: packager.getResourcesDir(appOutDir), langFileExt: ".lproj" }
-    } else {
-      return { dir: path.join(packager.getResourcesDir(appOutDir), "..", "locales"), langFileExt: ".pak" }
+      return { dirs: [packager.getResourcesDir(appOutDir), packager.getMacOsElectronFrameworkResourcesDir(appOutDir)], langFileExt: ".lproj" }
     }
+    return { dirs: [path.join(packager.getResourcesDir(appOutDir), "..", "locales")], langFileExt: ".pak" }
   }
 }
 

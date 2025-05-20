@@ -1,6 +1,7 @@
 import { notarize } from "@electron/notarize"
 import { NotarizeOptionsNotaryTool, NotaryToolKeychainCredentials } from "@electron/notarize/lib/types"
 import { PerFileSignOptions, SignOptions } from "@electron/osx-sign/dist/cjs/types"
+import { Identity } from "@electron/osx-sign/dist/cjs/util-identities"
 import { Arch, AsyncTaskManager, copyFile, deepAssign, exec, getArchSuffix, InvalidConfigurationError, log, orIfFileNotExist, statOrNull, unlinkIfExists, use } from "builder-util"
 import { MemoLazy, Nullish } from "builder-util-runtime"
 import * as fs from "fs/promises"
@@ -8,7 +9,7 @@ import { mkdir, readdir } from "fs/promises"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { AppInfo } from "./appInfo"
-import { CertType, CodeSigningInfo, createKeychain, CreateKeychainOptions, findIdentity, Identity, isSignAllowed, removeKeychain, reportError, sign } from "./codeSign/macCodeSign"
+import { CertType, CodeSigningInfo, createKeychain, CreateKeychainOptions, findIdentity, isSignAllowed, removeKeychain, reportError, sign } from "./codeSign/macCodeSign"
 import { DIR_TARGET, Platform, Target } from "./core"
 import { AfterPackContext, ElectronPlatformName } from "./index"
 import { MacConfiguration, MasConfiguration } from "./options/macOptions"
@@ -229,7 +230,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
     }
   }
 
-  private async sign(appPath: string, outDir: string | null, masOptions: MasConfiguration | null, arch: Arch | null): Promise<boolean> {
+  private async sign(appPath: string, outDir: string | null, masOptions: MasConfiguration | null, arch: Arch): Promise<boolean> {
     if (!isSignAllowed()) {
       return false
     }
@@ -237,12 +238,16 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
     const isMas = masOptions != null
     const options = masOptions == null ? this.platformSpecificBuildOptions : masOptions
     const qualifier = options.identity
+    const fallBackToAdhoc = (arch === Arch.arm64 || arch === Arch.universal) && !this.forceCodeSigning
 
     if (qualifier === null) {
       if (this.forceCodeSigning) {
         throw new InvalidConfigurationError("identity explicitly is set to null, but forceCodeSigning is set to true")
       }
       log.info({ reason: "identity explicitly is set to null" }, "skipped macOS code signing")
+      if (fallBackToAdhoc) {
+        log.warn("arm64 requires signing, but identity is set to null and signing is being skipped")
+      }
       return false
     }
 
@@ -268,7 +273,13 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
         }
       }
 
-      if (!options.sign && identity == null) {
+      const noIdentity = !options.sign && identity == null
+      if (qualifier === "-") {
+        identity = new Identity("-", undefined)
+      } else if (noIdentity && fallBackToAdhoc) {
+        log.warn(null, "falling back to ad-hoc signature for macOS application code signing")
+        identity = new Identity("-", undefined)
+      } else if (noIdentity) {
         await reportError(isMas, certificateTypes, qualifier, keychainFile, this.forceCodeSigning)
         return false
       }
@@ -357,7 +368,13 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
       const artifactName = this.expandArtifactNamePattern(masOptions, "pkg", arch)
       const artifactPath = path.join(outDir!, artifactName)
       await this.doFlat(appPath, artifactPath, masInstallerIdentity, keychainFile)
-      await this.dispatchArtifactCreated(artifactPath, null, Arch.x64, this.computeSafeArtifactName(artifactName, "pkg", arch, true, this.platformSpecificBuildOptions.defaultArch))
+      await this.info.emitArtifactBuildCompleted({
+        file: artifactPath,
+        target: null,
+        arch: Arch.x64,
+        safeArtifactName: this.computeSafeArtifactName(artifactName, "pkg", arch, true, this.platformSpecificBuildOptions.defaultArch),
+        packager: this,
+      })
     }
 
     if (!isMas) {
@@ -508,7 +525,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
       await Promise.all(
         directories.map(async (file: string) => {
           if (shouldSign(file)) {
-            await this.sign(path.join(sourceDirectory, file), null, null, null)
+            await this.sign(path.join(sourceDirectory, file), null, null, packContext.arch)
           }
         })
       )

@@ -153,16 +153,6 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     )
   }
 
-  dispatchArtifactCreated(file: string, target: Target | null, arch: Arch | null, safeArtifactName?: string | null): Promise<void> {
-    return this.info.emitArtifactBuildCompleted({
-      file,
-      safeArtifactName,
-      target,
-      arch,
-      packager: this,
-    })
-  }
-
   async pack(outDir: string, arch: Arch, targets: Array<Target>, taskManager: AsyncTaskManager): Promise<any> {
     const appOutDir = this.computeAppOutDir(outDir, arch)
     await this.doPack({
@@ -618,13 +608,17 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   getResourcesDir(appOutDir: string): string {
     if (this.platform === Platform.MAC) {
       return this.getMacOsResourcesDir(appOutDir)
-    } else if (isElectronBased(this.info.framework)) {
-      return path.join(appOutDir, "resources")
-    } else {
-      return appOutDir
     }
+    if (isElectronBased(this.info.framework)) {
+      return path.join(appOutDir, "resources")
+    }
+    return appOutDir
   }
 
+  public getMacOsElectronFrameworkResourcesDir(appOutDir: string): string {
+    const electronFrameworkName = path.basename(this.info.framework.distMacOsAppName, ".app") + " " + "Framework.framework"
+    return path.join(appOutDir, `${this.appInfo.productFilename}.app`, "Contents", "Frameworks", electronFrameworkName, "Resources")
+  }
   public getMacOsResourcesDir(appOutDir: string): string {
     return path.join(appOutDir, `${this.appInfo.productFilename}.app`, "Contents", "Resources")
   }

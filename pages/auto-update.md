@@ -28,7 +28,7 @@ All these targets are default, custom configuration is not required. (Though it 
 
 The `electron-updater` package offers a different functionality compared to Electron's built-in auto-updater. Here are the differences:
 
-* A dedicated release server is not required.
+* Linux is supported (not only macOS and Windows).
 * Code signature validation not only on macOS, but also on Windows.
 * All required metadata files and artifacts are produced and published automatically.
 * Download progress and [staged rollouts](#staged-rollouts) supported on all platforms.
@@ -124,7 +124,22 @@ autoUpdater.logger = require("electron-log")
 autoUpdater.logger.transports.file.level = "info"
 ```
 
-Note that in order to develop/test UI/UX of updating without packaging the application you need to have a file named `dev-app-update.yml` in the root of your project, which matches your `publish` setting from electron-builder config (but in [yaml](https://www.json2yaml.com) format). But it is not recommended, better to test auto-update for installed application (especially on Windows). [Minio](https://github.com/electron-userland/electron-builder/issues/3053#issuecomment-401001573) is recommended as a local server for testing updates.
+Note that in order to develop/test UI/UX of updating without packaging the application you need to have a file named `dev-app-update.yml` in the root of your project, which matches your `publish` setting from electron-builder config (but in [yaml](https://www.json2yaml.com) format).
+In latest version you need [force the updater](https://github.com/electron-userland/electron-builder/issues/6863) to work in "dev" mode:
+```js
+autoUpdater.forceDevUpdateConfig = true
+```
+!!! note
+    If you see this in logs:
+    ```
+    APPIMAGE env is not defined, current application is not an AppImage
+    ```
+    you need to apply [this workaround](https://github.com/electron-userland/electron-builder/issues/3167#issuecomment-627696277) otherwise update won't continue:
+    ```js
+    process.env.APPIMAGE = path.join(__dirname, 'dist', `app_name-${app.getVersion()}.AppImage`)
+    ```
+
+But it is not recommended, better to test auto-update for installed application (especially on Windows). [Minio](https://github.com/electron-userland/electron-builder/issues/3053#issuecomment-401001573) is recommended as a local server for testing updates.
 
 ## Compatibility
 

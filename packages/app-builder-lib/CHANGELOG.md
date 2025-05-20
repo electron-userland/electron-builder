@@ -1,5 +1,82 @@
 # app-builder-lib
 
+## 26.0.15
+
+### Patch Changes
+
+- [#9067](https://github.com/electron-userland/electron-builder/pull/9067) [`312938d8`](https://github.com/electron-userland/electron-builder/commit/312938d8519a29992e75e1f544c41ca50ae591e3) Thanks [@beyondkmp](https://github.com/beyondkmp)! - refactor: update package manager detection and improve type handling
+
+- [#9082](https://github.com/electron-userland/electron-builder/pull/9082) [`6f3aec81`](https://github.com/electron-userland/electron-builder/commit/6f3aec8106be0d365e59923410c1eb55cd0328d1) Thanks [@mmaietta](https://github.com/mmaietta)! - fix(deps): update dependency @electron/universal to v2.0.2
+
+- [#9038](https://github.com/electron-userland/electron-builder/pull/9038) [`d97e7eb2`](https://github.com/electron-userland/electron-builder/commit/d97e7eb20d6cdf53f7fd75d51818de3cf65e011a) Thanks [@beyondkmp](https://github.com/beyondkmp)! - refactor: improve resource directory handling for macOS
+
+- [#9083](https://github.com/electron-userland/electron-builder/pull/9083) [`0ce7b90e`](https://github.com/electron-userland/electron-builder/commit/0ce7b90e5eec0cf3049e2b3957b4d076fbdd615d) Thanks [@mmaietta](https://github.com/mmaietta)! - fix(deps): update dependency @electron/osx-sign to v1.3.3
+
+- Updated dependencies []:
+  - dmg-builder@26.0.15
+  - electron-builder-squirrel-windows@26.0.15
+
+## 26.0.14
+
+### Patch Changes
+
+- [#9032](https://github.com/electron-userland/electron-builder/pull/9032) [`3d65267a`](https://github.com/electron-userland/electron-builder/commit/3d65267a6c53ca824f70e5b0f5d8f4ba8be38237) Thanks [@indutny-signal](https://github.com/indutny-signal)! - Add customNsisResources override to nsis options
+
+- [#9061](https://github.com/electron-userland/electron-builder/pull/9061) [`5545e132`](https://github.com/electron-userland/electron-builder/commit/5545e1325457bf4c493166faaf533528d336e76f) Thanks [@mmaietta](https://github.com/mmaietta)! - chore: migrate fpm packaging from app builder
+
+- [#9034](https://github.com/electron-userland/electron-builder/pull/9034) [`80fbf5a6`](https://github.com/electron-userland/electron-builder/commit/80fbf5a6d8f308415469d4ee96a954932e6f19b7) Thanks [@beyondkmp](https://github.com/beyondkmp)! - feat: add buildUniversalInstaller option to NSIS portable configuration
+
+- [#8995](https://github.com/electron-userland/electron-builder/pull/8995) [`524fb6e0`](https://github.com/electron-userland/electron-builder/commit/524fb6e042446f741eaf77a8eb65485074186b96) Thanks [@mmaietta](https://github.com/mmaietta)! - chore(asar): use streaming API for `electron/asar` for constructing asar package
+
+- Updated dependencies []:
+  - dmg-builder@26.0.14
+  - electron-builder-squirrel-windows@26.0.14
+
+## 26.0.13
+
+### Patch Changes
+
+- [#9019](https://github.com/electron-userland/electron-builder/pull/9019) [`33bd6706`](https://github.com/electron-userland/electron-builder/commit/33bd67061235ae1067a8f6185d108b744388f2e3) Thanks [@beyondkmp](https://github.com/beyondkmp)! - chore(deps): bump @electron/rebuild to 3.7.1
+
+- [#9022](https://github.com/electron-userland/electron-builder/pull/9022) [`1397775c`](https://github.com/electron-userland/electron-builder/commit/1397775c3bbde974468ab639866c7434960cbc81) Thanks [@mmaietta](https://github.com/mmaietta)! - chore(deps): updating electron/rebuild to latest 3.7.2
+
+- [#9010](https://github.com/electron-userland/electron-builder/pull/9010) [`8bd1a10a`](https://github.com/electron-userland/electron-builder/commit/8bd1a10a2dcdee080e3b5a0359453d5d34b3ffbf) Thanks [@beyondkmp](https://github.com/beyondkmp)! - fix: remove implicit dependencies handling
+
+- [#8962](https://github.com/electron-userland/electron-builder/pull/8962) [`106640dd`](https://github.com/electron-userland/electron-builder/commit/106640dd42a3db08bfbe3a3a32fe333e93ba5c10) Thanks [@mmaietta](https://github.com/mmaietta)! - chore(refactor): enable parallel packaging of archs and targets with `concurrency` config prop
+
+- [#8987](https://github.com/electron-userland/electron-builder/pull/8987) [`9fb2895c`](https://github.com/electron-userland/electron-builder/commit/9fb2895cd008ea6fc6210078decabc15a5c0144a) Thanks [@danewilson](https://github.com/danewilson)! - fix: malformed `Files` param when using Azure Trusted Signing
+
+- [#9013](https://github.com/electron-userland/electron-builder/pull/9013) [`c223866e`](https://github.com/electron-userland/electron-builder/commit/c223866e366ef1aeeefec0d1a61a14b3d526f23e) Thanks [@beyondkmp](https://github.com/beyondkmp)! - fix: dependency path is undefined
+
+- [#9007](https://github.com/electron-userland/electron-builder/pull/9007) [`bff46ec4`](https://github.com/electron-userland/electron-builder/commit/bff46ec41c4a7715cc06f7dfd6ff95f8e4bbe869) Thanks [@kthchew](https://github.com/kthchew)! - fix(mac): allow ad-hoc identities for codesigning
+
+- [#9018](https://github.com/electron-userland/electron-builder/pull/9018) [`a2f7f735`](https://github.com/electron-userland/electron-builder/commit/a2f7f7350be2379c4917417c92ece5a6ab241708) Thanks [@gtluszcz](https://github.com/gtluszcz)! - Add information how to use electron-publish s3 with credentials stored in ~/.aws/config file.
+
+- Updated dependencies [[`106640dd`](https://github.com/electron-userland/electron-builder/commit/106640dd42a3db08bfbe3a3a32fe333e93ba5c10), [`a2f7f735`](https://github.com/electron-userland/electron-builder/commit/a2f7f7350be2379c4917417c92ece5a6ab241708)]:
+  - builder-util@26.0.13
+  - dmg-builder@26.0.13
+  - electron-builder-squirrel-windows@26.0.13
+  - builder-util-runtime@9.3.2
+  - electron-publish@26.0.13
+
+## 26.0.12
+
+### Patch Changes
+
+- [#8968](https://github.com/electron-userland/electron-builder/pull/8968) [`2d25ec8c`](https://github.com/electron-userland/electron-builder/commit/2d25ec8ca9ff6dfc634323b7592335b0631f4e47) Thanks [@t3chguy](https://github.com/t3chguy)! - chore(docs): Fix typo in `SquirrelWindowsOptions`
+
+- [#8947](https://github.com/electron-userland/electron-builder/pull/8947) [`7ba4fea9`](https://github.com/electron-userland/electron-builder/commit/7ba4fea95825650f02749949632b351c75d3019a) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: support `mas` packages for flipping fuses
+
+- [#8958](https://github.com/electron-userland/electron-builder/pull/8958) [`81e0c472`](https://github.com/electron-userland/electron-builder/commit/81e0c472fe2691b716aba5428dedc5da1c57e773) Thanks [@beyondkmp](https://github.com/beyondkmp)! - optimize workspace package resolution in dependency tree
+
+- [#8979](https://github.com/electron-userland/electron-builder/pull/8979) [`f24a2ce0`](https://github.com/electron-userland/electron-builder/commit/f24a2ce05cfbc88b79c1d743d13c898d70be99df) Thanks [@teamchong](https://github.com/teamchong)! - Fix: Azure trust signing fails with spaces in parameters
+
+- [#8957](https://github.com/electron-userland/electron-builder/pull/8957) [`ad151b9d`](https://github.com/electron-userland/electron-builder/commit/ad151b9dbefa746514dd15471e5ef8bf5eed1d9b) Thanks [@indutny-signal](https://github.com/indutny-signal)! - fix: pnpm collection of optional dependencies
+
+- Updated dependencies []:
+  - dmg-builder@26.0.12
+  - electron-builder-squirrel-windows@26.0.12
+
 ## 26.0.11
 
 ### Patch Changes

@@ -56,7 +56,10 @@ export async function installAppDeps(args: any) {
   // if two package.json — force full install (user wants to install/update app deps in addition to dev)
   await installOrRebuild(
     config,
-    appDir,
+    {
+      appDir,
+      projectDir,
+    },
     {
       frameworkInfo: { version, useCustomDist: true },
       platform: args.platform,

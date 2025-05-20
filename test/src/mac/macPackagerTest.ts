@@ -23,6 +23,9 @@ test.ifMac("two-package", ({ expect }) =>
           timestamp: undefined,
           notarize: false,
         },
+        dmg: {
+          title: "Foo1",
+        },
         //tslint:disable-next-line:no-invalid-template-strings
         artifactName: "${name}-${version}-${os}-${arch}.${ext}",
         electronFuses: {
@@ -42,6 +45,9 @@ test.ifMac("two-package", ({ expect }) =>
       checkMacApp: async appDir => {
         const resources = await fs.readdir(path.join(appDir, "Contents", "Resources"))
         expect(resources.filter(it => !it.startsWith(".")).sort()).toMatchSnapshot()
+
+        const electronFrameworkResources = await fs.readdir(path.join(appDir, "Contents", "Frameworks", "Electron Framework.framework", "Resources"))
+        expect(electronFrameworkResources.filter(it => !it.startsWith(".")).sort()).toMatchSnapshot()
       },
     }
   )
@@ -60,6 +66,9 @@ test.ifMac("one-package", ({ expect }) =>
           url: "https://develar.s3.amazonaws.com/test/${os}/${arch}",
         },
         downloadAlternateFFmpeg: false,
+        dmg: {
+          title: "Bar2",
+        },
         mac: {
           // test appId per platform
           appId: "foo",
