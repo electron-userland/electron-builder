@@ -45,6 +45,7 @@ export interface AssertPackOptions {
   readonly signedWin?: boolean
 
   readonly isInstallDepsBefore?: boolean
+  readonly storeDepsLockfileSnapshot?: boolean
 
   readonly publish?: PublishPolicy
 
@@ -137,7 +138,7 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
 
         const destLockfile = path.join(projectDir, pmOptions.lockfile)
 
-        const shouldUpdateLockfiles = !!process.env.UPDATE_LOCKFILE_FIXTURES
+        const shouldUpdateLockfiles = !!process.env.UPDATE_LOCKFILE_FIXTURES && !!checkOptions.storeDepsLockfileSnapshot
         // check for lockfile fixture so we can use `--frozen-lockfile`
         if ((await exists(testFixtureLockfile)) && !shouldUpdateLockfiles) {
           await copyFile(testFixtureLockfile, destLockfile)
@@ -155,7 +156,7 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
         })
 
         // save lockfile fixture
-        if (!(await exists(testFixtureLockfile)) || shouldUpdateLockfiles) {
+        if (!(await exists(testFixtureLockfile)) && shouldUpdateLockfiles) {
           const fixtureDir = path.dirname(testFixtureLockfile)
           if (!(await exists(fixtureDir))) {
             await mkdir(fixtureDir)
