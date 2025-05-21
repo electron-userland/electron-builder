@@ -1,6 +1,6 @@
 import { getBinFromUrl } from "app-builder-lib/out/binDownload"
 import { GenericServerOptions, Nullish } from "builder-util-runtime"
-import { doSpawn, getArchSuffix, TmpDir } from "builder-util/out/util"
+import { archFromString, doSpawn, getArchSuffix, TmpDir } from "builder-util/out/util"
 import { Arch, Configuration, Platform } from "electron-builder"
 import fs, { outputFile } from "fs-extra"
 import path from "path"
@@ -13,48 +13,68 @@ import { NEW_VERSION_NUMBER, OLD_VERSION_NUMBER, writeUpdateConfig } from "../he
 describe("Electron autoupdate from 1.0.0 to 1.0.1 (live test)", () => {
   // Signing is required for macOS autoupdate
   test.ifMac.ifEnv(process.env.CSC_KEY_PASSWORD)("mac", async () => {
-    await runTest()
+    await runTest("zip")
   })
   test.ifWindows("win", async () => {
-    await runTest()
+    await runTest("zip")
   })
   test.ifLinux("linux", async () => {
-    await runTest()
+    await runTest("AppImage")
   })
 })
 
-async function runTest() {
+async function runTest(target: string, arch: Arch = Arch.x64) {
   const tmpDir = new TmpDir("auto-update")
-  const outDirs: string[] = []
-
-  const targetArch = process.arch === "arm64" ? Arch.arm64 : Arch.x64
+  const outDirs: ApplicationUpdatePaths[] = []
   // 1. Build both versions
-  await doBuild(expect, outDirs, Platform.current().createTarget(["zip"], targetArch), tmpDir, process.platform === "win32")
+  await doBuild(expect, outDirs, Platform.current().createTarget([target], arch), tmpDir, process.platform === "win32")
 
   const oldAppDir = outDirs[0]
   const newAppDir = outDirs[1]
 
+  const dirPath = oldAppDir.dir
+  let appPath = oldAppDir.appPath
+  fs.readdir(dirPath, (err, files) => {
+    if (err) {
+      console.error("Error reading directory:", err)
+      return
+    }
+
+    console.log(`Contents of ${dirPath}:`)
+    files.forEach(file => {
+      console.log(file)
+    })
+  })
+  if (target === "AppImage") {
+    appPath = path.join(oldAppDir.dir, `TestApp-${OLD_VERSION_NUMBER}${getArchSuffix(arch)}.AppImage`)
+    await fs.chmod(appPath, 0o755)
+  }
+
   await runTestWithinServer(async (rootDirectory: string, updateConfigPath: string) => {
     // Move app update to the root directory of the server
-    await fs.copy(newAppDir, rootDirectory, { recursive: true, overwrite: true })
+    await fs.copy(newAppDir.dir, rootDirectory, { recursive: true, overwrite: true })
 
-    const appPath = getAppPath(oldAppDir, targetArch)
     const verifyAppVersion = async (expectedVersion: string) => await launchAndWaitForQuit({ appPath, updateConfigPath, expectedVersion })
 
-    console.log("Old version", await verifyAppVersion(OLD_VERSION_NUMBER))
+    expect((await verifyAppVersion(OLD_VERSION_NUMBER)).version).toMatch(OLD_VERSION_NUMBER)
 
     // Wait for quitAndInstall to take effect, increase delay if updates are slower (shouldn't be the case for such a small test app)
     const delay = 10 * 1000
     await new Promise(resolve => setTimeout(resolve, delay))
 
-    console.log("New version", await verifyAppVersion(NEW_VERSION_NUMBER))
+    expect((await verifyAppVersion(NEW_VERSION_NUMBER)).version).toMatch(NEW_VERSION_NUMBER)
   })
   await tmpDir.cleanup()
 }
 
+type ApplicationUpdatePaths = {
+  dir: string
+  appPath: string
+}
+
 async function doBuild(
   expect: ExpectStatic,
-  outDirs: Array<string>,
+  outDirs: Array<ApplicationUpdatePaths>,
   targets: Map<Platform, Map<Arch, Array<string>>>,
   tmpDir: TmpDir,
   isWindows: boolean,
@@ -140,9 +160,10 @@ async function doBuild(
   const build = (version: string) =>
     buildApp(version, targets, extraConfig, async context => {
       // move dist temporarily out of project dir so each downloader can reference it
-      const newDir = await tmpDir.getTempDir({ prefix: version })
-      await fs.move(context.outDir, newDir)
-      outDirs.push(newDir)
+      const dir = await tmpDir.getTempDir({ prefix: version })
+      await fs.move(context.outDir, dir)
+      const appPath = path.join(dir, path.relative(context.outDir, context.getAppPath(Platform.current(), archFromString(process.arch))))
+      outDirs.push({ dir, appPath })
     })
   try {
     await build(OLD_VERSION_NUMBER)
@@ -151,19 +172,6 @@ async function doBuild(
     await tmpDir.cleanup()
     throw e
   }
-}
-
-const getAppPath = (dir: string, arch: Arch) => {
-  if (process.platform === "darwin") {
-    return path.join(dir, `mac${getArchSuffix(arch)}`, `TestApp.app`)
-  }
-  if (process.platform === "linux") {
-    return path.join(dir, `linux${getArchSuffix(arch)}-unpacked`, `TestApp`)
-  }
-  if (process.platform === "win32") {
-    return path.join(dir, `win${getArchSuffix(arch)}-unpacked`, `TestApp.exe`)
-  }
-  throw new Error(`Unsupported platform: ${process.platform}`)
 }
 
 async function runTestWithinServer(doTest: (rootDirectory: string, updateConfigPath: string) => Promise<void>) {
@@ -182,14 +190,18 @@ async function runTestWithinServer(doTest: (rootDirectory: string, updateConfigP
   return await new Promise<void>((resolve, reject) => {
     httpServerProcess.on("error", reject)
     doTest(root, updateConfig).then(resolve).catch(reject)
-  }).then(
-    v => {
-      httpServerProcess.kill()
-      return v
-    },
-    e => {
-      httpServerProcess.kill()
-      throw e
-    }
-  )
+  })
+    .then(
+      v => {
+        httpServerProcess.kill()
+        return v
+      },
+      e => {
+        httpServerProcess.kill()
+        throw e
+      }
+    )
+    .finally(() => {
+      tmpDir.cleanupSync()
+    })
 }

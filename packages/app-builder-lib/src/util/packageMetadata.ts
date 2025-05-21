@@ -1,6 +1,6 @@
 import { InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
 import { Nullish } from "builder-util-runtime"
-import { readFile, readJSON, readJson, readJsonSync } from "fs-extra"
+import { readFile, readJson, readJsonSync } from "fs-extra"
 import * as path from "path"
 import * as semver from "semver"
 import { Metadata } from "../options/metadata"
@@ -109,19 +109,20 @@ function checkDependencies(dependencies: Record<string, string> | Nullish, error
       }
     }
 
+    // for testing auto-update using workspace electron-updater
     if (updaterVersion.startsWith("file:")) {
-      const normalized = path.normalize(updaterVersion.substring(5))
+      const normalized = path.normalize(updaterVersion.substring("file:".length))
       const packageJsonPath = path.isAbsolute(normalized) ? normalized : path.resolve(__dirname, normalized)
       const json = readJsonSync(path.join(packageJsonPath, "package.json"))
       updaterVersion = json.version
     }
-  }
 
-  const requiredElectronUpdaterVersion = "4.0.0"
-  if (!versionSatisfies(updaterVersion, `>=${requiredElectronUpdaterVersion}`)) {
-    errors.push(
-      `At least electron-updater ${requiredElectronUpdaterVersion} is recommended by current electron-builder version. Please set electron-updater version to "^${requiredElectronUpdaterVersion}". Received "${updaterVersion}"`
-    )
+    const requiredElectronUpdaterVersion = "4.0.0"
+    if (!versionSatisfies(updaterVersion, `>=${requiredElectronUpdaterVersion}`)) {
+      errors.push(
+        `At least electron-updater ${requiredElectronUpdaterVersion} is recommended by current electron-builder version. Please set electron-updater version to "^${requiredElectronUpdaterVersion}". Received "${updaterVersion}"`
+      )
+    }
   }
 
   const swVersion = dependencies["electron-builder-squirrel-windows"]
