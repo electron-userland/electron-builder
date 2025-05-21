@@ -9,6 +9,7 @@ import { launchAndWaitForQuit } from "../helpers/launchAppCrossPlatform"
 import { assertPack, modifyPackageJson, PackedContext } from "../helpers/packTester"
 import { ELECTRON_VERSION } from "../helpers/testConfig"
 import { NEW_VERSION_NUMBER, OLD_VERSION_NUMBER, writeUpdateConfig } from "../helpers/updaterTestUtil"
+import { exec, execSync } from "child_process"
 
 describe("Electron autoupdate from 1.0.0 to 1.0.1 (live test)", () => {
   // Signing is required for macOS autoupdate
@@ -32,23 +33,25 @@ async function runTest(target: string, arch: Arch = Arch.x64) {
   const oldAppDir = outDirs[0]
   const newAppDir = outDirs[1]
 
-  const dirPath = oldAppDir.dir
-  let appPath = oldAppDir.appPath
-  fs.readdir(dirPath, (err, files) => {
-    if (err) {
-      console.error("Error reading directory:", err)
-      return
-    }
+  // const dirPath = oldAppDir.dir
+  // let appPath = oldAppDir.appPath
+  const appPath = oldAppDir.appPath
+  // fs.readdir(dirPath, (err, files) => {
+  //   if (err) {
+  //     console.error("Error reading directory:", err)
+  //     return
+  //   }
 
-    console.log(`Contents of ${dirPath}:`)
-    files.forEach(file => {
-      console.log(file)
-    })
-  })
-  if (target === "AppImage") {
-    appPath = path.join(oldAppDir.dir, `TestApp-${OLD_VERSION_NUMBER}${getArchSuffix(arch)}.AppImage`)
-    await fs.chmod(appPath, 0o755)
-  }
+  //   console.log(`Contents of ${dirPath}:`)
+  //   files.forEach(file => {
+  //     console.log(file)
+  //   })
+  // })
+  // if (target === "AppImage") {
+  //   appPath = path.join(dirPath, `TestApp-${OLD_VERSION_NUMBER}${getArchSuffix(arch)}.AppImage`)
+  //   execSync(`apt-get update -yqq && apt-get install -yq file xvfb`, { stdio: "inherit" })
+  //   console.log(execSync(`file ${appPath}`, { stdio: "inherit" }))
+  // }
 
   await runTestWithinServer(async (rootDirectory: string, updateConfigPath: string) => {
     // Move app update to the root directory of the server
@@ -56,7 +59,9 @@ async function runTest(target: string, arch: Arch = Arch.x64) {
 
     const verifyAppVersion = async (expectedVersion: string) => await launchAndWaitForQuit({ appPath, updateConfigPath, expectedVersion })
 
-    expect((await verifyAppVersion(OLD_VERSION_NUMBER)).version).toMatch(OLD_VERSION_NUMBER)
+    const result = await verifyAppVersion(OLD_VERSION_NUMBER)
+    console.log("App version:", result)
+    expect(result.version).toMatch(OLD_VERSION_NUMBER)
 
     // Wait for quitAndInstall to take effect, increase delay if updates are slower (shouldn't be the case for such a small test app)
     const delay = 10 * 1000
@@ -105,6 +110,9 @@ async function doBuild(
             path: "test",
           },
           files: ["**/*", "node_modules/**", "!path/**"],
+          appImage: {
+            // systemIntegration: false,
+          }
         },
       },
       {
@@ -178,6 +186,9 @@ async function runTestWithinServer(doTest: (rootDirectory: string, updateConfigP
   const tmpDir = new TmpDir("blackbox-update-test")
   const root = await tmpDir.getTempDir({ prefix: "root" })
 
+  // 65535 is the max port number
+  // Math.random() / Math.random() is used to avoid zero
+  // Math.floor(((Math.random() / Math.random()) * 1000) % 65535) is used to avoid port number collision
   const port = 8000 + Math.floor(((Math.random() / Math.random()) * 1000) % 65535)
   const serverBin = await getBinFromUrl("ran", "0.1.3", "imfA3LtT6umMM0BuQ29MgO3CJ9uleN5zRBi3sXzcTbMOeYZ6SQeN7eKr3kXZikKnVOIwbH+DDO43wkiR/qTdkg==")
   const httpServerProcess = doSpawn(path.join(serverBin, process.platform, "ran"), [`-root=${root}`, `-port=${port}`, "-gzip=false", "-listdir=true"])

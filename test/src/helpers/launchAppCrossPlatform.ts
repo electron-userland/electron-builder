@@ -1,4 +1,5 @@
-import { ChildProcess, spawn } from "child_process"
+import { ChildProcess, execSync, spawn } from "child_process"
+import { chmodSync, closeSync, openSync, readSync } from "fs"
 import os from "os"
 import path from "path"
 
@@ -18,58 +19,104 @@ interface LaunchOptions {
 }
 
 export async function launchAndWaitForQuit({ appPath, timeoutMs = 20000, env = {}, expectedVersion, updateConfigPath }: LaunchOptions): Promise<LaunchResult> {
-  return new Promise((resolve, reject) => {
-    let child: ChildProcess
+  let child: ChildProcess
+  const versionRegex = /APP_VERSION:\s*([0-9]+\.[0-9]+\.[0-9]+)/
 
-    const platform = os.platform()
-    const versionRegex = /APP_VERSION:\s*([0-9]+\.[0-9]+\.[0-9]+)/
-    const finalEnv = {
-      ...process.env,
-      AUTO_UPDATER_TEST: "1",
-      AUTO_UPDATER_TEST_CONFIG_PATH: updateConfigPath,
-      ...env,
+  function spawnApp(command: string, args: string[] = [], detached = true, localEnv = env) {
+    return spawn(command, args, {
+      detached,
+      shell: false,
+      stdio: ["ignore", "pipe", "pipe"],
+      env: {
+        ...process.env,
+        AUTO_UPDATER_TEST: "1",
+        AUTO_UPDATER_TEST_CONFIG_PATH: updateConfigPath,
+        ...localEnv,
+      },
+    })
+  }
+
+  const platform = os.platform()
+  switch (platform) {
+    case "darwin": {
+      const binary = path.join(appPath, "Contents", "MacOS", path.basename(appPath, ".app"))
+      child = spawnApp(binary)
+      break
     }
 
+    case "win32": {
+      const powershellCmd = `Start-Process -FilePath '${appPath}' -Wait`
+      child = spawnApp("powershell.exe", ["-NoProfile", "-Command", powershellCmd], false)
+      break
+    }
+
+    case "linux": {
+      execSync(`apt-get update -yqq && apt-get install -yq file xvfb`, { stdio: "inherit" })
+
+      const { display, stop } = startXvfb()
+      await new Promise(resolve => setTimeout(resolve, 500)) // Give Xvfb time to init
+      console.log("Xvfb started on display", display)
+      ;["SIGINT", "SIGTERM", "uncaughtException", "unhandledRejection"].forEach(sig => {
+        process.once(sig, () => {
+          try {
+            stop()
+          } catch (e) {
+            console.warn("Failed to stop Xvfb:", e)
+          }
+        })
+      })
+
+      if (appPath.endsWith(".AppImage")) {
+        const magic = readMagicBytes(appPath)
+        if (magic.toString("utf-8", 1, 4) !== "ELF") {
+          throw new Error(`AppImage is not a valid ELF binary: magic=${magic.toString("hex")}`)
+        }
+        execSync("which Xvfb", { stdio: "inherit" })
+        execSync("which file", { stdio: "inherit" })
+        execSync("file " + appPath, { stdio: "inherit" })
+
+        chmodSync(appPath, 0o755)
+        const spawnEnv = {
+          ...env,
+          DISPLAY: display,
+          APPIMAGE_EXTRACT_AND_RUN: "1",
+        }
+
+        child = spawn(appPath, [], {
+          detached: true,
+          shell: false,
+          stdio: ["ignore", "pipe", "pipe"],
+          env: {
+            ...process.env,
+            AUTO_UPDATER_TEST: "1",
+            AUTO_UPDATER_TEST_CONFIG_PATH: updateConfigPath,
+            ...spawnEnv,
+          },
+        })
+      } else {
+        child = spawnApp(appPath, [], true, { DISPLAY: display })
+      }
+      break
+    }
+
+    default:
+      throw new Error(`Unsupported platform: ${platform}`)
+  }
+
+  return new Promise((resolve, reject) => {
+    let version: string | undefined
+    let resolved = false
     const stdoutChunks: string[] = []
     const stderrChunks: string[] = []
 
-    function spawnApp(command: string, args: string[] = []) {
-      return spawn(command, args, {
-        detached: true,
-        shell: false,
-        stdio: ["ignore", "pipe", "pipe"],
-        env: finalEnv,
+    function resolveResult(code: number | null) {
+      resolve({
+        version,
+        exitCode: code,
+        stdout: stdoutChunks.join(""),
+        stderr: stderrChunks.join(""),
       })
     }
-
-    try {
-      switch (platform) {
-        case "darwin": {
-          const binary = path.join(appPath, "Contents", "MacOS", path.basename(appPath, ".app"))
-          child = spawnApp(binary)
-          break
-        }
-        case "win32": {
-          const powershellCmd = `Start-Process -FilePath '${appPath}' -Wait`
-          child = spawn("powershell.exe", ["-NoProfile", "-Command", powershellCmd], {
-            stdio: ["ignore", "pipe", "pipe"],
-            env: finalEnv,
-          })
-          break
-        }
-        case "linux": {
-          child = spawnApp(appPath)
-          break
-        }
-        default:
-          throw new Error(`Unsupported platform: ${platform}`)
-      }
-    } catch (err) {
-      return reject(err)
-    }
-
-    let version: string | undefined
-    let resolved = false
 
     child.stdout?.on("data", data => {
       const line = data.toString()
@@ -83,13 +130,20 @@ export async function launchAndWaitForQuit({ appPath, timeoutMs = 20000, env = {
           reject(new Error(`Expected version ${expectedVersion}, got ${version}`))
         } else {
           resolved = true
-          resolveResult(resolve, version, 0, stdoutChunks, stderrChunks)
+          resolveResult(0)
+          try {
+            child.kill()
+          } catch {
+            /* empty */
+          }
         }
       }
     })
 
     child.stderr?.on("data", data => {
-      stderrChunks.push(data.toString())
+      const line = data.toString()
+      stderrChunks.push(line)
+      console.error(`[stderr] ${line}`)
     })
 
     child.on("error", err => {
@@ -102,31 +156,60 @@ export async function launchAndWaitForQuit({ appPath, timeoutMs = 20000, env = {
     child.on("exit", code => {
       if (!resolved) {
         resolved = true
-        resolveResult(resolve, version, code, stdoutChunks, stderrChunks)
+        resolveResult(code)
       }
     })
 
     setTimeout(() => {
       if (!resolved) {
         resolved = true
+        child.kill()
         reject(new Error(`Timeout after ${timeoutMs}ms\nSTDOUT:\n${stdoutChunks.join("")}\nSTDERR:\n${stderrChunks.join("")}`))
       }
-      child.kill() // best-effort cleanup
     }, timeoutMs)
   })
+}
 
-  function resolveResult(
-    resolve: (value: LaunchResult | PromiseLike<LaunchResult>) => void,
-    version: string | undefined,
-    code: number | null,
-    stdoutChunks: string[],
-    stderrChunks: string[]
-  ) {
-    resolve({
-      version,
-      exitCode: code,
-      stdout: stdoutChunks.join(""),
-      stderr: stderrChunks.join(""),
-    })
+// ⬇️ Launch Xvfb and validate it starts
+export function startXvfb(): { display: string; stop: () => void } {
+  const display = `:${Math.floor(90 + Math.random() * 10)}`
+  const proc = spawn("Xvfb", [display, "-screen", "0", "1024x768x24"], {
+    detached: true,
+    stdio: ["ignore", "pipe", "pipe"],
+  })
+
+  let errorOutput = ""
+  proc.stderr?.on("data", data => {
+    errorOutput += data.toString()
+  })
+
+  setTimeout(() => {
+    if (!proc.pid || isNaN(proc.pid)) {
+      throw new Error(`Xvfb failed to start on ${display}: ${errorOutput}`)
+    }
+  }, 200)
+
+  proc.unref()
+
+  return {
+    display,
+    stop: () => {
+      if (typeof proc.pid === "number" && !isNaN(proc.pid)) {
+        try {
+          process.kill(-proc.pid, "SIGTERM")
+        } catch (e) {
+          console.warn("Failed to stop Xvfb:", e)
+        }
+      }
+    },
   }
+}
+
+// ⬇️ Read first 4 bytes of AppImage to validate ELF header
+function readMagicBytes(appPath: string): Buffer {
+  const fd = openSync(appPath, "r")
+  const buffer = Buffer.alloc(4)
+  readSync(fd, buffer, 0, 4, 0)
+  closeSync(fd)
+  return buffer
 }
