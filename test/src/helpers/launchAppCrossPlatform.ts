@@ -51,7 +51,6 @@ export async function launchAndWaitForQuit({ appPath, timeoutMs = 20000, env = {
     }
 
     case "linux": {
-      execSync(`apt-get update -yqq && apt-get install -yq file xvfb`, { stdio: "inherit" })
 
       const { display, stop } = startXvfb()
       await new Promise(resolve => setTimeout(resolve, 500)) // Give Xvfb time to init

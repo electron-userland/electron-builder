@@ -9,6 +9,7 @@ import { launchAndWaitForQuit } from "../helpers/launchAppCrossPlatform"
 import { assertPack, modifyPackageJson, PackedContext } from "../helpers/packTester"
 import { ELECTRON_VERSION } from "../helpers/testConfig"
 import { NEW_VERSION_NUMBER, OLD_VERSION_NUMBER, writeUpdateConfig } from "../helpers/updaterTestUtil"
+import { execSync } from "child_process"
 
 describe("Electron autoupdate from 1.0.0 to 1.0.1 (live test)", () => {
   const debug = process.env.DEBUG
@@ -58,6 +59,7 @@ async function runTest(target: string, arch: Arch = Arch.x64) {
   //   })
   // })
   if (target === "AppImage") {
+    execSync(`apt-get update -yqq && apt-get install -yq file xvfb`, { stdio: "inherit" })
     appPath = path.join(dirPath, `TestApp-${OLD_VERSION_NUMBER}${getArchSuffix(arch)}.AppImage`)
   }
 
