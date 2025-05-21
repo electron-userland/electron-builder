@@ -1,6 +1,6 @@
 import { getBinFromUrl } from "app-builder-lib/out/binDownload"
 import { GenericServerOptions, Nullish } from "builder-util-runtime"
-import { archFromString, doSpawn, TmpDir } from "builder-util/out/util"
+import { archFromString, doSpawn, getArchSuffix, TmpDir } from "builder-util/out/util"
 import { Arch, Configuration, Platform } from "electron-builder"
 import fs, { outputFile } from "fs-extra"
 import path from "path"
@@ -43,9 +43,9 @@ async function runTest(target: string, arch: Arch = Arch.x64) {
   const oldAppDir = outDirs[0]
   const newAppDir = outDirs[1]
 
-  // const dirPath = oldAppDir.dir
-  // let appPath = oldAppDir.appPath
-  const appPath = oldAppDir.appPath
+  const dirPath = oldAppDir.dir
+  let appPath = oldAppDir.appPath
+  // const appPath = oldAppDir.appPath
   // fs.readdir(dirPath, (err, files) => {
   //   if (err) {
   //     console.error("Error reading directory:", err)
@@ -57,11 +57,9 @@ async function runTest(target: string, arch: Arch = Arch.x64) {
   //     console.log(file)
   //   })
   // })
-  // if (target === "AppImage") {
-  //   appPath = path.join(dirPath, `TestApp-${OLD_VERSION_NUMBER}${getArchSuffix(arch)}.AppImage`)
-  //   execSync(`apt-get update -yqq && apt-get install -yq file xvfb`, { stdio: "inherit" })
-  //   console.log(execSync(`file ${appPath}`, { stdio: "inherit" }))
-  // }
+  if (target === "AppImage") {
+    appPath = path.join(dirPath, `TestApp-${OLD_VERSION_NUMBER}${getArchSuffix(arch)}.AppImage`)
+  }
 
   await runTestWithinServer(async (rootDirectory: string, updateConfigPath: string) => {
     // Move app update to the root directory of the server
