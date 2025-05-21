@@ -13,7 +13,7 @@ interface LaunchOptions {
   appPath: string
   timeoutMs?: number
   env?: Record<string, string>
-  expectVersion?: string
+  expectedVersion?: string
   waitForVersionLog?: boolean
   updateConfigPath: string
 }
@@ -22,7 +22,7 @@ export async function launchAndWaitForQuit({
   appPath,
   timeoutMs = 20000,
   env = {},
-  expectVersion,
+  expectedVersion,
   updateConfigPath,
   waitForVersionLog = true,
 }: LaunchOptions): Promise<LaunchResult> {
@@ -81,13 +81,19 @@ export async function launchAndWaitForQuit({
 
     child.stdout?.on("data", data => {
       const line = data.toString()
+      console.log(line)
       stdoutChunks.push(line)
       const match = line.match(versionRegex)
       if (match) {
         version = match[1].trim()
-        if (expectVersion && version !== expectVersion) {
-          reject(new Error(`Expected version ${expectVersion}, got ${version}`))
+        console.log(`Found Version in console logs: ${version}`)
+        if (expectedVersion && version !== expectedVersion) {
+          reject(new Error(`Expected version ${expectedVersion}, got ${version}`))
+        } else {
+          resolved = true
+          resolveResult(resolve, version, 0, stdoutChunks, stderrChunks)
         }
+        child.kill() // best-effort cleanup
       }
     })
 
@@ -105,12 +111,7 @@ export async function launchAndWaitForQuit({
     child.on("exit", code => {
       if (!resolved) {
         resolved = true
-        resolve({
-          version,
-          exitCode: code,
-          stdout: stdoutChunks.join(""),
-          stderr: stderrChunks.join(""),
-        })
+        resolveResult(resolve, version, code, stdoutChunks, stderrChunks)
       }
     })
 
@@ -118,8 +119,23 @@ export async function launchAndWaitForQuit({
       if (!resolved) {
         resolved = true
         reject(new Error(`Timeout after ${timeoutMs}ms\nSTDOUT:\n${stdoutChunks.join("")}\nSTDERR:\n${stderrChunks.join("")}`))
-        child.kill()
       }
+      child.kill() // best-effort cleanup
     }, timeoutMs)
   })
+
+  function resolveResult(
+    resolve: (value: LaunchResult | PromiseLike<LaunchResult>) => void,
+    version: string | undefined,
+    code: number | null,
+    stdoutChunks: string[],
+    stderrChunks: string[]
+  ) {
+    resolve({
+      version,
+      exitCode: code,
+      stdout: stdoutChunks.join(""),
+      stderr: stderrChunks.join(""),
+    })
+  }
 }

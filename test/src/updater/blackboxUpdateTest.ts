@@ -139,21 +139,16 @@ describe("Electron autoupdate from 1.0.0 to 1.0.1 (live test)", () => {
 
       const oldExePath = app2(oldAppDir, targetArch)
 
-      const appVersion = async (expectVersion: string) => await launchAndWaitForQuit({ appPath: oldExePath, updateConfigPath, expectVersion })
-      await appVersion(OLD_VERSION_NUMBER)
+      const appVersion = async (expectedVersion: string) => await launchAndWaitForQuit({ appPath: oldExePath, updateConfigPath, expectedVersion })
+
+      console.log("Verified old version", await appVersion(OLD_VERSION_NUMBER))
 
       // Wait for quitAndInstall to take effect
       await wait(18000) // increase if updates are slower
 
-      // Relaunch app and verify new version
-      // const versionAfter = await launchAppCrossPlatform("open", [oldExePath], updateConfigPath)
-      await appVersion(NEW_VERSION_NUMBER)
-
-      // await appVersion(NEW_VERSION_NUMBER)
-
-      // const verifyNoUpdateSameVersion = await launchAppCrossPlatform("open", [oldExePath], updateConfigPath)
-      // expect(await appVersion()).toBe(NEW_VERSION_NUMBER)
+      console.log("Verified new version", await appVersion(NEW_VERSION_NUMBER))
     })
+    await tmpDir.cleanup()
   })
 })
 

@@ -24,19 +24,27 @@ async function init() {
   if (!app.isReady()) {
     await app.whenReady()
   }
-  console.log("APP_VERSION:", app.getVersion())
   isReady()
 }
-init()
 
 function isReady() {
-  console.log("App is ready")
   if (!!shouldTestAutoUpdater) {
     autoUpdater._appUpdateConfigPath = _appUpdateConfigPath
     autoUpdater.updateConfigPath = updateConfigPath
+    autoUpdater.logger = console
+    autoUpdater.autoDownload = true
+
     autoUpdater.checkForUpdates()
     autoUpdater.on("update-downloaded", () => {
       setTimeout(() => autoUpdater.quitAndInstall(false, true), 1000)
     })
   }
 }
+
+init()
+  .then(() => {
+    console.log("App initialized")
+  })
+  .catch(error => {
+    console.error("Error initializing app:", error)
+  })
