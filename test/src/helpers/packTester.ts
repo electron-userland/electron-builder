@@ -55,6 +55,7 @@ export interface PackedContext {
   readonly projectDir: string
   readonly outDir: string
 
+  readonly getAppPath: (platform: Platform, arch?: Arch) => string
   readonly getResources: (platform: Platform, arch?: Arch) => string
   readonly getContent: (platform: Platform, arch?: Arch) => string
 
@@ -182,19 +183,21 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
       )
 
       if (checkOptions.packed != null) {
-        const base = function (platform: Platform, arch?: Arch): string {
-          return path.join(
-            outDir,
-            `${platform.buildConfigurationKey}${getArchSuffix(arch ?? Arch.x64)}${platform === Platform.MAC ? "" : "-unpacked"}`,
-            platform === Platform.MAC ? `${packager.appInfo.productFilename}.app/Contents` : ""
-          )
+        const getAppPath = function (platform: Platform, arch?: Arch): string {
+          return path.join(outDir, `${platform.buildConfigurationKey}${getArchSuffix(arch ?? Arch.x64)}${platform === Platform.MAC ? "" : "-unpacked"}`)
         }
-
+        const getContent = (platform: Platform, arch: Arch | undefined): string => {
+          return path.join(getAppPath(platform, arch), platform === Platform.MAC ? `${packager.appInfo.productFilename}.app/Contents` : "")
+        }
+        const getResources = (platform: Platform, arch: Arch | undefined): string => {
+          return path.join(getContent(platform, arch), platform === Platform.MAC ? "Resources" : "resources")
+        }
         await checkOptions.packed({
           projectDir,
           outDir,
-          getResources: (platform, arch) => path.join(base(platform, arch), platform === Platform.MAC ? "Resources" : "resources"),
-          getContent: (platform, arch) => base(platform, arch),
+          getAppPath,
+          getResources,
+          getContent,
           packager,
           tmpDir,
         })
