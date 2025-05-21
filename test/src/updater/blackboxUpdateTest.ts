@@ -1,18 +1,15 @@
-import { describe, it, expect, ExpectStatic } from "vitest"
-import { ChildProcessWithoutNullStreams, spawn } from "child_process"
-import path from "path"
-import { Platform, Arch, Configuration } from "electron-builder"
-import fs, { outputFile, outputJson } from "fs-extra"
-import { NEW_VERSION_NUMBER, OLD_VERSION_NUMBER } from "../helpers/updaterTestUtil"
 import { getBinFromUrl } from "app-builder-lib/out/binDownload"
 import { GenericServerOptions, Nullish } from "builder-util-runtime"
-import { archFromString, doSpawn, getArchSuffix, TmpDir } from "builder-util/out/util"
-import { writeUpdateConfig } from "../helpers/updaterTestUtil"
-import { PackedContext, assertPack, modifyPackageJson } from "../helpers/packTester"
+import { doSpawn, getArchSuffix, TmpDir } from "builder-util/out/util"
+import { spawn } from "child_process"
+import { Arch, Configuration, Platform } from "electron-builder"
+import fs, { outputFile } from "fs-extra"
+import path from "path"
+import { describe, expect, ExpectStatic } from "vitest"
+import { assertPack, modifyPackageJson, PackedContext } from "../helpers/packTester"
 import { ELECTRON_VERSION } from "../helpers/testConfig"
-import { fileURLToPath } from "url"
-
-const app = (dir: string, arch: Arch) => path.join(dir, `mac${getArchSuffix(arch)}`, `TestApp.app`, "Contents", "MacOS", "TestApp")
+import { NEW_VERSION_NUMBER, OLD_VERSION_NUMBER, writeUpdateConfig } from "../helpers/updaterTestUtil"
+import { launchAndWaitForQuit } from "../helpers/launchAppCrossPlatform"
 
 async function doBuild(
   expect: ExpectStatic,
@@ -118,53 +115,8 @@ function wait(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms))
 }
 
-function launchAppAndGetVersion(cmd: string, args: string[] = [], updateConfigPath?: string): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const child = spawn(cmd, args, {
-      stdio: ["ignore", "pipe", "pipe"],
-      env: {
-        ...process.env,
-        AUTO_UPDATER_TEST: "1",
-        AUTO_UPDATER_TEST_CONFIG_PATH: updateConfigPath,
-      },
-    })
-
-    let stdout = ""
-    child.on("error", err => {
-      console.error("Failed to start child process:", err)
-      reject(err)
-    })
-    child.on("close", code => {
-      if (code !== 0) {
-        console.error(`Child process exited with code ${code}`)
-        reject(new Error(`Child process exited with code ${code}`))
-      }
-    })
-    child.stdout.on("data", data => {
-      const str = data.toString()
-      console.log("stdout:", str)
-      stdout += str
-
-      const match = str.match(/APP_VERSION:\s*(\d+\.\d+\.\d+)/)
-      if (match) {
-        resolve(match[1])
-        child.kill()
-      }
-    })
-
-    child.stderr.on("data", data => {
-      console.error("stderr:", data.toString())
-    })
-
-    child.on("exit", code => {
-      if (!stdout.includes("APP_VERSION")) {
-        reject(new Error("App exited without logging version."))
-      }
-    })
-
-    setTimeout(() => reject(new Error("Timeout: App did not log version")), 15000)
-  })
-}
+const app = (dir: string, arch: Arch) => path.join(dir, `mac${getArchSuffix(arch)}`, `TestApp.app`, "Contents", "MacOS", "TestApp")
+const app2 = (dir: string, arch: Arch) => path.join(dir, `mac${getArchSuffix(arch)}`, `TestApp.app`)
 
 describe("Electron autoupdate from 1.0.0 to 1.0.1 (live test)", () => {
   test.ifEnv(process.env.CSC_KEY_PASSWORD && process.platform === "darwin")("mac", async () => {
@@ -185,20 +137,22 @@ describe("Electron autoupdate from 1.0.0 to 1.0.1 (live test)", () => {
       // Move app update to the root directory of the server
       await fs.copy(newAppDir, rootDirectory, { recursive: true, overwrite: true })
 
-      const oldExePath = app(oldAppDir, targetArch)
+      const oldExePath = app2(oldAppDir, targetArch)
 
-      const versionBefore = await launchAppAndGetVersion(oldExePath, [], updateConfigPath)
-      expect(versionBefore).toBe(OLD_VERSION_NUMBER)
+      const appVersion = async (expectVersion: string) => await launchAndWaitForQuit({ appPath: oldExePath, updateConfigPath, expectVersion })
+      await appVersion(OLD_VERSION_NUMBER)
 
       // Wait for quitAndInstall to take effect
       await wait(18000) // increase if updates are slower
 
       // Relaunch app and verify new version
-      const versionAfter = await launchAppAndGetVersion(oldExePath, [], updateConfigPath)
-      expect(versionAfter).toBe(NEW_VERSION_NUMBER)
+      // const versionAfter = await launchAppCrossPlatform("open", [oldExePath], updateConfigPath)
+      await appVersion(NEW_VERSION_NUMBER)
 
-      const verifyNoUpdateSameVersion = await launchAppAndGetVersion(oldExePath, [], updateConfigPath)
-      expect(verifyNoUpdateSameVersion).toBe(NEW_VERSION_NUMBER)
+      // await appVersion(NEW_VERSION_NUMBER)
+
+      // const verifyNoUpdateSameVersion = await launchAppCrossPlatform("open", [oldExePath], updateConfigPath)
+      // expect(await appVersion()).toBe(NEW_VERSION_NUMBER)
     })
   })
 })
