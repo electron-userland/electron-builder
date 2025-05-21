@@ -207,6 +207,10 @@ export class NsisTarget extends Target {
       APP_GUID: guid,
       // Windows bug - entry in Software\Microsoft\Windows\CurrentVersion\Uninstall cannot have \ symbols (dir)
       UNINSTALL_APP_KEY: uninstallAppKey,
+      UNINSTALL_URL_HELP: options.uninstallUrlHelp || this.packager.info.metadata.homepage || undefined,
+      UNINSTALL_URL_INFO_ABOUT: options.uninstallUrlInfoAbout || this.packager.info.metadata.homepage || undefined,
+      UNINSTALL_URL_UPDATE_INFO: options.uninstallUrlUpdateInfo || this.packager.info.metadata.homepage || undefined,
+      UNINSTALL_URL_README: options.uninstallUrlReadme || this.packager.info.metadata.homepage || undefined,
       PRODUCT_NAME: appInfo.productName,
       PRODUCT_FILENAME: appInfo.productFilename,
       APP_FILENAME: getWindowsInstallationDirName(appInfo, !oneClick || isPerMachine),
