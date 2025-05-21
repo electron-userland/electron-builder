@@ -1065,10 +1065,8 @@ exports[`posix smart unpack 3`] = `
                       "unpacked": true,
                     },
                   },
-                  "unpacked": true,
                 },
               },
-              "unpacked": true,
             },
             "lib": {
               "files": {
@@ -1077,14 +1075,12 @@ exports[`posix smart unpack 3`] = `
                   "unpacked": true,
                 },
               },
-              "unpacked": true,
             },
             "package.json": {
               "size": "<size>",
               "unpacked": true,
             },
           },
-          "unpacked": true,
         },
         "mimic-response": {
           "files": {
@@ -5149,7 +5145,6 @@ exports[`smart unpack local module with dll file 2`] = `
                       "unpacked": true,
                     },
                   },
-                  "unpacked": true,
                 },
                 "edge-cs.dll": {
                   "size": "<size>",
@@ -5160,7 +5155,6 @@ exports[`smart unpack local module with dll file 2`] = `
                   "unpacked": true,
                 },
               },
-              "unpacked": true,
             },
             "package.json": {
               "size": "<size>",
@@ -5187,7 +5181,6 @@ exports[`smart unpack local module with dll file 2`] = `
                       "unpacked": true,
                     },
                   },
-                  "unpacked": true,
                 },
                 "edge-cs": {
                   "files": {
@@ -5202,13 +5195,10 @@ exports[`smart unpack local module with dll file 2`] = `
                           "unpacked": true,
                         },
                       },
-                      "unpacked": true,
                     },
                   },
-                  "unpacked": true,
                 },
               },
-              "unpacked": true,
             },
             "tools": {
               "files": {
@@ -5217,10 +5207,8 @@ exports[`smart unpack local module with dll file 2`] = `
                   "unpacked": true,
                 },
               },
-              "unpacked": true,
             },
           },
-          "unpacked": true,
         },
         "foo": {
           "files": {
@@ -5233,7 +5221,6 @@ exports[`smart unpack local module with dll file 2`] = `
               "unpacked": true,
             },
           },
-          "unpacked": true,
         },
         "ms": {
           "files": {
@@ -5360,7 +5347,6 @@ exports[`win smart unpack 2`] = `
                   "unpacked": true,
                 },
               },
-              "unpacked": true,
             },
             "test-smart-unpack-empty": {
               "files": {
@@ -5422,7 +5408,6 @@ exports[`win smart unpack 2`] = `
                       "unpacked": true,
                     },
                   },
-                  "unpacked": true,
                 },
                 "edge-cs.dll": {
                   "size": "<size>",
@@ -5433,7 +5418,6 @@ exports[`win smart unpack 2`] = `
                   "unpacked": true,
                 },
               },
-              "unpacked": true,
             },
             "package.json": {
               "size": "<size>",
@@ -5460,7 +5444,6 @@ exports[`win smart unpack 2`] = `
                       "unpacked": true,
                     },
                   },
-                  "unpacked": true,
                 },
                 "edge-cs": {
                   "files": {
@@ -5475,13 +5458,10 @@ exports[`win smart unpack 2`] = `
                           "unpacked": true,
                         },
                       },
-                      "unpacked": true,
                     },
                   },
-                  "unpacked": true,
                 },
               },
-              "unpacked": true,
             },
             "tools": {
               "files": {
@@ -5490,10 +5470,8 @@ exports[`win smart unpack 2`] = `
                   "unpacked": true,
                 },
               },
-              "unpacked": true,
             },
           },
-          "unpacked": true,
         },
         "ms": {
           "files": {
