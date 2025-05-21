@@ -1,15 +1,14 @@
 import { getBinFromUrl } from "app-builder-lib/out/binDownload"
 import { GenericServerOptions, Nullish } from "builder-util-runtime"
 import { doSpawn, getArchSuffix, TmpDir } from "builder-util/out/util"
-import { spawn } from "child_process"
 import { Arch, Configuration, Platform } from "electron-builder"
 import fs, { outputFile } from "fs-extra"
 import path from "path"
 import { describe, expect, ExpectStatic } from "vitest"
+import { launchAndWaitForQuit } from "../helpers/launchAppCrossPlatform"
 import { assertPack, modifyPackageJson, PackedContext } from "../helpers/packTester"
 import { ELECTRON_VERSION } from "../helpers/testConfig"
 import { NEW_VERSION_NUMBER, OLD_VERSION_NUMBER, writeUpdateConfig } from "../helpers/updaterTestUtil"
-import { launchAndWaitForQuit } from "../helpers/launchAppCrossPlatform"
 
 async function doBuild(
   expect: ExpectStatic,
@@ -114,13 +113,22 @@ async function doBuild(
 function wait(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms))
 }
-
-const app = (dir: string, arch: Arch) => path.join(dir, `mac${getArchSuffix(arch)}`, `TestApp.app`, "Contents", "MacOS", "TestApp")
-const app2 = (dir: string, arch: Arch) => path.join(dir, `mac${getArchSuffix(arch)}`, `TestApp.app`)
+const getAppPath = (dir: string, arch: Arch) => {
+  if (process.platform === "darwin") {
+    return path.join(dir, `mac${getArchSuffix(arch)}`, `TestApp.app`)
+  }
+  if (process.platform === "linux") {
+    return path.join(dir, `linux${getArchSuffix(arch)}-unpacked`, `TestApp`)
+  }
+  if (process.platform === "win32") {
+    return path.join(dir, `win${getArchSuffix(arch)}-unpacked`, `TestApp.exe`)
+  }
+  throw new Error(`Unsupported platform: ${process.platform}`)
+}
 
 describe("Electron autoupdate from 1.0.0 to 1.0.1 (live test)", () => {
   test.ifEnv(process.env.CSC_KEY_PASSWORD && process.platform === "darwin")("mac", async () => {
-    const tmpDir = new TmpDir("windows-auto-update")
+    const tmpDir = new TmpDir("auto-update")
     const outDirs: string[] = []
 
     const targetArch = process.arch === "arm64" ? Arch.arm64 : Arch.x64
@@ -130,23 +138,20 @@ describe("Electron autoupdate from 1.0.0 to 1.0.1 (live test)", () => {
     const oldAppDir = outDirs[0]
     const newAppDir = outDirs[1]
 
-    console.error("Old app dir:", oldAppDir)
-    console.error("New app dir:", newAppDir)
-
     await runTestWithinServer(async (rootDirectory: string, updateConfigPath: string) => {
       // Move app update to the root directory of the server
       await fs.copy(newAppDir, rootDirectory, { recursive: true, overwrite: true })
 
-      const oldExePath = app2(oldAppDir, targetArch)
+      const appPath = getAppPath(oldAppDir, targetArch)
 
-      const appVersion = async (expectedVersion: string) => await launchAndWaitForQuit({ appPath: oldExePath, updateConfigPath, expectedVersion })
+      const appVersion = async (expectedVersion: string) => await launchAndWaitForQuit({ appPath, updateConfigPath, expectedVersion })
 
-      console.log("Verified old version", await appVersion(OLD_VERSION_NUMBER))
+      console.log("Old version", await appVersion(OLD_VERSION_NUMBER))
 
-      // Wait for quitAndInstall to take effect
-      await wait(18000) // increase if updates are slower
+      // Wait for quitAndInstall to take effect, increase delay if updates are slower (shouldn't be the case for such a small test app)
+      await wait(10 * 1000)
 
-      console.log("Verified new version", await appVersion(NEW_VERSION_NUMBER))
+      console.log("New version", await appVersion(NEW_VERSION_NUMBER))
     })
     await tmpDir.cleanup()
   })

@@ -1,4 +1,4 @@
-import { spawn, ChildProcess } from "child_process"
+import { ChildProcess, spawn } from "child_process"
 import os from "os"
 import path from "path"
 
@@ -14,18 +14,10 @@ interface LaunchOptions {
   timeoutMs?: number
   env?: Record<string, string>
   expectedVersion?: string
-  waitForVersionLog?: boolean
   updateConfigPath: string
 }
 
-export async function launchAndWaitForQuit({
-  appPath,
-  timeoutMs = 20000,
-  env = {},
-  expectedVersion,
-  updateConfigPath,
-  waitForVersionLog = true,
-}: LaunchOptions): Promise<LaunchResult> {
+export async function launchAndWaitForQuit({ appPath, timeoutMs = 20000, env = {}, expectedVersion, updateConfigPath }: LaunchOptions): Promise<LaunchResult> {
   return new Promise((resolve, reject) => {
     let child: ChildProcess
 
@@ -93,7 +85,6 @@ export async function launchAndWaitForQuit({
           resolved = true
           resolveResult(resolve, version, 0, stdoutChunks, stderrChunks)
         }
-        child.kill() // best-effort cleanup
       }
     })
 

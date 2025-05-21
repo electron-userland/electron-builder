@@ -12,7 +12,7 @@ process.on("unhandledRejection", console.error)
 console.log(`APP_VERSION: ${app.getVersion()}`)
 
 const updateConfigPath = process.env.AUTO_UPDATER_TEST_CONFIG_PATH?.trim()
-const shouldTestAutoUpdater = process.env.AUTO_UPDATER_TEST
+const shouldTestAutoUpdater =!!process.env.AUTO_UPDATER_TEST?.trim() && updateConfigPath
 const root = path.dirname(process.execPath)
 const _appUpdateConfigPath = path.resolve(process.platform === "darwin" ? `${root}/../Resources` : `${root}/resources`, "app-update.yml")
 
@@ -28,7 +28,7 @@ async function init() {
 }
 
 function isReady() {
-  if (!!shouldTestAutoUpdater) {
+  if (shouldTestAutoUpdater) {
     autoUpdater._appUpdateConfigPath = _appUpdateConfigPath
     autoUpdater.updateConfigPath = updateConfigPath
     autoUpdater.logger = console
@@ -37,6 +37,19 @@ function isReady() {
     autoUpdater.checkForUpdates()
     autoUpdater.on("update-downloaded", () => {
       setTimeout(() => autoUpdater.quitAndInstall(false, true), 1000)
+    })
+    autoUpdater.on("update-not-available", () => {
+      console.log("Update not available")
+      app.quit()
+    })
+    autoUpdater.on("error", error => {
+      console.error("Error in auto-updater:", error)
+    })
+    autoUpdater.on("checking-for-update", () => {
+      console.log("Checking for update...")
+    })
+    autoUpdater.on("update-available", () => {
+      console.log("Update available")
     })
   }
 }
