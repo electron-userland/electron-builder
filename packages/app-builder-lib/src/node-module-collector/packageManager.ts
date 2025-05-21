@@ -1,95 +1,103 @@
-// copy from https://github.com/egoist/detect-package-manager/blob/main/src/index.ts
-// and merge https://github.com/egoist/detect-package-manager/pull/9 to support Monorepo
-import { resolve, dirname } from "path"
-import { exec, exists } from "builder-util"
+import * as path from "path"
+import * as fs from "fs"
 
-export type PM = "npm" | "yarn" | "pnpm" | "bun"
-
-const cache = new Map()
-const globalInstallationCache = new Map<string, boolean>()
-const lockfileCache = new Map<string, PM>()
-
-/**
- * Check if a global pm is available
- */
-function hasGlobalInstallation(pm: PM): Promise<boolean> {
-  const key = `has_global_${pm}`
-  if (globalInstallationCache.has(key)) {
-    return Promise.resolve(globalInstallationCache.get(key)!)
-  }
-
-  return exec(pm, ["--version"], { shell: true })
-    .then(res => {
-      return /^\d+.\d+.\d+$/.test(res)
-    })
-    .then(value => {
-      globalInstallationCache.set(key, value)
-      return value
-    })
-    .catch(() => false)
+export enum PM {
+  NPM = "npm",
+  YARN = "yarn",
+  PNPM = "pnpm",
+  YARN_BERRY = "yarn-berry",
 }
 
-function getTypeofLockFile(cwd = process.cwd()): Promise<PM> {
-  const key = `lockfile_${cwd}`
-  if (lockfileCache.has(key)) {
-    return Promise.resolve(lockfileCache.get(key)!)
-  }
+function detectPackageManagerByEnv(): PM {
+  if (process.env.npm_config_user_agent) {
+    const userAgent = process.env.npm_config_user_agent
 
-  return Promise.all([
-    exists(resolve(cwd, "yarn.lock")),
-    exists(resolve(cwd, "package-lock.json")),
-    exists(resolve(cwd, "pnpm-lock.yaml")),
-    exists(resolve(cwd, "bun.lockb")),
-  ]).then(([isYarn, _, isPnpm, isBun]) => {
-    let value: PM
-
-    if (isYarn) {
-      value = "yarn"
-    } else if (isPnpm) {
-      value = "pnpm"
-    } else if (isBun) {
-      value = "bun"
-    } else {
-      value = "npm"
+    if (userAgent.includes("pnpm")) {
+      return PM.PNPM
     }
 
-    cache.set(key, value)
-    return value
-  })
-}
+    if (userAgent.includes("yarn")) {
+      if (userAgent.includes("yarn/")) {
+        const version = userAgent.match(/yarn\/(\d+)\./)
+        if (version && parseInt(version[1]) >= 2) {
+          return PM.YARN_BERRY
+        }
+      }
+      return PM.YARN
+    }
 
-export const detect = async ({ cwd, includeGlobalBun }: { cwd?: string; includeGlobalBun?: boolean } = {}) => {
-  let type = await getTypeofLockFile(cwd)
-  if (type) {
-    return type
-  }
-
-  let tmpCwd = cwd || "."
-  for (let i = 1; i <= 5; i++) {
-    tmpCwd = dirname(tmpCwd)
-    type = await getTypeofLockFile(tmpCwd)
-    if (type) {
-      return type
+    if (userAgent.includes("npm")) {
+      return PM.NPM
     }
   }
 
-  if (await hasGlobalInstallation("yarn")) {
-    return "yarn"
-  }
-  if (await hasGlobalInstallation("pnpm")) {
-    return "yarn"
+  if (process.env.npm_execpath) {
+    const execPath = process.env.npm_execpath.toLowerCase()
+
+    if (execPath.includes("pnpm")) {
+      return PM.PNPM
+    }
+
+    if (execPath.includes("yarn")) {
+      if (execPath.includes("berry") || process.env.YARN_VERSION?.startsWith("2.") || process.env.YARN_VERSION?.startsWith("3.")) {
+        return PM.YARN_BERRY
+      }
+      return PM.YARN
+    }
+
+    if (execPath.includes("npm")) {
+      return PM.NPM
+    }
   }
 
-  if (includeGlobalBun && (await hasGlobalInstallation("bun"))) {
-    return "bun"
+  if (process.env.PNPM_HOME) {
+    return PM.PNPM
   }
-  return "npm"
+
+  if (process.env.YARN_REGISTRY) {
+    if (process.env.YARN_VERSION?.startsWith("2.") || process.env.YARN_VERSION?.startsWith("3.")) {
+      return PM.YARN_BERRY
+    }
+    return PM.YARN
+  }
+
+  if (process.env.npm_package_json) {
+    return PM.NPM
+  }
+
+  // return default
+  return PM.NPM
 }
 
-export function getPackageManagerVersion(pm: PM) {
-  return exec(pm, ["--version"], { shell: true }).then(res => res.trim())
+export function getPackageManagerCommand(pm: PM) {
+  let cmd = pm
+  if (pm === PM.YARN_BERRY || process.env.FORCE_YARN === "true") {
+    cmd = PM.YARN
+  }
+  return `${cmd}${process.platform === "win32" ? ".cmd" : ""}`
 }
 
-export function clearCache() {
-  return cache.clear()
+export function detectPackageManager(cwd: string) {
+  const isYarnLockFileExists = fs.existsSync(path.join(cwd, "yarn.lock"))
+  const isPnpmLockFileExists = fs.existsSync(path.join(cwd, "pnpm-lock.yaml"))
+  const isNpmLockFileExists = fs.existsSync(path.join(cwd, "package-lock.json"))
+
+  if (isYarnLockFileExists && !isPnpmLockFileExists && !isNpmLockFileExists) {
+    // check if yarn is berry
+    const pm = detectPackageManagerByEnv()
+    if (pm === PM.YARN_BERRY) {
+      return PM.YARN_BERRY
+    }
+    return PM.YARN
+  }
+
+  if (isPnpmLockFileExists && !isYarnLockFileExists && !isNpmLockFileExists) {
+    return PM.PNPM
+  }
+
+  if (isNpmLockFileExists && !isYarnLockFileExists && !isPnpmLockFileExists) {
+    return PM.NPM
+  }
+  // if there are no lock files or multiple lock files, return the package manager from env
+  return detectPackageManagerByEnv()
 }

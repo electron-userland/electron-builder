@@ -21,6 +21,8 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
   /**
    * The name of certificate to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](./code-signing.md) instead of specifying this option.
    * MAS installer identity is specified in the [mas](./mas.md).
+   *
+   * Set to `-` to use an ad-hoc identity for signing. Set to `null` to skip signing entirely.
    */
   readonly identity?: string | null
 

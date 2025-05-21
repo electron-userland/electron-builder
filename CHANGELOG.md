@@ -1,3 +1,49 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v26.0.14...v) (2025-05-04)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @electron/osx-sign to v1.3.3 ([#9083](https://github.com/electron-userland/electron-builder/issues/9083)) ([0ce7b90](https://github.com/electron-userland/electron-builder/commit/0ce7b90e5eec0cf3049e2b3957b4d076fbdd615d))
+* **deps:** update dependency @electron/universal to v2.0.3 ([#9082](https://github.com/electron-userland/electron-builder/issues/9082)) ([6f3aec8](https://github.com/electron-userland/electron-builder/commit/6f3aec8106be0d365e59923410c1eb55cd0328d1))
+* **electron-updater:** allow forceDevUpdateConfig also on Linux ([#9024](https://github.com/electron-userland/electron-builder/issues/9024)) ([e641751](https://github.com/electron-userland/electron-builder/commit/e641751ce36cdf099d62a897c591b2763705dbff))
+* update package manager detection and improve type handling ([#9067](https://github.com/electron-userland/electron-builder/issues/9067)) ([312938d](https://github.com/electron-userland/electron-builder/commit/312938d8519a29992e75e1f544c41ca50ae591e3))
+* update regex for multipart content-type parsing in multipleRange ([#9064](https://github.com/electron-userland/electron-builder/issues/9064)) ([444b791](https://github.com/electron-userland/electron-builder/commit/444b791f9d2812f2a0f60481f7b25297585d9c5a))
+
+
+### Features
+
+* support upgrading from ARM to ARM, rather than upgrading to x64 in window and linux ([#9059](https://github.com/electron-userland/electron-builder/issues/9059)) ([cb77508](https://github.com/electron-userland/electron-builder/commit/cb775088427d25e9ce0489067445716d35e09997))
+
+
+
+# [](https://github.com/electron-userland/electron-builder/compare/v26.0.13...v) (2025-04-27)
+
+
+### Features
+
+* `customNsisResources` override in nsis options ([#9032](https://github.com/electron-userland/electron-builder/issues/9032)) ([3d65267](https://github.com/electron-userland/electron-builder/commit/3d65267a6c53ca824f70e5b0f5d8f4ba8be38237))
+* add `buildUniversalInstaller` option to NSIS portable configuration ([#9034](https://github.com/electron-userland/electron-builder/issues/9034)) ([80fbf5a](https://github.com/electron-userland/electron-builder/commit/80fbf5a6d8f308415469d4ee96a954932e6f19b7))
+
+
+
+# [](https://github.com/electron-userland/electron-builder/compare/v26.0.12...v) (2025-04-12)
+
+
+### Bug Fixes
+
+* dependency path is undefined ([#9013](https://github.com/electron-userland/electron-builder/issues/9013)) ([c223866](https://github.com/electron-userland/electron-builder/commit/c223866e366ef1aeeefec0d1a61a14b3d526f23e)), closes [/github.com/electron/rebuild/blob/ff1ec40f82ca64e014079b246053f039b3cf4f23/src/search-module.ts#L76-L86](https://github.com//github.com/electron/rebuild/blob/ff1ec40f82ca64e014079b246053f039b3cf4f23/src/search-module.ts/issues/L76-L86)
+* **mac:** allow ad-hoc identities for codesigning ([#9007](https://github.com/electron-userland/electron-builder/issues/9007)) ([bff46ec](https://github.com/electron-userland/electron-builder/commit/bff46ec41c4a7715cc06f7dfd6ff95f8e4bbe869))
+* malformed `Files` param when using Azure Trusted Signing ([#8987](https://github.com/electron-userland/electron-builder/issues/8987)) ([9fb2895](https://github.com/electron-userland/electron-builder/commit/9fb2895cd008ea6fc6210078decabc15a5c0144a))
+* missing lowercase comparison in electron-updater ([#8992](https://github.com/electron-userland/electron-builder/issues/8992)) ([1f50540](https://github.com/electron-userland/electron-builder/commit/1f5054004468f76d316cee33ef6cc8717987b146))
+* remove implicit dependencies handling ([#9010](https://github.com/electron-userland/electron-builder/issues/9010)) ([8bd1a10](https://github.com/electron-userland/electron-builder/commit/8bd1a10a2dcdee080e3b5a0359453d5d34b3ffbf)), closes [#9000](https://github.com/electron-userland/electron-builder/issues/9000)
+
+
+### Features
+
+* **electron-updater:** allow overriding `AppUpdater.isStagingMatch` with hook `isUserWithinRollout` ([#9021](https://github.com/electron-userland/electron-builder/issues/9021)) ([cf43f05](https://github.com/electron-userland/electron-builder/commit/cf43f0567c6addaf3cefd7eadada95bd543165e1))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v26.0.11...v) (2025-03-20)
 
 

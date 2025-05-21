@@ -17,7 +17,7 @@ import {
 } from "builder-util"
 import { CancellationToken } from "builder-util-runtime"
 import { chmod, mkdirs, outputFile } from "fs-extra"
-import * as isCI from "is-ci"
+import { isCI } from "ci-info"
 import { Lazy } from "lazy-val"
 import { release as getOsRelease } from "os"
 import * as path from "path"
@@ -600,12 +600,16 @@ export class Packager {
     if (config.buildDependenciesFromSource === true && platform.nodeName !== process.platform) {
       log.info({ reason: "platform is different and buildDependenciesFromSource is set to true" }, "skipped dependencies rebuild")
     } else {
-      await installOrRebuild(config, this.appDir, {
-        frameworkInfo,
-        platform: platform.nodeName,
-        arch: Arch[arch],
-        productionDeps: this.getNodeDependencyInfo(null, false) as Lazy<Array<NodeModuleDirInfo>>,
-      })
+      await installOrRebuild(
+        config,
+        { appDir: this.appDir, projectDir: this.projectDir },
+        {
+          frameworkInfo,
+          platform: platform.nodeName,
+          arch: Arch[arch],
+          productionDeps: this.getNodeDependencyInfo(null, false) as Lazy<Array<NodeModuleDirInfo>>,
+        }
+      )
     }
   }
 }

@@ -1,5 +1,26 @@
 ## 4.3.0
 
+## 6.6.4
+
+### Patch Changes
+
+- [#9059](https://github.com/electron-userland/electron-builder/pull/9059) [`cb775088`](https://github.com/electron-userland/electron-builder/commit/cb775088427d25e9ce0489067445716d35e09997) Thanks [@beyondkmp](https://github.com/beyondkmp)! - feat: support upgrading from ARM to ARM, rather than upgrading to x64 in window and linux
+
+- [#9064](https://github.com/electron-userland/electron-builder/pull/9064) [`444b791f`](https://github.com/electron-userland/electron-builder/commit/444b791f9d2812f2a0f60481f7b25297585d9c5a) Thanks [@beyondkmp](https://github.com/beyondkmp)! - fix: update regex for multipart content-type parsing in multipleRange
+
+- [#9024](https://github.com/electron-userland/electron-builder/pull/9024) [`e641751c`](https://github.com/electron-userland/electron-builder/commit/e641751ce36cdf099d62a897c591b2763705dbff) Thanks [@Lemonexe](https://github.com/Lemonexe)! - fix: allow forceDevUpdateConfig also on Linux
+
+## 6.6.3
+
+### Patch Changes
+
+- [#9021](https://github.com/electron-userland/electron-builder/pull/9021) [`cf43f056`](https://github.com/electron-userland/electron-builder/commit/cf43f0567c6addaf3cefd7eadada95bd543165e1) Thanks [@Lemonexe](https://github.com/Lemonexe)! - feat: allow overriding AppUpdater.isStagingMatch
+
+- [#8992](https://github.com/electron-userland/electron-builder/pull/8992) [`1f505400`](https://github.com/electron-userland/electron-builder/commit/1f5054004468f76d316cee33ef6cc8717987b146) Thanks [@Sytten](https://github.com/Sytten)! - Fixed missing lowercase in extension comparison.
+
+- Updated dependencies [[`a2f7f735`](https://github.com/electron-userland/electron-builder/commit/a2f7f7350be2379c4917417c92ece5a6ab241708)]:
+  - builder-util-runtime@9.3.2
+
 ## 6.6.2
 
 ### Patch Changes

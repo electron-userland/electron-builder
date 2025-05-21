@@ -460,7 +460,7 @@
           ]
         },
         "url": {
-          "default": "https://github.com/electron-userland/electron-builder-binaries/releases/download",
+          "default": "https://github.com/electron-userland/electron-builder-binaries/releases/download/nsis-3.0.4.1/nsis-3.0.4.1.7z",
           "type": [
             "null",
             "string"
@@ -476,6 +476,29 @@
       },
       "required": [
         "url"
+      ],
+      "type": "object"
+    },
+    "CustomNsisResources": {
+      "additionalProperties": false,
+      "properties": {
+        "checksum": {
+          "default": "Dqd6g+2buwwvoG1Vyf6BHR1b+25QMmPcwZx40atOT57gH27rkjOei1L0JTldxZu4NFoEmW4kJgZ3DlSWVON3+Q==",
+          "type": "string"
+        },
+        "url": {
+          "default": "https://github.com/electron-userland/electron-builder-binaries/releases/download/nsis-resources-3.4.1/nsis-resources-3.4.1.7z",
+          "type": "string"
+        },
+        "version": {
+          "default": "3.4.1",
+          "type": "string"
+        }
+      },
+      "required": [
+        "checksum",
+        "url",
+        "version"
       ],
       "type": "object"
     },
@@ -2702,7 +2725,7 @@
           ]
         },
         "identity": {
-          "description": "The name of certificate to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](./code-signing.md) instead of specifying this option.\nMAS installer identity is specified in the [mas](./mas.md).",
+          "description": "The name of certificate to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](./code-signing.md) instead of specifying this option.\nMAS installer identity is specified in the [mas](./mas.md).\n\nSet to `-` to use an ad-hoc identity for signing. Set to `null` to skip signing entirely.",
           "type": [
             "null",
             "string"
@@ -3334,7 +3357,7 @@
           ]
         },
         "identity": {
-          "description": "The name of certificate to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](./code-signing.md) instead of specifying this option.\nMAS installer identity is specified in the [mas](./mas.md).",
+          "description": "The name of certificate to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](./code-signing.md) instead of specifying this option.\nMAS installer identity is specified in the [mas](./mas.md).\n\nSet to `-` to use an ad-hoc identity for signing. Set to `null` to skip signing entirely.",
           "type": [
             "null",
             "string"
@@ -3914,6 +3937,17 @@
           ],
           "description": "Allows you to provide your own `makensis`, such as one with support for debug logging via LogSet and LogText. (Logging also requires option `debugLogging = true`)"
         },
+        "customNsisResources": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/CustomNsisResources"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Allows you to provide your own `nsis-resources`"
+        },
         "deleteAppDataOnUninstall": {
           "default": false,
           "description": "*one-click installer only.* Whether to delete app data on uninstall.",
@@ -4219,6 +4253,17 @@
             }
           ],
           "description": "Allows you to provide your own `makensis`, such as one with support for debug logging via LogSet and LogText. (Logging also requires option `debugLogging = true`)"
+        },
+        "customNsisResources": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/CustomNsisResources"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Allows you to provide your own `nsis-resources`"
         },
         "deleteAppDataOnUninstall": {
           "default": false,
@@ -5164,6 +5209,11 @@
             "string"
           ]
         },
+        "buildUniversalInstaller": {
+          "default": true,
+          "description": "Disable building an universal installer of the archs specified in the target configuration",
+          "type": "boolean"
+        },
         "customNsisBinary": {
           "anyOf": [
             {
@@ -5174,6 +5224,17 @@
             }
           ],
           "description": "Allows you to provide your own `makensis`, such as one with support for debug logging via LogSet and LogText. (Logging also requires option `debugLogging = true`)"
+        },
+        "customNsisResources": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/CustomNsisResources"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Allows you to provide your own `nsis-resources`"
         },
         "guid": {
           "description": "See [GUID vs Application Name](./nsis.md#guid-vs-application-name).",
@@ -5340,7 +5401,7 @@
     },
     "S3Options": {
       "additionalProperties": false,
-      "description": "[Amazon S3](https://aws.amazon.com/s3/) options.\nAWS credentials are required, please see [getting your credentials](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/getting-your-credentials.html).\nDefine `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` [environment variables](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/loading-node-credentials-environment.html).\nOr in the [~/.aws/credentials](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/loading-node-credentials-shared.html).\n\nExample configuration:\n\n```json\n{\n\"build\":\n \"publish\": {\n   \"provider\": \"s3\",\n   \"bucket\": \"bucket-name\"\n }\n}\n}\n```",
+      "description": "[Amazon S3](https://aws.amazon.com/s3/) options.\nAWS credentials are required, please see [getting your credentials](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/getting-your-credentials.html).\nTo set credentials define `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` [environment variables](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/loading-node-credentials-environment.html) directly,\nor use [~/.aws/credentials](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/loading-node-credentials-shared.html) file,\nor use [~/.aws/config](https://docs.aws.amazon.com/sdkref/latest/guide/file-format.html) file. For the last method to work you will also need to define `AWS_SDK_LOAD_CONFIG=1` environment variable.\n\nExample configuration:\n\n```json\n{\n\"build\":\n \"publish\": {\n   \"provider\": \"s3\",\n   \"bucket\": \"bucket-name\"\n }\n}\n}\n```",
       "properties": {
         "accelerate": {
           "description": "If set to true, this will enable the s3 accelerated endpoint\nThese endpoints have a particular format of:\n ${bucketname}.s3-accelerate.amazonaws.com",
