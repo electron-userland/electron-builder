@@ -1825,6 +1825,20 @@
             "string"
           ]
         },
+        "excludeReBuildModules": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The modules to exclude from the rebuild."
+        },
         "executableArgs": {
           "anyOf": [
             {
@@ -2527,6 +2541,20 @@
             "string"
           ]
         },
+        "excludeReBuildModules": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The modules to exclude from the rebuild."
+        },
         "executableName": {
           "description": "The executable name. Defaults to `productName`.",
           "type": [
@@ -3158,6 +3186,20 @@
             "null",
             "string"
           ]
+        },
+        "excludeReBuildModules": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The modules to exclude from the rebuild."
         },
         "executableName": {
           "description": "The executable name. Defaults to `productName`.",
@@ -6381,6 +6423,20 @@
             "string"
           ]
         },
+        "excludeReBuildModules": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The modules to exclude from the rebuild."
+        },
         "executableName": {
           "description": "The executable name. Defaults to `productName`.",
           "type": [
@@ -7152,6 +7208,20 @@
         "null",
         "string"
       ]
+    },
+    "excludeReBuildModules": {
+      "anyOf": [
+        {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "The modules to exclude from the rebuild."
     },
     "executableName": {
       "description": "The executable name. Defaults to `productName`.",
