@@ -6,7 +6,7 @@ import { nodeGypRebuild } from "app-builder-lib/out/util/yarn"
 import { ExecError, InvalidConfigurationError, log } from "builder-util"
 import * as chalk from "chalk"
 import { readJson } from "fs-extra"
-import * as isCi from "is-ci"
+import { isCI } from "ci-info"
 import * as path from "path"
 import { build, configureBuildCommand, createYargs } from "../builder"
 import { configurePublishCommand, publish } from "../publish"
@@ -64,7 +64,7 @@ function wrap(task: (args: any) => Promise<any>) {
 }
 
 async function checkIsOutdated() {
-  if (isCi || process.env.NO_UPDATE_NOTIFIER != null) {
+  if (isCI || process.env.NO_UPDATE_NOTIFIER != null) {
     return
   }
 

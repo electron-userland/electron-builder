@@ -28,7 +28,7 @@ import {
 } from "electron-publish"
 import { MultiProgress } from "electron-publish/out/multiProgress"
 import { writeFile } from "fs/promises"
-import * as isCi from "is-ci"
+import * as isCi from "ci-info"
 import * as path from "path"
 import { WriteStream as TtyWriteStream } from "tty"
 import * as url from "url"
