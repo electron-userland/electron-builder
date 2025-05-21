@@ -2,15 +2,17 @@ import { describe, it, expect, ExpectStatic } from "vitest"
 import { ChildProcessWithoutNullStreams, spawn } from "child_process"
 import path from "path"
 import { Platform, Arch, Configuration } from "electron-builder"
-import fs, { outputJson } from "fs-extra"
+import fs, { outputFile, outputJson } from "fs-extra"
 import { NEW_VERSION_NUMBER, OLD_VERSION_NUMBER } from "../helpers/updaterTestUtil"
 import { getBinFromUrl } from "app-builder-lib/out/binDownload"
 import { GenericServerOptions, Nullish } from "builder-util-runtime"
-import { doSpawn, getArchSuffix, TmpDir } from "builder-util/out/util"
+import { archFromString, doSpawn, getArchSuffix, TmpDir } from "builder-util/out/util"
 import { writeUpdateConfig } from "../helpers/updaterTestUtil"
 import { PackedContext, assertPack, modifyPackageJson } from "../helpers/packTester"
 import { ELECTRON_VERSION } from "../helpers/testConfig"
 import { fileURLToPath } from "url"
+
+const app = (dir: string, arch: Arch) => path.join(dir, `mac${getArchSuffix(arch)}`, `TestApp.app`, "Contents", "MacOS", "TestApp")
 
 async function doBuild(
   expect: ExpectStatic,
@@ -32,6 +34,8 @@ async function doBuild(
       {
         targets,
         config: {
+          asar: false,
+          electronLanguages: ["en"],
           extraMetadata: {
             version,
           },
@@ -42,6 +46,7 @@ async function doBuild(
             bucket: "develar",
             path: "test",
           },
+          files: ["**/*", "node_modules/**", "!path/**"],
         },
       },
       {
@@ -51,17 +56,43 @@ async function doBuild(
         packed,
         projectDirCreated: projectDir =>
           Promise.all([
-            modifyPackageJson(projectDir, data => {
-              data.devDependencies = {
-                ...(data.devDependencies || {}),
-                electron: ELECTRON_VERSION,
-              }
-              data.dependencies = {
-                ...(data.devDependencies || {}),
-                "electron-updater": `file:${__dirname}/../../../packages/electron-updater/out`,
-                "builder-util-runtime": `file:${__dirname}/../../../packages/builder-util-runtime/out`,
-              }
-            }),
+            outputFile(path.join(projectDir, ".npmrc"), "node-linker=hoisted"),
+            // outputFile(path.join(projectDir, "pnpm-lock.yaml"), ""),
+            // outputFile(path.join(projectDir, "app", "pnpm-lock.yaml"), ""),
+            modifyPackageJson(
+              projectDir,
+              data => {
+                data.devDependencies = {
+                  electron: ELECTRON_VERSION,
+                }
+                data.dependencies = {
+                  "electron-updater": `file:${__dirname}/../../../packages/electron-updater`,
+                }
+                data.pnpm = {
+                  overrides: {
+                    "builder-util-runtime": `file:${__dirname}/../../../packages/builder-util-runtime`,
+                  },
+                }
+              },
+              true
+            ),
+            modifyPackageJson(
+              projectDir,
+              data => {
+                data.devDependencies = {
+                  electron: ELECTRON_VERSION,
+                }
+                data.dependencies = {
+                  "electron-updater": `file:${__dirname}/../../../packages/electron-updater`,
+                }
+                data.pnpm = {
+                  overrides: {
+                    "builder-util-runtime": `file:${__dirname}/../../../packages/builder-util-runtime`,
+                  },
+                }
+              },
+              false
+            ),
           ]),
       }
     )
@@ -87,21 +118,31 @@ function wait(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms))
 }
 
-function launchAppAndGetVersion(executablePath: string, updateConfigPath?: string): Promise<string> {
+function launchAppAndGetVersion(cmd: string, args: string[] = [], updateConfigPath?: string): Promise<string> {
   return new Promise((resolve, reject) => {
-    const child = doSpawn(executablePath, [], {
+    const child = spawn(cmd, args, {
       stdio: ["ignore", "pipe", "pipe"],
       env: {
         ...process.env,
         AUTO_UPDATER_TEST: "1",
         AUTO_UPDATER_TEST_CONFIG_PATH: updateConfigPath,
       },
-    }) as ChildProcessWithoutNullStreams
+    })
 
     let stdout = ""
-
+    child.on("error", err => {
+      console.error("Failed to start child process:", err)
+      reject(err)
+    })
+    child.on("close", code => {
+      if (code !== 0) {
+        console.error(`Child process exited with code ${code}`)
+        reject(new Error(`Child process exited with code ${code}`))
+      }
+    })
     child.stdout.on("data", data => {
       const str = data.toString()
+      console.log("stdout:", str)
       stdout += str
 
       const match = str.match(/APP_VERSION:\s*(\d+\.\d+\.\d+)/)
@@ -130,30 +171,34 @@ describe("Electron autoupdate from 1.0.0 to 1.0.1 (live test)", () => {
     const tmpDir = new TmpDir("windows-auto-update")
     const outDirs: string[] = []
 
+    const targetArch = process.arch === "arm64" ? Arch.arm64 : Arch.x64
     // 1. Build both versions
-    await doBuild(expect, outDirs, Platform.current().createTarget(["zip"], Arch.x64), tmpDir, process.platform === "win32")
+    await doBuild(expect, outDirs, Platform.current().createTarget(["zip"], targetArch), tmpDir, process.platform === "win32")
 
     const oldAppDir = outDirs[0]
     const newAppDir = outDirs[1]
 
     console.error("Old app dir:", oldAppDir)
     console.error("New app dir:", newAppDir)
-    const app = (dir: string, version: string) => path.join(dir, "mac", `TestApp.app`, "Contents", "MacOS", "TestApp")
 
     await runTestWithinServer(async (rootDirectory: string, updateConfigPath: string) => {
       // Move app update to the root directory of the server
       await fs.copy(newAppDir, rootDirectory, { recursive: true, overwrite: true })
 
-      const oldExePath = app(oldAppDir, OLD_VERSION_NUMBER)
-      const versionBefore = await launchAppAndGetVersion(oldExePath, updateConfigPath)
+      const oldExePath = app(oldAppDir, targetArch)
+
+      const versionBefore = await launchAppAndGetVersion(oldExePath, [], updateConfigPath)
       expect(versionBefore).toBe(OLD_VERSION_NUMBER)
 
       // Wait for quitAndInstall to take effect
-      await wait(8000) // increase if updates are slower
+      await wait(18000) // increase if updates are slower
 
       // Relaunch app and verify new version
-      const versionAfter = await launchAppAndGetVersion(oldExePath, undefined)
+      const versionAfter = await launchAppAndGetVersion(oldExePath, [], updateConfigPath)
       expect(versionAfter).toBe(NEW_VERSION_NUMBER)
+
+      const verifyNoUpdateSameVersion = await launchAppAndGetVersion(oldExePath, [], updateConfigPath)
+      expect(verifyNoUpdateSameVersion).toBe(NEW_VERSION_NUMBER)
     })
   })
 })
