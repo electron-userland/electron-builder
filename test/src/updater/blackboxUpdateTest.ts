@@ -1,17 +1,27 @@
 import { getBinFromUrl } from "app-builder-lib/out/binDownload"
 import { GenericServerOptions, Nullish } from "builder-util-runtime"
-import { archFromString, doSpawn, getArchSuffix, TmpDir } from "builder-util/out/util"
+import { archFromString, doSpawn, TmpDir } from "builder-util/out/util"
 import { Arch, Configuration, Platform } from "electron-builder"
 import fs, { outputFile } from "fs-extra"
 import path from "path"
-import { describe, expect, ExpectStatic } from "vitest"
+import { afterAll, beforeAll, describe, expect, ExpectStatic } from "vitest"
 import { launchAndWaitForQuit } from "../helpers/launchAppCrossPlatform"
 import { assertPack, modifyPackageJson, PackedContext } from "../helpers/packTester"
 import { ELECTRON_VERSION } from "../helpers/testConfig"
 import { NEW_VERSION_NUMBER, OLD_VERSION_NUMBER, writeUpdateConfig } from "../helpers/updaterTestUtil"
-import { exec, execSync } from "child_process"
 
 describe("Electron autoupdate from 1.0.0 to 1.0.1 (live test)", () => {
+  const debug = process.env.DEBUG
+  beforeAll(() => {
+    // Set the environment variable to enable auto-update testing
+    process.env.AUTO_UPDATER_TEST = "1"
+    process.env.DEBUG = "electron-builder"
+  })
+  afterAll(() => {
+    // Clean up the environment variable after the tests
+    delete process.env.AUTO_UPDATER_TEST
+    process.env.DEBUG = debug
+  })
   // Signing is required for macOS autoupdate
   test.ifMac.ifEnv(process.env.CSC_KEY_PASSWORD)("mac", async () => {
     await runTest("zip")
