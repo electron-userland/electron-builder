@@ -110,7 +110,7 @@ async function runTest(target: string, arch: Arch = Arch.x64) {
   // })
   if (target === "AppImage") {
     // execSync(`apt-get update -yqq && apt-get install -yq file xvfb libatk1.0-0 libatk-bridge2.0-0`, { stdio: "inherit" })
-    appPath = path.join(dirPath, `TestApp${getArchSuffix(arch)}.AppImage`)
+    appPath = path.join(dirPath, `TestApp.AppImage`)
   } else if (target === "deb") {
     appPath = path.join(dirPath, `TestApp-${OLD_VERSION_NUMBER}${getArchSuffix(arch)}.deb`)
     execSync(`sudo dpkg -i "${appPath}"`, { stdio: "inherit" })
@@ -141,6 +141,8 @@ async function runTest(target: string, arch: Arch = Arch.x64) {
 
     expect((await verifyAppVersion(NEW_VERSION_NUMBER)).version).toMatch(NEW_VERSION_NUMBER)
   })
+  // windows needs to release file locks, so a delay seems to be needed
+  await new Promise(resolve => setTimeout(resolve, 1000))
   await tmpDir.cleanup()
 }
 
@@ -183,8 +185,8 @@ async function doBuild(
           },
           files: ["**/*", "node_modules/**", "!path/**"],
           appImage: {
-            // removing version from the name so as to autoupdate the same file name and relaunch
-            artifactName: "${name}-${arch}.${ext}",
+            // removing version from the name so as to autoupdate the same file name and relaunch by the same appimage path
+            artifactName: "${name}.${ext}",
           },
           nsis: {
             oneClick: true,
