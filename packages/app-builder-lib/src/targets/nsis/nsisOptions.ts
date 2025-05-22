@@ -109,6 +109,14 @@ export interface NsisOptions extends CommonNsisOptions, CommonWindowsInstallerCo
   readonly allowElevation?: boolean
 
   /**
+   * *assisted installer only.* Allows the user to choose whether to create desktop and/or start menu shortcuts during installation (e.g. via checkboxes).
+   * By default, both shortcuts are created automatically.
+   * If enabled, the user can opt-in or opt-out at install time.
+   * @default false
+   */
+  readonly allowToAddShortcut?: boolean
+
+  /**
    * *assisted installer only.* Whether to allow user to change installation directory.
    * @default false
    */

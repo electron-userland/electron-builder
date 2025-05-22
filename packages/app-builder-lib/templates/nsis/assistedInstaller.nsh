@@ -19,6 +19,11 @@
     !insertmacro PAGE_INSTALL_MODE
   !endif
 
+  !ifdef ALLOW_TO_ADD_SHORTCUT
+    !include shortcutsPage.nsh
+    !insertmacro PAGE_SHORTCUTS
+  !endif
+
   !ifdef allowToChangeInstallationDirectory
     !include StrContains.nsh
 
