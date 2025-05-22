@@ -28,7 +28,7 @@ describe("Electron autoupdate from 1.0.0 to 1.0.1 (live test)", () => {
     await runTest("zip")
   })
   test.ifWindows("win", async () => {
-    await runTest("zip")
+    await runTest("nsis")
   })
   // docker image is x64, so this won't run on arm64 macs
   test.ifLinux.ifEnv(process.arch === "x64")("linux", async () => {
@@ -63,7 +63,7 @@ async function runTest(target: string, arch: Arch = Arch.x64) {
     execSync(`apt-get update -yqq && apt-get install -yq file xvfb libatk1.0-0`, { stdio: "inherit" })
     appPath = path.join(dirPath, `TestApp-${OLD_VERSION_NUMBER}${getArchSuffix(arch)}.AppImage`)
   } else if (process.platform === "win32") {
-    appPath = path.join(dirPath, `TestApp.exe`)
+    appPath = path.join(dirPath, "win-unpacked", `TestApp.exe`)
   // } else if (process.platform === "darwin") {
   //   appPath = path.join(dirPath, `TestApp-${OLD_VERSION_NUMBER}${getArchSuffix(arch)}.zip`)
   }
@@ -127,6 +127,10 @@ async function doBuild(
           files: ["**/*", "node_modules/**", "!path/**"],
           appImage: {
             // systemIntegration: false,
+          },
+          nsis: {
+            oneClick: true,
+            perMachine: false,
           }
         },
       },
