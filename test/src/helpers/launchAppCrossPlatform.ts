@@ -51,7 +51,6 @@ export async function launchAndWaitForQuit({ appPath, timeoutMs = 20000, env = {
     }
 
     case "linux": {
-
       const { display, stop } = startXvfb()
       await new Promise(resolve => setTimeout(resolve, 500)) // Give Xvfb time to init
       console.log("Xvfb started on display", display)
@@ -70,8 +69,6 @@ export async function launchAndWaitForQuit({ appPath, timeoutMs = 20000, env = {
         if (magic.toString("utf-8", 1, 4) !== "ELF") {
           throw new Error(`AppImage is not a valid ELF binary: magic=${magic.toString("hex")}`)
         }
-        execSync("which Xvfb", { stdio: "inherit" })
-        execSync("which file", { stdio: "inherit" })
         execSync("file " + appPath, { stdio: "inherit" })
 
         chmodSync(appPath, 0o755)
@@ -81,7 +78,7 @@ export async function launchAndWaitForQuit({ appPath, timeoutMs = 20000, env = {
           APPIMAGE_EXTRACT_AND_RUN: "1",
         }
 
-        child = spawn(appPath, [], {
+        child = spawn(appPath, ["--no-sandbox"], {
           detached: true,
           shell: false,
           stdio: ["ignore", "pipe", "pipe"],

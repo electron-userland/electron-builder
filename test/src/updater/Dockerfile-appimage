@@ -1,0 +1,59 @@
+FROM buildpack-deps:noble-curl
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Enable universe repo to get legacy libraries like libxcrypt-compat
+RUN apt-get update && \
+    apt-get install -y software-properties-common && \
+    add-apt-repository universe && \
+    apt-get update
+
+# Install required libraries for AppImages and legacy binaries
+RUN apt-get install -y \
+    fuse3 \
+    libfuse2 \
+    # libxcrypt-compat \
+    libasound2-dev \
+    libatk-bridge2.0-0 \
+    libatk1.0-0 \
+    libcups2 \
+    libdrm2 \
+    libgbm1 \
+    libgtk-3-0 \
+    libnspr4 \
+    libnss3 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxrandr2 \
+    libxss1 \
+    libxtst6 \
+    x11-utils \
+    xvfb \
+    file \
+    ruby \
+    curl \
+    unzip \
+    ca-certificates
+
+# Create fuse mount permissions
+RUN echo "user_allow_other" >> /etc/fuse.conf
+
+# Optional: Allow AppImages to run without sudo (needed for fuse)
+RUN ln -s /usr/bin/fuse3 /usr/bin/fuse || true
+
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+RUN apt-get install -y nodejs file xvfb
+RUN npm --silent install --global --depth 0 pnpm
+
+RUN apt-get install -y zlib1g-dev
+
+# Set fuse config (AppImages use FUSE sometimes)
+# RUN mkdir -p /etc/fuse.conf && echo "user_allow_other" >> /etc/fuse.conf
+
+# Optional: Add a non-root user if running AppImages as non-root is preferred
+# RUN useradd -m appuser
+# USER appuser
+# WORKDIR /home/appuser
+
+# Entry point — override at runtime to pass your AppImage
+# ENTRYPOINT ["/bin/bash"]

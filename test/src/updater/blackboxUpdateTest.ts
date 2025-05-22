@@ -40,8 +40,10 @@ describe("Electron autoupdate from 1.0.0 to 1.0.1 (live test)", () => {
         })
       }
     }
-    // docker image is x64, so this won't run on arm64 macs
-    test.ifEnv(process.arch === "x64")("linux", async () => {
+    test.ifEnv(process.arch === "arm64")("AppImage arm64", async () => {
+      await runTest("AppImage", Arch.arm64)
+    })
+    test.ifEnv(process.arch === "x64")("AppImage x64", async () => {
       await runTest("AppImage", Arch.x64)
     })
   })
@@ -95,8 +97,8 @@ async function runTest(target: string, arch: Arch = Arch.x64) {
   //   })
   // })
   if (target === "AppImage") {
-    execSync(`apt-get update -yqq && apt-get install -yq file xvfb libatk1.0-0 libatk-bridge2.0-0`, { stdio: "inherit" })
-    appPath = path.join(dirPath, `TestApp-${OLD_VERSION_NUMBER}${getArchSuffix(arch)}.AppImage`)
+    // execSync(`apt-get update -yqq && apt-get install -yq file xvfb libatk1.0-0 libatk-bridge2.0-0`, { stdio: "inherit" })
+    appPath = path.join(dirPath, `TestApp${getArchSuffix(arch)}.AppImage`)
   } else if (target === "deb") {
     appPath = path.join(dirPath, `TestApp-${OLD_VERSION_NUMBER}${getArchSuffix(arch)}.deb`)
     execSync(`sudo dpkg -i "${appPath}"`, { stdio: "inherit" })
@@ -105,8 +107,10 @@ async function runTest(target: string, arch: Arch = Arch.x64) {
     execSync(`sudo rpm -i --nosignature "${appPath}"`, { stdio: "inherit" })
   } else if (process.platform === "win32") {
     appPath = path.join(dirPath, "win-unpacked", `TestApp.exe`)
-    // } else if (process.platform === "darwin") {
-    //   appPath = path.join(dirPath, `TestApp-${OLD_VERSION_NUMBER}${getArchSuffix(arch)}.zip`)
+  } else if (process.platform === "darwin") {
+    appPath = path.join(dirPath, `mac${getArchSuffix(arch)}`, `TestApp-${OLD_VERSION_NUMBER}.app`, "Contents", "MacOS", "TestApp")
+  } else {
+    throw new Error(`Unsupported target: ${target}`)
   }
 
   await runTestWithinServer(async (rootDirectory: string, updateConfigPath: string) => {
@@ -167,7 +171,8 @@ async function doBuild(
           },
           files: ["**/*", "node_modules/**", "!path/**"],
           appImage: {
-            // systemIntegration: false,
+            // removing version from the name so as to autoupdate the same file name and relaunch
+            artifactName: "${name}-${arch}.${ext}",
           },
           nsis: {
             oneClick: true,
