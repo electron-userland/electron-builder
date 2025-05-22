@@ -30,9 +30,17 @@ describe("Electron autoupdate from 1.0.0 to 1.0.1 (live test)", () => {
   test.ifWindows("win", async () => {
     await runTest("nsis")
   })
-  // docker image is x64, so this won't run on arm64 macs
-  test.ifLinux.ifEnv(process.arch === "x64")("linux", async () => {
-    await runTest("AppImage", Arch.x64)
+  describe("linux", () => {
+    test("deb", async () => {
+      await runTest("deb")
+    })
+    test("rpm", async () => {
+      await runTest("rpm")
+    })
+    // docker image is x64, so this won't run on arm64 macs
+    test.ifEnv(process.arch === "x64")("linux", async () => {
+      await runTest("AppImage", Arch.x64)
+    })
   })
 })
 
@@ -62,10 +70,16 @@ async function runTest(target: string, arch: Arch = Arch.x64) {
   if (target === "AppImage") {
     execSync(`apt-get update -yqq && apt-get install -yq file xvfb libatk1.0-0 libatk-bridge2.0-0`, { stdio: "inherit" })
     appPath = path.join(dirPath, `TestApp-${OLD_VERSION_NUMBER}${getArchSuffix(arch)}.AppImage`)
+  } else if (target === "deb") {
+    appPath = path.join(dirPath, `TestApp-${OLD_VERSION_NUMBER}${getArchSuffix(arch)}.deb`)
+    execSync(`sudo dpkg -i "${appPath}"`, { stdio: "inherit" })
+  } else if (target === "rpm") {
+    appPath = path.join(dirPath, `TestApp-${OLD_VERSION_NUMBER}${getArchSuffix(arch)}.rpm`)
+    execSync(`sudo rpm -i --nosignature "${appPath}"`, { stdio: "inherit" })
   } else if (process.platform === "win32") {
     appPath = path.join(dirPath, "win-unpacked", `TestApp.exe`)
-  // } else if (process.platform === "darwin") {
-  //   appPath = path.join(dirPath, `TestApp-${OLD_VERSION_NUMBER}${getArchSuffix(arch)}.zip`)
+    // } else if (process.platform === "darwin") {
+    //   appPath = path.join(dirPath, `TestApp-${OLD_VERSION_NUMBER}${getArchSuffix(arch)}.zip`)
   }
 
   await runTestWithinServer(async (rootDirectory: string, updateConfigPath: string) => {
@@ -131,7 +145,7 @@ async function doBuild(
           nsis: {
             oneClick: true,
             perMachine: false,
-          }
+          },
         },
       },
       {
