@@ -28,13 +28,13 @@ describe("Electron autoupdate from 1.0.0 to 1.0.1 (live test)", () => {
   test.ifMac.ifEnv(process.env.CSC_KEY_PASSWORD)("mac", async () => {
     await runTest("zip")
   })
-  
+
   test.ifWindows("win", async () => {
     await runTest("nsis")
   })
 
   // must be sequential in order for process.env.ELECTRON_BUILDER_LINUX_PACKAGE_MANAGER to be respected per-test
-  describe("linux", { sequential: true }, () => {
+  describe.runIf(process.platform === "linux")("linux", { sequential: true }, () => {
     for (const distro in packageManagerMap) {
       const { pms, target } = packageManagerMap[distro as keyof typeof packageManagerMap]
       for (const pm of pms) {
