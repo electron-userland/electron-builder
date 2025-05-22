@@ -4,48 +4,12 @@ import { UpdateCheckResult } from "electron-updater"
 import { outputFile } from "fs-extra"
 import { tmpdir } from "os"
 import * as path from "path"
-import { ExpectStatic } from "vitest"
 import { assertThat } from "../helpers/fileAssert"
 import { removeUnstableProperties } from "../helpers/packTester"
 import { createNsisUpdater, trackEvents, validateDownload, writeUpdateConfig } from "../helpers/updaterTestUtil"
+import { ExpectStatic } from "vitest"
 
 const config = { retry: 3 }
-
-// test.ifWindows("test nsis updater: full install", config, async ({ expect }) => {
-//   let appPath1: string
-//   await appTwo(
-//     expect,
-//     {
-//       targets: Platform.WINDOWS.createTarget("nsis", Arch.x64),
-//     },
-//     {
-//       packed: async (context) => {
-//         appPath1 = context.getAppPath(Platform.WINDOWS, Arch.x64)
-//         // Install the app
-//         const installerPath = path.join(appPath1, "TestApp-1.0.0.exe")
-//         return Promise.resolve()
-//       }
-//     }
-//   )
-
-//   const updater = await createNsisUpdater("1.0.1")
-//   updater.updateConfigPath = await writeUpdateConfig<GithubOptions>({
-//     provider: "github",
-//     owner: "mmaietta",
-//     repo: "electron-builder-test",
-//   })
-//   const updateCheckResult = await validateDownload(expect, updater)
-//   expect(removeUnstableProperties(updateCheckResult?.updateInfo)).toMatchSnapshot()
-//   expect(updateCheckResult?.downloadPromise).toBeDefined()
-//   const files = await updateCheckResult?.downloadPromise
-//   expect(files!.length).toEqual(1)
-//   const installer = files![0]
-//   expect(installer.endsWith(".exe")).toBeTruthy()
-//   await assertThat(expect, installer).isFile()
-
-//   const didInstall = updater.quitAndInstall(true, false)
-//   expect(didInstall).toBe(true)
-// })
 
 test("downgrade (disallowed, beta)", config, async ({ expect }) => {
   const updater = await createNsisUpdater("1.5.2-beta.4")
