@@ -60,7 +60,7 @@ async function runTest(target: string, arch: Arch = Arch.x64) {
   //   })
   // })
   if (target === "AppImage") {
-    execSync(`apt-get update -yqq && apt-get install -yq file xvfb libatk1.0-0`, { stdio: "inherit" })
+    execSync(`apt-get update -yqq && apt-get install -yq file xvfb libatk1.0-0 libatk-bridge2.0-0`, { stdio: "inherit" })
     appPath = path.join(dirPath, `TestApp-${OLD_VERSION_NUMBER}${getArchSuffix(arch)}.AppImage`)
   } else if (process.platform === "win32") {
     appPath = path.join(dirPath, "win-unpacked", `TestApp.exe`)
