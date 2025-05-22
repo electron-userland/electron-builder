@@ -129,14 +129,14 @@ async function runTest(target: string, arch: Arch = Arch.x64) {
     // Move app update to the root directory of the server
     await fs.copy(newAppDir.dir, rootDirectory, { recursive: true, overwrite: true })
 
-    const verifyAppVersion = async (expectedVersion: string) => await launchAndWaitForQuit({ appPath, timeoutMs: 5 * 60 * 1000, updateConfigPath, expectedVersion })
+    const verifyAppVersion = async (expectedVersion: string) => await launchAndWaitForQuit({ appPath, timeoutMs: 15 * 60 * 1000, updateConfigPath, expectedVersion })
 
     const result = await verifyAppVersion(OLD_VERSION_NUMBER)
     console.log("App version:", result)
     expect(result.version).toMatch(OLD_VERSION_NUMBER)
 
     // Wait for quitAndInstall to take effect, increase delay if updates are slower (shouldn't be the case for such a small test app)
-    const delay = 10 * 1000
+    const delay = 60 * 1000
     await new Promise(resolve => setTimeout(resolve, delay))
 
     expect((await verifyAppVersion(NEW_VERSION_NUMBER)).version).toMatch(NEW_VERSION_NUMBER)

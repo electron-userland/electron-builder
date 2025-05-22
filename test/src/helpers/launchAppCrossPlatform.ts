@@ -53,16 +53,6 @@ export async function launchAndWaitForQuit({ appPath, timeoutMs = 20000, env = {
     case "linux": {
       const { display, stop } = startXvfb()
       await new Promise(resolve => setTimeout(resolve, 500)) // Give Xvfb time to init
-      console.log("Xvfb started on display", display)
-      ;["SIGINT", "SIGTERM", "uncaughtException", "unhandledRejection"].forEach(sig => {
-        process.once(sig, () => {
-          try {
-            stop()
-          } catch (e) {
-            console.warn("Failed to stop Xvfb:", e)
-          }
-        })
-      })
 
       if (appPath.endsWith(".AppImage")) {
         const magic = readMagicBytes(appPath)
@@ -187,17 +177,30 @@ export function startXvfb(): { display: string; stop: () => void } {
 
   proc.unref()
 
+  const stop = () => {
+    if (typeof proc.pid === "number" && !isNaN(proc.pid)) {
+      try {
+        process.kill(-proc.pid, "SIGTERM")
+      } catch (e) {
+        console.warn("Failed to stop Xvfb:", e)
+      }
+    }
+  }
+
+  console.log("Xvfb started on display", display)
+  ;["SIGINT", "SIGTERM", "uncaughtException", "unhandledRejection"].forEach(sig => {
+    process.once(sig, () => {
+      try {
+        stop()
+      } catch (e) {
+        console.warn("Failed to stop Xvfb:", e)
+      }
+    })
+  })
+  
   return {
     display,
-    stop: () => {
-      if (typeof proc.pid === "number" && !isNaN(proc.pid)) {
-        try {
-          process.kill(-proc.pid, "SIGTERM")
-        } catch (e) {
-          console.warn("Failed to stop Xvfb:", e)
-        }
-      }
-    },
+    stop,
   }
 }
 
