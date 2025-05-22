@@ -23,26 +23,32 @@ describe("Electron autoupdate from 1.0.0 to 1.0.1 (live test)", () => {
     delete process.env.AUTO_UPDATER_TEST
     process.env.DEBUG = debug
   })
+
   // Signing is required for macOS autoupdate
   test.ifMac.ifEnv(process.env.CSC_KEY_PASSWORD)("mac", async () => {
     await runTest("zip")
   })
+  
   test.ifWindows("win", async () => {
     await runTest("nsis")
   })
-  describe("linux", () => {
+
+  // must be sequential in order for process.env.ELECTRON_BUILDER_LINUX_PACKAGE_MANAGER to be respected per-test
+  describe("linux", { sequential: true }, () => {
     for (const distro in packageManagerMap) {
       const { pms, target } = packageManagerMap[distro as keyof typeof packageManagerMap]
       for (const pm of pms) {
         test.ifEnv(determineEnvironment(distro))(`${distro} - (${pm}) download and install`, async ({ expect }) => {
           process.env.ELECTRON_BUILDER_LINUX_PACKAGE_MANAGER = pm
           await runTest(target, Arch.x64)
+          delete process.env.ELECTRON_BUILDER_LINUX_PACKAGE_MANAGER
         })
       }
     }
     test.ifEnv(process.arch === "arm64")("AppImage arm64", async () => {
       await runTest("AppImage", Arch.arm64)
     })
+    // only works on x64 github runners, so this will fail on arm64 macs
     test.ifEnv(process.arch === "x64")("AppImage x64", async () => {
       await runTest("AppImage", Arch.x64)
     })
