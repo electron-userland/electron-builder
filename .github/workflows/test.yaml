@@ -2,19 +2,18 @@ name: Test
 
 on:
   push:
-    branches:
-      master
+    branches: master
   pull_request:
   workflow_dispatch: # Allows you to run this workflow manually from the Actions tab
     inputs:
       rebuild-docker-images:
-        description: 'Rebuild all Docker images'
+        description: "Rebuild all Docker images"
         default: false
-        type: 'boolean'
+        type: "boolean"
   workflow_call: # Allow this workflow to be called from other workflows
     inputs:
       rebuild-docker-images-call:
-        description: 'Rebuild all Docker images'
+        description: "Rebuild all Docker images"
         required: true
         type: boolean
 
@@ -147,17 +146,30 @@ jobs:
           docker image load --input ${{ runner.temp }}/electron-builder-all-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}.tar
           docker image ls -a
 
+      - name: Setup Updater docker images
+        run: |
+          docker build --platform=linux/amd64 -f ./test/src/updater/Dockerfile-archlinux . -t archlinux-updater-test
+          docker build --platform=linux/amd64 -f ./test/src/updater/Dockerfile-rpm . -t rpm-updater-test
+          docker build --platform=linux/amd64 -f ./test/src/updater/Dockerfile-debian . -t debian-updater-test
+
+      - name: Lint
+        run: pnpm pretest
+
       - name: Test
         run: |
           echo $TEST_RUNNER_IMAGE_TAG
           pnpm test-linux
         env:
-          TEST_FILES: nsisUpdaterTest,linuxUpdaterTest,PublishManagerTest,differentialUpdateTest
+          TEST_FILES: nsisUpdaterTest,PublishManagerTest,differentialUpdateTest
           KEYGEN_TOKEN: ${{ secrets.KEYGEN_TOKEN }}
           BITBUCKET_TOKEN: ${{ secrets.BITBUCKET_TOKEN }}
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
           FORCE_COLOR: 1
           TEST_RUNNER_IMAGE_TAG: electronuserland/builder:${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}-wine-mono
+
+      - name: Test Linux Updater
+        run: |
+           sh test/src/updater/test-specific-platforms.sh
 
       - name: Verify Docs Generation
         run: pnpm generate-all
