@@ -17,7 +17,7 @@ import {
 } from "builder-util"
 import { CancellationToken } from "builder-util-runtime"
 import { chmod, mkdirs, outputFile } from "fs-extra"
-import * as isCI from "is-ci"
+import { isCI } from "ci-info"
 import { Lazy } from "lazy-val"
 import { release as getOsRelease } from "os"
 import * as path from "path"
