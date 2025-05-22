@@ -1,16 +1,18 @@
 import { getBinFromUrl } from "app-builder-lib/out/binDownload"
 import { GenericServerOptions, Nullish } from "builder-util-runtime"
-import { archFromString, doSpawn, getArchSuffix, TmpDir } from "builder-util/out/util"
+import { archFromString, doSpawn, getArchSuffix, log, TmpDir } from "builder-util/out/util"
 import { Arch, Configuration, Platform } from "electron-builder"
-import fs, { outputFile } from "fs-extra"
+import fs, { existsSync, outputFile } from "fs-extra"
 import path from "path"
 import { afterAll, beforeAll, describe, expect, ExpectStatic } from "vitest"
 import { launchAndWaitForQuit } from "../helpers/launchAppCrossPlatform"
 import { assertPack, modifyPackageJson, PackedContext } from "../helpers/packTester"
 import { ELECTRON_VERSION } from "../helpers/testConfig"
 import { NEW_VERSION_NUMBER, OLD_VERSION_NUMBER, writeUpdateConfig } from "../helpers/updaterTestUtil"
-import { execSync } from "child_process"
+import { execFileSync, execSync, spawn } from "child_process"
 
+// Linux Tests MUST be run in docker containers for proper ephemeral testing environment (e.g. fresh install + update + relaunch)
+// Currently this test logic does not handle uninstalling packages (yet)
 describe("Electron autoupdate from 1.0.0 to 1.0.1 (live test)", () => {
   const debug = process.env.DEBUG
   beforeAll(() => {
@@ -95,32 +97,27 @@ async function runTest(target: string, arch: Arch = Arch.x64) {
   const newAppDir = outDirs[1]
 
   const dirPath = oldAppDir.dir
-  let appPath = oldAppDir.appPath
-  // const appPath = oldAppDir.appPath
-  // fs.readdir(dirPath, (err, files) => {
-  //   if (err) {
-  //     console.error("Error reading directory:", err)
-  //     return
-  //   }
+  let appPath: string
 
-  //   console.log(`Contents of ${dirPath}:`)
-  //   files.forEach(file => {
-  //     console.log(file)
-  //   })
-  // })
+  // Setup tests by installing the previous version
   if (target === "AppImage") {
-    // execSync(`apt-get update -yqq && apt-get install -yq file xvfb libatk1.0-0 libatk-bridge2.0-0`, { stdio: "inherit" })
     appPath = path.join(dirPath, `TestApp.AppImage`)
   } else if (target === "deb") {
-    appPath = path.join(dirPath, `TestApp-${OLD_VERSION_NUMBER}${getArchSuffix(arch)}.deb`)
+    appPath = path.join(dirPath, `TestApp.deb`)
     execSync(`sudo dpkg -i "${appPath}"`, { stdio: "inherit" })
   } else if (target === "rpm") {
-    appPath = path.join(dirPath, `TestApp-${OLD_VERSION_NUMBER}${getArchSuffix(arch)}.rpm`)
+    appPath = path.join(dirPath, `TestApp.rpm`)
     execSync(`sudo rpm -i --nosignature "${appPath}"`, { stdio: "inherit" })
   } else if (process.platform === "win32") {
-    appPath = path.join(dirPath, "win-unpacked", `TestApp.exe`)
+    // /S = silent install
+    execFileSync(path.join(dirPath, "TestApp.exe"), ['/S'], { stdio: 'inherit' })
+    // access installed app's location
+    appPath = path.join(process.env['ProgramFiles']!, 'TestApp', "TestApp.exe")
+    if (!existsSync(appPath)) {
+      throw new Error(`Installed app not found: ${appPath}`)
+    }
   } else if (process.platform === "darwin") {
-    appPath = path.join(dirPath, `mac${getArchSuffix(arch)}`, `TestApp-${OLD_VERSION_NUMBER}.app`, "Contents", "MacOS", "TestApp")
+    appPath = path.join(dirPath, `mac${getArchSuffix(arch)}`, `TestApp.app`, "Contents", "MacOS", "TestApp")
   } else {
     throw new Error(`Unsupported target: ${target}`)
   }
@@ -132,7 +129,7 @@ async function runTest(target: string, arch: Arch = Arch.x64) {
     const verifyAppVersion = async (expectedVersion: string) => await launchAndWaitForQuit({ appPath, timeoutMs: 15 * 60 * 1000, updateConfigPath, expectedVersion })
 
     const result = await verifyAppVersion(OLD_VERSION_NUMBER)
-    console.log("App version:", result)
+    log.debug(result, "Test App version")
     expect(result.version).toMatch(OLD_VERSION_NUMBER)
 
     // Wait for quitAndInstall to take effect, increase delay if updates are slower (shouldn't be the case for such a small test app)
@@ -140,10 +137,11 @@ async function runTest(target: string, arch: Arch = Arch.x64) {
     await new Promise(resolve => setTimeout(resolve, delay))
 
     expect((await verifyAppVersion(NEW_VERSION_NUMBER)).version).toMatch(NEW_VERSION_NUMBER)
+  }).finally(async () => {
+    // windows needs to release file locks, so a delay seems to be needed
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    await tmpDir.cleanup()
   })
-  // windows needs to release file locks, so a delay seems to be needed
-  await new Promise(resolve => setTimeout(resolve, 1000))
-  await tmpDir.cleanup()
 }
 
 type ApplicationUpdatePaths = {
@@ -171,7 +169,8 @@ async function doBuild(
       {
         targets,
         config: {
-          asar: false,
+          artifactName: "${name}.${ext}",
+          asar: false, // not necessarily needed, just easier debugging tbh
           electronLanguages: ["en"],
           extraMetadata: {
             version,
@@ -184,13 +183,9 @@ async function doBuild(
             path: "test",
           },
           files: ["**/*", "node_modules/**", "!path/**"],
-          appImage: {
-            // removing version from the name so as to autoupdate the same file name and relaunch by the same appimage path
-            artifactName: "${name}.${ext}",
-          },
           nsis: {
             oneClick: true,
-            perMachine: false,
+            // perMachine: true,
           },
         },
       },

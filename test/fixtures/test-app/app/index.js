@@ -12,7 +12,7 @@ process.on("unhandledRejection", console.error)
 console.log(`APP_VERSION: ${app.getVersion()}`)
 
 const updateConfigPath = process.env.AUTO_UPDATER_TEST_CONFIG_PATH?.trim()
-const shouldTestAutoUpdater = !!process.env.AUTO_UPDATER_TEST?.trim() && updateConfigPath
+const shouldTestAutoUpdater = !!process.env.AUTO_UPDATER_TEST?.trim() && !!updateConfigPath
 const root = path.dirname(process.execPath)
 const _appUpdateConfigPath = path.resolve(process.platform === "darwin" ? `${root}/../Resources` : `${root}/resources`, "app-update.yml")
 

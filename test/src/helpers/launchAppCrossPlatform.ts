@@ -45,8 +45,7 @@ export async function launchAndWaitForQuit({ appPath, timeoutMs = 20000, env = {
     }
 
     case "win32": {
-      const powershellCmd = `Start-Process -FilePath '${appPath}' -Wait`
-      child = spawnApp("powershell.exe", ["-NoProfile", "-Command", powershellCmd], false)
+      child = spawnApp(appPath)
       break
     }
 
@@ -197,7 +196,7 @@ export function startXvfb(): { display: string; stop: () => void } {
       }
     })
   })
-  
+
   return {
     display,
     stop,
