@@ -112,6 +112,7 @@ jobs:
           TEST_FILES: ${{ matrix.testFiles }}
           FORCE_COLOR: 1
           TEST_RUNNER_IMAGE_TAG: electronuserland/builder:${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}-wine-mono
+          DEBUG: electron-builder
 
   # Need to separate from other tests because logic is specific to when TOKEN env vars are set
   test-updater:
@@ -189,6 +190,7 @@ jobs:
           CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
           TEST_FILES: ${{ matrix.testFiles }}
           FORCE_COLOR: 1
+          DEBUG: electron-builder
 
   test-mac:
     runs-on: macos-latest
@@ -225,3 +227,4 @@ jobs:
           TEST_FILES: ${{ matrix.testFiles }}
           FORCE_COLOR: 1
           USE_SYSTEM_FPM: true
+          DEBUG: electron-builder
