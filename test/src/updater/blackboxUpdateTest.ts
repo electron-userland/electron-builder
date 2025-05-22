@@ -31,18 +31,45 @@ describe("Electron autoupdate from 1.0.0 to 1.0.1 (live test)", () => {
     await runTest("nsis")
   })
   describe("linux", () => {
-    test("deb", async () => {
-      await runTest("deb")
-    })
-    test("rpm", async () => {
-      await runTest("rpm")
-    })
+    for (const distro in packageManagerMap) {
+      const { pms, target } = packageManagerMap[distro as keyof typeof packageManagerMap]
+      for (const pm of pms) {
+        test.ifEnv(determineEnvironment(distro))(`${distro} - (${pm}) download and install`, async ({ expect }) => {
+          process.env.ELECTRON_BUILDER_LINUX_PACKAGE_MANAGER = pm
+          await runTest(target, Arch.x64)
+        })
+      }
+    }
     // docker image is x64, so this won't run on arm64 macs
     test.ifEnv(process.arch === "x64")("linux", async () => {
       await runTest("AppImage", Arch.x64)
     })
   })
 })
+
+const determineEnvironment = (target: string) => {
+  return execSync(`cat /etc/*release | grep "^ID="`).toString().includes(target)
+}
+
+const packageManagerMap: {
+  [key: string]: {
+    pms: string[]
+    target: string
+  }
+} = {
+  fedora: {
+    pms: ["zypper", "dnf", "yum", "rpm"],
+    target: "rpm",
+  },
+  debian: {
+    pms: ["apt", "dpkg"],
+    target: "deb",
+  },
+  arch: {
+    pms: ["pacman"],
+    target: "pacman",
+  },
+}
 
 async function runTest(target: string, arch: Arch = Arch.x64) {
   const tmpDir = new TmpDir("auto-update")

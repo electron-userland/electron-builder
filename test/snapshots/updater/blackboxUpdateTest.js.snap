@@ -1,5 +1,38 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
+exports[`Electron autoupdate from 1.0.0 to 1.0.1 (live test) > linux > linux 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp-1.0.0.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp-1.0.0.AppImage",
+          },
+        ],
+        "path": "TestApp-1.0.0.AppImage",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.0",
+      },
+    },
+  ],
+}
+`;
+
 exports[`Electron autoupdate from 1.0.0 to 1.0.1 (live test) > win 1`] = `
 {
   "win": [
