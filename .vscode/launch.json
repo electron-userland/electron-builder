@@ -10,8 +10,9 @@
           "console": "integratedTerminal",
           "internalConsoleOptions": "openOnFirstSessionStart",
           "env": {
-            "TEST_FILES": "macPackagerTest",
-            "UPDATE_SNAPSHOT": "false"
+            "TEST_FILES": "blackboxUpdateTest",
+            "UPDATE_SNAPSHOT": "true",
+            "DEBUG": "electron-builder"
           }
       }
   ]

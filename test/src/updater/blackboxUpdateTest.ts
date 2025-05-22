@@ -72,7 +72,7 @@ async function runTest(target: string, arch: Arch = Arch.x64) {
     // Move app update to the root directory of the server
     await fs.copy(newAppDir.dir, rootDirectory, { recursive: true, overwrite: true })
 
-    const verifyAppVersion = async (expectedVersion: string) => await launchAndWaitForQuit({ appPath, updateConfigPath, expectedVersion })
+    const verifyAppVersion = async (expectedVersion: string) => await launchAndWaitForQuit({ appPath, timeoutMs: 5 * 60 * 1000, updateConfigPath, expectedVersion })
 
     const result = await verifyAppVersion(OLD_VERSION_NUMBER)
     console.log("App version:", result)

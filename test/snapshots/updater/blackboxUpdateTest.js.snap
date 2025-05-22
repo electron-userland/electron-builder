@@ -1,0 +1,81 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Electron autoupdate from 1.0.0 to 1.0.1 (live test) > win 1`] = `
+{
+  "win": [
+    {
+      "file": "latest.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp Setup 1.0.0.exe",
+          },
+        ],
+        "path": "TestApp Setup 1.0.0.exe",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.0",
+      },
+    },
+    {
+      "arch": "x64",
+      "file": "TestApp Setup 1.0.0.exe",
+      "safeArtifactName": "TestApp-Setup-1.0.0.exe",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "TestApp Setup 1.0.0.exe.blockmap",
+      "safeArtifactName": "TestApp-Setup-1.0.0.exe.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`Electron autoupdate from 1.0.0 to 1.0.1 (live test) > win 2`] = `
+{
+  "win": [
+    {
+      "file": "latest.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp Setup 1.0.1.exe",
+          },
+        ],
+        "path": "TestApp Setup 1.0.1.exe",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.1",
+      },
+    },
+    {
+      "arch": "x64",
+      "file": "TestApp Setup 1.0.1.exe",
+      "safeArtifactName": "TestApp-Setup-1.0.1.exe",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "TestApp Setup 1.0.1.exe.blockmap",
+      "safeArtifactName": "TestApp-Setup-1.0.1.exe.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
