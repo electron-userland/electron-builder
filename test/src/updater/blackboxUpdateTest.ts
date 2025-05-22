@@ -13,7 +13,7 @@ import { execFileSync, execSync, spawn } from "child_process"
 
 // Linux Tests MUST be run in docker containers for proper ephemeral testing environment (e.g. fresh install + update + relaunch)
 // Currently this test logic does not handle uninstalling packages (yet)
-describe("Electron autoupdate from 1.0.0 to 1.0.1 (live test)", () => {
+describe("Electron autoupdate (fresh install & update)", () => {
   const debug = process.env.DEBUG
   beforeAll(() => {
     // Set the environment variable to enable auto-update testing
@@ -37,12 +37,12 @@ describe("Electron autoupdate from 1.0.0 to 1.0.1 (live test)", () => {
 
   // must be sequential in order for process.env.ELECTRON_BUILDER_LINUX_PACKAGE_MANAGER to be respected per-test
   describe.runIf(process.platform === "linux")("linux", { sequential: true }, () => {
-    test.ifEnv(process.env.RUN_APP_IMAGE_TEST && process.arch === "arm64")("AppImage arm64", async () => {
+    test.ifEnv(process.env.RUN_APP_IMAGE_TEST && process.arch === "arm64")("AppImage - arm64", async () => {
       await runTest("AppImage", Arch.arm64)
     })
 
     // only works on x64, so this will fail on arm64 macs due to arch mismatch
-    test.ifEnv(process.env.RUN_APP_IMAGE_TEST && process.arch === "x64")("AppImage x64", async () => {
+    test.ifEnv(process.env.RUN_APP_IMAGE_TEST && process.arch === "x64")("AppImage - x64", async () => {
       await runTest("AppImage", Arch.x64)
     })
 
@@ -50,7 +50,7 @@ describe("Electron autoupdate from 1.0.0 to 1.0.1 (live test)", () => {
     for (const distro in packageManagerMap) {
       const { pms, target } = packageManagerMap[distro as keyof typeof packageManagerMap]
       for (const pm of pms) {
-        test(`${distro} - (${pm}) download and install`, async context => {
+        test(`${distro} - (${pm})`, async context => {
           if (!determineEnvironment(distro)) {
             context.skip()
           }
