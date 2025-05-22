@@ -35,10 +35,20 @@ describe("Electron autoupdate from 1.0.0 to 1.0.1 (live test)", () => {
 
   // must be sequential in order for process.env.ELECTRON_BUILDER_LINUX_PACKAGE_MANAGER to be respected per-test
   describe.runIf(process.platform === "linux")("linux", { sequential: true }, () => {
+    test.ifEnv(process.env.RUN_APP_IMAGE_TEST && process.arch === "arm64")("AppImage arm64", async () => {
+      await runTest("AppImage", Arch.arm64)
+    })
+
+    // only works on x64, so this will fail on arm64 macs due to arch mismatch
+    test.ifEnv(process.env.RUN_APP_IMAGE_TEST && process.arch === "x64")("AppImage x64", async () => {
+      await runTest("AppImage", Arch.x64)
+    })
+
+    // package manager tests specific to each distro (and corresponding docker image)
     for (const distro in packageManagerMap) {
       const { pms, target } = packageManagerMap[distro as keyof typeof packageManagerMap]
       for (const pm of pms) {
-        test(`${distro} - (${pm}) download and install`, async (context) => {
+        test(`${distro} - (${pm}) download and install`, async context => {
           if (!determineEnvironment(distro)) {
             context.skip()
           }
@@ -48,13 +58,6 @@ describe("Electron autoupdate from 1.0.0 to 1.0.1 (live test)", () => {
         })
       }
     }
-    test.ifEnv(process.arch === "arm64")("AppImage arm64", async () => {
-      await runTest("AppImage", Arch.arm64)
-    })
-    // only works on x64 github runners, so this will fail on arm64 macs
-    test.ifEnv(process.arch === "x64")("AppImage x64", async () => {
-      await runTest("AppImage", Arch.x64)
-    })
   })
 })
 
