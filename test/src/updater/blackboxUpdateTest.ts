@@ -61,6 +61,10 @@ async function runTest(target: string, arch: Arch = Arch.x64) {
   if (target === "AppImage") {
     execSync(`apt-get update -yqq && apt-get install -yq file xvfb`, { stdio: "inherit" })
     appPath = path.join(dirPath, `TestApp-${OLD_VERSION_NUMBER}${getArchSuffix(arch)}.AppImage`)
+  } else if (process.platform === "win32") {
+    appPath = path.join(dirPath, `TestApp.exe`)
+  // } else if (process.platform === "darwin") {
+  //   appPath = path.join(dirPath, `TestApp-${OLD_VERSION_NUMBER}${getArchSuffix(arch)}.zip`)
   }
 
   await runTestWithinServer(async (rootDirectory: string, updateConfigPath: string) => {
