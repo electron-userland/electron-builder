@@ -38,7 +38,10 @@ describe("Electron autoupdate from 1.0.0 to 1.0.1 (live test)", () => {
     for (const distro in packageManagerMap) {
       const { pms, target } = packageManagerMap[distro as keyof typeof packageManagerMap]
       for (const pm of pms) {
-        test.ifEnv(determineEnvironment(distro))(`${distro} - (${pm}) download and install`, async ({ expect }) => {
+        test(`${distro} - (${pm}) download and install`, async (context) => {
+          if (!determineEnvironment(distro)) {
+            context.skip()
+          }
           process.env.ELECTRON_BUILDER_LINUX_PACKAGE_MANAGER = pm
           await runTest(target, Arch.x64)
           delete process.env.ELECTRON_BUILDER_LINUX_PACKAGE_MANAGER
