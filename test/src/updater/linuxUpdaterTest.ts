@@ -1,10 +1,13 @@
 import { GithubOptions } from "builder-util-runtime"
-import { DebUpdater, PacmanUpdater, RpmUpdater } from "electron-updater"
+import { AppUpdater, DebUpdater, PacmanUpdater, RpmUpdater } from "electron-updater"
 import { assertThat } from "../helpers/fileAssert"
 import { createTestAppAdapter, tuneTestUpdater, validateDownload, writeUpdateConfig } from "../helpers/updaterTestUtil"
 import { ExpectStatic } from "vitest"
+import { execSync } from "child_process"
 
-const runTest = async (expect: ExpectStatic, updaterClass: any, expectedExtension: "deb" | "rpm" | "AppImage" | "pacman") => {
+type UpdateFileExtension = "deb" | "rpm" | "AppImage" | "pacman"
+
+const runTest = async (expect: ExpectStatic, updaterClass: any, expectedExtension: UpdateFileExtension) => {
   const testAppAdapter = await createTestAppAdapter("1.0.1")
   const updater = new updaterClass(null, testAppAdapter)
   tuneTestUpdater(updater, { platform: "linux" })
@@ -23,20 +26,47 @@ const runTest = async (expect: ExpectStatic, updaterClass: any, expectedExtensio
   expect(installer.endsWith(`.${expectedExtension}`)).toBeTruthy()
   await assertThat(expect, installer).isFile()
 
-  // updater.quitAndInstall(true, false)
+  const didUpdate = updater.install(true, false)
+  expect(didUpdate).toBeTruthy()
 }
 
-test("test rpm download", async ({ expect }) => {
-  await runTest(expect, RpmUpdater, "rpm")
-})
+const determineEnvironment = (target: string) => {
+  return execSync(`cat /etc/*release | grep "^ID="`).toString().includes(target)
+}
 
-test("test pacman download", async ({ expect }) => {
-  await runTest(expect, PacmanUpdater, "pacman")
-})
+const packageManagerMap: {
+  [key: string]: {
+    pms: string[]
+    updater: typeof AppUpdater
+    extension: UpdateFileExtension
+  }
+} = {
+  fedora: {
+    pms: ["zypper", "dnf", "yum", "rpm"],
+    updater: RpmUpdater,
+    extension: "rpm",
+  },
+  debian: {
+    pms: ["apt", "dpkg"],
+    updater: DebUpdater,
+    extension: "deb",
+  },
+  arch: {
+    pms: ["pacman"],
+    updater: PacmanUpdater,
+    extension: "pacman",
+  }
+}
 
-test("test deb download", async ({ expect }) => {
-  await runTest(expect, DebUpdater, "deb")
-})
+for (const distro in packageManagerMap) {
+  const { pms, updater: Updater, extension } = packageManagerMap[distro as keyof typeof packageManagerMap]
+  for (const pm of pms) {
+    test.ifEnv(determineEnvironment(distro))(`test ${distro} download and install (${pm})`, async ({ expect }) => {
+      process.env.ELECTRON_BUILDER_LINUX_PACKAGE_MANAGER = pm
+      await runTest(expect, Updater, extension)
+    })
+  }
+}
 
 // test.ifLinux("test AppImage download", async ({ expect }) => {
 //   await runTest(expect, AppImageUpdater, "AppImage")

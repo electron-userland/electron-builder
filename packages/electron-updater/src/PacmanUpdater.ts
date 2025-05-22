@@ -1,11 +1,12 @@
 import { AllPublishOptions } from "builder-util-runtime"
 import { AppAdapter } from "./AppAdapter"
 import { DownloadUpdateOptions } from "./AppUpdater"
-import { BaseUpdater, InstallOptions } from "./BaseUpdater"
+import { InstallOptions } from "./BaseUpdater"
 import { DOWNLOAD_PROGRESS } from "./types"
 import { findFile } from "./providers/Provider"
+import { LinuxUpdater } from "./LinuxUpdater"
 
-export class PacmanUpdater extends BaseUpdater {
+export class PacmanUpdater extends LinuxUpdater {
   constructor(options?: AllPublishOptions | null, app?: AppAdapter) {
     super(options, app)
   }
@@ -32,18 +33,30 @@ export class PacmanUpdater extends BaseUpdater {
   }
 
   protected doInstall(options: InstallOptions): boolean {
-    const sudo = this.wrapSudo()
-    // pkexec doesn't want the command to be wrapped in " quotes
-    const wrapper = /pkexec/i.test(sudo) ? "" : `"`
     const installerPath = this.installerPath
     if (installerPath == null) {
-      this.dispatchError(new Error("No valid update available, can't quit and install"))
+      this.dispatchError(new Error("No update filepath provided, can't quit and install"))
       return false
     }
-    const cmd = ["pacman", "-U", "--noconfirm", installerPath]
-    this.spawnSyncLog(sudo, [`${wrapper}/bin/bash`, "-c", `'${cmd.join(" ")}'${wrapper}`])
+    try {
+      this.runCommandWithSudoIfNeeded(["pacman", "-U", "--noconfirm", installerPath])
+    } catch (error: any) {
+      this._logger.warn("pacman installation failed, attempting to update package database and retry")
+      this._logger.warn(error.message ?? error)
+
+      try {
+        // Update package database (not a full upgrade, just sync)
+        this.runCommandWithSudoIfNeeded(["pacman", "-Sy", "--noconfirm"])
+        // Retry installation
+        this.runCommandWithSudoIfNeeded(["pacman", "-U", "--noconfirm", installerPath])
+      } catch (retryError: any) {
+        this._logger.error("Retry after pacman -Sy failed")
+        this._logger.error(retryError.message ?? retryError)
+        throw retryError // bubble up the failure
+      }
+    }
     if (options.isForceRunAfter) {
-      this.app.relaunch()
+      this.app.relaunch() // note: `app` is undefined in tests since vite doesn't run in electron
     }
     return true
   }
