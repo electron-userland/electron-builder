@@ -46,7 +46,6 @@ function isReady() {
     autoUpdater.logger = console
     autoUpdater.autoRunAppAfterInstall = false
 
-    autoUpdater.checkForUpdates()
     autoUpdater.on("checking-for-update", () => {
       console.log("Checking for update...")
     })
@@ -65,6 +64,7 @@ function isReady() {
       console.error("Error in auto-updater:", error)
       app.quit()
     })
+    autoUpdater.checkForUpdates()
   }
 }
 
