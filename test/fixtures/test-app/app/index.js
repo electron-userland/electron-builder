@@ -44,8 +44,6 @@ function isReady() {
     // autoUpdater._appUpdateConfigPath = _appUpdateConfigPath
     autoUpdater.updateConfigPath = updateConfigPath
     autoUpdater.logger = console
-    autoUpdater.autoDownload = true
-    autoUpdater.autoInstallOnAppQuit = true
     autoUpdater.autoRunAppAfterInstall = false
 
     autoUpdater.checkForUpdates()
