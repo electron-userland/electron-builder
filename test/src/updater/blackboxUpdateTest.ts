@@ -202,6 +202,7 @@ async function doBuild(
           files: ["**/*", "node_modules/**", "!path/**"],
           nsis: {
             oneClick: true,
+            runAfterFinish: false
             // perMachine: true,
           },
         },
@@ -279,7 +280,7 @@ async function doBuild(
 
 async function runTestWithinServer(doTest: (rootDirectory: string, updateConfigPath: string) => Promise<void>) {
   const tmpDir = new TmpDir("blackbox-update-test")
-  const root = await tmpDir.getTempDir({ prefix: "root" })
+  const root = await tmpDir.getTempDir({ prefix: "test-server-root" })
 
   // 65535 is the max port number
   // Math.random() / Math.random() is used to avoid zero
@@ -307,7 +308,8 @@ async function runTestWithinServer(doTest: (rootDirectory: string, updateConfigP
         throw e
       }
     )
-    .finally(() => {
-      tmpDir.cleanupSync()
+    .finally(async () => {
+      await new Promise(resolve => setTimeout(resolve, 5 * 1000)) // windows file locks
+      await tmpDir.cleanup()
     })
 }
