@@ -149,8 +149,9 @@ async function runTest(target: string, arch: Arch = Arch.x64) {
     log.debug(result, "Test App version")
     expect(result.version).toMatch(OLD_VERSION_NUMBER)
 
-    // Wait for quitAndInstall to take effect, increase delay if updates are slower (shouldn't be the case for such a small test app)
-    const delay = 20 * 1000
+    // Wait for quitAndInstall to take effect, increase delay if updates are slower
+    // (shouldn't be the case for such a small test app, but Windows with Debugger attached is pretty dam slow)
+    const delay = 60 * 1000
     await new Promise(resolve => setTimeout(resolve, delay))
 
     expect((await verifyAppVersion(NEW_VERSION_NUMBER)).version).toMatch(NEW_VERSION_NUMBER)
