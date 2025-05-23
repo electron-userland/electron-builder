@@ -28,6 +28,8 @@ async function init() {
 }
 
 function isReady() {
+  console.log(`APP_VERSION: ${app.getVersion()}`)
+
   if (shouldTestAutoUpdater) {
     autoUpdater._appUpdateConfigPath = _appUpdateConfigPath
     autoUpdater.updateConfigPath = updateConfigPath
@@ -42,7 +44,7 @@ function isReady() {
       console.log("Update available")
     })
     autoUpdater.on("update-downloaded", () => {
-      autoUpdater.quitAndInstall(true, false)
+      autoUpdater.quitAndInstall(true, false) // must be false, do not auto-restart app as the unit tests will lose stdout piping/access
     })
     autoUpdater.on("update-not-available", () => {
       console.log("Update not available")

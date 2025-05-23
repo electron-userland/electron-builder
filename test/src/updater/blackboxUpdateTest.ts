@@ -10,6 +10,7 @@ import { assertPack, modifyPackageJson, PackedContext } from "../helpers/packTes
 import { ELECTRON_VERSION } from "../helpers/testConfig"
 import { NEW_VERSION_NUMBER, OLD_VERSION_NUMBER, writeUpdateConfig } from "../helpers/updaterTestUtil"
 import { execFileSync, execSync, spawn } from "child_process"
+import { homedir } from "os"
 
 // Linux Tests MUST be run in docker containers for proper ephemeral testing environment (e.g. fresh install + update + relaunch)
 // Currently this test logic does not handle uninstalling packages (yet)
@@ -109,17 +110,31 @@ async function runTest(target: string, arch: Arch = Arch.x64) {
     appPath = path.join(dirPath, `TestApp.rpm`)
     execSync(`sudo rpm -i --nosignature "${appPath}"`, { stdio: "inherit" })
   } else if (process.platform === "win32") {
-    // /S = silent install
-    execFileSync(path.join(dirPath, "TestApp.exe"), ['/S'], { stdio: 'inherit' })
+    // Don't use /S for silent install as we lose view of the process
     // access installed app's location
-    appPath = path.join(process.env['ProgramFiles']!, 'TestApp', "TestApp.exe")
-    if (!existsSync(appPath)) {
-      throw new Error(`Installed app not found: ${appPath}`)
+    const localProgramsPath = path.join(
+      process.env.LOCALAPPDATA || path.join(homedir(), 'AppData', 'Local'),
+      'Programs', 'TestApp'
+    )
+    const uninstaller = path.join(localProgramsPath, "Uninstall TestApp.exe")
+    if (existsSync(uninstaller)) {
+      console.log("Uninstalling", uninstaller)
+      execFileSync(uninstaller, [], { stdio: 'inherit' })
     }
+    
+    const installerPath = path.join(dirPath, "TestApp.exe")
+    console.log("Installing windows", installerPath)
+    execFileSync(installerPath, [], { stdio: 'inherit' })
+    
+    appPath = path.join(localProgramsPath, "TestApp.exe")
   } else if (process.platform === "darwin") {
     appPath = path.join(dirPath, `mac${getArchSuffix(arch)}`, `TestApp.app`, "Contents", "MacOS", "TestApp")
   } else {
     throw new Error(`Unsupported target: ${target}`)
+  }
+
+  if (!existsSync(appPath)) {
+    throw new Error(`App not found: ${appPath}`)
   }
 
   await runTestWithinServer(async (rootDirectory: string, updateConfigPath: string) => {
