@@ -222,6 +222,8 @@ async function doBuild(
                   electron: ELECTRON_VERSION,
                 }
                 data.dependencies = {
+                  ...data.dependencies,
+                  "@electron/remote": "^2.1.2",
                   "electron-updater": `file:${__dirname}/../../../packages/electron-updater`,
                 }
                 data.pnpm = {

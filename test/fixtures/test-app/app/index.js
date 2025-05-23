@@ -2,8 +2,6 @@
 
 const electron = require("electron")
 const path = require("path")
-require('@electron/remote/main').initialize()
-
 
 const app = electron.app
 const BrowserWindow = electron.BrowserWindow
@@ -34,7 +32,11 @@ async function init() {
 function isReady() {
   console.log(`APP_VERSION: ${app.getVersion()}`)
 
-  createWindow()
+  try {
+    createWindow()
+  } catch (error) {
+    console.error(error)
+  }
 
   if (shouldTestAutoUpdater) {
     const { autoUpdater } = require("electron-updater")
@@ -67,6 +69,8 @@ function isReady() {
 }
 
 function createWindow() {
+  require('@electron/remote/main').initialize()
+
   mainWindow = new BrowserWindow({
     width: 800, height: 600, webPreferences: {
       nodeIntegration: true, contextIsolation: false, enableRemoteModule: true
