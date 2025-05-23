@@ -57,7 +57,7 @@ function isReady() {
     })
     autoUpdater.on("update-downloaded", () => {
       console.log("Update downloaded, starting quitAndInstall")
-      autoUpdater.quitAndInstall(false, false) // must be false, do not auto-restart app as the unit tests will lose stdout piping/access
+      autoUpdater.quitAndInstall(true, false) // must be false, do not auto-restart app as the unit tests will lose stdout piping/access
     })
     autoUpdater.on("update-not-available", () => {
       console.log("Update not available")
