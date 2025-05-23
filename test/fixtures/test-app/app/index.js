@@ -1,10 +1,14 @@
 "use strict"
 
 const electron = require("electron")
-const { autoUpdater } = require("electron-updater")
 const path = require("path")
+require('@electron/remote/main').initialize()
+
 
 const app = electron.app
+const BrowserWindow = electron.BrowserWindow
+
+let mainWindow
 
 process.on("uncaughtException", console.error)
 process.on("unhandledRejection", console.error)
@@ -30,7 +34,11 @@ async function init() {
 function isReady() {
   console.log(`APP_VERSION: ${app.getVersion()}`)
 
+  createWindow()
+
   if (shouldTestAutoUpdater) {
+    const { autoUpdater } = require("electron-updater")
+
     autoUpdater._appUpdateConfigPath = _appUpdateConfigPath
     autoUpdater.updateConfigPath = updateConfigPath
     autoUpdater.logger = console
@@ -44,6 +52,7 @@ function isReady() {
       console.log("Update available")
     })
     autoUpdater.on("update-downloaded", () => {
+      console.log("Update downloaded, starting quitAndInstall")
       autoUpdater.quitAndInstall(true, false) // must be false, do not auto-restart app as the unit tests will lose stdout piping/access
     })
     autoUpdater.on("update-not-available", () => {
@@ -56,6 +65,27 @@ function isReady() {
     })
   }
 }
+
+function createWindow() {
+  mainWindow = new BrowserWindow({
+    width: 800, height: 600, webPreferences: {
+      nodeIntegration: true, contextIsolation: false, enableRemoteModule: true
+    }
+  })
+  require('@electron/remote/main').enable(mainWindow.webContents)
+
+  mainWindow.loadURL('file://' + __dirname + '/index.html')
+
+  mainWindow.webContents.openDevTools()
+
+  mainWindow.on('closed', function () {
+    mainWindow = null
+  });
+}
+
+app.on('window-all-closed', function () {
+  app.quit()
+})
 
 init()
   .then(() => {
