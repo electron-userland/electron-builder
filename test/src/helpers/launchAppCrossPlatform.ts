@@ -116,11 +116,11 @@ export async function launchAndWaitForQuit({ appPath, timeoutMs = 20000, env = {
         } else {
           resolved = true
           resolveResult(0)
-          try {
-            child.kill()
-          } catch {
-            /* empty */
-          }
+          // try {
+          //   child.kill()
+          // } catch {
+          //   /* empty */
+          // }
         }
       }
     })

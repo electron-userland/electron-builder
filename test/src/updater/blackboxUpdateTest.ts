@@ -116,10 +116,12 @@ async function runTest(target: string, arch: Arch = Arch.x64) {
       process.env.LOCALAPPDATA || path.join(homedir(), 'AppData', 'Local'),
       'Programs', 'TestApp'
     )
+    // this is to clear dev environment when not running on an ephemeral GH runner. Installation will fail due to "uninstall" message prompt, so we must uninstall first (hence the setTimeout delay)
     const uninstaller = path.join(localProgramsPath, "Uninstall TestApp.exe")
     if (existsSync(uninstaller)) {
       console.log("Uninstalling", uninstaller)
       execFileSync(uninstaller, [], { stdio: 'inherit' })
+      await new Promise(resolve => setTimeout(resolve, 5000))
     }
     
     const installerPath = path.join(dirPath, "TestApp.exe")
@@ -141,14 +143,14 @@ async function runTest(target: string, arch: Arch = Arch.x64) {
     // Move app update to the root directory of the server
     await fs.copy(newAppDir.dir, rootDirectory, { recursive: true, overwrite: true })
 
-    const verifyAppVersion = async (expectedVersion: string) => await launchAndWaitForQuit({ appPath, timeoutMs: 15 * 60 * 1000, updateConfigPath, expectedVersion })
+    const verifyAppVersion = async (expectedVersion: string) => await launchAndWaitForQuit({ appPath, timeoutMs: 2 * 60 * 1000, updateConfigPath, expectedVersion })
 
     const result = await verifyAppVersion(OLD_VERSION_NUMBER)
     log.debug(result, "Test App version")
     expect(result.version).toMatch(OLD_VERSION_NUMBER)
 
     // Wait for quitAndInstall to take effect, increase delay if updates are slower (shouldn't be the case for such a small test app)
-    const delay = 60 * 1000
+    const delay = 20 * 1000
     await new Promise(resolve => setTimeout(resolve, delay))
 
     expect((await verifyAppVersion(NEW_VERSION_NUMBER)).version).toMatch(NEW_VERSION_NUMBER)
@@ -223,7 +225,7 @@ async function doBuild(
                 }
                 data.dependencies = {
                   ...data.dependencies,
-                  "@electron/remote": "^2.1.2",
+                  "@electron/remote": "^2.1.2", // for debugging live application with GUI so that app.getVersion is accessible in renderer process
                   "electron-updater": `file:${__dirname}/../../../packages/electron-updater`,
                 }
                 data.pnpm = {
@@ -241,6 +243,8 @@ async function doBuild(
                   electron: ELECTRON_VERSION,
                 }
                 data.dependencies = {
+                  ...data.dependencies,
+                  "@electron/remote": "^2.1.2", // for debugging live application with GUI so that app.getVersion is accessible in renderer process
                   "electron-updater": `file:${__dirname}/../../../packages/electron-updater`,
                 }
                 data.pnpm = {

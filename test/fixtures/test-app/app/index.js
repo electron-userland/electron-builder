@@ -41,10 +41,12 @@ function isReady() {
   if (shouldTestAutoUpdater) {
     const { autoUpdater } = require("electron-updater")
 
-    autoUpdater._appUpdateConfigPath = _appUpdateConfigPath
+    // autoUpdater._appUpdateConfigPath = _appUpdateConfigPath
     autoUpdater.updateConfigPath = updateConfigPath
     autoUpdater.logger = console
     autoUpdater.autoDownload = true
+    autoUpdater.autoInstallOnAppQuit = true
+    autoUpdater.autoRunAppAfterInstall = false
 
     autoUpdater.checkForUpdates()
     autoUpdater.on("checking-for-update", () => {
@@ -55,7 +57,7 @@ function isReady() {
     })
     autoUpdater.on("update-downloaded", () => {
       console.log("Update downloaded, starting quitAndInstall")
-      autoUpdater.quitAndInstall(true, false) // must be false, do not auto-restart app as the unit tests will lose stdout piping/access
+      autoUpdater.quitAndInstall(false, false) // must be false, do not auto-restart app as the unit tests will lose stdout piping/access
     })
     autoUpdater.on("update-not-available", () => {
       console.log("Update not available")
