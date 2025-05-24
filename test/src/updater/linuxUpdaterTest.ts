@@ -51,11 +51,11 @@ const packageManagerMap: {
     updater: DebUpdater,
     extension: "deb",
   },
-  arch: {
-    pms: ["pacman"],
-    updater: PacmanUpdater,
-    extension: "pacman",
-  }
+  // arch: {
+  //   pms: ["pacman"],
+  //   updater: PacmanUpdater,
+  //   extension: "pacman",
+  // }
 }
 
 for (const distro in packageManagerMap) {
