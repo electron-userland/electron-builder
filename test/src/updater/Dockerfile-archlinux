@@ -6,7 +6,6 @@ RUN pacman -Sy --noconfirm \
     git \
     nodejs \
     npm \
-    which \
     && pacman -Scc --noconfirm
 
 RUN npm --silent install --global --depth 0 pnpm
