@@ -209,10 +209,9 @@ jobs:
       matrix:
         testFiles:
           - oneClickInstallerTest,assistedInstallerTest,webInstallerTest
-          - winPackagerTest,winCodeSignTest,BuildTest
+          - winPackagerTest,winCodeSignTest,BuildTest,blackboxUpdateTest
           - masTest,dmgTest,filesTest,macPackagerTest,differentialUpdateTest,macArchiveTest
           - concurrentBuildsTest
-          - blackboxUpdateTest
     steps:
       - name: Checkout code repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
