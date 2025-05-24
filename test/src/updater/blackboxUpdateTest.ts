@@ -112,22 +112,19 @@ async function runTest(target: string, arch: Arch = Arch.x64) {
   } else if (process.platform === "win32") {
     // Don't use /S for silent install as we lose view of the process
     // access installed app's location
-    const localProgramsPath = path.join(
-      process.env.LOCALAPPDATA || path.join(homedir(), 'AppData', 'Local'),
-      'Programs', 'TestApp'
-    )
+    const localProgramsPath = path.join(process.env.LOCALAPPDATA || path.join(homedir(), "AppData", "Local"), "Programs", "TestApp")
     // this is to clear dev environment when not running on an ephemeral GH runner.
     // Reinstallation will otherwise fail due to "uninstall" message prompt, so we must uninstall first (hence the setTimeout delay)
     const uninstaller = path.join(localProgramsPath, "Uninstall TestApp.exe")
     if (existsSync(uninstaller)) {
       console.log("Uninstalling", uninstaller)
-      execFileSync(uninstaller, [], { stdio: 'inherit' })
+      execFileSync(uninstaller, [], { stdio: "inherit" })
       await new Promise(resolve => setTimeout(resolve, 5000))
     }
 
     const installerPath = path.join(dirPath, "TestApp Setup.exe")
     console.log("Installing windows", installerPath)
-    execFileSync(installerPath, [], { stdio: 'inherit' })
+    execFileSync(installerPath, [], { stdio: "inherit" })
 
     appPath = path.join(localProgramsPath, "TestApp.exe")
   } else if (process.platform === "darwin") {
@@ -203,9 +200,9 @@ async function doBuild(
           files: ["**/*", "node_modules/**", "!path/**"],
           nsis: {
             artifactName: "${name} Setup.${ext}",
+            // one click installer required. don't run after install otherwise we lose stdout pipe
             oneClick: true,
-            runAfterFinish: false
-            // perMachine: true,
+            runAfterFinish: false,
           },
         },
       },
@@ -296,22 +293,30 @@ async function runTestWithinServer(doTest: (rootDirectory: string, updateConfigP
     url: `http://127.0.0.1:${port}`,
   })
 
+  const cleanup = () => {
+    try {
+      tmpDir.cleanupSync()
+    } catch (error) {
+      console.error("Failed to cleanup tmpDir", error)
+    }
+    try {
+      httpServerProcess.kill()
+    } catch (error) {
+      console.error("Failed to kill httpServerProcess", error)
+    }
+  }
+
   return await new Promise<void>((resolve, reject) => {
     httpServerProcess.on("error", reject)
     doTest(root, updateConfig).then(resolve).catch(reject)
-  })
-    .then(
-      v => {
-        httpServerProcess.kill()
-        return v
-      },
-      e => {
-        httpServerProcess.kill()
-        throw e
-      }
-    )
-    .finally(async () => {
-      await new Promise(resolve => setTimeout(resolve, 5 * 1000)) // windows file locks
-      await tmpDir.cleanup()
-    })
+  }).then(
+    v => {
+      cleanup()
+      return v
+    },
+    e => {
+      cleanup()
+      throw e
+    }
+  )
 }

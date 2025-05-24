@@ -1,4 +1,4 @@
-import { ChildProcess, execSync, spawn } from "child_process"
+import { ChildProcess, spawn } from "child_process"
 import { chmodSync, closeSync, openSync, readSync } from "fs"
 import os from "os"
 import path from "path"
@@ -58,7 +58,6 @@ export async function launchAndWaitForQuit({ appPath, timeoutMs = 20000, env = {
         if (magic.toString("utf-8", 1, 4) !== "ELF") {
           throw new Error(`AppImage is not a valid ELF binary: magic=${magic.toString("hex")}`)
         }
-        execSync("file " + appPath, { stdio: "inherit" })
 
         chmodSync(appPath, 0o755)
         const spawnEnv = {
@@ -116,11 +115,6 @@ export async function launchAndWaitForQuit({ appPath, timeoutMs = 20000, env = {
         } else {
           resolved = true
           resolveResult(0)
-          // try {
-          //   child.kill()
-          // } catch {
-          //   /* empty */
-          // }
         }
       }
     })
@@ -132,10 +126,10 @@ export async function launchAndWaitForQuit({ appPath, timeoutMs = 20000, env = {
     })
 
     child.on("error", err => {
-      // if (!resolved) {
-      //   resolved = true
+      if (!resolved) {
+        resolved = true
         reject(err)
-      // }
+      }
     })
 
     child.on("exit", code => {
