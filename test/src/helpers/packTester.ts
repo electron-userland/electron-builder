@@ -45,6 +45,7 @@ export interface AssertPackOptions {
   readonly signedWin?: boolean
 
   readonly isInstallDepsBefore?: boolean
+  readonly storeDepsLockfileSnapshot?: boolean
 
   readonly publish?: PublishPolicy
 
@@ -55,6 +56,7 @@ export interface PackedContext {
   readonly projectDir: string
   readonly outDir: string
 
+  readonly getAppPath: (platform: Platform, arch?: Arch) => string
   readonly getResources: (platform: Platform, arch?: Arch) => string
   readonly getContent: (platform: Platform, arch?: Arch) => string
 
@@ -136,7 +138,7 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
 
         const destLockfile = path.join(projectDir, pmOptions.lockfile)
 
-        const shouldUpdateLockfiles = !!process.env.UPDATE_LOCKFILE_FIXTURES
+        const shouldUpdateLockfiles = !!process.env.UPDATE_LOCKFILE_FIXTURES && !!checkOptions.storeDepsLockfileSnapshot
         // check for lockfile fixture so we can use `--frozen-lockfile`
         if ((await exists(testFixtureLockfile)) && !shouldUpdateLockfiles) {
           await copyFile(testFixtureLockfile, destLockfile)
@@ -154,7 +156,7 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
         })
 
         // save lockfile fixture
-        if (!(await exists(testFixtureLockfile)) || shouldUpdateLockfiles) {
+        if (!(await exists(testFixtureLockfile)) && shouldUpdateLockfiles) {
           const fixtureDir = path.dirname(testFixtureLockfile)
           if (!(await exists(fixtureDir))) {
             await mkdir(fixtureDir)
@@ -182,19 +184,21 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
       )
 
       if (checkOptions.packed != null) {
-        const base = function (platform: Platform, arch?: Arch): string {
-          return path.join(
-            outDir,
-            `${platform.buildConfigurationKey}${getArchSuffix(arch ?? Arch.x64)}${platform === Platform.MAC ? "" : "-unpacked"}`,
-            platform === Platform.MAC ? `${packager.appInfo.productFilename}.app/Contents` : ""
-          )
+        const getAppPath = function (platform: Platform, arch?: Arch): string {
+          return path.join(outDir, `${platform.buildConfigurationKey}${getArchSuffix(arch ?? Arch.x64)}${platform === Platform.MAC ? "" : "-unpacked"}`)
         }
-
+        const getContent = (platform: Platform, arch: Arch | undefined): string => {
+          return path.join(getAppPath(platform, arch), platform === Platform.MAC ? `${packager.appInfo.productFilename}.app/Contents` : "")
+        }
+        const getResources = (platform: Platform, arch: Arch | undefined): string => {
+          return path.join(getContent(platform, arch), platform === Platform.MAC ? "Resources" : "resources")
+        }
         await checkOptions.packed({
           projectDir,
           outDir,
-          getResources: (platform, arch) => path.join(base(platform, arch), platform === Platform.MAC ? "Resources" : "resources"),
-          getContent: (platform, arch) => base(platform, arch),
+          getAppPath,
+          getResources,
+          getContent,
           packager,
           tmpDir,
         })
