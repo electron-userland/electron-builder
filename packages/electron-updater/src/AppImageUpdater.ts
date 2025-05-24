@@ -88,7 +88,7 @@ export class AppImageUpdater extends BaseUpdater {
     const existingBaseName = path.basename(appImageFile)
     const installerPath = this.installerPath
     if (installerPath == null) {
-      this.dispatchError(new Error("No update filepath provided, can't quit and install"))
+      this.dispatchError(new Error("No valid update available, can't quit and install"))
       return false
     }
     // https://github.com/electron-userland/electron-builder/issues/2964

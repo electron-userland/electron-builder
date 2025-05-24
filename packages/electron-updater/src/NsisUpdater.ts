@@ -126,7 +126,7 @@ export class NsisUpdater extends BaseUpdater {
   protected doInstall(options: InstallOptions): boolean {
     const installerPath = this.installerPath
     if (installerPath == null) {
-      this.dispatchError(new Error("No update filepath provided, can't quit and install"))
+      this.dispatchError(new Error("No valid update available, can't quit and install"))
       return false
     }
 

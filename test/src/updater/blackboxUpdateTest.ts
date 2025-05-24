@@ -9,7 +9,7 @@ import { launchAndWaitForQuit } from "../helpers/launchAppCrossPlatform"
 import { assertPack, modifyPackageJson, PackedContext } from "../helpers/packTester"
 import { ELECTRON_VERSION } from "../helpers/testConfig"
 import { NEW_VERSION_NUMBER, OLD_VERSION_NUMBER, writeUpdateConfig } from "../helpers/updaterTestUtil"
-import { execFileSync, execSync, spawn } from "child_process"
+import { execFileSync, execSync } from "child_process"
 import { homedir } from "os"
 
 // Linux Tests MUST be run in docker containers for proper ephemeral testing environment (e.g. fresh install + update + relaunch)
@@ -124,11 +124,11 @@ async function runTest(target: string, arch: Arch = Arch.x64) {
       execFileSync(uninstaller, [], { stdio: 'inherit' })
       await new Promise(resolve => setTimeout(resolve, 5000))
     }
-    
+
     const installerPath = path.join(dirPath, "TestApp Setup.exe")
     console.log("Installing windows", installerPath)
     execFileSync(installerPath, [], { stdio: 'inherit' })
-    
+
     appPath = path.join(localProgramsPath, "TestApp.exe")
   } else if (process.platform === "darwin") {
     appPath = path.join(dirPath, `mac${getArchSuffix(arch)}`, `TestApp.app`, "Contents", "MacOS", "TestApp")
@@ -156,11 +156,10 @@ async function runTest(target: string, arch: Arch = Arch.x64) {
     await new Promise(resolve => setTimeout(resolve, delay))
 
     expect((await verifyAppVersion(NEW_VERSION_NUMBER)).version).toMatch(NEW_VERSION_NUMBER)
-  }).finally(async () => {
-    // windows needs to release file locks, so a delay seems to be needed
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    await tmpDir.cleanup()
   })
+  // windows needs to release file locks, so a delay seems to be needed
+  await new Promise(resolve => setTimeout(resolve, 1000))
+  await tmpDir.cleanup()
 }
 
 type ApplicationUpdatePaths = {

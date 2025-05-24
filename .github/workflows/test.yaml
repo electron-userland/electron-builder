@@ -168,7 +168,7 @@ jobs:
 
       - name: Test Linux Updater
         run: |
-           sh test/src/updater/test-specific-platforms.sh
+          sh test/src/updater/test-specific-platforms.sh
 
       - name: Verify Docs Generation
         run: pnpm generate-all

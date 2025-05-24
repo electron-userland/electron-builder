@@ -50,7 +50,7 @@ export async function launchAndWaitForQuit({ appPath, timeoutMs = 20000, env = {
     }
 
     case "linux": {
-      const { display, stop } = startXvfb()
+      const { display } = startXvfb()
       await new Promise(resolve => setTimeout(resolve, 500)) // Give Xvfb time to init
 
       if (appPath.endsWith(".AppImage")) {
