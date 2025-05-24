@@ -1,5 +1,5 @@
 import { GithubOptions } from "builder-util-runtime"
-import { AppUpdater, DebUpdater, PacmanUpdater, RpmUpdater } from "electron-updater"
+import { AppUpdater, DebUpdater, RpmUpdater } from "electron-updater"
 import { assertThat } from "../helpers/fileAssert"
 import { createTestAppAdapter, tuneTestUpdater, validateDownload, writeUpdateConfig } from "../helpers/updaterTestUtil"
 import { ExpectStatic } from "vitest"
