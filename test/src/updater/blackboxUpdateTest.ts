@@ -116,7 +116,8 @@ async function runTest(target: string, arch: Arch = Arch.x64) {
       process.env.LOCALAPPDATA || path.join(homedir(), 'AppData', 'Local'),
       'Programs', 'TestApp'
     )
-    // this is to clear dev environment when not running on an ephemeral GH runner. Installation will fail due to "uninstall" message prompt, so we must uninstall first (hence the setTimeout delay)
+    // this is to clear dev environment when not running on an ephemeral GH runner.
+    // Reinstallation will otherwise fail due to "uninstall" message prompt, so we must uninstall first (hence the setTimeout delay)
     const uninstaller = path.join(localProgramsPath, "Uninstall TestApp.exe")
     if (existsSync(uninstaller)) {
       console.log("Uninstalling", uninstaller)
@@ -124,7 +125,7 @@ async function runTest(target: string, arch: Arch = Arch.x64) {
       await new Promise(resolve => setTimeout(resolve, 5000))
     }
     
-    const installerPath = path.join(dirPath, "TestApp.exe")
+    const installerPath = path.join(dirPath, "TestApp Setup.exe")
     console.log("Installing windows", installerPath)
     execFileSync(installerPath, [], { stdio: 'inherit' })
     
@@ -202,6 +203,7 @@ async function doBuild(
           },
           files: ["**/*", "node_modules/**", "!path/**"],
           nsis: {
+            artifactName: "${name} Setup.${ext}",
             oneClick: true,
             runAfterFinish: false
             // perMachine: true,
@@ -281,7 +283,7 @@ async function doBuild(
 
 async function runTestWithinServer(doTest: (rootDirectory: string, updateConfigPath: string) => Promise<void>) {
   const tmpDir = new TmpDir("blackbox-update-test")
-  const root = await tmpDir.getTempDir({ prefix: "test-server-root" })
+  const root = await tmpDir.getTempDir({ prefix: "server-root" })
 
   // 65535 is the max port number
   // Math.random() / Math.random() is used to avoid zero

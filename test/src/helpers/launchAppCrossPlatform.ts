@@ -132,10 +132,10 @@ export async function launchAndWaitForQuit({ appPath, timeoutMs = 20000, env = {
     })
 
     child.on("error", err => {
-      if (!resolved) {
-        resolved = true
+      // if (!resolved) {
+      //   resolved = true
         reject(err)
-      }
+      // }
     })
 
     child.on("exit", code => {

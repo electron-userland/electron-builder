@@ -12,6 +12,9 @@ process.on("uncaughtException", console.error)
 process.on("unhandledRejection", console.error)
 
 console.log(`APP_VERSION: ${app.getVersion()}`)
+console.log('Running from:', app.getAppPath())
+console.log(`Process.execPath: ${process.execPath}`)
+console.log(`Process.argv: ${process.argv}`)
 
 const updateConfigPath = process.env.AUTO_UPDATER_TEST_CONFIG_PATH?.trim()
 const shouldTestAutoUpdater = !!process.env.AUTO_UPDATER_TEST?.trim() && !!updateConfigPath
@@ -32,11 +35,7 @@ async function init() {
 function isReady() {
   console.log(`APP_VERSION: ${app.getVersion()}`)
 
-  try {
-    createWindow()
-  } catch (error) {
-    console.error(error)
-  }
+  createWindow()
 
   if (shouldTestAutoUpdater) {
     const { autoUpdater } = require("electron-updater")
@@ -54,7 +53,9 @@ function isReady() {
     })
     autoUpdater.on("update-downloaded", () => {
       console.log("Update downloaded, starting quitAndInstall")
-      autoUpdater.quitAndInstall(true, false) // must be false, do not auto-restart app as the unit tests will lose stdout piping/access
+      // autoUpdater.quitAndInstall(true, false) // must be false, do not auto-restart app as the unit tests will lose stdout piping/access
+      autoUpdater.autoInstallOnAppQuit = true
+      app.quit()
     })
     autoUpdater.on("update-not-available", () => {
       console.log("Update not available")
@@ -69,14 +70,19 @@ function isReady() {
 }
 
 function createWindow() {
-  require('@electron/remote/main').initialize()
-
+  let remote;
+  try {
+    remote = require('@electron/remote/main')
+  } catch (error) {
+    console.error(error)
+  }
+  remote?.initialize()
   mainWindow = new BrowserWindow({
     width: 800, height: 600, webPreferences: {
       nodeIntegration: true, contextIsolation: false, enableRemoteModule: true
     }
   })
-  require('@electron/remote/main').enable(mainWindow.webContents)
+  remote?.enable(mainWindow.webContents)
 
   mainWindow.loadURL('file://' + __dirname + '/index.html')
 

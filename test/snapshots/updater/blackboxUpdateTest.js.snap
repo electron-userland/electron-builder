@@ -10,10 +10,10 @@ exports[`Electron autoupdate (fresh install & update) > win 1`] = `
           {
             "sha512": "@sha512",
             "size": "@size",
-            "url": "TestApp.exe",
+            "url": "TestApp Setup.exe",
           },
         ],
-        "path": "TestApp.exe",
+        "path": "TestApp Setup.exe",
         "releaseDate": "@releaseDate",
         "sha512": "@sha512",
         "version": "1.0.0",
@@ -21,14 +21,16 @@ exports[`Electron autoupdate (fresh install & update) > win 1`] = `
     },
     {
       "arch": "x64",
-      "file": "TestApp.exe",
+      "file": "TestApp Setup.exe",
+      "safeArtifactName": "TestApp-Setup.exe",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
     {
-      "file": "TestApp.exe.blockmap",
+      "file": "TestApp Setup.exe.blockmap",
+      "safeArtifactName": "TestApp-Setup.exe.blockmap",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
@@ -48,10 +50,10 @@ exports[`Electron autoupdate (fresh install & update) > win 2`] = `
           {
             "sha512": "@sha512",
             "size": "@size",
-            "url": "TestApp.exe",
+            "url": "TestApp Setup.exe",
           },
         ],
-        "path": "TestApp.exe",
+        "path": "TestApp Setup.exe",
         "releaseDate": "@releaseDate",
         "sha512": "@sha512",
         "version": "1.0.1",
@@ -59,14 +61,16 @@ exports[`Electron autoupdate (fresh install & update) > win 2`] = `
     },
     {
       "arch": "x64",
-      "file": "TestApp.exe",
+      "file": "TestApp Setup.exe",
+      "safeArtifactName": "TestApp-Setup.exe",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
     {
-      "file": "TestApp.exe.blockmap",
+      "file": "TestApp Setup.exe.blockmap",
+      "safeArtifactName": "TestApp-Setup.exe.blockmap",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
