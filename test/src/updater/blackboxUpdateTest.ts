@@ -15,16 +15,16 @@ import { homedir } from "os"
 // Linux Tests MUST be run in docker containers for proper ephemeral testing environment (e.g. fresh install + update + relaunch)
 // Currently this test logic does not handle uninstalling packages (yet)
 describe("Electron autoupdate (fresh install & update)", () => {
-  const debug = process.env.DEBUG
+  // const debug = process.env.DEBUG
   beforeAll(() => {
     // Set the environment variable to enable auto-update testing
     process.env.AUTO_UPDATER_TEST = "1"
-    process.env.DEBUG = "electron-builder"
+    // process.env.DEBUG = "electron-builder"
   })
   afterAll(() => {
     // Clean up the environment variable after the tests
     delete process.env.AUTO_UPDATER_TEST
-    process.env.DEBUG = debug
+    // process.env.DEBUG = debug
   })
 
   // Signing is required for macOS autoupdate
@@ -82,16 +82,15 @@ const packageManagerMap: {
     pms: ["apt", "dpkg"],
     target: "deb",
   },
-  // arch: {
-  //   pms: ["pacman"],
-  //   target: "pacman",
-  // },
+  arch: {
+    pms: ["pacman"],
+    target: "pacman",
+  },
 }
 
 async function runTest(target: string, arch: Arch = Arch.x64) {
   const tmpDir = new TmpDir("auto-update")
   const outDirs: ApplicationUpdatePaths[] = []
-  // 1. Build both versions
   await doBuild(expect, outDirs, Platform.current().createTarget([target], arch), tmpDir, process.platform === "win32")
 
   const oldAppDir = outDirs[0]
@@ -110,7 +109,6 @@ async function runTest(target: string, arch: Arch = Arch.x64) {
     appPath = path.join(dirPath, `TestApp.rpm`)
     execSync(`sudo rpm -i --nosignature "${appPath}"`, { stdio: "inherit" })
   } else if (process.platform === "win32") {
-    // Don't use /S for silent install as we lose view of the process
     // access installed app's location
     const localProgramsPath = path.join(process.env.LOCALAPPDATA || path.join(homedir(), "AppData", "Local"), "Programs", "TestApp")
     // this is to clear dev environment when not running on an ephemeral GH runner.
@@ -124,6 +122,7 @@ async function runTest(target: string, arch: Arch = Arch.x64) {
 
     const installerPath = path.join(dirPath, "TestApp Setup.exe")
     console.log("Installing windows", installerPath)
+    // Don't use /S for silent install as we lose stdout pipe
     execFileSync(installerPath, [], { stdio: "inherit" })
 
     appPath = path.join(localProgramsPath, "TestApp.exe")
@@ -215,8 +214,6 @@ async function doBuild(
         projectDirCreated: projectDir =>
           Promise.all([
             outputFile(path.join(projectDir, ".npmrc"), "node-linker=hoisted"),
-            // outputFile(path.join(projectDir, "pnpm-lock.yaml"), ""),
-            // outputFile(path.join(projectDir, "app", "pnpm-lock.yaml"), ""),
             modifyPackageJson(
               projectDir,
               data => {
