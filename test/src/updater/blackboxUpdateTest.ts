@@ -82,10 +82,10 @@ const packageManagerMap: {
     pms: ["apt", "dpkg"],
     target: "deb",
   },
-  // arch: {
-  //   pms: ["pacman"],
-  //   target: "pacman",
-  // },
+  arch: {
+    pms: ["pacman"],
+    target: "pacman",
+  },
 }
 
 async function runTest(target: string, arch: Arch = Arch.x64) {

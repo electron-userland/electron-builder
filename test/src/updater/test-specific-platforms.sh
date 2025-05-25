@@ -9,7 +9,7 @@ docker build --platform=linux/amd64 -f $CWD/Dockerfile-debian . -t debian-update
 # appimage only installs on same-arch systems, so we need to build it on the same arch (e.g. without --platform flag)
 docker build -f $CWD/Dockerfile-appimage . -t appimage-updater-test
 
-export TEST_FILES="linuxUpdaterTest"
+export TEST_FILES="blackboxUpdateTest,linuxUpdaterTest"
 export DEBUG="electron-updater:*,electron-builder:*"
 
 TEST_RUNNER_IMAGE_TAG="appimage-updater-test" ADDITIONAL_DOCKER_ARGS="-e RUN_APP_IMAGE_TEST=true" pnpm test-linux
