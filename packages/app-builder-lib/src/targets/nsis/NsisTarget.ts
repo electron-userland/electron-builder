@@ -207,10 +207,6 @@ export class NsisTarget extends Target {
       APP_GUID: guid,
       // Windows bug - entry in Software\Microsoft\Windows\CurrentVersion\Uninstall cannot have \ symbols (dir)
       UNINSTALL_APP_KEY: uninstallAppKey,
-      UNINSTALL_URL_HELP: options.uninstallUrlHelp || this.packager.info.metadata.homepage || undefined,
-      UNINSTALL_URL_INFO_ABOUT: options.uninstallUrlInfoAbout || this.packager.info.metadata.homepage || undefined,
-      UNINSTALL_URL_UPDATE_INFO: options.uninstallUrlUpdateInfo || this.packager.info.metadata.homepage || undefined,
-      UNINSTALL_URL_README: options.uninstallUrlReadme || this.packager.info.metadata.homepage || undefined,
       PRODUCT_NAME: appInfo.productName,
       PRODUCT_FILENAME: appInfo.productFilename,
       APP_FILENAME: getWindowsInstallationDirName(appInfo, !oneClick || isPerMachine),
@@ -228,6 +224,12 @@ export class NsisTarget extends Target {
     if (uninstallAppKey !== guid) {
       defines.UNINSTALL_REGISTRY_KEY_2 = `Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\${guid}`
     }
+
+    const { homepage } = this.packager.info.metadata
+    use(options.uninstallUrlHelp || homepage, it => (defines.UNINSTALL_URL_HELP = it))
+    use(options.uninstallUrlInfoAbout || homepage, it => (defines.UNINSTALL_URL_INFO_ABOUT = it))
+    use(options.uninstallUrlUpdateInfo || homepage, it => (defines.UNINSTALL_URL_UPDATE_INFO = it))
+    use(options.uninstallUrlReadme || homepage, it => (defines.UNINSTALL_URL_README = it))
 
     const commands: Commands = {
       OutFile: `"${installerPath}"`,
