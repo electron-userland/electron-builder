@@ -213,6 +213,7 @@ async function doBuild(
         packed,
         projectDirCreated: projectDir =>
           Promise.all([
+            outputFile(path.join(projectDir, "package-lock.json"), "{}"),
             outputFile(path.join(projectDir, ".npmrc"), "node-linker=hoisted"),
             modifyPackageJson(
               projectDir,
