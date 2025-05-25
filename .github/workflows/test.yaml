@@ -67,12 +67,11 @@ jobs:
       fail-fast: false
       matrix:
         testFiles:
-          # - ArtifactPublisherTest,BuildTest,ExtraBuildTest,RepoSlugTest,binDownloadTest,configurationValidationTest,filenameUtilTest,filesTest,globTest,ignoreTest,macroExpanderTest,mainEntryTest,urlUtilTest,extraMetadataTest,linuxArchiveTest,linuxPackagerTest,HoistedNodeModuleTest,MemoLazyTest,HoistTest
-          # - snapTest,debTest,fpmTest,protonTest
-          # - winPackagerTest,winCodeSignTest,webInstallerTest
-          # - oneClickInstallerTest,assistedInstallerTest
-          # - concurrentBuildsTest
-          - blackboxUpdateTest
+          - ArtifactPublisherTest,BuildTest,ExtraBuildTest,RepoSlugTest,binDownloadTest,configurationValidationTest,filenameUtilTest,filesTest,globTest,ignoreTest,macroExpanderTest,mainEntryTest,urlUtilTest,extraMetadataTest,linuxArchiveTest,linuxPackagerTest,HoistedNodeModuleTest,MemoLazyTest,HoistTest
+          - snapTest,debTest,fpmTest,protonTest
+          - winPackagerTest,winCodeSignTest,webInstallerTest
+          - oneClickInstallerTest,assistedInstallerTest
+          - concurrentBuildsTest
     steps:
       - name: Checkout code repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -111,7 +110,6 @@ jobs:
           TEST_FILES: ${{ matrix.testFiles }}
           FORCE_COLOR: 1
           TEST_RUNNER_IMAGE_TAG: electronuserland/builder:${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}-wine-mono
-          DEBUG: electron-builder
 
   # Need to separate from other tests because logic is specific to when TOKEN env vars are set
   test-updater:
@@ -146,12 +144,6 @@ jobs:
           docker image load --input ${{ runner.temp }}/electron-builder-all-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}.tar
           docker image ls -a
 
-      - name: Setup Updater docker images
-        run: |
-          docker build --platform=linux/amd64 -f ./test/src/updater/Dockerfile-archlinux . -t archlinux-updater-test
-          docker build --platform=linux/amd64 -f ./test/src/updater/Dockerfile-rpm . -t rpm-updater-test
-          docker build --platform=linux/amd64 -f ./test/src/updater/Dockerfile-debian . -t debian-updater-test
-
       - name: Lint
         run: pnpm pretest
 
@@ -169,7 +161,7 @@ jobs:
 
       - name: Test Linux Updater
         run: |
-           sh test/src/updater/test-specific-platforms.sh
+          sh test/src/updater/test-specific-platforms.sh
 
       - name: Verify Docs Generation
         run: pnpm generate-all
@@ -181,10 +173,10 @@ jobs:
       fail-fast: false
       matrix:
         testFiles:
-          # - winCodeSignTest,differentialUpdateTest,squirrelWindowsTest
-          # - appxTest,msiTest,portableTest,assistedInstallerTest,protonTest
-          # - BuildTest,oneClickInstallerTest,winPackagerTest,nsisUpdaterTest,webInstallerTest
-          # - concurrentBuildsTest
+          - winCodeSignTest,differentialUpdateTest,squirrelWindowsTest
+          - appxTest,msiTest,portableTest,assistedInstallerTest,protonTest
+          - BuildTest,oneClickInstallerTest,winPackagerTest,nsisUpdaterTest,webInstallerTest
+          - concurrentBuildsTest
           - blackboxUpdateTest
     steps:
       - name: Checkout code repository
@@ -202,7 +194,6 @@ jobs:
           CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
           TEST_FILES: ${{ matrix.testFiles }}
           FORCE_COLOR: 1
-          DEBUG: electron-builder
 
   test-mac:
     runs-on: macos-latest
@@ -211,11 +202,10 @@ jobs:
       fail-fast: false
       matrix:
         testFiles:
-          # - oneClickInstallerTest,assistedInstallerTest,webInstallerTest
-          # - winPackagerTest,winCodeSignTest,BuildTest
-          # - masTest,dmgTest,filesTest,macPackagerTest,differentialUpdateTest,macArchiveTest
-          # - concurrentBuildsTest
-          - blackboxUpdateTest
+          - oneClickInstallerTest,assistedInstallerTest,webInstallerTest
+          - winPackagerTest,winCodeSignTest,BuildTest,blackboxUpdateTest
+          - masTest,dmgTest,filesTest,macPackagerTest,differentialUpdateTest,macArchiveTest
+          - concurrentBuildsTest
     steps:
       - name: Checkout code repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -239,4 +229,3 @@ jobs:
           TEST_FILES: ${{ matrix.testFiles }}
           FORCE_COLOR: 1
           USE_SYSTEM_FPM: true
-          DEBUG: electron-builder

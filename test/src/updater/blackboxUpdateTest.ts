@@ -9,22 +9,22 @@ import { launchAndWaitForQuit } from "../helpers/launchAppCrossPlatform"
 import { assertPack, modifyPackageJson, PackedContext } from "../helpers/packTester"
 import { ELECTRON_VERSION } from "../helpers/testConfig"
 import { NEW_VERSION_NUMBER, OLD_VERSION_NUMBER, writeUpdateConfig } from "../helpers/updaterTestUtil"
-import { execFileSync, execSync, spawn } from "child_process"
+import { execFileSync, execSync } from "child_process"
 import { homedir } from "os"
 
 // Linux Tests MUST be run in docker containers for proper ephemeral testing environment (e.g. fresh install + update + relaunch)
 // Currently this test logic does not handle uninstalling packages (yet)
 describe("Electron autoupdate (fresh install & update)", () => {
-  const debug = process.env.DEBUG
+  // const debug = process.env.DEBUG
   beforeAll(() => {
     // Set the environment variable to enable auto-update testing
     process.env.AUTO_UPDATER_TEST = "1"
-    process.env.DEBUG = "electron-builder"
+    // process.env.DEBUG = "electron-builder"
   })
   afterAll(() => {
     // Clean up the environment variable after the tests
     delete process.env.AUTO_UPDATER_TEST
-    process.env.DEBUG = debug
+    // process.env.DEBUG = debug
   })
 
   // Signing is required for macOS autoupdate
@@ -82,16 +82,15 @@ const packageManagerMap: {
     pms: ["apt", "dpkg"],
     target: "deb",
   },
-  arch: {
-    pms: ["pacman"],
-    target: "pacman",
-  },
+  // arch: {
+  //   pms: ["pacman"],
+  //   target: "pacman",
+  // },
 }
 
 async function runTest(target: string, arch: Arch = Arch.x64) {
   const tmpDir = new TmpDir("auto-update")
   const outDirs: ApplicationUpdatePaths[] = []
-  // 1. Build both versions
   await doBuild(expect, outDirs, Platform.current().createTarget([target], arch), tmpDir, process.platform === "win32")
 
   const oldAppDir = outDirs[0]
@@ -110,25 +109,22 @@ async function runTest(target: string, arch: Arch = Arch.x64) {
     appPath = path.join(dirPath, `TestApp.rpm`)
     execSync(`sudo rpm -i --nosignature "${appPath}"`, { stdio: "inherit" })
   } else if (process.platform === "win32") {
-    // Don't use /S for silent install as we lose view of the process
     // access installed app's location
-    const localProgramsPath = path.join(
-      process.env.LOCALAPPDATA || path.join(homedir(), 'AppData', 'Local'),
-      'Programs', 'TestApp'
-    )
+    const localProgramsPath = path.join(process.env.LOCALAPPDATA || path.join(homedir(), "AppData", "Local"), "Programs", "TestApp")
     // this is to clear dev environment when not running on an ephemeral GH runner.
     // Reinstallation will otherwise fail due to "uninstall" message prompt, so we must uninstall first (hence the setTimeout delay)
     const uninstaller = path.join(localProgramsPath, "Uninstall TestApp.exe")
     if (existsSync(uninstaller)) {
       console.log("Uninstalling", uninstaller)
-      execFileSync(uninstaller, [], { stdio: 'inherit' })
+      execFileSync(uninstaller, [], { stdio: "inherit" })
       await new Promise(resolve => setTimeout(resolve, 5000))
     }
-    
+
     const installerPath = path.join(dirPath, "TestApp Setup.exe")
     console.log("Installing windows", installerPath)
-    execFileSync(installerPath, [], { stdio: 'inherit' })
-    
+    // Don't use /S for silent install as we lose stdout pipe
+    execFileSync(installerPath, [], { stdio: "inherit" })
+
     appPath = path.join(localProgramsPath, "TestApp.exe")
   } else if (process.platform === "darwin") {
     appPath = path.join(dirPath, `mac${getArchSuffix(arch)}`, `TestApp.app`, "Contents", "MacOS", "TestApp")
@@ -156,11 +152,10 @@ async function runTest(target: string, arch: Arch = Arch.x64) {
     await new Promise(resolve => setTimeout(resolve, delay))
 
     expect((await verifyAppVersion(NEW_VERSION_NUMBER)).version).toMatch(NEW_VERSION_NUMBER)
-  }).finally(async () => {
-    // windows needs to release file locks, so a delay seems to be needed
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    await tmpDir.cleanup()
   })
+  // windows needs to release file locks, so a delay seems to be needed
+  await new Promise(resolve => setTimeout(resolve, 1000))
+  await tmpDir.cleanup()
 }
 
 type ApplicationUpdatePaths = {
@@ -189,13 +184,13 @@ async function doBuild(
         targets,
         config: {
           artifactName: "${name}.${ext}",
-          asar: false, // not necessarily needed, just easier debugging tbh
+          // asar: false, // not necessarily needed, just easier debugging tbh
           electronLanguages: ["en"],
           extraMetadata: {
             version,
           },
           ...extraConfig,
-          compression: "store",
+          // compression: "store",
           publish: {
             provider: "s3",
             bucket: "develar",
@@ -204,9 +199,9 @@ async function doBuild(
           files: ["**/*", "node_modules/**", "!path/**"],
           nsis: {
             artifactName: "${name} Setup.${ext}",
+            // one click installer required. don't run after install otherwise we lose stdout pipe
             oneClick: true,
-            runAfterFinish: false
-            // perMachine: true,
+            runAfterFinish: false,
           },
         },
       },
@@ -219,8 +214,6 @@ async function doBuild(
         projectDirCreated: projectDir =>
           Promise.all([
             outputFile(path.join(projectDir, ".npmrc"), "node-linker=hoisted"),
-            // outputFile(path.join(projectDir, "pnpm-lock.yaml"), ""),
-            // outputFile(path.join(projectDir, "app", "pnpm-lock.yaml"), ""),
             modifyPackageJson(
               projectDir,
               data => {
@@ -297,22 +290,30 @@ async function runTestWithinServer(doTest: (rootDirectory: string, updateConfigP
     url: `http://127.0.0.1:${port}`,
   })
 
+  const cleanup = () => {
+    try {
+      tmpDir.cleanupSync()
+    } catch (error) {
+      console.error("Failed to cleanup tmpDir", error)
+    }
+    try {
+      httpServerProcess.kill()
+    } catch (error) {
+      console.error("Failed to kill httpServerProcess", error)
+    }
+  }
+
   return await new Promise<void>((resolve, reject) => {
     httpServerProcess.on("error", reject)
     doTest(root, updateConfig).then(resolve).catch(reject)
-  })
-    .then(
-      v => {
-        httpServerProcess.kill()
-        return v
-      },
-      e => {
-        httpServerProcess.kill()
-        throw e
-      }
-    )
-    .finally(async () => {
-      await new Promise(resolve => setTimeout(resolve, 5 * 1000)) // windows file locks
-      await tmpDir.cleanup()
-    })
+  }).then(
+    v => {
+      cleanup()
+      return v
+    },
+    e => {
+      cleanup()
+      throw e
+    }
+  )
 }

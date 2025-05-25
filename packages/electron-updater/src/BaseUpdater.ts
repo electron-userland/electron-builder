@@ -55,7 +55,7 @@ export abstract class BaseUpdater extends AppUpdater {
     const installerPath = this.installerPath
     const downloadedFileInfo = downloadedUpdateHelper == null ? null : downloadedUpdateHelper.downloadedFileInfo
     if (installerPath == null || downloadedFileInfo == null) {
-      this.dispatchError(new Error("No update filepath provided, can't quit and install"))
+      this.dispatchError(new Error("No valid update available, can't quit and install"))
       return false
     }
 
@@ -101,6 +101,22 @@ export abstract class BaseUpdater extends AppUpdater {
       this._logger.info("Auto install update on quit")
       this.install(true, false)
     })
+  }
+
+  protected wrapSudo() {
+    const { name } = this.app
+    const installComment = `"${name} would like to update"`
+    const sudo = this.spawnSyncLog("which gksudo || which kdesudo || which pkexec || which beesu")
+    const command = [sudo]
+    if (/kdesudo/i.test(sudo)) {
+      command.push("--comment", installComment)
+      command.push("-c")
+    } else if (/gksudo/i.test(sudo)) {
+      command.push("--message", installComment)
+    } else if (/pkexec/i.test(sudo)) {
+      command.push("--disable-internal-agent")
+    }
+    return command.join(" ")
   }
 
   protected spawnSyncLog(cmd: string, args: string[] = [], env = {}): string {
