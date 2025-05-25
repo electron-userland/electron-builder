@@ -1,0 +1,11 @@
+FROM fedora:latest
+
+RUN yum update -y && \
+    yum install -y nodejs npm
+
+RUN dnf install -y libxcrypt-compat rpm rpm-build \
+ && dnf clean all
+
+RUN npm --silent install --global --depth 0 pnpm
+
+WORKDIR /project
