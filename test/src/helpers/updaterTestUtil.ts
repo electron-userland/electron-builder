@@ -87,3 +87,7 @@ export function trackEvents(updater: AppUpdater) {
   }
   return actualEvents
 }
+export const OLD_VERSION_NUMBER = "1.0.0"
+export const NEW_VERSION_NUMBER = "1.0.1"
+
+export const testAppCacheDirName = "testapp-updater"

@@ -1,0 +1,384 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Electron autoupdate (fresh install & update) > linux > AppImage - arm64 1`] = `
+{
+  "linux": [
+    {
+      "arch": "arm64",
+      "file": "TestApp.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux-arm64.yml",
+      "fileContent": {
+        "files": [
+          {
+            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.AppImage",
+          },
+        ],
+        "path": "TestApp.AppImage",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`Electron autoupdate (fresh install & update) > linux > AppImage - arm64 2`] = `
+{
+  "linux": [
+    {
+      "arch": "arm64",
+      "file": "TestApp.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux-arm64.yml",
+      "fileContent": {
+        "files": [
+          {
+            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.AppImage",
+          },
+        ],
+        "path": "TestApp.AppImage",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.1",
+      },
+    },
+  ],
+}
+`;
+
+exports[`Electron autoupdate (fresh install & update) > linux > arch - (pacman) 1`] = `
+{
+  "linux": [
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.pacman",
+          },
+        ],
+        "path": "TestApp.pacman",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.0",
+      },
+    },
+    {
+      "arch": "x64",
+      "file": "TestApp.pacman",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`Electron autoupdate (fresh install & update) > linux > arch - (pacman) 2`] = `
+{
+  "linux": [
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.pacman",
+          },
+        ],
+        "path": "TestApp.pacman",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.1",
+      },
+    },
+    {
+      "arch": "x64",
+      "file": "TestApp.pacman",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`Electron autoupdate (fresh install & update) > win 1`] = `
+{
+  "win": [
+    {
+      "file": "latest.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp Setup.exe",
+          },
+        ],
+        "path": "TestApp Setup.exe",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.0",
+      },
+    },
+    {
+      "arch": "x64",
+      "file": "TestApp Setup.exe",
+      "safeArtifactName": "TestApp-Setup.exe",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "TestApp Setup.exe.blockmap",
+      "safeArtifactName": "TestApp-Setup.exe.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`Electron autoupdate (fresh install & update) > win 2`] = `
+{
+  "win": [
+    {
+      "file": "latest.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp Setup.exe",
+          },
+        ],
+        "path": "TestApp Setup.exe",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.1",
+      },
+    },
+    {
+      "arch": "x64",
+      "file": "TestApp Setup.exe",
+      "safeArtifactName": "TestApp-Setup.exe",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "TestApp Setup.exe.blockmap",
+      "safeArtifactName": "TestApp-Setup.exe.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`Electron autoupdate from 1.0.0 to 1.0.1 (live test) > linux > AppImage arm64 1`] = `
+{
+  "linux": [
+    {
+      "arch": "arm64",
+      "file": "TestApp-arm64.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux-arm64.yml",
+      "fileContent": {
+        "files": [
+          {
+            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp-arm64.AppImage",
+          },
+        ],
+        "path": "TestApp-arm64.AppImage",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`Electron autoupdate from 1.0.0 to 1.0.1 (live test) > linux > AppImage arm64 2`] = `
+{
+  "linux": [
+    {
+      "arch": "arm64",
+      "file": "TestApp-arm64.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux-arm64.yml",
+      "fileContent": {
+        "files": [
+          {
+            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp-arm64.AppImage",
+          },
+        ],
+        "path": "TestApp-arm64.AppImage",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.1",
+      },
+    },
+  ],
+}
+`;
+
+exports[`Electron autoupdate from 1.0.0 to 1.0.1 (live test) > linux > linux 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp-1.0.0.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp-1.0.0.AppImage",
+          },
+        ],
+        "path": "TestApp-1.0.0.AppImage",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`Electron autoupdate from 1.0.0 to 1.0.1 (live test) > win 1`] = `
+{
+  "win": [
+    {
+      "file": "latest.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.exe",
+          },
+        ],
+        "path": "TestApp.exe",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.0",
+      },
+    },
+    {
+      "arch": "x64",
+      "file": "TestApp.exe",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "TestApp.exe.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`Electron autoupdate from 1.0.0 to 1.0.1 (live test) > win 2`] = `
+{
+  "win": [
+    {
+      "file": "latest.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.exe",
+          },
+        ],
+        "path": "TestApp.exe",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.1",
+      },
+    },
+    {
+      "arch": "x64",
+      "file": "TestApp.exe",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "TestApp.exe.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;

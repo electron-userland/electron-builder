@@ -144,12 +144,6 @@ jobs:
           docker image load --input ${{ runner.temp }}/electron-builder-all-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}.tar
           docker image ls -a
 
-      - name: Setup Updater docker images
-        run: |
-          docker build --platform=linux/amd64 -f ./test/src/updater/Dockerfile-archlinux . -t archlinux-updater-test
-          docker build --platform=linux/amd64 -f ./test/src/updater/Dockerfile-rpm . -t rpm-updater-test
-          docker build --platform=linux/amd64 -f ./test/src/updater/Dockerfile-debian . -t debian-updater-test
-
       - name: Lint
         run: pnpm pretest
 
@@ -167,7 +161,7 @@ jobs:
 
       - name: Test Linux Updater
         run: |
-           sh test/src/updater/test-specific-platforms.sh
+          sh test/src/updater/test-specific-platforms.sh
 
       - name: Verify Docs Generation
         run: pnpm generate-all
@@ -183,6 +177,7 @@ jobs:
           - appxTest,msiTest,portableTest,assistedInstallerTest,protonTest
           - BuildTest,oneClickInstallerTest,winPackagerTest,nsisUpdaterTest,webInstallerTest
           - concurrentBuildsTest
+          - blackboxUpdateTest
     steps:
       - name: Checkout code repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -208,7 +203,7 @@ jobs:
       matrix:
         testFiles:
           - oneClickInstallerTest,assistedInstallerTest,webInstallerTest
-          - winPackagerTest,winCodeSignTest,BuildTest
+          - winPackagerTest,winCodeSignTest,BuildTest,blackboxUpdateTest
           - masTest,dmgTest,filesTest,macPackagerTest,differentialUpdateTest,macArchiveTest
           - concurrentBuildsTest
     steps:

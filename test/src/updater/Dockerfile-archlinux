@@ -1,6 +1,12 @@
 FROM archlinux:latest
 
-RUN pacman -Sy --noconfirm nodejs npm
+RUN pacman -Sy --noconfirm \
+    libxcrypt-compat \
+    base-devel \
+    git \
+    nodejs \
+    npm \
+    && pacman -Scc --noconfirm
 
 RUN npm --silent install --global --depth 0 pnpm
 

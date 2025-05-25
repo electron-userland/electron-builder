@@ -1,0 +1,48 @@
+FROM buildpack-deps:noble-curl
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Enable universe repo to get legacy libraries
+RUN apt-get update && \
+    apt-get install -y software-properties-common && \
+    add-apt-repository universe && \
+    apt-get update
+
+# Install required libraries for AppImages and legacy binaries
+RUN apt-get install -y \
+    fuse3 \
+    libfuse2 \
+    libasound2-dev \
+    libatk-bridge2.0-0 \
+    libatk1.0-0 \
+    libcups2 \
+    libdrm2 \
+    libgbm1 \
+    libgtk-3-0 \
+    libnspr4 \
+    libnss3 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxrandr2 \
+    libxss1 \
+    libxtst6 \
+    x11-utils \
+    xvfb \
+    file \
+    ruby \
+    curl \
+    unzip \
+    ca-certificates \
+    zlib1g-dev \
+    file \
+    xvfb
+
+# Create fuse mount permissions
+RUN echo "user_allow_other" >> /etc/fuse.conf
+
+# Allow AppImages to run without sudo (needed for fuse)
+RUN ln -s /usr/bin/fuse3 /usr/bin/fuse || true
+
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+RUN apt-get install -y nodejs
+RUN npm --silent install --global --depth 0 pnpm
