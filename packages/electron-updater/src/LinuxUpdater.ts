@@ -14,21 +14,23 @@ export abstract class LinuxUpdater extends BaseUpdater {
     return process.getuid?.() === 0
   }
 
+  /**
+   * Sanitizies the installer path for using with command line tools.
+   */
+  protected get installerPath(): string | null {
+    return super.installerPath?.replace(/ /g, "\\ ") ?? null
+  }
+
   protected runCommandWithSudoIfNeeded(commandWithArgs: string[]) {
     if (this.isRunningAsRoot()) {
       this._logger.info("Running as root, no need to use sudo")
       return this.spawnSyncLog(commandWithArgs[0], commandWithArgs.slice(1))
     }
 
-    let sudo: string[]
-    if (process.env.CI) {
-      sudo = ["sudo"]
-    } else {
-      const { name } = this.app
-      const installComment = `"${name} would like to update"`
-      sudo = this.sudoWithArgs(installComment)
-      this._logger.info(`Running as non-root user, using sudo to install: ${sudo}`)
-    }
+    const { name } = this.app
+    const installComment = `"${name} would like to update"`
+    const sudo = this.sudoWithArgs(installComment)
+    this._logger.info(`Running as non-root user, using sudo to install: ${sudo}`)
     // pkexec doesn't want the command to be wrapped in " quotes
     const wrapper = /pkexec/i.test(sudo[0]) ? "" : `"`
     return this.spawnSyncLog(sudo[0], [...(sudo.length > 1 ? sudo.slice(1) : []), `${wrapper}/bin/bash`, "-c", `'${commandWithArgs.join(" ")}'${wrapper}`])

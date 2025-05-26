@@ -108,6 +108,9 @@ async function runTest(target: string, arch: Arch = Arch.x64) {
   } else if (target === "rpm") {
     appPath = path.join(dirPath, `TestApp.rpm`)
     execSync(`sudo rpm -i --nosignature "${appPath}"`, { stdio: "inherit" })
+  } else if (target === "pacman") {
+    appPath = path.join(dirPath, `TestApp.pacman`)
+    execSync(`pacman -U --noconfirm "${appPath}"`, { stdio: "inherit" })
   } else if (process.platform === "win32") {
     // access installed app's location
     const localProgramsPath = path.join(process.env.LOCALAPPDATA || path.join(homedir(), "AppData", "Local"), "Programs", "TestApp")
@@ -183,10 +186,14 @@ async function doBuild(
       {
         targets,
         config: {
-          artifactName: "${name}.${ext}",
+          productName: "TestApp",
+          executableName: "TestApp",
+          appId: "com.test.app",
+          artifactName: "${productName}.${ext}",
           // asar: false, // not necessarily needed, just easier debugging tbh
           electronLanguages: ["en"],
           extraMetadata: {
+            name: "testapp",
             version,
           },
           ...extraConfig,
@@ -196,7 +203,7 @@ async function doBuild(
             bucket: "develar",
             path: "test",
           },
-          files: ["**/*", "node_modules/**", "!path/**"],
+          files: ["**/*", "../**/node_modules/**", "!path/**"],
           nsis: {
             artifactName: "${name} Setup.${ext}",
             // one click installer required. don't run after install otherwise we lose stdout pipe

@@ -28,10 +28,6 @@ export class DebUpdater extends LinuxUpdater {
     })
   }
 
-  protected get installerPath(): string | null {
-    return super.installerPath?.replace(/ /g, "\\ ") ?? null
-  }
-
   protected doInstall(options: InstallOptions): boolean {
     const installerPath = this.installerPath
     if (installerPath == null) {
