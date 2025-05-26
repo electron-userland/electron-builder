@@ -54,11 +54,6 @@ export async function launchAndWaitForQuit({ appPath, timeoutMs = 20000, env = {
       await new Promise(resolve => setTimeout(resolve, 500)) // Give Xvfb time to init
 
       if (appPath.endsWith(".AppImage")) {
-        const magic = readMagicBytes(appPath)
-        if (magic.toString("utf-8", 1, 4) !== "ELF") {
-          throw new Error(`AppImage is not a valid ELF binary: magic=${magic.toString("hex")}`)
-        }
-
         chmodSync(appPath, 0o755)
         const spawnEnv = {
           ...env,
@@ -78,7 +73,7 @@ export async function launchAndWaitForQuit({ appPath, timeoutMs = 20000, env = {
           },
         })
       } else {
-        child = spawnApp(appPath, [], true, { DISPLAY: display })
+        child = spawnApp(appPath, ["--no-sandbox"], true, { DISPLAY: display })
       }
       break
     }

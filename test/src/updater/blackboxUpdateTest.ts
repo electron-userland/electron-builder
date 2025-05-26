@@ -103,14 +103,17 @@ async function runTest(target: string, arch: Arch = Arch.x64) {
   if (target === "AppImage") {
     appPath = path.join(dirPath, `TestApp.AppImage`)
   } else if (target === "deb") {
-    appPath = path.join(dirPath, `TestApp.deb`)
-    execSync(`sudo dpkg -i "${appPath}"`, { stdio: "inherit" })
+    execSync(`sudo dpkg -i "${path.join(dirPath, `TestApp.deb`)}"`, { stdio: "inherit" })
+    appPath = path.join("/opt", "TestApp", "TestApp")
   } else if (target === "rpm") {
-    appPath = path.join(dirPath, `TestApp.rpm`)
-    execSync(`sudo rpm -i --nosignature "${appPath}"`, { stdio: "inherit" })
+    execSync(`sudo rpm -i --nosignature "${path.join(dirPath, `TestApp.rpm`)}"`, { stdio: "inherit" })
+    appPath = path.join("/opt", "TestApp", "TestApp")
   } else if (target === "pacman") {
-    appPath = path.join(dirPath, `TestApp.pacman`)
-    execSync(`pacman -U --noconfirm "${appPath}"`, { stdio: "inherit" })
+    execSync(`sudo pacman -Syyu --noconfirm`, { stdio: "inherit" })
+    execSync(`sudo pacman -U --noconfirm "${path.join(dirPath, `TestApp.pacman`)}"`, { stdio: "inherit" })
+    listFilesSync("/opt")
+    listFilesSync("/opt/TestApp")
+    appPath = path.join("/opt", "TestApp", "TestApp")
   } else if (process.platform === "win32") {
     // access installed app's location
     const localProgramsPath = path.join(process.env.LOCALAPPDATA || path.join(homedir(), "AppData", "Local"), "Programs", "TestApp")
@@ -132,7 +135,7 @@ async function runTest(target: string, arch: Arch = Arch.x64) {
   } else if (process.platform === "darwin") {
     appPath = path.join(dirPath, `mac${getArchSuffix(arch)}`, `TestApp.app`, "Contents", "MacOS", "TestApp")
   } else {
-    throw new Error(`Unsupported target: ${target}`)
+    throw new Error(`Unsupported Update test target: ${target}`)
   }
 
   if (!existsSync(appPath)) {
