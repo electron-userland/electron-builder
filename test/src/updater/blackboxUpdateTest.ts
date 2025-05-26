@@ -111,8 +111,6 @@ async function runTest(target: string, arch: Arch = Arch.x64) {
   } else if (target === "pacman") {
     execSync(`sudo pacman -Syyu --noconfirm`, { stdio: "inherit" })
     execSync(`sudo pacman -U --noconfirm "${path.join(dirPath, `TestApp.pacman`)}"`, { stdio: "inherit" })
-    listFilesSync("/opt")
-    listFilesSync("/opt/TestApp")
     appPath = path.join("/opt", "TestApp", "TestApp")
   } else if (process.platform === "win32") {
     // access installed app's location

@@ -317,6 +317,14 @@ export default class FpmTarget extends Target {
           log.error(null, hint + "(sudo apt-get install rpm)")
         }
       }
+      if (e.message.includes("xz: not found")) {
+        const hint = "to build rpm, executable xz is required, please install xz package on your system. "
+        if (process.platform === "darwin") {
+          log.error(null, hint + "(brew install xz)")
+        } else {
+          log.error(null, hint + "(sudo apt-get install xz-utils)")
+        }
+      }
       throw e
     })
   }
