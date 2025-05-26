@@ -35,32 +35,18 @@ export class RpmUpdater extends LinuxUpdater {
       return false
     }
 
-    const runInstallationCommand = (cmd: string[]) => {
-      this.runCommandWithSudoIfNeeded(cmd)
-      if (options.isForceRunAfter) {
-        this.app.relaunch()
-      }
-      return true
-    }
-
     const priorityList = ["zypper", "dnf", "yum", "rpm"]
     const packageManager = this.detectPackageManager(priorityList)
-    if (packageManager === "zypper") {
-      return runInstallationCommand(["zypper", "--non-interactive", "--no-refresh", "install", "--allow-unsigned-rpm", "-f", installerPath])
+    try {
+      RpmUpdater.installWithCommandRunner(packageManager as any, installerPath, this.runCommandWithSudoIfNeeded.bind(this), this._logger)
+    } catch (error: any) {
+      this.dispatchError(error)
+      return false
     }
-    if (packageManager === "dnf") {
-      return runInstallationCommand(["dnf", "install", "--nogpgcheck", "-y", installerPath])
+    if (options.isForceRunAfter) {
+      this.app.relaunch()
     }
-    if (packageManager === "yum") {
-      return runInstallationCommand(["yum", "install", "--nogpgcheck", "-y", installerPath])
-    }
-    if (packageManager === "rpm") {
-      this._logger.warn("Installing with rpm only (no dependency resolution).")
-      return runInstallationCommand(["rpm", "-Uvh", "--replacepkgs", "--replacefiles", "--nodeps", installerPath])
-    }
-    // If no supported package manager is found, log an error and return false
-    this.dispatchError(new Error(`Package manager ${packageManager} not supported`))
-    return false
+    return true
   }
 
   static installWithCommandRunner(packageManager: "zypper" | "dnf" | "yum" | "rpm", installerPath: string, commandRunner: (commandWithArgs: string[]) => void, logger: Logger) {

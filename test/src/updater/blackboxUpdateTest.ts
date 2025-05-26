@@ -11,21 +11,16 @@ import { ELECTRON_VERSION } from "../helpers/testConfig"
 import { NEW_VERSION_NUMBER, OLD_VERSION_NUMBER, writeUpdateConfig } from "../helpers/updaterTestUtil"
 import { execFileSync, execSync } from "child_process"
 import { homedir } from "os"
-import { DebUpdater, PacmanUpdater } from "electron-updater"
+import { DebUpdater, PacmanUpdater, RpmUpdater } from "electron-updater"
 
 // Linux Tests MUST be run in docker containers for proper ephemeral testing environment (e.g. fresh install + update + relaunch)
 // Currently this test logic does not handle uninstalling packages (yet)
 describe("Electron autoupdate (fresh install & update)", () => {
-  // const debug = process.env.DEBUG
   beforeAll(() => {
-    // Set the environment variable to enable auto-update testing
     process.env.AUTO_UPDATER_TEST = "1"
-    // process.env.DEBUG = "electron-builder"
   })
   afterAll(() => {
-    // Clean up the environment variable after the tests
     delete process.env.AUTO_UPDATER_TEST
-    // process.env.DEBUG = debug
   })
 
   // Signing is required for macOS autoupdate
@@ -114,7 +109,14 @@ async function runTest(target: string, arch: Arch = Arch.x64) {
     )
     appPath = path.join("/opt", "TestApp", "TestApp")
   } else if (target === "rpm") {
-    execSync(`sudo rpm -i --nosignature "${path.join(dirPath, `TestApp.rpm`)}"`, { stdio: "inherit" })
+    RpmUpdater.installWithCommandRunner(
+      "zypper",
+      path.join(dirPath, `TestApp.rpm`),
+      commandWithArgs => {
+        execSync(commandWithArgs.join(" "), { stdio: "inherit" })
+      },
+      console
+    )
     appPath = path.join("/opt", "TestApp", "TestApp")
   } else if (target === "pacman") {
     PacmanUpdater.installWithCommandRunner(

@@ -50,8 +50,8 @@ export class PacmanUpdater extends LinuxUpdater {
     try {
       commandRunner(["pacman", "-U", "--noconfirm", installerPath])
     } catch (error: any) {
-      logger.warn("pacman installation failed, attempting to update package database and retry")
       logger.warn(error.message ?? error)
+      logger.warn("pacman installation failed, attempting to update package database and retry")
 
       try {
         // Update package database (not a full upgrade, just sync)

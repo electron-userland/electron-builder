@@ -59,8 +59,8 @@ export class DebUpdater extends LinuxUpdater {
         commandRunner(["dpkg", "-i", installerPath])
       } catch (error: any) {
         // Handle missing dependencies via apt-get
-        logger.warn("dpkg installation failed, trying to fix broken dependencies with apt-get")
         logger.warn(error.message ?? error)
+        logger.warn("dpkg installation failed, trying to fix broken dependencies with apt-get")
         commandRunner(["apt-get", "install", "-f", "-y"])
       }
     } else if (packageManager === "apt") {

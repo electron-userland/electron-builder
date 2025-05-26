@@ -88,6 +88,8 @@ export abstract class LinuxUpdater extends BaseUpdater {
         return pm
       }
     }
-    return "unknown"
+    // return the first package manager in the list if none are found, this will throw upstream for proper logging
+    this._logger.warn(`No package manager found in the list: ${pms.join(", ")}. Defaulting to the first one: ${pms[0]}`)
+    return pms[0]
   }
 }
