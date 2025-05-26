@@ -2,7 +2,7 @@ import { AllPublishOptions } from "builder-util-runtime"
 import { AppAdapter } from "./AppAdapter"
 import { DownloadUpdateOptions } from "./AppUpdater"
 import { InstallOptions } from "./BaseUpdater"
-import { DOWNLOAD_PROGRESS } from "./types"
+import { DOWNLOAD_PROGRESS, Logger } from "./types"
 import { findFile } from "./providers/Provider"
 import { LinuxUpdater } from "./LinuxUpdater"
 
@@ -35,25 +35,33 @@ export class PacmanUpdater extends LinuxUpdater {
       return false
     }
     try {
-      this.runCommandWithSudoIfNeeded(["pacman", "-U", "--noconfirm", installerPath])
+      PacmanUpdater.installWithCommandRunner(installerPath, this.runCommandWithSudoIfNeeded.bind(this), this._logger)
     } catch (error: any) {
-      this._logger.warn("pacman installation failed, attempting to update package database and retry")
-      this._logger.warn(error.message ?? error)
-
-      try {
-        // Update package database (not a full upgrade, just sync)
-        this.runCommandWithSudoIfNeeded(["pacman", "-Sy", "--noconfirm"])
-        // Retry installation
-        this.runCommandWithSudoIfNeeded(["pacman", "-U", "--noconfirm", installerPath])
-      } catch (retryError: any) {
-        this._logger.error("Retry after pacman -Sy failed")
-        this.dispatchError(retryError)
-        return false
-      }
+      this.dispatchError(error)
+      return false
     }
     if (options.isForceRunAfter) {
       this.app.relaunch() // note: `app` is undefined in tests since vite doesn't run in electron
     }
     return true
+  }
+
+  static installWithCommandRunner(installerPath: string, commandRunner: (commandWithArgs: string[]) => void, logger: Logger) {
+    try {
+      commandRunner(["pacman", "-U", "--noconfirm", installerPath])
+    } catch (error: any) {
+      logger.warn("pacman installation failed, attempting to update package database and retry")
+      logger.warn(error.message ?? error)
+
+      try {
+        // Update package database (not a full upgrade, just sync)
+        commandRunner(["pacman", "-Sy", "--noconfirm"])
+        // Retry installation
+        commandRunner(["pacman", "-U", "--noconfirm", installerPath])
+      } catch (retryError: any) {
+        logger.error("Retry after pacman -Sy failed")
+        throw retryError
+      }
+    }
   }
 }

@@ -11,6 +11,7 @@ import { ELECTRON_VERSION } from "../helpers/testConfig"
 import { NEW_VERSION_NUMBER, OLD_VERSION_NUMBER, writeUpdateConfig } from "../helpers/updaterTestUtil"
 import { execFileSync, execSync } from "child_process"
 import { homedir } from "os"
+import { DebUpdater, PacmanUpdater } from "electron-updater"
 
 // Linux Tests MUST be run in docker containers for proper ephemeral testing environment (e.g. fresh install + update + relaunch)
 // Currently this test logic does not handle uninstalling packages (yet)
@@ -103,14 +104,28 @@ async function runTest(target: string, arch: Arch = Arch.x64) {
   if (target === "AppImage") {
     appPath = path.join(dirPath, `TestApp.AppImage`)
   } else if (target === "deb") {
-    execSync(`sudo dpkg -i "${path.join(dirPath, `TestApp.deb`)}"`, { stdio: "inherit" })
+    DebUpdater.installWithCommandRunner(
+      "dpkg",
+      path.join(dirPath, `TestApp.deb`),
+      commandWithArgs => {
+        execSync(commandWithArgs.join(" "), { stdio: "inherit" })
+      },
+      console
+    )
     appPath = path.join("/opt", "TestApp", "TestApp")
   } else if (target === "rpm") {
     execSync(`sudo rpm -i --nosignature "${path.join(dirPath, `TestApp.rpm`)}"`, { stdio: "inherit" })
     appPath = path.join("/opt", "TestApp", "TestApp")
   } else if (target === "pacman") {
-    execSync(`sudo pacman -Syyu --noconfirm`, { stdio: "inherit" })
-    execSync(`sudo pacman -U --noconfirm "${path.join(dirPath, `TestApp.pacman`)}"`, { stdio: "inherit" })
+    PacmanUpdater.installWithCommandRunner(
+      path.join(dirPath, `TestApp.pacman`),
+      commandWithArgs => {
+        execSync(commandWithArgs.join(" "), { stdio: "inherit" })
+      },
+      console
+    )
+    // execSync(`sudo pacman -Syyu --noconfirm`, { stdio: "inherit" })
+    // execSync(`sudo pacman -U --noconfirm "${path.join(dirPath, `TestApp.pacman`)}"`, { stdio: "inherit" })
     appPath = path.join("/opt", "TestApp", "TestApp")
   } else if (process.platform === "win32") {
     // access installed app's location

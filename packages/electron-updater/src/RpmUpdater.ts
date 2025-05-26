@@ -2,7 +2,7 @@ import { AllPublishOptions } from "builder-util-runtime"
 import { AppAdapter } from "./AppAdapter"
 import { DownloadUpdateOptions } from "./AppUpdater"
 import { InstallOptions } from "./BaseUpdater"
-import { DOWNLOAD_PROGRESS } from "./types"
+import { DOWNLOAD_PROGRESS, Logger } from "./types"
 import { findFile } from "./providers/Provider"
 import { LinuxUpdater } from "./LinuxUpdater"
 
@@ -61,5 +61,22 @@ export class RpmUpdater extends LinuxUpdater {
     // If no supported package manager is found, log an error and return false
     this.dispatchError(new Error(`Package manager ${packageManager} not supported`))
     return false
+  }
+
+  static installWithCommandRunner(packageManager: "zypper" | "dnf" | "yum" | "rpm", installerPath: string, commandRunner: (commandWithArgs: string[]) => void, logger: Logger) {
+    if (packageManager === "zypper") {
+      return commandRunner(["zypper", "--non-interactive", "--no-refresh", "install", "--allow-unsigned-rpm", "-f", installerPath])
+    }
+    if (packageManager === "dnf") {
+      return commandRunner(["dnf", "install", "--nogpgcheck", "-y", installerPath])
+    }
+    if (packageManager === "yum") {
+      return commandRunner(["yum", "install", "--nogpgcheck", "-y", installerPath])
+    }
+    if (packageManager === "rpm") {
+      logger.warn("Installing with rpm only (no dependency resolution).")
+      return commandRunner(["rpm", "-Uvh", "--replacepkgs", "--replacefiles", "--nodeps", installerPath])
+    }
+    throw new Error(`Package manager ${packageManager} not supported`)
   }
 }

@@ -1,5 +1,5 @@
 import { ChildProcess, spawn } from "child_process"
-import { chmodSync, closeSync, openSync, readSync } from "fs"
+import { chmodSync } from "fs"
 import os from "os"
 import path from "path"
 
@@ -190,13 +190,4 @@ export function startXvfb(): { display: string; stop: () => void } {
     display,
     stop,
   }
-}
-
-// ⬇️ Read first 4 bytes of AppImage to validate ELF header
-function readMagicBytes(appPath: string): Buffer {
-  const fd = openSync(appPath, "r")
-  const buffer = Buffer.alloc(4)
-  readSync(fd, buffer, 0, 4, 0)
-  closeSync(fd)
-  return buffer
 }
