@@ -27,7 +27,7 @@ export class PacmanUpdater extends LinuxUpdater {
       },
     })
   }
-  
+
   protected doInstall(options: InstallOptions): boolean {
     const installerPath = this.installerPath
     if (installerPath == null) {
@@ -47,8 +47,8 @@ export class PacmanUpdater extends LinuxUpdater {
         this.runCommandWithSudoIfNeeded(["pacman", "-U", "--noconfirm", installerPath])
       } catch (retryError: any) {
         this._logger.error("Retry after pacman -Sy failed")
-        this._logger.error(retryError.message ?? retryError)
-        throw retryError // bubble up the failure
+        this.dispatchError(retryError)
+        return false
       }
     }
     if (options.isForceRunAfter) {

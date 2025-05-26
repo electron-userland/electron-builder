@@ -205,7 +205,7 @@ async function doBuild(
           },
           files: ["**/*", "../**/node_modules/**", "!path/**"],
           nsis: {
-            artifactName: "${name} Setup.${ext}",
+            artifactName: "${productName} Setup.${ext}",
             // one click installer required. don't run after install otherwise we lose stdout pipe
             oneClick: true,
             runAfterFinish: false,
