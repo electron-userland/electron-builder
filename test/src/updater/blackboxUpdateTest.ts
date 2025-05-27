@@ -11,20 +11,16 @@ import { ELECTRON_VERSION } from "../helpers/testConfig"
 import { NEW_VERSION_NUMBER, OLD_VERSION_NUMBER, writeUpdateConfig } from "../helpers/updaterTestUtil"
 import { execFileSync, execSync } from "child_process"
 import { homedir } from "os"
+import { DebUpdater, PacmanUpdater, RpmUpdater } from "electron-updater"
 
 // Linux Tests MUST be run in docker containers for proper ephemeral testing environment (e.g. fresh install + update + relaunch)
 // Currently this test logic does not handle uninstalling packages (yet)
 describe("Electron autoupdate (fresh install & update)", () => {
-  // const debug = process.env.DEBUG
   beforeAll(() => {
-    // Set the environment variable to enable auto-update testing
     process.env.AUTO_UPDATER_TEST = "1"
-    // process.env.DEBUG = "electron-builder"
   })
   afterAll(() => {
-    // Clean up the environment variable after the tests
     delete process.env.AUTO_UPDATER_TEST
-    // process.env.DEBUG = debug
   })
 
   // Signing is required for macOS autoupdate
@@ -82,10 +78,10 @@ const packageManagerMap: {
     pms: ["apt", "dpkg"],
     target: "deb",
   },
-  // arch: {
-  //   pms: ["pacman"],
-  //   target: "pacman",
-  // },
+  arch: {
+    pms: ["pacman"],
+    target: "pacman",
+  },
 }
 
 async function runTest(target: string, arch: Arch = Arch.x64) {
@@ -103,11 +99,36 @@ async function runTest(target: string, arch: Arch = Arch.x64) {
   if (target === "AppImage") {
     appPath = path.join(dirPath, `TestApp.AppImage`)
   } else if (target === "deb") {
-    appPath = path.join(dirPath, `TestApp.deb`)
-    execSync(`sudo dpkg -i "${appPath}"`, { stdio: "inherit" })
+    DebUpdater.installWithCommandRunner(
+      "dpkg",
+      path.join(dirPath, `TestApp.deb`),
+      commandWithArgs => {
+        execSync(commandWithArgs.join(" "), { stdio: "inherit" })
+      },
+      console
+    )
+    appPath = path.join("/opt", "TestApp", "TestApp")
   } else if (target === "rpm") {
-    appPath = path.join(dirPath, `TestApp.rpm`)
-    execSync(`sudo rpm -i --nosignature "${appPath}"`, { stdio: "inherit" })
+    RpmUpdater.installWithCommandRunner(
+      "zypper",
+      path.join(dirPath, `TestApp.rpm`),
+      commandWithArgs => {
+        execSync(commandWithArgs.join(" "), { stdio: "inherit" })
+      },
+      console
+    )
+    appPath = path.join("/opt", "TestApp", "TestApp")
+  } else if (target === "pacman") {
+    PacmanUpdater.installWithCommandRunner(
+      path.join(dirPath, `TestApp.pacman`),
+      commandWithArgs => {
+        execSync(commandWithArgs.join(" "), { stdio: "inherit" })
+      },
+      console
+    )
+    // execSync(`sudo pacman -Syyu --noconfirm`, { stdio: "inherit" })
+    // execSync(`sudo pacman -U --noconfirm "${path.join(dirPath, `TestApp.pacman`)}"`, { stdio: "inherit" })
+    appPath = path.join("/opt", "TestApp", "TestApp")
   } else if (process.platform === "win32") {
     // access installed app's location
     const localProgramsPath = path.join(process.env.LOCALAPPDATA || path.join(homedir(), "AppData", "Local"), "Programs", "TestApp")
@@ -129,7 +150,7 @@ async function runTest(target: string, arch: Arch = Arch.x64) {
   } else if (process.platform === "darwin") {
     appPath = path.join(dirPath, `mac${getArchSuffix(arch)}`, `TestApp.app`, "Contents", "MacOS", "TestApp")
   } else {
-    throw new Error(`Unsupported target: ${target}`)
+    throw new Error(`Unsupported Update test target: ${target}`)
   }
 
   if (!existsSync(appPath)) {
@@ -183,10 +204,14 @@ async function doBuild(
       {
         targets,
         config: {
-          artifactName: "${name}.${ext}",
+          productName: "TestApp",
+          executableName: "TestApp",
+          appId: "com.test.app",
+          artifactName: "${productName}.${ext}",
           // asar: false, // not necessarily needed, just easier debugging tbh
           electronLanguages: ["en"],
           extraMetadata: {
+            name: "testapp",
             version,
           },
           ...extraConfig,
@@ -196,9 +221,9 @@ async function doBuild(
             bucket: "develar",
             path: "test",
           },
-          files: ["**/*", "node_modules/**", "!path/**"],
+          files: ["**/*", "../**/node_modules/**", "!path/**"],
           nsis: {
-            artifactName: "${name} Setup.${ext}",
+            artifactName: "${productName} Setup.${ext}",
             // one click installer required. don't run after install otherwise we lose stdout pipe
             oneClick: true,
             runAfterFinish: false,

@@ -26,8 +26,8 @@ const runTest = async (expect: ExpectStatic, updaterClass: any, expectedExtensio
   expect(installer.endsWith(`.${expectedExtension}`)).toBeTruthy()
   await assertThat(expect, installer).isFile()
 
-  // const didUpdate = updater.install(true, false)
-  // expect(didUpdate).toBeTruthy()
+  const didUpdate = updater.install(true, false)
+  expect(didUpdate).toBeTruthy()
 }
 
 const determineEnvironment = (target: string) => {
