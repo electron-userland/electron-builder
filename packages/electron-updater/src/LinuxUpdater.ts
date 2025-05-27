@@ -18,7 +18,7 @@ export abstract class LinuxUpdater extends BaseUpdater {
    * Sanitizies the installer path for using with command line tools.
    */
   protected get installerPath(): string | null {
-    return super.installerPath?.replace(/ /g, "\\ ") ?? null
+    return super.installerPath?.replace(/\\/g, "\\\\").replace(/ /g, "\\ ") ?? null
   }
 
   protected runCommandWithSudoIfNeeded(commandWithArgs: string[]) {
