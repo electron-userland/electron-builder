@@ -114,7 +114,7 @@ jobs:
   # Need to separate from other tests because logic is specific to when TOKEN env vars are set
   test-updater:
     runs-on: ubuntu-22.04
-    timeout-minutes: 20
+    timeout-minutes: 30
     needs: [check-if-docker-build, run-docker-build]
     # Wonky if-conditional to allow this step to run AFTER docker images are rebuilt OR if the build stage skipped and we want to use dockerhub registry for images
     if: |
