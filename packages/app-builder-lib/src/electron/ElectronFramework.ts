@@ -216,7 +216,7 @@ async function unpack(prepareOptions: PrepareApplicationStageDirectoryOptions, d
     log.info({ zipFile: resolvedDist }, "using custom electronDist zip file")
     await downloadUsingAdjustedConfig({
       ...downloadOptions,
-      customDir: path.dirname(resolvedDist), // set custom directory to the zip file's directory
+      cache: path.dirname(resolvedDist), // set custom directory to the zip file's directory
       customFilename: path.basename(resolvedDist), // set custom filename to the zip file's name
     })
     return false // do not clean up after unpacking, it's a custom bundle and we should respect its configuration/contents as required
@@ -229,7 +229,7 @@ async function unpack(prepareOptions: PrepareApplicationStageDirectoryOptions, d
       log.info({ electronDist: log.filePath(resolvedDist) }, "using custom electronDist directory")
       await downloadUsingAdjustedConfig({
         ...downloadOptions,
-        customDir: resolvedDist,
+        cache: resolvedDist,
         customFilename: defaultZipName,
       })
       return false
