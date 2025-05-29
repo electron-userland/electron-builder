@@ -55,7 +55,7 @@ const packageManagerMap: {
     pms: ["pacman"],
     updater: PacmanUpdater,
     extension: "pacman",
-  }
+  },
 }
 
 for (const distro in packageManagerMap) {

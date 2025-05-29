@@ -29,13 +29,17 @@ export default class SquirrelWindowsTarget extends Target {
       log.warn({ vendorDirectory }, "unable to access custom Squirrel.Windows vendor directory, falling back to default vendor ")
       const windowInstallerPackage = require.resolve("electron-winstaller/package.json")
       vendorDirectory = path.join(path.dirname(windowInstallerPackage), "vendor")
-      customSquirrelBin = await getBin("squirrel.windows", "https://github.com/electron-userland/electron-builder-binaries/releases/download/squirrel.windows@1.0.0/squirrel.windows-2.0.1-patched.7z", "DWijIRRElidu/Rq0yegAKqo2g6aVJUPvcRyvkzUoBPbRasIk61P6xY2fBMdXw6wT17md7NzrTI9/zA1wT9vEqg==")
+      customSquirrelBin = await getBin(
+        "squirrel.windows",
+        "https://github.com/electron-userland/electron-builder-binaries/releases/download/squirrel.windows@1.0.0/squirrel.windows-2.0.1-patched.7z",
+        "DWijIRRElidu/Rq0yegAKqo2g6aVJUPvcRyvkzUoBPbRasIk61P6xY2fBMdXw6wT17md7NzrTI9/zA1wT9vEqg=="
+      )
     }
 
     const tmpVendorDirectory = await this.packager.info.tempDirManager.createTempDir({ prefix: "squirrel-windows-vendor" })
     await fs.promises.cp(vendorDirectory, tmpVendorDirectory, { recursive: true })
     if (customSquirrelBin && customSquirrelBin.length > 0) {
-      await fs.promises.cp(customSquirrelBin, tmpVendorDirectory, { recursive: true })
+      await fs.promises.cp(path.join(customSquirrelBin, "electron-winstaller", "vendor"), tmpVendorDirectory, { recursive: true })
     }
 
     log.debug({ from: vendorDirectory, to: tmpVendorDirectory }, "copied vendor directory")
