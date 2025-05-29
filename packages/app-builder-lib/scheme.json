@@ -1010,55 +1010,26 @@
     "ElectronDownloadOptions": {
       "additionalProperties": false,
       "properties": {
-        "arch": {
-          "type": "string"
+        "checksums": {
+          "type": "object"
         },
-        "cache": {
-          "description": "The [cache location](https://github.com/electron-userland/electron-download#cache-location).",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "customDir": {
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "customFilename": {
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "isVerifyChecksum": {
+        "force": {
+          "description": "Whether to download an artifact regardless of whether it's in the cache directory.",
           "type": "boolean"
         },
-        "mirror": {
-          "description": "The mirror.",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "platform": {
-          "enum": [
-            "darwin",
-            "linux",
-            "mas",
-            "win32"
-          ],
-          "type": "string"
-        },
-        "strictSSL": {
+        "isGeneric": {
+          "const": false,
           "type": "boolean"
         },
-        "version": {
-          "type": "string"
+        "mirrorOptions": {
+          "$ref": "#/definitions/MirrorOptions",
+          "description": "Options related to specifying an artifact mirror."
+        },
+        "unsafelyDisableChecksums": {
+          "description": "When set to `true`, disables checking that the artifact download completed successfully\nwith the correct payload.",
+          "type": "boolean"
         }
-      },
-      "type": "object"
+      }
     },
     "FileAssociation": {
       "additionalProperties": false,
@@ -3617,6 +3588,40 @@
       },
       "type": "object"
     },
+    "MirrorOptions": {
+      "additionalProperties": false,
+      "description": "Options for specifying an alternative download mirror for Electron.",
+      "properties": {
+        "customDir": {
+          "description": "The name of the directory to download from,\noften scoped by version number e.g 'v4.0.4'",
+          "type": "string"
+        },
+        "customFilename": {
+          "description": "The name of the asset to download,\ne.g 'electron-v4.0.4-linux-x64.zip'",
+          "type": "string"
+        },
+        "customVersion": {
+          "description": "The version of the asset to download,\ne.g '4.0.4'",
+          "type": "string"
+        },
+        "mirror": {
+          "description": "The base URL of the mirror to download from.\ne.g https://github.com/electron/electron/releases/download",
+          "type": "string"
+        },
+        "nightlyMirror": {
+          "description": "The mirror URL for [`electron-nightly`](https://npmjs.com/package/electron-nightly),\nwhich lives in a separate npm package.",
+          "type": "string"
+        },
+        "nightly_mirror": {
+          "type": "string"
+        },
+        "resolveAssetURL": {
+          "description": "A function allowing customization of the url returned\nfrom getArtifactRemoteURL().",
+          "typeof": "function"
+        }
+      },
+      "type": "object"
+    },
     "MsiOptions": {
       "additionalProperties": false,
       "properties": {
@@ -5355,6 +5360,10 @@
         "name",
         "schemes"
       ],
+      "type": "object"
+    },
+    "Record<string,string>": {
+      "additionalProperties": false,
       "type": "object"
     },
     "ReleaseInfo": {
@@ -7112,7 +7121,7 @@
     },
     "electronDownload": {
       "$ref": "#/definitions/ElectronDownloadOptions",
-      "description": "The [electron-download](https://github.com/electron-userland/electron-download#usage) options."
+      "description": "The [electron/get](https://github.com/electron/get) options."
     },
     "electronFuses": {
       "anyOf": [
