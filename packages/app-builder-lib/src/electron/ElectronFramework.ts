@@ -192,8 +192,13 @@ async function unpack(prepareOptions: PrepareApplicationStageDirectoryOptions, d
   const { version, arch } = downloadOptions
   const defaultZipName = `electron-v${version}-${platformName}-${arch}.zip`
 
-  const electronDistHook: any = await resolveFunction(packager.appInfo.type, packager.config.electronDist, "electronDist")
-  let resolvedDist: string | null = typeof electronDistHook === "function" ? await Promise.resolve(electronDistHook(prepareOptions)) : electronDistHook
+  let resolvedDist: string | null = null
+  try {
+    const electronDistHook: any = await resolveFunction(packager.appInfo.type, packager.config.electronDist, "electronDist")
+    resolvedDist = typeof electronDistHook === "function" ? await Promise.resolve(electronDistHook(prepareOptions)) : electronDistHook
+  } catch (error: any) {
+    throw new Error("Failed to resolve electronDist: " + error.message)
+  }
 
   if (resolvedDist == null) {
     // if no custom electronDist is provided, use the default unpack logic

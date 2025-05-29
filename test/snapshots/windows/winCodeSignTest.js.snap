@@ -1,16 +1,5 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`electronDist 1`] = `
-"Cannot find module '<path>/foo'
-Require stack:
-- /Users/mikemaietta/Development/electron-builder-2/packages/app-builder-lib/out/util/resolve.js
-- /Users/mikemaietta/Development/electron-builder-2/packages/app-builder-lib/out/electron/ElectronFramework.js
-- /Users/mikemaietta/Development/electron-builder-2/packages/app-builder-lib/out/packager.js
-- /Users/mikemaietta/Development/electron-builder-2/packages/app-builder-lib/out/index.js
-- /Users/mikemaietta/Development/electron-builder-2/packages/electron-builder/out/builder.js
-- /Users/mikemaietta/Development/electron-builder-2/packages/electron-builder/out/index.js"
-`;
-
 exports[`forceCodeSigning 1`] = `"ERR_ELECTRON_BUILDER_INVALID_CONFIGURATION"`;
 
 exports[`parseDn 1`] = `
