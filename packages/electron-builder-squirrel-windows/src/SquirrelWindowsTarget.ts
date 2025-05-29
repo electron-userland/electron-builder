@@ -1,6 +1,6 @@
 import { InvalidConfigurationError, log, isEmptyOrSpaces } from "builder-util"
 import { execWine } from "app-builder-lib/out/wine"
-import { getBinFromUrl } from "app-builder-lib/out/binDownload"
+import { getBin } from "app-builder-lib/out/binDownload"
 import { sanitizeFileName } from "builder-util/out/filename"
 import { Arch, getArchSuffix, SquirrelWindowsOptions, Target, WinPackager } from "app-builder-lib"
 import * as path from "path"
@@ -29,7 +29,7 @@ export default class SquirrelWindowsTarget extends Target {
       log.warn({ vendorDirectory }, "unable to access custom Squirrel.Windows vendor directory, falling back to default vendor ")
       const windowInstallerPackage = require.resolve("electron-winstaller")
       vendorDirectory = path.resolve(windowInstallerPackage, "vendor")
-      customSquirrelBin = await getBinFromUrl("squirrel.windows", "2.0.1-patched", "DWijIRRElidu/Rq0yegAKqo2g6aVJUPvcRyvkzUoBPbRasIk61P6xY2fBMdXw6wT17md7NzrTI9/zA1wT9vEqg==")
+      customSquirrelBin = await getBin("squirrel.windows", "https://github.com/electron-userland/electron-builder-binaries/releases/download/squirrel.windows@1.0.0/squirrel.windows-2.0.1-patched.7z", "DWijIRRElidu/Rq0yegAKqo2g6aVJUPvcRyvkzUoBPbRasIk61P6xY2fBMdXw6wT17md7NzrTI9/zA1wT9vEqg==")
     }
 
     const tmpVendorDirectory = await this.packager.info.tempDirManager.createTempDir({ prefix: "squirrel-windows-vendor" })
