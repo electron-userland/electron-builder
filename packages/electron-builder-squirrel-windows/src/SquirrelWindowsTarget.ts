@@ -27,8 +27,8 @@ export default class SquirrelWindowsTarget extends Target {
 
     if (isEmptyOrSpaces(vendorDirectory) || !fs.existsSync(vendorDirectory)) {
       log.warn({ vendorDirectory }, "unable to access custom Squirrel.Windows vendor directory, falling back to default vendor ")
-      const windowInstallerPackage = require.resolve("electron-winstaller")
-      vendorDirectory = path.resolve(windowInstallerPackage, "vendor")
+      const windowInstallerPackage = require.resolve("electron-winstaller/package.json")
+      vendorDirectory = path.join(path.dirname(windowInstallerPackage), "vendor")
       customSquirrelBin = await getBin("squirrel.windows", "https://github.com/electron-userland/electron-builder-binaries/releases/download/squirrel.windows@1.0.0/squirrel.windows-2.0.1-patched.7z", "DWijIRRElidu/Rq0yegAKqo2g6aVJUPvcRyvkzUoBPbRasIk61P6xY2fBMdXw6wT17md7NzrTI9/zA1wT9vEqg==")
     }
 
