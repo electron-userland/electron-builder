@@ -1,5 +1,6 @@
 import { InvalidConfigurationError, log, isEmptyOrSpaces } from "builder-util"
 import { execWine } from "app-builder-lib/out/wine"
+import { getBinFromUrl } from "app-builder-lib/out/binDownload"
 import { sanitizeFileName } from "builder-util/out/filename"
 import { Arch, getArchSuffix, SquirrelWindowsOptions, Target, WinPackager } from "app-builder-lib"
 import * as path from "path"
@@ -22,14 +23,21 @@ export default class SquirrelWindowsTarget extends Target {
 
   private async prepareSignedVendorDirectory(): Promise<string> {
     let vendorDirectory = this.options.customSquirrelVendorDir
+    let customSquirrelBin = ""
+
     if (isEmptyOrSpaces(vendorDirectory) || !fs.existsSync(vendorDirectory)) {
       log.warn({ vendorDirectory }, "unable to access custom Squirrel.Windows vendor directory, falling back to default vendor ")
-      vendorDirectory = path.resolve(__dirname, "..", "vendor")
+      const windowInstallerPackage = require.resolve("electron-winstaller")
+      vendorDirectory = path.resolve(windowInstallerPackage, "vendor")
+      customSquirrelBin = await getBinFromUrl("squirrel.windows", "1.0.0", "DWijIRRElidu/Rq0yegAKqo2g6aVJUPvcRyvkzUoBPbRasIk61P6xY2fBMdXw6wT17md7NzrTI9/zA1wT9vEqg==")
     }
 
     const tmpVendorDirectory = await this.packager.info.tempDirManager.createTempDir({ prefix: "squirrel-windows-vendor" })
-    // Copy entire vendor directory to temp directory
     await fs.promises.cp(vendorDirectory, tmpVendorDirectory, { recursive: true })
+    if (customSquirrelBin && customSquirrelBin.length > 0) {
+      await fs.promises.cp(customSquirrelBin, tmpVendorDirectory, { recursive: true })
+    }
+
     log.debug({ from: vendorDirectory, to: tmpVendorDirectory }, "copied vendor directory")
 
     const files = await fs.promises.readdir(tmpVendorDirectory)
