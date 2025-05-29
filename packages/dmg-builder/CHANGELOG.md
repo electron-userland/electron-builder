@@ -1,5 +1,17 @@
 # dmg-builder
 
+## 26.0.16
+
+### Patch Changes
+
+- [#9118](https://github.com/electron-userland/electron-builder/pull/9118) [`bacc6b44`](https://github.com/electron-userland/electron-builder/commit/bacc6b44cce1134d6d8ea1b605f0340a50095018) Thanks [@mmaietta](https://github.com/mmaietta)! - refactor(dmg): add human-readable log messages for hdiutil error codes and refactoring retry logic to only retry on transient error codes
+
+- [#9115](https://github.com/electron-userland/electron-builder/pull/9115) [`9358b00b`](https://github.com/electron-userland/electron-builder/commit/9358b00b3985dd65a2c89b65a4c097653e9aebb2) Thanks [@mmaietta](https://github.com/mmaietta)! - fix(dmg): --force unmount dmg using hdiutil after 3sec delay when receiving error code 16 (resource is busy)
+
+- Updated dependencies [[`65de8564`](https://github.com/electron-userland/electron-builder/commit/65de8564f23536805b27ad36eec0b6574b682402), [`b62737d8`](https://github.com/electron-userland/electron-builder/commit/b62737d8c4528c04c78a490cc4dca8cdadbeaaac), [`9272cf33`](https://github.com/electron-userland/electron-builder/commit/9272cf33a8e3b788979010706e9c564e954a2ee7), [`59fdaa9f`](https://github.com/electron-userland/electron-builder/commit/59fdaa9f3420f253c735690091169577112793b7)]:
+  - app-builder-lib@26.0.16
+  - builder-util@26.0.16
+
 ## 26.0.15
 
 ### Patch Changes

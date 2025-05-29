@@ -1,5 +1,23 @@
 # app-builder-lib
 
+## 26.0.16
+
+### Patch Changes
+
+- [#9122](https://github.com/electron-userland/electron-builder/pull/9122) [`65de8564`](https://github.com/electron-userland/electron-builder/commit/65de8564f23536805b27ad36eec0b6574b682402) Thanks [@mmaietta](https://github.com/mmaietta)! - test: adding helper function to packageMetadata to accept a relative file:// uri dependency
+
+- [#9117](https://github.com/electron-userland/electron-builder/pull/9117) [`b62737d8`](https://github.com/electron-userland/electron-builder/commit/b62737d8c4528c04c78a490cc4dca8cdadbeaaac) Thanks [@talentlessguy](https://github.com/talentlessguy)! - chore(deps): replace `is-ci` with `ci-info`
+
+- [#9126](https://github.com/electron-userland/electron-builder/pull/9126) [`9272cf33`](https://github.com/electron-userland/electron-builder/commit/9272cf33a8e3b788979010706e9c564e954a2ee7) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: allow custom electron zip name to be provided when unpacking a provided electronDist
+
+- [#9068](https://github.com/electron-userland/electron-builder/pull/9068) [`59fdaa9f`](https://github.com/electron-userland/electron-builder/commit/59fdaa9f3420f253c735690091169577112793b7) Thanks [@hbcraft](https://github.com/hbcraft)! - fix(linux): productName should be used as the default value when executableName is not set. (#8766)
+
+- Updated dependencies [[`b62737d8`](https://github.com/electron-userland/electron-builder/commit/b62737d8c4528c04c78a490cc4dca8cdadbeaaac), [`bacc6b44`](https://github.com/electron-userland/electron-builder/commit/bacc6b44cce1134d6d8ea1b605f0340a50095018), [`9358b00b`](https://github.com/electron-userland/electron-builder/commit/9358b00b3985dd65a2c89b65a4c097653e9aebb2)]:
+  - builder-util@26.0.16
+  - dmg-builder@26.0.16
+  - electron-builder-squirrel-windows@26.0.16
+  - electron-publish@26.0.16
+
 ## 26.0.15
 
 ### Patch Changes
