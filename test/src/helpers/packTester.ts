@@ -4,7 +4,7 @@ import { computeArchToTargetNamesMap } from "app-builder-lib/out/targets/targetF
 import { getLinuxToolsPath } from "app-builder-lib/out/targets/tools"
 import { parsePlistFile, PlistObject } from "app-builder-lib/out/util/plist"
 import { AsarIntegrity } from "app-builder-lib/out/asar/integrity"
-import { addValue, copyDir, deepAssign, exec, executeFinally, exists, FileCopier, getPath7x, getPath7za, log, spawn, USE_HARD_LINKS, walk } from "builder-util"
+import { addValue, copyDir, deepAssign, exec, executeFinally, exists, FileCopier, getPath7x, getPath7za, log, spawn, use, USE_HARD_LINKS, walk } from "builder-util"
 import { CancellationToken, UpdateFileInfo } from "builder-util-runtime"
 import { Arch, ArtifactCreated, Configuration, DIR_TARGET, getArchSuffix, MacOsTargetName, Packager, PackagerOptions, Platform, Target } from "electron-builder"
 import { convertVersion } from "electron-winstaller"
@@ -24,6 +24,10 @@ import AdmZip from "adm-zip"
 // @ts-ignore
 import sanitizeFileName from "sanitize-filename"
 import type { ExpectStatic } from "vitest"
+import { installDependencies, installOrRebuild } from "app-builder-lib/out/util/yarn"
+import { computeDefaultAppDirectory } from "app-builder-lib/src/util/config/config"
+import { ELECTRON_VERSION } from "./testConfig"
+import { createLazyProductionDeps } from "app-builder-lib/src/util/packageDependencies"
 
 if (process.env.TRAVIS !== "true") {
   process.env.CIRCLE_BUILD_NUM = "42"
@@ -69,8 +73,8 @@ export function appThrows(expect: ExpectStatic, packagerOptions: PackagerOptions
   return assertThat(expect, assertPack(expect, "test-app-one", packagerOptions, checkOptions)).throws(customErrorAssert)
 }
 
-export function appTwoThrows(expect: ExpectStatic, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions = {}) {
-  return assertThat(expect, assertPack(expect, "test-app", packagerOptions, checkOptions)).throws()
+export function appTwoThrows(expect: ExpectStatic, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions = {}, customErrorAssert?: (error: Error) => void) {
+  return assertThat(expect, assertPack(expect, "test-app", packagerOptions, checkOptions)).throws(customErrorAssert)
 }
 
 export function app(expect: ExpectStatic, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions = {}) {
@@ -146,14 +150,29 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
         }
 
         // bin links required (e.g. for node-pre-gyp - if package refers to it in the install script)
-        await spawn(pmOptions.cmd, installArgs, {
-          cwd: projectDir,
-        }).catch((err: any) => {
-          if (err.message.includes("npm ci")) {
-            log.error({}, "npm ci failed, check if fixture dependencies were changed. If intentional, rerun with env var UPDATE_LOCKFILE_FIXTURES=true.")
+        // await spawn(pmOptions.cmd, installArgs, {
+        //   cwd: projectDir,
+        // }).catch((err: any) => {
+        //   if (err.message.includes("npm ci")) {
+        //     log.error({}, "npm ci failed, check if fixture dependencies were changed. If intentional, rerun with env var UPDATE_LOCKFILE_FIXTURES=true.")
+        //   }
+        //   throw err
+        // })
+        const appDir = await computeDefaultAppDirectory(
+          projectDir,
+          use(configuration.directories, it => it.app)
+        )
+        await installDependencies(
+          configuration,
+          {
+            projectDir: projectDir,
+            appDir: appDir,
+          },
+          {
+            frameworkInfo: { version: ELECTRON_VERSION, useCustomDist: false },
+            productionDeps: createLazyProductionDeps(appDir, null, false),
           }
-          throw err
-        })
+        )
 
         // save lockfile fixture
         if (!(await exists(testFixtureLockfile)) && shouldUpdateLockfiles) {

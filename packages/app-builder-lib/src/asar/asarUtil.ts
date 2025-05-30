@@ -83,6 +83,7 @@ export class AsarPackager {
         const result = await this.processFileOrSymlink({
           file,
           destination,
+          fileSet,
           transformedData,
           stat,
           isUnpacked,
@@ -117,10 +118,11 @@ export class AsarPackager {
     file: string
     destination: string
     stat: fs.Stats
+    fileSet: ResolvedFileSet
     transformedData: string | Buffer | undefined
     isUnpacked: (path: string) => boolean
   }): Promise<AsarStreamType> {
-    const { isUnpacked, transformedData, file, destination, stat } = options
+    const { isUnpacked, transformedData, file, destination, stat, fileSet } = options
     const unpacked = isUnpacked(destination)
 
     if (!stat.isFile() && !stat.isSymbolicLink()) {
@@ -141,6 +143,13 @@ export class AsarPackager {
       return { path: destination, streamGenerator, unpacked, type: "file", stat: { mode: stat.mode, size } }
     }
 
+    const realPathFile = await fs.realpath(file)
+    const isOutsidePackage = path.relative(fileSet.src, realPathFile).startsWith("..")
+    if (isOutsidePackage) {
+      log.error({ source: log.filePath(file), realPathFile: log.filePath(realPathFile) }, `unable to copy, file is symlinked outside the package`)
+      throw new Error(`Cannot copy file (${path.basename(file)}) symlinked to file (${path.basename(realPathFile)}) outside the package as that violates asar security integrity`)
+    }
+
     const config = {
       path: destination,
       streamGenerator: () => fs.createReadStream(file),
@@ -148,23 +157,23 @@ export class AsarPackager {
       stat,
     }
 
-    // if the file is a symlink, we need to resolve it
-    if (stat.isSymbolicLink()) {
-      let link = await readlink(file)
-      if (path.isAbsolute(link)) {
-        link = path.relative(path.dirname(file), link)
-      }
+    // not a symlink, stream directly
+    if (file === realPathFile) {
       return {
         ...config,
-        type: "link",
-        symlink: link,
+        type: "file",
       }
     }
 
-    // not a symlink, stream the file
+    // okay, it must be a symlink. evaluate link to be relative to source file in asar
+    let link = await readlink(file)
+    if (path.isAbsolute(link)) {
+      link = path.relative(path.dirname(file), link)
+    }
     return {
       ...config,
-      type: "file",
+      type: "link",
+      symlink: link,
     }
   }
 
