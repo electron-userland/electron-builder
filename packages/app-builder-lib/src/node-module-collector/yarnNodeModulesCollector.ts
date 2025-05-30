@@ -1,5 +1,5 @@
 import { NpmNodeModulesCollector } from "./npmNodeModulesCollector"
-import which from "which"
+import * as which from "which"
 
 export class YarnNodeModulesCollector extends NpmNodeModulesCollector {
   constructor(rootDir: string) {

@@ -10,7 +10,7 @@ import { executeAppBuilderAndWriteJson } from "./appBuilder"
 import { PM, detectPackageManager, getPackageManagerCommand } from "../node-module-collector"
 import { NodeModuleDirInfo } from "./packageDependencies"
 import { rebuild as remoteRebuild } from "./rebuild/rebuild"
-import which from "which"
+import * as which from "which"
 
 export async function installOrRebuild(config: Configuration, { appDir, projectDir }: DirectoryPaths, options: RebuildOptions, forceInstall = false) {
   const effectiveOptions: RebuildOptions = {

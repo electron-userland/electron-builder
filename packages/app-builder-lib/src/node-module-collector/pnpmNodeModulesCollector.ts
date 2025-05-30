@@ -4,7 +4,7 @@ import { PnpmDependency, Dependency } from "./types"
 import { log } from "builder-util"
 import * as path from "path"
 import * as fs from "fs"
-import which from "which"
+import * as which from "which"
 
 export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependency, PnpmDependency> {
   constructor(rootDir: string) {
