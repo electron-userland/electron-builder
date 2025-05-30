@@ -6,7 +6,7 @@ import asyncPool from "tiny-async-pool"
 import { excludedNames, FileMatcher } from "../fileMatcher"
 import { Packager } from "../packager"
 import { FileCopyHelper } from "./AppFileWalker"
-import { NodeModuleInfo } from "./packageDependencies"
+import { NodeModuleInfo } from "../node-module-collector"
 import { resolveFunction } from "./resolve"
 
 const excludedFiles = new Set(
