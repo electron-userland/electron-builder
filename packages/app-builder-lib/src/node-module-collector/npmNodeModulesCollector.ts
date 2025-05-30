@@ -8,7 +8,14 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
     super(rootDir)
   }
 
-  public readonly pmCommand = new Lazy<string>(() => Promise.resolve(process.platform === "win32" ? which("npm") : "npm"))
+  static readonly pmCommand = new Lazy<string>(async () => {
+    if (process.platform === "win32") {
+      return which("npm")
+    }
+    return "npm"
+  })
+
+  public readonly pmCommand = NpmNodeModulesCollector.pmCommand
   public readonly installOptions = this.pmCommand.value.then(cmd => ({ cmd, args: ["ci"], lockfile: "package-lock.json" }))
 
   protected getArgs(): string[] {
