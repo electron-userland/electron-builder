@@ -1,4 +1,6 @@
 import { InvalidConfigurationError, log, isEmptyOrSpaces } from "builder-util"
+import { execWine } from "app-builder-lib/out/wine"
+import { getBin } from "app-builder-lib/out/binDownload"
 import { sanitizeFileName } from "builder-util/out/filename"
 import { Arch, getArchSuffix, SquirrelWindowsOptions, Target, WinPackager } from "app-builder-lib"
 import * as path from "path"
@@ -20,29 +22,53 @@ export default class SquirrelWindowsTarget extends Target {
   }
 
   private async prepareSignedVendorDirectory(): Promise<string> {
-    // If not specified will use the Squirrel.Windows that is shipped with electron-installer(https://github.com/electron/windows-installer/tree/main/vendor)
-    // After https://github.com/electron-userland/electron-builder-binaries/pull/56 merged, will add `electron-builder-binaries` to get the latest version of squirrel.
-    let vendorDirectory = this.options.customSquirrelVendorDir || path.join(require.resolve("electron-winstaller/package.json"), "..", "vendor")
+    let vendorDirectory = this.options.customSquirrelVendorDir
+    let customSquirrelBin = ""
+
     if (isEmptyOrSpaces(vendorDirectory) || !fs.existsSync(vendorDirectory)) {
-      log.warn({ vendorDirectory }, "unable to access Squirrel.Windows vendor directory, falling back to default electron-winstaller")
-      vendorDirectory = path.join(require.resolve("electron-winstaller/package.json"), "..", "vendor")
+      log.warn({ vendorDirectory }, "unable to access custom Squirrel.Windows vendor directory, falling back to default vendor ")
+      const windowInstallerPackage = require.resolve("electron-winstaller/package.json")
+      vendorDirectory = path.join(path.dirname(windowInstallerPackage), "vendor")
+      customSquirrelBin = await getBin(
+        "squirrel.windows",
+        "https://github.com/electron-userland/electron-builder-binaries/releases/download/squirrel.windows@1.0.0/squirrel.windows-2.0.1-patched.7z",
+        "DWijIRRElidu/Rq0yegAKqo2g6aVJUPvcRyvkzUoBPbRasIk61P6xY2fBMdXw6wT17md7NzrTI9/zA1wT9vEqg=="
+      )
     }
 
     const tmpVendorDirectory = await this.packager.info.tempDirManager.createTempDir({ prefix: "squirrel-windows-vendor" })
-    // Copy entire vendor directory to temp directory
     await fs.promises.cp(vendorDirectory, tmpVendorDirectory, { recursive: true })
+    if (customSquirrelBin && customSquirrelBin.length > 0) {
+      await fs.promises.cp(path.join(customSquirrelBin, "electron-winstaller", "vendor"), tmpVendorDirectory, { recursive: true })
+    }
+
     log.debug({ from: vendorDirectory, to: tmpVendorDirectory }, "copied vendor directory")
 
     const files = await fs.promises.readdir(tmpVendorDirectory)
     for (const file of files) {
-      if (["Squirrel.exe", "StubExecutable.exe"].includes(file)) {
+      if (file === "Squirrel.exe") {
         const filePath = path.join(tmpVendorDirectory, file)
         log.debug({ file: filePath }, "signing vendor executable")
         await this.packager.sign(filePath)
+        break
       }
     }
-
     return tmpVendorDirectory
+  }
+
+  private async generateStubExecutableExe(appOutDir: string, vendorDir: string) {
+    const files = await fs.promises.readdir(appOutDir, { withFileTypes: true })
+    for (const file of files) {
+      const fileNameWithoutExt = path.basename(file.name, ".exe")
+      if (path.extname(file.name) === ".exe" && fileNameWithoutExt !== "Squirrel") {
+        const filePath = path.join(appOutDir, file.name)
+        log.filePath(filePath)
+        const stubExePath = path.join(appOutDir, `${fileNameWithoutExt}_ExecutionStub.exe`)
+        await fs.promises.copyFile(path.join(vendorDir, "StubExecutable.exe"), stubExePath)
+        await execWine(path.join(vendorDir, "WriteZipToSetup.exe"), null, ["--copy-stub-resources", filePath, stubExePath])
+        await this.packager.sign(stubExePath)
+      }
+    }
   }
 
   async build(appOutDir: string, arch: Arch) {
@@ -62,6 +88,7 @@ export default class SquirrelWindowsTarget extends Target {
         arch,
       })
       const distOptions = await this.computeEffectiveDistOptions(appOutDir, installerOutDir, setupFile)
+      await this.generateStubExecutableExe(appOutDir, distOptions.vendorDirectory!)
       await createWindowsInstaller(distOptions)
 
       await packager.signAndEditResources(artifactPath, arch, installerOutDir)
