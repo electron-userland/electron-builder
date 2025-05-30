@@ -1,15 +1,16 @@
 import * as electronRebuild from "@electron/rebuild"
 import { RebuildMode } from "@electron/rebuild/lib/types"
-import { asArray, findExecutable, log, spawn } from "builder-util"
+import { asArray, log, spawn } from "builder-util"
 import { pathExists } from "fs-extra"
 import { Lazy } from "lazy-val"
 import { homedir } from "os"
 import * as path from "path"
 import { Configuration } from "../configuration"
-import { detect, getPackageManagerVersion, PM } from "../node-module-collector"
 import { executeAppBuilderAndWriteJson } from "./appBuilder"
+import { PM, detectPackageManager, getPackageManagerCommand } from "../node-module-collector"
 import { NodeModuleDirInfo } from "./packageDependencies"
 import { rebuild as remoteRebuild } from "./rebuild/rebuild"
+import which from "which"
 
 export async function installOrRebuild(config: Configuration, { appDir, projectDir }: DirectoryPaths, options: RebuildOptions, forceInstall = false) {
   const effectiveOptions: RebuildOptions = {
@@ -78,38 +79,25 @@ export function getGypEnv(frameworkInfo: DesktopFrameworkInfo, platform: NodeJS.
   }
 }
 
-async function checkYarnBerry(pm: PM) {
-  if (pm !== "yarn") {
-    return false
-  }
-  const version = await getPackageManagerVersion(pm)
-  if (version == null || version.split(".").length < 1) {
-    return false
-  }
-
-  return version.split(".")[0] >= "2"
-}
-
 async function installDependencies(config: Configuration, { appDir, projectDir }: DirectoryPaths, options: RebuildOptions): Promise<any> {
   const platform = options.platform || process.platform
   const arch = options.arch || process.arch
   const additionalArgs = options.additionalArgs
 
-  const pm = await detect({ cwd: projectDir })
+  const pm = detectPackageManager(projectDir)
   log.info({ pm, platform, arch, projectDir, appDir }, `installing production dependencies`)
   const execArgs = ["install"]
-  const isYarnBerry = await checkYarnBerry(pm)
-  if (!isYarnBerry) {
+  if (pm === PM.YARN_BERRY) {
     if (process.env.NPM_NO_BIN_LINKS === "true") {
       execArgs.push("--no-bin-links")
     }
   }
 
-  if (!isRunningYarn(pm)) {
+  if (pm === PM.YARN) {
     execArgs.push("--prefer-offline")
   }
 
-  const execPath = await getPackageToolPath(pm)
+  const execPath = getPackageManagerCommand(pm)
 
   if (additionalArgs != null) {
     execArgs.push(...additionalArgs)
@@ -124,19 +112,10 @@ async function installDependencies(config: Configuration, { appDir, projectDir }
   return rebuild(config, { appDir, projectDir }, options)
 }
 
-const nodeGypExecutable = new Lazy(() =>
-  findExecutable({
-    name: "node-gyp",
-    executables: ["node-gyp"],
-    win32: ["node-gyp.cmd"],
-    arguments: ["--version"],
-  })
-)
-
 export async function nodeGypRebuild(platform: NodeJS.Platform, arch: string, frameworkInfo: DesktopFrameworkInfo) {
   log.info({ platform, arch }, "executing node-gyp rebuild")
   // this script must be used only for electron
-  const nodeGyp = await nodeGypExecutable.value
+  const nodeGyp = process.platform === "win32" ? await which("node-gyp") : "node-gyp"
   const args = ["rebuild"]
   // headers of old Electron versions do not have a valid config.gypi file
   // and --force-process-config must be passed to node-gyp >= 8.4.0 to
@@ -151,26 +130,6 @@ export async function nodeGypRebuild(platform: NodeJS.Platform, arch: string, fr
   }
   await spawn(nodeGyp, args, { env: getGypEnv(frameworkInfo, platform, arch, true) })
 }
-
-function getPackageToolPath(pm: PM): Promise<string> {
-  let executable = pm
-  if (process.env.FORCE_YARN === "true") {
-    executable = "yarn"
-  }
-
-  return findExecutable({
-    name: executable,
-    executables: [executable],
-    win32: [`${executable}.cmd`],
-    arguments: ["--version"],
-  })
-}
-
-function isRunningYarn(pm: PM) {
-  const userAgent = process.env.npm_config_user_agent
-  return process.env.FORCE_YARN === "true" || pm === "yarn" || (userAgent != null && /\byarn\b/.test(userAgent))
-}
-
 export interface RebuildOptions {
   frameworkInfo: DesktopFrameworkInfo
   productionDeps: Lazy<Array<NodeModuleDirInfo>>

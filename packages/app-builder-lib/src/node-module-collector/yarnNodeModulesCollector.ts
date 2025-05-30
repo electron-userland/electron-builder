@@ -1,24 +1,18 @@
-import { findExecutable } from "builder-util"
-import { Lazy } from "lazy-val"
 import { NpmNodeModulesCollector } from "./npmNodeModulesCollector"
+import which from "which"
 
 export class YarnNodeModulesCollector extends NpmNodeModulesCollector {
   constructor(rootDir: string) {
     super(rootDir)
   }
 
-  static readonly yarnCommand = new Lazy<string>(() =>
-    findExecutable({
-      name: "yarn",
-      executables: ["yarn"],
-      win32: ["yarn.cmd"],
-      arguments: ["--version"],
-    })
-  )
-
-  public readonly installOptions = YarnNodeModulesCollector.yarnCommand.value.then(cmd => ({
-    cmd: cmd,
-    args: ["install", "--frozen-lockfile"],
-    lockfile: "yarn.lock",
-  }))
+  // note: do not override `pmCommand`. We explicitly use npm for the json payload
+  public readonly installOptions = (async () => {
+    const cmd = process.platform === "win32" ? await which("yarn") : "yarn";
+    return {
+      cmd,
+      args: ["install", "--frozen-lockfile"],
+      lockfile: "yarn.lock",
+    };
+  })()
 }

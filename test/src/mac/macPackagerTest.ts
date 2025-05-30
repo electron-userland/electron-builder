@@ -45,6 +45,9 @@ test.ifMac("two-package", ({ expect }) =>
       checkMacApp: async appDir => {
         const resources = await fs.readdir(path.join(appDir, "Contents", "Resources"))
         expect(resources.filter(it => !it.startsWith(".")).sort()).toMatchSnapshot()
+
+        const electronFrameworkResources = await fs.readdir(path.join(appDir, "Contents", "Frameworks", "Electron Framework.framework", "Resources"))
+        expect(electronFrameworkResources.filter(it => !it.startsWith(".")).sort()).toMatchSnapshot()
       },
     }
   )
@@ -139,12 +142,17 @@ test.ifMac("yarn two package.json w/ native module", ({ expect }) =>
 )
 
 test.ifMac("electronDist", ({ expect }) =>
-  appThrows(expect, {
-    targets: Platform.MAC.createTarget(DIR_TARGET, Arch.x64),
-    config: {
-      electronDist: "foo",
+  appThrows(
+    expect,
+    {
+      targets: Platform.MAC.createTarget(DIR_TARGET, Arch.x64),
+      config: {
+        electronDist: "foo",
+      },
     },
-  })
+    {},
+    error => expect(error.message).toContain("Failed to resolve electronDist")
+  )
 )
 
 test.ifWinCi("Build macOS on Windows is not supported", ({ expect }) => appThrows(expect, platform(Platform.MAC)))

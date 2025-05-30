@@ -1,5 +1,21 @@
 # electron-builder
 
+## 26.0.15
+
+### Patch Changes
+
+- Updated dependencies [[`312938d8`](https://github.com/electron-userland/electron-builder/commit/312938d8519a29992e75e1f544c41ca50ae591e3), [`6f3aec81`](https://github.com/electron-userland/electron-builder/commit/6f3aec8106be0d365e59923410c1eb55cd0328d1), [`d97e7eb2`](https://github.com/electron-userland/electron-builder/commit/d97e7eb20d6cdf53f7fd75d51818de3cf65e011a), [`0ce7b90e`](https://github.com/electron-userland/electron-builder/commit/0ce7b90e5eec0cf3049e2b3957b4d076fbdd615d)]:
+  - app-builder-lib@26.0.15
+  - dmg-builder@26.0.15
+
+## 26.0.14
+
+### Patch Changes
+
+- Updated dependencies [[`3d65267a`](https://github.com/electron-userland/electron-builder/commit/3d65267a6c53ca824f70e5b0f5d8f4ba8be38237), [`5545e132`](https://github.com/electron-userland/electron-builder/commit/5545e1325457bf4c493166faaf533528d336e76f), [`80fbf5a6`](https://github.com/electron-userland/electron-builder/commit/80fbf5a6d8f308415469d4ee96a954932e6f19b7), [`524fb6e0`](https://github.com/electron-userland/electron-builder/commit/524fb6e042446f741eaf77a8eb65485074186b96)]:
+  - app-builder-lib@26.0.14
+  - dmg-builder@26.0.14
+
 ## 26.0.13
 
 ### Patch Changes

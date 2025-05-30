@@ -10,7 +10,7 @@ import { ELECTRON_VERSION } from "./helpers/testConfig"
 import { verifySmartUnpack } from "./helpers/verifySmartUnpack"
 import { spawn } from "builder-util/out/util"
 
-test("cli", ({ expect }) => {
+test.ifLinux("cli", ({ expect }) => {
   // because these methods are internal
   const { configureBuildCommand, normalizeOptions } = require("electron-builder/out/builder")
   const yargs = createYargs()
@@ -363,8 +363,9 @@ test.ifDevOrLinuxCi("win smart unpack", ({ expect }) => {
     },
     {
       isInstallDepsBefore: true,
-      projectDirCreated: projectDir => {
+      projectDirCreated: async projectDir => {
         p = projectDir
+        process.env.npm_config_user_agent = "npm"
         return packageJson(it => {
           it.dependencies = {
             debug: "3.1.0",
@@ -440,14 +441,17 @@ test.ifDevOrLinuxCi("posix smart unpack", ({ expect }) =>
     },
     {
       isInstallDepsBefore: true,
-      projectDirCreated: packageJson(it => {
-        it.dependencies = {
-          debug: "4.1.1",
-          "edge-cs": "1.2.1",
-          keytar: "7.9.0",
-          three: "0.160.0",
-        }
-      }),
+      projectDirCreated: projectDir => {
+        process.env.npm_config_user_agent = "npm"
+        return packageJson(it => {
+          it.dependencies = {
+            debug: "4.1.1",
+            "edge-cs": "1.2.1",
+            keytar: "7.9.0",
+            three: "0.160.0",
+          }
+        })(projectDir)
+      },
       packed: async context => {
         expect(context.packager.appInfo.copyright).toBe("Copyright © 2018 Foo Bar")
         await verifySmartUnpack(expect, context.getResources(Platform.LINUX), async asarFs => {

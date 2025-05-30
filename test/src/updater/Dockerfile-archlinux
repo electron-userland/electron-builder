@@ -1,0 +1,15 @@
+FROM archlinux:latest
+
+RUN pacman -Syu --noconfirm && \
+    pacman -S --noconfirm \
+    libxcrypt-compat \
+    base-devel \
+    git \
+    nodejs \
+    npm \
+    xorg-server-xvfb \
+    && pacman -Scc --noconfirm
+
+RUN npm --silent install --global --depth 0 pnpm
+
+WORKDIR /project

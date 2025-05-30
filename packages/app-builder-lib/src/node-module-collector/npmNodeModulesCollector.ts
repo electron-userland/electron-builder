@@ -1,23 +1,14 @@
 import { Lazy } from "lazy-val"
 import { NodeModulesCollector } from "./nodeModulesCollector"
 import { NpmDependency } from "./types"
-import { findExecutable } from "builder-util"
+import which from "which"
 
 export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency, string> {
   constructor(rootDir: string) {
     super(rootDir)
   }
 
-  static readonly pmCommand = new Lazy<string>(() =>
-    findExecutable({
-      name: "npm",
-      executables: ["npm"],
-      win32: ["npm.cmd"],
-      arguments: ["--version"],
-    })
-  )
-
-  public readonly pmCommand = NpmNodeModulesCollector.pmCommand
+  public readonly pmCommand = new Lazy<string>(() => Promise.resolve(process.platform === "win32" ? which("npm") : "npm"))
   public readonly installOptions = this.pmCommand.value.then(cmd => ({ cmd, args: ["ci"], lockfile: "package-lock.json" }))
 
   protected getArgs(): string[] {
