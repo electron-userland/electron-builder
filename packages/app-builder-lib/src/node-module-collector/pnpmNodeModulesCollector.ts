@@ -1,9 +1,10 @@
 import { Lazy } from "lazy-val"
 import { NodeModulesCollector } from "./nodeModulesCollector"
 import { PnpmDependency, Dependency } from "./types"
-import { exec, log } from "builder-util"
+import { log } from "builder-util"
 import * as path from "path"
 import * as fs from "fs"
+import which from "which"
 
 export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependency, PnpmDependency> {
   constructor(rootDir: string) {
@@ -12,12 +13,7 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
 
   static readonly pmCommand = new Lazy<string>(async () => {
     if (process.platform === "win32") {
-      try {
-        await exec("pnpm", ["--version"])
-      } catch (_error: any) {
-        log.debug(null, "pnpm not detected, falling back to pnpm.cmd")
-        return "pnpm.cmd"
-      }
+      return which("pnpm")
     }
     return "pnpm"
   })

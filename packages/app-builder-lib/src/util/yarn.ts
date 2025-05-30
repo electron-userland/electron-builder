@@ -10,6 +10,7 @@ import { executeAppBuilderAndWriteJson } from "./appBuilder"
 import { PM, detectPackageManager, getPackageManagerCommand } from "../node-module-collector"
 import { NodeModuleDirInfo } from "./packageDependencies"
 import { rebuild as remoteRebuild } from "./rebuild/rebuild"
+import which from "which"
 
 export async function installOrRebuild(config: Configuration, { appDir, projectDir }: DirectoryPaths, options: RebuildOptions, forceInstall = false) {
   const effectiveOptions: RebuildOptions = {
@@ -114,7 +115,7 @@ async function installDependencies(config: Configuration, { appDir, projectDir }
 export async function nodeGypRebuild(platform: NodeJS.Platform, arch: string, frameworkInfo: DesktopFrameworkInfo) {
   log.info({ platform, arch }, "executing node-gyp rebuild")
   // this script must be used only for electron
-  const nodeGyp = `node-gyp${process.platform === "win32" ? ".cmd" : ""}`
+  const nodeGyp = process.platform === "win32" ? await which("node-gyp") : "node-gyp"
   const args = ["rebuild"]
   // headers of old Electron versions do not have a valid config.gypi file
   // and --force-process-config must be passed to node-gyp >= 8.4.0 to

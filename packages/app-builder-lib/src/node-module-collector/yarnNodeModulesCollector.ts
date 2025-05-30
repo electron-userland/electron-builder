@@ -1,13 +1,18 @@
 import { NpmNodeModulesCollector } from "./npmNodeModulesCollector"
+import which from "which"
 
 export class YarnNodeModulesCollector extends NpmNodeModulesCollector {
   constructor(rootDir: string) {
     super(rootDir)
   }
 
-  public readonly installOptions = Promise.resolve({
-    cmd: process.platform === "win32" ? "yarn.cmd" : "yarn",
-    args: ["install", "--frozen-lockfile"],
-    lockfile: "yarn.lock",
-  })
+  // note: do not override `pmCommand`. We explicitly use npm for the json payload
+  public readonly installOptions = (async () => {
+    const cmd = process.platform === "win32" ? await which("yarn") : "yarn";
+    return {
+      cmd,
+      args: ["install", "--frozen-lockfile"],
+      lockfile: "yarn.lock",
+    };
+  })()
 }
