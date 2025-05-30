@@ -1,5 +1,5 @@
 import { appBuilderPath } from "app-builder-bin"
-import { Nullish, retry as _retry, safeStringifyJson } from "builder-util-runtime"
+import { retry as _retry, Nullish, safeStringifyJson } from "builder-util-runtime"
 import * as chalk from "chalk"
 import { ChildProcess, execFile, ExecFileOptions, SpawnOptions } from "child_process"
 import { spawn as _spawn } from "cross-spawn"
@@ -68,30 +68,6 @@ function getProcessEnv(env: Record<string, string | undefined> | Nullish): NodeJ
   finalEnv.LC_CTYPE = locale
   finalEnv.LC_ALL = locale
   return finalEnv
-}
-
-export type FindExecutableOptions = {
-  name: string
-  executables: string[]
-  arguments: string[]
-} & {
-  [platform in NodeJS.Platform]?: string[]
-}
-
-export async function findExecutable(options: FindExecutableOptions): Promise<string> {
-  const executables = [...(options[process.platform] ?? []), ...options.executables]
-
-  for (const executable of executables) {
-    try {
-      await exec(executable, options.arguments, { shell: true })
-      log.debug(null, `Using command ${executable} for ${options.name}`)
-      return executable
-    } catch (_) {
-      // ignored
-    }
-  }
-
-  throw new Error(`Cannot find executable for ${options.name}, tried: ${executables.join(", ")}`)
 }
 
 export function exec(file: string, args?: Array<string> | null, options?: ExecFileOptions, isLogOutIfDebug = true): Promise<string> {
