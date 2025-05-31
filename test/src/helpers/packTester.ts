@@ -4,7 +4,7 @@ import { computeArchToTargetNamesMap } from "app-builder-lib/out/targets/targetF
 import { getLinuxToolsPath } from "app-builder-lib/out/targets/tools"
 import { parsePlistFile, PlistObject } from "app-builder-lib/out/util/plist"
 import { AsarIntegrity } from "app-builder-lib/out/asar/integrity"
-import { addValue, copyDir, deepAssign, exec, executeFinally, exists, FileCopier, getPath7x, getPath7za, log, use, USE_HARD_LINKS, walk } from "builder-util"
+import { addValue, copyDir, deepAssign, exec, executeFinally, exists, FileCopier, getPath7x, getPath7za, log, USE_HARD_LINKS, walk } from "builder-util"
 import { CancellationToken, UpdateFileInfo } from "builder-util-runtime"
 import { Arch, ArtifactCreated, Configuration, DIR_TARGET, getArchSuffix, MacOsTargetName, Packager, PackagerOptions, Platform, Target } from "electron-builder"
 import { convertVersion } from "electron-winstaller"
@@ -147,10 +147,7 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
           await copyFile(testFixtureLockfile, destLockfile)
         }
 
-        const appDir = await computeDefaultAppDirectory(
-          projectDir,
-          use(configuration.directories, it => it.app)
-        )
+        const appDir = await computeDefaultAppDirectory(projectDir, configuration.directories?.app)
         await installDependencies(
           configuration,
           {

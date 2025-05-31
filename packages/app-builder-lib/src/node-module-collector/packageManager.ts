@@ -1,6 +1,5 @@
 import * as path from "path"
 import * as fs from "fs"
-import * as which from "which"
 
 export enum PM {
   NPM = "npm",
@@ -21,13 +20,7 @@ function resolveCommand(pm: PM): string {
   const fallback = pm === PM.YARN_BERRY ? "yarn" : pm
 
   try {
-    // On Windows, resolve the actual command path (e.g., yarn.cmd, npm.cmd)
-    if (process.platform === "win32") {
-      return which.sync(fallback)
-    }
-
-    // On POSIX systems, use the command name directly
-    return fallback
+    return whichSync(fallback)
   } catch {
     // If `which` fails (not found), still return the fallback string
     return fallback
@@ -84,4 +77,56 @@ export function detectPackageManager(cwd: string): PM {
 
   // fallback: multiple lockfiles or none
   return detectPackageManagerByEnv()
+}
+
+function isExecutable(filePath: string): boolean {
+  try {
+    fs.accessSync(filePath, fs.constants.X_OK)
+    return true
+  } catch {
+    return false
+  }
+}
+
+function hasExtension(file: string): boolean {
+  return !!path.extname(file)
+}
+
+function getPathExts(): string[] {
+  return process.platform === "win32" ? (process.env.PATHEXT || ".EXE;.CMD;.BAT;.COM").split(";") : [""]
+}
+
+function whichSync(command: string): string {
+  const isWindows = process.platform === "win32"
+  const pathEnv = process.env.PATH || ""
+  const pathExts = getPathExts()
+  const pathDirs = pathEnv.split(path.delimiter)
+
+  // If the command contains a path separator, it's a direct path
+  if (command.includes(path.sep)) {
+    const withExts = isWindows && !hasExtension(command) ? pathExts.map(ext => command + ext) : [command]
+
+    for (const candidate of withExts) {
+      if (fs.existsSync(candidate) && isExecutable(candidate)) {
+        return path.resolve(candidate)
+      }
+    }
+
+    throw new Error(`not found: ${command}`)
+  }
+
+  // Otherwise search in PATH directories
+  for (const dir of pathDirs) {
+    if (!dir) continue
+
+    const withExts = isWindows && !hasExtension(command) ? pathExts.map(ext => path.join(dir, command + ext)) : [path.join(dir, command)]
+
+    for (const candidate of withExts) {
+      if (fs.existsSync(candidate) && isExecutable(candidate)) {
+        return path.resolve(candidate)
+      }
+    }
+  }
+
+  throw new Error(`not found: ${command}`)
 }
