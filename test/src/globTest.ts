@@ -131,7 +131,7 @@ test.ifNotWindows("outside symlink", ({ expect }) =>
     error => expect(error.message).toContain("violates asar security integrity")
   ))
 
-test.only("two package nested symlink", ({ expect }) =>
+test.ifNotWindows("two package nested symlink", ({ expect }) =>
   appTwo(
     expect,
     {
@@ -141,8 +141,7 @@ test.only("two package nested symlink", ({ expect }) =>
           "!node_modules/**/*",
           {
             from: "node_modules/better-sqlite3/build/Release",
-            // from: newPath,
-            to: "dist/app/native",
+            to: "dist/native",
             filter: ["better_sqlite3.node"],
           },
         ],
@@ -150,7 +149,6 @@ test.only("two package nested symlink", ({ expect }) =>
     },
     {
       isInstallDepsBefore: true,
-      storeDepsLockfileSnapshot: true,
       projectDirCreated: async projectDir => {
         await modifyPackageJson(
           projectDir,
