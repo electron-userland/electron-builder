@@ -103,12 +103,17 @@ test("forceCodeSigning", ({ expect }) =>
   }))
 
 test("electronDist", ({ expect }) =>
-  appThrows(expect, {
-    targets: windowsDirTarget,
-    config: {
-      electronDist: "foo",
+  appThrows(
+    expect,
+    {
+      targets: windowsDirTarget,
+      config: {
+        electronDist: "foo",
+      },
     },
-  }))
+    {},
+    error => expect(error.message).toContain("Failed to resolve electronDist")
+  ))
 
 test("azure signing without credentials", ({ expect }) =>
   appThrows(
