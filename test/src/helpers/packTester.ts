@@ -4,7 +4,7 @@ import { computeArchToTargetNamesMap } from "app-builder-lib/out/targets/targetF
 import { getLinuxToolsPath } from "app-builder-lib/out/targets/tools"
 import { parsePlistFile, PlistObject } from "app-builder-lib/out/util/plist"
 import { AsarIntegrity } from "app-builder-lib/out/asar/integrity"
-import { addValue, copyDir, deepAssign, exec, executeFinally, exists, FileCopier, getPath7x, getPath7za, log, spawn, USE_HARD_LINKS, walk } from "builder-util"
+import { addValue, copyDir, deepAssign, exec, executeFinally, exists, FileCopier, getPath7x, getPath7za, log, use, USE_HARD_LINKS, walk } from "builder-util"
 import { CancellationToken, UpdateFileInfo } from "builder-util-runtime"
 import { Arch, ArtifactCreated, Configuration, DIR_TARGET, getArchSuffix, MacOsTargetName, Packager, PackagerOptions, Platform, Target } from "electron-builder"
 import { convertVersion } from "electron-winstaller"
@@ -24,6 +24,10 @@ import AdmZip from "adm-zip"
 // @ts-ignore
 import sanitizeFileName from "sanitize-filename"
 import type { ExpectStatic } from "vitest"
+import { computeDefaultAppDirectory } from "app-builder-lib/out/util/config/config"
+import { installDependencies } from "app-builder-lib/out/util/yarn"
+import { ELECTRON_VERSION } from "./testConfig"
+import { createLazyProductionDeps } from "app-builder-lib/out/util/packageDependencies"
 
 if (process.env.TRAVIS !== "true") {
   process.env.CIRCLE_BUILD_NUM = "42"
@@ -134,7 +138,6 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
       if (checkOptions.isInstallDepsBefore) {
         const pm = await getCollectorByPackageManager(projectDir)
         const pmOptions = await pm.installOptions
-        let installArgs = ["install"]
 
         const destLockfile = path.join(projectDir, pmOptions.lockfile)
 
@@ -142,18 +145,32 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
         // check for lockfile fixture so we can use `--frozen-lockfile`
         if ((await exists(testFixtureLockfile)) && !shouldUpdateLockfiles) {
           await copyFile(testFixtureLockfile, destLockfile)
-          installArgs = pmOptions.args
         }
 
-        // bin links required (e.g. for node-pre-gyp - if package refers to it in the install script)
-        await spawn(pmOptions.cmd, installArgs, {
-          cwd: projectDir,
-        }).catch((err: any) => {
-          if (err.message.includes("npm ci")) {
-            log.error({}, "npm ci failed, check if fixture dependencies were changed. If intentional, rerun with env var UPDATE_LOCKFILE_FIXTURES=true.")
+        const appDir = await computeDefaultAppDirectory(
+          projectDir,
+          use(configuration.directories, it => it.app)
+        )
+        await installDependencies(
+          configuration,
+          {
+            projectDir: projectDir,
+            appDir: appDir,
+          },
+          {
+            frameworkInfo: { version: ELECTRON_VERSION, useCustomDist: false },
+            productionDeps: createLazyProductionDeps(appDir, null, false),
           }
-          throw err
-        })
+        )
+
+        // save lockfile fixture
+        if (!(await exists(testFixtureLockfile)) && shouldUpdateLockfiles) {
+          const fixtureDir = path.dirname(testFixtureLockfile)
+          if (!(await exists(fixtureDir))) {
+            await mkdir(fixtureDir)
+          }
+          await copyFile(destLockfile, testFixtureLockfile)
+        }
 
         // save lockfile fixture
         if (!(await exists(testFixtureLockfile)) && shouldUpdateLockfiles) {

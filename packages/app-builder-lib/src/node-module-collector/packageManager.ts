@@ -1,5 +1,6 @@
 import * as path from "path"
 import * as fs from "fs"
+import * as which from "which"
 
 export enum PM {
   NPM = "npm",
@@ -8,96 +9,79 @@ export enum PM {
   YARN_BERRY = "yarn-berry",
 }
 
-function detectPackageManagerByEnv(): PM {
-  if (process.env.npm_config_user_agent) {
-    const userAgent = process.env.npm_config_user_agent
+// Cache for resolved paths
+const pmPathCache: Record<PM, string | null | undefined> = {
+  [PM.NPM]: undefined,
+  [PM.YARN]: undefined,
+  [PM.PNPM]: undefined,
+  [PM.YARN_BERRY]: undefined,
+}
 
-    if (userAgent.includes("pnpm")) {
-      return PM.PNPM
+async function resolveCommand(pm: PM): Promise<string> {
+  const fallback = pm === PM.YARN_BERRY ? "yarn" : pm
+
+  try {
+    // On Windows, resolve the actual command path (e.g., yarn.cmd, npm.cmd)
+    if (process.platform === "win32") {
+      return await which(fallback)
     }
 
-    if (userAgent.includes("yarn")) {
-      if (userAgent.includes("yarn/")) {
-        const version = userAgent.match(/yarn\/(\d+)\./)
-        if (version && parseInt(version[1]) >= 2) {
-          return PM.YARN_BERRY
-        }
-      }
-      return PM.YARN
-    }
+    // On POSIX systems, use the command name directly
+    return fallback
+  } catch {
+    // If `which` fails (not found), still return the fallback string
+    return fallback
+  }
+}
 
-    if (userAgent.includes("npm")) {
-      return PM.NPM
-    }
+export async function getPackageManagerCommand(pm: PM): Promise<string> {
+  if (pmPathCache[pm] !== undefined) {
+    return pmPathCache[pm]!
   }
 
-  if (process.env.npm_execpath) {
-    const execPath = process.env.npm_execpath.toLowerCase()
+  const resolved = await resolveCommand(pm)
+  pmPathCache[pm] = resolved
+  return resolved
+}
 
-    if (execPath.includes("pnpm")) {
-      return PM.PNPM
-    }
+export function detectPackageManagerByEnv(): PM {
+  const ua = process.env.npm_config_user_agent ?? ""
+  const execPath = process.env.npm_execpath?.toLowerCase() ?? ""
 
-    if (execPath.includes("yarn")) {
-      if (execPath.includes("berry") || process.env.YARN_VERSION?.startsWith("2.") || process.env.YARN_VERSION?.startsWith("3.")) {
-        return PM.YARN_BERRY
-      }
-      return PM.YARN
-    }
+  const yarnVersion = process.env.YARN_VERSION
+  const isBerry = yarnVersion?.startsWith("2.") || yarnVersion?.startsWith("3.")
 
-    if (execPath.includes("npm")) {
-      return PM.NPM
-    }
-  }
-
-  if (process.env.PNPM_HOME) {
+  if (ua.includes("pnpm") || execPath.includes("pnpm") || process.env.PNPM_HOME) {
     return PM.PNPM
   }
 
-  if (process.env.YARN_REGISTRY) {
-    if (process.env.YARN_VERSION?.startsWith("2.") || process.env.YARN_VERSION?.startsWith("3.")) {
-      return PM.YARN_BERRY
-    }
-    return PM.YARN
+  if (ua.includes("yarn") || execPath.includes("yarn") || process.env.YARN_REGISTRY) {
+    return isBerry || ua.includes("yarn/2") || ua.includes("yarn/3") ? PM.YARN_BERRY : PM.YARN
   }
 
-  if (process.env.npm_package_json) {
+  if (ua.includes("npm") || execPath.includes("npm") || process.env.npm_package_json) {
     return PM.NPM
   }
 
-  // return default
   return PM.NPM
 }
 
-export function getPackageManagerCommand(pm: PM) {
-  let cmd = pm
-  if (pm === PM.YARN_BERRY || process.env.FORCE_YARN === "true") {
-    cmd = PM.YARN
-  }
-  return `${cmd}${process.platform === "win32" ? ".cmd" : ""}`
-}
+export function detectPackageManager(cwd: string): PM {
+  const has = (file: string) => fs.existsSync(path.join(cwd, file))
 
-export function detectPackageManager(cwd: string) {
-  const isYarnLockFileExists = fs.existsSync(path.join(cwd, "yarn.lock"))
-  const isPnpmLockFileExists = fs.existsSync(path.join(cwd, "pnpm-lock.yaml"))
-  const isNpmLockFileExists = fs.existsSync(path.join(cwd, "package-lock.json"))
+  const yarn = has("yarn.lock")
+  const pnpm = has("pnpm-lock.yaml")
+  const npm = has("package-lock.json")
 
-  if (isYarnLockFileExists && !isPnpmLockFileExists && !isNpmLockFileExists) {
-    // check if yarn is berry
-    const pm = detectPackageManagerByEnv()
-    if (pm === PM.YARN_BERRY) {
-      return PM.YARN_BERRY
-    }
-    return PM.YARN
+  const detected: PM[] = []
+  if (yarn) detected.push(PM.YARN)
+  if (pnpm) detected.push(PM.PNPM)
+  if (npm) detected.push(PM.NPM)
+
+  if (detected.length === 1) {
+    return detected[0] === PM.YARN ? detectPackageManagerByEnv() : detected[0]
   }
 
-  if (isPnpmLockFileExists && !isYarnLockFileExists && !isNpmLockFileExists) {
-    return PM.PNPM
-  }
-
-  if (isNpmLockFileExists && !isYarnLockFileExists && !isPnpmLockFileExists) {
-    return PM.NPM
-  }
-  // if there are no lock files or multiple lock files, return the package manager from env
+  // fallback: multiple lockfiles or none
   return detectPackageManagerByEnv()
 }
