@@ -97,7 +97,7 @@ export async function installDependencies(config: Configuration, { appDir, proje
     execArgs.push("--prefer-offline")
   }
 
-  const execPath = await getPackageManagerCommand(pm)
+  const execPath = getPackageManagerCommand(pm)
 
   if (additionalArgs != null) {
     execArgs.push(...additionalArgs)
@@ -115,7 +115,7 @@ export async function installDependencies(config: Configuration, { appDir, proje
 export async function nodeGypRebuild(platform: NodeJS.Platform, arch: string, frameworkInfo: DesktopFrameworkInfo) {
   log.info({ platform, arch }, "executing node-gyp rebuild")
   // this script must be used only for electron
-  const nodeGyp = process.platform === "win32" ? await which("node-gyp") : "node-gyp"
+  const nodeGyp = process.platform === "win32" ? which.sync("node-gyp") : "node-gyp"
   const args = ["rebuild"]
   // headers of old Electron versions do not have a valid config.gypi file
   // and --force-process-config must be passed to node-gyp >= 8.4.0 to

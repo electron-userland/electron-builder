@@ -17,13 +17,13 @@ const pmPathCache: Record<PM, string | null | undefined> = {
   [PM.YARN_BERRY]: undefined,
 }
 
-async function resolveCommand(pm: PM): Promise<string> {
+function resolveCommand(pm: PM): string {
   const fallback = pm === PM.YARN_BERRY ? "yarn" : pm
 
   try {
     // On Windows, resolve the actual command path (e.g., yarn.cmd, npm.cmd)
     if (process.platform === "win32") {
-      return await which(fallback)
+      return which.sync(fallback)
     }
 
     // On POSIX systems, use the command name directly
@@ -34,12 +34,12 @@ async function resolveCommand(pm: PM): Promise<string> {
   }
 }
 
-export async function getPackageManagerCommand(pm: PM): Promise<string> {
+export function getPackageManagerCommand(pm: PM) {
   if (pmPathCache[pm] !== undefined) {
     return pmPathCache[pm]!
   }
 
-  const resolved = await resolveCommand(pm)
+  const resolved = resolveCommand(pm)
   pmPathCache[pm] = resolved
   return resolved
 }
