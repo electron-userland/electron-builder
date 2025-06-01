@@ -22,10 +22,10 @@
     "form-data": "^4.0.0",
     "fs-extra": "^10.1.0",
     "lazy-val": "^1.0.5",
-    "mime": "^2.5.2"
+    "mime": "^4.0.0"
   },
   "typings": "./out/index.d.ts",
   "devDependencies": {
-    "@types/mime": "2.0.3"
+    "@types/mime": "4.0.0"
   }
 }
