@@ -29,7 +29,7 @@
     "@types/fs-extra": "9.0.13",
     "@types/js-yaml": "4.0.3",
     "@types/lodash.escaperegexp": "4.1.6",
-    "@types/lodash.isequal": "4.5.5",
+    "@types/lodash.isequal": "4.5.8",
     "@types/semver": "^7.3.13",
     "electron": "^31.2.1"
   },
