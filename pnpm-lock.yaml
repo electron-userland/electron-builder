@@ -45,8 +45,8 @@ importers:
         specifier: 3.0.4
         version: 3.0.4(vitest@3.1.1)
       chalk:
-        specifier: ^4.1.2
-        version: 4.1.2
+        specifier: ^5.0.0
+        version: 5.3.0
       conventional-changelog-cli:
         specifier: 5.0.0
         version: 5.0.0(conventional-commits-filter@5.0.0)
@@ -301,8 +301,8 @@ importers:
         specifier: workspace:*
         version: link:../builder-util-runtime
       chalk:
-        specifier: ^4.1.2
-        version: 4.1.2
+        specifier: ^5.0.0
+        version: 5.3.0
       ci-info:
         specifier: ^4.2.0
         version: 4.2.0
@@ -419,8 +419,8 @@ importers:
         specifier: workspace:*
         version: link:../builder-util-runtime
       chalk:
-        specifier: ^4.1.2
-        version: 4.1.2
+        specifier: ^5.0.0
+        version: 5.3.0
       ci-info:
         specifier: ^4.2.0
         version: 4.2.0
@@ -502,8 +502,8 @@ importers:
         specifier: workspace:*
         version: link:../builder-util-runtime
       chalk:
-        specifier: ^4.1.2
-        version: 4.1.2
+        specifier: ^5.0.0
+        version: 5.3.0
       form-data:
         specifier: ^4.0.0
         version: 4.0.2
