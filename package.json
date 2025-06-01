@@ -67,7 +67,7 @@
     "prettier": "3.3.3",
     "ts-node": "^10.9.2",
     "typedoc": "^0.26.7",
-    "typedoc-plugin-markdown": "4.2.8",
+    "typedoc-plugin-markdown": "4.6.3",
     "typescript": "^5.6.2",
     "typescript-json-schema": "0.64.0",
     "vitest": "^3.0.4"
