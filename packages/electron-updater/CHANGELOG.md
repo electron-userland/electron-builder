@@ -1,5 +1,11 @@
 ## 4.3.0
 
+## 6.6.5
+
+### Patch Changes
+
+- [#9113](https://github.com/electron-userland/electron-builder/pull/9113) [`8ba9be48`](https://github.com/electron-userland/electron-builder/commit/8ba9be481e3b777aa77884d265fd9b7f927a8a99) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: don't error out when trying to determine package manager
+
 ## 6.6.4
 
 ### Patch Changes
