@@ -7,7 +7,7 @@ import { exec } from "builder-util"
 
 async function isPnpmProjectHoisted(rootDir: string) {
   const command = getPackageManagerCommand(PM.PNPM)
-  const config = await exec(command, ["config", "list"], { cwd: rootDir })
+  const config = await exec(command, ["config", "list"], { cwd: rootDir, shell: true })
   const lines = Object.fromEntries(config.split("\n").map(line => line.split("=").map(s => s.trim())))
   return lines["node-linker"] === "hoisted"
 }
