@@ -121,11 +121,14 @@ export function exec(file: string, args?: Array<string> | null, options?: ExecFi
           }
           resolve(stdout.toString())
         } else {
+          const code = (error as any).code
           // https://github.com/npm/npm/issues/17624
-          if ((file === "npm" || file === "npm.cmd") && args?.includes("list") && args?.includes("--silent")) {
+          if ((file.toLowerCase().endsWith("npm") || file.toLowerCase().endsWith("npm.cmd")) && args?.includes("list") && args?.includes("--silent")) {
+            console.error({ file, code }, error.message)
             resolve(stdout.toString())
+            return
           }
-          let message = chalk.red(removePassword(`Exit code: ${(error as any).code}. ${error.message}`))
+          let message = chalk.red(removePassword(`Exit code: ${code}. ${error.message}`))
           if (stdout.length !== 0) {
             if (file.endsWith("wine")) {
               stdout = stdout.toString()
