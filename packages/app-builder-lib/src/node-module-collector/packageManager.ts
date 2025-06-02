@@ -1,5 +1,6 @@
 import * as path from "path"
 import * as fs from "fs"
+import * as which from "which"
 
 export enum PM {
   NPM = "npm",
@@ -19,8 +20,12 @@ const pmPathCache: Record<PM, string | null | undefined> = {
 function resolveCommand(pm: PM): string {
   const fallback = pm === PM.YARN_BERRY ? "yarn" : pm
 
+  if (process.platform !== "win32") {
+    return fallback
+  }
+
   try {
-    return whichSync(fallback)
+    return path.basename(which.sync(fallback))
   } catch {
     // If `which` fails (not found), still return the fallback string
     return fallback
