@@ -932,14 +932,6 @@ exports[`yarn two package.json w/ native module 3`] = `
               "files": {
                 "Release": {
                   "files": {
-                    "node-addon-api": {
-                      "files": {
-                        "node_addon_api_except.stamp": {
-                          "size": "<size>",
-                          "unpacked": true,
-                        },
-                      },
-                    },
                     "pty.node": {
                       "size": "<size>",
                       "unpacked": true,
@@ -1849,7 +1841,6 @@ exports[`yarn two package.json w/ native module 4`] = `
   "app.asar.unpacked/node_modules/node-pty/deps/winpty/misc/Font-Report-June2016/Windows10SetFontBugginess.txt",
   "app.asar.unpacked/node_modules/node-pty/build/Release/pty.node",
   "app.asar.unpacked/node_modules/node-pty/build/Release/spawn-helper",
-  "app.asar.unpacked/node_modules/node-pty/build/Release/node-addon-api/node_addon_api_except.stamp",
   "app.asar.unpacked/node_modules/node-mac-permissions/LICENSE",
   "app.asar.unpacked/node_modules/node-mac-permissions/index.js",
   {

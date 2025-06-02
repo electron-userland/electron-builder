@@ -132,6 +132,7 @@ test.ifMac("yarn two package.json w/ native module", ({ expect }) =>
       config: {
         npmRebuild: true,
         nativeRebuilder: "sequential",
+        files: ["!**/*.stamp"],
       },
     },
     {
