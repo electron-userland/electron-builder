@@ -52,7 +52,7 @@ export class DmgTarget extends Target {
     // https://github.com/electron-userland/electron-builder/issues/2115
     const backgroundFile = specification.background == null ? null : await transformBackgroundFileIfNeed(specification.background, packager.info.tempDirManager)
     const finalSize = await computeAssetSize(packager.info.cancellationToken, tempDmg, specification, backgroundFile)
-    const expandingFinalSize = finalSize * 0.1 + finalSize
+    const expandingFinalSize = Math.ceil(finalSize * 0.1 + finalSize)
     await hdiUtil(["resize", "-size", expandingFinalSize.toString(), tempDmg])
 
     const volumePath = path.join("/Volumes", volumeName)
