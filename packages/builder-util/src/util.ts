@@ -10,6 +10,7 @@ import * as path from "path"
 import { install as installSourceMap } from "source-map-support"
 import { getPath7za } from "./7za"
 import { debug, log } from "./log"
+import { wrap } from "module"
 
 if (process.env.JEST_WORKER_ID == null) {
   installSourceMap()
@@ -142,7 +143,11 @@ export function exec(file: string, args?: Array<string> | null, options?: ExecFi
             message += `\n${chalk.red(stderr.toString())}`
           }
 
-          reject(new Error(message))
+          // TODO: switch to ECMA Script 2026 Error class with `cause` property
+          const wrappedError = new Error(message)
+          ;(wrappedError as any).code = code
+          wrappedError.stack = error.stack
+          reject(wrappedError)
         }
       }
     )
