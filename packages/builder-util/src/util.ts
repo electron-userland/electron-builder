@@ -123,7 +123,7 @@ export function exec(file: string, args?: Array<string> | null, options?: ExecFi
         } else {
           const code = (error as any).code
           // https://github.com/npm/npm/issues/17624
-          if ((file.toLowerCase().endsWith("npm") || file.toLowerCase().endsWith("npm.cmd")) && args?.includes("list") && args?.includes("--silent")) {
+          if (code === 1 && (file.toLowerCase().endsWith("npm") || file.toLowerCase().endsWith("npm.cmd")) && args?.includes("list") && args?.includes("--silent")) {
             console.error({ file, code }, error.message)
             resolve(stdout.toString())
             return
@@ -142,7 +142,8 @@ export function exec(file: string, args?: Array<string> | null, options?: ExecFi
             message += `\n${chalk.red(stderr.toString())}`
           }
 
-          reject(new Error(message))
+          // TODO: switch to ECMA Script 2026 Error class with `cause` property to return stack trace
+          reject(new ExecError(file, code, message, "", `${error.code || ExecError.code}`))
         }
       }
     )
@@ -271,12 +272,14 @@ function formatOut(text: string, title: string) {
 export class ExecError extends Error {
   alreadyLogged = false
 
+  static code = "ERR_ELECTRON_BUILDER_CANNOT_EXECUTE"
+
   constructor(
     command: string,
     readonly exitCode: number,
     out: string,
     errorOut: string,
-    code = "ERR_ELECTRON_BUILDER_CANNOT_EXECUTE"
+    code = ExecError.code
   ) {
     super(`${command} process failed ${code}${formatOut(String(exitCode), "Exit code")}${formatOut(out, "Output")}${formatOut(errorOut, "Error output")}`)
     ;(this as NodeJS.ErrnoException).code = code

@@ -211,7 +211,6 @@ async function testBlockMap(expect: ExpectStatic, oldDir: string, newDir: string
         platform: platform.nodeName as any,
         isUseDifferentialDownload: true,
       })
-      updater.logger = console
 
       const currentUpdaterCacheDirName = (await updater.configOnDisk.value).updaterCacheDirName
       if (currentUpdaterCacheDirName == null) {

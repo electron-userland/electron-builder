@@ -1,7 +1,7 @@
 import { NodeHttpExecutor, serializeToYaml, TmpDir } from "builder-util"
 import { AllPublishOptions, DownloadOptions } from "builder-util-runtime"
 import { AppUpdater, MacUpdater, NsisUpdater } from "electron-updater"
-import { TestOnlyUpdaterOptions } from "electron-updater/out/AppUpdater"
+import { NoOpLogger, TestOnlyUpdaterOptions } from "electron-updater/out/AppUpdater"
 import { outputFile, writeFile } from "fs-extra"
 import * as path from "path"
 import { assertThat } from "./fileAssert"
@@ -75,7 +75,7 @@ export function tuneTestUpdater(updater: AppUpdater, options?: TestOnlyUpdaterOp
     platform: "win32",
     ...options,
   }
-  updater.logger = console
+  updater.logger = new NoOpLogger()
 }
 
 export function trackEvents(updater: AppUpdater) {
