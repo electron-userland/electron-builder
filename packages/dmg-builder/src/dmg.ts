@@ -12,7 +12,7 @@ import * as path from "path"
 import { TmpDir } from "temp-file"
 import { addLicenseToDmg } from "./dmgLicense"
 import { attachAndExecute, computeBackground, detach, getDmgVendorPath } from "./dmgUtil"
-import { hdiUtil } from "./hdiuil"
+import { hdiUtil, hdiutilTransientExitCodes } from "./hdiuil"
 
 export class DmgTarget extends Target {
   readonly options: DmgOptions = this.packager.config.dmg || Object.create(null)
@@ -197,20 +197,27 @@ export class DmgTarget extends Target {
 }
 
 async function createStageDmg(tempDmg: string, appPath: string, volumeName: string) {
-  //noinspection SpellCheckingInspection
-  const imageArgs = addLogLevel(["create", "-srcfolder", appPath, "-volname", volumeName, "-anyowners", "-nospotlight", "-format", "UDRW"])
+  const createArgs = ["create", "-srcfolder", appPath, "-volname", volumeName, "-anyowners", "-nospotlight", "-format", "UDRW"]
+  const imageArgs = addLogLevel(createArgs)
   if (log.isDebugEnabled) {
     imageArgs.push("-debug")
   }
 
   imageArgs.push("-fs", "APFS")
   imageArgs.push(tempDmg)
-  await hdiUtil(imageArgs)
+  await hdiUtil(imageArgs).catch(async e => {
+      if (hdiutilTransientExitCodes.has(e.code)) {
+        // Delay then create, then retry with verbose output
+        await new Promise(resolve => setTimeout(resolve, 3000))
+        return hdiUtil(addLogLevel(createArgs, true))
+      }
+      throw e
+    })
   return tempDmg
 }
 
-function addLogLevel(args: Array<string>): Array<string> {
-  args.push(process.env.DEBUG_DMG === "true" ? "-verbose" : "-quiet")
+function addLogLevel(args: Array<string>, isVerbose = process.env.DEBUG_DMG === "true"): Array<string> {
+  args.push(isVerbose ? "-verbose" : "-quiet")
   return args
 }
 
