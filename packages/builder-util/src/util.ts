@@ -10,7 +10,6 @@ import * as path from "path"
 import { install as installSourceMap } from "source-map-support"
 import { getPath7za } from "./7za"
 import { debug, log } from "./log"
-import { wrap } from "module"
 
 if (process.env.JEST_WORKER_ID == null) {
   installSourceMap()
@@ -124,7 +123,7 @@ export function exec(file: string, args?: Array<string> | null, options?: ExecFi
         } else {
           const code = (error as any).code
           // https://github.com/npm/npm/issues/17624
-          if ((file.toLowerCase().endsWith("npm") || file.toLowerCase().endsWith("npm.cmd")) && args?.includes("list") && args?.includes("--silent")) {
+          if (code === 1 && (file.toLowerCase().endsWith("npm") || file.toLowerCase().endsWith("npm.cmd")) && args?.includes("list") && args?.includes("--silent")) {
             console.error({ file, code }, error.message)
             resolve(stdout.toString())
             return
