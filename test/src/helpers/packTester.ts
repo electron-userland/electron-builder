@@ -73,8 +73,8 @@ export function appThrows(expect: ExpectStatic, packagerOptions: PackagerOptions
   return assertThat(expect, assertPack(expect, "test-app-one", packagerOptions, checkOptions)).throws(customErrorAssert)
 }
 
-export function appTwoThrows(expect: ExpectStatic, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions = {}) {
-  return assertThat(expect, assertPack(expect, "test-app", packagerOptions, checkOptions)).throws()
+export function appTwoThrows(expect: ExpectStatic, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions = {}, customErrorAssert?: (error: Error) => void) {
+  return assertThat(expect, assertPack(expect, "test-app", packagerOptions, checkOptions)).throws(customErrorAssert)
 }
 
 export function app(expect: ExpectStatic, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions = {}) {
