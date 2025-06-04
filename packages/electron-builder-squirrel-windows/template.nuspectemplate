@@ -12,6 +12,6 @@
     <copyright><%- copyright %></copyright>
   </metadata>
   <files>
-    <file src="**" target="lib\net45" exclude="**\.git\**;" />
+    <file src="**" target="lib\net45" exclude="**\.git\**" />
   </files>
 </package>
