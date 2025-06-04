@@ -12,7 +12,7 @@
     <copyright><%- copyright %></copyright>
   </metadata>
   <files>
+    <file src="**" target="lib\net45" exclude="**\.git\**;Squirrel.exe" />
     <file src="Squirrel.exe" target="lib\net45\squirrel.exe" />
-    <file src="**" target="lib\net45" exclude="**\.git\**" />
   </files>
 </package>
