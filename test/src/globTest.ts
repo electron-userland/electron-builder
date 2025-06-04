@@ -132,7 +132,7 @@ test.ifNotWindows("outside symlink", ({ expect }) =>
   )
 )
 
-test.only("two package nested symlink", ({ expect }) =>
+test.only("two package nested symlink in pnpm workspace", ({ expect }) =>
   appTwo(
     expect,
     {
@@ -145,7 +145,7 @@ test.only("two package nested symlink", ({ expect }) =>
           "index.js",
           "package.json",
           "index.html",
-          "../../node_modules/debug",
+          "node_modules/debug",
           // "!node_modules/**/*",
           {
             from: "node_modules/better-sqlite3/build/Release",
@@ -157,13 +157,27 @@ test.only("two package nested symlink", ({ expect }) =>
     },
     {
       isInstallDepsBefore: true,
+      storeDepsLockfileSnapshot: false,
       projectDirCreated: async projectDir => {
+        await outputFile(
+          path.join(projectDir, "pnpm-workspace.yaml"),
+          `
+packages:
+  - 'app'
+  `
+        )
         await modifyPackageJson(
           projectDir,
           data => {
+            data.scripts = {
+              postinstall: "node node_modules/electron-builder/install-app-deps.js",
+            }
             data.dependencies = {
               "better-sqlite3": "^11.10.0",
               debug: "3.1.0",
+            }
+            data.devDependencies = {
+              "electron-builder": path.resolve(__dirname, "../../packages/electron-builder"),
             }
           },
           true

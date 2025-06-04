@@ -11288,6 +11288,12 @@ exports[`two package nested symlink 3`] = `
 ]
 `;
 
+exports[`two package nested symlink in pnpm workspace 1`] = `
+{
+  "linux": [],
+}
+`;
+
 exports[`unpackDir 1`] = `
 {
   "linux": [],
