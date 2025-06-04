@@ -124,7 +124,7 @@ export function exec(file: string, args?: Array<string> | null, options?: ExecFi
           const code = (error as any).code
           // https://github.com/npm/npm/issues/17624
           if (code === 1 && (file.toLowerCase().endsWith("npm") || file.toLowerCase().endsWith("npm.cmd")) && args?.includes("list") && args?.includes("--silent")) {
-            console.error({ file, code }, error.message)
+            log.debug({ file, code, message: error.message }, "`npm list` returned non-zero exit code, but it is expected (https://github.com/npm/npm/issues/17624)")
             resolve(stdout.toString())
             return
           }
