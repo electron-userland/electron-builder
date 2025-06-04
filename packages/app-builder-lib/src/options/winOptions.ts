@@ -52,7 +52,10 @@ export interface WindowsConfiguration extends PlatformSpecificBuildOptions {
   readonly requestedExecutionLevel?: RequestedExecutionLevel | null
 
   /**
-   * Whether to sign and add metadata to executable. Advanced option.
+   * Whether to sign and add metadata to executable.
+   * Metadata includes information about the app name/description/version, publisher, copyright, etc.
+   * This property also is responsible for adding the app icon and setting execution level.
+   * (Advanced option leveraging `rcedit`)
    * @default true
    */
   readonly signAndEditExecutable?: boolean

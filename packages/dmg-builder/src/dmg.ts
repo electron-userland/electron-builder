@@ -206,13 +206,13 @@ async function createStageDmg(tempDmg: string, appPath: string, volumeName: stri
   imageArgs.push("-fs", "APFS")
   imageArgs.push(tempDmg)
   await hdiUtil(imageArgs).catch(async e => {
-      if (hdiutilTransientExitCodes.has(e.code)) {
-        // Delay then create, then retry with verbose output
-        await new Promise(resolve => setTimeout(resolve, 3000))
-        return hdiUtil(addLogLevel(createArgs, true))
-      }
-      throw e
-    })
+    if (hdiutilTransientExitCodes.has(e.code)) {
+      // Delay then create, then retry with verbose output
+      await new Promise(resolve => setTimeout(resolve, 3000))
+      return hdiUtil(addLogLevel(createArgs, true))
+    }
+    throw e
+  })
   return tempDmg
 }
 
