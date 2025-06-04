@@ -571,7 +571,7 @@ export async function modifyPackageJson(projectDir: string, task: (data: any) =>
   await fs.unlink(file)
 
   await fs.writeFile(path.join(projectDir, ".yarnrc.yml"), "nodeLinker: node-modules")
-  return await writeJson(file, data)
+  return await fs.writeFile(file, JSON.stringify(data, null, 2), "utf-8")
 }
 
 export function platform(platform: Platform): PackagerOptions {

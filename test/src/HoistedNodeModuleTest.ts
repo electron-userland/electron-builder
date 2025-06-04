@@ -1,8 +1,9 @@
-import { assertPack, linuxDirTarget, verifyAsarFileTree, modifyPackageJson } from "./helpers/packTester"
+import { assertPack, linuxDirTarget, verifyAsarFileTree, modifyPackageJson, appTwo } from "./helpers/packTester"
 import { Platform, Arch, DIR_TARGET } from "electron-builder"
 import { outputFile, copySync, rmSync, readJsonSync, writeJsonSync, mkdirSync } from "fs-extra"
 import * as path from "path"
 import { spawn } from "builder-util/out/util"
+import { verifySmartUnpack } from "./helpers/verifySmartUnpack"
 
 test("yarn workspace", ({ expect }) =>
   assertPack(
@@ -534,6 +535,78 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
           ])
         },
         packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
+      }
+    ))
+
+  test.only("two package nested symlink in pnpm workspace", ({ expect }) =>
+    appTwo(
+      expect,
+      {
+        targets: linuxDirTarget,
+        config: {
+          directories: {
+            app: "app",
+          },
+          files: [
+            "index.js",
+            "package.json",
+            "index.html",
+            "../node_modules/debug",
+            {
+              from: "../node_modules/better-sqlite3/build/Release",
+              to: "dist/native",
+              filter: ["better_sqlite3.node"],
+            },
+          ],
+        },
+      },
+      {
+        isInstallDepsBefore: true,
+        storeDepsLockfileSnapshot: false,
+        projectDirCreated: async projectDir => {
+          await outputFile(
+            path.join(projectDir, "pnpm-workspace.yaml"),
+            `
+    packages:
+      - 'app'
+      `
+          )
+          await modifyPackageJson(
+            projectDir,
+            data => {
+              data.packageManager = "pnpm@10.10.0"
+              data.dependencies = {
+                "better-sqlite3": "^11.10.0",
+                debug: "3.1.0",
+              }
+              data.devDependencies = {
+                "electron-builder": `file://${path.resolve(__dirname, "../../packages/electron-builder")}`,
+              }
+              data.peerDependencies = {
+                "electron-builder-squirrel-windows": `file://${path.resolve(__dirname, "../../packages/electron-builder-squirrel-windows")}`,
+              }
+            },
+            true
+          )
+          await modifyPackageJson(projectDir, data => {
+            data.scripts = {
+              postinstall: "electron-builder install-app-deps",
+            }
+            data.pnpm = {
+              overrides: {
+                "app-builder-lib": `file://${path.resolve(__dirname, "../../packages/app-builder-lib")}`,
+                "builder-util": `file://${path.resolve(__dirname, "../../packages/builder-util")}`,
+                "builder-util-runtime": `file://${path.resolve(__dirname, "../../packages/builder-util-runtime")}`,
+                "dmg-builder": `file://${path.resolve(__dirname, "../../packages/dmg-builder")}`,
+                "electron-publish": `file://${path.resolve(__dirname, "../../packages/electron-publish")}`,
+                "electron-builder-squirrel-windows": `file://${path.resolve(__dirname, "../../packages/electron-builder-squirrel-windows")}`,
+              },
+            }
+          })
+        },
+        packed: async context => {
+          await verifySmartUnpack(expect, context.getResources(Platform.LINUX))
+        },
       }
     ))
 })

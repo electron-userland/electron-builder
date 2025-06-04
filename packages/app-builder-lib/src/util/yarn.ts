@@ -97,7 +97,7 @@ export async function installDependencies(config: Configuration, { appDir, proje
     execArgs.push("--prefer-offline")
   }
 
-  const execPath = getPackageManagerCommand(pm)
+  const execPath = getPackageManagerCommand(pm === PM.PNPM ? PM.NPM : pm)
 
   if (additionalArgs != null) {
     execArgs.push(...additionalArgs)
