@@ -4,6 +4,7 @@ import { outputFile, copySync, rmSync, readJsonSync, writeJsonSync, mkdirSync } 
 import * as path from "path"
 import { spawn } from "builder-util/out/util"
 import { verifySmartUnpack } from "./helpers/verifySmartUnpack"
+import { ELECTRON_VERSION } from "./helpers/testConfig"
 
 test("yarn workspace", ({ expect }) =>
   assertPack(
@@ -551,9 +552,9 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
             "index.js",
             "package.json",
             "index.html",
-            "../node_modules/debug",
+            "node_modules",
             {
-              from: "../node_modules/better-sqlite3/build/Release",
+              from: "node_modules/better-sqlite3/build/Release",
               to: "dist/native",
               filter: ["better_sqlite3.node"],
             },
@@ -574,24 +575,25 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
           await modifyPackageJson(
             projectDir,
             data => {
-              data.packageManager = "pnpm@10.10.0"
+              data.scripts = {
+                postinstall: "electron-builder install-app-deps",
+              }
               data.dependencies = {
                 "better-sqlite3": "^11.10.0",
                 debug: "3.1.0",
               }
               data.devDependencies = {
+                electron: ELECTRON_VERSION,
                 "electron-builder": `file://${path.resolve(__dirname, "../../packages/electron-builder")}`,
               }
-              data.peerDependencies = {
-                "electron-builder-squirrel-windows": `file://${path.resolve(__dirname, "../../packages/electron-builder-squirrel-windows")}`,
-              }
+              // data.peerDependencies = {
+              //   "electron-builder-squirrel-windows": `file://${path.resolve(__dirname, "../../packages/electron-builder-squirrel-windows")}`,
+              // }
             },
             true
           )
           await modifyPackageJson(projectDir, data => {
-            data.scripts = {
-              postinstall: "electron-builder install-app-deps",
-            }
+            data.packageManager = "pnpm@10.10.0"
             data.pnpm = {
               overrides: {
                 "app-builder-lib": `file://${path.resolve(__dirname, "../../packages/app-builder-lib")}`,
