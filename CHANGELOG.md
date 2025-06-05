@@ -1,3 +1,12 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v26.0.16...v) (2025-06-05)
+
+
+### Bug Fixes
+
+* don't assume commands end with .cmd on Windows ([#9026](https://github.com/electron-userland/electron-builder/issues/9026)) ([e56977b](https://github.com/electron-userland/electron-builder/commit/e56977b5c6da25e4d797fd6cb40ea8ca52464fd3))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v26.0.15...v) (2025-05-29)
 
 
