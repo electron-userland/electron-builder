@@ -197,7 +197,7 @@ async function unpack(prepareOptions: PrepareApplicationStageDirectoryOptions, d
     const electronDistHook: any = await resolveFunction(packager.appInfo.type, packager.config.electronDist, "electronDist")
     resolvedDist = typeof electronDistHook === "function" ? await Promise.resolve(electronDistHook(prepareOptions)) : electronDistHook
   } catch (error: any) {
-    throw new Error("Failed to resolve electronDist: " + error.message)
+    throw new Error(`Failed to resolve electronDist: ${error.message} ${error.stack}`)
   }
 
   if (resolvedDist == null) {
