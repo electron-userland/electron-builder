@@ -17,7 +17,6 @@
     "electron-publish": "workspace:*",
     "electron-updater": "workspace:*",
     "electron-winstaller": "5.4.0",
-    "extract-zip": "^2.0.1",
     "fs-extra": "^10.1.0",
     "js-yaml": "^4.1.0",
     "lazy-val": "^1.0.5",
