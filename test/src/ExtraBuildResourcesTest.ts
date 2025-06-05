@@ -196,27 +196,35 @@ test.ifNotWindows("electronDist as callback function for path to local folder wi
 test.only("electronDist as callback function for path to locally unzipped", ({ expect }) => {
   const tmpDir = new TmpDir()
 
-  return app(expect, {
-    targets: linuxDirTarget,
-    config: {
-      electronDist: async context => {
-        const { platformName, arch, version } = context
-        const fileName = `electron-v${version}-${platformName}-${arch}.zip`
-        const electronUrl = `https://github.com/electron/electron/releases/download/v${version}/${fileName}`
+  return app(
+    expect,
+    {
+      targets: linuxDirTarget,
+      config: {
+        electronDist: async context => {
+          const { platformName, arch, version } = context
+          const fileName = `electron-v${version}-${platformName}-${arch}.zip`
+          const electronUrl = `https://github.com/electron/electron/releases/download/v${version}/${fileName}`
 
-        const tempDir = await tmpDir.getTempDir()
-        if (!fs.existsSync(tempDir)) {
-          fs.mkdirSync(tempDir)
-        }
-        const electronPath = path.join(tempDir, "electron-dist")
+          const tempDir = await tmpDir.getTempDir()
+          if (!fs.existsSync(tempDir)) {
+            fs.mkdirSync(tempDir)
+          }
+          const electronPath = path.join(tempDir, "electron-dist")
 
-        const directory = await unzipper.Open.url(require("request"), electronUrl)
-        await directory.extract({ path: electronPath, concurrency: 5, forceStream: true })
+          const directory = await unzipper.Open.url(require("request"), electronUrl)
+          await directory.extract({ path: electronPath, concurrency: 5, forceStream: true })
 
-        return electronPath
+          return electronPath
+        },
       },
     },
-  })
+    {
+      packed: async () => {
+        await tmpDir.cleanup()
+      },
+    }
+  )
 })
 
 const overridePublishChannel: any = {
