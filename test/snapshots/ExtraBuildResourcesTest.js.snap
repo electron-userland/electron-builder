@@ -53,6 +53,31 @@ exports[`electronDist as callback function for path to locally unzipped 1`] = `
 }
 `;
 
+exports[`electronDist as callback function for path to locally unzipped 2`] = `
+[
+  "LICENSE.electron.txt",
+  "LICENSES.chromium.html",
+  "Test App ßW",
+  "chrome-sandbox",
+  "chrome_100_percent.pak",
+  "chrome_200_percent.pak",
+  "chrome_crashpad_handler",
+  "icudtl.dat",
+  "libEGL.so",
+  "libGLESv2.so",
+  "libffmpeg.so",
+  "libvk_swiftshader.so",
+  "libvulkan.so.1",
+  "locales",
+  "resources",
+  "resources.pak",
+  "snapshot_blob.bin",
+  "v8_context_snapshot.bin",
+  "version",
+  "vk_swiftshader_icd.json",
+]
+`;
+
 exports[`electronDist as path to local folder with electron builds zipped  1`] = `
 {
   "linux": [],

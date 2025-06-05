@@ -8,6 +8,7 @@ import { expectUpdateMetadata } from "./helpers/winHelper"
 import { ExpectStatic } from "vitest"
 import * as unzipper from "unzipper"
 import { TmpDir } from "temp-file"
+import { readdir } from "fs/promises"
 
 function createBuildResourcesTest(expect: ExpectStatic, packagerOptions: PackagerOptions) {
   return app(
@@ -220,7 +221,9 @@ test.only("electronDist as callback function for path to locally unzipped", ({ e
       },
     },
     {
-      packed: async () => {
+      packed: async context => {
+        const contents = await readdir(context.getAppPath(Platform.LINUX, Arch.x64))
+        expect(contents).toMatchSnapshot()
         await tmpDir.cleanup()
       },
     }
