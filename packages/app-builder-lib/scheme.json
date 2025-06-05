@@ -6590,7 +6590,7 @@
         },
         "signAndEditExecutable": {
           "default": true,
-          "description": "Whether to sign and add metadata to executable. Advanced option.",
+          "description": "Whether to sign and add metadata to executable.\nMetadata includes information about the app name/description/version, publisher, copyright, etc.\nThis property also is responsible for adding the app icon and setting execution level.\n(Advanced option leveraging `rcedit`)",
           "type": "boolean"
         },
         "signExts": {

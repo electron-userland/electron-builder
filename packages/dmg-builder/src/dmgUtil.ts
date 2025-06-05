@@ -38,7 +38,7 @@ export async function detach(name: string) {
     if (hdiutilTransientExitCodes.has(e.code)) {
       // Delay then force unmount with verbose output
       await new Promise(resolve => setTimeout(resolve, 3000))
-      return hdiUtil(["detach", "--force", name])
+      return hdiUtil(["detach", "-force", name])
     }
     throw e
   })

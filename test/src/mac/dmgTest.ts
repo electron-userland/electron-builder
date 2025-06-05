@@ -15,7 +15,7 @@ describe("dmg", { sequential: true }, () => {
     app(expect, {
       targets: dmgTarget,
       config: {
-        productName: "Default Dmg",
+        productName: "Default-Dmg",
         publish: null,
       },
     })
@@ -163,7 +163,7 @@ describe("dmg", { sequential: true }, () => {
       targets: defaultTarget,
       config: {
         publish: null,
-        productName: "No ApplicationsLink",
+        productName: "No-ApplicationsLink",
         dmg: {
           title: "No Applications Link",
           contents: [
@@ -206,7 +206,7 @@ describe("dmg", { sequential: true }, () => {
         config: {
           publish: null,
           // dmg can mount only one volume name, so, to test in parallel, we set different product name
-          productName: "Test ß No Volume Icon",
+          productName: "No_Volume_Icon",
           dmg: {
             icon: null,
           },
@@ -214,10 +214,10 @@ describe("dmg", { sequential: true }, () => {
       },
       {
         packed: context => {
-          return attachAndExecute(path.join(context.outDir, "Test ß No Volume Icon-1.1.0.dmg"), false, () => {
+          return attachAndExecute(path.join(context.outDir, "No_Volume_Icon-1.1.0.dmg"), false, () => {
             return Promise.all([
-              assertThat(expect, path.join("/Volumes/Test ß No Volume Icon 1.1.0/.background/background.tiff")).isFile(),
-              assertThat(expect, path.join("/Volumes/Test ß No Volume Icon 1.1.0/.VolumeIcon.icns")).doesNotExist(),
+              assertThat(expect, path.join("/Volumes/No_Volume_Icon 1.1.0/.background/background.tiff")).isFile(),
+              assertThat(expect, path.join("/Volumes/No_Volume_Icon 1.1.0/.VolumeIcon.icns")).doesNotExist(),
             ])
           })
         },
@@ -234,7 +234,7 @@ describe("dmg", { sequential: true }, () => {
         config: {
           publish: null,
           // dmg can mount only one volume name, so, to test in parallel, we set different product name
-          productName: "No Background",
+          productName: "No-Background",
           dmg: {
             background: null,
             title: "Foo",
@@ -243,8 +243,8 @@ describe("dmg", { sequential: true }, () => {
       },
       {
         packed: context => {
-          return attachAndExecute(path.join(context.outDir, "No Background-1.1.0.dmg"), false, () => {
-            return assertThat(expect, path.join("/Volumes/No Background 1.1.0/.background")).doesNotExist()
+          return attachAndExecute(path.join(context.outDir, "No-Background-1.1.0.dmg"), false, () => {
+            return assertThat(expect, path.join("/Volumes/No-Background 1.1.0/.background")).doesNotExist()
           })
         },
       }
@@ -258,7 +258,7 @@ describe("dmg", { sequential: true }, () => {
       config: {
         publish: null,
         // dmg can mount only one volume name, so, to test in parallel, we set different product name
-        productName: "Bundle ShortVersion",
+        productName: "Bundle-ShortVersion",
         mac: {
           bundleShortVersion: "2017.1-alpha5",
           darkModeSupport: true,
@@ -275,7 +275,7 @@ describe("dmg", { sequential: true }, () => {
       targets: defaultTarget,
       config: {
         publish: null,
-        productName: "Disable Icon",
+        productName: "Disable-Icon",
         dmg: {
           icon: null,
           title: "Disable Icon",
@@ -297,7 +297,7 @@ describe("dmg", { sequential: true }, () => {
     targets: dmgTarget,
     config: {
       publish: null,
-      productName: "Foo " + uniqueKey,
+      productName: "Foo-" + uniqueKey,
       dmg: {
         title: "Foo " + uniqueKey,
       },

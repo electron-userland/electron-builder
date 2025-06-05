@@ -121,11 +121,14 @@ export function exec(file: string, args?: Array<string> | null, options?: ExecFi
           }
           resolve(stdout.toString())
         } else {
+          const code = (error as any).code
           // https://github.com/npm/npm/issues/17624
-          if ((file === "npm" || file === "npm.cmd") && args?.includes("list") && args?.includes("--silent")) {
+          if (code === 1 && (file.toLowerCase().endsWith("npm") || file.toLowerCase().endsWith("npm.cmd")) && args?.includes("list") && args?.includes("--silent")) {
+            log.debug({ file, code, message: error.message }, "`npm list` returned non-zero exit code, but it is expected (https://github.com/npm/npm/issues/17624)")
             resolve(stdout.toString())
+            return
           }
-          let message = chalk.red(removePassword(`Exit code: ${(error as any).code}. ${error.message}`))
+          let message = chalk.red(removePassword(`Exit code: ${code}. ${error.message}`))
           if (stdout.length !== 0) {
             if (file.endsWith("wine")) {
               stdout = stdout.toString()
@@ -139,7 +142,8 @@ export function exec(file: string, args?: Array<string> | null, options?: ExecFi
             message += `\n${chalk.red(stderr.toString())}`
           }
 
-          reject(new Error(message))
+          // TODO: switch to ECMA Script 2026 Error class with `cause` property to return stack trace
+          reject(new ExecError(file, code, message, "", `${error.code || ExecError.code}`))
         }
       }
     )
@@ -268,12 +272,14 @@ function formatOut(text: string, title: string) {
 export class ExecError extends Error {
   alreadyLogged = false
 
+  static code = "ERR_ELECTRON_BUILDER_CANNOT_EXECUTE"
+
   constructor(
     command: string,
     readonly exitCode: number,
     out: string,
     errorOut: string,
-    code = "ERR_ELECTRON_BUILDER_CANNOT_EXECUTE"
+    code = ExecError.code
   ) {
     super(`${command} process failed ${code}${formatOut(String(exitCode), "Exit code")}${formatOut(out, "Output")}${formatOut(errorOut, "Error output")}`)
     ;(this as NodeJS.ErrnoException).code = code
