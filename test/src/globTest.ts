@@ -4,7 +4,7 @@ import { outputFile } from "fs-extra"
 import * as fs from "fs/promises"
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert"
-import { app, appThrows, appTwo, assertPack, linuxDirTarget, modifyPackageJson, PackedContext, removeUnstableProperties, verifyAsarFileTree } from "./helpers/packTester"
+import { app, appThrows, assertPack, linuxDirTarget, modifyPackageJson, PackedContext, removeUnstableProperties, verifyAsarFileTree } from "./helpers/packTester"
 import { verifySmartUnpack } from "./helpers/verifySmartUnpack"
 import { spawnSync } from "child_process"
 import { ExpectStatic } from "vitest"
@@ -115,7 +115,7 @@ test.ifNotWindows("link", ({ expect }) =>
   )
 )
 
-test.ifNotWindows("outside symlink", ({ expect }) =>
+test.ifNotWindows("outside link", ({ expect }) =>
   appThrows(
     expect,
     {
@@ -131,8 +131,6 @@ test.ifNotWindows("outside symlink", ({ expect }) =>
     error => expect(error.message).toContain("violates asar security integrity")
   )
 )
-
-
 describe("isInstallDepsBefore=true", { sequential: true }, () => {
   test.ifNotWindows("symlinks everywhere with static framework", ({ expect }) =>
     assertPack(
