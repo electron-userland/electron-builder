@@ -194,7 +194,7 @@ test.ifNotWindows("electronDist as callback function for path to local folder wi
   })
 )
 
-test.only("electronDist as callback function for path to locally unzipped", ({ expect }) => {
+test.ifNotWindows("electronDist as callback function for path to locally unzipped", ({ expect }) => {
   const tmpDir = new TmpDir()
 
   return app(
