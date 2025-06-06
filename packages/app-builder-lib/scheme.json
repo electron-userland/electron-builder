@@ -4169,6 +4169,34 @@
           "description": "The uninstaller display name in the control panel.",
           "type": "string"
         },
+        "uninstallUrlHelp": {
+          "description": "The URL to the uninstaller help page in the control panel. Defaults to [homepage](./configuration.md#homepage) from application package.json.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "uninstallUrlInfoABout": {
+          "description": "The URL to the uninstaller info about page in the control panel. Defaults to [homepage](./configuration.md#homepage) from application package.json.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "uninstallUrlUpdateInfo": {
+          "description": "The URL to the uninstaller update info page in the control panel. Defaults to [homepage](./configuration.md#homepage) from application package.json.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "uninstallUrlReadme": {
+          "description": "The URL to the uninstaller readme in the control panel. Defaults to [homepage](./configuration.md#homepage) from application package.json.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
         "uninstallerIcon": {
           "description": "The path to uninstaller icon, relative to the [build resources](./contents.md#extraresources) or to the project directory.\nDefaults to `build/uninstallerIcon.ico` or application icon.",
           "type": [
