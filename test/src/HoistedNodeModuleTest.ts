@@ -548,7 +548,6 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
           directories: {
             app: "app",
           },
-          // asar: false,
           files: [
             "index.js",
             "package.json",
@@ -575,8 +574,6 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
               {} as Record<string, string>
             )
 
-          // await outputFile(path.join(projectDir, ".npmrc"), `node-linker=isolated`)
-          // await outputFile(path.join(projectDir, "app", ".npmrc"), `node-linker=isolated`)
           await outputFile(path.join(projectDir, "pnpm-lock.yaml"), "")
           await outputFile(
             path.join(projectDir, "pnpm-workspace.yaml"),
@@ -599,9 +596,6 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
                 electron: ELECTRON_VERSION,
                 ...localDependencyMap(["electron-builder"]),
               }
-              // data.peerDependencies = {
-              //   "electron-builder-squirrel-windows": `file://${path.resolve(__dirname, "../../packages/electron-builder-squirrel-windows")}`,
-              // }
             },
             true
           )

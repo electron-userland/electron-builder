@@ -118,9 +118,7 @@ export async function installDependencies(config: Configuration, { appDir, proje
     execArgs.push(...additionalArgs)
   }
   await spawn(execPath, execArgs, {
-    cwd: pm === PM.PNPM ? projectDir : appDir,
-    stdio: "inherit",
-    shell: true,
+    cwd: appDir,
     env: getGypEnv(options.frameworkInfo, platform, arch, options.buildFromSource === true),
   })
 
