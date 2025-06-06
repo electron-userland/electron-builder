@@ -78,6 +78,8 @@ export type Defines = {
   INSTALL_MODE_PER_ALL_USERS_DEFAULT?: null
   INSTALL_MODE_PER_ALL_USERS_REQUIRED?: null
 
+  ALLOW_TO_ADD_SHORTCUT?: null
+
   allowToChangeInstallationDirectory?: null
 
   removeDefaultUninstallWelcomePage?: null
