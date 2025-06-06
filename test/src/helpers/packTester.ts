@@ -73,8 +73,8 @@ export function appThrows(expect: ExpectStatic, packagerOptions: PackagerOptions
   return assertThat(expect, assertPack(expect, "test-app-one", packagerOptions, checkOptions)).throws(customErrorAssert)
 }
 
-export function appTwoThrows(expect: ExpectStatic, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions = {}) {
-  return assertThat(expect, assertPack(expect, "test-app", packagerOptions, checkOptions)).throws()
+export function appTwoThrows(expect: ExpectStatic, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions = {}, customErrorAssert?: (error: Error) => void) {
+  return assertThat(expect, assertPack(expect, "test-app", packagerOptions, checkOptions)).throws(customErrorAssert)
 }
 
 export function app(expect: ExpectStatic, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions = {}) {
@@ -159,15 +159,6 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
             productionDeps: createLazyProductionDeps(appDir, null, false),
           }
         )
-
-        // save lockfile fixture
-        if (!(await exists(testFixtureLockfile)) && shouldUpdateLockfiles) {
-          const fixtureDir = path.dirname(testFixtureLockfile)
-          if (!(await exists(fixtureDir))) {
-            await mkdir(fixtureDir)
-          }
-          await copyFile(destLockfile, testFixtureLockfile)
-        }
 
         // save lockfile fixture
         if (!(await exists(testFixtureLockfile)) && shouldUpdateLockfiles) {
@@ -571,7 +562,7 @@ export async function modifyPackageJson(projectDir: string, task: (data: any) =>
   await fs.unlink(file)
 
   await fs.writeFile(path.join(projectDir, ".yarnrc.yml"), "nodeLinker: node-modules")
-  return await writeJson(file, data)
+  return await fs.writeFile(file, JSON.stringify(data, null, 2), "utf-8")
 }
 
 export function platform(platform: Platform): PackagerOptions {

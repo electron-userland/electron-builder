@@ -155,6 +155,9 @@ importers:
       electron-publish:
         specifier: workspace:*
         version: link:../electron-publish
+      find-up:
+        specifier: ^5.0.0
+        version: 5.0.0
       fs-extra:
         specifier: ^10.1.0
         version: 10.1.0
@@ -261,6 +264,9 @@ importers:
       '@types/ejs':
         specifier: 3.1.0
         version: 3.1.0
+      '@types/find-up':
+        specifier: ^4.0.2
+        version: 4.0.2
       '@types/hosted-git-info':
         specifier: 3.0.2
         version: 3.0.2
@@ -2250,6 +2256,10 @@ packages:
 
   '@types/estree@1.0.7':
     resolution: {integrity: sha512-w28IoSUCJpidD/TGviZwwMJckNESJZXFu7NBZ5YJ4mEUnNraUn9Pm8HSZm/jDF1pDWYKspWE7oVphigUPRakIQ==}
+
+  '@types/find-up@4.0.2':
+    resolution: {integrity: sha512-AcxsY79jbVkizdp5BPS9jsMntFD9GTbQJp+HgSvzFvDIL0dgfy1TRHpyQxZkPkgp5oIK0lnaJ8m+qSZhBMIqbw==}
+    deprecated: This is a stub types definition. find-up provides its own type definitions, so you do not need this installed.
 
   '@types/fs-extra@11.0.4':
     resolution: {integrity: sha512-yTbItCNreRooED33qjunPthRcSjERP1r4MqCZc7wv0u2sUkzTFp45tgUfS5+r7FrZPdmCCNflLhVSP/o+SemsQ==}
@@ -7826,6 +7836,10 @@ snapshots:
   '@types/ejs@3.1.0': {}
 
   '@types/estree@1.0.7': {}
+
+  '@types/find-up@4.0.2':
+    dependencies:
+      find-up: 5.0.0
 
   '@types/fs-extra@11.0.4':
     dependencies:

@@ -1,7 +1,7 @@
 import * as electronRebuild from "@electron/rebuild"
 import { RebuildMode } from "@electron/rebuild/lib/types"
-import { asArray, log, spawn } from "builder-util"
-import { pathExists } from "fs-extra"
+import { asArray, exec, log, spawn } from "builder-util"
+import { pathExists, readFile, readJson } from "fs-extra"
 import { Lazy } from "lazy-val"
 import { homedir } from "os"
 import * as path from "path"
@@ -26,6 +26,13 @@ export async function installOrRebuild(config: Configuration, { appDir, projectD
 
       break
     }
+  }
+
+  const packageJson = path.join(projectDir, "package.json")
+  if (await pathExists(packageJson)) {
+    await activatePackageManagerFromManifest(packageJson).catch(e => {
+      log.warn({ err: e, packageJson }, `failed to activate package manager from manifest`)
+    })
   }
 
   if (forceInstall || !isDependenciesInstalled) {
@@ -84,6 +91,13 @@ export async function installDependencies(config: Configuration, { appDir, proje
   const arch = options.arch || process.arch
   const additionalArgs = options.additionalArgs
 
+    const packageJson = path.join(projectDir, "package.json")
+  if (await pathExists(packageJson)) {
+    await activatePackageManagerFromManifest(packageJson).catch(e => {
+      log.warn({ err: e, packageJson }, `failed to activate package manager from manifest`)
+    })
+  }
+
   const pm = detectPackageManager(projectDir)
   log.info({ pm, platform, arch, projectDir, appDir }, `installing production dependencies`)
   const execArgs = ["install"]
@@ -95,6 +109,8 @@ export async function installDependencies(config: Configuration, { appDir, proje
 
   if (pm === PM.YARN) {
     execArgs.push("--prefer-offline")
+  } else if (pm === PM.PNPM) {
+    execArgs.push("--ignore-scripts=false")
   }
 
   const execPath = getPackageManagerCommand(pm)
@@ -187,4 +203,27 @@ export async function rebuild(config: Configuration, { appDir, projectDir }: Dir
     disablePreGypCopy: true,
   }
   return remoteRebuild(rebuildOptions)
+}
+
+export async function activatePackageManagerFromManifest(manifestPath: string): Promise<void> {
+  const pkg = await readJson(manifestPath)
+
+  const pmField = pkg.packageManager // e.g., "pnpm@10.10.0", "yarn@3.6.4"
+  if (!pmField) {
+    log.debug({ manifestPath }, `no packageManager field, skipping activation`)
+    return
+  }
+
+  const [manager, version] = pmField.split("@")
+  if (!manager || !version) {
+    throw new Error(`Invalid packageManager format in ${manifestPath}: "${pmField}"`)
+  }
+  // ✅ Run Corepack from outside the fixture to avoid edits
+  await exec("corepack", ["prepare", `${manager}@${version}`, "--activate"], {
+    cwd: "/", // 🛑 make sure Corepack doesn't run inside the fixture to prevent it from aggressively updating its package.json
+    env: {
+      ...process.env,
+      COREPACK_ENABLE_STRICT: "0", // avoids install errors for legacy formats
+    },
+  })
 }

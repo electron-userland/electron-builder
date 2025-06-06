@@ -1,8 +1,10 @@
-import { assertPack, linuxDirTarget, verifyAsarFileTree, modifyPackageJson } from "./helpers/packTester"
+import { assertPack, linuxDirTarget, verifyAsarFileTree, modifyPackageJson, appTwo } from "./helpers/packTester"
 import { Platform, Arch, DIR_TARGET } from "electron-builder"
 import { outputFile, copySync, rmSync, readJsonSync, writeJsonSync, mkdirSync } from "fs-extra"
 import * as path from "path"
-import { spawn } from "builder-util/out/util"
+import { exec, spawn } from "builder-util/out/util"
+import { verifySmartUnpack } from "./helpers/verifySmartUnpack"
+import { ELECTRON_VERSION } from "./helpers/testConfig"
 
 test("yarn workspace", ({ expect }) =>
   assertPack(
@@ -534,6 +536,80 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
           ])
         },
         packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
+      }
+    ))
+
+  test.ifNotWindows("two package nested symlink in pnpm workspace", ({ expect }) =>
+    appTwo(
+      expect,
+      {
+        targets: linuxDirTarget,
+        config: {
+          directories: {
+            app: "app",
+          },
+          files: [
+            "index.js",
+            "package.json",
+            "index.html",
+            "node_modules",
+            {
+              from: "node_modules/better-sqlite3/build/Release",
+              to: "dist/native",
+              filter: ["better_sqlite3.node"],
+            },
+          ],
+        },
+      },
+      {
+        isInstallDepsBefore: true,
+        storeDepsLockfileSnapshot: false,
+        projectDirCreated: async projectDir => {
+          const localDependencyMap = (dependencies: string[]) =>
+            dependencies.reduce(
+              (map, dep) => {
+                map[dep] = `link://${path.resolve(__dirname, "../../packages", dep)}`
+                return map
+              },
+              {} as Record<string, string>
+            )
+
+          await outputFile(path.join(projectDir, "pnpm-lock.yaml"), "")
+          await outputFile(
+            path.join(projectDir, "pnpm-workspace.yaml"),
+            `
+    packages:
+      - 'app'
+      `
+          )
+          await modifyPackageJson(
+            projectDir,
+            data => {
+              data.scripts = {
+                postinstall: "electron-builder install-app-deps",
+              }
+              data.dependencies = {
+                "better-sqlite3": "^11.10.0",
+                debug: "3.1.0",
+              }
+              data.devDependencies = {
+                electron: ELECTRON_VERSION,
+                ...localDependencyMap(["electron-builder"]),
+              }
+            },
+            true
+          )
+          await modifyPackageJson(projectDir, data => {
+            data.packageManager = "pnpm@10.10.0"
+            data.pnpm = {
+              overrides: localDependencyMap(["app-builder-lib", "builder-util", "builder-util-runtime", "dmg-builder", "electron-publish", "electron-builder-squirrel-windows"]),
+            }
+          })
+          // await exec("corepack", ["install"], { cwd: projectDir })
+        },
+        packed: async context => {
+          await verifySmartUnpack(expect, context.getResources(Platform.LINUX))
+        },
       }
     ))
 })
