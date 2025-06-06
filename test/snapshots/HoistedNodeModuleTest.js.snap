@@ -28314,6 +28314,18 @@ exports[`isInstallDepsBefore=true > two package nested symlink in pnpm workspace
 exports[`isInstallDepsBefore=true > two package nested symlink in pnpm workspace 2`] = `
 {
   "files": {
+    "dist": {
+      "files": {
+        "native": {
+          "files": {
+            "better_sqlite3.node": {
+              "executable": true,
+              "size": "<size>",
+            },
+          },
+        },
+      },
+    },
     "index.html": {
       "size": "<size>",
     },

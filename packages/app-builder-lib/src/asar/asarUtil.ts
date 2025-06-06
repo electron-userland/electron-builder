@@ -162,7 +162,7 @@ export class AsarPackager {
     }
 
     // not a symlink, stream directly
-    if (file === realPathFile) {
+    if (!stat.isSymbolicLink()) {
       return {
         ...config,
         type: "file",
