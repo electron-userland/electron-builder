@@ -235,33 +235,32 @@ export class AsarPackager {
   }
 }
 
-async function findWorkspaceRoot(startDir: string): Promise<string | undefined> {
-  // Look for the workspace marker files
+export async function findWorkspaceRoot(startDir: string): Promise<string | undefined> {
+  const packageJson = "package.json"
+  const WORKSPACE_MARKERS = ["pnpm-workspace.yaml", "lerna.json", "nx.json", "turbo.json", ".yarnrc.yml", packageJson]
+  // Use findUp to search for workspace markers in parent directories
   const file = await findUp(
     async directory => {
       const dirContents = await readdir(directory)
-      const marker = ["pnpm-workspace.yaml", "package.json"].find(marker => dirContents.includes(marker))
-      return dirContents.includes(".git") && !marker ? findUp.stop : marker
+      const pkgJsonPath = path.join(directory, packageJson)
+
+      for (const filenameMarker of WORKSPACE_MARKERS) {
+        if (dirContents.includes(filenameMarker)) {
+          if (filenameMarker === packageJson) {
+            const rootWorkspaceConfigPath = await fs
+              .readJson(pkgJsonPath)
+              .then(pkg => (pkg.workspaces || pkg.pnpm || pkg.workspaces?.packages ? pkgJsonPath : undefined))
+              .catch(() => undefined) // ignore invalid package.json
+            if (rootWorkspaceConfigPath) {
+              return rootWorkspaceConfigPath
+            }
+          }
+          return path.join(directory, filenameMarker)
+        }
+      }
+      return undefined
     },
     { cwd: startDir }
   )
-
-  if (!file) {
-    return undefined
-  }
-
-  // If it's package.json, make sure it has "workspaces"
-  if (file.endsWith("package.json")) {
-    const pkg = await fs.readJson(file)
-    const newDir = path.dirname(file)
-    if (pkg.workspaces || pkg.pnpm || pkg.workspaces?.packages) {
-      return newDir
-    } else {
-      // Keep looking up in case a parent has it
-      return findWorkspaceRoot(path.dirname(newDir))
-    }
-  }
-
-  // If it's pnpm-workspace.yaml, assume root
-  return path.dirname(file)
+  return file ? path.dirname(file) : undefined
 }
