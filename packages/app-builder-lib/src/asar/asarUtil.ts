@@ -9,6 +9,8 @@ import { PlatformPackager } from "../platformPackager"
 import { ResolvedFileSet, getDestinationPath } from "../util/appFileCopier"
 import { detectUnpackedDirs } from "./unpackDetector"
 import { Readable } from "stream"
+import * as findUp from "find-up"
+import { readdir } from "fs/promises"
 
 /** @internal */
 export class AsarPackager {
@@ -143,8 +145,9 @@ export class AsarPackager {
       return { path: destination, streamGenerator, unpacked, type: "file", stat: { mode: stat.mode, size } }
     }
 
+    const rootDir = (await findWorkspaceRoot(fileSet.src)) ?? fileSet.src
     const realPathFile = await fs.realpath(file)
-    const realPathRelative = path.relative(fileSet.src, realPathFile)
+    const realPathRelative = path.relative(rootDir, realPathFile)
     const isOutsidePackage = realPathRelative.startsWith("..")
     if (isOutsidePackage) {
       log.error({ source: log.filePath(file), realPathFile: log.filePath(realPathFile) }, `unable to copy, file is symlinked outside the package`)
@@ -230,4 +233,35 @@ export class AsarPackager {
       transformedFiles,
     }
   }
+}
+
+async function findWorkspaceRoot(startDir: string): Promise<string | undefined> {
+  // Look for the workspace marker files
+  const file = await findUp(
+    async directory => {
+      const dirContents = await readdir(directory)
+      const marker = ["pnpm-workspace.yaml", "package.json"].find(marker => dirContents.includes(marker))
+      return dirContents.includes(".git") && !marker ? findUp.stop : marker
+    },
+    { cwd: startDir }
+  )
+
+  if (!file) {
+    return undefined
+  }
+
+  // If it's package.json, make sure it has "workspaces"
+  if (file.endsWith("package.json")) {
+    const pkg = await fs.readJson(file)
+    const newDir = path.dirname(file)
+    if (pkg.workspaces || pkg.pnpm || pkg.workspaces?.packages) {
+      return newDir
+    } else {
+      // Keep looking up in case a parent has it
+      return findWorkspaceRoot(path.dirname(newDir))
+    }
+  }
+
+  // If it's pnpm-workspace.yaml, assume root
+  return path.dirname(file)
 }
