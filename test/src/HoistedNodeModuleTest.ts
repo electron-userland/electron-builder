@@ -539,7 +539,7 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
       }
     ))
 
-  test.only("two package nested symlink in pnpm workspace", ({ expect }) =>
+  test.ifNotWindows("two package nested symlink in pnpm workspace", ({ expect }) =>
     appTwo(
       expect,
       {
