@@ -197,7 +197,7 @@ async function unpack(prepareOptions: PrepareApplicationStageDirectoryOptions, d
     const electronDistHook: any = await resolveFunction(packager.appInfo.type, packager.config.electronDist, "electronDist")
     resolvedDist = typeof electronDistHook === "function" ? await Promise.resolve(electronDistHook(prepareOptions)) : electronDistHook
   } catch (error: any) {
-    throw new Error("Failed to resolve electronDist: " + error.message)
+    throw new Error(`Failed to resolve electronDist: ${error.message} ${error.stack}`)
   }
 
   if (resolvedDist == null) {
@@ -239,20 +239,20 @@ async function unpack(prepareOptions: PrepareApplicationStageDirectoryOptions, d
       })
       return false
     }
+    // if we reach here, it means the provided electronDist is neither a zip file nor a directory with the default zip file
+    // e.g. we treat it as a custom already-unpacked Electron distribution
+    log.info({ electronDist: log.filePath(resolvedDist) }, "using custom unpacked Electron distribution")
+    const source = packager.getElectronSrcDir(resolvedDist)
+    const destination = packager.getElectronDestinationDir(appOutDir)
+    log.info({ source, destination }, "copying unpacked Electron")
+    await emptyDir(appOutDir)
+    await copyDir(source, destination, {
+      isUseHardLink: DO_NOT_USE_HARD_LINKS,
+    })
+
+    return false
   }
-
-  // if we reach here, it means the provided electronDist is neither a zip file nor a directory with the default zip file
-  // e.g. we treat it as a custom already-unpacked Electron distribution
-  log.info({ electronDist: log.filePath(resolvedDist) }, "using custom unpacked Electron distribution")
-  const source = packager.getElectronSrcDir(resolvedDist)
-  const destination = packager.getElectronDestinationDir(appOutDir)
-  log.info({ source, destination }, "copying unpacked Electron")
-  await emptyDir(appOutDir)
-  await copyDir(source, destination, {
-    isUseHardLink: DO_NOT_USE_HARD_LINKS,
-  })
-
-  return false
+  throw new Error("Unable to unpack electron dist")
 }
 
 function cleanupAfterUnpack(prepareOptions: PrepareApplicationStageDirectoryOptions, distMacOsAppName: string, isFullCleanup: boolean) {

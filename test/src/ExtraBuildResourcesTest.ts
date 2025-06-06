@@ -1,11 +1,14 @@
 import { Arch, build, PackagerOptions, Platform } from "electron-builder"
-import * as fs from "fs/promises"
+import * as fs from "fs"
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert"
 import { app, assertPack, linuxDirTarget, modifyPackageJson } from "./helpers/packTester"
 import { getElectronCacheDir } from "./helpers/testConfig"
 import { expectUpdateMetadata } from "./helpers/winHelper"
 import { ExpectStatic } from "vitest"
+import * as unzipper from "unzipper"
+import { TmpDir } from "temp-file"
+import { readdir } from "fs/promises"
 
 function createBuildResourcesTest(expect: ExpectStatic, packagerOptions: PackagerOptions) {
   return app(
@@ -33,7 +36,7 @@ function createBuildResourcesTest(expect: ExpectStatic, packagerOptions: Package
       packed: async context => {
         await assertThat(expect, path.join(context.projectDir, "customDist", "latest")).isDirectory()
       },
-      projectDirCreated: projectDir => fs.rename(path.join(projectDir, "build"), path.join(projectDir, "custom")),
+      projectDirCreated: projectDir => Promise.resolve(fs.renameSync(path.join(projectDir, "build"), path.join(projectDir, "custom"))),
     }
   )
 }
@@ -191,6 +194,42 @@ test.ifNotWindows("electronDist as callback function for path to local folder wi
   })
 )
 
+test.ifNotWindows("electronDist as callback function for path to locally unzipped", ({ expect }) => {
+  const tmpDir = new TmpDir()
+
+  return app(
+    expect,
+    {
+      targets: linuxDirTarget,
+      config: {
+        electronDist: async context => {
+          const { platformName, arch, version } = context
+          const fileName = `electron-v${version}-${platformName}-${arch}.zip`
+          const electronUrl = `https://github.com/electron/electron/releases/download/v${version}/${fileName}`
+
+          const tempDir = await tmpDir.getTempDir()
+          if (!fs.existsSync(tempDir)) {
+            fs.mkdirSync(tempDir)
+          }
+          const electronPath = path.join(tempDir, "electron-dist")
+
+          const directory = await unzipper.Open.url(require("request"), electronUrl)
+          await directory.extract({ path: electronPath, concurrency: 5, forceStream: true })
+
+          return electronPath
+        },
+      },
+    },
+    {
+      packed: async context => {
+        const contents = await readdir(context.getAppPath(Platform.LINUX, Arch.x64))
+        expect(contents).toMatchSnapshot()
+        await tmpDir.cleanup()
+      },
+    }
+  )
+})
+
 const overridePublishChannel: any = {
   channel: "beta",
 }
@@ -217,6 +256,7 @@ test.ifDevOrLinuxCi("overriding the publish channel", ({ expect }) =>
         }),
       packed: async context => {
         expect(context.packager.config.publish).toMatchSnapshot()
+        return Promise.resolve()
       },
     }
   )
