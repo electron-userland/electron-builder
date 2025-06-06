@@ -1,7 +1,7 @@
 import * as electronRebuild from "@electron/rebuild"
 import { RebuildMode } from "@electron/rebuild/lib/types"
-import { asArray, log, spawn } from "builder-util"
-import { pathExists } from "fs-extra"
+import { asArray, exec, log, spawn } from "builder-util"
+import { pathExists, readJson } from "fs-extra"
 import { Lazy } from "lazy-val"
 import { homedir } from "os"
 import * as path from "path"
@@ -25,6 +25,19 @@ export async function installOrRebuild(config: Configuration, { appDir, projectD
       isDependenciesInstalled = true
 
       break
+    }
+  }
+
+  const packageJson = path.join(projectDir, "package.json")
+  if (await pathExists(packageJson)) {
+    const packageMetadata = await readJson(packageJson)
+    if (packageMetadata.packageManager != null) {
+      log.info({ packageManager: packageMetadata.packageManager }, "installing packageManager from package.json via `corepack`")
+      await exec("corepack", ["install"], {
+        cwd: appDir,
+        shell: true,
+        env: process.env,
+      })
     }
   }
 
@@ -95,6 +108,8 @@ export async function installDependencies(config: Configuration, { appDir, proje
 
   if (pm === PM.YARN) {
     execArgs.push("--prefer-offline")
+  } else if (pm === PM.PNPM) {
+    execArgs.push("--ignore-scripts=false")
   }
 
   const execPath = getPackageManagerCommand(pm)
@@ -103,7 +118,9 @@ export async function installDependencies(config: Configuration, { appDir, proje
     execArgs.push(...additionalArgs)
   }
   await spawn(execPath, execArgs, {
-    cwd: appDir,
+    cwd: pm === PM.PNPM ? projectDir : appDir,
+    stdio: "inherit",
+    shell: true,
     env: getGypEnv(options.frameworkInfo, platform, arch, options.buildFromSource === true),
   })
 

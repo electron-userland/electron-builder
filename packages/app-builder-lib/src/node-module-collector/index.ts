@@ -7,9 +7,14 @@ import { exec } from "builder-util"
 
 async function isPnpmProjectHoisted(rootDir: string) {
   const command = getPackageManagerCommand(PM.PNPM)
-  const config = await exec(command, ["config", "list"], { cwd: rootDir, shell: true })
-  const lines = Object.fromEntries(config.split("\n").map(line => line.split("=").map(s => s.trim())))
-  return lines["node-linker"] === "hoisted"
+  // const config = await exec(command, ["config", "list"], { cwd: rootDir, shell: true })
+  // const lines = Object.fromEntries(config.split("\n").map(line => line.split("=").map(s => s.trim())))
+  const isHoisted = (await exec(command, ["config", "get", "node-linker"], { cwd: rootDir, shell: true, env: process.env })).trim()
+  if (isHoisted === "hoisted") {
+    return true
+  }
+  return false
+  // return lines["node-linker"] === "hoisted"
 }
 
 export async function getCollectorByPackageManager(rootDir: string) {

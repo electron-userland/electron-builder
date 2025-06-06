@@ -2,7 +2,7 @@ import { assertPack, linuxDirTarget, verifyAsarFileTree, modifyPackageJson, appT
 import { Platform, Arch, DIR_TARGET } from "electron-builder"
 import { outputFile, copySync, rmSync, readJsonSync, writeJsonSync, mkdirSync } from "fs-extra"
 import * as path from "path"
-import { spawn } from "builder-util/out/util"
+import { exec, spawn } from "builder-util/out/util"
 import { verifySmartUnpack } from "./helpers/verifySmartUnpack"
 import { ELECTRON_VERSION } from "./helpers/testConfig"
 
@@ -548,6 +548,7 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
           directories: {
             app: "app",
           },
+          // asar: false,
           files: [
             "index.js",
             "package.json",
@@ -565,6 +566,18 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
         isInstallDepsBefore: true,
         storeDepsLockfileSnapshot: false,
         projectDirCreated: async projectDir => {
+          const localDependencyMap = (dependencies: string[]) =>
+            dependencies.reduce(
+              (map, dep) => {
+                map[dep] = `link://${path.resolve(__dirname, "../../packages", dep)}`
+                return map
+              },
+              {} as Record<string, string>
+            )
+
+          // await outputFile(path.join(projectDir, ".npmrc"), `node-linker=isolated`)
+          // await outputFile(path.join(projectDir, "app", ".npmrc"), `node-linker=isolated`)
+          await outputFile(path.join(projectDir, "pnpm-lock.yaml"), "")
           await outputFile(
             path.join(projectDir, "pnpm-workspace.yaml"),
             `
@@ -584,7 +597,7 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
               }
               data.devDependencies = {
                 electron: ELECTRON_VERSION,
-                "electron-builder": `file://${path.resolve(__dirname, "../../packages/electron-builder")}`,
+                ...localDependencyMap(["electron-builder"]),
               }
               // data.peerDependencies = {
               //   "electron-builder-squirrel-windows": `file://${path.resolve(__dirname, "../../packages/electron-builder-squirrel-windows")}`,
@@ -595,16 +608,10 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
           await modifyPackageJson(projectDir, data => {
             data.packageManager = "pnpm@10.10.0"
             data.pnpm = {
-              overrides: {
-                "app-builder-lib": `file://${path.resolve(__dirname, "../../packages/app-builder-lib")}`,
-                "builder-util": `file://${path.resolve(__dirname, "../../packages/builder-util")}`,
-                "builder-util-runtime": `file://${path.resolve(__dirname, "../../packages/builder-util-runtime")}`,
-                "dmg-builder": `file://${path.resolve(__dirname, "../../packages/dmg-builder")}`,
-                "electron-publish": `file://${path.resolve(__dirname, "../../packages/electron-publish")}`,
-                "electron-builder-squirrel-windows": `file://${path.resolve(__dirname, "../../packages/electron-builder-squirrel-windows")}`,
-              },
+              overrides: localDependencyMap(["app-builder-lib", "builder-util", "builder-util-runtime", "dmg-builder", "electron-publish", "electron-builder-squirrel-windows"]),
             }
           })
+          // await exec("corepack", ["install"], { cwd: projectDir })
         },
         packed: async context => {
           await verifySmartUnpack(expect, context.getResources(Platform.LINUX))

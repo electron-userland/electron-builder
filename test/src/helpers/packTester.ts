@@ -137,7 +137,7 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
 
       if (checkOptions.isInstallDepsBefore) {
         const pm = await getCollectorByPackageManager(projectDir)
-        const pmOptions = await pm.installOptions
+        const pmOptions = pm.installOptions
 
         const destLockfile = path.join(projectDir, pmOptions.lockfile)
 
@@ -159,15 +159,6 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
             productionDeps: createLazyProductionDeps(appDir, null, false),
           }
         )
-
-        // save lockfile fixture
-        if (!(await exists(testFixtureLockfile)) && shouldUpdateLockfiles) {
-          const fixtureDir = path.dirname(testFixtureLockfile)
-          if (!(await exists(fixtureDir))) {
-            await mkdir(fixtureDir)
-          }
-          await copyFile(destLockfile, testFixtureLockfile)
-        }
 
         // save lockfile fixture
         if (!(await exists(testFixtureLockfile)) && shouldUpdateLockfiles) {
