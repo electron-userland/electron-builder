@@ -19,7 +19,7 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
     await this.extractProductionDependencyGraph(realTree, "." /*root project name*/)
 
     const hoisterResult: HoisterResult = hoist(this.transToHoisterTree(this.productionGraph), { check: true })
-    this._getNodeModules(hoisterResult.dependencies, this.nodeModules)
+    await this._getNodeModules(hoisterResult.dependencies, this.nodeModules)
 
     return this.nodeModules
   }
