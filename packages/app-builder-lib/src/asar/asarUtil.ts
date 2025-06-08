@@ -9,6 +9,8 @@ import { PlatformPackager } from "../platformPackager"
 import { ResolvedFileSet, getDestinationPath } from "../util/appFileCopier"
 import { detectUnpackedDirs } from "./unpackDetector"
 import { Readable } from "stream"
+import * as findUp from "find-up"
+import { readdir } from "fs/promises"
 
 /** @internal */
 export class AsarPackager {
@@ -143,8 +145,9 @@ export class AsarPackager {
       return { path: destination, streamGenerator, unpacked, type: "file", stat: { mode: stat.mode, size } }
     }
 
+    const rootDir = (await findWorkspaceRoot(fileSet.src)) ?? fileSet.src
     const realPathFile = await fs.realpath(file)
-    const realPathRelative = path.relative(fileSet.src, realPathFile)
+    const realPathRelative = path.relative(rootDir, realPathFile)
     const isOutsidePackage = realPathRelative.startsWith("..")
     if (isOutsidePackage) {
       log.error({ source: log.filePath(file), realPathFile: log.filePath(realPathFile) }, `unable to copy, file is symlinked outside the package`)
@@ -159,7 +162,7 @@ export class AsarPackager {
     }
 
     // not a symlink, stream directly
-    if (file === realPathFile) {
+    if (!stat.isSymbolicLink()) {
       return {
         ...config,
         type: "file",
@@ -230,4 +233,34 @@ export class AsarPackager {
       transformedFiles,
     }
   }
+}
+
+export async function findWorkspaceRoot(startDir: string): Promise<string | undefined> {
+  const packageJson = "package.json"
+  const WORKSPACE_MARKERS = ["pnpm-workspace.yaml", "lerna.json", "nx.json", "turbo.json", ".yarnrc.yml", packageJson]
+  // Use findUp to search for workspace markers in parent directories
+  const file = await findUp(
+    async directory => {
+      const dirContents = await readdir(directory)
+      const pkgJsonPath = path.join(directory, packageJson)
+
+      for (const filenameMarker of WORKSPACE_MARKERS) {
+        if (dirContents.includes(filenameMarker)) {
+          if (filenameMarker === packageJson) {
+            const rootWorkspaceConfigPath = await fs
+              .readJson(pkgJsonPath)
+              .then(pkg => (pkg.workspaces || pkg.pnpm || pkg.workspaces?.packages ? pkgJsonPath : undefined))
+              .catch(() => undefined) // ignore invalid package.json
+            if (rootWorkspaceConfigPath) {
+              return rootWorkspaceConfigPath
+            }
+          }
+          return path.join(directory, filenameMarker)
+        }
+      }
+      return dirContents.includes(".git") ? findUp.stop : undefined // stop searching if we hit a .git root directory
+    },
+    { cwd: startDir }
+  )
+  return file ? path.dirname(file) : undefined
 }
