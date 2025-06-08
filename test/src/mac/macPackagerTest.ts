@@ -132,6 +132,7 @@ test.ifMac("yarn two package.json w/ native module", ({ expect }) =>
       config: {
         npmRebuild: true,
         nativeRebuilder: "sequential",
+        files: ["!**/*.stamp", "!**/*.Makefile"],
       },
     },
     {
@@ -142,12 +143,17 @@ test.ifMac("yarn two package.json w/ native module", ({ expect }) =>
 )
 
 test.ifMac("electronDist", ({ expect }) =>
-  appThrows(expect, {
-    targets: Platform.MAC.createTarget(DIR_TARGET, Arch.x64),
-    config: {
-      electronDist: "foo",
+  appThrows(
+    expect,
+    {
+      targets: Platform.MAC.createTarget(DIR_TARGET, Arch.x64),
+      config: {
+        electronDist: "foo",
+      },
     },
-  })
+    {},
+    error => expect(error.message).toContain("Failed to resolve electronDist")
+  )
 )
 
 test.ifWinCi("Build macOS on Windows is not supported", ({ expect }) => appThrows(expect, platform(Platform.MAC)))

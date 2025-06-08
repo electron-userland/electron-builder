@@ -2,30 +2,16 @@ import { Arch, Configuration, Platform } from "app-builder-lib"
 import { getBinFromUrl } from "app-builder-lib/out/binDownload"
 import { doSpawn, getArchSuffix } from "builder-util"
 import { GenericServerOptions, Nullish, S3Options } from "builder-util-runtime"
-import { AppImageUpdater, BaseUpdater, MacUpdater, NoOpLogger, NsisUpdater } from "electron-updater"
+import { AppImageUpdater, BaseUpdater, MacUpdater, NsisUpdater } from "electron-updater"
 import { EventEmitter } from "events"
 import { move } from "fs-extra"
 import * as path from "path"
 import { TmpDir } from "temp-file"
 import { TestAppAdapter } from "../helpers/TestAppAdapter"
 import { PackedContext, assertPack, removeUnstableProperties } from "../helpers/packTester"
-import { tuneTestUpdater, writeUpdateConfig } from "../helpers/updaterTestUtil"
+import { NEW_VERSION_NUMBER, OLD_VERSION_NUMBER, testAppCacheDirName, tuneTestUpdater, writeUpdateConfig } from "../helpers/updaterTestUtil"
 import { mockForNodeRequire } from "vitest-mock-commonjs"
 import { ExpectStatic } from "vitest"
-
-/*
-
-rm -rf ~/Documents/onshape-desktop-shell/node_modules/electron-updater && cp -R ~/Documents/electron-builder/packages/electron-updater ~/Documents/onshape-desktop-shell/node_modules/electron-updater && rm -rf ~/Documents/onshape-desktop-shell/node_modules/electron-updater/src && rm -rf ~/Documents/onshape-desktop-shell/node_modules/builder-util-runtime && cp -R ~/Documents/electron-builder/packages/builder-util-runtime ~/Documents/onshape-desktop-shell/node_modules/builder-util-runtime && rm -rf ~/Documents/onshape-desktop-shell/node_modules/builder-util-runtime/src
-
-*/
-// %USERPROFILE%\AppData\Roaming\Onshape
-
-// mkdir -p ~/minio-data/onshape
-// minio server ~/minio-data
-
-const OLD_VERSION_NUMBER = "1.0.0"
-
-const testAppCacheDirName = "testapp-updater"
 
 async function doBuild(
   expect: ExpectStatic,
@@ -75,7 +61,7 @@ async function doBuild(
     })
   try {
     await build(OLD_VERSION_NUMBER)
-    await build("1.0.1")
+    await build(NEW_VERSION_NUMBER)
   } catch (e: any) {
     await tmpDir.cleanup()
     throw e
@@ -156,7 +142,7 @@ test.ifMac("Mac universal", ({ expect }) => testMac(expect, Arch.universal))
 // only run on arm64 macs, otherwise of course no files can be found to be updated to (due to arch mismatch)
 test.ifMac.ifEnv(process.arch === "arm64")("Mac arm64", ({ expect }) => testMac(expect, Arch.arm64))
 
-async function checkResult(expect: ExpectStatic, updater: BaseUpdater) {
+export async function checkResult(expect: ExpectStatic, updater: BaseUpdater) {
   // disable automatic install otherwise mac updater will permanently wait on mocked electron's native updater to receive update (mocked server can't install)
   updater.autoInstallOnAppQuit = false
 
@@ -207,7 +193,6 @@ async function testBlockMap(expect: ExpectStatic, oldDir: string, newDir: string
 
   // Mac uses electron's native autoUpdater to serve updates to, we mock here since electron API isn't available within jest runtime
   const mockNativeUpdater = new TestNativeUpdater()
-
   mockForNodeRequire("electron", {
     autoUpdater: mockNativeUpdater,
   })
@@ -226,7 +211,6 @@ async function testBlockMap(expect: ExpectStatic, oldDir: string, newDir: string
         platform: platform.nodeName as any,
         isUseDifferentialDownload: true,
       })
-      updater.logger = new NoOpLogger()
 
       const currentUpdaterCacheDirName = (await updater.configOnDisk.value).updaterCacheDirName
       if (currentUpdaterCacheDirName == null) {

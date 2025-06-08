@@ -114,7 +114,7 @@ jobs:
   # Need to separate from other tests because logic is specific to when TOKEN env vars are set
   test-updater:
     runs-on: ubuntu-22.04
-    timeout-minutes: 20
+    timeout-minutes: 30
     needs: [check-if-docker-build, run-docker-build]
     # Wonky if-conditional to allow this step to run AFTER docker images are rebuilt OR if the build stage skipped and we want to use dockerhub registry for images
     if: |
@@ -144,23 +144,30 @@ jobs:
           docker image load --input ${{ runner.temp }}/electron-builder-all-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}.tar
           docker image ls -a
 
+      - name: Lint
+        run: pnpm pretest
+
       - name: Test
         run: |
           echo $TEST_RUNNER_IMAGE_TAG
           pnpm test-linux
         env:
-          TEST_FILES: nsisUpdaterTest,linuxUpdaterTest,PublishManagerTest,differentialUpdateTest
+          TEST_FILES: nsisUpdaterTest,PublishManagerTest,differentialUpdateTest
           KEYGEN_TOKEN: ${{ secrets.KEYGEN_TOKEN }}
           BITBUCKET_TOKEN: ${{ secrets.BITBUCKET_TOKEN }}
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
           FORCE_COLOR: 1
           TEST_RUNNER_IMAGE_TAG: electronuserland/builder:${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}-wine-mono
 
+      - name: Test Linux Updater
+        run: |
+          sh test/src/updater/test-specific-platforms.sh
+
       - name: Verify Docs Generation
         run: pnpm generate-all
 
   test-windows:
-    runs-on: windows-latest
+    runs-on: windows-2022
     timeout-minutes: 20
     strategy:
       fail-fast: false
@@ -170,6 +177,7 @@ jobs:
           - appxTest,msiTest,portableTest,assistedInstallerTest,protonTest
           - BuildTest,oneClickInstallerTest,winPackagerTest,nsisUpdaterTest,webInstallerTest
           - concurrentBuildsTest
+          - blackboxUpdateTest
     steps:
       - name: Checkout code repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -195,7 +203,7 @@ jobs:
       matrix:
         testFiles:
           - oneClickInstallerTest,assistedInstallerTest,webInstallerTest
-          - winPackagerTest,winCodeSignTest,BuildTest
+          - winPackagerTest,winCodeSignTest,BuildTest,blackboxUpdateTest
           - masTest,dmgTest,filesTest,macPackagerTest,differentialUpdateTest,macArchiveTest
           - concurrentBuildsTest
     steps:

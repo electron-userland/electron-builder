@@ -1,6 +1,6 @@
 {
   "name": "builder-util",
-  "version": "26.0.13",
+  "version": "26.0.16",
   "main": "out/util.js",
   "author": "Vladimir Krivosheev",
   "license": "MIT",
@@ -20,12 +20,12 @@
     "app-builder-bin": "5.0.0-alpha.12",
     "builder-util-runtime": "workspace:*",
     "chalk": "^4.1.2",
+    "ci-info": "^4.2.0",
     "cross-spawn": "^7.0.6",
     "debug": "^4.3.4",
     "fs-extra": "^10.1.0",
     "http-proxy-agent": "^7.0.0",
     "https-proxy-agent": "^7.0.0",
-    "is-ci": "^3.0.0",
     "js-yaml": "^4.1.0",
     "sanitize-filename": "^1.6.3",
     "source-map-support": "^0.5.19",
@@ -37,7 +37,6 @@
   "devDependencies": {
     "@types/cross-spawn": "6.0.6",
     "@types/fs-extra": "^9.0.11",
-    "@types/is-ci": "3.0.0",
     "@types/js-yaml": "4.0.3",
     "@types/source-map-support": "0.5.4",
     "@types/tiny-async-pool": "^1.0.5"
