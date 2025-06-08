@@ -155,6 +155,22 @@ export interface NsisOptions extends CommonNsisOptions, CommonWindowsInstallerCo
    * @default ${productName} ${version}
    */
   readonly uninstallDisplayName?: string
+  /**
+   * The URL to the uninstaller help page in the control panel. Defaults to [homepage](./configuration.md#homepage) from application package.json.
+   */
+  readonly uninstallUrlHelp?: string
+  /**
+   * The URL to the uninstaller info about page in the control panel. Defaults to [homepage](./configuration.md#homepage) from application package.json.
+   */
+  readonly uninstallUrlInfoAbout?: string
+  /**
+   * The URL to the uninstaller update info page in the control panel. Defaults to [homepage](./configuration.md#homepage) from application package.json.
+   */
+  readonly uninstallUrlUpdateInfo?: string
+  /**
+   * The URL to the uninstaller readme page in the control panel. Defaults to [homepage](./configuration.md#homepage) from application package.json.
+   */
+  readonly uninstallUrlReadme?: string
 
   /**
    * The path to NSIS include script to customize installer. Defaults to `build/installer.nsh`. See [Custom NSIS script](#custom-nsis-script).
