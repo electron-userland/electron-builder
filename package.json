@@ -28,7 +28,7 @@
     "generate-changeset": "pnpm changeset",
     "generate-schema": "typescript-json-schema packages/app-builder-lib/tsconfig-scheme.json Configuration --out packages/app-builder-lib/scheme.json --noExtraProps --useTypeOfKeyword --strictNullChecks --required && node ./scripts/fix-schema.js",
     "generate-all": "pnpm generate-schema && pnpm prettier",
-    "ci:test": "CI=1 vitest run",
+    "ci:test": "vitest run --no-update",
     "ci:version": "pnpm i && pnpm changelog && changeset version && node scripts/update-package-version-export.js && pnpm compile && pnpm generate-all && git add .",
     "ci:publish": "pnpm i && pnpm compile && pnpm publish -r --tag next && changeset tag",
     "docs:prebuild": "docker build -t mkdocs-dockerfile -f mkdocs-dockerfile . ",
