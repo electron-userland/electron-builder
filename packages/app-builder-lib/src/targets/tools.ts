@@ -7,6 +7,9 @@ export function getLinuxToolsPath() {
 }
 
 export async function getFpmPath() {
+  if (process.env.CUSTOM_FPM_PATH != null) {
+    return path.resolve(process.env.CUSTOM_FPM_PATH)
+  }
   const exec = "fpm"
   if (process.platform === "win32" || process.env.USE_SYSTEM_FPM === "true") {
     return exec
