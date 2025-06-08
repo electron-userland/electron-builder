@@ -13,7 +13,7 @@ async function isPnpmProjectHoisted(rootDir: string) {
 }
 
 export async function getCollectorByPackageManager(rootDir: string) {
-  const manager: PM = detectPackageManager(rootDir)
+  const manager: PM = await detectPackageManager(rootDir)
   switch (manager) {
     case PM.PNPM:
       if (await isPnpmProjectHoisted(rootDir)) {

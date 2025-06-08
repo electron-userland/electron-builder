@@ -56,7 +56,7 @@ export class AsarPackager {
     const unpackedPaths = new Set<string>()
     if (this.config.options.smartUnpack !== false) {
       for (const fileSet of fileSets) {
-        detectUnpackedDirs(fileSet, unpackedPaths)
+        await detectUnpackedDirs(fileSet, unpackedPaths)
       }
     }
 

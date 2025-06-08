@@ -1,6 +1,6 @@
 import * as path from "path"
-import * as fs from "fs"
 import * as which from "which"
+import { exists } from "builder-util/out/fs"
 
 export enum PM {
   NPM = "npm",
@@ -64,12 +64,12 @@ export function detectPackageManagerByEnv(): PM {
   return PM.NPM
 }
 
-export function detectPackageManager(cwd: string): PM {
-  const has = (file: string) => fs.existsSync(path.join(cwd, file))
+export async function detectPackageManager(cwd: string): Promise<PM> {
+  const has = (file: string) => exists(path.join(cwd, file))
 
-  const yarn = has("yarn.lock")
-  const pnpm = has("pnpm-lock.yaml")
-  const npm = has("package-lock.json")
+  const yarn = await has("yarn.lock")
+  const pnpm = await has("pnpm-lock.yaml")
+  const npm = await has("package-lock.json")
 
   const detected: PM[] = []
   if (yarn) detected.push(PM.YARN)

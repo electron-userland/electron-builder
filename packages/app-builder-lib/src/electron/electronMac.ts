@@ -1,7 +1,6 @@
-import { asArray, copyOrLinkFile, getPlatformIconFileName, InvalidConfigurationError, log, unlinkIfExists } from "builder-util"
+import { asArray, copyOrLinkFile, exists, getPlatformIconFileName, InvalidConfigurationError, log, unlinkIfExists } from "builder-util"
 import { rename, utimes } from "fs/promises"
 import * as path from "path"
-import * as fs from "fs"
 import { filterCFBundleIdentifier } from "../appInfo"
 import { AsarIntegrity } from "../asar/integrity"
 import { MacPackager } from "../macPackager"
@@ -71,7 +70,7 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
   const helperLoginPlistFilename = path.join(loginItemPath, `${electronBranding.productName} Login Helper.app`, "Contents", "Info.plist")
 
   const safeParsePlistFile = async (filePath: string): Promise<PlistObject | null> => {
-    if (!fs.existsSync(filePath)) {
+    if (!(await exists(filePath))) {
       return null
     }
     return await parsePlistFile(filePath)

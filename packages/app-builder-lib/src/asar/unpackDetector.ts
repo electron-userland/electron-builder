@@ -1,5 +1,5 @@
 import { FilterStats, log } from "builder-util"
-import { isBinaryFileSync } from "isbinaryfile"
+import { isBinaryFile } from "isbinaryfile"
 import * as path from "path"
 import { ResolvedFileSet } from "../util/appFileCopier"
 
@@ -9,7 +9,7 @@ export function isLibOrExe(file: string): boolean {
 }
 
 /** @internal */
-export function detectUnpackedDirs(fileSet: ResolvedFileSet, autoUnpackDirs: Set<string>) {
+export async function detectUnpackedDirs(fileSet: ResolvedFileSet, autoUnpackDirs: Set<string>) {
   const metadata = fileSet.metadata
 
   for (let i = 0, n = fileSet.files.length; i < n; i++) {
@@ -32,7 +32,7 @@ export function detectUnpackedDirs(fileSet: ResolvedFileSet, autoUnpackDirs: Set
     if (moduleName === "ffprobe-static" || moduleName === "ffmpeg-static" || isLibOrExe(file)) {
       shouldUnpack = true
     } else if (!hasExtension) {
-      shouldUnpack = !!isBinaryFileSync(file)
+      shouldUnpack = !!(await isBinaryFile(file))
     }
 
     if (!shouldUnpack) {

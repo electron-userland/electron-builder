@@ -1,6 +1,5 @@
 import { FilterStats, MAX_FILE_REQUESTS } from "builder-util"
-import { realpathSync } from "fs"
-import { lstat, lstatSync, readdir } from "fs-extra"
+import { lstat, readdir, realpath } from "fs-extra"
 import * as path from "path"
 import asyncPool from "tiny-async-pool"
 import { excludedNames, FileMatcher } from "../fileMatcher"
@@ -85,7 +84,7 @@ export class NodeModuleCopyHelper extends FileCopyHelper {
         }
 
         // check if filematcher matches the files array as more important than the default excluded files.
-        const fileMatched = filter != null && filter(dirPath, lstatSync(dirPath))
+        const fileMatched = filter != null && filter(dirPath, await lstat(dirPath))
         if (!fileMatched || !forceIncluded || !!this.packager.config.disableDefaultIgnoredFiles) {
           for (const ext of nodeModuleExcludedExts) {
             if (name.endsWith(ext)) {
@@ -166,7 +165,7 @@ export class NodeModuleCopyHelper extends FileCopyHelper {
     }
 
     for (const [file, index] of symlinkFiles) {
-      const resolvedPath = realpathSync(file)
+      const resolvedPath = await realpath(file)
       if (emptyDirs.has(resolvedPath)) {
         // delete symlink file if target is a empty dir
         result[index] = undefined

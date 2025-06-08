@@ -16,37 +16,39 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
     return ["list", "--prod", "--json", "--depth", "Infinity"]
   }
 
-  extractProductionDependencyGraph(tree: PnpmDependency, dependencyId: string): void {
+  async extractProductionDependencyGraph(tree: PnpmDependency, dependencyId: string) {
     if (this.productionGraph[dependencyId]) {
       return
     }
 
-    const p = path.normalize(this.resolvePath(tree.path))
+    const p = path.normalize(await this.resolvePath(tree.path))
     const packageJson: Dependency<string, string> = require(path.join(p, "package.json"))
     const prodDependencies = { ...packageJson.dependencies, ...packageJson.optionalDependencies }
 
     const deps = { ...(tree.dependencies || {}), ...(tree.optionalDependencies || {}) }
     this.productionGraph[dependencyId] = { dependencies: [] }
-    const dependencies = Object.entries(deps)
-      .filter(([packageName, dependency]) => {
-        // First check if it's in production dependencies
-        if (!prodDependencies[packageName]) {
-          return false
-        }
+    const dependencies = await Promise.all(
+      Object.entries(deps)
+        .filter(([packageName, dependency]) => {
+          // First check if it's in production dependencies
+          if (!prodDependencies[packageName]) {
+            return false
+          }
 
-        // Then check if optional dependency path exists
-        if (packageJson.optionalDependencies && packageJson.optionalDependencies[packageName] && !fs.existsSync(dependency.path)) {
-          log.debug(null, `Optional dependency ${packageName}@${dependency.version} path doesn't exist: ${dependency.path}`)
-          return false
-        }
+          // Then check if optional dependency path exists
+          if (packageJson.optionalDependencies && packageJson.optionalDependencies[packageName] && !fs.existsSync(dependency.path)) {
+            log.debug(null, `Optional dependency ${packageName}@${dependency.version} path doesn't exist: ${dependency.path}`)
+            return false
+          }
 
-        return true
-      })
-      .map(([packageName, dependency]) => {
-        const childDependencyId = `${packageName}@${dependency.version}`
-        this.extractProductionDependencyGraph(dependency, childDependencyId)
-        return childDependencyId
-      })
+          return true
+        })
+        .map(async ([packageName, dependency]) => {
+          const childDependencyId = `${packageName}@${dependency.version}`
+          await this.extractProductionDependencyGraph(dependency, childDependencyId)
+          return childDependencyId
+        })
+    )
 
     this.productionGraph[dependencyId] = { dependencies }
   }

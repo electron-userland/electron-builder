@@ -1,9 +1,9 @@
 import { hoist, type HoisterTree, type HoisterResult } from "./hoist"
 import * as path from "path"
-import * as fs from "fs"
 import type { NodeModuleInfo, DependencyGraph, Dependency } from "./types"
 import { exec, log } from "builder-util"
 import { getPackageManagerCommand, PM } from "./packageManager"
+import { lstat, realpath } from "fs-extra"
 
 export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType>, OptionalsType> {
   private nodeModules: NodeModuleInfo[] = []
@@ -16,7 +16,7 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
     const tree: T = await this.getDependenciesTree()
     const realTree: T = this.getTreeFromWorkspaces(tree)
     this.collectAllDependencies(realTree)
-    this.extractProductionDependencyGraph(realTree, "." /*root project name*/)
+    await this.extractProductionDependencyGraph(realTree, "." /*root project name*/)
 
     const hoisterResult: HoisterResult = hoist(this.transToHoisterTree(this.productionGraph), { check: true })
     this._getNodeModules(hoisterResult.dependencies, this.nodeModules)
@@ -31,7 +31,7 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
 
   protected abstract getArgs(): string[]
   protected abstract parseDependenciesTree(jsonBlob: string): T
-  protected abstract extractProductionDependencyGraph(tree: Dependency<T, OptionalsType>, dependencyId: string): void
+  protected abstract extractProductionDependencyGraph(tree: Dependency<T, OptionalsType>, dependencyId: string): Promise<void>
   protected abstract collectAllDependencies(tree: Dependency<T, OptionalsType>): void
 
   protected async getDependenciesTree(): Promise<T> {
@@ -44,11 +44,11 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
     return this.parseDependenciesTree(dependencies)
   }
 
-  protected resolvePath(filePath: string): string {
+  protected async resolvePath(filePath: string): Promise<string> {
     try {
-      const stats = fs.lstatSync(filePath)
+      const stats = await lstat(filePath)
       if (stats.isSymbolicLink()) {
-        return fs.realpathSync(filePath)
+        return await realpath(filePath)
       } else {
         return filePath
       }
@@ -92,7 +92,7 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
     return node
   }
 
-  private _getNodeModules(dependencies: Set<HoisterResult>, result: NodeModuleInfo[]) {
+  private async _getNodeModules(dependencies: Set<HoisterResult>, result: NodeModuleInfo[]) {
     if (dependencies.size === 0) {
       return
     }
@@ -107,12 +107,12 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
       const node: NodeModuleInfo = {
         name: d.name,
         version: reference,
-        dir: this.resolvePath(p),
+        dir: await this.resolvePath(p),
       }
       result.push(node)
       if (d.dependencies.size > 0) {
         node.dependencies = []
-        this._getNodeModules(d.dependencies, node.dependencies)
+        await this._getNodeModules(d.dependencies, node.dependencies)
       }
     }
     result.sort((a, b) => a.name.localeCompare(b.name))

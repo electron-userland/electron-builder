@@ -25,7 +25,7 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
     }
   }
 
-  protected extractProductionDependencyGraph(tree: NpmDependency, dependencyId: string): void {
+  protected async extractProductionDependencyGraph(tree: NpmDependency, dependencyId: string) {
     if (this.productionGraph[dependencyId]) {
       return
     }
@@ -37,13 +37,15 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
     // After initialization, if there are libraries with the same name+version later, they will not be searched recursively again
     // This will prevents infinite loops when circular dependencies are encountered.
     this.productionGraph[dependencyId] = { dependencies: [] }
-    const productionDeps = Object.entries(resolvedDeps)
-      .filter(([packageName]) => prodDependencies[packageName])
-      .map(([packageName, dependency]) => {
-        const childDependencyId = `${packageName}@${dependency.version}`
-        this.extractProductionDependencyGraph(dependency, childDependencyId)
-        return childDependencyId
-      })
+    const productionDeps = await Promise.all(
+      Object.entries(resolvedDeps)
+        .filter(([packageName]) => prodDependencies[packageName])
+        .map(async ([packageName, dependency]) => {
+          const childDependencyId = `${packageName}@${dependency.version}`
+          await this.extractProductionDependencyGraph(dependency, childDependencyId)
+          return childDependencyId
+        })
+    )
     this.productionGraph[dependencyId] = { dependencies: productionDeps }
   }
 

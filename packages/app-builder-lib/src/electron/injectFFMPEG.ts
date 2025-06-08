@@ -1,10 +1,10 @@
-import * as fs from "fs"
 import * as path from "path"
 import { ElectronPlatformName } from "./ElectronFramework"
 
-import { log } from "builder-util"
+import { exists, log } from "builder-util"
 import { getBin } from "../binDownload"
 import { PrepareApplicationStageDirectoryOptions } from "../Framework"
+import { copyFile } from "fs-extra"
 
 // NOTE: Adapted from https://github.com/MarshallOfSound/electron-packager-plugin-non-proprietary-codecs-ffmpeg to resolve dependency vulnerabilities
 const downloadFFMPEG = async (electronVersion: string, platform: ElectronPlatformName, arch: string) => {
@@ -15,7 +15,7 @@ const downloadFFMPEG = async (electronVersion: string, platform: ElectronPlatfor
   return getBin(ffmpegFileName, url)
 }
 
-const copyFFMPEG = (targetPath: string, platform: ElectronPlatformName) => (sourcePath: string) => {
+const copyFFMPEG = (targetPath: string, platform: ElectronPlatformName) => async (sourcePath: string) => {
   let fileName = "ffmpeg.dll"
   if (["darwin", "mas"].includes(platform)) {
     fileName = "libffmpeg.dylib"
@@ -28,13 +28,13 @@ const copyFFMPEG = (targetPath: string, platform: ElectronPlatformName) => (sour
   log.info({ lib: log.filePath(libPath), target: log.filePath(libTargetPath) }, "copying non-proprietary FFMPEG")
 
   // If the source doesn't exist we have a problem
-  if (!fs.existsSync(libPath)) {
+  if (!(await exists(libPath))) {
     throw new Error(`Failed to find FFMPEG library file at path: ${libPath}`)
   }
 
   // If we are copying to the source we can stop immediately
   if (libPath !== libTargetPath) {
-    fs.copyFileSync(libPath, libTargetPath)
+    await copyFile(libPath, libTargetPath)
   }
   return libTargetPath
 }
