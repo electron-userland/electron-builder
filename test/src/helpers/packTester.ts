@@ -254,7 +254,7 @@ async function packAndCheck(expect: ExpectStatic, packagerOptions: PackagerOptio
     objectToCompare[platform.buildConfigurationKey] = await Promise.all(
       (artifacts.get(platform) || [])
         .sort((a, b) => {
-          const archSortKey = a.arch === b.arch ? 0 : a.arch === Arch.arm64 ? -1 : 1
+          const archSortKey = (a.arch?.valueOf() ?? 0) - (b.arch?.valueOf() ?? 0)
           const fileNameSortKey = sortKey(a).localeCompare(sortKey(b), "en")
           return fileNameSortKey + archSortKey
         })
