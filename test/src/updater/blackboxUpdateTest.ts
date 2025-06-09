@@ -308,7 +308,7 @@ async function runTestWithinServer(doTest: (rootDirectory: string, updateConfigP
   // Math.random() / Math.random() is used to avoid zero
   // Math.floor(((Math.random() / Math.random()) * 1000) % 65535) is used to avoid port number collision
   const port = 8000 + Math.floor(((Math.random() / Math.random()) * 1000) % 65535)
-  const serverBin = await getBinFromUrl("ran", "0.1.3", "imfA3LtT6umMM0BuQ29MgO3CJ9uleN5zRBi3sXzcTbMOeYZ6SQeN7eKr3kXZikKnVOIwbH+DDO43wkiR/qTdkg==")
+  const serverBin = await getBinFromUrl("ran", "ran-0.1.3.7z", "imfA3LtT6umMM0BuQ29MgO3CJ9uleN5zRBi3sXzcTbMOeYZ6SQeN7eKr3kXZikKnVOIwbH+DDO43wkiR/qTdkg==")
   const httpServerProcess = doSpawn(path.join(serverBin, process.platform, "ran"), [`-root=${root}`, `-port=${port}`, "-gzip=false", "-listdir=true"])
 
   const updateConfig = await writeUpdateConfig<GenericServerOptions>({

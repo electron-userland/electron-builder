@@ -3,7 +3,7 @@ import { getBinFromUrl } from "../binDownload"
 
 export function getLinuxToolsPath() {
   //noinspection SpellCheckingInspection
-  return getBinFromUrl("linux-tools", "mac-10.12.3", "SQ8fqIRVXuQVWnVgaMTDWyf2TLAJjJYw3tRSqQJECmgF6qdM7Kogfa6KD49RbGzzMYIFca9Uw3MdsxzOPRWcYw==")
+  return getBinFromUrl("linux-tools", "linux-tools-mac-10.12.3.7z", "SQ8fqIRVXuQVWnVgaMTDWyf2TLAJjJYw3tRSqQJECmgF6qdM7Kogfa6KD49RbGzzMYIFca9Uw3MdsxzOPRWcYw==")
 }
 
 export async function getFpmPath() {
@@ -24,7 +24,7 @@ export async function getFpmPath() {
       checksum = "OnzvBdsHE5djcXcAT87rwbnZwS789ZAd2ehuIO42JWtBAHNzXKxV4o/24XFX5No4DJWGO2YSGQttW+zn7d/4rQ=="
       archSuffix = "-x86"
     }
-    return path.join(await getBinFromUrl("fpm", "1.9.3-2.3.1-linux" + archSuffix, checksum), exec)
+    return path.join(await getBinFromUrl("fpm", "fpm-1.9.3-2.3.1-linux" + archSuffix + ".7z", checksum), exec)
   }
-  return path.join(await getBinFromUrl("fpm", "1.9.3-20150715-2.2.2-mac", "oXfq+0H2SbdrbMik07mYloAZ8uHrmf6IJk+Q3P1kwywuZnKTXSaaeZUJNlWoVpRDWNu537YxxpBQWuTcF+6xfw=="), exec)
+  return path.join(await getBinFromUrl("fpm", "fpm-1.9.3-20150715-2.2.2-mac.7z", "oXfq+0H2SbdrbMik07mYloAZ8uHrmf6IJk+Q3P1kwywuZnKTXSaaeZUJNlWoVpRDWNu537YxxpBQWuTcF+6xfw=="), exec)
 }
