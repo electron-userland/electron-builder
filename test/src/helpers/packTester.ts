@@ -168,15 +168,6 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
           }
           await copyFile(destLockfile, testFixtureLockfile)
         }
-
-        // save lockfile fixture
-        if (!(await exists(testFixtureLockfile)) && shouldUpdateLockfiles) {
-          const fixtureDir = path.dirname(testFixtureLockfile)
-          if (!(await exists(fixtureDir))) {
-            await mkdir(fixtureDir)
-          }
-          await copyFile(destLockfile, testFixtureLockfile)
-        }
       } else {
         // if no deps installed, make sure no leftover lockfile fixture
         if (await exists(testFixtureLockfile)) {
@@ -262,7 +253,11 @@ async function packAndCheck(expect: ExpectStatic, packagerOptions: PackagerOptio
   for (const platform of packagerOptions.targets!.keys()) {
     objectToCompare[platform.buildConfigurationKey] = await Promise.all(
       (artifacts.get(platform) || [])
-        .sort((a, b) => sortKey(a).localeCompare(sortKey(b), "en"))
+        .sort((a, b) => {
+          const archSortKey = a.arch === b.arch ? 0 : a.arch === Arch.arm64 ? -1 : 1
+          const fileNameSortKey = sortKey(a).localeCompare(sortKey(b), "en")
+          return fileNameSortKey + archSortKey
+        })
         .map(async it => {
           const result: any = { ...it }
           const file = result.file
@@ -275,16 +270,14 @@ async function packAndCheck(expect: ExpectStatic, packagerOptions: PackagerOptio
           const updateInfo = result.updateInfo
           if (updateInfo != null) {
             result.updateInfo = removeUnstableProperties(updateInfo)
-          } else if (updateInfo === null) {
+          }
+          if (updateInfo === null) {
             delete result.updateInfo
           }
 
           // reduce snapshot - avoid noise
           if (result.safeArtifactName == null) {
             delete result.safeArtifactName
-          }
-          if (result.updateInfo == null) {
-            delete result.updateInfo
           }
           if (result.arch == null) {
             delete result.arch
