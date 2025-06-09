@@ -271,7 +271,7 @@ async function packAndCheck(expect: ExpectStatic, packagerOptions: PackagerOptio
           if (updateInfo != null) {
             result.updateInfo = removeUnstableProperties(updateInfo)
           }
-          if (updateInfo === null) {
+          if (updateInfo == null) {
             delete result.updateInfo
           }
 

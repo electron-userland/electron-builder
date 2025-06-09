@@ -45,7 +45,7 @@ const shouldRetry = (args: string[]) => (error: any) => {
   const stdout = error.stdout?.toString() || ""
   const output = `${stdout} ${stderr}`.trim()
 
-  const willRetry = hdiutilTransientExitCodes.has(code)
+  const willRetry = hdiutilTransientExitCodes.has(code.toString())
   log.warn({ willRetry, args, code, output }, `hdiutil error: ${explainHdiutilError(code)}`)
 
   return willRetry

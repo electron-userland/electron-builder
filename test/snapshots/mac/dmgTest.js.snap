@@ -225,15 +225,15 @@ exports[`dmg > bundleShortVersion 1`] = `
 {
   "mac": [
     {
-      "arch": "x64",
-      "file": "Bundle-ShortVersion-2017.1-alpha5.dmg",
+      "file": "Bundle-ShortVersion-2017.1-alpha5.dmg.blockmap",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
     {
-      "file": "Bundle-ShortVersion-2017.1-alpha5.dmg.blockmap",
+      "arch": "x64",
+      "file": "Bundle-ShortVersion-2017.1-alpha5.dmg",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
@@ -294,16 +294,16 @@ exports[`dmg > custom background - new way 1`] = `
 {
   "mac": [
     {
-      "arch": "x64",
-      "file": "CustomBackground-1.1.0-mac.zip",
+      "file": "CustomBackground-1.1.0-mac.zip.blockmap",
+      "safeArtifactName": "CustomBackground-1.1.0-mac.zip.blockmap",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
     {
-      "file": "CustomBackground-1.1.0-mac.zip.blockmap",
-      "safeArtifactName": "CustomBackground-1.1.0-mac.zip.blockmap",
+      "arch": "x64",
+      "file": "CustomBackground-1.1.0-mac.zip",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
@@ -364,16 +364,16 @@ exports[`dmg > disable dmg icon (light), bundleVersion 1`] = `
 {
   "mac": [
     {
-      "arch": "x64",
-      "file": "Disable-Icon-1.1.0-mac.zip",
+      "file": "Disable-Icon-1.1.0-mac.zip.blockmap",
+      "safeArtifactName": "Disable-Icon-1.1.0-mac.zip.blockmap",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
     {
-      "file": "Disable-Icon-1.1.0-mac.zip.blockmap",
-      "safeArtifactName": "Disable-Icon-1.1.0-mac.zip.blockmap",
+      "arch": "x64",
+      "file": "Disable-Icon-1.1.0-mac.zip",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
@@ -434,15 +434,15 @@ exports[`dmg > dmg 1`] = `
 {
   "mac": [
     {
-      "arch": "x64",
-      "file": "Default-Dmg-1.1.0.dmg",
+      "file": "Default-Dmg-1.1.0.dmg.blockmap",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
     {
-      "file": "Default-Dmg-1.1.0.dmg.blockmap",
+      "arch": "x64",
+      "file": "Default-Dmg-1.1.0.dmg",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
@@ -561,15 +561,15 @@ exports[`dmg > license buttons config 2`] = `
 {
   "mac": [
     {
-      "arch": "x64",
-      "file": "Foo-5-1.1.0.dmg",
+      "file": "Foo-5-1.1.0.dmg.blockmap",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
     {
-      "file": "Foo-5-1.1.0.dmg.blockmap",
+      "arch": "x64",
+      "file": "Foo-5-1.1.0.dmg",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
@@ -630,15 +630,15 @@ exports[`dmg > license en 1`] = `
 {
   "mac": [
     {
-      "arch": "x64",
-      "file": "Foo-3-1.1.0.dmg",
+      "file": "Foo-3-1.1.0.dmg.blockmap",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
     {
-      "file": "Foo-3-1.1.0.dmg.blockmap",
+      "arch": "x64",
+      "file": "Foo-3-1.1.0.dmg",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
@@ -699,15 +699,15 @@ exports[`dmg > license ja 1`] = `
 {
   "mac": [
     {
-      "arch": "x64",
-      "file": "Foo-2-1.1.0.dmg",
+      "file": "Foo-2-1.1.0.dmg.blockmap",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
     {
-      "file": "Foo-2-1.1.0.dmg.blockmap",
+      "arch": "x64",
+      "file": "Foo-2-1.1.0.dmg",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
@@ -768,15 +768,15 @@ exports[`dmg > license rtf 1`] = `
 {
   "mac": [
     {
-      "arch": "x64",
-      "file": "Foo-4-1.1.0.dmg",
+      "file": "Foo-4-1.1.0.dmg.blockmap",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
     {
-      "file": "Foo-4-1.1.0.dmg.blockmap",
+      "arch": "x64",
+      "file": "Foo-4-1.1.0.dmg",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
@@ -837,15 +837,15 @@ exports[`dmg > multi language license 1`] = `
 {
   "mac": [
     {
-      "arch": "x64",
-      "file": "Foo-1-1.1.0.dmg",
+      "file": "Foo-1-1.1.0.dmg.blockmap",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
     {
-      "file": "Foo-1-1.1.0.dmg.blockmap",
+      "arch": "x64",
+      "file": "Foo-1-1.1.0.dmg",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
@@ -906,15 +906,15 @@ exports[`dmg > no background 1`] = `
 {
   "mac": [
     {
-      "arch": "x64",
-      "file": "No-Background-1.1.0.dmg",
+      "file": "No-Background-1.1.0.dmg.blockmap",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
     {
-      "file": "No-Background-1.1.0.dmg.blockmap",
+      "arch": "x64",
+      "file": "No-Background-1.1.0.dmg",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
@@ -990,15 +990,15 @@ exports[`dmg > no build directory 2`] = `
 {
   "mac": [
     {
-      "arch": "x64",
-      "file": "NoBuildDirectory-1.1.0.dmg",
+      "file": "NoBuildDirectory-1.1.0.dmg.blockmap",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
     {
-      "file": "NoBuildDirectory-1.1.0.dmg.blockmap",
+      "arch": "x64",
+      "file": "NoBuildDirectory-1.1.0.dmg",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
@@ -1059,16 +1059,16 @@ exports[`dmg > retina background as 2 png 1`] = `
 {
   "mac": [
     {
-      "arch": "x64",
-      "file": "RetinaBackground-1.1.0-mac.zip",
+      "file": "RetinaBackground-1.1.0-mac.zip.blockmap",
+      "safeArtifactName": "RetinaBackground-1.1.0-mac.zip.blockmap",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
     {
-      "file": "RetinaBackground-1.1.0-mac.zip.blockmap",
-      "safeArtifactName": "RetinaBackground-1.1.0-mac.zip.blockmap",
+      "arch": "x64",
+      "file": "RetinaBackground-1.1.0-mac.zip",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
@@ -1129,15 +1129,15 @@ exports[`dmg > unset dmg icon 1`] = `
 {
   "mac": [
     {
-      "arch": "x64",
-      "file": "No_Volume_Icon-1.1.0.dmg",
+      "file": "No_Volume_Icon-1.1.0.dmg.blockmap",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
     {
-      "file": "No_Volume_Icon-1.1.0.dmg.blockmap",
+      "arch": "x64",
+      "file": "No_Volume_Icon-1.1.0.dmg",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",

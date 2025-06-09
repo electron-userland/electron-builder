@@ -70,7 +70,7 @@
     "typedoc-plugin-markdown": "4.2.8",
     "typescript": "^5.6.2",
     "typescript-json-schema": "0.64.0",
-    "vitest": "^3.0.4"
+    "vitest": "^3.2.2"
   },
   "engines": {
     "node": ">=14.14",
