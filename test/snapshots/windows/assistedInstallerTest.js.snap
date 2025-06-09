@@ -4,7 +4,7 @@ exports[`allowElevation false, app requestedExecutionLevel admin 1`] = `
 {
   "win": [
     {
-      "arch": "arm64",
+      "arch": "x64",
       "file": "test Setup 1.1.0.exe",
       "safeArtifactName": "test-Setup-1.1.0.exe",
     },
@@ -43,7 +43,7 @@ without features",
       },
     },
     {
-      "arch": "arm64",
+      "arch": "x64",
       "file": "Test Custom Installation Dir Setup 1.1.0.exe",
       "safeArtifactName": "Test-Custom-Installation-Dir-Setup-1.1.0.exe",
       "updateInfo": {
@@ -76,7 +76,7 @@ exports[`assisted 1`] = `
       },
     },
     {
-      "arch": "arm64",
+      "arch": "x64",
       "file": "Test App ßW Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe",
       "updateInfo": {
@@ -117,7 +117,7 @@ exports[`assisted, only perMachine 1`] = `
       },
     },
     {
-      "arch": "arm64",
+      "arch": "x64",
       "file": "Test App ßW Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe",
       "updateInfo": {
@@ -142,7 +142,7 @@ exports[`assisted, only perMachine and elevated 1`] = `
       },
     },
     {
-      "arch": "arm64",
+      "arch": "x64",
       "file": "Test App ßW Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe",
       "updateInfo": {
