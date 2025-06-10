@@ -33,8 +33,7 @@ export const NSIS_PATH = () => {
       }
     }
     // Warning: Don't use v3.0.4.2 - https://github.com/electron-userland/electron-builder/issues/6334
-    // noinspection SpellCheckingInspection
-    return getBinFromUrl("nsis", "3.0.4.1", "VKMiizYdmNdJOWpRGz4trl4lD++BvYP2irAXpMilheUP0pc93iKlWAoP843Vlraj8YG19CVn0j+dCo/hURz9+Q==")
+    return getBinFromUrl("nsis-3.0.4.1", "nsis-3.0.4.1.7z", "VKMiizYdmNdJOWpRGz4trl4lD++BvYP2irAXpMilheUP0pc93iKlWAoP843Vlraj8YG19CVn0j+dCo/hURz9+Q==")
   })
 }
 
@@ -44,7 +43,7 @@ export const NSIS_RESOURCES_PATH = () => {
       const { checksum, url, version } = options.customNsisResources
       return getBinFromCustomLoc("nsis-resources", version, url, checksum)
     }
-    return getBinFromUrl("nsis-resources", "3.4.1", "Dqd6g+2buwwvoG1Vyf6BHR1b+25QMmPcwZx40atOT57gH27rkjOei1L0JTldxZu4NFoEmW4kJgZ3DlSWVON3+Q==")
+    return getBinFromUrl("nsis-resources-3.4.1", "nsis-resources-3.4.1.7z", "Dqd6g+2buwwvoG1Vyf6BHR1b+25QMmPcwZx40atOT57gH27rkjOei1L0JTldxZu4NFoEmW4kJgZ3DlSWVON3+Q==")
   })
 }
 
