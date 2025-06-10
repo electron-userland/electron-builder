@@ -197,13 +197,12 @@ export class DmgTarget extends Target {
 }
 
 async function createStageDmg(tempDmg: string, appPath: string, volumeName: string) {
-  const createArgs = ["create", "-srcfolder", appPath, "-volname", volumeName, "-anyowners", "-nospotlight", "-format", "UDRW"]
+  // don't use APFS: https://github.com/electron-userland/electron-builder/issues/8415
+  const createArgs = ["create", "-srcfolder", appPath, "-volname", volumeName, "-anyowners", "-nospotlight", "-format", "UDRW", "-fs", "HFS+"]
   const imageArgs = addLogLevel(createArgs)
   if (log.isDebugEnabled) {
     imageArgs.push("-debug")
   }
-
-  imageArgs.push("-fs", "APFS")
   imageArgs.push(tempDmg)
   await hdiUtil(imageArgs).catch(async e => {
     if (hdiutilTransientExitCodes.has(e.code)) {
