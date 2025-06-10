@@ -529,19 +529,9 @@ exports[`win concurrent - all targets 1`] = `
 {
   "win": [
     {
-      "arch": "arm64",
-      "file": "Test Concurrent-1.1.0-arm64.7z",
-      "safeArtifactName": "Test-Concurrent-1.1.0-arm64.7z",
-    },
-    {
       "arch": "x64",
       "file": "Test Concurrent-1.1.0-x64.7z",
       "safeArtifactName": "Test-Concurrent-1.1.0-x64.7z",
-    },
-    {
-      "arch": "arm64",
-      "file": "Test Concurrent-1.1.0-arm64.appx",
-      "safeArtifactName": "Test-Concurrent-1.1.0-arm64.appx",
     },
     {
       "arch": "x64",
@@ -549,26 +539,8 @@ exports[`win concurrent - all targets 1`] = `
       "safeArtifactName": "Test-Concurrent-1.1.0-x64.appx",
     },
     {
-      "arch": "arm64",
-      "file": "Test Concurrent-1.1.0-arm64.exe",
-      "safeArtifactName": "Test-Concurrent-1.1.0-arm64.exe",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
       "file": "Test Concurrent-1.1.0-arm64.exe.blockmap",
       "safeArtifactName": "Test-Concurrent-1.1.0-arm64.exe.blockmap",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "arch": "x64",
-      "file": "Test Concurrent-1.1.0-x64.exe",
-      "safeArtifactName": "Test-Concurrent-1.1.0-x64.exe",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
@@ -599,9 +571,13 @@ exports[`win concurrent - all targets 1`] = `
       },
     },
     {
-      "arch": "arm64",
-      "file": "Test Concurrent-1.1.0-arm64.exe",
-      "safeArtifactName": "Test-Concurrent-1.1.0-arm64.exe",
+      "arch": "x64",
+      "file": "Test Concurrent-1.1.0-x64.exe",
+      "safeArtifactName": "Test-Concurrent-1.1.0-x64.exe",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
     },
     {
       "arch": "x64",
@@ -613,19 +589,68 @@ exports[`win concurrent - all targets 1`] = `
       "safeArtifactName": "Test-Concurrent-1.1.0.exe",
     },
     {
-      "arch": "arm64",
-      "file": "concurrent-1.1.0-full.nupkg",
-    },
-    {
       "arch": "x64",
       "file": "concurrent-1.1.0-full.nupkg",
     },
     {
-      "arch": "arm64",
+      "arch": "x64",
       "file": "RELEASES",
     },
     {
       "arch": "x64",
+      "file": "Test Concurrent-1.1.0-x64.exe",
+      "safeArtifactName": "concurrent-Setup-1.1.0.exe",
+    },
+    {
+      "arch": "x64",
+      "file": "Test Concurrent-1.1.0-x64.tar.bz2",
+      "safeArtifactName": "Test-Concurrent-1.1.0-x64.tar.bz2",
+    },
+    {
+      "arch": "x64",
+      "file": "Test Concurrent-1.1.0-x64.tar.gz",
+      "safeArtifactName": "Test-Concurrent-1.1.0-x64.tar.gz",
+    },
+    {
+      "arch": "x64",
+      "file": "Test Concurrent-1.1.0-x64.tar.xz",
+      "safeArtifactName": "Test-Concurrent-1.1.0-x64.tar.xz",
+    },
+    {
+      "arch": "x64",
+      "file": "Test Concurrent-1.1.0-x64.zip",
+      "safeArtifactName": "Test-Concurrent-1.1.0-x64.zip",
+    },
+    {
+      "arch": "arm64",
+      "file": "Test Concurrent-1.1.0-arm64.7z",
+      "safeArtifactName": "Test-Concurrent-1.1.0-arm64.7z",
+    },
+    {
+      "arch": "arm64",
+      "file": "Test Concurrent-1.1.0-arm64.appx",
+      "safeArtifactName": "Test-Concurrent-1.1.0-arm64.appx",
+    },
+    {
+      "arch": "arm64",
+      "file": "Test Concurrent-1.1.0-arm64.exe",
+      "safeArtifactName": "Test-Concurrent-1.1.0-arm64.exe",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "arch": "arm64",
+      "file": "Test Concurrent-1.1.0-arm64.exe",
+      "safeArtifactName": "Test-Concurrent-1.1.0-arm64.exe",
+    },
+    {
+      "arch": "arm64",
+      "file": "concurrent-1.1.0-full.nupkg",
+    },
+    {
+      "arch": "arm64",
       "file": "RELEASES",
     },
     {
@@ -634,19 +659,9 @@ exports[`win concurrent - all targets 1`] = `
       "safeArtifactName": "concurrent-Setup-1.1.0-arm64.exe",
     },
     {
-      "arch": "x64",
-      "file": "Test Concurrent-1.1.0-x64.exe",
-      "safeArtifactName": "concurrent-Setup-1.1.0.exe",
-    },
-    {
       "arch": "arm64",
       "file": "Test Concurrent-1.1.0-arm64.tar.bz2",
       "safeArtifactName": "Test-Concurrent-1.1.0-arm64.tar.bz2",
-    },
-    {
-      "arch": "x64",
-      "file": "Test Concurrent-1.1.0-x64.tar.bz2",
-      "safeArtifactName": "Test-Concurrent-1.1.0-x64.tar.bz2",
     },
     {
       "arch": "arm64",
@@ -654,29 +669,14 @@ exports[`win concurrent - all targets 1`] = `
       "safeArtifactName": "Test-Concurrent-1.1.0-arm64.tar.gz",
     },
     {
-      "arch": "x64",
-      "file": "Test Concurrent-1.1.0-x64.tar.gz",
-      "safeArtifactName": "Test-Concurrent-1.1.0-x64.tar.gz",
-    },
-    {
       "arch": "arm64",
       "file": "Test Concurrent-1.1.0-arm64.tar.xz",
       "safeArtifactName": "Test-Concurrent-1.1.0-arm64.tar.xz",
     },
     {
-      "arch": "x64",
-      "file": "Test Concurrent-1.1.0-x64.tar.xz",
-      "safeArtifactName": "Test-Concurrent-1.1.0-x64.tar.xz",
-    },
-    {
       "arch": "arm64",
       "file": "Test Concurrent-1.1.0-arm64.zip",
       "safeArtifactName": "Test-Concurrent-1.1.0-arm64.zip",
-    },
-    {
-      "arch": "x64",
-      "file": "Test Concurrent-1.1.0-x64.zip",
-      "safeArtifactName": "Test-Concurrent-1.1.0-x64.zip",
     },
   ],
 }
@@ -758,17 +758,16 @@ exports[`win concurrent 1`] = `
 {
   "win": [
     {
-      "arch": "arm64",
-      "file": "Test Concurrent-1.1.0-arm64.exe",
-      "safeArtifactName": "Test-Concurrent-1.1.0-arm64.exe",
+      "file": "Test Concurrent-1.1.0-arm64.exe.blockmap",
+      "safeArtifactName": "Test-Concurrent-1.1.0-arm64.exe.blockmap",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
     {
-      "file": "Test Concurrent-1.1.0-arm64.exe.blockmap",
-      "safeArtifactName": "Test-Concurrent-1.1.0-arm64.exe.blockmap",
+      "file": "Test Concurrent-1.1.0-x64.exe.blockmap",
+      "safeArtifactName": "Test-Concurrent-1.1.0-x64.exe.blockmap",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
@@ -778,14 +777,6 @@ exports[`win concurrent 1`] = `
       "arch": "x64",
       "file": "Test Concurrent-1.1.0-x64.exe",
       "safeArtifactName": "Test-Concurrent-1.1.0-x64.exe",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "file": "Test Concurrent-1.1.0-x64.exe.blockmap",
-      "safeArtifactName": "Test-Concurrent-1.1.0-x64.exe.blockmap",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
@@ -802,6 +793,15 @@ exports[`win concurrent 1`] = `
     {
       "file": "Test Concurrent-1.1.0.exe.blockmap",
       "safeArtifactName": "Test-Concurrent-1.1.0.exe.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "arch": "arm64",
+      "file": "Test Concurrent-1.1.0-arm64.exe",
+      "safeArtifactName": "Test-Concurrent-1.1.0-arm64.exe",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
