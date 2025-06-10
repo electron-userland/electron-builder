@@ -10,7 +10,7 @@ import { attachAndExecute, getDmgTemplatePath } from "dmg-builder/out/dmgUtil"
 const dmgTarget = Platform.MAC.createTarget("dmg", Arch.x64)
 const defaultTarget = Platform.MAC.createTarget(undefined, Arch.x64)
 
-describe("dmg", { sequential: true }, () => {
+describe("dmg", { concurrent: true }, () => {
   test.ifMac("dmg", ({ expect }) =>
     app(expect, {
       targets: dmgTarget,
