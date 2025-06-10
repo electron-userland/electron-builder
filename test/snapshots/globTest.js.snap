@@ -61,10 +61,8 @@ exports[`isInstallDepsBefore=true > asarUnpack node_modules 2`] = `
           "unpacked": true,
         },
       },
-      "unpacked": true,
     },
   },
-  "unpacked": true,
 }
 `;
 
@@ -9883,7 +9881,6 @@ exports[`isInstallDepsBefore=true > symlinks everywhere with static framework 3`
                                       "unpacked": true,
                                     },
                                   },
-                                  "unpacked": true,
                                 },
                                 "Hello": {
                                   "size": "<size>",
@@ -9930,7 +9927,6 @@ exports[`isInstallDepsBefore=true > symlinks everywhere with static framework 3`
                                           "unpacked": true,
                                         },
                                       },
-                                      "unpacked": true,
                                     },
                                     "Hello.swiftsourceinfo": {
                                       "size": "<size>",
@@ -9941,33 +9937,26 @@ exports[`isInstallDepsBefore=true > symlinks everywhere with static framework 3`
                                       "unpacked": true,
                                     },
                                   },
-                                  "unpacked": true,
                                 },
                               },
-                              "unpacked": true,
                             },
                             "Current": {
                               "link": "node_modules/hello-world/lib/Release/Hello.framework/Versions/A",
                               "unpacked": true,
                             },
                           },
-                          "unpacked": true,
                         },
                       },
-                      "unpacked": true,
                     },
                   },
-                  "unpacked": true,
                 },
               },
-              "unpacked": true,
             },
             "package.json": {
               "size": "<size>",
               "unpacked": true,
             },
           },
-          "unpacked": true,
         },
         "ms": {
           "files": {
@@ -10111,10 +10100,8 @@ exports[`unpackDir 2`] = `
               "unpacked": true,
             },
           },
-          "unpacked": true,
         },
       },
-      "unpacked": true,
     },
     "b2": {
       "files": {
@@ -10123,7 +10110,6 @@ exports[`unpackDir 2`] = `
           "unpacked": true,
         },
       },
-      "unpacked": true,
     },
     "do-not-unpack-dir": {
       "files": {
@@ -10230,10 +10216,8 @@ exports[`unpackDir one 2`] = `
               "unpacked": true,
             },
           },
-          "unpacked": true,
         },
       },
-      "unpacked": true,
     },
     "b2": {
       "files": {
@@ -10242,7 +10226,6 @@ exports[`unpackDir one 2`] = `
           "unpacked": true,
         },
       },
-      "unpacked": true,
     },
     "do-not-unpack-dir": {
       "files": {
