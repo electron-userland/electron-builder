@@ -4,9 +4,9 @@ exports[`linux concurrent 1`] = `
 {
   "linux": [
     {
-      "arch": "x64",
-      "file": "Test Concurrent-1.1.0-x86_64.AppImage",
-      "safeArtifactName": "Test-Concurrent-1.1.0-x86_64.AppImage",
+      "arch": "armv7l",
+      "file": "Test Concurrent-1.1.0-armv7l.AppImage",
+      "safeArtifactName": "Test-Concurrent-1.1.0-armv7l.AppImage",
       "updateInfo": {
         "blockMapSize": "@blockMapSize",
         "sha512": "@sha512",
@@ -14,9 +14,9 @@ exports[`linux concurrent 1`] = `
       },
     },
     {
-      "arch": "armv7l",
-      "file": "Test Concurrent-1.1.0-armv7l.AppImage",
-      "safeArtifactName": "Test-Concurrent-1.1.0-armv7l.AppImage",
+      "arch": "x64",
+      "file": "Test Concurrent-1.1.0-x86_64.AppImage",
+      "safeArtifactName": "Test-Concurrent-1.1.0-x86_64.AppImage",
       "updateInfo": {
         "blockMapSize": "@blockMapSize",
         "sha512": "@sha512",
@@ -172,9 +172,9 @@ exports[`mac/win/linux concurrent 1`] = `
 {
   "linux": [
     {
-      "arch": "x64",
-      "file": "Test Concurrent-1.1.0-x86_64.AppImage",
-      "safeArtifactName": "Test-Concurrent-1.1.0-x86_64.AppImage",
+      "arch": "armv7l",
+      "file": "Test Concurrent-1.1.0-armv7l.AppImage",
+      "safeArtifactName": "Test-Concurrent-1.1.0-armv7l.AppImage",
       "updateInfo": {
         "blockMapSize": "@blockMapSize",
         "sha512": "@sha512",
@@ -182,9 +182,9 @@ exports[`mac/win/linux concurrent 1`] = `
       },
     },
     {
-      "arch": "armv7l",
-      "file": "Test Concurrent-1.1.0-armv7l.AppImage",
-      "safeArtifactName": "Test-Concurrent-1.1.0-armv7l.AppImage",
+      "arch": "x64",
+      "file": "Test Concurrent-1.1.0-x86_64.AppImage",
+      "safeArtifactName": "Test-Concurrent-1.1.0-x86_64.AppImage",
       "updateInfo": {
         "blockMapSize": "@blockMapSize",
         "sha512": "@sha512",
