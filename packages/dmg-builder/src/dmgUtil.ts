@@ -143,12 +143,12 @@ export async function customizeDmg({ artifactPath, volumeName, specification, pa
       }
     }
   } else {
-    settings.background = specification.background
+    settings.background = backgroundFile
     delete settings["background-color"]
   }
 
-  if (!isEmptyOrSpaces(backgroundFile)) {
-    const size = await getImageSizeUsingSips(backgroundFile)
+  if (!isEmptyOrSpaces(settings.background)) {
+    const size = await getImageSizeUsingSips(settings.background)
     settings.window = { position: { x: 400, y: Math.round((1440 - size.height) / 2) }, size, ...settings.window }
   }
 
