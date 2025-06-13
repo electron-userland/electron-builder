@@ -580,17 +580,17 @@ exports[`Electron autoupdate (fresh install & update) > win 1`] = `
       },
     },
     {
-      "arch": "x64",
-      "file": "TestApp Setup.exe",
-      "safeArtifactName": "TestApp-Setup.exe",
+      "file": "TestApp Setup.exe.blockmap",
+      "safeArtifactName": "TestApp-Setup.exe.blockmap",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
     {
-      "file": "TestApp Setup.exe.blockmap",
-      "safeArtifactName": "TestApp-Setup.exe.blockmap",
+      "arch": "x64",
+      "file": "TestApp Setup.exe",
+      "safeArtifactName": "TestApp-Setup.exe",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
@@ -620,17 +620,17 @@ exports[`Electron autoupdate (fresh install & update) > win 2`] = `
       },
     },
     {
-      "arch": "x64",
-      "file": "TestApp Setup.exe",
-      "safeArtifactName": "TestApp-Setup.exe",
+      "file": "TestApp Setup.exe.blockmap",
+      "safeArtifactName": "TestApp-Setup.exe.blockmap",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
     {
-      "file": "TestApp Setup.exe.blockmap",
-      "safeArtifactName": "TestApp-Setup.exe.blockmap",
+      "arch": "x64",
+      "file": "TestApp Setup.exe",
+      "safeArtifactName": "TestApp-Setup.exe",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",

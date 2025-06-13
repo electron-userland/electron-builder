@@ -63,17 +63,17 @@ exports[`extraDistFiles 1`] = `
 {
   "mac": [
     {
-      "arch": "x64",
-      "file": "Test App ßW-1.1.0-mac.zip",
-      "safeArtifactName": "TestApp-1.1.0-mac.zip",
+      "file": "Test App ßW-1.1.0-mac.zip.blockmap",
+      "safeArtifactName": "Test App ßW-1.1.0-mac.zip.blockmap",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
     {
-      "file": "Test App ßW-1.1.0-mac.zip.blockmap",
-      "safeArtifactName": "Test App ßW-1.1.0-mac.zip.blockmap",
+      "arch": "x64",
+      "file": "Test App ßW-1.1.0-mac.zip",
+      "safeArtifactName": "TestApp-1.1.0-mac.zip",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
@@ -152,17 +152,17 @@ exports[`only zip 1`] = `
 {
   "mac": [
     {
-      "arch": "x64",
-      "file": "Test App ßW-1.1.0-mac.zip",
-      "safeArtifactName": "TestApp-1.1.0-mac.zip",
+      "file": "Test App ßW-1.1.0-mac.zip.blockmap",
+      "safeArtifactName": "Test App ßW-1.1.0-mac.zip.blockmap",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
     {
-      "file": "Test App ßW-1.1.0-mac.zip.blockmap",
-      "safeArtifactName": "Test App ßW-1.1.0-mac.zip.blockmap",
+      "arch": "x64",
+      "file": "Test App ßW-1.1.0-mac.zip",
+      "safeArtifactName": "TestApp-1.1.0-mac.zip",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
