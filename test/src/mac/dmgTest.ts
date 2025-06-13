@@ -10,7 +10,7 @@ import { attachAndExecute, getDmgTemplatePath } from "dmg-builder/out/dmgUtil"
 const dmgTarget = Platform.MAC.createTarget("dmg", Arch.x64)
 const defaultTarget = Platform.MAC.createTarget(undefined, Arch.x64)
 
-describe("dmg", { sequential: true }, () => {
+describe("dmg", { concurrent: true }, () => {
   test.ifMac("dmg", ({ expect }) =>
     app(expect, {
       targets: dmgTarget,
@@ -40,9 +40,14 @@ describe("dmg", { sequential: true }, () => {
           }
 
           const volumePath = it.volumePath
-          await assertThat(expect, path.join(volumePath, ".background", "background.tiff")).isFile()
+          await assertThat(expect, path.join(volumePath, ".background.tiff")).isFile()
           await assertThat(expect, path.join(volumePath, "Applications")).isSymbolicLink()
-          expect(it.specification.contents).toMatchSnapshot()
+          expect(
+            it.specification.contents.map((c: any) => ({
+              ...c,
+              path: path.extname(c.path) === ".app" ? path.basename(c.path) : c.path,
+            }))
+          ).toMatchSnapshot()
           return false
         },
       },
@@ -103,6 +108,11 @@ describe("dmg", { sequential: true }, () => {
           expect(it.specification.icon).toEqual("foo.icns")
           const packager: PlatformPackager<any> = it.packager
           expect(await packager.getIconPath()).toEqual(path.join(packager.projectDir, "build", "customIcon.icns"))
+
+          if (!("volumePath" in it)) {
+            return false
+          }
+          await assertThat(expect, path.join(it.volumePath, ".VolumeIcon.icns")).isFile()
           return Promise.resolve(true)
         },
       },
@@ -187,7 +197,7 @@ describe("dmg", { sequential: true }, () => {
 
         const volumePath = it.volumePath
         await Promise.all([
-          assertThat(expect, path.join(volumePath, ".background", "background.tiff")).isFile(),
+          assertThat(expect, path.join(volumePath, ".background.tiff")).isFile(),
           assertThat(expect, path.join(volumePath, "Applications")).doesNotExist(),
           assertThat(expect, path.join(volumePath, "TextEdit.app")).isSymbolicLink(),
           assertThat(expect, path.join(volumePath, "TextEdit.app")).isDirectory(),
@@ -216,7 +226,7 @@ describe("dmg", { sequential: true }, () => {
         packed: context => {
           return attachAndExecute(path.join(context.outDir, "No_Volume_Icon-1.1.0.dmg"), false, () => {
             return Promise.all([
-              assertThat(expect, path.join("/Volumes/No_Volume_Icon 1.1.0/.background/background.tiff")).isFile(),
+              assertThat(expect, path.join("/Volumes/No_Volume_Icon 1.1.0/.background.tiff")).isFile(),
               assertThat(expect, path.join("/Volumes/No_Volume_Icon 1.1.0/.VolumeIcon.icns")).doesNotExist(),
             ])
           })
@@ -244,7 +254,7 @@ describe("dmg", { sequential: true }, () => {
       {
         packed: context => {
           return attachAndExecute(path.join(context.outDir, "No-Background-1.1.0.dmg"), false, () => {
-            return assertThat(expect, path.join("/Volumes/No-Background 1.1.0/.background")).doesNotExist()
+            return assertThat(expect, path.join("/Volumes/No-Background 1.1.0/.background.tiff")).doesNotExist()
           })
         },
       }

@@ -1,39 +1,29 @@
-# -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-from __future__ import division
-
-import struct
 import datetime
 import io
-import re
 import os
 import os.path
-import stat
+import struct
 import sys
+from unicodedata import normalize
 
-if sys.platform == 'darwin':
+if sys.platform == "darwin":
     from . import osx
 
-try:
-    long
-except NameError:
-    long = int
-
-from .utils import *
+from .utils import mac_epoch
 
 ALIAS_KIND_FILE = 0
 ALIAS_KIND_FOLDER = 1
 
-ALIAS_HFS_VOLUME_SIGNATURE = b'H+'
+ALIAS_HFS_VOLUME_SIGNATURE = b"H+"
 
-ALIAS_FILESYSTEM_UDF     = 'UDF (CD/DVD)'
-ALIAS_FILESYSTEM_FAT32   = 'FAT32'
-ALIAS_FILESYSTEM_EXFAT   = 'exFAT'
-ALIAS_FILESYSTEM_HFSX    = 'HFSX'
-ALIAS_FILESYSTEM_HFSPLUS = 'HFS+'
-ALIAS_FILESYSTEM_FTP     = 'FTP'
-ALIAS_FILESYSTEM_NTFS    = 'NTFS'
-ALIAS_FILESYSTEM_UNKNOWN = 'unknown'
+ALIAS_FILESYSTEM_UDF = "UDF (CD/DVD)"
+ALIAS_FILESYSTEM_FAT32 = "FAT32"
+ALIAS_FILESYSTEM_EXFAT = "exFAT"
+ALIAS_FILESYSTEM_HFSX = "HFSX"
+ALIAS_FILESYSTEM_HFSPLUS = "HFS+"
+ALIAS_FILESYSTEM_FTP = "FTP"
+ALIAS_FILESYSTEM_NTFS = "NTFS"
+ALIAS_FILESYSTEM_UNKNOWN = "unknown"
 
 ALIAS_FIXED_DISK = 0
 ALIAS_NETWORK_DISK = 1
@@ -42,34 +32,36 @@ ALIAS_800KB_FLOPPY_DISK = 3
 ALIAS_1_44MB_FLOPPY_DISK = 4
 ALIAS_EJECTABLE_DISK = 5
 
-ALIAS_NO_CNID = 0xffffffff
+ALIAS_NO_CNID = 0xFFFFFFFF
 
 ALIAS_FSTYPE_MAP = {
     # Version 2 aliases
-    b'HX': ALIAS_FILESYSTEM_HFSX,
-    b'H+': ALIAS_FILESYSTEM_HFSPLUS,
-
+    b"HX": ALIAS_FILESYSTEM_HFSX,
+    b"H+": ALIAS_FILESYSTEM_HFSPLUS,
     # Version 3 aliases
-    b'BDcu':   ALIAS_FILESYSTEM_UDF,
-    b'BDIS':   ALIAS_FILESYSTEM_FAT32,
-    b'BDxF':   ALIAS_FILESYSTEM_EXFAT,
-    b'HX\0\0': ALIAS_FILESYSTEM_HFSX,
-    b'H+\0\0': ALIAS_FILESYSTEM_HFSPLUS,
-    b'KG\0\0': ALIAS_FILESYSTEM_FTP,
-    b'NTcu':   ALIAS_FILESYSTEM_NTFS,
+    b"BDcu": ALIAS_FILESYSTEM_UDF,
+    b"BDIS": ALIAS_FILESYSTEM_FAT32,
+    b"BDxF": ALIAS_FILESYSTEM_EXFAT,
+    b"HX\0\0": ALIAS_FILESYSTEM_HFSX,
+    b"H+\0\0": ALIAS_FILESYSTEM_HFSPLUS,
+    b"KG\0\0": ALIAS_FILESYSTEM_FTP,
+    b"NTcu": ALIAS_FILESYSTEM_NTFS,
 }
+
 
 def encode_utf8(s):
     if isinstance(s, bytes):
         return s
-    return s.encode('utf-8')
+    return s.encode("utf-8")
+
 
 def decode_utf8(s):
     if isinstance(s, bytes):
-        return s.decode('utf-8')
+        return s.decode("utf-8")
     return s
 
-class AppleShareInfo (object):
+
+class AppleShareInfo:
     def __init__(self, zone=None, server=None, user=None):
         #: The AppleShare zone
         self.zone = zone
@@ -79,13 +71,27 @@ class AppleShareInfo (object):
         self.user = user
 
     def __repr__(self):
-        return 'AppleShareInfo(%r,%r,%r)' % (self.zone, self.server, self.user)
+        return "AppleShareInfo({!r},{!r},{!r})".format(
+            self.zone, self.server, self.user
+        )
 
-class VolumeInfo (object):
-    def __init__(self, name, creation_date, fs_type, disk_type,
-                 attribute_flags, fs_id, appleshare_info=None,
-                 driver_name=None, posix_path=None, disk_image_alias=None,
-                 dialup_info=None, network_mount_info=None):
+
+class VolumeInfo:
+    def __init__(
+        self,
+        name,
+        creation_date,
+        fs_type,
+        disk_type,
+        attribute_flags,
+        fs_id,
+        appleshare_info=None,
+        driver_name=None,
+        posix_path=None,
+        disk_image_alias=None,
+        dialup_info=None,
+        network_mount_info=None,
+    ):
         #: The name of the volume on which the target resides
         self.name = name
 
@@ -140,26 +146,52 @@ class VolumeInfo (object):
         return ALIAS_FSTYPE_MAP.get(self.fs_type, ALIAS_FILESYSTEM_UNKNOWN)
 
     def __repr__(self):
-        args = ['name', 'creation_date', 'fs_type', 'disk_type',
-                'attribute_flags', 'fs_id']
+        args = [
+            "name",
+            "creation_date",
+            "fs_type",
+            "disk_type",
+            "attribute_flags",
+            "fs_id",
+        ]
         values = []
         for a in args:
             v = getattr(self, a)
             values.append(repr(v))
 
-        kwargs = ['appleshare_info', 'driver_name', 'posix_path',
-                  'disk_image_alias', 'dialup_info', 'network_mount_info']
+        kwargs = [
+            "appleshare_info",
+            "driver_name",
+            "posix_path",
+            "disk_image_alias",
+            "dialup_info",
+            "network_mount_info",
+        ]
         for a in kwargs:
             v = getattr(self, a)
             if v is not None:
-                values.append('%s=%r' % (a, v))
-        return 'VolumeInfo(%s)' % ','.join(values)
+                values.append(f"{a}={v!r}")
+        return "VolumeInfo(%s)" % ",".join(values)
 
-class TargetInfo (object):
-    def __init__(self, kind, filename, folder_cnid, cnid, creation_date,
-                 creator_code, type_code, levels_from=-1, levels_to=-1,
-                 folder_name=None, cnid_path=None, carbon_path=None,
-                 posix_path=None, user_home_prefix_len=None):
+
+class TargetInfo:
+    def __init__(
+        self,
+        kind,
+        filename,
+        folder_cnid,
+        cnid,
+        creation_date,
+        creator_code,
+        type_code,
+        levels_from=-1,
+        levels_to=-1,
+        folder_name=None,
+        cnid_path=None,
+        carbon_path=None,
+        posix_path=None,
+        user_home_prefix_len=None,
+    ):
         #: Either ALIAS_KIND_FILE or ALIAS_KIND_FOLDER
         self.kind = kind
 
@@ -208,25 +240,38 @@ class TargetInfo (object):
         self.user_home_prefix_len = user_home_prefix_len
 
     def __repr__(self):
-        args = ['kind', 'filename', 'folder_cnid', 'cnid', 'creation_date',
-                'creator_code', 'type_code']
+        args = [
+            "kind",
+            "filename",
+            "folder_cnid",
+            "cnid",
+            "creation_date",
+            "creator_code",
+            "type_code",
+        ]
         values = []
         for a in args:
             v = getattr(self, a)
             values.append(repr(v))
 
         if self.levels_from != -1:
-            values.append('levels_from=%r' % self.levels_from)
+            values.append("levels_from=%r" % self.levels_from)
         if self.levels_to != -1:
-            values.append('levels_to=%r' % self.levels_to)
+            values.append("levels_to=%r" % self.levels_to)
 
-        kwargs = ['folder_name', 'cnid_path', 'carbon_path',
-                  'posix_path', 'user_home_prefix_len']
+        kwargs = [
+            "folder_name",
+            "cnid_path",
+            "carbon_path",
+            "posix_path",
+            "user_home_prefix_len",
+        ]
         for a in kwargs:
             v = getattr(self, a)
-            values.append('%s=%r' % (a, v))
+            values.append(f"{a}={v!r}")
 
-        return 'TargetInfo(%s)' % ','.join(values)
+        return "TargetInfo(%s)" % ",".join(values)
+
 
 TAG_CARBON_FOLDER_NAME = 0
 TAG_CNID_PATH = 1
@@ -246,9 +291,16 @@ TAG_POSIX_PATH_TO_MOUNTPOINT = 19
 TAG_RECURSIVE_ALIAS_OF_DISK_IMAGE = 20
 TAG_USER_HOME_LENGTH_PREFIX = 21
 
-class Alias (object):
-    def __init__(self, appinfo=b'\0\0\0\0', version=2, volume=None,
-                       target=None, extra=[]):
+
+class Alias:
+    def __init__(
+        self,
+        appinfo=b"\0\0\0\0",
+        version=2,
+        volume=None,
+        target=None,
+        extra=[],
+    ):
         """Construct a new :class:`Alias` object with the specified
         contents."""
 
@@ -269,26 +321,48 @@ class Alias (object):
 
     @classmethod
     def _from_fd(cls, b):
-        appinfo, recsize, version = struct.unpack(b'>4shh', b.read(8))
+        appinfo, recsize, version = struct.unpack(b">4shh", b.read(8))
 
         if recsize < 150:
-            raise ValueError('Incorrect alias length')
+            raise ValueError("Incorrect alias length")
 
         if version not in (2, 3):
-            raise ValueError('Unsupported alias version %u' % version)
+            raise ValueError("Unsupported alias version %u" % version)
 
         if version == 2:
-            kind, volname, voldate, fstype, disktype, \
-            folder_cnid, filename, cnid, crdate, creator_code, type_code, \
-            levels_from, levels_to, volattrs, volfsid, reserved = \
-                struct.unpack(b'>h28pI2shI64pII4s4shhI2s10s', b.read(142))
+            (
+                kind,  # h
+                volname,  # 28p
+                voldate,  # I
+                fstype,  # 2s
+                disktype,  # h
+                folder_cnid,  # I
+                filename,  # 64p
+                cnid,  # I
+                crdate,  # I
+                creator_code,  # 4s
+                type_code,  # 4s
+                levels_from,  # h
+                levels_to,  # h
+                volattrs,  # I
+                volfsid,  # 2s
+                reserved,  # 10s
+            ) = struct.unpack(b">h28pI2shI64pII4s4shhI2s10s", b.read(142))
         else:
-            kind, voldate_hr, fstype, disktype, folder_cnid, cnid, crdate_hr, \
-            volattrs, reserved = \
-                struct.unpack(b'>hQ4shIIQI14s', b.read(46))
+            (
+                kind,  # h
+                voldate_hr,  # Q
+                fstype,  # 4s
+                disktype,  # h
+                folder_cnid,  # I
+                cnid,  # I
+                crdate_hr,  # Q
+                volattrs,  # I
+                reserved,  # 14s
+            ) = struct.unpack(b">hQ4shIIQI14s", b.read(46))
 
-            volname = b''
-            filename = b''
+            volname = b""
+            filename = b""
             creator_code = None
             type_code = None
             voldate = voldate_hr / 65536.0
@@ -300,28 +374,38 @@ class Alias (object):
         alias = Alias()
         alias.appinfo = appinfo
 
-        alias.volume = VolumeInfo (volname.decode().replace('/',':'),
-                                   voldate, fstype, disktype,
-                                   volattrs, volfsid)
-        alias.target = TargetInfo (kind, filename.decode().replace('/',':'),
-                                   folder_cnid, cnid,
-                                   crdate, creator_code, type_code)
+        alias.volume = VolumeInfo(
+            volname.decode().replace("/", ":"),
+            voldate,
+            fstype,
+            disktype,
+            volattrs,
+            volfsid,
+        )
+        alias.target = TargetInfo(
+            kind,
+            filename.decode().replace("/", ":"),
+            folder_cnid,
+            cnid,
+            crdate,
+            creator_code,
+            type_code,
+        )
         alias.target.levels_from = levels_from
         alias.target.levels_to = levels_to
 
-        tag = struct.unpack(b'>h', b.read(2))[0]
+        tag = struct.unpack(b">h", b.read(2))[0]
 
         while tag != -1:
-            length = struct.unpack(b'>h', b.read(2))[0]
+            length = struct.unpack(b">h", b.read(2))[0]
             value = b.read(length)
             if length & 1:
                 b.read(1)
 
             if tag == TAG_CARBON_FOLDER_NAME:
-                alias.target.folder_name = value.decode().replace('/',':')
+                alias.target.folder_name = value.decode().replace("/", ":")
             elif tag == TAG_CNID_PATH:
-                alias.target.cnid_path = struct.unpack('>%uI' % (length // 4),
-                                                           value)
+                alias.target.cnid_path = struct.unpack(">%uI" % (length // 4), value)
             elif tag == TAG_CARBON_PATH:
                 alias.target.carbon_path = value
             elif tag == TAG_APPLESHARE_ZONE:
@@ -343,17 +427,19 @@ class Alias (object):
             elif tag == TAG_DIALUP_INFO:
                 alias.volume.dialup_info = value
             elif tag == TAG_UNICODE_FILENAME:
-                alias.target.filename = value[2:].decode('utf-16be')
+                alias.target.filename = value[2:].decode("utf-16be")
             elif tag == TAG_UNICODE_VOLUME_NAME:
-                alias.volume.name = value[2:].decode('utf-16be')
+                alias.volume.name = value[2:].decode("utf-16be")
             elif tag == TAG_HIGH_RES_VOLUME_CREATION_DATE:
-                seconds = struct.unpack(b'>Q', value)[0] / 65536.0
-                alias.volume.creation_date \
-                    = mac_epoch + datetime.timedelta(seconds=seconds)
+                seconds = struct.unpack(b">Q", value)[0] / 65536.0
+                alias.volume.creation_date = mac_epoch + datetime.timedelta(
+                    seconds=seconds
+                )
             elif tag == TAG_HIGH_RES_CREATION_DATE:
-                seconds = struct.unpack(b'>Q', value)[0] / 65536.0
-                alias.target.creation_date \
-                    = mac_epoch + datetime.timedelta(seconds=seconds)
+                seconds = struct.unpack(b">Q", value)[0] / 65536.0
+                alias.target.creation_date = mac_epoch + datetime.timedelta(
+                    seconds=seconds
+                )
             elif tag == TAG_POSIX_PATH:
                 alias.target.posix_path = value.decode()
             elif tag == TAG_POSIX_PATH_TO_MOUNTPOINT:
@@ -361,11 +447,11 @@ class Alias (object):
             elif tag == TAG_RECURSIVE_ALIAS_OF_DISK_IMAGE:
                 alias.volume.disk_image_alias = Alias.from_bytes(value)
             elif tag == TAG_USER_HOME_LENGTH_PREFIX:
-                alias.target.user_home_prefix_len = struct.unpack(b'>h', value)[0]
+                alias.target.user_home_prefix_len = struct.unpack(b">h", value)[0]
             else:
                 alias.extra.append((tag, value))
 
-            tag = struct.unpack(b'>h', b.read(2))[0]
+            tag = struct.unpack(b">h", b.read(2))[0]
 
         return alias
 
@@ -378,8 +464,8 @@ class Alias (object):
     @classmethod
     def for_file(cls, path):
         """Create an :class:`Alias` that points at the specified file."""
-        if sys.platform != 'darwin':
-            raise Exception('Not implemented (requires special support)')
+        if sys.platform != "darwin":
+            raise Exception("Not implemented (requires special support)")
 
         path = encode_utf8(path)
 
@@ -389,21 +475,29 @@ class Alias (object):
         st = osx.statfs(path)
         vol_path = st.f_mntonname
 
+        # File and folder names in HFS+ are normalized to a form similar to NFD.
+        # Must be normalized (NFD->NFC) before use to avoid unicode string comparison issues.
+        vol_path = normalize("NFC", vol_path.decode("utf-8")).encode("utf-8")
+
         # Grab its attributes
-        attrs = [osx.ATTR_CMN_CRTIME,
-                 osx.ATTR_VOL_NAME,
-                 0, 0, 0]
+        attrs = [osx.ATTR_CMN_CRTIME, osx.ATTR_VOL_NAME, 0, 0, 0]
         volinfo = osx.getattrlist(vol_path, attrs, 0)
 
         vol_crtime = volinfo[0]
         vol_name = encode_utf8(volinfo[1])
 
         # Also grab various attributes of the file
-        attrs = [(osx.ATTR_CMN_OBJTYPE
-                  | osx.ATTR_CMN_CRTIME
-                  | osx.ATTR_CMN_FNDRINFO
-                  | osx.ATTR_CMN_FILEID
-                  | osx.ATTR_CMN_PARENTID), 0, 0, 0, 0]
+        attrs = [
+            osx.ATTR_CMN_OBJTYPE
+            | osx.ATTR_CMN_CRTIME
+            | osx.ATTR_CMN_FNDRINFO
+            | osx.ATTR_CMN_FILEID
+            | osx.ATTR_CMN_PARENTID,
+            0,
+            0,
+            0,
+            0,
+        ]
         info = osx.getattrlist(path, attrs, osx.FSOPT_NOFOLLOW)
 
         if info[0] == osx.VDIR:
@@ -416,7 +510,7 @@ class Alias (object):
 
         dirname, filename = os.path.split(path)
 
-        if dirname == b'' or dirname == b'.':
+        if dirname == b"" or dirname == b".":
             dirname = os.getcwd()
 
         foldername = os.path.basename(dirname)
@@ -424,16 +518,16 @@ class Alias (object):
         creation_date = info[1]
 
         if kind == ALIAS_KIND_FILE:
-            creator_code = struct.pack(b'I', info[2].fileInfo.fileCreator)
-            type_code = struct.pack(b'I', info[2].fileInfo.fileType)
+            creator_code = struct.pack(b"I", info[2].fileInfo.fileCreator)
+            type_code = struct.pack(b"I", info[2].fileInfo.fileType)
         else:
-            creator_code = b'\0\0\0\0'
-            type_code = b'\0\0\0\0'
+            creator_code = b"\0\0\0\0"
+            type_code = b"\0\0\0\0"
 
-        a.target = TargetInfo(kind, filename, folder_cnid, cnid, creation_date,
-                              creator_code, type_code)
-        a.volume = VolumeInfo(vol_name, vol_crtime, b'H+',
-                              ALIAS_FIXED_DISK, 0, b'\0\0')
+        a.target = TargetInfo(
+            kind, filename, folder_cnid, cnid, creation_date, creator_code, type_code
+        )
+        a.volume = VolumeInfo(vol_name, vol_crtime, b"H+", ALIAS_FIXED_DISK, 0, b"\0\0")
 
         a.target.folder_name = foldername
         a.volume.posix_path = vol_path
@@ -441,10 +535,10 @@ class Alias (object):
         rel_path = os.path.relpath(path, vol_path)
 
         # Leave off the initial '/' if vol_path is '/' (no idea why)
-        if vol_path == b'/':
+        if vol_path == b"/":
             a.target.posix_path = rel_path
         else:
-            a.target.posix_path = b'/' + rel_path
+            a.target.posix_path = b"/" + rel_path
 
         # Construct the Carbon and CNID paths
         carbon_path = []
@@ -457,11 +551,11 @@ class Alias (object):
                 attrs = [osx.ATTR_CMN_FILEID, 0, 0, 0, 0]
                 info = osx.getattrlist(os.path.join(vol_path, head), attrs, 0)
                 cnid_path.append(info[0])
-            carbon_tail = tail.replace(b':',b'/')
+            carbon_tail = tail.replace(b":", b"/")
             carbon_path.insert(0, carbon_tail)
             head, tail = os.path.split(head)
 
-        carbon_path = vol_name + b':' + b':\0'.join(carbon_path)
+        carbon_path = vol_name + b":" + b":\0".join(carbon_path)
 
         a.target.carbon_path = carbon_path
         a.target.cnid_path = cnid_path
@@ -471,172 +565,188 @@ class Alias (object):
     def _to_fd(self, b):
         # We'll come back and fix the length when we're done
         pos = b.tell()
-        b.write(struct.pack(b'>4shh', self.appinfo, 0, self.version))
+        b.write(struct.pack(b">4shh", self.appinfo, 0, self.version))
 
-        carbon_volname = encode_utf8(self.volume.name).replace(b':',b'/')
-        carbon_filename = encode_utf8(self.target.filename).replace(b':',b'/')
+        carbon_volname = encode_utf8(self.volume.name).replace(b":", b"/")
+        carbon_filename = encode_utf8(self.target.filename).replace(b":", b"/")
         voldate = (self.volume.creation_date - mac_epoch).total_seconds()
         crdate = (self.target.creation_date - mac_epoch).total_seconds()
 
         if self.version == 2:
             # NOTE: crdate should be in local time, but that's system dependent
             #       (so doing so is ridiculous, and nothing could rely on it).
-            b.write(struct.pack(b'>h28pI2shI64pII4s4shhI2s10s',
-                                self.target.kind,
-                                carbon_volname, int(voldate),
-                                self.volume.fs_type,
-                                self.volume.disk_type,
-                                self.target.folder_cnid,
-                                carbon_filename,
-                                self.target.cnid,
-                                int(crdate),
-                                self.target.creator_code,
-                                self.target.type_code,
-                                self.target.levels_from,
-                                self.target.levels_to,
-                                self.volume.attribute_flags,
-                                self.volume.fs_id,
-                                b'\0'*10))
+            b.write(
+                struct.pack(
+                    b">h28pI2shI64pII4s4shhI2s10s",
+                    self.target.kind,  # h
+                    carbon_volname,  # 28p
+                    int(voldate),  # I
+                    self.volume.fs_type,  # 2s
+                    self.volume.disk_type,  # h
+                    self.target.folder_cnid,  # I
+                    carbon_filename,  # 64p
+                    self.target.cnid,  # I
+                    int(crdate),  # I
+                    self.target.creator_code,  # 4s
+                    self.target.type_code,  # 4s
+                    self.target.levels_from,  # h
+                    self.target.levels_to,  # h
+                    self.volume.attribute_flags,  # I
+                    self.volume.fs_id,  # 2s
+                    b"\0" * 10,  # 10s
+                )
+            )
         else:
-            b.write(struct.pack(b'>hQ4shIIQI14s',
-                                self.target.kind,
-                                int(voldate * 65536),
-                                self.volume.fs_type,
-                                self.volume.disk_type,
-                                self.target.folder_cnid,
-                                self.target.cnid,
-                                int(crdate * 65536),
-                                self.volume.attribute_flags,
-                                self.volume.fs_id,
-                                b'\0'*14))
+            b.write(
+                struct.pack(
+                    b">hQ4shIIQI14s",
+                    self.target.kind,  # h
+                    int(voldate * 65536),  # Q
+                    self.volume.fs_type,  # 4s
+                    self.volume.disk_type,  # h
+                    self.target.folder_cnid,  # I
+                    self.target.cnid,  # I
+                    int(crdate * 65536),  # Q
+                    self.volume.attribute_flags,  # I
+                    b"\0" * 14,  # 14s
+                )
+            )
 
         # Excuse the odd order; we're copying Finder
         if self.target.folder_name:
-            carbon_foldername = encode_utf8(self.target.folder_name)\
-                                .replace(b':',b'/')
-            b.write(struct.pack(b'>hh', TAG_CARBON_FOLDER_NAME,
-                                len(carbon_foldername)))
+            carbon_foldername = encode_utf8(self.target.folder_name).replace(b":", b"/")
+            b.write(struct.pack(b">hh", TAG_CARBON_FOLDER_NAME, len(carbon_foldername)))
             b.write(carbon_foldername)
             if len(carbon_foldername) & 1:
-                b.write(b'\0')
+                b.write(b"\0")
 
-        b.write(struct.pack(b'>hhQhhQ',
+        b.write(
+            struct.pack(
+                b">hhQhhQ",
                 TAG_HIGH_RES_VOLUME_CREATION_DATE,
-                8, int(voldate * 65536),
+                8,
+                int(voldate * 65536),
                 TAG_HIGH_RES_CREATION_DATE,
-                8, int(crdate * 65536)))
+                8,
+                int(crdate * 65536),
+            )
+        )
 
         if self.target.cnid_path:
-            cnid_path = struct.pack('>%uI' % len(self.target.cnid_path),
-                                    *self.target.cnid_path)
-            b.write(struct.pack(b'>hh', TAG_CNID_PATH,
-                                 len(cnid_path)))
+            cnid_path = struct.pack(
+                ">%uI" % len(self.target.cnid_path), *self.target.cnid_path
+            )
+            b.write(struct.pack(b">hh", TAG_CNID_PATH, len(cnid_path)))
             b.write(cnid_path)
 
         if self.target.carbon_path:
-            carbon_path=encode_utf8(self.target.carbon_path)
-            b.write(struct.pack(b'>hh', TAG_CARBON_PATH,
-                                 len(carbon_path)))
+            carbon_path = encode_utf8(self.target.carbon_path)
+            b.write(struct.pack(b">hh", TAG_CARBON_PATH, len(carbon_path)))
             b.write(carbon_path)
             if len(carbon_path) & 1:
-                b.write(b'\0')
+                b.write(b"\0")
 
         if self.volume.appleshare_info:
             ai = self.volume.appleshare_info
             if ai.zone:
-                b.write(struct.pack(b'>hh', TAG_APPLESHARE_ZONE,
-                                     len(ai.zone)))
+                b.write(struct.pack(b">hh", TAG_APPLESHARE_ZONE, len(ai.zone)))
                 b.write(ai.zone)
                 if len(ai.zone) & 1:
-                    b.write(b'\0')
+                    b.write(b"\0")
             if ai.server:
-                b.write(struct.pack(b'>hh', TAG_APPLESHARE_SERVER_NAME,
-                                     len(ai.server)))
+                b.write(struct.pack(b">hh", TAG_APPLESHARE_SERVER_NAME, len(ai.server)))
                 b.write(ai.server)
                 if len(ai.server) & 1:
-                    b.write(b'\0')
+                    b.write(b"\0")
             if ai.username:
-                b.write(struct.pack(b'>hh', TAG_APPLESHARE_USERNAME,
-                                     len(ai.username)))
+                b.write(struct.pack(b">hh", TAG_APPLESHARE_USERNAME, len(ai.username)))
                 b.write(ai.username)
                 if len(ai.username) & 1:
-                    b.write(b'\0')
+                    b.write(b"\0")
 
         if self.volume.driver_name:
             driver_name = encode_utf8(self.volume.driver_name)
-            b.write(struct.pack(b'>hh', TAG_DRIVER_NAME,
-                                len(driver_name)))
+            b.write(struct.pack(b">hh", TAG_DRIVER_NAME, len(driver_name)))
             b.write(driver_name)
             if len(driver_name) & 1:
-                b.write(b'\0')
+                b.write(b"\0")
 
         if self.volume.network_mount_info:
-            b.write(struct.pack(b'>hh', TAG_NETWORK_MOUNT_INFO,
-                                len(self.volume.network_mount_info)))
+            b.write(
+                struct.pack(
+                    b">hh", TAG_NETWORK_MOUNT_INFO, len(self.volume.network_mount_info)
+                )
+            )
             b.write(self.volume.network_mount_info)
             if len(self.volume.network_mount_info) & 1:
-                b.write(b'\0')
+                b.write(b"\0")
 
         if self.volume.dialup_info:
-            b.write(struct.pack(b'>hh', TAG_DIALUP_INFO,
-                                len(self.volume.network_mount_info)))
+            b.write(
+                struct.pack(
+                    b">hh", TAG_DIALUP_INFO, len(self.volume.network_mount_info)
+                )
+            )
             b.write(self.volume.network_mount_info)
             if len(self.volume.network_mount_info) & 1:
-                b.write(b'\0')
+                b.write(b"\0")
 
-        utf16 = decode_utf8(self.target.filename)\
-                .replace(':','/').encode('utf-16-be')
-        b.write(struct.pack(b'>hhh', TAG_UNICODE_FILENAME,
-                            len(utf16) + 2,
-                            len(utf16) // 2))
+        utf16 = decode_utf8(self.target.filename).replace(":", "/").encode("utf-16-be")
+        b.write(
+            struct.pack(b">hhh", TAG_UNICODE_FILENAME, len(utf16) + 2, len(utf16) // 2)
+        )
         b.write(utf16)
 
-        utf16 = decode_utf8(self.volume.name)\
-                .replace(':','/').encode('utf-16-be')
-        b.write(struct.pack(b'>hhh', TAG_UNICODE_VOLUME_NAME,
-                            len(utf16) + 2,
-                            len(utf16) // 2))
+        utf16 = decode_utf8(self.volume.name).replace(":", "/").encode("utf-16-be")
+        b.write(
+            struct.pack(
+                b">hhh", TAG_UNICODE_VOLUME_NAME, len(utf16) + 2, len(utf16) // 2
+            )
+        )
         b.write(utf16)
 
         if self.target.posix_path:
             posix_path = encode_utf8(self.target.posix_path)
-            b.write(struct.pack(b'>hh', TAG_POSIX_PATH,
-                                len(posix_path)))
+            b.write(struct.pack(b">hh", TAG_POSIX_PATH, len(posix_path)))
             b.write(posix_path)
             if len(posix_path) & 1:
-                b.write(b'\0')
+                b.write(b"\0")
 
         if self.volume.posix_path:
             posix_path = encode_utf8(self.volume.posix_path)
-            b.write(struct.pack(b'>hh', TAG_POSIX_PATH_TO_MOUNTPOINT,
-                                len(posix_path)))
+            b.write(struct.pack(b">hh", TAG_POSIX_PATH_TO_MOUNTPOINT, len(posix_path)))
             b.write(posix_path)
             if len(posix_path) & 1:
-                b.write(b'\0')
+                b.write(b"\0")
 
         if self.volume.disk_image_alias:
             d = self.volume.disk_image_alias.to_bytes()
-            b.write(struct.pack(b'>hh', TAG_RECURSIVE_ALIAS_OF_DISK_IMAGE,
-                                len(d)))
+            b.write(struct.pack(b">hh", TAG_RECURSIVE_ALIAS_OF_DISK_IMAGE, len(d)))
             b.write(d)
             if len(d) & 1:
-                b.write(b'\0')
+                b.write(b"\0")
 
         if self.target.user_home_prefix_len is not None:
-            b.write(struct.pack(b'>hhh', TAG_USER_HOME_LENGTH_PREFIX,
-                                2, self.target.user_home_prefix_len))
+            b.write(
+                struct.pack(
+                    b">hhh",
+                    TAG_USER_HOME_LENGTH_PREFIX,
+                    2,
+                    self.target.user_home_prefix_len,
+                )
+            )
 
-        for t,v in self.extra:
-            b.write(struct.pack(b'>hh', t, len(v)))
+        for t, v in self.extra:
+            b.write(struct.pack(b">hh", t, len(v)))
             b.write(v)
             if len(v) & 1:
-                b.write(b'\0')
+                b.write(b"\0")
 
-        b.write(struct.pack(b'>hh', -1, 0))
+        b.write(struct.pack(b">hh", -1, 0))
 
         blen = b.tell() - pos
         b.seek(pos + 4, os.SEEK_SET)
-        b.write(struct.pack(b'>h', blen))
+        b.write(struct.pack(b">h", blen))
 
     def to_bytes(self):
         """Returns the binary representation for this :class:`Alias`."""
@@ -645,18 +755,18 @@ class Alias (object):
             return b.getvalue()
 
     def __str__(self):
-        return '<Alias target=%s>' % self.target.filename
+        return "<Alias target=%s>" % self.target.filename
 
     def __repr__(self):
         values = []
-        if self.appinfo != b'\0\0\0\0':
-            values.append('appinfo=%r' % self.appinfo)
+        if self.appinfo != b"\0\0\0\0":
+            values.append("appinfo=%r" % self.appinfo)
         if self.version != 2:
-            values.append('version=%r' % self.version)
+            values.append("version=%r" % self.version)
         if self.volume is not None:
-            values.append('volume=%r' % self.volume)
+            values.append("volume=%r" % self.volume)
         if self.target is not None:
-            values.append('target=%r' % self.target)
+            values.append("target=%r" % self.target)
         if self.extra:
-            values.append('extra=%r' % self.extra)
-        return 'Alias(%s)' % ','.join(values)
+            values.append("extra=%r" % self.extra)
+        return "Alias(%s)" % ",".join(values)

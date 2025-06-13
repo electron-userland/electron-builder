@@ -44,7 +44,7 @@ export class CheckingMacPackager extends MacPackager {
     for (const target of targets) {
       // do not use instanceof to avoid dmg require
       if (target.name === "dmg") {
-        this.effectiveDistOptions = await (target as DmgTarget).computeDmgOptions()
+        this.effectiveDistOptions = await (target as DmgTarget).computeDmgOptions("stub")
         break
       }
     }
@@ -60,6 +60,7 @@ export class CheckingMacPackager extends MacPackager {
   //noinspection JSUnusedGlobalSymbols
   async doSign(opts: MacSignOptions): Promise<any> {
     this.effectiveSignOptions = opts
+    return Promise.resolve()
   }
 
   //noinspection JSUnusedGlobalSymbols,JSUnusedLocalSymbols
