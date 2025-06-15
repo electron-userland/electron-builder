@@ -1,3 +1,19 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v26.0.16...v) (2025-06-13)
+
+
+### Bug Fixes
+
+* `electronDist` - detect if directory and copy electron from there, short circuit current logic path ([#9157](https://github.com/electron-userland/electron-builder/issues/9157)) ([092d398](https://github.com/electron-userland/electron-builder/commit/092d398a66057f411fe97fc3450de03bca6033d8))
+* don't assume commands end with .cmd on Windows ([#9026](https://github.com/electron-userland/electron-builder/issues/9026)) ([e56977b](https://github.com/electron-userland/electron-builder/commit/e56977b5c6da25e4d797fd6cb40ea8ca52464fd3))
+* update minimatch to ^10.0.3 to fix downstream issue ([#9162](https://github.com/electron-userland/electron-builder/issues/9162)) ([0b17b35](https://github.com/electron-userland/electron-builder/commit/0b17b351cae84f3360cc8265fc452650c2c71ac3))
+
+
+### Features
+
+* **nsis:** add support for more Windows Installer options ([#9119](https://github.com/electron-userland/electron-builder/issues/9119)) ([73696c6](https://github.com/electron-userland/electron-builder/commit/73696c6da6ea167a571af1226d6e82e94f3459b7))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v26.0.15...v) (2025-05-29)
 
 
