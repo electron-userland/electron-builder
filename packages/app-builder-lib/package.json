@@ -1,7 +1,7 @@
 {
   "name": "app-builder-lib",
   "description": "electron-builder lib",
-  "version": "26.0.16",
+  "version": "26.0.17",
   "main": "out/index.js",
   "files": [
     "out",
@@ -72,7 +72,7 @@
     "js-yaml": "^4.1.0",
     "json5": "^2.2.3",
     "lazy-val": "^1.0.5",
-    "minimatch": "^10.0.0",
+    "minimatch": "^10.0.3",
     "plist": "3.1.0",
     "resedit": "^1.7.0",
     "semver": "^7.3.8",

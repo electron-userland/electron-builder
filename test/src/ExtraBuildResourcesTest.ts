@@ -3,7 +3,7 @@ import * as fs from "fs"
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert"
 import { app, assertPack, linuxDirTarget, modifyPackageJson } from "./helpers/packTester"
-import { getElectronCacheDir } from "./helpers/testConfig"
+import { ELECTRON_VERSION, getElectronCacheDir } from "./helpers/testConfig"
 import { expectUpdateMetadata } from "./helpers/winHelper"
 import { ExpectStatic } from "vitest"
 import * as unzipper from "unzipper"
@@ -193,6 +193,34 @@ test.ifNotWindows("electronDist as callback function for path to local folder wi
     },
   })
 )
+
+test.ifLinux("electronDist as standard path to node_modules electron", ({ expect }) => {
+  return app(
+    expect,
+    {
+      targets: linuxDirTarget,
+      config: {
+        electronDist: "node_modules/electron/dist",
+      },
+    },
+    {
+      isInstallDepsBefore: true,
+      projectDirCreated: async projectDir => {
+        await modifyPackageJson(projectDir, data => {
+          data.devDependencies = {
+            ...data.devDependencies,
+            electron: ELECTRON_VERSION,
+          }
+          delete data.build.electronVersion
+        })
+      },
+      packed: async context => {
+        const contents = await readdir(context.getAppPath(Platform.LINUX, Arch.x64))
+        expect(contents).toMatchSnapshot()
+      },
+    }
+  )
+})
 
 test.ifNotWindows("electronDist as callback function for path to locally unzipped", ({ expect }) => {
   const tmpDir = new TmpDir()

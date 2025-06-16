@@ -2,8 +2,7 @@ import * as path from "path"
 import { getBinFromUrl } from "../binDownload"
 
 export function getLinuxToolsPath() {
-  //noinspection SpellCheckingInspection
-  return getBinFromUrl("linux-tools@1.0.1", "linux-tools-mac-10.12.4.7z", "CMiM/6mWOUghHkvgB2PmJdyGoblMdlGD+VBqbxiIea51ExDDe7GrZ82/wBy3KI0d5Wrrkc1Hkd1/lWMcbWUfuA==")
+  return getBinFromUrl("linux-tools-mac-10.12.3", "linux-tools-mac-10.12.3.7z", "SQ8fqIRVXuQVWnVgaMTDWyf2TLAJjJYw3tRSqQJECmgF6qdM7Kogfa6KD49RbGzzMYIFca9Uw3MdsxzOPRWcYw==")
 }
 
 export async function getFpmPath() {
@@ -15,19 +14,24 @@ export async function getFpmPath() {
     return exec
   }
   if (process.platform === "linux") {
+    let checksum: string
+    let archSuffix: string
     if (process.arch == "x64") {
-      return path.join(
-        await getBinFromUrl("fpm@3.0.4", "fpm-1.16.0-ruby-3.4.3-linux-x86_64.7z", "+A2XTFx/+ubWiKUBk8TBlZritbs0gSTYdXgE5pkOT9zMFW5/lq63qY9mPAZ06K8Z//+z1ddxb8O3qYBzf7PKoQ=="),
-        exec
-      )
+      checksum = "fcKdXPJSso3xFs5JyIJHG1TfHIRTGDP0xhSBGZl7pPZlz4/TJ4rD/q3wtO/uaBBYeX0qFFQAFjgu1uJ6HLHghA=="
+      archSuffix = "-x86_64"
+    } else {
+      checksum = "OnzvBdsHE5djcXcAT87rwbnZwS789ZAd2ehuIO42JWtBAHNzXKxV4o/24XFX5No4DJWGO2YSGQttW+zn7d/4rQ=="
+      archSuffix = "-x86"
     }
-    return path.join(
-      await getBinFromUrl("fpm@3.0.4", "fpm-1.16.0-ruby-3.4.3-linux-i386.7z", "+JlRlhWSuL/8Sm9w4cfMObzjLs7qvISXBPC9qz90YccZ9u8tqORmLD1FRT59OI0tTmNoCrFUzcVk6NkTNmuauQ=="),
-      exec
-    )
+    const fileName = "fpm-1.9.3-2.3.1-linux" + archSuffix
+    return path.join(await getBinFromUrl(fileName, fileName + ".7z", checksum), exec)
   }
   return path.join(
-    await getBinFromUrl("fpm@3.0.4", "fpm-1.16.0-ruby-3.4.3-darwin-x86_64.7z", "LAe6C1jjMFSCqUIBt/9SoqAoXaEN19up08rISACbgBfeBU8sL2nnkCur1AbiUcAcliNymfdXbTiueLb3bkHprw=="),
+    await getBinFromUrl(
+      "fpm-1.9.3-20150715-2.2.2-mac",
+      "fpm-1.9.3-20150715-2.2.2-mac.7z",
+      "oXfq+0H2SbdrbMik07mYloAZ8uHrmf6IJk+Q3P1kwywuZnKTXSaaeZUJNlWoVpRDWNu537YxxpBQWuTcF+6xfw=="
+    ),
     exec
   )
 }

@@ -147,6 +147,9 @@ exports[`dmg > background color 1`] = `
   "backgroundColor": "orange",
   "contents": [
     {
+      "name": "BackgroundColor.app",
+      "path": "dist/mac/BackgroundColor.app",
+      "type": "file",
       "x": 130,
       "y": 220,
     },
@@ -974,6 +977,9 @@ exports[`dmg > no background 2`] = `
 exports[`dmg > no build directory 1`] = `
 [
   {
+    "name": "NoBuildDirectory.app",
+    "path": "NoBuildDirectory.app",
+    "type": "file",
     "x": 130,
     "y": 220,
   },

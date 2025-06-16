@@ -1,37 +1,45 @@
 import { getBinFromUrl } from "app-builder-lib/out/binDownload"
 
 test("download binary from Github", async ({ expect }) => {
-  const bin = await getBin()
+  const bin = await getBinFromUrl(
+    "linux-tools-mac-10.12.3",
+    "linux-tools-mac-10.12.3.7z",
+    "SQ8fqIRVXuQVWnVgaMTDWyf2TLAJjJYw3tRSqQJECmgF6qdM7Kogfa6KD49RbGzzMYIFca9Uw3MdsxzOPRWcYw=="
+  )
   expect(bin).toBeTruthy()
 })
 
 test("download binary from Mirror with custom dir", async ({ expect }) => {
-  const previousDir = process.env.ELECTRON_BUILDER_BINARIES_CUSTOM_DIR
-  const previousMirror = process.env.ELECTRON_BUILDER_BINARIES_MIRROR
   process.env.ELECTRON_BUILDER_BINARIES_MIRROR = "https://github.com/electron-userland/electron-builder-binaries/releases/download/"
   process.env.ELECTRON_BUILDER_BINARIES_CUSTOM_DIR = "linux-tools-mac-10.12.3"
-  const bin = await getBin()
-  process.env.ELECTRON_BUILDER_BINARIES_MIRROR = previousMirror
-  process.env.ELECTRON_BUILDER_BINARIES_CUSTOM_DIR = previousDir
+  const bin = await getBinFromUrl(
+    "linux-tools-mac-10.12.3",
+    "linux-tools-mac-10.12.3.7z",
+    "SQ8fqIRVXuQVWnVgaMTDWyf2TLAJjJYw3tRSqQJECmgF6qdM7Kogfa6KD49RbGzzMYIFca9Uw3MdsxzOPRWcYw=="
+  )
+    delete process.env.ELECTRON_BUILDER_BINARIES_MIRROR
+  delete process.env.ELECTRON_BUILDER_BINARIES_CUSTOM_DIR
   expect(bin).toBeTruthy()
 })
 
 test("download binary from Mirror", async ({ expect }) => {
-  const previousMirror = process.env.ELECTRON_BUILDER_BINARIES_MIRROR
   process.env.ELECTRON_BUILDER_BINARIES_MIRROR = "https://github.com/electron-userland/electron-builder-binaries/releases/download/"
-  const bin = await getBin()
-  process.env.ELECTRON_BUILDER_BINARIES_MIRROR = previousMirror
+  const bin = await getBinFromUrl(
+    "linux-tools-mac-10.12.3",
+    "linux-tools-mac-10.12.3.7z",
+    "SQ8fqIRVXuQVWnVgaMTDWyf2TLAJjJYw3tRSqQJECmgF6qdM7Kogfa6KD49RbGzzMYIFca9Uw3MdsxzOPRWcYw=="
+  )
+    delete process.env.ELECTRON_BUILDER_BINARIES_MIRROR
   expect(bin).toBeTruthy()
 })
 
 test("download binary from Mirror with Url override", async ({ expect }) => {
-  const previousUrl = process.env.ELECTRON_BUILDER_BINARIES_DOWNLOAD_OVERRIDE_URL
   process.env.ELECTRON_BUILDER_BINARIES_DOWNLOAD_OVERRIDE_URL = "https://github.com/electron-userland/electron-builder-binaries/releases/download/linux-tools-mac-10.12.3"
-  const bin = await getBin()
-  process.env.ELECTRON_BUILDER_BINARIES_DOWNLOAD_OVERRIDE_URL = previousUrl
+  const bin = await getBinFromUrl(
+    "linux-tools-mac-10.12.3",
+    "linux-tools-mac-10.12.3.7z",
+    "SQ8fqIRVXuQVWnVgaMTDWyf2TLAJjJYw3tRSqQJECmgF6qdM7Kogfa6KD49RbGzzMYIFca9Uw3MdsxzOPRWcYw=="
+  )
+    delete process.env.ELECTRON_BUILDER_BINARIES_DOWNLOAD_OVERRIDE_URL
   expect(bin).toBeTruthy()
 })
-async function getBin() {
-  return await getBinFromUrl("linux-tools@1.0.1", "linux-tools-mac-10.12.4.7z", "CMiM/6mWOUghHkvgB2PmJdyGoblMdlGD+VBqbxiIea51ExDDe7GrZ82/wBy3KI0d5Wrrkc1Hkd1/lWMcbWUfuA==")
-}
-

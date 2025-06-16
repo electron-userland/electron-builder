@@ -17,7 +17,7 @@ export function getBinFromCustomLoc(name: string, version: string, binariesLocUr
   return getBin(dirName, binariesLocUrl, checksum)
 }
 
-export function getBinFromUrl(releaseName: string, filenameWithExt: string, checksum: string, githubOrgRepo = "mmaietta/electron-builder-binaries"): Promise<string> {
+export function getBinFromUrl(releaseName: string, filenameWithExt: string, checksum: string, githubOrgRepo = "electron-userland/electron-builder-binaries"): Promise<string> {
   let url: string
   if (process.env.ELECTRON_BUILDER_BINARIES_DOWNLOAD_OVERRIDE_URL) {
     url = process.env.ELECTRON_BUILDER_BINARIES_DOWNLOAD_OVERRIDE_URL + "/" + filenameWithExt
@@ -42,7 +42,7 @@ export function getBinFromUrl(releaseName: string, filenameWithExt: string, chec
 
 export function getBin(name: string, url?: string | null, checksum?: string | null): Promise<string> {
   // Old cache is ignored if cache environment variable changes
-  const cacheName = sanitizeFileName(`${process.env.ELECTRON_BUILDER_CACHE}${name}-${checksum || ""}`)
+  const cacheName = sanitizeFileName(`${process.env.ELECTRON_BUILDER_CACHE ?? ""}${name}`)
   let promise = versionToPromise.get(cacheName) // if rejected, we will try to download again
 
   if (promise != null) {
