@@ -1,4 +1,4 @@
-import { asArray, copyDir, DO_NOT_USE_HARD_LINKS, executeAppBuilder, log, MAX_FILE_REQUESTS, statOrNull, unlinkIfExists } from "builder-util"
+import { asArray, copyDir, DO_NOT_USE_HARD_LINKS, executeAppBuilder, isEmptyOrSpaces, log, MAX_FILE_REQUESTS, statOrNull, unlinkIfExists } from "builder-util"
 import { emptyDir, readdir, rename, rm } from "fs-extra"
 import * as path from "path"
 import asyncPool from "tiny-async-pool"
@@ -183,21 +183,77 @@ export async function createElectronFrameworkSupport(configuration: Configuratio
 /**
  * Unpacks a custom or default Electron distribution into the app output directory.
  */
-async function unpack(prepareOptions: PrepareApplicationStageDirectoryOptions, downloadOptions: ElectronDownloadOptions, distMacOsAppName: string) {
+async function unpack(prepareOptions: PrepareApplicationStageDirectoryOptions, downloadOptions: ElectronDownloadOptions, distMacOsAppName: string): Promise<boolean> {
   const downloadUsingAdjustedConfig = (options: ElectronDownloadOptions) => {
     return executeAppBuilder(["unpack-electron", "--configuration", JSON.stringify([options]), "--output", appOutDir, "--distMacOsAppName", distMacOsAppName])
+  }
+
+  const copyUnpackedElectronDistribution = async (folderPath: string) => {
+    log.info({ electronDist: log.filePath(folderPath) }, "using custom unpacked Electron distribution")
+    const source = packager.getElectronSrcDir(folderPath)
+    const destination = packager.getElectronDestinationDir(appOutDir)
+    log.info({ source, destination }, "copying unpacked Electron")
+    await emptyDir(appOutDir)
+    await copyDir(source, destination, {
+      isUseHardLink: DO_NOT_USE_HARD_LINKS,
+    })
+    return false
+  }
+
+  const selectElectron = async (filepath: string) => {
+    const resolvedDist = path.isAbsolute(filepath) ? filepath : path.resolve(packager.projectDir, filepath)
+
+    const electronDistStats = await statOrNull(resolvedDist)
+    if (!electronDistStats) {
+      throw new Error(
+        `The specified electronDist does not exist: ${resolvedDist}. Please provide a valid path to the Electron zip file, cache directory, or electron build directory.`
+      )
+    }
+
+    if (resolvedDist.endsWith(".zip")) {
+      log.info({ zipFile: resolvedDist }, "using custom electronDist zip file")
+      await downloadUsingAdjustedConfig({
+        ...downloadOptions,
+        cache: path.dirname(resolvedDist), // set custom directory to the zip file's directory
+        customFilename: path.basename(resolvedDist), // set custom filename to the zip file's name
+      })
+      return false // do not clean up after unpacking, it's a custom bundle and we should respect its configuration/contents as required
+    }
+
+    if (electronDistStats.isDirectory()) {
+      // backward compatibility: if electronDist is a directory, check for the default zip file inside it
+      const files = await readdir(resolvedDist)
+      if (files.includes(defaultZipName)) {
+        log.info({ electronDist: log.filePath(resolvedDist) }, "using custom electronDist directory")
+        await downloadUsingAdjustedConfig({
+          ...downloadOptions,
+          cache: resolvedDist,
+          customFilename: defaultZipName,
+        })
+        return false
+      }
+      // if we reach here, it means the provided electronDist is neither a zip file nor a directory with the default zip file
+      // e.g. we treat it as a custom already-unpacked Electron distribution
+      return await copyUnpackedElectronDistribution(resolvedDist)
+    }
+    throw new Error(`The specified electronDist is neither a zip file nor a directory: ${resolvedDist}. Please provide a valid path to the Electron zip file or cache directory.`)
   }
 
   const { packager, appOutDir, platformName } = prepareOptions
   const { version, arch } = downloadOptions
   const defaultZipName = `electron-v${version}-${platformName}-${arch}.zip`
 
+  const electronDist = packager.config.electronDist
+  if (typeof electronDist === "string" && !isEmptyOrSpaces(electronDist)) {
+    return selectElectron(electronDist)
+  }
+
   let resolvedDist: string | null = null
   try {
-    const electronDistHook: any = await resolveFunction(packager.appInfo.type, packager.config.electronDist, "electronDist")
+    const electronDistHook: any = await resolveFunction(packager.appInfo.type, electronDist, "electronDist")
     resolvedDist = typeof electronDistHook === "function" ? await Promise.resolve(electronDistHook(prepareOptions)) : electronDistHook
   } catch (error: any) {
-    throw new Error(`Failed to resolve electronDist: ${error.message} ${error.stack}`)
+    log.warn({ error }, "Failed to resolve electronDist, using default unpack logic")
   }
 
   if (resolvedDist == null) {
@@ -206,53 +262,7 @@ async function unpack(prepareOptions: PrepareApplicationStageDirectoryOptions, d
     await downloadUsingAdjustedConfig(downloadOptions)
     return true // indicates that we should clean up after unpacking
   }
-
-  if (!path.isAbsolute(resolvedDist)) {
-    // if it's a relative path, resolve it against the project directory
-    resolvedDist = path.resolve(packager.projectDir, resolvedDist)
-  }
-
-  const electronDistStats = await statOrNull(resolvedDist)
-  if (!electronDistStats) {
-    throw new Error(`The specified electronDist does not exist: ${resolvedDist}. Please provide a valid path to the Electron zip file or cache directory.`)
-  }
-
-  if (resolvedDist.endsWith(".zip")) {
-    log.info({ zipFile: resolvedDist }, "using custom electronDist zip file")
-    await downloadUsingAdjustedConfig({
-      ...downloadOptions,
-      cache: path.dirname(resolvedDist), // set custom directory to the zip file's directory
-      customFilename: path.basename(resolvedDist), // set custom filename to the zip file's name
-    })
-    return false // do not clean up after unpacking, it's a custom bundle and we should respect its configuration/contents as required
-  }
-
-  if (electronDistStats.isDirectory()) {
-    // backward compatibility: if electronDist is a directory, check for the default zip file inside it
-    const files = await readdir(resolvedDist)
-    if (files.includes(defaultZipName)) {
-      log.info({ electronDist: log.filePath(resolvedDist) }, "using custom electronDist directory")
-      await downloadUsingAdjustedConfig({
-        ...downloadOptions,
-        cache: resolvedDist,
-        customFilename: defaultZipName,
-      })
-      return false
-    }
-    // if we reach here, it means the provided electronDist is neither a zip file nor a directory with the default zip file
-    // e.g. we treat it as a custom already-unpacked Electron distribution
-    log.info({ electronDist: log.filePath(resolvedDist) }, "using custom unpacked Electron distribution")
-    const source = packager.getElectronSrcDir(resolvedDist)
-    const destination = packager.getElectronDestinationDir(appOutDir)
-    log.info({ source, destination }, "copying unpacked Electron")
-    await emptyDir(appOutDir)
-    await copyDir(source, destination, {
-      isUseHardLink: DO_NOT_USE_HARD_LINKS,
-    })
-
-    return false
-  }
-  throw new Error("Unable to unpack electron dist")
+  return selectElectron(resolvedDist)
 }
 
 function cleanupAfterUnpack(prepareOptions: PrepareApplicationStageDirectoryOptions, distMacOsAppName: string, isFullCleanup: boolean) {
