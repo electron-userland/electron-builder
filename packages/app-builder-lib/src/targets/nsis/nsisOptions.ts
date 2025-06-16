@@ -32,7 +32,7 @@ export interface CustomNsisResources {
   readonly url: string
 
   /**
-   * @default pi91FD6cWJ+GlMEf7B1O7Iyq4kWtm0cq6Ur1LlNTfPVdj+XyZ1zJkZMLR0RfNty8YaejqcKA4vI1R0+eHHgKGg==
+   * @default Dqd6g+2buwwvoG1Vyf6BHR1b+25QMmPcwZx40atOT57gH27rkjOei1L0JTldxZu4NFoEmW4kJgZ3DlSWVON3+Q==
    */
   readonly checksum: string
 

@@ -15,7 +15,7 @@
     "directory": "packages/app-builder-lib"
   },
   "engines": {
-    "node": ">=22.12.0"
+    "node": ">=14.0.0"
   },
   "keywords": [
     "electron",

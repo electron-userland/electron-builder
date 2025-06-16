@@ -4,7 +4,7 @@ import { rename } from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as os from "os"
 import * as path from "path"
-import { getBinFromUrl } from "../binDownload"
+import { getBin } from "../binDownload"
 import { Target } from "../core"
 import { WindowsConfiguration } from "../options/winOptions"
 import AppXTarget from "../targets/AppxTarget"
@@ -19,7 +19,7 @@ import { SignManager } from "./signManager"
 import { WindowsSignOptions } from "./windowsCodeSign"
 
 export function getSignVendorPath() {
-  return getBinFromUrl("win-codesign@1.0.1", "win-codesign-2.6.0.7z", "6LQI2d9BPC3Xs0ZoTQe1o3tPiA28c7+PY69Q9i/pD8lY45psMtHuLwv3vRckiVr3Zx1cbNyLlBR8STwCdcHwtA==")
+  return getBin("winCodeSign")
 }
 
 export type CustomWindowsSign = (configuration: CustomWindowsSignTaskConfiguration, packager?: WinPackager) => Promise<any>
