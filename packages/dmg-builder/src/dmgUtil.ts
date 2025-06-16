@@ -93,13 +93,14 @@ export function serializeString(data: string) {
 }
 
 type DmgBuilderConfig = {
+  appPath: string
   artifactPath: string
   volumeName: string
   specification: DmgOptions
   packager: MacPackager
 }
 
-export async function customizeDmg({ artifactPath, volumeName, specification, packager }: DmgBuilderConfig): Promise<boolean> {
+export async function customizeDmg({ appPath, artifactPath, volumeName, specification, packager }: DmgBuilderConfig): Promise<boolean> {
   const isValidIconTextSize = !!specification.iconTextSize && specification.iconTextSize >= 10 && specification.iconTextSize <= 16
   const iconTextSize = isValidIconTextSize ? specification.iconTextSize : 12
   const volumePath = path.join("/Volumes", volumeName)
@@ -117,7 +118,7 @@ export async function customizeDmg({ artifactPath, volumeName, specification, pa
     format: specification.format,
     contents:
       specification.contents?.map(c => ({
-        path: c.path!, // path is required
+        path: c.path || appPath, // path is required, when ommitted, appPath is used (backward compatibility
         x: c.x,
         y: c.y,
         name: c.name,
@@ -184,7 +185,7 @@ export async function customizeDmg({ artifactPath, volumeName, specification, pa
           // clean up `contents` for test snapshot verification since app path is absolute to a unique tmp dir
           contents: specification.contents?.map((c: any) => ({
             ...c,
-            path: path.extname(c.path) === ".app" ? path.relative(packager.projectDir, c.path) : c.path,
+            path: path.extname(c.path ?? "") === ".app" ? path.relative(packager.projectDir, c.path) : c.path,
           })),
         },
         packager,

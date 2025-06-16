@@ -76,7 +76,7 @@ export class DmgTarget extends Target {
 
     const specification = await this.computeDmgOptions(appPath)
 
-    if (!(await customizeDmg({ artifactPath, volumeName, specification, packager }))) {
+    if (!(await customizeDmg({ appPath, artifactPath, volumeName, specification, packager }))) {
       return
     }
 
