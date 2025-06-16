@@ -22,52 +22,54 @@ export default class SquirrelWindowsTarget extends Target {
   }
 
   private async prepareSignedVendorDirectory(): Promise<string> {
-    let vendorDirectory = this.options.customSquirrelVendorDir
-    let customSquirrelBin = ""
+    const customSquirrelVendorDirectory = this.options.customSquirrelVendorDir
+    const tmpVendorDirectory = await this.packager.info.tempDirManager.createTempDir({ prefix: "squirrel-windows-vendor" })
 
-    if (isEmptyOrSpaces(vendorDirectory) || !fs.existsSync(vendorDirectory)) {
-      log.warn({ vendorDirectory }, "unable to access custom Squirrel.Windows vendor directory, falling back to default vendor ")
+    if (isEmptyOrSpaces(customSquirrelVendorDirectory) || !fs.existsSync(customSquirrelVendorDirectory)) {
+      log.warn({ customSquirrelVendorDirectory: customSquirrelVendorDirectory }, "unable to access custom Squirrel.Windows vendor directory, falling back to default vendor ")
       const windowInstallerPackage = require.resolve("electron-winstaller/package.json")
-      vendorDirectory = path.join(path.dirname(windowInstallerPackage), "vendor")
-      customSquirrelBin = await getBin(
+      const vendorDirectory = path.join(path.dirname(windowInstallerPackage), "vendor")
+
+      const squirrelBin = await getBin(
         "squirrel.windows",
         "https://github.com/electron-userland/electron-builder-binaries/releases/download/squirrel.windows@1.0.0/squirrel.windows-2.0.1-patched.7z",
         "DWijIRRElidu/Rq0yegAKqo2g6aVJUPvcRyvkzUoBPbRasIk61P6xY2fBMdXw6wT17md7NzrTI9/zA1wT9vEqg=="
       )
-    }
 
-    const tmpVendorDirectory = await this.packager.info.tempDirManager.createTempDir({ prefix: "squirrel-windows-vendor" })
-    await fs.promises.cp(vendorDirectory, tmpVendorDirectory, { recursive: true })
-    if (customSquirrelBin && customSquirrelBin.length > 0) {
-      await fs.promises.cp(path.join(customSquirrelBin, "electron-winstaller", "vendor"), tmpVendorDirectory, { recursive: true })
+      await fs.promises.cp(vendorDirectory, tmpVendorDirectory, { recursive: true })
+      // copy the patched squirrel to tmp vendor directory
+      await fs.promises.cp(path.join(squirrelBin, "electron-winstaller", "vendor"), tmpVendorDirectory, { recursive: true })
+    } else {
+      // copy the custom squirrel vendor directory to tmp vendor directory
+      await fs.promises.cp(customSquirrelVendorDirectory, tmpVendorDirectory, { recursive: true })
     }
-
-    log.debug({ from: vendorDirectory, to: tmpVendorDirectory }, "copied vendor directory")
 
     const files = await fs.promises.readdir(tmpVendorDirectory)
-    for (const file of files) {
-      if (file === "Squirrel.exe") {
-        const filePath = path.join(tmpVendorDirectory, file)
-        log.debug({ file: filePath }, "signing vendor executable")
-        await this.packager.sign(filePath)
-        break
-      }
+    const squirrelExe = files.find(f => f === "Squirrel.exe")
+    if (squirrelExe) {
+      const filePath = path.join(tmpVendorDirectory, squirrelExe)
+      log.debug({ file: filePath }, "signing vendor executable")
+      await this.packager.sign(filePath)
+    } else {
+      log.warn("Squirrel.exe not found in vendor directory, skipping signing")
     }
     return tmpVendorDirectory
   }
 
   private async generateStubExecutableExe(appOutDir: string, vendorDir: string) {
     const files = await fs.promises.readdir(appOutDir, { withFileTypes: true })
-    for (const file of files) {
-      const fileNameWithoutExt = path.basename(file.name, ".exe")
-      if (path.extname(file.name) === ".exe" && fileNameWithoutExt !== "Squirrel") {
-        const filePath = path.join(appOutDir, file.name)
-        log.filePath(filePath)
-        const stubExePath = path.join(appOutDir, `${fileNameWithoutExt}_ExecutionStub.exe`)
-        await fs.promises.copyFile(path.join(vendorDir, "StubExecutable.exe"), stubExePath)
-        await execWine(path.join(vendorDir, "WriteZipToSetup.exe"), null, ["--copy-stub-resources", filePath, stubExePath])
-        await this.packager.sign(stubExePath)
-      }
+    const appExe = files.find(f => f.name === `${this.appName}.exe`)
+    if (appExe) {
+      const filePath = path.join(appOutDir, appExe.name)
+      log.filePath(filePath)
+      const stubExePath = path.join(appOutDir, `${this.appName}_ExecutionStub.exe`)
+      await fs.promises.copyFile(path.join(vendorDir, "StubExecutable.exe"), stubExePath)
+      await execWine(path.join(vendorDir, "WriteZipToSetup.exe"), null, ["--copy-stub-resources", filePath, stubExePath])
+      await this.packager.sign(stubExePath)
+      log.debug({ file: filePath }, "signing app executable")
+      await this.packager.sign(filePath)
+    } else {
+      log.warn("App executable not found in app directory, skipping signing")
     }
   }
 
