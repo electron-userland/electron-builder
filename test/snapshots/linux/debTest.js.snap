@@ -4,12 +4,12 @@ exports[`arm 1`] = `
 {
   "linux": [
     {
-      "arch": "arm64",
-      "file": "TestApp_1.1.0_arm64.deb",
-    },
-    {
       "arch": "armv7l",
       "file": "TestApp_1.1.0_armv7l.deb",
+    },
+    {
+      "arch": "arm64",
+      "file": "TestApp_1.1.0_arm64.deb",
     },
   ],
 }

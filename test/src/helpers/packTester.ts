@@ -336,17 +336,15 @@ async function checkLinuxResult(expect: ExpectStatic, outDir: string, packager: 
   }
 
   const appInfo = packager.appInfo
-  const autoFindPackagePath = await fs.readdir(outDir).then(files => files.find(file => file.endsWith(".deb")))
-  const defaultPackageFile = `${outDir}/${appInfo.name}_${appInfo.version}_${arch === Arch.ia32 ? "i386" : arch === Arch.x64 ? "amd64" : "armv7l"}.deb`
-  const packagePath = autoFindPackagePath != null ? path.join(outDir, autoFindPackagePath) : defaultPackageFile
-  expect(await getContents(packagePath)).toMatchSnapshot()
+  const packageFile = `${outDir}/${appInfo.name}_${appInfo.version}_${arch === Arch.ia32 ? "i386" : arch === Arch.x64 ? "amd64" : "armv7l"}.deb`
+  expect(await getContents(packageFile)).toMatchSnapshot()
   if (arch === Arch.ia32) {
     expect(await getContents(`${outDir}/${appInfo.name}_${appInfo.version}_i386.deb`)).toMatchSnapshot()
   }
 
   const control = parseDebControl(
     (
-      await execShell(`ar p '${packagePath}' control.tar.gz | ${await getTarExecutable()} zx --to-stdout ./control`, {
+      await execShell(`ar p '${packageFile}' control.tar.xz | ${await getTarExecutable()} -Jx --to-stdout ./control`, {
         maxBuffer: 10 * 1024 * 1024,
       })
     ).stdout
