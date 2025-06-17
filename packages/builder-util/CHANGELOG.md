@@ -1,5 +1,19 @@
 # builder-util
 
+## 26.0.17
+
+### Patch Changes
+
+- [#9138](https://github.com/electron-userland/electron-builder/pull/9138) [`a6be444c`](https://github.com/electron-userland/electron-builder/commit/a6be444c90e59bbe92c53e94d7a5070f1399651f) Thanks [@mmaietta](https://github.com/mmaietta)! - chore: wrapping Error in exec rejection so as to pass through error code to downstream logic
+
+- [#9142](https://github.com/electron-userland/electron-builder/pull/9142) [`3128991a`](https://github.com/electron-userland/electron-builder/commit/3128991a1b0057e9a98903ff379022954da28135) Thanks [@mmaietta](https://github.com/mmaietta)! - chore: adding additional docs to signAndEditExecutable for windows
+
+## 26.0.16
+
+### Patch Changes
+
+- [#9117](https://github.com/electron-userland/electron-builder/pull/9117) [`b62737d8`](https://github.com/electron-userland/electron-builder/commit/b62737d8c4528c04c78a490cc4dca8cdadbeaaac) Thanks [@talentlessguy](https://github.com/talentlessguy)! - chore(deps): replace `is-ci` with `ci-info`
+
 ## 26.0.13
 
 ### Patch Changes

@@ -1,5 +1,19 @@
 # electron-publish
 
+## 26.0.17
+
+### Patch Changes
+
+- Updated dependencies [[`a6be444c`](https://github.com/electron-userland/electron-builder/commit/a6be444c90e59bbe92c53e94d7a5070f1399651f), [`3128991a`](https://github.com/electron-userland/electron-builder/commit/3128991a1b0057e9a98903ff379022954da28135)]:
+  - builder-util@26.0.17
+
+## 26.0.16
+
+### Patch Changes
+
+- Updated dependencies [[`b62737d8`](https://github.com/electron-userland/electron-builder/commit/b62737d8c4528c04c78a490cc4dca8cdadbeaaac)]:
+  - builder-util@26.0.16
+
 ## 26.0.13
 
 ### Patch Changes

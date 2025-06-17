@@ -2,7 +2,7 @@ import { Arch, CopyFileTransformer, executeAppBuilder, FileTransformer, InvalidC
 import { Nullish } from "builder-util-runtime"
 import { createHash } from "crypto"
 import { readdir } from "fs/promises"
-import * as isCI from "is-ci"
+import { isCI } from "ci-info"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { SignManager } from "./codeSign/signManager"
