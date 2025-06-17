@@ -92,6 +92,10 @@ export type Defines = {
 
   UNINSTALLER_ICON?: string
   UNINSTALL_DISPLAY_NAME?: string
+  UNINSTALL_URL_HELP?: string
+  UNINSTALL_URL_INFO_ABOUT?: string
+  UNINSTALL_URL_UPDATE_INFO?: string
+  UNINSTALL_URL_README?: string
 
   RECREATE_DESKTOP_SHORTCUT?: null
 
