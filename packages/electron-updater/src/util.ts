@@ -30,8 +30,15 @@ export function getChannelFilename(channel: string): string {
   return `${channel}.yml`
 }
 
-export function blockmapFiles(baseUrl: URL, oldVersion: string, newVersion: string): URL[] {
+export function blockmapFiles(baseUrl: URL, oldVersion: string, newVersion: string, oldBlockMapFileBaseUrl: string | null=null): URL[] {
   const newBlockMapUrl = newUrlFromBase(`${baseUrl.pathname}.blockmap`, baseUrl)
-  const oldBlockMapUrl = newUrlFromBase(`${baseUrl.pathname.replace(new RegExp(escapeRegExp(newVersion), "g"), oldVersion)}.blockmap`, baseUrl)
+
+  let oldBlockMapUrl: URL | null = null
+  if (oldBlockMapFileBaseUrl) {
+   oldBlockMapUrl = new URL(`${oldBlockMapFileBaseUrl}.blockmap` )
+  } else {
+    oldBlockMapUrl = newUrlFromBase(`${baseUrl.pathname.replace(new RegExp(escapeRegExp(newVersion), "g"), oldVersion)}.blockmap`, baseUrl)
+  }
+  
   return [oldBlockMapUrl, newBlockMapUrl]
 }
