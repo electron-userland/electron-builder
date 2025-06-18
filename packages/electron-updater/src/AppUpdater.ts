@@ -121,7 +121,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    * The base URL of the old block map file.
    * @default null
    */
-  oldBlockMapFileBaseUrl: string | null = null
+  private _oldBlockMapFileBaseUrl: string | null = null
 
   /**
    * The current application version.
@@ -137,6 +137,14 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    */
   get channel(): string | null {
     return this._channel
+  }
+
+  get oldBlockMapFileBaseUrl(): string | null {
+    return this._oldBlockMapFileBaseUrl
+  }
+
+  set oldBlockMapFileBaseUrl(value: string | null) {
+    this._oldBlockMapFileBaseUrl = value
   }
 
   /**
@@ -796,7 +804,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       if (this._testOnlyOptions != null && !this._testOnlyOptions.isUseDifferentialDownload) {
         return true
       }
-      const blockmapFileUrls = blockmapFiles(fileInfo.url, this.app.version, downloadUpdateOptions.updateInfoAndProvider.info.version, this.oldBlockMapFileBaseUrl)
+      const blockmapFileUrls = blockmapFiles(fileInfo.url, this.app.version, downloadUpdateOptions.updateInfoAndProvider.info.version, this._oldBlockMapFileBaseUrl)
       this._logger.info(`Download block maps (old: "${blockmapFileUrls[0]}", new: ${blockmapFileUrls[1]})`)
 
       const downloadBlockMap = async (url: URL): Promise<BlockMap> => {
