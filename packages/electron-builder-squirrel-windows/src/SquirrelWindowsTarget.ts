@@ -31,8 +31,8 @@ export default class SquirrelWindowsTarget extends Target {
       const vendorDirectory = path.join(path.dirname(windowInstallerPackage), "vendor")
 
       const squirrelBin = await getBin(
-        "squirrel.windows",
-        "https://github.com/electron-userland/electron-builder-binaries/releases/download/squirrel.windows@1.0.0/squirrel.windows-2.0.1-patched.7z",
+        "squirrel.windows@1.0.0",
+        "squirrel.windows-2.0.1-patched.7z",
         "DWijIRRElidu/Rq0yegAKqo2g6aVJUPvcRyvkzUoBPbRasIk61P6xY2fBMdXw6wT17md7NzrTI9/zA1wT9vEqg=="
       )
 
@@ -59,18 +59,18 @@ export default class SquirrelWindowsTarget extends Target {
   private async generateStubExecutableExe(appOutDir: string, vendorDir: string) {
     const files = await fs.promises.readdir(appOutDir, { withFileTypes: true })
     const appExe = files.find(f => f.name === `${this.appName}.exe`)
-    if (appExe) {
-      const filePath = path.join(appOutDir, appExe.name)
-      log.filePath(filePath)
-      const stubExePath = path.join(appOutDir, `${this.appName}_ExecutionStub.exe`)
-      await fs.promises.copyFile(path.join(vendorDir, "StubExecutable.exe"), stubExePath)
-      await execWine(path.join(vendorDir, "WriteZipToSetup.exe"), null, ["--copy-stub-resources", filePath, stubExePath])
-      await this.packager.sign(stubExePath)
-      log.debug({ file: filePath }, "signing app executable")
-      await this.packager.sign(filePath)
-    } else {
-      log.warn("App executable not found in app directory, skipping signing")
+    if (!appExe) {
+      throw new Error(`App executable not found in app directory: ${appOutDir}`)
     }
+
+    const filePath = path.join(appOutDir, appExe.name)
+    log.filePath(filePath)
+    const stubExePath = path.join(appOutDir, `${this.appName}_ExecutionStub.exe`)
+    await fs.promises.copyFile(path.join(vendorDir, "StubExecutable.exe"), stubExePath)
+    await execWine(path.join(vendorDir, "WriteZipToSetup.exe"), null, ["--copy-stub-resources", filePath, stubExePath])
+    await this.packager.sign(stubExePath)
+    log.debug({ file: filePath }, "signing app executable")
+    await this.packager.sign(filePath)
   }
 
   async build(appOutDir: string, arch: Arch) {
