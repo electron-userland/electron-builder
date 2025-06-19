@@ -4167,7 +4167,38 @@
         "uninstallDisplayName": {
           "default": "${productName} ${version}",
           "description": "The uninstaller display name in the control panel.",
-          "type": "string"
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "uninstallUrlHelp": {
+          "description": "The URL to the uninstaller help page in the control panel. Defaults to [homepage](./configuration.md#homepage) from application package.json.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "uninstallUrlInfoAbout": {
+          "description": "The URL to the uninstaller info about page in the control panel. Defaults to [homepage](./configuration.md#homepage) from application package.json.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "uninstallUrlReadme": {
+          "description": "The URL to the uninstaller readme page in the control panel. Defaults to [homepage](./configuration.md#homepage) from application package.json.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "uninstallUrlUpdateInfo": {
+          "description": "The URL to the uninstaller update info page in the control panel. Defaults to [homepage](./configuration.md#homepage) from application package.json.",
+          "type": [
+            "null",
+            "string"
+          ]
         },
         "uninstallerIcon": {
           "description": "The path to uninstaller icon, relative to the [build resources](./contents.md#extraresources) or to the project directory.\nDefaults to `build/uninstallerIcon.ico` or application icon.",
@@ -4484,7 +4515,38 @@
         "uninstallDisplayName": {
           "default": "${productName} ${version}",
           "description": "The uninstaller display name in the control panel.",
-          "type": "string"
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "uninstallUrlHelp": {
+          "description": "The URL to the uninstaller help page in the control panel. Defaults to [homepage](./configuration.md#homepage) from application package.json.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "uninstallUrlInfoAbout": {
+          "description": "The URL to the uninstaller info about page in the control panel. Defaults to [homepage](./configuration.md#homepage) from application package.json.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "uninstallUrlReadme": {
+          "description": "The URL to the uninstaller readme page in the control panel. Defaults to [homepage](./configuration.md#homepage) from application package.json.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "uninstallUrlUpdateInfo": {
+          "description": "The URL to the uninstaller update info page in the control panel. Defaults to [homepage](./configuration.md#homepage) from application package.json.",
+          "type": [
+            "null",
+            "string"
+          ]
         },
         "uninstallerIcon": {
           "description": "The path to uninstaller icon, relative to the [build resources](./contents.md#extraresources) or to the project directory.\nDefaults to `build/uninstallerIcon.ico` or application icon.",
@@ -6585,7 +6647,7 @@
         },
         "signAndEditExecutable": {
           "default": true,
-          "description": "Whether to sign and add metadata to executable. Advanced option.",
+          "description": "Whether to sign and add metadata to executable.\nMetadata includes information about the app name/description/version, publisher, copyright, etc.\nThis property also is responsible for adding the app icon and setting execution level.\n(Advanced option leveraging `rcedit`)",
           "type": "boolean"
         },
         "signExts": {
