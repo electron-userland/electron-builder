@@ -859,16 +859,16 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         return null
       }
 
-      const newBlockMapData = await downloadBlockMap(blockmapFileUrls[0])
+      const newBlockMapData = await downloadBlockMap(blockmapFileUrls[1])
       await saveBlockMapToCacheDir(newBlockMapData, this.downloadedUpdateHelper!.cacheDirForPendingUpdate)
 
       // get old blockmap from cache dir first, if not found, download it
       let oldBlockMapData = await getBlockMapFromCacheDir(this.downloadedUpdateHelper!.cacheDir)
       if (oldBlockMapData == null) {
-        oldBlockMapData = await downloadBlockMap(blockmapFileUrls[1])
+        oldBlockMapData = await downloadBlockMap(blockmapFileUrls[0])
       }
 
-      await new GenericDifferentialDownloader(fileInfo.info, this.httpExecutor, downloadOptions).download(newBlockMapData, oldBlockMapData)
+      await new GenericDifferentialDownloader(fileInfo.info, this.httpExecutor, downloadOptions).download(oldBlockMapData, newBlockMapData)
       return false
     } catch (e: any) {
       this._logger.error(`Cannot download differentially, fallback to full download: ${e.stack || e}`)
