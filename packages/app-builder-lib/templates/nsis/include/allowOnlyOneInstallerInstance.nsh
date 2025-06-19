@@ -38,8 +38,7 @@
   !else
     StrCpy $CmdPath "$SYSDIR\cmd.exe"
     StrCpy $FindPath "$SYSDIR\find.exe"
-    StrCpy $PowerShellPath "pwsh" ; PowerShell Core (7+)
-    # StrCpy $PowerShellPath "$SYSDIR\WindowsPowerShell\v1.0\powershell.exe" ; actually broken with PowerShell 5.1 (and below), because some Paths are empty.
+    StrCpy $PowerShellPath "$SYSDIR\WindowsPowerShell\v1.0\powershell.exe"
     !insertmacro IS_POWERSHELL_AVAILABLE
     !insertmacro _CHECK_APP_RUNNING
   !endif
@@ -47,15 +46,17 @@
 
 !macro IS_POWERSHELL_AVAILABLE
   Var /GLOBAL IsPowerShellAvailable ; 0 = available, 1 = not available
-  # Try running PowerShell with a simple command
-  nsExec::Exec `"$PowerShellPath" -Command "exit 0"`
+  # Try running PowerShell with a simple command to check if it's available
+  nsExec::Exec `"$PowerShellPath" -C "if (Get-Command Get-CimInstance -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"`
   Pop $0  # Return code (0 = success, other = error)
 
   ${if} $0 == 0
     # PowerShell is available, check if it's not blocked by policies
-    nsExec::Exec `"$PowerShellPath" -Command "if ((Get-ExecutionPolicy -Scope Process) -eq 'Restricted') { exit 1 } else { exit 0 }"`
+    nsExec::Exec `"$PowerShellPath" -C "if ((Get-ExecutionPolicy -Scope Process) -eq 'Restricted') { exit 1 } else { exit 0 }"`
     Pop $0
-  ${else}
+  ${endIf}
+
+  ${if} $0 != 0
     StrCpy $0 1
   ${endIf}
 
@@ -64,7 +65,7 @@
 
 !macro FIND_PROCESS _FILE _RETURN
   ${if} $IsPowerShellAvailable == 0
-    nsExec::Exec `"$PowerShellPath" -C "if ((Get-Process | ? {$$_.Path -and $$_.Path.StartsWith('$INSTDIR', 'CurrentCultureIgnoreCase')}).Count -gt 0) { exit 0 } else { exit 1 }"`
+    nsExec::Exec `"$PowerShellPath" -C "if ((Get-CimInstance -ClassName Win32_Process | ? {$$_.Path -and $$_.Path.StartsWith('$INSTDIR', 'CurrentCultureIgnoreCase')}).Count -gt 0) { exit 0 } else { exit 1 }"`
     Pop ${_RETURN}
   ${else}
     !ifdef INSTALL_MODE_PER_ALL_USERS
@@ -90,7 +91,7 @@
   ${endIf}
 
   ${if} $IsPowerShellAvailable == 0
-    nsExec::Exec `"$PowerShellPath" -Command "Get-Process | ? {$$_.Path -and $$_.Path.StartsWith('$INSTDIR', 'CurrentCultureIgnoreCase')} | Stop-Process $0"`
+    nsExec::Exec `"$PowerShellPath" -C "Get-CimInstance -ClassName Win32_Process | ? {$$_.Path -and $$_.Path.StartsWith('$INSTDIR', 'CurrentCultureIgnoreCase')} | % { Stop-Process -Id $$_.ProcessId $0 }"`
   ${else}
     !ifdef INSTALL_MODE_PER_ALL_USERS
       nsExec::Exec `taskkill /IM "${_FILE}" /FI "PID ne $pid"`
