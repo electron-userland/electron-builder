@@ -37,10 +37,7 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
   protected async getDependenciesTree(): Promise<T> {
     const command = getPackageManagerCommand(this.installOptions.manager)
     const args = this.getArgs()
-    const dependencies = await exec(command, args, {
-      cwd: this.rootDir,
-      shell: true,
-    })
+    const dependencies = await exec(command, args, { cwd: this.rootDir, maxBuffer: 1024 * 1024 * 10 })
     return this.parseDependenciesTree(dependencies)
   }
 
