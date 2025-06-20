@@ -1,5 +1,15 @@
 # app-builder-lib
 
+## 26.0.18
+
+### Patch Changes
+
+- [#9166](https://github.com/electron-userland/electron-builder/pull/9166) [`61aa8557`](https://github.com/electron-userland/electron-builder/commit/61aa8557dcab97a516ef2abd8bdadab5eb662879) Thanks [@panther7](https://github.com/panther7)! - feat(nsis): added supports for uninstall components page
+
+- Updated dependencies [[`a2fbc8b6`](https://github.com/electron-userland/electron-builder/commit/a2fbc8b6666fc58fb7cf1a6fa607695bb3d29a04)]:
+  - dmg-builder@26.0.18
+  - electron-builder-squirrel-windows@26.0.18
+
 ## 26.0.17
 
 ### Patch Changes

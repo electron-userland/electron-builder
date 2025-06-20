@@ -1,3 +1,17 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v26.0.17...v) (2025-06-20)
+
+
+### Bug Fixes
+
+* resolve dmg flakiness by upgrading `dmgbuild` python vendor files ([#9163](https://github.com/electron-userland/electron-builder/issues/9163)) ([a2fbc8b](https://github.com/electron-userland/electron-builder/commit/a2fbc8b6666fc58fb7cf1a6fa607695bb3d29a04))
+
+
+### Features
+
+* **nsis:** added support for uninstall components page ([#9166](https://github.com/electron-userland/electron-builder/issues/9166)) ([61aa855](https://github.com/electron-userland/electron-builder/commit/61aa8557dcab97a516ef2abd8bdadab5eb662879))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v26.0.16...v) (2025-06-13)
 
 
