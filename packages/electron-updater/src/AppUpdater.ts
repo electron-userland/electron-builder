@@ -119,6 +119,12 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
 
   /**
    * The base URL of the old block map file.
+   *
+   * When null, the updater will use the base URL of the update file to download the update.
+   * When set, the updater will use this string as the base URL of the old block map file.
+   * Some servers like github cannot download the old block map file from latest release,
+   * so you need to compute the old block map file base URL manually.
+   *
    * @default null
    */
   private _oldBlockMapFileBaseUrl: string | null = null
