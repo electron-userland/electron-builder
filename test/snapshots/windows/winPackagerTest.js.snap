@@ -4,17 +4,16 @@ exports[`beta version 1`] = `
 {
   "win": [
     {
-      "arch": "arm64",
-      "file": "Test App ßW Setup 3.0.0-beta.2-arm64.exe",
-      "safeArtifactName": "TestApp-Setup-3.0.0-beta.2-arm64.exe",
+      "file": "Test App ßW Setup 3.0.0-beta.2-arm64.exe.blockmap",
+      "safeArtifactName": "TestApp-Setup-3.0.0-beta.2-arm64.exe.blockmap",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
     {
-      "file": "Test App ßW Setup 3.0.0-beta.2-arm64.exe.blockmap",
-      "safeArtifactName": "TestApp-Setup-3.0.0-beta.2-arm64.exe.blockmap",
+      "file": "Test App ßW Setup 3.0.0-beta.2.exe.blockmap",
+      "safeArtifactName": "TestApp-Setup-3.0.0-beta.2.exe.blockmap",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
@@ -30,8 +29,9 @@ exports[`beta version 1`] = `
       },
     },
     {
-      "file": "Test App ßW Setup 3.0.0-beta.2.exe.blockmap",
-      "safeArtifactName": "TestApp-Setup-3.0.0-beta.2.exe.blockmap",
+      "arch": "arm64",
+      "file": "Test App ßW Setup 3.0.0-beta.2-arm64.exe",
+      "safeArtifactName": "TestApp-Setup-3.0.0-beta.2-arm64.exe",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
@@ -49,14 +49,14 @@ exports[`win zip 1`] = `
 {
   "win": [
     {
-      "arch": "arm64",
-      "file": "Test App ßW-1.1.0-arm64-win.zip",
-      "safeArtifactName": "TestApp-1.1.0-arm64-win.zip",
-    },
-    {
       "arch": "x64",
       "file": "Test App ßW-1.1.0-win.zip",
       "safeArtifactName": "TestApp-1.1.0-win.zip",
+    },
+    {
+      "arch": "arm64",
+      "file": "Test App ßW-1.1.0-arm64-win.zip",
+      "safeArtifactName": "TestApp-1.1.0-arm64-win.zip",
     },
   ],
 }
@@ -66,6 +66,7 @@ exports[`win zip 2`] = `
 [
   "chrome_100_percent.pak",
   "chrome_200_percent.pak",
+  "d3dcompiler_47.dll",
   "ffmpeg.dll",
   "icudtl.dat",
   "libEGL.dll",
@@ -112,6 +113,7 @@ exports[`win zip 4`] = `
 [
   "chrome_100_percent.pak",
   "chrome_200_percent.pak",
+  "d3dcompiler_47.dll",
   "ffmpeg.dll",
   "icudtl.dat",
   "libEGL.dll",

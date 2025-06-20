@@ -225,6 +225,12 @@ export class NsisTarget extends Target {
       defines.UNINSTALL_REGISTRY_KEY_2 = `Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\${guid}`
     }
 
+    const { homepage } = this.packager.info.metadata
+    use(options.uninstallUrlHelp || homepage, it => (defines.UNINSTALL_URL_HELP = it))
+    use(options.uninstallUrlInfoAbout || homepage, it => (defines.UNINSTALL_URL_INFO_ABOUT = it))
+    use(options.uninstallUrlUpdateInfo || homepage, it => (defines.UNINSTALL_URL_UPDATE_INFO = it))
+    use(options.uninstallUrlReadme || homepage, it => (defines.UNINSTALL_URL_README = it))
+
     const commands: Commands = {
       OutFile: `"${installerPath}"`,
       VIProductVersion: appInfo.getVersionInWeirdWindowsForm(),

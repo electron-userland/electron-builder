@@ -292,7 +292,8 @@ export default class FpmTarget extends Target {
 
   private async executeFpm(target: string, fpmConfiguration: FpmConfiguration, env: any) {
     const fpmArgs = ["-s", "dir", "--force", "-t", target]
-    if (process.env.FPM_DEBUG === "true") {
+    const forceDebugLogging = process.env.FPM_DEBUG === "true"
+    if (forceDebugLogging) {
       fpmArgs.push("--debug")
     }
     if (log.isDebugEnabled) {
@@ -313,8 +314,27 @@ export default class FpmTarget extends Target {
         const hint = "to build rpm, executable rpmbuild is required, please install rpm package on your system. "
         if (process.platform === "darwin") {
           log.error(null, hint + "(brew install rpm)")
+        } else {
+          log.error(null, hint + "(sudo apt-get install rpm)")
         }
-        log.error(null, hint + "(sudo apt-get install rpm)")
+      }
+      if (e.message.includes("xz: not found")) {
+        const hint = "to build rpm, executable xz is required, please install xz package on your system. "
+        if (process.platform === "darwin") {
+          log.error(null, hint + "(brew install xz)")
+        } else {
+          log.error(null, hint + "(sudo apt-get install xz-utils)")
+        }
+      }
+      if (e.message.includes("error: File not found")) {
+        log.error(
+          { fpmArgs, ...fpmConfiguration },
+          "fpm failed to find the specified files. Please check your configuration and ensure all paths are correct. To see what files triggered this, set the environment variable FPM_DEBUG=true"
+        )
+        if (forceDebugLogging) {
+          log.error(null, e.message)
+        }
+        throw new Error(`FPM failed to find the specified files. Please check your configuration and ensure all paths are correct. Command: ${fpmPath} ${fpmArgs.join(" ")}`)
       }
       throw e
     })

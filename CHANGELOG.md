@@ -1,3 +1,32 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v26.0.16...v) (2025-06-13)
+
+
+### Bug Fixes
+
+* `electronDist` - detect if directory and copy electron from there, short circuit current logic path ([#9157](https://github.com/electron-userland/electron-builder/issues/9157)) ([092d398](https://github.com/electron-userland/electron-builder/commit/092d398a66057f411fe97fc3450de03bca6033d8))
+* don't assume commands end with .cmd on Windows ([#9026](https://github.com/electron-userland/electron-builder/issues/9026)) ([e56977b](https://github.com/electron-userland/electron-builder/commit/e56977b5c6da25e4d797fd6cb40ea8ca52464fd3))
+* update minimatch to ^10.0.3 to fix downstream issue ([#9162](https://github.com/electron-userland/electron-builder/issues/9162)) ([0b17b35](https://github.com/electron-userland/electron-builder/commit/0b17b351cae84f3360cc8265fc452650c2c71ac3))
+
+
+### Features
+
+* **nsis:** add support for more Windows Installer options ([#9119](https://github.com/electron-userland/electron-builder/issues/9119)) ([73696c6](https://github.com/electron-userland/electron-builder/commit/73696c6da6ea167a571af1226d6e82e94f3459b7))
+
+
+
+# [](https://github.com/electron-userland/electron-builder/compare/v26.0.15...v) (2025-05-29)
+
+
+### Bug Fixes
+
+* allow custom electron zip name to be provided when unpacking a provided `electronDist` ([#9126](https://github.com/electron-userland/electron-builder/issues/9126)) ([9272cf3](https://github.com/electron-userland/electron-builder/commit/9272cf33a8e3b788979010706e9c564e954a2ee7))
+* **dmg:** `--force` unmount dmg using hdiutil after delay on Resource Lock (code 16) ([#9115](https://github.com/electron-userland/electron-builder/issues/9115)) ([9358b00](https://github.com/electron-userland/electron-builder/commit/9358b00b3985dd65a2c89b65a4c097653e9aebb2))
+* **docs:** Update README.md emoji rendering ([#9110](https://github.com/electron-userland/electron-builder/issues/9110)) ([b87b158](https://github.com/electron-userland/electron-builder/commit/b87b158c12d3a096e8e7b4883438a277633ca3c7))
+* **linux:** `productName` should be used as the default value when `executableName` is not set per docs ([#9068](https://github.com/electron-userland/electron-builder/issues/9068)) ([59fdaa9](https://github.com/electron-userland/electron-builder/commit/59fdaa9f3420f253c735690091169577112793b7))
+* **updater:** don't throw when determining which package manager to use ([#9113](https://github.com/electron-userland/electron-builder/issues/9113)) ([8ba9be4](https://github.com/electron-userland/electron-builder/commit/8ba9be481e3b777aa77884d265fd9b7f927a8a99))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v26.0.14...v) (2025-05-04)
 
 
