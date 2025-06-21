@@ -806,7 +806,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       if (this._testOnlyOptions != null && !this._testOnlyOptions.isUseDifferentialDownload) {
         return true
       }
-      const blockmapFileUrls = blockmapFiles(fileInfo.url, this.app.version, downloadUpdateOptions.updateInfoAndProvider.info.version, this._oldBlockMapFileBaseUrl)
+      const blockmapFileUrls = blockmapFiles(fileInfo.url, this.app.version, downloadUpdateOptions.updateInfoAndProvider.info.version, this.previousBlockmapBaseUrlOverride)
       this._logger.info(`Download block maps (old: "${blockmapFileUrls[0]}", new: ${blockmapFileUrls[1]})`)
 
       const downloadBlockMap = async (url: URL): Promise<BlockMap> => {
