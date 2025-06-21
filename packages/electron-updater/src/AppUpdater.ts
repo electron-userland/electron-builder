@@ -127,7 +127,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    *
    * @default null
    */
-  private _oldBlockMapFileBaseUrl: string | null = null
+  public previousBlockmapBaseUrlOverride: string | null = null
 
   /**
    * The current application version.
@@ -143,14 +143,6 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    */
   get channel(): string | null {
     return this._channel
-  }
-
-  get oldBlockMapFileBaseUrl(): string | null {
-    return this._oldBlockMapFileBaseUrl
-  }
-
-  set oldBlockMapFileBaseUrl(value: string | null) {
-    this._oldBlockMapFileBaseUrl = value
   }
 
   /**
