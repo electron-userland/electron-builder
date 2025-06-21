@@ -25,7 +25,7 @@ function resolveCommand(pm: PM): string {
   }
 
   try {
-    return path.basename(which.sync(fallback))
+    return which.sync(fallback)
   } catch {
     // If `which` fails (not found), still return the fallback string
     return fallback
