@@ -1,6 +1,6 @@
 import { InvalidConfigurationError, log, isEmptyOrSpaces } from "builder-util"
 import { execWine } from "app-builder-lib/out/wine"
-import { getBin } from "app-builder-lib/out/binDownload"
+import { getBinFromUrl } from "app-builder-lib/out/binDownload"
 import { sanitizeFileName } from "builder-util/out/filename"
 import { Arch, getArchSuffix, SquirrelWindowsOptions, Target, WinPackager } from "app-builder-lib"
 import * as path from "path"
@@ -30,7 +30,7 @@ export default class SquirrelWindowsTarget extends Target {
       const windowInstallerPackage = require.resolve("electron-winstaller/package.json")
       const vendorDirectory = path.join(path.dirname(windowInstallerPackage), "vendor")
 
-      const squirrelBin = await getBin(
+      const squirrelBin = await getBinFromUrl(
         "squirrel.windows@1.0.0",
         "squirrel.windows-2.0.1-patched.7z",
         "DWijIRRElidu/Rq0yegAKqo2g6aVJUPvcRyvkzUoBPbRasIk61P6xY2fBMdXw6wT17md7NzrTI9/zA1wT9vEqg=="
