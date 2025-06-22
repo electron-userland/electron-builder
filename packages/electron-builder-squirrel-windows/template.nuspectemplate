@@ -19,6 +19,7 @@
     <file src="*.pak" target="lib\net45" />
     <file src="*.exe.config" target="lib\net45" />
     <file src="*.exe.sig" target="lib\net45" />
+    <file src="*_ExecutionStub.exe" target="lib\net45" />
     <file src="icudtl.dat" target="lib\net45\icudtl.dat" />
     <file src="Squirrel.exe" target="lib\net45\squirrel.exe" />
     <file src="LICENSE.electron.txt" target="lib\net45\LICENSE.electron.txt" />
