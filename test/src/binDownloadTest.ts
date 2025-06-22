@@ -17,7 +17,7 @@ test("download binary from Mirror with custom dir", async ({ expect }) => {
     "linux-tools-mac-10.12.3.7z",
     "SQ8fqIRVXuQVWnVgaMTDWyf2TLAJjJYw3tRSqQJECmgF6qdM7Kogfa6KD49RbGzzMYIFca9Uw3MdsxzOPRWcYw=="
   )
-    delete process.env.ELECTRON_BUILDER_BINARIES_MIRROR
+  delete process.env.ELECTRON_BUILDER_BINARIES_MIRROR
   delete process.env.ELECTRON_BUILDER_BINARIES_CUSTOM_DIR
   expect(bin).toBeTruthy()
 })
@@ -29,7 +29,7 @@ test("download binary from Mirror", async ({ expect }) => {
     "linux-tools-mac-10.12.3.7z",
     "SQ8fqIRVXuQVWnVgaMTDWyf2TLAJjJYw3tRSqQJECmgF6qdM7Kogfa6KD49RbGzzMYIFca9Uw3MdsxzOPRWcYw=="
   )
-    delete process.env.ELECTRON_BUILDER_BINARIES_MIRROR
+  delete process.env.ELECTRON_BUILDER_BINARIES_MIRROR
   expect(bin).toBeTruthy()
 })
 
@@ -40,6 +40,6 @@ test("download binary from Mirror with Url override", async ({ expect }) => {
     "linux-tools-mac-10.12.3.7z",
     "SQ8fqIRVXuQVWnVgaMTDWyf2TLAJjJYw3tRSqQJECmgF6qdM7Kogfa6KD49RbGzzMYIFca9Uw3MdsxzOPRWcYw=="
   )
-    delete process.env.ELECTRON_BUILDER_BINARIES_DOWNLOAD_OVERRIDE_URL
+  delete process.env.ELECTRON_BUILDER_BINARIES_DOWNLOAD_OVERRIDE_URL
   expect(bin).toBeTruthy()
 })
