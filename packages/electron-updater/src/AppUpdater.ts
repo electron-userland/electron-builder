@@ -516,7 +516,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       this.emit("update-not-available", updateInfo)
 
       // remove all installers from cache
-      this.downloadedUpdateHelper?.clear()
+      await this.downloadedUpdateHelper?.clear()
 
       return {
         isUpdateAvailable: false,
