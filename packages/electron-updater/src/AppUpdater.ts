@@ -15,7 +15,7 @@ import {
 import { randomBytes } from "crypto"
 import { release } from "os"
 import { EventEmitter } from "events"
-import { mkdir, outputFile, readFile, rename, unlink, copyFile, pathExists, emptyDir } from "fs-extra"
+import { mkdir, outputFile, readFile, rename, unlink, copyFile, pathExists } from "fs-extra"
 import { OutgoingHttpHeaders } from "http"
 import { load } from "js-yaml"
 import { Lazy } from "lazy-val"
