@@ -514,11 +514,10 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         }).`
       )
       this.emit("update-not-available", updateInfo)
+      
       // remove all installers from cache
-      const downloadedUpdateHelper =  this.downloadedUpdateHelper?.cacheDirForPendingUpdate
-      if (downloadedUpdateHelper && await pathExists(downloadedUpdateHelper)) {
-        await emptyDir(downloadedUpdateHelper)
-      }
+      this.downloadedUpdateHelper?.clear()
+
       return {
         isUpdateAvailable: false,
         versionInfo: updateInfo,
