@@ -15,7 +15,7 @@ import {
 import { randomBytes } from "crypto"
 import { release } from "os"
 import { EventEmitter } from "events"
-import { mkdir, outputFile, readFile, rename, unlink, copyFile, pathExists } from "fs-extra"
+import { mkdir, outputFile, readFile, rename, unlink, copyFile, pathExists, emptyDir } from "fs-extra"
 import { OutgoingHttpHeaders } from "http"
 import { load } from "js-yaml"
 import { Lazy } from "lazy-val"
@@ -514,6 +514,11 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         }).`
       )
       this.emit("update-not-available", updateInfo)
+      // remove all installers from cache
+      const downloadedUpdateHelper =  this.downloadedUpdateHelper?.cacheDirForPendingUpdate
+      if (downloadedUpdateHelper && await pathExists(downloadedUpdateHelper)) {
+        await emptyDir(downloadedUpdateHelper)
+      }
       return {
         isUpdateAvailable: false,
         versionInfo: updateInfo,
