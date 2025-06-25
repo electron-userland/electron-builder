@@ -151,25 +151,35 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
     }
 
     await new Promise<void>((resolve, reject) => {
+      const outStream = createWriteStream(tempOutputFile)
+
+      console.error(`Running command: ${command} ${args.join(" ")}`)
+      console.error(`Output will be written to: ${tempOutputFile}`)
+
       const child = spawn(command, args, {
         cwd,
         shell: false,
       })
-      const outStream = createWriteStream(tempOutputFile)
-      child.stdout.pipe(outStream)
 
       let stderr = ""
+
+      child.stdout.pipe(outStream)
+
       child.stderr.on("data", chunk => {
         stderr += chunk.toString()
       })
 
-      child.on("error", err => reject(new Error(`Spawn failed: ${err.message}`)))
+      child.on("error", err => {
+        reject(new Error(`Spawn failed: ${err.message}`))
+      })
 
       child.on("close", code => {
         outStream.close()
+
         if (code !== 0) {
           return reject(new Error(`Process exited with code ${code}:\n${stderr}`))
         }
+
         resolve()
       })
     })
