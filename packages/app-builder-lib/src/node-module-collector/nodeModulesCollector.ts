@@ -1,11 +1,13 @@
 import { hoist, type HoisterTree, type HoisterResult } from "./hoist"
 import * as path from "path"
-import * as fs from "fs"
+import * as fs from "fs-extra"
 import type { NodeModuleInfo, DependencyGraph, Dependency } from "./types"
 import { log } from "builder-util"
 import { getPackageManagerCommand, PM } from "./packageManager"
-import { exec } from "child_process"
+import { exec, spawn } from "child_process"
 import { promisify } from "util"
+import { createWriteStream } from "fs"
+import { TmpDir } from "temp-file"
 
 const execAsync = promisify(exec)
 
@@ -13,11 +15,7 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
   private nodeModules: NodeModuleInfo[] = []
   protected allDependencies: Map<string, T> = new Map()
   protected productionGraph: DependencyGraph = {}
-
-  static async safeExec(command: string, args: string[], cwd: string): Promise<string> {
-    const payload = await execAsync([`"${command}"`, ...args].join(" "), { cwd, maxBuffer: 1000 * 1024 * 1024 }) // 1000MB buffer LOL, some projects can have extremely large dependency trees
-    return payload.stdout.trim()
-  }
+  private readonly tmpDir: TmpDir = new TmpDir()
 
   constructor(private readonly rootDir: string) {}
 
@@ -30,6 +28,7 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
     const hoisterResult: HoisterResult = hoist(this.transToHoisterTree(this.productionGraph), { check: true })
     this._getNodeModules(hoisterResult.dependencies, this.nodeModules)
 
+    await this.tmpDir.cleanup()
     return this.nodeModules
   }
 
@@ -46,7 +45,7 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
   protected async getDependenciesTree(): Promise<T> {
     const command = getPackageManagerCommand(this.installOptions.manager)
     const args = this.getArgs()
-    const dependencies = await NodeModulesCollector.safeExec(command, args, this.rootDir)
+    const dependencies = await this.streamCollectorCommandToJsonFile(command, args, this.rootDir)
     return this.parseDependenciesTree(dependencies)
   }
 
@@ -122,5 +121,47 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
       }
     }
     result.sort((a, b) => a.name.localeCompare(b.name))
+  }
+
+  static async safeExec(command: string, args: string[], cwd: string): Promise<string> {
+    const payload = await execAsync([`"${command}"`, ...args].join(" "), { cwd, maxBuffer: 100 * 1024 * 1024 }) // 100MB buffer LOL, some projects can have extremely large dependency trees
+    return payload.stdout.trim()
+  }
+
+  async streamCollectorCommandToJsonFile(command: string, args: string[], cwd: string) {
+    const tempFile = await this.tmpDir.getTempFile({ prefix: command, suffix: "output.json" })
+
+    await new Promise<void>((resolve, reject) => {
+      const outStream = createWriteStream(tempFile)
+      const child = spawn(command, args, {
+        cwd,
+        shell: false,
+      })
+
+      let stderr = ""
+
+      child.stdout.pipe(outStream)
+
+      child.stderr.on("data", chunk => {
+        stderr += chunk.toString()
+      })
+
+      child.on("error", err => {
+        reject(new Error(`Failed to spawn process: ${err.message}`))
+      })
+
+      child.on("close", code => {
+        outStream.close()
+
+        if (code !== 0) {
+          reject(new Error(`Process exited ${code}\n${stderr}`))
+          return
+        }
+        resolve()
+      })
+    })
+
+    const fileData = await fs.readFile(tempFile, "utf8")
+    return fileData
   }
 }
