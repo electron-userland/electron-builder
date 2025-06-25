@@ -134,7 +134,7 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
       suffix: "output.json",
     })
 
-    const isCmdWithSpaces = process.platform === "win32" && path.extname(command).toLowerCase() === ".cmd" && command.includes(" ")
+    const isCmdWithSpaces = process.platform === "win32" && path.extname(command).toLowerCase() === ".cmd"
 
     const tempBatFile = isCmdWithSpaces
       ? await this.tmpDir.getTempFile({
