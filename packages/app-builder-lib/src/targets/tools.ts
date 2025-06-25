@@ -16,30 +16,55 @@ export async function getFpmPath() {
   if (process.platform === "linux") {
     if (process.arch == "x64") {
       return path.join(
-        await getBinFromUrl("fpm@2.0.0", "fpm-1.16.0-ruby-3.4.3-linux-x86_64.7z", "ItWjEqdl1WKMZyKqDgxcw1FTgw3OmdLCj50J4r4JipqD9Jhd4RlhCR5JZbrIqwRE+/9U9ntjopWVa2j/rkXnIw=="),
+        await getBinFromUrl(
+          "fpm@3.0.5",
+          "fpm-1.16.0-ruby-3.4.3-linux-amd64.7z",
+          "fwL0wTB5R2ILwieawK2jjPZf5IaxqXlRYrHlFnLeUcPz+Rz2IJqiZggzSQ7l4oJ3rWzYbMW3+WKOTNq6fod/cQ==",
+          "mmaietta/electron-builder-binaries"
+        ),
         exec
       )
     } else if (process.arch === "arm64") {
       return path.join(
-        await getBinFromUrl("fpm@2.0.0", "fpm-1.16.0-ruby-3.4.3-linux-arm64v8.7z", "WkB5mAA9FBpRUCUdSIaAYrZ4lU7fbeHSKuVM4LLXMwu27l65GVrH28jEiZ+yDxopAWNkcmAfCnG35dFVArB9gw=="),
+        await getBinFromUrl(
+          "fpm@3.0.5",
+          "fpm-1.16.0-ruby-3.4.3-linux-arm64v8.7z",
+          "05cQbF/JEjSvmYGQpRVY+Qaj4a4MCsbUlo4pFJmppMOMSHlyyCmSu3g96moM2N/Qv1QdFbZ+MJa+AgZSuO5CZQ==",
+          "mmaietta/electron-builder-binaries"
+        ),
         exec
       )
     }
     return path.join(
-      await getBinFromUrl("fpm@2.0.0", "fpm-1.16.0-ruby-3.4.3-linux-i386.7z", "yo8oNV2FIC0OryQeulBkPto3SIar6qVuV0lNEFUy55w+wZwvp/x6t/Ng/WnWRybRUXzCBEkgCdTRLvyMlSvUXw=="),
+      await getBinFromUrl(
+        "fpm@3.0.5",
+        "fpm-1.16.0-ruby-3.4.3-linux-i386.7z",
+        "n4KeDrQ7ruTTocHe/rQJ3v45yEBw6Pu2YXSmJAngF9rbcLr8BBUA/Khh1F/EtZvbf4wx0SAhlosYH+ImmdIoFw==",
+        "mmaietta/electron-builder-binaries"
+      ),
       exec
     )
   }
   // darwin arm64
   if (process.arch === "arm64") {
     return path.join(
-      await getBinFromUrl("fpm@2.0.0", "fpm-1.16.0-ruby-3.4.3-darwin-arm64.7z", "BuXMS1zmoSgjd6RG0s74bX0TvybKuLNMPvHsutbr9enVYUDmz7MRd8YI5goCFqtPGOvbvWKYGA9RnXzWH4ALKg=="),
+      await getBinFromUrl(
+        "fpm@3.0.5",
+        "fpm-1.16.0-ruby-3.4.3-darwin-arm64.7z",
+        "XaNjq4kxP2J/656ZqJ4GBk9cfhhFeY+ciB34qFL784ImJXN4q/0N4CWqJi0Dted9dMWKiKs9vDqLdOlW8gbT9A==",
+        "mmaietta/electron-builder-binaries"
+      ),
       exec
     )
   }
   // darwin x64
   return path.join(
-    await getBinFromUrl("fpm@2.0.0", "fpm-1.16.0-ruby-3.4.3-darwin-x86_64.7z", "g4KD+DZTAsmobs/huNhOxKEmaMv1R+PfgRFwWuJu1Sla/c6h4q2YAtICuukaX9goPguFYkfYd7AUb1hllVxyjQ=="),
+    await getBinFromUrl(
+      "fpm@3.0.5",
+      "fpm-1.16.0-ruby-3.4.3-darwin-x86_64.7z",
+      "lBGcgz+wPgEANuH0/+YVO7LMqaNRx1NrJP075qhNTyQru1JJdwZ2VhW0msXgQZGw9k/azv9stbkwVG4hWmZJxw==",
+      "mmaietta/electron-builder-binaries"
+    ),
     exec
   )
 }
