@@ -129,39 +129,51 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
   }
 
   async streamCollectorCommandToJsonFile(command: string, args: string[], cwd: string) {
-    const tempFile = await this.tmpDir.getTempFile({ prefix: path.basename(command, path.extname(command)), suffix: "output.json" })
+    const tempOutputFile = await this.tmpDir.getTempFile({
+      prefix: path.basename(command, path.extname(command)),
+      suffix: "output.json",
+    })
+
+    const isCmdWithSpaces = process.platform === "win32" && path.extname(command).toLowerCase() === ".cmd" && command.includes(" ")
+
+    const tempBatFile = isCmdWithSpaces
+      ? await this.tmpDir.getTempFile({
+          prefix: path.basename(command, path.extname(command)),
+          suffix: ".bat",
+        })
+      : null
+
+    if (tempBatFile) {
+      const batScript = `@echo off\r\n"${command}" %*\r\n` // <-- CRLF required for .bat
+      await fs.writeFile(tempBatFile, batScript, { encoding: "utf8" })
+      command = "cmd.exe"
+      args = ["/c", tempBatFile, ...args]
+    }
 
     await new Promise<void>((resolve, reject) => {
-      const outStream = createWriteStream(tempFile)
       const child = spawn(command, args, {
         cwd,
         shell: false,
       })
-
-      let stderr = ""
-
+      const outStream = createWriteStream(tempOutputFile)
       child.stdout.pipe(outStream)
 
+      let stderr = ""
       child.stderr.on("data", chunk => {
         stderr += chunk.toString()
       })
 
-      child.on("error", err => {
-        reject(new Error(`Failed to spawn process: ${err.message}`))
-      })
+      child.on("error", err => reject(new Error(`Spawn failed: ${err.message}`)))
 
       child.on("close", code => {
         outStream.close()
-
         if (code !== 0) {
-          reject(new Error(`Process exited ${code}\n${stderr}`))
-          return
+          return reject(new Error(`Process exited with code ${code}:\n${stderr}`))
         }
         resolve()
       })
     })
-
-    const fileData = await fs.readFile(tempFile, "utf8")
+    const fileData = await fs.readFile(tempOutputFile, "utf8")
     return fileData
   }
 }
