@@ -129,7 +129,7 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
   }
 
   async streamCollectorCommandToJsonFile(command: string, args: string[], cwd: string) {
-    const tempFile = await this.tmpDir.getTempFile({ prefix: command, suffix: "output.json" })
+    const tempFile = await this.tmpDir.getTempFile({ prefix: path.basename(command, path.extname(command)), suffix: "output.json" })
 
     await new Promise<void>((resolve, reject) => {
       const outStream = createWriteStream(tempFile)
