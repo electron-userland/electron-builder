@@ -14,6 +14,11 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
   protected allDependencies: Map<string, T> = new Map()
   protected productionGraph: DependencyGraph = {}
 
+  static async safeExec(command: string, args: string[], cwd: string): Promise<string> {
+    const payload = await execAsync([`"${command}"`, ...args].join(" "), { cwd, maxBuffer: 1024 * 1024 * 1024 }) // 1GB buffer, some projects can have extremely large dependency trees
+    return payload.stdout.trim()
+  }
+
   constructor(private readonly rootDir: string) {}
 
   public async getNodeModules(): Promise<NodeModuleInfo[]> {
@@ -117,10 +122,5 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
       }
     }
     result.sort((a, b) => a.name.localeCompare(b.name))
-  }
-
-  static async safeExec(command: string, args: string[], cwd: string): Promise<string> {
-    const payload = await execAsync([`"${command}"`, ...args].join(" "), { cwd })
-    return payload.stdout.trim()
   }
 }
