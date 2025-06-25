@@ -15,7 +15,7 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
   protected productionGraph: DependencyGraph = {}
 
   static async safeExec(command: string, args: string[], cwd: string): Promise<string> {
-    const payload = await execAsync([`"${command}"`, ...args].join(" "), { cwd, maxBuffer: 50 * 1024 * 1024 }) // 50MB buffer, some projects can have extremely large dependency trees
+    const payload = await execAsync([`"${command}"`, ...args].join(" "), { cwd, maxBuffer: 1000 * 1024 * 1024 }) // 1000MB buffer LOL, some projects can have extremely large dependency trees
     return payload.stdout.trim()
   }
 
