@@ -2,8 +2,12 @@ import { hoist, type HoisterTree, type HoisterResult } from "./hoist"
 import * as path from "path"
 import * as fs from "fs"
 import type { NodeModuleInfo, DependencyGraph, Dependency } from "./types"
-import { exec, log } from "builder-util"
+import { log } from "builder-util"
 import { getPackageManagerCommand, PM } from "./packageManager"
+import { exec } from "child_process"
+import { promisify } from "util"
+
+const execAsync = promisify(exec)
 
 export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType>, OptionalsType> {
   private nodeModules: NodeModuleInfo[] = []
@@ -37,7 +41,7 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
   protected async getDependenciesTree(): Promise<T> {
     const command = getPackageManagerCommand(this.installOptions.manager)
     const args = this.getArgs()
-    const dependencies = await exec(command, args, { cwd: this.rootDir })
+    const dependencies = await NodeModulesCollector.safeExec(command, args, this.rootDir)
     return this.parseDependenciesTree(dependencies)
   }
 
@@ -113,5 +117,10 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
       }
     }
     result.sort((a, b) => a.name.localeCompare(b.name))
+  }
+
+  static async safeExec(command: string, args: string[], cwd: string): Promise<string> {
+    const payload = await execAsync([`"${command}"`, ...args].join(" "), { cwd })
+    return payload.stdout.trim()
   }
 }
