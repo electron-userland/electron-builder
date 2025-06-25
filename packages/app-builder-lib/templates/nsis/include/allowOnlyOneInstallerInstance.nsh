@@ -67,7 +67,7 @@
 
       doStopProcess:
 
-      DetailPrint `Closing running "${PRODUCT_NAME}"...`
+      DetailPrint "$(appClosing)"
 
       # https://github.com/electron-userland/electron-builder/issues/2516#issuecomment-372009092
       !ifdef INSTALL_MODE_PER_ALL_USERS
