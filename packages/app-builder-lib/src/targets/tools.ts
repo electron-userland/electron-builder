@@ -6,6 +6,15 @@ export function getLinuxToolsPath() {
 }
 
 export async function getFpmPath() {
+  // It's just easier to copy the map of checksums here rather then adding them to within each if-statement
+  const fpmChecksumMap = {
+    "fpm-1.16.0-ruby-3.4.3-darwin-arm64.7z": "xAyOUp213DnD5zN3o53L2sRs+OgoMYRVy2tOIhgsUdxcJUMzfy6U5Nrd92ZXUn5AHW3Y87CXPqwsL0aQaBTnBg==",
+    "fpm-1.16.0-ruby-3.4.3-darwin-x86_64.7z": "WWdGdSOemjuQateF0qWkiWF9sgLgm8NNDnnWJe9CQ7l9+tVw1/tAGKH32/kTeaANVaDZg1r2Jq0uxudGEPYOuw==",
+    "fpm-1.16.0-ruby-3.4.3-linux-amd64.7z": "zN/lxd0tUJi/QmjOmUQt91OaJbO+cSGxYmse7xh4BVXE4MY5TgUHUR+TqmEgBDofHqtR7G2V0OenYlr25ZWY2A==",
+    "fpm-1.16.0-ruby-3.4.3-linux-arm64v8.7z": "WfC0mi3PI9DYwXZdkg2gwFttHGJn8uAZlNVWs0xYMkGNTpEunP25hdBltg0YXrVdVWEQhpjCU3if5F03B8jfcw==",
+    "fpm-1.16.0-ruby-3.4.3-linux-i386.7z": "0qkId/DmyKc7fOQQN5pTe2gB+CfsJArmRGH+1f4KmFrNbfXQRl2G0c5NNEjSiqjqu+WhpOaKVWpHAskLD5iSzA==",
+  }
+
   if (process.env.CUSTOM_FPM_PATH != null) {
     return path.resolve(process.env.CUSTOM_FPM_PATH)
   }
@@ -13,58 +22,23 @@ export async function getFpmPath() {
   if (process.platform === "win32" || process.env.USE_SYSTEM_FPM === "true") {
     return exec
   }
-  if (process.platform === "linux") {
-    if (process.arch == "x64") {
-      return path.join(
-        await getBinFromUrl(
-          "fpm@3.0.5",
-          "fpm-1.16.0-ruby-3.4.3-linux-amd64.7z",
-          "fwL0wTB5R2ILwieawK2jjPZf5IaxqXlRYrHlFnLeUcPz+Rz2IJqiZggzSQ7l4oJ3rWzYbMW3+WKOTNq6fod/cQ==",
-          "mmaietta/electron-builder-binaries"
-        ),
-        exec
-      )
-    } else if (process.arch === "arm64") {
-      return path.join(
-        await getBinFromUrl(
-          "fpm@3.0.5",
-          "fpm-1.16.0-ruby-3.4.3-linux-arm64v8.7z",
-          "05cQbF/JEjSvmYGQpRVY+Qaj4a4MCsbUlo4pFJmppMOMSHlyyCmSu3g96moM2N/Qv1QdFbZ+MJa+AgZSuO5CZQ==",
-          "mmaietta/electron-builder-binaries"
-        ),
-        exec
-      )
+  const getKey = () => {
+    if (process.platform === "linux") {
+      if (process.arch == "x64") {
+        return "fpm-1.16.0-ruby-3.4.3-linux-amd64.7z"
+      } else if (process.arch === "arm64") {
+        return "fpm-1.16.0-ruby-3.4.3-linux-arm64v8.7z"
+      }
+      return "fpm-1.16.0-ruby-3.4.3-linux-i386.7z"
     }
-    return path.join(
-      await getBinFromUrl(
-        "fpm@3.0.5",
-        "fpm-1.16.0-ruby-3.4.3-linux-i386.7z",
-        "n4KeDrQ7ruTTocHe/rQJ3v45yEBw6Pu2YXSmJAngF9rbcLr8BBUA/Khh1F/EtZvbf4wx0SAhlosYH+ImmdIoFw==",
-        "mmaietta/electron-builder-binaries"
-      ),
-      exec
-    )
+    // darwin arm64
+    if (process.arch === "arm64") {
+      return "fpm-1.16.0-ruby-3.4.3-darwin-arm64.7z"
+    }
+    return "fpm-1.16.0-ruby-3.4.3-darwin-x86_64.7z"
   }
-  // darwin arm64
-  if (process.arch === "arm64") {
-    return path.join(
-      await getBinFromUrl(
-        "fpm@3.0.5",
-        "fpm-1.16.0-ruby-3.4.3-darwin-arm64.7z",
-        "XaNjq4kxP2J/656ZqJ4GBk9cfhhFeY+ciB34qFL784ImJXN4q/0N4CWqJi0Dted9dMWKiKs9vDqLdOlW8gbT9A==",
-        "mmaietta/electron-builder-binaries"
-      ),
-      exec
-    )
-  }
-  // darwin x64
-  return path.join(
-    await getBinFromUrl(
-      "fpm@3.0.5",
-      "fpm-1.16.0-ruby-3.4.3-darwin-x86_64.7z",
-      "lBGcgz+wPgEANuH0/+YVO7LMqaNRx1NrJP075qhNTyQru1JJdwZ2VhW0msXgQZGw9k/azv9stbkwVG4hWmZJxw==",
-      "mmaietta/electron-builder-binaries"
-    ),
-    exec
-  )
+
+  const filename = getKey()
+  const fpmPath = await getBinFromUrl("fpm@2.0.1", filename, fpmChecksumMap[filename])
+  return path.join(fpmPath, exec)
 }
