@@ -134,16 +134,15 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
       suffix: "output.json",
     })
 
-    const isCmdWithSpaces = process.platform === "win32" && path.extname(command).toLowerCase() === ".cmd"
-
-    const tempBatFile = isCmdWithSpaces
-      ? await this.tmpDir.getTempFile({
-          prefix: path.basename(command, path.extname(command)),
-          suffix: ".bat",
-        })
-      : null
-
-    if (tempBatFile) {
+    const isWindowsScriptFile = process.platform === "win32" && path.extname(command).toLowerCase() === ".cmd"
+    if (isWindowsScriptFile) {
+      // If the command is a Windows script file (.cmd), we need to wrap it in a .bat file to ensure it runs correctly with cmd.exe
+      // This is necessary because .cmd files are not directly executable in the same way as .bat files.
+      // We create a temporary .bat file that calls the .cmd file with the provided arguments. The .bat file will be executed by cmd.exe.
+      const tempBatFile = await this.tmpDir.getTempFile({
+        prefix: path.basename(command, path.extname(command)),
+        suffix: ".bat",
+      })
       const batScript = `@echo off\r\n"${command}" %*\r\n` // <-- CRLF required for .bat
       await fs.writeFile(tempBatFile, batScript, { encoding: "utf8" })
       command = "cmd.exe"
@@ -153,12 +152,9 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
     await new Promise<void>((resolve, reject) => {
       const outStream = createWriteStream(tempOutputFile)
 
-      console.error(`Running command: ${command} ${args.join(" ")}`)
-      console.error(`Output will be written to: ${tempOutputFile}`)
-
       const child = spawn(command, args, {
         cwd,
-        shell: false,
+        shell: false, // required to prevent console logs polution from shell profile loading when `true`
       })
 
       let stderr = ""
@@ -179,7 +175,9 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
         if (code !== 0) {
           return reject(new Error(`Process exited with code ${code}:\n${stderr}`))
         }
-
+        if (stderr) {
+          console.error(`Command stderr output:\n${stderr}`)
+        }
         resolve()
       })
     })
