@@ -46,7 +46,12 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
     const command = getPackageManagerCommand(this.installOptions.manager)
     const args = this.getArgs()
     const dependencies = await this.streamCollectorCommandToJsonFile(command, args, this.rootDir)
-    return this.parseDependenciesTree(dependencies)
+    try {
+      return this.parseDependenciesTree(dependencies)
+    } catch (error: any) {
+      log.error({ message: error.message || error.stack, shellOutput: dependencies }, "error parsing dependencies tree")
+      throw new Error(`Failed to parse dependencies tree: ${error.message || error.stack}`)
+    }
   }
 
   protected resolvePath(filePath: string): string {
@@ -134,13 +139,14 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
       suffix: "output.json",
     })
 
+    const execName = path.basename(command, path.extname(command))
     const isWindowsScriptFile = process.platform === "win32" && path.extname(command).toLowerCase() === ".cmd"
     if (isWindowsScriptFile) {
       // If the command is a Windows script file (.cmd), we need to wrap it in a .bat file to ensure it runs correctly with cmd.exe
       // This is necessary because .cmd files are not directly executable in the same way as .bat files.
       // We create a temporary .bat file that calls the .cmd file with the provided arguments. The .bat file will be executed by cmd.exe.
       const tempBatFile = await this.tmpDir.getTempFile({
-        prefix: path.basename(command, path.extname(command)),
+        prefix: execName,
         suffix: ".bat",
       })
       const batScript = `@echo off\r\n"${command}" %*\r\n` // <-- CRLF required for .bat
@@ -172,11 +178,15 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
       child.on("close", code => {
         outStream.close()
 
+        // https://github.com/npm/npm/issues/17624
+        if (code === 1 && execName.toLowerCase() === "npm" && args.includes("list")) {
+          log.debug({ code, stderr }, "`npm list` returned non-zero exit code, but it MIGHT be expected (https://github.com/npm/npm/issues/17624). Check stderr for details.")
+          // This is a known issue with npm list command, it can return code 1 even when the command is "technically" successful
+          resolve()
+          return
+        }
         if (code !== 0) {
           return reject(new Error(`Process exited with code ${code}:\n${stderr}`))
-        }
-        if (stderr) {
-          console.error(`Command stderr output:\n${stderr}`)
         }
         resolve()
       })

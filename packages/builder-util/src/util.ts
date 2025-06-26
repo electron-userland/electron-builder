@@ -121,14 +121,7 @@ export function exec(file: string, args?: Array<string> | null, options?: ExecFi
           }
           resolve(stdout.toString())
         } else {
-          const code = (error as any).code
-          // https://github.com/npm/npm/issues/17624
-          if (code === 1 && (file.toLowerCase().endsWith("npm") || file.toLowerCase().endsWith("npm.cmd")) && args?.includes("list") && args?.includes("--silent")) {
-            log.debug({ file, code, message: error.message }, "`npm list` returned non-zero exit code, but it is expected (https://github.com/npm/npm/issues/17624)")
-            resolve(stdout.toString())
-            return
-          }
-          let message = chalk.red(removePassword(`Exit code: ${code}. ${error.message}`))
+          let message = chalk.red(removePassword(`Exit code: ${(error as any).code}. ${error.message}`))
           if (stdout.length !== 0) {
             if (file.endsWith("wine")) {
               stdout = stdout.toString()
@@ -143,7 +136,7 @@ export function exec(file: string, args?: Array<string> | null, options?: ExecFi
           }
 
           // TODO: switch to ECMA Script 2026 Error class with `cause` property to return stack trace
-          reject(new ExecError(file, code, message, "", `${error.code || ExecError.code}`))
+          reject(new ExecError(file, (error as any).code, message, "", `${error.code || ExecError.code}`))
         }
       }
     )
