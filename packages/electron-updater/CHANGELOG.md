@@ -1,5 +1,11 @@
 ## 4.3.0
 
+## 6.6.6
+
+### Patch Changes
+
+- [#9172](https://github.com/electron-userland/electron-builder/pull/9172) [`cb651ddb`](https://github.com/electron-userland/electron-builder/commit/cb651ddb732dd0b8614b1af25054261b978900dd) Thanks [@beyondkmp](https://github.com/beyondkmp)! - feat(updater): Cache the new blockmap file and allow customization of the old blockmap file base URL
+
 ## 6.6.5
 
 ### Patch Changes

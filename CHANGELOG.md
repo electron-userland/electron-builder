@@ -1,3 +1,19 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v26.0.17...v) (2025-06-27)
+
+
+### Bug Fixes
+
+* resolve dmg flakiness by upgrading `dmgbuild` python vendor files ([#9163](https://github.com/electron-userland/electron-builder/issues/9163)) ([a2fbc8b](https://github.com/electron-userland/electron-builder/commit/a2fbc8b6666fc58fb7cf1a6fa607695bb3d29a04))
+
+
+### Features
+
+* **nsis:** added support for uninstall components page ([#9166](https://github.com/electron-userland/electron-builder/issues/9166)) ([61aa855](https://github.com/electron-userland/electron-builder/commit/61aa8557dcab97a516ef2abd8bdadab5eb662879))
+* **nsis:** added translation string for 'closing app' ([#9183](https://github.com/electron-userland/electron-builder/issues/9183)) ([309f1dc](https://github.com/electron-userland/electron-builder/commit/309f1dcacb11231ac8cc2485a286f2ac63bfa085))
+* **updater:** Cache the new blockmap file and allow customization of the old blockmap file base URL. ([#9172](https://github.com/electron-userland/electron-builder/issues/9172)) ([cb651dd](https://github.com/electron-userland/electron-builder/commit/cb651ddb732dd0b8614b1af25054261b978900dd))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v26.0.16...v) (2025-06-13)
 
 
