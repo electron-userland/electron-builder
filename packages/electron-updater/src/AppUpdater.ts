@@ -175,6 +175,9 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   addAuthHeader(token: string) {
     this.requestHeaders = Object.assign({}, this.requestHeaders, {
       authorization: token,
+
+      // for gitlab private token
+      "PRIVATE-TOKEN": token,
     })
   }
 
