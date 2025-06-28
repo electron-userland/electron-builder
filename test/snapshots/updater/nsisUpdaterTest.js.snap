@@ -377,6 +377,80 @@ exports[`file url github private 2`] = `
 ]
 `;
 
+exports[`file url gitlab 1`] = `
+{
+  "assets": Map {
+    "myApp-1.4.19.exe" => "https://gitlab.com/daihere1993/electron-cicd-gitlab/uploads/5380695460839605bb43ca57876c65ce/myApp-1.4.19.exe",
+    "latest.yml" => "https://gitlab.com/daihere1993/electron-cicd-gitlab/uploads/f6761055faa67eafb151341367e7c891/latest.yml",
+    "builder-debug.yml" => "https://gitlab.com/daihere1993/electron-cicd-gitlab/uploads/c1d7c1a1abf0c9a8ebb660cdfe6085fb/builder-debug.yml",
+  },
+  "files": [
+    {
+      "sha512": "LnjTKVyKKiUKk+EF/4iT5EyxiNORnyHEGvkL+h6FNU58MLcMGJCqiLondvi3T+MxV7fo5oh4950rjSuSfj95dw==",
+      "size": 71956233,
+      "url": "myApp-1.4.19.exe",
+    },
+  ],
+  "path": "myApp-1.4.19.exe",
+  "releaseDate": "2023-09-24T10:10:44.654Z",
+  "releaseName": "v1.4.19",
+  "releaseNotes": "## [1.4.19](https://gitlab.com/daihere1993/electron-cicd-gitlab/compare/v1.4.18...v1.4.19) (2023-09-24)
+
+
+### Bug Fixes
+
+* test ([0264068](https://gitlab.com/daihere1993/electron-cicd-gitlab/commit/02640686b6016cfbb2b8d4a1b76a7bff268ec8c2))
+
+
+
+",
+  "sha512": "LnjTKVyKKiUKk+EF/4iT5EyxiNORnyHEGvkL+h6FNU58MLcMGJCqiLondvi3T+MxV7fo5oh4950rjSuSfj95dw==",
+  "tag": "v1.4.19",
+  "version": "1.4.19",
+}
+`;
+
+exports[`file url gitlab 2`] = `
+{
+  "assets": Map {
+    "myApp-1.4.19.exe" => "https://gitlab.com/daihere1993/electron-cicd-gitlab/uploads/5380695460839605bb43ca57876c65ce/myApp-1.4.19.exe",
+    "latest.yml" => "https://gitlab.com/daihere1993/electron-cicd-gitlab/uploads/f6761055faa67eafb151341367e7c891/latest.yml",
+    "builder-debug.yml" => "https://gitlab.com/daihere1993/electron-cicd-gitlab/uploads/c1d7c1a1abf0c9a8ebb660cdfe6085fb/builder-debug.yml",
+  },
+  "files": [
+    {
+      "sha512": "LnjTKVyKKiUKk+EF/4iT5EyxiNORnyHEGvkL+h6FNU58MLcMGJCqiLondvi3T+MxV7fo5oh4950rjSuSfj95dw==",
+      "size": 71956233,
+      "url": "myApp-1.4.19.exe",
+    },
+  ],
+  "path": "myApp-1.4.19.exe",
+  "releaseDate": "2023-09-24T10:10:44.654Z",
+  "releaseName": "v1.4.19",
+  "releaseNotes": "## [1.4.19](https://gitlab.com/daihere1993/electron-cicd-gitlab/compare/v1.4.18...v1.4.19) (2023-09-24)
+
+
+### Bug Fixes
+
+* test ([0264068](https://gitlab.com/daihere1993/electron-cicd-gitlab/commit/02640686b6016cfbb2b8d4a1b76a7bff268ec8c2))
+
+
+
+",
+  "sha512": "LnjTKVyKKiUKk+EF/4iT5EyxiNORnyHEGvkL+h6FNU58MLcMGJCqiLondvi3T+MxV7fo5oh4950rjSuSfj95dw==",
+  "tag": "v1.4.19",
+  "version": "1.4.19",
+}
+`;
+
+exports[`file url gitlab 3`] = `
+[
+  "checking-for-update",
+  "update-available",
+  "update-downloaded",
+]
+`;
+
 exports[`file url keygen 1`] = `
 {
   "files": [
@@ -436,6 +510,71 @@ exports[`github allowPrerelease=true 1`] = `
   "sha512": "@sha512",
   "tag": "v2.0.0",
   "version": "2.0.0",
+}
+`;
+
+exports[`gitlab - manual download 1`] = `
+{
+  "assets": {},
+  "files": [
+    {
+      "sha512": "@sha512",
+      "size": "@size",
+      "url": "myApp-1.4.19.exe",
+    },
+  ],
+  "path": "myApp-1.4.19.exe",
+  "releaseDate": "@releaseDate",
+  "releaseName": "v1.4.19",
+  "releaseNotes": "## [1.4.19](https://gitlab.com/daihere1993/electron-cicd-gitlab/compare/v1.4.18...v1.4.19) (2023-09-24)
+
+
+### Bug Fixes
+
+* test ([0264068](https://gitlab.com/daihere1993/electron-cicd-gitlab/commit/02640686b6016cfbb2b8d4a1b76a7bff268ec8c2))
+
+
+
+",
+  "sha512": "@sha512",
+  "tag": "v1.4.19",
+  "version": "1.4.19",
+}
+`;
+
+exports[`gitlab - manual download 2`] = `
+[
+  "checking-for-update",
+  "update-available",
+]
+`;
+
+exports[`gitlab checkForUpdates 1`] = `
+{
+  "assets": {},
+  "files": [
+    {
+      "sha512": "@sha512",
+      "size": "@size",
+      "url": "myApp-1.4.19.exe",
+    },
+  ],
+  "path": "myApp-1.4.19.exe",
+  "releaseDate": "@releaseDate",
+  "releaseName": "v1.4.19",
+  "releaseNotes": "## [1.4.19](https://gitlab.com/daihere1993/electron-cicd-gitlab/compare/v1.4.18...v1.4.19) (2023-09-24)
+
+
+### Bug Fixes
+
+* test ([0264068](https://gitlab.com/daihere1993/electron-cicd-gitlab/commit/02640686b6016cfbb2b8d4a1b76a7bff268ec8c2))
+
+
+
+",
+  "sha512": "@sha512",
+  "tag": "v1.4.19",
+  "version": "1.4.19",
 }
 `;
 
