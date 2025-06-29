@@ -1,14 +1,21 @@
 import { hoist, type HoisterTree, type HoisterResult } from "./hoist"
 import * as path from "path"
-import * as fs from "fs"
+import * as fs from "fs-extra"
 import type { NodeModuleInfo, DependencyGraph, Dependency } from "./types"
-import { exec, log } from "builder-util"
+import { log } from "builder-util"
 import { getPackageManagerCommand, PM } from "./packageManager"
+import { exec, spawn } from "child_process"
+import { promisify } from "util"
+import { createWriteStream } from "fs"
+import { TmpDir } from "temp-file"
+
+const execAsync = promisify(exec)
 
 export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType>, OptionalsType> {
   private nodeModules: NodeModuleInfo[] = []
   protected allDependencies: Map<string, T> = new Map()
   protected productionGraph: DependencyGraph = {}
+  private readonly tmpDir: TmpDir = new TmpDir()
 
   constructor(private readonly rootDir: string) {}
 
@@ -21,6 +28,7 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
     const hoisterResult: HoisterResult = hoist(this.transToHoisterTree(this.productionGraph), { check: true })
     this._getNodeModules(hoisterResult.dependencies, this.nodeModules)
 
+    await this.tmpDir.cleanup()
     return this.nodeModules
   }
 
@@ -37,11 +45,13 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
   protected async getDependenciesTree(): Promise<T> {
     const command = getPackageManagerCommand(this.installOptions.manager)
     const args = this.getArgs()
-    const dependencies = await exec(command, args, {
-      cwd: this.rootDir,
-      shell: true,
-    })
-    return this.parseDependenciesTree(dependencies)
+    const dependencies = await this.streamCollectorCommandToJsonFile(command, args, this.rootDir)
+    try {
+      return this.parseDependenciesTree(dependencies)
+    } catch (error: any) {
+      log.error({ message: error.message || error.stack, shellOutput: dependencies }, "error parsing dependencies tree")
+      throw new Error(`Failed to parse dependencies tree: ${error.message || error.stack}`)
+    }
   }
 
   protected resolvePath(filePath: string): string {
@@ -116,5 +126,72 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
       }
     }
     result.sort((a, b) => a.name.localeCompare(b.name))
+  }
+
+  static async safeExec(command: string, args: string[], cwd: string): Promise<string> {
+    const payload = await execAsync([`"${command}"`, ...args].join(" "), { cwd, maxBuffer: 100 * 1024 * 1024 }) // 100MB buffer LOL, some projects can have extremely large dependency trees
+    return payload.stdout.trim()
+  }
+
+  async streamCollectorCommandToJsonFile(command: string, args: string[], cwd: string) {
+    const tempOutputFile = await this.tmpDir.getTempFile({
+      prefix: path.basename(command, path.extname(command)),
+      suffix: "output.json",
+    })
+
+    const execName = path.basename(command, path.extname(command))
+    const isWindowsScriptFile = process.platform === "win32" && path.extname(command).toLowerCase() === ".cmd"
+    if (isWindowsScriptFile) {
+      // If the command is a Windows script file (.cmd), we need to wrap it in a .bat file to ensure it runs correctly with cmd.exe
+      // This is necessary because .cmd files are not directly executable in the same way as .bat files.
+      // We create a temporary .bat file that calls the .cmd file with the provided arguments. The .bat file will be executed by cmd.exe.
+      const tempBatFile = await this.tmpDir.getTempFile({
+        prefix: execName,
+        suffix: ".bat",
+      })
+      const batScript = `@echo off\r\n"${command}" %*\r\n` // <-- CRLF required for .bat
+      await fs.writeFile(tempBatFile, batScript, { encoding: "utf8" })
+      command = "cmd.exe"
+      args = ["/c", tempBatFile, ...args]
+    }
+
+    await new Promise<void>((resolve, reject) => {
+      const outStream = createWriteStream(tempOutputFile)
+
+      const child = spawn(command, args, {
+        cwd,
+        shell: false, // required to prevent console logs polution from shell profile loading when `true`
+      })
+
+      let stderr = ""
+
+      child.stdout.pipe(outStream)
+
+      child.stderr.on("data", chunk => {
+        stderr += chunk.toString()
+      })
+
+      child.on("error", err => {
+        reject(new Error(`Spawn failed: ${err.message}`))
+      })
+
+      child.on("close", code => {
+        outStream.close()
+
+        // https://github.com/npm/npm/issues/17624
+        if (code === 1 && execName.toLowerCase() === "npm" && args.includes("list")) {
+          log.debug({ code, stderr }, "`npm list` returned non-zero exit code, but it MIGHT be expected (https://github.com/npm/npm/issues/17624). Check stderr for details.")
+          // This is a known issue with npm list command, it can return code 1 even when the command is "technically" successful
+          resolve()
+          return
+        }
+        if (code !== 0) {
+          return reject(new Error(`Process exited with code ${code}:\n${stderr}`))
+        }
+        resolve()
+      })
+    })
+    const fileData = await fs.readFile(tempOutputFile, "utf8")
+    return fileData
   }
 }
