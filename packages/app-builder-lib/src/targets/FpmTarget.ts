@@ -1,4 +1,4 @@
-import { Arch, asArray, exec, getArchSuffix, getPath7za, log, serializeToYaml, TmpDir, toLinuxArchString, unlinkIfExists, use } from "builder-util"
+import { Arch, asArray, exec, getArchSuffix, log, serializeToYaml, TmpDir, toLinuxArchString, unlinkIfExists, use } from "builder-util"
 import { Nullish } from "builder-util-runtime"
 import { copyFile, outputFile, stat } from "fs-extra"
 import { mkdir, readFile } from "fs/promises"
@@ -253,9 +253,6 @@ export default class FpmTarget extends Target {
 
     const env = {
       ...process.env,
-      SZA_PATH: await getPath7za(),
-      SZA_COMPRESSION_LEVEL: packager.compression === "store" ? "0" : "9",
-      SZA_ARCHIVE_TYPE: "xz",
     }
 
     // rpmbuild wants directory rpm with some default config files. Even if we can use dylibbundler, path to such config files are not changed (we need to replace in the binary)

@@ -4,12 +4,12 @@ exports[`arm 1`] = `
 {
   "linux": [
     {
-      "arch": "arm64",
-      "file": "TestApp_1.1.0_arm64.deb",
-    },
-    {
       "arch": "armv7l",
       "file": "TestApp_1.1.0_armv7l.deb",
+    },
+    {
+      "arch": "arm64",
+      "file": "TestApp_1.1.0_arm64.deb",
     },
   ],
 }
@@ -75,7 +75,7 @@ exports[`arm 2`] = `
 
 exports[`arm 3`] = `
 {
-  "Architecture": "armhf",
+  "Architecture": "arm64",
   "Depends": "libgtk-3-0, libnotify4, libnss3, libxss1, libxtst6, xdg-utils, libatspi2.0-0, libuuid1, libsecret-1-0",
   "Homepage": "http://foo.example.com",
   "License": "MIT",
@@ -150,7 +150,7 @@ exports[`arm 5`] = `
 
 exports[`arm 6`] = `
 {
-  "Architecture": "armhf",
+  "Architecture": "arm64",
   "Depends": "libgtk-3-0, libnotify4, libnss3, libxss1, libxtst6, xdg-utils, libatspi2.0-0, libuuid1, libsecret-1-0",
   "Homepage": "http://foo.example.com",
   "License": "MIT",

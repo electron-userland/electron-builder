@@ -4,7 +4,7 @@ import { computeArchToTargetNamesMap } from "app-builder-lib/out/targets/targetF
 import { getLinuxToolsPath } from "app-builder-lib/out/targets/tools"
 import { parsePlistFile, PlistObject } from "app-builder-lib/out/util/plist"
 import { AsarIntegrity } from "app-builder-lib/out/asar/integrity"
-import { addValue, copyDir, deepAssign, exec, executeFinally, exists, FileCopier, getPath7x, getPath7za, log, USE_HARD_LINKS, walk } from "builder-util"
+import { addValue, copyDir, deepAssign, exec, executeFinally, exists, FileCopier, log, USE_HARD_LINKS, walk } from "builder-util"
 import { CancellationToken, UpdateFileInfo } from "builder-util-runtime"
 import { Arch, ArtifactCreated, Configuration, DIR_TARGET, getArchSuffix, MacOsTargetName, Packager, PackagerOptions, Platform, Target } from "electron-builder"
 import { convertVersion } from "electron-winstaller"
@@ -346,7 +346,7 @@ async function checkLinuxResult(expect: ExpectStatic, outDir: string, packager: 
 
   const control = parseDebControl(
     (
-      await execShell(`ar p '${packagePath}' control.tar.gz | ${await getTarExecutable()} zx --to-stdout ./control`, {
+      await execShell(`ar p '${packagePath}' control.tar.xz | ${await getTarExecutable()} -Jx --to-stdout ./control`, {
         maxBuffer: 10 * 1024 * 1024,
       })
     ).stdout
@@ -533,11 +533,10 @@ export async function getTarExecutable() {
 }
 
 async function getContents(packageFile: string) {
-  const result = await execShell(`ar p '${packageFile}' data.tar.xz | ${await getTarExecutable()} -t -I'${await getPath7x()}'`, {
+  const result = await execShell(`ar p '${packageFile}' data.tar.xz | ${await getTarExecutable()} -tJ`, {
     maxBuffer: 10 * 1024 * 1024,
     env: {
       ...process.env,
-      SZA_PATH: await getPath7za(),
     },
   })
 
