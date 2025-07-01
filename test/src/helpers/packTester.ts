@@ -136,7 +136,7 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
       }
 
       if (checkOptions.isInstallDepsBefore) {
-        const pm = await getCollectorByPackageManager(projectDir)
+        const pm = await getCollectorByPackageManager(projectDir, tmpDir)
         const pmOptions = pm.installOptions
 
         const destLockfile = path.join(projectDir, pmOptions.lockfile)

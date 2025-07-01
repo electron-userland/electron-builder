@@ -2,7 +2,7 @@ import { CancellationToken } from "./CancellationToken"
 
 export async function retry<T>(
   task: () => Promise<T>,
-  options: { retries: number; interval: number; backoff: number; attempt: number; shouldRetry?: (e: any) => boolean | Promise<boolean> }
+  options: { retries: number; interval: number; backoff?: number; attempt?: number; shouldRetry?: (e: any) => boolean | Promise<boolean> }
 ): Promise<T> {
   const { retries: retryCount, interval, backoff = 0, attempt = 0, shouldRetry } = options
   const cancellationToken = new CancellationToken()
