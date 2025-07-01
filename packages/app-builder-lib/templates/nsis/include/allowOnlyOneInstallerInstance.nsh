@@ -122,7 +122,7 @@
 
       doStopProcess:
 
-      DetailPrint `Closing running "${PRODUCT_NAME}"...`
+      DetailPrint "$(appClosing)"
 
       !insertmacro KILL_PROCESS "${APP_EXECUTABLE_FILENAME}" 0
       # to ensure that files are not "in-use"
