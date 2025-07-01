@@ -558,8 +558,8 @@ importers:
         specifier: 4.0.3
         version: 4.0.3
       '@types/lodash.escaperegexp':
-        specifier: 4.1.6
-        version: 4.1.6
+        specifier: 4.1.9
+        version: 4.1.9
       '@types/lodash.isequal':
         specifier: 4.5.5
         version: 4.5.5
@@ -686,7 +686,7 @@ importers:
         version: 1.6.3
       vitest:
         specifier: ^3.0.4
-        version: 3.1.1(@types/node@22.13.17)(@vitest/ui@3.0.4)(sass@1.86.1)(yaml@2.7.1)
+        version: 3.1.1(@types/node@22.13.17)(@vitest/ui@3.0.4(vitest@3.2.3))(sass@1.86.1)(yaml@2.7.1)
       vitest-mock-commonjs:
         specifier: ^1.0.2
         version: 1.0.2
@@ -2307,8 +2307,8 @@ packages:
   '@types/keyv@3.1.4':
     resolution: {integrity: sha512-BQ5aZNSCpj7D6K2ksrRCTmKRLEpnPvWDiLPfoGyhZ++8YtiK9d/3DBKPJgry359X/P1PfruyYwvnvwFjuEiEIg==}
 
-  '@types/lodash.escaperegexp@4.1.6':
-    resolution: {integrity: sha512-uENiqxLlqh6RzeE1cC6Z2gHqakToN9vKlTVCFkSVjAfeMeh2fY0916tHwJHeeKs28qB/hGYvKuampGYH5QDVCw==}
+  '@types/lodash.escaperegexp@4.1.9':
+    resolution: {integrity: sha512-CMQc8v16YzhnPZnMhYQuJUksI8BmL1jy/lHJkiXi4/t24Lx7Qvy7qxew1abrDJGa1T2i0NzLLaR27NK1/qp5Ow==}
 
   '@types/lodash.isequal@4.5.5':
     resolution: {integrity: sha512-4IKbinG7MGP131wRfceK6W4E/Qt3qssEFLF30LnJbjYiSfHGGRU/Io8YxXrZX109ir+iDETC8hw8QsDijukUVg==}
@@ -8005,7 +8005,7 @@ snapshots:
     dependencies:
       '@types/node': 22.13.17
 
-  '@types/lodash.escaperegexp@4.1.6':
+  '@types/lodash.escaperegexp@4.1.9':
     dependencies:
       '@types/lodash': 4.17.16
 
@@ -8383,7 +8383,7 @@ snapshots:
 
   agent-base@6.0.2:
     dependencies:
-      debug: 4.4.0
+      debug: 4.4.1
     transitivePeerDependencies:
       - supports-color
 
@@ -9844,7 +9844,7 @@ snapshots:
     dependencies:
       '@tootallnate/once': 2.0.0
       agent-base: 6.0.2
-      debug: 4.4.0
+      debug: 4.4.1
     transitivePeerDependencies:
       - supports-color
 
@@ -9869,7 +9869,7 @@ snapshots:
   https-proxy-agent@5.0.1:
     dependencies:
       agent-base: 6.0.2
-      debug: 4.4.0
+      debug: 4.4.1
     transitivePeerDependencies:
       - supports-color
 
@@ -11323,7 +11323,7 @@ snapshots:
   socks-proxy-agent@7.0.0:
     dependencies:
       agent-base: 6.0.2
-      debug: 4.4.0
+      debug: 4.4.1
       socks: 2.8.4
     transitivePeerDependencies:
       - supports-color
@@ -11914,7 +11914,7 @@ snapshots:
 
   vitest-mock-commonjs@1.0.2: {}
 
-  vitest@3.1.1(@types/node@22.13.17)(@vitest/ui@3.0.4)(sass@1.86.1)(yaml@2.7.1):
+  vitest@3.1.1(@types/node@22.13.17)(@vitest/ui@3.0.4(vitest@3.2.3))(sass@1.86.1)(yaml@2.7.1):
     dependencies:
       '@vitest/expect': 3.1.1
       '@vitest/mocker': 3.1.1(vite@6.2.4(@types/node@22.13.17)(sass@1.86.1)(yaml@2.7.1))
