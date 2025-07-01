@@ -67,12 +67,12 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
         interval: 500,
         shouldRetry: async (error: any) => {
           if (!(await exists(tempOutputFile))) {
-            log.warn({ error: error.message || error.stack, tempOutputFile }, "error getting dependencies tree, unable to find output; retrying")
+            log.error({ error: error.message || error.stack, tempOutputFile }, "error getting dependencies tree, unable to find output; retrying")
             return true
           }
           const dependencies = await fs.readFile(tempOutputFile, { encoding: "utf8" })
           if (dependencies.trim().length === 0) {
-            log.warn({ error: error.message || error.stack, tempOutputFile }, "dependency tree output file is empty, retrying")
+            log.error({ error: error.message || error.stack, tempOutputFile }, "dependency tree output file is empty, retrying")
             return true
           }
           return false
