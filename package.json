@@ -66,7 +66,7 @@
     "lint-staged": "15.2.10",
     "prettier": "3.3.3",
     "ts-node": "^10.9.2",
-    "typedoc": "^0.26.7",
+    "typedoc": "^0.28.0",
     "typedoc-plugin-markdown": "4.2.8",
     "typescript": "^5.6.2",
     "typescript-json-schema": "0.64.0",
