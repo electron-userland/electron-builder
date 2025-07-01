@@ -265,8 +265,8 @@ importers:
         specifier: 3.0.2
         version: 3.0.2
       '@types/js-yaml':
-        specifier: 4.0.3
-        version: 4.0.3
+        specifier: 4.0.9
+        version: 4.0.9
       '@types/plist':
         specifier: 3.0.5
         version: 3.0.5
@@ -353,8 +353,8 @@ importers:
         specifier: ^9.0.11
         version: 9.0.13
       '@types/js-yaml':
-        specifier: 4.0.3
-        version: 4.0.3
+        specifier: 4.0.9
+        version: 4.0.9
       '@types/source-map-support':
         specifier: 0.5.4
         version: 0.5.4
@@ -404,8 +404,8 @@ importers:
         specifier: 9.0.13
         version: 9.0.13
       '@types/js-yaml':
-        specifier: 4.0.3
-        version: 4.0.3
+        specifier: 4.0.9
+        version: 4.0.9
       temp-file:
         specifier: 3.4.0
         version: 3.4.0
@@ -555,8 +555,8 @@ importers:
         specifier: 9.0.13
         version: 9.0.13
       '@types/js-yaml':
-        specifier: 4.0.3
-        version: 4.0.3
+        specifier: 4.0.9
+        version: 4.0.9
       '@types/lodash.escaperegexp':
         specifier: 4.1.6
         version: 4.1.6
@@ -686,7 +686,7 @@ importers:
         version: 1.6.3
       vitest:
         specifier: ^3.0.4
-        version: 3.1.1(@types/node@22.13.17)(@vitest/ui@3.0.4)(sass@1.86.1)(yaml@2.7.1)
+        version: 3.1.1(@types/node@22.13.17)(@vitest/ui@3.0.4(vitest@3.2.3))(sass@1.86.1)(yaml@2.7.1)
       vitest-mock-commonjs:
         specifier: ^1.0.2
         version: 1.0.2
@@ -2297,6 +2297,9 @@ packages:
 
   '@types/js-yaml@4.0.3':
     resolution: {integrity: sha512-5t9BhoORasuF5uCPr+d5/hdB++zRFUTMIZOzbNkr+jZh3yQht4HYbRDyj9fY8n2TZT30iW9huzav73x4NikqWg==}
+
+  '@types/js-yaml@4.0.9':
+    resolution: {integrity: sha512-k4MGaQl5TGo/iipqb2UDG2UwjXziSWkh0uysQelTlJpX1qGlpUZYm8PnO4DxG1qBomtJUdYJ6qR6xdIah10JLg==}
 
   '@types/json-schema@7.0.15':
     resolution: {integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==}
@@ -7995,6 +7998,8 @@ snapshots:
 
   '@types/js-yaml@4.0.3': {}
 
+  '@types/js-yaml@4.0.9': {}
+
   '@types/json-schema@7.0.15': {}
 
   '@types/jsonfile@6.1.4':
@@ -8383,7 +8388,7 @@ snapshots:
 
   agent-base@6.0.2:
     dependencies:
-      debug: 4.4.0
+      debug: 4.4.1
     transitivePeerDependencies:
       - supports-color
 
@@ -9844,7 +9849,7 @@ snapshots:
     dependencies:
       '@tootallnate/once': 2.0.0
       agent-base: 6.0.2
-      debug: 4.4.0
+      debug: 4.4.1
     transitivePeerDependencies:
       - supports-color
 
@@ -9869,7 +9874,7 @@ snapshots:
   https-proxy-agent@5.0.1:
     dependencies:
       agent-base: 6.0.2
-      debug: 4.4.0
+      debug: 4.4.1
     transitivePeerDependencies:
       - supports-color
 
@@ -11323,7 +11328,7 @@ snapshots:
   socks-proxy-agent@7.0.0:
     dependencies:
       agent-base: 6.0.2
-      debug: 4.4.0
+      debug: 4.4.1
       socks: 2.8.4
     transitivePeerDependencies:
       - supports-color
@@ -11914,7 +11919,7 @@ snapshots:
 
   vitest-mock-commonjs@1.0.2: {}
 
-  vitest@3.1.1(@types/node@22.13.17)(@vitest/ui@3.0.4)(sass@1.86.1)(yaml@2.7.1):
+  vitest@3.1.1(@types/node@22.13.17)(@vitest/ui@3.0.4(vitest@3.2.3))(sass@1.86.1)(yaml@2.7.1):
     dependencies:
       '@vitest/expect': 3.1.1
       '@vitest/mocker': 3.1.1(vite@6.2.4(@types/node@22.13.17)(sass@1.86.1)(yaml@2.7.1))
