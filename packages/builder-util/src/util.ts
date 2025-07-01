@@ -405,13 +405,29 @@ export async function executeAppBuilder(
   if (maxRetries === 0) {
     return runCommand()
   } else {
-    return retry(runCommand, maxRetries, 1000)
+    return retry(runCommand, { retries: maxRetries, interval: 1000 })
   }
 }
 
-export async function retry<T>(task: () => Promise<T>, retryCount: number, interval: number, backoff = 0, attempt = 0, shouldRetry?: (e: any) => boolean): Promise<T> {
-  return await _retry(task, retryCount, interval, backoff, attempt, e => {
-    log.info(`Above command failed, retrying ${retryCount} more times`)
-    return shouldRetry?.(e) ?? true
+export async function retry<T>(
+  task: () => Promise<T>,
+  options: {
+    retries: number
+    interval: number
+    backoff?: number
+    attempt?: number // no need to set explicitly, left optional to be handled internally during recursion
+    shouldRetry?: (e: any) => boolean | Promise<boolean>
+  }
+): Promise<T> {
+  const { retries: retryCount, interval, backoff, attempt, shouldRetry } = options
+  return await _retry(task, {
+    retries: retryCount,
+    interval,
+    backoff: backoff ?? 0,
+    attempt: attempt ?? 0,
+    shouldRetry: e => {
+      log.info(`Above command failed, retrying ${retryCount} more times`)
+      return shouldRetry?.(e) ?? true
+    },
   })
 }

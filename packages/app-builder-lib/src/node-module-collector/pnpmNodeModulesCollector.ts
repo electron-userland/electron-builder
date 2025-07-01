@@ -13,10 +13,6 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
     return lines["node-linker"] === "hoisted"
   }
 
-  constructor(rootDir: string) {
-    super(rootDir)
-  }
-
   public readonly installOptions = { manager: PM.PNPM, lockfile: "pnpm-lock.yaml" }
 
   protected getArgs(): string[] {

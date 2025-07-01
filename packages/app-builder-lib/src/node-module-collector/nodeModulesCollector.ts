@@ -2,12 +2,11 @@ import { hoist, type HoisterTree, type HoisterResult } from "./hoist"
 import * as path from "path"
 import * as fs from "fs-extra"
 import type { NodeModuleInfo, DependencyGraph, Dependency } from "./types"
-import { log } from "builder-util"
+import { exists, log, retry, TmpDir } from "builder-util"
 import { getPackageManagerCommand, PM } from "./packageManager"
 import { exec, spawn } from "child_process"
 import { promisify } from "util"
 import { createWriteStream } from "fs"
-import { TmpDir } from "temp-file"
 
 const execAsync = promisify(exec)
 
@@ -15,9 +14,11 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
   private nodeModules: NodeModuleInfo[] = []
   protected allDependencies: Map<string, T> = new Map()
   protected productionGraph: DependencyGraph = {}
-  private readonly tmpDir: TmpDir = new TmpDir()
 
-  constructor(private readonly rootDir: string) {}
+  constructor(
+    private readonly rootDir: string,
+    private readonly tempDirManager: TmpDir
+  ) {}
 
   public async getNodeModules(): Promise<NodeModuleInfo[]> {
     const tree: T = await this.getDependenciesTree()
@@ -28,7 +29,6 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
     const hoisterResult: HoisterResult = hoist(this.transToHoisterTree(this.productionGraph), { check: true })
     this._getNodeModules(hoisterResult.dependencies, this.nodeModules)
 
-    await this.tmpDir.cleanup()
     return this.nodeModules
   }
 
@@ -45,13 +45,40 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
   protected async getDependenciesTree(): Promise<T> {
     const command = getPackageManagerCommand(this.installOptions.manager)
     const args = this.getArgs()
-    const dependencies = await this.streamCollectorCommandToJsonFile(command, args, this.rootDir)
-    try {
-      return this.parseDependenciesTree(dependencies)
-    } catch (error: any) {
-      log.error({ message: error.message || error.stack, shellOutput: dependencies }, "error parsing dependencies tree")
-      throw new Error(`Failed to parse dependencies tree: ${error.message || error.stack}`)
-    }
+
+    const tempOutputFile = await this.tempDirManager.getTempFile({
+      prefix: path.basename(command, path.extname(command)),
+      suffix: "output.json",
+    })
+
+    return retry(
+      async () => {
+        await this.streamCollectorCommandToJsonFile(command, args, this.rootDir, tempOutputFile)
+        const dependencies = await fs.readFile(tempOutputFile, { encoding: "utf8" })
+        try {
+          return this.parseDependenciesTree(dependencies)
+        } catch (error: any) {
+          log.error({ message: error.message || error.stack, shellOutput: dependencies }, "error parsing dependencies tree")
+          throw new Error(`Failed to parse dependencies tree: ${error.message || error.stack}`)
+        }
+      },
+      {
+        retries: 2,
+        interval: 500,
+        shouldRetry: async (error: any) => {
+          if (!(await exists(tempOutputFile))) {
+            log.warn({ error: error.message || error.stack, tempOutputFile }, "error getting dependencies tree, unable to find output; retrying")
+            return true
+          }
+          const dependencies = await fs.readFile(tempOutputFile, { encoding: "utf8" })
+          if (dependencies.trim().length === 0) {
+            log.warn({ error: error.message || error.stack, tempOutputFile }, "dependency tree output file is empty, retrying")
+            return true
+          }
+          return false
+        },
+      }
+    )
   }
 
   protected resolvePath(filePath: string): string {
@@ -133,19 +160,14 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
     return payload.stdout.trim()
   }
 
-  async streamCollectorCommandToJsonFile(command: string, args: string[], cwd: string) {
-    const tempOutputFile = await this.tmpDir.getTempFile({
-      prefix: path.basename(command, path.extname(command)),
-      suffix: "output.json",
-    })
-
+  async streamCollectorCommandToJsonFile(command: string, args: string[], cwd: string, tempOutputFile: string) {
     const execName = path.basename(command, path.extname(command))
     const isWindowsScriptFile = process.platform === "win32" && path.extname(command).toLowerCase() === ".cmd"
     if (isWindowsScriptFile) {
       // If the command is a Windows script file (.cmd), we need to wrap it in a .bat file to ensure it runs correctly with cmd.exe
       // This is necessary because .cmd files are not directly executable in the same way as .bat files.
       // We create a temporary .bat file that calls the .cmd file with the provided arguments. The .bat file will be executed by cmd.exe.
-      const tempBatFile = await this.tmpDir.getTempFile({
+      const tempBatFile = await this.tempDirManager.getTempFile({
         prefix: execName,
         suffix: ".bat",
       })
@@ -164,20 +186,16 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
       })
 
       let stderr = ""
-
       child.stdout.pipe(outStream)
-
       child.stderr.on("data", chunk => {
         stderr += chunk.toString()
       })
-
       child.on("error", err => {
         reject(new Error(`Spawn failed: ${err.message}`))
       })
 
       child.on("close", code => {
         outStream.close()
-
         // https://github.com/npm/npm/issues/17624
         if (code === 1 && execName.toLowerCase() === "npm" && args.includes("list")) {
           log.debug({ code, stderr }, "`npm list` returned non-zero exit code, but it MIGHT be expected (https://github.com/npm/npm/issues/17624). Check stderr for details.")
@@ -191,7 +209,5 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
         resolve()
       })
     })
-    const fileData = await fs.readFile(tempOutputFile, "utf8")
-    return fileData
   }
 }
