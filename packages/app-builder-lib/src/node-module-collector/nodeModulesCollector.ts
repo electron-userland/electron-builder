@@ -64,7 +64,7 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
       },
       {
         retries: 2,
-        interval: 500,
+        interval: 1000,
         shouldRetry: async (error: any) => {
           if (!(await exists(tempOutputFile))) {
             log.error({ error: error.message || error.stack, tempOutputFile }, "error getting dependencies tree, unable to find output; retrying")
