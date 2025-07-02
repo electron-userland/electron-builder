@@ -64,14 +64,17 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
       },
       {
         retries: 2,
-        interval: 1000,
+        interval: 2000,
+        backoff: 2000,
         shouldRetry: async (error: any) => {
           if (!(await exists(tempOutputFile))) {
             log.error({ error: error.message || error.stack, tempOutputFile }, "error getting dependencies tree, unable to find output; retrying")
             return true
           }
           const dependencies = await fs.readFile(tempOutputFile, { encoding: "utf8" })
-          if (dependencies.trim().length === 0) {
+          if (dependencies.trim().length === 0 || error.message?.includes("Unexpected end of JSON input")) {
+            // If the output file is empty or contains invalid JSON, we retry
+            // This can happen if the command fails or if the output is not as expected
             log.error({ error: error.message || error.stack, tempOutputFile }, "dependency tree output file is empty, retrying")
             return true
           }

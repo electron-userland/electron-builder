@@ -1,5 +1,5 @@
 import { appBuilderPath } from "app-builder-bin"
-import { retry as _retry, Nullish, safeStringifyJson } from "builder-util-runtime"
+import { retry, Nullish, safeStringifyJson } from "builder-util-runtime"
 import * as chalk from "chalk"
 import { ChildProcess, execFile, ExecFileOptions, SpawnOptions } from "child_process"
 import { spawn as _spawn } from "cross-spawn"
@@ -15,7 +15,7 @@ if (process.env.JEST_WORKER_ID == null) {
   installSourceMap()
 }
 
-export { safeStringifyJson } from "builder-util-runtime"
+export { safeStringifyJson, retry } from "builder-util-runtime"
 export { TmpDir } from "temp-file"
 export * from "./arch"
 export { Arch, archFromString, ArchType, defaultArchFromString, getArchCliNames, getArchSuffix, toLinuxArchString } from "./arch"
@@ -409,25 +409,3 @@ export async function executeAppBuilder(
   }
 }
 
-export async function retry<T>(
-  task: () => Promise<T>,
-  options: {
-    retries: number
-    interval: number
-    backoff?: number
-    attempt?: number // no need to set explicitly, left optional to be handled internally during recursion
-    shouldRetry?: (e: any) => boolean | Promise<boolean>
-  }
-): Promise<T> {
-  const { retries: retryCount, interval, backoff, attempt, shouldRetry } = options
-  return await _retry(task, {
-    retries: retryCount,
-    interval,
-    backoff: backoff ?? 0,
-    attempt: attempt ?? 0,
-    shouldRetry: e => {
-      log.info(`Above command failed, retrying ${retryCount} more times`)
-      return shouldRetry?.(e) ?? true
-    },
-  })
-}
