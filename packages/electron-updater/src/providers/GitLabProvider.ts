@@ -17,20 +17,22 @@ interface GitlabReleaseInfo {
   created_at: string
   released_at: string
   upcoming_release: boolean
-  assets: {
-    count: number
-    sources: Array<{
-      format: string
-      url: string
-    }>
-    links: Array<{
-      id: number
-      name: string
-      url: string
-      direct_asset_url: string
-      link_type: string
-    }>
-  }
+  assets: GitlabReleaseAsset
+}
+
+interface GitlabReleaseAsset {
+  count: number
+  sources: Array<{
+    format: string
+    url: string
+  }>
+  links: Array<{
+    id: number
+    name: string
+    url: string
+    direct_asset_url: string
+    link_type: string
+  }>
 }
 
 export class GitLabProvider extends Provider<GitlabUpdateInfo> {
@@ -167,11 +169,8 @@ export class GitLabProvider extends Provider<GitlabUpdateInfo> {
         fileInfo.url.replace(/ /g, "-"), // Spaces replaced with dashes
       ]
 
-      let assetUrl: string | undefined
-      for (const name of possibleNames) {
-        assetUrl = updateInfo.assets.get(name)
-        if (assetUrl) break
-      }
+      const matchingAssetName = possibleNames.find(name => updateInfo.assets.has(name))
+      const assetUrl = matchingAssetName ? updateInfo.assets.get(matchingAssetName) : undefined
 
       if (!assetUrl) {
         throw newError(
