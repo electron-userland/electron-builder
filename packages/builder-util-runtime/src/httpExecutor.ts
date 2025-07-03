@@ -319,7 +319,7 @@ Please double check that your authentication token is correct. Due to security r
     const newOptions = configureRequestOptionsFromUrl(redirectUrl, { ...options })
     const headers = newOptions.headers
     if (headers?.authorization) {
-      const parsedNewUrl = new URL(redirectUrl)
+      const parsedNewUrl = parseUrl(redirectUrl, options)
       if (parsedNewUrl.hostname.endsWith(".amazonaws.com") || parsedNewUrl.searchParams.has("X-Amz-Credential")) {
         delete headers.authorization
       }
@@ -351,9 +351,24 @@ export interface DownloadCallOptions {
   destination: string | null
 }
 
+function parseUrl(url: string, options: RequestOptions): URL {
+  if (url.startsWith("http://") || url.startsWith("https://")) {
+    // Absolute URL
+    return new URL(url)
+  } else {
+    // Relative URL - construct base URL from original options
+    const protocol = options.protocol || "https:"
+    const hostname = options.hostname || "localhost"
+    const port = options.port ? `:${options.port}` : ""
+    const baseUrl = `${protocol}//${hostname}${port}`
+    return new URL(url, baseUrl)
+  }
+}
+
 export function configureRequestOptionsFromUrl(url: string, options: RequestOptions) {
   const result = configureRequestOptions(options)
-  configureRequestUrl(new URL(url), result)
+  const parsedUrl = parseUrl(url, options)
+  configureRequestUrl(parsedUrl, result)
   return result
 }
 
