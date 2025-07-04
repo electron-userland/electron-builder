@@ -52,5 +52,10 @@ const shouldRetry = (args: string[]) => (error: any) => {
 }
 
 export async function hdiUtil(args: string[]): Promise<string | null> {
-  return retry(() => exec("hdiutil", args), 5, 5000, 2000, 0, shouldRetry(args))
+  return retry(() => exec("hdiutil", args), {
+    retries: 5,
+    interval: 5000,
+    backoff: 2000,
+    shouldRetry: shouldRetry(args),
+  })
 }

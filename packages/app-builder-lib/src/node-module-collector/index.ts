@@ -3,34 +3,27 @@ import { PnpmNodeModulesCollector } from "./pnpmNodeModulesCollector"
 import { YarnNodeModulesCollector } from "./yarnNodeModulesCollector"
 import { detectPackageManager, PM, getPackageManagerCommand } from "./packageManager"
 import { NodeModuleInfo } from "./types"
-import { exec } from "builder-util"
+import { TmpDir } from "temp-file"
 
-async function isPnpmProjectHoisted(rootDir: string) {
-  const command = getPackageManagerCommand(PM.PNPM)
-  const config = await exec(command, ["config", "list"], { cwd: rootDir, shell: true })
-  const lines = Object.fromEntries(config.split("\n").map(line => line.split("=").map(s => s.trim())))
-  return lines["node-linker"] === "hoisted"
-}
-
-export async function getCollectorByPackageManager(rootDir: string) {
+export async function getCollectorByPackageManager(rootDir: string, tempDirManager: TmpDir) {
   const manager: PM = detectPackageManager(rootDir)
   switch (manager) {
     case PM.PNPM:
-      if (await isPnpmProjectHoisted(rootDir)) {
-        return new NpmNodeModulesCollector(rootDir)
+      if (await PnpmNodeModulesCollector.isPnpmProjectHoisted(rootDir)) {
+        return new NpmNodeModulesCollector(rootDir, tempDirManager)
       }
-      return new PnpmNodeModulesCollector(rootDir)
+      return new PnpmNodeModulesCollector(rootDir, tempDirManager)
     case PM.NPM:
-      return new NpmNodeModulesCollector(rootDir)
+      return new NpmNodeModulesCollector(rootDir, tempDirManager)
     case PM.YARN:
-      return new YarnNodeModulesCollector(rootDir)
+      return new YarnNodeModulesCollector(rootDir, tempDirManager)
     default:
-      return new NpmNodeModulesCollector(rootDir)
+      return new NpmNodeModulesCollector(rootDir, tempDirManager)
   }
 }
 
-export async function getNodeModules(rootDir: string): Promise<NodeModuleInfo[]> {
-  const collector = await getCollectorByPackageManager(rootDir)
+export async function getNodeModules(rootDir: string, tempDirManager: TmpDir): Promise<NodeModuleInfo[]> {
+  const collector = await getCollectorByPackageManager(rootDir, tempDirManager)
   return collector.getNodeModules()
 }
 
