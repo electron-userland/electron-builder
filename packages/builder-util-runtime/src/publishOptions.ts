@@ -167,12 +167,6 @@ export interface GitlabOptions extends PublishConfiguration {
   readonly host?: string | null
 
   /**
-   * The protocol. GitLab supports both `https` and `http`.
-   * @default https
-   */
-  readonly protocol?: "https" | "http" | null
-
-  /**
    * The access token to support auto-update from private GitLab repositories. Never specify it in the configuration files. Only for [setFeedURL](./auto-update.md#appupdatersetfeedurloptions).
    */
   readonly token?: string | null

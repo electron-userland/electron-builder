@@ -357,8 +357,8 @@ function parseUrl(url: string, options: RequestOptions): URL {
     return new URL(url)
   } else {
     // Relative URL - construct base URL from original options
+    const hostname = options.hostname
     const protocol = options.protocol || "https:"
-    const hostname = options.hostname || "localhost"
     const port = options.port ? `:${options.port}` : ""
     const baseUrl = `${protocol}//${hostname}${port}`
     return new URL(url, baseUrl)

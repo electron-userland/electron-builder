@@ -51,9 +51,8 @@ export class GitLabProvider extends Provider<GitlabUpdateInfo> {
 
     const defaultHost = "gitlab.com"
     const host = options.host || defaultHost
-    const protocol = options.protocol || "https"
 
-    this.baseApiUrl = newBaseUrl(`${protocol}://${host}/api/v4`)
+    this.baseApiUrl = newBaseUrl(`https://${host}/api/v4`)
   }
 
   private get channel(): string {
