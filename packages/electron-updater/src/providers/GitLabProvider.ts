@@ -150,7 +150,7 @@ export class GitLabProvider extends Provider<GitlabUpdateInfo> {
     // Create assets map from GitLab release assets
     const assetsMap = new Map<string, string>()
     for (const asset of latestRelease.assets.links) {
-      assetsMap.set(asset.name, asset.direct_asset_url)
+      assetsMap.set(asset.name.replace(/ /g, "-"), asset.direct_asset_url)
     }
 
     return {

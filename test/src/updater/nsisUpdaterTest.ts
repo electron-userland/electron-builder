@@ -95,7 +95,7 @@ test("file url gitlab", config, async ({ expect }) => {
   const updater = await createNsisUpdater()
   const options: GitlabOptions = {
     provider: "gitlab",
-    projectId: 50484362, // electron-cicd-gitlab - has latest.yml and proper installers
+    projectId: 71361100,
   }
   updater.updateConfigPath = await writeUpdateConfig(options)
   updater.signals.updateDownloaded(info => {
@@ -111,7 +111,7 @@ test("gitlab checkForUpdates", config, async ({ expect }) => {
   const updater = await createNsisUpdater("0.0.1")
   updater.updateConfigPath = await writeUpdateConfig<GitlabOptions>({
     provider: "gitlab",
-    projectId: 50484362, // electron-cicd-gitlab - has latest.yml and proper installers
+    projectId: 71361100,
   })
 
   const actualEvents: Array<string> = []
@@ -131,7 +131,7 @@ test("gitlab - manual download", config, async ({ expect }) => {
   const updater = await createNsisUpdater("0.0.1")
   updater.updateConfigPath = await writeUpdateConfig<GitlabOptions>({
     provider: "gitlab",
-    projectId: 50484362, // electron-cicd-gitlab - has latest.yml and proper installers
+    projectId: 71361100,
   })
   updater.autoDownload = false
 
