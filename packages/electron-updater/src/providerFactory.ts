@@ -6,6 +6,7 @@ import {
   GenericServerOptions,
   getS3LikeProviderBaseUrl,
   GithubOptions,
+  GitlabOptions,
   KeygenOptions,
   newError,
   PublishConfiguration,
@@ -14,6 +15,7 @@ import { AppUpdater } from "./AppUpdater"
 import { BitbucketProvider } from "./providers/BitbucketProvider"
 import { GenericProvider } from "./providers/GenericProvider"
 import { GitHubProvider } from "./providers/GitHubProvider"
+import { GitLabProvider } from "./providers/GitLabProvider"
 import { KeygenProvider } from "./providers/KeygenProvider"
 import { PrivateGitHubProvider } from "./providers/PrivateGitHubProvider"
 import { Provider, ProviderRuntimeOptions } from "./providers/Provider"
@@ -42,6 +44,9 @@ export function createClient(data: PublishConfiguration | AllPublishOptions, upd
 
     case "bitbucket":
       return new BitbucketProvider(data as BitbucketOptions, updater, runtimeOptions)
+
+    case "gitlab":
+      return new GitLabProvider(data as GitlabOptions, updater, runtimeOptions)
 
     case "keygen":
       return new KeygenProvider(data as KeygenOptions, updater, runtimeOptions)
