@@ -92,29 +92,45 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
     return node
   }
 
-  private _getNodeModules(dependencies: Set<HoisterResult>, result: NodeModuleInfo[]) {
+  private _getNodeModules(
+    dependencies: Set<HoisterResult>,
+    result: NodeModuleInfo[],
+    seen: Set<string> = new Set()
+  ): void {
     if (dependencies.size === 0) {
-      return
+      return;
     }
-
+  
     for (const d of dependencies.values()) {
-      const reference = [...d.references][0]
-      const p = this.allDependencies.get(`${d.name}@${reference}`)?.path
-      if (p === undefined) {
-        log.debug({ name: d.name, reference }, "cannot find path for dependency")
-        continue
+      const reference = [...d.references][0];
+      const key = `${d.name}@${reference}`;
+  
+      // Prevent infinite recursion on cycles
+      if (seen.has(key)) {
+        continue;
       }
+      seen.add(key);
+  
+      const p = this.allDependencies.get(key)?.path;
+      if (p === undefined) {
+        log.debug({ name: d.name, reference }, "cannot find path for dependency");
+        continue;
+      }
+  
       const node: NodeModuleInfo = {
         name: d.name,
         version: reference,
         dir: this.resolvePath(p),
-      }
-      result.push(node)
+      };
+  
+      result.push(node);
+  
       if (d.dependencies.size > 0) {
-        node.dependencies = []
-        this._getNodeModules(d.dependencies, node.dependencies)
+        node.dependencies = [];
+        this._getNodeModules(d.dependencies, node.dependencies, seen);
       }
     }
-    result.sort((a, b) => a.name.localeCompare(b.name))
+  
+    result.sort((a, b) => a.name.localeCompare(b.name));
   }
 }
