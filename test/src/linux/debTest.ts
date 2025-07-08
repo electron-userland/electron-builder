@@ -109,8 +109,9 @@ test.ifNotWindows("deb file associations", ({ expect }) =>
           await execShell(
             `ar p '${context.outDir}/TestApp_1.1.0_amd64.deb' data.tar.xz | ${await getTarExecutable()} -Jx --to-stdout './usr/share/mime/packages/Test App ßW.xml'`,
             {
-            maxBuffer: 10 * 1024 * 1024,
-          })
+              maxBuffer: 10 * 1024 * 1024,
+            }
+          )
         ).stdout
         expect(mime.trim()).toMatchSnapshot()
       },
