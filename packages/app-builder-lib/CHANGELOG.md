@@ -1,5 +1,21 @@
 # app-builder-lib
 
+## 26.0.18
+
+### Patch Changes
+
+- [#9194](https://github.com/electron-userland/electron-builder/pull/9194) [`fc7c5a0d`](https://github.com/electron-userland/electron-builder/commit/fc7c5a0d4c46d0c61f5c9f9c02412b3a3a97b423) Thanks [@sevenc-nanashi](https://github.com/sevenc-nanashi)! - feat: use jiti instead of config-file-ts for loading TypeScript config
+
+- [#9100](https://github.com/electron-userland/electron-builder/pull/9100) [`e02b939b`](https://github.com/electron-userland/electron-builder/commit/e02b939bc6fc13dfdad3d4c63c86bc01aad618fd) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: upgrade fpm and corresponding portable ruby bundle to resolve build issues on macos
+
+- [#9166](https://github.com/electron-userland/electron-builder/pull/9166) [`61aa8557`](https://github.com/electron-userland/electron-builder/commit/61aa8557dcab97a516ef2abd8bdadab5eb662879) Thanks [@panther7](https://github.com/panther7)! - feat(nsis): added supports for uninstall components page
+
+- [#9183](https://github.com/electron-userland/electron-builder/pull/9183) [`309f1dca`](https://github.com/electron-userland/electron-builder/commit/309f1dcacb11231ac8cc2485a286f2ac63bfa085) Thanks [@panther7](https://github.com/panther7)! - feat(nsis): added translation for 'closing app'
+
+- Updated dependencies [[`a2fbc8b6`](https://github.com/electron-userland/electron-builder/commit/a2fbc8b6666fc58fb7cf1a6fa607695bb3d29a04)]:
+  - dmg-builder@26.0.18
+  - electron-builder-squirrel-windows@26.0.18
+
 ## 26.0.17
 
 ### Patch Changes
