@@ -58,8 +58,8 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
         try {
           return this.parseDependenciesTree(dependencies)
         } catch (error: any) {
-          log.error({ message: error.message || error.stack, shellOutput: dependencies }, "error parsing dependencies tree")
-          throw new Error(`Failed to parse dependencies tree: ${error.message || error.stack}`)
+          log.debug({ message: error.message || error.stack, shellOutput: dependencies }, "error parsing dependencies tree")
+          throw new Error(`Failed to parse dependencies tree: ${error.message || error.stack}. Use DEBUG=electron-builder env var to see the dependency query output.`)
         }
       },
       {
