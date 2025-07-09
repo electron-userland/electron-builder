@@ -1,3 +1,21 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v26.0.17...v) (2025-07-08)
+
+
+### Bug Fixes
+
+* **fpm:** upgrade fpm to 1.16 and ruby 3.4.3 ([#9100](https://github.com/electron-userland/electron-builder/issues/9100)) ([e02b939](https://github.com/electron-userland/electron-builder/commit/e02b939bc6fc13dfdad3d4c63c86bc01aad618fd))
+* resolve dmg flakiness by upgrading `dmgbuild` python vendor files ([#9163](https://github.com/electron-userland/electron-builder/issues/9163)) ([a2fbc8b](https://github.com/electron-userland/electron-builder/commit/a2fbc8b6666fc58fb7cf1a6fa607695bb3d29a04))
+
+
+### Features
+
+* **app-builder-lib:** use `jiti` for loading TS config file ([#9194](https://github.com/electron-userland/electron-builder/issues/9194)) ([fc7c5a0](https://github.com/electron-userland/electron-builder/commit/fc7c5a0d4c46d0c61f5c9f9c02412b3a3a97b423))
+* **nsis:** added support for uninstall components page ([#9166](https://github.com/electron-userland/electron-builder/issues/9166)) ([61aa855](https://github.com/electron-userland/electron-builder/commit/61aa8557dcab97a516ef2abd8bdadab5eb662879))
+* **nsis:** added translation string for 'closing app' ([#9183](https://github.com/electron-userland/electron-builder/issues/9183)) ([309f1dc](https://github.com/electron-userland/electron-builder/commit/309f1dcacb11231ac8cc2485a286f2ac63bfa085))
+* **updater:** Cache the new blockmap file and allow customization of the old blockmap file base URL. ([#9172](https://github.com/electron-userland/electron-builder/issues/9172)) ([cb651dd](https://github.com/electron-userland/electron-builder/commit/cb651ddb732dd0b8614b1af25054261b978900dd))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v26.0.16...v) (2025-06-13)
 
 
