@@ -408,4 +408,3 @@ export async function executeAppBuilder(
     return retry(runCommand, { retries: maxRetries, interval: 1000 })
   }
 }
-
