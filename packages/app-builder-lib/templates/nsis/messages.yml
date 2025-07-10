@@ -235,3 +235,6 @@ uninstallFailed:
   sv: Det gick inte att avinstallera gamla programfiler. Försök att köra installationsprogrammet igen.
   uk: Не вдалось видалити старі файли застосунку. Будь ласка, спробуйте запустити встановлювач знов.
   zh_TW: 無法俺安裝舊的應用程式檔案。 請嘗試再次執行安裝程式。
+appClosing:
+  en: "Closing running ${PRODUCT_NAME}..."
+  cs: "Ukončuji aplikaci ${PRODUCT_NAME}..."
