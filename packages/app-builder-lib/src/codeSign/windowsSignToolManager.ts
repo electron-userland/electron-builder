@@ -449,13 +449,11 @@ export class WindowsSignToolManager implements SignManager {
       }
     }
 
-    await retry(
-      () => vm.exec(tool, args, { timeout, env }),
-      2,
-      15000,
-      10000,
-      0,
-      (e: any) => {
+    await retry(() => vm.exec(tool, args, { timeout, env }), {
+      retries: 2,
+      interval: 15000,
+      backoff: 10000,
+      shouldRetry: (e: any) => {
         if (
           e.message.includes("The file is being used by another process") ||
           e.message.includes("The specified timestamp server either could not be reached") ||
@@ -465,8 +463,8 @@ export class WindowsSignToolManager implements SignManager {
           return true
         }
         return false
-      }
-    )
+      },
+    })
   }
 }
 
