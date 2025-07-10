@@ -77,7 +77,10 @@ export function detectPackageManager(cwd: string): PM {
   if (npm) detected.push(PM.NPM)
 
   if (detected.length === 1) {
-    return detected[0] === PM.YARN ? detectPackageManagerByEnv() : detected[0]
+    if (detected[0] === PM.YARN) {
+      return detectPackageManagerByEnv() === PM.YARN_BERRY ? PM.YARN_BERRY : PM.YARN
+    }
+    return detected[0]
   }
 
   // fallback: multiple lockfiles or none
