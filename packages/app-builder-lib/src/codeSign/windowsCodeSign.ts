@@ -21,17 +21,22 @@ export async function signWindows(options: WindowsSignOptions, packager: WinPack
 }
 
 function signWithRetry(signer: () => Promise<boolean>): Promise<boolean> {
-  return retry(signer, 3, 1000, 1000, 0, (e: any) => {
-    const message = e.message
-    if (
-      // https://github.com/electron-userland/electron-builder/issues/1414
-      message?.includes("Couldn't resolve host name") ||
-      // https://github.com/electron-userland/electron-builder/issues/8615
-      message?.includes("being used by another process.")
-    ) {
-      log.warn({ error: message }, "attempt to sign failed, another attempt will be made")
-      return true
-    }
-    return false
+  return retry(signer, {
+    retries: 3,
+    interval: 1000,
+    backoff: 1000,
+    shouldRetry: (e: any) => {
+      const message = e.message
+      if (
+        // https://github.com/electron-userland/electron-builder/issues/1414
+        message?.includes("Couldn't resolve host name") ||
+        // https://github.com/electron-userland/electron-builder/issues/8615
+        message?.includes("being used by another process.")
+      ) {
+        log.warn({ error: message }, "attempt to sign failed, another attempt will be made")
+        return true
+      }
+      return false
+    },
   })
 }

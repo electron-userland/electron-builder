@@ -1,6 +1,6 @@
 {
 	"name": "dmg-builder",
-	"version": "26.0.14",
+	"version": "26.0.18",
 	"main": "out/dmgUtil.js",
 	"author": "Vladimir Krivosheev",
 	"license": "MIT",
@@ -19,7 +19,6 @@
 	"dependencies": {
 		"app-builder-lib": "workspace:*",
 		"builder-util": "workspace:*",
-		"builder-util-runtime": "workspace:*",
 		"fs-extra": "^10.1.0",
 		"iconv-lite": "^0.6.2",
 		"js-yaml": "^4.1.0"

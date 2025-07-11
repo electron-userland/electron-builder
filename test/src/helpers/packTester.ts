@@ -4,7 +4,7 @@ import { computeArchToTargetNamesMap } from "app-builder-lib/out/targets/targetF
 import { getLinuxToolsPath } from "app-builder-lib/out/targets/tools"
 import { parsePlistFile, PlistObject } from "app-builder-lib/out/util/plist"
 import { AsarIntegrity } from "app-builder-lib/out/asar/integrity"
-import { addValue, copyDir, deepAssign, exec, executeFinally, exists, FileCopier, getPath7x, getPath7za, log, spawn, USE_HARD_LINKS, walk } from "builder-util"
+import { addValue, copyDir, deepAssign, exec, executeFinally, exists, FileCopier, log, USE_HARD_LINKS, walk } from "builder-util"
 import { CancellationToken, UpdateFileInfo } from "builder-util-runtime"
 import { Arch, ArtifactCreated, Configuration, DIR_TARGET, getArchSuffix, MacOsTargetName, Packager, PackagerOptions, Platform, Target } from "electron-builder"
 import { convertVersion } from "electron-winstaller"
@@ -24,6 +24,10 @@ import AdmZip from "adm-zip"
 // @ts-ignore
 import sanitizeFileName from "sanitize-filename"
 import type { ExpectStatic } from "vitest"
+import { computeDefaultAppDirectory } from "app-builder-lib/out/util/config/config"
+import { installDependencies } from "app-builder-lib/out/util/yarn"
+import { ELECTRON_VERSION } from "./testConfig"
+import { createLazyProductionDeps } from "app-builder-lib/out/util/packageDependencies"
 
 if (process.env.TRAVIS !== "true") {
   process.env.CIRCLE_BUILD_NUM = "42"
@@ -45,6 +49,7 @@ export interface AssertPackOptions {
   readonly signedWin?: boolean
 
   readonly isInstallDepsBefore?: boolean
+  readonly storeDepsLockfileSnapshot?: boolean
 
   readonly publish?: PublishPolicy
 
@@ -55,6 +60,7 @@ export interface PackedContext {
   readonly projectDir: string
   readonly outDir: string
 
+  readonly getAppPath: (platform: Platform, arch?: Arch) => string
   readonly getResources: (platform: Platform, arch?: Arch) => string
   readonly getContent: (platform: Platform, arch?: Arch) => string
 
@@ -130,31 +136,32 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
       }
 
       if (checkOptions.isInstallDepsBefore) {
-        const pm = await getCollectorByPackageManager(projectDir)
-        const pmOptions = await pm.installOptions
-        let installArgs = ["install"]
+        const pm = await getCollectorByPackageManager(projectDir, tmpDir)
+        const pmOptions = pm.installOptions
 
         const destLockfile = path.join(projectDir, pmOptions.lockfile)
 
-        const shouldUpdateLockfiles = !!process.env.UPDATE_LOCKFILE_FIXTURES
+        const shouldUpdateLockfiles = !!process.env.UPDATE_LOCKFILE_FIXTURES && !!checkOptions.storeDepsLockfileSnapshot
         // check for lockfile fixture so we can use `--frozen-lockfile`
         if ((await exists(testFixtureLockfile)) && !shouldUpdateLockfiles) {
           await copyFile(testFixtureLockfile, destLockfile)
-          installArgs = pmOptions.args
         }
 
-        // bin links required (e.g. for node-pre-gyp - if package refers to it in the install script)
-        await spawn(pmOptions.cmd, installArgs, {
-          cwd: projectDir,
-        }).catch((err: any) => {
-          if (err.message.includes("npm ci")) {
-            log.error({}, "npm ci failed, check if fixture dependencies were changed. If intentional, rerun with env var UPDATE_LOCKFILE_FIXTURES=true.")
+        const appDir = await computeDefaultAppDirectory(projectDir, configuration.directories?.app)
+        await installDependencies(
+          configuration,
+          {
+            projectDir: projectDir,
+            appDir: appDir,
+          },
+          {
+            frameworkInfo: { version: ELECTRON_VERSION, useCustomDist: false },
+            productionDeps: createLazyProductionDeps(appDir, null, false),
           }
-          throw err
-        })
+        )
 
         // save lockfile fixture
-        if (!(await exists(testFixtureLockfile)) || shouldUpdateLockfiles) {
+        if (!(await exists(testFixtureLockfile)) && shouldUpdateLockfiles) {
           const fixtureDir = path.dirname(testFixtureLockfile)
           if (!(await exists(fixtureDir))) {
             await mkdir(fixtureDir)
@@ -182,19 +189,21 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
       )
 
       if (checkOptions.packed != null) {
-        const base = function (platform: Platform, arch?: Arch): string {
-          return path.join(
-            outDir,
-            `${platform.buildConfigurationKey}${getArchSuffix(arch ?? Arch.x64)}${platform === Platform.MAC ? "" : "-unpacked"}`,
-            platform === Platform.MAC ? `${packager.appInfo.productFilename}.app/Contents` : ""
-          )
+        const getAppPath = function (platform: Platform, arch?: Arch): string {
+          return path.join(outDir, `${platform.buildConfigurationKey}${getArchSuffix(arch ?? Arch.x64)}${platform === Platform.MAC ? "" : "-unpacked"}`)
         }
-
+        const getContent = (platform: Platform, arch: Arch | undefined): string => {
+          return path.join(getAppPath(platform, arch), platform === Platform.MAC ? `${packager.appInfo.productFilename}.app/Contents` : "")
+        }
+        const getResources = (platform: Platform, arch: Arch | undefined): string => {
+          return path.join(getContent(platform, arch), platform === Platform.MAC ? "Resources" : "resources")
+        }
         await checkOptions.packed({
           projectDir,
           outDir,
-          getResources: (platform, arch) => path.join(base(platform, arch), platform === Platform.MAC ? "Resources" : "resources"),
-          getContent: (platform, arch) => base(platform, arch),
+          getAppPath,
+          getResources,
+          getContent,
           packager,
           tmpDir,
         })
@@ -244,7 +253,11 @@ async function packAndCheck(expect: ExpectStatic, packagerOptions: PackagerOptio
   for (const platform of packagerOptions.targets!.keys()) {
     objectToCompare[platform.buildConfigurationKey] = await Promise.all(
       (artifacts.get(platform) || [])
-        .sort((a, b) => sortKey(a).localeCompare(sortKey(b), "en"))
+        .sort((a, b) => {
+          const archSortKey = (a.arch?.valueOf() ?? 0) - (b.arch?.valueOf() ?? 0)
+          const fileNameSortKey = sortKey(a).localeCompare(sortKey(b), "en")
+          return fileNameSortKey + archSortKey
+        })
         .map(async it => {
           const result: any = { ...it }
           const file = result.file
@@ -257,16 +270,14 @@ async function packAndCheck(expect: ExpectStatic, packagerOptions: PackagerOptio
           const updateInfo = result.updateInfo
           if (updateInfo != null) {
             result.updateInfo = removeUnstableProperties(updateInfo)
-          } else if (updateInfo === null) {
+          }
+          if (updateInfo == null) {
             delete result.updateInfo
           }
 
           // reduce snapshot - avoid noise
           if (result.safeArtifactName == null) {
             delete result.safeArtifactName
-          }
-          if (result.updateInfo == null) {
-            delete result.updateInfo
           }
           if (result.arch == null) {
             delete result.arch
@@ -325,15 +336,17 @@ async function checkLinuxResult(expect: ExpectStatic, outDir: string, packager: 
   }
 
   const appInfo = packager.appInfo
-  const packageFile = `${outDir}/${appInfo.name}_${appInfo.version}_${arch === Arch.ia32 ? "i386" : arch === Arch.x64 ? "amd64" : "armv7l"}.deb`
-  expect(await getContents(packageFile)).toMatchSnapshot()
+  const autoFindPackagePath = await fs.readdir(outDir).then(files => files.find(file => file.endsWith(".deb")))
+  const defaultPackageFile = `${outDir}/${appInfo.name}_${appInfo.version}_${arch === Arch.ia32 ? "i386" : arch === Arch.x64 ? "amd64" : "armv7l"}.deb`
+  const packagePath = autoFindPackagePath != null ? path.join(outDir, autoFindPackagePath) : defaultPackageFile
+  expect(await getContents(packagePath)).toMatchSnapshot()
   if (arch === Arch.ia32) {
     expect(await getContents(`${outDir}/${appInfo.name}_${appInfo.version}_i386.deb`)).toMatchSnapshot()
   }
 
   const control = parseDebControl(
     (
-      await execShell(`ar p '${packageFile}' control.tar.gz | ${await getTarExecutable()} zx --to-stdout ./control`, {
+      await execShell(`ar p '${packagePath}' control.tar.xz | ${await getTarExecutable()} -Jx --to-stdout ./control`, {
         maxBuffer: 10 * 1024 * 1024,
       })
     ).stdout
@@ -520,11 +533,10 @@ export async function getTarExecutable() {
 }
 
 async function getContents(packageFile: string) {
-  const result = await execShell(`ar p '${packageFile}' data.tar.xz | ${await getTarExecutable()} -t -I'${await getPath7x()}'`, {
+  const result = await execShell(`ar p '${packageFile}' data.tar.xz | ${await getTarExecutable()} -tJ`, {
     maxBuffer: 10 * 1024 * 1024,
     env: {
       ...process.env,
-      SZA_PATH: await getPath7za(),
     },
   })
 

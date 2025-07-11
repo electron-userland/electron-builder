@@ -1,5 +1,5 @@
 import { appBuilderPath } from "app-builder-bin"
-import { retry as _retry, Nullish, safeStringifyJson } from "builder-util-runtime"
+import { retry, Nullish, safeStringifyJson } from "builder-util-runtime"
 import * as chalk from "chalk"
 import { ChildProcess, execFile, ExecFileOptions, SpawnOptions } from "child_process"
 import { spawn as _spawn } from "cross-spawn"
@@ -15,7 +15,7 @@ if (process.env.JEST_WORKER_ID == null) {
   installSourceMap()
 }
 
-export { safeStringifyJson } from "builder-util-runtime"
+export { safeStringifyJson, retry } from "builder-util-runtime"
 export { TmpDir } from "temp-file"
 export * from "./arch"
 export { Arch, archFromString, ArchType, defaultArchFromString, getArchCliNames, getArchSuffix, toLinuxArchString } from "./arch"
@@ -121,10 +121,6 @@ export function exec(file: string, args?: Array<string> | null, options?: ExecFi
           }
           resolve(stdout.toString())
         } else {
-          // https://github.com/npm/npm/issues/17624
-          if ((file === "npm" || file === "npm.cmd") && args?.includes("list") && args?.includes("--silent")) {
-            resolve(stdout.toString())
-          }
           let message = chalk.red(removePassword(`Exit code: ${(error as any).code}. ${error.message}`))
           if (stdout.length !== 0) {
             if (file.endsWith("wine")) {
@@ -139,7 +135,8 @@ export function exec(file: string, args?: Array<string> | null, options?: ExecFi
             message += `\n${chalk.red(stderr.toString())}`
           }
 
-          reject(new Error(message))
+          // TODO: switch to ECMA Script 2026 Error class with `cause` property to return stack trace
+          reject(new ExecError(file, (error as any).code, message, "", `${error.code || ExecError.code}`))
         }
       }
     )
@@ -268,12 +265,14 @@ function formatOut(text: string, title: string) {
 export class ExecError extends Error {
   alreadyLogged = false
 
+  static code = "ERR_ELECTRON_BUILDER_CANNOT_EXECUTE"
+
   constructor(
     command: string,
     readonly exitCode: number,
     out: string,
     errorOut: string,
-    code = "ERR_ELECTRON_BUILDER_CANNOT_EXECUTE"
+    code = ExecError.code
   ) {
     super(`${command} process failed ${code}${formatOut(String(exitCode), "Exit code")}${formatOut(out, "Output")}${formatOut(errorOut, "Error output")}`)
     ;(this as NodeJS.ErrnoException).code = code
@@ -406,13 +405,6 @@ export async function executeAppBuilder(
   if (maxRetries === 0) {
     return runCommand()
   } else {
-    return retry(runCommand, maxRetries, 1000)
+    return retry(runCommand, { retries: maxRetries, interval: 1000 })
   }
-}
-
-export async function retry<T>(task: () => Promise<T>, retryCount: number, interval: number, backoff = 0, attempt = 0, shouldRetry?: (e: any) => boolean): Promise<T> {
-  return await _retry(task, retryCount, interval, backoff, attempt, e => {
-    log.info(`Above command failed, retrying ${retryCount} more times`)
-    return shouldRetry?.(e) ?? true
-  })
 }

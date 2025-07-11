@@ -71,16 +71,16 @@ exports[`web installer (default github) 1`] = `
       },
     },
     {
-      "arch": "arm64",
-      "file": "TestApp-1.1.0-arm64.nsis.7z",
-    },
-    {
       "arch": "ia32",
       "file": "TestApp-1.1.0-ia32.nsis.7z",
     },
     {
       "arch": "x64",
       "file": "TestApp-1.1.0-x64.nsis.7z",
+    },
+    {
+      "arch": "arm64",
+      "file": "TestApp-1.1.0-arm64.nsis.7z",
     },
   ],
 }
@@ -143,12 +143,12 @@ exports[`web installer 1`] = `
       },
     },
     {
-      "arch": "arm64",
-      "file": "TestApp-1.1.0-arm64.nsis.7z",
-    },
-    {
       "arch": "x64",
       "file": "TestApp-1.1.0-x64.nsis.7z",
+    },
+    {
+      "arch": "arm64",
+      "file": "TestApp-1.1.0-arm64.nsis.7z",
     },
   ],
 }

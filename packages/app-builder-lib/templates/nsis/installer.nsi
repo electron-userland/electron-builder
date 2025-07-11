@@ -10,6 +10,13 @@ Var oldMenuDirectory
 !include "multiUser.nsh"
 !include "allowOnlyOneInstallerInstance.nsh"
 
+!ifdef BUILD_UNINSTALLER
+  !ifmacrodef customUnInstallSection
+    !define MUI_COMPONENTSPAGE_NODESC
+    !insertmacro MUI_UNPAGE_COMPONENTS
+  !endif
+!endif
+
 !ifdef INSTALL_MODE_PER_ALL_USERS
   !ifdef BUILD_UNINSTALLER
     RequestExecutionLevel user

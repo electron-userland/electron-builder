@@ -1,12 +1,14 @@
 import { log } from "builder-util"
-import { loadTsConfig } from "config-file-ts"
 import { parse as parseEnv } from "dotenv"
 import { DotenvParseInput, expand } from "dotenv-expand"
 import { promises as fs } from "fs"
+import { createJiti } from "jiti"
 import { load } from "js-yaml"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { resolveModule } from "../resolve"
+
+const jiti = createJiti(__filename)
 
 export interface ReadConfigResult<T> {
   readonly result: T
@@ -30,13 +32,7 @@ async function readConfig<T>(configFile: string, request: ReadConfigRequest): Pr
     }
     result = await Promise.resolve(result)
   } else if (configFile.endsWith(".ts")) {
-    // override logger temporarily to clean up console (config-file-ts does some internal logging that blogs up the default electron-builder log format)
-    const consoleLogger = console.log
-    console.log = (...args) => {
-      log.debug({ args }, "executing config-file-ts")
-    }
-    result = loadTsConfig(configFile)
-    console.log = consoleLogger
+    result = await jiti.import(configFile, { default: true })
 
     if (typeof result === "function") {
       result = result(request)
