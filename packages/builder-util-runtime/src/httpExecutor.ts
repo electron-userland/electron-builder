@@ -352,10 +352,10 @@ export interface DownloadCallOptions {
 }
 
 function parseUrl(url: string, options: RequestOptions): URL {
-  if (url.startsWith("http://") || url.startsWith("https://")) {
-    // Absolute URL
+  try {
+    // Would throw exception if url is not absolute
     return new URL(url)
-  } else {
+  } catch {
     // Relative URL - construct base URL from original options
     const hostname = options.hostname
     const protocol = options.protocol || "https:"
