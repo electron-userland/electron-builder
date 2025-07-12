@@ -377,6 +377,62 @@ exports[`file url github private 2`] = `
 ]
 `;
 
+exports[`file url gitlab 1`] = `
+{
+  "assets": Map {
+    "gitlab-electron-updater-test-Setup-1.0.0.exe" => "https://gitlab.com/-/project/71361100/uploads/e091e17d4af22a810eb3364850efee91/gitlab-electron-updater-test_Setup_1.0.0.exe",
+    "latest.yml" => "https://gitlab.com/-/project/71361100/uploads/3d114468f4225779109ea1dc462fcc47/latest.yml",
+    "gitlab-electron-updater-test-Setup-1.0.0.exe.blockmap" => "https://gitlab.com/-/project/71361100/uploads/351b843d22eea25c79909c6b8eb94bd5/gitlab-electron-updater-test_Setup_1.0.0.exe.blockmap",
+  },
+  "files": [
+    {
+      "sha512": "xQVjQm2Jpo+88NyCdSoyNlgSj+hDj7oP5A5endhg1x+7sjanRcicQj62SIV7u9GIusYyy+9bDsxDBdyVHo4bEg==",
+      "size": 78217306,
+      "url": "gitlab-electron-updater-test-Setup-1.0.0.exe",
+    },
+  ],
+  "path": "gitlab-electron-updater-test-Setup-1.0.0.exe",
+  "releaseDate": "2025-07-04T09:14:24.881Z",
+  "releaseName": "Release v1.0.0",
+  "releaseNotes": "Automated release for v1.0.0",
+  "sha512": "xQVjQm2Jpo+88NyCdSoyNlgSj+hDj7oP5A5endhg1x+7sjanRcicQj62SIV7u9GIusYyy+9bDsxDBdyVHo4bEg==",
+  "tag": "v1.0.0",
+  "version": "1.0.0",
+}
+`;
+
+exports[`file url gitlab 2`] = `
+{
+  "assets": Map {
+    "gitlab-electron-updater-test-Setup-1.0.0.exe" => "https://gitlab.com/-/project/71361100/uploads/e091e17d4af22a810eb3364850efee91/gitlab-electron-updater-test_Setup_1.0.0.exe",
+    "latest.yml" => "https://gitlab.com/-/project/71361100/uploads/3d114468f4225779109ea1dc462fcc47/latest.yml",
+    "gitlab-electron-updater-test-Setup-1.0.0.exe.blockmap" => "https://gitlab.com/-/project/71361100/uploads/351b843d22eea25c79909c6b8eb94bd5/gitlab-electron-updater-test_Setup_1.0.0.exe.blockmap",
+  },
+  "files": [
+    {
+      "sha512": "xQVjQm2Jpo+88NyCdSoyNlgSj+hDj7oP5A5endhg1x+7sjanRcicQj62SIV7u9GIusYyy+9bDsxDBdyVHo4bEg==",
+      "size": 78217306,
+      "url": "gitlab-electron-updater-test-Setup-1.0.0.exe",
+    },
+  ],
+  "path": "gitlab-electron-updater-test-Setup-1.0.0.exe",
+  "releaseDate": "2025-07-04T09:14:24.881Z",
+  "releaseName": "Release v1.0.0",
+  "releaseNotes": "Automated release for v1.0.0",
+  "sha512": "xQVjQm2Jpo+88NyCdSoyNlgSj+hDj7oP5A5endhg1x+7sjanRcicQj62SIV7u9GIusYyy+9bDsxDBdyVHo4bEg==",
+  "tag": "v1.0.0",
+  "version": "1.0.0",
+}
+`;
+
+exports[`file url gitlab 3`] = `
+[
+  "checking-for-update",
+  "update-available",
+  "update-downloaded",
+]
+`;
+
 exports[`file url keygen 1`] = `
 {
   "files": [
@@ -436,6 +492,53 @@ exports[`github allowPrerelease=true 1`] = `
   "sha512": "@sha512",
   "tag": "v2.0.0",
   "version": "2.0.0",
+}
+`;
+
+exports[`gitlab - manual download 1`] = `
+{
+  "assets": {},
+  "files": [
+    {
+      "sha512": "@sha512",
+      "size": "@size",
+      "url": "gitlab-electron-updater-test-Setup-1.0.0.exe",
+    },
+  ],
+  "path": "gitlab-electron-updater-test-Setup-1.0.0.exe",
+  "releaseDate": "@releaseDate",
+  "releaseName": "Release v1.0.0",
+  "releaseNotes": "Automated release for v1.0.0",
+  "sha512": "@sha512",
+  "tag": "v1.0.0",
+  "version": "1.0.0",
+}
+`;
+
+exports[`gitlab - manual download 2`] = `
+[
+  "checking-for-update",
+  "update-available",
+]
+`;
+
+exports[`gitlab checkForUpdates 1`] = `
+{
+  "assets": {},
+  "files": [
+    {
+      "sha512": "@sha512",
+      "size": "@size",
+      "url": "gitlab-electron-updater-test-Setup-1.0.0.exe",
+    },
+  ],
+  "path": "gitlab-electron-updater-test-Setup-1.0.0.exe",
+  "releaseDate": "@releaseDate",
+  "releaseName": "Release v1.0.0",
+  "releaseNotes": "Automated release for v1.0.0",
+  "sha512": "@sha512",
+  "tag": "v1.0.0",
+  "version": "1.0.0",
 }
 `;
 
