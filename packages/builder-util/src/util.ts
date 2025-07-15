@@ -54,11 +54,11 @@ export function removePassword(input: string): string {
     const value = quotedVal ?? unquotedVal
 
     if (prefix.trim() === "/p" && value.startsWith("\\\\Mac\\Host\\\\")) {
-      return `${prefix}${quote ?? ""}${value}${quote ?? ""}`
+      return `${prefix} ${quote ?? ""}${value}${quote ?? ""}`
     }
 
     const hashed = createHash("sha256").update(value).digest("hex")
-    return `${prefix}${quote ?? ""}${hashed} (sha256 hash)${quote ?? ""}`
+    return `${prefix} ${quote ?? ""}${hashed} (sha256 hash)${quote ?? ""}`
   })
 
   // Also handle `/b ... /c` block format
