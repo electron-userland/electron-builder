@@ -2,12 +2,15 @@ import { log } from "builder-util"
 import * as fs from "fs"
 import * as path from "path"
 import { NodeModulesCollector } from "./nodeModulesCollector"
-import { PM } from "./packageManager"
+import { getPackageManagerCommand, PM } from "./packageManager"
 import { Dependency, PnpmDependency } from "./types"
 
 export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependency, PnpmDependency> {
-  constructor(rootDir: string) {
-    super(rootDir)
+  static async isPnpmProjectHoisted(rootDir: string) {
+    const command = getPackageManagerCommand(PM.PNPM)
+    const config = await NodeModulesCollector.safeExec(command, ["config", "list"], rootDir)
+    const lines = Object.fromEntries(config.split("\n").map(line => line.split("=").map(s => s.trim())))
+    return lines["node-linker"] === "hoisted"
   }
 
   public readonly installOptions = { manager: PM.PNPM, lockfile: "pnpm-lock.yaml" }

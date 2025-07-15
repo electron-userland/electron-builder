@@ -214,7 +214,11 @@ async function importCerts(keychainFile: string, paths: Array<string>, keyPasswo
 }
 
 export async function sign(opts: SignOptions): Promise<void> {
-  return retry(() => signAsync(opts), 3, 5000, 5000)
+  return retry(() => signAsync(opts), {
+    retries: 3,
+    interval: 5000,
+    backoff: 5000,
+  })
 }
 
 export let findIdentityRawResult: Promise<Array<string>> | null = null

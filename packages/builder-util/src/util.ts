@@ -1,5 +1,5 @@
 import { appBuilderPath } from "app-builder-bin"
-import { retry as _retry, Nullish, safeStringifyJson } from "builder-util-runtime"
+import { retry, Nullish, safeStringifyJson } from "builder-util-runtime"
 import * as chalk from "chalk"
 import { ChildProcess, execFile, ExecFileOptions, SpawnOptions } from "child_process"
 import { spawn as _spawn } from "cross-spawn"
@@ -15,7 +15,7 @@ if (process.env.JEST_WORKER_ID == null) {
   installSourceMap()
 }
 
-export { safeStringifyJson } from "builder-util-runtime"
+export { safeStringifyJson, retry } from "builder-util-runtime"
 export { TmpDir } from "temp-file"
 export * from "./arch"
 export { Arch, archFromString, ArchType, defaultArchFromString, getArchCliNames, getArchSuffix, toLinuxArchString } from "./arch"
@@ -137,14 +137,7 @@ export function exec(file: string, args?: Array<string> | null, options?: ExecFi
           }
           resolve(stdout.toString())
         } else {
-          const code = (error as any).code
-          // https://github.com/npm/npm/issues/17624
-          if (code === 1 && (file.toLowerCase().endsWith("npm") || file.toLowerCase().endsWith("npm.cmd")) && args?.includes("list") && args?.includes("--silent")) {
-            log.debug({ file, code, message: error.message }, "`npm list` returned non-zero exit code, but it is expected (https://github.com/npm/npm/issues/17624)")
-            resolve(stdout.toString())
-            return
-          }
-          let message = chalk.red(removePassword(`Exit code: ${code}. ${error.message}`))
+          let message = chalk.red(removePassword(`Exit code: ${(error as any).code}. ${error.message}`))
           if (stdout.length !== 0) {
             if (file.endsWith("wine")) {
               stdout = stdout.toString()
@@ -159,7 +152,7 @@ export function exec(file: string, args?: Array<string> | null, options?: ExecFi
           }
 
           // TODO: switch to ECMA Script 2026 Error class with `cause` property to return stack trace
-          reject(new ExecError(file, code, message, "", `${error.code || ExecError.code}`))
+          reject(new ExecError(file, (error as any).code, message, "", `${error.code || ExecError.code}`))
         }
       }
     )
@@ -428,13 +421,6 @@ export async function executeAppBuilder(
   if (maxRetries === 0) {
     return runCommand()
   } else {
-    return retry(runCommand, maxRetries, 1000)
+    return retry(runCommand, { retries: maxRetries, interval: 1000 })
   }
-}
-
-export async function retry<T>(task: () => Promise<T>, retryCount: number, interval: number, backoff = 0, attempt = 0, shouldRetry?: (e: any) => boolean): Promise<T> {
-  return await _retry(task, retryCount, interval, backoff, attempt, e => {
-    log.info(`Above command failed, retrying ${retryCount} more times`)
-    return shouldRetry?.(e) ?? true
-  })
 }
