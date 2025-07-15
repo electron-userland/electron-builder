@@ -1,4 +1,4 @@
-import { BitbucketOptions, GenericServerOptions, GithubOptions, KeygenOptions, S3Options, SpacesOptions } from "builder-util-runtime"
+import { BitbucketOptions, GenericServerOptions, GithubOptions, GitlabOptions, KeygenOptions, S3Options, SpacesOptions } from "builder-util-runtime"
 import { BitbucketPublisher } from "electron-publish"
 import { UpdateCheckResult } from "electron-updater"
 import { outputFile } from "fs-extra"
@@ -89,6 +89,61 @@ test.ifEnv(process.env.BITBUCKET_TOKEN)("file url bitbucket", config, async ({ e
   updater.addAuthHeader(BitbucketPublisher.convertAppPassword(options.owner, process.env.BITBUCKET_TOKEN!))
   updater.updateConfigPath = await writeUpdateConfig(options)
   await validateDownload(expect, updater)
+})
+
+test("file url gitlab", config, async ({ expect }) => {
+  const updater = await createNsisUpdater()
+  const options: GitlabOptions = {
+    provider: "gitlab",
+    projectId: 71361100,
+  }
+  updater.updateConfigPath = await writeUpdateConfig(options)
+  updater.signals.updateDownloaded(info => {
+    expect(info.downloadedFile).not.toBeNull()
+
+    delete (info as any).downloadedFile
+    expect(info).toMatchSnapshot()
+  })
+  await validateDownload(expect, updater)
+})
+
+test("gitlab checkForUpdates", config, async ({ expect }) => {
+  const updater = await createNsisUpdater("0.0.1")
+  updater.updateConfigPath = await writeUpdateConfig<GitlabOptions>({
+    provider: "gitlab",
+    projectId: 71361100,
+  })
+
+  const actualEvents: Array<string> = []
+  const expectedEvents = ["checking-for-update", "update-available"] as const
+  for (const eventName of expectedEvents) {
+    updater.addListener(eventName, () => {
+      actualEvents.push(eventName)
+    })
+  }
+
+  const updateCheckResult = await updater.checkForUpdates()
+  expect(removeUnstableProperties(updateCheckResult?.updateInfo)).toMatchSnapshot()
+  expect(actualEvents).toEqual(expectedEvents)
+})
+
+test("gitlab - manual download", config, async ({ expect }) => {
+  const updater = await createNsisUpdater("0.0.1")
+  updater.updateConfigPath = await writeUpdateConfig<GitlabOptions>({
+    provider: "gitlab",
+    projectId: 71361100,
+  })
+  updater.autoDownload = false
+
+  const actualEvents = trackEvents(updater)
+
+  const updateCheckResult = await updater.checkForUpdates()
+  expect(removeUnstableProperties(updateCheckResult?.updateInfo)).toMatchSnapshot()
+  // noinspection JSIgnoredPromiseFromCall
+  expect(updateCheckResult?.downloadPromise).toBeNull()
+  expect(actualEvents).toMatchSnapshot()
+
+  await assertThat(expect, path.join((await updater.downloadUpdate())[0])).isFile()
 })
 
 test.skip("DigitalOcean Spaces", config, async ({ expect }) => {
