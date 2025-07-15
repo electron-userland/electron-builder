@@ -75,7 +75,7 @@ export async function computeElectronVersion(projectDir: string): Promise<string
         accept: "application/xml, application/atom+xml, text/xml, */*",
       },
     })
-    const feed = parseXml(feedXml!)
+    const feed = parseXml(feedXml)
     const latestRelease = feed.element("entry", false, `No published versions on GitHub`)
     const v = /\/tag\/v?([^/]+)$/.exec(latestRelease.element("link").attribute("href"))![1]
     return v.startsWith("v") ? v.substring(1) : v
@@ -83,13 +83,13 @@ export async function computeElectronVersion(projectDir: string): Promise<string
     log.warn('Electron version is set to "latest", but it is recommended to set it to some more restricted version range.')
     try {
       const releaseInfo = JSON.parse(
-        (await httpExecutor.request({
+        await httpExecutor.request({
           hostname: "github.com",
           path: `/electron/${dependency.name === "electron-nightly" ? "nightlies" : "electron"}/releases/latest`,
           headers: {
             accept: "application/json",
           },
-        }))!
+        })
       )
       const version = releaseInfo.tag_name.startsWith("v") ? releaseInfo.tag_name.substring(1) : releaseInfo.tag_name
       log.info({ version }, `resolve ${dependency.name}@${dependency.version}`)

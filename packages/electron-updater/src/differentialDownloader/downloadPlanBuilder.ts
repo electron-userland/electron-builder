@@ -37,7 +37,7 @@ export function computeOperations(oldBlockMap: BlockMap, newBlockMap: BlockMap, 
   const newFile = nameToNewBlocks.get(name)!
   let changedBlockCount = 0
 
-  const { checksumToOffset: checksumToOldOffset, checksumToOldSize } = buildChecksumMap(nameToOldBlocks.get(name)!, oldEntry.offset, logger)
+  const { checksumToOffset: checksumToOldOffset, checksumToOldSize } = buildChecksumMap(nameToOldBlocks.get(name), oldEntry.offset, logger)
 
   let newOffset = blockMapFile.offset
   for (let i = 0; i < newFile.checksums.length; newOffset += newFile.sizes[i], i++) {

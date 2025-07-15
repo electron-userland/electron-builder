@@ -80,7 +80,7 @@ export class PkgTarget extends Target {
       args.push("--package-path", extraPackages.packagePath)
     }
     args.push(artifactPath)
-    use(options.productbuild, it => args.push(...(it as any)))
+    use(options.productbuild, it => args.push(...it))
     await exec("productbuild", args, {
       cwd: appOutDir,
     })

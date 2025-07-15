@@ -148,7 +148,7 @@ export class KeygenPublisher extends HttpPublisher {
     await httpExecutor.doApiRequest(configureRequestOptions(upload, null, "PUT"), this.context.cancellationToken, requestProcessor)
   }
 
-  private async createArtifact(releaseId: any, fileName: string, dataLength: number): Promise<{ data?: KeygenArtifact; errors?: KeygenError[] }> {
+  private createArtifact(releaseId: any, fileName: string, dataLength: number): Promise<{ data?: KeygenArtifact; errors?: KeygenError[] }> {
     const upload: RequestOptions = {
       hostname: this.hostname,
       path: `${this.basePath}/artifacts`,
@@ -208,7 +208,7 @@ export class KeygenPublisher extends HttpPublisher {
     }
   }
 
-  private async getRelease(): Promise<{ data?: KeygenRelease; errors?: KeygenError[] }> {
+  private getRelease(): Promise<{ data?: KeygenRelease; errors?: KeygenError[] }> {
     const req: RequestOptions = {
       hostname: this.hostname,
       path: `${this.basePath}/releases/${this.version}?product=${this.info.product}`,
@@ -222,7 +222,7 @@ export class KeygenPublisher extends HttpPublisher {
     return parseJson(httpExecutor.request(configureRequestOptions(req, this.auth, "GET"), this.context.cancellationToken, null))
   }
 
-  private async createRelease(): Promise<{ data?: KeygenRelease; errors?: KeygenError[] }> {
+  private createRelease(): Promise<{ data?: KeygenRelease; errors?: KeygenError[] }> {
     const req: RequestOptions = {
       hostname: this.hostname,
       path: `${this.basePath}/releases`,

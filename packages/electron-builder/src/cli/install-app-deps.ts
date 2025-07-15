@@ -77,5 +77,5 @@ function main() {
 
 if (require.main === module) {
   log.warn("please use as subcommand: electron-builder install-app-deps")
-  main().catch(printErrorAndExit)
+  void main().catch(printErrorAndExit)
 }

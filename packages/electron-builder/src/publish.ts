@@ -117,5 +117,5 @@ function main() {
 
 if (require.main === module) {
   log.warn("please use as subcommand: electron-builder publish")
-  main().catch(printErrorAndExit)
+  void main().catch(printErrorAndExit)
 }
