@@ -841,7 +841,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       }
 
       const saveBlockMapToCacheDir = async (blockMapData: BlockMap, cacheDir: string) => {
-        const blockMapFile = path.join(cacheDir, `${new URL(fileInfo.url).pathname}.blockmap`)
+        const blockMapFile = path.join(cacheDir, `${new URL(fileInfo.url).pathname.split("/").pop()}.blockmap`)
         await outputFile(blockMapFile, gzipSync(JSON.stringify(blockMapData)))
       }
 
