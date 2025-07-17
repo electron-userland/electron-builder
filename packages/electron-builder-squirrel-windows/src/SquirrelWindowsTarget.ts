@@ -1,6 +1,6 @@
 import { InvalidConfigurationError, log, isEmptyOrSpaces } from "builder-util"
 import { execWine } from "app-builder-lib/out/wine"
-import { getBin } from "app-builder-lib/out/binDownload"
+import { getBinFromUrl } from "app-builder-lib/out/binDownload"
 import { sanitizeFileName } from "builder-util/out/filename"
 import { Arch, getArchSuffix, SquirrelWindowsOptions, Target, WinPackager } from "app-builder-lib"
 import * as path from "path"
@@ -30,9 +30,9 @@ export default class SquirrelWindowsTarget extends Target {
       const windowInstallerPackage = require.resolve("electron-winstaller/package.json")
       const vendorDirectory = path.join(path.dirname(windowInstallerPackage), "vendor")
 
-      const squirrelBin = await getBin(
-        "squirrel.windows",
-        "https://github.com/electron-userland/electron-builder-binaries/releases/download/squirrel.windows@1.0.0/squirrel.windows-2.0.1-patched.7z",
+      const squirrelBin = await getBinFromUrl(
+        "squirrel.windows@1.0.0",
+        "squirrel.windows-2.0.1-patched.7z",
         "DWijIRRElidu/Rq0yegAKqo2g6aVJUPvcRyvkzUoBPbRasIk61P6xY2fBMdXw6wT17md7NzrTI9/zA1wT9vEqg=="
       )
 
@@ -58,14 +58,14 @@ export default class SquirrelWindowsTarget extends Target {
 
   private async generateStubExecutableExe(appOutDir: string, vendorDir: string) {
     const files = await fs.promises.readdir(appOutDir, { withFileTypes: true })
-    const appExe = files.find(f => f.name === `${this.appName}.exe`)
+    const appExe = files.find(f => f.name === `${this.exeName}.exe`)
     if (!appExe) {
       throw new Error(`App executable not found in app directory: ${appOutDir}`)
     }
 
     const filePath = path.join(appOutDir, appExe.name)
     log.filePath(filePath)
-    const stubExePath = path.join(appOutDir, `${this.appName}_ExecutionStub.exe`)
+    const stubExePath = path.join(appOutDir, `${this.exeName}_ExecutionStub.exe`)
     await fs.promises.copyFile(path.join(vendorDir, "StubExecutable.exe"), stubExePath)
     await execWine(path.join(vendorDir, "WriteZipToSetup.exe"), null, ["--copy-stub-resources", filePath, stubExePath])
     await this.packager.sign(stubExePath)
@@ -147,6 +147,10 @@ export default class SquirrelWindowsTarget extends Target {
 
   private get appName() {
     return this.options.name || this.packager.appInfo.name
+  }
+
+  private get exeName() {
+    return this.packager.appInfo.productFilename || this.options.name || this.packager.appInfo.productName
   }
 
   private select7zipArch(vendorDirectory: string) {
