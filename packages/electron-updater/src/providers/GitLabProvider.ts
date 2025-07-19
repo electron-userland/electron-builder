@@ -1,4 +1,4 @@
-import { CancellationToken, GitlabOptions, HttpError, newError, UpdateFileInfo, UpdateInfo } from "builder-util-runtime"
+import { CancellationToken, GitlabOptions, HttpError, newError, UpdateFileInfo, UpdateInfo, GitlabReleaseInfo } from "builder-util-runtime"
 import { URL } from "url"
 import { AppUpdater } from "../AppUpdater"
 import { ResolvedUpdateFileInfo } from "../types"
@@ -8,31 +8,6 @@ import { getFileList, parseUpdateInfo, Provider, ProviderRuntimeOptions } from "
 interface GitlabUpdateInfo extends UpdateInfo {
   tag: string
   assets: Map<string, string> // filename -> download URL mapping
-}
-
-interface GitlabReleaseInfo {
-  name: string
-  tag_name: string
-  description: string
-  created_at: string
-  released_at: string
-  upcoming_release: boolean
-  assets: GitlabReleaseAsset
-}
-
-interface GitlabReleaseAsset {
-  count: number
-  sources: Array<{
-    format: string
-    url: string
-  }>
-  links: Array<{
-    id: number
-    name: string
-    url: string
-    direct_asset_url: string
-    link_type: string
-  }>
 }
 
 export class GitLabProvider extends Provider<GitlabUpdateInfo> {
