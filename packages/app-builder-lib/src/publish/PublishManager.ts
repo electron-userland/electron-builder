@@ -6,6 +6,7 @@ import {
   getS3LikeProviderBaseUrl,
   GithubOptions,
   githubUrl,
+  GitlabOptions,
   KeygenOptions,
   Nullish,
   PublishConfiguration,
@@ -17,6 +18,7 @@ import {
   BitbucketPublisher,
   getCiTag,
   GitHubPublisher,
+  GitlabPublisher,
   KeygenPublisher,
   PublishContext,
   Publisher,
@@ -314,6 +316,9 @@ export async function createPublisher(
     case "github":
       return new GitHubPublisher(context, publishConfig as GithubOptions, version, options)
 
+    case "gitlab":
+      return new GitlabPublisher(context, publishConfig as GitlabOptions, version, options)
+
     case "keygen":
       return new KeygenPublisher(context, publishConfig as KeygenOptions, version)
 
@@ -334,6 +339,9 @@ async function requireProviderClass(provider: string, packager: Packager): Promi
   switch (provider) {
     case "github":
       return GitHubPublisher
+
+    case "gitlab":
+      return GitlabPublisher
 
     case "generic":
       return null
