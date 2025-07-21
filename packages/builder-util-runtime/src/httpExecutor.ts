@@ -333,7 +333,10 @@ Please double check that your authentication token is correct. Due to security r
 
   private static reconstructOriginalUrl(options: RequestOptions): URL {
     const protocol = options.protocol || "https:"
-    const hostname = options.hostname || "localhost"
+    if (!options.hostname) {
+      throw new Error("Missing hostname in request options")
+    }
+    const hostname = options.hostname
     const port = options.port ? `:${options.port}` : ""
     const path = options.path || "/"
     return new URL(`${protocol}//${hostname}${port}${path}`)
@@ -368,11 +371,14 @@ Please double check that your authentication token is correct. Due to security r
   }
 
   private static getEffectivePort(url: URL): number {
+    const defaultPort = url.protocol === "https:" ? 443 : 80
     if (url.port) {
-      return parseInt(url.port, 10)
+      const parsed = parseInt(url.port, 10)
+      if (!isNaN(parsed)) {
+        return parsed
+      }
     }
-    // Return default port for scheme
-    return url.protocol === "https:" ? 443 : 80
+    return defaultPort
   }
 
   static retryOnServerError(task: () => Promise<any>, maxRetries = 3) {
