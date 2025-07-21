@@ -2,10 +2,16 @@
 "builder-util-runtime": minor
 ---
 
-fix: strip auth headers on cross-origin redirects following HTTP specifications
+fix: implement industry-standard cross-origin redirect auth handling
 
-Implement proper cross-origin redirect handling that strips authorization headers when redirected to a different origin (protocol, hostname, or port). This fixes GitHub release asset download failures that occur when GitHub redirects authenticated requests to cloud storage services like Azure or AWS that don't accept GitHub tokens.
+Replace hardcoded service-specific hostname checks with sophisticated cross-origin redirect detection that matches industry standards from Python requests library and Apache HttpClient.
 
-The fix replaces hardcoded service-specific checks with a standards-compliant approach that works for any cross-origin redirect scenario.
+**Key improvements:**
+- **Case-insensitive hostname comparison** for robust origin detection
+- **HTTP→HTTPS upgrade allowance** on standard ports (80→443) for backward compatibility
+- **Proper default port handling** that treats implicit and explicit default ports as equivalent
+- **Standards-compliant cross-origin detection** following RFC specifications
 
-Fixes #9207
+**Fixes GitHub issue #9207:** GitHub release asset downloads failing with 403 Forbidden when redirected from `api.github.com` to `release-assets.githubusercontent.com` (Azure backend) or other cloud storage services that don't accept GitHub tokens.
+
+The implementation now handles all cross-origin redirect scenarios while maintaining compatibility with legitimate same-origin redirects and industry-standard HTTP→HTTPS upgrades.

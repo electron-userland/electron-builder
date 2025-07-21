@@ -340,7 +340,39 @@ Please double check that your authentication token is correct. Due to security r
   }
 
   private static isCrossOriginRedirect(originalUrl: URL, redirectUrl: URL): boolean {
-    return originalUrl.protocol !== redirectUrl.protocol || originalUrl.hostname !== redirectUrl.hostname || originalUrl.port !== redirectUrl.port
+    // Case-insensitive hostname comparison
+    if (originalUrl.hostname.toLowerCase() !== redirectUrl.hostname.toLowerCase()) {
+      return true
+    }
+
+    // Special case: allow http -> https redirect on same host with standard ports
+    // This matches the behavior of Python requests library for backward compatibility
+    if (
+      originalUrl.protocol === "http:" &&
+      HttpExecutor.getEffectivePort(originalUrl) === 80 &&
+      redirectUrl.protocol === "https:" &&
+      HttpExecutor.getEffectivePort(redirectUrl) === 443
+    ) {
+      return false
+    }
+
+    // Strip auth on any other protocol change
+    if (originalUrl.protocol !== redirectUrl.protocol) {
+      return true
+    }
+
+    // Strip auth on port change (accounting for default ports)
+    const originalPort = HttpExecutor.getEffectivePort(originalUrl)
+    const redirectPort = HttpExecutor.getEffectivePort(redirectUrl)
+    return originalPort !== redirectPort
+  }
+
+  private static getEffectivePort(url: URL): number {
+    if (url.port) {
+      return parseInt(url.port, 10)
+    }
+    // Return default port for scheme
+    return url.protocol === "https:" ? 443 : 80
   }
 
   static retryOnServerError(task: () => Promise<any>, maxRetries = 3) {
