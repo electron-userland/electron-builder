@@ -322,7 +322,7 @@ Please double check that your authentication token is correct. Due to security r
       // Parse original and redirect URLs to compare origins
       const originalUrl = HttpExecutor.reconstructOriginalUrl(options)
       const parsedRedirectUrl = parseUrl(redirectUrl, options)
-      
+
       // Strip authorization header on cross-origin redirects (different protocol, hostname, or port)
       if (HttpExecutor.isCrossOriginRedirect(originalUrl, parsedRedirectUrl)) {
         delete headers.authorization
@@ -340,11 +340,7 @@ Please double check that your authentication token is correct. Due to security r
   }
 
   private static isCrossOriginRedirect(originalUrl: URL, redirectUrl: URL): boolean {
-    return (
-      originalUrl.protocol !== redirectUrl.protocol ||
-      originalUrl.hostname !== redirectUrl.hostname ||
-      originalUrl.port !== redirectUrl.port
-    )
+    return originalUrl.protocol !== redirectUrl.protocol || originalUrl.hostname !== redirectUrl.hostname || originalUrl.port !== redirectUrl.port
   }
 
   static retryOnServerError(task: () => Promise<any>, maxRetries = 3) {
