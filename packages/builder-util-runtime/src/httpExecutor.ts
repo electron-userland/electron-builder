@@ -319,23 +319,32 @@ Please double check that your authentication token is correct. Due to security r
     const newOptions = configureRequestOptionsFromUrl(redirectUrl, { ...options })
     const headers = newOptions.headers
     if (headers?.authorization) {
-      const parsedNewUrl = parseUrl(redirectUrl, options)
-      const hostname = parsedNewUrl.hostname.toLowerCase()
-
-      // Strip auth headers for cloud storage services that don't accept GitHub tokens
-      // GitHub releases redirect to release-assets.githubusercontent.com (Azure backend)
-      // AWS S3 and Azure services also don't accept GitHub tokens
-      if (
-        hostname.endsWith(".amazonaws.com") ||
-        parsedNewUrl.searchParams.has("X-Amz-Credential") ||
-        hostname === "release-assets.githubusercontent.com" ||
-        hostname.endsWith(".azureedge.net") ||
-        hostname.endsWith(".blob.core.windows.net")
-      ) {
+      // Parse original and redirect URLs to compare origins
+      const originalUrl = HttpExecutor.reconstructOriginalUrl(options)
+      const parsedRedirectUrl = parseUrl(redirectUrl, options)
+      
+      // Strip authorization header on cross-origin redirects (different protocol, hostname, or port)
+      if (HttpExecutor.isCrossOriginRedirect(originalUrl, parsedRedirectUrl)) {
         delete headers.authorization
       }
     }
     return newOptions
+  }
+
+  private static reconstructOriginalUrl(options: RequestOptions): URL {
+    const protocol = options.protocol || "https:"
+    const hostname = options.hostname || "localhost"
+    const port = options.port ? `:${options.port}` : ""
+    const path = options.path || "/"
+    return new URL(`${protocol}//${hostname}${port}${path}`)
+  }
+
+  private static isCrossOriginRedirect(originalUrl: URL, redirectUrl: URL): boolean {
+    return (
+      originalUrl.protocol !== redirectUrl.protocol ||
+      originalUrl.hostname !== redirectUrl.hostname ||
+      originalUrl.port !== redirectUrl.port
+    )
   }
 
   static retryOnServerError(task: () => Promise<any>, maxRetries = 3) {
