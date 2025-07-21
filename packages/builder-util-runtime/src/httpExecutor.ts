@@ -320,7 +320,18 @@ Please double check that your authentication token is correct. Due to security r
     const headers = newOptions.headers
     if (headers?.authorization) {
       const parsedNewUrl = parseUrl(redirectUrl, options)
-      if (parsedNewUrl.hostname.endsWith(".amazonaws.com") || parsedNewUrl.searchParams.has("X-Amz-Credential")) {
+      const hostname = parsedNewUrl.hostname.toLowerCase()
+
+      // Strip auth headers for cloud storage services that don't accept GitHub tokens
+      // GitHub releases redirect to release-assets.githubusercontent.com (Azure backend)
+      // AWS S3 and Azure services also don't accept GitHub tokens
+      if (
+        hostname.endsWith(".amazonaws.com") ||
+        parsedNewUrl.searchParams.has("X-Amz-Credential") ||
+        hostname === "release-assets.githubusercontent.com" ||
+        hostname.endsWith(".azureedge.net") ||
+        hostname.endsWith(".blob.core.windows.net")
+      ) {
         delete headers.authorization
       }
     }
