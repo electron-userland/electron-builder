@@ -325,6 +325,9 @@ Please double check that your authentication token is correct. Due to security r
 
       // Strip authorization header on cross-origin redirects (different protocol, hostname, or port)
       if (HttpExecutor.isCrossOriginRedirect(originalUrl, parsedRedirectUrl)) {
+        if (debug.enabled) {
+          debug(`Given the cross-origin redirect (from ${originalUrl.host} to ${parsedRedirectUrl.host}), the Authorization header will be stripped out.`)
+        }
         delete headers.authorization
       }
     }
