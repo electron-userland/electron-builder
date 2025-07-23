@@ -31,7 +31,7 @@ function isAuthError(error: any): boolean {
 }
 
 /**
- * Cleans up test releases, preserving v1.0.0 baseline release
+ * Cleans up test releases, preserving [v1.0.0, v1.1.0] baseline releases
  */
 async function cleanupExistingReleases(): Promise<void> {
   const token = process.env.GITLAB_TOKEN
@@ -44,8 +44,9 @@ async function cleanupExistingReleases(): Promise<void> {
     const helper = new GitlabTestHelper()
     const releases = await helper.getAllReleases()
 
-    // Keep v1.0.0 baseline release
-    const releasesToDelete = releases.filter((release: any) => release.tag_name !== "v1.0.0" && release.tag_name !== "1.0.0")
+    // Keep [v1.0.0, v1.1.0] baseline releases
+    const protectedReleases = ["v1.0.0", "1.0.0", "v1.1.0", "1.1.0"]
+    const releasesToDelete = releases.filter(release => !protectedReleases.includes(release.tag_name))
 
     if (releasesToDelete.length === 0) {
       console.log("No releases to cleanup")
