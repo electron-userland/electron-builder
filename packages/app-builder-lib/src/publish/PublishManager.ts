@@ -449,6 +449,8 @@ async function resolvePublishConfigurations(
     let serviceName: PublishProvider | null = null
     if (!isEmptyOrSpaces(process.env.GH_TOKEN) || !isEmptyOrSpaces(process.env.GITHUB_TOKEN)) {
       serviceName = "github"
+    } else if (!isEmptyOrSpaces(process.env.GITLAB_TOKEN) || !isEmptyOrSpaces(process.env.GL_TOKEN)) {
+      serviceName = "gitlab"
     } else if (!isEmptyOrSpaces(process.env.KEYGEN_TOKEN)) {
       serviceName = "keygen"
     } else if (!isEmptyOrSpaces(process.env.BITBUCKET_TOKEN)) {
@@ -506,7 +508,7 @@ async function getResolvedPublishConfig(
   options: PublishConfiguration,
   arch: Arch | null,
   errorIfCannot: boolean
-): Promise<PublishConfiguration | GithubOptions | BitbucketOptions | null> {
+): Promise<PublishConfiguration | GithubOptions | BitbucketOptions | GitlabOptions | null> {
   options = { ...options }
   expandPublishConfig(options, platformPackager, packager, arch)
 
