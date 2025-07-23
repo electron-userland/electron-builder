@@ -286,8 +286,4 @@ export class GitlabPublisher extends HttpPublisher {
   toString() {
     return `GitLab (project: ${this.projectId}, version: ${this.version})`
   }
-
-  getTokenForTesting(): string {
-    return this.token
-  }
 }
