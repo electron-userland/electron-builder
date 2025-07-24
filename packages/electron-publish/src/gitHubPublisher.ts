@@ -1,5 +1,5 @@
 import { Arch, Fields, httpExecutor, InvalidConfigurationError, isEmptyOrSpaces, isEnvTrue, isTokenCharValid, log } from "builder-util"
-import { configureRequestOptions, GithubOptions, HttpError, parseJson } from "builder-util-runtime"
+import { configureRequestOptions, GithubOptions, HttpError, parseJson, githubTagPrefix } from "builder-util-runtime"
 import { ClientRequest } from "http"
 import { Lazy } from "lazy-val"
 import * as mime from "mime"
@@ -65,7 +65,7 @@ export class GitHubPublisher extends HttpPublisher {
       throw new InvalidConfigurationError(`Version must not start with "v": ${version}`)
     }
 
-    this.tag = info.vPrefixedTagName === false ? version : `v${version}`
+    this.tag = githubTagPrefix(info) + version
 
     if (isEnvTrue(process.env.EP_DRAFT)) {
       this.releaseType = "draft"
