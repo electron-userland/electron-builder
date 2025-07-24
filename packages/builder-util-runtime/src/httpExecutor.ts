@@ -353,11 +353,15 @@ Please double check that your authentication token is correct. Due to security r
 
     // Special case: allow http -> https redirect on same host with standard ports
     // This matches the behavior of Python requests library for backward compatibility
+    // url.port returns an empty string if the port is omitted
+    // or explicitly set to the default port for a given protocol. 
     if (
       originalUrl.protocol === "http:" &&
-      HttpExecutor.getEffectivePort(originalUrl) === 80 &&
+      // This can be replaced with `!originalUrl.port`, but for the sake of clarity.
+      ["80", ""].includes(originalUrl.port) &&
       redirectUrl.protocol === "https:" &&
-      HttpExecutor.getEffectivePort(redirectUrl) === 443
+      // This can be replaced with `!redirectUrl.port`, but for the sake of clarity.
+      ["443", ""].includes(redirectUrl.port)
     ) {
       return false
     }
