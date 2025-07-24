@@ -60,15 +60,15 @@ async function cleanupExistingReleases(): Promise<void> {
         await helper.deleteUploadedAssets(versionId)
         await helper.deleteReleaseAndTag(versionId)
         console.log(`Cleaned up release: ${versionId}`)
-      } catch (error: unknown) {
-        console.warn(`Failed to cleanup release ${release.tag_name}:`, (error as Error).message)
+      } catch (e: any) {
+        console.warn(`Failed to cleanup release ${release.tag_name}:`, e.message)
       }
     })
 
     await Promise.allSettled(cleanupPromises)
     console.log(`Cleanup completed. Deleted ${releasesToDelete.length} releases.`)
-  } catch (error: unknown) {
-    console.warn("Failed to perform cleanup:", (error as Error).message)
+  } catch (e: any) {
+    console.warn("Failed to perform cleanup:", e.message)
   }
 }
 

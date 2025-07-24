@@ -191,18 +191,18 @@ export class GitlabPublisher extends HttpPublisher {
     form.append("file", fileContent, fileName)
 
     const response = await httpExecutor.doApiRequest(
-      configureRequestOptions({
-        protocol: parsedUrl.protocol,
-        hostname: parsedUrl.hostname,
-        port: parsedUrl.port as any,
-        path: parsedUrl.path,
-        method: "POST",
-        headers: {
-          "PRIVATE-TOKEN": this.token || "",
-          ...form.getHeaders(),
+      configureRequestOptions(
+        {
+          protocol: parsedUrl.protocol,
+          hostname: parsedUrl.hostname,
+          port: parsedUrl.port as any,
+          path: parsedUrl.path,
+          headers: { ...form.getHeaders() },
+          timeout: this.info.timeout || undefined,
         },
-        timeout: this.info.timeout || undefined,
-      }),
+        this.token,
+        "POST"
+      ),
       this.context.cancellationToken,
       (it: ClientRequest) => form.pipe(it)
     )
@@ -222,19 +222,18 @@ export class GitlabPublisher extends HttpPublisher {
     const parsedUrl = parseUrl(uploadUrl)
 
     return httpExecutor.doApiRequest(
-      configureRequestOptions({
-        protocol: parsedUrl.protocol,
-        hostname: parsedUrl.hostname,
-        port: parsedUrl.port as any,
-        path: parsedUrl.path,
-        method: "PUT",
-        headers: {
-          "PRIVATE-TOKEN": this.token || "",
-          "Content-Length": dataLength,
-          "Content-Type": mime.getType(fileName) || "application/octet-stream",
+      configureRequestOptions(
+        {
+          protocol: parsedUrl.protocol,
+          hostname: parsedUrl.hostname,
+          port: parsedUrl.port as any,
+          path: parsedUrl.path,
+          headers: { "Content-Length": dataLength, "Content-Type": mime.getType(fileName) || "application/octet-stream" },
+          timeout: this.info.timeout || undefined,
         },
-        timeout: this.info.timeout || undefined,
-      }),
+        this.token,
+        "PUT"
+      ),
       this.context.cancellationToken,
       requestProcessor
     )
@@ -245,16 +244,7 @@ export class GitlabPublisher extends HttpPublisher {
       return String(this.info.projectId)
     }
 
-    // Try to extract from CI environment
-    if (process.env.CI_PROJECT_ID) {
-      return process.env.CI_PROJECT_ID
-    }
-
-    if (process.env.CI_PROJECT_PATH) {
-      return process.env.CI_PROJECT_PATH
-    }
-
-    throw new InvalidConfigurationError("GitLab project ID or path is not specified. Set it in configuration or use CI_PROJECT_ID/CI_PROJECT_PATH environment variables.")
+    throw new InvalidConfigurationError("GitLab project ID is not specified, please set it in configuration.")
   }
 
   private gitlabRequest<T>(path: string, token: string | null, data: { [name: string]: any } | null = null, method: "GET" | "POST" | "PUT" | "DELETE" = "GET"): Promise<T> {
@@ -269,12 +259,10 @@ export class GitlabPublisher extends HttpPublisher {
             hostname: baseUrl.hostname,
             port: baseUrl.port as any,
             path: apiPath,
-            headers: {
-              "PRIVATE-TOKEN": token || "",
-              "Content-Type": "application/json",
-            },
+            headers: { "Content-Type": "application/json" },
             timeout: this.info.timeout || undefined,
           },
+          token,
           method
         ),
         this.context.cancellationToken,
