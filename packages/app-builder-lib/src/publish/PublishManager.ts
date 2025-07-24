@@ -5,6 +5,7 @@ import {
   GenericServerOptions,
   getS3LikeProviderBaseUrl,
   GithubOptions,
+  githubTagPrefix,
   githubUrl,
   KeygenOptions,
   Nullish,
@@ -385,7 +386,7 @@ export function computeDownloadUrl(publishConfiguration: PublishConfiguration, f
   let baseUrl
   if (publishConfiguration.provider === "github") {
     const gh = publishConfiguration as GithubOptions
-    baseUrl = `${githubUrl(gh)}/${gh.owner}/${gh.repo}/releases/download/${gh.vPrefixedTagName === false ? "" : "v"}${packager.appInfo.version}`
+    baseUrl = `${githubUrl(gh)}/${gh.owner}/${gh.repo}/releases/download/${githubTagPrefix(gh)}${packager.appInfo.version}`
   } else {
     baseUrl = getS3LikeProviderBaseUrl(publishConfiguration)
   }

@@ -1603,6 +1603,10 @@
           "default": true,
           "description": "Whether to use `v`-prefixed tag name.",
           "type": "boolean"
+        },
+        "tagNamePrefix": {
+          "description": "Sets the prefix of the tag name that comes before the semver number. Overrides vPrefixedTagName.",
+          "type": "string"
         }
       },
       "required": [
