@@ -253,7 +253,6 @@ export class GitlabPublisher extends HttpPublisher {
   }
 
   private gitlabRequest<T>(url: URL, token: string | null, data: { [name: string]: any } | null = null, method: "GET" | "POST" | "PUT" | "DELETE" = "GET"): Promise<T> {
-
     return parseJson(
       httpExecutor.request(
         configureRequestOptions(
