@@ -362,6 +362,11 @@ Please double check that your authentication token is correct. Due to security r
       return false
     }
 
+    // According to RFC 7235, a change in protocol or port constitutes a cross-origin request.
+    // Forwarding authentication headers to a different origin can be a security risk.
+    // For example, https://example.com:443 and http://example.com:80 are different origins.
+    // We only make an exception for HTTP -> HTTPS upgrades on standard ports for backward compatibility.
+
     // Strip auth on any other protocol change
     if (originalUrl.protocol !== redirectUrl.protocol) {
       return true
@@ -374,14 +379,22 @@ Please double check that your authentication token is correct. Due to security r
   }
 
   private static getEffectivePort(url: URL): number {
-    const defaultPort = url.protocol === "https:" ? 443 : 80
     if (url.port) {
       const parsed = parseInt(url.port, 10)
       if (!isNaN(parsed)) {
         return parsed
       }
     }
-    return defaultPort
+
+    if (url.protocol === "https:") {
+      return 443
+    }
+
+    if (url.protocol === "http:") {
+      return 80
+    }
+
+    throw new Error(`A port must be specified for non-http/https protocols: ${url.protocol}`)
   }
 
   static retryOnServerError(task: () => Promise<any>, maxRetries = 3) {
