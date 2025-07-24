@@ -377,8 +377,8 @@ Please double check that your authentication token is correct. Due to security r
     }
 
     // Strip auth on port change (accounting for default ports)
-    const originalPort = HttpExecutor.getEffectivePort(originalUrl)
-    const redirectPort = HttpExecutor.getEffectivePort(redirectUrl)
+    const originalPort = originalUrl.port
+    const redirectPort = redirectUrl.port
     return originalPort !== redirectPort
   }
 
