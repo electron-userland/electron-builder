@@ -505,3 +505,87 @@ describe("HttpExecutor.prepareRedirectUrlOptions", () => {
     })
   })
 })
+
+// @ts-ignore
+describe("HttpExecutor.isCrossOriginRedirect", () => {
+  const testCases: Array<{ name: string; url1: string; url2: string; expected: boolean }> = [
+    {
+      name: "should be false for same hostname, protocol, and port",
+      url1: "https://example.com/path",
+      url2: "https://example.com/other",
+      expected: false,
+    },
+    {
+      name: "should be true for different hostname",
+      url1: "https://example.com/path",
+      url2: "https://api.example.com/path",
+      expected: true,
+    },
+    {
+      name: "should be true for different protocol",
+      url1: "https://example.com/path",
+      url2: "http://example.com/path",
+      expected: true,
+    },
+    {
+      name: "should be true for different port",
+      url1: "https://example.com:8080/path",
+      url2: "https://example.com:9090/path",
+      expected: true,
+    },
+    {
+      name: "should be false for implicit vs explicit default port",
+      url1: "https://example.com/path",
+      url2: "https://example.com:443/path",
+      expected: false,
+    },
+    {
+      name: "should be false for case-insensitive hostname",
+      url1: "https://EXAMPLE.com/path",
+      url2: "https://example.com/path",
+      expected: false,
+    },
+    {
+      name: "SPECIAL CASE: should be false for http -> https upgrade with default ports",
+      url1: "http://example.com/path",
+      url2: "https://example.com/path",
+      expected: false,
+    },
+    {
+      name: "SPECIAL CASE: should be false for http -> https upgrade with explicit default ports",
+      url1: "http://example.com:80/path",
+      url2: "https://example.com:443/path",
+      expected: false,
+    },
+    {
+      name: "SPECIAL CASE: should be true for http -> https upgrade with non-default ports",
+      url1: "http://example.com:8080/path",
+      url2: "https://example.com:8443/path",
+      expected: true,
+    },
+  ]
+
+  for (const tc of testCases) {
+    test(tc.name, () => {
+      const url1 = new URL(tc.url1)
+      const url2 = new URL(tc.url2)
+      // @ts-ignore
+      const result = HttpExecutor.isCrossOriginRedirect(url1, url2)
+      expect(result).toBe(tc.expected)
+    })
+  }
+})
+
+describe("HttpExecutor error handling", () => {
+  test("should throw an error if hostname is missing and authorization header is present", () => {
+    const originalOptions: RequestOptions = {
+      protocol: "https:",
+      path: "/some/path",
+      headers: {
+        authorization: "Bearer token123",
+      },
+    }
+    const redirectUrl = "https://example.com/redirect"
+    expect(() => HttpExecutor.prepareRedirectUrlOptions(redirectUrl, originalOptions)).toThrow("Missing hostname in request options")
+  })
+})

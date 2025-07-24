@@ -382,25 +382,6 @@ Please double check that your authentication token is correct. Due to security r
     return originalPort !== redirectPort
   }
 
-  private static getEffectivePort(url: URL): number {
-    if (url.port) {
-      const parsed = parseInt(url.port, 10)
-      if (!isNaN(parsed)) {
-        return parsed
-      }
-    }
-
-    if (url.protocol === "https:") {
-      return 443
-    }
-
-    if (url.protocol === "http:") {
-      return 80
-    }
-
-    throw new Error(`A port must be specified for non-http/https protocols: ${url.protocol}`)
-  }
-
   static retryOnServerError(task: () => Promise<any>, maxRetries = 3) {
     for (let attemptNumber = 0; ; attemptNumber++) {
       try {
