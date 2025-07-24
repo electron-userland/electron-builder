@@ -65,14 +65,11 @@ export class GitLabProvider extends Provider<GitlabUpdateInfo> {
 
     let latestRelease: GitlabReleaseInfo
     try {
-      const releaseResponse = await this.httpRequest(
-        latestReleaseUrl,
-        {
-          accept: "application/json",
-          "PRIVATE-TOKEN": this.options.token || "",
-        },
-        cancellationToken
-      )
+      const header = { "Content-Type": "application/json" }
+      if (this.options.token) {
+        ;(header as any)["PRIVATE-TOKEN"] = this.options.token
+      }
+      const releaseResponse = await this.httpRequest(latestReleaseUrl, header, cancellationToken)
 
       if (!releaseResponse) {
         throw newError("No latest release found", "ERR_UPDATER_NO_PUBLISHED_VERSIONS")

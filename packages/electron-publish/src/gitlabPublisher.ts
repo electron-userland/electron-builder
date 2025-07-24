@@ -5,7 +5,7 @@ import { ClientRequest } from "http"
 import { Lazy } from "lazy-val"
 import * as mime from "mime"
 import * as FormData from "form-data"
-import { parse as parseUrl } from "url"
+import { parse as parseUrl, URL } from "url"
 import { HttpPublisher } from "./httpPublisher"
 import { PublishContext, PublishOptions } from "./index"
 import { getCiTag } from "./publisher"
@@ -16,6 +16,7 @@ export class GitlabPublisher extends HttpPublisher {
 
   private readonly token: string
   private readonly host: string
+  private readonly baseApiPath: string
   private readonly projectId: string
 
   readonly providerName = "gitlab"
@@ -47,6 +48,7 @@ export class GitlabPublisher extends HttpPublisher {
     this.token = token
     this.host = info.host || "gitlab.com"
     this.projectId = this.resolveProjectId()
+    this.baseApiPath = `https://${this.host}/api/v4`
 
     if (version.startsWith("v")) {
       throw new InvalidConfigurationError(`Version must not start with "v": ${version}`)
@@ -63,7 +65,8 @@ export class GitlabPublisher extends HttpPublisher {
     }
 
     // Get all releases first, then filter by tag (similar to GitHub publisher pattern)
-    const releases = await this.gitlabRequest<Array<GitlabReleaseInfo>>(`/projects/${encodeURIComponent(this.projectId)}/releases`, this.token)
+    const url = new URL(`${this.baseApiPath}/projects/${encodeURIComponent(this.projectId)}/releases`)
+    const releases = await this.gitlabRequest<GitlabReleaseInfo[]>(url, this.token)
     for (const release of releases) {
       if (release.tag_name === this.tag) {
         return release
@@ -114,7 +117,8 @@ export class GitlabPublisher extends HttpPublisher {
       ref: this.getBranchName(),
     }
 
-    return this.gitlabRequest<GitlabReleaseInfo>(`/projects/${encodeURIComponent(this.projectId)}/releases`, this.token, releaseData, "POST")
+    const url = new URL(`${this.baseApiPath}/projects/${encodeURIComponent(this.projectId)}/releases`)
+    return this.gitlabRequest<GitlabReleaseInfo>(url, this.token, releaseData, "POST")
   }
 
   protected async doUpload(
@@ -171,7 +175,8 @@ export class GitlabPublisher extends HttpPublisher {
         link_type: "other",
       }
 
-      await this.gitlabRequest(`/projects/${encodeURIComponent(this.projectId)}/releases/${this.tag}/assets/links`, this.token, linkData, "POST")
+      const url = new URL(`${this.baseApiPath}/projects/${encodeURIComponent(this.projectId)}/releases/${this.tag}/assets/links`)
+      await this.gitlabRequest(url, this.token, linkData, "POST")
 
       log.debug({ fileName, assetUrl }, "Successfully linked asset to GitLab release")
     } catch (e: any) {
@@ -247,18 +252,16 @@ export class GitlabPublisher extends HttpPublisher {
     throw new InvalidConfigurationError("GitLab project ID is not specified, please set it in configuration.")
   }
 
-  private gitlabRequest<T>(path: string, token: string | null, data: { [name: string]: any } | null = null, method: "GET" | "POST" | "PUT" | "DELETE" = "GET"): Promise<T> {
-    const baseUrl = parseUrl(`https://${this.host}`)
-    const apiPath = path.startsWith("/api/v4") ? path : `/api/v4${path.startsWith("/") ? path : `/${path}`}`
+  private gitlabRequest<T>(url: URL, token: string | null, data: { [name: string]: any } | null = null, method: "GET" | "POST" | "PUT" | "DELETE" = "GET"): Promise<T> {
 
     return parseJson(
       httpExecutor.request(
         configureRequestOptions(
           {
-            protocol: baseUrl.protocol,
-            hostname: baseUrl.hostname,
-            port: baseUrl.port as any,
-            path: apiPath,
+            port: url.port,
+            path: url.pathname,
+            protocol: url.protocol,
+            hostname: url.hostname,
             headers: { "Content-Type": "application/json" },
             timeout: this.info.timeout || undefined,
           },
