@@ -168,8 +168,7 @@ export class GitlabTestHelper {
       const releases = await this.gitlabRequest<GitlabReleaseInfo[]>(`/projects/${encodeURIComponent(this.projectId)}/releases`)
       return releases || []
     } catch (e: any) {
-      log.warn({ error: e.message }, "Failed to get all releases")
-      return []
+      throw new Error(`Failed to get all releases: ${e.message}`)
     }
   }
 }
