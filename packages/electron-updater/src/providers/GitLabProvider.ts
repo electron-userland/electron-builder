@@ -196,14 +196,11 @@ export class GitLabProvider extends Provider<GitlabUpdateInfo> {
       const releaseUrl = newUrlFromBase(`projects/${this.options.projectId}/releases/${encodeURIComponent(releaseId)}`, this.baseApiUrl)
 
       try {
-        const releaseResponse = await this.httpRequest(
-          releaseUrl,
-          {
-            accept: "application/json",
-            "PRIVATE-TOKEN": this.options.token || "",
-          },
-          cancellationToken
-        )
+        const header = { "Content-Type": "application/json" }
+        if (this.options.token) {
+          ;(header as any)["PRIVATE-TOKEN"] = this.options.token
+        }
+        const releaseResponse = await this.httpRequest(releaseUrl, header, cancellationToken)
 
         if (releaseResponse) {
           const release: GitlabReleaseInfo = JSON.parse(releaseResponse)
