@@ -261,7 +261,7 @@ export class GitLabProvider extends Provider<GitlabUpdateInfo> {
     return [oldBlockMapUrl, newBlockMapUrl]
   }
 
-  async getBlockMapFiles(baseUrl: URL, newVersion: string, oldVersion: string, oldBlockMapFileBaseUrl: string | null = null): Promise<URL[]> {
+  async getBlockMapFiles(baseUrl: URL, oldVersion: string, newVersion: string, oldBlockMapFileBaseUrl: string | null = null): Promise<URL[]> {
     // If is `project_upload`, find blockmap files in GitLab assets
     // As each asset has a unique path that includes an identified hash code,
     // e.g. https://gitlab.com/-/project/71361100/uploads/051f27a925eaf679f2ad688105362acc/latest.yml
