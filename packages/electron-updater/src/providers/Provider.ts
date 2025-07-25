@@ -27,7 +27,7 @@ export abstract class Provider<T extends UpdateInfo> {
 
   // By default, the blockmap file is in the same directory as the main file
   // But some providers may have a different blockmap file, so we need to override this method
-  getBlockMapFiles(baseUrl: URL, newVersion: string, oldVersion: string, oldBlockMapFileBaseUrl: string | null = null): URL[] | Promise<URL[]> {
+  getBlockMapFiles(baseUrl: URL, oldVersion: string, newVersion: string, oldBlockMapFileBaseUrl: string | null = null): URL[] | Promise<URL[]> {
     const newBlockMapUrl = newUrlFromBase(`${baseUrl.pathname}.blockmap`, baseUrl)
     const oldBlockMapUrl = newUrlFromBase(
       `${baseUrl.pathname.replace(new RegExp(escapeRegExp(newVersion), "g"), oldVersion)}.blockmap`,
