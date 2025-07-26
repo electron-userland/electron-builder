@@ -1,11 +1,13 @@
-import { Arch, httpExecutor, InvalidConfigurationError, isEmptyOrSpaces, isTokenCharValid, log } from "builder-util"
+import { Arch, Fields, httpExecutor, InvalidConfigurationError, isEmptyOrSpaces, isTokenCharValid, log } from "builder-util"
+import { createReadStream } from "fs"
+import { stat } from "fs/promises"
 import { readFile } from "fs/promises"
-import { configureRequestOptions, GitlabOptions, GitlabReleaseInfo, parseJson } from "builder-util-runtime"
+import { configureRequestOptions, GitlabOptions, GitlabReleaseInfo, parseJson, HttpError } from "builder-util-runtime"
 import { ClientRequest } from "http"
 import { Lazy } from "lazy-val"
 import * as mime from "mime"
 import * as FormData from "form-data"
-import { parse as parseUrl, URL } from "url"
+import { URL } from "url"
 import { HttpPublisher } from "./httpPublisher"
 import { PublishContext, PublishOptions } from "./index"
 import { getCiTag } from "./publisher"
@@ -21,7 +23,7 @@ export class GitlabPublisher extends HttpPublisher {
 
   readonly providerName = "gitlab"
 
-  private releaseLogFields: any = null
+  private releaseLogFields: Fields | null = null
 
   constructor(
     context: PublishContext,
@@ -64,58 +66,78 @@ export class GitlabPublisher extends HttpPublisher {
       version: this.version,
     }
 
-    // Get all releases first, then filter by tag (similar to GitHub publisher pattern)
-    const url = new URL(`${this.baseApiPath}/projects/${encodeURIComponent(this.projectId)}/releases`)
-    const releases = await this.gitlabRequest<GitlabReleaseInfo[]>(url, this.token)
-    for (const release of releases) {
-      if (release.tag_name === this.tag) {
-        return release
+    try {
+      // Get all releases first, then filter by tag (similar to GitHub publisher pattern)
+      const url = new URL(`${this.baseApiPath}/projects/${encodeURIComponent(this.projectId)}/releases`)
+      const releases = await this.gitlabRequest<GitlabReleaseInfo[]>(url, this.token)
+      for (const release of releases) {
+        if (release.tag_name === this.tag) {
+          return release
+        }
       }
-    }
 
-    // Create new release if it doesn't exist
-    if (this.options.publish === "always" || getCiTag() != null) {
-      log.info(
+      // Create new release if it doesn't exist
+      if (this.options.publish === "always" || getCiTag() != null) {
+        log.info(
+          {
+            reason: "release doesn't exist",
+            ...logFields,
+          },
+          `creating GitLab release`
+        )
+        return this.createRelease()
+      }
+
+      this.releaseLogFields = {
+        reason: 'release doesn\'t exist and not created because "publish" is not "always" and build is not on tag',
+        ...logFields,
+      }
+      return null
+    } catch (error: any) {
+      const errorInfo = this.categorizeGitlabError(error)
+      log.error(
         {
-          reason: "release doesn't exist",
           ...logFields,
+          error: error.message,
+          errorType: errorInfo.type,
+          statusCode: errorInfo.statusCode,
         },
-        `creating GitLab release`
+        "Failed to get or create GitLab release"
       )
-      return this.createRelease()
+      throw error
     }
-
-    this.releaseLogFields = {
-      reason: 'release doesn\'t exist and not created because "publish" is not "always" and build is not on tag',
-      ...logFields,
-    }
-    return null
   }
 
-  private getBranchName(): string {
-    // Try GitLab CI environment variables first
-    if (process.env.CI_COMMIT_REF_NAME) {
-      return process.env.CI_COMMIT_REF_NAME
+  private async getDefaultBranch(): Promise<string> {
+    try {
+      const url = new URL(`${this.baseApiPath}/projects/${encodeURIComponent(this.projectId)}`)
+      const project = await this.gitlabRequest<{ default_branch: string }>(url, this.token)
+      return project.default_branch || "main"
+    } catch (error: any) {
+      log.warn({ error: error.message }, "Failed to get default branch, using 'main' as fallback")
+      return "main"
     }
-    if (process.env.CI_COMMIT_BRANCH) {
-      return process.env.CI_COMMIT_BRANCH
-    }
-    if (process.env.CI_DEFAULT_BRANCH) {
-      return process.env.CI_DEFAULT_BRANCH
-    }
-
-    // Default fallback
-    return "main"
   }
 
   private async createRelease(): Promise<GitlabReleaseInfo> {
     const releaseName = this.info.vPrefixedTagName === false ? this.version : `v${this.version}`
+    const branchName = await this.getDefaultBranch()
     const releaseData = {
       tag_name: this.tag,
       name: releaseName,
       description: `Release ${releaseName}`,
-      ref: this.getBranchName(),
+      ref: branchName,
     }
+
+    log.debug(
+      {
+        tag: this.tag,
+        name: releaseName,
+        ref: branchName,
+        projectId: this.projectId,
+      },
+      "creating GitLab release"
+    )
 
     const url = new URL(`${this.baseApiPath}/projects/${encodeURIComponent(this.projectId)}/releases`)
     return this.gitlabRequest<GitlabReleaseInfo>(url, this.token, releaseData, "POST")
@@ -134,7 +156,15 @@ export class GitlabPublisher extends HttpPublisher {
       return
     }
 
+    const logFields = {
+      file: fileName,
+      arch: Arch[arch],
+      size: dataLength,
+      uploadTarget: this.info.uploadTarget || "project_upload",
+    }
+
     try {
+      log.debug(logFields, "starting GitLab upload")
       // Default to project_upload method
       const uploadTarget = this.info.uploadTarget || "project_upload"
 
@@ -144,7 +174,7 @@ export class GitlabPublisher extends HttpPublisher {
         uploadResult = await this.uploadToGenericPackages(fileName, dataLength, requestProcessor, _file)
         // For generic packages, construct the download URL
         const projectId = encodeURIComponent(this.projectId)
-        assetUrl = `https://${this.host}/api/v4/projects/${projectId}/packages/generic/releases/${this.version}/${fileName}`
+        assetUrl = `${this.baseApiPath}/projects/${projectId}/packages/generic/releases/${this.version}/${fileName}`
       } else {
         // Default to project_upload
         uploadResult = await this.uploadToProjectUpload(fileName, _file)
@@ -155,14 +185,23 @@ export class GitlabPublisher extends HttpPublisher {
       // Add the uploaded file as a release asset link
       if (assetUrl) {
         await this.addReleaseAssetLink(fileName, assetUrl)
-        log.info({ fileName, assetUrl }, "Added file to GitLab release assets")
+        log.info({ ...logFields, assetUrl }, "GitLab upload completed successfully")
       } else {
-        log.warn({ fileName }, "No asset URL found for file")
+        log.warn({ ...logFields }, "No asset URL found for file")
       }
 
       return uploadResult
     } catch (e: any) {
-      log.error({ file: fileName, error: e.message }, "failed to upload to GitLab")
+      const errorInfo = this.categorizeGitlabError(e)
+      log.error(
+        {
+          ...logFields,
+          error: e.message,
+          errorType: errorInfo.type,
+          statusCode: errorInfo.statusCode,
+        },
+        "GitLab upload failed"
+      )
       throw e
     }
   }
@@ -186,14 +225,26 @@ export class GitlabPublisher extends HttpPublisher {
   }
 
   private async uploadToProjectUpload(fileName: string, _filePath: string): Promise<any> {
-    const projectId = encodeURIComponent(this.projectId)
-    const uploadUrl = `https://${this.host}/api/v4/projects/${projectId}/uploads`
-    const parsedUrl = parseUrl(uploadUrl)
+    const uploadUrl = `${this.baseApiPath}/projects/${encodeURIComponent(this.projectId)}/uploads`
+    const parsedUrl = new URL(uploadUrl)
 
-    // Read file content and create FormData for multipart/form-data upload
-    const fileContent = await readFile(_filePath)
+    // Check file size to determine upload method
+    const stats = await stat(_filePath)
+    const fileSize = stats.size
+    const STREAMING_THRESHOLD = 50 * 1024 * 1024 // 50MB
+
     const form = new FormData()
-    form.append("file", fileContent, fileName)
+    if (fileSize > STREAMING_THRESHOLD) {
+      // Use streaming for large files
+      log.debug({ fileName, fileSize }, "using streaming upload for large file")
+      const fileStream = createReadStream(_filePath)
+      form.append("file", fileStream, fileName)
+    } else {
+      // Use buffer for small files
+      log.debug({ fileName, fileSize }, "using buffer upload for small file")
+      const fileContent = await readFile(_filePath)
+      form.append("file", fileContent, fileName)
+    }
 
     const response = await httpExecutor.doApiRequest(
       configureRequestOptions(
@@ -201,7 +252,7 @@ export class GitlabPublisher extends HttpPublisher {
           protocol: parsedUrl.protocol,
           hostname: parsedUrl.hostname,
           port: parsedUrl.port as any,
-          path: parsedUrl.path,
+          path: parsedUrl.pathname,
           headers: { ...form.getHeaders() },
           timeout: this.info.timeout || undefined,
         },
@@ -222,9 +273,8 @@ export class GitlabPublisher extends HttpPublisher {
     requestProcessor: (request: ClientRequest, reject: (error: Error) => void) => void,
     _filePath: string
   ): Promise<any> {
-    const projectId = encodeURIComponent(this.projectId)
-    const uploadUrl = `https://${this.host}/api/v4/projects/${projectId}/packages/generic/releases/${this.version}/${fileName}`
-    const parsedUrl = parseUrl(uploadUrl)
+    const uploadUrl = `${this.baseApiPath}/projects/${encodeURIComponent(this.projectId)}/packages/generic/releases/${this.version}/${fileName}`
+    const parsedUrl = new URL(uploadUrl)
 
     return httpExecutor.doApiRequest(
       configureRequestOptions(
@@ -232,7 +282,7 @@ export class GitlabPublisher extends HttpPublisher {
           protocol: parsedUrl.protocol,
           hostname: parsedUrl.hostname,
           port: parsedUrl.port as any,
-          path: parsedUrl.path,
+          path: parsedUrl.pathname,
           headers: { "Content-Length": dataLength, "Content-Type": mime.getType(fileName) || "application/octet-stream" },
           timeout: this.info.timeout || undefined,
         },
@@ -271,6 +321,42 @@ export class GitlabPublisher extends HttpPublisher {
         data
       )
     )
+  }
+
+  private categorizeGitlabError(error: any): { type: string; statusCode?: number } {
+    if (error instanceof HttpError) {
+      const statusCode = error.statusCode
+
+      switch (statusCode) {
+        case 401:
+          return { type: "authentication", statusCode }
+        case 403:
+          return { type: "authorization", statusCode }
+        case 404:
+          return { type: "not_found", statusCode }
+        case 409:
+          return { type: "conflict", statusCode }
+        case 413:
+          return { type: "file_too_large", statusCode }
+        case 422:
+          return { type: "validation_error", statusCode }
+        case 429:
+          return { type: "rate_limit", statusCode }
+        case 500:
+        case 502:
+        case 503:
+        case 504:
+          return { type: "server_error", statusCode }
+        default:
+          return { type: "http_error", statusCode }
+      }
+    }
+
+    if (error.code === "ECONNRESET" || error.code === "ENOTFOUND" || error.code === "ETIMEDOUT") {
+      return { type: "network_error" }
+    }
+
+    return { type: "unknown_error" }
   }
 
   toString() {
