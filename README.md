@@ -159,7 +159,7 @@ const Platform = builder.Platform
 builder.build({
   targets: Platform.MAC.createTarget(),
   config: {
-   "//": "build options, see https://goo.gl/QQXmcV"
+   "//": "build options, see https://www.electron.build/"
   }
 })
   .then(() => {
