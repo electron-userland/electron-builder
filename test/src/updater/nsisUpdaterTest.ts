@@ -78,7 +78,7 @@ test("github blockmap files - should get blockmap files", config, async ({ expec
     const baseUrlString = `https://github.com/artifacts/master/raw/electron%20Setup%20${newVersion}.exe`
     const baseUrl = new URL(baseUrlString)
 
-    const blockMapUrls = await provider.getBlockMapFiles(baseUrl, newVersion, oldVersion)
+    const blockMapUrls = await provider.getBlockMapFiles(baseUrl, oldVersion, newVersion)
     const oldBlockMapUrl = blockMapUrls[0]
     const newBlockMapUrl = blockMapUrls[1]
 
