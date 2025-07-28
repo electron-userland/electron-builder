@@ -241,7 +241,7 @@ export class GitLabProvider extends Provider<GitlabUpdateInfo> {
   /**
    * Find blockmap URLs from version assets
    */
-  private async findBlockMapUrlsFromAssets(newVersion: string, oldVersion: string, baseFilename: string): Promise<[URL | null, URL | null]> {
+  private async findBlockMapUrlsFromAssets(oldVersion: string, newVersion: string, baseFilename: string): Promise<[URL | null, URL | null]> {
     let newBlockMapUrl: URL | null = null
     let oldBlockMapUrl: URL | null = null
 
@@ -270,7 +270,7 @@ export class GitLabProvider extends Provider<GitlabUpdateInfo> {
       const baseFilename = baseUrl.pathname.split("/").pop() || ""
 
       // Try to find blockmap files in GitLab assets
-      const [oldBlockMapUrl, newBlockMapUrl] = await this.findBlockMapUrlsFromAssets(newVersion, oldVersion, baseFilename)
+      const [oldBlockMapUrl, newBlockMapUrl] = await this.findBlockMapUrlsFromAssets(oldVersion, newVersion, baseFilename)
 
       if (!newBlockMapUrl) {
         throw newError(`Cannot find blockmap file for ${newVersion} in GitLab assets`, "ERR_UPDATER_BLOCKMAP_FILE_NOT_FOUND")
@@ -282,7 +282,7 @@ export class GitLabProvider extends Provider<GitlabUpdateInfo> {
 
       return [oldBlockMapUrl, newBlockMapUrl]
     } else {
-      return super.getBlockMapFiles(baseUrl, newVersion, oldVersion, oldBlockMapFileBaseUrl)
+      return super.getBlockMapFiles(baseUrl, oldVersion, newVersion, oldBlockMapFileBaseUrl)
     }
   }
 

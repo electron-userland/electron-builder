@@ -187,7 +187,7 @@ test("gitlab blockmap files - should get blockmap files from project_upload", co
   const provider = (updater as any)?.updateInfoAndProvider?.provider as GitLabProvider
   if (provider) {
     const baseUrl = new URL("https://gitlab.com/gitlab-electron-updater-test_Setup_1.1.0.exe")
-    const blockMapUrls = await provider.getBlockMapFiles(baseUrl, "1.1.0", "1.0.0")
+    const blockMapUrls = await provider.getBlockMapFiles(baseUrl, "1.0.0", "1.1.0")
 
     expect(blockMapUrls).toHaveLength(2)
 
@@ -213,7 +213,7 @@ test("gitlab blockmap files - should get blockmap files from generic_package", c
   const provider = (updater as any)?.updateInfoAndProvider?.provider as GitLabProvider
   if (provider) {
     const baseUrl = new URL("https://gitlab.com/gitlab-electron-updater-test_Setup_1.1.0.exe")
-    const blockMapUrls = await provider.getBlockMapFiles(baseUrl, "1.1.0", "1.0.0")
+    const blockMapUrls = await provider.getBlockMapFiles(baseUrl, "1.0.0", "1.1.0")
 
     expect(blockMapUrls).toHaveLength(2)
 
