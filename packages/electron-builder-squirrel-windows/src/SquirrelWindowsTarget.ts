@@ -203,7 +203,9 @@ export default class SquirrelWindowsTarget extends Target {
       options.remoteReleases = this.options.remoteReleases
     }
 
-    if (!("loadingGif" in options)) {
+    if (this.options.loadingGif) {
+      options.loadingGif = path.resolve(packager.projectDir, this.options.loadingGif)
+    } else {
       const resourceList = await packager.resourceList
       if (resourceList.includes("install-spinner.gif")) {
         options.loadingGif = path.join(packager.buildResourcesDir, "install-spinner.gif")
