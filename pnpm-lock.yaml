@@ -529,6 +529,9 @@ importers:
       builder-util-runtime:
         specifier: workspace:*
         version: link:../builder-util-runtime
+      es-toolkit:
+        specifier: ^1.39.8
+        version: 1.39.8
       fs-extra:
         specifier: ^10.1.0
         version: 10.1.0
@@ -538,12 +541,6 @@ importers:
       lazy-val:
         specifier: ^1.0.5
         version: 1.0.5
-      lodash.escaperegexp:
-        specifier: ^4.1.2
-        version: 4.1.2
-      lodash.isequal:
-        specifier: ^4.5.0
-        version: 4.5.0
       semver:
         specifier: ^7.6.3
         version: 7.7.1
@@ -557,12 +554,6 @@ importers:
       '@types/js-yaml':
         specifier: 4.0.3
         version: 4.0.3
-      '@types/lodash.escaperegexp':
-        specifier: 4.1.6
-        version: 4.1.6
-      '@types/lodash.isequal':
-        specifier: 4.5.5
-        version: 4.5.5
       '@types/semver':
         specifier: ^7.3.13
         version: 7.7.0
@@ -2299,15 +2290,6 @@ packages:
   '@types/keyv@3.1.4':
     resolution: {integrity: sha512-BQ5aZNSCpj7D6K2ksrRCTmKRLEpnPvWDiLPfoGyhZ++8YtiK9d/3DBKPJgry359X/P1PfruyYwvnvwFjuEiEIg==}
 
-  '@types/lodash.escaperegexp@4.1.6':
-    resolution: {integrity: sha512-uENiqxLlqh6RzeE1cC6Z2gHqakToN9vKlTVCFkSVjAfeMeh2fY0916tHwJHeeKs28qB/hGYvKuampGYH5QDVCw==}
-
-  '@types/lodash.isequal@4.5.5':
-    resolution: {integrity: sha512-4IKbinG7MGP131wRfceK6W4E/Qt3qssEFLF30LnJbjYiSfHGGRU/Io8YxXrZX109ir+iDETC8hw8QsDijukUVg==}
-
-  '@types/lodash@4.17.16':
-    resolution: {integrity: sha512-HX7Em5NYQAXKW+1T+FiuG27NGwzJfCX3s1GjOa7ujxZa52kjJLOr4FUxT+giF6Tgxv1e+/czV/iTtBw27WTU9g==}
-
   '@types/mdast@4.0.4':
     resolution: {integrity: sha512-kGaNbPh1k7AFzgpud/gMdvIm5xuECykRR+JnWKQno9TAXVa6WIVCGTPvYGekIDL4uwCZQSYbUxNBSb1aUo79oA==}
 
@@ -3387,6 +3369,9 @@ packages:
     resolution: {integrity: sha512-w+5mJ3GuFL+NjVtJlvydShqE1eN3h3PbI7/5LAsYJP/2qtuMXjfL2LpHSRqo4b4eSF5K/DH1JXKUAHSB2UW50g==}
     engines: {node: '>= 0.4'}
 
+  es-toolkit@1.39.8:
+    resolution: {integrity: sha512-A8QO9TfF+rltS8BXpdu8OS+rpGgEdnRhqIVxO/ZmNvnXBYgOdSsxukT55ELyP94gZIntWJ+Li9QRrT2u1Kitpg==}
+
   es6-error@4.1.1:
     resolution: {integrity: sha512-Um/+FxMr9CISWh0bi5Zv0iOD+4cFh5qLeks1qhAopKVAJw3drgKbKySikp7wGhDL0HPeaja0P5ULZrxLkniUVg==}
 
@@ -4285,13 +4270,6 @@ packages:
 
   lodash.debounce@4.0.8:
     resolution: {integrity: sha512-FT1yDzDYEoYWhnSGnpE/4Kj1fLZkDFyqRb7fNt6FdYOSxlUWAtp42Eh6Wb0rGIv/m9Bgo7x4GhQbm5Ys4SG5ow==}
-
-  lodash.escaperegexp@4.1.2:
-    resolution: {integrity: sha512-TM9YBvyC84ZxE3rgfefxUWiQKLilstD6k7PTGt6wfbtXF8ixIJLOL3VYyV/z+ZiPLsVxAsKAFVwWlWeb2Y8Yyw==}
-
-  lodash.isequal@4.5.0:
-    resolution: {integrity: sha512-pDo3lu8Jhfjqls6GkMgpahsF9kCyayhgykjyLMNFTKWrpVdAQtYyB4muAMWozBB4ig/dtWAmsMxLEI8wuz+DYQ==}
-    deprecated: This package is deprecated. Use require('node:util').isDeepStrictEqual instead.
 
   lodash.merge@4.6.2:
     resolution: {integrity: sha512-0KpjqXRVvrYyCsX1swR/XTK0va6VQkQM6MNo7PqW77ByjAhoARA8EfrP1N4+KlKj8YS0ZUCtRT/YUuhyYDujIQ==}
@@ -7950,16 +7928,6 @@ snapshots:
     dependencies:
       '@types/node': 22.13.17
 
-  '@types/lodash.escaperegexp@4.1.6':
-    dependencies:
-      '@types/lodash': 4.17.16
-
-  '@types/lodash.isequal@4.5.5':
-    dependencies:
-      '@types/lodash': 4.17.16
-
-  '@types/lodash@4.17.16': {}
-
   '@types/mdast@4.0.4':
     dependencies:
       '@types/unist': 3.0.3
@@ -9221,6 +9189,8 @@ snapshots:
       is-date-object: 1.1.0
       is-symbol: 1.1.1
 
+  es-toolkit@1.39.8: {}
+
   es6-error@4.1.1:
     optional: true
 
@@ -10250,10 +10220,6 @@ snapshots:
       p-locate: 5.0.0
 
   lodash.debounce@4.0.8: {}
-
-  lodash.escaperegexp@4.1.2: {}
-
-  lodash.isequal@4.5.0: {}
 
   lodash.merge@4.6.2: {}
 
