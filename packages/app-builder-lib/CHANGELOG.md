@@ -1,5 +1,40 @@
 # app-builder-lib
 
+## 26.0.19
+
+### Patch Changes
+
+- [#9197](https://github.com/electron-userland/electron-builder/pull/9197) [`6cc5d2ee`](https://github.com/electron-userland/electron-builder/commit/6cc5d2ee45250aae4a05872ae5b800a9e5cca939) Thanks [@beyondkmp](https://github.com/beyondkmp)! - fix: change installOptions to use npm in yarn PM
+
+- [#9196](https://github.com/electron-userland/electron-builder/pull/9196) [`21e4ea23`](https://github.com/electron-userland/electron-builder/commit/21e4ea23819a9133c9166df85e3f0ba54e5a6326) Thanks [@beyondkmp](https://github.com/beyondkmp)! - fix(nsis): implement custom function to handle /D parameter with spaces
+
+- [#9069](https://github.com/electron-userland/electron-builder/pull/9069) [`c9480bc0`](https://github.com/electron-userland/electron-builder/commit/c9480bc0a170cfad1cb3dfcedc7110d39b6cbd26) Thanks [@panther7](https://github.com/panther7)! - feat(nsis): terminate only processes running in installation folder
+
+- [#9177](https://github.com/electron-userland/electron-builder/pull/9177) [`35f5f6e5`](https://github.com/electron-userland/electron-builder/commit/35f5f6e55762ffc377fcd5587a8cea8753184d50) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: remove `shell: true` from node_modules collector so as to prevent shell console logging from malforming the json output
+
+- Updated dependencies [[`1a6ea016`](https://github.com/electron-userland/electron-builder/commit/1a6ea016b7793c75e7586e0e14d5f26d3535c292), [`35f5f6e5`](https://github.com/electron-userland/electron-builder/commit/35f5f6e55762ffc377fcd5587a8cea8753184d50)]:
+  - builder-util-runtime@9.3.3
+  - builder-util@26.0.19
+  - dmg-builder@26.0.19
+  - electron-builder-squirrel-windows@26.0.19
+  - electron-publish@26.0.19
+
+## 26.0.18
+
+### Patch Changes
+
+- [#9194](https://github.com/electron-userland/electron-builder/pull/9194) [`fc7c5a0d`](https://github.com/electron-userland/electron-builder/commit/fc7c5a0d4c46d0c61f5c9f9c02412b3a3a97b423) Thanks [@sevenc-nanashi](https://github.com/sevenc-nanashi)! - feat: use jiti instead of config-file-ts for loading TypeScript config
+
+- [#9100](https://github.com/electron-userland/electron-builder/pull/9100) [`e02b939b`](https://github.com/electron-userland/electron-builder/commit/e02b939bc6fc13dfdad3d4c63c86bc01aad618fd) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: upgrade fpm and corresponding portable ruby bundle to resolve build issues on macos
+
+- [#9166](https://github.com/electron-userland/electron-builder/pull/9166) [`61aa8557`](https://github.com/electron-userland/electron-builder/commit/61aa8557dcab97a516ef2abd8bdadab5eb662879) Thanks [@panther7](https://github.com/panther7)! - feat(nsis): added supports for uninstall components page
+
+- [#9183](https://github.com/electron-userland/electron-builder/pull/9183) [`309f1dca`](https://github.com/electron-userland/electron-builder/commit/309f1dcacb11231ac8cc2485a286f2ac63bfa085) Thanks [@panther7](https://github.com/panther7)! - feat(nsis): added translation for 'closing app'
+
+- Updated dependencies [[`a2fbc8b6`](https://github.com/electron-userland/electron-builder/commit/a2fbc8b6666fc58fb7cf1a6fa607695bb3d29a04)]:
+  - dmg-builder@26.0.18
+  - electron-builder-squirrel-windows@26.0.18
+
 ## 26.0.17
 
 ### Patch Changes
