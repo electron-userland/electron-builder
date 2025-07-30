@@ -68,7 +68,16 @@ export class Logger {
   }
 
   private _doLog(message: string | Error, fields: Fields | null, level: LogLevel) {
-    if (this.shouldDisableNonErrorLoggingVitest && level !== "error") {
+    if (this.shouldDisableNonErrorLoggingVitest) {
+      if (
+        [
+          // "warn", // is actually a bit too noisy
+          "error",
+        ].includes(level)
+      ) {
+        // log error message to console so VITEST can capture stacktrace as well
+        console.log(message, fields)
+      }
       return // ignore info/warn message during VITEST workflow if debug flag is disabled
     }
 
