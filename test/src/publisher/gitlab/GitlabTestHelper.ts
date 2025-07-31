@@ -13,7 +13,8 @@ export class GitlabTestHelper {
   private readonly projectId: string
 
   constructor({
-    projectId = process.env.GITLAB_TEST_PROJECT_ID || "71361100",
+    // gitlab repo for this project is `https://gitlab.com/daihere1993/gitlab-electron-updater-test-2`
+    projectId = "72170733",
     host = "gitlab.com",
   }: {
     projectId?: string

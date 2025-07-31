@@ -12,7 +12,7 @@ import { GitlabTestHelper } from "./GitlabTestHelper"
  *
  * Prerequisites:
  * - GITLAB_TOKEN environment variable with valid GitLab personal access token
- * - GITLAB_TEST_PROJECT_ID for test project (default: 71361100)
+ * - GITLAB_TEST_PROJECT_ID for test project (default: 72170733)
  *
  * Coverage:
  * - Authentication validation
