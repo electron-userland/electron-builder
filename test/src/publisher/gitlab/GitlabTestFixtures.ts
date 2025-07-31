@@ -16,7 +16,7 @@ export class GitlabTestFixtures {
 
   // Project configurations
   static readonly PROJECTS = {
-    valid: process.env.GITLAB_TEST_PROJECT_ID || "71361100",
+    valid: "72170733",
     nonExistent: "99999999",
     stringFormat: "namespace/project-name",
     numericFormat: 12345678,
