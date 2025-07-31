@@ -1,5 +1,24 @@
 # app-builder-lib
 
+## 26.0.19
+
+### Patch Changes
+
+- [#9197](https://github.com/electron-userland/electron-builder/pull/9197) [`6cc5d2ee`](https://github.com/electron-userland/electron-builder/commit/6cc5d2ee45250aae4a05872ae5b800a9e5cca939) Thanks [@beyondkmp](https://github.com/beyondkmp)! - fix: change installOptions to use npm in yarn PM
+
+- [#9196](https://github.com/electron-userland/electron-builder/pull/9196) [`21e4ea23`](https://github.com/electron-userland/electron-builder/commit/21e4ea23819a9133c9166df85e3f0ba54e5a6326) Thanks [@beyondkmp](https://github.com/beyondkmp)! - fix(nsis): implement custom function to handle /D parameter with spaces
+
+- [#9069](https://github.com/electron-userland/electron-builder/pull/9069) [`c9480bc0`](https://github.com/electron-userland/electron-builder/commit/c9480bc0a170cfad1cb3dfcedc7110d39b6cbd26) Thanks [@panther7](https://github.com/panther7)! - feat(nsis): terminate only processes running in installation folder
+
+- [#9177](https://github.com/electron-userland/electron-builder/pull/9177) [`35f5f6e5`](https://github.com/electron-userland/electron-builder/commit/35f5f6e55762ffc377fcd5587a8cea8753184d50) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: remove `shell: true` from node_modules collector so as to prevent shell console logging from malforming the json output
+
+- Updated dependencies [[`1a6ea016`](https://github.com/electron-userland/electron-builder/commit/1a6ea016b7793c75e7586e0e14d5f26d3535c292), [`35f5f6e5`](https://github.com/electron-userland/electron-builder/commit/35f5f6e55762ffc377fcd5587a8cea8753184d50)]:
+  - builder-util-runtime@9.3.3
+  - builder-util@26.0.19
+  - dmg-builder@26.0.19
+  - electron-builder-squirrel-windows@26.0.19
+  - electron-publish@26.0.19
+
 ## 26.0.18
 
 ### Patch Changes

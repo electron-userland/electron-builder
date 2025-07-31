@@ -8,6 +8,9 @@
           "$ref": "#/definitions/GithubOptions"
         },
         {
+          "$ref": "#/definitions/GitlabOptions"
+        },
+        {
           "$ref": "#/definitions/S3Options"
         },
         {
@@ -107,6 +110,9 @@
           "anyOf": [
             {
               "$ref": "#/definitions/GithubOptions"
+            },
+            {
+              "$ref": "#/definitions/GitlabOptions"
             },
             {
               "$ref": "#/definitions/S3Options"
@@ -255,6 +261,9 @@
           "anyOf": [
             {
               "$ref": "#/definitions/GithubOptions"
+            },
+            {
+              "$ref": "#/definitions/GitlabOptions"
             },
             {
               "$ref": "#/definitions/S3Options"
@@ -733,6 +742,9 @@
               "$ref": "#/definitions/GithubOptions"
             },
             {
+              "$ref": "#/definitions/GitlabOptions"
+            },
+            {
               "$ref": "#/definitions/S3Options"
             },
             {
@@ -910,6 +922,9 @@
           "anyOf": [
             {
               "$ref": "#/definitions/GithubOptions"
+            },
+            {
+              "$ref": "#/definitions/GitlabOptions"
             },
             {
               "$ref": "#/definitions/S3Options"
@@ -1271,6 +1286,9 @@
               "$ref": "#/definitions/GithubOptions"
             },
             {
+              "$ref": "#/definitions/GitlabOptions"
+            },
+            {
               "$ref": "#/definitions/S3Options"
             },
             {
@@ -1588,6 +1606,88 @@
         }
       },
       "required": [
+        "provider"
+      ],
+      "type": "object"
+    },
+    "GitlabOptions": {
+      "additionalProperties": false,
+      "description": "[GitLab](https://docs.gitlab.com/ee/user/project/releases/) options.\n\nGitLab [personal access token](https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html) is required for private repositories. You can generate one by going to your GitLab profile settings.\nDefine `GITLAB_TOKEN` environment variable.",
+      "properties": {
+        "channel": {
+          "default": "latest",
+          "description": "The channel.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "host": {
+          "default": "gitlab.com",
+          "description": "The host (including the port if needed).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "projectId": {
+          "description": "The GitLab project ID or namespace/project-name.",
+          "type": [
+            "string",
+            "number"
+          ]
+        },
+        "provider": {
+          "const": "gitlab",
+          "description": "The provider. Must be `gitlab`.",
+          "type": "string"
+        },
+        "publishAutoUpdate": {
+          "default": true,
+          "description": "Whether to publish auto update info files.\n\nAuto update relies only on the first provider in the list (you can specify several publishers).\nThus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.",
+          "type": "boolean"
+        },
+        "publisherName": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "requestHeaders": {
+          "$ref": "#/definitions/OutgoingHttpHeaders",
+          "description": "Any custom request headers"
+        },
+        "timeout": {
+          "default": 120000,
+          "description": "Request timeout in milliseconds. (Default is 2 minutes; O is ignored)",
+          "type": [
+            "null",
+            "number"
+          ]
+        },
+        "token": {
+          "description": "The access token to support auto-update from private GitLab repositories. Never specify it in the configuration files. Only for [setFeedURL](./auto-update.md#appupdatersetfeedurloptions).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "updaterCacheDirName": {
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      },
+      "required": [
+        "projectId",
         "provider"
       ],
       "type": "object"
@@ -2002,6 +2102,9 @@
               "$ref": "#/definitions/GithubOptions"
             },
             {
+              "$ref": "#/definitions/GitlabOptions"
+            },
+            {
               "$ref": "#/definitions/S3Options"
             },
             {
@@ -2272,6 +2375,9 @@
           "anyOf": [
             {
               "$ref": "#/definitions/GithubOptions"
+            },
+            {
+              "$ref": "#/definitions/GitlabOptions"
             },
             {
               "$ref": "#/definitions/S3Options"
@@ -2777,6 +2883,9 @@
           "anyOf": [
             {
               "$ref": "#/definitions/GithubOptions"
+            },
+            {
+              "$ref": "#/definitions/GitlabOptions"
             },
             {
               "$ref": "#/definitions/S3Options"
@@ -3411,6 +3520,9 @@
               "$ref": "#/definitions/GithubOptions"
             },
             {
+              "$ref": "#/definitions/GitlabOptions"
+            },
+            {
               "$ref": "#/definitions/S3Options"
             },
             {
@@ -3693,6 +3805,9 @@
               "$ref": "#/definitions/GithubOptions"
             },
             {
+              "$ref": "#/definitions/GitlabOptions"
+            },
+            {
               "$ref": "#/definitions/S3Options"
             },
             {
@@ -3817,6 +3932,9 @@
           "anyOf": [
             {
               "$ref": "#/definitions/GithubOptions"
+            },
+            {
+              "$ref": "#/definitions/GitlabOptions"
             },
             {
               "$ref": "#/definitions/S3Options"
@@ -4094,6 +4212,9 @@
           "anyOf": [
             {
               "$ref": "#/definitions/GithubOptions"
+            },
+            {
+              "$ref": "#/definitions/GitlabOptions"
             },
             {
               "$ref": "#/definitions/S3Options"
@@ -4442,6 +4563,9 @@
           "anyOf": [
             {
               "$ref": "#/definitions/GithubOptions"
+            },
+            {
+              "$ref": "#/definitions/GitlabOptions"
             },
             {
               "$ref": "#/definitions/S3Options"
@@ -5195,6 +5319,9 @@
               "$ref": "#/definitions/GithubOptions"
             },
             {
+              "$ref": "#/definitions/GitlabOptions"
+            },
+            {
               "$ref": "#/definitions/S3Options"
             },
             {
@@ -5309,6 +5436,9 @@
           "anyOf": [
             {
               "$ref": "#/definitions/GithubOptions"
+            },
+            {
+              "$ref": "#/definitions/GitlabOptions"
             },
             {
               "$ref": "#/definitions/S3Options"
@@ -5868,6 +5998,9 @@
               "$ref": "#/definitions/GithubOptions"
             },
             {
+              "$ref": "#/definitions/GitlabOptions"
+            },
+            {
               "$ref": "#/definitions/S3Options"
             },
             {
@@ -6176,6 +6309,9 @@
           "anyOf": [
             {
               "$ref": "#/definitions/GithubOptions"
+            },
+            {
+              "$ref": "#/definitions/GitlabOptions"
             },
             {
               "$ref": "#/definitions/S3Options"
@@ -6587,6 +6723,9 @@
           "anyOf": [
             {
               "$ref": "#/definitions/GithubOptions"
+            },
+            {
+              "$ref": "#/definitions/GitlabOptions"
             },
             {
               "$ref": "#/definitions/S3Options"
@@ -7623,6 +7762,9 @@
       "anyOf": [
         {
           "$ref": "#/definitions/GithubOptions"
+        },
+        {
+          "$ref": "#/definitions/GitlabOptions"
         },
         {
           "$ref": "#/definitions/S3Options"
