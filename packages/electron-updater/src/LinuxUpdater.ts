@@ -31,8 +31,11 @@ export abstract class LinuxUpdater extends BaseUpdater {
     const installComment = `"${name} would like to update"`
     const sudo = this.sudoWithArgs(installComment)
     this._logger.info(`Running as non-root user, using sudo to install: ${sudo}`)
-    // pkexec doesn't want the command to be wrapped in " quotes
-    const wrapper = /pkexec/i.test(sudo[0]) ? "" : `"`
+    let wrapper = `"`
+    // some sudo commands dont want the command to be wrapped in " quotes
+    if (/pkexec/i.test(sudo[0]) || sudo[0] === "sudo") {
+      wrapper = ""
+    }
     return this.spawnSyncLog(sudo[0], [...(sudo.length > 1 ? sudo.slice(1) : []), `${wrapper}/bin/bash`, "-c", `'${commandWithArgs.join(" ")}'${wrapper}`])
   }
 
