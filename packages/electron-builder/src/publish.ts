@@ -31,7 +31,7 @@ export function configurePublishCommand(yargs: yargs.Argv): yargs.Argv {
       description: "The app/build version used when searching for an upload release (used by some Publishers)",
     })
     .option("config", {
-      alias: ["c"],
+      alias: ["c", "configurationFilePath"],
       type: "string",
       description:
         "The path to an electron-builder config. Defaults to `electron-builder.yml` (or `json`, or `json5`, or `js`, or `ts`), see " + chalk.underline("https://goo.gl/YFRJOM"),
