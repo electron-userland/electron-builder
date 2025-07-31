@@ -257,17 +257,11 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
     const isDevelopment = type === "development"
     const certificateTypes = getCertificateTypes(isMas, isDevelopment)
 
-    let identity = null
-    for (const certificateType of certificateTypes) {
-      identity = await findIdentity(certificateType, qualifier, keychainFile)
-      if (identity != null) {
-        break
-      }
-    }
+    let identity = await findIdentity([certificateType], qualifier, keychainFile)
 
     if (identity == null) {
       if (!isMas && !isDevelopment && explicitType !== "distribution") {
-        identity = await findIdentity("Mac Developer", qualifier, keychainFile)
+        identity = await findIdentity(["Mac Developer"], qualifier, keychainFile)
         if (identity != null) {
           log.warn("Mac Developer is used to sign app — it is only for development and testing, not for production")
         }
@@ -358,8 +352,8 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
 
     // https://github.com/electron-userland/electron-builder/issues/1196#issuecomment-312310209
     if (masOptions != null && !isDevelopment) {
-      const certType = isDevelopment ? "Mac Developer" : "3rd Party Mac Developer Installer"
-      const masInstallerIdentity = await findIdentity(certType, masOptions.identity, keychainFile)
+      const certTypes = ["Apple Distribution", "3rd Party Mac Developer Installer"]
+      const masInstallerIdentity = await findIdentity(certTypes, masOptions.identity, keychainFile)
       if (masInstallerIdentity == null) {
         throw new InvalidConfigurationError(`Cannot find valid "${certType}" identity to sign MAS installer, please see https://electron.build/code-signing`)
       }
