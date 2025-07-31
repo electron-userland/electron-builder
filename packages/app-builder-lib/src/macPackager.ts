@@ -352,10 +352,10 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
 
     // https://github.com/electron-userland/electron-builder/issues/1196#issuecomment-312310209
     if (masOptions != null && !isDevelopment) {
-      const certTypes = ["Apple Distribution", "3rd Party Mac Developer Installer"]
+      const certTypes: CertType[] = ["Apple Distribution", "3rd Party Mac Developer Installer"]
       const masInstallerIdentity = await findIdentity(certTypes, masOptions.identity, keychainFile)
       if (masInstallerIdentity == null) {
-        throw new InvalidConfigurationError(`Cannot find valid "${certType}" identity to sign MAS installer, please see https://electron.build/code-signing`)
+        throw new InvalidConfigurationError(`Cannot find valid [${certTypes}] identity to sign MAS installer, please see https://electron.build/code-signing`)
       }
 
       // mas uploaded to AppStore, so, use "-" instead of space for name
