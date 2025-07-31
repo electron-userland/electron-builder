@@ -3,10 +3,6 @@ import { PM } from "./packageManager"
 import { NpmDependency } from "./types"
 
 export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency, string> {
-  constructor(rootDir: string) {
-    super(rootDir)
-  }
-
   public readonly installOptions = { manager: PM.NPM, lockfile: "package-lock.json" }
 
   protected getArgs(): string[] {

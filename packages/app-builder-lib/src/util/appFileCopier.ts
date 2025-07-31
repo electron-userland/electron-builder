@@ -181,12 +181,12 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
   const projectDir = platformPackager.info.projectDir
   const appDir = platformPackager.info.appDir
 
-  let deps = await getNodeModules(appDir)
+  let deps = await getNodeModules(appDir, platformPackager.info.tempDirManager)
   if (projectDir !== appDir && deps.length === 0) {
     const packageJson = require(path.join(appDir, "package.json"))
     if (Object.keys(packageJson.dependencies || {}).length > 0) {
       log.debug({ projectDir, appDir }, "no node_modules in app dir, trying to find in project dir")
-      deps = await getNodeModules(projectDir)
+      deps = await getNodeModules(projectDir, platformPackager.info.tempDirManager)
     }
   }
 

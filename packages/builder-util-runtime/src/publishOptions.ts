@@ -1,12 +1,13 @@
 import { OutgoingHttpHeaders } from "http"
 import { Nullish } from "."
 
-export type PublishProvider = "github" | "s3" | "spaces" | "generic" | "custom" | "snapStore" | "keygen" | "bitbucket"
+export type PublishProvider = "github" | "gitlab" | "s3" | "spaces" | "generic" | "custom" | "snapStore" | "keygen" | "bitbucket"
 
 // typescript-json-schema generates only PublishConfiguration if it is specified in the list, so, it is not added here
 export type AllPublishOptions =
   | string
   | GithubOptions
+  | GitlabOptions
   | S3Options
   | SpacesOptions
   | GenericServerOptions
@@ -140,6 +141,41 @@ export interface GithubOptions extends PublishConfiguration {
 /** @private */
 export function githubUrl(options: GithubOptions, defaultHost = "github.com") {
   return `${options.protocol || "https"}://${options.host || defaultHost}`
+}
+
+/**
+ * [GitLab](https://docs.gitlab.com/ee/user/project/releases/) options.
+ *
+ * GitLab [personal access token](https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html) is required for private repositories. You can generate one by going to your GitLab profile settings.
+ * Define `GITLAB_TOKEN` environment variable.
+ */
+export interface GitlabOptions extends PublishConfiguration {
+  /**
+   * The provider. Must be `gitlab`.
+   */
+  readonly provider: "gitlab"
+
+  /**
+   * The GitLab project ID or namespace/project-name.
+   */
+  readonly projectId: string | number
+
+  /**
+   * The host (including the port if needed).
+   * @default gitlab.com
+   */
+  readonly host?: string | null
+
+  /**
+   * The access token to support auto-update from private GitLab repositories. Never specify it in the configuration files. Only for [setFeedURL](./auto-update.md#appupdatersetfeedurloptions).
+   */
+  readonly token?: string | null
+
+  /**
+   * The channel.
+   * @default latest
+   */
+  readonly channel?: string | null
 }
 
 /**

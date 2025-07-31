@@ -780,14 +780,17 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     const tempUpdateFile = await createTempUpdateFile(`temp-${updateFileName}`, cacheDir, log)
     try {
       await taskOptions.task(tempUpdateFile, downloadOptions, packageFile, removeFileIfAny)
-      await retry(
-        () => rename(tempUpdateFile, updateFile),
-        60,
-        500,
-        0,
-        0,
-        error => error instanceof Error && /^EBUSY:/.test(error.message)
-      )
+      await retry(() => rename(tempUpdateFile, updateFile), {
+        retries: 60,
+        interval: 500,
+        shouldRetry: (error: Error) => {
+          if (error instanceof Error && /^EBUSY:/.test(error.message)) {
+            return true
+          }
+          log.warn(`Cannot rename temp file to final file: ${error.message || error.stack}`)
+          return false
+        },
+      })
     } catch (e: any) {
       await removeFileIfAny()
 
