@@ -257,7 +257,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
     const isDevelopment = type === "development"
     const certificateTypes = getCertificateTypes(isMas, isDevelopment)
 
-    let identity = await findIdentity([certificateType], qualifier, keychainFile)
+    let identity = await findIdentity(certificateTypes, qualifier, keychainFile)
 
     if (identity == null) {
       if (!isMas && !isDevelopment && explicitType !== "distribution") {

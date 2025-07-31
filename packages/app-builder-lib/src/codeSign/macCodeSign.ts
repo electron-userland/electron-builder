@@ -268,22 +268,24 @@ async function getValidIdentities(keychain?: string | null): Promise<Array<strin
   return result
 }
 
-async function _findIdentity(type: CertType, qualifier?: string | null, keychain?: string | null): Promise<Identity | null> {
+async function _findIdentity(types: CertType[], qualifier?: string | null, keychain?: string | null): Promise<Identity | null> {
   // https://github.com/electron-userland/electron-builder/issues/484
   //noinspection SpellCheckingInspection
   const lines = await getValidIdentities(keychain)
-  const namePrefix = `${type}:`
   for (const line of lines) {
     if (qualifier != null && !line.includes(qualifier)) {
       continue
     }
 
-    if (line.includes(namePrefix)) {
-      return parseIdentity(line)
+    for (const type of types) {
+      const namePrefix = `${type}:`
+      if (line.includes(namePrefix)) {
+        return parseIdentity(line)
+      }
     }
   }
 
-  if (type === "Developer ID Application") {
+  if (types.includes("Developer ID Application")) {
     // find non-Apple certificate
     // https://github.com/electron-userland/electron-builder/issues/458
     l: for (const line of lines) {
@@ -321,11 +323,11 @@ function parseIdentity(line: string): Identity {
   return new _Identity(name, hash)
 }
 
-export function findIdentity(certType: CertType, qualifier?: string | null, keychain?: string | null): Promise<Identity | null> {
+export function findIdentity(certTypes: CertType[], qualifier?: string | null, keychain?: string | null): Promise<Identity | null> {
   let identity = qualifier || process.env.CSC_NAME
   if (isEmptyOrSpaces(identity)) {
     if (isAutoDiscoveryCodeSignIdentity()) {
-      return _findIdentity(certType, null, keychain)
+      return _findIdentity(certTypes, null, keychain)
     } else {
       return Promise.resolve(null)
     }
@@ -334,7 +336,7 @@ export function findIdentity(certType: CertType, qualifier?: string | null, keyc
     for (const prefix of appleCertificatePrefixes) {
       checkPrefix(identity, prefix)
     }
-    return _findIdentity(certType, identity, keychain)
+    return _findIdentity(certTypes, identity, keychain)
   }
 }
 
