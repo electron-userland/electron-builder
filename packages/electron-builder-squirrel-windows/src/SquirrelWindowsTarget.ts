@@ -64,7 +64,6 @@ export default class SquirrelWindowsTarget extends Target {
     }
 
     const filePath = path.join(appOutDir, appExe.name)
-    log.filePath(filePath)
     const stubExePath = path.join(appOutDir, `${this.exeName}_ExecutionStub.exe`)
     await fs.promises.copyFile(path.join(vendorDir, "StubExecutable.exe"), stubExePath)
     await execWine(path.join(vendorDir, "WriteZipToSetup.exe"), null, ["--copy-stub-resources", filePath, stubExePath])
