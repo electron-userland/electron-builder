@@ -15,6 +15,7 @@ export function configurePublishCommand(yargs: yargs.Argv): yargs.Argv {
   // https://github.com/yargs/yargs/issues/760
   // demandOption is required to be set
   return yargs
+    .version(false)
     .parserConfiguration({
       "camel-case-expansion": false,
     })
