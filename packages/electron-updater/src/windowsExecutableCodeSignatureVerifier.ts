@@ -1,8 +1,23 @@
 import { parseDn } from "builder-util-runtime"
-import { execFile, execFileSync } from "child_process"
+import { execFile, execFileSync, ExecFileOptions } from "child_process"
 import * as os from "os"
 import { Logger } from "./types"
 import * as path from "path"
+
+function preparePowerShellExec(command: string) {
+  // https://github.com/electron-userland/electron-builder/issues/2421
+  // https://github.com/electron-userland/electron-builder/issues/2535
+  // Resetting PSModulePath is necessary https://github.com/electron-userland/electron-builder/issues/7127
+  // semicolon wont terminate the set command and run chcp thus leading to verification errors on certificats with special chars like german umlauts, so rather
+  //   join commands using & https://github.com/electron-userland/electron-builder/issues/8162
+  const executable = `set "PSModulePath=" & chcp 65001 >NUL & powershell.exe`
+  const args = ["-NoProfile", "-NonInteractive", "-InputFormat", "None", "-Command", command]
+  const options: ExecFileOptions = {
+    shell: true,
+    timeout: 20 * 1000,
+  }
+  return [executable, args, options] as const
+}
 
 // $certificateInfo = (Get-AuthenticodeSignature 'xxx\yyy.exe'
 // | where {$_.Status.Equals([System.Management.Automation.SignatureStatus]::Valid) -and $_.SignerCertificate.Subject.Contains("CN=siemens.com")})
@@ -30,18 +45,7 @@ export function verifySignature(publisherNames: Array<string>, unescapedTempUpda
     const tempUpdateFile = unescapedTempUpdateFile.replace(/'/g, "''")
     logger.info(`Verifying signature ${tempUpdateFile}`)
 
-    // https://github.com/electron-userland/electron-builder/issues/2421
-    // https://github.com/electron-userland/electron-builder/issues/2535
-    // Resetting PSModulePath is necessary https://github.com/electron-userland/electron-builder/issues/7127
-    // semicolon wont terminate the set command and run chcp thus leading to verification errors on certificats with special chars like german umlauts, so rather
-    //   join commands using & https://github.com/electron-userland/electron-builder/issues/8162
-    execFile(
-      `set "PSModulePath=" & chcp 65001 >NUL & powershell.exe`,
-      ["-NoProfile", "-NonInteractive", "-InputFormat", "None", "-Command", `"Get-AuthenticodeSignature -LiteralPath '${tempUpdateFile}' | ConvertTo-Json -Compress"`],
-      {
-        shell: true,
-        timeout: 20 * 1000,
-      },
+    execFile(...preparePowerShellExec(`"Get-AuthenticodeSignature -LiteralPath '${tempUpdateFile}' | ConvertTo-Json -Compress"`),
       (error, stdout, stderr) => {
         try {
           if (error != null || stderr) {
@@ -123,7 +127,7 @@ function handleError(logger: Logger, error: Error | null, stderr: string | null,
   }
 
   try {
-    execFileSync("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", "ConvertTo-Json test"], { timeout: 10 * 1000 } as any)
+    execFileSync(...preparePowerShellExec("ConvertTo-Json test"))
   } catch (testError: any) {
     logger.warn(
       `Cannot execute ConvertTo-Json: ${testError.message}. Ignoring signature validation due to unsupported powershell version. Please upgrade to powershell 3 or higher.`
