@@ -2,7 +2,7 @@ import { defineConfig } from "vitest/config"
 import fs from "fs"
 
 export default () => {
-  const testRegex = process.env.TEST_FILES?.split(",") ?? ["*Test"]
+  const testRegex = process.env.TEST_FILES?.split(",") ?? ["*Test", "*test"]
   const includeRegex = `(${testRegex.join("|")})`
   console.log("TEST_FILES pattern", includeRegex)
 
