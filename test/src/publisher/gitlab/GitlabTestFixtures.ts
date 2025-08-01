@@ -102,17 +102,19 @@ export class GitlabTestFixtures {
   }
 
   // Assertion helpers for test validation
-  static validateReleaseStructure(release: any): boolean {
-    return typeof release.tag_name === "string" && typeof release.name === "string" && Array.isArray(release.assets?.links)
+  static validateReleaseStructure(release: unknown): boolean {
+    const r = release as any
+    return typeof r?.tag_name === "string" && typeof r?.name === "string" && Array.isArray(r?.assets?.links)
   }
 
-  static validateAssetLinkStructure(link: any): boolean {
+  static validateAssetLinkStructure(link: unknown): boolean {
+    const l = link as any
     return (
-      (typeof link.id === "string" || typeof link.id === "number") &&
-      typeof link.name === "string" &&
-      typeof link.url === "string" &&
-      typeof link.direct_asset_url === "string" &&
-      typeof link.link_type === "string"
+      (typeof l?.id === "string" || typeof l?.id === "number") &&
+      typeof l?.name === "string" &&
+      typeof l?.url === "string" &&
+      typeof l?.direct_asset_url === "string" &&
+      typeof l?.link_type === "string"
     )
   }
 }

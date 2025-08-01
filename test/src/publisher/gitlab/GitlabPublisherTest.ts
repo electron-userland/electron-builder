@@ -113,8 +113,8 @@ describe("GitLab Publisher - Unit Tests", () => {
           GitlabTestFixtures.VERSIONS.valid
         )
 
-        expect(publisherWithPrefix.toString()).toBeDefined()
-        expect(publisherWithoutPrefix.toString()).toBeDefined()
+        expect(publisherWithPrefix.toString()).toContain("GitLab")
+        expect(publisherWithoutPrefix.toString()).toContain("GitLab")
       })
     })
 
@@ -122,7 +122,7 @@ describe("GitLab Publisher - Unit Tests", () => {
       test("should use default host", ({ expect }) => {
         const publisher = new GitlabPublisher(publishContext, GitlabTestFixtures.createOptions(), GitlabTestFixtures.VERSIONS.valid)
 
-        expect(publisher.toString()).toBeDefined()
+        expect(publisher.toString()).toContain("GitLab")
       })
 
       test("should use custom host", ({ expect }) => {
@@ -134,7 +134,7 @@ describe("GitLab Publisher - Unit Tests", () => {
           GitlabTestFixtures.VERSIONS.valid
         )
 
-        expect(publisher.toString()).toBeDefined()
+        expect(publisher.toString()).toContain("GitLab")
       })
 
       test("should use enterprise host", ({ expect }) => {
@@ -146,7 +146,7 @@ describe("GitLab Publisher - Unit Tests", () => {
           GitlabTestFixtures.VERSIONS.valid
         )
 
-        expect(publisher.toString()).toBeDefined()
+        expect(publisher.toString()).toContain("GitLab")
       })
     })
   })
@@ -172,7 +172,7 @@ describe("GitLab Publisher - Unit Tests", () => {
     test("should default to project_upload method", ({ expect }) => {
       const publisher = new GitlabPublisher(publishContext, GitlabTestFixtures.createOptions(), GitlabTestFixtures.VERSIONS.valid)
 
-      expect(publisher.toString()).toBeDefined()
+      expect(publisher.toString()).toContain("GitLab")
     })
 
     test("should accept generic_package upload target", ({ expect }) => {
@@ -184,7 +184,7 @@ describe("GitLab Publisher - Unit Tests", () => {
         GitlabTestFixtures.VERSIONS.valid
       )
 
-      expect(publisher.toString()).toBeDefined()
+      expect(publisher.toString()).toContain("GitLab")
     })
 
     test("should accept custom timeout", ({ expect }) => {
@@ -196,7 +196,7 @@ describe("GitLab Publisher - Unit Tests", () => {
         GitlabTestFixtures.VERSIONS.valid
       )
 
-      expect(publisher.toString()).toBeDefined()
+      expect(publisher.toString()).toContain("GitLab")
     })
   })
 

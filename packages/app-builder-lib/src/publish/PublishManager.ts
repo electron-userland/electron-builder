@@ -317,7 +317,7 @@ export async function createPublisher(
       return new GitHubPublisher(context, publishConfig as GithubOptions, version, options)
 
     case "gitlab":
-      return new GitlabPublisher(context, publishConfig as GitlabOptions, version, options)
+      return new GitlabPublisher(context, publishConfig as GitlabOptions, version)
 
     case "keygen":
       return new KeygenPublisher(context, publishConfig as KeygenOptions, version)
