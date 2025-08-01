@@ -107,7 +107,7 @@
     "@types/hosted-git-info": "3.0.2",
     "@types/js-yaml": "4.0.3",
     "@types/plist": "3.0.5",
-    "@types/semver": "7.3.8",
+    "@types/semver": "7.7.0",
     "@types/tar": "^6.1.3",
     "@types/tiny-async-pool": "^1",
     "@types/which": "^3.0.4",
