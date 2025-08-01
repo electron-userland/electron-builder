@@ -354,7 +354,7 @@ Please double check that your authentication token is correct. Due to security r
     // Special case: allow http -> https redirect on same host with standard ports
     // This matches the behavior of Python requests library for backward compatibility
     // url.port returns an empty string if the port is omitted
-    // or explicitly set to the default port for a given protocol. 
+    // or explicitly set to the default port for a given protocol.
     if (
       originalUrl.protocol === "http:" &&
       // This can be replaced with `!originalUrl.port`, but for the sake of clarity.
