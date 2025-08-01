@@ -11,11 +11,11 @@ Commands:
 
 Building:
   --mac, -m, -o, --macos   Build for macOS, accepts target list (see
-                           https://goo.gl/5uHuzj).                       [array]
+                           https://www.electron.build/mac)               [array]
   --linux, -l              Build for Linux, accepts target list (see
-                           https://goo.gl/4vwQad)                        [array]
+                           https://www.electron.build/linux)             [array]
   --win, -w, --windows     Build for Windows, accepts target list (see
-                           https://goo.gl/jYsTEJ)                        [array]
+                           https://www.electron.build/win)               [array]
   --x64                    Build for x64                               [boolean]
   --ia32                   Build for ia32                              [boolean]
   --armv7l                 Build for armv7l                            [boolean]
@@ -32,7 +32,7 @@ Building:
 
 Publishing:
   --publish, -p  Publish artifacts (to GitHub Releases), see
-                 https://goo.gl/tSFycD
+                 https://www.electron.build/publish
                 [choices: "onTag", "onTagOrDraft", "always", "never", undefined]
 
 
@@ -49,7 +49,7 @@ Options:
   -f, --files    The file(s) to upload to your publisher      [array] [required]
   -c, --config   The path to an electron-builder config. Defaults to
                  `electron-builder.yml` (or `json`, or `json5`, or `js`, or
-                 `ts`), see https://goo.gl/YFRJOM                       [string]
+                 `ts`), see https://www.electron.build/configuration   [string]
 
 Other:
   --help     Show help                                                 [boolean]

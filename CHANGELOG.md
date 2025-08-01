@@ -1,3 +1,20 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v26.0.18...v) (2025-07-15)
+
+
+### Bug Fixes
+
+* change installOptions to use npm in yarn PM ([#9197](https://github.com/electron-userland/electron-builder/issues/9197)) ([6cc5d2e](https://github.com/electron-userland/electron-builder/commit/6cc5d2ee45250aae4a05872ae5b800a9e5cca939))
+* **nsis:** implement custom function to handle /D parameter with spaces ([#9196](https://github.com/electron-userland/electron-builder/issues/9196)) ([21e4ea2](https://github.com/electron-userland/electron-builder/commit/21e4ea23819a9133c9166df85e3f0ba54e5a6326))
+* Use `spawn` -> `shell: false` for node module collection ([#9177](https://github.com/electron-userland/electron-builder/issues/9177)) ([35f5f6e](https://github.com/electron-userland/electron-builder/commit/35f5f6e55762ffc377fcd5587a8cea8753184d50))
+
+
+### Features
+
+* **electron-updater:** add `GitLab` provider ([#9186](https://github.com/electron-userland/electron-builder/issues/9186)) ([1a6ea01](https://github.com/electron-userland/electron-builder/commit/1a6ea016b7793c75e7586e0e14d5f26d3535c292))
+* **nsis:** terminate only processes running in installation folder ([#9069](https://github.com/electron-userland/electron-builder/issues/9069)) ([c9480bc](https://github.com/electron-userland/electron-builder/commit/c9480bc0a170cfad1cb3dfcedc7110d39b6cbd26))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v26.0.17...v) (2025-07-08)
 
 
