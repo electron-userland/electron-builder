@@ -186,7 +186,7 @@ export class GitLabProvider extends Provider<GitlabUpdateInfo> {
     return null
   }
 
-  private async getReleaseInfoByVersion(version: string): Promise<GitlabReleaseInfo | null> {
+  private async fetchReleaseInfoByVersion(version: string): Promise<GitlabReleaseInfo | null> {
     const cancellationToken = new CancellationToken()
 
     // Try v-prefixed version first, then fallback to plain version
@@ -230,7 +230,7 @@ export class GitLabProvider extends Provider<GitlabUpdateInfo> {
     }
 
     // Fetch version info if not cached or version doesn't match
-    const versionInfo = await this.getReleaseInfoByVersion(version)
+    const versionInfo = await this.fetchReleaseInfoByVersion(version)
     if (versionInfo && versionInfo.assets) {
       return this.convertAssetsToMap(versionInfo.assets)
     }
@@ -262,8 +262,8 @@ export class GitLabProvider extends Provider<GitlabUpdateInfo> {
   }
 
   async getBlockMapFiles(baseUrl: URL, oldVersion: string, newVersion: string, oldBlockMapFileBaseUrl: string | null = null): Promise<URL[]> {
-    // If is `project_upload`, find blockmap files in GitLab assets
-    // As each asset has a unique path that includes an identified hash code,
+    // If is `project_upload`, find blockmap files from corresponding gitLab assets
+    // Because each asset has an unique path that includes an identified hash code,
     // e.g. https://gitlab.com/-/project/71361100/uploads/051f27a925eaf679f2ad688105362acc/latest.yml
     if (this.options.uploadTarget === "project_upload") {
       // Get the base filename from the URL to find corresponding blockmap files

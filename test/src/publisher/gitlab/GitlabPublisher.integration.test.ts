@@ -1,7 +1,7 @@
 import { Arch } from "builder-util"
 import { CancellationToken } from "builder-util-runtime"
 import { GitlabPublisher, PublishContext } from "electron-publish"
-import { afterAll, beforeEach, describe, test, expect } from "vitest"
+import { afterAll, beforeEach, describe, expect, test } from "vitest"
 import { GitlabTestFixtures } from "./GitlabTestFixtures"
 import { GitlabTestHelper } from "./GitlabTestHelper"
 
@@ -24,9 +24,8 @@ import { GitlabTestHelper } from "./GitlabTestHelper"
  * - Minimal API calls for CI efficiency
  */
 
-// Helper function to check if error is due to authentication issues
-function isAuthError(error: any): boolean {
-  const errorMessage = error.message || error.description?.message || error.toString()
+function isAuthError(error: unknown): boolean {
+  const errorMessage = (error as Error)?.message || (error as any)?.description?.message || String(error)
   return GitlabTestFixtures.ERROR_PATTERNS.auth.test(errorMessage)
 }
 
@@ -36,7 +35,7 @@ function isAuthError(error: any): boolean {
 async function cleanupExistingReleases(): Promise<void> {
   const token = process.env.GITLAB_TOKEN
   if (!token) {
-    console.warn("No GitLab token available for cleanup")
+    // No GitLab token available for cleanup
     return
   }
 
@@ -46,10 +45,10 @@ async function cleanupExistingReleases(): Promise<void> {
 
     // Keep [v1.0.0, v1.1.0] baseline releases
     const protectedReleases = ["v1.0.0", "1.0.0", "v1.1.0", "1.1.0"]
-    const releasesToDelete = releases.filter(release => !protectedReleases.includes(release.tag_name))
+    const releasesToDelete = releases.filter((release: any) => !protectedReleases.includes(release.tag_name))
 
     if (releasesToDelete.length === 0) {
-      console.log("No releases to cleanup")
+      // No releases to cleanup
       return
     }
 
@@ -59,16 +58,16 @@ async function cleanupExistingReleases(): Promise<void> {
         const versionId = release.tag_name
         await helper.deleteUploadedAssets(versionId)
         await helper.deleteReleaseAndTag(versionId)
-        console.log(`Cleaned up release: ${versionId}`)
-      } catch (e: any) {
-        console.warn(`Failed to cleanup release ${release.tag_name}:`, e.message)
+        // Cleaned up release: ${versionId}
+      } catch (_e: unknown) {
+        // Failed to cleanup release ${release.tag_name}
       }
     })
 
     await Promise.allSettled(cleanupPromises)
-    console.log(`Cleanup completed. Deleted ${releasesToDelete.length} releases.`)
-  } catch (e: any) {
-    console.warn("Failed to perform cleanup:", e.message)
+    // Cleanup completed. Deleted ${releasesToDelete.length} releases.
+  } catch (_e: unknown) {
+    // Failed to perform cleanup
   }
 }
 
@@ -100,8 +99,7 @@ describe.sequential("GitLab Publisher - Integration Tests", () => {
         ...options,
         token: undefined, // Use environment token
       }),
-      uniqueVersion,
-      GitlabTestFixtures.DEFAULT_PUBLISH_OPTIONS
+      uniqueVersion
     )
   }
 
@@ -112,15 +110,14 @@ describe.sequential("GitLab Publisher - Integration Tests", () => {
         GitlabTestFixtures.createOptions({
           token: GitlabTestFixtures.TOKENS.invalid,
         }),
-        `${GitlabTestFixtures.VERSIONS.randomVersion()}.${testId}`,
-        GitlabTestFixtures.DEFAULT_PUBLISH_OPTIONS
+        `${GitlabTestFixtures.VERSIONS.randomVersion()}.${testId}`
       )
 
       try {
         await publisher.upload({ file: GitlabTestFixtures.ICON_PATH, arch: Arch.x64 })
         throw new Error("Expected authentication error")
-      } catch (error: any) {
-        expect(isAuthError(error), `Error: ${error.message}`).toBe(true)
+      } catch (error: unknown) {
+        expect(isAuthError(error), `Error: ${(error as Error).message}`).toBe(true)
       }
     }, 15000)
   })

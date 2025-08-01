@@ -42,7 +42,7 @@ export class GitlabTestHelper {
     try {
       const response = await httpExecutor.request(requestOptions, undefined, data)
       return response ? JSON.parse(response) : null
-    } catch (e: any) {
+    } catch (e: unknown) {
       if (e instanceof HttpError && e.statusCode === 404) {
         return null
       }
@@ -56,7 +56,7 @@ export class GitlabTestHelper {
   async getRelease(releaseId: string): Promise<GitlabReleaseInfo | null> {
     try {
       return await this.gitlabRequest<GitlabReleaseInfo>(`/projects/${encodeURIComponent(this.projectId)}/releases/${releaseId}`)
-    } catch (e: any) {
+    } catch (e: unknown) {
       if (e instanceof HttpError && e.statusCode === 404) {
         return null
       }
@@ -76,7 +76,7 @@ export class GitlabTestHelper {
 
     try {
       await this.gitlabRequest(`/projects/${encodeURIComponent(this.projectId)}/releases/${releaseId}`, null, "DELETE")
-    } catch (e: any) {
+    } catch (e: unknown) {
       if (e instanceof HttpError && e.statusCode === 404) {
         log.warn({ releaseId, reason: "doesn't exist" }, "cannot delete release")
         return
@@ -99,20 +99,20 @@ export class GitlabTestHelper {
       // First delete the release
       await this.deleteRelease(releaseId)
       log.debug({ releaseId }, "Deleted GitLab release")
-    } catch (e: any) {
-      log.warn({ releaseId, error: e.message }, "Failed to delete GitLab release")
+    } catch (e: unknown) {
+      log.warn({ releaseId, error: (e as Error).message }, "Failed to delete GitLab release")
     }
 
     try {
       // Then delete the git tag
       await this.gitlabRequest(`/projects/${encodeURIComponent(this.projectId)}/repository/tags/${encodeURIComponent(releaseId)}`, null, "DELETE")
       log.debug({ releaseId }, "Deleted GitLab tag")
-    } catch (e: any) {
+    } catch (e: unknown) {
       if (e instanceof HttpError && e.statusCode === 404) {
         log.warn({ releaseId, reason: "doesn't exist" }, "cannot delete git tag")
         return
       }
-      log.warn({ releaseId, error: e.message }, "Failed to delete GitLab tag")
+      log.warn({ releaseId, error: (e as Error).message }, "Failed to delete GitLab tag")
     }
   }
 
@@ -125,8 +125,8 @@ export class GitlabTestHelper {
     try {
       // Only need to delete generic packages - project uploads are auto-deleted with releases
       await this.deleteGenericPackages(releaseId)
-    } catch (e: any) {
-      log.warn({ releaseId, error: e.message }, "Failed to cleanup uploaded assets")
+    } catch (e: unknown) {
+      log.warn({ releaseId, error: (e as Error).message }, "Failed to cleanup uploaded assets")
     }
   }
 
@@ -150,14 +150,14 @@ export class GitlabTestHelper {
         try {
           await this.gitlabRequest(`/projects/${encodeURIComponent(this.projectId)}/packages/${pkg.id}`, null, "DELETE")
           log.debug({ packageId: pkg.id, version: pkg.version }, "Deleted GitLab generic package")
-        } catch (e: any) {
-          log.warn({ packageId: pkg.id, version: pkg.version, error: e.message }, "Failed to delete GitLab generic package")
+        } catch (e: unknown) {
+          log.warn({ packageId: pkg.id, version: pkg.version, error: (e as Error).message }, "Failed to delete GitLab generic package")
         }
       })
 
       await Promise.allSettled(deletePromises)
-    } catch (e: any) {
-      log.warn({ version, error: e.message }, "Failed to cleanup generic packages")
+    } catch (e: unknown) {
+      log.warn({ version, error: (e as Error).message }, "Failed to cleanup generic packages")
     }
   }
 
@@ -168,8 +168,8 @@ export class GitlabTestHelper {
     try {
       const releases = await this.gitlabRequest<GitlabReleaseInfo[]>(`/projects/${encodeURIComponent(this.projectId)}/releases`)
       return releases || []
-    } catch (e: any) {
-      throw new Error(`Failed to get all releases: ${e.message}`)
+    } catch (e: unknown) {
+      throw new Error(`Failed to get all releases: ${(e as Error).message}`)
     }
   }
 }
