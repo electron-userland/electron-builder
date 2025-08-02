@@ -2075,6 +2075,13 @@
           ],
           "description": "The mime types in addition to specified in the file associations. Use it if you don't want to register a new mime type, but reuse existing."
         },
+        "minimumSystemVersion": {
+          "description": "The minimum os kernel version required to install the application.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
         "packageCategory": {
           "description": "backward compatibility + to allow specify fpm-only category for all possible fpm targets in one place",
           "type": [
@@ -2433,6 +2440,13 @@
     "MacConfiguration": {
       "additionalProperties": false,
       "properties": {
+        "LSMinimumSystemVersion": {
+          "description": "The minimum version of macOS required for the app to run. Corresponds to `LSMinimumSystemVersion`.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
         "additionalArguments": {
           "anyOf": [
             {
@@ -2843,7 +2857,7 @@
           "type": "boolean"
         },
         "minimumSystemVersion": {
-          "description": "The minimum version of macOS required for the app to run. Corresponds to `LSMinimumSystemVersion`.",
+          "description": "The minimum os kernel version required to install the application.",
           "type": [
             "null",
             "string"
@@ -3068,6 +3082,13 @@
     "MasConfiguration": {
       "additionalProperties": false,
       "properties": {
+        "LSMinimumSystemVersion": {
+          "description": "The minimum version of macOS required for the app to run. Corresponds to `LSMinimumSystemVersion`.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
         "additionalArguments": {
           "anyOf": [
             {
@@ -3478,7 +3499,7 @@
           "type": "boolean"
         },
         "minimumSystemVersion": {
-          "description": "The minimum version of macOS required for the app to run. Corresponds to `LSMinimumSystemVersion`.",
+          "description": "The minimum os kernel version required to install the application.",
           "type": [
             "null",
             "string"
@@ -6705,6 +6726,13 @@
             "string"
           ]
         },
+        "minimumSystemVersion": {
+          "description": "The minimum os kernel version required to install the application.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
         "protocols": {
           "anyOf": [
             {
@@ -7576,6 +7604,13 @@
         }
       ],
       "description": "MAS (Mac Application Store) development options (`mas-dev` target)."
+    },
+    "minimumSystemVersion": {
+      "description": "The minimum os kernel version required to install the application.",
+      "type": [
+        "null",
+        "string"
+      ]
     },
     "msi": {
       "anyOf": [
