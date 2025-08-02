@@ -26,6 +26,7 @@ export {
   getS3LikeProviderBaseUrl,
   GithubOptions,
   githubUrl,
+  githubTagPrefix,
   GitlabOptions,
   KeygenOptions,
   PublishConfiguration,

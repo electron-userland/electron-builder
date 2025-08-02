@@ -98,8 +98,16 @@ export interface GithubOptions extends PublishConfiguration {
   /**
    * Whether to use `v`-prefixed tag name.
    * @default true
+   * @deprecated please use #tagNamePrefix instead.
    */
   readonly vPrefixedTagName?: boolean
+
+  /**
+   * If defined, sets the prefix of the tag name that comes before the semver number.
+   * e.g. "v" in "v1.2.3" or "test" of "test1.2.3".
+   * Overrides `vPrefixedTagName`
+   */
+  readonly tagNamePrefix?: string
 
   /**
    * The host (including the port if need).
@@ -141,6 +149,16 @@ export interface GithubOptions extends PublishConfiguration {
 /** @private */
 export function githubUrl(options: GithubOptions, defaultHost = "github.com") {
   return `${options.protocol || "https"}://${options.host || defaultHost}`
+}
+
+export function githubTagPrefix(options: GithubOptions) {
+  if (options.tagNamePrefix) {
+    return options.tagNamePrefix
+  }
+  if (options.vPrefixedTagName ?? true) {
+    return 'v'
+  }
+  return ''
 }
 
 /**
