@@ -33,7 +33,6 @@ describe("GitLab Publisher - Unit Tests", () => {
 
         try {
           delete process.env.GITLAB_TOKEN
-          delete process.env.GL_TOKEN
 
           expect(() => {
             new GitlabPublisher(

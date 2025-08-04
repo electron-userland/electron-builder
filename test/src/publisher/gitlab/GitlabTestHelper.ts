@@ -20,7 +20,7 @@ export class GitlabTestHelper {
     projectId?: string
     host?: string
   } = {}) {
-    this.token = process.env.GITLAB_TOKEN || process.env.GL_TOKEN || ""
+    this.token = process.env.GITLAB_TOKEN || ""
     this.host = host
     this.projectId = String(projectId)
   }

@@ -147,7 +147,7 @@ export function githubUrl(options: GithubOptions, defaultHost = "github.com") {
  * [GitLab](https://docs.gitlab.com/ee/user/project/releases/) options.
  *
  * GitLab [personal access token](https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html) is required for private repositories. You can generate one by going to your GitLab profile settings.
- * Define `GITLAB_TOKEN` or `GL_TOKEN` environment variable.
+ * Define `GITLAB_TOKEN` environment variable.
  */
 export interface GitlabOptions extends PublishConfiguration {
   /**

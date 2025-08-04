@@ -82,7 +82,6 @@ export class GitlabTestFixtures {
   } {
     const original = {
       GITLAB_TOKEN: process.env.GITLAB_TOKEN,
-      GL_TOKEN: process.env.GL_TOKEN,
       CI_PROJECT_ID: process.env.CI_PROJECT_ID,
       CI_PROJECT_PATH: process.env.CI_PROJECT_PATH,
     }

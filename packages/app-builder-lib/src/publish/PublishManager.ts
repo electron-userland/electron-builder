@@ -449,7 +449,7 @@ async function resolvePublishConfigurations(
     let serviceName: PublishProvider | null = null
     if (!isEmptyOrSpaces(process.env.GH_TOKEN) || !isEmptyOrSpaces(process.env.GITHUB_TOKEN)) {
       serviceName = "github"
-    } else if (!isEmptyOrSpaces(process.env.GITLAB_TOKEN) || !isEmptyOrSpaces(process.env.GL_TOKEN)) {
+    } else if (!isEmptyOrSpaces(process.env.GITLAB_TOKEN)) {
       serviceName = "gitlab"
     } else if (!isEmptyOrSpaces(process.env.KEYGEN_TOKEN)) {
       serviceName = "keygen"

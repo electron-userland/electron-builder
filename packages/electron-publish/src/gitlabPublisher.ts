@@ -35,15 +35,15 @@ export class GitlabPublisher extends HttpPublisher {
 
     let token = info.token
     if (isEmptyOrSpaces(token)) {
-      token = process.env.GITLAB_TOKEN || process.env.GL_TOKEN
+      token = process.env.GITLAB_TOKEN
       if (isEmptyOrSpaces(token)) {
-        throw new InvalidConfigurationError(`GitLab Personal Access Token is not set, neither programmatically, nor using env "GITLAB_TOKEN" or "GL_TOKEN"`)
+        throw new InvalidConfigurationError(`GitLab Personal Access Token is not set, neither programmatically, nor using env "GITLAB_TOKEN"`)
       }
 
       token = token.trim()
 
       if (!isTokenCharValid(token)) {
-        throw new InvalidConfigurationError(`GitLab Personal Access Token (${JSON.stringify(token)}) contains invalid characters, please check env "GITLAB_TOKEN" or "GL_TOKEN"`)
+        throw new InvalidConfigurationError(`GitLab Personal Access Token (${JSON.stringify(token)}) contains invalid characters, please check env "GITLAB_TOKEN"`)
       }
     }
 
