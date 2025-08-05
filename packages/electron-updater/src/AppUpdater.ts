@@ -748,7 +748,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         ...updateInfo,
         downloadedFile: updateFile,
       })
-      const currentBlockMapFile = path.join(cacheDir, "current.blockmap")
+      const currentBlockMapFile = path.join(cacheDir, `${updateFileName}.blockmap`)
       if (await pathExists(currentBlockMapFile)) {
         await copyFile(currentBlockMapFile, path.join(downloadedUpdateHelper.cacheDir, "current.blockmap"))
       }
@@ -844,7 +844,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       }
 
       const saveBlockMapToCacheDir = async (blockMapData: BlockMap, cacheDir: string) => {
-        const blockMapFile = path.join(cacheDir, "current.blockmap")
+        const blockMapFile = path.join(cacheDir, `${new URL(fileInfo.url).pathname.split("/").pop()}.blockmap`)
         await outputFile(blockMapFile, gzipSync(JSON.stringify(blockMapData)))
       }
 
