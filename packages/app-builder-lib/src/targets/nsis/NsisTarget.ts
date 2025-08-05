@@ -37,7 +37,7 @@ import { addCustomMessageFileInclude, createAddLangsMacro, LangConfigurator } fr
 import { computeLicensePage } from "./nsisLicense"
 import { NsisOptions, PortableOptions } from "./nsisOptions"
 import { NsisScriptGenerator } from "./nsisScriptGenerator"
-import { AppPackageHelper, NSIS_PATH, NSIS_RESOURCES_PATH, NsisTargetOptions, nsisTemplatesDir, UninstallerReader } from "./nsisUtil"
+import { AppPackageHelper, NSIS_PATH, NSIS_RESOURCES_PATH, NsisTargetOptions, nsisTemplatesDir, ProgIdMaker, UninstallerReader } from "./nsisUtil"
 
 const debug = _debug("electron-builder:nsis")
 
@@ -167,6 +167,10 @@ export class NsisTarget extends Target {
     }
   }
 
+  get appGuid(): string {
+    return this.options.guid || UUID.v5(this.packager.appInfo.id, ELECTRON_BUILDER_NS_UUID)
+  }
+
   private async buildInstaller(archs: Map<Arch, string>): Promise<any> {
     const primaryArch: Arch | null = archs.size === 1 ? (archs.keys().next().value ?? null) : null
     const packager = this.packager
@@ -200,11 +204,10 @@ export class NsisTarget extends Target {
       logFields
     )
 
-    const guid = options.guid || UUID.v5(appInfo.id, ELECTRON_BUILDER_NS_UUID)
-    const uninstallAppKey = guid.replace(/\\/g, " - ")
+    const uninstallAppKey = this.appGuid.replace(/\\/g, " - ")
     const defines: Defines = {
       APP_ID: appInfo.id,
-      APP_GUID: guid,
+      APP_GUID: this.appGuid,
       // Windows bug - entry in Software\Microsoft\Windows\CurrentVersion\Uninstall cannot have \ symbols (dir)
       UNINSTALL_APP_KEY: uninstallAppKey,
       PRODUCT_NAME: appInfo.productName,
@@ -221,8 +224,8 @@ export class NsisTarget extends Target {
     if (options.customNsisBinary?.debugLogging) {
       defines.ENABLE_LOGGING_ELECTRON_BUILDER = null
     }
-    if (uninstallAppKey !== guid) {
-      defines.UNINSTALL_REGISTRY_KEY_2 = `Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\${guid}`
+    if (uninstallAppKey !== this.appGuid) {
+      defines.UNINSTALL_REGISTRY_KEY_2 = `Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\${this.appGuid}`
     }
 
     const { homepage } = this.packager.info.metadata
@@ -728,6 +731,7 @@ export class NsisTarget extends Target {
     const fileAssociations = packager.fileAssociations
     if (fileAssociations.length !== 0) {
       scriptGenerator.include(path.join(path.join(nsisTemplatesDir, "include"), "FileAssociation.nsh"))
+      const progIdMaker = new ProgIdMaker(this.appGuid, packager.appInfo.productFilename)
       if (isInstaller) {
         const registerFileAssociationsScript = new NsisScriptGenerator()
         for (const item of fileAssociations) {
@@ -740,10 +744,11 @@ export class NsisTarget extends Target {
               registerFileAssociationsScript.file(installedIconPath, customIcon)
             }
 
+            const progID = progIdMaker.progId(item.name || ext)
             const icon = `"${installedIconPath}"`
             const commandText = `"Open with ${packager.appInfo.productName}"`
             const command = '"$appExe $\\"%1$\\""'
-            registerFileAssociationsScript.insertMacro("APP_ASSOCIATE", `"${ext}" "${item.name || ext}" "${item.description || ""}" ${icon} ${commandText} ${command}`)
+            registerFileAssociationsScript.insertMacro("APP_ASSOCIATE", `"${ext}" "${progID}" "${item.description || ""}" ${icon} ${commandText} ${command}`)
           }
         }
         scriptGenerator.macro("registerFileAssociations", registerFileAssociationsScript)
@@ -751,7 +756,7 @@ export class NsisTarget extends Target {
         const unregisterFileAssociationsScript = new NsisScriptGenerator()
         for (const item of fileAssociations) {
           for (const ext of asArray(item.ext)) {
-            unregisterFileAssociationsScript.insertMacro("APP_UNASSOCIATE", `"${normalizeExt(ext)}" "${item.name || ext}"`)
+            unregisterFileAssociationsScript.insertMacro("APP_UNASSOCIATE", `"${normalizeExt(ext)}" "${progIdMaker.progId(item.name || ext)}"`)
           }
         }
         scriptGenerator.macro("unregisterFileAssociations", unregisterFileAssociationsScript)
