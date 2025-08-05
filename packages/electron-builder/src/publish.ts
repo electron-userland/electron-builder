@@ -15,6 +15,7 @@ export function configurePublishCommand(yargs: yargs.Argv): yargs.Argv {
   // https://github.com/yargs/yargs/issues/760
   // demandOption is required to be set
   return yargs
+    .version(false)
     .parserConfiguration({
       "camel-case-expansion": false,
     })
@@ -31,7 +32,7 @@ export function configurePublishCommand(yargs: yargs.Argv): yargs.Argv {
       description: "The app/build version used when searching for an upload release (used by some Publishers)",
     })
     .option("config", {
-      alias: ["c"],
+      alias: ["c", "configurationFilePath"],
       type: "string",
       description:
         "The path to an electron-builder config. Defaults to `electron-builder.yml` (or `json`, or `json5`, or `js`, or `ts`), see " + chalk.underline("https://goo.gl/YFRJOM"),
