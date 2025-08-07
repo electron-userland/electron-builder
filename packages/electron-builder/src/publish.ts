@@ -5,6 +5,7 @@ import { Publish } from "app-builder-lib/out/core"
 import { computeSafeArtifactNameIfNeeded } from "app-builder-lib/out/platformPackager"
 import { getConfig } from "app-builder-lib/out/util/config/config"
 import { InvalidConfigurationError, archFromString, log, printErrorAndExit } from "builder-util"
+import { PublishPolicy } from "electron-publish"
 import * as chalk from "chalk"
 import * as path from "path"
 import * as yargs from "yargs"
@@ -15,6 +16,7 @@ export function configurePublishCommand(yargs: yargs.Argv): yargs.Argv {
   // https://github.com/yargs/yargs/issues/760
   // demandOption is required to be set
   return yargs
+    .version(false)
     .parserConfiguration({
       "camel-case-expansion": false,
     })
@@ -31,34 +33,41 @@ export function configurePublishCommand(yargs: yargs.Argv): yargs.Argv {
       description: "The app/build version used when searching for an upload release (used by some Publishers)",
     })
     .option("config", {
-      alias: ["c"],
+      alias: ["c", "configurationFilePath"],
       type: "string",
       description:
         "The path to an electron-builder config. Defaults to `electron-builder.yml` (or `json`, or `json5`, or `js`, or `ts`), see " + chalk.underline("https://goo.gl/YFRJOM"),
     })
+    .option("policy", {
+      alias: ["p"],
+      type: "string",
+      description: `Publish trigger policy, see ${chalk.underline("https://www.electron.build/publish")}`,
+      choices: ["onTag", "onTagOrDraft", "always", "never", undefined as any],
+    })
     .demandOption("files")
 }
 
-export async function publish(args: { files: string[]; version: string | undefined; configurationFilePath: string | undefined }) {
+export async function publish(args: { files: string[]; version: string | undefined; configurationFilePath: string | undefined; policy: PublishPolicy }) {
   const uploadTasks = args.files.map(f => {
     return {
       file: path.resolve(f),
       arch: null,
     }
   })
-  return publishArtifactsWithOptions(uploadTasks, args.version, args.configurationFilePath)
+  return publishArtifactsWithOptions(uploadTasks, args.version, args.configurationFilePath, undefined, { publish: args.policy })
 }
 
 export async function publishArtifactsWithOptions(
   uploadOptions: { file: string; arch: string | null }[],
   buildVersion?: string,
   configurationFilePath?: string,
-  publishConfiguration?: Publish
+  publishConfiguration?: Publish,
+  publishOptions?: PublishOptions
 ) {
   const projectDir = process.cwd()
   const config = await getConfig(projectDir, configurationFilePath || null, { publish: publishConfiguration, detectUpdateChannel: false })
 
-  const buildOptions: BuildOptions = normalizeOptions({ config })
+  const buildOptions: BuildOptions = normalizeOptions({ config, publish: publishOptions?.publish })
   checkBuildRequestOptions(buildOptions)
 
   const uniqueUploads = Array.from(new Set(uploadOptions))
