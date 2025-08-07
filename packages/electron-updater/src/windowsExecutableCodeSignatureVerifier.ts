@@ -4,7 +4,7 @@ import * as os from "os"
 import { Logger } from "./types"
 import * as path from "path"
 
-function preparePowerShellExec(command: string) {
+function preparePowerShellExec(command: string, timeout?: number) {
   // https://github.com/electron-userland/electron-builder/issues/2421
   // https://github.com/electron-userland/electron-builder/issues/2535
   // Resetting PSModulePath is necessary https://github.com/electron-userland/electron-builder/issues/7127
@@ -14,7 +14,7 @@ function preparePowerShellExec(command: string) {
   const args = ["-NoProfile", "-NonInteractive", "-InputFormat", "None", "-Command", command]
   const options: ExecFileOptions = {
     shell: true,
-    timeout: 20 * 1000,
+    timeout,
   }
   return [executable, args, options] as const
 }
@@ -45,7 +45,7 @@ export function verifySignature(publisherNames: Array<string>, unescapedTempUpda
     const tempUpdateFile = unescapedTempUpdateFile.replace(/'/g, "''")
     logger.info(`Verifying signature ${tempUpdateFile}`)
 
-    execFile(...preparePowerShellExec(`"Get-AuthenticodeSignature -LiteralPath '${tempUpdateFile}' | ConvertTo-Json -Compress"`),
+    execFile(...preparePowerShellExec(`"Get-AuthenticodeSignature -LiteralPath '${tempUpdateFile}' | ConvertTo-Json -Compress"`, 20 * 1000),
       (error, stdout, stderr) => {
         try {
           if (error != null || stderr) {
@@ -127,7 +127,7 @@ function handleError(logger: Logger, error: Error | null, stderr: string | null,
   }
 
   try {
-    execFileSync(...preparePowerShellExec("ConvertTo-Json test"))
+    execFileSync(...preparePowerShellExec("ConvertTo-Json test", 10 * 1000))
   } catch (testError: any) {
     logger.warn(
       `Cannot execute ConvertTo-Json: ${testError.message}. Ignoring signature validation due to unsupported powershell version. Please upgrade to powershell 3 or higher.`
