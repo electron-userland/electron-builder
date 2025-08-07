@@ -30,12 +30,12 @@
 !macroend
 
 !macro CHECK_APP_RUNNING
-  Var /GLOBAL CmdPath
-  Var /GLOBAL FindPath
-  Var /GLOBAL PowerShellPath
   !ifmacrodef customCheckAppRunning
     !insertmacro customCheckAppRunning
   !else
+    Var /GLOBAL CmdPath
+    Var /GLOBAL FindPath
+    Var /GLOBAL PowerShellPath
     StrCpy $CmdPath "$SYSDIR\cmd.exe"
     StrCpy $FindPath "$SYSDIR\find.exe"
     StrCpy $PowerShellPath "$SYSDIR\WindowsPowerShell\v1.0\powershell.exe"
