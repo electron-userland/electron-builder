@@ -1,5 +1,17 @@
 # electron-builder-squirrel-windows
 
+## 26.0.20
+
+### Patch Changes
+
+- [#8959](https://github.com/electron-userland/electron-builder/pull/8959) [`0ad8f91c`](https://github.com/electron-userland/electron-builder/commit/0ad8f91cd5478a2063eb9e20df47797c8b42d48c) Thanks [@beyondkmp](https://github.com/beyondkmp)! - fix: generate stubExecutableExe and sign it for squirrel.windows using new electron-builder-binaries asset
+
+- [#9222](https://github.com/electron-userland/electron-builder/pull/9222) [`9997660e`](https://github.com/electron-userland/electron-builder/commit/9997660e20cbdaa4ddb01d1c6078dea91097d6f0) Thanks [@beyondkmp](https://github.com/beyondkmp)! - fix(squirrel-windows): update loadingGif handling to prioritize user-defined option
+
+- Updated dependencies [[`f262a735`](https://github.com/electron-userland/electron-builder/commit/f262a7358dafe189b5d9bf06d7be43478ee35faa), [`44b28997`](https://github.com/electron-userland/electron-builder/commit/44b28997f15314730d1bb69303a47dc26f7950d1), [`cf0ac45d`](https://github.com/electron-userland/electron-builder/commit/cf0ac45db79e3e3ff1cef3ad931f7272646d1cb1), [`e9251f47`](https://github.com/electron-userland/electron-builder/commit/e9251f4725f1f7c14c9792f5af8053dde1793d6a), [`c54a0609`](https://github.com/electron-userland/electron-builder/commit/c54a0609753a11d032f87e727eccbab1f6836081)]:
+  - app-builder-lib@26.0.20
+  - builder-util@26.0.20
+
 ## 26.0.19
 
 ### Patch Changes

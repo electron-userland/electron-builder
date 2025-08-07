@@ -1,5 +1,24 @@
 # app-builder-lib
 
+## 26.0.20
+
+### Patch Changes
+
+- [#9231](https://github.com/electron-userland/electron-builder/pull/9231) [`f262a735`](https://github.com/electron-userland/electron-builder/commit/f262a7358dafe189b5d9bf06d7be43478ee35faa) Thanks [@rastiqdev](https://github.com/rastiqdev)! - fix: add quotation marks around variable in AppArmor profile
+
+- [#9216](https://github.com/electron-userland/electron-builder/pull/9216) [`44b28997`](https://github.com/electron-userland/electron-builder/commit/44b28997f15314730d1bb69303a47dc26f7950d1) Thanks [@taylorhadden](https://github.com/taylorhadden)! - feat(github): Add `tagNamePrefix` option and deprecate `vPrefixedTagName`
+
+- [#9219](https://github.com/electron-userland/electron-builder/pull/9219) [`cf0ac45d`](https://github.com/electron-userland/electron-builder/commit/cf0ac45db79e3e3ff1cef3ad931f7272646d1cb1) Thanks [@beyondkmp](https://github.com/beyondkmp)! - fix(yarn): check for dependencies in both projectDir and appDir during installation
+
+- [#9217](https://github.com/electron-userland/electron-builder/pull/9217) [`e9251f47`](https://github.com/electron-userland/electron-builder/commit/e9251f4725f1f7c14c9792f5af8053dde1793d6a) Thanks [@sabonerune](https://github.com/sabonerune)! - fix(nsis): Fix file associations according to the Windows documentation
+
+- Updated dependencies [[`44b28997`](https://github.com/electron-userland/electron-builder/commit/44b28997f15314730d1bb69303a47dc26f7950d1), [`0ad8f91c`](https://github.com/electron-userland/electron-builder/commit/0ad8f91cd5478a2063eb9e20df47797c8b42d48c), [`9997660e`](https://github.com/electron-userland/electron-builder/commit/9997660e20cbdaa4ddb01d1c6078dea91097d6f0), [`7c7fd6ca`](https://github.com/electron-userland/electron-builder/commit/7c7fd6ca240eda72048835f754adac92c4ab4e8c), [`c54a0609`](https://github.com/electron-userland/electron-builder/commit/c54a0609753a11d032f87e727eccbab1f6836081)]:
+  - builder-util-runtime@9.4.0
+  - electron-publish@26.0.20
+  - electron-builder-squirrel-windows@26.0.20
+  - builder-util@26.0.20
+  - dmg-builder@26.0.20
+
 ## 26.0.19
 
 ### Patch Changes

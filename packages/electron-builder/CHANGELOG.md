@@ -1,5 +1,19 @@
 # electron-builder
 
+## 26.0.20
+
+### Patch Changes
+
+- [#9228](https://github.com/electron-userland/electron-builder/pull/9228) [`d031eeaa`](https://github.com/electron-userland/electron-builder/commit/d031eeaa7eb282e516471eed2e2a764716999b20) Thanks [@choegyumin](https://github.com/choegyumin)! - fix: support option to override `PublishPolicy` in publish command
+
+- [#9227](https://github.com/electron-userland/electron-builder/pull/9227) [`8f0ad06e`](https://github.com/electron-userland/electron-builder/commit/8f0ad06eae4716b7b753301531241166a7333058) Thanks [@choegyumin](https://github.com/choegyumin)! - fix: fix argument names mismatch in publish command to make it work
+
+- Updated dependencies [[`f262a735`](https://github.com/electron-userland/electron-builder/commit/f262a7358dafe189b5d9bf06d7be43478ee35faa), [`44b28997`](https://github.com/electron-userland/electron-builder/commit/44b28997f15314730d1bb69303a47dc26f7950d1), [`7c7fd6ca`](https://github.com/electron-userland/electron-builder/commit/7c7fd6ca240eda72048835f754adac92c4ab4e8c), [`cf0ac45d`](https://github.com/electron-userland/electron-builder/commit/cf0ac45db79e3e3ff1cef3ad931f7272646d1cb1), [`e9251f47`](https://github.com/electron-userland/electron-builder/commit/e9251f4725f1f7c14c9792f5af8053dde1793d6a), [`c54a0609`](https://github.com/electron-userland/electron-builder/commit/c54a0609753a11d032f87e727eccbab1f6836081)]:
+  - app-builder-lib@26.0.20
+  - builder-util-runtime@9.4.0
+  - builder-util@26.0.20
+  - dmg-builder@26.0.20
+
 ## 26.0.19
 
 ### Patch Changes
