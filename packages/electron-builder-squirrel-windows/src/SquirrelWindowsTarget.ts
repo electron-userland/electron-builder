@@ -161,7 +161,7 @@ export default class SquirrelWindowsTarget extends Target {
     fs.copyFileSync(path.join(vendorDirectory, `7z-${resolvedArch}.dll`), path.join(vendorDirectory, "7z.dll"))
   }
 
-  private async createNuspecTemplateWithProjectUrl(additionalFiles: {src: string, target: string}[]) {
+  private async createNuspecTemplateWithProjectUrl(additionalFiles: { src: string; target: string }[]) {
     const templatePath = path.resolve(__dirname, "..", "template.nuspectemplate")
     const projectUrl = await this.packager.appInfo.computePackageUrl()
 
@@ -176,17 +176,11 @@ export default class SquirrelWindowsTarget extends Target {
     }
 
     // Replace the additionalFiles loop with the actual files
-    if(additionalFiles.length > 0) {
-    const additionalFilesContent = additionalFiles.map(f => `    <file src="${f.src}" target="${f.target}" />`).join('\n')
-    templateContent = templateContent.replace(
-      '<% file src="additionalFiles.src" target="additionalFiles.target" / %>',
-        additionalFilesContent
-      )
-    }else{
-      templateContent = templateContent.replace(
-        '<% file src="additionalFiles.src" target="additionalFiles.target" / %>',
-        ''
-      )
+    if (additionalFiles.length > 0) {
+      const additionalFilesContent = additionalFiles.map(f => `    <file src="${f.src}" target="${f.target}" />`).join("\n")
+      templateContent = templateContent.replace('<% file src="additionalFiles.src" target="additionalFiles.target" / %>', additionalFilesContent)
+    } else {
+      templateContent = templateContent.replace('<% file src="additionalFiles.src" target="additionalFiles.target" / %>', "")
     }
 
     await fs.promises.writeFile(nuspecTemplate, templateContent)
@@ -207,17 +201,19 @@ export default class SquirrelWindowsTarget extends Target {
       const fileName = f.name
 
       // Files explicitly included in template
-      if (fileName.endsWith(".bin") ||
-          fileName.endsWith(".dll") ||
-          fileName.endsWith(".pak") ||
-          fileName.endsWith(".exe.config") ||
-          fileName.endsWith(".exe.sig") ||
-          fileName.endsWith("_ExecutionStub.exe") ||
-          fileName === "icudtl.dat" ||
-          fileName === "Squirrel.exe" ||
-          fileName === "LICENSE.electron.txt" ||
-          fileName === "LICENSES.chromium.html" ||
-          fileName === appExe) {
+      if (
+        fileName.endsWith(".bin") ||
+        fileName.endsWith(".dll") ||
+        fileName.endsWith(".pak") ||
+        fileName.endsWith(".exe.config") ||
+        fileName.endsWith(".exe.sig") ||
+        fileName.endsWith("_ExecutionStub.exe") ||
+        fileName === "icudtl.dat" ||
+        fileName === "Squirrel.exe" ||
+        fileName === "LICENSE.electron.txt" ||
+        fileName === "LICENSES.chromium.html" ||
+        fileName === appExe
+      ) {
         return false
       }
       return true
@@ -237,8 +233,6 @@ export default class SquirrelWindowsTarget extends Target {
     })
   }
 
-
-
   async computeEffectiveDistOptions(appDirectory: string, outputDirectory: string, setupFile: string): Promise<SquirrelOptions> {
     const packager = this.packager
     let iconUrl = this.options.iconUrl
@@ -252,7 +246,6 @@ export default class SquirrelWindowsTarget extends Target {
         throw new InvalidConfigurationError("squirrelWindows.iconUrl is not specified, please see https://www.electron.build/squirrel-windows#SquirrelWindowsOptions-iconUrl")
       }
     }
-
 
     const additionalFiles = await this.getAdditionalFiles(appDirectory, this.exeName)
     checkConflictingOptions(this.options)
