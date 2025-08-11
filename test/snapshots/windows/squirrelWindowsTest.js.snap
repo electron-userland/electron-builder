@@ -272,6 +272,7 @@ exports[`squirrel.windows > squirrel window x64 msi 2`] = `
   "lib/net45/d3dcompiler_47.dll",
   "lib/net45/ffmpeg.dll",
   "lib/net45/icudtl.dat",
+  "lib/net45/index.html",
   "lib/net45/libEGL.dll",
   "lib/net45/libGLESv2.dll",
   "lib/net45/LICENSE.electron.txt",

@@ -247,7 +247,7 @@ export default class SquirrelWindowsTarget extends Target {
       }
     }
 
-    const additionalFiles = await this.getAdditionalFiles(appDirectory, this.exeName)
+    const additionalFiles = await this.getAdditionalFiles(appDirectory)
     checkConflictingOptions(this.options)
     const appInfo = packager.appInfo
     const options: SquirrelOptions = {
