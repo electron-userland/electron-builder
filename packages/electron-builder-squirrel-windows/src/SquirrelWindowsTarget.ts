@@ -187,7 +187,7 @@ export default class SquirrelWindowsTarget extends Target {
     return nuspecTemplate
   }
 
-  private async getAdditionalFiles(appOutDir: string, exeName: string) {
+  private async getAdditionalFiles(appOutDir: string) {
     const files = await fs.promises.readdir(appOutDir, { withFileTypes: true })
     const appExe = `${this.exeName}.exe`
 
