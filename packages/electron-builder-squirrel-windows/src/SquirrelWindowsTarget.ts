@@ -161,19 +161,83 @@ export default class SquirrelWindowsTarget extends Target {
     fs.copyFileSync(path.join(vendorDirectory, `7z-${resolvedArch}.dll`), path.join(vendorDirectory, "7z.dll"))
   }
 
-  private async createNuspecTemplateWithProjectUrl() {
+  private async createNuspecTemplateWithProjectUrl(additionalFiles: {src: string, target: string}[]) {
     const templatePath = path.resolve(__dirname, "..", "template.nuspectemplate")
     const projectUrl = await this.packager.appInfo.computePackageUrl()
+
+    // Always create a customized template to include additionalFiles
+    const nuspecTemplate = await this.packager.info.tempDirManager.getTempFile({ prefix: "template", suffix: ".nuspectemplate" })
+    let templateContent = await fs.promises.readFile(templatePath, "utf8")
+
+    // Add project URL if available
     if (projectUrl != null) {
-      const nuspecTemplate = await this.packager.info.tempDirManager.getTempFile({ prefix: "template", suffix: ".nuspectemplate" })
-      let templateContent = await fs.promises.readFile(templatePath, "utf8")
       const searchString = "<copyright><%- copyright %></copyright>"
       templateContent = templateContent.replace(searchString, `${searchString}\n    <projectUrl>${projectUrl}</projectUrl>`)
-      await fs.promises.writeFile(nuspecTemplate, templateContent)
-      return nuspecTemplate
     }
-    return templatePath
+
+    // Replace the additionalFiles loop with the actual files
+    if(additionalFiles.length > 0) {
+    const additionalFilesContent = additionalFiles.map(f => `    <file src="${f.src}" target="${f.target}" />`).join('\n')
+    templateContent = templateContent.replace(
+      '<% file src="additionalFiles.src" target="additionalFiles.target" / %>',
+        additionalFilesContent
+      )
+    }else{
+      templateContent = templateContent.replace(
+        '<% file src="additionalFiles.src" target="additionalFiles.target" / %>',
+        ''
+      )
+    }
+
+    await fs.promises.writeFile(nuspecTemplate, templateContent)
+    return nuspecTemplate
   }
+
+  private async getAdditionalFiles(appOutDir: string, exeName: string) {
+    const files = await fs.promises.readdir(appOutDir, { withFileTypes: true })
+    const appExe = `${this.exeName}.exe`
+
+    const additionalFiles = files.filter(f => {
+      if (f.isDirectory()) {
+        // Filter out directories already included in template
+        return f.name !== "resources" && f.name !== "locales"
+      }
+
+      // Filter out files already included in template.nuspectemplate
+      const fileName = f.name
+
+      // Files explicitly included in template
+      if (fileName.endsWith(".bin") ||
+          fileName.endsWith(".dll") ||
+          fileName.endsWith(".pak") ||
+          fileName.endsWith(".exe.config") ||
+          fileName.endsWith(".exe.sig") ||
+          fileName.endsWith("_ExecutionStub.exe") ||
+          fileName === "icudtl.dat" ||
+          fileName === "Squirrel.exe" ||
+          fileName === "LICENSE.electron.txt" ||
+          fileName === "LICENSES.chromium.html" ||
+          fileName === appExe) {
+        return false
+      }
+      return true
+    })
+
+    return additionalFiles.map(f => {
+      if (f.isDirectory()) {
+        return {
+          src: `${f.name}\\**`,
+          target: `lib\\net45\\${f.name}`,
+        }
+      }
+      return {
+        src: f.name,
+        target: `lib\\net45\\${f.name}`,
+      }
+    })
+  }
+
+
 
   async computeEffectiveDistOptions(appDirectory: string, outputDirectory: string, setupFile: string): Promise<SquirrelOptions> {
     const packager = this.packager
@@ -189,6 +253,8 @@ export default class SquirrelWindowsTarget extends Target {
       }
     }
 
+
+    const additionalFiles = await this.getAdditionalFiles(appDirectory, this.exeName)
     checkConflictingOptions(this.options)
     const appInfo = packager.appInfo
     const options: SquirrelOptions = {
@@ -200,7 +266,7 @@ export default class SquirrelWindowsTarget extends Target {
       description: appInfo.description,
       exe: `${appInfo.productFilename || this.options.name || appInfo.productName}.exe`,
       authors: appInfo.companyName || "",
-      nuspecTemplate: await this.createNuspecTemplateWithProjectUrl(),
+      nuspecTemplate: await this.createNuspecTemplateWithProjectUrl(additionalFiles),
       iconUrl,
       copyright: appInfo.copyright,
       noMsi: !this.options.msi,
