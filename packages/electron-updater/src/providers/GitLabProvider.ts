@@ -65,10 +65,7 @@ export class GitLabProvider extends Provider<GitlabUpdateInfo> {
 
     let latestRelease: GitlabReleaseInfo
     try {
-      const header = { "Content-Type": "application/json" }
-      if (this.options.token) {
-        ;(header as any)["PRIVATE-TOKEN"] = this.options.token
-      }
+      const header = { "Content-Type": "application/json", ...this.setAuthHeaderForToken(this.options.token || null) }
       const releaseResponse = await this.httpRequest(latestReleaseUrl, header, cancellationToken)
 
       if (!releaseResponse) {
@@ -196,10 +193,7 @@ export class GitLabProvider extends Provider<GitlabUpdateInfo> {
       const releaseUrl = newUrlFromBase(`projects/${this.options.projectId}/releases/${encodeURIComponent(releaseId)}`, this.baseApiUrl)
 
       try {
-        const header = { "Content-Type": "application/json" }
-        if (this.options.token) {
-          ;(header as any)["PRIVATE-TOKEN"] = this.options.token
-        }
+        const header = { "Content-Type": "application/json", ...this.setAuthHeaderForToken(this.options.token || null) }
         const releaseResponse = await this.httpRequest(releaseUrl, header, cancellationToken)
 
         if (releaseResponse) {
@@ -218,6 +212,23 @@ export class GitLabProvider extends Provider<GitlabUpdateInfo> {
 
     // If we get here, none of the release ID formats worked
     throw newError(`Unable to find release with version ${version} (tried: ${possibleReleaseIds.join(", ")}) on GitLab`, "ERR_UPDATER_RELEASE_NOT_FOUND")
+  }
+
+  private setAuthHeaderForToken(token: string | null): { [key: string]: string } {
+    const headers: { [key: string]: string } = {}
+
+    if (token != null) {
+      // If the token starts with "Bearer", it is an OAuth application secret
+      // Note that the original gitlab token would not start with "Bearer"
+      // it might start with "gloas-", if so user needs to add "Bearer " prefix to the token
+      if (token.startsWith("Bearer")) {
+        headers.authorization = token
+      } else {
+        headers["PRIVATE-TOKEN"] = token
+      }
+    }
+
+    return headers
   }
 
   /**

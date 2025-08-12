@@ -17,7 +17,7 @@ export class GitlabPublisher extends HttpPublisher {
   private readonly tag: string
   readonly _release = new Lazy(() => (this.token === "__test__" ? Promise.resolve(null as any) : this.getOrCreateRelease()))
 
-  private readonly token: string
+  private readonly token: string | null
   private readonly host: string
   private readonly baseApiPath: string
   private readonly projectId: string
@@ -33,9 +33,9 @@ export class GitlabPublisher extends HttpPublisher {
   ) {
     super(context, true)
 
-    let token = info.token
+    let token = info.token || null
     if (isEmptyOrSpaces(token)) {
-      token = process.env.GITLAB_TOKEN
+      token = process.env.GITLAB_TOKEN || null
       if (isEmptyOrSpaces(token)) {
         throw new InvalidConfigurationError(`GitLab Personal Access Token is not set, neither programmatically, nor using env "GITLAB_TOKEN"`)
       }
@@ -91,7 +91,7 @@ export class GitlabPublisher extends HttpPublisher {
 
   private async getExistingRelease(): Promise<GitlabReleaseInfo | null> {
     const url = this.buildProjectUrl("/releases")
-    const releases = await this.gitlabRequest<GitlabReleaseInfo[]>(url, this.token)
+    const releases = await this.gitlabRequest<GitlabReleaseInfo[]>(url)
 
     for (const release of releases) {
       if (release.tag_name === this.tag) {
@@ -105,7 +105,7 @@ export class GitlabPublisher extends HttpPublisher {
   private async getDefaultBranch(): Promise<string> {
     try {
       const url = this.buildProjectUrl()
-      const project = await this.gitlabRequest<{ default_branch: string }>(url, this.token)
+      const project = await this.gitlabRequest<{ default_branch: string }>(url)
       return project.default_branch || "main"
     } catch (error: any) {
       log.warn({ error: error.message }, "Failed to get default branch, using 'main' as fallback")
@@ -134,7 +134,7 @@ export class GitlabPublisher extends HttpPublisher {
     )
 
     const url = this.buildProjectUrl("/releases")
-    return this.gitlabRequest<GitlabReleaseInfo>(url, this.token, releaseData, "POST")
+    return this.gitlabRequest<GitlabReleaseInfo>(url, releaseData, "POST")
   }
 
   protected async doUpload(fileName: string, arch: Arch, dataLength: number, requestProcessor: RequestProcessor, filePath: string): Promise<any> {
@@ -207,7 +207,7 @@ export class GitlabPublisher extends HttpPublisher {
       }
 
       const url = this.buildProjectUrl(`/releases/${this.tag}/assets/links`)
-      await this.gitlabRequest(url, this.token, linkData, "POST")
+      await this.gitlabRequest(url, linkData, "POST")
 
       log.debug({ fileName, assetUrl }, "Successfully linked asset to GitLab release")
     } catch (e: any) {
@@ -245,10 +245,10 @@ export class GitlabPublisher extends HttpPublisher {
           hostname: parsedUrl.hostname,
           port: parsedUrl.port as any,
           path: parsedUrl.pathname,
-          headers: { ...form.getHeaders() },
+          headers: { ...form.getHeaders(), ...this.setAuthHeaderForToken(this.token) },
           timeout: this.info.timeout || undefined,
         },
-        this.token,
+        null,
         "POST"
       ),
       this.context.cancellationToken,
@@ -270,10 +270,10 @@ export class GitlabPublisher extends HttpPublisher {
           hostname: parsedUrl.hostname,
           port: parsedUrl.port as any,
           path: parsedUrl.pathname,
-          headers: { "Content-Length": dataLength, "Content-Type": mime.getType(fileName) || "application/octet-stream" },
+          headers: { "Content-Length": dataLength, "Content-Type": mime.getType(fileName) || "application/octet-stream", ...this.setAuthHeaderForToken(this.token) },
           timeout: this.info.timeout || undefined,
         },
-        this.token,
+        null,
         "PUT"
       ),
       this.context.cancellationToken,
@@ -293,7 +293,7 @@ export class GitlabPublisher extends HttpPublisher {
     throw new InvalidConfigurationError("GitLab project ID is not specified, please set it in configuration.")
   }
 
-  private gitlabRequest<T>(url: URL, token: string | null, data: { [name: string]: any } | null = null, method: "GET" | "POST" | "PUT" | "DELETE" = "GET"): Promise<T> {
+  private gitlabRequest<T>(url: URL, data: { [name: string]: any } | null = null, method: "GET" | "POST" | "PUT" | "DELETE" = "GET"): Promise<T> {
     return parseJson(
       httpExecutor.request(
         configureRequestOptions(
@@ -302,16 +302,33 @@ export class GitlabPublisher extends HttpPublisher {
             path: url.pathname,
             protocol: url.protocol,
             hostname: url.hostname,
-            headers: { "Content-Type": "application/json" },
+            headers: { "Content-Type": "application/json", ...this.setAuthHeaderForToken(this.token) },
             timeout: this.info.timeout || undefined,
           },
-          token,
+          null,
           method
         ),
         this.context.cancellationToken,
         data
       )
     )
+  }
+
+  private setAuthHeaderForToken(token: string | null): { [key: string]: string } {
+    const headers: { [key: string]: string } = {}
+
+    if (token != null) {
+      // If the token starts with "Bearer", it is an OAuth application secret
+      // Note that the original gitlab token would not start with "Bearer"
+      // it might start with "gloas-", if so user needs to add "Bearer " prefix to the token
+      if (token.startsWith("Bearer")) {
+        headers.authorization = token
+      } else {
+        headers["PRIVATE-TOKEN"] = token
+      }
+    }
+
+    return headers
   }
 
   private categorizeGitlabError(error: any): { type: string; statusCode?: number } {

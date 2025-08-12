@@ -563,7 +563,7 @@ export function configureRequestOptions(options: RequestOptions, token?: string 
   const headers = options.headers
 
   if (token != null) {
-    setAuthHeaderForToken(headers, token)
+    ;(headers as any).authorization = token.startsWith("Basic") || token.startsWith("Bearer") ? token : `token ${token}`
   }
   if (headers["User-Agent"] == null) {
     headers["User-Agent"] = "electron-builder"
@@ -600,32 +600,4 @@ export function safeStringifyJson(data: any, skippedNames?: Set<string>) {
     },
     2
   )
-}
-
-/**
- * Sets the appropriate authorization header based on token prefix
- * Supports GitLab-specific token formats while maintaining backward compatibility
- * @param headers The headers object to modify
- * @param token The authentication token
- */
-function setAuthHeaderForToken(headers: any, token: string): void {
-  // GitLab Personal Access Token - use PRIVATE-TOKEN header
-  if (token.startsWith("glpat-")) {
-    headers["PRIVATE-TOKEN"] = token
-    return
-  }
-
-  // GitLab OAuth Application Secret - use Bearer authorization
-  if (token.startsWith("gloas-")) {
-    headers.authorization = `Bearer ${token}`
-    return
-  }
-
-  // Backward compatibility: existing logic for Basic, Bearer, or default token format
-  if (token.startsWith("Basic") || token.startsWith("Bearer")) {
-    headers.authorization = token
-  } else {
-    // Default case: use token format (maintains backward compatibility)
-    headers.authorization = `token ${token}`
-  }
 }
