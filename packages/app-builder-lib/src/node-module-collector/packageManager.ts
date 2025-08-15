@@ -47,14 +47,16 @@ export function detectPackageManagerByEnv(): PM {
   const execPath = process.env.npm_execpath?.toLowerCase() ?? ""
 
   const yarnVersion = process.env.YARN_VERSION
-  const isBerry = yarnVersion?.startsWith("2.") || yarnVersion?.startsWith("3.")
+  const isBerry = yarnVersion ? !yarnVersion.startsWith("1.") : false
 
   if (ua.includes("pnpm") || execPath.includes("pnpm") || process.env.PNPM_HOME) {
     return PM.PNPM
   }
 
   if (ua.includes("yarn") || execPath.includes("yarn") || process.env.YARN_REGISTRY) {
-    return isBerry || ua.includes("yarn/2") || ua.includes("yarn/3") ? PM.YARN_BERRY : PM.YARN
+    // Check if it's Berry by version or user agent (yarn/1.x is classic, everything else is Berry)
+    const isBerryFromUA = /yarn\/(?!1\.)/.test(ua)
+    return isBerry || isBerryFromUA ? PM.YARN_BERRY : PM.YARN
   }
 
   if (ua.includes("npm") || execPath.includes("npm") || process.env.npm_package_json) {

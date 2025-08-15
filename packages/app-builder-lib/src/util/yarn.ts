@@ -94,7 +94,7 @@ export async function installDependencies(config: Configuration, { appDir, proje
   }
 
   if (pm === PM.YARN) {
-    execArgs.push("--prefer-offline")
+    execArgs.push("--cached")
   }
 
   const execPath = getPackageManagerCommand(pm)
