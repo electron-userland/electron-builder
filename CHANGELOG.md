@@ -1,3 +1,31 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v26.0.19...v) (2025-08-15)
+
+
+### Bug Fixes
+
+* add quotation marks around variable in AppArmor profile ([#9231](https://github.com/electron-userland/electron-builder/issues/9231)) ([f262a73](https://github.com/electron-userland/electron-builder/commit/f262a7358dafe189b5d9bf06d7be43478ee35faa))
+* auto-update powershell script for powershell version test with  `ConvertTo-Json test` ([#9232](https://github.com/electron-userland/electron-builder/issues/9232)) ([cfc4f36](https://github.com/electron-userland/electron-builder/commit/cfc4f36a5af20fb6c61dc7dfa6202cbc0fd9f201))
+* correct broken links in builder.ts and cli.md ([#9218](https://github.com/electron-userland/electron-builder/issues/9218)) ([e375149](https://github.com/electron-userland/electron-builder/commit/e37514998a25ada30c4e776e43134d466cac7221))
+* **deps:** update dependency form-data to v4.0.4 [security] ([#9212](https://github.com/electron-userland/electron-builder/issues/9212)) ([7977708](https://github.com/electron-userland/electron-builder/commit/79777089ca2b98c55dd1cabd157ec420994af696))
+* **electron-updater:** Do not wrap update command when updating with sudo ([#9225](https://github.com/electron-userland/electron-builder/issues/9225)) ([d27ac52](https://github.com/electron-userland/electron-builder/commit/d27ac523bb1581f274c018952d55162315e7a9b8))
+* fix argument names mismatch in publish command to make it work ([#9227](https://github.com/electron-userland/electron-builder/issues/9227)) ([8f0ad06](https://github.com/electron-userland/electron-builder/commit/8f0ad06eae4716b7b753301531241166a7333058))
+* generate stubExecutableExe and sign it ([#8959](https://github.com/electron-userland/electron-builder/issues/8959)) ([0ad8f91](https://github.com/electron-userland/electron-builder/commit/0ad8f91cd5478a2063eb9e20df47797c8b42d48c))
+* **nsis:** fix file association ([#9217](https://github.com/electron-userland/electron-builder/issues/9217)) ([e9251f4](https://github.com/electron-userland/electron-builder/commit/e9251f4725f1f7c14c9792f5af8053dde1793d6a))
+* scrubbing more aggressively anything in the logs ([#9182](https://github.com/electron-userland/electron-builder/issues/9182)) ([c54a060](https://github.com/electron-userland/electron-builder/commit/c54a0609753a11d032f87e727eccbab1f6836081))
+* **squirrel-windows:** update loadingGif handling to prioritize user-defined option ([#9222](https://github.com/electron-userland/electron-builder/issues/9222)) ([9997660](https://github.com/electron-userland/electron-builder/commit/9997660e20cbdaa4ddb01d1c6078dea91097d6f0))
+* strip auth headers for GitHub release assets redirects ([#9211](https://github.com/electron-userland/electron-builder/issues/9211)) ([7c7fd6c](https://github.com/electron-userland/electron-builder/commit/7c7fd6ca240eda72048835f754adac92c4ab4e8c))
+* support option to override publish trigger (`--policy`) in publish command ([#9228](https://github.com/electron-userland/electron-builder/issues/9228)) ([d031eea](https://github.com/electron-userland/electron-builder/commit/d031eeaa7eb282e516471eed2e2a764716999b20))
+* **test:** gitlab related failed cases ([#9221](https://github.com/electron-userland/electron-builder/issues/9221)) ([c6d0ff9](https://github.com/electron-userland/electron-builder/commit/c6d0ff9870457d122f9fde6e10315a975bc696aa))
+* uncaught exception during differential downloading via multipleRangDownloader ([#9248](https://github.com/electron-userland/electron-builder/issues/9248)) ([8cbf079](https://github.com/electron-userland/electron-builder/commit/8cbf079ec20bbc642f9b6c306e3e9141a1fcc385))
+* **yarn:** check for dependencies in both projectDir and appDir during installation ([#9219](https://github.com/electron-userland/electron-builder/issues/9219)) ([cf0ac45](https://github.com/electron-userland/electron-builder/commit/cf0ac45db79e3e3ff1cef3ad931f7272646d1cb1))
+
+
+### Features
+
+* **github:** Add `tagNamePrefix` option to github publisher options (deprecates  `vPrefixedTagName`) ([#9216](https://github.com/electron-userland/electron-builder/issues/9216)) ([44b2899](https://github.com/electron-userland/electron-builder/commit/44b28997f15314730d1bb69303a47dc26f7950d1))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v26.0.18...v) (2025-07-15)
 
 
