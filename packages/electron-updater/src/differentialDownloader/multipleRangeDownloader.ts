@@ -69,6 +69,8 @@ function doExecuteTasks(differentialDownloader: DifferentialDownloader, options:
         const requestOptions = differentialDownloader.createRequestOptions()
         requestOptions.headers!.Range = `bytes=${task.start}-${task.end - 1}`
         const request = differentialDownloader.httpExecutor.createRequest(requestOptions, response => {
+          response.on("error", reject)
+
           if (!checkIsRangesSupported(response, reject)) {
             return
           }
