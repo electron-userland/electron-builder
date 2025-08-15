@@ -32,7 +32,6 @@ import type { TypedEmitter } from "tiny-typed-emitter"
 import Session = Electron.Session
 import type { AuthInfo } from "electron"
 import { gunzipSync, gzipSync } from "zlib"
-import { blockmapFiles } from "./util"
 import { DifferentialDownloaderOptions } from "./differentialDownloader/DifferentialDownloader"
 import { GenericDifferentialDownloader } from "./differentialDownloader/GenericDifferentialDownloader"
 import { DOWNLOAD_PROGRESS, Logger, ResolvedUpdateFileInfo, UPDATE_DOWNLOADED, UpdateCheckResult, UpdateDownloadedEvent, UpdaterSignal } from "./types"
@@ -809,7 +808,13 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       if (this._testOnlyOptions != null && !this._testOnlyOptions.isUseDifferentialDownload) {
         return true
       }
-      const blockmapFileUrls = blockmapFiles(fileInfo.url, this.app.version, downloadUpdateOptions.updateInfoAndProvider.info.version, this.previousBlockmapBaseUrlOverride)
+      const provider = downloadUpdateOptions.updateInfoAndProvider.provider
+      const blockmapFileUrls = await provider.getBlockMapFiles(
+        fileInfo.url,
+        this.app.version,
+        downloadUpdateOptions.updateInfoAndProvider.info.version,
+        this.previousBlockmapBaseUrlOverride
+      )
       this._logger.info(`Download block maps (old: "${blockmapFileUrls[0]}", new: ${blockmapFileUrls[1]})`)
 
       const downloadBlockMap = async (url: URL): Promise<BlockMap> => {

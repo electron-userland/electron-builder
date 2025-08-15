@@ -174,26 +174,38 @@ export interface GitlabOptions extends PublishConfiguration {
   readonly provider: "gitlab"
 
   /**
-   * The GitLab project ID or namespace/project-name.
+   * The GitLab project ID or path (e.g., "12345678" or "namespace/project").
    */
-  readonly projectId: string | number
+  readonly projectId?: string | number | null
 
   /**
-   * The host (including the port if needed).
+   * The GitLab host (including the port if need).
    * @default gitlab.com
    */
   readonly host?: string | null
 
   /**
-   * The access token to support auto-update from private GitLab repositories. Never specify it in the configuration files. Only for [setFeedURL](./auto-update.md#appupdatersetfeedurloptions).
+   * The access token to support auto-update from private GitLab repositories. Never specify it in the configuration files.
    */
   readonly token?: string | null
+
+  /**
+   * Whether to use `v`-prefixed tag name.
+   * @default true
+   */
+  readonly vPrefixedTagName?: boolean
 
   /**
    * The channel.
    * @default latest
    */
   readonly channel?: string | null
+
+  /**
+   * Upload target method. Can be "project_upload" for GitLab project uploads or "generic_package" for GitLab generic packages.
+   * @default "project_upload"
+   */
+  readonly uploadTarget?: "project_upload" | "generic_package" | null
 }
 
 /**
@@ -445,6 +457,31 @@ export interface SpacesOptions extends BaseS3Options {
    * The region (e.g. `nyc3`).
    */
   readonly region: string
+}
+
+export interface GitlabReleaseInfo {
+  name: string
+  tag_name: string
+  description: string
+  created_at: string
+  released_at: string
+  upcoming_release: boolean
+  assets: GitlabReleaseAsset
+}
+
+export interface GitlabReleaseAsset {
+  count: number
+  sources: Array<{
+    format: string
+    url: string
+  }>
+  links: Array<{
+    id: number
+    name: string
+    url: string
+    direct_asset_url: string
+    link_type: string
+  }>
 }
 
 export function getS3LikeProviderBaseUrl(configuration: PublishConfiguration) {
