@@ -45,59 +45,57 @@ export function verifySignature(publisherNames: Array<string>, unescapedTempUpda
     const tempUpdateFile = unescapedTempUpdateFile.replace(/'/g, "''")
     logger.info(`Verifying signature ${tempUpdateFile}`)
 
-    execFile(...preparePowerShellExec(`"Get-AuthenticodeSignature -LiteralPath '${tempUpdateFile}' | ConvertTo-Json -Compress"`, 20 * 1000),
-      (error, stdout, stderr) => {
-        try {
-          if (error != null || stderr) {
-            handleError(logger, error, stderr, reject)
-            resolve(null)
-            return
-          }
-          const data = parseOut(stdout)
-          if (data.Status === 0) {
-            try {
-              const normlaizedUpdateFilePath = path.normalize(data.Path)
-              const normalizedTempUpdateFile = path.normalize(unescapedTempUpdateFile)
-              logger.info(`LiteralPath: ${normlaizedUpdateFilePath}. Update Path: ${normalizedTempUpdateFile}`)
-              if (normlaizedUpdateFilePath !== normalizedTempUpdateFile) {
-                handleError(logger, new Error(`LiteralPath of ${normlaizedUpdateFilePath} is different than ${normalizedTempUpdateFile}`), stderr, reject)
-                resolve(null)
-                return
-              }
-            } catch (error: any) {
-              logger.warn(`Unable to verify LiteralPath of update asset due to missing data.Path. Skipping this step of validation. Message: ${error.message ?? error.stack}`)
-            }
-            const subject = parseDn(data.SignerCertificate.Subject)
-            let match = false
-            for (const name of publisherNames) {
-              const dn = parseDn(name)
-              if (dn.size) {
-                // if we have a full DN, compare all values
-                const allKeys = Array.from(dn.keys())
-                match = allKeys.every(key => {
-                  return dn.get(key) === subject.get(key)
-                })
-              } else if (name === subject.get("CN")!) {
-                logger.warn(`Signature validated using only CN ${name}. Please add your full Distinguished Name (DN) to publisherNames configuration`)
-                match = true
-              }
-              if (match) {
-                resolve(null)
-                return
-              }
-            }
-          }
-
-          const result = `publisherNames: ${publisherNames.join(" | ")}, raw info: ` + JSON.stringify(data, (name, value) => (name === "RawData" ? undefined : value), 2)
-          logger.warn(`Sign verification failed, installer signed with incorrect certificate: ${result}`)
-          resolve(result)
-        } catch (e: any) {
-          handleError(logger, e, null, reject)
+    execFile(...preparePowerShellExec(`"Get-AuthenticodeSignature -LiteralPath '${tempUpdateFile}' | ConvertTo-Json -Compress"`, 20 * 1000), (error, stdout, stderr) => {
+      try {
+        if (error != null || stderr) {
+          handleError(logger, error, stderr, reject)
           resolve(null)
           return
         }
+        const data = parseOut(stdout)
+        if (data.Status === 0) {
+          try {
+            const normlaizedUpdateFilePath = path.normalize(data.Path)
+            const normalizedTempUpdateFile = path.normalize(unescapedTempUpdateFile)
+            logger.info(`LiteralPath: ${normlaizedUpdateFilePath}. Update Path: ${normalizedTempUpdateFile}`)
+            if (normlaizedUpdateFilePath !== normalizedTempUpdateFile) {
+              handleError(logger, new Error(`LiteralPath of ${normlaizedUpdateFilePath} is different than ${normalizedTempUpdateFile}`), stderr, reject)
+              resolve(null)
+              return
+            }
+          } catch (error: any) {
+            logger.warn(`Unable to verify LiteralPath of update asset due to missing data.Path. Skipping this step of validation. Message: ${error.message ?? error.stack}`)
+          }
+          const subject = parseDn(data.SignerCertificate.Subject)
+          let match = false
+          for (const name of publisherNames) {
+            const dn = parseDn(name)
+            if (dn.size) {
+              // if we have a full DN, compare all values
+              const allKeys = Array.from(dn.keys())
+              match = allKeys.every(key => {
+                return dn.get(key) === subject.get(key)
+              })
+            } else if (name === subject.get("CN")!) {
+              logger.warn(`Signature validated using only CN ${name}. Please add your full Distinguished Name (DN) to publisherNames configuration`)
+              match = true
+            }
+            if (match) {
+              resolve(null)
+              return
+            }
+          }
+        }
+
+        const result = `publisherNames: ${publisherNames.join(" | ")}, raw info: ` + JSON.stringify(data, (name, value) => (name === "RawData" ? undefined : value), 2)
+        logger.warn(`Sign verification failed, installer signed with incorrect certificate: ${result}`)
+        resolve(result)
+      } catch (e: any) {
+        handleError(logger, e, null, reject)
+        resolve(null)
+        return
       }
-    )
+    })
   })
 }
 
