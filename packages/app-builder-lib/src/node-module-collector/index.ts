@@ -27,4 +27,4 @@ export async function getNodeModules(rootDir: string, tempDirManager: TmpDir): P
   return collector.getNodeModules()
 }
 
-export { detectPackageManager, PM, getPackageManagerCommand }
+export { detectPackageManager, PM, getPackageManagerCommand, NodeModuleInfo }
