@@ -223,6 +223,49 @@ export function getFixtureDir() {
   return path.join(__dirname, "..", "..", "fixtures")
 }
 
+/**
+ * Determines the priority of a file based on its extension for sorting.
+ * Lower numbers have higher priority in the sort order.
+ */
+function getFileTypePriority(file: string): number {
+  if (file.endsWith(".dmg")) return 1
+  if (file.endsWith(".zip")) return 2
+  if (file.endsWith(".blockmap")) return 3
+  if (file.endsWith(".yml")) return 4
+  return 5
+}
+
+/**
+ * Sorts artifacts in a deterministic order for consistent test snapshots.
+ * Sort order:
+ * 1. Primary: File type (DMG > ZIP > blockmap > YML > others)
+ * 2. Secondary: Architecture (x64 > ia32 > arm64 > universal)
+ * 3. Tertiary: Filename (alphabetical)
+ */
+function sortArtifacts(a: ArtifactCreated, b: ArtifactCreated): number {
+  // Primary sort: by file extension type
+  const fileA = a.file ?? ""
+  const fileB = b.file ?? ""
+
+  const typePriorityA = getFileTypePriority(fileA)
+  const typePriorityB = getFileTypePriority(fileB)
+
+  if (typePriorityA !== typePriorityB) {
+    return typePriorityA - typePriorityB
+  }
+
+  // Secondary sort: by architecture
+  const archSortKey = (a.arch?.valueOf() ?? 0) - (b.arch?.valueOf() ?? 0)
+  if (archSortKey !== 0) {
+    return archSortKey
+  }
+
+  // Tertiary sort: by filename
+  const baseNameA = path.basename(fileA)
+  const baseNameB = path.basename(fileB)
+  return baseNameA.localeCompare(baseNameB, "en")
+}
+
 async function packAndCheck(expect: ExpectStatic, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions) {
   const cancellationToken = new CancellationToken()
   const packager = new Packager(packagerOptions, cancellationToken)
@@ -245,60 +288,50 @@ async function packAndCheck(expect: ExpectStatic, packagerOptions: PackagerOptio
     return { packager, outDir }
   }
 
-  function sortKey(a: ArtifactCreated) {
-    return `${a.target == null ? "no-target" : a.target.name}:${a.file == null ? a.fileContent!.toString("hex") : path.basename(a.file)}`
-  }
-
   const objectToCompare: any = {}
   for (const platform of packagerOptions.targets!.keys()) {
     objectToCompare[platform.buildConfigurationKey] = await Promise.all(
-      (artifacts.get(platform) || [])
-        .sort((a, b) => {
-          const archSortKey = (a.arch?.valueOf() ?? 0) - (b.arch?.valueOf() ?? 0)
-          const fileNameSortKey = sortKey(a).localeCompare(sortKey(b), "en")
-          return fileNameSortKey + archSortKey
-        })
-        .map(async it => {
-          const result: any = { ...it }
-          const file = result.file
-          if (file != null) {
-            if (file.endsWith(".yml")) {
-              result.fileContent = removeUnstableProperties(load(await fs.readFile(file, "utf-8")))
-            }
-            result.file = path.basename(file)
+      (artifacts.get(platform) || []).sort(sortArtifacts).map(async it => {
+        const result: any = { ...it }
+        const file = result.file
+        if (file != null) {
+          if (file.endsWith(".yml")) {
+            result.fileContent = removeUnstableProperties(load(await fs.readFile(file, "utf-8")))
           }
-          const updateInfo = result.updateInfo
-          if (updateInfo != null) {
-            result.updateInfo = removeUnstableProperties(updateInfo)
-          }
-          if (updateInfo == null) {
-            delete result.updateInfo
-          }
+          result.file = path.basename(file)
+        }
+        const updateInfo = result.updateInfo
+        if (updateInfo != null) {
+          result.updateInfo = removeUnstableProperties(updateInfo)
+        }
+        if (updateInfo == null) {
+          delete result.updateInfo
+        }
 
-          // reduce snapshot - avoid noise
-          if (result.safeArtifactName == null) {
-            delete result.safeArtifactName
-          }
-          if (result.arch == null) {
-            delete result.arch
-          } else {
-            result.arch = Arch[result.arch]
-          }
+        // reduce snapshot - avoid noise
+        if (result.safeArtifactName == null) {
+          delete result.safeArtifactName
+        }
+        if (result.arch == null) {
+          delete result.arch
+        } else {
+          result.arch = Arch[result.arch]
+        }
 
-          if (result.fileContent) {
-            if (Buffer.isBuffer(result.fileContent)) {
-              delete result.fileContent
-            } else if (Array.isArray(result.fileContent.files)) {
-              result.fileContent.files = result.fileContent.files.sort((a: UpdateFileInfo, b: UpdateFileInfo) => a.url.localeCompare(b.url, "en"))
-            }
+        if (result.fileContent) {
+          if (Buffer.isBuffer(result.fileContent)) {
+            delete result.fileContent
+          } else if (Array.isArray(result.fileContent.files)) {
+            result.fileContent.files = result.fileContent.files.sort((a: UpdateFileInfo, b: UpdateFileInfo) => a.url.localeCompare(b.url, "en"))
           }
+        }
 
-          delete result.isWriteUpdateInfo
-          delete result.packager
-          delete result.target
-          delete result.publishConfig
-          return result
-        })
+        delete result.isWriteUpdateInfo
+        delete result.packager
+        delete result.target
+        delete result.publishConfig
+        return result
+      })
     )
   }
 
