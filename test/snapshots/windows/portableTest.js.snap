@@ -29,13 +29,13 @@ exports[`portable 1`] = `
   "win": [
     {
       "arch": "x64",
-      "file": "Test App ßW Setup 1.1.0.exe",
-      "safeArtifactName": "TestApp-Setup-1.1.0.exe",
+      "file": "Test App ßW 1.1.0.exe",
+      "safeArtifactName": "TestApp-1.1.0.exe",
     },
     {
       "arch": "x64",
-      "file": "Test App ßW 1.1.0.exe",
-      "safeArtifactName": "TestApp-1.1.0.exe",
+      "file": "Test App ßW Setup 1.1.0.exe",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe",
     },
   ],
 }

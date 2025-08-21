@@ -228,17 +228,42 @@ export function getFixtureDir() {
  * Lower numbers have higher priority in the sort order.
  */
 function getFileTypePriority(file: string): number {
+  // Primary executables and installers
   if (file.endsWith(".dmg")) return 1
-  if (file.endsWith(".zip")) return 2
-  if (file.endsWith(".blockmap")) return 3
-  if (file.endsWith(".yml")) return 4
-  return 5
+  if (file.endsWith(".exe")) return 2
+  if (file.endsWith(".msi")) return 3
+  if (file.endsWith(".pkg")) return 4
+  if (file.endsWith(".deb")) return 5
+  if (file.endsWith(".rpm")) return 6
+  if (file.endsWith(".AppImage")) return 7
+  if (file.endsWith(".appx")) return 8
+  if (file.endsWith(".snap")) return 9
+  if (file.endsWith(".flatpak")) return 10
+
+  // Archive formats
+  if (file.endsWith(".zip")) return 11
+  if (file.endsWith(".7z")) return 12
+  if (file.endsWith(".tar.gz")) return 13
+  if (file.endsWith(".tar.xz")) return 14
+  if (file.endsWith(".tar.bz2")) return 15
+
+  // Package formats
+  if (file.endsWith(".nupkg")) return 16
+  if (file.endsWith(".asar")) return 17
+
+  // Metadata and auxiliary files
+  if (file.endsWith(".blockmap")) return 18
+  if (file.endsWith(".yml")) return 19
+  if (file.endsWith(".yaml")) return 19
+
+  // Other files
+  return 20
 }
 
 /**
  * Sorts artifacts in a deterministic order for consistent test snapshots.
  * Sort order:
- * 1. Primary: File type (DMG > ZIP > blockmap > YML > others)
+ * 1. Primary: File type
  * 2. Secondary: Architecture (x64 > ia32 > arm64 > universal)
  * 3. Tertiary: Filename (alphabetical)
  */

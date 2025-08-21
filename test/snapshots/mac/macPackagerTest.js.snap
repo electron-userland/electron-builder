@@ -595,16 +595,16 @@ exports[`yarn two package.json w/ native module 1`] = `
 {
   "mac": [
     {
-      "file": "test-app-two-native-modules-1.1.1-universal-mac.zip.blockmap",
-      "safeArtifactName": "test-app-two-native-modules-1.1.1-universal-mac.zip.blockmap",
+      "arch": "universal",
+      "file": "test-app-two-native-modules-1.1.1-universal-mac.zip",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
     {
-      "arch": "universal",
-      "file": "test-app-two-native-modules-1.1.1-universal-mac.zip",
+      "file": "test-app-two-native-modules-1.1.1-universal-mac.zip.blockmap",
+      "safeArtifactName": "test-app-two-native-modules-1.1.1-universal-mac.zip.blockmap",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",

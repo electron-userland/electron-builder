@@ -181,13 +181,13 @@ exports[`languages and not signed (windows store only) 1`] = `
 {
   "win": [
     {
-      "arch": "ia32",
-      "file": "Test App ßW 1.1.0 ia32.appx",
+      "arch": "x64",
+      "file": "Test App ßW 1.1.0.appx",
       "safeArtifactName": "TestApp-1.1.0.appx",
     },
     {
-      "arch": "x64",
-      "file": "Test App ßW 1.1.0.appx",
+      "arch": "ia32",
+      "file": "Test App ßW 1.1.0 ia32.appx",
       "safeArtifactName": "TestApp-1.1.0.appx",
     },
   ],
