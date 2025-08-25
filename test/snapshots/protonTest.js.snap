@@ -58,17 +58,17 @@ exports[`win 1`] = `
 {
   "win": [
     {
-      "file": "Test App ßW Setup 1.1.0.exe.blockmap",
-      "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
+      "arch": "x64",
+      "file": "Test App ßW Setup 1.1.0.exe",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
     {
-      "arch": "x64",
-      "file": "Test App ßW Setup 1.1.0.exe",
-      "safeArtifactName": "TestApp-Setup-1.1.0.exe",
+      "file": "Test App ßW Setup 1.1.0.exe.blockmap",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",

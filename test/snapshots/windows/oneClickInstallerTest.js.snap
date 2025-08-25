@@ -16,17 +16,17 @@ exports[`createDesktopShortcut always 1`] = `
 {
   "win": [
     {
-      "file": "Test App ßW Setup 1.1.0.exe.blockmap",
-      "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
+      "arch": "x64",
+      "file": "Test App ßW Setup 1.1.0.exe",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
     {
-      "arch": "x64",
-      "file": "Test App ßW Setup 1.1.0.exe",
-      "safeArtifactName": "TestApp-Setup-1.1.0.exe",
+      "file": "Test App ßW Setup 1.1.0.exe.blockmap",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
@@ -106,17 +106,17 @@ exports[`custom include 1`] = `
 {
   "win": [
     {
-      "file": "Test App ßW Setup 1.1.0.exe.blockmap",
-      "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
+      "arch": "x64",
+      "file": "Test App ßW Setup 1.1.0.exe",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
     {
-      "arch": "x64",
-      "file": "Test App ßW Setup 1.1.0.exe",
-      "safeArtifactName": "TestApp-Setup-1.1.0.exe",
+      "file": "Test App ßW Setup 1.1.0.exe.blockmap",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
@@ -130,17 +130,17 @@ exports[`custom script 1`] = `
 {
   "win": [
     {
-      "file": "Test App ßW Setup 1.1.0.exe.blockmap",
-      "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
+      "arch": "x64",
+      "file": "Test App ßW Setup 1.1.0.exe",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
     {
-      "arch": "x64",
-      "file": "Test App ßW Setup 1.1.0.exe",
-      "safeArtifactName": "TestApp-Setup-1.1.0.exe",
+      "file": "Test App ßW Setup 1.1.0.exe.blockmap",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
@@ -178,17 +178,17 @@ exports[`html license 1`] = `
 {
   "win": [
     {
-      "file": "Test App ßW Setup 1.1.0.exe.blockmap",
-      "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
+      "arch": "x64",
+      "file": "Test App ßW Setup 1.1.0.exe",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
     {
-      "arch": "x64",
-      "file": "Test App ßW Setup 1.1.0.exe",
-      "safeArtifactName": "TestApp-Setup-1.1.0.exe",
+      "file": "Test App ßW Setup 1.1.0.exe.blockmap",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
@@ -250,17 +250,17 @@ exports[`multi language license 1`] = `
 {
   "win": [
     {
-      "file": "Test App ßW Setup 1.1.0.exe.blockmap",
-      "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
+      "arch": "x64",
+      "file": "Test App ßW Setup 1.1.0.exe",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
     {
-      "arch": "x64",
-      "file": "Test App ßW Setup 1.1.0.exe",
-      "safeArtifactName": "TestApp-Setup-1.1.0.exe",
+      "file": "Test App ßW Setup 1.1.0.exe.blockmap",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
@@ -273,6 +273,23 @@ exports[`multi language license 1`] = `
 exports[`one-click 1`] = `
 {
   "win": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW Setup 1.1.0.exe",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "Test App ßW Setup 1.1.0.exe.blockmap",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
     {
       "file": "latest.yml",
       "fileContent": {
@@ -287,23 +304,6 @@ exports[`one-click 1`] = `
         "releaseDate": "@releaseDate",
         "sha512": "@sha512",
         "version": "1.1.0",
-      },
-    },
-    {
-      "file": "Test App ßW Setup 1.1.0.exe.blockmap",
-      "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "arch": "x64",
-      "file": "Test App ßW Setup 1.1.0.exe",
-      "safeArtifactName": "TestApp-Setup-1.1.0.exe",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
       },
     },
   ],
@@ -322,23 +322,6 @@ exports[`perMachine, no run after finish 1`] = `
 {
   "win": [
     {
-      "file": "latest.yml",
-      "fileContent": {
-        "files": [
-          {
-            "isAdminRightsRequired": true,
-            "sha512": "@sha512",
-            "size": "@size",
-            "url": "TestApp Setup 1.1.0.exe",
-          },
-        ],
-        "path": "TestApp Setup 1.1.0.exe",
-        "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
-        "version": "1.1.0",
-      },
-    },
-    {
       "arch": "ia32",
       "file": "TestApp Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe",
@@ -355,6 +338,23 @@ exports[`perMachine, no run after finish 1`] = `
         "isAdminRightsRequired": true,
         "sha512": "@sha512",
         "size": "@size",
+      },
+    },
+    {
+      "file": "latest.yml",
+      "fileContent": {
+        "files": [
+          {
+            "isAdminRightsRequired": true,
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp Setup 1.1.0.exe",
+          },
+        ],
+        "path": "TestApp Setup 1.1.0.exe",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.1.0",
       },
     },
   ],

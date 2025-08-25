@@ -20,6 +20,10 @@ exports[`targets 1`] = `
   "linux": [
     {
       "arch": "x64",
+      "file": "TestApp-1.1.0.zip",
+    },
+    {
+      "arch": "x64",
       "file": "TestApp-1.1.0.7z",
     },
     {
@@ -33,10 +37,6 @@ exports[`targets 1`] = `
     {
       "arch": "x64",
       "file": "TestApp-1.1.0.sh",
-    },
-    {
-      "arch": "x64",
-      "file": "TestApp-1.1.0.zip",
     },
   ],
 }
