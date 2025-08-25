@@ -552,12 +552,12 @@ exports[`win concurrent - all targets 1`] = `
     {
       "arch": "x64",
       "file": "Test Concurrent-1.1.0-x64.exe",
-      "safeArtifactName": "Test-Concurrent-1.1.0-x64.exe",
+      "safeArtifactName": "concurrent-Setup-1.1.0.exe",
     },
     {
       "arch": "x64",
       "file": "Test Concurrent-1.1.0-x64.exe",
-      "safeArtifactName": "concurrent-Setup-1.1.0.exe",
+      "safeArtifactName": "Test-Concurrent-1.1.0-x64.exe",
     },
     {
       "arch": "arm64",
@@ -571,12 +571,12 @@ exports[`win concurrent - all targets 1`] = `
     {
       "arch": "arm64",
       "file": "Test Concurrent-1.1.0-arm64.exe",
-      "safeArtifactName": "Test-Concurrent-1.1.0-arm64.exe",
+      "safeArtifactName": "concurrent-Setup-1.1.0-arm64.exe",
     },
     {
       "arch": "arm64",
       "file": "Test Concurrent-1.1.0-arm64.exe",
-      "safeArtifactName": "concurrent-Setup-1.1.0-arm64.exe",
+      "safeArtifactName": "Test-Concurrent-1.1.0-arm64.exe",
     },
     {
       "arch": "x64",
@@ -647,6 +647,14 @@ exports[`win concurrent - all targets 1`] = `
       "file": "concurrent-1.1.0-full.nupkg",
     },
     {
+      "file": "Test Concurrent-1.1.0.exe.blockmap",
+      "safeArtifactName": "Test-Concurrent-1.1.0.exe.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
       "file": "Test Concurrent-1.1.0-arm64.exe.blockmap",
       "safeArtifactName": "Test-Concurrent-1.1.0-arm64.exe.blockmap",
       "updateInfo": {
@@ -657,14 +665,6 @@ exports[`win concurrent - all targets 1`] = `
     {
       "file": "Test Concurrent-1.1.0-x64.exe.blockmap",
       "safeArtifactName": "Test-Concurrent-1.1.0-x64.exe.blockmap",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "file": "Test Concurrent-1.1.0.exe.blockmap",
-      "safeArtifactName": "Test-Concurrent-1.1.0.exe.blockmap",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",

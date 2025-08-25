@@ -228,44 +228,49 @@ export function getFixtureDir() {
  * Lower numbers have higher priority in the sort order.
  */
 function getFileTypePriority(file: string): number {
-  // Primary executables and installers
-  if (file.endsWith(".dmg")) return 1
-  if (file.endsWith(".exe")) return 2
-  if (file.endsWith(".msi")) return 3
-  if (file.endsWith(".pkg")) return 4
-  if (file.endsWith(".deb")) return 5
-  if (file.endsWith(".rpm")) return 6
-  if (file.endsWith(".AppImage")) return 7
-  if (file.endsWith(".appx")) return 8
-  if (file.endsWith(".snap")) return 9
-  if (file.endsWith(".flatpak")) return 10
+  const ordering = [
+    // Primary executables and installers
+    ".dmg",
+    ".exe",
+    ".msi",
+    ".pkg",
+    ".deb",
+    ".rpm",
+    ".AppImage",
+    ".appx",
+    ".snap",
+    ".flatpak",
 
-  // Archive formats
-  if (file.endsWith(".zip")) return 11
-  if (file.endsWith(".7z")) return 12
-  if (file.endsWith(".tar.gz")) return 13
-  if (file.endsWith(".tar.xz")) return 14
-  if (file.endsWith(".tar.bz2")) return 15
+    // Archive formats
+    ".zip",
+    ".7z",
+    ".tar.gz",
+    ".tar.xz",
+    ".tar.bz2",
 
-  // Package formats
-  if (file.endsWith(".nupkg")) return 16
-  if (file.endsWith(".asar")) return 17
+    // Package formats
+    ".nupkg",
+    ".asar",
 
-  // Metadata and auxiliary files
-  if (file.endsWith(".blockmap")) return 18
-  if (file.endsWith(".yml")) return 19
-  if (file.endsWith(".yaml")) return 19
+    // Metadata and auxiliary files
+    ".blockmap",
+    ".yml",
+    ".yaml",
+  ]
 
-  // Other files
-  return 20
+  const index = ordering.findIndex(ext => file.endsWith(ext))
+  // If found, return priority (1-based index), otherwise return highest value for "other files"
+  return index === -1 ? ordering.length + 1 : index + 1
 }
 
 /**
  * Sorts artifacts in a deterministic order for consistent test snapshots.
  * Sort order:
- * 1. Primary: File type
- * 2. Secondary: Architecture (x64 > ia32 > arm64 > universal)
+ * 1. Primary: File type (by extension priority)
+ * 2. Secondary: Architecture (ia32 < x64 < armv7l < arm64 < universal)
  * 3. Tertiary: Filename (alphabetical)
+ * 4. Quaternary: Presence of updateInfo (with updateInfo < without updateInfo)
+ * 5. Quinary: Safe artifact name (alphabetical)
  */
 function sortArtifacts(a: ArtifactCreated, b: ArtifactCreated): number {
   // Primary sort: by file extension type
@@ -288,7 +293,24 @@ function sortArtifacts(a: ArtifactCreated, b: ArtifactCreated): number {
   // Tertiary sort: by filename
   const baseNameA = path.basename(fileA)
   const baseNameB = path.basename(fileB)
-  return baseNameA.localeCompare(baseNameB, "en")
+  const fileNameCompare = baseNameA.localeCompare(baseNameB, "en")
+  if (fileNameCompare !== 0) {
+    return fileNameCompare
+  }
+
+  // Quaternary sort: by presence of updateInfo (with updateInfo comes first)
+  const hasUpdateInfoA = a.updateInfo ? 0 : 1
+  const hasUpdateInfoB = b.updateInfo ? 0 : 1
+
+  if (hasUpdateInfoA !== hasUpdateInfoB) {
+    return hasUpdateInfoA - hasUpdateInfoB
+  }
+
+  // Quinary sort: by safeArtifactName (final tiebreaker)
+  const safeNameA = a.safeArtifactName ?? ""
+  const safeNameB = b.safeArtifactName ?? ""
+
+  return safeNameA.localeCompare(safeNameB, "en")
 }
 
 async function packAndCheck(expect: ExpectStatic, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions) {

@@ -564,6 +564,15 @@ exports[`Electron autoupdate (fresh install & update) > win 1`] = `
 {
   "win": [
     {
+      "arch": "x64",
+      "file": "TestApp Setup.exe",
+      "safeArtifactName": "TestApp-Setup.exe",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
       "file": "TestApp Setup.exe.blockmap",
       "safeArtifactName": "TestApp-Setup.exe.blockmap",
       "updateInfo": {
@@ -585,15 +594,6 @@ exports[`Electron autoupdate (fresh install & update) > win 1`] = `
         "releaseDate": "@releaseDate",
         "sha512": "@sha512",
         "version": "1.0.0",
-      },
-    },
-    {
-      "arch": "x64",
-      "file": "TestApp Setup.exe",
-      "safeArtifactName": "TestApp-Setup.exe",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
       },
     },
   ],
