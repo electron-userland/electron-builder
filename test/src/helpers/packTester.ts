@@ -259,8 +259,8 @@ function getFileTypePriority(file: string): number {
   ]
 
   const index = ordering.findIndex(ext => file.endsWith(ext))
-  // If found, return priority (1-based index), otherwise return highest value for "other files"
-  return index === -1 ? ordering.length + 1 : index + 1
+  // If found, return the index (0-based), otherwise return highest value for "other files"
+  return index === -1 ? ordering.length : index
 }
 
 /**
