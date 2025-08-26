@@ -16,7 +16,7 @@ import * as path from "path"
 import pathSorter from "path-sort"
 import { NtExecutable, NtExecutableResource } from "resedit"
 import { TmpDir } from "temp-file"
-import { getCollectorByPackageManager } from "app-builder-lib/out/node-module-collector"
+import { getCollectorByPackageManager, detectPackageManager } from "app-builder-lib/out/node-module-collector"
 import { promisify } from "util"
 import { CSC_LINK, WIN_CSC_LINK } from "./codeSignData"
 import { assertThat } from "./fileAssert"
@@ -136,10 +136,11 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
       }
 
       if (checkOptions.isInstallDepsBefore) {
-        const pm = await getCollectorByPackageManager(projectDir, tmpDir)
-        const pmOptions = pm.installOptions
+        const pm = detectPackageManager([projectDir])
+        const collector = await getCollectorByPackageManager(pm, projectDir, tmpDir)
+        const collectorOptions = collector.installOptions
 
-        const destLockfile = path.join(projectDir, pmOptions.lockfile)
+        const destLockfile = path.join(projectDir, collectorOptions.lockfile)
 
         const shouldUpdateLockfiles = !!process.env.UPDATE_LOCKFILE_FIXTURES && !!checkOptions.storeDepsLockfileSnapshot
         // check for lockfile fixture so we can use `--frozen-lockfile`

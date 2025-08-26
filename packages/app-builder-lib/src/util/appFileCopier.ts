@@ -13,7 +13,7 @@ import { PlatformPackager } from "../platformPackager"
 import { AppFileWalker } from "./AppFileWalker"
 import { NodeModuleCopyHelper } from "./NodeModuleCopyHelper"
 import { NodeModuleInfo } from "./packageDependencies"
-import { getNodeModules } from "../node-module-collector"
+import { getNodeModules, detectPackageManager } from "../node-module-collector"
 
 const BOWER_COMPONENTS_PATTERN = `${path.sep}bower_components${path.sep}`
 /** @internal */
@@ -181,12 +181,14 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
   const projectDir = platformPackager.info.projectDir
   const appDir = platformPackager.info.appDir
 
-  let deps = await getNodeModules(appDir, platformPackager.info.tempDirManager)
+  const pm = detectPackageManager(appDir === projectDir ? [appDir] : [appDir, projectDir])
+
+  let deps = await getNodeModules(pm, appDir, platformPackager.info.tempDirManager)
   if (projectDir !== appDir && deps.length === 0) {
     const packageJson = require(path.join(appDir, "package.json"))
     if (Object.keys(packageJson.dependencies || {}).length > 0) {
       log.debug({ projectDir, appDir }, "no node_modules in app dir, trying to find in project dir")
-      deps = await getNodeModules(projectDir, platformPackager.info.tempDirManager)
+      deps = await getNodeModules(pm, projectDir, platformPackager.info.tempDirManager)
     }
   }
 
