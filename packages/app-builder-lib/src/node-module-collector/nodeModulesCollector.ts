@@ -23,7 +23,7 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
   public async getNodeModules(): Promise<NodeModuleInfo[]> {
     const tree: T = await this.getDependenciesTree()
     const realTree: T = this.getTreeFromWorkspaces(tree)
-    this.collectAllDependencies(realTree)
+    this.collectAllDependencies(tree) // Parse from the root, as npm list can host and deduplicate across projects in the workspace
     this.extractProductionDependencyGraph(realTree, "." /*root project name*/)
 
     const hoisterResult: HoisterResult = hoist(this.transToHoisterTree(this.productionGraph), { check: true })
