@@ -809,6 +809,15 @@ exports[`nsis 2`] = `
 {
   "win": [
     {
+      "arch": "x64",
+      "file": "Test App ßW Setup 1.0.1.exe",
+      "safeArtifactName": "TestApp-Setup-1.0.1.exe",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
       "file": "Test App ßW Setup 1.0.1.exe.blockmap",
       "safeArtifactName": "TestApp-Setup-1.0.1.exe.blockmap",
       "updateInfo": {
@@ -830,15 +839,6 @@ exports[`nsis 2`] = `
         "releaseDate": "@releaseDate",
         "sha512": "@sha512",
         "version": "1.0.1",
-      },
-    },
-    {
-      "arch": "x64",
-      "file": "Test App ßW Setup 1.0.1.exe",
-      "safeArtifactName": "TestApp-Setup-1.0.1.exe",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
       },
     },
   ],
@@ -921,6 +921,26 @@ exports[`web installer 2`] = `
 {
   "win": [
     {
+      "arch": "x64",
+      "file": "Test App ßW Web Setup 1.0.1.exe",
+      "safeArtifactName": "TestApp-WebSetup-1.0.1.exe",
+      "updateInfo": {
+        "packages": {
+          "x64": {
+            "blockMapSize": "@blockMapSize",
+            "file": "TestApp-1.0.1-x64.nsis.7z",
+            "path": "TestApp-1.0.1-x64.nsis.7z",
+            "sha512": "@sha512",
+            "size": "@size",
+          },
+        },
+      },
+    },
+    {
+      "arch": "x64",
+      "file": "TestApp-1.0.1-x64.nsis.7z",
+    },
+    {
       "file": "latest.yml",
       "fileContent": {
         "files": [
@@ -943,26 +963,6 @@ exports[`web installer 2`] = `
         "sha512": "@sha512",
         "version": "1.0.1",
       },
-    },
-    {
-      "arch": "x64",
-      "file": "Test App ßW Web Setup 1.0.1.exe",
-      "safeArtifactName": "TestApp-WebSetup-1.0.1.exe",
-      "updateInfo": {
-        "packages": {
-          "x64": {
-            "blockMapSize": "@blockMapSize",
-            "file": "TestApp-1.0.1-x64.nsis.7z",
-            "path": "TestApp-1.0.1-x64.nsis.7z",
-            "sha512": "@sha512",
-            "size": "@size",
-          },
-        },
-      },
-    },
-    {
-      "arch": "x64",
-      "file": "TestApp-1.0.1-x64.nsis.7z",
     },
   ],
 }
