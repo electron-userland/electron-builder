@@ -287,7 +287,8 @@ export function configureBuildCommand(yargs: yargs.Argv): yargs.Argv {
       alias: ["c"],
       group: buildGroup,
       description:
-        "The path to an electron-builder config. Defaults to `electron-builder.yml` (or `json`, or `json5`, or `js`, or `ts`), see " + chalk.underline("https://www.electron.build/configuration"),
+        "The path to an electron-builder config. Defaults to `electron-builder.yml` (or `json`, or `json5`, or `js`, or `ts`), see " +
+        chalk.underline("https://www.electron.build/configuration"),
     })
     .group(["help", "version"], "Other:")
     .example("electron-builder -mwl", "build for macOS, Windows and Linux")
