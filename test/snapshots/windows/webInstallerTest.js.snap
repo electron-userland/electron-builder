@@ -4,44 +4,6 @@ exports[`web installer (default github) 1`] = `
 {
   "win": [
     {
-      "file": "latest.yml",
-      "fileContent": {
-        "files": [
-          {
-            "sha512": "@sha512",
-            "url": "TestApp-WebSetup-1.1.0.exe",
-          },
-        ],
-        "packages": {
-          "arm64": {
-            "blockMapSize": "@blockMapSize",
-            "file": "TestApp-1.1.0-arm64.nsis.7z",
-            "path": "TestApp-1.1.0-arm64.nsis.7z",
-            "sha512": "@sha512",
-            "size": "@size",
-          },
-          "ia32": {
-            "blockMapSize": "@blockMapSize",
-            "file": "TestApp-1.1.0-ia32.nsis.7z",
-            "path": "TestApp-1.1.0-ia32.nsis.7z",
-            "sha512": "@sha512",
-            "size": "@size",
-          },
-          "x64": {
-            "blockMapSize": "@blockMapSize",
-            "file": "TestApp-1.1.0-x64.nsis.7z",
-            "path": "TestApp-1.1.0-x64.nsis.7z",
-            "sha512": "@sha512",
-            "size": "@size",
-          },
-        },
-        "path": "TestApp-WebSetup-1.1.0.exe",
-        "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
-        "version": "1.1.0",
-      },
-    },
-    {
       "file": "Test App ßW Web Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-WebSetup-1.1.0.exe",
       "updateInfo": {
@@ -82,6 +44,44 @@ exports[`web installer (default github) 1`] = `
       "arch": "arm64",
       "file": "TestApp-1.1.0-arm64.nsis.7z",
     },
+    {
+      "file": "latest.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "url": "TestApp-WebSetup-1.1.0.exe",
+          },
+        ],
+        "packages": {
+          "arm64": {
+            "blockMapSize": "@blockMapSize",
+            "file": "TestApp-1.1.0-arm64.nsis.7z",
+            "path": "TestApp-1.1.0-arm64.nsis.7z",
+            "sha512": "@sha512",
+            "size": "@size",
+          },
+          "ia32": {
+            "blockMapSize": "@blockMapSize",
+            "file": "TestApp-1.1.0-ia32.nsis.7z",
+            "path": "TestApp-1.1.0-ia32.nsis.7z",
+            "sha512": "@sha512",
+            "size": "@size",
+          },
+          "x64": {
+            "blockMapSize": "@blockMapSize",
+            "file": "TestApp-1.1.0-x64.nsis.7z",
+            "path": "TestApp-1.1.0-x64.nsis.7z",
+            "sha512": "@sha512",
+            "size": "@size",
+          },
+        },
+        "path": "TestApp-WebSetup-1.1.0.exe",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.1.0",
+      },
+    },
   ],
 }
 `;
@@ -89,6 +89,36 @@ exports[`web installer (default github) 1`] = `
 exports[`web installer 1`] = `
 {
   "win": [
+    {
+      "file": "Test App ßW Web Setup 1.1.0.exe",
+      "safeArtifactName": "TestApp-WebSetup-1.1.0.exe",
+      "updateInfo": {
+        "packages": {
+          "arm64": {
+            "blockMapSize": "@blockMapSize",
+            "file": "TestApp-1.1.0-arm64.nsis.7z",
+            "path": "TestApp-1.1.0-arm64.nsis.7z",
+            "sha512": "@sha512",
+            "size": "@size",
+          },
+          "x64": {
+            "blockMapSize": "@blockMapSize",
+            "file": "TestApp-1.1.0-x64.nsis.7z",
+            "path": "TestApp-1.1.0-x64.nsis.7z",
+            "sha512": "@sha512",
+            "size": "@size",
+          },
+        },
+      },
+    },
+    {
+      "arch": "x64",
+      "file": "TestApp-1.1.0-x64.nsis.7z",
+    },
+    {
+      "arch": "arm64",
+      "file": "TestApp-1.1.0-arm64.nsis.7z",
+    },
     {
       "file": "latest.yml",
       "fileContent": {
@@ -120,18 +150,18 @@ exports[`web installer 1`] = `
         "version": "1.1.0",
       },
     },
+  ],
+}
+`;
+
+exports[`web installer, safe name on github 1`] = `
+{
+  "win": [
     {
-      "file": "Test App ßW Web Setup 1.1.0.exe",
-      "safeArtifactName": "TestApp-WebSetup-1.1.0.exe",
+      "arch": "x64",
+      "file": "WorkFlowy.exe",
       "updateInfo": {
         "packages": {
-          "arm64": {
-            "blockMapSize": "@blockMapSize",
-            "file": "TestApp-1.1.0-arm64.nsis.7z",
-            "path": "TestApp-1.1.0-arm64.nsis.7z",
-            "sha512": "@sha512",
-            "size": "@size",
-          },
           "x64": {
             "blockMapSize": "@blockMapSize",
             "file": "TestApp-1.1.0-x64.nsis.7z",
@@ -146,17 +176,6 @@ exports[`web installer 1`] = `
       "arch": "x64",
       "file": "TestApp-1.1.0-x64.nsis.7z",
     },
-    {
-      "arch": "arm64",
-      "file": "TestApp-1.1.0-arm64.nsis.7z",
-    },
-  ],
-}
-`;
-
-exports[`web installer, safe name on github 1`] = `
-{
-  "win": [
     {
       "file": "latest.yml",
       "fileContent": {
@@ -179,25 +198,6 @@ exports[`web installer, safe name on github 1`] = `
         "releaseDate": "@releaseDate",
         "sha512": "@sha512",
         "version": "1.1.0",
-      },
-    },
-    {
-      "arch": "x64",
-      "file": "TestApp-1.1.0-x64.nsis.7z",
-    },
-    {
-      "arch": "x64",
-      "file": "WorkFlowy.exe",
-      "updateInfo": {
-        "packages": {
-          "x64": {
-            "blockMapSize": "@blockMapSize",
-            "file": "TestApp-1.1.0-x64.nsis.7z",
-            "path": "TestApp-1.1.0-x64.nsis.7z",
-            "sha512": "@sha512",
-            "size": "@size",
-          },
-        },
       },
     },
   ],
