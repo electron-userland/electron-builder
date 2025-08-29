@@ -106,13 +106,31 @@ export class GitlabTestFixtures {
     return typeof r?.tag_name === "string" && typeof r?.name === "string" && Array.isArray(r?.assets?.links)
   }
 
-  static validateAssetLinkStructure(link: unknown): boolean {
+  static validateAssetLinkStructure(link: unknown, assetType: "project_upload" | "generic_package"): boolean {
     const l = link as any
+
+    // GitLab upload URL pattern: https://gitlab.com/-/project/{projectId}/uploads/{hash}/{filename}
+    const gitlabUploadUrlPattern = /^https:\/\/gitlab\.com\/-\/project\/\d+\/uploads\/[a-f0-9]{32}\/.+$/
+
+    // GitLab generic package URL pattern: https://gitlab.com/api/v4/projects/{projectId}/packages/generic/{packageName}/{packageVersion}/{filename}
+    const gitlabGenericPackageUrlPattern = /^https:\/\/gitlab\.com\/api\/v4\/projects\/\d+\/packages\/generic\/.+\/.+\/.+$/
+
+    const isValidUrl = (url: string) => {
+      if (assetType === "project_upload") {
+        return gitlabUploadUrlPattern.test(url)
+      } else if (assetType === "generic_package") {
+        return gitlabGenericPackageUrlPattern.test(url)
+      }
+      return false
+    }
+
     return (
       (typeof l?.id === "string" || typeof l?.id === "number") &&
       typeof l?.name === "string" &&
       typeof l?.url === "string" &&
+      isValidUrl(l?.url) &&
       typeof l?.direct_asset_url === "string" &&
+      isValidUrl(l?.direct_asset_url) &&
       typeof l?.link_type === "string"
     )
   }

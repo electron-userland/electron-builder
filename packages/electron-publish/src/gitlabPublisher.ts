@@ -192,7 +192,7 @@ export class GitlabPublisher extends HttpPublisher {
       // Default to project_upload
       const uploadResult = await this.uploadToProjectUpload(fileName, filePath)
       // For project uploads, construct full URL from relative path
-      assetPath = `https://${this.host}${uploadResult.url}`
+      assetPath = `https://${this.host}${uploadResult.full_path}`
     }
 
     return assetPath

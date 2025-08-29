@@ -136,7 +136,7 @@ describe.sequential("GitLab Publisher - Integration Tests", () => {
 
         const assets = release?.assets
         expect(assets?.links?.length).toBeGreaterThan(0)
-        expect(GitlabTestFixtures.validateAssetLinkStructure(assets?.links[0])).toBe(true)
+        expect(GitlabTestFixtures.validateAssetLinkStructure(assets?.links[0], "project_upload")).toBe(true)
       },
       60000
     )
@@ -154,7 +154,7 @@ describe.sequential("GitLab Publisher - Integration Tests", () => {
 
         const assets = release?.assets
         expect(assets?.links?.length).toBeGreaterThan(0)
-        expect(GitlabTestFixtures.validateAssetLinkStructure(assets?.links[0])).toBe(true)
+        expect(GitlabTestFixtures.validateAssetLinkStructure(assets?.links[0], "generic_package")).toBe(true)
       },
       60000
     )
