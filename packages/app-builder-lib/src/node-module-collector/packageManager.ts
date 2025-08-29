@@ -1,6 +1,7 @@
 import * as path from "path"
 import * as fs from "fs"
 import * as which from "which"
+import { execSync } from "child_process"
 
 export enum PM {
   NPM = "npm",
@@ -42,26 +43,33 @@ export function getPackageManagerCommand(pm: PM) {
   return resolved
 }
 
-export function detectPackageManagerByEnv(pm: 'npm' | 'yarn' | 'pnpm'): PM | null {
-  const ua = process.env.npm_config_user_agent ?? ""
-  const execPath = process.env.npm_execpath?.toLowerCase() ?? ""
-
-  const yarnVersion = process.env.YARN_VERSION
-  const isBerry = yarnVersion?.startsWith("2.") || yarnVersion?.startsWith("3.")
-
-  switch (pm) {
-    case 'pnpm':
-      return ua.includes("pnpm") || execPath.includes("pnpm") || process.env.PNPM_HOME ? PM.PNPM : null
-    case 'yarn':
-      if (ua.includes("yarn") || execPath.includes("yarn") || process.env.YARN_REGISTRY) {
-        return isBerry || ua.includes("yarn/2") || ua.includes("yarn/3") ? PM.YARN_BERRY : PM.YARN
-      }
-      return null
-    case 'npm':
-      return ua.includes("npm") || execPath.includes("npm") || process.env.npm_package_json ? PM.NPM : null
-    default:
-      return null
+export function detectPackageManagerByEnv(): PM | null {
+  if (process.env.npm_config_user_agent) {
+    const userAgent = process.env.npm_config_user_agent
+    if (userAgent.includes("pnpm")) return PM.PNPM
+    if (userAgent.includes("yarn")) return PM.YARN
+    if (userAgent.includes("npm")) return PM.NPM
   }
+
+  if (process.env.npm_execpath) {
+    const execPath = process.env.npm_execpath
+    if (execPath.includes("pnpm")) return PM.PNPM
+    if (execPath.includes("yarn")) return PM.YARN
+    if (execPath.includes("npm")) return PM.NPM
+  }
+
+  const packageJsonPath = path.join(process.cwd(), "package.json")
+  if (fs.existsSync(packageJsonPath)) {
+    const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"))
+
+    if (packageJson.packageManager) {
+      if (packageJson.packageManager.startsWith("pnpm@")) return PM.PNPM
+      if (packageJson.packageManager.startsWith("yarn@")) return PM.YARN
+      if (packageJson.packageManager.startsWith("npm@")) return PM.NPM
+    }
+  }
+
+  return null
 }
 
 export function detectPackageManagerByLockfile(cwd: string): PM | null {
@@ -77,11 +85,15 @@ export function detectPackageManagerByLockfile(cwd: string): PM | null {
   if (npm) detected.push(PM.NPM)
 
   if (detected.length === 1) {
-    if (detected[0] === PM.YARN) {
-      return detectPackageManagerByEnv('yarn') === PM.YARN_BERRY ? PM.YARN_BERRY : PM.YARN
-    }
     return detected[0]
   }
 
   return null
+}
+
+export function detectYarnBerry() {
+  // yarn --version
+  const version = execSync("yarn --version").toString().trim()
+  if (parseInt(version.split(".")[0]) > 1) return PM.YARN_BERRY
+  return PM.YARN
 }
