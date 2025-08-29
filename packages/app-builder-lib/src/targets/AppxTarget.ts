@@ -149,7 +149,12 @@ export default class AppXTarget extends Target {
     }
     this.buildQueueManager.add(async () => {
       await vm.exec(vm.toVmFile(path.join(vendorPath, "windows-10", signToolArch, "makeappx.exe")), makeAppXArgs)
-      await packager.sign(artifactPath)
+
+      if (this.options.publisher == null) {
+        log.info({ reason: "publisher is null" }, "AppX is not signed")
+      } else {
+        await packager.sign(artifactPath)
+      }
 
       await stageDir.cleanup()
 
@@ -192,6 +197,10 @@ export default class AppXTarget extends Target {
 
   // https://github.com/electron-userland/electron-builder/issues/2108#issuecomment-333200711
   private async computePublisherName() {
+    if (this.options.publisher == null) {
+      log.info({ reason: "publisher is null" }, "AppX is not signed")
+      return "CN=ms"
+    }
     const signtoolManager = await this.packager.signingManager.value
     return signtoolManager.computePublisherName(this, this.options.publisher)
   }

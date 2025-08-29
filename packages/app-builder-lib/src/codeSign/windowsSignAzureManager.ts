@@ -1,11 +1,13 @@
 import { asArray, InvalidConfigurationError, log } from "builder-util"
-import { MemoLazy } from "builder-util-runtime"
+import { MemoLazy, Nullish } from "builder-util-runtime"
 import { Lazy } from "lazy-val"
 import { WindowsAzureSigningConfiguration, WindowsConfiguration } from "../options/winOptions"
 import { WinPackager } from "../winPackager"
 import { SignManager } from "./signManager"
 import { WindowsSignOptions } from "./windowsCodeSign"
 import { CertificateFromStoreInfo, FileCodeSigningInfo } from "./windowsSignToolManager"
+import AppXTarget from "../targets/AppxTarget"
+import { Target } from "../core"
 
 export class WindowsSignAzureManager implements SignManager {
   private readonly platformSpecificBuildOptions: WindowsConfiguration
@@ -95,13 +97,15 @@ export class WindowsSignAzureManager implements SignManager {
     return true
   }
 
-  computePublisherName(): Promise<string> {
-    return Promise.resolve(this.packager.platformSpecificBuildOptions.azureSignOptions!.publisherName)
+  async computePublisherName(_target: Target, publisherName: string | Nullish): Promise<string> {
+    return Promise.resolve(publisherName || this.packager.platformSpecificBuildOptions.azureSignOptions!.publisherName)
   }
+
   readonly cscInfo = new MemoLazy<WindowsConfiguration, FileCodeSigningInfo | CertificateFromStoreInfo | null>(
     () => this.packager.platformSpecificBuildOptions,
     _selected => Promise.resolve(null)
   )
+
   // prerequisite: requires `initializeProviderModules` to already have been executed
   async signFile(options: WindowsSignOptions): Promise<boolean> {
     const vm = await this.packager.vm.value
