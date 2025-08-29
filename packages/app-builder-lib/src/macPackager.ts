@@ -71,9 +71,6 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
   }
   
   expandArch(pattern: string, arch?: Arch | null): string[] {
-    if(!arch) {
-      return [pattern];
-    }
     if(arch === Arch.arm64) {
       return [doExpandMacro(pattern, null, this.appInfo, {}, false)]
     }
@@ -323,15 +320,15 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
       binaries = (await Promise.all(
         binaries.flatMap(async destination => {
           const expandedDestination = this.expandArch(destination, arch);
-          return await Promise.all(expandedDestination.map(async destination => {
-            if (await statOrNull(destination)) {
-              return destination
+          return await Promise.all(expandedDestination.map(async d => {
+            if (await statOrNull(d)) {
+              return d
             }
-            return path.resolve(appPath, destination)
+            return path.resolve(appPath, d)
           }))
         })
       )).flat();
-      log.info({ binaries }, "signing additional user-defined binaries")
+      log.info({ binaries, arch: arch == null ? null : Arch[arch] }, "signing additional user-defined binaries for arch")
     }
     const customSignOptions: MasConfiguration | MacConfiguration = (isMas ? masOptions : this.platformSpecificBuildOptions) || this.platformSpecificBuildOptions
 
