@@ -310,7 +310,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
       // Accept absolute paths for external binaries, else resolve relative paths from the artifact's app Contents path.
       binaries = await Promise.all(
         binaries.map(async destination => {
-          const expandedDestination = this.expandMacro(destination);
+          const expandedDestination = this.expandMacro(destination, arch == null ? null : Arch[arch], { "/*": "{,/**/*}" });
           if (await statOrNull(expandedDestination)) {
             return expandedDestination
           }
