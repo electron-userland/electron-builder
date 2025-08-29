@@ -21,6 +21,7 @@ import { createCommonTarget, NoOpTarget } from "./targets/targetFactory"
 import { isMacOsHighSierra } from "./util/macosVersion"
 import { getTemplatePath } from "./util/pathManager"
 import { resolveFunction } from "./util/resolve"
+import { expandMacro as doExpandMacro } from "./util/macroExpander"
 
 export type CustomMacSignOptions = SignOptions
 export type CustomMacSign = (configuration: CustomMacSignOptions, packager: MacPackager) => Promise<void>
@@ -67,6 +68,10 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
 
   get defaultTarget(): Array<string> {
     return this.info.framework.macOsDefaultTargets
+  }
+  
+  expandMacro(pattern: string, arch?: string | null, extra: any = {}, isProductNameSanitized = true): string {
+    return doExpandMacro(pattern, arch, this.appInfo, { os: this.platform.buildConfigurationKey, ...extra }, isProductNameSanitized)
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -305,10 +310,11 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
       // Accept absolute paths for external binaries, else resolve relative paths from the artifact's app Contents path.
       binaries = await Promise.all(
         binaries.map(async destination => {
-          if (await statOrNull(destination)) {
-            return destination
+          const expandedDestination = this.expandMacro(destination);
+          if (await statOrNull(expandedDestination)) {
+            return expandedDestination
           }
-          return path.resolve(appPath, destination)
+          return path.resolve(appPath, expandedDestination)
         })
       )
       log.info({ binaries }, "signing additional user-defined binaries")
