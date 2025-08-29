@@ -1578,6 +1578,10 @@
           "$ref": "#/definitions/OutgoingHttpHeaders",
           "description": "Any custom request headers"
         },
+        "tagNamePrefix": {
+          "description": "If defined, sets the prefix of the tag name that comes before the semver number.\ne.g. \"v\" in \"v1.2.3\" or \"test\" of \"test1.2.3\".\nOverrides `vPrefixedTagName`",
+          "type": "string"
+        },
         "timeout": {
           "default": 120000,
           "description": "Request timeout in milliseconds. (Default is 2 minutes; O is ignored)",
@@ -1603,10 +1607,6 @@
           "default": true,
           "description": "Whether to use `v`-prefixed tag name.",
           "type": "boolean"
-        },
-        "tagNamePrefix": {
-          "description": "Sets the prefix of the tag name that comes before the semver number. Overrides vPrefixedTagName.",
-          "type": "string"
         }
       },
       "required": [

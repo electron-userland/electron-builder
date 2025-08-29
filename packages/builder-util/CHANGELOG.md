@@ -1,5 +1,14 @@
 # builder-util
 
+## 26.0.20
+
+### Patch Changes
+
+- [#9182](https://github.com/electron-userland/electron-builder/pull/9182) [`c54a0609`](https://github.com/electron-userland/electron-builder/commit/c54a0609753a11d032f87e727eccbab1f6836081) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: scrubbing more aggressively anything in the logs that MIGHT be password affiliated (handling spaces in secrets)
+
+- Updated dependencies [[`44b28997`](https://github.com/electron-userland/electron-builder/commit/44b28997f15314730d1bb69303a47dc26f7950d1), [`7c7fd6ca`](https://github.com/electron-userland/electron-builder/commit/7c7fd6ca240eda72048835f754adac92c4ab4e8c)]:
+  - builder-util-runtime@9.4.0
+
 ## 26.0.19
 
 ### Patch Changes
