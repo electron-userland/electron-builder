@@ -42,29 +42,29 @@ export function getPackageManagerCommand(pm: PM) {
   return resolved
 }
 
-export function detectPackageManagerByEnv(): PM {
+export function detectPackageManagerByEnv(pm: 'npm' | 'yarn' | 'pnpm'): PM | null {
   const ua = process.env.npm_config_user_agent ?? ""
   const execPath = process.env.npm_execpath?.toLowerCase() ?? ""
 
   const yarnVersion = process.env.YARN_VERSION
   const isBerry = yarnVersion?.startsWith("2.") || yarnVersion?.startsWith("3.")
 
-  if (ua.includes("pnpm") || execPath.includes("pnpm") || process.env.PNPM_HOME) {
-    return PM.PNPM
+  switch (pm) {
+    case 'pnpm':
+      return ua.includes("pnpm") || execPath.includes("pnpm") || process.env.PNPM_HOME ? PM.PNPM : null
+    case 'yarn':
+      if (ua.includes("yarn") || execPath.includes("yarn") || process.env.YARN_REGISTRY) {
+        return isBerry || ua.includes("yarn/2") || ua.includes("yarn/3") ? PM.YARN_BERRY : PM.YARN
+      }
+      return null
+    case 'npm':
+      return ua.includes("npm") || execPath.includes("npm") || process.env.npm_package_json ? PM.NPM : null
+    default:
+      return null
   }
-
-  if (ua.includes("yarn") || execPath.includes("yarn") || process.env.YARN_REGISTRY) {
-    return isBerry || ua.includes("yarn/2") || ua.includes("yarn/3") ? PM.YARN_BERRY : PM.YARN
-  }
-
-  if (ua.includes("npm") || execPath.includes("npm") || process.env.npm_package_json) {
-    return PM.NPM
-  }
-
-  return PM.NPM
 }
 
-export function detectPackageManager(cwd: string): PM {
+export function detectPackageManagerByLockfile(cwd: string): PM | null {
   const has = (file: string) => fs.existsSync(path.join(cwd, file))
 
   const yarn = has("yarn.lock")
@@ -78,11 +78,10 @@ export function detectPackageManager(cwd: string): PM {
 
   if (detected.length === 1) {
     if (detected[0] === PM.YARN) {
-      return detectPackageManagerByEnv() === PM.YARN_BERRY ? PM.YARN_BERRY : PM.YARN
+      return detectPackageManagerByEnv('yarn') === PM.YARN_BERRY ? PM.YARN_BERRY : PM.YARN
     }
     return detected[0]
   }
 
-  // fallback: multiple lockfiles or none
-  return detectPackageManagerByEnv()
+  return null
 }
