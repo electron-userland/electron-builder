@@ -21,6 +21,7 @@ import { createCommonTarget, NoOpTarget } from "./targets/targetFactory"
 import { isMacOsHighSierra } from "./util/macosVersion"
 import { getTemplatePath } from "./util/pathManager"
 import { resolveFunction } from "./util/resolve"
+import { expandMacro as doExpandMacro } from "./util/macroExpander"
 
 export type CustomMacSignOptions = SignOptions
 export type CustomMacSign = (configuration: CustomMacSignOptions, packager: MacPackager) => Promise<void>
@@ -67,6 +68,19 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
 
   get defaultTarget(): Array<string> {
     return this.info.framework.macOsDefaultTargets
+  }
+  
+  expandArch(pattern: string, arch?: Arch | null): string[] {
+    if(arch === Arch.arm64) {
+      return [doExpandMacro(pattern, null, this.appInfo, {}, false)]
+    }
+    if(arch === Arch.universal) {
+      return [
+        doExpandMacro(pattern, Arch[Arch.arm64], this.appInfo, {}, false),
+        doExpandMacro(pattern, Arch[Arch.x64], this.appInfo, {}, false),
+      ]
+    }
+    return [doExpandMacro(pattern, null, this.appInfo, {}, false)];
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -303,15 +317,18 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
     let binaries = options.binaries || undefined
     if (binaries) {
       // Accept absolute paths for external binaries, else resolve relative paths from the artifact's app Contents path.
-      binaries = await Promise.all(
-        binaries.map(async destination => {
-          if (await statOrNull(destination)) {
-            return destination
-          }
-          return path.resolve(appPath, destination)
+      binaries = (await Promise.all(
+        binaries.flatMap(async destination => {
+          const expandedDestination = this.expandArch(destination, arch);
+          return await Promise.all(expandedDestination.map(async d => {
+            if (await statOrNull(d)) {
+              return d
+            }
+            return path.resolve(appPath, d)
+          }))
         })
-      )
-      log.info({ binaries }, "signing additional user-defined binaries")
+      )).flat();
+      log.info({ binaries, arch: arch == null ? null : Arch[arch] }, "signing additional user-defined binaries for arch")
     }
     const customSignOptions: MasConfiguration | MacConfiguration = (isMas ? masOptions : this.platformSpecificBuildOptions) || this.platformSpecificBuildOptions
 
