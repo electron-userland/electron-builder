@@ -44,31 +44,24 @@ export function getPackageManagerCommand(pm: PM) {
 }
 
 export function detectPackageManagerByEnv(): PM | null {
-  if (process.env.npm_config_user_agent) {
-    const userAgent = process.env.npm_config_user_agent
-    if (userAgent.includes("pnpm")) return PM.PNPM
-    if (userAgent.includes("yarn")) return PM.YARN
-    if (userAgent.includes("npm")) return PM.NPM
-  }
-
-  if (process.env.npm_execpath) {
-    const execPath = process.env.npm_execpath
-    if (execPath.includes("pnpm")) return PM.PNPM
-    if (execPath.includes("yarn")) return PM.YARN
-    if (execPath.includes("npm")) return PM.NPM
-  }
+  const pms = [PM.YARN, PM.NPM, PM.PNPM]
 
   const packageJsonPath = path.join(process.cwd(), "package.json")
-  if (fs.existsSync(packageJsonPath)) {
-    const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"))
+  const packageManager = fs.existsSync(packageJsonPath) ? JSON.parse(fs.readFileSync(packageJsonPath, "utf8"))?.packageManager : undefined
 
-    if (packageJson.packageManager) {
-      if (packageJson.packageManager.startsWith("pnpm@")) return PM.PNPM
-      if (packageJson.packageManager.startsWith("yarn@")) return PM.YARN
-      if (packageJson.packageManager.startsWith("npm@")) return PM.NPM
+  const priorityChecklist = [
+    (key: string) => process.env.npm_config_user_agent?.includes(key),
+    (key: string) => process.env.npm_execpath?.includes(key),
+    (key: string) => packageManager?.startsWith(`${key}@`),
+  ]
+
+  for (const checker of priorityChecklist) {
+    for (const pm of pms) {
+      if (checker(pm)) {
+        return pm
+      }
     }
   }
-
   return null
 }
 
