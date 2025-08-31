@@ -13,6 +13,7 @@ export async function getCollectorByPackageManager(pm: PM, rootDir: string, temp
       }
       return new PnpmNodeModulesCollector(rootDir, tempDirManager)
     case PM.NPM:
+    case PM.BUN:
       return new NpmNodeModulesCollector(rootDir, tempDirManager)
     case PM.YARN:
       return new YarnNodeModulesCollector(rootDir, tempDirManager)

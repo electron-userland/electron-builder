@@ -8,6 +8,7 @@ export enum PM {
   YARN = "yarn",
   PNPM = "pnpm",
   YARN_BERRY = "yarn-berry",
+  BUN = "bun",
 }
 
 // Cache for resolved paths
@@ -16,6 +17,7 @@ const pmPathCache: Record<PM, string | null | undefined> = {
   [PM.YARN]: undefined,
   [PM.PNPM]: undefined,
   [PM.YARN_BERRY]: undefined,
+  [PM.BUN]: undefined,
 }
 
 function resolveCommand(pm: PM): string {
@@ -44,8 +46,6 @@ export function getPackageManagerCommand(pm: PM) {
 }
 
 export function detectPackageManagerByEnv(): PM | null {
-  const pms = [PM.YARN, PM.NPM, PM.PNPM]
-
   const packageJsonPath = path.join(process.cwd(), "package.json")
   const packageManager = fs.existsSync(packageJsonPath) ? JSON.parse(fs.readFileSync(packageJsonPath, "utf8"))?.packageManager : undefined
 
@@ -55,6 +55,7 @@ export function detectPackageManagerByEnv(): PM | null {
     (key: string) => packageManager?.startsWith(`${key}@`),
   ]
 
+  const pms = Object.values(PM).filter(pm => pm !== PM.YARN_BERRY)
   for (const checker of priorityChecklist) {
     for (const pm of pms) {
       if (checker(pm)) {
@@ -71,11 +72,13 @@ export function detectPackageManagerByLockfile(cwd: string): PM | null {
   const yarn = has("yarn.lock")
   const pnpm = has("pnpm-lock.yaml")
   const npm = has("package-lock.json")
+  const bun = has("bun.lock") || has("bun.lockb")
 
   const detected: PM[] = []
   if (yarn) detected.push(PM.YARN)
   if (pnpm) detected.push(PM.PNPM)
   if (npm) detected.push(PM.NPM)
+  if (bun) detected.push(PM.BUN)
 
   if (detected.length === 1) {
     return detected[0]
