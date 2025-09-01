@@ -30,22 +30,23 @@ export async function getNodeModules(pm: PM, rootDir: string, tempDirManager: Tm
 export function detectPackageManager(dirs: string[]): PM {
   let pm: PM | null = null
 
+  const resolveYarnVersion = (pm: PM) => {
+    if(pm === PM.YARN) {
+      return detectYarnBerry()
+    }
+    return pm
+  }
+
   for (const dir of dirs) {
     pm = detectPackageManagerByLockfile(dir)
     if (pm) {
-      if (pm === PM.YARN) {
-        return detectYarnBerry()
-      }
-      return pm
+      return resolveYarnVersion(pm)
     }
   }
 
   pm = detectPackageManagerByEnv()
   if (pm) {
-    if (pm === PM.YARN) {
-      return detectYarnBerry()
-    }
-    return pm
+    return resolveYarnVersion(pm)
   }
 
   // Default to npm

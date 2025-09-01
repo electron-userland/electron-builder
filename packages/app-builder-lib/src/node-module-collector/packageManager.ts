@@ -69,16 +69,19 @@ export function detectPackageManagerByEnv(): PM | null {
 export function detectPackageManagerByLockfile(cwd: string): PM | null {
   const has = (file: string) => fs.existsSync(path.join(cwd, file))
 
-  const yarn = has("yarn.lock")
-  const pnpm = has("pnpm-lock.yaml")
-  const npm = has("package-lock.json")
-  const bun = has("bun.lock") || has("bun.lockb")
-
   const detected: PM[] = []
-  if (yarn) detected.push(PM.YARN)
-  if (pnpm) detected.push(PM.PNPM)
-  if (npm) detected.push(PM.NPM)
-  if (bun) detected.push(PM.BUN)
+  if (has("yarn.lock")) {
+    detected.push(PM.YARN)
+  }
+  if (has("pnpm-lock.yaml")) {
+    detected.push(PM.PNPM)
+  }
+  if (has("package-lock.json")) {
+    detected.push(PM.NPM)
+  }
+  if (has("bun.lock") || has("bun.lockb")) {
+    detected.push(PM.BUN)
+  }
 
   if (detected.length === 1) {
     return detected[0]
