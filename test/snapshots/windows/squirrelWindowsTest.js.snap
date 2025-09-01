@@ -5,16 +5,16 @@ exports[`squirrel.windows > Squirrel.Windows 1`] = `
   "win": [
     {
       "arch": "x64",
-      "file": "RELEASES",
-    },
-    {
-      "arch": "x64",
       "file": "Test App ßW Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe",
     },
     {
       "arch": "x64",
       "file": "TestApp-1.1.0-full.nupkg",
+    },
+    {
+      "arch": "x64",
+      "file": "RELEASES",
     },
   ],
 }
@@ -61,12 +61,13 @@ exports[`squirrel.windows > artifactName 1`] = `
   "win": [
     {
       "arch": "x64",
-      "file": "RELEASES",
+      "file": "Test TestApp foo.exe",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe",
     },
     {
       "arch": "x64",
-      "file": "Test TestApp foo.exe",
-      "safeArtifactName": "TestApp-Setup-1.1.0.exe",
+      "file": "Test TestApp foo.zip",
+      "safeArtifactName": "Test-TestApp-foo.zip",
     },
     {
       "arch": "x64",
@@ -74,8 +75,7 @@ exports[`squirrel.windows > artifactName 1`] = `
     },
     {
       "arch": "x64",
-      "file": "Test TestApp foo.zip",
-      "safeArtifactName": "Test-TestApp-foo.zip",
+      "file": "RELEASES",
     },
   ],
 }
@@ -122,10 +122,6 @@ exports[`squirrel.windows > squirrel window arm64 msi 1`] = `
   "win": [
     {
       "arch": "arm64",
-      "file": "RELEASES",
-    },
-    {
-      "arch": "arm64",
       "file": "Test App ßW Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-Setup-1.1.0-arm64.exe",
     },
@@ -137,6 +133,10 @@ exports[`squirrel.windows > squirrel window arm64 msi 1`] = `
     {
       "arch": "arm64",
       "file": "TestApp-1.1.0-full.nupkg",
+    },
+    {
+      "arch": "arm64",
+      "file": "RELEASES",
     },
   ],
 }
@@ -182,10 +182,6 @@ exports[`squirrel.windows > squirrel window ia32 msi 1`] = `
   "win": [
     {
       "arch": "ia32",
-      "file": "RELEASES",
-    },
-    {
-      "arch": "ia32",
       "file": "Test App ßW Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-Setup-1.1.0-ia32.exe",
     },
@@ -197,6 +193,10 @@ exports[`squirrel.windows > squirrel window ia32 msi 1`] = `
     {
       "arch": "ia32",
       "file": "TestApp-1.1.0-full.nupkg",
+    },
+    {
+      "arch": "ia32",
+      "file": "RELEASES",
     },
   ],
 }
@@ -243,10 +243,6 @@ exports[`squirrel.windows > squirrel window x64 msi 1`] = `
   "win": [
     {
       "arch": "x64",
-      "file": "RELEASES",
-    },
-    {
-      "arch": "x64",
       "file": "Test App ßW Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe",
     },
@@ -258,6 +254,10 @@ exports[`squirrel.windows > squirrel window x64 msi 1`] = `
     {
       "arch": "x64",
       "file": "TestApp-1.1.0-full.nupkg",
+    },
+    {
+      "arch": "x64",
+      "file": "RELEASES",
     },
   ],
 }
