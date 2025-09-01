@@ -71,16 +71,15 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
   }
   
   expandArch(pattern: string, arch?: Arch | null): string[] {
-    if(arch === Arch.arm64 || arch === null || arch === undefined) {
-      return [doExpandMacro(pattern, null, this.appInfo, {}, false)]
-    }
     if(arch === Arch.universal) {
+    // Universal build has `app-x64.asar.unpacked` & `app-arm64.asar.unpacked`
       return [
         doExpandMacro(pattern, Arch[Arch.arm64], this.appInfo, {}, false),
         doExpandMacro(pattern, Arch[Arch.x64], this.appInfo, {}, false),
       ]
     }
-    return [doExpandMacro(pattern, Arch[arch], this.appInfo, {}, false)];
+    // Every other build keeps the name as `app.asar.unpacked`
+    return [doExpandMacro(pattern, null, this.appInfo, {}, false)];
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
