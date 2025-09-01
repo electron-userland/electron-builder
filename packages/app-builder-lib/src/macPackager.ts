@@ -71,7 +71,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
   }
   
   expandArch(pattern: string, arch?: Arch | null): string[] {
-    if(arch === Arch.arm64) {
+    if(arch === Arch.arm64 || arch === null || arch === undefined) {
       return [doExpandMacro(pattern, null, this.appInfo, {}, false)]
     }
     if(arch === Arch.universal) {
@@ -80,7 +80,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
         doExpandMacro(pattern, Arch[Arch.x64], this.appInfo, {}, false),
       ]
     }
-    return [doExpandMacro(pattern, null, this.appInfo, {}, false)];
+    return [doExpandMacro(pattern, Arch[arch], this.appInfo, {}, false)];
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
