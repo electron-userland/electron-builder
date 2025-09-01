@@ -1,5 +1,18 @@
 ## 4.3.0
 
+## 6.6.8
+
+### Patch Changes
+
+- [#9248](https://github.com/electron-userland/electron-builder/pull/9248) [`8cbf079e`](https://github.com/electron-userland/electron-builder/commit/8cbf079ec20bbc642f9b6c306e3e9141a1fcc385) Thanks [@DamonYu6](https://github.com/DamonYu6)! - fix: uncaught exception during differential downloading via multipleRangDownloader
+
+- [#9232](https://github.com/electron-userland/electron-builder/pull/9232) [`cfc4f36a`](https://github.com/electron-userland/electron-builder/commit/cfc4f36a5af20fb6c61dc7dfa6202cbc0fd9f201) Thanks [@michalzaq12](https://github.com/michalzaq12)! - fix: auto-update powershell script
+
+- [#9225](https://github.com/electron-userland/electron-builder/pull/9225) [`d27ac523`](https://github.com/electron-userland/electron-builder/commit/d27ac523bb1581f274c018952d55162315e7a9b8) Thanks [@yannishuber](https://github.com/yannishuber)! - fix(electron-updater): do not use quotes when installing update with sudo
+
+- Updated dependencies [[`44b28997`](https://github.com/electron-userland/electron-builder/commit/44b28997f15314730d1bb69303a47dc26f7950d1), [`7c7fd6ca`](https://github.com/electron-userland/electron-builder/commit/7c7fd6ca240eda72048835f754adac92c4ab4e8c)]:
+  - builder-util-runtime@9.4.0
+
 ## 6.6.7
 
 ### Patch Changes

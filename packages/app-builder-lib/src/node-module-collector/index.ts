@@ -27,7 +27,7 @@ export async function getNodeModules(pm: PM, rootDir: string, tempDirManager: Tm
 }
 
 export function detectPackageManager(dirs: string[]): PM {
-  let pm: PM | null = null;
+  let pm: PM | null = null
 
   for (const dir of dirs) {
     pm = detectPackageManagerByLockfile(dir)
@@ -36,7 +36,7 @@ export function detectPackageManager(dirs: string[]): PM {
     }
   }
 
-  return detectPackageManagerByEnv('pnpm') || detectPackageManagerByEnv('yarn') || detectPackageManagerByEnv('npm') || PM.NPM
+  return detectPackageManagerByEnv("pnpm") || detectPackageManagerByEnv("yarn") || detectPackageManagerByEnv("npm") || PM.NPM
 }
 
 export { PM, getPackageManagerCommand }

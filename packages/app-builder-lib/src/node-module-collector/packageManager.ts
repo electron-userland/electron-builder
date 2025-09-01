@@ -42,7 +42,7 @@ export function getPackageManagerCommand(pm: PM) {
   return resolved
 }
 
-export function detectPackageManagerByEnv(pm: 'npm' | 'yarn' | 'pnpm'): PM | null {
+export function detectPackageManagerByEnv(pm: "npm" | "yarn" | "pnpm"): PM | null {
   const ua = process.env.npm_config_user_agent ?? ""
   const execPath = process.env.npm_execpath?.toLowerCase() ?? ""
 
@@ -50,14 +50,14 @@ export function detectPackageManagerByEnv(pm: 'npm' | 'yarn' | 'pnpm'): PM | nul
   const isBerry = yarnVersion?.startsWith("2.") || yarnVersion?.startsWith("3.")
 
   switch (pm) {
-    case 'pnpm':
+    case "pnpm":
       return ua.includes("pnpm") || execPath.includes("pnpm") || process.env.PNPM_HOME ? PM.PNPM : null
-    case 'yarn':
+    case "yarn":
       if (ua.includes("yarn") || execPath.includes("yarn") || process.env.YARN_REGISTRY) {
         return isBerry || ua.includes("yarn/2") || ua.includes("yarn/3") ? PM.YARN_BERRY : PM.YARN
       }
       return null
-    case 'npm':
+    case "npm":
       return ua.includes("npm") || execPath.includes("npm") || process.env.npm_package_json ? PM.NPM : null
     default:
       return null
@@ -78,7 +78,7 @@ export function detectPackageManagerByLockfile(cwd: string): PM | null {
 
   if (detected.length === 1) {
     if (detected[0] === PM.YARN) {
-      return detectPackageManagerByEnv('yarn') === PM.YARN_BERRY ? PM.YARN_BERRY : PM.YARN
+      return detectPackageManagerByEnv("yarn") === PM.YARN_BERRY ? PM.YARN_BERRY : PM.YARN
     }
     return detected[0]
   }
