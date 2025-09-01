@@ -31,7 +31,7 @@ export function detectPackageManager(dirs: string[]): PM {
   let pm: PM | null = null
 
   const resolveYarnVersion = (pm: PM) => {
-    if(pm === PM.YARN) {
+    if (pm === PM.YARN) {
       return detectYarnBerry()
     }
     return pm
