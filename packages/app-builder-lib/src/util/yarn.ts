@@ -84,7 +84,7 @@ export async function installDependencies(config: Configuration, { appDir, proje
   const arch = options.arch || process.arch
   const additionalArgs = options.additionalArgs
 
-  const pm = detectPackageManager(projectDir)
+  const pm = detectPackageManager([projectDir])
   log.info({ pm, platform, arch, projectDir, appDir }, `installing production dependencies`)
   const execArgs = ["install"]
   if (pm === PM.YARN_BERRY) {
