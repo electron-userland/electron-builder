@@ -1,4 +1,4 @@
-Recommended tools: [AppIcon Generator](http://www.tweaknow.com/appicongenerator.php), [MakeAppIcon](https://makeappicon.com/), [iConvert Icons](https://iconverticons.com/online/).
+Recommended tools: [AppIcon Generator](http://www.tweaknow.com/appicongenerator.php), [MakeAppIcon](https://makeappicon.com/).
 
 ## macOS
 
