@@ -63,11 +63,8 @@
 ;
 
 !macro APP_ASSOCIATE EXT FILECLASS DESCRIPTION ICON COMMANDTEXT COMMAND
-  ; Backup the previously associated file class
-  ReadRegStr $R0 SHELL_CONTEXT "Software\Classes\.${EXT}" ""
-  WriteRegStr SHELL_CONTEXT "Software\Classes\.${EXT}" "${FILECLASS}_backup" "$R0"
-
   WriteRegStr SHELL_CONTEXT "Software\Classes\.${EXT}" "" "${FILECLASS}"
+  WriteRegNone SHELL_CONTEXT "Software\Classes\.${EXT}\OpenWithProgids" "${FILECLASS}"
 
   WriteRegStr SHELL_CONTEXT "Software\Classes\${FILECLASS}" "" `${DESCRIPTION}`
   WriteRegStr SHELL_CONTEXT "Software\Classes\${FILECLASS}\DefaultIcon" "" `${ICON}`
@@ -77,11 +74,8 @@
 !macroend
 
 !macro APP_ASSOCIATE_EX EXT FILECLASS DESCRIPTION ICON VERB DEFAULTVERB SHELLNEW COMMANDTEXT COMMAND
-  ; Backup the previously associated file class
-  ReadRegStr $R0 SHELL_CONTEXT "Software\Classes\.${EXT}" ""
-  WriteRegStr SHELL_CONTEXT "Software\Classes\.${EXT}" "${FILECLASS}_backup" "$R0"
-
   WriteRegStr SHELL_CONTEXT "Software\Classes\.${EXT}" "" "${FILECLASS}"
+  WriteRegNone SHELL_CONTEXT "Software\Classes\.${EXT}\OpenWithProgids" "${FILECLASS}"
   StrCmp "${SHELLNEW}" "0" +2
   WriteRegStr SHELL_CONTEXT "Software\Classes\.${EXT}\ShellNew" "NullFile" ""
 
@@ -103,10 +97,7 @@
 
 
 !macro APP_UNASSOCIATE EXT FILECLASS
-  ; Backup the previously associated file class
-  ReadRegStr $R0 SHELL_CONTEXT "Software\Classes\.${EXT}" `${FILECLASS}_backup`
-  WriteRegStr SHELL_CONTEXT "Software\Classes\.${EXT}" "" "$R0"
-
+  DeleteRegValue SHELL_CONTEXT "Software\Classes\.${EXT}\OpenWithProgids" "${FILECLASS}"
   DeleteRegKey SHELL_CONTEXT `Software\Classes\${FILECLASS}`
 !macroend
 

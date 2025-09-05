@@ -33,12 +33,12 @@
   Var /GLOBAL CmdPath
   Var /GLOBAL FindPath
   Var /GLOBAL PowerShellPath
+  StrCpy $CmdPath "$SYSDIR\cmd.exe"
+  StrCpy $FindPath "$SYSDIR\find.exe"
+  StrCpy $PowerShellPath "$SYSDIR\WindowsPowerShell\v1.0\powershell.exe"
   !ifmacrodef customCheckAppRunning
     !insertmacro customCheckAppRunning
   !else
-    StrCpy $CmdPath "$SYSDIR\cmd.exe"
-    StrCpy $FindPath "$SYSDIR\find.exe"
-    StrCpy $PowerShellPath "$SYSDIR\WindowsPowerShell\v1.0\powershell.exe"
     !insertmacro IS_POWERSHELL_AVAILABLE
     !insertmacro _CHECK_APP_RUNNING
   !endif

@@ -19,16 +19,16 @@ exports[`extraResources on Windows 1`] = `
   "win": [
     {
       "arch": "x64",
-      "file": "RELEASES",
-    },
-    {
-      "arch": "x64",
       "file": "Test App ßW Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe",
     },
     {
       "arch": "x64",
       "file": "TestApp-1.1.0-full.nupkg",
+    },
+    {
+      "arch": "x64",
+      "file": "RELEASES",
     },
   ],
 }

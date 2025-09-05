@@ -131,6 +131,7 @@ test.ifMac("pkg scripts", ({ expect }) =>
         const info = parseXml(await fs.readFile(path.join(unpackedDir, "Distribution"), "utf8"))
         for (const element of info.getElements("pkg-ref")) {
           element.removeAttribute("installKBytes")
+          element.removeAttribute("updateKBytes")
           const bundleVersion = element.elementOrNull("bundle-version")
           if (bundleVersion != null) {
             bundleVersion.element("bundle").removeAttribute("CFBundleVersion")
