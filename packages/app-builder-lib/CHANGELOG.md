@@ -1,5 +1,15 @@
 # app-builder-lib
 
+## 26.0.21
+
+### Patch Changes
+
+- [#9262](https://github.com/electron-userland/electron-builder/pull/9262) [`c51f9627`](https://github.com/electron-userland/electron-builder/commit/c51f96272517c08a09504445fb31e61326e0c381) Thanks [@beyondkmp](https://github.com/beyondkmp)! - fix: enhance package manager detection to support Yarn Berry (#9261)
+
+- Updated dependencies []:
+  - dmg-builder@26.0.21
+  - electron-builder-squirrel-windows@26.0.21
+
 ## 26.0.20
 
 ### Patch Changes

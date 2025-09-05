@@ -1,3 +1,12 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v26.0.20...v) (2025-09-05)
+
+
+### Features
+
+* improve detecting pm and support bun ([#9262](https://github.com/electron-userland/electron-builder/issues/9262)) ([c51f962](https://github.com/electron-userland/electron-builder/commit/c51f96272517c08a09504445fb31e61326e0c381))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v26.0.19...v) (2025-08-29)
 
 
