@@ -205,6 +205,220 @@ exports[`electron version from electron-prebuilt dependency 1`] = `
 }
 `;
 
+exports[`exclude some modules from rebuild 1`] = `
+{
+  "win": [],
+}
+`;
+
+exports[`exclude some modules from rebuild 2`] = `
+{
+  "files": {
+    "app": {
+      "files": {
+        "package.json": {
+          "files": {
+            "readme.md": {
+              "size": "<size>",
+            },
+          },
+        },
+        "readme.md": {
+          "size": "<size>",
+        },
+      },
+    },
+    "index.html": {
+      "size": "<size>",
+    },
+    "index.js": {
+      "size": "<size>",
+    },
+    "node_modules": {
+      "files": {
+        "debug": {
+          "files": {
+            "LICENSE": {
+              "size": "<size>",
+            },
+            "Makefile": {
+              "size": "<size>",
+            },
+            "node.js": {
+              "size": "<size>",
+            },
+            "package.json": {
+              "size": "<size>",
+            },
+            "src": {
+              "files": {
+                "browser.js": {
+                  "size": "<size>",
+                },
+                "debug.js": {
+                  "size": "<size>",
+                },
+                "index.js": {
+                  "size": "<size>",
+                },
+                "node.js": {
+                  "size": "<size>",
+                },
+              },
+            },
+          },
+        },
+        "ms": {
+          "files": {
+            "index.js": {
+              "size": "<size>",
+            },
+            "license.md": {
+              "size": "<size>",
+            },
+            "package.json": {
+              "size": "<size>",
+            },
+          },
+        },
+        "node-gyp-build": {
+          "files": {
+            "LICENSE": {
+              "size": "<size>",
+            },
+            "SECURITY.md": {
+              "size": "<size>",
+            },
+            "bin.js": {
+              "size": "<size>",
+            },
+            "build-test.js": {
+              "size": "<size>",
+            },
+            "index.js": {
+              "size": "<size>",
+            },
+            "node-gyp-build.js": {
+              "size": "<size>",
+            },
+            "optional.js": {
+              "size": "<size>",
+            },
+            "package.json": {
+              "size": "<size>",
+            },
+          },
+        },
+        "selection-hook": {
+          "files": {
+            "LICENSE": {
+              "size": "<size>",
+              "unpacked": true,
+            },
+            "index.js": {
+              "size": "<size>",
+              "unpacked": true,
+            },
+            "package.json": {
+              "size": "<size>",
+              "unpacked": true,
+            },
+            "prebuilds": {
+              "files": {
+                "win32-x64": {
+                  "files": {
+                    "selection-hook.node": {
+                      "size": "<size>",
+                      "unpacked": true,
+                    },
+                  },
+                  "unpacked": true,
+                },
+              },
+              "unpacked": true,
+            },
+            "src": {
+              "files": {
+                "windows": {
+                  "files": {
+                    "lib": {
+                      "files": {
+                        "clipboard.h": {
+                          "size": "<size>",
+                          "unpacked": true,
+                        },
+                        "string_pool.h": {
+                          "size": "<size>",
+                          "unpacked": true,
+                        },
+                        "utils.h": {
+                          "size": "<size>",
+                          "unpacked": true,
+                        },
+                      },
+                      "unpacked": true,
+                    },
+                  },
+                  "unpacked": true,
+                },
+              },
+              "unpacked": true,
+            },
+          },
+          "unpacked": true,
+        },
+      },
+    },
+    "package.json": {
+      "size": "<size>",
+    },
+  },
+}
+`;
+
+exports[`exclude some modules from rebuild 3`] = `
+[
+  "app.asar",
+  "app.asar.unpacked/node_modules/selection-hook/LICENSE",
+  "app.asar.unpacked/node_modules/selection-hook/index.js",
+  {
+    "content": "{
+  "name": "selection-hook",
+  "version": "0.9.9",
+  "description": "Text selection monitoring of native Node.js module with N-API across applications",
+  "author": "0xfullex",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/0xfullex/selection-hook"
+  },
+  "main": "index.js",
+  "types": "index.d.ts",
+  "license": "MIT",
+  "dependencies": {
+    "node-gyp-build": "^4.7.1"
+  },
+  "devDependencies": {
+    "node-addon-api": "^5.1.0",
+    "node-gyp": "^9.3.1",
+    "prebuildify": "^6.0.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "gypfile": true,
+  "os": [
+    "win32"
+  ]
+}",
+    "name": "app.asar.unpacked/node_modules/selection-hook/package.json",
+  },
+  "app.asar.unpacked/node_modules/selection-hook/src/windows/lib/clipboard.h",
+  "app.asar.unpacked/node_modules/selection-hook/src/windows/lib/string_pool.h",
+  "app.asar.unpacked/node_modules/selection-hook/src/windows/lib/utils.h",
+  "app.asar.unpacked/node_modules/selection-hook/prebuilds/win32-x64/selection-hook.node",
+]
+`;
+
 exports[`hooks as file - cjs 1`] = `
 {
   "linux": [
