@@ -105,35 +105,36 @@ export class CopyElevateHelper {
   private readonly copied = new Map<string, Promise<any>>()
 
   copy(appOutDir: string, target: NsisTarget): Promise<any> {
-    if (!target.packager.info.framework.isCopyElevateHelper) {
-      return Promise.resolve()
-    }
+    return Promise.resolve()
+    // if (!target.packager.info.framework.isCopyElevateHelper) {
+    //   return Promise.resolve()
+    // }
 
-    let isPackElevateHelper = target.options.packElevateHelper
-    if (isPackElevateHelper === false && target.options.perMachine === true) {
-      isPackElevateHelper = true
-      log.warn("`packElevateHelper = false` is ignored, because `perMachine` is set to `true`")
-    }
+    // let isPackElevateHelper = target.options.packElevateHelper
+    // if (isPackElevateHelper === false && target.options.perMachine === true) {
+    //   isPackElevateHelper = true
+    //   log.warn("`packElevateHelper = false` is ignored, because `perMachine` is set to `true`")
+    // }
 
-    if (isPackElevateHelper === false) {
-      return Promise.resolve()
-    }
+    // if (isPackElevateHelper === false) {
+    //   return Promise.resolve()
+    // }
 
-    let promise = this.copied.get(appOutDir)
-    if (promise != null) {
-      return promise
-    }
+    // let promise = this.copied.get(appOutDir)
+    // if (promise != null) {
+    //   return promise
+    // }
 
-    promise = NSIS_PATH().then(it => {
-      const outFile = path.join(appOutDir, "resources", "elevate.exe")
-      const promise = copyFile(path.join(it, "elevate.exe"), outFile, false)
-      if (target.packager.platformSpecificBuildOptions.signAndEditExecutable !== false) {
-        return promise.then(() => target.packager.sign(outFile))
-      }
-      return promise
-    })
-    this.copied.set(appOutDir, promise)
-    return promise
+    // promise = NSIS_PATH().then(it => {
+    //   const outFile = path.join(appOutDir, "resources", "elevate.exe")
+    //   const promise = copyFile(path.join(it, "elevate.exe"), outFile, false)
+    //   if (target.packager.platformSpecificBuildOptions.signAndEditExecutable !== false) {
+    //     return promise.then(() => target.packager.sign(outFile))
+    //   }
+    //   return promise
+    // })
+    // this.copied.set(appOutDir, promise)
+    // return promise
   }
 }
 

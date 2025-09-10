@@ -8,7 +8,7 @@ import { FileWithEmbeddedBlockMapDifferentialDownloader } from "./differentialDo
 import { DOWNLOAD_PROGRESS } from "./types"
 import { VerifyUpdateCodeSignature } from "./main"
 import { findFile, Provider } from "./providers/Provider"
-import { unlink } from "fs-extra"
+import { existsSync, unlink } from "fs-extra"
 import { verifySignature } from "./windowsExecutableCodeSignatureVerifier"
 import { URL } from "url"
 
@@ -151,7 +151,7 @@ export class NsisUpdater extends BaseUpdater {
     }
 
     const callUsingElevation = (): void => {
-      this.spawnLog(path.join(process.resourcesPath, "elevate.exe"), [installerPath].concat(args)).catch(e => this.dispatchError(e))
+      this.callUsingElevation(installerPath, args).catch(e => this.dispatchError(e))
     }
 
     if (options.isAdminRightsRequired) {
@@ -178,6 +178,25 @@ export class NsisUpdater extends BaseUpdater {
       }
     })
     return true
+  }
+
+  private callUsingElevation(installerPath: string, args: string[] = []) {
+    const elevatePath = path.join(process.resourcesPath, "elevate.exe")
+
+    let command
+    let finalArgs
+
+    if (existsSync(elevatePath)) {
+      // Old NSIS (<3.11) requires elevate.exe wrapper
+      command = elevatePath
+      finalArgs = [installerPath].concat(args)
+    } else {
+      // NSIS 3.11+ handles elevation itself
+      command = installerPath
+      finalArgs = args
+    }
+
+    return this.spawnLog(command, finalArgs)
   }
 
   private async differentialDownloadWebPackage(

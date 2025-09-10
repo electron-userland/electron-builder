@@ -630,12 +630,18 @@ export class NsisTarget extends Target {
       this.packager.debugLogger.add("nsis.script", script)
     }
 
-    const nsisPath = await NSIS_PATH()
-    const command = path.join(
-      nsisPath,
-      process.platform === "darwin" ? "mac" : process.platform === "win32" ? "Bin" : "linux",
-      process.platform === "win32" ? "makensis.exe" : "makensis"
-    )
+    const nsisPath = NSIS_PATH()
+    const command = await nsisPath.then(p => {
+      if (process.platform === "win32") {
+        return path.join(p, process.arch === "x64" ? "win64" : "win32", "Bin", "makensis.exe")
+      }
+      return path.join(p, process.platform === "darwin" ? "mac" : "linux", "makensis")
+    })
+    // const command = path.join(
+    //   nsisPath,
+    //   process.platform === "darwin" ? "mac" : process.platform === "win32" ? "Bin" : "linux",
+    //   process.platform === "win32" ? "makensis.exe" : "makensis"
+    // )
 
     // if (process.platform === "win32") {
     // fix for an issue caused by virus scanners, locking the file during write
@@ -645,7 +651,10 @@ export class NsisTarget extends Target {
 
     await spawnAndWrite(command, args, script, {
       // we use NSIS_CONFIG_CONST_DATA_PATH=no to build makensis on Linux, but in any case it doesn't use stubs as MacOS/Windows version, so, we explicitly set NSISDIR
-      env: { ...process.env, NSISDIR: nsisPath },
+      env: {
+        ...process.env,
+        NSISDIR: path.join(await nsisPath, "share", "nsis"),
+      },
       cwd: nsisTemplatesDir,
     })
   }
