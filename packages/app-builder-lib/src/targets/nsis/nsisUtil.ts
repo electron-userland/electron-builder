@@ -34,9 +34,9 @@ export const NSIS_PATH = () => {
     }
     // Warning: Don't use v3.0.4.2 - https://github.com/electron-userland/electron-builder/issues/6334
     return getBinFromUrl(
-      "nsis@4.0.0",
+      "nsis@4.0.1",
       "nsis-bundle-linux-win32-win64-macos-3.11.7z",
-      "P4XGnbOn3VhmSArcqjYHQ3xzuOSZ7Kp1FBB1V16RxYjGJNoSVdxQklgMMTybbJyNzCV/QFkc07NZw2YCy2KkgA==",
+      "H2UPhb3tnAnBnkw1+7oQMMsubn1F0XQoIk3S/ol1p7GtjpTrzWVlBt+R1kRMApz+5BFz6XDDhRAFnfNQRvwvOA==",
       "mmaietta/electron-builder-binaries"
     )
   })

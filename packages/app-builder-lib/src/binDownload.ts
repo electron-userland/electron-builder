@@ -38,7 +38,7 @@ export function getBinFromUrl(releaseName: string, filenameWithExt: string, chec
     url = `${baseUrl}${middleUrl}/${filenameWithExt}`
   }
 
-  const cacheKey = `${releaseName}-${path.basename(filenameWithExt, path.extname(filenameWithExt))}`
+  const cacheKey = `${releaseName}-${sanitizeFileName(path.basename(filenameWithExt, path.extname(filenameWithExt)))}`
   return getBin(cacheKey, url, checksum)
 }
 
