@@ -635,7 +635,7 @@ export class NsisTarget extends Target {
       if (process.platform === "win32") {
         return path.join(p, process.arch === "x64" ? "win64" : "win32", "Bin", "makensis.exe")
       }
-      return path.join(p, process.platform === "darwin" ? "mac" : "linux", "makensis")
+      return path.join(p, "makensis")
     })
     // const command = path.join(
     //   nsisPath,
@@ -653,7 +653,7 @@ export class NsisTarget extends Target {
       // we use NSIS_CONFIG_CONST_DATA_PATH=no to build makensis on Linux, but in any case it doesn't use stubs as MacOS/Windows version, so, we explicitly set NSISDIR
       env: {
         ...process.env,
-        NSISDIR: path.join(await nsisPath, "share", "nsis"),
+        // NSISDIR: path.join(await nsisPath, "share", "nsis"),
       },
       cwd: nsisTemplatesDir,
     })

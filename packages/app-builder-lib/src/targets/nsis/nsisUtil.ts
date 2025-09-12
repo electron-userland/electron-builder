@@ -1,4 +1,4 @@
-import { Arch, copyFile, dirSize, log } from "builder-util"
+import { Arch, copyFile, dirSize, executeAppBuilder, log, statOrNull } from "builder-util"
 import { PackageFileInfo } from "builder-util-runtime"
 import * as fs from "fs/promises"
 import * as path from "path"
@@ -7,6 +7,7 @@ import { getBinFromCustomLoc, getBinFromUrl } from "../../binDownload"
 import { getTemplatePath } from "../../util/pathManager"
 import { NsisOptions } from "./nsisOptions"
 import { NsisTarget } from "./NsisTarget"
+import { statSync } from "fs-extra"
 
 export const nsisTemplatesDir = getTemplatePath("nsis")
 
@@ -19,27 +20,34 @@ export const NsisTargetOptions = (() => {
   }
 })()
 
-export const NSIS_PATH = () => {
+export const NSIS_PATH = async () => {
   const custom = process.env.ELECTRON_BUILDER_NSIS_DIR
   if (custom != null && custom.length > 0) {
-    return Promise.resolve(custom.trim())
-  }
-  return NsisTargetOptions.then((options: NsisOptions) => {
-    if (options.customNsisBinary) {
-      const { checksum, url, version } = options.customNsisBinary
-      if (checksum && url) {
-        const binaryVersion = version || checksum.substr(0, 8)
-        return getBinFromCustomLoc("nsis", binaryVersion, url, checksum)
-      }
+    const location = custom.trim()
+    if (statSync(location).isDirectory()) {
+      return Promise.resolve(location)
     }
-    // Warning: Don't use v3.0.4.2 - https://github.com/electron-userland/electron-builder/issues/6334
-    return getBinFromUrl(
-      "nsis@4.0.1",
-      "nsis-bundle-linux-win32-win64-macos-3.11.7z",
-      "H2UPhb3tnAnBnkw1+7oQMMsubn1F0XQoIk3S/ol1p7GtjpTrzWVlBt+R1kRMApz+5BFz6XDDhRAFnfNQRvwvOA==",
+    log.error({ location }, "Extracting NSIS from zip")
+    await executeAppBuilder(["unzip", "-i", location, "-o", path.resolve(location, "..", "nsis")])
+    return path.resolve(location, "..", "nsis", "nsis-bundle")
+  }
+  const options = await NsisTargetOptions
+  if (options.customNsisBinary) {
+    const { checksum, url, version } = options.customNsisBinary
+    if (checksum && url) {
+      const binaryVersion = version || checksum.substr(0, 8)
+      return getBinFromCustomLoc("nsis", binaryVersion, url, checksum)
+    }
+  }
+  return path.resolve(
+    await getBinFromUrl(
+      "nsis@4.0.3",
+      "nsis-bundle-linux-win32-win64-macos-3.11.zip",
+      "NjE7TiVr0GMjrFn5YIqJlqmfllP4OqhQo7wYNp0lCteisJZbojNVhdrNdMdiLrjNnxZ4aDMp+D/eJPIRXVAkew==",
       "mmaietta/electron-builder-binaries"
-    )
-  })
+    ),
+    "nsis-bundle"
+  )
 }
 
 export const NSIS_RESOURCES_PATH = () => {
