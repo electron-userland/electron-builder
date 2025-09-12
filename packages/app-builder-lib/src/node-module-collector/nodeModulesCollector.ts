@@ -140,10 +140,18 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
     for (const d of dependencies.values()) {
       const reference = [...d.references][0]
       const p = this.allDependencies.get(`${d.name}@${reference}`)?.path
-      if (p === undefined) {
+      if (p === undefined ) {
         log.debug({ name: d.name, reference }, "cannot find path for dependency")
         continue
       }
+
+      // fix npm list issue
+      // https://github.com/npm/cli/issues/8535
+      if(!fs.existsSync(p)) {
+        log.debug({ name: d.name, reference, p }, "dependency path does not exist")
+        continue
+      }
+
       const node: NodeModuleInfo = {
         name: d.name,
         version: reference,
