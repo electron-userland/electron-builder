@@ -77,6 +77,7 @@ describe("squirrel.windows", { sequential: true }, () => {
           squirrelWindows: {
             msi: true,
           },
+          extraFiles: ["index.html"],
         },
       },
       { signedWin: true }
