@@ -1,6 +1,6 @@
 {
   "name": "electron-forge-maker-appimage",
-  "version": "26.0.20",
+  "version": "26.0.21",
   "main": "main.js",
   "author": "Vladimir Krivosheev",
   "license": "MIT",

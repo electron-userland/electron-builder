@@ -1,5 +1,19 @@
 # app-builder-lib
 
+## 26.0.21
+
+### Patch Changes
+
+- [#9263](https://github.com/electron-userland/electron-builder/pull/9263) [`08773afa`](https://github.com/electron-userland/electron-builder/commit/08773afadfe10911ed1dff084fefe1024c5a74d8) Thanks [@bimusiek](https://github.com/bimusiek)! - feat: Expanding `${arch}` macro properly for `mac.binaries` in case of native node packages for unpacked files for macos `universal` target
+
+- [#9274](https://github.com/electron-userland/electron-builder/pull/9274) [`38c2085e`](https://github.com/electron-userland/electron-builder/commit/38c2085e9a344812d32611d197d1df66d6644b45) Thanks [@beyondkmp](https://github.com/beyondkmp)! - Optional dep's path cannot find in newest npm
+
+- [#9262](https://github.com/electron-userland/electron-builder/pull/9262) [`c51f9627`](https://github.com/electron-userland/electron-builder/commit/c51f96272517c08a09504445fb31e61326e0c381) Thanks [@beyondkmp](https://github.com/beyondkmp)! - fix: enhance package manager detection to support Yarn Berry (#9261)
+
+- Updated dependencies []:
+  - dmg-builder@26.0.21
+  - electron-builder-squirrel-windows@26.0.21
+
 ## 26.0.20
 
 ### Patch Changes
