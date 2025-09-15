@@ -633,7 +633,7 @@ export class NsisTarget extends Target {
     const nsisPath = NSIS_PATH()
     const command = await nsisPath.then(p => {
       if (process.platform === "win32") {
-        return path.join(p, process.arch === "x64" ? "win64" : "win32", "Bin", "makensis.exe")
+        return path.join(p, "makensis.cmd")
       }
       return path.join(p, "makensis")
     })
