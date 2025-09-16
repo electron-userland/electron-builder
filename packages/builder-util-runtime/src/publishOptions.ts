@@ -156,9 +156,9 @@ export function githubTagPrefix(options: GithubOptions) {
     return options.tagNamePrefix
   }
   if (options.vPrefixedTagName ?? true) {
-    return 'v'
+    return "v"
   }
-  return ''
+  return ""
 }
 
 /**
