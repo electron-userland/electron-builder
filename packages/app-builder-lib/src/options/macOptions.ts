@@ -33,6 +33,11 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
   readonly icon?: string | null
 
   /**
+   * The path to application icon made with Apple's Icon Composer.
+   */
+  readonly iconComposerIcon?: string | null
+
+  /**
    * The path to entitlements file for signing the app. `build/entitlements.mac.plist` will be used if exists (it is a recommended way to set).
    * MAS entitlements is specified in the [mas](./mas.md).
    * See [this folder in osx-sign's repository](https://github.com/electron/osx-sign/tree/main/entitlements) for examples.

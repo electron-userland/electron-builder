@@ -22,6 +22,7 @@ import { isMacOsHighSierra } from "./util/macosVersion"
 import { getTemplatePath } from "./util/pathManager"
 import { resolveFunction } from "./util/resolve"
 import { expandMacro as doExpandMacro } from "./util/macroExpander"
+import { generateAssetCatalogForIcon } from "./util/macosIconComposer"
 
 export type CustomMacSignOptions = SignOptions
 export type CustomMacSign = (configuration: CustomMacSignOptions, packager: MacPackager) => Promise<void>
@@ -502,10 +503,11 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
     // https://github.com/electron-userland/electron-builder/issues/1278
     appPlist.CFBundleExecutable = appFilename.endsWith(" Helper") ? appFilename.substring(0, appFilename.length - " Helper".length) : appFilename
 
+    const resourcesPath = path.join(contentsPath, "Resources")
+
     const icon = await this.getIconPath()
     if (icon != null) {
       const oldIcon = appPlist.CFBundleIconFile
-      const resourcesPath = path.join(contentsPath, "Resources")
       if (oldIcon != null) {
         await unlinkIfExists(path.join(resourcesPath, oldIcon))
       }
@@ -515,6 +517,13 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
     }
     appPlist.CFBundleName = appInfo.productName
     appPlist.CFBundleDisplayName = appInfo.productName
+
+    const iconComposerIcon = this.platformSpecificBuildOptions.iconComposerIcon
+    if (iconComposerIcon) {
+      const assetCatalog = await generateAssetCatalogForIcon(iconComposerIcon)
+      appPlist.CFBundleIconName = "Icon"
+      await fs.writeFile(path.join(resourcesPath, "Assets.car"), assetCatalog)
+    }
 
     const minimumSystemVersion = this.platformSpecificBuildOptions.minimumSystemVersion
     if (minimumSystemVersion != null) {

@@ -2834,6 +2834,13 @@
             "string"
           ]
         },
+        "iconComposerIcon": {
+          "description": "The path to application icon made with Apple's Icon Composer.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
         "identity": {
           "description": "The name of certificate to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](./code-signing.md) instead of specifying this option.\nMAS installer identity is specified in the [mas](./mas.md).\n\nSet to `-` to use an ad-hoc identity for signing. Set to `null` to skip signing entirely.",
           "type": [
@@ -3464,6 +3471,13 @@
         "icon": {
           "default": "build/icon.icns",
           "description": "The path to application icon.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "iconComposerIcon": {
+          "description": "The path to application icon made with Apple's Icon Composer.",
           "type": [
             "null",
             "string"
