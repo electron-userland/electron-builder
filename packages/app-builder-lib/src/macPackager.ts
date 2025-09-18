@@ -507,9 +507,10 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
 
     // Support both legacy `.icns` and modern `.icon` (Icon Composer) inputs via `mac.icon`.
     // Prefer `.icon` if provided; still accept `.icns`.
-    const configuredIcon = (this.platformSpecificBuildOptions.icon ?? (this.config as any).icon) as string | null | undefined
+    const configuredIcon = this.platformSpecificBuildOptions.icon
     const isIconComposer = typeof configuredIcon === "string" && configuredIcon.toLowerCase().endsWith(".icon")
 
+    // Bundle legacy `icns` format
     const icon = isIconComposer ? null : await this.getIconPath()
     if (icon != null) {
       const oldIcon = appPlist.CFBundleIconFile
@@ -523,6 +524,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
     appPlist.CFBundleName = appInfo.productName
     appPlist.CFBundleDisplayName = appInfo.productName
 
+    // Bundle new `icon` format
     if (isIconComposer && configuredIcon) {
       const iconComposerPath = await this.getResource(configuredIcon)
       if (iconComposerPath) {
