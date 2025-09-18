@@ -28,14 +28,11 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
 
   /**
    * The path to application icon.
+   * Accepts `.icns` (legacy) or `.icon` (Icon Composer asset).
+   * If a `.icon` asset is provided, it will be preferred and compiled to an asset catalog.
    * @default build/icon.icns
    */
   readonly icon?: string | null
-
-  /**
-   * The path to application icon made with Apple's Icon Composer.
-   */
-  readonly iconComposerIcon?: string | null
 
   /**
    * The path to entitlements file for signing the app. `build/entitlements.mac.plist` will be used if exists (it is a recommended way to set).

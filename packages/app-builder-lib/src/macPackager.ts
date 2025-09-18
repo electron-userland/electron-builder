@@ -505,7 +505,12 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
 
     const resourcesPath = path.join(contentsPath, "Resources")
 
-    const icon = await this.getIconPath()
+    // Support both legacy `.icns` and modern `.icon` (Icon Composer) inputs via `mac.icon`.
+    // Prefer `.icon` if provided; still accept `.icns`.
+    const configuredIcon = (this.platformSpecificBuildOptions.icon ?? (this.config as any).icon) as string | null | undefined
+    const isIconComposer = typeof configuredIcon === "string" && configuredIcon.toLowerCase().endsWith(".icon")
+
+    const icon = isIconComposer ? null : await this.getIconPath()
     if (icon != null) {
       const oldIcon = appPlist.CFBundleIconFile
       if (oldIcon != null) {
@@ -518,11 +523,13 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
     appPlist.CFBundleName = appInfo.productName
     appPlist.CFBundleDisplayName = appInfo.productName
 
-    const iconComposerIcon = this.platformSpecificBuildOptions.iconComposerIcon
-    if (iconComposerIcon) {
-      const assetCatalog = await generateAssetCatalogForIcon(iconComposerIcon)
-      appPlist.CFBundleIconName = "Icon"
-      await fs.writeFile(path.join(resourcesPath, "Assets.car"), assetCatalog)
+    if (isIconComposer && configuredIcon) {
+      const iconComposerPath = await this.getResource(configuredIcon)
+      if (iconComposerPath) {
+        const assetCatalog = await generateAssetCatalogForIcon(iconComposerPath)
+        appPlist.CFBundleIconName = "Icon"
+        await fs.writeFile(path.join(resourcesPath, "Assets.car"), assetCatalog)
+      }
     }
 
     const minimumSystemVersion = this.platformSpecificBuildOptions.minimumSystemVersion
