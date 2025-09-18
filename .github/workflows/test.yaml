@@ -152,7 +152,7 @@ jobs:
           echo $TEST_RUNNER_IMAGE_TAG
           pnpm test-linux
         env:
-          TEST_FILES: nsisUpdaterTest,PublishManagerTest,differentialUpdateTest
+          TEST_FILES: nsisUpdaterTest,PublishManagerTest,differentialUpdateTest,GitlabPublisherTest,GitlabPublisher.integration.test
           KEYGEN_TOKEN: ${{ secrets.KEYGEN_TOKEN }}
           BITBUCKET_TOKEN: ${{ secrets.BITBUCKET_TOKEN }}
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
