@@ -1,5 +1,3 @@
-const { rebuild } = require("@electron/rebuild")
-
 if (!process.send) {
   console.error("The remote rebuilder expects to be spawned with an IPC channel")
   process.exit(1)
