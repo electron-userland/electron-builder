@@ -1,3 +1,4 @@
+import { parsePlistFile, PlistObject } from "app-builder-lib/out/util/plist"
 import { Arch, DIR_TARGET, Platform } from "electron-builder"
 import * as fs from "fs/promises"
 import * as path from "path"
@@ -17,6 +18,44 @@ async function assertIcon(expect: ExpectStatic, platformPackager: CheckingMacPac
 }
 
 const targets = Platform.MAC.createTarget(DIR_TARGET, Arch.x64)
+
+const iconComposerFixture = path.join(__dirname, "..", "..", "fixtures", "macos-icon-composer-assets", "electron.icon")
+
+test.ifMac("Icon Composer asset catalog", ({ expect }) => {
+  return app(
+    expect,
+    {
+      targets,
+      config: {
+        mac: {
+          icon: "icon.icon",
+        },
+      },
+    },
+    {
+      projectDirCreated: async projectDir => {
+        await Promise.all([fs.unlink(path.join(projectDir, "build", "icon.icns")), fs.unlink(path.join(projectDir, "build", "icon.ico"))])
+
+        await fs.cp(iconComposerFixture, path.join(projectDir, "build", "icon.icon"), {
+          recursive: true,
+        })
+      },
+      packed: async context => {
+        const resourcesDir = context.getResources(Platform.MAC, Arch.arm64)
+        const contentsDir = context.getContent(Platform.MAC, Arch.arm64)
+        const infoPlistPath = path.join(contentsDir, "Info.plist")
+
+        const info = await parsePlistFile<PlistObject>(infoPlistPath)
+        expect(info.CFBundleIconName).toBe("Icon")
+        expect(info.CFBundleIconFile).toBeUndefined()
+
+        const assetCatalogPath = path.join(resourcesDir, "Assets.car")
+        const writtenCatalog = await fs.readFile(assetCatalogPath)
+        expect(writtenCatalog.length).toBeGreaterThan(0)
+      },
+    }
+  )
+})
 
 test.ifMac("icon set", ({ expect }) => {
   let platformPackager: CheckingMacPackager | null = null
