@@ -1,5 +1,11 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
+exports[`Icon Composer asset catalog 1`] = `
+{
+  "mac": [],
+}
+`;
+
 exports[`custom icon set 1`] = `
 [
   {
@@ -97,6 +103,12 @@ exports[`default png icon 1`] = `
     "size": 512,
   },
 ]
+`;
+
+exports[`icon composer generate asset catalog 1`] = `
+{
+  "mac": [],
+}
 `;
 
 exports[`icon set 1`] = `

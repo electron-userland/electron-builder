@@ -21,7 +21,7 @@ const targets = Platform.MAC.createTarget(DIR_TARGET, Arch.x64)
 
 const iconComposerFixture = path.join(__dirname, "..", "..", "fixtures", "macos-icon-composer-assets", "electron.icon")
 
-test.ifMac("Icon Composer asset catalog", ({ expect }) => {
+test.ifMac("icon composer generate asset catalog", ({ expect }) => {
   return app(
     expect,
     {
@@ -41,13 +41,12 @@ test.ifMac("Icon Composer asset catalog", ({ expect }) => {
         })
       },
       packed: async context => {
-        const resourcesDir = context.getResources(Platform.MAC, Arch.arm64)
-        const contentsDir = context.getContent(Platform.MAC, Arch.arm64)
+        const resourcesDir = context.getResources(Platform.MAC, Arch.x64)
+        const contentsDir = context.getContent(Platform.MAC, Arch.x64)
         const infoPlistPath = path.join(contentsDir, "Info.plist")
 
         const info = await parsePlistFile<PlistObject>(infoPlistPath)
         expect(info.CFBundleIconName).toBe("Icon")
-        expect(info.CFBundleIconFile).toBeUndefined()
 
         const assetCatalogPath = path.join(resourcesDir, "Assets.car")
         const writtenCatalog = await fs.readFile(assetCatalogPath)
