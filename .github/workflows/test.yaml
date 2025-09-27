@@ -227,3 +227,33 @@ jobs:
         env:
           TEST_FILES: ${{ matrix.testFiles }}
           FORCE_COLOR: 1
+
+  test-mac-icons:
+    runs-on: macos-26
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        testFiles:
+          - macIconTest
+    steps:
+      - name: Checkout code repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+
+      - name: Setup Tests
+        uses: ./.github/actions/pretest
+        with:
+          cache-path: ~/Library/Caches/electron
+          cache-key: v-23.3.10-macos-electron-icons
+
+      - name: Install toolset via brew
+        run: |
+          brew install powershell/tap/powershell
+          brew install --cask wine-stable
+          brew install rpm
+
+      - name: Test
+        run: pnpm ci:test
+        env:
+          TEST_FILES: ${{ matrix.testFiles }}
+          FORCE_COLOR: 1
