@@ -3,7 +3,7 @@ FROM debian:bookworm-slim
 RUN apt-get update && apt-get install -y curl gnupg xz-utils xvfb zypper binutils libasound2
 
 RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
-RUN apt-get install -y nodejs npm
+RUN apt-get install -y nodejs
 
 RUN npm --silent install --global --depth 0 pnpm
 
