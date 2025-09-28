@@ -15,3 +15,7 @@ RUN pacman -Sy --noconfirm archlinux-keyring \
     xorg-server-xvfb \
  && pacman -Scc --noconfirm \
  && rm -rf /var/lib/pacman/sync/* /var/cache/pacman/pkg/*
+
+RUN npm --silent install --global --depth 0 pnpm
+
+WORKDIR /project
