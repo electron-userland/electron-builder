@@ -1,4 +1,4 @@
-FROM --platform=linux/amd64 archlinux:base-20250629.0.373469
+FROM archlinux:base-20250629.0.373469
 
 RUN pacman -Sy --noconfirm archlinux-keyring \
  && pacman -S --noconfirm gnupg \
