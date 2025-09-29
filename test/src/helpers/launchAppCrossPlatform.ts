@@ -186,6 +186,7 @@ export function startXvfb(): { display: string; stop: () => void } {
     })
   })
 
+  console.log("Xvfb started on display", display)
   return {
     display,
     stop,
