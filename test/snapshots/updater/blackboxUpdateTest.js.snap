@@ -66,6 +66,72 @@ exports[`Electron autoupdate (fresh install & update) > linux > AppImage - arm64
 }
 `;
 
+exports[`Electron autoupdate (fresh install & update) > linux > AppImage - x64 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.AppImage",
+          },
+        ],
+        "path": "TestApp.AppImage",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`Electron autoupdate (fresh install & update) > linux > AppImage - x64 2`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.AppImage",
+          },
+        ],
+        "path": "TestApp.AppImage",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.1",
+      },
+    },
+  ],
+}
+`;
+
 exports[`Electron autoupdate (fresh install & update) > linux > arch - (pacman) 1`] = `
 {
   "linux": [
