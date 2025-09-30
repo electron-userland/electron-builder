@@ -1,4 +1,4 @@
-import { getProjectRootPath } from "@electron/rebuild/lib/search-module"
+import { getProjectRootPath } from "./search-module"
 
 import { httpExecutor, InvalidConfigurationError, log } from "builder-util"
 import { parseXml } from "builder-util-runtime"
