@@ -1,5 +1,3 @@
-import * as electronRebuild from "@electron/rebuild"
-import { RebuildMode } from "@electron/rebuild/lib/types"
 import { asArray, log, spawn } from "builder-util"
 import { pathExists } from "fs-extra"
 import { Lazy } from "lazy-val"
@@ -11,6 +9,7 @@ import { PM, detectPackageManager, getPackageManagerCommand } from "../node-modu
 import { NodeModuleDirInfo } from "./packageDependencies"
 import { rebuild as remoteRebuild } from "./rebuild/rebuild"
 import * as which from "which"
+import { RebuildOptions as ElectronRebuildOptions } from "@electron/rebuild"
 
 export async function installOrRebuild(config: Configuration, { appDir, projectDir }: DirectoryPaths, options: RebuildOptions, forceInstall = false) {
   const effectiveOptions: RebuildOptions = {
@@ -176,14 +175,14 @@ export async function rebuild(config: Configuration, { appDir, projectDir }: Dir
   }
   log.info(logInfo, "executing @electron/rebuild")
 
-  const rebuildOptions: electronRebuild.RebuildOptions = {
+  const rebuildOptions: ElectronRebuildOptions = {
     buildPath: appDir,
     electronVersion,
     arch,
     platform,
     buildFromSource,
     projectRootPath: projectDir,
-    mode: (config.nativeRebuilder as RebuildMode) || "sequential",
+    mode: config.nativeRebuilder || "sequential",
     disablePreGypCopy: true,
   }
   return remoteRebuild(rebuildOptions)

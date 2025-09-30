@@ -1,5 +1,3 @@
-import { getProjectRootPath } from "./search-module"
-
 import { httpExecutor, InvalidConfigurationError, log } from "builder-util"
 import { parseXml } from "builder-util-runtime"
 import { readJson } from "fs-extra"
@@ -9,6 +7,7 @@ import * as semver from "semver"
 import { Configuration } from "../configuration"
 import { getConfig } from "../util/config/config"
 import { orNullIfFileNotExist } from "../util/config/load"
+import { getProjectRootPath } from "./search-module"
 
 export type MetadataValue = Lazy<Record<string, any> | null>
 
