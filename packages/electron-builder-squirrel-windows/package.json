@@ -21,7 +21,7 @@
     "electron-winstaller": "5.4.0"
   },
   "devDependencies": {
-    "@types/archiver": "5.3.1",
+    "@types/archiver": "6.0.3",
     "@types/fs-extra": "9.0.13"
   },
   "types": "./out/SquirrelWindowsTarget.d.ts"
