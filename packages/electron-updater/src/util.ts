@@ -1,7 +1,5 @@
 // if baseUrl path doesn't ends with /, this path will be not prepended to passed pathname for new URL(input, base)
 import { URL } from "url"
-// @ts-ignore
-import * as escapeRegExp from "lodash.escaperegexp"
 
 /** @internal */
 export function newBaseUrl(url: string): URL {
@@ -28,14 +26,4 @@ export function newUrlFromBase(pathname: string, baseUrl: URL, addRandomQueryToA
 
 export function getChannelFilename(channel: string): string {
   return `${channel}.yml`
-}
-
-export function blockmapFiles(baseUrl: URL, oldVersion: string, newVersion: string, oldBlockMapFileBaseUrl: string | null = null): URL[] {
-  const newBlockMapUrl = newUrlFromBase(`${baseUrl.pathname}.blockmap`, baseUrl)
-  const oldBlockMapUrl = newUrlFromBase(
-    `${baseUrl.pathname.replace(new RegExp(escapeRegExp(newVersion), "g"), oldVersion)}.blockmap`,
-    oldBlockMapFileBaseUrl ? new URL(oldBlockMapFileBaseUrl) : baseUrl
-  )
-
-  return [oldBlockMapUrl, newBlockMapUrl]
 }

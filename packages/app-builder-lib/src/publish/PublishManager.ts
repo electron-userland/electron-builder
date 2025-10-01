@@ -7,6 +7,7 @@ import {
   GithubOptions,
   githubTagPrefix,
   githubUrl,
+  GitlabOptions,
   KeygenOptions,
   Nullish,
   PublishConfiguration,
@@ -18,6 +19,7 @@ import {
   BitbucketPublisher,
   getCiTag,
   GitHubPublisher,
+  GitlabPublisher,
   KeygenPublisher,
   PublishContext,
   Publisher,
@@ -315,6 +317,9 @@ export async function createPublisher(
     case "github":
       return new GitHubPublisher(context, publishConfig as GithubOptions, version, options)
 
+    case "gitlab":
+      return new GitlabPublisher(context, publishConfig as GitlabOptions, version)
+
     case "keygen":
       return new KeygenPublisher(context, publishConfig as KeygenOptions, version)
 
@@ -335,6 +340,9 @@ async function requireProviderClass(provider: string, packager: Packager): Promi
   switch (provider) {
     case "github":
       return GitHubPublisher
+
+    case "gitlab":
+      return GitlabPublisher
 
     case "generic":
       return null
@@ -442,6 +450,8 @@ async function resolvePublishConfigurations(
     let serviceName: PublishProvider | null = null
     if (!isEmptyOrSpaces(process.env.GH_TOKEN) || !isEmptyOrSpaces(process.env.GITHUB_TOKEN)) {
       serviceName = "github"
+    } else if (!isEmptyOrSpaces(process.env.GITLAB_TOKEN)) {
+      serviceName = "gitlab"
     } else if (!isEmptyOrSpaces(process.env.KEYGEN_TOKEN)) {
       serviceName = "keygen"
     } else if (!isEmptyOrSpaces(process.env.BITBUCKET_TOKEN)) {
@@ -499,7 +509,7 @@ async function getResolvedPublishConfig(
   options: PublishConfiguration,
   arch: Arch | null,
   errorIfCannot: boolean
-): Promise<PublishConfiguration | GithubOptions | BitbucketOptions | null> {
+): Promise<PublishConfiguration | GithubOptions | BitbucketOptions | GitlabOptions | null> {
   options = { ...options }
   expandPublishConfig(options, platformPackager, packager, arch)
 
