@@ -7,7 +7,6 @@
     "moduleResolution": "node",
     "skipLibCheck": true,
     "strict": true,
-    "allowJs": true,
     "noUnusedLocals": true,
     "noFallthroughCasesInSwitch": true,
     "noImplicitReturns": true,

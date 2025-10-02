@@ -11,9 +11,8 @@
   },
   "include": [
       "src/**/*.ts",
-      "src/**/*.js",
       "../../typings/*.d.ts"
-     ],
+  ],
   "exclude": [
   ],
   "references": [

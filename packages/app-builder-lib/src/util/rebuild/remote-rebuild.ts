@@ -1,4 +1,3 @@
-"use strict"
 
 if (!process.send) {
   console.error("The remote rebuilder expects to be spawned with an IPC channel")
@@ -33,7 +32,7 @@ const dynamicImport = new Function("specifier", "return import(specifier)")
 const main = () => {
   const options = JSON.parse(process.argv[2])
 
-  // crazy hack to retain dynamic import, calling an ESM function from CJS context
+  // crazy hack to retain dynamic import, while calling an ESM function from CJS context
   return dynamicImport("@electron/rebuild").then((module: any) => {
     const { rebuild } = module
     return rebuilder(rebuild(options))
