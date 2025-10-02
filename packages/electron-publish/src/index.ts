@@ -4,6 +4,7 @@ import { MultiProgress } from "./multiProgress"
 
 export { BitbucketPublisher } from "./bitbucketPublisher"
 export { GitHubPublisher } from "./gitHubPublisher"
+export { GitlabPublisher } from "./gitlabPublisher"
 export { KeygenPublisher } from "./keygenPublisher"
 export { S3Publisher } from "./s3/s3Publisher"
 export { SpacesPublisher } from "./s3/spacesPublisher"
