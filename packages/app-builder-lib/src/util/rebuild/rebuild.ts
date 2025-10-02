@@ -7,7 +7,7 @@ export const rebuild = async (options: RebuildOptions): Promise<void> => {
   const { arch } = options
   log.info({ arch }, `installing native dependencies`)
 
-  const child = cp.fork(path.resolve(__dirname, "remote-rebuild-ts.js"), [JSON.stringify(options)], {
+  const child = cp.fork(path.resolve(__dirname, "remote-rebuild.js"), [JSON.stringify(options)], {
     stdio: ["pipe", "pipe", "pipe", "ipc"],
   })
 

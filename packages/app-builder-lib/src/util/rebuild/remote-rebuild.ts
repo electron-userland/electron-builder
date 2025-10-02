@@ -1,15 +1,11 @@
 "use strict"
 
-import { RebuildResult } from "@electron/rebuild/lib/rebuild"
-
 if (!process.send) {
   console.error("The remote rebuilder expects to be spawned with an IPC channel")
   process.exit(1)
 }
 
-const options = JSON.parse(process.argv[2])
-
-function rebuilder(rebuilder: RebuildResult): void {
+function rebuilder(rebuilder: any): void {
   rebuilder.lifecycle.on("module-found", (moduleName: any) => process.send?.({ msg: "module-found", moduleName }))
   rebuilder.lifecycle.on("module-done", (moduleName: any) => process.send?.({ msg: "module-done", moduleName }))
   rebuilder.lifecycle.on("module-skip", (moduleName: any) => process.send?.({ msg: "module-skip", moduleName }))
@@ -31,8 +27,17 @@ function rebuilder(rebuilder: RebuildResult): void {
     })
 }
 
-rebuilder(require("@electron/rebuild").rebuild(options))
+// eslint-disable-next-line @typescript-eslint/no-implied-eval
+const dynamicImport = new Function("specifier", "return import(specifier)")
 
-// void import("@electron/rebuild").then(module => {
-//   rebuilder(module.rebuild(options))
-// })
+const main = () => {
+  const options = JSON.parse(process.argv[2])
+
+  // crazy hack to retain dynamic import, calling an ESM function from CJS context
+  return dynamicImport("@electron/rebuild").then((module: any) => {
+    const { rebuild } = module
+    return rebuilder(rebuild(options))
+  })
+}
+
+main()
