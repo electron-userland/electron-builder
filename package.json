@@ -49,7 +49,7 @@
   "devDependencies": {
     "@babel/plugin-transform-modules-commonjs": "7.24.8",
     "@changesets/changelog-github": "0.4.7",
-    "@changesets/cli": "2.25.0",
+    "@changesets/cli": "2.29.7",
     "@stylistic/eslint-plugin": "^2.8.0",
     "@types/node": "^22.7.4",
     "@typescript-eslint/eslint-plugin": "8.17.0",
@@ -79,7 +79,8 @@
   "packageManager": "pnpm@9.4.0",
   "pnpm": {
     "patchedDependencies": {
-      "@changesets/cli@2.25.0": "patches/@changesets__cli@2.25.0.patch"
+      "@changesets/cli@2.29.7": "patches/@changesets__cli@2.29.7.patch",
+      "@changesets/assemble-release-plan@6.0.9": "patches/@changesets__assemble-release-plan@6.0.9.patch"
     }
   }
 }
