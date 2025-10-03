@@ -1,8 +1,8 @@
 ---
-"app-builder-lib": patch
-"builder-util-runtime": patch
-"electron-publish": patch
-"electron-updater": patch
+"app-builder-lib": minor
+"builder-util-runtime": minor
+"electron-publish": minor
+"electron-updater": minor
 ---
 
-Support gitlab publisher
+feat: Support gitlab publisher
