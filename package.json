@@ -50,6 +50,8 @@
     "@babel/plugin-transform-modules-commonjs": "7.24.8",
     "@changesets/changelog-github": "0.4.7",
     "@changesets/cli": "2.29.7",
+    "@eslint/eslintrc": "^3.3.1",
+    "@eslint/js": "^9.37.0",
     "@stylistic/eslint-plugin": "^2.8.0",
     "@types/node": "^22.7.4",
     "@typescript-eslint/eslint-plugin": "8.17.0",
