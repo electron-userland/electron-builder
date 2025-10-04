@@ -33,7 +33,7 @@ jobs:
       # Auto-setup of NPM_TOKEN env var for for changesets/action
       - uses: electron/npm-trusted-auth-action@v1
         with:
-          package-name: 'electron-userland/electron-builder'
+          package-name: 'electron-builder'
 
       - name: Create versions PR & prepare publish
         id: changesets
