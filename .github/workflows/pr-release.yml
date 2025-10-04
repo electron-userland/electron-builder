@@ -8,14 +8,14 @@ on:
 env:
   HUSKY: 0 # Bypass husky commit hook for CI
 
-permissions:
-  id-token: write  # Required for OIDC token
+permissions: {}
 
 jobs:
   pr-release:
     permissions:
       contents: write # to create release (changesets/action)
       pull-requests: write # to create pull request (changesets/action)
+      id-token: write  # Required for OIDC token
 
     timeout-minutes: 15
     runs-on: ubuntu-latest
@@ -26,17 +26,16 @@ jobs:
           # This makes Actions fetch all Git history so that Changesets can generate changelogs with the correct commits
           fetch-depth: 0
 
-      - name: Install deps and audit
+      - name: Install dependencies
         uses: ./.github/actions/pnpm
 
-      # Authenticate to npm registry
       # Auto-setup of NPM_TOKEN env var for for changesets/action
-      - uses: electron/npm-trusted-auth-action@v1
+      - name: Authenticate to npm registry
+        uses: electron/npm-trusted-auth-action@v1
         with:
           package-name: 'electron-builder'
 
       - name: Create versions PR & prepare publish
-        id: changesets
         uses: changesets/action@06245a4e0a36c064a573d4150030f5ec548e4fcc # v1.4.1
         with:
           version: pnpm ci:version
