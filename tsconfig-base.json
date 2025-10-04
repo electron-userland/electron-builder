@@ -10,6 +10,7 @@
     "noUnusedLocals": true,
     "noFallthroughCasesInSwitch": true,
     "noImplicitReturns": true,
+    "allowJs": true,
 
     "inlineSources": true,
     "sourceMap": true,

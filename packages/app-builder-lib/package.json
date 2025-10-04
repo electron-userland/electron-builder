@@ -6,6 +6,7 @@
   "files": [
     "out",
     "templates",
+    "helpers",
     "scheme.json",
     "certs/root_certs.keychain"
   ],
