@@ -41,7 +41,7 @@ Var installMode
     ${endif}
 
     # allow /D switch to override installation path https://github.com/electron-userland/electron-builder/issues/1551
-    ${StdUtils.GetParameter} $R0 "D" ""
+    !insertmacro GetDParameter $R0
     ${If} $R0 != ""
       StrCpy $INSTDIR $R0
     ${endif}
@@ -84,10 +84,51 @@ Var installMode
     ${endif}
 
     # allow /D switch to override installation path https://github.com/electron-userland/electron-builder/issues/1551
-    ${StdUtils.GetParameter} $R0 "D" ""
+    !insertmacro GetDParameter $R0
     ${If} $R0 != ""
       StrCpy $INSTDIR $R0
     ${endif}
 
   !macroend
 !endif
+
+# Custom function to handle /D parameter with spaces
+# The /D parameter is special in NSIS - it must be the last parameter and cannot have quotes
+# Use StdUtils.GetParameter to get the full command line, then parse /D= manually
+!macro GetDParameter outVar
+  Push $R8
+  Push $R9
+  Push $R7
+  Push $R6
+  Push $R5
+
+  # Get the complete command line using StdUtils (including /D parameter)
+  ${StdUtils.GetAllParameters} $R8 "0"
+
+  # Initialize result
+  StrCpy $R9 ""
+
+  # Search for /D= or /d= using a simple loop
+  StrLen $R7 $R8
+  IntOp $R7 $R7 - 2  # Don't check last 2 characters
+  StrCpy $R6 0
+
+  ${Do}
+    StrCpy $R5 $R8 3 $R6  # Get 3 characters starting at position $R6
+    ${If} $R5 == "/D="
+    ${OrIf} $R5 == "/d="
+      # Found /D= or /d=, extract everything after it
+      IntOp $R6 $R6 + 3
+      StrCpy $R9 $R8 "" $R6
+      ${Break}
+    ${EndIf}
+    IntOp $R6 $R6 + 1
+  ${LoopUntil} $R6 > $R7
+
+  StrCpy ${outVar} $R9
+  Pop $R5
+  Pop $R6
+  Pop $R7
+  Pop $R9
+  Pop $R8
+!macroend

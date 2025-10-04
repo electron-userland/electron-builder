@@ -222,19 +222,19 @@ export function configureBuildCommand(yargs: yargs.Argv): yargs.Argv {
     .option("mac", {
       group: buildGroup,
       alias: ["m", "o", "macos"],
-      description: `Build for macOS, accepts target list (see ${chalk.underline("https://goo.gl/5uHuzj")}).`,
+      description: `Build for macOS, accepts target list (see ${chalk.underline("https://www.electron.build/mac")}).`,
       type: "array",
     })
     .option("linux", {
       group: buildGroup,
       alias: "l",
-      description: `Build for Linux, accepts target list (see ${chalk.underline("https://goo.gl/4vwQad")})`,
+      description: `Build for Linux, accepts target list (see ${chalk.underline("https://www.electron.build/linux")})`,
       type: "array",
     })
     .option("win", {
       group: buildGroup,
       alias: ["w", "windows"],
-      description: `Build for Windows, accepts target list (see ${chalk.underline("https://goo.gl/jYsTEJ")})`,
+      description: `Build for Windows, accepts target list (see ${chalk.underline("https://www.electron.build/win")})`,
       type: "array",
     })
     .option("x64", {
@@ -270,7 +270,7 @@ export function configureBuildCommand(yargs: yargs.Argv): yargs.Argv {
     .option("publish", {
       group: publishGroup,
       alias: "p",
-      description: `Publish artifacts, see ${chalk.underline("https://goo.gl/tSFycD")}`,
+      description: `Publish artifacts, see ${chalk.underline("https://www.electron.build/publish")}`,
       choices: ["onTag", "onTagOrDraft", "always", "never", undefined as any],
     })
     .option("prepackaged", {
@@ -287,7 +287,8 @@ export function configureBuildCommand(yargs: yargs.Argv): yargs.Argv {
       alias: ["c"],
       group: buildGroup,
       description:
-        "The path to an electron-builder config. Defaults to `electron-builder.yml` (or `json`, or `json5`, or `js`, or `ts`), see " + chalk.underline("https://goo.gl/YFRJOM"),
+        "The path to an electron-builder config. Defaults to `electron-builder.yml` (or `json`, or `json5`, or `js`, or `ts`), see " +
+        chalk.underline("https://www.electron.build/configuration"),
     })
     .group(["help", "version"], "Other:")
     .example("electron-builder -mwl", "build for macOS, Windows and Linux")

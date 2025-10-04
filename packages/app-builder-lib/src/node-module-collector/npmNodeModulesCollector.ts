@@ -1,14 +1,9 @@
-import { Lazy } from "lazy-val"
 import { NodeModulesCollector } from "./nodeModulesCollector"
+import { PM } from "./packageManager"
 import { NpmDependency } from "./types"
 
 export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency, string> {
-  constructor(rootDir: string) {
-    super(rootDir)
-  }
-
-  public readonly pmCommand = new Lazy<string>(() => Promise.resolve(process.platform === "win32" ? "npm.cmd" : "npm"))
-  public readonly installOptions = this.pmCommand.value.then(cmd => ({ cmd, args: ["ci"], lockfile: "package-lock.json" }))
+  public readonly installOptions = { manager: PM.NPM, lockfile: "package-lock.json" }
 
   protected getArgs(): string[] {
     return ["list", "-a", "--include", "prod", "--include", "optional", "--omit", "dev", "--json", "--long", "--silent"]

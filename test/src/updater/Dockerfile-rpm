@@ -1,0 +1,25 @@
+FROM fedora:latest
+
+RUN dnf install -y \
+    libxcrypt-compat \
+    nodejs \
+    npm \
+    rpm-build \
+    libXScrnSaver \
+    libX11-devel \
+    alsa-lib \
+    git \
+    gcc-c++ \
+    make \
+    libuuid \
+    libuuid-devel \
+    python3 \
+    curl \
+    xz
+
+# Optional: for better font rendering or Chromium deps
+RUN dnf install -y liberation-fonts fontconfig
+
+RUN npm --silent install --global --depth 0 pnpm
+
+WORKDIR /project

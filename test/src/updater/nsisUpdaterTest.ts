@@ -1,4 +1,4 @@
-import { BitbucketOptions, GenericServerOptions, GithubOptions, KeygenOptions, S3Options, SpacesOptions } from "builder-util-runtime"
+import { BitbucketOptions, GenericServerOptions, GithubOptions, GitlabOptions, KeygenOptions, S3Options, SpacesOptions } from "builder-util-runtime"
 import { BitbucketPublisher } from "electron-publish"
 import { UpdateCheckResult } from "electron-updater"
 import { outputFile } from "fs-extra"
@@ -8,6 +8,8 @@ import { assertThat } from "../helpers/fileAssert"
 import { removeUnstableProperties } from "../helpers/packTester"
 import { createNsisUpdater, trackEvents, validateDownload, writeUpdateConfig } from "../helpers/updaterTestUtil"
 import { ExpectStatic } from "vitest"
+import { GitLabProvider } from "electron-updater/src/providers/GitLabProvider"
+import { GitHubProvider } from "electron-updater/src/providers/GitHubProvider"
 
 const config = { retry: 3 }
 
@@ -59,6 +61,32 @@ test("github allowPrerelease=false", config, async ({ expect }) => {
   expect(removeUnstableProperties(updateCheckResult?.updateInfo)).toMatchSnapshot()
 })
 
+test("github blockmap files - should get blockmap files", config, async ({ expect }) => {
+  const updater = await createNsisUpdater("1.0.0")
+  updater.updateConfigPath = await writeUpdateConfig<GithubOptions>({
+    provider: "github",
+    owner: "develar",
+    repo: "__test_nsis_release",
+  })
+
+  await updater.checkForUpdates()
+
+  const provider = (updater as any)?.updateInfoAndProvider?.provider as GitHubProvider
+  if (provider) {
+    const oldVersion = "1.1.9-2+ed8ccd"
+    const newVersion = "1.1.9-3+be4a1f"
+    const baseUrlString = `https://github.com/artifacts/master/raw/electron%20Setup%20${newVersion}.exe`
+    const baseUrl = new URL(baseUrlString)
+
+    const blockMapUrls = await provider.getBlockMapFiles(baseUrl, oldVersion, newVersion)
+    const oldBlockMapUrl = blockMapUrls[0]
+    const newBlockMapUrl = blockMapUrls[1]
+
+    expect(oldBlockMapUrl.href).toBe("https://github.com/artifacts/master/raw/electron%20Setup%201.1.9-2+ed8ccd.exe.blockmap")
+    expect(newBlockMapUrl.href).toBe("https://github.com/artifacts/master/raw/electron%20Setup%201.1.9-3+be4a1f.exe.blockmap")
+  }
+})
+
 test("file url generic", config, async ({ expect }) => {
   const updater = await createNsisUpdater()
   updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({
@@ -89,6 +117,113 @@ test.ifEnv(process.env.BITBUCKET_TOKEN)("file url bitbucket", config, async ({ e
   updater.addAuthHeader(BitbucketPublisher.convertAppPassword(options.owner, process.env.BITBUCKET_TOKEN!))
   updater.updateConfigPath = await writeUpdateConfig(options)
   await validateDownload(expect, updater)
+})
+
+test("file url gitlab", config, async ({ expect }) => {
+  const updater = await createNsisUpdater()
+  const options: GitlabOptions = {
+    provider: "gitlab",
+    projectId: 71361100,
+  }
+  updater.updateConfigPath = await writeUpdateConfig(options)
+  updater.signals.updateDownloaded(info => {
+    expect(info.downloadedFile).not.toBeNull()
+
+    delete (info as any).downloadedFile
+    expect(info).toMatchSnapshot()
+  })
+  await validateDownload(expect, updater)
+})
+
+test("gitlab checkForUpdates", config, async ({ expect }) => {
+  const updater = await createNsisUpdater("0.0.1")
+  updater.updateConfigPath = await writeUpdateConfig<GitlabOptions>({
+    provider: "gitlab",
+    projectId: 71361100,
+  })
+
+  const actualEvents: Array<string> = []
+  const expectedEvents = ["checking-for-update", "update-available"] as const
+  for (const eventName of expectedEvents) {
+    updater.addListener(eventName, () => {
+      actualEvents.push(eventName)
+    })
+  }
+
+  const updateCheckResult = await updater.checkForUpdates()
+  expect(removeUnstableProperties(updateCheckResult?.updateInfo)).toMatchSnapshot()
+  expect(actualEvents).toEqual(expectedEvents)
+})
+
+test("gitlab - manual download", config, async ({ expect }) => {
+  const updater = await createNsisUpdater("0.0.1")
+  updater.updateConfigPath = await writeUpdateConfig<GitlabOptions>({
+    provider: "gitlab",
+    projectId: 71361100,
+  })
+  updater.autoDownload = false
+
+  const actualEvents = trackEvents(updater)
+
+  const updateCheckResult = await updater.checkForUpdates()
+  expect(removeUnstableProperties(updateCheckResult?.updateInfo)).toMatchSnapshot()
+  // noinspection JSIgnoredPromiseFromCall
+  expect(updateCheckResult?.downloadPromise).toBeNull()
+  expect(actualEvents).toMatchSnapshot()
+
+  await assertThat(expect, path.join((await updater.downloadUpdate())[0])).isFile()
+})
+
+test("gitlab blockmap files - should get blockmap files from project_upload", config, async ({ expect }) => {
+  const updater = await createNsisUpdater("1.0.0")
+  updater.updateConfigPath = await writeUpdateConfig<GitlabOptions>({
+    provider: "gitlab",
+    projectId: 71361100,
+    uploadTarget: "project_upload",
+  })
+
+  await updater.checkForUpdates()
+
+  const provider = (updater as any)?.updateInfoAndProvider?.provider as GitLabProvider
+  if (provider) {
+    const baseUrl = new URL("https://gitlab.com/gitlab-electron-updater-test_Setup_1.1.0.exe")
+    const blockMapUrls = await provider.getBlockMapFiles(baseUrl, "1.0.0", "1.1.0")
+
+    expect(blockMapUrls).toHaveLength(2)
+
+    const oldBlockMapUrl = blockMapUrls[0]
+    const newBlockMapUrl = blockMapUrls[1]
+    expect(oldBlockMapUrl).toBeInstanceOf(URL)
+    expect(newBlockMapUrl).toBeInstanceOf(URL)
+    expect(oldBlockMapUrl.href).toContain("gitlab-electron-updater-test_Setup_1.0.0.exe.blockmap")
+    expect(newBlockMapUrl.href).toContain("gitlab-electron-updater-test_Setup_1.1.0.exe.blockmap")
+  }
+})
+
+test("gitlab blockmap files - should get blockmap files from generic_package", config, async ({ expect }) => {
+  const updater = await createNsisUpdater("1.0.0")
+  updater.updateConfigPath = await writeUpdateConfig<GitlabOptions>({
+    provider: "gitlab",
+    projectId: 71361100,
+    uploadTarget: "generic_package",
+  })
+
+  await updater.checkForUpdates()
+
+  const provider = (updater as any)?.updateInfoAndProvider?.provider as GitLabProvider
+  if (provider) {
+    const baseUrl = new URL("https://gitlab.com/gitlab-electron-updater-test_Setup_1.1.0.exe")
+    const blockMapUrls = await provider.getBlockMapFiles(baseUrl, "1.0.0", "1.1.0")
+
+    expect(blockMapUrls).toHaveLength(2)
+
+    const oldBlockMapUrl = blockMapUrls[0]
+    const newBlockMapUrl = blockMapUrls[1]
+    expect(oldBlockMapUrl).toBeInstanceOf(URL)
+    expect(newBlockMapUrl).toBeInstanceOf(URL)
+    expect(oldBlockMapUrl.href).toBe("https://gitlab.com/gitlab-electron-updater-test_Setup_1.0.0.exe.blockmap")
+    expect(newBlockMapUrl.href).toBe("https://gitlab.com/gitlab-electron-updater-test_Setup_1.1.0.exe.blockmap")
+  }
 })
 
 test.skip("DigitalOcean Spaces", config, async ({ expect }) => {

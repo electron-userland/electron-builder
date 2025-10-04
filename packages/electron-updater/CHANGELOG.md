@@ -1,5 +1,41 @@
 ## 4.3.0
 
+## 6.6.8
+
+### Patch Changes
+
+- [#9248](https://github.com/electron-userland/electron-builder/pull/9248) [`8cbf079e`](https://github.com/electron-userland/electron-builder/commit/8cbf079ec20bbc642f9b6c306e3e9141a1fcc385) Thanks [@DamonYu6](https://github.com/DamonYu6)! - fix: uncaught exception during differential downloading via multipleRangDownloader
+
+- [#9232](https://github.com/electron-userland/electron-builder/pull/9232) [`cfc4f36a`](https://github.com/electron-userland/electron-builder/commit/cfc4f36a5af20fb6c61dc7dfa6202cbc0fd9f201) Thanks [@michalzaq12](https://github.com/michalzaq12)! - fix: auto-update powershell script
+
+- [#9225](https://github.com/electron-userland/electron-builder/pull/9225) [`d27ac523`](https://github.com/electron-userland/electron-builder/commit/d27ac523bb1581f274c018952d55162315e7a9b8) Thanks [@yannishuber](https://github.com/yannishuber)! - fix(electron-updater): do not use quotes when installing update with sudo
+
+- Updated dependencies [[`44b28997`](https://github.com/electron-userland/electron-builder/commit/44b28997f15314730d1bb69303a47dc26f7950d1), [`7c7fd6ca`](https://github.com/electron-userland/electron-builder/commit/7c7fd6ca240eda72048835f754adac92c4ab4e8c)]:
+  - builder-util-runtime@9.4.0
+
+## 6.6.7
+
+### Patch Changes
+
+- [#9186](https://github.com/electron-userland/electron-builder/pull/9186) [`1a6ea016`](https://github.com/electron-userland/electron-builder/commit/1a6ea016b7793c75e7586e0e14d5f26d3535c292) Thanks [@daihere1993](https://github.com/daihere1993)! - feat(electron-updater): add GitLab provider support
+
+- [#9177](https://github.com/electron-userland/electron-builder/pull/9177) [`35f5f6e5`](https://github.com/electron-userland/electron-builder/commit/35f5f6e55762ffc377fcd5587a8cea8753184d50) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: remove `shell: true` from node_modules collector so as to prevent shell console logging from malforming the json output
+
+- Updated dependencies [[`1a6ea016`](https://github.com/electron-userland/electron-builder/commit/1a6ea016b7793c75e7586e0e14d5f26d3535c292), [`35f5f6e5`](https://github.com/electron-userland/electron-builder/commit/35f5f6e55762ffc377fcd5587a8cea8753184d50)]:
+  - builder-util-runtime@9.3.3
+
+## 6.6.6
+
+### Patch Changes
+
+- [#9172](https://github.com/electron-userland/electron-builder/pull/9172) [`cb651ddb`](https://github.com/electron-userland/electron-builder/commit/cb651ddb732dd0b8614b1af25054261b978900dd) Thanks [@beyondkmp](https://github.com/beyondkmp)! - feat(updater): Cache the new blockmap file and allow customization of the old blockmap file base URL
+
+## 6.6.5
+
+### Patch Changes
+
+- [#9113](https://github.com/electron-userland/electron-builder/pull/9113) [`8ba9be48`](https://github.com/electron-userland/electron-builder/commit/8ba9be481e3b777aa77884d265fd9b7f927a8a99) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: don't error out when trying to determine package manager
+
 ## 6.6.4
 
 ### Patch Changes

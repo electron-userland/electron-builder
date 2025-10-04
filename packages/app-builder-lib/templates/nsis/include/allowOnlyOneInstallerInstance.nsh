@@ -30,22 +30,77 @@
 !macroend
 
 !macro CHECK_APP_RUNNING
-    !ifmacrodef customCheckAppRunning
-      !insertmacro customCheckAppRunning
-    !else
-      !insertmacro _CHECK_APP_RUNNING
-    !endif
-!macroend
-
-!macro FIND_PROCESS _FILE _ERR
-  !ifdef INSTALL_MODE_PER_ALL_USERS
-    ${nsProcess::FindProcess} "${_FILE}" ${_ERR}
+  Var /GLOBAL CmdPath
+  Var /GLOBAL FindPath
+  Var /GLOBAL PowerShellPath
+  StrCpy $CmdPath "$SYSDIR\cmd.exe"
+  StrCpy $FindPath "$SYSDIR\find.exe"
+  StrCpy $PowerShellPath "$SYSDIR\WindowsPowerShell\v1.0\powershell.exe"
+  !ifmacrodef customCheckAppRunning
+    !insertmacro customCheckAppRunning
   !else
-    # find process owned by current user
-    nsExec::Exec `"$SYSDIR\cmd.exe" /c tasklist /FI "USERNAME eq %USERNAME%" /FI "IMAGENAME eq ${_FILE}" /FO csv | "$SYSDIR\find.exe" "${_FILE}"`
-    Pop ${_ERR}
+    !insertmacro IS_POWERSHELL_AVAILABLE
+    !insertmacro _CHECK_APP_RUNNING
   !endif
 !macroend
+
+!macro IS_POWERSHELL_AVAILABLE
+  Var /GLOBAL IsPowerShellAvailable ; 0 = available, 1 = not available
+  # Try running PowerShell with a simple command to check if it's available
+  nsExec::Exec `"$PowerShellPath" -C "if (Get-Command Get-CimInstance -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"`
+  Pop $0  # Return code (0 = success, other = error)
+
+  ${if} $0 == 0
+    # PowerShell is available, check if it's not blocked by policies
+    nsExec::Exec `"$PowerShellPath" -C "if ((Get-ExecutionPolicy -Scope Process) -eq 'Restricted') { exit 1 } else { exit 0 }"`
+    Pop $0
+  ${endIf}
+
+  ${if} $0 != 0
+    StrCpy $0 1
+  ${endIf}
+
+  StrCpy $IsPowerShellAvailable $0
+!macroend
+
+!macro FIND_PROCESS _FILE _RETURN
+  ${if} $IsPowerShellAvailable == 0
+    nsExec::Exec `"$PowerShellPath" -C "if ((Get-CimInstance -ClassName Win32_Process | ? {$$_.Path -and $$_.Path.StartsWith('$INSTDIR', 'CurrentCultureIgnoreCase')}).Count -gt 0) { exit 0 } else { exit 1 }"`
+    Pop ${_RETURN}
+  ${else}
+    !ifdef INSTALL_MODE_PER_ALL_USERS
+      ${nsProcess::FindProcess} "${_FILE}" ${_RETURN}
+    !else
+      # find process owned by current user
+      nsExec::Exec `"$CmdPath" /C tasklist /FI "USERNAME eq %USERNAME%" /FI "IMAGENAME eq ${_FILE}" /FO CSV | "$FindPath" "${_FILE}"`
+      Pop ${_RETURN}
+    !endif
+  ${endIf}
+!macroend
+
+!macro KILL_PROCESS _FILE _FORCE
+  Push $0
+  ${if} ${_FORCE} == 1
+    ${if} $IsPowerShellAvailable == 0
+      StrCpy $0 "-Force"
+    ${else}
+      StrCpy $0 "/F"
+    ${endIf}
+  ${else}
+    StrCpy $0 ""
+  ${endIf}
+
+  ${if} $IsPowerShellAvailable == 0
+    nsExec::Exec `"$PowerShellPath" -C "Get-CimInstance -ClassName Win32_Process | ? {$$_.Path -and $$_.Path.StartsWith('$INSTDIR', 'CurrentCultureIgnoreCase')} | % { Stop-Process -Id $$_.ProcessId $0 }"`
+  ${else}
+    !ifdef INSTALL_MODE_PER_ALL_USERS
+      nsExec::Exec `taskkill /IM "${_FILE}" /FI "PID ne $pid"`
+    !else
+      nsExec::Exec `"$CmdPath" /C taskkill $0 /IM "${_FILE}" /FI "PID ne $pid" /FI "USERNAME eq %USERNAME%"`
+    !endif
+  ${endIf}
+  Pop $0
+!macroend 
 
 !macro _CHECK_APP_RUNNING
   ${GetProcessInfo} 0 $pid $1 $2 $3 $4
@@ -67,14 +122,9 @@
 
       doStopProcess:
 
-      DetailPrint `Closing running "${PRODUCT_NAME}"...`
+      DetailPrint "$(appClosing)"
 
-      # https://github.com/electron-userland/electron-builder/issues/2516#issuecomment-372009092
-      !ifdef INSTALL_MODE_PER_ALL_USERS
-        nsExec::Exec `taskkill /im "${APP_EXECUTABLE_FILENAME}" /fi "PID ne $pid"`
-      !else
-        nsExec::Exec `"$SYSDIR\cmd.exe" /c taskkill /im "${APP_EXECUTABLE_FILENAME}" /fi "PID ne $pid" /fi "USERNAME eq %USERNAME%"`
-      !endif
+      !insertmacro KILL_PROCESS "${APP_EXECUTABLE_FILENAME}" 0
       # to ensure that files are not "in-use"
       Sleep 300
 
@@ -88,13 +138,9 @@
         ${if} $R0 == 0
           # wait to give a chance to exit gracefully
           Sleep 1000
-          !ifdef INSTALL_MODE_PER_ALL_USERS
-            nsExec::Exec `taskkill /f /im "${APP_EXECUTABLE_FILENAME}" /fi "PID ne $pid"`
-          !else
-            nsExec::Exec `"$SYSDIR\cmd.exe" /c taskkill /f /im "${APP_EXECUTABLE_FILENAME}" /fi "PID ne $pid" /fi "USERNAME eq %USERNAME%"`
-          !endif
+          !insertmacro KILL_PROCESS "${APP_EXECUTABLE_FILENAME}" 1 # 1 = force kill
           !insertmacro FIND_PROCESS "${APP_EXECUTABLE_FILENAME}" $R0
-          ${If} $R0 == 0
+          ${if} $R0 == 0
             DetailPrint `Waiting for "${PRODUCT_NAME}" to close.`
             Sleep 2000
           ${else}

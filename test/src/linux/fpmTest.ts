@@ -2,7 +2,7 @@ import { Platform } from "electron-builder"
 import { app } from "../helpers/packTester"
 
 // "apk" is very slow, don't test for now
-test.ifDevOrLinuxCi("targets", ({ expect }) =>
+test.ifDevOrLinuxCi("targets", { timeout: 10 * 60 * 1000 }, ({ expect }) =>
   app(expect, {
     targets: Platform.LINUX.createTarget(["sh", "freebsd", "pacman", "zip", "7z"]),
     config: {

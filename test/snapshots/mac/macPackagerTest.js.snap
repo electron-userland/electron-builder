@@ -1,15 +1,5 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`electron mirror 1`] = `
-{
-  "mac": [],
-}
-`;
-
-exports[`electronDist 1`] = `"corrupted Electron dist"`;
-
-exports[`invalid electron mirror 1`] = `"ERR_NON_2XX_3XX_RESPONSE"`;
-
 exports[`multiple asar resources 1`] = `
 {
   "mac": [
@@ -111,6 +101,23 @@ exports[`one-package 1`] = `
       },
     },
     {
+      "arch": "x64",
+      "file": "Test App ßW-1.1.0-mac.zip",
+      "safeArtifactName": "TestApp-1.1.0-mac.zip",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "Test App ßW-1.1.0-mac.zip.blockmap",
+      "safeArtifactName": "Test App ßW-1.1.0-mac.zip.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
       "file": "Test App ßW-1.1.0.dmg.blockmap",
       "safeArtifactName": "TestApp-1.1.0.dmg.blockmap",
       "updateInfo": {
@@ -137,23 +144,6 @@ exports[`one-package 1`] = `
         "releaseDate": "@releaseDate",
         "sha512": "@sha512",
         "version": "1.1.0",
-      },
-    },
-    {
-      "arch": "x64",
-      "file": "Test App ßW-1.1.0-mac.zip",
-      "safeArtifactName": "TestApp-1.1.0-mac.zip",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "file": "Test App ßW-1.1.0-mac.zip.blockmap",
-      "safeArtifactName": "Test App ßW-1.1.0-mac.zip.blockmap",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
       },
     },
   ],
@@ -250,15 +240,16 @@ exports[`two-package 1`] = `
 {
   "mac": [
     {
-      "arch": "arm64",
-      "file": "TestApp-1.1.0-mac-arm64.dmg",
+      "arch": "x64",
+      "file": "TestApp-1.1.0-mac-x64.dmg",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
     {
-      "file": "TestApp-1.1.0-mac-arm64.dmg.blockmap",
+      "arch": "arm64",
+      "file": "TestApp-1.1.0-mac-arm64.dmg",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
@@ -273,6 +264,45 @@ exports[`two-package 1`] = `
       },
     },
     {
+      "arch": "x64",
+      "file": "TestApp-1.1.0-mac-x64.zip",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "arch": "arm64",
+      "file": "TestApp-1.1.0-mac-arm64.zip",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "arch": "universal",
+      "file": "TestApp-1.1.0-mac-universal.zip",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "TestApp-1.1.0-mac-arm64.dmg.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "TestApp-1.1.0-mac-arm64.zip.blockmap",
+      "safeArtifactName": "TestApp-1.1.0-mac-arm64.zip.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
       "file": "TestApp-1.1.0-mac-universal.dmg.blockmap",
       "updateInfo": {
         "sha512": "@sha512",
@@ -280,8 +310,8 @@ exports[`two-package 1`] = `
       },
     },
     {
-      "arch": "x64",
-      "file": "TestApp-1.1.0-mac-x64.dmg",
+      "file": "TestApp-1.1.0-mac-universal.zip.blockmap",
+      "safeArtifactName": "TestApp-1.1.0-mac-universal.zip.blockmap",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
@@ -289,6 +319,14 @@ exports[`two-package 1`] = `
     },
     {
       "file": "TestApp-1.1.0-mac-x64.dmg.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "TestApp-1.1.0-mac-x64.zip.blockmap",
+      "safeArtifactName": "TestApp-1.1.0-mac-x64.zip.blockmap",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
@@ -333,54 +371,6 @@ exports[`two-package 1`] = `
         "releaseDate": "@releaseDate",
         "sha512": "@sha512",
         "version": "1.1.0",
-      },
-    },
-    {
-      "arch": "arm64",
-      "file": "TestApp-1.1.0-mac-arm64.zip",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "file": "TestApp-1.1.0-mac-arm64.zip.blockmap",
-      "safeArtifactName": "TestApp-1.1.0-mac-arm64.zip.blockmap",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "arch": "universal",
-      "file": "TestApp-1.1.0-mac-universal.zip",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "file": "TestApp-1.1.0-mac-universal.zip.blockmap",
-      "safeArtifactName": "TestApp-1.1.0-mac-universal.zip.blockmap",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "arch": "x64",
-      "file": "TestApp-1.1.0-mac-x64.zip",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "file": "TestApp-1.1.0-mac-x64.zip.blockmap",
-      "safeArtifactName": "TestApp-1.1.0-mac-x64.zip.blockmap",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
       },
     },
   ],
@@ -942,14 +932,6 @@ exports[`yarn two package.json w/ native module 3`] = `
               "files": {
                 "Release": {
                   "files": {
-                    "node-addon-api": {
-                      "files": {
-                        "node_addon_api_except.stamp": {
-                          "size": "<size>",
-                          "unpacked": true,
-                        },
-                      },
-                    },
                     "pty.node": {
                       "size": "<size>",
                       "unpacked": true,
@@ -1526,14 +1508,6 @@ exports[`yarn two package.json w/ native module 3`] = `
                 },
               },
             },
-            "node-addon-api": {
-              "files": {
-                "node_addon_api.Makefile": {
-                  "size": "<size>",
-                  "unpacked": true,
-                },
-              },
-            },
             "package.json": {
               "size": "<size>",
               "unpacked": true,
@@ -1731,7 +1705,6 @@ exports[`yarn two package.json w/ native module 4`] = `
   "app.asar.unpacked/node_modules/node-pty/src/shared/conout.ts",
   "app.asar.unpacked/node_modules/node-pty/scripts/post-install.js",
   "app.asar.unpacked/node_modules/node-pty/scripts/publish.js",
-  "app.asar.unpacked/node_modules/node-pty/node-addon-api/node_addon_api.Makefile",
   "app.asar.unpacked/node_modules/node-pty/lib/conpty_console_list_agent.js",
   "app.asar.unpacked/node_modules/node-pty/lib/conpty_console_list_agent.js.map",
   "app.asar.unpacked/node_modules/node-pty/lib/eventEmitter2.js",
@@ -1859,7 +1832,6 @@ exports[`yarn two package.json w/ native module 4`] = `
   "app.asar.unpacked/node_modules/node-pty/deps/winpty/misc/Font-Report-June2016/Windows10SetFontBugginess.txt",
   "app.asar.unpacked/node_modules/node-pty/build/Release/pty.node",
   "app.asar.unpacked/node_modules/node-pty/build/Release/spawn-helper",
-  "app.asar.unpacked/node_modules/node-pty/build/Release/node-addon-api/node_addon_api_except.stamp",
   "app.asar.unpacked/node_modules/node-mac-permissions/LICENSE",
   "app.asar.unpacked/node_modules/node-mac-permissions/index.js",
   {

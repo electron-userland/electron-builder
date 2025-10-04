@@ -184,22 +184,6 @@ exports[`Mac Intel 1`] = `
 {
   "mac": [
     {
-      "file": "latest-mac.yml",
-      "fileContent": {
-        "files": [
-          {
-            "sha512": "@sha512",
-            "size": "@size",
-            "url": "Test App ßW-1.0.0-mac.zip",
-          },
-        ],
-        "path": "Test App ßW-1.0.0-mac.zip",
-        "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
-        "version": "1.0.0",
-      },
-    },
-    {
       "arch": "x64",
       "file": "Test App ßW-1.0.0-mac.zip",
       "safeArtifactName": "TestApp-1.0.0-mac.zip",
@@ -214,6 +198,22 @@ exports[`Mac Intel 1`] = `
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
+      },
+    },
+    {
+      "file": "latest-mac.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "Test App ßW-1.0.0-mac.zip",
+          },
+        ],
+        "path": "Test App ßW-1.0.0-mac.zip",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.0",
       },
     },
   ],
@@ -271,22 +271,6 @@ exports[`Mac Intel 3`] = `
 {
   "mac": [
     {
-      "file": "latest-mac.yml",
-      "fileContent": {
-        "files": [
-          {
-            "sha512": "@sha512",
-            "size": "@size",
-            "url": "Test App ßW-1.0.1-mac.zip",
-          },
-        ],
-        "path": "Test App ßW-1.0.1-mac.zip",
-        "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
-        "version": "1.0.1",
-      },
-    },
-    {
       "arch": "x64",
       "file": "Test App ßW-1.0.1-mac.zip",
       "safeArtifactName": "TestApp-1.0.1-mac.zip",
@@ -301,6 +285,22 @@ exports[`Mac Intel 3`] = `
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
+      },
+    },
+    {
+      "file": "latest-mac.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "Test App ßW-1.0.1-mac.zip",
+          },
+        ],
+        "path": "Test App ßW-1.0.1-mac.zip",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.1",
       },
     },
   ],
@@ -379,22 +379,6 @@ exports[`Mac arm64 1`] = `
 {
   "mac": [
     {
-      "file": "latest-mac.yml",
-      "fileContent": {
-        "files": [
-          {
-            "sha512": "@sha512",
-            "size": "@size",
-            "url": "Test App ßW-1.0.0-arm64-mac.zip",
-          },
-        ],
-        "path": "Test App ßW-1.0.0-arm64-mac.zip",
-        "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
-        "version": "1.0.0",
-      },
-    },
-    {
       "arch": "arm64",
       "file": "Test App ßW-1.0.0-arm64-mac.zip",
       "safeArtifactName": "TestApp-1.0.0-arm64-mac.zip",
@@ -409,6 +393,22 @@ exports[`Mac arm64 1`] = `
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
+      },
+    },
+    {
+      "file": "latest-mac.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "Test App ßW-1.0.0-arm64-mac.zip",
+          },
+        ],
+        "path": "Test App ßW-1.0.0-arm64-mac.zip",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.0",
       },
     },
   ],
@@ -466,22 +466,6 @@ exports[`Mac arm64 3`] = `
 {
   "mac": [
     {
-      "file": "latest-mac.yml",
-      "fileContent": {
-        "files": [
-          {
-            "sha512": "@sha512",
-            "size": "@size",
-            "url": "Test App ßW-1.0.1-arm64-mac.zip",
-          },
-        ],
-        "path": "Test App ßW-1.0.1-arm64-mac.zip",
-        "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
-        "version": "1.0.1",
-      },
-    },
-    {
       "arch": "arm64",
       "file": "Test App ßW-1.0.1-arm64-mac.zip",
       "safeArtifactName": "TestApp-1.0.1-arm64-mac.zip",
@@ -496,6 +480,22 @@ exports[`Mac arm64 3`] = `
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
+      },
+    },
+    {
+      "file": "latest-mac.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "Test App ßW-1.0.1-arm64-mac.zip",
+          },
+        ],
+        "path": "Test App ßW-1.0.1-arm64-mac.zip",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.1",
       },
     },
   ],
@@ -574,22 +574,6 @@ exports[`Mac universal 1`] = `
 {
   "mac": [
     {
-      "file": "latest-mac.yml",
-      "fileContent": {
-        "files": [
-          {
-            "sha512": "@sha512",
-            "size": "@size",
-            "url": "Test App ßW-1.0.0-universal-mac.zip",
-          },
-        ],
-        "path": "Test App ßW-1.0.0-universal-mac.zip",
-        "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
-        "version": "1.0.0",
-      },
-    },
-    {
       "arch": "universal",
       "file": "Test App ßW-1.0.0-universal-mac.zip",
       "safeArtifactName": "TestApp-1.0.0-universal-mac.zip",
@@ -604,6 +588,22 @@ exports[`Mac universal 1`] = `
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
+      },
+    },
+    {
+      "file": "latest-mac.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "Test App ßW-1.0.0-universal-mac.zip",
+          },
+        ],
+        "path": "Test App ßW-1.0.0-universal-mac.zip",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.0",
       },
     },
   ],
@@ -661,22 +661,6 @@ exports[`Mac universal 3`] = `
 {
   "mac": [
     {
-      "file": "latest-mac.yml",
-      "fileContent": {
-        "files": [
-          {
-            "sha512": "@sha512",
-            "size": "@size",
-            "url": "Test App ßW-1.0.1-universal-mac.zip",
-          },
-        ],
-        "path": "Test App ßW-1.0.1-universal-mac.zip",
-        "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
-        "version": "1.0.1",
-      },
-    },
-    {
       "arch": "universal",
       "file": "Test App ßW-1.0.1-universal-mac.zip",
       "safeArtifactName": "TestApp-1.0.1-universal-mac.zip",
@@ -691,6 +675,22 @@ exports[`Mac universal 3`] = `
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
+      },
+    },
+    {
+      "file": "latest-mac.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "Test App ßW-1.0.1-universal-mac.zip",
+          },
+        ],
+        "path": "Test App ßW-1.0.1-universal-mac.zip",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.1",
       },
     },
   ],
@@ -769,22 +769,6 @@ exports[`nsis 1`] = `
 {
   "win": [
     {
-      "file": "latest.yml",
-      "fileContent": {
-        "files": [
-          {
-            "sha512": "@sha512",
-            "size": "@size",
-            "url": "Test App ßW Setup 1.0.0.exe",
-          },
-        ],
-        "path": "Test App ßW Setup 1.0.0.exe",
-        "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
-        "version": "1.0.0",
-      },
-    },
-    {
       "arch": "x64",
       "file": "Test App ßW Setup 1.0.0.exe",
       "safeArtifactName": "TestApp-Setup-1.0.0.exe",
@@ -801,13 +785,6 @@ exports[`nsis 1`] = `
         "size": "@size",
       },
     },
-  ],
-}
-`;
-
-exports[`nsis 2`] = `
-{
-  "win": [
     {
       "file": "latest.yml",
       "fileContent": {
@@ -815,15 +792,22 @@ exports[`nsis 2`] = `
           {
             "sha512": "@sha512",
             "size": "@size",
-            "url": "Test App ßW Setup 1.0.1.exe",
+            "url": "Test App ßW Setup 1.0.0.exe",
           },
         ],
-        "path": "Test App ßW Setup 1.0.1.exe",
+        "path": "Test App ßW Setup 1.0.0.exe",
         "releaseDate": "@releaseDate",
         "sha512": "@sha512",
-        "version": "1.0.1",
+        "version": "1.0.0",
       },
     },
+  ],
+}
+`;
+
+exports[`nsis 2`] = `
+{
+  "win": [
     {
       "arch": "x64",
       "file": "Test App ßW Setup 1.0.1.exe",
@@ -839,6 +823,22 @@ exports[`nsis 2`] = `
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
+      },
+    },
+    {
+      "file": "latest.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "Test App ßW Setup 1.0.1.exe",
+          },
+        ],
+        "path": "Test App ßW Setup 1.0.1.exe",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.1",
       },
     },
   ],
@@ -870,6 +870,26 @@ exports[`web installer 1`] = `
 {
   "win": [
     {
+      "arch": "x64",
+      "file": "Test App ßW Web Setup 1.0.0.exe",
+      "safeArtifactName": "TestApp-WebSetup-1.0.0.exe",
+      "updateInfo": {
+        "packages": {
+          "x64": {
+            "blockMapSize": "@blockMapSize",
+            "file": "TestApp-1.0.0-x64.nsis.7z",
+            "path": "TestApp-1.0.0-x64.nsis.7z",
+            "sha512": "@sha512",
+            "size": "@size",
+          },
+        },
+      },
+    },
+    {
+      "arch": "x64",
+      "file": "TestApp-1.0.0-x64.nsis.7z",
+    },
+    {
       "file": "latest.yml",
       "fileContent": {
         "files": [
@@ -893,16 +913,23 @@ exports[`web installer 1`] = `
         "version": "1.0.0",
       },
     },
+  ],
+}
+`;
+
+exports[`web installer 2`] = `
+{
+  "win": [
     {
       "arch": "x64",
-      "file": "Test App ßW Web Setup 1.0.0.exe",
-      "safeArtifactName": "TestApp-WebSetup-1.0.0.exe",
+      "file": "Test App ßW Web Setup 1.0.1.exe",
+      "safeArtifactName": "TestApp-WebSetup-1.0.1.exe",
       "updateInfo": {
         "packages": {
           "x64": {
             "blockMapSize": "@blockMapSize",
-            "file": "TestApp-1.0.0-x64.nsis.7z",
-            "path": "TestApp-1.0.0-x64.nsis.7z",
+            "file": "TestApp-1.0.1-x64.nsis.7z",
+            "path": "TestApp-1.0.1-x64.nsis.7z",
             "sha512": "@sha512",
             "size": "@size",
           },
@@ -911,15 +938,8 @@ exports[`web installer 1`] = `
     },
     {
       "arch": "x64",
-      "file": "TestApp-1.0.0-x64.nsis.7z",
+      "file": "TestApp-1.0.1-x64.nsis.7z",
     },
-  ],
-}
-`;
-
-exports[`web installer 2`] = `
-{
-  "win": [
     {
       "file": "latest.yml",
       "fileContent": {
@@ -943,26 +963,6 @@ exports[`web installer 2`] = `
         "sha512": "@sha512",
         "version": "1.0.1",
       },
-    },
-    {
-      "arch": "x64",
-      "file": "Test App ßW Web Setup 1.0.1.exe",
-      "safeArtifactName": "TestApp-WebSetup-1.0.1.exe",
-      "updateInfo": {
-        "packages": {
-          "x64": {
-            "blockMapSize": "@blockMapSize",
-            "file": "TestApp-1.0.1-x64.nsis.7z",
-            "path": "TestApp-1.0.1-x64.nsis.7z",
-            "sha512": "@sha512",
-            "size": "@size",
-          },
-        },
-      },
-    },
-    {
-      "arch": "x64",
-      "file": "TestApp-1.0.1-x64.nsis.7z",
     },
   ],
 }

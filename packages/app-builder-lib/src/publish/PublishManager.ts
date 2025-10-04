@@ -5,7 +5,9 @@ import {
   GenericServerOptions,
   getS3LikeProviderBaseUrl,
   GithubOptions,
+  githubTagPrefix,
   githubUrl,
+  GitlabOptions,
   KeygenOptions,
   Nullish,
   PublishConfiguration,
@@ -17,6 +19,7 @@ import {
   BitbucketPublisher,
   getCiTag,
   GitHubPublisher,
+  GitlabPublisher,
   KeygenPublisher,
   PublishContext,
   Publisher,
@@ -28,7 +31,7 @@ import {
 } from "electron-publish"
 import { MultiProgress } from "electron-publish/out/multiProgress"
 import { writeFile } from "fs/promises"
-import * as isCi from "is-ci"
+import * as isCi from "ci-info"
 import * as path from "path"
 import { WriteStream as TtyWriteStream } from "tty"
 import * as url from "url"
@@ -314,6 +317,9 @@ export async function createPublisher(
     case "github":
       return new GitHubPublisher(context, publishConfig as GithubOptions, version, options)
 
+    case "gitlab":
+      return new GitlabPublisher(context, publishConfig as GitlabOptions, version)
+
     case "keygen":
       return new KeygenPublisher(context, publishConfig as KeygenOptions, version)
 
@@ -334,6 +340,9 @@ async function requireProviderClass(provider: string, packager: Packager): Promi
   switch (provider) {
     case "github":
       return GitHubPublisher
+
+    case "gitlab":
+      return GitlabPublisher
 
     case "generic":
       return null
@@ -385,7 +394,7 @@ export function computeDownloadUrl(publishConfiguration: PublishConfiguration, f
   let baseUrl
   if (publishConfiguration.provider === "github") {
     const gh = publishConfiguration as GithubOptions
-    baseUrl = `${githubUrl(gh)}/${gh.owner}/${gh.repo}/releases/download/${gh.vPrefixedTagName === false ? "" : "v"}${packager.appInfo.version}`
+    baseUrl = `${githubUrl(gh)}/${gh.owner}/${gh.repo}/releases/download/${githubTagPrefix(gh)}${packager.appInfo.version}`
   } else {
     baseUrl = getS3LikeProviderBaseUrl(publishConfiguration)
   }
@@ -441,6 +450,8 @@ async function resolvePublishConfigurations(
     let serviceName: PublishProvider | null = null
     if (!isEmptyOrSpaces(process.env.GH_TOKEN) || !isEmptyOrSpaces(process.env.GITHUB_TOKEN)) {
       serviceName = "github"
+    } else if (!isEmptyOrSpaces(process.env.GITLAB_TOKEN)) {
+      serviceName = "gitlab"
     } else if (!isEmptyOrSpaces(process.env.KEYGEN_TOKEN)) {
       serviceName = "keygen"
     } else if (!isEmptyOrSpaces(process.env.BITBUCKET_TOKEN)) {
@@ -498,7 +509,7 @@ async function getResolvedPublishConfig(
   options: PublishConfiguration,
   arch: Arch | null,
   errorIfCannot: boolean
-): Promise<PublishConfiguration | GithubOptions | BitbucketOptions | null> {
+): Promise<PublishConfiguration | GithubOptions | BitbucketOptions | GitlabOptions | null> {
   options = { ...options }
   expandPublishConfig(options, platformPackager, packager, arch)
 

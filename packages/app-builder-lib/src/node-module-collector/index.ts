@@ -1,37 +1,56 @@
 import { NpmNodeModulesCollector } from "./npmNodeModulesCollector"
 import { PnpmNodeModulesCollector } from "./pnpmNodeModulesCollector"
 import { YarnNodeModulesCollector } from "./yarnNodeModulesCollector"
-import { detectPackageManager, PM, getPackageManagerCommand } from "./packageManager"
+import { detectPackageManagerByLockfile, detectPackageManagerByEnv, PM, getPackageManagerCommand, detectYarnBerry } from "./packageManager"
 import { NodeModuleInfo } from "./types"
-import { exec } from "builder-util"
+import { TmpDir } from "temp-file"
 
-async function isPnpmProjectHoisted(rootDir: string) {
-  const command = await PnpmNodeModulesCollector.pmCommand.value
-  const config = await exec(command, ["config", "list"], { cwd: rootDir, shell: true })
-  const lines = Object.fromEntries(config.split("\n").map(line => line.split("=").map(s => s.trim())))
-  return lines["node-linker"] === "hoisted"
-}
-
-export async function getCollectorByPackageManager(rootDir: string) {
-  const manager: PM = detectPackageManager(rootDir)
-  switch (manager) {
+export async function getCollectorByPackageManager(pm: PM, rootDir: string, tempDirManager: TmpDir) {
+  switch (pm) {
     case PM.PNPM:
-      if (await isPnpmProjectHoisted(rootDir)) {
-        return new NpmNodeModulesCollector(rootDir)
+      if (await PnpmNodeModulesCollector.isPnpmProjectHoisted(rootDir)) {
+        return new NpmNodeModulesCollector(rootDir, tempDirManager)
       }
-      return new PnpmNodeModulesCollector(rootDir)
+      return new PnpmNodeModulesCollector(rootDir, tempDirManager)
     case PM.NPM:
-      return new NpmNodeModulesCollector(rootDir)
+    case PM.BUN:
+      return new NpmNodeModulesCollector(rootDir, tempDirManager)
     case PM.YARN:
-      return new YarnNodeModulesCollector(rootDir)
+      return new YarnNodeModulesCollector(rootDir, tempDirManager)
     default:
-      return new NpmNodeModulesCollector(rootDir)
+      return new NpmNodeModulesCollector(rootDir, tempDirManager)
   }
 }
 
-export async function getNodeModules(rootDir: string): Promise<NodeModuleInfo[]> {
-  const collector = await getCollectorByPackageManager(rootDir)
+export async function getNodeModules(pm: PM, rootDir: string, tempDirManager: TmpDir): Promise<NodeModuleInfo[]> {
+  const collector = await getCollectorByPackageManager(pm, rootDir, tempDirManager)
   return collector.getNodeModules()
 }
 
-export { detectPackageManager, PM, getPackageManagerCommand }
+export function detectPackageManager(dirs: string[]): PM {
+  let pm: PM | null = null
+
+  const resolveYarnVersion = (pm: PM) => {
+    if (pm === PM.YARN) {
+      return detectYarnBerry()
+    }
+    return pm
+  }
+
+  for (const dir of dirs) {
+    pm = detectPackageManagerByLockfile(dir)
+    if (pm) {
+      return resolveYarnVersion(pm)
+    }
+  }
+
+  pm = detectPackageManagerByEnv()
+  if (pm) {
+    return resolveYarnVersion(pm)
+  }
+
+  // Default to npm
+  return PM.NPM
+}
+
+export { PM, getPackageManagerCommand }
