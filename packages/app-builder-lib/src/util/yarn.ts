@@ -7,7 +7,7 @@ import { Configuration } from "../configuration"
 import { executeAppBuilderAndWriteJson } from "./appBuilder"
 import { PM, detectPackageManager, getPackageManagerCommand } from "../node-module-collector"
 import { NodeModuleDirInfo } from "./packageDependencies"
-import { rebuild as remoteRebuild } from "./rebuild/rebuild"
+import { rebuild as remoteRebuild } from "./rebuild"
 import * as which from "which"
 import { RebuildOptions as ElectronRebuildOptions } from "@electron/rebuild"
 
