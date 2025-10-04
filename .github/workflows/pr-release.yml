@@ -8,7 +8,9 @@ on:
 env:
   HUSKY: 0 # Bypass husky commit hook for CI
 
-permissions: {}
+permissions:
+  id-token: write  # Required for OIDC token
+
 jobs:
   pr-release:
     permissions:
@@ -27,10 +29,11 @@ jobs:
       - name: Install deps and audit
         uses: ./.github/actions/pnpm
 
-      - name: Set up NPM credentials
-        run: echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
-        env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+      # Authenticate to npm registry
+      # Auto-setup of NPM_TOKEN env var for for changesets/action
+      - uses: electron/npm-trusted-auth-action@v1
+        with:
+          package-name: 'electron-userland/electron-builder'
 
       - name: Create versions PR & prepare publish
         id: changesets
@@ -42,4 +45,4 @@ jobs:
           publish: pnpm ci:publish
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_TOKEN: ${{ env.NPM_TOKEN }}
