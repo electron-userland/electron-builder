@@ -52,7 +52,7 @@
     "@electron/fuses": "^1.8.0",
     "@electron/notarize": "2.5.0",
     "@electron/osx-sign": "1.3.3",
-    "@electron/rebuild": "3.7.2",
+    "@electron/rebuild": "4.0.1",
     "@electron/universal": "2.0.3",
     "@malept/flatpak-bundler": "^0.4.0",
     "@types/fs-extra": "9.0.13",
