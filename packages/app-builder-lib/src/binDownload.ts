@@ -51,7 +51,7 @@ export function getBin(cacheKey: string, url?: string | null, checksum?: string 
     return promise
   }
 
-  promise = doGetBin(cacheName, url, checksum)
+  promise = doGetBin(cacheKey, url, checksum)
   versionToPromise.set(cacheName, promise)
   return promise
 }
