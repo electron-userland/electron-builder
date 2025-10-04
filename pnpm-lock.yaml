@@ -6,10 +6,10 @@ settings:
 
 patchedDependencies:
   '@changesets/assemble-release-plan@6.0.9':
-    hash: scxbrhht2ttmun6dmullcw2ipu
+    hash: ef56f57067dfcc594f40d9afc7278abe38cecf1c04230936e447a60e0d58a46e
     path: patches/@changesets__assemble-release-plan@6.0.9.patch
   '@changesets/cli@2.29.7':
-    hash: hn5w3ar5kzfvrwqaymff5f37xu
+    hash: 0840fdb970dc9d87c5b800e1772fa7183819563f50d1bb3b5487471be7f933ba
     path: patches/@changesets__cli@2.29.7.patch
 
 importers:
@@ -31,7 +31,7 @@ importers:
         version: 0.4.7(encoding@0.1.13)
       '@changesets/cli':
         specifier: 2.29.7
-        version: 2.29.7(patch_hash=hn5w3ar5kzfvrwqaymff5f37xu)(@types/node@22.13.17)
+        version: 2.29.7(patch_hash=0840fdb970dc9d87c5b800e1772fa7183819563f50d1bb3b5487471be7f933ba)(@types/node@22.13.17)
       '@stylistic/eslint-plugin':
         specifier: ^2.8.0
         version: 2.13.0(eslint@9.16.0(jiti@2.4.2))(typescript@5.8.2)
@@ -398,10 +398,6 @@ importers:
       js-yaml:
         specifier: ^4.1.0
         version: 4.1.0
-    optionalDependencies:
-      dmg-license:
-        specifier: ^1.0.11
-        version: 1.0.11
     devDependencies:
       '@types/fs-extra':
         specifier: 9.0.13
@@ -412,6 +408,10 @@ importers:
       temp-file:
         specifier: 3.4.0
         version: 3.4.0
+    optionalDependencies:
+      dmg-license:
+        specifier: ^1.0.11
+        version: 1.0.11
 
   packages/electron-builder:
     dependencies:
@@ -6593,7 +6593,7 @@ snapshots:
       resolve-from: 5.0.0
       semver: 7.7.2
 
-  '@changesets/assemble-release-plan@6.0.9(patch_hash=scxbrhht2ttmun6dmullcw2ipu)':
+  '@changesets/assemble-release-plan@6.0.9(patch_hash=ef56f57067dfcc594f40d9afc7278abe38cecf1c04230936e447a60e0d58a46e)':
     dependencies:
       '@changesets/errors': 0.2.0
       '@changesets/get-dependents-graph': 2.1.3
@@ -6614,10 +6614,10 @@ snapshots:
     transitivePeerDependencies:
       - encoding
 
-  '@changesets/cli@2.29.7(patch_hash=hn5w3ar5kzfvrwqaymff5f37xu)(@types/node@22.13.17)':
+  '@changesets/cli@2.29.7(patch_hash=0840fdb970dc9d87c5b800e1772fa7183819563f50d1bb3b5487471be7f933ba)(@types/node@22.13.17)':
     dependencies:
       '@changesets/apply-release-plan': 7.0.13
-      '@changesets/assemble-release-plan': 6.0.9(patch_hash=scxbrhht2ttmun6dmullcw2ipu)
+      '@changesets/assemble-release-plan': 6.0.9(patch_hash=ef56f57067dfcc594f40d9afc7278abe38cecf1c04230936e447a60e0d58a46e)
       '@changesets/changelog-git': 0.2.1
       '@changesets/config': 3.1.1
       '@changesets/errors': 0.2.0
@@ -6677,7 +6677,7 @@ snapshots:
 
   '@changesets/get-release-plan@4.0.13':
     dependencies:
-      '@changesets/assemble-release-plan': 6.0.9(patch_hash=scxbrhht2ttmun6dmullcw2ipu)
+      '@changesets/assemble-release-plan': 6.0.9(patch_hash=ef56f57067dfcc594f40d9afc7278abe38cecf1c04230936e447a60e0d58a46e)
       '@changesets/config': 3.1.1
       '@changesets/pre': 2.0.2
       '@changesets/read': 0.6.5

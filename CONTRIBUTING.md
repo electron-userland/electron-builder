@@ -9,7 +9,7 @@ This repository has a mono-repo structure consisting of multiple packages. Try t
 
 > All prerequisites could be installed via script at the end of the chapter
 
-- [pnpm](https://pnpm.js.org) is required because NPM is not reliable and Yarn 2 is not as good as PNPM.
+- [pnpm](https://pnpm.js.org) is required.
 
 Currently we use the following version of PNPM in the Github CI's action config, please use the same version to ensure that lockfiles are compatible.
 https://github.com/electron-userland/electron-builder/blob/master/.github/actions/pnpm/action.yml
