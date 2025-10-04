@@ -91,8 +91,13 @@ export function detectPackageManagerByLockfile(cwd: string): PM | null {
 }
 
 export function detectYarnBerry() {
-  // yarn --version
-  const version = execSync("yarn --version").toString().trim()
-  if (parseInt(version.split(".")[0]) > 1) return PM.YARN_BERRY
+  try {
+    const version = execSync("yarn --version").toString().trim()
+    if (parseInt(version.split(".")[0]) > 1) {
+      return PM.YARN_BERRY
+    }
+  } catch (_e) {
+    // If `yarn` is not found or another error occurs, fallback to the regular Yarn
+  }
   return PM.YARN
 }

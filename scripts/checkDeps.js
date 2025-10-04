@@ -8,6 +8,8 @@ const knownUnusedDevDependencies = new Set([
   "typedoc-plugin-markdown", // Used in typedoc config
   // Eslint config doesn't get scanned by depCheck
   "@stylistic/eslint-plugin",
+  "@eslint/js",
+  "@eslint/eslintrc",
   "@typescript-eslint/eslint-plugin",
   "@typescript-eslint/parser",
   "eslint-config-prettier",
