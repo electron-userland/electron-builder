@@ -1628,15 +1628,16 @@
         },
         "host": {
           "default": "gitlab.com",
-          "description": "The host (including the port if needed).",
+          "description": "The GitLab host (including the port if need).",
           "type": [
             "null",
             "string"
           ]
         },
         "projectId": {
-          "description": "The GitLab project ID or namespace/project-name.",
+          "description": "The GitLab project ID or path (e.g., \"12345678\" or \"namespace/project\").",
           "type": [
+            "null",
             "string",
             "number"
           ]
@@ -1677,7 +1678,7 @@
           ]
         },
         "token": {
-          "description": "The access token to support auto-update from private GitLab repositories. Never specify it in the configuration files. Only for [setFeedURL](./auto-update.md#appupdatersetfeedurloptions).",
+          "description": "The access token to support auto-update from private GitLab repositories. Never specify it in the configuration files.",
           "type": [
             "null",
             "string"
@@ -1688,10 +1689,30 @@
             "null",
             "string"
           ]
+        },
+        "uploadTarget": {
+          "anyOf": [
+            {
+              "enum": [
+                "generic_package",
+                "project_upload"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "project_upload",
+          "description": "Upload target method. Can be \"project_upload\" for GitLab project uploads or \"generic_package\" for GitLab generic packages."
+        },
+        "vPrefixedTagName": {
+          "default": true,
+          "description": "Whether to use `v`-prefixed tag name.",
+          "type": "boolean"
         }
       },
       "required": [
-        "projectId",
         "provider"
       ],
       "type": "object"
