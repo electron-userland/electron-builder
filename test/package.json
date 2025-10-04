@@ -23,7 +23,7 @@
     "path-sort": "^0.1.0",
     "request": "^2.88.2",
     "resedit": "1.7.0",
-    "semver": "7.7.1",
+    "semver": "7.7.2",
     "stat-mode": "^1.0.0",
     "temp-file": "^3.4.0",
     "unzipper": "^0.12.3",

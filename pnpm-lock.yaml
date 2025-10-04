@@ -186,8 +186,8 @@ importers:
         specifier: ^1.7.0
         version: 1.7.0
       semver:
-        specifier: 7.7.1
-        version: 7.7.1
+        specifier: 7.7.2
+        version: 7.7.2
       tar:
         specifier: ^6.1.12
         version: 6.2.1
@@ -548,8 +548,8 @@ importers:
         specifier: ^4.5.0
         version: 4.5.0
       semver:
-        specifier: 7.7.1
-        version: 7.7.1
+        specifier: 7.7.2
+        version: 7.7.2
       tiny-typed-emitter:
         specifier: ^2.1.0
         version: 2.1.0
@@ -636,8 +636,8 @@ importers:
         specifier: 1.7.0
         version: 1.7.0
       semver:
-        specifier: 7.7.1
-        version: 7.7.1
+        specifier: 7.7.2
+        version: 7.7.2
       stat-mode:
         specifier: ^1.0.0
         version: 1.0.0
@@ -4756,8 +4756,8 @@ packages:
     resolution: {integrity: sha512-BR7VvDCVHO+q2xBEWskxS6DJE1qRnb7DxzUrogb71CWoSficBxYsiAGd+Kl0mmq/MprG9yArRkyrQxTO6XjMzA==}
     hasBin: true
 
-  semver@7.7.1:
-    resolution: {integrity: sha512-hlq8tAfn0m/61p4BVRcPzIGr6LKiMwo4VM6dGi6pt4qcRkmNzTcWq6eCEjEh+qXjkMDvPlOFFSGwQjoEa6gyMA==}
+  semver@7.7.2:
+    resolution: {integrity: sha512-RF0Fw+rO5AMf9MAyaRXI4AV0Ulj5lMHqVxxdSgiVbixSCXoEmmX/jk0CuJw4+3SqroYO9VoUh+HcuJivvtJemA==}
     engines: {node: '>=10'}
     hasBin: true
 
@@ -6583,7 +6583,7 @@ snapshots:
       outdent: 0.5.0
       prettier: 2.8.8
       resolve-from: 5.0.0
-      semver: 7.7.1
+      semver: 7.7.2
 
   '@changesets/assemble-release-plan@6.0.9(patch_hash=scxbrhht2ttmun6dmullcw2ipu)':
     dependencies:
@@ -6592,7 +6592,7 @@ snapshots:
       '@changesets/should-skip-package': 0.1.2
       '@changesets/types': 6.1.0
       '@manypkg/get-packages': 1.1.3
-      semver: 7.7.1
+      semver: 7.7.2
 
   '@changesets/changelog-git@0.2.1':
     dependencies:
@@ -6633,7 +6633,7 @@ snapshots:
       package-manager-detector: 0.2.11
       picocolors: 1.1.1
       resolve-from: 5.0.0
-      semver: 7.7.1
+      semver: 7.7.2
       spawndamnit: 3.0.1
       term-size: 2.2.1
     transitivePeerDependencies:
@@ -6658,7 +6658,7 @@ snapshots:
       '@changesets/types': 6.1.0
       '@manypkg/get-packages': 1.1.3
       picocolors: 1.1.1
-      semver: 7.7.1
+      semver: 7.7.2
 
   '@changesets/get-github-info@0.5.2(encoding@0.1.13)':
     dependencies:
@@ -6733,7 +6733,7 @@ snapshots:
   '@conventional-changelog/git-client@1.0.1(conventional-commits-filter@5.0.0)(conventional-commits-parser@6.1.0)':
     dependencies:
       '@types/semver': 7.7.1
-      semver: 7.7.1
+      semver: 7.7.2
     optionalDependencies:
       conventional-commits-filter: 5.0.0
       conventional-commits-parser: 6.1.0
@@ -6782,7 +6782,7 @@ snapshots:
       make-fetch-happen: 10.2.1
       nopt: 6.0.0
       proc-log: 2.0.1
-      semver: 7.7.1
+      semver: 7.7.2
       tar: 6.2.1
       which: 2.0.2
     transitivePeerDependencies:
@@ -6832,7 +6832,7 @@ snapshots:
       node-api-version: 0.2.1
       ora: 5.4.1
       read-binary-file-arch: 1.0.6
-      semver: 7.7.1
+      semver: 7.7.2
       tar: 6.2.1
       yargs: 17.7.2
     transitivePeerDependencies:
@@ -7158,7 +7158,7 @@ snapshots:
   '@npmcli/fs@2.1.2':
     dependencies:
       '@gar/promisify': 1.1.3
-      semver: 7.7.1
+      semver: 7.7.2
 
   '@npmcli/move-file@2.0.1':
     dependencies:
@@ -7607,7 +7607,7 @@ snapshots:
       fast-glob: 3.3.3
       is-glob: 4.0.3
       minimatch: 9.0.5
-      semver: 7.7.1
+      semver: 7.7.2
       ts-api-utils: 1.4.3(typescript@5.8.2)
     optionalDependencies:
       typescript: 5.8.2
@@ -7622,7 +7622,7 @@ snapshots:
       fast-glob: 3.3.3
       is-glob: 4.0.3
       minimatch: 9.0.5
-      semver: 7.7.1
+      semver: 7.7.2
       ts-api-utils: 2.1.0(typescript@5.8.2)
       typescript: 5.8.2
     transitivePeerDependencies:
@@ -8254,7 +8254,7 @@ snapshots:
       conventional-commits-filter: 5.0.0
       handlebars: 4.7.8
       meow: 13.2.0
-      semver: 7.7.1
+      semver: 7.7.2
 
   conventional-changelog@6.0.0(conventional-commits-filter@5.0.0):
     dependencies:
@@ -8380,7 +8380,7 @@ snapshots:
       resolve: 1.22.10
       sass: 1.86.1
       scss-parser: 1.0.6
-      semver: 7.7.1
+      semver: 7.7.2
       yargs: 16.2.0
     transitivePeerDependencies:
       - supports-color
@@ -8924,7 +8924,7 @@ snapshots:
       es6-error: 4.1.1
       matcher: 3.0.0
       roarr: 2.15.4
-      semver: 7.7.1
+      semver: 7.7.2
       serialize-error: 7.0.1
     optional: true
 
@@ -9274,7 +9274,7 @@ snapshots:
       jest-util: 29.7.0
       natural-compare: 1.4.0
       pretty-format: 29.7.0
-      semver: 7.7.1
+      semver: 7.7.2
     transitivePeerDependencies:
       - supports-color
 
@@ -9639,7 +9639,7 @@ snapshots:
 
   node-abi@3.74.0:
     dependencies:
-      semver: 7.7.1
+      semver: 7.7.2
 
   node-addon-api@1.7.2: {}
 
@@ -9648,7 +9648,7 @@ snapshots:
 
   node-api-version@0.2.1:
     dependencies:
-      semver: 7.7.1
+      semver: 7.7.2
 
   node-fetch@2.7.0(encoding@0.1.13):
     dependencies:
@@ -9667,7 +9667,7 @@ snapshots:
   normalize-package-data@6.0.2:
     dependencies:
       hosted-git-info: 7.0.2
-      semver: 7.7.1
+      semver: 7.7.2
       validate-npm-package-license: 3.0.4
 
   normalize-path@3.0.0: {}
@@ -10128,7 +10128,7 @@ snapshots:
 
   semver@6.3.1: {}
 
-  semver@7.7.1: {}
+  semver@7.7.2: {}
 
   serialize-error@7.0.1:
     dependencies:
@@ -10160,7 +10160,7 @@ snapshots:
 
   simple-update-notifier@2.0.0:
     dependencies:
-      semver: 7.7.1
+      semver: 7.7.2
 
   sirv@3.0.1:
     dependencies:
