@@ -2,25 +2,64 @@ import { downloadArtifact as _downloadArtifact, ElectronDownloadCacheMode, Elect
 import { getUserDefinedCacheDir, PADDING } from "builder-util"
 import * as chalk from "chalk"
 import { MultiProgress } from "electron-publish/out/multiProgress"
+import { ElectronPlatformName } from "../electron/ElectronFramework"
 
 const configToPromise = new Map<string, Promise<string>>()
 
-export type ElectronDownloadOptions = Omit<
+export type ElectronGetOptions = Omit<
   ElectronPlatformArtifactDetails,
-  "platform" | "arch" | "version" | "artifactName" | "artifactSuffix" | "customFilename" | "tempDirectory" | "downloader" | "cacheMode" | "cacheRoot" | "downloadOptions"
+  | "platform"
+  | "arch"
+  | "version"
+  | "artifactName"
+  | "artifactSuffix"
+  | "customFilename"
+  | "tempDirectory"
+  | "downloader"
+  | "cacheMode"
+  | "cacheRoot"
+  | "downloadOptions"
+  | "mirrorOptions" // to be added below
 > & {
   mirrorOptions: Omit<MirrorOptions, "customDir" | "customFilename" | "customVersion">
 }
 
-type ElectronGetDownloadConfig = {
-  electronDownload?: ElectronDownloadOptions
+type ArtifactDownloadOptions = {
+  electronDownload?: ElectronGetOptions | ElectronDownloadOptions | null
   artifactName: string
   platformName: string
   arch: string
   version: string
 }
 
-export async function downloadArtifact(config: ElectronGetDownloadConfig, progress: MultiProgress | null) {
+export interface ElectronDownloadOptions {
+  // https://github.com/electron-userland/electron-builder/issues/3077
+  // must be optional
+  version?: string
+
+  /**
+   * The [cache location](https://github.com/electron-userland/electron-download#cache-location).
+   */
+  cache?: string | null
+
+  /**
+   * The mirror.
+   */
+  mirror?: string | null
+
+  /** @private */
+  customDir?: string | null
+  /** @private */
+  customFilename?: string | null
+
+  strictSSL?: boolean
+  isVerifyChecksum?: boolean
+
+  platform?: ElectronPlatformName
+  arch?: string
+}
+
+export async function downloadArtifact(config: ArtifactDownloadOptions, progress: MultiProgress | null) {
   // Old cache is ignored if cache environment variable changes
   const cacheDir = await getUserDefinedCacheDir()
   const cacheName = JSON.stringify(config)
@@ -36,7 +75,7 @@ export async function downloadArtifact(config: ElectronGetDownloadConfig, progre
   return promise
 }
 
-async function doDownloadArtifact(config: ElectronGetDownloadConfig, cacheDir: string | undefined, progress: MultiProgress | null) {
+async function doDownloadArtifact(config: ArtifactDownloadOptions, cacheDir: string | undefined, progress: MultiProgress | null) {
   const { electronDownload, arch, version, platformName, artifactName } = config
 
   const progressBar = progress?.createBar(`${" ".repeat(PADDING + 2)}[:bar] :percent | ${chalk.green(artifactName)}`, { total: 100 })
@@ -48,15 +87,36 @@ async function doDownloadArtifact(config: ElectronGetDownloadConfig, cacheDir: s
       return Promise.resolve()
     },
   }
-  const artifactConfig: ElectronPlatformArtifactDetails = {
-    cacheMode: ElectronDownloadCacheMode.ReadOnly,
+  let artifactConfig: ElectronPlatformArtifactDetails = {
     cacheRoot: cacheDir,
-    ...(electronDownload ?? {}),
     platform: platformName,
     arch,
     version,
     artifactName,
     downloadOptions,
+  }
+  if (Object.hasOwnProperty.call(electronDownload, "mirrorOptions")) {
+    const options = electronDownload as ElectronGetOptions
+    artifactConfig = { ...artifactConfig, ...options }
+  } else if (electronDownload != null) {
+    const { mirror, customDir, cache, customFilename, isVerifyChecksum, platform, arch: ea } = electronDownload as ElectronDownloadOptions
+    artifactConfig = {
+      ...artifactConfig,
+      unsafelyDisableChecksums: isVerifyChecksum === false,
+      cacheRoot: cache ?? cacheDir,
+      cacheMode: cache != null ? ElectronDownloadCacheMode.ReadOnly : ElectronDownloadCacheMode.ReadWrite,
+      mirrorOptions: {
+        mirror: mirror || undefined,
+        customDir: customDir || undefined,
+        customFilename: customFilename || undefined,
+      },
+    }
+    if (platform != null) {
+      artifactConfig.platform = platform
+    }
+    if (ea != null) {
+      artifactConfig.arch = ea
+    }
   }
 
   const dist = await _downloadArtifact(artifactConfig)

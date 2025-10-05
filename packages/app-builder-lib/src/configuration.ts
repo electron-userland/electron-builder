@@ -16,7 +16,7 @@ import { BuildResult } from "./packager"
 import { ArtifactBuildStarted, ArtifactCreated } from "./packagerApi"
 import { PlatformPackager } from "./platformPackager"
 import { NsisOptions, NsisWebOptions, PortableOptions } from "./targets/nsis/nsisOptions"
-import { ElectronDownloadOptions } from "./util/electronGet"
+import { ElectronDownloadOptions, ElectronGetOptions } from "./util/electronGet"
 
 // duplicate appId here because it is important
 /**
@@ -204,7 +204,7 @@ export interface Configuration extends CommonConfiguration, PlatformSpecificBuil
   /**
    * The [electron/get](https://github.com/electron/get) options.
    */
-  readonly electronDownload?: ElectronDownloadOptions
+  readonly electronDownload?: ElectronDownloadOptions | ElectronGetOptions | null
 
   /**
    * The branding used by Electron's distributables. This is needed if a fork has modified Electron's BRANDING.json file.
