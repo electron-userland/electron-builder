@@ -46,6 +46,7 @@ export interface PrepareApplicationStageDirectoryOptions {
   readonly appOutDir: string
   readonly platformName: ElectronPlatformName
   readonly arch: string
+  readonly version: string
 }
 
 export function isElectronBased(framework: Framework): boolean {

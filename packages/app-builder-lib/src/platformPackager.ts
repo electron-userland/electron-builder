@@ -257,6 +257,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       appOutDir,
       platformName,
       arch: Arch[arch],
+      version: framework.version,
     })
 
     await this.info.emitAfterExtract({
