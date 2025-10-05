@@ -95,27 +95,30 @@ async function doDownloadArtifact(config: ArtifactDownloadOptions, cacheDir: str
     artifactName,
     downloadOptions,
   }
-  if (Object.hasOwnProperty.call(electronDownload, "mirrorOptions")) {
-    const options = electronDownload as ElectronGetOptions
-    artifactConfig = { ...artifactConfig, ...options }
-  } else if (electronDownload != null) {
-    const { mirror, customDir, cache, customFilename, isVerifyChecksum, platform, arch: ea } = electronDownload as ElectronDownloadOptions
-    artifactConfig = {
-      ...artifactConfig,
-      unsafelyDisableChecksums: isVerifyChecksum === false,
-      cacheRoot: cache ?? cacheDir,
-      cacheMode: cache != null ? ElectronDownloadCacheMode.ReadOnly : ElectronDownloadCacheMode.ReadWrite,
-      mirrorOptions: {
-        mirror: mirror || undefined,
-        customDir: customDir || undefined,
-        customFilename: customFilename || undefined,
-      },
-    }
-    if (platform != null) {
-      artifactConfig.platform = platform
-    }
-    if (ea != null) {
-      artifactConfig.arch = ea
+  if (electronDownload != null) {
+    // determine whether electronDownload is ElectronGetOptions or ElectronDownloadOptions
+    if (Object.hasOwnProperty.call(electronDownload, "mirrorOptions")) {
+      const options = electronDownload as ElectronGetOptions
+      artifactConfig = { ...artifactConfig, ...options }
+    } else {
+      const { mirror, customDir, cache, customFilename, isVerifyChecksum, platform, arch: ea } = electronDownload as ElectronDownloadOptions
+      artifactConfig = {
+        ...artifactConfig,
+        unsafelyDisableChecksums: isVerifyChecksum === false,
+        cacheRoot: cache ?? cacheDir,
+        cacheMode: cache != null ? ElectronDownloadCacheMode.ReadOnly : ElectronDownloadCacheMode.ReadWrite,
+        mirrorOptions: {
+          mirror: mirror || undefined,
+          customDir: customDir || undefined,
+          customFilename: customFilename || undefined,
+        },
+      }
+      if (platform != null) {
+        artifactConfig.platform = platform
+      }
+      if (ea != null) {
+        artifactConfig.arch = ea
+      }
     }
   }
 
