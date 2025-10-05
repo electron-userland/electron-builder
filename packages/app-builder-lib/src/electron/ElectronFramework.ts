@@ -4,10 +4,9 @@ import { emptyDir, readdir, rename, rm } from "fs-extra"
 import * as fs from "fs/promises"
 import * as path from "path"
 import asyncPool from "tiny-async-pool"
-import { WriteStream as TtyWriteStream } from "tty"
 import { Configuration } from "../configuration"
 import { BeforeCopyExtraFilesOptions, Framework, PrepareApplicationStageDirectoryOptions } from "../Framework"
-import { Packager, Platform } from "../index"
+import { Packager, Platform, PlatformPackager } from "../index"
 import { LinuxPackager } from "../linuxPackager"
 import { MacPackager } from "../macPackager"
 import { getTemplatePath } from "../util/pathManager"
@@ -36,59 +35,23 @@ export function createBrandingOpts(opts: Configuration): Required<ElectronBrandi
   }
 }
 
-async function beforeCopyExtraFiles(options: BeforeCopyExtraFilesOptions) {
-  const { appOutDir, packager } = options
-  const electronBranding = createBrandingOpts(packager.config)
-  if (packager.platform === Platform.LINUX) {
-    const linuxPackager = packager as LinuxPackager
-    const executable = path.join(appOutDir, linuxPackager.executableName)
-    await rm(executable, { recursive: true, force: true })
-    await rename(path.join(appOutDir, electronBranding.projectName), executable)
-  } else if (packager.platform === Platform.WINDOWS) {
-    const executable = path.join(appOutDir, `${packager.appInfo.productFilename}.exe`)
-    await rm(executable, { recursive: true, force: true })
-    await rename(path.join(appOutDir, `${electronBranding.projectName}.exe`), executable)
-    if (options.asarIntegrity) {
-      await addWinAsarIntegrity(executable, options.asarIntegrity)
-    }
-  } else {
-    await createMacApp(packager as MacPackager, appOutDir, options.asarIntegrity, (options.platformName as ElectronPlatformName) === "mas")
-  }
-}
-
-async function removeUnusedLanguagesIfNeeded(options: PrepareApplicationStageDirectoryOptions) {
-  const {
-    packager: { config, platformSpecificBuildOptions },
-  } = options
-  const wantedLanguages = asArray(platformSpecificBuildOptions.electronLanguages || config.electronLanguages)
-  if (!wantedLanguages.length) {
-    return
-  }
-
-  const { dirs, langFileExt } = getLocalesConfig(options)
-  // noinspection SpellCheckingInspection
-  const deletedFiles = async (dir: string) => {
-    await asyncPool(MAX_FILE_REQUESTS, await readdir(dir), async file => {
-      if (path.extname(file) !== langFileExt) {
-        return
+export async function createElectronFrameworkSupport(configuration: Configuration, packager: Packager): Promise<Framework> {
+  let version = configuration.electronVersion
+  if (version == null) {
+    // for prepacked app asar no dev deps in the app.asar
+    if (packager.isPrepackedAppAsar) {
+      version = await getElectronVersionFromInstalled(packager.projectDir)
+      if (version == null) {
+        throw new Error(`Cannot compute electron version for prepacked asar`)
       }
-
-      const language = path.basename(file, langFileExt)
-      if (!wantedLanguages.includes(language)) {
-        return fs.rm(path.join(dir, file), { recursive: true, force: true })
-      }
-      return
-    })
-  }
-  await Promise.all(dirs.map(deletedFiles))
-
-  function getLocalesConfig(options: PrepareApplicationStageDirectoryOptions) {
-    const { appOutDir, packager } = options
-    if (packager.platform === Platform.MAC) {
-      return { dirs: [packager.getResourcesDir(appOutDir), packager.getMacOsElectronFrameworkResourcesDir(appOutDir)], langFileExt: ".lproj" }
+    } else {
+      version = await computeElectronVersion(packager.projectDir)
     }
-    return { dirs: [path.join(packager.getResourcesDir(appOutDir), "..", "locales")], langFileExt: ".pak" }
+    configuration.electronVersion = version
   }
+
+  const branding = createBrandingOpts(configuration)
+  return new ElectronFramework(branding.projectName, version, branding.productName)
 }
 
 class ElectronFramework implements Framework {
@@ -101,7 +64,7 @@ class ElectronFramework implements Framework {
   // noinspection JSUnusedGlobalSymbols
   readonly isNpmRebuildRequired = true
 
-  readonly progress = (process.stdout as TtyWriteStream).isTTY ? new MultiProgress() : null
+  readonly progress = process.stdout?.isTTY ? new MultiProgress() : null
 
   constructor(
     readonly name: string,
@@ -125,8 +88,24 @@ class ElectronFramework implements Framework {
     }
   }
 
-  beforeCopyExtraFiles(options: BeforeCopyExtraFilesOptions) {
-    return beforeCopyExtraFiles(options)
+  async beforeCopyExtraFiles(options: BeforeCopyExtraFilesOptions) {
+    const { appOutDir, packager } = options
+    const electronBranding = createBrandingOpts(packager.config)
+    if (packager.platform === Platform.LINUX) {
+      const linuxPackager = packager as LinuxPackager
+      const executable = path.join(appOutDir, linuxPackager.executableName)
+      await rm(executable, { recursive: true, force: true })
+      await rename(path.join(appOutDir, electronBranding.projectName), executable)
+    } else if (packager.platform === Platform.WINDOWS) {
+      const executable = path.join(appOutDir, `${packager.appInfo.productFilename}.exe`)
+      await rm(executable, { recursive: true, force: true })
+      await rename(path.join(appOutDir, `${electronBranding.projectName}.exe`), executable)
+      if (options.asarIntegrity) {
+        await addWinAsarIntegrity(executable, options.asarIntegrity)
+      }
+    } else {
+      await createMacApp(packager as MacPackager, appOutDir, options.asarIntegrity, (options.platformName as ElectronPlatformName) === "mas")
+    }
   }
 
   private async unpack(prepareOptions: PrepareApplicationStageDirectoryOptions, version: string, productFilename: string) {
@@ -134,56 +113,10 @@ class ElectronFramework implements Framework {
     const zipFileName = `electron-v${version}-${platformName}-${arch}.zip`
 
     const dist = await this.resolveElectronDist(prepareOptions, zipFileName)
+
     await this.copyOrDownloadElectronDist(dist, prepareOptions, version, zipFileName)
 
     await this.cleanupAfterUnpack(prepareOptions, productFilename)
-  }
-
-  private async copyOrDownloadElectronDist(dist: string | null, prepareOptions: PrepareApplicationStageDirectoryOptions, version: string, zipFileName: string) {
-    const { packager, appOutDir, platformName, arch } = prepareOptions
-    const {
-      config: { electronDownload },
-    } = packager
-    if (dist != null) {
-      const zipFilePath = path.join(dist, zipFileName)
-      if (await exists(zipFilePath)) {
-        log.info({ dist, zipFile: zipFileName }, "resolved electronDist")
-        dist = zipFilePath
-      } else if ((await statOrNull(dist))?.isDirectory()) {
-        const source = path.isAbsolute(dist) ? dist : packager.getElectronSrcDir(dist)
-        const destination = packager.getElectronDestinationDir(appOutDir)
-        log.info({ source, destination }, "copying Electron")
-        await emptyDir(appOutDir)
-        await copyDir(source, destination, {
-          isUseHardLink: DO_NOT_USE_HARD_LINKS,
-        })
-        dist = null
-      } else {
-        log.warn(
-          { searchDir: log.filePath(dist), zipTarget: zipFileName },
-          "custom `electronDist` provided but no zip or unpacked electron directory found; falling back to official electron app"
-        )
-      }
-    } else {
-      log.info({ zipFile: zipFileName }, "downloading")
-      dist = await downloadArtifact(
-        {
-          electronDownload,
-          artifactName: "electron",
-          platformName,
-          arch,
-          version,
-        },
-        this.progress
-      )
-    }
-
-    if (dist?.endsWith(".zip")) {
-      log.debug(null, "extracting electron zip")
-      await executeAppBuilder(["unzip", "--input", dist, "--output", appOutDir])
-      log.info(null, "electron unpacked successfully")
-    }
-    return dist
   }
 
   private async resolveElectronDist(prepareOptions: PrepareApplicationStageDirectoryOptions, zipFileName: string) {
@@ -210,39 +143,124 @@ class ElectronFramework implements Framework {
     return dist
   }
 
+  private async copyOrDownloadElectronDist(dist: string | null, prepareOptions: PrepareApplicationStageDirectoryOptions, version: string, zipFileName: string) {
+    const { packager, appOutDir, platformName, arch } = prepareOptions
+    const {
+      config: { electronDownload },
+    } = packager
+
+    if (dist != null) {
+      const source = path.isAbsolute(dist) ? dist : packager.getElectronSrcDir(dist)
+      const zipFilePath = path.join(source, zipFileName)
+
+      const stats = await statOrNull(dist)
+      if (stats?.isFile() && dist.endsWith(".zip")) {
+        log.info({ dist: log.filePath(dist) }, "using Electron zip")
+      } else if (await exists(zipFilePath)) {
+        log.info({ dist: log.filePath(zipFilePath) }, "using Electron zip")
+        dist = zipFilePath
+      } else if (stats?.isDirectory()) {
+        const destination = packager.getElectronDestinationDir(appOutDir)
+        log.info({ source: log.filePath(source), destination: log.filePath(destination) }, "copying Electron build directory")
+        await emptyDir(appOutDir)
+        await copyDir(source, destination, {
+          isUseHardLink: DO_NOT_USE_HARD_LINKS,
+        })
+        dist = null
+      } else {
+        const errorMessage = "Please provide a valid path to the Electron zip file, cache directory, or Electron build directory."
+        log.error({ searchDir: log.filePath(dist), zipTarget: zipFileName }, errorMessage)
+        throw new Error(errorMessage)
+      }
+    } else {
+      log.info({ zipFile: zipFileName }, "downloading Electron")
+      dist = await downloadArtifact(
+        {
+          electronDownload,
+          artifactName: "electron",
+          platformName,
+          arch,
+          version,
+        },
+        this.progress
+      )
+    }
+
+    if (dist?.endsWith(".zip")) {
+      await this.extractAndRenameElectron(dist, appOutDir, packager)
+    }
+    return dist
+  }
+
+  private async extractAndRenameElectron(dist: string, appOutDir: string, packager: PlatformPackager<any>) {
+    log.debug(null, "extracting electron zip")
+    await executeAppBuilder(["unzip", "--input", dist, "--output", appOutDir])
+    if (packager.platform === Platform.MAC) {
+      // on macOS zip could contain <productName>.app or default Electron.app
+      const appPath = path.join(appOutDir, `${this.productName}.app`)
+      if (!(await exists(appPath))) {
+        await rename(path.join(appOutDir, "Electron.app"), appPath)
+      }
+    } else if (packager.platform === Platform.LINUX) {
+      // on Linux zip contains electron executable directory
+      const appPath = path.join(appOutDir, this.productName)
+      if (!(await exists(appPath))) {
+        await rename(path.join(appOutDir, "electron"), appPath)
+      }
+    } else if (packager.platform === Platform.WINDOWS) {
+      const appPath = path.join(appOutDir, `${this.productName}.exe`)
+      if (!(await exists(appPath))) {
+        await rename(path.join(appOutDir, "electron.exe"), appPath)
+      }
+    }
+    log.info(null, "Electron unpacked and renamed successfully")
+  }
+
   private async cleanupAfterUnpack(prepareOptions: PrepareApplicationStageDirectoryOptions, productFilename: string) {
     const out = prepareOptions.appOutDir
     const isMac = prepareOptions.packager.platform === Platform.MAC
     const resourcesPath = isMac ? path.join(out, `${productFilename}.app`, "Contents", "Resources") : path.join(out, "resources")
 
-    return Promise.all([
-      unlinkIfExists(path.join(resourcesPath, "default_app.asar")),
-      unlinkIfExists(path.join(out, "version")),
-      !isMac
-        ? rename(path.join(out, "LICENSE"), path.join(out, "LICENSE.electron.txt")).catch(() => {
-            /* ignore */
-          })
-        : Promise.resolve(),
-      removeUnusedLanguagesIfNeeded(prepareOptions),
-    ])
-  }
-}
-
-export async function createElectronFrameworkSupport(configuration: Configuration, packager: Packager): Promise<Framework> {
-  let version = configuration.electronVersion
-  if (version == null) {
-    // for prepacked app asar no dev deps in the app.asar
-    if (packager.isPrepackedAppAsar) {
-      version = await getElectronVersionFromInstalled(packager.projectDir)
-      if (version == null) {
-        throw new Error(`Cannot compute electron version for prepacked asar`)
-      }
-    } else {
-      version = await computeElectronVersion(packager.projectDir)
+    await unlinkIfExists(path.join(resourcesPath, "default_app.asar"))
+    await unlinkIfExists(path.join(out, "version"))
+    if (!isMac) {
+      await rename(path.join(out, "LICENSE"), path.join(out, "LICENSE.electron.txt")).catch(() => {
+        /* ignore */
+      })
     }
-    configuration.electronVersion = version
+    await this.removeUnusedLanguagesIfNeeded(prepareOptions)
   }
 
-  const branding = createBrandingOpts(configuration)
-  return new ElectronFramework(branding.projectName, version, branding.productName)
+  async removeUnusedLanguagesIfNeeded(options: PrepareApplicationStageDirectoryOptions) {
+    const {
+      packager: { config, platformSpecificBuildOptions },
+    } = options
+    const wantedLanguages = asArray(platformSpecificBuildOptions.electronLanguages || config.electronLanguages)
+    if (!wantedLanguages.length) {
+      return
+    }
+
+    const getLocalesConfig = (options: PrepareApplicationStageDirectoryOptions) => {
+      const { appOutDir, packager } = options
+      if (packager.platform === Platform.MAC) {
+        return { dirs: [packager.getResourcesDir(appOutDir), packager.getMacOsElectronFrameworkResourcesDir(appOutDir)], langFileExt: ".lproj" }
+      }
+      return { dirs: [path.join(packager.getResourcesDir(appOutDir), "..", "locales")], langFileExt: ".pak" }
+    }
+
+    const { dirs, langFileExt } = getLocalesConfig(options)
+    for (const dir of dirs) {
+      await asyncPool(MAX_FILE_REQUESTS, await readdir(dir), async file => {
+        if (path.extname(file) !== langFileExt) {
+          return
+        }
+
+        const language = path.basename(file, langFileExt)
+        if (!wantedLanguages.includes(language)) {
+          return fs.rm(path.join(dir, file), { recursive: true, force: true })
+        }
+        return
+      })
+    }
+  }
 }
