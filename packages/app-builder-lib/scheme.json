@@ -1025,8 +1025,65 @@
     "ElectronDownloadOptions": {
       "additionalProperties": false,
       "properties": {
+        "arch": {
+          "type": "string"
+        },
+        "cache": {
+          "description": "The [cache location](https://github.com/electron-userland/electron-download#cache-location).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "customDir": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "customFilename": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "isVerifyChecksum": {
+          "type": "boolean"
+        },
+        "mirror": {
+          "description": "The mirror.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "platform": {
+          "enum": [
+            "darwin",
+            "linux",
+            "mas",
+            "win32"
+          ],
+          "type": "string"
+        },
+        "strictSSL": {
+          "type": "boolean"
+        },
+        "version": {
+          "type": "string"
+        },
         "checksums": {
           "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "ElectronGetOptions": {
+      "additionalProperties": false,
+      "properties": {
+        "checksums": {
+          "$ref": "#/definitions/Record<string,string>",
+          "description": "Provides checksums for the artifact as strings.\nCan be used if you already know the checksums of the Electron artifact\nyou are downloading and want to skip the checksum file download\nwithout skipping the checksum validation.\n\nThis should be an object whose keys are the file names of the artifacts and\nthe values are their respective SHA256 checksums."
         },
         "force": {
           "description": "Whether to download an artifact regardless of whether it's in the cache directory.",
@@ -1035,10 +1092,6 @@
         "isGeneric": {
           "const": false,
           "type": "boolean"
-        },
-        "mirrorOptions": {
-          "$ref": "#/definitions/MirrorOptions",
-          "description": "Options related to specifying an artifact mirror."
         },
         "unsafelyDisableChecksums": {
           "description": "When set to `true`, disables checking that the artifact download completed successfully\nwith the correct payload.",
@@ -1599,15 +1652,16 @@
         },
         "host": {
           "default": "gitlab.com",
-          "description": "The host (including the port if needed).",
+          "description": "The GitLab host (including the port if need).",
           "type": [
             "null",
             "string"
           ]
         },
         "projectId": {
-          "description": "The GitLab project ID or namespace/project-name.",
+          "description": "The GitLab project ID or path (e.g., \"12345678\" or \"namespace/project\").",
           "type": [
+            "null",
             "string",
             "number"
           ]
@@ -1648,7 +1702,7 @@
           ]
         },
         "token": {
-          "description": "The access token to support auto-update from private GitLab repositories. Never specify it in the configuration files. Only for [setFeedURL](./auto-update.md#appupdatersetfeedurloptions).",
+          "description": "The access token to support auto-update from private GitLab repositories. Never specify it in the configuration files.",
           "type": [
             "null",
             "string"
@@ -1659,10 +1713,30 @@
             "null",
             "string"
           ]
+        },
+        "uploadTarget": {
+          "anyOf": [
+            {
+              "enum": [
+                "generic_package",
+                "project_upload"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "project_upload",
+          "description": "Upload target method. Can be \"project_upload\" for GitLab project uploads or \"generic_package\" for GitLab generic packages."
+        },
+        "vPrefixedTagName": {
+          "default": true,
+          "description": "Whether to use `v`-prefixed tag name.",
+          "type": "boolean"
         }
       },
       "required": [
-        "projectId",
         "provider"
       ],
       "type": "object"
@@ -3700,40 +3774,6 @@
             "null",
             "string"
           ]
-        }
-      },
-      "type": "object"
-    },
-    "MirrorOptions": {
-      "additionalProperties": false,
-      "description": "Options for specifying an alternative download mirror for Electron.",
-      "properties": {
-        "customDir": {
-          "description": "The name of the directory to download from,\noften scoped by version number e.g 'v4.0.4'",
-          "type": "string"
-        },
-        "customFilename": {
-          "description": "The name of the asset to download,\ne.g 'electron-v4.0.4-linux-x64.zip'",
-          "type": "string"
-        },
-        "customVersion": {
-          "description": "The version of the asset to download,\ne.g '4.0.4'",
-          "type": "string"
-        },
-        "mirror": {
-          "description": "The base URL of the mirror to download from.\ne.g https://github.com/electron/electron/releases/download",
-          "type": "string"
-        },
-        "nightlyMirror": {
-          "description": "The mirror URL for [`electron-nightly`](https://npmjs.com/package/electron-nightly),\nwhich lives in a separate npm package.",
-          "type": "string"
-        },
-        "nightly_mirror": {
-          "type": "string"
-        },
-        "resolveAssetURL": {
-          "description": "A function allowing customization of the url returned\nfrom getArtifactRemoteURL().",
-          "typeof": "function"
         }
       },
       "type": "object"
@@ -7325,8 +7365,18 @@
       "description": "The function (or path to file or module id) to be run when staging the electron artifact environment.\nReturns the path to custom Electron build (e.g. `~/electron/out/R`) or folder of electron zips.\n\nZip files must follow the pattern `electron-v${version}-${platformName}-${arch}.zip`, otherwise it will be assumed to be an unpacked Electron app directory"
     },
     "electronDownload": {
-      "$ref": "#/definitions/ElectronDownloadOptions",
-      "description": "The [electron/get](https://github.com/electron/get) options."
+      "anyOf": [
+        {
+          "$ref": "#/definitions/ElectronDownloadOptions"
+        },
+        {
+          "$ref": "#/definitions/ElectronGetOptions"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "The [electron-download](https://github.com/electron-userland/electron-download#usage) options.\nAlternatively, you can use [electron/get](https://github.com/electron/get#usage) options."
     },
     "electronFuses": {
       "anyOf": [
