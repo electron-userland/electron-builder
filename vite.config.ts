@@ -41,7 +41,7 @@ export default () => {
       },
 
       sequence: {
-        concurrent: true
+        concurrent: false
       },
 
       slowTestThreshold: 60 * 1000,
