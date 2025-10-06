@@ -76,7 +76,7 @@ export async function downloadArtifact(config: ArtifactDownloadOptions, progress
 }
 
 async function doDownloadArtifact(config: ArtifactDownloadOptions, cacheDir: string | undefined, progress: MultiProgress | null) {
-  const { electronDownload, arch, version, platformName, artifactName } = config
+  const { electronDownload, arch, version, platformName: platform, artifactName } = config
 
   const progressBar = progress?.createBar(`${" ".repeat(PADDING + 2)}[:bar] :percent | ${chalk.green(artifactName)}`, { total: 100 })
   progressBar?.render()
@@ -89,7 +89,7 @@ async function doDownloadArtifact(config: ArtifactDownloadOptions, cacheDir: str
   }
   let artifactConfig: ElectronPlatformArtifactDetails = {
     cacheRoot: cacheDir,
-    platform: platformName,
+    platform,
     arch,
     version,
     artifactName,
@@ -101,7 +101,7 @@ async function doDownloadArtifact(config: ArtifactDownloadOptions, cacheDir: str
       const options = electronDownload as ElectronGetOptions
       artifactConfig = { ...artifactConfig, ...options }
     } else {
-      const { mirror, customDir, cache, customFilename, isVerifyChecksum, platform, arch: ea } = electronDownload as ElectronDownloadOptions
+      const { mirror, customDir, cache, customFilename, isVerifyChecksum, platform: platformName, arch: downloadArch } = electronDownload as ElectronDownloadOptions
       artifactConfig = {
         ...artifactConfig,
         unsafelyDisableChecksums: isVerifyChecksum === false,
@@ -113,11 +113,11 @@ async function doDownloadArtifact(config: ArtifactDownloadOptions, cacheDir: str
           customFilename: customFilename || undefined,
         },
       }
-      if (platform != null) {
-        artifactConfig.platform = platform
+      if (platformName != null) {
+        artifactConfig.platform = platformName
       }
-      if (ea != null) {
-        artifactConfig.arch = ea
+      if (downloadArch != null) {
+        artifactConfig.arch = downloadArch
       }
     }
   }

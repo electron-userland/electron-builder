@@ -14,8 +14,8 @@ import { resolveFunction } from "../util/resolve"
 import { createMacApp } from "./electronMac"
 import { computeElectronVersion, getElectronVersionFromInstalled } from "./electronVersion"
 import { addWinAsarIntegrity } from "./electronWin"
-import injectFFMPEG from "./injectFFMPEG"
 import { downloadArtifact } from "../util/electronGet"
+import { FFMPEGInjector } from "./FFMPEGInjector"
 
 export type ElectronPlatformName = "darwin" | "linux" | "win32" | "mas"
 
@@ -82,15 +82,18 @@ class ElectronFramework implements Framework {
   }
 
   async prepareApplicationStageDirectory(options: PrepareApplicationStageDirectoryOptions) {
-    await this.unpack(options, this.version, this.productName)
+    await this.unpack(options)
     if (options.packager.config.downloadAlternateFFmpeg) {
-      await injectFFMPEG(this.progress, options, this.version, this.productName)
+      await new FFMPEGInjector(this.progress, options, this.version, this.productName).inject()
     }
   }
 
   async beforeCopyExtraFiles(options: BeforeCopyExtraFilesOptions) {
     const { appOutDir, packager } = options
     const electronBranding = createBrandingOpts(packager.config)
+
+    await this.cleanupAfterUnpack(options, electronBranding.productName)
+
     if (packager.platform === Platform.LINUX) {
       const linuxPackager = packager as LinuxPackager
       const executable = path.join(appOutDir, linuxPackager.executableName)
@@ -108,15 +111,13 @@ class ElectronFramework implements Framework {
     }
   }
 
-  private async unpack(prepareOptions: PrepareApplicationStageDirectoryOptions, version: string, productFilename: string) {
+  private async unpack(prepareOptions: PrepareApplicationStageDirectoryOptions,) {
     const { platformName, arch } = prepareOptions
-    const zipFileName = `electron-v${version}-${platformName}-${arch}.zip`
+    const zipFileName = `electron-v${this.version}-${platformName}-${arch}.zip`
 
     const dist = await this.resolveElectronDist(prepareOptions, zipFileName)
 
-    await this.copyOrDownloadElectronDist(dist, prepareOptions, version, zipFileName)
-
-    await this.cleanupAfterUnpack(prepareOptions, productFilename)
+    await this.copyOrDownloadElectronDist(dist, prepareOptions, this.version, zipFileName)
   }
 
   private async resolveElectronDist(prepareOptions: PrepareApplicationStageDirectoryOptions, zipFileName: string) {
@@ -196,32 +197,33 @@ class ElectronFramework implements Framework {
     log.debug(null, "extracting electron zip")
     await executeAppBuilder(["unzip", "--input", dist, "--output", appOutDir])
     if (packager.platform === Platform.MAC) {
-      // on macOS zip could contain <productName>.app or default Electron.app
-      const appPath = path.join(appOutDir, `${this.productName}.app`)
-      if (!(await exists(appPath))) {
-        await rename(path.join(appOutDir, "Electron.app"), appPath)
-      }
-    } else if (packager.platform === Platform.LINUX) {
-      // on Linux zip contains electron executable directory
-      const appPath = path.join(appOutDir, this.productName)
-      if (!(await exists(appPath))) {
-        await rename(path.join(appOutDir, "electron"), appPath)
-      }
-    } else if (packager.platform === Platform.WINDOWS) {
-      const appPath = path.join(appOutDir, `${this.productName}.exe`)
-      if (!(await exists(appPath))) {
-        await rename(path.join(appOutDir, "electron.exe"), appPath)
-      }
+      //   // on macOS zip could contain <productName>.app or default Electron.app
+      //   const appPath = path.join(appOutDir, `${this.productName}.app`)
+      //   if (!(await exists(appPath))) {
+      //     await rename(path.join(appOutDir, "Electron.app"), appPath)
+      //   }
+      // } else if (packager.platform === Platform.LINUX) {
+      //   // on Linux zip contains electron executable directory
+      //   const appPath = path.join(appOutDir, this.productName)
+      //   if (!(await exists(appPath))) {
+      //     await rename(path.join(appOutDir, "Electron"), appPath)
+      //   }
+      // } else if (packager.platform === Platform.WINDOWS) {
+      //   const appPath = path.join(appOutDir, `${this.productName}.exe`)
+      //   if (!(await exists(appPath))) {
+      //     await rename(path.join(appOutDir, "Electron.exe"), appPath)
+      //   }
     }
     log.info(null, "Electron unpacked and renamed successfully")
   }
 
-  private async cleanupAfterUnpack(prepareOptions: PrepareApplicationStageDirectoryOptions, productFilename: string) {
+  private async cleanupAfterUnpack(prepareOptions: BeforeCopyExtraFilesOptions, productFilename: string) {
     const out = prepareOptions.appOutDir
     const isMac = prepareOptions.packager.platform === Platform.MAC
-    const resourcesPath = isMac ? path.join(out, `${productFilename}.app`, "Contents", "Resources") : path.join(out, "resources")
+    const resourcesPath = prepareOptions.packager.getResourcesDir(out)
 
     await unlinkIfExists(path.join(resourcesPath, "default_app.asar"))
+    await unlinkIfExists(path.join(resourcesPath, "inspector", ".htaccess"))
     await unlinkIfExists(path.join(out, "version"))
     if (!isMac) {
       await rename(path.join(out, "LICENSE"), path.join(out, "LICENSE.electron.txt")).catch(() => {
@@ -231,7 +233,7 @@ class ElectronFramework implements Framework {
     await this.removeUnusedLanguagesIfNeeded(prepareOptions)
   }
 
-  async removeUnusedLanguagesIfNeeded(options: PrepareApplicationStageDirectoryOptions) {
+  async removeUnusedLanguagesIfNeeded(options: BeforeCopyExtraFilesOptions) {
     const {
       packager: { config, platformSpecificBuildOptions },
     } = options
@@ -240,7 +242,7 @@ class ElectronFramework implements Framework {
       return
     }
 
-    const getLocalesConfig = (options: PrepareApplicationStageDirectoryOptions) => {
+    const getLocalesConfig = (options: BeforeCopyExtraFilesOptions) => {
       const { appOutDir, packager } = options
       if (packager.platform === Platform.MAC) {
         return { dirs: [packager.getResourcesDir(appOutDir), packager.getMacOsElectronFrameworkResourcesDir(appOutDir)], langFileExt: ".lproj" }
@@ -250,7 +252,8 @@ class ElectronFramework implements Framework {
 
     const { dirs, langFileExt } = getLocalesConfig(options)
     for (const dir of dirs) {
-      await asyncPool(MAX_FILE_REQUESTS, await readdir(dir), async file => {
+      const contents = await readdir(dir)
+      await asyncPool(MAX_FILE_REQUESTS, contents, async file => {
         if (path.extname(file) !== langFileExt) {
           return
         }
