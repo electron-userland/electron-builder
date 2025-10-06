@@ -92,7 +92,7 @@ class ElectronFramework implements Framework {
     const { appOutDir, packager } = options
     const electronBranding = createBrandingOpts(packager.config)
 
-    await this.cleanupPreRename(options)
+    await this.cleanupBeforeRename(options)
 
     if (packager.platform === Platform.LINUX) {
       const linuxPackager = packager as LinuxPackager
@@ -117,7 +117,7 @@ class ElectronFramework implements Framework {
 
     const dist = await this.resolveElectronDist(prepareOptions, zipFileName)
 
-    await this.copyOrDownloadElectronDist(dist, prepareOptions, this.version, zipFileName)
+    await this.copyOrDownloadElectronDist(dist, prepareOptions, zipFileName)
   }
 
   private async resolveElectronDist(prepareOptions: PrepareApplicationStageDirectoryOptions, zipFileName: string) {
@@ -144,7 +144,7 @@ class ElectronFramework implements Framework {
     return dist
   }
 
-  private async copyOrDownloadElectronDist(dist: string | null, prepareOptions: PrepareApplicationStageDirectoryOptions, version: string, zipFileName: string) {
+  private async copyOrDownloadElectronDist(dist: string | null, prepareOptions: PrepareApplicationStageDirectoryOptions, zipFileName: string) {
     const { packager, appOutDir, platformName, arch } = prepareOptions
     const {
       config: { electronDownload },
@@ -154,9 +154,9 @@ class ElectronFramework implements Framework {
       const source = path.isAbsolute(dist) ? dist : packager.getElectronSrcDir(dist)
       const zipFilePath = path.join(source, zipFileName)
 
-      const stats = await statOrNull(dist)
-      if (stats?.isFile() && dist.endsWith(".zip")) {
-        log.info({ dist: log.filePath(dist) }, "using Electron zip")
+      const stats = await statOrNull(source)
+      if (stats?.isFile() && source.endsWith(".zip")) {
+        log.info({ dist: log.filePath(source) }, "using Electron zip")
       } else if (await exists(zipFilePath)) {
         log.info({ dist: log.filePath(zipFilePath) }, "using Electron zip")
         dist = zipFilePath
@@ -170,7 +170,7 @@ class ElectronFramework implements Framework {
         dist = null
       } else {
         const errorMessage = "Please provide a valid path to the Electron zip file, cache directory, or Electron build directory."
-        log.error({ searchDir: log.filePath(dist), zipTarget: zipFileName }, errorMessage)
+        log.error({ searchDir: log.filePath(source) }, errorMessage)
         throw new Error(errorMessage)
       }
     } else {
@@ -181,7 +181,7 @@ class ElectronFramework implements Framework {
           artifactName: "electron",
           platformName,
           arch,
-          version,
+          version: this.version,
         },
         this.progress
       )
@@ -217,14 +217,14 @@ class ElectronFramework implements Framework {
     log.info(null, "Electron unpacked and renamed successfully")
   }
 
-  private async cleanupPreRename(prepareOptions: BeforeCopyExtraFilesOptions) {
+  private async cleanupBeforeRename(prepareOptions: BeforeCopyExtraFilesOptions) {
     const out = prepareOptions.appOutDir
     const isMac = prepareOptions.packager.platform === Platform.MAC
-    let resourcesPath = path.join(out, "resources")
+    let resourcesPath = path.resolve(out, "resources")
     if (isMac) {
-      resourcesPath = path.join(out, `${this.productName}.app`, "Contents", "Resources")
+      resourcesPath = path.resolve(out, `${this.productName}.app`, "Contents", "Resources")
       if (!(await exists(resourcesPath))) {
-        resourcesPath = path.join(out, `Electron.app`, "Contents", "Resources")
+        resourcesPath = path.resolve(out, `Electron.app`, "Contents", "Resources")
       }
     }
 
