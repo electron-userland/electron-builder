@@ -92,7 +92,7 @@ class ElectronFramework implements Framework {
     const { appOutDir, packager } = options
     const electronBranding = createBrandingOpts(packager.config)
 
-    await this.cleanupAfterUnpack(options, electronBranding.productName)
+    await this.cleanupPreRename(options)
 
     if (packager.platform === Platform.LINUX) {
       const linuxPackager = packager as LinuxPackager
@@ -111,7 +111,7 @@ class ElectronFramework implements Framework {
     }
   }
 
-  private async unpack(prepareOptions: PrepareApplicationStageDirectoryOptions,) {
+  private async unpack(prepareOptions: PrepareApplicationStageDirectoryOptions) {
     const { platformName, arch } = prepareOptions
     const zipFileName = `electron-v${this.version}-${platformName}-${arch}.zip`
 
@@ -217,10 +217,16 @@ class ElectronFramework implements Framework {
     log.info(null, "Electron unpacked and renamed successfully")
   }
 
-  private async cleanupAfterUnpack(prepareOptions: BeforeCopyExtraFilesOptions, productFilename: string) {
+  private async cleanupPreRename(prepareOptions: BeforeCopyExtraFilesOptions) {
     const out = prepareOptions.appOutDir
     const isMac = prepareOptions.packager.platform === Platform.MAC
-    const resourcesPath = prepareOptions.packager.getResourcesDir(out)
+    let resourcesPath = path.join(out, "resources")
+    if (isMac) {
+      resourcesPath = path.join(out, `${this.productName}.app`, "Contents", "Resources")
+      if (!(await exists(resourcesPath))) {
+        resourcesPath = path.join(out, `Electron.app`, "Contents", "Resources")
+      }
+    }
 
     await unlinkIfExists(path.join(resourcesPath, "default_app.asar"))
     await unlinkIfExists(path.join(resourcesPath, "inspector", ".htaccess"))
@@ -230,27 +236,19 @@ class ElectronFramework implements Framework {
         /* ignore */
       })
     }
-    await this.removeUnusedLanguagesIfNeeded(prepareOptions)
+    await this.removeUnusedLanguagesIfNeeded(prepareOptions, resourcesPath)
   }
 
-  async removeUnusedLanguagesIfNeeded(options: BeforeCopyExtraFilesOptions) {
+  async removeUnusedLanguagesIfNeeded(options: BeforeCopyExtraFilesOptions, resourcesPath: string) {
     const {
-      packager: { config, platformSpecificBuildOptions },
+      packager: { config, platformSpecificBuildOptions, platform },
     } = options
     const wantedLanguages = asArray(platformSpecificBuildOptions.electronLanguages || config.electronLanguages)
     if (!wantedLanguages.length) {
       return
     }
 
-    const getLocalesConfig = (options: BeforeCopyExtraFilesOptions) => {
-      const { appOutDir, packager } = options
-      if (packager.platform === Platform.MAC) {
-        return { dirs: [packager.getResourcesDir(appOutDir), packager.getMacOsElectronFrameworkResourcesDir(appOutDir)], langFileExt: ".lproj" }
-      }
-      return { dirs: [path.join(packager.getResourcesDir(appOutDir), "..", "locales")], langFileExt: ".pak" }
-    }
-
-    const { dirs, langFileExt } = getLocalesConfig(options)
+    const { dirs, langFileExt } = this.getLocalesConfig(platform, resourcesPath)
     for (const dir of dirs) {
       const contents = await readdir(dir)
       await asyncPool(MAX_FILE_REQUESTS, contents, async file => {
@@ -265,5 +263,12 @@ class ElectronFramework implements Framework {
         return
       })
     }
+  }
+
+  private getLocalesConfig(platform: Platform, resourcesPath: string) {
+    if (platform === Platform.MAC) {
+      return { dirs: [resourcesPath, path.resolve(resourcesPath, "..", "Frameworks", `${this.productName} Framework.framework`, "Resources")], langFileExt: ".lproj" }
+    }
+    return { dirs: [path.resolve(resourcesPath, "..", "locales")], langFileExt: ".pak" }
   }
 }
