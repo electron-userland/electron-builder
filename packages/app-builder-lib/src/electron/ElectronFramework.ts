@@ -6,7 +6,7 @@ import * as path from "path"
 import asyncPool from "tiny-async-pool"
 import { Configuration } from "../configuration"
 import { BeforeCopyExtraFilesOptions, Framework, PrepareApplicationStageDirectoryOptions } from "../Framework"
-import { Packager, Platform, PlatformPackager } from "../index"
+import { Packager, Platform } from "../index"
 import { LinuxPackager } from "../linuxPackager"
 import { MacPackager } from "../macPackager"
 import { getTemplatePath } from "../util/pathManager"
@@ -92,8 +92,6 @@ class ElectronFramework implements Framework {
     const { appOutDir, packager } = options
     const electronBranding = createBrandingOpts(packager.config)
 
-    await this.cleanupBeforeRename(options)
-
     if (packager.platform === Platform.LINUX) {
       const linuxPackager = packager as LinuxPackager
       const executable = path.join(appOutDir, linuxPackager.executableName)
@@ -118,6 +116,8 @@ class ElectronFramework implements Framework {
     const dist = await this.resolveElectronDist(prepareOptions, zipFileName)
 
     await this.copyOrDownloadElectronDist(dist, prepareOptions, zipFileName)
+
+    await this.removeFiles(prepareOptions)
   }
 
   private async resolveElectronDist(prepareOptions: PrepareApplicationStageDirectoryOptions, zipFileName: string) {
@@ -188,36 +188,18 @@ class ElectronFramework implements Framework {
     }
 
     if (dist?.endsWith(".zip")) {
-      await this.extractAndRenameElectron(dist, appOutDir, packager)
+      await this.extractAndRenameElectron(dist, appOutDir)
     }
     return dist
   }
 
-  private async extractAndRenameElectron(dist: string, appOutDir: string, packager: PlatformPackager<any>) {
-    log.debug(null, "extracting electron zip")
+  private async extractAndRenameElectron(dist: string, appOutDir: string) {
+    log.debug(null, "extracting Electron zip")
     await executeAppBuilder(["unzip", "--input", dist, "--output", appOutDir])
-    if (packager.platform === Platform.MAC) {
-      //   // on macOS zip could contain <productName>.app or default Electron.app
-      //   const appPath = path.join(appOutDir, `${this.productName}.app`)
-      //   if (!(await exists(appPath))) {
-      //     await rename(path.join(appOutDir, "Electron.app"), appPath)
-      //   }
-      // } else if (packager.platform === Platform.LINUX) {
-      //   // on Linux zip contains electron executable directory
-      //   const appPath = path.join(appOutDir, this.productName)
-      //   if (!(await exists(appPath))) {
-      //     await rename(path.join(appOutDir, "Electron"), appPath)
-      //   }
-      // } else if (packager.platform === Platform.WINDOWS) {
-      //   const appPath = path.join(appOutDir, `${this.productName}.exe`)
-      //   if (!(await exists(appPath))) {
-      //     await rename(path.join(appOutDir, "Electron.exe"), appPath)
-      //   }
-    }
-    log.info(null, "Electron unpacked and renamed successfully")
+    log.debug(null, "Electron unpacked successfully")
   }
 
-  private async cleanupBeforeRename(prepareOptions: BeforeCopyExtraFilesOptions) {
+  private async removeFiles(prepareOptions: PrepareApplicationStageDirectoryOptions) {
     const out = prepareOptions.appOutDir
     const isMac = prepareOptions.packager.platform === Platform.MAC
     let resourcesPath = path.resolve(out, "resources")
@@ -239,7 +221,7 @@ class ElectronFramework implements Framework {
     await this.removeUnusedLanguagesIfNeeded(prepareOptions, resourcesPath)
   }
 
-  async removeUnusedLanguagesIfNeeded(options: BeforeCopyExtraFilesOptions, resourcesPath: string) {
+  async removeUnusedLanguagesIfNeeded(options: PrepareApplicationStageDirectoryOptions, resourcesPath: string) {
     const {
       packager: { config, platformSpecificBuildOptions, platform },
     } = options
