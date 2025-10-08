@@ -178,7 +178,7 @@ function validateFileSet(fileSet: ResolvedFileSet): ResolvedFileSet {
 
 /** @internal */
 export async function computeNodeModuleFileSets(platformPackager: PlatformPackager<any>, mainMatcher: FileMatcher): Promise<Array<ResolvedFileSet>> {
-  const { tempDirManager, cancellationToken, appDir, packageManager, projectDir } = platformPackager.info
+  const { tempDirManager, cancellationToken, appDir, packageManager, projectDir, workspaceRoot } = platformPackager.info
 
   if (cancellationToken.cancelled) {
     throw new Error("cancelled")
@@ -193,8 +193,15 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
   //     deps = await getNodeModules(pm, projectDir, tempDirManager)
   //   }
   // }
-  const deps = await getNodeModules(packageManager.pm, packageManager.rootDir, tempDirManager)
-
+  let deps: Array<NodeModuleInfo> = []
+  for (const dir of [appDir, projectDir, workspaceRoot]) {
+    const dirDeps = await getNodeModules(packageManager.pm, dir, tempDirManager)
+    if (dirDeps.length > 0) {
+      log.debug({ nodeModules: dirDeps, dir }, "collected node modules")
+      deps = dirDeps
+      break
+    }
+  }
   log.debug({ nodeModules: deps }, "collected node modules")
 
   const nodeModuleExcludedExts = getNodeModuleExcludedExts(platformPackager)

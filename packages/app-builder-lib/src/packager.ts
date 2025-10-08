@@ -92,16 +92,15 @@ type PackagerEvents = {
 
 export class Packager {
   readonly projectDir: string
-  readonly packageManager: { pm: PM; rootDir: string }
+  readonly packageManager: { pm: PM; workspaceRoot: string }
 
   private _appDir: string
   get appDir(): string {
     return this._appDir
   }
 
-  private _workspaceRoot: string = process.env.ELECTRON_BUILDER_WORKSPACE_ROOT || this.appDir
   get workspaceRoot(): string {
-    return this._workspaceRoot
+    return process.env.ELECTRON_BUILDER_WORKSPACE_ROOT || this.packageManager.workspaceRoot || this.projectDir
   }
 
   private _metadata: Metadata | null = null
@@ -266,9 +265,8 @@ export class Packager {
 
     this.packageManager = use(detectPackageManager([this.projectDir, this.appDir]), it => ({
       pm: it.pm,
-      rootDir: this.findWorkspaceRoot(it.pm) ?? it.resolvedDirectory,
+      workspaceRoot: this.findWorkspaceRoot(it.pm) ?? it.resolvedDirectory,
     }))!
-    this._workspaceRoot = this.findWorkspaceRoot(this.packageManager.pm) || this.packageManager.rootDir
 
     this.options = {
       ...options,
