@@ -94,8 +94,8 @@ export function detectYarnBerry() {
   // yarn --version
   try {
     const version = execSync("yarn --version").toString().trim()
-    if (parseInt(version.split(".")[0]) > 1){
-       return PM.YARN_BERRY
+    if (parseInt(version.split(".")[0]) > 1) {
+      return PM.YARN_BERRY
     }
   } catch (error) {
     // If `yarn` is not found or another error occurs, fall back to the regular Yarn since we're already determined in a Yarn project
