@@ -13,7 +13,7 @@ import { PlatformPackager } from "../platformPackager"
 import { AppFileWalker } from "./AppFileWalker"
 import { NodeModuleCopyHelper } from "./NodeModuleCopyHelper"
 import { NodeModuleInfo } from "./packageDependencies"
-import { getNodeModules } from "../node-module-collector"
+import { getNodeModules, detectPackageManager } from "../node-module-collector"
 
 const BOWER_COMPONENTS_PATTERN = `${path.sep}bower_components${path.sep}`
 /** @internal */
@@ -178,18 +178,22 @@ function validateFileSet(fileSet: ResolvedFileSet): ResolvedFileSet {
 
 /** @internal */
 export async function computeNodeModuleFileSets(platformPackager: PlatformPackager<any>, mainMatcher: FileMatcher): Promise<Array<ResolvedFileSet>> {
-  const projectDir = platformPackager.info.projectDir
-  const appDir = platformPackager.info.appDir
-  const pm = platformPackager.info.packageManager
+  const { tempDirManager, cancellationToken, appDir, packageManager, projectDir } = platformPackager.info
 
-  let deps = await getNodeModules(pm, appDir, platformPackager.info.tempDirManager)
-  if (projectDir !== appDir && deps.length === 0) {
-    const packageJson = require(path.join(appDir, "package.json"))
-    if (Object.keys(packageJson.dependencies || {}).length > 0) {
-      log.debug({ projectDir, appDir }, "no node_modules in app dir, trying to find in project dir")
-      deps = await getNodeModules(pm, projectDir, platformPackager.info.tempDirManager)
-    }
+  if (cancellationToken.cancelled) {
+    throw new Error("cancelled")
   }
+
+  // const pm = packageManager.pm
+  // let deps = await getNodeModules(pm, appDir, tempDirManager)
+  // if (projectDir !== appDir && deps.length === 0) {
+  //   const packageJson = require(path.join(appDir, "package.json"))
+  //   if (Object.keys(packageJson.dependencies || {}).length > 0) {
+  //     log.debug({ projectDir, appDir }, "no node_modules in app dir, trying to find in project dir")
+  //     deps = await getNodeModules(pm, projectDir, tempDirManager)
+  //   }
+  // }
+  const deps = await getNodeModules(packageManager.pm, packageManager.rootDir, tempDirManager)
 
   log.debug({ nodeModules: deps }, "collected node modules")
 

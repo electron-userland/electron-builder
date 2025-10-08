@@ -28,6 +28,7 @@ import { computeDefaultAppDirectory } from "app-builder-lib/out/util/config/conf
 import { installDependencies } from "app-builder-lib/out/util/yarn"
 import { ELECTRON_VERSION } from "./testConfig"
 import { createLazyProductionDeps } from "app-builder-lib/out/util/packageDependencies"
+import { execSync } from "child_process"
 
 if (process.env.TRAVIS !== "true") {
   process.env.CIRCLE_BUILD_NUM = "42"
@@ -136,7 +137,7 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
       }
 
       if (checkOptions.isInstallDepsBefore) {
-        const pm = detectPackageManager([projectDir])
+        const pm = detectPackageManager([projectDir]).pm
         const collector = await getCollectorByPackageManager(pm, projectDir, tmpDir)
         const collectorOptions = collector.installOptions
 
@@ -149,11 +150,21 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
         }
 
         const appDir = await computeDefaultAppDirectory(projectDir, configuration.directories?.app)
+
+        const env = {
+          ...process.env,
+          COREPACK_HOME: await tmpDir.createTempDir({ prefix: "corepack-home" }),
+          COREPACK_ENABLE_DOWNLOADS: "1",
+        }
+        execSync(`corepack enable ${pm}}`, { env })
+        execSync(`corepack prepare ${pm} --activate`, { env, stdio: "inherit" })
+
         await installDependencies(
           configuration,
           {
             projectDir: projectDir,
             appDir: appDir,
+            workspaceRoot: null,
           },
           {
             frameworkInfo: { version: ELECTRON_VERSION, useCustomDist: false },

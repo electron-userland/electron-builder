@@ -144,7 +144,7 @@ export class AsarPackager {
     }
 
     const realPathFile = await fs.realpath(file)
-    const realPathRelative = path.relative(fileSet.src, this.packager.info.workspaceRoot)
+    const realPathRelative = path.relative(this.packager.info.workspaceRoot, fileSet.src)
     const isOutsidePackage = realPathRelative.startsWith("..")
     if (isOutsidePackage) {
       log.error(

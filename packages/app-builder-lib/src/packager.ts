@@ -14,6 +14,7 @@ import {
   safeStringifyJson,
   serializeToYaml,
   TmpDir,
+  use,
 } from "builder-util"
 import { CancellationToken } from "builder-util-runtime"
 import { chmod, mkdirs, outputFile } from "fs-extra"
@@ -91,14 +92,14 @@ type PackagerEvents = {
 
 export class Packager {
   readonly projectDir: string
-  readonly packageManager: PM
+  readonly packageManager: { pm: PM; rootDir: string }
 
   private _appDir: string
   get appDir(): string {
     return this._appDir
   }
 
-  private _workspaceRoot: string = process.env.BUILDER_WORKSPACE_DIR || this.appDir
+  private _workspaceRoot: string = process.env.ELECTRON_BUILDER_WORKSPACE_ROOT || this.appDir
   get workspaceRoot(): string {
     return this._workspaceRoot
   }
@@ -263,8 +264,11 @@ export class Packager {
     this.projectDir = options.projectDir == null ? process.cwd() : path.resolve(options.projectDir)
     this._appDir = this.projectDir
 
-    this.packageManager = detectPackageManager([this.projectDir, this.appDir]).pm
-    this._workspaceRoot = this.findWorkspaceRoot(this.packageManager) || this.appDir
+    this.packageManager = use(detectPackageManager([this.projectDir, this.appDir]), it => ({
+      pm: it.pm,
+      rootDir: this.findWorkspaceRoot(it.pm) ?? it.resolvedDirectory,
+    }))!
+    this._workspaceRoot = this.findWorkspaceRoot(this.packageManager.pm) || this.packageManager.rootDir
 
     this.options = {
       ...options,
@@ -281,7 +285,7 @@ export class Packager {
           return execSync("pnpm root -w", { cwd: this.projectDir, encoding: "utf8" }).trim()
         case PM.NPM:
           return execSync("npm prefix -w", { cwd: this.projectDir, encoding: "utf8" }).trim()
-        case PM.YARN:
+        case PM.YARN_BERRY:
           try {
             // Yarn 2+ (Berry)
             return execSync("yarn config get workspaceRoot", {
