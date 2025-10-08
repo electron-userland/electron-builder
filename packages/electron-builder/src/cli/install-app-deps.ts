@@ -60,6 +60,7 @@ export async function installAppDeps(args: any) {
     {
       appDir,
       projectDir,
+      workspaceRoot: null,
     },
     {
       frameworkInfo: { version, useCustomDist: true },

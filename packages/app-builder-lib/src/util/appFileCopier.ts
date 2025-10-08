@@ -13,7 +13,7 @@ import { PlatformPackager } from "../platformPackager"
 import { AppFileWalker } from "./AppFileWalker"
 import { NodeModuleCopyHelper } from "./NodeModuleCopyHelper"
 import { NodeModuleInfo } from "./packageDependencies"
-import { getNodeModules, detectPackageManager } from "../node-module-collector"
+import { getNodeModules } from "../node-module-collector"
 
 const BOWER_COMPONENTS_PATTERN = `${path.sep}bower_components${path.sep}`
 /** @internal */
@@ -180,8 +180,7 @@ function validateFileSet(fileSet: ResolvedFileSet): ResolvedFileSet {
 export async function computeNodeModuleFileSets(platformPackager: PlatformPackager<any>, mainMatcher: FileMatcher): Promise<Array<ResolvedFileSet>> {
   const projectDir = platformPackager.info.projectDir
   const appDir = platformPackager.info.appDir
-
-  const pm = detectPackageManager(appDir === projectDir ? [appDir] : [appDir, projectDir])
+  const pm = platformPackager.info.packageManager
 
   let deps = await getNodeModules(pm, appDir, platformPackager.info.tempDirManager)
   if (projectDir !== appDir && deps.length === 0) {

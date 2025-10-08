@@ -27,30 +27,26 @@ export async function getNodeModules(pm: PM, rootDir: string, tempDirManager: Tm
   return collector.getNodeModules()
 }
 
-export function detectPackageManager(dirs: string[]): PM {
+export function detectPackageManager(searchPaths: string[]): { pm: PM; resolvedDirectory: string } {
   let pm: PM | null = null
 
-  const resolveYarnVersion = (pm: PM) => {
-    if (pm === PM.YARN) {
-      return detectYarnBerry()
-    }
-    return pm
-  }
+  const resolveIfYarn = (pm: PM) => (pm === PM.YARN ? detectYarnBerry() : pm)
 
-  for (const dir of dirs) {
+  for (const dir of searchPaths) {
     pm = detectPackageManagerByLockfile(dir)
     if (pm) {
-      return resolveYarnVersion(pm)
+      return { pm: resolveIfYarn(pm), resolvedDirectory: dir }
     }
   }
 
+  const cwd = process.cwd()
   pm = detectPackageManagerByEnv()
   if (pm) {
-    return resolveYarnVersion(pm)
+    return { pm: resolveIfYarn(pm), resolvedDirectory: cwd }
   }
 
   // Default to npm
-  return PM.NPM
+  return { pm: PM.NPM, resolvedDirectory: searchPaths[0] || cwd }
 }
 
 export { PM, getPackageManagerCommand }

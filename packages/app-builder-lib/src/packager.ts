@@ -43,6 +43,8 @@ import { installOrRebuild, nodeGypRebuild } from "./util/yarn"
 import { PACKAGE_VERSION } from "./version"
 import { AsyncEventEmitter, HandlerType } from "./util/asyncEventEmitter"
 import asyncPool from "tiny-async-pool"
+import { detectPackageManager, PM } from "./node-module-collector"
+import { execSync } from "child_process"
 
 async function createFrameworkInfo(configuration: Configuration, packager: Packager): Promise<Framework> {
   let framework = configuration.framework
@@ -89,10 +91,16 @@ type PackagerEvents = {
 
 export class Packager {
   readonly projectDir: string
+  readonly packageManager: PM
 
   private _appDir: string
   get appDir(): string {
     return this._appDir
+  }
+
+  private _workspaceRoot: string = process.env.BUILDER_WORKSPACE_DIR || this.appDir
+  get workspaceRoot(): string {
+    return this._workspaceRoot
   }
 
   private _metadata: Metadata | null = null
@@ -254,6 +262,10 @@ export class Packager {
 
     this.projectDir = options.projectDir == null ? process.cwd() : path.resolve(options.projectDir)
     this._appDir = this.projectDir
+
+    this.packageManager = detectPackageManager([this.projectDir, this.appDir]).pm
+    this._workspaceRoot = this.findWorkspaceRoot(this.packageManager) || this.appDir
+
     this.options = {
       ...options,
       prepackaged: options.prepackaged == null ? null : path.resolve(this.projectDir, options.prepackaged),
@@ -262,7 +274,32 @@ export class Packager {
     log.info({ version: PACKAGE_VERSION, os: getOsRelease() }, "electron-builder")
   }
 
-  async addPackagerEventHandlers() {
+  private findWorkspaceRoot(pm: PM): string | undefined {
+    try {
+      switch (pm) {
+        case PM.PNPM:
+          return execSync("pnpm root -w", { cwd: this.projectDir, encoding: "utf8" }).trim()
+        case PM.NPM:
+          return execSync("npm prefix -w", { cwd: this.projectDir, encoding: "utf8" }).trim()
+        case PM.YARN:
+          try {
+            // Yarn 2+ (Berry)
+            return execSync("yarn config get workspaceRoot", {
+              cwd: this.projectDir,
+              encoding: "utf8",
+            }).trim()
+          } catch {
+            // no solution for Yarn v1
+          }
+          break
+      }
+    } catch {
+      // ignore CLI errors
+    }
+    return undefined
+  }
+
+  private async addPackagerEventHandlers() {
     const { type } = this.appInfo
     this.eventEmitter.on("artifactBuildStarted", await resolveFunction(type, this.config.artifactBuildStarted, "artifactBuildStarted"), "user")
     this.eventEmitter.on("artifactBuildCompleted", await resolveFunction(type, this.config.artifactBuildCompleted, "artifactBuildCompleted"), "user")
@@ -602,7 +639,7 @@ export class Packager {
     } else {
       await installOrRebuild(
         config,
-        { appDir: this.appDir, projectDir: this.projectDir },
+        { appDir: this.appDir, projectDir: this.projectDir, workspaceRoot: this.workspaceRoot },
         {
           frameworkInfo,
           platform: platform.nodeName,
