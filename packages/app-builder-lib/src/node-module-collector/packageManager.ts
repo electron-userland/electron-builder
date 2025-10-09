@@ -46,14 +46,7 @@ export function getPackageManagerCommand(pm: PM) {
 }
 
 export function detectPackageManagerByEnv(): PM | null {
-  const packageJsonPath = path.join(process.cwd(), "package.json")
-  const packageManager = fs.existsSync(packageJsonPath) ? JSON.parse(fs.readFileSync(packageJsonPath, "utf8"))?.packageManager : undefined
-
-  const priorityChecklist = [
-    (key: string) => process.env.npm_config_user_agent?.includes(key),
-    (key: string) => process.env.npm_execpath?.includes(key),
-    (key: string) => packageManager?.startsWith(`${key}@`),
-  ]
+  const priorityChecklist = [(key: string) => process.env.npm_config_user_agent?.includes(key), (key: string) => process.env.npm_execpath?.includes(key)]
 
   const pms = Object.values(PM).filter(pm => pm !== PM.YARN_BERRY)
   for (const checker of priorityChecklist) {
@@ -66,8 +59,17 @@ export function detectPackageManagerByEnv(): PM | null {
   return null
 }
 
-export function detectPackageManagerByLockfile(cwd: string): PM | null {
-  const has = (file: string) => fs.existsSync(path.join(cwd, file))
+export function detectPackageManagerByFile(dir: string): PM | null {
+  const has = (file: string) => fs.existsSync(path.join(dir, file))
+
+  const packageJsonPath = path.join(dir, "package.json")
+  const packageManager = fs.existsSync(packageJsonPath) ? JSON.parse(fs.readFileSync(packageJsonPath, "utf8"))?.packageManager : undefined
+  if (packageManager) {
+    const [pm] = packageManager.split("@")
+    if (Object.values(PM).includes(pm as PM)) {
+      return pm as PM
+    }
+  }
 
   const detected: PM[] = []
   if (has("yarn.lock")) {
@@ -90,14 +92,13 @@ export function detectPackageManagerByLockfile(cwd: string): PM | null {
   return null
 }
 
-export function detectYarnBerry() {
-  // yarn --version
+export function detectYarnBerry(): PM.YARN_BERRY | PM.YARN {
   try {
     const version = execSync("yarn --version").toString().trim()
     if (parseInt(version.split(".")[0]) > 1) {
       return PM.YARN_BERRY
     }
-  } catch (error) {
+  } catch (_error) {
     // If `yarn` is not found or another error occurs, fall back to the regular Yarn since we're already determined in a Yarn project
   }
   return PM.YARN

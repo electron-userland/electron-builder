@@ -178,31 +178,27 @@ function validateFileSet(fileSet: ResolvedFileSet): ResolvedFileSet {
 
 /** @internal */
 export async function computeNodeModuleFileSets(platformPackager: PlatformPackager<any>, mainMatcher: FileMatcher): Promise<Array<ResolvedFileSet>> {
-  const { tempDirManager, cancellationToken, appDir, packageManager, projectDir, workspaceRoot } = platformPackager.info
+  const packager = platformPackager.info
+  const { tempDirManager, cancellationToken, appDir, projectDir } = packager
 
   if (cancellationToken.cancelled) {
     throw new Error("cancelled")
   }
 
-  // const pm = packageManager.pm
-  // let deps = await getNodeModules(pm, appDir, tempDirManager)
-  // if (projectDir !== appDir && deps.length === 0) {
-  //   const packageJson = require(path.join(appDir, "package.json"))
-  //   if (Object.keys(packageJson.dependencies || {}).length > 0) {
-  //     log.debug({ projectDir, appDir }, "no node_modules in app dir, trying to find in project dir")
-  //     deps = await getNodeModules(pm, projectDir, tempDirManager)
-  //   }
-  // }
   let deps: Array<NodeModuleInfo> = []
-  for (const dir of [appDir, projectDir, workspaceRoot]) {
-    const dirDeps = await getNodeModules(packageManager.pm, dir, tempDirManager)
+  const searchDirectories = [appDir, projectDir, await packager.getWorkspaceRoot()]
+  for (const dir of searchDirectories) {
+    const dirDeps = await getNodeModules(await packager.getPackageManager(), dir, tempDirManager)
     if (dirDeps.length > 0) {
-      log.debug({ nodeModules: dirDeps, dir }, "collected node modules")
+      log.debug({ dir, nodeModules: dirDeps }, "collected node modules")
       deps = dirDeps
       break
     }
   }
-  log.debug({ nodeModules: deps }, "collected node modules")
+  if (deps.length === 0) {
+    log.warn({ searchDirectories: searchDirectories.map(it => log.filePath(it)) }, "no node modules returned searching directories")
+    return []
+  }
 
   const nodeModuleExcludedExts = getNodeModuleExcludedExts(platformPackager)
   // serial execution because copyNodeModules is concurrent and so, no need to increase queue/pressure

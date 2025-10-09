@@ -156,8 +156,9 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
           COREPACK_HOME: await tmpDir.createTempDir({ prefix: "corepack-home" }),
           COREPACK_ENABLE_DOWNLOADS: "1",
         }
-        execSync(`corepack enable ${pm}}`, { env })
-        execSync(`corepack prepare ${pm} --activate`, { env, stdio: "inherit" })
+        log.info({ pm, env: { COREPACK_HOME: env.COREPACK_HOME } }, "activating corepack")
+        execSync(`corepack enable ${pm}`, { env, cwd: projectDir, stdio: "inherit" })
+        execSync(`corepack prepare ${pm} --activate`, { env, cwd: projectDir, stdio: "inherit" })
 
         await installDependencies(
           configuration,

@@ -8,11 +8,13 @@ import {
   executeFinally,
   getArtifactArchName,
   InvalidConfigurationError,
+  isEmptyOrSpaces,
   log,
   MAX_FILE_REQUESTS,
   orNullIfFileNotExist,
   safeStringifyJson,
   serializeToYaml,
+  spawn,
   TmpDir,
   use,
 } from "builder-util"
@@ -92,15 +94,18 @@ type PackagerEvents = {
 
 export class Packager {
   readonly projectDir: string
-  readonly packageManager: { pm: PM; workspaceRoot: string }
 
   private _appDir: string
   get appDir(): string {
     return this._appDir
   }
 
-  get workspaceRoot(): string {
-    return process.env.ELECTRON_BUILDER_WORKSPACE_ROOT || this.packageManager.workspaceRoot || this.projectDir
+  private readonly _packageManager: Lazy<{ pm: PM; workspaceRoot: Promise<string | undefined> }>
+  async getPackageManager() {
+    return (await this._packageManager.value).pm
+  }
+  async getWorkspaceRoot(): Promise<string> {
+    return (await (await this._packageManager.value).workspaceRoot) || this.projectDir
   }
 
   private _metadata: Metadata | null = null
@@ -263,10 +268,12 @@ export class Packager {
     this.projectDir = options.projectDir == null ? process.cwd() : path.resolve(options.projectDir)
     this._appDir = this.projectDir
 
-    this.packageManager = use(detectPackageManager([this.projectDir, this.appDir]), it => ({
-      pm: it.pm,
-      workspaceRoot: this.findWorkspaceRoot(it.pm) ?? it.resolvedDirectory,
-    }))!
+    const availableDirs = [process.env.ELECTRON_BUILDER_WORKSPACE_ROOT, this.projectDir, this.appDir].filter(it => !isEmptyOrSpaces(it)).map(it => path.resolve(it!))
+    const pm = detectPackageManager(availableDirs)
+    this._packageManager = new Lazy(async () => ({
+      pm: pm.pm,
+      workspaceRoot: Promise.resolve((await this.findWorkspaceRoot(pm.pm)) ?? pm.resolvedDirectory),
+    }))
 
     this.options = {
       ...options,
@@ -276,29 +283,26 @@ export class Packager {
     log.info({ version: PACKAGE_VERSION, os: getOsRelease() }, "electron-builder")
   }
 
-  private findWorkspaceRoot(pm: PM): string | undefined {
-    try {
-      switch (pm) {
-        case PM.PNPM:
-          return execSync("pnpm root -w", { cwd: this.projectDir, encoding: "utf8" }).trim()
-        case PM.NPM:
-          return execSync("npm prefix -w", { cwd: this.projectDir, encoding: "utf8" }).trim()
-        case PM.YARN_BERRY:
-          try {
-            // Yarn 2+ (Berry)
-            return execSync("yarn config get workspaceRoot", {
-              cwd: this.projectDir,
-              encoding: "utf8",
-            }).trim()
-          } catch {
-            // no solution for Yarn v1
-          }
-          break
-      }
-    } catch {
-      // ignore CLI errors
+  private async findWorkspaceRoot(pm: PM): Promise<string | undefined> {
+    let command: { command: string; args: Array<string> }
+    switch (pm) {
+      case PM.PNPM:
+        command = { command: "pnpm", args: ["root", "-w"] }
+        break
+      case PM.YARN_BERRY:
+        command = { command: "yarn", args: ["config", "get", "workspaceRoot"] }
+        break
+        // case PM.BUN:
+        //   command = { command: "bun", args: ["workspaces", "info"] }
+        break
+      case PM.NPM:
+      default: // default fallback to npm
+        command = { command: "npm", args: ["prefix", "-w"] }
+        break
     }
-    return undefined
+    return spawn(command.command, command.args, { cwd: this.projectDir, stdio: ["ignore", "pipe", "ignore"] })
+      .catch(() => undefined)
+      .then(it => (it == null ? undefined : it.trim()))
   }
 
   private async addPackagerEventHandlers() {
@@ -641,7 +645,7 @@ export class Packager {
     } else {
       await installOrRebuild(
         config,
-        { appDir: this.appDir, projectDir: this.projectDir, workspaceRoot: this.workspaceRoot },
+        { appDir: this.appDir, projectDir: this.projectDir, workspaceRoot: await this.getWorkspaceRoot() },
         {
           frameworkInfo,
           platform: platform.nodeName,
