@@ -11,7 +11,13 @@ import { rebuild as remoteRebuild } from "./rebuild"
 import * as which from "which"
 import { RebuildOptions as ElectronRebuildOptions } from "@electron/rebuild"
 
-export async function installOrRebuild(config: Configuration, { appDir, projectDir, workspaceRoot }: DirectoryPaths, options: RebuildOptions, forceInstall = false) {
+export async function installOrRebuild(
+  config: Configuration,
+  { appDir, projectDir, workspaceRoot }: DirectoryPaths,
+  options: RebuildOptions,
+  forceInstall = false,
+  env: NodeJS.ProcessEnv
+) {
   const effectiveOptions: RebuildOptions = {
     buildFromSource: config.buildDependenciesFromSource === true,
     additionalArgs: asArray(config.npmArgs),
@@ -28,7 +34,7 @@ export async function installOrRebuild(config: Configuration, { appDir, projectD
   }
 
   if (forceInstall || !isDependenciesInstalled) {
-    await installDependencies(config, { appDir, projectDir, workspaceRoot }, effectiveOptions)
+    await installDependencies(config, { appDir, projectDir, workspaceRoot }, effectiveOptions, env)
   } else {
     await rebuild(config, { appDir, projectDir, workspaceRoot }, effectiveOptions)
   }
@@ -78,7 +84,12 @@ export function getGypEnv(frameworkInfo: DesktopFrameworkInfo, platform: NodeJS.
   }
 }
 
-export async function installDependencies(config: Configuration, { appDir, projectDir, workspaceRoot }: DirectoryPaths, options: RebuildOptions): Promise<any> {
+export async function installDependencies(
+  config: Configuration,
+  { appDir, projectDir, workspaceRoot }: DirectoryPaths,
+  options: RebuildOptions,
+  env: NodeJS.ProcessEnv
+): Promise<any> {
   const platform = options.platform || process.platform
   const arch = options.arch || process.arch
   const additionalArgs = options.additionalArgs
@@ -92,7 +103,6 @@ export async function installDependencies(config: Configuration, { appDir, proje
   if (pm === PM.YARN) {
     execArgs.push("--prefer-offline")
   } else if (pm === PM.YARN_BERRY) {
-    execArgs.push("--cached")
     if (process.env.NPM_NO_BIN_LINKS === "true") {
       execArgs.push("--no-bin-links")
     }
@@ -106,7 +116,10 @@ export async function installDependencies(config: Configuration, { appDir, proje
 
   await spawn(execPath, execArgs, {
     cwd: appDir,
-    env: getGypEnv(options.frameworkInfo, platform, arch, options.buildFromSource === true),
+    env: {
+      ...getGypEnv(options.frameworkInfo, platform, arch, options.buildFromSource === true),
+      ...env,
+    },
   })
 
   // Some native dependencies no longer use `install` hook for building their native module, (yarn 3+ removed implicit link of `install` and `rebuild` steps)

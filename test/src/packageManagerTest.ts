@@ -1,4 +1,6 @@
+import * as path from "path"
 import { app, assertPack, linuxDirTarget, modifyPackageJson } from "./helpers/packTester"
+import { ELECTRON_VERSION } from "./helpers/testConfig"
 
 const yarnVersion = "yarn@1.22.19"
 const yarnBerryVersion = "yarn@3.5.1"
@@ -7,13 +9,17 @@ const packageConfig = (data: any, version: string) => {
   data.packageManager = version
   data.name = "@packageManager/app"
   data.version = "1.0.0"
-  data.dependencies = {
-    "is-odd": "3.0.1",
+  // data.dependencies = {
+  //   "debug": "^4.3.4",
+  // }
+  data.devDependencies = {
+    electron: ELECTRON_VERSION,
   }
+  data.optionalDependencies = {}
   return data
 }
 
-describe("package.json => packageManager", () => {
+describe("package.json => packageManager", { sequential: true }, () => {
   // Test for yarn package manager
   describe("yarn", () => {
     test("yarn", ({ expect }) =>
@@ -49,18 +55,13 @@ describe("package.json => packageManager", () => {
         "test-app-yarn-workspace",
         {
           targets: linuxDirTarget,
+          projectDir: "packages/test-app",
         },
         {
           projectDirCreated: projectDir =>
             Promise.all([
               modifyPackageJson(projectDir, data => packageConfig(data, yarnVersion), false),
-              // modifyPackageJson(
-              //   path.join(projectDir, "packages", "test-app"),
-              //   data => {
-              //     data.packageManager = "yarn@1.22.19"
-              //   },
-              //   false
-              // ),
+              modifyPackageJson(path.join(projectDir, "packages", "test-app"), data => packageConfig(data, yarnVersion), false),
             ]),
         }
       ))
@@ -71,6 +72,7 @@ describe("package.json => packageManager", () => {
         "test-app-yarn-workspace",
         {
           targets: linuxDirTarget,
+          projectDir: "packages/test-app",
         },
         {
           projectDirCreated: projectDir =>
@@ -94,6 +96,7 @@ describe("package.json => packageManager", () => {
         "test-app-yarn-several-workspace",
         {
           targets: linuxDirTarget,
+
         },
         {
           projectDirCreated: projectDir =>
@@ -162,7 +165,7 @@ describe("package.json => packageManager", () => {
         targets: linuxDirTarget,
       },
       {
-        projectDirCreated: projectDir => modifyPackageJson(projectDir, data => packageConfig(data, "npm@22"), false),
+        projectDirCreated: projectDir => modifyPackageJson(projectDir, data => packageConfig(data, "npm@22.12.0"), false),
       }
     ))
 })

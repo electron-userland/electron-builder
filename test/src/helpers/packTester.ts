@@ -136,8 +136,38 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
         await projectDirCreated(projectDir, tmpDir)
       }
 
+      const { pm, packageManager } = detectPackageManager([projectDir])
+
+      const tmpCache = await tmpDir.createTempDir({ prefix: "yarn-cache-" })
+      const tmpHome = await tmpDir.createTempDir({ prefix: "yarn-home-" })
+      const COREPACK_HOME = await tmpDir.createTempDir({ prefix: "corepack-home" })
+      const runtimeEnv = {
+        ...process.env,
+        // corepack
+        // COREPACK_HOME,
+        // COREPACK_ENABLE_DOWNLOADS: "1",
+        // yarn
+        HOME: tmpHome,
+        USERPROFILE: tmpHome, // for Windows compatibility
+        YARN_CACHE_FOLDER: tmpCache,
+        // YARN_DISABLE_TELEMETRY: "1",
+        // YARN_ENABLE_TELEMETRY: "false",
+        YARN_IGNORE_PATH: "1", // ignore globally installed yarn binaries
+        npm_config_cache: tmpCache, // prevent npm fallback caching
+      }
+      log.info({ pm, COREPACK_HOME }, "activating corepack")
+      try {
+        execSync(`corepack enable ${pm}`, { env: runtimeEnv, cwd: projectDir, stdio: "inherit" })
+      } catch (err: any) {
+        console.warn("⚠️ Corepack enable failed (possibly already enabled):", err.message)
+      }
+      try {
+        execSync(`corepack prepare ${packageManager} --activate`, { env: runtimeEnv, cwd: projectDir, stdio: "inherit" })
+      } catch (err: any) {
+        console.warn("⚠️ Yarn prepare failed:", err.message)
+      }
+
       if (checkOptions.isInstallDepsBefore) {
-        const pm = detectPackageManager([projectDir]).pm
         const collector = await getCollectorByPackageManager(pm, projectDir, tmpDir)
         const collectorOptions = collector.installOptions
 
@@ -151,15 +181,6 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
 
         const appDir = await computeDefaultAppDirectory(projectDir, configuration.directories?.app)
 
-        const env = {
-          ...process.env,
-          COREPACK_HOME: await tmpDir.createTempDir({ prefix: "corepack-home" }),
-          COREPACK_ENABLE_DOWNLOADS: "1",
-        }
-        log.info({ pm, env: { COREPACK_HOME: env.COREPACK_HOME } }, "activating corepack")
-        execSync(`corepack enable ${pm}`, { env, cwd: projectDir, stdio: "inherit" })
-        execSync(`corepack prepare ${pm} --activate`, { env, cwd: projectDir, stdio: "inherit" })
-
         await installDependencies(
           configuration,
           {
@@ -170,7 +191,8 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
           {
             frameworkInfo: { version: ELECTRON_VERSION, useCustomDist: false },
             productionDeps: createLazyProductionDeps(appDir, null, false),
-          }
+          },
+          runtimeEnv
         )
 
         // save lockfile fixture
@@ -198,7 +220,8 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
           projectDir,
           ...packagerOptions,
         },
-        checkOptions
+        checkOptions,
+        runtimeEnv
       )
 
       if (checkOptions.packed != null) {
@@ -326,9 +349,15 @@ function sortArtifacts(a: ArtifactCreated, b: ArtifactCreated): number {
   return safeNameA.localeCompare(safeNameB, "en")
 }
 
-async function packAndCheck(expect: ExpectStatic, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions) {
+async function packAndCheck(
+  expect: ExpectStatic,
+  packagerOptions: PackagerOptions,
+  checkOptions: AssertPackOptions,
+  runtimeEnv: NodeJS.ProcessEnv
+): Promise<{ packager: Packager; outDir: string }> {
   const cancellationToken = new CancellationToken()
   const packager = new Packager(packagerOptions, cancellationToken)
+  ;(packager as any).runtimeEnvironmentVariables = runtimeEnv
   const publishManager = new PublishManager(packager, { publish: "publish" in checkOptions ? checkOptions.publish : "never" })
 
   const artifacts: Map<Platform, Array<ArtifactCreated>> = new Map()

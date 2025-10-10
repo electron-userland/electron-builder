@@ -46,7 +46,7 @@ import { installOrRebuild, nodeGypRebuild } from "./util/yarn"
 import { PACKAGE_VERSION } from "./version"
 import { AsyncEventEmitter, HandlerType } from "./util/asyncEventEmitter"
 import asyncPool from "tiny-async-pool"
-import { detectPackageManager, PM } from "./node-module-collector"
+import { detectPackageManager, findWorkspaceRoot, PM } from "./node-module-collector"
 import { execSync } from "child_process"
 
 async function createFrameworkInfo(configuration: Configuration, packager: Packager): Promise<Framework> {
@@ -159,6 +159,8 @@ export class Packager {
 
   private nodeDependencyInfo = new Map<string, Lazy<Array<any>>>()
 
+  private runtimeEnvironmentVariables: NodeJS.ProcessEnv = {}
+
   getNodeDependencyInfo(platform: Platform | null, flatten: boolean = true): Lazy<Array<NodeModuleInfo | NodeModuleDirInfo>> {
     let key = "" + flatten.toString()
     let excludedDependencies: Array<string> | null = null
@@ -268,12 +270,7 @@ export class Packager {
     this.projectDir = options.projectDir == null ? process.cwd() : path.resolve(options.projectDir)
     this._appDir = this.projectDir
 
-    const availableDirs = new Set([process.env.ELECTRON_BUILDER_WORKSPACE_ROOT, this.projectDir, this.appDir].filter(it => !isEmptyOrSpaces(it)).map(it => path.resolve(it!)))
-    const pm = detectPackageManager([...availableDirs])
-    this._packageManager = new Lazy(async () => ({
-      pm: pm.pm,
-      workspaceRoot: Promise.resolve((await this.findWorkspaceRoot(pm.pm)) ?? pm.resolvedDirectory),
-    }))
+    this._packageManager = this.resolvePackageManager()
 
     this.options = {
       ...options,
@@ -283,26 +280,13 @@ export class Packager {
     log.info({ version: PACKAGE_VERSION, os: getOsRelease() }, "electron-builder")
   }
 
-  private async findWorkspaceRoot(pm: PM): Promise<string | undefined> {
-    let command: { command: string; args: Array<string> }
-    switch (pm) {
-      case PM.PNPM:
-        command = { command: "pnpm", args: ["root", "-w"] }
-        break
-      case PM.YARN_BERRY:
-        command = { command: "yarn", args: ["config", "get", "workspaceRoot"] }
-        break
-        // case PM.BUN:
-        //   command = { command: "bun", args: ["workspaces", "info"] }
-        break
-      case PM.NPM:
-      default: // default fallback to npm
-        command = { command: "npm", args: ["prefix", "-w"] }
-        break
-    }
-    return spawn(command.command, command.args, { cwd: this.projectDir, stdio: ["ignore", "pipe", "ignore"] })
-      .catch(() => undefined)
-      .then(it => (it == null ? undefined : it.trim()))
+  private resolvePackageManager(): Lazy<{ pm: PM; workspaceRoot: Promise<string | undefined> }> {
+    const availableDirs = new Set([process.env.ELECTRON_BUILDER_WORKSPACE_ROOT, this.projectDir, this.appDir].filter(it => !isEmptyOrSpaces(it)).map(it => path.resolve(it!)))
+    const pm = detectPackageManager([...availableDirs])
+    return new Lazy(async () => ({
+      pm: pm.pm,
+      workspaceRoot: Promise.resolve((await findWorkspaceRoot(pm.pm, this.projectDir)) ?? pm.resolvedDirectory),
+    }))
   }
 
   private async addPackagerEventHandlers() {
@@ -651,7 +635,9 @@ export class Packager {
           platform: platform.nodeName,
           arch: Arch[arch],
           productionDeps: this.getNodeDependencyInfo(null, false) as Lazy<Array<NodeModuleDirInfo>>,
-        }
+        },
+        false,
+        this.runtimeEnvironmentVariables
       )
     }
   }

@@ -62,7 +62,8 @@ export async function installAppDeps(args: any) {
       arch: args.arch,
       productionDeps: createLazyProductionDeps(appDir, null, false),
     },
-    appDir !== projectDir
+    appDir !== projectDir,
+    {}
   )
 }
 

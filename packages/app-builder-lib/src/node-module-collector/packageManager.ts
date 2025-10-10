@@ -62,15 +62,6 @@ export function detectPackageManagerByEnv(): PM | null {
 export function detectPackageManagerByFile(dir: string): PM | null {
   const has = (file: string) => fs.existsSync(path.join(dir, file))
 
-  const packageJsonPath = path.join(dir, "package.json")
-  const packageManager = fs.existsSync(packageJsonPath) ? JSON.parse(fs.readFileSync(packageJsonPath, "utf8"))?.packageManager : undefined
-  if (packageManager) {
-    const [pm] = packageManager.split("@")
-    if (Object.values(PM).includes(pm as PM)) {
-      return pm as PM
-    }
-  }
-
   const detected: PM[] = []
   if (has("yarn.lock")) {
     detected.push(PM.YARN)
