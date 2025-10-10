@@ -268,8 +268,8 @@ export class Packager {
     this.projectDir = options.projectDir == null ? process.cwd() : path.resolve(options.projectDir)
     this._appDir = this.projectDir
 
-    const availableDirs = [process.env.ELECTRON_BUILDER_WORKSPACE_ROOT, this.projectDir, this.appDir].filter(it => !isEmptyOrSpaces(it)).map(it => path.resolve(it!))
-    const pm = detectPackageManager(availableDirs)
+    const availableDirs = new Set([process.env.ELECTRON_BUILDER_WORKSPACE_ROOT, this.projectDir, this.appDir].filter(it => !isEmptyOrSpaces(it)).map(it => path.resolve(it!)))
+    const pm = detectPackageManager([...availableDirs])
     this._packageManager = new Lazy(async () => ({
       pm: pm.pm,
       workspaceRoot: Promise.resolve((await this.findWorkspaceRoot(pm.pm)) ?? pm.resolvedDirectory),
