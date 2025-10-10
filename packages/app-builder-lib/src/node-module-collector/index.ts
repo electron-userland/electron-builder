@@ -1,3 +1,4 @@
+import { BunNodeModulesCollector } from "./bunNodeModulesCollector"
 import { NpmNodeModulesCollector } from "./npmNodeModulesCollector"
 import { PnpmNodeModulesCollector } from "./pnpmNodeModulesCollector"
 import { YarnNodeModulesCollector } from "./yarnNodeModulesCollector"
@@ -13,8 +14,9 @@ export async function getCollectorByPackageManager(pm: PM, rootDir: string, temp
       }
       return new PnpmNodeModulesCollector(rootDir, tempDirManager)
     case PM.NPM:
-    case PM.BUN:
       return new NpmNodeModulesCollector(rootDir, tempDirManager)
+    case PM.BUN:
+      return new BunNodeModulesCollector(rootDir, tempDirManager)
     case PM.YARN:
       return new YarnNodeModulesCollector(rootDir, tempDirManager)
     default:
@@ -53,4 +55,4 @@ export function detectPackageManager(dirs: string[]): PM {
   return PM.NPM
 }
 
-export { PM, getPackageManagerCommand }
+export { PM, getPackageManagerCommand, BunNodeModulesCollector }

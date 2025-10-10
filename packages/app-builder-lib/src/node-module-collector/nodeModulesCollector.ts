@@ -16,8 +16,8 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
   protected productionGraph: DependencyGraph = {}
 
   constructor(
-    private readonly rootDir: string,
-    private readonly tempDirManager: TmpDir
+    protected readonly rootDir: string,
+    protected readonly tempDirManager: TmpDir
   ) {}
 
   public async getNodeModules(): Promise<NodeModuleInfo[]> {
