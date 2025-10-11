@@ -4,17 +4,16 @@ description: 'Enable via corepack and install dependencies'
 runs:
   using: 'composite'
   steps:
-    - name: Enable Corepack for pnpm
-      run: |
-        corepack enable
-        corepack prepare pnpm@10.18.0 --activate
-      shell: bash
-
     - name: Setup node
       uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
       with:
         node-version: '22'
         cache: 'pnpm'
+
+    - name: Enable corepack
+      run: |
+        corepack enable
+      shell: bash
 
     - name: Install dependencies
       run: pnpm install --frozen-lockfile
