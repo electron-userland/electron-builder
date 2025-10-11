@@ -7,7 +7,7 @@ import { TmpDir } from "temp-file"
 import * as path from "path"
 import * as fs from "fs-extra"
 import { execSync } from "child_process"
-import { isEmptyOrSpaces, spawn } from "builder-util"
+import { isEmptyOrSpaces, log, spawn } from "builder-util"
 
 export async function getCollectorByPackageManager(pm: PM, rootDir: string, tempDirManager: TmpDir) {
   switch (pm) {
@@ -95,47 +95,22 @@ export async function findWorkspaceRoot(pm: PM, cwd: string): Promise<string | u
     cwd,
     stdio: ["ignore", "pipe", "ignore"],
   })
-    .catch(() => findNearestWithWorkspacesField(cwd))
-    .then(it => it?.trim())
-
-  if (!output) {
-    return undefined
-  }
-
-  try {
-    const json = JSON.parse(output)
-    if (pm === PM.YARN) {
-      // if JSON valid, workspace detected
-      return await findNearestWithWorkspacesField(cwd)
-    } else if (pm === PM.BUN) {
-      if (Array.isArray(json) && json.length > 0) {
-        return await findNearestWithWorkspacesField(cwd)
+    .then(it => {
+      const output = it?.trim()
+      if (pm === PM.YARN) {
+        JSON.parse(output) // if JSON valid, workspace detected
+        return findNearestWithWorkspacesField(cwd)
+      } else if (pm === PM.BUN) {
+        const json = JSON.parse(output)
+        if (Array.isArray(json) && json.length > 0) {
+          return findNearestWithWorkspacesField(cwd)
+        }
       }
-    }
-  } catch {
-    return undefined
-  }
+      return output
+    })
+    .catch(() => findNearestWithWorkspacesField(cwd))
 
-  // if (pm === PM.YARN) {
-  //   try {
-  //     JSON.parse(output) // if JSON valid, workspace detected
-  //     return await findNearestWithWorkspacesField(cwd)
-  //   } catch {
-  //     return undefined
-  //   }
-  // }
-
-  // if (pm === PM.BUN) {
-  //   try {
-  //     const json = JSON.parse(output)
-  //     if (Array.isArray(json) && json.length > 0) {
-  //       return await findNearestWithWorkspacesField(cwd)
-  //     }
-  //   } catch {
-  //     return undefined
-  //   }
-  // }
-
+  log.debug({ dir: output }, "workspace root detected")
   return output
 }
 
@@ -145,12 +120,16 @@ async function findNearestWithWorkspacesField(dir: string): Promise<string | und
     const pkgPath = path.join(current, "package.json")
     try {
       const pkg = JSON.parse(await fs.readFile(pkgPath, "utf8"))
-      if (pkg.workspaces) return current
+      if (pkg.workspaces) {
+        return current
+      }
     } catch {
       // ignore
     }
     const parent = path.dirname(current)
-    if (parent === current) break
+    if (parent === current) {
+      break
+    }
     current = parent
   }
   return undefined

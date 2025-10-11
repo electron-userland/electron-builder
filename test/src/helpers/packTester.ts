@@ -156,13 +156,14 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
         npm_config_cache: tmpCache, // prevent npm fallback caching
       }
       log.info({ pm }, "activating corepack")
+      const manager = pm === PM.YARN_BERRY ? "yarn" : pm
       try {
-        execSync(`corepack enable ${pm === PM.YARN_BERRY ? "yarn" : pm}`, { env: runtimeEnv, cwd: projectDir, stdio: "inherit" })
+        execSync(`corepack enable ${manager}`, { env: runtimeEnv, cwd: projectDir, stdio: "inherit" })
       } catch (err: any) {
         console.warn("⚠️ Corepack enable failed (possibly already enabled):", err.message)
       }
       try {
-        execSync(`corepack prepare ${packageManager} --activate`, { env: runtimeEnv, cwd: projectDir, stdio: "inherit" })
+        execSync(`corepack prepare ${packageManager ?? `${manager}@latest`} --activate`, { env: runtimeEnv, cwd: projectDir, stdio: "inherit" })
       } catch (err: any) {
         console.warn("⚠️ Yarn prepare failed:", err.message)
       }

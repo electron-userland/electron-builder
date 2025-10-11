@@ -17,16 +17,6 @@
   optionalDependencies:
     global-agent "^3.0.0"
 
-"@sentry/core@0.5.4":
-  version "0.5.4"
-  resolved "https://registry.yarnpkg.com/@sentry/core/-/core-0.5.4.tgz#9b0a842b442131b3801bae70be2ca4e9c510574e"
-  dependencies:
-    "@sentry/shim" "0.5.4"
-
-"@sentry/shim@0.5.4":
-  version "0.5.4"
-  resolved "https://registry.yarnpkg.com/@sentry/shim/-/shim-0.5.4.tgz#cb826b1a34765ae5e1b21e61df2def2f8da91dc1"
-
 "@sindresorhus/is@^4.0.0":
   version "4.6.0"
   resolved "https://registry.yarnpkg.com/@sindresorhus/is/-/is-4.6.0.tgz#3c7c9c46e678feefe7a2e5bb609d3dbd665ffb3f"
@@ -122,7 +112,7 @@ clone-response@^1.0.2:
   dependencies:
     mimic-response "^1.0.0"
 
-debug@^4.1.0, debug@^4.1.1:
+debug@^4.1.0, debug@^4.1.1, debug@^4.3.4:
   version "4.4.3"
   resolved "https://registry.yarnpkg.com/debug/-/debug-4.4.3.tgz#c6ae432d9bd9662582fce08709b038c58e9e3d6a"
   integrity sha512-RGwwWnwQvkVfavKVt22FGLw+xYSdzARwm0ru6DhTVA3umU5hZc28V3kO4stgYryrTlLpuvgI9GiijltAjNbcqA==
@@ -163,10 +153,6 @@ detect-node@^2.0.4:
   version "2.1.0"
   resolved "https://registry.yarnpkg.com/detect-node/-/detect-node-2.1.0.tgz#c9c70775a49c3d03bc2c06d9a73be550f978f8b1"
   integrity sha512-T0NIuQpnTvFDATNuHN5roPwSBG83rFsuO+MXXH9/3N1eFbn4wcPjttvjMLEPWJ0RGUYgQE7cGgS3tNxbqCGM7g==
-
-electron-log@2.2.9:
-  version "2.2.9"
-  resolved "https://registry.yarnpkg.com/electron-log/-/electron-log-2.2.9.tgz#e0484cb1a8a84593095e3b69f47361ae15d73bdf"
 
 electron@23.3.10:
   version "23.3.10"

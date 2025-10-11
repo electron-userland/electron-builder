@@ -1,8 +1,9 @@
 import * as path from "path"
-import { app, assertPack, copyTestAsset, getFixtureDir, linuxDirTarget, modifyPackageJson } from "./helpers/packTester"
+import { app, assertPack, getFixtureDir, linuxDirTarget, modifyPackageJson, verifyAsarFileTree } from "./helpers/packTester"
 import { ELECTRON_VERSION } from "./helpers/testConfig"
 import { copyFile, rm, writeFile } from "fs-extra"
-import { exec, execSync } from "child_process"
+import { execSync } from "child_process"
+import { Platform } from "app-builder-lib"
 
 const yarnVersion = "yarn@1.22.19"
 const yarnBerryVersion = "yarn@3.5.1"
@@ -31,6 +32,8 @@ test("yarn", ({ expect }) =>
     },
     {
       isInstallDepsBefore: true,
+      packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
+
       projectDirCreated: async projectDir => {
         await modifyPackageJson(
           projectDir,
@@ -47,7 +50,7 @@ test("yarn", ({ expect }) =>
         await rm(path.join(projectDir, ".yarnrc.yml"))
         // await writeFile(path.join(projectDir, ".yarnrc.yml"), "workspaceRoot: .\n"),
         execSync("yarn install", { cwd: projectDir, stdio: "inherit" })
-        // execSync("yarn install", { cwd: path.join(projectDir, "app"), stdio: "inherit" })
+        execSync("yarn install", { cwd: path.join(projectDir, "app"), stdio: "inherit" })
       },
     }
   ))
@@ -61,6 +64,8 @@ test("yarn berry", ({ expect }) =>
     },
     {
       isInstallDepsBefore: true,
+      packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
+
       projectDirCreated: async projectDir => {
         await modifyPackageJson(
           projectDir,
@@ -75,8 +80,7 @@ test("yarn berry", ({ expect }) =>
         await copyFile(path.join(getFixtureDir(), ".pnp.cjs"), path.join(projectDir, ".pnp.cjs"))
         await rm(path.join(projectDir, ".yarnrc.yml"))
         execSync("yarn install", { cwd: projectDir, stdio: "inherit" })
-        // execSync("yarn install", { cwd: path.join(projectDir, "app"), stdio: "inherit" })
-        // await writeFile(path.join(projectDir, ".yarnrc.yml"), "workspaceRoot: .\n"),
+
       },
     }
   ))
@@ -91,18 +95,12 @@ test("yarn workspace", ({ expect }) =>
     },
     {
       isInstallDepsBefore: true,
+      packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
       projectDirCreated: async projectDir => {
         await modifyPackageJson(projectDir, data => {
           data.packageManager = yarnVersion
         })
         await modifyPackageJson(path.join(projectDir, "packages", "test-app"), data => packageConfig(data, yarnVersion))
-        // await writeFile(path.join(projectDir, "yarn.lock"), "")
-        // await writeFile(path.join(projectDir, "app", "yarn.lock"), "")
-        // await copyFile(path.join(getFixtureDir(), ".pnp.cjs"), path.join(projectDir, ".pnp.cjs"))
-        // await rm(path.join(projectDir, ".yarnrc.yml"))
-        // execSync("yarn install", { cwd: projectDir, stdio: "inherit" })
-        // execSync("yarn install", { cwd: path.join(projectDir, "app"), stdio: "inherit" })
-        // await writeFile(path.join(projectDir, ".yarnrc.yml"), "workspaceRoot: .\n"),
       },
     }
   ))
@@ -117,6 +115,7 @@ test("yarn berry workspace", ({ expect }) =>
     },
     {
       isInstallDepsBefore: true,
+      packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
       projectDirCreated: async projectDir => {
         await modifyPackageJson(projectDir, data => {
           data.packageManager = yarnBerryVersion
@@ -136,6 +135,7 @@ test("yarn multi-package workspace", ({ expect }) =>
     },
     {
       isInstallDepsBefore: true,
+      packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
       projectDirCreated: async projectDir => {
         await modifyPackageJson(projectDir, data => {
           data.packageManager = yarnVersion
@@ -155,6 +155,7 @@ test("yarn berry multi-package workspace", ({ expect }) =>
     },
     {
       isInstallDepsBefore: true,
+      packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
       projectDirCreated: async projectDir => {
         await modifyPackageJson(projectDir, data => {
           data.packageManager = yarnBerryVersion
@@ -173,6 +174,7 @@ test("pnpm", ({ expect }) =>
     },
     {
       isInstallDepsBefore: true,
+      packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
       projectDirCreated: projectDir =>
         modifyPackageJson(
           projectDir,
@@ -195,6 +197,8 @@ test("npm", ({ expect }) =>
     },
     {
       isInstallDepsBefore: true,
+      packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
+
       projectDirCreated: projectDir => modifyPackageJson(projectDir, data => packageConfig(data, "npm@9.8.1"), false),
     }
   ))
