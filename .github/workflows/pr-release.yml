@@ -35,6 +35,12 @@ jobs:
         with:
           package-name: 'electron-builder'
 
+      - name: Generate GitHub App token
+        uses: electron/github-app-auth-action@v1.1.1
+        id: generate-token
+        with:
+          creds: ${{ secrets.RELEASE_BOT_APP_CREDS }}
+
       - name: Create versions PR & prepare publish
         uses: changesets/action@06245a4e0a36c064a573d4150030f5ec548e4fcc # v1.4.1
         with:
@@ -43,5 +49,5 @@ jobs:
           title: 'chore(deploy): Release'
           publish: pnpm ci:publish
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ steps.generate-token.outputs.token }}
           NPM_TOKEN: ${{ env.NPM_TOKEN }}
