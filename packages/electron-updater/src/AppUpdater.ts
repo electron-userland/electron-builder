@@ -12,6 +12,7 @@ import {
   BlockMap,
   retry,
 } from "builder-util-runtime"
+import { Notification } from 'electron'
 import { randomBytes } from "crypto"
 import { release } from "os"
 import { EventEmitter } from "events"
@@ -365,7 +366,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   }
 
   // noinspection JSUnusedGlobalSymbols
-  checkForUpdatesAndNotify(downloadNotification?: DownloadNotification): Promise<UpdateCheckResult | null> {
+  checkForUpdatesAndNotify(downloadNotification?: Notification | DownloadNotification | false): Promise<UpdateCheckResult | null> {
     return this.checkForUpdates().then(it => {
       if (!it?.downloadPromise) {
         if (this._logger.debug != null) {
@@ -374,10 +375,17 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         return it
       }
 
-      void it.downloadPromise.then(() => {
-        const notificationContent = AppUpdater.formatDownloadNotification(it.updateInfo.version, this.app.name, downloadNotification)
-        new (require("electron").Notification)(notificationContent).show()
-      })
+      if (downloadNotification !== false) { // Stricly conditional check with false to allow for disabling notifications
+        void it.downloadPromise.then(() => {
+          if (downloadNotification instanceof Notification) { // Allow custom electron Notification 
+            downloadNotification.show()
+          }
+          else {
+            const notificationContent = AppUpdater.formatDownloadNotification(it.updateInfo.version, this.app.name, downloadNotification)
+            new (require("electron").Notification)(notificationContent).show()
+          }
+        })
+      }
 
       return it
     })
