@@ -8,10 +8,6 @@ import * as plist from "plist"
 import * as semver from "semver"
 
 export async function generateAssetCatalogForIcon(inputPath: string) {
-  if (!semver.gte(os.release(), "25.0.0")) {
-    throw new Error(`actool .icon support is currently limited to macOS 26 and higher`)
-  }
-
   const acToolVersionOutput = await spawn("actool", ["--version"])
   const versionInfo = plist.parse(acToolVersionOutput) as Record<string, Record<string, string>>
   if (!versionInfo || !versionInfo["com.apple.actool.version"] || !versionInfo["com.apple.actool.version"]["short-bundle-version"]) {
