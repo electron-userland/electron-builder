@@ -12,7 +12,9 @@ runs:
   using: 'composite'
   steps:
     - name: Enable Corepack for pnpm
-      run: corepack enable
+      run: |
+        corepack enable
+        corepack prepare pnpm@10.18.0 --activate
       shell: bash
 
     - name: Setup python
