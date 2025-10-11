@@ -1,5 +1,15 @@
 # app-builder-lib
 
+## 26.1.1
+
+### Patch Changes
+
+- [#9300](https://github.com/electron-userland/electron-builder/pull/9300) [`0835fbcac0a0cfb0f34355699812cc85db035ad4`](https://github.com/electron-userland/electron-builder/commit/0835fbcac0a0cfb0f34355699812cc85db035ad4) Thanks [@mmaietta](https://github.com/mmaietta)! - chore: updating pnpm and setting minimumReleaseAge to 1 week
+
+- Updated dependencies []:
+  - dmg-builder@26.1.1
+  - electron-builder-squirrel-windows@26.1.1
+
 ## 26.1.0
 
 ### Minor Changes
