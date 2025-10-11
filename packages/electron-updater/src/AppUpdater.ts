@@ -12,7 +12,7 @@ import {
   BlockMap,
   retry,
 } from "builder-util-runtime"
-import { Notification } from 'electron'
+import { Notification } from "electron"
 import { randomBytes } from "crypto"
 import { release } from "os"
 import { EventEmitter } from "events"
@@ -375,13 +375,19 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         return it
       }
 
-      if (downloadNotification !== false) { // Stricly conditional check with false to allow for disabling notifications
+      if (downloadNotification !== false) {
+        // Stricly conditional check with false to allow for disabling notifications
         void it.downloadPromise.then(() => {
-          if (downloadNotification instanceof Notification) { // Allow custom electron Notification 
+          const version = it.updateInfo.version
+          const appName = this.app.name
+
+          if (downloadNotification instanceof Notification) {
+            // Allow custom electron Notification
+            downloadNotification.title = downloadNotification.title.replace("{appName}", appName).replace("{version}", version)
+            downloadNotification.body = downloadNotification.body.replace("{appName}", appName).replace("{version}", version)
             downloadNotification.show()
-          }
-          else {
-            const notificationContent = AppUpdater.formatDownloadNotification(it.updateInfo.version, this.app.name, downloadNotification)
+          } else {
+            const notificationContent = AppUpdater.formatDownloadNotification(version, appName, downloadNotification)
             new (require("electron").Notification)(notificationContent).show()
           }
         })
