@@ -1,190 +1,184 @@
-import { execSync } from "child_process"
+import { load } from "js-yaml"
 import * as fs from "fs-extra"
 import * as path from "path"
 import { NodeModulesCollector } from "./nodeModulesCollector"
 import { PM } from "./packageManager"
-import { Dependency, YarnDependency } from "./types"
+import { Dependency, YarnDependency, DependencyGraph } from "./types"
+import { execSync } from "child_process"
 
 export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependency, string> {
   public readonly installOptions = { manager: PM.YARN, lockfile: "yarn.lock" }
+  protected productionGraph: DependencyGraph = {}
+  protected version: string
+  protected isPnP: boolean
 
-  protected getArgs(): string[] {
-    return ["list", "--production", "--json", "--depth=Infinity", "--no-progress"]
+  constructor(rootDir: string, tempDirManager: import("builder-util").TmpDir) {
+    super(rootDir, tempDirManager)
+
+    this.version = this.getYarnVersion()
+    this.isPnP = this.detectPnP(rootDir)
   }
 
-  protected collectAllDependencies(tree: Dependency<YarnDependency, string>): void {
-    const visited = new Set<string>()
-    const stack: Dependency<YarnDependency, string>[] = [tree]
-
-    while (stack.length > 0) {
-      const node = stack.pop()
-      if (!node) continue
-
-      const id = `${node.name}@${node.version}`
-      if (visited.has(id)) continue
-      visited.add(id)
-
-      this.allDependencies.set(id, node)
-      for (const dep of Object.values(node.dependencies ?? {})) {
-        stack.push(dep)
-      }
+  protected getArgs(): string[] {
+    // Only Yarn v1 uses CLI. We use pnp.cjs for PnP and manual tree build for Yarn Berry node_modules linker
+    if (this.version.startsWith("1.")) {
+      return ["list", "--production", "--json", "--depth=Infinity", "--no-progress"]
     }
+    return []
   }
 
   protected async getDependenciesTree(): Promise<YarnDependency> {
-    const pnpPath = path.join(this.rootDir, ".pnp.cjs")
-
-    // 1️⃣ Yarn Berry in PnP mode
-    if (fs.existsSync(pnpPath)) {
-      const tree = await this.getYarnPnPTree(this.rootDir, pnpPath)
+    if (this.isPnP) {
+      const pnpFile = path.join(this.rootDir, ".pnp.cjs")
+      const tree = this.getYarnPnPTree(this.rootDir, pnpFile)
       if (tree) return tree
-      throw new Error(`Failed to extract Yarn PnP tree: .pnp.cjs file exists but failed to parse it`)
+      throw new Error(`Failed to extract Yarn PnP dependency tree.`)
     }
 
-    // 2️⃣ Yarn Classic (v1.x) fallback detection
-    // const yarnVersion = this.getYarnVersion()
-    // const major = parseInt(yarnVersion.split(".")[0], 10)
-    // if (major < 2) {
-    //   const output = execSync("yarn list --production --json --no-progress", {
-    //     cwd: this.rootDir,
-    //     encoding: "utf8",
-    //   })
-    //   return this.parseYarnClassicTree(output, this.rootDir)
-    // }
+    if (this.version.startsWith("1.")) {
+      const output = await NodeModulesCollector.safeExec("yarn", this.getArgs(), this.rootDir)
+      return this.parseDependenciesTree(output)
+    }
 
-    // 3️⃣ Yarn Berry (2+) in node_modules linker mode
-    return super.getDependenciesTree()
+    // Yarn Berry node_modules linker fallback
+    return this.buildNodeModulesTreeManually(this.rootDir)
   }
 
   protected parseDependenciesTree(jsonBlob: string): YarnDependency {
-    const lines = jsonBlob
-      .split("\n")
-      .map(l => l.trim())
-      .filter(Boolean)
-      .map(l => {
-        try {
-          return JSON.parse(l)
-        } catch {
-          return undefined
-        }
-      })
-      .filter(Boolean)
-
-    const parsed = lines.find((l: any) => l.type === "tree")?.data?.trees
-    if (!parsed) {
-      throw new Error(`Failed to extract Yarn tree: no "type":"tree" line found in \`yarn list\` output`)
+    const data = JSON.parse(jsonBlob)
+    if (data.dependencies) {
+      return this.normalizeNpmLikeTree(data, this.rootDir)
     }
 
-    return this.normalizeTree(parsed, this.rootDir)
+    throw new Error("Invalid Yarn CLI output")
   }
 
-  private normalizeTree(data: any[], root: string): YarnDependency {
-    if (!data?.length) {
-      throw new Error("Yarn module collector dependency tree is invalid or empty")
-    }
-
-    const parseTree = (node: any, parentDir: string): YarnDependency => {
-      const { name, version } = this.parseNameVersion(node.name)
+  private normalizeNpmLikeTree(data: any, cwd: string): YarnDependency {
+    const parseNode = (node: any, parentDir: string): YarnDependency => {
+      const name = node.name
+      const version = node.version ?? "unknown"
       const dir = this.resolveModuleDir(name, parentDir)
       const deps: Record<string, YarnDependency> = {}
 
-      if (Array.isArray(node.children) && node.children.length > 0) {
-        for (const child of node.children) {
-          const dep = parseTree(child, dir)
-          deps[dep.name] = dep
+      for (const [depName, depNode] of Object.entries(node.dependencies ?? {})) {
+        deps[depName] = parseNode(depNode, dir)
+      }
+
+      return { name, version, path: dir, dependencies: Object.keys(deps).length ? deps : undefined }
+    }
+
+    return parseNode(data, cwd)
+  }
+
+  protected collectAllDependencies(tree: Dependency<YarnDependency, string>): void {
+    const visit = (node: Dependency<YarnDependency, string>, parentId?: string) => {
+      const deps = node.dependencies || {}
+      for (const [name, dep] of Object.entries(deps)) {
+        const depId = `${name}@${dep.version}`
+        if (!this.productionGraph[depId]) this.productionGraph[depId] = { dependencies: [] }
+
+        // recurse
+        visit(dep, depId)
+
+        if (parentId) {
+          const parent = this.productionGraph[parentId] ?? { dependencies: [] }
+          if (!parent.dependencies.includes(depId)) parent.dependencies.push(depId)
+          this.productionGraph[parentId] = parent
         }
       }
+    }
 
-      return {
-        name,
-        version,
-        path: dir,
-        dependencies: Object.keys(deps).length ? deps : undefined,
+    visit(tree)
+  }
+
+  protected extractProductionDependencyGraph(tree: Dependency<YarnDependency, string>, dependencyId: string): void {
+    if (this.productionGraph[dependencyId]) return
+    if (Object.keys(this.productionGraph).length === 0) this.collectAllDependencies(tree)
+
+    const deps = tree.dependencies || {}
+    const childIds: string[] = []
+
+    for (const [packageName, dependency] of Object.entries(deps)) {
+      const childId = `${packageName}@${dependency.version}`
+      childIds.push(childId)
+      this.extractProductionDependencyGraph(dependency, childId)
+    }
+
+    this.productionGraph[dependencyId] = { dependencies: childIds }
+  }
+
+  private buildNodeModulesTreeManually(baseDir: string): YarnDependency {
+    const rootPkg = fs.readJSONSync(path.join(baseDir, "package.json"))
+
+    const traverse = (pkgDir: string): Record<string, YarnDependency> | undefined => {
+      const nodeModules = path.join(pkgDir, "node_modules")
+      if (!fs.existsSync(nodeModules)) return undefined
+
+      const deps: Record<string, YarnDependency> = {}
+      for (const name of fs.readdirSync(nodeModules)) {
+        if (name.startsWith(".")) continue
+        const depPath = path.join(nodeModules, name)
+        const pkgJson = path.join(depPath, "package.json")
+        if (!fs.existsSync(pkgJson)) continue
+        const pkg = fs.readJSONSync(pkgJson)
+        deps[name] = { name: pkg.name, version: pkg.version, path: depPath, dependencies: traverse(depPath) }
       }
+      return Object.keys(deps).length ? deps : undefined
     }
-
-    return parseTree(data[0], root)
+    const rootNode: YarnDependency = { name: rootPkg.name, version: rootPkg.version, path: baseDir, dependencies: traverse(baseDir) }
+    return rootNode
   }
 
-  /**
-   * Yarn v1 “classic” tree parser
-   */
-  private parseYarnClassicTree(jsonBlob: string, cwd: string): YarnDependency {
-    const lines = jsonBlob
-      .split("\n")
-      .map(l => l.trim())
-      .filter(Boolean)
-      .map(l => {
-        try {
-          return JSON.parse(l)
-        } catch {
-          return undefined
-        }
-      })
-      .filter(Boolean)
-
-    const trees = lines.find((l: any) => l.type === "tree")?.data?.trees
-    const tree = trees?.[0]
-    if (!tree) {
-      throw new Error("Failed to parse Yarn v1 classic tree from output")
-    }
-    return this.normalizeYarnClassicTree(tree, cwd)
-  }
-
-  private normalizeYarnClassicTree(tree: any, cwd: string): YarnDependency {
-    const { name, version } = this.parseNameVersion(tree.name)
-    const node: YarnDependency = {
-      name,
-      version: tree.version || version,
-      path: path.resolve(cwd, "node_modules", name),
-      dependencies: {},
-    }
-
-    if (Array.isArray(tree.children)) {
-      for (const child of tree.children) {
-        const dep = this.normalizeYarnClassicTree(child, cwd)
-        node.dependencies![dep.name] = dep
-      }
-    }
-
-    return node
-  }
-
-  private async getYarnPnPTree(cwd: string, pnpPath: string): Promise<YarnDependency | undefined> {
+  private resolveModuleDir(pkg: string, base: string): string {
     try {
-      let pnpApi
-      try {
-        pnpApi = require(pnpPath)
-      } catch {
-        pnpApi = await import(pnpPath)
-      }
+      return path.dirname(require.resolve(path.join(pkg, "package.json"), { paths: [base] }))
+    } catch {
+      return path.join(base, "node_modules", pkg)
+    }
+  }
 
+  private getYarnVersion(): string {
+    try {
+      return execSync("yarn --version", { cwd: this.rootDir }).toString().trim()
+    } catch {
+      return "unknown"
+    }
+  }
+
+  private detectPnP(rootDir: string): boolean {
+    try {
+      const rcPath = path.join(rootDir, ".yarnrc.yml")
+      if (fs.existsSync(rcPath)) {
+        const cfg: any = load(fs.readFileSync(rcPath, "utf-8"))
+        if (cfg?.nodeLinker === "pnp") return true
+      }
+      return fs.existsSync(path.join(rootDir, ".pnp.cjs"))
+    } catch {
+      return false
+    }
+  }
+
+  private getYarnPnPTree(cwd: string, pnpPath: string): YarnDependency | undefined {
+    try {
+      const pnpApi = require(pnpPath)
       const topLocator = pnpApi.topLevel
       const visited = new Set<string>()
 
       const buildNode = (locator: any): YarnDependency => {
         const info = pnpApi.getPackageInformation(locator)
         const dir = info?.packageLocation ? path.resolve(info.packageLocation) : path.resolve(cwd)
-
-        const node: YarnDependency = {
-          name: locator.name,
-          version: locator.reference,
-          path: dir,
-          dependencies: {},
-        }
+        const node: YarnDependency = { name: locator.name, version: locator.reference, path: dir, dependencies: {} }
 
         if (!info?.packageDependencies) return node
 
         for (const [depName, ref] of info.packageDependencies) {
-          if (ref === null) continue
+          if (!ref) continue
           const key = `${depName}@${ref}`
           if (visited.has(key)) continue
           visited.add(key)
-
           const depLocator = pnpApi.getLocator(depName, ref)
           node.dependencies![depName] = buildNode(depLocator)
         }
-
         return node
       }
 
@@ -194,52 +188,4 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
       return undefined
     }
   }
-
-  /**
-   * Resolve the directory of a dependency from a given base path.
-   */
-  private resolveModuleDir(pkg: string, base: string): string {
-    return path.resolve(base, "node_modules", pkg)
-    try {
-      const entry = require.resolve(path.join(pkg, "package.json"), { paths: [base] })
-      return path.dirname(entry)
-    } catch {
-      return path.join(base, "node_modules", pkg)
-    }
-  }
-
-  /**
-   * Parse a dependency identifier like "@scope/pkg@1.2.3" or "pkg@1.2.3"
-   */
-  private parseNameVersion(identifier: string): { name: string; version: string } {
-    const match = identifier.match(/^(@[^/]+\/[^@]+)@(.+)$/) || identifier.match(/^([^@]+)@(.+)$/)
-    if (match) {
-      return { name: match[1], version: match[2] }
-    }
-    return { name: identifier, version: "unknown" }
-  }
-
-  private getYarnVersion(): string {
-    try {
-      const version = execSync("yarn --version", { cwd: this.rootDir, encoding: "utf8" }).trim()
-      return version
-    } catch {
-      return "1.0.0" // default fallback
-    }
-  }
-
-  protected extractProductionDependencyGraph(tree: Dependency<YarnDependency, string>, dependencyId: string): void {
-    if (this.productionGraph[dependencyId]) return
-
-    const deps = tree.dependencies || {}
-    this.productionGraph[dependencyId] = { dependencies: [] }
-    const dependencies = Object.entries(deps).map(([packageName, dependency]) => {
-      const childDependencyId = `${packageName}@${dependency.version}`
-      this.extractProductionDependencyGraph(dependency, childDependencyId)
-      return childDependencyId
-    })
-
-    this.productionGraph[dependencyId] = { dependencies }
-  }
-
 }

@@ -155,7 +155,7 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
         YARN_IGNORE_PATH: "1", // ignore globally installed yarn binaries
         npm_config_cache: tmpCache, // prevent npm fallback caching
       }
-      log.info({ pm, COREPACK_HOME }, "activating corepack")
+      log.info({ pm }, "activating corepack")
       try {
         execSync(`corepack enable ${pm === PM.YARN_BERRY ? "yarn" : pm}`, { env: runtimeEnv, cwd: projectDir, stdio: "inherit" })
       } catch (err: any) {
@@ -685,7 +685,7 @@ export async function modifyPackageJson(projectDir: string, task: (data: any) =>
   await fs.unlink(file)
 
   await fs.writeFile(path.join(projectDir, ".yarnrc.yml"), "nodeLinker: node-modules")
-  return await writeJson(file, data)
+  return await writeJson(file, data, { spaces: 2 })
 }
 
 export function platform(platform: Platform): PackagerOptions {

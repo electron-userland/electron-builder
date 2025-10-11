@@ -1,7 +1,8 @@
 import * as path from "path"
-import { app, assertPack, linuxDirTarget, modifyPackageJson } from "./helpers/packTester"
+import { app, assertPack, copyTestAsset, getFixtureDir, linuxDirTarget, modifyPackageJson } from "./helpers/packTester"
 import { ELECTRON_VERSION } from "./helpers/testConfig"
-import { writeFile } from "fs-extra"
+import { copyFile, rm, writeFile } from "fs-extra"
+import { exec, execSync } from "child_process"
 
 const yarnVersion = "yarn@1.22.19"
 const yarnBerryVersion = "yarn@3.5.1"
@@ -21,7 +22,7 @@ const packageConfig = (data: any, version: string) => {
   return data
 }
 
-test.only("yarn", ({ expect }) =>
+test("yarn", ({ expect }) =>
   assertPack(
     expect,
     "test-app-yarn-hoisted",
@@ -30,25 +31,28 @@ test.only("yarn", ({ expect }) =>
     },
     {
       isInstallDepsBefore: true,
-      projectDirCreated: projectDir =>
-        Promise.all([
-          modifyPackageJson(
-            projectDir,
-            data => {
-              data.packageManager = yarnVersion
-              // data.workspaceRoot = data.workspaceRoot || ["app"]
-            },
-            false
-          ),
-          modifyPackageJson(projectDir, data => packageConfig(data, yarnVersion), true),
-          writeFile(path.join(projectDir, "yarn.lock"), ""),
-          writeFile(path.join(projectDir, "app", "yarn.lock"), ""),
-          // writeFile(path.join(projectDir, ".yarnrc.yml"), "workspaceRoot: .\n"),
-        ]),
+      projectDirCreated: async projectDir => {
+        await modifyPackageJson(
+          projectDir,
+          data => {
+            data.packageManager = yarnVersion
+            // data.workspaceRoot = data.workspaceRoot || ["app"]
+          },
+          false
+        )
+        await modifyPackageJson(projectDir, data => packageConfig(data, yarnVersion), true)
+        await writeFile(path.join(projectDir, "yarn.lock"), "")
+        await writeFile(path.join(projectDir, "app", "yarn.lock"), "")
+        await copyFile(path.join(getFixtureDir(), ".pnp.cjs"), path.join(projectDir, ".pnp.cjs"))
+        await rm(path.join(projectDir, ".yarnrc.yml"))
+        // await writeFile(path.join(projectDir, ".yarnrc.yml"), "workspaceRoot: .\n"),
+        execSync("yarn install", { cwd: projectDir, stdio: "inherit" })
+        // execSync("yarn install", { cwd: path.join(projectDir, "app"), stdio: "inherit" })
+      },
     }
   ))
 
-test("yarn berry", ({ expect }) =>
+test.only("yarn berry", ({ expect }) =>
   assertPack(
     expect,
     "test-app-yarn-hoisted",
@@ -57,13 +61,23 @@ test("yarn berry", ({ expect }) =>
     },
     {
       isInstallDepsBefore: true,
-      projectDirCreated: projectDir =>
-        Promise.all([
-          modifyPackageJson(projectDir, data => packageConfig(data, yarnBerryVersion), true),
-                    writeFile(path.join(projectDir, "yarn.lock"), ""),
-          writeFile(path.join(projectDir, "app", "yarn.lock"), ""),
-          // fs.writeFile(path.join(projectDir, ".yarnrc.yml"), "nodeLinker: node-modules\n"),
-        ]),
+      projectDirCreated: async projectDir => {
+        await modifyPackageJson(
+          projectDir,
+          data => {
+            data.packageManager = yarnBerryVersion
+          },
+          false
+        )
+        await modifyPackageJson(projectDir, data => packageConfig(data, yarnBerryVersion), true)
+        await writeFile(path.join(projectDir, "yarn.lock"), "")
+        await writeFile(path.join(projectDir, "app", "yarn.lock"), "")
+        await copyTestAsset(".pnp.cjs", path.join(projectDir, ".pnp.cjs"))
+        await rm(path.join(projectDir, ".yarnrc.yml"))
+        // await writeFile(path.join(projectDir, ".yarnrc.yml"), "workspaceRoot: .\n"),
+        execSync("yarn install", { cwd: projectDir, stdio: "inherit" })
+        // execSync("yarn install", { cwd: path.join(projectDir, "app"), stdio: "inherit" })
+      },
     }
   ))
 // yarn workspace
@@ -116,7 +130,6 @@ test("yarn multi-package workspace", ({ expect }) =>
     "test-app-yarn-several-workspace",
     {
       targets: linuxDirTarget,
-
     },
     {
       isInstallDepsBefore: true,
