@@ -83,9 +83,9 @@ export function detectPackageManagerByFile(dir: string): PM | null {
   return null
 }
 
-export function detectYarnBerry(): PM.YARN_BERRY | PM.YARN {
+export function detectYarnBerry(cwd: string): PM.YARN_BERRY | PM.YARN {
   try {
-    const version = execSync("yarn --version").toString().trim()
+    const version = execSync("yarn --version", { encoding: "utf8", cwd }).toString().trim()
     if (parseInt(version.split(".")[0]) > 1) {
       return PM.YARN_BERRY
     }

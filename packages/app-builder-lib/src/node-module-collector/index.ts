@@ -17,6 +17,7 @@ export async function getCollectorByPackageManager(pm: PM, rootDir: string, temp
       }
       return new PnpmNodeModulesCollector(rootDir, tempDirManager)
     case PM.YARN:
+    case PM.YARN_BERRY:
       return new YarnNodeModulesCollector(rootDir, tempDirManager)
     case PM.NPM:
     case PM.BUN:
@@ -30,10 +31,10 @@ export async function getNodeModules(pm: PM, rootDir: string, tempDirManager: Tm
   return collector.getNodeModules()
 }
 
-export function detectPackageManager(searchPaths: string[]): { pm: PM; packageManager: string | undefined; resolvedDirectory: string | undefined } {
+export function detectPackageManager(searchPaths: string[]): { pm: PM; corepackConfig: string | undefined; resolvedDirectory: string | undefined } {
   let pm: PM | null = null
 
-  const resolveIfYarn = (pm: PM) => (pm === PM.YARN ? detectYarnBerry() : pm)
+  const resolveIfYarn = (pm: PM, cwd: string) => (pm === PM.YARN ? detectYarnBerry(cwd) : pm)
 
   for (const dir of searchPaths) {
     const packageJsonPath = path.join(dir, "package.json")
@@ -41,34 +42,20 @@ export function detectPackageManager(searchPaths: string[]): { pm: PM; packageMa
     if (packageManager) {
       const [pm] = packageManager.split("@")
       if (Object.values(PM).includes(pm as PM)) {
-        return { pm: pm as PM, packageManager, resolvedDirectory: dir }
+        return { pm: resolveIfYarn(pm as PM, dir), corepackConfig: packageManager, resolvedDirectory: dir }
       }
     }
 
     pm = detectPackageManagerByFile(dir)
     if (pm) {
-      return { pm: resolveIfYarn(pm), resolvedDirectory: dir, packageManager: undefined }
+      return { pm: resolveIfYarn(pm, dir), resolvedDirectory: dir, corepackConfig: undefined }
     }
   }
 
-  // if no lockfile, then just check for a package.json where the last node_modules dir was found
-  // for (const dir of searchPaths) {
-  //   const traversal = workspaceRootTraversalSearch(dir)
-  //   if (traversal && traversal.isWorkspace && traversal.lastNodeModulesDir) {
-  //     return { pm: PM.NPM, resolvedDirectory: traversal.lastNodeModulesDir }
-  //   }
-  // }
-
   pm = detectPackageManagerByEnv()
-  // const cwd = process.env.npm_package_json ? path.dirname(process.env.npm_package_json) : (process.env.INIT_CWD ?? process.cwd())
-  // if (pm) {
-  //   return { pm: resolveIfYarn(pm), resolvedDirectory: cwd }
-  // }
-
-  // Default to npm
-  return { pm: resolveIfYarn(pm || PM.NPM), resolvedDirectory: undefined, packageManager: undefined }
+  const cwd = process.env.npm_package_json ? path.dirname(process.env.npm_package_json) : (process.env.INIT_CWD ?? process.cwd())
+  return { pm: resolveIfYarn(pm || PM.NPM, cwd), resolvedDirectory: undefined, corepackConfig: undefined }
 }
-
 
 export async function findWorkspaceRoot(pm: PM, cwd: string): Promise<string | undefined> {
   let command: { command: string; args: string[] } | undefined
@@ -84,7 +71,7 @@ export async function findWorkspaceRoot(pm: PM, cwd: string): Promise<string | u
 
     case PM.YARN: {
       // verify yarn v1.x before using “workspaces info”
-      const version = execSync("yarn -v", { encoding: "utf8", cwd }).trim()
+      const version = execSync("yarn --version", { encoding: "utf8", cwd }).trim()
       if (!version.startsWith("1.")) {
         // fallback if not Yarn 1
         return await findNearestWithWorkspacesField(cwd)
@@ -104,39 +91,50 @@ export async function findWorkspaceRoot(pm: PM, cwd: string): Promise<string | u
       break
   }
 
-  let output: string | undefined
-  try {
-    output = await spawn(command.command, command.args, {
-      cwd,
-      stdio: ["ignore", "pipe", "ignore"],
-    }).then(it => it.trim())
-  } catch {
-    return await findNearestWithWorkspacesField(cwd)
-  }
+  const output = await spawn(command.command, command.args, {
+    cwd,
+    stdio: ["ignore", "pipe", "ignore"],
+  })
+    .catch(() => findNearestWithWorkspacesField(cwd))
+    .then(it => it?.trim())
 
   if (!output) {
     return undefined
   }
 
-  if (pm === PM.YARN) {
-    try {
-      JSON.parse(output) // if JSON valid, workspace detected
+  try {
+    const json = JSON.parse(output)
+    if (pm === PM.YARN) {
+      // if JSON valid, workspace detected
       return await findNearestWithWorkspacesField(cwd)
-    } catch {
-      return undefined
-    }
-  }
-
-  if (pm === PM.BUN) {
-    try {
-      const json = JSON.parse(output)
+    } else if (pm === PM.BUN) {
       if (Array.isArray(json) && json.length > 0) {
         return await findNearestWithWorkspacesField(cwd)
       }
-    } catch {
-      return undefined
     }
+  } catch {
+    return undefined
   }
+
+  // if (pm === PM.YARN) {
+  //   try {
+  //     JSON.parse(output) // if JSON valid, workspace detected
+  //     return await findNearestWithWorkspacesField(cwd)
+  //   } catch {
+  //     return undefined
+  //   }
+  // }
+
+  // if (pm === PM.BUN) {
+  //   try {
+  //     const json = JSON.parse(output)
+  //     if (Array.isArray(json) && json.length > 0) {
+  //       return await findNearestWithWorkspacesField(cwd)
+  //     }
+  //   } catch {
+  //     return undefined
+  //   }
+  // }
 
   return output
 }

@@ -16,7 +16,7 @@ import * as path from "path"
 import pathSorter from "path-sort"
 import { NtExecutable, NtExecutableResource } from "resedit"
 import { TmpDir } from "temp-file"
-import { getCollectorByPackageManager, detectPackageManager } from "app-builder-lib/out/node-module-collector"
+import { getCollectorByPackageManager, detectPackageManager, PM } from "app-builder-lib/out/node-module-collector"
 import { promisify } from "util"
 import { CSC_LINK, WIN_CSC_LINK } from "./codeSignData"
 import { assertThat } from "./fileAssert"
@@ -136,7 +136,7 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
         await projectDirCreated(projectDir, tmpDir)
       }
 
-      const { pm, packageManager } = detectPackageManager([projectDir])
+      const { pm, corepackConfig: packageManager } = detectPackageManager([projectDir])
 
       const tmpCache = await tmpDir.createTempDir({ prefix: "yarn-cache-" })
       const tmpHome = await tmpDir.createTempDir({ prefix: "yarn-home-" })
@@ -157,7 +157,7 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
       }
       log.info({ pm, COREPACK_HOME }, "activating corepack")
       try {
-        execSync(`corepack enable ${pm}`, { env: runtimeEnv, cwd: projectDir, stdio: "inherit" })
+        execSync(`corepack enable ${pm === PM.YARN_BERRY ? "yarn" : pm}`, { env: runtimeEnv, cwd: projectDir, stdio: "inherit" })
       } catch (err: any) {
         console.warn("⚠️ Corepack enable failed (possibly already enabled):", err.message)
       }

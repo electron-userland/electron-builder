@@ -16,7 +16,7 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
   protected productionGraph: DependencyGraph = {}
 
   constructor(
-    private readonly rootDir: string,
+    protected readonly rootDir: string,
     private readonly tempDirManager: TmpDir
   ) {}
 
@@ -58,7 +58,7 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
         try {
           return this.parseDependenciesTree(dependencies)
         } catch (error: any) {
-          log.debug({ message: error.message || error.stack, shellOutput: dependencies }, "error parsing dependencies tree")
+          log.debug({ message: error.message, stack: error.stack, shellOutput: dependencies }, "error parsing dependencies tree")
           throw new Error(`Failed to parse dependencies tree: ${error.message || error.stack}. Use DEBUG=electron-builder env var to see the dependency query output.`)
         }
       },
@@ -208,14 +208,14 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
       child.on("close", code => {
         outStream.close()
         // https://github.com/npm/npm/issues/17624
-        if (code === 1 && execName.toLowerCase() === "npm" && args.includes("list")) {
-          log.debug({ code, stderr }, "`npm list` returned non-zero exit code, but it MIGHT be expected (https://github.com/npm/npm/issues/17624). Check stderr for details.")
+         if (code === 1 && ["npm", "yarn"].includes(execName.toLowerCase()) && args.includes("list")) {
+          log.debug({ code, stderr }, "`npm/yarn list` returned non-zero exit code, but it MIGHT be expected (https://github.com/npm/npm/issues/17624). Check stderr for details.")
           // This is a known issue with npm list command, it can return code 1 even when the command is "technically" successful
           resolve()
           return
         }
         if (code !== 0) {
-          return reject(new Error(`Process exited with code ${code}:\n${stderr}`))
+          return reject(new Error(`Node module collector process exited with code ${code}:\n${stderr}`))
         }
         resolve()
       })

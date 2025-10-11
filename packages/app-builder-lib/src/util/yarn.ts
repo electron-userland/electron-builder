@@ -115,7 +115,7 @@ export async function installDependencies(
   }
 
   await spawn(execPath, execArgs, {
-    cwd: appDir,
+    cwd: _resolvedWorkspaceDir || appDir,
     env: {
       ...getGypEnv(options.frameworkInfo, platform, arch, options.buildFromSource === true),
       ...env,
