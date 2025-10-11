@@ -59,7 +59,10 @@ export async function generateAssetCatalogForIcon(inputPath: string) {
       "macosx",
     ])
 
-    return await fs.readFile(path.resolve(outputPath, "Assets.car"))
+    const assetCatalog = await fs.readFile(path.resolve(outputPath, "Assets.car"))
+    const icnsFile = await fs.readFile(path.resolve(outputPath, "Icon.icns"))
+
+    return { assetCatalog, icnsFile }
   } finally {
     await fs.rm(tmpDir, {
       recursive: true,

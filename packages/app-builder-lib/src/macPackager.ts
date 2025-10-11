@@ -528,9 +528,15 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
     if (isIconComposer && configuredIcon) {
       const iconComposerPath = await this.getResource(configuredIcon)
       if (iconComposerPath) {
-        const assetCatalog = await generateAssetCatalogForIcon(iconComposerPath)
+        const { assetCatalog, icnsFile } = await generateAssetCatalogForIcon(iconComposerPath)
+
+        // Create and setup the asset catalog
         appPlist.CFBundleIconName = "Icon"
         await fs.writeFile(path.join(resourcesPath, "Assets.car"), assetCatalog)
+
+        // Create and setup the icns file
+        appPlist.CFBundleIconFile = "Icon"
+        await fs.writeFile(path.join(resourcesPath, "Icon.icns"), icnsFile)
       }
     }
 

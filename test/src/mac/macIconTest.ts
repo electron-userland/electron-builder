@@ -47,6 +47,7 @@ test.ifMac("icon composer generate asset catalog", ({ expect }) => {
 
         const info = await parsePlistFile<PlistObject>(infoPlistPath)
         expect(info.CFBundleIconName).toBe("Icon")
+        expect(info.CFBundleIconFile).toBe("Icon")
 
         const assetCatalogPath = path.join(resourcesDir, "Assets.car")
         const writtenCatalog = await fs.readFile(assetCatalogPath)
