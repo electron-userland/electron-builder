@@ -13,8 +13,6 @@ permissions: {}
 jobs:
   pr-release:
     permissions:
-      contents: write # to create release (changesets/action)
-      pull-requests: write # to create pull request (changesets/action)
       id-token: write  # Required for OIDC token
 
     timeout-minutes: 15
