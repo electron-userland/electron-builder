@@ -50,6 +50,8 @@
     "@babel/plugin-transform-modules-commonjs": "7.24.8",
     "@changesets/changelog-github": "0.4.7",
     "@changesets/cli": "2.29.7",
+    "@eslint/eslintrc": "^3.3.1",
+    "@eslint/js": "^9.37.0",
     "@stylistic/eslint-plugin": "^2.8.0",
     "@types/node": "^22.7.4",
     "@typescript-eslint/eslint-plugin": "8.17.0",
@@ -74,9 +76,9 @@
   },
   "engines": {
     "node": ">=14.14",
-    "pnpm": ">=9"
+    "pnpm": ">=10"
   },
-  "packageManager": "pnpm@9.4.0",
+  "packageManager": "pnpm@10.18.0+sha512.e804f889f1cecc40d572db084eec3e4881739f8dec69c0ff10d2d1beff9a4e309383ba27b5b750059d7f4c149535b6cd0d2cb1ed3aeb739239a4284a68f40cfa",
   "pnpm": {
     "patchedDependencies": {
       "@changesets/cli@2.29.7": "patches/@changesets__cli@2.29.7.patch",
