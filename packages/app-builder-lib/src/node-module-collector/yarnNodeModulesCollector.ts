@@ -36,8 +36,7 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
     }
 
     if (this.version.startsWith("1.")) {
-      const output = await NodeModulesCollector.safeExec("yarn", this.getArgs(), this.rootDir)
-      return this.parseDependenciesTree(output)
+      return super.getDependenciesTree()
     }
 
     // Yarn Berry node_modules linker fallback
@@ -50,7 +49,49 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
       return this.normalizeNpmLikeTree(data, this.rootDir)
     }
 
-    throw new Error("Invalid Yarn CLI output")
+    const lines = jsonBlob
+      .split("\n")
+      .map(l => l.trim())
+      .filter(Boolean)
+      .map(l => {
+        try {
+          return JSON.parse(l)
+        } catch {
+          return undefined
+        }
+      })
+      .filter(Boolean)
+
+    const parsed = lines.find((l: any) => l.type === "tree")?.data?.trees
+    if (!parsed) {
+      throw new Error(`Failed to extract Yarn tree: no "type":"tree" line found in \`yarn list\` output`)
+    }
+
+    return this.normalizeTree(parsed, this.rootDir)
+  }
+
+  private normalizeTree(data: any[], root: string): YarnDependency {
+    const parseTree = (node: any, parentDir: string): YarnDependency => {
+      const { name, version } = this.parseNameVersion(node.name)
+      const dir = this.resolveModuleDir(name, parentDir)
+      const deps: Record<string, YarnDependency> = {}
+
+      if (Array.isArray(node.children) && node.children.length > 0) {
+        for (const child of node.children) {
+          const dep = parseTree(child, dir)
+          deps[dep.name] = dep
+        }
+      }
+
+      return {
+        name,
+        version,
+        path: dir, // alias for compatibility
+        dependencies: Object.keys(deps).length ? deps : undefined,
+      }
+    }
+
+    return parseTree(data[0], root)
   }
 
   private normalizeNpmLikeTree(data: any, cwd: string): YarnDependency {
@@ -187,5 +228,16 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
       console.error("Failed to extract Yarn PnP tree:", err)
       return undefined
     }
+  }
+
+  /**
+   * Parse a dependency identifier like "@scope/pkg@1.2.3" or "pkg@1.2.3"
+   */
+  private parseNameVersion(identifier: string): { name: string; version: string } {
+    const match = identifier.match(/^(@[^/]+\/[^@]+)@(.+)$/) || identifier.match(/^([^@]+)@(.+)$/)
+    if (match) {
+      return { name: match[1], version: match[2] }
+    }
+    return { name: identifier, version: "unknown" }
   }
 }

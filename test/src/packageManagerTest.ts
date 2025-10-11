@@ -52,7 +52,7 @@ test("yarn", ({ expect }) =>
     }
   ))
 
-test.only("yarn berry", ({ expect }) =>
+test("yarn berry", ({ expect }) =>
   assertPack(
     expect,
     "test-app-yarn-hoisted",
@@ -72,11 +72,11 @@ test.only("yarn berry", ({ expect }) =>
         await modifyPackageJson(projectDir, data => packageConfig(data, yarnBerryVersion), true)
         await writeFile(path.join(projectDir, "yarn.lock"), "")
         await writeFile(path.join(projectDir, "app", "yarn.lock"), "")
-        await copyTestAsset(".pnp.cjs", path.join(projectDir, ".pnp.cjs"))
+        await copyFile(path.join(getFixtureDir(), ".pnp.cjs"), path.join(projectDir, ".pnp.cjs"))
         await rm(path.join(projectDir, ".yarnrc.yml"))
-        // await writeFile(path.join(projectDir, ".yarnrc.yml"), "workspaceRoot: .\n"),
         execSync("yarn install", { cwd: projectDir, stdio: "inherit" })
         // execSync("yarn install", { cwd: path.join(projectDir, "app"), stdio: "inherit" })
+        // await writeFile(path.join(projectDir, ".yarnrc.yml"), "workspaceRoot: .\n"),
       },
     }
   ))
@@ -90,12 +90,24 @@ test("yarn workspace", ({ expect }) =>
       projectDir: "packages/test-app",
     },
     {
-      isInstallDepsBefore: true,
-      projectDirCreated: projectDir =>
-        Promise.all([
-          modifyPackageJson(projectDir, data => packageConfig(data, yarnVersion), false),
-          modifyPackageJson(path.join(projectDir, "packages", "test-app"), data => packageConfig(data, yarnVersion), false),
-        ]),
+isInstallDepsBefore: true,
+      projectDirCreated: async projectDir => {
+        await modifyPackageJson(
+          projectDir,
+          data => {
+            data.packageManager = yarnVersion
+          },
+          false
+        )
+        await modifyPackageJson(projectDir, data => packageConfig(data, yarnVersion), true)
+        await writeFile(path.join(projectDir, "yarn.lock"), "")
+        await writeFile(path.join(projectDir, "app", "yarn.lock"), "")
+        await copyFile(path.join(getFixtureDir(), ".pnp.cjs"), path.join(projectDir, ".pnp.cjs"))
+        await rm(path.join(projectDir, ".yarnrc.yml"))
+        execSync("yarn install", { cwd: projectDir, stdio: "inherit" })
+        // execSync("yarn install", { cwd: path.join(projectDir, "app"), stdio: "inherit" })
+        // await writeFile(path.join(projectDir, ".yarnrc.yml"), "workspaceRoot: .\n"),
+      },
     }
   ))
 // yarn berry workspace
@@ -109,18 +121,23 @@ test("yarn berry workspace", ({ expect }) =>
     },
     {
       isInstallDepsBefore: true,
-      projectDirCreated: projectDir =>
-        Promise.all([
-          modifyPackageJson(projectDir, data => packageConfig(data, yarnBerryVersion), false),
-          // modifyPackageJson(
-          //   path.join(projectDir, "packages", "test-app"),
-          //   data => {
-          //     data.packageManager = yarnBerryVersion
-          //   },
-          //   false
-          // ),
-          // fs.writeFile(path.join(projectDir, ".yarnrc.yml"), "nodeLinker: node-modules\n"),
-        ]),
+      projectDirCreated: async projectDir => {
+        await modifyPackageJson(
+          projectDir,
+          data => {
+            data.packageManager = yarnVersion
+          },
+          false
+        )
+        await modifyPackageJson(projectDir, data => packageConfig(data, yarnVersion), true)
+        await writeFile(path.join(projectDir, "yarn.lock"), "")
+        await writeFile(path.join(projectDir, "app", "yarn.lock"), "")
+        await copyFile(path.join(getFixtureDir(), ".pnp.cjs"), path.join(projectDir, ".pnp.cjs"))
+        await rm(path.join(projectDir, ".yarnrc.yml"))
+        execSync("yarn install", { cwd: projectDir, stdio: "inherit" })
+        // execSync("yarn install", { cwd: path.join(projectDir, "app"), stdio: "inherit" })
+        // await writeFile(path.join(projectDir, ".yarnrc.yml"), "workspaceRoot: .\n"),
+      },
     }
   ))
 // yarn multi-package workspace

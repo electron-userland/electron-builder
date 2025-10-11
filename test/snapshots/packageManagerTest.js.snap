@@ -1,5 +1,11 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
+exports[`npm 1`] = `
+{
+  "linux": [],
+}
+`;
+
 exports[`package.json => packageManager > npm 1`] = `
 {
   "linux": [],
@@ -12,7 +18,19 @@ exports[`package.json => packageManager > pnpm 1`] = `
 }
 `;
 
+exports[`pnpm 1`] = `
+{
+  "linux": [],
+}
+`;
+
 exports[`yarn 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`yarn berry 1`] = `
 {
   "linux": [],
 }

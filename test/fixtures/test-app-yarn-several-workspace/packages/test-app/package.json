@@ -19,8 +19,8 @@
     }
   },
   "dependencies": {
-    "ms": "2.0.0",
     "electron-log": "2.2.9",
-    "foo": "*"
+    "foo": "*",
+    "ms": "2.0.0"
   }
 }
