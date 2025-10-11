@@ -35,3 +35,27 @@ exports[`yarn berry 1`] = `
   "linux": [],
 }
 `;
+
+exports[`yarn berry multi-package workspace 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`yarn berry workspace 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`yarn multi-package workspace 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`yarn workspace 1`] = `
+{
+  "linux": [],
+}
+`;
