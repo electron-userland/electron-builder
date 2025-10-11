@@ -8,6 +8,7 @@ import * as fs from "fs/promises"
 import { mkdir, readdir } from "fs/promises"
 import { Lazy } from "lazy-val"
 import * as path from "path"
+import * as os from "os"
 import { AppInfo } from "./appInfo"
 import { CertType, CodeSigningInfo, createKeychain, CreateKeychainOptions, findIdentity, isSignAllowed, removeKeychain, reportError, sign } from "./codeSign/macCodeSign"
 import { DIR_TARGET, Platform, Target } from "./core"
@@ -537,6 +538,14 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
         // Create and setup the icns file
         appPlist.CFBundleIconFile = "Icon"
         await fs.writeFile(path.join(resourcesPath, "Icon.icns"), icnsFile)
+
+        // Override configuration to use the generated icns file for compatibility
+        const tempDir = await fs.mkdtemp(path.resolve(os.tmpdir(), "icon-compile-"))
+        const tempIcnsFile = path.resolve(tempDir, "Icon.icns")
+        await fs.writeFile(tempIcnsFile, icnsFile)
+
+        // @ts-expect-error - this is an override for compatibility
+        this.platformSpecificBuildOptions.icon = tempIcnsFile
       }
     }
 
