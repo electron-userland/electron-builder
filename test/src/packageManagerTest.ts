@@ -35,14 +35,14 @@ test.only("yarn", ({ expect }) =>
           modifyPackageJson(
             projectDir,
             data => {
-              data.packageManager = yarnBerryVersion
+              data.packageManager = yarnVersion
               // data.workspaceRoot = data.workspaceRoot || ["app"]
             },
             false
           ),
-          modifyPackageJson(projectDir, data => packageConfig(data, yarnBerryVersion), true),
-          // writeFile(path.join(projectDir, "yarn.lock"), ""),
-          // writeFile(path.join(projectDir, "app", "yarn.lock"), ""),
+          modifyPackageJson(projectDir, data => packageConfig(data, yarnVersion), true),
+          writeFile(path.join(projectDir, "yarn.lock"), ""),
+          writeFile(path.join(projectDir, "app", "yarn.lock"), ""),
           // writeFile(path.join(projectDir, ".yarnrc.yml"), "workspaceRoot: .\n"),
         ]),
     }
@@ -60,6 +60,8 @@ test("yarn berry", ({ expect }) =>
       projectDirCreated: projectDir =>
         Promise.all([
           modifyPackageJson(projectDir, data => packageConfig(data, yarnBerryVersion), true),
+                    writeFile(path.join(projectDir, "yarn.lock"), ""),
+          writeFile(path.join(projectDir, "app", "yarn.lock"), ""),
           // fs.writeFile(path.join(projectDir, ".yarnrc.yml"), "nodeLinker: node-modules\n"),
         ]),
     }
