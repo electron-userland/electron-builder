@@ -20,6 +20,7 @@ export default [{
       "**/out",
       // used for CLI
       "**/main.js",
+      "packages/app-builder-lib/helpers",
       "packages/electron-builder/cli.js",
       "packages/electron-builder/install-app-deps.js"
     ],
