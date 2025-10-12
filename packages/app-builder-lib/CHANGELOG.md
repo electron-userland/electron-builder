@@ -1,5 +1,34 @@
 # app-builder-lib
 
+## 26.1.0
+
+### Minor Changes
+
+- [#9263](https://github.com/electron-userland/electron-builder/pull/9263) [`08773afadfe10911ed1dff084fefe1024c5a74d8`](https://github.com/electron-userland/electron-builder/commit/08773afadfe10911ed1dff084fefe1024c5a74d8) Thanks [@bimusiek](https://github.com/bimusiek)! - feat: Expanding `${arch}` macro properly for `mac.binaries` in case of native node packages for unpacked files for macos `universal` target
+
+- [#9209](https://github.com/electron-userland/electron-builder/pull/9209) [`6fd391d9e8390c00c8b0674d8ac3a5b7b6f0f19f`](https://github.com/electron-userland/electron-builder/commit/6fd391d9e8390c00c8b0674d8ac3a5b7b6f0f19f) Thanks [@daihere1993](https://github.com/daihere1993)! - feat: Support gitlab publisher
+
+### Patch Changes
+
+- [#9299](https://github.com/electron-userland/electron-builder/pull/9299) [`9f06a859f9c82b305d0a43c5b6e8c47d1c7451f1`](https://github.com/electron-userland/electron-builder/commit/9f06a859f9c82b305d0a43c5b6e8c47d1c7451f1) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: removes dynamic eval and utilizes a js helper file for trying `await import` and `require` that is then copied into the final npm package
+
+- [#9301](https://github.com/electron-userland/electron-builder/pull/9301) [`85cb4d031a060976b2519665b98294bb3c735aa0`](https://github.com/electron-userland/electron-builder/commit/85cb4d031a060976b2519665b98294bb3c735aa0) Thanks [@mmaietta](https://github.com/mmaietta)! - chore(deps): updating semver to 7.7.2
+
+- [#9293](https://github.com/electron-userland/electron-builder/pull/9293) [`e5f5799fbb193a7a8700fcaaf1ab9e79c9c694ce`](https://github.com/electron-userland/electron-builder/commit/e5f5799fbb193a7a8700fcaaf1ab9e79c9c694ce) Thanks [@drivron](https://github.com/drivron)! - fix: incorrect cache name set when ELECTRON_BUILDER_CACHE env var is present
+
+- [#9274](https://github.com/electron-userland/electron-builder/pull/9274) [`38c2085e9a344812d32611d197d1df66d6644b45`](https://github.com/electron-userland/electron-builder/commit/38c2085e9a344812d32611d197d1df66d6644b45) Thanks [@beyondkmp](https://github.com/beyondkmp)! - fix: Optional dep's path cannot find in newest npm
+
+- [#9262](https://github.com/electron-userland/electron-builder/pull/9262) [`c51f96272517c08a09504445fb31e61326e0c381`](https://github.com/electron-userland/electron-builder/commit/c51f96272517c08a09504445fb31e61326e0c381) Thanks [@beyondkmp](https://github.com/beyondkmp)! - fix: enhance package manager detection to support Yarn Berry (#9261)
+
+- [#9285](https://github.com/electron-userland/electron-builder/pull/9285) [`193abcf78691b145dd1f406ac5521e88beec0a5c`](https://github.com/electron-userland/electron-builder/commit/193abcf78691b145dd1f406ac5521e88beec0a5c) Thanks [@mmaietta](https://github.com/mmaietta)! - chore(deps): update electron/rebuild to resolve node-gyp dependency issue
+
+- Updated dependencies [[`6fd391d9e8390c00c8b0674d8ac3a5b7b6f0f19f`](https://github.com/electron-userland/electron-builder/commit/6fd391d9e8390c00c8b0674d8ac3a5b7b6f0f19f)]:
+  - builder-util-runtime@9.5.0
+  - electron-publish@26.1.0
+  - dmg-builder@26.1.0
+  - electron-builder-squirrel-windows@26.1.0
+  - builder-util@26.1.0
+
 ## 26.0.20
 
 ### Patch Changes
