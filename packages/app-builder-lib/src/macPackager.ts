@@ -512,15 +512,19 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
     const isIconComposer = typeof configuredIcon === "string" && configuredIcon.toLowerCase().endsWith(".icon")
 
     // Bundle legacy `icns` format
-    const icon = isIconComposer ? null : await this.getIconPath()
-    if (icon != null) {
+    const setIcnsFile = async (iconPath: string) => {
       const oldIcon = appPlist.CFBundleIconFile
       if (oldIcon != null) {
         await unlinkIfExists(path.join(resourcesPath, oldIcon))
       }
       const iconFileName = "icon.icns"
       appPlist.CFBundleIconFile = iconFileName
-      await copyFile(icon, path.join(resourcesPath, iconFileName))
+      await copyFile(iconPath, path.join(resourcesPath, iconFileName))
+    }
+
+    const icon = isIconComposer ? null : await this.getIconPath()
+    if (icon != null) {
+      await setIcnsFile(icon)
     }
     appPlist.CFBundleName = appInfo.productName
     appPlist.CFBundleDisplayName = appInfo.productName
@@ -535,17 +539,15 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
         appPlist.CFBundleIconName = "Icon"
         await fs.writeFile(path.join(resourcesPath, "Assets.car"), assetCatalog)
 
-        // Create and setup the icns file
-        appPlist.CFBundleIconFile = "Icon"
-        await fs.writeFile(path.join(resourcesPath, "Icon.icns"), icnsFile)
-
         // Override configuration to use the generated icns file for compatibility
         const tempDir = await fs.mkdtemp(path.resolve(os.tmpdir(), "icon-compile-"))
         const tempIcnsFile = path.resolve(tempDir, "Icon.icns")
         await fs.writeFile(tempIcnsFile, icnsFile)
-
         // @ts-expect-error - this is an override for compatibility
         this.platformSpecificBuildOptions.icon = tempIcnsFile
+
+        // Setup the icns file
+        await setIcnsFile(tempIcnsFile)
       }
     }
 
