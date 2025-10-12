@@ -2,7 +2,21 @@ import { notarize } from "@electron/notarize"
 import { NotarizeOptionsNotaryTool, NotaryToolKeychainCredentials } from "@electron/notarize/lib/types"
 import { PerFileSignOptions, SignOptions } from "@electron/osx-sign/dist/cjs/types"
 import { Identity } from "@electron/osx-sign/dist/cjs/util-identities"
-import { Arch, AsyncTaskManager, copyFile, deepAssign, exec, getArchSuffix, InvalidConfigurationError, log, orIfFileNotExist, statOrNull, unlinkIfExists, use } from "builder-util"
+import {
+  Arch,
+  AsyncTaskManager,
+  copyFile,
+  deepAssign,
+  exec,
+  exists,
+  getArchSuffix,
+  InvalidConfigurationError,
+  log,
+  orIfFileNotExist,
+  statOrNull,
+  unlinkIfExists,
+  use,
+} from "builder-util"
 import { MemoLazy, Nullish } from "builder-util-runtime"
 import * as fs from "fs/promises"
 import { mkdir, readdir } from "fs/promises"
@@ -164,6 +178,14 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
           `packaging`
         )
         const appFile = `${this.appInfo.productFilename}.app`
+
+        // Make sure the Assets.car file is the same for both architectures
+        const sourceCatalogPath = path.join(x64AppOutDir, appFile, "Contents/Resources/Assets.car")
+        if (await exists(sourceCatalogPath)) {
+          const targetCatalogPath = path.join(arm64AppOutPath, appFile, "Contents/Resources/Assets.car")
+          await fs.copyFile(sourceCatalogPath, targetCatalogPath)
+        }
+
         const { makeUniversalApp } = require("@electron/universal")
         await makeUniversalApp({
           x64AppPath: path.join(x64AppOutDir, appFile),
