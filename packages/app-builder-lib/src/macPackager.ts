@@ -540,7 +540,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
         await fs.writeFile(path.join(resourcesPath, "Assets.car"), assetCatalog)
 
         // Override configuration to use the generated icns file for compatibility
-        const tempDir = await fs.mkdtemp(path.resolve(os.tmpdir(), "icon-compile-"))
+        const tempDir = await fs.mkdtemp(path.resolve(os.tmpdir(), "icns-storage"))
         const tempIcnsFile = path.resolve(tempDir, "Icon.icns")
         await fs.writeFile(tempIcnsFile, icnsFile)
         // @ts-expect-error - this is an override for compatibility

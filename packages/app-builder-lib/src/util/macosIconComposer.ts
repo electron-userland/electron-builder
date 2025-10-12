@@ -19,7 +19,7 @@ export async function generateAssetCatalogForIcon(inputPath: string) {
     throw new Error(`Unsupported actool version. Must be on actool 26.0.0 or higher but found ${acToolVersion}. Install XCode 26 or higher to get a supported version of actool.`)
   }
 
-  const tmpDir = await fs.mkdtemp(path.resolve(os.tmpdir(), "icon-compile-"))
+  const tmpDir = await fs.mkdtemp(path.resolve(os.tmpdir(), "icon-compile"))
   const iconPath = path.resolve(tmpDir, "Icon.icon")
   const outputPath = path.resolve(tmpDir, "out")
 
