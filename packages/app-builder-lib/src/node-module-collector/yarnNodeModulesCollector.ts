@@ -3,14 +3,15 @@ import * as fs from "fs-extra"
 import * as path from "path"
 import { NodeModulesCollector } from "./nodeModulesCollector"
 import { PM } from "./packageManager"
-import { Dependency, YarnDependency, DependencyGraph } from "./types"
+import { Dependency, YarnDependency } from "./types"
 import { execSync } from "child_process"
+import { log } from "builder-util"
+import { NpmNodeModulesCollector } from "./npmNodeModulesCollector"
 
 export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependency, string> {
   public readonly installOptions = { manager: PM.YARN, lockfile: "yarn.lock" }
-  protected productionGraph: DependencyGraph = {}
-  protected version: string
-  protected isPnP: boolean
+  private version: string
+  private isPnP: boolean
 
   constructor(rootDir: string, tempDirManager: import("builder-util").TmpDir) {
     super(rootDir, tempDirManager)
@@ -24,7 +25,8 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
     if (this.version.startsWith("1.")) {
       return ["list", "--production", "--json", "--depth=Infinity", "--no-progress"]
     }
-    return []
+    log.debug({ version: this.version, isPnP: this.isPnP }, "Yarn version detected. Expected `pnp.cjs` for PnP or node_modules linker for non-PnP.")
+    throw new Error(`Yarn version ${this.version} is not supported for CLI tree extraction. Use PnP or node_modules linker instead.`)
   }
 
   protected async getDependenciesTree(): Promise<YarnDependency> {
@@ -65,6 +67,10 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
     const parsed = lines.find((l: any) => l.type === "tree")?.data?.trees
     if (!parsed) {
       throw new Error(`Failed to extract Yarn tree: no "type":"tree" line found in \`yarn list\` output`)
+    }
+
+    if (parsed.length === 0) {
+      return { name: ".", version: "unknown", path: this.rootDir }
     }
 
     return this.normalizeTree(parsed, this.rootDir)
@@ -111,26 +117,20 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
     return parseNode(data, cwd)
   }
 
-  protected collectAllDependencies(tree: Dependency<YarnDependency, string>): void {
-    const visit = (node: Dependency<YarnDependency, string>, parentId?: string) => {
-      const deps = node.dependencies || {}
-      for (const [name, dep] of Object.entries(deps)) {
-        const depId = `${name}@${dep.version}`
-        if (!this.productionGraph[depId]) this.productionGraph[depId] = { dependencies: [] }
-
-        // recurse
-        visit(dep, depId)
-
-        if (parentId) {
-          const parent = this.productionGraph[parentId] ?? { dependencies: [] }
-          if (!parent.dependencies.includes(depId)) parent.dependencies.push(depId)
-          this.productionGraph[parentId] = parent
-        }
-      }
+  protected collectAllDependencies(tree: YarnDependency) {
+    // Collect regular dependencies
+    for (const [key, value] of Object.entries(tree.dependencies || {})) {
+      this.allDependencies.set(`${key}@${value.version}`, value)
+      this.collectAllDependencies(value)
     }
 
-    visit(tree)
+    // Collect optional dependencies if they exist
+    // for (const [key, value] of Object.entries(tree.optionalDependencies || {})) {
+    //   this.allDependencies.set(`${key}@${value.version}`, value)
+    //   this.collectAllDependencies(value)
+    // }
   }
+
 
   protected extractProductionDependencyGraph(tree: Dependency<YarnDependency, string>, dependencyId: string): void {
     if (this.productionGraph[dependencyId]) return

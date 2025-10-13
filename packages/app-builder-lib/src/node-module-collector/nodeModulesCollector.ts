@@ -7,6 +7,7 @@ import { getPackageManagerCommand, PM } from "./packageManager"
 import { exec, spawn } from "child_process"
 import { promisify } from "util"
 import { createWriteStream } from "fs"
+import { r } from "tar"
 
 const execAsync = promisify(exec)
 
@@ -58,8 +59,10 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
         try {
           return this.parseDependenciesTree(dependencies)
         } catch (error: any) {
-          log.debug({ message: error.message, stack: error.stack, shellOutput: dependencies }, "error parsing dependencies tree")
-          throw new Error(`Failed to parse dependencies tree: ${error.message || error.stack}. Use DEBUG=electron-builder env var to see the dependency query output.`)
+          log.debug({ message: error.message, stack: error.stack, shellOutput: dependencies, cwd: this.rootDir }, "error parsing dependencies tree")
+          throw new Error(
+            `Failed to parse dependencies tree in ${this.rootDir} -> ${error.message || error.stack}. Use DEBUG=electron-builder env var to see the dependency query output.`
+          )
         }
       },
       {
@@ -68,14 +71,14 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
         backoff: 2000,
         shouldRetry: async (error: any) => {
           if (!(await exists(tempOutputFile))) {
-            log.error({ error: error.message || error.stack, tempOutputFile }, "error getting dependencies tree, unable to find output; retrying")
+            log.error({ error: error.message || error.stack, tempOutputFile, cwd: this.rootDir }, "error getting dependencies tree, unable to find output; retrying")
             return true
           }
           const dependencies = await fs.readFile(tempOutputFile, { encoding: "utf8" })
           if (dependencies.trim().length === 0 || error.message?.includes("Unexpected end of JSON input")) {
             // If the output file is empty or contains invalid JSON, we retry
             // This can happen if the command fails or if the output is not as expected
-            log.error({ error: error.message || error.stack, tempOutputFile }, "dependency tree output file is empty, retrying")
+            log.error({ error: error.message || error.stack, tempOutputFile, cwd: this.rootDir }, "dependency tree output file is empty, retrying")
             return true
           }
           return false

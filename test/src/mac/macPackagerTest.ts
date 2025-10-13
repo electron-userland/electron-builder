@@ -136,6 +136,7 @@ test.ifMac("yarn two package.json w/ native module", ({ expect }) =>
       },
     },
     {
+      isInstallDepsBefore: true,
       signed: false,
       packed: async context => await verifySmartUnpack(expect, context.getResources(Platform.MAC, Arch.universal)),
     }

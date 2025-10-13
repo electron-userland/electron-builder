@@ -14,9 +14,7 @@ import {
   orNullIfFileNotExist,
   safeStringifyJson,
   serializeToYaml,
-  spawn,
   TmpDir,
-  use,
 } from "builder-util"
 import { CancellationToken } from "builder-util-runtime"
 import { chmod, mkdirs, outputFile } from "fs-extra"
@@ -47,7 +45,6 @@ import { PACKAGE_VERSION } from "./version"
 import { AsyncEventEmitter, HandlerType } from "./util/asyncEventEmitter"
 import asyncPool from "tiny-async-pool"
 import { detectPackageManager, findWorkspaceRoot, PM } from "./node-module-collector"
-import { execSync } from "child_process"
 
 async function createFrameworkInfo(configuration: Configuration, packager: Packager): Promise<Framework> {
   let framework = configuration.framework
