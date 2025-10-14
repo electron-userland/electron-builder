@@ -7,7 +7,17 @@ import * as path from "node:path"
 import * as plist from "plist"
 import * as semver from "semver"
 
-export async function generateAssetCatalogForIcon(inputPath: string) {
+export interface AssetCatalogResult {
+  assetCatalog: Buffer<ArrayBufferLike>
+  icnsFile: Buffer<ArrayBufferLike>
+}
+
+/**
+ * Generates an asset catalog and extra assets that are useful for packaging the app.
+ * @param inputPath The path to the `.icon` file
+ * @returns The asset catalog and extra assets
+ */
+export async function generateAssetCatalogForIcon(inputPath: string): Promise<AssetCatalogResult> {
   const acToolVersionOutput = await spawn("actool", ["--version"])
   const versionInfo = plist.parse(acToolVersionOutput) as Record<string, Record<string, string>>
   if (!versionInfo || !versionInfo["com.apple.actool.version"] || !versionInfo["com.apple.actool.version"]["short-bundle-version"]) {

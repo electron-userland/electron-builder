@@ -22,7 +22,6 @@ import * as fs from "fs/promises"
 import { mkdir, readdir } from "fs/promises"
 import { Lazy } from "lazy-val"
 import * as path from "path"
-import * as os from "os"
 import { AppInfo } from "./appInfo"
 import { CertType, CodeSigningInfo, createKeychain, CreateKeychainOptions, findIdentity, isSignAllowed, removeKeychain, reportError, sign } from "./codeSign/macCodeSign"
 import { DIR_TARGET, Platform, Target } from "./core"
@@ -37,7 +36,6 @@ import { isMacOsHighSierra } from "./util/macosVersion"
 import { getTemplatePath } from "./util/pathManager"
 import { resolveFunction } from "./util/resolve"
 import { expandMacro as doExpandMacro } from "./util/macroExpander"
-import { generateAssetCatalogForIcon } from "./util/macosIconComposer"
 
 export type CustomMacSignOptions = SignOptions
 export type CustomMacSign = (configuration: CustomMacSignOptions, packager: MacPackager) => Promise<void>
@@ -533,7 +531,11 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
     const configuredIcon = this.platformSpecificBuildOptions.icon
     const isIconComposer = typeof configuredIcon === "string" && configuredIcon.toLowerCase().endsWith(".icon")
 
-    // Bundle legacy `icns` format
+    // Set the app name
+    appPlist.CFBundleName = appInfo.productName
+    appPlist.CFBundleDisplayName = appInfo.productName
+
+    // Bundle legacy `icns` format - this should also run when `.icon` is provided
     const setIcnsFile = async (iconPath: string) => {
       const oldIcon = appPlist.CFBundleIconFile
       if (oldIcon != null) {
@@ -544,32 +546,20 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
       await copyFile(iconPath, path.join(resourcesPath, iconFileName))
     }
 
-    const icon = isIconComposer ? null : await this.getIconPath()
-    if (icon != null) {
-      await setIcnsFile(icon)
+    const icnsFilePath = await this.getIconPath()
+    if (icnsFilePath != null) {
+      await setIcnsFile(icnsFilePath)
     }
-    appPlist.CFBundleName = appInfo.productName
-    appPlist.CFBundleDisplayName = appInfo.productName
 
     // Bundle new `icon` format
     if (isIconComposer && configuredIcon) {
       const iconComposerPath = await this.getResource(configuredIcon)
       if (iconComposerPath) {
-        const { assetCatalog, icnsFile } = await generateAssetCatalogForIcon(iconComposerPath)
+        const { assetCatalog } = await this.generateAssetCatalogData(iconComposerPath)
 
         // Create and setup the asset catalog
         appPlist.CFBundleIconName = "Icon"
         await fs.writeFile(path.join(resourcesPath, "Assets.car"), assetCatalog)
-
-        // Override configuration to use the generated icns file for compatibility
-        const tempDir = await fs.mkdtemp(path.resolve(os.tmpdir(), "icns-storage"))
-        const tempIcnsFile = path.resolve(tempDir, "Icon.icns")
-        await fs.writeFile(tempIcnsFile, icnsFile)
-        // @ts-expect-error - this is an override for compatibility
-        this.platformSpecificBuildOptions.icon = tempIcnsFile
-
-        // Setup the icns file
-        await setIcnsFile(tempIcnsFile)
       }
     }
 
