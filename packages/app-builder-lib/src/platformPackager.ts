@@ -863,9 +863,17 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       path.resolve(this.projectDir, output, `.icon-${outputFormat}`),
     ]
     for (const source of sources) {
+      if (source.endsWith(".icon")) {
+        // Ignore .icon files: they will cause the format conversion to fail
+        continue
+      }
       args.push("--input", source)
     }
     for (const source of fallbackSources) {
+      if (source.endsWith(".icon")) {
+        // Ignore .icon files: they will cause the format conversion to fail
+        continue
+      }
       args.push("--fallback-input", source)
     }
 
