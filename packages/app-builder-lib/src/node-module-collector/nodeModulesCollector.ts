@@ -101,6 +101,23 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
     }
   }
 
+  protected resolveModuleDir(pkg: string, base: string): string {
+    if (pkg === ".") {
+      return base
+    }
+    try {
+      const packageJson = path.dirname(require.resolve(path.join(pkg, "package.json"), { paths: [base] }))
+      if (fs.existsSync(packageJson)) {
+        return packageJson
+      }
+    } catch {
+      // ignore, use fallback
+    }
+    const searchPath = path.join(base, "node_modules", pkg)
+    log.debug({ pkg, searchPath }, "Failed to resolve module path, falling back to manual node_modules path construction")
+    return searchPath
+  }
+
   private getTreeFromWorkspaces(tree: T): T {
     if (tree.workspaces && tree.dependencies) {
       const packageJson: Dependency<string, string> = require(path.join(this.rootDir, "package.json"))

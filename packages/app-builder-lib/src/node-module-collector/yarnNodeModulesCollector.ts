@@ -82,7 +82,7 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
       const dir = this.resolveModuleDir(name, parentDir)
       const deps: Record<string, YarnDependency> = {}
 
-      if (Array.isArray(node.children) && node.children.length > 0) {
+      if (Array.isArray(node.children)) {
         for (const child of node.children) {
           const dep = parseTree(child, dir)
           deps[dep.name] = dep
@@ -92,18 +92,35 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
       return {
         name,
         version,
-        path: dir, // alias for compatibility
+        path: dir,
         dependencies: Object.keys(deps).length ? deps : undefined,
       }
     }
 
-    return parseTree(data[0], root)
+    const dependencies = data
+      .map(i => {
+        const tree1 = parseTree(i, root)
+        return tree1
+      })
+      .reduce(
+        (acc, cur) => {
+          acc[cur.name] = cur
+          return acc
+        },
+        {} as Record<string, YarnDependency>
+      )
+    return {
+      name: ".",
+      version: "unknown",
+      path: root,
+      dependencies,
+    }
   }
 
   private normalizeNpmLikeTree(data: any, cwd: string): YarnDependency {
     const parseNode = (node: any, parentDir: string): YarnDependency => {
       const name = node.name
-      const version = node.version ?? "unknown"
+      const version = node.version
       const dir = this.resolveModuleDir(name, parentDir)
       const deps: Record<string, YarnDependency> = {}
 
@@ -131,22 +148,67 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
     // }
   }
 
-
-  protected extractProductionDependencyGraph(tree: Dependency<YarnDependency, string>, dependencyId: string): void {
-    if (this.productionGraph[dependencyId]) return
-    if (Object.keys(this.productionGraph).length === 0) this.collectAllDependencies(tree)
-
-    const deps = tree.dependencies || {}
-    const childIds: string[] = []
-
-    for (const [packageName, dependency] of Object.entries(deps)) {
-      const childId = `${packageName}@${dependency.version}`
-      childIds.push(childId)
-      this.extractProductionDependencyGraph(dependency, childId)
+  extractProductionDependencyGraph(tree: YarnDependency, dependencyId: string): void {
+    if (this.productionGraph[dependencyId]) {
+      return
     }
 
-    this.productionGraph[dependencyId] = { dependencies: childIds }
+    const p = path.normalize(this.resolveModuleDir(tree.name, tree.path))
+    const packageJson: Dependency<string, string> = require(path.join(p, "package.json"))
+    const prodDependencies = { ...packageJson.dependencies, ...packageJson.optionalDependencies }
+
+    const deps = { ...(tree.dependencies || {}) } // ...(tree.optionalDependencies || {}) }
+    this.productionGraph[dependencyId] = { dependencies: [] }
+    const dependencies = Object.entries(deps)
+      .filter(([packageName, dependency]) => {
+        // First check if it's in production dependencies
+        if (!prodDependencies[packageName]) {
+          return false
+        }
+
+        // Then check if optional dependency path exists
+        if (packageJson.optionalDependencies && packageJson.optionalDependencies[packageName] && !fs.existsSync(dependency.path)) {
+          log.debug(null, `Optional dependency ${packageName}@${dependency.version} path doesn't exist: ${dependency.path}`)
+          return false
+        }
+
+        return true
+      })
+      .map(([packageName, dependency]) => {
+        const childDependencyId = `${packageName}@${dependency.version}`
+        this.extractProductionDependencyGraph(dependency, childDependencyId)
+        return childDependencyId
+      })
+
+    this.productionGraph[dependencyId] = { dependencies }
   }
+
+  // protected extractProductionDependencyGraph(tree: YarnDependency, dependencyId: string): void {
+  //   if (this.productionGraph[dependencyId]) {
+  //     return
+  //   }
+  //   // if (Object.keys(this.productionGraph).length === 0) this.collectAllDependencies(tree)
+
+  //   // const deps = tree.dependencies || {}
+  //   // const childIds: string[] = []
+
+  //   // for (const [packageName, dependency] of Object.entries(deps)) {
+  //   //   const childId = `${packageName}@${dependency.version}`
+  //   //   childIds.push(childId)
+  //   //   this.extractProductionDependencyGraph(dependency, childId)
+  //   // }
+
+  //   // this.productionGraph[dependencyId] = { dependencies: childIds }
+
+  //       const productionDeps = Object.entries(resolvedDeps)
+  //     .filter(([packageName]) => prodDependencies[packageName])
+  //     .map(([packageName, dependency]) => {
+  //       const childDependencyId = `${packageName}@${dependency.version}`
+  //       this.extractProductionDependencyGraph(dependency, childDependencyId)
+  //       return childDependencyId
+  //     })
+  //   this.productionGraph[dependencyId] = { dependencies: productionDeps }
+  // }
 
   private buildNodeModulesTreeManually(baseDir: string): YarnDependency {
     const rootPkg = fs.readJSONSync(path.join(baseDir, "package.json"))
@@ -160,7 +222,7 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
         if (name.startsWith(".")) continue
         const depPath = path.join(nodeModules, name)
         const pkgJson = path.join(depPath, "package.json")
-        if (!fs.existsSync(pkgJson)) continue
+        // if (!fs.existsSync(pkgJson)) continue
         const pkg = fs.readJSONSync(pkgJson)
         deps[name] = { name: pkg.name, version: pkg.version, path: depPath, dependencies: traverse(depPath) }
       }
@@ -168,14 +230,6 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
     }
     const rootNode: YarnDependency = { name: rootPkg.name, version: rootPkg.version, path: baseDir, dependencies: traverse(baseDir) }
     return rootNode
-  }
-
-  private resolveModuleDir(pkg: string, base: string): string {
-    try {
-      return path.dirname(require.resolve(path.join(pkg, "package.json"), { paths: [base] }))
-    } catch {
-      return path.join(base, "node_modules", pkg)
-    }
   }
 
   private getYarnVersion(): string {
