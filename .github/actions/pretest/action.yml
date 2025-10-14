@@ -1,5 +1,5 @@
 name: 'Setup Tests'
-description: 'Set up pnpm, node w/ pnpm cache, install and audit deps, compile, and restore electron cache'
+description: 'Set up pnpm, node w/ pnpm cache, install deps, compile, and restore electron cache'
 inputs:
   cache-key:
     description: 'The key to the electron cache'
@@ -7,18 +7,13 @@ inputs:
   cache-path:
     description: 'The path to the electron cache'
     required: true
-  version:
-    description: 'The pnpm version to use'
-    required: false
-    default: 9.4.0
 
 runs:
   using: 'composite'
   steps:
-    - name: Setup pnpm
-      uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
-      with:
-        version: ${{ inputs.version }}
+    - name: Enable Corepack for pnpm
+      run: corepack enable
+      shell: bash
 
     - name: Setup python
       uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
