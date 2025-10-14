@@ -12,24 +12,55 @@ export interface AssetCatalogResult {
   icnsFile: Buffer<ArrayBufferLike>
 }
 
+const INVALID_ACTOOL_VERSION_ERROR = new Error(
+  "Failed to check actool version. Is Xcode 26 or higher installed? See output of the `actool --version` CLI command for more details."
+)
+
+async function checkActoolVersion(tmpDir: string) {
+  const acToolOutputFileName = path.resolve(tmpDir, "actool.log")
+
+  let versionInfo: Record<string, Record<string, string>> | undefined = undefined
+
+  try {
+    const acToolOutputFile = await fs.open(acToolOutputFileName, "w")
+    await spawn("actool", ["--version"], { stdio: ["ignore", acToolOutputFile.fd, acToolOutputFile.fd] })
+    const acToolVersionOutput = await fs.readFile(acToolOutputFileName, "utf8")
+    versionInfo = plist.parse(acToolVersionOutput) as Record<string, Record<string, string>>
+  } catch {
+    throw INVALID_ACTOOL_VERSION_ERROR
+  }
+
+  if (!versionInfo || !versionInfo["com.apple.actool.version"] || !versionInfo["com.apple.actool.version"]["short-bundle-version"]) {
+    throw INVALID_ACTOOL_VERSION_ERROR
+  }
+
+  const acToolVersion = versionInfo["com.apple.actool.version"]["short-bundle-version"]
+  if (!semver.gte(semver.coerce(acToolVersion)!, "26.0.0")) {
+    throw new Error(`Unsupported actool version. Must be on actool 26.0.0 or higher but found ${acToolVersion}. Install Xcode 26 or higher to get a supported version of actool.`)
+  }
+}
+
 /**
  * Generates an asset catalog and extra assets that are useful for packaging the app.
  * @param inputPath The path to the `.icon` file
  * @returns The asset catalog and extra assets
  */
 export async function generateAssetCatalogForIcon(inputPath: string): Promise<AssetCatalogResult> {
-  const acToolVersionOutput = await spawn("actool", ["--version"])
-  const versionInfo = plist.parse(acToolVersionOutput) as Record<string, Record<string, string>>
-  if (!versionInfo || !versionInfo["com.apple.actool.version"] || !versionInfo["com.apple.actool.version"]["short-bundle-version"]) {
-    throw new Error("Unable to query actool version. Is Xcode 26 or higher installed? See output of the `actool --version` CLI command for more details.")
+  const tmpDir = await fs.mkdtemp(path.resolve(os.tmpdir(), "icon-compile-"))
+  const cleanup = async () => {
+    await fs.rm(tmpDir, {
+      recursive: true,
+      force: true,
+    })
   }
 
-  const acToolVersion = versionInfo["com.apple.actool.version"]["short-bundle-version"]
-  if (!semver.gte(semver.coerce(acToolVersion)!, "26.0.0")) {
-    throw new Error(`Unsupported actool version. Must be on actool 26.0.0 or higher but found ${acToolVersion}. Install XCode 26 or higher to get a supported version of actool.`)
+  try {
+    await checkActoolVersion(tmpDir)
+  } catch (error) {
+    await cleanup()
+    throw error
   }
 
-  const tmpDir = await fs.mkdtemp(path.resolve(os.tmpdir(), "icon-compile"))
   const iconPath = path.resolve(tmpDir, "Icon.icon")
   const outputPath = path.resolve(tmpDir, "out")
 
@@ -74,9 +105,6 @@ export async function generateAssetCatalogForIcon(inputPath: string): Promise<As
 
     return { assetCatalog, icnsFile }
   } finally {
-    await fs.rm(tmpDir, {
-      recursive: true,
-      force: true,
-    })
+    await cleanup()
   }
 }
