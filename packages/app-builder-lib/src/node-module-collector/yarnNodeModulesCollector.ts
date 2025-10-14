@@ -148,67 +148,52 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
     // }
   }
 
-  extractProductionDependencyGraph(tree: YarnDependency, dependencyId: string): void {
-    if (this.productionGraph[dependencyId]) {
-      return
-    }
-
-    const p = path.normalize(this.resolveModuleDir(tree.name, tree.path))
-    const packageJson: Dependency<string, string> = require(path.join(p, "package.json"))
-    const prodDependencies = { ...packageJson.dependencies, ...packageJson.optionalDependencies }
-
-    const deps = { ...(tree.dependencies || {}) } // ...(tree.optionalDependencies || {}) }
-    this.productionGraph[dependencyId] = { dependencies: [] }
-    const dependencies = Object.entries(deps)
-      .filter(([packageName, dependency]) => {
-        // First check if it's in production dependencies
-        if (!prodDependencies[packageName]) {
-          return false
-        }
-
-        // Then check if optional dependency path exists
-        if (packageJson.optionalDependencies && packageJson.optionalDependencies[packageName] && !fs.existsSync(dependency.path)) {
-          log.debug(null, `Optional dependency ${packageName}@${dependency.version} path doesn't exist: ${dependency.path}`)
-          return false
-        }
-
-        return true
-      })
-      .map(([packageName, dependency]) => {
-        const childDependencyId = `${packageName}@${dependency.version}`
-        this.extractProductionDependencyGraph(dependency, childDependencyId)
-        return childDependencyId
-      })
-
-    this.productionGraph[dependencyId] = { dependencies }
-  }
-
-  // protected extractProductionDependencyGraph(tree: YarnDependency, dependencyId: string): void {
+  // extractProductionDependencyGraph(tree: YarnDependency, dependencyId: string): void {
   //   if (this.productionGraph[dependencyId]) {
   //     return
   //   }
-  //   // if (Object.keys(this.productionGraph).length === 0) this.collectAllDependencies(tree)
 
-  //   // const deps = tree.dependencies || {}
-  //   // const childIds: string[] = []
+  //   const p = path.normalize(this.resolveModuleDir(tree.name, tree.path))
+  //   const packageJson: Dependency<string, string> = require(path.join(p, "package.json"))
+  //   const prodDependencies = { ...packageJson.dependencies, ...packageJson.optionalDependencies }
 
-  //   // for (const [packageName, dependency] of Object.entries(deps)) {
-  //   //   const childId = `${packageName}@${dependency.version}`
-  //   //   childIds.push(childId)
-  //   //   this.extractProductionDependencyGraph(dependency, childId)
-  //   // }
+  //   const deps = { ...(tree.dependencies || {}) } // ...(tree.optionalDependencies || {}) }
+  //   this.productionGraph[dependencyId] = { dependencies: [] }
+  //   const dependencies = Object.entries(deps)
+  //     .filter(([packageName, dependency]) => {
+  //       // First check if it's in production dependencies
+  //       if (!prodDependencies[packageName]) {
+  //         return false
+  //       }
 
-  //   // this.productionGraph[dependencyId] = { dependencies: childIds }
+  //       // Then check if optional dependency path exists
+  //       if (packageJson.optionalDependencies?.[packageName] && !fs.existsSync(dependency.path)) {
+  //         log.debug({ packageName, version: dependency.version, path: dependency.path }, `optional dependency path doesn't exist`)
+  //         return false
+  //       }
 
-  //       const productionDeps = Object.entries(resolvedDeps)
-  //     .filter(([packageName]) => prodDependencies[packageName])
+  //       return true
+  //     })
   //     .map(([packageName, dependency]) => {
   //       const childDependencyId = `${packageName}@${dependency.version}`
   //       this.extractProductionDependencyGraph(dependency, childDependencyId)
   //       return childDependencyId
   //     })
-  //   this.productionGraph[dependencyId] = { dependencies: productionDeps }
+
+  //   this.productionGraph[dependencyId] = { dependencies }
   // }
+
+  protected extractProductionDependencyGraph(tree: YarnDependency, dependencyId: string): void {
+    if (this.productionGraph[dependencyId]) {
+      return
+    }
+    const productionDeps = Object.entries(tree.dependencies || {}).map(([packageName, dependency]) => {
+      const childDependencyId = `${packageName}@${dependency.version}`
+      this.extractProductionDependencyGraph(dependency, childDependencyId)
+      return childDependencyId
+    })
+    this.productionGraph[dependencyId] = { dependencies: productionDeps }
+  }
 
   private buildNodeModulesTreeManually(baseDir: string): YarnDependency {
     const rootPkg = fs.readJSONSync(path.join(baseDir, "package.json"))

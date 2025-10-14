@@ -38,8 +38,8 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
         }
 
         // Then check if optional dependency path exists
-        if (packageJson.optionalDependencies && packageJson.optionalDependencies[packageName] && !fs.existsSync(dependency.path)) {
-          log.debug(null, `Optional dependency ${packageName}@${dependency.version} path doesn't exist: ${dependency.path}`)
+        if (packageJson.optionalDependencies?.[packageName] && !fs.existsSync(dependency.path)) {
+          log.debug({ packageName, version: dependency.version, path: dependency.path }, `optional dependency path doesn't exist`)
           return false
         }
 

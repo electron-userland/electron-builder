@@ -114,7 +114,7 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
       // ignore, use fallback
     }
     const searchPath = path.join(base, "node_modules", pkg)
-    log.debug({ pkg, searchPath }, "Failed to resolve module path, falling back to manual node_modules path construction")
+    log.debug({ pkg, searchPath }, "failed to resolve module path, falling back to manual node_modules path construction")
     return searchPath
   }
 
