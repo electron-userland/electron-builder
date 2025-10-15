@@ -28,6 +28,12 @@ runs:
         node-version: '22'
         cache: 'pnpm'
 
+    - name: Update npm to mirror pr-release workflow environment
+      run: npm install -g npm@11.6.2
+
+    - name: Verify updated npm version
+      run: npm -v
+
     - name: Install dependencies
       run: pnpm install --frozen-lockfile
       shell: bash
