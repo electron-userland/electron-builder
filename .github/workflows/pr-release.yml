@@ -27,14 +27,8 @@ jobs:
       - name: Install dependencies
         uses: ./.github/actions/pnpm
 
-      # Auto-setup of NPM_TOKEN env var for for changesets/action
-      - name: Authenticate to npm registry
-        uses: electron/npm-trusted-auth-action@v1
-        with:
-          package-name: 'electron-builder'
-
       - name: Generate GitHub App token
-        uses: electron/github-app-auth-action@v1.1.1
+        uses: electron/github-app-auth-action@384fd19694fe7b6dcc9a684746c6976ad78228ae
         id: generate-token
         with:
           creds: ${{ secrets.RELEASE_BOT_APP_CREDS }}
@@ -48,4 +42,3 @@ jobs:
           publish: pnpm ci:publish
         env:
           GITHUB_TOKEN: ${{ steps.generate-token.outputs.token }}
-          NPM_TOKEN: ${{ env.NPM_TOKEN }}
