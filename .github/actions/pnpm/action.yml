@@ -18,9 +18,11 @@ runs:
 
     - name: Update npm to support OIDC token authentication for publishing
       run: npm install -g npm@11.6.2
+      shell: bash
 
     - name: Verify updated npm version
       run: npm -v
+      shell: bash
 
     - name: Install dependencies
       run: pnpm install --frozen-lockfile
