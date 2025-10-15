@@ -140,6 +140,7 @@ exports[`one-package 1`] = `
             "url": "Test App ßW-1.1.0.dmg",
           },
         ],
+        "minimumSystemVersion": "22.0.4",
         "path": "Test App ßW-1.1.0-mac.zip",
         "releaseDate": "@releaseDate",
         "sha512": "@sha512",
