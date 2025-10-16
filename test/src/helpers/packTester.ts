@@ -31,7 +31,7 @@ import { createLazyProductionDeps } from "app-builder-lib/out/util/packageDepend
 import { execSync } from "child_process"
 
 const packageManagerVersionMap = {
-  [PM.NPM]: { cli: "npm", version: "9" },
+  [PM.NPM]: { cli: "npm", version: "11.6.2" },
   [PM.YARN]: { cli: "yarn", version: "1.22.19" },
   [PM.YARN_BERRY]: { cli: "yarn", version: "3.5.0" },
   [PM.PNPM]: { cli: "pnpm", version: "7" },
