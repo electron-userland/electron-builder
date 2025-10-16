@@ -15,7 +15,7 @@ export const excludedNames =
   ".git,.hg,.svn,CVS,RCS,SCCS," +
   "__pycache__,.DS_Store,thumbs.db,.gitignore,.gitkeep,.gitattributes,.npmignore," +
   ".idea,.vs,.flowconfig,.jshintrc,.eslintrc,.circleci," +
-  ".yarn-integrity,.yarn-metadata.json,yarn-error.log,yarn.lock,package-lock.json,npm-debug.log,pnpm-lock.yaml," +
+  ".yarn-integrity,.yarn-metadata.json,yarn-error.log,yarn.lock,package-lock.json,npm-debug.log,pnpm-lock.yaml,bun.lock,bun.lockb" +
   "appveyor.yml,.travis.yml,circle.yml,.nyc_output,.husky,.github,electron-builder.env"
 
 export const excludedExts =
