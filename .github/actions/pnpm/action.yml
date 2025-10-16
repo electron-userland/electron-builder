@@ -5,7 +5,9 @@ runs:
   using: 'composite'
   steps:
     - name: Enable Corepack for pnpm
-      run: corepack enable
+      run: |
+        corepack enable
+        corepack prepare pnpm@10.18.0 --activate
       shell: bash
 
     - name: Setup node
@@ -13,6 +15,14 @@ runs:
       with:
         node-version: '22'
         cache: 'pnpm'
+
+    - name: Update npm to support OIDC token authentication for publishing
+      run: npm install -g npm@11.6.2
+      shell: bash
+
+    - name: Verify updated npm version
+      run: npm -v
+      shell: bash
 
     - name: Install dependencies
       run: pnpm install --frozen-lockfile

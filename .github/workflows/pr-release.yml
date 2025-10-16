@@ -9,11 +9,11 @@ env:
   HUSKY: 0 # Bypass husky commit hook for CI
 
 permissions: {}
+
 jobs:
   pr-release:
     permissions:
-      contents: write # to create release (changesets/action)
-      pull-requests: write # to create pull request (changesets/action)
+      id-token: write  # Required for OIDC token
 
     timeout-minutes: 15
     runs-on: ubuntu-latest
@@ -24,16 +24,16 @@ jobs:
           # This makes Actions fetch all Git history so that Changesets can generate changelogs with the correct commits
           fetch-depth: 0
 
-      - name: Install deps and audit
+      - name: Install dependencies
         uses: ./.github/actions/pnpm
 
-      - name: Set up NPM credentials
-        run: echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
-        env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Generate GitHub App token
+        uses: electron/github-app-auth-action@384fd19694fe7b6dcc9a684746c6976ad78228ae
+        id: generate-token
+        with:
+          creds: ${{ secrets.RELEASE_BOT_APP_CREDS }}
 
       - name: Create versions PR & prepare publish
-        id: changesets
         uses: changesets/action@06245a4e0a36c064a573d4150030f5ec548e4fcc # v1.4.1
         with:
           version: pnpm ci:version
@@ -41,5 +41,4 @@ jobs:
           title: 'chore(deploy): Release'
           publish: pnpm ci:publish
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          GITHUB_TOKEN: ${{ steps.generate-token.outputs.token }}
