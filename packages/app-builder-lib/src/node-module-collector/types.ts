@@ -26,6 +26,16 @@ export interface NpmDependency extends Dependency<NpmDependency, string> {
   }
 }
 
+// in types.ts file
+
+type BunManifest = {
+  manifestDependencies: Record<string, string>
+  manifestOptionalDependencies: Record<string, string>
+}
+
+
+interface BunDependency extends Dependency<BunDependency, BunDependency>, BunManifest {}
+
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface YarnDependency extends Dependency<YarnDependency, string> {}
 

@@ -38,9 +38,14 @@ const packageManagerVersionMap = {
   [PM.BUN]: { cli: "bun", version: "1" },
 }
 
-export function getPackageManagerWithVersion(pm: PM, version: string | undefined): string {
+export function getPackageManagerWithVersion(pm: PM, version: string | undefined) {
   const packageManagerInfo = packageManagerVersionMap[pm]
-  return version == null ? `${packageManagerInfo.cli}@${packageManagerInfo.version}` : `${packageManagerInfo.cli}@${version}`
+  const prepare = version == null ? `${packageManagerInfo.cli}@${packageManagerInfo.version}` : `${packageManagerInfo.cli}@${version}`
+  return {
+    cli: packageManagerInfo.cli,
+    version: packageManagerInfo.version,
+    prepareEntry: prepare,
+  }
 }
 
 export const EXTENDED_TIMEOUT = 10 * 60 * 1000
@@ -163,15 +168,15 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
         YARN_IGNORE_PATH: "1", // ignore globally installed yarn binaries
         npm_config_cache: tmpCache, // prevent npm fallback caching
       }
-      const manager = getPackageManagerWithVersion(pm, packageManager)
-      log.info({ manager }, "activating corepack")
+      const { cli, prepareEntry, version } = getPackageManagerWithVersion(pm, packageManager)
+      log.info({ pm, version: version }, "activating corepack")
       try {
-        execSync(`corepack enable ${manager}`, { env: runtimeEnv, cwd: projectDir, stdio: "inherit" })
+        execSync(`corepack enable ${cli}`, { env: runtimeEnv, cwd: projectDir, stdio: "inherit" })
       } catch (err: any) {
         console.warn("⚠️ Corepack enable failed (possibly already enabled):", err.message)
       }
       try {
-        execSync(`corepack prepare ${manager} --activate`, { env: runtimeEnv, cwd: projectDir, stdio: "inherit" })
+        execSync(`corepack prepare ${prepareEntry} --activate`, { env: runtimeEnv, cwd: projectDir, stdio: "inherit" })
       } catch (err: any) {
         console.warn("⚠️ Yarn prepare failed:", err.message)
       }
@@ -516,8 +521,9 @@ async function checkMacResult(expect: ExpectStatic, packager: Packager, packager
   const plistPath = path.join(packedAppDir, "Contents", "Info.plist")
   const info = await parsePlistFile<PlistObject>(plistPath)
 
+  const buildNumber = process.env.TRAVIS_BUILD_NUMBER || process.env.CIRCLE_BUILD_NUM
   expect(info).toMatchObject({
-    CFBundleVersion: info.CFBundleVersion === "50" ? "50" : `${appInfo.version}.${process.env.TRAVIS_BUILD_NUMBER || process.env.CIRCLE_BUILD_NUM}`,
+    CFBundleVersion: info.CFBundleVersion === "50" ? "50" : `${appInfo.version}${buildNumber ? "." + buildNumber : ""}`,
   })
 
   // checked manually, remove to avoid mismatch on CI server (where TRAVIS_BUILD_NUMBER is defined and different on each test run)
