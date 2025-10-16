@@ -25,15 +25,28 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
     if (this.version.startsWith("1.")) {
       return ["list", "--production", "--json", "--depth=Infinity", "--no-progress"]
     }
-    log.debug({ version: this.version, isPnP: this.isPnP }, "Yarn version detected. Expected `pnp.cjs` for PnP or node_modules linker for non-PnP.")
+    log.debug(
+      { version: this.version, isPnP: this.isPnP },
+      "Yarn version detected. Expected `pnp.cjs` for PnP or node_modules linker for non-PnP. Falling back to npm query if neither."
+    )
+    // TODO: Migrate to be a subclass of NpmNodeModulesCollector for non-PnP Yarn Berry
     throw new Error(`Yarn version ${this.version} is not supported for CLI tree extraction. Use PnP or node_modules linker instead.`)
   }
 
   protected async getDependenciesTree(): Promise<YarnDependency> {
     if (this.isPnP) {
+      log.debug({ version: this.version }, "using Yarn PnP for dependency tree extraction.")
+      // Yarn PnP
+      // Reference: https://yarnpkg.com/features/pnp
+      // Note: .pnp.cjs is not always in the project root (can be in workspace root instead)
+      // So we explicitly specify the path here to avoid issues.
+      // Also, we do not use `yarn pnpify` because it may not be available in all Yarn versions.
       const pnpFile = path.join(this.rootDir, ".pnp.cjs")
       const tree = this.getYarnPnPTree(this.rootDir, pnpFile)
-      if (tree) return tree
+      if (tree) {
+        return tree
+      }
+      log.debug({ pnpFile }, "Yarn PnP file not found or failed to load.")
       throw new Error(`Failed to extract Yarn PnP dependency tree.`)
     }
 
@@ -41,7 +54,8 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
       return super.getDependenciesTree()
     }
 
-    // Yarn Berry node_modules linker fallback
+    // Yarn Berry node_modules linker fallback. (Slower due to system ops, so we only use it as a fallback)
+    log.debug({ version: this.version }, "using manual node_modules traversal for Yarn v2+.")
     return this.buildNodeModulesTreeManually(this.rootDir)
   }
 
@@ -110,7 +124,7 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
         {} as Record<string, YarnDependency>
       )
     return {
-      name: ".",
+      name: ".", // root package name stub
       version: "unknown",
       path: root,
       dependencies,
@@ -142,10 +156,13 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
     }
 
     // Collect optional dependencies if they exist
-    // for (const [key, value] of Object.entries(tree.optionalDependencies || {})) {
-    //   this.allDependencies.set(`${key}@${value.version}`, value)
-    //   this.collectAllDependencies(value)
-    // }
+    for (const [key, value] of Object.entries(tree.optionalDependencies || {})) {
+      this.allDependencies.set(`${key}@${value}`, {
+        name: key,
+        version: value,
+        path: this.resolveModuleDir(key, tree.path),
+      })
+    }
   }
 
   // extractProductionDependencyGraph(tree: YarnDependency, dependencyId: string): void {
@@ -195,26 +212,92 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
     this.productionGraph[dependencyId] = { dependencies: productionDeps }
   }
 
-  private buildNodeModulesTreeManually(baseDir: string): YarnDependency {
-    const rootPkg = fs.readJSONSync(path.join(baseDir, "package.json"))
+  // private buildNodeModulesTreeManually(baseDir: string): YarnDependency {
+  //   const rootPkg = fs.readJSONSync(path.join(baseDir, "package.json"))
 
-    const traverse = (pkgDir: string): Record<string, YarnDependency> | undefined => {
-      const nodeModules = path.join(pkgDir, "node_modules")
-      if (!fs.existsSync(nodeModules)) return undefined
+  //   const traverse = (pkgDir: string): Record<string, YarnDependency> | undefined => {
+  //     const nodeModules = path.join(pkgDir, "node_modules")
+  //     if (!fs.existsSync(nodeModules)) return undefined
+
+  //     const deps: Record<string, YarnDependency> = {}
+  //     for (const name of fs.readdirSync(nodeModules)) {
+  //       if (!name || name.startsWith(".")) {
+  //         continue
+  //       }
+  //       if (fs.statSync(path.join(nodeModules, name)).isDirectory()) {
+  //         if (name.startsWith("@")) {
+  //           // Scoped package
+  //           for (const scopedName of fs.readdirSync(path.join(nodeModules, name))) {
+  //             const fullName = `${name}/${scopedName}`
+  //             const depPath = path.join(nodeModules, fullName)
+  //             const pkgJson = path.join(depPath, "package.json")
+  //             // if (!fs.existsSync(pkgJson)) continue
+  //             const pkg = fs.readJSONSync(pkgJson)
+  //             deps[fullName] = { name: pkg.name, version: pkg.version, path: depPath, dependencies: traverse(depPath) }
+  //           }
+  //           continue
+  //         }
+  //       }
+  //       const depPath = path.join(nodeModules, name)
+  //       const pkgJson = path.join(depPath, "package.json")
+  //       // if (!fs.existsSync(pkgJson)) continue
+  //       const pkg = fs.readJSONSync(pkgJson)
+  //       deps[name] = { name: pkg.name, version: pkg.version, path: depPath, dependencies: traverse(depPath) }
+  //     }
+  //     return Object.keys(deps).length ? deps : undefined
+  //   }
+  //   const rootNode: YarnDependency = { name: rootPkg.name, version: rootPkg.version, path: baseDir, dependencies: traverse(baseDir) }
+  //   return rootNode
+  // }
+
+  /**
+ * Builds a dependency tree using only package.json dependencies and optionalDependencies.
+ * This skips devDependencies and does not walk the node_modules filesystem.
+ */
+  private buildNodeModulesTreeManually(baseDir: string): YarnDependency {
+    const visited = new Set<string>()
+
+    const buildFromPackage = (pkgDir: string): YarnDependency => {
+      const pkgPath = path.join(pkgDir, "package.json")
+      const pkg = fs.readJSONSync(pkgPath)
+      const id = `${pkg.name}@${pkg.version}`
+      if (visited.has(id)) {
+        return { name: pkg.name, version: pkg.version, path: pkgDir }
+      }
+      visited.add(id)
 
       const deps: Record<string, YarnDependency> = {}
-      for (const name of fs.readdirSync(nodeModules)) {
-        if (name.startsWith(".")) continue
-        const depPath = path.join(nodeModules, name)
-        const pkgJson = path.join(depPath, "package.json")
-        // if (!fs.existsSync(pkgJson)) continue
-        const pkg = fs.readJSONSync(pkgJson)
-        deps[name] = { name: pkg.name, version: pkg.version, path: depPath, dependencies: traverse(depPath) }
+      const optDeps: Record<string, string> = {}
+
+      const allDeps = {
+        ...pkg.dependencies,
+        ...pkg.optionalDependencies,
       }
-      return Object.keys(deps).length ? deps : undefined
+
+      for (const [depName, depVersion] of Object.entries(allDeps ?? {})) {
+        try {
+          // Try to locate dependency relative to current package
+          const depPkgPath = require.resolve(path.join(depName, "package.json"), {
+            paths: [pkgDir],
+          })
+          const depDir = path.dirname(depPkgPath)
+          deps[depName] = buildFromPackage(depDir)
+        } catch {
+          // Not installed or cannot resolve; keep version range info only
+          optDeps[depName] = depVersion as string
+        }
+      }
+
+      return {
+        name: pkg.name,
+        version: pkg.version,
+        path: pkgDir,
+        dependencies: Object.keys(deps).length ? deps : undefined,
+        optionalDependencies: Object.keys(optDeps).length ? optDeps : undefined,
+      }
     }
-    const rootNode: YarnDependency = { name: rootPkg.name, version: rootPkg.version, path: baseDir, dependencies: traverse(baseDir) }
-    return rootNode
+
+    return buildFromPackage(baseDir)
   }
 
   private getYarnVersion(): string {

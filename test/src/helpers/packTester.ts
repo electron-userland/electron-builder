@@ -30,8 +30,17 @@ import { ELECTRON_VERSION } from "./testConfig"
 import { createLazyProductionDeps } from "app-builder-lib/out/util/packageDependencies"
 import { execSync } from "child_process"
 
-if (process.env.TRAVIS !== "true") {
-  process.env.CIRCLE_BUILD_NUM = "42"
+const packageManagerVersionMap = {
+  [PM.NPM]: { cli: "npm", version: "9" },
+  [PM.YARN]: { cli: "yarn", version: "1.22.19" },
+  [PM.YARN_BERRY]: { cli: "yarn", version: "3.5.0" },
+  [PM.PNPM]: { cli: "pnpm", version: "7" },
+  [PM.BUN]: { cli: "bun", version: "1" },
+}
+
+export function getPackageManagerWithVersion(pm: PM, version: string | undefined): string {
+  const packageManagerInfo = packageManagerVersionMap[pm]
+  return version == null ? `${packageManagerInfo.cli}@${packageManagerInfo.version}` : `${packageManagerInfo.cli}@${version}`
 }
 
 export const EXTENDED_TIMEOUT = 10 * 60 * 1000
@@ -140,7 +149,6 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
 
       const tmpCache = await tmpDir.createTempDir({ prefix: "yarn-cache-" })
       const tmpHome = await tmpDir.createTempDir({ prefix: "yarn-home-" })
-      const COREPACK_HOME = await tmpDir.createTempDir({ prefix: "corepack-home" })
       const runtimeEnv = {
         ...process.env,
         // corepack
@@ -155,15 +163,15 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
         YARN_IGNORE_PATH: "1", // ignore globally installed yarn binaries
         npm_config_cache: tmpCache, // prevent npm fallback caching
       }
-      log.info({ pm }, "activating corepack")
-      const manager = pm === PM.YARN_BERRY ? "yarn" : pm
+      const manager = getPackageManagerWithVersion(pm, packageManager)
+      log.info({ manager }, "activating corepack")
       try {
         execSync(`corepack enable ${manager}`, { env: runtimeEnv, cwd: projectDir, stdio: "inherit" })
       } catch (err: any) {
         console.warn("⚠️ Corepack enable failed (possibly already enabled):", err.message)
       }
       try {
-        execSync(`corepack prepare ${packageManager ?? `${manager}@latest`} --activate`, { env: runtimeEnv, cwd: projectDir, stdio: "inherit" })
+        execSync(`corepack prepare ${manager} --activate`, { env: runtimeEnv, cwd: projectDir, stdio: "inherit" })
       } catch (err: any) {
         console.warn("⚠️ Yarn prepare failed:", err.message)
       }
