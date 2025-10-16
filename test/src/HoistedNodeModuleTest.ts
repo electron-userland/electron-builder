@@ -13,7 +13,6 @@ test("yarn workspace", ({ expect }) =>
       projectDir: "packages/test-app",
     },
     {
-      isInstallDepsBefore: true,
       packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
     }
   ))

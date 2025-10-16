@@ -7,7 +7,6 @@ import { getPackageManagerCommand, PM } from "./packageManager"
 import { exec, spawn } from "child_process"
 import { promisify } from "util"
 import { createWriteStream } from "fs"
-import { r } from "tar"
 
 const execAsync = promisify(exec)
 
