@@ -11,18 +11,20 @@ import { isEmptyOrSpaces, log, spawn } from "builder-util"
 
 export async function getCollectorByPackageManager(pm: PM, rootDir: string, tempDirManager: TmpDir) {
   switch (pm) {
-    case PM.PNPM:
-      if (await PnpmNodeModulesCollector.isPnpmProjectHoisted(rootDir)) {
-        return new NpmNodeModulesCollector(rootDir, tempDirManager)
+    case PM.PNPM: {
+      const isHoisted = await PnpmNodeModulesCollector.isPnpmProjectHoisted(rootDir)
+      if (!isHoisted) {
+        return new PnpmNodeModulesCollector(rootDir, tempDirManager)
       }
-      return new PnpmNodeModulesCollector(rootDir, tempDirManager)
+      // hoisted pnpm projects use npm-style node_modules layout
+      return new NpmNodeModulesCollector(rootDir, tempDirManager)
+    }
+    case PM.NPM:
+    case PM.BUN:
+      return new NpmNodeModulesCollector(rootDir, tempDirManager)
     case PM.YARN:
     case PM.YARN_BERRY:
       return new YarnNodeModulesCollector(rootDir, tempDirManager)
-    case PM.NPM:
-    case PM.BUN:
-    default:
-      return new NpmNodeModulesCollector(rootDir, tempDirManager)
   }
 }
 
@@ -41,6 +43,7 @@ export function detectPackageManager(searchPaths: string[]): { pm: PM; corepackC
     const packageManager = fs.existsSync(packageJsonPath) ? JSON.parse(fs.readFileSync(packageJsonPath, "utf8"))?.packageManager : undefined
     if (packageManager) {
       const [pm] = packageManager.split("@")
+      log.debug({ resolvedPackageManager: pm, packageManager, dir }, "packageManager field detected in package.json")
       if (Object.values(PM).includes(pm as PM)) {
         return { pm: resolveIfYarn(pm as PM, dir), corepackConfig: packageManager, resolvedDirectory: dir }
       }
@@ -48,7 +51,9 @@ export function detectPackageManager(searchPaths: string[]): { pm: PM; corepackC
 
     pm = detectPackageManagerByFile(dir)
     if (pm) {
-      return { pm: resolveIfYarn(pm, dir), resolvedDirectory: dir, corepackConfig: undefined }
+      const resolvedPackageManager = resolveIfYarn(pm, dir)
+      log.debug({ resolvedPackageManager, dir }, "packageManager detected by file")
+      return { pm: resolvedPackageManager, resolvedDirectory: dir, corepackConfig: undefined }
     }
   }
 
