@@ -38,9 +38,9 @@ const packageManagerVersionMap = {
   [PM.BUN]: { cli: "bun", version: "1" },
 }
 
-export function getPackageManagerWithVersion(pm: PM, version: string | undefined) {
+export function getPackageManagerWithVersion(pm: PM, packageJsonManagerConfig: string | undefined) {
   const packageManagerInfo = packageManagerVersionMap[pm]
-  const prepare = version == null ? `${packageManagerInfo.cli}@${packageManagerInfo.version}` : `${packageManagerInfo.cli}@${version}`
+  const prepare = packageJsonManagerConfig == null ? `${packageManagerInfo.cli}@${packageManagerInfo.version}` : packageJsonManagerConfig
   return {
     cli: packageManagerInfo.cli,
     version: packageManagerInfo.version,
