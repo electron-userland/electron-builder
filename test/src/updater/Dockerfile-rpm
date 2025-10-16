@@ -20,6 +20,6 @@ RUN dnf install -y \
 # Optional: for better font rendering or Chromium deps
 RUN dnf install -y liberation-fonts fontconfig
 
-RUN npm --silent install --global --depth 0 pnpm
+RUN npm --silent install --global --depth 0 pnpm corepack
 
 WORKDIR /project

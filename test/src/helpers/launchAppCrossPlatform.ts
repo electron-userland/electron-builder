@@ -174,8 +174,7 @@ export function startXvfb(): { display: string; stop: () => void } {
       }
     }
   }
-
-  console.log("Xvfb started on display", display)
+  // Ensure Xvfb is stopped on process exit
   ;["SIGINT", "SIGTERM", "uncaughtException", "unhandledRejection"].forEach(sig => {
     process.once(sig, () => {
       try {
