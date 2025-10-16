@@ -2,7 +2,7 @@ name: Test
 
 on:
   push:
-    branches: master
+    branches: [master]
   pull_request:
   workflow_dispatch: # Allows you to run this workflow manually from the Actions tab
     inputs:
@@ -211,7 +211,7 @@ jobs:
           FORCE_COLOR: 1
 
   test-mac:
-    runs-on: macos-latest
+    runs-on: macos-26
     timeout-minutes: 20
     strategy:
       fail-fast: false
@@ -219,7 +219,7 @@ jobs:
         testFiles:
           - oneClickInstallerTest,assistedInstallerTest,webInstallerTest
           - winPackagerTest,winCodeSignTest,BuildTest,blackboxUpdateTest
-          - masTest,dmgTest,filesTest,macPackagerTest,differentialUpdateTest,macArchiveTest
+          - masTest,dmgTest,filesTest,macPackagerTest,differentialUpdateTest,macArchiveTest,macIconTest
           - concurrentBuildsTest
     steps:
       - name: Checkout code repository
