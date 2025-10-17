@@ -12,12 +12,12 @@ import { isEmptyOrSpaces, log, spawn } from "builder-util"
 export async function getCollectorByPackageManager(pm: PM, rootDir: string, tempDirManager: TmpDir) {
   switch (pm) {
     case PM.PNPM: {
-      const isHoisted = await PnpmNodeModulesCollector.isPnpmProjectHoisted(rootDir)
-      if (!isHoisted) {
+      // const isHoisted = await PnpmNodeModulesCollector.isPnpmProjectHoisted(rootDir)
+      // if (!isHoisted) {
         return new PnpmNodeModulesCollector(rootDir, tempDirManager)
-      }
-      // hoisted pnpm projects use npm-style node_modules layout
-      return new NpmNodeModulesCollector(rootDir, tempDirManager)
+      // }
+      // // hoisted pnpm projects use npm-style node_modules layout
+      // return new NpmNodeModulesCollector(rootDir, tempDirManager)
     }
     case PM.NPM:
     case PM.BUN:
@@ -35,10 +35,11 @@ export async function getNodeModules(pm: PM, rootDir: string, tempDirManager: Tm
 
 export function detectPackageManager(searchPaths: string[]): { pm: PM; corepackConfig: string | undefined; resolvedDirectory: string | undefined } {
   let pm: PM | null = null
+  const dedupedPaths = Array.from(new Set(searchPaths))
 
   const resolveIfYarn = (pm: PM, cwd: string) => (pm === PM.YARN ? detectYarnBerry(cwd) : pm)
 
-  for (const dir of searchPaths) {
+  for (const dir of dedupedPaths) {
     const packageJsonPath = path.join(dir, "package.json")
     const packageManager = fs.existsSync(packageJsonPath) ? JSON.parse(fs.readFileSync(packageJsonPath, "utf8"))?.packageManager : undefined
     if (packageManager) {

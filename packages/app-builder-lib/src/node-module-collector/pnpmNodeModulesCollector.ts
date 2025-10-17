@@ -19,12 +19,13 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
     return ["list", "--prod", "--json", "--depth", "Infinity"]
   }
 
-  extractProductionDependencyGraph(tree: PnpmDependency, dependencyId: string): void {
+  protected async extractProductionDependencyGraph(tree: PnpmDependency, dependencyId: string): Promise<void> {
     if (this.productionGraph[dependencyId]) {
       return
     }
 
-    const p = path.normalize(this.resolvePath(tree.path))
+    const isHoisted = await this.isProjectHoisted()
+    const p = this.resolveModuleDir(dependencyId, (isHoisted) ? this.rootDir : tree.path)
     const packageJson: Dependency<string, string> = require(path.join(p, "package.json"))
     const prodDependencies = { ...packageJson.dependencies, ...packageJson.optionalDependencies }
 
@@ -45,13 +46,13 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
 
         return true
       })
-      .map(([packageName, dependency]) => {
-        const childDependencyId = `${packageName}@${dependency.version}`
-        this.extractProductionDependencyGraph(dependency, childDependencyId)
+      .map(async ([packageName, dependency]) => {
+        const childDependencyId = isHoisted ? packageName : `${packageName}@${dependency.version}`
+        await this.extractProductionDependencyGraph(dependency, childDependencyId)
         return childDependencyId
       })
 
-    this.productionGraph[dependencyId] = { dependencies }
+    this.productionGraph[dependencyId] = { dependencies: await Promise.all(dependencies) }
   }
 
   protected collectAllDependencies(tree: PnpmDependency) {

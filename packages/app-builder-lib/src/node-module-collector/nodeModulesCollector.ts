@@ -24,7 +24,7 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
     const tree: T = await this.getDependenciesTree()
     this.collectAllDependencies(tree) // Parse from the root, as npm list can host and deduplicate across projects in the workspace
     const realTree: T = this.getTreeFromWorkspaces(tree)
-    this.extractProductionDependencyGraph(realTree, "." /*root project name*/)
+    await this.extractProductionDependencyGraph(realTree, "." /*root project name*/)
 
     const hoisterResult: HoisterResult = hoist(this.transToHoisterTree(this.productionGraph), { check: true })
     this._getNodeModules(hoisterResult.dependencies, this.nodeModules)
@@ -39,7 +39,7 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
 
   protected abstract getArgs(): string[]
   protected abstract parseDependenciesTree(jsonBlob: string): T
-  protected abstract extractProductionDependencyGraph(tree: Dependency<T, OptionalsType>, dependencyId: string): void
+  protected abstract extractProductionDependencyGraph(tree: Dependency<T, OptionalsType>, dependencyId: string): Promise<void>
   protected abstract collectAllDependencies(tree: Dependency<T, OptionalsType>): void
 
   protected async getDependenciesTree(): Promise<T> {
@@ -240,4 +240,12 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
       })
     })
   }
+
+  async isProjectHoisted() {
+    const command = getPackageManagerCommand(this.installOptions.manager)
+    const config = await NodeModulesCollector.safeExec(command, ["config", "list"], this.rootDir)
+    const lines = Object.fromEntries(config.split("\n").map(line => line.split("=").map(s => s.trim())))
+    return lines["node-linker"] === "hoisted"
+  }
+
 }

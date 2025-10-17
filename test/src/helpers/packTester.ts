@@ -30,16 +30,16 @@ import { ELECTRON_VERSION } from "./testConfig"
 import { createLazyProductionDeps } from "app-builder-lib/out/util/packageDependencies"
 import { execSync } from "child_process"
 
-const packageManagerVersionMap = {
+const PACKAGE_MANAGER_VERSION_MAP = {
   [PM.NPM]: { cli: "npm", version: "9.8.1" },
   [PM.YARN]: { cli: "yarn", version: "1.22.19" },
   [PM.YARN_BERRY]: { cli: "yarn", version: "3.5.0" },
-  [PM.PNPM]: { cli: "pnpm", version: "7" },
+  [PM.PNPM]: { cli: "pnpm", version: "10.18.0" },
   [PM.BUN]: { cli: "bun", version: "1" },
 }
 
 export function getPackageManagerWithVersion(pm: PM, packageJsonManagerConfig: string | undefined) {
-  const packageManagerInfo = packageManagerVersionMap[pm]
+  const packageManagerInfo = PACKAGE_MANAGER_VERSION_MAP[pm]
   const prepare = packageJsonManagerConfig == null ? `${packageManagerInfo.cli}@${packageManagerInfo.version}` : packageJsonManagerConfig
   return {
     cli: packageManagerInfo.cli,

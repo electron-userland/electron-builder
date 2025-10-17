@@ -40,7 +40,6 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
       // Reference: https://yarnpkg.com/features/pnp
       // Note: .pnp.cjs is not always in the project root (can be in workspace root instead)
       // So we explicitly specify the path here to avoid issues.
-      // Also, we do not use `yarn pnpify` because it may not be available in all Yarn versions.
       const pnpFile = path.join(this.rootDir, ".pnp.cjs")
       const tree = this.getYarnPnPTree(this.rootDir, pnpFile)
       if (tree) {
@@ -200,16 +199,16 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
   //   this.productionGraph[dependencyId] = { dependencies }
   // }
 
-  protected extractProductionDependencyGraph(tree: YarnDependency, dependencyId: string): void {
+  protected async extractProductionDependencyGraph(tree: YarnDependency, dependencyId: string): Promise<void> {
     if (this.productionGraph[dependencyId]) {
       return
     }
-    const productionDeps = Object.entries(tree.dependencies || {}).map(([packageName, dependency]) => {
+    const productionDeps = Object.entries(tree.dependencies || {}).map(async ([packageName, dependency]) => {
       const childDependencyId = `${packageName}@${dependency.version}`
-      this.extractProductionDependencyGraph(dependency, childDependencyId)
+      await this.extractProductionDependencyGraph(dependency, childDependencyId)
       return childDependencyId
     })
-    this.productionGraph[dependencyId] = { dependencies: productionDeps }
+    this.productionGraph[dependencyId] = { dependencies: await Promise.all(productionDeps) }
   }
 
   // private buildNodeModulesTreeManually(baseDir: string): YarnDependency {

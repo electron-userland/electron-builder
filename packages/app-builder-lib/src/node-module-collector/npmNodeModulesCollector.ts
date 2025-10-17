@@ -21,7 +21,7 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
     }
   }
 
-  protected extractProductionDependencyGraph(tree: NpmDependency, dependencyId: string): void {
+  protected async extractProductionDependencyGraph(tree: NpmDependency, dependencyId: string): Promise<void> {
     if (this.productionGraph[dependencyId]) {
       return
     }
@@ -35,12 +35,12 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
     this.productionGraph[dependencyId] = { dependencies: [] }
     const productionDeps = Object.entries(resolvedDeps)
       .filter(([packageName]) => prodDependencies[packageName])
-      .map(([packageName, dependency]) => {
+      .map(async ([packageName, dependency]) => {
         const childDependencyId = `${packageName}@${dependency.version}`
-        this.extractProductionDependencyGraph(dependency, childDependencyId)
+        await this.extractProductionDependencyGraph(dependency, childDependencyId)
         return childDependencyId
       })
-    this.productionGraph[dependencyId] = { dependencies: productionDeps }
+    this.productionGraph[dependencyId] = { dependencies: await Promise.all(productionDeps) }
   }
 
   protected parseDependenciesTree(jsonBlob: string): NpmDependency {

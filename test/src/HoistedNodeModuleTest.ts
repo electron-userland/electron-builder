@@ -1,8 +1,9 @@
-import { assertPack, linuxDirTarget, verifyAsarFileTree, modifyPackageJson } from "./helpers/packTester"
+import { assertPack, linuxDirTarget, verifyAsarFileTree, modifyPackageJson, getPackageManagerWithVersion } from "./helpers/packTester"
 import { Platform, Arch, DIR_TARGET } from "electron-builder"
-import { outputFile, copySync, rmSync, readJsonSync, writeJsonSync, mkdirSync } from "fs-extra"
+import { outputFile, copySync, rmSync, readJsonSync, writeJsonSync, mkdirSync, rm } from "fs-extra"
 import * as path from "path"
 import { spawn } from "builder-util/out/util"
+import { PM } from "app-builder-lib/out/node-module-collector"
 
 test("yarn workspace", ({ expect }) =>
   assertPack(
@@ -207,8 +208,8 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
               data.dependencies = {
                 "es5-ext": "0.10.53",
               }
+              data.packageManager = getPackageManagerWithVersion(PM.PNPM, undefined).prepareEntry
             }),
-            outputFile(path.join(projectDir, "pnpm-lock.yaml"), ""),
           ])
         },
         packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
@@ -233,8 +234,8 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
               data.optionalDependencies = {
                 debug: "3.1.0",
               }
+              data.packageManager = getPackageManagerWithVersion(PM.PNPM, undefined).prepareEntry
             }),
-            outputFile(path.join(projectDir, "pnpm-lock.yaml"), ""),
           ])
         },
         packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
@@ -259,8 +260,8 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
               data.optionalDependencies = {
                 "node-mac-permissions": "2.3.0",
               }
+              data.packageManager = getPackageManagerWithVersion(PM.PNPM, undefined).prepareEntry
             }),
-            outputFile(path.join(projectDir, "pnpm-lock.yaml"), ""),
           ])
         },
         packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
@@ -382,8 +383,8 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
               data.dependencies = {
                 "npm-run-all": "^4.1.5",
               }
+              data.packageManager = getPackageManagerWithVersion(PM.PNPM, undefined).prepareEntry
             }),
-            outputFile(path.join(projectDir, "pnpm-lock.yaml"), ""),
           ])
         },
         packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
@@ -467,7 +468,7 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
     ))
 
   //github.com/electron-userland/electron-builder/issues/8881
-  test("pnpm node-linker=hoisted", ({ expect }) =>
+  test.only("pnpm node-linker=hoisted", ({ expect }) =>
     assertPack(
       expect,
       "test-app-hoisted",
@@ -482,8 +483,8 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
               data.dependencies = {
                 dayjs: "1.11.13",
               }
+              data.packageManager = getPackageManagerWithVersion(PM.PNPM, undefined).prepareEntry
             }),
-            outputFile(path.join(projectDir, "pnpm-lock.yaml"), ""),
             outputFile(path.join(projectDir, ".npmrc"), "node-linker=hoisted"),
           ])
         },
@@ -505,8 +506,8 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
               data.dependencies = {
                 dayjs: "1.11.13",
               }
+              data.packageManager = getPackageManagerWithVersion(PM.PNPM, undefined).prepareEntry
             }),
-            outputFile(path.join(projectDir, "pnpm-lock.yaml"), ""),
             outputFile(path.join(projectDir, ".npmrc"), "shamefully-hoist=true"),
           ])
         },
@@ -528,8 +529,8 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
               data.dependencies = {
                 dayjs: "1.11.13",
               }
+              data.packageManager = getPackageManagerWithVersion(PM.PNPM, undefined).prepareEntry
             }),
-            outputFile(path.join(projectDir, "pnpm-lock.yaml"), ""),
             outputFile(path.join(projectDir, ".npmrc"), "public-hoist-pattern=*"),
           ])
         },
