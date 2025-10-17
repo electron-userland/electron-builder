@@ -26,6 +26,10 @@ export interface NpmDependency extends Dependency<NpmDependency, string> {
   }
 }
 
+
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface YarnDependency extends Dependency<YarnDependency, string> {}
+
 export type Dependency<T, V> = Dependencies<T, V> & ParsedDependencyTree
 
 export type Dependencies<T, V> = {

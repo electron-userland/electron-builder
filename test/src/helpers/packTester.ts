@@ -16,7 +16,7 @@ import * as path from "path"
 import pathSorter from "path-sort"
 import { NtExecutable, NtExecutableResource } from "resedit"
 import { TmpDir } from "temp-file"
-import { getCollectorByPackageManager, detectPackageManager } from "app-builder-lib/out/node-module-collector"
+import { getCollectorByPackageManager, detectPackageManager, PM } from "app-builder-lib/out/node-module-collector"
 import { promisify } from "util"
 import { CSC_LINK, WIN_CSC_LINK } from "./codeSignData"
 import { assertThat } from "./fileAssert"
@@ -28,9 +28,24 @@ import { computeDefaultAppDirectory } from "app-builder-lib/out/util/config/conf
 import { installDependencies } from "app-builder-lib/out/util/yarn"
 import { ELECTRON_VERSION } from "./testConfig"
 import { createLazyProductionDeps } from "app-builder-lib/out/util/packageDependencies"
+import { execSync } from "child_process"
 
-if (process.env.TRAVIS !== "true") {
-  process.env.CIRCLE_BUILD_NUM = "42"
+const packageManagerVersionMap = {
+  [PM.NPM]: { cli: "npm", version: "9.8.1" },
+  [PM.YARN]: { cli: "yarn", version: "1.22.19" },
+  [PM.YARN_BERRY]: { cli: "yarn", version: "3.5.0" },
+  [PM.PNPM]: { cli: "pnpm", version: "7" },
+  [PM.BUN]: { cli: "bun", version: "1" },
+}
+
+export function getPackageManagerWithVersion(pm: PM, packageJsonManagerConfig: string | undefined) {
+  const packageManagerInfo = packageManagerVersionMap[pm]
+  const prepare = packageJsonManagerConfig == null ? `${packageManagerInfo.cli}@${packageManagerInfo.version}` : packageJsonManagerConfig
+  return {
+    cli: packageManagerInfo.cli,
+    version: packageManagerInfo.version,
+    prepareEntry: prepare,
+  }
 }
 
 export const EXTENDED_TIMEOUT = 10 * 60 * 1000
@@ -135,8 +150,38 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
         await projectDirCreated(projectDir, tmpDir)
       }
 
+      const { pm, corepackConfig: packageManager } = detectPackageManager([projectDir])
+
+      const tmpCache = await tmpDir.createTempDir({ prefix: "yarn-cache-" })
+      const tmpHome = await tmpDir.createTempDir({ prefix: "yarn-home-" })
+      const runtimeEnv = {
+        ...process.env,
+        // corepack
+        // COREPACK_HOME,
+        // COREPACK_ENABLE_DOWNLOADS: "1",
+        // yarn
+        HOME: tmpHome,
+        USERPROFILE: tmpHome, // for Windows compatibility
+        YARN_CACHE_FOLDER: tmpCache,
+        // YARN_DISABLE_TELEMETRY: "1",
+        // YARN_ENABLE_TELEMETRY: "false",
+        YARN_IGNORE_PATH: "1", // ignore globally installed yarn binaries
+        npm_config_cache: tmpCache, // prevent npm fallback caching
+      }
+      const { cli, prepareEntry, version } = getPackageManagerWithVersion(pm, packageManager)
+      log.info({ pm, version: version }, "activating corepack")
+      try {
+        execSync(`corepack enable ${cli}`, { env: runtimeEnv, cwd: projectDir, stdio: "inherit" })
+      } catch (err: any) {
+        console.warn("⚠️ Corepack enable failed (possibly already enabled):", err.message)
+      }
+      try {
+        execSync(`corepack prepare ${prepareEntry} --activate`, { env: runtimeEnv, cwd: projectDir, stdio: "inherit" })
+      } catch (err: any) {
+        console.warn("⚠️ Yarn prepare failed:", err.message)
+      }
+
       if (checkOptions.isInstallDepsBefore) {
-        const pm = detectPackageManager([projectDir])
         const collector = await getCollectorByPackageManager(pm, projectDir, tmpDir)
         const collectorOptions = collector.installOptions
 
@@ -149,16 +194,19 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
         }
 
         const appDir = await computeDefaultAppDirectory(projectDir, configuration.directories?.app)
+
         await installDependencies(
           configuration,
           {
             projectDir: projectDir,
             appDir: appDir,
+            workspaceRoot: null,
           },
           {
             frameworkInfo: { version: ELECTRON_VERSION, useCustomDist: false },
             productionDeps: createLazyProductionDeps(appDir, null, false),
-          }
+          },
+          runtimeEnv
         )
 
         // save lockfile fixture
@@ -186,7 +234,8 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
           projectDir,
           ...packagerOptions,
         },
-        checkOptions
+        checkOptions,
+        runtimeEnv
       )
 
       if (checkOptions.packed != null) {
@@ -314,9 +363,15 @@ function sortArtifacts(a: ArtifactCreated, b: ArtifactCreated): number {
   return safeNameA.localeCompare(safeNameB, "en")
 }
 
-async function packAndCheck(expect: ExpectStatic, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions) {
+async function packAndCheck(
+  expect: ExpectStatic,
+  packagerOptions: PackagerOptions,
+  checkOptions: AssertPackOptions,
+  runtimeEnv: NodeJS.ProcessEnv
+): Promise<{ packager: Packager; outDir: string }> {
   const cancellationToken = new CancellationToken()
   const packager = new Packager(packagerOptions, cancellationToken)
+  ;(packager as any).runtimeEnvironmentVariables = runtimeEnv
   const publishManager = new PublishManager(packager, { publish: "publish" in checkOptions ? checkOptions.publish : "never" })
 
   const artifacts: Map<Platform, Array<ArtifactCreated>> = new Map()
@@ -466,8 +521,9 @@ async function checkMacResult(expect: ExpectStatic, packager: Packager, packager
   const plistPath = path.join(packedAppDir, "Contents", "Info.plist")
   const info = await parsePlistFile<PlistObject>(plistPath)
 
+  const buildNumber = process.env.TRAVIS_BUILD_NUMBER || process.env.CIRCLE_BUILD_NUM
   expect(info).toMatchObject({
-    CFBundleVersion: info.CFBundleVersion === "50" ? "50" : `${appInfo.version}.${process.env.TRAVIS_BUILD_NUMBER || process.env.CIRCLE_BUILD_NUM}`,
+    CFBundleVersion: info.CFBundleVersion === "50" ? "50" : `${appInfo.version}${buildNumber ? "." + buildNumber : ""}`,
   })
 
   // checked manually, remove to avoid mismatch on CI server (where TRAVIS_BUILD_NUMBER is defined and different on each test run)
@@ -644,7 +700,7 @@ export async function modifyPackageJson(projectDir: string, task: (data: any) =>
   await fs.unlink(file)
 
   await fs.writeFile(path.join(projectDir, ".yarnrc.yml"), "nodeLinker: node-modules")
-  return await writeJson(file, data)
+  return await writeJson(file, data, { spaces: 2 })
 }
 
 export function platform(platform: Platform): PackagerOptions {

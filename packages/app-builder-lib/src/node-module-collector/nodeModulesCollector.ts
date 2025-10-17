@@ -16,7 +16,7 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
   protected productionGraph: DependencyGraph = {}
 
   constructor(
-    private readonly rootDir: string,
+    protected readonly rootDir: string,
     private readonly tempDirManager: TmpDir
   ) {}
 
@@ -58,8 +58,10 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
         try {
           return this.parseDependenciesTree(dependencies)
         } catch (error: any) {
-          log.debug({ message: error.message || error.stack, shellOutput: dependencies }, "error parsing dependencies tree")
-          throw new Error(`Failed to parse dependencies tree: ${error.message || error.stack}. Use DEBUG=electron-builder env var to see the dependency query output.`)
+          log.debug({ message: error.message, stack: error.stack, shellOutput: dependencies, cwd: this.rootDir }, "error parsing dependencies tree")
+          throw new Error(
+            `Failed to parse dependencies tree in ${this.rootDir} -> ${error.message || error.stack}. Use DEBUG=electron-builder env var to see the dependency query output.`
+          )
         }
       },
       {
@@ -68,14 +70,14 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
         backoff: 2000,
         shouldRetry: async (error: any) => {
           if (!(await exists(tempOutputFile))) {
-            log.error({ error: error.message || error.stack, tempOutputFile }, "error getting dependencies tree, unable to find output; retrying")
+            log.error({ error: error.message || error.stack, tempOutputFile, cwd: this.rootDir }, "error getting dependencies tree, unable to find output; retrying")
             return true
           }
           const dependencies = await fs.readFile(tempOutputFile, { encoding: "utf8" })
           if (dependencies.trim().length === 0 || error.message?.includes("Unexpected end of JSON input")) {
             // If the output file is empty or contains invalid JSON, we retry
             // This can happen if the command fails or if the output is not as expected
-            log.error({ error: error.message || error.stack, tempOutputFile }, "dependency tree output file is empty, retrying")
+            log.error({ error: error.message || error.stack, tempOutputFile, cwd: this.rootDir }, "dependency tree output file is empty, retrying")
             return true
           }
           return false
@@ -96,6 +98,23 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
       log.debug({ message: error.message || error.stack }, "error resolving path")
       return filePath
     }
+  }
+
+  protected resolveModuleDir(pkg: string, base: string): string {
+    if (pkg === ".") {
+      return base
+    }
+    try {
+      const packageJson = path.dirname(require.resolve(path.join(pkg, "package.json"), { paths: [base] }))
+      if (fs.existsSync(packageJson)) {
+        return packageJson
+      }
+    } catch {
+      // ignore, use fallback
+    }
+    const searchPath = path.join(base, "node_modules", pkg)
+    log.debug({ pkg, searchPath }, "failed to resolve module path, falling back to manual node_modules path construction")
+    return searchPath
   }
 
   private getTreeFromWorkspaces(tree: T): T {
@@ -202,20 +221,20 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
         stderr += chunk.toString()
       })
       child.on("error", err => {
-        reject(new Error(`Spawn failed: ${err.message}`))
+        reject(new Error(`Node module collector spawn failed: ${err.message}`))
       })
 
       child.on("close", code => {
         outStream.close()
         // https://github.com/npm/npm/issues/17624
-        if (code === 1 && execName.toLowerCase() === "npm" && args.includes("list")) {
-          log.debug({ code, stderr }, "`npm list` returned non-zero exit code, but it MIGHT be expected (https://github.com/npm/npm/issues/17624). Check stderr for details.")
+        if (code === 1 && ["npm", "yarn"].includes(execName.toLowerCase()) && args.includes("list")) {
           // This is a known issue with npm list command, it can return code 1 even when the command is "technically" successful
+          log.debug({ code, stderr }, "`npm list` returned non-zero exit code, but it MIGHT be expected (https://github.com/npm/npm/issues/17624). Check stderr for details.")
           resolve()
           return
         }
         if (code !== 0) {
-          return reject(new Error(`Process exited with code ${code}:\n${stderr}`))
+          return reject(new Error(`Node module collector process exited with code ${code}:\n${stderr}`))
         }
         resolve()
       })

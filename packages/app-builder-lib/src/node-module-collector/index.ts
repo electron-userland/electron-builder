@@ -1,24 +1,30 @@
 import { NpmNodeModulesCollector } from "./npmNodeModulesCollector"
 import { PnpmNodeModulesCollector } from "./pnpmNodeModulesCollector"
 import { YarnNodeModulesCollector } from "./yarnNodeModulesCollector"
-import { detectPackageManagerByLockfile, detectPackageManagerByEnv, PM, getPackageManagerCommand, detectYarnBerry } from "./packageManager"
+import { detectPackageManagerByFile, detectPackageManagerByEnv, PM, getPackageManagerCommand, detectYarnBerry } from "./packageManager"
 import { NodeModuleInfo } from "./types"
 import { TmpDir } from "temp-file"
+import * as path from "path"
+import * as fs from "fs-extra"
+import { execSync } from "child_process"
+import { isEmptyOrSpaces, log, spawn } from "builder-util"
 
 export async function getCollectorByPackageManager(pm: PM, rootDir: string, tempDirManager: TmpDir) {
   switch (pm) {
-    case PM.PNPM:
-      if (await PnpmNodeModulesCollector.isPnpmProjectHoisted(rootDir)) {
-        return new NpmNodeModulesCollector(rootDir, tempDirManager)
+    case PM.PNPM: {
+      const isHoisted = await PnpmNodeModulesCollector.isPnpmProjectHoisted(rootDir)
+      if (!isHoisted) {
+        return new PnpmNodeModulesCollector(rootDir, tempDirManager)
       }
-      return new PnpmNodeModulesCollector(rootDir, tempDirManager)
+      // hoisted pnpm projects use npm-style node_modules layout
+      return new NpmNodeModulesCollector(rootDir, tempDirManager)
+    }
     case PM.NPM:
     case PM.BUN:
       return new NpmNodeModulesCollector(rootDir, tempDirManager)
     case PM.YARN:
+    case PM.YARN_BERRY:
       return new YarnNodeModulesCollector(rootDir, tempDirManager)
-    default:
-      return new NpmNodeModulesCollector(rootDir, tempDirManager)
   }
 }
 
@@ -27,30 +33,110 @@ export async function getNodeModules(pm: PM, rootDir: string, tempDirManager: Tm
   return collector.getNodeModules()
 }
 
-export function detectPackageManager(dirs: string[]): PM {
+export function detectPackageManager(searchPaths: string[]): { pm: PM; corepackConfig: string | undefined; resolvedDirectory: string | undefined } {
   let pm: PM | null = null
 
-  const resolveYarnVersion = (pm: PM) => {
-    if (pm === PM.YARN) {
-      return detectYarnBerry()
-    }
-    return pm
-  }
+  const resolveIfYarn = (pm: PM, cwd: string) => (pm === PM.YARN ? detectYarnBerry(cwd) : pm)
 
-  for (const dir of dirs) {
-    pm = detectPackageManagerByLockfile(dir)
+  for (const dir of searchPaths) {
+    const packageJsonPath = path.join(dir, "package.json")
+    const packageManager = fs.existsSync(packageJsonPath) ? JSON.parse(fs.readFileSync(packageJsonPath, "utf8"))?.packageManager : undefined
+    if (packageManager) {
+      const [pm] = packageManager.split("@")
+      log.debug({ resolvedPackageManager: pm, packageManager, dir }, "packageManager field detected in package.json")
+      if (Object.values(PM).includes(pm as PM)) {
+        return { pm: resolveIfYarn(pm as PM, dir), corepackConfig: packageManager, resolvedDirectory: dir }
+      }
+    }
+
+    pm = detectPackageManagerByFile(dir)
     if (pm) {
-      return resolveYarnVersion(pm)
+      const resolvedPackageManager = resolveIfYarn(pm, dir)
+      log.debug({ resolvedPackageManager, dir }, "packageManager detected by file")
+      return { pm: resolvedPackageManager, resolvedDirectory: dir, corepackConfig: undefined }
     }
   }
 
   pm = detectPackageManagerByEnv()
-  if (pm) {
-    return resolveYarnVersion(pm)
-  }
-
-  // Default to npm
-  return PM.NPM
+  const cwd = process.env.npm_package_json ? path.dirname(process.env.npm_package_json) : (process.env.INIT_CWD ?? process.cwd())
+  return { pm: resolveIfYarn(pm || PM.NPM, cwd), resolvedDirectory: undefined, corepackConfig: undefined }
 }
 
+export async function findWorkspaceRoot(pm: PM, cwd: string): Promise<string | undefined> {
+  let command: { command: string; args: string[] } | undefined
+
+  switch (pm) {
+    case PM.PNPM:
+      command = { command: "pnpm", args: ["root", "-w"] }
+      break
+
+    case PM.YARN_BERRY:
+      command = { command: "yarn", args: ["config", "get", "workspaceRoot"] }
+      break
+
+    case PM.YARN: {
+      // verify yarn v1.x before using “workspaces info”
+      const version = execSync("yarn --version", { encoding: "utf8", cwd }).trim()
+      if (!version.startsWith("1.")) {
+        // fallback if not Yarn 1
+        return await findNearestWithWorkspacesField(cwd)
+      }
+
+      command = { command: "yarn", args: ["workspaces", "info", "--silent"] }
+      break
+    }
+
+    case PM.BUN:
+      command = { command: "bun", args: ["pm", "ls", "--json"] }
+      break
+
+    case PM.NPM:
+    default:
+      command = { command: "npm", args: ["prefix", "-w"] }
+      break
+  }
+
+  const output = await spawn(command.command, command.args, {
+    cwd,
+    stdio: ["ignore", "pipe", "ignore"],
+  })
+    .then(it => {
+      const output = it?.trim()
+      if (pm === PM.YARN) {
+        JSON.parse(output) // if JSON valid, workspace detected
+        return findNearestWithWorkspacesField(cwd)
+      } else if (pm === PM.BUN) {
+        const json = JSON.parse(output)
+        if (Array.isArray(json) && json.length > 0) {
+          return findNearestWithWorkspacesField(cwd)
+        }
+      }
+      return output
+    })
+    .catch(() => findNearestWithWorkspacesField(cwd))
+
+  log.debug({ root: output }, output ? "workspace root detected" : "workspace root not detected")
+  return output
+}
+
+async function findNearestWithWorkspacesField(dir: string): Promise<string | undefined> {
+  let current = dir
+  while (true) {
+    const pkgPath = path.join(current, "package.json")
+    try {
+      const pkg = JSON.parse(await fs.readFile(pkgPath, "utf8"))
+      if (pkg.workspaces) {
+        return current
+      }
+    } catch {
+      // ignore
+    }
+    const parent = path.dirname(current)
+    if (parent === current) {
+      break
+    }
+    current = parent
+  }
+  return undefined
+}
 export { PM, getPackageManagerCommand }

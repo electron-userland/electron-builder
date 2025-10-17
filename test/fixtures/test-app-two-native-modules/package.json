@@ -35,5 +35,6 @@
     "squirrelWindows": {
       "iconUrl": "https://raw.githubusercontent.com/szwacz/electron-boilerplate/master/resources/windows/icon.ico"
     }
-  }
+  },
+  "packageManager": "yarn@1.22.19"
 }
