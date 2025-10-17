@@ -86,28 +86,28 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
     )
   }
 
-  protected resolvePath(filePath: string): string {
-    try {
-      const stats = fs.lstatSync(filePath)
-      if (stats.isSymbolicLink()) {
-        return fs.realpathSync(filePath)
-      } else {
-        return filePath
-      }
-    } catch (error: any) {
-      log.debug({ message: error.message || error.stack }, "error resolving path")
-      return filePath
-    }
-  }
+  // protected resolvePath(filePath: string): string {
+  //   try {
+  //     const stats = fs.lstatSync(filePath)
+  //     if (stats.isSymbolicLink()) {
+  //       return fs.realpathSync(filePath)
+  //     } else {
+  //       return filePath
+  //     }
+  //   } catch (error: any) {
+  //     log.debug({ message: error.message || error.stack }, "error resolving path")
+  //     return filePath
+  //   }
+  // }
 
   protected resolveModuleDir(pkg: string, base: string): string {
     if (pkg === ".") {
       return base
     }
     try {
-      const packageJson = path.dirname(require.resolve(path.join(pkg, "package.json"), { paths: [base] }))
-      if (fs.existsSync(packageJson)) {
-        return packageJson
+      const packageJsonDirectory = path.dirname(require.resolve(path.join(pkg, "package.json"), { paths: [base] }))
+      if (fs.existsSync(packageJsonDirectory)) {
+        return packageJsonDirectory
       }
     } catch {
       // ignore, use fallback
@@ -144,7 +144,8 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
       }
       nodes.set(key, node)
 
-      for (const dep of (obj[key] || {}).dependencies || []) {
+      const deps = (obj[key] || {}).dependencies || []
+      for (const dep of deps) {
         node.dependencies.add(this.transToHoisterTree(obj, dep, nodes))
       }
     }
@@ -158,7 +159,8 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
 
     for (const d of dependencies.values()) {
       const reference = [...d.references][0]
-      const p = this.allDependencies.get(`${d.name}@${reference}`)?.path
+      const dep = this.allDependencies.get(`${d.name}@${reference}`)
+      const p = dep?.path
       if (p === undefined) {
         log.debug({ name: d.name, reference }, "cannot find path for dependency")
         continue
@@ -174,7 +176,7 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
       const node: NodeModuleInfo = {
         name: d.name,
         version: reference,
-        dir: this.resolvePath(p),
+        dir: p,
       }
       result.push(node)
       if (d.dependencies.size > 0) {

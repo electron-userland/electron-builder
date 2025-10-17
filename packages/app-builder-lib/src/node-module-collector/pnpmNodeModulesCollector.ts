@@ -6,13 +6,6 @@ import { getPackageManagerCommand, PM } from "./packageManager"
 import { Dependency, PnpmDependency } from "./types"
 
 export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependency, PnpmDependency> {
-  static async isPnpmProjectHoisted(rootDir: string) {
-    const command = getPackageManagerCommand(PM.PNPM)
-    const config = await NodeModulesCollector.safeExec(command, ["config", "list"], rootDir)
-    const lines = Object.fromEntries(config.split("\n").map(line => line.split("=").map(s => s.trim())))
-    return lines["node-linker"] === "hoisted"
-  }
-
   public readonly installOptions = { manager: PM.PNPM, lockfile: "pnpm-lock.yaml" }
 
   protected getArgs(): string[] {
@@ -25,7 +18,8 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
     }
 
     const isHoisted = await this.isProjectHoisted()
-    const p = this.resolveModuleDir(dependencyId, (isHoisted) ? this.rootDir : tree.path)
+    const currentDependencyId = dependencyId !== "." && isHoisted ? tree.from : dependencyId // do not use `.name` for PNPM
+    const p = dependencyId === "." ? this.rootDir : this.resolveModuleDir(currentDependencyId, isHoisted ? this.rootDir : tree.path)
     const packageJson: Dependency<string, string> = require(path.join(p, "package.json"))
     const prodDependencies = { ...packageJson.dependencies, ...packageJson.optionalDependencies }
 
@@ -47,7 +41,7 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
         return true
       })
       .map(async ([packageName, dependency]) => {
-        const childDependencyId = isHoisted ? packageName : `${packageName}@${dependency.version}`
+        const childDependencyId = `${packageName}@${dependency.version}`
         await this.extractProductionDependencyGraph(dependency, childDependencyId)
         return childDependencyId
       })
@@ -72,6 +66,8 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
   protected parseDependenciesTree(jsonBlob: string): PnpmDependency {
     const dependencyTree: PnpmDependency[] = JSON.parse(jsonBlob)
     // pnpm returns an array of dependency trees
-    return dependencyTree[0]
+    return dependencyTree.map(tree => {
+      return { ...tree }
+    })[0]
   }
 }
