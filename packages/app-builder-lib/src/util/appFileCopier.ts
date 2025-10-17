@@ -190,7 +190,7 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
 
     const dirDeps = await getNodeModules(await packager.getPackageManager(), dir, tempDirManager)
     if (dirDeps.length > 0) {
-      log.debug({ dir, nodeModules: dirDeps }, "collected node modules")
+      log.debug({ dir, nodeModules: dirDeps.map(it => ({ ...it, dir: log.filePath(it.dir) })) }, "collected node modules")
       deps = dirDeps
       break
     }
