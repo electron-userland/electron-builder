@@ -152,7 +152,7 @@ test.ifMac("electronDist", ({ expect }) =>
       },
     },
     {},
-    error => expect(error.message).toContain("Please provide a valid path to the Electron zip file, cache directory, or electron build directory.")
+    error => expect(error.message).toContain("Please provide a valid path to the Electron zip file, cache directory, or Electron build directory.")
   )
 )
 
