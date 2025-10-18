@@ -1,11 +1,11 @@
-import { assertPack, linuxDirTarget, verifyAsarFileTree, modifyPackageJson, getPackageManagerWithVersion } from "./helpers/packTester"
 import { Platform, Arch, DIR_TARGET } from "electron-builder"
 import { outputFile, copySync, rmSync, readJsonSync, writeJsonSync, mkdirSync, rm } from "fs-extra"
 import * as path from "path"
 import { spawn } from "builder-util/out/util"
 import { PM } from "app-builder-lib/out/node-module-collector"
+import { assertPack, linuxDirTarget, modifyPackageJson, verifyAsarFileTree } from "./helpers/packTester"
 
-test("yarn workspace", ({ expect }) =>
+test.only("yarn workspace", ({ expect }) =>
   assertPack(
     expect,
     "test-app-yarn-workspace",
@@ -14,10 +14,7 @@ test("yarn workspace", ({ expect }) =>
       projectDir: "packages/test-app",
     },
     {
-      projectDirCreated: async projectDir =>
-        modifyPackageJson(projectDir, data => {
-          data.packageManager = getPackageManagerWithVersion(PM.YARN).prepareEntry
-        }),
+      packageManager: PM.YARN,
       packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
     }
   ))
@@ -31,10 +28,7 @@ test("conflict versions", ({ expect }) =>
       projectDir: "packages/test-app",
     },
     {
-      projectDirCreated: async projectDir =>
-        modifyPackageJson(projectDir, data => {
-          data.packageManager = getPackageManagerWithVersion(PM.YARN).prepareEntry
-        }),
+      packageManager: PM.YARN,
       packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
     }
   ))
@@ -48,10 +42,7 @@ test("yarn several workspaces", ({ expect }) =>
       projectDir: "packages/test-app",
     },
     {
-      projectDirCreated: async projectDir =>
-        modifyPackageJson(projectDir, data => {
-          data.packageManager = getPackageManagerWithVersion(PM.YARN).prepareEntry
-        }),
+      packageManager: PM.YARN,
       packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
     }
   ))
@@ -68,10 +59,7 @@ test("yarn several workspaces and asarUnpack", ({ expect }) =>
       },
     },
     {
-      projectDirCreated: async projectDir =>
-        modifyPackageJson(projectDir, data => {
-          data.packageManager = getPackageManagerWithVersion(PM.YARN).prepareEntry
-        }),
+      packageManager: PM.YARN,
       packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
     }
   ))
@@ -84,10 +72,7 @@ test("yarn two package.json w/ native module", ({ expect }) =>
       targets: linuxDirTarget,
     },
     {
-      projectDirCreated: async projectDir =>
-        modifyPackageJson(projectDir, data => {
-          data.packageManager = getPackageManagerWithVersion(PM.YARN).prepareEntry
-        }),
+      packageManager: PM.YARN,
       packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
     }
   ))
@@ -100,6 +85,7 @@ test("yarn two package.json", ({ expect }) =>
       targets: linuxDirTarget,
     },
     {
+      packageManager: PM.YARN,
       isInstallDepsBefore: false,
       projectDirCreated: async projectDir => {
         await modifyPackageJson(projectDir, data => {
@@ -117,7 +103,6 @@ test("yarn two package.json", ({ expect }) =>
           data.build.directories = {
             app: "app",
           }
-          data.packageManager = getPackageManagerWithVersion(PM.YARN).prepareEntry
         })
 
         // install dependencies in project dir
@@ -150,6 +135,7 @@ test("yarn two package.json without node_modules", ({ expect }) =>
       targets: linuxDirTarget,
     },
     {
+      packageManager: PM.YARN,
       isInstallDepsBefore: false,
       projectDirCreated: async projectDir => {
         await modifyPackageJson(projectDir, data => {
@@ -167,11 +153,10 @@ test("yarn two package.json without node_modules", ({ expect }) =>
           data.build.directories = {
             app: "app",
           }
-          data.packageManager = getPackageManagerWithVersion(PM.YARN).prepareEntry
         })
 
         // install dependencies in project dir
-        await spawn("npm", ["install"], {
+        await spawn("yarn", ["install"], {
           cwd: projectDir,
         })
 
@@ -200,6 +185,7 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
         projectDir: "packages/test-app",
       },
       {
+        packageManager: PM.YARN,
         isInstallDepsBefore: true,
         projectDirCreated: async projectDir => {
           const subAppDir = path.join(projectDir, "packages", "test-app")
@@ -208,7 +194,6 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
             data.dependencies = {
               "is-odd": "3.0.1",
             }
-            data.packageManager = getPackageManagerWithVersion(PM.YARN).prepareEntry
           })
         },
         packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
@@ -224,6 +209,7 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
         targets: linuxDirTarget,
       },
       {
+        packageManager: PM.PNPM,
         isInstallDepsBefore: true,
         projectDirCreated: projectDir => {
           return Promise.all([
@@ -231,7 +217,6 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
               data.dependencies = {
                 "es5-ext": "0.10.53",
               }
-              data.packageManager = getPackageManagerWithVersion(PM.PNPM).prepareEntry
             }),
           ])
         },
@@ -247,6 +232,7 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
         targets: linuxDirTarget,
       },
       {
+        packageManager: PM.PNPM,
         isInstallDepsBefore: true,
         projectDirCreated: projectDir => {
           return Promise.all([
@@ -257,7 +243,6 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
               data.optionalDependencies = {
                 debug: "3.1.0",
               }
-              data.packageManager = getPackageManagerWithVersion(PM.PNPM).prepareEntry
             }),
           ])
         },
@@ -273,6 +258,7 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
         targets: linuxDirTarget,
       },
       {
+        packageManager: PM.PNPM,
         isInstallDepsBefore: true,
         projectDirCreated: projectDir => {
           return Promise.all([
@@ -283,7 +269,6 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
               data.optionalDependencies = {
                 "node-mac-permissions": "2.3.0",
               }
-              data.packageManager = getPackageManagerWithVersion(PM.PNPM).prepareEntry
             }),
           ])
         },
@@ -300,6 +285,7 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
         targets: Platform.WINDOWS.createTarget(DIR_TARGET, Arch.x64),
       },
       {
+        packageManager: PM.YARN,
         isInstallDepsBefore: true,
         projectDirCreated: projectDir => {
           return Promise.all([
@@ -311,7 +297,6 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
                 debug: "3.1.0",
               }
             }),
-            outputFile(path.join(projectDir, "yarn.lock"), ""),
           ])
         },
         packed: context => verifyAsarFileTree(expect, context.getResources(Platform.WINDOWS)),
@@ -326,6 +311,7 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
         targets: Platform.WINDOWS.createTarget(DIR_TARGET, Arch.x64),
       },
       {
+        packageManager: PM.NPM,
         isInstallDepsBefore: true,
         projectDirCreated: projectDir => {
           return Promise.all([
@@ -337,7 +323,6 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
                 debug: "3.1.0",
               }
             }),
-            outputFile(path.join(projectDir, "package-lock.json"), ""),
           ])
         },
         packed: context => verifyAsarFileTree(expect, context.getResources(Platform.WINDOWS)),
@@ -353,9 +338,9 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
         targets: Platform.WINDOWS.createTarget(DIR_TARGET, Arch.x64),
       },
       {
+        packageManager: PM.YARN,
         isInstallDepsBefore: true,
-        projectDirCreated: async (projectDir, tmpDir) => {
-          await outputFile(path.join(projectDir, "yarn.lock"), "")
+        projectDirCreated: async projectDir => {
           await outputFile(path.join(projectDir, "node_modules", "foo", "package.json"), `{"name":"foo","version":"9.0.0","main":"index.js","license":"MIT"}`)
           await modifyPackageJson(projectDir, data => {
             data.dependencies = {
@@ -376,6 +361,7 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
         targets: linuxDirTarget,
       },
       {
+        packageManager: PM.YARN,
         isInstallDepsBefore: true,
         projectDirCreated: projectDir => {
           return Promise.all([
@@ -384,7 +370,6 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
                 "npm-run-all": "^4.1.5",
               }
             }),
-            outputFile(path.join(projectDir, "yarn.lock"), ""),
           ])
         },
         packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
@@ -399,6 +384,7 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
         targets: linuxDirTarget,
       },
       {
+        packageManager: PM.PNPM,
         isInstallDepsBefore: true,
         projectDirCreated: projectDir => {
           return Promise.all([
@@ -406,7 +392,6 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
               data.dependencies = {
                 "npm-run-all": "^4.1.5",
               }
-              data.packageManager = getPackageManagerWithVersion(PM.PNPM).prepareEntry
             }),
           ])
         },
@@ -423,6 +408,7 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
         targets: linuxDirTarget,
       },
       {
+        packageManager: PM.YARN,
         isInstallDepsBefore: true,
         projectDirCreated: projectDir => {
           return Promise.all([
@@ -435,7 +421,6 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
                 electron: "34.0.2",
               }
             }),
-            outputFile(path.join(projectDir, "yarn.lock"), ""),
           ])
         },
         packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
@@ -451,6 +436,7 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
         targets: linuxDirTarget,
       },
       {
+        packageManager: PM.YARN,
         isInstallDepsBefore: true,
         projectDirCreated: projectDir => {
           return Promise.all([
@@ -459,7 +445,6 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
                 "parse-asn1": "5.1.7",
               }
             }),
-            outputFile(path.join(projectDir, "yarn.lock"), ""),
           ])
         },
         packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
@@ -475,6 +460,7 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
         targets: linuxDirTarget,
       },
       {
+        packageManager: PM.NPM,
         isInstallDepsBefore: true,
         projectDirCreated: projectDir => {
           return Promise.all([
@@ -499,6 +485,7 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
         targets: linuxDirTarget,
       },
       {
+        packageManager: PM.PNPM,
         isInstallDepsBefore: true,
         projectDirCreated: projectDir => {
           return Promise.all([
@@ -506,7 +493,6 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
               data.dependencies = {
                 dayjs: "1.11.13",
               }
-              data.packageManager = getPackageManagerWithVersion(PM.PNPM).prepareEntry
             }),
             outputFile(path.join(projectDir, ".npmrc"), "node-linker=hoisted"),
           ])
@@ -522,6 +508,7 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
         targets: linuxDirTarget,
       },
       {
+        packageManager: PM.PNPM,
         isInstallDepsBefore: true,
         projectDirCreated: projectDir => {
           return Promise.all([
@@ -529,7 +516,6 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
               data.dependencies = {
                 dayjs: "1.11.13",
               }
-              data.packageManager = getPackageManagerWithVersion(PM.PNPM).prepareEntry
             }),
             outputFile(path.join(projectDir, ".npmrc"), "shamefully-hoist=true"),
           ])
@@ -545,6 +531,7 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
         targets: linuxDirTarget,
       },
       {
+        packageManager: PM.PNPM,
         isInstallDepsBefore: true,
         projectDirCreated: projectDir => {
           return Promise.all([
@@ -552,7 +539,6 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
               data.dependencies = {
                 dayjs: "1.11.13",
               }
-              data.packageManager = getPackageManagerWithVersion(PM.PNPM).prepareEntry
             }),
             outputFile(path.join(projectDir, ".npmrc"), "public-hoist-pattern=*"),
           ])

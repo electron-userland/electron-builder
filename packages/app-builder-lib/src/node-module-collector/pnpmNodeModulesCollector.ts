@@ -79,8 +79,8 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
     }
 
     // use .from instead of .name
-    const id = isHoisted ? pkg.from : `${pkg.from}@${pkg.version}`
-    return super.resolveModuleDir(id, isHoisted ? this.rootDir : pkg.path)
+    // const id = isHoisted ? pkg.from : `${pkg.from}@${pkg.version}`
+    return super.resolveModuleDir(pkg.from, isHoisted ? this.rootDir : pkg.path)
   }
 
   protected parseDependenciesTree(jsonBlob: string): PnpmDependency {

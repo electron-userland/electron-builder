@@ -59,6 +59,7 @@ export interface AssertPackOptions {
 
   readonly checkMacApp?: (appDir: string, info: any) => Promise<any>
 
+  readonly packageManager?: PM
   readonly useTempDir?: boolean
   readonly signed?: boolean
   readonly signedWin?: boolean
@@ -146,10 +147,18 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
 
   await executeFinally(
     (async () => {
+      const packageManagerOverride = checkOptions.packageManager || PM.NPM
+      await modifyPackageJson(projectDir, data => {
+        if (data.packageManager == null) {
+          data.packageManager = getPackageManagerWithVersion(packageManagerOverride).prepareEntry
+        }
+      })
+
       if (projectDirCreated != null) {
         await projectDirCreated(projectDir, tmpDir)
       }
 
+      // Package manager could have been changed during `projectDirCreated`
       const { pm, corepackConfig: packageManager } = detectPackageManager([projectDir])
 
       const tmpCache = await tmpDir.createTempDir({ prefix: "yarn-cache-" })

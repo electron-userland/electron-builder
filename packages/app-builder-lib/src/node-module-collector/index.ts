@@ -9,7 +9,9 @@ import * as fs from "fs-extra"
 import { execSync } from "child_process"
 import { isEmptyOrSpaces, log, spawn } from "builder-util"
 
-export async function getCollectorByPackageManager(pm: PM, rootDir: string, tempDirManager: TmpDir) {
+export { PM, getPackageManagerCommand }
+
+export function getCollectorByPackageManager(pm: PM, rootDir: string, tempDirManager: TmpDir) {
   switch (pm) {
     case PM.PNPM: {
       // const isHoisted = await PnpmNodeModulesCollector.isPnpmProjectHoisted(rootDir)
@@ -28,14 +30,14 @@ export async function getCollectorByPackageManager(pm: PM, rootDir: string, temp
   }
 }
 
-export async function getNodeModules(pm: PM, rootDir: string, tempDirManager: TmpDir): Promise<NodeModuleInfo[]> {
-  const collector = await getCollectorByPackageManager(pm, rootDir, tempDirManager)
+export function getNodeModules(pm: PM, rootDir: string, tempDirManager: TmpDir): Promise<NodeModuleInfo[]> {
+  const collector = getCollectorByPackageManager(pm, rootDir, tempDirManager)
   return collector.getNodeModules()
 }
 
 export function detectPackageManager(searchPaths: string[]): { pm: PM; corepackConfig: string | undefined; resolvedDirectory: string | undefined } {
   let pm: PM | null = null
-  const dedupedPaths = Array.from(new Set(searchPaths))
+  const dedupedPaths = Array.from(new Set(searchPaths)) // reduce file operations, dedupe paths since primary use case has projectDir === appDir
 
   const resolveIfYarn = (pm: PM, cwd: string) => (pm === PM.YARN ? detectYarnBerry(cwd) : pm)
 
@@ -140,4 +142,3 @@ async function findNearestWithWorkspacesField(dir: string): Promise<string | und
   }
   return undefined
 }
-export { PM, getPackageManagerCommand }

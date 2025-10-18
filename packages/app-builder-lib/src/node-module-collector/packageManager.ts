@@ -85,9 +85,24 @@ export function detectPackageManagerByFile(dir: string): PM | null {
 }
 
 export function detectYarnBerry(cwd: string): PM.YARN_BERRY | PM.YARN {
+  const checkVersion = () => {
+    try {
+      const version = execSync("yarn --version", { encoding: "utf8", cwd }).toString().trim()
+      if (parseInt(version.split(".")[0]) > 1) {
+        return PM.YARN_BERRY
+      }
+    } catch (_error) {
+      log.debug({ error: _error }, "cannot determine yarn version, assuming yarn v1")
+      // If `yarn` is not found or another error occurs, fall back to the regular Yarn since we're already determined in a Yarn project
+    }
+    return PM.YARN
+  }
   const lockPath = path.join(cwd, "yarn.lock")
+  if (!fs.existsSync(lockPath)) {
+    return checkVersion()
+  }
   // Read the first few lines of yarn.lock to determine the version
-  const firstBytes = fs.readFileSync(lockPath, "utf8").split("\n").slice(0, 10).join("\n");
+  const firstBytes = fs.readFileSync(lockPath, "utf8").split("\n").slice(0, 10).join("\n")
 
   // Yarn v2+ (Berry) has a "__metadata:" block near the top
   if (firstBytes.includes("__metadata:")) {
@@ -100,14 +115,5 @@ export function detectYarnBerry(cwd: string): PM.YARN_BERRY | PM.YARN {
   }
 
   // fallback to `yarn --version` check since this works AFTER corepack is enabled, but cannot be detected before hand (e.g. unit tests)
-  try {
-    const version = execSync("yarn --version", { encoding: "utf8", cwd }).toString().trim()
-    if (parseInt(version.split(".")[0]) > 1) {
-      return PM.YARN_BERRY
-    }
-  } catch (_error) {
-    log.debug({ error: _error }, "cannot determine yarn version, assuming yarn v1")
-    // If `yarn` is not found or another error occurs, fall back to the regular Yarn since we're already determined in a Yarn project
-  }
-  return PM.YARN
+  return checkVersion()
 }
