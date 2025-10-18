@@ -147,20 +147,21 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
     return parseNode(data, cwd)
   }
 
-  protected collectAllDependencies(tree: YarnDependency) {
+  protected async collectAllDependencies(tree: YarnDependency) {
     // Collect regular dependencies
     for (const [key, value] of Object.entries(tree.dependencies || {})) {
-      this.allDependencies.set(`${key}@${value.version}`, value)
-      this.collectAllDependencies(value)
+      this.allDependencies.set(this.moduleKeyGenerator(value), value)
+      await this.collectAllDependencies(value)
     }
 
     // Collect optional dependencies if they exist
     for (const [key, value] of Object.entries(tree.optionalDependencies || {})) {
-      this.allDependencies.set(`${key}@${value}`, {
+      const module = {
         name: key,
         version: value,
         path: this.resolveModuleDir(key, tree.path),
-      })
+      }
+      this.allDependencies.set(this.moduleKeyGenerator(module), module)
     }
   }
 

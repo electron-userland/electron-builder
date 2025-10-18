@@ -9,15 +9,15 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
     return ["list", "-a", "--include", "prod", "--include", "optional", "--omit", "dev", "--json", "--long", "--silent"]
   }
 
-  protected collectAllDependencies(tree: NpmDependency) {
+  protected async collectAllDependencies(tree: NpmDependency) {
     for (const [key, value] of Object.entries(tree.dependencies || {})) {
       const { _dependencies = {}, dependencies = {} } = value
       const isDuplicateDep = Object.keys(_dependencies).length > 0 && Object.keys(dependencies).length === 0
       if (isDuplicateDep) {
         continue
       }
-      this.allDependencies.set(`${key}@${value.version}`, value)
-      this.collectAllDependencies(value)
+      this.allDependencies.set(this.moduleKeyGenerator(value), value)
+      await this.collectAllDependencies(value)
     }
   }
 
