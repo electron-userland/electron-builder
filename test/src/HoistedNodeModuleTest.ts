@@ -14,6 +14,10 @@ test("yarn workspace", ({ expect }) =>
       projectDir: "packages/test-app",
     },
     {
+      projectDirCreated: async projectDir =>
+        modifyPackageJson(projectDir, data => {
+          data.packageManager = getPackageManagerWithVersion(PM.YARN).prepareEntry
+        }),
       packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
     }
   ))
@@ -27,6 +31,10 @@ test("conflict versions", ({ expect }) =>
       projectDir: "packages/test-app",
     },
     {
+      projectDirCreated: async projectDir =>
+        modifyPackageJson(projectDir, data => {
+          data.packageManager = getPackageManagerWithVersion(PM.YARN).prepareEntry
+        }),
       packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
     }
   ))
@@ -40,6 +48,10 @@ test("yarn several workspaces", ({ expect }) =>
       projectDir: "packages/test-app",
     },
     {
+      projectDirCreated: async projectDir =>
+        modifyPackageJson(projectDir, data => {
+          data.packageManager = getPackageManagerWithVersion(PM.YARN).prepareEntry
+        }),
       packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
     }
   ))
@@ -56,6 +68,10 @@ test("yarn several workspaces and asarUnpack", ({ expect }) =>
       },
     },
     {
+      projectDirCreated: async projectDir =>
+        modifyPackageJson(projectDir, data => {
+          data.packageManager = getPackageManagerWithVersion(PM.YARN).prepareEntry
+        }),
       packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
     }
   ))
@@ -68,6 +84,10 @@ test("yarn two package.json w/ native module", ({ expect }) =>
       targets: linuxDirTarget,
     },
     {
+      projectDirCreated: async projectDir =>
+        modifyPackageJson(projectDir, data => {
+          data.packageManager = getPackageManagerWithVersion(PM.YARN).prepareEntry
+        }),
       packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
     }
   ))
@@ -97,6 +117,7 @@ test("yarn two package.json", ({ expect }) =>
           data.build.directories = {
             app: "app",
           }
+          data.packageManager = getPackageManagerWithVersion(PM.YARN).prepareEntry
         })
 
         // install dependencies in project dir
@@ -146,6 +167,7 @@ test("yarn two package.json without node_modules", ({ expect }) =>
           data.build.directories = {
             app: "app",
           }
+          data.packageManager = getPackageManagerWithVersion(PM.YARN).prepareEntry
         })
 
         // install dependencies in project dir
@@ -186,6 +208,7 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
             data.dependencies = {
               "is-odd": "3.0.1",
             }
+            data.packageManager = getPackageManagerWithVersion(PM.YARN).prepareEntry
           })
         },
         packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
@@ -208,7 +231,7 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
               data.dependencies = {
                 "es5-ext": "0.10.53",
               }
-              data.packageManager = getPackageManagerWithVersion(PM.PNPM, undefined).prepareEntry
+              data.packageManager = getPackageManagerWithVersion(PM.PNPM).prepareEntry
             }),
           ])
         },
@@ -234,7 +257,7 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
               data.optionalDependencies = {
                 debug: "3.1.0",
               }
-              data.packageManager = getPackageManagerWithVersion(PM.PNPM, undefined).prepareEntry
+              data.packageManager = getPackageManagerWithVersion(PM.PNPM).prepareEntry
             }),
           ])
         },
@@ -260,7 +283,7 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
               data.optionalDependencies = {
                 "node-mac-permissions": "2.3.0",
               }
-              data.packageManager = getPackageManagerWithVersion(PM.PNPM, undefined).prepareEntry
+              data.packageManager = getPackageManagerWithVersion(PM.PNPM).prepareEntry
             }),
           ])
         },
@@ -383,7 +406,7 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
               data.dependencies = {
                 "npm-run-all": "^4.1.5",
               }
-              data.packageManager = getPackageManagerWithVersion(PM.PNPM, undefined).prepareEntry
+              data.packageManager = getPackageManagerWithVersion(PM.PNPM).prepareEntry
             }),
           ])
         },
@@ -468,7 +491,7 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
     ))
 
   //github.com/electron-userland/electron-builder/issues/8881
-  test.only("pnpm node-linker=hoisted", ({ expect }) =>
+  test("pnpm node-linker=hoisted", ({ expect }) =>
     assertPack(
       expect,
       "test-app-hoisted",
@@ -483,7 +506,7 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
               data.dependencies = {
                 dayjs: "1.11.13",
               }
-              data.packageManager = getPackageManagerWithVersion(PM.PNPM, undefined).prepareEntry
+              data.packageManager = getPackageManagerWithVersion(PM.PNPM).prepareEntry
             }),
             outputFile(path.join(projectDir, ".npmrc"), "node-linker=hoisted"),
           ])
@@ -506,7 +529,7 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
               data.dependencies = {
                 dayjs: "1.11.13",
               }
-              data.packageManager = getPackageManagerWithVersion(PM.PNPM, undefined).prepareEntry
+              data.packageManager = getPackageManagerWithVersion(PM.PNPM).prepareEntry
             }),
             outputFile(path.join(projectDir, ".npmrc"), "shamefully-hoist=true"),
           ])
@@ -529,7 +552,7 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
               data.dependencies = {
                 dayjs: "1.11.13",
               }
-              data.packageManager = getPackageManagerWithVersion(PM.PNPM, undefined).prepareEntry
+              data.packageManager = getPackageManagerWithVersion(PM.PNPM).prepareEntry
             }),
             outputFile(path.join(projectDir, ".npmrc"), "public-hoist-pattern=*"),
           ])
