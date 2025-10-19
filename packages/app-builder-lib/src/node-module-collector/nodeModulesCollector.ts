@@ -246,7 +246,7 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
       child.on("close", code => {
         outStream.close()
         // https://github.com/npm/npm/issues/17624
-        if (code === 1 && ["npm", "yarn"].includes(execName.toLowerCase()) && args.includes("list")) {
+        if (code === 1 && ["npm"].includes(execName.toLowerCase()) && args.includes("list")) {
           // This is a known issue with npm list command, it can return code 1 even when the command is "technically" successful
           log.debug({ code, stderr }, "`npm list` returned non-zero exit code, but it MIGHT be expected (https://github.com/npm/npm/issues/17624). Check stderr for details.")
           resolve()

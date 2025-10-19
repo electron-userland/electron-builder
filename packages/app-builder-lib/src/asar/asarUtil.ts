@@ -145,11 +145,14 @@ export class AsarPackager {
 
     const realPathFile = await fs.realpath(file)
     const workspaceRoot = await this.packager.info.getWorkspaceRoot()
-    const realPathRelative = path.relative(workspaceRoot, fileSet.src)
+
+    // Determine if the real path points outside the workspace
+    const realPathRelative = path.relative(workspaceRoot, realPathFile)
     const isOutsidePackage = realPathRelative.startsWith("..")
+
     if (isOutsidePackage) {
       log.error({ source: log.filePath(file), realPathFile: log.filePath(realPathFile), workspaceRoot }, `unable to copy, file is symlinked outside the package`)
-      throw new Error(`Cannot copy file (${path.basename(file)}) symlinked to file (${path.basename(realPathFile)}) outside the package as that violates asar security integrity`)
+      throw new Error(`Cannot copy file (${file}) symlinked to file (${realPathRelative}) outside the package as that violates asar security integrity`)
     }
 
     const config = {
@@ -160,7 +163,7 @@ export class AsarPackager {
     }
 
     // not a symlink, stream directly
-    if (!stat.isSymbolicLink()) {
+    if (file === realPathFile) {
       return {
         ...config,
         type: "file",
