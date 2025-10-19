@@ -10077,6 +10077,12 @@ exports[`link 3`] = `
 }
 `;
 
+exports[`outside link 1`] = `
+{
+  "linux": [],
+}
+`;
+
 exports[`unpackDir 1`] = `
 {
   "linux": [],

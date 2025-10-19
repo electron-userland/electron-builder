@@ -9,6 +9,7 @@ import { verifySmartUnpack } from "./helpers/verifySmartUnpack"
 import { spawnSync } from "child_process"
 import { ExpectStatic } from "vitest"
 import { spawn } from "builder-util/out/util"
+import { PM } from "app-builder-lib/out/node-module-collector/packageManager"
 
 async function createFiles(appDir: string) {
   await Promise.all([
@@ -144,8 +145,8 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
       },
       {
         isInstallDepsBefore: true,
+        packageManager: PM.NPM,
         projectDirCreated: async projectDir => {
-          await outputFile(path.join(projectDir, "package-lock.json"), "")
           await modifyPackageJson(projectDir, data => {
             data.dependencies = {
               debug: "4.1.1",
@@ -207,6 +208,7 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
         targets: linuxDirTarget,
       },
       {
+        packageManager: PM.YARN,
         isInstallDepsBefore: true,
         projectDirCreated: async projectDir => {
           return Promise.all([
@@ -219,7 +221,6 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
                 "react-dom": "15.2.1",
               }
             }),
-            outputFile(path.join(projectDir, "yarn.lock"), ""),
           ])
         },
         packed: context => {
@@ -241,9 +242,9 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
         },
       },
       {
+        packageManager: PM.NPM,
         isInstallDepsBefore: true,
         projectDirCreated: async projectDir => {
-          await outputFile(path.join(projectDir, "package-lock.json"), "")
           return modifyPackageJson(projectDir, data => {
             //noinspection SpellCheckingInspection
             data.dependencies = {
@@ -272,8 +273,8 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
       },
       {
         isInstallDepsBefore: true,
+        packageManager: PM.NPM,
         projectDirCreated: async projectDir => {
-          await outputFile(path.join(projectDir, "package-lock.json"), "")
           return modifyPackageJson(projectDir, data => {
             data.dependencies = {
               "ci-info": "2.0.0",

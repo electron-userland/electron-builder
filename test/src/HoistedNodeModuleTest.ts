@@ -469,7 +469,6 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
                 tar: "7.4.3",
               }
             }),
-            outputFile(path.join(projectDir, "package-lock.json"), ""),
           ])
         },
         packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
