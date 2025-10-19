@@ -158,7 +158,7 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
         await projectDirCreated(projectDir, tmpDir)
       }
 
-      // Package manager could have been changed during `projectDirCreated`
+      // Check again. Package manager could have been changed during `projectDirCreated`
       const { pm, corepackConfig: packageManager } = detectPackageManager([projectDir])
 
       const tmpCache = await tmpDir.createTempDir({ prefix: "yarn-cache-" })
@@ -190,47 +190,40 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
         console.warn("⚠️ Yarn prepare failed:", err.message)
       }
 
-      if (checkOptions.isInstallDepsBefore) {
-        const collector = await getCollectorByPackageManager(pm, projectDir, tmpDir)
-        const collectorOptions = collector.installOptions
+      const collector = await getCollectorByPackageManager(pm, projectDir, tmpDir)
+      const collectorOptions = collector.installOptions
 
-        const destLockfile = path.join(projectDir, collectorOptions.lockfile)
+      const destLockfile = path.join(projectDir, collectorOptions.lockfile)
 
-        const shouldUpdateLockfiles = !!process.env.UPDATE_LOCKFILE_FIXTURES && !!checkOptions.storeDepsLockfileSnapshot
-        // check for lockfile fixture so we can use `--frozen-lockfile`
-        if ((await exists(testFixtureLockfile)) && !shouldUpdateLockfiles) {
-          await copyFile(testFixtureLockfile, destLockfile)
+      const shouldUpdateLockfiles = !!process.env.UPDATE_LOCKFILE_FIXTURES && !!checkOptions.storeDepsLockfileSnapshot
+      // check for lockfile fixture so we can use `--frozen-lockfile`
+      if ((await exists(testFixtureLockfile)) && !shouldUpdateLockfiles) {
+        await copyFile(testFixtureLockfile, destLockfile)
+      }
+
+      const appDir = await computeDefaultAppDirectory(projectDir, configuration.directories?.app)
+
+      await installDependencies(
+        configuration,
+        {
+          projectDir: projectDir,
+          appDir: appDir,
+          workspaceRoot: null,
+        },
+        {
+          frameworkInfo: { version: ELECTRON_VERSION, useCustomDist: false },
+          productionDeps: createLazyProductionDeps(appDir, null, false),
+        },
+        runtimeEnv
+      )
+
+      // save lockfile fixture
+      if (!(await exists(testFixtureLockfile)) && shouldUpdateLockfiles) {
+        const fixtureDir = path.dirname(testFixtureLockfile)
+        if (!(await exists(fixtureDir))) {
+          await mkdir(fixtureDir)
         }
-
-        const appDir = await computeDefaultAppDirectory(projectDir, configuration.directories?.app)
-
-        await installDependencies(
-          configuration,
-          {
-            projectDir: projectDir,
-            appDir: appDir,
-            workspaceRoot: null,
-          },
-          {
-            frameworkInfo: { version: ELECTRON_VERSION, useCustomDist: false },
-            productionDeps: createLazyProductionDeps(appDir, null, false),
-          },
-          runtimeEnv
-        )
-
-        // save lockfile fixture
-        if (!(await exists(testFixtureLockfile)) && shouldUpdateLockfiles) {
-          const fixtureDir = path.dirname(testFixtureLockfile)
-          if (!(await exists(fixtureDir))) {
-            await mkdir(fixtureDir)
-          }
-          await copyFile(destLockfile, testFixtureLockfile)
-        }
-      } else {
-        // if no deps installed, make sure no leftover lockfile fixture
-        if (await exists(testFixtureLockfile)) {
-          await remove(testFixtureLockfile)
-        }
+        await copyFile(destLockfile, testFixtureLockfile)
       }
 
       if (packagerOptions.projectDir != null) {

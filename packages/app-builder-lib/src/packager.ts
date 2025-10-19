@@ -97,12 +97,12 @@ export class Packager {
     return this._appDir
   }
 
-  private readonly _packageManager: Lazy<{ pm: PM; workspaceRoot: Promise<string | undefined> }>
-  async getPackageManager() {
-    return (await this._packageManager.value).pm
+  private _packageManager: Lazy<{ pm: PM; workspaceRoot: Promise<string | undefined> }> | null = null
+  async getPackageManager(): Promise<PM> {
+    return (await this._packageManager!.value).pm
   }
   async getWorkspaceRoot(): Promise<string> {
-    return (await (await this._packageManager.value).workspaceRoot) || this.projectDir
+    return (await (await this._packageManager!.value).workspaceRoot) || this.projectDir
   }
 
   private _metadata: Metadata | null = null
@@ -267,8 +267,6 @@ export class Packager {
     this.projectDir = options.projectDir == null ? process.cwd() : path.resolve(options.projectDir)
     this._appDir = this.projectDir
 
-    this._packageManager = this.resolvePackageManager()
-
     this.options = {
       ...options,
       prepackaged: options.prepackaged == null ? null : path.resolve(this.projectDir, options.prepackaged),
@@ -278,12 +276,22 @@ export class Packager {
   }
 
   private resolvePackageManager(): Lazy<{ pm: PM; workspaceRoot: Promise<string | undefined> }> {
-    const availableDirs = [this.projectDir, this.appDir]
-    const pm = detectPackageManager(availableDirs)
-    return new Lazy(async () => ({
-      pm: pm.pm,
-      workspaceRoot: Promise.resolve((await findWorkspaceRoot(pm.pm, this.projectDir)) ?? pm.resolvedDirectory),
-    }))
+    return new Lazy(async () => {
+      const availableDirs = [this.projectDir, this.appDir]
+      const pm = detectPackageManager(availableDirs)
+      const workspaceRoot = (await findWorkspaceRoot(pm.pm, this.projectDir)) ?? pm.resolvedDirectory
+      if (workspaceRoot != null) {
+        const actualPm = detectPackageManager(workspaceRoot != null ? [workspaceRoot] : availableDirs)
+        return {
+          pm: actualPm.pm,
+          workspaceRoot: Promise.resolve(actualPm.resolvedDirectory),
+        }
+      }
+      return {
+        pm: pm.pm,
+        workspaceRoot: Promise.resolve(workspaceRoot),
+      }
+    })
   }
 
   private async addPackagerEventHandlers() {
@@ -411,6 +419,8 @@ export class Packager {
 
     this._configuration = configuration
     this._devMetadata = devMetadata
+
+    this._packageManager = this.resolvePackageManager()
   }
 
   // external caller of this method always uses isTwoPackageJsonProjectLayoutUsed=false and appDir=projectDir, no way (and need) to use another values

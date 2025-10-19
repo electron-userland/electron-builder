@@ -5,7 +5,7 @@ import { spawn } from "builder-util/out/util"
 import { PM } from "app-builder-lib/out/node-module-collector"
 import { assertPack, linuxDirTarget, modifyPackageJson, verifyAsarFileTree } from "./helpers/packTester"
 
-test.only("yarn workspace", ({ expect }) =>
+test("yarn workspace", ({ expect }) =>
   assertPack(
     expect,
     "test-app-yarn-workspace",
