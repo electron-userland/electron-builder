@@ -2849,7 +2849,7 @@
         },
         "icon": {
           "default": "build/icon.icns",
-          "description": "The path to application icon.",
+          "description": "The path to application icon.\nAccepts `.icns` (legacy) or `.icon` (Icon Composer asset).\nIf a `.icon` asset is provided, it will be preferred and compiled to an asset catalog.",
           "type": [
             "null",
             "string"
@@ -3484,7 +3484,7 @@
         },
         "icon": {
           "default": "build/icon.icns",
-          "description": "The path to application icon.",
+          "description": "The path to application icon.\nAccepts `.icns` (legacy) or `.icon` (Icon Composer asset).\nIf a `.icon` asset is provided, it will be preferred and compiled to an asset catalog.",
           "type": [
             "null",
             "string"
