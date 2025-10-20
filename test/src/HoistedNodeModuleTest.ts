@@ -106,7 +106,7 @@ test("yarn two package.json", ({ expect }) =>
         })
 
         // install dependencies in project dir
-        await spawn("npm", ["install"], {
+        await spawn("yarn", ["install"], {
           cwd: projectDir,
         })
 
@@ -175,7 +175,7 @@ test("yarn two package.json without node_modules", ({ expect }) =>
       packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
     }
   ))
-describe("isInstallDepsBefore=true", { sequential: true }, () => {
+describe("isInstallDepsBefore=true", () => {
   test("yarn workspace for scope name", ({ expect }) =>
     assertPack(
       expect,

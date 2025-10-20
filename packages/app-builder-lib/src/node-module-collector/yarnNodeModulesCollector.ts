@@ -204,8 +204,8 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
     if (this.productionGraph[dependencyId]) {
       return
     }
-    const productionDeps = Object.entries(tree.dependencies || {}).map(async ([packageName, dependency]) => {
-      const childDependencyId = `${packageName}@${dependency.version}`
+    const productionDeps = Object.entries(tree.dependencies || {}).map(async ([, dependency]) => {
+      const childDependencyId = this.moduleKeyGenerator(dependency)
       await this.extractProductionDependencyGraph(dependency, childDependencyId)
       return childDependencyId
     })
@@ -260,7 +260,7 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
     const buildFromPackage = (pkgDir: string): YarnDependency => {
       const pkgPath = path.join(pkgDir, "package.json")
       const pkg = fs.readJSONSync(pkgPath)
-      const id = `${pkg.name}@${pkg.version}`
+      const id = this.moduleKeyGenerator(pkg)
       if (visited.has(id)) {
         return { name: pkg.name, version: pkg.version, path: pkgDir }
       }
@@ -277,10 +277,10 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
       for (const [depName, depVersion] of Object.entries(allDeps ?? {})) {
         try {
           // Try to locate dependency relative to current package
-          const depPkgPath = require.resolve(path.join(depName, "package.json"), {
-            paths: [pkgDir],
-          })
-          const depDir = path.dirname(depPkgPath)
+          // const depPkgPath = require.resolve(path.join(depName, "package.json"), {
+          //   paths: [pkgDir],
+          // })
+          const depDir = this.resolveModuleDir(depName, pkgDir)
           deps[depName] = buildFromPackage(depDir)
         } catch {
           // Not installed or cannot resolve; keep version range info only

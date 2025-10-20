@@ -1,8 +1,7 @@
 {
-    "name": "stripped-native-dep",
+    "name": "hello-world",
     "version": "1.0.0",
-    "description": "",
+    "description": "Sample node_module to test symlinked framework handling",
     "author": "",
     "license": "ISC"
   }
-  

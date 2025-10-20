@@ -10,7 +10,7 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
   }
 
   protected async collectAllDependencies(tree: NpmDependency) {
-    for (const [key, value] of Object.entries(tree.dependencies || {})) {
+    for (const [, value] of Object.entries(tree.dependencies || {})) {
       const { _dependencies = {}, dependencies = {} } = value
       const isDuplicateDep = Object.keys(_dependencies).length > 0 && Object.keys(dependencies).length === 0
       if (isDuplicateDep) {
@@ -35,8 +35,8 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
     this.productionGraph[dependencyId] = { dependencies: [] }
     const productionDeps = Object.entries(resolvedDeps)
       .filter(([packageName]) => prodDependencies[packageName])
-      .map(async ([packageName, dependency]) => {
-        const childDependencyId = `${packageName}@${dependency.version}`
+      .map(async ([, dependency]) => {
+        const childDependencyId = this.moduleKeyGenerator(dependency)
         await this.extractProductionDependencyGraph(dependency, childDependencyId)
         return childDependencyId
       })

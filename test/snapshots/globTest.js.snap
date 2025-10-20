@@ -18637,12 +18637,6 @@ exports[`isInstallDepsBefore=true > ignore node_modules 1`] = `
 }
 `;
 
-exports[`isInstallDepsBefore=true > local node module with file protocol 1`] = `
-{
-  "linux": [],
-}
-`;
-
 exports[`isInstallDepsBefore=true > symlinks everywhere with static framework 1`] = `
 {
   "linux": [],
@@ -18852,13 +18846,13 @@ exports[`isInstallDepsBefore=true > symlinks everywhere with static framework 4`
   "app.asar.unpacked/node_modules/hello-world/hello-world-framework.sh",
   {
     "content": "{
-    "name": "stripped-native-dep",
+    "name": "hello-world",
     "version": "1.0.0",
-    "description": "",
+    "description": "Sample node_module to test symlinked framework handling",
     "author": "",
     "license": "ISC"
   }
-  ",
+",
     "name": "app.asar.unpacked/node_modules/hello-world/package.json",
   },
   "app.asar.unpacked/node_modules/hello-world/lib/Release/Hello.framework/Headers",
@@ -18929,12 +18923,6 @@ exports[`link 3`] = `
       "size": 289,
     },
   },
-}
-`;
-
-exports[`outside link 1`] = `
-{
-  "linux": [],
 }
 `;
 

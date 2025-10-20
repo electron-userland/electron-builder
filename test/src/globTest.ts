@@ -153,7 +153,7 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
               ...data.dependencies,
             }
           })
-          return fs.symlink(path.join(projectDir, "index.js"), path.join(projectDir, "foo.js"))
+          await fs.symlink(path.join(projectDir, "index.js"), path.join(projectDir, "foo.js"))
         },
         packed: async context => {
           const resources = context.getResources(Platform.LINUX)
