@@ -16,7 +16,7 @@ export function getCollectorByPackageManager(pm: PM, rootDir: string, tempDirMan
     case PM.PNPM: {
       // const isHoisted = await PnpmNodeModulesCollector.isPnpmProjectHoisted(rootDir)
       // if (!isHoisted) {
-        return new PnpmNodeModulesCollector(rootDir, tempDirManager)
+      return new PnpmNodeModulesCollector(rootDir, tempDirManager)
       // }
       // // hoisted pnpm projects use npm-style node_modules layout
       // return new NpmNodeModulesCollector(rootDir, tempDirManager)

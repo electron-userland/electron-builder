@@ -86,7 +86,6 @@ test("yarn two package.json", ({ expect }) =>
     },
     {
       packageManager: PM.YARN,
-      isInstallDepsBefore: false,
       projectDirCreated: async projectDir => {
         await modifyPackageJson(projectDir, data => {
           data.dependencies = {
@@ -136,7 +135,6 @@ test("yarn two package.json without node_modules", ({ expect }) =>
     },
     {
       packageManager: PM.YARN,
-      isInstallDepsBefore: false,
       projectDirCreated: async projectDir => {
         await modifyPackageJson(projectDir, data => {
           data.dependencies = {
@@ -186,7 +184,6 @@ describe("isInstallDepsBefore=true", () => {
       },
       {
         packageManager: PM.YARN,
-        isInstallDepsBefore: true,
         projectDirCreated: async projectDir => {
           const subAppDir = path.join(projectDir, "packages", "test-app")
           return modifyPackageJson(subAppDir, data => {
@@ -210,7 +207,6 @@ describe("isInstallDepsBefore=true", () => {
       },
       {
         packageManager: PM.PNPM,
-        isInstallDepsBefore: true,
         projectDirCreated: projectDir => {
           return Promise.all([
             modifyPackageJson(projectDir, data => {
@@ -233,7 +229,6 @@ describe("isInstallDepsBefore=true", () => {
       },
       {
         packageManager: PM.PNPM,
-        isInstallDepsBefore: true,
         projectDirCreated: projectDir => {
           return Promise.all([
             modifyPackageJson(projectDir, data => {
@@ -259,7 +254,6 @@ describe("isInstallDepsBefore=true", () => {
       },
       {
         packageManager: PM.PNPM,
-        isInstallDepsBefore: true,
         projectDirCreated: projectDir => {
           return Promise.all([
             modifyPackageJson(projectDir, data => {
@@ -286,7 +280,6 @@ describe("isInstallDepsBefore=true", () => {
       },
       {
         packageManager: PM.YARN,
-        isInstallDepsBefore: true,
         projectDirCreated: projectDir => {
           return Promise.all([
             modifyPackageJson(projectDir, data => {
@@ -312,7 +305,6 @@ describe("isInstallDepsBefore=true", () => {
       },
       {
         packageManager: PM.NPM,
-        isInstallDepsBefore: true,
         projectDirCreated: projectDir => {
           return Promise.all([
             modifyPackageJson(projectDir, data => {
@@ -339,7 +331,6 @@ describe("isInstallDepsBefore=true", () => {
       },
       {
         packageManager: PM.YARN,
-        isInstallDepsBefore: true,
         projectDirCreated: async projectDir => {
           await outputFile(path.join(projectDir, "node_modules", "foo", "package.json"), `{"name":"foo","version":"9.0.0","main":"index.js","license":"MIT"}`)
           await modifyPackageJson(projectDir, data => {
@@ -362,7 +353,6 @@ describe("isInstallDepsBefore=true", () => {
       },
       {
         packageManager: PM.YARN,
-        isInstallDepsBefore: true,
         projectDirCreated: projectDir => {
           return Promise.all([
             modifyPackageJson(projectDir, data => {
@@ -385,7 +375,6 @@ describe("isInstallDepsBefore=true", () => {
       },
       {
         packageManager: PM.PNPM,
-        isInstallDepsBefore: true,
         projectDirCreated: projectDir => {
           return Promise.all([
             modifyPackageJson(projectDir, data => {
@@ -409,7 +398,6 @@ describe("isInstallDepsBefore=true", () => {
       },
       {
         packageManager: PM.YARN,
-        isInstallDepsBefore: true,
         projectDirCreated: projectDir => {
           return Promise.all([
             modifyPackageJson(projectDir, data => {
@@ -437,7 +425,6 @@ describe("isInstallDepsBefore=true", () => {
       },
       {
         packageManager: PM.YARN,
-        isInstallDepsBefore: true,
         projectDirCreated: projectDir => {
           return Promise.all([
             modifyPackageJson(projectDir, data => {
@@ -461,7 +448,6 @@ describe("isInstallDepsBefore=true", () => {
       },
       {
         packageManager: PM.NPM,
-        isInstallDepsBefore: true,
         projectDirCreated: projectDir => {
           return Promise.all([
             modifyPackageJson(projectDir, data => {
@@ -485,7 +471,6 @@ describe("isInstallDepsBefore=true", () => {
       },
       {
         packageManager: PM.PNPM,
-        isInstallDepsBefore: true,
         projectDirCreated: projectDir => {
           return Promise.all([
             modifyPackageJson(projectDir, data => {
@@ -508,7 +493,6 @@ describe("isInstallDepsBefore=true", () => {
       },
       {
         packageManager: PM.PNPM,
-        isInstallDepsBefore: true,
         projectDirCreated: projectDir => {
           return Promise.all([
             modifyPackageJson(projectDir, data => {
@@ -531,7 +515,6 @@ describe("isInstallDepsBefore=true", () => {
       },
       {
         packageManager: PM.PNPM,
-        isInstallDepsBefore: true,
         projectDirCreated: projectDir => {
           return Promise.all([
             modifyPackageJson(projectDir, data => {

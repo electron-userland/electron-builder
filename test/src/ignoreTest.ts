@@ -91,7 +91,6 @@ test.ifNotCiMac.sequential("ignore node_modules dev dep", ({ expect }) =>
     },
     {
       packageManager: PM.NPM,
-      isInstallDepsBefore: true,
       projectDirCreated: async projectDir => {
         return Promise.all([
           modifyPackageJson(projectDir, data => {
@@ -121,7 +120,6 @@ test.ifDevOrLinuxCi.sequential("copied sub node_modules of the rootDir/node_modu
     },
     {
       packageManager: PM.NPM,
-      isInstallDepsBefore: true,
       projectDirCreated: async projectDir => {
         return Promise.all([
           modifyPackageJson(projectDir, data => {

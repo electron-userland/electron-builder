@@ -204,7 +204,6 @@ test.ifLinux("electronDist as standard path to node_modules electron", ({ expect
       },
     },
     {
-      isInstallDepsBefore: true,
       projectDirCreated: async projectDir => {
         await modifyPackageJson(projectDir, data => {
           data.devDependencies = {

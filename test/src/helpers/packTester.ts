@@ -64,7 +64,6 @@ export interface AssertPackOptions {
   readonly signed?: boolean
   readonly signedWin?: boolean
 
-  readonly isInstallDepsBefore?: boolean
   readonly storeDepsLockfileSnapshot?: boolean
 
   readonly publish?: PublishPolicy

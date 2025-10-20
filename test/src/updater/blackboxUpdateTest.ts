@@ -231,7 +231,6 @@ async function doBuild(
         },
       },
       {
-        isInstallDepsBefore: true,
         storeDepsLockfileSnapshot: false,
         signed: true,
         signedWin: isWindows,

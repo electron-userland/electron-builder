@@ -31,7 +31,6 @@ test("yarn", ({ expect }) =>
       targets: linuxDirTarget,
     },
     {
-      isInstallDepsBefore: true,
       packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
 
       projectDirCreated: async projectDir => {
@@ -63,7 +62,6 @@ test("yarn berry", ({ expect }) =>
       targets: linuxDirTarget,
     },
     {
-      isInstallDepsBefore: true,
       packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
 
       projectDirCreated: async projectDir => {
@@ -80,7 +78,6 @@ test("yarn berry", ({ expect }) =>
         await copyFile(path.join(getFixtureDir(), ".pnp.cjs"), path.join(projectDir, ".pnp.cjs"))
         await rm(path.join(projectDir, ".yarnrc.yml"))
         execSync("yarn install", { cwd: projectDir, stdio: "inherit" })
-
       },
     }
   ))
@@ -94,7 +91,6 @@ test("yarn workspace", ({ expect }) =>
       projectDir: "packages/test-app",
     },
     {
-      isInstallDepsBefore: true,
       packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
       projectDirCreated: async projectDir => {
         await modifyPackageJson(projectDir, data => {
@@ -114,7 +110,6 @@ test("yarn berry workspace", ({ expect }) =>
       projectDir: "packages/test-app",
     },
     {
-      isInstallDepsBefore: true,
       packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
       projectDirCreated: async projectDir => {
         await modifyPackageJson(projectDir, data => {
@@ -134,7 +129,6 @@ test("yarn multi-package workspace", ({ expect }) =>
       projectDir: "packages/test-app",
     },
     {
-      isInstallDepsBefore: true,
       packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
       projectDirCreated: async projectDir => {
         await modifyPackageJson(projectDir, data => {
@@ -154,7 +148,6 @@ test("yarn berry multi-package workspace", ({ expect }) =>
       projectDir: "packages/test-app",
     },
     {
-      isInstallDepsBefore: true,
       packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
       projectDirCreated: async projectDir => {
         await modifyPackageJson(projectDir, data => {
@@ -173,7 +166,6 @@ test("pnpm", ({ expect }) =>
       targets: linuxDirTarget,
     },
     {
-      isInstallDepsBefore: true,
       packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
       projectDirCreated: projectDir =>
         modifyPackageJson(
@@ -196,7 +188,6 @@ test("npm", ({ expect }) =>
       targets: linuxDirTarget,
     },
     {
-      isInstallDepsBefore: true,
       packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
 
       projectDirCreated: projectDir => modifyPackageJson(projectDir, data => packageConfig(data, "npm@9.8.1"), false),

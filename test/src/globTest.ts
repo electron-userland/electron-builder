@@ -144,7 +144,6 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
         },
       },
       {
-        isInstallDepsBefore: true,
         packageManager: PM.NPM,
         projectDirCreated: async projectDir => {
           await modifyPackageJson(projectDir, data => {
@@ -209,7 +208,6 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
       },
       {
         packageManager: PM.YARN,
-        isInstallDepsBefore: true,
         projectDirCreated: async projectDir => {
           return Promise.all([
             modifyPackageJson(projectDir, data => {
@@ -243,7 +241,6 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
       },
       {
         packageManager: PM.NPM,
-        isInstallDepsBefore: true,
         projectDirCreated: async projectDir => {
           return modifyPackageJson(projectDir, data => {
             //noinspection SpellCheckingInspection
@@ -272,7 +269,6 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
         },
       },
       {
-        isInstallDepsBefore: true,
         packageManager: PM.NPM,
         projectDirCreated: async projectDir => {
           return modifyPackageJson(projectDir, data => {

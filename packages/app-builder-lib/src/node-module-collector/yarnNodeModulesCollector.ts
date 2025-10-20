@@ -251,9 +251,9 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
   // }
 
   /**
- * Builds a dependency tree using only package.json dependencies and optionalDependencies.
- * This skips devDependencies and does not walk the node_modules filesystem.
- */
+   * Builds a dependency tree using only package.json dependencies and optionalDependencies.
+   * This skips devDependencies and does not walk the node_modules filesystem.
+   */
   private buildNodeModulesTreeManually(baseDir: string): YarnDependency {
     const visited = new Set<string>()
 
