@@ -1,6 +1,4 @@
-const func = (event) => {
-  return
-}
+const func = console.log
 
 export const artifactBuildStarted = func
 export const artifactBuildCompleted = func

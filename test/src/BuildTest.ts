@@ -277,19 +277,19 @@ test.ifLinuxOrDevMac("hooks as file - cjs", async ({ expect }) => {
   })
 })
 
-// test.only("hooks as file - mjs exported functions", async ({ expect }) => {
-//   const hookScript = path.join(getFixtureDir(), "build-hook.mjs")
-//   return assertPack(expect,"test-app-one", {
-//     targets: createTargets([Platform.LINUX, Platform.MAC], "zip", "x64"),
-//     config: {
-//       artifactBuildStarted: hookScript,
-//       artifactBuildCompleted: hookScript,
-//       beforePack: hookScript,
-//       afterExtract: hookScript,
-//       afterPack: hookScript,
-//     },
-//   })
-// })
+test.ifLinuxOrDevMac("hooks as file - mjs exported functions", async ({ expect }) => {
+  const hookScript = path.join(getFixtureDir(), "build-hook.mjs")
+  return assertPack(expect, "test-app-one", {
+    targets: createTargets([Platform.LINUX, Platform.MAC], "zip", "x64"),
+    config: {
+      artifactBuildStarted: hookScript,
+      artifactBuildCompleted: hookScript,
+      beforePack: hookScript,
+      afterExtract: hookScript,
+      afterPack: hookScript,
+    },
+  })
+})
 
 test.ifWindows("afterSign", ({ expect }) => {
   let called = 0
@@ -364,15 +364,14 @@ test.ifDevOrLinuxCi("win smart unpack", ({ expect }) => {
     {
       projectDirCreated: async projectDir => {
         p = projectDir
-        process.env.npm_config_user_agent = "npm"
-        return packageJson(it => {
+        return modifyPackageJson(projectDir, it => {
           it.dependencies = {
             debug: "3.1.0",
             "edge-cs": "1.2.1",
             "@electron-builder/test-smart-unpack": "1.0.0",
             "@electron-builder/test-smart-unpack-empty": "1.0.0",
           }
-        })(projectDir)
+        })
       },
       packed: async context => {
         await verifySmartUnpack(expect, context.getResources(Platform.WINDOWS))
@@ -382,16 +381,18 @@ test.ifDevOrLinuxCi("win smart unpack", ({ expect }) => {
   )
 })
 
-test.ifDevOrWinCi("smart unpack local module with dll file", ({ expect }) => {
+test("smart unpack local module with dll file", ({ expect }) => {
   return app(
     expect,
     {
       targets: Platform.WINDOWS.createTarget(DIR_TARGET, Arch.x64),
+      config: {
+        files: ["!foo"],
+      },
     },
     {
-      projectDirCreated: async (projectDir, tmpDir) => {
-        const tempDir = await tmpDir.getTempDir()
-        const localPath = path.join(tempDir, "foo")
+      projectDirCreated: async projectDir => {
+        const localPath = path.join(projectDir, "foo")
         await outputFile(path.join(localPath, "package.json"), `{"name":"foo","version":"9.0.0","main":"index.js","license":"MIT"}`)
         await outputFile(path.join(localPath, "test.dll"), `test`)
         await modifyPackageJson(projectDir, data => {
@@ -400,11 +401,6 @@ test.ifDevOrWinCi("smart unpack local module with dll file", ({ expect }) => {
             "edge-cs": "1.2.1",
             foo: `file:${localPath}`,
           }
-        })
-
-        // we can't use `isInstallDepsBefore` as `localPath` is dynamic and changes for every which causes `--frozen-lockfile` and `npm ci` to fail
-        await spawn("npm", ["install"], {
-          cwd: projectDir,
         })
       },
       packed: async context => {
