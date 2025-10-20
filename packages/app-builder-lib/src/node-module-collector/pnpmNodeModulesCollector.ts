@@ -78,7 +78,7 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
     if (base === this.rootDir) {
       return base
     }
-    return await this.resolveModuleDir(pkg, base)
+    return await super.resolveModuleDir(pkg, base)
   }
 
   protected async parseDependenciesTree(jsonBlob: string): Promise<PnpmDependency> {
