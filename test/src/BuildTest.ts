@@ -8,6 +8,7 @@ import * as path from "path"
 import { app, appTwo, appTwoThrows, assertPack, getFixtureDir, linuxDirTarget, modifyPackageJson, packageJson, toSystemIndependentPath } from "./helpers/packTester"
 import { ELECTRON_VERSION } from "./helpers/testConfig"
 import { verifySmartUnpack } from "./helpers/verifySmartUnpack"
+import { PM } from "app-builder-lib/src/node-module-collector/packageManager"
 
 test.ifLinux("cli", ({ expect }) => {
   // because these methods are internal
@@ -390,8 +391,11 @@ test("smart unpack local module with dll file", ({ expect }) => {
       },
     },
     {
-      projectDirCreated: async projectDir => {
-        const localPath = path.join(projectDir, "foo")
+      storeDepsLockfileSnapshot: false,
+      packageManager: PM.NPM,
+      projectDirCreated: async (projectDir, tmpDir) => {
+        const tmpPath = await tmpDir.getTempDir()
+        const localPath = path.join(tmpPath, "foo")
         await outputFile(path.join(localPath, "package.json"), `{"name":"foo","version":"9.0.0","main":"index.js","license":"MIT"}`)
         await outputFile(path.join(localPath, "test.dll"), `test`)
         await modifyPackageJson(projectDir, data => {
