@@ -19,7 +19,7 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
 
     let packageJson: Dependency<string, string>
     try {
-      const dependencyPath = await this.resolvePnpmModuleDir(tree)
+      const dependencyPath = await this.resolveModuleDir(tree.from, tree.path)
       // Attempt to extract the production dependency graph
       packageJson = require(path.join(dependencyPath, "package.json"))
     } catch (error: any) {
@@ -60,7 +60,8 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
         const module = {
           ...value,
           name: key,
-          path: await this.resolvePnpmModuleDir(value),
+          // use .from instead of .name
+          path: await this.resolveModuleDir(value.from, value.path),
         }
         this.allDependencies.set(this.moduleKeyGenerator(module), module)
         await this.collectAllDependencies(module)
@@ -72,14 +73,11 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
     await collect(tree.optionalDependencies)
   }
 
-  private async resolvePnpmModuleDir(pkg: PnpmDependency): Promise<string> {
-    const isHoisted = await this.isHoisted.value
-    if (pkg.path === this.rootDir) {
-      return pkg.path
+  protected async resolveModuleDir(pkg: string, base: string): Promise<string> {
+    if (base === this.rootDir) {
+      return base
     }
-
-    // use .from instead of .name
-    return this.resolveModuleDir(pkg.from, isHoisted ? this.rootDir : pkg.path)
+    return await this.resolveModuleDir(pkg, base)
   }
 
   protected async parseDependenciesTree(jsonBlob: string): Promise<PnpmDependency> {

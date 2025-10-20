@@ -205,10 +205,6 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
 
       for (const [depName, depVersion] of Object.entries(allDeps ?? {})) {
         try {
-          // Try to locate dependency relative to current package
-          // const depPkgPath = require.resolve(path.join(depName, "package.json"), {
-          //   paths: [pkgDir],
-          // })
           const depDir = await this.resolveModuleDir(depName, pkgDir)
           deps[depName] = await buildFromPackage(depDir)
         } catch {
@@ -231,7 +227,7 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
 
   private getYarnVersion(): string {
     try {
-      return execSync("yarn --version", { cwd: this.rootDir }).toString().trim()
+      return execSync("yarn --version", { encoding: "utf8", cwd: this.rootDir }).toString().trim()
     } catch {
       return "unknown"
     }

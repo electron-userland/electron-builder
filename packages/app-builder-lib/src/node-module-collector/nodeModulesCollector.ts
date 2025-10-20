@@ -100,16 +100,19 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
   }
 
   protected async resolveModuleDir(pkg: string, base: string): Promise<string> {
+    const isHoisted = await this.isHoisted.value
+    const searchRoot = isHoisted ? this.rootDir : base
+
     try {
-      const packageJsonDirectory = path.dirname(require.resolve(path.join(pkg, "package.json"), { paths: [base] }))
+      const packageJsonDirectory = path.dirname(require.resolve(path.join(pkg, "package.json"), { paths: [searchRoot] }))
       if (await exists(packageJsonDirectory)) {
         return packageJsonDirectory
       }
     } catch {
       // ignore, use fallback
     }
-    const searchPath = path.join(base, "node_modules", pkg)
-    log.debug({ pkg, searchPath }, "failed to resolve module path, falling back to manual node_modules path construction")
+    const searchPath = path.join(searchRoot, "node_modules", pkg)
+    log.debug({ pkg, searchRoot, base }, "failed to resolve module path's package.json, falling back to manual node_modules path construction")
     return searchPath
   }
 
