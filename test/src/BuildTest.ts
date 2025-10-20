@@ -155,16 +155,16 @@ it.ifDevOrLinuxCi("electron version from electron-prebuilt dependency", ({ expec
       targets: linuxDirTarget,
     },
     {
-      projectDirCreated: projectDir =>
-        Promise.all([
+      projectDirCreated: async projectDir => {
+        await modifyPackageJson(projectDir, data => {
+          delete data.build.electronVersion
+          data.devDependencies = {}
+        })
+        return () =>
           outputJson(path.join(projectDir, "node_modules", "electron-prebuilt", "package.json"), {
             version: ELECTRON_VERSION,
-          }),
-          modifyPackageJson(projectDir, data => {
-            delete data.build.electronVersion
-            data.devDependencies = {}
-          }),
-        ]),
+          })
+      },
     }
   )
 )
@@ -176,16 +176,16 @@ test.ifDevOrLinuxCi("electron version from electron dependency", ({ expect }) =>
       targets: linuxDirTarget,
     },
     {
-      projectDirCreated: projectDir =>
-        Promise.all([
+      projectDirCreated: async projectDir => {
+        await modifyPackageJson(projectDir, data => {
+          delete data.build.electronVersion
+          data.devDependencies = {}
+        })
+        return () =>
           outputJson(path.join(projectDir, "node_modules", "electron", "package.json"), {
             version: ELECTRON_VERSION,
-          }),
-          modifyPackageJson(projectDir, data => {
-            delete data.build.electronVersion
-            data.devDependencies = {}
-          }),
-        ]),
+          })
+      },
     }
   )
 )

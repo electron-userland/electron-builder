@@ -165,41 +165,6 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
     }
   }
 
-  // extractProductionDependencyGraph(tree: YarnDependency, dependencyId: string): void {
-  //   if (this.productionGraph[dependencyId]) {
-  //     return
-  //   }
-
-  //   const p = path.normalize(this.resolveModuleDir(tree.name, tree.path))
-  //   const packageJson: Dependency<string, string> = require(path.join(p, "package.json"))
-  //   const prodDependencies = { ...packageJson.dependencies, ...packageJson.optionalDependencies }
-
-  //   const deps = { ...(tree.dependencies || {}) } // ...(tree.optionalDependencies || {}) }
-  //   this.productionGraph[dependencyId] = { dependencies: [] }
-  //   const dependencies = Object.entries(deps)
-  //     .filter(([packageName, dependency]) => {
-  //       // First check if it's in production dependencies
-  //       if (!prodDependencies[packageName]) {
-  //         return false
-  //       }
-
-  //       // Then check if optional dependency path exists
-  //       if (packageJson.optionalDependencies?.[packageName] && !fs.existsSync(dependency.path)) {
-  //         log.debug({ packageName, version: dependency.version, path: dependency.path }, `optional dependency path doesn't exist`)
-  //         return false
-  //       }
-
-  //       return true
-  //     })
-  //     .map(([packageName, dependency]) => {
-  //       const childDependencyId = `${packageName}@${dependency.version}`
-  //       this.extractProductionDependencyGraph(dependency, childDependencyId)
-  //       return childDependencyId
-  //     })
-
-  //   this.productionGraph[dependencyId] = { dependencies }
-  // }
-
   protected async extractProductionDependencyGraph(tree: YarnDependency, dependencyId: string): Promise<void> {
     if (this.productionGraph[dependencyId]) {
       return
@@ -211,44 +176,6 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
     })
     this.productionGraph[dependencyId] = { dependencies: await Promise.all(productionDeps) }
   }
-
-  // private buildNodeModulesTreeManually(baseDir: string): YarnDependency {
-  //   const rootPkg = fs.readJSONSync(path.join(baseDir, "package.json"))
-
-  //   const traverse = (pkgDir: string): Record<string, YarnDependency> | undefined => {
-  //     const nodeModules = path.join(pkgDir, "node_modules")
-  //     if (!fs.existsSync(nodeModules)) return undefined
-
-  //     const deps: Record<string, YarnDependency> = {}
-  //     for (const name of fs.readdirSync(nodeModules)) {
-  //       if (!name || name.startsWith(".")) {
-  //         continue
-  //       }
-  //       if (fs.statSync(path.join(nodeModules, name)).isDirectory()) {
-  //         if (name.startsWith("@")) {
-  //           // Scoped package
-  //           for (const scopedName of fs.readdirSync(path.join(nodeModules, name))) {
-  //             const fullName = `${name}/${scopedName}`
-  //             const depPath = path.join(nodeModules, fullName)
-  //             const pkgJson = path.join(depPath, "package.json")
-  //             // if (!fs.existsSync(pkgJson)) continue
-  //             const pkg = fs.readJSONSync(pkgJson)
-  //             deps[fullName] = { name: pkg.name, version: pkg.version, path: depPath, dependencies: traverse(depPath) }
-  //           }
-  //           continue
-  //         }
-  //       }
-  //       const depPath = path.join(nodeModules, name)
-  //       const pkgJson = path.join(depPath, "package.json")
-  //       // if (!fs.existsSync(pkgJson)) continue
-  //       const pkg = fs.readJSONSync(pkgJson)
-  //       deps[name] = { name: pkg.name, version: pkg.version, path: depPath, dependencies: traverse(depPath) }
-  //     }
-  //     return Object.keys(deps).length ? deps : undefined
-  //   }
-  //   const rootNode: YarnDependency = { name: rootPkg.name, version: rootPkg.version, path: baseDir, dependencies: traverse(baseDir) }
-  //   return rootNode
-  // }
 
   /**
    * Builds a dependency tree using only package.json dependencies and optionalDependencies.

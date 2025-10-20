@@ -53,7 +53,7 @@ export const linuxDirTarget = Platform.LINUX.createTarget(DIR_TARGET, Arch.x64)
 export const snapTarget = Platform.LINUX.createTarget("snap", Arch.x64)
 
 export interface AssertPackOptions {
-  readonly projectDirCreated?: (projectDir: string, tmpDir: TmpDir) => Promise<any>
+  readonly projectDirCreated?: (projectDir: string, tmpDir: TmpDir) => Promise<any> | (() => Promise<any>)
   readonly packed?: (context: PackedContext) => Promise<any>
   readonly expectedArtifacts?: Array<string>
 
@@ -117,7 +117,6 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
     packagerOptions = deepAssign({}, packagerOptions, { config: { mac: { identity: null } } })
   }
 
-  const projectDirCreated = checkOptions.projectDirCreated
   let projectDir = path.join(__dirname, "..", "..", "fixtures", fixtureName)
   // const isDoNotUseTempDir = platform === "darwin"
   const customTmpDir = process.env.TEST_APP_TMP_DIR
@@ -153,9 +152,7 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
         }
       })
 
-      if (projectDirCreated != null) {
-        await projectDirCreated(projectDir, tmpDir)
-      }
+      const postNodeModuleInstallHook = checkOptions.projectDirCreated ? await checkOptions.projectDirCreated(projectDir, tmpDir) : null
 
       // Check again. Package manager could have been changed during `projectDirCreated`
       const { pm, corepackConfig: packageManager } = detectPackageManager([projectDir])
@@ -229,6 +226,7 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
         packagerOptions.projectDir = path.resolve(projectDir, packagerOptions.projectDir)
       }
 
+      await postNodeModuleInstallHook?.()
       const { packager, outDir } = await packAndCheck(
         expect,
         {
