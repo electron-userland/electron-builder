@@ -1,5 +1,5 @@
 import { log } from "builder-util"
-import * as fs from "fs"
+import * as fs from "fs-extra"
 import * as path from "path"
 import { NodeModulesCollector } from "./nodeModulesCollector"
 import { getPackageManagerCommand, PM } from "./packageManager"
@@ -19,6 +19,7 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
 
     let packageJson: Dependency<string, string>
     try {
+      // use .from instead of .name for pnpm
       const dependencyPath = await this.resolveModuleDir(tree.from, tree.path)
       // Attempt to extract the production dependency graph
       packageJson = require(path.join(dependencyPath, "package.json"))

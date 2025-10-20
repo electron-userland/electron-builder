@@ -87,7 +87,7 @@ const packageManagerMap: {
 async function runTest(target: string, arch: Arch = Arch.x64) {
   const tmpDir = new TmpDir("auto-update")
   const outDirs: ApplicationUpdatePaths[] = []
-  await doBuild(expect, outDirs, Platform.current().createTarget([target], arch), tmpDir, process.platform === "win32")
+  await doBuild(expect, outDirs, Platform.LINUX.createTarget([target], arch), tmpDir, process.platform === "win32")
 
   const oldAppDir = outDirs[0]
   const newAppDir = outDirs[1]
@@ -235,8 +235,8 @@ async function doBuild(
         signed: true,
         signedWin: isWindows,
         packed,
-        projectDirCreated: projectDir =>
-          Promise.all([
+        projectDirCreated: async projectDir => {
+          await Promise.all([
             outputFile(path.join(projectDir, "package-lock.json"), "{}"),
             outputFile(path.join(projectDir, ".npmrc"), "node-linker=hoisted"),
             modifyPackageJson(
@@ -277,7 +277,9 @@ async function doBuild(
               },
               false
             ),
-          ]),
+          ])
+          execSync("npm install", { cwd: projectDir, stdio: "inherit" })
+        },
       }
     )
   }
