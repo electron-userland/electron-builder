@@ -8,7 +8,6 @@ import {
   executeFinally,
   getArtifactArchName,
   InvalidConfigurationError,
-  isEmptyOrSpaces,
   log,
   MAX_FILE_REQUESTS,
   orNullIfFileNotExist,
@@ -103,7 +102,7 @@ export class Packager {
     const workspaceRoot = (await findWorkspaceRoot(pm.pm, this.projectDir)) ?? pm.resolvedDirectory
     if (workspaceRoot != null) {
       // re-detect package manager from workspace root, this seems particularly necessary for pnpm workspaces
-      const actualPm = detectPackageManager(workspaceRoot != null ? [workspaceRoot] : availableDirs)
+      const actualPm = detectPackageManager([workspaceRoot])
       return {
         pm: actualPm.pm,
         workspaceRoot: Promise.resolve(actualPm.resolvedDirectory),

@@ -8,7 +8,6 @@ import * as path from "path"
 import { app, appTwo, appTwoThrows, assertPack, getFixtureDir, linuxDirTarget, modifyPackageJson, packageJson, toSystemIndependentPath } from "./helpers/packTester"
 import { ELECTRON_VERSION } from "./helpers/testConfig"
 import { verifySmartUnpack } from "./helpers/verifySmartUnpack"
-import { spawn } from "builder-util/out/util"
 
 test.ifLinux("cli", ({ expect }) => {
   // because these methods are internal

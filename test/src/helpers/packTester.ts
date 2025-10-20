@@ -9,7 +9,7 @@ import { CancellationToken, UpdateFileInfo } from "builder-util-runtime"
 import { Arch, ArtifactCreated, Configuration, DIR_TARGET, getArchSuffix, MacOsTargetName, Packager, PackagerOptions, Platform, Target } from "electron-builder"
 import { convertVersion } from "electron-winstaller"
 import { PublishPolicy } from "electron-publish"
-import { copyFile, emptyDir, mkdir, remove, writeJson } from "fs-extra"
+import { copyFile, emptyDir, mkdir, writeJson } from "fs-extra"
 import * as fs from "fs/promises"
 import { load } from "js-yaml"
 import * as path from "path"
@@ -226,7 +226,10 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
         packagerOptions.projectDir = path.resolve(projectDir, packagerOptions.projectDir)
       }
 
-      await postNodeModuleInstallHook?.()
+      if (typeof postNodeModuleInstallHook === "function") {
+        await postNodeModuleInstallHook()
+      }
+
       const { packager, outDir } = await packAndCheck(
         expect,
         {

@@ -122,7 +122,7 @@ export class AsarPackager {
     transformedData: string | Buffer | undefined
     isUnpacked: (path: string) => boolean
   }): Promise<AsarStreamType> {
-    const { isUnpacked, transformedData, file, destination, stat, fileSet } = options
+    const { isUnpacked, transformedData, file, destination, stat } = options
     const unpacked = isUnpacked(destination)
 
     if (!stat.isFile() && !stat.isSymbolicLink()) {

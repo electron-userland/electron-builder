@@ -1,5 +1,5 @@
 import { Platform, Arch, DIR_TARGET } from "electron-builder"
-import { outputFile, copySync, rmSync, readJsonSync, writeJsonSync, mkdirSync, rm } from "fs-extra"
+import { outputFile, copySync, rmSync, readJsonSync, writeJsonSync, mkdirSync } from "fs-extra"
 import * as path from "path"
 import { spawn } from "builder-util/out/util"
 import { PM } from "app-builder-lib/out/node-module-collector"

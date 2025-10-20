@@ -3,10 +3,9 @@ import * as fs from "fs-extra"
 import * as path from "path"
 import { NodeModulesCollector } from "./nodeModulesCollector"
 import { PM } from "./packageManager"
-import { Dependency, YarnDependency } from "./types"
+import { YarnDependency } from "./types"
 import { execSync } from "child_process"
 import { log } from "builder-util"
-import { NpmNodeModulesCollector } from "./npmNodeModulesCollector"
 
 export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependency, string> {
   public readonly installOptions = { manager: PM.YARN, lockfile: "yarn.lock" }
@@ -149,7 +148,7 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
 
   protected async collectAllDependencies(tree: YarnDependency) {
     // Collect regular dependencies
-    for (const [key, value] of Object.entries(tree.dependencies || {})) {
+    for (const [_, value] of Object.entries(tree.dependencies || {})) {
       this.allDependencies.set(this.moduleKeyGenerator(value), value)
       await this.collectAllDependencies(value)
     }
@@ -237,15 +236,20 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
 
   private detectPnP(rootDir: string): boolean {
     try {
+      if (fs.existsSync(path.join(rootDir, ".pnp.cjs")) || fs.existsSync(path.join(rootDir, ".pnp.js"))) {
+        return true
+      }
       const rcPath = path.join(rootDir, ".yarnrc.yml")
       if (fs.existsSync(rcPath)) {
         const cfg: any = load(fs.readFileSync(rcPath, "utf-8"))
-        if (cfg?.nodeLinker === "pnp") return true
+        if (cfg?.nodeLinker === "pnp") {
+          return true
+        }
       }
-      return fs.existsSync(path.join(rootDir, ".pnp.cjs"))
     } catch {
-      return false
+      // ignore
     }
+    return false
   }
 
   private getYarnPnPTree(cwd: string, pnpPath: string): YarnDependency | undefined {
@@ -259,12 +263,18 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
         const dir = info?.packageLocation ? path.resolve(info.packageLocation) : path.resolve(cwd)
         const node: YarnDependency = { name: locator.name, version: locator.reference, path: dir, dependencies: {} }
 
-        if (!info?.packageDependencies) return node
+        if (!info?.packageDependencies) {
+          return node
+        }
 
         for (const [depName, ref] of info.packageDependencies) {
-          if (!ref) continue
+          if (!ref) {
+            continue
+          }
           const key = `${depName}@${ref}`
-          if (visited.has(key)) continue
+          if (visited.has(key)) {
+            continue
+          }
           visited.add(key)
           const depLocator = pnpApi.getLocator(depName, ref)
           node.dependencies![depName] = buildNode(depLocator)
@@ -273,20 +283,9 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
       }
 
       return buildNode(topLocator)
-    } catch (err) {
-      console.error("Failed to extract Yarn PnP tree:", err)
-      return undefined
+    } catch (err: any) {
+      log.error({ message: err.message, stack: err.stack }, "Yarn PnP extraction error")
     }
-  }
-
-  /**
-   * Parse a dependency identifier like "@scope/pkg@1.2.3" or "pkg@1.2.3"
-   */
-  private parseNameVersion(identifier: string): { name: string; version: string } {
-    const match = identifier.match(/^(@[^/]+\/[^@]+)@(.+)$/) || identifier.match(/^([^@]+)@(.+)$/)
-    if (match) {
-      return { name: match[1], version: match[2] }
-    }
-    return { name: identifier, version: "unknown" }
+    return undefined
   }
 }

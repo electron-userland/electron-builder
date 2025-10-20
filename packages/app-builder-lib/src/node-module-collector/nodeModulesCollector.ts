@@ -19,13 +19,13 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
   protected isHoisted = new Lazy<boolean>(async () => {
     const command = getPackageManagerCommand(this.installOptions.manager)
     try {
-      const config = await NodeModulesCollector.safeExec(command, ["config", "list"], this.rootDir)
+      const config = await this.asyncExec(command, ["config", "list"])
       const lines = Object.fromEntries(config.split("\n").map(line => line.split("=").map(s => s.trim())))
       return lines["node-linker"] === "hoisted"
     } catch (error: any) {
       log.error({ error: error.message, stack: error.stack }, "error checking if node modules are hoisted, falling back to non-hoisted")
-      return false
     }
+    return false
   })
 
   constructor(
@@ -99,24 +99,7 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
     )
   }
 
-  // protected resolvePath(filePath: string): string {
-  //   try {
-  //     const stats = fs.lstatSync(filePath)
-  //     if (stats.isSymbolicLink()) {
-  //       return fs.realpathSync(filePath)
-  //     } else {
-  //       return filePath
-  //     }
-  //   } catch (error: any) {
-  //     log.debug({ message: error.message || error.stack }, "error resolving path")
-  //     return filePath
-  //   }
-  // }
-
   protected resolveModuleDir(pkg: string, base: string): string {
-    if (pkg === ".") {
-      return base
-    }
     try {
       const packageJsonDirectory = path.dirname(require.resolve(path.join(pkg, "package.json"), { paths: [base] }))
       if (fs.existsSync(packageJsonDirectory)) {
@@ -132,6 +115,17 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
 
   protected moduleKeyGenerator(pkg: T): string {
     return `${pkg.name}@${pkg.version}`
+  }
+
+  /**
+   * Parse a dependency identifier like "@scope/pkg@1.2.3" or "pkg@1.2.3"
+   */
+  protected parseNameVersion(identifier: string): { name: string; version: string } {
+    const match = identifier.match(/^(@[^/]+\/[^@]+)@(.+)$/) || identifier.match(/^([^@]+)@(.+)$/)
+    if (match) {
+      return { name: match[1], version: match[2] }
+    }
+    return { name: identifier, version: "unknown" }
   }
 
   private getTreeFromWorkspaces(tree: T): T {
@@ -204,7 +198,7 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
     result.sort((a, b) => a.name.localeCompare(b.name))
   }
 
-  static async safeExec(command: string, args: string[], cwd: string): Promise<string> {
+  async asyncExec(command: string, args: string[], cwd: string = this.rootDir): Promise<string> {
     const payload = await execAsync([`"${command}"`, ...args].join(" "), { cwd, maxBuffer: 100 * 1024 * 1024 }) // 100MB buffer LOL, some projects can have extremely large dependency trees
     return payload.stdout.trim()
   }

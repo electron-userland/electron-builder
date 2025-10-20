@@ -7,20 +7,14 @@ import { TmpDir } from "temp-file"
 import * as path from "path"
 import * as fs from "fs-extra"
 import { execSync } from "child_process"
-import { isEmptyOrSpaces, log, spawn } from "builder-util"
+import { log, spawn } from "builder-util"
 
 export { PM, getPackageManagerCommand }
 
 export function getCollectorByPackageManager(pm: PM, rootDir: string, tempDirManager: TmpDir) {
   switch (pm) {
-    case PM.PNPM: {
-      // const isHoisted = await PnpmNodeModulesCollector.isPnpmProjectHoisted(rootDir)
-      // if (!isHoisted) {
+    case PM.PNPM:
       return new PnpmNodeModulesCollector(rootDir, tempDirManager)
-      // }
-      // // hoisted pnpm projects use npm-style node_modules layout
-      // return new NpmNodeModulesCollector(rootDir, tempDirManager)
-    }
     case PM.NPM:
     case PM.BUN:
       return new NpmNodeModulesCollector(rootDir, tempDirManager)
