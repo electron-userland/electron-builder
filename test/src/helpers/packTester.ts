@@ -174,7 +174,7 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
         npm_config_cache: tmpCache, // prevent npm fallback caching
       }
       const { cli, prepareEntry, version } = getPackageManagerWithVersion(pm, packageManager)
-      log.info({ pm, version: version }, "activating corepack")
+      log.info({ pm, version: version, projectDir }, "activating corepack")
       try {
         execSync(`corepack enable ${cli}`, { env: runtimeEnv, cwd: projectDir, stdio: "inherit" })
       } catch (err: any) {

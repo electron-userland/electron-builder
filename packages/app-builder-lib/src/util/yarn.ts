@@ -164,7 +164,7 @@ export interface DirectoryPaths {
 }
 
 /** @internal */
-export async function rebuild(config: Configuration, { appDir, projectDir, workspaceRoot }: DirectoryPaths, options: RebuildOptions) {
+export async function rebuild(config: Configuration, { appDir, projectDir }: DirectoryPaths, options: RebuildOptions) {
   const configuration = {
     dependencies: await options.productionDeps.value,
     nodeExecPath: process.execPath,
