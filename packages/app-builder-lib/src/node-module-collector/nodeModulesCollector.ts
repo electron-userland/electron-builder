@@ -51,7 +51,7 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
   }
 
   protected abstract getArgs(): string[]
-  protected abstract parseDependenciesTree(jsonBlob: string): T
+  protected abstract parseDependenciesTree(jsonBlob: string): Promise<T>
   protected abstract extractProductionDependencyGraph(tree: Dependency<T, OptionalsType>, dependencyId: string): Promise<void>
   protected abstract collectAllDependencies(tree: Dependency<T, OptionalsType>): Promise<void>
 
@@ -99,10 +99,10 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
     )
   }
 
-  protected resolveModuleDir(pkg: string, base: string): string {
+  protected async resolveModuleDir(pkg: string, base: string): Promise<string> {
     try {
       const packageJsonDirectory = path.dirname(require.resolve(path.join(pkg, "package.json"), { paths: [base] }))
-      if (fs.existsSync(packageJsonDirectory)) {
+      if (await exists(packageJsonDirectory)) {
         return packageJsonDirectory
       }
     } catch {

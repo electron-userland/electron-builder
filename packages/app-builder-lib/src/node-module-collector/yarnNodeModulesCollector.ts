@@ -57,7 +57,7 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
     return this.buildNodeModulesTreeManually(this.rootDir)
   }
 
-  protected parseDependenciesTree(jsonBlob: string): YarnDependency {
+  protected async parseDependenciesTree(jsonBlob: string): Promise<YarnDependency> {
     const data = JSON.parse(jsonBlob)
     if (data.dependencies) {
       return this.normalizeNpmLikeTree(data, this.rootDir)
@@ -88,15 +88,15 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
     return this.normalizeTree(parsed, this.rootDir)
   }
 
-  private normalizeTree(data: any[], root: string): YarnDependency {
-    const parseTree = (node: any, parentDir: string): YarnDependency => {
+  private async normalizeTree(data: any[], root: string): Promise<YarnDependency> {
+    const parseTree = async (node: any, parentDir: string): Promise<YarnDependency> => {
       const { name, version } = this.parseNameVersion(node.name)
-      const dir = this.resolveModuleDir(name, parentDir)
+      const dir = await this.resolveModuleDir(name, parentDir)
       const deps: Record<string, YarnDependency> = {}
 
       if (Array.isArray(node.children)) {
         for (const child of node.children) {
-          const dep = parseTree(child, dir)
+          const dep = await parseTree(child, dir)
           deps[dep.name] = dep
         }
       }
@@ -109,18 +109,21 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
       }
     }
 
-    const dependencies = data
-      .map(i => {
-        const tree1 = parseTree(i, root)
-        return tree1
-      })
-      .reduce(
-        (acc, cur) => {
-          acc[cur.name] = cur
-          return acc
-        },
-        {} as Record<string, YarnDependency>
+    const dependencies = (
+      await Promise.all(
+        data.map(async i => {
+          return parseTree(i, root)
+        })
       )
+    ).reduce(
+      (acc, cur) => {
+        const current = cur
+        acc[current.name] = current
+        return acc
+      },
+      {} as Record<string, YarnDependency>
+    )
+
     return {
       name: ".", // root package name stub
       version: "unknown",
@@ -129,21 +132,21 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
     }
   }
 
-  private normalizeNpmLikeTree(data: any, cwd: string): YarnDependency {
-    const parseNode = (node: any, parentDir: string): YarnDependency => {
+  private async normalizeNpmLikeTree(data: any, cwd: string): Promise<YarnDependency> {
+    const parseNode = async (node: any, parentDir: string): Promise<YarnDependency> => {
       const name = node.name
       const version = node.version
-      const dir = this.resolveModuleDir(name, parentDir)
+      const dir = await this.resolveModuleDir(name, parentDir)
       const deps: Record<string, YarnDependency> = {}
 
       for (const [depName, depNode] of Object.entries(node.dependencies ?? {})) {
-        deps[depName] = parseNode(depNode, dir)
+        deps[depName] = await parseNode(depNode, dir)
       }
 
       return { name, version, path: dir, dependencies: Object.keys(deps).length ? deps : undefined }
     }
 
-    return parseNode(data, cwd)
+    return await parseNode(data, cwd)
   }
 
   protected async collectAllDependencies(tree: YarnDependency) {
@@ -158,7 +161,7 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
       const module = {
         name: key,
         version: value,
-        path: this.resolveModuleDir(key, tree.path),
+        path: await this.resolveModuleDir(key, tree.path),
       }
       this.allDependencies.set(this.moduleKeyGenerator(module), module)
     }
@@ -180,10 +183,10 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
    * Builds a dependency tree using only package.json dependencies and optionalDependencies.
    * This skips devDependencies and does not walk the node_modules filesystem.
    */
-  private buildNodeModulesTreeManually(baseDir: string): YarnDependency {
+  private async buildNodeModulesTreeManually(baseDir: string): Promise<YarnDependency> {
     const visited = new Set<string>()
 
-    const buildFromPackage = (pkgDir: string): YarnDependency => {
+    const buildFromPackage = async (pkgDir: string): Promise<YarnDependency> => {
       const pkgPath = path.join(pkgDir, "package.json")
       const pkg = fs.readJSONSync(pkgPath)
       const id = this.moduleKeyGenerator(pkg)
@@ -206,8 +209,8 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
           // const depPkgPath = require.resolve(path.join(depName, "package.json"), {
           //   paths: [pkgDir],
           // })
-          const depDir = this.resolveModuleDir(depName, pkgDir)
-          deps[depName] = buildFromPackage(depDir)
+          const depDir = await this.resolveModuleDir(depName, pkgDir)
+          deps[depName] = await buildFromPackage(depDir)
         } catch {
           // Not installed or cannot resolve; keep version range info only
           optDeps[depName] = depVersion as string
@@ -223,7 +226,7 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
       }
     }
 
-    return buildFromPackage(baseDir)
+    return await buildFromPackage(baseDir)
   }
 
   private getYarnVersion(): string {

@@ -2,7 +2,7 @@ import { log } from "builder-util"
 import * as fs from "fs"
 import * as path from "path"
 import { NodeModulesCollector } from "./nodeModulesCollector"
-import { PM } from "./packageManager"
+import { getPackageManagerCommand, PM } from "./packageManager"
 import { Dependency, PnpmDependency } from "./types"
 
 export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependency, PnpmDependency> {
@@ -77,13 +77,14 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
     if (pkg.path === this.rootDir) {
       return pkg.path
     }
+
     // use .from instead of .name
-    return super.resolveModuleDir(pkg.from, isHoisted ? this.rootDir : pkg.path)
+    return this.resolveModuleDir(pkg.from, isHoisted ? this.rootDir : pkg.path)
   }
 
-  protected parseDependenciesTree(jsonBlob: string): PnpmDependency {
+  protected async parseDependenciesTree(jsonBlob: string): Promise<PnpmDependency> {
     const dependencyTree: PnpmDependency[] = JSON.parse(jsonBlob)
     // pnpm returns an array of dependency trees
-    return dependencyTree[0]
+    return Promise.resolve(dependencyTree[0])
   }
 }

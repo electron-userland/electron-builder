@@ -37,13 +37,18 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
       .filter(([packageName]) => prodDependencies[packageName])
       .map(async ([, dependency]) => {
         const childDependencyId = this.moduleKeyGenerator(dependency)
-        await this.extractProductionDependencyGraph(dependency, childDependencyId)
+        const dep = {
+          ...dependency,
+          name: dependency.name,
+          path: await this.resolveModuleDir(dependency.name, dependency.path),
+        }
+        await this.extractProductionDependencyGraph(dep, childDependencyId)
         return childDependencyId
       })
     this.productionGraph[dependencyId] = { dependencies: await Promise.all(productionDeps) }
   }
 
-  protected parseDependenciesTree(jsonBlob: string): NpmDependency {
-    return JSON.parse(jsonBlob)
+  protected async parseDependenciesTree(jsonBlob: string): Promise<NpmDependency> {
+    return Promise.resolve(JSON.parse(jsonBlob))
   }
 }
