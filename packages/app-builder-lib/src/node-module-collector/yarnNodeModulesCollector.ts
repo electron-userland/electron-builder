@@ -6,9 +6,25 @@ import { PM } from "./packageManager"
 import { YarnDependency } from "./types"
 import { execSync } from "child_process"
 import { log } from "builder-util"
+import { Lazy } from "lazy-val"
 
 export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependency, string> {
-  public readonly installOptions = { manager: PM.YARN, lockfile: "yarn.lock" }
+  public readonly installOptions = {
+    manager: PM.YARN,
+    lockfile: "yarn.lock",
+    lockfileDirs: (workspaceRoot: string) =>
+      new Lazy(async () => {
+        try {
+          const linkedModules = path.join(workspaceRoot, "node_modules")
+          if (await fs.pathExists(linkedModules)) {
+            return [linkedModules]
+          }
+        } catch (error: any) {
+          log.debug({ workspaceRoot, error: error.message, stack: error.stack }, "no yarn cache dir detected")
+        }
+        return []
+      }),
+  }
   private version: string
   private isPnP: boolean
 

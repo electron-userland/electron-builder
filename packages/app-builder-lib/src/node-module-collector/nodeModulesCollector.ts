@@ -48,6 +48,7 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
   public abstract readonly installOptions: {
     manager: PM
     lockfile: string
+    lockfileDirs: (workspaceRoot: string) => Lazy<string[]>
   }
 
   protected abstract getArgs(): string[]
@@ -69,7 +70,8 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
         await this.streamCollectorCommandToJsonFile(command, args, this.rootDir, tempOutputFile)
         const dependencies = await fs.readFile(tempOutputFile, { encoding: "utf8" })
         try {
-          return this.parseDependenciesTree(dependencies)
+          const parsedTree = await this.parseDependenciesTree(dependencies)
+          return parsedTree
         } catch (error: any) {
           log.debug({ message: error.message, stack: error.stack, shellOutput: dependencies, cwd: this.rootDir }, "error parsing dependencies tree")
           throw new Error(
@@ -104,7 +106,9 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
     const searchRoot = isHoisted ? this.rootDir : base
 
     try {
-      const packageJsonDirectory = path.dirname(require.resolve(path.join(pkg, "package.json"), { paths: [searchRoot] }))
+      const resolved = require.resolve(path.join(pkg, "package.json"), { paths: [searchRoot] })
+      const real = await fs.realpath(resolved)
+      const packageJsonDirectory = path.dirname(real)
       if (await exists(packageJsonDirectory)) {
         return packageJsonDirectory
       }
@@ -118,6 +122,14 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
 
   protected moduleKeyGenerator(pkg: T): string {
     return `${pkg.name}@${pkg.version}`
+  }
+
+  private collectFileProtocolDeps(mod: T): T {
+    const deps = [...Object.values(mod.dependencies || {}), ...Object.values(mod.optionalDependencies || {})].filter(
+      v => typeof v === "string" && v.startsWith("file:")
+    ) as string[]
+
+    return { ...mod, dependencies: deps.map(v => path.resolve(v.replace(/^file:/, ""))) }
   }
 
   /**

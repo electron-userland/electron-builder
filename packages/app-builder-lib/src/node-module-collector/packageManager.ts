@@ -97,6 +97,12 @@ export function detectYarnBerry(cwd: string): PM.YARN_BERRY | PM.YARN {
     }
     return PM.YARN
   }
+
+  const yarnBerry = path.join(cwd, ".yarnrc.yml")
+  if (fs.existsSync(yarnBerry)) {
+    return PM.YARN_BERRY
+  }
+
   const lockPath = path.join(cwd, "yarn.lock")
   if (!fs.existsSync(lockPath)) {
     return checkVersion()

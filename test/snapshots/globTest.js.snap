@@ -18637,6 +18637,12 @@ exports[`isInstallDepsBefore=true > ignore node_modules 1`] = `
 }
 `;
 
+exports[`isInstallDepsBefore=true > local node module with file protocol 1`] = `
+{
+  "linux": [],
+}
+`;
+
 exports[`isInstallDepsBefore=true > symlinks everywhere with static framework 1`] = `
 {
   "linux": [],

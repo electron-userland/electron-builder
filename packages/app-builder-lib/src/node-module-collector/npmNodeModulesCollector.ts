@@ -1,9 +1,19 @@
+import { Lazy } from "lazy-val"
 import { NodeModulesCollector } from "./nodeModulesCollector"
 import { PM } from "./packageManager"
 import { NpmDependency } from "./types"
+import * as path from "path"
+import * as os from "os"
 
 export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency, string> {
-  public readonly installOptions = { manager: PM.NPM, lockfile: "package-lock.json" }
+  public readonly installOptions = {
+    manager: PM.NPM,
+    lockfile: "package-lock.json",
+    lockfileDirs: () =>
+      new Lazy<string[]>(() => {
+        return Promise.resolve([path.join(os.homedir(), ".npm")])
+      }),
+  }
 
   protected getArgs(): string[] {
     return ["list", "-a", "--include", "prod", "--include", "optional", "--omit", "dev", "--json", "--long", "--silent"]

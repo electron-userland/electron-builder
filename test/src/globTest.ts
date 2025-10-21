@@ -174,6 +174,7 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
         },
       },
       {
+        packageManager: PM.NPM,
         projectDirCreated: async (projectDir, tmpDir) => {
           const tempDir = await tmpDir.getTempDir()
           const localPath = path.join(tempDir, "foo")
@@ -185,7 +186,7 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
             }
           })
 
-          // we can't use `isInstallDepsBefore` as `localPath` is dynamic and changes for every which causes `--frozen-lockfile` and `npm ci` to fail
+          //`localPath` is dynamic and changes for every which causes `--frozen-lockfile` and `npm ci` to fail
           await spawn("npm", ["install"], {
             cwd: projectDir,
           })

@@ -4,9 +4,41 @@ import * as path from "path"
 import { NodeModulesCollector } from "./nodeModulesCollector"
 import { getPackageManagerCommand, PM } from "./packageManager"
 import { Dependency, PnpmDependency } from "./types"
+import { Lazy } from "lazy-val"
+import * as os from "os"
 
 export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependency, PnpmDependency> {
-  public readonly installOptions = { manager: PM.PNPM, lockfile: "pnpm-lock.yaml" }
+  public readonly installOptions = {
+    manager: PM.PNPM,
+    lockfile: "pnpm-lock.yaml",
+    lockfileDirs: (workspaceRoot: string) =>
+      new Lazy(async () => {
+        try {
+          const home = os.homedir()
+          const defaultStore = path.join(home, ".pnpm-store")
+          const rcFile = path.join(home, ".npmrc")
+
+          if (await fs.pathExists(rcFile)) {
+            const content = await fs.readFile(rcFile, "utf8")
+            const match = content.match(/^store-dir\s*=\s*(.+)$/m)
+            if (match) {
+              return [path.resolve(match[1])]
+            }
+          }
+
+          // fallback: look for local virtual store
+          const virtualStoreDir = path.join(workspaceRoot, "node_modules", ".pnpm")
+          if (await fs.pathExists(virtualStoreDir)) {
+            return [virtualStoreDir]
+          }
+
+          return [defaultStore]
+        } catch (error: any) {
+          log.debug({ workspaceRoot, error: error.message, stack: error.stack }, "no store dir detected")
+        }
+        return []
+      }),
+  }
 
   protected getArgs(): string[] {
     return ["list", "--prod", "--json", "--depth", "Infinity"]
