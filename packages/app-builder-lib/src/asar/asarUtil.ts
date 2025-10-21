@@ -156,6 +156,17 @@ export class AsarPackager {
       return { path: destination, streamGenerator, unpacked, type: "file", stat: { mode: stat.mode, size } }
     }
 
+    // verify that the file is not a direct link or symlinked to access/copy a system file
+    const workspaceRoot = await this.packager.info.getWorkspaceRoot()
+    const realPath = await fs.realpath(file)
+    const unsafe = await this.isSystemOrUnsafePath(realPath)
+    if (unsafe) {
+      log.error({ source: file, realPath, workspaceRoot }, `unable to copy, file is symlinked outside the package to a system or unsafe path`)
+      throw new Error(
+        `Cannot copy file [${file}] symlinked to file [${realPath}] outside the package as that violates asar security integrity (e.g. relative/outside of workspace directory [${workspaceRoot}]).`
+      )
+    }
+
     const config = {
       path: destination,
       streamGenerator: () => fs.createReadStream(file),
@@ -171,18 +182,7 @@ export class AsarPackager {
       }
     }
 
-    // okay, it must be a symlink. verify that the link is not trying to access/copy a system file
-    const workspaceRoot = await this.packager.info.getWorkspaceRoot()
-    const realPath = await fs.realpath(file)
-    const unsafe = await this.isSystemOrUnsafePath(realPath)
-    if (unsafe) {
-      log.error({ source: file, realPath: realPath, workspaceRoot }, `unable to copy, file is symlinked outside the package`)
-      throw new Error(
-        `Cannot copy file (${file}) symlinked to file (${realPath}) outside the package as that violates asar security integrity (e.g. relative/outside of workspace directory (${workspaceRoot})).`
-      )
-    }
-
-    // evaluate link to be relative to source file in asar
+    // okay, it must be a symlink. evaluate link to be relative to source file in asar
     let link = await readlink(file)
     if (path.isAbsolute(link)) {
       link = path.relative(path.dirname(file), link)
@@ -246,114 +246,153 @@ export class AsarPackager {
       transformedFiles,
     }
   }
-  // Returns true if `target` path is "unsafe"
-  async isSystemOrUnsafePath(target: string): Promise<boolean> {
-    const normalized = path.resolve(target)
-    // const resolvedRoot = path.resolve(workspaceRoot)
 
-    // 1. Outside project root
-    // if (!normalized.startsWith(resolvedRoot)) {
-    //   const { unsafe } = await this.isSymlinkUnsafe(target, workspaceRoot)
-    //   return unsafe
-    // }
+  async getSystemPaths(): Promise<string[]> {
+    const systemPaths = [
+      // Generic *nix
+      "/usr",
+      "/lib",
+      "/bin",
+      "/sbin",
+      "/System",
+      "/Library",
+      "/private/etc",
+      "/private/var",
+      "/private/tmp",
 
-    // 2. Under known system paths
-    for (const sys of SYSTEM_PATHS) {
-      const resolvedSys = path.resolve(sys)
-      if (normalized.startsWith(resolvedSys)) {
+      // macOS legacy symlinks
+      "/etc",
+      "/var",
+      "/tmp",
+
+      // Windows
+      process.env.SystemRoot,
+      process.env.WINDIR,
+      process.env.ProgramFiles,
+      process.env["ProgramFiles(x86)"],
+      process.env.ProgramData,
+      process.env.CommonProgramFiles,
+      process.env["CommonProgramFiles(x86)"],
+    ].filter(Boolean) as string[]
+
+    // Normalize to real paths to prevent symlink bypasses
+    const resolvedPaths: string[] = []
+    for (const p of systemPaths) {
+      try {
+        resolvedPaths.push(await fs.realpath(p))
+      } catch {
+        resolvedPaths.push(path.resolve(p))
+      }
+    }
+
+    return resolvedPaths
+  }
+
+  async isSystemOrUnsafePath(file: string, workspaceRoot?: string): Promise<boolean> {
+    const blockedSystemPaths = await this.getSystemPaths()
+    const resolved = await fs.realpath(file).catch(() => path.resolve(file))
+    if (workspaceRoot) {
+      const workspace = path.resolve(workspaceRoot)
+
+      if (!resolved.startsWith(workspace)) {
+        return true
+      }
+    }
+    for (const sys of blockedSystemPaths) {
+      if (resolved.startsWith(sys)) {
         return true
       }
     }
 
-    return Promise.resolve(false)
-  }
-
-  async isSymlinkUnsafe(filePath: string, workspaceRoot: string): Promise<{ unsafe: boolean; realPath: string }> {
-    const realPath = await fs.realpath(filePath)
-    const rel = path.relative(workspaceRoot, realPath)
-
-    // ✅ Safe if inside workspace
-    if (!rel.startsWith("..")) {
-      return { unsafe: false, realPath }
+      return false
     }
 
-    const normalized = path.normalize(realPath)
+    // async isSymlinkUnsafe(filePath: string, workspaceRoot: string): Promise<{ unsafe: boolean; realPath: string }> {
+    //   const realPath = await fs.realpath(filePath)
+    //   const rel = path.relative(workspaceRoot, realPath)
 
-    // ✅ Allow common package manager storage directories
-    const allowedPrefixes = ["/node_modules/.pnpm/", "/node_modules/.store/", "/.yarn/cache/", "/.yarn/unplugged/"]
+    //   // ✅ Safe if inside workspace
+    //   if (!rel.startsWith("..")) {
+    //     return { unsafe: false, realPath }
+    //   }
 
-    if (allowedPrefixes.some(prefix => normalized.includes(prefix))) {
-      return { unsafe: false, realPath }
-    }
-    // 🚫 Unsafe: points outside workspace and not in allowed dirs
-    return { unsafe: true, realPath }
+    //   const normalized = path.normalize(realPath)
+
+    //   // ✅ Allow common package manager storage directories
+    //   const allowedPrefixes = ["/node_modules/.pnpm/", "/node_modules/.store/", "/.yarn/cache/", "/.yarn/unplugged/"]
+
+    //   if (allowedPrefixes.some(prefix => normalized.includes(prefix))) {
+    //     return { unsafe: false, realPath }
+    //   }
+    //   // 🚫 Unsafe: points outside workspace and not in allowed dirs
+    //   return { unsafe: true, realPath }
+    // }
+
+    //   detectPackageManager(workspaceRoot: string): Promise<PackageManagerInfo> {
+    //   const npmLock = path.join(workspaceRoot, "package-lock.json")
+    //   const pnpmLock = path.join(workspaceRoot, "pnpm-lock.yaml")
+    //   const yarnLock = path.join(workspaceRoot, "yarn.lock")
+    //   const yarnBerry = path.join(workspaceRoot, ".yarnrc.yml")
+
+    //   const lockfileDirs: string[] = []
+
+    //   if (await fs.pathExists(pnpmLock)) {
+    //     // --- pnpm ---
+    //     const storeDir = await this.detectPnpmStoreDir(workspaceRoot)
+    //     if (storeDir) lockfileDirs.push(storeDir)
+    //     return { name: "pnpm", rootDir: workspaceRoot, lockfileDirs }
+    //   }
+
+    //   if (await fs.pathExists(yarnBerry)) {
+    //     // --- Yarn Berry (v2+) ---
+    //     const yarnCache = path.join(workspaceRoot, ".yarn", "cache")
+    //     const yarnUnplugged = path.join(workspaceRoot, ".yarn", "unplugged")
+    //     for (const d of [yarnCache, yarnUnplugged]) {
+    //       if (await fs.pathExists(d)) lockfileDirs.push(d)
+    //     }
+    //     return { name: "yarn-berry", rootDir: workspaceRoot, lockfileDirs }
+    //   }
+
+    //   if (await fs.pathExists(yarnLock)) {
+    //     // --- Yarn Classic (v1) ---
+    //     const linkedModules = path.join(workspaceRoot, "node_modules")
+    //     lockfileDirs.push(linkedModules)
+    //     return { name: "yarn-v1", rootDir: workspaceRoot, lockfileDirs }
+    //   }
+
+    //   if (await fs.pathExists(npmLock)) {
+    //     // --- npm ---
+    //     const npmCache = path.join(os.homedir(), ".npm")
+    //     lockfileDirs.push(npmCache)
+    //     return { name: "npm", rootDir: workspaceRoot, lockfileDirs }
+    //   }
+
+    //   // --- Fallback ---
+    //   return { name: "unknown", rootDir: workspaceRoot, lockfileDirs }
+    // }
+
+    /**
+     * Detect pnpm store directory from config or default
+     */
+    // async detectPnpmStoreDir(workspaceRoot: string): Promise<string | undefined> {
+    //   try {
+    //     const home = os.homedir()
+    //     const defaultStore = path.join(home, ".pnpm-store")
+    //     const rcFile = path.join(home, ".npmrc")
+
+    //     if (await fs.pathExists(rcFile)) {
+    //       const content = await fs.readFile(rcFile, "utf8")
+    //       const match = content.match(/^store-dir\s*=\s*(.+)$/m)
+    //       if (match) return path.resolve(match[1])
+    //     }
+
+    //     // fallback: look for local virtual store
+    //     const virtualStoreDir = path.join(workspaceRoot, "node_modules", ".pnpm")
+    //     if (await fs.pathExists(virtualStoreDir)) return virtualStoreDir
+
+    //     return defaultStore
+    //   } catch {
+    //     return undefined
+    //   }
+    // }
   }
-
-  //   detectPackageManager(workspaceRoot: string): Promise<PackageManagerInfo> {
-  //   const npmLock = path.join(workspaceRoot, "package-lock.json")
-  //   const pnpmLock = path.join(workspaceRoot, "pnpm-lock.yaml")
-  //   const yarnLock = path.join(workspaceRoot, "yarn.lock")
-  //   const yarnBerry = path.join(workspaceRoot, ".yarnrc.yml")
-
-  //   const lockfileDirs: string[] = []
-
-  //   if (await fs.pathExists(pnpmLock)) {
-  //     // --- pnpm ---
-  //     const storeDir = await this.detectPnpmStoreDir(workspaceRoot)
-  //     if (storeDir) lockfileDirs.push(storeDir)
-  //     return { name: "pnpm", rootDir: workspaceRoot, lockfileDirs }
-  //   }
-
-  //   if (await fs.pathExists(yarnBerry)) {
-  //     // --- Yarn Berry (v2+) ---
-  //     const yarnCache = path.join(workspaceRoot, ".yarn", "cache")
-  //     const yarnUnplugged = path.join(workspaceRoot, ".yarn", "unplugged")
-  //     for (const d of [yarnCache, yarnUnplugged]) {
-  //       if (await fs.pathExists(d)) lockfileDirs.push(d)
-  //     }
-  //     return { name: "yarn-berry", rootDir: workspaceRoot, lockfileDirs }
-  //   }
-
-  //   if (await fs.pathExists(yarnLock)) {
-  //     // --- Yarn Classic (v1) ---
-  //     const linkedModules = path.join(workspaceRoot, "node_modules")
-  //     lockfileDirs.push(linkedModules)
-  //     return { name: "yarn-v1", rootDir: workspaceRoot, lockfileDirs }
-  //   }
-
-  //   if (await fs.pathExists(npmLock)) {
-  //     // --- npm ---
-  //     const npmCache = path.join(os.homedir(), ".npm")
-  //     lockfileDirs.push(npmCache)
-  //     return { name: "npm", rootDir: workspaceRoot, lockfileDirs }
-  //   }
-
-  //   // --- Fallback ---
-  //   return { name: "unknown", rootDir: workspaceRoot, lockfileDirs }
-  // }
-
-  /**
-   * Detect pnpm store directory from config or default
-   */
-  // async detectPnpmStoreDir(workspaceRoot: string): Promise<string | undefined> {
-  //   try {
-  //     const home = os.homedir()
-  //     const defaultStore = path.join(home, ".pnpm-store")
-  //     const rcFile = path.join(home, ".npmrc")
-
-  //     if (await fs.pathExists(rcFile)) {
-  //       const content = await fs.readFile(rcFile, "utf8")
-  //       const match = content.match(/^store-dir\s*=\s*(.+)$/m)
-  //       if (match) return path.resolve(match[1])
-  //     }
-
-  //     // fallback: look for local virtual store
-  //     const virtualStoreDir = path.join(workspaceRoot, "node_modules", ".pnpm")
-  //     if (await fs.pathExists(virtualStoreDir)) return virtualStoreDir
-
-  //     return defaultStore
-  //   } catch {
-  //     return undefined
-  //   }
-  // }
-}

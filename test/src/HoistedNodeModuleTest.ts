@@ -1,5 +1,5 @@
 import { Platform, Arch, DIR_TARGET } from "electron-builder"
-import { outputFile, copySync, rmSync, readJsonSync, writeJsonSync, mkdirSync } from "fs-extra"
+import { outputFile, copySync, rmSync, readJsonSync, writeJsonSync, mkdirSync, symlink } from "fs-extra"
 import * as path from "path"
 import { spawn } from "builder-util/out/util"
 import { PM } from "app-builder-lib/out/node-module-collector"
@@ -175,13 +175,40 @@ test("yarn two package.json without node_modules", ({ expect }) =>
     }
   ))
 
-test.only("should throw when attempting to package a system file", ({ expect }) =>
-  appTwoThrows(
+test("should throw when attempting to package a system file", async ({ expect }) => {
+  const invalidPath = process.platform === "win32" ? "C:\\Windows\\System32\\drivers\\etc\\hosts" : "/etc/passwd"
+  // throw on symlink to system file
+  await appTwoThrows(
     expect,
     {
+      targets: Platform.current().createTarget("zip"),
       projectDir: "app",
       config: {
-        files: ["/app", "../../etc/passwd", "/System/Library/CoreServices/SystemVersion.plist"],
+        asar: true,
+        electronVersion: ELECTRON_VERSION,
+      },
+    },
+    {
+      packageManager: PM.YARN,
+      projectDirCreated: async projectDir => {
+        await symlink(invalidPath, path.join(projectDir, "app", "badlink"))
+      },
+    },
+    error => {
+      expect(error).toBeInstanceOf(Error)
+      expect(error.message).toContain("violates asar security integrity")
+    }
+  )
+  // throw on direct path in `files` attempting to force copy from system dir
+  await appTwoThrows(
+    expect,
+    {
+      targets: Platform.current().createTarget("zip"),
+      projectDir: "app",
+      config: {
+        files: ["**/*", invalidPath],
+        asar: true,
+        electronVersion: ELECTRON_VERSION,
       },
     },
     {
@@ -189,9 +216,10 @@ test.only("should throw when attempting to package a system file", ({ expect }) 
     },
     error => {
       expect(error).toBeInstanceOf(Error)
-      expect(error.message).toBe("No nsis target found! Please specify an nsis target")
+      expect(error.message).toContain("violates asar security integrity")
     }
-  ))
+  )
+})
 
 describe("isInstallDepsBefore=true", () => {
   test("yarn workspace for scope name", ({ expect }) =>

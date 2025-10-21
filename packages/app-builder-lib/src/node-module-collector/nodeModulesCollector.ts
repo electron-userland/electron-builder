@@ -68,12 +68,12 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
     return retry(
       async () => {
         await this.streamCollectorCommandToJsonFile(command, args, this.rootDir, tempOutputFile)
-        const dependencies = await fs.readFile(tempOutputFile, { encoding: "utf8" })
+        const shellOutput = await fs.readFile(tempOutputFile, { encoding: "utf8" })
         try {
-          const parsedTree = await this.parseDependenciesTree(dependencies)
+          const parsedTree = await this.parseDependenciesTree(shellOutput)
           return parsedTree
         } catch (error: any) {
-          log.debug({ message: error.message, stack: error.stack, shellOutput: dependencies, cwd: this.rootDir }, "error parsing dependencies tree")
+          log.debug({ message: error.message, stack: error.stack, shellOutput, cwd: this.rootDir }, "error parsing dependencies tree")
           throw new Error(
             `Failed to parse dependencies tree in ${this.rootDir} -> ${error.message || error.stack}. Use DEBUG=electron-builder env var to see the dependency query output.`
           )

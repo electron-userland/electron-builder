@@ -89,11 +89,11 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
 
   protected async collectAllDependencies(tree: PnpmDependency): Promise<void> {
     const collect = async (deps: PnpmDependency["dependencies"] | PnpmDependency["optionalDependencies"] = {}) => {
-      for (const [key, value] of Object.entries(deps)) {
+      for (const [, value] of Object.entries(deps)) {
         const module = {
           ...value,
-          name: key,
-          // use .from instead of .name
+          // use .from instead of .name for pnpm
+          name: value.from,
           path: await this.resolveModuleDir(value.from, value.path),
         }
         this.allDependencies.set(this.moduleKeyGenerator(module), module)
