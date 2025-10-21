@@ -95,7 +95,7 @@ export async function findWorkspaceRoot(pm: PM, cwd: string): Promise<string | u
 
   const output = await spawn(command.command, command.args, {
     cwd,
-    stdio: ["ignore", "pipe", "ignore"],
+    stdio: "inherit",
   })
     .then(it => {
       const output = it?.trim()
@@ -108,7 +108,7 @@ export async function findWorkspaceRoot(pm: PM, cwd: string): Promise<string | u
           return findNearestWithWorkspacesField(cwd)
         }
       }
-      return output
+      return !output?.length ? undefined : output
     })
     .catch(() => findNearestWithWorkspacesField(cwd))
 

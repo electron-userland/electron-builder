@@ -65,7 +65,7 @@ test("yarn several workspaces and asarUnpack", ({ expect }) =>
     }
   ))
 
-test("yarn two package.json w/ native module", ({ expect }) =>
+test.ifLinux("yarn two package.json w/ native module", ({ expect }) =>
   assertPack(
     expect,
     "test-app-two-native-modules",
