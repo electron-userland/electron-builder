@@ -3,7 +3,8 @@ import { outputFile, copySync, rmSync, readJsonSync, writeJsonSync, mkdirSync } 
 import * as path from "path"
 import { spawn } from "builder-util/out/util"
 import { PM } from "app-builder-lib/out/node-module-collector"
-import { assertPack, linuxDirTarget, modifyPackageJson, verifyAsarFileTree } from "./helpers/packTester"
+import { appThrows, appTwoThrows, assertPack, linuxDirTarget, modifyPackageJson, verifyAsarFileTree } from "./helpers/packTester"
+import { ELECTRON_VERSION } from "./helpers/testConfig"
 
 test("yarn workspace", ({ expect }) =>
   assertPack(
@@ -173,6 +174,25 @@ test("yarn two package.json without node_modules", ({ expect }) =>
       packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
     }
   ))
+
+test.only("should throw when attempting to package a system file", ({ expect }) =>
+  appTwoThrows(
+    expect,
+    {
+      projectDir: "app",
+      config: {
+        files: ["/app", "../../etc/passwd", "/System/Library/CoreServices/SystemVersion.plist"],
+      },
+    },
+    {
+      packageManager: PM.YARN,
+    },
+    error => {
+      expect(error).toBeInstanceOf(Error)
+      expect(error.message).toBe("No nsis target found! Please specify an nsis target")
+    }
+  ))
+
 describe("isInstallDepsBefore=true", () => {
   test("yarn workspace for scope name", ({ expect }) =>
     assertPack(

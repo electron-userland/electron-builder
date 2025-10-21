@@ -174,7 +174,7 @@ export class AsarPackager {
     // okay, it must be a symlink. verify that the link is not trying to access/copy a system file
     const workspaceRoot = await this.packager.info.getWorkspaceRoot()
     const realPath = await fs.realpath(file)
-    const unsafe = await this.isSystemOrUnsafePath(file)
+    const unsafe = await this.isSystemOrUnsafePath(realPath)
     if (unsafe) {
       log.error({ source: file, realPath: realPath, workspaceRoot }, `unable to copy, file is symlinked outside the package`)
       throw new Error(

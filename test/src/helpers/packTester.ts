@@ -88,8 +88,8 @@ export function appThrows(expect: ExpectStatic, packagerOptions: PackagerOptions
   return assertThat(expect, assertPack(expect, "test-app-one", packagerOptions, checkOptions)).throws(customErrorAssert)
 }
 
-export function appTwoThrows(expect: ExpectStatic, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions = {}) {
-  return assertThat(expect, assertPack(expect, "test-app", packagerOptions, checkOptions)).throws()
+export function appTwoThrows(expect: ExpectStatic, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions = {}, customErrorAssert?: (error: Error) => void) {
+  return assertThat(expect, assertPack(expect, "test-app", packagerOptions, checkOptions)).throws(customErrorAssert)
 }
 
 export function app(expect: ExpectStatic, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions = {}) {
@@ -139,7 +139,7 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
       // if custom project dir specified, copy node_modules (i.e. do not ignore it)
       return (packagerOptions.projectDir != null || basename !== "node_modules") && (!basename.startsWith(".") || basename === ".babelrc")
     },
-    isUseHardLink: USE_HARD_LINKS,
+    isUseHardLink: USE_HARD_LINKS, // TODO: consider use hard links for tests
   })
   projectDir = dir
 
@@ -157,8 +157,8 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
       // Check again. Package manager could have been changed during `projectDirCreated`
       const { pm, corepackConfig: packageManager } = detectPackageManager([projectDir])
 
-      const tmpCache = await tmpDir.createTempDir({ prefix: "yarn-cache-" })
-      const tmpHome = await tmpDir.createTempDir({ prefix: "yarn-home-" })
+      const tmpCache = await tmpDir.createTempDir({ prefix: "cache-" })
+      const tmpHome = await tmpDir.createTempDir({ prefix: "home-" })
       const runtimeEnv = {
         ...process.env,
         // corepack

@@ -112,11 +112,11 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
       if (await exists(packageJsonDirectory)) {
         return packageJsonDirectory
       }
-    } catch {
-      // ignore, use fallback
+      log.debug({ pkg, searchRoot, base }, "failed to resolve module path's package.json, falling back to manual node_modules path construction")
+    } catch (error: any) {
+      log.debug({ error: error.message, stack: error.stack, pkg, searchRoot, base }, "cannot resolve module path's package.json")
     }
     const searchPath = path.join(searchRoot, "node_modules", pkg)
-    log.debug({ pkg, searchRoot, base }, "failed to resolve module path's package.json, falling back to manual node_modules path construction")
     return searchPath
   }
 
