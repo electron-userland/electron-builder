@@ -95,7 +95,7 @@ export async function installDependencies(
   const additionalArgs = options.additionalArgs
 
   const searchPaths = [projectDir, appDir].concat(workspaceRoot ? [workspaceRoot] : [])
-  const { pm, resolvedDirectory: _resolvedWorkspaceDir } = detectPackageManager(searchPaths)
+  const { pm, resolvedDirectory: _resolvedWorkspaceDir } = await detectPackageManager(searchPaths)
 
   log.info({ pm, platform, arch, projectDir, appDir, workspaceRoot: _resolvedWorkspaceDir }, "installing dependencies")
 

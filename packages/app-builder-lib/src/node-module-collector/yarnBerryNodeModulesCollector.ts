@@ -27,7 +27,7 @@ export class YarnBerryNodeModulesCollector extends YarnNodeModulesCollector {
       log.debug({ error: error.message, stack: error.stack }, "failed to extract Yarn dependencies tree")
     }
     // Yarn Berry node_modules linker fallback. (Slower due to system ops, so we only use it as a fallback)
-    log.warn(null, "unable to process dependency tree, falling back to using manual node_modules traversal for Yarn v2+.")
+    log.debug(null, "unable to process dependency tree, falling back to using manual node_modules traversal for Yarn v2+.")
     return await this.buildNodeModulesTreeManually(this.rootDir)
   }
 

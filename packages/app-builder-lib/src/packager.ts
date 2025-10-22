@@ -98,11 +98,11 @@ export class Packager {
 
   private _packageManager = new Lazy(async () => {
     const availableDirs = [this.projectDir, this.appDir]
-    const pm = detectPackageManager(availableDirs)
+    const pm = await detectPackageManager(availableDirs)
     const workspaceRoot = await findWorkspaceRoot(pm.pm, this.projectDir)
     if (workspaceRoot != null) {
       // re-detect package manager from workspace root, this seems particularly necessary for pnpm workspaces
-      const actualPm = detectPackageManager([workspaceRoot])
+      const actualPm = await detectPackageManager([workspaceRoot])
       return {
         pm: actualPm.pm,
         workspaceRoot: Promise.resolve(actualPm.resolvedDirectory),

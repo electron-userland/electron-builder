@@ -1,8 +1,8 @@
 import * as path from "path"
-import * as fs from "fs"
+import * as fs from "fs-extra"
 import * as which from "which"
 import { execSync } from "child_process"
-import { log } from "builder-util"
+import { exists, log } from "builder-util"
 
 export enum PM {
   NPM = "npm",
@@ -60,20 +60,20 @@ export function detectPackageManagerByEnv(): PM | null {
   return null
 }
 
-export function detectPackageManagerByFile(dir: string): PM | null {
-  const has = (file: string) => fs.existsSync(path.join(dir, file))
+export async function detectPackageManagerByFile(dir: string): Promise<PM | null> {
+  const has = (file: string) => exists(path.join(dir, file))
 
   const detected: PM[] = []
-  if (has("yarn.lock")) {
+  if (await has("yarn.lock")) {
     detected.push(PM.YARN)
   }
-  if (has("pnpm-lock.yaml")) {
+  if (await has("pnpm-lock.yaml")) {
     detected.push(PM.PNPM)
   }
-  if (has("package-lock.json")) {
+  if (await has("package-lock.json")) {
     detected.push(PM.NPM)
   }
-  if (has("bun.lock") || has("bun.lockb")) {
+  if ((await has("bun.lock")) || (await has("bun.lockb"))) {
     detected.push(PM.BUN)
   }
 
@@ -84,7 +84,7 @@ export function detectPackageManagerByFile(dir: string): PM | null {
   return null
 }
 
-export function detectYarnBerry(cwd: string): PM.YARN_BERRY | PM.YARN {
+export async function detectYarnBerry(cwd: string): Promise<PM.YARN | PM.YARN_BERRY> {
   const checkVersion = () => {
     try {
       const version = execSync("yarn --version", { encoding: "utf8", cwd }).toString().trim()
@@ -99,16 +99,16 @@ export function detectYarnBerry(cwd: string): PM.YARN_BERRY | PM.YARN {
   }
 
   const yarnBerry = path.join(cwd, ".yarnrc.yml")
-  if (fs.existsSync(yarnBerry)) {
+  if (await exists(yarnBerry)) {
     return PM.YARN_BERRY
   }
 
   const lockPath = path.join(cwd, "yarn.lock")
-  if (!fs.existsSync(lockPath)) {
+  if (!(await exists(lockPath))) {
     return checkVersion()
   }
   // Read the first few lines of yarn.lock to determine the version
-  const firstBytes = fs.readFileSync(lockPath, "utf8").split("\n").slice(0, 10).join("\n")
+  const firstBytes = (await fs.readFile(lockPath, "utf8")).split("\n").slice(0, 10).join("\n")
 
   // Yarn v2+ (Berry) has a "__metadata:" block near the top
   if (firstBytes.includes("__metadata:")) {

@@ -38,8 +38,8 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
     const realTree: T = this.getTreeFromWorkspaces(tree)
     await this.extractProductionDependencyGraph(realTree, realTree.name /*root project name*/)
 
-    const hoisterResult: HoisterResult = hoist(this.transToHoisterTree(this.productionGraph, "."), { check: true })
-    const nodeModules: NodeModuleInfo[] = this._getNodeModules(hoisterResult.dependencies, [])
+    const hoisterResult: HoisterResult = hoist(this.transToHoisterTree(this.productionGraph, tree.name), { check: true })
+    const nodeModules: NodeModuleInfo[] = await this._getNodeModules(hoisterResult.dependencies)
 
     return nodeModules
   }
@@ -167,7 +167,9 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
     return node
   }
 
-  private _getNodeModules(dependencies: Set<HoisterResult>, result: NodeModuleInfo[]) {
+  private async _getNodeModules(dependencies: Set<HoisterResult>): Promise<NodeModuleInfo[]> {
+    const result: NodeModuleInfo[] = []
+
     if (dependencies.size === 0) {
       return result
     }
@@ -183,7 +185,7 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
 
       // fix npm list issue
       // https://github.com/npm/cli/issues/8535
-      if (!fs.existsSync(p)) {
+      if (!(await exists(p))) {
         log.debug({ name: d.name, reference, p }, "dependency path does not exist")
         continue
       }
@@ -195,8 +197,7 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
       }
       result.push(node)
       if (d.dependencies.size > 0) {
-        node.dependencies = []
-        this._getNodeModules(d.dependencies, node.dependencies)
+        node.dependencies = await this._getNodeModules(d.dependencies)
       }
     }
     return result.sort((a, b) => a.name.localeCompare(b.name))

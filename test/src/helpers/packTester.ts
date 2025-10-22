@@ -155,7 +155,7 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
       const postNodeModuleInstallHook = checkOptions.projectDirCreated ? await checkOptions.projectDirCreated(projectDir, tmpDir) : null
 
       // Check again. Package manager could have been changed during `projectDirCreated`
-      const { pm, corepackConfig: packageManager } = detectPackageManager([projectDir])
+      const { pm, corepackConfig: packageManager } = await detectPackageManager([projectDir])
 
       const tmpCache = await tmpDir.createTempDir({ prefix: "cache-" })
       const tmpHome = await tmpDir.createTempDir({ prefix: "home-" })
