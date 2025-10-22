@@ -12,7 +12,6 @@ import { Lazy } from "lazy-val"
 const execAsync = promisify(exec)
 
 export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType>, OptionalsType> {
-  private nodeModules: NodeModuleInfo[] = []
   protected allDependencies: Map<string, T> = new Map()
   protected productionGraph: DependencyGraph = {}
 
@@ -23,7 +22,7 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
       const lines = Object.fromEntries(config.split("\n").map(line => line.split("=").map(s => s.trim())))
       return lines["node-linker"] === "hoisted"
     } catch (error: any) {
-      log.error({ error: error.message, stack: error.stack }, "error checking if node modules are hoisted, falling back to non-hoisted")
+      log.debug({ error: error.message, stack: error.stack }, "error checking if node modules are hoisted, falling back to non-hoisted")
     }
     return false
   })
@@ -40,9 +39,9 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
     await this.extractProductionDependencyGraph(realTree, realTree.name /*root project name*/)
 
     const hoisterResult: HoisterResult = hoist(this.transToHoisterTree(this.productionGraph, "."), { check: true })
-    this._getNodeModules(hoisterResult.dependencies, this.nodeModules)
+    const nodeModules: NodeModuleInfo[] = this._getNodeModules(hoisterResult.dependencies, [])
 
-    return this.nodeModules
+    return nodeModules
   }
 
   public abstract readonly installOptions: {
@@ -76,17 +75,23 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
         backoff: 2000,
         shouldRetry: async (error: any) => {
           if (!(await exists(tempOutputFile))) {
-            log.error({ error: error.message || error.stack, tempOutputFile, cwd: this.rootDir }, "error getting dependencies tree, unable to find output; retrying")
+            log.debug({ error: error.message || error.stack, tempOutputFile, cwd: this.rootDir }, "error getting dependencies tree, unable to find output; retrying")
             return true
           }
           const fileContent = await fs.readFile(tempOutputFile, { encoding: "utf8" })
-          if (fileContent.trim().length === 0 || error.message?.includes("Unexpected end of JSON input")) {
+          if (fileContent.trim().length === 0) {
             // If the output file is empty or contains invalid JSON, we retry
             // This can happen if the command fails or if the output is not as expected
-            log.error({ error: error.message || error.stack, tempOutputFile, cwd: this.rootDir }, "dependency tree output file is empty, retrying")
+            log.debug({ error: error.message || error.stack, tempOutputFile, cwd: this.rootDir }, "dependency tree output file is empty, retrying")
             return true
           }
-          log.error({ message: error.message, stack: error.stack, shellOutput: fileContent, cwd: this.rootDir }, "error parsing dependencies tree")
+          if (error.message?.includes("Unexpected end of JSON input")) {
+            // If the output file is empty or contains invalid JSON, we retry
+            // This can happen if the command fails or if the output is not as expected
+            log.debug({ error: error.message || error.stack, tempOutputFile, cwd: this.rootDir, fileContent }, "expected JSON data (check `fileContent`), retrying")
+            return true
+          }
+          log.error({ message: error.message, stack: error.stack, cwd: this.rootDir, fileContent }, "error parsing dependencies tree")
           return false
         },
       }
@@ -164,7 +169,7 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
 
   private _getNodeModules(dependencies: Set<HoisterResult>, result: NodeModuleInfo[]) {
     if (dependencies.size === 0) {
-      return
+      return result
     }
 
     for (const d of dependencies.values()) {
@@ -194,7 +199,7 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
         this._getNodeModules(d.dependencies, node.dependencies)
       }
     }
-    result.sort((a, b) => a.name.localeCompare(b.name))
+    return result.sort((a, b) => a.name.localeCompare(b.name))
   }
 
   async asyncExec(command: string, args: string[], cwd: string = this.rootDir): Promise<string> {
