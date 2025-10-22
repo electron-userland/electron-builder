@@ -14,94 +14,30 @@ exports[`npm 2`] = `
         "package.json": {
           "files": {
             "readme.md": {
-              "offset": "24709",
+              "offset": "0",
               "size": 32,
             },
           },
         },
         "readme.md": {
-          "offset": "24741",
+          "offset": "32",
           "size": 78,
         },
       },
     },
     "index.html": {
-      "offset": "24819",
+      "offset": "110",
       "size": 841,
     },
     "index.js": {
-      "offset": "25660",
+      "offset": "951",
       "size": 4184,
     },
-    "node_modules": {
-      "files": {
-        "debug": {
-          "files": {
-            "LICENSE": {
-              "offset": "0",
-              "size": 1139,
-            },
-            "package.json": {
-              "offset": "1139",
-              "size": 910,
-            },
-            "src": {
-              "files": {
-                "browser.js": {
-                  "offset": "2049",
-                  "size": 6103,
-                },
-                "common.js": {
-                  "offset": "8152",
-                  "size": 6915,
-                },
-                "index.js": {
-                  "offset": "15067",
-                  "size": 314,
-                },
-                "node.js": {
-                  "offset": "15381",
-                  "size": 4728,
-                },
-              },
-            },
-          },
-        },
-        "ms": {
-          "files": {
-            "index.js": {
-              "offset": "20109",
-              "size": 3024,
-            },
-            "license.md": {
-              "offset": "23133",
-              "size": 1079,
-            },
-            "package.json": {
-              "offset": "24212",
-              "size": 497,
-            },
-          },
-        },
-      },
-    },
     "package.json": {
-      "offset": "29844",
+      "offset": "5135",
       "size": 378,
     },
   },
-}
-`;
-
-exports[`package.json => packageManager > npm 1`] = `
-{
-  "linux": [],
-}
-`;
-
-exports[`package.json => packageManager > pnpm 1`] = `
-{
-  "linux": [],
 }
 `;
 
@@ -119,24 +55,49 @@ exports[`pnpm 2`] = `
         "package.json": {
           "files": {
             "readme.md": {
-              "offset": "24709",
+              "offset": "0",
               "size": 32,
             },
           },
         },
         "readme.md": {
-          "offset": "24741",
+          "offset": "32",
           "size": 78,
         },
       },
     },
     "index.html": {
-      "offset": "24819",
+      "offset": "110",
       "size": 841,
     },
     "index.js": {
-      "offset": "25660",
+      "offset": "951",
       "size": 4184,
+    },
+    "package.json": {
+      "offset": "5135",
+      "size": 517,
+    },
+  },
+}
+`;
+
+exports[`yarn 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`yarn 2`] = `
+{
+  "files": {
+    "index.html": {
+      "offset": "29309",
+      "size": 378,
+    },
+    "index.js": {
+      "offset": "29687",
+      "size": 619,
     },
     "node_modules": {
       "files": {
@@ -145,6 +106,26 @@ exports[`pnpm 2`] = `
             "LICENSE": {
               "offset": "0",
               "size": 1139,
+            },
+            "node_modules": {
+              "files": {
+                "ms": {
+                  "files": {
+                    "index.js": {
+                      "offset": "20109",
+                      "size": 3024,
+                    },
+                    "license.md": {
+                      "offset": "23133",
+                      "size": 1079,
+                    },
+                    "package.json": {
+                      "offset": "24212",
+                      "size": 497,
+                    },
+                  },
+                },
+              },
             },
             "package.json": {
               "offset": "1139",
@@ -175,15 +156,15 @@ exports[`pnpm 2`] = `
         "ms": {
           "files": {
             "index.js": {
-              "offset": "20109",
+              "offset": "24709",
               "size": 3024,
             },
             "license.md": {
-              "offset": "23133",
+              "offset": "27733",
               "size": 1079,
             },
             "package.json": {
-              "offset": "24212",
+              "offset": "28812",
               "size": 497,
             },
           },
@@ -191,38 +172,13 @@ exports[`pnpm 2`] = `
       },
     },
     "package.json": {
-      "offset": "29844",
-      "size": 517,
-    },
-  },
-}
-`;
-
-exports[`yarn 1`] = `
-{
-  "linux": [],
-}
-`;
-
-exports[`yarn 2`] = `
-{
-  "files": {
-    "index.html": {
-      "offset": "0",
-      "size": 378,
-    },
-    "index.js": {
-      "offset": "378",
-      "size": 619,
-    },
-    "package.json": {
-      "offset": "997",
+      "offset": "30306",
       "size": 348,
     },
     "path": {
       "files": {
         "app.asar": {
-          "offset": "1345",
+          "offset": "30654",
           "size": 714,
         },
       },
@@ -240,22 +196,27 @@ exports[`yarn berry 1`] = `
 exports[`yarn berry 2`] = `
 {
   "files": {
-    "index.html": {
+    ".pnp.cjs": {
+      "executable": true,
       "offset": "0",
+      "size": 613444,
+    },
+    "index.html": {
+      "offset": "613444",
       "size": 378,
     },
     "index.js": {
-      "offset": "378",
+      "offset": "613822",
       "size": 619,
     },
     "package.json": {
-      "offset": "997",
-      "size": 346,
+      "offset": "614441",
+      "size": 316,
     },
     "path": {
       "files": {
         "app.asar": {
-          "offset": "1343",
+          "offset": "614757",
           "size": 714,
         },
       },

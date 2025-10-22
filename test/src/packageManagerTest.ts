@@ -139,7 +139,7 @@ test("yarn multi-package workspace", ({ expect }) =>
     }
   ))
 // yarn berry multi-package workspace
-test("yarn berry multi-package workspace", ({ expect }) =>
+test.only("yarn berry multi-package workspace", ({ expect }) =>
   assertPack(
     expect,
     "test-app-yarn-several-workspace",

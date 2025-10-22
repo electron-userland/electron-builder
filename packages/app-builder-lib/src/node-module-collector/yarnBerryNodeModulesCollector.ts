@@ -12,26 +12,23 @@ export class YarnBerryNodeModulesCollector extends YarnNodeModulesCollector {
     lockfile: "yarn.lock",
   }
 
-  constructor(rootDir: string, tempDirManager: import("builder-util").TmpDir) {
-    super(rootDir, tempDirManager)
-  }
-
   protected getArgs(): string[] {
     // Only Yarn v1 uses CLI. We use pnp.cjs for PnP and manual tree build for Yarn Berry node_modules linker.
-    // If those fail, then we fallback to npm query (but will fail if using corepack)
+    // If those fail, then we fallback to npm query. It will fail if using corepack, so we attempt to manually build the tree.
     return NPM_LIST_ARGS
   }
 
   protected async getDependenciesTree(): Promise<YarnDependency> {
     try {
-      log.debug({ isPnP: this.isPnP }, "expecting `pnp.cjs` for PnP or node_modules linker for non-PnP. Will attempt falling back to npm query if neither.")
-      return super.getDependenciesTree(PM.NPM)
+      const isPnP = await this.isPnP.value
+      log.debug({ isPnP }, "expecting `pnp.cjs` for PnP or node_modules linker for non-PnP. Will attempt falling back to npm query if neither.")
+      return await super.getDependenciesTree(PM.NPM)
     } catch (error: any) {
       log.debug({ error: error.message, stack: error.stack }, "failed to extract Yarn dependencies tree")
     }
     // Yarn Berry node_modules linker fallback. (Slower due to system ops, so we only use it as a fallback)
     log.warn(null, "unable to process dependency tree, falling back to using manual node_modules traversal for Yarn v2+.")
-    return this.buildNodeModulesTreeManually(this.rootDir)
+    return await this.buildNodeModulesTreeManually(this.rootDir)
   }
 
   /**

@@ -39,7 +39,7 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
     const realTree: T = this.getTreeFromWorkspaces(tree)
     await this.extractProductionDependencyGraph(realTree, realTree.name /*root project name*/)
 
-    const hoisterResult: HoisterResult = hoist(this.transToHoisterTree(this.productionGraph, realTree.name), { check: true })
+    const hoisterResult: HoisterResult = hoist(this.transToHoisterTree(this.productionGraph, "."), { check: true })
     this._getNodeModules(hoisterResult.dependencies, this.nodeModules)
 
     return this.nodeModules
@@ -68,15 +68,7 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
       async () => {
         await this.streamCollectorCommandToJsonFile(command, args, this.rootDir, tempOutputFile)
         const shellOutput = await fs.readFile(tempOutputFile, { encoding: "utf8" })
-        try {
-          const parsedTree = await this.parseDependenciesTree(shellOutput)
-          return parsedTree
-        } catch (error: any) {
-          log.debug({ message: error.message, stack: error.stack, shellOutput, cwd: this.rootDir }, "error parsing dependencies tree")
-          throw new Error(
-            `Failed to parse dependencies tree in ${this.rootDir} -> ${error.message || error.stack}. Use DEBUG=electron-builder env var to see the dependency query output.`
-          )
-        }
+        return await this.parseDependenciesTree(shellOutput)
       },
       {
         retries: 2,
@@ -87,13 +79,14 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
             log.error({ error: error.message || error.stack, tempOutputFile, cwd: this.rootDir }, "error getting dependencies tree, unable to find output; retrying")
             return true
           }
-          const dependencies = await fs.readFile(tempOutputFile, { encoding: "utf8" })
-          if (dependencies.trim().length === 0 || error.message?.includes("Unexpected end of JSON input")) {
+          const fileContent = await fs.readFile(tempOutputFile, { encoding: "utf8" })
+          if (fileContent.trim().length === 0 || error.message?.includes("Unexpected end of JSON input")) {
             // If the output file is empty or contains invalid JSON, we retry
             // This can happen if the command fails or if the output is not as expected
             log.error({ error: error.message || error.stack, tempOutputFile, cwd: this.rootDir }, "dependency tree output file is empty, retrying")
             return true
           }
+          log.error({ message: error.message, stack: error.stack, shellOutput: fileContent, cwd: this.rootDir }, "error parsing dependencies tree")
           return false
         },
       }
@@ -121,14 +114,6 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
 
   protected moduleKeyGenerator(pkg: T): string {
     return `${pkg.name}@${pkg.version}`
-  }
-
-  private collectFileProtocolDeps(mod: T): T {
-    const deps = [...Object.values(mod.dependencies || {}), ...Object.values(mod.optionalDependencies || {})].filter(
-      v => typeof v === "string" && v.startsWith("file:")
-    ) as string[]
-
-    return { ...mod, dependencies: deps.map(v => path.resolve(v.replace(/^file:/, ""))) }
   }
 
   /**
@@ -256,7 +241,9 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
         // https://github.com/npm/npm/issues/17624
         if (code === 1 && "npm" === execName.toLowerCase() && args.includes("list")) {
           // This is a known issue with npm list command, it can return code 1 even when the command is "technically" successful
-          log.debug({ code, stderr }, "`npm list` returned non-zero exit code, but it MIGHT be expected (https://github.com/npm/npm/issues/17624). Check stderr for details.")
+          if (this.installOptions.manager === PM.NPM) {
+            log.debug({ code, stderr }, "`npm list` returned non-zero exit code, but it MIGHT be expected (https://github.com/npm/npm/issues/17624). Check stderr for details.")
+          }
           return resolve()
         }
         if (code !== 0) {

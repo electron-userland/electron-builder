@@ -4,26 +4,22 @@ import * as path from "path"
 import { NodeModulesCollector } from "./nodeModulesCollector"
 import { PM } from "./packageManager"
 import { YarnDependency } from "./types"
-import { log } from "builder-util"
+import { exists, log } from "builder-util"
+import { Lazy } from "lazy-val"
 
 export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependency, string> {
   public readonly installOptions = {
     manager: PM.YARN,
     lockfile: "yarn.lock",
   }
-  protected readonly isPnP: boolean
-
-  constructor(rootDir: string, tempDirManager: import("builder-util").TmpDir) {
-    super(rootDir, tempDirManager)
-    this.isPnP = this.detectPnP(rootDir)
-  }
+  protected readonly isPnP = new Lazy<boolean>(async () => this.detectPnP(this.rootDir))
 
   protected getArgs(): string[] {
     return ["list", "--production", "--json", "--depth=Infinity", "--no-progress"]
   }
 
   protected async getDependenciesTree(pm: PM): Promise<YarnDependency> {
-    if (this.isPnP) {
+    if (await this.isPnP.value) {
       log.debug(null, "using Yarn PnP for dependency tree extraction.")
       // Yarn PnP
       // Reference: https://yarnpkg.com/features/pnp
@@ -42,9 +38,13 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
   }
 
   protected async parseDependenciesTree(jsonBlob: string): Promise<YarnDependency> {
-    const data = JSON.parse(jsonBlob)
-    if (data.dependencies) {
-      return this.normalizeNpmLikeTree(data, this.rootDir)
+    try {
+      const data = JSON.parse(jsonBlob)
+      if (data.dependencies) {
+        return this.normalizeNpmLikeTree(data, this.rootDir)
+      }
+    } catch {
+      // ignore
     }
 
     const lines = jsonBlob
@@ -163,14 +163,14 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
     return await parseNode(data, cwd)
   }
 
-  private detectPnP(rootDir: string): boolean {
+  private async detectPnP(rootDir: string): Promise<boolean> {
     try {
-      if (fs.existsSync(path.join(rootDir, ".pnp.cjs")) || fs.existsSync(path.join(rootDir, ".pnp.js"))) {
+      if ((await exists(path.join(rootDir, ".pnp.cjs"))) || (await exists(path.join(rootDir, ".pnp.js")))) {
         return true
       }
       const rcPath = path.join(rootDir, ".yarnrc.yml")
-      if (fs.existsSync(rcPath)) {
-        const cfg: any = load(fs.readFileSync(rcPath, "utf-8"))
+      if (await exists(rcPath)) {
+        const cfg: any = load(await fs.readFile(rcPath, "utf-8"))
         if (cfg?.nodeLinker === "pnp") {
           return true
         }

@@ -91,17 +91,17 @@ export async function findWorkspaceRoot(pm: PM, cwd: string): Promise<string | u
 
   const output = await spawn(command.command, command.args, { cwd, stdio: ["ignore", "pipe", "ignore"] })
     .then(it => {
-      const output = it?.trim()
+      const out = it?.trim()
       if (pm === PM.YARN) {
-        JSON.parse(output) // if JSON valid, workspace detected
+        JSON.parse(out) // if JSON valid, workspace detected
         return findNearestWithWorkspacesField(cwd)
       } else if (pm === PM.BUN) {
-        const json = JSON.parse(output)
+        const json = JSON.parse(out)
         if (Array.isArray(json) && json.length > 0) {
           return findNearestWithWorkspacesField(cwd)
         }
       }
-      return !output?.length ? undefined : output
+      return !out?.length || out === "undefined" ? undefined : out
     })
     .catch(() => findNearestWithWorkspacesField(cwd))
 
