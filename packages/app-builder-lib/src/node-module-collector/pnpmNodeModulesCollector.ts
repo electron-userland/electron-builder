@@ -11,33 +11,6 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
   public readonly installOptions = {
     manager: PM.PNPM,
     lockfile: "pnpm-lock.yaml",
-    lockfileDirs: (workspaceRoot: string) =>
-      new Lazy(async () => {
-        try {
-          const home = os.homedir()
-          const defaultStore = path.join(home, ".pnpm-store")
-          const rcFile = path.join(home, ".npmrc")
-
-          if (await fs.pathExists(rcFile)) {
-            const content = await fs.readFile(rcFile, "utf8")
-            const match = content.match(/^store-dir\s*=\s*(.+)$/m)
-            if (match) {
-              return [path.resolve(match[1])]
-            }
-          }
-
-          // fallback: look for local virtual store
-          const virtualStoreDir = path.join(workspaceRoot, "node_modules", ".pnpm")
-          if (await fs.pathExists(virtualStoreDir)) {
-            return [virtualStoreDir]
-          }
-
-          return [defaultStore]
-        } catch (error: any) {
-          log.debug({ workspaceRoot, error: error.message, stack: error.stack }, "no store dir detected")
-        }
-        return []
-      }),
   }
 
   protected getArgs(): string[] {
@@ -78,10 +51,10 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
 
         return true
       })
-      .map(async ([packageName, dependency]) => {
-        const childDependencyId = `${packageName}@${dependency.version}`
-        await this.extractProductionDependencyGraph(dependency, childDependencyId)
-        return childDependencyId
+      .map(async ([, dependency]) => {
+        const packageId = this.moduleKeyGenerator(dependency)
+        await this.extractProductionDependencyGraph(dependency, packageId)
+        return packageId
       })
 
     this.productionGraph[dependencyId] = { dependencies: await Promise.all(dependencies) }

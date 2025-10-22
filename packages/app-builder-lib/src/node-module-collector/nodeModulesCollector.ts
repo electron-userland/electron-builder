@@ -34,7 +34,7 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
   ) {}
 
   public async getNodeModules(): Promise<NodeModuleInfo[]> {
-    const tree: T = await this.getDependenciesTree()
+    const tree: T = await this.getDependenciesTree(this.installOptions.manager)
     await this.collectAllDependencies(tree) // Parse from the root, as npm list can host and deduplicate across projects in the workspace
     const realTree: T = this.getTreeFromWorkspaces(tree)
     await this.extractProductionDependencyGraph(realTree, realTree.name /*root project name*/)
@@ -48,7 +48,6 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
   public abstract readonly installOptions: {
     manager: PM
     lockfile: string
-    lockfileDirs: (workspaceRoot: string) => Lazy<string[]>
   }
 
   protected abstract getArgs(): string[]
@@ -56,8 +55,8 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
   protected abstract extractProductionDependencyGraph(tree: Dependency<T, OptionalsType>, dependencyId: string): Promise<void>
   protected abstract collectAllDependencies(tree: Dependency<T, OptionalsType>): Promise<void>
 
-  protected async getDependenciesTree(): Promise<T> {
-    const command = getPackageManagerCommand(this.installOptions.manager)
+  protected async getDependenciesTree(pn: PM): Promise<T> {
+    const command = getPackageManagerCommand(pn)
     const args = this.getArgs()
 
     const tempOutputFile = await this.tempDirManager.getTempFile({

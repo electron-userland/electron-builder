@@ -5,18 +5,15 @@ import { NpmDependency } from "./types"
 import * as path from "path"
 import * as os from "os"
 
+export const NPM_LIST_ARGS = ["list", "-a", "--include", "prod", "--include", "optional", "--omit", "dev", "--json", "--long", "--silent"]
 export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency, string> {
   public readonly installOptions = {
     manager: PM.NPM,
     lockfile: "package-lock.json",
-    lockfileDirs: () =>
-      new Lazy<string[]>(() => {
-        return Promise.resolve([path.join(os.homedir(), ".npm")])
-      }),
   }
 
   protected getArgs(): string[] {
-    return ["list", "-a", "--include", "prod", "--include", "optional", "--omit", "dev", "--json", "--long", "--silent"]
+    return NPM_LIST_ARGS
   }
 
   protected async collectAllDependencies(tree: NpmDependency) {

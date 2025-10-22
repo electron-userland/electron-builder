@@ -6,8 +6,8 @@ import { NodeModuleInfo } from "./types"
 import { TmpDir } from "temp-file"
 import * as path from "path"
 import * as fs from "fs-extra"
-import { execSync } from "child_process"
 import { log, spawn } from "builder-util"
+import { YarnBerryNodeModulesCollector } from "./yarnBerryNodeModulesCollector"
 
 export { PM, getPackageManagerCommand }
 
@@ -15,12 +15,14 @@ export function getCollectorByPackageManager(pm: PM, rootDir: string, tempDirMan
   switch (pm) {
     case PM.PNPM:
       return new PnpmNodeModulesCollector(rootDir, tempDirManager)
-    case PM.NPM:
-    case PM.BUN:
-      return new NpmNodeModulesCollector(rootDir, tempDirManager)
     case PM.YARN:
-    case PM.YARN_BERRY:
       return new YarnNodeModulesCollector(rootDir, tempDirManager)
+    case PM.YARN_BERRY:
+      return new YarnBerryNodeModulesCollector(rootDir, tempDirManager)
+    case PM.BUN:
+    case PM.NPM:
+    default:
+      return new NpmNodeModulesCollector(rootDir, tempDirManager)
   }
 }
 
@@ -54,9 +56,10 @@ export function detectPackageManager(searchPaths: string[]): { pm: PM; corepackC
     }
   }
 
-  pm = detectPackageManagerByEnv()
+  pm = detectPackageManagerByEnv() || PM.NPM
   const cwd = process.env.npm_package_json ? path.dirname(process.env.npm_package_json) : (process.env.INIT_CWD ?? process.cwd())
-  return { pm: resolveIfYarn(pm || PM.NPM, cwd), resolvedDirectory: undefined, corepackConfig: undefined }
+  log.info({ detected: cwd }, "packageManager not detected by file, falling back to environment detection")
+  return { pm: resolveIfYarn(pm, cwd), resolvedDirectory: undefined, corepackConfig: undefined }
 }
 
 export async function findWorkspaceRoot(pm: PM, cwd: string): Promise<string | undefined> {
@@ -72,13 +75,6 @@ export async function findWorkspaceRoot(pm: PM, cwd: string): Promise<string | u
       break
 
     case PM.YARN: {
-      // verify yarn v1.x before using “workspaces info”
-      const version = execSync("yarn --version", { encoding: "utf8", cwd }).trim()
-      if (!version.startsWith("1.")) {
-        // fallback if not Yarn 1
-        return await findNearestWithWorkspacesField(cwd)
-      }
-
       command = { command: "yarn", args: ["workspaces", "info", "--silent"] }
       break
     }
@@ -93,10 +89,7 @@ export async function findWorkspaceRoot(pm: PM, cwd: string): Promise<string | u
       break
   }
 
-  const output = await spawn(command.command, command.args, {
-    cwd,
-    stdio: "inherit",
-  })
+  const output = await spawn(command.command, command.args, { cwd, stdio: ["ignore", "pipe", "ignore"] })
     .then(it => {
       const output = it?.trim()
       if (pm === PM.YARN) {
