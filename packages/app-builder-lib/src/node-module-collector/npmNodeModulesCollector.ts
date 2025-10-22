@@ -1,9 +1,6 @@
-import { Lazy } from "lazy-val"
 import { NodeModulesCollector } from "./nodeModulesCollector"
 import { PM } from "./packageManager"
 import { NpmDependency } from "./types"
-import * as path from "path"
-import * as os from "os"
 
 export const NPM_LIST_ARGS = ["list", "-a", "--include", "prod", "--include", "optional", "--omit", "dev", "--json", "--long", "--silent"]
 export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency, string> {

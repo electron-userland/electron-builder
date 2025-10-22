@@ -42,9 +42,10 @@ export function detectPackageManager(searchPaths: string[]): { pm: PM; corepackC
     const packageManager = fs.existsSync(packageJsonPath) ? JSON.parse(fs.readFileSync(packageJsonPath, "utf8"))?.packageManager : undefined
     if (packageManager) {
       const [pm] = packageManager.split("@")
-      log.debug({ resolvedPackageManager: pm, packageManager, dir }, "packageManager field detected in package.json")
       if (Object.values(PM).includes(pm as PM)) {
-        return { pm: resolveIfYarn(pm as PM, dir), corepackConfig: packageManager, resolvedDirectory: dir }
+        const resolvedPackageManager = resolveIfYarn(pm as PM, dir)
+        log.debug({ resolvedPackageManager, packageManager, dir }, "packageManager field detected in package.json")
+        return { pm: resolvedPackageManager, corepackConfig: packageManager, resolvedDirectory: dir }
       }
     }
 
