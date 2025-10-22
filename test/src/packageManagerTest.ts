@@ -1,12 +1,13 @@
 import * as path from "path"
-import { app, assertPack, getFixtureDir, linuxDirTarget, modifyPackageJson, verifyAsarFileTree } from "./helpers/packTester"
+import { app, assertPack, getFixtureDir, getPackageManagerWithVersion, linuxDirTarget, modifyPackageJson, verifyAsarFileTree } from "./helpers/packTester"
 import { ELECTRON_VERSION } from "./helpers/testConfig"
 import { copyFile, rm, writeFile } from "fs-extra"
 import { execSync } from "child_process"
 import { Platform } from "app-builder-lib"
+import { PM } from "app-builder-lib/src/node-module-collector"
 
-const yarnVersion = "yarn@1.22.19"
-const yarnBerryVersion = "yarn@3.5.1"
+const yarnVersion = getPackageManagerWithVersion(PM.YARN).prepareEntry
+const yarnBerryVersion = getPackageManagerWithVersion(PM.YARN_BERRY).prepareEntry
 
 const packageConfig = (data: any, version: string) => {
   data.packageManager = version
@@ -38,7 +39,6 @@ test("yarn", ({ expect }) =>
           projectDir,
           data => {
             data.packageManager = yarnVersion
-            // data.workspaceRoot = data.workspaceRoot || ["app"]
           },
           false
         )
@@ -47,7 +47,6 @@ test("yarn", ({ expect }) =>
         await writeFile(path.join(projectDir, "app", "yarn.lock"), "")
         await copyFile(path.join(getFixtureDir(), ".pnp.cjs"), path.join(projectDir, ".pnp.cjs"))
         await rm(path.join(projectDir, ".yarnrc.yml"))
-        // await writeFile(path.join(projectDir, ".yarnrc.yml"), "workspaceRoot: .\n"),
         execSync("yarn install", { cwd: projectDir, stdio: "inherit" })
         execSync("yarn install", { cwd: path.join(projectDir, "app"), stdio: "inherit" })
       },
@@ -78,6 +77,7 @@ test("yarn berry", ({ expect }) =>
         await copyFile(path.join(getFixtureDir(), ".pnp.cjs"), path.join(projectDir, ".pnp.cjs"))
         await rm(path.join(projectDir, ".yarnrc.yml"))
         execSync("yarn install", { cwd: projectDir, stdio: "inherit" })
+        // execSync("yarn unplug --all", { cwd: projectDir, stdio: "inherit" })
       },
     }
   ))

@@ -20,7 +20,7 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
 
   protected async getDependenciesTree(pm: PM): Promise<YarnDependency> {
     if (await this.isPnP.value) {
-      log.debug(null, "using Yarn PnP for dependency tree extraction.")
+      log.debug(null, "using Yarn PnP for dependency tree extraction")
       // Yarn PnP
       // Reference: https://yarnpkg.com/features/pnp
       // Note: .pnp.cjs is not always in the project root (can be in workspace root instead)
@@ -30,8 +30,8 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
       if (tree) {
         return tree
       }
-      log.debug({ pnpFile }, "Yarn PnP file not found or failed to load.")
-      throw new Error(`Failed to extract Yarn PnP dependency tree.`)
+      log.error({ pnpFile }, "Yarn PnP file not found or failed to load")
+      throw new Error(`Failed to extract Yarn PnP dependency tree - .pnp.cjs file not found or invalid`)
     }
 
     return super.getDependenciesTree(pm)

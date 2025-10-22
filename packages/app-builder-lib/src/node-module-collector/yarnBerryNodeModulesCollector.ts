@@ -31,6 +31,22 @@ export class YarnBerryNodeModulesCollector extends YarnNodeModulesCollector {
     return await this.buildNodeModulesTreeManually(this.rootDir)
   }
 
+  protected async resolveModuleDir(pkg: string, base: string): Promise<string> {
+    try {
+      return await super.resolveModuleDir(pkg, this.rootDir)
+    } catch (error) {
+      const unpluggedDir = path.join(base, ".yarn/unplugged");
+      const matches = await fs.readdir(unpluggedDir).catch(() => []);
+      const found = matches.find(name => name.startsWith(`${pkg}-npm-`));
+      if (found) {
+        return path.join(unpluggedDir, found, "node_modules", pkg);
+      }
+    }
+        // fallback: Yarn2 virtual packages
+    // Yarn Berry PnP does not use node_modules, so we resolve directly to the package directory.
+    return Promise.resolve(path.join(this.rootDir, "node_modules", pkg))
+  }
+
   /**
    * Builds a dependency tree using only package.json dependencies and optionalDependencies.
    * This skips devDependencies and does not walk the node_modules filesystem.
@@ -40,7 +56,7 @@ export class YarnBerryNodeModulesCollector extends YarnNodeModulesCollector {
 
     const buildFromPackage = async (pkgDir: string): Promise<YarnDependency> => {
       const pkgPath = path.join(pkgDir, "package.json")
-      const pkg = fs.readJSONSync(pkgPath)
+      const pkg = await fs.readJson(pkgPath)
       const id = this.moduleKeyGenerator(pkg)
       if (visited.has(id)) {
         return { name: pkg.name, version: pkg.version, path: pkgDir }

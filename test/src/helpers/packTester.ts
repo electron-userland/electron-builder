@@ -171,6 +171,7 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
         // YARN_DISABLE_TELEMETRY: "1",
         // YARN_ENABLE_TELEMETRY: "false",
         YARN_IGNORE_PATH: "1", // ignore globally installed yarn binaries
+        // YARN_NODE_LINKER: "node-modules", // force to not use pnp (as there's no way to access virtual packages within the paths returned by pnpm)
         npm_config_cache: tmpCache, // prevent npm fallback caching
       }
       const { cli, prepareEntry, version } = getPackageManagerWithVersion(pm, packageManager)

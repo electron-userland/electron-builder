@@ -36,9 +36,9 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
     const tree: T = await this.getDependenciesTree(this.installOptions.manager)
     await this.collectAllDependencies(tree) // Parse from the root, as npm list can host and deduplicate across projects in the workspace
     const realTree: T = this.getTreeFromWorkspaces(tree)
-    await this.extractProductionDependencyGraph(realTree, realTree.name /*root project name*/)
+    await this.extractProductionDependencyGraph(realTree, "." /*root project name*/)
 
-    const hoisterResult: HoisterResult = hoist(this.transToHoisterTree(this.productionGraph, tree.name), { check: true })
+    const hoisterResult: HoisterResult = hoist(this.transToHoisterTree(this.productionGraph, "."), { check: true })
     const nodeModules: NodeModuleInfo[] = await this._getNodeModules(hoisterResult.dependencies)
 
     return nodeModules
@@ -148,12 +148,13 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
 
   private transToHoisterTree(obj: DependencyGraph, key: string, nodes: Map<string, HoisterTree> = new Map()): HoisterTree {
     let node = nodes.get(key)
-    const name = key.match(/@?[^@]+/)![0]
+    const { name, version: reference } = this.parseNameVersion(key)
+    // const reference = key.match(/@?[^@]+@?(.+)?/)![1] || ``
     if (!node) {
       node = {
         name,
         identName: name,
-        reference: key.match(/@?[^@]+@?(.+)?/)![1] || ``,
+        reference,
         dependencies: new Set<HoisterTree>(),
         peerNames: new Set<string>([]),
       }

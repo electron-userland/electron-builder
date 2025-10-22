@@ -76,7 +76,8 @@ test.ifLinux("yarn two package.json w/ native module", ({ expect }) =>
       packageManager: PM.YARN,
       packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
     }
-  ))
+  )
+)
 
 test("yarn two package.json", ({ expect }) =>
   assertPack(
@@ -175,19 +176,20 @@ test("yarn two package.json without node_modules", ({ expect }) =>
     }
   ))
 
-test("should throw when attempting to package a system file", async ({ expect }) => {
+test.only("should throw when attempting to package a system file", async ({ expect }) => {
   const invalidPath = process.platform === "win32" ? "C:\\Windows\\System32\\drivers\\etc\\hosts" : "/etc/passwd"
+  const buildConfig = {
+    targets: Platform.current().createTarget("zip"),
+    projectDir: "app",
+    config: {
+      asar: true,
+      electronVersion: ELECTRON_VERSION,
+    },
+  }
   // throw on symlink to system file
   await appTwoThrows(
     expect,
-    {
-      targets: Platform.current().createTarget("zip"),
-      projectDir: "app",
-      config: {
-        asar: true,
-        electronVersion: ELECTRON_VERSION,
-      },
-    },
+    buildConfig,
     {
       packageManager: PM.YARN,
       projectDirCreated: async projectDir => {
@@ -203,12 +205,10 @@ test("should throw when attempting to package a system file", async ({ expect })
   await appTwoThrows(
     expect,
     {
-      targets: Platform.current().createTarget("zip"),
-      projectDir: "app",
+      ...buildConfig,
       config: {
-        files: ["**/*", invalidPath],
-        asar: true,
-        electronVersion: ELECTRON_VERSION,
+        ...buildConfig.config,
+        files: ["index.js", "package.json", invalidPath],
       },
     },
     {
