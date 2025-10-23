@@ -22,7 +22,7 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
       const lines = Object.fromEntries(config.split("\n").map(line => line.split("=").map(s => s.trim())))
       return lines["node-linker"] === "hoisted"
     } catch (error: any) {
-      log.debug({ error: error.message, stack: error.stack }, "error checking if node modules are hoisted, falling back to non-hoisted")
+      log.debug({ error: error.message }, "error checking if node modules are hoisted, falling back to non-hoisted")
     }
     return false
   })
@@ -74,24 +74,25 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
         interval: 2000,
         backoff: 2000,
         shouldRetry: async (error: any) => {
+          const logFields = { error: error.message, tempOutputFile, cwd: this.rootDir }
           if (!(await exists(tempOutputFile))) {
-            log.debug({ error: error.message || error.stack, tempOutputFile, cwd: this.rootDir }, "error getting dependencies tree, unable to find output; retrying")
+            log.debug(logFields, "error getting dependencies tree, unable to find output; retrying")
             return true
           }
           const fileContent = await fs.readFile(tempOutputFile, { encoding: "utf8" })
           if (fileContent.trim().length === 0) {
             // If the output file is empty or contains invalid JSON, we retry
             // This can happen if the command fails or if the output is not as expected
-            log.debug({ error: error.message || error.stack, tempOutputFile, cwd: this.rootDir }, "dependency tree output file is empty, retrying")
+            log.debug(logFields, "dependency tree output file is empty, retrying")
             return true
           }
           if (error.message?.includes("Unexpected end of JSON input")) {
             // If the output file is empty or contains invalid JSON, we retry
             // This can happen if the command fails or if the output is not as expected
-            log.debug({ error: error.message || error.stack, tempOutputFile, cwd: this.rootDir, fileContent }, "expected JSON data (check `fileContent`), retrying")
+            log.debug({ ...logFields, fileContent }, "expected JSON data (check `fileContent`), retrying")
             return true
           }
-          log.error({ message: error.message, stack: error.stack, cwd: this.rootDir, fileContent }, "error parsing dependencies tree")
+          log.error({ message: error.message, cwd: this.rootDir, fileContent }, "error parsing dependencies tree")
           return false
         },
       }
@@ -117,7 +118,8 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
         entry = require.resolve(pkg, { paths: [searchRoot] })
       } catch {
         // for when `main` entrypoint is missing in package.json
-        entry = require.resolve(path.join(pkg,"package.json"), { paths: [searchRoot] })
+        entry = require.resolve(path.join(pkg, "package.json"), { paths: [searchRoot] })
+        entry = path.dirname(entry)
       }
       const realEntry = await fs.realpath(entry)
       const dir = path.dirname(realEntry)

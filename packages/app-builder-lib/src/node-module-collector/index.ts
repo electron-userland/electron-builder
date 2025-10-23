@@ -31,7 +31,7 @@ export function getNodeModules(pm: PM, rootDir: string, tempDirManager: TmpDir):
   return collector.getNodeModules()
 }
 
-export async function detectPackageManager(searchPaths: string[]): Promise<{ pm: PM; corepackConfig: string | undefined; resolvedDirectory: string | undefined} > {
+export async function detectPackageManager(searchPaths: string[]): Promise<{ pm: PM; corepackConfig: string | undefined; resolvedDirectory: string | undefined }> {
   let pm: PM | null = null
   const dedupedPaths = Array.from(new Set(searchPaths)) // reduce file operations, dedupe paths since primary use case has projectDir === appDir
 

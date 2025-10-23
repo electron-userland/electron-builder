@@ -24,10 +24,16 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
     try {
       // use .from instead of .name for pnpm
       const dependencyPath = await this.resolveModuleDir({ pkg: tree.from, base: tree.path, virtualPath: undefined })
+      const packageJsonPath = path.join(dependencyPath, "package.json")
       // Attempt to extract the production dependency graph
-      packageJson = require(path.join(dependencyPath, "package.json"))
+      if (!(await fs.pathExists(packageJsonPath))) {
+        log.warn({ packageJsonPath }, "package.json not found for module, skipping production dependency extraction")
+        this.productionGraph[dependencyId] = { dependencies: [] }
+        return
+      }
+      packageJson = require(packageJsonPath)
     } catch (error: any) {
-      log.error({ error: error.message, stack: error.stack }, "node module collector threw error extracting production dependency graph")
+      log.error({ error: error.message }, "node module collector threw error extracting production dependency graph")
       throw error
     }
     const prodDependencies = { ...packageJson.dependencies, ...packageJson.optionalDependencies }
