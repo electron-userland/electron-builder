@@ -1,5 +1,29 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
+exports[`local file:// protocol with npm 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`local file:// protocol with pnpm 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`local file:// protocol with yarn 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`local file:// protocol with yarn-berry 1`] = `
+{
+  "linux": [],
+}
+`;
+
 exports[`npm 1`] = `
 {
   "linux": [],
@@ -248,12 +272,17 @@ exports[`yarn berry 1`] = `
 exports[`yarn berry 2`] = `
 {
   "files": {
-    "index.html": {
+    ".pnp.cjs": {
+      "executable": true,
       "offset": "24709",
+      "size": 611604,
+    },
+    "index.html": {
+      "offset": "636313",
       "size": 378,
     },
     "index.js": {
-      "offset": "25087",
+      "offset": "636691",
       "size": 619,
     },
     "node_modules": {
@@ -309,13 +338,13 @@ exports[`yarn berry 2`] = `
       },
     },
     "package.json": {
-      "offset": "25706",
+      "offset": "637310",
       "size": 316,
     },
     "path": {
       "files": {
         "app.asar": {
-          "offset": "26022",
+          "offset": "637626",
           "size": 714,
         },
       },

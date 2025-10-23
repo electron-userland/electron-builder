@@ -44,7 +44,7 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
         const dep = {
           ...dependency,
           name: dependency.name,
-          path: await this.resolveModuleDir(dependency.name, dependency.path),
+          path: await this.resolveModuleDir({ pkg: dependency.name, base: dependency.path, virtualPath: dependency.resolved }),
         }
         await this.extractProductionDependencyGraph(dep, childDependencyId)
         return childDependencyId

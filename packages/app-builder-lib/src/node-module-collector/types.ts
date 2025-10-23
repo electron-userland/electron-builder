@@ -20,6 +20,7 @@ export interface PnpmDependency extends Dependency<PnpmDependency, PnpmDependenc
 }
 
 export interface NpmDependency extends Dependency<NpmDependency, string> {
+  readonly resolved: string
   // implicit dependencies
   readonly _dependencies?: {
     [packageName: string]: string

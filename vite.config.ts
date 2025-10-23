@@ -41,7 +41,7 @@ export default () => {
       },
 
       sequence: {
-        concurrent: true
+        concurrent: process.env.TEST_SEQUENTIAL !== "true",
       },
 
       slowTestThreshold: 60 * 1000,

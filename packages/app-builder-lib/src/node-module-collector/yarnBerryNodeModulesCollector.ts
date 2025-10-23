@@ -5,6 +5,7 @@ import { YarnNodeModulesCollector } from "./yarnNodeModulesCollector"
 import { NPM_LIST_ARGS } from "./npmNodeModulesCollector"
 import * as path from "path"
 import * as fs from "fs-extra"
+import { access } from "fs/promises"
 
 export class YarnBerryNodeModulesCollector extends YarnNodeModulesCollector {
   public readonly installOptions = {
@@ -21,30 +22,37 @@ export class YarnBerryNodeModulesCollector extends YarnNodeModulesCollector {
   protected async getDependenciesTree(): Promise<YarnDependency> {
     try {
       const isPnP = await this.isPnP.value
-      log.debug({ isPnP }, "expecting `pnp.cjs` for PnP or node_modules linker for non-PnP. Will attempt falling back to npm query if neither.")
+      if (isPnP) {
+        log.info({ isPnP }, "expecting node_modules linker for non-PnP. Will attempt falling back to npm query if error.")
+      }
       return await super.getDependenciesTree(PM.NPM)
     } catch (error: any) {
       log.debug({ error: error.message, stack: error.stack }, "failed to extract Yarn dependencies tree")
     }
     // Yarn Berry node_modules linker fallback. (Slower due to system ops, so we only use it as a fallback)
-    log.debug(null, "unable to process dependency tree, falling back to using manual node_modules traversal for Yarn v2+.")
+    log.info(null, "unable to process dependency tree, falling back to using manual node_modules traversal for Yarn v2+.")
     return await this.buildNodeModulesTreeManually(this.rootDir)
   }
 
-  protected async resolveModuleDir(pkg: string, base: string): Promise<string> {
+  protected async resolveModuleDir(options: { pkg: string; base: string; virtualPath: string | undefined }): Promise<string> {
+    const { pkg, base } = options
     try {
-      return await super.resolveModuleDir(pkg, this.rootDir)
-    } catch (error) {
+      return await super.resolveModuleDir(options)
+    } catch (error: any) {
       // fallback: Yarn2 virtual packages
-      const unpluggedDir = path.join(base, ".yarn/unplugged");
-      const matches = await fs.readdir(unpluggedDir).catch(() => []);
-      const found = matches.find(name => name.startsWith(`${pkg}-npm-`));
+      const unpluggedDir = path.join(base, ".yarn/unplugged")
+      const matches = await fs.readdir(unpluggedDir).catch(() => [])
+      const found = matches.find(name => name.startsWith(`${pkg}-npm-`))
       if (found) {
-        return path.join(unpluggedDir, found, "node_modules", pkg);
+        return path.join(unpluggedDir, found, "node_modules", pkg)
       }
+      log.debug({ pkg, base, error: error.message }, "failed to resolve module dir, falling back to default resolution")
     }
     // Yarn Berry PnP does not use node_modules, so we resolve directly to the package directory.
-    return Promise.resolve(path.join(this.rootDir, "node_modules", pkg))
+    const searchPath = path.join(this.rootDir, "node_modules", pkg)
+    // validate path exists or throw early (we'd rather exit early than have dependencies silently not-found)
+    await access(searchPath)
+    return searchPath
   }
 
   /**
@@ -73,7 +81,7 @@ export class YarnBerryNodeModulesCollector extends YarnNodeModulesCollector {
 
       for (const [depName, depVersion] of Object.entries(allDeps ?? {})) {
         try {
-          const depDir = await this.resolveModuleDir(depName, pkgDir)
+          const depDir = await this.resolveModuleDir({ pkg: depName, base: pkgDir, virtualPath: undefined })
           deps[depName] = await buildFromPackage(depDir)
         } catch {
           // Not installed or cannot resolve; keep version range info only

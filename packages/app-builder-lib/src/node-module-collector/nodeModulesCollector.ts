@@ -6,7 +6,7 @@ import { exists, log, retry, TmpDir } from "builder-util"
 import { getPackageManagerCommand, PM } from "./packageManager"
 import { exec, spawn } from "child_process"
 import { promisify } from "util"
-import { createWriteStream } from "fs"
+import { access, createWriteStream } from "fs-extra"
 import { Lazy } from "lazy-val"
 
 const execAsync = promisify(exec)
@@ -98,22 +98,33 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
     )
   }
 
-  protected async resolveModuleDir(pkg: string, base: string): Promise<string> {
+  protected async resolveModuleDir(options: { pkg: string; base: string; virtualPath: string | undefined }): Promise<string> {
+    const { pkg, base, virtualPath } = options
     const isHoisted = await this.isHoisted.value
     const searchRoot = isHoisted ? this.rootDir : base
 
-    try {
-      const resolved = require.resolve(path.join(pkg, "package.json"), { paths: [searchRoot] })
-      const real = await fs.realpath(resolved)
-      const packageJsonDirectory = path.dirname(real)
-      if (await exists(packageJsonDirectory)) {
-        return packageJsonDirectory
-      }
-      log.debug({ pkg, searchRoot, base }, "failed to resolve module path's package.json, falling back to manual node_modules path construction")
-    } catch (error: any) {
-      log.debug({ error: error.message, stack: error.stack, pkg, searchRoot, base }, "cannot resolve module path's package.json")
+    // Handle file:// or file: style dependencies
+    if (virtualPath?.startsWith("file:")) {
+      const filePath = virtualPath.replace(/^file:(\/\/)?/, "")
+      const resolvedPath = path.resolve(this.rootDir, "node_modules", filePath) // always resolve from searchRoot
+      const real = await fs.realpath(resolvedPath)
+      return real
     }
+
+    // try {
+    const entry = require.resolve(pkg, { paths: [searchRoot] })
+    const realEntry = await fs.realpath(entry)
+    const dir = path.dirname(realEntry)
+    if (await exists(dir)) {
+      return dir
+    }
+    log.debug({ pkg, searchRoot, base }, "failed to resolve module path's package.json, falling back to manual node_modules path construction")
+    //   } catch (error: any) {
+    //     log.debug({ error: error.message, stack: error.stack, pkg, searchRoot, base }, "cannot resolve module path's package.json")
+    //   }
     const searchPath = path.join(searchRoot, "node_modules", pkg)
+    // validate path exists or throw early (we'd rather exit early than have dependencies silently not-found)
+    await access(searchPath)
     return searchPath
   }
 

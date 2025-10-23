@@ -38,6 +38,10 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
   }
 
   protected async parseDependenciesTree(jsonBlob: string): Promise<YarnDependency> {
+    if (!jsonBlob) {
+      throw new Error("Yarn dependencies tree is empty")
+    }
+    // Try NPM-like output first. `yarn` falls back to `npm list` for v2+ if node_modules linker is used.
     try {
       const data = JSON.parse(jsonBlob)
       if (data.dependencies) {
@@ -84,7 +88,7 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
       const module = {
         name: key,
         version: value,
-        path: await this.resolveModuleDir(key, tree.path),
+        path: await this.resolveModuleDir({ pkg: key, base: tree.path, virtualPath: value }),
       }
       this.allDependencies.set(this.moduleKeyGenerator(module), module)
     }
@@ -96,7 +100,12 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
     }
     const productionDeps = Object.entries(tree.dependencies || {}).map(async ([, dependency]) => {
       const childDependencyId = this.moduleKeyGenerator(dependency)
-      await this.extractProductionDependencyGraph(dependency, childDependencyId)
+      const dep = {
+        ...dependency,
+        name: dependency.name,
+        path: await this.resolveModuleDir({ pkg: dependency.name, base: dependency.path, virtualPath: undefined }),
+      }
+      await this.extractProductionDependencyGraph(dep, childDependencyId)
       return childDependencyId
     })
     this.productionGraph[dependencyId] = { dependencies: await Promise.all(productionDeps) }
@@ -105,7 +114,7 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
   private async normalizeTree(data: any[], root: string): Promise<YarnDependency> {
     const parseTree = async (node: any, parentDir: string): Promise<YarnDependency> => {
       const { name, version } = this.parseNameVersion(node.name)
-      const dir = await this.resolveModuleDir(name, parentDir)
+      const dir = await this.resolveModuleDir({ pkg: name, base: parentDir, virtualPath: undefined })
 
       const deps: Record<string, YarnDependency> = {}
       if (Array.isArray(node.children)) {
@@ -150,7 +159,7 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
     const parseNode = async (node: any, parentDir: string): Promise<YarnDependency> => {
       const name = node.name
       const version = node.version
-      const dir = await this.resolveModuleDir(name, parentDir)
+      const dir = await this.resolveModuleDir({ pkg: name, base: parentDir, virtualPath: undefined })
       const deps: Record<string, YarnDependency> = {}
 
       for (const [depName, depNode] of Object.entries(node.dependencies ?? {})) {

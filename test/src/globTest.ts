@@ -163,42 +163,6 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
     )
   )
 
-  test.ifDevOrLinuxCi("local node module with file protocol", ({ expect }) => {
-    return assertPack(
-      expect,
-      "test-app-one",
-      {
-        targets: linuxDirTarget,
-        config: {
-          asarUnpack: ["**/node_modules/foo/**/*"],
-        },
-      },
-      {
-        packageManager: PM.NPM,
-        projectDirCreated: async (projectDir, tmpDir) => {
-          const tempDir = await tmpDir.getTempDir()
-          const localPath = path.join(tempDir, "foo")
-          await outputFile(path.join(localPath, "package.json"), `{"name":"foo","version":"9.0.0","main":"index.js","license":"MIT","dependencies":{"ms":"2.0.0"}}`)
-          spawnSync("npm", ["install"], { cwd: localPath })
-          await modifyPackageJson(projectDir, data => {
-            data.dependencies = {
-              foo: `file:${localPath}`,
-            }
-          })
-
-          //`localPath` is dynamic and changes for every which causes `--frozen-lockfile` and `npm ci` to fail
-          await spawn("npm", ["install"], {
-            cwd: projectDir,
-          })
-        },
-        packed: async context => {
-          await assertThat(expect, path.join(path.join(context.getResources(Platform.LINUX), "app.asar.unpacked", "node_modules", "foo", "package.json"))).isFile()
-        },
-      }
-    )
-  })
-
-  // cannot be enabled
   // https://github.com/electron-userland/electron-builder/issues/611
   test.ifDevOrLinuxCi("failed peer dep", ({ expect }) => {
     return assertPack(
