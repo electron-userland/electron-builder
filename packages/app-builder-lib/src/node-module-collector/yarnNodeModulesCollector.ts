@@ -201,7 +201,9 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
         const dir = info?.packageLocation ? path.resolve(info.packageLocation) : path.resolve(cwd)
         if (dir.includes("virtual")) {
           log.error({ dir, locator }, "unable to extract file(s) from Yarn PnP virtual package")
-          throw new Error(`Cannot resolve Yarn PnP virtual package [${locator.name}@${locator.reference}] at [${dir}], please force hoisted node_modules installation instead`)
+          throw new Error(
+            `Cannot resolve Yarn PnP virtual package [${locator.name}@${locator.reference}] at [${dir}], please force hoisted node_modules installation instead of PnP`
+          )
         }
 
         const node: YarnDependency = { name: locator.name, version: locator.reference, path: dir, dependencies: {} }

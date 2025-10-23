@@ -23,7 +23,7 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
     let packageJson: Dependency<string, string>
     try {
       // use .from instead of .name for pnpm
-      const dependencyPath = await this.resolveModuleDir({ pkg: tree.from, base: tree.path, virtualPath: undefined })
+      const dependencyPath = await this.resolveModuleDir({ pkg: tree.from, base: tree.path, virtualPath: tree.resolved })
       const packageJsonPath = path.join(dependencyPath, "package.json")
       // Attempt to extract the production dependency graph
       if (!(await fs.pathExists(packageJsonPath))) {
