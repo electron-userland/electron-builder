@@ -35397,24 +35397,7 @@ exports[`isInstallDepsBefore=true > yarn workspace for scope name 2`] = `
 
 exports[`should throw when attempting to package a system file 1`] = `
 {
-  "mac": [
-    {
-      "arch": "arm64",
-      "file": "TestApp-1.1.0-arm64-mac.zip",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "file": "TestApp-1.1.0-arm64-mac.zip.blockmap",
-      "safeArtifactName": "TestApp-1.1.0-arm64-mac.zip.blockmap",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-  ],
+  "mac": [],
 }
 `;
 

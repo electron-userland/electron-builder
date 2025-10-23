@@ -129,7 +129,7 @@ test.ifNotWindows("outside link", ({ expect }) =>
         await fs.symlink(tempDir, path.join(projectDir, "o-dir"))
       },
     },
-    error => expect(error.message).toContain("violates asar security integrity")
+    error => expect(error.message).toContain("outside the package to a system or unsafe path")
   )
 )
 describe("isInstallDepsBefore=true", { sequential: true }, () => {

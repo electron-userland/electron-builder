@@ -145,14 +145,11 @@ export class AsarPackager {
     }
 
     // verify that the file is not a direct link or symlinked to access/copy a system file
-    const workspaceRoot = await this.packager.info.getWorkspaceRoot()
     const realPath = await fs.realpath(file)
     const unsafe = await this.isSystemOrUnsafePath(realPath)
     if (unsafe) {
-      log.error({ source: file, realPath, workspaceRoot }, `unable to copy, file is symlinked outside the package to a system or unsafe path`)
-      throw new Error(
-        `Cannot copy file [${file}] symlinked to file [${realPath}] outside the package as that violates asar security integrity (e.g. relative/outside of workspace directory [${workspaceRoot}]).`
-      )
+      log.error({ source: file, realPath }, `unable to copy, file is from outside the package to a system or unsafe path`)
+      throw new Error(`Cannot copy file [${file}] symlinked to file [${realPath}] outside the package to a system or unsafe path`)
     }
 
     const config = {
@@ -235,7 +232,7 @@ export class AsarPackager {
     }
   }
 
-  async getProtectedPaths(): Promise<string[]> {
+  private async getProtectedPaths(): Promise<string[]> {
     const systemPaths = [
       // Generic *nix
       "/usr",
@@ -258,11 +255,11 @@ export class AsarPackager {
       // Windows
       process.env.SystemRoot,
       process.env.WINDIR,
-      process.env.ProgramFiles,
-      process.env["ProgramFiles(x86)"],
-      process.env.ProgramData,
-      process.env.CommonProgramFiles,
-      process.env["CommonProgramFiles(x86)"],
+      // process.env.ProgramFiles,
+      // process.env["ProgramFiles(x86)"],
+      // process.env.ProgramData,
+      // process.env.CommonProgramFiles,
+      // process.env["CommonProgramFiles(x86)"],
     ]
       .filter(Boolean)
       .map(p => path.resolve(p as string))
@@ -280,7 +277,7 @@ export class AsarPackager {
     return resolvedPaths
   }
 
-  async isSystemOrUnsafePath(file: string, workspaceRoot?: string): Promise<boolean> {
+  private async isSystemOrUnsafePath(file: string, workspaceRoot?: string): Promise<boolean> {
     const resolved = await fs.realpath(file).catch(() => path.resolve(file))
     if (workspaceRoot) {
       const workspace = path.resolve(workspaceRoot)

@@ -106,8 +106,8 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
     const parseTree = async (node: any, parentDir: string): Promise<YarnDependency> => {
       const { name, version } = this.parseNameVersion(node.name)
       const dir = await this.resolveModuleDir(name, parentDir)
-      const deps: Record<string, YarnDependency> = {}
 
+      const deps: Record<string, YarnDependency> = {}
       if (Array.isArray(node.children)) {
         for (const child of node.children) {
           const dep = await parseTree(child, dir)
@@ -190,6 +190,11 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
       const buildNode = (locator: any): YarnDependency => {
         const info = pnpApi.getPackageInformation(locator)
         const dir = info?.packageLocation ? path.resolve(info.packageLocation) : path.resolve(cwd)
+        if (dir.includes("virtual")) {
+          log.error({ dir, locator }, "unable to extract file(s) from Yarn PnP virtual package")
+          throw new Error(`Cannot resolve Yarn PnP virtual package [${locator.name}@${locator.reference}] at [${dir}], please force hoisted node_modules installation instead`)
+        }
+
         const node: YarnDependency = { name: locator.name, version: locator.reference, path: dir, dependencies: {} }
 
         if (!info?.packageDependencies) {

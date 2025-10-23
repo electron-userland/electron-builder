@@ -35,6 +35,7 @@ export class YarnBerryNodeModulesCollector extends YarnNodeModulesCollector {
     try {
       return await super.resolveModuleDir(pkg, this.rootDir)
     } catch (error) {
+      // fallback: Yarn2 virtual packages
       const unpluggedDir = path.join(base, ".yarn/unplugged");
       const matches = await fs.readdir(unpluggedDir).catch(() => []);
       const found = matches.find(name => name.startsWith(`${pkg}-npm-`));
@@ -42,7 +43,6 @@ export class YarnBerryNodeModulesCollector extends YarnNodeModulesCollector {
         return path.join(unpluggedDir, found, "node_modules", pkg);
       }
     }
-        // fallback: Yarn2 virtual packages
     // Yarn Berry PnP does not use node_modules, so we resolve directly to the package directory.
     return Promise.resolve(path.join(this.rootDir, "node_modules", pkg))
   }

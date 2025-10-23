@@ -2,10 +2,8 @@ import { log } from "builder-util"
 import * as fs from "fs-extra"
 import * as path from "path"
 import { NodeModulesCollector } from "./nodeModulesCollector"
-import { getPackageManagerCommand, PM } from "./packageManager"
+import { PM } from "./packageManager"
 import { Dependency, PnpmDependency } from "./types"
-import { Lazy } from "lazy-val"
-import * as os from "os"
 
 export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependency, PnpmDependency> {
   public readonly installOptions = {

@@ -176,17 +176,37 @@ test("yarn two package.json without node_modules", ({ expect }) =>
     }
   ))
 
-test.only("should throw when attempting to package a system file", async ({ expect }) => {
-  const invalidPath = process.platform === "win32" ? "C:\\Windows\\System32\\drivers\\etc\\hosts" : "/etc/passwd"
+test.ifWindows("should throw when attempting to package a system file", async ({ expect }) => {
+  const invalidPath = "C:\\Windows\\System32\\drivers\\etc\\hosts"
+  return appTwoThrows(
+    expect,
+    {
+      targets: Platform.WINDOWS.createTarget("dir", Arch.x64),
+      projectDir: "app",
+      config: {
+        files: ["index.js", "package.json", invalidPath],
+      },
+    },
+    {
+      packageManager: PM.YARN,
+    },
+    error => {
+      expect(error).toBeInstanceOf(Error)
+      expect(error.message).toContain("outside the package to a system or unsafe path")
+    }
+  )
+})
+
+test.ifNotWindows("should throw when attempting to package a symlink to a system file", async ({ expect }) => {
+  const invalidPath = "/etc/passwd"
   const buildConfig = {
-    targets: Platform.current().createTarget("zip"),
+    targets: Platform.current().createTarget("dir", Arch.x64),
     projectDir: "app",
     config: {
       asar: true,
       electronVersion: ELECTRON_VERSION,
     },
   }
-  // throw on symlink to system file
   await appTwoThrows(
     expect,
     buildConfig,
@@ -198,25 +218,7 @@ test.only("should throw when attempting to package a system file", async ({ expe
     },
     error => {
       expect(error).toBeInstanceOf(Error)
-      expect(error.message).toContain("violates asar security integrity")
-    }
-  )
-  // throw on direct path in `files` attempting to force copy from system dir
-  await appTwoThrows(
-    expect,
-    {
-      ...buildConfig,
-      config: {
-        ...buildConfig.config,
-        files: ["index.js", "package.json", invalidPath],
-      },
-    },
-    {
-      packageManager: PM.YARN,
-    },
-    error => {
-      expect(error).toBeInstanceOf(Error)
-      expect(error.message).toContain("violates asar security integrity")
+      expect(error.message).toContain("outside the package to a system or unsafe path")
     }
   )
 })
