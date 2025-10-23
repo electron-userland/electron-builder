@@ -111,21 +111,32 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
       return real
     }
 
-    // try {
-    const entry = require.resolve(pkg, { paths: [searchRoot] })
-    const realEntry = await fs.realpath(entry)
-    const dir = path.dirname(realEntry)
-    if (await exists(dir)) {
-      return dir
+    try {
+      let entry: string
+      try {
+        entry = require.resolve(pkg, { paths: [searchRoot] })
+      } catch {
+        // for when `main` entrypoint is missing in package.json
+        entry = require.resolve(path.join(pkg,"package.json"), { paths: [searchRoot] })
+      }
+      const realEntry = await fs.realpath(entry)
+      const dir = path.dirname(realEntry)
+      if (await exists(dir)) {
+        return dir
+      }
+      log.debug({ pkg, searchRoot, base }, "failed to resolve module path's package.json, falling back to manual node_modules path construction")
+    } catch (error: any) {
+      log.debug({ error: error.message, pkg, searchRoot }, "cannot resolve module path's package.json")
     }
-    log.debug({ pkg, searchRoot, base }, "failed to resolve module path's package.json, falling back to manual node_modules path construction")
-    //   } catch (error: any) {
-    //     log.debug({ error: error.message, stack: error.stack, pkg, searchRoot, base }, "cannot resolve module path's package.json")
-    //   }
     const searchPath = path.join(searchRoot, "node_modules", pkg)
     // validate path exists or throw early (we'd rather exit early than have dependencies silently not-found)
-    await access(searchPath)
-    return searchPath
+    try {
+      await access(searchPath)
+      return searchPath
+    } catch (error: any) {
+      log.error({ pkg, searchPath, searchRoot }, "cannot access module path")
+      throw error
+    }
   }
 
   protected moduleKeyGenerator(pkg: T): string {

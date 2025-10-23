@@ -17,6 +17,7 @@ export type ParsedDependencyTree = {
 // We extract only what we need when constructing DependencyTree in `extractProductionDependencyTree`
 export interface PnpmDependency extends Dependency<PnpmDependency, PnpmDependency> {
   readonly from: string
+  readonly resolved: string
 }
 
 export interface NpmDependency extends Dependency<NpmDependency, string> {

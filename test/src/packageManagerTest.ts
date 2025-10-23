@@ -198,7 +198,6 @@ test("npm", ({ expect }) =>
 // Test for local file:// protocol
 
 Object.values(PM)
-  // .filter(pm => pm === PM.PNPM)
   .forEach(pm => {
     test.only(`local file:// protocol with ${pm} for project outside workspace`, ({ expect }) => {
       return assertPack(

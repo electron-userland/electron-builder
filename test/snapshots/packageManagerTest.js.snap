@@ -6,7 +6,19 @@ exports[`local file:// protocol with npm 1`] = `
 }
 `;
 
+exports[`local file:// protocol with npm for project outside workspace 1`] = `
+{
+  "linux": [],
+}
+`;
+
 exports[`local file:// protocol with pnpm 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`local file:// protocol with pnpm for project outside workspace 1`] = `
 {
   "linux": [],
 }
@@ -18,7 +30,19 @@ exports[`local file:// protocol with yarn 1`] = `
 }
 `;
 
+exports[`local file:// protocol with yarn for project outside workspace 1`] = `
+{
+  "linux": [],
+}
+`;
+
 exports[`local file:// protocol with yarn-berry 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`local file:// protocol with yarn-berry for project outside workspace 1`] = `
 {
   "linux": [],
 }

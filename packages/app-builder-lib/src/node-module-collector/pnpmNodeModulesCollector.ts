@@ -65,7 +65,7 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
           ...value,
           // use .from instead of .name for pnpm
           name: value.from,
-          path: await this.resolveModuleDir({ pkg: value.from, base: value.path, virtualPath: undefined }),
+          path: await this.resolveModuleDir({ pkg: value.from, base: value.path, virtualPath: value.resolved }),
         }
         this.allDependencies.set(this.moduleKeyGenerator(module), module)
         await this.collectAllDependencies(module)
