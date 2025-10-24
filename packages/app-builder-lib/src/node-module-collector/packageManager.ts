@@ -84,10 +84,9 @@ export async function detectPackageManagerByFile(dir: string): Promise<PM | null
   return null
 }
 
-export async function detectYarnBerry(cwd: string): Promise<PM.YARN | PM.YARN_BERRY> {
-  const checkVersion = () => {
+export async function detectYarnBerry(cwd: string, version: string): Promise<PM.YARN | PM.YARN_BERRY> {
+  const checkBerry = () => {
     try {
-      const version = execSync("yarn --version", { encoding: "utf8", cwd }).toString().trim()
       if (parseInt(version.split(".")[0]) > 1) {
         return PM.YARN_BERRY
       }
@@ -95,17 +94,20 @@ export async function detectYarnBerry(cwd: string): Promise<PM.YARN | PM.YARN_BE
       log.debug({ error: _error }, "cannot determine yarn version, assuming yarn v1")
       // If `yarn` is not found or another error occurs, fall back to the regular Yarn since we're already determined in a Yarn project
     }
-    return PM.YARN
+    return undefined
   }
 
-  const yarnBerry = path.join(cwd, ".yarnrc.yml")
-  if (await exists(yarnBerry)) {
+  if (version === "latest" || version === "berry") {
     return PM.YARN_BERRY
+  }
+
+  if (version.length > 0) {
+    return checkBerry() ?? PM.YARN
   }
 
   const lockPath = path.join(cwd, "yarn.lock")
   if (!(await exists(lockPath))) {
-    return checkVersion()
+    return checkBerry() ?? PM.YARN
   }
   // Read the first few lines of yarn.lock to determine the version
   const firstBytes = (await fs.readFile(lockPath, "utf8")).split("\n").slice(0, 10).join("\n")
@@ -120,6 +122,5 @@ export async function detectYarnBerry(cwd: string): Promise<PM.YARN | PM.YARN_BE
     return PM.YARN
   }
 
-  // fallback to `yarn --version` check since this works AFTER corepack is enabled, but cannot be detected before hand (e.g. unit tests)
-  return checkVersion()
+  return checkBerry() ?? PM.YARN
 }

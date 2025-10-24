@@ -70,7 +70,7 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
         return await this.parseDependenciesTree(shellOutput)
       },
       {
-        retries: 2,
+        retries: 1,
         interval: 2000,
         backoff: 2000,
         shouldRetry: async (error: any) => {

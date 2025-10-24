@@ -145,12 +145,7 @@ export class AsarPackager {
     }
 
     // verify that the file is not a direct link or symlinked to access/copy a system file
-    const realPath = await fs.realpath(file)
-    const unsafe = await this.isSystemOrUnsafePath(realPath)
-    if (unsafe) {
-      log.error({ source: file, realPath }, `unable to copy, file is from outside the package to a system or unsafe path`)
-      throw new Error(`Cannot copy file [${file}] symlinked to file [${realPath}] outside the package to a system or unsafe path`)
-    }
+    await this.protectSystemAndUnsafePaths(file)
 
     const config = {
       path: destination,
@@ -166,6 +161,9 @@ export class AsarPackager {
         type: "file",
       }
     }
+
+    // guard against symlink pointing to outside workspace root
+    // await this.protectSystemAndUnsafePaths(file, await this.packager.info.getWorkspaceRoot())
 
     // okay, it must be a symlink. evaluate link to be relative to source file in asar
     let link = await readlink(file)
@@ -277,29 +275,40 @@ export class AsarPackager {
     return resolvedPaths
   }
 
-  private async isSystemOrUnsafePath(file: string, workspaceRoot?: string): Promise<boolean> {
+  private async protectSystemAndUnsafePaths(file: string, workspaceRoot?: string): Promise<boolean> {
     const resolved = await fs.realpath(file).catch(() => path.resolve(file))
-    if (workspaceRoot) {
-      const workspace = path.resolve(workspaceRoot)
 
-      if (!resolved.startsWith(workspace)) {
-        return true
+    const scan = async () => {
+      if (workspaceRoot) {
+        const workspace = path.resolve(workspaceRoot)
+
+        if (!resolved.startsWith(workspace)) {
+          return true
+        }
       }
-    }
 
-    // Allow temp & cache folders
-    const tmpdir = await fs.realpath(os.tmpdir())
-    if (resolved.startsWith(tmpdir)) {
+      // Allow temp & cache folders
+      const tmpdir = await fs.realpath(os.tmpdir())
+      if (resolved.startsWith(tmpdir)) {
+        return false
+      }
+
+      const blockedSystemPaths = await this.getProtectedPaths()
+      for (const sys of blockedSystemPaths) {
+        if (resolved.startsWith(sys)) {
+          return true
+        }
+      }
+
       return false
     }
 
-    const blockedSystemPaths = await this.getProtectedPaths()
-    for (const sys of blockedSystemPaths) {
-      if (resolved.startsWith(sys)) {
-        return true
-      }
-    }
+    const unsafe = await scan()
 
-    return false
+    if (unsafe) {
+      log.error({ source: file, realPath: resolved }, `unable to copy, file is from outside the package to a system or unsafe path`)
+      throw new Error(`Cannot copy file [${file}] symlinked to file [${resolved}] outside the package to a system or unsafe path`)
+    }
+    return unsafe
   }
 }

@@ -31,7 +31,7 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
         return tree
       }
       log.error({ pnpFile }, "Yarn PnP file not found or failed to load")
-      throw new Error(`Failed to extract Yarn PnP dependency tree - .pnp.cjs file not found or invalid`)
+      throw new Error(`Failed to extract Yarn PnP dependency tree - .pnp.cjs file not found or unable to load`)
     }
 
     return super.getDependenciesTree(pm)
@@ -67,10 +67,6 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
     const parsed = lines.find((l: any) => l.type === "tree")?.data?.trees
     if (!parsed) {
       throw new Error(`Failed to extract Yarn tree: no "type":"tree" line found in \`yarn list\` output`)
-    }
-
-    if (parsed.length === 0) {
-      return { name: ".", version: "unknown", path: this.rootDir }
     }
 
     return this.normalizeTree(parsed, this.rootDir)
@@ -229,7 +225,7 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
 
       return buildNode(topLocator)
     } catch (err: any) {
-      log.error({ message: err.message, stack: err.stack }, "Yarn PnP extraction error")
+      log.error({ message: err.message }, "Yarn PnP extraction error")
     }
     return undefined
   }

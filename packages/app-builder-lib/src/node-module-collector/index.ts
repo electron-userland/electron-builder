@@ -1,7 +1,7 @@
 import { NpmNodeModulesCollector } from "./npmNodeModulesCollector"
 import { PnpmNodeModulesCollector } from "./pnpmNodeModulesCollector"
 import { YarnNodeModulesCollector } from "./yarnNodeModulesCollector"
-import { detectPackageManagerByFile, detectPackageManagerByEnv, PM, getPackageManagerCommand, detectYarnBerry } from "./packageManager"
+import { detectPackageManagerByFile, detectPackageManagerByEnv, PM, getPackageManagerCommand, detectYarnBerry as detectIfYarnBerry } from "./packageManager"
 import { NodeModuleInfo } from "./types"
 import { TmpDir } from "temp-file"
 import * as path from "path"
@@ -35,15 +35,15 @@ export async function detectPackageManager(searchPaths: string[]): Promise<{ pm:
   let pm: PM | null = null
   const dedupedPaths = Array.from(new Set(searchPaths)) // reduce file operations, dedupe paths since primary use case has projectDir === appDir
 
-  const resolveIfYarn = (pm: PM, cwd: string) => (pm === PM.YARN ? detectYarnBerry(cwd) : pm)
+  const resolveIfYarn = (pm: PM, version: string, cwd: string) => (pm === PM.YARN ? detectIfYarnBerry(cwd, version) : pm)
 
   for (const dir of dedupedPaths) {
     const packageJsonPath = path.join(dir, "package.json")
     const packageManager = fs.existsSync(packageJsonPath) ? JSON.parse(fs.readFileSync(packageJsonPath, "utf8"))?.packageManager : undefined
     if (packageManager) {
-      const [pm] = packageManager.split("@")
+      const [pm, version] = packageManager.split("@")
       if (Object.values(PM).includes(pm as PM)) {
-        const resolvedPackageManager = await resolveIfYarn(pm as PM, dir)
+        const resolvedPackageManager = await resolveIfYarn(pm as PM, version, dir)
         log.debug({ resolvedPackageManager, packageManager, cwd: dir }, "packageManager field detected in package.json")
         return { pm: resolvedPackageManager, corepackConfig: packageManager, resolvedDirectory: dir }
       }
@@ -51,7 +51,7 @@ export async function detectPackageManager(searchPaths: string[]): Promise<{ pm:
 
     pm = await detectPackageManagerByFile(dir)
     if (pm) {
-      const resolvedPackageManager = await resolveIfYarn(pm, dir)
+      const resolvedPackageManager = await resolveIfYarn(pm, "", dir)
       log.debug({ resolvedPackageManager, cwd: dir }, "packageManager detected by file")
       return { pm: resolvedPackageManager, resolvedDirectory: dir, corepackConfig: undefined }
     }
@@ -59,7 +59,7 @@ export async function detectPackageManager(searchPaths: string[]): Promise<{ pm:
 
   pm = detectPackageManagerByEnv() || PM.NPM
   const cwd = process.env.npm_package_json ? path.dirname(process.env.npm_package_json) : (process.env.INIT_CWD ?? process.cwd())
-  const resolvedPackageManager = await resolveIfYarn(pm, cwd)
+  const resolvedPackageManager = await resolveIfYarn(pm, "", cwd)
   log.info({ resolvedPackageManager, detected: cwd }, "packageManager not detected by file, falling back to environment detection")
   return { pm: resolvedPackageManager, resolvedDirectory: undefined, corepackConfig: undefined }
 }
