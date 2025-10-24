@@ -38,9 +38,9 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
     }
     const prodDependencies = { ...packageJson.dependencies, ...packageJson.optionalDependencies }
 
-    const deps = { ...(tree.dependencies || {}), ...(tree.optionalDependencies || {}) }
+    const allDeps = { ...(tree.dependencies || {}), ...(tree.optionalDependencies || {}) }
     this.productionGraph[dependencyId] = { dependencies: [] }
-    const dependencies = Object.entries(deps)
+    const deps = Object.entries(allDeps)
       .filter(([packageName, dependency]) => {
         // First check if it's in production dependencies
         if (!prodDependencies[packageName]) {
@@ -61,7 +61,13 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
         return packageId
       })
 
-    this.productionGraph[dependencyId] = { dependencies: await Promise.all(dependencies) }
+    const dependencies = await Promise.all(deps)
+    this.productionGraph[dependencyId] = { dependencies }
+  }
+
+  protected moduleKeyGenerator(pkg: PnpmDependency): string {
+    // use .from instead of .name for pnpm
+    return `${pkg.from}@${pkg.version}`
   }
 
   protected async collectAllDependencies(tree: PnpmDependency): Promise<void> {
