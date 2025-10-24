@@ -9997,13 +9997,13 @@ exports[`isInstallDepsBefore=true > symlinks everywhere with static framework 4`
   "app.asar.unpacked/node_modules/hello-world/hello-world-framework.sh",
   {
     "content": "{
-    "name": "stripped-native-dep",
+    "name": "hello-world",
     "version": "1.0.0",
-    "description": "",
+    "description": "Sample node_module to test symlinked framework handling",
     "author": "",
     "license": "ISC"
   }
-  ",
+",
     "name": "app.asar.unpacked/node_modules/hello-world/package.json",
   },
   "app.asar.unpacked/node_modules/hello-world/lib/Release/Hello.framework/Headers",
@@ -10071,7 +10071,7 @@ exports[`link 3`] = `
     },
     "package.json": {
       "offset": "5135",
-      "size": 256,
+      "size": 289,
     },
   },
 }
@@ -10291,7 +10291,7 @@ exports[`unpackDir one 2`] = `
     },
     "package.json": {
       "offset": "5139",
-      "size": 256,
+      "size": 289,
     },
   },
 }

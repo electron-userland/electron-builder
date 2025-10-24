@@ -152,9 +152,9 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
         }
       })
 
-      const postNodeModuleInstallHook = checkOptions.projectDirCreated ? await checkOptions.projectDirCreated(projectDir, tmpDir) : null
+      const postNodeModulesInstallHook = checkOptions.projectDirCreated ? await checkOptions.projectDirCreated(projectDir, tmpDir) : null
 
-      // Check again. Package manager could have been changed during `projectDirCreated`
+      // Check again. Package manager could have been changed in package.json during `projectDirCreated`
       const { pm, corepackConfig: packageManager } = await detectPackageManager([projectDir])
 
       const tmpCache = await tmpDir.createTempDir({ prefix: "cache-" })
@@ -187,7 +187,7 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
         console.warn("⚠️ Yarn prepare failed:", err.message)
       }
 
-      const collector = await getCollectorByPackageManager(pm, projectDir, tmpDir)
+      const collector = getCollectorByPackageManager(pm, projectDir, tmpDir)
       const collectorOptions = collector.installOptions
 
       const destLockfile = path.join(projectDir, collectorOptions.lockfile)
@@ -214,6 +214,10 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
         runtimeEnv
       )
 
+      if (typeof postNodeModulesInstallHook === "function") {
+        await postNodeModulesInstallHook()
+      }
+
       // save lockfile fixture
       if (!(await exists(testFixtureLockfile)) && shouldUpdateLockfiles) {
         const fixtureDir = path.dirname(testFixtureLockfile)
@@ -225,10 +229,6 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
 
       if (packagerOptions.projectDir != null) {
         packagerOptions.projectDir = path.resolve(projectDir, packagerOptions.projectDir)
-      }
-
-      if (typeof postNodeModuleInstallHook === "function") {
-        await postNodeModuleInstallHook()
       }
 
       const { packager, outDir } = await packAndCheck(

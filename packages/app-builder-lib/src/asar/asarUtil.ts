@@ -163,7 +163,7 @@ export class AsarPackager {
     }
 
     // guard against symlink pointing to outside workspace root
-    // await this.protectSystemAndUnsafePaths(file, await this.packager.info.getWorkspaceRoot())
+    await this.protectSystemAndUnsafePaths(file, await this.packager.info.getWorkspaceRoot())
 
     // okay, it must be a symlink. evaluate link to be relative to source file in asar
     let link = await readlink(file)
