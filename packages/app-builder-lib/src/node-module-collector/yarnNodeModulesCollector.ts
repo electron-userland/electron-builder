@@ -48,7 +48,7 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
 
     const parsed: YarnListTree[] | undefined = lines
       .filter((l: YarnListJsonLine) => l.type === "tree")
-      .map(l => l.data.trees)
+      .map(l => (l.data as any).trees)
       .shift()
     if (!parsed) {
       throw new Error(`Failed to extract Yarn tree: no "type":"tree" line found in \`yarn list\` output: ${lines}`)

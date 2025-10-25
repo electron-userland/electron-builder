@@ -200,7 +200,7 @@ test("npm", ({ expect }) =>
 Object.values(PM)
   .filter(pm => pm !== PM.BUN) // bun is not supported for file: protocol
   .forEach(pm => {
-    test.only(`local file:// protocol with ${pm} for project outside workspace`, ({ expect }) => {
+    test(`local file:// protocol with ${pm} for project outside workspace`, ({ expect }) => {
       return assertPack(
         expect,
         "test-app-one",

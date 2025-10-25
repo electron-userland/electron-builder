@@ -1,4 +1,4 @@
-import path from "path"
+import * as path from "path"
 import { NodeModulesCollector } from "./nodeModulesCollector"
 import { PM } from "./packageManager"
 import { NpmDependency } from "./types"
@@ -110,6 +110,7 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
     const visited = new Set<string>()
 
     const buildFromPackage = async (pkgDir: string): Promise<NpmDependency> => {
+      log.debug({ pkgDir }, "building dependency node from package.json")
       const pkgPath = path.join(pkgDir, "package.json")
       const pkg: PackageJson = await readJson(pkgPath)
 
@@ -123,14 +124,9 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
 
       const prodDeps: Record<string, NpmDependency> = {}
 
-      for (const [name, version] of Object.entries(pkg.dependencies || {})) {
+      for (const [name] of Object.entries(pkg.dependencies || {})) {
         const p = await this.resolveModuleDir({ pkg: name, base: pkgDir })
-        prodDeps[name] = {
-          name,
-          version,
-          path: p,
-        }
-        await buildFromPackage(p)
+        prodDeps[name] = await buildFromPackage(p)
       }
 
       return {

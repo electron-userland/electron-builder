@@ -15,8 +15,8 @@ export class YarnBerryNodeModulesCollector extends NpmNodeModulesCollector {
   }
   protected readonly isPnP = new Lazy<boolean>(async () => this.detectPnP(this.rootDir))
 
-      // Only Yarn v1 uses CLI. We use pnp.cjs for PnP and manual tree build for Yarn Berry node_modules linker.
-    // If those fail, then we fallback to npm query. That will fail if using corepack though, so we attempt to manually build the tree.
+  // Only Yarn v1 uses CLI. We use pnp.cjs for PnP and manual tree build for Yarn Berry node_modules linker.
+  // If those fail, then we fallback to npm query. That will fail if using corepack though, so we attempt to manually build the tree.
   protected async getDependenciesTree(): Promise<NpmDependency> {
     if (await this.isPnP.value) {
       log.debug(null, "using Yarn PnP for dependency tree extraction")
