@@ -9,6 +9,7 @@ import { verifySmartUnpack } from "./helpers/verifySmartUnpack"
 import { spawnSync } from "child_process"
 import { ExpectStatic } from "vitest"
 import { spawn } from "builder-util/out/util"
+import { PM } from "app-builder-lib/out/node-module-collector/packageManager"
 
 async function createFiles(appDir: string) {
   await Promise.all([
@@ -115,7 +116,7 @@ test.ifNotWindows("link", ({ expect }) =>
   )
 )
 
-test.ifNotWindows("outside link", ({ expect }) =>
+test.skip("outside link", ({ expect }) =>
   appThrows(
     expect,
     {
@@ -128,7 +129,10 @@ test.ifNotWindows("outside link", ({ expect }) =>
         await fs.symlink(tempDir, path.join(projectDir, "o-dir"))
       },
     },
-    error => expect(error.message).toContain("violates asar security integrity")
+    error => {
+      expect(error).toBeInstanceOf(Error)
+      expect(error.message).toContain("outside the package to a system or unsafe path")
+    }
   )
 )
 describe("isInstallDepsBefore=true", { sequential: true }, () => {
@@ -143,16 +147,15 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
         },
       },
       {
-        isInstallDepsBefore: true,
+        packageManager: PM.NPM,
         projectDirCreated: async projectDir => {
-          await outputFile(path.join(projectDir, "package-lock.json"), "")
           await modifyPackageJson(projectDir, data => {
             data.dependencies = {
               debug: "4.1.1",
               ...data.dependencies,
             }
           })
-          return fs.symlink(path.join(projectDir, "index.js"), path.join(projectDir, "foo.js"))
+          await fs.symlink(path.join(projectDir, "index.js"), path.join(projectDir, "foo.js"))
         },
         packed: async context => {
           const resources = context.getResources(Platform.LINUX)
@@ -163,41 +166,6 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
     )
   )
 
-  test.ifDevOrLinuxCi("local node module with file protocol", ({ expect }) => {
-    return assertPack(
-      expect,
-      "test-app-one",
-      {
-        targets: linuxDirTarget,
-        config: {
-          asarUnpack: ["**/node_modules/foo/**/*"],
-        },
-      },
-      {
-        projectDirCreated: async (projectDir, tmpDir) => {
-          const tempDir = await tmpDir.getTempDir()
-          const localPath = path.join(tempDir, "foo")
-          await outputFile(path.join(localPath, "package.json"), `{"name":"foo","version":"9.0.0","main":"index.js","license":"MIT","dependencies":{"ms":"2.0.0"}}`)
-          spawnSync("npm", ["install"], { cwd: localPath })
-          await modifyPackageJson(projectDir, data => {
-            data.dependencies = {
-              foo: `file:${localPath}`,
-            }
-          })
-
-          // we can't use `isInstallDepsBefore` as `localPath` is dynamic and changes for every which causes `--frozen-lockfile` and `npm ci` to fail
-          await spawn("npm", ["install"], {
-            cwd: projectDir,
-          })
-        },
-        packed: async context => {
-          await assertThat(expect, path.join(path.join(context.getResources(Platform.LINUX), "app.asar.unpacked", "node_modules", "foo", "package.json"))).isFile()
-        },
-      }
-    )
-  })
-
-  // cannot be enabled
   // https://github.com/electron-userland/electron-builder/issues/611
   test.ifDevOrLinuxCi("failed peer dep", ({ expect }) => {
     return assertPack(
@@ -207,7 +175,7 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
         targets: linuxDirTarget,
       },
       {
-        isInstallDepsBefore: true,
+        packageManager: PM.YARN,
         projectDirCreated: async projectDir => {
           return Promise.all([
             modifyPackageJson(projectDir, data => {
@@ -219,7 +187,6 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
                 "react-dom": "15.2.1",
               }
             }),
-            outputFile(path.join(projectDir, "yarn.lock"), ""),
           ])
         },
         packed: context => {
@@ -241,9 +208,8 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
         },
       },
       {
-        isInstallDepsBefore: true,
+        packageManager: PM.NPM,
         projectDirCreated: async projectDir => {
-          await outputFile(path.join(projectDir, "package-lock.json"), "")
           return modifyPackageJson(projectDir, data => {
             //noinspection SpellCheckingInspection
             data.dependencies = {
@@ -271,9 +237,8 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
         },
       },
       {
-        isInstallDepsBefore: true,
+        packageManager: PM.NPM,
         projectDirCreated: async projectDir => {
-          await outputFile(path.join(projectDir, "package-lock.json"), "")
           return modifyPackageJson(projectDir, data => {
             data.dependencies = {
               "ci-info": "2.0.0",

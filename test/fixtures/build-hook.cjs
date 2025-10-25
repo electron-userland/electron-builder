@@ -1,3 +1,1 @@
-module.exports = (event) => {
-  return Promise.resolve('foobar');
-}
+module.exports = console.log

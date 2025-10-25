@@ -10,8 +10,10 @@
           "console": "integratedTerminal",
           "internalConsoleOptions": "openOnFirstSessionStart",
           "env": {
-            "TEST_FILES": "macPackagerTest",
-            "UPDATE_SNAPSHOT": "false"
+            "TEST_FILES": "packageManagerTest",
+            "UPDATE_SNAPSHOT": "false",
+            "DEBUG": "electron-builder",
+            "TEST_SEQUENTIAL": "true" // Run tests sequentially to debug issues that may be hidden by concurrency (console log pollution when DEBUG flag set)
           }
       }
   ]

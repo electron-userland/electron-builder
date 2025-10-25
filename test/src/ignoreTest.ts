@@ -3,6 +3,7 @@ import { outputFile } from "fs-extra"
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert"
 import { app, checkDirContents, linuxDirTarget, modifyPackageJson } from "./helpers/packTester"
+import { PM } from "app-builder-lib/out/node-module-collector/packageManager"
 
 const currentProcessTarget = Platform.LINUX.createTarget(DIR_TARGET, archFromString(process.arch))
 
@@ -89,9 +90,8 @@ test.ifNotCiMac.sequential("ignore node_modules dev dep", ({ expect }) =>
       },
     },
     {
-      isInstallDepsBefore: true,
+      packageManager: PM.NPM,
       projectDirCreated: async projectDir => {
-        await outputFile(path.join(projectDir, "package-lock.json"), "")
         return Promise.all([
           modifyPackageJson(projectDir, data => {
             data.devDependencies = {
@@ -119,9 +119,8 @@ test.ifDevOrLinuxCi.sequential("copied sub node_modules of the rootDir/node_modu
       },
     },
     {
-      isInstallDepsBefore: true,
+      packageManager: PM.NPM,
       projectDirCreated: async projectDir => {
-        await outputFile(path.join(projectDir, "package-lock.json"), "")
         return Promise.all([
           modifyPackageJson(projectDir, data => {
             data.dependencies = {
