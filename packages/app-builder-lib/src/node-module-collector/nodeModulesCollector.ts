@@ -156,11 +156,19 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
    * Parse a dependency identifier like "@scope/pkg@1.2.3" or "pkg@1.2.3"
    */
   protected parseNameVersion(identifier: string): { name: string; version: string } {
-    const match = identifier.match(/^(@[^/]+\/[^@]+)@(.+)$/) || identifier.match(/^([^@]+)@(.+)$/)
-    if (match) {
-      return { name: match[1], version: match[2] }
+    //   const match = identifier.match(/^(@[^/]+\/[^@]+)@(.+)$/) || identifier.match(/^([^@]+)@(.+)$/)
+    //   if (match) {
+    //     return { name: match[1], version: match[2] }
+    //   }
+    //   return { name: identifier, version: "unknown" }
+    const lastAt = identifier.lastIndexOf("@")
+    if (lastAt <= 0) {
+      // fallback for scoped packages or malformed strings
+      return { name: identifier, version: "unknown" }
     }
-    return { name: identifier, version: "unknown" }
+    const name = identifier.slice(0, lastAt)
+    const version = identifier.slice(lastAt + 1)
+    return { name, version }
   }
 
   // protected async collectAllDependencies(tree: ProdDepType) {
