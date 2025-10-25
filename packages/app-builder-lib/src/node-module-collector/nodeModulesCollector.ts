@@ -1,7 +1,7 @@
 import { hoist, type HoisterTree, type HoisterResult } from "./hoist"
 import * as path from "path"
 import * as fs from "fs-extra"
-import type { NodeModuleInfo, DependencyGraph, Dependency } from "./types"
+import type { NodeModuleInfo, DependencyGraph, Dependency, ResolveModuleOptions } from "./types"
 import { exists, log, retry, TmpDir } from "builder-util"
 import { getPackageManagerCommand, PM } from "./packageManager"
 import { exec, spawn } from "child_process"
@@ -11,8 +11,8 @@ import { Lazy } from "lazy-val"
 
 const execAsync = promisify(exec)
 
-export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType>, OptionalsType> {
-  protected allDependencies: Map<string, T> = new Map()
+export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDepType, OptionalDepType>, OptionalDepType> {
+  protected allDependencies: Map<string, ProdDepType> = new Map()
   protected productionGraph: DependencyGraph = {}
 
   protected isHoisted = new Lazy<boolean>(async () => {
@@ -33,9 +33,9 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
   ) {}
 
   public async getNodeModules(): Promise<NodeModuleInfo[]> {
-    const tree: T = await this.getDependenciesTree(this.installOptions.manager)
+    const tree: ProdDepType = await this.getDependenciesTree(this.installOptions.manager)
     await this.collectAllDependencies(tree) // Parse from the root, as npm list can host and deduplicate across projects in the workspace
-    const realTree: T = this.getTreeFromWorkspaces(tree)
+    const realTree: ProdDepType = this.getTreeFromWorkspaces(tree)
     await this.extractProductionDependencyGraph(realTree, "." /*root project name*/)
 
     const hoisterResult: HoisterResult = hoist(this.transToHoisterTree(this.productionGraph, "."), { check: true })
@@ -50,12 +50,12 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
   }
 
   protected abstract getArgs(): string[]
-  protected abstract parseDependenciesTree(jsonBlob: string): Promise<T>
-  protected abstract extractProductionDependencyGraph(tree: Dependency<T, OptionalsType>, dependencyId: string): Promise<void>
-  protected abstract collectAllDependencies(tree: Dependency<T, OptionalsType>): Promise<void>
+  protected abstract parseDependenciesTree(jsonBlob: string): Promise<ProdDepType>
+  protected abstract extractProductionDependencyGraph(tree: Dependency<ProdDepType, OptionalDepType>, dependencyId: string): Promise<void>
+  protected abstract collectAllDependencies(tree: Dependency<ProdDepType, OptionalDepType>): Promise<void>
 
-  protected async getDependenciesTree(pn: PM): Promise<T> {
-    const command = getPackageManagerCommand(pn)
+  protected async getDependenciesTree(pm: PM): Promise<ProdDepType> {
+    const command = getPackageManagerCommand(pm)
     const args = this.getArgs()
 
     const tempOutputFile = await this.tempDirManager.getTempFile({
@@ -99,8 +99,8 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
     )
   }
 
-  protected async resolveModuleDir(options: { pkg: string; base: string; virtualPath: string | undefined }): Promise<string> {
-    const { pkg, base, virtualPath } = options
+  protected async resolveModuleDir(options: ResolveModuleOptions): Promise<string> {
+    const { pkg, base, virtualPath, isOptionalDependency = false } = options
     const isHoisted = await this.isHoisted.value
     const searchRoot = isHoisted ? this.rootDir : base
 
@@ -126,9 +126,11 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
       if (await exists(dir)) {
         return dir
       }
+    } catch {
+      // ignore
+    }
+    if (!isOptionalDependency) {
       log.debug({ pkg, searchRoot, base }, "failed to resolve module path's package.json, falling back to manual node_modules path construction")
-    } catch (error: any) {
-      log.debug({ error: error.message, pkg, searchRoot }, "cannot resolve module path's package.json")
     }
     const searchPath = path.join(searchRoot, "node_modules", pkg)
     // validate path exists or throw early (we'd rather exit early than have dependencies silently not-found)
@@ -136,12 +138,17 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
       await access(searchPath)
       return searchPath
     } catch (error: any) {
-      log.error({ pkg, searchPath, searchRoot }, "cannot access module path")
+      if (!isOptionalDependency) {
+        log.error({ pkg, searchPath, searchRoot }, "cannot access module path")
+      } else {
+        log.debug({ pkg, searchPath, searchRoot }, "cannot access optionalDependency module path, skipping since it may not be installed")
+      }
+      // we throw regardless, caller will handle optional vs non-optional since returning undefined would be ambiguous
       throw error
     }
   }
 
-  protected moduleKeyGenerator(pkg: T): string {
+  protected moduleKeyGenerator(pkg: ProdDepType): string {
     return `${pkg.name}@${pkg.version}`
   }
 
@@ -156,7 +163,39 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
     return { name: identifier, version: "unknown" }
   }
 
-  private getTreeFromWorkspaces(tree: T): T {
+  // protected async collectAllDependencies(tree: ProdDepType) {
+  //   const collect = async (deps: ProdDepType["dependencies"] | ProdDepType["optionalDependencies"] = {}, isOptionalDependency: boolean) => {
+  //     for (const [, value] of Object.entries(deps)) {
+  //       let p: string
+  //       try {
+  //         p = await this.resolveModuleDir({ pkg: value.name, base: value.path, isOptionalDependency })
+  //       } catch (e) {
+  //         if (isOptionalDependency) {
+  //           // ignore. optional dependency may not be installed (we throw in resolveModuleDir in this case)
+  //           continue
+  //         }
+  //         log.error({ pkg: value.name }, "failed to resolve module directory")
+  //         throw e
+  //       }
+  //       const m = {
+  //         ...value,
+  //         path: p,
+  //       }
+  //       const moduleKey = this.moduleKeyGenerator(m)
+  //       if (this.allDependencies.has(moduleKey)) {
+  //         continue
+  //       }
+  //       this.allDependencies.set(moduleKey, m)
+  //       await this.collectAllDependencies(m)
+  //     }
+  //   }
+  //   // Collect regular dependencies
+  //   await collect(tree.dependencies, false)
+  //   // Collect optional dependencies if they exist
+  //   await collect(tree.optionalDependencies, true)
+  // }
+
+  private getTreeFromWorkspaces(tree: ProdDepType): ProdDepType {
     if (tree.workspaces && tree.dependencies) {
       const packageJson: Dependency<string, string> = require(path.join(this.rootDir, "package.json"))
       const dependencyName = packageJson.name

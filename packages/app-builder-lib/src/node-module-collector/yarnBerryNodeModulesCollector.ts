@@ -1,41 +1,66 @@
-import { PM } from "./packageManager"
-import { YarnDependency } from "./types"
-import { log } from "builder-util"
-import { YarnNodeModulesCollector } from "./yarnNodeModulesCollector"
-import { NPM_LIST_ARGS } from "./npmNodeModulesCollector"
-import * as path from "path"
+import { exists, log } from "builder-util"
 import * as fs from "fs-extra"
 import { access } from "fs/promises"
+import { load } from "js-yaml"
+import { Lazy } from "lazy-val"
+import * as path from "path"
+import { NpmNodeModulesCollector } from "./npmNodeModulesCollector"
+import { PM } from "./packageManager"
+import { NpmDependency, ResolveModuleOptions } from "./types"
 
-export class YarnBerryNodeModulesCollector extends YarnNodeModulesCollector {
+export class YarnBerryNodeModulesCollector extends NpmNodeModulesCollector {
   public readonly installOptions = {
     manager: PM.YARN_BERRY,
     lockfile: "yarn.lock",
   }
+  protected readonly isPnP = new Lazy<boolean>(async () => this.detectPnP(this.rootDir))
 
-  protected getArgs(): string[] {
-    // Only Yarn v1 uses CLI. We use pnp.cjs for PnP and manual tree build for Yarn Berry node_modules linker.
-    // If those fail, then we fallback to npm query. It will fail if using corepack, so we attempt to manually build the tree.
-    return NPM_LIST_ARGS
-  }
-
-  protected async getDependenciesTree(): Promise<YarnDependency> {
-    try {
-      const isPnP = await this.isPnP.value
-      if (isPnP) {
-        log.info({ isPnP }, "expecting node_modules linker for non-PnP. Will attempt falling back to npm query if error.")
+      // Only Yarn v1 uses CLI. We use pnp.cjs for PnP and manual tree build for Yarn Berry node_modules linker.
+    // If those fail, then we fallback to npm query. That will fail if using corepack though, so we attempt to manually build the tree.
+  protected async getDependenciesTree(): Promise<NpmDependency> {
+    if (await this.isPnP.value) {
+      log.debug(null, "using Yarn PnP for dependency tree extraction")
+      // Yarn PnP
+      // Reference: https://yarnpkg.com/features/pnp
+      // Note: .pnp.cjs is not always in the project root (can be in workspace root instead)
+      // So we explicitly specify the path here to avoid issues.
+      const pnpFile = path.join(this.rootDir, ".pnp.cjs")
+      const tree = this.getYarnPnPTree(this.rootDir, pnpFile)
+      if (tree) {
+        return tree
       }
+      log.warn({ pnpFile }, "Yarn PnP file not found or failed to load, falling back to npm collector")
+    }
+
+    try {
       return await super.getDependenciesTree(PM.NPM)
     } catch (error: any) {
-      log.debug({ error: error.message }, "failed to extract Yarn dependencies tree")
+      log.debug({ error: error.message }, "failed to extract Yarn dependencies via npm-compatible CLI")
     }
     // Yarn Berry node_modules linker fallback. (Slower due to system ops, so we only use it as a fallback)
     log.info(null, "unable to process dependency tree, falling back to using manual node_modules traversal for Yarn v2+.")
     return await this.buildNodeModulesTreeManually(this.rootDir)
   }
 
-  protected async resolveModuleDir(options: { pkg: string; base: string; virtualPath: string | undefined }): Promise<string> {
-    const { pkg, base } = options
+  protected async extractProductionDependencyGraph(tree: NpmDependency, dependencyId: string): Promise<void> {
+    if (this.productionGraph[dependencyId]) {
+      return
+    }
+    const productionDeps = Object.entries(tree.dependencies || {}).map(async ([, dependency]) => {
+      const childDependencyId = this.moduleKeyGenerator(dependency)
+      const dep = {
+        ...dependency,
+        name: dependency.name,
+        path: await this.resolveModuleDir({ pkg: dependency.name, base: dependency.path, virtualPath: undefined }),
+      }
+      await this.extractProductionDependencyGraph(dep, childDependencyId)
+      return childDependencyId
+    })
+    this.productionGraph[dependencyId] = { dependencies: await Promise.all(productionDeps) }
+  }
+
+  protected async resolveModuleDir(options: ResolveModuleOptions): Promise<string> {
+    const { pkg, base, isOptionalDependency = false } = options
     try {
       return await super.resolveModuleDir(options)
     } catch (error: any) {
@@ -51,53 +76,73 @@ export class YarnBerryNodeModulesCollector extends YarnNodeModulesCollector {
     // Yarn Berry PnP does not use node_modules, so we resolve directly to the package directory.
     const searchPath = path.join(this.rootDir, "node_modules", pkg)
     // validate path exists or throw early (we'd rather exit early than have dependencies silently not-found)
-    await access(searchPath)
-    return searchPath
+    try {
+      await access(searchPath)
+      return searchPath
+    } catch {
+      throw new Error(`Cannot resolve module ${pkg} from ${base}${isOptionalDependency ? " (optional dependency)" : ""}`)
+    }
   }
 
-  /**
-   * Builds a dependency tree using only package.json dependencies and optionalDependencies.
-   * This skips devDependencies and does not walk the node_modules filesystem.
-   */
-  private async buildNodeModulesTreeManually(baseDir: string): Promise<YarnDependency> {
-    const visited = new Set<string>()
+  private getYarnPnPTree(cwd: string, pnpPath: string): NpmDependency | undefined {
+    try {
+      const pnpApi = require(pnpPath)
+      const topLocator = pnpApi.topLevel
+      const visited = new Set<string>()
 
-    const buildFromPackage = async (pkgDir: string): Promise<YarnDependency> => {
-      const pkgPath = path.join(pkgDir, "package.json")
-      const pkg = await fs.readJson(pkgPath)
-      const id = this.moduleKeyGenerator(pkg)
-      if (visited.has(id)) {
-        return { name: pkg.name, version: pkg.version, path: pkgDir }
+      const buildNode = (locator: any): NpmDependency => {
+        const info = pnpApi.getPackageInformation(locator)
+        const dir = info?.packageLocation ? path.resolve(info.packageLocation) : path.resolve(cwd)
+        if (dir.includes("virtual:")) {
+          log.error({ dir, locator }, "unable to extract file(s) from Yarn PnP virtual package")
+          throw new Error(
+            `Cannot resolve Yarn PnP virtual package [${locator.name}@${locator.reference}] at [${dir}], please force hoisted node_modules installation instead of PnP`
+          )
+        }
+
+        const node: NpmDependency = { name: locator.name, version: locator.reference, path: dir, dependencies: {}, resolved: dir }
+
+        if (!info?.packageDependencies) {
+          return node
+        }
+
+        for (const [depName, ref] of info.packageDependencies) {
+          if (!ref) {
+            continue
+          }
+          const key = `${depName}@${ref}`
+          if (visited.has(key)) {
+            continue
+          }
+          visited.add(key)
+          const depLocator = pnpApi.getLocator(depName, ref)
+          node.dependencies![depName] = buildNode(depLocator)
+        }
+        return node
       }
-      visited.add(id)
 
-      const deps: Record<string, YarnDependency> = {}
-      const optDeps: Record<string, string> = {}
+      return buildNode(topLocator)
+    } catch (err: any) {
+      log.error({ message: err.message }, "Yarn PnP extraction error")
+    }
+    return undefined
+  }
 
-      const allDeps = {
-        ...pkg.dependencies,
-        ...pkg.optionalDependencies,
+  private async detectPnP(rootDir: string): Promise<boolean> {
+    try {
+      if ((await exists(path.join(rootDir, ".pnp.cjs"))) || (await exists(path.join(rootDir, ".pnp.js")))) {
+        return true
       }
-
-      for (const [depName, depVersion] of Object.entries(allDeps ?? {})) {
-        try {
-          const depDir = await this.resolveModuleDir({ pkg: depName, base: pkgDir, virtualPath: undefined })
-          deps[depName] = await buildFromPackage(depDir)
-        } catch {
-          // Not installed or cannot resolve; keep version range info only
-          optDeps[depName] = depVersion as string
+      const rcPath = path.join(rootDir, ".yarnrc.yml")
+      if (await exists(rcPath)) {
+        const cfg: any = load(await fs.readFile(rcPath, "utf-8"))
+        if (cfg?.nodeLinker === "pnp") {
+          return true
         }
       }
-
-      return {
-        name: pkg.name,
-        version: pkg.version,
-        path: pkgDir,
-        dependencies: Object.keys(deps).length ? deps : undefined,
-        optionalDependencies: Object.keys(optDeps).length ? optDeps : undefined,
-      }
+    } catch {
+      // ignore
     }
-
-    return await buildFromPackage(baseDir)
+    return false
   }
 }

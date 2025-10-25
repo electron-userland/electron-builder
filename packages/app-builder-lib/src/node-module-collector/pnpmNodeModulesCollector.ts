@@ -73,14 +73,25 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
   protected async collectAllDependencies(tree: PnpmDependency): Promise<void> {
     const collect = async (deps: PnpmDependency["dependencies"] | PnpmDependency["optionalDependencies"] = {}) => {
       for (const [, value] of Object.entries(deps)) {
-        const module = {
+        let p: string
+        try {
+          p = await this.resolveModuleDir({ pkg: value.from, base: value.path, virtualPath: value.resolved })
+        } catch {
+          // ignore. optional dependency may not be installed (we throw in resolveModuleDir in this case)
+          continue
+        }
+        const m = {
           ...value,
           // use .from instead of .name for pnpm
           name: value.from,
-          path: await this.resolveModuleDir({ pkg: value.from, base: value.path, virtualPath: value.resolved }),
+          path: p,
         }
-        this.allDependencies.set(this.moduleKeyGenerator(module), module)
-        await this.collectAllDependencies(module)
+        const moduleKey = this.moduleKeyGenerator(m)
+        if (this.allDependencies.has(moduleKey)) {
+          continue
+        }
+        this.allDependencies.set(moduleKey, m)
+        await this.collectAllDependencies(m)
       }
     }
     // Collect regular dependencies

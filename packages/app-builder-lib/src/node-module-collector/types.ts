@@ -1,3 +1,10 @@
+export type ResolveModuleOptions = {
+  pkg: string
+  base: string
+  virtualPath?: string
+  isOptionalDependency?: boolean
+}
+
 export interface NodeModuleInfo {
   name: string
   version: string
@@ -21,7 +28,7 @@ export interface PnpmDependency extends Dependency<PnpmDependency, PnpmDependenc
 }
 
 export interface NpmDependency extends Dependency<NpmDependency, string> {
-  readonly resolved: string
+  readonly resolved?: string
   // implicit dependencies
   readonly _dependencies?: {
     [packageName: string]: string
@@ -29,7 +36,10 @@ export interface NpmDependency extends Dependency<NpmDependency, string> {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface YarnDependency extends Dependency<YarnDependency, string> {}
+export interface YarnBerryDependency extends Dependency<YarnBerryDependency, string> {}
+
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface YarnDependency extends Dependency<YarnDependency, YarnDependency> {}
 
 export type Dependency<T, V> = Dependencies<T, V> & ParsedDependencyTree
 
