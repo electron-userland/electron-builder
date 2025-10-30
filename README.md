@@ -100,9 +100,7 @@ See the full documentation on [electron.build](https://www.electron.build).
 
 Check out this interactive walkthrough of the `electron-builder` codebase on CodeCanvas [here](https://www.code-canvas.com/?session=unauthenticatedGithub&repo=electron-builder&owner=electron-userland&branch=master&OnboardingTutorial=true).
 
-To refine existing dataflow simulation or create new ones, follow the quick tutorial [here](https://docs.code-canvas.com/updating-diagram).
-
-<img width="1916" alt="CodeCanvas Screenshot" src="https://codecanvas-media-public.s3.amazonaws.com/images/codecanvas-readme-screenshot.png" />
+<img width="1814" height="825" alt="image" src="https://github.com/user-attachments/assets/6c7fb976-6aea-4dd4-bf04-ab55f7828229" />
 
 ## Installation
 [Yarn](http://yarnpkg.com/) is [strongly](https://github.com/electron-userland/electron-builder/issues/1147#issuecomment-276284477) recommended instead of npm.
