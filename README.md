@@ -95,6 +95,15 @@ See the full documentation on [electron.build](https://www.electron.build).
 | “I found a bug or I have a question”   | [Open an issue](https://github.com/electron-userland/electron-builder/issues/new) |
 | “I want to support development”        | [Donate](https://www.electron.build/donate)                                       |
 
+
+### How does `electron-builder` work under the hood?
+
+Check out this interactive walkthrough of the `electron-builder` codebase on CodeCanvas [here](https://www.code-canvas.com/?session=unauthenticatedGithub&repo=electron-builder&owner=electron-userland&branch=master&OnboardingTutorial=true).
+
+To refine existing dataflow simulation or create new ones, follow the quick tutorial [here](https://docs.code-canvas.com/updating-diagram).
+
+<img width="1916" alt="CodeCanvas Screenshot" src="https://codecanvas-media-public.s3.amazonaws.com/images/codecanvas-readme-screenshot.png" />
+
 ## Installation
 [Yarn](http://yarnpkg.com/) is [strongly](https://github.com/electron-userland/electron-builder/issues/1147#issuecomment-276284477) recommended instead of npm.
 
