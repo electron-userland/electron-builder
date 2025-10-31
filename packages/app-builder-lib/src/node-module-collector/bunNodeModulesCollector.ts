@@ -1,9 +1,9 @@
 import { log } from "builder-util"
 import * as path from "path"
-import { sync as resolveSync } from "resolve"
 import { NodeModulesCollector } from "./nodeModulesCollector"
 import { PM } from "./packageManager"
 import { BunDependency, BunManifest, Dependencies } from "./types"
+import { createRequire } from "module"
 
 export class BunNodeModulesCollector extends NodeModulesCollector<BunDependency, BunDependency> {
   public readonly installOptions = { manager: PM.BUN, lockfile: "bun.lock" }
@@ -147,11 +147,15 @@ export class BunNodeModulesCollector extends NodeModulesCollector<BunDependency,
 
   private findInstalledDependency(basedir: string, dependencyName: string): string | null {
     try {
-      const packageJsonPath = resolveSync(path.join(dependencyName, "package.json"), {
-        basedir,
-        preserveSymlinks: false,
-        includeCoreModules: false,
-      })
+      // This is necessary to create a require function that is from the perspective of the basedir
+      //
+      // It must be an absolute path
+      const requireStartingFile = path.join(path.resolve(basedir), "__fake_starting_file__.js")
+
+      const localizedRequire = createRequire(requireStartingFile)
+
+      const packageJsonPath = localizedRequire.resolve(path.join(dependencyName, "package.json"))
+
       return path.dirname(packageJsonPath)
     } catch (e: any) {
       if (e?.code === "MODULE_NOT_FOUND") {

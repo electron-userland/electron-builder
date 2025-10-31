@@ -191,9 +191,6 @@ importers:
       resedit:
         specifier: ^1.7.0
         version: 1.7.0
-      resolve:
-        specifier: ^1.22.10
-        version: 1.22.10
       semver:
         specifier: 7.7.2
         version: 7.7.2

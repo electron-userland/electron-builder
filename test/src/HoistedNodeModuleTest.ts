@@ -529,6 +529,7 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
               data.dependencies = {
                 lib: "workspace:*",
                 "is-bigint": "1.1.0",
+                process: "^0.11.10",
               }
             }),
             modifyPackageJson(libPkg, data => {
@@ -572,6 +573,7 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
               data.dependencies = {
                 lib: "workspace:*",
                 "is-bigint": "1.1.0",
+                process: "^0.11.10",
               }
             }),
             modifyPackageJson(libPkg, data => {
@@ -616,6 +618,7 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
               data.dependencies = {
                 lib: "workspace:*",
                 "is-bigint": "1.1.0",
+                process: "^0.11.10",
               }
             }),
             modifyPackageJson(libPkg, data => {
@@ -658,6 +661,7 @@ describe("isInstallDepsBefore=true", { sequential: true }, () => {
               data.dependencies = {
                 lib: "workspace:*",
                 "is-bigint": "1.1.0",
+                process: "^0.11.10",
               }
             }),
             modifyPackageJson(libPkg, data => {
