@@ -45,7 +45,7 @@
   },
   "devDependencies": {
     "@babel/plugin-transform-modules-commonjs": "7.24.8",
-    "@changesets/changelog-github": "0.4.7",
+    "@changesets/changelog-github": "0.5.1",
     "@changesets/cli": "2.29.7",
     "@eslint/eslintrc": "^3.3.1",
     "@eslint/js": "^9.37.0",
