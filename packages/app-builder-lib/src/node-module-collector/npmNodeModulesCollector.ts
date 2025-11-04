@@ -1,9 +1,25 @@
+import * as path from "path"
 import { NodeModulesCollector } from "./nodeModulesCollector"
 import { PM } from "./packageManager"
 import { NpmDependency } from "./types"
+import { readJson } from "fs-extra"
+import { log } from "builder-util"
+
+type PackageJson = {
+  name: string
+  version: string
+  dependencies?: Record<string, string>
+  devDependencies?: Record<string, string>
+  peerDependencies?: Record<string, string>
+  optionalDependencies?: Record<string, string>
+  workspaces?: string[] | { packages: string[] }
+}
 
 export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency, string> {
-  public readonly installOptions = { manager: PM.NPM, lockfile: "package-lock.json" }
+  public readonly installOptions = {
+    manager: PM.NPM,
+    lockfile: "package-lock.json",
+  }
 
   protected getArgs(): string[] {
     return ["list", "-a", "--include", "prod", "--include", "optional", "--omit", "dev", "--json", "--long", "--silent"]
@@ -21,7 +37,7 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
     }
   }
 
-  protected extractProductionDependencyGraph(tree: NpmDependency, dependencyId: string): void {
+  protected async extractProductionDependencyGraph(tree: NpmDependency, dependencyId: string): Promise<void> {
     if (this.productionGraph[dependencyId]) {
       return
     }
@@ -42,6 +58,42 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
       })
     this.productionGraph[dependencyId] = { dependencies: productionDeps }
   }
+  protected async parseDependenciesTree(jsonBlob: string): Promise<NpmDependency> {
+    return Promise.resolve(JSON.parse(jsonBlob))
+  }
+  /**
+   * Builds a dependency tree using only package.json dependencies and optionalDependencies.
+   * This skips devDependencies and does not walk the node_modules filesystem.
+   */
+  protected async buildNodeModulesTreeManually(baseDir: string): Promise<NpmDependency> {
+    const visited = new Set<string>()
+
+    const buildFromPackage = async (pkgDir: string): Promise<NpmDependency> => {
+      log.info({ pkgDir }, "building dependency node from package.json")
+      const pkgPath = path.join(pkgDir, "package.json")
+      const pkg: PackageJson = await readJson(pkgPath)
+
+      const base = { name: pkg.name, version: pkg.version, path: pkgDir }
+      const id = this.packageVersionString(base)
+
+      if (visited.has(id)) {
+        return base
+      }
+      visited.add(id)
+
+      const prodDeps: Record<string, NpmDependency> = {}
+
+      for (const [name, version] of Object.entries(pkg.dependencies || {})) {
+        const p = await this.resolveModuleDir({ dependency: { name, version, path: pkgDir }, virtualPath: version })
+        prodDeps[name] = await buildFromPackage(p!)
+      }
+
+      return {
+        ...base,
+        dependencies: Object.keys(prodDeps).length ? prodDeps : undefined,
+        optionalDependencies: pkg.optionalDependencies,
+      }
+    }
 
   protected parseDependenciesTree(jsonBlob: string): NpmDependency {
     return JSON.parse(jsonBlob)

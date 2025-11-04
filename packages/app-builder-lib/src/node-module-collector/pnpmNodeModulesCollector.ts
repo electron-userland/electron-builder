@@ -6,14 +6,10 @@ import { getPackageManagerCommand, PM } from "./packageManager"
 import { Dependency, PnpmDependency } from "./types"
 
 export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependency, PnpmDependency> {
-  static async isPnpmProjectHoisted(rootDir: string) {
-    const command = getPackageManagerCommand(PM.PNPM)
-    const config = await NodeModulesCollector.safeExec(command, ["config", "list"], rootDir)
-    const lines = Object.fromEntries(config.split("\n").map(line => line.split("=").map(s => s.trim())))
-    return lines["node-linker"] === "hoisted"
+  public readonly installOptions = {
+    manager: PM.PNPM,
+    lockfile: "pnpm-lock.yaml",
   }
-
-  public readonly installOptions = { manager: PM.PNPM, lockfile: "pnpm-lock.yaml" }
 
   protected getArgs(): string[] {
     return ["list", "--prod", "--json", "--depth", "Infinity"]
@@ -68,9 +64,9 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
     }
   }
 
-  protected parseDependenciesTree(jsonBlob: string): PnpmDependency {
+  protected async parseDependenciesTree(jsonBlob: string): Promise<PnpmDependency> {
     const dependencyTree: PnpmDependency[] = JSON.parse(jsonBlob)
     // pnpm returns an array of dependency trees
-    return dependencyTree[0]
+    return Promise.resolve(dependencyTree[0])
   }
 }
