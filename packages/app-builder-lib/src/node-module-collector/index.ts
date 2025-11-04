@@ -58,7 +58,7 @@ export async function detectPackageManager(searchPaths: string[]): Promise<{ pm:
       const [pm, version] = packageManager.split("@")
       if (Object.values(PM).includes(pm as PM)) {
         const resolvedPackageManager = await resolveIfYarn(pm as PM, version, dir)
-        log.info({ resolvedPackageManager, packageManager, cwd: dir }, "packageManager field detected in package.json")
+        log.debug({ resolvedPackageManager, packageManager, cwd: dir }, "packageManager field detected in package.json")
         return { pm: resolvedPackageManager, corepackConfig: packageManager, resolvedDirectory: dir }
       }
     }
@@ -66,7 +66,7 @@ export async function detectPackageManager(searchPaths: string[]): Promise<{ pm:
     pm = await detectPackageManagerByFile(dir)
     if (pm) {
       const resolvedPackageManager = await resolveIfYarn(pm, "", dir)
-      log.info({ resolvedPackageManager, cwd: dir }, "packageManager detected by file")
+      log.debug({ resolvedPackageManager, cwd: dir }, "packageManager detected by file")
       return { pm: resolvedPackageManager, resolvedDirectory: dir, corepackConfig: undefined }
     }
   }
@@ -74,7 +74,7 @@ export async function detectPackageManager(searchPaths: string[]): Promise<{ pm:
   pm = detectPackageManagerByEnv() || PM.NPM
   const cwd = process.env.npm_package_json ? path.dirname(process.env.npm_package_json) : (process.env.INIT_CWD ?? process.cwd())
   const resolvedPackageManager = await resolveIfYarn(pm, "", cwd)
-  log.info({ resolvedPackageManager, detected: cwd }, "packageManager not detected by file, falling back to environment detection")
+  log.debug({ resolvedPackageManager, detected: cwd }, "packageManager not detected by file, falling back to environment detection")
   return { pm: resolvedPackageManager, resolvedDirectory: undefined, corepackConfig: undefined }
 }
 
@@ -121,7 +121,7 @@ export async function findWorkspaceRoot(pm: PM, cwd: string): Promise<string | u
     })
     .catch(() => findNearestWithWorkspacesField(cwd))
 
-  log.info({ root: output }, output ? "workspace root detected" : "workspace root not detected")
+  log.debug({ root: output }, output ? "workspace root detected" : "workspace root not detected")
   return output
 }
 

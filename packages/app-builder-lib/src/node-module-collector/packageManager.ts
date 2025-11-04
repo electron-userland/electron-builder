@@ -90,7 +90,7 @@ export async function detectYarnBerry(cwd: string, version: string): Promise<PM.
         return PM.YARN_BERRY
       }
     } catch (_error) {
-      log.info({ error: _error }, "cannot determine yarn version, assuming yarn v1")
+      log.debug({ error: _error }, "cannot determine yarn version, assuming yarn v1")
       // If `yarn` is not found or another error occurs, fall back to the regular Yarn since we're already determined in a Yarn project
     }
     return undefined

@@ -27,11 +27,11 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
       const lines = Object.fromEntries(config.split("\n").map(line => line.split("=").map(s => s.trim())))
 
       if (lines["node-linker"] === "hoisted") {
-        log.info({ manager: this.installOptions.manager }, "node_modules are hoisted")
+        log.debug({ manager: this.installOptions.manager }, "node_modules are hoisted")
         return true
       }
     } catch (error: any) {
-      log.info({ error: error.message }, "error checking if node modules are hoisted, falling back to non-hoisted")
+      log.debug({ error: error.message }, "error checking if node modules are hoisted, falling back to non-hoisted")
     }
 
     return false
@@ -61,7 +61,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     const hoisterResult: HoisterResult = hoist(this.transformToHoisterTree(this.productionGraph, packageName), { check: true })
 
     this._getNodeModules(hoisterResult.dependencies, this.nodeModules)
-    log.info({ packageName, depCount: this.nodeModules.length }, "node modules collection complete")
+    log.debug({ packageName, depCount: this.nodeModules.length }, "node modules collection complete")
 
     return this.nodeModules
   }
@@ -99,22 +99,24 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
           const logFields = { error: error.message, tempOutputFile, cwd: this.rootDir }
 
           if (!(await exists(tempOutputFile))) {
-            log.info(logFields, "dependency tree output file missing, retrying")
+            log.debug(logFields, "dependency tree output file missing, retrying")
             return true
           }
 
           const fileContent = await fs.readFile(tempOutputFile, { encoding: "utf8" })
+          const fields = { ...logFields, fileContent }
+
           if (fileContent.trim().length === 0) {
-            log.info(logFields, "dependency tree output file empty, retrying")
+            log.debug(fields, "dependency tree output file empty, retrying")
             return true
           }
 
           if (error.message?.includes("Unexpected end of JSON input")) {
-            log.info({ ...logFields, fileContent }, "JSON parse error in dependency tree, retrying")
+            log.debug(fields, "JSON parse error in dependency tree, retrying")
             return true
           }
 
-          log.error({ message: error.message, cwd: this.rootDir, fileContent }, "error parsing dependencies tree")
+          log.error(fields, "error parsing dependencies tree")
           return false
         },
       }
@@ -130,7 +132,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
         return filePath
       }
     } catch (error: any) {
-      log.debug({ message: error.message || error.stack }, "error resolving path")
+      log.debug({ filePath, message: error.message || error.stack }, "error resolving path")
       return filePath
     }
   }
@@ -165,7 +167,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
 
       for (const [key, value] of Object.entries(tree.dependencies)) {
         if (key === dependencyName) {
-          log.info({ key, path: value.path }, "returning workspace tree for root dependency")
+          log.debug({ key, path: value.path }, "returning workspace tree for root dependency")
           return value
         }
       }
@@ -278,7 +280,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
         if (code === 1 && "npm" === execName.toLowerCase() && args.includes("list")) {
           // This is a known issue with npm list command, it can return code 1 even when the command is "technically" successful
           if (this.installOptions.manager === PM.NPM) {
-            log.info({ code, stderr }, "`npm list` returned non-zero exit code, but it MIGHT be expected (https://github.com/npm/npm/issues/17624). Check stderr for details.")
+            log.debug({ code, stderr }, "`npm list` returned non-zero exit code, but it MIGHT be expected (https://github.com/npm/npm/issues/17624). Check stderr for details.")
           }
           return resolve()
         }

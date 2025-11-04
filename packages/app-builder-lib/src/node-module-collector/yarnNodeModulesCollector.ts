@@ -4,6 +4,7 @@ import * as path from "path"
 import { NodeModulesCollector } from "./nodeModulesCollector"
 import { PM } from "./packageManager"
 import { YarnDependency } from "./types"
+import { Lazy } from "lazy-val"
 
 type YarnListJsonLine =
   | {
@@ -33,6 +34,10 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
     lockfile: "yarn.lock",
   }
 
+  protected isHoisted: Lazy<boolean> = new Lazy<boolean>(async () => {
+    return Promise.resolve(true) // Yarn Classic always hoists
+  })
+
   protected getArgs(): string[] {
     return ["list", "--production", "--json", "--depth=Infinity", "--no-progress"]
   }
@@ -45,7 +50,7 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
     if (tree.dependencies && appName) {
       for (const [key, dep] of Object.entries(tree.dependencies)) {
         if (dep.name === appName) {
-          log.info({ name: dep.name, path: dep.path }, "skipping root app package from dependency tree")
+          log.debug({ name: dep.name, path: dep.path }, "skipping root app package from dependency tree")
           delete tree.dependencies[key]
         }
       }
@@ -111,7 +116,9 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
       .shift()
 
     if (!parsedTree) {
-      throw new Error(`Failed to extract Yarn tree: no "type":"tree" line found`)
+      // log.warn({ output: jsonBlob }, `Failed to extract Yarn tree: no "type":"tree" line found, falling back to manual node_modules traversal`)
+      // return this.buildNodeModulesTreeManually(this.rootDir)
+      throw new Error('Failed to extract Yarn tree: no "type":"tree" line found in console output')
     }
 
     const normalizedTree = this.normalizeTree(parsedTree)
@@ -135,7 +142,7 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
     for (const node of tree) {
       const match = node.name.match(/^(.*)@([^@]+)$/)
       if (!match) {
-        log.info({ name: node.name }, "invalid node name format")
+        log.debug({ name: node.name }, "invalid node name format")
         continue
       }
 
@@ -144,7 +151,7 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
 
       const isShadow = node.shadow && node.color === "dim"
       if (isShadow) {
-        log.info({ pkgName, version }, "skipping shadow node")
+        log.debug({ pkgName, version }, "skipping shadow node")
         continue
       }
 
@@ -169,7 +176,7 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
         optionalDependencies: {},
       }
 
-      log.info({ name: pkgName, version }, "+ normalize")
+      log.debug({ name: pkgName, version }, "+ normalize")
 
       if (node.children && node.children.length > 0) {
         for (const child of node.children) {
@@ -183,7 +190,7 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
             continue
           }
 
-          log.info({ parent: pkgName, childName, childVersion }, "  + normalize child")
+          log.debug({ parent: pkgName, childName, childVersion }, "  + normalize child")
           const childDeps = this.normalizeTree([child], seen)
 
           for (const [childDepName, childDep] of Object.entries(childDeps)) {
@@ -232,7 +239,7 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
           p = this.resolvePath(value.path)
         } catch (e) {
           if (treatAsOptional) {
-            log.info({ pkg: this.cacheKey(value), name: value.name }, "failed to resolve optional dependency, skipping")
+            log.debug({ pkg: this.cacheKey(value), name: value.name }, "failed to resolve optional dependency, skipping")
             failedPackages.add(value.name)
             continue
           }
@@ -240,7 +247,7 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
           // Special case: if this is not a direct root dependency and resolution failed,
           // it might be a transitive dep of an optional package
           if (!isDirectRootDep) {
-            log.info({ pkg: this.cacheKey(value), name: value.name }, "failed to resolve transitive dependency, treating as optional")
+            log.debug({ pkg: this.cacheKey(value), name: value.name }, "failed to resolve transitive dependency, treating as optional")
             failedPackages.add(value.name)
             continue
           }
@@ -251,7 +258,7 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
 
         // If resolution returned null (optional dependency not found), skip it
         if (!p) {
-          log.info({ pkg: this.cacheKey(value), name: value.name }, "optional dependency not found, skipping")
+          log.debug({ pkg: this.cacheKey(value), name: value.name }, "optional dependency not found, skipping")
           failedPackages.add(value.name)
           continue
         }
@@ -261,7 +268,7 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
         if (versionMatch) {
           resolvedVersion = versionMatch[1]
           if (resolvedVersion !== value.version) {
-            log.info({ name: value.name, declared: value.version, resolved: resolvedVersion }, "resolved actual version from path")
+            log.debug({ name: value.name, declared: value.version, resolved: resolvedVersion }, "resolved actual version from path")
           }
         }
 
@@ -293,7 +300,7 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
       const cleanDependencies = (deps: Record<string, YarnDependency> = {}) => {
         for (const [key, dep] of Object.entries(deps)) {
           if (failedPackages.has(dep.name)) {
-            log.info({ name: dep.name }, "removing failed package from tree")
+            log.debug({ name: dep.name }, "removing failed package from tree")
             delete deps[key]
           } else {
             // Recursively clean children

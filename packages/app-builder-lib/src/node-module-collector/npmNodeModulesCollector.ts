@@ -3,7 +3,7 @@ import { NodeModulesCollector } from "./nodeModulesCollector"
 import { PM } from "./packageManager"
 import { NpmDependency } from "./types"
 import { readJson } from "fs-extra"
-import { log } from "builder-util"
+import { exists, log } from "builder-util"
 
 type PackageJson = {
   name: string
@@ -51,12 +51,12 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
     this.productionGraph[dependencyId] = { dependencies: [] }
     const productionDeps = Object.entries(resolvedDeps)
       .filter(([packageName]) => prodDependencies[packageName])
-      .map(([packageName, dependency]) => {
+      .map(async ([packageName, dependency]) => {
         const childDependencyId = `${packageName}@${dependency.version}`
-        this.extractProductionDependencyGraph(dependency, childDependencyId)
+        await this.extractProductionDependencyGraph(dependency, childDependencyId)
         return childDependencyId
       })
-    this.productionGraph[dependencyId] = { dependencies: productionDeps }
+    this.productionGraph[dependencyId] = { dependencies: await Promise.all(productionDeps) }
   }
 
   /**
@@ -67,11 +67,18 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
     const visited = new Set<string>()
 
     const buildFromPackage = async (pkgDir: string): Promise<NpmDependency> => {
-      log.info({ pkgDir }, "building dependency node from package.json")
-      const pkgPath = path.join(pkgDir, "package.json")
+      const dir = (await this.isHoisted.value) ? baseDir : pkgDir
+      const pkgPath = this.resolvePath(path.join(dir, "package.json"))
+
+      log.debug({ dir, pkgPath }, "building dependency node from package.json")
+
+      if (!(await exists(pkgPath))) {
+        throw new Error(`package.json not found at ${pkgPath} while building dependency tree manually within ${baseDir}`)
+      }
+
       const pkg: PackageJson = await readJson(pkgPath)
 
-      const base = { name: pkg.name, version: pkg.version, path: pkgDir }
+      const base = { name: pkg.name, version: pkg.version, path: dir }
       const id = this.packageVersionString(base)
 
       if (visited.has(id)) {
@@ -82,7 +89,10 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
       const prodDeps: Record<string, NpmDependency> = {}
 
       for (const [name, version] of Object.entries(pkg.dependencies || {})) {
-        const p = this.resolvePath(path.join(pkgDir, "node_modules", name))
+
+        const packagePath = path.join(dir, "node_modules", name)
+        log.debug({ packagePath }, `resolving production sub-dependency ${name}@${version}`)
+        const p = this.resolvePath(packagePath)
         prodDeps[name] = await buildFromPackage(p)
       }
 

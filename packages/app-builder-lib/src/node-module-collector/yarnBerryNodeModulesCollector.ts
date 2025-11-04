@@ -17,7 +17,7 @@ export class YarnBerryNodeModulesCollector extends NpmNodeModulesCollector {
 
   // Only Yarn v1 uses CLI. We use pnp.cjs for PnP and manual tree build for Yarn Berry node_modules linker.
   // If those fail, then we fallback to npm query. That will fail if using corepack though, so we attempt to manually build the tree.
-  protected async getDependenciesTree(): Promise<NpmDependency> {
+  protected async getDependenciesTree(_pm: PM): Promise<NpmDependency> {
     const isPnp = await this.isPnP.value
     if (isPnp) {
       // log.info(null, "using Yarn PnP for dependency tree extraction")
@@ -31,7 +31,7 @@ export class YarnBerryNodeModulesCollector extends NpmNodeModulesCollector {
       //   return tree
       // }
       // log.warn({ pnpFile }, "Yarn PnP file not found or failed to load, falling back to npm collector")
-      log.warn(null, "Yarn PnP extraction not supported directly due to virtual zip paths, falling back to npm collection")
+      log.warn(null, "Yarn PnP extraction not supported directly due to virtual paths (<package>.zip/<path>), falling back to npm collection")
     }
 
     try {
@@ -51,7 +51,6 @@ export class YarnBerryNodeModulesCollector extends NpmNodeModulesCollector {
       const childDependencyId = this.packageVersionString(dependency)
       const dep = {
         ...dependency,
-        name: dependency.name,
         path: this.resolvePath(dependency.path),
       }
       await this.extractProductionDependencyGraph(dep, childDependencyId)
