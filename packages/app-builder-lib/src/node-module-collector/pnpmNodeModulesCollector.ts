@@ -21,7 +21,13 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
     }
 
     const p = path.normalize(this.resolvePath(tree.path))
-    const packageJson: Dependency<string, string> = require(path.join(p, "package.json"))
+    let packageJson: Dependency<string, string>
+    try {
+      packageJson = require(path.join(p, "package.json"))
+    } catch (error: any) {
+      log.warn(null, `Failed to read package.json for ${p}: ${error.message}`)
+      return
+    }
     const prodDependencies = { ...packageJson.dependencies, ...packageJson.optionalDependencies }
 
     const deps = { ...(tree.dependencies || {}), ...(tree.optionalDependencies || {}) }

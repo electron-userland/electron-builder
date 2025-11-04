@@ -88145,6 +88145,35 @@ exports[`pnpm max stack 2`] = `
 }
 `;
 
+exports[`pnpm node-linker=hoisted 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`pnpm node-linker=hoisted 2`] = `
+{
+  "files": {
+    ".npmrc": {
+      "offset": "0",
+      "size": 19,
+    },
+    "index.html": {
+      "offset": "19",
+      "size": 378,
+    },
+    "index.js": {
+      "offset": "397",
+      "size": 619,
+    },
+    "package.json": {
+      "offset": "1016",
+      "size": 362,
+    },
+  },
+}
+`;
+
 exports[`pnpm optional dependencies 1`] = `
 {
   "linux": [],
