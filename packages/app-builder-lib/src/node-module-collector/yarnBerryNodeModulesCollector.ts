@@ -52,39 +52,12 @@ export class YarnBerryNodeModulesCollector extends NpmNodeModulesCollector {
       const dep = {
         ...dependency,
         name: dependency.name,
-        path: (await this.resolveModuleDir({ dependency, virtualPath: undefined }))!,
+        path: this.resolvePath(dependency.path),
       }
       await this.extractProductionDependencyGraph(dep, childDependencyId)
       return childDependencyId
     })
     this.productionGraph[dependencyId] = { dependencies: await Promise.all(productionDeps) }
-  }
-
-  protected async resolveModuleDir(options: ResolveModuleOptions<NpmDependency>): Promise<string | null> {
-    const { dependency, isOptionalDependency = false } = options
-    const pkg = dependency.name
-    const base = dependency.path
-    try {
-      return await super.resolveModuleDir(options)
-    } catch (error: any) {
-      // fallback: Yarn2 virtual packages
-      const unpluggedDir = path.join(base, ".yarn/unplugged")
-      const matches = await fs.readdir(unpluggedDir).catch(() => [])
-      const found = matches.find(name => name.startsWith(`${pkg}-npm-`))
-      if (found) {
-        return path.join(unpluggedDir, found, "node_modules", pkg)
-      }
-      log.info({ pkg, base, error: error.message }, "failed to resolve module dir, falling back to default resolution")
-    }
-    // Yarn Berry PnP does not use node_modules, so we resolve directly to the package directory.
-    const searchPath = path.join(this.rootDir, "node_modules", pkg)
-    // validate path exists or throw early (we'd rather exit early than have dependencies silently not-found)
-    try {
-      await access(searchPath)
-      return searchPath
-    } catch {
-      throw new Error(`Cannot resolve module ${pkg} from ${base}${isOptionalDependency ? " (optional dependency)" : ""}`)
-    }
   }
 
   private async detectPnP(rootDir: string): Promise<boolean> {

@@ -25,7 +25,7 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
     return ["list", "-a", "--include", "prod", "--include", "optional", "--omit", "dev", "--json", "--long", "--silent"]
   }
 
-  protected collectAllDependencies(tree: NpmDependency) {
+  protected async collectAllDependencies(tree: NpmDependency) {
     for (const [key, value] of Object.entries(tree.dependencies || {})) {
       const { _dependencies = {}, dependencies = {} } = value
       const isDuplicateDep = Object.keys(_dependencies).length > 0 && Object.keys(dependencies).length === 0
@@ -33,7 +33,7 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
         continue
       }
       this.allDependencies.set(`${key}@${value.version}`, value)
-      this.collectAllDependencies(value)
+      await this.collectAllDependencies(value)
     }
   }
 
@@ -58,14 +58,12 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
       })
     this.productionGraph[dependencyId] = { dependencies: productionDeps }
   }
-  protected async parseDependenciesTree(jsonBlob: string): Promise<NpmDependency> {
-    return Promise.resolve(JSON.parse(jsonBlob))
-  }
+
   /**
    * Builds a dependency tree using only package.json dependencies and optionalDependencies.
    * This skips devDependencies and does not walk the node_modules filesystem.
    */
-  protected async buildNodeModulesTreeManually(baseDir: string): Promise<NpmDependency> {
+  protected  buildNodeModulesTreeManually(baseDir: string): Promise<NpmDependency> {
     const visited = new Set<string>()
 
     const buildFromPackage = async (pkgDir: string): Promise<NpmDependency> => {
@@ -84,8 +82,8 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
       const prodDeps: Record<string, NpmDependency> = {}
 
       for (const [name, version] of Object.entries(pkg.dependencies || {})) {
-        const p = await this.resolveModuleDir({ dependency: { name, version, path: pkgDir }, virtualPath: version })
-        prodDeps[name] = await buildFromPackage(p!)
+        const p = this.resolvePath(path.join(pkgDir, "node_modules", name))
+        prodDeps[name] = await buildFromPackage(p)
       }
 
       return {
@@ -94,8 +92,10 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
         optionalDependencies: pkg.optionalDependencies,
       }
     }
+    return buildFromPackage(baseDir)
+  }
 
-  protected parseDependenciesTree(jsonBlob: string): NpmDependency {
-    return JSON.parse(jsonBlob)
+  protected async parseDependenciesTree(jsonBlob: string): Promise<NpmDependency> {
+    return Promise.resolve(JSON.parse(jsonBlob))
   }
 }

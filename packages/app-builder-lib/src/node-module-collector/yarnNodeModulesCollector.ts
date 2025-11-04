@@ -61,7 +61,7 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
 
     const productionDeps = Object.entries(tree.dependencies || {}).map(async ([, dependency]) => {
       const childDependencyId = this.packageVersionString(dependency)
-      const resolvedPath = (await this.resolveModuleDir({ dependency }))!
+      const resolvedPath = this.resolvePath(dependency.path)
 
       const dep = {
         ...dependency,
@@ -229,10 +229,7 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
         let p: string | null
 
         try {
-          p = await this.resolveModuleDir({
-            dependency: value,
-            isOptionalDependency: treatAsOptional,
-          })
+          p = this.resolvePath(value.path)
         } catch (e) {
           if (treatAsOptional) {
             log.info({ pkg: this.cacheKey(value), name: value.name }, "failed to resolve optional dependency, skipping")

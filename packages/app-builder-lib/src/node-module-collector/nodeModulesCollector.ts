@@ -13,6 +13,7 @@ import { CancellationToken } from "builder-util-runtime"
 const execAsync = promisify(exec)
 
 export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDepType, OptionalDepType>, OptionalDepType> {
+  private nodeModules: NodeModuleInfo[] = []
   protected allDependencies: Map<string, ProdDepType> = new Map()
   protected productionGraph: DependencyGraph = {}
   protected pkgJsonCache: Map<string, string> = new Map()
@@ -59,10 +60,10 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
 
     const hoisterResult: HoisterResult = hoist(this.transformToHoisterTree(this.productionGraph, packageName), { check: true })
 
-    const nodeModules: NodeModuleInfo[] = await this._getNodeModules(hoisterResult.dependencies)
-    log.info({ packageName, depCount: nodeModules.length }, "node modules collection complete")
+    this._getNodeModules(hoisterResult.dependencies, this.nodeModules)
+    log.info({ packageName, depCount: this.nodeModules.length }, "node modules collection complete")
 
-    return nodeModules
+    return this.nodeModules
   }
 
   public abstract readonly installOptions: {
@@ -131,6 +132,9 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     } catch (error: any) {
       log.debug({ message: error.message || error.stack }, "error resolving path")
       return filePath
+    }
+  }
+
   protected cacheKey(pkg: ProdDepType): string {
     const rel = path.relative(this.rootDir, pkg.path)
     return `${pkg.name}::${pkg.version}::${rel ?? "."}`

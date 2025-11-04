@@ -5,6 +5,7 @@ import { copySync, mkdirSync, outputFile, readJsonSync, rmSync, symlink, writeJs
 import * as path from "path"
 import { appTwoThrows, assertPack, linuxDirTarget, modifyPackageJson, verifyAsarFileTree } from "./helpers/packTester"
 import { ELECTRON_VERSION } from "./helpers/testConfig"
+import { exec, execSync } from "child_process"
 
 test("yarn workspace", ({ expect }) =>
   assertPack(
@@ -116,6 +117,9 @@ test("yarn two package.json", ({ expect }) =>
         delete packageJson.build
         delete packageJson.scripts
         writeJsonSync(path.join(projectDir, "app", "package.json"), packageJson)
+
+        execSync("yarn install", { cwd: projectDir })
+        execSync("yarn install", { cwd: path.join(projectDir, "app") })
       },
       packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
     }

@@ -15,7 +15,7 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
     return ["list", "--prod", "--json", "--depth", "Infinity"]
   }
 
-  extractProductionDependencyGraph(tree: PnpmDependency, dependencyId: string): void {
+  protected async extractProductionDependencyGraph(tree: PnpmDependency, dependencyId: string) {
     if (this.productionGraph[dependencyId]) {
       return
     }
@@ -26,7 +26,7 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
 
     const deps = { ...(tree.dependencies || {}), ...(tree.optionalDependencies || {}) }
     this.productionGraph[dependencyId] = { dependencies: [] }
-    const dependencies = Object.entries(deps)
+    const depPromises = Object.entries(deps)
       .filter(([packageName, dependency]) => {
         // First check if it's in production dependencies
         if (!prodDependencies[packageName]) {
@@ -41,26 +41,27 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
 
         return true
       })
-      .map(([packageName, dependency]) => {
+      .map(async ([packageName, dependency]) => {
         const childDependencyId = `${packageName}@${dependency.version}`
-        this.extractProductionDependencyGraph(dependency, childDependencyId)
+        await this.extractProductionDependencyGraph(dependency, childDependencyId)
         return childDependencyId
       })
 
+    const dependencies = await Promise.all(depPromises)
     this.productionGraph[dependencyId] = { dependencies }
   }
 
-  protected collectAllDependencies(tree: PnpmDependency) {
+  protected async collectAllDependencies(tree: PnpmDependency) {
     // Collect regular dependencies
     for (const [key, value] of Object.entries(tree.dependencies || {})) {
       this.allDependencies.set(`${key}@${value.version}`, value)
-      this.collectAllDependencies(value)
+      await this.collectAllDependencies(value)
     }
 
     // Collect optional dependencies if they exist
     for (const [key, value] of Object.entries(tree.optionalDependencies || {})) {
       this.allDependencies.set(`${key}@${value.version}`, value)
-      this.collectAllDependencies(value)
+      await this.collectAllDependencies(value)
     }
   }
 
