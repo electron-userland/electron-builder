@@ -5,7 +5,7 @@ import { copySync, mkdirSync, outputFile, readJsonSync, rmSync, symlink, writeJs
 import * as path from "path"
 import { appTwoThrows, assertPack, linuxDirTarget, modifyPackageJson, verifyAsarFileTree } from "./helpers/packTester"
 import { ELECTRON_VERSION } from "./helpers/testConfig"
-import { exec, execSync } from "child_process"
+import { execSync } from "child_process"
 
 test("yarn workspace", ({ expect }) =>
   assertPack(

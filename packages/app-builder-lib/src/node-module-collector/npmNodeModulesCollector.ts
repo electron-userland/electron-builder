@@ -63,7 +63,7 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
    * Builds a dependency tree using only package.json dependencies and optionalDependencies.
    * This skips devDependencies and does not walk the node_modules filesystem.
    */
-  protected  buildNodeModulesTreeManually(baseDir: string): Promise<NpmDependency> {
+  protected buildNodeModulesTreeManually(baseDir: string): Promise<NpmDependency> {
     const visited = new Set<string>()
 
     const buildFromPackage = async (pkgDir: string): Promise<NpmDependency> => {
@@ -89,7 +89,6 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
       const prodDeps: Record<string, NpmDependency> = {}
 
       for (const [name, version] of Object.entries(pkg.dependencies || {})) {
-
         const packagePath = path.join(dir, "node_modules", name)
         log.debug({ packagePath }, `resolving production sub-dependency ${name}@${version}`)
         const p = this.resolvePath(packagePath)

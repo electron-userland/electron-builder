@@ -121,7 +121,7 @@ export async function findWorkspaceRoot(pm: PM, cwd: string): Promise<string | u
     })
     .catch(() => findNearestWithWorkspacesField(cwd))
 
-  log.debug({ root: output }, output ? "workspace root detected" : "workspace root not detected")
+  log.debug({ root: output || cwd }, output ? "workspace root detected" : "workspace root not detected, using project root")
   return output
 }
 

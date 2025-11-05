@@ -22,16 +22,16 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
   protected isHoisted = new Lazy<boolean>(async () => {
     const command = getPackageManagerCommand(this.installOptions.manager)
 
-    try {
-      const config = await this.asyncExec(command, ["config", "list"])
-      const lines = Object.fromEntries(config.split("\n").map(line => line.split("=").map(s => s.trim())))
+    const config = (await this.asyncExec(command, ["config", "list"])).stdout
+    if (config == null) {
+      log.debug({ manager: this.installOptions.manager }, "unable to determine if node_modules are hoisted: no config output. falling back to hoisted mode")
+      return false
+    }
+    const lines = Object.fromEntries(config.split("\n").map(line => line.split("=").map(s => s.trim())))
 
-      if (lines["node-linker"] === "hoisted") {
-        log.debug({ manager: this.installOptions.manager }, "node_modules are hoisted")
-        return true
-      }
-    } catch (error: any) {
-      log.debug({ error: error.message }, "error checking if node modules are hoisted, falling back to non-hoisted")
+    if (lines["node-linker"] === "hoisted") {
+      log.debug({ manager: this.installOptions.manager }, "node_modules are hoisted")
+      return true
     }
 
     return false
@@ -40,7 +40,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
   constructor(
     protected readonly rootDir: string,
     private readonly tempDirManager: TmpDir
-  ) { }
+  ) {}
 
   public async getNodeModules({ cancellationToken, packageName }: { cancellationToken: CancellationToken; packageName: string }): Promise<NodeModuleInfo[]> {
     const tree: ProdDepType = await this.getDependenciesTree(this.installOptions.manager)
@@ -235,9 +235,12 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     result.sort((a, b) => a.name.localeCompare(b.name))
   }
 
-  async asyncExec(command: string, args: string[], cwd: string = this.rootDir): Promise<string> {
-    const payload = await execAsync([`"${command}"`, ...args].join(" "), { cwd, maxBuffer: 100 * 1024 * 1024 }) // 100MB buffer LOL, some projects can have extremely large dependency trees
-    return payload.stdout.trim()
+  async asyncExec(command: string, args: string[], cwd: string = this.rootDir): Promise<{ stdout: string | null; stderr: string | null }> {
+    const payload = await execAsync([`"${command}"`, ...args].join(" "), { cwd, maxBuffer: 100 * 1024 * 1024, encoding: "utf8" }).catch(err => {
+      log.error({ err }, "failed to execute command")
+      return { stdout: null, stderr: err.message }
+    })
+    return { stdout: payload.stdout?.trim() ?? null, stderr: payload.stderr?.trim() ?? null }
   }
 
   async streamCollectorCommandToJsonFile(command: string, args: string[], cwd: string, tempOutputFile: string) {
@@ -276,12 +279,14 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
 
       child.on("close", code => {
         outStream.close()
+        if (stderr.length > 0) {
+          log.debug({ stderr }, "note: there was node module collector output on stderr")
+          // return reject(new Error(`Node module collector error output:\n${stderr}`))
+        }
         // https://github.com/npm/npm/issues/17624
         if (code === 1 && "npm" === execName.toLowerCase() && args.includes("list")) {
           // This is a known issue with npm list command, it can return code 1 even when the command is "technically" successful
-          if (this.installOptions.manager === PM.NPM) {
-            log.debug({ code, stderr }, "`npm list` returned non-zero exit code, but it MIGHT be expected (https://github.com/npm/npm/issues/17624). Check stderr for details.")
-          }
+          log.debug(null, "`npm list` returned non-zero exit code, but it MIGHT be expected (https://github.com/npm/npm/issues/17624). Check stderr for details.")
           return resolve()
         }
         if (code !== 0) {
