@@ -51,8 +51,8 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
     this.productionGraph[dependencyId] = { dependencies: [] }
     const productionDeps = Object.entries(resolvedDeps)
       .filter(([packageName]) => prodDependencies[packageName])
-      .map(async ([packageName, dependency]) => {
-        const childDependencyId = `${packageName}@${dependency.version}`
+      .map(async ([, dependency]) => {
+        const childDependencyId = this.packageVersionString(dependency)
         await this.extractProductionDependencyGraph(dependency, childDependencyId)
         return childDependencyId
       })

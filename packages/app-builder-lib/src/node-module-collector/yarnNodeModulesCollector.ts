@@ -65,14 +65,12 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
     }
 
     const productionDeps = Object.entries(tree.dependencies || {}).map(async ([, dependency]) => {
-      const childDependencyId = this.packageVersionString(dependency)
-      const resolvedPath = this.resolvePath(dependency.path)
-
       const dep = {
         ...dependency,
-        path: resolvedPath,
+        path: this.resolvePath(dependency.path),
       }
 
+      const childDependencyId = this.packageVersionString(dep)
       await this.extractProductionDependencyGraph(dep, childDependencyId)
       return childDependencyId
     })

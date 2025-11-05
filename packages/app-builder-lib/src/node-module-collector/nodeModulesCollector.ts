@@ -42,7 +42,15 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     private readonly tempDirManager: TmpDir
   ) {}
 
-  public async getNodeModules({ cancellationToken, packageName }: { cancellationToken: CancellationToken; packageName: string }): Promise<NodeModuleInfo[]> {
+  public async getNodeModules({
+    cancellationToken,
+    packageName,
+    packageVersion,
+  }: {
+    cancellationToken: CancellationToken
+    packageName: string
+    packageVersion?: string
+  }): Promise<NodeModuleInfo[]> {
     const tree: ProdDepType = await this.getDependenciesTree(this.installOptions.manager)
 
     if (cancellationToken.cancelled) {
@@ -52,16 +60,17 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     await this.collectAllDependencies(tree)
 
     const realTree: ProdDepType = await this.getTreeFromWorkspaces(tree)
-    await this.extractProductionDependencyGraph(realTree, packageName)
+    const packageId = this.packageVersionString(realTree)
+    await this.extractProductionDependencyGraph(realTree, packageId)
 
     if (cancellationToken.cancelled) {
       throw new Error("getNodeModules cancelled after building production graph")
     }
 
-    const hoisterResult: HoisterResult = hoist(this.transformToHoisterTree(this.productionGraph, packageName), { check: true })
+    const hoisterResult: HoisterResult = hoist(this.transformToHoisterTree(this.productionGraph, packageId), { check: true })
 
     this._getNodeModules(hoisterResult.dependencies, this.nodeModules)
-    log.debug({ packageName, depCount: this.nodeModules.length }, "node modules collection complete")
+    log.debug({ packageId, depCount: this.nodeModules.length }, "node modules collection complete")
 
     return this.nodeModules
   }

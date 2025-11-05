@@ -47,8 +47,8 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
 
         return true
       })
-      .map(async ([packageName, dependency]) => {
-        const childDependencyId = `${packageName}@${dependency.version}`
+      .map(async ([, dependency]) => {
+        const childDependencyId = this.packageVersionString(dependency)
         await this.extractProductionDependencyGraph(dependency, childDependencyId)
         return childDependencyId
       })

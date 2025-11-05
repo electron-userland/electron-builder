@@ -49,11 +49,11 @@ export class YarnBerryNodeModulesCollector extends NpmNodeModulesCollector {
       return
     }
     const productionDeps = Object.entries(tree.dependencies || {}).map(async ([, dependency]) => {
-      const childDependencyId = this.packageVersionString(dependency)
       const dep = {
         ...dependency,
         path: this.resolvePath(dependency.path),
       }
+      const childDependencyId = this.packageVersionString(dep)
       await this.extractProductionDependencyGraph(dep, childDependencyId)
       return childDependencyId
     })
