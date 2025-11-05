@@ -67,10 +67,9 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
     const visited = new Set<string>()
 
     const buildFromPackage = async (pkgDir: string): Promise<NpmDependency> => {
-      const dir = (await this.isHoisted.value) ? baseDir : pkgDir
-      const pkgPath = this.resolvePath(path.join(dir, "package.json"))
+      const pkgPath = this.resolvePath(path.join(pkgDir, "package.json"))
 
-      log.debug({ dir, pkgPath }, "building dependency node from package.json")
+      log.debug({ pkgPath }, "building dependency node from package.json")
 
       if (!(await exists(pkgPath))) {
         throw new Error(`package.json not found at ${pkgPath} while building dependency tree manually within ${baseDir}`)
@@ -78,7 +77,7 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
 
       const pkg: PackageJson = await readJson(pkgPath)
 
-      const base = { name: pkg.name, version: pkg.version, path: dir }
+      const base = { name: pkg.name, version: pkg.version, path: pkgDir }
       const id = this.packageVersionString(base)
 
       if (visited.has(id)) {
@@ -89,6 +88,7 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
       const prodDeps: Record<string, NpmDependency> = {}
 
       for (const [name, version] of Object.entries(pkg.dependencies || {})) {
+        const dir = (await this.isHoisted.value) ? baseDir : pkgDir
         const packagePath = path.join(dir, "node_modules", name)
         log.debug({ packagePath }, `resolving production sub-dependency ${name}@${version}`)
         const p = this.resolvePath(packagePath)

@@ -62,9 +62,9 @@ export class YarnBerryNodeModulesCollector extends NpmNodeModulesCollector {
   }
 
   private async detectYarnSetup(rootDir: string): Promise<YarnSetupInfo> {
-    let yarnVersion: string | null = null
-    let nodeLinker: "pnp" | "node-modules" | null = null
-    let nmHoistingLimits: "workspaces" | "dependencies" | "none" | null = null
+    let yarnVersion: YarnSetupInfo["yarnVersion"] = null
+    let nodeLinker: YarnSetupInfo["nodeLinker"] = null
+    let nmHoistingLimits: YarnSetupInfo["nmHoistingLimits"] = null
 
     const output = await this.asyncExec("yarn", ["config", "list", "--json"], rootDir)
 
@@ -80,12 +80,21 @@ export class YarnBerryNodeModulesCollector extends NpmNodeModulesCollector {
     }
 
     // Yarn prints multiple JSON lines; find the one with type: 'inspect'
-    const inspectLine = output.stdout
+    const parsed = output.stdout
       .split("\n")
-      .map(line => line.trim())
-      .find(line => line.startsWith('{"type":"inspect"'))
-    if (inspectLine) {
-      const parsed = JSON.parse(inspectLine)
+      .map(l => l.trim())
+      .filter(Boolean)
+      .map(l => {
+        try {
+          return JSON.parse(l)
+        } catch {
+          return undefined
+        }
+      })
+      .filter(Boolean)
+      .find(l => l.type === "inspect")
+
+    if (parsed) {
       const data = parsed.data?.["rc"] || parsed.data || {}
 
       yarnVersion = parsed.data?.["manifest"]?.version ?? null
