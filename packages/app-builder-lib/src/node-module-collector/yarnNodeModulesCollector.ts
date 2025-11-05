@@ -38,15 +38,17 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
     return Promise.resolve(true) // Yarn Classic always hoists
   })
 
+  private appPkgJson: Lazy<any> = new Lazy<any>(async () => {
+    const appPkgPath = path.join(this.rootDir, "package.json")
+    return readJson(appPkgPath).catch(() => ({}))
+  })
+
   protected getArgs(): string[] {
     return ["list", "--production", "--json", "--depth=Infinity", "--no-progress"]
   }
 
   protected async getTreeFromWorkspaces(tree: YarnDependency): Promise<YarnDependency> {
-    const appPkgPath = path.join(this.rootDir, "package.json")
-    const appPkg = await readJson(appPkgPath).catch(() => ({}))
-    const appName = appPkg.name
-
+    const appName = (await this.appPkgJson.value).name
     if (tree.dependencies && appName) {
       for (const [key, dep] of Object.entries(tree.dependencies)) {
         if (dep.name === appName) {
@@ -94,7 +96,7 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
     return "prod"
   }
 
-  protected parseDependenciesTree(jsonBlob: string): Promise<YarnDependency> {
+  protected async parseDependenciesTree(jsonBlob: string): Promise<YarnDependency> {
     const lines = jsonBlob
       .split("\n")
       .map(l => l.trim())
@@ -126,9 +128,10 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
       dependencies[name] = dep
     }
 
+    const rootPkgJson = await this.appPkgJson.value
     return Promise.resolve({
-      name: ".",
-      version: "unknown",
+      name: rootPkgJson.name || ".",
+      version: rootPkgJson.version || "unknown",
       path: this.rootDir,
       dependencies,
     })
@@ -159,17 +162,17 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
 
       seen.add(id)
 
-      const depKey = [...this.allDependencies.keys()].find(key => {
-        const [nameKey, versionKey] = key.split("::")
-        return nameKey === pkgName && versionKey === version
-      })
+      // const depKey = [...this.allDependencies.keys()].find(key => {
+      //   const [nameKey, versionKey] = key.split("::")
+      //   return nameKey === pkgName && versionKey === version
+      // })
 
-      const dep = depKey ? this.allDependencies.get(depKey) : undefined
+      const dep = this.allDependencies.get(node.name)!
 
       const normalizedDep: YarnDependency = {
         name: pkgName,
         version,
-        path: dep?.path ?? path.join(this.rootDir, "node_modules", pkgName), // Use fallback path
+        path: this.resolvePath(dep.path), // Use fallback path since yarn classic's hoisting behavior
         dependencies: {},
         optionalDependencies: {},
       }
@@ -276,7 +279,7 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
           path: p,
         }
 
-        const moduleKey = this.cacheKey(m)
+        const moduleKey = this.packageVersionString(m)
         if (this.allDependencies.has(moduleKey)) {
           continue
         }
