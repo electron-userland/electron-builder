@@ -37,7 +37,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     return false
   })
 
-    protected appPkgJson: Lazy<any> = new Lazy<any>(async () => {
+  protected appPkgJson: Lazy<any> = new Lazy<any>(async () => {
     const appPkgPath = path.join(this.rootDir, "package.json")
     return readJson(appPkgPath)
   })
@@ -149,6 +149,23 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     } catch (error: any) {
       log.debug({ filePath, message: error.message || error.stack }, "error resolving path")
       return filePath
+    }
+  }
+
+  /**
+   * Resolves a package to its filesystem location using Node.js module resolution.
+   * Returns the directory containing the package, not the package.json path.
+   */
+  protected resolvePackageDir = (packageName: string, fromDir: string): string | null => {
+    try {
+      // require.resolve finds the main entry point, so we look for package.json instead
+      const packageJsonPath = require.resolve(`${packageName}/package.json`, {
+        paths: [fromDir, this.rootDir],
+      })
+      return path.dirname(packageJsonPath)
+    } catch (error: any) {
+      log.warn({ packageName, fromDir, error: error.message }, "could not resolve package")
+      return null
     }
   }
 

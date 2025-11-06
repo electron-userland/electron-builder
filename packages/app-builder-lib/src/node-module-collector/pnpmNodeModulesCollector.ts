@@ -20,16 +20,24 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
       return
     }
 
-    const p = path.normalize(this.resolvePath(tree.path))
-    let packageJson: Dependency<string, string>
-    try {
-      packageJson = require(path.join(p, "package.json"))
-    } catch (error: any) {
-      log.warn(null, `Failed to read package.json for ${p}: ${error.message}`)
+    const getProductionDependencies = (tree: PnpmDependency): { packageJson: Dependency<string, string>; prodDeps: Record<string, string> } | null => {
+      const p = path.normalize(this.resolvePackageDir(tree.name, tree.path) ?? this.resolvePath(tree.path))
+      let packageJson: Dependency<string, string>
+      try {
+        packageJson = require(path.join(p, "package.json"))
+      } catch (error: any) {
+        log.warn(null, `Failed to read package.json for ${p}: ${error.message}`)
+        return null
+      }
+      return { packageJson, prodDeps: { ...packageJson.dependencies, ...packageJson.optionalDependencies } }
+    }
+
+    const json = tree.name === dependencyId ? null : getProductionDependencies(tree)
+    const prodDependencies = json?.prodDeps ?? { ...(tree.dependencies || {}), ...(tree.optionalDependencies || {}) }
+    if (prodDependencies == null) {
+      this.productionGraph[dependencyId] = { dependencies: [] }
       return
     }
-    const prodDependencies = { ...packageJson.dependencies, ...packageJson.optionalDependencies }
-
     const deps = { ...(tree.dependencies || {}), ...(tree.optionalDependencies || {}) }
     this.productionGraph[dependencyId] = { dependencies: [] }
     const depPromises = Object.entries(deps)
@@ -40,7 +48,7 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
         }
 
         // Then check if optional dependency path exists
-        if (packageJson.optionalDependencies && packageJson.optionalDependencies[packageName] && !fs.existsSync(dependency.path)) {
+        if (json?.packageJson?.optionalDependencies?.[packageName] && !fs.existsSync(dependency.path)) {
           log.debug(null, `Optional dependency ${packageName}@${dependency.version} path doesn't exist: ${dependency.path}`)
           return false
         }
@@ -69,6 +77,11 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
       this.allDependencies.set(`${key}@${value.version}`, value)
       await this.collectAllDependencies(value)
     }
+  }
+
+  protected packageVersionString(pkg: PnpmDependency): string {
+    // we use 'from' field because 'name' may be different in case of aliases
+    return `${pkg.from}@${pkg.version}`
   }
 
   protected async parseDependenciesTree(jsonBlob: string): Promise<PnpmDependency> {

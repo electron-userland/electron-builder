@@ -68,23 +68,6 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
     const visited = new Set<string>()
 
     /**
-     * Resolves a package to its filesystem location using Node.js module resolution.
-     * Returns the directory containing the package, not the package.json path.
-     */
-    const resolvePackageDir = (packageName: string, fromDir: string): string | null => {
-      try {
-        // require.resolve finds the main entry point, so we look for package.json instead
-        const packageJsonPath = require.resolve(`${packageName}/package.json`, {
-          paths: [baseDir, fromDir],
-        })
-        return path.dirname(packageJsonPath)
-      } catch (error: any) {
-        log.warn({ packageName, fromDir, error: error.message }, "could not resolve package")
-        return null
-      }
-    }
-
-    /**
      * Recursively builds dependency tree starting from a package directory.
      */
     const buildFromPackage = async (packageDir: string): Promise<NpmDependency> => {
@@ -122,7 +105,7 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
       for (const [depName, depVersion] of Object.entries(allProdDepNames)) {
         try {
           // Resolve the dependency using Node.js module resolution from this package's directory
-          const depPath = resolvePackageDir(depName, packageDir)
+          const depPath = this.resolvePackageDir(depName, packageDir)
 
           if (!depPath) {
             log.warn({ package: pkg.name, dependency: depName, version: depVersion }, "dependency not found, skipping")
