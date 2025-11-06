@@ -40,7 +40,7 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
 
   private appPkgJson: Lazy<any> = new Lazy<any>(async () => {
     const appPkgPath = path.join(this.rootDir, "package.json")
-    return readJson(appPkgPath).catch(() => ({}))
+    return readJson(appPkgPath)
   })
 
   protected getArgs(): string[] {
@@ -49,13 +49,10 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
 
   protected async getTreeFromWorkspaces(tree: YarnDependency): Promise<YarnDependency> {
     const appName = (await this.appPkgJson.value).name
-    if (tree.dependencies && appName) {
-      for (const [key, dep] of Object.entries(tree.dependencies)) {
-        if (dep.name === appName) {
-          log.debug({ name: dep.name, path: dep.path }, "skipping root app package from dependency tree")
-          delete tree.dependencies[key]
-        }
-      }
+    if (tree.dependencies?.[appName]) {
+      const { name, path } = tree.dependencies[appName]
+      log.debug({ name, path }, "pruning root app/self package from workspace tree")
+      delete tree.dependencies[appName]
     }
 
     return tree
