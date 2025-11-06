@@ -414,7 +414,7 @@ test("smart unpack local module with dll file", ({ expect }) => {
 })
 
 // https://github.com/electron-userland/electron-builder/issues/1738
-test.ifDevOrLinuxCi("posix smart unpack", ({ expect }) =>
+test.ifNotWindows("posix smart unpack", ({ expect }) =>
   app(
     expect,
     {
