@@ -6,31 +6,33 @@ import { getPackageManagerCommand, PM } from "./packageManager"
 import { Dependency, PnpmDependency } from "./types"
 
 export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependency, PnpmDependency> {
-  static async isPnpmProjectHoisted(rootDir: string) {
-    const command = getPackageManagerCommand(PM.PNPM)
-    const config = await NodeModulesCollector.safeExec(command, ["config", "list"], rootDir)
-    const lines = Object.fromEntries(config.split("\n").map(line => line.split("=").map(s => s.trim())))
-    return lines["node-linker"] === "hoisted"
+  public readonly installOptions = {
+    manager: PM.PNPM,
+    lockfile: "pnpm-lock.yaml",
   }
-
-  public readonly installOptions = { manager: PM.PNPM, lockfile: "pnpm-lock.yaml" }
 
   protected getArgs(): string[] {
     return ["list", "--prod", "--json", "--depth", "Infinity"]
   }
 
-  extractProductionDependencyGraph(tree: PnpmDependency, dependencyId: string): void {
+  protected async extractProductionDependencyGraph(tree: PnpmDependency, dependencyId: string) {
     if (this.productionGraph[dependencyId]) {
       return
     }
 
     const p = path.normalize(this.resolvePath(tree.path))
-    const packageJson: Dependency<string, string> = require(path.join(p, "package.json"))
+    let packageJson: Dependency<string, string>
+    try {
+      packageJson = require(path.join(p, "package.json"))
+    } catch (error: any) {
+      log.warn(null, `Failed to read package.json for ${p}: ${error.message}`)
+      return
+    }
     const prodDependencies = { ...packageJson.dependencies, ...packageJson.optionalDependencies }
 
     const deps = { ...(tree.dependencies || {}), ...(tree.optionalDependencies || {}) }
     this.productionGraph[dependencyId] = { dependencies: [] }
-    const dependencies = Object.entries(deps)
+    const depPromises = Object.entries(deps)
       .filter(([packageName, dependency]) => {
         // First check if it's in production dependencies
         if (!prodDependencies[packageName]) {
@@ -45,32 +47,33 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
 
         return true
       })
-      .map(([packageName, dependency]) => {
-        const childDependencyId = `${packageName}@${dependency.version}`
-        this.extractProductionDependencyGraph(dependency, childDependencyId)
+      .map(async ([, dependency]) => {
+        const childDependencyId = this.packageVersionString(dependency)
+        await this.extractProductionDependencyGraph(dependency, childDependencyId)
         return childDependencyId
       })
 
+    const dependencies = await Promise.all(depPromises)
     this.productionGraph[dependencyId] = { dependencies }
   }
 
-  protected collectAllDependencies(tree: PnpmDependency) {
+  protected async collectAllDependencies(tree: PnpmDependency) {
     // Collect regular dependencies
     for (const [key, value] of Object.entries(tree.dependencies || {})) {
       this.allDependencies.set(`${key}@${value.version}`, value)
-      this.collectAllDependencies(value)
+      await this.collectAllDependencies(value)
     }
 
     // Collect optional dependencies if they exist
     for (const [key, value] of Object.entries(tree.optionalDependencies || {})) {
       this.allDependencies.set(`${key}@${value.version}`, value)
-      this.collectAllDependencies(value)
+      await this.collectAllDependencies(value)
     }
   }
 
-  protected parseDependenciesTree(jsonBlob: string): PnpmDependency {
+  protected async parseDependenciesTree(jsonBlob: string): Promise<PnpmDependency> {
     const dependencyTree: PnpmDependency[] = JSON.parse(jsonBlob)
     // pnpm returns an array of dependency trees
-    return dependencyTree[0]
+    return Promise.resolve(dependencyTree[0])
   }
 }

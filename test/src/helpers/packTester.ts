@@ -9,14 +9,14 @@ import { CancellationToken, UpdateFileInfo } from "builder-util-runtime"
 import { Arch, ArtifactCreated, Configuration, DIR_TARGET, getArchSuffix, MacOsTargetName, Packager, PackagerOptions, Platform, Target } from "electron-builder"
 import { convertVersion } from "electron-winstaller"
 import { PublishPolicy } from "electron-publish"
-import { copyFile, emptyDir, mkdir, remove, writeJson } from "fs-extra"
+import { copyFile, emptyDir, mkdir, writeJson } from "fs-extra"
 import * as fs from "fs/promises"
 import { load } from "js-yaml"
 import * as path from "path"
 import pathSorter from "path-sort"
 import { NtExecutable, NtExecutableResource } from "resedit"
 import { TmpDir } from "temp-file"
-import { getCollectorByPackageManager, detectPackageManager } from "app-builder-lib/out/node-module-collector"
+import { getCollectorByPackageManager, detectPackageManager, PM } from "app-builder-lib/out/node-module-collector"
 import { promisify } from "util"
 import { CSC_LINK, WIN_CSC_LINK } from "./codeSignData"
 import { assertThat } from "./fileAssert"
@@ -28,9 +28,24 @@ import { computeDefaultAppDirectory } from "app-builder-lib/out/util/config/conf
 import { installDependencies } from "app-builder-lib/out/util/yarn"
 import { ELECTRON_VERSION } from "./testConfig"
 import { createLazyProductionDeps } from "app-builder-lib/out/util/packageDependencies"
+import { execSync } from "child_process"
 
-if (process.env.TRAVIS !== "true") {
-  process.env.CIRCLE_BUILD_NUM = "42"
+const PACKAGE_MANAGER_VERSION_MAP = {
+  [PM.NPM]: { cli: "npm", version: "9.8.1" },
+  [PM.YARN]: { cli: "yarn", version: "1.22.19" },
+  [PM.YARN_BERRY]: { cli: "yarn", version: "3.5.0" },
+  [PM.PNPM]: { cli: "pnpm", version: "10.18.0" },
+  [PM.BUN]: { cli: "bun", version: "1" },
+}
+
+export function getPackageManagerWithVersion(pm: PM, packageManagerAndVersionString?: string) {
+  const packageManagerInfo = PACKAGE_MANAGER_VERSION_MAP[pm]
+  const prepare = packageManagerAndVersionString == null ? `${packageManagerInfo.cli}@${packageManagerInfo.version}` : packageManagerAndVersionString
+  return {
+    cli: packageManagerInfo.cli,
+    version: packageManagerInfo.version,
+    prepareEntry: prepare,
+  }
 }
 
 export const EXTENDED_TIMEOUT = 10 * 60 * 1000
@@ -38,17 +53,17 @@ export const linuxDirTarget = Platform.LINUX.createTarget(DIR_TARGET, Arch.x64)
 export const snapTarget = Platform.LINUX.createTarget("snap", Arch.x64)
 
 export interface AssertPackOptions {
-  readonly projectDirCreated?: (projectDir: string, tmpDir: TmpDir) => Promise<any>
+  readonly projectDirCreated?: (projectDir: string, tmpDir: TmpDir) => Promise<any> | (() => Promise<any>)
   readonly packed?: (context: PackedContext) => Promise<any>
   readonly expectedArtifacts?: Array<string>
 
   readonly checkMacApp?: (appDir: string, info: any) => Promise<any>
 
+  readonly packageManager?: PM
   readonly useTempDir?: boolean
   readonly signed?: boolean
   readonly signedWin?: boolean
 
-  readonly isInstallDepsBefore?: boolean
   readonly storeDepsLockfileSnapshot?: boolean
 
   readonly publish?: PublishPolicy
@@ -73,8 +88,8 @@ export function appThrows(expect: ExpectStatic, packagerOptions: PackagerOptions
   return assertThat(expect, assertPack(expect, "test-app-one", packagerOptions, checkOptions)).throws(customErrorAssert)
 }
 
-export function appTwoThrows(expect: ExpectStatic, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions = {}) {
-  return assertThat(expect, assertPack(expect, "test-app", packagerOptions, checkOptions)).throws()
+export function appTwoThrows(expect: ExpectStatic, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions = {}, customErrorAssert?: (error: Error) => void) {
+  return assertThat(expect, assertPack(expect, "test-app", packagerOptions, checkOptions)).throws(customErrorAssert)
 }
 
 export function app(expect: ExpectStatic, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions = {}) {
@@ -102,7 +117,6 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
     packagerOptions = deepAssign({}, packagerOptions, { config: { mac: { identity: null } } })
   }
 
-  const projectDirCreated = checkOptions.projectDirCreated
   let projectDir = path.join(__dirname, "..", "..", "fixtures", fixtureName)
   // const isDoNotUseTempDir = platform === "darwin"
   const customTmpDir = process.env.TEST_APP_TMP_DIR
@@ -125,55 +139,93 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
       // if custom project dir specified, copy node_modules (i.e. do not ignore it)
       return (packagerOptions.projectDir != null || basename !== "node_modules") && (!basename.startsWith(".") || basename === ".babelrc")
     },
-    isUseHardLink: USE_HARD_LINKS,
+    isUseHardLink: USE_HARD_LINKS, // TODO: consider use hard links for tests
   })
   projectDir = dir
 
   await executeFinally(
     (async () => {
-      if (projectDirCreated != null) {
-        await projectDirCreated(projectDir, tmpDir)
+      const packageManagerOverride = checkOptions.packageManager || PM.NPM
+      await modifyPackageJson(projectDir, data => {
+        if (data.packageManager == null) {
+          data.packageManager = getPackageManagerWithVersion(packageManagerOverride).prepareEntry
+        }
+      })
+
+      const postNodeModulesInstallHook = checkOptions.projectDirCreated ? await checkOptions.projectDirCreated(projectDir, tmpDir) : null
+
+      // Check again. Package manager could have been changed in package.json during `projectDirCreated`
+      const { pm, corepackConfig: packageManager } = await detectPackageManager([projectDir])
+
+      const tmpCache = await tmpDir.createTempDir({ prefix: "cache-" })
+      const tmpHome = await tmpDir.createTempDir({ prefix: "home-" })
+      const runtimeEnv = {
+        ...process.env,
+        // corepack
+        // COREPACK_HOME,
+        // COREPACK_ENABLE_DOWNLOADS: "1",
+        // yarn
+        HOME: tmpHome,
+        USERPROFILE: tmpHome, // for Windows compatibility
+        YARN_CACHE_FOLDER: tmpCache,
+        // YARN_DISABLE_TELEMETRY: "1",
+        // YARN_ENABLE_TELEMETRY: "false",
+        YARN_IGNORE_PATH: "1", // ignore globally installed yarn binaries
+        YARN_ENABLE_IMMUTABLE_INSTALLS: "false", // to be sure that --frozen-lockfile is not used
+        // YARN_NODE_LINKER: "node-modules", // force to not use pnp (as there's no way to access virtual packages within the paths returned by pnpm)
+        npm_config_cache: tmpCache, // prevent npm fallback caching
+      }
+      const { cli, prepareEntry, version } = getPackageManagerWithVersion(pm, packageManager)
+      log.info({ pm, version: version, projectDir }, "activating corepack")
+      try {
+        execSync(`corepack enable ${cli}`, { env: runtimeEnv, cwd: projectDir, stdio: "inherit" })
+      } catch (err: any) {
+        console.warn("⚠️ Corepack enable failed (possibly already enabled):", err.message)
+      }
+      try {
+        execSync(`corepack prepare ${prepareEntry} --activate`, { env: runtimeEnv, cwd: projectDir, stdio: "inherit" })
+      } catch (err: any) {
+        console.warn("⚠️ Yarn prepare failed:", err.message)
       }
 
-      if (checkOptions.isInstallDepsBefore) {
-        const pm = detectPackageManager([projectDir])
-        const collector = await getCollectorByPackageManager(pm, projectDir, tmpDir)
-        const collectorOptions = collector.installOptions
+      const collector = getCollectorByPackageManager(pm, projectDir, tmpDir)
+      const collectorOptions = collector.installOptions
 
-        const destLockfile = path.join(projectDir, collectorOptions.lockfile)
+      const destLockfile = path.join(projectDir, collectorOptions.lockfile)
 
-        const shouldUpdateLockfiles = !!process.env.UPDATE_LOCKFILE_FIXTURES && !!checkOptions.storeDepsLockfileSnapshot
-        // check for lockfile fixture so we can use `--frozen-lockfile`
-        if ((await exists(testFixtureLockfile)) && !shouldUpdateLockfiles) {
-          await copyFile(testFixtureLockfile, destLockfile)
+      const shouldUpdateLockfiles = !!process.env.UPDATE_LOCKFILE_FIXTURES && !!checkOptions.storeDepsLockfileSnapshot
+      // check for lockfile fixture so we can use `--frozen-lockfile`
+      if ((await exists(testFixtureLockfile)) && !shouldUpdateLockfiles) {
+        await copyFile(testFixtureLockfile, destLockfile)
+      }
+
+      const appDir = await computeDefaultAppDirectory(projectDir, configuration.directories?.app)
+
+      await installDependencies(
+        configuration,
+        {
+          projectDir: projectDir,
+          appDir: appDir,
+          workspaceRoot: null,
+        },
+        {
+          frameworkInfo: { version: ELECTRON_VERSION, useCustomDist: false },
+          productionDeps: createLazyProductionDeps(appDir, null, false),
+        },
+        runtimeEnv
+      )
+
+      if (typeof postNodeModulesInstallHook === "function") {
+        await postNodeModulesInstallHook()
+      }
+
+      // save lockfile fixture
+      if (!(await exists(testFixtureLockfile)) && shouldUpdateLockfiles) {
+        const fixtureDir = path.dirname(testFixtureLockfile)
+        if (!(await exists(fixtureDir))) {
+          await mkdir(fixtureDir)
         }
-
-        const appDir = await computeDefaultAppDirectory(projectDir, configuration.directories?.app)
-        await installDependencies(
-          configuration,
-          {
-            projectDir: projectDir,
-            appDir: appDir,
-          },
-          {
-            frameworkInfo: { version: ELECTRON_VERSION, useCustomDist: false },
-            productionDeps: createLazyProductionDeps(appDir, null, false),
-          }
-        )
-
-        // save lockfile fixture
-        if (!(await exists(testFixtureLockfile)) && shouldUpdateLockfiles) {
-          const fixtureDir = path.dirname(testFixtureLockfile)
-          if (!(await exists(fixtureDir))) {
-            await mkdir(fixtureDir)
-          }
-          await copyFile(destLockfile, testFixtureLockfile)
-        }
-      } else {
-        // if no deps installed, make sure no leftover lockfile fixture
-        if (await exists(testFixtureLockfile)) {
-          await remove(testFixtureLockfile)
-        }
+        await copyFile(destLockfile, testFixtureLockfile)
       }
 
       if (packagerOptions.projectDir != null) {
@@ -186,7 +238,8 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
           projectDir,
           ...packagerOptions,
         },
-        checkOptions
+        checkOptions,
+        runtimeEnv
       )
 
       if (checkOptions.packed != null) {
@@ -314,9 +367,15 @@ function sortArtifacts(a: ArtifactCreated, b: ArtifactCreated): number {
   return safeNameA.localeCompare(safeNameB, "en")
 }
 
-async function packAndCheck(expect: ExpectStatic, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions) {
+async function packAndCheck(
+  expect: ExpectStatic,
+  packagerOptions: PackagerOptions,
+  checkOptions: AssertPackOptions,
+  runtimeEnv: NodeJS.ProcessEnv
+): Promise<{ packager: Packager; outDir: string }> {
   const cancellationToken = new CancellationToken()
   const packager = new Packager(packagerOptions, cancellationToken)
+  ;(packager as any).runtimeEnvironmentVariables = runtimeEnv
   const publishManager = new PublishManager(packager, { publish: "publish" in checkOptions ? checkOptions.publish : "never" })
 
   const artifacts: Map<Platform, Array<ArtifactCreated>> = new Map()
@@ -466,8 +525,9 @@ async function checkMacResult(expect: ExpectStatic, packager: Packager, packager
   const plistPath = path.join(packedAppDir, "Contents", "Info.plist")
   const info = await parsePlistFile<PlistObject>(plistPath)
 
+  const buildNumber = process.env.TRAVIS_BUILD_NUMBER || process.env.CIRCLE_BUILD_NUM
   expect(info).toMatchObject({
-    CFBundleVersion: info.CFBundleVersion === "50" ? "50" : `${appInfo.version}.${process.env.TRAVIS_BUILD_NUMBER || process.env.CIRCLE_BUILD_NUM}`,
+    CFBundleVersion: info.CFBundleVersion === "50" ? "50" : `${appInfo.version}${buildNumber ? "." + buildNumber : ""}`,
   })
 
   // checked manually, remove to avoid mismatch on CI server (where TRAVIS_BUILD_NUMBER is defined and different on each test run)
@@ -644,7 +704,7 @@ export async function modifyPackageJson(projectDir: string, task: (data: any) =>
   await fs.unlink(file)
 
   await fs.writeFile(path.join(projectDir, ".yarnrc.yml"), "nodeLinker: node-modules")
-  return await writeJson(file, data)
+  return await writeJson(file, data, { spaces: 2 })
 }
 
 export function platform(platform: Platform): PackagerOptions {
