@@ -15,6 +15,11 @@ type YarnSetupInfo = {
   isPnP: boolean
   isHoisted: boolean
 }
+
+// Only Yarn v1 uses CLI. We should use pnp.cjs for PnP, but we can't access the files due to virtual file paths within zipped modules.
+// We fallback to npm node module collection (since Yarn Berry could have npm-like structure OR pnpm-like structure, depending on `nmHoistingLimits` configuration).
+// In the latter case, we still can't assume `pnpm` is installed, so we still try to use npm collection as a best-effort attempt.
+// If those fail, such as if using corepack, we attempt to manually build the tree.
 export class YarnBerryNodeModulesCollector extends NpmNodeModulesCollector {
   public readonly installOptions = {
     manager: PM.YARN_BERRY,
@@ -25,24 +30,13 @@ export class YarnBerryNodeModulesCollector extends NpmNodeModulesCollector {
 
   protected isHoisted: Lazy<boolean> = new Lazy<boolean>(async () => this.yarnSetupInfo.value.then(info => info.isHoisted))
 
-  // Only Yarn v1 uses CLI. We should use pnp.cjs for PnP, but we can't access the files due to virtual file paths within zipped modules.
-  // We fallback to npm node module collection (since Yarn Berry could have npm-like structure OR pnpm-like structure, depending on `nmHoistingLimits` configuration).
-  // In the latter case, we still can't assume `pnpm` is installed, so we still try to use npm collection as a best-effort attempt.
-  // If those fail, such as if using corepack, we attempt to manually build the tree.
-  protected async getDependenciesTree(_pm: PM): Promise<NpmDependency> {
-    const isHoisted = await this.yarnSetupInfo.value.then(info => !!info.isPnP)
-    if (isHoisted) {
-      log.warn(null, "Yarn PnP extraction not supported directly due to virtual paths (<package>.zip/<path>)")
+  protected async getDependenciesTree(pm: PM): Promise<NpmDependency> {
+    const isPnp = await this.yarnSetupInfo.value.then(info => !!info.isPnP)
+    if (isPnp) {
+      log.warn(null, "Yarn PnP extraction not supported directly due to virtual file paths (<package_name>.zip/<file_path>), falling back to NPM node module collector")
     }
 
-    try {
-      log.debug(null, "attempting to extract dependency tree using npm node module collector for Yarn Berry")
-      return await super.getDependenciesTree(PM.NPM)
-    } catch (error: any) {
-      log.info({ error: error.message }, "unable to process dependency tree, falling back to using manual node_modules traversal for yarn berry")
-    }
-    // Yarn Berry node_modules linker fallback. (Slower due to system ops, so we only use it as a fallback)
-    return this.buildNodeModulesTreeManually(this.rootDir)
+    return super.getDependenciesTree(pm)
   }
 
   protected async extractProductionDependencyGraph(tree: NpmDependency, dependencyId: string): Promise<void> {

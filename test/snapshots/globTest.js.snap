@@ -19820,7 +19820,7 @@ exports[`link 3`] = `
     },
     "package.json": {
       "offset": "5135",
-      "size": 256,
+      "size": 289,
     },
   },
 }
@@ -20273,7 +20273,7 @@ exports[`unpackDir one 2`] = `
     },
     "package.json": {
       "offset": "5139",
-      "size": 256,
+      "size": 289,
     },
   },
 }

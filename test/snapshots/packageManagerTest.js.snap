@@ -390,11 +390,11 @@ exports[`yarn berry multi-package workspace 2`] = `
 {
   "files": {
     "index.html": {
-      "offset": "24419",
+      "offset": "24709",
       "size": 841,
     },
     "index.js": {
-      "offset": "25260",
+      "offset": "25550",
       "size": 2501,
     },
     "node_modules": {
@@ -435,22 +435,22 @@ exports[`yarn berry multi-package workspace 2`] = `
           "files": {
             "index.js": {
               "offset": "20109",
-              "size": 2764,
+              "size": 3024,
             },
             "license.md": {
-              "offset": "22873",
-              "size": 1077,
+              "offset": "23133",
+              "size": 1079,
             },
             "package.json": {
-              "offset": "23950",
-              "size": 469,
+              "offset": "24212",
+              "size": 497,
             },
           },
         },
       },
     },
     "package.json": {
-      "offset": "27761",
+      "offset": "28051",
       "size": 329,
     },
   },

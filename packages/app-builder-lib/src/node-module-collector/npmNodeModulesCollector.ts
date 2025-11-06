@@ -1,9 +1,8 @@
+import { exists, log } from "builder-util"
 import * as path from "path"
 import { NodeModulesCollector } from "./nodeModulesCollector"
 import { PM } from "./packageManager"
 import { NpmDependency } from "./types"
-import { readJson } from "fs-extra"
-import { exists, log } from "builder-util"
 
 type PackageJson = {
   name: string
@@ -23,6 +22,17 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
 
   protected getArgs(): string[] {
     return ["list", "-a", "--include", "prod", "--include", "optional", "--omit", "dev", "--json", "--long", "--silent"]
+  }
+
+  protected async getDependenciesTree(pm: PM): Promise<NpmDependency> {
+    try {
+      // force NPM collection as Yarn Berry extends this class and PnP is not supported directly
+      return await super.getDependenciesTree(PM.NPM)
+    } catch (error: any) {
+      log.info({ pm, parser: PM.NPM, error: error.message }, "unable to process dependency tree, falling back to using manual node_modules traversal")
+    }
+    // node_modules linker fallback. (Slower due to system ops, so we only use it as a fallback)
+    return this.buildNodeModulesTreeManually(this.rootDir)
   }
 
   protected async collectAllDependencies(tree: NpmDependency) {
