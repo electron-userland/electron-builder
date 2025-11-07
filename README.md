@@ -96,17 +96,18 @@ See the full documentation on [electron.build](https://www.electron.build).
 | “I want to support development”        | [Donate](https://www.electron.build/donate)                                       |
 
 ## Installation
-[Yarn](http://yarnpkg.com/) is [strongly](https://github.com/electron-userland/electron-builder/issues/1147#issuecomment-276284477) recommended instead of npm.
-
-`yarn add electron-builder --dev`
+```
+yarn add electron-builder --dev
+// or npm, pnpm, bun
+```
 
 ### Note for Yarn 3
 
-Yarn 3 use PnP by default, but electron-builder still need node-modules(ref: [yarnpkg/berry#4804](https://github.com/yarnpkg/berry/issues/4804#issuecomment-1234407305)). Add configuration in the `.yarnrc.yaml` as follows:
+Yarn 3 use PnP by default, but electron-builder still needs node-modules (ref: [yarnpkg/berry#4804](https://github.com/yarnpkg/berry/issues/4804#issuecomment-1234407305)). Add configuration in the `.yarnrc.yaml` as follows:
 ```
 nodeLinker: "node-modules"
 ```
-will declare to use node-modules instead of PnP.
+This will declare to use node-modules instead of PnP.
 
 ## Quick Setup Guide
 
@@ -170,13 +171,9 @@ builder.build({
   })
 ```
 
-## Boilerplates
+## Community Boilerplates
 
-* [electron-webpack-quick-start](https://github.com/electron-userland/electron-webpack-quick-start) — A bare minimum project structure to get started developing with [electron-webpack](https://github.com/electron-userland/electron-webpack). Recommended.
 * [electron-react-boilerplate](https://github.com/chentsulin/electron-react-boilerplate) A boilerplate for scalable cross-platform desktop apps.
-* [electron-react-redux-boilerplate](https://github.com/jschr/electron-react-redux-boilerplate) A minimal boilerplate to get started with Electron, React and Redux.
-* [electron-boilerplate](https://github.com/szwacz/electron-boilerplate) A minimalistic yet comprehensive boilerplate application.
-* [Vue CLI 3 plugin for Electron](https://nklayman.github.io/vue-cli-plugin-electron-builder) A Vue CLI 3 plugin for Electron with no required configuration.
 * [electron-vue-vite](https://github.com/caoxiemeihao/electron-vue-vite) A real simple Electron + Vue3 + Vite5 boilerplate.
 * [vite-electron-builder](https://github.com/cawa-93/vite-electron-builder) Secure boilerplate for Electron app based on Vite. Supports multiple frameworks.
 * [electronjs-with-nextjs](https://github.com/saulotarsobc/electronjs-with-nextjs) ElectronJS application with NextJS and TypeScript.
@@ -201,7 +198,7 @@ DEBUG=electron-builder
 !!! tip "PowerShell"
     PowerShell uses different syntax to set environment variables.
     ```bash
-    $env:DEBUG=electron-builder
+    $env:DEBUG = "electron-builder"
     ```
 
 ## Donate
