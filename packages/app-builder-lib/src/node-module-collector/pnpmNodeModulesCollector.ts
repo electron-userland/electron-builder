@@ -19,7 +19,7 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
       return
     }
 
-    const getProductionDependencies = (tree: PnpmDependency): { packageJson: PackageJson; prodDeps: Record<string, string> } | null => {
+    const getProductionDependencies = (tree: PnpmDependency): { prodDeps: Record<string, string>; optionalDependencies: Record<string, string> } | null => {
       const p = path.normalize(this.resolvePackageDir(tree.name, tree.path) ?? this.resolvePath(tree.path))
       const pkgJsonPath = path.join(p, "package.json")
 
@@ -30,7 +30,7 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
         log.warn(null, `Failed to read package.json for ${p}: ${error.message}`)
         return null
       }
-      return { packageJson, prodDeps: { ...packageJson.dependencies, ...packageJson.optionalDependencies } }
+      return { prodDeps: { ...packageJson.dependencies, ...packageJson.optionalDependencies }, optionalDependencies: { ...packageJson.optionalDependencies } }
     }
 
     const json = tree.name === dependencyId ? null : getProductionDependencies(tree)
@@ -49,7 +49,7 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
         }
 
         // Then check if optional dependency path exists (using memoized version)
-        if (json?.packageJson?.optionalDependencies?.[packageName] && !this.existsSyncMemoized(dependency.path)) {
+        if (json?.optionalDependencies?.[packageName] && !this.existsSyncMemoized(dependency.path)) {
           log.debug(null, `Optional dependency ${packageName}@${dependency.version} path doesn't exist: ${dependency.path}`)
           return false
         }

@@ -47,10 +47,10 @@ export interface NpmDependency extends Dependency<NpmDependency, string> {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface YarnBerryDependency extends Dependency<YarnBerryDependency, string> { }
+export interface YarnBerryDependency extends Dependency<YarnBerryDependency, string> {}
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface YarnDependency extends Dependency<YarnDependency, YarnDependency> { }
+export interface YarnDependency extends Dependency<YarnDependency, YarnDependency> {}
 
 export type Dependency<T, V> = Dependencies<T, V> & ParsedDependencyTree
 
