@@ -37,6 +37,7 @@ RUN git clone https://aur.archlinux.org/http-parser.git \
 USER root
 WORKDIR /project
 
-RUN npm --silent install --global --depth 0 pnpm
+RUN npm --silent install --global --depth 0 pnpm corepack \
+ && corepack enable
 
 WORKDIR /project
