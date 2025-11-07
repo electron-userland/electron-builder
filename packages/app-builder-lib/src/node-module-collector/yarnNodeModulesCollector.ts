@@ -3,7 +3,7 @@ import { Lazy } from "lazy-val"
 import * as path from "path"
 import { NodeModulesCollector } from "./nodeModulesCollector"
 import { PM } from "./packageManager"
-import { YarnDependency } from "./types"
+import { PackageJson, YarnDependency } from "./types"
 
 type YarnListJsonLine =
   | {
@@ -75,7 +75,7 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
     this.productionGraph[dependencyId] = { dependencies: await Promise.all(productionDeps) }
   }
 
-  protected getDependencyType(pkgName: string, parentPkgJson: any): "prod" | "dev" | "optional" {
+  protected getDependencyType(pkgName: string, parentPkgJson: PackageJson): "prod" | "dev" | "optional" {
     if (parentPkgJson.optionalDependencies?.[pkgName]) {
       return "optional"
     }
@@ -214,7 +214,7 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
           continue
         }
 
-        const isRootOptional = rootPkgJson.optionalDependencies?.[value.name]
+        const isRootOptional = !!rootPkgJson.optionalDependencies?.[value.name]
         const isDirectRootDep = rootPkgJson.dependencies?.[value.name] || rootPkgJson.optionalDependencies?.[value.name] || rootPkgJson.devDependencies?.[value.name]
         const treatAsOptional = isOptionalDependency || parentIsOptional || isRootOptional
 

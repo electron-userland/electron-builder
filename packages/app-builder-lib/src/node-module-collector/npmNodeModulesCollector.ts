@@ -1,18 +1,8 @@
-import { exists, log } from "builder-util"
+import { log } from "builder-util"
 import * as path from "path"
 import { NodeModulesCollector } from "./nodeModulesCollector"
 import { PM } from "./packageManager"
-import { NpmDependency } from "./types"
-
-type PackageJson = {
-  name: string
-  version: string
-  dependencies?: Record<string, string>
-  devDependencies?: Record<string, string>
-  peerDependencies?: Record<string, string>
-  optionalDependencies?: Record<string, string>
-  workspaces?: string[] | { packages: string[] }
-}
+import { NpmDependency, PackageJson } from "./types"
 
 export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency, string> {
   public readonly installOptions = {
@@ -85,12 +75,12 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
 
       log.debug({ pkgPath }, "building dependency node from package.json")
 
-      if (!(await exists(pkgPath))) {
+      if (!(await this.existsMemoized(pkgPath))) {
         throw new Error(`package.json not found at ${pkgPath}`)
       }
 
-      // Read package.json using require for consistency with Node.js module system
-      const pkg: PackageJson = require(pkgPath)
+      // Read package.json using memoized require for consistency with Node.js module system
+      const pkg: PackageJson = this.requireMemoized(pkgPath)
       const resolvedPackageDir = this.resolvePath(packageDir)
 
       // Use resolved path as the unique identifier to prevent circular dependencies

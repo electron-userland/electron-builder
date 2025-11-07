@@ -1,16 +1,16 @@
-import { NpmNodeModulesCollector } from "./npmNodeModulesCollector"
-import { PnpmNodeModulesCollector } from "./pnpmNodeModulesCollector"
-import { YarnNodeModulesCollector } from "./yarnNodeModulesCollector"
-import { detectPackageManagerByFile, detectPackageManagerByEnv, PM, getPackageManagerCommand, detectYarnBerry as detectIfYarnBerry } from "./packageManager"
-import { NodeModuleInfo } from "./types"
-import { TmpDir } from "temp-file"
-import * as path from "path"
-import * as fs from "fs-extra"
 import { log, spawn } from "builder-util"
-import { YarnBerryNodeModulesCollector } from "./yarnBerryNodeModulesCollector"
 import { CancellationToken } from "builder-util-runtime"
+import * as fs from "fs-extra"
+import * as path from "path"
+import { TmpDir } from "temp-file"
+import { NpmNodeModulesCollector } from "./npmNodeModulesCollector"
+import { detectYarnBerry as detectIfYarnBerry, detectPackageManagerByEnv, detectPackageManagerByFile, getPackageManagerCommand, PM } from "./packageManager"
+import { PnpmNodeModulesCollector } from "./pnpmNodeModulesCollector"
+import { NodeModuleInfo } from "./types"
+import { YarnBerryNodeModulesCollector } from "./yarnBerryNodeModulesCollector"
+import { YarnNodeModulesCollector } from "./yarnNodeModulesCollector"
 
-export { PM, getPackageManagerCommand }
+export { getPackageManagerCommand, PM }
 
 export function getCollectorByPackageManager(pm: PM, rootDir: string, tempDirManager: TmpDir) {
   switch (pm) {

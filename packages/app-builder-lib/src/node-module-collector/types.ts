@@ -1,9 +1,11 @@
-export type YarnListJsonLine = { type: "tree"; data: { type: "list"; trees: YarnListTree[] } } | { type: "info" | "warning" | "error"; data: string }
-
-export interface YarnListTree {
-  name: string // "pkg@1.2.3"
-  children: YarnListTree[]
-  shadow?: boolean
+export type PackageJson = {
+  name: string
+  version: string
+  dependencies?: Record<string, string>
+  devDependencies?: Record<string, string>
+  peerDependencies?: Record<string, string>
+  optionalDependencies?: Record<string, string>
+  workspaces?: string[] | { packages: string[] }
 }
 
 export type ResolveModuleOptions<T> = {
@@ -25,7 +27,7 @@ export type ParsedDependencyTree = {
   readonly name: string
   readonly version: string
   readonly path: string
-  readonly workspaces?: string[] // we only use this at root level
+  readonly workspaces?: string[] | { packages: string[] } // we only use this at root level
 }
 
 // Note: `PnpmDependency` and `NpmDependency` include the output of `JSON.parse(...)` of `pnpm list` and `npm list` respectively
@@ -45,10 +47,10 @@ export interface NpmDependency extends Dependency<NpmDependency, string> {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface YarnBerryDependency extends Dependency<YarnBerryDependency, string> {}
+export interface YarnBerryDependency extends Dependency<YarnBerryDependency, string> { }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface YarnDependency extends Dependency<YarnDependency, YarnDependency> {}
+export interface YarnDependency extends Dependency<YarnDependency, YarnDependency> { }
 
 export type Dependency<T, V> = Dependencies<T, V> & ParsedDependencyTree
 

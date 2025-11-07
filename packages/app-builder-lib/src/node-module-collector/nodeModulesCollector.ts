@@ -7,8 +7,9 @@ import { Lazy } from "lazy-val"
 import * as path from "path"
 import { promisify } from "util"
 import { hoist, type HoisterResult, type HoisterTree } from "./hoist"
+import { createModuleCache, type ModuleCache } from "./moduleCache"
 import { getPackageManagerCommand, PM } from "./packageManager"
-import type { Dependency, DependencyGraph, NodeModuleInfo } from "./types"
+import type { Dependency, DependencyGraph, NodeModuleInfo, PackageJson } from "./types"
 
 const execAsync = promisify(exec)
 
@@ -18,6 +19,9 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
   protected productionGraph: DependencyGraph = {}
   protected pkgJsonCache: Map<string, string> = new Map()
   protected memoResolvedModules = new Map<string, Promise<string | null>>()
+
+  // Unified cache for all file system and module operations
+  protected cache: ModuleCache = createModuleCache()
 
   protected isHoisted = new Lazy<boolean>(async () => {
     const command = getPackageManagerCommand(this.installOptions.manager)
@@ -37,9 +41,9 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     return false
   })
 
-  protected appPkgJson: Lazy<any> = new Lazy<any>(async () => {
+  protected appPkgJson: Lazy<PackageJson> = new Lazy<PackageJson>(async () => {
     const appPkgPath = path.join(this.rootDir, "package.json")
-    return readJson(appPkgPath)
+    return this.readJsonMemoized(appPkgPath)
   })
 
   constructor(
@@ -103,7 +107,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
         shouldRetry: async (error: any) => {
           const logFields = { error: error.message, tempOutputFile, cwd: this.rootDir }
 
-          if (!(await exists(tempOutputFile))) {
+          if (!(await this.existsMemoized(tempOutputFile))) {
             log.debug(logFields, "dependency tree output file missing, retrying")
             return true
           }
@@ -128,16 +132,53 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     )
   }
 
+  protected async existsMemoized(filePath: string): Promise<boolean> {
+    if (!this.cache.exists.has(filePath)) {
+      this.cache.exists.set(filePath, await exists(filePath))
+    }
+    return this.cache.exists.get(filePath)!
+  }
+
+  protected async readJsonMemoized(filePath: string): Promise<PackageJson> {
+    if (!this.cache.packageJson.has(filePath)) {
+      this.cache.packageJson.set(filePath, await readJson(filePath))
+    }
+    return this.cache.packageJson.get(filePath)!
+  }
+
+  protected lstatMemoized(filePath: string): fs.Stats {
+    if (!this.cache.lstat.has(filePath)) {
+      this.cache.lstat.set(filePath, fs.lstatSync(filePath))
+    }
+    return this.cache.lstat.get(filePath)!
+  }
+
+  protected realpathMemoized(filePath: string): string {
+    if (!this.cache.realPath.has(filePath)) {
+      this.cache.realPath.set(filePath, fs.realpathSync(filePath))
+    }
+    return this.cache.realPath.get(filePath)!
+  }
+
   protected resolvePath(filePath: string): string {
+    // Check if we've already resolved this path
+    if (this.cache.realPath.has(filePath)) {
+      return this.cache.realPath.get(filePath)!
+    }
+
     try {
-      const stats = fs.lstatSync(filePath)
+      const stats = this.lstatMemoized(filePath)
       if (stats.isSymbolicLink()) {
-        return fs.realpathSync(filePath)
+        const resolved = this.realpathMemoized(filePath)
+        this.cache.realPath.set(filePath, resolved)
+        return resolved
       } else {
+        this.cache.realPath.set(filePath, filePath)
         return filePath
       }
     } catch (error: any) {
       log.debug({ filePath, message: error.message || error.stack }, "error resolving path")
+      this.cache.realPath.set(filePath, filePath)
       return filePath
     }
   }
@@ -147,16 +188,40 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
    * Returns the directory containing the package, not the package.json path.
    */
   protected resolvePackageDir = (packageName: string, fromDir: string): string | null => {
+    const cacheKey = `${packageName}::${fromDir}`
+
+    // Check memoization cache
+    if (this.cache.requireResolve.has(cacheKey)) {
+      return this.cache.requireResolve.get(cacheKey)!
+    }
+
     try {
       // require.resolve finds the main entry point, so we look for package.json instead
       const packageJsonPath = require.resolve(`${packageName}/package.json`, {
         paths: [fromDir, this.rootDir],
       })
-      return path.dirname(packageJsonPath)
+      const result = path.dirname(packageJsonPath)
+      this.cache.requireResolve.set(cacheKey, result)
+      return result
     } catch (error: any) {
       log.warn({ packageName, fromDir, error: error.message }, "could not resolve package")
+      this.cache.requireResolve.set(cacheKey, null)
       return null
     }
+  }
+
+  protected requireMemoized(pkgPath: string): PackageJson {
+    if (!this.cache.packageJson.has(pkgPath)) {
+      this.cache.packageJson.set(pkgPath, require(pkgPath))
+    }
+    return this.cache.packageJson.get(pkgPath)!
+  }
+
+  protected existsSyncMemoized(filePath: string): boolean {
+    if (!this.cache.exists.has(filePath)) {
+      this.cache.exists.set(filePath, fs.existsSync(filePath))
+    }
+    return this.cache.exists.get(filePath)!
   }
 
   protected cacheKey(pkg: ProdDepType): string {
@@ -184,7 +249,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
 
   protected async getTreeFromWorkspaces(tree: ProdDepType): Promise<ProdDepType> {
     if (tree.workspaces && tree.dependencies) {
-      const packageJson: Dependency<string, string> = await fs.readJson(path.join(this.rootDir, "package.json"))
+      const packageJson = await this.appPkgJson.value
       const dependencyName = packageJson.name
 
       for (const [key, value] of Object.entries(tree.dependencies)) {

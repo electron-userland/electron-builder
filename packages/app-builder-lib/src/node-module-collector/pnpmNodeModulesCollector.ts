@@ -1,9 +1,8 @@
 import { log } from "builder-util"
-import * as fs from "fs"
 import * as path from "path"
 import { NodeModulesCollector } from "./nodeModulesCollector"
 import { PM } from "./packageManager"
-import { Dependency, PnpmDependency } from "./types"
+import { PackageJson, PnpmDependency } from "./types"
 
 export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependency, PnpmDependency> {
   public readonly installOptions = {
@@ -20,11 +19,13 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
       return
     }
 
-    const getProductionDependencies = (tree: PnpmDependency): { packageJson: Dependency<string, string>; prodDeps: Record<string, string> } | null => {
+    const getProductionDependencies = (tree: PnpmDependency): { packageJson: PackageJson; prodDeps: Record<string, string> } | null => {
       const p = path.normalize(this.resolvePackageDir(tree.name, tree.path) ?? this.resolvePath(tree.path))
-      let packageJson: Dependency<string, string>
+      const pkgJsonPath = path.join(p, "package.json")
+
+      let packageJson: PackageJson
       try {
-        packageJson = require(path.join(p, "package.json"))
+        packageJson = this.requireMemoized(pkgJsonPath)
       } catch (error: any) {
         log.warn(null, `Failed to read package.json for ${p}: ${error.message}`)
         return null
@@ -47,8 +48,8 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
           return false
         }
 
-        // Then check if optional dependency path exists
-        if (json?.packageJson?.optionalDependencies?.[packageName] && !fs.existsSync(dependency.path)) {
+        // Then check if optional dependency path exists (using memoized version)
+        if (json?.packageJson?.optionalDependencies?.[packageName] && !this.existsSyncMemoized(dependency.path)) {
           log.debug(null, `Optional dependency ${packageName}@${dependency.version} path doesn't exist: ${dependency.path}`)
           return false
         }
