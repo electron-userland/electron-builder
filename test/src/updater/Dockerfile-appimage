@@ -45,4 +45,6 @@ RUN ln -s /usr/bin/fuse3 /usr/bin/fuse || true
 
 RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
 RUN apt-get install -y nodejs
-RUN npm --silent install --global --depth 0 pnpm
+RUN npm --silent install --global --depth 0 pnpm corepack \
+ && corepack enable
+
