@@ -38,6 +38,10 @@ export const NSIS_PATH = () => {
 }
 
 export const NSIS_RESOURCES_PATH = () => {
+  const custom = process.env.ELECTRON_BUILDER_NSIS_RESOURCES_DIR
+  if (custom != null && custom.length > 0) {
+    return Promise.resolve(custom.trim())
+  }
   return NsisTargetOptions.then((options: NsisOptions) => {
     if (options.customNsisResources) {
       const { checksum, url, version } = options.customNsisResources
