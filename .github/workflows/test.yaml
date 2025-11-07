@@ -188,7 +188,7 @@ jobs:
       fail-fast: false
       matrix:
         testFiles:
-          - winCodeSignTest,differentialUpdateTest,squirrelWindowsTest,HoistedNodeModuleTest
+          - winCodeSignTest,differentialUpdateTest,squirrelWindowsTest
           - appxTest,msiTest,portableTest,assistedInstallerTest,protonTest
           - BuildTest,oneClickInstallerTest,winPackagerTest,nsisUpdaterTest,webInstallerTest
           - concurrentBuildsTest

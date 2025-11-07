@@ -1,12 +1,8 @@
-import { exists, log } from "builder-util"
-import * as fs from "fs-extra"
-import { access } from "fs/promises"
-import { load } from "js-yaml"
+import { log } from "builder-util"
 import { Lazy } from "lazy-val"
-import * as path from "path"
 import { NpmNodeModulesCollector } from "./npmNodeModulesCollector"
 import { PM } from "./packageManager"
-import { NpmDependency, ResolveModuleOptions, YarnDependency } from "./types"
+import { NpmDependency } from "./types"
 
 type YarnSetupInfo = {
   yarnVersion: string | null

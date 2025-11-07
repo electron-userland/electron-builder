@@ -2,7 +2,7 @@ import { log } from "builder-util"
 import * as fs from "fs"
 import * as path from "path"
 import { NodeModulesCollector } from "./nodeModulesCollector"
-import { getPackageManagerCommand, PM } from "./packageManager"
+import { PM } from "./packageManager"
 import { Dependency, PnpmDependency } from "./types"
 
 export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependency, PnpmDependency> {

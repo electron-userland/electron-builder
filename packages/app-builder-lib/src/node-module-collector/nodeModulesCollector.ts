@@ -1,4 +1,5 @@
 import { exists, log, retry, TmpDir } from "builder-util"
+import { CancellationToken } from "builder-util-runtime"
 import { exec, spawn } from "child_process"
 import * as fs from "fs-extra"
 import { createWriteStream, readJson } from "fs-extra"
@@ -7,8 +8,7 @@ import * as path from "path"
 import { promisify } from "util"
 import { hoist, type HoisterResult, type HoisterTree } from "./hoist"
 import { getPackageManagerCommand, PM } from "./packageManager"
-import type { Dependency, DependencyGraph, NodeModuleInfo, ResolveModuleOptions } from "./types"
-import { CancellationToken } from "builder-util-runtime"
+import type { Dependency, DependencyGraph, NodeModuleInfo } from "./types"
 
 const execAsync = promisify(exec)
 

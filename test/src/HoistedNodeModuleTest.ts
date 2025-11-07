@@ -181,6 +181,7 @@ test.ifWindows("should throw when attempting to package a system file", async ({
       targets: Platform.WINDOWS.createTarget("dir", Arch.x64),
       projectDir: "app",
       config: {
+        electronVersion: ELECTRON_VERSION,
         files: ["index.js", "package.json", invalidPath],
       },
     },
