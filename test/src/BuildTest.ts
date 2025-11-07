@@ -387,7 +387,10 @@ test("smart unpack local module with dll file", ({ expect }) => {
     {
       targets: Platform.WINDOWS.createTarget(DIR_TARGET, Arch.x64),
       config: {
-        files: ["!foo"],
+        files: [
+          "!foo",
+          "!**/NuGet", // for some reason, NuGet only shows up on CI builds, but no Windows VMs or local linux/mac machines
+        ],
       },
     },
     {

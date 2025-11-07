@@ -34,17 +34,15 @@ export function getNodeModules(
     tempDirManager,
     cancellationToken,
     packageName,
-    packageVersion
   }: {
     rootDir: string
     tempDirManager: TmpDir
     cancellationToken: CancellationToken
     packageName: string
-    packageVersion?: string
   }
 ): Promise<NodeModuleInfo[]> {
   const collector = getCollectorByPackageManager(pm, rootDir, tempDirManager)
-  return collector.getNodeModules({ cancellationToken, packageName, packageVersion })
+  return collector.getNodeModules({ cancellationToken, packageName })
 }
 
 export async function detectPackageManager(searchPaths: string[]): Promise<{ pm: PM; corepackConfig: string | undefined; resolvedDirectory: string | undefined }> {

@@ -1,10 +1,9 @@
 import { log } from "builder-util"
-import { readJson } from "fs-extra"
+import { Lazy } from "lazy-val"
 import * as path from "path"
 import { NodeModulesCollector } from "./nodeModulesCollector"
 import { PM } from "./packageManager"
 import { YarnDependency } from "./types"
-import { Lazy } from "lazy-val"
 
 type YarnListJsonLine =
   | {
@@ -56,19 +55,6 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
     }
     return Promise.resolve(tree)
   }
-
-  // /**
-  //  * Check if a given path is a workspace package by checking if it's within
-  //  * a directory that matches the workspace patterns in package.json
-  //  */
-  // private isWorkspacePackage(pkgPath: string): boolean {
-  //   const relativePath = path.relative(this.rootDir, pkgPath)
-  //   // Common workspace patterns: packages/*, apps/*, etc.
-  //   // Check if the path is outside node_modules and in a subdirectory
-  //   return !relativePath.includes('node_modules') &&
-  //          relativePath.includes(path.sep) &&
-  //          !relativePath.startsWith('..')
-  // }
 
   protected async extractProductionDependencyGraph(tree: YarnDependency, dependencyId: string): Promise<void> {
     if (this.productionGraph[dependencyId]) {
@@ -210,11 +196,8 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
     return normalized
   }
 
-  protected async collectAllDependencies(tree: YarnDependency, appPackageName: string) {
-    // Use the provided appPackageName, or fall back to the current package name
-    const packageToExclude = appPackageName
-
-    const rootPkgJson = await readJson(path.join(this.rootDir, "package.json")).catch(() => ({}))
+  protected async collectAllDependencies(tree: YarnDependency, packageToExclude: string) {
+    const rootPkgJson = await this.appPkgJson.value
     const failedPackages = new Set<string>()
 
     log.debug({ packageToExclude, hasWorkspaces: !!tree.workspaces }, "collectAllDependencies starting")
