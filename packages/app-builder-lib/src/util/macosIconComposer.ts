@@ -8,8 +8,8 @@ import * as plist from "plist"
 import * as semver from "semver"
 
 export interface AssetCatalogResult {
-  assetCatalog: Buffer<ArrayBufferLike>
-  icnsFile: Buffer<ArrayBufferLike>
+  assetCatalog: Buffer
+  icnsFile: Buffer
 }
 
 const INVALID_ACTOOL_VERSION_ERROR = new Error(
