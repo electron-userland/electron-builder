@@ -1,4 +1,4 @@
-import { log, spawn } from "builder-util"
+import { exists, log, spawn } from "builder-util"
 import { CancellationToken } from "builder-util-runtime"
 import * as fs from "fs-extra"
 import * as path from "path"
@@ -53,7 +53,7 @@ export async function detectPackageManager(searchPaths: string[]): Promise<{ pm:
 
   for (const dir of dedupedPaths) {
     const packageJsonPath = path.join(dir, "package.json")
-    const packageManager = fs.existsSync(packageJsonPath) ? JSON.parse(fs.readFileSync(packageJsonPath, "utf8"))?.packageManager : undefined
+    const packageManager = (await exists(packageJsonPath)) ? (await fs.readJson(packageJsonPath, "utf8"))?.packageManager : undefined
     if (packageManager) {
       const [pm, version] = packageManager.split("@")
       if (Object.values(PM).includes(pm as PM)) {

@@ -19,8 +19,8 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
       return
     }
 
-    const getProductionDependencies = (tree: PnpmDependency): { prodDeps: Record<string, string>; optionalDependencies: Record<string, string> } | null => {
-      const p = path.normalize(this.resolvePackageDir(tree.name, tree.path) ?? this.resolvePath(tree.path))
+    const getProductionDependencies = async (tree: PnpmDependency): Promise<{ prodDeps: Record<string, string>; optionalDependencies: Record<string, string> } | null> => {
+      const p = path.normalize(this.resolvePackageDir(tree.name, tree.path) ?? (await this.resolvePath(tree.path)))
       const pkgJsonPath = path.join(p, "package.json")
 
       let packageJson: PackageJson
@@ -33,7 +33,7 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
       return { prodDeps: { ...packageJson.dependencies, ...packageJson.optionalDependencies }, optionalDependencies: { ...packageJson.optionalDependencies } }
     }
 
-    const json = tree.name === dependencyId ? null : getProductionDependencies(tree)
+    const json = tree.name === dependencyId ? null : await getProductionDependencies(tree)
     const prodDependencies = json?.prodDeps ?? { ...(tree.dependencies || {}), ...(tree.optionalDependencies || {}) }
     if (prodDependencies == null) {
       this.productionGraph[dependencyId] = { dependencies: [] }

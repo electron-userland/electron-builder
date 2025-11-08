@@ -69,7 +69,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
 
     const hoisterResult: HoisterResult = hoist(this.transformToHoisterTree(this.productionGraph, packageName), { check: true })
 
-    this._getNodeModules(hoisterResult.dependencies, this.nodeModules)
+    await this._getNodeModules(hoisterResult.dependencies, this.nodeModules)
     log.debug({ packageName, depCount: this.nodeModules.length }, "node modules collection complete")
 
     return this.nodeModules
@@ -146,30 +146,30 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     return this.cache.packageJson.get(filePath)!
   }
 
-  protected lstatMemoized(filePath: string): fs.Stats {
+  protected async lstatMemoized(filePath: string): Promise<fs.Stats> {
     if (!this.cache.lstat.has(filePath)) {
-      this.cache.lstat.set(filePath, fs.lstatSync(filePath))
+      this.cache.lstat.set(filePath, await fs.lstat(filePath))
     }
     return this.cache.lstat.get(filePath)!
   }
 
-  protected realpathMemoized(filePath: string): string {
+  protected async realpathMemoized(filePath: string): Promise<string> {
     if (!this.cache.realPath.has(filePath)) {
-      this.cache.realPath.set(filePath, fs.realpathSync(filePath))
+      this.cache.realPath.set(filePath, await fs.realpath(filePath))
     }
     return this.cache.realPath.get(filePath)!
   }
 
-  protected resolvePath(filePath: string): string {
+  protected async resolvePath(filePath: string): Promise<string> {
     // Check if we've already resolved this path
     if (this.cache.realPath.has(filePath)) {
       return this.cache.realPath.get(filePath)!
     }
 
     try {
-      const stats = this.lstatMemoized(filePath)
+      const stats = await this.lstatMemoized(filePath)
       if (stats.isSymbolicLink()) {
-        const resolved = this.realpathMemoized(filePath)
+        const resolved = await this.realpathMemoized(filePath)
         this.cache.realPath.set(filePath, resolved)
         return resolved
       } else {
@@ -288,7 +288,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     return node
   }
 
-  private _getNodeModules(dependencies: Set<HoisterResult>, result: NodeModuleInfo[]) {
+  private async _getNodeModules(dependencies: Set<HoisterResult>, result: NodeModuleInfo[]) {
     if (dependencies.size === 0) {
       return
     }
@@ -303,7 +303,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
 
       // fix npm list issue
       // https://github.com/npm/cli/issues/8535
-      if (!fs.existsSync(p)) {
+      if (!(await exists(p))) {
         log.debug({ name: d.name, reference, p }, "dependency path does not exist")
         continue
       }
@@ -311,23 +311,23 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
       const node: NodeModuleInfo = {
         name: d.name,
         version: reference,
-        dir: this.resolvePath(p),
+        dir: await this.resolvePath(p),
       }
       result.push(node)
       if (d.dependencies.size > 0) {
         node.dependencies = []
-        this._getNodeModules(d.dependencies, node.dependencies)
+        await this._getNodeModules(d.dependencies, node.dependencies)
       }
     }
     result.sort((a, b) => a.name.localeCompare(b.name))
   }
 
-  async asyncExec(command: string, args: string[], cwd: string = this.rootDir): Promise<{ stdout: string | null; stderr: string | null }> {
+  async asyncExec(command: string, args: string[], cwd: string = this.rootDir): Promise<{ stdout: string | undefined; stderr: string | undefined }> {
     const payload = await execAsync([`"${command}"`, ...args].join(" "), { cwd, maxBuffer: 100 * 1024 * 1024, encoding: "utf8" }).catch(err => {
       log.error({ err }, "failed to execute command")
-      return { stdout: null, stderr: err.message }
+      return { stdout: undefined, stderr: err.message }
     })
-    return { stdout: payload.stdout?.trim() ?? null, stderr: payload.stderr?.trim() ?? null }
+    return { stdout: payload.stdout?.trim() ?? undefined, stderr: payload.stderr?.trim() ?? undefined }
   }
 
   async streamCollectorCommandToJsonFile(command: string, args: string[], cwd: string, tempOutputFile: string) {
