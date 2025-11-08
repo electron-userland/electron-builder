@@ -210,8 +210,9 @@ jobs:
           TEST_FILES: ${{ matrix.testFiles }}
           FORCE_COLOR: 1
 
+  # Some tests fails while on macOS 26, so we'll keep it this way for now
   test-mac:
-    runs-on: macos-26
+    runs-on: macos-latest
     timeout-minutes: 20
     strategy:
       fail-fast: false
@@ -219,8 +220,38 @@ jobs:
         testFiles:
           - oneClickInstallerTest,assistedInstallerTest,webInstallerTest
           - winPackagerTest,winCodeSignTest,BuildTest,blackboxUpdateTest
-          - masTest,dmgTest,filesTest,macPackagerTest,differentialUpdateTest,macArchiveTest,macIconTest
+          - masTest,dmgTest,filesTest,macPackagerTest,differentialUpdateTest,macArchiveTest
           - concurrentBuildsTest
+    steps:
+      - name: Checkout code repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Setup Tests
+        uses: ./.github/actions/pretest
+        with:
+          cache-path: ~/Library/Caches/electron
+          cache-key: v-23.3.10-macos-electron
+
+      - name: Install toolset via brew
+        run: |
+          brew install powershell/tap/powershell
+          brew install --cask wine-stable
+          brew install rpm
+
+      - name: Test
+        run: pnpm ci:test
+        env:
+          TEST_FILES: ${{ matrix.testFiles }}
+          FORCE_COLOR: 1
+
+  test-mac-26:
+    runs-on: macos-26
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        testFiles:
+          - macIconTest
     steps:
       - name: Checkout code repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
