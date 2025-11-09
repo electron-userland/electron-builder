@@ -6827,7 +6827,7 @@
             }
           ],
           "default": null,
-          "description": "Explicit file extensions to also sign. Advanced option."
+          "description": "Explicit file name/extensions (`str.endsWith`) to also sign. Advanced option.\nSupports negative patterns, e.g. example that excludes `.appx` files: `[\"somefilename\", \".dll\", \"!.appx\"]`."
         },
         "signtoolOptions": {
           "anyOf": [

@@ -149,7 +149,7 @@ export default class AppXTarget extends Target {
     }
     this.buildQueueManager.add(async () => {
       await vm.exec(vm.toVmFile(path.join(vendorPath, "windows-10", signToolArch, "makeappx.exe")), makeAppXArgs)
-      await packager.sign(artifactPath)
+      await packager.signIf(artifactPath)
 
       await stageDir.cleanup()
 

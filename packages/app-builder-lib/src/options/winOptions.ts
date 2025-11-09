@@ -61,7 +61,8 @@ export interface WindowsConfiguration extends PlatformSpecificBuildOptions {
   readonly signAndEditExecutable?: boolean
 
   /**
-   * Explicit file extensions to also sign. Advanced option.
+   * Explicit file name/extensions (`str.endsWith`) to also sign. Advanced option.
+   * Supports negative patterns, e.g. example that excludes `.appx` files: `["somefilename", ".dll", "!.appx"]`.
    * @see https://github.com/electron-userland/electron-builder/issues/7329
    * @default null
    */
