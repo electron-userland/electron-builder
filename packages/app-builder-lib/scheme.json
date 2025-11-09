@@ -6536,7 +6536,7 @@
               "type": "null"
             }
           ],
-          "description": "Options for usage of Azure Trusted Signing (beta)\nCannot be used in conjunction with `signtoolOptions`, signing will default to Azure Trusted Signing"
+          "description": "Options for usage of Azure Trusted Signing service\nCannot be used in conjunction with `signtoolOptions`, signing will default to Azure Trusted Signing"
         },
         "compression": {
           "anyOf": [
