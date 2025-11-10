@@ -35,7 +35,7 @@ jobs:
           creds: ${{ secrets.RELEASE_BOT_APP_CREDS }}
 
       - name: Create versions PR & prepare publish
-        uses: changesets/action@06245a4e0a36c064a573d4150030f5ec548e4fcc # v1.4.1
+        uses: changesets/action@e0145edc7d9d8679003495b11f87bd8ef63c0cba # v1.5.3
         with:
           version: pnpm ci:version
           commit: 'chore(deploy): Release'
