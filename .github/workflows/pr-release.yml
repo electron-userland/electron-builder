@@ -35,7 +35,7 @@ jobs:
           creds: ${{ secrets.RELEASE_BOT_APP_CREDS }}
 
       - name: Create versions PR & prepare publish
-        uses: changesets/action@e0145edc7d9d8679003495b11f87bd8ef63c0cba # v1.5.3
+        uses: changesets/action@46d76b563147ef252e05c85aebc32798079b62fb # v1.5.3 - @marshallofsound fork
         with:
           version: pnpm ci:version
           commit: 'chore(deploy): Release'
