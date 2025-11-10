@@ -93,65 +93,8 @@ async function runTest(target: string, arch: Arch = Arch.x64) {
   const newAppDir = outDirs[1]
 
   const dirPath = oldAppDir.dir
-  let appPath: string
-
   // Setup tests by installing the previous version
-  if (target === "AppImage") {
-    appPath = path.join(dirPath, `TestApp.AppImage`)
-  } else if (target === "deb") {
-    DebUpdater.installWithCommandRunner(
-      "dpkg",
-      path.join(dirPath, `TestApp.deb`),
-      commandWithArgs => {
-        execSync(commandWithArgs.join(" "), { stdio: "inherit" })
-      },
-      console
-    )
-    appPath = path.join("/opt", "TestApp", "TestApp")
-  } else if (target === "rpm") {
-    RpmUpdater.installWithCommandRunner(
-      "zypper",
-      path.join(dirPath, `TestApp.rpm`),
-      commandWithArgs => {
-        execSync(commandWithArgs.join(" "), { stdio: "inherit" })
-      },
-      console
-    )
-    appPath = path.join("/opt", "TestApp", "TestApp")
-  } else if (target === "pacman") {
-    PacmanUpdater.installWithCommandRunner(
-      path.join(dirPath, `TestApp.pacman`),
-      commandWithArgs => {
-        execSync(commandWithArgs.join(" "), { stdio: "inherit" })
-      },
-      console
-    )
-    // execSync(`sudo pacman -Syyu --noconfirm`, { stdio: "inherit" })
-    // execSync(`sudo pacman -U --noconfirm "${path.join(dirPath, `TestApp.pacman`)}"`, { stdio: "inherit" })
-    appPath = path.join("/opt", "TestApp", "TestApp")
-  } else if (process.platform === "win32") {
-    // access installed app's location
-    const localProgramsPath = path.join(process.env.LOCALAPPDATA || path.join(homedir(), "AppData", "Local"), "Programs", "TestApp")
-    // this is to clear dev environment when not running on an ephemeral GH runner.
-    // Reinstallation will otherwise fail due to "uninstall" message prompt, so we must uninstall first (hence the setTimeout delay)
-    const uninstaller = path.join(localProgramsPath, "Uninstall TestApp.exe")
-    if (existsSync(uninstaller)) {
-      console.log("Uninstalling", uninstaller)
-      execFileSync(uninstaller, [], { stdio: "inherit" })
-      await new Promise(resolve => setTimeout(resolve, 5000))
-    }
-
-    const installerPath = path.join(dirPath, "TestApp Setup.exe")
-    console.log("Installing windows", installerPath)
-    // Don't use /S for silent install as we lose stdout pipe
-    execFileSync(installerPath, [], { stdio: "inherit" })
-
-    appPath = path.join(localProgramsPath, "TestApp.exe")
-  } else if (process.platform === "darwin") {
-    appPath = path.join(dirPath, `mac${getArchSuffix(arch)}`, `TestApp.app`, "Contents", "MacOS", "TestApp")
-  } else {
-    throw new Error(`Unsupported Update test target: ${target}`)
-  }
+  const appPath = await handleInitialInstallPerOS({ target, dirPath, arch })
 
   if (!existsSync(appPath)) {
     throw new Error(`App not found: ${appPath}`)
@@ -176,6 +119,7 @@ async function runTest(target: string, arch: Arch = Arch.x64) {
   })
   // windows needs to release file locks, so a delay seems to be needed
   await new Promise(resolve => setTimeout(resolve, 1000))
+  handleCleanupPerOS({ target })
   await tmpDir.cleanup()
 }
 
@@ -297,6 +241,85 @@ async function doBuild(
   } catch (e: any) {
     await tmpDir.cleanup()
     throw e
+  }
+}
+
+async function handleInitialInstallPerOS({ target, dirPath, arch }: { target: string; dirPath: string; arch: Arch }): Promise<string> {
+  let appPath: string
+  if (target === "AppImage") {
+    appPath = path.join(dirPath, `TestApp.AppImage`)
+  } else if (target === "deb") {
+    DebUpdater.installWithCommandRunner(
+      "dpkg",
+      path.join(dirPath, `TestApp.deb`),
+      commandWithArgs => {
+        execSync(commandWithArgs.join(" "), { stdio: "inherit" })
+      },
+      console
+    )
+    appPath = path.join("/opt", "TestApp", "TestApp")
+  } else if (target === "rpm") {
+    RpmUpdater.installWithCommandRunner(
+      "zypper",
+      path.join(dirPath, `TestApp.rpm`),
+      commandWithArgs => {
+        execSync(commandWithArgs.join(" "), { stdio: "inherit" })
+      },
+      console
+    )
+    appPath = path.join("/opt", "TestApp", "TestApp")
+  } else if (target === "pacman") {
+    PacmanUpdater.installWithCommandRunner(
+      path.join(dirPath, `TestApp.pacman`),
+      commandWithArgs => {
+        execSync(commandWithArgs.join(" "), { stdio: "inherit" })
+      },
+      console
+    )
+    // execSync(`sudo pacman -Syyu --noconfirm`, { stdio: "inherit" })
+    // execSync(`sudo pacman -U --noconfirm "${path.join(dirPath, `TestApp.pacman`)}"`, { stdio: "inherit" })
+    appPath = path.join("/opt", "TestApp", "TestApp")
+  } else if (process.platform === "win32") {
+    // access installed app's location
+    const localProgramsPath = path.join(process.env.LOCALAPPDATA || path.join(homedir(), "AppData", "Local"), "Programs", "TestApp")
+    // this is to clear dev environment when not running on an ephemeral GH runner.
+    // Reinstallation will otherwise fail due to "uninstall" message prompt, so we must uninstall first (hence the setTimeout delay)
+    const uninstaller = path.join(localProgramsPath, "Uninstall TestApp.exe")
+    if (existsSync(uninstaller)) {
+      console.log("Uninstalling", uninstaller)
+      execFileSync(uninstaller, [], { stdio: "inherit" })
+      await new Promise(resolve => setTimeout(resolve, 5000))
+    }
+
+    const installerPath = path.join(dirPath, "TestApp Setup.exe")
+    console.log("Installing windows", installerPath)
+    // Don't use /S for silent install as we lose stdout pipe
+    execFileSync(installerPath, [], { stdio: "inherit" })
+
+    appPath = path.join(localProgramsPath, "TestApp.exe")
+  } else if (process.platform === "darwin") {
+    appPath = path.join(dirPath, `mac${getArchSuffix(arch)}`, `TestApp.app`, "Contents", "MacOS", "TestApp")
+  } else {
+    throw new Error(`Unsupported Update test target: ${target}`)
+  }
+  return appPath
+}
+
+function handleCleanupPerOS({ target }: { target: string }) {
+  if (target === "deb") {
+    execSync(`sudo dpkg -r testapp`, { stdio: "inherit" })
+  } else if (target === "rpm") {
+    execSync(`sudo zypper rm -y testapp`, { stdio: "inherit" })
+  } else if (target === "pacman") {
+    execSync(`sudo pacman -R --noconfirm testapp`, { stdio: "inherit" })
+  } else if (process.platform === "win32") {
+    // access installed app's location
+    const localProgramsPath = path.join(process.env.LOCALAPPDATA || path.join(homedir(), "AppData", "Local"), "Programs", "TestApp")
+    const uninstaller = path.join(localProgramsPath, "Uninstall TestApp.exe")
+    console.log("Uninstalling", uninstaller)
+    execFileSync(uninstaller, ["/S", "/C", "exit"], { stdio: "inherit" })
+  } else if (process.platform === "darwin") {
+    // ignore, nothing to uninstall, it's running/updating out of the local `dist` directory
   }
 }
 
