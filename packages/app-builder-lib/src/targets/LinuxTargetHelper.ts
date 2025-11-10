@@ -69,7 +69,9 @@ export class LinuxTargetHelper {
     // need to put here and not as default because need to resolve image size
     const result = await packager.resolveIcon(sources, fallbackSources, "set")
     this.maxIconPath = result[result.length - 1].file
-    return result
+
+    // Ignore .icon files for linux (they are exclusive for macOS)
+    return result.filter(icon => !icon.file.endsWith(".icon"))
   }
 
   getDescription(options: LinuxTargetSpecificOptions) {
