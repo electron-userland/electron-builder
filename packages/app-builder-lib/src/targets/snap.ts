@@ -135,8 +135,10 @@ export default class SnapTarget extends Target {
       delete snap.plugs
     } else {
       const archTriplet = archNameToTriplet(arch)
+      // https://github.com/electron-userland/electron-builder/issues/9320
+      const electronDefault = this.isElectronVersionGreaterOrEqualThan("38.0.0") ? "" : "1"
       appDescriptor.environment = {
-        DISABLE_WAYLAND: options.allowNativeWayland ? "" : "1",
+        DISABLE_WAYLAND: options.allowNativeWayland ? "" : electronDefault,
         PATH: "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         SNAP_DESKTOP_RUNTIME: "$SNAP/gnome-platform",
         LD_LIBRARY_PATH: [
