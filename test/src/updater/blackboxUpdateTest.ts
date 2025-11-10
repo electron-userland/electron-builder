@@ -119,7 +119,7 @@ async function runTest(target: string, arch: Arch = Arch.x64) {
   })
   // windows needs to release file locks, so a delay seems to be needed
   await new Promise(resolve => setTimeout(resolve, 1000))
-  handleCleanupPerOS({ target })
+  await handleCleanupPerOS({ target })
   await tmpDir.cleanup()
 }
 
@@ -287,14 +287,14 @@ async function handleInitialInstallPerOS({ target, dirPath, arch }: { target: st
     const uninstaller = path.join(localProgramsPath, "Uninstall TestApp.exe")
     if (existsSync(uninstaller)) {
       console.log("Uninstalling", uninstaller)
-      execFileSync(uninstaller, [], { stdio: "inherit" })
+      execFileSync(uninstaller, ["/S", "/C", "exit"], { stdio: "inherit" })
       await new Promise(resolve => setTimeout(resolve, 5000))
     }
 
     const installerPath = path.join(dirPath, "TestApp Setup.exe")
     console.log("Installing windows", installerPath)
     // Don't use /S for silent install as we lose stdout pipe
-    execFileSync(installerPath, [], { stdio: "inherit" })
+    execFileSync(installerPath, ["/S"], { stdio: "inherit" })
 
     appPath = path.join(localProgramsPath, "TestApp.exe")
   } else if (process.platform === "darwin") {
@@ -305,7 +305,7 @@ async function handleInitialInstallPerOS({ target, dirPath, arch }: { target: st
   return appPath
 }
 
-function handleCleanupPerOS({ target }: { target: string }) {
+async function handleCleanupPerOS({ target }: { target: string }) {
   if (target === "deb") {
     execSync(`sudo dpkg -r testapp`, { stdio: "inherit" })
   } else if (target === "rpm") {
@@ -318,6 +318,7 @@ function handleCleanupPerOS({ target }: { target: string }) {
     const uninstaller = path.join(localProgramsPath, "Uninstall TestApp.exe")
     console.log("Uninstalling", uninstaller)
     execFileSync(uninstaller, ["/S", "/C", "exit"], { stdio: "inherit" })
+    await new Promise(resolve => setTimeout(resolve, 5000))
   } else if (process.platform === "darwin") {
     // ignore, nothing to uninstall, it's running/updating out of the local `dist` directory
   }
