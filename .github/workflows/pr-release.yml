@@ -42,6 +42,5 @@ jobs:
           title: 'chore(deploy): Release'
           publish: pnpm ci:publish
           setupGitUser: false
-          commitMode: github-api
         env:
           GITHUB_TOKEN: ${{ steps.generate-token.outputs.token }}
