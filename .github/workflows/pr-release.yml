@@ -31,6 +31,7 @@ jobs:
         uses: electron/github-app-auth-action@384fd19694fe7b6dcc9a684746c6976ad78228ae
         id: generate-token
         with:
+          export-git-user: true
           creds: ${{ secrets.RELEASE_BOT_APP_CREDS }}
 
       - name: Create versions PR & prepare publish
@@ -40,5 +41,7 @@ jobs:
           commit: 'chore(deploy): Release'
           title: 'chore(deploy): Release'
           publish: pnpm ci:publish
+          setupGitUser: false
+          commitMode: github-api
         env:
           GITHUB_TOKEN: ${{ steps.generate-token.outputs.token }}
