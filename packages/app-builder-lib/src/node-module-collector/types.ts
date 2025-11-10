@@ -26,6 +26,13 @@ export interface NpmDependency extends Dependency<NpmDependency, string> {
   }
 }
 
+export interface BunManifest {
+  manifestDependencies: Record<string, string>
+  manifestOptionalDependencies: Record<string, string>
+}
+
+export interface BunDependency extends Dependency<BunDependency, BunDependency>, BunManifest {}
+
 export type Dependency<T, V> = Dependencies<T, V> & ParsedDependencyTree
 
 export type Dependencies<T, V> = {
