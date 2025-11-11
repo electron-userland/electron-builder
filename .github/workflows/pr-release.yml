@@ -23,6 +23,7 @@ jobs:
         with:
           # This makes Actions fetch all Git history so that Changesets can generate changelogs with the correct commits
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Install dependencies
         uses: ./.github/actions/pnpm
@@ -35,13 +36,12 @@ jobs:
           creds: ${{ secrets.RELEASE_BOT_APP_CREDS }}
 
       - name: Create versions PR & prepare publish
-        uses: changesets/action@e0145edc7d9d8679003495b11f87bd8ef63c0cba # v1.5.3
+        uses: changesets/action@7af85527bb2f43a404b5823a6cad47661be255c1 # v1.5.3 - @marshallofsound fork
         with:
           version: pnpm ci:version
           commit: 'chore(deploy): Release'
           title: 'chore(deploy): Release'
           publish: pnpm ci:publish
           setupGitUser: false
-          commitMode: github-api
         env:
           GITHUB_TOKEN: ${{ steps.generate-token.outputs.token }}
