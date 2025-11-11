@@ -106,9 +106,7 @@ test.ifNotWindows("deb file associations", ({ expect }) =>
     {
       packed: async context => {
         const mime = (
-          await execShell(
-            `ar p '${context.outDir}/TestApp_1.1.0_amd64.deb' data.tar.xz | ${await getTarExecutable()} -Jx --to-stdout './usr/share/mime/packages/Test App ßW.xml'`,
-            {
+          await execShell(`ar p '${context.outDir}/TestApp_1.1.0_amd64.deb' data.tar.xz | ${await getTarExecutable()} -Jx --to-stdout './usr/share/mime/packages/testapp.xml'`, {
               maxBuffer: 10 * 1024 * 1024,
             }
           )
