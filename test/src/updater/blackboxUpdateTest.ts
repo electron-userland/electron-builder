@@ -307,18 +307,12 @@ async function handleInitialInstallPerOS({ target, dirPath, arch }: { target: st
 
 async function handleCleanupPerOS({ target }: { target: string }) {
   if (target === "deb") {
-    try {
-      execSync("sudo dpkg -r testapp", { stdio: "inherit" });
-    } catch (err: any) {
-      console.error("dpkg failed:", err.message);
-      console.log("Trying to fix broken dependencies...");
-      execSync("sudo apt-get install -f -y", { stdio: "inherit" });
-      execSync("sudo dpkg --configure -a", { stdio: "inherit" });
-    }
+    // TODO: ignore for now, this doesn't block CI, but proper uninstall logic should be implemented
+    //   execSync("dpkg -r testapp", { stdio: "inherit" });
   } else if (target === "rpm") {
-    execSync(`sudo zypper rm -y testapp`, { stdio: "inherit" })
+    execSync(`zypper rm -y testapp`, { stdio: "inherit" })
   } else if (target === "pacman") {
-    execSync(`sudo pacman -R --noconfirm testapp`, { stdio: "inherit" })
+    execSync(`pacman -R --noconfirm testapp`, { stdio: "inherit" })
   } else if (process.platform === "win32") {
     // access installed app's location
     const localProgramsPath = path.join(process.env.LOCALAPPDATA || path.join(homedir(), "AppData", "Local"), "Programs", "TestApp")
