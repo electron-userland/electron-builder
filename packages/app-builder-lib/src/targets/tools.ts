@@ -8,11 +8,11 @@ export function getLinuxToolsPath() {
 export async function getFpmPath() {
   // It's just easier to copy the map of checksums here rather then adding them to within each if-statement
   const fpmChecksumMap = {
-    "fpm-1.16.0-ruby-3.4.3-darwin-arm64.7z": "xAyOUp213DnD5zN3o53L2sRs+OgoMYRVy2tOIhgsUdxcJUMzfy6U5Nrd92ZXUn5AHW3Y87CXPqwsL0aQaBTnBg==",
-    "fpm-1.16.0-ruby-3.4.3-darwin-x86_64.7z": "WWdGdSOemjuQateF0qWkiWF9sgLgm8NNDnnWJe9CQ7l9+tVw1/tAGKH32/kTeaANVaDZg1r2Jq0uxudGEPYOuw==",
-    "fpm-1.16.0-ruby-3.4.3-linux-amd64.7z": "zN/lxd0tUJi/QmjOmUQt91OaJbO+cSGxYmse7xh4BVXE4MY5TgUHUR+TqmEgBDofHqtR7G2V0OenYlr25ZWY2A==",
-    "fpm-1.16.0-ruby-3.4.3-linux-arm64v8.7z": "WfC0mi3PI9DYwXZdkg2gwFttHGJn8uAZlNVWs0xYMkGNTpEunP25hdBltg0YXrVdVWEQhpjCU3if5F03B8jfcw==",
-    "fpm-1.16.0-ruby-3.4.3-linux-i386.7z": "0qkId/DmyKc7fOQQN5pTe2gB+CfsJArmRGH+1f4KmFrNbfXQRl2G0c5NNEjSiqjqu+WhpOaKVWpHAskLD5iSzA==",
+    "fpm-1.16.0-ruby-3.4.3-darwin-arm64.7z": "BuXMS1zmoSgjd6RG0s74bX0TvybKuLNMPvHsutbr9enVYUDmz7MRd8YI5goCFqtPGOvbvWKYGA9RnXzWH4ALKg==",
+    "fpm-1.16.0-ruby-3.4.3-darwin-x86_64.7z": "g4KD+DZTAsmobs/huNhOxKEmaMv1R+PfgRFwWuJu1Sla/c6h4q2YAtICuukaX9goPguFYkfYd7AUb1hllVxyjQ==",
+    "fpm-1.16.0-ruby-3.4.3-linux-arm64v8.7z": "WkB5mAA9FBpRUCUdSIaAYrZ4lU7fbeHSKuVM4LLXMwu27l65GVrH28jEiZ+yDxopAWNkcmAfCnG35dFVArB9gw==",
+    "fpm-1.16.0-ruby-3.4.3-linux-i386.7z": "yo8oNV2FIC0OryQeulBkPto3SIar6qVuV0lNEFUy55w+wZwvp/x6t/Ng/WnWRybRUXzCBEkgCdTRLvyMlSvUXw==",
+    "fpm-1.16.0-ruby-3.4.3-linux-x86_64.7z": "ItWjEqdl1WKMZyKqDgxcw1FTgw3OmdLCj50J4r4JipqD9Jhd4RlhCR5JZbrIqwRE+/9U9ntjopWVa2j/rkXnIw==",
   }
 
   if (process.env.CUSTOM_FPM_PATH != null) {
@@ -25,7 +25,7 @@ export async function getFpmPath() {
   const getKey = () => {
     if (process.platform === "linux") {
       if (process.arch == "x64") {
-        return "fpm-1.16.0-ruby-3.4.3-linux-amd64.7z"
+        return "fpm-1.16.0-ruby-3.4.3-linux-x86_64.7z"
       } else if (process.arch === "arm64") {
         return "fpm-1.16.0-ruby-3.4.3-linux-arm64v8.7z"
       }
@@ -39,6 +39,6 @@ export async function getFpmPath() {
   }
 
   const filename = getKey()
-  const fpmPath = await getBinFromUrl("fpm@2.0.1", filename, fpmChecksumMap[filename])
+  const fpmPath = await getBinFromUrl("fpm@2.0.0", filename, fpmChecksumMap[filename])
   return path.join(fpmPath, exec)
 }
