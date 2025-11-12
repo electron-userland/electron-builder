@@ -1,0 +1,1557 @@
+<!doctype html>
+<html lang="tr">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Şantiye Kayıt Sistemi</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    .cost-row {
+      cursor: move;
+    }
+    .cost-row:hover {
+      background-color: #f8fafc;
+    }
+    .dragging {
+      opacity: 0.5;
+    }
+  </style>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+  <script src="/_sdk/element_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="min-h-screen bg-gray-50">
+  <div id="app" class="min-h-screen p-6"></div>
+  <script>
+    const DEFAULT_COST_TYPES = [
+      "Hafriyat İşleri",
+      "Hazır Beton",
+      "İnşaat Demiri",
+      "Duvar Malzeme ve İşçilik",
+      "Çatı Malzeme ve İşçilik",
+      "Nalbur Giderleri",
+      "Zemin Parke Kaplama ve İşçilik"
+    ];
+
+    const DEFAULT_TITLES = [
+      "BMS GROUP",
+      "KOC INSAAT",
+      "CANPOLATLAR",
+      "UCARLAR",
+      "GORKEM YAPI",
+      "AKTIF BETON",
+      "AKTIF YONGA",
+      "ELIF TICARET"
+    ];
+
+    const DEFAULT_MATERIALS = [
+      "Hafriyat",
+      "Temel Kazısı",
+      "Dolgu",
+      "Kum",
+      "Çakıl",
+      "Hazır Beton C20",
+      "Hazır Beton C25",
+      "Hazır Beton C30",
+      "Hazır Beton C35",
+      "İnşaat Demiri Ø8",
+      "İnşaat Demiri Ø10",
+      "İnşaat Demiri Ø12",
+      "İnşaat Demiri Ø14",
+      "İnşaat Demiri Ø16",
+      "İnşaat Demiri Ø18",
+      "İnşaat Demiri Ø20",
+      "Hasır Demir",
+      "Bağlama Teli",
+      "Çimento",
+      "Tuğla",
+      "Briket",
+      "Gaz Beton 10cm",
+      "Gaz Beton 15cm",
+      "Gaz Beton 20cm",
+      "Ytong",
+      "Kalıp Tahtası",
+      "Kalıp İskelesi",
+      "Direk",
+      "Kiriş",
+      "Su İzolasyonu",
+      "Nem İzolasyonu",
+      "Isı İzolasyonu"
+    ];
+
+    let allRecords = [];
+    let currentView = 'list';
+    let currentSite = null;
+
+    async function initializeApp() {
+      // Verileri yükle
+      allRecords = await window.electronAPI.loadData();
+      renderApp();
+    }
+
+    async function saveAllData() {
+      const result = await window.electronAPI.saveData(allRecords);
+      if (!result.success) {
+        showMessage("Veri kaydetme hatası: " + result.error);
+      }
+    }
+
+    function getSites() {
+      return allRecords.filter(r => r.type === 'site');
+    }
+
+    function getCostsForSite(siteId) {
+      return allRecords.filter(r => r.type === 'cost' && r.siteId === siteId);
+    }
+
+    function getCostTypes() {
+      const customTypes = allRecords.filter(r => r.type === 'costType');
+      if (customTypes.length === 0) {
+        return DEFAULT_COST_TYPES;
+      }
+      
+      let types = [...DEFAULT_COST_TYPES];
+      
+      customTypes.forEach(ct => {
+        if (ct.isDeleted && ct.replacesDefault) {
+          types = types.filter(t => t !== ct.replacesDefault);
+        } else if (ct.replacesDefault) {
+          const index = types.indexOf(ct.replacesDefault);
+          if (index !== -1) {
+            types[index] = ct.name;
+          }
+        } else if (ct.name) {
+          types.push(ct.name);
+        }
+      });
+      
+      return types.sort();
+    }
+
+    function getTitles() {
+      const customTitles = allRecords.filter(r => r.type === 'titleType');
+      if (customTitles.length === 0) {
+        return DEFAULT_TITLES;
+      }
+      
+      let titles = [...DEFAULT_TITLES];
+      
+      customTitles.forEach(ct => {
+        if (ct.isDeleted && ct.replacesDefault) {
+          titles = titles.filter(t => t !== ct.replacesDefault);
+        } else if (ct.replacesDefault) {
+          const index = titles.indexOf(ct.replacesDefault);
+          if (index !== -1) {
+            titles[index] = ct.name;
+          }
+        } else if (ct.name) {
+          titles.push(ct.name);
+        }
+      });
+      
+      return titles.sort();
+    }
+
+    function getMaterials() {
+      const customMaterials = allRecords.filter(r => r.type === 'materialType');
+      if (customMaterials.length === 0) {
+        return DEFAULT_MATERIALS;
+      }
+      
+      let materials = [...DEFAULT_MATERIALS];
+      
+      customMaterials.forEach(ct => {
+        if (ct.isDeleted && ct.replacesDefault) {
+          materials = materials.filter(t => t !== ct.replacesDefault);
+        } else if (ct.replacesDefault) {
+          const index = materials.indexOf(ct.replacesDefault);
+          if (index !== -1) {
+            materials[index] = ct.name;
+          }
+        } else if (ct.name) {
+          materials.push(ct.name);
+        }
+      });
+      
+      return materials.sort();
+    }
+
+    function renderApp() {
+      currentView = 'list';
+      
+      const app = document.getElementById('app');
+      
+      app.innerHTML = `
+        <div class="max-w-4xl mx-auto">
+          <header class="mb-8 flex justify-between items-center">
+            <div>
+              <h1 class="text-4xl font-bold text-gray-800 mb-2">
+                🏗️ Şantiye Kayıt Sistemi
+              </h1>
+              <p class="text-gray-600">Masaüstü Versiyonu</p>
+            </div>
+            <div class="flex gap-2">
+              <button id="manage-titles-btn" class="text-gray-600 hover:text-gray-800 transition-colors px-4 py-2 rounded-md border border-gray-300">
+                📝 Ünvanlar
+              </button>
+              <button id="manage-materials-btn" class="text-gray-600 hover:text-gray-800 transition-colors px-4 py-2 rounded-md border border-gray-300">
+                🧱 Malzemeler
+              </button>
+              <button id="manage-cost-types-btn" class="text-gray-600 hover:text-gray-800 transition-colors px-4 py-2 rounded-md border border-gray-300">
+                ⚙️ Maliyet Türleri
+              </button>
+            </div>
+          </header>
+
+          <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <form id="site-form">
+              <div class="mb-4">
+                <label for="site-name" class="block mb-2 font-medium text-gray-700">
+                  Şantiye Adı
+                </label>
+                <input type="text" id="site-name" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+              </div>
+              <button type="submit" class="w-full bg-blue-600 text-white font-medium py-3 px-4 rounded-md hover:bg-blue-700 transition-colors">
+                ➕ Şantiye Ekle
+              </button>
+            </form>
+          </div>
+
+          <div id="quick-cost-section" class="mb-6"></div>
+
+          <div id="sites-list" class="space-y-4"></div>
+        </div>
+      `;
+
+      document.getElementById('site-form').addEventListener('submit', handleAddSite);
+      document.getElementById('manage-cost-types-btn').addEventListener('click', () => {
+        currentView = 'manageCostTypes';
+        renderManageCostTypes();
+      });
+      document.getElementById('manage-titles-btn').addEventListener('click', () => {
+        currentView = 'manageTitles';
+        renderManageTitles();
+      });
+      document.getElementById('manage-materials-btn').addEventListener('click', () => {
+        currentView = 'manageMaterials';
+        renderManageMaterials();
+      });
+      renderSites();
+      renderQuickCostSection();
+    }
+
+    function renderManageTitles() {
+      const customTitles = allRecords.filter(r => r.type === 'titleType');
+      const isUsingDefaults = customTitles.length === 0;
+
+      const app = document.getElementById('app');
+      app.innerHTML = `
+        <div class="max-w-4xl mx-auto">
+          <button id="back-button" class="mb-6 flex items-center gap-2 text-blue-600 hover:text-blue-800 transition-colors">
+            ← Geri Dön
+          </button>
+
+          <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">
+              📝 Ünvan Yönetimi
+            </h2>
+
+            ${isUsingDefaults ? `
+              <div class="mb-4 p-4 bg-blue-50 rounded-lg">
+                <p class="text-sm text-gray-700 mb-2">
+                  ℹ️ Varsayılan ünvanları düzenleyebilir veya silebilirsiniz. Yeni ünvan eklemek için aşağıdaki formu kullanın.
+                </p>
+              </div>
+            ` : ''}
+
+            <form id="add-title-form" class="mb-6">
+              <div class="flex gap-2">
+                <input type="text" id="new-title-name" required placeholder="Yeni ünvan adı" class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <button type="submit" class="bg-blue-600 text-white font-medium py-2 px-6 rounded-md hover:bg-blue-700 transition-colors">
+                  Ekle
+                </button>
+              </div>
+            </form>
+
+            <div class="space-y-2">
+              <h3 class="text-lg font-bold text-gray-800 mb-3">
+                ${isUsingDefaults ? 'Varsayılan Ünvanlar' : 'Özel Ünvanlar'}
+              </h3>
+              <div id="titles-list" class="space-y-2">
+                ${getTitles().map(titleName => {
+                  const customTitle = customTitles.find(ct => ct.name === titleName);
+                  return `
+                    <div class="flex items-center justify-between gap-2 p-3 bg-gray-50 rounded-lg border title-item" data-title-name="${titleName}" data-title-id="${customTitle ? customTitle.id : ''}" data-is-default="${!customTitle}">
+                      <span class="title-name-display flex-1 text-gray-800">
+                        ${titleName}
+                      </span>
+                      <input type="text" class="title-name-input hidden flex-1 px-2 py-1 border border-gray-300 rounded" value="${titleName}">
+                      <div class="flex gap-2">
+                        <button class="edit-title-btn text-gray-600 hover:text-gray-800 transition-colors">
+                          ✏️
+                        </button>
+                        <button class="save-title-btn hidden text-blue-600 hover:text-blue-800 transition-colors">
+                          ✓
+                        </button>
+                        <button class="cancel-edit-title-btn hidden text-gray-600 hover:text-gray-800 transition-colors">
+                          ✕
+                        </button>
+                        <button class="delete-title-btn text-red-600 hover:text-red-800 transition-colors">
+                          🗑️
+                        </button>
+                      </div>
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      document.getElementById('back-button').addEventListener('click', () => {
+        renderApp();
+      });
+
+      document.getElementById('add-title-form').addEventListener('submit', handleAddTitle);
+
+      document.querySelectorAll('.edit-title-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const item = e.currentTarget.closest('.title-item');
+          item.querySelector('.title-name-display').classList.add('hidden');
+          item.querySelector('.title-name-input').classList.remove('hidden');
+          item.querySelector('.edit-title-btn').classList.add('hidden');
+          item.querySelector('.save-title-btn').classList.remove('hidden');
+          item.querySelector('.cancel-edit-title-btn').classList.remove('hidden');
+          item.querySelector('.delete-title-btn').classList.add('hidden');
+        });
+      });
+
+      document.querySelectorAll('.cancel-edit-title-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const item = e.currentTarget.closest('.title-item');
+          const originalName = item.dataset.titleName;
+          item.querySelector('.title-name-input').value = originalName;
+          item.querySelector('.title-name-display').classList.remove('hidden');
+          item.querySelector('.title-name-input').classList.add('hidden');
+          item.querySelector('.edit-title-btn').classList.remove('hidden');
+          item.querySelector('.save-title-btn').classList.add('hidden');
+          item.querySelector('.cancel-edit-title-btn').classList.add('hidden');
+          item.querySelector('.delete-title-btn').classList.remove('hidden');
+        });
+      });
+
+      document.querySelectorAll('.save-title-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          const item = e.currentTarget.closest('.title-item');
+          const titleId = item.dataset.titleId;
+          const isDefault = item.dataset.isDefault === 'true';
+          const newName = item.querySelector('.title-name-input').value.trim();
+          
+          if (!newName) {
+            showMessage("Ünvan adı boş olamaz.");
+            return;
+          }
+
+          const existingTitles = getTitles();
+          const originalName = item.dataset.titleName;
+          if (newName !== originalName && existingTitles.includes(newName)) {
+            showMessage("Bu ünvan adı zaten mevcut.");
+            return;
+          }
+
+          if (isDefault) {
+            const newTitleRecord = {
+              id: Date.now().toString(),
+              type: 'titleType',
+              name: newName,
+              replacesDefault: originalName,
+              createdAt: new Date().toISOString()
+            };
+            
+            allRecords.push(newTitleRecord);
+            await saveAllData();
+            showSuccessMessage("Ünvan güncellendi!");
+            renderManageTitles();
+          } else {
+            const titleRecord = allRecords.find(r => r.id === titleId);
+            if (titleRecord) {
+              titleRecord.name = newName;
+              await saveAllData();
+              showSuccessMessage("Ünvan güncellendi!");
+              renderManageTitles();
+            }
+          }
+        });
+      });
+
+      document.querySelectorAll('.delete-title-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          const item = e.currentTarget.closest('.title-item');
+          const titleId = item.dataset.titleId;
+          const isDefault = item.dataset.isDefault === 'true';
+          const titleName = item.dataset.titleName;
+          
+          if (isDefault) {
+            const deletedTitleRecord = {
+              id: Date.now().toString(),
+              type: 'titleType',
+              name: '',
+              replacesDefault: titleName,
+              isDeleted: true,
+              createdAt: new Date().toISOString()
+            };
+            
+            allRecords.push(deletedTitleRecord);
+            await saveAllData();
+            showSuccessMessage("Ünvan silindi!");
+            renderManageTitles();
+          } else {
+            const index = allRecords.findIndex(r => r.id === titleId);
+            if (index !== -1) {
+              allRecords.splice(index, 1);
+              await saveAllData();
+              showSuccessMessage("Ünvan silindi!");
+              renderManageTitles();
+            }
+          }
+        });
+      });
+    }
+
+    async function handleAddTitle(e) {
+      e.preventDefault();
+
+      const name = document.getElementById('new-title-name').value.trim();
+
+      const existingTitles = getTitles();
+      if (existingTitles.includes(name)) {
+        showMessage("Bu ünvan zaten mevcut.");
+        return;
+      }
+
+      const titleType = {
+        id: Date.now().toString(),
+        type: 'titleType',
+        name: name,
+        createdAt: new Date().toISOString()
+      };
+
+      allRecords.push(titleType);
+      await saveAllData();
+      
+      document.getElementById('add-title-form').reset();
+      showSuccessMessage("Ünvan başarıyla eklendi!");
+      renderManageTitles();
+    }
+
+    function renderManageMaterials() {
+      const customMaterials = allRecords.filter(r => r.type === 'materialType');
+      const isUsingDefaults = customMaterials.length === 0;
+
+      const app = document.getElementById('app');
+      app.innerHTML = `
+        <div class="max-w-4xl mx-auto">
+          <button id="back-button" class="mb-6 flex items-center gap-2 text-blue-600 hover:text-blue-800 transition-colors">
+            ← Geri Dön
+          </button>
+
+          <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">
+              🧱 Malzeme Yönetimi
+            </h2>
+
+            ${isUsingDefaults ? `
+              <div class="mb-4 p-4 bg-blue-50 rounded-lg">
+                <p class="text-sm text-gray-700 mb-2">
+                  ℹ️ Varsayılan kaba inşaat malzemelerini düzenleyebilir veya silebilirsiniz. Yeni malzeme eklemek için aşağıdaki formu kullanın.
+                </p>
+              </div>
+            ` : ''}
+
+            <form id="add-material-form" class="mb-6">
+              <div class="flex gap-2">
+                <input type="text" id="new-material-name" required placeholder="Yeni malzeme adı" class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <button type="submit" class="bg-blue-600 text-white font-medium py-2 px-6 rounded-md hover:bg-blue-700 transition-colors">
+                  Ekle
+                </button>
+              </div>
+            </form>
+
+            <div class="space-y-2">
+              <h3 class="text-lg font-bold text-gray-800 mb-3">
+                ${isUsingDefaults ? 'Varsayılan Malzemeler (Kaba İnşaat)' : 'Özel Malzemeler'}
+              </h3>
+              <div id="materials-list" class="space-y-2 max-h-96 overflow-y-auto">
+                ${getMaterials().map(materialName => {
+                  const customMaterial = customMaterials.find(ct => ct.name === materialName);
+                  return `
+                    <div class="flex items-center justify-between gap-2 p-3 bg-gray-50 rounded-lg border material-item" data-material-name="${materialName}" data-material-id="${customMaterial ? customMaterial.id : ''}" data-is-default="${!customMaterial}">
+                      <span class="material-name-display flex-1 text-gray-800">
+                        ${materialName}
+                      </span>
+                      <input type="text" class="material-name-input hidden flex-1 px-2 py-1 border border-gray-300 rounded" value="${materialName}">
+                      <div class="flex gap-2">
+                        <button class="edit-material-btn text-gray-600 hover:text-gray-800 transition-colors">
+                          ✏️
+                        </button>
+                        <button class="save-material-btn hidden text-blue-600 hover:text-blue-800 transition-colors">
+                          ✓
+                        </button>
+                        <button class="cancel-edit-material-btn hidden text-gray-600 hover:text-gray-800 transition-colors">
+                          ✕
+                        </button>
+                        <button class="delete-material-btn text-red-600 hover:text-red-800 transition-colors">
+                          🗑️
+                        </button>
+                      </div>
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      document.getElementById('back-button').addEventListener('click', () => {
+        renderApp();
+      });
+
+      document.getElementById('add-material-form').addEventListener('submit', handleAddMaterial);
+
+      document.querySelectorAll('.edit-material-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const item = e.currentTarget.closest('.material-item');
+          item.querySelector('.material-name-display').classList.add('hidden');
+          item.querySelector('.material-name-input').classList.remove('hidden');
+          item.querySelector('.edit-material-btn').classList.add('hidden');
+          item.querySelector('.save-material-btn').classList.remove('hidden');
+          item.querySelector('.cancel-edit-material-btn').classList.remove('hidden');
+          item.querySelector('.delete-material-btn').classList.add('hidden');
+        });
+      });
+
+      document.querySelectorAll('.cancel-edit-material-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const item = e.currentTarget.closest('.material-item');
+          const originalName = item.dataset.materialName;
+          item.querySelector('.material-name-input').value = originalName;
+          item.querySelector('.material-name-display').classList.remove('hidden');
+          item.querySelector('.material-name-input').classList.add('hidden');
+          item.querySelector('.edit-material-btn').classList.remove('hidden');
+          item.querySelector('.save-material-btn').classList.add('hidden');
+          item.querySelector('.cancel-edit-material-btn').classList.add('hidden');
+          item.querySelector('.delete-material-btn').classList.remove('hidden');
+        });
+      });
+
+      document.querySelectorAll('.save-material-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          const item = e.currentTarget.closest('.material-item');
+          const materialId = item.dataset.materialId;
+          const isDefault = item.dataset.isDefault === 'true';
+          const newName = item.querySelector('.material-name-input').value.trim();
+          
+          if (!newName) {
+            showMessage("Malzeme adı boş olamaz.");
+            return;
+          }
+
+          const existingMaterials = getMaterials();
+          const originalName = item.dataset.materialName;
+          if (newName !== originalName && existingMaterials.includes(newName)) {
+            showMessage("Bu malzeme adı zaten mevcut.");
+            return;
+          }
+
+          if (isDefault) {
+            const newMaterialRecord = {
+              id: Date.now().toString(),
+              type: 'materialType',
+              name: newName,
+              replacesDefault: originalName,
+              createdAt: new Date().toISOString()
+            };
+            
+            allRecords.push(newMaterialRecord);
+            await saveAllData();
+            showSuccessMessage("Malzeme güncellendi!");
+            renderManageMaterials();
+          } else {
+            const materialRecord = allRecords.find(r => r.id === materialId);
+            if (materialRecord) {
+              materialRecord.name = newName;
+              await saveAllData();
+              showSuccessMessage("Malzeme güncellendi!");
+              renderManageMaterials();
+            }
+          }
+        });
+      });
+
+      document.querySelectorAll('.delete-material-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          const item = e.currentTarget.closest('.material-item');
+          const materialId = item.dataset.materialId;
+          const isDefault = item.dataset.isDefault === 'true';
+          const materialName = item.dataset.materialName;
+          
+          if (isDefault) {
+            const deletedMaterialRecord = {
+              id: Date.now().toString(),
+              type: 'materialType',
+              name: '',
+              replacesDefault: materialName,
+              isDeleted: true,
+              createdAt: new Date().toISOString()
+            };
+            
+            allRecords.push(deletedMaterialRecord);
+            await saveAllData();
+            showSuccessMessage("Malzeme silindi!");
+            renderManageMaterials();
+          } else {
+            const index = allRecords.findIndex(r => r.id === materialId);
+            if (index !== -1) {
+              allRecords.splice(index, 1);
+              await saveAllData();
+              showSuccessMessage("Malzeme silindi!");
+              renderManageMaterials();
+            }
+          }
+        });
+      });
+    }
+
+    async function handleAddMaterial(e) {
+      e.preventDefault();
+
+      const name = document.getElementById('new-material-name').value.trim();
+
+      const existingMaterials = getMaterials();
+      if (existingMaterials.includes(name)) {
+        showMessage("Bu malzeme zaten mevcut.");
+        return;
+      }
+
+      const materialType = {
+        id: Date.now().toString(),
+        type: 'materialType',
+        name: name,
+        createdAt: new Date().toISOString()
+      };
+
+      allRecords.push(materialType);
+      await saveAllData();
+      
+      document.getElementById('add-material-form').reset();
+      showSuccessMessage("Malzeme başarıyla eklendi!");
+      renderManageMaterials();
+    }
+
+    function renderManageCostTypes() {
+      const customCostTypes = allRecords.filter(r => r.type === 'costType');
+      const isUsingDefaults = customCostTypes.length === 0;
+
+      const app = document.getElementById('app');
+      app.innerHTML = `
+        <div class="max-w-4xl mx-auto">
+          <button id="back-button" class="mb-6 flex items-center gap-2 text-blue-600 hover:text-blue-800 transition-colors">
+            ← Geri Dön
+          </button>
+
+          <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">
+              ⚙️ Maliyet Türleri Yönetimi
+            </h2>
+
+            ${isUsingDefaults ? `
+              <div class="mb-4 p-4 bg-blue-50 rounded-lg">
+                <p class="text-sm text-gray-700 mb-2">
+                  ℹ️ Varsayılan maliyet türlerini düzenleyebilir veya silebilirsiniz. Yeni tür eklemek için aşağıdaki formu kullanın.
+                </p>
+              </div>
+            ` : ''}
+
+            <form id="add-cost-type-form" class="mb-6">
+              <div class="flex gap-2">
+                <input type="text" id="new-cost-type-name" required placeholder="Yeni maliyet türü adı" class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <button type="submit" class="bg-blue-600 text-white font-medium py-2 px-6 rounded-md hover:bg-blue-700 transition-colors">
+                  Ekle
+                </button>
+              </div>
+            </form>
+
+            <div class="space-y-2">
+              <h3 class="text-lg font-bold text-gray-800 mb-3">
+                ${isUsingDefaults ? 'Varsayılan Türler' : 'Özel Türler'}
+              </h3>
+              <div id="cost-types-list" class="space-y-2">
+                ${getCostTypes().map(typeName => {
+                  const customType = customCostTypes.find(ct => ct.name === typeName);
+                  return `
+                    <div class="flex items-center justify-between gap-2 p-3 bg-gray-50 rounded-lg border cost-type-item" data-type-name="${typeName}" data-type-id="${customType ? customType.id : ''}" data-is-default="${!customType}">
+                      <span class="type-name-display flex-1 text-gray-800">
+                        ${typeName}
+                      </span>
+                      <input type="text" class="type-name-input hidden flex-1 px-2 py-1 border border-gray-300 rounded" value="${typeName}">
+                      <div class="flex gap-2">
+                        <button class="edit-cost-type-btn text-gray-600 hover:text-gray-800 transition-colors">
+                          ✏️
+                        </button>
+                        <button class="save-cost-type-btn hidden text-blue-600 hover:text-blue-800 transition-colors">
+                          ✓
+                        </button>
+                        <button class="cancel-edit-btn hidden text-gray-600 hover:text-gray-800 transition-colors">
+                          ✕
+                        </button>
+                        <button class="delete-cost-type-btn text-red-600 hover:text-red-800 transition-colors">
+                          🗑️
+                        </button>
+                      </div>
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      document.getElementById('back-button').addEventListener('click', () => {
+        renderApp();
+      });
+
+      document.getElementById('add-cost-type-form').addEventListener('submit', handleAddCostType);
+
+      document.querySelectorAll('.edit-cost-type-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const item = e.currentTarget.closest('.cost-type-item');
+          item.querySelector('.type-name-display').classList.add('hidden');
+          item.querySelector('.type-name-input').classList.remove('hidden');
+          item.querySelector('.edit-cost-type-btn').classList.add('hidden');
+          item.querySelector('.save-cost-type-btn').classList.remove('hidden');
+          item.querySelector('.cancel-edit-btn').classList.remove('hidden');
+          item.querySelector('.delete-cost-type-btn').classList.add('hidden');
+        });
+      });
+
+      document.querySelectorAll('.cancel-edit-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const item = e.currentTarget.closest('.cost-type-item');
+          const originalName = item.dataset.typeName;
+          item.querySelector('.type-name-input').value = originalName;
+          item.querySelector('.type-name-display').classList.remove('hidden');
+          item.querySelector('.type-name-input').classList.add('hidden');
+          item.querySelector('.edit-cost-type-btn').classList.remove('hidden');
+          item.querySelector('.save-cost-type-btn').classList.add('hidden');
+          item.querySelector('.cancel-edit-btn').classList.add('hidden');
+          item.querySelector('.delete-cost-type-btn').classList.remove('hidden');
+        });
+      });
+
+      document.querySelectorAll('.save-cost-type-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          const item = e.currentTarget.closest('.cost-type-item');
+          const typeId = item.dataset.typeId;
+          const isDefault = item.dataset.isDefault === 'true';
+          const newName = item.querySelector('.type-name-input').value.trim();
+          
+          if (!newName) {
+            showMessage("Maliyet türü adı boş olamaz.");
+            return;
+          }
+
+          const existingTypes = getCostTypes();
+          const originalName = item.dataset.typeName;
+          if (newName !== originalName && existingTypes.includes(newName)) {
+            showMessage("Bu maliyet türü adı zaten mevcut.");
+            return;
+          }
+
+          if (isDefault) {
+            const newTypeRecord = {
+              id: Date.now().toString(),
+              type: 'costType',
+              name: newName,
+              replacesDefault: originalName,
+              createdAt: new Date().toISOString()
+            };
+            
+            allRecords.push(newTypeRecord);
+            await saveAllData();
+            showSuccessMessage("Maliyet türü güncellendi!");
+            renderManageCostTypes();
+          } else {
+            const typeRecord = allRecords.find(r => r.id === typeId);
+            if (typeRecord) {
+              typeRecord.name = newName;
+              await saveAllData();
+              showSuccessMessage("Maliyet türü güncellendi!");
+              renderManageCostTypes();
+            }
+          }
+        });
+      });
+
+      document.querySelectorAll('.delete-cost-type-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          const item = e.currentTarget.closest('.cost-type-item');
+          const typeId = item.dataset.typeId;
+          const isDefault = item.dataset.isDefault === 'true';
+          const typeName = item.dataset.typeName;
+          
+          if (isDefault) {
+            const deletedTypeRecord = {
+              id: Date.now().toString(),
+              type: 'costType',
+              name: '',
+              replacesDefault: typeName,
+              isDeleted: true,
+              createdAt: new Date().toISOString()
+            };
+            
+            allRecords.push(deletedTypeRecord);
+            await saveAllData();
+            showSuccessMessage("Maliyet türü silindi!");
+            renderManageCostTypes();
+          } else {
+            const index = allRecords.findIndex(r => r.id === typeId);
+            if (index !== -1) {
+              allRecords.splice(index, 1);
+              await saveAllData();
+              showSuccessMessage("Maliyet türü silindi!");
+              renderManageCostTypes();
+            }
+          }
+        });
+      });
+    }
+
+    async function handleAddCostType(e) {
+      e.preventDefault();
+
+      const name = document.getElementById('new-cost-type-name').value.trim();
+
+      const existingTypes = getCostTypes();
+      if (existingTypes.includes(name)) {
+        showMessage("Bu maliyet türü zaten mevcut.");
+        return;
+      }
+
+      const costType = {
+        id: Date.now().toString(),
+        type: 'costType',
+        name: name,
+        createdAt: new Date().toISOString()
+      };
+
+      allRecords.push(costType);
+      await saveAllData();
+      
+      document.getElementById('add-cost-type-form').reset();
+      showSuccessMessage("Maliyet türü başarıyla eklendi!");
+      renderManageCostTypes();
+    }
+
+    async function handleAddSite(e) {
+      e.preventDefault();
+
+      const name = document.getElementById('site-name').value;
+
+      const site = {
+        id: Date.now().toString(),
+        type: 'site',
+        name,
+        createdAt: new Date().toISOString()
+      };
+
+      allRecords.push(site);
+      await saveAllData();
+      
+      document.getElementById('site-form').reset();
+      renderQuickCostSection();
+      renderSites();
+      showSuccessMessage("Şantiye başarıyla eklendi!");
+    }
+
+    function renderQuickCostSection() {
+      const container = document.getElementById('quick-cost-section');
+      if (!container) return;
+
+      const sites = getSites();
+      
+      if (sites.length === 0) {
+        container.innerHTML = '';
+        return;
+      }
+
+      const costTypes = getCostTypes();
+
+      container.innerHTML = `
+        <div class="bg-white rounded-lg shadow-md p-6">
+          <h2 class="text-2xl font-bold text-gray-800 mb-4">
+            💰 Hızlı Maliyet Ekle
+          </h2>
+
+          <form id="quick-cost-form">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div class="md:col-span-2">
+                <label class="block mb-2 font-medium text-gray-700">
+                  Şantiye Seç
+                </label>
+                <select id="quick-site-select" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <option value="">Şantiye Seçiniz</option>
+                  ${sites.map(site => `<option value="${site.id}">${site.name}</option>`).join('')}
+                </select>
+              </div>
+
+              <div>
+                <label class="block mb-2 font-medium text-gray-700">
+                  Maliyet Türü
+                </label>
+                <select id="quick-cost-type" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <option value="">Seçiniz</option>
+                  ${costTypes.map(type => `<option value="${type}">${type}</option>`).join('')}
+                </select>
+              </div>
+
+              <div>
+                <label class="block mb-2 font-medium text-gray-700">
+                  Tarih
+                </label>
+                <input type="date" id="quick-cost-date" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" value="${new Date().toISOString().split('T')[0]}">
+              </div>
+
+              <div>
+                <label class="block mb-2 font-medium text-gray-700">
+                  Ünvan
+                </label>
+                <select id="quick-cost-title" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <option value="">Seçiniz</option>
+                  ${getTitles().map(title => `<option value="${title}">${title}</option>`).join('')}
+                </select>
+              </div>
+
+              <div>
+                <label class="block mb-2 font-medium text-gray-700">
+                  Malzeme
+                </label>
+                <select id="quick-cost-material" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <option value="">Seçiniz</option>
+                  ${getMaterials().map(material => `<option value="${material}">${material}</option>`).join('')}
+                </select>
+              </div>
+
+              <div>
+                <label class="block mb-2 font-medium text-gray-700">
+                  Miktar
+                </label>
+                <input type="number" id="quick-cost-quantity" required min="0" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="0">
+              </div>
+
+              <div>
+                <label class="block mb-2 font-medium text-gray-700">
+                  Birim
+                </label>
+                <select id="quick-cost-unit" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <option value="">Seçiniz</option>
+                  <option value="Adet">Adet</option>
+                  <option value="Kg">Kg</option>
+                  <option value="Ton">Ton</option>
+                  <option value="Gram">Gram</option>
+                  <option value="m">m (Metre)</option>
+                  <option value="m²">m² (Metrekare)</option>
+                  <option value="m³">m³ (Metreküp)</option>
+                  <option value="cm">cm (Santimetre)</option>
+                  <option value="mm">mm (Milimetre)</option>
+                  <option value="Litre">Litre</option>
+                  <option value="Galon">Galon</option>
+                  <option value="Saat">Saat</option>
+                  <option value="Gün">Gün</option>
+                  <option value="Hafta">Hafta</option>
+                  <option value="Ay">Ay</option>
+                  <option value="Takım">Takım</option>
+                  <option value="Çuval">Çuval</option>
+                  <option value="Torba">Torba</option>
+                  <option value="Koli">Koli</option>
+                  <option value="Paket">Paket</option>
+                  <option value="Kutu">Kutu</option>
+                  <option value="Rulo">Rulo</option>
+                  <option value="Levha">Levha</option>
+                  <option value="Palet">Palet</option>
+                  <option value="Kamyon">Kamyon</option>
+                  <option value="Damper">Damper</option>
+                  <option value="Mikser">Mikser</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block mb-2 font-medium text-gray-700">
+                  Birim Fiyat
+                </label>
+                <div class="flex gap-2 items-center">
+                  <input type="number" id="quick-cost-unit-price" required min="0" step="0.01" class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="0.00">
+                  <label class="flex items-center gap-2 cursor-pointer whitespace-nowrap">
+                    <input type="checkbox" id="quick-cost-kdv-included" class="w-4 h-4">
+                    <span class="text-sm text-gray-700">
+                      KDV Dahil
+                    </span>
+                  </label>
+                </div>
+              </div>
+
+              <div>
+                <label class="block mb-2 font-medium text-gray-700">
+                  Para Birimi
+                </label>
+                <select id="quick-cost-currency" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <option value="TL">₺ TL</option>
+                  <option value="USD">$ USD</option>
+                  <option value="EUR">€ EUR</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block mb-2 font-medium text-gray-700">
+                  KDV (%)
+                </label>
+                <input type="number" id="quick-cost-kdv" required min="0" max="100" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="20" value="20">
+              </div>
+
+              <div class="md:col-span-2">
+                <label class="block mb-2 font-medium text-gray-700">
+                  Açıklama
+                </label>
+                <textarea id="quick-cost-description" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ek açıklama (opsiyonel)"></textarea>
+              </div>
+            </div>
+
+            <button type="submit" class="w-full bg-blue-600 text-white font-medium py-3 px-4 rounded-md hover:bg-blue-700 transition-colors">
+              Maliyet Ekle
+            </button>
+          </form>
+        </div>
+      `;
+
+      const form = document.getElementById('quick-cost-form');
+      form.addEventListener('submit', handleQuickAddCost);
+    }
+
+    async function handleQuickAddCost(e) {
+      e.preventDefault();
+
+      const siteId = document.getElementById('quick-site-select').value;
+
+      const cost = {
+        id: Date.now().toString(),
+        type: 'cost',
+        siteId: siteId,
+        costType: document.getElementById('quick-cost-type').value,
+        date: document.getElementById('quick-cost-date').value,
+        title: document.getElementById('quick-cost-title').value,
+        material: document.getElementById('quick-cost-material').value,
+        quantity: parseFloat(document.getElementById('quick-cost-quantity').value),
+        unit: document.getElementById('quick-cost-unit').value,
+        description: document.getElementById('quick-cost-description').value,
+        currency: document.getElementById('quick-cost-currency').value,
+        unitPrice: parseFloat(document.getElementById('quick-cost-unit-price').value),
+        kdv: parseFloat(document.getElementById('quick-cost-kdv').value),
+        kdvIncluded: document.getElementById('quick-cost-kdv-included').checked,
+        discount: 0,
+        withholding: 0,
+        createdAt: new Date().toISOString()
+      };
+
+      allRecords.push(cost);
+      await saveAllData();
+      
+      document.getElementById('quick-cost-form').reset();
+      document.getElementById('quick-cost-date').value = new Date().toISOString().split('T')[0];
+      renderSites();
+      showSuccessMessage("Maliyet başarıyla eklendi!");
+    }
+
+    function renderSites() {
+      const container = document.getElementById('sites-list');
+      if (!container) return;
+
+      const sites = getSites();
+      const sortedSites = [...sites].sort((a, b) => 
+        new Date(b.createdAt) - new Date(a.createdAt)
+      );
+
+      container.innerHTML = '';
+
+      sortedSites.forEach(site => {
+        const siteCosts = getCostsForSite(site.id);
+        const totalCost = siteCosts.reduce((sum, cost) => {
+          const subtotal = cost.quantity * cost.unitPrice;
+          const discountAmount = subtotal * (cost.discount / 100);
+          const afterDiscount = subtotal - discountAmount;
+          let total;
+          if (cost.kdvIncluded) {
+            total = afterDiscount;
+          } else {
+            const kdvAmount = afterDiscount * (cost.kdv / 100);
+            total = afterDiscount + kdvAmount;
+          }
+          const withholdingAmount = total * (cost.withholding / 100);
+          return sum + (total - withholdingAmount);
+        }, 0);
+
+        const card = document.createElement('div');
+        card.className = 'bg-white rounded-xl shadow-lg p-6 border-l-4 border-blue-600 cursor-pointer hover:shadow-2xl hover:scale-[1.02] transition-all duration-300';
+
+        const date = new Date(site.createdAt);
+        const formattedDate = date.toLocaleDateString('tr-TR');
+
+        card.innerHTML = `
+          <div class="flex justify-between items-start">
+            <div class="flex-1 site-clickable">
+              <div class="flex items-center gap-3 mb-3">
+                <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-2xl">
+                  🏗️
+                </div>
+                <div class="flex-1">
+                  <h3 class="text-2xl font-bold text-gray-800">
+                    ${site.name}
+                  </h3>
+                  <span class="text-sm text-gray-600">
+                    📅 ${formattedDate}
+                  </span>
+                </div>
+              </div>
+              <div class="flex gap-6 mt-4 pt-4 border-t border-gray-200">
+                <div>
+                  <div class="text-xs text-gray-600">
+                    Toplam Kayıt
+                  </div>
+                  <div class="text-lg font-bold text-blue-600">
+                    ${siteCosts.length} adet
+                  </div>
+                </div>
+                <div>
+                  <div class="text-xs text-gray-600">
+                    Toplam Maliyet
+                  </div>
+                  <div class="text-lg font-bold text-blue-600">
+                    ₺${totalCost.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
+                  </div>
+                </div>
+              </div>
+            </div>
+            <button class="delete-button text-red-600 hover:text-red-800 hover:scale-110 transition-all ml-4 p-2 rounded-lg text-xl" data-site-id="${site.id}">
+              🗑️
+            </button>
+          </div>
+        `;
+
+        card.querySelector('.site-clickable').addEventListener('click', () => openSiteDetail(site));
+        card.querySelector('.delete-button').addEventListener('click', async (e) => {
+          e.stopPropagation();
+          const index = allRecords.findIndex(r => r.id === site.id);
+          if (index !== -1) {
+            allRecords.splice(index, 1);
+            await saveAllData();
+            showSuccessMessage("Şantiye silindi!");
+            renderSites();
+          }
+        });
+
+        container.appendChild(card);
+      });
+    }
+
+    function openSiteDetail(site) {
+      currentView = 'detail';
+      currentSite = site;
+      renderSiteDetail(site);
+    }
+
+    function renderSiteDetail(site) {
+      const app = document.getElementById('app');
+      app.innerHTML = `
+        <div class="max-w-6xl mx-auto">
+          <button id="back-to-list" class="mb-6 flex items-center gap-2 text-blue-600 hover:text-blue-800 transition-colors">
+            ← Şantiyelere Dön
+          </button>
+
+          <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <div class="flex justify-between items-center mb-6">
+              <div>
+                <h2 class="text-4xl font-bold text-gray-800 mb-2">
+                  🏗️ ${site.name}
+                </h2>
+                <p class="text-gray-600">
+                  Maliyet Kayıtları
+                </p>
+              </div>
+              <button id="add-cost-btn" class="bg-blue-600 text-white px-6 py-3 rounded-md hover:bg-blue-700 transition-colors">
+                + Maliyet Ekle
+              </button>
+            </div>
+
+            <div id="cost-type-summary" class="mb-6"></div>
+
+            <div id="costs-container" class="space-y-4"></div>
+          </div>
+        </div>
+      `;
+
+      document.getElementById('back-to-list').addEventListener('click', () => {
+        currentView = 'list';
+        renderApp();
+      });
+
+      document.getElementById('add-cost-btn').addEventListener('click', () => {
+        showAddCostModal(site);
+      });
+
+      renderCosts(site);
+    }
+
+    function renderCosts(site) {
+      const container = document.getElementById('costs-container');
+      if (!container) return;
+
+      const costs = getCostsForSite(site.id);
+      const sortedCosts = [...costs].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+      // Maliyet türlerine göre toplamları hesapla
+      const costTypeTotals = {};
+      costs.forEach(cost => {
+        const subtotal = cost.quantity * cost.unitPrice;
+        const discountAmount = subtotal * (cost.discount / 100);
+        const afterDiscount = subtotal - discountAmount;
+        let total;
+        if (cost.kdvIncluded) {
+          total = afterDiscount;
+        } else {
+          const kdvAmount = afterDiscount * (cost.kdv / 100);
+          total = afterDiscount + kdvAmount;
+        }
+        const withholdingAmount = total * (cost.withholding / 100);
+        const finalTotal = total - withholdingAmount;
+
+        if (!costTypeTotals[cost.costType]) {
+          costTypeTotals[cost.costType] = 0;
+        }
+        costTypeTotals[cost.costType] += finalTotal;
+      });
+
+      // Özet bölümünü render et
+      const summaryContainer = document.getElementById('cost-type-summary');
+      if (summaryContainer && Object.keys(costTypeTotals).length > 0) {
+        const sortedTypes = Object.entries(costTypeTotals).sort((a, b) => b[1] - a[1]);
+        const grandTotal = sortedTypes.reduce((sum, [_, total]) => sum + total, 0);
+
+        summaryContainer.innerHTML = `
+          <div class="border rounded-lg p-4 bg-gray-50">
+            <h3 class="text-xl font-bold text-gray-800 mb-4">
+              📊 Maliyet Türü Özeti
+            </h3>
+            <div class="space-y-2">
+              ${sortedTypes.map(([costType, total]) => `
+                <div class="flex justify-between items-center py-2 border-b border-gray-200">
+                  <span class="text-sm text-gray-700">
+                    ${costType}
+                  </span>
+                  <span class="text-base font-bold text-blue-600">
+                    ₺${total.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
+                  </span>
+                </div>
+              `).join('')}
+              <div class="flex justify-between items-center py-3 pt-4 border-t-2 border-blue-600">
+                <span class="text-lg font-bold text-gray-800">
+                  GENEL TOPLAM
+                </span>
+                <span class="text-2xl font-bold text-blue-600">
+                  ₺${grandTotal.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
+                </span>
+              </div>
+            </div>
+          </div>
+        `;
+      } else if (summaryContainer) {
+        summaryContainer.innerHTML = '';
+      }
+
+      if (sortedCosts.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-12">
+            <p class="text-gray-600">
+              Henüz maliyet kaydı bulunmuyor. Yukarıdaki butona tıklayarak ekleyebilirsiniz.
+            </p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = sortedCosts.map(cost => {
+        const subtotal = cost.quantity * cost.unitPrice;
+        const discountAmount = subtotal * (cost.discount / 100);
+        const afterDiscount = subtotal - discountAmount;
+        let total;
+        if (cost.kdvIncluded) {
+          total = afterDiscount;
+        } else {
+          const kdvAmount = afterDiscount * (cost.kdv / 100);
+          total = afterDiscount + kdvAmount;
+        }
+        const withholdingAmount = total * (cost.withholding / 100);
+        const finalTotal = total - withholdingAmount;
+
+        const currencySymbol = cost.currency === 'TL' ? '₺' : cost.currency === 'USD' ? '$' : '€';
+
+        return `
+          <div class="border rounded-lg p-4 bg-gray-50 hover:shadow-md transition-shadow">
+            <div class="flex justify-between items-start mb-3">
+              <div class="flex-1">
+                <div class="flex items-center gap-2 mb-2">
+                  <span class="text-lg font-bold text-gray-800">
+                    ${cost.costType}
+                  </span>
+                  <span class="text-sm text-gray-600">
+                    • ${new Date(cost.date).toLocaleDateString('tr-TR')}
+                  </span>
+                </div>
+                <div class="text-sm text-gray-700 mb-2">
+                  <strong>Ünvan:</strong> ${cost.title}
+                </div>
+                <div class="text-sm text-gray-700 mb-2">
+                  <strong>Malzeme:</strong> ${cost.material}
+                </div>
+                <div class="text-sm text-gray-700 mb-2">
+                  <strong>Miktar:</strong> ${cost.quantity} ${cost.unit}
+                </div>
+                <div class="text-sm text-gray-700 mb-2">
+                  <strong>Birim Fiyat:</strong> ${currencySymbol}${cost.unitPrice.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ${cost.kdvIncluded ? '(KDV Dahil)' : ''}
+                </div>
+                ${cost.description ? `
+                  <div class="text-xs text-gray-600 mt-2">
+                    ${cost.description}
+                  </div>
+                ` : ''}
+              </div>
+              <div class="text-right ml-4">
+                <div class="text-2xl font-bold text-blue-600 mb-2">
+                  ${currencySymbol}${finalTotal.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
+                </div>
+                <button class="delete-cost-btn text-red-600 hover:text-red-800 transition-colors p-2 rounded" data-cost-id="${cost.id}">
+                  🗑️
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      container.querySelectorAll('.delete-cost-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const costId = btn.dataset.costId;
+          const index = allRecords.findIndex(r => r.id === costId);
+          if (index !== -1) {
+            allRecords.splice(index, 1);
+            await saveAllData();
+            showSuccessMessage("Maliyet silindi!");
+            renderCosts(site);
+          }
+        });
+      });
+    }
+
+    function showAddCostModal(site) {
+      const modal = document.createElement('div');
+      modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4';
+      modal.style.overflowY = 'auto';
+      
+      modal.innerHTML = `
+        <div class="bg-white rounded-lg shadow-2xl p-6 max-w-2xl w-full my-8">
+          <h3 class="text-2xl font-bold text-gray-800 mb-4">
+            💰 Yeni Maliyet Ekle
+          </h3>
+
+          <form id="add-cost-form">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div>
+                <label class="block mb-2 font-medium text-gray-700">
+                  Maliyet Türü
+                </label>
+                <select id="modal-cost-type" required class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                  <option value="">Seçiniz</option>
+                  ${getCostTypes().map(type => `<option value="${type}">${type}</option>`).join('')}
+                </select>
+              </div>
+
+              <div>
+                <label class="block mb-2 font-medium text-gray-700">
+                  Tarih
+                </label>
+                <input type="date" id="modal-cost-date" required class="w-full px-3 py-2 border border-gray-300 rounded-md" value="${new Date().toISOString().split('T')[0]}">
+              </div>
+
+              <div>
+                <label class="block mb-2 font-medium text-gray-700">
+                  Ünvan
+                </label>
+                <select id="modal-cost-title" required class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                  <option value="">Seçiniz</option>
+                  ${getTitles().map(title => `<option value="${title}">${title}</option>`).join('')}
+                </select>
+              </div>
+
+              <div>
+                <label class="block mb-2 font-medium text-gray-700">
+                  Malzeme
+                </label>
+                <select id="modal-cost-material" required class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                  <option value="">Seçiniz</option>
+                  ${getMaterials().map(material => `<option value="${material}">${material}</option>`).join('')}
+                </select>
+              </div>
+
+              <div>
+                <label class="block mb-2 font-medium text-gray-700">
+                  Miktar
+                </label>
+                <input type="number" id="modal-cost-quantity" required min="0" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-md" placeholder="0">
+              </div>
+
+              <div>
+                <label class="block mb-2 font-medium text-gray-700">
+                  Birim
+                </label>
+                <select id="modal-cost-unit" required class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                  <option value="">Seçiniz</option>
+                  <option value="Adet">Adet</option>
+                  <option value="Kg">Kg</option>
+                  <option value="Ton">Ton</option>
+                  <option value="m">m (Metre)</option>
+                  <option value="m²">m² (Metrekare)</option>
+                  <option value="m³">m³ (Metreküp)</option>
+                  <option value="Litre">Litre</option>
+                  <option value="Çuval">Çuval</option>
+                  <option value="Paket">Paket</option>
+                  <option value="Rulo">Rulo</option>
+                  <option value="Mikser">Mikser</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block mb-2 font-medium text-gray-700">
+                  Birim Fiyat
+                </label>
+                <div class="flex gap-2 items-center">
+                  <input type="number" id="modal-cost-unit-price" required min="0" step="0.01" class="flex-1 px-3 py-2 border border-gray-300 rounded-md" placeholder="0.00">
+                  <label class="flex items-center gap-2 cursor-pointer whitespace-nowrap">
+                    <input type="checkbox" id="modal-cost-kdv-included" class="w-4 h-4">
+                    <span class="text-sm text-gray-700">
+                      KDV Dahil
+                    </span>
+                  </label>
+                </div>
+              </div>
+
+              <div>
+                <label class="block mb-2 font-medium text-gray-700">
+                  Para Birimi
+                </label>
+                <select id="modal-cost-currency" required class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                  <option value="TL">₺ TL</option>
+                  <option value="USD">$ USD</option>
+                  <option value="EUR">€ EUR</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block mb-2 font-medium text-gray-700">
+                  KDV (%)
+                </label>
+                <input type="number" id="modal-cost-kdv" required min="0" max="100" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-md" placeholder="20" value="20">
+              </div>
+
+              <div class="md:col-span-2">
+                <label class="block mb-2 font-medium text-gray-700">
+                  Açıklama
+                </label>
+                <textarea id="modal-cost-description" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-md" placeholder="Ek açıklama (opsiyonel)"></textarea>
+              </div>
+            </div>
+
+            <div class="flex gap-2">
+              <button type="submit" class="flex-1 bg-blue-600 text-white px-4 py-3 rounded-md hover:bg-blue-700 transition-colors">
+                Kaydet
+              </button>
+              <button type="button" id="cancel-add-cost" class="flex-1 text-gray-600 px-4 py-3 rounded-md border border-gray-300 hover:bg-gray-50 transition-colors">
+                İptal
+              </button>
+            </div>
+          </form>
+        </div>
+      `;
+
+      document.body.appendChild(modal);
+
+      modal.querySelector('#cancel-add-cost').addEventListener('click', () => {
+        modal.remove();
+      });
+
+      modal.querySelector('#add-cost-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const cost = {
+          id: Date.now().toString(),
+          type: 'cost',
+          siteId: site.id,
+          costType: document.getElementById('modal-cost-type').value,
+          date: document.getElementById('modal-cost-date').value,
+          title: document.getElementById('modal-cost-title').value,
+          material: document.getElementById('modal-cost-material').value,
+          quantity: parseFloat(document.getElementById('modal-cost-quantity').value),
+          unit: document.getElementById('modal-cost-unit').value,
+          description: document.getElementById('modal-cost-description').value,
+          currency: document.getElementById('modal-cost-currency').value,
+          unitPrice: parseFloat(document.getElementById('modal-cost-unit-price').value),
+          kdv: parseFloat(document.getElementById('modal-cost-kdv').value),
+          kdvIncluded: document.getElementById('modal-cost-kdv-included').checked,
+          discount: 0,
+          withholding: 0,
+          createdAt: new Date().toISOString()
+        };
+
+        allRecords.push(cost);
+        await saveAllData();
+        
+        modal.remove();
+        renderCosts(site);
+        showSuccessMessage("Maliyet başarıyla eklendi!");
+      });
+    }
+
+    function showMessage(message) {
+      const toast = document.createElement('div');
+      toast.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+      toast.textContent = message;
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    }
+
+    function showSuccessMessage(message) {
+      const toast = document.createElement('div');
+      toast.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+      toast.textContent = message;
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    }
+
+    initializeApp();
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'99d585d607a7bc3c',t:'MTc2Mjk0NTE5Ni4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
