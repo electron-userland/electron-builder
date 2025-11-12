@@ -12,7 +12,6 @@ import {
   BlockMap,
   retry,
 } from "builder-util-runtime"
-import { Notification } from "electron"
 import { randomBytes } from "crypto"
 import { release } from "os"
 import { EventEmitter } from "events"
@@ -37,6 +36,7 @@ import { DifferentialDownloaderOptions } from "./differentialDownloader/Differen
 import { GenericDifferentialDownloader } from "./differentialDownloader/GenericDifferentialDownloader"
 import { DOWNLOAD_PROGRESS, Logger, ResolvedUpdateFileInfo, UPDATE_DOWNLOADED, UpdateCheckResult, UpdateDownloadedEvent, UpdaterSignal } from "./types"
 import { VerifyUpdateSupport } from "./main"
+import { Notification } from "electron/main"
 
 export type AppUpdaterEvents = {
   error: (error: Error, message?: string) => void
