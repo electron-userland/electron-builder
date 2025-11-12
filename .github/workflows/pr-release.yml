@@ -23,6 +23,7 @@ jobs:
         with:
           # This makes Actions fetch all Git history so that Changesets can generate changelogs with the correct commits
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Install dependencies
         uses: ./.github/actions/pnpm
@@ -31,14 +32,16 @@ jobs:
         uses: electron/github-app-auth-action@384fd19694fe7b6dcc9a684746c6976ad78228ae
         id: generate-token
         with:
+          export-git-user: true
           creds: ${{ secrets.RELEASE_BOT_APP_CREDS }}
 
       - name: Create versions PR & prepare publish
-        uses: changesets/action@06245a4e0a36c064a573d4150030f5ec548e4fcc # v1.4.1
+        uses: changesets/action@7af85527bb2f43a404b5823a6cad47661be255c1 # v1.5.3 - @marshallofsound fork
         with:
           version: pnpm ci:version
           commit: 'chore(deploy): Release'
           title: 'chore(deploy): Release'
           publish: pnpm ci:publish
+          setupGitUser: false
         env:
           GITHUB_TOKEN: ${{ steps.generate-token.outputs.token }}
