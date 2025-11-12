@@ -133,7 +133,7 @@ export interface WindowsAzureSigningConfiguration {
   /**
    * [The publisher name](https://github.com/electron-userland/electron-builder/issues/1187#issuecomment-278972073), exactly as in your code signed certificate. Several names can be provided.
    */
-  readonly publisherName: string
+  readonly publisherName: string | Array<string> | null
   /**
    * The Trusted Signing Account endpoint. The URI value must have a URI that aligns to the
    * region your Trusted Signing Account and Certificate Profile you are specifying were created
