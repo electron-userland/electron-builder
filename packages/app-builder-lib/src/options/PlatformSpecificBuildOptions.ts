@@ -199,6 +199,11 @@ export interface PlatformSpecificBuildOptions extends TargetSpecificOptions, Fil
   cscKeyPassword?: string | null
 
   readonly defaultArch?: string
+
+  /**
+   * The modules to exclude from the rebuild.
+   */
+  readonly excludeReBuildModules?: Array<string> | null
 }
 
 export interface ReleaseInfo {

@@ -181,6 +181,7 @@ export async function rebuild(config: Configuration, { appDir, projectDir }: Dir
     arch,
     platform,
     buildFromSource,
+    ignoreModules: config.excludeReBuildModules || undefined,
     projectRootPath: projectDir,
     mode: config.nativeRebuilder || "sequential",
     disablePreGypCopy: true,

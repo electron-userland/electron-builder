@@ -192,6 +192,11 @@ export interface CommonConfiguration {
    * [Experimental] Configuration for concurrent builds.
    */
   readonly concurrency?: Concurrency | null
+
+  /**
+   * The modules to exclude from the rebuild.
+   */
+  readonly excludeReBuildModules?: Array<string> | null
 }
 
 export interface Configuration extends CommonConfiguration, PlatformSpecificBuildOptions, Hooks {
