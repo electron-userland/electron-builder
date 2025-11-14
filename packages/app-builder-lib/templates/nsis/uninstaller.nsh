@@ -8,6 +8,13 @@ Function un.onInit
   
   !insertmacro check64BitAndSetRegView
 
+  # Parse command line for /S flag and set silent mode
+  ${GetParameters} $R0
+  ${GetOptions} $R0 "/S" $R1
+  ${IfNot} ${Errors}
+    SetSilent silent
+  ${EndIf}
+  
   ${If} ${Silent}
     call un.checkAppRunning
   ${else}
