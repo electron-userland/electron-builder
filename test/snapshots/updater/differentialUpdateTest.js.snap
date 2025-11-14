@@ -262,6 +262,7 @@ exports[`Mac Intel 2`] = `
   "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
   "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
+  "NSPrefersDisplaySafeAreaCompatibilityMode": false,
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
 }
@@ -349,6 +350,7 @@ exports[`Mac Intel 4`] = `
   "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
   "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
+  "NSPrefersDisplaySafeAreaCompatibilityMode": false,
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
 }
@@ -457,6 +459,7 @@ exports[`Mac arm64 2`] = `
   "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
   "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
+  "NSPrefersDisplaySafeAreaCompatibilityMode": false,
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
 }
@@ -544,6 +547,7 @@ exports[`Mac arm64 4`] = `
   "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
   "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
+  "NSPrefersDisplaySafeAreaCompatibilityMode": false,
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
 }
@@ -652,6 +656,7 @@ exports[`Mac universal 2`] = `
   "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
   "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
+  "NSPrefersDisplaySafeAreaCompatibilityMode": false,
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
 }
@@ -739,6 +744,7 @@ exports[`Mac universal 4`] = `
   "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
   "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
+  "NSPrefersDisplaySafeAreaCompatibilityMode": false,
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
 }

@@ -82,7 +82,7 @@ jobs:
         uses: ./.github/actions/pretest
         with:
           cache-path: ~/.cache/electron
-          cache-key: v-23.3.10-linux-electron
+          cache-key: v-35.7.5-linux-electron
 
       - name: Download test-runner if exists
         if: needs.run-docker-build.result == 'success'
@@ -129,7 +129,7 @@ jobs:
         uses: ./.github/actions/pretest
         with:
           cache-path: ~/.cache/electron
-          cache-key: v-23.3.10-update-electron
+          cache-key: v-35.7.5-update-electron
 
       - name: Download test-runner if exists
         if: needs.run-docker-build.result == 'success'
@@ -172,7 +172,7 @@ jobs:
         uses: ./.github/actions/pretest
         with:
           cache-path: ~/.cache/electron
-          cache-key: v-23.3.10-update-electron
+          cache-key: v-35.7.5-update-electron
 
       - name: Verify Docs Generation
         run: pnpm generate-all
@@ -200,7 +200,7 @@ jobs:
       - name: Setup Tests
         uses: ./.github/actions/pretest
         with:
-          cache-key: v-23.3.10-windows-electron
+          cache-key: v-35.7.5-windows-electron
           cache-path: ~\AppData\Local\electron\Cache
 
       - name: Test
@@ -230,7 +230,7 @@ jobs:
         uses: ./.github/actions/pretest
         with:
           cache-path: ~/Library/Caches/electron
-          cache-key: v-23.3.10-macos-electron
+          cache-key: v-35.7.5-macos-electron
 
       - name: Install toolset via brew
         run: |
