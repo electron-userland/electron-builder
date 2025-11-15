@@ -18,7 +18,6 @@ import {
   use,
 } from "builder-util"
 import { MemoLazy, Nullish } from "builder-util-runtime"
-import * as fs from "fs/promises"
 import { mkdir, readdir } from "fs/promises"
 import { Lazy } from "lazy-val"
 import * as path from "path"
@@ -139,7 +138,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
         return super.doPack(config)
       }
       case Arch.universal: {
-        const outDirName = (arch: Arch) => `${appOutDir}-${Arch[arch]}-temp`
+        const outDirName = (arch: Arch) => this.info.tempDirManager.createTempDir({ prefix: `mac-${Arch[arch]}` })
         const options = {
           ...config,
           options: {
@@ -150,7 +149,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
         }
 
         const x64Arch = Arch.x64
-        const x64AppOutDir = outDirName(x64Arch)
+        const x64AppOutDir = await outDirName(x64Arch)
         await super.doPack({ ...options, appOutDir: x64AppOutDir, arch: x64Arch })
 
         if (this.info.cancellationToken.cancelled) {
@@ -158,7 +157,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
         }
 
         const arm64Arch = Arch.arm64
-        const arm64AppOutPath = outDirName(arm64Arch)
+        const arm64AppOutPath = await outDirName(arm64Arch)
         await super.doPack({ ...options, appOutDir: arm64AppOutPath, arch: arm64Arch })
 
         if (this.info.cancellationToken.cancelled) {
@@ -194,8 +193,6 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
           singleArchFiles: platformSpecificBuildOptions.singleArchFiles,
           x64ArchFiles: platformSpecificBuildOptions.x64ArchFiles,
         })
-        await fs.rm(x64AppOutDir, { recursive: true, force: true })
-        await fs.rm(arm64AppOutPath, { recursive: true, force: true })
 
         // Give users a final opportunity to perform things on the combined universal package before signing
         const packContext: AfterPackContext = {
@@ -509,11 +506,11 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
   }
 
   public getElectronSrcDir(dist: string) {
-    return path.resolve(this.projectDir, dist, this.info.framework.distMacOsAppName)
+    return path.resolve(this.projectDir, dist, `${this.info.framework.productName}.app`)
   }
 
   public getElectronDestinationDir(appOutDir: string) {
-    return path.join(appOutDir, this.info.framework.distMacOsAppName)
+    return path.join(appOutDir, `${this.info.framework.productName}.app`)
   }
 
   // todo fileAssociations
