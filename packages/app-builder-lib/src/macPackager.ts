@@ -2,7 +2,21 @@ import { notarize } from "@electron/notarize"
 import { NotarizeOptionsNotaryTool, NotaryToolKeychainCredentials } from "@electron/notarize/lib/types"
 import { PerFileSignOptions, SignOptions } from "@electron/osx-sign/dist/cjs/types"
 import { Identity } from "@electron/osx-sign/dist/cjs/util-identities"
-import { Arch, AsyncTaskManager, copyFile, deepAssign, exec, getArchSuffix, InvalidConfigurationError, log, orIfFileNotExist, statOrNull, unlinkIfExists, use } from "builder-util"
+import {
+  Arch,
+  AsyncTaskManager,
+  copyFile,
+  deepAssign,
+  exec,
+  exists,
+  getArchSuffix,
+  InvalidConfigurationError,
+  log,
+  orIfFileNotExist,
+  statOrNull,
+  unlinkIfExists,
+  use,
+} from "builder-util"
 import { MemoLazy, Nullish } from "builder-util-runtime"
 import * as fs from "fs/promises"
 import { mkdir, readdir } from "fs/promises"
@@ -162,6 +176,14 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
           `packaging`
         )
         const appFile = `${this.appInfo.productFilename}.app`
+
+        // Make sure the Assets.car file is the same for both architectures
+        const sourceCatalogPath = path.join(x64AppOutDir, appFile, "Contents/Resources/Assets.car")
+        if (await exists(sourceCatalogPath)) {
+          const targetCatalogPath = path.join(arm64AppOutPath, appFile, "Contents/Resources/Assets.car")
+          await fs.copyFile(sourceCatalogPath, targetCatalogPath)
+        }
+
         const { makeUniversalApp } = require("@electron/universal")
         await makeUniversalApp({
           x64AppPath: path.join(x64AppOutDir, appFile),
@@ -502,19 +524,44 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
     // https://github.com/electron-userland/electron-builder/issues/1278
     appPlist.CFBundleExecutable = appFilename.endsWith(" Helper") ? appFilename.substring(0, appFilename.length - " Helper".length) : appFilename
 
-    const icon = await this.getIconPath()
-    if (icon != null) {
+    const resourcesPath = path.join(contentsPath, "Resources")
+
+    // Support both legacy `.icns` and modern `.icon` (Icon Composer) inputs via `mac.icon`.
+    // Prefer `.icon` if provided; still accept `.icns`.
+    const configuredIcon = this.platformSpecificBuildOptions.icon
+    const isIconComposer = typeof configuredIcon === "string" && configuredIcon.toLowerCase().endsWith(".icon")
+
+    // Set the app name
+    appPlist.CFBundleName = appInfo.productName
+    appPlist.CFBundleDisplayName = appInfo.productName
+
+    // Bundle legacy `icns` format - this should also run when `.icon` is provided
+    const setIcnsFile = async (iconPath: string) => {
       const oldIcon = appPlist.CFBundleIconFile
-      const resourcesPath = path.join(contentsPath, "Resources")
       if (oldIcon != null) {
         await unlinkIfExists(path.join(resourcesPath, oldIcon))
       }
       const iconFileName = "icon.icns"
       appPlist.CFBundleIconFile = iconFileName
-      await copyFile(icon, path.join(resourcesPath, iconFileName))
+      await copyFile(iconPath, path.join(resourcesPath, iconFileName))
     }
-    appPlist.CFBundleName = appInfo.productName
-    appPlist.CFBundleDisplayName = appInfo.productName
+
+    const icnsFilePath = await this.getIconPath()
+    if (icnsFilePath != null) {
+      await setIcnsFile(icnsFilePath)
+    }
+
+    // Bundle new `icon` format
+    if (isIconComposer && configuredIcon) {
+      const iconComposerPath = await this.getResource(configuredIcon)
+      if (iconComposerPath) {
+        const { assetCatalog } = await this.generateAssetCatalogData(iconComposerPath)
+
+        // Create and setup the asset catalog
+        appPlist.CFBundleIconName = "Icon"
+        await fs.writeFile(path.join(resourcesPath, "Assets.car"), assetCatalog)
+      }
+    }
 
     const minimumSystemVersion = this.platformSpecificBuildOptions.minimumSystemVersion
     if (minimumSystemVersion != null) {
