@@ -192,7 +192,7 @@ importers:
         specifier: ^1.7.0
         version: 1.7.0
       semver:
-        specifier: 7.7.2
+        specifier: ~7.7.2
         version: 7.7.2
       tar:
         specifier: ^6.1.12
@@ -554,7 +554,7 @@ importers:
         specifier: ^4.5.0
         version: 4.5.0
       semver:
-        specifier: 7.7.2
+        specifier: ~7.7.2
         version: 7.7.2
       tiny-typed-emitter:
         specifier: ^2.1.0
