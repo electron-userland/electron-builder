@@ -1,5 +1,19 @@
 # app-builder-lib
 
+## 26.3.0
+
+### Minor Changes
+
+- [#9309](https://github.com/electron-userland/electron-builder/pull/9309) [`b741b726daeb06080ab1cf46a93d318fd89ae4e7`](https://github.com/electron-userland/electron-builder/commit/b741b726daeb06080ab1cf46a93d318fd89ae4e7) Thanks [@mmaietta](https://github.com/mmaietta)! - feat: support `corepack` and `packageManager` field and add related unit tests
+
+- [#9335](https://github.com/electron-userland/electron-builder/pull/9335) [`16c8fa19b288770a6d24164e562a353877e59536`](https://github.com/electron-userland/electron-builder/commit/16c8fa19b288770a6d24164e562a353877e59536) Thanks [@mmaietta](https://github.com/mmaietta)! - feat: allowing negative patterns to be provided for `signExts` as signing overrides
+
+### Patch Changes
+
+- Updated dependencies [[`16c8fa19b288770a6d24164e562a353877e59536`](https://github.com/electron-userland/electron-builder/commit/16c8fa19b288770a6d24164e562a353877e59536)]:
+  - electron-builder-squirrel-windows@26.3.0
+  - dmg-builder@26.3.0
+
 ## 26.2.0
 
 ### Minor Changes
