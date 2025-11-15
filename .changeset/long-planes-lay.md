@@ -3,4 +3,4 @@
 "app-builder-lib": patch
 ---
 
-chore(deps): updating semver to 7.7.2
+chore: remove "beta" labels from a few features
