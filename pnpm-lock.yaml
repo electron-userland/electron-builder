@@ -9,7 +9,7 @@ patchedDependencies:
     hash: ef56f57067dfcc594f40d9afc7278abe38cecf1c04230936e447a60e0d58a46e
     path: patches/@changesets__assemble-release-plan@6.0.9.patch
   '@changesets/cli@2.29.7':
-    hash: 0840fdb970dc9d87c5b800e1772fa7183819563f50d1bb3b5487471be7f933ba
+    hash: 4ef9ea77709c09dd51d013cff58b6b8d9004f0c22208e12942cbf4161351d590
     path: patches/@changesets__cli@2.29.7.patch
 
 importers:
@@ -31,7 +31,7 @@ importers:
         version: 0.4.7(encoding@0.1.13)
       '@changesets/cli':
         specifier: 2.29.7
-        version: 2.29.7(patch_hash=0840fdb970dc9d87c5b800e1772fa7183819563f50d1bb3b5487471be7f933ba)(@types/node@22.13.17)
+        version: 2.29.7(patch_hash=4ef9ea77709c09dd51d013cff58b6b8d9004f0c22208e12942cbf4161351d590)(@types/node@22.13.17)
       '@eslint/eslintrc':
         specifier: ^3.3.1
         version: 3.3.1
@@ -6628,7 +6628,7 @@ snapshots:
     transitivePeerDependencies:
       - encoding
 
-  '@changesets/cli@2.29.7(patch_hash=0840fdb970dc9d87c5b800e1772fa7183819563f50d1bb3b5487471be7f933ba)(@types/node@22.13.17)':
+  '@changesets/cli@2.29.7(patch_hash=4ef9ea77709c09dd51d013cff58b6b8d9004f0c22208e12942cbf4161351d590)(@types/node@22.13.17)':
     dependencies:
       '@changesets/apply-release-plan': 7.0.13
       '@changesets/assemble-release-plan': 6.0.9(patch_hash=ef56f57067dfcc594f40d9afc7278abe38cecf1c04230936e447a60e0d58a46e)
