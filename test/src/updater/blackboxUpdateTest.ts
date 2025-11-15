@@ -175,13 +175,12 @@ async function doBuild(
         },
       },
       {
-        isInstallDepsBefore: true,
         storeDepsLockfileSnapshot: false,
         signed: true,
         signedWin: isWindows,
         packed,
-        projectDirCreated: projectDir =>
-          Promise.all([
+        projectDirCreated: async projectDir => {
+          await Promise.all([
             outputFile(path.join(projectDir, "package-lock.json"), "{}"),
             outputFile(path.join(projectDir, ".npmrc"), "node-linker=hoisted"),
             modifyPackageJson(
@@ -222,7 +221,9 @@ async function doBuild(
               },
               false
             ),
-          ]),
+          ])
+          execSync("npm install", { cwd: projectDir, stdio: "inherit" })
+        },
       }
     )
   }
