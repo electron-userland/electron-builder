@@ -1965,7 +1965,7 @@
           "description": "The executable parameters. Pass to executableName"
         },
         "executableName": {
-          "description": "The executable name. Defaults to `productName`.",
+          "description": "The executable name. Defaults to `productName`\nNote: Except for Linux, where this would constitute a breaking change in previous behavior and lead to both invalid executable names and Desktop files. Ref comments in: https://github.com/electron-userland/electron-builder/pull/9068",
           "type": [
             "null",
             "string"
@@ -2659,7 +2659,7 @@
           ]
         },
         "executableName": {
-          "description": "The executable name. Defaults to `productName`.",
+          "description": "The executable name. Defaults to `productName`\nNote: Except for Linux, where this would constitute a breaking change in previous behavior and lead to both invalid executable names and Desktop files. Ref comments in: https://github.com/electron-userland/electron-builder/pull/9068",
           "type": [
             "null",
             "string"
@@ -3294,7 +3294,7 @@
           ]
         },
         "executableName": {
-          "description": "The executable name. Defaults to `productName`.",
+          "description": "The executable name. Defaults to `productName`\nNote: Except for Linux, where this would constitute a breaking change in previous behavior and lead to both invalid executable names and Desktop files. Ref comments in: https://github.com/electron-userland/electron-builder/pull/9068",
           "type": [
             "null",
             "string"
@@ -6536,7 +6536,7 @@
               "type": "null"
             }
           ],
-          "description": "Options for usage of Azure Trusted Signing (beta)\nCannot be used in conjunction with `signtoolOptions`, signing will default to Azure Trusted Signing"
+          "description": "Options for usage of Azure Trusted Signing service\nCannot be used in conjunction with `signtoolOptions`, signing will default to Azure Trusted Signing"
         },
         "compression": {
           "anyOf": [
@@ -6605,7 +6605,7 @@
           ]
         },
         "executableName": {
-          "description": "The executable name. Defaults to `productName`.",
+          "description": "The executable name. Defaults to `productName`\nNote: Except for Linux, where this would constitute a breaking change in previous behavior and lead to both invalid executable names and Desktop files. Ref comments in: https://github.com/electron-userland/electron-builder/pull/9068",
           "type": [
             "null",
             "string"
@@ -6827,7 +6827,7 @@
             }
           ],
           "default": null,
-          "description": "Explicit file extensions to also sign. Advanced option."
+          "description": "Explicit file name/extensions (`str.endsWith`) to also sign. Advanced option.\nSupports negative patterns, e.g. example that excludes `.appx` files: `[\"somefilename\", \".dll\", \"!.appx\"]`."
         },
         "signtoolOptions": {
           "anyOf": [
@@ -7380,7 +7380,7 @@
       ]
     },
     "executableName": {
-      "description": "The executable name. Defaults to `productName`.",
+      "description": "The executable name. Defaults to `productName`\nNote: Except for Linux, where this would constitute a breaking change in previous behavior and lead to both invalid executable names and Desktop files. Ref comments in: https://github.com/electron-userland/electron-builder/pull/9068",
       "type": [
         "null",
         "string"

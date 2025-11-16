@@ -1,4 +1,4 @@
-import { Arch, CopyFileTransformer, executeAppBuilder, FileTransformer, InvalidConfigurationError, use, walk } from "builder-util"
+import { Arch, CopyFileTransformer, executeAppBuilder, FileTransformer, InvalidConfigurationError, log, use, walk } from "builder-util"
 import { Nullish } from "builder-util-runtime"
 import { createHash } from "crypto"
 import { readdir } from "fs/promises"
@@ -119,7 +119,12 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     return chooseNotNull(chooseNotNull(this.platformSpecificBuildOptions.signtoolOptions?.certificatePassword, process.env.WIN_CSC_KEY_PASSWORD), super.doGetCscPassword())
   }
 
-  async sign(file: string): Promise<boolean> {
+  async signIf(file: string): Promise<boolean> {
+    if (!this.shouldSignFile(file, true)) {
+      log.info({ file: log.filePath(file) }, "file signing skipped via signExts configuration")
+      return false
+    }
+
     const signOptions: WindowsSignOptions = {
       path: file,
       options: this.platformSpecificBuildOptions,
@@ -207,7 +212,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
       await execWine(path.join(vendorPath, "rcedit-ia32.exe"), path.join(vendorPath, "rcedit-x64.exe"), args)
     }
 
-    await this.sign(file)
+    await this.signIf(file)
     timer.end()
 
     if (buildCacheManager != null) {
@@ -215,9 +220,23 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     }
   }
 
-  private shouldSignFile(file: string): boolean {
-    const shouldSignExplicit = !!this.platformSpecificBuildOptions.signExts?.some(ext => file.endsWith(ext))
-    return shouldSignExplicit || file.endsWith(".exe")
+  private shouldSignFile(file: string, fallbackValue = false): boolean {
+    const backwardCompatibility = file.endsWith(".exe")
+    const signExts = this.platformSpecificBuildOptions.signExts
+    if (!signExts?.length) {
+      return backwardCompatibility || fallbackValue
+    }
+    // process patterns ( !exe => exclude .exe, .dll => include .dll )
+    // we process first to allow literal negatives in case a filename matches "help!.txt" or similar
+    if (signExts.some(ext => file.endsWith(ext))) {
+      return true
+    }
+    // process negative patterns
+    if (signExts.some(ext => ext.startsWith("!") && file.endsWith(ext.substring(1)))) {
+      return false
+    }
+    // if no explicit patterns matched, fall back to backward compatibility
+    return backwardCompatibility || fallbackValue
   }
 
   protected createTransformerForExtraFiles(packContext: AfterPackContext): FileTransformer | null {
@@ -229,7 +248,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
       if (this.shouldSignFile(file)) {
         const parentDir = path.dirname(file)
         if (parentDir !== packContext.appOutDir) {
-          return new CopyFileTransformer(file => this.sign(file))
+          return new CopyFileTransformer(file => this.signIf(file))
         }
       }
       return null
@@ -253,7 +272,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
           this.platformSpecificBuildOptions.requestedExecutionLevel
         )
       } else if (this.shouldSignFile(file)) {
-        await this.sign(path.join(packContext.appOutDir, file))
+        await this.signIf(path.join(packContext.appOutDir, file))
       }
     }
 
@@ -267,7 +286,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     }
     const filesToSign = await Promise.all([filesPromise(["resources", "app.asar.unpacked"]), filesPromise(["swiftshader"])])
     for (const file of filesToSign.flat(1)) {
-      await this.sign(file)
+      await this.signIf(file)
     }
 
     return true

@@ -4,12 +4,12 @@ index 53fc925f8aa492e7333033483e9f3e45839963ad..e0902ee40002980cd8a1e16103ff313c
 +++ b/dist/changesets-cli.cjs.js
 @@ -924,8 +924,8 @@ async function getUnpublishedPackages(packages, preState) {
  }
- 
+
  async function getUntaggedPackages(packages, cwd, tool) {
 -  const packageWithTags = await Promise.all(packages.map(async pkg => {
 -    const tagName = tool === "root" ? `v${pkg.packageJson.version}` : `${pkg.packageJson.name}@${pkg.packageJson.version}`;
 +  const packageWithTags = await Promise.all(packages.filter(pkg => ["electron-builder", "electron-updater"].includes(pkg.packageJson.name)).map(async pkg => {
-+    const tagName = ("root" !== tool && pkg.packageJson.name !== 'electron-builder') ? `${pkg.packageJson.name}@${pkg.packageJson.version}` : `v${pkg.packageJson.version}`
++    const tagName = (pkg.packageJson.name === "electron-builder") ? `v${pkg.packageJson.version}` : `${pkg.packageJson.name}@${pkg.packageJson.version}`;
      const isMissingTag = !((await git__namespace.tagExists(tagName, cwd)) || (await git__namespace.remoteTagExists(tagName)));
      return {
        pkg,
@@ -19,12 +19,12 @@ index 6c363c0551d7a5b69e2e48be0bcd757699609094..272ce19c87ac3e5f02bb150ae4a4076d
 +++ b/dist/changesets-cli.esm.js
 @@ -886,8 +886,8 @@ async function getUnpublishedPackages(packages, preState) {
  }
- 
+
  async function getUntaggedPackages(packages, cwd, tool) {
 -  const packageWithTags = await Promise.all(packages.map(async pkg => {
 -    const tagName = tool === "root" ? `v${pkg.packageJson.version}` : `${pkg.packageJson.name}@${pkg.packageJson.version}`;
 +  const packageWithTags = await Promise.all(packages.filter(pkg => ["electron-builder", "electron-updater"].includes(pkg.packageJson.name)).map(async pkg => {
-+    const tagName = ("root" !== tool && pkg.packageJson.name !== 'electron-builder') ? `${pkg.packageJson.name}@${pkg.packageJson.version}` : `v${pkg.packageJson.version}`
++    const tagName = (pkg.packageJson.name === 'electron-builder') ? `v${pkg.packageJson.version}` : `${pkg.packageJson.name}@${pkg.packageJson.version}`;
      const isMissingTag = !((await git.tagExists(tagName, cwd)) || (await git.remoteTagExists(tagName)));
      return {
        pkg,

@@ -1,5 +1,11 @@
 ## 4.3.0
 
+## 6.7.1
+
+### Patch Changes
+
+- [#9334](https://github.com/electron-userland/electron-builder/pull/9334) [`21623e1b037e4509af04e767ca1c1458682b0eba`](https://github.com/electron-userland/electron-builder/commit/21623e1b037e4509af04e767ca1c1458682b0eba) Thanks [@mmaietta](https://github.com/mmaietta)! - chore: remove "beta" labels from a few features
+
 ## 6.7.0
 
 ### Minor Changes

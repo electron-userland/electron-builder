@@ -43,6 +43,7 @@ import { installOrRebuild, nodeGypRebuild } from "./util/yarn"
 import { PACKAGE_VERSION } from "./version"
 import { AsyncEventEmitter, HandlerType } from "./util/asyncEventEmitter"
 import asyncPool from "tiny-async-pool"
+import { detectPackageManager, findWorkspaceRoot, PM } from "./node-module-collector"
 
 async function createFrameworkInfo(configuration: Configuration, packager: Packager): Promise<Framework> {
   let framework = configuration.framework
@@ -95,6 +96,30 @@ export class Packager {
     return this._appDir
   }
 
+  private _packageManager = new Lazy(async () => {
+    const availableDirs = [this.projectDir, this.appDir]
+    const pm = await detectPackageManager(availableDirs)
+    const workspaceRoot = await findWorkspaceRoot(pm.pm, this.projectDir)
+    if (workspaceRoot != null) {
+      // re-detect package manager from workspace root, this seems particularly necessary for pnpm workspaces
+      const actualPm = await detectPackageManager([workspaceRoot])
+      return {
+        pm: actualPm.pm,
+        workspaceRoot: Promise.resolve(actualPm.resolvedDirectory),
+      }
+    }
+    return {
+      pm: pm.pm,
+      workspaceRoot: Promise.resolve(pm.resolvedDirectory),
+    }
+  })
+  async getPackageManager(): Promise<PM> {
+    return (await this._packageManager.value).pm
+  }
+  async getWorkspaceRoot(): Promise<string> {
+    return (await (await this._packageManager.value).workspaceRoot) || this.projectDir
+  }
+
   private _metadata: Metadata | null = null
   get metadata(): Metadata {
     return this._metadata!
@@ -145,6 +170,8 @@ export class Packager {
   }
 
   private nodeDependencyInfo = new Map<string, Lazy<Array<any>>>()
+
+  private runtimeEnvironmentVariables: NodeJS.ProcessEnv = {}
 
   getNodeDependencyInfo(platform: Platform | null, flatten: boolean = true): Lazy<Array<NodeModuleInfo | NodeModuleDirInfo>> {
     let key = "" + flatten.toString()
@@ -254,6 +281,7 @@ export class Packager {
 
     this.projectDir = options.projectDir == null ? process.cwd() : path.resolve(options.projectDir)
     this._appDir = this.projectDir
+
     this.options = {
       ...options,
       prepackaged: options.prepackaged == null ? null : path.resolve(this.projectDir, options.prepackaged),
@@ -262,7 +290,7 @@ export class Packager {
     log.info({ version: PACKAGE_VERSION, os: getOsRelease() }, "electron-builder")
   }
 
-  async addPackagerEventHandlers() {
+  private async addPackagerEventHandlers() {
     const { type } = this.appInfo
     this.eventEmitter.on("artifactBuildStarted", await resolveFunction(type, this.config.artifactBuildStarted, "artifactBuildStarted"), "user")
     this.eventEmitter.on("artifactBuildCompleted", await resolveFunction(type, this.config.artifactBuildCompleted, "artifactBuildCompleted"), "user")
@@ -602,13 +630,15 @@ export class Packager {
     } else {
       await installOrRebuild(
         config,
-        { appDir: this.appDir, projectDir: this.projectDir },
+        { appDir: this.appDir, projectDir: this.projectDir, workspaceRoot: await this.getWorkspaceRoot() },
         {
           frameworkInfo,
           platform: platform.nodeName,
           arch: Arch[arch],
           productionDeps: this.getNodeDependencyInfo(null, false) as Lazy<Array<NodeModuleDirInfo>>,
-        }
+        },
+        false,
+        this.runtimeEnvironmentVariables
       )
     }
   }

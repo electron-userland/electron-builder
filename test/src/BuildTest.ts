@@ -8,7 +8,7 @@ import * as path from "path"
 import { app, appTwo, appTwoThrows, assertPack, getFixtureDir, linuxDirTarget, modifyPackageJson, packageJson, toSystemIndependentPath } from "./helpers/packTester"
 import { ELECTRON_VERSION } from "./helpers/testConfig"
 import { verifySmartUnpack } from "./helpers/verifySmartUnpack"
-import { spawn } from "builder-util/out/util"
+import { PM } from "app-builder-lib/src/node-module-collector/packageManager"
 
 test.ifLinux("cli", ({ expect }) => {
   // because these methods are internal
@@ -155,16 +155,16 @@ it.ifDevOrLinuxCi("electron version from electron-prebuilt dependency", ({ expec
       targets: linuxDirTarget,
     },
     {
-      projectDirCreated: projectDir =>
-        Promise.all([
+      projectDirCreated: async projectDir => {
+        await modifyPackageJson(projectDir, data => {
+          delete data.build.electronVersion
+          data.devDependencies = {}
+        })
+        return () =>
           outputJson(path.join(projectDir, "node_modules", "electron-prebuilt", "package.json"), {
             version: ELECTRON_VERSION,
-          }),
-          modifyPackageJson(projectDir, data => {
-            delete data.build.electronVersion
-            data.devDependencies = {}
-          }),
-        ]),
+          })
+      },
     }
   )
 )
@@ -176,16 +176,16 @@ test.ifDevOrLinuxCi("electron version from electron dependency", ({ expect }) =>
       targets: linuxDirTarget,
     },
     {
-      projectDirCreated: projectDir =>
-        Promise.all([
+      projectDirCreated: async projectDir => {
+        await modifyPackageJson(projectDir, data => {
+          delete data.build.electronVersion
+          data.devDependencies = {}
+        })
+        return () =>
           outputJson(path.join(projectDir, "node_modules", "electron", "package.json"), {
             version: ELECTRON_VERSION,
-          }),
-          modifyPackageJson(projectDir, data => {
-            delete data.build.electronVersion
-            data.devDependencies = {}
-          }),
-        ]),
+          })
+      },
     }
   )
 )
@@ -277,19 +277,19 @@ test.ifLinuxOrDevMac("hooks as file - cjs", async ({ expect }) => {
   })
 })
 
-// test.only("hooks as file - mjs exported functions", async ({ expect }) => {
-//   const hookScript = path.join(getFixtureDir(), "build-hook.mjs")
-//   return assertPack(expect,"test-app-one", {
-//     targets: createTargets([Platform.LINUX, Platform.MAC], "zip", "x64"),
-//     config: {
-//       artifactBuildStarted: hookScript,
-//       artifactBuildCompleted: hookScript,
-//       beforePack: hookScript,
-//       afterExtract: hookScript,
-//       afterPack: hookScript,
-//     },
-//   })
-// })
+test.ifLinuxOrDevMac("hooks as file - mjs exported functions", async ({ expect }) => {
+  const hookScript = path.join(getFixtureDir(), "build-hook.mjs")
+  return assertPack(expect, "test-app-one", {
+    targets: createTargets([Platform.LINUX, Platform.MAC], "zip", "x64"),
+    config: {
+      artifactBuildStarted: hookScript,
+      artifactBuildCompleted: hookScript,
+      beforePack: hookScript,
+      afterExtract: hookScript,
+      afterPack: hookScript,
+    },
+  })
+})
 
 test.ifWindows("afterSign", ({ expect }) => {
   let called = 0
@@ -362,18 +362,16 @@ test.ifDevOrLinuxCi("win smart unpack", ({ expect }) => {
       },
     },
     {
-      isInstallDepsBefore: true,
       projectDirCreated: async projectDir => {
         p = projectDir
-        process.env.npm_config_user_agent = "npm"
-        return packageJson(it => {
+        return modifyPackageJson(projectDir, it => {
           it.dependencies = {
             debug: "3.1.0",
             "edge-cs": "1.2.1",
             "@electron-builder/test-smart-unpack": "1.0.0",
             "@electron-builder/test-smart-unpack-empty": "1.0.0",
           }
-        })(projectDir)
+        })
       },
       packed: async context => {
         await verifySmartUnpack(expect, context.getResources(Platform.WINDOWS))
@@ -383,17 +381,24 @@ test.ifDevOrLinuxCi("win smart unpack", ({ expect }) => {
   )
 })
 
-test.ifDevOrWinCi("smart unpack local module with dll file", ({ expect }) => {
+test("smart unpack local module with dll file", ({ expect }) => {
   return app(
     expect,
     {
       targets: Platform.WINDOWS.createTarget(DIR_TARGET, Arch.x64),
+      config: {
+        files: [
+          "!foo",
+          "!**/NuGet", // for some reason, NuGet only shows up on CI builds, but no Windows VMs or local linux/mac machines
+        ],
+      },
     },
     {
-      isInstallDepsBefore: true,
+      storeDepsLockfileSnapshot: false,
+      packageManager: PM.NPM,
       projectDirCreated: async (projectDir, tmpDir) => {
-        const tempDir = await tmpDir.getTempDir()
-        const localPath = path.join(tempDir, "foo")
+        const tmpPath = await tmpDir.getTempDir()
+        const localPath = path.join(tmpPath, "foo")
         await outputFile(path.join(localPath, "package.json"), `{"name":"foo","version":"9.0.0","main":"index.js","license":"MIT"}`)
         await outputFile(path.join(localPath, "test.dll"), `test`)
         await modifyPackageJson(projectDir, data => {
@@ -402,11 +407,6 @@ test.ifDevOrWinCi("smart unpack local module with dll file", ({ expect }) => {
             "edge-cs": "1.2.1",
             foo: `file:${localPath}`,
           }
-        })
-
-        // we can't use `isInstallDepsBefore` as `localPath` is dynamic and changes for every which causes `--frozen-lockfile` and `npm ci` to fail
-        await spawn("npm", ["install"], {
-          cwd: projectDir,
         })
       },
       packed: async context => {
@@ -417,7 +417,7 @@ test.ifDevOrWinCi("smart unpack local module with dll file", ({ expect }) => {
 })
 
 // https://github.com/electron-userland/electron-builder/issues/1738
-test.ifDevOrLinuxCi("posix smart unpack", ({ expect }) =>
+test.ifNotWindows("posix smart unpack", ({ expect }) =>
   app(
     expect,
     {
@@ -440,7 +440,6 @@ test.ifDevOrLinuxCi("posix smart unpack", ({ expect }) =>
       },
     },
     {
-      isInstallDepsBefore: true,
       projectDirCreated: projectDir => {
         process.env.npm_config_user_agent = "npm"
         return packageJson(it => {

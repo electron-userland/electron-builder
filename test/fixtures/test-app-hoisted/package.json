@@ -9,7 +9,7 @@
   "license": "MIT",
   "main": "index.js",
   "build": {
-    "electronVersion": "23.3.10",
+    "electronVersion": "35.7.5",
     "appId": "org.electron-builder.testApp",
     "compression": "store",
     "npmRebuild": false,
