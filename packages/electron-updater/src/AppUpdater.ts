@@ -29,14 +29,13 @@ import { GenericProvider } from "./providers/GenericProvider"
 import { createClient, isUrlProbablySupportMultiRangeRequests } from "./providerFactory"
 import { Provider, ProviderPlatform } from "./providers/Provider"
 import type { TypedEmitter } from "tiny-typed-emitter"
-import Session = Electron.Session
+import { Session, Notification } from "electron"
 import type { AuthInfo } from "electron"
 import { gunzipSync, gzipSync } from "zlib"
 import { DifferentialDownloaderOptions } from "./differentialDownloader/DifferentialDownloader"
 import { GenericDifferentialDownloader } from "./differentialDownloader/GenericDifferentialDownloader"
 import { DOWNLOAD_PROGRESS, Logger, ResolvedUpdateFileInfo, UPDATE_DOWNLOADED, UpdateCheckResult, UpdateDownloadedEvent, UpdaterSignal } from "./types"
 import { VerifyUpdateSupport } from "./main"
-import { Notification } from "electron/main"
 
 export type AppUpdaterEvents = {
   error: (error: Error, message?: string) => void
