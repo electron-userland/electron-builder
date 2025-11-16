@@ -30,6 +30,13 @@ export type ParsedDependencyTree = {
   readonly workspaces?: string[] | { packages: string[] } // we only use this at root level
 }
 
+export interface BunManifest {
+  manifestDependencies: Record<string, string>
+  manifestOptionalDependencies: Record<string, string>
+}
+
+export interface BunDependency extends Dependency<BunDependency, BunDependency>, BunManifest {}
+
 // Note: `PnpmDependency` and `NpmDependency` include the output of `JSON.parse(...)` of `pnpm list` and `npm list` respectively
 // This object has a TON of info - a majority, if not all, of each dependency's package.json
 // We extract only what we need when constructing DependencyTree in `extractProductionDependencyTree`
