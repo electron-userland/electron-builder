@@ -144,8 +144,8 @@ importers:
         specifier: ^0.2.0
         version: 0.2.0
       ci-info:
-        specifier: ^4.2.0
-        version: 4.2.0
+        specifier: 4.3.1
+        version: 4.3.1
       debug:
         specifier: ^4.3.4
         version: 4.4.0
@@ -2911,6 +2911,10 @@ packages:
 
   ci-info@4.2.0:
     resolution: {integrity: sha512-cYY9mypksY8NRqgDB1XD1RiJL338v/551niynFTGkZOO2LHuB2OmOYxDIe/ttN9AHwrqdum1360G3ald0W9kCg==}
+    engines: {node: '>=8'}
+
+  ci-info@4.3.1:
+    resolution: {integrity: sha512-Wdy2Igu8OcBpI2pZePZ5oWjPC38tmDVx5WKUXKwlLYkA0ozo85sLsLvkBbBn/sZaSCMFOGZJ14fvW9t5/d7kdA==}
     engines: {node: '>=8'}
 
   cli-cursor@3.1.0:
@@ -8126,6 +8130,8 @@ snapshots:
   ci-info@3.9.0: {}
 
   ci-info@4.2.0: {}
+
+  ci-info@4.3.1: {}
 
   cli-cursor@3.1.0:
     dependencies:
