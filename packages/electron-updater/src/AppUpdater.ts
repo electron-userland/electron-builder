@@ -365,7 +365,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   }
 
   // noinspection JSUnusedGlobalSymbols
-  checkForUpdatesAndNotify(downloadNotification?: Notification | DownloadNotification | false): Promise<UpdateCheckResult | null> {
+  checkForUpdatesAndNotify(downloadNotification?: Notification | DownloadNotification): Promise<UpdateCheckResult | null> {
     return this.checkForUpdates().then(it => {
       if (!it?.downloadPromise) {
         if (this._logger.debug != null) {
@@ -374,9 +374,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         return it
       }
 
-      if (downloadNotification !== false) {
-        // Stricly conditional check with false to allow for disabling notifications
-        void it.downloadPromise.then(() => {
+      void it.downloadPromise.then(() => {
           const version = it.updateInfo.version
           const appName = this.app.name
 
@@ -389,8 +387,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
             const notificationContent = AppUpdater.formatDownloadNotification(version, appName, downloadNotification)
             new (require("electron").Notification)(notificationContent).show()
           }
-        })
-      }
+        });
 
       return it
     })
