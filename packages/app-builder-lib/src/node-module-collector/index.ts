@@ -9,6 +9,7 @@ import { PnpmNodeModulesCollector } from "./pnpmNodeModulesCollector"
 import { NodeModuleInfo } from "./types"
 import { YarnBerryNodeModulesCollector } from "./yarnBerryNodeModulesCollector"
 import { YarnNodeModulesCollector } from "./yarnNodeModulesCollector"
+import { BunNodeModulesCollector } from "./bunNodeModulesCollector"
 
 export { getPackageManagerCommand, PM }
 
@@ -21,6 +22,7 @@ export function getCollectorByPackageManager(pm: PM, rootDir: string, tempDirMan
     case PM.YARN_BERRY:
       return new YarnBerryNodeModulesCollector(rootDir, tempDirManager)
     case PM.BUN:
+      return new BunNodeModulesCollector(rootDir, tempDirManager)
     case PM.NPM:
     default:
       return new NpmNodeModulesCollector(rootDir, tempDirManager)

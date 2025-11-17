@@ -199,6 +199,173 @@ test("npm", ({ expect }) =>
     }
   ))
 
+test.ifMac("bun workspace --linker=isolated", ({ expect }) =>
+  assertPack(
+    expect,
+    "test-app-bun-workspace",
+    {
+      targets: linuxDirTarget,
+      projectDir: "packages/app",
+    },
+    {
+      packageManager: PM.BUN,
+      projectDirCreated: projectDir => {
+        const appPkg = path.join(projectDir, "packages", "app")
+        const libPkg = path.join(projectDir, "packages", "lib")
+
+        return Promise.all([
+          // root pkgs should not be included
+          modifyPackageJson(projectDir, data => {
+            data.dependencies = {
+              "is-plain-obj": "3.0.0",
+            }
+          }),
+          modifyPackageJson(appPkg, data => {
+            data.dependencies = {
+              lib: "workspace:*",
+              "is-bigint": "1.1.0",
+              process: "^0.11.10",
+            }
+          }),
+          modifyPackageJson(libPkg, data => {
+            data.dependencies = {
+              "left-pad": "1.3.0",
+            }
+          }),
+          outputFile(path.join(projectDir, "bunfig.toml"), '[install]\nlinker = "isolated"\n'),
+        ])
+      },
+      packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
+    }
+  )
+)
+
+test.ifMac("bun workspace --linker=isolated - multiple conflicting versions", ({ expect }) =>
+  assertPack(
+    expect,
+    "test-app-bun-workspace",
+    {
+      targets: linuxDirTarget,
+      projectDir: "packages/app",
+    },
+    {
+      packageManager: PM.BUN,
+      projectDirCreated: projectDir => {
+        const appPkg = path.join(projectDir, "packages", "app")
+        const libPkg = path.join(projectDir, "packages", "lib")
+
+        return Promise.all([
+          // root pkgs should not be included
+          modifyPackageJson(projectDir, data => {
+            data.dependencies = {
+              "is-plain-obj": "3.0.0",
+            }
+          }),
+          modifyPackageJson(appPkg, data => {
+            data.dependencies = {
+              lib: "workspace:*",
+              "is-bigint": "1.1.0",
+              process: "^0.11.10",
+            }
+          }),
+          modifyPackageJson(libPkg, data => {
+            data.dependencies = {
+              "left-pad": "1.3.0",
+              // should include this in a nested node_modules directory
+              "is-bigint": "1.0.4",
+            }
+          }),
+          outputFile(path.join(projectDir, "bunfig.toml"), '[install]\nlinker = "isolated"\n'),
+        ])
+      },
+      packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
+    }
+  )
+)
+
+test.ifMac("bun workspace --linker=hoisted", ({ expect }) =>
+  assertPack(
+    expect,
+    "test-app-bun-workspace",
+    {
+      targets: linuxDirTarget,
+      projectDir: "packages/app",
+    },
+    {
+      packageManager: PM.BUN,
+      projectDirCreated: projectDir => {
+        const appPkg = path.join(projectDir, "packages", "app")
+        const libPkg = path.join(projectDir, "packages", "lib")
+
+        return Promise.all([
+          // root pkgs should not be included
+          modifyPackageJson(projectDir, data => {
+            data.dependencies = {
+              "is-plain-obj": "3.0.0",
+            }
+          }),
+          modifyPackageJson(appPkg, data => {
+            data.dependencies = {
+              lib: "workspace:*",
+              "is-bigint": "1.1.0",
+              process: "^0.11.10",
+            }
+          }),
+          modifyPackageJson(libPkg, data => {
+            data.dependencies = {
+              "left-pad": "1.3.0",
+            }
+          }),
+          outputFile(path.join(projectDir, "bunfig.toml"), '[install]\nlinker = "hoisted"\n'),
+        ])
+      },
+      packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
+    }
+  )
+)
+
+test.ifMac("bun workspace --linker=hoisted - multiple conflicting versions", ({ expect }) =>
+  assertPack(
+    expect,
+    "test-app-bun-workspace",
+    {
+      targets: linuxDirTarget,
+      projectDir: "packages/app",
+    },
+    {
+      packageManager: PM.BUN,
+      projectDirCreated: projectDir => {
+        const appPkg = path.join(projectDir, "packages", "app")
+        const libPkg = path.join(projectDir, "packages", "lib")
+
+        return Promise.all([
+          // root pkgs should not be included
+          modifyPackageJson(projectDir, data => {
+            data.dependencies = {
+              "is-plain-obj": "3.0.0",
+            }
+          }),
+          modifyPackageJson(appPkg, data => {
+            data.dependencies = {
+              lib: "workspace:*",
+              "is-bigint": "1.1.0",
+              process: "^0.11.10",
+            }
+          }),
+          modifyPackageJson(libPkg, data => {
+            data.dependencies = {
+              "left-pad": "1.3.0",
+              // should include this in a nested node_modules directory, since it's a conflicting package version
+              "is-bigint": "1.0.4",
+            }
+          }),
+          outputFile(path.join(projectDir, "bunfig.toml"), '[install]\nlinker = "hoisted"\n'),
+        ])
+      },
+      packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
+    }
+  ))
+
 // Test for local file:// protocol
 
 Object.values(PM)
