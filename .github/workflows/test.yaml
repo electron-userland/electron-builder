@@ -98,9 +98,6 @@ jobs:
           docker image load --input ${{ runner.temp }}/electron-builder-all-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}.tar
           docker image ls -a
 
-      - name: Lint
-        run: pnpm pretest
-
       - name: Run tests in docker image
         run: |
           echo $TEST_RUNNER_IMAGE_TAG
@@ -143,9 +140,6 @@ jobs:
         run: |
           docker image load --input ${{ runner.temp }}/electron-builder-all-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}.tar
           docker image ls -a
-
-      - name: Lint
-        run: pnpm pretest
 
       - name: Test
         run: |
@@ -262,11 +256,8 @@ jobs:
           cache-path: ~/Library/Caches/electron
           cache-key: v-23.3.10-macos-electron
 
-      - name: Install toolset via brew
-        run: |
-          brew install powershell/tap/powershell
-          brew install --cask wine-stable
-          brew install rpm
+      - name: Lint
+        run: pnpm pretest
 
       - name: Test
         run: pnpm ci:test
