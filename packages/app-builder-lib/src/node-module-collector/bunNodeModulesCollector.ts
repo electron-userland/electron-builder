@@ -16,18 +16,15 @@ export class BunNodeModulesCollector extends NodeModulesCollector<BunDependency,
   }
 
   protected async getDependenciesTree(): Promise<BunDependency> {
-    const rootPkgPath = path.join(this.rootDir, "package.json")
-    const rootManifest = this.requireMemoized(rootPkgPath)
-    const rootName = rootManifest.name ?? "."
-
+    const rootManifest = await this.appPkgJson.value
     const childMaps = await this.resolveChildren(this.rootDir, {
       manifestDependencies: rootManifest.dependencies ?? {},
       manifestOptionalDependencies: rootManifest.optionalDependencies ?? {},
     })
 
     return {
-      name: rootName,
-      version: rootManifest.version ?? "0.0.0",
+      name: rootManifest.name,
+      version: rootManifest.version,
       path: this.rootDir,
       manifestDependencies: rootManifest.dependencies ?? {},
       manifestOptionalDependencies: rootManifest.optionalDependencies ?? {},
@@ -40,7 +37,7 @@ export class BunNodeModulesCollector extends NodeModulesCollector<BunDependency,
     const allDeps = [...Object.values(tree.dependencies || {}), ...Object.values(tree.optionalDependencies || {})]
 
     for (const dependency of allDeps) {
-      const key = `${dependency.name}@${dependency.version}`
+      const key = this.packageVersionString(dependency)
       if (!this.allDependencies.has(key)) {
         this.allDependencies.set(key, dependency)
         await this.collectAllDependencies(dependency)
@@ -71,7 +68,7 @@ export class BunNodeModulesCollector extends NodeModulesCollector<BunDependency,
       for (const [alias, dep] of Object.entries(entries)) {
         // Only include if it's declared in the manifest (production/optional, not dev)
         if (manifest[alias]) {
-          const childId = `${dep.name}@${dep.version}`
+          const childId = this.packageVersionString(dep)
           dependencies.push(childId)
           await this.extractProductionDependencyGraph(dep, childId)
         }
@@ -165,7 +162,7 @@ export class BunNodeModulesCollector extends NodeModulesCollector<BunDependency,
     // Recursively resolve children
     const childMaps = await this.resolveChildren(resolvedPath, {
       manifestDependencies,
-      manifestOptionalDependencies
+      manifestOptionalDependencies,
     })
 
     // Create the final dependency object
@@ -179,48 +176,10 @@ export class BunNodeModulesCollector extends NodeModulesCollector<BunDependency,
       optionalDependencies: Object.keys(childMaps.optionalDependencies ?? {}).length > 0 ? childMaps.optionalDependencies : undefined,
     }
 
-    // Update cache with final dependency
     this.dependencyCacheByPath.set(resolvedPath, dependency)
 
     log.debug({ name: packageName, version: dependency.version, childCount: Object.keys(dependency.dependencies || {}).length }, "dependency loaded")
 
     return dependency
   }
-
-  /**
-   * Finds the installed location of a dependency using Node.js module resolution
-   */
-  // private findInstalledDependency(basedir: string, dependencyName: string): string | null {
-  //   const cacheKey = `${dependencyName}::${basedir}`
-
-  //   // Check if we've already resolved this
-  //   if (this.cache.requireResolve.has(cacheKey)) {
-  //     return this.cache.requireResolve.get(cacheKey)!
-  //   }
-
-  //   try {
-  //     // Create a require function from the perspective of the basedir
-  //     // This ensures proper module resolution based on the requesting package's location
-  //     const requireStartingFile = path.join(path.resolve(basedir), "__fake_starting_file__.js")
-  //     const localizedRequire = createRequire(requireStartingFile)
-
-  //     // Resolve the package.json to find the package root
-  //     const packageJsonPath = localizedRequire.resolve(path.join(dependencyName, "package.json"))
-  //     const result = path.dirname(packageJsonPath)
-
-  //     // Cache the result
-  //     this.cache.requireResolve.set(cacheKey, result)
-
-  //     return result
-  //   } catch (e: any) {
-  //     if (e?.code === "MODULE_NOT_FOUND") {
-  //       // Cache null result to avoid repeated failed lookups
-  //       this.cache.requireResolve.set(cacheKey, null)
-  //       return null
-  //     }
-  //     // Re-throw unexpected errors
-  //     log.error({ dependencyName, basedir, error: e.message }, "unexpected error resolving dependency")
-  //     throw e
-  //   }
-  // }
 }

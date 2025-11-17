@@ -1,5 +1,182 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
+exports[`bun workspace --linker=hoisted - multiple conflicting versions 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`bun workspace --linker=hoisted - multiple conflicting versions 2`] = `
+{
+  "files": {
+    "index.js": {
+      "offset": "31271",
+      "size": 32,
+    },
+    "node_modules": {
+      "files": {
+        "has-bigints": {
+          "files": {
+            ".nycrc": {
+              "offset": "0",
+              "size": 139,
+            },
+            "LICENSE": {
+              "offset": "139",
+              "size": 1071,
+            },
+            "index.js": {
+              "offset": "1210",
+              "size": 374,
+            },
+            "package.json": {
+              "offset": "1584",
+              "size": 1166,
+            },
+            "tsconfig.json": {
+              "offset": "2750",
+              "size": 123,
+            },
+          },
+        },
+        "is-bigint": {
+          "files": {
+            ".nycrc": {
+              "offset": "2873",
+              "size": 139,
+            },
+            "LICENSE": {
+              "offset": "3012",
+              "size": 1071,
+            },
+            "index.js": {
+              "offset": "4083",
+              "size": 844,
+            },
+            "package.json": {
+              "offset": "4927",
+              "size": 1397,
+            },
+            "tsconfig.json": {
+              "offset": "6324",
+              "size": 114,
+            },
+          },
+        },
+        "left-pad": {
+          "files": {
+            "COPYING": {
+              "offset": "6438",
+              "size": 502,
+            },
+            "index.js": {
+              "offset": "6940",
+              "size": 1469,
+            },
+            "package.json": {
+              "offset": "8409",
+              "size": 466,
+            },
+            "perf": {
+              "files": {
+                "O(n).js": {
+                  "offset": "8875",
+                  "size": 241,
+                },
+                "es6Repeat.js": {
+                  "offset": "9116",
+                  "size": 216,
+                },
+                "perf.js": {
+                  "offset": "9332",
+                  "size": 1442,
+                },
+              },
+            },
+            "test.js": {
+              "offset": "10774",
+              "size": 4005,
+            },
+          },
+        },
+        "lib": {
+          "files": {
+            ".yarnrc.yml": {
+              "offset": "14779",
+              "size": 24,
+            },
+            "index.js": {
+              "offset": "14803",
+              "size": 46,
+            },
+            "node_modules": {
+              "files": {
+                "is-bigint": {
+                  "files": {
+                    ".eslintignore": {
+                      "offset": "14988",
+                      "size": 10,
+                    },
+                    ".nycrc": {
+                      "offset": "14998",
+                      "size": 139,
+                    },
+                    "LICENSE": {
+                      "offset": "15137",
+                      "size": 1071,
+                    },
+                    "index.js": {
+                      "offset": "16208",
+                      "size": 737,
+                    },
+                    "package.json": {
+                      "offset": "16945",
+                      "size": 955,
+                    },
+                  },
+                },
+              },
+            },
+            "package.json": {
+              "offset": "14849",
+              "size": 139,
+            },
+          },
+        },
+        "process": {
+          "files": {
+            "LICENSE": {
+              "offset": "17900",
+              "size": 1098,
+            },
+            "browser.js": {
+              "offset": "18998",
+              "size": 5418,
+            },
+            "index.js": {
+              "offset": "24416",
+              "size": 96,
+            },
+            "package.json": {
+              "offset": "24512",
+              "size": 449,
+            },
+            "test.js": {
+              "offset": "24961",
+              "size": 6310,
+            },
+          },
+        },
+      },
+    },
+    "package.json": {
+      "offset": "31303",
+      "size": 325,
+    },
+  },
+}
+`;
+
 exports[`bun workspace --linker=hoisted 1`] = `
 {
   "linux": [],

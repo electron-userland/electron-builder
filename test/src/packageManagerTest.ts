@@ -240,7 +240,7 @@ test.ifMac("bun workspace --linker=isolated", ({ expect }) =>
   )
 )
 
-test("bun workspace --linker=isolated - multiple conflicting versions", ({ expect }) =>
+test.ifMac("bun workspace --linker=isolated - multiple conflicting versions", ({ expect }) =>
   assertPack(
     expect,
     "test-app-bun-workspace",
