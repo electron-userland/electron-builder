@@ -10,10 +10,8 @@ export type PackageJson = {
 
 export type ResolveModuleOptions<T> = {
   dependency: T
-  // base: string
   virtualPath?: string // e.g. for file: dependencies or symlinked dependencies
   isOptionalDependency?: boolean
-  // cacheKeySuffix?: string
 }
 
 export interface NodeModuleInfo {
@@ -29,13 +27,6 @@ export type ParsedDependencyTree = {
   readonly path: string
   readonly workspaces?: string[] | { packages: string[] } // we only use this at root level
 }
-
-export interface BunManifest {
-  manifestDependencies: Record<string, string>
-  manifestOptionalDependencies: Record<string, string>
-}
-
-export interface BunDependency extends Dependency<BunDependency, BunDependency>, BunManifest {}
 
 // Note: `PnpmDependency` and `NpmDependency` include the output of `JSON.parse(...)` of `pnpm list` and `npm list` respectively
 // This object has a TON of info - a majority, if not all, of each dependency's package.json
