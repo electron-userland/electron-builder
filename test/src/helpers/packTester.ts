@@ -176,18 +176,21 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
         npm_config_cache: tmpCache, // prevent npm fallback caching
       }
       const { cli, prepareEntry, version } = getPackageManagerWithVersion(pm, packageManager)
-      log.info({ pm, version: version, projectDir }, "activating corepack")
-      try {
-        execSync(`corepack enable ${cli}`, { env: runtimeEnv, cwd: projectDir, stdio: "inherit" })
-      } catch (err: any) {
-        console.warn("⚠️ Corepack enable failed (possibly already enabled):", err.message)
+      if (pm === PM.BUN) {
+        log.info({ pm, version: version, projectDir }, "installing dependencies with bun; corepack does not support it currently and it must be installed separately")
+      } else {
+        log.info({ pm, version: version, projectDir }, "activating corepack")
+        try {
+          execSync(`corepack enable ${cli}`, { env: runtimeEnv, cwd: projectDir, stdio: "inherit" })
+        } catch (err: any) {
+          console.warn("⚠️ Corepack enable failed (possibly already enabled):", err.message)
+        }
+        try {
+          execSync(`corepack prepare ${prepareEntry} --activate`, { env: runtimeEnv, cwd: projectDir, stdio: "inherit" })
+        } catch (err: any) {
+          console.warn("⚠️ Yarn prepare failed:", err.message)
+        }
       }
-      try {
-        execSync(`corepack prepare ${prepareEntry} --activate`, { env: runtimeEnv, cwd: projectDir, stdio: "inherit" })
-      } catch (err: any) {
-        console.warn("⚠️ Yarn prepare failed:", err.message)
-      }
-
       const collector = getCollectorByPackageManager(pm, projectDir, tmpDir)
       const collectorOptions = collector.installOptions
 
