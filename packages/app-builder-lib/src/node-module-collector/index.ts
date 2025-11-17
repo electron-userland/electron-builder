@@ -21,7 +21,7 @@ export function getCollectorByPackageManager(pm: PM, rootDir: string, tempDirMan
       return new YarnNodeModulesCollector(rootDir, tempDirManager)
     case PM.YARN_BERRY:
       return new YarnBerryNodeModulesCollector(rootDir, tempDirManager)
-case PM.BUN:
+    case PM.BUN:
       return new BunNodeModulesCollector(rootDir, tempDirManager)
     case PM.NPM:
     default:
