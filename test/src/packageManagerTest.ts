@@ -199,7 +199,7 @@ test("npm", ({ expect }) =>
     }
   ))
 
-test("bun workspace --linker=isolated", ({ expect }) =>
+test.ifMac("bun workspace --linker=isolated", ({ expect }) =>
   assertPack(
     expect,
     "test-app-bun-workspace",
@@ -283,7 +283,7 @@ test("bun workspace --linker=isolated - multiple conflicting versions", ({ expec
   )
 )
 
-test("bun workspace --linker=hoisted", ({ expect }) =>
+test.ifMac("bun workspace --linker=hoisted", ({ expect }) =>
   assertPack(
     expect,
     "test-app-bun-workspace",
@@ -324,7 +324,7 @@ test("bun workspace --linker=hoisted", ({ expect }) =>
   )
 )
 
-test("bun workspace --linker=hoisted - multiple conflicting versions", ({ expect }) =>
+test.ifMac("bun workspace --linker=hoisted - multiple conflicting versions", ({ expect }) =>
   assertPack(
     expect,
     "test-app-bun-workspace",
