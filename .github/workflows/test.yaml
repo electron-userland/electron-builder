@@ -232,12 +232,16 @@ jobs:
           cache-path: ~/Library/Caches/electron
           cache-key: v-35.7.5-macos-electron
 
-      - name: Install toolset via brew and also install bun
+      - name: Install toolset via brew
         run: |
           brew install powershell/tap/powershell
           brew install --cask wine-stable
           brew install rpm
+
+      - name: Install bun
+        run: |
           curl -fsSL https://bun.sh/install | bash
+          source ~/.bash_profile
 
       - name: Test
         run: pnpm ci:test
