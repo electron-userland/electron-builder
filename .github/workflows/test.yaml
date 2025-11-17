@@ -89,13 +89,13 @@ jobs:
         id: download-test-runner-image
         uses: actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806 # v4.1.9
         with:
-          name: electron-builder-all-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}
+          name: electron-builder-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}-wine-mono
           path: ${{ runner.temp }}
 
       - name: Load test runner image if needed
         if: needs.run-docker-build.result == 'success'
         run: |
-          docker image load --input ${{ runner.temp }}/electron-builder-all-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}.tar
+          docker image load --input ${{ runner.temp }}/electron-builder-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}-wine-mono.tar
           docker image ls -a
 
       - name: Run tests in docker image
