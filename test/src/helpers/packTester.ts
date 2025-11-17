@@ -35,7 +35,7 @@ const PACKAGE_MANAGER_VERSION_MAP = {
   [PM.YARN]: { cli: "yarn", version: "1.22.19" },
   [PM.YARN_BERRY]: { cli: "yarn", version: "3.5.0" },
   [PM.PNPM]: { cli: "pnpm", version: "10.18.0" },
-  [PM.BUN]: { cli: "bun", version: "1" },
+  [PM.BUN]: { cli: "bun", version: "1.3.2" },
 }
 
 export function getPackageManagerWithVersion(pm: PM, packageManagerAndVersionString?: string) {

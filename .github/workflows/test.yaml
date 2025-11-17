@@ -238,10 +238,6 @@ jobs:
           brew install --cask wine-stable
           brew install rpm
 
-      - name: Install bun
-        run: |
-          npm i -g bun
-
       - name: Test
         run: pnpm ci:test
         env:
