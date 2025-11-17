@@ -240,8 +240,7 @@ jobs:
 
       - name: Install bun
         run: |
-          curl -fsSL https://bun.sh/install | bash
-          source ~/.bash_profile
+          npm i -g bun
 
       - name: Test
         run: pnpm ci:test
