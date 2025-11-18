@@ -352,7 +352,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
 
       const child = spawn(command, args, {
         cwd,
-        shell: false, // required to prevent console logs polution from shell profile loading when `true`
+        shell: false, // required to prevent console logs pollution from shell profile loading when `true`
       })
 
       let stderr = ""
