@@ -39,20 +39,11 @@ jobs:
         run: |
           docker images --filter=reference="electronuserland/builder:*"
           docker save -o ${{ runner.temp }}/electron-builder-all-${{ env.NODE_TAG }}.tar electronuserland/builder
-          docker save -o ${{ runner.temp }}/electron-builder-${{ env.NODE_TAG }}-wine-mono.tar electronuserland/builder:${{ env.NODE_TAG }}-wine-mono
 
       - name: Bundle all images
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: electron-builder-all-${{ env.NODE_TAG }}
           path: ${{ runner.temp }}/electron-builder-all-${{ env.NODE_TAG }}.tar
-          retention-days: 1
-          if-no-files-found: error
-
-      - name: Bundle test runner image
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: electron-builder-${{ env.NODE_TAG }}-wine-mono
-          path: ${{ runner.temp }}/electron-builder-${{ env.NODE_TAG }}-wine-mono.tar
           retention-days: 1
           if-no-files-found: error
