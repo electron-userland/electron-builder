@@ -31,7 +31,7 @@ jobs:
       - name: Builds all images
         shell: bash
         run: |
-        bash docker/build.sh ${{ matrix.nodeVersion }}
+          bash docker/build.sh ${{ matrix.nodeVersion }}
 
       - name: List and export images
         shell: bash
