@@ -16,8 +16,7 @@ jobs:
           22.14.0,
           20.18.3,
           18.20.7,
-          16.20.2,
-          14.21.3
+          16.20.2
         ]
     steps:
       - name: Checkout code repository
