@@ -60,6 +60,7 @@ runs:
         fi
 
     - name: Size check
+      shell: bash
       run: df -h
 
     #########################################################
@@ -205,4 +206,5 @@ runs:
         sudo rm -rf /tmp/*
 
     - name: Size check
+      shell: bash
       run: df -h
