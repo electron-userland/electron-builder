@@ -22,13 +22,8 @@ jobs:
       - name: Checkout code repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
-      - run: df -h
-      - name: Cleanup unused SDKs and images to make space for massive docker image build
-        run: |
-          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
-          sudo docker image prune --all --force
-          sudo docker builder prune -a
-      - run: df -h
+      - name: Cleanup runner
+        uses: ./.github/actions/cleanup-runner
 
       - name: Extract node major version to tag docker images
         run: echo "NODE_TAG=$(cut -d '.' -f 1 <<< ${{ matrix.nodeVersion }})" >> $GITHUB_ENV

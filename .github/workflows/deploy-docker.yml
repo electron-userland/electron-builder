@@ -31,13 +31,11 @@ jobs:
           14, 16, 18, 20, 22
         ]
     steps:
-      - run: df -h
-      - name: Cleanup unused SDKs and images to make space for massive docker image collection+push
-        run: |
-          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
-          sudo docker image prune --all --force
-          sudo docker builder prune -a
-      - run: df -h
+      - name: Checkout code repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Cleanup runner
+        uses: ./.github/actions/cleanup-runner
 
       - name: Download images artifact - node${{ matrix.nodeMajorVersion }}
         uses: actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806 # v4.1.9
