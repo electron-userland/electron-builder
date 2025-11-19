@@ -321,9 +321,14 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
 
   async asyncExec(command: string, args: string[], cwd: string = this.rootDir): Promise<{ stdout: string | undefined; stderr: string | undefined }> {
     const file = await this.tempDirManager.getTempFile({ prefix: "exec-", suffix: ".txt" })
-    await this.streamCollectorCommandToFile(command, args, cwd, file)
-    const result = await fs.readFile(file, { encoding: "utf8" })
-    return { stdout: result?.trim(), stderr: undefined }
+    try {
+      await this.streamCollectorCommandToFile(command, args, cwd, file)
+      const result = await fs.readFile(file, { encoding: "utf8" })
+      return { stdout: result?.trim(), stderr: undefined }
+    } catch (error: any) {
+      log.error({ error: error.message }, "failed to execute command")
+      return { stdout: undefined, stderr: error.message }
+    }
   }
 
   async streamCollectorCommandToFile(command: string, args: string[], cwd: string, tempOutputFile: string) {
