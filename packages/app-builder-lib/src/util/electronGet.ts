@@ -67,12 +67,12 @@ export async function downloadArtifact(config: ArtifactDownloadOptions, progress
   let promise = configToPromise.get(cacheName) // if rejected, we will try to download again
 
   if (promise != null) {
-    return promise
+    return await promise
   }
 
   promise = doDownloadArtifact(config, cacheDir, progress)
   configToPromise.set(cacheName, promise)
-  return promise
+  return await promise
 }
 
 async function doDownloadArtifact(config: ArtifactDownloadOptions, cacheDir: string | undefined, progress: MultiProgress | null) {

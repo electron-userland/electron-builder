@@ -7376,7 +7376,7 @@
           "type": "null"
         }
       ],
-      "description": "The [electron-download](https://github.com/electron-userland/electron-download#usage) options.\nAlternatively, you can use [electron/get](https://github.com/electron/get#usage) options."
+      "description": "The [electron-download](https://github.com/electron-userland/electron-download#usage) options. (legacy)\nAlternatively, you can use [electron/get](https://github.com/electron/get#usage) options."
     },
     "electronFuses": {
       "anyOf": [
