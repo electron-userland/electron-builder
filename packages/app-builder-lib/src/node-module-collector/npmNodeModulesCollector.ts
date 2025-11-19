@@ -1,27 +1,43 @@
+import { log } from "builder-util"
+import * as path from "path"
 import { NodeModulesCollector } from "./nodeModulesCollector"
 import { PM } from "./packageManager"
-import { NpmDependency } from "./types"
+import { NpmDependency, PackageJson } from "./types"
 
 export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency, string> {
-  public readonly installOptions = { manager: PM.NPM, lockfile: "package-lock.json" }
+  public readonly installOptions = {
+    manager: PM.NPM,
+    lockfile: "package-lock.json",
+  }
 
   protected getArgs(): string[] {
     return ["list", "-a", "--include", "prod", "--include", "optional", "--omit", "dev", "--json", "--long", "--silent"]
   }
 
-  protected collectAllDependencies(tree: NpmDependency) {
-    for (const [key, value] of Object.entries(tree.dependencies || {})) {
+  protected async getDependenciesTree(pm: PM): Promise<NpmDependency> {
+    try {
+      // force NPM collection as Yarn Berry extends this class and PnP is not supported directly
+      return await super.getDependenciesTree(pm)
+    } catch (error: any) {
+      log.info({ pm, parser: PM.NPM, error: error.message }, "unable to process dependency tree, falling back to using manual node_modules traversal")
+    }
+    // node_modules linker fallback. (Slower due to system ops, so we only use it as a fallback)
+    return this.buildNodeModulesTreeManually(this.rootDir)
+  }
+
+  protected async collectAllDependencies(tree: NpmDependency) {
+    for (const [, value] of Object.entries(tree.dependencies || {})) {
       const { _dependencies = {}, dependencies = {} } = value
       const isDuplicateDep = Object.keys(_dependencies).length > 0 && Object.keys(dependencies).length === 0
       if (isDuplicateDep) {
         continue
       }
-      this.allDependencies.set(`${key}@${value.version}`, value)
-      this.collectAllDependencies(value)
+      this.allDependencies.set(this.packageVersionString(value), value)
+      await this.collectAllDependencies(value)
     }
   }
 
-  protected extractProductionDependencyGraph(tree: NpmDependency, dependencyId: string): void {
+  protected async extractProductionDependencyGraph(tree: NpmDependency, dependencyId: string): Promise<void> {
     if (this.productionGraph[dependencyId]) {
       return
     }
@@ -34,16 +50,95 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
     // This will prevents infinite loops when circular dependencies are encountered.
     this.productionGraph[dependencyId] = { dependencies: [] }
     const productionDeps = Object.entries(resolvedDeps)
-      .filter(([packageName]) => prodDependencies[packageName])
-      .map(([packageName, dependency]) => {
-        const childDependencyId = `${packageName}@${dependency.version}`
-        this.extractProductionDependencyGraph(dependency, childDependencyId)
+      .filter(([packageName]) => this.isProdDependency(packageName, tree))
+      .map(async ([, dependency]) => {
+        const childDependencyId = this.packageVersionString(dependency)
+        await this.extractProductionDependencyGraph(dependency, childDependencyId)
         return childDependencyId
       })
-    this.productionGraph[dependencyId] = { dependencies: productionDeps }
+    const collectedDependencies = await Promise.all(productionDeps)
+    this.productionGraph[dependencyId] = { dependencies: collectedDependencies }
   }
 
-  protected parseDependenciesTree(jsonBlob: string): NpmDependency {
-    return JSON.parse(jsonBlob)
+  protected isProdDependency(packageName: string, tree: NpmDependency) {
+    return tree._dependencies?.[packageName] != null
+  }
+
+  /**
+   * Builds a dependency tree using only package.json dependencies and optionalDependencies.
+   * This skips devDependencies and uses Node.js module resolution (require.resolve).
+   */
+  protected buildNodeModulesTreeManually(baseDir: string): Promise<NpmDependency> {
+    // Track visited packages by their resolved path to prevent infinite loops
+    const visited = new Set<string>()
+
+    /**
+     * Recursively builds dependency tree starting from a package directory.
+     */
+    const buildFromPackage = async (packageDir: string): Promise<NpmDependency> => {
+      const pkgPath = path.join(packageDir, "package.json")
+
+      log.debug({ pkgPath }, "building dependency node from package.json")
+
+      if (!(await this.existsMemoized(pkgPath))) {
+        throw new Error(`package.json not found at ${pkgPath}`)
+      }
+
+      // Read package.json using memoized require for consistency with Node.js module system
+      const pkg: PackageJson = this.requireMemoized(pkgPath)
+      const resolvedPackageDir = await this.resolvePath(packageDir)
+
+      // Use resolved path as the unique identifier to prevent circular dependencies
+      if (visited.has(resolvedPackageDir)) {
+        log.debug({ name: pkg.name, version: pkg.version, path: resolvedPackageDir }, "skipping already visited package")
+        return {
+          name: pkg.name,
+          version: pkg.version,
+          path: resolvedPackageDir,
+        }
+      }
+
+      visited.add(resolvedPackageDir)
+
+      const prodDeps: Record<string, NpmDependency> = {}
+      const allProdDepNames = {
+        ...pkg.dependencies,
+        ...pkg.optionalDependencies,
+      }
+
+      // Process all production and optional dependencies
+      for (const [depName, depVersion] of Object.entries(allProdDepNames)) {
+        try {
+          // Resolve the dependency using Node.js module resolution from this package's directory
+          const depPath = this.resolvePackageDir(depName, packageDir)
+
+          if (!depPath) {
+            log.warn({ package: pkg.name, dependency: depName, version: depVersion }, "dependency not found, skipping")
+            continue
+          }
+
+          log.debug({ package: pkg.name, dependency: depName, resolvedPath: depPath }, "processing production dependency")
+
+          // Recursively build the dependency tree for this dependency
+          prodDeps[depName] = await buildFromPackage(depPath)
+        } catch (error: any) {
+          log.warn({ package: pkg.name, dependency: depName, error: error.message }, "failed to process dependency, skipping")
+        }
+      }
+
+      return {
+        name: pkg.name,
+        version: pkg.version,
+        path: resolvedPackageDir,
+        dependencies: Object.keys(prodDeps).length > 0 ? prodDeps : undefined,
+        optionalDependencies: pkg.optionalDependencies,
+      }
+    }
+
+    return buildFromPackage(baseDir)
+  }
+
+  protected async parseDependenciesTree(jsonBlob: string): Promise<NpmDependency> {
+    return Promise.resolve(JSON.parse(jsonBlob))
   }
 }

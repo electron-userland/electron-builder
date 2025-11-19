@@ -1,33 +1,76 @@
-import { hoist, type HoisterTree, type HoisterResult } from "./hoist"
-import * as path from "path"
-import * as fs from "fs-extra"
-import type { NodeModuleInfo, DependencyGraph, Dependency } from "./types"
 import { exists, log, retry, TmpDir } from "builder-util"
-import { getPackageManagerCommand, PM } from "./packageManager"
+import { CancellationToken } from "builder-util-runtime"
 import { exec, spawn } from "child_process"
+import * as fs from "fs-extra"
+import { createWriteStream, readJson } from "fs-extra"
+import { Lazy } from "lazy-val"
+import * as path from "path"
 import { promisify } from "util"
-import { createWriteStream } from "fs"
+import { hoist, type HoisterResult, type HoisterTree } from "./hoist"
+import { createModuleCache, type ModuleCache } from "./moduleCache"
+import { getPackageManagerCommand, PM } from "./packageManager"
+import type { Dependency, DependencyGraph, NodeModuleInfo, PackageJson } from "./types"
 
 const execAsync = promisify(exec)
 
-export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType>, OptionalsType> {
+export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDepType, OptionalDepType>, OptionalDepType> {
   private nodeModules: NodeModuleInfo[] = []
-  protected allDependencies: Map<string, T> = new Map()
+  protected allDependencies: Map<string, ProdDepType> = new Map()
   protected productionGraph: DependencyGraph = {}
+  protected pkgJsonCache: Map<string, string> = new Map()
+  protected memoResolvedModules = new Map<string, Promise<string | null>>()
+
+  // Unified cache for all file system and module operations
+  protected cache: ModuleCache = createModuleCache()
+
+  protected isHoisted = new Lazy<boolean>(async () => {
+    const command = getPackageManagerCommand(this.installOptions.manager)
+
+    const config = (await this.asyncExec(command, ["config", "list"])).stdout
+    if (config == null) {
+      log.debug({ manager: this.installOptions.manager }, "unable to determine if node_modules are hoisted: no config output. falling back to hoisted mode")
+      return false
+    }
+    const lines = Object.fromEntries(config.split("\n").map(line => line.split("=").map(s => s.trim())))
+
+    if (lines["node-linker"] === "hoisted") {
+      log.debug({ manager: this.installOptions.manager }, "node_modules are hoisted")
+      return true
+    }
+
+    return false
+  })
+
+  protected appPkgJson: Lazy<PackageJson> = new Lazy<PackageJson>(async () => {
+    const appPkgPath = path.join(this.rootDir, "package.json")
+    return this.readJsonMemoized(appPkgPath)
+  })
 
   constructor(
-    private readonly rootDir: string,
+    protected readonly rootDir: string,
     private readonly tempDirManager: TmpDir
   ) {}
 
-  public async getNodeModules(): Promise<NodeModuleInfo[]> {
-    const tree: T = await this.getDependenciesTree()
-    this.collectAllDependencies(tree) // Parse from the root, as npm list can host and deduplicate across projects in the workspace
-    const realTree: T = this.getTreeFromWorkspaces(tree)
-    this.extractProductionDependencyGraph(realTree, "." /*root project name*/)
+  public async getNodeModules({ cancellationToken, packageName }: { cancellationToken: CancellationToken; packageName: string }): Promise<NodeModuleInfo[]> {
+    const tree: ProdDepType = await this.getDependenciesTree(this.installOptions.manager)
 
-    const hoisterResult: HoisterResult = hoist(this.transToHoisterTree(this.productionGraph), { check: true })
-    this._getNodeModules(hoisterResult.dependencies, this.nodeModules)
+    if (cancellationToken.cancelled) {
+      throw new Error("getNodeModules cancelled after fetching dependency tree")
+    }
+
+    await this.collectAllDependencies(tree, packageName)
+
+    const realTree: ProdDepType = await this.getTreeFromWorkspaces(tree)
+    await this.extractProductionDependencyGraph(realTree, packageName)
+
+    if (cancellationToken.cancelled) {
+      throw new Error("getNodeModules cancelled after building production graph")
+    }
+
+    const hoisterResult: HoisterResult = hoist(this.transformToHoisterTree(this.productionGraph, packageName), { check: true })
+
+    await this._getNodeModules(hoisterResult.dependencies, this.nodeModules)
+    log.debug({ packageName, depCount: this.nodeModules.length }, "node modules collection complete")
 
     return this.nodeModules
   }
@@ -38,12 +81,12 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
   }
 
   protected abstract getArgs(): string[]
-  protected abstract parseDependenciesTree(jsonBlob: string): T
-  protected abstract extractProductionDependencyGraph(tree: Dependency<T, OptionalsType>, dependencyId: string): void
-  protected abstract collectAllDependencies(tree: Dependency<T, OptionalsType>): void
+  protected abstract parseDependenciesTree(jsonBlob: string): Promise<ProdDepType>
+  protected abstract extractProductionDependencyGraph(tree: Dependency<ProdDepType, OptionalDepType>, dependencyId: string): Promise<void>
+  protected abstract collectAllDependencies(tree: Dependency<ProdDepType, OptionalDepType>, appPackageName: string): Promise<void>
 
-  protected async getDependenciesTree(): Promise<T> {
-    const command = getPackageManagerCommand(this.installOptions.manager)
+  protected async getDependenciesTree(pm: PM): Promise<ProdDepType> {
+    const command = getPackageManagerCommand(pm)
     const args = this.getArgs()
 
     const tempOutputFile = await this.tempDirManager.getTempFile({
@@ -54,56 +97,164 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
     return retry(
       async () => {
         await this.streamCollectorCommandToJsonFile(command, args, this.rootDir, tempOutputFile)
-        const dependencies = await fs.readFile(tempOutputFile, { encoding: "utf8" })
-        try {
-          return this.parseDependenciesTree(dependencies)
-        } catch (error: any) {
-          log.debug({ message: error.message || error.stack, shellOutput: dependencies }, "error parsing dependencies tree")
-          throw new Error(`Failed to parse dependencies tree: ${error.message || error.stack}. Use DEBUG=electron-builder env var to see the dependency query output.`)
-        }
+        const shellOutput = await fs.readFile(tempOutputFile, { encoding: "utf8" })
+        return await this.parseDependenciesTree(shellOutput)
       },
       {
-        retries: 2,
+        retries: 1,
         interval: 2000,
         backoff: 2000,
         shouldRetry: async (error: any) => {
-          if (!(await exists(tempOutputFile))) {
-            log.error({ error: error.message || error.stack, tempOutputFile }, "error getting dependencies tree, unable to find output; retrying")
+          const logFields = { error: error.message, tempOutputFile, cwd: this.rootDir }
+
+          if (!(await this.existsMemoized(tempOutputFile))) {
+            log.debug(logFields, "dependency tree output file missing, retrying")
             return true
           }
-          const dependencies = await fs.readFile(tempOutputFile, { encoding: "utf8" })
-          if (dependencies.trim().length === 0 || error.message?.includes("Unexpected end of JSON input")) {
-            // If the output file is empty or contains invalid JSON, we retry
-            // This can happen if the command fails or if the output is not as expected
-            log.error({ error: error.message || error.stack, tempOutputFile }, "dependency tree output file is empty, retrying")
+
+          const fileContent = await fs.readFile(tempOutputFile, { encoding: "utf8" })
+          const fields = { ...logFields, fileContent }
+
+          if (fileContent.trim().length === 0) {
+            log.debug(fields, "dependency tree output file empty, retrying")
             return true
           }
+
+          if (error.message?.includes("Unexpected end of JSON input")) {
+            log.debug(fields, "JSON parse error in dependency tree, retrying")
+            return true
+          }
+
+          log.error(fields, "error parsing dependencies tree")
           return false
         },
       }
     )
   }
 
-  protected resolvePath(filePath: string): string {
+  protected async existsMemoized(filePath: string): Promise<boolean> {
+    if (!this.cache.exists.has(filePath)) {
+      this.cache.exists.set(filePath, await exists(filePath))
+    }
+    return this.cache.exists.get(filePath)!
+  }
+
+  protected async readJsonMemoized(filePath: string): Promise<PackageJson> {
+    if (!this.cache.packageJson.has(filePath)) {
+      this.cache.packageJson.set(filePath, await readJson(filePath))
+    }
+    return this.cache.packageJson.get(filePath)!
+  }
+
+  protected async lstatMemoized(filePath: string): Promise<fs.Stats> {
+    if (!this.cache.lstat.has(filePath)) {
+      this.cache.lstat.set(filePath, await fs.lstat(filePath))
+    }
+    return this.cache.lstat.get(filePath)!
+  }
+
+  protected async realpathMemoized(filePath: string): Promise<string> {
+    if (!this.cache.realPath.has(filePath)) {
+      this.cache.realPath.set(filePath, await fs.realpath(filePath))
+    }
+    return this.cache.realPath.get(filePath)!
+  }
+
+  protected async resolvePath(filePath: string): Promise<string> {
+    // Check if we've already resolved this path
+    if (this.cache.realPath.has(filePath)) {
+      return this.cache.realPath.get(filePath)!
+    }
+
     try {
-      const stats = fs.lstatSync(filePath)
+      const stats = await this.lstatMemoized(filePath)
       if (stats.isSymbolicLink()) {
-        return fs.realpathSync(filePath)
+        const resolved = await this.realpathMemoized(filePath)
+        this.cache.realPath.set(filePath, resolved)
+        return resolved
       } else {
+        this.cache.realPath.set(filePath, filePath)
         return filePath
       }
     } catch (error: any) {
-      log.debug({ message: error.message || error.stack }, "error resolving path")
+      log.debug({ filePath, message: error.message || error.stack }, "error resolving path")
+      this.cache.realPath.set(filePath, filePath)
       return filePath
     }
   }
 
-  private getTreeFromWorkspaces(tree: T): T {
+  /**
+   * Resolves a package to its filesystem location using Node.js module resolution.
+   * Returns the directory containing the package, not the package.json path.
+   */
+  protected resolvePackageDir = (packageName: string, fromDir: string): string | null => {
+    const cacheKey = `${packageName}::${fromDir}`
+
+    // Check memoization cache
+    if (this.cache.requireResolve.has(cacheKey)) {
+      return this.cache.requireResolve.get(cacheKey)!
+    }
+
+    try {
+      // require.resolve finds the main entry point, so we look for package.json instead
+      const packageJsonPath = require.resolve(`${packageName}/package.json`, {
+        paths: [fromDir, this.rootDir],
+      })
+      const result = path.dirname(packageJsonPath)
+      this.cache.requireResolve.set(cacheKey, result)
+      return result
+    } catch (error: any) {
+      log.warn({ packageName, fromDir, error: error.message }, "could not resolve package")
+      this.cache.requireResolve.set(cacheKey, null)
+      return null
+    }
+  }
+
+  protected requireMemoized(pkgPath: string): PackageJson {
+    if (!this.cache.packageJson.has(pkgPath)) {
+      this.cache.packageJson.set(pkgPath, require(pkgPath))
+    }
+    return this.cache.packageJson.get(pkgPath)!
+  }
+
+  protected existsSyncMemoized(filePath: string): boolean {
+    if (!this.cache.exists.has(filePath)) {
+      this.cache.exists.set(filePath, fs.existsSync(filePath))
+    }
+    return this.cache.exists.get(filePath)!
+  }
+
+  protected cacheKey(pkg: ProdDepType): string {
+    const rel = path.relative(this.rootDir, pkg.path)
+    return `${pkg.name}::${pkg.version}::${rel ?? "."}`
+  }
+
+  protected packageVersionString(pkg: ProdDepType): string {
+    return `${pkg.name}@${pkg.version}`
+  }
+
+  /**
+   * Parse a dependency identifier like "@scope/pkg@1.2.3" or "pkg@1.2.3"
+   */
+  protected parseNameVersion(identifier: string): { name: string; version: string } {
+    const lastAt = identifier.lastIndexOf("@")
+    if (lastAt <= 0) {
+      // fallback for scoped packages or malformed strings
+      return { name: identifier, version: "unknown" }
+    }
+    const name = identifier.slice(0, lastAt)
+    const version = identifier.slice(lastAt + 1)
+    return { name, version }
+  }
+
+  protected async getTreeFromWorkspaces(tree: ProdDepType): Promise<ProdDepType> {
     if (tree.workspaces && tree.dependencies) {
-      const packageJson: Dependency<string, string> = require(path.join(this.rootDir, "package.json"))
+      const packageJson = await this.appPkgJson.value
       const dependencyName = packageJson.name
+
       for (const [key, value] of Object.entries(tree.dependencies)) {
         if (key === dependencyName) {
+          log.debug({ key, path: value.path }, "returning workspace tree for root dependency")
           return value
         }
       }
@@ -112,27 +263,32 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
     return tree
   }
 
-  private transToHoisterTree(obj: DependencyGraph, key: string = `.`, nodes: Map<string, HoisterTree> = new Map()): HoisterTree {
+  private transformToHoisterTree(obj: DependencyGraph, key: string, nodes: Map<string, HoisterTree> = new Map()): HoisterTree {
     let node = nodes.get(key)
-    const name = key.match(/@?[^@]+/)![0]
+    const { name, version } = this.parseNameVersion(key)
+
     if (!node) {
       node = {
         name,
         identName: name,
-        reference: key.match(/@?[^@]+@?(.+)?/)![1] || ``,
+        reference: version,
         dependencies: new Set<HoisterTree>(),
-        peerNames: new Set<string>([]),
+        peerNames: new Set<string>(),
       }
+
       nodes.set(key, node)
 
-      for (const dep of (obj[key] || {}).dependencies || []) {
-        node.dependencies.add(this.transToHoisterTree(obj, dep, nodes))
+      const deps = (obj[key] || {}).dependencies || []
+      for (const dep of deps) {
+        const child = this.transformToHoisterTree(obj, dep, nodes)
+        node.dependencies.add(child)
       }
     }
+
     return node
   }
 
-  private _getNodeModules(dependencies: Set<HoisterResult>, result: NodeModuleInfo[]) {
+  private async _getNodeModules(dependencies: Set<HoisterResult>, result: NodeModuleInfo[]) {
     if (dependencies.size === 0) {
       return
     }
@@ -147,7 +303,7 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
 
       // fix npm list issue
       // https://github.com/npm/cli/issues/8535
-      if (!fs.existsSync(p)) {
+      if (!(await exists(p))) {
         log.debug({ name: d.name, reference, p }, "dependency path does not exist")
         continue
       }
@@ -155,20 +311,23 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
       const node: NodeModuleInfo = {
         name: d.name,
         version: reference,
-        dir: this.resolvePath(p),
+        dir: await this.resolvePath(p),
       }
       result.push(node)
       if (d.dependencies.size > 0) {
         node.dependencies = []
-        this._getNodeModules(d.dependencies, node.dependencies)
+        await this._getNodeModules(d.dependencies, node.dependencies)
       }
     }
     result.sort((a, b) => a.name.localeCompare(b.name))
   }
 
-  static async safeExec(command: string, args: string[], cwd: string): Promise<string> {
-    const payload = await execAsync([`"${command}"`, ...args].join(" "), { cwd, maxBuffer: 100 * 1024 * 1024 }) // 100MB buffer LOL, some projects can have extremely large dependency trees
-    return payload.stdout.trim()
+  async asyncExec(command: string, args: string[], cwd: string = this.rootDir): Promise<{ stdout: string | undefined; stderr: string | undefined }> {
+    const payload = await execAsync([command, ...args].join(" "), { cwd, maxBuffer: 100 * 1024 * 1024, encoding: "utf8" }).catch(err => {
+      log.error({ err }, "failed to execute command")
+      return { stdout: undefined, stderr: err.message }
+    })
+    return { stdout: payload.stdout?.trim() ?? undefined, stderr: payload.stderr?.trim() ?? undefined }
   }
 
   async streamCollectorCommandToJsonFile(command: string, args: string[], cwd: string, tempOutputFile: string) {
@@ -202,22 +361,21 @@ export abstract class NodeModulesCollector<T extends Dependency<T, OptionalsType
         stderr += chunk.toString()
       })
       child.on("error", err => {
-        reject(new Error(`Spawn failed: ${err.message}`))
+        reject(new Error(`Node module collector spawn failed: ${err.message}`))
       })
 
       child.on("close", code => {
         outStream.close()
         // https://github.com/npm/npm/issues/17624
-        if (code === 1 && execName.toLowerCase() === "npm" && args.includes("list")) {
-          log.debug({ code, stderr }, "`npm list` returned non-zero exit code, but it MIGHT be expected (https://github.com/npm/npm/issues/17624). Check stderr for details.")
-          // This is a known issue with npm list command, it can return code 1 even when the command is "technically" successful
-          resolve()
-          return
+        const shouldIgnore = code === 1 && "npm" === execName.toLowerCase() && args.includes("list")
+        if (shouldIgnore) {
+          log.debug(null, "`npm list` returned non-zero exit code, but it MIGHT be expected (https://github.com/npm/npm/issues/17624). Check stderr for details.")
         }
-        if (code !== 0) {
-          return reject(new Error(`Process exited with code ${code}:\n${stderr}`))
+        if (stderr.length > 0) {
+          log.debug({ stderr }, "note: there was node module collector output on stderr")
         }
-        resolve()
+        const shouldResolve = code === 0 || shouldIgnore
+        return shouldResolve ? resolve() : reject(new Error(`Node module collector process exited with code ${code}:\n${stderr}`))
       })
     })
   }

@@ -1,0 +1,1373 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`bun workspace --linker=hoisted - multiple conflicting versions 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`bun workspace --linker=hoisted - multiple conflicting versions 2`] = `
+{
+  "files": {
+    "index.js": {
+      "offset": "31271",
+      "size": 32,
+    },
+    "node_modules": {
+      "files": {
+        "has-bigints": {
+          "files": {
+            ".nycrc": {
+              "offset": "0",
+              "size": 139,
+            },
+            "LICENSE": {
+              "offset": "139",
+              "size": 1071,
+            },
+            "index.js": {
+              "offset": "1210",
+              "size": 374,
+            },
+            "package.json": {
+              "offset": "1584",
+              "size": 1166,
+            },
+            "tsconfig.json": {
+              "offset": "2750",
+              "size": 123,
+            },
+          },
+        },
+        "is-bigint": {
+          "files": {
+            ".nycrc": {
+              "offset": "2873",
+              "size": 139,
+            },
+            "LICENSE": {
+              "offset": "3012",
+              "size": 1071,
+            },
+            "index.js": {
+              "offset": "4083",
+              "size": 844,
+            },
+            "package.json": {
+              "offset": "4927",
+              "size": 1397,
+            },
+            "tsconfig.json": {
+              "offset": "6324",
+              "size": 114,
+            },
+          },
+        },
+        "left-pad": {
+          "files": {
+            "COPYING": {
+              "offset": "6438",
+              "size": 502,
+            },
+            "index.js": {
+              "offset": "6940",
+              "size": 1469,
+            },
+            "package.json": {
+              "offset": "8409",
+              "size": 466,
+            },
+            "perf": {
+              "files": {
+                "O(n).js": {
+                  "offset": "8875",
+                  "size": 241,
+                },
+                "es6Repeat.js": {
+                  "offset": "9116",
+                  "size": 216,
+                },
+                "perf.js": {
+                  "offset": "9332",
+                  "size": 1442,
+                },
+              },
+            },
+            "test.js": {
+              "offset": "10774",
+              "size": 4005,
+            },
+          },
+        },
+        "lib": {
+          "files": {
+            ".yarnrc.yml": {
+              "offset": "14779",
+              "size": 24,
+            },
+            "index.js": {
+              "offset": "14803",
+              "size": 46,
+            },
+            "node_modules": {
+              "files": {
+                "is-bigint": {
+                  "files": {
+                    ".eslintignore": {
+                      "offset": "14988",
+                      "size": 10,
+                    },
+                    ".nycrc": {
+                      "offset": "14998",
+                      "size": 139,
+                    },
+                    "LICENSE": {
+                      "offset": "15137",
+                      "size": 1071,
+                    },
+                    "index.js": {
+                      "offset": "16208",
+                      "size": 737,
+                    },
+                    "package.json": {
+                      "offset": "16945",
+                      "size": 955,
+                    },
+                  },
+                },
+              },
+            },
+            "package.json": {
+              "offset": "14849",
+              "size": 139,
+            },
+          },
+        },
+        "process": {
+          "files": {
+            "LICENSE": {
+              "offset": "17900",
+              "size": 1098,
+            },
+            "browser.js": {
+              "offset": "18998",
+              "size": 5418,
+            },
+            "index.js": {
+              "offset": "24416",
+              "size": 96,
+            },
+            "package.json": {
+              "offset": "24512",
+              "size": 449,
+            },
+            "test.js": {
+              "offset": "24961",
+              "size": 6310,
+            },
+          },
+        },
+      },
+    },
+    "package.json": {
+      "offset": "31303",
+      "size": 325,
+    },
+  },
+}
+`;
+
+exports[`bun workspace --linker=hoisted 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`bun workspace --linker=hoisted 2`] = `
+{
+  "files": {
+    "index.js": {
+      "offset": "28333",
+      "size": 32,
+    },
+    "node_modules": {
+      "files": {
+        "has-bigints": {
+          "files": {
+            ".nycrc": {
+              "offset": "0",
+              "size": 139,
+            },
+            "LICENSE": {
+              "offset": "139",
+              "size": 1071,
+            },
+            "index.js": {
+              "offset": "1210",
+              "size": 374,
+            },
+            "package.json": {
+              "offset": "1584",
+              "size": 1166,
+            },
+            "tsconfig.json": {
+              "offset": "2750",
+              "size": 123,
+            },
+          },
+        },
+        "is-bigint": {
+          "files": {
+            ".nycrc": {
+              "offset": "2873",
+              "size": 139,
+            },
+            "LICENSE": {
+              "offset": "3012",
+              "size": 1071,
+            },
+            "index.js": {
+              "offset": "4083",
+              "size": 844,
+            },
+            "package.json": {
+              "offset": "4927",
+              "size": 1397,
+            },
+            "tsconfig.json": {
+              "offset": "6324",
+              "size": 114,
+            },
+          },
+        },
+        "left-pad": {
+          "files": {
+            "COPYING": {
+              "offset": "6438",
+              "size": 502,
+            },
+            "index.js": {
+              "offset": "6940",
+              "size": 1469,
+            },
+            "package.json": {
+              "offset": "8409",
+              "size": 466,
+            },
+            "perf": {
+              "files": {
+                "O(n).js": {
+                  "offset": "8875",
+                  "size": 241,
+                },
+                "es6Repeat.js": {
+                  "offset": "9116",
+                  "size": 216,
+                },
+                "perf.js": {
+                  "offset": "9332",
+                  "size": 1442,
+                },
+              },
+            },
+            "test.js": {
+              "offset": "10774",
+              "size": 4005,
+            },
+          },
+        },
+        "lib": {
+          "files": {
+            ".yarnrc.yml": {
+              "offset": "14779",
+              "size": 24,
+            },
+            "index.js": {
+              "offset": "14803",
+              "size": 46,
+            },
+            "package.json": {
+              "offset": "14849",
+              "size": 113,
+            },
+          },
+        },
+        "process": {
+          "files": {
+            "LICENSE": {
+              "offset": "14962",
+              "size": 1098,
+            },
+            "browser.js": {
+              "offset": "16060",
+              "size": 5418,
+            },
+            "index.js": {
+              "offset": "21478",
+              "size": 96,
+            },
+            "package.json": {
+              "offset": "21574",
+              "size": 449,
+            },
+            "test.js": {
+              "offset": "22023",
+              "size": 6310,
+            },
+          },
+        },
+      },
+    },
+    "package.json": {
+      "offset": "28365",
+      "size": 325,
+    },
+  },
+}
+`;
+
+exports[`bun workspace --linker=isolated - multiple conflicting versions 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`bun workspace --linker=isolated - multiple conflicting versions 2`] = `
+{
+  "files": {
+    "index.js": {
+      "offset": "31271",
+      "size": 32,
+    },
+    "node_modules": {
+      "files": {
+        "has-bigints": {
+          "files": {
+            ".nycrc": {
+              "offset": "0",
+              "size": 139,
+            },
+            "LICENSE": {
+              "offset": "139",
+              "size": 1071,
+            },
+            "index.js": {
+              "offset": "1210",
+              "size": 374,
+            },
+            "package.json": {
+              "offset": "1584",
+              "size": 1166,
+            },
+            "tsconfig.json": {
+              "offset": "2750",
+              "size": 123,
+            },
+          },
+        },
+        "is-bigint": {
+          "files": {
+            ".nycrc": {
+              "offset": "2873",
+              "size": 139,
+            },
+            "LICENSE": {
+              "offset": "3012",
+              "size": 1071,
+            },
+            "index.js": {
+              "offset": "4083",
+              "size": 844,
+            },
+            "package.json": {
+              "offset": "4927",
+              "size": 1397,
+            },
+            "tsconfig.json": {
+              "offset": "6324",
+              "size": 114,
+            },
+          },
+        },
+        "left-pad": {
+          "files": {
+            "COPYING": {
+              "offset": "6438",
+              "size": 502,
+            },
+            "index.js": {
+              "offset": "6940",
+              "size": 1469,
+            },
+            "package.json": {
+              "offset": "8409",
+              "size": 466,
+            },
+            "perf": {
+              "files": {
+                "O(n).js": {
+                  "offset": "8875",
+                  "size": 241,
+                },
+                "es6Repeat.js": {
+                  "offset": "9116",
+                  "size": 216,
+                },
+                "perf.js": {
+                  "offset": "9332",
+                  "size": 1442,
+                },
+              },
+            },
+            "test.js": {
+              "offset": "10774",
+              "size": 4005,
+            },
+          },
+        },
+        "lib": {
+          "files": {
+            ".yarnrc.yml": {
+              "offset": "14779",
+              "size": 24,
+            },
+            "index.js": {
+              "offset": "14803",
+              "size": 46,
+            },
+            "node_modules": {
+              "files": {
+                "is-bigint": {
+                  "files": {
+                    ".eslintignore": {
+                      "offset": "14988",
+                      "size": 10,
+                    },
+                    ".nycrc": {
+                      "offset": "14998",
+                      "size": 139,
+                    },
+                    "LICENSE": {
+                      "offset": "15137",
+                      "size": 1071,
+                    },
+                    "index.js": {
+                      "offset": "16208",
+                      "size": 737,
+                    },
+                    "package.json": {
+                      "offset": "16945",
+                      "size": 955,
+                    },
+                  },
+                },
+              },
+            },
+            "package.json": {
+              "offset": "14849",
+              "size": 139,
+            },
+          },
+        },
+        "process": {
+          "files": {
+            "LICENSE": {
+              "offset": "17900",
+              "size": 1098,
+            },
+            "browser.js": {
+              "offset": "18998",
+              "size": 5418,
+            },
+            "index.js": {
+              "offset": "24416",
+              "size": 96,
+            },
+            "package.json": {
+              "offset": "24512",
+              "size": 449,
+            },
+            "test.js": {
+              "offset": "24961",
+              "size": 6310,
+            },
+          },
+        },
+      },
+    },
+    "package.json": {
+      "offset": "31303",
+      "size": 325,
+    },
+  },
+}
+`;
+
+exports[`bun workspace --linker=isolated 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`bun workspace --linker=isolated 2`] = `
+{
+  "files": {
+    "index.js": {
+      "offset": "28333",
+      "size": 32,
+    },
+    "node_modules": {
+      "files": {
+        "has-bigints": {
+          "files": {
+            ".nycrc": {
+              "offset": "0",
+              "size": 139,
+            },
+            "LICENSE": {
+              "offset": "139",
+              "size": 1071,
+            },
+            "index.js": {
+              "offset": "1210",
+              "size": 374,
+            },
+            "package.json": {
+              "offset": "1584",
+              "size": 1166,
+            },
+            "tsconfig.json": {
+              "offset": "2750",
+              "size": 123,
+            },
+          },
+        },
+        "is-bigint": {
+          "files": {
+            ".nycrc": {
+              "offset": "2873",
+              "size": 139,
+            },
+            "LICENSE": {
+              "offset": "3012",
+              "size": 1071,
+            },
+            "index.js": {
+              "offset": "4083",
+              "size": 844,
+            },
+            "package.json": {
+              "offset": "4927",
+              "size": 1397,
+            },
+            "tsconfig.json": {
+              "offset": "6324",
+              "size": 114,
+            },
+          },
+        },
+        "left-pad": {
+          "files": {
+            "COPYING": {
+              "offset": "6438",
+              "size": 502,
+            },
+            "index.js": {
+              "offset": "6940",
+              "size": 1469,
+            },
+            "package.json": {
+              "offset": "8409",
+              "size": 466,
+            },
+            "perf": {
+              "files": {
+                "O(n).js": {
+                  "offset": "8875",
+                  "size": 241,
+                },
+                "es6Repeat.js": {
+                  "offset": "9116",
+                  "size": 216,
+                },
+                "perf.js": {
+                  "offset": "9332",
+                  "size": 1442,
+                },
+              },
+            },
+            "test.js": {
+              "offset": "10774",
+              "size": 4005,
+            },
+          },
+        },
+        "lib": {
+          "files": {
+            ".yarnrc.yml": {
+              "offset": "14779",
+              "size": 24,
+            },
+            "index.js": {
+              "offset": "14803",
+              "size": 46,
+            },
+            "package.json": {
+              "offset": "14849",
+              "size": 113,
+            },
+          },
+        },
+        "process": {
+          "files": {
+            "LICENSE": {
+              "offset": "14962",
+              "size": 1098,
+            },
+            "browser.js": {
+              "offset": "16060",
+              "size": 5418,
+            },
+            "index.js": {
+              "offset": "21478",
+              "size": 96,
+            },
+            "package.json": {
+              "offset": "21574",
+              "size": 449,
+            },
+            "test.js": {
+              "offset": "22023",
+              "size": 6310,
+            },
+          },
+        },
+      },
+    },
+    "package.json": {
+      "offset": "28365",
+      "size": 325,
+    },
+  },
+}
+`;
+
+exports[`local file:// protocol with npm for project outside workspace 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`local file:// protocol with pnpm for project outside workspace 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`local file:// protocol with yarn for project outside workspace 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`local file:// protocol with yarn-berry for project outside workspace 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`npm 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`npm 2`] = `
+{
+  "files": {
+    "app": {
+      "files": {
+        "package.json": {
+          "files": {
+            "readme.md": {
+              "offset": "24709",
+              "size": 32,
+            },
+          },
+        },
+        "readme.md": {
+          "offset": "24741",
+          "size": 78,
+        },
+      },
+    },
+    "index.html": {
+      "offset": "24819",
+      "size": 841,
+    },
+    "index.js": {
+      "offset": "25660",
+      "size": 4184,
+    },
+    "node_modules": {
+      "files": {
+        "debug": {
+          "files": {
+            "LICENSE": {
+              "offset": "0",
+              "size": 1139,
+            },
+            "package.json": {
+              "offset": "1139",
+              "size": 910,
+            },
+            "src": {
+              "files": {
+                "browser.js": {
+                  "offset": "2049",
+                  "size": 6103,
+                },
+                "common.js": {
+                  "offset": "8152",
+                  "size": 6915,
+                },
+                "index.js": {
+                  "offset": "15067",
+                  "size": 314,
+                },
+                "node.js": {
+                  "offset": "15381",
+                  "size": 4728,
+                },
+              },
+            },
+          },
+        },
+        "ms": {
+          "files": {
+            "index.js": {
+              "offset": "20109",
+              "size": 3024,
+            },
+            "license.md": {
+              "offset": "23133",
+              "size": 1079,
+            },
+            "package.json": {
+              "offset": "24212",
+              "size": 497,
+            },
+          },
+        },
+      },
+    },
+    "package.json": {
+      "offset": "29844",
+      "size": 377,
+    },
+  },
+}
+`;
+
+exports[`pnpm 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`pnpm 2`] = `
+{
+  "files": {
+    "app": {
+      "files": {
+        "package.json": {
+          "files": {
+            "readme.md": {
+              "offset": "24709",
+              "size": 32,
+            },
+          },
+        },
+        "readme.md": {
+          "offset": "24741",
+          "size": 78,
+        },
+      },
+    },
+    "index.html": {
+      "offset": "24819",
+      "size": 841,
+    },
+    "index.js": {
+      "offset": "25660",
+      "size": 4184,
+    },
+    "node_modules": {
+      "files": {
+        "debug": {
+          "files": {
+            "LICENSE": {
+              "offset": "0",
+              "size": 1139,
+            },
+            "package.json": {
+              "offset": "1139",
+              "size": 910,
+            },
+            "src": {
+              "files": {
+                "browser.js": {
+                  "offset": "2049",
+                  "size": 6103,
+                },
+                "common.js": {
+                  "offset": "8152",
+                  "size": 6915,
+                },
+                "index.js": {
+                  "offset": "15067",
+                  "size": 314,
+                },
+                "node.js": {
+                  "offset": "15381",
+                  "size": 4728,
+                },
+              },
+            },
+          },
+        },
+        "ms": {
+          "files": {
+            "index.js": {
+              "offset": "20109",
+              "size": 3024,
+            },
+            "license.md": {
+              "offset": "23133",
+              "size": 1079,
+            },
+            "package.json": {
+              "offset": "24212",
+              "size": 497,
+            },
+          },
+        },
+      },
+    },
+    "package.json": {
+      "offset": "29844",
+      "size": 516,
+    },
+  },
+}
+`;
+
+exports[`yarn 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`yarn 2`] = `
+{
+  "files": {
+    "index.html": {
+      "offset": "24709",
+      "size": 378,
+    },
+    "index.js": {
+      "offset": "25087",
+      "size": 619,
+    },
+    "node_modules": {
+      "files": {
+        "debug": {
+          "files": {
+            "LICENSE": {
+              "offset": "0",
+              "size": 1139,
+            },
+            "package.json": {
+              "offset": "1139",
+              "size": 910,
+            },
+            "src": {
+              "files": {
+                "browser.js": {
+                  "offset": "2049",
+                  "size": 6103,
+                },
+                "common.js": {
+                  "offset": "8152",
+                  "size": 6915,
+                },
+                "index.js": {
+                  "offset": "15067",
+                  "size": 314,
+                },
+                "node.js": {
+                  "offset": "15381",
+                  "size": 4728,
+                },
+              },
+            },
+          },
+        },
+        "ms": {
+          "files": {
+            "index.js": {
+              "offset": "20109",
+              "size": 3024,
+            },
+            "license.md": {
+              "offset": "23133",
+              "size": 1079,
+            },
+            "package.json": {
+              "offset": "24212",
+              "size": 497,
+            },
+          },
+        },
+      },
+    },
+    "package.json": {
+      "offset": "25706",
+      "size": 347,
+    },
+    "path": {
+      "files": {
+        "app.asar": {
+          "offset": "26053",
+          "size": 714,
+        },
+      },
+    },
+  },
+}
+`;
+
+exports[`yarn berry 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`yarn berry 2`] = `
+{
+  "files": {
+    "index.html": {
+      "offset": "24709",
+      "size": 378,
+    },
+    "index.js": {
+      "offset": "25087",
+      "size": 619,
+    },
+    "node_modules": {
+      "files": {
+        "debug": {
+          "files": {
+            "LICENSE": {
+              "offset": "0",
+              "size": 1139,
+            },
+            "package.json": {
+              "offset": "1139",
+              "size": 910,
+            },
+            "src": {
+              "files": {
+                "browser.js": {
+                  "offset": "2049",
+                  "size": 6103,
+                },
+                "common.js": {
+                  "offset": "8152",
+                  "size": 6915,
+                },
+                "index.js": {
+                  "offset": "15067",
+                  "size": 314,
+                },
+                "node.js": {
+                  "offset": "15381",
+                  "size": 4728,
+                },
+              },
+            },
+          },
+        },
+        "ms": {
+          "files": {
+            "index.js": {
+              "offset": "20109",
+              "size": 3024,
+            },
+            "license.md": {
+              "offset": "23133",
+              "size": 1079,
+            },
+            "package.json": {
+              "offset": "24212",
+              "size": 497,
+            },
+          },
+        },
+      },
+    },
+    "package.json": {
+      "offset": "25706",
+      "size": 315,
+    },
+    "path": {
+      "files": {
+        "app.asar": {
+          "offset": "26021",
+          "size": 714,
+        },
+      },
+    },
+  },
+}
+`;
+
+exports[`yarn berry multi-package workspace 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`yarn berry multi-package workspace 2`] = `
+{
+  "files": {
+    "index.html": {
+      "offset": "24709",
+      "size": 841,
+    },
+    "index.js": {
+      "offset": "25550",
+      "size": 2501,
+    },
+    "node_modules": {
+      "files": {
+        "debug": {
+          "files": {
+            "LICENSE": {
+              "offset": "0",
+              "size": 1139,
+            },
+            "package.json": {
+              "offset": "1139",
+              "size": 910,
+            },
+            "src": {
+              "files": {
+                "browser.js": {
+                  "offset": "2049",
+                  "size": 6103,
+                },
+                "common.js": {
+                  "offset": "8152",
+                  "size": 6915,
+                },
+                "index.js": {
+                  "offset": "15067",
+                  "size": 314,
+                },
+                "node.js": {
+                  "offset": "15381",
+                  "size": 4728,
+                },
+              },
+            },
+          },
+        },
+        "ms": {
+          "files": {
+            "index.js": {
+              "offset": "20109",
+              "size": 3024,
+            },
+            "license.md": {
+              "offset": "23133",
+              "size": 1079,
+            },
+            "package.json": {
+              "offset": "24212",
+              "size": 497,
+            },
+          },
+        },
+      },
+    },
+    "package.json": {
+      "offset": "28051",
+      "size": 329,
+    },
+  },
+}
+`;
+
+exports[`yarn berry workspace 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`yarn berry workspace 2`] = `
+{
+  "files": {
+    "index.html": {
+      "offset": "24709",
+      "size": 841,
+    },
+    "index.js": {
+      "offset": "25550",
+      "size": 2501,
+    },
+    "node_modules": {
+      "files": {
+        "debug": {
+          "files": {
+            "LICENSE": {
+              "offset": "0",
+              "size": 1139,
+            },
+            "package.json": {
+              "offset": "1139",
+              "size": 910,
+            },
+            "src": {
+              "files": {
+                "browser.js": {
+                  "offset": "2049",
+                  "size": 6103,
+                },
+                "common.js": {
+                  "offset": "8152",
+                  "size": 6915,
+                },
+                "index.js": {
+                  "offset": "15067",
+                  "size": 314,
+                },
+                "node.js": {
+                  "offset": "15381",
+                  "size": 4728,
+                },
+              },
+            },
+          },
+        },
+        "ms": {
+          "files": {
+            "index.js": {
+              "offset": "20109",
+              "size": 3024,
+            },
+            "license.md": {
+              "offset": "23133",
+              "size": 1079,
+            },
+            "package.json": {
+              "offset": "24212",
+              "size": 497,
+            },
+          },
+        },
+      },
+    },
+    "package.json": {
+      "offset": "28051",
+      "size": 329,
+    },
+  },
+}
+`;
+
+exports[`yarn multi-package workspace 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`yarn multi-package workspace 2`] = `
+{
+  "files": {
+    "index.html": {
+      "offset": "28891",
+      "size": 841,
+    },
+    "index.js": {
+      "offset": "29732",
+      "size": 2501,
+    },
+    "node_modules": {
+      "files": {
+        "debug": {
+          "files": {
+            "LICENSE": {
+              "offset": "0",
+              "size": 1139,
+            },
+            "node_modules": {
+              "files": {
+                "ms": {
+                  "files": {
+                    "index.js": {
+                      "offset": "20109",
+                      "size": 2764,
+                    },
+                    "license.md": {
+                      "offset": "22873",
+                      "size": 1077,
+                    },
+                    "package.json": {
+                      "offset": "23950",
+                      "size": 469,
+                    },
+                  },
+                },
+              },
+            },
+            "package.json": {
+              "offset": "1139",
+              "size": 910,
+            },
+            "src": {
+              "files": {
+                "browser.js": {
+                  "offset": "2049",
+                  "size": 6103,
+                },
+                "common.js": {
+                  "offset": "8152",
+                  "size": 6915,
+                },
+                "index.js": {
+                  "offset": "15067",
+                  "size": 314,
+                },
+                "node.js": {
+                  "offset": "15381",
+                  "size": 4728,
+                },
+              },
+            },
+          },
+        },
+        "foo": {
+          "files": {
+            "index.js": {
+              "offset": "24419",
+              "size": 35,
+            },
+            "package.json": {
+              "offset": "24454",
+              "size": 127,
+            },
+          },
+        },
+        "ms": {
+          "files": {
+            "index.js": {
+              "offset": "24581",
+              "size": 2764,
+            },
+            "license.md": {
+              "offset": "27345",
+              "size": 1077,
+            },
+            "package.json": {
+              "offset": "28422",
+              "size": 469,
+            },
+          },
+        },
+      },
+    },
+    "package.json": {
+      "offset": "32233",
+      "size": 361,
+    },
+  },
+}
+`;
+
+exports[`yarn workspace 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`yarn workspace 2`] = `
+{
+  "files": {
+    "index.html": {
+      "offset": "24709",
+      "size": 841,
+    },
+    "index.js": {
+      "offset": "25550",
+      "size": 2501,
+    },
+    "node_modules": {
+      "files": {
+        "debug": {
+          "files": {
+            "LICENSE": {
+              "offset": "0",
+              "size": 1139,
+            },
+            "package.json": {
+              "offset": "1139",
+              "size": 910,
+            },
+            "src": {
+              "files": {
+                "browser.js": {
+                  "offset": "2049",
+                  "size": 6103,
+                },
+                "common.js": {
+                  "offset": "8152",
+                  "size": 6915,
+                },
+                "index.js": {
+                  "offset": "15067",
+                  "size": 314,
+                },
+                "node.js": {
+                  "offset": "15381",
+                  "size": 4728,
+                },
+              },
+            },
+          },
+        },
+        "ms": {
+          "files": {
+            "index.js": {
+              "offset": "20109",
+              "size": 3024,
+            },
+            "license.md": {
+              "offset": "23133",
+              "size": 1079,
+            },
+            "package.json": {
+              "offset": "24212",
+              "size": 497,
+            },
+          },
+        },
+      },
+    },
+    "package.json": {
+      "offset": "28051",
+      "size": 361,
+    },
+  },
+}
+`;

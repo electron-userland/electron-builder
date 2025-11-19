@@ -31,7 +31,7 @@ import {
 } from "electron-publish"
 import { MultiProgress } from "electron-publish/out/multiProgress"
 import { writeFile } from "fs/promises"
-import * as isCi from "ci-info"
+import { isCI } from "ci-info"
 import * as path from "path"
 import { WriteStream as TtyWriteStream } from "tty"
 import * as url from "url"
@@ -91,7 +91,7 @@ export class PublishManager implements PublishContext {
           if (tag != null) {
             log.info({ reason: "tag is defined", tag }, "artifacts will be published")
             publishOptions.publish = "onTag"
-          } else if (isCi) {
+          } else if (isCI) {
             log.info({ reason: "CI detected" }, "artifacts will be published if draft release exists")
             publishOptions.publish = "onTagOrDraft"
           }

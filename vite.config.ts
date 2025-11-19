@@ -41,11 +41,11 @@ export default () => {
       },
 
       sequence: {
-        concurrent: false
+        concurrent: process.env.TEST_SEQUENTIAL !== "true",
       },
 
       slowTestThreshold: 60 * 1000,
-      testTimeout: 8 * 60 * 1000, // disk operations can be slow. We're generous with the timeout here to account for less-performant hardware
+      testTimeout: 10 * 60 * 1000, // disk operations can be slow. We're generous with the timeout here to account for less-performant hardware
       coverage: {
         reporter: ["lcov", "text"],
       },

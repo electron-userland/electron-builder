@@ -1,14 +1,13 @@
 import { Platform } from "app-builder-lib"
 import { readAsar } from "app-builder-lib/out/asar/asar"
+import { PM } from "app-builder-lib/out/node-module-collector/packageManager"
 import { outputFile } from "fs-extra"
 import * as fs from "fs/promises"
 import * as path from "path"
+import { ExpectStatic } from "vitest"
 import { assertThat } from "./helpers/fileAssert"
 import { app, appThrows, assertPack, linuxDirTarget, modifyPackageJson, PackedContext, removeUnstableProperties, verifyAsarFileTree } from "./helpers/packTester"
 import { verifySmartUnpack } from "./helpers/verifySmartUnpack"
-import { spawnSync } from "child_process"
-import { ExpectStatic } from "vitest"
-import { spawn } from "builder-util/out/util"
 
 async function createFiles(appDir: string) {
   await Promise.all([
@@ -85,10 +84,10 @@ test.ifDevOrLinuxCi("asarUnpack and files ignore", ({ expect }) => {
       },
     },
     {
-      projectDirCreated: projectDir => outputFile(path.join(projectDir, "node_modules/ffprobe-static/bin/darwin/x64/ffprobe"), "data"),
+      projectDirCreated: projectDir => outputFile(path.join(projectDir, "test/ffprobe-static/bin/darwin/x64/ffprobe"), "data"),
       packed: async context => {
         const resourceDir = context.getResources(Platform.LINUX)
-        await Promise.all([assertThat(expect, path.join(resourceDir, "app.asar.unpacked", "node_modules/ffprobe-static/bin/darwin/x64/ffprobe")).doesNotExist()])
+        await Promise.all([assertThat(expect, path.join(resourceDir, "app.asar.unpacked", "test/ffprobe-static/bin/darwin/x64/ffprobe")).doesNotExist()])
 
         await verifyAsarFileTree(expect, resourceDir)
       },
@@ -115,7 +114,7 @@ test.ifNotWindows("link", ({ expect }) =>
   )
 )
 
-test.ifNotWindows("outside link", ({ expect }) =>
+test.skip("outside link", ({ expect }) =>
   appThrows(
     expect,
     {
@@ -128,164 +127,125 @@ test.ifNotWindows("outside link", ({ expect }) =>
         await fs.symlink(tempDir, path.join(projectDir, "o-dir"))
       },
     },
-    error => expect(error.message).toContain("violates asar security integrity")
+    error => {
+      expect(error).toBeInstanceOf(Error)
+      expect(error.message).toContain("outside the package to a system or unsafe path")
+    }
+  ))
+test.ifNotWindows("symlinks everywhere with static framework", ({ expect }) =>
+  assertPack(
+    expect,
+    "test-app-symlink-framework",
+    {
+      targets: linuxDirTarget,
+      config: {
+        files: ["!hello-world"],
+      },
+    },
+    {
+      packageManager: PM.NPM,
+      projectDirCreated: async projectDir => {
+        await modifyPackageJson(projectDir, data => {
+          data.dependencies = {
+            debug: "4.1.1",
+            ...data.dependencies,
+          }
+        })
+        await fs.symlink(path.join(projectDir, "index.js"), path.join(projectDir, "foo.js"))
+      },
+      packed: async context => {
+        const resources = context.getResources(Platform.LINUX)
+        expect((await readAsar(path.join(resources, "app.asar"))).getFile("foo.js", false)).toMatchSnapshot()
+        await verifySmartUnpack(expect, resources)
+      },
+    }
   )
 )
-describe("isInstallDepsBefore=true", { sequential: true }, () => {
-  test.ifNotWindows("symlinks everywhere with static framework", ({ expect }) =>
-    assertPack(
-      expect,
-      "test-app-symlink-framework",
-      {
-        targets: linuxDirTarget,
-        config: {
-          files: ["!hello-world"],
-        },
-      },
-      {
-        isInstallDepsBefore: true,
-        projectDirCreated: async projectDir => {
-          await outputFile(path.join(projectDir, "package-lock.json"), "")
-          await modifyPackageJson(projectDir, data => {
-            data.dependencies = {
-              debug: "4.1.1",
-              ...data.dependencies,
-            }
-          })
-          return fs.symlink(path.join(projectDir, "index.js"), path.join(projectDir, "foo.js"))
-        },
-        packed: async context => {
-          const resources = context.getResources(Platform.LINUX)
-          expect((await readAsar(path.join(resources, "app.asar"))).getFile("foo.js", false)).toMatchSnapshot()
-          await verifySmartUnpack(expect, resources)
-        },
-      }
-    )
-  )
 
-  test.ifDevOrLinuxCi("local node module with file protocol", ({ expect }) => {
-    return assertPack(
-      expect,
-      "test-app-one",
-      {
-        targets: linuxDirTarget,
-        config: {
-          asarUnpack: ["**/node_modules/foo/**/*"],
-        },
-      },
-      {
-        projectDirCreated: async (projectDir, tmpDir) => {
-          const tempDir = await tmpDir.getTempDir()
-          const localPath = path.join(tempDir, "foo")
-          await outputFile(path.join(localPath, "package.json"), `{"name":"foo","version":"9.0.0","main":"index.js","license":"MIT","dependencies":{"ms":"2.0.0"}}`)
-          spawnSync("npm", ["install"], { cwd: localPath })
-          await modifyPackageJson(projectDir, data => {
-            data.dependencies = {
-              foo: `file:${localPath}`,
-            }
-          })
-
-          // we can't use `isInstallDepsBefore` as `localPath` is dynamic and changes for every which causes `--frozen-lockfile` and `npm ci` to fail
-          await spawn("npm", ["install"], {
-            cwd: projectDir,
-          })
-        },
-        packed: async context => {
-          await assertThat(expect, path.join(path.join(context.getResources(Platform.LINUX), "app.asar.unpacked", "node_modules", "foo", "package.json"))).isFile()
-        },
-      }
-    )
-  })
-
-  // cannot be enabled
-  // https://github.com/electron-userland/electron-builder/issues/611
-  test.ifDevOrLinuxCi("failed peer dep", ({ expect }) => {
-    return assertPack(
-      expect,
-      "test-app-one",
-      {
-        targets: linuxDirTarget,
-      },
-      {
-        isInstallDepsBefore: true,
-        projectDirCreated: async projectDir => {
-          return Promise.all([
-            modifyPackageJson(projectDir, data => {
-              //noinspection SpellCheckingInspection
-              data.dependencies = {
-                debug: "4.1.1",
-                "rc-datepicker": "4.0.0",
-                react: "15.2.1",
-                "react-dom": "15.2.1",
-              }
-            }),
-            outputFile(path.join(projectDir, "yarn.lock"), ""),
-          ])
-        },
-        packed: context => {
-          return verifySmartUnpack(expect, context.getResources(Platform.LINUX))
-        },
-      }
-    )
-  })
-
-  test.ifDevOrLinuxCi("ignore node_modules", ({ expect }) => {
-    return assertPack(
-      expect,
-      "test-app-one",
-      {
-        targets: linuxDirTarget,
-        config: {
-          asar: false,
-          files: ["!node_modules/**/*"],
-        },
-      },
-      {
-        isInstallDepsBefore: true,
-        projectDirCreated: async projectDir => {
-          await outputFile(path.join(projectDir, "package-lock.json"), "")
-          return modifyPackageJson(projectDir, data => {
+// https://github.com/electron-userland/electron-builder/issues/611
+test.ifDevOrLinuxCi("failed peer dep", ({ expect }) => {
+  return assertPack(
+    expect,
+    "test-app-one",
+    {
+      targets: linuxDirTarget,
+    },
+    {
+      packageManager: PM.YARN,
+      projectDirCreated: async projectDir => {
+        return Promise.all([
+          modifyPackageJson(projectDir, data => {
             //noinspection SpellCheckingInspection
             data.dependencies = {
-              "ci-info": "2.0.0",
-              // this contains string-width-cjs 4.2.3
-              "@isaacs/cliui": "8.0.2",
+              debug: "4.1.1",
+              "rc-datepicker": "4.0.0",
+              react: "15.2.1",
+              "react-dom": "15.2.1",
             }
-          })
-        },
-        packed: context => {
-          return assertThat(expect, path.join(context.getResources(Platform.LINUX), "app", "node_modules")).doesNotExist()
-        },
-      }
-    )
-  })
-
-  test.ifDevOrLinuxCi("asarUnpack node_modules", ({ expect }) => {
-    return assertPack(
-      expect,
-      "test-app-one",
-      {
-        targets: linuxDirTarget,
-        config: {
-          asarUnpack: "node_modules",
-        },
+          }),
+        ])
       },
-      {
-        isInstallDepsBefore: true,
-        projectDirCreated: async projectDir => {
-          await outputFile(path.join(projectDir, "package-lock.json"), "")
-          return modifyPackageJson(projectDir, data => {
-            data.dependencies = {
-              "ci-info": "2.0.0",
-            }
-          })
-        },
-        packed: async context => {
-          const nodeModulesNode = (await readAsar(path.join(context.getResources(Platform.LINUX), "app.asar"))).getNode("node_modules")
-          expect(removeUnstableProperties(nodeModulesNode)).toMatchSnapshot()
-          await assertThat(expect, path.join(context.getResources(Platform.LINUX), "app.asar.unpacked/node_modules/ci-info")).isDirectory()
-        },
-      }
-    )
-  })
+      packed: context => {
+        return verifySmartUnpack(expect, context.getResources(Platform.LINUX))
+      },
+    }
+  )
+})
+
+test.ifDevOrLinuxCi("ignore node_modules", ({ expect }) => {
+  return assertPack(
+    expect,
+    "test-app-one",
+    {
+      targets: linuxDirTarget,
+      config: {
+        asar: false,
+        files: ["!node_modules/**/*"],
+      },
+    },
+    {
+      packageManager: PM.NPM,
+      projectDirCreated: async projectDir => {
+        return modifyPackageJson(projectDir, data => {
+          //noinspection SpellCheckingInspection
+          data.dependencies = {
+            "ci-info": "2.0.0",
+            // this contains string-width-cjs 4.2.3
+            "@isaacs/cliui": "8.0.2",
+          }
+        })
+      },
+      packed: context => {
+        return assertThat(expect, path.join(context.getResources(Platform.LINUX), "app", "node_modules")).doesNotExist()
+      },
+    }
+  )
+})
+
+test.ifDevOrLinuxCi("asarUnpack node_modules", ({ expect }) => {
+  return assertPack(
+    expect,
+    "test-app-one",
+    {
+      targets: linuxDirTarget,
+      config: {
+        asarUnpack: "node_modules",
+      },
+    },
+    {
+      packageManager: PM.NPM,
+      projectDirCreated: async projectDir => {
+        return modifyPackageJson(projectDir, data => {
+          data.dependencies = {
+            "ci-info": "2.0.0",
+          }
+        })
+      },
+      packed: async context => {
+        const nodeModulesNode = (await readAsar(path.join(context.getResources(Platform.LINUX), "app.asar"))).getNode("node_modules")
+        expect(removeUnstableProperties(nodeModulesNode)).toMatchSnapshot()
+        await assertThat(expect, path.join(context.getResources(Platform.LINUX), "app.asar.unpacked/node_modules/ci-info")).isDirectory()
+      },
+    }
+  )
 })

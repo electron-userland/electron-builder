@@ -35,6 +35,7 @@ import { isMacOsHighSierra } from "./util/macosVersion"
 import { getTemplatePath } from "./util/pathManager"
 import { resolveFunction } from "./util/resolve"
 import { expandMacro as doExpandMacro } from "./util/macroExpander"
+import { writeFile } from "fs-extra"
 
 export type CustomMacSignOptions = SignOptions
 export type CustomMacSign = (configuration: CustomMacSignOptions, packager: MacPackager) => Promise<void>
@@ -180,7 +181,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
         const sourceCatalogPath = path.join(x64AppOutDir, appFile, "Contents/Resources/Assets.car")
         if (await exists(sourceCatalogPath)) {
           const targetCatalogPath = path.join(arm64AppOutPath, appFile, "Contents/Resources/Assets.car")
-          await fs.copyFile(sourceCatalogPath, targetCatalogPath)
+          await copyFile(sourceCatalogPath, targetCatalogPath)
         }
 
         const { makeUniversalApp } = require("@electron/universal")
@@ -556,7 +557,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
 
         // Create and setup the asset catalog
         appPlist.CFBundleIconName = "Icon"
-        await fs.writeFile(path.join(resourcesPath, "Assets.car"), assetCatalog)
+        await writeFile(path.join(resourcesPath, "Assets.car"), assetCatalog)
       }
     }
 

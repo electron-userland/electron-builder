@@ -13,7 +13,7 @@ import { PlatformPackager } from "../platformPackager"
 import { AppFileWalker } from "./AppFileWalker"
 import { NodeModuleCopyHelper } from "./NodeModuleCopyHelper"
 import { NodeModuleInfo } from "./packageDependencies"
-import { getNodeModules, detectPackageManager } from "../node-module-collector"
+import { getNodeModules } from "../node-module-collector"
 
 const BOWER_COMPONENTS_PATTERN = `${path.sep}bower_components${path.sep}`
 /** @internal */
@@ -178,21 +178,27 @@ function validateFileSet(fileSet: ResolvedFileSet): ResolvedFileSet {
 
 /** @internal */
 export async function computeNodeModuleFileSets(platformPackager: PlatformPackager<any>, mainMatcher: FileMatcher): Promise<Array<ResolvedFileSet>> {
-  const projectDir = platformPackager.info.projectDir
-  const appDir = platformPackager.info.appDir
+  const packager = platformPackager.info
+  const { tempDirManager, cancellationToken, appDir, projectDir } = packager
 
-  const pm = detectPackageManager(appDir === projectDir ? [appDir] : [appDir, projectDir])
+  let deps: Array<NodeModuleInfo> = []
+  const searchDirectories = Array.from(new Set([appDir, projectDir, await packager.getWorkspaceRoot()])).filter((it): it is string => it != null)
+  for (const dir of searchDirectories) {
+    if (cancellationToken.cancelled) {
+      throw new Error("user cancelled")
+    }
 
-  let deps = await getNodeModules(pm, appDir, platformPackager.info.tempDirManager)
-  if (projectDir !== appDir && deps.length === 0) {
-    const packageJson = require(path.join(appDir, "package.json"))
-    if (Object.keys(packageJson.dependencies || {}).length > 0) {
-      log.debug({ projectDir, appDir }, "no node_modules in app dir, trying to find in project dir")
-      deps = await getNodeModules(pm, projectDir, platformPackager.info.tempDirManager)
+    const dirDeps = await getNodeModules(await packager.getPackageManager(), { rootDir: dir, tempDirManager, cancellationToken, packageName: packager.metadata.name! })
+    if (dirDeps.length > 0) {
+      log.debug({ dir, nodeModules: dirDeps.map(it => ({ ...it, dir: log.filePath(it.dir) })) }, "collected node modules")
+      deps = dirDeps
+      break
     }
   }
-
-  log.debug({ nodeModules: deps }, "collected node modules")
+  if (deps.length === 0) {
+    log.warn({ searchDirectories: searchDirectories.map(it => log.filePath(it)) }, "no node modules returned while searching directories")
+    return []
+  }
 
   const nodeModuleExcludedExts = getNodeModuleExcludedExts(platformPackager)
   // serial execution because copyNodeModules is concurrent and so, no need to increase queue/pressure

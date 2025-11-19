@@ -1,5 +1,59 @@
 # app-builder-lib
 
+## 26.3.0
+
+### Minor Changes
+
+- Feat: support `corepack` and `packageManager` field and add related unit tests _[`#9309`](https://github.com/electron-userland/electron-builder/pull/9309) [`b741b72`](https://github.com/electron-userland/electron-builder/commit/b741b726daeb06080ab1cf46a93d318fd89ae4e7) [@mmaietta](https://github.com/mmaietta)_
+- Feat: adding bun node*module collector support *[`#9357`](https://github.com/electron-userland/electron-builder/pull/9357) [`811d13d`](https://github.com/electron-userland/electron-builder/commit/811d13d730fe78ee2e721b7c537e8b3e5579a4f0) [@mmaietta](https://github.com/mmaietta)\_
+- Feat: allowing negative patterns to be provided for `signExts` as signing overrides _[`#9335`](https://github.com/electron-userland/electron-builder/pull/9335) [`16c8fa1`](https://github.com/electron-userland/electron-builder/commit/16c8fa19b288770a6d24164e562a353877e59536) [@mmaietta](https://github.com/mmaietta)_
+
+### Patch Changes
+
+- Chore: bumping version packages of all packages to trigger Trusted Signing provedance release _[`#9362`](https://github.com/electron-userland/electron-builder/pull/9362) [`030269b`](https://github.com/electron-userland/electron-builder/commit/030269bca94b5e3621dbf8883976e1f85a1524f0) [@mmaietta](https://github.com/mmaietta)_
+- Fix(mac): handle `undefined` cert password with empty string fallback _[`#9359`](https://github.com/electron-userland/electron-builder/pull/9359) [`d8ad468`](https://github.com/electron-userland/electron-builder/commit/d8ad468cbf13ffb46889bbe0ba9f8c6d8ec1ac8f) [@davej](https://github.com/davej)_
+- Fix: fix ci-info import for detecting CI _[`#9356`](https://github.com/electron-userland/electron-builder/pull/9356) [`2e0837b`](https://github.com/electron-userland/electron-builder/commit/2e0837b279156ad5b60a71d1e2733b495c192f5a) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 5 dependencies</summary>
+
+<small>
+
+[`030269b`](https://github.com/electron-userland/electron-builder/commit/030269bca94b5e3621dbf8883976e1f85a1524f0) [`16c8fa1`](https://github.com/electron-userland/electron-builder/commit/16c8fa19b288770a6d24164e562a353877e59536)
+
+</small>
+
+- `builder-util@26.3.0`
+- `builder-util-runtime@9.5.1`
+- `dmg-builder@26.3.0`
+- `electron-builder-squirrel-windows@26.3.0`
+- `electron-publish@26.3.0`
+
+</details>
+
+## 26.2.0
+
+### Minor Changes
+
+- [#9333](https://github.com/electron-userland/electron-builder/pull/9333) [`6a49f85c69a22844729033f023249975f47a28f1`](https://github.com/electron-userland/electron-builder/commit/6a49f85c69a22844729033f023249975f47a28f1) Thanks [@chroberino](https://github.com/chroberino)! - feat: Allow local nsis-resources via env var `ELECTRON_BUILDER_NSIS_RESOURCES_DIR`
+
+- [#9279](https://github.com/electron-userland/electron-builder/pull/9279) [`b6a34c00c35e42dc279a55d672558ea7badc7fcd`](https://github.com/electron-userland/electron-builder/commit/b6a34c00c35e42dc279a55d672558ea7badc7fcd) Thanks [@iamEvanYT](https://github.com/iamEvanYT)! - feat: support Icon Composer icons for macOS
+
+### Patch Changes
+
+- [#9282](https://github.com/electron-userland/electron-builder/pull/9282) [`836a15c6c70abf8582aaa63603e14f77d5fa3f89`](https://github.com/electron-userland/electron-builder/commit/836a15c6c70abf8582aaa63603e14f77d5fa3f89) Thanks [@naderhen](https://github.com/naderhen)! - NSIS: Fix non-utilized for Silent Flag in Uninstaller
+
+- [#9334](https://github.com/electron-userland/electron-builder/pull/9334) [`21623e1b037e4509af04e767ca1c1458682b0eba`](https://github.com/electron-userland/electron-builder/commit/21623e1b037e4509af04e767ca1c1458682b0eba) Thanks [@mmaietta](https://github.com/mmaietta)! - chore: remove "beta" labels from a few features
+
+- [#9300](https://github.com/electron-userland/electron-builder/pull/9300) [`0835fbcac0a0cfb0f34355699812cc85db035ad4`](https://github.com/electron-userland/electron-builder/commit/0835fbcac0a0cfb0f34355699812cc85db035ad4) Thanks [@mmaietta](https://github.com/mmaietta)! - chore: updating pnpm and setting minimumReleaseAge to 1 week
+
+- [#9346](https://github.com/electron-userland/electron-builder/pull/9346) [`d19387174365c85968034149be43d80a39e7335f`](https://github.com/electron-userland/electron-builder/commit/d19387174365c85968034149be43d80a39e7335f) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: revert PR https://github.com/electron-userland/electron-builder/pull/9068 due to breaking change
+
+- [#9337](https://github.com/electron-userland/electron-builder/pull/9337) [`f4d7924a082fbb9113d52782430f82b1f0ffcb52`](https://github.com/electron-userland/electron-builder/commit/f4d7924a082fbb9113d52782430f82b1f0ffcb52) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: change default value of disable_wayland depending on electron version (in order to support elevtron >38)
+
+- Updated dependencies []:
+  - dmg-builder@26.2.0
+  - electron-builder-squirrel-windows@26.2.0
+
 ## 26.1.0
 
 ### Minor Changes

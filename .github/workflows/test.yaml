@@ -70,13 +70,16 @@ jobs:
           - ArtifactPublisherTest,BuildTest,ExtraBuildTest,RepoSlugTest,binDownloadTest,configurationValidationTest,filenameUtilTest,filesTest,globTest,httpExecutorTest,ignoreTest,macroExpanderTest,mainEntryTest,urlUtilTest,extraMetadataTest,linuxArchiveTest,linuxPackagerTest,HoistedNodeModuleTest,MemoLazyTest,HoistTest,ExtraBuildResourcesTest,utilTest
           - snapTest,debTest,fpmTest,protonTest
           - winPackagerTest,winCodeSignTest,webInstallerTest
-          - oneClickInstallerTest,assistedInstallerTest
+          - oneClickInstallerTest,assistedInstallerTest,packageManagerTest
           - concurrentBuildsTest
     steps:
       - name: Checkout code repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           fetch-depth: 2
+
+      - name: Cleanup runner
+        uses: ./.github/actions/cleanup-runner
 
       - name: Setup Tests
         uses: ./.github/actions/pretest
@@ -97,9 +100,6 @@ jobs:
         run: |
           docker image load --input ${{ runner.temp }}/electron-builder-all-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}.tar
           docker image ls -a
-
-      - name: Lint
-        run: pnpm pretest
 
       - name: Run tests in docker image
         run: |
@@ -125,6 +125,9 @@ jobs:
       - name: Checkout code repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
+      - name: Cleanup runner
+        uses: ./.github/actions/cleanup-runner
+
       - name: Setup Tests
         uses: ./.github/actions/pretest
         with:
@@ -143,9 +146,6 @@ jobs:
         run: |
           docker image load --input ${{ runner.temp }}/electron-builder-all-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}.tar
           docker image ls -a
-
-      - name: Lint
-        run: pnpm pretest
 
       - name: Test
         run: |
@@ -218,7 +218,7 @@ jobs:
       fail-fast: false
       matrix:
         testFiles:
-          - oneClickInstallerTest,assistedInstallerTest,webInstallerTest
+          - oneClickInstallerTest,assistedInstallerTest,webInstallerTest,packageManagerTest,HoistedNodeModuleTest
           - winPackagerTest,winCodeSignTest,BuildTest,blackboxUpdateTest
           - masTest,dmgTest,filesTest,macPackagerTest,differentialUpdateTest,macArchiveTest
           - concurrentBuildsTest
@@ -262,11 +262,8 @@ jobs:
           cache-path: ~/Library/Caches/electron
           cache-key: v-23.3.10-macos-electron
 
-      - name: Install toolset via brew
-        run: |
-          brew install powershell/tap/powershell
-          brew install --cask wine-stable
-          brew install rpm
+      - name: Lint
+        run: pnpm pretest
 
       - name: Test
         run: pnpm ci:test
