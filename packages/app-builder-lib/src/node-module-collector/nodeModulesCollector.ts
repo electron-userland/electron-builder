@@ -323,7 +323,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
   }
 
   async asyncExec(command: string, args: string[], cwd: string = this.rootDir): Promise<{ stdout: string | undefined; stderr: string | undefined }> {
-    const payload = await execAsync([`"${command}"`, ...args].join(" "), { cwd, maxBuffer: 100 * 1024 * 1024, encoding: "utf8" }).catch(err => {
+    const payload = await execAsync([command, ...args].join(" "), { cwd, maxBuffer: 100 * 1024 * 1024, encoding: "utf8" }).catch(err => {
       log.error({ err }, "failed to execute command")
       return { stdout: undefined, stderr: err.message }
     })
