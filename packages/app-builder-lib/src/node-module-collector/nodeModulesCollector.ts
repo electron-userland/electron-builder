@@ -326,7 +326,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
       const result = await fs.readFile(file, { encoding: "utf8" })
       return { stdout: result?.trim(), stderr: undefined }
     } catch (error: any) {
-      log.error({ error: error.message }, "failed to execute command")
+      log.debug({ error: error.message }, "failed to execute command")
       return { stdout: undefined, stderr: error.message }
     }
   }
