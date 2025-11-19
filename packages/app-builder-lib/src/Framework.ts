@@ -5,7 +5,7 @@ import { AfterPackContext, ElectronPlatformName, Platform, PlatformPackager } fr
 export interface Framework {
   readonly name: string
   readonly version: string
-  readonly productName: string
+  readonly distMacOsAppName: string
   readonly macOsDefaultTargets: Array<string>
   readonly defaultAppIdPrefix: string
 

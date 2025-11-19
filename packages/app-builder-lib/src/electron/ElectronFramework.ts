@@ -15,7 +15,7 @@ import { createMacApp } from "./electronMac"
 import { computeElectronVersion, getElectronVersionFromInstalled } from "./electronVersion"
 import { addWinAsarIntegrity } from "./electronWin"
 import { downloadArtifact } from "../util/electronGet"
-import { FFMPEGInjector } from "./FFMPEGInjector"
+import { FFMPEGInjector } from "./injectFFMPEG"
 
 export type ElectronPlatformName = "darwin" | "linux" | "win32" | "mas"
 
@@ -69,7 +69,7 @@ class ElectronFramework implements Framework {
   constructor(
     readonly name: string,
     readonly version: string,
-    readonly productName: string
+    readonly distMacOsAppName: string
   ) {}
 
   getDefaultIcon(platform: Platform) {
@@ -84,7 +84,7 @@ class ElectronFramework implements Framework {
   async prepareApplicationStageDirectory(options: PrepareApplicationStageDirectoryOptions) {
     await this.unpack(options)
     if (options.packager.config.downloadAlternateFFmpeg) {
-      await new FFMPEGInjector(this.progress, options, this.version, this.productName).inject()
+      await new FFMPEGInjector(this.progress, options, this.version, this.distMacOsAppName).inject()
     }
   }
 
@@ -204,7 +204,7 @@ class ElectronFramework implements Framework {
     const isMac = prepareOptions.packager.platform === Platform.MAC
     let resourcesPath = path.resolve(out, "resources")
     if (isMac) {
-      resourcesPath = path.resolve(out, `${this.productName}.app`, "Contents", "Resources")
+      resourcesPath = path.resolve(out, this.distMacOsAppName, "Contents", "Resources")
       if (!(await exists(resourcesPath))) {
         resourcesPath = path.resolve(out, `Electron.app`, "Contents", "Resources")
       }
@@ -249,7 +249,11 @@ class ElectronFramework implements Framework {
 
   private getLocalesConfig(platform: Platform, resourcesPath: string) {
     if (platform === Platform.MAC) {
-      return { dirs: [resourcesPath, path.resolve(resourcesPath, "..", "Frameworks", `${this.productName} Framework.framework`, "Resources")], langFileExt: ".lproj" }
+      const frameworkName = `${path.basename(this.distMacOsAppName, ".app")} Framework.framework`
+      return {
+        dirs: [resourcesPath, path.resolve(resourcesPath, "..", "Frameworks", frameworkName, "Resources")],
+        langFileExt: ".lproj",
+      }
     }
     return { dirs: [path.resolve(resourcesPath, "..", "locales")], langFileExt: ".pak" }
   }

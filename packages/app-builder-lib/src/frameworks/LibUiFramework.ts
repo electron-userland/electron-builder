@@ -24,7 +24,7 @@ export class LibUiFramework implements Framework {
 
   constructor(
     readonly version: string,
-    readonly productName: string,
+    readonly distMacOsAppName: string,
     protected readonly isUseLaunchUi: boolean
   ) {}
 
@@ -61,7 +61,7 @@ export class LibUiFramework implements Framework {
   }
 
   private async prepareMacosApplicationStageDirectory(packager: MacPackager, options: PrepareApplicationStageDirectoryOptions) {
-    const appContentsDir = path.join(options.appOutDir, `${this.productName}.app`, "Contents")
+    const appContentsDir = path.join(options.appOutDir, this.distMacOsAppName, "Contents")
     await mkdir(path.join(appContentsDir, "Resources"), { recursive: true })
     await mkdir(path.join(appContentsDir, "MacOS"), { recursive: true })
     await executeAppBuilder(["proton-native", "--node-version", this.version, "--platform", "darwin", "--stage", path.join(appContentsDir, "MacOS")])

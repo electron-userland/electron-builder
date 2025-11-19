@@ -507,11 +507,11 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
   }
 
   public getElectronSrcDir(dist: string) {
-    return path.resolve(this.projectDir, dist, `${this.info.framework.productName}.app`)
+    return path.resolve(this.projectDir, dist, this.info.framework.distMacOsAppName)
   }
 
   public getElectronDestinationDir(appOutDir: string) {
-    return path.join(appOutDir, `${this.info.framework.productName}.app`)
+    return path.join(appOutDir, this.info.framework.distMacOsAppName)
   }
 
   // todo fileAssociations
