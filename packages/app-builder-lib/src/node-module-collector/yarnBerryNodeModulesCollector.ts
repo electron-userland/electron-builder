@@ -44,10 +44,9 @@ export class YarnBerryNodeModulesCollector extends NpmNodeModulesCollector {
     let nodeLinker: YarnSetupInfo["nodeLinker"] = null
     let nmHoistingLimits: YarnSetupInfo["nmHoistingLimits"] = null
 
-    const output = await this.asyncExec("yarn", ["config", "list", "--json"], rootDir)
+    const output = await this.asyncExec("yarn", ["config", "--json"], rootDir)
 
-    if (output.stdout == null) {
-      log.debug({ stderr: output.stderr }, "there was no config output, falling back to hoisted mode")
+    if (!output.stdout) {
       return {
         yarnVersion,
         nodeLinker,
@@ -57,32 +56,45 @@ export class YarnBerryNodeModulesCollector extends NpmNodeModulesCollector {
       }
     }
 
-    // Yarn prints multiple JSON lines; find the one with type: 'inspect'
-    const parsed = output.stdout
+    // Yarn 1: multi-line stream with type:"inspect" (not used in this file anyways)
+    // Yarn 2–3: multi-line stream with type:"inspect"
+    // Yarn 4: single JSON object, no "type"
+    const lines = output.stdout
       .split("\n")
       .map(l => l.trim())
       .filter(Boolean)
-      .map(l => {
-        try {
-          return JSON.parse(l)
-        } catch {
-          return undefined
+
+    let data: any = null
+
+    for (const line of lines) {
+      try {
+        const parsed = JSON.parse(line)
+
+        // Yarn 4: direct object
+        if (parsed.rc || parsed.manifest) {
+          data = parsed
+          break
         }
-      })
-      .filter(Boolean)
-      .find(l => l.type === "inspect")
 
-    if (parsed) {
-      const data = parsed.data?.["rc"] || parsed.data || {}
-
-      yarnVersion = parsed.data?.["manifest"]?.version ?? null
-      nodeLinker = data["nodeLinker"] ?? null
-      nmHoistingLimits = data["nmHoistingLimits"] ?? null
+        // Yarn 1–3: inspect event
+        if (parsed.type === "inspect") {
+          data = parsed.data
+          break
+        }
+      } catch {
+        // ignore non-JSON lines
+      }
     }
 
-    // Determine if using PnP
+    if (data) {
+      const rc = data.rc || data // Yarn 4: rc in root; Yarn 2–3: rc inside data
+      yarnVersion = data.manifest?.version ?? null
+      nodeLinker = rc.nodeLinker ?? null
+      nmHoistingLimits = rc.nmHoistingLimits ?? null
+    }
+
     const isPnP = nodeLinker === "pnp"
-    const isHoisted = isPnP ? false : nmHoistingLimits === "dependencies" || nmHoistingLimits === "workspaces"
+    const isHoisted = !isPnP && (nmHoistingLimits === "dependencies" || nmHoistingLimits === "workspaces")
 
     return {
       yarnVersion,
