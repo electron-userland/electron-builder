@@ -60,7 +60,6 @@
     "async-exit-hook": "^2.0.1",
     "builder-util": "workspace:*",
     "builder-util-runtime": "workspace:*",
-    "chalk": "^4",
     "chromium-pickle-js": "^0.2.0",
     "ci-info": "4.3.1",
     "debug": "^4.3.4",

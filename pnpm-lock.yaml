@@ -137,9 +137,6 @@ importers:
       builder-util-runtime:
         specifier: workspace:*
         version: link:../builder-util-runtime
-      chalk:
-        specifier: ^4
-        version: 4.1.2
       chromium-pickle-js:
         specifier: ^0.2.0
         version: 0.2.0

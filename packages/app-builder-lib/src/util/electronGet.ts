@@ -1,6 +1,5 @@
 import { downloadArtifact as _downloadArtifact, ElectronDownloadCacheMode, ElectronPlatformArtifactDetails, GotDownloaderOptions, MirrorOptions } from "@electron/get"
 import { getUserDefinedCacheDir, PADDING } from "builder-util"
-import * as chalk from "chalk"
 import { MultiProgress } from "electron-publish/out/multiProgress"
 import { ElectronPlatformName } from "../electron/ElectronFramework"
 
@@ -78,7 +77,7 @@ export async function downloadArtifact(config: ArtifactDownloadOptions, progress
 async function doDownloadArtifact(config: ArtifactDownloadOptions, cacheDir: string | undefined, progress: MultiProgress | null) {
   const { electronDownload, arch, version, platformName: platform, artifactName } = config
 
-  const progressBar = progress?.createBar(`${" ".repeat(PADDING + 2)}[:bar] :percent | ${chalk.green(artifactName)}`, { total: 100 })
+  const progressBar = progress?.createBar(`${" ".repeat(PADDING + 2)}[:bar] :percent | ${artifactName}`, { total: 100 })
   progressBar?.render()
 
   const downloadOptions: GotDownloaderOptions = {
@@ -101,6 +100,7 @@ async function doDownloadArtifact(config: ArtifactDownloadOptions, cacheDir: str
       const options = electronDownload as ElectronGetOptions
       artifactConfig = { ...artifactConfig, ...options }
     } else {
+      // legacy
       const { mirror, customDir, cache, customFilename, isVerifyChecksum, platform: platformName, arch: downloadArch } = electronDownload as ElectronDownloadOptions
       artifactConfig = {
         ...artifactConfig,
