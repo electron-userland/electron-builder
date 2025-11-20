@@ -4,19 +4,21 @@ import * as fs from "fs-extra"
 import * as path from "path"
 import { PrepareApplicationStageDirectoryOptions } from "../Framework"
 import { downloadArtifact } from "../util/electronGet"
+import { ElectronBrandingOptions } from "./ElectronFramework"
+import { Platform } from "../core"
 
 export class FFMPEGInjector {
   constructor(
     private readonly progress: MultiProgress | null,
     private readonly options: PrepareApplicationStageDirectoryOptions,
     private readonly electronVersion: string,
-    private readonly productFilename: string
+    private readonly branding: Required<ElectronBrandingOptions>
   ) {}
 
   async inject() {
     const libPath =
-      this.options.platformName === "darwin"
-        ? path.join(this.options.appOutDir, `${this.productFilename}.app`, "/Contents/Frameworks/Electron Framework.framework/Versions/A/Libraries")
+      this.options.platformName === Platform.MAC.nodeName
+        ? path.join(this.options.appOutDir, `${this.branding.productName}.app`, `/Contents/Frameworks/${this.branding.productName} Framework.framework/Versions/A/Libraries`)
         : this.options.appOutDir
 
     const ffmpegDir = await this.downloadFFMPEG()

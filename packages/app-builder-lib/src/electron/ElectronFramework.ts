@@ -84,7 +84,7 @@ class ElectronFramework implements Framework {
   async prepareApplicationStageDirectory(options: PrepareApplicationStageDirectoryOptions) {
     await this.unpack(options)
     if (options.packager.config.downloadAlternateFFmpeg) {
-      await new FFMPEGInjector(this.progress, options, this.version, this.distMacOsAppName).inject()
+      await new FFMPEGInjector(this.progress, options, this.version, createBrandingOpts(options.packager.config)).inject()
     }
   }
 
