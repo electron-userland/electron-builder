@@ -205,9 +205,6 @@ class ElectronFramework implements Framework {
     let resourcesPath = path.resolve(out, "resources")
     if (isMac) {
       resourcesPath = path.resolve(out, this.distMacOsAppName, "Contents", "Resources")
-      if (!(await exists(resourcesPath))) {
-        resourcesPath = path.resolve(out, `Electron.app`, "Contents", "Resources")
-      }
     }
 
     await unlinkIfExists(path.join(resourcesPath, "default_app.asar"))
