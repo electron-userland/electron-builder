@@ -1,5 +1,5 @@
 import { downloadArtifact as _downloadArtifact, ElectronDownloadCacheMode, ElectronPlatformArtifactDetails, GotDownloaderOptions, MirrorOptions } from "@electron/get"
-import { getUserDefinedCacheDir, PADDING } from "builder-util"
+import { getUserDefinedCacheDir, log, PADDING } from "builder-util"
 import { MultiProgress } from "electron-publish/out/multiProgress"
 import { ElectronPlatformName } from "../electron/ElectronFramework"
 
@@ -29,6 +29,7 @@ type ArtifactDownloadOptions = {
   platformName: string
   arch: string
   version: string
+  cacheDir?: string
 }
 
 export interface ElectronDownloadOptions {
@@ -60,8 +61,8 @@ export interface ElectronDownloadOptions {
 
 export async function downloadArtifact(config: ArtifactDownloadOptions, progress: MultiProgress | null) {
   // Old cache is ignored if cache environment variable changes
-  const cacheDir = await getUserDefinedCacheDir()
-  const cacheName = JSON.stringify(config)
+  const cacheDir = config.cacheDir || (await getUserDefinedCacheDir())
+  const cacheName = JSON.stringify({ ...config, cacheDir })
 
   let promise = configToPromise.get(cacheName) // if rejected, we will try to download again
 
@@ -77,23 +78,16 @@ export async function downloadArtifact(config: ArtifactDownloadOptions, progress
 async function doDownloadArtifact(config: ArtifactDownloadOptions, cacheDir: string | undefined, progress: MultiProgress | null) {
   const { electronDownload, arch, version, platformName: platform, artifactName } = config
 
-  const progressBar = progress?.createBar(`${" ".repeat(PADDING + 2)}[:bar] :percent | ${artifactName}`, { total: 100 })
-  progressBar?.render()
-
-  const downloadOptions: GotDownloaderOptions = {
-    getProgressCallback: progress => {
-      progressBar?.update(progress.percent)
-      return Promise.resolve()
-    },
-  }
   let artifactConfig: ElectronPlatformArtifactDetails = {
     cacheRoot: cacheDir,
     platform,
     arch,
     version,
     artifactName,
-    downloadOptions,
   }
+  log.debug(artifactConfig, "artifact download initiated")
+
+
   if (electronDownload != null) {
     // determine whether electronDownload is ElectronGetOptions or ElectronDownloadOptions
     if (Object.hasOwnProperty.call(electronDownload, "mirrorOptions")) {
@@ -122,7 +116,17 @@ async function doDownloadArtifact(config: ArtifactDownloadOptions, cacheDir: str
     }
   }
 
-  const dist = await _downloadArtifact(artifactConfig)
+  const progressBar = progress?.createBar(`${" ".repeat(PADDING + 2)}[:bar] :percent | ${artifactName}`, { total: 100 })
+  progressBar?.render()
+
+  const downloadOptions: GotDownloaderOptions = {
+    getProgressCallback: progress => {
+      progressBar?.update(progress.percent)
+      return Promise.resolve()
+    },
+  }
+
+  const dist = await _downloadArtifact({ ...artifactConfig, downloadOptions })
   progressBar?.update(100)
   progressBar?.terminate()
 

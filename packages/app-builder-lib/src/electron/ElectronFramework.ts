@@ -1,6 +1,6 @@
 import { asArray, copyDir, DO_NOT_USE_HARD_LINKS, executeAppBuilder, exists, log, MAX_FILE_REQUESTS, statOrNull, unlinkIfExists } from "builder-util"
 import { MultiProgress } from "electron-publish/out/multiProgress"
-import { emptyDir, readdir, rename, rm } from "fs-extra"
+import { emptyDir, readdir, rename } from "fs-extra"
 import * as fs from "fs/promises"
 import * as path from "path"
 import asyncPool from "tiny-async-pool"
@@ -95,11 +95,9 @@ class ElectronFramework implements Framework {
     if (packager.platform === Platform.LINUX) {
       const linuxPackager = packager as LinuxPackager
       const executable = path.join(appOutDir, linuxPackager.executableName)
-      await rm(executable, { recursive: true, force: true })
       await rename(path.join(appOutDir, electronBranding.projectName), executable)
     } else if (packager.platform === Platform.WINDOWS) {
       const executable = path.join(appOutDir, `${packager.appInfo.productFilename}.exe`)
-      await rm(executable, { recursive: true, force: true })
       await rename(path.join(appOutDir, `${electronBranding.projectName}.exe`), executable)
       if (options.asarIntegrity) {
         await addWinAsarIntegrity(executable, options.asarIntegrity)
@@ -157,6 +155,7 @@ class ElectronFramework implements Framework {
       const stats = await statOrNull(source)
       if (stats?.isFile() && source.endsWith(".zip")) {
         log.info({ dist: log.filePath(source) }, "using Electron zip")
+        dist = source
       } else if (await exists(zipFilePath)) {
         log.info({ dist: log.filePath(zipFilePath) }, "using Electron zip")
         dist = zipFilePath
