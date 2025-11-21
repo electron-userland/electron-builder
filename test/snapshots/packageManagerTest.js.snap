@@ -667,7 +667,7 @@ exports[`npm 2`] = `
     },
     "package.json": {
       "offset": "29844",
-      "size": 377,
+      "size": 370,
     },
   },
 }
@@ -760,7 +760,7 @@ exports[`pnpm 2`] = `
     },
     "package.json": {
       "offset": "29844",
-      "size": 516,
+      "size": 509,
     },
   },
 }
@@ -837,12 +837,12 @@ exports[`yarn 2`] = `
     },
     "package.json": {
       "offset": "25706",
-      "size": 347,
+      "size": 340,
     },
     "path": {
       "files": {
         "app.asar": {
-          "offset": "26053",
+          "offset": "26046",
           "size": 714,
         },
       },
@@ -922,12 +922,12 @@ exports[`yarn berry 2`] = `
     },
     "package.json": {
       "offset": "25706",
-      "size": 315,
+      "size": 308,
     },
     "path": {
       "files": {
         "app.asar": {
-          "offset": "26021",
+          "offset": "26014",
           "size": 714,
         },
       },
@@ -1007,7 +1007,7 @@ exports[`yarn berry multi-package workspace 2`] = `
     },
     "package.json": {
       "offset": "28051",
-      "size": 329,
+      "size": 322,
     },
   },
 }
@@ -1084,7 +1084,7 @@ exports[`yarn berry workspace 2`] = `
     },
     "package.json": {
       "offset": "28051",
-      "size": 329,
+      "size": 322,
     },
   },
 }
@@ -1193,7 +1193,7 @@ exports[`yarn multi-package workspace 2`] = `
     },
     "package.json": {
       "offset": "32233",
-      "size": 361,
+      "size": 354,
     },
   },
 }
@@ -1270,7 +1270,7 @@ exports[`yarn workspace 2`] = `
     },
     "package.json": {
       "offset": "28051",
-      "size": 361,
+      "size": 354,
     },
   },
 }

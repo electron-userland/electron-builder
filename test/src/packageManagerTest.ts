@@ -12,7 +12,7 @@ const yarnBerryVersion = getPackageManagerWithVersion(PM.YARN_BERRY).prepareEntr
 
 const packageConfig = (data: any, version: string) => {
   data.packageManager = version
-  data.name = "@packageManager/app"
+  data.name = "hellow-world"
   data.version = "1.0.0"
   data.dependencies = {
     ...data.debpendencies,
@@ -101,7 +101,7 @@ test("yarn workspace", ({ expect }) =>
       },
     }
   ))
-// yarn berry workspace
+
 test("yarn berry workspace", ({ expect }) =>
   assertPack(
     expect,
