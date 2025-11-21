@@ -10,7 +10,7 @@ exports[`bun workspace --linker=hoisted - multiple conflicting versions 2`] = `
 {
   "files": {
     "index.js": {
-      "offset": "31271",
+      "offset": "17900",
       "size": 32,
     },
     "node_modules": {
@@ -143,34 +143,10 @@ exports[`bun workspace --linker=hoisted - multiple conflicting versions 2`] = `
             },
           },
         },
-        "process": {
-          "files": {
-            "LICENSE": {
-              "offset": "17900",
-              "size": 1098,
-            },
-            "browser.js": {
-              "offset": "18998",
-              "size": 5418,
-            },
-            "index.js": {
-              "offset": "24416",
-              "size": 96,
-            },
-            "package.json": {
-              "offset": "24512",
-              "size": 449,
-            },
-            "test.js": {
-              "offset": "24961",
-              "size": 6310,
-            },
-          },
-        },
       },
     },
     "package.json": {
-      "offset": "31303",
+      "offset": "17932",
       "size": 325,
     },
   },
@@ -187,7 +163,7 @@ exports[`bun workspace --linker=hoisted 2`] = `
 {
   "files": {
     "index.js": {
-      "offset": "28333",
+      "offset": "14962",
       "size": 32,
     },
     "node_modules": {
@@ -292,34 +268,10 @@ exports[`bun workspace --linker=hoisted 2`] = `
             },
           },
         },
-        "process": {
-          "files": {
-            "LICENSE": {
-              "offset": "14962",
-              "size": 1098,
-            },
-            "browser.js": {
-              "offset": "16060",
-              "size": 5418,
-            },
-            "index.js": {
-              "offset": "21478",
-              "size": 96,
-            },
-            "package.json": {
-              "offset": "21574",
-              "size": 449,
-            },
-            "test.js": {
-              "offset": "22023",
-              "size": 6310,
-            },
-          },
-        },
       },
     },
     "package.json": {
-      "offset": "28365",
+      "offset": "14994",
       "size": 325,
     },
   },
@@ -336,7 +288,7 @@ exports[`bun workspace --linker=isolated - multiple conflicting versions 2`] = `
 {
   "files": {
     "index.js": {
-      "offset": "31271",
+      "offset": "17900",
       "size": 32,
     },
     "node_modules": {
@@ -469,34 +421,10 @@ exports[`bun workspace --linker=isolated - multiple conflicting versions 2`] = `
             },
           },
         },
-        "process": {
-          "files": {
-            "LICENSE": {
-              "offset": "17900",
-              "size": 1098,
-            },
-            "browser.js": {
-              "offset": "18998",
-              "size": 5418,
-            },
-            "index.js": {
-              "offset": "24416",
-              "size": 96,
-            },
-            "package.json": {
-              "offset": "24512",
-              "size": 449,
-            },
-            "test.js": {
-              "offset": "24961",
-              "size": 6310,
-            },
-          },
-        },
       },
     },
     "package.json": {
-      "offset": "31303",
+      "offset": "17932",
       "size": 325,
     },
   },
@@ -513,7 +441,7 @@ exports[`bun workspace --linker=isolated 2`] = `
 {
   "files": {
     "index.js": {
-      "offset": "28333",
+      "offset": "14962",
       "size": 32,
     },
     "node_modules": {
@@ -618,34 +546,10 @@ exports[`bun workspace --linker=isolated 2`] = `
             },
           },
         },
-        "process": {
-          "files": {
-            "LICENSE": {
-              "offset": "14962",
-              "size": 1098,
-            },
-            "browser.js": {
-              "offset": "16060",
-              "size": 5418,
-            },
-            "index.js": {
-              "offset": "21478",
-              "size": 96,
-            },
-            "package.json": {
-              "offset": "21574",
-              "size": 449,
-            },
-            "test.js": {
-              "offset": "22023",
-              "size": 6310,
-            },
-          },
-        },
       },
     },
     "package.json": {
-      "offset": "28365",
+      "offset": "14994",
       "size": 325,
     },
   },

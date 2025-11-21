@@ -26,7 +26,7 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
         throw new Error(`Cannot compute production dependencies for package with empty name: ${packageName}`)
       }
 
-      const p = path.normalize(this.resolvePackageDir(packageName, tree.path) ?? (await this.resolvePath(tree.path)))
+      const p = path.normalize((await this.resolvePackageDir(packageName, tree.path)) ?? (await this.resolvePath(tree.path)))
       const pkgJsonPath = path.join(p, "package.json")
 
       let packageJson: PackageJson

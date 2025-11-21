@@ -8,7 +8,11 @@ import * as path from "path"
 import { hoist, type HoisterResult, type HoisterTree } from "./hoist"
 import { createModuleCache, type ModuleCache } from "./moduleCache"
 import { getPackageManagerCommand, PM } from "./packageManager"
-import type { Dependency, DependencyGraph, NodeModuleInfo, PackageJson } from "./types"
+import type { Dependency, DependencyGraph, NodeModuleInfo, PackageJson, YarnDependency } from "./types"
+import { fileURLToPath, pathToFileURL } from "node:url"
+
+
+
 
 export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDepType, OptionalDepType>, OptionalDepType> {
   private nodeModules: NodeModuleInfo[] = []
@@ -17,21 +21,33 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
   protected pkgJsonCache: Map<string, string> = new Map()
   protected memoResolvedModules = new Map<string, Promise<string | null>>()
 
+  private importMetaResolve = new Lazy(async () => {
+    try {
+      // Node >= 16 builtin ESM-aware resolver
+      const packageName = "import-meta-resolve"
+      const imported = await import(packageName)
+      return imported.resolve
+    } catch {
+      return null
+    }
+  })
+
   // Unified cache for all file system and module operations
   protected cache: ModuleCache = createModuleCache()
 
   protected isHoisted = new Lazy<boolean>(async () => {
-    const command = getPackageManagerCommand(this.installOptions.manager)
+    const { manager } = this.installOptions
+    const command = getPackageManagerCommand(manager)
 
     const config = (await this.asyncExec(command, ["config", "list"])).stdout
     if (config == null) {
-      log.debug({ manager: this.installOptions.manager }, "unable to determine if node_modules are hoisted: no config output. falling back to hoisted mode")
+      log.debug({ manager }, "unable to determine if node_modules are hoisted: no config output. falling back to hoisted mode")
       return false
     }
     const lines = Object.fromEntries(config.split("\n").map(line => line.split("=").map(s => s.trim())))
 
     if (lines["node-linker"] === "hoisted") {
-      log.debug({ manager: this.installOptions.manager }, "node_modules are hoisted")
+      log.debug({ manager }, "node_modules are hoisted")
       return true
     }
 
@@ -184,32 +200,57 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
    * Resolves a package to its filesystem location using Node.js module resolution.
    * Returns the directory containing the package, not the package.json path.
    */
-  protected resolvePackageDir = (packageName: string, fromDir: string): string | null => {
+  protected async resolvePackageDir(packageName: string, fromDir: string): Promise<string | null> {
     const cacheKey = `${packageName}::${fromDir}`
-
-    // Check memoization cache
     if (this.cache.requireResolve.has(cacheKey)) {
       return this.cache.requireResolve.get(cacheKey)!
     }
 
-    const searchPath = fromDir
-    try {
-      // require.resolve finds the main entry point, so we look for package.json instead
-      // const packageJsonPath = require.resolve(`${packageName}/package.json`, {
-      //   paths: [searchPath, this.rootDir],
-      // })
-      const packageJsonPath = path.resolve(searchPath, "package.json")
-      if (!this.existsSyncMemoized(packageJsonPath)) {
-        throw new Error(`Package not found: ${packageName} from ${searchPath}`)
+    const resolveEntry = async () => {
+      // 1) Try Node ESM resolver (handles exports reliably)
+      if (await this.importMetaResolve.value) {
+        try {
+          const url = (await this.importMetaResolve.value)(packageName, pathToFileURL(fromDir).href)
+          return url.startsWith("file://") ? fileURLToPath(url) : null
+        } catch {
+          // ignore
+        }
       }
-      const result = path.dirname(packageJsonPath)
-      this.cache.requireResolve.set(cacheKey, result)
-      return result
-    } catch (error: any) {
-      log.warn({ packageName, searchPath, error: error.message }, "could not resolve package")
+
+      // 2) Fallback: require.resolve (CJS, old packages)
+      try {
+        return require.resolve(packageName, { paths: [fromDir, this.rootDir] })
+      } catch {
+        // ignore
+      }
+
+      return null
+    }
+
+    const entry = await resolveEntry()
+    if (!entry) {
       this.cache.requireResolve.set(cacheKey, null)
       return null
     }
+
+    // 3) Walk upward until you find a package.json
+    let dir = path.dirname(entry)
+    while (true) {
+      const pkgFile = path.join(dir, "package.json")
+      if (await exists(pkgFile)) {
+        this.cache.requireResolve.set(cacheKey, dir)
+        return dir
+      }
+
+      const parent = path.dirname(dir)
+      if (parent === dir) {
+        break // root reached
+      }
+      dir = parent
+    }
+
+    this.cache.requireResolve.set(cacheKey, null)
+    return null
   }
 
   protected requireMemoized(pkgPath: string): PackageJson {
@@ -249,20 +290,35 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     return { name, version }
   }
 
-  protected async getTreeFromWorkspaces(tree: ProdDepType): Promise<ProdDepType> {
-    if (tree.workspaces && tree.dependencies) {
-      const packageJson = await this.appPkgJson.value
-      const dependencyName = packageJson.name
+  // protected async getTreeFromWorkspaces(tree: ProdDepType): Promise<ProdDepType> {
+  //   if (tree.workspaces && tree.dependencies) {
+  //     const packageJson = await this.appPkgJson.value
+  //     const dependencyName = packageJson.name
 
-      for (const [key, value] of Object.entries(tree.dependencies)) {
-        if (key === dependencyName) {
-          log.debug({ key, path: value.path }, "returning workspace tree for root dependency")
-          return value
-        }
-      }
+  //     for (const [key, value] of Object.entries(tree.dependencies)) {
+  //       if (key === dependencyName) {
+  //         log.debug({ key, path: value.path }, "returning workspace tree for root dependency")
+  //         return value
+  //       }
+  //     }
+  //   }
+
+  //   return tree
+  // }
+
+  protected async getTreeFromWorkspaces(tree: ProdDepType): Promise<ProdDepType> {
+    if (!tree.workspaces || !tree.dependencies) {
+      return tree
     }
 
-    return tree
+    const appName = this.packageVersionString(tree)
+
+    if (tree.dependencies?.[appName]) {
+      const { name, path } = tree.dependencies[appName]
+      log.debug({ name, path }, "pruning root app/self package from workspace tree")
+      delete tree.dependencies[appName]
+    }
+    return Promise.resolve(tree)
   }
 
   private transformToHoisterTree(obj: DependencyGraph, key: string, nodes: Map<string, HoisterTree> = new Map()): HoisterTree {
