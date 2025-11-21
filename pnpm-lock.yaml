@@ -169,7 +169,7 @@ importers:
         version: 2.4.2
       js-yaml:
         specifier: ^4.1.0
-        version: 4.1.0
+        version: 4.1.1
       json5:
         specifier: ^2.2.3
         version: 2.2.3
@@ -332,7 +332,7 @@ importers:
         version: 7.0.6
       js-yaml:
         specifier: ^4.1.0
-        version: 4.1.0
+        version: 4.1.1
       sanitize-filename:
         specifier: ^1.6.3
         version: 1.6.3
@@ -397,7 +397,7 @@ importers:
         version: 0.6.3
       js-yaml:
         specifier: ^4.1.0
-        version: 4.1.0
+        version: 4.1.1
     devDependencies:
       '@types/fs-extra':
         specifier: 9.0.13
@@ -537,7 +537,7 @@ importers:
         version: 10.1.0
       js-yaml:
         specifier: ^4.1.0
-        version: 4.1.0
+        version: 4.1.1
       lazy-val:
         specifier: ^1.0.5
         version: 1.0.5
@@ -622,7 +622,7 @@ importers:
         version: 10.1.0
       js-yaml:
         specifier: ^4.1.0
-        version: 4.1.0
+        version: 4.1.1
       lazy-val:
         specifier: ^1.0.5
         version: 1.0.5
@@ -3863,8 +3863,8 @@ packages:
     resolution: {integrity: sha512-okMH7OXXJ7YrN9Ok3/SXrnu4iX9yOk+25nqX4imS2npuvTYDmo/QEZoqwZkYaIDk3jVvBOTOIEgEhaLOynBS9g==}
     hasBin: true
 
-  js-yaml@4.1.0:
-    resolution: {integrity: sha512-wpxZs9NoxZaJESJGIZTyDEaYpl0FKSA+FB9aJiyemKhMwkxQg63h4T1KJgUGHpTqPDNRcmmYLugrRjJlBtWvRA==}
+  js-yaml@4.1.1:
+    resolution: {integrity: sha512-qQKT4zQxXl8lLwBtHMWwaTcGfFOZviOJet3Oy/xmGk2gZH677CJM9EvtfdSkgWcATZhj/55JZ0rmy3myCT5lsA==}
     hasBin: true
 
   jsbn@0.1.1:
@@ -6797,7 +6797,7 @@ snapshots:
       globals: 14.0.0
       ignore: 5.3.2
       import-fresh: 3.3.1
-      js-yaml: 4.1.0
+      js-yaml: 4.1.1
       minimatch: 3.1.2
       strip-json-comments: 3.1.1
     transitivePeerDependencies:
@@ -9070,7 +9070,7 @@ snapshots:
       argparse: 1.0.10
       esprima: 4.0.1
 
-  js-yaml@4.1.0:
+  js-yaml@4.1.1:
     dependencies:
       argparse: 2.0.1
 
