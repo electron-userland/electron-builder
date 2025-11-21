@@ -8,11 +8,8 @@ import * as path from "path"
 import { hoist, type HoisterResult, type HoisterTree } from "./hoist"
 import { createModuleCache, type ModuleCache } from "./moduleCache"
 import { getPackageManagerCommand, PM } from "./packageManager"
-import type { Dependency, DependencyGraph, NodeModuleInfo, PackageJson, YarnDependency } from "./types"
+import type { Dependency, DependencyGraph, NodeModuleInfo, PackageJson } from "./types"
 import { fileURLToPath, pathToFileURL } from "node:url"
-
-
-
 
 export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDepType, OptionalDepType>, OptionalDepType> {
   private nodeModules: NodeModuleInfo[] = []
@@ -289,22 +286,6 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     const version = identifier.slice(lastAt + 1)
     return { name, version }
   }
-
-  // protected async getTreeFromWorkspaces(tree: ProdDepType): Promise<ProdDepType> {
-  //   if (tree.workspaces && tree.dependencies) {
-  //     const packageJson = await this.appPkgJson.value
-  //     const dependencyName = packageJson.name
-
-  //     for (const [key, value] of Object.entries(tree.dependencies)) {
-  //       if (key === dependencyName) {
-  //         log.debug({ key, path: value.path }, "returning workspace tree for root dependency")
-  //         return value
-  //       }
-  //     }
-  //   }
-
-  //   return tree
-  // }
 
   protected async getTreeFromWorkspaces(tree: ProdDepType): Promise<ProdDepType> {
     if (!tree.workspaces || !tree.dependencies) {
