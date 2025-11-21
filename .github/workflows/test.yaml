@@ -219,7 +219,7 @@ jobs:
       matrix:
         testFiles:
           - oneClickInstallerTest,assistedInstallerTest,webInstallerTest,packageManagerTest,HoistedNodeModuleTest,rebuilderTest
-          - winPackagerTest,winCodeSignTest,BuildTest,blackboxUpdateTest
+          - winPackagerTest,winCodeSignTest,BuildTest,blackboxUpdateTest,debTest
           - masTest,dmgTest,filesTest,macPackagerTest,differentialUpdateTest,macArchiveTest
           - concurrentBuildsTest
     steps:

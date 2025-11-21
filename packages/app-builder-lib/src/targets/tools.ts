@@ -6,13 +6,13 @@ export function getLinuxToolsPath() {
 }
 
 export async function getFpmPath() {
-  // It's just easier to copy the map of checksums here rather then adding them to within each if-statement
+  // It's just easier to copy the map of checksums here rather then adding them to within each if-statement. Also, easy copy-paste from the releases page
   const fpmChecksumMap = {
-    "fpm-1.16.0-ruby-3.4.3-darwin-arm64.7z": "xAyOUp213DnD5zN3o53L2sRs+OgoMYRVy2tOIhgsUdxcJUMzfy6U5Nrd92ZXUn5AHW3Y87CXPqwsL0aQaBTnBg==",
-    "fpm-1.16.0-ruby-3.4.3-darwin-x86_64.7z": "WWdGdSOemjuQateF0qWkiWF9sgLgm8NNDnnWJe9CQ7l9+tVw1/tAGKH32/kTeaANVaDZg1r2Jq0uxudGEPYOuw==",
-    "fpm-1.16.0-ruby-3.4.3-linux-amd64.7z": "zN/lxd0tUJi/QmjOmUQt91OaJbO+cSGxYmse7xh4BVXE4MY5TgUHUR+TqmEgBDofHqtR7G2V0OenYlr25ZWY2A==",
-    "fpm-1.16.0-ruby-3.4.3-linux-arm64v8.7z": "WfC0mi3PI9DYwXZdkg2gwFttHGJn8uAZlNVWs0xYMkGNTpEunP25hdBltg0YXrVdVWEQhpjCU3if5F03B8jfcw==",
-    "fpm-1.16.0-ruby-3.4.3-linux-i386.7z": "0qkId/DmyKc7fOQQN5pTe2gB+CfsJArmRGH+1f4KmFrNbfXQRl2G0c5NNEjSiqjqu+WhpOaKVWpHAskLD5iSzA==",
+    "fpm-1.17.0-ruby-3.4.3-darwin-arm64.7z": "mjZzoFNW5ujEeJbtztR0l68a41a7aF8JwloL00X7XLnXHg7jKue224in+gyoTQraJYJSKGpWdJbHlEcrS9SNiQ==",
+    "fpm-1.17.0-ruby-3.4.3-darwin-x86_64.7z": "3q35ppdceHqwMTPv7kmWtiF7bRlKyQgb6AVuhkQDT/MgdbkRgqZtGuQuGwyk8YyhlU2Onutq1P2DEKjCREV6aQ==",
+    "fpm-1.17.0-ruby-3.4.3-linux-amd64.7z": "/O7C7upuHT4GAKhsw8Lj4NbLGf4/pQvWR0qizryT3lqK6omgZcRdhSdUAjq5L1HP2u1wteC5yv+Ite8cUXjUfg==",
+    "fpm-1.17.0-ruby-3.4.3-linux-arm64v8.7z": "XNnPHXT0G2IGQlVRJqUse/2GNpMlmdAQXhxlbIkd29O5QbTIifxGsloNHc5oXShRZDEnczR1nMnFa0EzWJDi1g==",
+    "fpm-1.17.0-ruby-3.4.3-linux-i386.7z": "qOXxXDkD+/qS+Xs+MgQWY6jOtUTD71dieXXPhsbMpbexddNgw3QGsIDSdduWt8qHECLQ8rHpBJtHwUWVIrcPGA==",
   }
 
   if (process.env.CUSTOM_FPM_PATH != null) {
@@ -25,20 +25,20 @@ export async function getFpmPath() {
   const getKey = () => {
     if (process.platform === "linux") {
       if (process.arch == "x64") {
-        return "fpm-1.16.0-ruby-3.4.3-linux-amd64.7z"
+        return "fpm-1.17.0-ruby-3.4.3-linux-amd64.7z"
       } else if (process.arch === "arm64") {
-        return "fpm-1.16.0-ruby-3.4.3-linux-arm64v8.7z"
+        return "fpm-1.17.0-ruby-3.4.3-linux-arm64v8.7z"
       }
-      return "fpm-1.16.0-ruby-3.4.3-linux-i386.7z"
+      return "fpm-1.17.0-ruby-3.4.3-linux-i386.7z"
     }
     // darwin arm64
     if (process.arch === "arm64") {
-      return "fpm-1.16.0-ruby-3.4.3-darwin-arm64.7z"
+      return "fpm-1.17.0-ruby-3.4.3-darwin-arm64.7z"
     }
-    return "fpm-1.16.0-ruby-3.4.3-darwin-x86_64.7z"
+    return "fpm-1.17.0-ruby-3.4.3-darwin-x86_64.7z"
   }
 
   const filename = getKey()
-  const fpmPath = await getBinFromUrl("fpm@2.0.1", filename, fpmChecksumMap[filename])
+  const fpmPath = await getBinFromUrl("fpm@2.1.3", filename, fpmChecksumMap[filename])
   return path.join(fpmPath, exec)
 }
