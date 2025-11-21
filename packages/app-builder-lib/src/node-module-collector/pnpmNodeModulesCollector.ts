@@ -1,4 +1,4 @@
-import { log } from "builder-util"
+import { isEmptyOrSpaces, log } from "builder-util"
 import * as path from "path"
 import { NodeModulesCollector } from "./nodeModulesCollector"
 import { PM } from "./packageManager"
@@ -20,7 +20,12 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
     }
 
     const getProductionDependencies = async (tree: PnpmDependency): Promise<{ prodDeps: Record<string, string>; optionalDependencies: Record<string, string> } | null> => {
-      const p = path.normalize(this.resolvePackageDir(tree.name, tree.path) ?? (await this.resolvePath(tree.path)))
+      const packageName = tree.from
+      if (isEmptyOrSpaces(packageName)) {
+        throw new Error(`Cannot compute production dependencies for package with empty name: ${JSON.stringify(tree)}`)
+      }
+
+      const p = path.normalize(this.resolvePackageDir(packageName, tree.path) ?? (await this.resolvePath(tree.path)))
       const pkgJsonPath = path.join(p, "package.json")
 
       let packageJson: PackageJson
@@ -33,7 +38,7 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
       return { prodDeps: { ...packageJson.dependencies, ...packageJson.optionalDependencies }, optionalDependencies: { ...packageJson.optionalDependencies } }
     }
 
-    const json = tree.name === dependencyId ? null : await getProductionDependencies(tree)
+    const json = tree.from === dependencyId ? null : await getProductionDependencies(tree)
     const prodDependencies = json?.prodDeps ?? { ...(tree.dependencies || {}), ...(tree.optionalDependencies || {}) }
     if (prodDependencies == null) {
       this.productionGraph[dependencyId] = { dependencies: [] }
