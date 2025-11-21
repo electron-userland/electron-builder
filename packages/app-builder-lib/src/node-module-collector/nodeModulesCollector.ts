@@ -1,5 +1,5 @@
 import { exists, log, retry, TmpDir } from "builder-util"
-import { spawn as spawnProcess } from "child_process"
+import * as childProcess from "child_process"
 import { CancellationToken } from "builder-util-runtime"
 import * as fs from "fs-extra"
 import { createWriteStream, readJson } from "fs-extra"
@@ -192,16 +192,21 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
       return this.cache.requireResolve.get(cacheKey)!
     }
 
+    const searchPath = fromDir
     try {
       // require.resolve finds the main entry point, so we look for package.json instead
-      const packageJsonPath = require.resolve(`${packageName}/package.json`, {
-        paths: [fromDir, this.rootDir],
-      })
+      // const packageJsonPath = require.resolve(`${packageName}/package.json`, {
+      //   paths: [searchPath, this.rootDir],
+      // })
+      const packageJsonPath = path.resolve(searchPath, "package.json")
+      if (!this.existsSyncMemoized(packageJsonPath)) {
+        throw new Error(`Package not found: ${packageName} from ${searchPath}`)
+      }
       const result = path.dirname(packageJsonPath)
       this.cache.requireResolve.set(cacheKey, result)
       return result
     } catch (error: any) {
-      log.warn({ packageName, fromDir, error: error.message }, "could not resolve package")
+      log.warn({ packageName, searchPath, error: error.message }, "could not resolve package")
       this.cache.requireResolve.set(cacheKey, null)
       return null
     }
@@ -352,7 +357,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     await new Promise<void>((resolve, reject) => {
       const outStream = createWriteStream(tempOutputFile)
 
-      const child = spawnProcess(command, args, {
+      const child = childProcess.spawn(command, args, {
         cwd,
         shell: false, // required to prevent console logs polution from shell profile loading when `true`
       })

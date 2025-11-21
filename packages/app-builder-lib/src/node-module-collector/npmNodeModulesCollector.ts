@@ -16,10 +16,9 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
 
   protected async getDependenciesTree(pm: PM): Promise<NpmDependency> {
     try {
-      // force NPM collection as Yarn Berry extends this class and PnP is not supported directly
       return await super.getDependenciesTree(pm)
     } catch (error: any) {
-      log.info({ pm, parser: PM.NPM, error: error.message }, "unable to process dependency tree, falling back to using manual node_modules traversal")
+      log.info({ pm: this.installOptions.manager, parser: PM.NPM, error: error.message }, "unable to process dependency tree, falling back to using manual node_modules traversal")
     }
     // node_modules linker fallback. (Slower due to system ops, so we only use it as a fallback)
     return this.buildNodeModulesTreeManually(this.rootDir)

@@ -20,9 +20,10 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
     }
 
     const getProductionDependencies = async (tree: PnpmDependency): Promise<{ prodDeps: Record<string, string>; optionalDependencies: Record<string, string> } | null> => {
-      const packageName = tree.from
+      const packageName = tree.name || tree.from
       if (isEmptyOrSpaces(packageName)) {
-        throw new Error(`Cannot compute production dependencies for package with empty name: ${JSON.stringify(tree)}`)
+        log.error(tree, `Cannot determine production dependencies for package with empty name`)
+        throw new Error(`Cannot compute production dependencies for package with empty name: ${packageName}`)
       }
 
       const p = path.normalize(this.resolvePackageDir(packageName, tree.path) ?? (await this.resolvePath(tree.path)))

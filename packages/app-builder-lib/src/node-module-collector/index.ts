@@ -25,7 +25,6 @@ export function getCollectorByPackageManager(pm: PM, rootDir: string, tempDirMan
     case PM.BUN:
       return new BunNodeModulesCollector(rootDir, tempDirManager)
     case PM.NPM:
-    default:
       return new NpmNodeModulesCollector(rootDir, tempDirManager)
   }
 }
@@ -72,7 +71,7 @@ async function findWorkspaceRoot(pm: PM, cwd: string): Promise<string | undefine
 
   switch (pm) {
     case PM.PNPM:
-      command = { command: "pnpm", args: ["root", "-w"] }
+      command = { command: "pnpm", args: ["--workspace-root", "exec", "pwd"] }
       break
 
     case PM.YARN_BERRY:
