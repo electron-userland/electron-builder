@@ -68,7 +68,7 @@ jobs:
       matrix:
         testFiles:
           - ArtifactPublisherTest,BuildTest,ExtraBuildTest,RepoSlugTest,binDownloadTest,configurationValidationTest,filenameUtilTest,filesTest,globTest,httpExecutorTest,ignoreTest,macroExpanderTest,mainEntryTest,urlUtilTest,extraMetadataTest,linuxArchiveTest,linuxPackagerTest,HoistedNodeModuleTest,MemoLazyTest,HoistTest,ExtraBuildResourcesTest,utilTest
-          - snapTest,debTest,fpmTest,protonTest
+          - snapTest,debTest,fpmTest,protonTest,rebuilderTest
           - winPackagerTest,winCodeSignTest,webInstallerTest
           - oneClickInstallerTest,assistedInstallerTest,packageManagerTest
           - concurrentBuildsTest
@@ -218,7 +218,7 @@ jobs:
       fail-fast: false
       matrix:
         testFiles:
-          - oneClickInstallerTest,assistedInstallerTest,webInstallerTest,packageManagerTest,HoistedNodeModuleTest
+          - oneClickInstallerTest,assistedInstallerTest,webInstallerTest,packageManagerTest,HoistedNodeModuleTest,rebuilderTest
           - winPackagerTest,winCodeSignTest,BuildTest,blackboxUpdateTest
           - masTest,dmgTest,filesTest,macPackagerTest,differentialUpdateTest,macArchiveTest
           - concurrentBuildsTest

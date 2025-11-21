@@ -6,6 +6,7 @@ import { orNullIfFileNotExist } from "app-builder-lib/out/util/config/load"
 import { createLazyProductionDeps } from "app-builder-lib/out/util/packageDependencies"
 import { installOrRebuild } from "app-builder-lib/out/util/yarn"
 import { PACKAGE_VERSION } from "app-builder-lib/out/version"
+import { determinePackageManagerEnv } from "app-builder-lib/out/node-module-collector"
 import { getArchCliNames, log, printErrorAndExit } from "builder-util"
 import { readJson } from "fs-extra"
 import { Lazy } from "lazy-val"
@@ -48,13 +49,15 @@ export async function installAppDeps(args: any) {
   const config = await getConfig(projectDir, null, null, packageMetadata)
   const [appDir, version] = await Promise.all<string>([computeDefaultAppDirectory(projectDir, config.directories?.app), getElectronVersion(projectDir, config)])
 
+  const packageManagerEnv = determinePackageManagerEnv({ projectDir, appDir, workspaceRoot: undefined })
+
   // if two package.json — force full install (user wants to install/update app deps in addition to dev)
   await installOrRebuild(
     config,
     {
       appDir,
       projectDir,
-      workspaceRoot: null,
+      workspaceRoot: await (await packageManagerEnv.value).workspaceRoot,
     },
     {
       frameworkInfo: { version, useCustomDist: true },
