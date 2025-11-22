@@ -116,6 +116,12 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
             continue
           }
 
+          // Skip if this dependency resolves to the same directory (self-reference)
+          if ((await this.resolvePath(depPath)) === resolvedPackageDir) {
+            log.debug({ package: pkg.name, dependency: depName }, "skipping self-referential dependency")
+            continue
+          }
+
           log.debug({ package: pkg.name, dependency: depName, resolvedPath: depPath }, "processing production dependency")
 
           // Recursively build the dependency tree for this dependency
