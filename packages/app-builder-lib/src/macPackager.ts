@@ -18,7 +18,6 @@ import {
   use,
 } from "builder-util"
 import { MemoLazy, Nullish } from "builder-util-runtime"
-import * as fs from "fs/promises"
 import { mkdir, readdir } from "fs/promises"
 import { Lazy } from "lazy-val"
 import * as path from "path"
@@ -36,6 +35,7 @@ import { isMacOsHighSierra } from "./util/macosVersion"
 import { getTemplatePath } from "./util/pathManager"
 import { resolveFunction } from "./util/resolve"
 import { expandMacro as doExpandMacro } from "./util/macroExpander"
+import { writeFile } from "fs-extra"
 
 export type CustomMacSignOptions = SignOptions
 export type CustomMacSign = (configuration: CustomMacSignOptions, packager: MacPackager) => Promise<void>
@@ -139,7 +139,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
         return super.doPack(config)
       }
       case Arch.universal: {
-        const outDirName = (arch: Arch) => `${appOutDir}-${Arch[arch]}-temp`
+        const outDirName = (arch: Arch) => this.info.tempDirManager.createTempDir({ prefix: `mac-${Arch[arch]}` })
         const options = {
           ...config,
           options: {
@@ -150,7 +150,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
         }
 
         const x64Arch = Arch.x64
-        const x64AppOutDir = outDirName(x64Arch)
+        const x64AppOutDir = await outDirName(x64Arch)
         await super.doPack({ ...options, appOutDir: x64AppOutDir, arch: x64Arch })
 
         if (this.info.cancellationToken.cancelled) {
@@ -158,7 +158,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
         }
 
         const arm64Arch = Arch.arm64
-        const arm64AppOutPath = outDirName(arm64Arch)
+        const arm64AppOutPath = await outDirName(arm64Arch)
         await super.doPack({ ...options, appOutDir: arm64AppOutPath, arch: arm64Arch })
 
         if (this.info.cancellationToken.cancelled) {
@@ -181,7 +181,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
         const sourceCatalogPath = path.join(x64AppOutDir, appFile, "Contents/Resources/Assets.car")
         if (await exists(sourceCatalogPath)) {
           const targetCatalogPath = path.join(arm64AppOutPath, appFile, "Contents/Resources/Assets.car")
-          await fs.copyFile(sourceCatalogPath, targetCatalogPath)
+          await copyFile(sourceCatalogPath, targetCatalogPath)
         }
 
         const { makeUniversalApp } = require("@electron/universal")
@@ -194,8 +194,6 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
           singleArchFiles: platformSpecificBuildOptions.singleArchFiles,
           x64ArchFiles: platformSpecificBuildOptions.x64ArchFiles,
         })
-        await fs.rm(x64AppOutDir, { recursive: true, force: true })
-        await fs.rm(arm64AppOutPath, { recursive: true, force: true })
 
         // Give users a final opportunity to perform things on the combined universal package before signing
         const packContext: AfterPackContext = {
@@ -559,7 +557,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
 
         // Create and setup the asset catalog
         appPlist.CFBundleIconName = "Icon"
-        await fs.writeFile(path.join(resourcesPath, "Assets.car"), assetCatalog)
+        await writeFile(path.join(resourcesPath, "Assets.car"), assetCatalog)
       }
     }
 
