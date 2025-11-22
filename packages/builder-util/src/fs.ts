@@ -293,9 +293,7 @@ export interface CopyDirOptions {
 export async function copyDir(src: string, destination: string, options: CopyDirOptions = {}): Promise<any> {
   const fileCopier = new FileCopier(options.isUseHardLink, options.transformer)
 
-  if (log.isDebugEnabled) {
-    log.debug({ src, destination }, `copying${fileCopier.isUseHardLink ? " using hard links" : ""}`)
-  }
+  log.debug({ src, destination }, `copying${fileCopier.isUseHardLink ? " using hard links" : ""}`)
 
   const createdSourceDirs = new Set<string>()
   const links: Array<Link> = []

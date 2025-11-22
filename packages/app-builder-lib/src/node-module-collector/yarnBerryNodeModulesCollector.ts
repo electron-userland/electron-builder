@@ -47,6 +47,7 @@ export class YarnBerryNodeModulesCollector extends NpmNodeModulesCollector {
     const output = await this.asyncExec("yarn", ["config", "--json"], rootDir)
 
     if (!output.stdout) {
+      log.debug(null, "Yarn config returned no output, assuming default Yarn v1 behavior (hoisted, non-PnP)")
       return {
         yarnVersion,
         nodeLinker,

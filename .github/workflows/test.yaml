@@ -243,6 +243,8 @@ jobs:
         env:
           TEST_FILES: ${{ matrix.testFiles }}
           FORCE_COLOR: 1
+          TEST_SEQUENTIAL: true
+          DEBUG: electron-builder
 
   test-mac-26:
     runs-on: macos-26
