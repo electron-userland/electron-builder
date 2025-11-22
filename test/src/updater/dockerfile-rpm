@@ -15,7 +15,8 @@ RUN dnf install -y \
     libuuid-devel \
     python3 \
     curl \
-    xz
+    xz \
+    zypper
 
 # Optional: for better font rendering or Chromium deps
 RUN dnf install -y liberation-fonts fontconfig
