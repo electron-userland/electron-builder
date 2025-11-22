@@ -16,7 +16,8 @@ RUN dnf install -y \
     python3 \
     curl \
     xz \
-    zypper
+    zypper \
+    at-spi2-core
 
 # Optional: for better font rendering or Chromium deps
 RUN dnf install -y liberation-fonts fontconfig
