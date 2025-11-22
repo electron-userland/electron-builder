@@ -163,7 +163,7 @@ jobs:
   # must be it's own build node due to docker library/images size limit on github hosted runners
   test-e2e:
     runs-on: ubuntu-22.04
-    timeout-minutes: 20
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
