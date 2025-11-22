@@ -163,7 +163,15 @@ jobs:
   # must be it's own build node due to docker library/images size limit on github hosted runners
   test-e2e:
     runs-on: ubuntu-22.04
-    timeout-minutes: 30
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        TEST_RUNNER_IMAGE_TAG:
+          - Dockerfile-archlinux
+          - Dockerfile-rpm
+          - Dockerfile-debian
+          - Dockerfile-appimage
     steps:
       - name: Checkout code repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -179,7 +187,14 @@ jobs:
 
       - name: e2e Linux Updater tests (install, auto-update, uninstall)
         run: |
-          sh test/src/updater/test-specific-platforms.sh
+          docker build --platform=linux/amd64 -t $TEST_RUNNER_IMAGE_TAG -f ./test/src/updater/$TEST_RUNNER_IMAGE_TAG .
+          pnpm test-linux
+        env:
+          TEST_RUNNER_IMAGE_TAG: ${{ matrix.TEST_RUNNER_IMAGE_TAG }}
+          TEST_FILES: blackboxUpdateTest,linuxUpdaterTest
+          DEBUG: electron-updater,electron-builder
+          ADDITIONAL_DOCKER_ARGS: "-e RUN_APP_IMAGE_TEST=true"
+
 
   test-windows:
     runs-on: windows-2022
