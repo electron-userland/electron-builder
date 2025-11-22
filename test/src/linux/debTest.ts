@@ -4,7 +4,7 @@ import { app, execShell, getTarExecutable } from "../helpers/packTester"
 
 const defaultDebTarget = Platform.LINUX.createTarget("deb", Arch.x64)
 
-test.only("deb", ({ expect }) =>
+test.ifNotWindows("deb", ({ expect }) =>
   app(expect, {
     targets: defaultDebTarget,
   })
