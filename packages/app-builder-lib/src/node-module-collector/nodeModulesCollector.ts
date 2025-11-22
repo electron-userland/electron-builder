@@ -292,7 +292,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
       return tree
     }
 
-    const appName = this.packageVersionString(tree)
+    const appName = tree.name
 
     if (tree.dependencies?.[appName]) {
       const { name, path } = tree.dependencies[appName]

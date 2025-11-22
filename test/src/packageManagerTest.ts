@@ -12,7 +12,7 @@ const yarnBerryVersion = getPackageManagerWithVersion(PM.YARN_BERRY).prepareEntr
 
 const packageConfig = (data: any, version: string) => {
   data.packageManager = version
-  data.name = "hellow-world"
+  data.name = "hello-world"
   data.version = "1.0.0"
   data.dependencies = {
     ...data.debpendencies,
@@ -76,11 +76,10 @@ test("yarn berry", ({ expect }) =>
         await writeFile(path.join(projectDir, "yarn.lock"), "")
         await writeFile(path.join(projectDir, "app", "yarn.lock"), "")
         await copyFile(path.join(getFixtureDir(), ".pnp.cjs"), path.join(projectDir, ".pnp.cjs"))
-        // await rm(path.join(projectDir, ".yarnrc.yml"))
-        // execSync("yarn install", { cwd: projectDir })
       },
     }
   ))
+
 // yarn workspace
 test("yarn workspace", ({ expect }) =>
   assertPack(
@@ -121,6 +120,7 @@ test("yarn berry workspace", ({ expect }) =>
       },
     }
   ))
+
 // yarn multi-package workspace
 test("yarn multi-package workspace", ({ expect }) =>
   assertPack(
@@ -141,7 +141,8 @@ test("yarn multi-package workspace", ({ expect }) =>
       },
     }
   ))
-// yarn berry multi-package workspace
+
+ // yarn berry multi-package workspace
 test("yarn berry multi-package workspace", ({ expect }) =>
   assertPack(
     expect,
