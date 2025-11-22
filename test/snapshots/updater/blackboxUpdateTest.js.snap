@@ -626,6 +626,254 @@ exports[`Electron autoupdate (fresh install & update) > linux > debian - (dpkg) 
 
 exports[`Electron autoupdate (fresh install & update) > linux > debian - (dpkg) 8`] = `"Test Application (test quite “ #378)"`;
 
+exports[`Electron autoupdate (fresh install & update) > linux > fedora - (dnf) 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp.rpm",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.rpm",
+          },
+        ],
+        "path": "TestApp.rpm",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`Electron autoupdate (fresh install & update) > linux > fedora - (dnf) 2`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp.rpm",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.rpm",
+          },
+        ],
+        "path": "TestApp.rpm",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.1",
+      },
+    },
+  ],
+}
+`;
+
+exports[`Electron autoupdate (fresh install & update) > linux > fedora - (rpm) 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp.rpm",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.rpm",
+          },
+        ],
+        "path": "TestApp.rpm",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`Electron autoupdate (fresh install & update) > linux > fedora - (rpm) 2`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp.rpm",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.rpm",
+          },
+        ],
+        "path": "TestApp.rpm",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.1",
+      },
+    },
+  ],
+}
+`;
+
+exports[`Electron autoupdate (fresh install & update) > linux > fedora - (yum) 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp.rpm",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.rpm",
+          },
+        ],
+        "path": "TestApp.rpm",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`Electron autoupdate (fresh install & update) > linux > fedora - (yum) 2`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp.rpm",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.rpm",
+          },
+        ],
+        "path": "TestApp.rpm",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.1",
+      },
+    },
+  ],
+}
+`;
+
+exports[`Electron autoupdate (fresh install & update) > linux > fedora - (zypper) 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp.rpm",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.rpm",
+          },
+        ],
+        "path": "TestApp.rpm",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`Electron autoupdate (fresh install & update) > linux > fedora - (zypper) 2`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp.rpm",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.rpm",
+          },
+        ],
+        "path": "TestApp.rpm",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.1",
+      },
+    },
+  ],
+}
+`;
+
 exports[`Electron autoupdate (fresh install & update) > win 1`] = `
 {
   "win": [
