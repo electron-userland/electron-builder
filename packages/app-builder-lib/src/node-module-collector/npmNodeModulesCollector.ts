@@ -77,7 +77,7 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
     const buildFromPackage = async (packageDir: string): Promise<NpmDependency> => {
       const pkgPath = path.join(packageDir, "package.json")
 
-      log.info({ pkgPath }, "building dependency node from package.json")
+      log.debug({ pkgPath }, "building dependency node from package.json")
 
       if (!(await this.existsMemoized(pkgPath))) {
         throw new Error(`package.json not found at ${pkgPath}`)
@@ -89,7 +89,7 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
 
       // Use resolved path as the unique identifier to prevent circular dependencies
       if (visited.has(resolvedPackageDir)) {
-        log.info({ name: pkg.name, version: pkg.version, path: resolvedPackageDir }, "skipping already visited package")
+        log.debug({ name: pkg.name, version: pkg.version, path: resolvedPackageDir }, "skipping already visited package")
         return {
           name: pkg.name,
           version: pkg.version,
@@ -120,11 +120,11 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
 
           // Skip if this dependency resolves to the base directory or any parent we're already processing
           if (resolvedDepPath === resolvedPackageDir || resolvedDepPath === (await this.resolvePath(baseDir))) {
-            log.info({ package: pkg.name, dependency: depName, resolvedPath: resolvedDepPath }, "skipping self-referential dependency")
+            log.debug({ package: pkg.name, dependency: depName, resolvedPath: resolvedDepPath }, "skipping self-referential dependency")
             continue
           }
 
-          log.info({ package: pkg.name, dependency: depName, resolvedPath: depPath }, "processing production dependency")
+          log.debug({ package: pkg.name, dependency: depName, resolvedPath: depPath }, "processing production dependency")
 
           // Recursively build the dependency tree for this dependency
           prodDeps[depName] = await buildFromPackage(depPath)
