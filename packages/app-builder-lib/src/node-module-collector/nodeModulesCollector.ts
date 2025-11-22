@@ -1,17 +1,14 @@
 import { exists, log, retry, TmpDir } from "builder-util"
+import { spawn as spawnProcess } from "child_process"
 import { CancellationToken } from "builder-util-runtime"
-import { exec, spawn } from "child_process"
 import * as fs from "fs-extra"
 import { createWriteStream, readJson } from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
-import { promisify } from "util"
 import { hoist, type HoisterResult, type HoisterTree } from "./hoist"
 import { createModuleCache, type ModuleCache } from "./moduleCache"
 import { getPackageManagerCommand, PM } from "./packageManager"
 import type { Dependency, DependencyGraph, NodeModuleInfo, PackageJson } from "./types"
-
-const execAsync = promisify(exec)
 
 export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDepType, OptionalDepType>, OptionalDepType> {
   private nodeModules: NodeModuleInfo[] = []
@@ -96,7 +93,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
 
     return retry(
       async () => {
-        await this.streamCollectorCommandToJsonFile(command, args, this.rootDir, tempOutputFile)
+        await this.streamCollectorCommandToFile(command, args, this.rootDir, tempOutputFile)
         const shellOutput = await fs.readFile(tempOutputFile, { encoding: "utf8" })
         return await this.parseDependenciesTree(shellOutput)
       },
@@ -323,20 +320,25 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
   }
 
   async asyncExec(command: string, args: string[], cwd: string = this.rootDir): Promise<{ stdout: string | undefined; stderr: string | undefined }> {
-    const payload = await execAsync([`"${command}"`, ...args].join(" "), { cwd, maxBuffer: 100 * 1024 * 1024, encoding: "utf8" }).catch(err => {
-      log.error({ err }, "failed to execute command")
-      return { stdout: undefined, stderr: err.message }
-    })
-    return { stdout: payload.stdout?.trim() ?? undefined, stderr: payload.stderr?.trim() ?? undefined }
+    const file = await this.tempDirManager.getTempFile({ prefix: "exec-", suffix: ".txt" })
+    try {
+      await this.streamCollectorCommandToFile(command, args, cwd, file)
+      const result = await fs.readFile(file, { encoding: "utf8" })
+      return { stdout: result?.trim(), stderr: undefined }
+    } catch (error: any) {
+      log.debug({ error: error.message }, "failed to execute command")
+      return { stdout: undefined, stderr: error.message }
+    }
   }
 
-  async streamCollectorCommandToJsonFile(command: string, args: string[], cwd: string, tempOutputFile: string) {
+  async streamCollectorCommandToFile(command: string, args: string[], cwd: string, tempOutputFile: string) {
     const execName = path.basename(command, path.extname(command))
     const isWindowsScriptFile = process.platform === "win32" && path.extname(command).toLowerCase() === ".cmd"
     if (isWindowsScriptFile) {
       // If the command is a Windows script file (.cmd), we need to wrap it in a .bat file to ensure it runs correctly with cmd.exe
       // This is necessary because .cmd files are not directly executable in the same way as .bat files.
       // We create a temporary .bat file that calls the .cmd file with the provided arguments. The .bat file will be executed by cmd.exe.
+      // Note: This is a workaround for Windows command execution quirks for specifically when `shell: false`
       const tempBatFile = await this.tempDirManager.getTempFile({
         prefix: execName,
         suffix: ".bat",
@@ -350,7 +352,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     await new Promise<void>((resolve, reject) => {
       const outStream = createWriteStream(tempOutputFile)
 
-      const child = spawn(command, args, {
+      const child = spawnProcess(command, args, {
         cwd,
         shell: false, // required to prevent console logs polution from shell profile loading when `true`
       })

@@ -200,7 +200,7 @@ export async function createKeychain({ tmpDir, cscLink, cscKeyPassword, cscILink
 
 async function importCerts(keychainFile: string, paths: Array<string>, keyPasswords: Array<string>): Promise<CodeSigningInfo> {
   for (let i = 0; i < paths.length; i++) {
-    const password = keyPasswords[i]
+    const password = keyPasswords[i] ?? ""
     await exec("/usr/bin/security", ["import", paths[i], "-k", keychainFile, "-T", "/usr/bin/codesign", "-T", "/usr/bin/productbuild", "-P", password])
 
     // https://stackoverflow.com/questions/39868578/security-codesign-in-sierra-keychain-ignores-access-control-settings-and-ui-p

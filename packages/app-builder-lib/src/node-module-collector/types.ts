@@ -10,10 +10,8 @@ export type PackageJson = {
 
 export type ResolveModuleOptions<T> = {
   dependency: T
-  // base: string
   virtualPath?: string // e.g. for file: dependencies or symlinked dependencies
   isOptionalDependency?: boolean
-  // cacheKeySuffix?: string
 }
 
 export interface NodeModuleInfo {

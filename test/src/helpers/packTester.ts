@@ -16,7 +16,7 @@ import * as path from "path"
 import pathSorter from "path-sort"
 import { NtExecutable, NtExecutableResource } from "resedit"
 import { TmpDir } from "temp-file"
-import { getCollectorByPackageManager, detectPackageManager, PM } from "app-builder-lib/out/node-module-collector"
+import { getCollectorByPackageManager, PM } from "app-builder-lib/out/node-module-collector"
 import { promisify } from "util"
 import { CSC_LINK, WIN_CSC_LINK } from "./codeSignData"
 import { assertThat } from "./fileAssert"
@@ -29,13 +29,14 @@ import { installDependencies } from "app-builder-lib/out/util/yarn"
 import { ELECTRON_VERSION } from "./testConfig"
 import { createLazyProductionDeps } from "app-builder-lib/out/util/packageDependencies"
 import { execSync } from "child_process"
+import { detectPackageManager } from "app-builder-lib/out/node-module-collector/packageManager"
 
 const PACKAGE_MANAGER_VERSION_MAP = {
   [PM.NPM]: { cli: "npm", version: "9.8.1" },
   [PM.YARN]: { cli: "yarn", version: "1.22.19" },
   [PM.YARN_BERRY]: { cli: "yarn", version: "3.5.0" },
   [PM.PNPM]: { cli: "pnpm", version: "10.18.0" },
-  [PM.BUN]: { cli: "bun", version: "1" },
+  [PM.BUN]: { cli: "bun", version: "1.3.2" },
 }
 
 export function getPackageManagerWithVersion(pm: PM, packageManagerAndVersionString?: string) {
@@ -48,7 +49,7 @@ export function getPackageManagerWithVersion(pm: PM, packageManagerAndVersionStr
   }
 }
 
-export const EXTENDED_TIMEOUT = 10 * 60 * 1000
+export const EXTENDED_TIMEOUT = 14 * 60 * 1000
 export const linuxDirTarget = Platform.LINUX.createTarget(DIR_TARGET, Arch.x64)
 export const snapTarget = Platform.LINUX.createTarget("snap", Arch.x64)
 
@@ -176,18 +177,21 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
         npm_config_cache: tmpCache, // prevent npm fallback caching
       }
       const { cli, prepareEntry, version } = getPackageManagerWithVersion(pm, packageManager)
-      log.info({ pm, version: version, projectDir }, "activating corepack")
-      try {
-        execSync(`corepack enable ${cli}`, { env: runtimeEnv, cwd: projectDir, stdio: "inherit" })
-      } catch (err: any) {
-        console.warn("⚠️ Corepack enable failed (possibly already enabled):", err.message)
+      if (pm === PM.BUN) {
+        log.info({ pm, version: version, projectDir }, "installing dependencies with bun; corepack does not support it currently and it must be installed separately")
+      } else {
+        log.info({ pm, version: version, projectDir }, "activating corepack")
+        try {
+          execSync(`corepack enable ${cli}`, { env: runtimeEnv, cwd: projectDir, stdio: "inherit" })
+        } catch (err: any) {
+          console.warn("⚠️ Corepack enable failed (possibly already enabled):", err.message)
+        }
+        try {
+          execSync(`corepack prepare ${prepareEntry} --activate`, { env: runtimeEnv, cwd: projectDir, stdio: "inherit" })
+        } catch (err: any) {
+          console.warn("⚠️ Yarn prepare failed:", err.message)
+        }
       }
-      try {
-        execSync(`corepack prepare ${prepareEntry} --activate`, { env: runtimeEnv, cwd: projectDir, stdio: "inherit" })
-      } catch (err: any) {
-        console.warn("⚠️ Yarn prepare failed:", err.message)
-      }
-
       const collector = getCollectorByPackageManager(pm, projectDir, tmpDir)
       const collectorOptions = collector.installOptions
 

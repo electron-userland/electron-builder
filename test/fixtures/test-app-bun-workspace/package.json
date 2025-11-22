@@ -1,0 +1,8 @@
+{
+  "name": "test-app-bun-workspace",
+  "private": true,
+  "version": "1.0.0",
+  "workspaces": [
+    "packages/*"
+  ]
+}

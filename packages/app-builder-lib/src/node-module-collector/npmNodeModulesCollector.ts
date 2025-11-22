@@ -17,7 +17,7 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
   protected async getDependenciesTree(pm: PM): Promise<NpmDependency> {
     try {
       // force NPM collection as Yarn Berry extends this class and PnP is not supported directly
-      return await super.getDependenciesTree(PM.NPM)
+      return await super.getDependenciesTree(pm)
     } catch (error: any) {
       log.info({ pm, parser: PM.NPM, error: error.message }, "unable to process dependency tree, falling back to using manual node_modules traversal")
     }
@@ -50,13 +50,18 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
     // This will prevents infinite loops when circular dependencies are encountered.
     this.productionGraph[dependencyId] = { dependencies: [] }
     const productionDeps = Object.entries(resolvedDeps)
-      .filter(([packageName]) => prodDependencies[packageName])
+      .filter(([packageName]) => this.isProdDependency(packageName, tree))
       .map(async ([, dependency]) => {
         const childDependencyId = this.packageVersionString(dependency)
         await this.extractProductionDependencyGraph(dependency, childDependencyId)
         return childDependencyId
       })
-    this.productionGraph[dependencyId] = { dependencies: await Promise.all(productionDeps) }
+    const collectedDependencies = await Promise.all(productionDeps)
+    this.productionGraph[dependencyId] = { dependencies: collectedDependencies }
+  }
+
+  protected isProdDependency(packageName: string, tree: NpmDependency) {
+    return tree._dependencies?.[packageName] != null
   }
 
   /**
