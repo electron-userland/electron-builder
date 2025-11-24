@@ -4,7 +4,7 @@ import { archFromString, doSpawn, getArchSuffix, log, TmpDir } from "builder-uti
 import { Arch, Configuration, Platform } from "electron-builder"
 import fs, { existsSync, outputFile } from "fs-extra"
 import path from "path"
-import { afterAll, beforeAll, describe, expect, ExpectStatic } from "vitest"
+import { afterAll, beforeAll, describe, ExpectStatic, TestContext } from "vitest"
 import { launchAndWaitForQuit } from "../helpers/launchAppCrossPlatform"
 import { assertPack, modifyPackageJson, PackedContext } from "../helpers/packTester"
 import { ELECTRON_VERSION } from "../helpers/testConfig"
@@ -24,23 +24,23 @@ describe("Electron autoupdate (fresh install & update)", () => {
   })
 
   // Signing is required for macOS autoupdate
-  test.ifMac.ifEnv(process.env.CSC_KEY_PASSWORD)("mac", async () => {
-    await runTest("zip")
+  test.ifMac.ifEnv(process.env.CSC_KEY_PASSWORD)("mac", async context => {
+    await runTest(context, "zip")
   })
 
-  test.ifWindows("win", async () => {
-    await runTest("nsis")
+  test.ifWindows("win", async context => {
+    await runTest(context, "nsis")
   })
 
   // must be sequential in order for process.env.ELECTRON_BUILDER_LINUX_PACKAGE_MANAGER to be respected per-test
   describe.runIf(process.platform === "linux")("linux", () => {
-    test.ifEnv(process.env.RUN_APP_IMAGE_TEST && process.arch === "arm64")("AppImage - arm64", async () => {
-      await runTest("AppImage", Arch.arm64)
+    test.ifEnv(process.env.RUN_APP_IMAGE_TEST && process.arch === "arm64")("AppImage - arm64", async context => {
+      await runTest(context, "AppImage", Arch.arm64)
     })
 
     // only works on x64, so this will fail on arm64 macs due to arch mismatch
-    test.ifEnv(process.env.RUN_APP_IMAGE_TEST && process.arch === "x64")("AppImage - x64", async () => {
-      await runTest("AppImage", Arch.x64)
+    test.ifEnv(process.env.RUN_APP_IMAGE_TEST && process.arch === "x64")("AppImage - x64", async context => {
+      await runTest(context, "AppImage", Arch.x64)
     })
 
     // package manager tests specific to each distro (and corresponding docker image)
@@ -52,7 +52,7 @@ describe("Electron autoupdate (fresh install & update)", () => {
             context.skip()
           }
           process.env.ELECTRON_BUILDER_LINUX_PACKAGE_MANAGER = pm
-          await runTest(target, Arch.x64)
+          await runTest(context, target, Arch.x64)
           delete process.env.ELECTRON_BUILDER_LINUX_PACKAGE_MANAGER
         })
       }
@@ -84,7 +84,9 @@ const packageManagerMap: {
   },
 }
 
-async function runTest(target: string, arch: Arch = Arch.x64) {
+async function runTest(context: TestContext, target: string, arch: Arch = Arch.x64) {
+  const { expect } = context
+
   const tmpDir = new TmpDir("auto-update")
   const outDirs: ApplicationUpdatePaths[] = []
   await doBuild(expect, outDirs, Platform.current().createTarget([target], arch), tmpDir, process.platform === "win32")
@@ -116,7 +118,7 @@ async function runTest(target: string, arch: Arch = Arch.x64) {
     await new Promise(resolve => setTimeout(resolve, delay))
 
     expect((await verifyAppVersion(NEW_VERSION_NUMBER)).version).toMatch(NEW_VERSION_NUMBER)
-  })
+  }).catch(() => tmpDir.cleanupSync())
   // windows needs to release file locks, so a delay seems to be needed
   await new Promise(resolve => setTimeout(resolve, 1000))
   await handleCleanupPerOS({ target })
