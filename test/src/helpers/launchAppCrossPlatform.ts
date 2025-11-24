@@ -176,9 +176,9 @@ export function startXvfb(): { display: string; stop: () => void } {
       }
     }
   }
-  // Ensure Xvfb is stopped on process exit
+  // Ensure Xvfb is stopped on main process exit
   ;["SIGINT", "SIGTERM", "uncaughtException", "unhandledRejection"].forEach(sig => {
-    proc.once(sig, () => {
+    process.once(sig, () => {
       try {
         stop()
       } catch (e) {
