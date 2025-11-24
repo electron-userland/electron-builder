@@ -190,7 +190,7 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
 
     const dirDeps = await getNodeModules(await packager.getPackageManager(), { rootDir: dir, tempDirManager, cancellationToken, packageName: packager.metadata.name! })
     if (dirDeps.length > 0) {
-      log.debug({ dir, nodeModules: dirDeps.map(it => ({ ...it, dir: log.filePath(it.dir) })) }, "collected node modules")
+      log.debug({ dir, nodeModules: dirDeps }, "collected node modules")
       deps = dirDeps
       break
     }
@@ -213,6 +213,8 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
     const files = await copier.collectNodeModules(dep, nodeModuleExcludedExts, path.relative(mainMatcher.to, destination))
     result[index++] = validateFileSet({ src: source, destination, files, metadata: copier.metadata })
 
+    log.debug({ dep: dep.name, from: log.filePath(source), to: log.filePath(destination), filesCount: files.length }, "prepared to copy node module")
+
     if (dep.dependencies) {
       for (const c of dep.dependencies) {
         await collectNodeModules(c, path.join(destination, NODE_MODULES, c.name))
@@ -224,7 +226,6 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
     const destination = path.join(mainMatcher.to, NODE_MODULES, dep.name)
     await collectNodeModules(dep, destination)
   }
-
   return result
 }
 

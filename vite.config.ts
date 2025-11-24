@@ -1,5 +1,6 @@
 import { defineConfig } from "vitest/config"
 import fs from "fs"
+import isCI from "is-ci"
 
 export default () => {
   const testRegex = process.env.TEST_FILES?.split(",") ?? ["*Test", "*test"]
@@ -17,6 +18,8 @@ export default () => {
       // if using `toMatchSnapshot`, it MUST be passed in through the test context
       // e.g. test("name", ({ expect }) => { ... })
       globals: true,
+      allowOnly: !isCI,
+      expandSnapshotDiff: true,
 
       setupFiles: "./test/vitest-setup.ts",
       include: [`test/src/**/${includeRegex}.ts`],

@@ -17,22 +17,6 @@ exports[`yarn berry workspace 2`] = `
     },
     "node_modules": {
       "files": {
-        "base64-js": {
-          "files": {
-            "LICENSE": {
-              "size": "<size>",
-            },
-            "base64js.min.js": {
-              "size": "<size>",
-            },
-            "index.js": {
-              "size": "<size>",
-            },
-            "package.json": {
-              "size": "<size>",
-            },
-          },
-        },
         "better-sqlite3-multiple-ciphers": {
           "files": {
             "LICENSE": {
@@ -210,22 +194,6 @@ exports[`yarn berry workspace 2`] = `
             },
           },
         },
-        "buffer": {
-          "files": {
-            "AUTHORS.md": {
-              "size": "<size>",
-            },
-            "LICENSE": {
-              "size": "<size>",
-            },
-            "index.js": {
-              "size": "<size>",
-            },
-            "package.json": {
-              "size": "<size>",
-            },
-          },
-        },
         "chownr": {
           "files": {
             "LICENSE": {
@@ -386,19 +354,6 @@ exports[`yarn berry workspace 2`] = `
           },
         },
         "github-from-package": {
-          "files": {
-            "LICENSE": {
-              "size": "<size>",
-            },
-            "index.js": {
-              "size": "<size>",
-            },
-            "package.json": {
-              "size": "<size>",
-            },
-          },
-        },
-        "ieee754": {
           "files": {
             "LICENSE": {
               "size": "<size>",
@@ -939,23 +894,6 @@ exports[`yarn berry workspace 2`] = `
             },
             "index.js": {
               "size": "<size>",
-            },
-            "package.json": {
-              "size": "<size>",
-            },
-          },
-        },
-        "string_decoder": {
-          "files": {
-            "LICENSE": {
-              "size": "<size>",
-            },
-            "lib": {
-              "files": {
-                "string_decoder.js": {
-                  "size": "<size>",
-                },
-              },
             },
             "package.json": {
               "size": "<size>",
