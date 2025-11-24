@@ -87,7 +87,6 @@ async function doDownloadArtifact(config: ArtifactDownloadOptions, cacheDir: str
   }
   log.debug(artifactConfig, "artifact download initiated")
 
-
   if (electronDownload != null) {
     // determine whether electronDownload is ElectronGetOptions or ElectronDownloadOptions
     if (Object.hasOwnProperty.call(electronDownload, "mirrorOptions")) {
