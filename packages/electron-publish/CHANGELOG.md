@@ -1,5 +1,21 @@
 # electron-publish
 
+## 26.3.1
+
+### Patch Changes
+
+<details><summary>Updated 1 dependency</summary>
+
+<small>
+
+[`ec0a851`](https://github.com/electron-userland/electron-builder/commit/ec0a85179b4508c372667f55e395d8b27c58a046)
+
+</small>
+
+- `builder-util@26.3.1`
+
+</details>
+
 ## 26.3.0
 
 ### Patch Changes
