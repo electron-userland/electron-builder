@@ -33,7 +33,7 @@ describe("Electron autoupdate (fresh install & update)", () => {
   })
 
   // must be sequential in order for process.env.ELECTRON_BUILDER_LINUX_PACKAGE_MANAGER to be respected per-test
-  describe.runIf(process.platform === "linux")("linux", () => {
+  describe.runIf(process.platform === "linux")("linux", { sequential: true }, () => {
     test.ifEnv(process.env.RUN_APP_IMAGE_TEST && process.arch === "arm64")("AppImage - arm64", async context => {
       await runTest(context, "AppImage", Arch.arm64)
     })
