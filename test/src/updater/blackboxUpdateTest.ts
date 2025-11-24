@@ -15,7 +15,7 @@ import { DebUpdater, PacmanUpdater, RpmUpdater } from "electron-updater"
 
 // Linux Tests MUST be run in docker containers for proper ephemeral testing environment (e.g. fresh install + update + relaunch)
 // Currently this test logic does not handle uninstalling packages (yet)
-describe("Electron autoupdate (fresh install & update)", () => {
+describe("Electron autoupdate (fresh install & update)", { sequential: true }, () => {
   beforeAll(() => {
     process.env.AUTO_UPDATER_TEST = "1"
   })
@@ -47,7 +47,7 @@ describe("Electron autoupdate (fresh install & update)", () => {
     for (const distro in packageManagerMap) {
       const { pms, target } = packageManagerMap[distro as keyof typeof packageManagerMap]
       for (const pm of pms) {
-        test(`${distro} - (${pm})`, async context => {
+        test(`${distro} - (${pm})`, { sequential: true }, async context => {
           if (!determineEnvironment(distro)) {
             context.skip()
           }
