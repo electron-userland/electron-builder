@@ -1,5 +1,32 @@
 # app-builder-lib
 
+## 26.3.1
+
+### Patch Changes
+
+- Fix: properly collect node*modules when they're ESM and we're node>=16 *[`#9380`](https://github.com/electron-userland/electron-builder/pull/9380) [`ec0a851`](https://github.com/electron-userland/electron-builder/commit/ec0a85179b4508c372667f55e395d8b27c58a046) [@mmaietta](https://github.com/mmaietta)\_
+- Fix: Use `yarn config --json` to parse yarn berry (output varies v2-4) _[`#9371`](https://github.com/electron-userland/electron-builder/pull/9371) [`2f3e7e1`](https://github.com/electron-userland/electron-builder/commit/2f3e7e1e67dd30c4987c33172ca6857ee0a2fc14) [@mmaietta](https://github.com/mmaietta)_
+- Fix: upgrade fpm to 1.17.0 _[`#9381`](https://github.com/electron-userland/electron-builder/pull/9381) [`6171472`](https://github.com/electron-userland/electron-builder/commit/617147281ceb53e9d40be852678131d2832abd79) [@mmaietta](https://github.com/mmaietta)_
+- Fix: node 14 vs 15+ promisify warning on child*process.exec *[`#9374`](https://github.com/electron-userland/electron-builder/pull/9374) [`ef364d3`](https://github.com/electron-userland/electron-builder/commit/ef364d32c4fa78200249916af934b5235e04ba3e) [@mmaietta](https://github.com/mmaietta)\_
+- Fix: `install-app-deps` missing `workspaceRoot` for passing `projectRootPath` into electron/rebuild _[`#9376`](https://github.com/electron-userland/electron-builder/pull/9376) [`45a1683`](https://github.com/electron-userland/electron-builder/commit/45a1683400b6525998256d83059ce7b562098eb1) [@mmaietta](https://github.com/mmaietta)_
+- Fix: cleanup actool output file handle after spawn _[`#9373`](https://github.com/electron-userland/electron-builder/pull/9373) [`1607820`](https://github.com/electron-userland/electron-builder/commit/160782067f904b61d53eb28368aea58022fe1717) [@mmaietta](https://github.com/mmaietta)_
+- Chore(deps): update dependency js-yaml to v4.1.1 [security] _[`#9375`](https://github.com/electron-userland/electron-builder/pull/9375) [`ed8ea12`](https://github.com/electron-userland/electron-builder/commit/ed8ea12f7c2ccf3e52079a5aa9517f1342448c52) [@renovate](https://github.com/apps/renovate)_
+
+<details><summary>Updated 4 dependencies</summary>
+
+<small>
+
+[`ec0a851`](https://github.com/electron-userland/electron-builder/commit/ec0a85179b4508c372667f55e395d8b27c58a046) [`82c07af`](https://github.com/electron-userland/electron-builder/commit/82c07af19f7f3447f3a693a641bad7261e6b924f)
+
+</small>
+
+- `builder-util@26.3.1`
+- `dmg-builder@26.3.1`
+- `electron-builder-squirrel-windows@26.3.1`
+- `electron-publish@26.3.1`
+
+</details>
+
 ## 26.3.0
 
 ### Minor Changes
