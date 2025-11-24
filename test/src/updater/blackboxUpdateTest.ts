@@ -102,27 +102,42 @@ async function runTest(context: TestContext, target: string, arch: Arch = Arch.x
     throw new Error(`App not found: ${appPath}`)
   }
 
-  await runTestWithinServer(async (rootDirectory: string, updateConfigPath: string) => {
-    // Move app update to the root directory of the server
-    await fs.copy(newAppDir.dir, rootDirectory, { recursive: true, overwrite: true })
+  let queuedError: Error | null = null
+  try {
+    await runTestWithinServer(async (rootDirectory: string, updateConfigPath: string) => {
+      // Move app update to the root directory of the server
+      await fs.copy(newAppDir.dir, rootDirectory, { recursive: true, overwrite: true })
 
-    const verifyAppVersion = async (expectedVersion: string) => await launchAndWaitForQuit({ appPath, timeoutMs: 2 * 60 * 1000, updateConfigPath, expectedVersion })
+      const verifyAppVersion = async (expectedVersion: string) => await launchAndWaitForQuit({ appPath, timeoutMs: 2 * 60 * 1000, updateConfigPath, expectedVersion })
 
-    const result = await verifyAppVersion(OLD_VERSION_NUMBER)
-    log.debug(result, "Test App version")
-    expect(result.version).toMatch(OLD_VERSION_NUMBER)
+      const result = await verifyAppVersion(OLD_VERSION_NUMBER)
+      log.debug(result, "Test App version")
+      expect(result.version).toMatch(OLD_VERSION_NUMBER)
 
-    // Wait for quitAndInstall to take effect, increase delay if updates are slower
-    // (shouldn't be the case for such a small test app, but Windows with Debugger attached is pretty dam slow)
-    const delay = 60 * 1000
-    await new Promise(resolve => setTimeout(resolve, delay))
+      // Wait for quitAndInstall to take effect, increase delay if updates are slower
+      // (shouldn't be the case for such a small test app, but Windows with Debugger attached is pretty dam slow)
+      const delay = 60 * 1000
+      await new Promise(resolve => setTimeout(resolve, delay))
 
-    expect((await verifyAppVersion(NEW_VERSION_NUMBER)).version).toMatch(NEW_VERSION_NUMBER)
-  }).catch(() => tmpDir.cleanupSync())
-  // windows needs to release file locks, so a delay seems to be needed
-  await new Promise(resolve => setTimeout(resolve, 1000))
-  await handleCleanupPerOS({ target })
-  await tmpDir.cleanup()
+      expect((await verifyAppVersion(NEW_VERSION_NUMBER)).version).toMatch(NEW_VERSION_NUMBER)
+    })
+  } catch (error: any) {
+    log.error({ error: error.message }, "Blackbox Updater Test failed to run")
+    queuedError = error
+  } finally {
+    // windows needs to release file locks, so a delay seems to be needed
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    await tmpDir.cleanup()
+    try {
+      await handleCleanupPerOS({ target })
+    } catch (error: any) {
+      log.error({ error: error.message }, "Blackbox Updater Test cleanup failed")
+      // ignore
+    }
+  }
+  if (queuedError) {
+    throw queuedError
+  }
 }
 
 type ApplicationUpdatePaths = {
@@ -309,11 +324,11 @@ async function handleInitialInstallPerOS({ target, dirPath, arch }: { target: st
 }
 
 async function handleCleanupPerOS({ target }: { target: string }) {
+  // TODO: ignore for now, this doesn't block CI, but proper uninstall logic should be implemented
   if (target === "deb") {
-    // TODO: ignore for now, this doesn't block CI, but proper uninstall logic should be implemented
     //   execSync("dpkg -r testapp", { stdio: "inherit" });
   } else if (target === "rpm") {
-    execSync(`zypper rm -y testapp`, { stdio: "inherit" })
+    // execSync(`zypper rm -y testapp`, { stdio: "inherit" })
   } else if (target === "pacman") {
     execSync(`pacman -R --noconfirm testapp`, { stdio: "inherit" })
   } else if (process.platform === "win32") {
