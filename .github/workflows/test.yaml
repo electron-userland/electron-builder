@@ -68,7 +68,7 @@ jobs:
       matrix:
         testFiles:
           - ArtifactPublisherTest,BuildTest,ExtraBuildTest,RepoSlugTest,binDownloadTest,configurationValidationTest,filenameUtilTest,filesTest,globTest,httpExecutorTest,ignoreTest,macroExpanderTest,mainEntryTest,urlUtilTest,extraMetadataTest,linuxArchiveTest,linuxPackagerTest,HoistedNodeModuleTest,MemoLazyTest,HoistTest,ExtraBuildResourcesTest,utilTest
-          - snapTest,debTest,fpmTest,protonTest
+          - snapTest,debTest,fpmTest,protonTest,rebuilderTest
           - winPackagerTest,winCodeSignTest,webInstallerTest
           - oneClickInstallerTest,assistedInstallerTest,packageManagerTest
           - concurrentBuildsTest
@@ -164,6 +164,14 @@ jobs:
   test-e2e:
     runs-on: ubuntu-22.04
     timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        TEST_RUNNER_IMAGE_TAG:
+          - dockerfile-archlinux
+          - dockerfile-rpm
+          - dockerfile-debian
+          - dockerfile-appimage
     steps:
       - name: Checkout code repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -179,7 +187,14 @@ jobs:
 
       - name: e2e Linux Updater tests (install, auto-update, uninstall)
         run: |
-          sh test/src/updater/test-specific-platforms.sh
+          docker build --platform=linux/amd64 -t $TEST_RUNNER_IMAGE_TAG -f ./test/src/updater/$TEST_RUNNER_IMAGE_TAG .
+          pnpm test-linux
+        env:
+          TEST_RUNNER_IMAGE_TAG: ${{ matrix.TEST_RUNNER_IMAGE_TAG }}
+          TEST_FILES: blackboxUpdateTest,linuxUpdaterTest
+          DEBUG: electron-updater,electron-builder
+          ADDITIONAL_DOCKER_ARGS: "-e RUN_APP_IMAGE_TEST=true"
+
 
   test-windows:
     runs-on: windows-2022
@@ -218,8 +233,8 @@ jobs:
       fail-fast: false
       matrix:
         testFiles:
-          - oneClickInstallerTest,assistedInstallerTest,webInstallerTest,packageManagerTest,HoistedNodeModuleTest
-          - winPackagerTest,winCodeSignTest,BuildTest,blackboxUpdateTest
+          - oneClickInstallerTest,assistedInstallerTest,webInstallerTest,packageManagerTest,HoistedNodeModuleTest,rebuilderTest
+          - winPackagerTest,winCodeSignTest,BuildTest,blackboxUpdateTest,debTest
           - masTest,dmgTest,filesTest,macPackagerTest,differentialUpdateTest,macArchiveTest
           - concurrentBuildsTest
     steps:
@@ -243,6 +258,8 @@ jobs:
         env:
           TEST_FILES: ${{ matrix.testFiles }}
           FORCE_COLOR: 1
+          TEST_SEQUENTIAL: true
+          DEBUG: electron-builder
 
   test-mac-26:
     runs-on: macos-26

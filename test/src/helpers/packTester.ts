@@ -16,7 +16,7 @@ import * as path from "path"
 import pathSorter from "path-sort"
 import { NtExecutable, NtExecutableResource } from "resedit"
 import { TmpDir } from "temp-file"
-import { getCollectorByPackageManager, detectPackageManager, PM } from "app-builder-lib/out/node-module-collector"
+import { getCollectorByPackageManager, PM } from "app-builder-lib/out/node-module-collector"
 import { promisify } from "util"
 import { CSC_LINK, WIN_CSC_LINK } from "./codeSignData"
 import { assertThat } from "./fileAssert"
@@ -29,6 +29,7 @@ import { installDependencies } from "app-builder-lib/out/util/yarn"
 import { ELECTRON_VERSION } from "./testConfig"
 import { createLazyProductionDeps } from "app-builder-lib/out/util/packageDependencies"
 import { execSync } from "child_process"
+import { detectPackageManager } from "app-builder-lib/out/node-module-collector/packageManager"
 
 const PACKAGE_MANAGER_VERSION_MAP = {
   [PM.NPM]: { cli: "npm", version: "9.8.1" },

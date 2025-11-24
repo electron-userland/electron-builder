@@ -43,7 +43,7 @@ import { installOrRebuild, nodeGypRebuild } from "./util/yarn"
 import { PACKAGE_VERSION } from "./version"
 import { AsyncEventEmitter, HandlerType } from "./util/asyncEventEmitter"
 import asyncPool from "tiny-async-pool"
-import { detectPackageManager, findWorkspaceRoot, PM } from "./node-module-collector"
+import { determinePackageManagerEnv, PM } from "./node-module-collector"
 
 async function createFrameworkInfo(configuration: Configuration, packager: Packager): Promise<Framework> {
   let framework = configuration.framework
@@ -96,23 +96,7 @@ export class Packager {
     return this._appDir
   }
 
-  private _packageManager = new Lazy(async () => {
-    const availableDirs = [this.projectDir, this.appDir]
-    const pm = await detectPackageManager(availableDirs)
-    const workspaceRoot = await findWorkspaceRoot(pm.pm, this.projectDir)
-    if (workspaceRoot != null) {
-      // re-detect package manager from workspace root, this seems particularly necessary for pnpm workspaces
-      const actualPm = await detectPackageManager([workspaceRoot])
-      return {
-        pm: actualPm.pm,
-        workspaceRoot: Promise.resolve(actualPm.resolvedDirectory),
-      }
-    }
-    return {
-      pm: pm.pm,
-      workspaceRoot: Promise.resolve(pm.resolvedDirectory),
-    }
-  })
+  private readonly _packageManager: Lazy<{ pm: PM; workspaceRoot: Promise<string | undefined> }>
   async getPackageManager(): Promise<PM> {
     return (await this._packageManager.value).pm
   }
@@ -281,6 +265,7 @@ export class Packager {
 
     this.projectDir = options.projectDir == null ? process.cwd() : path.resolve(options.projectDir)
     this._appDir = this.projectDir
+    this._packageManager = determinePackageManagerEnv({ projectDir: this.projectDir, appDir: this.appDir, workspaceRoot: undefined })
 
     this.options = {
       ...options,
@@ -389,9 +374,8 @@ export class Packager {
 
     const devMetadata = this.devMetadata
     const configuration = await getConfig(projectDir, configPath, configFromOptions, new Lazy(() => Promise.resolve(devMetadata)))
-    if (log.isDebugEnabled) {
-      log.debug({ config: getSafeEffectiveConfig(configuration) }, "effective config")
-    }
+
+    log.debug({ config: getSafeEffectiveConfig(configuration) }, "effective config")
 
     this._appDir = await computeDefaultAppDirectory(projectDir, configuration.directories!.app)
     this.isTwoPackageJsonProjectLayoutUsed = this._appDir !== projectDir

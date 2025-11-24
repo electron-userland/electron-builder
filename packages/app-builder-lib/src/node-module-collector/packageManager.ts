@@ -4,11 +4,11 @@ import * as path from "path"
 import * as which from "which"
 
 export enum PM {
-  NPM = "npm",
-  YARN = "yarn",
   PNPM = "pnpm",
+  YARN = "yarn",
   YARN_BERRY = "yarn-berry",
   BUN = "bun",
+  NPM = "npm",
 }
 
 // Cache for resolved paths
@@ -45,7 +45,40 @@ export function getPackageManagerCommand(pm: PM) {
   return resolved
 }
 
-export function detectPackageManagerByEnv(): PM | null {
+export async function detectPackageManager(searchPaths: string[]): Promise<{ pm: PM; corepackConfig: string | undefined; resolvedDirectory: string | undefined }> {
+  let pm: PM | null = null
+  const dedupedPaths = Array.from(new Set(searchPaths)) // reduce file operations, dedupe paths since primary use case has projectDir === appDir
+
+  const resolveIfYarn = (pm: PM, version: string, cwd: string) => (pm === PM.YARN ? detectYarnBerry(cwd, version) : pm)
+
+  for (const dir of dedupedPaths) {
+    const packageJsonPath = path.join(dir, "package.json")
+    const packageManager = (await exists(packageJsonPath)) ? (await fs.readJson(packageJsonPath, "utf8"))?.packageManager : undefined
+    if (packageManager) {
+      const [pm, version] = packageManager.split("@")
+      if (Object.values(PM).includes(pm as PM)) {
+        const resolvedPackageManager = await resolveIfYarn(pm as PM, version, dir)
+        log.debug({ resolvedPackageManager, packageManager, cwd: dir }, "packageManager field detected in package.json")
+        return { pm: resolvedPackageManager, corepackConfig: packageManager, resolvedDirectory: dir }
+      }
+    }
+
+    pm = await detectPackageManagerByFile(dir)
+    if (pm) {
+      const resolvedPackageManager = await resolveIfYarn(pm, "", dir)
+      log.debug({ resolvedPackageManager, cwd: dir }, "packageManager detected by file")
+      return { pm: resolvedPackageManager, resolvedDirectory: dir, corepackConfig: undefined }
+    }
+  }
+
+  pm = detectPackageManagerByEnv() || PM.NPM
+  const cwd = process.env.npm_package_json ? path.dirname(process.env.npm_package_json) : (process.env.INIT_CWD ?? process.cwd())
+  const resolvedPackageManager = await resolveIfYarn(pm, "", cwd)
+  log.debug({ resolvedPackageManager, detected: cwd }, "packageManager not detected by file, falling back to environment detection")
+  return { pm: resolvedPackageManager, resolvedDirectory: undefined, corepackConfig: undefined }
+}
+
+function detectPackageManagerByEnv(): PM | null {
   const priorityChecklist = [(key: string) => process.env.npm_config_user_agent?.includes(key), (key: string) => process.env.npm_execpath?.includes(key)]
 
   const pms = Object.values(PM).filter(pm => pm !== PM.YARN_BERRY)
@@ -59,7 +92,7 @@ export function detectPackageManagerByEnv(): PM | null {
   return null
 }
 
-export async function detectPackageManagerByFile(dir: string): Promise<PM | null> {
+async function detectPackageManagerByFile(dir: string): Promise<PM | null> {
   const has = (file: string) => exists(path.join(dir, file))
 
   const detected: PM[] = []
@@ -83,7 +116,7 @@ export async function detectPackageManagerByFile(dir: string): Promise<PM | null
   return null
 }
 
-export async function detectYarnBerry(cwd: string, version: string): Promise<PM.YARN | PM.YARN_BERRY> {
+async function detectYarnBerry(cwd: string, version: string): Promise<PM.YARN | PM.YARN_BERRY> {
   const checkBerry = () => {
     try {
       if (parseInt(version.split(".")[0]) > 1) {

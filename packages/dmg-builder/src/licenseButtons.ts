@@ -47,9 +47,8 @@ export async function getLicenseButtons(licenseButtonFiles: Array<LicenseButtons
       data += serializeString("0006" + buttonsStr)
       data += `\n};`
 
-      if (log.isDebugEnabled) {
-        log.debug({ lang: item.langName, data }, `overwriting license buttons`)
-      }
+      log.debug({ lang: item.langName, data }, `overwriting license buttons`)
+
       return data
     } catch (e: any) {
       log.debug({ error: e }, "cannot overwrite license buttons")
