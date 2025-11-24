@@ -70,7 +70,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
 
     await this.collectAllDependencies(tree, packageName)
 
-    const realTree: ProdDepType = await this.getTreeFromWorkspaces(tree)
+    const realTree: ProdDepType = await this.getTreeFromWorkspaces(tree, packageName)
     await this.extractProductionDependencyGraph(realTree, packageName)
 
     if (cancellationToken.cancelled) {
@@ -287,17 +287,18 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     return { name, version }
   }
 
-  protected async getTreeFromWorkspaces(tree: ProdDepType): Promise<ProdDepType> {
-    if (!tree.workspaces || !tree.dependencies) {
+  protected async getTreeFromWorkspaces(tree: ProdDepType, packageName: string): Promise<ProdDepType> {
+    if (!(tree.workspaces && tree.dependencies)) {
       return tree
     }
 
-    const appName = tree.name
-
-    if (tree.dependencies?.[appName]) {
-      const { name, path } = tree.dependencies[appName]
-      log.debug({ name, path }, "pruning root app/self package from workspace tree")
-      delete tree.dependencies[appName]
+    if (tree.dependencies?.[packageName]) {
+      const { name, path, dependencies } = tree.dependencies[packageName]
+      log.debug({ name, path, dependencies: JSON.stringify(dependencies) }, "pruning root app/self package from workspace tree")
+      for (const [name, pkg] of Object.entries(dependencies ?? {})) {
+        tree.dependencies[name] = pkg
+      }
+      delete tree.dependencies[packageName]
     }
     return Promise.resolve(tree)
   }
