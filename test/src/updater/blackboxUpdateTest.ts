@@ -159,7 +159,7 @@ async function doBuild(
             version,
           },
           ...extraConfig,
-          // compression: "store",
+          compression: "store",
           publish: {
             provider: "s3",
             bucket: "develar",

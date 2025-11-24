@@ -20,7 +20,8 @@ RUN dnf install -y \
     at-spi2-core
 
 # Optional: for better font rendering or Chromium deps
-RUN dnf install -y liberation-fonts fontconfig gtk3 xdg-utils
+RUN dnf install -y liberation-fonts fontconfig gtk3 xdg-utils xorg-x11-server-Xvfb
+
 
 RUN npm --silent install --global --depth 0 pnpm corepack \
  && corepack enable
