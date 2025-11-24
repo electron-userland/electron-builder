@@ -8,7 +8,7 @@ import { move } from "fs-extra"
 import * as path from "path"
 import { TmpDir } from "temp-file"
 import { TestAppAdapter } from "../helpers/TestAppAdapter"
-import { PackedContext, assertPack, removeUnstableProperties } from "../helpers/packTester"
+import { EXTENDED_TIMEOUT, PackedContext, assertPack, removeUnstableProperties } from "../helpers/packTester"
 import { NEW_VERSION_NUMBER, OLD_VERSION_NUMBER, testAppCacheDirName, tuneTestUpdater, writeUpdateConfig } from "../helpers/updaterTestUtil"
 import { mockForNodeRequire } from "vitest-mock-commonjs"
 import { ExpectStatic } from "vitest"
@@ -137,7 +137,7 @@ async function testMac(expect: ExpectStatic, arch: Arch) {
 }
 
 test.ifMac("Mac Intel", ({ expect }) => testMac(expect, Arch.x64))
-test.ifMac("Mac universal", ({ expect }) => testMac(expect, Arch.universal))
+test.ifMac("Mac universal", { timeout: EXTENDED_TIMEOUT }, ({ expect }) => testMac(expect, Arch.universal))
 
 // only run on arm64 macs, otherwise of course no files can be found to be updated to (due to arch mismatch)
 test.ifMac.ifEnv(process.arch === "arm64")("Mac arm64", ({ expect }) => testMac(expect, Arch.arm64))

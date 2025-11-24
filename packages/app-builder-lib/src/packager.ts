@@ -374,9 +374,8 @@ export class Packager {
 
     const devMetadata = this.devMetadata
     const configuration = await getConfig(projectDir, configPath, configFromOptions, new Lazy(() => Promise.resolve(devMetadata)))
-    if (log.isDebugEnabled) {
-      log.debug({ config: getSafeEffectiveConfig(configuration) }, "effective config")
-    }
+
+    log.debug({ config: getSafeEffectiveConfig(configuration) }, "effective config")
 
     this._appDir = await computeDefaultAppDirectory(projectDir, configuration.directories!.app)
     this.isTwoPackageJsonProjectLayoutUsed = this._appDir !== projectDir

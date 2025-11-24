@@ -1,4 +1,4 @@
-FROM fedora:latest
+FROM fedora:42
 
 RUN dnf install -y \
     libxcrypt-compat \
@@ -15,10 +15,13 @@ RUN dnf install -y \
     libuuid-devel \
     python3 \
     curl \
-    xz
+    xz \
+    zypper \
+    at-spi2-core
 
 # Optional: for better font rendering or Chromium deps
-RUN dnf install -y liberation-fonts fontconfig
+RUN dnf install -y liberation-fonts fontconfig gtk3 xdg-utils xorg-x11-server-Xvfb
+
 
 RUN npm --silent install --global --depth 0 pnpm corepack \
  && corepack enable

@@ -2,16 +2,12 @@ import { Configuration, Platform } from "app-builder-lib"
 import { PM } from "app-builder-lib/out/node-module-collector"
 import { exists } from "builder-util/src/util"
 import path from "path"
-import { assertPack, getPackageManagerWithVersion, linuxDirTarget, modifyPackageJson } from "./helpers/packTester"
+import { assertPack, linuxDirTarget, modifyPackageJson } from "./helpers/packTester"
 import { ELECTRON_VERSION } from "./helpers/testConfig"
 import { verifySmartUnpack } from "./helpers/verifySmartUnpack"
 
-const yarnVersion = getPackageManagerWithVersion(PM.YARN).prepareEntry
-const yarnBerryVersion = getPackageManagerWithVersion(PM.YARN_BERRY).prepareEntry
-
-const packageConfig = (data: any, version: string) => {
-  data.packageManager = version
-  data.name = "@packageManager/app"
+const packageConfig = (data: any) => {
+  data.name = "@packageManagers/test-app-yarn-workspace"
   data.version = "1.0.0"
   data.dependencies = {
     ...data.debpendencies,
@@ -41,16 +37,14 @@ test("yarn workspace", ({ expect }) =>
       config,
     },
     {
+      packageManager: PM.YARN,
       storeDepsLockfileSnapshot: true,
       packed: async context => {
         await verifySmartUnpack(expect, context.getResources(Platform.LINUX))
         expect(await exists(path.join(context.getResources(Platform.LINUX), "app.asar.unpacked", extraFile))).toBeTruthy()
       },
       projectDirCreated: async projectDir => {
-        await modifyPackageJson(projectDir, data => {
-          data.packageManager = yarnVersion
-        })
-        await modifyPackageJson(path.join(projectDir, "packages", "test-app"), data => packageConfig(data, yarnVersion))
+        await modifyPackageJson(path.join(projectDir, "packages", "test-app"), data => packageConfig(data))
       },
     }
   ))
@@ -66,16 +60,14 @@ test("yarn berry workspace", ({ expect }) =>
       config,
     },
     {
+      packageManager: PM.YARN_BERRY,
       storeDepsLockfileSnapshot: true,
       packed: async context => {
         await verifySmartUnpack(expect, context.getResources(Platform.LINUX))
         expect(await exists(path.join(context.getResources(Platform.LINUX), "app.asar.unpacked", extraFile))).toBeTruthy()
       },
       projectDirCreated: async projectDir => {
-        await modifyPackageJson(projectDir, data => {
-          data.packageManager = yarnBerryVersion
-        })
-        await modifyPackageJson(path.join(projectDir, "packages", "test-app"), data => packageConfig(data, yarnBerryVersion))
+        await modifyPackageJson(path.join(projectDir, "packages", "test-app"), data => packageConfig(data))
       },
     }
   ))

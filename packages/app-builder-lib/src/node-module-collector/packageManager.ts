@@ -4,11 +4,11 @@ import * as path from "path"
 import * as which from "which"
 
 export enum PM {
-  NPM = "npm",
-  YARN = "yarn",
   PNPM = "pnpm",
+  YARN = "yarn",
   YARN_BERRY = "yarn-berry",
   BUN = "bun",
+  NPM = "npm",
 }
 
 // Cache for resolved paths

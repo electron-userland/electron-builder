@@ -1,3 +1,4 @@
+import { isEmptyOrSpaces } from "builder-util"
 import { ChildProcess, spawn } from "child_process"
 import { chmodSync } from "fs"
 import os from "os"
@@ -146,8 +147,8 @@ export async function launchAndWaitForQuit({ appPath, timeoutMs = 20000, env = {
 
 // ⬇️ Launch Xvfb and validate it starts
 export function startXvfb(): { display: string; stop: () => void } {
-  const display = `:${Math.floor(90 + Math.random() * 10)}`
-  const proc = spawn("Xvfb", [display, "-screen", "0", "1024x768x24"], {
+  const display = `:${Math.ceil(Math.random() * 100)}`
+  const proc = spawn("Xvfb", [display, "-screen", "0", "1920x1080x24"], {
     detached: true,
     stdio: ["ignore", "pipe", "pipe"],
   })
@@ -161,11 +162,12 @@ export function startXvfb(): { display: string; stop: () => void } {
     if (!proc.pid || isNaN(proc.pid)) {
       throw new Error(`Xvfb failed to start on ${display}: ${errorOutput}`)
     }
-  }, 200)
+  }, 1000)
 
   proc.unref()
 
   const stop = () => {
+    console.log(`Stopping Xvfb.${isEmptyOrSpaces(errorOutput) ? "" : ` Error output: ${errorOutput}`}`)
     if (typeof proc.pid === "number" && !isNaN(proc.pid)) {
       try {
         process.kill(-proc.pid, "SIGTERM")
@@ -174,7 +176,7 @@ export function startXvfb(): { display: string; stop: () => void } {
       }
     }
   }
-  // Ensure Xvfb is stopped on process exit
+  // Ensure Xvfb is stopped on main process exit
   ;["SIGINT", "SIGTERM", "uncaughtException", "unhandledRejection"].forEach(sig => {
     process.once(sig, () => {
       try {
