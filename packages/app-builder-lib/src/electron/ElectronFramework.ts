@@ -51,7 +51,7 @@ export async function createElectronFrameworkSupport(configuration: Configuratio
   }
 
   const branding = createBrandingOpts(configuration)
-  return new ElectronFramework(branding.projectName, version, branding.productName)
+  return new ElectronFramework(branding.projectName, version, `${branding.productName}.app`)
 }
 
 class ElectronFramework implements Framework {
