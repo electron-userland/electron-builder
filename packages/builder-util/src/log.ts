@@ -3,6 +3,40 @@ import { Chalk } from "chalk"
 import _debug from "debug"
 import WritableStream = NodeJS.WritableStream
 
+import { Signale } from "signale"
+
+export enum ELECTRON_BUILDER_SIGNALS {
+  TOTAL = "building with electron-builder",
+  PACKAGING = "packaging application",
+  ARTIFACTS = "generating artifacts",
+}
+
+const signale = new Signale({
+  types: {
+    info: {
+      badge: "ℹ️",
+      color: "blue",
+      label: "",
+    },
+    warn: {
+      badge: "⚠️",
+      color: "yellow",
+      label: "warn",
+    },
+    error: {
+      badge: "⨯",
+      color: "red",
+      label: "error",
+    },
+    debug: {
+      badge: "🐛",
+      color: "magenta",
+      label: "debug",
+    },
+  },
+})
+signale.config({ displayTimestamp: true, displayLabel: true })
+
 let printer: ((message: string) => void) | null = null
 
 export const debug = _debug("electron-builder")
@@ -15,7 +49,7 @@ export function setPrinter(value: ((message: string) => void) | null) {
   printer = value
 }
 
-export type LogLevel = "info" | "warn" | "debug" | "notice" | "error"
+export type LogLevel = "info" | "warn" | "debug" | "note" | "error"
 
 export const PADDING = 2
 
@@ -39,6 +73,20 @@ export class Logger {
   // noinspection JSMethodCanBeStatic
   get isDebugEnabled() {
     return debug.enabled
+  }
+
+  start(label: string, interactive: boolean = false) {
+    signale.time(label)
+    // if (interactive) {
+    //   signale.pending(`Starting ${label}...`)
+    // }
+  }
+
+  complete(label: string, interactive: boolean = false) {
+    signale.timeEnd(label)
+    // if (interactive) {
+    //   signale.success(`${label} completed.`)
+    // }
   }
 
   info(messageOrFields: Fields | null | string, message?: string) {
@@ -88,11 +136,12 @@ export class Logger {
       message = message.toString()
     }
 
-    const levelIndicator = level === "error" ? "⨯" : "•"
-    const color = LEVEL_TO_COLOR[level]
-    this.stream.write(`${" ".repeat(PADDING)}${color(levelIndicator)} `)
-    this.stream.write(Logger.createMessage(this.messageTransformer(message, level), fields, level, color, PADDING + 2 /* level indicator and space */))
-    this.stream.write("\n")
+    // const levelIndicator = level === "error" ? "⨯" : "•"
+    // const color = LEVEL_TO_COLOR[level]
+    // this.stream.write(`${" ".repeat(PADDING)}${color(levelIndicator)} `)
+    // this.stream.write(Logger.createMessage(this.messageTransformer(message, level), fields, level, color, PADDING + 2 /* level indicator and space */))
+    // this.stream.write("\n")
+    signale[level](message, fields || {})
   }
 
   static createMessage(message: string, fields: Fields | null, level: LogLevel, color: (it: string) => string, messagePadding = 0): string {

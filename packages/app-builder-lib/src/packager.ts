@@ -5,6 +5,7 @@ import {
   AsyncTaskManager,
   DebugLogger,
   deepAssign,
+  ELECTRON_BUILDER_SIGNALS,
   executeFinally,
   getArtifactArchName,
   InvalidConfigurationError,
@@ -273,6 +274,7 @@ export class Packager {
     }
 
     log.info({ version: PACKAGE_VERSION, os: getOsRelease() }, "electron-builder")
+    log.start(ELECTRON_BUILDER_SIGNALS.TOTAL, true)
   }
 
   private async addPackagerEventHandlers() {
