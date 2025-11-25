@@ -64,7 +64,9 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
       throw new Error("getNodeModules cancelled after building production graph")
     }
 
-    const hoisterResult: HoisterResult = hoist(this.transformToHoisterTree(this.productionGraph, packageName), {})
+    const hoisterResult: HoisterResult = hoist(this.transformToHoisterTree(this.productionGraph, packageName), {
+      check: log.isDebugEnabled,
+    })
 
     await this._getNodeModules(hoisterResult.dependencies, this.nodeModules)
     log.debug({ packageName, depCount: this.nodeModules.length }, "node modules collection complete")
