@@ -62,6 +62,7 @@ export class AsarPackager {
     }
 
     const results: AsarStreamType[] = []
+    const resultsPaths = new Set<string>()
     for (const fileSet of fileSets) {
       // Don't use Promise.all, we need to retain order of execution/iteration through the already-ordered fileset
       for (const [index, file] of fileSet.files.entries()) {
@@ -79,7 +80,7 @@ export class AsarPackager {
           return isChild || isFileUnpacked
         }
 
-        this.processParentDirectories(isUnpacked, destination, results)
+        this.processParentDirectories(isUnpacked, destination, results, resultsPaths)
 
         const result = await this.processFileOrSymlink({
           file,
@@ -91,13 +92,14 @@ export class AsarPackager {
         })
         if (result != null) {
           results.push(result)
+          resultsPaths.add(result.path)
         }
       }
     }
     return results
   }
 
-  private processParentDirectories(isUnpacked: (path: string) => boolean, destination: string, results: AsarStreamType[]) {
+  private processParentDirectories(isUnpacked: (path: string) => boolean, destination: string, results: AsarStreamType[], resultsPaths: Set<string>) {
     // process parent directories
     let superDir = path.dirname(path.normalize(destination))
     while (superDir !== ".") {
@@ -107,8 +109,9 @@ export class AsarPackager {
         unpacked: isUnpacked(superDir),
       }
       // add to results if not already present
-      if (!results.some(r => r.path === dir.path)) {
+      if (!resultsPaths.has(dir.path)) {
         results.push(dir)
+        resultsPaths.add(dir.path)
       }
 
       superDir = path.dirname(superDir)
