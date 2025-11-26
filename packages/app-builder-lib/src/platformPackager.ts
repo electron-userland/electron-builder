@@ -246,7 +246,8 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
 
     const framework = this.info.framework
-    log.info(ELECTRON_BUILDER_SIGNALS.PACKAGING,
+    log.info(
+      ELECTRON_BUILDER_SIGNALS.PACKAGING,
       {
         platform: platformName,
         arch: Arch[arch],
@@ -579,7 +580,8 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       const appAsarStat = await statOrNull(path.join(this.info.appDir, "app.asar"))
       //noinspection ES6MissingAwait
       if (appAsarStat == null || !appAsarStat.isFile()) {
-        log.warn(ELECTRON_BUILDER_SIGNALS.PACKAGING,
+        log.warn(
+          ELECTRON_BUILDER_SIGNALS.PACKAGING,
           {
             solution: "enable asar and use asarUnpack to unpack files that must be externally available",
           },

@@ -1,7 +1,21 @@
 import { signAsync } from "@electron/osx-sign"
 import { SignOptions } from "@electron/osx-sign/dist/cjs/types"
 import { Identity as _Identity } from "@electron/osx-sign/dist/cjs/util-identities"
-import { copyFile, ELECTRON_BUILDER_SIGNALS, exec, Fields, InvalidConfigurationError, isEmptyOrSpaces, isEnvTrue, isPullRequest, log, Logger, retry, TmpDir, unlinkIfExists } from "builder-util"
+import {
+  copyFile,
+  ELECTRON_BUILDER_SIGNALS,
+  exec,
+  Fields,
+  InvalidConfigurationError,
+  isEmptyOrSpaces,
+  isEnvTrue,
+  isPullRequest,
+  log,
+  Logger,
+  retry,
+  TmpDir,
+  unlinkIfExists,
+} from "builder-util"
 import { Nullish } from "builder-util-runtime"
 import { createHash, randomBytes } from "crypto"
 import { rename } from "fs/promises"
@@ -47,7 +61,9 @@ export function isSignAllowed(isPrintWarn = true): boolean {
     } else {
       if (isPrintWarn) {
         // https://github.com/electron-userland/electron-builder/issues/1524
-        log.warn(ELECTRON_BUILDER_SIGNALS.CODE_SIGN, null,
+        log.warn(
+          ELECTRON_BUILDER_SIGNALS.CODE_SIGN,
+          null,
           "Current build is a part of pull request, code signing will be skipped." + "\nSet env CSC_FOR_PULL_REQUEST to true to force code signing." + `\n${buildForPrWarning}`
         )
       }

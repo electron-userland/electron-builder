@@ -484,7 +484,8 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
     const customSign = await resolveFunction(this.appInfo.type, customSignOptions.sign, "sign")
 
     const { app, platform, type, provisioningProfile } = opts
-    log.info(ELECTRON_BUILDER_SIGNALS.CODE_SIGN,
+    log.info(
+      ELECTRON_BUILDER_SIGNALS.CODE_SIGN,
       {
         file: log.filePath(app),
         platform,

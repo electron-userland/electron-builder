@@ -167,7 +167,8 @@ export class GitlabPublisher extends HttpPublisher {
       return assetPath
     } catch (e: any) {
       const errorInfo = this.categorizeGitlabError(e)
-      log.error(ELECTRON_BUILDER_SIGNALS.PUBLISH,
+      log.error(
+        ELECTRON_BUILDER_SIGNALS.PUBLISH,
         {
           ...logFields,
           error: e.message,
@@ -213,7 +214,7 @@ export class GitlabPublisher extends HttpPublisher {
 
       log.debug(ELECTRON_BUILDER_SIGNALS.PUBLISH, { fileName, assetUrl }, "Successfully linked asset to GitLab release")
     } catch (e: any) {
-    log.warn(ELECTRON_BUILDER_SIGNALS.PUBLISH,  { fileName, assetUrl, error: e.message }, "Failed to link asset to GitLab release")
+      log.warn(ELECTRON_BUILDER_SIGNALS.PUBLISH, { fileName, assetUrl, error: e.message }, "Failed to link asset to GitLab release")
       // Don't throw - the file was uploaded successfully, linking is optional
     }
   }

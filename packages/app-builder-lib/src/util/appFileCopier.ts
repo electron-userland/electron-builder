@@ -213,7 +213,11 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
     const files = await copier.collectNodeModules(dep, nodeModuleExcludedExts, path.relative(mainMatcher.to, destination))
     result[index++] = validateFileSet({ src: source, destination, files, metadata: copier.metadata })
 
-    log.debug(ELECTRON_BUILDER_SIGNALS.COLLECT_FILES, { dep: dep.name, from: log.filePath(source), to: log.filePath(destination), filesCount: files.length }, "prepared to copy node module")
+    log.debug(
+      ELECTRON_BUILDER_SIGNALS.COLLECT_FILES,
+      { dep: dep.name, from: log.filePath(source), to: log.filePath(destination), filesCount: files.length },
+      "prepared to copy node module"
+    )
 
     if (dep.dependencies) {
       for (const c of dep.dependencies) {

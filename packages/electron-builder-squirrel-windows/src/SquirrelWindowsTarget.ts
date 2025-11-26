@@ -26,7 +26,11 @@ export default class SquirrelWindowsTarget extends Target {
     const tmpVendorDirectory = await this.packager.info.tempDirManager.createTempDir({ prefix: "squirrel-windows-vendor" })
 
     if (isEmptyOrSpaces(customSquirrelVendorDirectory) || !fs.existsSync(customSquirrelVendorDirectory)) {
-      log.warn(ELECTRON_BUILDER_SIGNALS.PACKAGING, { customSquirrelVendorDirectory: customSquirrelVendorDirectory }, "unable to access custom Squirrel.Windows vendor directory, falling back to default vendor ")
+      log.warn(
+        ELECTRON_BUILDER_SIGNALS.PACKAGING,
+        { customSquirrelVendorDirectory: customSquirrelVendorDirectory },
+        "unable to access custom Squirrel.Windows vendor directory, falling back to default vendor "
+      )
       const windowInstallerPackage = require.resolve("electron-winstaller/package.json")
       const vendorDirectory = path.join(path.dirname(windowInstallerPackage), "vendor")
 

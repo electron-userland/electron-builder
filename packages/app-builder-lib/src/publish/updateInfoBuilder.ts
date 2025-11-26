@@ -212,7 +212,8 @@ export async function writeUpdateInfoFiles(updateInfoFileTasks: Array<UpdateInfo
   await asyncPool<UpdateInfoFileTask, void>(concurrency, Array.from(updateChannelFileToInfo.values()), async task => {
     const publishConfig = task.publishConfiguration
     if (publishConfig.publishAutoUpdate === false) {
-      log.debug(ELECTRON_BUILDER_SIGNALS.PUBLISH,
+      log.debug(
+        ELECTRON_BUILDER_SIGNALS.PUBLISH,
         {
           provider: publishConfig.provider,
           reason: "publishAutoUpdate is set to false",

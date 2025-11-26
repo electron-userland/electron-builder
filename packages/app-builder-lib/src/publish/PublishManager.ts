@@ -1,4 +1,16 @@
-import { Arch, asArray, AsyncTaskManager, ELECTRON_BUILDER_SIGNALS, exists, InvalidConfigurationError, isEmptyOrSpaces, isPullRequest, log, safeStringifyJson, serializeToYaml } from "builder-util"
+import {
+  Arch,
+  asArray,
+  AsyncTaskManager,
+  ELECTRON_BUILDER_SIGNALS,
+  exists,
+  InvalidConfigurationError,
+  isEmptyOrSpaces,
+  isPullRequest,
+  log,
+  safeStringifyJson,
+  serializeToYaml,
+} from "builder-util"
 import {
   BitbucketOptions,
   CancellationToken,
@@ -104,7 +116,8 @@ export class PublishManager implements PublishContext {
         log.warn(ELECTRON_BUILDER_SIGNALS.PACKAGING, null, publishForPrWarning)
       }
     } else if (publishOptions.publish !== "never") {
-      log.info(ELECTRON_BUILDER_SIGNALS.PACKAGING,
+      log.info(
+        ELECTRON_BUILDER_SIGNALS.PACKAGING,
         {
           reason: "current build is a part of pull request",
           solution: `set env PUBLISH_FOR_PULL_REQUEST to true to force code signing\n${publishForPrWarning}`,
@@ -160,7 +173,8 @@ export class PublishManager implements PublishContext {
 
     const publisher = await this.getOrCreatePublisher(publishConfig, appInfo)
     if (publisher == null) {
-      log.debug(ELECTRON_BUILDER_SIGNALS.PACKAGING,
+      log.debug(
+        ELECTRON_BUILDER_SIGNALS.PACKAGING,
         {
           file: log.filePath(event.file),
           reason: "publisher is null",
@@ -173,7 +187,11 @@ export class PublishManager implements PublishContext {
 
     const providerName = publisher.providerName
     if (this.publishOptions.publish === "onTagOrDraft" && getCiTag() == null && providerName !== "bitbucket" && providerName !== "github") {
-      log.info(ELECTRON_BUILDER_SIGNALS.PACKAGING, { file: log.filePath(event.file), reason: "current build is not for a git tag", publishPolicy: "onTagOrDraft" }, `not published to ${providerName}`)
+      log.info(
+        ELECTRON_BUILDER_SIGNALS.PACKAGING,
+        { file: log.filePath(event.file), reason: "current build is not for a git tag", publishPolicy: "onTagOrDraft" },
+        `not published to ${providerName}`
+      )
       return
     }
 
@@ -374,7 +392,11 @@ async function requireProviderClass(provider: string, packager: Packager): Promi
           return module.default || module
         }
       }
-      log.error(ELECTRON_BUILDER_SIGNALS.PACKAGING, { path: log.filePath(packager.buildResourcesDir), template, extensionsChecked: extensions }, "unable to find publish provider in build resources")
+      log.error(
+        ELECTRON_BUILDER_SIGNALS.PACKAGING,
+        { path: log.filePath(packager.buildResourcesDir), template, extensionsChecked: extensions },
+        "unable to find publish provider in build resources"
+      )
       throw new InvalidConfigurationError(`Cannot find module for publisher "${provider}" with any extension: ${extensions.join(", ")}`)
     }
   }
@@ -596,7 +618,11 @@ async function getResolvedPublishConfig(
 
   if (isGithub) {
     if ((options as GithubOptions).token != null && !(options as GithubOptions).private) {
-      log.warn(ELECTRON_BUILDER_SIGNALS.PACKAGING, null, '"token" specified in the github publish options. It should be used only for [setFeedURL](module:electron-updater/out/AppUpdater.AppUpdater+setFeedURL).')
+      log.warn(
+        ELECTRON_BUILDER_SIGNALS.PACKAGING,
+        null,
+        '"token" specified in the github publish options. It should be used only for [setFeedURL](module:electron-updater/out/AppUpdater.AppUpdater+setFeedURL).'
+      )
     }
     //tslint:disable-next-line:no-object-literal-type-assertion
     return { owner, repo: project, ...options } as GithubOptions

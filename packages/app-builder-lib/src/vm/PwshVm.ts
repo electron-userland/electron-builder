@@ -13,7 +13,8 @@ export class PwshVmManager extends VmManager {
       return "pwsh"
     }
     const errorMessage = `unable to find \`pwsh\`, please install per instructions linked in logs`
-    log.error(ELECTRON_BUILDER_SIGNALS.VM,
+    log.error(
+      ELECTRON_BUILDER_SIGNALS.VM,
       {
         mac: "https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell-on-macos",
         linux: "https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell-on-linux",

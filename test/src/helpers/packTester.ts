@@ -178,7 +178,11 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
       }
       const { cli, prepareEntry, version } = getPackageManagerWithVersion(pm, packageManager)
       if (pm === PM.BUN) {
-        log.info(ELECTRON_BUILDER_SIGNALS.TEST, { pm, version: version, projectDir }, "installing dependencies with bun; corepack does not support it currently and it must be installed separately")
+        log.info(
+          ELECTRON_BUILDER_SIGNALS.TEST,
+          { pm, version: version, projectDir },
+          "installing dependencies with bun; corepack does not support it currently and it must be installed separately"
+        )
       } else {
         log.info(ELECTRON_BUILDER_SIGNALS.TEST, { pm, version: version, projectDir }, "activating corepack")
         try {

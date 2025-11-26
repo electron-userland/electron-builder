@@ -99,7 +99,7 @@ export async function installDependencies(
   const searchPaths = [projectDir, appDir].concat(workspaceRoot ? [workspaceRoot] : [])
   const { pm, resolvedDirectory: _resolvedWorkspaceDir } = await detectPackageManager(searchPaths)
 
-  log.info(ELECTRON_BUILDER_SIGNALS.DEPENDENCY_INSTALLATION,{ pm, platform, arch, projectDir, appDir, workspaceRoot: _resolvedWorkspaceDir }, "installing dependencies")
+  log.info(ELECTRON_BUILDER_SIGNALS.DEPENDENCY_INSTALLATION, { pm, platform, arch, projectDir, appDir, workspaceRoot: _resolvedWorkspaceDir }, "installing dependencies")
 
   const execArgs = ["install"]
   if (pm === PM.YARN) {

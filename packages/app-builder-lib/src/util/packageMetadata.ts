@@ -70,7 +70,9 @@ export function checkMetadata(metadata: Metadata, devMetadata: any | null, appPa
 
   const devDependencies = (metadata as any).devDependencies
   if (devDependencies != null && ("electron-rebuild" in devDependencies || "@electron/rebuild" in devDependencies)) {
-    log.info(ELECTRON_BUILDER_SIGNALS.INIT, null,
+    log.info(
+      ELECTRON_BUILDER_SIGNALS.INIT,
+      null,
       '@electron/rebuild already used by electron-builder, please consider to remove excess dependency from devDependencies\n\nTo ensure your native dependencies are always matched electron version, simply add script `"postinstall": "electron-builder install-app-deps" to your `package.json`'
     )
   }

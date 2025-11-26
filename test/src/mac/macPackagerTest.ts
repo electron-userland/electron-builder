@@ -120,8 +120,7 @@ test.only("one-package", ({ expect }) =>
         await assertThat(expect, path.join(appDir, "Contents", "Resources", "someFoo.icns")).isFile()
       },
     }
-  )
-)
+  ))
 
 test.ifMac("yarn two package.json w/ native module", ({ expect }) =>
   assertPack(

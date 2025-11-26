@@ -18,7 +18,11 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
     try {
       return await super.getDependenciesTree(pm)
     } catch (error: any) {
-      log.info(ELECTRON_BUILDER_SIGNALS.COLLECT_FILES, { pm: this.installOptions.manager, parser: PM.NPM, error: error.message }, "unable to process dependency tree, falling back to using manual node_modules traversal")
+      log.info(
+        ELECTRON_BUILDER_SIGNALS.COLLECT_FILES,
+        { pm: this.installOptions.manager, parser: PM.NPM, error: error.message },
+        "unable to process dependency tree, falling back to using manual node_modules traversal"
+      )
     }
     // node_modules linker fallback. (Slower due to system ops, so we only use it as a fallback) [e.g. corepack env will not allow npm CLI to extract tree]
     return this.buildNodeModulesTreeManually(this.rootDir)
@@ -128,8 +132,8 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
 
           // Recursively build the dependency tree for this dependency
           prodDeps[depName] = await buildFromPackage(depPath)
-          } catch (error: any) {
-            log.warn(ELECTRON_BUILDER_SIGNALS.COLLECT_FILES, { package: pkg.name, dependency: depName, error: error.message }, "failed to process dependency, skipping")
+        } catch (error: any) {
+          log.warn(ELECTRON_BUILDER_SIGNALS.COLLECT_FILES, { package: pkg.name, dependency: depName, error: error.message }, "failed to process dependency, skipping")
         }
       }
 

@@ -47,7 +47,11 @@ export async function getConfig(
   }
 
   if (configAndEffectiveFile != null) {
-    log.info(ELECTRON_BUILDER_SIGNALS.INIT, { file: configAndEffectiveFile.configFile == null ? 'package.json ("build" field)' : configAndEffectiveFile.configFile }, "loaded configuration")
+    log.info(
+      ELECTRON_BUILDER_SIGNALS.INIT,
+      { file: configAndEffectiveFile.configFile == null ? 'package.json ("build" field)' : configAndEffectiveFile.configFile },
+      "loaded configuration"
+    )
   }
 
   if (config.extends == null && config.extends !== null) {

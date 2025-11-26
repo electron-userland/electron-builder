@@ -80,7 +80,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     const hoisterResult: HoisterResult = hoist(this.transformToHoisterTree(this.productionGraph, packageName), { check: true })
 
     await this._getNodeModules(hoisterResult.dependencies, this.nodeModules)
-    log.debug(ELECTRON_BUILDER_SIGNALS.COLLECT_FILES,   { packageName, depCount: this.nodeModules.length }, "node modules collection complete")
+    log.debug(ELECTRON_BUILDER_SIGNALS.COLLECT_FILES, { packageName, depCount: this.nodeModules.length }, "node modules collection complete")
 
     return this.nodeModules
   }
@@ -414,7 +414,11 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
         // https://github.com/npm/npm/issues/17624
         const shouldIgnore = code === 1 && "npm" === execName.toLowerCase() && args.includes("list")
         if (shouldIgnore) {
-          log.debug(ELECTRON_BUILDER_SIGNALS.COLLECT_FILES, null, "`npm list` returned non-zero exit code, but it MIGHT be expected (https://github.com/npm/npm/issues/17624). Check stderr for details.")
+          log.debug(
+            ELECTRON_BUILDER_SIGNALS.COLLECT_FILES,
+            null,
+            "`npm list` returned non-zero exit code, but it MIGHT be expected (https://github.com/npm/npm/issues/17624). Check stderr for details."
+          )
         }
         if (stderr.length > 0) {
           log.debug(ELECTRON_BUILDER_SIGNALS.COLLECT_FILES, { stderr }, "note: there was node module collector output on stderr")

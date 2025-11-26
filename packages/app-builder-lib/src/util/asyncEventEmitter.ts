@@ -48,7 +48,7 @@ export class AsyncEventEmitter<T extends EventMap> implements TypedEventEmitter<
 
     const eventListeners = this.listeners.get(event) || []
     if (!eventListeners.length) {
-      log.debug(ELECTRON_BUILDER_SIGNALS.GENERIC,{ event }, "no event listeners found")
+      log.debug(ELECTRON_BUILDER_SIGNALS.GENERIC, { event }, "no event listeners found")
       return result
     }
 

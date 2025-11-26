@@ -50,7 +50,7 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
 
     if (tree.dependencies?.[appName]) {
       const { name, path } = tree.dependencies[appName]
-      log.debug(ELECTRON_BUILDER_SIGNALS.COLLECT_FILES,{ name, path }, "pruning root app/self package from workspace tree")
+      log.debug(ELECTRON_BUILDER_SIGNALS.COLLECT_FILES, { name, path }, "pruning root app/self package from workspace tree")
       delete tree.dependencies[appName]
     }
     return Promise.resolve(tree)
@@ -137,7 +137,7 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
     for (const node of tree) {
       const match = node.name.match(/^(.*)@([^@]+)$/)
       if (!match) {
-        log.debug(ELECTRON_BUILDER_SIGNALS.COLLECT_FILES,{ name: node.name }, "invalid node name format")
+        log.debug(ELECTRON_BUILDER_SIGNALS.COLLECT_FILES, { name: node.name }, "invalid node name format")
         continue
       }
 
@@ -146,7 +146,7 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
 
       const isShadow = node.shadow && node.color === "dim"
       if (isShadow) {
-        log.debug(ELECTRON_BUILDER_SIGNALS.COLLECT_FILES,{ pkgName, version }, "skipping shadow node")
+        log.debug(ELECTRON_BUILDER_SIGNALS.COLLECT_FILES, { pkgName, version }, "skipping shadow node")
         continue
       }
 
@@ -167,7 +167,7 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
         optionalDependencies: {},
       }
 
-      log.debug(ELECTRON_BUILDER_SIGNALS.COLLECT_FILES,{ name: pkgName, version }, "+ normalize")
+      log.debug(ELECTRON_BUILDER_SIGNALS.COLLECT_FILES, { name: pkgName, version }, "+ normalize")
 
       if (node.children && node.children.length > 0) {
         for (const child of node.children) {
@@ -181,7 +181,7 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
             continue
           }
 
-          log.debug(ELECTRON_BUILDER_SIGNALS.COLLECT_FILES,{ parent: pkgName, childName, childVersion }, "  + normalize child")
+          log.debug(ELECTRON_BUILDER_SIGNALS.COLLECT_FILES, { parent: pkgName, childName, childVersion }, "  + normalize child")
           const childDeps = await this.normalizeTree([child], seen, appName)
 
           for (const [childDepName, childDep] of Object.entries(childDeps)) {
@@ -200,7 +200,7 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
     const rootPkgJson = await this.appPkgJson.value
     const failedPackages = new Set<string>()
 
-    log.debug(ELECTRON_BUILDER_SIGNALS.COLLECT_FILES,{ packageToExclude, hasWorkspaces: !!tree.workspaces }, "collectAllDependencies starting")
+    log.debug(ELECTRON_BUILDER_SIGNALS.COLLECT_FILES, { packageToExclude, hasWorkspaces: !!tree.workspaces }, "collectAllDependencies starting")
 
     const collect = async (
       deps: YarnDependency["dependencies"] | YarnDependency["optionalDependencies"] = {},
@@ -210,7 +210,7 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
       for (const [, value] of Object.entries(deps)) {
         // Skip the app package if provided
         if (packageToExclude && value.name === packageToExclude) {
-          log.debug(ELECTRON_BUILDER_SIGNALS.COLLECT_FILES,{ name: value.name }, "skipping app package in collectAllDependencies")
+          log.debug(ELECTRON_BUILDER_SIGNALS.COLLECT_FILES, { name: value.name }, "skipping app package in collectAllDependencies")
           continue
         }
 
@@ -224,23 +224,23 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
           p = await this.resolvePath(value.path)
         } catch (e) {
           if (treatAsOptional) {
-            log.debug(ELECTRON_BUILDER_SIGNALS.COLLECT_FILES,{ pkg: this.cacheKey(value), name: value.name }, "failed to resolve optional dependency, skipping")
+            log.debug(ELECTRON_BUILDER_SIGNALS.COLLECT_FILES, { pkg: this.cacheKey(value), name: value.name }, "failed to resolve optional dependency, skipping")
             failedPackages.add(value.name)
             continue
           }
 
           if (!isDirectRootDep) {
-            log.debug(ELECTRON_BUILDER_SIGNALS.COLLECT_FILES,{ pkg: this.cacheKey(value), name: value.name }, "failed to resolve transitive dependency, treating as optional")
+            log.debug(ELECTRON_BUILDER_SIGNALS.COLLECT_FILES, { pkg: this.cacheKey(value), name: value.name }, "failed to resolve transitive dependency, treating as optional")
             failedPackages.add(value.name)
             continue
           }
 
-          log.error(ELECTRON_BUILDER_SIGNALS.COLLECT_FILES,{ pkg: this.cacheKey(value) }, "failed to resolve module directory")
+          log.error(ELECTRON_BUILDER_SIGNALS.COLLECT_FILES, { pkg: this.cacheKey(value) }, "failed to resolve module directory")
           throw e
         }
 
         if (!p) {
-          log.debug(ELECTRON_BUILDER_SIGNALS.COLLECT_FILES,{ pkg: this.cacheKey(value), name: value.name }, "optional dependency not found, skipping")
+          log.debug(ELECTRON_BUILDER_SIGNALS.COLLECT_FILES, { pkg: this.cacheKey(value), name: value.name }, "optional dependency not found, skipping")
           failedPackages.add(value.name)
           continue
         }
@@ -250,7 +250,7 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
         if (versionMatch) {
           resolvedVersion = versionMatch[1]
           if (resolvedVersion !== value.version) {
-            log.debug(ELECTRON_BUILDER_SIGNALS.COLLECT_FILES,{ name: value.name, declared: value.version, resolved: resolvedVersion }, "resolved actual version from path")
+            log.debug(ELECTRON_BUILDER_SIGNALS.COLLECT_FILES, { name: value.name, declared: value.version, resolved: resolvedVersion }, "resolved actual version from path")
           }
         }
 
@@ -280,7 +280,7 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
     if (packageToExclude) {
       for (const [key, dep] of this.allDependencies.entries()) {
         if (dep.name === packageToExclude) {
-          log.debug(ELECTRON_BUILDER_SIGNALS.COLLECT_FILES,{ key, name: dep.name }, "removing app package from allDependencies")
+          log.debug(ELECTRON_BUILDER_SIGNALS.COLLECT_FILES, { key, name: dep.name }, "removing app package from allDependencies")
           this.allDependencies.delete(key)
         }
       }
@@ -290,7 +290,7 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
       const cleanDependencies = (deps: Record<string, YarnDependency> = {}) => {
         for (const [key, dep] of Object.entries(deps)) {
           if (failedPackages.has(dep.name)) {
-            log.debug(ELECTRON_BUILDER_SIGNALS.COLLECT_FILES,{ name: dep.name }, "removing failed package from tree")
+            log.debug(ELECTRON_BUILDER_SIGNALS.COLLECT_FILES, { name: dep.name }, "removing failed package from tree")
             delete deps[key]
           } else {
             if (dep.dependencies) {

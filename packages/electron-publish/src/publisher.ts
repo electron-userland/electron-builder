@@ -18,7 +18,7 @@ export abstract class Publisher {
   abstract upload(task: UploadTask): Promise<any>
 
   protected createProgressBar(fileName: string, size: number): ProgressBar | null {
-    log.info(ELECTRON_BUILDER_SIGNALS.PUBLISH,{ file: fileName, provider: this.providerName }, "uploading")
+    log.info(ELECTRON_BUILDER_SIGNALS.PUBLISH, { file: fileName, provider: this.providerName }, "uploading")
     if (this.context.progress == null || size < 512 * 1024) {
       return null
     }

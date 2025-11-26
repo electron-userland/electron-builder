@@ -1,7 +1,6 @@
 import * as React from "react"
 import { Text } from "ink"
 import { Nullish } from "builder-util-runtime"
-
 export type LogLevel = "info" | "warn" | "error" | "debug" | "success"
 
 export interface LogEntry {
@@ -9,6 +8,7 @@ export interface LogEntry {
   fields: Record<string, any> | Nullish
   level: LogLevel
 }
+
 
 interface Props {
   logs: LogEntry[]

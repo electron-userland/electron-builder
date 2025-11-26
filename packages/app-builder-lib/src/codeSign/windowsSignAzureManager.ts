@@ -37,7 +37,11 @@ export class WindowsSignAzureManager implements SignManager {
     } catch (error: any) {
       // Might not be needed, seems GH runners already have NuGet set up.
       // Logging to debug just in case users run into this. If NuGet isn't present, Install-Module -Name TrustedSigning will fail, so we'll get the logs at that point
-      log.debug(ELECTRON_BUILDER_SIGNALS.CODE_SIGN, { message: error.message || error.stack }, "unable to install PackageProvider Nuget. Might be a false alarm though as some systems already have it installed")
+      log.debug(
+        ELECTRON_BUILDER_SIGNALS.CODE_SIGN,
+        { message: error.message || error.stack },
+        "unable to install PackageProvider Nuget. Might be a false alarm though as some systems already have it installed"
+      )
     }
     await vm.exec(ps, ["-NoProfile", "-NonInteractive", "-Command", "Install-Module -Name TrustedSigning -MinimumVersion 0.5.0 -Force -Repository PSGallery -Scope CurrentUser"])
 

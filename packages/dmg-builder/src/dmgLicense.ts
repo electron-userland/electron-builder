@@ -59,7 +59,7 @@ export async function addLicenseToDmg(packager: PlatformPackager<any>, dmgPath: 
   await dmgLicenseFromJSON(dmgPath, jsonFile, {
     onNonFatalError: (e: Error) => {
       log.warn(ELECTRON_BUILDER_SIGNALS.PACKAGING, e, `dmg-license warning`)
-    }
+    },
   })
 
   return jsonFile

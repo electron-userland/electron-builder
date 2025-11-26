@@ -29,7 +29,11 @@ export class YarnBerryNodeModulesCollector extends NpmNodeModulesCollector {
   protected async getDependenciesTree(_pm: PM): Promise<NpmDependency> {
     const isPnp = await this.yarnSetupInfo.value.then(info => !!info.isPnP)
     if (isPnp) {
-      log.warn(ELECTRON_BUILDER_SIGNALS.COLLECT_FILES, null, "Yarn PnP extraction not supported directly due to virtual file paths (<package_name>.zip/<file_path>), falling back to NPM node module collector")
+      log.warn(
+        ELECTRON_BUILDER_SIGNALS.COLLECT_FILES,
+        null,
+        "Yarn PnP extraction not supported directly due to virtual file paths (<package_name>.zip/<file_path>), falling back to NPM node module collector"
+      )
     }
 
     return super.getDependenciesTree(PM.NPM)

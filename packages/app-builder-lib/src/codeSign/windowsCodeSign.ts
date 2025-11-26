@@ -14,7 +14,7 @@ export async function signWindows(options: WindowsSignOptions, packager: WinPack
     }
     log.info(ELECTRON_BUILDER_SIGNALS.CODE_SIGN, { path: log.filePath(options.path) }, "signing with Azure Trusted Signing")
   } else {
-    log.info(ELECTRON_BUILDER_SIGNALS.CODE_SIGN,  { path: log.filePath(options.path) }, "signing with signtool.exe")
+    log.info(ELECTRON_BUILDER_SIGNALS.CODE_SIGN, { path: log.filePath(options.path) }, "signing with signtool.exe")
   }
   const packageManager = await packager.signingManager.value
   return signWithRetry(async () => packageManager.signFile(options))

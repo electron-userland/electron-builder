@@ -218,7 +218,7 @@ export class WindowsSignToolManager implements SignManager {
           user: cscInfo.isLocalMachineStore ? "local machine" : "current user",
         }
       }
-      log.info(ELECTRON_BUILDER_SIGNALS.CODE_SIGN,logInfo, "signing")
+      log.info(ELECTRON_BUILDER_SIGNALS.CODE_SIGN, logInfo, "signing")
     } else if (!customSign) {
       log.debug(ELECTRON_BUILDER_SIGNALS.CODE_SIGN, { signHook: !!customSign, cscInfo }, "no signing info identified, signing is skipped")
       return false

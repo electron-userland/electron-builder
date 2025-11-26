@@ -293,7 +293,7 @@ export default class FpmTarget extends Target {
     if (forceDebugLogging) {
       fpmArgs.push("--debug")
     }
-    if (log.isDebugEnabled)  {
+    if (log.isDebugEnabled) {
       fpmArgs.push("--log", "debug")
     }
     fpmConfiguration.customDepends?.forEach(it => fpmArgs.push("-d", it))
@@ -324,7 +324,8 @@ export default class FpmTarget extends Target {
         }
       }
       if (e.message.includes("error: File not found")) {
-        log.error(ELECTRON_BUILDER_SIGNALS.PACKAGING,
+        log.error(
+          ELECTRON_BUILDER_SIGNALS.PACKAGING,
           { fpmArgs, ...fpmConfiguration },
           "fpm failed to find the specified files. Please check your configuration and ensure all paths are correct. To see what files triggered this, set the environment variable FPM_DEBUG=true"
         )

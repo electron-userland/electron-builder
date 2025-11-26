@@ -1,4 +1,14 @@
-import { replaceDefault as _replaceDefault, Arch, deepAssign, ELECTRON_BUILDER_SIGNALS, executeAppBuilder, InvalidConfigurationError, log, serializeToYaml, toLinuxArchString } from "builder-util"
+import {
+  replaceDefault as _replaceDefault,
+  Arch,
+  deepAssign,
+  ELECTRON_BUILDER_SIGNALS,
+  executeAppBuilder,
+  InvalidConfigurationError,
+  log,
+  serializeToYaml,
+  toLinuxArchString,
+} from "builder-util"
 import { asArray, Nullish, SnapStoreOptions } from "builder-util-runtime"
 import { outputFile, readFile } from "fs-extra"
 import { load } from "js-yaml"
