@@ -2,8 +2,7 @@
   "extends": "../tsconfig-base.json",
   "compilerOptions": {
     "outDir": "out",
-    "rootDir": "src",
-    "jsx": "react"
+    "rootDir": "src"
   },
   "include": [
     "src/**/*.ts",
@@ -13,9 +12,5 @@
     {
       "path": "../builder-util-runtime"
     }
-  ],
-  "jsdoc": {
-    "out": "../../scripts/jsdoc/out/util",
-    "access": "public"
-  }
+  ]
 }
