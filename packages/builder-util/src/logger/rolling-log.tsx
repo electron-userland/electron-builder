@@ -1,10 +1,12 @@
 import * as React from "react"
 import { Text } from "ink"
+import { Nullish } from "builder-util-runtime"
 
 export type LogLevel = "info" | "warn" | "error" | "debug" | "success"
 
 export interface LogEntry {
-  message: string
+  message: string | Nullish
+  fields: Record<string, any> | Nullish
   level: LogLevel
 }
 

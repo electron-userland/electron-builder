@@ -9,7 +9,15 @@ import * as _debug from "debug";
 import { LogEntry, LogLevel } from "./logger/rolling-log";
 import { Nullish } from "builder-util-runtime";
 
-export const debug = _debug("electron-builder");
+let printer: ((message: string) => void) | null = null
+
+export const debug = _debug("electron-builder")
+
+export function setPrinter(value: ((message: string) => void) | null) {
+  printer = value
+}
+
+export const PADDING = 2
 
 // Enum of signals
 export enum ELECTRON_BUILDER_SIGNALS {
@@ -60,11 +68,18 @@ export class Logger {
     this.rerender();
   }
 
+
+  filePath(file: string) {
+    const cwd = process.cwd()
+    return file.startsWith(cwd) ? file.substring(cwd.length + 1) : file
+  }
+
+
   get isDebugEnabled(): boolean {
     return debug.enabled;
   }
 
-  private log(signal: ELECTRON_BUILDER_SIGNALS, fields: Fields | Nullish, message: string, level: LogLevel = "info") {
+  private log(signal: ELECTRON_BUILDER_SIGNALS, fields: Fields | Nullish, message?: string, level: LogLevel = "info") {
     const task = this.tasks[signal];
     if (!task) return;
 
@@ -72,22 +87,22 @@ export class Logger {
       task.start();
     }
 
-    task.log(message, level);
+    task.log(fields, message, level);
   }
 
   info(signal: ELECTRON_BUILDER_SIGNALS, fields: Fields | Nullish, message: string) {
     this.log(signal, fields, message, "info");
   }
 
-  warn(signal: ELECTRON_BUILDER_SIGNALS, fields: Fields | Nullish, message: string) {
+  warn(signal: ELECTRON_BUILDER_SIGNALS, fields: Fields | Nullish | Error, message?: string) {
     this.log(signal, fields, message, "warn");
   }
 
-  error(signal: ELECTRON_BUILDER_SIGNALS, fields: Fields | Nullish, message: string) {
+  error(signal: ELECTRON_BUILDER_SIGNALS, fields: Fields | Nullish | Error, message?: string) {
     this.log(signal, fields, message, "error");
   }
 
-  debug(signal: ELECTRON_BUILDER_SIGNALS, fields: Fields | Nullish, message: string) {
+  debug(signal: ELECTRON_BUILDER_SIGNALS, fields: Fields | Nullish | Error, message?: string) {
     this.log(signal, fields, message, "debug");
   }
 

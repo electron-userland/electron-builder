@@ -14,10 +14,10 @@ export const rebuild = async (options: RebuildOptions): Promise<void> => {
   let pendingError: Error
 
   child.stdout?.on("data", chunk => {
-    log.info(ELECTRON_BUILDER_SIGNALS.NATIVE_REBUILD, chunk.toString())
+    log.info(ELECTRON_BUILDER_SIGNALS.NATIVE_REBUILD, null, chunk.toString())
   })
   child.stderr?.on("data", chunk => {
-    log.error(ELECTRON_BUILDER_SIGNALS.NATIVE_REBUILD, chunk.toString())
+    log.error(ELECTRON_BUILDER_SIGNALS.NATIVE_REBUILD, null, chunk.toString())
   })
 
   child.on("message", (message: { msg: string; moduleName: string; err: { message: string; stack: string } }) => {

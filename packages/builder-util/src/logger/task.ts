@@ -1,3 +1,5 @@
+import { Nullish } from "builder-util-runtime";
+import { Fields } from "../util";
 import { LogEntry, LogLevel } from "./rolling-log";
 
 export type TaskStatus = "pending" | "running" | "success" | "error";
@@ -30,8 +32,8 @@ export class TaskController {
     return this.task;
   }
 
-  log(message: string, level: LogLevel) {
-    const entry = { message, level };
+  log(fields: Fields | Nullish,message: string | Nullish, level: LogLevel) {
+    const entry = { fields, message, level };
     this.task.logs.push(entry);
     if (this.task.status === "running") {
       this.task.recentLogs.push(entry);

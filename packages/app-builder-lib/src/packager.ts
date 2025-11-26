@@ -274,7 +274,7 @@ export class Packager {
     }
 
     log.info(ELECTRON_BUILDER_SIGNALS.GENERIC, { version: PACKAGE_VERSION, os: getOsRelease() }, "electron-builder")
-    log.start(ELECTRON_BUILDER_SIGNALS.TOTAL, true)
+    log.start(ELECTRON_BUILDER_SIGNALS.TOTAL)
   }
 
   private async addPackagerEventHandlers() {

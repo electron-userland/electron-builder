@@ -79,7 +79,7 @@ export function checkBuildRequestOptions(options: PackagerOptions & PublishOptio
 }
 
 export function build(options: PackagerOptions & PublishOptions, packager: Packager = new Packager(options)): Promise<Array<string>> {
-  log.start(ELECTRON_BUILDER_SIGNALS.BUILD, true)
+  log.start(ELECTRON_BUILDER_SIGNALS.BUILD)
 
   checkBuildRequestOptions(options)
 
@@ -138,7 +138,6 @@ export function build(options: PackagerOptions & PublishOptions, packager: Packa
       packager.clearPackagerEventListeners()
       process.removeListener("SIGINT", sigIntHandler)
       log.complete(ELECTRON_BUILDER_SIGNALS.BUILD)
-      log.logDurationReport()
     })
   })
 }

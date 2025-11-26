@@ -22,7 +22,7 @@ export abstract class Publisher {
     if (this.context.progress == null || size < 512 * 1024) {
       return null
     }
-    log.start(ELECTRON_BUILDER_SIGNALS.PUBLISH, true)
+    log.start(ELECTRON_BUILDER_SIGNALS.PUBLISH)
     throw new Error("Deprecated method, use signale instead")
     // return this.context.progress.createBar(`${" ".repeat(PADDING + 2)}[:bar] :percent :etas | ${chalk.green(fileName)} to ${this.providerName}`, {
     //   total: size,
