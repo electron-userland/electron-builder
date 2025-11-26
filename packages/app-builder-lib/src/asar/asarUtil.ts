@@ -1,5 +1,5 @@
 import { createPackageFromStreams, AsarStreamType, AsarDirectory } from "@electron/asar"
-import { log } from "builder-util"
+import { ELECTRON_BUILDER_SIGNALS, log } from "builder-util"
 import { Filter } from "builder-util/out/fs"
 import * as fs from "fs-extra"
 import { readlink } from "fs-extra"
@@ -47,7 +47,7 @@ export class AsarPackager {
       if (args[0] === "Ordering file has 100% coverage.") {
         return // no need to log, this means our ordering logic is working correctly
       }
-      log.info({ args }, "logging @electron/asar")
+      log.info(ELECTRON_BUILDER_SIGNALS.ASAR, { args }, "logging @electron/asar")
     }
     await createPackageFromStreams(this.outFile, streams)
     console.log = consoleLogger
@@ -306,7 +306,7 @@ export class AsarPackager {
     const unsafe = await scan()
 
     if (unsafe) {
-      log.error({ source: file, realPath: resolved }, `unable to copy, file is from outside the package to a system or unsafe path`)
+      log.error(ELECTRON_BUILDER_SIGNALS.ASAR, { source: file, realPath: resolved }, `unable to copy, file is from outside the package to a system or unsafe path`)
       throw new Error(`Cannot copy file [${file}] symlinked to file [${resolved}] outside the package to a system or unsafe path`)
     }
     return unsafe

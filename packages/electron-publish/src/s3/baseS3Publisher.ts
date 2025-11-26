@@ -1,4 +1,4 @@
-import { executeAppBuilder, log } from "builder-util"
+import { ELECTRON_BUILDER_SIGNALS, executeAppBuilder, log } from "builder-util"
 import { BaseS3Options } from "builder-util-runtime"
 import { mkdir, symlink } from "fs/promises"
 import * as path from "path"
@@ -58,7 +58,7 @@ export abstract class BaseS3Publisher extends Publisher {
       })
         .then(() => {
           try {
-            log.debug({ provider: this.providerName, file: fileName, bucket: this.getBucketName() }, "uploaded")
+            log.debug(ELECTRON_BUILDER_SIGNALS.PUBLISH, { provider: this.providerName, file: fileName, bucket: this.getBucketName() }, "uploaded")
           } finally {
             resolve(undefined)
           }

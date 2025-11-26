@@ -1,4 +1,4 @@
-import { isEmptyOrSpaces, log } from "builder-util"
+import { ELECTRON_BUILDER_SIGNALS, isEmptyOrSpaces, log } from "builder-util"
 import { Nullish } from "builder-util-runtime"
 import { sanitizeFileName } from "builder-util/out/filename"
 import { prerelease } from "semver"
@@ -132,7 +132,7 @@ export class AppInfo {
     if (appId != null && (appId === "your.id" || isEmptyOrSpaces(appId))) {
       const incorrectAppId = appId
       appId = generateDefaultAppId()
-      log.warn(`do not use "${incorrectAppId}" as appId, "${appId}" will be used instead`)
+      log.warn(ELECTRON_BUILDER_SIGNALS.GENERIC, `do not use "${incorrectAppId}" as appId, "${appId}" will be used instead`)
     }
 
     return appId == null ? generateDefaultAppId() : appId

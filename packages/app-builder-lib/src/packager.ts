@@ -597,6 +597,7 @@ export class Packager {
 
     const beforeBuild = await resolveFunction(this.appInfo.type, config.beforeBuild, "beforeBuild")
     if (beforeBuild != null) {
+      log.start("beforeBuild", true)
       const performDependenciesInstallOrRebuild = await beforeBuild({
         appDir: this.appDir,
         electronVersion: this.config.electronVersion!,

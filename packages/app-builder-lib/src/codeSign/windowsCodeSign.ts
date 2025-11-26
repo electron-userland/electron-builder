@@ -1,4 +1,4 @@
-import { log, retry } from "builder-util"
+import { ELECTRON_BUILDER_SIGNALS, log, retry } from "builder-util"
 import { WindowsConfiguration } from "../options/winOptions"
 import { WinPackager } from "../winPackager"
 
@@ -10,11 +10,11 @@ export interface WindowsSignOptions {
 export async function signWindows(options: WindowsSignOptions, packager: WinPackager): Promise<boolean> {
   if (options.options.azureSignOptions) {
     if (options.options.signtoolOptions) {
-      log.warn(null, "ignoring signtool options, using Azure Trusted Signing; please only configure one")
+      log.warn(ELECTRON_BUILDER_SIGNALS.CODE_SIGN, null, "ignoring signtool options, using Azure Trusted Signing; please only configure one")
     }
-    log.info({ path: log.filePath(options.path) }, "signing with Azure Trusted Signing")
+    log.info(ELECTRON_BUILDER_SIGNALS.CODE_SIGN, { path: log.filePath(options.path) }, "signing with Azure Trusted Signing")
   } else {
-    log.info({ path: log.filePath(options.path) }, "signing with signtool.exe")
+    log.info(ELECTRON_BUILDER_SIGNALS.CODE_SIGN,  { path: log.filePath(options.path) }, "signing with signtool.exe")
   }
   const packageManager = await packager.signingManager.value
   return signWithRetry(async () => packageManager.signFile(options))
@@ -33,7 +33,7 @@ function signWithRetry(signer: () => Promise<boolean>): Promise<boolean> {
         // https://github.com/electron-userland/electron-builder/issues/8615
         message?.includes("being used by another process.")
       ) {
-        log.warn({ error: message }, "attempt to sign failed, another attempt will be made")
+        log.warn(ELECTRON_BUILDER_SIGNALS.CODE_SIGN, { error: message }, "attempt to sign failed, another attempt will be made")
         return true
       }
       return false

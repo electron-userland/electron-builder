@@ -1,4 +1,4 @@
-import { Arch, httpExecutor, InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
+import { Arch, ELECTRON_BUILDER_SIGNALS, httpExecutor, InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
 import { configureRequestOptions, HttpExecutor, parseJson } from "builder-util-runtime"
 import { KeygenOptions } from "builder-util-runtime/out/publishOptions"
 import { getCompleteExtname } from "builder-util/out/filename"
@@ -179,7 +179,7 @@ export class KeygenPublisher extends HttpPublisher {
       },
     }
 
-    log.debug({ data: JSON.stringify(data) }, "Keygen create artifact")
+    log.debug(ELECTRON_BUILDER_SIGNALS.PUBLISH, { data: JSON.stringify(data) }, "Keygen create artifact")
 
     return parseJson(httpExecutor.request(configureRequestOptions(upload, this.auth, "POST"), this.context.cancellationToken, { data }))
   }
@@ -251,7 +251,7 @@ export class KeygenPublisher extends HttpPublisher {
       },
     }
 
-    log.debug({ data: JSON.stringify(data) }, "Keygen create release")
+    log.debug(ELECTRON_BUILDER_SIGNALS.PUBLISH, { data: JSON.stringify(data) }, "Keygen create release")
 
     return parseJson(httpExecutor.request(configureRequestOptions(req, this.auth, "POST"), this.context.cancellationToken, { data }))
   }

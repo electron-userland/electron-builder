@@ -79,6 +79,8 @@ export function checkBuildRequestOptions(options: PackagerOptions & PublishOptio
 }
 
 export function build(options: PackagerOptions & PublishOptions, packager: Packager = new Packager(options)): Promise<Array<string>> {
+  log.start("build")
+
   checkBuildRequestOptions(options)
 
   const publishManager = new PublishManager(packager, options)
@@ -135,6 +137,12 @@ export function build(options: PackagerOptions & PublishOptions, packager: Packa
     return promise.then(() => {
       packager.clearPackagerEventListeners()
       process.removeListener("SIGINT", sigIntHandler)
+      log.complete("build")
+
+      log.info(
+        Object.entries(log.timeLoggedEvents).map(([_, value]) => ({ label: value.label, span: value.span })),
+        "build time report"
+      )
     })
   })
 }

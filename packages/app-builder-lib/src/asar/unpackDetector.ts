@@ -1,4 +1,4 @@
-import { FilterStats, log } from "builder-util"
+import { ELECTRON_BUILDER_SIGNALS, FilterStats, log } from "builder-util"
 import { isBinaryFileSync } from "isbinaryfile"
 import * as path from "path"
 import { ResolvedFileSet } from "../util/appFileCopier"
@@ -39,7 +39,7 @@ export function detectUnpackedDirs(fileSet: ResolvedFileSet, autoUnpackDirs: Set
       continue
     }
 
-    log.debug({ file: stat.moduleFullFilePath, reason: "contains executable code" }, "not packed into asar archive")
+    log.debug(ELECTRON_BUILDER_SIGNALS.ASAR, { file: stat.moduleFullFilePath, reason: "contains executable code" }, "not packed into asar archive")
     autoUnpackDirs.add(stat.moduleRootPath)
   }
 }

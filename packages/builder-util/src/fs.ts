@@ -7,7 +7,7 @@ import { platform } from "os"
 import * as path from "path"
 import { Mode } from "stat-mode"
 import asyncPool from "tiny-async-pool"
-import { log } from "./log"
+import { ELECTRON_BUILDER_SIGNALS, log } from "./log"
 import { orIfFileNotExist, orNullIfFileNotExist } from "./promise"
 
 export const MAX_FILE_REQUESTS = 8
@@ -183,7 +183,7 @@ export function copyOrLinkFile(src: string, dest: string, stats?: Stats | null, 
     if (originalModeNumber !== stats.mode) {
       if (log.isDebugEnabled) {
         const oldMode = new Mode({ mode: originalModeNumber })
-        log.debug({ file: dest, oldMode, mode }, "permissions fixed from")
+        log.debug(ELECTRON_BUILDER_SIGNALS.FS_OP, { file: dest, oldMode, mode }, "permissions fixed from")
       }
 
       // https://helgeklein.com/blog/2009/05/hard-links-and-permissions-acls/
@@ -191,7 +191,7 @@ export function copyOrLinkFile(src: string, dest: string, stats?: Stats | null, 
       // That means if you change the permissions/owner/attributes on one hard link, you will immediately see the changes on all other hard links.
       if (isUseHardLink) {
         isUseHardLink = false
-        log.debug({ dest }, "copied, but not linked, because file permissions need to be fixed")
+        log.debug(ELECTRON_BUILDER_SIGNALS.FS_OP, { dest }, "copied, but not linked, because file permissions need to be fixed")
       }
     }
   }
@@ -201,7 +201,7 @@ export function copyOrLinkFile(src: string, dest: string, stats?: Stats | null, 
       if (e.code === "EXDEV") {
         const isLog = exDevErrorHandler == null ? true : exDevErrorHandler()
         if (isLog && log.isDebugEnabled) {
-          log.debug({ error: e.message }, "cannot copy using hard link")
+          log.debug(ELECTRON_BUILDER_SIGNALS.FS_OP, { error: e.message }, "cannot copy using hard link")
         }
         return doCopyFile(src, dest, stats)
       } else {
@@ -293,7 +293,7 @@ export interface CopyDirOptions {
 export async function copyDir(src: string, destination: string, options: CopyDirOptions = {}): Promise<any> {
   const fileCopier = new FileCopier(options.isUseHardLink, options.transformer)
 
-  log.debug({ src, destination }, `copying${fileCopier.isUseHardLink ? " using hard links" : ""}`)
+  log.debug(ELECTRON_BUILDER_SIGNALS.FS_OP, { src, destination }, `copying${fileCopier.isUseHardLink ? " using hard links" : ""}`)
 
   const createdSourceDirs = new Set<string>()
   const links: Array<Link> = []

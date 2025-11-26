@@ -1,4 +1,4 @@
-import { Arch, Fields, httpExecutor, InvalidConfigurationError, isEmptyOrSpaces, isEnvTrue, isTokenCharValid, log } from "builder-util"
+import { Arch, ELECTRON_BUILDER_SIGNALS, Fields, httpExecutor, InvalidConfigurationError, isEmptyOrSpaces, isEnvTrue, isTokenCharValid, log } from "builder-util"
 import { configureRequestOptions, GithubOptions, HttpError, parseJson, githubTagPrefix } from "builder-util-runtime"
 import { ClientRequest } from "http"
 import { Lazy } from "lazy-val"
@@ -69,10 +69,10 @@ export class GitHubPublisher extends HttpPublisher {
 
     if (isEnvTrue(process.env.EP_DRAFT)) {
       this.releaseType = "draft"
-      log.info({ reason: "env EP_DRAFT is set to true" }, "GitHub provider release type is set to draft")
+      log.info(ELECTRON_BUILDER_SIGNALS.PUBLISH, { reason: "env EP_DRAFT is set to true" }, "GitHub provider release type is set to draft")
     } else if (isEnvTrue(process.env.EP_PRE_RELEASE) || isEnvTrue(process.env.EP_PRELEASE) /* https://github.com/electron-userland/electron-builder/issues/2878 */) {
       this.releaseType = "prerelease"
-      log.info({ reason: "env EP_PRE_RELEASE is set to true" }, "GitHub provider release type is set to prerelease")
+      log.info(ELECTRON_BUILDER_SIGNALS.PUBLISH, { reason: "env EP_PRE_RELEASE is set to true" }, "GitHub provider release type is set to prerelease")
     } else if (info.releaseType != null) {
       this.releaseType = info.releaseType
     } else if ((options as any).prerelease) {
@@ -109,7 +109,7 @@ export class GitHubPublisher extends HttpPublisher {
           existingType: release.prerelease ? "pre-release" : "release",
           publishingType: this.releaseType,
         }
-        log.warn(this.releaseLogFields, "GitHub release not created")
+        log.warn(ELECTRON_BUILDER_SIGNALS.PUBLISH, this.releaseLogFields, "GitHub release not created")
         return null
       }
 
@@ -124,7 +124,7 @@ export class GitHubPublisher extends HttpPublisher {
           ...logFields,
           date: new Date(publishedAt).toString(),
         }
-        log.warn(this.releaseLogFields, "GitHub release not created")
+        log.warn(ELECTRON_BUILDER_SIGNALS.PUBLISH, this.releaseLogFields, "GitHub release not created")
         return null
       }
       return release
@@ -133,6 +133,7 @@ export class GitHubPublisher extends HttpPublisher {
     // https://github.com/electron-userland/electron-builder/issues/1835
     if (this.options.publish === "always" || getCiTag() != null) {
       log.info(
+        ELECTRON_BUILDER_SIGNALS.PUBLISH,
         {
           reason: "release doesn't exist",
           ...logFields,
@@ -151,7 +152,7 @@ export class GitHubPublisher extends HttpPublisher {
 
   private async overwriteArtifact(fileName: string, release: Release) {
     // delete old artifact and re-upload
-    log.warn({ file: fileName, reason: "already exists on GitHub" }, "overwrite published file")
+    log.warn(ELECTRON_BUILDER_SIGNALS.PUBLISH, { file: fileName, reason: "already exists on GitHub" }, "overwrite published file")
 
     const assets = await this.githubRequest<Array<Asset>>(`/repos/${this.info.owner}/${this.info.repo}/releases/${release.id}/assets`, this.token, null)
     for (const asset of assets) {
@@ -161,13 +162,13 @@ export class GitHubPublisher extends HttpPublisher {
       }
     }
 
-    log.debug({ file: fileName, reason: "not found on GitHub" }, "trying to upload again")
+    log.debug(ELECTRON_BUILDER_SIGNALS.PUBLISH, { file: fileName, reason: "not found on GitHub" }, "trying to upload again")
   }
 
   protected async doUpload(fileName: string, arch: Arch, dataLength: number, requestProcessor: (request: ClientRequest, reject: (error: Error) => void) => void): Promise<any> {
     const release = await this._release.value
     if (release == null) {
-      log.warn({ file: fileName, ...this.releaseLogFields }, "skipped publishing")
+      log.warn(ELECTRON_BUILDER_SIGNALS.PUBLISH, { file: fileName, ...this.releaseLogFields }, "skipped publishing")
       return
     }
 
@@ -257,7 +258,7 @@ export class GitHubPublisher extends HttpPublisher {
       } catch (e: any) {
         if (e instanceof HttpError) {
           if (e.statusCode === 404) {
-            log.warn({ releaseId: release.id, reason: "doesn't exist" }, "cannot delete release")
+            log.warn(ELECTRON_BUILDER_SIGNALS.PUBLISH, { releaseId: release.id, reason: "doesn't exist" }, "cannot delete release")
             return
           } else if (e.statusCode === 405 || e.statusCode === 502) {
             continue
@@ -268,7 +269,7 @@ export class GitHubPublisher extends HttpPublisher {
       }
     }
 
-    log.warn({ releaseId: release.id }, "cannot delete release")
+    log.warn(ELECTRON_BUILDER_SIGNALS.PUBLISH, { releaseId: release.id }, "cannot delete release")
   }
 
   private githubRequest<T>(path: string, token: string | null, data: { [name: string]: any } | null = null, method?: "GET" | "DELETE" | "PUT"): Promise<T> {

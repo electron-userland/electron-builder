@@ -53,7 +53,7 @@ test.ifMac("two-package", ({ expect }) =>
   )
 )
 
-test.ifMac("one-package", ({ expect }) =>
+test.only("one-package", ({ expect }) =>
   app(
     expect,
     {

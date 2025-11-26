@@ -1,4 +1,4 @@
-import { executeAppBuilder, InvalidConfigurationError, log } from "builder-util"
+import { ELECTRON_BUILDER_SIGNALS, executeAppBuilder, InvalidConfigurationError, log } from "builder-util"
 import { S3Options } from "builder-util-runtime"
 import { PublishContext } from ".."
 import { BaseS3Publisher } from "./baseS3Publisher"
@@ -27,7 +27,7 @@ export class S3Publisher extends BaseS3Publisher {
         if (errorIfCannot) {
           throw e
         } else {
-          log.warn(`cannot compute region for bucket (required because on dotted bucket names, we need to use a path-based endpoint URL): ${e}`)
+          log.warn(ELECTRON_BUILDER_SIGNALS.PUBLISH, `cannot compute region for bucket (required because on dotted bucket names, we need to use a path-based endpoint URL): ${e}`)
         }
       }
     }

@@ -1,4 +1,4 @@
-import { Arch, httpExecutor, InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
+import { Arch, ELECTRON_BUILDER_SIGNALS, httpExecutor, InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
 import { configureRequestOptions, HttpExecutor } from "builder-util-runtime"
 import { BitbucketOptions } from "builder-util-runtime/out/publishOptions"
 import * as FormData from "form-data"
@@ -26,7 +26,7 @@ export class BitbucketPublisher extends HttpPublisher {
     }
 
     if (isEmptyOrSpaces(username)) {
-      log.warn('No Bitbucket username provided via "BITBUCKET_USERNAME". Defaulting to use repo owner.')
+      log.warn(ELECTRON_BUILDER_SIGNALS.PUBLISH, null, 'No Bitbucket username provided via "BITBUCKET_USERNAME". Defaulting to use repo owner.')
     }
 
     this.info = info

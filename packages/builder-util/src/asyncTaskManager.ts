@@ -1,5 +1,5 @@
 import { CancellationToken } from "builder-util-runtime"
-import { log } from "./log"
+import { ELECTRON_BUILDER_SIGNALS, log } from "./log"
 import { NestedError } from "./promise"
 
 export class AsyncTaskManager {
@@ -16,7 +16,7 @@ export class AsyncTaskManager {
 
   addTask(promise: Promise<any>) {
     if (this.cancellationToken.cancelled) {
-      log.debug({ reason: "cancelled", stack: new Error().stack }, "async task not added")
+      log.debug(ELECTRON_BUILDER_SIGNALS.ALL, { reason: "cancelled", stack: new Error().stack }, "async task not added")
       if ("cancel" in promise) {
         ;(promise as any).cancel()
       }
@@ -25,7 +25,7 @@ export class AsyncTaskManager {
 
     this.tasks.push(
       promise.catch(it => {
-        log.debug({ error: it.message || it.toString() }, "async task error")
+        log.debug(ELECTRON_BUILDER_SIGNALS.ALL, { error: it.message || it.toString() }, "async task error")
         this.errors.push(it)
         return Promise.resolve(null)
       })

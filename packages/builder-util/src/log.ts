@@ -6,9 +6,21 @@ import WritableStream = NodeJS.WritableStream
 import { Signale } from "signale"
 
 export enum ELECTRON_BUILDER_SIGNALS {
+  ALL = "all",
+  INIT = "initializing build",
+  CONFIG = "reading configuration",
+  DEPENDENCY_INSTALLATION = "installing app dependencies",
+  DOWNLOAD = "downloading",
+  DOWNLOAD_COMPLETE = "download complete",
+  TRANSFORM_ARTIFACTS = "transforming artifacts",
+  CODE_SIGN = "code signing",
   TOTAL = "building with electron-builder",
   PACKAGING = "packaging application",
   ARTIFACTS = "generating artifacts",
+  ASAR = "creating asar archive with @electron/asar",
+  FS_OP = "file system operation",
+  PUBLISH = "publishing",
+  GENERIC = "generic", // will be filtered out in Signale interactive mode
 }
 
 const signale = new Signale({
@@ -53,13 +65,19 @@ export type LogLevel = "info" | "warn" | "debug" | "note" | "error"
 
 export const PADDING = 2
 
+type TimeEndType = ReturnType<typeof signale.timeEnd> & { logger?: Signale }
+
 export class Logger {
   // clean up logs since concurrent tests are impossible to track logic execution with console concurrency "noise"
   private readonly shouldDisableNonErrorLoggingVitest = process.env.VITEST && !this.isDebugEnabled
 
-  constructor(protected readonly stream: WritableStream) {
+  public readonly signale = signale
+
+  readonly timeLoggedEvents = new Map<string, TimeEndType>()
+
+  constructor() {
     if (this.shouldDisableNonErrorLoggingVitest) {
-      this.log(`non-error logging is silenced during VITEST workflow when DEBUG=electron-builder flag is not set`)
+      console.log(`non-error logging is silenced during VITEST workflow when DEBUG=electron-builder flag is not set`)
     }
   }
 
@@ -75,47 +93,50 @@ export class Logger {
     return debug.enabled
   }
 
-  start(label: string, interactive: boolean = false) {
-    signale.time(label)
-    // if (interactive) {
-    //   signale.pending(`Starting ${label}...`)
-    // }
+  start(label: ELECTRON_BUILDER_SIGNALS, interactive: boolean = true) {
+    if (interactive) {
+      signale.start(label)
+    }
+    const logger = interactive ? new Signale({ interactive, scope: label }) : signale
+    const id = logger.time(label)
+    this.timeLoggedEvents.set(id, { logger, label, span: 0 })
+    return id
   }
 
-  complete(label: string, interactive: boolean = false) {
-    signale.timeEnd(label)
-    // if (interactive) {
-    //   signale.success(`${label} completed.`)
-    // }
+  complete(label: ELECTRON_BUILDER_SIGNALS) {
+    const logger = this.timeLoggedEvents.get(label)?.logger ?? signale
+    const { label: id, span } = logger.timeEnd(label) // span: time elapsed
+    this.timeLoggedEvents.set(id, { label, span })
+    return span
   }
 
-  info(messageOrFields: Fields | null | string, message?: string) {
-    this.doLog(message, messageOrFields, "info")
+  info(logger: ELECTRON_BUILDER_SIGNALS, messageOrFields: Fields | null | string, message?: string) {
+    this.doLog(message, messageOrFields, "info", logger)
   }
 
-  error(messageOrFields: Fields | null | string, message?: string) {
-    this.doLog(message, messageOrFields, "error")
+  error(logger: ELECTRON_BUILDER_SIGNALS, messageOrFields: Fields | null | string, message?: string | Error) {
+    this.doLog(message, messageOrFields, "error", logger)
   }
 
-  warn(messageOrFields: Fields | null | string, message?: string): void {
-    this.doLog(message, messageOrFields, "warn")
+  warn(logger: ELECTRON_BUILDER_SIGNALS, messageOrFields: Fields | null | string, message?: string): void {
+    this.doLog(message, messageOrFields, "warn", logger)
   }
 
-  debug(fields: Fields | null, message: string) {
+  debug(logger: ELECTRON_BUILDER_SIGNALS, fields: Fields | null, message: string) {
     if (debug.enabled) {
-      this._doLog(message, fields, "debug")
+      this._doLog(message, fields, "debug", logger)
     }
   }
 
-  private doLog(message: string | undefined | Error, messageOrFields: Fields | null | string, level: LogLevel) {
+  private doLog(message: string | undefined | Error, messageOrFields: Fields | null | string, level: LogLevel, logger: ELECTRON_BUILDER_SIGNALS) {
     if (message === undefined) {
-      this._doLog(messageOrFields as string, null, level)
+      this._doLog(messageOrFields as string, null, level, logger)
     } else {
-      this._doLog(message, messageOrFields as Fields | null, level)
+      this._doLog(message, messageOrFields as Fields | null, level, logger)
     }
   }
 
-  private _doLog(message: string | Error, fields: Fields | null, level: LogLevel) {
+  private _doLog(message: string | Error, fields: Fields | null, level: LogLevel, logger: ELECTRON_BUILDER_SIGNALS) {
     if (this.shouldDisableNonErrorLoggingVitest) {
       if (
         [
@@ -141,7 +162,8 @@ export class Logger {
     // this.stream.write(`${" ".repeat(PADDING)}${color(levelIndicator)} `)
     // this.stream.write(Logger.createMessage(this.messageTransformer(message, level), fields, level, color, PADDING + 2 /* level indicator and space */))
     // this.stream.write("\n")
-    signale[level](message, fields || {})
+    const loggerInstance = this.timeLoggedEvents.get(logger)?.logger ?? signale
+    loggerInstance[level](message, fields)
   }
 
   static createMessage(message: string, fields: Fields | null, level: LogLevel, color: (it: string) => string, messagePadding = 0): string {
@@ -176,20 +198,20 @@ export class Logger {
     return text
   }
 
-  log(message: string): void {
-    if (printer == null) {
-      this.stream.write(`${message}\n`)
-    } else {
-      printer(message)
-    }
-  }
+  // log(message: string): void {
+  //   if (printer == null) {
+  //     this.stream.write(`${message}\n`)
+  //   } else {
+  //     printer(message)
+  //   }
+  // }
 }
 
-const LEVEL_TO_COLOR: { [index: string]: Chalk } = {
-  info: chalk.blue,
-  warn: chalk.yellow,
-  error: chalk.red,
-  debug: chalk.white,
-}
+// const LEVEL_TO_COLOR: { [index: string]: Chalk } = {
+//   info: chalk.blue,
+//   warn: chalk.yellow,
+//   error: chalk.red,
+//   debug: chalk.white,
+// }
 
-export const log = new Logger(process.stdout)
+export const log = new Logger()

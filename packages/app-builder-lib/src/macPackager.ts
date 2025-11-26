@@ -7,6 +7,7 @@ import {
   AsyncTaskManager,
   copyFile,
   deepAssign,
+  ELECTRON_BUILDER_SIGNALS,
   exec,
   exists,
   getArchSuffix,
@@ -167,6 +168,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
 
         const framework = this.info.framework
         log.info(
+          ELECTRON_BUILDER_SIGNALS.PACKAGING,
           {
             platform: platformName,
             arch: Arch[arch],
@@ -276,9 +278,9 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
       if (this.forceCodeSigning) {
         throw new InvalidConfigurationError("identity explicitly is set to null, but forceCodeSigning is set to true")
       }
-      log.info({ reason: "identity explicitly is set to null" }, "skipped macOS code signing")
+      log.info(ELECTRON_BUILDER_SIGNALS.CODE_SIGN, { reason: "identity explicitly is set to null" }, "skipped macOS code signing")
       if (fallBackToAdhoc) {
-        log.warn("arm64 requires signing, but identity is set to null and signing is being skipped")
+        log.warn(ELECTRON_BUILDER_SIGNALS.CODE_SIGN, null, "arm64 requires signing, but identity is set to null and signing is being skipped")
       }
       return false
     }
@@ -301,7 +303,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
       if (!isMas && !isDevelopment && explicitType !== "distribution") {
         identity = await findIdentity("Mac Developer", qualifier, keychainFile)
         if (identity != null) {
-          log.warn("Mac Developer is used to sign app — it is only for development and testing, not for production")
+          log.warn(ELECTRON_BUILDER_SIGNALS.CODE_SIGN, null, "Mac Developer is used to sign app — it is only for development and testing, not for production")
         }
       }
 
@@ -309,7 +311,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
       if (qualifier === "-") {
         identity = new Identity("-", undefined)
       } else if (noIdentity && fallBackToAdhoc) {
-        log.warn(null, "falling back to ad-hoc signature for macOS application code signing")
+        log.warn(ELECTRON_BUILDER_SIGNALS.CODE_SIGN, null, "falling back to ad-hoc signature for macOS application code signing")
         identity = new Identity("-", undefined)
       } else if (noIdentity) {
         await reportError(isMas, certificateTypes, qualifier, keychainFile, this.forceCodeSigning)
@@ -350,7 +352,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
           })
         )
       ).flat()
-      log.info({ binaries, arch: arch == null ? null : Arch[arch] }, "signing additional user-defined binaries for arch")
+      log.info(ELECTRON_BUILDER_SIGNALS.CODE_SIGN, { binaries, arch: arch == null ? null : Arch[arch] }, "signing additional user-defined binaries for arch")
     }
     const customSignOptions: MasConfiguration | MacConfiguration = (isMas ? masOptions : this.platformSpecificBuildOptions) || this.platformSpecificBuildOptions
 
@@ -471,7 +473,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
         requirements: requirements || undefined,
         additionalArguments: customSignOptions.additionalArguments || [],
       }
-      log.debug({ file: log.filePath(filePath), ...args }, "selecting signing options")
+      log.debug(ELECTRON_BUILDER_SIGNALS.CODE_SIGN, { file: log.filePath(filePath), ...args }, "selecting signing options")
       return args
     }
     return optionsForFile
@@ -482,7 +484,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
     const customSign = await resolveFunction(this.appInfo.type, customSignOptions.sign, "sign")
 
     const { app, platform, type, provisioningProfile } = opts
-    log.info(
+    log.info(ELECTRON_BUILDER_SIGNALS.CODE_SIGN,
       {
         file: log.filePath(app),
         platform,
@@ -611,16 +613,16 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
   async notarizeIfProvided(appPath: string) {
     const notarizeOptions = this.platformSpecificBuildOptions.notarize
     if (notarizeOptions === false) {
-      log.info({ reason: "`notarize` options were set explicitly `false`" }, "skipped macOS notarization")
+      log.info(ELECTRON_BUILDER_SIGNALS.CODE_SIGN, { reason: "`notarize` options were set explicitly `false`" }, "skipped macOS notarization")
       return
     }
     const options = this.getNotarizeOptions(appPath)
     if (!options) {
-      log.warn({ reason: "`notarize` options were unable to be generated" }, "skipped macOS notarization")
+      log.warn(ELECTRON_BUILDER_SIGNALS.CODE_SIGN, { reason: "`notarize` options were unable to be generated" }, "skipped macOS notarization")
       return
     }
     await notarize(options)
-    log.info(null, "notarization successful")
+    log.info(ELECTRON_BUILDER_SIGNALS.CODE_SIGN, null, "notarization successful")
   }
 
   private getNotarizeOptions(appPath: string): NotarizeOptionsNotaryTool | undefined {

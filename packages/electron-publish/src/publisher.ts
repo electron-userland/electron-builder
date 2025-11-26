@@ -1,4 +1,4 @@
-import { log, PADDING } from "builder-util"
+import { ELECTRON_BUILDER_SIGNALS, log, PADDING } from "builder-util"
 import { ProgressCallbackTransform, PublishProvider } from "builder-util-runtime"
 import * as chalk from "chalk"
 import { createReadStream, Stats } from "fs-extra"
@@ -18,14 +18,16 @@ export abstract class Publisher {
   abstract upload(task: UploadTask): Promise<any>
 
   protected createProgressBar(fileName: string, size: number): ProgressBar | null {
-    log.info({ file: fileName, provider: this.providerName }, "uploading")
+    log.info(ELECTRON_BUILDER_SIGNALS.PUBLISH,{ file: fileName, provider: this.providerName }, "uploading")
     if (this.context.progress == null || size < 512 * 1024) {
       return null
     }
-    return this.context.progress.createBar(`${" ".repeat(PADDING + 2)}[:bar] :percent :etas | ${chalk.green(fileName)} to ${this.providerName}`, {
-      total: size,
-      ...progressBarOptions,
-    })
+    log.start(ELECTRON_BUILDER_SIGNALS.PUBLISH, true)
+    throw new Error("Deprecated method, use signale instead")
+    // return this.context.progress.createBar(`${" ".repeat(PADDING + 2)}[:bar] :percent :etas | ${chalk.green(fileName)} to ${this.providerName}`, {
+    //   total: size,
+    //   ...progressBarOptions,
+    // })
   }
 
   protected createReadStreamAndProgressBar(file: string, fileStat: Stats, progressBar: ProgressBar | null, reject: (error: Error) => void): NodeJS.ReadableStream {

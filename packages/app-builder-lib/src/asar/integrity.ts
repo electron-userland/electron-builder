@@ -1,4 +1,4 @@
-import { FilterStats, log, statOrNull, walk } from "builder-util"
+import { ELECTRON_BUILDER_SIGNALS, FilterStats, log, statOrNull, walk } from "builder-util"
 import { createHash } from "crypto"
 import { readdir } from "fs/promises"
 import * as path from "path"
@@ -42,7 +42,7 @@ export async function computeData({ resourcesPath, resourcesRelativePath, resour
       const { from, to } = matcher
       const stat = await statOrNull(from)
       if (stat == null) {
-        log.warn({ from }, `file source doesn't exist`)
+        log.warn(ELECTRON_BUILDER_SIGNALS.ASAR, { from }, `file source doesn't exist`)
         return []
       }
       if (stat.isFile()) {

@@ -9,7 +9,7 @@ import { dump } from "js-yaml"
 import * as path from "path"
 import { install as installSourceMap } from "source-map-support"
 import { getPath7za } from "./7za"
-import { debug, log } from "./log"
+import { debug, ELECTRON_BUILDER_SIGNALS, log } from "./log"
 
 if (process.env.JEST_WORKER_ID == null) {
   installSourceMap()
@@ -108,7 +108,7 @@ export function exec(file: string, args?: Array<string> | null, options?: ExecFi
       }
     }
 
-    log.debug(logFields, "executing")
+    log.debug(ELECTRON_BUILDER_SIGNALS.GENERIC, logFields, "executing")
   }
 
   return new Promise<string>((resolve, reject) => {
@@ -133,7 +133,7 @@ export function exec(file: string, args?: Array<string> | null, options?: ExecFi
               logFields.stderr = stderr
             }
 
-            log.debug(logFields, "executed")
+            log.debug(ELECTRON_BUILDER_SIGNALS.GENERIC, logFields, "executed")
           }
           resolve(stdout.toString())
         } else {
@@ -176,7 +176,7 @@ function logSpawn(command: string, args: Array<string>, options: SpawnOptions) {
   if (options != null && options.cwd != null) {
     logFields.cwd = options.cwd
   }
-  log.debug(logFields, "spawning")
+  log.debug(ELECTRON_BUILDER_SIGNALS.GENERIC, logFields, "spawning")
 }
 
 export function doSpawn(command: string, args: Array<string>, options?: SpawnOptions, extraOptions?: ExtraSpawnOptions): ChildProcess {
@@ -261,7 +261,7 @@ function handleProcess(event: string, childProcess: ChildProcess, command: strin
       if (out.length > 0) {
         fields.out = out
       }
-      log.debug(fields, "exited")
+      log.debug(ELECTRON_BUILDER_SIGNALS.GENERIC, fields, "exited")
     }
 
     if (code === 0) {

@@ -1,4 +1,4 @@
-import { Arch, Fields, httpExecutor, InvalidConfigurationError, isEmptyOrSpaces, isTokenCharValid, log } from "builder-util"
+import { Arch, ELECTRON_BUILDER_SIGNALS, Fields, httpExecutor, InvalidConfigurationError, isEmptyOrSpaces, isTokenCharValid, log } from "builder-util"
 import { createReadStream } from "fs"
 import { stat } from "fs/promises"
 import { readFile } from "fs/promises"
@@ -77,6 +77,7 @@ export class GitlabPublisher extends HttpPublisher {
     } catch (error: any) {
       const errorInfo = this.categorizeGitlabError(error)
       log.error(
+        ELECTRON_BUILDER_SIGNALS.PUBLISH,
         {
           ...logFields,
           error: error.message,
@@ -108,7 +109,7 @@ export class GitlabPublisher extends HttpPublisher {
       const project = await this.gitlabRequest<{ default_branch: string }>(url)
       return project.default_branch || "main"
     } catch (error: any) {
-      log.warn({ error: error.message }, "Failed to get default branch, using 'main' as fallback")
+      log.warn(ELECTRON_BUILDER_SIGNALS.PUBLISH, { error: error.message }, "Failed to get default branch, using 'main' as fallback")
       return "main"
     }
   }
@@ -124,6 +125,7 @@ export class GitlabPublisher extends HttpPublisher {
     }
 
     log.debug(
+      ELECTRON_BUILDER_SIGNALS.PUBLISH,
       {
         tag: this.tag,
         name: releaseName,
@@ -140,7 +142,7 @@ export class GitlabPublisher extends HttpPublisher {
   protected async doUpload(fileName: string, arch: Arch, dataLength: number, requestProcessor: RequestProcessor, filePath: string): Promise<any> {
     const release = await this._release.value
     if (release == null) {
-      log.warn({ file: fileName, ...this.releaseLogFields }, "skipped publishing")
+      log.warn(ELECTRON_BUILDER_SIGNALS.PUBLISH, { file: fileName, ...this.releaseLogFields }, "skipped publishing")
       return
     }
 
@@ -152,20 +154,20 @@ export class GitlabPublisher extends HttpPublisher {
     }
 
     try {
-      log.debug(logFields, "starting GitLab upload")
+      log.debug(ELECTRON_BUILDER_SIGNALS.PUBLISH, logFields, "starting GitLab upload")
       const assetPath = await this.uploadFileAndReturnAssetPath(fileName, dataLength, requestProcessor, filePath)
       // Add the uploaded file as a release asset link
       if (assetPath) {
         await this.addReleaseAssetLink(fileName, assetPath)
-        log.info({ ...logFields, assetPath }, "GitLab upload completed successfully")
+        log.info(ELECTRON_BUILDER_SIGNALS.PUBLISH, { ...logFields, assetPath }, "GitLab upload completed successfully")
       } else {
-        log.warn({ ...logFields }, "No asset URL found for file")
+        log.warn(ELECTRON_BUILDER_SIGNALS.PUBLISH, { ...logFields }, "No asset URL found for file")
       }
 
       return assetPath
     } catch (e: any) {
       const errorInfo = this.categorizeGitlabError(e)
-      log.error(
+      log.error(ELECTRON_BUILDER_SIGNALS.PUBLISH,
         {
           ...logFields,
           error: e.message,
@@ -209,9 +211,9 @@ export class GitlabPublisher extends HttpPublisher {
       const url = this.buildProjectUrl(`/releases/${this.tag}/assets/links`)
       await this.gitlabRequest(url, linkData, "POST")
 
-      log.debug({ fileName, assetUrl }, "Successfully linked asset to GitLab release")
+      log.debug(ELECTRON_BUILDER_SIGNALS.PUBLISH, { fileName, assetUrl }, "Successfully linked asset to GitLab release")
     } catch (e: any) {
-      log.warn({ fileName, assetUrl, error: e.message }, "Failed to link asset to GitLab release")
+    log.warn(ELECTRON_BUILDER_SIGNALS.PUBLISH,  { fileName, assetUrl, error: e.message }, "Failed to link asset to GitLab release")
       // Don't throw - the file was uploaded successfully, linking is optional
     }
   }
@@ -228,12 +230,12 @@ export class GitlabPublisher extends HttpPublisher {
     const form = new FormData()
     if (fileSize > STREAMING_THRESHOLD) {
       // Use streaming for large files
-      log.debug({ fileName, fileSize }, "using streaming upload for large file")
+      log.debug(ELECTRON_BUILDER_SIGNALS.PUBLISH, { fileName, fileSize }, "using streaming upload for large file")
       const fileStream = createReadStream(filePath)
       form.append("file", fileStream, fileName)
     } else {
       // Use buffer for small files
-      log.debug({ fileName, fileSize }, "using buffer upload for small file")
+      log.debug(ELECTRON_BUILDER_SIGNALS.PUBLISH, { fileName, fileSize }, "using buffer upload for small file")
       const fileContent = await readFile(filePath)
       form.append("file", fileContent, fileName)
     }

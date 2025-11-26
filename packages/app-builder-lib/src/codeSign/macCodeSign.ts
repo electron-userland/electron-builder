@@ -1,7 +1,7 @@
 import { signAsync } from "@electron/osx-sign"
 import { SignOptions } from "@electron/osx-sign/dist/cjs/types"
 import { Identity as _Identity } from "@electron/osx-sign/dist/cjs/util-identities"
-import { copyFile, exec, Fields, InvalidConfigurationError, isEmptyOrSpaces, isEnvTrue, isPullRequest, log, Logger, retry, TmpDir, unlinkIfExists } from "builder-util"
+import { copyFile, ELECTRON_BUILDER_SIGNALS, exec, Fields, InvalidConfigurationError, isEmptyOrSpaces, isEnvTrue, isPullRequest, log, Logger, retry, TmpDir, unlinkIfExists } from "builder-util"
 import { Nullish } from "builder-util-runtime"
 import { createHash, randomBytes } from "crypto"
 import { rename } from "fs/promises"
@@ -30,7 +30,7 @@ export interface CodeSigningInfo {
 export function isSignAllowed(isPrintWarn = true): boolean {
   if (process.platform !== "darwin") {
     if (isPrintWarn) {
-      log.warn({ reason: "supported only on macOS" }, "skipped macOS application code signing")
+      log.warn(ELECTRON_BUILDER_SIGNALS.CODE_SIGN, { reason: "supported only on macOS" }, "skipped macOS application code signing")
     }
     return false
   }
@@ -42,12 +42,12 @@ export function isSignAllowed(isPrintWarn = true): boolean {
   if (isPullRequest()) {
     if (isEnvTrue(process.env.CSC_FOR_PULL_REQUEST)) {
       if (isPrintWarn) {
-        log.warn(buildForPrWarning)
+        log.warn(ELECTRON_BUILDER_SIGNALS.CODE_SIGN, null, buildForPrWarning)
       }
     } else {
       if (isPrintWarn) {
         // https://github.com/electron-userland/electron-builder/issues/1524
-        log.warn(
+        log.warn(ELECTRON_BUILDER_SIGNALS.CODE_SIGN, null,
           "Current build is a part of pull request, code signing will be skipped." + "\nSet env CSC_FOR_PULL_REQUEST to true to force code signing." + `\n${buildForPrWarning}`
         )
       }
@@ -92,7 +92,7 @@ export async function reportError(isMas: boolean, certificateTypes: CertType[], 
   if (isMas || isForceCodeSigning) {
     throw new Error(Logger.createMessage(skipMessage, logFields, "error", it => it))
   } else {
-    log.warn(logFields, skipMessage)
+    log.warn(ELECTRON_BUILDER_SIGNALS.CODE_SIGN, logFields, skipMessage)
   }
 }
 
@@ -144,7 +144,7 @@ export interface CreateKeychainOptions {
 export function removeKeychain(keychainFile: string, printWarn = true): Promise<any> {
   return exec("/usr/bin/security", ["delete-keychain", keychainFile]).catch((e: any) => {
     if (printWarn) {
-      log.warn({ file: keychainFile, error: e.stack || e }, "cannot delete keychain")
+      log.warn(ELECTRON_BUILDER_SIGNALS.CODE_SIGN, { file: keychainFile, error: e.stack || e }, "cannot delete keychain")
     }
     return unlinkIfExists(keychainFile)
   })
