@@ -1,30 +1,34 @@
-import * as React from "react";
-import { Text } from "ink";
+import * as React from "react"
+import { Text } from "ink"
 
-export type LogLevel = "info" | "warn" | "error" | "success";
+export type LogLevel = "info" | "warn" | "error" | "debug" | "success"
 
 export interface LogEntry {
-  message: string;
-  level: LogLevel;
+  message: string
+  level: LogLevel
 }
 
 interface Props {
-  logs: LogEntry[];
-  maxLines?: number;
+  logs: LogEntry[]
+  maxLines?: number
 }
 
 export const RollingLog: React.FC<Props> = ({ logs, maxLines = 5 }) => {
-  const visible = logs.slice(-maxLines);
+  const visible = logs.slice(-maxLines)
 
   const colorFor = (lvl: LogLevel) => {
     switch (lvl) {
-      case "error": return "red";
-      case "warn": return "yellow";
-      case "success": return "green";
+      case "error":
+        return "red"
+      case "warn":
+        return "yellow"
+      case "success":
+        return "green"
       case "info":
-      default: return "cyan";
+      default:
+        return "cyan"
     }
-  };
+  }
 
   return (
     <>
@@ -34,5 +38,5 @@ export const RollingLog: React.FC<Props> = ({ logs, maxLines = 5 }) => {
         </Text>
       ))}
     </>
-  );
-};
+  )
+}

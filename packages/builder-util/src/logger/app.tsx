@@ -1,43 +1,21 @@
 import * as React from "react";
 import { render } from "ink";
 import { TaskController } from "./task";
-import { TwoColumnDashboard } from "./dashboard";
+import { RowDashboard } from "./dashboard";
+import { ELECTRON_BUILDER_SIGNALS } from "../log";
 
-// Task list
+// eslint-disable-next-line prefer-const
+let rerender: () => void;
 const tasks: TaskController[] = [];
-
-const rerender = () => {
-  render(<TwoColumnDashboard tasks={tasks.map(t => t.snapshot)} />);
+tasks.push(...Object.values(ELECTRON_BUILDER_SIGNALS).map(signal => new TaskController(signal, () => rerender())));
+rerender = () => {
+  render(<RowDashboard tasks={tasks.map(t => t.snapshot)} />);
 };
 
-// Create tasks
-const build = new TaskController("Build", rerender);
-const lint = new TaskController("Lint", rerender);
-
-tasks.push(build, lint);
-
-// Start tasks
+// Example usage:
+const build = tasks[1]; // BUILDING
 build.start();
-lint.start();
-
-build.setPayload({ step: "compile", file: "src/a.ts", ok: true });
-lint.setPayload({ file: "src/b.ts", warnings: 2 });
-
-let i = 0;
-const interval = setInterval(() => {
-  build.log(`Building chunk ${i}`);
-  build.setProgress(i);
-  lint.log(`Linting file ${i}.ts`);
-  lint.setProgress(i);
-
-  i += 10;
-
-  if (i > 100) {
-    build.success();
-    lint.error("Failed lint rules");
-    rerender();
-    clearInterval(interval);
-  } else {
-    rerender();
-  }
-}, 400);
+build.log("Compiling module A...");
+build.log("Compiling module B...");
+setTimeout(() => build.log("Module C compiled"), 500);
+setTimeout(() => build.complete("success"), 1000);

@@ -1,60 +1,41 @@
 import * as React from "react";
 import { Box, Text } from "ink";
-import { Task } from "./task";
-import { RollingLog } from "./rolling-log";
+import { TaskController, Task } from "./task";
 
 interface Props {
   tasks: Task[];
 }
 
-const truncateJson = (obj: unknown, max = 60) => {
-  try {
-    const raw = JSON.stringify(obj);
-    return raw.length > max ? raw.slice(0, max - 1) + "…" : raw;
-  } catch {
-    return "<invalid json>";
-  }
-};
+export const RowDashboard: React.FC<Props> = ({ tasks }) => {
+  const colorForLevel = (level: string) => {
+    switch (level) {
+      case "error": return "red";
+      case "warn": return "yellow";
+      case "success": return "green";
+      case "info":
+      default: return "cyan";
+    }
+  };
 
-export const TwoColumnDashboard: React.FC<Props> = ({ tasks }) => {
   return (
     <Box flexDirection="column" padding={1}>
-      {tasks.map((task) => {
-        const color =
-          task.status === "success" ? "green" :
-          task.status === "error" ? "red" :
-          task.status === "running" ? "cyan" :
-          "gray";
+      {tasks.map(task => (
+        <Box key={task.id} flexDirection="column">
+          {/* Full width row for the SIGNAL enum */}
+          <Text color={task.status === "running" ? "cyan" :
+                      task.status === "success" ? "green" :
+                      task.status === "error" ? "red" : "gray"}>
+            {task.label} — {task.status.toUpperCase()}
+          </Text>
 
-        return (
-          <Box
-            key={task.id}
-            flexDirection="column"
-            borderStyle="round"
-            borderColor={color}
-            padding={1}
-            marginBottom={1}
-          >
-            {/* Header row */}
-            <Box justifyContent="space-between">
-              <Text color={color}>
-                {task.title} — {task.status.toUpperCase()}
-                {task.status === "running" ? ` ${task.progress}%` : ""}
-              </Text>
-              <Text color="yellow">
-                {truncateJson(task.payload ?? {}, 60)}
-              </Text>
-            </Box>
-
-            {/* Log column */}
-            <Box flexDirection="row" marginTop={1}>
-              <Box flexGrow={1}>
-                <RollingLog logs={task.logs} maxLines={4} />
-              </Box>
-            </Box>
-          </Box>
-        );
-      })}
+          {/* Rolling logs, only while running */}
+          {task.status === "running" && task.recentLogs.map((entry, idx) => (
+            <Text key={idx} color={colorForLevel(entry.level)}>
+              {entry.message}
+            </Text>
+          ))}
+        </Box>
+      ))}
     </Box>
   );
 };

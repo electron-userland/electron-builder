@@ -1,10 +1,15 @@
-import * as chalk from "chalk"
-import { Chalk } from "chalk"
-import _debug from "debug"
-import WritableStream = NodeJS.WritableStream
+import * as React from "react";
+import { render } from "ink";
+import { TaskController  } from "./logger/task";
+import { RowDashboard } from "./logger/dashboard";
+import * as fs from "fs";
+import * as path from "path";
 
-import * as signale from "signale"
+import * as _debug from "debug";
 
+const debug = _debug("electron-builder");
+
+// Enum of signals
 export enum ELECTRON_BUILDER_SIGNALS {
   ALL = "all",
   INIT = "initializing build",
@@ -19,271 +24,94 @@ export enum ELECTRON_BUILDER_SIGNALS {
   PACKAGING = "packaging application",
   COPYING = "copying",
   ARTIFACTS = "generating artifacts",
-  ASAR = "creating asar archive with @electron/asar",
+  ASAR = "creating asar archive",
   FS_OP = "file system operation",
   PUBLISH = "publishing",
   NATIVE_REBUILD = "executing @electron/rebuild",
-
-  // will be filtered out in Signale interactive mode
   GENERIC = "generic",
   VM = "leveraging virtual machine",
-
   TEST = "TEST",
 }
 
-const logger = new signale.Signale({
-  types: {
-    info: {
-      badge: "ℹ️",
-      color: "blue",
-      label: "",
-    },
-    warn: {
-      badge: "⚠️",
-      color: "yellow",
-      label: "warn",
-    },
-    error: {
-      badge: "⨯",
-      color: "red",
-      label: "error",
-    },
-    debug: {
-      badge: "🐛",
-      color: "magenta",
-      label: "debug",
-    },
-  },
-})
-logger.config({ displayTimestamp: true, displayLabel: true })
-
-let printer: ((message: string) => void) | null = null
-
-export const debug = _debug("electron-builder")
-
-export interface Fields {
-  [index: string]: any
-}
-
-export function setPrinter(value: ((message: string) => void) | null) {
-  printer = value
-}
-
-export type LogLevel = signale.DefaultMethods
-
-export const PADDING = 2
-
-type TimeEndType = ReturnType<typeof logger.timeEnd> & { logger?: signale.Signale; counter?: number }
+export type Fields = Record<string, any>;
 
 export class Logger {
-  // clean up logs since concurrent tests are impossible to track logic execution with console concurrency "noise"
-  private readonly shouldDisableNonErrorLoggingVitest = process.env.VITEST && !this.isDebugEnabled
+  private tasks: Record<ELECTRON_BUILDER_SIGNALS, TaskController> = {} as any;
+  private rerender: (() => void) | null = null;
+  private outDir: string;
 
-  public readonly signale = signale
+  constructor(outDir: string = "dist") {
+    this.outDir = outDir;
 
-  readonly timeLoggedEvents = new Map<string, TimeEndType>()
-  logDurationReport() {
-    const result: Array<{ label: string; span: number }> = []
-    for (const { label, span } of this.timeLoggedEvents.values()) {
-      result.push({ label, span: span ?? 0 })
-    }
-    this.info(ELECTRON_BUILDER_SIGNALS.GENERIC, result, "event duration report")
+    // Create TaskControllers for all signals
+    Object.values(ELECTRON_BUILDER_SIGNALS).forEach(signal => {
+      this.tasks[signal] = new TaskController(signal, () => this.rerender?.());
+    });
+
+    // Initial render
+    this.rerender = () => {
+      render(
+        <RowDashboard tasks={Object.values(this.tasks).map(t => t.snapshot)} />
+      );
+    };
+
+    this.rerender();
   }
 
-  constructor() {
-    if (this.shouldDisableNonErrorLoggingVitest) {
-      console.log(`non-error logging is silenced during VITEST workflow when DEBUG=electron-builder flag is not set`)
-    }
+  get isDebugEnabled(): boolean {
+    return debug.enabled;
   }
 
-  messageTransformer: (message: string, level: LogLevel) => string = it => it
+  private log(signal: ELECTRON_BUILDER_SIGNALS, fields: Fields, message: string, level: LogLevel = "info") {
+    const task = this.tasks[signal];
+    if (!task) return;
 
-  filePath(file: string) {
-    const cwd = process.cwd()
-    return file.startsWith(cwd) ? file.substring(cwd.length + 1) : file
-  }
-
-  // noinspection JSMethodCanBeStatic
-  get isDebugEnabled() {
-    return debug.enabled
-  }
-
-  private getInteractiveSignale(label: ELECTRON_BUILDER_SIGNALS): Required<TimeEndType>  {
-    // label = ELECTRON_BUILDER_SIGNALS.GENERIC
-    if (this.timeLoggedEvents.has(label)) {
-      return this.timeLoggedEvents.get(label) as Required<TimeEndType>
+    if (task.snapshot.status !== "running") {
+      task.start();
     }
 
-    const logger = new signale.Signale({
-      interactive: true,
-      scope: label,
-      types: {
-        info: {
-          badge: "ℹ️",
-          color: "blue",
-          label: "",
-        },
-        warn: {
-          badge: "⚠️",
-          color: "yellow",
-          label: "warn",
-        },
-        error: {
-          badge: "⨯",
-          color: "red",
-          label: "error",
-        },
-        debug: {
-          badge: "🐛",
-          color: "magenta",
-          label: "debug",
-        },
-      },
-    })
-    const config = { logger, label, span: 0, counter: 0 }
-    this.timeLoggedEvents.set(label, config)
-    return config
+    task.log(message, level);
   }
 
-  start(label: ELECTRON_BUILDER_SIGNALS, interactive: boolean = true) {
-    const instance = this.getInteractiveSignale(label)
-    if (interactive) {
-      instance.logger.start(label)
-    }
-    const id = instance.logger.time(label)
-    this.timeLoggedEvents.set(id, { ...instance, span: 0 })
-    return id
+  info(signal: ELECTRON_BUILDER_SIGNALS, fields: Fields, message: string) {
+    this.log(signal, fields, message, "info");
   }
 
-  complete(label: ELECTRON_BUILDER_SIGNALS) {
-    const instance = this.getInteractiveSignale(label)
-    const { span } = instance.logger.timeEnd(label) // span: time elapsed
-    this.timeLoggedEvents.set(label, { ...instance, span })
-    return span
+  warn(signal: ELECTRON_BUILDER_SIGNALS, fields: Fields, message: string) {
+    this.log(signal, fields, message, "warn");
   }
 
-  info(logger: ELECTRON_BUILDER_SIGNALS, messageOrFields: Fields | null, message?: string) {
-    this.doLog(message, messageOrFields, "info", logger)
+  error(signal: ELECTRON_BUILDER_SIGNALS, fields: Fields, message: string) {
+    this.log(signal, fields, message, "error");
   }
 
-  error(logger: ELECTRON_BUILDER_SIGNALS, messageOrFields: Fields | null | Error, message?: string) {
-    this.doLog(message, messageOrFields, "error", logger)
+  debug(signal: ELECTRON_BUILDER_SIGNALS, fields: Fields, message: string) {
+    this.log(signal, fields, message, "debug");
   }
 
-  warn(logger: ELECTRON_BUILDER_SIGNALS, messageOrFields: Fields | null, message?: string): void {
-    // this.doLog(message, messageOrFields, "warn", logger)
+  start(signal: ELECTRON_BUILDER_SIGNALS) {
+    this.tasks[signal].start();
   }
 
-  debug(logger: ELECTRON_BUILDER_SIGNALS, fields: Fields | null, message: string) {
-    if (debug.enabled) {
-      this._doLog(message, fields, "debug", logger)
-    }
+  complete(signal: ELECTRON_BUILDER_SIGNALS, status: "success" | "error" = "success") {
+    this.tasks[signal].complete(status);
   }
 
-  private doLog(message: string | undefined, messageOrFields: Fields | null, level: LogLevel, logger: ELECTRON_BUILDER_SIGNALS) {
-    this._doLog(message ?? "               ", messageOrFields, level, logger)
+  // Save full logs to a file
+  saveLogs(filename: string = "build.log") {
+    const filePath = path.join(this.outDir, filename);
+    const allLogs: string[] = [];
+
+    Object.values(this.tasks).forEach(task => {
+      task.snapshot.logs.forEach((entry: LogEntry) => {
+        allLogs.push(`[${task.snapshot.label}] ${entry.level.toUpperCase()}: ${entry.message}`);
+      });
+    });
+
+    fs.mkdirSync(this.outDir, { recursive: true });
+    fs.writeFileSync(filePath, allLogs.join("\n"), { encoding: "utf-8" });
   }
-
-  private _doLog(message: string, fields: Fields | null | Error, level: LogLevel, logger: ELECTRON_BUILDER_SIGNALS) {
-    if (!this.timeLoggedEvents.has(logger)) {
-      this.start(logger, true)
-    }
-    if (this.shouldDisableNonErrorLoggingVitest) {
-      if (
-        [
-          "warn", // is actually a bit too noisy
-          "error",
-        ].includes(level)
-      ) {
-        // log error message to console so VITEST can capture stacktrace as well
-        console.log(message, fields)
-      }
-      return // ignore info/warn message during VITEST workflow if debug flag is disabled
-    }
-    const instance = this.getInteractiveSignale(logger)
-    // loggerInstance.await("[%d/4] - Process A", 1)
-
-    // setTimeout(() => {
-    //   loggerInstance.success("[%d/4] - Process A", 2)
-    //   setTimeout(() => {
-    //     loggerInstance.await("[%d/4] - Process B", 3)
-    //     setTimeout(() => {
-    //       loggerInstance.error("[%d/4] - Process B", 4)
-    //       setTimeout(() => {}, 1000)
-    //     }, 1000)
-    //   }, 1000)
-    // }, 1000)
-    //
-    // switch (level) {
-    //   case "info":
-    //     loggerInstance.config({ displayLabel: false })
-    //     break
-    //   case "warn":
-    //     message = Logger.createMessage(message, fields as Fields | null, level, chalk.yellow, PADDING)
-    //     break
-    //   case "debug":
-    //     message = Logger.createMessage(message, fields as Fields | null, level, chalk.magenta, PADDING)
-    //     break
-    //   case "error":
-    //     if (fields instanceof Error) {
-    //       message += `: ${fields.stack ?? fields.message}`
-    //       fields = null
-    //     }
-    //     message = Logger.createMessage(message, fields as Fields | null, level, chalk.red, PADDING)
-    //     break
-    //   default:
-    //     message = Logger.createMessage(message, fields as Fields | null, level, chalk.white, PADDING)
-    //     break
-    // }
-    instance.logger[level](`[${instance.counter++ > 8 ? instance.counter : `0${instance.counter}`}]       ${message}               ${JSON.stringify(fields)}`)
-  }
-
-  static createMessage(message: string, fields: Fields | null, level: LogLevel, color: (it: string) => string, messagePadding = 0): string {
-    if (fields == null) {
-      return message
-    }
-
-    const fieldPadding = " ".repeat(Math.max(2, 16 - message.length))
-    let text = (level === "error" ? color(message) : message) + fieldPadding
-    const fieldNames = Object.keys(fields)
-    let counter = 0
-    for (const name of fieldNames) {
-      let fieldValue = fields[name]
-      let valuePadding: string | null = null
-      // Remove unnecessary line breaks
-      if (fieldValue != null && typeof fieldValue === "string" && fieldValue.includes("\n")) {
-        valuePadding = " ".repeat(messagePadding + message.length + fieldPadding.length + 2)
-        fieldValue = fieldValue.replace(/\n\s*\n/g, `\n${valuePadding}`)
-      } else if (Array.isArray(fieldValue)) {
-        fieldValue = JSON.stringify(fieldValue)
-      }
-
-      text += `${color(name)}=${fieldValue}`
-      if (++counter !== fieldNames.length) {
-        if (valuePadding == null) {
-          text += " "
-        } else {
-          text += "\n" + valuePadding
-        }
-      }
-    }
-    return text
-  }
-
-  // log(message: string): void {
-  //   if (printer == null) {
-  //     this.stream.write(`${message}\n`)
-  //   } else {
-  //     printer(message)
-  //   }
-  // }
 }
 
-// const LEVEL_TO_COLOR: { [index: string]: Chalk } = {
-//   info: chalk.blue,
-//   warn: chalk.yellow,
-//   error: chalk.red,
-//   debug: chalk.white,
-// }
-
-export const log = new Logger()
+// Singleton
+export const log = new Logger("dist");

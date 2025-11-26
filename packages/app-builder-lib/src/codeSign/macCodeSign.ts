@@ -90,7 +90,7 @@ export async function reportError(isMas: boolean, certificateTypes: CertType[], 
 
   const skipMessage = "skipped macOS application code signing"
   if (isMas || isForceCodeSigning) {
-    throw new Error(Logger.createMessage(skipMessage, logFields, "error", it => it))
+    throw new Error(JSON.stringify({ message: skipMessage, ...logFields }))
   } else {
     log.warn(ELECTRON_BUILDER_SIGNALS.CODE_SIGN, logFields, skipMessage)
   }
