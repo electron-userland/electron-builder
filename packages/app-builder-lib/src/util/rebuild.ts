@@ -1,11 +1,11 @@
 import { RebuildOptions } from "@electron/rebuild"
-import { log } from "builder-util"
+import { ELECTRON_BUILDER_SIGNALS, log } from "builder-util"
 import * as cp from "child_process"
 import * as path from "path"
 
 export const rebuild = async (options: RebuildOptions): Promise<void> => {
   const { arch } = options
-  log.info({ arch }, `installing native dependencies`)
+  log.info(ELECTRON_BUILDER_SIGNALS.NATIVE_REBUILD, { arch }, `installing native dependencies`)
 
   const child = cp.fork(path.resolve(__dirname, "../../helpers/remote-rebuild.js"), [JSON.stringify(options)], {
     stdio: ["pipe", "pipe", "pipe", "ipc"],
@@ -14,25 +14,25 @@ export const rebuild = async (options: RebuildOptions): Promise<void> => {
   let pendingError: Error
 
   child.stdout?.on("data", chunk => {
-    log.info(chunk.toString())
+    log.info(ELECTRON_BUILDER_SIGNALS.NATIVE_REBUILD, chunk.toString())
   })
   child.stderr?.on("data", chunk => {
-    log.error(chunk.toString())
+    log.error(ELECTRON_BUILDER_SIGNALS.NATIVE_REBUILD, chunk.toString())
   })
 
   child.on("message", (message: { msg: string; moduleName: string; err: { message: string; stack: string } }) => {
     const { moduleName, msg } = message
     switch (msg) {
       case "module-found": {
-        log.info({ moduleName, arch }, "preparing")
+        log.info(ELECTRON_BUILDER_SIGNALS.NATIVE_REBUILD, { moduleName, arch }, "preparing")
         break
       }
       case "module-done": {
-        log.info({ moduleName, arch }, "finished")
+        log.info(ELECTRON_BUILDER_SIGNALS.NATIVE_REBUILD, { moduleName, arch }, "finished")
         break
       }
       case "module-skip": {
-        log.debug?.({ moduleName, arch }, "skipped. set ENV=electron-rebuild to determine why")
+        log.debug(ELECTRON_BUILDER_SIGNALS.NATIVE_REBUILD, { moduleName, arch }, "skipped. set ENV=electron-rebuild to determine why")
         break
       }
       case "rebuild-error": {
@@ -41,7 +41,7 @@ export const rebuild = async (options: RebuildOptions): Promise<void> => {
         break
       }
       case "rebuild-done": {
-        log.info("completed installing native dependencies")
+        log.info(ELECTRON_BUILDER_SIGNALS.NATIVE_REBUILD, null, "completed installing native dependencies")
         break
       }
     }

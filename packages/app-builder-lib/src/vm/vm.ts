@@ -1,4 +1,4 @@
-import { DebugLogger, exec, ExtraSpawnOptions, InvalidConfigurationError, log, spawn } from "builder-util"
+import { DebugLogger, ELECTRON_BUILDER_SIGNALS, exec, ExtraSpawnOptions, InvalidConfigurationError, log, spawn } from "builder-util"
 import { ExecFileOptions, SpawnOptions } from "child_process"
 import { Lazy } from "lazy-val"
 import * as path from "path"
@@ -23,11 +23,11 @@ export class VmManager {
   readonly powershellCommand = new Lazy(() => {
     return this.exec("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", `Get-Command pwsh.exe`])
       .then(() => {
-        log.info(null, "identified pwsh.exe")
+        log.info(ELECTRON_BUILDER_SIGNALS.VM, null, "identified pwsh.exe")
         return "pwsh.exe"
       })
       .catch(() => {
-        log.info(null, "unable to find pwsh.exe, falling back to powershell.exe")
+        log.info(ELECTRON_BUILDER_SIGNALS.VM, null, "unable to find pwsh.exe, falling back to powershell.exe")
         return "powershell.exe"
       })
   })

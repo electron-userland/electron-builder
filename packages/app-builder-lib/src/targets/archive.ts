@@ -1,4 +1,4 @@
-import { debug7z, exec, exists, getPath7za, log, statOrNull, unlinkIfExists } from "builder-util"
+import { debug7z, ELECTRON_BUILDER_SIGNALS, exec, exists, getPath7za, log, statOrNull, unlinkIfExists } from "builder-util"
 import { move } from "fs-extra"
 import * as path from "path"
 import { create, CreateOptions, FileOptions } from "tar"
@@ -173,7 +173,7 @@ export function computeZipCompressArgs(options: ArchiveOptions = {}) {
   }
 
   if (options.dictSize != null) {
-    log.warn({ distSize: options.dictSize }, `ignoring unsupported option`)
+    log.warn(ELECTRON_BUILDER_SIGNALS.PACKAGING, { distSize: options.dictSize }, `ignoring unsupported option`)
   }
 
   // do not save extra file attributes (Extended Attributes on OS/2, uid/gid and file times on Unix)
@@ -183,7 +183,7 @@ export function computeZipCompressArgs(options: ArchiveOptions = {}) {
 
   if (options.method != null) {
     if (options.method !== "DEFAULT") {
-      log.warn({ method: options.method }, `ignoring unsupported option`)
+      log.warn(ELECTRON_BUILDER_SIGNALS.PACKAGING, { method: options.method }, `ignoring unsupported option`)
     }
   } else {
     args.push("-Z", storeOnly ? "store" : "deflate")
@@ -197,12 +197,12 @@ export async function archive(format: string, outFile: string, dirToArchive: str
   const outFileStat = await statOrNull(outFile)
   const dirStat = await statOrNull(dirToArchive)
   if (outFileStat && dirStat && outFileStat.mtime > dirStat.mtime) {
-    log.info({ reason: "Archive file is up to date", outFile }, `skipped archiving`)
+    log.info(ELECTRON_BUILDER_SIGNALS.PACKAGING, { reason: "Archive file is up to date", outFile }, `skipped archiving`)
     return outFile
   }
   let use7z = true
   if (process.platform === "darwin" && format === "zip" && dirToArchive.normalize("NFC") !== dirToArchive) {
-    log.warn({ reason: "7z doesn't support NFD-normalized filenames" }, `using zip`)
+    log.warn(ELECTRON_BUILDER_SIGNALS.PACKAGING, { reason: "7z doesn't support NFD-normalized filenames" }, `using zip`)
     use7z = false
   }
   const args = use7z ? compute7zCompressArgs(format, options) : computeZipCompressArgs(options)

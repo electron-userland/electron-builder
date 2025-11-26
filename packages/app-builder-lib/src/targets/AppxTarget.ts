@@ -1,4 +1,4 @@
-import { Arch, asArray, copyOrLinkFile, deepAssign, InvalidConfigurationError, log, walk } from "builder-util"
+import { Arch, asArray, copyOrLinkFile, deepAssign, ELECTRON_BUILDER_SIGNALS, InvalidConfigurationError, log, walk } from "builder-util"
 import { Nullish } from "builder-util-runtime"
 import { emptyDir, readdir, readFile, writeFile } from "fs-extra"
 import * as path from "path"
@@ -206,7 +206,7 @@ export default class AppXTarget extends Target {
 
     const customManifestPath = await this.packager.getResource(this.options.customManifestPath)
     if (customManifestPath) {
-      log.info({ manifestPath: log.filePath(customManifestPath) }, "custom appx manifest found")
+      log.info(ELECTRON_BUILDER_SIGNALS.PACKAGING, { manifestPath: log.filePath(customManifestPath) }, "custom appx manifest found")
     }
     const manifestFileContent = await readFile(customManifestPath || path.join(getTemplatePath("appx"), "appxmanifest.xml"), "utf8")
     const manifest = manifestFileContent.replace(/\${([a-zA-Z0-9]+)}/g, (match, p1): string => {
@@ -233,10 +233,10 @@ export default class AppXTarget extends Target {
             result = options.applicationId
           } else if (!isNaN(identitynumber) && options.identityName !== null && options.identityName !== undefined) {
             if (options.identityName[0] === "0") {
-              log.warn(`Remove the 0${identitynumber}`)
+              log.warn(ELECTRON_BUILDER_SIGNALS.PACKAGING, null, `Remove the 0${identitynumber}`)
               result = options.identityName.replace("0" + identitynumber.toString(), "")
             } else {
-              log.warn(`Remove the ${identitynumber}`)
+              log.warn(ELECTRON_BUILDER_SIGNALS.PACKAGING, null, `Remove the ${identitynumber}`)
               result = options.identityName.replace(identitynumber.toString(), "")
             }
           } else {

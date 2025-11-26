@@ -1,4 +1,4 @@
-import { Arch, asArray, AsyncTaskManager, exists, InvalidConfigurationError, isEmptyOrSpaces, isPullRequest, log, safeStringifyJson, serializeToYaml } from "builder-util"
+import { Arch, asArray, AsyncTaskManager, ELECTRON_BUILDER_SIGNALS, exists, InvalidConfigurationError, isEmptyOrSpaces, isPullRequest, log, safeStringifyJson, serializeToYaml } from "builder-util"
 import {
   BitbucketOptions,
   CancellationToken,
@@ -89,10 +89,10 @@ export class PublishManager implements PublishContext {
         } else {
           const tag = getCiTag()
           if (tag != null) {
-            log.info({ reason: "tag is defined", tag }, "artifacts will be published")
+            log.info(ELECTRON_BUILDER_SIGNALS.PACKAGING, { reason: "tag is defined", tag }, "artifacts will be published")
             publishOptions.publish = "onTag"
           } else if (isCI) {
-            log.info({ reason: "CI detected" }, "artifacts will be published if draft release exists")
+            log.info(ELECTRON_BUILDER_SIGNALS.PACKAGING, { reason: "CI detected" }, "artifacts will be published if draft release exists")
             publishOptions.publish = "onTagOrDraft"
           }
         }
@@ -101,10 +101,10 @@ export class PublishManager implements PublishContext {
       const publishPolicy = publishOptions.publish
       this.isPublish = publishPolicy != null && publishOptions.publish !== "never" && (publishPolicy !== "onTag" || getCiTag() != null)
       if (this.isPublish && forcePublishForPr) {
-        log.warn(publishForPrWarning)
+        log.warn(ELECTRON_BUILDER_SIGNALS.PACKAGING, null, publishForPrWarning)
       }
     } else if (publishOptions.publish !== "never") {
-      log.info(
+      log.info(ELECTRON_BUILDER_SIGNALS.PACKAGING,
         {
           reason: "current build is a part of pull request",
           solution: `set env PUBLISH_FOR_PULL_REQUEST to true to force code signing\n${publishForPrWarning}`,
@@ -160,7 +160,7 @@ export class PublishManager implements PublishContext {
 
     const publisher = await this.getOrCreatePublisher(publishConfig, appInfo)
     if (publisher == null) {
-      log.debug(
+      log.debug(ELECTRON_BUILDER_SIGNALS.PACKAGING,
         {
           file: log.filePath(event.file),
           reason: "publisher is null",
@@ -173,7 +173,7 @@ export class PublishManager implements PublishContext {
 
     const providerName = publisher.providerName
     if (this.publishOptions.publish === "onTagOrDraft" && getCiTag() == null && providerName !== "bitbucket" && providerName !== "github") {
-      log.info({ file: log.filePath(event.file), reason: "current build is not for a git tag", publishPolicy: "onTagOrDraft" }, `not published to ${providerName}`)
+      log.info(ELECTRON_BUILDER_SIGNALS.PACKAGING, { file: log.filePath(event.file), reason: "current build is not for a git tag", publishPolicy: "onTagOrDraft" }, `not published to ${providerName}`)
       return
     }
 
@@ -196,7 +196,7 @@ export class PublishManager implements PublishContext {
     const eventFile = event.file
     if (publishConfigs == null) {
       if (this.isPublish) {
-        log.debug({ file: eventFile, reason: "no publish configs" }, "not published")
+        log.debug(ELECTRON_BUILDER_SIGNALS.PACKAGING, { file: eventFile, reason: "no publish configs" }, "not published")
       }
       return
     }
@@ -204,7 +204,7 @@ export class PublishManager implements PublishContext {
     if (this.isPublish) {
       for (const publishConfig of publishConfigs) {
         if (this.cancellationToken.cancelled) {
-          log.debug({ file: event.file, reason: "cancelled" }, "not published")
+          log.debug(ELECTRON_BUILDER_SIGNALS.PACKAGING, { file: event.file, reason: "cancelled" }, "not published")
           break
         }
 
@@ -230,7 +230,7 @@ export class PublishManager implements PublishContext {
     if (publisher == null) {
       publisher = await createPublisher(this, appInfo.version, publishConfig, this.publishOptions, this.packager)
       this.nameToPublisher.set(providerCacheKey, publisher)
-      log.info({ publisher: publisher!.toString() }, "publishing")
+      log.info(ELECTRON_BUILDER_SIGNALS.PACKAGING, { publisher: publisher!.toString() }, "publishing")
     }
     return publisher
   }
@@ -285,7 +285,7 @@ export async function getPublishConfigsForUpdateInfo(
   }
 
   if (publishConfigs.length === 0) {
-    log.debug(null, "getPublishConfigsForUpdateInfo: no publishConfigs, detect using repository info")
+    log.debug(ELECTRON_BUILDER_SIGNALS.PACKAGING, null, "getPublishConfigsForUpdateInfo: no publishConfigs, detect using repository info")
     // https://github.com/electron-userland/electron-builder/issues/925#issuecomment-261732378
     // default publish config is github, file should be generated regardless of publish state (user can test installer locally or manage the release process manually)
     const repositoryInfo = await packager.info.repositoryInfo
@@ -374,7 +374,7 @@ async function requireProviderClass(provider: string, packager: Packager): Promi
           return module.default || module
         }
       }
-      log.error({ path: log.filePath(packager.buildResourcesDir), template, extensionsChecked: extensions }, "unable to find publish provider in build resources")
+      log.error(ELECTRON_BUILDER_SIGNALS.PACKAGING, { path: log.filePath(packager.buildResourcesDir), template, extensionsChecked: extensions }, "unable to find publish provider in build resources")
       throw new InvalidConfigurationError(`Cannot find module for publisher "${provider}" with any extension: ${extensions.join(", ")}`)
     }
   }
@@ -463,7 +463,7 @@ async function resolvePublishConfigurations(
     }
 
     if (serviceName != null) {
-      log.debug(null, `detect ${serviceName} as publish provider`)
+      log.debug(ELECTRON_BUILDER_SIGNALS.PACKAGING, null, `detect ${serviceName} as publish provider`)
       return [(await getResolvedPublishConfig(platformPackager, packager, { provider: serviceName }, arch, errorIfCannot))!]
     }
   }
@@ -574,13 +574,13 @@ async function getResolvedPublishConfig(
     if (errorIfCannot) {
       throw new Error(message)
     } else {
-      log.warn(message)
+      log.warn(ELECTRON_BUILDER_SIGNALS.PACKAGING, null, message)
       return null
     }
   }
 
   if (!owner || !project) {
-    log.debug({ reason: "owner or project is not specified explicitly", provider, owner, project }, "calling getInfo")
+    log.debug(ELECTRON_BUILDER_SIGNALS.PACKAGING, { reason: "owner or project is not specified explicitly", provider, owner, project }, "calling getInfo")
     const info = await getInfo()
     if (info == null) {
       return null
@@ -596,7 +596,7 @@ async function getResolvedPublishConfig(
 
   if (isGithub) {
     if ((options as GithubOptions).token != null && !(options as GithubOptions).private) {
-      log.warn('"token" specified in the github publish options. It should be used only for [setFeedURL](module:electron-updater/out/AppUpdater.AppUpdater+setFeedURL).')
+      log.warn(ELECTRON_BUILDER_SIGNALS.PACKAGING, null, '"token" specified in the github publish options. It should be used only for [setFeedURL](module:electron-updater/out/AppUpdater.AppUpdater+setFeedURL).')
     }
     //tslint:disable-next-line:no-object-literal-type-assertion
     return { owner, repo: project, ...options } as GithubOptions

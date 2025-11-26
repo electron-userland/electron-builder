@@ -1,4 +1,4 @@
-import { asArray, InvalidConfigurationError, log } from "builder-util"
+import { asArray, ELECTRON_BUILDER_SIGNALS, InvalidConfigurationError, log } from "builder-util"
 import { MemoLazy } from "builder-util-runtime"
 import { Lazy } from "lazy-val"
 import { WindowsAzureSigningConfiguration, WindowsConfiguration } from "../options/winOptions"
@@ -31,19 +31,19 @@ export class WindowsSignAzureManager implements SignManager {
     const vm = await this.packager.vm.value
     const ps = await vm.powershellCommand.value
 
-    log.info(null, "installing required module (TrustedSigning) with scope CurrentUser")
+    log.info(ELECTRON_BUILDER_SIGNALS.CODE_SIGN, null, "installing required module (TrustedSigning) with scope CurrentUser")
     try {
       await vm.exec(ps, ["-NoProfile", "-NonInteractive", "-Command", "Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force -Scope CurrentUser"])
     } catch (error: any) {
       // Might not be needed, seems GH runners already have NuGet set up.
       // Logging to debug just in case users run into this. If NuGet isn't present, Install-Module -Name TrustedSigning will fail, so we'll get the logs at that point
-      log.debug({ message: error.message || error.stack }, "unable to install PackageProvider Nuget. Might be a false alarm though as some systems already have it installed")
+      log.debug(ELECTRON_BUILDER_SIGNALS.CODE_SIGN, { message: error.message || error.stack }, "unable to install PackageProvider Nuget. Might be a false alarm though as some systems already have it installed")
     }
     await vm.exec(ps, ["-NoProfile", "-NonInteractive", "-Command", "Install-Module -Name TrustedSigning -MinimumVersion 0.5.0 -Force -Repository PSGallery -Scope CurrentUser"])
 
     // Preemptively check env vars once during initialization
     // Options: https://learn.microsoft.com/en-us/dotnet/api/azure.identity.environmentcredential?view=azure-dotnet#definition
-    log.info(null, "verifying env vars for authenticating to Microsoft Entra ID")
+    log.info(ELECTRON_BUILDER_SIGNALS.CODE_SIGN, null, "verifying env vars for authenticating to Microsoft Entra ID")
     this.verifyRequiredEnvVars()
     if (!(this.verifyPrincipleSecretEnv() || this.verifyPrincipleCertificateEnv() || this.verifyUsernamePasswordEnv())) {
       throw new InvalidConfigurationError(
@@ -64,7 +64,7 @@ export class WindowsSignAzureManager implements SignManager {
 
   verifyPrincipleSecretEnv() {
     if (!process.env.AZURE_CLIENT_SECRET) {
-      log.debug({ envVar: "AZURE_CLIENT_SECRET" }, "no secret found for authenticating to Microsoft Entra ID")
+      log.debug(ELECTRON_BUILDER_SIGNALS.CODE_SIGN, { envVar: "AZURE_CLIENT_SECRET" }, "no secret found for authenticating to Microsoft Entra ID")
       return false
     }
     return true
@@ -72,23 +72,23 @@ export class WindowsSignAzureManager implements SignManager {
 
   verifyPrincipleCertificateEnv() {
     if (!process.env.AZURE_CLIENT_CERTIFICATE_PATH) {
-      log.debug({ envVar: "AZURE_CLIENT_CERTIFICATE_PATH" }, "no path found for signing certificate for authenticating to Microsoft Entra ID")
+      log.debug(ELECTRON_BUILDER_SIGNALS.CODE_SIGN, { envVar: "AZURE_CLIENT_CERTIFICATE_PATH" }, "no path found for signing certificate for authenticating to Microsoft Entra ID")
       return false
     }
     if (!process.env.AZURE_CLIENT_CERTIFICATE_PASSWORD) {
-      log.debug({ envVar: "AZURE_CLIENT_CERTIFICATE_PASSWORD" }, "(optional) certificate password not found, assuming no password")
+      log.debug(ELECTRON_BUILDER_SIGNALS.CODE_SIGN, { envVar: "AZURE_CLIENT_CERTIFICATE_PASSWORD" }, "(optional) certificate password not found, assuming no password")
     }
     if (!process.env.AZURE_CLIENT_SEND_CERTIFICATE_CHAIN) {
-      log.debug({ envVar: "AZURE_CLIENT_SEND_CERTIFICATE_CHAIN" }, "(optional) certificate chain not found")
+      log.debug(ELECTRON_BUILDER_SIGNALS.CODE_SIGN, { envVar: "AZURE_CLIENT_SEND_CERTIFICATE_CHAIN" }, "(optional) certificate chain not found")
     }
     return true
   }
 
   verifyUsernamePasswordEnv() {
     if (!process.env.AZURE_USERNAME) {
-      log.debug({ envVar: "AZURE_USERNAME" }, "no username found for authenticating to Microsoft Entra ID")
+      log.debug(ELECTRON_BUILDER_SIGNALS.CODE_SIGN, { envVar: "AZURE_USERNAME" }, "no username found for authenticating to Microsoft Entra ID")
       if (!process.env.AZURE_PASSWORD) {
-        log.debug({ envVar: "AZURE_PASSWORD" }, "no password found for authenticating to Microsoft Entra ID")
+        log.debug(ELECTRON_BUILDER_SIGNALS.CODE_SIGN, { envVar: "AZURE_PASSWORD" }, "no password found for authenticating to Microsoft Entra ID")
       }
       return false
     }

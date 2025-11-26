@@ -1,4 +1,4 @@
-import { asArray, copyDir, DO_NOT_USE_HARD_LINKS, executeAppBuilder, isEmptyOrSpaces, log, MAX_FILE_REQUESTS, statOrNull, unlinkIfExists } from "builder-util"
+import { asArray, copyDir, DO_NOT_USE_HARD_LINKS, ELECTRON_BUILDER_SIGNALS, executeAppBuilder, isEmptyOrSpaces, log, MAX_FILE_REQUESTS, statOrNull, unlinkIfExists } from "builder-util"
 import { emptyDir, readdir, rename, rm } from "fs-extra"
 import * as path from "path"
 import asyncPool from "tiny-async-pool"
@@ -189,10 +189,10 @@ async function unpack(prepareOptions: PrepareApplicationStageDirectoryOptions, d
   }
 
   const copyUnpackedElectronDistribution = async (folderPath: string) => {
-    log.info({ electronDist: log.filePath(folderPath) }, "using custom unpacked Electron distribution")
+    log.info(ELECTRON_BUILDER_SIGNALS.COPYING, { electronDist: log.filePath(folderPath) }, "using custom unpacked Electron distribution")
     const source = packager.getElectronSrcDir(folderPath)
     const destination = packager.getElectronDestinationDir(appOutDir)
-    log.info({ source, destination }, "copying unpacked Electron")
+    log.info(ELECTRON_BUILDER_SIGNALS.COPYING, { source, destination }, "copying unpacked Electron")
     await emptyDir(appOutDir)
     await copyDir(source, destination, {
       isUseHardLink: DO_NOT_USE_HARD_LINKS,
@@ -211,7 +211,7 @@ async function unpack(prepareOptions: PrepareApplicationStageDirectoryOptions, d
     }
 
     if (resolvedDist.endsWith(".zip")) {
-      log.info({ zipFile: resolvedDist }, "using custom electronDist zip file")
+      log.info(ELECTRON_BUILDER_SIGNALS.COPYING, { zipFile: resolvedDist }, "using custom electronDist zip file")
       await downloadUsingAdjustedConfig({
         ...downloadOptions,
         cache: path.dirname(resolvedDist), // set custom directory to the zip file's directory
@@ -224,7 +224,7 @@ async function unpack(prepareOptions: PrepareApplicationStageDirectoryOptions, d
       // backward compatibility: if electronDist is a directory, check for the default zip file inside it
       const files = await readdir(resolvedDist)
       if (files.includes(defaultZipName)) {
-        log.info({ electronDist: log.filePath(resolvedDist) }, "using custom electronDist directory")
+        log.info(ELECTRON_BUILDER_SIGNALS.COPYING, { electronDist: log.filePath(resolvedDist) }, "using custom electronDist directory")
         await downloadUsingAdjustedConfig({
           ...downloadOptions,
           cache: resolvedDist,
@@ -253,12 +253,12 @@ async function unpack(prepareOptions: PrepareApplicationStageDirectoryOptions, d
     const electronDistHook: any = await resolveFunction(packager.appInfo.type, electronDist, "electronDist")
     resolvedDist = typeof electronDistHook === "function" ? await Promise.resolve(electronDistHook(prepareOptions)) : electronDistHook
   } catch (error: any) {
-    log.warn({ error }, "Failed to resolve electronDist, using default unpack logic")
+    log.warn(ELECTRON_BUILDER_SIGNALS.COPYING, { error }, "Failed to resolve electronDist, using default unpack logic")
   }
 
   if (resolvedDist == null) {
     // if no custom electronDist is provided, use the default unpack logic
-    log.debug(null, "no custom electronDist provided, unpacking default Electron distribution")
+    log.debug(ELECTRON_BUILDER_SIGNALS.COPYING, null, "no custom electronDist provided, unpacking default Electron distribution")
     await downloadUsingAdjustedConfig(downloadOptions)
     return true // indicates that we should clean up after unpacking
   }

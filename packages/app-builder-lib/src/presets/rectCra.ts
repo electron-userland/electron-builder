@@ -1,4 +1,4 @@
-import { log, statOrNull } from "builder-util"
+import { ELECTRON_BUILDER_SIGNALS, log, statOrNull } from "builder-util"
 import * as path from "path"
 import { Configuration } from "../configuration"
 
@@ -6,7 +6,7 @@ import { Configuration } from "../configuration"
 export async function reactCra(projectDir: string): Promise<Configuration> {
   if ((await statOrNull(path.join(projectDir, "public", "electron.js"))) == null) {
     // noinspection SpellCheckingInspection
-    log.warn("public/electron.js not found. Please see https://medium.com/@kitze/%EF%B8%8F-from-react-to-an-electron-app-ready-for-production-a0468ecb1da3")
+    log.warn(ELECTRON_BUILDER_SIGNALS.PACKAGING, null, "public/electron.js not found. Please see https://medium.com/@kitze/%EF%B8%8F-from-react-to-an-electron-app-ready-for-production-a0468ecb1da3")
   }
 
   return {

@@ -1,4 +1,4 @@
-import { Arch, copyFile, log, orNullIfFileNotExist } from "builder-util"
+import { Arch, copyFile, ELECTRON_BUILDER_SIGNALS, log, orNullIfFileNotExist } from "builder-util"
 import { Hash } from "crypto"
 import { readJson, writeJson } from "fs-extra"
 import { mkdir, readFile } from "fs/promises"
@@ -35,19 +35,19 @@ export class BuildCacheManager {
     this.cacheInfo = await orNullIfFileNotExist(readJson(this.cacheInfoFile))
     const oldDigest = this.cacheInfo == null ? null : this.cacheInfo.executableDigest
     if (oldDigest !== digest) {
-      log.debug({ oldDigest, newDigest: digest }, "no valid cached executable found")
+      log.debug(ELECTRON_BUILDER_SIGNALS.GENERIC, { oldDigest, newDigest: digest }, "no valid cached executable found")
       return false
     }
 
-    log.debug({ cacheFile: this.cacheFile, file: this.executableFile }, `copying cached executable`)
+    log.debug(ELECTRON_BUILDER_SIGNALS.GENERIC, { cacheFile: this.cacheFile, file: this.executableFile }, `copying cached executable`)
     try {
       await copyFile(this.cacheFile, this.executableFile, false)
       return true
     } catch (e: any) {
       if (e.code === "ENOENT" || e.code === "ENOTDIR") {
-        log.debug({ error: e.code }, "copy cached executable failed")
+        log.debug(ELECTRON_BUILDER_SIGNALS.GENERIC, { error: e.code }, "copy cached executable failed")
       } else {
-        log.warn({ error: e.stack || e }, `cannot copy cached executable`)
+        log.warn(ELECTRON_BUILDER_SIGNALS.GENERIC, { error: e.stack || e }, `cannot copy cached executable`)
       }
     }
     return false
@@ -68,7 +68,7 @@ export class BuildCacheManager {
       await mkdir(this.cacheDir, { recursive: true })
       await Promise.all([writeJson(this.cacheInfoFile, this.cacheInfo), copyFile(this.executableFile, this.cacheFile, false)])
     } catch (e: any) {
-      log.warn({ error: e.stack || e }, `cannot save build cache`)
+      log.warn(ELECTRON_BUILDER_SIGNALS.GENERIC, { error: e.stack || e }, `cannot save build cache`)
     }
   }
 }

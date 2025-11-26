@@ -1,4 +1,4 @@
-import { log } from "builder-util"
+import { ELECTRON_BUILDER_SIGNALS, log } from "builder-util"
 import { Lazy } from "lazy-val"
 import { isPwshAvailable, VmManager } from "./vm"
 
@@ -8,12 +8,12 @@ export class PwshVmManager extends VmManager {
   }
 
   readonly powershellCommand = new Lazy<string>(async () => {
-    log.info(null, "checking for `pwsh` for powershell")
+    log.info(ELECTRON_BUILDER_SIGNALS.VM, null, "checking for `pwsh` for powershell")
     if (await isPwshAvailable.value) {
       return "pwsh"
     }
     const errorMessage = `unable to find \`pwsh\`, please install per instructions linked in logs`
-    log.error(
+    log.error(ELECTRON_BUILDER_SIGNALS.VM,
       {
         mac: "https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell-on-macos",
         linux: "https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell-on-linux",

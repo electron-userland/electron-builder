@@ -4,7 +4,7 @@ import { computeArchToTargetNamesMap } from "app-builder-lib/out/targets/targetF
 import { getLinuxToolsPath } from "app-builder-lib/out/targets/tools"
 import { parsePlistFile, PlistObject } from "app-builder-lib/out/util/plist"
 import { AsarIntegrity } from "app-builder-lib/out/asar/integrity"
-import { addValue, copyDir, deepAssign, exec, executeFinally, exists, FileCopier, log, USE_HARD_LINKS, walk } from "builder-util"
+import { addValue, copyDir, deepAssign, ELECTRON_BUILDER_SIGNALS, exec, executeFinally, exists, FileCopier, log, USE_HARD_LINKS, walk } from "builder-util"
 import { CancellationToken, UpdateFileInfo } from "builder-util-runtime"
 import { Arch, ArtifactCreated, Configuration, DIR_TARGET, getArchSuffix, MacOsTargetName, Packager, PackagerOptions, Platform, Target } from "electron-builder"
 import { convertVersion } from "electron-winstaller"
@@ -126,7 +126,7 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
   const dir = customTmpDir == null ? await tmpDir.createTempDir({ prefix: "test-project" }) : path.resolve(customTmpDir)
   if (customTmpDir != null) {
     await emptyDir(dir)
-    log.info({ customTmpDir }, "custom temp dir used")
+    log.info(ELECTRON_BUILDER_SIGNALS.TEST, { customTmpDir }, "custom temp dir used")
   }
 
   const state = expect.getState()
@@ -178,9 +178,9 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
       }
       const { cli, prepareEntry, version } = getPackageManagerWithVersion(pm, packageManager)
       if (pm === PM.BUN) {
-        log.info({ pm, version: version, projectDir }, "installing dependencies with bun; corepack does not support it currently and it must be installed separately")
+        log.info(ELECTRON_BUILDER_SIGNALS.TEST, { pm, version: version, projectDir }, "installing dependencies with bun; corepack does not support it currently and it must be installed separately")
       } else {
-        log.info({ pm, version: version, projectDir }, "activating corepack")
+        log.info(ELECTRON_BUILDER_SIGNALS.TEST, { pm, version: version, projectDir }, "activating corepack")
         try {
           execSync(`corepack enable ${cli}`, { env: runtimeEnv, cwd: projectDir, stdio: "inherit" })
         } catch (err: any) {
@@ -719,7 +719,7 @@ export function platform(platform: Platform): PackagerOptions {
 
 export function signed(packagerOptions: PackagerOptions): PackagerOptions {
   if (process.env.CSC_KEY_PASSWORD == null) {
-    log.warn({ reason: "CSC_KEY_PASSWORD is not defined" }, "macOS code signing is not tested")
+    log.warn(ELECTRON_BUILDER_SIGNALS.TEST, { reason: "CSC_KEY_PASSWORD is not defined" }, "macOS code signing is not tested")
   } else {
     if (packagerOptions.config == null) {
       ;(packagerOptions as any).config = {}

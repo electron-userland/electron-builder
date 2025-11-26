@@ -1,6 +1,6 @@
 import { PlatformPackager } from "app-builder-lib"
 import { getLicenseFiles } from "app-builder-lib/out/util/license"
-import { log } from "builder-util"
+import { ELECTRON_BUILDER_SIGNALS, log } from "builder-util"
 import { dmgLicenseFromJSON } from "dmg-license"
 import { readFile, readJson } from "fs-extra"
 import { load } from "js-yaml"
@@ -57,7 +57,9 @@ export async function addLicenseToDmg(packager: PlatformPackager<any>, dmgPath: 
   }
 
   await dmgLicenseFromJSON(dmgPath, jsonFile, {
-    onNonFatalError: log.warn.bind(log),
+    onNonFatalError: (e: Error) => {
+      log.warn(ELECTRON_BUILDER_SIGNALS.PACKAGING, e, `dmg-license warning`)
+    }
   })
 
   return jsonFile

@@ -7,7 +7,7 @@ import { createLazyProductionDeps } from "app-builder-lib/out/util/packageDepend
 import { installOrRebuild } from "app-builder-lib/out/util/yarn"
 import { PACKAGE_VERSION } from "app-builder-lib/out/version"
 import { determinePackageManagerEnv } from "app-builder-lib/out/node-module-collector"
-import { getArchCliNames, log, printErrorAndExit } from "builder-util"
+import { ELECTRON_BUILDER_SIGNALS, getArchCliNames, log, printErrorAndExit } from "builder-util"
 import { readJson } from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
@@ -36,7 +36,7 @@ export function configureInstallAppDepsCommand(yargs: yargs.Argv): yargs.Argv {
 /** @internal */
 export async function installAppDeps(args: any) {
   try {
-    log.info({ version: PACKAGE_VERSION }, "electron-builder")
+    log.info(ELECTRON_BUILDER_SIGNALS.GENERIC, { version: PACKAGE_VERSION }, "electron-builder")
   } catch (e: any) {
     // error in dev mode without babel
     if (!(e instanceof ReferenceError)) {
@@ -75,6 +75,6 @@ function main() {
 }
 
 if (require.main === module) {
-  log.warn("please use as subcommand: electron-builder install-app-deps")
+  log.warn(ELECTRON_BUILDER_SIGNALS.GENERIC, null, "please use as subcommand: electron-builder install-app-deps")
   main().catch(printErrorAndExit)
 }

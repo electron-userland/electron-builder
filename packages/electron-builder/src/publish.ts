@@ -4,11 +4,11 @@ import { AppInfo, CancellationToken, Packager, PackagerOptions, PublishManager, 
 import { Publish } from "app-builder-lib/out/core"
 import { computeSafeArtifactNameIfNeeded } from "app-builder-lib/out/platformPackager"
 import { getConfig } from "app-builder-lib/out/util/config/config"
-import { InvalidConfigurationError, archFromString, log, printErrorAndExit } from "builder-util"
+import { ELECTRON_BUILDER_SIGNALS, InvalidConfigurationError, archFromString, log, printErrorAndExit } from "builder-util"
 import { PublishPolicy } from "electron-publish"
 import * as chalk from "chalk"
 import * as path from "path"
-import * as yargs from "yargs"
+import yargs from "yargs"
 import { BuildOptions, normalizeOptions } from "./builder"
 
 /** @internal */
@@ -91,7 +91,7 @@ async function publishPackageWithTasks(
   const publishManager = new PublishManager(packager, options, cancellationToken)
 
   const sigIntHandler = () => {
-    log.warn("cancelled by SIGINT")
+    log.warn(ELECTRON_BUILDER_SIGNALS.PUBLISH, null, "cancelled by SIGINT")
     packager.cancellationToken.cancel()
     publishManager.cancelTasks()
   }
@@ -115,7 +115,7 @@ async function publishPackageWithTasks(
     packager.cancellationToken.cancel()
     publishManager.cancelTasks()
     process.removeListener("SIGINT", sigIntHandler)
-    log.error({ message: (error.stack || error.message || error).toString() }, "error publishing")
+    log.error(ELECTRON_BUILDER_SIGNALS.PUBLISH, error, "error publishing")
   }
   return null
 }
@@ -125,6 +125,6 @@ function main() {
 }
 
 if (require.main === module) {
-  log.warn("please use as subcommand: electron-builder publish")
+  log.warn(ELECTRON_BUILDER_SIGNALS.INIT, null, "please use as subcommand: electron-builder publish")
   main().catch(printErrorAndExit)
 }

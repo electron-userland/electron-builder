@@ -1,4 +1,4 @@
-import { DebugLogger, deepAssign, InvalidConfigurationError, log, safeStringifyJson, statOrNull } from "builder-util"
+import { DebugLogger, deepAssign, ELECTRON_BUILDER_SIGNALS, InvalidConfigurationError, log, safeStringifyJson, statOrNull } from "builder-util"
 import { Nullish } from "builder-util-runtime"
 import { readJson } from "fs-extra"
 import { Lazy } from "lazy-val"
@@ -47,7 +47,7 @@ export async function getConfig(
   }
 
   if (configAndEffectiveFile != null) {
-    log.info({ file: configAndEffectiveFile.configFile == null ? 'package.json ("build" field)' : configAndEffectiveFile.configFile }, "loaded configuration")
+    log.info(ELECTRON_BUILDER_SIGNALS.INIT, { file: configAndEffectiveFile.configFile == null ? 'package.json ("build" field)' : configAndEffectiveFile.configFile }, "loaded configuration")
   }
 
   if (config.extends == null && config.extends !== null) {
@@ -70,11 +70,11 @@ export async function getConfig(
   const parentConfigs = await loadParentConfigsRecursively(config.extends, async configExtend => {
     if (configExtend === "react-cra") {
       const result = await reactCra(projectDir)
-      log.info({ preset: configExtend }, "loaded parent configuration")
+      log.info(ELECTRON_BUILDER_SIGNALS.INIT, { preset: configExtend }, "loaded parent configuration")
       return result
     } else {
       const { configFile, result } = await loadParentConfig<Configuration>(configRequest, configExtend)
-      log.info({ file: configFile }, "loaded parent configuration")
+      log.info(ELECTRON_BUILDER_SIGNALS.INIT, { file: configFile }, "loaded parent configuration")
       return result
     }
   })
@@ -273,7 +273,7 @@ export async function computeDefaultAppDirectory(projectDir: string, userAppDir:
     } else if (!stat.isDirectory()) {
       throw new InvalidConfigurationError(`Application directory ${userAppDir} is not a directory`)
     } else if (projectDir === absolutePath) {
-      log.warn({ appDirectory: userAppDir }, `Specified application directory equals to project dir — superfluous or wrong configuration`)
+      log.warn(ELECTRON_BUILDER_SIGNALS.INIT, { appDirectory: userAppDir }, `Specified application directory equals to project dir — superfluous or wrong configuration`)
     }
     return absolutePath
   }

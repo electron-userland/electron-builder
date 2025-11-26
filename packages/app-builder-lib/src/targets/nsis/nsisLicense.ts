@@ -1,4 +1,4 @@
-import { log } from "builder-util"
+import { ELECTRON_BUILDER_SIGNALS, log } from "builder-util"
 import * as fs from "fs"
 import * as path from "path"
 import { lcid } from "../../util/langs"
@@ -14,19 +14,19 @@ function convertFileToUtf8WithBOMSync(filePath: string): boolean {
     const data = fs.readFileSync(filePath)
 
     // Check if the file already starts with a UTF-8 BOM
-    log.debug({ file: log.filePath(filePath) }, "checking file for BOM header")
+    log.debug(ELECTRON_BUILDER_SIGNALS.PACKAGING, { file: log.filePath(filePath) }, "checking file for BOM header")
     if (data.length >= UTF8_BOM_HEADER.length && data.subarray(0, UTF8_BOM_HEADER.length).equals(UTF8_BOM_HEADER)) {
-      log.debug({ file: log.filePath(filePath) }, "file is already in BOM format, skipping conversion.")
+      log.debug(ELECTRON_BUILDER_SIGNALS.PACKAGING, { file: log.filePath(filePath) }, "file is already in BOM format, skipping conversion.")
       return true
     }
 
     // If not, add the BOM
     const dataWithBOM = Buffer.concat([UTF8_BOM_HEADER, data])
     fs.writeFileSync(filePath, dataWithBOM)
-    log.debug({ file: log.filePath(filePath) }, "file successfully converted to UTF-8 with BOM")
+    log.debug(ELECTRON_BUILDER_SIGNALS.PACKAGING, { file: log.filePath(filePath) }, "file successfully converted to UTF-8 with BOM")
     return true
   } catch (err: any) {
-    log.error({ file: log.filePath(filePath), message: err.message ?? err.stack }, "unable to convert file to UTF-8 with BOM")
+    log.error(ELECTRON_BUILDER_SIGNALS.PACKAGING, { file: log.filePath(filePath), message: err.message ?? err.stack }, "unable to convert file to UTF-8 with BOM")
     return false
   }
 }

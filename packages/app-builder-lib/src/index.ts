@@ -1,4 +1,4 @@
-import { InvalidConfigurationError, executeFinally, log } from "builder-util"
+import { ELECTRON_BUILDER_SIGNALS, InvalidConfigurationError, executeFinally, log } from "builder-util"
 import { asArray } from "builder-util-runtime"
 import { PublishOptions } from "electron-publish"
 import { Packager } from "./packager"
@@ -79,13 +79,13 @@ export function checkBuildRequestOptions(options: PackagerOptions & PublishOptio
 }
 
 export function build(options: PackagerOptions & PublishOptions, packager: Packager = new Packager(options)): Promise<Array<string>> {
-  log.start("build")
+  log.start(ELECTRON_BUILDER_SIGNALS.BUILD, true)
 
   checkBuildRequestOptions(options)
 
   const publishManager = new PublishManager(packager, options)
   const sigIntHandler = () => {
-    log.warn("cancelled by SIGINT")
+    log.warn(ELECTRON_BUILDER_SIGNALS.BUILD, null, "cancelled by SIGINT")
     packager.cancellationToken.cancel()
     publishManager.cancelTasks()
   }
@@ -106,7 +106,7 @@ export function build(options: PackagerOptions & PublishOptions, packager: Packa
 
       for (const newArtifact of newArtifacts) {
         if (buildResult.artifactPaths.includes(newArtifact)) {
-          log.warn({ newArtifact }, "skipping publish of artifact, already published")
+          log.warn(ELECTRON_BUILDER_SIGNALS.BUILD, { newArtifact }, "skipping publish of artifact, already published")
           continue
         }
         buildResult.artifactPaths.push(newArtifact)
@@ -137,12 +137,8 @@ export function build(options: PackagerOptions & PublishOptions, packager: Packa
     return promise.then(() => {
       packager.clearPackagerEventListeners()
       process.removeListener("SIGINT", sigIntHandler)
-      log.complete("build")
-
-      log.info(
-        Object.entries(log.timeLoggedEvents).map(([_, value]) => ({ label: value.label, span: value.span })),
-        "build time report"
-      )
+      log.complete(ELECTRON_BUILDER_SIGNALS.BUILD)
+      log.logDurationReport()
     })
   })
 }

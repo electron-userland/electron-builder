@@ -27,7 +27,7 @@ export class S3Publisher extends BaseS3Publisher {
         if (errorIfCannot) {
           throw e
         } else {
-          log.warn(ELECTRON_BUILDER_SIGNALS.PUBLISH, `cannot compute region for bucket (required because on dotted bucket names, we need to use a path-based endpoint URL): ${e}`)
+          log.warn(ELECTRON_BUILDER_SIGNALS.PUBLISH, e, `cannot compute region for bucket (required because on dotted bucket names, we need to use a path-based endpoint URL)`)
         }
       }
     }

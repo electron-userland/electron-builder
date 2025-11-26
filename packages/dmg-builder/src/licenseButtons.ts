@@ -1,6 +1,6 @@
 import { PlatformPackager } from "app-builder-lib"
 import { getLicenseAssets } from "app-builder-lib/out/util/license"
-import { log } from "builder-util"
+import { ELECTRON_BUILDER_SIGNALS, log } from "builder-util"
 import { readFile } from "fs-extra"
 import * as iconv from "iconv-lite"
 import { load } from "js-yaml"
@@ -47,11 +47,11 @@ export async function getLicenseButtons(licenseButtonFiles: Array<LicenseButtons
       data += serializeString("0006" + buttonsStr)
       data += `\n};`
 
-      log.debug({ lang: item.langName, data }, `overwriting license buttons`)
+      log.debug(ELECTRON_BUILDER_SIGNALS.PACKAGING, { lang: item.langName, data }, `overwriting license buttons`)
 
       return data
     } catch (e: any) {
-      log.debug({ error: e }, "cannot overwrite license buttons")
+      log.debug(ELECTRON_BUILDER_SIGNALS.PACKAGING, { error: e }, "cannot overwrite license buttons")
       return data
     }
   }
@@ -81,7 +81,7 @@ function hexEncode(str: string, lang: string, langWithRegion: string) {
       }
       result += hex
     } catch (e: any) {
-      log.debug({ error: e, char: str[i] }, "cannot convert")
+      log.debug(ELECTRON_BUILDER_SIGNALS.PACKAGING, { error: e, char: str[i] }, "cannot convert")
       result += "3F" //?
     }
   }

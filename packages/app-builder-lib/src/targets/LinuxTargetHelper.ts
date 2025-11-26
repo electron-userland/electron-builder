@@ -1,4 +1,4 @@
-import { asArray, exists, isEmptyOrSpaces, log } from "builder-util"
+import { asArray, ELECTRON_BUILDER_SIGNALS, exists, isEmptyOrSpaces, log } from "builder-util"
 import { outputFile } from "fs-extra"
 import { Lazy } from "lazy-val"
 import { join } from "path"
@@ -177,9 +177,10 @@ export class LinuxTargetHelper {
       if (category == null) {
         // https://github.com/develar/onshape-desktop-shell/issues/48
         if (macCategory != null) {
-          log.warn({ macCategory }, "cannot map macOS category to Linux. If possible mapping is known for you, please file issue to add it.")
+          log.warn(ELECTRON_BUILDER_SIGNALS.PACKAGING, { macCategory }, "cannot map macOS category to Linux. If possible mapping is known for you, please file issue to add it.")
         }
         log.warn(
+          ELECTRON_BUILDER_SIGNALS.PACKAGING,
           {
             reason: "linux.category is not set and cannot map from macOS",
             docs: "https://www.electron.build/linux",

@@ -1,4 +1,4 @@
-import { Arch, CopyFileTransformer, executeAppBuilder, FileTransformer, InvalidConfigurationError, log, use, walk } from "builder-util"
+import { Arch, CopyFileTransformer, ELECTRON_BUILDER_SIGNALS, executeAppBuilder, FileTransformer, InvalidConfigurationError, log, use, walk } from "builder-util"
 import { Nullish } from "builder-util-runtime"
 import { createHash } from "crypto"
 import { readdir } from "fs/promises"
@@ -121,7 +121,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
 
   async signIf(file: string): Promise<boolean> {
     if (!this.shouldSignFile(file, true)) {
-      log.info({ file: log.filePath(file) }, "file signing skipped via signExts configuration")
+      log.info(ELECTRON_BUILDER_SIGNALS.CODE_SIGN, { file: log.filePath(file) }, "file signing skipped via signExts configuration")
       return false
     }
 

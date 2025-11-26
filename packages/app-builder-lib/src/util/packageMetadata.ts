@@ -1,4 +1,4 @@
-import { InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
+import { ELECTRON_BUILDER_SIGNALS, InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
 import { Nullish } from "builder-util-runtime"
 import { readFile, readJson, readJsonSync } from "fs-extra"
 import * as path from "path"
@@ -52,10 +52,10 @@ export function checkMetadata(metadata: Metadata, devMetadata: any | null, appPa
   checkNotEmpty("name", metadata.name)
 
   if (isEmptyOrSpaces(metadata.description)) {
-    log.warn({ appPackageFile }, `description is missed in the package.json`)
+    log.warn(ELECTRON_BUILDER_SIGNALS.INIT, { appPackageFile }, `description is missed in the package.json`)
   }
   if (metadata.author == null) {
-    log.warn({ appPackageFile }, `author is missed in the package.json`)
+    log.warn(ELECTRON_BUILDER_SIGNALS.INIT, { appPackageFile }, `author is missed in the package.json`)
   }
   checkNotEmpty("version", metadata.version)
 
@@ -70,7 +70,7 @@ export function checkMetadata(metadata: Metadata, devMetadata: any | null, appPa
 
   const devDependencies = (metadata as any).devDependencies
   if (devDependencies != null && ("electron-rebuild" in devDependencies || "@electron/rebuild" in devDependencies)) {
-    log.info(
+    log.info(ELECTRON_BUILDER_SIGNALS.INIT, null,
       '@electron/rebuild already used by electron-builder, please consider to remove excess dependency from devDependencies\n\nTo ensure your native dependencies are always matched electron version, simply add script `"postinstall": "electron-builder install-app-deps" to your `package.json`'
     )
   }

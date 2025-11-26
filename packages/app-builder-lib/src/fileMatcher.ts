@@ -1,4 +1,4 @@
-import { asArray, copyDir, copyOrLinkFile, FileTransformer, Filter, log, statOrNull, USE_HARD_LINKS } from "builder-util"
+import { asArray, copyDir, copyOrLinkFile, ELECTRON_BUILDER_SIGNALS, FileTransformer, Filter, log, statOrNull, USE_HARD_LINKS } from "builder-util"
 import { Nullish } from "builder-util-runtime"
 import { mkdir } from "fs/promises"
 import { Minimatch } from "minimatch"
@@ -348,7 +348,7 @@ export function copyFiles(matchers: Array<FileMatcher> | null, transformer: File
     matchers.map(async (matcher: FileMatcher) => {
       const fromStat = await statOrNull(matcher.from)
       if (fromStat == null) {
-        log.warn({ from: matcher.from }, `file source doesn't exist`)
+        log.warn(ELECTRON_BUILDER_SIGNALS.COPYING, { from: matcher.from }, `file source doesn't exist`)
         return
       }
 
@@ -366,7 +366,7 @@ export function copyFiles(matchers: Array<FileMatcher> | null, transformer: File
       if (matcher.isEmpty() || matcher.containsOnlyIgnore()) {
         matcher.prependPattern("**/*")
       }
-      log.debug({ matcher }, "copying files using pattern")
+      log.debug(ELECTRON_BUILDER_SIGNALS.COPYING, { matcher }, "copying files using pattern")
       return await copyDir(matcher.from, matcher.to, { filter: matcher.createFilter(), transformer, isUseHardLink: isUseHardLink ? USE_HARD_LINKS : null })
     })
   )

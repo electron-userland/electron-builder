@@ -1,4 +1,4 @@
-import { DebugLogger, ExtraSpawnOptions, exec, log, spawn } from "builder-util"
+import { DebugLogger, ELECTRON_BUILDER_SIGNALS, ExtraSpawnOptions, exec, log, spawn } from "builder-util"
 import { ExecFileOptions, SpawnOptions, execFileSync } from "child_process"
 import { VmManager } from "./vm"
 
@@ -54,7 +54,7 @@ export class ParallelsVmManager extends VmManager {
       throw new Error(`Please ensure that your are logged in "${this.vm.name}" parallels virtual machine. In the future please do not stop VM, but suspend.\n\n${error.message}`)
     }
 
-    log.warn("ensure that 'Share folders' is set to 'All Disks', see https://goo.gl/E6XphP")
+    log.warn(ELECTRON_BUILDER_SIGNALS.VM, null, "ensure that 'Share folders' is set to 'All Disks', see https://goo.gl/E6XphP")
     throw error
   }
 

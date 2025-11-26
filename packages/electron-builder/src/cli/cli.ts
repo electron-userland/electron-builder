@@ -3,7 +3,7 @@
 import { getElectronVersion } from "app-builder-lib/out/electron/electronVersion"
 import { loadEnv } from "app-builder-lib/out/util/config/load"
 import { nodeGypRebuild } from "app-builder-lib/out/util/yarn"
-import { ExecError, InvalidConfigurationError, log } from "builder-util"
+import { ELECTRON_BUILDER_SIGNALS, ExecError, InvalidConfigurationError, log } from "builder-util"
 import * as chalk from "chalk"
 import { readJson } from "fs-extra"
 import { isCI } from "ci-info"
@@ -47,7 +47,7 @@ void createYargs()
 
 function wrap(task: (args: any) => Promise<any>) {
   return (args: any) => {
-    checkIsOutdated().catch((e: any) => log.warn({ error: e }, "cannot check updates"))
+    checkIsOutdated().catch((e: any) => log.warn(ELECTRON_BUILDER_SIGNALS.INIT, { error: e }, "cannot check updates"))
     loadEnv(path.join(process.cwd(), "electron-builder.env"))
       .then(() => task(args))
       .catch(error => {
@@ -55,9 +55,9 @@ function wrap(task: (args: any) => Promise<any>) {
         // https://github.com/electron-userland/electron-builder/issues/2940
         process.on("exit", () => (process.exitCode = 1))
         if (error instanceof InvalidConfigurationError) {
-          log.error(null, error.message)
+          log.error(ELECTRON_BUILDER_SIGNALS.ALL, error)
         } else if (!(error instanceof ExecError) || !error.alreadyLogged) {
-          log.error({ failedTask: task.name, stackTrace: error.stack }, error.message)
+          log.error(ELECTRON_BUILDER_SIGNALS.ALL, { failedTask: task.name, stackTrace: error.stack }, error.message)
         }
       })
   }

@@ -1,4 +1,4 @@
-import { isEmptyOrSpaces, log } from "builder-util"
+import { ELECTRON_BUILDER_SIGNALS, isEmptyOrSpaces, log } from "builder-util"
 import * as path from "path"
 import { NodeModulesCollector } from "./nodeModulesCollector"
 import { PM } from "./packageManager"
@@ -22,7 +22,7 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
     const getProductionDependencies = async (depTree: PnpmDependency): Promise<{ prodDeps: Record<string, string>; optionalDependencies: Record<string, string> } | null> => {
       const packageName = depTree.name || depTree.from
       if (isEmptyOrSpaces(packageName)) {
-        log.error(depTree, `Cannot determine production dependencies for package with empty name`)
+        log.error(ELECTRON_BUILDER_SIGNALS.COLLECT_FILES, depTree, `Cannot determine production dependencies for package with empty name`)
         throw new Error(`Cannot compute production dependencies for package with empty name: ${packageName}`)
       }
 
@@ -33,7 +33,7 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
       try {
         packageJson = this.requireMemoized(pkgJsonPath)
       } catch (error: any) {
-        log.warn(null, `Failed to read package.json for ${p}: ${error.message}`)
+        log.warn(ELECTRON_BUILDER_SIGNALS.COLLECT_FILES, null, `Failed to read package.json for ${p}: ${error.message}`)
         return null
       }
       return { prodDeps: { ...packageJson.dependencies, ...packageJson.optionalDependencies }, optionalDependencies: { ...packageJson.optionalDependencies } }
@@ -57,7 +57,7 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
 
         // Then check if optional dependency path exists (using memoized version)
         if (json?.optionalDependencies?.[packageName] && !this.existsSyncMemoized(dependency.path)) {
-          log.debug(null, `Optional dependency ${packageName}@${dependency.version} path doesn't exist: ${dependency.path}`)
+          log.debug(ELECTRON_BUILDER_SIGNALS.COLLECT_FILES, null, `Optional dependency ${packageName}@${dependency.version} path doesn't exist: ${dependency.path}`)
           return false
         }
 

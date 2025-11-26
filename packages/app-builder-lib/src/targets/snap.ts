@@ -1,4 +1,4 @@
-import { replaceDefault as _replaceDefault, Arch, deepAssign, executeAppBuilder, InvalidConfigurationError, log, serializeToYaml, toLinuxArchString } from "builder-util"
+import { replaceDefault as _replaceDefault, Arch, deepAssign, ELECTRON_BUILDER_SIGNALS, executeAppBuilder, InvalidConfigurationError, log, serializeToYaml, toLinuxArchString } from "builder-util"
 import { asArray, Nullish, SnapStoreOptions } from "builder-util-runtime"
 import { outputFile, readFile } from "fs-extra"
 import { load } from "js-yaml"
@@ -42,7 +42,7 @@ export default class SnapTarget extends Target {
         throw new InvalidConfigurationError("Electron 2 and higher is required to build Snap")
       }
 
-      log.warn("Electron 4 and higher is highly recommended for Snap")
+      log.warn(ELECTRON_BUILDER_SIGNALS.PACKAGING, null, "Electron 4 and higher is highly recommended for Snap")
     }
 
     const appInfo = this.packager.appInfo

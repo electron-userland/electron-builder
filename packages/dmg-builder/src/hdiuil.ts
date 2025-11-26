@@ -1,4 +1,4 @@
-import { exec, log, retry } from "builder-util"
+import { ELECTRON_BUILDER_SIGNALS, exec, log, retry } from "builder-util"
 
 /**
  * Table of hdiutil error codes that are transient and can be retried.
@@ -46,7 +46,7 @@ const shouldRetry = (args: string[]) => (error: any) => {
   const output = `${stdout} ${stderr}`.trim()
 
   const willRetry = hdiutilTransientExitCodes.has(code.toString())
-  log.warn({ willRetry, args, code, output }, `hdiutil error: ${explainHdiutilError(code)}`)
+  log.warn(ELECTRON_BUILDER_SIGNALS.PACKAGING, { willRetry, args, code, output }, `hdiutil error: ${explainHdiutilError(code)}`)
 
   return willRetry
 }

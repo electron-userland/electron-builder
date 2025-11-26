@@ -1,4 +1,4 @@
-import { asArray, copyOrLinkFile, getPlatformIconFileName, InvalidConfigurationError, log, unlinkIfExists } from "builder-util"
+import { asArray, copyOrLinkFile, ELECTRON_BUILDER_SIGNALS, getPlatformIconFileName, InvalidConfigurationError, log, unlinkIfExists } from "builder-util"
 import { rename, utimes } from "fs/promises"
 import * as path from "path"
 import * as fs from "fs"
@@ -102,7 +102,7 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
 
   const oldHelperBundleId = (buildMetadata as any)["helper-bundle-id"]
   if (oldHelperBundleId != null) {
-    log.warn("build.helper-bundle-id is deprecated, please set as build.mac.helperBundleId")
+    log.warn(ELECTRON_BUILDER_SIGNALS.PACKAGING, null, "build.helper-bundle-id is deprecated, please set as build.mac.helperBundleId")
   }
 
   const defaultAppId = packager.platformSpecificBuildOptions.appId

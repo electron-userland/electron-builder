@@ -132,7 +132,7 @@ export class AppInfo {
     if (appId != null && (appId === "your.id" || isEmptyOrSpaces(appId))) {
       const incorrectAppId = appId
       appId = generateDefaultAppId()
-      log.warn(ELECTRON_BUILDER_SIGNALS.GENERIC, `do not use "${incorrectAppId}" as appId, "${appId}" will be used instead`)
+      log.warn(ELECTRON_BUILDER_SIGNALS.GENERIC, null, `do not use "${incorrectAppId}" as appId, "${appId}" will be used instead`)
     }
 
     return appId == null ? generateDefaultAppId() : appId

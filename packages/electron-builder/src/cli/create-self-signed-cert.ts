@@ -1,5 +1,5 @@
 import { getSignVendorPath } from "app-builder-lib/out/codeSign/windowsSignToolManager"
-import { exec, log, spawn, TmpDir, unlinkIfExists } from "builder-util"
+import { ELECTRON_BUILDER_SIGNALS, exec, log, spawn, TmpDir, unlinkIfExists } from "builder-util"
 import { sanitizeFileName } from "builder-util/out/filename"
 import * as chalk from "chalk"
 import { mkdir } from "fs/promises"
@@ -13,7 +13,7 @@ export async function createSelfSignedCert(publisher: string) {
   const cer = `${tempPrefix}.cer`
   const pvk = `${tempPrefix}.pvk`
 
-  log.info(chalk.bold('When asked to enter a password ("Create Private Key Password"), please select "None".'))
+  log.info(ELECTRON_BUILDER_SIGNALS.GENERIC, null, chalk.bold('When asked to enter a password ("Create Private Key Password"), please select "None".'))
 
   try {
     await mkdir(path.dirname(tempPrefix), { recursive: true })
@@ -23,10 +23,10 @@ export async function createSelfSignedCert(publisher: string) {
     const pfx = path.join(targetDir, `${sanitizeFileName(publisher)}.pfx`)
     await unlinkIfExists(pfx)
     await exec(path.join(vendorPath, "pvk2pfx.exe"), ["-pvk", pvk, "-spc", cer, "-pfx", pfx])
-    log.info({ file: pfx }, `created. Please see https://electron.build/code-signing how to use it to sign.`)
+    log.info(ELECTRON_BUILDER_SIGNALS.GENERIC, { file: pfx }, `created. Please see https://electron.build/code-signing how to use it to sign.`)
 
     const certLocation = "Cert:\\LocalMachine\\TrustedPeople"
-    log.info({ file: pfx, certLocation }, `importing. Operation will be succeed only if runned from root. Otherwise import  file manually.`)
+    log.info(ELECTRON_BUILDER_SIGNALS.GENERIC, { file: pfx, certLocation }, `importing. Operation will be succeed only if runned from root. Otherwise import  file manually.`)
     await spawn("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", "Import-PfxCertificate", "-FilePath", `"${pfx}"`, "-CertStoreLocation", certLocation])
   } finally {
     await tmpDir.cleanup()

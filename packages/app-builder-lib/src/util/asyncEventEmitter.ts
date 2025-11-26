@@ -1,4 +1,4 @@
-import { log } from "builder-util"
+import { ELECTRON_BUILDER_SIGNALS, log } from "builder-util"
 import { CancellationToken, Nullish } from "builder-util-runtime"
 
 type Handler = (...args: any[]) => Promise<void> | void
@@ -48,7 +48,7 @@ export class AsyncEventEmitter<T extends EventMap> implements TypedEventEmitter<
 
     const eventListeners = this.listeners.get(event) || []
     if (!eventListeners.length) {
-      log.debug({ event }, "no event listeners found")
+      log.debug(ELECTRON_BUILDER_SIGNALS.GENERIC,{ event }, "no event listeners found")
       return result
     }
 

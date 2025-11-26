@@ -1,4 +1,4 @@
-import { httpExecutor, InvalidConfigurationError, log } from "builder-util"
+import { ELECTRON_BUILDER_SIGNALS, httpExecutor, InvalidConfigurationError, log } from "builder-util"
 import { parseXml } from "builder-util-runtime"
 import { readJson } from "fs-extra"
 import { Lazy } from "lazy-val"
@@ -29,7 +29,7 @@ export async function getElectronVersionFromInstalled(projectDir: string): Promi
       return (await readJson(path.join(projectDir, "node_modules", name, "package.json"))).version
     } catch (e: any) {
       if (e.code !== "ENOENT") {
-        log.warn({ name, error: e }, `cannot read electron version package.json`)
+        log.warn(ELECTRON_BUILDER_SIGNALS.GENERIC, { name, error: e }, `cannot read electron version package.json`)
       }
     }
   }
@@ -42,7 +42,7 @@ export async function getElectronPackage(projectDir: string) {
       return await readJson(path.join(projectDir, "node_modules", name, "package.json"))
     } catch (e: any) {
       if (e.code !== "ENOENT") {
-        log.warn({ name, error: e }, `cannot find electron in package.json`)
+        log.warn(ELECTRON_BUILDER_SIGNALS.GENERIC, { name, error: e }, `cannot find electron in package.json`)
       }
     }
   }
@@ -66,7 +66,7 @@ export async function computeElectronVersion(projectDir: string): Promise<string
     }
   }
   if (dependency?.name === "electron-nightly") {
-    log.info("You are using a nightly version of electron, be warned that those builds are highly unstable.")
+    log.info(ELECTRON_BUILDER_SIGNALS.GENERIC, null, "You are using a nightly version of electron, be warned that those builds are highly unstable.")
     const feedXml = await httpExecutor.request({
       hostname: "github.com",
       path: `/electron/nightlies/releases.atom`,
@@ -79,7 +79,7 @@ export async function computeElectronVersion(projectDir: string): Promise<string
     const v = /\/tag\/v?([^/]+)$/.exec(latestRelease.element("link").attribute("href"))![1]
     return v.startsWith("v") ? v.substring(1) : v
   } else if (dependency?.version === "latest") {
-    log.warn('Electron version is set to "latest", but it is recommended to set it to some more restricted version range.')
+    log.warn(ELECTRON_BUILDER_SIGNALS.GENERIC, null, 'Electron version is set to "latest", but it is recommended to set it to some more restricted version range.')
     try {
       const releaseInfo = JSON.parse(
         (await httpExecutor.request({
@@ -91,10 +91,10 @@ export async function computeElectronVersion(projectDir: string): Promise<string
         }))!
       )
       const version = releaseInfo.tag_name.startsWith("v") ? releaseInfo.tag_name.substring(1) : releaseInfo.tag_name
-      log.info({ version }, `resolve ${dependency.name}@${dependency.version}`)
+      log.info(ELECTRON_BUILDER_SIGNALS.GENERIC, { version }, `resolve ${dependency.name}@${dependency.version}`)
       return version
     } catch (e: any) {
-      log.warn(e)
+      log.warn(ELECTRON_BUILDER_SIGNALS.GENERIC, e)
     }
 
     throw new InvalidConfigurationError(`Cannot find electron dependency to get electron version in the '${path.join(projectDir, "package.json")}'`)

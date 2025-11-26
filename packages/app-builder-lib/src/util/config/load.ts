@@ -1,4 +1,4 @@
-import { log } from "builder-util"
+import { ELECTRON_BUILDER_SIGNALS, log } from "builder-util"
 import { parse as parseEnv } from "dotenv"
 import { DotenvParseInput, expand } from "dotenv-expand"
 import { promises as fs } from "fs"
@@ -134,7 +134,7 @@ export async function loadEnv(envFile: string) {
 
   const parsed = parseEnv<DotenvParseInput>(data)
 
-  log.info({ envFile }, "injecting environment")
+  log.info(ELECTRON_BUILDER_SIGNALS.INIT, { envFile }, "injecting environment")
   Object.entries(parsed).forEach(([key, value]) => {
     if (!Object.prototype.hasOwnProperty.call(process.env, key)) {
       process.env[key] = value

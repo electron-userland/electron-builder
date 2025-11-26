@@ -1,4 +1,4 @@
-import { Arch, asArray, exec, getArchSuffix, log, serializeToYaml, TmpDir, toLinuxArchString, unlinkIfExists, use } from "builder-util"
+import { Arch, asArray, ELECTRON_BUILDER_SIGNALS, exec, getArchSuffix, log, serializeToYaml, TmpDir, toLinuxArchString, unlinkIfExists, use } from "builder-util"
 import { Nullish } from "builder-util-runtime"
 import { copyFile, outputFile, stat } from "fs-extra"
 import { mkdir, readFile } from "fs/promises"
@@ -143,7 +143,7 @@ export default class FpmTarget extends Target {
       ? await getAppUpdatePublishConfiguration(packager, arch, false /* in any case validation will be done on publish */)
       : null
     if (publishConfig != null) {
-      log.info({ resourceDir: log.filePath(resourceDir) }, `adding autoupdate files for: ${target}. (Beta feature)`)
+      log.info(ELECTRON_BUILDER_SIGNALS.PACKAGING, { resourceDir: log.filePath(resourceDir) }, `adding autoupdate files for: ${target}. (Beta feature)`)
       await outputFile(path.join(resourceDir, "app-update.yml"), serializeToYaml(publishConfig))
       // Extra file needed for auto-updater to detect installation method
       await outputFile(path.join(resourceDir, "package-type"), target)
@@ -293,7 +293,7 @@ export default class FpmTarget extends Target {
     if (forceDebugLogging) {
       fpmArgs.push("--debug")
     }
-    if (log.isDebugEnabled) {
+    if (log.isDebugEnabled)  {
       fpmArgs.push("--log", "debug")
     }
     fpmConfiguration.customDepends?.forEach(it => fpmArgs.push("-d", it))
@@ -310,26 +310,26 @@ export default class FpmTarget extends Target {
       if (e.message.includes("Need executable 'rpmbuild' to convert dir to rpm")) {
         const hint = "to build rpm, executable rpmbuild is required, please install rpm package on your system. "
         if (process.platform === "darwin") {
-          log.error(null, hint + "(brew install rpm)")
+          log.error(ELECTRON_BUILDER_SIGNALS.PACKAGING, null, hint + "(brew install rpm)")
         } else {
-          log.error(null, hint + "(sudo apt-get install rpm)")
+          log.error(ELECTRON_BUILDER_SIGNALS.PACKAGING, null, hint + "(sudo apt-get install rpm)")
         }
       }
       if (e.message.includes("xz: not found")) {
         const hint = "to build rpm, executable xz is required, please install xz package on your system. "
         if (process.platform === "darwin") {
-          log.error(null, hint + "(brew install xz)")
+          log.error(ELECTRON_BUILDER_SIGNALS.PACKAGING, null, hint + "(brew install xz)")
         } else {
-          log.error(null, hint + "(sudo apt-get install xz-utils)")
+          log.error(ELECTRON_BUILDER_SIGNALS.PACKAGING, null, hint + "(sudo apt-get install xz-utils)")
         }
       }
       if (e.message.includes("error: File not found")) {
-        log.error(
+        log.error(ELECTRON_BUILDER_SIGNALS.PACKAGING,
           { fpmArgs, ...fpmConfiguration },
           "fpm failed to find the specified files. Please check your configuration and ensure all paths are correct. To see what files triggered this, set the environment variable FPM_DEBUG=true"
         )
         if (forceDebugLogging) {
-          log.error(null, e.message)
+          log.error(ELECTRON_BUILDER_SIGNALS.PACKAGING, null, e.message)
         }
         throw new Error(`FPM failed to find the specified files. Please check your configuration and ensure all paths are correct. Command: ${fpmPath} ${fpmArgs.join(" ")}`)
       }
@@ -406,7 +406,7 @@ async function writeConfigFile(tmpDir: TmpDir, templatePath: string, options: an
     }
   }
   const config = (await readFile(templatePath, "utf8")).replace(/\${([a-zA-Z]+)}/g, replacer).replace(/<%=([a-zA-Z]+)%>/g, (match, p1) => {
-    log.warn("<%= varName %> is deprecated, please use ${varName} instead")
+    log.warn(ELECTRON_BUILDER_SIGNALS.PACKAGING, null, "<%= varName %> is deprecated, please use ${varName} instead")
     return replacer(match, p1.trim())
   })
 

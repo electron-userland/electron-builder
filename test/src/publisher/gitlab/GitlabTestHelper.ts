@@ -1,4 +1,4 @@
-import { httpExecutor, log } from "builder-util"
+import { ELECTRON_BUILDER_SIGNALS, httpExecutor, log } from "builder-util"
 import { GitlabReleaseInfo, HttpError } from "builder-util-runtime"
 
 /**
@@ -70,7 +70,7 @@ export class GitlabTestHelper {
   async deleteRelease(releaseId: string): Promise<void> {
     const release = await this.getRelease(releaseId)
     if (release == null) {
-      log.warn({ releaseId, reason: "doesn't exist" }, "cannot delete release")
+      log.warn(ELECTRON_BUILDER_SIGNALS.TEST, { releaseId, reason: "doesn't exist" }, "cannot delete release")
       return
     }
 
@@ -78,7 +78,7 @@ export class GitlabTestHelper {
       await this.gitlabRequest(`/projects/${encodeURIComponent(this.projectId)}/releases/${releaseId}`, null, "DELETE")
     } catch (e: unknown) {
       if (e instanceof HttpError && e.statusCode === 404) {
-        log.warn({ releaseId, reason: "doesn't exist" }, "cannot delete release")
+        log.warn(ELECTRON_BUILDER_SIGNALS.TEST, { releaseId, reason: "doesn't exist" }, "cannot delete release")
         return
       }
       throw e
@@ -91,28 +91,28 @@ export class GitlabTestHelper {
   async deleteReleaseAndTag(releaseId: string): Promise<void> {
     const release = await this.getRelease(releaseId)
     if (release == null) {
-      log.warn({ releaseId, reason: "doesn't exist" }, "cannot delete release")
+      log.warn(ELECTRON_BUILDER_SIGNALS.TEST, { releaseId, reason: "doesn't exist" }, "cannot delete release")
       return
     }
 
     try {
       // First delete the release
       await this.deleteRelease(releaseId)
-      log.debug({ releaseId }, "Deleted GitLab release")
+      log.debug(ELECTRON_BUILDER_SIGNALS.TEST, { releaseId }, "Deleted GitLab release")
     } catch (e: unknown) {
-      log.warn({ releaseId, error: (e as Error).message }, "Failed to delete GitLab release")
+      log.warn(ELECTRON_BUILDER_SIGNALS.TEST, { releaseId, error: (e as Error).message }, "Failed to delete GitLab release")
     }
 
     try {
       // Then delete the git tag
       await this.gitlabRequest(`/projects/${encodeURIComponent(this.projectId)}/repository/tags/${encodeURIComponent(releaseId)}`, null, "DELETE")
-      log.debug({ releaseId }, "Deleted GitLab tag")
+      log.debug(ELECTRON_BUILDER_SIGNALS.TEST, { releaseId }, "Deleted GitLab tag")
     } catch (e: unknown) {
       if (e instanceof HttpError && e.statusCode === 404) {
-        log.warn({ releaseId, reason: "doesn't exist" }, "cannot delete git tag")
+        log.warn(ELECTRON_BUILDER_SIGNALS.TEST, { releaseId, reason: "doesn't exist" }, "cannot delete git tag")
         return
       }
-      log.warn({ releaseId, error: (e as Error).message }, "Failed to delete GitLab tag")
+      log.warn(ELECTRON_BUILDER_SIGNALS.TEST, { releaseId, error: (e as Error).message }, "Failed to delete GitLab tag")
     }
   }
 
@@ -125,8 +125,8 @@ export class GitlabTestHelper {
     try {
       // Only need to delete generic packages - project uploads are auto-deleted with releases
       await this.deleteGenericPackages(releaseId)
-    } catch (e: unknown) {
-      log.warn({ releaseId, error: (e as Error).message }, "Failed to cleanup uploaded assets")
+    } catch (e: any) {
+      log.warn(ELECTRON_BUILDER_SIGNALS.TEST, e, `Failed to cleanup uploaded assets for release ${releaseId}`)
     }
   }
 
@@ -149,15 +149,15 @@ export class GitlabTestHelper {
       const deletePromises = matchingPackages.map(async (pkg: any) => {
         try {
           await this.gitlabRequest(`/projects/${encodeURIComponent(this.projectId)}/packages/${pkg.id}`, null, "DELETE")
-          log.debug({ packageId: pkg.id, version: pkg.version }, "Deleted GitLab generic package")
+          log.debug(ELECTRON_BUILDER_SIGNALS.TEST, { packageId: pkg.id, version: pkg.version }, "Deleted GitLab generic package")
         } catch (e: unknown) {
-          log.warn({ packageId: pkg.id, version: pkg.version, error: (e as Error).message }, "Failed to delete GitLab generic package")
+          log.warn(ELECTRON_BUILDER_SIGNALS.TEST, { packageId: pkg.id, version: pkg.version, error: (e as Error).message }, "Failed to delete GitLab generic package")
         }
       })
 
       await Promise.allSettled(deletePromises)
     } catch (e: unknown) {
-      log.warn({ version, error: (e as Error).message }, "Failed to cleanup generic packages")
+      log.warn(ELECTRON_BUILDER_SIGNALS.TEST, { version, error: (e as Error).message }, "Failed to cleanup generic packages")
     }
   }
 

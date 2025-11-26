@@ -1,4 +1,4 @@
-import { asArray, log, spawn } from "builder-util"
+import { asArray, ELECTRON_BUILDER_SIGNALS, log, spawn } from "builder-util"
 import { pathExists } from "fs-extra"
 import { Lazy } from "lazy-val"
 import { homedir } from "os"
@@ -99,7 +99,7 @@ export async function installDependencies(
   const searchPaths = [projectDir, appDir].concat(workspaceRoot ? [workspaceRoot] : [])
   const { pm, resolvedDirectory: _resolvedWorkspaceDir } = await detectPackageManager(searchPaths)
 
-  log.info({ pm, platform, arch, projectDir, appDir, workspaceRoot: _resolvedWorkspaceDir }, "installing dependencies")
+  log.info(ELECTRON_BUILDER_SIGNALS.DEPENDENCY_INSTALLATION,{ pm, platform, arch, projectDir, appDir, workspaceRoot: _resolvedWorkspaceDir }, "installing dependencies")
 
   const execArgs = ["install"]
   if (pm === PM.YARN) {
@@ -130,7 +130,7 @@ export async function installDependencies(
 }
 
 export async function nodeGypRebuild(platform: NodeJS.Platform, arch: string, frameworkInfo: DesktopFrameworkInfo) {
-  log.info({ platform, arch }, "executing node-gyp rebuild")
+  log.info(ELECTRON_BUILDER_SIGNALS.DEPENDENCY_INSTALLATION, { platform, arch }, "executing node-gyp rebuild")
   // this script must be used only for electron
   const nodeGyp = process.platform === "win32" ? which.sync("node-gyp") : "node-gyp"
   const args = ["rebuild"]
@@ -197,7 +197,7 @@ export async function rebuild(config: Configuration, { appDir, projectDir, works
     projectDir: log.filePath(projectDir) || "./",
     appDir: log.filePath(appDir) || "./",
   }
-  log.info(logInfo, "executing @electron/rebuild")
+  log.info(ELECTRON_BUILDER_SIGNALS.DEPENDENCY_INSTALLATION, logInfo, "preparing @electron/rebuild")
 
   const rebuildOptions: ElectronRebuildOptions = {
     buildPath: appDir,

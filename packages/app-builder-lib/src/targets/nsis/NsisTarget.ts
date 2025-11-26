@@ -2,6 +2,7 @@ import {
   Arch,
   asArray,
   AsyncTaskManager,
+  ELECTRON_BUILDER_SIGNALS,
   exec,
   executeAppBuilder,
   exists,
@@ -77,7 +78,7 @@ export class NsisTarget extends Target {
 
     const deps = packager.info.metadata.dependencies
     if (deps != null && deps["electron-squirrel-startup"] != null) {
-      log.warn('"electron-squirrel-startup" dependency is not required for NSIS')
+      log.warn(ELECTRON_BUILDER_SIGNALS.PACKAGING, null, '"electron-squirrel-startup" dependency is not required for NSIS')
     }
 
     NsisTargetOptions.resolve(this.options)
@@ -291,7 +292,7 @@ export class NsisTarget extends Target {
           // after adding blockmap data will be "Warnings: 1" in the end of output
           const match = /(\d+)\s+\d+\s+\d+\s+files/.exec(archiveInfo)
           if (match == null) {
-            log.warn({ output: archiveInfo }, "cannot compute size of app package")
+            log.warn(ELECTRON_BUILDER_SIGNALS.PACKAGING, { output: archiveInfo }, "cannot compute size of app package")
           } else {
             estimatedSize += parseInt(match[1], 10)
           }
@@ -406,7 +407,7 @@ export class NsisTarget extends Target {
     const script = await readFile(customScriptPath || path.join(nsisTemplatesDir, "installer.nsi"), "utf8")
 
     if (customScriptPath != null) {
-      log.info({ reason: "custom NSIS script is used" }, "uninstaller is not signed by electron-builder")
+      log.info(ELECTRON_BUILDER_SIGNALS.PACKAGING, { reason: "custom NSIS script is used" }, "uninstaller is not signed by electron-builder")
       return script
     }
 
@@ -424,7 +425,7 @@ export class NsisTarget extends Target {
       try {
         await UninstallerReader.exec(installerPath, uninstallerPath)
       } catch (error: any) {
-        log.warn(`packager.vm is used: ${error.message}`)
+        log.warn(ELECTRON_BUILDER_SIGNALS.PACKAGING, null, `packager.vm is used: ${error.message}`)
 
         const vm = await packager.vm.value
         await vm.exec(installerPath, [])
@@ -794,7 +795,7 @@ async function ensureNotBusy(outFile: string): Promise<void> {
         try {
           if (error != null && error.code === "EBUSY") {
             if (!wasBusyBefore) {
-              log.info({}, "output file is locked for writing (maybe by virus scanner) => waiting for unlock...")
+              log.info(ELECTRON_BUILDER_SIGNALS.PACKAGING, {}, "output file is locked for writing (maybe by virus scanner) => waiting for unlock...")
             }
             resolve(false)
           } else if (fd == null) {

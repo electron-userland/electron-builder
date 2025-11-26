@@ -1,4 +1,4 @@
-import { exists, log } from "builder-util"
+import { ELECTRON_BUILDER_SIGNALS, exists, log } from "builder-util"
 import * as fs from "fs-extra"
 import * as path from "path"
 import * as which from "which"
@@ -58,7 +58,7 @@ export async function detectPackageManager(searchPaths: string[]): Promise<{ pm:
       const [pm, version] = packageManager.split("@")
       if (Object.values(PM).includes(pm as PM)) {
         const resolvedPackageManager = await resolveIfYarn(pm as PM, version, dir)
-        log.debug({ resolvedPackageManager, packageManager, cwd: dir }, "packageManager field detected in package.json")
+        log.debug(ELECTRON_BUILDER_SIGNALS.COLLECT_FILES, { resolvedPackageManager, packageManager, cwd: dir }, "packageManager field detected in package.json")
         return { pm: resolvedPackageManager, corepackConfig: packageManager, resolvedDirectory: dir }
       }
     }
@@ -66,7 +66,7 @@ export async function detectPackageManager(searchPaths: string[]): Promise<{ pm:
     pm = await detectPackageManagerByFile(dir)
     if (pm) {
       const resolvedPackageManager = await resolveIfYarn(pm, "", dir)
-      log.debug({ resolvedPackageManager, cwd: dir }, "packageManager detected by file")
+      log.debug(ELECTRON_BUILDER_SIGNALS.COLLECT_FILES, { resolvedPackageManager, cwd: dir }, "packageManager detected by file")
       return { pm: resolvedPackageManager, resolvedDirectory: dir, corepackConfig: undefined }
     }
   }
@@ -74,7 +74,7 @@ export async function detectPackageManager(searchPaths: string[]): Promise<{ pm:
   pm = detectPackageManagerByEnv() || PM.NPM
   const cwd = process.env.npm_package_json ? path.dirname(process.env.npm_package_json) : (process.env.INIT_CWD ?? process.cwd())
   const resolvedPackageManager = await resolveIfYarn(pm, "", cwd)
-  log.debug({ resolvedPackageManager, detected: cwd }, "packageManager not detected by file, falling back to environment detection")
+  log.debug(ELECTRON_BUILDER_SIGNALS.COLLECT_FILES, { resolvedPackageManager, detected: cwd }, "packageManager not detected by file, falling back to environment detection")
   return { pm: resolvedPackageManager, resolvedDirectory: undefined, corepackConfig: undefined }
 }
 
@@ -123,7 +123,7 @@ async function detectYarnBerry(cwd: string, version: string): Promise<PM.YARN | 
         return PM.YARN_BERRY
       }
     } catch (_error) {
-      log.debug({ error: _error }, "cannot determine yarn version, assuming yarn v1")
+      log.debug(ELECTRON_BUILDER_SIGNALS.COLLECT_FILES, { error: _error }, "cannot determine yarn version, assuming yarn v1")
       // If `yarn` is not found or another error occurs, fall back to the regular Yarn since we're already determined in a Yarn project
     }
     return undefined

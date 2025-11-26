@@ -6,6 +6,7 @@ import {
   DebugLogger,
   deepAssign,
   defaultArchFromString,
+  ELECTRON_BUILDER_SIGNALS,
   FileTransformer,
   getArchSuffix,
   getArtifactArchName,
@@ -128,7 +129,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   getCscPassword(): string {
     const password = this.doGetCscPassword()
     if (isEmptyOrSpaces(password)) {
-      log.info({ reason: "CSC_KEY_PASSWORD is not defined" }, "empty password will be used for code signing")
+      log.info(ELECTRON_BUILDER_SIGNALS.PACKAGING, { reason: "CSC_KEY_PASSWORD is not defined" }, "empty password will be used for code signing")
       return ""
     } else {
       return password.trim()
@@ -245,7 +246,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
 
     const framework = this.info.framework
-    log.info(
+    log.info(ELECTRON_BUILDER_SIGNALS.PACKAGING,
       {
         platform: platformName,
         arch: Arch[arch],
@@ -423,7 +424,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     const executableName = this instanceof LinuxPackager ? this.executableName : this.appInfo.productFilename
     const electronBinaryPath = path.join(appOutDir, `${executableName}${ext}`)
 
-    log.info({ electronPath: log.filePath(electronBinaryPath) }, "executing @electron/fuses")
+    log.info(ELECTRON_BUILDER_SIGNALS.PACKAGING, { electronPath: log.filePath(electronBinaryPath) }, "executing @electron/fuses")
     return flipFuses(electronBinaryPath, fuses)
   }
 
@@ -442,7 +443,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     if (didSign) {
       await this.info.emitAfterSign(packContext)
     } else if (this.info.filterPackagerEventListeners("afterSign", "user").length) {
-      log.warn(null, `skipping "afterSign" hook as no signing occurred, perhaps you intended "afterPack"?`)
+      log.warn(ELECTRON_BUILDER_SIGNALS.PACKAGING, null, `skipping "afterSign" hook as no signing occurred, perhaps you intended "afterPack"?`)
     }
   }
 
@@ -578,7 +579,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       const appAsarStat = await statOrNull(path.join(this.info.appDir, "app.asar"))
       //noinspection ES6MissingAwait
       if (appAsarStat == null || !appAsarStat.isFile()) {
-        log.warn(
+        log.warn(ELECTRON_BUILDER_SIGNALS.PACKAGING,
           {
             solution: "enable asar and use asarUnpack to unpack files that must be externally available",
           },
@@ -836,7 +837,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
         return framework.getDefaultIcon(this.platform)
       }
 
-      log.warn({ reason: "application icon is not set" }, `default ${capitalizeFirstLetter(framework.name)} icon is used`)
+      log.warn(ELECTRON_BUILDER_SIGNALS.PACKAGING, { reason: "application icon is not set" }, `default ${capitalizeFirstLetter(framework.name)} icon is used`)
       return this.getDefaultFrameworkIcon()
     } else {
       return result[0].file
@@ -884,7 +885,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
 
     if (result.isFallback) {
-      log.warn({ reason: "application icon is not set" }, `default ${capitalizeFirstLetter(this.info.framework.name)} icon is used`)
+      log.warn(ELECTRON_BUILDER_SIGNALS.PACKAGING, { reason: "application icon is not set" }, `default ${capitalizeFirstLetter(this.info.framework.name)} icon is used`)
     }
 
     return result.icons || []

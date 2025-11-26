@@ -1,4 +1,4 @@
-import { log } from "builder-util"
+import { ELECTRON_BUILDER_SIGNALS, log } from "builder-util"
 import { readFile, writeFile } from "fs/promises"
 import * as path from "path"
 import { NtExecutable, NtExecutableResource, Resource } from "resedit"
@@ -38,5 +38,5 @@ export async function addWinAsarIntegrity(executablePath: string, asarIntegrity:
   resource.outputResource(executable)
 
   await writeFile(executablePath, Buffer.from(executable.generate()))
-  log.info({ executablePath: log.filePath(executablePath) }, "updating asar integrity executable resource")
+  log.info(ELECTRON_BUILDER_SIGNALS.GENERIC, { executablePath: log.filePath(executablePath) }, "updating asar integrity executable resource")
 }

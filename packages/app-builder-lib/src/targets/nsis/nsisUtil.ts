@@ -1,4 +1,4 @@
-import { Arch, copyFile, dirSize, log } from "builder-util"
+import { Arch, copyFile, dirSize, ELECTRON_BUILDER_SIGNALS, log } from "builder-util"
 import { PackageFileInfo } from "builder-util-runtime"
 import * as fs from "fs/promises"
 import * as path from "path"
@@ -22,7 +22,7 @@ export const NsisTargetOptions = (() => {
 export const NSIS_PATH = () => {
   const custom = process.env.ELECTRON_BUILDER_NSIS_DIR
   if (custom != null && custom.length > 0) {
-    log.info({ path: custom.trim() }, "using local nsis")
+    log.info(ELECTRON_BUILDER_SIGNALS.PACKAGING, { path: custom.trim() }, "using local nsis")
     return Promise.resolve(custom.trim())
   }
   return NsisTargetOptions.then((options: NsisOptions) => {
@@ -41,7 +41,7 @@ export const NSIS_PATH = () => {
 export const NSIS_RESOURCES_PATH = () => {
   const custom = process.env.ELECTRON_BUILDER_NSIS_RESOURCES_DIR
   if (custom != null && custom.length > 0) {
-    log.info({ path: custom.trim() }, "using local nsis-resources")
+    log.info(ELECTRON_BUILDER_SIGNALS.PACKAGING, { path: custom.trim() }, "using local nsis-resources")
     return Promise.resolve(custom.trim())
   }
   return NsisTargetOptions.then((options: NsisOptions) => {
@@ -118,7 +118,7 @@ export class CopyElevateHelper {
     let isPackElevateHelper = target.options.packElevateHelper
     if (isPackElevateHelper === false && target.options.perMachine === true) {
       isPackElevateHelper = true
-      log.warn("`packElevateHelper = false` is ignored, because `perMachine` is set to `true`")
+      log.warn(ELECTRON_BUILDER_SIGNALS.PACKAGING, null, "`packElevateHelper = false` is ignored, because `perMachine` is set to `true`")
     }
 
     if (isPackElevateHelper === false) {

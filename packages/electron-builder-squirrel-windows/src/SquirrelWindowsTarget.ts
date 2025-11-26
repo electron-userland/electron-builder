@@ -1,4 +1,4 @@
-import { InvalidConfigurationError, log, isEmptyOrSpaces } from "builder-util"
+import { InvalidConfigurationError, log, isEmptyOrSpaces, ELECTRON_BUILDER_SIGNALS } from "builder-util"
 import { execWine } from "app-builder-lib/out/wine"
 import { getBinFromUrl } from "app-builder-lib/out/binDownload"
 import { sanitizeFileName } from "builder-util/out/filename"
@@ -26,7 +26,7 @@ export default class SquirrelWindowsTarget extends Target {
     const tmpVendorDirectory = await this.packager.info.tempDirManager.createTempDir({ prefix: "squirrel-windows-vendor" })
 
     if (isEmptyOrSpaces(customSquirrelVendorDirectory) || !fs.existsSync(customSquirrelVendorDirectory)) {
-      log.warn({ customSquirrelVendorDirectory: customSquirrelVendorDirectory }, "unable to access custom Squirrel.Windows vendor directory, falling back to default vendor ")
+      log.warn(ELECTRON_BUILDER_SIGNALS.PACKAGING, { customSquirrelVendorDirectory: customSquirrelVendorDirectory }, "unable to access custom Squirrel.Windows vendor directory, falling back to default vendor ")
       const windowInstallerPackage = require.resolve("electron-winstaller/package.json")
       const vendorDirectory = path.join(path.dirname(windowInstallerPackage), "vendor")
 
@@ -48,10 +48,10 @@ export default class SquirrelWindowsTarget extends Target {
     const squirrelExe = files.find(f => f === "Squirrel.exe")
     if (squirrelExe) {
       const filePath = path.join(tmpVendorDirectory, squirrelExe)
-      log.debug({ file: filePath }, "signing vendor executable")
+      log.debug(ELECTRON_BUILDER_SIGNALS.PACKAGING, { file: filePath }, "signing vendor executable")
       await this.packager.signIf(filePath)
     } else {
-      log.warn("Squirrel.exe not found in vendor directory, skipping signing")
+      log.warn(ELECTRON_BUILDER_SIGNALS.PACKAGING, null, "Squirrel.exe not found in vendor directory, skipping signing")
     }
     return tmpVendorDirectory
   }
@@ -68,7 +68,7 @@ export default class SquirrelWindowsTarget extends Target {
     await fs.promises.copyFile(path.join(vendorDir, "StubExecutable.exe"), stubExePath)
     await execWine(path.join(vendorDir, "WriteZipToSetup.exe"), null, ["--copy-stub-resources", filePath, stubExePath])
     await this.packager.signIf(stubExePath)
-    log.debug({ file: filePath }, "signing app executable")
+    log.debug(ELECTRON_BUILDER_SIGNALS.PACKAGING, { file: filePath }, "signing app executable")
     await this.packager.signIf(filePath)
   }
 
@@ -226,10 +226,10 @@ export default class SquirrelWindowsTarget extends Target {
     if (this.options.remoteReleases === true) {
       const info = await packager.info.repositoryInfo
       if (info == null) {
-        log.warn("remoteReleases set to true, but cannot get repository info")
+        log.warn(ELECTRON_BUILDER_SIGNALS.PACKAGING, null, "remoteReleases set to true, but cannot get repository info")
       } else {
         options.remoteReleases = `https://github.com/${info.user}/${info.project}`
-        log.info({ remoteReleases: options.remoteReleases }, `remoteReleases is set`)
+        log.info(ELECTRON_BUILDER_SIGNALS.PACKAGING, { remoteReleases: options.remoteReleases }, `remoteReleases is set`)
       }
     } else if (typeof this.options.remoteReleases === "string" && !isEmptyOrSpaces(this.options.remoteReleases)) {
       options.remoteReleases = this.options.remoteReleases
@@ -256,7 +256,7 @@ function checkConflictingOptions(options: any) {
   }
 
   if ("noMsi" in options) {
-    log.warn(`noMsi is deprecated, please specify as "msi": true if you want to create an MSI installer`)
+    log.warn(ELECTRON_BUILDER_SIGNALS.PACKAGING, null, `noMsi is deprecated, please specify as "msi": true if you want to create an MSI installer`)
     options.msi = !options.noMsi
   }
 

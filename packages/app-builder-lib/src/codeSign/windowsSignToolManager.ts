@@ -1,4 +1,4 @@
-import { asArray, InvalidConfigurationError, log, retry } from "builder-util"
+import { asArray, ELECTRON_BUILDER_SIGNALS, InvalidConfigurationError, log, retry } from "builder-util"
 import { MemoLazy, parseDn } from "builder-util-runtime"
 import { rename } from "fs-extra"
 import { Lazy } from "lazy-val"
@@ -122,7 +122,7 @@ export class WindowsSignToolManager implements SignManager {
             if (platformSpecificBuildOptions.signtoolOptions?.sign == null) {
               throw e
             } else {
-              log.debug({ error: e }, "getCertificateFromStoreInfo error")
+              log.debug(ELECTRON_BUILDER_SIGNALS.CODE_SIGN, { error: e }, "getCertificateFromStoreInfo error")
               return null
             }
           })
@@ -169,7 +169,7 @@ export class WindowsSignToolManager implements SignManager {
   // https://github.com/electron-userland/electron-builder/issues/2108#issuecomment-333200711
   async computePublisherName(target: Target, publisherName: string) {
     if (target instanceof AppXTarget && (await this.cscInfo.value) == null) {
-      log.info({ reason: "Windows Store only build" }, "AppX is not signed")
+      log.info(ELECTRON_BUILDER_SIGNALS.CODE_SIGN, { reason: "Windows Store only build" }, "AppX is not signed")
       return publisherName || "CN=ms"
     }
 
@@ -218,9 +218,9 @@ export class WindowsSignToolManager implements SignManager {
           user: cscInfo.isLocalMachineStore ? "local machine" : "current user",
         }
       }
-      log.info(logInfo, "signing")
+      log.info(ELECTRON_BUILDER_SIGNALS.CODE_SIGN,logInfo, "signing")
     } else if (!customSign) {
-      log.debug({ signHook: !!customSign, cscInfo }, "no signing info identified, signing is skipped")
+      log.debug(ELECTRON_BUILDER_SIGNALS.CODE_SIGN, { signHook: !!customSign, cscInfo }, "no signing info identified, signing is skipped")
       return false
     }
 
@@ -412,10 +412,10 @@ export class WindowsSignToolManager implements SignManager {
 
       const parentPath = certInfo.PSParentPath
       const store = parentPath.substring(parentPath.lastIndexOf("\\") + 1)
-      log.debug({ store, PSParentPath: parentPath }, "auto-detect certificate store")
+      log.debug(ELECTRON_BUILDER_SIGNALS.CODE_SIGN, { store, PSParentPath: parentPath }, "auto-detect certificate store")
       // https://github.com/electron-userland/electron-builder/issues/1717
       const isLocalMachineStore = parentPath.includes("Certificate::LocalMachine")
-      log.debug(null, "auto-detect using of LocalMachine store")
+      log.debug(ELECTRON_BUILDER_SIGNALS.CODE_SIGN, null, "auto-detect using of LocalMachine store")
       return {
         thumbprint: certInfo.Thumbprint,
         subject: certInfo.Subject,
@@ -459,7 +459,7 @@ export class WindowsSignToolManager implements SignManager {
           e.message.includes("The specified timestamp server either could not be reached") ||
           e.message.includes("No certificates were found that met all the given criteria.")
         ) {
-          log.warn(`Attempt to code sign failed, another attempt will be made in 15 seconds: ${e.message}`)
+          log.warn(ELECTRON_BUILDER_SIGNALS.CODE_SIGN, e, `Attempt to code sign failed, another attempt will be made in 15 seconds`)
           return true
         }
         return false

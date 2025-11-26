@@ -1,6 +1,6 @@
 import { getBinFromUrl } from "app-builder-lib/out/binDownload"
 import { GenericServerOptions, Nullish } from "builder-util-runtime"
-import { archFromString, doSpawn, getArchSuffix, log, TmpDir } from "builder-util/out/util"
+import { archFromString, doSpawn, ELECTRON_BUILDER_SIGNALS, getArchSuffix, log, TmpDir } from "builder-util/out/util"
 import { Arch, Configuration, Platform } from "electron-builder"
 import fs, { existsSync, outputFile } from "fs-extra"
 import path from "path"
@@ -111,7 +111,7 @@ async function runTest(context: TestContext, target: string, arch: Arch = Arch.x
       const verifyAppVersion = async (expectedVersion: string) => await launchAndWaitForQuit({ appPath, timeoutMs: 2 * 60 * 1000, updateConfigPath, expectedVersion })
 
       const result = await verifyAppVersion(OLD_VERSION_NUMBER)
-      log.debug(result, "Test App version")
+      log.debug(ELECTRON_BUILDER_SIGNALS.TEST, result, "Test App version")
       expect(result.version).toMatch(OLD_VERSION_NUMBER)
 
       // Wait for quitAndInstall to take effect, increase delay if updates are slower
@@ -122,7 +122,7 @@ async function runTest(context: TestContext, target: string, arch: Arch = Arch.x
       expect((await verifyAppVersion(NEW_VERSION_NUMBER)).version).toMatch(NEW_VERSION_NUMBER)
     })
   } catch (error: any) {
-    log.error({ error: error.message }, "Blackbox Updater Test failed to run")
+    log.error(ELECTRON_BUILDER_SIGNALS.TEST, { error: error.message }, "Blackbox Updater Test failed to run")
     queuedError = error
   } finally {
     // windows needs to release file locks, so a delay seems to be needed
@@ -131,7 +131,7 @@ async function runTest(context: TestContext, target: string, arch: Arch = Arch.x
     try {
       await handleCleanupPerOS({ target })
     } catch (error: any) {
-      log.error({ error: error.message }, "Blackbox Updater Test cleanup failed")
+      log.error(ELECTRON_BUILDER_SIGNALS.TEST, { error: error.message }, "Blackbox Updater Test cleanup failed")
       // ignore
     }
   }

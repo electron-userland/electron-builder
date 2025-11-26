@@ -1,4 +1,4 @@
-import { log } from "builder-util"
+import { ELECTRON_BUILDER_SIGNALS, log } from "builder-util"
 import { readFile } from "fs-extra"
 import { Lazy } from "lazy-val"
 import { release as osRelease } from "os"
@@ -10,7 +10,7 @@ const macOsVersion = new Lazy<string>(async () => {
   if (!matches) {
     throw new Error("Couldn't find the macOS version")
   }
-  log.debug({ version: matches[1] }, "macOS version")
+  log.debug(ELECTRON_BUILDER_SIGNALS.INIT, { version: matches[1] }, "macOS version")
   return clean(matches[1])
 })
 

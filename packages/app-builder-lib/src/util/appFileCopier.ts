@@ -1,4 +1,4 @@
-import { AsyncTaskManager, FileCopier, FileTransformer, Link, log, MAX_FILE_REQUESTS, statOrNull, walk } from "builder-util"
+import { AsyncTaskManager, ELECTRON_BUILDER_SIGNALS, FileCopier, FileTransformer, Link, log, MAX_FILE_REQUESTS, statOrNull, walk } from "builder-util"
 import { Stats } from "fs"
 import { ensureSymlink } from "fs-extra"
 import { mkdir, readlink } from "fs/promises"
@@ -139,7 +139,7 @@ export async function computeFileSets(
 
     const fromStat = await statOrNull(matcher.from)
     if (fromStat == null) {
-      log.debug({ directory: matcher.from, reason: "doesn't exist" }, `skipped copying`)
+      log.debug(ELECTRON_BUILDER_SIGNALS.COPYING, { directory: matcher.from, reason: "doesn't exist" }, `skipped copying`)
       continue
     }
 
@@ -190,13 +190,13 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
 
     const dirDeps = await getNodeModules(await packager.getPackageManager(), { rootDir: dir, tempDirManager, cancellationToken, packageName: packager.metadata.name! })
     if (dirDeps.length > 0) {
-      log.debug({ dir, nodeModules: dirDeps }, "collected node modules")
+      log.debug(ELECTRON_BUILDER_SIGNALS.COLLECT_FILES, { dir, nodeModules: dirDeps }, "collected node modules")
       deps = dirDeps
       break
     }
   }
   if (deps.length === 0) {
-    log.warn({ searchDirectories: searchDirectories.map(it => log.filePath(it)) }, "no node modules returned while searching directories")
+    log.warn(ELECTRON_BUILDER_SIGNALS.COLLECT_FILES, { searchDirectories: searchDirectories.map(it => log.filePath(it)) }, "no node modules returned while searching directories")
     return []
   }
 
@@ -213,7 +213,7 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
     const files = await copier.collectNodeModules(dep, nodeModuleExcludedExts, path.relative(mainMatcher.to, destination))
     result[index++] = validateFileSet({ src: source, destination, files, metadata: copier.metadata })
 
-    log.debug({ dep: dep.name, from: log.filePath(source), to: log.filePath(destination), filesCount: files.length }, "prepared to copy node module")
+    log.debug(ELECTRON_BUILDER_SIGNALS.COLLECT_FILES, { dep: dep.name, from: log.filePath(source), to: log.filePath(destination), filesCount: files.length }, "prepared to copy node module")
 
     if (dep.dependencies) {
       for (const c of dep.dependencies) {
@@ -230,7 +230,7 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
 }
 
 async function compileUsingElectronCompile(mainFileSet: ResolvedFileSet, packager: Packager): Promise<ResolvedFileSet> {
-  log.info("compiling using electron-compile")
+  log.info(ELECTRON_BUILDER_SIGNALS.COLLECT_FILES, null, "compiling using electron-compile")
 
   const electronCompileCache = await packager.tempDirManager.getTempDir({ prefix: "electron-compile-cache" })
   const cacheDir = path.join(electronCompileCache, ".cache")

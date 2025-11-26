@@ -1,4 +1,4 @@
-import { log } from "builder-util"
+import { ELECTRON_BUILDER_SIGNALS, log } from "builder-util"
 import * as path from "path"
 import { NodeModulesCollector } from "./nodeModulesCollector"
 import { PM } from "./packageManager"
@@ -18,7 +18,7 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
     try {
       return await super.getDependenciesTree(pm)
     } catch (error: any) {
-      log.info({ pm: this.installOptions.manager, parser: PM.NPM, error: error.message }, "unable to process dependency tree, falling back to using manual node_modules traversal")
+      log.info(ELECTRON_BUILDER_SIGNALS.COLLECT_FILES, { pm: this.installOptions.manager, parser: PM.NPM, error: error.message }, "unable to process dependency tree, falling back to using manual node_modules traversal")
     }
     // node_modules linker fallback. (Slower due to system ops, so we only use it as a fallback) [e.g. corepack env will not allow npm CLI to extract tree]
     return this.buildNodeModulesTreeManually(this.rootDir)
@@ -77,7 +77,7 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
     const buildFromPackage = async (packageDir: string): Promise<NpmDependency> => {
       const pkgPath = path.join(packageDir, "package.json")
 
-      log.debug({ pkgPath }, "building dependency node from package.json")
+      log.debug(ELECTRON_BUILDER_SIGNALS.COLLECT_FILES, { pkgPath }, "building dependency node from package.json")
 
       if (!(await this.existsMemoized(pkgPath))) {
         throw new Error(`package.json not found at ${pkgPath}`)
@@ -89,7 +89,7 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
 
       // Use resolved path as the unique identifier to prevent circular dependencies
       if (visited.has(resolvedPackageDir)) {
-        log.debug({ name: pkg.name, version: pkg.version, path: resolvedPackageDir }, "skipping already visited package")
+        log.debug(ELECTRON_BUILDER_SIGNALS.COLLECT_FILES, { name: pkg.name, version: pkg.version, path: resolvedPackageDir }, "skipping already visited package")
         return {
           name: pkg.name,
           version: pkg.version,
@@ -112,7 +112,7 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
           const depPath = await this.resolvePackageDir(depName, packageDir)
 
           if (!depPath) {
-            log.warn({ package: pkg.name, dependency: depName, version: depVersion }, "dependency not found, skipping")
+            log.warn(ELECTRON_BUILDER_SIGNALS.COLLECT_FILES, { package: pkg.name, dependency: depName, version: depVersion }, "dependency not found, skipping")
             continue
           }
 
@@ -120,16 +120,16 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
 
           // Skip if this dependency resolves to the base directory or any parent we're already processing
           if (resolvedDepPath === resolvedPackageDir || resolvedDepPath === (await this.resolvePath(baseDir))) {
-            log.debug({ package: pkg.name, dependency: depName, resolvedPath: resolvedDepPath }, "skipping self-referential dependency")
+            log.debug(ELECTRON_BUILDER_SIGNALS.COLLECT_FILES, { package: pkg.name, dependency: depName, resolvedPath: resolvedDepPath }, "skipping self-referential dependency")
             continue
           }
 
-          log.debug({ package: pkg.name, dependency: depName, resolvedPath: depPath }, "processing production dependency")
+          log.debug(ELECTRON_BUILDER_SIGNALS.COLLECT_FILES, { package: pkg.name, dependency: depName, resolvedPath: depPath }, "processing production dependency")
 
           // Recursively build the dependency tree for this dependency
           prodDeps[depName] = await buildFromPackage(depPath)
-        } catch (error: any) {
-          log.warn({ package: pkg.name, dependency: depName, error: error.message }, "failed to process dependency, skipping")
+          } catch (error: any) {
+            log.warn(ELECTRON_BUILDER_SIGNALS.COLLECT_FILES, { package: pkg.name, dependency: depName, error: error.message }, "failed to process dependency, skipping")
         }
       }
 

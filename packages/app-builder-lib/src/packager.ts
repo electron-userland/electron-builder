@@ -273,7 +273,7 @@ export class Packager {
       prepackaged: options.prepackaged == null ? null : path.resolve(this.projectDir, options.prepackaged),
     }
 
-    log.info({ version: PACKAGE_VERSION, os: getOsRelease() }, "electron-builder")
+    log.info(ELECTRON_BUILDER_SIGNALS.GENERIC, { version: PACKAGE_VERSION, os: getOsRelease() }, "electron-builder")
     log.start(ELECTRON_BUILDER_SIGNALS.TOTAL, true)
   }
 
@@ -311,6 +311,7 @@ export class Packager {
 
   async emitArtifactBuildStarted(event: ArtifactBuildStarted, logFields?: any) {
     log.info(
+      ELECTRON_BUILDER_SIGNALS.TOTAL,
       logFields || {
         target: event.targetPresentableName,
         arch: event.arch == null ? null : Arch[event.arch],
@@ -377,7 +378,7 @@ export class Packager {
     const devMetadata = this.devMetadata
     const configuration = await getConfig(projectDir, configPath, configFromOptions, new Lazy(() => Promise.resolve(devMetadata)))
 
-    log.debug({ config: getSafeEffectiveConfig(configuration) }, "effective config")
+    log.debug(ELECTRON_BUILDER_SIGNALS.TOTAL, { config: getSafeEffectiveConfig(configuration) }, "effective config")
 
     this._appDir = await computeDefaultAppDirectory(projectDir, configuration.directories!.app)
     this.isTwoPackageJsonProjectLayoutUsed = this._appDir !== projectDir
@@ -393,7 +394,7 @@ export class Packager {
     deepAssign(this.metadata, configuration.extraMetadata)
 
     if (this.isTwoPackageJsonProjectLayoutUsed) {
-      log.debug({ devPackageFile, appPackageFile }, "two package.json structure is used")
+      log.debug(ELECTRON_BUILDER_SIGNALS.TOTAL, { devPackageFile, appPackageFile }, "two package.json structure is used")
     }
     checkMetadata(this.metadata, this.devMetadata, appPackageFile, devPackageFile)
 
@@ -425,7 +426,7 @@ export class Packager {
 
     if (!isCI && (process.stdout as any).isTTY) {
       const effectiveConfigFile = path.join(commonOutDirWithoutPossibleOsMacro, "builder-effective-config.yaml")
-      log.info({ file: log.filePath(effectiveConfigFile) }, "writing effective config")
+      log.info(ELECTRON_BUILDER_SIGNALS.TOTAL, { file: log.filePath(effectiveConfigFile) }, "writing effective config")
       await outputFile(effectiveConfigFile, getSafeEffectiveConfig(this.config))
     }
 
@@ -447,7 +448,7 @@ export class Packager {
       this.toDispose.length = 0
       for (const disposer of toDispose) {
         await disposer().catch((e: any) => {
-          log.warn({ error: e }, "cannot dispose")
+          log.warn(ELECTRON_BUILDER_SIGNALS.TOTAL, { error: e }, "cannot dispose")
         })
       }
     })
@@ -497,10 +498,11 @@ export class Packager {
 
       let poolCount = Math.floor(packager.config.concurrency?.jobs || 1)
       if (poolCount < 1) {
-        log.warn({ concurrency: poolCount }, "concurrency is invalid, overriding with job count: 1")
+        log.warn(ELECTRON_BUILDER_SIGNALS.TOTAL, { concurrency: poolCount }, "concurrency is invalid, overriding with job count: 1")
         poolCount = 1
       } else if (poolCount > MAX_FILE_REQUESTS) {
         log.warn(
+          ELECTRON_BUILDER_SIGNALS.TOTAL,
           { concurrency: poolCount, MAX_FILE_REQUESTS },
           `job concurrency is greater than recommended MAX_FILE_REQUESTS, this may lead to File Descriptor errors (too many files open). Proceed with caution (e.g. this is an experimental feature)`
         )
@@ -591,13 +593,12 @@ export class Packager {
     }
 
     if (config.npmRebuild === false) {
-      log.info({ reason: "npmRebuild is set to false" }, "skipped dependencies rebuild")
+      log.info(ELECTRON_BUILDER_SIGNALS.TOTAL, { reason: "npmRebuild is set to false" }, "skipped dependencies rebuild")
       return
     }
 
     const beforeBuild = await resolveFunction(this.appInfo.type, config.beforeBuild, "beforeBuild")
     if (beforeBuild != null) {
-      log.start("beforeBuild", true)
       const performDependenciesInstallOrRebuild = await beforeBuild({
         appDir: this.appDir,
         electronVersion: this.config.electronVersion!,
@@ -613,7 +614,7 @@ export class Packager {
     }
 
     if (config.buildDependenciesFromSource === true && platform.nodeName !== process.platform) {
-      log.info({ reason: "platform is different and buildDependenciesFromSource is set to true" }, "skipped dependencies rebuild")
+      log.info(ELECTRON_BUILDER_SIGNALS.TOTAL, { reason: "platform is different and buildDependenciesFromSource is set to true" }, "skipped dependencies rebuild")
     } else {
       await installOrRebuild(
         config,

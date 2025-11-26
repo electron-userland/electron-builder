@@ -1,4 +1,4 @@
-import { log } from "builder-util"
+import { ELECTRON_BUILDER_SIGNALS, log } from "builder-util"
 import { Lazy } from "lazy-val"
 import { NpmNodeModulesCollector } from "./npmNodeModulesCollector"
 import { PM } from "./packageManager"
@@ -29,7 +29,7 @@ export class YarnBerryNodeModulesCollector extends NpmNodeModulesCollector {
   protected async getDependenciesTree(_pm: PM): Promise<NpmDependency> {
     const isPnp = await this.yarnSetupInfo.value.then(info => !!info.isPnP)
     if (isPnp) {
-      log.warn(null, "Yarn PnP extraction not supported directly due to virtual file paths (<package_name>.zip/<file_path>), falling back to NPM node module collector")
+      log.warn(ELECTRON_BUILDER_SIGNALS.COLLECT_FILES, null, "Yarn PnP extraction not supported directly due to virtual file paths (<package_name>.zip/<file_path>), falling back to NPM node module collector")
     }
 
     return super.getDependenciesTree(PM.NPM)
@@ -47,7 +47,7 @@ export class YarnBerryNodeModulesCollector extends NpmNodeModulesCollector {
     const output = await this.asyncExec("yarn", ["config", "--json"], rootDir)
 
     if (!output.stdout) {
-      log.debug(null, "Yarn config returned no output, assuming default Yarn v1 behavior (hoisted, non-PnP)")
+      log.debug(ELECTRON_BUILDER_SIGNALS.COLLECT_FILES, null, "Yarn config returned no output, assuming default Yarn v1 behavior (hoisted, non-PnP)")
       return {
         yarnVersion,
         nodeLinker,

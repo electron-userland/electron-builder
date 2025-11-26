@@ -1,4 +1,4 @@
-import { debug, deepAssign, FileTransformer, log } from "builder-util"
+import { debug, deepAssign, ELECTRON_BUILDER_SIGNALS, FileTransformer, log } from "builder-util"
 import { readFile } from "fs/promises"
 import * as path from "path"
 import { Configuration } from "./configuration"
@@ -43,7 +43,7 @@ export function createTransformer(srcDir: string, configuration: Configuration, 
             isRemovePackageKeywords,
           })
         )
-        .catch((e: any) => log.warn(e))
+        .catch((e: any) => log.warn(ELECTRON_BUILDER_SIGNALS.COPYING, e))
     } else if (extraTransformer != null) {
       return extraTransformer(file)
     } else {

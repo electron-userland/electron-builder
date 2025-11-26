@@ -1,4 +1,4 @@
-import { FileTransformer, log } from "builder-util"
+import { ELECTRON_BUILDER_SIGNALS, FileTransformer, log } from "builder-util"
 import { safeStringifyJson } from "builder-util-runtime"
 import { Platform } from "./core"
 import { NODE_MODULES_PATTERN } from "./fileTransformer"
@@ -37,12 +37,13 @@ export class ProtonFramework extends LibUiFramework {
         babel = require("babel-core")
       } catch (_e: any) {
         // babel isn't installed
-        log.debug(null, "don't transpile source code using Babel")
+        log.debug(ELECTRON_BUILDER_SIGNALS.PACKAGING, null, "don't transpile source code using Babel")
         return null
       }
     }
 
     log.info(
+      ELECTRON_BUILDER_SIGNALS.PACKAGING,
       {
         options: safeStringifyJson(babelOptions, new Set<string>(["presets"])),
       },

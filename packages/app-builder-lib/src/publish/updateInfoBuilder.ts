@@ -1,5 +1,5 @@
 import asyncPool from "tiny-async-pool"
-import { Arch, log, safeStringifyJson, serializeToYaml } from "builder-util"
+import { Arch, ELECTRON_BUILDER_SIGNALS, log, safeStringifyJson, serializeToYaml } from "builder-util"
 import { GenericServerOptions, PublishConfiguration, UpdateInfo, WindowsUpdateInfo } from "builder-util-runtime"
 import { outputFile, outputJson, readFile } from "fs-extra"
 import { Lazy } from "lazy-val"
@@ -212,7 +212,7 @@ export async function writeUpdateInfoFiles(updateInfoFileTasks: Array<UpdateInfo
   await asyncPool<UpdateInfoFileTask, void>(concurrency, Array.from(updateChannelFileToInfo.values()), async task => {
     const publishConfig = task.publishConfiguration
     if (publishConfig.publishAutoUpdate === false) {
-      log.debug(
+      log.debug(ELECTRON_BUILDER_SIGNALS.PUBLISH,
         {
           provider: publishConfig.provider,
           reason: "publishAutoUpdate is set to false",

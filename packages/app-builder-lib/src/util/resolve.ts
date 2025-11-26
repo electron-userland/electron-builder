@@ -1,4 +1,4 @@
-import { log } from "builder-util/out/log"
+import { ELECTRON_BUILDER_SIGNALS, log } from "builder-util/out/log"
 import debug from "debug"
 import * as path from "path"
 import * as requireMaybe from "../../helpers/dynamic-import"
@@ -7,7 +7,7 @@ export async function resolveModule<T>(type: string | undefined, name: string): 
   try {
     return requireMaybe.dynamicImportMaybe(name)
   } catch (error: any) {
-    log.error({ moduleName: name, message: error.message ?? error.stack }, "Unable to dynamically `import` or `require`")
+    log.error(ELECTRON_BUILDER_SIGNALS.INIT, { moduleName: name, message: error.message ?? error.stack }, "Unable to dynamically `import` or `require`")
     throw error
   }
 }

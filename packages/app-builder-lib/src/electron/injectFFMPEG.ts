@@ -2,7 +2,7 @@ import * as fs from "fs"
 import * as path from "path"
 import { ElectronPlatformName } from "./ElectronFramework"
 
-import { log } from "builder-util"
+import { ELECTRON_BUILDER_SIGNALS, log } from "builder-util"
 import { getBin } from "../binDownload"
 import { PrepareApplicationStageDirectoryOptions } from "../Framework"
 
@@ -11,7 +11,7 @@ const downloadFFMPEG = async (electronVersion: string, platform: ElectronPlatfor
   const ffmpegFileName = `ffmpeg-v${electronVersion}-${platform}-${arch}.zip`
   const url = `https://github.com/electron/electron/releases/download/v${electronVersion}/${ffmpegFileName}`
 
-  log.info({ file: ffmpegFileName }, "downloading non-proprietary FFMPEG")
+  log.info(ELECTRON_BUILDER_SIGNALS.COPYING, { file: ffmpegFileName }, "downloading non-proprietary FFMPEG")
   return getBin(ffmpegFileName, url)
 }
 
@@ -25,7 +25,7 @@ const copyFFMPEG = (targetPath: string, platform: ElectronPlatformName) => (sour
 
   const libPath = path.resolve(sourcePath, fileName)
   const libTargetPath = path.resolve(targetPath, fileName)
-  log.info({ lib: log.filePath(libPath), target: log.filePath(libTargetPath) }, "copying non-proprietary FFMPEG")
+  log.info(ELECTRON_BUILDER_SIGNALS.COPYING,{ lib: log.filePath(libPath), target: log.filePath(libTargetPath) }, "copying non-proprietary FFMPEG")
 
   // If the source doesn't exist we have a problem
   if (!fs.existsSync(libPath)) {

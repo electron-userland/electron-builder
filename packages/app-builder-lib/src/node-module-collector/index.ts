@@ -8,7 +8,7 @@ import { YarnBerryNodeModulesCollector } from "./yarnBerryNodeModulesCollector"
 import { YarnNodeModulesCollector } from "./yarnNodeModulesCollector"
 import { BunNodeModulesCollector } from "./bunNodeModulesCollector"
 import { Lazy } from "lazy-val"
-import { spawn, log } from "builder-util"
+import { spawn, log, ELECTRON_BUILDER_SIGNALS } from "builder-util"
 import * as fs from "fs-extra"
 import * as path from "path"
 
@@ -109,7 +109,7 @@ async function findWorkspaceRoot(pm: PM, cwd: string): Promise<string | undefine
     })
     .catch(() => findNearestWithWorkspacesField(cwd))
 
-  log.debug({ root: output || cwd }, output ? "workspace root detected" : "workspace root not detected, using project root")
+  log.debug(ELECTRON_BUILDER_SIGNALS.ALL, { root: output || cwd }, output ? "workspace root detected" : "workspace root not detected, using project root")
   return output
 }
 

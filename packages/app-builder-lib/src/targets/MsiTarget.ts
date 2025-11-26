@@ -1,4 +1,4 @@
-import { Arch, asArray, deepAssign, log, walk } from "builder-util"
+import { Arch, asArray, deepAssign, ELECTRON_BUILDER_SIGNALS, log, walk } from "builder-util"
 import { UUID } from "builder-util-runtime"
 import { createHash } from "crypto"
 import * as ejs from "ejs"
@@ -189,7 +189,7 @@ export default class MsiTarget extends Target {
 
     const companyName = appInfo.companyName
     if (!companyName) {
-      log.warn(`Manufacturer is not set for MSI — please set "author" in the package.json`)
+      log.warn(ELECTRON_BUILDER_SIGNALS.PACKAGING, null, `Manufacturer is not set for MSI — please set "author" in the package.json`)
     }
 
     return {

@@ -1,4 +1,4 @@
-import { Arch, log } from "builder-util"
+import { Arch, ELECTRON_BUILDER_SIGNALS, log } from "builder-util"
 import { computeDownloadUrl, getPublishConfigs, getPublishConfigsForUpdateInfo } from "../../publish/PublishManager"
 import { WinPackager } from "../../winPackager"
 import { NsisWebOptions } from "./nsisOptions"
@@ -38,7 +38,7 @@ export class WebInstallerTarget extends NsisTarget {
 
   get shouldBuildUniversalInstaller() {
     if (this.options.buildUniversalInstaller === false) {
-      log.warn({ buildUniversalInstaller: true }, "only universal builds are supported for nsis-web installers, overriding setting")
+      log.warn(ELECTRON_BUILDER_SIGNALS.PACKAGING, { buildUniversalInstaller: true }, "only universal builds are supported for nsis-web installers, overriding setting")
     }
     return true
   }

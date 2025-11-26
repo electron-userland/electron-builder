@@ -1,4 +1,4 @@
-import { exists, log, retry, TmpDir } from "builder-util"
+import { ELECTRON_BUILDER_SIGNALS, exists, log, retry, TmpDir } from "builder-util"
 import * as childProcess from "child_process"
 import { CancellationToken } from "builder-util-runtime"
 import * as fs from "fs-extra"
@@ -38,13 +38,13 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
 
     const config = (await this.asyncExec(command, ["config", "list"])).stdout
     if (config == null) {
-      log.debug({ manager }, "unable to determine if node_modules are hoisted: no config output. falling back to hoisted mode")
+      log.debug(ELECTRON_BUILDER_SIGNALS.COLLECT_FILES, { manager }, "unable to determine if node_modules are hoisted: no config output. falling back to hoisted mode")
       return false
     }
     const lines = Object.fromEntries(config.split("\n").map(line => line.split("=").map(s => s.trim())))
 
     if (lines["node-linker"] === "hoisted") {
-      log.debug({ manager }, "node_modules are hoisted")
+      log.debug(ELECTRON_BUILDER_SIGNALS.COLLECT_FILES, { manager }, "node_modules are hoisted")
       return true
     }
 
@@ -80,7 +80,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     const hoisterResult: HoisterResult = hoist(this.transformToHoisterTree(this.productionGraph, packageName), { check: true })
 
     await this._getNodeModules(hoisterResult.dependencies, this.nodeModules)
-    log.debug({ packageName, depCount: this.nodeModules.length }, "node modules collection complete")
+    log.debug(ELECTRON_BUILDER_SIGNALS.COLLECT_FILES,   { packageName, depCount: this.nodeModules.length }, "node modules collection complete")
 
     return this.nodeModules
   }
@@ -118,7 +118,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
           const logFields = { error: error.message, tempOutputFile, cwd: this.rootDir }
 
           if (!(await this.existsMemoized(tempOutputFile))) {
-            log.debug(logFields, "dependency tree output file missing, retrying")
+            log.debug(ELECTRON_BUILDER_SIGNALS.COLLECT_FILES, logFields, "dependency tree output file missing, retrying")
             return true
           }
 
@@ -126,16 +126,16 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
           const fields = { ...logFields, fileContent }
 
           if (fileContent.trim().length === 0) {
-            log.debug(fields, "dependency tree output file empty, retrying")
+            log.debug(ELECTRON_BUILDER_SIGNALS.COLLECT_FILES, fields, "dependency tree output file empty, retrying")
             return true
           }
 
           if (error.message?.includes("Unexpected end of JSON input")) {
-            log.debug(fields, "JSON parse error in dependency tree, retrying")
+            log.debug(ELECTRON_BUILDER_SIGNALS.COLLECT_FILES, fields, "JSON parse error in dependency tree, retrying")
             return true
           }
 
-          log.error(fields, "error parsing dependencies tree")
+          log.error(ELECTRON_BUILDER_SIGNALS.COLLECT_FILES, fields, "error parsing dependencies tree")
           return false
         },
       }
@@ -187,7 +187,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
         return filePath
       }
     } catch (error: any) {
-      log.debug({ filePath, message: error.message || error.stack }, "error resolving path")
+      log.debug(ELECTRON_BUILDER_SIGNALS.COLLECT_FILES, { filePath, message: error.message || error.stack }, "error resolving path")
       this.cache.realPath.set(filePath, filePath)
       return filePath
     }
@@ -294,7 +294,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
 
     if (tree.dependencies?.[packageName]) {
       const { name, path, dependencies } = tree.dependencies[packageName]
-      log.debug({ name, path, dependencies: JSON.stringify(dependencies) }, "pruning root app/self package from workspace tree")
+      log.debug(ELECTRON_BUILDER_SIGNALS.COLLECT_FILES, { name, path, dependencies: JSON.stringify(dependencies) }, "pruning root app/self package from workspace tree")
       for (const [name, pkg] of Object.entries(dependencies ?? {})) {
         tree.dependencies[name] = pkg
       }
@@ -337,14 +337,14 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
       const reference = [...d.references][0]
       const p = this.allDependencies.get(`${d.name}@${reference}`)?.path
       if (p === undefined) {
-        log.debug({ name: d.name, reference }, "cannot find path for dependency")
+        log.debug(ELECTRON_BUILDER_SIGNALS.COLLECT_FILES, { name: d.name, reference }, "cannot find path for dependency")
         continue
       }
 
       // fix npm list issue
       // https://github.com/npm/cli/issues/8535
       if (!(await exists(p))) {
-        log.debug({ name: d.name, reference, p }, "dependency path does not exist")
+        log.debug(ELECTRON_BUILDER_SIGNALS.COLLECT_FILES, { name: d.name, reference, p }, "dependency path does not exist")
         continue
       }
 
@@ -369,7 +369,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
       const result = await fs.readFile(file, { encoding: "utf8" })
       return { stdout: result?.trim(), stderr: undefined }
     } catch (error: any) {
-      log.debug({ error: error.message }, "failed to execute command")
+      log.debug(ELECTRON_BUILDER_SIGNALS.COLLECT_FILES, { error: error.message }, "failed to execute command")
       return { stdout: undefined, stderr: error.message }
     }
   }
@@ -414,10 +414,10 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
         // https://github.com/npm/npm/issues/17624
         const shouldIgnore = code === 1 && "npm" === execName.toLowerCase() && args.includes("list")
         if (shouldIgnore) {
-          log.debug(null, "`npm list` returned non-zero exit code, but it MIGHT be expected (https://github.com/npm/npm/issues/17624). Check stderr for details.")
+          log.debug(ELECTRON_BUILDER_SIGNALS.COLLECT_FILES, null, "`npm list` returned non-zero exit code, but it MIGHT be expected (https://github.com/npm/npm/issues/17624). Check stderr for details.")
         }
         if (stderr.length > 0) {
-          log.debug({ stderr }, "note: there was node module collector output on stderr")
+          log.debug(ELECTRON_BUILDER_SIGNALS.COLLECT_FILES, { stderr }, "note: there was node module collector output on stderr")
         }
         const shouldResolve = code === 0 || shouldIgnore
         return shouldResolve ? resolve() : reject(new Error(`Node module collector process exited with code ${code}:\n${stderr}`))
