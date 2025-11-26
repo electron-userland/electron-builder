@@ -6,8 +6,10 @@ import * as fs from "fs";
 import * as path from "path";
 
 import * as _debug from "debug";
+import { LogEntry, LogLevel } from "./logger/rolling-log";
+import { Nullish } from "builder-util-runtime";
 
-const debug = _debug("electron-builder");
+export const debug = _debug("electron-builder");
 
 // Enum of signals
 export enum ELECTRON_BUILDER_SIGNALS {
@@ -62,7 +64,7 @@ export class Logger {
     return debug.enabled;
   }
 
-  private log(signal: ELECTRON_BUILDER_SIGNALS, fields: Fields, message: string, level: LogLevel = "info") {
+  private log(signal: ELECTRON_BUILDER_SIGNALS, fields: Fields | Nullish, message: string, level: LogLevel = "info") {
     const task = this.tasks[signal];
     if (!task) return;
 
@@ -73,19 +75,19 @@ export class Logger {
     task.log(message, level);
   }
 
-  info(signal: ELECTRON_BUILDER_SIGNALS, fields: Fields, message: string) {
+  info(signal: ELECTRON_BUILDER_SIGNALS, fields: Fields | Nullish, message: string) {
     this.log(signal, fields, message, "info");
   }
 
-  warn(signal: ELECTRON_BUILDER_SIGNALS, fields: Fields, message: string) {
+  warn(signal: ELECTRON_BUILDER_SIGNALS, fields: Fields | Nullish, message: string) {
     this.log(signal, fields, message, "warn");
   }
 
-  error(signal: ELECTRON_BUILDER_SIGNALS, fields: Fields, message: string) {
+  error(signal: ELECTRON_BUILDER_SIGNALS, fields: Fields | Nullish, message: string) {
     this.log(signal, fields, message, "error");
   }
 
-  debug(signal: ELECTRON_BUILDER_SIGNALS, fields: Fields, message: string) {
+  debug(signal: ELECTRON_BUILDER_SIGNALS, fields: Fields | Nullish, message: string) {
     this.log(signal, fields, message, "debug");
   }
 
