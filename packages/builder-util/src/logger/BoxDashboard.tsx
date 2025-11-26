@@ -12,7 +12,7 @@ export const BoxDashboard: React.FC<Props> = ({ tasks, maxLogLines = 5 }) => {
   return (
     <Box flexDirection="column" padding={1}>
       {tasks
-        .filter(task => task.status === "running")
+        .filter(task => task.recentLogs.length > 0 || task.status === "running")
         .map(task => (
           <Box
             key={task.id}

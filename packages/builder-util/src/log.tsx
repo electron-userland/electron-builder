@@ -19,7 +19,6 @@ export const PADDING = 2
 
 // Enum of signals
 
-
 export enum ELECTRON_BUILDER_SIGNALS {
   ALL = "all",
   INIT = "initializing build",
@@ -60,9 +59,7 @@ export class Logger {
 
     // Initial render
     this.rerender = () => {
-      render(
-        <BoxDashboard tasks={Object.values(this.tasks).map(t => t.snapshot)} />
-      )
+      render(<BoxDashboard tasks={Object.values(this.tasks).map(t => t.snapshot)} />)
     }
 
     this.rerender()
@@ -72,12 +69,10 @@ export class Logger {
     return debug.enabled
   }
 
-
   filePath(file: string) {
     const cwd = process.cwd()
     return file.startsWith(cwd) ? file.substring(cwd.length + 1) : file
   }
-
 
   private getTask(signal: ELECTRON_BUILDER_SIGNALS) {
     return this.tasks[signal]
@@ -94,19 +89,19 @@ export class Logger {
     task.log(fields, message, level)
   }
 
-  info(signal: ELECTRON_BUILDER_SIGNALS, fields: Fields | Nullish= {}, message?: string) {
+  info(signal: ELECTRON_BUILDER_SIGNALS, fields: Fields | Nullish = {}, message?: string) {
     this.log(signal, message, fields, "info")
   }
 
-  warn(signal: ELECTRON_BUILDER_SIGNALS, fields: Fields | Nullish= {}, message?: string) {
+  warn(signal: ELECTRON_BUILDER_SIGNALS, fields: Fields | Nullish = {}, message?: string) {
     this.log(signal, message, fields, "warn")
   }
 
-  error(signal: ELECTRON_BUILDER_SIGNALS, fields: Fields | Nullish= {}, message?: string) {
+  error(signal: ELECTRON_BUILDER_SIGNALS, fields: Fields | Nullish = {}, message?: string) {
     this.log(signal, message, fields, "error")
   }
 
-  debug(signal: ELECTRON_BUILDER_SIGNALS, fields: Fields | Nullish= {}, message?: string) {
+  debug(signal: ELECTRON_BUILDER_SIGNALS, fields: Fields | Nullish = {}, message?: string) {
     this.log(signal, message, fields, "debug")
   }
 
