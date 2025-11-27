@@ -1,6 +1,6 @@
 import { createPackageFromStreams, AsarStreamType, AsarDirectory } from "@electron/asar"
 import { log } from "builder-util"
-import { Filter } from "builder-util/out/fs"
+import { exists, Filter } from "builder-util/out/fs"
 import * as fs from "fs-extra"
 import { readlink } from "fs-extra"
 import * as path from "path"
@@ -10,6 +10,36 @@ import { ResolvedFileSet, getDestinationPath } from "../util/appFileCopier"
 import { detectUnpackedDirs } from "./unpackDetector"
 import { Readable } from "stream"
 import * as os from "os"
+
+const resolvePath = async (file: string | undefined): Promise<string | undefined> => (file && (await exists(file)) ? fs.realpath(file).catch(() => path.resolve(file)) : undefined)
+const resolvePaths = async (filepaths: (string | undefined)[]) => {
+  return Promise.all(filepaths.map(resolvePath)).then(paths => paths.filter((it): it is string => it != null))
+}
+
+const DENYLIST = resolvePaths([
+  "/usr",
+  "/lib",
+  "/bin",
+  "/sbin",
+  "/etc",
+
+  "/tmp",
+  "/var", // block whole /var by default. If $HOME is under /var, it's explicitly in ALLOWLIST - https://github.com/electron-userland/electron-builder/issues/9025#issuecomment-3575380041
+
+  // macOS system directories
+  "/System",
+  "/Library",
+  "/private",
+
+  // Windows system directories
+  process.env.SystemRoot,
+  process.env.WINDIR,
+])
+
+const ALLOWLIST = resolvePaths([
+  os.tmpdir(), // always allow temp dir
+  os.homedir(), // always allow home dir
+])
 
 /** @internal */
 export class AsarPackager {
@@ -148,7 +178,7 @@ export class AsarPackager {
     }
 
     // verify that the file is not a direct link or symlinked to access/copy a system file
-    await this.protectSystemAndUnsafePaths(file)
+    await this.protectSystemAndUnsafePaths(file, await this.packager.info.getWorkspaceRoot())
 
     const config = {
       path: destination,
@@ -164,9 +194,6 @@ export class AsarPackager {
         type: "file",
       }
     }
-
-    // guard against symlink pointing to outside workspace root
-    await this.protectSystemAndUnsafePaths(file, await this.packager.info.getWorkspaceRoot())
 
     // okay, it must be a symlink. evaluate link to be relative to source file in asar
     let link = await readlink(file)
@@ -233,85 +260,49 @@ export class AsarPackager {
     }
   }
 
-  private async getProtectedPaths(): Promise<string[]> {
-    const systemPaths = [
-      // Generic *nix
-      "/usr",
-      "/lib",
-      "/bin",
-      "/sbin",
-      "/System",
-      "/Library",
-      "/private/etc",
-      "/private/var/db",
-      "/private/var/root",
-      "/private/var/log",
-      "/private/tmp",
+  private async checkAgainstRoots(target: string, allowRoots: string[]): Promise<boolean> {
+    const resolved = await resolvePath(target)
 
-      // macOS legacy symlinks
-      "/etc",
-      "/var",
-      "/tmp",
-
-      // Windows
-      process.env.SystemRoot,
-      process.env.WINDIR,
-      // process.env.ProgramFiles,
-      // process.env["ProgramFiles(x86)"],
-      // process.env.ProgramData,
-      // process.env.CommonProgramFiles,
-      // process.env["CommonProgramFiles(x86)"],
-    ]
-      .filter(Boolean)
-      .map(p => path.resolve(p as string))
-
-    // Normalize to real paths to prevent symlink bypasses
-    const resolvedPaths: string[] = []
-    for (const p of systemPaths) {
-      try {
-        resolvedPaths.push(await fs.realpath(p))
-      } catch {
-        resolvedPaths.push(path.resolve(p))
+    for (const root of allowRoots) {
+      const resolvedRoot = root
+      if (resolved === resolvedRoot || resolved?.startsWith(resolvedRoot + path.sep)) {
+        return true
       }
     }
-
-    return resolvedPaths
+    return false
   }
 
-  private async protectSystemAndUnsafePaths(file: string, workspaceRoot?: string): Promise<boolean> {
-    const resolved = await fs.realpath(file).catch(() => path.resolve(file))
+  private async protectSystemAndUnsafePaths(file: string, workspaceRoot: string): Promise<void> {
+    const resolved = await resolvePath(file)
+    const logFields = { source: file, realPath: resolved }
 
-    const scan = async () => {
-      if (workspaceRoot) {
-        const workspace = path.resolve(workspaceRoot)
+    const isUnsafe = async () => {
+      const workspace = await resolvePath(workspaceRoot)
 
-        if (!resolved.startsWith(workspace)) {
-          return true
-        }
-      }
-
-      // Allow temp & cache folders
-      const tmpdir = await fs.realpath(os.tmpdir())
-      if (resolved.startsWith(tmpdir)) {
+      if (workspace && resolved?.startsWith(workspace)) {
+        // if in workspace, always safe
         return false
       }
 
-      const blockedSystemPaths = await this.getProtectedPaths()
-      for (const sys of blockedSystemPaths) {
-        if (resolved.startsWith(sys)) {
-          return true
-        }
+      const allowed = await this.checkAgainstRoots(file, await ALLOWLIST)
+      if (allowed) {
+        return false // allowlist is priority
       }
 
+      const denied = await this.checkAgainstRoots(file, await DENYLIST)
+      if (denied) {
+        log.error(logFields, `denied access to system or unsafe path`)
+        return true
+      }
+      // default
+      log.debug(logFields, `path is outside of explicit safe paths, defaulting to safe`)
       return false
     }
 
-    const unsafe = await scan()
+    const unsafe = await isUnsafe()
 
     if (unsafe) {
-      log.error({ source: file, realPath: resolved }, `unable to copy, file is from outside the package to a system or unsafe path`)
       throw new Error(`Cannot copy file [${file}] symlinked to file [${resolved}] outside the package to a system or unsafe path`)
     }
-    return unsafe
   }
 }
