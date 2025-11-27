@@ -172,6 +172,20 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     return this.cache.realPath.get(filePath)!
   }
 
+  protected requireMemoized(pkgPath: string): PackageJson {
+    if (!this.cache.packageJson.has(pkgPath)) {
+      this.cache.packageJson.set(pkgPath, require(pkgPath))
+    }
+    return this.cache.packageJson.get(pkgPath)!
+  }
+
+  protected existsSyncMemoized(filePath: string): boolean {
+    if (!this.cache.exists.has(filePath)) {
+      this.cache.exists.set(filePath, fs.existsSync(filePath))
+    }
+    return this.cache.exists.get(filePath)!
+  }
+
   protected async resolvePath(filePath: string): Promise<string> {
     // Check if we've already resolved this path
     if (this.cache.realPath.has(filePath)) {
@@ -211,7 +225,8 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
         try {
           const url = (await this.importMetaResolve.value)(packageName, pathToFileURL(fromDir).href)
           return url.startsWith("file://") ? fileURLToPath(url) : null
-        } catch {
+        } catch (error: any) {
+          log.debug({ error: error.message }, "import-meta-resolve failed")
           // ignore
         }
       }
@@ -219,7 +234,8 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
       // 2) Fallback: require.resolve (CJS, old packages)
       try {
         return require.resolve(packageName, { paths: [fromDir, this.rootDir] })
-      } catch {
+      } catch (error: any) {
+        log.debug({ error: error.message }, "require.resolve failed")
         // ignore
       }
 
@@ -236,7 +252,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     let dir = path.dirname(entry)
     while (true) {
       const pkgFile = path.join(dir, "package.json")
-      if (await exists(pkgFile)) {
+      if (await this.existsMemoized(pkgFile)) {
         this.cache.requireResolve.set(cacheKey, dir)
         return dir
       }
@@ -250,20 +266,6 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
 
     this.cache.requireResolve.set(cacheKey, null)
     return null
-  }
-
-  protected requireMemoized(pkgPath: string): PackageJson {
-    if (!this.cache.packageJson.has(pkgPath)) {
-      this.cache.packageJson.set(pkgPath, require(pkgPath))
-    }
-    return this.cache.packageJson.get(pkgPath)!
-  }
-
-  protected existsSyncMemoized(filePath: string): boolean {
-    if (!this.cache.exists.has(filePath)) {
-      this.cache.exists.set(filePath, fs.existsSync(filePath))
-    }
-    return this.cache.exists.get(filePath)!
   }
 
   protected cacheKey(pkg: ProdDepType): string {
@@ -296,7 +298,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
 
     if (tree.dependencies?.[packageName]) {
       const { name, path, dependencies } = tree.dependencies[packageName]
-      log.debug({ name, path, dependencies: JSON.stringify(dependencies) }, "pruning root app/self package from workspace tree")
+      log.debug({ name, path, dependencies: JSON.stringify(dependencies) }, "pruning root app/self reference from workspace tree")
       for (const [name, pkg] of Object.entries(dependencies ?? {})) {
         tree.dependencies[name] = pkg
       }
