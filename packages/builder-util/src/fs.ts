@@ -149,7 +149,10 @@ export async function walk(initialDirPath: string, filter?: Filter | null, consu
   return result
 }
 
-const _isUseHardLink = process.platform !== "win32" && process.env.USE_HARD_LINKS !== "false" && (isCI || process.env.USE_HARD_LINKS === "true")
+// performance optimization. only enable hard links during unit tests on non-Windows platforms by default
+// This is to optimize disk space and speed during tests, while avoiding potential issues with hard links in distribution builds
+// https://github.com/electron-userland/electron-builder/issues/5721
+const _isUseHardLink = process.platform !== "win32" && process.env.USE_HARD_LINKS !== "false" && process.env.VITEST == null
 
 export function copyFile(src: string, dest: string, isEnsureDir = true) {
   return (isEnsureDir ? mkdir(path.dirname(dest), { recursive: true }) : Promise.resolve()).then(() => copyOrLinkFile(src, dest, null, false))
