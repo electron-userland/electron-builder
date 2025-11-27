@@ -1,5 +1,24 @@
 # app-builder-lib
 
+## 26.3.2
+
+### Patch Changes
+
+- Fix: allow home dir when it's symlinked from /var/home _[`#9389`](https://github.com/electron-userland/electron-builder/pull/9389) [`0cd0831`](https://github.com/electron-userland/electron-builder/commit/0cd0831ec1c23b4fb4d701c10d586cb83d4ed2ed) [@mmaietta](https://github.com/mmaietta)_
+- Perf: optimize duplicate checking in asar packager using Set _[`#9386`](https://github.com/electron-userland/electron-builder/pull/9386) [`7f7113d`](https://github.com/electron-userland/electron-builder/commit/7f7113dc435a427ca4ff041fb138512ac0bdeaaa) [@beyondkmp](https://github.com/beyondkmp)_
+- Fix: returning actual path in hoisted mode for pnpm since it can still return virtual paths _[`#9392`](https://github.com/electron-userland/electron-builder/pull/9392) [`65eecac`](https://github.com/electron-userland/electron-builder/commit/65eecac1bec8fb5667621bdba4f1d2b1c75230b5) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+</small>
+
+- `dmg-builder@26.3.2`
+- `electron-builder-squirrel-windows@26.3.2`
+
+</details>
+
 ## 26.3.1
 
 ### Patch Changes
