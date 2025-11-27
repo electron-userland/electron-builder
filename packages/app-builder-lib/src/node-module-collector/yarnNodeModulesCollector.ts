@@ -123,8 +123,8 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
 
     const rootPkgJson = await this.appPkgJson.value
     return Promise.resolve({
-      name: rootPkgJson?.name || ".",
-      version: rootPkgJson?.version || "unknown",
+      name: rootPkgJson.name,
+      version: rootPkgJson.version,
       path: this.rootDir,
       dependencies,
       workspaces: rootPkgJson?.workspaces,
