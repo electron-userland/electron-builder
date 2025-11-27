@@ -11,42 +11,35 @@ import { detectUnpackedDirs } from "./unpackDetector"
 import { Readable } from "stream"
 import * as os from "os"
 
-const DENYLIST = Promise.all(
-  [
-    "/usr",
-    "/lib",
-    "/bin",
-    "/sbin",
-    "/etc",
+const resolvePath = async (file: string | undefined): Promise<string | undefined> => (file && (await exists(file)) ? fs.realpath(file).catch(() => path.resolve(file)) : undefined)
+const resolvePaths = async (filepaths: (string | undefined)[]) => {
+  return Promise.all(filepaths.map(resolvePath)).then(paths => paths.filter((it): it is string => it != null))
+}
 
-    "/tmp",
-    "/var", // block whole /var by default. If $HOME is under /var, it's explicitly in ALLOWLIST
+const DENYLIST = resolvePaths([
+  "/usr",
+  "/lib",
+  "/bin",
+  "/sbin",
+  "/etc",
 
-    // macOS system directories
-    "/System",
-    "/Library",
-    "/private",
+  "/tmp",
+  "/var", // block whole /var by default. If $HOME is under /var, it's explicitly in ALLOWLIST - https://github.com/electron-userland/electron-builder/issues/9025#issuecomment-3575380041
 
-    // Windows system directories
-    process.env.SystemRoot,
-    process.env.WINDIR,
-  ]
-    .filter((it): it is string => it != null)
-    .map(async it => ((await exists(it)) ? await resolvePath(it) : null))
-    .filter((it): it is Promise<string> => it != null)
-)
+  // macOS system directories
+  "/System",
+  "/Library",
+  "/private",
 
-const ALLOWLIST = Promise.all(
-  [
-    process.env.HOME, // always allow current user’s home
-    os.tmpdir(), // always allow temp directory
-  ]
-    .filter((it): it is string => it != null)
-    .map(async it => ((await exists(it)) ? await resolvePath(it) : null))
-    .filter((it): it is Promise<string> => it != null)
-)
+  // Windows system directories
+  process.env.SystemRoot,
+  process.env.WINDIR,
+])
 
-const resolvePath = (file: string) => fs.realpath(file).catch(() => path.resolve(file))
+const ALLOWLIST = resolvePaths([
+  os.tmpdir(), // always allow temp dir
+  os.homedir(), // always allow home dir
+])
 
 /** @internal */
 export class AsarPackager {
@@ -272,41 +265,44 @@ export class AsarPackager {
 
     for (const root of allowRoots) {
       const resolvedRoot = root
-      if (resolved === resolvedRoot || resolved.startsWith(resolvedRoot + path.sep)) {
+      if (resolved === resolvedRoot || resolved?.startsWith(resolvedRoot + path.sep)) {
         return true
       }
     }
     return false
   }
 
-  private async protectSystemAndUnsafePaths(file: string, workspaceRoot: string): Promise<boolean> {
+  private async protectSystemAndUnsafePaths(file: string, workspaceRoot: string): Promise<void> {
     const resolved = await resolvePath(file)
+    const logFields = { source: file, realPath: resolved }
 
     const isUnsafe = async () => {
       const workspace = await resolvePath(workspaceRoot)
 
-      if (resolved.startsWith(workspace)) {
+      if (workspace && resolved?.startsWith(workspace)) {
+        // if in workspace, always safe
         return false
       }
 
-      const denied = await this.checkAgainstRoots(file, await DENYLIST)
       const allowed = await this.checkAgainstRoots(file, await ALLOWLIST)
-
       if (allowed) {
-        return false // allowlist overrides everything
+        return false // allowlist is priority
       }
+
+      const denied = await this.checkAgainstRoots(file, await DENYLIST)
       if (denied) {
-        return true // blocked unless explicitly allowed
+        log.error(logFields, `denied access to system or unsafe path`)
+        return true
       }
+      // default
+      log.debug(logFields, `path is outside of explicit safe paths, defaulting to safe`)
       return false
     }
 
     const unsafe = await isUnsafe()
 
     if (unsafe) {
-      log.error({ source: file, realPath: resolved }, `unable to copy, file is from outside the package to a system or unsafe path`)
       throw new Error(`Cannot copy file [${file}] symlinked to file [${resolved}] outside the package to a system or unsafe path`)
     }
-    return unsafe
   }
 }
