@@ -172,6 +172,20 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     return this.cache.realPath.get(filePath)!
   }
 
+  protected requireMemoized(pkgPath: string): PackageJson {
+    if (!this.cache.packageJson.has(pkgPath)) {
+      this.cache.packageJson.set(pkgPath, require(pkgPath))
+    }
+    return this.cache.packageJson.get(pkgPath)!
+  }
+
+  protected existsSyncMemoized(filePath: string): boolean {
+    if (!this.cache.exists.has(filePath)) {
+      this.cache.exists.set(filePath, fs.existsSync(filePath))
+    }
+    return this.cache.exists.get(filePath)!
+  }
+
   protected async resolvePath(filePath: string): Promise<string> {
     // Check if we've already resolved this path
     if (this.cache.realPath.has(filePath)) {
@@ -252,20 +266,6 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
 
     this.cache.requireResolve.set(cacheKey, null)
     return null
-  }
-
-  protected requireMemoized(pkgPath: string): PackageJson {
-    if (!this.cache.packageJson.has(pkgPath)) {
-      this.cache.packageJson.set(pkgPath, require(pkgPath))
-    }
-    return this.cache.packageJson.get(pkgPath)!
-  }
-
-  protected existsSyncMemoized(filePath: string): boolean {
-    if (!this.cache.exists.has(filePath)) {
-      this.cache.exists.set(filePath, fs.existsSync(filePath))
-    }
-    return this.cache.exists.get(filePath)!
   }
 
   protected cacheKey(pkg: ProdDepType): string {

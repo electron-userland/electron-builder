@@ -20,7 +20,7 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
       const packageName = depTree.name || depTree.from
       if (packageName) {
         const hoistedPath = path.join(this.rootDir, "node_modules", packageName)
-        if (this.existsSyncMemoized(hoistedPath)) {
+        if (await this.existsMemoized(hoistedPath)) {
           return hoistedPath
         }
       }
@@ -74,7 +74,7 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
       // Then check if optional dependency path exists (using actual resolved path)
       if (json?.optionalDependencies?.[packageName]) {
         const actualPath = await this.resolveActualPath(dependency)
-        if (!this.existsSyncMemoized(actualPath)) {
+        if (!(await this.existsMemoized(actualPath))) {
           log.debug(null, `Optional dependency ${packageName}@${dependency.version} path doesn't exist: ${actualPath}`)
           return undefined
         }
