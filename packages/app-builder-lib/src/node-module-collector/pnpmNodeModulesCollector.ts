@@ -29,28 +29,27 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
     return depTree.path
   }
 
-  private async getProductionDependencies  (depTree: PnpmDependency): Promise<{ path: string; prodDeps: Record<string, string>; optionalDependencies: Record<string, string> }> {
-      const packageName = depTree.name || depTree.from
-      if (isEmptyOrSpaces(packageName)) {
-        log.error(depTree, `Cannot determine production dependencies for package with empty name`)
-        throw new Error(`Cannot compute production dependencies for package with empty name: ${packageName}`)
-      }
-
-      const actualPath = await this.resolveActualPath(depTree)
-      // const resolvedPackageDir = await this.resolvePackageDir(packageName, actualPath)
-      const resolvedLocalPath = await this.resolvePath(actualPath)
-      const p = path.normalize(resolvedLocalPath)
-      const pkgJsonPath = path.join(p, "package.json")
-
-      let packageJson: PackageJson
-      try {
-        packageJson = this.requireMemoized(pkgJsonPath)
-      } catch (error: any) {
-        log.warn(null, `Failed to read package.json for ${p}: ${error.message}`)
-        return { path: p, prodDeps: {}, optionalDependencies: {} }
-      }
-      return { path: p, prodDeps: { ...packageJson.dependencies, ...packageJson.optionalDependencies }, optionalDependencies: { ...packageJson.optionalDependencies } }
+  private async getProductionDependencies(depTree: PnpmDependency): Promise<{ path: string; prodDeps: Record<string, string>; optionalDependencies: Record<string, string> }> {
+    const packageName = depTree.name || depTree.from
+    if (isEmptyOrSpaces(packageName)) {
+      log.error(depTree, `Cannot determine production dependencies for package with empty name`)
+      throw new Error(`Cannot compute production dependencies for package with empty name: ${packageName}`)
     }
+
+    const actualPath = await this.resolveActualPath(depTree)
+    const resolvedLocalPath = await this.resolvePath(actualPath)
+    const p = path.normalize(resolvedLocalPath)
+    const pkgJsonPath = path.join(p, "package.json")
+
+    let packageJson: PackageJson
+    try {
+      packageJson = this.requireMemoized(pkgJsonPath)
+    } catch (error: any) {
+      log.warn(null, `Failed to read package.json for ${p}: ${error.message}`)
+      return { path: p, prodDeps: {}, optionalDependencies: {} }
+    }
+    return { path: p, prodDeps: { ...packageJson.dependencies, ...packageJson.optionalDependencies }, optionalDependencies: { ...packageJson.optionalDependencies } }
+  }
 
   protected async extractProductionDependencyGraph(tree: PnpmDependency, dependencyId: string) {
     if (this.productionGraph[dependencyId]) {
