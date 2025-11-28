@@ -109,25 +109,23 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
       for (const [depName, depVersion] of Object.entries(allProdDepNames)) {
         try {
           // Resolve the dependency using Node.js module resolution from this package's directory
-          const depPath = await this.resolvePackageDir(depName, packageDir)
+          const resolvedPackage = await this.resolvePackage(depName, packageDir)
 
-          if (!depPath) {
-            log.warn({ package: pkg.name, dependency: depName, version: depVersion }, "dependency not found, skipping")
-            continue
+          if (!resolvedPackage) {
+            log.warn({ package: pkg.name, dependency: depName, version: depVersion }, "dependency not found")
           }
 
-          const resolvedDepPath = await this.resolvePath(depPath)
-
+          const resolvedDepPath = await this.resolvePath(resolvedPackage!.packageDir)
           // Skip if this dependency resolves to the base directory or any parent we're already processing
           if (resolvedDepPath === resolvedPackageDir || resolvedDepPath === (await this.resolvePath(baseDir))) {
             log.debug({ package: pkg.name, dependency: depName, resolvedPath: resolvedDepPath }, "skipping self-referential dependency")
             continue
           }
 
-          log.debug({ package: pkg.name, dependency: depName, resolvedPath: depPath }, "processing production dependency")
+          log.debug({ package: pkg.name, dependency: depName, resolvedDepPath }, "processing production dependency")
 
           // Recursively build the dependency tree for this dependency
-          prodDeps[depName] = await buildFromPackage(depPath)
+          prodDeps[depName] = await buildFromPackage(resolvedDepPath)
         } catch (error: any) {
           log.warn({ package: pkg.name, dependency: depName, error: error.message }, "failed to process dependency, skipping")
         }

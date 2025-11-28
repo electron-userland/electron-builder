@@ -9,7 +9,6 @@ import { hoist, type HoisterResult, type HoisterTree } from "./hoist"
 import { createModuleCache, type ModuleCache } from "./moduleCache"
 import { getPackageManagerCommand, PM } from "./packageManager"
 import type { Dependency, DependencyGraph, NodeModuleInfo, PackageJson } from "./types"
-import { fileURLToPath, pathToFileURL } from "node:url"
 
 export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDepType, OptionalDepType>, OptionalDepType> {
   private nodeModules: NodeModuleInfo[] = []
@@ -17,17 +16,6 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
   protected productionGraph: DependencyGraph = {}
   protected pkgJsonCache: Map<string, string> = new Map()
   protected memoResolvedModules = new Map<string, Promise<string | null>>()
-
-  private importMetaResolve = new Lazy(async () => {
-    try {
-      // Node >= 16 builtin ESM-aware resolver
-      const packageName = "import-meta-resolve"
-      const imported = await import(packageName)
-      return imported.resolve
-    } catch {
-      return null
-    }
-  })
 
   // Unified cache for all file system and module operations
   protected cache: ModuleCache = createModuleCache()
@@ -210,60 +198,50 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
   }
 
   /**
-   * Resolves a package to its filesystem location using Node.js module resolution.
-   * Returns the directory containing the package, not the package.json path.
+   * Resolve a package directory purely from the filesystem.
+   * Does NOT attempt to load the module or resolve an "exports" entrypoint.
+   * Good for Yarn 4 because a package may not be resolvable as a module,
+   * but still exists on disk.
    */
-  protected async resolvePackageDir(packageName: string, fromDir: string): Promise<string | null> {
+  protected async resolvePackage(packageName: string, fromDir: string): Promise<{ entry: string; packageDir: string } | null> {
     const cacheKey = `${packageName}::${fromDir}`
     if (this.cache.requireResolve.has(cacheKey)) {
       return this.cache.requireResolve.get(cacheKey)!
     }
 
-    const resolveEntry = async () => {
-      // 1) Try Node ESM resolver (handles exports reliably)
-      if (await this.importMetaResolve.value) {
-        try {
-          const url = (await this.importMetaResolve.value)(packageName, pathToFileURL(fromDir).href)
-          return url.startsWith("file://") ? fileURLToPath(url) : null
-        } catch (error: any) {
-          log.debug({ error: error.message }, "import-meta-resolve failed")
-          // ignore
-        }
-      }
-
-      // 2) Fallback: require.resolve (CJS, old packages)
-      try {
-        return require.resolve(packageName, { paths: [fromDir, this.rootDir] })
-      } catch (error: any) {
-        log.debug({ error: error.message }, "require.resolve failed")
-        // ignore
-      }
-
-      return null
+    // 1. NESTED under fromDir/node_modules/<name>
+    let candidate = path.join(fromDir, "node_modules", packageName)
+    let pkgJson = path.join(candidate, "package.json")
+    if (await this.existsMemoized(pkgJson)) {
+      this.cache.requireResolve.set(cacheKey, { entry: pkgJson, packageDir: candidate })
+      return { entry: pkgJson, packageDir: candidate }
     }
 
-    const entry = await resolveEntry()
-    if (!entry) {
-      this.cache.requireResolve.set(cacheKey, null)
-      return null
+    // 2. HOISTED under rootDir/node_modules/<name>
+    candidate = path.join(this.rootDir, "node_modules", packageName)
+    pkgJson = path.join(candidate, "package.json")
+    if (await this.existsMemoized(pkgJson)) {
+      this.cache.requireResolve.set(cacheKey, { entry: pkgJson, packageDir: candidate })
+      return { entry: pkgJson, packageDir: candidate }
     }
 
-    // 3) Walk upward until you find a package.json
-    let dir = path.dirname(entry)
+    // 3. FALLBACK: try parent directories BFS (classic Node-style search)
+    let current = fromDir
     while (true) {
-      const pkgFile = path.join(dir, "package.json")
-      if (await this.existsMemoized(pkgFile)) {
-        this.cache.requireResolve.set(cacheKey, dir)
-        return dir
+      const nm = path.join(current, "node_modules", packageName)
+      const pkg = path.join(nm, "package.json")
+
+      if (await this.existsMemoized(pkg)) {
+        this.cache.requireResolve.set(cacheKey, { entry: pkg, packageDir: nm })
+        return { entry: pkg, packageDir: nm }
       }
 
-      const parent = path.dirname(dir)
-      if (parent === dir) {
-        break // root reached
-      }
-      dir = parent
+      const parent = path.dirname(current)
+      if (parent === current) break
+      current = parent
     }
 
+    // 4. LAST RESORT: DO NOT throw — just return null
     this.cache.requireResolve.set(cacheKey, null)
     return null
   }
