@@ -143,11 +143,9 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
       const [, pkgName, version] = match
       const id = `${pkgName}@${version}`
 
-      // Skip shadow nodes - they reference packages hoisted elsewhere
       const isShadow = node.shadow && node.color === "dim"
       if (isShadow) {
         log.debug({ pkgName, version }, "registering shadow node (hoisted elsewhere), will resolve")
-        // continue
       }
 
       if (seen.has(id)) {
