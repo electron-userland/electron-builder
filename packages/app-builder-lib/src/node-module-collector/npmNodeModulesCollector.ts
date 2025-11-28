@@ -122,7 +122,7 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
             continue
           }
 
-          log.debug({ package: pkg.name, dependency: depName, resolvedDepPath }, "processing production dependency")
+          log.debug({ package: pkg.name, dependency: depName, ...resolvedPackage, resolvedDepPath }, "processing production dependency")
 
           // Recursively build the dependency tree for this dependency
           prodDeps[depName] = await buildFromPackage(resolvedDepPath)

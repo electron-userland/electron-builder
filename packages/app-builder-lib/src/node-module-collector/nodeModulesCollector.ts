@@ -237,7 +237,9 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
       }
 
       const parent = path.dirname(current)
-      if (parent === current) break
+      if (parent === current) {
+        break
+      }
       current = parent
     }
 
