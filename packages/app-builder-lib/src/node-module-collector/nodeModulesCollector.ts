@@ -1,4 +1,4 @@
-import { exists, log, retry, TmpDir } from "builder-util"
+import { exists, isEmptyOrSpaces, log, retry, TmpDir } from "builder-util"
 import * as childProcess from "child_process"
 import { CancellationToken } from "builder-util-runtime"
 import * as fs from "fs-extra"
@@ -36,8 +36,8 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     const { manager } = this.installOptions
     const command = getPackageManagerCommand(manager)
 
-    const config = (await this.asyncExec(command, ["config", "list"])).stdout
-    if (config == null) {
+    const config = (await this.asyncExec(command, ["config", "list"])).stdout?.trim()
+    if (isEmptyOrSpaces(config)) {
       log.debug({ manager }, "unable to determine if node_modules are hoisted: no config output. falling back to hoisted mode")
       return false
     }
