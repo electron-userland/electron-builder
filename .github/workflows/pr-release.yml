@@ -29,7 +29,7 @@ jobs:
         uses: ./.github/actions/pnpm
 
       - name: Generate GitHub App token
-        uses: electron/github-app-auth-action@384fd19694fe7b6dcc9a684746c6976ad78228ae
+        uses: electron/github-app-auth-action@207a5fc4b67ad1e003417be0f3dcffd4bacf9f3c
         id: generate-token
         with:
           export-git-user: true
