@@ -114,16 +114,14 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
       throw new Error('Failed to extract Yarn tree: no "type":"tree" line found in console output')
     }
 
-    // const normalizedTree = await this.normalizeTree(parsedTree, new Set<string>(), undefined)
-    const rootPkgJson = await this.appPkgJson.value
-
-    const normalizedTree = await this.normalizeTreeBFS(parsedTree, rootPkgJson.name, this.rootDir)
+    const normalizedTree = await this.normalizeTree(parsedTree, new Set<string>(), undefined)
 
     const dependencies: Record<string, YarnDependency> = {}
     for (const [name, dep] of Object.entries(normalizedTree)) {
       dependencies[name] = dep
     }
 
+    const rootPkgJson = await this.appPkgJson.value
     return Promise.resolve({
       name: rootPkgJson.name,
       version: rootPkgJson.version,
@@ -132,150 +130,83 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
       workspaces: rootPkgJson?.workspaces,
     })
   }
-
-  /**
-   * BFS-based normalizeTree specifically for Yarn Classic v1.
-   * Avoids recursion depth issues and resolves real on-disk paths robustly.
-   */
-  private async normalizeTreeBFS(rootTrees: YarnListTree[], appName?: string, parentRoot: string = this.rootDir): Promise<Record<string, YarnDependency>> {
+  private async normalizeTree(tree: YarnListTree[], seen = new Set<string>(), appName?: string, parentPath: string = this.rootDir): Promise<Record<string, YarnDependency>> {
     const normalized: Record<string, YarnDependency> = {}
-    const seen = new Set<string>()
 
-    // Work queue for BFS: each item carries both the tree node and its parent dir
-    const queue: Array<{ node: YarnListTree; parentPath: string }> = []
-
-    // Seed with root trees
-    for (const node of rootTrees) {
-      queue.push({ node, parentPath: parentRoot })
-    }
-
-    while (queue.length > 0) {
-      const { node, parentPath } = queue.shift()!
-
-      // Parse "pkg@version"
+    for (const node of tree) {
       const match = node.name.match(/^(.*)@([^@]+)$/)
       if (!match) {
-        log.debug({ name: node.name }, "invalid node name format in BFS normalize")
+        log.debug({ name: node.name }, "invalid node name format")
         continue
       }
 
-      const [, pkgName, declaredVersion] = match
-      const id = `${pkgName}@${declaredVersion}`
+      const [, pkgName, version] = match
+      const id = `${pkgName}@${version}`
 
-      // Yarn classic marks shadow nodes but they may still physically exist nested.
+      // Skip shadow nodes - they reference packages hoisted elsewhere
       const isShadow = node.shadow && node.color === "dim"
       if (isShadow) {
-        log.debug({ pkgName, declaredVersion }, "shadow node – Yarn claims hoisted")
+        log.debug({ pkgName, version }, "registering shadow node (hoisted elsewhere), will resolve")
+        // continue
       }
 
-      // Skip if we already processed this versioned package
       if (seen.has(id)) {
         continue
       }
+
       seen.add(id)
 
-      let pkgPath: string | null
+      // For non-shadow nodes, try to resolve the actual path
+      let pkgPath: string | null = null
 
-      // ------------------------------------------------------
-      // 1. Try nested under parentPath
-      // ------------------------------------------------------
-      const nested = path.join(parentPath, "node_modules", pkgName)
-      const nestedExists = await this.existsMemoized(nested)
-
-      if (isShadow && nestedExists) {
-        log.warn({ pkgName, declaredVersion, nested, parentPath }, "Yarn claims hoisted but nested copy exists on disk (shadow contradiction)")
-      }
-
-      if (nestedExists) {
-        pkgPath = nested
+      // First try hoisted location (most common for Yarn Classic)
+      const hoistedPath = path.join(this.rootDir, "node_modules", pkgName)
+      if (await this.existsMemoized(hoistedPath)) {
+        pkgPath = hoistedPath
       } else {
-        // ------------------------------------------------------
-        // 2. Try hoisted under rootDir
-        // ------------------------------------------------------
-        const hoisted = path.join(this.rootDir, "node_modules", pkgName)
-        const hoistedExists = await this.existsMemoized(hoisted)
-
-        if (hoistedExists) {
-          pkgPath = hoisted
+        // If not hoisted, try nested under parent
+        const nestedPath = path.join(parentPath, "node_modules", pkgName)
+        if (await this.existsMemoized(nestedPath)) {
+          pkgPath = nestedPath
         } else {
-          // ------------------------------------------------------
-          // 3. Full Node-style resolution fallback
-          // ------------------------------------------------------
-          try {
-            pkgPath = (await this.resolvePackageDir(pkgName, parentPath))!
-            log.debug({ pkgName, declaredVersion, resolved: pkgPath }, "resolvePackageDir() fallback succeeded in BFS")
-          } catch {
-            log.warn({ pkgName, declaredVersion, parentPath }, "could not locate package in nested/hoisted/fallback resolution (BFS)")
-            continue
+          // Walk up the directory tree
+          let current = parentPath
+          while (current !== this.rootDir && current !== path.dirname(current)) {
+            const candidatePath = path.join(current, "node_modules", pkgName)
+            if (await this.existsMemoized(candidatePath)) {
+              pkgPath = candidatePath
+              break
+            }
+            current = path.dirname(current)
           }
         }
       }
 
-      // ------------------------------------------------------
-      // Retrieve real version from package.json
-      // ------------------------------------------------------
-      let realVersion = declaredVersion
-      let pkgJson: PackageJson | undefined
-
-      try {
-        pkgJson = await this.readJsonMemoized(path.join(pkgPath, "package.json"))
-        if (pkgJson?.version) {
-          realVersion = pkgJson.version
-          if (realVersion !== declaredVersion) {
-            log.debug({ pkgName, declared: declaredVersion, real: realVersion }, "corrected real version from package.json during BFS")
-          }
-        }
-      } catch {
-        // If the hoisted path existed but package.json was missing, try nested fallback
-        if (pkgPath.includes("node_modules") && !nestedExists) {
-          log.warn({ pkgName, pkgPath }, "failed to read package.json — hoisted path may be ghost; retrying nested/fallback")
-
-          if (nestedExists) {
-            pkgPath = nested
-          } else {
-            try {
-              pkgPath = await this.resolvePackageDir(pkgName, parentPath)
-            } catch {
-              log.error({ pkgName }, "package.json missing and no fallback resolution worked (BFS)")
-              continue
-            }
-          }
-
-          try {
-            pkgJson = await this.readJsonMemoized(pkgPath!)
-            if (pkgJson?.version) {
-              realVersion = pkgJson.version
-            }
-          } catch {
-            log.error({ pkgName, pkgPath }, "package.json still unreadable after fallback — skipping")
-            continue
-          }
-        } else {
-          log.warn({ pkgName, pkgPath }, "failed to read package.json for real version in BFS")
-        }
+      if (!pkgPath) {
+        log.warn({ pkgName, version, parentPath }, "could not find package in node_modules hierarchy")
+        continue
       }
 
-      // ------------------------------------------------------
-      // Build the YarnDependency node
-      // ------------------------------------------------------
-      const dep: YarnDependency = {
+      const normalizedDep: YarnDependency = {
         name: pkgName,
-        version: realVersion,
-        path: pkgPath!,
+        version,
+        path: pkgPath,
         dependencies: {},
         optionalDependencies: {},
       }
 
-      normalized[pkgName] = dep
+      log.debug({ name: pkgName, version, path: pkgPath }, "+ normalize")
 
-      // ------------------------------------------------------
-      // Enqueue children for BFS
-      // ------------------------------------------------------
-      if (pkgPath && node.children && node.children.length > 0) {
-        for (const child of node.children) {
-          queue.push({ node: child, parentPath: pkgPath })
+      // Process children (which may include shadow nodes that we'll skip)
+      if (node.children && node.children.length > 0) {
+        const childDeps = await this.normalizeTree(node.children, seen, appName, pkgPath)
+
+        for (const [childDepName, childDep] of Object.entries(childDeps)) {
+          normalizedDep.dependencies![childDepName] = childDep
         }
       }
+
+      normalized[pkgName] = normalizedDep
     }
 
     return normalized
