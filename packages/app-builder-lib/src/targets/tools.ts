@@ -1,5 +1,6 @@
 import * as path from "path"
-import { getBinFromUrl } from "../binDownload"
+import { getBin, getBinFromUrl } from "../binDownload"
+import { isEmptyOrSpaces } from "builder-util"
 
 export function getLinuxToolsPath() {
   return getBinFromUrl("linux-tools-mac-10.12.3", "linux-tools-mac-10.12.3.7z", "SQ8fqIRVXuQVWnVgaMTDWyf2TLAJjJYw3tRSqQJECmgF6qdM7Kogfa6KD49RbGzzMYIFca9Uw3MdsxzOPRWcYw==")
@@ -41,4 +42,12 @@ export async function getFpmPath() {
   const filename = getKey()
   const fpmPath = await getBinFromUrl("fpm@2.1.4", filename, fpmChecksumMap[filename])
   return path.join(fpmPath, exec)
+}
+
+export function getWinCodeSignPath() {
+  const overridePath = process.env.ELECTRON_BUILDER_WIN_CODESIGN_PATH
+  if (!isEmptyOrSpaces(overridePath)) {
+    return overridePath
+  }
+  return getBin("winCodeSign")
 }

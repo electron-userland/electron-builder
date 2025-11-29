@@ -4,7 +4,6 @@ import { rename } from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as os from "os"
 import * as path from "path"
-import { getBin } from "../binDownload"
 import { Target } from "../core"
 import { WindowsConfiguration } from "../options/winOptions"
 import AppXTarget from "../targets/AppxTarget"
@@ -17,10 +16,7 @@ import { WinPackager } from "../winPackager"
 import { importCertificate } from "./codesign"
 import { SignManager } from "./signManager"
 import { WindowsSignOptions } from "./windowsCodeSign"
-
-export function getSignVendorPath() {
-  return getBin("winCodeSign")
-}
+import { getWinCodeSignPath } from "../targets/tools"
 
 export type CustomWindowsSign = (configuration: CustomWindowsSignTaskConfiguration, packager?: WinPackager) => Promise<any>
 
@@ -356,15 +352,6 @@ export class WindowsSignToolManager implements SignManager {
     return path.join(path.dirname(inputPath), `${path.basename(inputPath, extension)}-signed-${hash}${extension}`)
   }
 
-  getWinSignTool(vendorPath: string): string {
-    // use modern signtool on Windows Server 2012 R2 to be able to sign AppX
-    if (isOldWin6()) {
-      return path.join(vendorPath, "windows-6", "signtool.exe")
-    } else {
-      return path.join(vendorPath, "windows-10", process.arch, "signtool.exe")
-    }
-  }
-
   async getToolPath(isWin = process.platform === "win32"): Promise<ToolInfo> {
     if (isUseSystemSigncode()) {
       return { path: "osslsigncode" }
@@ -375,10 +362,11 @@ export class WindowsSignToolManager implements SignManager {
       return { path: result }
     }
 
-    const vendorPath = await getSignVendorPath()
+    const vendorPath = await getWinCodeSignPath()
     if (isWin) {
       // use modern signtool on Windows Server 2012 R2 to be able to sign AppX
-      return { path: this.getWinSignTool(vendorPath) }
+      const signToolExePath = isOldWin6() ? path.join(vendorPath, "windows-6", "signtool.exe") : path.join(vendorPath, "windows-10", process.arch, "signtool.exe")
+      return { path: signToolExePath }
     } else if (process.platform === "darwin") {
       const toolDirPath = path.join(vendorPath, process.platform, "10.12")
       return {

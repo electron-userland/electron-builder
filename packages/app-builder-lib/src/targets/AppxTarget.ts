@@ -3,7 +3,8 @@ import { Nullish } from "builder-util-runtime"
 import { emptyDir, readdir, readFile, writeFile } from "fs-extra"
 import * as path from "path"
 import { AppXOptions } from "../"
-import { getSignVendorPath, isOldWin6 } from "../codeSign/windowsSignToolManager"
+import { isOldWin6 } from "../codeSign/windowsSignToolManager"
+import { getWinCodeSignPath } from "./tools"
 import { Target } from "../core"
 import { getTemplatePath } from "../util/pathManager"
 import { VmManager } from "../vm/vm"
@@ -73,7 +74,7 @@ export default class AppXTarget extends Target {
       arch,
     })
 
-    const vendorPath = await getSignVendorPath()
+    const vendorPath = await getWinCodeSignPath()
     const vm = await packager.vm.value
 
     const stageDir = await createStageDir(this, packager, arch)
