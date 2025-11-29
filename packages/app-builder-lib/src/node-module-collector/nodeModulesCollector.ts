@@ -11,16 +11,14 @@ import { getPackageManagerCommand, PM } from "./packageManager"
 import type { Dependency, DependencyGraph, NodeModuleInfo, PackageJson } from "./types"
 
 export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDepType, OptionalDepType>, OptionalDepType> {
-  private nodeModules: NodeModuleInfo[] = []
-  protected allDependencies: Map<string, ProdDepType> = new Map()
-  protected productionGraph: DependencyGraph = {}
-  protected pkgJsonCache: Map<string, string> = new Map()
-  protected memoResolvedModules = new Map<string, Promise<string | null>>()
+  private readonly nodeModules: NodeModuleInfo[] = []
+  protected readonly allDependencies: Map<string, ProdDepType> = new Map()
+  protected readonly productionGraph: DependencyGraph = {}
 
   // Unified cache for all file system and module operations
-  protected cache: ModuleCache = createModuleCache()
+  private readonly cache: ModuleCache = createModuleCache()
 
-  protected isHoisted = new Lazy<boolean>(async () => {
+  protected readonly isHoisted = new Lazy<boolean>(async () => {
     const { manager } = this.installOptions
     const command = getPackageManagerCommand(manager)
 
@@ -57,7 +55,6 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     }
 
     await this.collectAllDependencies(tree, packageName)
-
     const realTree: ProdDepType = await this.getTreeFromWorkspaces(tree, packageName)
     await this.extractProductionDependencyGraph(realTree, packageName)
 
@@ -68,10 +65,8 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     const hoisterResult: HoisterResult = hoist(this.transformToHoisterTree(this.productionGraph, packageName), {
       check: log.isDebugEnabled,
     })
-
     await this._getNodeModules(hoisterResult.dependencies, this.nodeModules)
     log.debug({ packageName, depCount: this.nodeModules.length }, "node modules collection complete")
-
     return this.nodeModules
   }
 
@@ -278,9 +273,10 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
 
     if (tree.dependencies?.[packageName]) {
       const { name, path, dependencies } = tree.dependencies[packageName]
-      log.debug({ name, path, dependencies: JSON.stringify(dependencies) }, "pruning root app/self reference from workspace tree")
+      log.debug({ name, path, dependencies: JSON.stringify(dependencies) }, "pruning root app/self reference from workspace tree, merging dependencies uptree")
       for (const [name, pkg] of Object.entries(dependencies ?? {})) {
         tree.dependencies[name] = pkg
+        this.allDependencies.set(this.packageVersionString(pkg), pkg)
       }
       delete tree.dependencies[packageName]
     }

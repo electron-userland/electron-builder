@@ -41,21 +41,6 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
     return ["list", "--production", "--json", "--depth=Infinity", "--no-progress"]
   }
 
-  protected async getTreeFromWorkspaces(tree: YarnDependency): Promise<YarnDependency> {
-    if (!tree.workspaces || !tree.dependencies) {
-      return tree
-    }
-
-    const appName = this.packageVersionString(tree)
-
-    if (tree.dependencies?.[appName]) {
-      const { name, path } = tree.dependencies[appName]
-      log.debug({ name, path }, "pruning root app/self package from workspace tree")
-      delete tree.dependencies[appName]
-    }
-    return Promise.resolve(tree)
-  }
-
   protected async extractProductionDependencyGraph(tree: YarnDependency, dependencyId: string): Promise<void> {
     if (this.productionGraph[dependencyId]) {
       return
@@ -152,8 +137,6 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
         continue
       }
 
-      seen.add(id)
-
       // For non-shadow nodes, try to resolve the actual path
       let pkgPath: string | null = null
 
@@ -184,6 +167,7 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
         log.warn({ pkgName, version, parentPath }, "could not find package in node_modules hierarchy")
         continue
       }
+      seen.add(id)
 
       const normalizedDep: YarnDependency = {
         name: pkgName,
