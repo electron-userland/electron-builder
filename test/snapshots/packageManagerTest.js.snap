@@ -10,7 +10,7 @@ exports[`bun workspace --linker=hoisted - multiple conflicting versions 2`] = `
 {
   "files": {
     "index.js": {
-      "offset": "17900",
+      "offset": "31271",
       "size": 32,
     },
     "node_modules": {
@@ -143,10 +143,34 @@ exports[`bun workspace --linker=hoisted - multiple conflicting versions 2`] = `
             },
           },
         },
+        "process": {
+          "files": {
+            "LICENSE": {
+              "offset": "17900",
+              "size": 1098,
+            },
+            "browser.js": {
+              "offset": "18998",
+              "size": 5418,
+            },
+            "index.js": {
+              "offset": "24416",
+              "size": 96,
+            },
+            "package.json": {
+              "offset": "24512",
+              "size": 449,
+            },
+            "test.js": {
+              "offset": "24961",
+              "size": 6310,
+            },
+          },
+        },
       },
     },
     "package.json": {
-      "offset": "17932",
+      "offset": "31303",
       "size": 325,
     },
   },
@@ -163,7 +187,7 @@ exports[`bun workspace --linker=hoisted 2`] = `
 {
   "files": {
     "index.js": {
-      "offset": "14962",
+      "offset": "28333",
       "size": 32,
     },
     "node_modules": {
@@ -268,10 +292,34 @@ exports[`bun workspace --linker=hoisted 2`] = `
             },
           },
         },
+        "process": {
+          "files": {
+            "LICENSE": {
+              "offset": "14962",
+              "size": 1098,
+            },
+            "browser.js": {
+              "offset": "16060",
+              "size": 5418,
+            },
+            "index.js": {
+              "offset": "21478",
+              "size": 96,
+            },
+            "package.json": {
+              "offset": "21574",
+              "size": 449,
+            },
+            "test.js": {
+              "offset": "22023",
+              "size": 6310,
+            },
+          },
+        },
       },
     },
     "package.json": {
-      "offset": "14994",
+      "offset": "28365",
       "size": 325,
     },
   },
@@ -288,7 +336,7 @@ exports[`bun workspace --linker=isolated - multiple conflicting versions 2`] = `
 {
   "files": {
     "index.js": {
-      "offset": "17900",
+      "offset": "31271",
       "size": 32,
     },
     "node_modules": {
@@ -421,10 +469,34 @@ exports[`bun workspace --linker=isolated - multiple conflicting versions 2`] = `
             },
           },
         },
+        "process": {
+          "files": {
+            "LICENSE": {
+              "offset": "17900",
+              "size": 1098,
+            },
+            "browser.js": {
+              "offset": "18998",
+              "size": 5418,
+            },
+            "index.js": {
+              "offset": "24416",
+              "size": 96,
+            },
+            "package.json": {
+              "offset": "24512",
+              "size": 449,
+            },
+            "test.js": {
+              "offset": "24961",
+              "size": 6310,
+            },
+          },
+        },
       },
     },
     "package.json": {
-      "offset": "17932",
+      "offset": "31303",
       "size": 325,
     },
   },
@@ -441,7 +513,7 @@ exports[`bun workspace --linker=isolated 2`] = `
 {
   "files": {
     "index.js": {
-      "offset": "14962",
+      "offset": "28333",
       "size": 32,
     },
     "node_modules": {
@@ -546,10 +618,34 @@ exports[`bun workspace --linker=isolated 2`] = `
             },
           },
         },
+        "process": {
+          "files": {
+            "LICENSE": {
+              "offset": "14962",
+              "size": 1098,
+            },
+            "browser.js": {
+              "offset": "16060",
+              "size": 5418,
+            },
+            "index.js": {
+              "offset": "21478",
+              "size": 96,
+            },
+            "package.json": {
+              "offset": "21574",
+              "size": 449,
+            },
+            "test.js": {
+              "offset": "22023",
+              "size": 6310,
+            },
+          },
+        },
       },
     },
     "package.json": {
-      "offset": "14994",
+      "offset": "28365",
       "size": 325,
     },
   },
@@ -776,11 +872,11 @@ exports[`yarn 2`] = `
 {
   "files": {
     "index.html": {
-      "offset": "24709",
+      "offset": "29309",
       "size": 378,
     },
     "index.js": {
-      "offset": "25087",
+      "offset": "29687",
       "size": 619,
     },
     "node_modules": {
@@ -790,6 +886,26 @@ exports[`yarn 2`] = `
             "LICENSE": {
               "offset": "0",
               "size": 1139,
+            },
+            "node_modules": {
+              "files": {
+                "ms": {
+                  "files": {
+                    "index.js": {
+                      "offset": "20109",
+                      "size": 3024,
+                    },
+                    "license.md": {
+                      "offset": "23133",
+                      "size": 1079,
+                    },
+                    "package.json": {
+                      "offset": "24212",
+                      "size": 497,
+                    },
+                  },
+                },
+              },
             },
             "package.json": {
               "offset": "1139",
@@ -820,15 +936,15 @@ exports[`yarn 2`] = `
         "ms": {
           "files": {
             "index.js": {
-              "offset": "20109",
+              "offset": "24709",
               "size": 3024,
             },
             "license.md": {
-              "offset": "23133",
+              "offset": "27733",
               "size": 1079,
             },
             "package.json": {
-              "offset": "24212",
+              "offset": "28812",
               "size": 497,
             },
           },
@@ -836,13 +952,13 @@ exports[`yarn 2`] = `
       },
     },
     "package.json": {
-      "offset": "25706",
+      "offset": "30306",
       "size": 339,
     },
     "path": {
       "files": {
         "app.asar": {
-          "offset": "26045",
+          "offset": "30645",
           "size": 714,
         },
       },
@@ -1100,11 +1216,11 @@ exports[`yarn multi-package workspace 2`] = `
 {
   "files": {
     "index.html": {
-      "offset": "28891",
+      "offset": "24581",
       "size": 841,
     },
     "index.js": {
-      "offset": "29732",
+      "offset": "25422",
       "size": 2501,
     },
     "node_modules": {
@@ -1114,26 +1230,6 @@ exports[`yarn multi-package workspace 2`] = `
             "LICENSE": {
               "offset": "0",
               "size": 1139,
-            },
-            "node_modules": {
-              "files": {
-                "ms": {
-                  "files": {
-                    "index.js": {
-                      "offset": "20109",
-                      "size": 2764,
-                    },
-                    "license.md": {
-                      "offset": "22873",
-                      "size": 1077,
-                    },
-                    "package.json": {
-                      "offset": "23950",
-                      "size": 469,
-                    },
-                  },
-                },
-              },
             },
             "package.json": {
               "offset": "1139",
@@ -1164,11 +1260,11 @@ exports[`yarn multi-package workspace 2`] = `
         "foo": {
           "files": {
             "index.js": {
-              "offset": "24419",
+              "offset": "20109",
               "size": 35,
             },
             "package.json": {
-              "offset": "24454",
+              "offset": "20144",
               "size": 127,
             },
           },
@@ -1176,15 +1272,15 @@ exports[`yarn multi-package workspace 2`] = `
         "ms": {
           "files": {
             "index.js": {
-              "offset": "24581",
+              "offset": "20271",
               "size": 2764,
             },
             "license.md": {
-              "offset": "27345",
+              "offset": "23035",
               "size": 1077,
             },
             "package.json": {
-              "offset": "28422",
+              "offset": "24112",
               "size": 469,
             },
           },
@@ -1192,7 +1288,7 @@ exports[`yarn multi-package workspace 2`] = `
       },
     },
     "package.json": {
-      "offset": "32233",
+      "offset": "27923",
       "size": 353,
     },
   },

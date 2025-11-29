@@ -48,6 +48,9 @@ export class AsarFilesystem {
     let node = this.header
     for (const dir of p.split(path.sep)) {
       if (dir !== ".") {
+        if (node == null) {
+          throw new Error(`Cannot find node for path: ${p} (node is null at ${dir})`)
+        }
         let child = node.files![dir]
         if (child == null) {
           if (!isCreate) {
@@ -70,6 +73,9 @@ export class AsarFilesystem {
 
     const name = path.basename(p)
     const dirNode = this.searchNodeFromDirectory(path.dirname(p), true)!
+    if (dirNode == null) {
+      throw new Error(`Cannot find node for path: ${p} (node is null at ${path.dirname(p)})`)
+    }
     if (dirNode.files == null) {
       dirNode.files = this.newNode()
     }
@@ -115,6 +121,9 @@ export class AsarFilesystem {
 
   getNode(p: string): Node | null {
     const node = this.searchNodeFromDirectory(path.dirname(p), false)!
+    if (node == null) {
+      throw new Error(`Cannot find node for path: ${p} (node is null at ${path.dirname(p)})`)
+    }
     return node.files![path.basename(p)]
   }
 
