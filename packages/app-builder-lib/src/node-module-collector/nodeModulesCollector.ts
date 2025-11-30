@@ -372,6 +372,8 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
       args = ["/c", tempBatFile, ...args]
     }
 
+    log.debug({ command, args, cwd, tempOutputFile }, "spawning node module collector process")
+
     await new Promise<void>((resolve, reject) => {
       const outStream = createWriteStream(tempOutputFile)
 

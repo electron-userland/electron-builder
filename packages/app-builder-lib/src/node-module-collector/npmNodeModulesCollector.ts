@@ -84,7 +84,7 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
       }
 
       // Read package.json using memoized require for consistency with Node.js module system
-      const pkg: PackageJson = this.requireMemoized(pkgPath)
+      const pkg: PackageJson = await this.readJsonMemoized(pkgPath)
       const resolvedPackageDir = await this.resolvePath(packageDir)
 
       // Use resolved path as the unique identifier to prevent circular dependencies
