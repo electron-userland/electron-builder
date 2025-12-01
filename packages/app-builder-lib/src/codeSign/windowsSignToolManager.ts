@@ -260,40 +260,91 @@ export class WindowsSignToolManager implements SignManager {
 
   // on windows be aware of http://stackoverflow.com/a/32640183/1910191
   computeSignToolArgs(options: WindowsSignTaskConfiguration, isWin: boolean, vm: VmManager = new VmManager()): Array<string> {
+    return isWin ? this.computeWindowsSignArgs(options, vm) : this.computeOsslsigncodeArgs(options, vm)
+  }
+
+  private computeWindowsSignArgs(options: WindowsSignTaskConfiguration, vm: VmManager): Array<string> {
     const inputFile = vm.toVmFile(options.path)
-    const outputPath = isWin ? inputFile : this.getOutputPath(inputFile, options.hash)
-    if (!isWin) {
-      options.resultOutputPath = outputPath
-    }
+    const args = ["sign"]
 
-    const args = isWin ? ["sign"] : ["-in", inputFile, "-out", outputPath]
-
+    // Timestamping
     if (process.env.ELECTRON_BUILDER_OFFLINE !== "true") {
-      const timestampingServiceUrl = options.options.signtoolOptions?.timeStampServer || "http://timestamp.digicert.com"
-      if (isWin) {
-        args.push(
-          options.isNest || options.hash === "sha256" ? "/tr" : "/t",
-          options.isNest || options.hash === "sha256" ? options.options.signtoolOptions?.rfc3161TimeStampServer || "http://timestamp.digicert.com" : timestampingServiceUrl
-        )
-      } else {
-        args.push("-t", timestampingServiceUrl)
-      }
+      const isRfc3161 = options.isNest || options.hash === "sha256"
+      args.push(isRfc3161 ? "/tr" : "/t")
+
+      const timestampUrl = isRfc3161
+        ? options.options.signtoolOptions?.rfc3161TimeStampServer || "http://timestamp.digicert.com"
+        : options.options.signtoolOptions?.timeStampServer || "http://timestamp.digicert.com"
+      args.push(timestampUrl)
     }
 
+    // Certificate
+    this.addCertificateArgs(args, options, vm, true)
+
+    // Hash algorithm
+    args.push("/fd", options.hash.toLowerCase())
+    if (process.env.ELECTRON_BUILDER_OFFLINE !== "true") {
+      args.push("/td", "sha256")
+    }
+
+    // Optional parameters
+    this.addCommonSigningArgs(args, options, vm, true)
+
+    // Windows-specific
+    args.push("/debug")
+    args.push(inputFile) // Must be last
+
+    return args
+  }
+
+  private computeOsslsigncodeArgs(options: WindowsSignTaskConfiguration, vm: VmManager): Array<string> {
+    const inputFile = vm.toVmFile(options.path)
+    const outputPath = this.getOutputPath(inputFile, options.hash)
+    options.resultOutputPath = outputPath
+
+    const args = ["sign", "-in", inputFile, "-out", outputPath]
+
+    // Timestamping
+    if (process.env.ELECTRON_BUILDER_OFFLINE !== "true") {
+      const timestampUrl = options.options.signtoolOptions?.timeStampServer || "http://timestamp.digicert.com"
+      args.push("-t", timestampUrl)
+    }
+
+    // Certificate
+    this.addCertificateArgs(args, options, vm, false)
+
+    // Hash algorithm
+    args.push("-h", options.hash.toLowerCase())
+
+    // Optional parameters
+    this.addCommonSigningArgs(args, options, vm, false)
+
+    // Proxy support
+    const httpsProxy = process.env.HTTPS_PROXY
+    if (httpsProxy?.length) {
+      args.push("-p", httpsProxy)
+    }
+
+    return args
+  }
+
+  private addCertificateArgs(args: Array<string>, options: WindowsSignTaskConfiguration, vm: VmManager, isWin: boolean): void {
     const certificateFile = (options.cscInfo as FileCodeSigningInfo).file
+
     if (certificateFile == null) {
-      const cscInfo = options.cscInfo as CertificateFromStoreInfo
-      const subjectName = cscInfo.thumbprint
+      // Certificate from store (Windows only)
       if (!isWin) {
-        throw new Error(`${subjectName == null ? "certificateSha1" : "certificateSubjectName"} supported only on Windows`)
+        throw new Error("certificateSha1/certificateSubjectName supported only on Windows")
       }
 
+      const cscInfo = options.cscInfo as CertificateFromStoreInfo
       args.push("/sha1", cscInfo.thumbprint)
       args.push("/s", cscInfo.store)
       if (cscInfo.isLocalMachineStore) {
         args.push("/sm")
       }
     } else {
+      // Certificate file
       const certExtension = path.extname(certificateFile)
       if (certExtension === ".p12" || certExtension === ".pfx") {
         args.push(isWin ? "/f" : "-pkcs12", vm.toVmFile(certificateFile))
@@ -301,26 +352,22 @@ export class WindowsSignToolManager implements SignManager {
         throw new Error(`Please specify pkcs12 (.p12/.pfx) file, ${certificateFile} is not correct`)
       }
     }
+  }
 
-    args.push(isWin ? "/fd" : "-h", options.hash.toUpperCase())
-    if (isWin && process.env.ELECTRON_BUILDER_OFFLINE !== "true") {
-      args.push("/td", "sha256")
-    }
-
+  private addCommonSigningArgs(args: Array<string>, options: WindowsSignTaskConfiguration, vm: VmManager, isWin: boolean): void {
     if (options.name) {
-      args.push(isWin ? "/d" : "-n", options.name)
+      args.push(isWin ? "/d" : "-n", `"${options.name}"`)
     }
 
     if (options.site) {
       args.push(isWin ? "/du" : "-i", options.site)
     }
 
-    // msi does not support dual-signing
     if (options.isNest) {
       args.push(isWin ? "/as" : "-nest")
     }
 
-    const password = options.cscInfo == null ? null : (options.cscInfo as FileCodeSigningInfo).password
+    const password = (options.cscInfo as FileCodeSigningInfo)?.password
     if (password) {
       args.push(isWin ? "/p" : "-pass", password)
     }
@@ -329,20 +376,6 @@ export class WindowsSignToolManager implements SignManager {
     if (additionalCert) {
       args.push(isWin ? "/ac" : "-ac", vm.toVmFile(additionalCert))
     }
-
-    const httpsProxyFromEnv = process.env.HTTPS_PROXY
-    if (!isWin && httpsProxyFromEnv != null && httpsProxyFromEnv.length) {
-      args.push("-p", httpsProxyFromEnv)
-    }
-
-    if (isWin) {
-      // https://github.com/electron-userland/electron-builder/issues/2875#issuecomment-387233610
-      args.push("/debug")
-      // must be last argument
-      args.push(inputFile)
-    }
-
-    return args
   }
 
   getOutputPath(inputPath: string, hash: string) {
