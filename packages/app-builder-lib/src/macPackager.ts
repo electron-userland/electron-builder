@@ -563,7 +563,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
       }
     }
 
-    const minimumSystemVersion = this.platformSpecificBuildOptions.minimumSystemVersion
+    const minimumSystemVersion = this.platformSpecificBuildOptions.LSMinimumSystemVersion
     if (minimumSystemVersion != null) {
       appPlist.LSMinimumSystemVersion = minimumSystemVersion
     }
