@@ -36,19 +36,20 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
       throw new Error(`Cannot compute production dependencies for package with empty name: ${packageName}`)
     }
 
-    const actualPath = await this.resolveActualPath(depTree)
-    const resolvedLocalPath = await this.resolvePath(actualPath)
-    const p = path.normalize(resolvedLocalPath)
-    const pkgJsonPath = path.join(p, "package.json")
+    const pkgJsonPath = await this.resolvePackage(packageName, depTree.path)
 
+    if (pkgJsonPath == null) {
+      log.warn({ packageName, path: depTree.path, version: depTree.version }, `Cannot find package.json for dependency`)
+      return { path: depTree.path, prodDeps: {}, optionalDependencies: {} }
+    }
     let packageJson: PackageJson
     try {
-      packageJson = this.requireMemoized(pkgJsonPath)
+      packageJson = await this.readJsonMemoized(pkgJsonPath.entry)
     } catch (error: any) {
-      log.warn(null, `Failed to read package.json for ${p}: ${error.message}`)
-      return { path: p, prodDeps: {}, optionalDependencies: {} }
+      log.warn(pkgJsonPath, `Failed to read package.json: ${error.message}`)
+      return { path: pkgJsonPath.packageDir, prodDeps: {}, optionalDependencies: {} }
     }
-    return { path: p, prodDeps: { ...packageJson.dependencies, ...packageJson.optionalDependencies }, optionalDependencies: { ...packageJson.optionalDependencies } }
+    return { path: pkgJsonPath.packageDir, prodDeps: { ...packageJson.dependencies, ...packageJson.optionalDependencies }, optionalDependencies: { ...packageJson.optionalDependencies } }
   }
 
   protected async extractProductionDependencyGraph(tree: PnpmDependency, dependencyId: string) {
