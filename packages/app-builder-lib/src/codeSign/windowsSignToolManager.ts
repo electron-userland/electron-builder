@@ -283,7 +283,7 @@ export class WindowsSignToolManager implements SignManager {
 
     // Hash algorithm
     args.push("/fd", options.hash.toLowerCase())
-    if (process.env.ELECTRON_BUILDER_OFFLINE !== "true") {
+    if (process.env.ELECTRON_BUILDER_OFFLINE !== "true" && !args.includes("/t")) {
       args.push("/td", "sha256")
     }
 
