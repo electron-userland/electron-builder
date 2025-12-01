@@ -4,7 +4,7 @@ import { emptyDir, readdir, readFile, writeFile } from "fs-extra"
 import * as path from "path"
 import { AppXOptions } from "../"
 import { isOldWin6 } from "../codeSign/windowsSignToolManager"
-import { getWinCodeSignPath } from "./tools"
+import { getWindowsKitsBundle } from "./tools"
 import { Target } from "../core"
 import { getTemplatePath } from "../util/pathManager"
 import { VmManager } from "../vm/vm"
@@ -74,7 +74,7 @@ export default class AppXTarget extends Target {
       arch,
     })
 
-    const vendorPath = await getWinCodeSignPath()
+    const vendorPath = await getWindowsKitsBundle()
     const vm = await packager.vm.value
 
     const stageDir = await createStageDir(this, packager, arch)
@@ -108,11 +108,11 @@ export default class AppXTarget extends Target {
     await packager.info.emitAppxManifestCreated(manifestFile)
     mappingList.push(assetInfo.mappings)
     mappingList.push([`"${vm.toVmFile(manifestFile)}" "AppxManifest.xml"`])
-    const signToolArch = arch === Arch.arm64 ? "x64" : Arch[arch]
+    const signToolArch = arch === Arch.ia32 ? "x86" : Arch[arch]
 
     if (isScaledAssetsProvided(userAssets)) {
       const outFile = vm.toVmFile(stageDir.getTempFile("resources.pri"))
-      const makePriPath = vm.toVmFile(path.join(vendorPath, "windows-10", signToolArch, "makepri.exe"))
+      const makePriPath = vm.toVmFile(path.join(vendorPath, signToolArch, "makepri.exe"))
 
       const assetRoot = stageDir.getTempFile("appx/assets")
       await emptyDir(assetRoot)
@@ -149,7 +149,7 @@ export default class AppXTarget extends Target {
       makeAppXArgs.push(...this.options.makeappxArgs)
     }
     this.buildQueueManager.add(async () => {
-      await vm.exec(vm.toVmFile(path.join(vendorPath, "windows-10", signToolArch, "makeappx.exe")), makeAppXArgs)
+      await vm.exec(vm.toVmFile(path.join(vendorPath, signToolArch, "makeappx.exe")), makeAppXArgs)
       await packager.signIf(artifactPath)
 
       await stageDir.cleanup()

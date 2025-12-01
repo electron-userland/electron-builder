@@ -8,7 +8,7 @@ import { Target } from "../core"
 import { WindowsConfiguration } from "../options/winOptions"
 import AppXTarget from "../targets/AppxTarget"
 import { executeAppBuilderAsJson } from "../util/appBuilder"
-import { computeToolEnv, ToolInfo } from "../util/bundledTool"
+import { ToolInfo } from "../util/bundledTool"
 import { isUseSystemSigncode } from "../util/flags"
 import { resolveFunction } from "../util/resolve"
 import { VmManager } from "../vm/vm"
@@ -16,7 +16,7 @@ import { WinPackager } from "../winPackager"
 import { importCertificate } from "./codesign"
 import { SignManager } from "./signManager"
 import { WindowsSignOptions } from "./windowsCodeSign"
-import { getWinCodeSignPath } from "../targets/tools"
+import { getOsslSigncodeBundle, getWindowsKitsBundle } from "../targets/tools"
 
 export type CustomWindowsSign = (configuration: CustomWindowsSignTaskConfiguration, packager?: WinPackager) => Promise<any>
 
@@ -362,19 +362,13 @@ export class WindowsSignToolManager implements SignManager {
       return { path: result }
     }
 
-    const vendorPath = await getWinCodeSignPath()
     if (isWin) {
-      // use modern signtool on Windows Server 2012 R2 to be able to sign AppX
-      const signToolExePath = isOldWin6() ? path.join(vendorPath, "windows-6", "signtool.exe") : path.join(vendorPath, "windows-10", process.arch, "signtool.exe")
+      const vendorPath = await getWindowsKitsBundle()
+      const signToolExePath = path.join(vendorPath, process.arch, "signtool.exe")
       return { path: signToolExePath }
-    } else if (process.platform === "darwin") {
-      const toolDirPath = path.join(vendorPath, process.platform, "10.12")
-      return {
-        path: path.join(toolDirPath, "osslsigncode"),
-        env: computeToolEnv([path.join(toolDirPath, "lib")]),
-      }
     } else {
-      return { path: path.join(vendorPath, process.platform, "osslsigncode") }
+      const vendorPath = await getOsslSigncodeBundle()
+      return { path: path.join(vendorPath, "osslsigncode") }
     }
   }
 
@@ -432,9 +426,6 @@ export class WindowsSignToolManager implements SignManager {
     } else {
       vm = new VmManager()
       args = configuration.computeSignToolArgs(isWin)
-      if (toolInfo.env != null) {
-        env = toolInfo.env
-      }
     }
 
     await retry(() => vm.exec(tool, args, { timeout, env }), {

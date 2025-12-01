@@ -9,7 +9,6 @@ import { SignManager } from "./codeSign/signManager"
 import { signWindows, WindowsSignOptions } from "./codeSign/windowsCodeSign"
 import { WindowsSignAzureManager } from "./codeSign/windowsSignAzureManager"
 import { FileCodeSigningInfo, WindowsSignToolManager } from "./codeSign/windowsSignToolManager"
-import { getWinCodeSignPath } from "./targets/tools"
 import { AfterPackContext } from "./configuration"
 import { DIR_TARGET, Platform, Target } from "./core"
 import { RequestedExecutionLevel, WindowsConfiguration } from "./options/winOptions"
@@ -27,6 +26,7 @@ import { isBuildCacheEnabled } from "./util/flags"
 import { time } from "./util/timer"
 import { getWindowsVm, VmManager } from "./vm/vm"
 import { execWine } from "./wine"
+import { getRceditBundle } from "./targets/tools"
 
 export class WinPackager extends PlatformPackager<WindowsConfiguration> {
   _iconPath = new Lazy(() => this.getOrConvertIcon("ico"))
@@ -209,8 +209,8 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     if (process.platform === "win32" || process.platform === "darwin") {
       await executeAppBuilder(["rcedit", "--args", JSON.stringify(args)], undefined /* child-process */, {}, 3 /* retry three times */)
     } else if (this.info.framework.name === "electron") {
-      const vendorPath = await getWinCodeSignPath()
-      await execWine(path.join(vendorPath, "rcedit-ia32.exe"), path.join(vendorPath, "rcedit-x64.exe"), args)
+      const vendorPath = await getRceditBundle()
+      await execWine(path.join(vendorPath, "rcedit-x86.exe"), path.join(vendorPath, "rcedit-x64.exe"), args)
     }
 
     await this.signIf(file)
