@@ -266,7 +266,7 @@ export class WindowsSignToolManager implements SignManager {
       options.resultOutputPath = outputPath
     }
 
-    const args = isWin ? ["sign", "/fd", "SHA256"] : ["-in", inputFile, "-out", outputPath]
+    const args = isWin ? ["sign"] : ["-in", inputFile, "-out", outputPath]
 
     if (process.env.ELECTRON_BUILDER_OFFLINE !== "true") {
       const timestampingServiceUrl = options.options.signtoolOptions?.timeStampServer || "http://timestamp.digicert.com"
@@ -303,7 +303,7 @@ export class WindowsSignToolManager implements SignManager {
     }
 
     if (!isWin || options.hash !== "sha1") {
-      args.push(isWin ? "/fd" : "-h", options.hash)
+      args.push(isWin ? "/fd" : "-h", options.hash.toUpperCase())
       if (isWin && process.env.ELECTRON_BUILDER_OFFLINE !== "true") {
         args.push("/td", "sha256")
       }
