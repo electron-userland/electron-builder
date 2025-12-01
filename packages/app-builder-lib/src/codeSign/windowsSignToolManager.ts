@@ -266,7 +266,7 @@ export class WindowsSignToolManager implements SignManager {
       options.resultOutputPath = outputPath
     }
 
-    const args = isWin ? ["sign"] : ["-in", inputFile, "-out", outputPath]
+    const args = isWin ? ["sign", "/fd", "SHA256"] : ["-in", inputFile, "-out", outputPath]
 
     if (process.env.ELECTRON_BUILDER_OFFLINE !== "true") {
       const timestampingServiceUrl = options.options.signtoolOptions?.timeStampServer || "http://timestamp.digicert.com"
@@ -414,7 +414,6 @@ export class WindowsSignToolManager implements SignManager {
     const timeout = parseInt(process.env.SIGNTOOL_TIMEOUT as any, 10) || 10 * 60 * 1000
     // decide runtime argument by cases
     let args: Array<string>
-    let env = process.env
     let vm: VmManager
     const useVmIfNotOnWin = configuration.path.endsWith(".appx") || !("file" in configuration.cscInfo!) /* certificateSubjectName and other such options */
     const isWin = process.platform === "win32" || useVmIfNotOnWin
@@ -428,7 +427,7 @@ export class WindowsSignToolManager implements SignManager {
       args = configuration.computeSignToolArgs(isWin)
     }
 
-    await retry(() => vm.exec(tool, args, { timeout, env }), {
+    await retry(() => vm.exec(tool, args, { timeout, env: process.env }), {
       retries: 2,
       interval: 15000,
       backoff: 10000,

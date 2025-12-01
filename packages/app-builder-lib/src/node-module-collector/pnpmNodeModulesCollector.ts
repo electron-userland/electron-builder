@@ -49,7 +49,11 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
       log.warn(pkgJsonPath, `Failed to read package.json: ${error.message}`)
       return { path: pkgJsonPath.packageDir, prodDeps: {}, optionalDependencies: {} }
     }
-    return { path: pkgJsonPath.packageDir, prodDeps: { ...packageJson.dependencies, ...packageJson.optionalDependencies }, optionalDependencies: { ...packageJson.optionalDependencies } }
+    return {
+      path: pkgJsonPath.packageDir,
+      prodDeps: { ...packageJson.dependencies, ...packageJson.optionalDependencies },
+      optionalDependencies: { ...packageJson.optionalDependencies },
+    }
   }
 
   protected async extractProductionDependencyGraph(tree: PnpmDependency, dependencyId: string) {
