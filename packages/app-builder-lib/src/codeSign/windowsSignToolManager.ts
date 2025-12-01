@@ -302,11 +302,9 @@ export class WindowsSignToolManager implements SignManager {
       }
     }
 
-    if (!isWin || options.hash !== "sha1") {
-      args.push(isWin ? "/fd" : "-h", options.hash.toUpperCase())
-      if (isWin && process.env.ELECTRON_BUILDER_OFFLINE !== "true") {
-        args.push("/td", "sha256")
-      }
+    args.push(isWin ? "/fd" : "-h", options.hash.toUpperCase())
+    if (isWin && process.env.ELECTRON_BUILDER_OFFLINE !== "true") {
+      args.push("/td", "sha256")
     }
 
     if (options.name) {
