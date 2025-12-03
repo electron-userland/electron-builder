@@ -75,7 +75,7 @@ async function findWorkspaceRoot(pm: PM, cwd: string): Promise<string | undefine
       break
 
     case PM.YARN_BERRY:
-      command = { command: "yarn", args: ["config", "get", "projectRoot"] }
+      command = { command: "yarn", args: ["config", "get", "projectCwd"] }
       break
 
     case PM.YARN: {
