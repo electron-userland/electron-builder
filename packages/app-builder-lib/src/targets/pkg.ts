@@ -153,7 +153,7 @@ export class PkgTarget extends Target {
     }
 
     // Write requirements plist to temp file
-    const requirementsPlistFile = path.join(this.outDir, "productbuild-requirements.plist")
+    const requirementsPlistFile = await this.packager.info.tempDirManager.getTempFile({ suffix: ".plist", prefix: "productbuild-requirements" })
     await savePlistFile(requirementsPlistFile, requirements)
 
     const args = ["--synthesize", "--product", requirementsPlistFile, "--component", appPath]
@@ -166,9 +166,6 @@ export class PkgTarget extends Target {
     await exec("productbuild", args, {
       cwd: this.outDir,
     })
-
-    // Clean up temp plist file
-    await unlink(requirementsPlistFile)
 
     let distInfo = await readFile(distInfoFile, "utf-8")
 
