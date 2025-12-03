@@ -75,7 +75,7 @@ async function findWorkspaceRoot(pm: PM, cwd: string): Promise<string | undefine
       break
 
     case PM.YARN_BERRY:
-      command = { command: "yarn", args: ["config", "get", "workspaceRoot"] }
+      command = { command: "yarn", args: ["config", "get", "projectRoot"] }
       break
 
     case PM.YARN: {
@@ -98,22 +98,22 @@ async function findWorkspaceRoot(pm: PM, cwd: string): Promise<string | undefine
       const out = it?.trim()
       if (pm === PM.YARN) {
         JSON.parse(out) // if JSON valid, workspace detected
-        return findNearestWithWorkspacesField(cwd)
+        return findNearestPackageJsonWithWorkspacesField(cwd)
       } else if (pm === PM.BUN) {
         const json = JSON.parse(out)
         if (Array.isArray(json) && json.length > 0) {
-          return findNearestWithWorkspacesField(cwd)
+          return findNearestPackageJsonWithWorkspacesField(cwd)
         }
       }
       return !out?.length || out === "undefined" ? undefined : out
     })
-    .catch(() => findNearestWithWorkspacesField(cwd))
+    .catch(() => findNearestPackageJsonWithWorkspacesField(cwd))
 
   log.debug({ root: output || cwd }, output ? "workspace root detected" : "workspace root not detected, using project root")
   return output
 }
 
-async function findNearestWithWorkspacesField(dir: string): Promise<string | undefined> {
+async function findNearestPackageJsonWithWorkspacesField(dir: string): Promise<string | undefined> {
   let current = dir
   while (true) {
     const pkgPath = path.join(current, "package.json")
