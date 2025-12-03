@@ -55,7 +55,11 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
         await this.extractProductionDependencyGraph(dependency, childDependencyId)
         return childDependencyId
       })
-    const collectedDependencies = await Promise.all(productionDeps)
+
+    const collectedDependencies: string[] = []
+    for (const dep of productionDeps) {
+      collectedDependencies.push(await dep)
+    }
     this.productionGraph[dependencyId] = { dependencies: collectedDependencies }
   }
 

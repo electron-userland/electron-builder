@@ -89,8 +89,14 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
       return childDependencyId
     })
 
-    const dependencies = (await Promise.all(depPromises)).filter((id): id is string => id !== undefined)
-    this.productionGraph[dependencyId] = { dependencies }
+    const collectedDependencies: string[] = []
+    for (const dep of depPromises) {
+      const result = await dep
+      if (result !== undefined) {
+        collectedDependencies.push(result)
+      }
+    }
+    this.productionGraph[dependencyId] = { dependencies: collectedDependencies }
   }
 
   protected async collectAllDependencies(tree: PnpmDependency) {

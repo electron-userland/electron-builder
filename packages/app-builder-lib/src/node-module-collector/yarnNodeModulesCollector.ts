@@ -57,7 +57,11 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
       return childDependencyId
     })
 
-    this.productionGraph[dependencyId] = { dependencies: await Promise.all(productionDeps) }
+    const dependencies: string[] = []
+    for (const dep of productionDeps) {
+      dependencies.push(await dep)
+    }
+    this.productionGraph[dependencyId] = { dependencies }
   }
 
   protected getDependencyType(pkgName: string, parentPkgJson: PackageJson): "prod" | "dev" | "optional" {
