@@ -113,9 +113,10 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
 
           if (!resolvedPackage) {
             log.warn({ package: pkg.name, dependency: depName, version: depVersion }, "dependency not found")
+            continue
           }
 
-          const resolvedDepPath = await this.resolvePath(resolvedPackage!.packageDir)
+          const resolvedDepPath = await this.resolvePath(resolvedPackage.packageDir)
           // Skip if this dependency resolves to the base directory or any parent we're already processing
           if (resolvedDepPath === resolvedPackageDir || resolvedDepPath === (await this.resolvePath(baseDir))) {
             log.debug({ package: pkg.name, dependency: depName, resolvedPath: resolvedDepPath }, "skipping self-referential dependency")
