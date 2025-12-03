@@ -1,5 +1,22 @@
 # app-builder-lib
 
+## 26.3.3
+
+### Patch Changes
+
+- Fix: double check yarn hoisted mode for each node module - yarn classic doesn't perma-hoist _[`#9401`](https://github.com/electron-userland/electron-builder/pull/9401) [`241c53a`](https://github.com/electron-userland/electron-builder/commit/241c53a598d9eb566de06059b4aa2f2d97d8712c) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+</small>
+
+- `dmg-builder@26.3.3`
+- `electron-builder-squirrel-windows@26.3.3`
+
+</details>
+
 ## 26.3.2
 
 ### Patch Changes
