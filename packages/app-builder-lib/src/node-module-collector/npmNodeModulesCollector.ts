@@ -26,9 +26,7 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
 
   protected async collectAllDependencies(tree: NpmDependency) {
     for (const [, value] of Object.entries(tree.dependencies || {})) {
-      const { _dependencies = {}, dependencies = {} } = value
-      const isDuplicateDep = Object.keys(_dependencies).length > 0 && Object.keys(dependencies).length === 0
-      if (isDuplicateDep) {
+      if (this.isDuplicatedNpmDependency(value)) {
         continue
       }
       this.allDependencies.set(this.packageVersionString(value), value)
@@ -41,14 +39,13 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
       return
     }
 
-    const { _dependencies: prodDependencies = {}, dependencies = {} } = tree
-    const isDuplicateDep = Object.keys(prodDependencies).length > 0 && Object.keys(dependencies).length === 0
-    const resolvedDeps = isDuplicateDep ? (this.allDependencies.get(dependencyId)?.dependencies ?? {}) : dependencies
+    const isDuplicateDep = this.isDuplicatedNpmDependency(tree)
+    const resolvedDeps = isDuplicateDep ? this.allDependencies.get(dependencyId)?.dependencies : tree.dependencies
     // Initialize with empty dependencies array first to mark this dependency as "in progress"
     // After initialization, if there are libraries with the same name+version later, they will not be searched recursively again
     // This will prevents infinite loops when circular dependencies are encountered.
     this.productionGraph[dependencyId] = { dependencies: [] }
-    const productionDeps = Object.entries(resolvedDeps)
+    const productionDeps = Object.entries(resolvedDeps || {})
       .filter(([packageName]) => this.isProdDependency(packageName, tree))
       .map(async ([, dependency]) => {
         const childDependencyId = this.packageVersionString(dependency)
@@ -61,6 +58,14 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
       collectedDependencies.push(await dep)
     }
     this.productionGraph[dependencyId] = { dependencies: collectedDependencies }
+  }
+
+  // Check: is package already included as a prod dependency due to another package?
+  // We need to check this to prevent infinite loops in case of duplicated dependencies
+  private isDuplicatedNpmDependency(tree: NpmDependency): boolean {
+    const { _dependencies = {}, dependencies = {} } = tree
+    const isDuplicateDep = Object.keys(_dependencies).length > 0 && Object.keys(dependencies).length === 0
+    return isDuplicateDep
   }
 
   protected isProdDependency(packageName: string, tree: NpmDependency) {
