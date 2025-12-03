@@ -78,7 +78,7 @@ importers:
         specifier: ^4.1.0
         version: 4.1.0
       prettier:
-        specifier: ^3.6.0
+        specifier: 3.6.2
         version: 3.6.2
       ts-node:
         specifier: ^10.9.2
