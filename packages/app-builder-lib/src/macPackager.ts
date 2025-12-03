@@ -36,6 +36,7 @@ import { isMacOsHighSierra } from "./util/macosVersion"
 import { getTemplatePath } from "./util/pathManager"
 import { resolveFunction } from "./util/resolve"
 import { expandMacro as doExpandMacro } from "./util/macroExpander"
+        import { makeUniversalApp } from "@electron/universal"
 
 export type CustomMacSignOptions = SignOptions
 export type CustomMacSign = (configuration: CustomMacSignOptions, packager: MacPackager) => Promise<void>
@@ -184,15 +185,14 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
           await fs.copyFile(sourceCatalogPath, targetCatalogPath)
         }
 
-        const { makeUniversalApp } = require("@electron/universal")
         await makeUniversalApp({
           x64AppPath: path.join(x64AppOutDir, appFile),
           arm64AppPath: path.join(arm64AppOutPath, appFile),
           outAppPath: path.join(appOutDir, appFile),
           force: true,
-          mergeASARs: platformSpecificBuildOptions.mergeASARs ?? true,
-          singleArchFiles: platformSpecificBuildOptions.singleArchFiles,
-          x64ArchFiles: platformSpecificBuildOptions.x64ArchFiles,
+          mergeASARs: platformSpecificBuildOptions.mergeASARs ?? true, // must be ?? to allow false
+          singleArchFiles: platformSpecificBuildOptions.singleArchFiles || undefined,
+          x64ArchFiles: platformSpecificBuildOptions.x64ArchFiles || undefined,
         })
         await fs.rm(x64AppOutDir, { recursive: true, force: true })
         await fs.rm(arm64AppOutPath, { recursive: true, force: true })
