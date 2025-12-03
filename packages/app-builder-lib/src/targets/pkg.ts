@@ -152,7 +152,6 @@ export class PkgTarget extends Target {
       requirements.os = [minimumSystemVersion]
     }
 
-    // Write requirements plist to temp file
     const requirementsPlistFile = await this.packager.info.tempDirManager.getTempFile({ suffix: ".plist", prefix: "productbuild-requirements" })
     await savePlistFile(requirementsPlistFile, requirements)
 
