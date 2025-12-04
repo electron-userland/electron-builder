@@ -1,6 +1,6 @@
 import { createPackageFromStreams, AsarStreamType, AsarDirectory } from "@electron/asar"
 import { log } from "builder-util"
-import { Filter } from "builder-util/out/fs"
+import { exists, Filter } from "builder-util/out/fs"
 import * as fs from "fs-extra"
 import { readlink } from "fs-extra"
 import * as path from "path"
@@ -9,6 +9,37 @@ import { PlatformPackager } from "../platformPackager"
 import { ResolvedFileSet, getDestinationPath } from "../util/appFileCopier"
 import { detectUnpackedDirs } from "./unpackDetector"
 import { Readable } from "stream"
+import * as os from "os"
+
+const resolvePath = async (file: string | undefined): Promise<string | undefined> => (file && (await exists(file)) ? fs.realpath(file).catch(() => path.resolve(file)) : undefined)
+const resolvePaths = async (filepaths: (string | undefined)[]) => {
+  return Promise.all(filepaths.map(resolvePath)).then(paths => paths.filter((it): it is string => it != null))
+}
+
+const DENYLIST = resolvePaths([
+  "/usr",
+  "/lib",
+  "/bin",
+  "/sbin",
+  "/etc",
+
+  "/tmp",
+  "/var", // block whole /var by default. If $HOME is under /var, it's explicitly in ALLOWLIST - https://github.com/electron-userland/electron-builder/issues/9025#issuecomment-3575380041
+
+  // macOS system directories
+  "/System",
+  "/Library",
+  "/private",
+
+  // Windows system directories
+  process.env.SystemRoot,
+  process.env.WINDIR,
+])
+
+const ALLOWLIST = resolvePaths([
+  os.tmpdir(), // always allow temp dir
+  os.homedir(), // always allow home dir
+])
 
 /** @internal */
 export class AsarPackager {
@@ -61,6 +92,7 @@ export class AsarPackager {
     }
 
     const results: AsarStreamType[] = []
+    const resultsPaths = new Set<string>()
     for (const fileSet of fileSets) {
       // Don't use Promise.all, we need to retain order of execution/iteration through the already-ordered fileset
       for (const [index, file] of fileSet.files.entries()) {
@@ -78,7 +110,7 @@ export class AsarPackager {
           return isChild || isFileUnpacked
         }
 
-        this.processParentDirectories(isUnpacked, destination, results)
+        this.processParentDirectories(isUnpacked, destination, results, resultsPaths)
 
         const result = await this.processFileOrSymlink({
           file,
@@ -90,13 +122,14 @@ export class AsarPackager {
         })
         if (result != null) {
           results.push(result)
+          resultsPaths.add(result.path)
         }
       }
     }
     return results
   }
 
-  private processParentDirectories(isUnpacked: (path: string) => boolean, destination: string, results: AsarStreamType[]) {
+  private processParentDirectories(isUnpacked: (path: string) => boolean, destination: string, results: AsarStreamType[], resultsPaths: Set<string>) {
     // process parent directories
     let superDir = path.dirname(path.normalize(destination))
     while (superDir !== ".") {
@@ -106,8 +139,9 @@ export class AsarPackager {
         unpacked: isUnpacked(superDir),
       }
       // add to results if not already present
-      if (!results.some(r => r.path === dir.path)) {
+      if (!resultsPaths.has(dir.path)) {
         results.push(dir)
+        resultsPaths.add(dir.path)
       }
 
       superDir = path.dirname(superDir)
@@ -122,7 +156,7 @@ export class AsarPackager {
     transformedData: string | Buffer | undefined
     isUnpacked: (path: string) => boolean
   }): Promise<AsarStreamType> {
-    const { isUnpacked, transformedData, file, destination, stat, fileSet } = options
+    const { isUnpacked, transformedData, file, destination, stat } = options
     const unpacked = isUnpacked(destination)
 
     if (!stat.isFile() && !stat.isSymbolicLink()) {
@@ -143,13 +177,8 @@ export class AsarPackager {
       return { path: destination, streamGenerator, unpacked, type: "file", stat: { mode: stat.mode, size } }
     }
 
-    const realPathFile = await fs.realpath(file)
-    const realPathRelative = path.relative(fileSet.src, realPathFile)
-    const isOutsidePackage = realPathRelative.startsWith("..")
-    if (isOutsidePackage) {
-      log.error({ source: log.filePath(file), realPathFile: log.filePath(realPathFile) }, `unable to copy, file is symlinked outside the package`)
-      throw new Error(`Cannot copy file (${path.basename(file)}) symlinked to file (${path.basename(realPathFile)}) outside the package as that violates asar security integrity`)
-    }
+    // verify that the file is not a direct link or symlinked to access/copy a system file
+    await this.protectSystemAndUnsafePaths(file, await this.packager.info.getWorkspaceRoot())
 
     const config = {
       path: destination,
@@ -158,8 +187,8 @@ export class AsarPackager {
       stat,
     }
 
-    // not a symlink, stream directly
-    if (file === realPathFile) {
+    // file, stream directly
+    if (!stat.isSymbolicLink()) {
       return {
         ...config,
         type: "file",
@@ -228,6 +257,52 @@ export class AsarPackager {
       metadata,
       files: sortedFileEntries.map(([, file]) => file),
       transformedFiles,
+    }
+  }
+
+  private async checkAgainstRoots(target: string, allowRoots: string[]): Promise<boolean> {
+    const resolved = await resolvePath(target)
+
+    for (const root of allowRoots) {
+      const resolvedRoot = root
+      if (resolved === resolvedRoot || resolved?.startsWith(resolvedRoot + path.sep)) {
+        return true
+      }
+    }
+    return false
+  }
+
+  private async protectSystemAndUnsafePaths(file: string, workspaceRoot: string): Promise<void> {
+    const resolved = await resolvePath(file)
+    const logFields = { source: file, realPath: resolved }
+
+    const isUnsafe = async () => {
+      const workspace = await resolvePath(workspaceRoot)
+
+      if (workspace && resolved?.startsWith(workspace)) {
+        // if in workspace, always safe
+        return false
+      }
+
+      const allowed = await this.checkAgainstRoots(file, await ALLOWLIST)
+      if (allowed) {
+        return false // allowlist is priority
+      }
+
+      const denied = await this.checkAgainstRoots(file, await DENYLIST)
+      if (denied) {
+        log.error(logFields, `denied access to system or unsafe path`)
+        return true
+      }
+      // default
+      log.debug(logFields, `path is outside of explicit safe paths, defaulting to safe`)
+      return false
+    }
+
+    const unsafe = await isUnsafe()
+
+    if (unsafe) {
+      throw new Error(`Cannot copy file [${file}] symlinked to file [${resolved}] outside the package to a system or unsafe path`)
     }
   }
 }

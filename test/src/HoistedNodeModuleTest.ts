@@ -1,8 +1,11 @@
-import { assertPack, linuxDirTarget, verifyAsarFileTree, modifyPackageJson } from "./helpers/packTester"
-import { Platform, Arch, DIR_TARGET } from "electron-builder"
-import { outputFile, copySync, rmSync, readJsonSync, writeJsonSync, mkdirSync } from "fs-extra"
-import * as path from "path"
+import { PM } from "app-builder-lib/out/node-module-collector"
 import { spawn } from "builder-util/out/util"
+import { Arch, DIR_TARGET, Platform } from "electron-builder"
+import { copySync, mkdirSync, outputFile, readJsonSync, rmSync, symlink, writeJsonSync } from "fs-extra"
+import * as path from "path"
+import { appTwoThrows, assertPack, linuxDirTarget, modifyPackageJson, verifyAsarFileTree } from "./helpers/packTester"
+import { ELECTRON_VERSION } from "./helpers/testConfig"
+import { execSync } from "child_process"
 
 test("yarn workspace", ({ expect }) =>
   assertPack(
@@ -13,6 +16,7 @@ test("yarn workspace", ({ expect }) =>
       projectDir: "packages/test-app",
     },
     {
+      packageManager: PM.YARN,
       packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
     }
   ))
@@ -26,6 +30,7 @@ test("conflict versions", ({ expect }) =>
       projectDir: "packages/test-app",
     },
     {
+      packageManager: PM.YARN,
       packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
     }
   ))
@@ -39,6 +44,7 @@ test("yarn several workspaces", ({ expect }) =>
       projectDir: "packages/test-app",
     },
     {
+      packageManager: PM.YARN,
       packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
     }
   ))
@@ -55,11 +61,12 @@ test("yarn several workspaces and asarUnpack", ({ expect }) =>
       },
     },
     {
+      packageManager: PM.YARN,
       packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
     }
   ))
 
-test("yarn two package.json w/ native module", ({ expect }) =>
+test.ifLinux("yarn two package.json w/ native mac-only module (optional dep)", ({ expect }) =>
   assertPack(
     expect,
     "test-app-two-native-modules",
@@ -67,9 +74,11 @@ test("yarn two package.json w/ native module", ({ expect }) =>
       targets: linuxDirTarget,
     },
     {
+      packageManager: PM.YARN,
       packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
     }
-  ))
+  )
+)
 
 test("yarn two package.json", ({ expect }) =>
   assertPack(
@@ -79,7 +88,7 @@ test("yarn two package.json", ({ expect }) =>
       targets: linuxDirTarget,
     },
     {
-      isInstallDepsBefore: false,
+      packageManager: PM.YARN,
       projectDirCreated: async projectDir => {
         await modifyPackageJson(projectDir, data => {
           data.dependencies = {
@@ -98,16 +107,9 @@ test("yarn two package.json", ({ expect }) =>
           }
         })
 
-        // install dependencies in project dir
-        await spawn("npm", ["install"], {
-          cwd: projectDir,
-        })
-
         mkdirSync(path.join(projectDir, "app"))
-        rmSync(path.join(projectDir, "app", "node_modules"), { recursive: true, force: true })
         copySync(path.join(projectDir, "index.html"), path.join(projectDir, "app", "index.html"))
         copySync(path.join(projectDir, "index.js"), path.join(projectDir, "app", "index.js"))
-        copySync(path.join(projectDir, "node_modules"), path.join(projectDir, "app", "node_modules"))
 
         // delete package.json devDependencies
         const packageJson = readJsonSync(path.join(projectDir, "package.json"))
@@ -115,6 +117,9 @@ test("yarn two package.json", ({ expect }) =>
         delete packageJson.build
         delete packageJson.scripts
         writeJsonSync(path.join(projectDir, "app", "package.json"), packageJson)
+
+        execSync("yarn install", { cwd: projectDir })
+        execSync("yarn install", { cwd: path.join(projectDir, "app") })
       },
       packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
     }
@@ -128,7 +133,7 @@ test("yarn two package.json without node_modules", ({ expect }) =>
       targets: linuxDirTarget,
     },
     {
-      isInstallDepsBefore: false,
+      packageManager: PM.YARN,
       projectDirCreated: async projectDir => {
         await modifyPackageJson(projectDir, data => {
           data.dependencies = {
@@ -148,7 +153,7 @@ test("yarn two package.json without node_modules", ({ expect }) =>
         })
 
         // install dependencies in project dir
-        await spawn("npm", ["install"], {
+        await spawn("yarn", ["install"], {
           cwd: projectDir,
         })
 
@@ -167,373 +172,443 @@ test("yarn two package.json without node_modules", ({ expect }) =>
       packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
     }
   ))
-describe("isInstallDepsBefore=true", { sequential: true }, () => {
-  test("yarn workspace for scope name", ({ expect }) =>
-    assertPack(
-      expect,
-      "test-app-yarn-several-workspace",
-      {
-        targets: linuxDirTarget,
-        projectDir: "packages/test-app",
-      },
-      {
-        isInstallDepsBefore: true,
-        projectDirCreated: async projectDir => {
-          const subAppDir = path.join(projectDir, "packages", "test-app")
-          return modifyPackageJson(subAppDir, data => {
-            data.name = "@scope/xxx-app"
-            data.dependencies = {
-              "is-odd": "3.0.1",
-            }
-          })
-        },
-        packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
-      }
-    ))
 
-  // https://github.com/electron-userland/electron-builder/issues/8493
-  test("pnpm es5-ext without hoisted config", ({ expect }) =>
-    assertPack(
-      expect,
-      "test-app-hoisted",
-      {
-        targets: linuxDirTarget,
+test.ifWindows("should throw when attempting to package a system file", async ({ expect }) => {
+  const invalidPath = "C:\\Windows\\System32\\drivers\\etc\\hosts"
+  return appTwoThrows(
+    expect,
+    {
+      targets: Platform.WINDOWS.createTarget("dir", Arch.x64),
+      projectDir: "app",
+      config: {
+        electronVersion: ELECTRON_VERSION,
+        files: ["index.js", "package.json", invalidPath],
       },
-      {
-        isInstallDepsBefore: true,
-        projectDirCreated: projectDir => {
-          return Promise.all([
-            modifyPackageJson(projectDir, data => {
-              data.dependencies = {
-                "es5-ext": "0.10.53",
-              }
-            }),
-            outputFile(path.join(projectDir, "pnpm-lock.yaml"), ""),
-          ])
-        },
-        packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
-      }
-    ))
-
-  test("pnpm optional dependencies", ({ expect }) =>
-    assertPack(
-      expect,
-      "test-app-hoisted",
-      {
-        targets: linuxDirTarget,
-      },
-      {
-        isInstallDepsBefore: true,
-        projectDirCreated: projectDir => {
-          return Promise.all([
-            modifyPackageJson(projectDir, data => {
-              data.dependencies = {
-                "electron-clear-data": "^1.0.5",
-              }
-              data.optionalDependencies = {
-                debug: "3.1.0",
-              }
-            }),
-            outputFile(path.join(projectDir, "pnpm-lock.yaml"), ""),
-          ])
-        },
-        packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
-      }
-    ))
-
-  test.ifLinux("pnpm optional dependency not installable on linux", ({ expect }) =>
-    assertPack(
-      expect,
-      "test-app-hoisted",
-      {
-        targets: linuxDirTarget,
-      },
-      {
-        isInstallDepsBefore: true,
-        projectDirCreated: projectDir => {
-          return Promise.all([
-            modifyPackageJson(projectDir, data => {
-              data.dependencies = {
-                "electron-clear-data": "^1.0.5",
-              }
-              data.optionalDependencies = {
-                "node-mac-permissions": "2.3.0",
-              }
-            }),
-            outputFile(path.join(projectDir, "pnpm-lock.yaml"), ""),
-          ])
-        },
-        packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
-      }
-    )
+    },
+    {
+      packageManager: PM.YARN,
+    },
+    error => {
+      expect(error).toBeInstanceOf(Error)
+      expect(error.message).toContain("outside the package to a system or unsafe path")
+    }
   )
+})
 
-  test("yarn electron-clear-data", ({ expect }) =>
-    assertPack(
-      expect,
-      "test-app-hoisted",
-      {
-        targets: Platform.WINDOWS.createTarget(DIR_TARGET, Arch.x64),
+test.ifNotWindows("should throw when attempting to package a symlink to a system file", async ({ expect }) => {
+  const invalidPath = "/etc/passwd"
+  const buildConfig = {
+    targets: Platform.current().createTarget("dir", Arch.x64),
+    projectDir: "app",
+    config: {
+      asar: true,
+      electronVersion: ELECTRON_VERSION,
+    },
+  }
+  await appTwoThrows(
+    expect,
+    buildConfig,
+    {
+      packageManager: PM.YARN,
+      projectDirCreated: async projectDir => {
+        await symlink(invalidPath, path.join(projectDir, "app", "badlink"))
       },
-      {
-        isInstallDepsBefore: true,
-        projectDirCreated: projectDir => {
-          return Promise.all([
-            modifyPackageJson(projectDir, data => {
-              data.dependencies = {
-                "electron-clear-data": "^1.0.5",
-              }
-              data.optionalDependencies = {
-                debug: "3.1.0",
-              }
-            }),
-            outputFile(path.join(projectDir, "yarn.lock"), ""),
-          ])
-        },
-        packed: context => verifyAsarFileTree(expect, context.getResources(Platform.WINDOWS)),
-      }
-    ))
+    },
+    error => {
+      expect(error).toBeInstanceOf(Error)
+      expect(error.message).toContain("outside the package to a system or unsafe path")
+    }
+  )
+})
 
-  test("npm electron-clear-data", ({ expect }) =>
-    assertPack(
-      expect,
-      "test-app-hoisted",
-      {
-        targets: Platform.WINDOWS.createTarget(DIR_TARGET, Arch.x64),
+test("yarn workspace for scope name", ({ expect }) =>
+  assertPack(
+    expect,
+    "test-app-yarn-several-workspace",
+    {
+      targets: linuxDirTarget,
+      projectDir: "packages/test-app",
+    },
+    {
+      packageManager: PM.YARN,
+      projectDirCreated: async projectDir => {
+        const subAppDir = path.join(projectDir, "packages", "test-app")
+        return modifyPackageJson(subAppDir, data => {
+          data.name = "@scope/xxx-app"
+          data.dependencies = {
+            "is-odd": "3.0.1",
+          }
+        })
       },
-      {
-        isInstallDepsBefore: true,
-        projectDirCreated: projectDir => {
-          return Promise.all([
-            modifyPackageJson(projectDir, data => {
-              data.dependencies = {
-                "electron-clear-data": "^1.0.5",
-              }
-              data.optionalDependencies = {
-                debug: "3.1.0",
-              }
-            }),
-            outputFile(path.join(projectDir, "package-lock.json"), ""),
-          ])
-        },
-        packed: context => verifyAsarFileTree(expect, context.getResources(Platform.WINDOWS)),
-      }
-    ))
+      packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
+    }
+  ))
 
-  // https://github.com/electron-userland/electron-builder/issues/8842
-  test("yarn some module add by manual instead of install", ({ expect }) =>
-    assertPack(
-      expect,
-      "test-app-hoisted",
-      {
-        targets: Platform.WINDOWS.createTarget(DIR_TARGET, Arch.x64),
-      },
-      {
-        isInstallDepsBefore: true,
-        projectDirCreated: async (projectDir, tmpDir) => {
-          await outputFile(path.join(projectDir, "yarn.lock"), "")
-          await outputFile(path.join(projectDir, "node_modules", "foo", "package.json"), `{"name":"foo","version":"9.0.0","main":"index.js","license":"MIT"}`)
-          await modifyPackageJson(projectDir, data => {
+// https://github.com/electron-userland/electron-builder/issues/8493
+test("pnpm es5-ext without hoisted config", ({ expect }) =>
+  assertPack(
+    expect,
+    "test-app-hoisted",
+    {
+      targets: linuxDirTarget,
+    },
+    {
+      packageManager: PM.PNPM,
+      projectDirCreated: projectDir => {
+        return Promise.all([
+          modifyPackageJson(projectDir, data => {
             data.dependencies = {
+              "es5-ext": "0.10.53",
+            }
+          }),
+        ])
+      },
+      packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
+    }
+  ))
+
+test("pnpm optional dependencies", ({ expect }) =>
+  assertPack(
+    expect,
+    "test-app-hoisted",
+    {
+      targets: linuxDirTarget,
+    },
+    {
+      packageManager: PM.PNPM,
+      projectDirCreated: projectDir => {
+        return Promise.all([
+          modifyPackageJson(projectDir, data => {
+            data.dependencies = {
+              "electron-clear-data": "^1.0.5",
+            }
+            data.optionalDependencies = {
               debug: "3.1.0",
             }
-          })
-        },
-        packed: context => verifyAsarFileTree(expect, context.getResources(Platform.WINDOWS)),
-      }
-    ))
+          }),
+        ])
+      },
+      packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
+    }
+  ))
 
-  //https://github.com/electron-userland/electron-builder/issues/8857
-  test("yarn max stack", ({ expect }) =>
-    assertPack(
-      expect,
-      "test-app-hoisted",
-      {
-        targets: linuxDirTarget,
+test.ifLinux("pnpm optional dependency not installable on linux", ({ expect }) =>
+  assertPack(
+    expect,
+    "test-app-hoisted",
+    {
+      targets: linuxDirTarget,
+    },
+    {
+      packageManager: PM.PNPM,
+      projectDirCreated: projectDir => {
+        return Promise.all([
+          modifyPackageJson(projectDir, data => {
+            data.dependencies = {
+              "electron-clear-data": "^1.0.5",
+            }
+            data.optionalDependencies = {
+              "node-mac-permissions": "2.3.0",
+            }
+          }),
+        ])
       },
-      {
-        isInstallDepsBefore: true,
-        projectDirCreated: projectDir => {
-          return Promise.all([
-            modifyPackageJson(projectDir, data => {
-              data.dependencies = {
-                "npm-run-all": "^4.1.5",
-              }
-            }),
-            outputFile(path.join(projectDir, "yarn.lock"), ""),
-          ])
-        },
-        packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
-      }
-    ))
+      packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
+    }
+  )
+)
 
-  test("pnpm max stack", ({ expect }) =>
-    assertPack(
-      expect,
-      "test-app-hoisted",
-      {
-        targets: linuxDirTarget,
+test("yarn electron-clear-data", ({ expect }) =>
+  assertPack(
+    expect,
+    "test-app-hoisted",
+    {
+      targets: Platform.WINDOWS.createTarget(DIR_TARGET, Arch.x64),
+    },
+    {
+      packageManager: PM.YARN,
+      projectDirCreated: projectDir => {
+        return Promise.all([
+          modifyPackageJson(projectDir, data => {
+            data.dependencies = {
+              "electron-clear-data": "^1.0.5",
+            }
+            data.optionalDependencies = {
+              debug: "3.1.0",
+            }
+          }),
+        ])
       },
-      {
-        isInstallDepsBefore: true,
-        projectDirCreated: projectDir => {
-          return Promise.all([
-            modifyPackageJson(projectDir, data => {
-              data.dependencies = {
-                "npm-run-all": "^4.1.5",
-              }
-            }),
-            outputFile(path.join(projectDir, "pnpm-lock.yaml"), ""),
-          ])
-        },
-        packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
-      }
-    ))
+      packed: context => verifyAsarFileTree(expect, context.getResources(Platform.WINDOWS)),
+    }
+  ))
 
-  //github.com/electron-userland/electron-builder/issues/8842
-  test("yarn ms", ({ expect }) =>
-    assertPack(
-      expect,
-      "test-app-hoisted",
-      {
-        targets: linuxDirTarget,
+test("npm electron-clear-data", ({ expect }) =>
+  assertPack(
+    expect,
+    "test-app-hoisted",
+    {
+      targets: Platform.WINDOWS.createTarget(DIR_TARGET, Arch.x64),
+    },
+    {
+      packageManager: PM.NPM,
+      projectDirCreated: projectDir => {
+        return Promise.all([
+          modifyPackageJson(projectDir, data => {
+            data.dependencies = {
+              "electron-clear-data": "^1.0.5",
+            }
+            data.optionalDependencies = {
+              debug: "3.1.0",
+            }
+          }),
+        ])
       },
-      {
-        isInstallDepsBefore: true,
-        projectDirCreated: projectDir => {
-          return Promise.all([
-            modifyPackageJson(projectDir, data => {
-              data.dependencies = {
-                "@sentry/electron": "5.11.0",
-                "electron-clear-data": "^1.0.5",
-              }
-              data.devDependencies = {
-                electron: "34.0.2",
-              }
-            }),
-            outputFile(path.join(projectDir, "yarn.lock"), ""),
-          ])
-        },
-        packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
-      }
-    ))
+      packed: context => verifyAsarFileTree(expect, context.getResources(Platform.WINDOWS)),
+    }
+  ))
 
-  //github.com/electron-userland/electron-builder/issues/8426
-  test("yarn parse-asn1", ({ expect }) =>
-    assertPack(
-      expect,
-      "test-app-hoisted",
-      {
-        targets: linuxDirTarget,
+// https://github.com/electron-userland/electron-builder/issues/8842
+test("yarn some module add by manual instead of install", ({ expect }) =>
+  assertPack(
+    expect,
+    "test-app-hoisted",
+    {
+      targets: Platform.WINDOWS.createTarget(DIR_TARGET, Arch.x64),
+    },
+    {
+      packageManager: PM.YARN,
+      projectDirCreated: async projectDir => {
+        await outputFile(path.join(projectDir, "node_modules", "foo", "package.json"), `{"name":"foo","version":"9.0.0","main":"index.js","license":"MIT"}`)
+        await modifyPackageJson(projectDir, data => {
+          data.dependencies = {
+            debug: "3.1.0",
+          }
+        })
       },
-      {
-        isInstallDepsBefore: true,
-        projectDirCreated: projectDir => {
-          return Promise.all([
-            modifyPackageJson(projectDir, data => {
-              data.dependencies = {
-                "parse-asn1": "5.1.7",
-              }
-            }),
-            outputFile(path.join(projectDir, "yarn.lock"), ""),
-          ])
-        },
-        packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
-      }
-    ))
+      packed: context => verifyAsarFileTree(expect, context.getResources(Platform.WINDOWS)),
+    }
+  ))
 
-  //github.com/electron-userland/electron-builder/issues/8431
-  test("npm tar", ({ expect }) =>
-    assertPack(
-      expect,
-      "test-app-hoisted",
-      {
-        targets: linuxDirTarget,
+//https://github.com/electron-userland/electron-builder/issues/8857
+test("yarn max stack", ({ expect }) =>
+  assertPack(
+    expect,
+    "test-app-hoisted",
+    {
+      targets: linuxDirTarget,
+    },
+    {
+      packageManager: PM.YARN,
+      projectDirCreated: projectDir => {
+        return Promise.all([
+          modifyPackageJson(projectDir, data => {
+            data.dependencies = {
+              "npm-run-all": "^4.1.5",
+            }
+          }),
+        ])
       },
-      {
-        isInstallDepsBefore: true,
-        projectDirCreated: projectDir => {
-          return Promise.all([
-            modifyPackageJson(projectDir, data => {
-              data.dependencies = {
-                tar: "7.4.3",
-              }
-            }),
-            outputFile(path.join(projectDir, "package-lock.json"), ""),
-          ])
-        },
-        packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
-      }
-    ))
+      packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
+    }
+  ))
 
-  //github.com/electron-userland/electron-builder/issues/8881
-  test("pnpm node-linker=hoisted", ({ expect }) =>
-    assertPack(
-      expect,
-      "test-app-hoisted",
-      {
-        targets: linuxDirTarget,
+test("pnpm max stack", ({ expect }) =>
+  assertPack(
+    expect,
+    "test-app-hoisted",
+    {
+      targets: linuxDirTarget,
+    },
+    {
+      packageManager: PM.PNPM,
+      projectDirCreated: projectDir => {
+        return Promise.all([
+          modifyPackageJson(projectDir, data => {
+            data.dependencies = {
+              "npm-run-all": "^4.1.5",
+            }
+          }),
+        ])
       },
-      {
-        isInstallDepsBefore: true,
-        projectDirCreated: projectDir => {
-          return Promise.all([
-            modifyPackageJson(projectDir, data => {
-              data.dependencies = {
-                dayjs: "1.11.13",
-              }
-            }),
-            outputFile(path.join(projectDir, "pnpm-lock.yaml"), ""),
-            outputFile(path.join(projectDir, ".npmrc"), "node-linker=hoisted"),
-          ])
-        },
-        packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
-      }
-    ))
-  test("pnpm shamefully-hoist=true", ({ expect }) =>
-    assertPack(
-      expect,
-      "test-app-hoisted",
-      {
-        targets: linuxDirTarget,
+      packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
+    }
+  ))
+
+//github.com/electron-userland/electron-builder/issues/8842
+test("yarn ms", ({ expect }) =>
+  assertPack(
+    expect,
+    "test-app-hoisted",
+    {
+      targets: linuxDirTarget,
+    },
+    {
+      packageManager: PM.YARN,
+      projectDirCreated: projectDir => {
+        return Promise.all([
+          modifyPackageJson(projectDir, data => {
+            data.dependencies = {
+              "@sentry/electron": "5.11.0",
+              "electron-clear-data": "^1.0.5",
+            }
+            data.devDependencies = {
+              electron: "34.0.2",
+            }
+          }),
+        ])
       },
-      {
-        isInstallDepsBefore: true,
-        projectDirCreated: projectDir => {
-          return Promise.all([
-            modifyPackageJson(projectDir, data => {
-              data.dependencies = {
-                dayjs: "1.11.13",
-              }
-            }),
-            outputFile(path.join(projectDir, "pnpm-lock.yaml"), ""),
-            outputFile(path.join(projectDir, ".npmrc"), "shamefully-hoist=true"),
-          ])
-        },
-        packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
-      }
-    ))
-  test("pnpm public-hoist-pattern=*", ({ expect }) =>
-    assertPack(
-      expect,
-      "test-app-hoisted",
-      {
-        targets: linuxDirTarget,
+      packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
+    }
+  ))
+
+//github.com/electron-userland/electron-builder/issues/8426
+test("yarn parse-asn1", ({ expect }) =>
+  assertPack(
+    expect,
+    "test-app-hoisted",
+    {
+      targets: linuxDirTarget,
+    },
+    {
+      packageManager: PM.YARN,
+      projectDirCreated: projectDir => {
+        return Promise.all([
+          modifyPackageJson(projectDir, data => {
+            data.dependencies = {
+              "parse-asn1": "5.1.7",
+            }
+          }),
+        ])
       },
-      {
-        isInstallDepsBefore: true,
-        projectDirCreated: projectDir => {
-          return Promise.all([
-            modifyPackageJson(projectDir, data => {
-              data.dependencies = {
-                dayjs: "1.11.13",
-              }
-            }),
-            outputFile(path.join(projectDir, "pnpm-lock.yaml"), ""),
-            outputFile(path.join(projectDir, ".npmrc"), "public-hoist-pattern=*"),
-          ])
-        },
-        packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
-      }
-    ))
-})
+      packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
+    }
+  ))
+
+//github.com/electron-userland/electron-builder/issues/8431
+test("npm tar", ({ expect }) =>
+  assertPack(
+    expect,
+    "test-app-hoisted",
+    {
+      targets: linuxDirTarget,
+    },
+    {
+      packageManager: PM.NPM,
+      projectDirCreated: projectDir => {
+        return Promise.all([
+          modifyPackageJson(projectDir, data => {
+            data.dependencies = {
+              tar: "7.4.3",
+            }
+          }),
+        ])
+      },
+      packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
+    }
+  ))
+
+//github.com/electron-userland/electron-builder/issues/8881
+test("pnpm node-linker=hoisted", ({ expect }) =>
+  assertPack(
+    expect,
+    "test-app-hoisted",
+    {
+      targets: linuxDirTarget,
+    },
+    {
+      packageManager: PM.PNPM,
+      projectDirCreated: projectDir => {
+        return Promise.all([
+          modifyPackageJson(projectDir, data => {
+            data.dependencies = {
+              dayjs: "1.11.13",
+            }
+          }),
+          outputFile(path.join(projectDir, ".npmrc"), "node-linker=hoisted"),
+        ])
+      },
+      packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
+    }
+  ))
+test("pnpm shamefully-hoist=true", ({ expect }) =>
+  assertPack(
+    expect,
+    "test-app-hoisted",
+    {
+      targets: linuxDirTarget,
+    },
+    {
+      packageManager: PM.PNPM,
+      projectDirCreated: projectDir => {
+        return Promise.all([
+          modifyPackageJson(projectDir, data => {
+            data.dependencies = {
+              dayjs: "1.11.13",
+            }
+          }),
+          outputFile(path.join(projectDir, ".npmrc"), "shamefully-hoist=true"),
+        ])
+      },
+      packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
+    }
+  ))
+test("pnpm public-hoist-pattern=*", ({ expect }) =>
+  assertPack(
+    expect,
+    "test-app-hoisted",
+    {
+      targets: linuxDirTarget,
+    },
+    {
+      packageManager: PM.PNPM,
+      projectDirCreated: projectDir => {
+        return Promise.all([
+          modifyPackageJson(projectDir, data => {
+            data.dependencies = {
+              dayjs: "1.11.13",
+            }
+          }),
+          outputFile(path.join(projectDir, ".npmrc"), "public-hoist-pattern=*"),
+        ])
+      },
+      packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
+    }
+  ))
+
+test("pnpm workspace with native module", ({ expect }) =>
+  assertPack(
+    expect,
+    "test-app-yarn-several-workspace",
+    {
+      targets: linuxDirTarget,
+      projectDir: "packages/test-app",
+      config: {
+        files: [
+          "!node_modules/better-sqlite3/**",
+          {
+            from: "node_modules/better-sqlite3/build/Release",
+            to: "./",
+            filter: ["*.node"],
+          },
+        ],
+      },
+    },
+    {
+      packageManager: PM.PNPM,
+      projectDirCreated: projectDir => {
+        return Promise.all([
+          modifyPackageJson(path.join(projectDir, "packages", "test-app"), data => {
+            data.dependencies = {
+              "better-sqlite3": "^11.10.0",
+              debug: "4.4.3",
+            }
+            data.devDependencies = {
+              electron: ELECTRON_VERSION,
+            }
+          }),
+        ])
+      },
+      packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
+    }
+  ))

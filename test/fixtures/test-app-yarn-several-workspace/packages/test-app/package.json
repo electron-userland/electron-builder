@@ -7,7 +7,7 @@
   "author": "Foo Bar <foo@example.com>",
   "license": "MIT",
   "build": {
-    "electronVersion": "23.3.10",
+    "electronVersion": "35.7.5",
     "appId": "org.electron-builder.testApp",
     "compression": "store",
     "npmRebuild": false,
@@ -19,8 +19,8 @@
     }
   },
   "dependencies": {
-    "ms": "2.0.0",
     "electron-log": "2.2.9",
-    "foo": "*"
+    "foo": "*",
+    "ms": "2.0.0"
   }
 }

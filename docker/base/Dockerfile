@@ -31,8 +31,6 @@ RUN wget -q "http://security.ubuntu.com/ubuntu/pool/main/o/openssl/libssl1.1_1.1
   dpkg -i libssl1.1*.deb && \
   rm libssl1.1*.deb
 
-COPY ./test.sh /test.sh
-
 WORKDIR /project
 
 # fix error /usr/local/bundle/gems/fpm-1.5.0/lib/fpm/package/freebsd.rb:72:in `encode': "\xE2" from ASCII-8BIT to UTF-8 (Encoding::UndefinedConversionError)

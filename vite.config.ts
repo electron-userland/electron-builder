@@ -1,5 +1,6 @@
 import { defineConfig } from "vitest/config"
 import fs from "fs"
+import isCI from "is-ci"
 
 export default () => {
   const testRegex = process.env.TEST_FILES?.split(",") ?? ["*Test", "*test"]
@@ -17,6 +18,8 @@ export default () => {
       // if using `toMatchSnapshot`, it MUST be passed in through the test context
       // e.g. test("name", ({ expect }) => { ... })
       globals: true,
+      allowOnly: !isCI,
+      expandSnapshotDiff: true,
 
       setupFiles: "./test/vitest-setup.ts",
       include: [`test/src/**/${includeRegex}.ts`],
@@ -41,11 +44,11 @@ export default () => {
       },
 
       sequence: {
-        concurrent: true
+        concurrent: process.env.TEST_SEQUENTIAL !== "true",
       },
 
       slowTestThreshold: 60 * 1000,
-      testTimeout: 8 * 60 * 1000, // disk operations can be slow. We're generous with the timeout here to account for less-performant hardware
+      testTimeout: 10 * 60 * 1000, // disk operations can be slow. We're generous with the timeout here to account for less-performant hardware
       coverage: {
         reporter: ["lcov", "text"],
       },

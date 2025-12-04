@@ -1,5 +1,94 @@
 # electron-forge-maker-appimage
 
+## 26.3.4
+
+### Patch Changes
+
+<details><summary>Updated 1 dependency</summary>
+
+<small>
+
+[`e34be3b`](https://github.com/electron-userland/electron-builder/commit/e34be3b3e8486c20cac316b4ae978ce275ea9cf7) [`ada111e`](https://github.com/electron-userland/electron-builder/commit/ada111ebe82d9487c27441969ab15899bafad4c9) [`4d24ebd`](https://github.com/electron-userland/electron-builder/commit/4d24ebd79ea33d8d9afa4a4bf18af90e968d0ff3) [`b81c253`](https://github.com/electron-userland/electron-builder/commit/b81c2539c4da4630b9e955f3afa6ec76cb30447b)
+
+</small>
+
+- `app-builder-lib@26.3.4`
+
+</details>
+
+## 26.3.3
+
+### Patch Changes
+
+<details><summary>Updated 1 dependency</summary>
+
+<small>
+
+[`241c53a`](https://github.com/electron-userland/electron-builder/commit/241c53a598d9eb566de06059b4aa2f2d97d8712c)
+
+</small>
+
+- `app-builder-lib@26.3.3`
+
+</details>
+
+## 26.3.2
+
+### Patch Changes
+
+<details><summary>Updated 1 dependency</summary>
+
+<small>
+
+[`0cd0831`](https://github.com/electron-userland/electron-builder/commit/0cd0831ec1c23b4fb4d701c10d586cb83d4ed2ed) [`7f7113d`](https://github.com/electron-userland/electron-builder/commit/7f7113dc435a427ca4ff041fb138512ac0bdeaaa) [`65eecac`](https://github.com/electron-userland/electron-builder/commit/65eecac1bec8fb5667621bdba4f1d2b1c75230b5)
+
+</small>
+
+- `app-builder-lib@26.3.2`
+
+</details>
+
+## 26.3.1
+
+### Patch Changes
+
+<details><summary>Updated 1 dependency</summary>
+
+<small>
+
+[`ec0a851`](https://github.com/electron-userland/electron-builder/commit/ec0a85179b4508c372667f55e395d8b27c58a046) [`2f3e7e1`](https://github.com/electron-userland/electron-builder/commit/2f3e7e1e67dd30c4987c33172ca6857ee0a2fc14) [`6171472`](https://github.com/electron-userland/electron-builder/commit/617147281ceb53e9d40be852678131d2832abd79) [`ef364d3`](https://github.com/electron-userland/electron-builder/commit/ef364d32c4fa78200249916af934b5235e04ba3e) [`45a1683`](https://github.com/electron-userland/electron-builder/commit/45a1683400b6525998256d83059ce7b562098eb1) [`1607820`](https://github.com/electron-userland/electron-builder/commit/160782067f904b61d53eb28368aea58022fe1717) [`ed8ea12`](https://github.com/electron-userland/electron-builder/commit/ed8ea12f7c2ccf3e52079a5aa9517f1342448c52)
+
+</small>
+
+- `app-builder-lib@26.3.1`
+
+</details>
+
+## 26.3.0
+
+### Patch Changes
+
+- Chore: bumping version packages of all packages to trigger Trusted Signing provedance release _[`#9362`](https://github.com/electron-userland/electron-builder/pull/9362) [`030269b`](https://github.com/electron-userland/electron-builder/commit/030269bca94b5e3621dbf8883976e1f85a1524f0) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 1 dependency</summary>
+
+<small>
+
+[`030269b`](https://github.com/electron-userland/electron-builder/commit/030269bca94b5e3621dbf8883976e1f85a1524f0) [`b741b72`](https://github.com/electron-userland/electron-builder/commit/b741b726daeb06080ab1cf46a93d318fd89ae4e7) [`d8ad468`](https://github.com/electron-userland/electron-builder/commit/d8ad468cbf13ffb46889bbe0ba9f8c6d8ec1ac8f) [`811d13d`](https://github.com/electron-userland/electron-builder/commit/811d13d730fe78ee2e721b7c537e8b3e5579a4f0) [`16c8fa1`](https://github.com/electron-userland/electron-builder/commit/16c8fa19b288770a6d24164e562a353877e59536) [`2e0837b`](https://github.com/electron-userland/electron-builder/commit/2e0837b279156ad5b60a71d1e2733b495c192f5a)
+
+</small>
+
+- `app-builder-lib@26.3.0`
+
+</details>
+
+## 26.2.0
+
+### Patch Changes
+
+- Updated dependencies [[`836a15c6c70abf8582aaa63603e14f77d5fa3f89`](https://github.com/electron-userland/electron-builder/commit/836a15c6c70abf8582aaa63603e14f77d5fa3f89), [`21623e1b037e4509af04e767ca1c1458682b0eba`](https://github.com/electron-userland/electron-builder/commit/21623e1b037e4509af04e767ca1c1458682b0eba), [`6a49f85c69a22844729033f023249975f47a28f1`](https://github.com/electron-userland/electron-builder/commit/6a49f85c69a22844729033f023249975f47a28f1), [`0835fbcac0a0cfb0f34355699812cc85db035ad4`](https://github.com/electron-userland/electron-builder/commit/0835fbcac0a0cfb0f34355699812cc85db035ad4), [`d19387174365c85968034149be43d80a39e7335f`](https://github.com/electron-userland/electron-builder/commit/d19387174365c85968034149be43d80a39e7335f), [`b6a34c00c35e42dc279a55d672558ea7badc7fcd`](https://github.com/electron-userland/electron-builder/commit/b6a34c00c35e42dc279a55d672558ea7badc7fcd), [`f4d7924a082fbb9113d52782430f82b1f0ffcb52`](https://github.com/electron-userland/electron-builder/commit/f4d7924a082fbb9113d52782430f82b1f0ffcb52)]:
+  - app-builder-lib@26.2.0
+
 ## 26.1.0
 
 ### Patch Changes

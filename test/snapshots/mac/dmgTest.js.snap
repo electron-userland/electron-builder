@@ -219,6 +219,7 @@ exports[`dmg > background color 3`] = `
   "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
   "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
+  "NSPrefersDisplaySafeAreaCompatibilityMode": false,
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
 }
@@ -288,6 +289,7 @@ exports[`dmg > bundleShortVersion 2`] = `
   "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
   "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
+  "NSPrefersDisplaySafeAreaCompatibilityMode": false,
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
 }
@@ -358,6 +360,7 @@ exports[`dmg > custom background - new way 2`] = `
   "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
   "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
+  "NSPrefersDisplaySafeAreaCompatibilityMode": false,
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
 }
@@ -428,6 +431,7 @@ exports[`dmg > disable dmg icon (light), bundleVersion 2`] = `
   "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
   "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
+  "NSPrefersDisplaySafeAreaCompatibilityMode": false,
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
 }
@@ -497,6 +501,7 @@ exports[`dmg > dmg 2`] = `
   "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
   "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
+  "NSPrefersDisplaySafeAreaCompatibilityMode": false,
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
 }
@@ -624,6 +629,7 @@ exports[`dmg > license buttons config 3`] = `
   "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
   "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
+  "NSPrefersDisplaySafeAreaCompatibilityMode": false,
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
 }
@@ -693,6 +699,7 @@ exports[`dmg > license en 2`] = `
   "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
   "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
+  "NSPrefersDisplaySafeAreaCompatibilityMode": false,
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
 }
@@ -762,6 +769,7 @@ exports[`dmg > license ja 2`] = `
   "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
   "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
+  "NSPrefersDisplaySafeAreaCompatibilityMode": false,
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
 }
@@ -831,6 +839,7 @@ exports[`dmg > license rtf 2`] = `
   "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
   "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
+  "NSPrefersDisplaySafeAreaCompatibilityMode": false,
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
 }
@@ -900,6 +909,7 @@ exports[`dmg > multi language license 2`] = `
   "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
   "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
+  "NSPrefersDisplaySafeAreaCompatibilityMode": false,
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
 }
@@ -969,6 +979,7 @@ exports[`dmg > no background 2`] = `
   "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
   "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
+  "NSPrefersDisplaySafeAreaCompatibilityMode": false,
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
 }
@@ -1056,6 +1067,7 @@ exports[`dmg > no build directory 3`] = `
   "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
   "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
+  "NSPrefersDisplaySafeAreaCompatibilityMode": false,
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
 }
@@ -1126,6 +1138,7 @@ exports[`dmg > retina background as 2 png 2`] = `
   "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
   "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
+  "NSPrefersDisplaySafeAreaCompatibilityMode": false,
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
 }
@@ -1195,6 +1208,7 @@ exports[`dmg > unset dmg icon 2`] = `
   "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
   "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
+  "NSPrefersDisplaySafeAreaCompatibilityMode": false,
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
 }

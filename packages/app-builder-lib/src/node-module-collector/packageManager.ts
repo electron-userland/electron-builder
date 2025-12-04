@@ -1,14 +1,14 @@
+import { exists, log } from "builder-util"
+import * as fs from "fs-extra"
 import * as path from "path"
-import * as fs from "fs"
 import * as which from "which"
-import { execSync } from "child_process"
 
 export enum PM {
-  NPM = "npm",
-  YARN = "yarn",
   PNPM = "pnpm",
+  YARN = "yarn",
   YARN_BERRY = "yarn-berry",
   BUN = "bun",
+  NPM = "npm",
 }
 
 // Cache for resolved paths
@@ -45,15 +45,46 @@ export function getPackageManagerCommand(pm: PM) {
   return resolved
 }
 
-export function detectPackageManagerByEnv(): PM | null {
-  const packageJsonPath = path.join(process.cwd(), "package.json")
-  const packageManager = fs.existsSync(packageJsonPath) ? JSON.parse(fs.readFileSync(packageJsonPath, "utf8"))?.packageManager : undefined
+type PackageManagerSetup = {
+  pm: PM
+  corepackConfig: string | undefined
+  resolvedDirectory: string | undefined
+  detectionMethod: string
+}
 
-  const priorityChecklist = [
-    (key: string) => process.env.npm_config_user_agent?.includes(key),
-    (key: string) => process.env.npm_execpath?.includes(key),
-    (key: string) => packageManager?.startsWith(`${key}@`),
-  ]
+export async function detectPackageManager(searchPaths: string[]): Promise<PackageManagerSetup> {
+  let pm: PM | null = null
+  const dedupedPaths = Array.from(new Set(searchPaths)) // reduce file operations, dedupe paths since primary use case has projectDir === appDir
+
+  const resolveIfYarn = (pm: PM, version: string, cwd: string) => (pm === PM.YARN ? detectYarnBerry(cwd, version) : pm)
+
+  for (const dir of dedupedPaths) {
+    const packageJsonPath = path.join(dir, "package.json")
+    const packageManager = (await exists(packageJsonPath)) ? (await fs.readJson(packageJsonPath, "utf8"))?.packageManager : undefined
+    if (packageManager) {
+      const [pm, version] = packageManager.split("@")
+      if (Object.values(PM).includes(pm as PM)) {
+        const resolvedPackageManager = await resolveIfYarn(pm as PM, version, dir)
+        return { pm: resolvedPackageManager, corepackConfig: packageManager, resolvedDirectory: dir, detectionMethod: "packageManager field" }
+      }
+    }
+
+    pm = await detectPackageManagerByFile(dir)
+    if (pm) {
+      const resolvedPackageManager = await resolveIfYarn(pm, "", dir)
+      return { pm: resolvedPackageManager, resolvedDirectory: dir, corepackConfig: undefined, detectionMethod: "lock file" }
+    }
+  }
+
+  pm = detectPackageManagerByEnv() || PM.NPM
+  const cwd = process.env.npm_package_json ? path.dirname(process.env.npm_package_json) : (process.env.INIT_CWD ?? process.cwd())
+  const resolvedPackageManager = await resolveIfYarn(pm, "", cwd)
+  log.info({ resolvedPackageManager, detected: cwd }, "packageManager not detected by file, falling back to environment detection")
+  return { pm: resolvedPackageManager, resolvedDirectory: undefined, corepackConfig: undefined, detectionMethod: "process environment" }
+}
+
+function detectPackageManagerByEnv(): PM | null {
+  const priorityChecklist = [(key: string) => process.env.npm_config_user_agent?.includes(key), (key: string) => process.env.npm_execpath?.includes(key)]
 
   const pms = Object.values(PM).filter(pm => pm !== PM.YARN_BERRY)
   for (const checker of priorityChecklist) {
@@ -66,20 +97,20 @@ export function detectPackageManagerByEnv(): PM | null {
   return null
 }
 
-export function detectPackageManagerByLockfile(cwd: string): PM | null {
-  const has = (file: string) => fs.existsSync(path.join(cwd, file))
+async function detectPackageManagerByFile(dir: string): Promise<PM | null> {
+  const has = (file: string) => exists(path.join(dir, file))
 
   const detected: PM[] = []
-  if (has("yarn.lock")) {
+  if (await has("yarn.lock")) {
     detected.push(PM.YARN)
   }
-  if (has("pnpm-lock.yaml")) {
+  if (await has("pnpm-lock.yaml")) {
     detected.push(PM.PNPM)
   }
-  if (has("package-lock.json")) {
+  if (await has("package-lock.json")) {
     detected.push(PM.NPM)
   }
-  if (has("bun.lock") || has("bun.lockb")) {
+  if ((await has("bun.lock")) || (await has("bun.lockb"))) {
     detected.push(PM.BUN)
   }
 
@@ -90,14 +121,43 @@ export function detectPackageManagerByLockfile(cwd: string): PM | null {
   return null
 }
 
-export function detectYarnBerry() {
-  try {
-    const version = execSync("yarn --version").toString().trim()
-    if (parseInt(version.split(".")[0]) > 1) {
-      return PM.YARN_BERRY
+async function detectYarnBerry(cwd: string, version: string): Promise<PM.YARN | PM.YARN_BERRY> {
+  const checkBerry = () => {
+    try {
+      if (parseInt(version.split(".")[0]) > 1) {
+        return PM.YARN_BERRY
+      }
+    } catch (_error) {
+      log.debug({ error: _error }, "cannot determine yarn version, assuming yarn v1")
+      // If `yarn` is not found or another error occurs, fall back to the regular Yarn since we're already determined in a Yarn project
     }
-  } catch (_e) {
-    // If `yarn` is not found or another error occurs, fallback to the regular Yarn
+    return undefined
   }
-  return PM.YARN
+
+  if (version === "latest" || version === "berry") {
+    return PM.YARN_BERRY
+  }
+
+  if (version.length > 0) {
+    return checkBerry() ?? PM.YARN
+  }
+
+  const lockPath = path.join(cwd, "yarn.lock")
+  if (!(await exists(lockPath))) {
+    return checkBerry() ?? PM.YARN
+  }
+  // Read the first few lines of yarn.lock to determine the version
+  const firstBytes = (await fs.readFile(lockPath, "utf8")).split("\n").slice(0, 10).join("\n")
+
+  // Yarn v2+ (Berry) has a "__metadata:" block near the top
+  if (firstBytes.includes("__metadata:")) {
+    return PM.YARN_BERRY
+  }
+
+  // Yarn v1 format is classic semi-YAML with comment header
+  if (firstBytes.includes("DO NOT EDIT THIS FILE DIRECTLY.")) {
+    return PM.YARN
+  }
+
+  return checkBerry() ?? PM.YARN
 }

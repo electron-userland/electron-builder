@@ -1,7 +1,7 @@
 {
   "name": "app-builder-lib",
   "description": "electron-builder lib",
-  "version": "26.1.0",
+  "version": "26.3.4",
   "main": "out/index.js",
   "files": [
     "out",
@@ -60,7 +60,7 @@
     "builder-util": "workspace:*",
     "builder-util-runtime": "workspace:*",
     "chromium-pickle-js": "^0.2.0",
-    "ci-info": "^4.2.0",
+    "ci-info": "4.3.1",
     "debug": "^4.3.4",
     "dotenv": "^16.4.5",
     "dotenv-expand": "^11.0.6",

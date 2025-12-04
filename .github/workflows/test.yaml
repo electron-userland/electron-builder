@@ -68,9 +68,9 @@ jobs:
       matrix:
         testFiles:
           - ArtifactPublisherTest,BuildTest,ExtraBuildTest,RepoSlugTest,binDownloadTest,configurationValidationTest,filenameUtilTest,filesTest,globTest,httpExecutorTest,ignoreTest,macroExpanderTest,mainEntryTest,urlUtilTest,extraMetadataTest,linuxArchiveTest,linuxPackagerTest,HoistedNodeModuleTest,MemoLazyTest,HoistTest,ExtraBuildResourcesTest,utilTest
-          - snapTest,debTest,fpmTest,protonTest
+          - snapTest,debTest,fpmTest,protonTest,rebuilderTest
           - winPackagerTest,winCodeSignTest,webInstallerTest
-          - oneClickInstallerTest,assistedInstallerTest
+          - oneClickInstallerTest,assistedInstallerTest,packageManagerTest
           - concurrentBuildsTest
     steps:
       - name: Checkout code repository
@@ -78,11 +78,14 @@ jobs:
         with:
           fetch-depth: 2
 
+      - name: Cleanup runner
+        uses: ./.github/actions/cleanup-runner
+
       - name: Setup Tests
         uses: ./.github/actions/pretest
         with:
           cache-path: ~/.cache/electron
-          cache-key: v-23.3.10-linux-electron
+          cache-key: v-35.7.5-linux-electron
 
       - name: Download test-runner if exists
         if: needs.run-docker-build.result == 'success'
@@ -97,9 +100,6 @@ jobs:
         run: |
           docker image load --input ${{ runner.temp }}/electron-builder-all-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}.tar
           docker image ls -a
-
-      - name: Lint
-        run: pnpm pretest
 
       - name: Run tests in docker image
         run: |
@@ -125,11 +125,14 @@ jobs:
       - name: Checkout code repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
+      - name: Cleanup runner
+        uses: ./.github/actions/cleanup-runner
+
       - name: Setup Tests
         uses: ./.github/actions/pretest
         with:
           cache-path: ~/.cache/electron
-          cache-key: v-23.3.10-update-electron
+          cache-key: v-35.7.5-update-electron
 
       - name: Download test-runner if exists
         if: needs.run-docker-build.result == 'success'
@@ -143,9 +146,6 @@ jobs:
         run: |
           docker image load --input ${{ runner.temp }}/electron-builder-all-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}.tar
           docker image ls -a
-
-      - name: Lint
-        run: pnpm pretest
 
       - name: Test
         run: |
@@ -164,22 +164,37 @@ jobs:
   test-e2e:
     runs-on: ubuntu-22.04
     timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        TEST_RUNNER_IMAGE_TAG:
+          - dockerfile-archlinux
+          - dockerfile-rpm
+          - dockerfile-debian
+          - dockerfile-appimage
     steps:
       - name: Checkout code repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
       - name: Setup Tests
         uses: ./.github/actions/pretest
         with:
           cache-path: ~/.cache/electron
-          cache-key: v-23.3.10-update-electron
+          cache-key: v-35.7.5-update-electron
 
       - name: Verify Docs Generation
         run: pnpm generate-all
 
       - name: e2e Linux Updater tests (install, auto-update, uninstall)
         run: |
-          sh test/src/updater/test-specific-platforms.sh
+          docker build --platform=linux/amd64 -t $TEST_RUNNER_IMAGE_TAG -f ./test/src/updater/$TEST_RUNNER_IMAGE_TAG .
+          pnpm test-linux
+        env:
+          TEST_RUNNER_IMAGE_TAG: ${{ matrix.TEST_RUNNER_IMAGE_TAG }}
+          TEST_FILES: blackboxUpdateTest,linuxUpdaterTest
+          DEBUG: electron-updater,electron-builder
+          ADDITIONAL_DOCKER_ARGS: "-e RUN_APP_IMAGE_TEST=true"
+
 
   test-windows:
     runs-on: windows-2022
@@ -200,7 +215,7 @@ jobs:
       - name: Setup Tests
         uses: ./.github/actions/pretest
         with:
-          cache-key: v-23.3.10-windows-electron
+          cache-key: v-35.7.5-windows-electron
           cache-path: ~\AppData\Local\electron\Cache
 
       - name: Test
@@ -218,8 +233,8 @@ jobs:
       fail-fast: false
       matrix:
         testFiles:
-          - oneClickInstallerTest,assistedInstallerTest,webInstallerTest
-          - winPackagerTest,winCodeSignTest,BuildTest,blackboxUpdateTest
+          - oneClickInstallerTest,assistedInstallerTest,webInstallerTest,packageManagerTest,HoistedNodeModuleTest,rebuilderTest
+          - winPackagerTest,winCodeSignTest,BuildTest,blackboxUpdateTest,debTest
           - masTest,dmgTest,filesTest,macPackagerTest,differentialUpdateTest,macArchiveTest
           - concurrentBuildsTest
     steps:
@@ -230,7 +245,7 @@ jobs:
         uses: ./.github/actions/pretest
         with:
           cache-path: ~/Library/Caches/electron
-          cache-key: v-23.3.10-macos-electron
+          cache-key: v-35.7.5-macos-electron
 
       - name: Install toolset via brew
         run: |
@@ -243,6 +258,8 @@ jobs:
         env:
           TEST_FILES: ${{ matrix.testFiles }}
           FORCE_COLOR: 1
+          TEST_SEQUENTIAL: true
+          DEBUG: electron-builder
 
   test-mac-26:
     runs-on: macos-26
@@ -262,11 +279,8 @@ jobs:
           cache-path: ~/Library/Caches/electron
           cache-key: v-23.3.10-macos-electron
 
-      - name: Install toolset via brew
-        run: |
-          brew install powershell/tap/powershell
-          brew install --cask wine-stable
-          brew install rpm
+      - name: Lint
+        run: pnpm pretest
 
       - name: Test
         run: pnpm ci:test

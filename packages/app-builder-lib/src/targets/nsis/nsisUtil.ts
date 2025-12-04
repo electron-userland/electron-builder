@@ -135,7 +135,7 @@ export class CopyElevateHelper {
       const outFile = path.join(appOutDir, "resources", "elevate.exe")
       const promise = copyFile(path.join(it, "elevate.exe"), outFile, false)
       if (target.packager.platformSpecificBuildOptions.signAndEditExecutable !== false) {
-        return promise.then(() => target.packager.sign(outFile))
+        return promise.then(() => target.packager.signIf(outFile))
       }
       return promise
     })

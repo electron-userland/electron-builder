@@ -49,7 +49,7 @@ export default class SquirrelWindowsTarget extends Target {
     if (squirrelExe) {
       const filePath = path.join(tmpVendorDirectory, squirrelExe)
       log.debug({ file: filePath }, "signing vendor executable")
-      await this.packager.sign(filePath)
+      await this.packager.signIf(filePath)
     } else {
       log.warn("Squirrel.exe not found in vendor directory, skipping signing")
     }
@@ -67,9 +67,9 @@ export default class SquirrelWindowsTarget extends Target {
     const stubExePath = path.join(appOutDir, `${this.exeName}_ExecutionStub.exe`)
     await fs.promises.copyFile(path.join(vendorDir, "StubExecutable.exe"), stubExePath)
     await execWine(path.join(vendorDir, "WriteZipToSetup.exe"), null, ["--copy-stub-resources", filePath, stubExePath])
-    await this.packager.sign(stubExePath)
+    await this.packager.signIf(stubExePath)
     log.debug({ file: filePath }, "signing app executable")
-    await this.packager.sign(filePath)
+    await this.packager.signIf(filePath)
   }
 
   async build(appOutDir: string, arch: Arch) {
@@ -95,7 +95,7 @@ export default class SquirrelWindowsTarget extends Target {
       await packager.signAndEditResources(artifactPath, arch, installerOutDir)
 
       if (this.options.msi) {
-        await packager.sign(msiArtifactPath)
+        await packager.signIf(msiArtifactPath)
       }
 
       const safeArtifactName = (ext: string) => `${sanitizedName}-Setup-${version}${getArchSuffix(arch)}.${ext}`

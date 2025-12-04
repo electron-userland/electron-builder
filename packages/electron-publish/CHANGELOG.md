@@ -1,5 +1,56 @@
 # electron-publish
 
+## 26.3.4
+
+### Patch Changes
+
+<details><summary>Updated 1 dependency</summary>
+
+<small>
+
+[`2faee4d`](https://github.com/electron-userland/electron-builder/commit/2faee4d941d16c6f52d6c793c709a77ccfb79d0a) [`da1d768`](https://github.com/electron-userland/electron-builder/commit/da1d7687c6d2d2db8e319e371ba001c946bf130c)
+
+</small>
+
+- `builder-util@26.3.4`
+
+</details>
+
+## 26.3.1
+
+### Patch Changes
+
+<details><summary>Updated 1 dependency</summary>
+
+<small>
+
+[`ec0a851`](https://github.com/electron-userland/electron-builder/commit/ec0a85179b4508c372667f55e395d8b27c58a046)
+
+</small>
+
+- `builder-util@26.3.1`
+
+</details>
+
+## 26.3.0
+
+### Patch Changes
+
+- Chore: bumping version packages of all packages to trigger Trusted Signing provedance release _[`#9362`](https://github.com/electron-userland/electron-builder/pull/9362) [`030269b`](https://github.com/electron-userland/electron-builder/commit/030269bca94b5e3621dbf8883976e1f85a1524f0) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+[`030269b`](https://github.com/electron-userland/electron-builder/commit/030269bca94b5e3621dbf8883976e1f85a1524f0)
+
+</small>
+
+- `builder-util@26.3.0`
+- `builder-util-runtime@9.5.1`
+
+</details>
+
 ## 26.1.0
 
 ### Minor Changes

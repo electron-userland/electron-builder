@@ -4,7 +4,7 @@ import { archFromString, doSpawn, getArchSuffix, log, TmpDir } from "builder-uti
 import { Arch, Configuration, Platform } from "electron-builder"
 import fs, { existsSync, outputFile } from "fs-extra"
 import path from "path"
-import { afterAll, beforeAll, describe, expect, ExpectStatic } from "vitest"
+import { afterAll, beforeAll, describe, ExpectStatic, TestContext } from "vitest"
 import { launchAndWaitForQuit } from "../helpers/launchAppCrossPlatform"
 import { assertPack, modifyPackageJson, PackedContext } from "../helpers/packTester"
 import { ELECTRON_VERSION } from "../helpers/testConfig"
@@ -24,35 +24,35 @@ describe("Electron autoupdate (fresh install & update)", () => {
   })
 
   // Signing is required for macOS autoupdate
-  test.ifMac.ifEnv(process.env.CSC_KEY_PASSWORD)("mac", async () => {
-    await runTest("zip")
+  test.ifMac.ifEnv(process.env.CSC_KEY_PASSWORD)("mac", async context => {
+    await runTest(context, "zip")
   })
 
-  test.ifWindows("win", async () => {
-    await runTest("nsis")
+  test.ifWindows("win", async context => {
+    await runTest(context, "nsis")
   })
 
   // must be sequential in order for process.env.ELECTRON_BUILDER_LINUX_PACKAGE_MANAGER to be respected per-test
   describe.runIf(process.platform === "linux")("linux", { sequential: true }, () => {
-    test.ifEnv(process.env.RUN_APP_IMAGE_TEST && process.arch === "arm64")("AppImage - arm64", async () => {
-      await runTest("AppImage", Arch.arm64)
+    test.ifEnv(process.env.RUN_APP_IMAGE_TEST && process.arch === "arm64")("AppImage - arm64", async context => {
+      await runTest(context, "AppImage", Arch.arm64)
     })
 
     // only works on x64, so this will fail on arm64 macs due to arch mismatch
-    test.ifEnv(process.env.RUN_APP_IMAGE_TEST && process.arch === "x64")("AppImage - x64", async () => {
-      await runTest("AppImage", Arch.x64)
+    test.ifEnv(process.env.RUN_APP_IMAGE_TEST && process.arch === "x64")("AppImage - x64", async context => {
+      await runTest(context, "AppImage", Arch.x64)
     })
 
     // package manager tests specific to each distro (and corresponding docker image)
     for (const distro in packageManagerMap) {
       const { pms, target } = packageManagerMap[distro as keyof typeof packageManagerMap]
       for (const pm of pms) {
-        test(`${distro} - (${pm})`, async context => {
+        test(`${distro} - (${pm})`, { sequential: true }, async context => {
           if (!determineEnvironment(distro)) {
             context.skip()
           }
           process.env.ELECTRON_BUILDER_LINUX_PACKAGE_MANAGER = pm
-          await runTest(target, Arch.x64)
+          await runTest(context, target, Arch.x64)
           delete process.env.ELECTRON_BUILDER_LINUX_PACKAGE_MANAGER
         })
       }
@@ -84,7 +84,9 @@ const packageManagerMap: {
   },
 }
 
-async function runTest(target: string, arch: Arch = Arch.x64) {
+async function runTest(context: TestContext, target: string, arch: Arch = Arch.x64) {
+  const { expect } = context
+
   const tmpDir = new TmpDir("auto-update")
   const outDirs: ApplicationUpdatePaths[] = []
   await doBuild(expect, outDirs, Platform.current().createTarget([target], arch), tmpDir, process.platform === "win32")
@@ -93,9 +95,175 @@ async function runTest(target: string, arch: Arch = Arch.x64) {
   const newAppDir = outDirs[1]
 
   const dirPath = oldAppDir.dir
-  let appPath: string
-
   // Setup tests by installing the previous version
+  const appPath = await handleInitialInstallPerOS({ target, dirPath, arch })
+
+  if (!existsSync(appPath)) {
+    throw new Error(`App not found: ${appPath}`)
+  }
+
+  let queuedError: Error | null = null
+  try {
+    await runTestWithinServer(async (rootDirectory: string, updateConfigPath: string) => {
+      // Move app update to the root directory of the server
+      await fs.copy(newAppDir.dir, rootDirectory, { recursive: true, overwrite: true })
+
+      const verifyAppVersion = async (expectedVersion: string) => await launchAndWaitForQuit({ appPath, timeoutMs: 2 * 60 * 1000, updateConfigPath, expectedVersion })
+
+      const result = await verifyAppVersion(OLD_VERSION_NUMBER)
+      log.debug(result, "Test App version")
+      expect(result.version).toMatch(OLD_VERSION_NUMBER)
+
+      // Wait for quitAndInstall to take effect, increase delay if updates are slower
+      // (shouldn't be the case for such a small test app, but Windows with Debugger attached is pretty dam slow)
+      const delay = 60 * 1000
+      await new Promise(resolve => setTimeout(resolve, delay))
+
+      expect((await verifyAppVersion(NEW_VERSION_NUMBER)).version).toMatch(NEW_VERSION_NUMBER)
+    })
+  } catch (error: any) {
+    log.error({ error: error.message }, "Blackbox Updater Test failed to run")
+    queuedError = error
+  } finally {
+    // windows needs to release file locks, so a delay seems to be needed
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    await tmpDir.cleanup()
+    try {
+      await handleCleanupPerOS({ target })
+    } catch (error: any) {
+      log.error({ error: error.message }, "Blackbox Updater Test cleanup failed")
+      // ignore
+    }
+  }
+  if (queuedError) {
+    throw queuedError
+  }
+}
+
+type ApplicationUpdatePaths = {
+  dir: string
+  appPath: string
+}
+
+async function doBuild(
+  expect: ExpectStatic,
+  outDirs: Array<ApplicationUpdatePaths>,
+  targets: Map<Platform, Map<Arch, Array<string>>>,
+  tmpDir: TmpDir,
+  isWindows: boolean,
+  extraConfig?: Configuration | null
+) {
+  async function buildApp(
+    version: string,
+    targets: Map<Platform, Map<Arch, Array<string>>>,
+    extraConfig: Configuration | Nullish,
+    packed: (context: PackedContext) => Promise<any>
+  ) {
+    await assertPack(
+      expect,
+      "test-app",
+      {
+        targets,
+        config: {
+          productName: "TestApp",
+          executableName: "TestApp",
+          appId: "com.test.app",
+          artifactName: "${productName}.${ext}",
+          // asar: false, // not necessarily needed, just easier debugging tbh
+          electronLanguages: ["en"],
+          extraMetadata: {
+            name: "testapp",
+            version,
+          },
+          ...extraConfig,
+          compression: "store",
+          publish: {
+            provider: "s3",
+            bucket: "develar",
+            path: "test",
+          },
+          files: ["**/*", "../**/node_modules/**", "!path/**"],
+          nsis: {
+            artifactName: "${productName} Setup.${ext}",
+            // one click installer required. don't run after install otherwise we lose stdout pipe
+            oneClick: true,
+            runAfterFinish: false,
+          },
+        },
+      },
+      {
+        storeDepsLockfileSnapshot: false,
+        signed: true,
+        signedWin: isWindows,
+        packed,
+        projectDirCreated: async projectDir => {
+          await Promise.all([
+            outputFile(path.join(projectDir, "package-lock.json"), "{}"),
+            outputFile(path.join(projectDir, ".npmrc"), "node-linker=hoisted"),
+            modifyPackageJson(
+              projectDir,
+              data => {
+                data.devDependencies = {
+                  electron: ELECTRON_VERSION,
+                }
+                data.dependencies = {
+                  ...data.dependencies,
+                  "@electron/remote": "^2.1.2", // for debugging live application with GUI so that app.getVersion is accessible in renderer process
+                  "electron-updater": `file:${__dirname}/../../../packages/electron-updater`,
+                }
+                data.pnpm = {
+                  overrides: {
+                    "builder-util-runtime": `file:${__dirname}/../../../packages/builder-util-runtime`,
+                  },
+                }
+              },
+              true
+            ),
+            modifyPackageJson(
+              projectDir,
+              data => {
+                data.devDependencies = {
+                  electron: ELECTRON_VERSION,
+                }
+                data.dependencies = {
+                  ...data.dependencies,
+                  "@electron/remote": "^2.1.2", // for debugging live application with GUI so that app.getVersion is accessible in renderer process
+                  "electron-updater": `file:${__dirname}/../../../packages/electron-updater`,
+                }
+                data.pnpm = {
+                  overrides: {
+                    "builder-util-runtime": `file:${__dirname}/../../../packages/builder-util-runtime`,
+                  },
+                }
+              },
+              false
+            ),
+          ])
+          execSync("npm install", { cwd: projectDir, stdio: "inherit" })
+        },
+      }
+    )
+  }
+
+  const build = (version: string) =>
+    buildApp(version, targets, extraConfig, async context => {
+      // move dist temporarily out of project dir so each downloader can reference it
+      const dir = await tmpDir.getTempDir({ prefix: version })
+      await fs.move(context.outDir, dir)
+      const appPath = path.join(dir, path.relative(context.outDir, context.getAppPath(Platform.current(), archFromString(process.arch))))
+      outDirs.push({ dir, appPath })
+    })
+  try {
+    await build(OLD_VERSION_NUMBER)
+    await build(NEW_VERSION_NUMBER)
+  } catch (e: any) {
+    await tmpDir.cleanup()
+    throw e
+  }
+}
+
+async function handleInitialInstallPerOS({ target, dirPath, arch }: { target: string; dirPath: string; arch: Arch }): Promise<string> {
+  let appPath: string
   if (target === "AppImage") {
     appPath = path.join(dirPath, `TestApp.AppImage`)
   } else if (target === "deb") {
@@ -137,14 +305,14 @@ async function runTest(target: string, arch: Arch = Arch.x64) {
     const uninstaller = path.join(localProgramsPath, "Uninstall TestApp.exe")
     if (existsSync(uninstaller)) {
       console.log("Uninstalling", uninstaller)
-      execFileSync(uninstaller, [], { stdio: "inherit" })
+      execFileSync(uninstaller, ["/S", "/C", "exit"], { stdio: "inherit" })
       await new Promise(resolve => setTimeout(resolve, 5000))
     }
 
     const installerPath = path.join(dirPath, "TestApp Setup.exe")
     console.log("Installing windows", installerPath)
     // Don't use /S for silent install as we lose stdout pipe
-    execFileSync(installerPath, [], { stdio: "inherit" })
+    execFileSync(installerPath, ["/S"], { stdio: "inherit" })
 
     appPath = path.join(localProgramsPath, "TestApp.exe")
   } else if (process.platform === "darwin") {
@@ -152,151 +320,26 @@ async function runTest(target: string, arch: Arch = Arch.x64) {
   } else {
     throw new Error(`Unsupported Update test target: ${target}`)
   }
-
-  if (!existsSync(appPath)) {
-    throw new Error(`App not found: ${appPath}`)
-  }
-
-  await runTestWithinServer(async (rootDirectory: string, updateConfigPath: string) => {
-    // Move app update to the root directory of the server
-    await fs.copy(newAppDir.dir, rootDirectory, { recursive: true, overwrite: true })
-
-    const verifyAppVersion = async (expectedVersion: string) => await launchAndWaitForQuit({ appPath, timeoutMs: 2 * 60 * 1000, updateConfigPath, expectedVersion })
-
-    const result = await verifyAppVersion(OLD_VERSION_NUMBER)
-    log.debug(result, "Test App version")
-    expect(result.version).toMatch(OLD_VERSION_NUMBER)
-
-    // Wait for quitAndInstall to take effect, increase delay if updates are slower
-    // (shouldn't be the case for such a small test app, but Windows with Debugger attached is pretty dam slow)
-    const delay = 60 * 1000
-    await new Promise(resolve => setTimeout(resolve, delay))
-
-    expect((await verifyAppVersion(NEW_VERSION_NUMBER)).version).toMatch(NEW_VERSION_NUMBER)
-  })
-  // windows needs to release file locks, so a delay seems to be needed
-  await new Promise(resolve => setTimeout(resolve, 1000))
-  await tmpDir.cleanup()
+  return appPath
 }
 
-type ApplicationUpdatePaths = {
-  dir: string
-  appPath: string
-}
-
-async function doBuild(
-  expect: ExpectStatic,
-  outDirs: Array<ApplicationUpdatePaths>,
-  targets: Map<Platform, Map<Arch, Array<string>>>,
-  tmpDir: TmpDir,
-  isWindows: boolean,
-  extraConfig?: Configuration | null
-) {
-  async function buildApp(
-    version: string,
-    targets: Map<Platform, Map<Arch, Array<string>>>,
-    extraConfig: Configuration | Nullish,
-    packed: (context: PackedContext) => Promise<any>
-  ) {
-    await assertPack(
-      expect,
-      "test-app",
-      {
-        targets,
-        config: {
-          productName: "TestApp",
-          executableName: "TestApp",
-          appId: "com.test.app",
-          artifactName: "${productName}.${ext}",
-          // asar: false, // not necessarily needed, just easier debugging tbh
-          electronLanguages: ["en"],
-          extraMetadata: {
-            name: "testapp",
-            version,
-          },
-          ...extraConfig,
-          // compression: "store",
-          publish: {
-            provider: "s3",
-            bucket: "develar",
-            path: "test",
-          },
-          files: ["**/*", "../**/node_modules/**", "!path/**"],
-          nsis: {
-            artifactName: "${productName} Setup.${ext}",
-            // one click installer required. don't run after install otherwise we lose stdout pipe
-            oneClick: true,
-            runAfterFinish: false,
-          },
-        },
-      },
-      {
-        isInstallDepsBefore: true,
-        storeDepsLockfileSnapshot: false,
-        signed: true,
-        signedWin: isWindows,
-        packed,
-        projectDirCreated: projectDir =>
-          Promise.all([
-            outputFile(path.join(projectDir, "package-lock.json"), "{}"),
-            outputFile(path.join(projectDir, ".npmrc"), "node-linker=hoisted"),
-            modifyPackageJson(
-              projectDir,
-              data => {
-                data.devDependencies = {
-                  electron: ELECTRON_VERSION,
-                }
-                data.dependencies = {
-                  ...data.dependencies,
-                  "@electron/remote": "^2.1.2", // for debugging live application with GUI so that app.getVersion is accessible in renderer process
-                  "electron-updater": `file:${__dirname}/../../../packages/electron-updater`,
-                }
-                data.pnpm = {
-                  overrides: {
-                    "builder-util-runtime": `file:${__dirname}/../../../packages/builder-util-runtime`,
-                  },
-                }
-              },
-              true
-            ),
-            modifyPackageJson(
-              projectDir,
-              data => {
-                data.devDependencies = {
-                  electron: ELECTRON_VERSION,
-                }
-                data.dependencies = {
-                  ...data.dependencies,
-                  "@electron/remote": "^2.1.2", // for debugging live application with GUI so that app.getVersion is accessible in renderer process
-                  "electron-updater": `file:${__dirname}/../../../packages/electron-updater`,
-                }
-                data.pnpm = {
-                  overrides: {
-                    "builder-util-runtime": `file:${__dirname}/../../../packages/builder-util-runtime`,
-                  },
-                }
-              },
-              false
-            ),
-          ]),
-      }
-    )
-  }
-
-  const build = (version: string) =>
-    buildApp(version, targets, extraConfig, async context => {
-      // move dist temporarily out of project dir so each downloader can reference it
-      const dir = await tmpDir.getTempDir({ prefix: version })
-      await fs.move(context.outDir, dir)
-      const appPath = path.join(dir, path.relative(context.outDir, context.getAppPath(Platform.current(), archFromString(process.arch))))
-      outDirs.push({ dir, appPath })
-    })
-  try {
-    await build(OLD_VERSION_NUMBER)
-    await build(NEW_VERSION_NUMBER)
-  } catch (e: any) {
-    await tmpDir.cleanup()
-    throw e
+async function handleCleanupPerOS({ target }: { target: string }) {
+  // TODO: ignore for now, this doesn't block CI, but proper uninstall logic should be implemented
+  if (target === "deb") {
+    //   execSync("dpkg -r testapp", { stdio: "inherit" });
+  } else if (target === "rpm") {
+    // execSync(`zypper rm -y testapp`, { stdio: "inherit" })
+  } else if (target === "pacman") {
+    execSync(`pacman -R --noconfirm testapp`, { stdio: "inherit" })
+  } else if (process.platform === "win32") {
+    // access installed app's location
+    const localProgramsPath = path.join(process.env.LOCALAPPDATA || path.join(homedir(), "AppData", "Local"), "Programs", "TestApp")
+    const uninstaller = path.join(localProgramsPath, "Uninstall TestApp.exe")
+    console.log("Uninstalling", uninstaller)
+    execFileSync(uninstaller, ["/S", "/C", "exit"], { stdio: "inherit" })
+    await new Promise(resolve => setTimeout(resolve, 5000))
+  } else if (process.platform === "darwin") {
+    // ignore, nothing to uninstall, it's running/updating out of the local `dist` directory
   }
 }
 

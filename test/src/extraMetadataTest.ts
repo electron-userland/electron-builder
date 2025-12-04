@@ -34,7 +34,6 @@ function createExtraMetadataTest(expect: ExpectStatic, asar: boolean) {
       projectDirCreated: projectDir =>
         modifyPackageJson(projectDir, data => {
           data.scripts = {}
-          data.devDependencies = { foo: "boo" }
           data.foo = {
             bar: 42,
             existingProp: 22,
@@ -52,8 +51,8 @@ function createExtraMetadataTest(expect: ExpectStatic, asar: boolean) {
   )
 }
 
-test.ifDevOrLinuxCi("extra metadata", ({ expect }) => createExtraMetadataTest(expect, true))
-test.ifDevOrLinuxCi("extra metadata (no asar)", ({ expect }) => createExtraMetadataTest(expect, false))
+test("extra metadata", ({ expect }) => createExtraMetadataTest(expect, true))
+test("extra metadata (no asar)", ({ expect }) => createExtraMetadataTest(expect, false))
 
 test("cli", ({ expect }) => {
   // because these methods are internal

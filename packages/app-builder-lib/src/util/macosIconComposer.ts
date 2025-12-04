@@ -21,16 +21,22 @@ async function checkActoolVersion(tmpDir: string) {
 
   let versionInfo: Record<string, Record<string, string>> | undefined = undefined
 
+  let acToolOutputFile: fs.FileHandle | null = null
+  let errorQueued: Error | null = null
   try {
-    const acToolOutputFile = await fs.open(acToolOutputFileName, "w")
+    acToolOutputFile = await fs.open(acToolOutputFileName, "w")
     await spawn("actool", ["--version"], { stdio: ["ignore", acToolOutputFile.fd, acToolOutputFile.fd] })
     const acToolVersionOutput = await fs.readFile(acToolOutputFileName, "utf8")
     versionInfo = plist.parse(acToolVersionOutput) as Record<string, Record<string, string>>
-  } catch {
-    throw INVALID_ACTOOL_VERSION_ERROR
+  } catch (e: any) {
+    errorQueued = e
+  } finally {
+    if (acToolOutputFile) {
+      await acToolOutputFile.close()
+    }
   }
 
-  if (!versionInfo || !versionInfo["com.apple.actool.version"] || !versionInfo["com.apple.actool.version"]["short-bundle-version"]) {
+  if (errorQueued || !versionInfo || !versionInfo["com.apple.actool.version"] || !versionInfo["com.apple.actool.version"]["short-bundle-version"]) {
     throw INVALID_ACTOOL_VERSION_ERROR
   }
 

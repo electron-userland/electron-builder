@@ -106,7 +106,8 @@ export interface PlatformSpecificBuildOptions extends TargetSpecificOptions, Fil
   readonly artifactName?: string | null
 
   /**
-   * The executable name. Defaults to `productName`.
+   * The executable name. Defaults to `productName`
+   * Note: Except for Linux, where this would constitute a breaking change in previous behavior and lead to both invalid executable names and Desktop files. Ref comments in: https://github.com/electron-userland/electron-builder/pull/9068
    */
   readonly executableName?: string | null
 

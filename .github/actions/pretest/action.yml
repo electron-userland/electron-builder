@@ -28,10 +28,15 @@ runs:
         node-version: '22'
         cache: 'pnpm'
 
+    - name: Install bun globally
+      run: |
+        npm install -g bun@1.3.2
+      shell: bash
+
     - name: Update npm to mirror pr-release workflow environment
       run: npm install -g npm@11.6.2
       shell: bash
-      
+
     - name: Verify updated npm version
       run: npm -v
       shell: bash
@@ -55,4 +60,4 @@ runs:
 #   uses: ./.github/actions/pretest
 #   with:
 #     cache-path: ~/Library/Caches/electron
-#     cache-key: v-23.3.10-macos-electron
+#     cache-key: v-35.7.5-macos-electron
