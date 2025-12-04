@@ -151,6 +151,72 @@ test.ifMac("pkg scripts", ({ expect }) =>
   )
 )
 
+test.ifMac("pkg hostArchitectures for arm64", ({ expect }) =>
+  app(
+    expect,
+    {
+      targets: Platform.MAC.createTarget("pkg", Arch.arm64),
+    },
+    {
+      signed: false,
+      packed: async context => {
+        const pkgPath = path.join(context.outDir, "Test App ßW-1.1.0-arm64.pkg")
+        const unpackedDir = path.join(context.outDir, "pkg-unpacked")
+        await exec("pkgutil", ["--expand", pkgPath, unpackedDir])
+
+        const distributionXml = await fs.readFile(path.join(unpackedDir, "Distribution"), "utf8")
+        expect(distributionXml).toContain('hostArchitectures="arm64"')
+      },
+    }
+  )
+)
+
+test.ifMac("pkg hostArchitectures for x64", ({ expect }) =>
+  app(
+    expect,
+    {
+      targets: Platform.MAC.createTarget("pkg", Arch.x64),
+    },
+    {
+      signed: false,
+      packed: async context => {
+        const pkgPath = path.join(context.outDir, "Test App ßW-1.1.0.pkg")
+        const unpackedDir = path.join(context.outDir, "pkg-unpacked")
+        await exec("pkgutil", ["--expand", pkgPath, unpackedDir])
+
+        const distributionXml = await fs.readFile(path.join(unpackedDir, "Distribution"), "utf8")
+        expect(distributionXml).toContain('hostArchitectures="x86_64"')
+      },
+    }
+  )
+)
+
+test.ifMac("pkg minimumSystemVersion adds volume-check", ({ expect }) =>
+  app(
+    expect,
+    {
+      targets: Platform.MAC.createTarget("pkg", Arch.arm64),
+      config: {
+        mac: {
+          minimumSystemVersion: "12.0",
+        },
+      },
+    },
+    {
+      signed: false,
+      packed: async context => {
+        const pkgPath = path.join(context.outDir, "Test App ßW-1.1.0-arm64.pkg")
+        const unpackedDir = path.join(context.outDir, "pkg-unpacked")
+        await exec("pkgutil", ["--expand", pkgPath, unpackedDir])
+
+        const distributionXml = await fs.readFile(path.join(unpackedDir, "Distribution"), "utf8")
+        expect(distributionXml).toContain("<volume-check>")
+        expect(distributionXml).toContain('<os-version min="12.0"')
+      },
+    }
+  )
+)
+
 test.ifMac("pkg extra packages", async ({ expect }) => {
   const extraPackages = path.join("build", "extra-packages")
   return app(
