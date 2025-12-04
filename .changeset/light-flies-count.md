@@ -2,4 +2,4 @@
 "app-builder-lib": patch
 ---
 
-fix: moving unpacked directory flags to be post-processing of symlinks
+fix: do not process unpacked parent directories. Let it automatically be parsed in sequence and through electron/asar streaming
