@@ -39,7 +39,7 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
     const pkgJsonPath = await this.resolvePackage(packageName, depTree.path)
 
     if (pkgJsonPath == null) {
-      log.warn({ packageName, path: depTree.path, version: depTree.version }, `Cannot find package.json for dependency`)
+      log.debug({ packageName, path: depTree.path, version: depTree.version }, `Cannot find package.json for dependency`)
       return { path: depTree.path, prodDeps: {}, optionalDependencies: {} }
     }
     let packageJson: PackageJson
