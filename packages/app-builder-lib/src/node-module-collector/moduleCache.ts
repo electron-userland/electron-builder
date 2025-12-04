@@ -14,7 +14,7 @@ export type ModuleCache = {
   /** Cache for lstat results */
   lstat: Map<string, fs.Stats>
   /** Cache for require.resolve results (key: "packageName::fromDir") */
-  requireResolve: Map<string, string | null>
+  requireResolve: Map<string, { entry: string; packageDir: string } | null>
 }
 
 /**

@@ -41,21 +41,6 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
     return ["list", "--production", "--json", "--depth=Infinity", "--no-progress"]
   }
 
-  protected async getTreeFromWorkspaces(tree: YarnDependency): Promise<YarnDependency> {
-    if (!tree.workspaces || !tree.dependencies) {
-      return tree
-    }
-
-    const appName = this.packageVersionString(tree)
-
-    if (tree.dependencies?.[appName]) {
-      const { name, path } = tree.dependencies[appName]
-      log.debug({ name, path }, "pruning root app/self package from workspace tree")
-      delete tree.dependencies[appName]
-    }
-    return Promise.resolve(tree)
-  }
-
   protected async extractProductionDependencyGraph(tree: YarnDependency, dependencyId: string): Promise<void> {
     if (this.productionGraph[dependencyId]) {
       return
@@ -72,7 +57,11 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
       return childDependencyId
     })
 
-    this.productionGraph[dependencyId] = { dependencies: await Promise.all(productionDeps) }
+    const dependencies: string[] = []
+    for (const dep of productionDeps) {
+      dependencies.push(await dep)
+    }
+    this.productionGraph[dependencyId] = { dependencies }
   }
 
   protected getDependencyType(pkgName: string, parentPkgJson: PackageJson): "prod" | "dev" | "optional" {
@@ -123,15 +112,14 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
 
     const rootPkgJson = await this.appPkgJson.value
     return Promise.resolve({
-      name: rootPkgJson?.name || ".",
-      version: rootPkgJson?.version || "unknown",
+      name: rootPkgJson.name,
+      version: rootPkgJson.version,
       path: this.rootDir,
       dependencies,
       workspaces: rootPkgJson?.workspaces,
     })
   }
-
-  private async normalizeTree(tree: YarnListTree[], seen = new Set<string>(), appName?: string): Promise<Record<string, YarnDependency>> {
+  private async normalizeTree(tree: YarnListTree[], seen = new Set<string>(), appName?: string, parentPath: string = this.rootDir): Promise<Record<string, YarnDependency>> {
     const normalized: Record<string, YarnDependency> = {}
 
     for (const node of tree) {
@@ -146,47 +134,61 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
 
       const isShadow = node.shadow && node.color === "dim"
       if (isShadow) {
-        log.debug({ pkgName, version }, "skipping shadow node")
-        continue
+        log.debug({ pkgName, version }, "registering shadow node (hoisted elsewhere), will resolve")
       }
 
       if (seen.has(id)) {
         continue
       }
 
-      seen.add(id)
+      // For non-shadow nodes, try to resolve the actual path
+      let pkgPath: string | null = null
 
-      // Build the expected path - yarn classic hoists to root node_modules
-      const pkgPath = path.join(this.rootDir, "node_modules", pkgName)
+      // First try hoisted location (most common for Yarn Classic)
+      const hoistedPath = path.join(this.rootDir, "node_modules", pkgName)
+      if (await this.existsMemoized(hoistedPath)) {
+        pkgPath = hoistedPath
+      } else {
+        // If not hoisted, try nested under parent
+        const nestedPath = path.join(parentPath, "node_modules", pkgName)
+        if (await this.existsMemoized(nestedPath)) {
+          pkgPath = nestedPath
+        } else {
+          // Walk up the directory tree
+          let current = parentPath
+          while (current !== this.rootDir && current !== path.dirname(current)) {
+            const candidatePath = path.join(current, "node_modules", pkgName)
+            if (await this.existsMemoized(candidatePath)) {
+              pkgPath = candidatePath
+              break
+            }
+            current = path.dirname(current)
+          }
+        }
+      }
+
+      if (!pkgPath) {
+        log.warn({ pkgName, version, parentPath }, "could not find package in node_modules hierarchy")
+        continue
+      }
+      seen.add(id)
 
       const normalizedDep: YarnDependency = {
         name: pkgName,
         version,
-        path: pkgPath, // Will be resolved later in collectAllDependencies
+        path: pkgPath,
         dependencies: {},
         optionalDependencies: {},
       }
 
-      log.debug({ name: pkgName, version }, "+ normalize")
+      log.debug({ name: pkgName, version, path: pkgPath }, "+ normalize")
 
+      // Process children (which may include shadow nodes that we'll skip)
       if (node.children && node.children.length > 0) {
-        for (const child of node.children) {
-          const childMatch = child.name.match(/^(.*)@([^@]+)$/)
-          if (!childMatch) {
-            continue
-          }
+        const childDeps = await this.normalizeTree(node.children, seen, appName, pkgPath)
 
-          const [, childName, childVersion] = childMatch
-          if (child.shadow && child.color === "dim") {
-            continue
-          }
-
-          log.debug({ parent: pkgName, childName, childVersion }, "  + normalize child")
-          const childDeps = await this.normalizeTree([child], seen, appName)
-
-          for (const [childDepName, childDep] of Object.entries(childDeps)) {
-            normalizedDep.dependencies![childDepName] = childDep
-          }
+        for (const [childDepName, childDep] of Object.entries(childDeps)) {
+          normalizedDep.dependencies![childDepName] = childDep
         }
       }
 

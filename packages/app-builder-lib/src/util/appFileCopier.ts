@@ -182,7 +182,7 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
   const { tempDirManager, cancellationToken, appDir, projectDir } = packager
 
   let deps: Array<NodeModuleInfo> = []
-  const searchDirectories = Array.from(new Set([appDir, projectDir, await packager.getWorkspaceRoot()])).filter((it): it is string => it != null)
+  const searchDirectories = Array.from(new Set([projectDir, appDir, await packager.getWorkspaceRoot()])).filter((it): it is string => it != null)
   for (const dir of searchDirectories) {
     if (cancellationToken.cancelled) {
       throw new Error("user cancelled")
@@ -193,6 +193,10 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
       log.debug({ dir, nodeModules: dirDeps }, "collected node modules")
       deps = dirDeps
       break
+    }
+    const attempt = searchDirectories.indexOf(dir)
+    if (attempt < searchDirectories.length - 1) {
+      log.info({ searchDir: dir, attempt }, "no node modules found in collection, trying next search directory")
     }
   }
   if (deps.length === 0) {

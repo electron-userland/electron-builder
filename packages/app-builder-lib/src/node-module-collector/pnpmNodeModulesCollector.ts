@@ -11,7 +11,49 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
   }
 
   protected getArgs(): string[] {
-    return ["list", "--prod", "--json", "--depth", "Infinity"]
+    return ["list", "--prod", "--json", "--depth", "Infinity", "--long"]
+  }
+
+  private async resolveActualPath(depTree: PnpmDependency): Promise<string> {
+    // If using hoisted mode, try to find the package at the hoisted location first
+    if (await this.isHoisted.value) {
+      const packageName = depTree.name || depTree.from
+      if (packageName) {
+        const hoistedPath = path.join(this.rootDir, "node_modules", packageName)
+        if (await this.existsMemoized(hoistedPath)) {
+          return hoistedPath
+        }
+      }
+    }
+    // Fall back to the reported path (which might be the .pnpm store path)
+    return depTree.path
+  }
+
+  private async getProductionDependencies(depTree: PnpmDependency): Promise<{ path: string; prodDeps: Record<string, string>; optionalDependencies: Record<string, string> }> {
+    const packageName = depTree.name || depTree.from
+    if (isEmptyOrSpaces(packageName)) {
+      log.error(depTree, `Cannot determine production dependencies for package with empty name`)
+      throw new Error(`Cannot compute production dependencies for package with empty name: ${packageName}`)
+    }
+
+    const pkgJsonPath = await this.resolvePackage(packageName, depTree.path)
+
+    if (pkgJsonPath == null) {
+      log.debug({ packageName, path: depTree.path, version: depTree.version }, `Cannot find package.json for dependency`)
+      return { path: depTree.path, prodDeps: {}, optionalDependencies: {} }
+    }
+    let packageJson: PackageJson
+    try {
+      packageJson = await this.readJsonMemoized(pkgJsonPath.entry)
+    } catch (error: any) {
+      log.warn(pkgJsonPath, `Failed to read package.json: ${error.message}`)
+      return { path: pkgJsonPath.packageDir, prodDeps: {}, optionalDependencies: {} }
+    }
+    return {
+      path: pkgJsonPath.packageDir,
+      prodDeps: { ...packageJson.dependencies, ...packageJson.optionalDependencies },
+      optionalDependencies: { ...packageJson.optionalDependencies },
+    }
   }
 
   protected async extractProductionDependencyGraph(tree: PnpmDependency, dependencyId: string) {
@@ -19,28 +61,8 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
       return
     }
 
-    const getProductionDependencies = async (depTree: PnpmDependency): Promise<{ prodDeps: Record<string, string>; optionalDependencies: Record<string, string> } | null> => {
-      const packageName = depTree.name || depTree.from
-      if (isEmptyOrSpaces(packageName)) {
-        log.error(depTree, `Cannot determine production dependencies for package with empty name`)
-        throw new Error(`Cannot compute production dependencies for package with empty name: ${packageName}`)
-      }
-
-      const p = path.normalize((await this.resolvePackageDir(packageName, depTree.path)) ?? (await this.resolvePath(depTree.path)))
-      const pkgJsonPath = path.join(p, "package.json")
-
-      let packageJson: PackageJson
-      try {
-        packageJson = this.requireMemoized(pkgJsonPath)
-      } catch (error: any) {
-        log.warn(null, `Failed to read package.json for ${p}: ${error.message}`)
-        return null
-      }
-      return { prodDeps: { ...packageJson.dependencies, ...packageJson.optionalDependencies }, optionalDependencies: { ...packageJson.optionalDependencies } }
-    }
-
     const packageName = tree.name || tree.from
-    const json = packageName === dependencyId ? null : await getProductionDependencies(tree)
+    const json = packageName === dependencyId ? null : await this.getProductionDependencies(tree)
     const prodDependencies = json?.prodDeps ?? { ...(tree.dependencies || {}), ...(tree.optionalDependencies || {}) }
     if (prodDependencies == null) {
       this.productionGraph[dependencyId] = { dependencies: [] }
@@ -48,41 +70,47 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
     }
     const deps = { ...(tree.dependencies || {}), ...(tree.optionalDependencies || {}) }
     this.productionGraph[dependencyId] = { dependencies: [] }
-    const depPromises = Object.entries(deps)
-      .filter(([packageName, dependency]) => {
-        // First check if it's in production dependencies
-        if (!prodDependencies[packageName]) {
-          return false
+    const depPromises = Object.entries(deps).map(async ([packageName, dependency]) => {
+      // First check if it's in production dependencies
+      if (!prodDependencies[packageName]) {
+        return undefined
+      }
+
+      // Then check if optional dependency path exists (using actual resolved path)
+      if (json?.optionalDependencies?.[packageName]) {
+        const actualPath = await this.resolveActualPath(dependency)
+        if (!(await this.existsMemoized(actualPath))) {
+          log.debug(null, `Optional dependency ${packageName}@${dependency.version} path doesn't exist: ${actualPath}`)
+          return undefined
         }
+      }
+      const childDependencyId = this.packageVersionString(dependency)
+      await this.extractProductionDependencyGraph(dependency, childDependencyId)
+      return childDependencyId
+    })
 
-        // Then check if optional dependency path exists (using memoized version)
-        if (json?.optionalDependencies?.[packageName] && !this.existsSyncMemoized(dependency.path)) {
-          log.debug(null, `Optional dependency ${packageName}@${dependency.version} path doesn't exist: ${dependency.path}`)
-          return false
-        }
-
-        return true
-      })
-      .map(async ([, dependency]) => {
-        const childDependencyId = this.packageVersionString(dependency)
-        await this.extractProductionDependencyGraph(dependency, childDependencyId)
-        return childDependencyId
-      })
-
-    const dependencies = await Promise.all(depPromises)
-    this.productionGraph[dependencyId] = { dependencies }
+    const collectedDependencies: string[] = []
+    for (const dep of depPromises) {
+      const result = await dep
+      if (result !== undefined) {
+        collectedDependencies.push(result)
+      }
+    }
+    this.productionGraph[dependencyId] = { dependencies: collectedDependencies }
   }
 
   protected async collectAllDependencies(tree: PnpmDependency) {
     // Collect regular dependencies
     for (const [key, value] of Object.entries(tree.dependencies || {})) {
-      this.allDependencies.set(`${key}@${value.version}`, value)
+      const json = await this.getProductionDependencies(value)
+      this.allDependencies.set(`${key}@${value.version}`, { ...value, path: json.path })
       await this.collectAllDependencies(value)
     }
 
     // Collect optional dependencies if they exist
     for (const [key, value] of Object.entries(tree.optionalDependencies || {})) {
-      this.allDependencies.set(`${key}@${value.version}`, value)
+      const json = await this.getProductionDependencies(value)
+      this.allDependencies.set(`${key}@${value.version}`, { ...value, path: json.path })
       await this.collectAllDependencies(value)
     }
   }

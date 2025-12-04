@@ -1,4 +1,4 @@
-import { exists, log, retry, TmpDir } from "builder-util"
+import { exists, isEmptyOrSpaces, log, retry, TmpDir } from "builder-util"
 import * as childProcess from "child_process"
 import { CancellationToken } from "builder-util-runtime"
 import * as fs from "fs-extra"
@@ -9,35 +9,21 @@ import { hoist, type HoisterResult, type HoisterTree } from "./hoist"
 import { createModuleCache, type ModuleCache } from "./moduleCache"
 import { getPackageManagerCommand, PM } from "./packageManager"
 import type { Dependency, DependencyGraph, NodeModuleInfo, PackageJson } from "./types"
-import { fileURLToPath, pathToFileURL } from "node:url"
 
 export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDepType, OptionalDepType>, OptionalDepType> {
-  private nodeModules: NodeModuleInfo[] = []
-  protected allDependencies: Map<string, ProdDepType> = new Map()
-  protected productionGraph: DependencyGraph = {}
-  protected pkgJsonCache: Map<string, string> = new Map()
-  protected memoResolvedModules = new Map<string, Promise<string | null>>()
-
-  private importMetaResolve = new Lazy(async () => {
-    try {
-      // Node >= 16 builtin ESM-aware resolver
-      const packageName = "import-meta-resolve"
-      const imported = await import(packageName)
-      return imported.resolve
-    } catch {
-      return null
-    }
-  })
+  private readonly nodeModules: NodeModuleInfo[] = []
+  protected readonly allDependencies: Map<string, ProdDepType> = new Map()
+  protected readonly productionGraph: DependencyGraph = {}
 
   // Unified cache for all file system and module operations
-  protected cache: ModuleCache = createModuleCache()
+  private readonly cache: ModuleCache = createModuleCache()
 
-  protected isHoisted = new Lazy<boolean>(async () => {
+  protected readonly isHoisted = new Lazy<boolean>(async () => {
     const { manager } = this.installOptions
     const command = getPackageManagerCommand(manager)
 
-    const config = (await this.asyncExec(command, ["config", "list"])).stdout
-    if (config == null) {
+    const config = (await this.asyncExec(command, ["config", "list"])).stdout?.trim()
+    if (isEmptyOrSpaces(config)) {
       log.debug({ manager }, "unable to determine if node_modules are hoisted: no config output. falling back to hoisted mode")
       return false
     }
@@ -69,7 +55,6 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     }
 
     await this.collectAllDependencies(tree, packageName)
-
     const realTree: ProdDepType = await this.getTreeFromWorkspaces(tree, packageName)
     await this.extractProductionDependencyGraph(realTree, packageName)
 
@@ -77,11 +62,11 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
       throw new Error("getNodeModules cancelled after building production graph")
     }
 
-    const hoisterResult: HoisterResult = hoist(this.transformToHoisterTree(this.productionGraph, packageName), { check: true })
-
+    const hoisterResult: HoisterResult = hoist(this.transformToHoisterTree(this.productionGraph, packageName), {
+      check: log.isDebugEnabled,
+    })
     await this._getNodeModules(hoisterResult.dependencies, this.nodeModules)
     log.debug({ packageName, depCount: this.nodeModules.length }, "node modules collection complete")
-
     return this.nodeModules
   }
 
@@ -170,6 +155,20 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     return this.cache.realPath.get(filePath)!
   }
 
+  protected requireMemoized(pkgPath: string): PackageJson {
+    if (!this.cache.packageJson.has(pkgPath)) {
+      this.cache.packageJson.set(pkgPath, require(pkgPath))
+    }
+    return this.cache.packageJson.get(pkgPath)!
+  }
+
+  protected existsSyncMemoized(filePath: string): boolean {
+    if (!this.cache.exists.has(filePath)) {
+      this.cache.exists.set(filePath, fs.existsSync(filePath))
+    }
+    return this.cache.exists.get(filePath)!
+  }
+
   protected async resolvePath(filePath: string): Promise<string> {
     // Check if we've already resolved this path
     if (this.cache.realPath.has(filePath)) {
@@ -194,74 +193,54 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
   }
 
   /**
-   * Resolves a package to its filesystem location using Node.js module resolution.
-   * Returns the directory containing the package, not the package.json path.
+   * Resolve a package directory purely from the filesystem.
+   * Does NOT attempt to load the module or resolve an "exports" entrypoint.
+   * Good for Yarn 4 because a package may not be resolvable as a module,
+   * but still exists on disk.
    */
-  protected async resolvePackageDir(packageName: string, fromDir: string): Promise<string | null> {
+  protected async resolvePackage(packageName: string, fromDir: string): Promise<{ entry: string; packageDir: string } | null> {
     const cacheKey = `${packageName}::${fromDir}`
     if (this.cache.requireResolve.has(cacheKey)) {
       return this.cache.requireResolve.get(cacheKey)!
     }
 
-    const resolveEntry = async () => {
-      // 1) Try Node ESM resolver (handles exports reliably)
-      if (await this.importMetaResolve.value) {
-        try {
-          const url = (await this.importMetaResolve.value)(packageName, pathToFileURL(fromDir).href)
-          return url.startsWith("file://") ? fileURLToPath(url) : null
-        } catch {
-          // ignore
-        }
-      }
-
-      // 2) Fallback: require.resolve (CJS, old packages)
-      try {
-        return require.resolve(packageName, { paths: [fromDir, this.rootDir] })
-      } catch {
-        // ignore
-      }
-
-      return null
+    // 1. NESTED under fromDir/node_modules/<name>
+    let candidate = path.join(fromDir, "node_modules", packageName)
+    let pkgJson = path.join(candidate, "package.json")
+    if (await this.existsMemoized(pkgJson)) {
+      this.cache.requireResolve.set(cacheKey, { entry: pkgJson, packageDir: candidate })
+      return { entry: pkgJson, packageDir: candidate }
     }
 
-    const entry = await resolveEntry()
-    if (!entry) {
-      this.cache.requireResolve.set(cacheKey, null)
-      return null
+    // 2. HOISTED under rootDir/node_modules/<name>
+    candidate = path.join(this.rootDir, "node_modules", packageName)
+    pkgJson = path.join(candidate, "package.json")
+    if (await this.existsMemoized(pkgJson)) {
+      this.cache.requireResolve.set(cacheKey, { entry: pkgJson, packageDir: candidate })
+      return { entry: pkgJson, packageDir: candidate }
     }
 
-    // 3) Walk upward until you find a package.json
-    let dir = path.dirname(entry)
+    // 3. FALLBACK: try parent directories BFS (classic Node-style search)
+    let current = fromDir
     while (true) {
-      const pkgFile = path.join(dir, "package.json")
-      if (await exists(pkgFile)) {
-        this.cache.requireResolve.set(cacheKey, dir)
-        return dir
+      const nm = path.join(current, "node_modules", packageName)
+      const pkg = path.join(nm, "package.json")
+
+      if (await this.existsMemoized(pkg)) {
+        this.cache.requireResolve.set(cacheKey, { entry: pkg, packageDir: nm })
+        return { entry: pkg, packageDir: nm }
       }
 
-      const parent = path.dirname(dir)
-      if (parent === dir) {
-        break // root reached
+      const parent = path.dirname(current)
+      if (parent === current) {
+        break
       }
-      dir = parent
+      current = parent
     }
 
+    // 4. LAST RESORT: DO NOT throw — just return null
     this.cache.requireResolve.set(cacheKey, null)
     return null
-  }
-
-  protected requireMemoized(pkgPath: string): PackageJson {
-    if (!this.cache.packageJson.has(pkgPath)) {
-      this.cache.packageJson.set(pkgPath, require(pkgPath))
-    }
-    return this.cache.packageJson.get(pkgPath)!
-  }
-
-  protected existsSyncMemoized(filePath: string): boolean {
-    if (!this.cache.exists.has(filePath)) {
-      this.cache.exists.set(filePath, fs.existsSync(filePath))
-    }
-    return this.cache.exists.get(filePath)!
   }
 
   protected cacheKey(pkg: ProdDepType): string {
@@ -294,9 +273,10 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
 
     if (tree.dependencies?.[packageName]) {
       const { name, path, dependencies } = tree.dependencies[packageName]
-      log.debug({ name, path, dependencies: JSON.stringify(dependencies) }, "pruning root app/self package from workspace tree")
+      log.debug({ name, path, dependencies: JSON.stringify(dependencies) }, "pruning root app/self reference from workspace tree, merging dependencies uptree")
       for (const [name, pkg] of Object.entries(dependencies ?? {})) {
         tree.dependencies[name] = pkg
+        this.allDependencies.set(this.packageVersionString(pkg), pkg)
       }
       delete tree.dependencies[packageName]
     }
@@ -391,6 +371,8 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
       command = "cmd.exe"
       args = ["/c", tempBatFile, ...args]
     }
+
+    log.debug({ command, args, cwd, tempOutputFile }, "spawning node module collector process")
 
     await new Promise<void>((resolve, reject) => {
       const outStream = createWriteStream(tempOutputFile)

@@ -26,9 +26,7 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
 
   protected async collectAllDependencies(tree: NpmDependency) {
     for (const [, value] of Object.entries(tree.dependencies || {})) {
-      const { _dependencies = {}, dependencies = {} } = value
-      const isDuplicateDep = Object.keys(_dependencies).length > 0 && Object.keys(dependencies).length === 0
-      if (isDuplicateDep) {
+      if (this.isDuplicatedNpmDependency(value)) {
         continue
       }
       this.allDependencies.set(this.packageVersionString(value), value)
@@ -41,22 +39,33 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
       return
     }
 
-    const { _dependencies: prodDependencies = {}, dependencies = {} } = tree
-    const isDuplicateDep = Object.keys(prodDependencies).length > 0 && Object.keys(dependencies).length === 0
-    const resolvedDeps = isDuplicateDep ? (this.allDependencies.get(dependencyId)?.dependencies ?? {}) : dependencies
+    const isDuplicateDep = this.isDuplicatedNpmDependency(tree)
+    const resolvedDeps = isDuplicateDep ? this.allDependencies.get(dependencyId)?.dependencies : tree.dependencies
     // Initialize with empty dependencies array first to mark this dependency as "in progress"
     // After initialization, if there are libraries with the same name+version later, they will not be searched recursively again
     // This will prevents infinite loops when circular dependencies are encountered.
     this.productionGraph[dependencyId] = { dependencies: [] }
-    const productionDeps = Object.entries(resolvedDeps)
+    const productionDeps = Object.entries(resolvedDeps || {})
       .filter(([packageName]) => this.isProdDependency(packageName, tree))
       .map(async ([, dependency]) => {
         const childDependencyId = this.packageVersionString(dependency)
         await this.extractProductionDependencyGraph(dependency, childDependencyId)
         return childDependencyId
       })
-    const collectedDependencies = await Promise.all(productionDeps)
+
+    const collectedDependencies: string[] = []
+    for (const dep of productionDeps) {
+      collectedDependencies.push(await dep)
+    }
     this.productionGraph[dependencyId] = { dependencies: collectedDependencies }
+  }
+
+  // Check: is package already included as a prod dependency due to another package?
+  // We need to check this to prevent infinite loops in case of duplicated dependencies
+  private isDuplicatedNpmDependency(tree: NpmDependency): boolean {
+    const { _dependencies = {}, dependencies = {} } = tree
+    const isDuplicateDep = Object.keys(_dependencies).length > 0 && Object.keys(dependencies).length === 0
+    return isDuplicateDep
   }
 
   protected isProdDependency(packageName: string, tree: NpmDependency) {
@@ -84,7 +93,7 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
       }
 
       // Read package.json using memoized require for consistency with Node.js module system
-      const pkg: PackageJson = this.requireMemoized(pkgPath)
+      const pkg: PackageJson = await this.readJsonMemoized(pkgPath)
       const resolvedPackageDir = await this.resolvePath(packageDir)
 
       // Use resolved path as the unique identifier to prevent circular dependencies
@@ -109,25 +118,24 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
       for (const [depName, depVersion] of Object.entries(allProdDepNames)) {
         try {
           // Resolve the dependency using Node.js module resolution from this package's directory
-          const depPath = await this.resolvePackageDir(depName, packageDir)
+          const resolvedPackage = await this.resolvePackage(depName, packageDir)
 
-          if (!depPath) {
-            log.warn({ package: pkg.name, dependency: depName, version: depVersion }, "dependency not found, skipping")
+          if (!resolvedPackage) {
+            log.warn({ package: pkg.name, dependency: depName, version: depVersion }, "dependency not found")
             continue
           }
 
-          const resolvedDepPath = await this.resolvePath(depPath)
-
+          const resolvedDepPath = await this.resolvePath(resolvedPackage.packageDir)
           // Skip if this dependency resolves to the base directory or any parent we're already processing
           if (resolvedDepPath === resolvedPackageDir || resolvedDepPath === (await this.resolvePath(baseDir))) {
             log.debug({ package: pkg.name, dependency: depName, resolvedPath: resolvedDepPath }, "skipping self-referential dependency")
             continue
           }
 
-          log.debug({ package: pkg.name, dependency: depName, resolvedPath: depPath }, "processing production dependency")
+          log.debug({ package: pkg.name, dependency: depName, ...resolvedPackage, resolvedDepPath }, "processing production dependency")
 
           // Recursively build the dependency tree for this dependency
-          prodDeps[depName] = await buildFromPackage(depPath)
+          prodDeps[depName] = await buildFromPackage(resolvedDepPath)
         } catch (error: any) {
           log.warn({ package: pkg.name, dependency: depName, error: error.message }, "failed to process dependency, skipping")
         }
