@@ -20,10 +20,10 @@ export const NsisTargetOptions = (() => {
 })()
 
 export const NSIS_PATH = () => {
-  const custom = process.env.ELECTRON_BUILDER_NSIS_DIR
+  const custom = process.env.ELECTRON_BUILDER_NSIS_DIR?.trim()
   if (!isEmptyOrSpaces(custom)) {
-    log.info({ path: custom.trim() }, "using local nsis")
-    return Promise.resolve(custom.trim())
+    log.info({ path: custom }, "using local nsis")
+    return Promise.resolve(custom)
   }
   return NsisTargetOptions.then((options: NsisOptions) => {
     if (options.customNsisBinary) {
@@ -39,10 +39,10 @@ export const NSIS_PATH = () => {
 }
 
 export const NSIS_RESOURCES_PATH = () => {
-  const custom = process.env.ELECTRON_BUILDER_NSIS_RESOURCES_DIR
+  const custom = process.env.ELECTRON_BUILDER_NSIS_RESOURCES_DIR?.trim()
   if (!isEmptyOrSpaces(custom)) {
-    log.info({ path: custom.trim() }, "using local nsis-resources")
-    return Promise.resolve(custom.trim())
+    log.info({ path: custom }, "using local nsis-resources")
+    return Promise.resolve(custom)
   }
   return NsisTargetOptions.then((options: NsisOptions) => {
     if (options.customNsisResources) {
