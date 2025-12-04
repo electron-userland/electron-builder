@@ -1,5 +1,12 @@
 # builder-util
 
+## 26.3.4
+
+### Patch Changes
+
+- Chore: resolve lint-deps issue now that ci-info isn't used _[`#9412`](https://github.com/electron-userland/electron-builder/pull/9412) [`2faee4d`](https://github.com/electron-userland/electron-builder/commit/2faee4d941d16c6f52d6c793c709a77ccfb79d0a) [@mmaietta](https://github.com/mmaietta)_
+- Fix: only use hardlinks during unit tests to avoid breaking debian builds where /opt is on a different drive _[`#9397`](https://github.com/electron-userland/electron-builder/pull/9397) [`da1d768`](https://github.com/electron-userland/electron-builder/commit/da1d7687c6d2d2db8e319e371ba001c946bf130c) [@mmaietta](https://github.com/mmaietta)_
+
 ## 26.3.1
 
 ### Patch Changes
