@@ -1,4 +1,4 @@
-import { createPackageFromStreams, AsarStreamType, AsarDirectory } from "@electron/asar"
+import { createPackageFromStreams, AsarStreamType } from "@electron/asar"
 import { log } from "builder-util"
 import { exists, Filter } from "builder-util/out/fs"
 import * as fs from "fs-extra"
@@ -100,17 +100,12 @@ export class AsarPackager {
         const stat = fileSet.metadata.get(file)!
         const destination = path.relative(this.config.defaultDestination, getDestinationPath(file, fileSet))
 
-        const paths = Array.from(unpackedPaths).map(p => path.normalize(p))
-
-        const isChildDirectory = (fileOrDirPath: string) =>
-          paths.includes(path.normalize(fileOrDirPath)) || paths.some(unpackedPath => path.normalize(fileOrDirPath).startsWith(unpackedPath + path.sep))
+        const normalizedUnpackedPaths = Array.from(unpackedPaths).map(p => path.normalize(p))
         const isUnpacked = (dir: string) => {
-          const isChild = isChildDirectory(dir)
+          const isChild = normalizedUnpackedPaths.some(unpackedPath => path.normalize(dir).startsWith(unpackedPath + path.sep))
           const isFileUnpacked = this.config.unpackPattern?.(file, stat) ?? false
           return isChild || isFileUnpacked
         }
-
-        this.processParentDirectories(isUnpacked, destination, results, resultsPaths)
 
         const result = await this.processFileOrSymlink({
           file,
@@ -127,25 +122,6 @@ export class AsarPackager {
       }
     }
     return results
-  }
-
-  private processParentDirectories(isUnpacked: (path: string) => boolean, destination: string, results: AsarStreamType[], resultsPaths: Set<string>) {
-    // process parent directories
-    let superDir = path.dirname(path.normalize(destination))
-    while (superDir !== ".") {
-      const dir: AsarDirectory = {
-        type: "directory",
-        path: superDir,
-        unpacked: isUnpacked(superDir),
-      }
-      // add to results if not already present
-      if (!resultsPaths.has(dir.path)) {
-        results.push(dir)
-        resultsPaths.add(dir.path)
-      }
-
-      superDir = path.dirname(superDir)
-    }
   }
 
   private async processFileOrSymlink(options: {
