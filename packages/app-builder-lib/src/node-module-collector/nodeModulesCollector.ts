@@ -10,8 +10,8 @@ import { createModuleCache, type ModuleCache } from "./moduleCache"
 import { getPackageManagerCommand, PM } from "./packageManager"
 import type { Dependency, DependencyGraph, NodeModuleInfo, PackageJson } from "./types"
 import { fileURLToPath, pathToFileURL } from "node:url"
-
-type Result = { foundPath: string; version: string } | null
+import semver from "semver"
+type Result = { packageDir: string; version: string } | null
 
 export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDepType, OptionalDepType>, OptionalDepType> {
   private nodeModules: NodeModuleInfo[] = []
@@ -211,67 +211,67 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     }
   }
 
-  /**
-   * Resolves a package to its filesystem location using Node.js module resolution.
-   * Returns the directory containing the package, not the package.json path.
-   */
-  protected async resolvePackageDir(options: { packageName: string; fromDir: string; packageVersion: string }): Promise<{ entry: string; packageDir: string } | null> {
-    const { packageName, fromDir, packageVersion } = options
-    const cacheKey = `${packageName}::${packageVersion}::${fromDir}`
-    if (this.cache.requireResolve.has(cacheKey)) {
-      return this.cache.requireResolve.get(cacheKey)!
-    }
+  // /**
+  //  * Resolves a package to its filesystem location using Node.js module resolution.
+  //  * Returns the directory containing the package, not the package.json path.
+  //  */
+  // protected async resolvePackageDir(options: { packageName: string; fromDir: string; packageVersion: string }): Promise<{ entry: string; packageDir: string } | null> {
+  //   const { packageName, fromDir, packageVersion } = options
+  //   const cacheKey = `${packageName}::${packageVersion}::${fromDir}`
+  //   if (this.cache.requireResolve.has(cacheKey)) {
+  //     return this.cache.requireResolve.get(cacheKey)!
+  //   }
 
-    const resolveEntry = async () => {
-      // 1) Try Node ESM resolver (handles exports reliably)
-      if (await this.importMetaResolve.value) {
-        try {
-          const url = (await this.importMetaResolve.value)(packageName, pathToFileURL(fromDir).href)
-          const result = url.startsWith("file://") ? fileURLToPath(url) : null
-          return result
-        } catch (error: any) {
-          log.debug({ error: error.message }, "import-meta-resolve faile, attempting require.resolved")
-          // ignore
-        }
-      }
+  //   const resolveEntry = async () => {
+  //     // 1) Try Node ESM resolver (handles exports reliably)
+  //     if (await this.importMetaResolve.value) {
+  //       try {
+  //         const url = (await this.importMetaResolve.value)(packageName, pathToFileURL(fromDir).href)
+  //         const result = url.startsWith("file://") ? fileURLToPath(url) : null
+  //         return result
+  //       } catch (error: any) {
+  //         log.debug({ error: error.message }, "import-meta-resolve faile, attempting require.resolved")
+  //         // ignore
+  //       }
+  //     }
 
-      // 2) Fallback: require.resolve (CJS, old packages)
-      try {
-        const result = require.resolve(packageName, { paths: [fromDir, this.rootDir] })
-        return result
-      } catch (error: any) {
-        log.debug({ error: error.message }, "require.resolve failed")
-        // ignore
-      }
+  //     // 2) Fallback: require.resolve (CJS, old packages)
+  //     try {
+  //       const result = require.resolve(packageName, { paths: [fromDir, this.rootDir] })
+  //       return result
+  //     } catch (error: any) {
+  //       log.debug({ error: error.message }, "require.resolve failed")
+  //       // ignore
+  //     }
 
-      return null
-    }
+  //     return null
+  //   }
 
-    const entry = await resolveEntry()
-    if (!entry) {
-      this.cache.requireResolve.set(cacheKey, null)
-      return null
-    }
+  //   const entry = await resolveEntry()
+  //   if (!entry) {
+  //     this.cache.requireResolve.set(cacheKey, null)
+  //     return null
+  //   }
 
-    // 3) Walk upward until you find a package.json
-    let dir = path.dirname(entry)
-    while (true) {
-      const pkgFile = path.join(dir, "package.json")
-      if (await this.existsMemoized(pkgFile)) {
-        this.cache.requireResolve.set(cacheKey, { entry, packageDir: dir })
-        return { entry, packageDir: dir }
-      }
+  //   // 3) Walk upward until you find a package.json
+  //   let dir = path.dirname(entry)
+  //   while (true) {
+  //     const pkgFile = path.join(dir, "package.json")
+  //     if (await this.existsMemoized(pkgFile)) {
+  //       this.cache.requireResolve.set(cacheKey, { entry, packageDir: dir })
+  //       return { entry, packageDir: dir }
+  //     }
 
-      const parent = path.dirname(dir)
-      if (parent === dir) {
-        break // root reached
-      }
-      dir = parent
-    }
+  //     const parent = path.dirname(dir)
+  //     if (parent === dir) {
+  //       break // root reached
+  //     }
+  //     dir = parent
+  //   }
 
-    this.cache.requireResolve.set(cacheKey, null)
-    return null
-  }
+  //   this.cache.requireResolve.set(cacheKey, null)
+  //   return null
+  // }
 
   protected cacheKey(pkg: ProdDepType): string {
     const rel = path.relative(this.rootDir, pkg.path)
@@ -447,10 +447,18 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
 
   semverSatisfies(found: string, range?: string): boolean {
     if (!range || range === "*" || range === "") return true
-    try {
-      // try to require semver if present
 
-      const semver = require("semver")
+    try {
+      semver.valid(range) // to trigger exception if invalid
+    } catch (error: any) {
+      // ignore, we can't verify non-semver ranges
+      // e.g. git urls, file:, patch:, etc. Example:
+      // "@ai-sdk/google": "patch:@ai-sdk/google@npm%3A2.0.43#~/.yarn/patches/@ai-sdk-google-npm-2.0.43-689ed559b3.patch"
+      log.debug({ found, range, error: error.message }, "unable to verify non-semver version range, assuming match")
+      return true
+    }
+
+    try {
       return semver.satisfies(found, range)
     } catch (e) {
       // fallback: simple equality or basic prefix handling (^, ~)
@@ -478,7 +486,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
       if (fs.existsSync(candidate)) {
         const ver = this.readPackageVersion(candidate)
         if (ver && this.semverSatisfies(ver, requiredRange)) {
-          return { foundPath: path.dirname(candidate), version: ver }
+          return { packageDir: path.dirname(candidate), version: ver }
         }
         // otherwise keep searching upward (we may find a different hoisted version)
       }
@@ -527,7 +535,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
               if (fs.existsSync(candidatePkgJson)) {
                 const ver = this.readPackageVersion(candidatePkgJson)
                 if (ver && this.semverSatisfies(ver, requiredRange)) {
-                  return { foundPath: path.dirname(candidatePkgJson), version: ver }
+                  return { packageDir: path.dirname(candidatePkgJson), version: ver }
                 }
               }
               // enqueue scPath/node_modules to explore further
@@ -555,7 +563,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
         if (fs.existsSync(candidatePkgJson)) {
           const ver = this.readPackageVersion(candidatePkgJson)
           if (ver && this.semverSatisfies(ver, requiredRange)) {
-            return { foundPath: path.dirname(candidatePkgJson), version: ver }
+            return { packageDir: path.dirname(candidatePkgJson), version: ver }
           }
         }
 
@@ -564,7 +572,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
         if (fs.existsSync(candidateDirect)) {
           const ver = this.readPackageVersion(candidateDirect)
           if (ver && this.semverSatisfies(ver, requiredRange)) {
-            return { foundPath: path.dirname(candidateDirect), version: ver }
+            return { packageDir: path.dirname(candidateDirect), version: ver }
           }
         }
 
@@ -585,13 +593,13 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
   /**
    * Public function: locatePackageVersion
    */
-  async locatePackageVersion(parentDir: string, pkgName: string, requiredRange?: string): Promise<{ foundPath: string; version: string } | null> {
+  async locatePackageVersion(parentDir: string, pkgName: string, requiredRange?: string): Promise<Result | null> {
     // 1) check direct parent node_modules/pkgName first
     const direct = path.join(path.resolve(parentDir), "node_modules", pkgName, "package.json")
     if (fs.existsSync(direct)) {
       const ver = this.readPackageVersion(direct)
       if (ver && this.semverSatisfies(ver, requiredRange)) {
-        return { foundPath: path.dirname(direct), version: ver }
+        return { packageDir: path.dirname(direct), version: ver }
       }
     }
 
