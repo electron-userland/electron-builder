@@ -93,7 +93,7 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
       }
 
       // Read package.json using memoized require for consistency with Node.js module system
-      const pkg: PackageJson = await this.readJsonMemoized(pkgPath)
+      const pkg: PackageJson = this.requireMemoized(pkgPath)
       const resolvedPackageDir = await this.resolvePath(packageDir)
 
       // Use resolved path as the unique identifier to prevent circular dependencies
@@ -118,24 +118,25 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
       for (const [depName, depVersion] of Object.entries(allProdDepNames)) {
         try {
           // Resolve the dependency using Node.js module resolution from this package's directory
-          const resolvedPackage = await this.resolvePackage(depName, packageDir)
+          const depPath = await this.resolvePackageDir(depName, packageDir)
 
-          if (!resolvedPackage) {
-            log.warn({ package: pkg.name, dependency: depName, version: depVersion }, "dependency not found")
+          if (!depPath) {
+            log.warn({ package: pkg.name, dependency: depName, version: depVersion }, "dependency not found, skipping")
             continue
           }
 
-          const resolvedDepPath = await this.resolvePath(resolvedPackage.packageDir)
+          const resolvedDepPath = await this.resolvePath(depPath)
+
           // Skip if this dependency resolves to the base directory or any parent we're already processing
           if (resolvedDepPath === resolvedPackageDir || resolvedDepPath === (await this.resolvePath(baseDir))) {
             log.debug({ package: pkg.name, dependency: depName, resolvedPath: resolvedDepPath }, "skipping self-referential dependency")
             continue
           }
 
-          log.debug({ package: pkg.name, dependency: depName, ...resolvedPackage, resolvedDepPath }, "processing production dependency")
+          log.debug({ package: pkg.name, dependency: depName, resolvedPath: depPath }, "processing production dependency")
 
           // Recursively build the dependency tree for this dependency
-          prodDeps[depName] = await buildFromPackage(resolvedDepPath)
+          prodDeps[depName] = await buildFromPackage(depPath)
         } catch (error: any) {
           log.warn({ package: pkg.name, dependency: depName, error: error.message }, "failed to process dependency, skipping")
         }
