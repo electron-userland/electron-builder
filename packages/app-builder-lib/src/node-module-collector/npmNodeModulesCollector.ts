@@ -20,7 +20,7 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
     } catch (error: any) {
       log.info({ pm: this.installOptions.manager, parser: PM.NPM, error: error.message }, "unable to process dependency tree, falling back to using manual node_modules traversal")
     }
-    // node_modules linker fallback. (Slower due to system ops, so we only use it as a fallback) [e.g. corepack env will not allow npm CLI to extract tree]
+    // node_modules linker fallback. (Slower due to system ops, so we only use it as a fallback) [such as when corepack env will not allow npm CLI to extract tree]
     return this.buildNodeModulesTreeManually(this.rootDir)
   }
 
@@ -118,14 +118,14 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
       for (const [depName, depVersion] of Object.entries(allProdDepNames)) {
         try {
           // Resolve the dependency using Node.js module resolution from this package's directory
-          const depPath = await this.resolvePackageDir(depName, packageDir)
+          const depPath = await this.resolvePackageDir({ packageName: depName, fromDir: resolvedPackageDir, packageVersion: depVersion })
 
-          if (!depPath) {
+          if (!depPath || depPath.packageDir.length === 0) {
             log.warn({ package: pkg.name, dependency: depName, version: depVersion }, "dependency not found, skipping")
             continue
           }
 
-          const resolvedDepPath = await this.resolvePath(depPath)
+          const resolvedDepPath = await this.resolvePath(depPath.packageDir)
 
           // Skip if this dependency resolves to the base directory or any parent we're already processing
           if (resolvedDepPath === resolvedPackageDir || resolvedDepPath === (await this.resolvePath(baseDir))) {
@@ -136,7 +136,7 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
           log.debug({ package: pkg.name, dependency: depName, resolvedPath: depPath }, "processing production dependency")
 
           // Recursively build the dependency tree for this dependency
-          prodDeps[depName] = await buildFromPackage(depPath)
+          prodDeps[depName] = await buildFromPackage(depPath.packageDir)
         } catch (error: any) {
           log.warn({ package: pkg.name, dependency: depName, error: error.message }, "failed to process dependency, skipping")
         }

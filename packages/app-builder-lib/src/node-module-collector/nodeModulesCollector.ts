@@ -11,6 +11,8 @@ import { getPackageManagerCommand, PM } from "./packageManager"
 import type { Dependency, DependencyGraph, NodeModuleInfo, PackageJson } from "./types"
 import { fileURLToPath, pathToFileURL } from "node:url"
 
+type Result = { foundPath: string; version: string } | null
+
 export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDepType, OptionalDepType>, OptionalDepType> {
   private nodeModules: NodeModuleInfo[] = []
   protected allDependencies: Map<string, ProdDepType> = new Map()
@@ -213,8 +215,9 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
    * Resolves a package to its filesystem location using Node.js module resolution.
    * Returns the directory containing the package, not the package.json path.
    */
-  protected async resolvePackageDir(packageName: string, fromDir: string): Promise<string | null> {
-    const cacheKey = `${packageName}::${fromDir}`
+  protected async resolvePackageDir(options: { packageName: string; fromDir: string; packageVersion: string }): Promise<{ entry: string; packageDir: string } | null> {
+    const { packageName, fromDir, packageVersion } = options
+    const cacheKey = `${packageName}::${packageVersion}::${fromDir}`
     if (this.cache.requireResolve.has(cacheKey)) {
       return this.cache.requireResolve.get(cacheKey)!
     }
@@ -224,16 +227,18 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
       if (await this.importMetaResolve.value) {
         try {
           const url = (await this.importMetaResolve.value)(packageName, pathToFileURL(fromDir).href)
-          return url.startsWith("file://") ? fileURLToPath(url) : null
+          const result = url.startsWith("file://") ? fileURLToPath(url) : null
+          return result
         } catch (error: any) {
-          log.debug({ error: error.message }, "import-meta-resolve failed")
+          log.debug({ error: error.message }, "import-meta-resolve faile, attempting require.resolved")
           // ignore
         }
       }
 
       // 2) Fallback: require.resolve (CJS, old packages)
       try {
-        return require.resolve(packageName, { paths: [fromDir, this.rootDir] })
+        const result = require.resolve(packageName, { paths: [fromDir, this.rootDir] })
+        return result
       } catch (error: any) {
         log.debug({ error: error.message }, "require.resolve failed")
         // ignore
@@ -253,8 +258,8 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     while (true) {
       const pkgFile = path.join(dir, "package.json")
       if (await this.existsMemoized(pkgFile)) {
-        this.cache.requireResolve.set(cacheKey, dir)
-        return dir
+        this.cache.requireResolve.set(cacheKey, { entry, packageDir: dir })
+        return { entry, packageDir: dir }
       }
 
       const parent = path.dirname(dir)
@@ -301,6 +306,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
       log.debug({ name, path, dependencies: JSON.stringify(dependencies) }, "pruning root app/self reference from workspace tree")
       for (const [name, pkg] of Object.entries(dependencies ?? {})) {
         tree.dependencies[name] = pkg
+        this.allDependencies.set(this.packageVersionString(pkg), pkg)
       }
       delete tree.dependencies[packageName]
     }
@@ -427,5 +433,176 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
         return shouldResolve ? resolve() : reject(new Error(`Node module collector process exited with code ${code}:\n${stderr}`))
       })
     })
+  }
+
+  readPackageVersion(pkgJsonPath: string): string | null {
+    try {
+      const raw = fs.readFileSync(pkgJsonPath, "utf8")
+      const obj = JSON.parse(raw)
+      return typeof obj.version === "string" ? obj.version : null
+    } catch (e) {
+      return null
+    }
+  }
+
+  semverSatisfies(found: string, range?: string): boolean {
+    if (!range || range === "*" || range === "") return true
+    try {
+      // try to require semver if present
+
+      const semver = require("semver")
+      return semver.satisfies(found, range)
+    } catch (e) {
+      // fallback: simple equality or basic prefix handling (^, ~)
+      if (range === found) return true
+      if (range.startsWith("^") || range.startsWith("~")) {
+        const r = range.slice(1)
+        return r === found
+      }
+      // if range is like "8.x" or "8.*" match major
+      const m = range.match(/^(\d+)[.(*|x)]*/)
+      const fm = found.match(/^(\d+)\./)
+      if (m && fm) return m[1] === fm[1]
+      return false
+    }
+  }
+
+  /**
+   * Upward search (hoisted)
+   */
+  upwardSearch(parentDir: string, pkgName: string, requiredRange?: string): Result {
+    let current = path.resolve(parentDir)
+    const root = path.parse(current).root
+    while (true) {
+      const candidate = path.join(current, "node_modules", pkgName, "package.json")
+      if (fs.existsSync(candidate)) {
+        const ver = this.readPackageVersion(candidate)
+        if (ver && this.semverSatisfies(ver, requiredRange)) {
+          return { foundPath: path.dirname(candidate), version: ver }
+        }
+        // otherwise keep searching upward (we may find a different hoisted version)
+      }
+      if (current === root) break
+      const parent = path.dirname(current)
+      if (parent === current) break
+      current = parent
+    }
+    return null
+  }
+
+  /**
+   * Breadth-first downward search from parentDir/node_modules
+   * Looks for node_modules/\*\/node_modules/pkgName (and deeper)
+   */
+  downwardSearch(parentDir: string, pkgName: string, requiredRange?: string, maxExplored = 2000, maxDepth = 6): Result {
+    const start = path.join(path.resolve(parentDir), "node_modules")
+    if (!fs.existsSync(start) || !fs.statSync(start).isDirectory()) return null
+
+    const visited = new Set<string>()
+    const queue: Array<{ dir: string; depth: number }> = [{ dir: start, depth: 0 }]
+    let explored = 0
+
+    while (queue.length > 0) {
+      const { dir, depth } = queue.shift()!
+      if (explored++ > maxExplored) break
+      if (depth > maxDepth) continue
+      let entries: string[]
+      try {
+        entries = fs.readdirSync(dir)
+      } catch (e) {
+        continue
+      }
+      for (const entry of entries) {
+        if (entry.startsWith(".")) continue
+        const entryPath = path.join(dir, entry)
+        // handle scoped packages @scope/name
+        if (entry.startsWith("@")) {
+          // queue the scope directory itself to explore its children
+          if (fs.existsSync(entryPath) && fs.statSync(entryPath).isDirectory()) {
+            const scopeEntries = fs.readdirSync(entryPath)
+            for (const sc of scopeEntries) {
+              const scPath = path.join(entryPath, sc)
+              // check scPath/node_modules/pkgName
+              const candidatePkgJson = path.join(scPath, "node_modules", pkgName, "package.json")
+              if (fs.existsSync(candidatePkgJson)) {
+                const ver = this.readPackageVersion(candidatePkgJson)
+                if (ver && this.semverSatisfies(ver, requiredRange)) {
+                  return { foundPath: path.dirname(candidatePkgJson), version: ver }
+                }
+              }
+              // enqueue scPath/node_modules to explore further
+              const scNodeModules = path.join(scPath, "node_modules")
+              if (fs.existsSync(scNodeModules) && fs.statSync(scNodeModules).isDirectory()) {
+                if (!visited.has(scNodeModules)) {
+                  visited.add(scNodeModules)
+                  queue.push({ dir: scNodeModules, depth: depth + 1 })
+                }
+              }
+            }
+          }
+          continue
+        }
+
+        // check for direct candidate: entry/node_modules/pkgName
+        try {
+          const stat = fs.lstatSync(entryPath)
+          if (!stat.isDirectory()) continue
+        } catch (e) {
+          continue
+        }
+
+        const candidatePkgJson = path.join(entryPath, "node_modules", pkgName, "package.json")
+        if (fs.existsSync(candidatePkgJson)) {
+          const ver = this.readPackageVersion(candidatePkgJson)
+          if (ver && this.semverSatisfies(ver, requiredRange)) {
+            return { foundPath: path.dirname(candidatePkgJson), version: ver }
+          }
+        }
+
+        // also check entry/node_modules directly for pkgName (some layouts)
+        const candidateDirect = path.join(entryPath, pkgName, "package.json")
+        if (fs.existsSync(candidateDirect)) {
+          const ver = this.readPackageVersion(candidateDirect)
+          if (ver && this.semverSatisfies(ver, requiredRange)) {
+            return { foundPath: path.dirname(candidateDirect), version: ver }
+          }
+        }
+
+        // enqueue entry/node_modules for deeper traversal
+        const nextNodeModules = path.join(entryPath, "node_modules")
+        if (fs.existsSync(nextNodeModules) && fs.statSync(nextNodeModules).isDirectory()) {
+          if (!visited.has(nextNodeModules)) {
+            visited.add(nextNodeModules)
+            queue.push({ dir: nextNodeModules, depth: depth + 1 })
+          }
+        }
+      }
+    }
+
+    return null
+  }
+
+  /**
+   * Public function: locatePackageVersion
+   */
+  async locatePackageVersion(parentDir: string, pkgName: string, requiredRange?: string): Promise<{ foundPath: string; version: string } | null> {
+    // 1) check direct parent node_modules/pkgName first
+    const direct = path.join(path.resolve(parentDir), "node_modules", pkgName, "package.json")
+    if (fs.existsSync(direct)) {
+      const ver = this.readPackageVersion(direct)
+      if (ver && this.semverSatisfies(ver, requiredRange)) {
+        return { foundPath: path.dirname(direct), version: ver }
+      }
+    }
+
+    // 2) upward hoisted search
+    const up = this.upwardSearch(parentDir, pkgName, requiredRange)
+    if (up) return up
+
+    // 3) downward nested search
+    const down = this.downwardSearch(parentDir, pkgName, requiredRange)
+    if (down) return down
+
+    return Promise.resolve(null)
   }
 }

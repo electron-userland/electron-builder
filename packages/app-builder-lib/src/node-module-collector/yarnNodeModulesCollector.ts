@@ -117,15 +117,15 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
     if (!parsedTree) {
       throw new Error('Failed to extract Yarn tree: no "type":"tree" line found in console output')
     }
+    const rootPkgJson = await this.appPkgJson.value
 
-    const normalizedTree = await this.normalizeTree(parsedTree, new Set<string>(), undefined)
+    const normalizedTree = await this.normalizeTree({ tree: parsedTree, seen: new Set<string>(), appName: rootPkgJson.name, parentPath: this.rootDir, parentPkgJson: rootPkgJson })
 
     const dependencies: Record<string, YarnDependency> = {}
     for (const [name, dep] of Object.entries(normalizedTree)) {
       dependencies[name] = dep
     }
 
-    const rootPkgJson = await this.appPkgJson.value
     return Promise.resolve({
       name: rootPkgJson.name,
       version: rootPkgJson.version,
@@ -135,8 +135,26 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
     })
   }
 
-  private async normalizeTree(tree: YarnListTree[], seen = new Set<string>(), appName?: string): Promise<Record<string, YarnDependency>> {
+  private async normalizeTree(options: {
+    tree: YarnListTree[]
+    seen: Set<string>
+    appName?: string
+    parentPath: string
+    parentPkgJson?: PackageJson // Add parent's package.json
+  }): Promise<Record<string, YarnDependency>> {
+    const { tree, seen, appName, parentPath = this.rootDir } = options
+    let parentPkgJson = options.parentPkgJson
     const normalized: Record<string, YarnDependency> = {}
+
+    // Load parent's package.json if not provided
+    if (!parentPkgJson && parentPath) {
+      const parentPkgPath = path.join(parentPath, "package.json")
+      try {
+        parentPkgJson = await this.readJsonMemoized(parentPkgPath)
+      } catch {
+        // Parent might not have package.json (e.g., root workspace)
+      }
+    }
 
     for (const node of tree) {
       const match = node.name.match(/^(.*)@([^@]+)$/)
@@ -148,49 +166,42 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
       const [, pkgName, version] = match
       const id = `${pkgName}@${version}`
 
-      const isShadow = node.shadow && node.color === "dim"
-      if (isShadow) {
-        log.debug({ pkgName, version }, "skipping shadow node")
+      if (seen.has(id)) {
         continue
       }
 
-      if (seen.has(id)) {
+      // Find the correct package path that matches the required version
+      const pkg = await this.locatePackageVersion(parentPath, pkgName, version)
+      const pkgPath = pkg ? pkg.foundPath : null
+
+      if (!pkgPath) {
+        log.warn({ pkgName, version, parentPath }, "could not find package matching version")
         continue
       }
 
       seen.add(id)
 
-      // Build the expected path - yarn classic hoists to root node_modules
-      const pkgPath = path.join(this.rootDir, "node_modules", pkgName)
-
       const normalizedDep: YarnDependency = {
         name: pkgName,
         version,
-        path: pkgPath, // Will be resolved later in collectAllDependencies
+        path: pkgPath,
         dependencies: {},
         optionalDependencies: {},
       }
 
-      log.debug({ name: pkgName, version }, "+ normalize")
-
+      // Recursively process children, passing this package's info
       if (node.children && node.children.length > 0) {
-        for (const child of node.children) {
-          const childMatch = child.name.match(/^(.*)@([^@]+)$/)
-          if (!childMatch) {
-            continue
-          }
+        const childPkgJson = await this.readJsonMemoized(path.join(pkgPath, "package.json"))
+        const childDeps = await this.normalizeTree({
+          tree: node.children,
+          seen,
+          appName,
+          parentPath: pkgPath,
+          parentPkgJson: childPkgJson, // Pass this package's package.json to children
+        })
 
-          const [, childName, childVersion] = childMatch
-          if (child.shadow && child.color === "dim") {
-            continue
-          }
-
-          log.debug({ parent: pkgName, childName, childVersion }, "  + normalize child")
-          const childDeps = await this.normalizeTree([child], seen, appName)
-
-          for (const [childDepName, childDep] of Object.entries(childDeps)) {
-            normalizedDep.dependencies![childDepName] = childDep
-          }
+        for (const [childDepName, childDep] of Object.entries(childDeps)) {
+          normalizedDep.dependencies![childDepName] = childDep
         }
       }
 
@@ -198,6 +209,85 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
     }
 
     return normalized
+  }
+
+  /**
+   * Resolves a package path that matches the required version.
+   * Searches in order: nested -> hoisted -> walk up tree
+   */
+  async resolvePackageWithVersion(pkgName: string, requiredVersion: string, parentPath: string, parentPkgJson?: PackageJson): Promise<string | null> {
+    const searchPaths: string[] = []
+
+    // 1. Nested under parent (highest priority for version conflicts)
+    searchPaths.push(path.join(parentPath, "node_modules", pkgName))
+
+    // 2. Hoisted at root
+    searchPaths.push(path.join(this.rootDir, "node_modules", pkgName))
+
+    // 3. Walk up the directory tree
+    let current = path.dirname(parentPath)
+    while (current !== this.rootDir && current !== path.dirname(current)) {
+      searchPaths.push(path.join(current, "node_modules", pkgName))
+      current = path.dirname(current)
+    }
+
+    // Try each path and validate version
+    for (const candidatePath of searchPaths) {
+      if (!(await this.existsMemoized(candidatePath))) {
+        continue
+      }
+
+      const pkgJsonPath = path.join(candidatePath, "package.json")
+      try {
+        const pkgJson = await this.readJsonMemoized(pkgJsonPath)
+
+        // Validate version matches
+        if (pkgJson.version === requiredVersion) {
+          log.debug(
+            {
+              pkgName,
+              requiredVersion,
+              foundVersion: pkgJson.version,
+              path: candidatePath,
+            },
+            "found matching package version"
+          )
+          return candidatePath
+        } else {
+          log.debug(
+            {
+              pkgName,
+              requiredVersion,
+              foundVersion: pkgJson.version,
+              path: candidatePath,
+            },
+            "package version mismatch, continuing search"
+          )
+        }
+      } catch (error: any) {
+        log.debug(
+          {
+            pkgName,
+            path: candidatePath,
+            error: error.message,
+          },
+          "failed to read package.json, skipping"
+        )
+      }
+    }
+
+    // If no exact match found, log warning
+    log.warn(
+      {
+        pkgName,
+        requiredVersion,
+        parentPath,
+        searchedPaths: searchPaths,
+      },
+      "could not find package with matching version"
+    )
+
+    return null
   }
 
   protected async collectAllDependencies(tree: YarnDependency, packageToExclude: string) {
