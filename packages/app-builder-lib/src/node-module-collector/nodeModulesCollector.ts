@@ -370,14 +370,8 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     })
   }
 
-  readPackageVersion(pkgJsonPath: string): string | null {
-    try {
-      const raw = fs.readFileSync(pkgJsonPath, "utf8")
-      const obj = JSON.parse(raw)
-      return typeof obj.version === "string" ? obj.version : null
-    } catch (e) {
-      return null
-    }
+  async readPackageVersion(pkgJsonPath: string): Promise<string | null> {
+    return await this.cache.packageJson[pkgJsonPath].then(pkg => pkg.version).catch(() => null)
   }
 
   semverSatisfies(found: string, range?: string): boolean {
@@ -418,21 +412,25 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
   /**
    * Upward search (hoisted)
    */
-  upwardSearch(parentDir: string, pkgName: string, requiredRange?: string): Result {
+  async upwardSearch(parentDir: string, pkgName: string, requiredRange?: string): Promise<Result> {
     let current = path.resolve(parentDir)
     const root = path.parse(current).root
     while (true) {
       const candidate = path.join(current, "node_modules", pkgName, "package.json")
-      if (fs.existsSync(candidate)) {
-        const ver = this.readPackageVersion(candidate)
+      if (await this.cache.exists[candidate]) {
+        const ver = await this.readPackageVersion(candidate)
         if (ver && this.semverSatisfies(ver, requiredRange)) {
           return { packageDir: path.dirname(candidate), version: ver }
         }
         // otherwise keep searching upward (we may find a different hoisted version)
       }
-      if (current === root) break
+      if (current === root) {
+        break
+      }
       const parent = path.dirname(current)
-      if (parent === current) break
+      if (parent === current) {
+        break
+      }
       current = parent
     }
     return null
@@ -442,9 +440,11 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
    * Breadth-first downward search from parentDir/node_modules
    * Looks for node_modules/\*\/node_modules/pkgName (and deeper)
    */
-  downwardSearch(parentDir: string, pkgName: string, requiredRange?: string, maxExplored = 2000, maxDepth = 6): Result {
+  async downwardSearch(parentDir: string, pkgName: string, requiredRange?: string, maxExplored = 2000, maxDepth = 6): Promise<Result> {
     const start = path.join(path.resolve(parentDir), "node_modules")
-    if (!fs.existsSync(start) || !fs.statSync(start).isDirectory()) return null
+    if (!(await this.cache.exists[start]) || !(await this.cache.lstat[start]).isDirectory()) {
+      return null
+    }
 
     const visited = new Set<string>()
     const queue: Array<{ dir: string; depth: number }> = [{ dir: start, depth: 0 }]
@@ -452,35 +452,41 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
 
     while (queue.length > 0) {
       const { dir, depth } = queue.shift()!
-      if (explored++ > maxExplored) break
-      if (depth > maxDepth) continue
+      if (explored++ > maxExplored) {
+        break
+      }
+      if (depth > maxDepth) {
+        continue
+      }
       let entries: string[]
       try {
-        entries = fs.readdirSync(dir)
+        entries = await fs.readdir(dir)
       } catch (e) {
         continue
       }
       for (const entry of entries) {
-        if (entry.startsWith(".")) continue
+        if (entry.startsWith(".")) {
+          continue
+        }
         const entryPath = path.join(dir, entry)
         // handle scoped packages @scope/name
         if (entry.startsWith("@")) {
           // queue the scope directory itself to explore its children
-          if (fs.existsSync(entryPath) && fs.statSync(entryPath).isDirectory()) {
-            const scopeEntries = fs.readdirSync(entryPath)
+          if ((await this.cache.exists[entryPath]) && (await this.cache.lstat[entryPath]).isDirectory()) {
+            const scopeEntries = await fs.readdir(entryPath)
             for (const sc of scopeEntries) {
               const scPath = path.join(entryPath, sc)
               // check scPath/node_modules/pkgName
               const candidatePkgJson = path.join(scPath, "node_modules", pkgName, "package.json")
-              if (fs.existsSync(candidatePkgJson)) {
-                const ver = this.readPackageVersion(candidatePkgJson)
+              if (await this.cache.exists[candidatePkgJson]) {
+                const ver = await this.readPackageVersion(candidatePkgJson)
                 if (ver && this.semverSatisfies(ver, requiredRange)) {
                   return { packageDir: path.dirname(candidatePkgJson), version: ver }
                 }
               }
               // enqueue scPath/node_modules to explore further
               const scNodeModules = path.join(scPath, "node_modules")
-              if (fs.existsSync(scNodeModules) && fs.statSync(scNodeModules).isDirectory()) {
+              if ((await this.cache.exists[scNodeModules]) && (await this.cache.lstat[scNodeModules]).isDirectory()) {
                 if (!visited.has(scNodeModules)) {
                   visited.add(scNodeModules)
                   queue.push({ dir: scNodeModules, depth: depth + 1 })
@@ -493,15 +499,17 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
 
         // check for direct candidate: entry/node_modules/pkgName
         try {
-          const stat = fs.lstatSync(entryPath)
-          if (!stat.isDirectory()) continue
-        } catch (e) {
+          const stat = await this.cache.lstat[entryPath]
+          if (!stat.isDirectory()) {
+            continue
+          }
+        } catch {
           continue
         }
 
         const candidatePkgJson = path.join(entryPath, "node_modules", pkgName, "package.json")
-        if (fs.existsSync(candidatePkgJson)) {
-          const ver = this.readPackageVersion(candidatePkgJson)
+        if (await this.cache.exists[candidatePkgJson]) {
+          const ver = await this.readPackageVersion(candidatePkgJson)
           if (ver && this.semverSatisfies(ver, requiredRange)) {
             return { packageDir: path.dirname(candidatePkgJson), version: ver }
           }
@@ -509,8 +517,8 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
 
         // also check entry/node_modules directly for pkgName (some layouts)
         const candidateDirect = path.join(entryPath, pkgName, "package.json")
-        if (fs.existsSync(candidateDirect)) {
-          const ver = this.readPackageVersion(candidateDirect)
+        if (await this.cache.exists[candidateDirect]) {
+          const ver = await this.readPackageVersion(candidateDirect)
           if (ver && this.semverSatisfies(ver, requiredRange)) {
             return { packageDir: path.dirname(candidateDirect), version: ver }
           }
@@ -518,7 +526,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
 
         // enqueue entry/node_modules for deeper traversal
         const nextNodeModules = path.join(entryPath, "node_modules")
-        if (fs.existsSync(nextNodeModules) && fs.statSync(nextNodeModules).isDirectory()) {
+        if ((await this.cache.exists[nextNodeModules]) && (await this.cache.lstat[nextNodeModules]).isDirectory()) {
           if (!visited.has(nextNodeModules)) {
             visited.add(nextNodeModules)
             queue.push({ dir: nextNodeModules, depth: depth + 1 })
@@ -530,27 +538,17 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     return null
   }
 
-  /**
-   * Public function: locatePackageVersion
-   */
   async locatePackageVersion(parentDir: string, pkgName: string, requiredRange?: string): Promise<Result | null> {
     // 1) check direct parent node_modules/pkgName first
     const direct = path.join(path.resolve(parentDir), "node_modules", pkgName, "package.json")
-    if (fs.existsSync(direct)) {
-      const ver = this.readPackageVersion(direct)
+    if (await this.cache.exists[direct]) {
+      const ver = await this.readPackageVersion(direct)
       if (ver && this.semverSatisfies(ver, requiredRange)) {
         return { packageDir: path.dirname(direct), version: ver }
       }
     }
 
-    // 2) upward hoisted search
-    const up = this.upwardSearch(parentDir, pkgName, requiredRange)
-    if (up) return up
-
-    // 3) downward nested search
-    const down = this.downwardSearch(parentDir, pkgName, requiredRange)
-    if (down) return down
-
-    return Promise.resolve(null)
+    // 2) upward hoisted search, then 3) downward non-hoisted search
+    return (await this.upwardSearch(parentDir, pkgName, requiredRange)) || (await this.downwardSearch(parentDir, pkgName, requiredRange)) || null
   }
 }
