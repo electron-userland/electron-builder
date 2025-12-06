@@ -35,7 +35,7 @@ import { isCI } from "ci-info"
 import * as path from "path"
 import { WriteStream as TtyWriteStream } from "tty"
 import * as url from "url"
-import { AppInfo, ArtifactCreated, Configuration, Platform, PlatformSpecificBuildOptions, Target } from "../index"
+import { AppInfo, ArtifactCreated, Configuration, Platform, PlatformSpecificBuildOptions, Target, TargetSpecificOptions } from "../index"
 import { Packager } from "../packager"
 import { PlatformPackager } from "../platformPackager"
 import { expandMacro } from "../util/macroExpander"
@@ -125,7 +125,7 @@ export class PublishManager implements PublishContext {
         }
       }
 
-      const publishConfig = await getAppUpdatePublishConfiguration(packager, event.arch, this.isPublish)
+      const publishConfig = await getAppUpdatePublishConfiguration(packager, null, event.arch, this.isPublish)
       if (publishConfig != null) {
         await writeFile(path.join(packager.getResourcesDir(event.appOutDir), "app-update.yml"), serializeToYaml(publishConfig))
       }
@@ -254,7 +254,12 @@ export class PublishManager implements PublishContext {
   }
 }
 
-export async function getAppUpdatePublishConfiguration(packager: PlatformPackager<any>, arch: Arch, errorIfCannot: boolean) {
+export async function getAppUpdatePublishConfiguration(
+  packager: PlatformPackager<any>,
+  targetSpecificOptions: TargetSpecificOptions | Nullish,
+  arch: Arch,
+  errorIfCannot: boolean
+): Promise<PublishConfiguration | null> {
   const publishConfigs = await getPublishConfigsForUpdateInfo(packager, await getPublishConfigs(packager, null, arch, errorIfCannot), arch)
   if (publishConfigs == null || publishConfigs.length === 0) {
     return null
