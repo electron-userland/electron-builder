@@ -167,11 +167,32 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        TEST_RUNNER_IMAGE_TAG:
-          - dockerfile-archlinux
-          - dockerfile-rpm
-          - dockerfile-debian
-          - dockerfile-appimage
+        test_config:
+          - file: dockerfile-archlinux
+            env:
+              ELECTRON_BUILDER_LINUX_PACKAGE_MANAGER: pacman
+          - file: dockerfile-rpm
+            env:
+              ELECTRON_BUILDER_LINUX_PACKAGE_MANAGER: dnf
+          - file: dockerfile-rpm
+            env:
+              ELECTRON_BUILDER_LINUX_PACKAGE_MANAGER: zypper
+          - file: dockerfile-rpm
+            env:
+              ELECTRON_BUILDER_LINUX_PACKAGE_MANAGER: yum
+          - file: dockerfile-rpm
+            env:
+              ELECTRON_BUILDER_LINUX_PACKAGE_MANAGER: rpm
+          - file: dockerfile-debian
+            env:
+              ELECTRON_BUILDER_LINUX_PACKAGE_MANAGER: apt
+          - file: dockerfile-debian
+            env:
+              ELECTRON_BUILDER_LINUX_PACKAGE_MANAGER: dpkg
+          - file: dockerfile-appimage
+            env:
+              RUN_APP_IMAGE_TEST: true
+
     steps:
       - name: Checkout code repository
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
@@ -187,13 +208,12 @@ jobs:
 
       - name: e2e Linux Updater tests (install, auto-update, uninstall)
         run: |
-          docker build --platform=linux/amd64 -t $TEST_RUNNER_IMAGE_TAG -f ./test/src/updater/$TEST_RUNNER_IMAGE_TAG .
-          pnpm test-linux
+          docker build --platform=linux/amd64 -t ${{ matrix.test_config.file }} -f ./test/src/updater/${{ matrix.test_config.file }} .
+          TEST_RUNNER_IMAGE_TAG=${{ matrix.test_config.file }} pnpm test-linux
         env:
-          TEST_RUNNER_IMAGE_TAG: ${{ matrix.TEST_RUNNER_IMAGE_TAG }}
           TEST_FILES: blackboxUpdateTest,linuxUpdaterTest
           DEBUG: electron-updater,electron-builder
-          ADDITIONAL_DOCKER_ARGS: "-e RUN_APP_IMAGE_TEST=true"
+          ADDITIONAL_DOCKER_ARGS: "-e ELECTRON_BUILDER_LINUX_PACKAGE_MANAGER=${{ matrix.test_config.env.ELECTRON_BUILDER_LINUX_PACKAGE_MANAGER }} -e RUN_APP_IMAGE_TEST=${{ matrix.test_config.env.RUN_APP_IMAGE_TEST || false }}"
 
 
   test-windows:

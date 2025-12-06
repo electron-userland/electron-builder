@@ -1,6 +1,6 @@
 import { getBinFromUrl } from "app-builder-lib/out/binDownload"
 import { GenericServerOptions, Nullish } from "builder-util-runtime"
-import { archFromString, doSpawn, getArchSuffix, log, TmpDir } from "builder-util/out/util"
+import { archFromString, doSpawn, getArchSuffix, isEmptyOrSpaces, log, TmpDir } from "builder-util/out/util"
 import { Arch, Configuration, Platform } from "electron-builder"
 import fs, { existsSync, outputFile } from "fs-extra"
 import path from "path"
@@ -49,6 +49,10 @@ describe("Electron autoupdate (fresh install & update)", () => {
       for (const pm of pms) {
         test(`${distro} - (${pm})`, { sequential: true }, async context => {
           if (!determineEnvironment(distro)) {
+            context.skip()
+          }
+          // skip if already set to avoid interfering with other package manager tests
+          if (!isEmptyOrSpaces(process.env.ELECTRON_BUILDER_LINUX_PACKAGE_MANAGER) && process.env.ELECTRON_BUILDER_LINUX_PACKAGE_MANAGER !== pm) {
             context.skip()
           }
           process.env.ELECTRON_BUILDER_LINUX_PACKAGE_MANAGER = pm
