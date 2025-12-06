@@ -282,13 +282,13 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
       const reference = [...d.references][0]
       const p = this.allDependencies.get(`${d.name}@${reference}`)?.path
       if (p === undefined) {
-        log.debug({ name: d.name, reference }, "cannot find path for dependency")
+        log.warn({ name: d.name, reference }, "cannot find path for dependency")
         continue
       }
 
       // fix npm list issue
       // https://github.com/npm/cli/issues/8535
-      if (!(await exists(p))) {
+      if (!(await this.cache.exists[p])) {
         log.debug({ name: d.name, reference, p }, "dependency path does not exist")
         continue
       }

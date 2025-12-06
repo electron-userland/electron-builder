@@ -172,7 +172,7 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
 
       // Find the correct package path that matches the required version
       const pkg = await this.locatePackageVersion(parentPath, pkgName, version)
-      const pkgPath = pkg ? pkg.packageDir : null
+      const pkgPath = pkg?.packageDir
 
       if (!pkgPath) {
         log.warn({ pkgName, version, parentPath }, "could not find package matching version")
@@ -209,85 +209,6 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
     }
 
     return normalized
-  }
-
-  /**
-   * Resolves a package path that matches the required version.
-   * Searches in order: nested -> hoisted -> walk up tree
-   */
-  async resolvePackageWithVersion(pkgName: string, requiredVersion: string, parentPath: string, parentPkgJson?: PackageJson): Promise<string | null> {
-    const searchPaths: string[] = []
-
-    // 1. Nested under parent (highest priority for version conflicts)
-    searchPaths.push(path.join(parentPath, "node_modules", pkgName))
-
-    // 2. Hoisted at root
-    searchPaths.push(path.join(this.rootDir, "node_modules", pkgName))
-
-    // 3. Walk up the directory tree
-    let current = path.dirname(parentPath)
-    while (current !== this.rootDir && current !== path.dirname(current)) {
-      searchPaths.push(path.join(current, "node_modules", pkgName))
-      current = path.dirname(current)
-    }
-
-    // Try each path and validate version
-    for (const candidatePath of searchPaths) {
-      if (!(await this.cache.exists[candidatePath])) {
-        continue
-      }
-
-      const pkgJsonPath = path.join(candidatePath, "package.json")
-      try {
-        const pkgJson = await this.cache.packageJson[pkgJsonPath]
-
-        // Validate version matches
-        if (pkgJson.version === requiredVersion) {
-          log.debug(
-            {
-              pkgName,
-              requiredVersion,
-              foundVersion: pkgJson.version,
-              path: candidatePath,
-            },
-            "found matching package version"
-          )
-          return candidatePath
-        } else {
-          log.debug(
-            {
-              pkgName,
-              requiredVersion,
-              foundVersion: pkgJson.version,
-              path: candidatePath,
-            },
-            "package version mismatch, continuing search"
-          )
-        }
-      } catch (error: any) {
-        log.debug(
-          {
-            pkgName,
-            path: candidatePath,
-            error: error.message,
-          },
-          "failed to read package.json, skipping"
-        )
-      }
-    }
-
-    // If no exact match found, log warning
-    log.warn(
-      {
-        pkgName,
-        requiredVersion,
-        parentPath,
-        searchedPaths: searchPaths,
-      },
-      "could not find package with matching version"
-    )
-
-    return null
   }
 
   protected async collectAllDependencies(tree: YarnDependency, packageToExclude: string) {
@@ -375,6 +296,9 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
       for (const [key, dep] of this.allDependencies.entries()) {
         if (dep.name === packageToExclude) {
           log.debug({ key, name: dep.name }, "removing app package from allDependencies")
+          for (const [, d] of Object.entries(dep.dependencies || {})) {
+            this.allDependencies.set(this.packageVersionString(d), d)
+          }
           this.allDependencies.delete(key)
         }
       }
