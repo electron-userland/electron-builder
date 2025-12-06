@@ -25,22 +25,22 @@ describe("Electron autoupdate (fresh install & update)", () => {
 
   // Signing is required for macOS autoupdate
   test.ifMac.ifEnv(process.env.CSC_KEY_PASSWORD)("mac", async context => {
-    await runTest(context, "zip")
+    await runTest(context, "mac", "zip")
   })
 
   test.ifWindows("win", async context => {
-    await runTest(context, "nsis")
+    await runTest(context, "nsis", "nsis")
   })
 
   // must be sequential in order for process.env.ELECTRON_BUILDER_LINUX_PACKAGE_MANAGER to be respected per-test
   describe.runIf(process.platform === "linux")("linux", { sequential: true }, () => {
-    test.ifEnv(process.env.RUN_APP_IMAGE_TEST && process.arch === "arm64")("AppImage - arm64", async context => {
-      await runTest(context, "AppImage", Arch.arm64)
+    test.ifEnv(process.env.RUN_APP_IMAGE_TEST === "true" && process.arch === "arm64")("AppImage - arm64", async context => {
+      await runTest(context, "AppImage", "appimage", Arch.arm64)
     })
 
     // only works on x64, so this will fail on arm64 macs due to arch mismatch
-    test.ifEnv(process.env.RUN_APP_IMAGE_TEST && process.arch === "x64")("AppImage - x64", async context => {
-      await runTest(context, "AppImage", Arch.x64)
+    test.ifEnv(process.env.RUN_APP_IMAGE_TEST === "true" && process.arch === "x64")("AppImage - x64", async context => {
+      await runTest(context, "AppImage", "appimage", Arch.x64)
     })
 
     // package manager tests specific to each distro (and corresponding docker image)
@@ -52,12 +52,10 @@ describe("Electron autoupdate (fresh install & update)", () => {
             context.skip()
           }
           // skip if already set to avoid interfering with other package manager tests
-          if (!isEmptyOrSpaces(process.env.ELECTRON_BUILDER_LINUX_PACKAGE_MANAGER) && process.env.ELECTRON_BUILDER_LINUX_PACKAGE_MANAGER !== pm) {
+          if (!isEmptyOrSpaces(process.env.PACKAGE_MANAGER_TO_TEST) && process.env.PACKAGE_MANAGER_TO_TEST !== pm) {
             context.skip()
           }
-          process.env.ELECTRON_BUILDER_LINUX_PACKAGE_MANAGER = pm
-          await runTest(context, target, Arch.x64)
-          delete process.env.ELECTRON_BUILDER_LINUX_PACKAGE_MANAGER
+          await runTest(context, target, pm, Arch.x64)
         })
       }
     }
@@ -88,7 +86,7 @@ const packageManagerMap: {
   },
 }
 
-async function runTest(context: TestContext, target: string, arch: Arch = Arch.x64) {
+async function runTest(context: TestContext, target: string, packageManager: string, arch: Arch = Arch.x64) {
   const { expect } = context
 
   const tmpDir = new TmpDir("auto-update")
@@ -112,7 +110,7 @@ async function runTest(context: TestContext, target: string, arch: Arch = Arch.x
       // Move app update to the root directory of the server
       await fs.copy(newAppDir.dir, rootDirectory, { recursive: true, overwrite: true })
 
-      const verifyAppVersion = async (expectedVersion: string) => await launchAndWaitForQuit({ appPath, timeoutMs: 2 * 60 * 1000, updateConfigPath, expectedVersion })
+      const verifyAppVersion = async (expectedVersion: string) => await launchAndWaitForQuit({ appPath, timeoutMs: 2 * 60 * 1000, updateConfigPath, expectedVersion, packageManagerToTest: packageManager })
 
       const result = await verifyAppVersion(OLD_VERSION_NUMBER)
       log.debug(result, "Test App version")
