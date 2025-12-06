@@ -6,19 +6,21 @@ import { createWriteStream, readJson } from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { hoist, type HoisterResult, type HoisterTree } from "./hoist"
-import { createModuleCache, type ModuleCache } from "./moduleCache"
 import { getPackageManagerCommand, PM } from "./packageManager"
 import type { Dependency, DependencyGraph, NodeModuleInfo, PackageJson } from "./types"
 import { fileURLToPath, pathToFileURL } from "node:url"
-import semver from "semver"
+import * as semver from "semver"
+import { ModuleCache } from "./moduleCache"
 type Result = { packageDir: string; version: string } | null
 
 export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDepType, OptionalDepType>, OptionalDepType> {
   private nodeModules: NodeModuleInfo[] = []
   protected allDependencies: Map<string, ProdDepType> = new Map()
   protected productionGraph: DependencyGraph = {}
-  protected pkgJsonCache: Map<string, string> = new Map()
-  protected memoResolvedModules = new Map<string, Promise<string | null>>()
+  protected readonly cache: ModuleCache = new ModuleCache()
+
+  // protected pkgJsonCache: Map<string, string> = new Map()
+  // protected memoResolvedModules = new Map<string, Promise<string | null>>()
 
   private importMetaResolve = new Lazy(async () => {
     try {
@@ -32,7 +34,6 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
   })
 
   // Unified cache for all file system and module operations
-  protected cache: ModuleCache = createModuleCache()
 
   protected isHoisted = new Lazy<boolean>(async () => {
     const { manager } = this.installOptions
@@ -54,8 +55,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
   })
 
   protected appPkgJson: Lazy<PackageJson> = new Lazy<PackageJson>(async () => {
-    const appPkgPath = path.join(this.rootDir, "package.json")
-    return this.readJsonMemoized(appPkgPath)
+    return this.cache.packageJson[path.join(this.rootDir, "package.json")]
   })
 
   constructor(
@@ -121,7 +121,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
         shouldRetry: async (error: any) => {
           const logFields = { error: error.message, tempOutputFile, cwd: this.rootDir }
 
-          if (!(await this.existsMemoized(tempOutputFile))) {
+          if (!(await this.cache.exists[tempOutputFile])) {
             log.debug(logFields, "dependency tree output file missing, retrying")
             return true
           }
@@ -144,71 +144,6 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
         },
       }
     )
-  }
-
-  protected async existsMemoized(filePath: string): Promise<boolean> {
-    if (!this.cache.exists.has(filePath)) {
-      this.cache.exists.set(filePath, await exists(filePath))
-    }
-    return this.cache.exists.get(filePath)!
-  }
-
-  protected async readJsonMemoized(filePath: string): Promise<PackageJson> {
-    if (!this.cache.packageJson.has(filePath)) {
-      this.cache.packageJson.set(filePath, await readJson(filePath))
-    }
-    return this.cache.packageJson.get(filePath)!
-  }
-
-  protected async lstatMemoized(filePath: string): Promise<fs.Stats> {
-    if (!this.cache.lstat.has(filePath)) {
-      this.cache.lstat.set(filePath, await fs.lstat(filePath))
-    }
-    return this.cache.lstat.get(filePath)!
-  }
-
-  protected async realpathMemoized(filePath: string): Promise<string> {
-    if (!this.cache.realPath.has(filePath)) {
-      this.cache.realPath.set(filePath, await fs.realpath(filePath))
-    }
-    return this.cache.realPath.get(filePath)!
-  }
-
-  protected requireMemoized(pkgPath: string): PackageJson {
-    if (!this.cache.packageJson.has(pkgPath)) {
-      this.cache.packageJson.set(pkgPath, require(pkgPath))
-    }
-    return this.cache.packageJson.get(pkgPath)!
-  }
-
-  protected existsSyncMemoized(filePath: string): boolean {
-    if (!this.cache.exists.has(filePath)) {
-      this.cache.exists.set(filePath, fs.existsSync(filePath))
-    }
-    return this.cache.exists.get(filePath)!
-  }
-
-  protected async resolvePath(filePath: string): Promise<string> {
-    // Check if we've already resolved this path
-    if (this.cache.realPath.has(filePath)) {
-      return this.cache.realPath.get(filePath)!
-    }
-
-    try {
-      const stats = await this.lstatMemoized(filePath)
-      if (stats.isSymbolicLink()) {
-        const resolved = await this.realpathMemoized(filePath)
-        this.cache.realPath.set(filePath, resolved)
-        return resolved
-      } else {
-        this.cache.realPath.set(filePath, filePath)
-        return filePath
-      }
-    } catch (error: any) {
-      log.debug({ filePath, message: error.message || error.stack }, "error resolving path")
-      this.cache.realPath.set(filePath, filePath)
-      return filePath
-    }
   }
 
   // /**
@@ -257,7 +192,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
   //   let dir = path.dirname(entry)
   //   while (true) {
   //     const pkgFile = path.join(dir, "package.json")
-  //     if (await this.existsMemoized(pkgFile)) {
+  //     if (await this.cache.memoize("exists", pkgFile)) {
   //       this.cache.requireResolve.set(cacheKey, { entry, packageDir: dir })
   //       return { entry, packageDir: dir }
   //     }
@@ -361,7 +296,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
       const node: NodeModuleInfo = {
         name: d.name,
         version: reference,
-        dir: await this.resolvePath(p),
+        dir: await this.cache.realPath[p],
       }
       result.push(node)
       if (d.dependencies.size > 0) {
@@ -448,13 +383,11 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
   semverSatisfies(found: string, range?: string): boolean {
     if (!range || range === "*" || range === "") return true
 
-    try {
-      semver.valid(range) // to trigger exception if invalid
-    } catch (error: any) {
+    if (semver.parse(range) == null) {
       // ignore, we can't verify non-semver ranges
       // e.g. git urls, file:, patch:, etc. Example:
       // "@ai-sdk/google": "patch:@ai-sdk/google@npm%3A2.0.43#~/.yarn/patches/@ai-sdk-google-npm-2.0.43-689ed559b3.patch"
-      log.debug({ found, range, error: error.message }, "unable to verify non-semver version range, assuming match")
+      log.debug({ found, range }, "unable to validate semver version range, assuming match")
       return true
     }
 

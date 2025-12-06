@@ -88,13 +88,12 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
 
       log.debug({ pkgPath }, "building dependency node from package.json")
 
-      if (!(await this.existsMemoized(pkgPath))) {
+      if (!(await this.cache.exists[pkgPath])) {
         throw new Error(`package.json not found at ${pkgPath}`)
       }
 
-      // Read package.json using memoized require for consistency with Node.js module system
-      const pkg: PackageJson = this.requireMemoized(pkgPath)
-      const resolvedPackageDir = await this.resolvePath(packageDir)
+      const pkg: PackageJson = await this.cache.packageJson[pkgPath]
+      const resolvedPackageDir = await this.cache.realPath[packageDir]
 
       // Use resolved path as the unique identifier to prevent circular dependencies
       if (visited.has(resolvedPackageDir)) {
@@ -126,11 +125,11 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
             continue
           }
 
-          const resolvedDepPath = await this.resolvePath(depPath.packageDir)
+          const resolvedDepPath = await this.cache.realPath[depPath.packageDir]
           const logFields = { package: pkg.name, dependency: depName, resolvedPath: resolvedDepPath }
 
           // Skip if this dependency resolves to the base directory or any parent we're already processing
-          if (resolvedDepPath === resolvedPackageDir || resolvedDepPath === (await this.resolvePath(baseDir))) {
+          if (resolvedDepPath === resolvedPackageDir || resolvedDepPath === (await this.cache.realPath[baseDir])) {
             log.debug(logFields, "skipping self-referential dependency")
             continue
           }

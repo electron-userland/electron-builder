@@ -20,7 +20,7 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
       const packageName = depTree.name || depTree.from
       if (packageName) {
         const hoistedPath = path.join(this.rootDir, "node_modules", packageName)
-        if (await this.existsMemoized(hoistedPath)) {
+        if (await this.cache.exists[hoistedPath]) {
           return hoistedPath
         }
       }
@@ -37,13 +37,13 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
     }
 
     const actualPath = await this.resolveActualPath(depTree)
-    const resolvedLocalPath = await this.resolvePath(actualPath)
+    const resolvedLocalPath = await this.cache.realPath[actualPath]
     const p = path.normalize(resolvedLocalPath)
     const pkgJsonPath = path.join(p, "package.json")
 
     let packageJson: PackageJson
     try {
-      packageJson = this.requireMemoized(pkgJsonPath)
+      packageJson = await this.cache.packageJson[pkgJsonPath]
     } catch (error: any) {
       log.warn(null, `Failed to read package.json for ${p}: ${error.message}`)
       return { path: p, prodDeps: {}, optionalDependencies: {} }
@@ -74,7 +74,7 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
       // Then check if optional dependency path exists (using actual resolved path)
       if (json?.optionalDependencies?.[packageName]) {
         const actualPath = await this.resolveActualPath(dependency)
-        if (!(await this.existsMemoized(actualPath))) {
+        if (!(await this.cache.exists[actualPath])) {
           log.debug(null, `Optional dependency ${packageName}@${dependency.version} path doesn't exist: ${actualPath}`)
           return undefined
         }

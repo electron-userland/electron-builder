@@ -64,7 +64,7 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
     const productionDeps = Object.entries(tree.dependencies || {}).map(async ([, dependency]) => {
       const dep = {
         ...dependency,
-        path: await this.resolvePath(dependency.path),
+        path: await this.cache.realPath[dependency.path],
       }
 
       const childDependencyId = this.packageVersionString(dep)
@@ -150,7 +150,7 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
     if (!parentPkgJson && parentPath) {
       const parentPkgPath = path.join(parentPath, "package.json")
       try {
-        parentPkgJson = await this.readJsonMemoized(parentPkgPath)
+        parentPkgJson = await this.cache.packageJson[parentPkgPath]
       } catch {
         // Parent might not have package.json (e.g., root workspace)
       }
@@ -191,7 +191,7 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
 
       // Recursively process children, passing this package's info
       if (node.children && node.children.length > 0) {
-        const childPkgJson = await this.readJsonMemoized(path.join(pkgPath, "package.json"))
+        const childPkgJson = await this.cache.packageJson[path.join(pkgPath, "package.json")]
         const childDeps = await this.normalizeTree({
           tree: node.children,
           seen,
@@ -233,13 +233,13 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
 
     // Try each path and validate version
     for (const candidatePath of searchPaths) {
-      if (!(await this.existsMemoized(candidatePath))) {
+      if (!(await this.cache.exists[candidatePath])) {
         continue
       }
 
       const pkgJsonPath = path.join(candidatePath, "package.json")
       try {
-        const pkgJson = await this.readJsonMemoized(pkgJsonPath)
+        const pkgJson = await this.cache.packageJson[pkgJsonPath]
 
         // Validate version matches
         if (pkgJson.version === requiredVersion) {
@@ -315,7 +315,7 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
         let p: string | null
 
         try {
-          p = await this.resolvePath(value.path)
+          p = await this.cache.realPath[value.path]
         } catch (e) {
           if (treatAsOptional) {
             log.debug({ pkg: this.cacheKey(value), name: value.name }, "failed to resolve optional dependency, skipping")
