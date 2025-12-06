@@ -192,8 +192,8 @@ importers:
         specifier: ~7.7.3
         version: 7.7.3
       tar:
-        specifier: ^6.1.12
-        version: 6.2.1
+        specifier: ^7.0.0
+        version: 7.5.1
       temp-file:
         specifier: ^3.4.0
         version: 3.4.0
