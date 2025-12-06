@@ -399,7 +399,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
 
     try {
       return semver.satisfies(found, range)
-    } catch (e: any) {
+    } catch {
       // fallback: simple equality or basic prefix handling (^, ~)
       if (range.startsWith("^") || range.startsWith("~")) {
         const r = range.slice(1)

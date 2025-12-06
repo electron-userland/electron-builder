@@ -35,6 +35,8 @@ export class ModuleCache {
     this.requireResolve = this.createAsyncProxy(this.requireResolveMap, (key: string) => this.transformKey("requireResolve", key))
   }
 
+  // this allows dot-notation access while still supporting async retrieval
+  // e.g., cache.packageJson[somePath] returns Promise<PackageJson>
   private createAsyncProxy<T>(map: Map<string, T>, compute: (key: string) => Promise<T>): Record<string, Promise<T>> {
     return new Proxy({} as Record<string, Promise<T>>, {
       async get(_, key: string) {
