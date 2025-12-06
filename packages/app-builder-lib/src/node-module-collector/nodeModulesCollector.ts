@@ -381,9 +381,15 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
   }
 
   semverSatisfies(found: string, range?: string): boolean {
-    if (!range || range === "*" || range === "") return true
+    if (!range || range === "*" || range === "") {
+      return true
+    }
 
-    if (semver.parse(range) == null) {
+    if (range === found) {
+      return true
+    }
+
+    if (semver.validRange(range) == null) {
       // ignore, we can't verify non-semver ranges
       // e.g. git urls, file:, patch:, etc. Example:
       // "@ai-sdk/google": "patch:@ai-sdk/google@npm%3A2.0.43#~/.yarn/patches/@ai-sdk-google-npm-2.0.43-689ed559b3.patch"
@@ -393,9 +399,8 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
 
     try {
       return semver.satisfies(found, range)
-    } catch (e) {
+    } catch (e: any) {
       // fallback: simple equality or basic prefix handling (^, ~)
-      if (range === found) return true
       if (range.startsWith("^") || range.startsWith("~")) {
         const r = range.slice(1)
         return r === found
@@ -403,7 +408,9 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
       // if range is like "8.x" or "8.*" match major
       const m = range.match(/^(\d+)[.(*|x)]*/)
       const fm = found.match(/^(\d+)\./)
-      if (m && fm) return m[1] === fm[1]
+      if (m && fm) {
+        return m[1] === fm[1]
+      }
       return false
     }
   }

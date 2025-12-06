@@ -37,11 +37,11 @@ export class ModuleCache {
 
   private createAsyncProxy<T>(map: Map<string, T>, compute: (key: string) => Promise<T>): Record<string, Promise<T>> {
     return new Proxy({} as Record<string, Promise<T>>, {
-      get(_, key: string) {
+      async get(_, key: string) {
         if (map.has(key)) {
           return Promise.resolve(map.get(key)!)
         }
-        return compute(key).then(value => {
+        return await compute(key).then(value => {
           map.set(key, value)
           return value
         })
@@ -81,7 +81,7 @@ export class ModuleCache {
       case "lstat":
         return await fs.lstat(path)
       case "requireResolve":
-        return require(path)
+        return require.resolve(path)
     }
   }
 }
