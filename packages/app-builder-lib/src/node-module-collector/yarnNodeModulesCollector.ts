@@ -151,6 +151,11 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
       const [, pkgName, version] = match
       const id = `${pkgName}@${version}`
 
+      const isShadow = node.shadow && node.color === "dim"
+      if (isShadow) {
+        log.debug({ pkgName, version }, "registering shadow node (hoisted elsewhere), will resolve")
+      }
+
       if (seen.has(id)) {
         continue
       }

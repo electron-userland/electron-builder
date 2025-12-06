@@ -116,8 +116,6 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
       // Process all production and optional dependencies
       for (const [depName, depVersion] of Object.entries(allProdDepNames)) {
         try {
-          // Resolve the dependency using Node.js module resolution from this package's directory
-          // const depPath = await this.resolvePackageDir({ packageName: depName, fromDir: resolvedPackageDir, packageVersion: depVersion })
           const depPath = await this.locatePackageVersion(resolvedPackageDir, depName, depVersion)
 
           if (!depPath || depPath.packageDir.length === 0) {
