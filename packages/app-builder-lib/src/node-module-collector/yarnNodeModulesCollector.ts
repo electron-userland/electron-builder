@@ -41,21 +41,6 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
     return ["list", "--production", "--json", "--depth=Infinity", "--no-progress"]
   }
 
-  protected async getTreeFromWorkspaces(tree: YarnDependency): Promise<YarnDependency> {
-    if (!tree.workspaces || !tree.dependencies) {
-      return tree
-    }
-
-    const appName = this.packageVersionString(tree)
-
-    if (tree.dependencies?.[appName]) {
-      const { name, path } = tree.dependencies[appName]
-      log.debug({ name, path }, "pruning root app/self package from workspace tree")
-      delete tree.dependencies[appName]
-    }
-    return Promise.resolve(tree)
-  }
-
   protected async extractProductionDependencyGraph(tree: YarnDependency, dependencyId: string): Promise<void> {
     if (this.productionGraph[dependencyId]) {
       return
@@ -117,7 +102,7 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
     if (!parsedTree) {
       throw new Error('Failed to extract Yarn tree: no "type":"tree" line found in console output')
     }
-    const rootPkgJson = await this.appPkgJson.value
+    const rootPkgJson = await this.cache.packageJson[path.join(this.rootDir, "package.json")]
 
     const normalizedTree = await this.normalizeTree({ tree: parsedTree, seen: new Set<string>(), appName: rootPkgJson.name, parentPath: this.rootDir, parentPkgJson: rootPkgJson })
 
@@ -212,7 +197,7 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
   }
 
   protected async collectAllDependencies(tree: YarnDependency, packageToExclude: string) {
-    const rootPkgJson = await this.appPkgJson.value
+    const rootPkgJson = await this.cache.packageJson[path.join(this.rootDir, "package.json")]
     const failedPackages = new Set<string>()
 
     log.debug({ packageToExclude, hasWorkspaces: !!tree.workspaces }, "collectAllDependencies starting")
@@ -223,41 +208,29 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
       parentIsOptional: boolean = false
     ) => {
       for (const [, value] of Object.entries(deps)) {
-        // Skip the app package if provided
-        if (packageToExclude && value.name === packageToExclude) {
-          log.debug({ name: value.name }, "skipping app package in collectAllDependencies")
-          continue
-        }
-
         const isRootOptional = !!rootPkgJson.optionalDependencies?.[value.name]
         const isDirectRootDep = rootPkgJson.dependencies?.[value.name] || rootPkgJson.optionalDependencies?.[value.name] || rootPkgJson.devDependencies?.[value.name]
         const treatAsOptional = isOptionalDependency || parentIsOptional || isRootOptional
 
-        let p: string | null
-
-        try {
-          p = await this.cache.realPath[value.path]
-        } catch (e) {
+        const logFields = { name: value.name, version: value.version, path: value.path }
+        log.debug(logFields, "collecting dependency")
+        const p = await this.cache.realPath[value.path]
+        if (!(await this.cache.exists[p])) {
           if (treatAsOptional) {
-            log.debug({ pkg: this.cacheKey(value), name: value.name }, "failed to resolve optional dependency, skipping")
+            log.debug(logFields, "failed to find optional dependency, skipping")
             failedPackages.add(value.name)
             continue
           }
 
           if (!isDirectRootDep) {
-            log.debug({ pkg: this.cacheKey(value), name: value.name }, "failed to resolve transitive dependency, treating as optional")
+            log.debug(logFields, "failed to find transitive dependency, treating as optional")
             failedPackages.add(value.name)
             continue
           }
 
-          log.error({ pkg: this.cacheKey(value) }, "failed to resolve module directory")
-          throw e
-        }
-
-        if (!p) {
-          log.debug({ pkg: this.cacheKey(value), name: value.name }, "optional dependency not found, skipping")
-          failedPackages.add(value.name)
-          continue
+          const message = "unable to find module directory; is the path correct?"
+          log.error(logFields, message)
+          throw new Error(`Failed to resolve module directory for ${value.name}@${value.version} at path: ${value.path}`)
         }
 
         let resolvedVersion = value.version
@@ -279,7 +252,6 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
         if (this.allDependencies.has(moduleKey)) {
           continue
         }
-
         this.allDependencies.set(moduleKey, m)
 
         const childIsOptional = treatAsOptional

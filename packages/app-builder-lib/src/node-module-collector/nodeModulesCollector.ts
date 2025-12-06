@@ -1,61 +1,37 @@
-import { exists, log, retry, TmpDir } from "builder-util"
-import * as childProcess from "child_process"
+import { log, retry, TmpDir } from "builder-util"
 import { CancellationToken } from "builder-util-runtime"
+import * as childProcess from "child_process"
 import * as fs from "fs-extra"
-import { createWriteStream, readJson } from "fs-extra"
+import { createWriteStream } from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
-import { hoist, type HoisterResult, type HoisterTree } from "./hoist"
-import { getPackageManagerCommand, PM } from "./packageManager"
-import type { Dependency, DependencyGraph, NodeModuleInfo, PackageJson } from "./types"
-import { fileURLToPath, pathToFileURL } from "node:url"
 import * as semver from "semver"
+import { hoist, type HoisterResult, type HoisterTree } from "./hoist"
 import { ModuleCache } from "./moduleCache"
+import { getPackageManagerCommand, PM } from "./packageManager"
+import type { Dependency, DependencyGraph, NodeModuleInfo } from "./types"
 type Result = { packageDir: string; version: string } | null
 
 export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDepType, OptionalDepType>, OptionalDepType> {
-  private nodeModules: NodeModuleInfo[] = []
-  protected allDependencies: Map<string, ProdDepType> = new Map()
-  protected productionGraph: DependencyGraph = {}
+  private readonly nodeModules: NodeModuleInfo[] = []
+  protected readonly allDependencies: Map<string, ProdDepType> = new Map()
+  protected readonly productionGraph: DependencyGraph = {}
   protected readonly cache: ModuleCache = new ModuleCache()
-
-  // protected pkgJsonCache: Map<string, string> = new Map()
-  // protected memoResolvedModules = new Map<string, Promise<string | null>>()
-
-  private importMetaResolve = new Lazy(async () => {
-    try {
-      // Node >= 16 builtin ESM-aware resolver
-      const packageName = "import-meta-resolve"
-      const imported = await import(packageName)
-      return imported.resolve
-    } catch {
-      return null
-    }
-  })
-
-  // Unified cache for all file system and module operations
 
   protected isHoisted = new Lazy<boolean>(async () => {
     const { manager } = this.installOptions
     const command = getPackageManagerCommand(manager)
-
     const config = (await this.asyncExec(command, ["config", "list"])).stdout
     if (config == null) {
       log.debug({ manager }, "unable to determine if node_modules are hoisted: no config output. falling back to hoisted mode")
       return false
     }
     const lines = Object.fromEntries(config.split("\n").map(line => line.split("=").map(s => s.trim())))
-
     if (lines["node-linker"] === "hoisted") {
       log.debug({ manager }, "node_modules are hoisted")
       return true
     }
-
     return false
-  })
-
-  protected appPkgJson: Lazy<PackageJson> = new Lazy<PackageJson>(async () => {
-    return this.cache.packageJson[path.join(this.rootDir, "package.json")]
   })
 
   constructor(
@@ -145,68 +121,6 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
       }
     )
   }
-
-  // /**
-  //  * Resolves a package to its filesystem location using Node.js module resolution.
-  //  * Returns the directory containing the package, not the package.json path.
-  //  */
-  // protected async resolvePackageDir(options: { packageName: string; fromDir: string; packageVersion: string }): Promise<{ entry: string; packageDir: string } | null> {
-  //   const { packageName, fromDir, packageVersion } = options
-  //   const cacheKey = `${packageName}::${packageVersion}::${fromDir}`
-  //   if (this.cache.requireResolve.has(cacheKey)) {
-  //     return this.cache.requireResolve.get(cacheKey)!
-  //   }
-
-  //   const resolveEntry = async () => {
-  //     // 1) Try Node ESM resolver (handles exports reliably)
-  //     if (await this.importMetaResolve.value) {
-  //       try {
-  //         const url = (await this.importMetaResolve.value)(packageName, pathToFileURL(fromDir).href)
-  //         const result = url.startsWith("file://") ? fileURLToPath(url) : null
-  //         return result
-  //       } catch (error: any) {
-  //         log.debug({ error: error.message }, "import-meta-resolve faile, attempting require.resolved")
-  //         // ignore
-  //       }
-  //     }
-
-  //     // 2) Fallback: require.resolve (CJS, old packages)
-  //     try {
-  //       const result = require.resolve(packageName, { paths: [fromDir, this.rootDir] })
-  //       return result
-  //     } catch (error: any) {
-  //       log.debug({ error: error.message }, "require.resolve failed")
-  //       // ignore
-  //     }
-
-  //     return null
-  //   }
-
-  //   const entry = await resolveEntry()
-  //   if (!entry) {
-  //     this.cache.requireResolve.set(cacheKey, null)
-  //     return null
-  //   }
-
-  //   // 3) Walk upward until you find a package.json
-  //   let dir = path.dirname(entry)
-  //   while (true) {
-  //     const pkgFile = path.join(dir, "package.json")
-  //     if (await this.cache.memoize("exists", pkgFile)) {
-  //       this.cache.requireResolve.set(cacheKey, { entry, packageDir: dir })
-  //       return { entry, packageDir: dir }
-  //     }
-
-  //     const parent = path.dirname(dir)
-  //     if (parent === dir) {
-  //       break // root reached
-  //     }
-  //     dir = parent
-  //   }
-
-  //   this.cache.requireResolve.set(cacheKey, null)
-  //   return null
-  // }
 
   protected cacheKey(pkg: ProdDepType): string {
     const rel = path.relative(this.rootDir, pkg.path)
@@ -370,11 +284,26 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     })
   }
 
-  async readPackageVersion(pkgJsonPath: string): Promise<string | null> {
+
+  protected async locatePackageVersion(parentDir: string, pkgName: string, requiredRange?: string): Promise<Result | null> {
+    // 1) check direct parent node_modules/pkgName first
+    const direct = path.join(path.resolve(parentDir), "node_modules", pkgName, "package.json")
+    if (await this.cache.exists[direct]) {
+      const ver = await this.readPackageVersion(direct)
+      if (ver && this.semverSatisfies(ver, requiredRange)) {
+        return { packageDir: path.dirname(direct), version: ver }
+      }
+    }
+
+    // 2) upward hoisted search, then 3) downward non-hoisted search
+    return (await this.upwardSearch(parentDir, pkgName, requiredRange)) || (await this.downwardSearch(parentDir, pkgName, requiredRange)) || null
+  }
+
+  protected async readPackageVersion(pkgJsonPath: string): Promise<string | null> {
     return await this.cache.packageJson[pkgJsonPath].then(pkg => pkg.version).catch(() => null)
   }
 
-  semverSatisfies(found: string, range?: string): boolean {
+  protected semverSatisfies(found: string, range?: string): boolean {
     if (!range || range === "*" || range === "") {
       return true
     }
@@ -412,7 +341,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
   /**
    * Upward search (hoisted)
    */
-  async upwardSearch(parentDir: string, pkgName: string, requiredRange?: string): Promise<Result> {
+  private async upwardSearch(parentDir: string, pkgName: string, requiredRange?: string): Promise<Result> {
     let current = path.resolve(parentDir)
     const root = path.parse(current).root
     while (true) {
@@ -440,7 +369,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
    * Breadth-first downward search from parentDir/node_modules
    * Looks for node_modules/\*\/node_modules/pkgName (and deeper)
    */
-  async downwardSearch(parentDir: string, pkgName: string, requiredRange?: string, maxExplored = 2000, maxDepth = 6): Promise<Result> {
+  private async downwardSearch(parentDir: string, pkgName: string, requiredRange?: string, maxExplored = 2000, maxDepth = 6): Promise<Result> {
     const start = path.join(path.resolve(parentDir), "node_modules")
     if (!(await this.cache.exists[start]) || !(await this.cache.lstat[start]).isDirectory()) {
       return null
@@ -538,17 +467,4 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     return null
   }
 
-  async locatePackageVersion(parentDir: string, pkgName: string, requiredRange?: string): Promise<Result | null> {
-    // 1) check direct parent node_modules/pkgName first
-    const direct = path.join(path.resolve(parentDir), "node_modules", pkgName, "package.json")
-    if (await this.cache.exists[direct]) {
-      const ver = await this.readPackageVersion(direct)
-      if (ver && this.semverSatisfies(ver, requiredRange)) {
-        return { packageDir: path.dirname(direct), version: ver }
-      }
-    }
-
-    // 2) upward hoisted search, then 3) downward non-hoisted search
-    return (await this.upwardSearch(parentDir, pkgName, requiredRange)) || (await this.downwardSearch(parentDir, pkgName, requiredRange)) || null
-  }
 }

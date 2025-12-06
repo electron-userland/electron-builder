@@ -1,6 +1,7 @@
 import { exists, log } from "builder-util"
 import { PackageJson } from "./types"
 import * as fs from "fs-extra"
+import { resolve } from "path"
 
 // Type aliases for clarity
 type PackageJsonCache = Record<string, Promise<PackageJson>>
@@ -33,16 +34,17 @@ export class ModuleCache {
     this.lstat = this.createAsyncProxy(this.lstatMap, (path: string) => fs.lstat(path))
     this.requireResolve = this.createAsyncProxy(this.requireResolveMap, (path: string) => require.resolve(path))
     this.realPath = this.createAsyncProxy(this.realPathMap, async (path: string) => {
+      const p = resolve(path)
       try {
-        const stats = await this.lstat[path]
+        const stats = await this.lstat[p]
         if (stats.isSymbolicLink()) {
-          return await fs.realpath(path)
+          return await fs.realpath(p)
         }
-        return path
+        return p
       } catch (error: any) {
-        log.debug({ filePath: path, message: error.message || error.stack }, "error resolving path")
+        log.debug({ filePath: p, message: error.message || error.stack }, "error resolving path")
       }
-      return path
+      return p
     })
   }
 
