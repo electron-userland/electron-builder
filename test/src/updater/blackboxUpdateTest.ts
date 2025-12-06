@@ -110,7 +110,8 @@ async function runTest(context: TestContext, target: string, packageManager: str
       // Move app update to the root directory of the server
       await fs.copy(newAppDir.dir, rootDirectory, { recursive: true, overwrite: true })
 
-      const verifyAppVersion = async (expectedVersion: string) => await launchAndWaitForQuit({ appPath, timeoutMs: 2 * 60 * 1000, updateConfigPath, expectedVersion, packageManagerToTest: packageManager })
+      const verifyAppVersion = async (expectedVersion: string) =>
+        await launchAndWaitForQuit({ appPath, timeoutMs: 2 * 60 * 1000, updateConfigPath, expectedVersion, packageManagerToTest: packageManager })
 
       const result = await verifyAppVersion(OLD_VERSION_NUMBER)
       log.debug(result, "Test App version")
