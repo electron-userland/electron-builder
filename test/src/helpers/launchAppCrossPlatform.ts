@@ -17,9 +17,17 @@ interface LaunchOptions {
   env?: Record<string, string>
   expectedVersion?: string
   updateConfigPath: string
+  packageManagerToTest: string
 }
 
-export async function launchAndWaitForQuit({ appPath, timeoutMs = 20000, env = {}, expectedVersion, updateConfigPath }: LaunchOptions): Promise<LaunchResult> {
+export async function launchAndWaitForQuit({
+  appPath,
+  timeoutMs = 20000,
+  env = {},
+  expectedVersion,
+  updateConfigPath,
+  packageManagerToTest,
+}: LaunchOptions): Promise<LaunchResult> {
   let child: ChildProcess
   const versionRegex = /APP_VERSION:\s*([0-9]+\.[0-9]+\.[0-9]+)/
 
@@ -32,6 +40,7 @@ export async function launchAndWaitForQuit({ appPath, timeoutMs = 20000, env = {
         ...process.env,
         AUTO_UPDATER_TEST: "1",
         AUTO_UPDATER_TEST_CONFIG_PATH: updateConfigPath,
+        ELECTRON_BUILDER_LINUX_PACKAGE_MANAGER: packageManagerToTest,
         ...localEnv,
       },
     })
