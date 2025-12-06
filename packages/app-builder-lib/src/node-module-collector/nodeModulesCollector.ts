@@ -284,7 +284,6 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     })
   }
 
-
   protected async locatePackageVersion(parentDir: string, pkgName: string, requiredRange?: string): Promise<Result | null> {
     // 1) check direct parent node_modules/pkgName first
     const direct = path.join(path.resolve(parentDir), "node_modules", pkgName, "package.json")
@@ -466,5 +465,4 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
 
     return null
   }
-
 }
