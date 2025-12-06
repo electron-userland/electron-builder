@@ -20,7 +20,7 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
     } catch (error: any) {
       log.info({ pm: this.installOptions.manager, parser: PM.NPM, error: error.message }, "unable to process dependency tree, falling back to using manual node_modules traversal")
     }
-    // node_modules linker fallback. (Slower due to system ops, so we only use it as a fallback) [e.g. corepack env will not allow npm CLI to extract tree]
+    // node_modules linker fallback. (Slower due to system ops, so we only use it as a fallback) [such as when corepack env will not allow npm CLI to extract tree]
     return this.buildNodeModulesTreeManually(this.rootDir)
   }
 
@@ -88,13 +88,12 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
 
       log.debug({ pkgPath }, "building dependency node from package.json")
 
-      if (!(await this.existsMemoized(pkgPath))) {
+      if (!(await this.cache.exists[pkgPath])) {
         throw new Error(`package.json not found at ${pkgPath}`)
       }
 
-      // Read package.json using memoized require for consistency with Node.js module system
-      const pkg: PackageJson = await this.readJsonMemoized(pkgPath)
-      const resolvedPackageDir = await this.resolvePath(packageDir)
+      const pkg: PackageJson = await this.cache.packageJson[pkgPath]
+      const resolvedPackageDir = await this.cache.realPath[packageDir]
 
       // Use resolved path as the unique identifier to prevent circular dependencies
       if (visited.has(resolvedPackageDir)) {
@@ -117,22 +116,23 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
       // Process all production and optional dependencies
       for (const [depName, depVersion] of Object.entries(allProdDepNames)) {
         try {
-          // Resolve the dependency using Node.js module resolution from this package's directory
-          const resolvedPackage = await this.resolvePackage(depName, packageDir)
+          const depPath = await this.locatePackageVersion(resolvedPackageDir, depName, depVersion)
 
-          if (!resolvedPackage) {
-            log.warn({ package: pkg.name, dependency: depName, version: depVersion }, "dependency not found")
+          if (!depPath || depPath.packageDir.length === 0) {
+            log.warn({ package: pkg.name, dependency: depName, version: depVersion }, "dependency not found, skipping")
             continue
           }
 
-          const resolvedDepPath = await this.resolvePath(resolvedPackage.packageDir)
+          const resolvedDepPath = await this.cache.realPath[depPath.packageDir]
+          const logFields = { package: pkg.name, dependency: depName, resolvedPath: resolvedDepPath }
+
           // Skip if this dependency resolves to the base directory or any parent we're already processing
-          if (resolvedDepPath === resolvedPackageDir || resolvedDepPath === (await this.resolvePath(baseDir))) {
-            log.debug({ package: pkg.name, dependency: depName, resolvedPath: resolvedDepPath }, "skipping self-referential dependency")
+          if (resolvedDepPath === resolvedPackageDir || resolvedDepPath === (await this.cache.realPath[baseDir])) {
+            log.debug(logFields, "skipping self-referential dependency")
             continue
           }
 
-          log.debug({ package: pkg.name, dependency: depName, ...resolvedPackage, resolvedDepPath }, "processing production dependency")
+          log.debug(logFields, "processing production dependency")
 
           // Recursively build the dependency tree for this dependency
           prodDeps[depName] = await buildFromPackage(resolvedDepPath)
