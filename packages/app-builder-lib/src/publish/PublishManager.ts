@@ -387,8 +387,8 @@ export function computeDownloadUrl(publishConfiguration: PublishConfiguration, f
       return baseUrlString
     }
 
-    const baseUrl = url.parse(baseUrlString)
-    return url.format({ ...(baseUrl as url.UrlObject), pathname: path.posix.resolve(baseUrl.pathname || "/", encodeURI(fileName)) })
+    const baseUrl = new url.URL(baseUrlString)
+    return url.format({ ...baseUrl, pathname: path.posix.resolve(baseUrl.pathname || "/", encodeURI(fileName)) })
   }
 
   let baseUrl
