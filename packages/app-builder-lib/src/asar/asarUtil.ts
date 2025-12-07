@@ -1,6 +1,6 @@
-import { createPackageFromStreams, AsarStreamType } from "@electron/asar"
-import { log } from "builder-util"
-import { exists, Filter } from "builder-util/out/fs"
+import { createPackageFromStreams, AsarStreamType, AsarDirectory } from "@electron/asar"
+import { isEmptyOrSpaces, log } from "builder-util"
+import { exists, Filter, FilterStats } from "builder-util/out/fs"
 import * as fs from "fs-extra"
 import { readlink } from "fs-extra"
 import * as path from "path"
@@ -91,8 +91,18 @@ export class AsarPackager {
       }
     }
 
-    const results: AsarStreamType[] = []
-    const resultsPaths = new Set<string>()
+    const resultsMap = new Map<string, AsarStreamType>()
+    const streamOrdering: string[] = []
+    const normalizedUnpackedPaths = Array.from(unpackedPaths).map(p => path.normalize(p))
+
+    const isUnpacked = (dir: string, file?: string, stat?: FilterStats) => {
+      const normalizedDir = path.normalize(dir)
+      // execute checks in order w/o having to check all conditions if not needed (loop optimization/short-circuit)
+      const isFileUnpacked = () => !isEmptyOrSpaces(file) && stat != null && this.config.unpackPattern?.(file, stat) === true
+      const isChild = () =>  normalizedUnpackedPaths.some(unpackedPath => normalizedDir.startsWith(unpackedPath + path.sep) || normalizedDir === unpackedPath)
+      return isFileUnpacked() || isChild()
+    }
+
     for (const fileSet of fileSets) {
       // Don't use Promise.all, we need to retain order of execution/iteration through the already-ordered fileset
       for (const [index, file] of fileSet.files.entries()) {
@@ -100,12 +110,8 @@ export class AsarPackager {
         const stat = fileSet.metadata.get(file)!
         const destination = path.relative(this.config.defaultDestination, getDestinationPath(file, fileSet))
 
-        const normalizedUnpackedPaths = Array.from(unpackedPaths).map(p => path.normalize(p))
-        const isUnpacked = (dir: string) => {
-          const isChild = normalizedUnpackedPaths.some(unpackedPath => path.normalize(dir).startsWith(unpackedPath + path.sep))
-          const isFileUnpacked = this.config.unpackPattern?.(file, stat) ?? false
-          return isChild || isFileUnpacked
-        }
+        // First, ensure parent directories exist in the map
+        this.ensureParentDirectories(destination, resultsMap, streamOrdering)
 
         const result = await this.processFileOrSymlink({
           file,
@@ -115,13 +121,69 @@ export class AsarPackager {
           stat,
           isUnpacked,
         })
-        if (result != null) {
-          results.push(result)
-          resultsPaths.add(result.path)
+        if (result != null && !resultsMap.has(result.path)) {
+          resultsMap.set(result.path, result)
+          streamOrdering.push(result.path)
         }
       }
     }
+
+    // Second pass: mark parent directories as unpacked if their children are unpacked
+    for (const [destPath, entry] of resultsMap.entries()) {
+      if (entry.unpacked) {
+        this.markParentDirectoriesAsUnpacked(destPath, resultsMap, isUnpacked)
+      }
+    }
+
+    // Build final results array in the correct order
+    const results: AsarStreamType[] = []
+    for (const destPath of streamOrdering) {
+      const entry = resultsMap.get(destPath)
+      if (entry) {
+        results.push(entry)
+      }
+    }
+
     return results
+  }
+
+  private ensureParentDirectories(destination: string, resultsMap: Map<string, AsarStreamType>, streamOrdering: string[]) {
+    const parents: string[] = []
+    let superDir = path.dirname(path.normalize(destination))
+
+    while (superDir !== ".") {
+      parents.unshift(superDir)
+      superDir = path.dirname(superDir)
+    }
+
+    for (const parentPath of parents) {
+      if (!resultsMap.has(parentPath)) {
+        const dir: AsarDirectory = {
+          type: "directory",
+          path: parentPath,
+          unpacked: false, // Will be updated in second pass if needed
+        }
+        resultsMap.set(parentPath, dir)
+        streamOrdering.push(parentPath)
+      }
+    }
+  }
+
+  private markParentDirectoriesAsUnpacked(destination: string, resultsMap: Map<string, AsarStreamType>, isUnpacked: (path: string) => boolean) {
+    let superDir = path.dirname(path.normalize(destination))
+
+    while (superDir !== ".") {
+      const entry = resultsMap.get(superDir)
+      if (entry) {
+        const normalized = path.normalize(superDir)
+        const shouldBeUnpacked = isUnpacked(normalized)
+
+        if (shouldBeUnpacked) {
+          entry.unpacked = true
+        }
+      }
+      superDir = path.dirname(superDir)
+    }
   }
 
   private async processFileOrSymlink(options: {
@@ -130,10 +192,10 @@ export class AsarPackager {
     stat: fs.Stats
     fileSet: ResolvedFileSet
     transformedData: string | Buffer | undefined
-    isUnpacked: (path: string) => boolean
+    isUnpacked: (dir: string, file?: string, stat?: FilterStats) => boolean
   }): Promise<AsarStreamType> {
     const { isUnpacked, transformedData, file, destination, stat } = options
-    const unpacked = isUnpacked(destination)
+    const unpacked = isUnpacked(destination, file, stat)
 
     if (!stat.isFile() && !stat.isSymbolicLink()) {
       return { path: destination, unpacked, type: "directory" }
