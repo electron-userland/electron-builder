@@ -1,5 +1,11 @@
 ## 4.3.0
 
+## 6.7.3
+
+### Patch Changes
+
+- Chore(deps): unpinning semver and updating it for app-builder-lib and electron-updater _[`#9349`](https://github.com/electron-userland/electron-builder/pull/9349) [`e043df5`](https://github.com/electron-userland/electron-builder/commit/e043df57604fb029fd8f9cf7d835b8366ee71aa6) [@panther7](https://github.com/panther7)_
+
 ## 6.7.2
 
 ### Patch Changes
