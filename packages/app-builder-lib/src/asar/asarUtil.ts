@@ -95,14 +95,26 @@ export class AsarPackager {
     const streamOrdering: string[] = []
     const normalizedUnpackedPaths = Array.from(unpackedPaths).map(p => path.normalize(p))
 
-    const isUnpacked = (dir: string, file?: string, stat?: FilterStats) => {
+    // Optimized unpacked check with short-circuit evaluation
+    const isUnpacked = (dir: string, file?: string, stat?: FilterStats): boolean => {
       const normalizedDir = path.normalize(dir)
-      // execute checks in order w/o having to check all conditions if not needed (loop optimization/short-circuit)
-      const isFileUnpacked = () => !isEmptyOrSpaces(file) && stat != null && this.config.unpackPattern?.(file, stat) === true
-      const isChild = () =>  normalizedUnpackedPaths.some(unpackedPath => normalizedDir.startsWith(unpackedPath + path.sep) || normalizedDir === unpackedPath)
-      return isFileUnpacked() || isChild()
+
+      // Check file pattern first (most specific)
+      if (!isEmptyOrSpaces(file) && stat && this.config.unpackPattern?.(file, stat)) {
+        return true
+      }
+
+      // Check if path is within any unpacked directory
+      for (const unpackedPath of normalizedUnpackedPaths) {
+        if (normalizedDir === unpackedPath || normalizedDir.startsWith(unpackedPath + path.sep)) {
+          return true
+        }
+      }
+
+      return false
     }
 
+    // First pass: process all files in order, ensuring parent directories exist
     for (const fileSet of fileSets) {
       // Don't use Promise.all, we need to retain order of execution/iteration through the already-ordered fileset
       for (const [index, file] of fileSet.files.entries()) {
@@ -110,7 +122,7 @@ export class AsarPackager {
         const stat = fileSet.metadata.get(file)!
         const destination = path.relative(this.config.defaultDestination, getDestinationPath(file, fileSet))
 
-        // First, ensure parent directories exist in the map
+        // Ensure parent directories exist before processing file
         this.ensureParentDirectories(destination, resultsMap, streamOrdering)
 
         const result = await this.processFileOrSymlink({
@@ -121,47 +133,42 @@ export class AsarPackager {
           stat,
           isUnpacked,
         })
-        if (result != null && !resultsMap.has(result.path)) {
+
+        if (result && !resultsMap.has(result.path)) {
           resultsMap.set(result.path, result)
           streamOrdering.push(result.path)
         }
       }
     }
 
-    // Second pass: mark parent directories as unpacked if their children are unpacked
-    for (const [destPath, entry] of resultsMap.entries()) {
+    // Second pass: propagate unpacked flag to parent directories
+    for (const entry of resultsMap.values()) {
       if (entry.unpacked) {
-        this.markParentDirectoriesAsUnpacked(destPath, resultsMap, isUnpacked)
+        this.markParentDirectoriesAsUnpacked(entry.path, resultsMap, isUnpacked)
       }
     }
 
-    // Build final results array in the correct order
-    const results: AsarStreamType[] = []
-    for (const destPath of streamOrdering) {
-      const entry = resultsMap.get(destPath)
-      if (entry) {
-        results.push(entry)
-      }
-    }
-
-    return results
+    // Build final results array maintaining processing order
+    return streamOrdering.map(path => resultsMap.get(path)!).filter(Boolean)
   }
 
-  private ensureParentDirectories(destination: string, resultsMap: Map<string, AsarStreamType>, streamOrdering: string[]) {
+  private ensureParentDirectories(destination: string, resultsMap: Map<string, AsarStreamType>, streamOrdering: string[]): void {
     const parents: string[] = []
-    let superDir = path.dirname(path.normalize(destination))
+    let current = path.dirname(path.normalize(destination))
 
-    while (superDir !== ".") {
-      parents.unshift(superDir)
-      superDir = path.dirname(superDir)
+    // Collect all parent directories from deepest to root
+    while (current !== ".") {
+      parents.unshift(current)
+      current = path.dirname(current)
     }
 
+    // Add parent directories in order (root to deepest)
     for (const parentPath of parents) {
       if (!resultsMap.has(parentPath)) {
         const dir: AsarDirectory = {
           type: "directory",
           path: parentPath,
-          unpacked: false, // Will be updated in second pass if needed
+          unpacked: false, // Updated in second pass if needed
         }
         resultsMap.set(parentPath, dir)
         streamOrdering.push(parentPath)
@@ -169,20 +176,15 @@ export class AsarPackager {
     }
   }
 
-  private markParentDirectoriesAsUnpacked(destination: string, resultsMap: Map<string, AsarStreamType>, isUnpacked: (path: string) => boolean) {
-    let superDir = path.dirname(path.normalize(destination))
+  private markParentDirectoriesAsUnpacked(destination: string, resultsMap: Map<string, AsarStreamType>, isUnpacked: (path: string) => boolean): void {
+    let current = path.dirname(path.normalize(destination))
 
-    while (superDir !== ".") {
-      const entry = resultsMap.get(superDir)
-      if (entry) {
-        const normalized = path.normalize(superDir)
-        const shouldBeUnpacked = isUnpacked(normalized)
-
-        if (shouldBeUnpacked) {
-          entry.unpacked = true
-        }
+    while (current !== ".") {
+      const entry = resultsMap.get(current)
+      if (entry && isUnpacked(current)) {
+        entry.unpacked = true
       }
-      superDir = path.dirname(superDir)
+      current = path.dirname(current)
     }
   }
 
@@ -197,49 +199,52 @@ export class AsarPackager {
     const { isUnpacked, transformedData, file, destination, stat } = options
     const unpacked = isUnpacked(destination, file, stat)
 
+    // Handle directories
     if (!stat.isFile() && !stat.isSymbolicLink()) {
       return { path: destination, unpacked, type: "directory" }
     }
 
-    // write any data if provided, skip symlink check
+    // Handle transformed data (pre-processed content)
     if (transformedData != null) {
-      const streamGenerator = () => {
-        return new Readable({
-          read() {
-            this.push(transformedData)
-            this.push(null)
-          },
-        })
-      }
       const size = Buffer.byteLength(transformedData)
-      return { path: destination, streamGenerator, unpacked, type: "file", stat: { mode: stat.mode, size } }
+      return {
+        path: destination,
+        streamGenerator: () =>
+          new Readable({
+            read() {
+              this.push(transformedData)
+              this.push(null)
+            },
+          }),
+        unpacked,
+        type: "file",
+        stat: { mode: stat.mode, size },
+      }
     }
 
     // verify that the file is not a direct link or symlinked to access/copy a system file
     await this.protectSystemAndUnsafePaths(file, await this.packager.info.getWorkspaceRoot())
 
-    const config = {
+    const baseConfig = {
       path: destination,
       streamGenerator: () => fs.createReadStream(file),
       unpacked,
       stat,
     }
 
-    // file, stream directly
+    // Handle regular files
     if (!stat.isSymbolicLink()) {
-      return {
-        ...config,
-        type: "file",
-      }
+      return { ...baseConfig, type: "file" }
     }
 
-    // okay, it must be a symlink. evaluate link to be relative to source file in asar
+    // Handle symlinks - make relative to source location
     let link = await readlink(file)
     if (path.isAbsolute(link)) {
       link = path.relative(path.dirname(file), link)
     }
+
     return {
-      ...config,
+      ...baseConfig,
       type: "link",
       symlink: link,
     }
@@ -279,20 +284,16 @@ export class AsarPackager {
       for (const [oldIndex, value] of fileSet.transformedFiles) {
         const newIndex = indexMap.get(oldIndex)
         if (newIndex === undefined) {
-          const file = fileSet.files[oldIndex]
-          throw new Error(`Internal error: ${file} was lost while ordering asar`)
+          throw new Error(`Internal error: ${fileSet.files[oldIndex]} was lost while ordering asar`)
         }
-
         transformedFiles.set(newIndex, value)
       }
     }
 
-    const { src, destination, metadata } = fileSet
-
     return {
-      src,
-      destination,
-      metadata,
+      src: fileSet.src,
+      destination: fileSet.destination,
+      metadata: fileSet.metadata,
       files: sortedFileEntries.map(([, file]) => file),
       transformedFiles,
     }
@@ -300,10 +301,10 @@ export class AsarPackager {
 
   private async checkAgainstRoots(target: string, allowRoots: string[]): Promise<boolean> {
     const resolved = await resolvePath(target)
+    if (!resolved) return false
 
     for (const root of allowRoots) {
-      const resolvedRoot = root
-      if (resolved === resolvedRoot || resolved?.startsWith(resolvedRoot + path.sep)) {
+      if (resolved === root || resolved.startsWith(root + path.sep)) {
         return true
       }
     }
@@ -314,33 +315,25 @@ export class AsarPackager {
     const resolved = await resolvePath(file)
     const logFields = { source: file, realPath: resolved }
 
-    const isUnsafe = async () => {
-      const workspace = await resolvePath(workspaceRoot)
+    const workspace = await resolvePath(workspaceRoot)
 
-      if (workspace && resolved?.startsWith(workspace)) {
-        // if in workspace, always safe
-        return false
-      }
-
-      const allowed = await this.checkAgainstRoots(file, await ALLOWLIST)
-      if (allowed) {
-        return false // allowlist is priority
-      }
-
-      const denied = await this.checkAgainstRoots(file, await DENYLIST)
-      if (denied) {
-        log.error(logFields, `denied access to system or unsafe path`)
-        return true
-      }
-      // default
-      log.debug(logFields, `path is outside of explicit safe paths, defaulting to safe`)
-      return false
+    // If in workspace, always safe
+    if (workspace && resolved?.startsWith(workspace)) {
+      return
     }
 
-    const unsafe = await isUnsafe()
+    // Check allowlist (priority)
+    if (await this.checkAgainstRoots(file, await ALLOWLIST)) {
+      return
+    }
 
-    if (unsafe) {
+    // Check denylist
+    if (await this.checkAgainstRoots(file, await DENYLIST)) {
+      log.error(logFields, `denied access to system or unsafe path`)
       throw new Error(`Cannot copy file [${file}] symlinked to file [${resolved}] outside the package to a system or unsafe path`)
     }
+
+    // Default: outside explicit paths but not explicitly denied
+    log.debug(logFields, `path is outside of explicit safe paths, defaulting to safe`)
   }
 }
