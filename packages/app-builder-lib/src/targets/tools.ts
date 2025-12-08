@@ -63,13 +63,16 @@ export async function getWindowsKitsBundle({ useLegacy, arch }: { useLegacy: boo
   if (!isEmptyOrSpaces(overridePath)) {
     return { kit: overridePath, appxAssets: overridePath }
   }
+
+  const windowsKitArch = (x86: string) => (arch === Arch.ia32 ? x86 : arch === Arch.arm64 ? "arm64" : "x64")
+
   if (useLegacy === true) {
     const vendorPath = await getBin("winCodeSign")
-    return { kit: path.join(vendorPath, "windows-10", arch === Arch.arm64 ? "x64" : Arch[arch]), appxAssets: vendorPath }
+    return { kit: path.join(vendorPath, "windows-10", windowsKitArch("ia32")), appxAssets: vendorPath }
   }
   const file = "windows-kits-bundle-10_0_26100_0.zip"
   const vendorPath = await getBinFromUrl("win-codesign@1.0.0", file, wincodesignChecksums[file])
-  return { kit: path.join(vendorPath, arch === Arch.ia32 ? "x86" : Arch[arch]), appxAssets: vendorPath }
+  return { kit: path.join(vendorPath, windowsKitArch("x86")), appxAssets: vendorPath }
 }
 
 export function isOldWin6() {
@@ -101,12 +104,12 @@ export async function getOsslSigncodeBundle({ useLegacy }: { useLegacy: boolean 
   }
 
   if (useLegacy === true) {
-    const vendorBase = path.join((await getBin("winCodeSign")), process.platform)
+    const vendorBase = path.join(await getBin("winCodeSign"), process.platform)
     const vendorPath = process.platform === "darwin" ? path.join(vendorBase, "10.12") : vendorBase
-    return { path: path.join(vendorPath, "osslsigncode"),  env: process.platform === "darwin" ? computeToolEnv([path.join(vendorPath, "lib")]) : undefined }
+    return { path: path.join(vendorPath, "osslsigncode"), env: process.platform === "darwin" ? computeToolEnv([path.join(vendorPath, "lib")]) : undefined }
   }
 
-  const getKey = () => {
+  const filename = (() => {
     if (process.platform === "linux") {
       if (process.arch == "x64") {
         return "win-codesign-linux-amd64.zip"
@@ -120,9 +123,7 @@ export async function getOsslSigncodeBundle({ useLegacy }: { useLegacy: boolean 
       return "win-codesign-darwin-arm64.zip"
     }
     return "win-codesign-darwin-x86_64.zip"
-  }
-
-  const filename = getKey()
+  })()
   const toolPath = await getBinFromUrl("win-codesign@1.0.0", filename, wincodesignChecksums[filename])
   return { path: path.join(toolPath, "osslsigncode") }
 }
