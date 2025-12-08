@@ -1,3 +1,4 @@
+import { isEmptyOrSpaces } from "builder-util"
 import { ChildProcess, spawn } from "child_process"
 import { chmodSync } from "fs"
 import os from "os"
@@ -16,9 +17,17 @@ interface LaunchOptions {
   env?: Record<string, string>
   expectedVersion?: string
   updateConfigPath: string
+  packageManagerToTest: string
 }
 
-export async function launchAndWaitForQuit({ appPath, timeoutMs = 20000, env = {}, expectedVersion, updateConfigPath }: LaunchOptions): Promise<LaunchResult> {
+export async function launchAndWaitForQuit({
+  appPath,
+  timeoutMs = 20000,
+  env = {},
+  expectedVersion,
+  updateConfigPath,
+  packageManagerToTest,
+}: LaunchOptions): Promise<LaunchResult> {
   let child: ChildProcess
   const versionRegex = /APP_VERSION:\s*([0-9]+\.[0-9]+\.[0-9]+)/
 
@@ -31,6 +40,7 @@ export async function launchAndWaitForQuit({ appPath, timeoutMs = 20000, env = {
         ...process.env,
         AUTO_UPDATER_TEST: "1",
         AUTO_UPDATER_TEST_CONFIG_PATH: updateConfigPath,
+        ELECTRON_BUILDER_LINUX_PACKAGE_MANAGER: packageManagerToTest,
         ...localEnv,
       },
     })
@@ -146,8 +156,8 @@ export async function launchAndWaitForQuit({ appPath, timeoutMs = 20000, env = {
 
 // ⬇️ Launch Xvfb and validate it starts
 export function startXvfb(): { display: string; stop: () => void } {
-  const display = `:${Math.floor(90 + Math.random() * 10)}`
-  const proc = spawn("Xvfb", [display, "-screen", "0", "1024x768x24"], {
+  const display = `:${Math.ceil(Math.random() * 100)}`
+  const proc = spawn("Xvfb", [display, "-screen", "0", "1920x1080x24"], {
     detached: true,
     stdio: ["ignore", "pipe", "pipe"],
   })
@@ -161,11 +171,12 @@ export function startXvfb(): { display: string; stop: () => void } {
     if (!proc.pid || isNaN(proc.pid)) {
       throw new Error(`Xvfb failed to start on ${display}: ${errorOutput}`)
     }
-  }, 200)
+  }, 1000)
 
   proc.unref()
 
   const stop = () => {
+    console.log(`Stopping Xvfb.${isEmptyOrSpaces(errorOutput) ? "" : ` Error output: ${errorOutput}`}`)
     if (typeof proc.pid === "number" && !isNaN(proc.pid)) {
       try {
         process.kill(-proc.pid, "SIGTERM")
@@ -174,8 +185,7 @@ export function startXvfb(): { display: string; stop: () => void } {
       }
     }
   }
-
-  console.log("Xvfb started on display", display)
+  // Ensure Xvfb is stopped on main process exit
   ;["SIGINT", "SIGTERM", "uncaughtException", "unhandledRejection"].forEach(sig => {
     process.once(sig, () => {
       try {
@@ -186,6 +196,7 @@ export function startXvfb(): { display: string; stop: () => void } {
     })
   })
 
+  console.log("Xvfb started on display", display)
   return {
     display,
     stop,

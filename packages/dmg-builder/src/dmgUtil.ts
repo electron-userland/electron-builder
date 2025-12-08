@@ -156,24 +156,21 @@ export async function customizeDmg({ appPath, artifactPath, volumeName, specific
   const settingsFile = await packager.getTempFile(".json")
   await writeFile(settingsFile, JSON.stringify(settings, null, 2))
 
-  const executePython = async (execName: string) => {
-    let pythonPath = process.env.PYTHON_PATH
-    if (!pythonPath) {
-      pythonPath = (await exec("which", [execName])).trim()
-    }
-    await exec(pythonPath, [path.join(getDmgVendorPath(), "run_dmgbuild.py"), "-s", settingsFile, path.basename(volumePath), artifactPath], {
-      cwd: getDmgVendorPath(),
-      env: {
-        ...process.env,
-        PYTHONIOENCODING: "utf8",
-      },
-    })
+  const python3Check = () => exec("command", ["-v", "python3"])
+  const pythonCheck = () => exec("command", ["-v", "python"])
+  const pythonPath = process.env.PYTHON_PATH || (await python3Check().catch(pythonCheck)) || (await pythonCheck())
+  if (pythonPath == null || isEmptyOrSpaces(pythonPath.trim())) {
+    throw new Error("Cannot find 'python' or 'python3' executable, please ensure Python is installed and available in PATH or set PYTHON_PATH environment variable")
   }
-  try {
-    await executePython("python3")
-  } catch (_error: any) {
-    await executePython("python")
-  }
+  const vendorDir = getDmgVendorPath()
+  await exec(pythonPath.trim(), [path.join(vendorDir, "run_dmgbuild.py"), "-s", settingsFile, path.basename(volumePath), artifactPath], {
+    cwd: vendorDir,
+    env: {
+      ...process.env,
+      PYTHONIOENCODING: "utf8",
+    },
+  })
+
   // effectiveOptionComputed, when present, is purely for verifying result during test execution
   return (
     packager.packagerOptions.effectiveOptionComputed == null ||

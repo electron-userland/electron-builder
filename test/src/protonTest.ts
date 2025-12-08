@@ -9,7 +9,6 @@ const checkOptions: AssertPackOptions = {
       await copyDir(src, projectDir + "/node_modules")
     }
   },
-  isInstallDepsBefore: false,
 }
 
 test.ifMac("mac", ({ expect }) =>

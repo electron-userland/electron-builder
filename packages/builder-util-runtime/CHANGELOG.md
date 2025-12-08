@@ -1,5 +1,17 @@
 # builder-util-runtime
 
+## 9.5.1
+
+### Patch Changes
+
+- Chore: bumping version packages of all packages to trigger Trusted Signing provedance release _[`#9362`](https://github.com/electron-userland/electron-builder/pull/9362) [`030269b`](https://github.com/electron-userland/electron-builder/commit/030269bca94b5e3621dbf8883976e1f85a1524f0) [@mmaietta](https://github.com/mmaietta)_
+
+## 9.5.0
+
+### Minor Changes
+
+- [#9209](https://github.com/electron-userland/electron-builder/pull/9209) [`6fd391d9e8390c00c8b0674d8ac3a5b7b6f0f19f`](https://github.com/electron-userland/electron-builder/commit/6fd391d9e8390c00c8b0674d8ac3a5b7b6f0f19f) Thanks [@daihere1993](https://github.com/daihere1993)! - feat: Support gitlab publisher
+
 ## 9.4.0
 
 ### Minor Changes

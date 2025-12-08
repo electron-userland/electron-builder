@@ -1,5 +1,48 @@
 ## 4.3.0
 
+## 6.7.3
+
+### Patch Changes
+
+- Chore(deps): unpinning semver and updating it for app-builder-lib and electron-updater _[`#9349`](https://github.com/electron-userland/electron-builder/pull/9349) [`e043df5`](https://github.com/electron-userland/electron-builder/commit/e043df57604fb029fd8f9cf7d835b8366ee71aa6) [@panther7](https://github.com/panther7)_
+
+## 6.7.2
+
+### Patch Changes
+
+- Chore: bumping version packages of all packages to trigger Trusted Signing provedance release _[`#9362`](https://github.com/electron-userland/electron-builder/pull/9362) [`030269b`](https://github.com/electron-userland/electron-builder/commit/030269bca94b5e3621dbf8883976e1f85a1524f0) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 1 dependency</summary>
+
+<small>
+
+[`030269b`](https://github.com/electron-userland/electron-builder/commit/030269bca94b5e3621dbf8883976e1f85a1524f0)
+
+</small>
+
+- `builder-util-runtime@9.5.1`
+
+</details>
+
+## 6.7.1
+
+### Patch Changes
+
+- [#9334](https://github.com/electron-userland/electron-builder/pull/9334) [`21623e1b037e4509af04e767ca1c1458682b0eba`](https://github.com/electron-userland/electron-builder/commit/21623e1b037e4509af04e767ca1c1458682b0eba) Thanks [@mmaietta](https://github.com/mmaietta)! - chore: remove "beta" labels from a few features
+
+## 6.7.0
+
+### Minor Changes
+
+- [#9209](https://github.com/electron-userland/electron-builder/pull/9209) [`6fd391d9e8390c00c8b0674d8ac3a5b7b6f0f19f`](https://github.com/electron-userland/electron-builder/commit/6fd391d9e8390c00c8b0674d8ac3a5b7b6f0f19f) Thanks [@daihere1993](https://github.com/daihere1993)! - feat: Support gitlab publisher
+
+### Patch Changes
+
+- [#9301](https://github.com/electron-userland/electron-builder/pull/9301) [`85cb4d031a060976b2519665b98294bb3c735aa0`](https://github.com/electron-userland/electron-builder/commit/85cb4d031a060976b2519665b98294bb3c735aa0) Thanks [@mmaietta](https://github.com/mmaietta)! - chore(deps): updating semver to 7.7.2
+
+- Updated dependencies [[`6fd391d9e8390c00c8b0674d8ac3a5b7b6f0f19f`](https://github.com/electron-userland/electron-builder/commit/6fd391d9e8390c00c8b0674d8ac3a5b7b6f0f19f)]:
+  - builder-util-runtime@9.5.0
+
 ## 6.6.8
 
 ### Patch Changes

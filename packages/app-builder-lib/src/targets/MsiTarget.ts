@@ -99,7 +99,7 @@ export default class MsiTarget extends Target {
 
     await stageDir.cleanup()
 
-    await packager.sign(artifactPath)
+    await packager.signIf(artifactPath)
 
     await packager.info.emitArtifactBuildCompleted({
       file: artifactPath,

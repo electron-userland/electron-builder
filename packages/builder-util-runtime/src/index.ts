@@ -34,6 +34,8 @@ export {
   S3Options,
   SnapStoreOptions,
   SpacesOptions,
+  GitlabReleaseInfo,
+  GitlabReleaseAsset,
 } from "./publishOptions"
 export { retry } from "./retry"
 export { parseDn } from "./rfc2253Parser"

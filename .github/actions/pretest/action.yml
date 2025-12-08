@@ -1,5 +1,5 @@
 name: 'Setup Tests'
-description: 'Set up pnpm, node w/ pnpm cache, install and audit deps, compile, and restore electron cache'
+description: 'Set up pnpm, node w/ pnpm cache, install deps, compile, and restore electron cache'
 inputs:
   cache-key:
     description: 'The key to the electron cache'
@@ -7,29 +7,39 @@ inputs:
   cache-path:
     description: 'The path to the electron cache'
     required: true
-  version:
-    description: 'The pnpm version to use'
-    required: false
-    default: 9.4.0
 
 runs:
   using: 'composite'
   steps:
-    - name: Setup pnpm
-      uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
-      with:
-        version: ${{ inputs.version }}
+    - name: Enable Corepack for pnpm
+      run: |
+        corepack enable
+        corepack prepare pnpm@10.18.0 --activate
+      shell: bash
 
     - name: Setup python
-      uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+      uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
       with:
         python-version: '3.13'
 
     - name: Setup node
-      uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+      uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
       with:
         node-version: '22'
         cache: 'pnpm'
+
+    - name: Install bun globally
+      run: |
+        npm install -g bun@1.3.2
+      shell: bash
+
+    - name: Update npm to mirror pr-release workflow environment
+      run: npm install -g npm@11.6.2
+      shell: bash
+
+    - name: Verify updated npm version
+      run: npm -v
+      shell: bash
 
     - name: Install dependencies
       run: pnpm install --frozen-lockfile
@@ -50,4 +60,4 @@ runs:
 #   uses: ./.github/actions/pretest
 #   with:
 #     cache-path: ~/Library/Caches/electron
-#     cache-key: v-23.3.10-macos-electron
+#     cache-key: v-35.7.5-macos-electron

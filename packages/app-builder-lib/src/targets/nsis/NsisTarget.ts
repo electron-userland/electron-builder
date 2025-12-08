@@ -359,7 +359,7 @@ export class NsisTarget extends Target {
       defines.UNINSTALLER_OUT_FILE = definesUninstaller.UNINSTALLER_OUT_FILE
 
       await this.executeMakensis(defines, commands, sharedHeader + (await this.computeFinalScript(script, true, archs)))
-      await Promise.all<any>([packager.sign(installerPath), defines.UNINSTALLER_OUT_FILE == null ? Promise.resolve() : unlink(defines.UNINSTALLER_OUT_FILE)])
+      await Promise.all<any>([packager.signIf(installerPath), defines.UNINSTALLER_OUT_FILE == null ? Promise.resolve() : unlink(defines.UNINSTALLER_OUT_FILE)])
 
       const safeArtifactName = computeSafeArtifactNameIfNeeded(installerFilename, () => this.generateGitHubInstallerName(primaryArch, defaultArch))
       let updateInfo: any
@@ -438,7 +438,7 @@ export class NsisTarget extends Target {
     } else {
       await execWine(installerPath, null, [], { env: { __COMPAT_LAYER: "RunAsInvoker" } })
     }
-    await packager.sign(uninstallerPath)
+    await packager.signIf(uninstallerPath)
 
     delete defines.BUILD_UNINSTALLER
     // platform-specific path, not wine
