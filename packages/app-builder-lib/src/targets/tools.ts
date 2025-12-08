@@ -61,15 +61,15 @@ export async function getFpmPath() {
 export async function getWindowsKitsBundle({ useLegacy, arch }: { useLegacy: boolean | Nullish; arch: Arch }) {
   const overridePath = process.env.ELECTRON_BUILDER_WINDOWS_KITS_PATH
   if (!isEmptyOrSpaces(overridePath)) {
-    return { kit: overridePath, appxAssets: path.join(overridePath, "appxAssets") }
+    return { kit: overridePath, appxAssets: overridePath }
   }
   if (useLegacy === true) {
     const vendorPath = await getBin("winCodeSign")
-    return { kit: path.join(vendorPath, "windows-10", arch === Arch.arm64 ? "x64" : Arch[arch]), appxAssets: path.join(vendorPath, "appxAssets") }
+    return { kit: path.join(vendorPath, "windows-10", arch === Arch.arm64 ? "x64" : Arch[arch]), appxAssets: vendorPath }
   }
   const file = "windows-kits-bundle-10_0_26100_0.zip"
   const vendorPath = await getBinFromUrl("win-codesign@1.0.0", file, wincodesignChecksums[file])
-  return { kit: path.join(vendorPath, arch === Arch.ia32 ? "x86" : Arch[arch]), appxAssets: path.join(vendorPath, "appxAssets") }
+  return { kit: path.join(vendorPath, arch === Arch.ia32 ? "x86" : Arch[arch]), appxAssets: vendorPath }
 }
 
 export function isOldWin6() {
@@ -124,7 +124,7 @@ export async function getOsslSigncodeBundle({ useLegacy }: { useLegacy: boolean 
 
   const filename = getKey()
   const toolPath = await getBinFromUrl("win-codesign@1.0.0", filename, wincodesignChecksums[filename])
-  return { path: toolPath }
+  return { path: path.join(toolPath, "osslsigncode") }
 }
 
 export async function getRceditBundle({ useLegacy }: { useLegacy: boolean | Nullish }) {
