@@ -255,7 +255,7 @@ jobs:
         testFiles:
           - oneClickInstallerTest,assistedInstallerTest,webInstallerTest,packageManagerTest,HoistedNodeModuleTest,rebuilderTest
           - winPackagerTest,winCodeSignTest,BuildTest,blackboxUpdateTest,debTest
-          - masTest,dmgTest,filesTest,macPackagerTest,differentialUpdateTest,macArchiveTest
+          - masTest,dmgTest,filesTest,macPackagerTest,differentialUpdateTest,macArchiveTest,assistedInstallerTest
           - concurrentBuildsTest
     steps:
       - name: Checkout code repository
@@ -278,8 +278,6 @@ jobs:
         env:
           TEST_FILES: ${{ matrix.testFiles }}
           FORCE_COLOR: 1
-          TEST_SEQUENTIAL: true
-          DEBUG: electron-builder
 
   test-mac-26:
     runs-on: macos-26
