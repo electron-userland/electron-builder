@@ -245,9 +245,8 @@ jobs:
           TEST_FILES: ${{ matrix.testFiles }}
           FORCE_COLOR: 1
 
-  # Some tests fails while on macOS 26, so we'll keep it this way for now
   test-mac:
-    runs-on: macos-latest
+    runs-on: macos-26
     timeout-minutes: 20
     strategy:
       fail-fast: false
@@ -255,8 +254,8 @@ jobs:
         testFiles:
           - oneClickInstallerTest,assistedInstallerTest,webInstallerTest,packageManagerTest,HoistedNodeModuleTest,rebuilderTest
           - winPackagerTest,winCodeSignTest,BuildTest,blackboxUpdateTest,debTest
-          - masTest,dmgTest,filesTest,macPackagerTest,differentialUpdateTest,macArchiveTest,assistedInstallerTest
-          - concurrentBuildsTest
+          - masTest,dmgTest,filesTest,macPackagerTest,macArchiveTest,assistedInstallerTest
+          - concurrentBuildsTest,macIconTest
     steps:
       - name: Checkout code repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -279,14 +278,14 @@ jobs:
           TEST_FILES: ${{ matrix.testFiles }}
           FORCE_COLOR: 1
 
-  test-mac-26:
-    runs-on: macos-26
+  test-mac-old:
+    runs-on: macos-latest
     timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
         testFiles:
-          - macIconTest
+          - differentialUpdateTest,blackboxUpdateTest
     steps:
       - name: Checkout code repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
