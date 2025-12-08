@@ -7,7 +7,7 @@ import { Target } from "../core"
 import { WindowsConfiguration } from "../options/winOptions"
 import AppXTarget from "../targets/AppxTarget"
 import { executeAppBuilderAsJson } from "../util/appBuilder"
-import { computeToolEnv, ToolInfo } from "../util/bundledTool"
+import { ToolInfo } from "../util/bundledTool"
 import { isUseSystemSigncode } from "../util/flags"
 import { resolveFunction } from "../util/resolve"
 import { VmManager } from "../vm/vm"
@@ -398,7 +398,7 @@ export class WindowsSignToolManager implements SignManager {
       return { path: signToolExePath }
     } else {
       const vendor = await getOsslSigncodeBundle({ useLegacy: this.packager.config.win?.winCodeSign === "legacy" })
-      return { path: path.join(vendor.path, "osslsigncode"), env: computeToolEnv([path.join(vendor.path, "lib")]) }
+      return { path: vendor.path, env: vendor.env }
     }
   }
 
@@ -457,7 +457,7 @@ export class WindowsSignToolManager implements SignManager {
       args = configuration.computeSignToolArgs(isWin)
     }
 
-    await retry(() => vm.exec(tool, args, { timeout, env: process.env }), {
+    await retry(() => vm.exec(tool, args, { timeout, env: { ...process.env, ...(toolInfo.env || {}) } }), {
       retries: 2,
       interval: 15000,
       backoff: 10000,

@@ -45,6 +45,18 @@ exports[`icon < 256 1`] = `"ERR_ICON_TOO_SMALL"`;
 
 exports[`icon not an image 1`] = `"ERR_ICON_UNKNOWN_FORMAT"`;
 
+exports[`legacy win-codesign 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW-1.1.0-win.zip",
+      "safeArtifactName": "TestApp-1.1.0-win.zip",
+    },
+  ],
+}
+`;
+
 exports[`win zip 1`] = `
 {
   "win": [

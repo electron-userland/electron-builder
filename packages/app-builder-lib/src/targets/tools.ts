@@ -3,6 +3,7 @@ import { getBin, getBinFromUrl } from "../binDownload"
 import { Arch, isEmptyOrSpaces, log } from "builder-util"
 import { Nullish } from "builder-util-runtime"
 import * as os from "os"
+import { computeToolEnv } from "../util/bundledTool"
 
 const wincodesignChecksums = {
   "rcedit-windows-2_0_0.zip": "NrBrX6M6qMG5vhUlMsD1P+byOfBq45KAD12Ono0lEfX8ynu3t0DmwJEMsRIjV/l0/SlptzM/eQXtY6+mOsvyjw==",
@@ -100,8 +101,9 @@ export async function getOsslSigncodeBundle({ useLegacy }: { useLegacy: boolean 
   }
 
   if (useLegacy === true) {
-    const vendorPath = await getBin("winCodeSign")
-    return { path: path.join(vendorPath, process.platform, "osslsigncode") }
+    const vendorBase = path.join((await getBin("winCodeSign")), process.platform)
+    const vendorPath = process.platform === "darwin" ? path.join(vendorBase, "10.12") : vendorBase
+    return { path: path.join(vendorPath, "osslsigncode"),  env: process.platform === "darwin" ? computeToolEnv([path.join(vendorPath, "lib")]) : undefined }
   }
 
   const getKey = () => {
