@@ -178,7 +178,6 @@ test("do not exclude build entirely (respect files)", ({ expect }) => assertPack
 test.ifNotWindows("electronDist as path to local folder with electron builds zipped ", async ({ expect }) => {
   const tmpDir = new TmpDir()
   const cacheDir = await tmpDir.createTempDir({ prefix: "electronDistCache" })
-  const targets = Platform.LINUX.createTarget("dir", Arch.x64)
   const file = await downloadArtifact(
     {
       artifactName: "electron",
@@ -189,12 +188,18 @@ test.ifNotWindows("electronDist as path to local folder with electron builds zip
     },
     null
   )
-  await app(expect, {
-    targets,
-    config: {
-      electronDist: path.dirname(file),
+  await app(
+    expect,
+    {
+      targets: Platform.LINUX.createTarget("dir", Arch.x64),
+      config: {
+        electronDist: path.dirname(file),
+      },
     },
-  })
+    {
+      tmpDir,
+    }
+  )
   await tmpDir.cleanup()
 })
 
