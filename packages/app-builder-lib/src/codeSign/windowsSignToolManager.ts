@@ -4,12 +4,11 @@ import { rename } from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as os from "os"
 import * as path from "path"
-import { getBin } from "../binDownload"
 import { Target } from "../core"
 import { WindowsConfiguration } from "../options/winOptions"
 import AppXTarget from "../targets/AppxTarget"
 import { executeAppBuilderAsJson } from "../util/appBuilder"
-import { computeToolEnv, ToolInfo } from "../util/bundledTool"
+import { ToolInfo } from "../util/bundledTool"
 import { isUseSystemSigncode } from "../util/flags"
 import { resolveFunction } from "../util/resolve"
 import { VmManager } from "../vm/vm"
@@ -17,10 +16,7 @@ import { WinPackager } from "../winPackager"
 import { importCertificate } from "./codesign"
 import { SignManager } from "./signManager"
 import { WindowsSignOptions } from "./windowsCodeSign"
-
-export function getSignVendorPath() {
-  return getBin("winCodeSign")
-}
+import { getOsslSigncodeBundle, getWindowsKitsBundle } from "../targets/tools"
 
 export type CustomWindowsSign = (configuration: CustomWindowsSignTaskConfiguration, packager?: WinPackager) => Promise<any>
 
@@ -264,40 +260,91 @@ export class WindowsSignToolManager implements SignManager {
 
   // on windows be aware of http://stackoverflow.com/a/32640183/1910191
   computeSignToolArgs(options: WindowsSignTaskConfiguration, isWin: boolean, vm: VmManager = new VmManager()): Array<string> {
+    return isWin ? this.computeWindowsSignArgs(options, vm) : this.computeOsslsigncodeArgs(options, vm)
+  }
+
+  private computeWindowsSignArgs(options: WindowsSignTaskConfiguration, vm: VmManager): Array<string> {
     const inputFile = vm.toVmFile(options.path)
-    const outputPath = isWin ? inputFile : this.getOutputPath(inputFile, options.hash)
-    if (!isWin) {
-      options.resultOutputPath = outputPath
-    }
+    const args = ["sign"]
 
-    const args = isWin ? ["sign"] : ["-in", inputFile, "-out", outputPath]
-
+    // Timestamping
     if (process.env.ELECTRON_BUILDER_OFFLINE !== "true") {
-      const timestampingServiceUrl = options.options.signtoolOptions?.timeStampServer || "http://timestamp.digicert.com"
-      if (isWin) {
-        args.push(
-          options.isNest || options.hash === "sha256" ? "/tr" : "/t",
-          options.isNest || options.hash === "sha256" ? options.options.signtoolOptions?.rfc3161TimeStampServer || "http://timestamp.digicert.com" : timestampingServiceUrl
-        )
-      } else {
-        args.push("-t", timestampingServiceUrl)
-      }
+      const isRfc3161 = options.isNest || options.hash === "sha256"
+      args.push(isRfc3161 ? "/tr" : "/t")
+
+      const timestampUrl = isRfc3161
+        ? options.options.signtoolOptions?.rfc3161TimeStampServer || "http://timestamp.digicert.com"
+        : options.options.signtoolOptions?.timeStampServer || "http://timestamp.digicert.com"
+      args.push(timestampUrl)
     }
 
+    // Certificate
+    this.addCertificateArgs(args, options, vm, true)
+
+    // Hash algorithm
+    args.push("/fd", options.hash.toLowerCase())
+    if (process.env.ELECTRON_BUILDER_OFFLINE !== "true" && !args.includes("/t")) {
+      args.push("/td", "sha256")
+    }
+
+    // Optional parameters
+    this.addCommonSigningArgs(args, options, vm, true)
+
+    // Windows-specific
+    args.push("/debug")
+    args.push(inputFile) // Must be last
+
+    return args
+  }
+
+  private computeOsslsigncodeArgs(options: WindowsSignTaskConfiguration, vm: VmManager): Array<string> {
+    const inputFile = vm.toVmFile(options.path)
+    const outputPath = this.getOutputPath(inputFile, options.hash)
+    options.resultOutputPath = outputPath
+
+    const args = ["sign", "-in", inputFile, "-out", outputPath]
+
+    // Timestamping
+    if (process.env.ELECTRON_BUILDER_OFFLINE !== "true") {
+      const timestampUrl = options.options.signtoolOptions?.timeStampServer || "http://timestamp.digicert.com"
+      args.push("-t", timestampUrl)
+    }
+
+    // Certificate
+    this.addCertificateArgs(args, options, vm, false)
+
+    // Hash algorithm
+    args.push("-h", options.hash.toLowerCase())
+
+    // Optional parameters
+    this.addCommonSigningArgs(args, options, vm, false)
+
+    // Proxy support
+    const httpsProxy = process.env.HTTPS_PROXY
+    if (httpsProxy?.length) {
+      args.push("-p", httpsProxy)
+    }
+
+    return args
+  }
+
+  private addCertificateArgs(args: Array<string>, options: WindowsSignTaskConfiguration, vm: VmManager, isWin: boolean): void {
     const certificateFile = (options.cscInfo as FileCodeSigningInfo).file
+
     if (certificateFile == null) {
-      const cscInfo = options.cscInfo as CertificateFromStoreInfo
-      const subjectName = cscInfo.thumbprint
+      // Certificate from store (Windows only)
       if (!isWin) {
-        throw new Error(`${subjectName == null ? "certificateSha1" : "certificateSubjectName"} supported only on Windows`)
+        throw new Error("certificateSha1/certificateSubjectName supported only on Windows")
       }
 
+      const cscInfo = options.cscInfo as CertificateFromStoreInfo
       args.push("/sha1", cscInfo.thumbprint)
       args.push("/s", cscInfo.store)
       if (cscInfo.isLocalMachineStore) {
         args.push("/sm")
       }
     } else {
+      // Certificate file
       const certExtension = path.extname(certificateFile)
       if (certExtension === ".p12" || certExtension === ".pfx") {
         args.push(isWin ? "/f" : "-pkcs12", vm.toVmFile(certificateFile))
@@ -305,28 +352,22 @@ export class WindowsSignToolManager implements SignManager {
         throw new Error(`Please specify pkcs12 (.p12/.pfx) file, ${certificateFile} is not correct`)
       }
     }
+  }
 
-    if (!isWin || options.hash !== "sha1") {
-      args.push(isWin ? "/fd" : "-h", options.hash)
-      if (isWin && process.env.ELECTRON_BUILDER_OFFLINE !== "true") {
-        args.push("/td", "sha256")
-      }
-    }
-
+  private addCommonSigningArgs(args: Array<string>, options: WindowsSignTaskConfiguration, vm: VmManager, isWin: boolean): void {
     if (options.name) {
-      args.push(isWin ? "/d" : "-n", options.name)
+      args.push(isWin ? "/d" : "-n", `"${options.name}"`)
     }
 
     if (options.site) {
       args.push(isWin ? "/du" : "-i", options.site)
     }
 
-    // msi does not support dual-signing
     if (options.isNest) {
       args.push(isWin ? "/as" : "-nest")
     }
 
-    const password = options.cscInfo == null ? null : (options.cscInfo as FileCodeSigningInfo).password
+    const password = (options.cscInfo as FileCodeSigningInfo)?.password
     if (password) {
       args.push(isWin ? "/p" : "-pass", password)
     }
@@ -335,34 +376,11 @@ export class WindowsSignToolManager implements SignManager {
     if (additionalCert) {
       args.push(isWin ? "/ac" : "-ac", vm.toVmFile(additionalCert))
     }
-
-    const httpsProxyFromEnv = process.env.HTTPS_PROXY
-    if (!isWin && httpsProxyFromEnv != null && httpsProxyFromEnv.length) {
-      args.push("-p", httpsProxyFromEnv)
-    }
-
-    if (isWin) {
-      // https://github.com/electron-userland/electron-builder/issues/2875#issuecomment-387233610
-      args.push("/debug")
-      // must be last argument
-      args.push(inputFile)
-    }
-
-    return args
   }
 
   getOutputPath(inputPath: string, hash: string) {
     const extension = path.extname(inputPath)
     return path.join(path.dirname(inputPath), `${path.basename(inputPath, extension)}-signed-${hash}${extension}`)
-  }
-
-  getWinSignTool(vendorPath: string): string {
-    // use modern signtool on Windows Server 2012 R2 to be able to sign AppX
-    if (isOldWin6()) {
-      return path.join(vendorPath, "windows-6", "signtool.exe")
-    } else {
-      return path.join(vendorPath, "windows-10", process.arch, "signtool.exe")
-    }
   }
 
   async getToolPath(isWin = process.platform === "win32"): Promise<ToolInfo> {
@@ -375,18 +393,13 @@ export class WindowsSignToolManager implements SignManager {
       return { path: result }
     }
 
-    const vendorPath = await getSignVendorPath()
     if (isWin) {
-      // use modern signtool on Windows Server 2012 R2 to be able to sign AppX
-      return { path: this.getWinSignTool(vendorPath) }
-    } else if (process.platform === "darwin") {
-      const toolDirPath = path.join(vendorPath, process.platform, "10.12")
-      return {
-        path: path.join(toolDirPath, "osslsigncode"),
-        env: computeToolEnv([path.join(toolDirPath, "lib")]),
-      }
+      const vendorPath = await getWindowsKitsBundle({ useLegacy: this.packager.config.win?.winCodeSign === "legacy", arch: process.arch as any })
+      const signToolExePath = path.join(vendorPath.kit, "signtool.exe")
+      return { path: signToolExePath }
     } else {
-      return { path: path.join(vendorPath, process.platform, "osslsigncode") }
+      const vendorPath = await getOsslSigncodeBundle({ useLegacy: this.packager.config.win?.winCodeSign === "legacy", signToolArch: process.arch as any })
+      return { path: path.join(vendorPath, "osslsigncode") }
     }
   }
 
@@ -432,7 +445,6 @@ export class WindowsSignToolManager implements SignManager {
     const timeout = parseInt(process.env.SIGNTOOL_TIMEOUT as any, 10) || 10 * 60 * 1000
     // decide runtime argument by cases
     let args: Array<string>
-    let env = process.env
     let vm: VmManager
     const useVmIfNotOnWin = configuration.path.endsWith(".appx") || !("file" in configuration.cscInfo!) /* certificateSubjectName and other such options */
     const isWin = process.platform === "win32" || useVmIfNotOnWin
@@ -444,12 +456,9 @@ export class WindowsSignToolManager implements SignManager {
     } else {
       vm = new VmManager()
       args = configuration.computeSignToolArgs(isWin)
-      if (toolInfo.env != null) {
-        env = toolInfo.env
-      }
     }
 
-    await retry(() => vm.exec(tool, args, { timeout, env }), {
+    await retry(() => vm.exec(tool, args, { timeout, env: process.env }), {
       retries: 2,
       interval: 15000,
       backoff: 10000,

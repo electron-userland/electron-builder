@@ -8,7 +8,7 @@ import * as path from "path"
 import { app, appTwo, appTwoThrows, assertPack, getFixtureDir, linuxDirTarget, modifyPackageJson, packageJson, toSystemIndependentPath } from "./helpers/packTester"
 import { ELECTRON_VERSION } from "./helpers/testConfig"
 import { verifySmartUnpack } from "./helpers/verifySmartUnpack"
-import { PM } from "app-builder-lib/src/node-module-collector/packageManager"
+import { PM } from "app-builder-lib/out/node-module-collector/packageManager"
 
 test.ifLinux("cli", ({ expect }) => {
   // because these methods are internal

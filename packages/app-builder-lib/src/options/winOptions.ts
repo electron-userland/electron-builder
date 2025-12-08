@@ -25,6 +25,14 @@ export interface WindowsConfiguration extends PlatformSpecificBuildOptions {
   readonly legalTrademarks?: string | null
 
   /**
+   * Whether or not to use legacy Windows code signing resources from electron-builder-binaries
+   * Note: this option is temporary for backward-compatibility and will be removed in a future major release
+   * @default "1.0"
+   *
+   */
+  readonly winCodeSign?: "legacy" | "1.0" | null
+
+  /**
    * Options for usage with signtool.exe
    * Cannot be used in conjunction with `azureSignOptions`, signing will default to Azure Trusted Signing
    */
