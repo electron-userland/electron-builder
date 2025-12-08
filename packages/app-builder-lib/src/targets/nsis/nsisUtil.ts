@@ -1,4 +1,4 @@
-import { Arch, copyFile, dirSize, log } from "builder-util"
+import { Arch, copyFile, dirSize, isEmptyOrSpaces, log } from "builder-util"
 import { PackageFileInfo } from "builder-util-runtime"
 import * as fs from "fs/promises"
 import * as path from "path"
@@ -21,10 +21,10 @@ export const NsisTargetOptions = (() => {
 })()
 
 export const NSIS_PATH = () => {
-  const custom = process.env.ELECTRON_BUILDER_NSIS_DIR
-  if (custom != null && custom.length > 0) {
-    log.info({ path: custom.trim() }, "using local nsis")
-    return Promise.resolve(custom.trim())
+  const custom = process.env.ELECTRON_BUILDER_NSIS_DIR?.trim()
+  if (!isEmptyOrSpaces(custom)) {
+    log.info({ path: custom }, "using local nsis")
+    return Promise.resolve(custom)
   }
   return NsisTargetOptions.then((options: NsisOptions) => {
     if (options.customNsisBinary) {
@@ -40,10 +40,10 @@ export const NSIS_PATH = () => {
 }
 
 export const NSIS_RESOURCES_PATH = () => {
-  const custom = process.env.ELECTRON_BUILDER_NSIS_RESOURCES_DIR
-  if (custom != null && custom.length > 0) {
-    log.info({ path: custom.trim() }, "using local nsis-resources")
-    return Promise.resolve(custom.trim())
+  const custom = process.env.ELECTRON_BUILDER_NSIS_RESOURCES_DIR?.trim()
+  if (!isEmptyOrSpaces(custom)) {
+    log.info({ path: custom }, "using local nsis-resources")
+    return Promise.resolve(custom)
   }
   return NsisTargetOptions.then((options: NsisOptions) => {
     if (options.customNsisResources) {

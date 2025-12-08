@@ -49,7 +49,7 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
     const productionDeps = Object.entries(tree.dependencies || {}).map(async ([, dependency]) => {
       const dep = {
         ...dependency,
-        path: await this.resolvePath(dependency.path),
+        path: await this.cache.realPath[dependency.path],
       }
 
       const childDependencyId = this.packageVersionString(dep)
@@ -102,15 +102,15 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
     if (!parsedTree) {
       throw new Error('Failed to extract Yarn tree: no "type":"tree" line found in console output')
     }
+    const rootPkgJson = await this.cache.packageJson[path.join(this.rootDir, "package.json")]
 
-    const normalizedTree = await this.normalizeTree(parsedTree, new Set<string>(), undefined)
+    const normalizedTree = await this.normalizeTree({ tree: parsedTree, seen: new Set<string>(), appName: rootPkgJson.name, parentPath: this.rootDir, parentPkgJson: rootPkgJson })
 
     const dependencies: Record<string, YarnDependency> = {}
     for (const [name, dep] of Object.entries(normalizedTree)) {
       dependencies[name] = dep
     }
 
-    const rootPkgJson = await this.appPkgJson.value
     return Promise.resolve({
       name: rootPkgJson.name,
       version: rootPkgJson.version,
@@ -119,8 +119,27 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
       workspaces: rootPkgJson?.workspaces,
     })
   }
-  private async normalizeTree(tree: YarnListTree[], seen = new Set<string>(), appName?: string, parentPath: string = this.rootDir): Promise<Record<string, YarnDependency>> {
+
+  private async normalizeTree(options: {
+    tree: YarnListTree[]
+    seen: Set<string>
+    appName?: string
+    parentPath: string
+    parentPkgJson?: PackageJson // Add parent's package.json
+  }): Promise<Record<string, YarnDependency>> {
+    const { tree, seen, appName, parentPath = this.rootDir } = options
+    let parentPkgJson = options.parentPkgJson
     const normalized: Record<string, YarnDependency> = {}
+
+    // Load parent's package.json if not provided
+    if (!parentPkgJson && parentPath) {
+      const parentPkgPath = path.join(parentPath, "package.json")
+      try {
+        parentPkgJson = await this.cache.packageJson[parentPkgPath]
+      } catch {
+        // Parent might not have package.json (e.g., root workspace)
+      }
+    }
 
     for (const node of tree) {
       const match = node.name.match(/^(.*)@([^@]+)$/)
@@ -141,36 +160,15 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
         continue
       }
 
-      // For non-shadow nodes, try to resolve the actual path
-      let pkgPath: string | null = null
-
-      // First try hoisted location (most common for Yarn Classic)
-      const hoistedPath = path.join(this.rootDir, "node_modules", pkgName)
-      if (await this.existsMemoized(hoistedPath)) {
-        pkgPath = hoistedPath
-      } else {
-        // If not hoisted, try nested under parent
-        const nestedPath = path.join(parentPath, "node_modules", pkgName)
-        if (await this.existsMemoized(nestedPath)) {
-          pkgPath = nestedPath
-        } else {
-          // Walk up the directory tree
-          let current = parentPath
-          while (current !== this.rootDir && current !== path.dirname(current)) {
-            const candidatePath = path.join(current, "node_modules", pkgName)
-            if (await this.existsMemoized(candidatePath)) {
-              pkgPath = candidatePath
-              break
-            }
-            current = path.dirname(current)
-          }
-        }
-      }
+      // Find the correct package path that matches the required version
+      const pkg = await this.locatePackageVersion(parentPath, pkgName, version)
+      const pkgPath = pkg?.packageDir
 
       if (!pkgPath) {
-        log.warn({ pkgName, version, parentPath }, "could not find package in node_modules hierarchy")
+        log.warn({ pkgName, version, parentPath }, "could not find package matching version")
         continue
       }
+
       seen.add(id)
 
       const normalizedDep: YarnDependency = {
@@ -181,11 +179,16 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
         optionalDependencies: {},
       }
 
-      log.debug({ name: pkgName, version, path: pkgPath }, "+ normalize")
-
-      // Process children (which may include shadow nodes that we'll skip)
+      // Recursively process children, passing this package's info
       if (node.children && node.children.length > 0) {
-        const childDeps = await this.normalizeTree(node.children, seen, appName, pkgPath)
+        const childPkgJson = await this.cache.packageJson[path.join(pkgPath, "package.json")]
+        const childDeps = await this.normalizeTree({
+          tree: node.children,
+          seen,
+          appName,
+          parentPath: pkgPath,
+          parentPkgJson: childPkgJson, // Pass this package's package.json to children
+        })
 
         for (const [childDepName, childDep] of Object.entries(childDeps)) {
           normalizedDep.dependencies![childDepName] = childDep
@@ -199,7 +202,7 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
   }
 
   protected async collectAllDependencies(tree: YarnDependency, packageToExclude: string) {
-    const rootPkgJson = await this.appPkgJson.value
+    const rootPkgJson = await this.cache.packageJson[path.join(this.rootDir, "package.json")]
     const failedPackages = new Set<string>()
 
     log.debug({ packageToExclude, hasWorkspaces: !!tree.workspaces }, "collectAllDependencies starting")
@@ -210,41 +213,29 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
       parentIsOptional: boolean = false
     ) => {
       for (const [, value] of Object.entries(deps)) {
-        // Skip the app package if provided
-        if (packageToExclude && value.name === packageToExclude) {
-          log.debug({ name: value.name }, "skipping app package in collectAllDependencies")
-          continue
-        }
-
         const isRootOptional = !!rootPkgJson.optionalDependencies?.[value.name]
         const isDirectRootDep = rootPkgJson.dependencies?.[value.name] || rootPkgJson.optionalDependencies?.[value.name] || rootPkgJson.devDependencies?.[value.name]
         const treatAsOptional = isOptionalDependency || parentIsOptional || isRootOptional
 
-        let p: string | null
-
-        try {
-          p = await this.resolvePath(value.path)
-        } catch (e) {
+        const logFields = { name: value.name, version: value.version, path: value.path }
+        log.debug(logFields, "collecting dependency")
+        const p = await this.cache.realPath[value.path]
+        if (!(await this.cache.exists[p])) {
           if (treatAsOptional) {
-            log.debug({ pkg: this.cacheKey(value), name: value.name }, "failed to resolve optional dependency, skipping")
+            log.debug(logFields, "failed to find optional dependency, skipping")
             failedPackages.add(value.name)
             continue
           }
 
           if (!isDirectRootDep) {
-            log.debug({ pkg: this.cacheKey(value), name: value.name }, "failed to resolve transitive dependency, treating as optional")
+            log.debug(logFields, "failed to find transitive dependency, treating as optional")
             failedPackages.add(value.name)
             continue
           }
 
-          log.error({ pkg: this.cacheKey(value) }, "failed to resolve module directory")
-          throw e
-        }
-
-        if (!p) {
-          log.debug({ pkg: this.cacheKey(value), name: value.name }, "optional dependency not found, skipping")
-          failedPackages.add(value.name)
-          continue
+          const message = "unable to find module directory; is the path correct?"
+          log.error(logFields, message)
+          throw new Error(`Failed to resolve module directory for ${value.name}@${value.version} at path: ${value.path}`)
         }
 
         let resolvedVersion = value.version
@@ -266,7 +257,6 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
         if (this.allDependencies.has(moduleKey)) {
           continue
         }
-
         this.allDependencies.set(moduleKey, m)
 
         const childIsOptional = treatAsOptional
@@ -283,6 +273,9 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
       for (const [key, dep] of this.allDependencies.entries()) {
         if (dep.name === packageToExclude) {
           log.debug({ key, name: dep.name }, "removing app package from allDependencies")
+          for (const [, d] of Object.entries(dep.dependencies || {})) {
+            this.allDependencies.set(this.packageVersionString(d), d)
+          }
           this.allDependencies.delete(key)
         }
       }
