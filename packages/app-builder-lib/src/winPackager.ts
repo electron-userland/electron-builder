@@ -209,7 +209,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     if (process.platform === "win32" || process.platform === "darwin") {
       await executeAppBuilder(["rcedit", "--args", JSON.stringify(args)], undefined /* child-process */, {}, 3 /* retry three times */)
     } else if (this.info.framework.name === "electron") {
-      const vendor = await getRceditBundle(this.config.win?.winCodeSign === "legacy")
+      const vendor = await getRceditBundle({ useLegacy: this.config.win?.winCodeSign === "legacy" })
       await execWine(vendor.x86, vendor.x64, args)
     }
 

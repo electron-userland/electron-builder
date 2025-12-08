@@ -2,13 +2,12 @@ import { asArray, InvalidConfigurationError, log, retry } from "builder-util"
 import { MemoLazy, parseDn } from "builder-util-runtime"
 import { rename } from "fs-extra"
 import { Lazy } from "lazy-val"
-import * as os from "os"
 import * as path from "path"
 import { Target } from "../core"
 import { WindowsConfiguration } from "../options/winOptions"
 import AppXTarget from "../targets/AppxTarget"
 import { executeAppBuilderAsJson } from "../util/appBuilder"
-import { ToolInfo } from "../util/bundledTool"
+import { computeToolEnv, ToolInfo } from "../util/bundledTool"
 import { isUseSystemSigncode } from "../util/flags"
 import { resolveFunction } from "../util/resolve"
 import { VmManager } from "../vm/vm"
@@ -398,8 +397,8 @@ export class WindowsSignToolManager implements SignManager {
       const signToolExePath = path.join(vendorPath.kit, "signtool.exe")
       return { path: signToolExePath }
     } else {
-      const vendorPath = await getOsslSigncodeBundle({ useLegacy: this.packager.config.win?.winCodeSign === "legacy", signToolArch: process.arch as any })
-      return { path: path.join(vendorPath, "osslsigncode") }
+      const vendor = await getOsslSigncodeBundle({ useLegacy: this.packager.config.win?.winCodeSign === "legacy" })
+      return { path: path.join(vendor.path, "osslsigncode"), env: computeToolEnv([path.join(vendor.path, "lib")]) }
     }
   }
 
@@ -475,9 +474,4 @@ export class WindowsSignToolManager implements SignManager {
       },
     })
   }
-}
-
-export function isOldWin6() {
-  const winVersion = os.release()
-  return winVersion.startsWith("6.") && !winVersion.startsWith("6.3")
 }
