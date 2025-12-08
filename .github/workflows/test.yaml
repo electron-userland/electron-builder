@@ -277,7 +277,6 @@ jobs:
         env:
           TEST_FILES: ${{ matrix.testFiles }}
           FORCE_COLOR: 1
-          TEST_SEQUENTIAL: true
 
   test-mac-old:
     runs-on: macos-latest
