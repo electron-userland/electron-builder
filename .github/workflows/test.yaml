@@ -254,7 +254,7 @@ jobs:
         testFiles:
           - oneClickInstallerTest,assistedInstallerTest,webInstallerTest,packageManagerTest,HoistedNodeModuleTest,rebuilderTest
           - winPackagerTest,winCodeSignTest,BuildTest,blackboxUpdateTest,debTest
-          - masTest,dmgTest,filesTest,macPackagerTest,differentialUpdateTest,macArchiveTest
+          - masTest,dmgTest,filesTest,macPackagerTest,macArchiveTest
           - concurrentBuildsTest,macIconTest
     steps:
       - name: Checkout code repository
@@ -279,3 +279,29 @@ jobs:
           FORCE_COLOR: 1
           TEST_SEQUENTIAL: true
 
+  test-mac-old:
+    runs-on: macos-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        testFiles:
+          - differentialUpdateTest,blackboxUpdateTest
+    steps:
+      - name: Checkout code repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Setup Tests
+        uses: ./.github/actions/pretest
+        with:
+          cache-path: ~/Library/Caches/electron
+          cache-key: v-23.3.10-macos-electron
+
+      - name: Lint
+        run: pnpm pretest
+
+      - name: Test
+        run: pnpm ci:test
+        env:
+          TEST_FILES: ${{ matrix.testFiles }}
+          FORCE_COLOR: 1
