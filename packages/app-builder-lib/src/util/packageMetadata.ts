@@ -4,10 +4,14 @@ import fsExtra from "fs-extra"
 import * as path from "path"
 import * as semver from "semver"
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { Metadata } from "../options/metadata.js"
 import { normalizePackageData } from "./normalizePackageData.js"
 =======
 import { Metadata } from "../options/metadata"
+=======
+import { Metadata } from "../options/metadata.js"
+>>>>>>> d26567f58 (tmp save)
 import { normalizePackageData } from "./normalizePackageData.js.js"
 >>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 

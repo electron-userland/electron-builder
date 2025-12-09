@@ -7,10 +7,14 @@ import { deepAssign, Nullish } from "builder-util-runtime"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> d26567f58 (tmp save)
 import { Configuration } from "../../configuration.js"
 import { FileSet } from "../../options/PlatformSpecificBuildOptions.js"
 import { reactCra } from "../../presets/rectCra.js"
 import { PACKAGE_VERSION } from "../../version.js"
+<<<<<<< HEAD
 import { getConfig as _getConfig, loadParentConfig, orNullIfFileNotExist, ReadConfigRequest } from "./load.js"
 import { validateSchema } from "./schemaValidator.js"
 import _fsExtra from "fs-extra"
@@ -20,6 +24,8 @@ import { Configuration } from "../../configuration"
 import { FileSet } from "../../options/PlatformSpecificBuildOptions"
 import { reactCra } from "../../presets/rectCra"
 import { PACKAGE_VERSION } from "../../version"
+=======
+>>>>>>> d26567f58 (tmp save)
 import { getConfig as _getConfig, loadParentConfig, orNullIfFileNotExist, ReadConfigRequest } from "./load.js.js"
 const validateSchema = require("@develar/schema-utils")
 >>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)

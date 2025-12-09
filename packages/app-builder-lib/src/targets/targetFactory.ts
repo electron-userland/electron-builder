@@ -1,11 +1,16 @@
 import { addValue, Arch, archFromString, ArchType, asArray } from "builder-util"
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { DEFAULT_TARGET, DIR_TARGET, Platform, Target, TargetConfiguration } from "../core.js"
 import { PlatformPackager } from "../platformPackager.js"
 import { ArchiveTarget } from "./ArchiveTarget.js"
 =======
 import { DEFAULT_TARGET, DIR_TARGET, Platform, Target, TargetConfiguration } from "../core"
 import { PlatformPackager } from "../platformPackager"
+=======
+import { DEFAULT_TARGET, DIR_TARGET, Platform, Target, TargetConfiguration } from "../core.js"
+import { PlatformPackager } from "../platformPackager.js"
+>>>>>>> d26567f58 (tmp save)
 import { ArchiveTarget } from "./ArchiveTarget.js.js"
 >>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 

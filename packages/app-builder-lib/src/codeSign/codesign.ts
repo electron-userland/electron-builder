@@ -2,8 +2,11 @@ import { decodeCscLinkBase64, InvalidConfigurationError, resolveCscLinkPath, sta
 
 import { TmpDir } from "temp-file"
 import { download } from "../binDownload.js"
+<<<<<<< HEAD
 import _fsExtra from "fs-extra"
 const { outputFile } = _fsExtra
+=======
+>>>>>>> d26567f58 (tmp save)
 
 /** @private */
 export async function importCertificate(cscLink: string, tmpDir: TmpDir, currentDir: string): Promise<string> {

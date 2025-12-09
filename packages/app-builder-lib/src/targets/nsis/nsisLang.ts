@@ -4,6 +4,7 @@ import fsExtra from "fs-extra"
 import { load } from "js-yaml"
 import * as path from "path"
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { PlatformPackager } from "../../platformPackager.js"
 import { bundledLanguages, langIdToName, lcid, toLangWithRegion } from "../../util/langs.js"
 import { NsisOptions } from "./nsisOptions.js"
@@ -12,6 +13,10 @@ import { nsisTemplatesDir } from "./nsisUtil.js"
 =======
 import { PlatformPackager } from "../../platformPackager"
 import { bundledLanguages, langIdToName, lcid, toLangWithRegion } from "../../util/langs"
+=======
+import { PlatformPackager } from "../../platformPackager.js"
+import { bundledLanguages, langIdToName, lcid, toLangWithRegion } from "../../util/langs.js"
+>>>>>>> d26567f58 (tmp save)
 import { NsisOptions } from "./nsisOptions.js.js"
 import { NsisScriptGenerator } from "./nsisScriptGenerator.js.js"
 import { nsisTemplatesDir } from "./nsisUtil.js.js"

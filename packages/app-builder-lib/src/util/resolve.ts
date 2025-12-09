@@ -3,10 +3,14 @@ import debug from "debug"
 import { realpath } from "fs/promises"
 import { createRequire } from "node:module"
 import * as path from "path"
+<<<<<<< HEAD
 
 const _require = createRequire(import.meta.url)
 const _requireResolve = _require.resolve
 const _dynamicImportMaybe: (modulePath: string) => Promise<any> = _require("../../helpers/dynamic-import.cjs").dynamicImportMaybe
+=======
+import * as requireMaybe from "../../helpers/dynamic-import.js"
+>>>>>>> d26567f58 (tmp save)
 
 export async function resolveModule<T>(type: string | undefined, name: string): Promise<T> {
   try {

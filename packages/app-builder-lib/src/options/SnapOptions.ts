@@ -1,9 +1,13 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { TargetSpecificOptions } from "../core.js"
 import { SnapcraftYAML } from "../targets/snap/snapcraft.js"
 import { CommonLinuxOptions } from "./linuxOptions.js"
 =======
 import { TargetSpecificOptions } from "../core"
+=======
+import { TargetSpecificOptions } from "../core.js"
+>>>>>>> d26567f58 (tmp save)
 import { CommonLinuxOptions } from "./linuxOptions.js.js"
 >>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 

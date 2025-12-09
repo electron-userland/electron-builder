@@ -1,5 +1,9 @@
+<<<<<<< HEAD
 import { BlockMap } from "builder-util-runtime"
 import { BlockMapFile } from "builder-util-runtime/internal"
+=======
+import { BlockMap, BlockMapFile } from "builder-util-runtime/out/blockMapApi"
+>>>>>>> d26567f58 (tmp save)
 import { Logger } from "../types.js"
 
 export enum OperationKind {

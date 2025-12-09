@@ -3,11 +3,15 @@ import { rename, utimes } from "fs/promises"
 import * as path from "path"
 import * as fs from "fs"
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> d26567f58 (tmp save)
 import { filterCFBundleIdentifier } from "../appInfo.js"
 import { AsarIntegrity } from "../asar/integrity.js"
 import { MacPackager } from "../macPackager.js"
 import { normalizeExt } from "../platformPackager.js"
 import { savePlistFile, parsePlistFile, PlistObject, PlistValue } from "../util/plist.js"
+<<<<<<< HEAD
 import { createBrandingOpts } from "./ElectronFramework.js"
 =======
 import { filterCFBundleIdentifier } from "../appInfo"
@@ -15,6 +19,8 @@ import { AsarIntegrity } from "../asar/integrity"
 import { MacPackager } from "../macPackager"
 import { normalizeExt } from "../platformPackager"
 import { savePlistFile, parsePlistFile, PlistObject, PlistValue } from "../util/plist"
+=======
+>>>>>>> d26567f58 (tmp save)
 import { createBrandingOpts } from "./ElectronFramework.js.js"
 >>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 

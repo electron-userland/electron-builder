@@ -6,12 +6,16 @@ import { Lazy } from "lazy-val"
 import * as path from "path"
 import * as semver from "semver"
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> d26567f58 (tmp save)
 import { Platform } from "../core.js"
 import { ReleaseInfo } from "../options/PlatformSpecificBuildOptions.js"
 import { Packager } from "../packager.js"
 import { ArtifactCreated } from "../packagerApi.js"
 import { PlatformPackager } from "../platformPackager.js"
 import { hashFile } from "../util/hash.js"
+<<<<<<< HEAD
 import { computeDownloadUrl, getPublishConfigsForUpdateInfo } from "./PublishManager.js"
 =======
 import { Platform } from "../core"
@@ -20,6 +24,8 @@ import { Packager } from "../packager"
 import { ArtifactCreated } from "../packagerApi"
 import { PlatformPackager } from "../platformPackager"
 import { hashFile } from "../util/hash"
+=======
+>>>>>>> d26567f58 (tmp save)
 import { computeDownloadUrl, getPublishConfigsForUpdateInfo } from "./PublishManager.js.js"
 >>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 

@@ -3,6 +3,7 @@ import { deepAssign } from "builder-util-runtime"
 
 import { Lazy } from "lazy-val"
 import { join } from "path"
+<<<<<<< HEAD
 import * as semver from "semver"
 import { CompressionLevel } from "../core.js"
 import { LinuxPackager } from "../linuxPackager.js"
@@ -81,6 +82,11 @@ function mapLinuxCompressionToSnap(level: CompressionLevel | null | undefined): 
   }
   return undefined
 }
+=======
+import { LinuxPackager } from "../linuxPackager.js"
+import { LinuxTargetSpecificOptions } from "../options/linuxOptions.js"
+import { IconInfo } from "../platformPackager.js"
+>>>>>>> d26567f58 (tmp save)
 
 export const installPrefix = "/opt"
 

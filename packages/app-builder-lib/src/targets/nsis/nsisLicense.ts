@@ -2,6 +2,7 @@ import { log } from "builder-util"
 import * as fs from "fs"
 import * as path from "path"
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { lcid } from "../../util/langs.js"
 import { getLicenseFiles, getNotLocalizedLicenseFile } from "../../util/license.js"
 import { WinPackager } from "../../winPackager.js"
@@ -12,6 +13,11 @@ import { nsisTemplatesDir } from "./nsisUtil.js"
 import { lcid } from "../../util/langs"
 import { getLicenseFiles, getNotLocalizedLicenseFile } from "../../util/license"
 import { WinPackager } from "../../winPackager"
+=======
+import { lcid } from "../../util/langs.js"
+import { getLicenseFiles, getNotLocalizedLicenseFile } from "../../util/license.js"
+import { WinPackager } from "../../winPackager.js"
+>>>>>>> d26567f58 (tmp save)
 import { NsisOptions } from "./nsisOptions.js.js"
 import { NsisScriptGenerator } from "./nsisScriptGenerator.js.js"
 import { nsisTemplatesDir } from "./nsisUtil.js.js"

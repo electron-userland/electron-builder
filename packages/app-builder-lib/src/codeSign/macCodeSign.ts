@@ -9,10 +9,14 @@ import { homedir, tmpdir } from "os"
 import * as path from "path"
 import { getTempName } from "temp-file"
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { isAutoDiscoveryCodeSignIdentity } from "../util/flags.js"
 import { importCertificate } from "./codesign.js"
 =======
 import { isAutoDiscoveryCodeSignIdentity } from "../util/flags"
+=======
+import { isAutoDiscoveryCodeSignIdentity } from "../util/flags.js"
+>>>>>>> d26567f58 (tmp save)
 import { importCertificate } from "./codesign.js.js"
 >>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 

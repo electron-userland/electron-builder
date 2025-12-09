@@ -4,8 +4,12 @@ import { readdirSync } from "fs"
 import { readFile, unlink, writeFile } from "fs/promises"
 import * as path from "path"
 import { filterCFBundleIdentifier } from "../appInfo.js"
+<<<<<<< HEAD
 import { findIdentity } from "../codeSign/macCodeSign.js"
 import type { Identity } from "../codeSign/macCodeSign.js"
+=======
+import { findIdentity, Identity } from "../codeSign/macCodeSign.js"
+>>>>>>> d26567f58 (tmp save)
 import { Target } from "../core.js"
 import { MacPackager } from "../macPackager.js"
 import { PkgOptions } from "../options/pkgOptions.js"

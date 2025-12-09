@@ -2,6 +2,9 @@ import { asArray, copyDir, DO_NOT_USE_HARD_LINKS, isEmptyOrSpaces, log, MAX_FILE
 import * as path from "path"
 import asyncPool from "tiny-async-pool"
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> d26567f58 (tmp save)
 import { Configuration } from "../configuration.js"
 import { BeforeCopyExtraFilesOptions, Framework, PrepareApplicationStageDirectoryOptions } from "../Framework.js"
 import { Packager, Platform } from "../index.js"
@@ -9,6 +12,7 @@ import { LinuxPackager } from "../linuxPackager.js"
 import { MacPackager } from "../macPackager.js"
 import { getTemplatePath } from "../util/pathManager.js"
 import { resolveFunction } from "../util/resolve.js"
+<<<<<<< HEAD
 import { downloadElectronArtifactZip, ElectronDownloadOptions, ElectronGetOptions, extractArchive } from "../util/electronGet.js"
 export { ElectronDownloadOptions }
 import { createMacApp } from "./electronMac.js"
@@ -25,6 +29,8 @@ import { LinuxPackager } from "../linuxPackager"
 import { MacPackager } from "../macPackager"
 import { getTemplatePath } from "../util/pathManager"
 import { resolveFunction } from "../util/resolve"
+=======
+>>>>>>> d26567f58 (tmp save)
 import { createMacApp } from "./electronMac.js.js"
 import { computeElectronVersion, getElectronVersionFromInstalled } from "./electronVersion.js.js"
 import { addWinAsarIntegrity } from "./electronWin.js.js"

@@ -9,6 +9,7 @@ import { Platform } from "../core.js"
 import { Framework, PrepareApplicationStageDirectoryOptions } from "../Framework.js"
 import { LinuxPackager } from "../linuxPackager.js"
 import { MacPackager } from "../macPackager.js"
+<<<<<<< HEAD
 import { downloadBuilderToolset } from "../util/electronGet.js"
 import { savePlistFile } from "../util/plist.js"
 
@@ -33,6 +34,9 @@ const launchUiChecksums = {
   "launchui-v0.1.4-10.13.0-win32-ia32.7z": "682734da3d817ac365093c6c8ef3d9a70cc3f2a809e4588cb12a311358a68a2d",
   "launchui-v0.1.4-10.13.0-win32-x64.7z": "2f26629c5f5c12baeff272ac7855a1df7f27621cce782b79965f9a9b5eccc359",
 }
+=======
+import { savePlistFile } from "../util/plist.js"
+>>>>>>> d26567f58 (tmp save)
 
 export class LibUiFramework implements Framework {
   readonly name: string = "libui"

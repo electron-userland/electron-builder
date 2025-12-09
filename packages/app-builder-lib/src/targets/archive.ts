@@ -4,6 +4,7 @@ import { create } from "tar"
 import type { TarOptionsWithAliasesAsync } from "tar"
 import { TmpDir } from "temp-file"
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { CompressionLevel } from "../core.js"
 import { getLinuxToolsMacToolset } from "../toolsets/linux.js"
 import { getPath7za } from "../toolsets/7zip.js"
@@ -28,6 +29,9 @@ type TarConfig = {
 }
 =======
 import { CompressionLevel } from "../core"
+=======
+import { CompressionLevel } from "../core.js"
+>>>>>>> d26567f58 (tmp save)
 import { getLinuxToolsPath } from "./tools.js.js"
 >>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 

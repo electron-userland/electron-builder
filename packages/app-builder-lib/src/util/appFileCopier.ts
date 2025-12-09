@@ -5,6 +5,7 @@ import { mkdir, readlink } from "fs/promises"
 import * as path from "path"
 import asyncPool from "tiny-async-pool"
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { isLibOrExe } from "../asar/unpackDetector.js"
 import { Platform } from "../core.js"
 import { excludedExts, FileMatcher } from "../fileMatcher.js"
@@ -22,10 +23,18 @@ import { excludedExts, FileMatcher } from "../fileMatcher"
 import { createElectronCompilerHost, NODE_MODULES_PATTERN } from "../fileTransformer"
 import { Packager } from "../packager"
 import { PlatformPackager } from "../platformPackager"
+=======
+import { isLibOrExe } from "../asar/unpackDetector.js"
+import { Platform } from "../core.js"
+import { excludedExts, FileMatcher } from "../fileMatcher.js"
+import { createElectronCompilerHost, NODE_MODULES_PATTERN } from "../fileTransformer.js"
+import { Packager } from "../packager.js"
+import { PlatformPackager } from "../platformPackager.js"
+>>>>>>> d26567f58 (tmp save)
 import { AppFileWalker } from "./AppFileWalker.js.js"
 import { NodeModuleCopyHelper } from "./NodeModuleCopyHelper.js.js"
 import { NodeModuleInfo } from "./packageDependencies.js.js"
-import { getNodeModules } from "../node-module-collector"
+import { getNodeModules } from "../node-module-collector.js"
 
 const BOWER_COMPONENTS_PATTERN = `${path.sep}bower_components${path.sep}`
 /** @internal */

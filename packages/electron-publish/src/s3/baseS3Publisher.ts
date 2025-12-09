@@ -2,6 +2,7 @@ import { log } from "builder-util"
 import { BaseS3Options } from "builder-util-runtime"
 import { mkdir, symlink } from "fs/promises"
 import * as path from "path"
+<<<<<<< HEAD
 import { PublishContext, UploadTask } from "../index.js"
 import { Publisher } from "../publisher.js"
 import type { AwsCredentials } from "./awsCredentials.js"
@@ -19,6 +20,10 @@ export interface S3UploadExtraParams {
   storageClass?: string
   serverSideEncryption?: string
 }
+=======
+import { PublishContext, UploadTask } from ".."
+import { Publisher } from "../publisher.js"
+>>>>>>> d26567f58 (tmp save)
 
 export abstract class BaseS3Publisher extends Publisher {
   protected constructor(

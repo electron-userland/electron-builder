@@ -3,10 +3,14 @@ import { createHash } from "crypto"
 import { readdir } from "fs/promises"
 import * as path from "path"
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { FileMatcher } from "../fileMatcher.js"
 import { readAsarHeader } from "./asar.js"
 =======
 import { FileMatcher } from "../fileMatcher"
+=======
+import { FileMatcher } from "../fileMatcher.js"
+>>>>>>> d26567f58 (tmp save)
 import { readAsarHeader } from "./asar.js.js"
 >>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 

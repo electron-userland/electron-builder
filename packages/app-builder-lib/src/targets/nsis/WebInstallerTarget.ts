@@ -1,5 +1,6 @@
 import { Arch, log } from "builder-util"
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { computeDownloadUrl, getPublishConfigs, getPublishConfigsForUpdateInfo } from "../../publish/PublishManager.js"
 import { WinPackager } from "../../winPackager.js"
 import { NsisWebOptions } from "./nsisOptions.js"
@@ -8,6 +9,10 @@ import { AppPackageHelper } from "./nsisUtil.js"
 =======
 import { computeDownloadUrl, getPublishConfigs, getPublishConfigsForUpdateInfo } from "../../publish/PublishManager"
 import { WinPackager } from "../../winPackager"
+=======
+import { computeDownloadUrl, getPublishConfigs, getPublishConfigsForUpdateInfo } from "../../publish/PublishManager.js"
+import { WinPackager } from "../../winPackager.js"
+>>>>>>> d26567f58 (tmp save)
 import { NsisWebOptions } from "./nsisOptions.js.js"
 import { NsisTarget } from "./NsisTarget.js.js"
 import { AppPackageHelper } from "./nsisUtil.js.js"

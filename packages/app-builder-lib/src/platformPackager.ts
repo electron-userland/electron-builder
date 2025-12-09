@@ -60,6 +60,7 @@ import {
   Target,
   TargetSpecificOptions,
 <<<<<<< HEAD
+<<<<<<< HEAD
 } from "./index.js"
 import { computeFileSets, computeNodeModuleFileSets, copyAppFiles, transformFiles } from "./util/appFileCopier.js"
 import { convertIcon, IconFormat, IconInfo } from "./util/iconConverter.js"
@@ -67,6 +68,9 @@ import { expandMacro as doExpandMacro } from "./util/macroExpander.js"
 import { AssetCatalogResult, generateAssetCatalogForIcon } from "./util/macosIconComposer.js"
 =======
 } from "./index"
+=======
+} from "./index.js"
+>>>>>>> d26567f58 (tmp save)
 import { executeAppBuilderAsJson } from "./util/appBuilder.js.js"
 import { computeFileSets, computeNodeModuleFileSets, copyAppFiles, ELECTRON_COMPILE_SHIM_FILENAME, transformFiles } from "./util/appFileCopier.js.js"
 import { expandMacro as doExpandMacro } from "./util/macroExpander.js.js"

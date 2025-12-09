@@ -9,9 +9,9 @@ import { WinPackager } from "../winPackager.js"
 import MsiTarget from "./MsiTarget.js"
 =======
 import { MsiWrappedOptions } from "../"
-import { TargetConfiguration } from "../core"
-import { FinalCommonWindowsInstallerOptions } from "../options/CommonWindowsInstallerConfiguration"
-import { WinPackager } from "../winPackager"
+import { TargetConfiguration } from "../core.js"
+import { FinalCommonWindowsInstallerOptions } from "../options/CommonWindowsInstallerConfiguration.js"
+import { WinPackager } from "../winPackager.js"
 import MsiTarget from "./MsiTarget.js.js"
 >>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 

@@ -3,6 +3,7 @@ import { Nullish } from "builder-util-runtime"
 import { ExecFileOptions, SpawnOptions } from "child_process"
 import * as path from "path"
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { ToolsetConfig } from "../configuration.js"
 import { getWineToolset } from "../toolsets/wine.js"
 import { VmManager } from "./vm.js"
@@ -15,6 +16,9 @@ type WineOptions = {
 }
 =======
 import { execWine } from "../wine"
+=======
+import { execWine } from "../wine.js"
+>>>>>>> d26567f58 (tmp save)
 import { VmManager } from "./vm.js.js"
 >>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 

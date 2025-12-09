@@ -3,10 +3,14 @@ import { Arch, copyFile, toLinuxArchString } from "builder-util"
 
 import * as path from "path"
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> d26567f58 (tmp save)
 import { Target } from "../core.js"
 import { LinuxPackager } from "../linuxPackager.js"
 import { FlatpakOptions } from "../options/linuxOptions.js"
 import { getNotLocalizedLicenseFile } from "../util/license.js"
+<<<<<<< HEAD
 import { LinuxTargetHelper } from "./LinuxTargetHelper.js"
 import { createStageDir, StageDir } from "./targetUtil.js"
 import { deepAssign, Nullish } from "builder-util-runtime"
@@ -17,6 +21,8 @@ import { Target } from "../core"
 import { LinuxPackager } from "../linuxPackager"
 import { FlatpakOptions } from "../options/linuxOptions"
 import { getNotLocalizedLicenseFile } from "../util/license"
+=======
+>>>>>>> d26567f58 (tmp save)
 import { LinuxTargetHelper } from "./LinuxTargetHelper.js.js"
 import { createStageDir, StageDir } from "./targetUtil.js.js"
 >>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)

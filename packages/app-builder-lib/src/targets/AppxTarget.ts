@@ -16,11 +16,11 @@ import _fsExtra from "fs-extra"
 const { emptyDir, readdir, readFile, writeFile } = _fsExtra
 =======
 import { AppXOptions } from "../"
-import { getSignVendorPath, isOldWin6 } from "../codeSign/windowsSignToolManager"
-import { Target } from "../core"
-import { getTemplatePath } from "../util/pathManager"
-import { VmManager } from "../vm/vm"
-import { WinPackager } from "../winPackager"
+import { getSignVendorPath, isOldWin6 } from "../codeSign/windowsSignToolManager.js"
+import { Target } from "../core.js"
+import { getTemplatePath } from "../util/pathManager.js"
+import { VmManager } from "../vm/vm.js"
+import { WinPackager } from "../winPackager.js"
 import { createStageDir } from "./targetUtil.js.js"
 >>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 

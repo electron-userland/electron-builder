@@ -36,15 +36,20 @@ import * as path from "path"
 import { WriteStream as TtyWriteStream } from "tty"
 import * as url from "url"
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { AppInfo } from "../appInfo.js"
 import { Configuration } from "../configuration.js"
 import { Platform, Target, TargetSpecificOptions } from "../core.js"
 import { ArtifactCreated } from "../packagerApi.js"
 import { PlatformSpecificBuildOptions } from "../options/PlatformSpecificBuildOptions.js"
+=======
+import { AppInfo, ArtifactCreated, Configuration, Platform, PlatformSpecificBuildOptions, Target } from "../index.js"
+>>>>>>> d26567f58 (tmp save)
 import { Packager } from "../packager.js"
 import { PlatformPackager } from "../platformPackager.js"
 import { expandMacro } from "../util/macroExpander.js"
 import { WinPackager } from "../winPackager.js"
+<<<<<<< HEAD
 import { createUpdateInfoTasks, UpdateInfoFileTask, writeUpdateInfoFiles } from "./updateInfoBuilder.js"
 import { resolveModule } from "../util/resolve.js"
 import { parseUrl } from "../util/pathManager.js"
@@ -57,6 +62,10 @@ import { WinPackager } from "../winPackager"
 import { createUpdateInfoTasks, UpdateInfoFileTask, writeUpdateInfoFiles } from "./updateInfoBuilder.js.js"
 import { resolveModule } from "../util/resolve"
 >>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
+=======
+import { createUpdateInfoTasks, UpdateInfoFileTask, writeUpdateInfoFiles } from "./updateInfoBuilder.js.js"
+import { resolveModule } from "../util/resolve.js"
+>>>>>>> d26567f58 (tmp save)
 
 const publishForPrWarning =
   "There are serious security concerns with PUBLISH_FOR_PULL_REQUEST=true (see the  CircleCI documentation (https://circleci.com/docs/1.0/fork-pr-builds/) for details)" +

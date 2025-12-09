@@ -1,6 +1,7 @@
 import { Arch, defaultArchFromString } from "builder-util"
 import * as path from "path"
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { Platform, Target, TargetSpecificOptions } from "../core.js"
 import { copyFiles, getFileMatchers } from "../fileMatcher.js"
 import { PlatformPackager } from "../platformPackager.js"
@@ -10,6 +11,11 @@ import { appendBlockmap, createBlockmap } from "./differentialUpdateInfoBuilder.
 import { Platform, Target, TargetSpecificOptions } from "../core"
 import { copyFiles, getFileMatchers } from "../fileMatcher"
 import { PlatformPackager } from "../platformPackager"
+=======
+import { Platform, Target, TargetSpecificOptions } from "../core.js"
+import { copyFiles, getFileMatchers } from "../fileMatcher.js"
+import { PlatformPackager } from "../platformPackager.js"
+>>>>>>> d26567f58 (tmp save)
 import { archive, tar } from "./archive.js.js"
 import { appendBlockmap, createBlockmap } from "./differentialUpdateInfoBuilder.js.js"
 >>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)

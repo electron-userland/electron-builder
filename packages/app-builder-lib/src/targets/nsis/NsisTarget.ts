@@ -19,17 +19,25 @@ import * as fs from "fs"
 
 import * as path from "path"
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> d26567f58 (tmp save)
 import { Target } from "../../core.js"
 import { DesktopShortcutCreationPolicy, getEffectiveOptions } from "../../options/CommonWindowsInstallerConfiguration.js"
 import { chooseNotNull, computeSafeArtifactNameIfNeeded, normalizeExt } from "../../platformPackager.js"
 import { hashFile } from "../../util/hash.js"
 import { isMacOsCatalina } from "../../util/macosVersion.js"
 import { time } from "../../util/timer.js"
+<<<<<<< HEAD
 import { WineVmManager } from "../../vm/WineVm.js"
+=======
+import { execWine } from "../../wine.js"
+>>>>>>> d26567f58 (tmp save)
 import { WinPackager } from "../../winPackager.js"
 import { archive, ArchiveOptions } from "../archive.js"
 import { appendBlockmap, configureDifferentialAwareArchiveOptions, createBlockmap, createNsisWebDifferentialUpdateInfo } from "../differentialUpdateInfoBuilder.js"
 import { getWindowsInstallationAppPackageName, getWindowsInstallationDirName } from "../targetUtil.js"
+<<<<<<< HEAD
 import { Commands } from "./Commands.js"
 import { Defines } from "./Defines.js"
 import { addCustomMessageFileInclude, createAddLangsMacro, LangConfigurator } from "./nsisLang.js"
@@ -53,6 +61,8 @@ import { WinPackager } from "../../winPackager"
 import { archive, ArchiveOptions } from "../archive"
 import { appendBlockmap, configureDifferentialAwareArchiveOptions, createBlockmap, createNsisWebDifferentialUpdateInfo } from "../differentialUpdateInfoBuilder"
 import { getWindowsInstallationAppPackageName, getWindowsInstallationDirName } from "../targetUtil"
+=======
+>>>>>>> d26567f58 (tmp save)
 import { Commands } from "./Commands.js.js"
 import { Defines } from "./Defines.js.js"
 import { addCustomMessageFileInclude, createAddLangsMacro, LangConfigurator } from "./nsisLang.js.js"

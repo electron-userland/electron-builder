@@ -5,6 +5,7 @@ import { createWriteStream } from "fs"
 import { OutgoingHttpHeaders, RequestOptions } from "http"
 import { ProgressInfo, CancellationToken } from "builder-util-runtime"
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { Logger } from "../types.js"
 import { copyData } from "./DataSplitter.js"
 import { URL } from "url"
@@ -13,6 +14,9 @@ import { checkIsRangesSupported, executeTasksUsingMultipleRangeRequests } from "
 import { ProgressDifferentialDownloadCallbackTransform, ProgressDifferentialDownloadInfo } from "./ProgressDifferentialDownloadCallbackTransform.js"
 =======
 import { Logger } from "../types"
+=======
+import { Logger } from "../types.js"
+>>>>>>> d26567f58 (tmp save)
 import { copyData } from "./DataSplitter.js.js"
 import { URL } from "url"
 import { computeOperations, Operation, OperationKind } from "./downloadPlanBuilder.js.js"
