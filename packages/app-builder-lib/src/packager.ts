@@ -436,28 +436,25 @@ export class Packager {
     })
 
     this.disposeOnBuildFinish(() =>
-      retry(
-        () => {
-          return this.tempDirManager.cleanup()
+      retry(() => this.tempDirManager.cleanup(), {
+        retries: 2,
+        interval: 2000,
+        backoff: 2000,
+        cancellationToken: this.cancellationToken,
+        shouldRetry: e => {
+          const message: string = e?.message || ""
+          const code = e?.code
+          // windows file locks
+          const resourceIsBusy = message.includes("EBUSY") || code === "EBUSY"
+          if (resourceIsBusy) {
+            log.debug({ error: message || code }, "retrying temporary directory cleanup")
+            return true
+          }
+          return false
         },
-        {
-          retries: 2,
-          interval: 1000,
-          backoff: 1000,
-          cancellationToken: this.cancellationToken,
-          shouldRetry: e => {
-            const message: string = e?.message || ""
-            const code = e?.code
-            const resourceIsBusy = message.includes("EBUSY") || code === "EBUSY"
-            if (resourceIsBusy) {
-              log.debug({ error: message || code }, "retrying temporary directory cleanup")
-              return true
-            }
-            return false
-          },
-        }
-      )
+      })
     )
+
     const platformToTargets = await executeFinally(this.doBuild(), async () => {
       if (this.debugLogger.isEnabled) {
         await this.debugLogger.save(path.join(commonOutDirWithoutPossibleOsMacro, "builder-debug.yml"))
