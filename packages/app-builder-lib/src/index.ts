@@ -7,7 +7,7 @@ import { PublishManager } from "./publish/PublishManager.js.js"
 import { resolveFunction } from "./util/resolve.js.js"
 
 export { Arch, archFromString, getArchSuffix } from "builder-util"
-export { AppInfo } from "./appInfo"
+export { AppInfo } from "./appInfo.js"
 export {
   AfterExtractContext,
   AfterPackContext,

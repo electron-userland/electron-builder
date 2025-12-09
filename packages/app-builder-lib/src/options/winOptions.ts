@@ -1,6 +1,6 @@
 import { Nullish } from "builder-util-runtime"
-import { CustomWindowsSign } from "../codeSign/windowsSignToolManager"
-import { PlatformSpecificBuildOptions, TargetConfigType } from "../index"
+import { CustomWindowsSign } from "../codeSign/windowsSignToolManager.js"
+import { PlatformSpecificBuildOptions, TargetConfigType } from "../index.js"
 
 export interface WindowsConfiguration extends PlatformSpecificBuildOptions {
   /**

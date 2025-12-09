@@ -3,7 +3,7 @@ import * as path from "path"
 import { AppUpdater } from "./AppUpdater.js.js"
 import { UpdateInfo } from "builder-util-runtime"
 
-export { BaseUpdater } from "./BaseUpdater"
+export { BaseUpdater } from "./BaseUpdater.js"
 export { AppUpdater, NoOpLogger } from "./AppUpdater"
 export { Provider } from "./providers/Provider"
 export { AppImageUpdater } from "./AppImageUpdater"

@@ -3,7 +3,7 @@ import { move } from "fs-extra"
 import * as path from "path"
 import { create, CreateOptions, FileOptions } from "tar"
 import { TmpDir } from "temp-file"
-import { CompressionLevel } from "../core"
+import { CompressionLevel } from "../core.js"
 import { getLinuxToolsPath } from "./tools.js.js"
 
 /** @internal */

@@ -1,9 +1,9 @@
 import { CancellationToken, GithubOptions, githubUrl, HttpError, newError, parseXml, ReleaseNoteInfo, UpdateInfo, XElement } from "builder-util-runtime"
 import * as semver from "semver"
 import { URL } from "url"
-import { AppUpdater } from "../AppUpdater"
-import { ResolvedUpdateFileInfo } from "../types"
-import { getChannelFilename, newBaseUrl, newUrlFromBase } from "../util"
+import { AppUpdater } from "../AppUpdater.js"
+import { ResolvedUpdateFileInfo } from "../types.js"
+import { getChannelFilename, newBaseUrl, newUrlFromBase } from "../util.js"
 import { parseUpdateInfo, Provider, ProviderRuntimeOptions, resolveFiles } from "./Provider.js.js"
 
 const hrefRegExp = /\/tag\/([^/]+)$/

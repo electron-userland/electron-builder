@@ -1,4 +1,4 @@
-import { CompressionLevel, Publish, TargetConfiguration, TargetSpecificOptions } from "../core"
+import { CompressionLevel, Publish, TargetConfiguration, TargetSpecificOptions } from "../core.js"
 import { FileAssociation } from "./FileAssociation.js.js"
 
 export interface FileSet {

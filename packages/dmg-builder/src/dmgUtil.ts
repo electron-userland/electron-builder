@@ -5,7 +5,7 @@ import { hdiUtil, hdiutilTransientExitCodes } from "./hdiuil.js.js"
 import { writeFile } from "fs-extra"
 import { DmgBuildConfig } from "./dmg.js.js"
 
-export { DmgTarget } from "./dmg"
+export { DmgTarget } from "./dmg.js"
 
 const root = path.join(__dirname, "..")
 

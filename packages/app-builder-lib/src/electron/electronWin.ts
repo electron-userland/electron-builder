@@ -2,7 +2,7 @@ import { log } from "builder-util"
 import { readFile, writeFile } from "fs/promises"
 import * as path from "path"
 import { NtExecutable, NtExecutableResource, Resource } from "resedit"
-import { AsarIntegrity } from "../asar/integrity"
+import { AsarIntegrity } from "../asar/integrity.js"
 
 /** @internal */
 export async function addWinAsarIntegrity(executablePath: string, asarIntegrity: AsarIntegrity) {

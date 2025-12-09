@@ -3,7 +3,7 @@ import { Nullish } from "builder-util-runtime"
 import { readFile, readJson, readJsonSync } from "fs-extra"
 import * as path from "path"
 import * as semver from "semver"
-import { Metadata } from "../options/metadata"
+import { Metadata } from "../options/metadata.js"
 import { normalizePackageData } from "./normalizePackageData.js.js"
 
 /** @internal */

@@ -3,8 +3,8 @@ import * as path from "path"
 import { ElectronPlatformName } from "./ElectronFramework.js.js"
 
 import { log } from "builder-util"
-import { getBin } from "../binDownload"
-import { PrepareApplicationStageDirectoryOptions } from "../Framework"
+import { getBin } from "../binDownload.js"
+import { PrepareApplicationStageDirectoryOptions } from "../Framework.js"
 
 // NOTE: Adapted from https://github.com/MarshallOfSound/electron-packager-plugin-non-proprietary-codecs-ffmpeg to resolve dependency vulnerabilities
 const downloadFFMPEG = async (electronVersion: string, platform: ElectronPlatformName, arch: string) => {
