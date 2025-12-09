@@ -1,5 +1,6 @@
 {
   "name": "electron-builder-squirrel-windows",
+<<<<<<< HEAD
   "version": "26.15.3",
   "type": "module",
   "main": "./dist/SquirrelWindowsTarget.js",
@@ -15,6 +16,11 @@
       "require": "./dist/indexInternal.js"
     }
   },
+=======
+  "version": "26.3.5",
+  "type": "module",
+  "exports": "./out/SquirrelWindowsTarget.js",
+>>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
   "author": "Vladimir Krivosheev",
   "license": "MIT",
   "repository": {

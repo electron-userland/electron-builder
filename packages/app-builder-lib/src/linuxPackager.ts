@@ -1,4 +1,5 @@
 import { Arch } from "builder-util"
+<<<<<<< HEAD
 import { sanitizeFileName } from "builder-util/internal"
 import { DIR_TARGET, Platform, Target } from "./core.js"
 import { LinuxConfiguration } from "./options/linuxOptions.js"
@@ -10,6 +11,19 @@ import FpmTarget from "./targets/FpmTarget.js"
 import { LinuxTargetHelper } from "./targets/LinuxTargetHelper.js"
 import SnapTarget from "./targets/snap/SnapTarget.js"
 import { createCommonTarget } from "./targets/targetFactory.js"
+=======
+import { sanitizeFileName } from "builder-util/out/filename"
+import { DIR_TARGET, Platform, Target } from "./core.js.js"
+import { LinuxConfiguration } from "./options/linuxOptions.js.js"
+import { Packager } from "./packager.js.js"
+import { PlatformPackager } from "./platformPackager.js.js"
+import AppImageTarget from "./targets/AppImageTarget.js.js"
+import FlatpakTarget from "./targets/FlatpakTarget.js.js"
+import FpmTarget from "./targets/FpmTarget.js.js"
+import { LinuxTargetHelper } from "./targets/LinuxTargetHelper.js.js"
+import SnapTarget from "./targets/snap.js.js"
+import { createCommonTarget } from "./targets/targetFactory.js.js"
+>>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 
 export class LinuxPackager extends PlatformPackager<LinuxConfiguration> {
   readonly executableName: string

@@ -2,10 +2,19 @@ import { asArray, log, retry, spawn, stripSensitiveEnvVars } from "builder-util"
 
 import { homedir } from "os"
 import * as path from "path"
+<<<<<<< HEAD
 import { Configuration } from "../configuration.js"
 import { PM, getPackageManagerCommand } from "../node-module-collector/index.js"
 import { detectPackageManager } from "../node-module-collector/packageManager.js"
 import { rebuild as remoteRebuild } from "./rebuild.js"
+=======
+import { Configuration } from "../configuration"
+import { executeAppBuilderAndWriteJson } from "./appBuilder.js.js"
+import { PM, getPackageManagerCommand } from "../node-module-collector"
+import { detectPackageManager } from "../node-module-collector/packageManager"
+import { NodeModuleDirInfo } from "./packageDependencies.js.js"
+import { rebuild as remoteRebuild } from "./rebuild.js.js"
+>>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 import * as which from "which"
 import type { RebuildOptions as ElectronRebuildOptions } from "@electron/rebuild"
 import { Nullish } from "builder-util-runtime"

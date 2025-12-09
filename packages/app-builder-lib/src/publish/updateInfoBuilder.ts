@@ -5,6 +5,7 @@ import fsExtra from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import * as semver from "semver"
+<<<<<<< HEAD
 import { Platform } from "../core.js"
 import { ReleaseInfo } from "../options/PlatformSpecificBuildOptions.js"
 import { Packager } from "../packager.js"
@@ -12,6 +13,15 @@ import { ArtifactCreated } from "../packagerApi.js"
 import { PlatformPackager } from "../platformPackager.js"
 import { hashFile } from "../util/hash.js"
 import { computeDownloadUrl, getPublishConfigsForUpdateInfo } from "./PublishManager.js"
+=======
+import { Platform } from "../core"
+import { ReleaseInfo } from "../options/PlatformSpecificBuildOptions"
+import { Packager } from "../packager"
+import { ArtifactCreated } from "../packagerApi"
+import { PlatformPackager } from "../platformPackager"
+import { hashFile } from "../util/hash"
+import { computeDownloadUrl, getPublishConfigsForUpdateInfo } from "./PublishManager.js.js"
+>>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 
 async function getReleaseInfo(packager: PlatformPackager<any>) {
   const releaseInfo: ReleaseInfo = { ...(packager.platformSpecificBuildOptions.releaseInfo || packager.config.releaseInfo) }

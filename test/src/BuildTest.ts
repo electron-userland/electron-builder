@@ -8,7 +8,11 @@ import * as path from "path"
 import { app, appTwo, appTwoThrows, assertPack, getFixtureDir, linuxDirTarget, modifyPackageJson, packageJson, toSystemIndependentPath } from "./helpers/packTester.js"
 import { ELECTRON_VERSION } from "./helpers/testConfig.js"
 import { verifySmartUnpack } from "./helpers/verifySmartUnpack.js"
+<<<<<<< HEAD
 import { PM } from "app-builder-lib/internal"
+=======
+import { PM } from "app-builder-lib/src/node-module-collector/packageManager"
+>>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 
 test.ifLinux("cli", ({ expect }) => {
   const yargs = createYargs()

@@ -2,6 +2,7 @@ import { bundle as bundleFlatpak, FlatpakBundlerBuildOptions, FlatpakManifest } 
 import { Arch, copyFile, toLinuxArchString } from "builder-util"
 
 import * as path from "path"
+<<<<<<< HEAD
 import { Target } from "../core.js"
 import { LinuxPackager } from "../linuxPackager.js"
 import { FlatpakOptions } from "../options/linuxOptions.js"
@@ -11,6 +12,14 @@ import { createStageDir, StageDir } from "./targetUtil.js"
 import { deepAssign, Nullish } from "builder-util-runtime"
 import _fsExtra from "fs-extra"
 const { chmod, outputFile } = _fsExtra
+=======
+import { Target } from "../core"
+import { LinuxPackager } from "../linuxPackager"
+import { FlatpakOptions } from "../options/linuxOptions"
+import { getNotLocalizedLicenseFile } from "../util/license"
+import { LinuxTargetHelper } from "./LinuxTargetHelper.js.js"
+import { createStageDir, StageDir } from "./targetUtil.js.js"
+>>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 
 export default class FlatpakTarget extends Target {
   readonly options: FlatpakOptions = deepAssign({}, this.packager.platformSpecificBuildOptions, (this.packager.config as any)[this.name])

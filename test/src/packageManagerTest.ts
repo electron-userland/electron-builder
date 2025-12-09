@@ -5,8 +5,11 @@ import * as path from "path"
 import { assertThat } from "./helpers/fileAssert.js"
 import { app, assertPack, getFixtureDir, getPackageManagerWithVersion, linuxDirTarget, modifyPackageJson, verifyAsarFileTree } from "./helpers/packTester.js"
 import { ELECTRON_VERSION } from "./helpers/testConfig.js"
+<<<<<<< HEAD
 import { isEmptyOrSpaces, spawn } from "builder-util"
 import * as which from "which"
+=======
+>>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 
 const yarnVersion = getPackageManagerWithVersion(PM.YARN).prepareEntry
 const yarnBerryVersion = getPackageManagerWithVersion(PM.YARN_BERRY).prepareEntry

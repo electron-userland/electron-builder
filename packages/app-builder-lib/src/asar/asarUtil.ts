@@ -4,10 +4,17 @@ import { dynamicImport } from "../util/dynamicImport.js"
 import fs from "fs-extra"
 
 import * as path from "path"
+<<<<<<< HEAD
 import { AsarOptions } from "../options/PlatformSpecificBuildOptions.js"
 import { PlatformPackager } from "../platformPackager.js"
 import { ResolvedFileSet, getDestinationPath } from "../util/appFileCopier.js"
 import { detectUnpackedDirs } from "./unpackDetector.js"
+=======
+import { AsarOptions } from "../options/PlatformSpecificBuildOptions"
+import { PlatformPackager } from "../platformPackager"
+import { ResolvedFileSet, getDestinationPath } from "../util/appFileCopier"
+import { detectUnpackedDirs } from "./unpackDetector.js.js"
+>>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 import { Readable } from "stream"
 import * as os from "os"
 const { readlink } = fs

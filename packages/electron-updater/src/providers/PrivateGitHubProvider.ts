@@ -4,10 +4,17 @@ import { load } from "js-yaml"
 import * as path from "path"
 import { AppUpdater } from "../AppUpdater.js"
 import { URL } from "url"
+<<<<<<< HEAD
 import { getChannelFilename, newUrlFromBase } from "../util.js"
 import { BaseGitHubProvider } from "./GitHubProvider.js"
 import { ResolvedUpdateFileInfo } from "../types.js"
 import { getFileList, ProviderRuntimeOptions } from "./Provider.js"
+=======
+import { getChannelFilename, newUrlFromBase } from "../util"
+import { BaseGitHubProvider } from "./GitHubProvider.js.js"
+import { ResolvedUpdateFileInfo } from "../types"
+import { getFileList, ProviderRuntimeOptions } from "./Provider.js.js"
+>>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 
 export interface PrivateGitHubUpdateInfo extends UpdateInfo {
   assets: Array<Asset>

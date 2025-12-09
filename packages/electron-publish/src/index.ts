@@ -1,6 +1,10 @@
 import { Arch } from "builder-util"
 import { CancellationToken } from "builder-util-runtime"
+<<<<<<< HEAD
 import { MultiProgress } from "./multiProgress.js"
+=======
+import { MultiProgress } from "./multiProgress.js.js"
+>>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 
 export { MultiProgress }
 export { ProgressBar } from "./progress.js"

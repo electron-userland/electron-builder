@@ -1,8 +1,12 @@
 import { createRequire } from "node:module"
 import * as path from "path"
+<<<<<<< HEAD
 
 const require = createRequire(import.meta.url)
 import { AppAdapter, getAppCacheDir } from "./AppAdapter.js"
+=======
+import { AppAdapter, getAppCacheDir } from "./AppAdapter.js.js"
+>>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 
 export class ElectronAppAdapter implements AppAdapter {
   constructor(private readonly app = require("electron").app) {}

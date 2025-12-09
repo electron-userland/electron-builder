@@ -3,7 +3,11 @@ import fsExtra from "fs-extra"
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert.js"
 import { app, checkDirContents, linuxDirTarget, modifyPackageJson } from "./helpers/packTester.js"
+<<<<<<< HEAD
 import { PM } from "app-builder-lib/internal"
+=======
+import { PM } from "app-builder-lib/out/node-module-collector/packageManager"
+>>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 
 const currentProcessTarget = Platform.LINUX.createTarget(DIR_TARGET, archFromString(process.arch))
 

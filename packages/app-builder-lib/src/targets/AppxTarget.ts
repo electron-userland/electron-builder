@@ -2,6 +2,7 @@ import { Arch, asArray, copyOrLinkFile, InvalidConfigurationError, log, walk } f
 import { deepAssign, Nullish } from "builder-util-runtime"
 
 import * as path from "path"
+<<<<<<< HEAD
 import { AppXOptions } from "../index.js"
 import { getWindowsKitsBundle } from "../toolsets/windows.js"
 import { Target } from "../core.js"
@@ -13,6 +14,15 @@ import { isOldWin6 } from "../toolsets/windows.js"
 import { CAPABILITIES, isValidCapabilityName } from "./AppxCapabilities.js"
 import _fsExtra from "fs-extra"
 const { emptyDir, readdir, readFile, writeFile } = _fsExtra
+=======
+import { AppXOptions } from "../"
+import { getSignVendorPath, isOldWin6 } from "../codeSign/windowsSignToolManager"
+import { Target } from "../core"
+import { getTemplatePath } from "../util/pathManager"
+import { VmManager } from "../vm/vm"
+import { WinPackager } from "../winPackager"
+import { createStageDir } from "./targetUtil.js.js"
+>>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 
 const APPX_ASSETS_DIR_NAME = "appx"
 

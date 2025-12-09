@@ -1,11 +1,16 @@
 import { createRequire } from "node:module"
 import { AllPublishOptions } from "builder-util-runtime"
 import { spawn, SpawnOptions, spawnSync, StdioOptions } from "child_process"
+<<<<<<< HEAD
 import * as path from "path"
 import { AppAdapter } from "./AppAdapter.js"
 import { AppUpdater, DownloadExecutorTask } from "./AppUpdater.js"
 
 const require = createRequire(import.meta.url)
+=======
+import { AppAdapter } from "./AppAdapter.js.js"
+import { AppUpdater, DownloadExecutorTask } from "./AppUpdater.js.js"
+>>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 
 export abstract class BaseUpdater extends AppUpdater {
   protected quitAndInstallCalled = false

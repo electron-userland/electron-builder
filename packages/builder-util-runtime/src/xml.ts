@@ -1,5 +1,9 @@
 import * as sax from "sax"
+<<<<<<< HEAD
 import { newError } from "./error.js"
+=======
+import { newError } from "./error.js.js"
+>>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 
 export class XElement {
   value = ""

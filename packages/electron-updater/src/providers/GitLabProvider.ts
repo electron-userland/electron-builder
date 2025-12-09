@@ -1,11 +1,20 @@
 import { CancellationToken, GitlabOptions, HttpError, newError, UpdateFileInfo, UpdateInfo, GitlabReleaseInfo, GitlabReleaseAsset } from "builder-util-runtime"
 import { OutgoingHttpHeaders, RequestOptions } from "http"
 import { URL } from "url"
+<<<<<<< HEAD
 import escapeRegExp from "lodash.escaperegexp"
 import { AppUpdater } from "../AppUpdater.js"
 import { ResolvedUpdateFileInfo } from "../types.js"
 import { getChannelFilename, newBaseUrl, newUrlFromBase } from "../util.js"
 import { getFileList, parseUpdateInfo, Provider, ProviderRuntimeOptions } from "./Provider.js"
+=======
+// @ts-ignore
+import * as escapeRegExp from "lodash.escaperegexp"
+import { AppUpdater } from "../AppUpdater"
+import { ResolvedUpdateFileInfo } from "../types"
+import { getChannelFilename, newBaseUrl, newUrlFromBase } from "../util"
+import { getFileList, parseUpdateInfo, Provider, ProviderRuntimeOptions } from "./Provider.js.js"
+>>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 
 interface GitlabUpdateInfo extends UpdateInfo {
   tag: string

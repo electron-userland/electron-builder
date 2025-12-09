@@ -1,11 +1,21 @@
 import { Nullish } from "builder-util-runtime"
 import { TmpDir } from "temp-file"
+<<<<<<< HEAD
 import { NpmNodeModulesCollector } from "./npmNodeModulesCollector.js"
 import { detectPackageManager, getPackageManagerCommand, PM } from "./packageManager.js"
 import { PnpmNodeModulesCollector } from "./pnpmNodeModulesCollector.js"
 import { YarnBerryNodeModulesCollector } from "./yarnBerryNodeModulesCollector.js"
 import { YarnNodeModulesCollector } from "./yarnNodeModulesCollector.js"
 import { BunNodeModulesCollector } from "./bunNodeModulesCollector.js"
+=======
+import { NpmNodeModulesCollector } from "./npmNodeModulesCollector.js.js"
+import { detectPackageManager, getPackageManagerCommand, PM } from "./packageManager.js.js"
+import { PnpmNodeModulesCollector } from "./pnpmNodeModulesCollector.js.js"
+import { NodeModuleInfo } from "./types.js.js"
+import { YarnBerryNodeModulesCollector } from "./yarnBerryNodeModulesCollector.js.js"
+import { YarnNodeModulesCollector } from "./yarnNodeModulesCollector.js.js"
+import { BunNodeModulesCollector } from "./bunNodeModulesCollector.js.js"
+>>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 import { Lazy } from "lazy-val"
 import { spawn, log, exists, isEmptyOrSpaces } from "builder-util"
 import fs from "fs-extra"

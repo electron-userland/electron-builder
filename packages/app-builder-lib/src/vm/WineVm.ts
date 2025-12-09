@@ -2,6 +2,7 @@ import { exec, ExtraSpawnOptions } from "builder-util"
 import { Nullish } from "builder-util-runtime"
 import { ExecFileOptions, SpawnOptions } from "child_process"
 import * as path from "path"
+<<<<<<< HEAD
 import { ToolsetConfig } from "../configuration.js"
 import { getWineToolset } from "../toolsets/wine.js"
 import { VmManager } from "./vm.js"
@@ -12,6 +13,10 @@ type WineOptions = {
   options?: ExecFileOptions
   toolset: ToolsetConfig["wine"] | Nullish
 }
+=======
+import { execWine } from "../wine"
+import { VmManager } from "./vm.js.js"
+>>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 
 export class WineVmManager extends VmManager {
   constructor(private readonly wineToolset: ToolsetConfig["wine"]) {

@@ -11,6 +11,7 @@ import {
   newError,
   PublishConfiguration,
 } from "builder-util-runtime"
+<<<<<<< HEAD
 import { AppUpdater } from "./AppUpdater.js"
 import { BitbucketProvider } from "./providers/BitbucketProvider.js"
 import { GenericProvider } from "./providers/GenericProvider.js"
@@ -19,6 +20,16 @@ import { GitLabProvider } from "./providers/GitLabProvider.js"
 import { KeygenProvider } from "./providers/KeygenProvider.js"
 import { PrivateGitHubProvider } from "./providers/PrivateGitHubProvider.js"
 import { Provider, ProviderRuntimeOptions } from "./providers/Provider.js"
+=======
+import { AppUpdater } from "./AppUpdater.js.js"
+import { BitbucketProvider } from "./providers/BitbucketProvider.js.js"
+import { GenericProvider } from "./providers/GenericProvider.js.js"
+import { GitHubProvider } from "./providers/GitHubProvider.js.js"
+import { GitLabProvider } from "./providers/GitLabProvider.js.js"
+import { KeygenProvider } from "./providers/KeygenProvider.js.js"
+import { PrivateGitHubProvider } from "./providers/PrivateGitHubProvider.js.js"
+import { Provider, ProviderRuntimeOptions } from "./providers/Provider.js.js"
+>>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 
 export function isUrlProbablySupportMultiRangeRequests(url: string): boolean {
   return !url.includes("s3.amazonaws.com")

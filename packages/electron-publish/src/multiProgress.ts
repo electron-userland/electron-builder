@@ -1,5 +1,9 @@
 import { setPrinter } from "builder-util"
+<<<<<<< HEAD
 import { ProgressBar } from "./progress.js"
+=======
+import { ProgressBar } from "./progress.js.js"
+>>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 
 export class MultiProgress {
   private readonly stream = process.stdout as any

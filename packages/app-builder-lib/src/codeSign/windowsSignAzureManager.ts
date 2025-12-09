@@ -1,11 +1,19 @@
 import { asArray, log } from "builder-util"
 import { MemoLazy } from "builder-util-runtime"
 import { Lazy } from "lazy-val"
+<<<<<<< HEAD
 import { WindowsAzureSigningConfiguration, WindowsConfiguration } from "../options/winOptions.js"
 import { WinPackager } from "../winPackager.js"
 import { SignManager } from "./signManager.js"
 import { WindowsSignOptions } from "./windowsCodeSign.js"
 import { CertificateFromStoreInfo, FileCodeSigningInfo } from "./windowsSignToolManager.js"
+=======
+import { WindowsAzureSigningConfiguration, WindowsConfiguration } from "../options/winOptions"
+import { WinPackager } from "../winPackager"
+import { SignManager } from "./signManager.js.js"
+import { WindowsSignOptions } from "./windowsCodeSign.js.js"
+import { CertificateFromStoreInfo, FileCodeSigningInfo } from "./windowsSignToolManager.js.js"
+>>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 
 export class WindowsSignAzureManager implements SignManager {
   private readonly platformSpecificBuildOptions: WindowsConfiguration

@@ -4,11 +4,17 @@ import { exec, executeFinally, exists, InvalidConfigurationError, isEmptyOrSpace
 import { stat } from "fs/promises"
 
 import * as path from "path"
+<<<<<<< HEAD
 import { DmgBuildConfig } from "./dmg.js"
 import type { DmgBuildLicenseConfig } from "./dmgLicense.js"
 import { hdiUtil, hdiUtilWithStdin, hdiutilTransientExitCodes } from "./hdiuil.js"
 import _fsExtra from "fs-extra"
 const { writeFile } = _fsExtra
+=======
+import { hdiUtil, hdiutilTransientExitCodes } from "./hdiuil.js.js"
+import { writeFile } from "fs-extra"
+import { DmgBuildConfig } from "./dmg.js.js"
+>>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 
 export { DmgTarget } from "./dmg.js"
 

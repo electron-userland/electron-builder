@@ -16,14 +16,26 @@ import { NtExecutable, NtExecutableResource } from "resedit"
 import { TmpDir } from "temp-file"
 import { getCollectorByPackageManager, PM } from "app-builder-lib/internal"
 import { promisify } from "util"
+<<<<<<< HEAD
 import { MAC_CSC_LINK, WIN_CSC_LINK } from "./codeSignData"
 import { assertThat } from "./fileAssert"
+=======
+import { CSC_LINK, WIN_CSC_LINK } from "./codeSignData.js"
+import { assertThat } from "./fileAssert.js"
+>>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 import AdmZip from "adm-zip"
 // @ts-ignore
 import sanitizeFileName from "sanitize-filename"
 import type { ExpectStatic } from "vitest"
+<<<<<<< HEAD
 import { computeDefaultAppDirectory, installDependencies } from "app-builder-lib/internal"
 import { ELECTRON_VERSION } from "./testConfig"
+=======
+import { computeDefaultAppDirectory } from "app-builder-lib/out/util/config/config"
+import { installDependencies } from "app-builder-lib/out/util/yarn"
+import { ELECTRON_VERSION } from "./testConfig.js"
+import { createLazyProductionDeps } from "app-builder-lib/out/util/packageDependencies"
+>>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 import { execSync } from "child_process"
 import { detectPackageManager } from "app-builder-lib/src/node-module-collector/packageManager"
 

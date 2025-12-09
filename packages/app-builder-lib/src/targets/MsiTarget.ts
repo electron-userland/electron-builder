@@ -5,6 +5,7 @@ import * as ejs from "ejs"
 import { readFile, writeFile } from "fs/promises"
 import { Lazy } from "lazy-val"
 import * as path from "path"
+<<<<<<< HEAD
 import { MsiOptions } from "../index.js"
 import { getBinFromUrl } from "../binDownload.js"
 import { Target } from "../core.js"
@@ -16,6 +17,18 @@ import { WineVmManager } from "../vm/WineVm.js"
 import { WinPackager } from "../winPackager.js"
 import { withToolsetLock } from "../util/toolsetLock.js"
 import { createStageDir, getWindowsInstallationDirName } from "./targetUtil.js"
+=======
+import { MsiOptions } from "../"
+import { getBinFromUrl } from "../binDownload"
+import { Target } from "../core"
+import { DesktopShortcutCreationPolicy, FinalCommonWindowsInstallerOptions, getEffectiveOptions } from "../options/CommonWindowsInstallerConfiguration"
+import { normalizeExt } from "../platformPackager"
+import { getTemplatePath } from "../util/pathManager"
+import { VmManager } from "../vm/vm"
+import { WineVmManager } from "../vm/WineVm"
+import { WinPackager } from "../winPackager"
+import { createStageDir, getWindowsInstallationDirName } from "./targetUtil.js.js"
+>>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 
 const ELECTRON_BUILDER_UPGRADE_CODE_NS_UUID = UUID.parse("d752fe43-5d44-44d5-9fc9-6dd1bf19d5cc")
 const ROOT_DIR_ID = "APPLICATIONFOLDER"

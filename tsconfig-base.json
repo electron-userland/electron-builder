@@ -1,10 +1,15 @@
 {
   "extends": "@tsconfig/node22/tsconfig.json",
   "compilerOptions": {
+<<<<<<< HEAD
     "module": "ESNext",
     "moduleResolution": "bundler",
 
     "forceConsistentCasingInFileNames": true,
+=======
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+>>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 
     "noUnusedLocals": true,
     "noFallthroughCasesInSwitch": true,

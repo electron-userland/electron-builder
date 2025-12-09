@@ -2,7 +2,11 @@ import { DebugLogger, exec, ExtraSpawnOptions, InvalidConfigurationError, log, s
 import { ExecFileOptions, SpawnOptions } from "child_process"
 import { Lazy } from "lazy-val"
 import * as path from "path"
+<<<<<<< HEAD
 import { ParallelsVm } from "./ParallelsVm.js"
+=======
+import { ParallelsVm } from "./ParallelsVm.js.js"
+>>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 export class VmManager {
   get pathSep(): string {
     return path.sep

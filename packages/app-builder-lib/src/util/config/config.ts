@@ -6,6 +6,7 @@ import { deepAssign, Nullish } from "builder-util-runtime"
 
 import { Lazy } from "lazy-val"
 import * as path from "path"
+<<<<<<< HEAD
 import { Configuration } from "../../configuration.js"
 import { FileSet } from "../../options/PlatformSpecificBuildOptions.js"
 import { reactCra } from "../../presets/rectCra.js"
@@ -14,6 +15,14 @@ import { getConfig as _getConfig, loadParentConfig, orNullIfFileNotExist, ReadCo
 import { validateSchema } from "./schemaValidator.js"
 import _fsExtra from "fs-extra"
 const { readJson } = _fsExtra
+=======
+import { Configuration } from "../../configuration"
+import { FileSet } from "../../options/PlatformSpecificBuildOptions"
+import { reactCra } from "../../presets/rectCra"
+import { PACKAGE_VERSION } from "../../version"
+import { getConfig as _getConfig, loadParentConfig, orNullIfFileNotExist, ReadConfigRequest } from "./load.js.js"
+const validateSchema = require("@develar/schema-utils")
+>>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 
 // https://github.com/electron-userland/electron-builder/issues/1847
 function mergePublish(config: Configuration, configFromOptions: Configuration) {

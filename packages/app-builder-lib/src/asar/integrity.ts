@@ -2,8 +2,13 @@ import { FilterStats, log, statOrNull, walk } from "builder-util"
 import { createHash } from "crypto"
 import { readdir } from "fs/promises"
 import * as path from "path"
+<<<<<<< HEAD
 import { FileMatcher } from "../fileMatcher.js"
 import { readAsarHeader } from "./asar.js"
+=======
+import { FileMatcher } from "../fileMatcher"
+import { readAsarHeader } from "./asar.js.js"
+>>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 
 export interface AsarIntegrityOptions {
   readonly resourcesPath: string

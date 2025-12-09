@@ -2,11 +2,17 @@ import { PM } from "app-builder-lib/internal"
 import { spawn } from "builder-util"
 import { Arch, DIR_TARGET, Platform } from "electron-builder"
 import * as path from "path"
+<<<<<<< HEAD
 import { appTwoThrows, assertPack, linuxDirTarget, modifyPackageJson, verifyAsarFileTree } from "./helpers/packTester"
 import { ELECTRON_VERSION } from "./helpers/testConfig"
 import { copy, mkdir, outputFile, readJson, rm, symlink, writeJson } from "fs-extra"
 import { assertThat } from "./helpers/fileAssert"
 import { dump } from "js-yaml"
+=======
+import { appTwoThrows, assertPack, linuxDirTarget, modifyPackageJson, verifyAsarFileTree } from "./helpers/packTester.js"
+import { ELECTRON_VERSION } from "./helpers/testConfig.js"
+import { execSync } from "child_process"
+>>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 
 describe("node_module collectors", () => {
   test("yarn workspace", ({ expect }) =>

@@ -18,6 +18,7 @@ import _debug from "debug"
 import * as fs from "fs"
 
 import * as path from "path"
+<<<<<<< HEAD
 import { Target } from "../../core.js"
 import { DesktopShortcutCreationPolicy, getEffectiveOptions } from "../../options/CommonWindowsInstallerConfiguration.js"
 import { chooseNotNull, computeSafeArtifactNameIfNeeded, normalizeExt } from "../../platformPackager.js"
@@ -40,6 +41,26 @@ import { AppPackageHelper, nsisTemplatesDir, UninstallerReader } from "./nsisUti
 import { checkMakensisOutput, verifyInstallerSize } from "./nsisValidation.js"
 import _fsExtra from "fs-extra"
 const { readFile, stat, unlink } = _fsExtra
+=======
+import { Target } from "../../core"
+import { DesktopShortcutCreationPolicy, getEffectiveOptions } from "../../options/CommonWindowsInstallerConfiguration"
+import { chooseNotNull, computeSafeArtifactNameIfNeeded, normalizeExt } from "../../platformPackager"
+import { hashFile } from "../../util/hash"
+import { isMacOsCatalina } from "../../util/macosVersion"
+import { time } from "../../util/timer"
+import { execWine } from "../../wine"
+import { WinPackager } from "../../winPackager"
+import { archive, ArchiveOptions } from "../archive"
+import { appendBlockmap, configureDifferentialAwareArchiveOptions, createBlockmap, createNsisWebDifferentialUpdateInfo } from "../differentialUpdateInfoBuilder"
+import { getWindowsInstallationAppPackageName, getWindowsInstallationDirName } from "../targetUtil"
+import { Commands } from "./Commands.js.js"
+import { Defines } from "./Defines.js.js"
+import { addCustomMessageFileInclude, createAddLangsMacro, LangConfigurator } from "./nsisLang.js.js"
+import { computeLicensePage } from "./nsisLicense.js.js"
+import { NsisOptions, PortableOptions } from "./nsisOptions.js.js"
+import { NsisScriptGenerator } from "./nsisScriptGenerator.js.js"
+import { AppPackageHelper, NSIS_PATH, NSIS_RESOURCES_PATH, NsisTargetOptions, nsisTemplatesDir, UninstallerReader } from "./nsisUtil.js.js"
+>>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 
 const debug = _debug("electron-builder:nsis")
 

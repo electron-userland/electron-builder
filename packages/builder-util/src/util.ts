@@ -6,11 +6,16 @@ import _debug from "debug"
 import { dump } from "js-yaml"
 import * as path from "path"
 import { install as installSourceMap } from "source-map-support"
+<<<<<<< HEAD
 import { debug, log } from "./log.js"
 import { exists } from "./fs.js"
 import _fsExtra from "fs-extra"
 const { mkdir } = _fsExtra
 import { isEmptyOrSpaces } from "./stringUtil.js"
+=======
+import { getPath7za } from "./7za.js.js"
+import { debug, log } from "./log.js.js"
+>>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 
 if (process.env.JEST_WORKER_ID == null) {
   installSourceMap()

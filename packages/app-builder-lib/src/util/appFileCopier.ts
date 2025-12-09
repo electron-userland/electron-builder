@@ -4,6 +4,7 @@ import fsExtra from "fs-extra"
 import { mkdir, readlink } from "fs/promises"
 import * as path from "path"
 import asyncPool from "tiny-async-pool"
+<<<<<<< HEAD
 import { isLibOrExe } from "../asar/unpackDetector.js"
 import { Platform } from "../core.js"
 import { excludedExts, FileMatcher } from "../fileMatcher.js"
@@ -14,6 +15,22 @@ import { PlatformPackager } from "../platformPackager.js"
 import { AppFileWalker } from "./AppFileWalker.js"
 import { NodeModuleCopyHelper } from "./NodeModuleCopyHelper.js"
 import { NodeModuleInfo } from "../node-module-collector/types.js"
+=======
+import { isLibOrExe } from "../asar/unpackDetector"
+import { Platform } from "../core"
+import { excludedExts, FileMatcher } from "../fileMatcher"
+import { createElectronCompilerHost, NODE_MODULES_PATTERN } from "../fileTransformer"
+import { Packager } from "../packager"
+import { PlatformPackager } from "../platformPackager"
+import { AppFileWalker } from "./AppFileWalker.js.js"
+import { NodeModuleCopyHelper } from "./NodeModuleCopyHelper.js.js"
+import { NodeModuleInfo } from "./packageDependencies.js.js"
+import { getNodeModules } from "../node-module-collector"
+
+const BOWER_COMPONENTS_PATTERN = `${path.sep}bower_components${path.sep}`
+/** @internal */
+export const ELECTRON_COMPILE_SHIM_FILENAME = "__shim.js"
+>>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 
 export function getDestinationPath(file: string, fileSet: ResolvedFileSet) {
   if (file === fileSet.src) {

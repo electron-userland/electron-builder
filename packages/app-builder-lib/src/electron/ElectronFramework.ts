@@ -1,6 +1,7 @@
 import { asArray, copyDir, DO_NOT_USE_HARD_LINKS, isEmptyOrSpaces, log, MAX_FILE_REQUESTS, statOrNull, unlinkIfExists } from "builder-util"
 import * as path from "path"
 import asyncPool from "tiny-async-pool"
+<<<<<<< HEAD
 import { Configuration } from "../configuration.js"
 import { BeforeCopyExtraFilesOptions, Framework, PrepareApplicationStageDirectoryOptions } from "../Framework.js"
 import { Packager, Platform } from "../index.js"
@@ -16,6 +17,19 @@ import { addWinAsarIntegrity } from "./electronWin.js"
 import { FFMPEGInjector } from "./injectFFMPEG.js"
 import _fsExtra from "fs-extra"
 const { emptyDir, readdir, rename, rm } = _fsExtra
+=======
+import { Configuration } from "../configuration"
+import { BeforeCopyExtraFilesOptions, Framework, PrepareApplicationStageDirectoryOptions } from "../Framework"
+import { Packager, Platform } from "../index"
+import { LinuxPackager } from "../linuxPackager"
+import { MacPackager } from "../macPackager"
+import { getTemplatePath } from "../util/pathManager"
+import { resolveFunction } from "../util/resolve"
+import { createMacApp } from "./electronMac.js.js"
+import { computeElectronVersion, getElectronVersionFromInstalled } from "./electronVersion.js.js"
+import { addWinAsarIntegrity } from "./electronWin.js.js"
+import injectFFMPEG from "./injectFFMPEG.js.js"
+>>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 
 export type ElectronPlatformName = "darwin" | "linux" | "win32" | "mas"
 

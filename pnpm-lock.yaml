@@ -31,7 +31,11 @@ importers:
         version: 9.39.2
       '@stylistic/eslint-plugin':
         specifier: ^2.8.0
+<<<<<<< HEAD
         version: 2.13.0(eslint@9.39.2(jiti@2.4.2))(typescript@5.8.2)
+=======
+        version: 2.13.0(eslint@9.39.1(jiti@2.4.2))(typescript@5.8.2)
+>>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
       '@tsconfig/node22':
         specifier: ^22.0.5
         version: 22.0.5
@@ -4222,9 +4226,12 @@ packages:
   '@tsconfig/node22@22.0.5':
     resolution: {integrity: sha512-hLf2ld+sYN/BtOJjHUWOk568dvjFQkHnLNa6zce25GIH+vxKfvTgm3qpaH6ToF5tu/NN0IH66s+Bb5wElHrLcw==}
 
+<<<<<<< HEAD
   '@tybys/wasm-util@0.10.2':
     resolution: {integrity: sha512-RoBvJ2X0wuKlWFIjrwffGw1IqZHKQqzIchKaadZZfnNpsAYp2mM0h36JtPCjNDAHGgYez/15uMBpfGwchhiMgg==}
 
+=======
+>>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
   '@types/adm-zip@0.5.6':
     resolution: {integrity: sha512-lRlcSLg5Yoo7C2H2AUiAoYlvifWoCx/se7iUNiCBTfEVVYFVn+Tr9ZGed4K73tYgLe9O4PjdJvbxlkdAOx/qiw==}
 
@@ -15090,11 +15097,14 @@ snapshots:
 
   '@tsconfig/node22@22.0.5': {}
 
+<<<<<<< HEAD
   '@tybys/wasm-util@0.10.2':
     dependencies:
       tslib: 2.8.1
     optional: true
 
+=======
+>>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
   '@types/adm-zip@0.5.6':
     dependencies:
       '@types/node': 22.13.17

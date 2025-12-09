@@ -1,9 +1,17 @@
 import { Arch, log } from "builder-util"
+<<<<<<< HEAD
 import { computeDownloadUrl, getPublishConfigs, getPublishConfigsForUpdateInfo } from "../../publish/PublishManager.js"
 import { WinPackager } from "../../winPackager.js"
 import { NsisWebOptions } from "./nsisOptions.js"
 import { NsisTarget } from "./NsisTarget.js"
 import { AppPackageHelper } from "./nsisUtil.js"
+=======
+import { computeDownloadUrl, getPublishConfigs, getPublishConfigsForUpdateInfo } from "../../publish/PublishManager"
+import { WinPackager } from "../../winPackager"
+import { NsisWebOptions } from "./nsisOptions.js.js"
+import { NsisTarget } from "./NsisTarget.js.js"
+import { AppPackageHelper } from "./nsisUtil.js.js"
+>>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 
 /** @private */
 export class WebInstallerTarget extends NsisTarget {

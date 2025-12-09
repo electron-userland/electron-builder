@@ -1,5 +1,6 @@
 {
   "name": "builder-util-runtime",
+<<<<<<< HEAD
   "version": "9.7.0",
   "type": "module",
   "main": "./dist/index.js",
@@ -15,6 +16,11 @@
       "require": "./dist/indexInternal.js"
     }
   },
+=======
+  "version": "9.5.1",
+  "type": "module",
+  "exports": "./out/index.js",
+>>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
   "author": "Vladimir Krivosheev",
   "license": "MIT",
   "repository": {

@@ -1,5 +1,25 @@
 import { asArray, InvalidConfigurationError, log, retry } from "builder-util"
 import { MemoLazy, parseDn } from "builder-util-runtime"
+<<<<<<< HEAD
+=======
+import { rename } from "fs-extra"
+import { Lazy } from "lazy-val"
+import * as os from "os"
+import * as path from "path"
+import { getBin } from "../binDownload"
+import { Target } from "../core"
+import { WindowsConfiguration } from "../options/winOptions"
+import AppXTarget from "../targets/AppxTarget"
+import { executeAppBuilderAsJson } from "../util/appBuilder"
+import { computeToolEnv, ToolInfo } from "../util/bundledTool"
+import { isUseSystemSigncode } from "../util/flags"
+import { resolveFunction } from "../util/resolve"
+import { VmManager } from "../vm/vm"
+import { WinPackager } from "../winPackager"
+import { importCertificate } from "./codesign.js.js"
+import { SignManager } from "./signManager.js.js"
+import { WindowsSignOptions } from "./windowsCodeSign.js.js"
+>>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 
 import { Lazy } from "lazy-val"
 import * as path from "path"

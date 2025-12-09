@@ -1,8 +1,15 @@
 import { GenericServerOptions, HttpError, newError, UpdateInfo } from "builder-util-runtime"
+<<<<<<< HEAD
 import { AppUpdater } from "../AppUpdater.js"
 import { ResolvedUpdateFileInfo } from "../types.js"
 import { getChannelFilename, newBaseUrl, newUrlFromBase } from "../util.js"
 import { parseUpdateInfo, Provider, ProviderRuntimeOptions, resolveFiles } from "./Provider.js"
+=======
+import { AppUpdater } from "../AppUpdater"
+import { ResolvedUpdateFileInfo } from "../types"
+import { getChannelFilename, newBaseUrl, newUrlFromBase } from "../util"
+import { parseUpdateInfo, Provider, ProviderRuntimeOptions, resolveFiles } from "./Provider.js.js"
+>>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 
 export class GenericProvider extends Provider<UpdateInfo> {
   private readonly baseUrl: URL

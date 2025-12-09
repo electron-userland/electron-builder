@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 import { isValidKey } from "builder-util-runtime"
+=======
+import { isValidKey } from "./mapper.js.js"
+>>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 
 function isObject(x: any) {
   if (Array.isArray(x)) {

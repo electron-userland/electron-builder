@@ -3,6 +3,7 @@ import { deepAssign, Nullish } from "builder-util-runtime"
 
 import { mkdir, readFile } from "fs/promises"
 import * as path from "path"
+<<<<<<< HEAD
 import { smarten } from "../appInfo.js"
 import { Target } from "../core.js"
 import * as errorMessages from "../errorMessages.js"
@@ -19,6 +20,22 @@ import { installPrefix, LinuxTargetHelper } from "./LinuxTargetHelper.js"
 import { getFpmPath, getLinuxToolsPath } from "../toolsets/linux.js"
 import _fsExtra from "fs-extra"
 const { copyFile, outputFile, stat } = _fsExtra
+=======
+import { smarten } from "../appInfo"
+import { Target } from "../core"
+import * as errorMessages from "../errorMessages"
+import { LinuxPackager } from "../linuxPackager"
+import { DebOptions, LinuxTargetSpecificOptions } from "../options/linuxOptions"
+import { ArtifactCreated } from "../packagerApi"
+import { getAppUpdatePublishConfiguration } from "../publish/PublishManager"
+import { objectToArgs } from "../util/appBuilder"
+import { computeEnv } from "../util/bundledTool"
+import { hashFile } from "../util/hash"
+import { isMacOsSierra } from "../util/macosVersion"
+import { getTemplatePath } from "../util/pathManager"
+import { installPrefix, LinuxTargetHelper } from "./LinuxTargetHelper.js.js"
+import { getFpmPath, getLinuxToolsPath } from "./tools.js.js"
+>>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 
 interface FpmOptions {
   name: string

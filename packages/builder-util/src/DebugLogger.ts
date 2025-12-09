@@ -1,7 +1,13 @@
+<<<<<<< HEAD
 import { serializeToYaml } from "./util.js"
 import { mapToObject } from "builder-util-runtime"
 import _fsExtra from "fs-extra"
 const { outputFile } = _fsExtra
+=======
+import { outputFile } from "fs-extra"
+import { serializeToYaml } from "./util.js.js"
+import { mapToObject } from "./mapper.js.js"
+>>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 
 export class DebugLogger {
   readonly data = new Map<string, any>()

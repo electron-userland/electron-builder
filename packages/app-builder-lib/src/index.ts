@@ -1,10 +1,17 @@
 import { InvalidConfigurationError, executeFinally, log } from "builder-util"
 import { asArray } from "builder-util-runtime"
 import { PublishOptions } from "electron-publish"
+<<<<<<< HEAD
 import { Packager } from "./packager.js"
 import { PackagerOptions } from "./packagerApi.js"
 import { PublishManager } from "./publish/PublishManager.js"
 import { resolveFunction } from "./util/resolve.js"
+=======
+import { Packager } from "./packager.js.js"
+import { PackagerOptions } from "./packagerApi.js.js"
+import { PublishManager } from "./publish/PublishManager.js.js"
+import { resolveFunction } from "./util/resolve.js.js"
+>>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 
 export { Arch, archFromString, getArchSuffix } from "builder-util"
 export { AppInfo } from "./appInfo.js"

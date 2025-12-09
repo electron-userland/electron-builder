@@ -6,7 +6,11 @@ import fsExtra from "fs-extra"
 import * as path from "path"
 import { assertThat } from "./fileAssert.js"
 import { TestAppAdapter } from "./TestAppAdapter.js"
+<<<<<<< HEAD
 import { ExpectStatic, vi } from "vitest"
+=======
+import { ExpectStatic } from "vitest"
+>>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 
 const tmpDir = new TmpDir("updater-test-util")
 

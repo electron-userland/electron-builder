@@ -1,4 +1,5 @@
 import { PlatformPackager } from "app-builder-lib"
+<<<<<<< HEAD
 import { getLicenseAssets } from "app-builder-lib/internal"
 
 export interface LicenseButtonsFile {
@@ -7,6 +8,15 @@ export interface LicenseButtonsFile {
   langWithRegion: string
   langName: string
 }
+=======
+import { getLicenseAssets } from "app-builder-lib/out/util/license"
+import { log } from "builder-util"
+import { readFile } from "fs-extra"
+import * as iconv from "iconv-lite"
+import { load } from "js-yaml"
+import { serializeString } from "./dmgUtil.js.js"
+import { getDefaultButtons } from "./licenseDefaultButtons.js.js"
+>>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 
 export async function getLicenseButtonsFile(packager: PlatformPackager<any>): Promise<Array<LicenseButtonsFile>> {
   return getLicenseAssets(

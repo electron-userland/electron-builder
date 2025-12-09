@@ -53,6 +53,7 @@ const shouldRetry = (args: string[]) => (error: any) => {
 
 export async function hdiUtil(args: string[]): Promise<string | null> {
   return await retry(() => exec("hdiutil", args), {
+<<<<<<< HEAD
     retries: 5,
     interval: 5000,
     backoff: 2000,
@@ -64,6 +65,8 @@ export async function hdiUtil(args: string[]): Promise<string | null> {
 // DMGs that have an embedded SLA so the prompt is auto-accepted without blocking.
 export async function hdiUtilWithStdin(args: string[], stdin: string): Promise<string | null> {
   return retry(() => spawnAndWriteWithOutput("hdiutil", args, stdin).then(({ stdout }) => stdout || null), {
+=======
+>>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
     retries: 5,
     interval: 5000,
     backoff: 2000,

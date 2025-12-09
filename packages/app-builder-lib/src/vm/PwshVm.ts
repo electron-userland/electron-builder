@@ -1,6 +1,10 @@
 import { log } from "builder-util"
 import { Lazy } from "lazy-val"
+<<<<<<< HEAD
 import { isPwshAvailable, VmManager } from "./vm.js"
+=======
+import { isPwshAvailable, VmManager } from "./vm.js.js"
+>>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 
 export class PwshVmManager extends VmManager {
   constructor() {

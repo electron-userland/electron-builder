@@ -8,8 +8,13 @@ import { Lazy } from "lazy-val"
 import { homedir, tmpdir } from "os"
 import * as path from "path"
 import { getTempName } from "temp-file"
+<<<<<<< HEAD
 import { isAutoDiscoveryCodeSignIdentity } from "../util/flags.js"
 import { importCertificate } from "./codesign.js"
+=======
+import { isAutoDiscoveryCodeSignIdentity } from "../util/flags"
+import { importCertificate } from "./codesign.js.js"
+>>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 
 export const appleCertificatePrefixes = ["Developer ID Application:", "Developer ID Installer:", "3rd Party Mac Developer Application:", "3rd Party Mac Developer Installer:"]
 

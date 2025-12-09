@@ -1,3 +1,10 @@
+<<<<<<< HEAD
+=======
+import * as fs from "fs"
+import * as path from "path"
+import { ElectronPlatformName } from "./ElectronFramework.js.js"
+
+>>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 import { log } from "builder-util"
 import fs from "fs-extra"
 import * as path from "path"

@@ -1,4 +1,5 @@
 import { Arch } from "builder-util"
+<<<<<<< HEAD
 import { BeforeBuildContext, Target } from "./core.js"
 import { ElectronBrandingOptions } from "./electron/ElectronFramework.js"
 import { PrepareApplicationStageDirectoryOptions } from "./Framework.js"
@@ -17,6 +18,25 @@ import { ArtifactBuildStarted, ArtifactCreated } from "./packagerApi.js"
 import { PlatformPackager } from "./platformPackager.js"
 import { NsisOptions, NsisWebOptions, PortableOptions } from "./targets/nsis/nsisOptions.js"
 import { ElectronDownloadOptions, ElectronGetOptions } from "./util/electronGet.js"
+=======
+import { BeforeBuildContext, Target } from "./core.js.js"
+import { ElectronBrandingOptions, ElectronDownloadOptions } from "./electron/ElectronFramework.js.js"
+import { PrepareApplicationStageDirectoryOptions } from "./Framework.js.js"
+import { AppXOptions } from "./options/AppXOptions.js.js"
+import { AppImageOptions, DebOptions, FlatpakOptions, LinuxConfiguration, LinuxTargetSpecificOptions } from "./options/linuxOptions.js.js"
+import { DmgOptions, MacConfiguration, MasConfiguration } from "./options/macOptions.js.js"
+import { MsiOptions } from "./options/MsiOptions.js.js"
+import { MsiWrappedOptions } from "./options/MsiWrappedOptions.js.js"
+import { PkgOptions } from "./options/pkgOptions.js.js"
+import { PlatformSpecificBuildOptions } from "./options/PlatformSpecificBuildOptions.js.js"
+import { SnapOptions } from "./options/SnapOptions.js.js"
+import { SquirrelWindowsOptions } from "./options/SquirrelWindowsOptions.js.js"
+import { WindowsConfiguration } from "./options/winOptions.js.js"
+import { BuildResult } from "./packager.js.js"
+import { ArtifactBuildStarted, ArtifactCreated } from "./packagerApi.js.js"
+import { PlatformPackager } from "./platformPackager.js.js"
+import { NsisOptions, NsisWebOptions, PortableOptions } from "./targets/nsis/nsisOptions.js.js"
+>>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 
 // duplicate appId here because it is important
 /**

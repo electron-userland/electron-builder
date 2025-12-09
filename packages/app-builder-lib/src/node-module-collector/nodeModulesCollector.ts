@@ -4,10 +4,19 @@ import { createWriteStream } from "node:fs"
 import _fsExtra from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
+<<<<<<< HEAD
 import { hoist, type HoisterResult, type HoisterTree } from "./hoist.js"
 import { LogMessageByKey, ModuleManager } from "./moduleManager.js"
 import { getPackageManagerCommand, PM } from "./packageManager.js"
 import type { Dependency, DependencyGraph, NodeModuleInfo, PackageJson } from "./types.js"
+=======
+import * as semver from "semver"
+import { hoist, type HoisterResult, type HoisterTree } from "./hoist.js.js"
+import { ModuleCache } from "./moduleCache.js.js"
+import { getPackageManagerCommand, PM } from "./packageManager.js.js"
+import type { Dependency, DependencyGraph, NodeModuleInfo } from "./types.js.js"
+type Result = { packageDir: string; version: string } | null
+>>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 
 export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDepType, OptionalDepType>, OptionalDepType> {
   private readonly nodeModules: NodeModuleInfo[] = []

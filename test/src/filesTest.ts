@@ -3,7 +3,11 @@ import { DIR_TARGET, Platform } from "electron-builder"
 import fsExtra from "fs-extra"
 import * as fs from "fs/promises"
 import * as path from "path"
+<<<<<<< HEAD
 import statMode from "stat-mode"
+=======
+import { Mode, RWX } from "stat-mode"
+>>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 import { assertThat } from "./helpers/fileAssert.js"
 import { app, appThrows, assertPack, checkDirContents, linuxDirTarget, modifyPackageJson } from "./helpers/packTester.js"
 import { ExpectStatic } from "vitest"

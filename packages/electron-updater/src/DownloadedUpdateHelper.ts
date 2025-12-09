@@ -1,10 +1,18 @@
 import { UpdateInfo } from "builder-util-runtime"
 import { createHash } from "crypto"
 import { createReadStream } from "fs"
+<<<<<<< HEAD
 import isEqual from "lodash.isequal"
 import { ResolvedUpdateFileInfo } from "./types.js"
 import { Logger } from "./types.js"
 import fsExtra from "fs-extra"
+=======
+// @ts-ignore
+import * as isEqual from "lodash.isequal"
+import { ResolvedUpdateFileInfo } from "./types.js.js"
+import { Logger } from "./types.js.js"
+import { pathExists, readJson, emptyDir, outputJson, unlink } from "fs-extra"
+>>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 import * as path from "path"
 
 /** @private **/

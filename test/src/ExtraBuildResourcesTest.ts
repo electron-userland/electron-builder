@@ -2,6 +2,7 @@ import { Arch, build, PackagerOptions, Platform } from "electron-builder"
 import * as fs from "fs"
 import { readdir } from "fs/promises"
 import * as path from "path"
+<<<<<<< HEAD
 import { TmpDir } from "temp-file"
 import * as unzipper from "unzipper"
 import { ExpectStatic } from "vitest"
@@ -10,6 +11,16 @@ import { app, assertPack, linuxDirTarget, modifyPackageJson } from "./helpers/pa
 import { ELECTRON_VERSION } from "./helpers/testConfig"
 import { expectUpdateMetadata } from "./helpers/winHelper"
 import { downloadArtifact } from "@electron/get"
+=======
+import { assertThat } from "./helpers/fileAssert.js"
+import { app, assertPack, linuxDirTarget, modifyPackageJson } from "./helpers/packTester.js"
+import { ELECTRON_VERSION, getElectronCacheDir } from "./helpers/testConfig.js"
+import { expectUpdateMetadata } from "./helpers/winHelper.js"
+import { ExpectStatic } from "vitest"
+import * as unzipper from "unzipper"
+import { TmpDir } from "temp-file"
+import { readdir } from "fs/promises"
+>>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 
 function createBuildResourcesTest(expect: ExpectStatic, packagerOptions: PackagerOptions) {
   return app(

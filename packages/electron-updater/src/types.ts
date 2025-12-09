@@ -1,7 +1,11 @@
 import { CancellationToken, PackageFileInfo, ProgressInfo, UpdateFileInfo, UpdateInfo } from "builder-util-runtime"
 import { EventEmitter } from "events"
 import { URL } from "url"
+<<<<<<< HEAD
 import { LoginCallback } from "./electronHttpExecutor.js"
+=======
+import { LoginCallback } from "./electronHttpExecutor.js.js"
+>>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 
 export { CancellationToken, PackageFileInfo, ProgressInfo, UpdateFileInfo, UpdateInfo }
 

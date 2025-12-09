@@ -1,7 +1,15 @@
+<<<<<<< HEAD
 import { LogMessageByKey } from "./moduleManager.js"
 import { NodeModulesCollector } from "./nodeModulesCollector.js"
 import { PM } from "./packageManager.js"
 import { NpmDependency } from "./types.js"
+=======
+import { log } from "builder-util"
+import * as path from "path"
+import { NodeModulesCollector } from "./nodeModulesCollector.js.js"
+import { PM } from "./packageManager.js.js"
+import { NpmDependency, PackageJson } from "./types.js.js"
+>>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 
 export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency, string> {
   public readonly installOptions = {

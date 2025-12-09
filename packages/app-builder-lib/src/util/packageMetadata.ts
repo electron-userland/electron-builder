@@ -3,8 +3,13 @@ import { Nullish } from "builder-util-runtime"
 import fsExtra from "fs-extra"
 import * as path from "path"
 import * as semver from "semver"
+<<<<<<< HEAD
 import { Metadata } from "../options/metadata.js"
 import { normalizePackageData } from "./normalizePackageData.js"
+=======
+import { Metadata } from "../options/metadata"
+import { normalizePackageData } from "./normalizePackageData.js.js"
+>>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 
 /** @internal */
 export async function readPackageJson(file: string): Promise<any> {

@@ -2,9 +2,15 @@ import { isEmptyOrSpaces, log } from "builder-util"
 import { sanitizeFileName } from "builder-util/internal"
 import { Nullish } from "builder-util-runtime"
 import { prerelease } from "semver"
+<<<<<<< HEAD
 import { PlatformSpecificBuildOptions } from "./options/PlatformSpecificBuildOptions.js"
 import { Packager } from "./packager.js"
 import { expandMacro } from "./util/macroExpander.js"
+=======
+import { PlatformSpecificBuildOptions } from "./options/PlatformSpecificBuildOptions.js.js"
+import { Packager } from "./packager.js.js"
+import { expandMacro } from "./util/macroExpander.js.js"
+>>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 
 // fpm bug - rpm build --description is not escaped, well... decided to replace quite to smart quote
 // http://leancrew.com/all-this/2010/11/smart-quotes-in-javascript/

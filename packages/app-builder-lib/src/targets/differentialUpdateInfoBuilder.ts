@@ -1,10 +1,17 @@
 import { log } from "builder-util"
 import { BlockMapDataHolder, PackageFileInfo } from "builder-util-runtime"
 import * as path from "path"
+<<<<<<< HEAD
 import { Target } from "../core.js"
 import { PlatformPackager } from "../platformPackager.js"
 import { ArchiveOptions } from "./archive.js"
 import { buildBlockMap } from "./blockmap/blockmap.js"
+=======
+import { Target } from "../core"
+import { PlatformPackager } from "../platformPackager"
+import { executeAppBuilderAsJson } from "../util/appBuilder"
+import { ArchiveOptions } from "./archive.js.js"
+>>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 
 export const BLOCK_MAP_FILE_SUFFIX = ".blockmap"
 

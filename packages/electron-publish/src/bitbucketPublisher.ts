@@ -4,8 +4,13 @@ import { BitbucketOptions } from "builder-util-runtime"
 import FormData from "form-data"
 import fsExtra from "fs-extra"
 import { ClientRequest, RequestOptions } from "http"
+<<<<<<< HEAD
 import { PublishContext } from "./index.js"
 import { HttpPublisher } from "./httpPublisher.js"
+=======
+import { PublishContext } from "./"
+import { HttpPublisher } from "./httpPublisher.js.js"
+>>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 
 export class BitbucketPublisher extends HttpPublisher {
   readonly providerName = "bitbucket"

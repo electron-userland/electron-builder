@@ -1,8 +1,12 @@
 import { newError } from "builder-util-runtime"
 import { createReadStream } from "fs"
 import { Writable } from "stream"
+<<<<<<< HEAD
 import { Operation, OperationKind } from "./downloadPlanBuilder.js"
 import { ProgressInfo } from "./ProgressDifferentialDownloadCallbackTransform.js"
+=======
+import { Operation, OperationKind } from "./downloadPlanBuilder.js.js"
+>>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 
 const DOUBLE_CRLF = Buffer.from("\r\n\r\n")
 

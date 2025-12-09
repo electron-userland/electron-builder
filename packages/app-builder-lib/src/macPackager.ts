@@ -23,6 +23,7 @@ import * as fs from "fs/promises"
 import { mkdir, readdir } from "fs/promises"
 import { Lazy } from "lazy-val"
 import * as path from "path"
+<<<<<<< HEAD
 import { AppInfo } from "./appInfo.js"
 import { CodeSigningInfo, createKeychain, CreateKeychainOptions, isSignAllowed, removeKeychain, sign } from "./codeSign/macCodeSign.js"
 import { DIR_TARGET, Platform, Target } from "./core.js"
@@ -38,6 +39,23 @@ import { dynamicImport } from "./util/dynamicImport.js"
 import { isMacOsHighSierra } from "./util/macosVersion.js"
 import { expandMacro as doExpandMacro } from "./util/macroExpander.js"
 import { resolveFunction } from "./util/resolve.js"
+=======
+import { AppInfo } from "./appInfo.js.js"
+import { CertType, CodeSigningInfo, createKeychain, CreateKeychainOptions, findIdentity, isSignAllowed, removeKeychain, reportError, sign } from "./codeSign/macCodeSign.js.js"
+import { DIR_TARGET, Platform, Target } from "./core.js.js"
+import { AfterPackContext, ElectronPlatformName } from "./index.js.js"
+import { MacConfiguration, MasConfiguration } from "./options/macOptions.js.js"
+import { Packager } from "./packager.js.js"
+import { chooseNotNull, DoPackOptions, PlatformPackager } from "./platformPackager.js.js"
+import { ArchiveTarget } from "./targets/ArchiveTarget.js.js"
+import { PkgTarget, prepareProductBuildArgs } from "./targets/pkg.js.js"
+import { createCommonTarget, NoOpTarget } from "./targets/targetFactory.js.js"
+import { isMacOsHighSierra } from "./util/macosVersion.js.js"
+import { getTemplatePath } from "./util/pathManager.js.js"
+import { resolveFunction } from "./util/resolve.js.js"
+import { expandMacro as doExpandMacro } from "./util/macroExpander.js.js"
+import { makeUniversalApp } from "@electron/universal"
+>>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 
 export type CustomMacSignOptions = SignOptions
 export type CustomMacSign = (configuration: CustomMacSignOptions, packager: MacPackager) => Promise<void>

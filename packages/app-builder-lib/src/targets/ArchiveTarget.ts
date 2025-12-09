@@ -1,10 +1,18 @@
 import { Arch, defaultArchFromString } from "builder-util"
 import * as path from "path"
+<<<<<<< HEAD
 import { Platform, Target, TargetSpecificOptions } from "../core.js"
 import { copyFiles, getFileMatchers } from "../fileMatcher.js"
 import { PlatformPackager } from "../platformPackager.js"
 import { archive, tar } from "./archive.js"
 import { appendBlockmap, createBlockmap } from "./differentialUpdateInfoBuilder.js"
+=======
+import { Platform, Target, TargetSpecificOptions } from "../core"
+import { copyFiles, getFileMatchers } from "../fileMatcher"
+import { PlatformPackager } from "../platformPackager"
+import { archive, tar } from "./archive.js.js"
+import { appendBlockmap, createBlockmap } from "./differentialUpdateInfoBuilder.js.js"
+>>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 
 export class ArchiveTarget extends Target {
   readonly options: TargetSpecificOptions

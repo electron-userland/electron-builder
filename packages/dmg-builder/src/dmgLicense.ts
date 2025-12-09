@@ -1,6 +1,15 @@
 import { PlatformPackager } from "app-builder-lib"
+<<<<<<< HEAD
 import { getLicenseFiles } from "app-builder-lib/internal"
 import { InvalidConfigurationError } from "builder-util"
+=======
+import { getLicenseFiles } from "app-builder-lib/out/util/license"
+import { log } from "builder-util"
+import { dmgLicenseFromJSON } from "dmg-license"
+import { readFile, readJson } from "fs-extra"
+import { load } from "js-yaml"
+import { getLicenseButtonsFile } from "./licenseButtons.js.js"
+>>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 
 import { CORE_SCHEMA, load } from "js-yaml"
 import { getLicenseButtonsFile } from "./licenseButtons.js"
