@@ -4,8 +4,8 @@ import { AppUpdater, MacUpdater, NsisUpdater } from "electron-updater"
 import { NoOpLogger, TestOnlyUpdaterOptions } from "electron-updater/out/AppUpdater"
 import { outputFile, writeFile } from "fs-extra"
 import * as path from "path"
-import { assertThat } from "./fileAssert"
-import { TestAppAdapter } from "./TestAppAdapter"
+import { assertThat } from "./fileAssert.js"
+import { TestAppAdapter } from "./TestAppAdapter.js"
 import { ExpectStatic } from "vitest"
 
 const tmpDir = new TmpDir("updater-test-util")

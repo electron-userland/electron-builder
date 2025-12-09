@@ -4,7 +4,7 @@ import { URL } from "url"
 import { AppUpdater } from "../AppUpdater"
 import { ResolvedUpdateFileInfo } from "../types"
 import { getChannelFilename, newBaseUrl, newUrlFromBase } from "../util"
-import { parseUpdateInfo, Provider, ProviderRuntimeOptions, resolveFiles } from "./Provider"
+import { parseUpdateInfo, Provider, ProviderRuntimeOptions, resolveFiles } from "./Provider.js.js"
 
 const hrefRegExp = /\/tag\/([^/]+)$/
 

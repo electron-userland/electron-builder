@@ -1,7 +1,7 @@
 import { InvalidConfigurationError, isEmptyOrSpaces } from "builder-util"
 import { SpacesOptions } from "builder-util-runtime"
 import { PublishContext } from "../"
-import { BaseS3Publisher } from "./baseS3Publisher"
+import { BaseS3Publisher } from "./baseS3Publisher.js.js"
 
 export class SpacesPublisher extends BaseS3Publisher {
   readonly providerName = "spaces"

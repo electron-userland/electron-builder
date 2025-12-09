@@ -1,9 +1,9 @@
 import { DmgOptions, MacPackager, PlatformPackager } from "app-builder-lib"
 import { exec, executeFinally, exists, isEmptyOrSpaces, TmpDir } from "builder-util"
 import * as path from "path"
-import { hdiUtil, hdiutilTransientExitCodes } from "./hdiuil"
+import { hdiUtil, hdiutilTransientExitCodes } from "./hdiuil.js.js"
 import { writeFile } from "fs-extra"
-import { DmgBuildConfig } from "./dmg"
+import { DmgBuildConfig } from "./dmg.js.js"
 
 export { DmgTarget } from "./dmg"
 

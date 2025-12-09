@@ -10,7 +10,7 @@ import { homedir, tmpdir } from "os"
 import * as path from "path"
 import { getTempName } from "temp-file"
 import { isAutoDiscoveryCodeSignIdentity } from "../util/flags"
-import { importCertificate } from "./codesign"
+import { importCertificate } from "./codesign.js.js"
 
 export const appleCertificatePrefixes = ["Developer ID Application:", "Developer ID Installer:", "3rd Party Mac Developer Application:", "3rd Party Mac Developer Installer:"]
 

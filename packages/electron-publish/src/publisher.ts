@@ -3,7 +3,7 @@ import { ProgressCallbackTransform, PublishProvider } from "builder-util-runtime
 import * as chalk from "chalk"
 import { createReadStream, Stats } from "fs-extra"
 import { PublishContext, UploadTask } from "."
-import { ProgressBar } from "./progress"
+import { ProgressBar } from "./progress.js.js"
 
 const progressBarOptions = {
   incomplete: " ",

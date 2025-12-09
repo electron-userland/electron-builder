@@ -1,5 +1,5 @@
 import { TargetSpecificOptions } from "../core"
-import { CommonWindowsInstallerConfiguration } from "./CommonWindowsInstallerConfiguration"
+import { CommonWindowsInstallerConfiguration } from "./CommonWindowsInstallerConfiguration.js.js"
 
 export interface MsiWrappedOptions extends CommonWindowsInstallerConfiguration, TargetSpecificOptions {
   /**

@@ -1,10 +1,10 @@
 import { AllPublishOptions } from "builder-util-runtime"
-import { AppAdapter } from "./AppAdapter"
-import { DownloadUpdateOptions } from "./AppUpdater"
-import { InstallOptions } from "./BaseUpdater"
-import { DOWNLOAD_PROGRESS, Logger } from "./types"
-import { findFile } from "./providers/Provider"
-import { LinuxUpdater } from "./LinuxUpdater"
+import { AppAdapter } from "./AppAdapter.js.js"
+import { DownloadUpdateOptions } from "./AppUpdater.js.js"
+import { InstallOptions } from "./BaseUpdater.js.js"
+import { DOWNLOAD_PROGRESS, Logger } from "./types.js.js"
+import { findFile } from "./providers/Provider.js.js"
+import { LinuxUpdater } from "./LinuxUpdater.js.js"
 
 export class RpmUpdater extends LinuxUpdater {
   constructor(options?: AllPublishOptions | null, app?: AppAdapter) {

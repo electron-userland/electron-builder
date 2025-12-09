@@ -5,9 +5,9 @@ import { outputFile } from "fs-extra"
 import * as fs from "fs/promises"
 import * as path from "path"
 import { ExpectStatic } from "vitest"
-import { assertThat } from "./helpers/fileAssert"
-import { app, appThrows, assertPack, linuxDirTarget, modifyPackageJson, PackedContext, removeUnstableProperties, verifyAsarFileTree } from "./helpers/packTester"
-import { verifySmartUnpack } from "./helpers/verifySmartUnpack"
+import { assertThat } from "./helpers/fileAssert.js"
+import { app, appThrows, assertPack, linuxDirTarget, modifyPackageJson, PackedContext, removeUnstableProperties, verifyAsarFileTree } from "./helpers/packTester.js"
+import { verifySmartUnpack } from "./helpers/verifySmartUnpack.js"
 
 async function createFiles(appDir: string) {
   await Promise.all([

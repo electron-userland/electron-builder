@@ -5,7 +5,7 @@ import { MsiWrappedOptions } from "../"
 import { TargetConfiguration } from "../core"
 import { FinalCommonWindowsInstallerOptions } from "../options/CommonWindowsInstallerConfiguration"
 import { WinPackager } from "../winPackager"
-import MsiTarget from "./MsiTarget"
+import MsiTarget from "./MsiTarget.js.js"
 
 const ELECTRON_MSI_WRAPPED_NS_UUID = UUID.parse("467f7bb2-a83c-442f-b776-394d316e8e53")
 

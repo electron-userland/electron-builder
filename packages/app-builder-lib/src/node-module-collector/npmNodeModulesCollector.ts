@@ -1,8 +1,8 @@
 import { log } from "builder-util"
 import * as path from "path"
-import { NodeModulesCollector } from "./nodeModulesCollector"
-import { PM } from "./packageManager"
-import { NpmDependency, PackageJson } from "./types"
+import { NodeModulesCollector } from "./nodeModulesCollector.js.js"
+import { PM } from "./packageManager.js.js"
+import { NpmDependency, PackageJson } from "./types.js.js"
 
 export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency, string> {
   public readonly installOptions = {

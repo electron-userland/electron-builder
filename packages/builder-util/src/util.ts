@@ -8,8 +8,8 @@ import _debug from "debug"
 import { dump } from "js-yaml"
 import * as path from "path"
 import { install as installSourceMap } from "source-map-support"
-import { getPath7za } from "./7za"
-import { debug, log } from "./log"
+import { getPath7za } from "./7za.js.js"
+import { debug, log } from "./log.js.js"
 
 if (process.env.JEST_WORKER_ID == null) {
   installSourceMap()

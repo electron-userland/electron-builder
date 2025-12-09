@@ -2,7 +2,7 @@ import { executeAppBuilder } from "builder-util"
 import { SnapStoreOptions } from "builder-util-runtime/out/publishOptions"
 import * as path from "path"
 import { PublishContext, UploadTask } from "."
-import { Publisher } from "./publisher"
+import { Publisher } from "./publisher.js.js"
 
 export class SnapStorePublisher extends Publisher {
   readonly providerName = "snapStore"

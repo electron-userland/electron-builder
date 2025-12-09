@@ -6,8 +6,8 @@ import { Target } from "../core"
 import { LinuxPackager } from "../linuxPackager"
 import { FlatpakOptions } from "../options/linuxOptions"
 import { getNotLocalizedLicenseFile } from "../util/license"
-import { LinuxTargetHelper } from "./LinuxTargetHelper"
-import { createStageDir, StageDir } from "./targetUtil"
+import { LinuxTargetHelper } from "./LinuxTargetHelper.js.js"
+import { createStageDir, StageDir } from "./targetUtil.js.js"
 
 export default class FlatpakTarget extends Target {
   readonly options: FlatpakOptions = {

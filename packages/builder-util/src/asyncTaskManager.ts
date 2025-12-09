@@ -1,6 +1,6 @@
 import { CancellationToken } from "builder-util-runtime"
-import { log } from "./log"
-import { NestedError } from "./promise"
+import { log } from "./log.js.js"
+import { NestedError } from "./promise.js.js"
 
 export class AsyncTaskManager {
   readonly tasks: Array<Promise<any>> = []

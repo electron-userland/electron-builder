@@ -6,9 +6,9 @@ import { Arch, exec, getArchSuffix, InvalidConfigurationError, isEmptyOrSpaces }
 import { sanitizeFileName } from "builder-util/out/filename"
 import { release as getOsRelease } from "os"
 import * as path from "path"
-import { addLicenseToDmg } from "./dmgLicense"
-import { computeBackground, customizeDmg } from "./dmgUtil"
-import { hdiUtil } from "./hdiuil"
+import { addLicenseToDmg } from "./dmgLicense.js.js"
+import { computeBackground, customizeDmg } from "./dmgUtil.js.js"
+import { hdiUtil } from "./hdiuil.js.js"
 
 export interface DmgBuildConfig {
   title: string

@@ -3,9 +3,9 @@ import { PM } from "app-builder-lib/src/node-module-collector"
 import { execSync } from "child_process"
 import { copyFile, outputFile, rm, writeFile } from "fs-extra"
 import * as path from "path"
-import { assertThat } from "./helpers/fileAssert"
-import { app, assertPack, getFixtureDir, getPackageManagerWithVersion, linuxDirTarget, modifyPackageJson, verifyAsarFileTree } from "./helpers/packTester"
-import { ELECTRON_VERSION } from "./helpers/testConfig"
+import { assertThat } from "./helpers/fileAssert.js"
+import { app, assertPack, getFixtureDir, getPackageManagerWithVersion, linuxDirTarget, modifyPackageJson, verifyAsarFileTree } from "./helpers/packTester.js"
+import { ELECTRON_VERSION } from "./helpers/testConfig.js"
 
 const yarnVersion = getPackageManagerWithVersion(PM.YARN).prepareEntry
 const yarnBerryVersion = getPackageManagerWithVersion(PM.YARN_BERRY).prepareEntry

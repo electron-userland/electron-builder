@@ -1,7 +1,7 @@
 import { CancellationToken, GitlabOptions } from "builder-util-runtime"
 import { GitlabPublisher, PublishContext } from "electron-publish"
 import { beforeEach, describe, test, vi } from "vitest"
-import { GitlabTestFixtures } from "./GitlabTestFixtures"
+import { GitlabTestFixtures } from "./GitlabTestFixtures.js"
 
 // Mock the HTTP executor to avoid real network calls
 vi.mock("builder-util", async () => {

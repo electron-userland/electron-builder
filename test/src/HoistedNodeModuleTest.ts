@@ -3,8 +3,8 @@ import { spawn } from "builder-util/out/util"
 import { Arch, DIR_TARGET, Platform } from "electron-builder"
 import { copySync, mkdirSync, outputFile, readJsonSync, rmSync, symlink, writeJsonSync } from "fs-extra"
 import * as path from "path"
-import { appTwoThrows, assertPack, linuxDirTarget, modifyPackageJson, verifyAsarFileTree } from "./helpers/packTester"
-import { ELECTRON_VERSION } from "./helpers/testConfig"
+import { appTwoThrows, assertPack, linuxDirTarget, modifyPackageJson, verifyAsarFileTree } from "./helpers/packTester.js"
+import { ELECTRON_VERSION } from "./helpers/testConfig.js"
 import { execSync } from "child_process"
 
 test("yarn workspace", ({ expect }) =>

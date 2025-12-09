@@ -1,6 +1,6 @@
 import { Arch } from "builder-util"
 import { CancellationToken } from "builder-util-runtime"
-import { MultiProgress } from "./multiProgress"
+import { MultiProgress } from "./multiProgress.js.js"
 
 export { BitbucketPublisher } from "./bitbucketPublisher"
 export { GitHubPublisher } from "./gitHubPublisher"

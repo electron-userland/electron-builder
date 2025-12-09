@@ -15,8 +15,8 @@ import { computeEnv } from "../util/bundledTool"
 import { hashFile } from "../util/hash"
 import { isMacOsSierra } from "../util/macosVersion"
 import { getTemplatePath } from "../util/pathManager"
-import { installPrefix, LinuxTargetHelper } from "./LinuxTargetHelper"
-import { getFpmPath, getLinuxToolsPath } from "./tools"
+import { installPrefix, LinuxTargetHelper } from "./LinuxTargetHelper.js.js"
+import { getFpmPath, getLinuxToolsPath } from "./tools.js.js"
 
 interface FpmOptions {
   name: string

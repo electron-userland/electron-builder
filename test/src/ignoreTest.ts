@@ -1,8 +1,8 @@
 import { DIR_TARGET, Platform, archFromString } from "electron-builder"
 import { outputFile } from "fs-extra"
 import * as path from "path"
-import { assertThat } from "./helpers/fileAssert"
-import { app, checkDirContents, linuxDirTarget, modifyPackageJson } from "./helpers/packTester"
+import { assertThat } from "./helpers/fileAssert.js"
+import { app, checkDirContents, linuxDirTarget, modifyPackageJson } from "./helpers/packTester.js"
 import { PM } from "app-builder-lib/out/node-module-collector/packageManager"
 
 const currentProcessTarget = Platform.LINUX.createTarget(DIR_TARGET, archFromString(process.arch))

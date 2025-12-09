@@ -1,7 +1,7 @@
 import { log } from "builder-util"
-import { NpmNodeModulesCollector } from "./npmNodeModulesCollector"
-import { PM } from "./packageManager"
-import { NpmDependency } from "./types"
+import { NpmNodeModulesCollector } from "./npmNodeModulesCollector.js.js"
+import { PM } from "./packageManager.js.js"
+import { NpmDependency } from "./types.js.js"
 
 export class BunNodeModulesCollector extends NpmNodeModulesCollector {
   public readonly installOptions = { manager: PM.BUN, lockfile: "bun.lock" }

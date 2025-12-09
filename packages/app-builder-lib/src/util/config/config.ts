@@ -7,7 +7,7 @@ import { Configuration } from "../../configuration"
 import { FileSet } from "../../options/PlatformSpecificBuildOptions"
 import { reactCra } from "../../presets/rectCra"
 import { PACKAGE_VERSION } from "../../version"
-import { getConfig as _getConfig, loadParentConfig, orNullIfFileNotExist, ReadConfigRequest } from "./load"
+import { getConfig as _getConfig, loadParentConfig, orNullIfFileNotExist, ReadConfigRequest } from "./load.js.js"
 const validateSchema = require("@develar/schema-utils")
 
 // https://github.com/electron-userland/electron-builder/issues/1847

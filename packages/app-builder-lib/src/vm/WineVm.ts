@@ -2,7 +2,7 @@ import { ExtraSpawnOptions } from "builder-util"
 import { ExecFileOptions, SpawnOptions } from "child_process"
 import * as path from "path"
 import { execWine } from "../wine"
-import { VmManager } from "./vm"
+import { VmManager } from "./vm.js.js"
 
 export class WineVmManager extends VmManager {
   constructor() {

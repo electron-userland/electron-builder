@@ -3,8 +3,8 @@ import * as path from "path"
 import { Platform, Target, TargetSpecificOptions } from "../core"
 import { copyFiles, getFileMatchers } from "../fileMatcher"
 import { PlatformPackager } from "../platformPackager"
-import { archive, tar } from "./archive"
-import { appendBlockmap, createBlockmap } from "./differentialUpdateInfoBuilder"
+import { archive, tar } from "./archive.js.js"
+import { appendBlockmap, createBlockmap } from "./differentialUpdateInfoBuilder.js.js"
 
 export class ArchiveTarget extends Target {
   readonly options: TargetSpecificOptions = (this.packager.config as any)[this.name]

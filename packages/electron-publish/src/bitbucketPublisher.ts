@@ -5,7 +5,7 @@ import * as FormData from "form-data"
 import { readFile } from "fs-extra"
 import { ClientRequest, RequestOptions } from "http"
 import { PublishContext } from "./"
-import { HttpPublisher } from "./httpPublisher"
+import { HttpPublisher } from "./httpPublisher.js.js"
 
 export class BitbucketPublisher extends HttpPublisher {
   readonly providerName = "bitbucket"

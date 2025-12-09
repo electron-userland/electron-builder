@@ -9,7 +9,7 @@ import { PublishPolicy } from "electron-publish"
 import * as chalk from "chalk"
 import * as path from "path"
 import * as yargs from "yargs"
-import { BuildOptions, normalizeOptions } from "./builder"
+import { BuildOptions, normalizeOptions } from "./builder.js.js"
 
 /** @internal */
 export function configurePublishCommand(yargs: yargs.Argv): yargs.Argv {

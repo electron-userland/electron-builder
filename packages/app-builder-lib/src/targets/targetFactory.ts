@@ -1,7 +1,7 @@
 import { addValue, Arch, archFromString, ArchType, asArray } from "builder-util"
 import { DEFAULT_TARGET, DIR_TARGET, Platform, Target, TargetConfiguration } from "../core"
 import { PlatformPackager } from "../platformPackager"
-import { ArchiveTarget } from "./ArchiveTarget"
+import { ArchiveTarget } from "./ArchiveTarget.js.js"
 
 const archiveTargets = new Set(["zip", "7z", "tar.xz", "tar.lz", "tar.gz", "tar.bz2"])
 

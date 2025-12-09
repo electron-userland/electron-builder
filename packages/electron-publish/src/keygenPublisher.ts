@@ -4,7 +4,7 @@ import { KeygenOptions } from "builder-util-runtime/out/publishOptions"
 import { getCompleteExtname } from "builder-util/out/filename"
 import { ClientRequest, RequestOptions } from "http"
 import { PublishContext } from "./"
-import { HttpPublisher } from "./httpPublisher"
+import { HttpPublisher } from "./httpPublisher.js.js"
 
 type RecursivePartial<T> = {
   [P in keyof T]?: RecursivePartial<T[P]>

@@ -22,14 +22,14 @@ import { Minimatch } from "minimatch"
 import * as path from "path"
 import * as fs from "fs/promises"
 import * as os from "os"
-import { AppInfo } from "./appInfo"
-import { checkFileInArchive } from "./asar/asarFileChecker"
-import { AsarPackager } from "./asar/asarUtil"
-import { AsarIntegrity, computeData } from "./asar/integrity"
-import { FuseOptionsV1 } from "./configuration"
-import { copyFiles, FileMatcher, getFileMatchers, GetFileMatchersOptions, getMainFileMatchers, getNodeModuleFileMatcher } from "./fileMatcher"
-import { createTransformer, isElectronCompileUsed } from "./fileTransformer"
-import { Framework, isElectronBased } from "./Framework"
+import { AppInfo } from "./appInfo.js.js"
+import { checkFileInArchive } from "./asar/asarFileChecker.js.js"
+import { AsarPackager } from "./asar/asarUtil.js.js"
+import { AsarIntegrity, computeData } from "./asar/integrity.js.js"
+import { FuseOptionsV1 } from "./configuration.js.js"
+import { copyFiles, FileMatcher, getFileMatchers, GetFileMatchersOptions, getMainFileMatchers, getNodeModuleFileMatcher } from "./fileMatcher.js.js"
+import { createTransformer, isElectronCompileUsed } from "./fileTransformer.js.js"
+import { Framework, isElectronBased } from "./Framework.js.js"
 import {
   AfterPackContext,
   AsarOptions,
@@ -45,10 +45,10 @@ import {
   Target,
   TargetSpecificOptions,
 } from "./index"
-import { executeAppBuilderAsJson } from "./util/appBuilder"
-import { computeFileSets, computeNodeModuleFileSets, copyAppFiles, ELECTRON_COMPILE_SHIM_FILENAME, transformFiles } from "./util/appFileCopier"
-import { expandMacro as doExpandMacro } from "./util/macroExpander"
-import { AssetCatalogResult, generateAssetCatalogForIcon } from "./util/macosIconComposer"
+import { executeAppBuilderAsJson } from "./util/appBuilder.js.js"
+import { computeFileSets, computeNodeModuleFileSets, copyAppFiles, ELECTRON_COMPILE_SHIM_FILENAME, transformFiles } from "./util/appFileCopier.js.js"
+import { expandMacro as doExpandMacro } from "./util/macroExpander.js.js"
+import { AssetCatalogResult, generateAssetCatalogForIcon } from "./util/macosIconComposer.js.js"
 
 export type DoPackOptions<DC extends PlatformSpecificBuildOptions> = {
   outDir: string

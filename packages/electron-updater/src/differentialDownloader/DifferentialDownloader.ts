@@ -5,11 +5,11 @@ import { createWriteStream } from "fs"
 import { OutgoingHttpHeaders, RequestOptions } from "http"
 import { ProgressInfo, CancellationToken } from "builder-util-runtime"
 import { Logger } from "../types"
-import { copyData } from "./DataSplitter"
+import { copyData } from "./DataSplitter.js.js"
 import { URL } from "url"
-import { computeOperations, Operation, OperationKind } from "./downloadPlanBuilder"
-import { checkIsRangesSupported, executeTasksUsingMultipleRangeRequests } from "./multipleRangeDownloader"
-import { ProgressDifferentialDownloadCallbackTransform, ProgressDifferentialDownloadInfo } from "./ProgressDifferentialDownloadCallbackTransform"
+import { computeOperations, Operation, OperationKind } from "./downloadPlanBuilder.js.js"
+import { checkIsRangesSupported, executeTasksUsingMultipleRangeRequests } from "./multipleRangeDownloader.js.js"
+import { ProgressDifferentialDownloadCallbackTransform, ProgressDifferentialDownloadInfo } from "./ProgressDifferentialDownloadCallbackTransform.js.js"
 
 export interface DifferentialDownloaderOptions {
   readonly oldFile: string

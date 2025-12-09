@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from "fs-extra"
 import * as path from "path"
-import { AppUpdater } from "./AppUpdater"
+import { AppUpdater } from "./AppUpdater.js.js"
 import { UpdateInfo } from "builder-util-runtime"
 
 export { BaseUpdater } from "./BaseUpdater"

@@ -5,7 +5,7 @@ import * as escapeRegExp from "lodash.escaperegexp"
 import { AppUpdater } from "../AppUpdater"
 import { ResolvedUpdateFileInfo } from "../types"
 import { getChannelFilename, newBaseUrl, newUrlFromBase } from "../util"
-import { getFileList, parseUpdateInfo, Provider, ProviderRuntimeOptions } from "./Provider"
+import { getFileList, parseUpdateInfo, Provider, ProviderRuntimeOptions } from "./Provider.js.js"
 
 interface GitlabUpdateInfo extends UpdateInfo {
   tag: string

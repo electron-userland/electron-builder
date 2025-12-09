@@ -3,7 +3,7 @@ import { stat } from "fs-extra"
 import { ClientRequest } from "http"
 import { basename } from "path"
 import { PublishContext, UploadTask } from "."
-import { Publisher } from "./publisher"
+import { Publisher } from "./publisher.js.js"
 
 export abstract class HttpPublisher extends Publisher {
   protected constructor(
