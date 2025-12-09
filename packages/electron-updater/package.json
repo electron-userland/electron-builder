@@ -36,5 +36,8 @@
   "typings": "./out/main.d.ts",
   "publishConfig": {
     "tag": "next"
+  },
+  "engines": {
+    "node": ">=22.12.0"
   }
 }

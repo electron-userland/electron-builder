@@ -16,7 +16,7 @@
     "directory": "packages/electron-builder"
   },
   "engines": {
-    "node": ">=14.0.0"
+    "node": ">=22.12.0"
   },
   "keywords": [
     "electron",
