@@ -38,7 +38,7 @@ export interface PnpmDependency extends Dependency<PnpmDependency, PnpmDependenc
 
 export interface NpmDependency extends Dependency<NpmDependency, string> {
   readonly resolved?: string
-  // implicit dependencies
+  // implicit dependencies. only is present from `npm list`, not manual tree traversal
   readonly _dependencies?: {
     [packageName: string]: string
   }

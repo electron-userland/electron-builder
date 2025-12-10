@@ -35,10 +35,6 @@ export class YarnBerryNodeModulesCollector extends NpmNodeModulesCollector {
     return super.getDependenciesTree(PM.NPM)
   }
 
-  protected isProdDependency(packageName: string, tree: NpmDependency): boolean {
-    return tree.dependencies?.[packageName] != null || tree.optionalDependencies?.[packageName] != null
-  }
-
   private async detectYarnSetup(rootDir: string): Promise<YarnSetupInfo> {
     let yarnVersion: YarnSetupInfo["yarnVersion"] = null
     let nodeLinker: YarnSetupInfo["nodeLinker"] = null

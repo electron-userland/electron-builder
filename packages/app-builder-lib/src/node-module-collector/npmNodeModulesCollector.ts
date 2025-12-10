@@ -68,8 +68,8 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
     return isDuplicateDep
   }
 
-  protected isProdDependency(packageName: string, tree: NpmDependency) {
-    return tree._dependencies?.[packageName] != null
+  protected isProdDependency(packageName: string, tree: NpmDependency): boolean {
+    return tree._dependencies?.[packageName] != null || tree.dependencies?.[packageName] != null || tree.optionalDependencies?.[packageName] != null
   }
 
   /**
