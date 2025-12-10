@@ -64,22 +64,6 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
     this.productionGraph[dependencyId] = { dependencies }
   }
 
-  protected getDependencyType(pkgName: string, parentPkgJson: PackageJson): "prod" | "dev" | "optional" {
-    if (parentPkgJson.optionalDependencies?.[pkgName]) {
-      return "optional"
-    }
-
-    if (parentPkgJson.devDependencies?.[pkgName]) {
-      return "dev"
-    }
-
-    if (parentPkgJson.dependencies?.[pkgName]) {
-      return "prod"
-    }
-
-    return "prod"
-  }
-
   protected async parseDependenciesTree(jsonBlob: string): Promise<YarnDependency> {
     const lines = jsonBlob
       .split("\n")

@@ -43,12 +43,14 @@ export default () => {
         },
       },
 
+      slowTestThreshold: 60 * 1000,
+      // disk operations can be slow. We're generous with the timeout here to account for less-performant (local?) machines.
+      // GH runners are fast, but we're still running tests concurrently, so collectively, they take less time, but individually, they can take longer due to parallelism.
+      testTimeout: 15 * 60 * 1000,
       sequence: {
         concurrent: process.env.TEST_SEQUENTIAL !== "true",
       },
 
-      slowTestThreshold: 60 * 1000,
-      testTimeout: 10 * 60 * 1000, // disk operations can be slow. We're generous with the timeout here to account for less-performant hardware
       coverage: {
         reporter: ["lcov", "text"],
       },
