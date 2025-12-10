@@ -1,5 +1,5 @@
 import { Platform } from "app-builder-lib"
-import { PM } from "app-builder-lib/src/node-module-collector"
+import { PM } from "app-builder-lib"
 import { execSync } from "child_process"
 import { copyFile, outputFile, rm, writeFile } from "fs-extra"
 import * as path from "path"

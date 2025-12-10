@@ -3,7 +3,7 @@ import { outputFile } from "fs-extra"
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert.js"
 import { app, checkDirContents, linuxDirTarget, modifyPackageJson } from "./helpers/packTester.js"
-import { PM } from "app-builder-lib/out/node-module-collector/packageManager"
+import { PM } from "app-builder-lib"
 
 const currentProcessTarget = Platform.LINUX.createTarget(DIR_TARGET, archFromString(process.arch))
 

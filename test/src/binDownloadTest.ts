@@ -1,4 +1,4 @@
-import { getBinFromUrl } from "app-builder-lib/out/binDownload"
+import { getBinFromUrl } from "app-builder-lib"
 
 test("download binary from Github", async ({ expect }) => {
   const bin = await getBinFromUrl(

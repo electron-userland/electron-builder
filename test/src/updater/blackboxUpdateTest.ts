@@ -1,6 +1,6 @@
-import { getBinFromUrl } from "app-builder-lib/out/binDownload"
+import { getBinFromUrl } from "app-builder-lib"
 import { GenericServerOptions, Nullish } from "builder-util-runtime"
-import { archFromString, doSpawn, getArchSuffix, isEmptyOrSpaces, log, TmpDir } from "builder-util/out/util"
+import { archFromString, doSpawn, getArchSuffix, isEmptyOrSpaces, log, TmpDir } from "builder-util"
 import { Arch, Configuration, Platform } from "electron-builder"
 import fs, { existsSync, outputFile } from "fs-extra"
 import path from "path"

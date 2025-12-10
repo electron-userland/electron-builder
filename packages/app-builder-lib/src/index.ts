@@ -52,6 +52,7 @@ export { CommonNsisOptions, CustomNsisBinary, NsisOptions, NsisWebOptions, Porta
 
 export { CancellationToken, ProgressInfo } from "builder-util-runtime"
 export { PublishOptions, UploadTask } from "electron-publish"
+export { findIdentity, isSignAllowed } from "./codeSign/macCodeSign.js"
 export { WindowsSignOptions } from "./codeSign/windowsCodeSign.js"
 export {
   CertificateFromStoreInfo,
@@ -66,29 +67,51 @@ export { LinuxPackager } from "./linuxPackager.js"
 export { CustomMacSign, CustomMacSignOptions, MacPackager } from "./macPackager.js"
 export { PlatformPackager } from "./platformPackager.js"
 export { PublishManager } from "./publish/PublishManager.js"
+export { getLicenseAssets, getLicenseFiles } from "./util/license.js"
 export { WinPackager } from "./winPackager.js"
-export { findIdentity, isSignAllowed } from "./codeSign/macCodeSign.js"
-export { getLicenseFiles, getLicenseAssets } from "./util/license.js"
 
-export { resolveFunction } from "./util/resolve.js"
-export { executeAppBuilderAsJson } from "./util/appBuilder.js"
-export { getElectronVersion } from "./electron/electronVersion.js"
-export { loadEnv } from "./util/config/load.js"
-export { nodeGypRebuild } from "./util/yarn.js"
 export { getSignVendorPath } from "./codeSign/windowsSignToolManager.js"
+export { getElectronVersion } from "./electron/electronVersion.js"
+export { executeAppBuilderAsJson } from "./util/appBuilder.js"
+export { loadEnv } from "./util/config/load.js"
+export { resolveFunction } from "./util/resolve.js"
+export { nodeGypRebuild } from "./util/yarn.js"
 
-export { computeDefaultAppDirectory, getConfig } from "./util/config/config.js"
+export { determinePackageManagerEnv } from "./node-module-collector/index.js"
+export { computeDefaultAppDirectory, getConfig, doMergeConfigs } from "./util/config/config.js"
 export { orNullIfFileNotExist } from "./util/config/load.js"
 export { createLazyProductionDeps } from "./util/packageDependencies.js"
 export { installOrRebuild } from "./util/yarn.js"
 export { PACKAGE_VERSION } from "./version.js"
-export { determinePackageManagerEnv } from "./node-module-collector/index.js"
 
-export { execWine } from "./wine.js"
+export { getBinFromUrl } from "./binDownload.js"
 export { Publish } from "./core.js"
 export { computeSafeArtifactNameIfNeeded } from "./platformPackager.js"
+export { createPublisher } from "./publish/PublishManager.js"
 export { createBlockmap } from "./targets/differentialUpdateInfoBuilder.js"
-export { getBinFromUrl } from "./binDownload.js"
+export { execWine } from "./wine.js"
+
+export { validateConfiguration } from "./util/config/config.js"
+export { PM } from "./node-module-collector/packageManager.js"
+export { readAsarJson, readAsar, AsarFilesystem } from "./asar/asar.js"
+
+export { computeArchToTargetNamesMap } from "./targets/targetFactory.js"
+
+export { expandMacro } from "./util/macroExpander.js"
+export { hoist, HoisterTree, HoisterResult, HoisterDependencyKind } from "./node-module-collector/hoist.js"
+export { getLinuxToolsPath } from "./targets/tools.js"
+export { parsePlistFile, PlistObject } from "./util/plist.js"
+export { AsarIntegrity } from "./asar/integrity.js"
+export { getCollectorByPackageManager } from "./node-module-collector/index.js"
+export { installDependencies } from "./util/yarn.js"
+export { detectPackageManager } from "./node-module-collector/packageManager.js"
+
+export { getRepositoryInfo } from "./util/repositoryInfo.js"
+export { Identity } from "./codeSign/macCodeSign.js"
+export { DoPackOptions } from "./platformPackager.js"
+
+export { createKeychain } from "./codeSign/macCodeSign.js"
+
 
 const expectedOptions = new Set(["publish", "targets", "mac", "win", "linux", "projectDir", "platformPackagerFactory", "config", "effectiveOptionComputed", "prepackaged"])
 

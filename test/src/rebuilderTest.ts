@@ -1,6 +1,6 @@
 import { Configuration, Platform } from "app-builder-lib"
-import { PM } from "app-builder-lib/out/node-module-collector"
-import { exists } from "builder-util/src/util"
+import { PM } from "app-builder-lib"
+import { exists } from "builder-util"
 import path from "path"
 import { assertPack, linuxDirTarget, modifyPackageJson } from "./helpers/packTester.js"
 import { ELECTRON_VERSION } from "./helpers/testConfig.js"

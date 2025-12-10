@@ -1,4 +1,4 @@
-import { parsePlistFile, PlistObject } from "app-builder-lib/out/util/plist"
+import { parsePlistFile, PlistObject } from "app-builder-lib"
 import { Arch, DIR_TARGET, Platform } from "electron-builder"
 import * as fs from "fs/promises"
 import * as path from "path"

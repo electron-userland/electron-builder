@@ -10,6 +10,8 @@ import { addLicenseToDmg } from "./dmgLicense.js"
 import { computeBackground, customizeDmg } from "./dmgUtil.js"
 import { hdiUtil } from "./hdiuil.js"
 
+export { attachAndExecute, getDmgTemplatePath } from "./dmgUtil.js"
+
 export interface DmgBuildConfig {
   title: string
   icon?: string | null

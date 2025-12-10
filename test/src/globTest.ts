@@ -1,6 +1,6 @@
 import { Platform } from "app-builder-lib"
-import { readAsar } from "app-builder-lib/out/asar/asar"
-import { PM } from "app-builder-lib/out/node-module-collector/packageManager"
+import { readAsar } from "app-builder-lib"
+import { PM } from "app-builder-lib"
 import { outputFile } from "fs-extra"
 import * as fs from "fs/promises"
 import * as path from "path"
