@@ -4,16 +4,16 @@ import { ensureSymlink } from "fs-extra"
 import { mkdir, readlink } from "fs/promises"
 import * as path from "path"
 import asyncPool from "tiny-async-pool"
-import { isLibOrExe } from "../asar/unpackDetector.js"
-import { Platform } from "../core.js"
-import { excludedExts, FileMatcher } from "../fileMatcher.js"
-import { createElectronCompilerHost, NODE_MODULES_PATTERN } from "../fileTransformer.js"
-import { Packager } from "../packager.js"
-import { PlatformPackager } from "../platformPackager.js"
-import { AppFileWalker } from "./AppFileWalker.js"
-import { NodeModuleCopyHelper } from "./NodeModuleCopyHelper.js"
-import { NodeModuleInfo } from "./packageDependencies.js"
-import { getNodeModules } from "../node-module-collector/index.js"
+import { isLibOrExe } from "../asar/unpackDetector"
+import { Platform } from "../core"
+import { excludedExts, FileMatcher } from "../fileMatcher"
+import { createElectronCompilerHost, NODE_MODULES_PATTERN } from "../fileTransformer"
+import { Packager } from "../packager"
+import { PlatformPackager } from "../platformPackager"
+import { AppFileWalker } from "./AppFileWalker"
+import { NodeModuleCopyHelper } from "./NodeModuleCopyHelper"
+import { NodeModuleInfo } from "./packageDependencies"
+import { getNodeModules, PM } from "../node-module-collector"
 
 const BOWER_COMPONENTS_PATTERN = `${path.sep}bower_components${path.sep}`
 /** @internal */
@@ -183,20 +183,26 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
 
   let deps: Array<NodeModuleInfo> = []
   const searchDirectories = Array.from(new Set([projectDir, appDir, await packager.getWorkspaceRoot()])).filter((it): it is string => it != null)
-  for (const dir of searchDirectories) {
-    if (cancellationToken.cancelled) {
-      throw new Error("user cancelled")
-    }
+  const pmApproaches = [await packager.getPackageManager(), PM.TRAVERSAL]
+  for (const pm of pmApproaches) {
+    for (const dir of searchDirectories) {
+      if (cancellationToken.cancelled) {
+        throw new Error("user cancelled")
+      }
 
-    const dirDeps = await getNodeModules(await packager.getPackageManager(), { rootDir: dir, tempDirManager, cancellationToken, packageName: packager.metadata.name! })
-    if (dirDeps.length > 0) {
-      log.debug({ dir, nodeModules: dirDeps }, "collected node modules")
-      deps = dirDeps
-      break
+      const options = { rootDir: dir, tempDirManager, cancellationToken, packageName: packager.metadata.name! }
+      deps = await getNodeModules(pm, options)
+      if (deps.length > 0) {
+        break
+      }
+      const attempt = searchDirectories.indexOf(dir)
+      if (attempt < searchDirectories.length - 1) {
+        log.info({ searchDir: dir, attempt }, "no node modules found in collection, trying next search directory")
+      }
     }
-    const attempt = searchDirectories.indexOf(dir)
-    if (attempt < searchDirectories.length - 1) {
-      log.info({ searchDir: dir, attempt }, "no node modules found in collection, trying next search directory")
+    if (deps.length > 0) {
+      log.debug({ pm, nodeModules: deps }, "collected node modules")
+      break
     }
   }
   if (deps.length === 0) {

@@ -1,22 +1,22 @@
 import { log, retry, TmpDir } from "builder-util"
 import { CancellationToken } from "builder-util-runtime"
 import * as childProcess from "child_process"
-import * as fs from "fs-extra"
 import { createWriteStream } from "fs-extra"
 import { Lazy } from "lazy-val"
-import * as path from "path"
-import * as semver from "semver"
 import { hoist, type HoisterResult, type HoisterTree } from "./hoist.js"
 import { ModuleCache } from "./moduleCache.js"
 import { getPackageManagerCommand, PM } from "./packageManager.js"
-import type { Dependency, DependencyGraph, NodeModuleInfo, PackageJson } from "./types.js"
-type Result = { packageDir: string; version: string } | null
+import type { Dependency, DependencyGraph, NodeModuleInfo } from "./types.js"
+import * as path from "path"
+import * as semver from "semver"
+import * as fs from "fs-extra"
 
 export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDepType, OptionalDepType>, OptionalDepType> {
   private readonly nodeModules: NodeModuleInfo[] = []
   protected readonly allDependencies: Map<string, ProdDepType> = new Map()
   protected readonly productionGraph: DependencyGraph = {}
   protected readonly cache: ModuleCache = new ModuleCache()
+  // private readonly manualNodeModulesCollector = new TraversalNodeModulesCollector<ProdDepType, OptionalDepType>(this.rootDir, this.tempDirManager)
 
   protected isHoisted = new Lazy<boolean>(async () => {
     const { manager } = this.installOptions
@@ -39,29 +39,16 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     private readonly tempDirManager: TmpDir
   ) {}
 
-  public async getNodeModules({ cancellationToken, packageName }: { cancellationToken: CancellationToken; packageName: string }): Promise<NodeModuleInfo[]> {
+  public async getNodeModules({ packageName }: { cancellationToken: CancellationToken; packageName: string }): Promise<NodeModuleInfo[]> {
     const tree: ProdDepType = await this.getDependenciesTree(this.installOptions.manager)
-
-    if (cancellationToken.cancelled) {
-      throw new Error("getNodeModules cancelled after fetching dependency tree")
-    }
-
     await this.collectAllDependencies(tree, packageName)
-
     const realTree: ProdDepType = await this.getTreeFromWorkspaces(tree, packageName)
     await this.extractProductionDependencyGraph(realTree, packageName)
-
-    if (cancellationToken.cancelled) {
-      throw new Error("getNodeModules cancelled after building production graph")
-    }
-
     const hoisterResult: HoisterResult = hoist(this.transformToHoisterTree(this.productionGraph, packageName), {
       check: log.isDebugEnabled,
     })
-
     await this._getNodeModules(hoisterResult.dependencies, this.nodeModules)
     log.debug({ packageName, depCount: this.nodeModules.length }, "node modules collection complete")
-
     return this.nodeModules
   }
 
@@ -72,8 +59,32 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
 
   protected abstract getArgs(): string[]
   protected abstract parseDependenciesTree(jsonBlob: string): Promise<ProdDepType>
-  protected abstract extractProductionDependencyGraph(tree: Dependency<ProdDepType, OptionalDepType>, dependencyId: string): Promise<void>
   protected abstract collectAllDependencies(tree: Dependency<ProdDepType, OptionalDepType>, appPackageName: string): Promise<void>
+
+  protected async extractProductionDependencyGraph(tree: ProdDepType, dependencyId: string): Promise<void> {
+    if (this.productionGraph[dependencyId]) {
+      return
+    }
+    // Initialize with empty dependencies array first to mark this dependency as "in progress"
+    // After initialization, if there are libraries with the same name+version later, they will not be searched recursively again
+    // This will prevents infinite loops when circular dependencies are encountered.
+    this.productionGraph[dependencyId] = { dependencies: [] }
+
+    const resolvedDeps = tree.dependencies
+    const collectedDependencies: string[] = []
+    if (resolvedDeps && Object.keys(resolvedDeps).length > 0) {
+      for (const packageName in resolvedDeps) {
+        if (!this.isProdDependency(packageName, tree)) {
+          continue
+        }
+        const dependency = resolvedDeps[packageName]
+        const childDependencyId = this.packageVersionString(dependency)
+        await this.extractProductionDependencyGraph(dependency, childDependencyId)
+        collectedDependencies.push(childDependencyId)
+      }
+    }
+    this.productionGraph[dependencyId] = { dependencies: collectedDependencies }
+  }
 
   protected async getDependenciesTree(pm: PM): Promise<ProdDepType> {
     const command = getPackageManagerCommand(pm)
@@ -119,34 +130,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
           return false
         },
       }
-    ).catch(error => {
-      log.info({ pm: this.installOptions.manager, error: error.message }, "unable to process dependency tree, falling back to using manual node_modules traversal")
-      // node_modules linker fallback. (Slower due to system ops, so we only use it as a fallback) [such as when corepack env will not allow npm CLI to extract tree]
-      return this.buildNodeModulesTreeManually(this.rootDir)
-    })
-  }
-
-  protected cacheKey(pkg: ProdDepType): string {
-    const rel = path.relative(this.rootDir, pkg.path)
-    return `${pkg.name}::${pkg.version}::${rel ?? "."}`
-  }
-
-  protected packageVersionString(pkg: ProdDepType): string {
-    return `${pkg.name}@${pkg.version}`
-  }
-
-  /**
-   * Parse a dependency identifier like "@scope/pkg@1.2.3" or "pkg@1.2.3"
-   */
-  protected parseNameVersion(identifier: string): { name: string; version: string } {
-    const lastAt = identifier.lastIndexOf("@")
-    if (lastAt <= 0) {
-      // fallback for scoped packages or malformed strings
-      return { name: identifier, version: "unknown" }
-    }
-    const name = identifier.slice(0, lastAt)
-    const version = identifier.slice(lastAt + 1)
-    return { name, version }
+    )
   }
 
   protected async getTreeFromWorkspaces(tree: ProdDepType, packageName: string): Promise<ProdDepType> {
@@ -225,152 +209,39 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     result.sort((a, b) => a.name.localeCompare(b.name))
   }
 
-  async asyncExec(command: string, args: string[], cwd: string = this.rootDir): Promise<{ stdout: string | undefined; stderr: string | undefined }> {
-    const file = await this.tempDirManager.getTempFile({ prefix: "exec-", suffix: ".txt" })
-    try {
-      await this.streamCollectorCommandToFile(command, args, cwd, file)
-      const result = await fs.readFile(file, { encoding: "utf8" })
-      return { stdout: result?.trim(), stderr: undefined }
-    } catch (error: any) {
-      log.debug({ error: error.message }, "failed to execute command")
-      return { stdout: undefined, stderr: error.message }
-    }
+  protected isProdDependency(packageName: string, tree: ProdDepType): boolean {
+    return tree.dependencies?.[packageName] != null || tree.optionalDependencies?.[packageName] != null
   }
 
-  async streamCollectorCommandToFile(command: string, args: string[], cwd: string, tempOutputFile: string) {
-    const execName = path.basename(command, path.extname(command))
-    const isWindowsScriptFile = process.platform === "win32" && path.extname(command).toLowerCase() === ".cmd"
-    if (isWindowsScriptFile) {
-      // If the command is a Windows script file (.cmd), we need to wrap it in a .bat file to ensure it runs correctly with cmd.exe
-      // This is necessary because .cmd files are not directly executable in the same way as .bat files.
-      // We create a temporary .bat file that calls the .cmd file with the provided arguments. The .bat file will be executed by cmd.exe.
-      // Note: This is a workaround for Windows command execution quirks for specifically when `shell: false`
-      const tempBatFile = await this.tempDirManager.getTempFile({
-        prefix: execName,
-        suffix: ".bat",
-      })
-      const batScript = `@echo off\r\n"${command}" %*\r\n` // <-- CRLF required for .bat
-      await fs.writeFile(tempBatFile, batScript, { encoding: "utf8" })
-      command = "cmd.exe"
-      args = ["/c", tempBatFile, ...args]
-    }
+  // ----- PROTECTED HELPERS FOR ALL COLLECTORS -----
+  protected cacheKey(pkg: ProdDepType): string {
+    const rel = path.relative(this.rootDir, pkg.path)
+    return `${pkg.name}::${pkg.version}::${rel ?? "."}`
+  }
 
-    await new Promise<void>((resolve, reject) => {
-      const outStream = createWriteStream(tempOutputFile)
-
-      const child = childProcess.spawn(command, args, {
-        cwd,
-        env: { COREPACK_ENABLE_STRICT: "0", ...process.env },
-        shell: false, // required to prevent console logs polution from shell profile loading when `true`
-      })
-
-      let stderr = ""
-      child.stdout.pipe(outStream)
-      child.stderr.on("data", chunk => {
-        stderr += chunk.toString()
-      })
-      child.on("error", err => {
-        reject(new Error(`Node module collector spawn failed: ${err.message}`))
-      })
-
-      child.on("close", code => {
-        outStream.close()
-        // https://github.com/npm/npm/issues/17624
-        const shouldIgnore = code === 1 && "npm" === execName.toLowerCase() && args.includes("list")
-        if (shouldIgnore) {
-          log.debug(null, "`npm list` returned non-zero exit code, but it MIGHT be expected (https://github.com/npm/npm/issues/17624). Check stderr for details.")
-        }
-        if (stderr.length > 0) {
-          log.debug({ stderr }, "note: there was node module collector output on stderr")
-        }
-        const shouldResolve = code === 0 || shouldIgnore
-        return shouldResolve ? resolve() : reject(new Error(`Node module collector process exited with code ${code}:\n${stderr}`))
-      })
-    })
+  protected packageVersionString(pkg: Pick<ProdDepType, "name" | "version">): string {
+    return `${pkg.name}@${pkg.version}`
   }
 
   /**
-   * Builds a dependency tree using only package.json dependencies and optionalDependencies.
-   * This skips devDependencies and uses Node.js module resolution (require.resolve).
+   * Parse a dependency identifier like "@scope/pkg@1.2.3" or "pkg@1.2.3"
    */
-  protected buildNodeModulesTreeManually(baseDir: string): Promise<NpmDependency> {
-    // Track visited packages by their resolved path to prevent infinite loops
-    const visited = new Set<string>()
-
-    /**
-     * Recursively builds dependency tree starting from a package directory.
-     */
-    const buildFromPackage = async (packageDir: string): Promise<ProdDepType> => {
-      const pkgPath = path.join(packageDir, "package.json")
-
-      log.debug({ pkgPath }, "building dependency node from package.json")
-
-      if (!(await this.cache.exists[pkgPath])) {
-        throw new Error(`package.json not found at ${pkgPath}`)
-      }
-
-      const pkg: PackageJson = await this.cache.packageJson[pkgPath]
-      const resolvedPackageDir = await this.cache.realPath[packageDir]
-
-      // Use resolved path as the unique identifier to prevent circular dependencies
-      if (visited.has(resolvedPackageDir)) {
-        log.debug({ name: pkg.name, version: pkg.version, path: resolvedPackageDir }, "skipping already visited package")
-        return {
-          name: pkg.name,
-          version: pkg.version,
-          path: resolvedPackageDir,
-        }
-      }
-
-      visited.add(resolvedPackageDir)
-
-      const prodDeps: Record<string, NpmDependency> = {}
-      const allProdDepNames = {
-        ...pkg.dependencies,
-        ...pkg.optionalDependencies,
-      }
-
-      // Process all production and optional dependencies
-      for (const [depName, depVersion] of Object.entries(allProdDepNames)) {
-        try {
-          const depPath = await this.locatePackageVersion(resolvedPackageDir, depName, depVersion)
-
-          if (!depPath || depPath.packageDir.length === 0) {
-            log.warn({ package: pkg.name, dependency: depName, version: depVersion }, "dependency not found, skipping")
-            continue
-          }
-
-          const resolvedDepPath = await this.cache.realPath[depPath.packageDir]
-          const logFields = { package: pkg.name, dependency: depName, resolvedPath: resolvedDepPath }
-
-          // Skip if this dependency resolves to the base directory or any parent we're already processing
-          if (resolvedDepPath === resolvedPackageDir || resolvedDepPath === (await this.cache.realPath[baseDir])) {
-            log.debug(logFields, "skipping self-referential dependency")
-            continue
-          }
-
-          log.debug(logFields, "processing production dependency")
-
-          // Recursively build the dependency tree for this dependency
-          prodDeps[depName] = await buildFromPackage(resolvedDepPath)
-        } catch (error: any) {
-          log.warn({ package: pkg.name, dependency: depName, error: error.message }, "failed to process dependency, skipping")
-        }
-      }
-
-      return {
-        name: pkg.name,
-        version: pkg.version,
-        path: resolvedPackageDir,
-        dependencies: Object.keys(prodDeps).length > 0 ? prodDeps : undefined,
-        optionalDependencies: pkg.optionalDependencies,
-      }
+  protected parseNameVersion(identifier: string): { name: string; version: string } {
+    const lastAt = identifier.lastIndexOf("@")
+    if (lastAt <= 0) {
+      // fallback for scoped packages or malformed strings
+      return { name: identifier, version: "unknown" }
     }
-
-    return buildFromPackage(baseDir)
+    const name = identifier.slice(0, lastAt)
+    const version = identifier.slice(lastAt + 1)
+    return { name, version }
   }
 
-  protected async locatePackageVersion(parentDir: string, pkgName: string, requiredRange?: string): Promise<Result | null> {
+  // ----------------------------------------------------------------
+  // ----- PROTECTED HELPERS FOR MANUAL NODE_MODULES TRAVERSAL ------
+  // ----------------------------------------------------------------
+
+  protected async locatePackageVersion(parentDir: string, pkgName: string, requiredRange?: string): Promise<{ packageDir: string; version: string } | null> {
     // 1) check direct parent node_modules/pkgName first
     const direct = path.join(path.resolve(parentDir), "node_modules", pkgName, "package.json")
     if (await this.cache.exists[direct]) {
@@ -426,7 +297,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
   /**
    * Upward search (hoisted)
    */
-  private async upwardSearch(parentDir: string, pkgName: string, requiredRange?: string): Promise<Result> {
+  private async upwardSearch(parentDir: string, pkgName: string, requiredRange?: string): Promise<{ packageDir: string; version: string } | null> {
     let current = path.resolve(parentDir)
     const root = path.parse(current).root
     while (true) {
@@ -454,7 +325,13 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
    * Breadth-first downward search from parentDir/node_modules
    * Looks for node_modules/\*\/node_modules/pkgName (and deeper)
    */
-  private async downwardSearch(parentDir: string, pkgName: string, requiredRange?: string, maxExplored = 2000, maxDepth = 6): Promise<Result> {
+  private async downwardSearch(
+    parentDir: string,
+    pkgName: string,
+    requiredRange?: string,
+    maxExplored = 2000,
+    maxDepth = 6
+  ): Promise<{ packageDir: string; version: string } | null> {
     const start = path.join(path.resolve(parentDir), "node_modules")
     if (!(await this.cache.exists[start]) || !(await this.cache.lstat[start]).isDirectory()) {
       return null
@@ -550,5 +427,78 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     }
 
     return null
+  }
+
+  // ----------------------------------------------------------------
+  // ----- FANCY HELPERS FOR COMMAND EXECUTION -----
+  // ----------------------------------------------------------------
+
+  async asyncExec(command: string, args: string[], cwd: string = this.rootDir): Promise<{ stdout: string | undefined; stderr: string | undefined }> {
+    const file = await this.tempDirManager.getTempFile({ prefix: "exec-", suffix: ".txt" })
+    try {
+      await this.streamCollectorCommandToFile(command, args, cwd, file)
+      const result = await fs.readFile(file, { encoding: "utf8" })
+      return { stdout: result?.trim(), stderr: undefined }
+    } catch (error: any) {
+      log.debug({ command, args, error: error.message }, "failed to execute command")
+      return { stdout: undefined, stderr: error.message }
+    }
+  }
+
+  async streamCollectorCommandToFile(command: string, args: string[], cwd: string, tempOutputFile: string) {
+    const execName = path.basename(command, path.extname(command))
+    const isWindowsScriptFile = process.platform === "win32" && path.extname(command).toLowerCase() === ".cmd"
+    if (isWindowsScriptFile) {
+      // If the command is a Windows script file (.cmd), we need to wrap it in a .bat file to ensure it runs correctly with cmd.exe
+      // This is necessary because .cmd files are not directly executable in the same way as .bat files.
+      // We create a temporary .bat file that calls the .cmd file with the provided arguments. The .bat file will be executed by cmd.exe.
+      // Note: This is a workaround for Windows command execution quirks for specifically when `shell: false`
+      const tempBatFile = await this.tempDirManager.getTempFile({
+        prefix: execName,
+        suffix: ".bat",
+      })
+      const batScript = `@echo off\r\n"${command}" %*\r\n` // <-- CRLF required for .bat
+      await fs.writeFile(tempBatFile, batScript, { encoding: "utf8" })
+      command = "cmd.exe"
+      args = ["/c", tempBatFile, ...args]
+    }
+
+    await new Promise<void>((resolve, reject) => {
+      const outStream = createWriteStream(tempOutputFile)
+
+      const child = childProcess.spawn(command, args, {
+        cwd,
+        env: { COREPACK_ENABLE_STRICT: "0", ...process.env },
+        shell: false, // required to prevent console logs polution from shell profile loading when `true`
+      })
+
+      let stderr = ""
+      child.stdout.pipe(outStream)
+      child.stderr.on("data", chunk => {
+        stderr += chunk.toString()
+      })
+      child.on("error", err => {
+        reject(new Error(`Node module collector spawn failed: ${err.message}`))
+      })
+
+      child.on("close", code => {
+        outStream.close()
+        // https://github.com/npm/npm/issues/17624
+        const shouldIgnore = code === 1 && "npm" === execName.toLowerCase() && args.includes("list")
+        if (shouldIgnore) {
+          log.debug(null, "`npm list` returned non-zero exit code, but it MIGHT be expected (https://github.com/npm/npm/issues/17624). Check stderr for details.")
+        }
+        if (stderr.length > 0) {
+          log.debug({ stderr }, "note: there was node module collector output on stderr")
+        }
+        const shouldResolve = code === 0 || shouldIgnore
+        return shouldResolve ? resolve() : reject(new Error(`Node module collector process exited with code ${code}:\n${stderr}`))
+      })
+      // this.cancellationToken.onCancel(() => {
+      //   outStream.close()
+      //   child.kill("SIGINT")
+      //   reject(new Error("Node module collector process was cancelled"))
+      // })
+    })
   }
 }

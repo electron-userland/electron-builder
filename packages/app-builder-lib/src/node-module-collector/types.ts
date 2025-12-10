@@ -38,7 +38,7 @@ export interface PnpmDependency extends Dependency<PnpmDependency, PnpmDependenc
 
 export interface NpmDependency extends Dependency<NpmDependency, string> {
   readonly resolved?: string
-  // implicit dependencies
+  // implicit dependencies, returned only through `npm list`
   readonly _dependencies?: {
     [packageName: string]: string
   }
@@ -49,6 +49,9 @@ export interface YarnBerryDependency extends Dependency<YarnBerryDependency, str
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface YarnDependency extends Dependency<YarnDependency, YarnDependency> {}
+
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface TraversedDependency extends Dependency<TraversedDependency, string> {}
 
 export type Dependency<T, V> = Dependencies<T, V> & ParsedDependencyTree
 

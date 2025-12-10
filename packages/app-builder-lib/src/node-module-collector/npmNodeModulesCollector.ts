@@ -1,8 +1,6 @@
-import { log } from "builder-util"
-import * as path from "path"
 import { NodeModulesCollector } from "./nodeModulesCollector.js"
 import { PM } from "./packageManager.js"
-import { NpmDependency, PackageJson } from "./types.js"
+import { NpmDependency } from "./types.js"
 
 export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency, string> {
   public readonly installOptions = {
@@ -59,8 +57,9 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
     return isDuplicateDep
   }
 
+  // `npm list` provides explicit list of deps in _dependencies
   protected isProdDependency(packageName: string, tree: NpmDependency) {
-    return tree._dependencies?.[packageName] != null
+    return tree._dependencies?.[packageName] != null // || super.isProdDependency(packageName, tree)
   }
 
   protected async parseDependenciesTree(jsonBlob: string): Promise<NpmDependency> {

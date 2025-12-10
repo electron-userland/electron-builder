@@ -11,6 +11,7 @@ import { Lazy } from "lazy-val"
 import { spawn, log, exists } from "builder-util"
 import * as fs from "fs-extra"
 import * as path from "path"
+import { TraversalNodeModulesCollector } from "./traversalNodeModulesCollector"
 
 export { getPackageManagerCommand, PM }
 
@@ -26,6 +27,9 @@ export function getCollectorByPackageManager(pm: PM, rootDir: string, tempDirMan
       return new BunNodeModulesCollector(rootDir, tempDirManager)
     case PM.NPM:
       return new NpmNodeModulesCollector(rootDir, tempDirManager)
+    // should never access this case (as it's internally a fallback), but TS needs a default and we need to satisfy it
+    case PM.TRAVERSAL:
+      return new TraversalNodeModulesCollector(rootDir, tempDirManager)
   }
 }
 
