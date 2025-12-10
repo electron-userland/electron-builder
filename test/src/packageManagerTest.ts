@@ -39,6 +39,7 @@ describe("Package Managers", () => {
       {
         targets: linuxDirTarget,
       },
+<<<<<<< HEAD
       {
         storeDepsLockfileSnapshot: true,
         packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
@@ -65,6 +66,339 @@ describe("Package Managers", () => {
             env: testEnv,
             stdio: "ignore",
           })
+=======
+    }
+  ))
+
+test("yarn berry", ({ expect }) =>
+  assertPack(
+    expect,
+    "test-app-yarn-hoisted",
+    {
+      targets: linuxDirTarget,
+    },
+    {
+      storeDepsLockfileSnapshot: true,
+      packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
+      projectDirCreated: async projectDir => {
+        await modifyPackageJson(
+          projectDir,
+          data => {
+            data.packageManager = yarnBerryVersion
+          },
+          false
+        )
+        await modifyPackageJson(projectDir, data => packageConfig(data, yarnBerryVersion), true)
+        await writeFile(path.join(projectDir, "yarn.lock"), "")
+        await writeFile(path.join(projectDir, "app", "yarn.lock"), "")
+        await copyFile(path.join(getFixtureDir(), ".pnp.cjs"), path.join(projectDir, ".pnp.cjs"))
+      },
+    }
+  ))
+
+// yarn workspace
+test("yarn workspace", ({ expect }) =>
+  assertPack(
+    expect,
+    "test-app-yarn-workspace",
+    {
+      targets: linuxDirTarget,
+      projectDir: "packages/test-app",
+    },
+    {
+      storeDepsLockfileSnapshot: true,
+      packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
+      projectDirCreated: async projectDir => {
+        await modifyPackageJson(projectDir, data => {
+          data.packageManager = yarnVersion
+        })
+        await modifyPackageJson(path.join(projectDir, "packages", "test-app"), data => packageConfig(data, yarnVersion))
+      },
+    }
+  ))
+
+test("yarn berry workspace", ({ expect }) =>
+  assertPack(
+    expect,
+    "test-app-yarn-workspace",
+    {
+      targets: linuxDirTarget,
+      projectDir: "packages/test-app",
+    },
+    {
+      storeDepsLockfileSnapshot: true,
+      packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
+      projectDirCreated: async projectDir => {
+        await modifyPackageJson(projectDir, data => {
+          data.packageManager = yarnBerryVersion
+        })
+        await modifyPackageJson(path.join(projectDir, "packages", "test-app"), data => packageConfig(data, yarnBerryVersion))
+      },
+    }
+  ))
+
+// yarn multi-package workspace
+test("yarn multi-package workspace", ({ expect }) =>
+  assertPack(
+    expect,
+    "test-app-yarn-several-workspace",
+    {
+      targets: linuxDirTarget,
+      projectDir: "packages/test-app",
+    },
+    {
+      storeDepsLockfileSnapshot: true,
+      packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
+      projectDirCreated: async projectDir => {
+        await modifyPackageJson(projectDir, data => {
+          data.packageManager = yarnVersion
+        })
+        await modifyPackageJson(path.join(projectDir, "packages", "test-app"), data => packageConfig(data, yarnVersion))
+      },
+    }
+  ))
+
+ // yarn berry multi-package workspace
+test("yarn berry multi-package workspace", ({ expect }) =>
+  assertPack(
+    expect,
+    "test-app-yarn-several-workspace",
+    {
+      targets: linuxDirTarget,
+      projectDir: "packages/test-app",
+    },
+    {
+      storeDepsLockfileSnapshot: true,
+      packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
+      projectDirCreated: async projectDir => {
+        await modifyPackageJson(projectDir, data => {
+          data.packageManager = yarnBerryVersion
+        })
+        await modifyPackageJson(path.join(projectDir, "packages", "test-app"), data => packageConfig(data, yarnBerryVersion))
+      },
+    }
+  ))
+
+// Test for pnpm package manager
+test("pnpm", ({ expect }) =>
+  app(
+    expect,
+    {
+      targets: linuxDirTarget,
+    },
+    {
+      storeDepsLockfileSnapshot: true,
+      packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
+      projectDirCreated: projectDir =>
+        modifyPackageJson(
+          projectDir,
+          data =>
+            packageConfig(
+              data,
+              "pnpm@10.18.0+sha512.e804f889f1cecc40d572db084eec3e4881739f8dec69c0ff10d2d1beff9a4e309383ba27b5b750059d7f4c149535b6cd0d2cb1ed3aeb739239a4284a68f40cfa"
+            ),
+          false
+        ),
+    }
+  ))
+
+// Test for npm package manager
+test("npm", ({ expect }) =>
+  app(
+    expect,
+    {
+      targets: linuxDirTarget,
+    },
+    {
+      storeDepsLockfileSnapshot: true,
+      packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
+      projectDirCreated: projectDir => modifyPackageJson(projectDir, data => packageConfig(data, "npm@9.8.1"), false),
+    }
+  ))
+
+test("bun workspace --linker=isolated", ({ expect }) =>
+  assertPack(
+    expect,
+    "test-app-bun-workspace",
+    {
+      targets: linuxDirTarget,
+      projectDir: "packages/app",
+    },
+    {
+      packageManager: PM.BUN,
+      projectDirCreated: projectDir => {
+        const appPkg = path.join(projectDir, "packages", "app")
+        const libPkg = path.join(projectDir, "packages", "lib")
+
+        return Promise.all([
+          // root pkgs should not be included
+          modifyPackageJson(projectDir, data => {
+            data.dependencies = {
+              "is-plain-obj": "3.0.0",
+            }
+          }),
+          modifyPackageJson(appPkg, data => {
+            data.dependencies = {
+              lib: "workspace:*",
+              "is-bigint": "1.1.0",
+              process: "^0.11.10",
+            }
+          }),
+          modifyPackageJson(libPkg, data => {
+            data.dependencies = {
+              "left-pad": "1.3.0",
+            }
+          }),
+          outputFile(path.join(projectDir, "bunfig.toml"), '[install]\nlinker = "isolated"\n'),
+        ])
+      },
+      packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
+    }
+  )
+)
+
+test("bun workspace --linker=isolated - multiple conflicting versions", ({ expect }) =>
+  assertPack(
+    expect,
+    "test-app-bun-workspace",
+    {
+      targets: linuxDirTarget,
+      projectDir: "packages/app",
+    },
+    {
+      packageManager: PM.BUN,
+      projectDirCreated: projectDir => {
+        const appPkg = path.join(projectDir, "packages", "app")
+        const libPkg = path.join(projectDir, "packages", "lib")
+
+        return Promise.all([
+          // root pkgs should not be included
+          modifyPackageJson(projectDir, data => {
+            data.dependencies = {
+              "is-plain-obj": "3.0.0",
+            }
+          }),
+          modifyPackageJson(appPkg, data => {
+            data.dependencies = {
+              lib: "workspace:*",
+              "is-bigint": "1.1.0",
+              process: "^0.11.10",
+            }
+          }),
+          modifyPackageJson(libPkg, data => {
+            data.dependencies = {
+              "left-pad": "1.3.0",
+              // should include this in a nested node_modules directory
+              "is-bigint": "1.0.4",
+            }
+          }),
+          outputFile(path.join(projectDir, "bunfig.toml"), '[install]\nlinker = "isolated"\n'),
+        ])
+      },
+      packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
+    }
+  )
+)
+
+test("bun workspace --linker=hoisted", ({ expect }) =>
+  assertPack(
+    expect,
+    "test-app-bun-workspace",
+    {
+      targets: linuxDirTarget,
+      projectDir: "packages/app",
+    },
+    {
+      packageManager: PM.BUN,
+      projectDirCreated: projectDir => {
+        const appPkg = path.join(projectDir, "packages", "app")
+        const libPkg = path.join(projectDir, "packages", "lib")
+
+        return Promise.all([
+          // root pkgs should not be included
+          modifyPackageJson(projectDir, data => {
+            data.dependencies = {
+              "is-plain-obj": "3.0.0",
+            }
+          }),
+          modifyPackageJson(appPkg, data => {
+            data.dependencies = {
+              lib: "workspace:*",
+              "is-bigint": "1.1.0",
+              process: "^0.11.10",
+            }
+          }),
+          modifyPackageJson(libPkg, data => {
+            data.dependencies = {
+              "left-pad": "1.3.0",
+            }
+          }),
+          outputFile(path.join(projectDir, "bunfig.toml"), '[install]\nlinker = "hoisted"\n'),
+        ])
+      },
+      packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
+    }
+  )
+)
+
+test("bun workspace --linker=hoisted - multiple conflicting versions", ({ expect }) =>
+  assertPack(
+    expect,
+    "test-app-bun-workspace",
+    {
+      targets: linuxDirTarget,
+      projectDir: "packages/app",
+    },
+    {
+      packageManager: PM.BUN,
+      projectDirCreated: projectDir => {
+        const appPkg = path.join(projectDir, "packages", "app")
+        const libPkg = path.join(projectDir, "packages", "lib")
+
+        return Promise.all([
+          // root pkgs should not be included
+          modifyPackageJson(projectDir, data => {
+            data.dependencies = {
+              "is-plain-obj": "3.0.0",
+            }
+          }),
+          modifyPackageJson(appPkg, data => {
+            data.dependencies = {
+              lib: "workspace:*",
+              "is-bigint": "1.1.0",
+              process: "^0.11.10",
+            }
+          }),
+          modifyPackageJson(libPkg, data => {
+            data.dependencies = {
+              "left-pad": "1.3.0",
+              // should include this in a nested node_modules directory, since it's a conflicting package version
+              "is-bigint": "1.0.4",
+            }
+          }),
+          outputFile(path.join(projectDir, "bunfig.toml"), '[install]\nlinker = "hoisted"\n'),
+        ])
+      },
+      packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
+    }
+  ))
+
+// Test for local file:// protocol
+
+Object.values(PM)
+  .filter(pm => ![PM.BUN, PM.TRAVERSAL].includes(pm)) // bun is not supported for file: protocol
+  .forEach(pm => {
+    test(`local file:// protocol with ${pm} for project outside workspace`, ({ expect }) => {
+      return assertPack(
+        expect,
+        "test-app-one",
+        {
+          targets: linuxDirTarget,
+          config: {
+            files: ["**/*"],
+            asarUnpack: ["**/node_modules/foo/**/*"],
+          },
+>>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
         },
       }
     ))

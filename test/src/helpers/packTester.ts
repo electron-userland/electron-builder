@@ -217,8 +217,17 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
     (async () => {
       const packageManagerOverride = checkOptions.packageManager
       await modifyPackageJson(projectDir, data => {
+<<<<<<< HEAD
         if (data.packageManager == null || packageManagerOverride) {
           data.packageManager = getPackageManagerWithVersion(packageManagerOverride || PM.NPM).prepareEntry
+=======
+        if (
+          data.packageManager == null &&
+          // these will block `npm list` with "Unsupported package manager specification (bun@1.3.2)"
+          ![PM.BUN, PM.TRAVERSAL].includes(packageManagerOverride)
+        ) {
+          data.packageManager = getPackageManagerWithVersion(packageManagerOverride).prepareEntry
+>>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
         }
       })
 

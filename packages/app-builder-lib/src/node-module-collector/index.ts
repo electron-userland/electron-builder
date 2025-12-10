@@ -30,7 +30,11 @@ import { Lazy } from "lazy-val"
 import { spawn, log, exists, isEmptyOrSpaces } from "builder-util"
 import fs from "fs-extra"
 import * as path from "path"
+<<<<<<< HEAD
 import { TraversalNodeModulesCollector } from "./traversalNodeModulesCollector.js"
+=======
+import { TraversalNodeModulesCollector } from "./traversalNodeModulesCollector"
+>>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
 
 export { getPackageManagerCommand, PM, PnpmNodeModulesCollector, YarnNodeModulesCollector, YarnBerryNodeModulesCollector, BunNodeModulesCollector, TraversalNodeModulesCollector }
 
@@ -46,6 +50,10 @@ export function getCollectorByPackageManager(pm: PM, rootDir: string, tempDirMan
       return new BunNodeModulesCollector(rootDir, tempDirManager)
     case PM.NPM:
       return new NpmNodeModulesCollector(rootDir, tempDirManager)
+<<<<<<< HEAD
+=======
+    // should never access this case (as it's internally a fallback), but TS needs a default and we need to satisfy it
+>>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
     case PM.TRAVERSAL:
       return new TraversalNodeModulesCollector(rootDir, tempDirManager)
   }

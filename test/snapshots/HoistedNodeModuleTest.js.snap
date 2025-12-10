@@ -51243,12 +51243,21 @@ exports[`node_module collectors > yarn ms 2`] = `
 {
   "files": {
     "index.html": {
+<<<<<<< HEAD
       "offset": 51065450,
       "size": 380,
     },
     "index.js": {
       "offset": 51065830,
       "size": 620,
+=======
+      "offset": "50445467",
+      "size": 378,
+    },
+    "index.js": {
+      "offset": "50445845",
+      "size": 619,
+>>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
     },
     "node_modules": {
       "files": {
@@ -72745,18 +72754,44 @@ exports[`node_module collectors > yarn ms 2`] = `
             "node": {
               "files": {
                 "LICENSE": {
+<<<<<<< HEAD
                   "offset": 49913800,
                   "size": 1150,
                 },
                 "package.json": {
                   "offset": 49914940,
                   "size": 760,
+=======
+                  "offset": "48547900",
+                  "size": 1141,
+                },
+                "node_modules": {
+                  "files": {
+                    "undici-types": {
+                      "files": {
+                        "LICENSE": {
+                          "offset": "48549791",
+                          "size": 1090,
+                        },
+                        "package.json": {
+                          "offset": "48550881",
+                          "size": 325,
+                        },
+                      },
+                    },
+                  },
+                },
+                "package.json": {
+                  "offset": "48549041",
+                  "size": 750,
+>>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
                 },
               },
             },
             "pg": {
               "files": {
                 "LICENSE": {
+<<<<<<< HEAD
                   "offset": 49915700,
                   "size": 1150,
                 },
@@ -72767,42 +72802,99 @@ exports[`node_module collectors > yarn ms 2`] = `
                 "package.json": {
                   "offset": 49918820,
                   "size": 820,
+=======
+                  "executable": true,
+                  "offset": "48551206",
+                  "size": 1141,
+                },
+                "package.json": {
+                  "executable": true,
+                  "offset": "48552347",
+                  "size": 611,
+>>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
                 },
               },
             },
             "pg-pool": {
               "files": {
                 "LICENSE": {
+<<<<<<< HEAD
                   "offset": 49919630,
                   "size": 1150,
                 },
                 "package.json": {
                   "offset": 49920770,
                   "size": 580,
+=======
+                  "offset": "48552958",
+                  "size": 1141,
+                },
+                "package.json": {
+                  "offset": "48554099",
+                  "size": 579,
+>>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
                 },
               },
             },
             "shimmer": {
               "files": {
                 "LICENSE": {
+<<<<<<< HEAD
                   "offset": 49921350,
                   "size": 1150,
                 },
                 "package.json": {
                   "offset": 49922490,
                   "size": 560,
+=======
+                  "offset": "48554678",
+                  "size": 1141,
+                },
+                "package.json": {
+                  "offset": "48555819",
+                  "size": 555,
+>>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
                 },
               },
             },
             "tedious": {
               "files": {
                 "LICENSE": {
+<<<<<<< HEAD
                   "offset": 49923050,
                   "size": 1150,
                 },
                 "package.json": {
                   "offset": 49924190,
                   "size": 590,
+=======
+                  "offset": "48556374",
+                  "size": 1141,
+                },
+                "node_modules": {
+                  "files": {
+                    "@types": {
+                      "files": {
+                        "node": {
+                          "files": {
+                            "LICENSE": {
+                              "offset": "48558097",
+                              "size": 1141,
+                            },
+                            "package.json": {
+                              "offset": "48559238",
+                              "size": 750,
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+                "package.json": {
+                  "offset": "48557515",
+                  "size": 582,
+>>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
                 },
               },
             },
@@ -72811,14 +72903,23 @@ exports[`node_module collectors > yarn ms 2`] = `
         "acorn": {
           "files": {
             "LICENSE": {
+<<<<<<< HEAD
               "offset": 49924770,
               "size": 1100,
+=======
+              "offset": "48559988",
+              "size": 1099,
+>>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
             },
             "bin": {
               "files": {
                 "acorn": {
                   "executable": true,
+<<<<<<< HEAD
                   "offset": 49925870,
+=======
+                  "offset": "48561087",
+>>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
                   "size": 60,
                 },
               },
@@ -72826,6 +72927,7 @@ exports[`node_module collectors > yarn ms 2`] = `
             "dist": {
               "files": {
                 "acorn.d.mts": {
+<<<<<<< HEAD
                   "offset": 49925930,
                   "size": 22020,
                 },
@@ -72840,41 +72942,84 @@ exports[`node_module collectors > yarn ms 2`] = `
                 "bin.js": {
                   "offset": 50421740,
                   "size": 3330,
+=======
+                  "offset": "48561147",
+                  "size": 21989,
+                },
+                "acorn.js": {
+                  "offset": "48583136",
+                  "size": 241575,
+                },
+                "acorn.mjs": {
+                  "offset": "48824711",
+                  "size": 229792,
+                },
+                "bin.js": {
+                  "offset": "49054503",
+                  "size": 3329,
+>>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
                 },
               },
             },
             "package.json": {
+<<<<<<< HEAD
               "offset": 50425070,
               "size": 1000,
+=======
+              "offset": "49057832",
+              "size": 997,
+>>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
             },
           },
         },
         "acorn-import-attributes": {
           "files": {
             "LICENSE": {
+<<<<<<< HEAD
               "offset": 50426060,
               "size": 1070,
+=======
+              "offset": "49058829",
+              "size": 1069,
+>>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
             },
             "lib": {
               "files": {
                 "index.js": {
+<<<<<<< HEAD
                   "offset": 50427130,
                   "size": 10490,
                 },
                 "index.mjs": {
                   "offset": 50437620,
+=======
+                  "offset": "49059898",
+                  "size": 10482,
+                },
+                "index.mjs": {
+                  "offset": "49070380",
+>>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
                   "size": 9400,
                 },
               },
             },
             "package.json": {
+<<<<<<< HEAD
               "offset": 50447020,
               "size": 1010,
+=======
+              "offset": "49079780",
+              "size": 1002,
+>>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
             },
             "src": {
               "files": {
                 "index.js": {
+<<<<<<< HEAD
                   "offset": 50448020,
+=======
+                  "offset": "49080782",
+>>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
                   "size": 9400,
                 },
               },
@@ -72885,23 +73030,37 @@ exports[`node_module collectors > yarn ms 2`] = `
           "files": {
             "LICENSE": {
               "executable": true,
+<<<<<<< HEAD
               "offset": 50457420,
               "size": 1090,
+=======
+              "offset": "49090182",
+              "size": 1085,
+>>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
             },
             "dist": {
               "files": {
                 "lexer.js": {
+<<<<<<< HEAD
                   "offset": 50458500,
                   "size": 33510,
                 },
                 "lexer.mjs": {
                   "offset": 50492010,
+=======
+                  "offset": "49091267",
+                  "size": 33507,
+                },
+                "lexer.mjs": {
+                  "offset": "49124774",
+>>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
                   "size": 33480,
                 },
               },
             },
             "lexer.js": {
               "executable": true,
+<<<<<<< HEAD
               "offset": 50525490,
               "size": 53720,
             },
@@ -72909,22 +73068,60 @@ exports[`node_module collectors > yarn ms 2`] = `
               "executable": true,
               "offset": 50579200,
               "size": 830,
+=======
+              "offset": "49158254",
+              "size": 53714,
+            },
+            "package.json": {
+              "executable": true,
+              "offset": "49211968",
+              "size": 829,
+>>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
             },
           },
         },
         "debug": {
           "files": {
             "LICENSE": {
+<<<<<<< HEAD
               "offset": 50580030,
               "size": 1140,
             },
             "package.json": {
               "offset": 50581170,
+=======
+              "offset": "49212797",
+              "size": 1139,
+            },
+            "node_modules": {
+              "files": {
+                "ms": {
+                  "files": {
+                    "index.js": {
+                      "offset": "49232906",
+                      "size": 3024,
+                    },
+                    "license.md": {
+                      "offset": "49235930",
+                      "size": 1079,
+                    },
+                    "package.json": {
+                      "offset": "49237009",
+                      "size": 497,
+                    },
+                  },
+                },
+              },
+            },
+            "package.json": {
+              "offset": "49213936",
+>>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
               "size": 910,
             },
             "src": {
               "files": {
                 "browser.js": {
+<<<<<<< HEAD
                   "offset": 50582080,
                   "size": 6110,
                 },
@@ -72939,6 +73136,22 @@ exports[`node_module collectors > yarn ms 2`] = `
                 "node.js": {
                   "offset": 50595410,
                   "size": 4730,
+=======
+                  "offset": "49214846",
+                  "size": 6103,
+                },
+                "common.js": {
+                  "offset": "49220949",
+                  "size": 6915,
+                },
+                "index.js": {
+                  "offset": "49227864",
+                  "size": 314,
+                },
+                "node.js": {
+                  "offset": "49228178",
+                  "size": 4728,
+>>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
                 },
               },
             },
@@ -72947,26 +73160,44 @@ exports[`node_module collectors > yarn ms 2`] = `
         "deepmerge": {
           "files": {
             ".editorconfig": {
+<<<<<<< HEAD
               "offset": 50600140,
               "size": 120,
             },
             ".eslintcache": {
               "offset": 50600250,
               "size": 390,
+=======
+              "offset": "49237506",
+              "size": 113,
+            },
+            ".eslintcache": {
+              "offset": "49237619",
+              "size": 382,
+>>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
             },
             "dist": {
               "files": {
                 "cjs.js": {
+<<<<<<< HEAD
                   "offset": 50600640,
                   "size": 4050,
                 },
                 "umd.js": {
                   "offset": 50604680,
+=======
+                  "offset": "49238001",
+                  "size": 4048,
+                },
+                "umd.js": {
+                  "offset": "49242049",
+>>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
                   "size": 4420,
                 },
               },
             },
             "index.js": {
+<<<<<<< HEAD
               "offset": 50609100,
               "size": 3300,
             },
@@ -72981,25 +73212,55 @@ exports[`node_module collectors > yarn ms 2`] = `
             "rollup.config.js": {
               "offset": 50614240,
               "size": 350,
+=======
+              "offset": "49246469",
+              "size": 3293,
+            },
+            "license.txt": {
+              "offset": "49249762",
+              "size": 1116,
+            },
+            "package.json": {
+              "offset": "49250878",
+              "size": 729,
+            },
+            "rollup.config.js": {
+              "offset": "49251607",
+              "size": 343,
+>>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
             },
           },
         },
         "electron-clear-data": {
           "files": {
             "LICENSE.md": {
+<<<<<<< HEAD
               "offset": 50614590,
               "size": 1060,
+=======
+              "offset": "49251950",
+              "size": 1059,
+>>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
             },
             "dist": {
               "files": {
                 "main.js": {
+<<<<<<< HEAD
                   "offset": 50615640,
                   "size": 1740,
+=======
+                  "offset": "49253009",
+                  "size": 1734,
+>>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
                 },
               },
             },
             "package.json": {
+<<<<<<< HEAD
               "offset": 50617380,
+=======
+              "offset": "49254743",
+>>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
               "size": 960,
             },
           },
@@ -73051,34 +73312,58 @@ exports[`node_module collectors > yarn ms 2`] = `
         "forwarded-parse": {
           "files": {
             "LICENSE": {
+<<<<<<< HEAD
               "offset": 50624440,
               "size": 1060,
             },
             "index.js": {
               "offset": 50625490,
               "size": 4200,
+=======
+              "offset": "49255703",
+              "size": 1055,
+            },
+            "index.js": {
+              "offset": "49256758",
+              "size": 4192,
+>>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
             },
             "lib": {
               "files": {
                 "ascii.js": {
+<<<<<<< HEAD
                   "offset": 50629680,
                   "size": 2230,
                 },
                 "error.js": {
                   "offset": 50631910,
                   "size": 470,
+=======
+                  "offset": "49260950",
+                  "size": 2230,
+                },
+                "error.js": {
+                  "offset": "49263180",
+                  "size": 465,
+>>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
                 },
               },
             },
             "package.json": {
+<<<<<<< HEAD
               "offset": 50632380,
               "size": 470,
+=======
+              "offset": "49263645",
+              "size": 465,
+>>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
             },
           },
         },
         "function-bind": {
           "files": {
             ".nycrc": {
+<<<<<<< HEAD
               "offset": 50632840,
               "size": 220,
             },
@@ -73097,12 +73382,33 @@ exports[`node_module collectors > yarn ms 2`] = `
             "package.json": {
               "offset": 50636280,
               "size": 1330,
+=======
+              "offset": "49264110",
+              "size": 216,
+            },
+            "LICENSE": {
+              "offset": "49264326",
+              "size": 1052,
+            },
+            "implementation.js": {
+              "offset": "49265378",
+              "size": 2043,
+            },
+            "index.js": {
+              "offset": "49267421",
+              "size": 126,
+            },
+            "package.json": {
+              "offset": "49267547",
+              "size": 1329,
+>>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
             },
           },
         },
         "hasown": {
           "files": {
             ".nycrc": {
+<<<<<<< HEAD
               "offset": 50637610,
               "size": 220,
             },
@@ -73125,12 +73431,61 @@ exports[`node_module collectors > yarn ms 2`] = `
             "tsconfig.json": {
               "offset": 50640720,
               "size": 80,
+=======
+              "offset": "49268876",
+              "size": 216,
+            },
+            "LICENSE": {
+              "offset": "49269092",
+              "size": 1083,
+            },
+            "index.js": {
+              "offset": "49270175",
+              "size": 206,
+            },
+            "node_modules": {
+              "files": {
+                "function-bind": {
+                  "files": {
+                    ".nycrc": {
+                      "offset": "49271928",
+                      "size": 216,
+                    },
+                    "LICENSE": {
+                      "offset": "49272144",
+                      "size": 1052,
+                    },
+                    "implementation.js": {
+                      "offset": "49273196",
+                      "size": 2043,
+                    },
+                    "index.js": {
+                      "offset": "49275239",
+                      "size": 126,
+                    },
+                    "package.json": {
+                      "offset": "49275365",
+                      "size": 1329,
+                    },
+                  },
+                },
+              },
+            },
+            "package.json": {
+              "offset": "49270381",
+              "size": 1474,
+            },
+            "tsconfig.json": {
+              "offset": "49271855",
+              "size": 73,
+>>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
             },
           },
         },
         "import-in-the-middle": {
           "files": {
             ".editorconfig": {
+<<<<<<< HEAD
               "offset": 50640790,
               "size": 220,
             },
@@ -73177,10 +73532,59 @@ exports[`node_module collectors > yarn ms 2`] = `
             "index.js": {
               "offset": 50672670,
               "size": 4720,
+=======
+              "offset": "49276694",
+              "size": 215,
+            },
+            ".eslintrc.yaml": {
+              "offset": "49276909",
+              "size": 551,
+            },
+            ".release-please-manifest.json": {
+              "offset": "49277460",
+              "size": 20,
+            },
+            "CODE_OF_CONDUCT.md": {
+              "offset": "49277480",
+              "size": 148,
+            },
+            "CONTRIBUTING.md": {
+              "offset": "49277628",
+              "size": 1409,
+            },
+            "GOVERNANCE.md": {
+              "offset": "49279037",
+              "size": 1267,
+            },
+            "LICENSE": {
+              "offset": "49280304",
+              "size": 11357,
+            },
+            "LICENSE-3rdparty.csv": {
+              "offset": "49291661",
+              "size": 203,
+            },
+            "NOTICE": {
+              "offset": "49291864",
+              "size": 1491,
+            },
+            "hook.js": {
+              "offset": "49293355",
+              "size": 14810,
+            },
+            "hook.mjs": {
+              "offset": "49308165",
+              "size": 412,
+            },
+            "index.js": {
+              "offset": "49308577",
+              "size": 4716,
+>>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
             },
             "lib": {
               "files": {
                 "get-esm-exports.js": {
+<<<<<<< HEAD
                   "offset": 50677390,
                   "size": 3450,
                 },
@@ -73191,10 +73595,147 @@ exports[`node_module collectors > yarn ms 2`] = `
                 "register.js": {
                   "offset": 50687230,
                   "size": 1720,
+=======
+                  "offset": "49313293",
+                  "size": 3441,
+                },
+                "get-exports.js": {
+                  "offset": "49316734",
+                  "size": 6405,
+                },
+                "register.js": {
+                  "offset": "49323139",
+                  "size": 1712,
+                },
+              },
+            },
+            "node_modules": {
+              "files": {
+                "acorn": {
+                  "files": {
+                    "LICENSE": {
+                      "offset": "49326855",
+                      "size": 1099,
+                    },
+                    "bin": {
+                      "files": {
+                        "acorn": {
+                          "executable": true,
+                          "offset": "49327954",
+                          "size": 60,
+                        },
+                      },
+                    },
+                    "dist": {
+                      "files": {
+                        "acorn.d.mts": {
+                          "offset": "49328014",
+                          "size": 21989,
+                        },
+                        "acorn.js": {
+                          "offset": "49350003",
+                          "size": 241575,
+                        },
+                        "acorn.mjs": {
+                          "offset": "49591578",
+                          "size": 229792,
+                        },
+                        "bin.js": {
+                          "offset": "49821370",
+                          "size": 3329,
+                        },
+                      },
+                    },
+                    "package.json": {
+                      "offset": "49824699",
+                      "size": 997,
+                    },
+                  },
+                },
+                "acorn-import-attributes": {
+                  "files": {
+                    "LICENSE": {
+                      "offset": "49825696",
+                      "size": 1069,
+                    },
+                    "lib": {
+                      "files": {
+                        "index.js": {
+                          "offset": "49826765",
+                          "size": 10482,
+                        },
+                        "index.mjs": {
+                          "offset": "49837247",
+                          "size": 9400,
+                        },
+                      },
+                    },
+                    "package.json": {
+                      "offset": "49846647",
+                      "size": 1002,
+                    },
+                    "src": {
+                      "files": {
+                        "index.js": {
+                          "offset": "49847649",
+                          "size": 9400,
+                        },
+                      },
+                    },
+                  },
+                },
+                "cjs-module-lexer": {
+                  "files": {
+                    "LICENSE": {
+                      "executable": true,
+                      "offset": "49857049",
+                      "size": 1085,
+                    },
+                    "dist": {
+                      "files": {
+                        "lexer.js": {
+                          "offset": "49858134",
+                          "size": 33507,
+                        },
+                        "lexer.mjs": {
+                          "offset": "49891641",
+                          "size": 33480,
+                        },
+                      },
+                    },
+                    "lexer.js": {
+                      "executable": true,
+                      "offset": "49925121",
+                      "size": 53714,
+                    },
+                    "package.json": {
+                      "executable": true,
+                      "offset": "49978835",
+                      "size": 829,
+                    },
+                  },
+                },
+                "module-details-from-path": {
+                  "files": {
+                    "LICENSE": {
+                      "offset": "49979664",
+                      "size": 1091,
+                    },
+                    "index.js": {
+                      "offset": "49980755",
+                      "size": 965,
+                    },
+                    "package.json": {
+                      "offset": "49981720",
+                      "size": 675,
+                    },
+                  },
+>>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
                 },
               },
             },
             "package.json": {
+<<<<<<< HEAD
               "offset": 50688950,
               "size": 1400,
             },
@@ -73205,12 +73746,25 @@ exports[`node_module collectors > yarn ms 2`] = `
             "tsconfig.json": {
               "offset": 50690650,
               "size": 310,
+=======
+              "offset": "49324851",
+              "size": 1399,
+            },
+            "release-please-config.json": {
+              "offset": "49326250",
+              "size": 300,
+            },
+            "tsconfig.json": {
+              "offset": "49326550",
+              "size": 305,
+>>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
             },
           },
         },
         "is-core-module": {
           "files": {
             ".nycrc": {
+<<<<<<< HEAD
               "offset": 50690950,
               "size": 140,
             },
@@ -73229,12 +73783,61 @@ exports[`node_module collectors > yarn ms 2`] = `
             "package.json": {
               "offset": 50699980,
               "size": 1240,
+=======
+              "offset": "49982395",
+              "size": 139,
+            },
+            "LICENSE": {
+              "offset": "49982534",
+              "size": 1078,
+            },
+            "core.json": {
+              "offset": "49983612",
+              "size": 5953,
+            },
+            "index.js": {
+              "offset": "49989565",
+              "size": 1766,
+            },
+            "node_modules": {
+              "files": {
+                "hasown": {
+                  "files": {
+                    ".nycrc": {
+                      "offset": "49992567",
+                      "size": 216,
+                    },
+                    "LICENSE": {
+                      "offset": "49992783",
+                      "size": 1083,
+                    },
+                    "index.js": {
+                      "offset": "49993866",
+                      "size": 206,
+                    },
+                    "package.json": {
+                      "offset": "49994072",
+                      "size": 1474,
+                    },
+                    "tsconfig.json": {
+                      "offset": "49995546",
+                      "size": 73,
+                    },
+                  },
+                },
+              },
+            },
+            "package.json": {
+              "offset": "49991331",
+              "size": 1236,
+>>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
             },
           },
         },
         "module-details-from-path": {
           "files": {
             "LICENSE": {
+<<<<<<< HEAD
               "offset": 50701220,
               "size": 1100,
             },
@@ -73245,12 +73848,25 @@ exports[`node_module collectors > yarn ms 2`] = `
             "package.json": {
               "offset": 50703280,
               "size": 680,
+=======
+              "offset": "49995619",
+              "size": 1091,
+            },
+            "index.js": {
+              "offset": "49996710",
+              "size": 965,
+            },
+            "package.json": {
+              "offset": "49997675",
+              "size": 675,
+>>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
             },
           },
         },
         "ms": {
           "files": {
             "index.js": {
+<<<<<<< HEAD
               "offset": 50703950,
               "size": 3030,
             },
@@ -73261,12 +73877,25 @@ exports[`node_module collectors > yarn ms 2`] = `
             "package.json": {
               "offset": 50708050,
               "size": 500,
+=======
+              "offset": "49998350",
+              "size": 3024,
+            },
+            "license.md": {
+              "offset": "50001374",
+              "size": 1079,
+            },
+            "package.json": {
+              "offset": "50002453",
+              "size": 497,
+>>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
             },
           },
         },
         "path-parse": {
           "files": {
             "LICENSE": {
+<<<<<<< HEAD
               "offset": 50708550,
               "size": 1080,
             },
@@ -73277,12 +73906,25 @@ exports[`node_module collectors > yarn ms 2`] = `
             "package.json": {
               "offset": 50711520,
               "size": 370,
+=======
+              "offset": "50002950",
+              "size": 1080,
+            },
+            "index.js": {
+              "offset": "50004030",
+              "size": 1893,
+            },
+            "package.json": {
+              "offset": "50005923",
+              "size": 362,
+>>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
             },
           },
         },
         "pg-int8": {
           "files": {
             "LICENSE": {
+<<<<<<< HEAD
               "offset": 50711890,
               "size": 750,
             },
@@ -73293,18 +73935,36 @@ exports[`node_module collectors > yarn ms 2`] = `
             "package.json": {
               "offset": 50714210,
               "size": 410,
+=======
+              "offset": "50006285",
+              "size": 750,
+            },
+            "index.js": {
+              "offset": "50007035",
+              "size": 1572,
+            },
+            "package.json": {
+              "offset": "50008607",
+              "size": 402,
+>>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
             },
           },
         },
         "pg-protocol": {
           "files": {
             "LICENSE": {
+<<<<<<< HEAD
               "offset": 50714610,
               "size": 1080,
+=======
+              "offset": "50009009",
+              "size": 1077,
+>>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
             },
             "dist": {
               "files": {
                 "b.js": {
+<<<<<<< HEAD
                   "offset": 50715690,
                   "size": 640,
                 },
@@ -73375,24 +74035,107 @@ exports[`node_module collectors > yarn ms 2`] = `
                 "serializer.js.map": {
                   "offset": 50822610,
                   "size": 7130,
+=======
+                  "offset": "50010086",
+                  "size": 636,
+                },
+                "b.js.map": {
+                  "offset": "50010722",
+                  "size": 792,
+                },
+                "buffer-reader.js": {
+                  "offset": "50011514",
+                  "size": 1639,
+                },
+                "buffer-reader.js.map": {
+                  "offset": "50013153",
+                  "size": 1747,
+                },
+                "buffer-writer.js": {
+                  "offset": "50014900",
+                  "size": 2772,
+                },
+                "buffer-writer.js.map": {
+                  "offset": "50017672",
+                  "size": 3087,
+                },
+                "inbound-parser.test.js": {
+                  "offset": "50020759",
+                  "size": 19234,
+                },
+                "inbound-parser.test.js.map": {
+                  "offset": "50039993",
+                  "size": 14688,
+                },
+                "index.js": {
+                  "offset": "50054681",
+                  "size": 791,
+                },
+                "index.js.map": {
+                  "offset": "50055472",
+                  "size": 522,
+                },
+                "messages.js": {
+                  "offset": "50055994",
+                  "size": 4973,
+                },
+                "messages.js.map": {
+                  "offset": "50060967",
+                  "size": 3383,
+                },
+                "outbound-serializer.test.js": {
+                  "offset": "50064350",
+                  "size": 11065,
+                },
+                "outbound-serializer.test.js.map": {
+                  "offset": "50075415",
+                  "size": 10276,
+                },
+                "parser.js": {
+                  "offset": "50085691",
+                  "size": 13824,
+                },
+                "parser.js.map": {
+                  "offset": "50099515",
+                  "size": 11246,
+                },
+                "serializer.js": {
+                  "offset": "50110761",
+                  "size": 6937,
+                },
+                "serializer.js.map": {
+                  "offset": "50117698",
+                  "size": 7124,
+>>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
                 },
               },
             },
             "esm": {
               "files": {
                 "index.js": {
+<<<<<<< HEAD
                   "offset": 50829740,
                   "size": 330,
+=======
+                  "offset": "50124822",
+                  "size": 325,
+>>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
                 },
               },
             },
             "package.json": {
+<<<<<<< HEAD
               "offset": 50830060,
               "size": 870,
+=======
+              "offset": "50125147",
+              "size": 871,
+>>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
             },
             "src": {
               "files": {
                 "b.ts": {
+<<<<<<< HEAD
                   "offset": 50830930,
                   "size": 480,
                 },
@@ -73427,15 +74170,59 @@ exports[`node_module collectors > yarn ms 2`] = `
                 "serializer.ts": {
                   "offset": 50879180,
                   "size": 7200,
+=======
+                  "offset": "50126018",
+                  "size": 473,
+                },
+                "buffer-reader.ts": {
+                  "offset": "50126491",
+                  "size": 1440,
+                },
+                "buffer-writer.ts": {
+                  "offset": "50127931",
+                  "size": 2503,
+                },
+                "inbound-parser.test.ts": {
+                  "offset": "50130434",
+                  "size": 15158,
+                },
+                "index.ts": {
+                  "offset": "50145592",
+                  "size": 443,
+                },
+                "messages.ts": {
+                  "offset": "50146035",
+                  "size": 6458,
+                },
+                "outbound-serializer.test.ts": {
+                  "offset": "50152493",
+                  "size": 8562,
+                },
+                "parser.ts": {
+                  "offset": "50161055",
+                  "size": 13469,
+                },
+                "serializer.ts": {
+                  "offset": "50174524",
+                  "size": 7193,
+>>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
                 },
                 "testing": {
                   "files": {
                     "buffer-list.ts": {
+<<<<<<< HEAD
                       "offset": 50886370,
                       "size": 1730,
                     },
                     "test-buffers.ts": {
                       "offset": 50888100,
+=======
+                      "offset": "50181717",
+                      "size": 1727,
+                    },
+                    "test-buffers.ts": {
+                      "offset": "50183444",
+>>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
                       "size": 4360,
                     },
                   },
@@ -73447,6 +74234,7 @@ exports[`node_module collectors > yarn ms 2`] = `
         "pg-types": {
           "files": {
             "Makefile": {
+<<<<<<< HEAD
               "offset": 50892460,
               "size": 240,
             },
@@ -73457,10 +74245,23 @@ exports[`node_module collectors > yarn ms 2`] = `
             "index.test-d.ts": {
               "offset": 50893900,
               "size": 760,
+=======
+              "offset": "50187804",
+              "size": 232,
+            },
+            "index.js": {
+              "offset": "50188036",
+              "size": 1214,
+            },
+            "index.test-d.ts": {
+              "offset": "50189250",
+              "size": 759,
+>>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
             },
             "lib": {
               "files": {
                 "arrayParser.js": {
+<<<<<<< HEAD
                   "offset": 50894660,
                   "size": 210,
                 },
@@ -73475,18 +74276,108 @@ exports[`node_module collectors > yarn ms 2`] = `
                 "textParsers.js": {
                   "offset": 50902500,
                   "size": 5370,
+=======
+                  "offset": "50190009",
+                  "size": 208,
+                },
+                "binaryParsers.js": {
+                  "offset": "50190217",
+                  "size": 6063,
+                },
+                "builtins.js": {
+                  "offset": "50196280",
+                  "size": 1564,
+                },
+                "textParsers.js": {
+                  "offset": "50197844",
+                  "size": 5367,
+                },
+              },
+            },
+            "node_modules": {
+              "files": {
+                "postgres-array": {
+                  "files": {
+                    "index.js": {
+                      "offset": "50203918",
+                      "size": 2320,
+                    },
+                    "license": {
+                      "offset": "50206238",
+                      "size": 1111,
+                    },
+                    "package.json": {
+                      "offset": "50207349",
+                      "size": 526,
+                    },
+                  },
+                },
+                "postgres-bytea": {
+                  "files": {
+                    "index.js": {
+                      "offset": "50207875",
+                      "size": 823,
+                    },
+                    "license": {
+                      "offset": "50208698",
+                      "size": 1111,
+                    },
+                    "package.json": {
+                      "offset": "50209809",
+                      "size": 480,
+                    },
+                  },
+                },
+                "postgres-date": {
+                  "files": {
+                    "index.js": {
+                      "offset": "50210289",
+                      "size": 2676,
+                    },
+                    "license": {
+                      "offset": "50212965",
+                      "size": 1111,
+                    },
+                    "package.json": {
+                      "offset": "50214076",
+                      "size": 485,
+                    },
+                  },
+                },
+                "postgres-interval": {
+                  "files": {
+                    "index.js": {
+                      "offset": "50214561",
+                      "size": 3413,
+                    },
+                    "license": {
+                      "offset": "50217974",
+                      "size": 1111,
+                    },
+                    "package.json": {
+                      "offset": "50219085",
+                      "size": 540,
+                    },
+                  },
+>>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
                 },
               },
             },
             "package.json": {
+<<<<<<< HEAD
               "offset": 50907870,
               "size": 710,
+=======
+              "offset": "50203211",
+              "size": 707,
+>>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
             },
           },
         },
         "postgres-array": {
           "files": {
             "index.js": {
+<<<<<<< HEAD
               "offset": 50908570,
               "size": 2320,
             },
@@ -73497,12 +74388,25 @@ exports[`node_module collectors > yarn ms 2`] = `
             "package.json": {
               "offset": 50912000,
               "size": 530,
+=======
+              "offset": "50219625",
+              "size": 2320,
+            },
+            "license": {
+              "offset": "50221945",
+              "size": 1111,
+            },
+            "package.json": {
+              "offset": "50223056",
+              "size": 526,
+>>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
             },
           },
         },
         "postgres-bytea": {
           "files": {
             "index.js": {
+<<<<<<< HEAD
               "offset": 50912530,
               "size": 870,
             },
@@ -73512,6 +74416,17 @@ exports[`node_module collectors > yarn ms 2`] = `
             },
             "package.json": {
               "offset": 50914500,
+=======
+              "offset": "50223582",
+              "size": 823,
+            },
+            "license": {
+              "offset": "50224405",
+              "size": 1111,
+            },
+            "package.json": {
+              "offset": "50225516",
+>>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
               "size": 480,
             },
           },
@@ -73519,6 +74434,7 @@ exports[`node_module collectors > yarn ms 2`] = `
         "postgres-date": {
           "files": {
             "index.js": {
+<<<<<<< HEAD
               "offset": 50914980,
               "size": 2680,
             },
@@ -73529,12 +74445,25 @@ exports[`node_module collectors > yarn ms 2`] = `
             "package.json": {
               "offset": 50918770,
               "size": 490,
+=======
+              "offset": "50225996",
+              "size": 2676,
+            },
+            "license": {
+              "offset": "50228672",
+              "size": 1111,
+            },
+            "package.json": {
+              "offset": "50229783",
+              "size": 485,
+>>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
             },
           },
         },
         "postgres-interval": {
           "files": {
             "index.js": {
+<<<<<<< HEAD
               "offset": 50919260,
               "size": 3420,
             },
@@ -73544,6 +74473,45 @@ exports[`node_module collectors > yarn ms 2`] = `
             },
             "package.json": {
               "offset": 50923780,
+=======
+              "offset": "50230268",
+              "size": 3413,
+            },
+            "license": {
+              "offset": "50233681",
+              "size": 1111,
+            },
+            "node_modules": {
+              "files": {
+                "xtend": {
+                  "files": {
+                    "LICENSE": {
+                      "offset": "50235332",
+                      "size": 1078,
+                    },
+                    "immutable.js": {
+                      "offset": "50236410",
+                      "size": 384,
+                    },
+                    "mutable.js": {
+                      "offset": "50236794",
+                      "size": 369,
+                    },
+                    "package.json": {
+                      "offset": "50237163",
+                      "size": 701,
+                    },
+                    "test.js": {
+                      "offset": "50237864",
+                      "size": 2307,
+                    },
+                  },
+                },
+              },
+            },
+            "package.json": {
+              "offset": "50234792",
+>>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
               "size": 540,
             },
           },
@@ -73551,6 +74519,7 @@ exports[`node_module collectors > yarn ms 2`] = `
         "require-in-the-middle": {
           "files": {
             "LICENSE": {
+<<<<<<< HEAD
               "offset": 50924320,
               "size": 1200,
             },
@@ -73560,6 +74529,134 @@ exports[`node_module collectors > yarn ms 2`] = `
             },
             "package.json": {
               "offset": 50939660,
+=======
+              "offset": "50240171",
+              "size": 1192,
+            },
+            "index.js": {
+              "offset": "50241363",
+              "size": 14148,
+            },
+            "node_modules": {
+              "files": {
+                "debug": {
+                  "files": {
+                    "LICENSE": {
+                      "offset": "50256481",
+                      "size": 1139,
+                    },
+                    "package.json": {
+                      "offset": "50257620",
+                      "size": 910,
+                    },
+                    "src": {
+                      "files": {
+                        "browser.js": {
+                          "offset": "50258530",
+                          "size": 6103,
+                        },
+                        "common.js": {
+                          "offset": "50264633",
+                          "size": 6915,
+                        },
+                        "index.js": {
+                          "offset": "50271548",
+                          "size": 314,
+                        },
+                        "node.js": {
+                          "offset": "50271862",
+                          "size": 4728,
+                        },
+                      },
+                    },
+                  },
+                },
+                "resolve": {
+                  "files": {
+                    ".editorconfig": {
+                      "offset": "50276590",
+                      "size": 605,
+                    },
+                    "LICENSE": {
+                      "offset": "50277195",
+                      "size": 1071,
+                    },
+                    "SECURITY.md": {
+                      "offset": "50278266",
+                      "size": 357,
+                    },
+                    "async.js": {
+                      "offset": "50278623",
+                      "size": 56,
+                    },
+                    "bin": {
+                      "files": {
+                        "resolve": {
+                          "executable": true,
+                          "offset": "50278679",
+                          "size": 1535,
+                        },
+                      },
+                    },
+                    "index.js": {
+                      "offset": "50280214",
+                      "size": 174,
+                    },
+                    "lib": {
+                      "files": {
+                        "async.js": {
+                          "offset": "50280388",
+                          "size": 11517,
+                        },
+                        "caller.js": {
+                          "offset": "50291905",
+                          "size": 354,
+                        },
+                        "core.js": {
+                          "offset": "50292259",
+                          "size": 309,
+                        },
+                        "core.json": {
+                          "offset": "50292568",
+                          "size": 5953,
+                        },
+                        "homedir.js": {
+                          "offset": "50298521",
+                          "size": 805,
+                        },
+                        "is-core.js": {
+                          "offset": "50299326",
+                          "size": 116,
+                        },
+                        "node-modules-paths.js": {
+                          "offset": "50299442",
+                          "size": 1365,
+                        },
+                        "normalize-options.js": {
+                          "offset": "50300807",
+                          "size": 348,
+                        },
+                        "sync.js": {
+                          "offset": "50301155",
+                          "size": 7147,
+                        },
+                      },
+                    },
+                    "package.json": {
+                      "offset": "50308302",
+                      "size": 1318,
+                    },
+                    "sync.js": {
+                      "offset": "50309620",
+                      "size": 55,
+                    },
+                  },
+                },
+              },
+            },
+            "package.json": {
+              "offset": "50255511",
+>>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
               "size": 970,
             },
           },
@@ -73579,6 +74676,7 @@ exports[`node_module collectors > yarn ms 2`] = `
               },
             },
             ".editorconfig": {
+<<<<<<< HEAD
               "offset": 50942630,
               "size": 660,
             },
@@ -73593,13 +74691,34 @@ exports[`node_module collectors > yarn ms 2`] = `
             "async.js": {
               "offset": 50944740,
               "size": 60,
+=======
+              "offset": "50309675",
+              "size": 605,
+            },
+            "LICENSE": {
+              "offset": "50310280",
+              "size": 1071,
+            },
+            "SECURITY.md": {
+              "offset": "50311351",
+              "size": 357,
+            },
+            "async.js": {
+              "offset": "50311708",
+              "size": 56,
+>>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
             },
             "bin": {
               "files": {
                 "resolve": {
                   "executable": true,
+<<<<<<< HEAD
                   "offset": 50944790,
                   "size": 1540,
+=======
+                  "offset": "50311764",
+                  "size": 1535,
+>>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
                 },
               },
             },
@@ -73608,12 +74727,18 @@ exports[`node_module collectors > yarn ms 2`] = `
               "size": 1580,
             },
             "index.js": {
+<<<<<<< HEAD
               "offset": 50947900,
               "size": 180,
+=======
+              "offset": "50313299",
+              "size": 174,
+>>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
             },
             "lib": {
               "files": {
                 "async.js": {
+<<<<<<< HEAD
                   "offset": 50948080,
                   "size": 11550,
                 },
@@ -73648,37 +74773,161 @@ exports[`node_module collectors > yarn ms 2`] = `
                 "sync.js": {
                   "offset": 50969060,
                   "size": 7170,
+=======
+                  "offset": "50313473",
+                  "size": 11517,
+                },
+                "caller.js": {
+                  "offset": "50324990",
+                  "size": 354,
+                },
+                "core.js": {
+                  "offset": "50325344",
+                  "size": 309,
+                },
+                "core.json": {
+                  "offset": "50325653",
+                  "size": 5953,
+                },
+                "homedir.js": {
+                  "offset": "50331606",
+                  "size": 805,
+                },
+                "is-core.js": {
+                  "offset": "50332411",
+                  "size": 116,
+                },
+                "node-modules-paths.js": {
+                  "offset": "50332527",
+                  "size": 1365,
+                },
+                "normalize-options.js": {
+                  "offset": "50333892",
+                  "size": 348,
+                },
+                "sync.js": {
+                  "offset": "50334240",
+                  "size": 7147,
+                },
+              },
+            },
+            "node_modules": {
+              "files": {
+                "is-core-module": {
+                  "files": {
+                    ".nycrc": {
+                      "offset": "50342760",
+                      "size": 139,
+                    },
+                    "LICENSE": {
+                      "offset": "50342899",
+                      "size": 1078,
+                    },
+                    "core.json": {
+                      "offset": "50343977",
+                      "size": 5953,
+                    },
+                    "index.js": {
+                      "offset": "50349930",
+                      "size": 1766,
+                    },
+                    "package.json": {
+                      "offset": "50351696",
+                      "size": 1236,
+                    },
+                  },
+                },
+                "path-parse": {
+                  "files": {
+                    "LICENSE": {
+                      "offset": "50352932",
+                      "size": 1080,
+                    },
+                    "index.js": {
+                      "offset": "50354012",
+                      "size": 1893,
+                    },
+                    "package.json": {
+                      "offset": "50355905",
+                      "size": 362,
+                    },
+                  },
+                },
+                "supports-preserve-symlinks-flag": {
+                  "files": {
+                    ".nycrc": {
+                      "offset": "50356267",
+                      "size": 139,
+                    },
+                    "LICENSE": {
+                      "offset": "50356406",
+                      "size": 1067,
+                    },
+                    "browser.js": {
+                      "offset": "50357473",
+                      "size": 38,
+                    },
+                    "index.js": {
+                      "offset": "50357511",
+                      "size": 293,
+                    },
+                    "package.json": {
+                      "offset": "50357804",
+                      "size": 1266,
+                    },
+                  },
+>>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
                 },
               },
             },
             "package.json": {
+<<<<<<< HEAD
               "offset": 50976230,
               "size": 1400,
             },
             "sync.js": {
               "offset": 50977620,
               "size": 60,
+=======
+              "offset": "50341387",
+              "size": 1318,
+            },
+            "sync.js": {
+              "offset": "50342705",
+              "size": 55,
+>>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
             },
           },
         },
         "semver": {
           "files": {
             "LICENSE": {
+<<<<<<< HEAD
               "offset": 50977680,
               "size": 770,
+=======
+              "offset": "50359070",
+              "size": 765,
+>>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
             },
             "bin": {
               "files": {
                 "semver.js": {
                   "executable": true,
+<<<<<<< HEAD
                   "offset": 50978440,
                   "size": 4960,
+=======
+                  "offset": "50359835",
+                  "size": 4739,
+>>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
                 },
               },
             },
             "classes": {
               "files": {
                 "comparator.js": {
+<<<<<<< HEAD
                   "offset": 50983400,
                   "size": 3640,
                 },
@@ -73692,6 +74941,21 @@ exports[`node_module collectors > yarn ms 2`] = `
                 },
                 "semver.js": {
                   "offset": 51002150,
+=======
+                  "offset": "50364574",
+                  "size": 3631,
+                },
+                "index.js": {
+                  "offset": "50368205",
+                  "size": 143,
+                },
+                "range.js": {
+                  "offset": "50368348",
+                  "size": 14977,
+                },
+                "semver.js": {
+                  "offset": "50383325",
+>>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
                   "size": 9480,
                 },
               },
@@ -73699,6 +74963,7 @@ exports[`node_module collectors > yarn ms 2`] = `
             "functions": {
               "files": {
                 "clean.js": {
+<<<<<<< HEAD
                   "offset": 51011630,
                   "size": 210,
                 },
@@ -73797,16 +75062,118 @@ exports[`node_module collectors > yarn ms 2`] = `
                 "valid.js": {
                   "offset": 51020740,
                   "size": 180,
+=======
+                  "offset": "50392805",
+                  "size": 205,
+                },
+                "cmp.js": {
+                  "offset": "50393010",
+                  "size": 961,
+                },
+                "coerce.js": {
+                  "offset": "50393971",
+                  "size": 2004,
+                },
+                "compare-build.js": {
+                  "offset": "50395975",
+                  "size": 281,
+                },
+                "compare-loose.js": {
+                  "offset": "50396256",
+                  "size": 132,
+                },
+                "compare.js": {
+                  "offset": "50396388",
+                  "size": 170,
+                },
+                "diff.js": {
+                  "offset": "50396558",
+                  "size": 1421,
+                },
+                "eq.js": {
+                  "offset": "50397979",
+                  "size": 126,
+                },
+                "gt.js": {
+                  "offset": "50398105",
+                  "size": 124,
+                },
+                "gte.js": {
+                  "offset": "50398229",
+                  "size": 127,
+                },
+                "inc.js": {
+                  "offset": "50398356",
+                  "size": 478,
+                },
+                "lt.js": {
+                  "offset": "50398834",
+                  "size": 124,
+                },
+                "lte.js": {
+                  "offset": "50398958",
+                  "size": 127,
+                },
+                "major.js": {
+                  "offset": "50399085",
+                  "size": 136,
+                },
+                "minor.js": {
+                  "offset": "50399221",
+                  "size": 136,
+                },
+                "neq.js": {
+                  "offset": "50399357",
+                  "size": 128,
+                },
+                "parse.js": {
+                  "offset": "50399485",
+                  "size": 331,
+                },
+                "patch.js": {
+                  "offset": "50399816",
+                  "size": 136,
+                },
+                "prerelease.js": {
+                  "offset": "50399952",
+                  "size": 234,
+                },
+                "rcompare.js": {
+                  "offset": "50400186",
+                  "size": 132,
+                },
+                "rsort.js": {
+                  "offset": "50400318",
+                  "size": 163,
+                },
+                "satisfies.js": {
+                  "offset": "50400481",
+                  "size": 247,
+                },
+                "sort.js": {
+                  "offset": "50400728",
+                  "size": 161,
+                },
+                "valid.js": {
+                  "offset": "50400889",
+                  "size": 176,
+>>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
                 },
               },
             },
             "index.js": {
+<<<<<<< HEAD
               "offset": 51020910,
               "size": 2700,
+=======
+              "offset": "50401065",
+              "size": 2630,
+>>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
             },
             "internal": {
               "files": {
                 "constants.js": {
+<<<<<<< HEAD
                   "offset": 51023600,
                   "size": 880,
                 },
@@ -73829,10 +75196,35 @@ exports[`node_module collectors > yarn ms 2`] = `
                 "re.js": {
                   "offset": 51026380,
                   "size": 8140,
+=======
+                  "offset": "50403695",
+                  "size": 873,
+                },
+                "debug.js": {
+                  "offset": "50404568",
+                  "size": 240,
+                },
+                "identifiers.js": {
+                  "offset": "50404808",
+                  "size": 525,
+                },
+                "lrucache.js": {
+                  "offset": "50405333",
+                  "size": 802,
+                },
+                "parse-options.js": {
+                  "offset": "50406135",
+                  "size": 338,
+                },
+                "re.js": {
+                  "offset": "50406473",
+                  "size": 8141,
+>>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
                 },
               },
             },
             "package.json": {
+<<<<<<< HEAD
               "offset": 51034520,
               "size": 1350,
             },
@@ -73843,10 +75235,23 @@ exports[`node_module collectors > yarn ms 2`] = `
             "range.bnf": {
               "offset": 51035950,
               "size": 710,
+=======
+              "offset": "50414614",
+              "size": 1350,
+            },
+            "preload.js": {
+              "offset": "50415964",
+              "size": 83,
+            },
+            "range.bnf": {
+              "offset": "50416047",
+              "size": 619,
+>>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
             },
             "ranges": {
               "files": {
                 "gtr.js": {
+<<<<<<< HEAD
                   "offset": 51036650,
                   "size": 240,
                 },
@@ -73889,6 +75294,50 @@ exports[`node_module collectors > yarn ms 2`] = `
                 "valid.js": {
                   "offset": 51051400,
                   "size": 330,
+=======
+                  "offset": "50416666",
+                  "size": 231,
+                },
+                "intersects.js": {
+                  "offset": "50416897",
+                  "size": 224,
+                },
+                "ltr.js": {
+                  "offset": "50417121",
+                  "size": 227,
+                },
+                "max-satisfying.js": {
+                  "offset": "50417348",
+                  "size": 593,
+                },
+                "min-satisfying.js": {
+                  "offset": "50417941",
+                  "size": 591,
+                },
+                "min-version.js": {
+                  "offset": "50418532",
+                  "size": 1514,
+                },
+                "outside.js": {
+                  "offset": "50420046",
+                  "size": 2204,
+                },
+                "simplify.js": {
+                  "offset": "50422250",
+                  "size": 1355,
+                },
+                "subset.js": {
+                  "offset": "50423605",
+                  "size": 7524,
+                },
+                "to-comparators.js": {
+                  "offset": "50431129",
+                  "size": 282,
+                },
+                "valid.js": {
+                  "offset": "50431411",
+                  "size": 326,
+>>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
                 },
               },
             },
@@ -73897,6 +75346,7 @@ exports[`node_module collectors > yarn ms 2`] = `
         "shimmer": {
           "files": {
             "LICENSE": {
+<<<<<<< HEAD
               "offset": 51051720,
               "size": 1330,
             },
@@ -73907,12 +75357,25 @@ exports[`node_module collectors > yarn ms 2`] = `
             "package.json": {
               "offset": 51055990,
               "size": 410,
+=======
+              "offset": "50431737",
+              "size": 1327,
+            },
+            "index.js": {
+              "offset": "50433064",
+              "size": 2943,
+            },
+            "package.json": {
+              "offset": "50436007",
+              "size": 403,
+>>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
             },
           },
         },
         "supports-preserve-symlinks-flag": {
           "files": {
             ".nycrc": {
+<<<<<<< HEAD
               "offset": 51056400,
               "size": 140,
             },
@@ -73931,24 +75394,54 @@ exports[`node_module collectors > yarn ms 2`] = `
             "package.json": {
               "offset": 51057930,
               "size": 1270,
+=======
+              "offset": "50436410",
+              "size": 139,
+            },
+            "LICENSE": {
+              "offset": "50436549",
+              "size": 1067,
+            },
+            "browser.js": {
+              "offset": "50437616",
+              "size": 38,
+            },
+            "index.js": {
+              "offset": "50437654",
+              "size": 293,
+            },
+            "package.json": {
+              "offset": "50437947",
+              "size": 1266,
+>>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
             },
           },
         },
         "undici-types": {
           "files": {
             "LICENSE": {
+<<<<<<< HEAD
               "offset": 51059200,
               "size": 1090,
             },
             "package.json": {
               "offset": 51060290,
               "size": 330,
+=======
+              "offset": "50439213",
+              "size": 1090,
+            },
+            "package.json": {
+              "offset": "50440303",
+              "size": 325,
+>>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
             },
           },
         },
         "xtend": {
           "files": {
             "LICENSE": {
+<<<<<<< HEAD
               "offset": 51060620,
               "size": 1080,
             },
@@ -73967,14 +75460,39 @@ exports[`node_module collectors > yarn ms 2`] = `
             "test.js": {
               "offset": 51063150,
               "size": 2310,
+=======
+              "offset": "50440628",
+              "size": 1078,
+            },
+            "immutable.js": {
+              "offset": "50441706",
+              "size": 384,
+            },
+            "mutable.js": {
+              "offset": "50442090",
+              "size": 369,
+            },
+            "package.json": {
+              "offset": "50442459",
+              "size": 701,
+            },
+            "test.js": {
+              "offset": "50443160",
+              "size": 2307,
+>>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
             },
           },
         },
       },
     },
     "package.json": {
+<<<<<<< HEAD
       "offset": 51066450,
       "size": 410,
+=======
+      "offset": "50446464",
+      "size": 409,
+>>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
     },
   },
 }

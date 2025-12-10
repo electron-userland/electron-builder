@@ -23,6 +23,7 @@ import { excludedExts, FileMatcher } from "../fileMatcher"
 import { createElectronCompilerHost, NODE_MODULES_PATTERN } from "../fileTransformer"
 import { Packager } from "../packager"
 import { PlatformPackager } from "../platformPackager"
+<<<<<<< HEAD
 =======
 import { isLibOrExe } from "../asar/unpackDetector.js"
 import { Platform } from "../core.js"
@@ -42,6 +43,12 @@ import { NodeModuleCopyHelper } from "./NodeModuleCopyHelper.js"
 import { NodeModuleInfo } from "./packageDependencies.js"
 import { getNodeModules } from "../node-module-collector/index.js"
 >>>>>>> c92b22265 (tmp save for .js extension migration)
+=======
+import { AppFileWalker } from "./AppFileWalker"
+import { NodeModuleCopyHelper } from "./NodeModuleCopyHelper"
+import { NodeModuleInfo } from "./packageDependencies"
+import { getNodeModules, PM } from "../node-module-collector"
+>>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
 
 const BOWER_COMPONENTS_PATTERN = `${path.sep}bower_components${path.sep}`
 /** @internal */
@@ -198,7 +205,41 @@ function validateFileSet(fileSet: ResolvedFileSet): ResolvedFileSet {
 
 /** @internal */
 export async function computeNodeModuleFileSets(platformPackager: PlatformPackager<any>, mainMatcher: FileMatcher): Promise<Array<ResolvedFileSet>> {
+<<<<<<< HEAD
   const deps = await collectNodeModulesWithLogging(platformPackager)
+=======
+  const packager = platformPackager.info
+  const { tempDirManager, cancellationToken, appDir, projectDir } = packager
+
+  let deps: Array<NodeModuleInfo> = []
+  const searchDirectories = Array.from(new Set([projectDir, appDir, await packager.getWorkspaceRoot()])).filter((it): it is string => it != null)
+  const pmApproaches = [await packager.getPackageManager(), PM.TRAVERSAL]
+  for (const pm of pmApproaches) {
+    for (const dir of searchDirectories) {
+      if (cancellationToken.cancelled) {
+        throw new Error("user cancelled")
+      }
+
+      const options = { rootDir: dir, tempDirManager, cancellationToken, packageName: packager.metadata.name! }
+      deps = await getNodeModules(pm, options)
+      if (deps.length > 0) {
+        break
+      }
+      const attempt = searchDirectories.indexOf(dir)
+      if (attempt < searchDirectories.length - 1) {
+        log.info({ searchDir: dir, attempt }, "no node modules found in collection, trying next search directory")
+      }
+    }
+    if (deps.length > 0) {
+      log.debug({ pm, nodeModules: deps }, "collected node modules")
+      break
+    }
+  }
+  if (deps.length === 0) {
+    log.warn({ searchDirectories: searchDirectories.map(it => log.filePath(it)) }, "no node modules returned while searching directories")
+    return []
+  }
+>>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
 
   const nodeModuleExcludedExts = getNodeModuleExcludedExts(platformPackager)
   // serial execution because copyNodeModules is concurrent and so, no need to increase queue/pressure

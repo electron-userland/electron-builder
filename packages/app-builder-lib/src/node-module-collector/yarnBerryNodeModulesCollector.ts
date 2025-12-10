@@ -48,7 +48,11 @@ export class YarnBerryNodeModulesCollector extends NpmNodeModulesCollector {
   }
 
   protected isProdDependency(packageName: string, tree: NpmDependency): boolean {
+<<<<<<< HEAD
     return super.isProdDependency(packageName, tree) || tree.dependencies?.[packageName] != null || tree.optionalDependencies?.[packageName] != null
+=======
+    return super.isProdDependency(packageName, tree) || tree.dependencies?.[packageName] != null || tree.optionalDependencies?.[packageName] == null
+>>>>>>> 850646b29 (move the manual node module traversal to the root abstract class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments. extract fallback node collector (Traversal) to separate class due to differing parsing logic from NPM collector)
   }
 
   private async detectYarnSetup(rootDir: string): Promise<YarnSetupInfo> {
