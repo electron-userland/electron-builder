@@ -1,8 +1,8 @@
 #! /usr/bin/env node
 
-import { getElectronVersion } from "app-builder-lib/out/electron/electronVersion"
-import { loadEnv } from "app-builder-lib/out/util/config/load"
-import { nodeGypRebuild } from "app-builder-lib/out/util/yarn"
+import { getElectronVersion } from "app-builder-lib"
+import { loadEnv } from "app-builder-lib"
+import { nodeGypRebuild } from "app-builder-lib"
 import { ExecError, InvalidConfigurationError, log } from "builder-util"
 import * as chalk from "chalk"
 import { readJson } from "fs-extra"

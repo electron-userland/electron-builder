@@ -68,6 +68,21 @@ export { PlatformPackager } from "./platformPackager.js"
 export { PublishManager } from "./publish/PublishManager.js"
 export { WinPackager } from "./winPackager.js"
 export { findIdentity, isSignAllowed } from "./codeSign/macCodeSign.js"
+export { getLicenseFiles, getLicenseAssets } from "./util/license.js"
+
+export { resolveFunction } from "./util/resolve.js"
+export { executeAppBuilderAsJson } from "./util/appBuilder.js"
+export { getElectronVersion } from "./electron/electronVersion.js"
+export { loadEnv } from "./util/config/load.js"
+export { nodeGypRebuild } from "./util/yarn.js"
+export { getSignVendorPath } from "./codeSign/windowsSignToolManager.js"
+
+export { computeDefaultAppDirectory, getConfig } from "./util/config/config.js"
+export { orNullIfFileNotExist } from "./util/config/load.js"
+export { createLazyProductionDeps } from "./util/packageDependencies.js"
+export { installOrRebuild } from "./util/yarn.js"
+export { PACKAGE_VERSION } from "./version.js"
+export { determinePackageManagerEnv } from "./node-module-collector/index.js"
 
 const expectedOptions = new Set(["publish", "targets", "mac", "win", "linux", "projectDir", "platformPackagerFactory", "config", "effectiveOptionComputed", "prepackaged"])
 
