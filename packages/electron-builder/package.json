@@ -55,6 +55,7 @@
     "app-builder-lib": "workspace:*",
     "builder-util": "workspace:*",
     "builder-util-runtime": "workspace:*",
+    "electron-publish": "workspace:*",
     "chalk": "^4.1.2",
     "ci-info": "^4.2.0",
     "dmg-builder": "workspace:*",
