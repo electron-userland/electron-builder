@@ -119,6 +119,10 @@ export { WinPackager } from "./winPackager.js"
 export { findIdentity, isSignAllowed } from "./codeSign/macCodeSign.js"
 >>>>>>> c92b22265 (tmp save for .js extension migration)
 
+export { execWine } from "./wine.js"
+export { Publish } from "./core.js"
+export { computeSafeArtifactNameIfNeeded } from "./platformPackager.js"
+
 const expectedOptions = new Set(["publish", "targets", "mac", "win", "linux", "projectDir", "platformPackagerFactory", "config", "effectiveOptionComputed", "prepackaged"])
 
 export function checkBuildRequestOptions(options: PackagerOptions & PublishOptions) {
