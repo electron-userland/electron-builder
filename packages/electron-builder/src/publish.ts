@@ -1,9 +1,9 @@
 #! /usr/bin/env node
 
 import { AppInfo, CancellationToken, Packager, PackagerOptions, PublishManager, PublishOptions, UploadTask, checkBuildRequestOptions } from "app-builder-lib"
-import { Publish } from "app-builder-lib/out/core"
-import { computeSafeArtifactNameIfNeeded } from "app-builder-lib/out/platformPackager"
-import { getConfig } from "app-builder-lib/out/util/config/config"
+import { Publish } from "app-builder-lib"
+import { computeSafeArtifactNameIfNeeded } from "app-builder-lib"
+import { getConfig } from "app-builder-lib"
 import { InvalidConfigurationError, archFromString, log, printErrorAndExit } from "builder-util"
 import { PublishPolicy } from "electron-publish"
 import * as chalk from "chalk"

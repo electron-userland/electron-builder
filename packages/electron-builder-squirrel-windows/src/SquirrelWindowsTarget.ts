@@ -1,5 +1,5 @@
 import { InvalidConfigurationError, log, isEmptyOrSpaces } from "builder-util"
-import { execWine } from "app-builder-lib/out/wine"
+import { execWine } from "app-builder-lib"
 import { getBinFromUrl } from "app-builder-lib/out/binDownload"
 import { sanitizeFileName } from "builder-util"
 import { Arch, getArchSuffix, SquirrelWindowsOptions, Target, WinPackager } from "app-builder-lib"

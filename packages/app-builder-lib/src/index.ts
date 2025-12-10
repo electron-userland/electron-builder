@@ -84,6 +84,10 @@ export { installOrRebuild } from "./util/yarn.js"
 export { PACKAGE_VERSION } from "./version.js"
 export { determinePackageManagerEnv } from "./node-module-collector/index.js"
 
+export { execWine } from "./wine.js"
+export { Publish } from "./core.js"
+export { computeSafeArtifactNameIfNeeded } from "./platformPackager.js"
+
 const expectedOptions = new Set(["publish", "targets", "mac", "win", "linux", "projectDir", "platformPackagerFactory", "config", "effectiveOptionComputed", "prepackaged"])
 
 export function checkBuildRequestOptions(options: PackagerOptions & PublishOptions) {

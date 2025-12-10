@@ -11,7 +11,7 @@ import { Lazy } from "lazy-val"
 import { spawn, log, exists } from "builder-util"
 import * as fs from "fs-extra"
 import * as path from "path"
-import { TraversalNodeModulesCollector } from "./traversalNodeModulesCollector"
+import { TraversalNodeModulesCollector } from "./traversalNodeModulesCollector.js"
 
 export { getPackageManagerCommand, PM }
 
