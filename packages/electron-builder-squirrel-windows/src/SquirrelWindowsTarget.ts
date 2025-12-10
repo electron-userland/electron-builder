@@ -8,7 +8,7 @@ import { sanitizeFileName } from "builder-util/internal"
 =======
 import { InvalidConfigurationError, log, isEmptyOrSpaces } from "builder-util"
 import { execWine } from "app-builder-lib"
-import { getBinFromUrl } from "app-builder-lib/out/binDownload"
+import { getBinFromUrl } from "app-builder-lib"
 import { sanitizeFileName } from "builder-util"
 >>>>>>> c92b22265 (tmp save for .js extension migration)
 import { Arch, getArchSuffix, SquirrelWindowsOptions, Target, WinPackager } from "app-builder-lib"
@@ -19,8 +19,7 @@ import { Options as SquirrelOptions, createWindowsInstaller, convertVersion } fr
 import { WineVmManager } from "app-builder-lib/internal"
 
 export default class SquirrelWindowsTarget extends Target {
-  //tslint:disable-next-line:no-object-literal-type-assertion
-  readonly options: SquirrelWindowsOptions = { ...this.packager.platformSpecificBuildOptions, ...this.packager.config.squirrelWindows } as SquirrelWindowsOptions
+  readonly options: SquirrelWindowsOptions
 
   isAsyncSupported = false
 
@@ -29,6 +28,7 @@ export default class SquirrelWindowsTarget extends Target {
     readonly outDir: string
   ) {
     super("squirrel")
+    this.options = { ...this.packager.platformSpecificBuildOptions, ...this.packager.config.squirrelWindows }
   }
 
   private async prepareSignedVendorDirectory(): Promise<string> {

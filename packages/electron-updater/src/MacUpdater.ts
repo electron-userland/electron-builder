@@ -23,7 +23,7 @@ import { findFile } from "./providers/Provider.js.js"
 =======
 import { AppAdapter } from "./AppAdapter.js"
 import { AppUpdater, DownloadUpdateOptions } from "./AppUpdater.js"
-import { ResolvedUpdateFileInfo } from "./main.js"
+import { ResolvedUpdateFileInfo } from "./types.js"
 import { UpdateDownloadedEvent } from "./types.js"
 import { findFile } from "./providers/Provider.js"
 >>>>>>> c92b22265 (tmp save for .js extension migration)

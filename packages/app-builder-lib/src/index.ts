@@ -122,6 +122,8 @@ export { findIdentity, isSignAllowed } from "./codeSign/macCodeSign.js"
 export { execWine } from "./wine.js"
 export { Publish } from "./core.js"
 export { computeSafeArtifactNameIfNeeded } from "./platformPackager.js"
+export { createBlockmap } from "./targets/differentialUpdateInfoBuilder.js"
+export { getBinFromUrl } from "./binDownload.js"
 
 const expectedOptions = new Set(["publish", "targets", "mac", "win", "linux", "projectDir", "platformPackagerFactory", "config", "effectiveOptionComputed", "prepackaged"])
 
