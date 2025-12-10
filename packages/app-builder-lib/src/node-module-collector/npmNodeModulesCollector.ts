@@ -47,13 +47,16 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
     this.productionGraph[dependencyId] = { dependencies: [] }
 
     const collectedDependencies: string[] = []
-    for (const [packageName, dependency] of Object.entries(resolvedDeps || {})) {
-      if (!this.isProdDependency(packageName, tree)) {
-        continue
+    if (resolvedDeps && Object.keys(resolvedDeps).length > 0) {
+      for (const packageName in resolvedDeps) {
+        if (!this.isProdDependency(packageName, tree)) {
+          continue
+        }
+        const dependency = resolvedDeps[packageName]
+        const childDependencyId = this.packageVersionString(dependency)
+        await this.extractProductionDependencyGraph(dependency, childDependencyId)
+        collectedDependencies.push(childDependencyId)
       }
-      const childDependencyId = this.packageVersionString(dependency)
-      await this.extractProductionDependencyGraph(dependency, childDependencyId)
-      collectedDependencies.push(childDependencyId)
     }
     this.productionGraph[dependencyId] = { dependencies: collectedDependencies }
   }
