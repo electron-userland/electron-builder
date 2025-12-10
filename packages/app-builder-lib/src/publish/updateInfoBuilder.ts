@@ -11,7 +11,7 @@ import { Packager } from "../packager.js"
 import { ArtifactCreated } from "../packagerApi.js"
 import { PlatformPackager } from "../platformPackager.js"
 import { hashFile } from "../util/hash.js"
-import { computeDownloadUrl, getPublishConfigsForUpdateInfo } from "./PublishManager.js.js"
+import { computeDownloadUrl, getPublishConfigsForUpdateInfo } from "./PublishManager.js"
 
 async function getReleaseInfo(packager: PlatformPackager<any>) {
   const releaseInfo: ReleaseInfo = { ...(packager.platformSpecificBuildOptions.releaseInfo || packager.config.releaseInfo) }

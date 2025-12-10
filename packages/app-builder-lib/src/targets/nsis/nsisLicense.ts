@@ -4,9 +4,9 @@ import * as path from "path"
 import { lcid } from "../../util/langs.js"
 import { getLicenseFiles, getNotLocalizedLicenseFile } from "../../util/license.js"
 import { WinPackager } from "../../winPackager.js"
-import { NsisOptions } from "./nsisOptions.js.js"
-import { NsisScriptGenerator } from "./nsisScriptGenerator.js.js"
-import { nsisTemplatesDir } from "./nsisUtil.js.js"
+import { NsisOptions } from "./nsisOptions.js"
+import { NsisScriptGenerator } from "./nsisScriptGenerator.js"
+import { nsisTemplatesDir } from "./nsisUtil.js"
 
 function convertFileToUtf8WithBOMSync(filePath: string): boolean {
   try {

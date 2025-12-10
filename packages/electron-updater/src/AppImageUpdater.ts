@@ -3,12 +3,12 @@ import { execFileSync } from "child_process"
 import { chmod } from "fs-extra"
 import { unlinkSync } from "fs"
 import * as path from "path"
-import { DownloadUpdateOptions } from "./AppUpdater.js.js"
-import { BaseUpdater, InstallOptions } from "./BaseUpdater.js.js"
-import { DifferentialDownloaderOptions } from "./differentialDownloader/DifferentialDownloader.js.js"
-import { FileWithEmbeddedBlockMapDifferentialDownloader } from "./differentialDownloader/FileWithEmbeddedBlockMapDifferentialDownloader.js.js"
-import { findFile, Provider } from "./providers/Provider.js.js"
-import { DOWNLOAD_PROGRESS, ResolvedUpdateFileInfo } from "./types.js.js"
+import { DownloadUpdateOptions } from "./AppUpdater.js"
+import { BaseUpdater, InstallOptions } from "./BaseUpdater.js"
+import { DifferentialDownloaderOptions } from "./differentialDownloader/DifferentialDownloader.js"
+import { FileWithEmbeddedBlockMapDifferentialDownloader } from "./differentialDownloader/FileWithEmbeddedBlockMapDifferentialDownloader.js"
+import { findFile, Provider } from "./providers/Provider.js"
+import { DOWNLOAD_PROGRESS, ResolvedUpdateFileInfo } from "./types.js"
 
 export class AppImageUpdater extends BaseUpdater {
   constructor(options?: AllPublishOptions | null, app?: any) {

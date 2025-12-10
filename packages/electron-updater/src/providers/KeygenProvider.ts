@@ -2,7 +2,7 @@ import { CancellationToken, KeygenOptions, newError, UpdateInfo } from "builder-
 import { AppUpdater } from "../AppUpdater.js"
 import { ResolvedUpdateFileInfo } from "../types.js"
 import { getChannelFilename, newBaseUrl, newUrlFromBase } from "../util.js"
-import { parseUpdateInfo, Provider, ProviderRuntimeOptions, resolveFiles } from "./Provider.js.js"
+import { parseUpdateInfo, Provider, ProviderRuntimeOptions, resolveFiles } from "./Provider.js"
 
 export class KeygenProvider extends Provider<UpdateInfo> {
   private readonly defaultHostname = "api.keygen.sh"

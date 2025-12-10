@@ -29,7 +29,7 @@ import {
   SpacesPublisher,
   UploadTask,
 } from "electron-publish"
-import { MultiProgress } from "electron-publish/out/multiProgress"
+import { MultiProgress } from "electron-publish"
 import { writeFile } from "fs/promises"
 import { isCI } from "ci-info"
 import * as path from "path"
@@ -40,7 +40,7 @@ import { Packager } from "../packager.js"
 import { PlatformPackager } from "../platformPackager.js"
 import { expandMacro } from "../util/macroExpander.js"
 import { WinPackager } from "../winPackager.js"
-import { createUpdateInfoTasks, UpdateInfoFileTask, writeUpdateInfoFiles } from "./updateInfoBuilder.js.js"
+import { createUpdateInfoTasks, UpdateInfoFileTask, writeUpdateInfoFiles } from "./updateInfoBuilder.js"
 import { resolveModule } from "../util/resolve.js"
 
 const publishForPrWarning =

@@ -8,13 +8,14 @@ import _debug from "debug"
 import { dump } from "js-yaml"
 import * as path from "path"
 import { install as installSourceMap } from "source-map-support"
-import { getPath7za } from "./7za.js.js"
-import { debug, log } from "./log.js.js"
+import { getPath7za } from "./7za.js"
+import { debug, log } from "./log.js"
 
 if (process.env.JEST_WORKER_ID == null) {
   installSourceMap()
 }
 
+export { getCompleteExtname, sanitizeFileName } from "./filename"
 export { safeStringifyJson, retry } from "builder-util-runtime"
 export { TmpDir } from "temp-file"
 export * from "./arch.js"

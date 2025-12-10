@@ -39,18 +39,19 @@ type ExtraPackages = {
 // productbuild --scripts doesn't work (because scripts in this case not added to our package)
 // https://github.com/electron-userland/@electron/osx-sign/issues/96#issuecomment-274986942
 export class PkgTarget extends Target {
-  readonly options: PkgOptions = {
-    allowAnywhere: true,
-    allowCurrentUserHome: true,
-    allowRootDirectory: true,
-    ...this.packager.config.pkg,
-  }
+  readonly options: PkgOptions
 
   constructor(
     private readonly packager: MacPackager,
     readonly outDir: string
   ) {
     super("pkg")
+    this.options = {
+    allowAnywhere: true,
+    allowCurrentUserHome: true,
+    allowRootDirectory: true,
+    ...this.packager.config.pkg,
+  }
   }
 
   async build(appPath: string, arch: Arch): Promise<any> {

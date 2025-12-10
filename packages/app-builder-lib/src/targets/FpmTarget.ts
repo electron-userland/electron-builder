@@ -15,8 +15,8 @@ import { computeEnv } from "../util/bundledTool.js"
 import { hashFile } from "../util/hash.js"
 import { isMacOsSierra } from "../util/macosVersion.js"
 import { getTemplatePath } from "../util/pathManager.js"
-import { installPrefix, LinuxTargetHelper } from "./LinuxTargetHelper.js.js"
-import { getFpmPath, getLinuxToolsPath } from "./tools.js.js"
+import { installPrefix, LinuxTargetHelper } from "./LinuxTargetHelper.js"
+import { getFpmPath, getLinuxToolsPath } from "./tools.js"
 
 interface FpmOptions {
   name: string
@@ -32,7 +32,7 @@ interface ScriptFiles {
 }
 
 export default class FpmTarget extends Target {
-  readonly options: LinuxTargetSpecificOptions = { ...this.packager.platformSpecificBuildOptions, ...(this.packager.config as any)[this.name] }
+  readonly options: LinuxTargetSpecificOptions
 
   private readonly scriptFiles: Promise<ScriptFiles>
 
@@ -43,6 +43,7 @@ export default class FpmTarget extends Target {
     readonly outDir: string
   ) {
     super(name, false)
+    this.options = { ...this.packager.platformSpecificBuildOptions, ...(this.packager.config as any)[this.name] }
 
     this.scriptFiles = this.createScripts()
   }

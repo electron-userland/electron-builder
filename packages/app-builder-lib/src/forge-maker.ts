@@ -1,6 +1,6 @@
 import * as path from "path"
-import { build } from "./index.js.js"
-import { PackagerOptions } from "./packagerApi.js.js"
+import { build } from "./index.js"
+import { PackagerOptions } from "./packagerApi.js"
 
 export interface ForgeOptions {
   readonly dir: string

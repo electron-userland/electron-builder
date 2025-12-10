@@ -1,5 +1,5 @@
 import { exists, log } from "builder-util"
-import { PackageJson } from "./types.js.js"
+import { PackageJson } from "./types.js"
 import * as fs from "fs-extra"
 import { resolve } from "path"
 

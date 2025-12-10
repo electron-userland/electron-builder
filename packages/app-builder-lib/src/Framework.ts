@@ -1,6 +1,6 @@
 import { FileTransformer } from "builder-util"
-import { AsarIntegrity } from "./asar/integrity.js.js"
-import { AfterPackContext, ElectronPlatformName, Platform, PlatformPackager } from "./index.js.js"
+import { AsarIntegrity } from "./asar/integrity.js"
+import { AfterPackContext, ElectronPlatformName, Platform, PlatformPackager } from "./index.js"
 
 export interface Framework {
   readonly name: string

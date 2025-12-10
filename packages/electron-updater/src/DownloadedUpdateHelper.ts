@@ -3,8 +3,8 @@ import { createHash } from "crypto"
 import { createReadStream } from "fs"
 // @ts-ignore
 import * as isEqual from "lodash.isequal"
-import { ResolvedUpdateFileInfo } from "./types.js.js"
-import { Logger } from "./types.js.js"
+import { ResolvedUpdateFileInfo } from "./types.js"
+import { Logger } from "./types.js"
 import { pathExists, readJson, emptyDir, outputJson, unlink } from "fs-extra"
 import * as path from "path"
 

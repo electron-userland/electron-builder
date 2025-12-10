@@ -10,9 +10,9 @@ import { isCI } from "ci-info"
 import * as path from "path"
 import { build, configureBuildCommand, createYargs } from "../builder.js"
 import { configurePublishCommand, publish } from "../publish.js"
-import { createSelfSignedCert } from "./create-self-signed-cert.js.js"
-import { configureInstallAppDepsCommand, installAppDeps } from "./install-app-deps.js.js"
-import { start } from "./start.js.js"
+import { createSelfSignedCert } from "./create-self-signed-cert.js"
+import { configureInstallAppDepsCommand, installAppDeps } from "./install-app-deps.js"
+import { start } from "./start.js"
 
 // tslint:disable:no-unused-expression
 void createYargs()

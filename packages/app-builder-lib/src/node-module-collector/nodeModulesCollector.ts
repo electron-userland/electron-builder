@@ -6,10 +6,10 @@ import { createWriteStream } from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import * as semver from "semver"
-import { hoist, type HoisterResult, type HoisterTree } from "./hoist.js.js"
-import { ModuleCache } from "./moduleCache.js.js"
-import { getPackageManagerCommand, PM } from "./packageManager.js.js"
-import type { Dependency, DependencyGraph, NodeModuleInfo } from "./types.js.js"
+import { hoist, type HoisterResult, type HoisterTree } from "./hoist.js"
+import { ModuleCache } from "./moduleCache.js"
+import { getPackageManagerCommand, PM } from "./packageManager.js"
+import type { Dependency, DependencyGraph, NodeModuleInfo } from "./types.js"
 type Result = { packageDir: string; version: string } | null
 
 export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDepType, OptionalDepType>, OptionalDepType> {

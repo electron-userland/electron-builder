@@ -22,14 +22,14 @@ import { Minimatch } from "minimatch"
 import * as path from "path"
 import * as fs from "fs/promises"
 import * as os from "os"
-import { AppInfo } from "./appInfo.js.js"
-import { checkFileInArchive } from "./asar/asarFileChecker.js.js"
-import { AsarPackager } from "./asar/asarUtil.js.js"
-import { AsarIntegrity, computeData } from "./asar/integrity.js.js"
-import { FuseOptionsV1 } from "./configuration.js.js"
-import { copyFiles, FileMatcher, getFileMatchers, GetFileMatchersOptions, getMainFileMatchers, getNodeModuleFileMatcher } from "./fileMatcher.js.js"
-import { createTransformer, isElectronCompileUsed } from "./fileTransformer.js.js"
-import { Framework, isElectronBased } from "./Framework.js.js"
+import { AppInfo } from "./appInfo.js"
+import { checkFileInArchive } from "./asar/asarFileChecker.js"
+import { AsarPackager } from "./asar/asarUtil.js"
+import { AsarIntegrity, computeData } from "./asar/integrity.js"
+import { FuseOptionsV1 } from "./configuration.js"
+import { copyFiles, FileMatcher, getFileMatchers, GetFileMatchersOptions, getMainFileMatchers, getNodeModuleFileMatcher } from "./fileMatcher.js"
+import { createTransformer, isElectronCompileUsed } from "./fileTransformer.js"
+import { Framework, isElectronBased } from "./Framework.js"
 import {
   AfterPackContext,
   AsarOptions,
@@ -45,10 +45,10 @@ import {
   Target,
   TargetSpecificOptions,
 } from "./index.js"
-import { executeAppBuilderAsJson } from "./util/appBuilder.js.js"
-import { computeFileSets, computeNodeModuleFileSets, copyAppFiles, ELECTRON_COMPILE_SHIM_FILENAME, transformFiles } from "./util/appFileCopier.js.js"
-import { expandMacro as doExpandMacro } from "./util/macroExpander.js.js"
-import { AssetCatalogResult, generateAssetCatalogForIcon } from "./util/macosIconComposer.js.js"
+import { executeAppBuilderAsJson } from "./util/appBuilder.js"
+import { computeFileSets, computeNodeModuleFileSets, copyAppFiles, ELECTRON_COMPILE_SHIM_FILENAME, transformFiles } from "./util/appFileCopier.js"
+import { expandMacro as doExpandMacro } from "./util/macroExpander.js"
+import { AssetCatalogResult, generateAssetCatalogForIcon } from "./util/macosIconComposer.js"
 
 export type DoPackOptions<DC extends PlatformSpecificBuildOptions> = {
   outDir: string

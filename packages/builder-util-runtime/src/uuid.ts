@@ -1,5 +1,5 @@
 import { createHash, randomBytes } from "crypto"
-import { newError } from "./error.js.js"
+import { newError } from "./error.js"
 
 const invalidName = "options.name must be either a string or a Buffer"
 

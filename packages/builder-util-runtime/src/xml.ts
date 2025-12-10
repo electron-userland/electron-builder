@@ -1,5 +1,5 @@
 import * as sax from "sax"
-import { newError } from "./error.js.js"
+import { newError } from "./error.js"
 
 export class XElement {
   value = ""

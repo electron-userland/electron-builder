@@ -3,7 +3,7 @@ import { createHash } from "crypto"
 import { readdir } from "fs/promises"
 import * as path from "path"
 import { FileMatcher } from "../fileMatcher.js"
-import { readAsarHeader } from "./asar.js.js"
+import { readAsarHeader } from "./asar.js"
 
 export interface AsarIntegrityOptions {
   readonly resourcesPath: string

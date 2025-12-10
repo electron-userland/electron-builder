@@ -1,7 +1,7 @@
 import { InvalidConfigurationError, log, isEmptyOrSpaces } from "builder-util"
 import { execWine } from "app-builder-lib/out/wine"
 import { getBinFromUrl } from "app-builder-lib/out/binDownload"
-import { sanitizeFileName } from "builder-util/out/filename"
+import { sanitizeFileName } from "builder-util"
 import { Arch, getArchSuffix, SquirrelWindowsOptions, Target, WinPackager } from "app-builder-lib"
 import * as path from "path"
 import * as fs from "fs"

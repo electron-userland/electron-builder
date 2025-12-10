@@ -1,5 +1,5 @@
 import * as asar from "@electron/asar"
-import { FilesystemEntry, FilesystemFileEntry } from "@electron/asar/lib/filesystem"
+import { FilesystemEntry, FilesystemFileEntry } from "@electron/asar/lib/filesystem.js"
 
 export function checkFileInArchive(asarFile: string, relativeFile: string, messagePrefix: string) {
   function error(text: string) {

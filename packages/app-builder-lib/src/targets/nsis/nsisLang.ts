@@ -5,9 +5,9 @@ import { load } from "js-yaml"
 import * as path from "path"
 import { PlatformPackager } from "../../platformPackager.js"
 import { bundledLanguages, langIdToName, lcid, toLangWithRegion } from "../../util/langs.js"
-import { NsisOptions } from "./nsisOptions.js.js"
-import { NsisScriptGenerator } from "./nsisScriptGenerator.js.js"
-import { nsisTemplatesDir } from "./nsisUtil.js.js"
+import { NsisOptions } from "./nsisOptions.js"
+import { NsisScriptGenerator } from "./nsisScriptGenerator.js"
+import { nsisTemplatesDir } from "./nsisUtil.js"
 
 const debug = _debug("electron-builder:nsis")
 

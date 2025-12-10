@@ -2,7 +2,7 @@ import { CancellationToken, BitbucketOptions, newError, UpdateInfo } from "build
 import { AppUpdater } from "../AppUpdater.js"
 import { ResolvedUpdateFileInfo } from "../types.js"
 import { getChannelFilename, newBaseUrl, newUrlFromBase } from "../util.js"
-import { parseUpdateInfo, Provider, ProviderRuntimeOptions, resolveFiles } from "./Provider.js.js"
+import { parseUpdateInfo, Provider, ProviderRuntimeOptions, resolveFiles } from "./Provider.js"
 
 export class BitbucketProvider extends Provider<UpdateInfo> {
   private readonly baseUrl: URL

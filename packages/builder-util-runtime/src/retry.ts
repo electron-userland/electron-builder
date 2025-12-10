@@ -1,4 +1,4 @@
-import { CancellationToken } from "./CancellationToken.js.js"
+import { CancellationToken } from "./CancellationToken.js"
 
 export async function retry<T>(
   task: () => Promise<T>,

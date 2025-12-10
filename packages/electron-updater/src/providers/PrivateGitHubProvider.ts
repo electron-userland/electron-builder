@@ -5,9 +5,9 @@ import * as path from "path"
 import { AppUpdater } from "../AppUpdater.js"
 import { URL } from "url"
 import { getChannelFilename, newUrlFromBase } from "../util.js"
-import { BaseGitHubProvider } from "./GitHubProvider.js.js"
+import { BaseGitHubProvider } from "./GitHubProvider.js"
 import { ResolvedUpdateFileInfo } from "../types.js"
-import { getFileList, ProviderRuntimeOptions } from "./Provider.js.js"
+import { getFileList, ProviderRuntimeOptions } from "./Provider.js"
 
 export interface PrivateGitHubUpdateInfo extends UpdateInfo {
   assets: Array<Asset>

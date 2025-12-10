@@ -1,7 +1,7 @@
 import { parseDn } from "builder-util-runtime"
 import { execFile, execFileSync, ExecFileOptions } from "child_process"
 import * as os from "os"
-import { Logger } from "./types.js.js"
+import { Logger } from "./types.js"
 import * as path from "path"
 
 function preparePowerShellExec(command: string, timeout?: number) {

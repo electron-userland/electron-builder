@@ -1,6 +1,6 @@
 import { executeAppBuilder } from "builder-util"
 import { Nullish } from "builder-util-runtime"
-import { sanitizeFileName } from "builder-util/out/filename"
+import { sanitizeFileName } from "builder-util"
 import * as path from "path"
 
 const versionToPromise = new Map<string, Promise<string>>()

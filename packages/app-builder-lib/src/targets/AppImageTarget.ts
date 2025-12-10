@@ -8,12 +8,12 @@ import { AppImageOptions } from "../options/linuxOptions.js"
 import { getAppUpdatePublishConfiguration } from "../publish/PublishManager.js"
 import { executeAppBuilderAsJson, objectToArgs } from "../util/appBuilder.js"
 import { getNotLocalizedLicenseFile } from "../util/license.js"
-import { LinuxTargetHelper } from "./LinuxTargetHelper.js.js"
-import { createStageDir } from "./targetUtil.js.js"
+import { LinuxTargetHelper } from "./LinuxTargetHelper.js"
+import { createStageDir } from "./targetUtil.js"
 
 // https://unix.stackexchange.com/questions/375191/append-to-sub-directory-inside-squashfs-file
 export default class AppImageTarget extends Target {
-  readonly options: AppImageOptions = { ...this.packager.platformSpecificBuildOptions, ...(this.packager.config as any)[this.name] }
+  readonly options: AppImageOptions
   private readonly desktopEntry: Lazy<string>
 
   constructor(
@@ -23,6 +23,7 @@ export default class AppImageTarget extends Target {
     readonly outDir: string
   ) {
     super("appImage")
+    this.options  = { ...this.packager.platformSpecificBuildOptions, ...(this.packager.config as any)[this.name] }
 
     this.desktopEntry = new Lazy<string>(() => {
       const args = this.options.executableArgs?.join(" ") || "--no-sandbox"

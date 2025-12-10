@@ -1,6 +1,6 @@
 import * as fs from "fs"
 import * as path from "path"
-import { ElectronPlatformName } from "./ElectronFramework.js.js"
+import { ElectronPlatformName } from "./ElectronFramework.js"
 
 import { log } from "builder-util"
 import { getBin } from "../binDownload.js"

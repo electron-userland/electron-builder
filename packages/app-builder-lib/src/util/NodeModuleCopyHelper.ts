@@ -5,9 +5,9 @@ import * as path from "path"
 import asyncPool from "tiny-async-pool"
 import { excludedNames, FileMatcher } from "../fileMatcher.js"
 import { Packager } from "../packager.js"
-import { FileCopyHelper } from "./AppFileWalker.js.js"
-import { NodeModuleInfo } from "./packageDependencies.js.js"
-import { resolveFunction } from "./resolve.js.js"
+import { FileCopyHelper } from "./AppFileWalker.js"
+import { NodeModuleInfo } from "./packageDependencies.js"
+import { resolveFunction } from "./resolve.js"
 
 const excludedFiles = new Set(
   [

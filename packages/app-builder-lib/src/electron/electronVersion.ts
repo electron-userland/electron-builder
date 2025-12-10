@@ -7,7 +7,7 @@ import * as semver from "semver"
 import { Configuration } from "../configuration.js"
 import { getConfig } from "../util/config/config.js"
 import { orNullIfFileNotExist } from "../util/config/load.js"
-import { getProjectRootPath } from "./search-module.js.js"
+import { getProjectRootPath } from "./search-module.js"
 
 export type MetadataValue = Lazy<Record<string, any> | null>
 
