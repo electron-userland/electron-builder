@@ -1,8 +1,12 @@
+<<<<<<< HEAD
 import * as os from "os"
 import * as path from "path"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import { getBinFromUrl, downloadBuilderToolset } from "app-builder-lib/internal"
 import { getBin, getBinFromCustomLoc } from "app-builder-lib/src/binDownload"
+=======
+import { getBinFromUrl } from "app-builder-lib"
+>>>>>>> fb7cff668 (esm complete on tests as well?)
 
 // vi.mock is hoisted before imports by vitest. Importing from `src/` (TypeScript
 // sources) ensures vitest's transform pipeline handles module interception.

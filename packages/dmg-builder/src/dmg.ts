@@ -29,6 +29,8 @@ import { computeBackground, customizeDmg } from "./dmgUtil.js"
 import { hdiUtil } from "./hdiuil.js"
 >>>>>>> c92b22265 (tmp save for .js extension migration)
 
+export { attachAndExecute, getDmgTemplatePath } from "./dmgUtil.js"
+
 export interface DmgBuildConfig {
   title: string
   icon?: string | null

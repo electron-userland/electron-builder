@@ -1,11 +1,19 @@
+<<<<<<< HEAD
 import { PublishManager } from "app-builder-lib"
 import { verifyAsarFileTree as _verifyAsarFileTree } from "./asarVerifier"
 import { AsarIntegrity, computeArchToTargetNamesMap, getLinuxToolsMacToolset, parsePlistFile, PlistObject } from "app-builder-lib/internal"
 import { addValue, copyDir, exec, executeFinally, exists, FileCopier, log, USE_HARD_LINKS, walk } from "builder-util"
 import { CancellationToken, deepAssign, UpdateFileInfo } from "builder-util-runtime"
+=======
+import AdmZip from "adm-zip"
+import { AsarIntegrity, computeArchToTargetNamesMap, computeDefaultAppDirectory, createLazyProductionDeps, detectPackageManager, getCollectorByPackageManager, getLinuxToolsPath, installDependencies, parsePlistFile, PlistObject, PM, PublishManager, readAsar } from "app-builder-lib"
+import { addValue, copyDir, deepAssign, exec, executeFinally, exists, FileCopier, log, USE_HARD_LINKS, walk } from "builder-util"
+import { CancellationToken, UpdateFileInfo } from "builder-util-runtime"
+import { execSync } from "child_process"
+>>>>>>> fb7cff668 (esm complete on tests as well?)
 import { Arch, ArtifactCreated, Configuration, DIR_TARGET, getArchSuffix, MacOsTargetName, Packager, PackagerOptions, Platform, Target } from "electron-builder"
-import { convertVersion } from "electron-winstaller"
 import { PublishPolicy } from "electron-publish"
+import { convertVersion } from "electron-winstaller"
 import { copyFile, emptyDir, mkdir, writeJson } from "fs-extra"
 import * as fs from "fs/promises"
 import { realpath as realpathCb } from "fs"
@@ -13,7 +21,9 @@ import { load } from "js-yaml"
 import * as path from "path"
 import pathSorter from "path-sort"
 import { NtExecutable, NtExecutableResource } from "resedit"
+import sanitizeFileName from "sanitize-filename"
 import { TmpDir } from "temp-file"
+<<<<<<< HEAD
 import { getCollectorByPackageManager, PM } from "app-builder-lib/internal"
 import { promisify } from "util"
 <<<<<<< HEAD
@@ -38,6 +48,13 @@ import { createLazyProductionDeps } from "app-builder-lib/out/util/packageDepend
 >>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 import { execSync } from "child_process"
 import { detectPackageManager } from "app-builder-lib/src/node-module-collector/packageManager"
+=======
+import { promisify } from "util"
+import type { ExpectStatic } from "vitest"
+import { CSC_LINK, WIN_CSC_LINK } from "./codeSignData.js"
+import { assertThat } from "./fileAssert.js"
+import { ELECTRON_VERSION } from "./testConfig.js"
+>>>>>>> fb7cff668 (esm complete on tests as well?)
 
 const PACKAGE_MANAGER_VERSION_MAP = {
   [PM.NPM]: { cli: "npm", version: "9.8.1" },

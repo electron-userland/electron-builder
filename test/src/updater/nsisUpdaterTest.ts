@@ -8,7 +8,12 @@ import { assertThat } from "../helpers/fileAssert.js"
 import { removeUnstableProperties } from "../helpers/packTester.js"
 import { createNsisUpdater, trackEvents, validateDownload, writeUpdateConfig } from "../helpers/updaterTestUtil.js"
 import { ExpectStatic } from "vitest"
+<<<<<<< HEAD
 import { GitLabProvider, GitHubProvider } from "electron-updater"
+=======
+import { GitLabProvider } from "electron-updater"
+import { GitHubProvider } from "electron-updater"
+>>>>>>> fb7cff668 (esm complete on tests as well?)
 
 const config = { retry: 3 }
 

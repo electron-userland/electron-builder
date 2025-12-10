@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 import { PM } from "app-builder-lib/internal"
+=======
+import { PM } from "app-builder-lib"
+>>>>>>> fb7cff668 (esm complete on tests as well?)
 import { spawn } from "builder-util"
 import { Arch, DIR_TARGET, Platform } from "electron-builder"
 import * as path from "path"

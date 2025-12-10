@@ -1,8 +1,13 @@
 import { NodeHttpExecutor, serializeToYaml, TmpDir } from "builder-util"
 import { AllPublishOptions, DownloadOptions } from "builder-util-runtime"
 import { AppUpdater, MacUpdater, NsisUpdater } from "electron-updater"
+<<<<<<< HEAD
 import { NoOpLogger, TestOnlyUpdaterOptions } from "electron-updater/src/AppUpdater"
 import fsExtra from "fs-extra"
+=======
+import { NoOpLogger, TestOnlyUpdaterOptions } from "electron-updater"
+import { outputFile, writeFile } from "fs-extra"
+>>>>>>> fb7cff668 (esm complete on tests as well?)
 import * as path from "path"
 import { assertThat } from "./fileAssert.js"
 import { TestAppAdapter } from "./TestAppAdapter.js"

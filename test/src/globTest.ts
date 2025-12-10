@@ -1,7 +1,13 @@
 import { Platform } from "app-builder-lib"
+<<<<<<< HEAD
 import { readAsar } from "app-builder-lib/internal"
 import { PM } from "app-builder-lib/internal"
 import fsExtra from "fs-extra"
+=======
+import { readAsar } from "app-builder-lib"
+import { PM } from "app-builder-lib"
+import { outputFile } from "fs-extra"
+>>>>>>> fb7cff668 (esm complete on tests as well?)
 import * as fs from "fs/promises"
 import * as path from "path"
 import { ExpectStatic } from "vitest"

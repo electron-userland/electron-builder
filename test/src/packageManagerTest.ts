@@ -1,6 +1,12 @@
 import { Platform } from "app-builder-lib"
+<<<<<<< HEAD
 import { PM } from "app-builder-lib/internal"
 import fsExtra from "fs-extra"
+=======
+import { PM } from "app-builder-lib"
+import { execSync } from "child_process"
+import { copyFile, outputFile, rm, writeFile } from "fs-extra"
+>>>>>>> fb7cff668 (esm complete on tests as well?)
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert.js"
 import { app, assertPack, getFixtureDir, getPackageManagerWithVersion, linuxDirTarget, modifyPackageJson, verifyAsarFileTree } from "./helpers/packTester.js"

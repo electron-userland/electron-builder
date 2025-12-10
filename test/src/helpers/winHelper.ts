@@ -1,6 +1,10 @@
+<<<<<<< HEAD
 import { readAsarJson } from "app-builder-lib/internal"
 import { getWineToolset } from "app-builder-lib/src/toolsets/wine"
 import type { ToolsetConfig } from "app-builder-lib/internal"
+=======
+import { readAsarJson } from "app-builder-lib"
+>>>>>>> fb7cff668 (esm complete on tests as well?)
 import { walk } from "builder-util"
 import { Arch, Platform } from "electron-builder"
 import fsExtra from "fs-extra"

@@ -2,8 +2,12 @@
   "extends": "@tsconfig/node22/tsconfig.json",
   "compilerOptions": {
 <<<<<<< HEAD
+<<<<<<< HEAD
     "module": "ESNext",
     "moduleResolution": "bundler",
+=======
+    "lib": ["es2024", "WebWorker", "esnext"],
+>>>>>>> fb7cff668 (esm complete on tests as well?)
 
     "forceConsistentCasingInFileNames": true,
 =======

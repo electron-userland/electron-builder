@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 import { AsarFilesystem, readAsar } from "app-builder-lib/internal"
+=======
+import { AsarFilesystem, readAsar } from "app-builder-lib"
+>>>>>>> fb7cff668 (esm complete on tests as well?)
 import { walk } from "builder-util"
 import { readFileSync } from "fs"
 import * as path from "path"

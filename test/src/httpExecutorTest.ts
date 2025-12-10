@@ -1,7 +1,10 @@
 import { expect, test, describe } from "vitest"
 import { HttpExecutor } from "builder-util-runtime"
+<<<<<<< HEAD
 import { hashSensitiveValue, safeStringifyJson } from "builder-util-runtime/internal"
 import { addSensitiveFieldPattern, addSensitiveRedirectHeader, isSensitiveFieldName } from "builder-util-runtime/src/httpExecutor"
+=======
+>>>>>>> fb7cff668 (esm complete on tests as well?)
 import { RequestOptions } from "http"
 
 describe("HttpExecutor.prepareRedirectUrlOptions", () => {

@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 import { getRepositoryInfo } from "app-builder-lib/internal"
+=======
+import { getRepositoryInfo } from "app-builder-lib"
+>>>>>>> fb7cff668 (esm complete on tests as well?)
 import { ExpectStatic } from "vitest"
 
 function checkInfo(expect: ExpectStatic, info: any) {

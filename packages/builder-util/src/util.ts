@@ -27,10 +27,14 @@ if (process.env.JEST_WORKER_ID == null) {
 }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 export { isEmptyOrSpaces } from "./stringUtil.js"
 =======
 export { getCompleteExtname, sanitizeFileName } from "./filename"
 >>>>>>> c92b22265 (tmp save for .js extension migration)
+=======
+export { getCompleteExtname, sanitizeFileName } from "./filename.js"
+>>>>>>> fb7cff668 (esm complete on tests as well?)
 export { safeStringifyJson, retry } from "builder-util-runtime"
 export { TmpDir } from "temp-file"
 export * from "./arch.js"

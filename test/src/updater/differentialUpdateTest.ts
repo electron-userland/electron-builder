@@ -1,5 +1,14 @@
+<<<<<<< HEAD
 import { Arch, Platform } from "app-builder-lib"
 import { getArchSuffix } from "builder-util"
+=======
+import { Arch, Configuration, Platform } from "app-builder-lib"
+import { getBinFromUrl } from "app-builder-lib"
+import { doSpawn, getArchSuffix } from "builder-util"
+import { GenericServerOptions, Nullish, S3Options } from "builder-util-runtime"
+import { AppImageUpdater, BaseUpdater, MacUpdater, NsisUpdater } from "electron-updater"
+import { EventEmitter } from "events"
+>>>>>>> fb7cff668 (esm complete on tests as well?)
 import { move } from "fs-extra"
 import * as path from "path"
 import { TmpDir } from "temp-file"

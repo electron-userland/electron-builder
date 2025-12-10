@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 import { ElectronAppAdapter } from "electron-updater/src/ElectronAppAdapter"
+=======
+import { ElectronAppAdapter } from "electron-updater"
+>>>>>>> fb7cff668 (esm complete on tests as well?)
 
 // do not implement AppAdapter directly, test that our ElectronAppAdapter implementation is correct
 export class TestAppAdapter extends ElectronAppAdapter {
