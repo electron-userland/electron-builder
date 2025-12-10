@@ -4,6 +4,7 @@ import { addValue, Arch, archFromString, ArchType, asArray } from "builder-util"
 import { DEFAULT_TARGET, DIR_TARGET, Platform, Target, TargetConfiguration } from "../core.js"
 import { PlatformPackager } from "../platformPackager.js"
 import { ArchiveTarget } from "./ArchiveTarget.js"
+<<<<<<< HEAD
 =======
 import { DEFAULT_TARGET, DIR_TARGET, Platform, Target, TargetConfiguration } from "../core"
 import { PlatformPackager } from "../platformPackager"
@@ -13,6 +14,8 @@ import { PlatformPackager } from "../platformPackager.js"
 >>>>>>> d26567f58 (tmp save)
 import { ArchiveTarget } from "./ArchiveTarget.js.js"
 >>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
+=======
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 
 const archiveTargets = new Set(["zip", "7z", "tar.xz", "tar.lz", "tar.gz", "tar.bz2"])
 

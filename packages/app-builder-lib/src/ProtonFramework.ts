@@ -4,16 +4,22 @@ import { FileTransformer, log } from "builder-util"
 const require = createRequire(import.meta.url)
 import { safeStringifyJson } from "builder-util-runtime"
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 import { Platform } from "./core.js"
 import { NODE_MODULES_PATTERN } from "./fileTransformer.js"
 import { LibUiFramework } from "./frameworks/LibUiFramework.js"
 import { getTemplatePath } from "./util/pathManager.js"
+<<<<<<< HEAD
 =======
 import { Platform } from "./core.js.js"
 import { NODE_MODULES_PATTERN } from "./fileTransformer.js.js"
 import { LibUiFramework } from "./frameworks/LibUiFramework.js.js"
 import { getTemplatePath } from "./util/pathManager.js.js"
 >>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
+=======
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 
 export class ProtonFramework extends LibUiFramework {
   readonly name = "proton"

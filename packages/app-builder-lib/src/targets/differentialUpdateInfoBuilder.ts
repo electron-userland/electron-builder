@@ -15,9 +15,13 @@ import { executeAppBuilderAsJson } from "../util/appBuilder"
 import { Target } from "../core.js"
 import { PlatformPackager } from "../platformPackager.js"
 import { executeAppBuilderAsJson } from "../util/appBuilder.js"
+<<<<<<< HEAD
 >>>>>>> d26567f58 (tmp save)
 import { ArchiveOptions } from "./archive.js.js"
 >>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
+=======
+import { ArchiveOptions } from "./archive.js"
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 
 export const BLOCK_MAP_FILE_SUFFIX = ".blockmap"
 

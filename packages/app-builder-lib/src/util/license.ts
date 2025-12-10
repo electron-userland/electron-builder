@@ -4,6 +4,7 @@ import * as path from "path"
 <<<<<<< HEAD
 import { PlatformPackager } from "../platformPackager.js"
 import { langIdToName, toLangWithRegion } from "./langs.js"
+<<<<<<< HEAD
 =======
 import { PlatformPackager } from "../platformPackager"
 =======
@@ -11,6 +12,8 @@ import { PlatformPackager } from "../platformPackager.js"
 >>>>>>> d26567f58 (tmp save)
 import { langIdToName, toLangWithRegion } from "./langs.js.js"
 >>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
+=======
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 
 export function getLicenseAssets(fileNames: Array<string>, packager: PlatformPackager<any>) {
   return fileNames

@@ -2,6 +2,7 @@
 <<<<<<< HEAD
 import { TargetSpecificOptions } from "../core.js"
 import { CommonWindowsInstallerConfiguration } from "./CommonWindowsInstallerConfiguration.js"
+<<<<<<< HEAD
 =======
 import { TargetSpecificOptions } from "../core"
 =======
@@ -9,6 +10,8 @@ import { TargetSpecificOptions } from "../core.js"
 >>>>>>> d26567f58 (tmp save)
 import { CommonWindowsInstallerConfiguration } from "./CommonWindowsInstallerConfiguration.js.js"
 >>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
+=======
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 
 export interface MsiOptions extends CommonWindowsInstallerConfiguration, TargetSpecificOptions {
   /**

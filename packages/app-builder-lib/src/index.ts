@@ -2,16 +2,22 @@ import { InvalidConfigurationError, executeFinally, log } from "builder-util"
 import { asArray } from "builder-util-runtime"
 import { PublishOptions } from "electron-publish"
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 import { Packager } from "./packager.js"
 import { PackagerOptions } from "./packagerApi.js"
 import { PublishManager } from "./publish/PublishManager.js"
 import { resolveFunction } from "./util/resolve.js"
+<<<<<<< HEAD
 =======
 import { Packager } from "./packager.js.js"
 import { PackagerOptions } from "./packagerApi.js.js"
 import { PublishManager } from "./publish/PublishManager.js.js"
 import { resolveFunction } from "./util/resolve.js.js"
 >>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
+=======
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 
 export { Arch, archFromString, getArchSuffix } from "builder-util"
 export { AppInfo } from "./appInfo.js"
@@ -26,7 +32,10 @@ export {
   Hooks,
   MetadataDirectories,
   PackContext,
+<<<<<<< HEAD
   ToolsetConfig,
+=======
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 } from "./configuration.js"
 export {
   BeforeBuildContext,
@@ -40,6 +49,7 @@ export {
   TargetConfiguration,
   TargetSpecificOptions,
 } from "./core.js"
+<<<<<<< HEAD
 export { ElectronBrandingOptions, ElectronPlatformName } from "./electron/ElectronFramework.js"
 export { ElectronDownloadOptions } from "./util/electronGet.js"
 export { AppXOptions } from "./options/AppXOptions.js"
@@ -57,12 +67,24 @@ export {
   RpmOptions,
 } from "./options/linuxOptions.js"
 export type { DmgContent, DmgOptions, DmgWindow, MacConfiguration, MacOsTargetName, MasConfiguration } from "./options/macOptions.js"
+=======
+export { ElectronBrandingOptions, ElectronDownloadOptions, ElectronPlatformName } from "./electron/ElectronFramework.js"
+export { AppXOptions } from "./options/AppXOptions.js"
+export { CommonWindowsInstallerConfiguration } from "./options/CommonWindowsInstallerConfiguration.js"
+export { FileAssociation } from "./options/FileAssociation.js"
+export { AppImageOptions, CommonLinuxOptions, DebOptions, FlatpakOptions, LinuxConfiguration, LinuxDesktopFile, LinuxTargetSpecificOptions } from "./options/linuxOptions.js"
+export { DmgContent, DmgOptions, DmgWindow, MacConfiguration, MacOsTargetName, MasConfiguration } from "./options/macOptions.js"
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 export { AuthorMetadata, Metadata, RepositoryInfo } from "./options/metadata.js"
 export { MsiOptions } from "./options/MsiOptions.js"
 export { MsiWrappedOptions } from "./options/MsiWrappedOptions.js"
 export { BackgroundAlignment, BackgroundScaling, PkgBackgroundOptions, PkgOptions } from "./options/pkgOptions.js"
 export { AsarOptions, FileSet, FilesBuildOptions, PlatformSpecificBuildOptions, Protocol, ReleaseInfo } from "./options/PlatformSpecificBuildOptions.js"
+<<<<<<< HEAD
 export { PlugDescriptor, SlotDescriptor, SnapcraftOptions, SnapOptions } from "./options/SnapOptions.js"
+=======
+export { PlugDescriptor, SlotDescriptor, SnapOptions } from "./options/SnapOptions.js"
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 export { SquirrelWindowsOptions } from "./options/SquirrelWindowsOptions.js"
 export { WindowsAzureSigningConfiguration, WindowsConfiguration, WindowsSigntoolConfiguration } from "./options/winOptions.js"
 export { BuildResult, Packager } from "./packager.js"
@@ -78,9 +100,13 @@ export {
   CustomWindowsSignTaskConfiguration,
   FileCodeSigningInfo,
   WindowsSignTaskConfiguration,
+<<<<<<< HEAD
   WindowsSignToolManager,
 } from "./codeSign/windowsSignToolManager.js"
 export { ToolInfo } from "./util/bundledTool.js"
+=======
+} from "./codeSign/windowsSignToolManager.js"
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 export { ForgeOptions, buildForge } from "./forge-maker.js"
 export { Framework, PrepareApplicationStageDirectoryOptions } from "./Framework.js"
 export { LinuxPackager } from "./linuxPackager.js"
@@ -88,6 +114,10 @@ export { CustomMacSign, CustomMacSignOptions, MacPackager } from "./macPackager.
 export { PlatformPackager } from "./platformPackager.js"
 export { PublishManager } from "./publish/PublishManager.js"
 export { WinPackager } from "./winPackager.js"
+<<<<<<< HEAD
+=======
+export { findIdentity, isSignAllowed } from "./codeSign/macCodeSign.js"
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 
 const expectedOptions = new Set(["publish", "targets", "mac", "win", "linux", "projectDir", "platformPackagerFactory", "config", "effectiveOptionComputed", "prepackaged"])
 

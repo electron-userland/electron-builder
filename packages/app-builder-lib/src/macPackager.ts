@@ -1,8 +1,15 @@
+<<<<<<< HEAD
 import { createRequire } from "node:module"
 import { SignOptions } from "@electron/osx-sign/dist/cjs/types"
 import type { Identity } from "@electron/osx-sign/dist/cjs/util-identities"
 
 const _require = createRequire(import.meta.url)
+=======
+import { notarize } from "@electron/notarize"
+import { NotarizeOptionsNotaryTool, NotaryToolKeychainCredentials } from "@electron/notarize/lib/types.js"
+import { PerFileSignOptions, SignOptions } from "@electron/osx-sign/dist/cjs/types.js"
+import { Identity } from "@electron/osx-sign/dist/cjs/util-identities.js"
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 import {
   Arch,
   AsyncTaskManager,
@@ -24,17 +31,25 @@ import { mkdir, readdir } from "fs/promises"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { AppInfo } from "./appInfo.js"
 import { CodeSigningInfo, createKeychain, CreateKeychainOptions, isSignAllowed, removeKeychain, sign } from "./codeSign/macCodeSign.js"
 import { DIR_TARGET, Platform, Target } from "./core.js"
 import { AfterPackContext, ElectronPlatformName } from "./index.js"
 import { MacTargetHelper, PlatformType } from "./mac/MacTargetHelper.js"
+=======
+import { AppInfo } from "./appInfo.js"
+import { CertType, CodeSigningInfo, createKeychain, CreateKeychainOptions, findIdentity, isSignAllowed, removeKeychain, reportError, sign } from "./codeSign/macCodeSign.js"
+import { DIR_TARGET, Platform, Target } from "./core.js"
+import { AfterPackContext, ElectronPlatformName } from "./index.js"
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 import { MacConfiguration, MasConfiguration } from "./options/macOptions.js"
 import { Packager } from "./packager.js"
 import { chooseNotNull, DoPackOptions, PlatformPackager } from "./platformPackager.js"
 import { ArchiveTarget } from "./targets/ArchiveTarget.js"
 import { PkgTarget, prepareProductBuildArgs } from "./targets/pkg.js"
 import { createCommonTarget, NoOpTarget } from "./targets/targetFactory.js"
+<<<<<<< HEAD
 import { dynamicImport } from "./util/dynamicImport.js"
 import { isMacOsHighSierra } from "./util/macosVersion.js"
 import { expandMacro as doExpandMacro } from "./util/macroExpander.js"
@@ -54,6 +69,12 @@ import { isMacOsHighSierra } from "./util/macosVersion.js.js"
 import { getTemplatePath } from "./util/pathManager.js.js"
 import { resolveFunction } from "./util/resolve.js.js"
 import { expandMacro as doExpandMacro } from "./util/macroExpander.js.js"
+=======
+import { isMacOsHighSierra } from "./util/macosVersion.js"
+import { getTemplatePath } from "./util/pathManager.js"
+import { resolveFunction } from "./util/resolve.js"
+import { expandMacro as doExpandMacro } from "./util/macroExpander.js"
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 import { makeUniversalApp } from "@electron/universal"
 >>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 

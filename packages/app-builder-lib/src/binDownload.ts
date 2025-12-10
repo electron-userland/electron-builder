@@ -2,7 +2,11 @@ import * as fs from "fs/promises"
 import { log, parseValidEnvVarUrl } from "builder-util"
 import { dynamicImport } from "./util/dynamicImport.js"
 import { Nullish } from "builder-util-runtime"
+<<<<<<< HEAD
 import { sanitizeFileName } from "builder-util/internal"
+=======
+import { sanitizeFileName } from "builder-util"
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 import * as path from "path"
 import { downloadBuilderToolset, getBinariesMirrorUrl, getCacheDirectory } from "./util/electronGet.js"
 

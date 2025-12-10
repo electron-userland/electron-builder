@@ -4,10 +4,14 @@ import { DebugLogger, ExtraSpawnOptions, exec, log, spawn } from "builder-util"
 const require = createRequire(import.meta.url)
 import { ExecFileOptions, SpawnOptions, execFileSync } from "child_process"
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { VmManager } from "./vm.js"
 =======
 import { VmManager } from "./vm.js.js"
 >>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
+=======
+import { VmManager } from "./vm.js"
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 
 /** @internal */
 export async function parseVmList(debugLogger: DebugLogger) {

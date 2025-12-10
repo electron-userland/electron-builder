@@ -24,12 +24,16 @@ import * as path from "path"
 import * as fs from "fs/promises"
 import * as os from "os"
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 import { AppInfo } from "./appInfo.js"
 import { checkFileInArchive } from "./asar/asarFileChecker.js"
 import { AsarPackager } from "./asar/asarUtil.js"
 import { AsarIntegrity, computeData } from "./asar/integrity.js"
 import { FuseOptionsV1 } from "./configuration.js"
 import { copyFiles, FileMatcher, getFileMatchers, GetFileMatchersOptions, getMainFileMatchers, getNodeModuleFileMatcher } from "./fileMatcher.js"
+<<<<<<< HEAD
 import { createTransformer } from "./fileTransformer.js"
 import { Framework, isElectronBased } from "./Framework.js"
 import { Platform } from "./core.js"
@@ -45,6 +49,10 @@ import { FuseOptionsV1 } from "./configuration.js.js"
 import { copyFiles, FileMatcher, getFileMatchers, GetFileMatchersOptions, getMainFileMatchers, getNodeModuleFileMatcher } from "./fileMatcher.js.js"
 import { createTransformer, isElectronCompileUsed } from "./fileTransformer.js.js"
 import { Framework, isElectronBased } from "./Framework.js.js"
+=======
+import { createTransformer, isElectronCompileUsed } from "./fileTransformer.js"
+import { Framework, isElectronBased } from "./Framework.js"
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 import {
 >>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
   AfterPackContext,
@@ -62,6 +70,7 @@ import {
 <<<<<<< HEAD
 <<<<<<< HEAD
 } from "./index.js"
+<<<<<<< HEAD
 import { computeFileSets, computeNodeModuleFileSets, copyAppFiles, transformFiles } from "./util/appFileCopier.js"
 import { convertIcon, IconFormat, IconInfo } from "./util/iconConverter.js"
 import { expandMacro as doExpandMacro } from "./util/macroExpander.js"
@@ -76,6 +85,12 @@ import { computeFileSets, computeNodeModuleFileSets, copyAppFiles, ELECTRON_COMP
 import { expandMacro as doExpandMacro } from "./util/macroExpander.js.js"
 import { AssetCatalogResult, generateAssetCatalogForIcon } from "./util/macosIconComposer.js.js"
 >>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
+=======
+import { executeAppBuilderAsJson } from "./util/appBuilder.js"
+import { computeFileSets, computeNodeModuleFileSets, copyAppFiles, ELECTRON_COMPILE_SHIM_FILENAME, transformFiles } from "./util/appFileCopier.js"
+import { expandMacro as doExpandMacro } from "./util/macroExpander.js"
+import { AssetCatalogResult, generateAssetCatalogForIcon } from "./util/macosIconComposer.js"
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 
 export type DoPackOptions<DC extends PlatformSpecificBuildOptions> = {
   outDir: string

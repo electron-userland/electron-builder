@@ -12,8 +12,12 @@ import { Argv } from "yargs"
 import { BuildOptions, createYargs, normalizeOptions } from "./builder.js"
 =======
 import * as yargs from "yargs"
+<<<<<<< HEAD
 import { BuildOptions, normalizeOptions } from "./builder.js.js"
 >>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
+=======
+import { BuildOptions, normalizeOptions } from "./builder.js"
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 
 /** @internal */
 export function configurePublishCommand(yargs: Argv): Argv {

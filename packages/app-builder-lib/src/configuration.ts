@@ -1,22 +1,35 @@
 import { Arch } from "builder-util"
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { BeforeBuildContext, Target } from "./core.js"
 import { ElectronBrandingOptions } from "./electron/ElectronFramework.js"
 import { PrepareApplicationStageDirectoryOptions } from "./Framework.js"
 import { AppXOptions } from "./options/AppXOptions.js"
 import { AppImageOptions, DebOptions, FlatpakOptions, LinuxConfiguration, LinuxTargetSpecificOptions, PacmanOptions, RpmOptions } from "./options/linuxOptions.js"
+=======
+import { BeforeBuildContext, Target } from "./core.js"
+import { ElectronBrandingOptions, ElectronDownloadOptions } from "./electron/ElectronFramework.js"
+import { PrepareApplicationStageDirectoryOptions } from "./Framework.js"
+import { AppXOptions } from "./options/AppXOptions.js"
+import { AppImageOptions, DebOptions, FlatpakOptions, LinuxConfiguration, LinuxTargetSpecificOptions } from "./options/linuxOptions.js"
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 import { DmgOptions, MacConfiguration, MasConfiguration } from "./options/macOptions.js"
 import { MsiOptions } from "./options/MsiOptions.js"
 import { MsiWrappedOptions } from "./options/MsiWrappedOptions.js"
 import { PkgOptions } from "./options/pkgOptions.js"
 import { PlatformSpecificBuildOptions } from "./options/PlatformSpecificBuildOptions.js"
+<<<<<<< HEAD
 import { SnapcraftOptions, SnapOptions } from "./options/SnapOptions.js"
+=======
+import { SnapOptions } from "./options/SnapOptions.js"
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 import { SquirrelWindowsOptions } from "./options/SquirrelWindowsOptions.js"
 import { WindowsConfiguration } from "./options/winOptions.js"
 import { BuildResult } from "./packager.js"
 import { ArtifactBuildStarted, ArtifactCreated } from "./packagerApi.js"
 import { PlatformPackager } from "./platformPackager.js"
 import { NsisOptions, NsisWebOptions, PortableOptions } from "./targets/nsis/nsisOptions.js"
+<<<<<<< HEAD
 import { ElectronDownloadOptions, ElectronGetOptions } from "./util/electronGet.js"
 =======
 import { BeforeBuildContext, Target } from "./core.js.js"
@@ -37,6 +50,8 @@ import { ArtifactBuildStarted, ArtifactCreated } from "./packagerApi.js.js"
 import { PlatformPackager } from "./platformPackager.js.js"
 import { NsisOptions, NsisWebOptions, PortableOptions } from "./targets/nsis/nsisOptions.js.js"
 >>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
+=======
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 
 // duplicate appId here because it is important
 /**

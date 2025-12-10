@@ -1,8 +1,12 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { CommonWindowsInstallerConfiguration } from "../../options/CommonWindowsInstallerConfiguration.js"
 =======
 import { CommonWindowsInstallerConfiguration } from "../...js"
 >>>>>>> d26567f58 (tmp save)
+=======
+import { CommonWindowsInstallerConfiguration } from "../../options/CommonWindowsInstallerConfiguration.js"
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 import { TargetSpecificOptions } from "../../core.js"
 
 export interface CustomNsisBinary {

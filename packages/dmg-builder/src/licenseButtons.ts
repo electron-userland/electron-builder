@@ -14,9 +14,14 @@ import { log } from "builder-util"
 import { readFile } from "fs-extra"
 import * as iconv from "iconv-lite"
 import { load } from "js-yaml"
+<<<<<<< HEAD
 import { serializeString } from "./dmgUtil.js.js"
 import { getDefaultButtons } from "./licenseDefaultButtons.js.js"
 >>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
+=======
+import { serializeString } from "./dmgUtil.js"
+import { getDefaultButtons } from "./licenseDefaultButtons.js"
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 
 export async function getLicenseButtonsFile(packager: PlatformPackager<any>): Promise<Array<LicenseButtonsFile>> {
   return getLicenseAssets(

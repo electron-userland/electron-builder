@@ -2,6 +2,7 @@ import { Arch, exists, InvalidConfigurationError } from "builder-util"
 import { deepAssign, UUID } from "builder-util-runtime"
 import * as path from "path"
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { MsiWrappedOptions } from "../options/MsiWrappedOptions.js"
 import { TargetConfiguration } from "../core.js"
 import { FinalCommonWindowsInstallerOptions } from "../options/CommonWindowsInstallerConfiguration.js"
@@ -14,6 +15,13 @@ import { FinalCommonWindowsInstallerOptions } from "../options/CommonWindowsInst
 import { WinPackager } from "../winPackager.js"
 import MsiTarget from "./MsiTarget.js.js"
 >>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
+=======
+import { MsiWrappedOptions } from "../index.js"
+import { TargetConfiguration } from "../core.js"
+import { FinalCommonWindowsInstallerOptions } from "../options/CommonWindowsInstallerConfiguration.js"
+import { WinPackager } from "../winPackager.js"
+import MsiTarget from "./MsiTarget.js"
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 
 const ELECTRON_MSI_WRAPPED_NS_UUID = UUID.parse("467f7bb2-a83c-442f-b776-394d316e8e53")
 

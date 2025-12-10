@@ -11,6 +11,7 @@ import { LinuxPackager } from "../linuxPackager.js"
 import { FlatpakOptions } from "../options/linuxOptions.js"
 import { getNotLocalizedLicenseFile } from "../util/license.js"
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { LinuxTargetHelper } from "./LinuxTargetHelper.js"
 import { createStageDir, StageDir } from "./targetUtil.js"
 import { deepAssign, Nullish } from "builder-util-runtime"
@@ -29,6 +30,13 @@ import { createStageDir, StageDir } from "./targetUtil.js.js"
 
 export default class FlatpakTarget extends Target {
   readonly options: FlatpakOptions = deepAssign({}, this.packager.platformSpecificBuildOptions, (this.packager.config as any)[this.name])
+=======
+import { LinuxTargetHelper } from "./LinuxTargetHelper.js"
+import { createStageDir, StageDir } from "./targetUtil.js"
+
+export default class FlatpakTarget extends Target {
+  readonly options: FlatpakOptions
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 
   constructor(
     name: string,
@@ -37,6 +45,10 @@ export default class FlatpakTarget extends Target {
     readonly outDir: string
   ) {
     super(name)
+    this.options = {
+    ...this.packager.platformSpecificBuildOptions,
+    ...(this.packager.config as any)[this.name],
+  }
   }
 
   get appId(): string {

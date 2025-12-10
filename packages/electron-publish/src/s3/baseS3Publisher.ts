@@ -3,6 +3,7 @@ import { BaseS3Options } from "builder-util-runtime"
 import { mkdir, symlink } from "fs/promises"
 import * as path from "path"
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { PublishContext, UploadTask } from "../index.js"
 import { Publisher } from "../publisher.js"
 import type { AwsCredentials } from "./awsCredentials.js"
@@ -22,6 +23,9 @@ export interface S3UploadExtraParams {
 }
 =======
 import { PublishContext, UploadTask } from ".."
+=======
+import { PublishContext, UploadTask } from "../index.js"
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 import { Publisher } from "../publisher.js"
 >>>>>>> d26567f58 (tmp save)
 

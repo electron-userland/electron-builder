@@ -1,5 +1,10 @@
+<<<<<<< HEAD
 import type { FilesystemEntry, FilesystemFileEntry } from "@electron/asar/lib/filesystem"
 import { dynamicImport } from "../util/dynamicImport.js"
+=======
+import * as asar from "@electron/asar"
+import { FilesystemEntry, FilesystemFileEntry } from "@electron/asar/lib/filesystem.js"
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 
 export async function checkFileInArchive(asarFile: string, relativeFile: string, messagePrefix: string): Promise<FilesystemEntry> {
   const asar = await dynamicImport<typeof import("@electron/asar")>("@electron/asar")

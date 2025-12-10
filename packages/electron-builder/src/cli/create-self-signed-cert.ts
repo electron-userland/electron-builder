@@ -1,7 +1,14 @@
+<<<<<<< HEAD
 import { getWindowsKitsBundle } from "app-builder-lib/internal"
 import { archFromString, exec, log, spawn, TmpDir, unlinkIfExists } from "builder-util"
 import { sanitizeFileName } from "builder-util/internal"
 import chalk from "chalk"
+=======
+import { getSignVendorPath } from "app-builder-lib/out/codeSign/windowsSignToolManager"
+import { exec, log, spawn, TmpDir, unlinkIfExists } from "builder-util"
+import { sanitizeFileName } from "builder-util"
+import * as chalk from "chalk"
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 import { mkdir } from "fs/promises"
 import * as path from "path"
 

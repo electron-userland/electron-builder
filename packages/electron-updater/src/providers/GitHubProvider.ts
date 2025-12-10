@@ -7,6 +7,7 @@ import { AppUpdater } from "../AppUpdater.js"
 import { ResolvedUpdateFileInfo } from "../types.js"
 import { getChannelFilename, newBaseUrl, newUrlFromBase } from "../util.js"
 import { parseUpdateInfo, Provider, ProviderRuntimeOptions, resolveFiles } from "./Provider.js"
+<<<<<<< HEAD
 =======
 import { AppUpdater } from "../AppUpdater"
 import { ResolvedUpdateFileInfo } from "../types"
@@ -18,6 +19,8 @@ import { getChannelFilename, newBaseUrl, newUrlFromBase } from "../util.js"
 >>>>>>> d26567f58 (tmp save)
 import { parseUpdateInfo, Provider, ProviderRuntimeOptions, resolveFiles } from "./Provider.js.js"
 >>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
+=======
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 
 const hrefRegExp = /\/tag\/(v?[^/]+)$/
 

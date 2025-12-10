@@ -13,6 +13,7 @@ import { MacPackager } from "../macPackager.js"
 import { getTemplatePath } from "../util/pathManager.js"
 import { resolveFunction } from "../util/resolve.js"
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { downloadElectronArtifactZip, ElectronDownloadOptions, ElectronGetOptions, extractArchive } from "../util/electronGet.js"
 export { ElectronDownloadOptions }
 import { createMacApp } from "./electronMac.js"
@@ -36,6 +37,12 @@ import { computeElectronVersion, getElectronVersionFromInstalled } from "./elect
 import { addWinAsarIntegrity } from "./electronWin.js.js"
 import injectFFMPEG from "./injectFFMPEG.js.js"
 >>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
+=======
+import { createMacApp } from "./electronMac.js"
+import { computeElectronVersion, getElectronVersionFromInstalled } from "./electronVersion.js"
+import { addWinAsarIntegrity } from "./electronWin.js"
+import injectFFMPEG from "./injectFFMPEG.js"
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 
 export type ElectronPlatformName = "darwin" | "linux" | "win32" | "mas"
 

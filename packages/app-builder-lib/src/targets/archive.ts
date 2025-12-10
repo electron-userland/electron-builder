@@ -6,6 +6,7 @@ import { TmpDir } from "temp-file"
 <<<<<<< HEAD
 <<<<<<< HEAD
 import { CompressionLevel } from "../core.js"
+<<<<<<< HEAD
 import { getLinuxToolsMacToolset } from "../toolsets/linux.js"
 import { getPath7za } from "../toolsets/7zip.js"
 import _fsExtra from "fs-extra"
@@ -34,6 +35,9 @@ import { CompressionLevel } from "../core.js"
 >>>>>>> d26567f58 (tmp save)
 import { getLinuxToolsPath } from "./tools.js.js"
 >>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
+=======
+import { getLinuxToolsPath } from "./tools.js"
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 
 /** @internal */
 export async function tar({ compression, format, outFile, dirToArchive, isMacApp, tempDirManager }: TarConfig): Promise<void> {

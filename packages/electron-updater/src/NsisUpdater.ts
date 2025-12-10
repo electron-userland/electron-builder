@@ -2,12 +2,16 @@ import { createRequire } from "node:module"
 import { AllPublishOptions, newError, PackageFileInfo, CURRENT_APP_INSTALLER_FILE_NAME, CURRENT_APP_PACKAGE_FILE_NAME } from "builder-util-runtime"
 import * as path from "path"
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 import { AppAdapter } from "./AppAdapter.js"
 import { DownloadUpdateOptions } from "./AppUpdater.js"
 import { BaseUpdater, InstallOptions } from "./BaseUpdater.js"
 import { DifferentialDownloaderOptions } from "./differentialDownloader/DifferentialDownloader.js"
 import { FileWithEmbeddedBlockMapDifferentialDownloader } from "./differentialDownloader/FileWithEmbeddedBlockMapDifferentialDownloader.js"
 import { DOWNLOAD_PROGRESS } from "./types.js"
+<<<<<<< HEAD
 import { VerifyUpdateCodeSignature } from "./index.js"
 import { findFile, Provider } from "./providers/Provider.js"
 import fsExtra from "fs-extra"
@@ -24,6 +28,12 @@ import { findFile, Provider } from "./providers/Provider.js.js"
 import { unlink } from "fs-extra"
 import { verifySignature } from "./windowsExecutableCodeSignatureVerifier.js.js"
 >>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
+=======
+import { VerifyUpdateCodeSignature } from "./main.js"
+import { findFile, Provider } from "./providers/Provider.js"
+import { unlink } from "fs-extra"
+import { verifySignature } from "./windowsExecutableCodeSignatureVerifier.js"
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 import { URL } from "url"
 
 const require = createRequire(import.meta.url)

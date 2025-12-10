@@ -8,6 +8,7 @@ import asyncPool from "tiny-async-pool"
 import { excludedNames, FileMatcher } from "../fileMatcher.js"
 import { Packager } from "../packager.js"
 import { FileCopyHelper } from "./AppFileWalker.js"
+<<<<<<< HEAD
 import { NodeModuleInfo } from "../node-module-collector/types.js"
 import { resolveFunction } from "./resolve.js"
 =======
@@ -21,6 +22,10 @@ import { FileCopyHelper } from "./AppFileWalker.js.js"
 import { NodeModuleInfo } from "./packageDependencies.js.js"
 import { resolveFunction } from "./resolve.js.js"
 >>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
+=======
+import { NodeModuleInfo } from "./packageDependencies.js"
+import { resolveFunction } from "./resolve.js"
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 
 const excludedFiles = new Set(
   [

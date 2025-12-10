@@ -5,6 +5,7 @@ import { stat } from "fs/promises"
 
 import * as path from "path"
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { DmgBuildConfig } from "./dmg.js"
 import type { DmgBuildLicenseConfig } from "./dmgLicense.js"
 import { hdiUtil, hdiUtilWithStdin, hdiutilTransientExitCodes } from "./hdiuil.js"
@@ -15,6 +16,11 @@ import { hdiUtil, hdiutilTransientExitCodes } from "./hdiuil.js.js"
 import { writeFile } from "fs-extra"
 import { DmgBuildConfig } from "./dmg.js.js"
 >>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
+=======
+import { hdiUtil, hdiutilTransientExitCodes } from "./hdiuil.js"
+import { writeFile } from "fs-extra"
+import { DmgBuildConfig } from "./dmg.js"
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 
 export { DmgTarget } from "./dmg.js"
 

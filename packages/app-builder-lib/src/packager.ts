@@ -22,6 +22,9 @@ import { Lazy } from "lazy-val"
 import { release as getOsRelease } from "os"
 import * as path from "path"
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 import { AppInfo } from "./appInfo.js"
 import { readAsarJson } from "./asar/asar.js"
 import { AfterExtractContext, AfterPackContext, BeforePackContext, Configuration, Hook } from "./configuration.js"
@@ -36,12 +39,17 @@ import { ProtonFramework } from "./ProtonFramework.js"
 import { computeArchToTargetNamesMap, createTargets, NoOpTarget } from "./targets/targetFactory.js"
 import { computeDefaultAppDirectory, getConfig, validateConfiguration } from "./util/config/config.js"
 import { expandMacro } from "./util/macroExpander.js"
+<<<<<<< HEAD
+=======
+import { createLazyProductionDeps, NodeModuleDirInfo, NodeModuleInfo } from "./util/packageDependencies.js"
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 import { checkMetadata, readPackageJson } from "./util/packageMetadata.js"
 import { getRepositoryInfo } from "./util/repositoryInfo.js"
 import { resolveFunction } from "./util/resolve.js"
 import { installOrRebuild, nodeGypRebuild } from "./util/yarn.js"
 import { PACKAGE_VERSION } from "./version.js"
 import { AsyncEventEmitter, HandlerType } from "./util/asyncEventEmitter.js"
+<<<<<<< HEAD
 import asyncPool from "tiny-async-pool"
 import { determinePackageManagerEnv, PM } from "./node-module-collector/index.js"
 import _fsExtra from "fs-extra"
@@ -71,6 +79,10 @@ import { AsyncEventEmitter, HandlerType } from "./util/asyncEventEmitter.js.js"
 import asyncPool from "tiny-async-pool"
 import { determinePackageManagerEnv, PM } from "./node-module-collector.js.js"
 >>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
+=======
+import asyncPool from "tiny-async-pool"
+import { determinePackageManagerEnv, PM } from "./node-module-collector/index.js"
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 
 async function createFrameworkInfo(configuration: Configuration, packager: Packager): Promise<Framework> {
   let framework = configuration.framework

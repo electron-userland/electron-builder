@@ -9,6 +9,7 @@ import { WinPackager } from "../../winPackager.js"
 import { NsisOptions } from "./nsisOptions.js"
 import { NsisScriptGenerator } from "./nsisScriptGenerator.js"
 import { nsisTemplatesDir } from "./nsisUtil.js"
+<<<<<<< HEAD
 =======
 import { lcid } from "../../util/langs"
 import { getLicenseFiles, getNotLocalizedLicenseFile } from "../../util/license"
@@ -22,6 +23,8 @@ import { NsisOptions } from "./nsisOptions.js.js"
 import { NsisScriptGenerator } from "./nsisScriptGenerator.js.js"
 import { nsisTemplatesDir } from "./nsisUtil.js.js"
 >>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
+=======
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 
 function convertFileToUtf8WithBOMSync(filePath: string): boolean {
   try {

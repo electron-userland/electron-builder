@@ -8,6 +8,7 @@ import { ProgressInfo, CancellationToken } from "builder-util-runtime"
 <<<<<<< HEAD
 import { Logger } from "../types.js"
 import { copyData } from "./DataSplitter.js"
+<<<<<<< HEAD
 import { URL } from "url"
 import { computeOperations, Operation, OperationKind } from "./downloadPlanBuilder.js"
 import { checkIsRangesSupported, executeTasksUsingMultipleRangeRequests } from "./multipleRangeDownloader.js"
@@ -23,6 +24,12 @@ import { computeOperations, Operation, OperationKind } from "./downloadPlanBuild
 import { checkIsRangesSupported, executeTasksUsingMultipleRangeRequests } from "./multipleRangeDownloader.js.js"
 import { ProgressDifferentialDownloadCallbackTransform, ProgressDifferentialDownloadInfo } from "./ProgressDifferentialDownloadCallbackTransform.js.js"
 >>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
+=======
+import { URL } from "url"
+import { computeOperations, Operation, OperationKind } from "./downloadPlanBuilder.js"
+import { checkIsRangesSupported, executeTasksUsingMultipleRangeRequests } from "./multipleRangeDownloader.js"
+import { ProgressDifferentialDownloadCallbackTransform, ProgressDifferentialDownloadInfo } from "./ProgressDifferentialDownloadCallbackTransform.js"
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 
 export interface DifferentialDownloaderOptions {
   readonly oldFile: string

@@ -6,6 +6,7 @@ import { readFile, writeFile } from "fs/promises"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { MsiOptions } from "../index.js"
 import { getBinFromUrl } from "../binDownload.js"
 import { Target } from "../core.js"
@@ -19,6 +20,9 @@ import { withToolsetLock } from "../util/toolsetLock.js"
 import { createStageDir, getWindowsInstallationDirName } from "./targetUtil.js"
 =======
 import { MsiOptions } from "../"
+=======
+import { MsiOptions } from "../index.js"
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 import { getBinFromUrl } from "../binDownload.js"
 import { Target } from "../core.js"
 import { DesktopShortcutCreationPolicy, FinalCommonWindowsInstallerOptions, getEffectiveOptions } from "../options/CommonWindowsInstallerConfiguration.js"
@@ -27,8 +31,12 @@ import { getTemplatePath } from "../util/pathManager.js"
 import { VmManager } from "../vm/vm.js"
 import { WineVmManager } from "../vm/WineVm.js"
 import { WinPackager } from "../winPackager.js"
+<<<<<<< HEAD
 import { createStageDir, getWindowsInstallationDirName } from "./targetUtil.js.js"
 >>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
+=======
+import { createStageDir, getWindowsInstallationDirName } from "./targetUtil.js"
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 
 const ELECTRON_BUILDER_UPGRADE_CODE_NS_UUID = UUID.parse("d752fe43-5d44-44d5-9fc9-6dd1bf19d5cc")
 const ROOT_DIR_ID = "APPLICATIONFOLDER"
@@ -37,7 +45,7 @@ const ROOT_DIR_ID = "APPLICATIONFOLDER"
 export default class MsiTarget extends Target {
   protected readonly vm = process.platform === "win32" ? new VmManager() : new WineVmManager(this.packager.config.toolsets?.wine)
 
-  readonly options: MsiOptions = deepAssign(this.packager.platformSpecificBuildOptions, this.packager.config.msi)
+  readonly options: MsiOptions
 
   constructor(
     protected readonly packager: WinPackager,
@@ -46,6 +54,7 @@ export default class MsiTarget extends Target {
     isAsyncSupported = true
   ) {
     super(name, isAsyncSupported)
+    this.options = deepAssign(this.packager.platformSpecificBuildOptions, this.packager.config.msi)
   }
 
   protected projectTemplate = new Lazy<(data: any) => string>(async () => {

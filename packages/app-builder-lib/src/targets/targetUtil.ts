@@ -2,11 +2,15 @@ import { Arch, debug } from "builder-util"
 import * as fs from "fs/promises"
 import * as path from "path"
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { AppInfo } from "../appInfo.js"
 import { Target } from "../core.js"
 =======
 import { AppInfo, Target } from "../"
 >>>>>>> d26567f58 (tmp save)
+=======
+import { AppInfo, Target } from "../index.js"
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 import { PlatformPackager } from "../platformPackager.js"
 
 export class StageDir {

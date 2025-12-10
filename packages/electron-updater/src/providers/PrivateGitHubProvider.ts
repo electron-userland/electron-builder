@@ -8,6 +8,7 @@ import { URL } from "url"
 <<<<<<< HEAD
 import { getChannelFilename, newUrlFromBase } from "../util.js"
 import { BaseGitHubProvider } from "./GitHubProvider.js"
+<<<<<<< HEAD
 import { ResolvedUpdateFileInfo } from "../types.js"
 import { getFileList, ProviderRuntimeOptions } from "./Provider.js"
 =======
@@ -19,6 +20,10 @@ import { BaseGitHubProvider } from "./GitHubProvider.js.js"
 import { ResolvedUpdateFileInfo } from "../types.js"
 import { getFileList, ProviderRuntimeOptions } from "./Provider.js.js"
 >>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
+=======
+import { ResolvedUpdateFileInfo } from "../types.js"
+import { getFileList, ProviderRuntimeOptions } from "./Provider.js"
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 
 export interface PrivateGitHubUpdateInfo extends UpdateInfo {
   assets: Array<Asset>

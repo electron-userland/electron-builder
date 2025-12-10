@@ -1,8 +1,12 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { CancellationToken } from "./CancellationToken.js"
 =======
 import { CancellationToken } from "./CancellationToken.js.js"
 >>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
+=======
+import { CancellationToken } from "./CancellationToken.js"
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 
 export async function retry<T>(
   task: () => Promise<T>,

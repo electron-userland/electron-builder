@@ -8,8 +8,12 @@ import { log } from "builder-util"
 import { dmgLicenseFromJSON } from "dmg-license"
 import { readFile, readJson } from "fs-extra"
 import { load } from "js-yaml"
+<<<<<<< HEAD
 import { getLicenseButtonsFile } from "./licenseButtons.js.js"
 >>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
+=======
+import { getLicenseButtonsFile } from "./licenseButtons.js"
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 
 import { CORE_SCHEMA, load } from "js-yaml"
 import { getLicenseButtonsFile } from "./licenseButtons.js"

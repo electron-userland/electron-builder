@@ -8,9 +8,14 @@ import { ProgressBar } from "./progress.js"
 =======
 import * as chalk from "chalk"
 import { createReadStream, Stats } from "fs-extra"
+<<<<<<< HEAD
 import { PublishContext, UploadTask } from "."
 import { ProgressBar } from "./progress.js.js"
 >>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
+=======
+import { PublishContext, UploadTask } from "./index.js"
+import { ProgressBar } from "./progress.js"
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 
 const progressBarOptions = {
   incomplete: " ",

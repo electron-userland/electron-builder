@@ -7,11 +7,18 @@ import { readdir } from "fs/promises"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { readAsarHeader } from "./asar/asar.js"
 import { SignManager } from "./codeSign/signManager.js"
 import { signWindows, WindowsSignOptions } from "./codeSign/windowsCodeSign.js"
 import { WindowsSignAzureManager } from "./codeSign/windowsSignAzureManager.js"
 import { FileCodeSigningInfo, WindowsSignToolManager } from "./codeSign/windowsSignToolManager.js"
+=======
+import { SignManager } from "./codeSign/signManager.js"
+import { signWindows, WindowsSignOptions } from "./codeSign/windowsCodeSign.js"
+import { WindowsSignAzureManager } from "./codeSign/windowsSignAzureManager.js"
+import { FileCodeSigningInfo, getSignVendorPath, WindowsSignToolManager } from "./codeSign/windowsSignToolManager.js"
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 import { AfterPackContext } from "./configuration.js"
 import { DIR_TARGET, Platform, Target } from "./core.js"
 import { RequestedExecutionLevel, WindowsConfiguration } from "./options/winOptions.js"
@@ -26,6 +33,7 @@ import { WebInstallerTarget } from "./targets/nsis/WebInstallerTarget.js"
 import { createCommonTarget } from "./targets/targetFactory.js"
 import { BuildCacheManager, digest } from "./util/cacheManager.js"
 import { isBuildCacheEnabled } from "./util/flags.js"
+<<<<<<< HEAD
 import { editWindowsResources, ResourceEditOptions } from "./util/resEdit.js"
 import { time } from "./util/timer.js"
 import { getWindowsVm, VmManager } from "./vm/vm.js"
@@ -54,6 +62,11 @@ import { time } from "./util/timer.js.js"
 import { getWindowsVm, VmManager } from "./vm/vm.js.js"
 import { execWine } from "./wine.js.js"
 >>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
+=======
+import { time } from "./util/timer.js"
+import { getWindowsVm, VmManager } from "./vm/vm.js"
+import { execWine } from "./wine.js"
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 
 export class WinPackager extends PlatformPackager<WindowsConfiguration> {
   _iconPath = new Lazy(() => this.getOrConvertIcon("ico"))

@@ -1,6 +1,7 @@
 import { InvalidConfigurationError, log } from "builder-util"
 import { S3Options } from "builder-util-runtime"
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { PublishContext } from "../index.js"
 import { resolveAwsCredentials } from "./awsCredentials.js"
 import { BaseS3Publisher, S3UploadConfig, S3UploadExtraParams } from "./baseS3Publisher.js"
@@ -9,6 +10,10 @@ import { getBucketLocation } from "./bucketLocation.js"
 import { PublishContext } from ".."
 import { BaseS3Publisher } from "./baseS3Publisher.js.js"
 >>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
+=======
+import { PublishContext } from "../index.js"
+import { BaseS3Publisher } from "./baseS3Publisher.js"
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 
 export class S3Publisher extends BaseS3Publisher {
   readonly providerName = "s3"

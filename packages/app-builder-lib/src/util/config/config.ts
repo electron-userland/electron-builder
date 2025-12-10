@@ -15,6 +15,7 @@ import { FileSet } from "../../options/PlatformSpecificBuildOptions.js"
 import { reactCra } from "../../presets/rectCra.js"
 import { PACKAGE_VERSION } from "../../version.js"
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { getConfig as _getConfig, loadParentConfig, orNullIfFileNotExist, ReadConfigRequest } from "./load.js"
 import { validateSchema } from "./schemaValidator.js"
 import _fsExtra from "fs-extra"
@@ -27,6 +28,9 @@ import { PACKAGE_VERSION } from "../../version"
 =======
 >>>>>>> d26567f58 (tmp save)
 import { getConfig as _getConfig, loadParentConfig, orNullIfFileNotExist, ReadConfigRequest } from "./load.js.js"
+=======
+import { getConfig as _getConfig, loadParentConfig, orNullIfFileNotExist, ReadConfigRequest } from "./load.js"
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 const validateSchema = require("@develar/schema-utils")
 >>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 

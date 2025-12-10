@@ -44,7 +44,10 @@ export { parseDn } from "./rfc2253Parser.js"
 export { BlockMapDataHolder, PackageFileInfo, ReleaseNoteInfo, UpdateFileInfo, UpdateInfo, WindowsUpdateInfo } from "./updateInfo.js"
 export { UUID } from "./uuid.js"
 export { parseXml, XElement } from "./xml.js"
+<<<<<<< HEAD
 export { isValidKey, mapToObject, asArray, Nullish, deepAssign, objectToArgs } from "./objects.js"
+=======
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 
 // nsis
 export const CURRENT_APP_INSTALLER_FILE_NAME = "installer.exe"

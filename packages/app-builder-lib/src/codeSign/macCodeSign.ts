@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 import type { SignOptions } from "@electron/osx-sign/dist/cjs/types"
+=======
+import { signAsync, SignOptions } from "@electron/osx-sign"
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 import { copyFile, exec, Fields, InvalidConfigurationError, isEmptyOrSpaces, isEnvTrue, isPullRequest, log, Logger, retry, TmpDir, unlinkIfExists } from "builder-util"
 import { dynamicImport } from "../util/dynamicImport.js"
 import { Nullish } from "builder-util-runtime"
@@ -12,6 +16,7 @@ import { getTempName } from "temp-file"
 <<<<<<< HEAD
 import { isAutoDiscoveryCodeSignIdentity } from "../util/flags.js"
 import { importCertificate } from "./codesign.js"
+<<<<<<< HEAD
 =======
 import { isAutoDiscoveryCodeSignIdentity } from "../util/flags"
 =======
@@ -19,6 +24,8 @@ import { isAutoDiscoveryCodeSignIdentity } from "../util/flags.js"
 >>>>>>> d26567f58 (tmp save)
 import { importCertificate } from "./codesign.js.js"
 >>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
+=======
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 
 export const appleCertificatePrefixes = ["Developer ID Application:", "Developer ID Installer:", "3rd Party Mac Developer Application:", "3rd Party Mac Developer Installer:"]
 
@@ -328,8 +335,12 @@ async function parseIdentity(line: string): Promise<Identity> {
   const firstQuoteIndex = line.indexOf('"')
   const name = line.substring(firstQuoteIndex + 1, line.lastIndexOf('"'))
   const hash = line.substring(0, firstQuoteIndex - 1)
+<<<<<<< HEAD
   const { Identity: IdentityClass } = await dynamicImport<{ Identity: new (name: string, hash?: string) => Identity }>("@electron/osx-sign/dist/cjs/util-identities")
   return new IdentityClass(name, hash)
+=======
+  return new Identity(name, hash)
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 }
 
 export function findIdentity(certType: CertType, qualifier?: string | null, keychain?: string | null): Promise<Identity | null> {

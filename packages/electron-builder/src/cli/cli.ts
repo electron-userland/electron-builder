@@ -21,10 +21,16 @@ import { isCI } from "ci-info"
 import * as path from "path"
 import { build, configureBuildCommand, createYargs } from "../builder.js"
 import { configurePublishCommand, publish } from "../publish.js"
+<<<<<<< HEAD
 import { createSelfSignedCert } from "./create-self-signed-cert.js.js"
 import { configureInstallAppDepsCommand, installAppDeps } from "./install-app-deps.js.js"
 import { start } from "./start.js.js"
 >>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
+=======
+import { createSelfSignedCert } from "./create-self-signed-cert.js"
+import { configureInstallAppDepsCommand, installAppDeps } from "./install-app-deps.js"
+import { start } from "./start.js"
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 
 // tslint:disable:no-unused-expression
 void createYargs()

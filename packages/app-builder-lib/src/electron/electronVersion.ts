@@ -10,6 +10,7 @@ import { Configuration } from "../configuration.js"
 import { getConfig } from "../util/config/config.js"
 import { orNullIfFileNotExist } from "../util/config/load.js"
 import { getProjectRootPath } from "./search-module.js"
+<<<<<<< HEAD
 =======
 import { Configuration } from "../configuration"
 import { getConfig } from "../util/config/config"
@@ -21,6 +22,8 @@ import { orNullIfFileNotExist } from "../util/config/load.js"
 >>>>>>> d26567f58 (tmp save)
 import { getProjectRootPath } from "./search-module.js.js"
 >>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
+=======
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 
 export type MetadataValue = Lazy<Record<string, any> | null>
 

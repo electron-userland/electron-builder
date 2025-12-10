@@ -2,12 +2,17 @@ import { debug, FileTransformer, log } from "builder-util"
 import { readFile } from "fs/promises"
 import * as path from "path"
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { Configuration } from "./configuration.js"
 import { deepAssign } from "builder-util-runtime"
 =======
 import { Configuration } from "./configuration.js.js"
 import { Packager } from "./packager.js.js"
 >>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
+=======
+import { Configuration } from "./configuration.js"
+import { Packager } from "./packager.js"
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 
 /** @internal */
 export const NODE_MODULES_PATTERN = `${path.sep}node_modules${path.sep}`

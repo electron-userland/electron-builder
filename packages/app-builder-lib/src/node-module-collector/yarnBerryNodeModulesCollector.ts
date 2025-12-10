@@ -1,6 +1,7 @@
 import { log } from "builder-util"
 import { Lazy } from "lazy-val"
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { NpmNodeModulesCollector } from "./npmNodeModulesCollector.js"
 import { PM } from "./packageManager.js"
 import { NpmDependency } from "./types.js"
@@ -9,6 +10,11 @@ import { NpmNodeModulesCollector } from "./npmNodeModulesCollector.js.js"
 import { PM } from "./packageManager.js.js"
 import { NpmDependency } from "./types.js.js"
 >>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
+=======
+import { NpmNodeModulesCollector } from "./npmNodeModulesCollector.js"
+import { PM } from "./packageManager.js"
+import { NpmDependency } from "./types.js"
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 
 type YarnSetupInfo = {
   yarnVersion: string | null

@@ -16,10 +16,16 @@ import { isUseSystemSigncode } from "../util/flags.js"
 import { resolveFunction } from "../util/resolve.js"
 import { VmManager } from "../vm/vm.js"
 import { WinPackager } from "../winPackager.js"
+<<<<<<< HEAD
 import { importCertificate } from "./codesign.js.js"
 import { SignManager } from "./signManager.js.js"
 import { WindowsSignOptions } from "./windowsCodeSign.js.js"
 >>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
+=======
+import { importCertificate } from "./codesign.js"
+import { SignManager } from "./signManager.js"
+import { WindowsSignOptions } from "./windowsCodeSign.js"
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 
 import { Lazy } from "lazy-val"
 import * as path from "path"

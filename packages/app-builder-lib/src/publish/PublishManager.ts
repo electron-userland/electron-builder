@@ -29,8 +29,13 @@ import {
   SpacesPublisher,
   UploadTask,
 } from "electron-publish"
+<<<<<<< HEAD
 import { MultiProgress } from "electron-publish/internal"
 import { readFile, writeFile } from "fs/promises"
+=======
+import { MultiProgress } from "electron-publish"
+import { writeFile } from "fs/promises"
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 import { isCI } from "ci-info"
 import * as path from "path"
 import { WriteStream as TtyWriteStream } from "tty"
@@ -50,6 +55,7 @@ import { PlatformPackager } from "../platformPackager.js"
 import { expandMacro } from "../util/macroExpander.js"
 import { WinPackager } from "../winPackager.js"
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { createUpdateInfoTasks, UpdateInfoFileTask, writeUpdateInfoFiles } from "./updateInfoBuilder.js"
 import { resolveModule } from "../util/resolve.js"
 import { parseUrl } from "../util/pathManager.js"
@@ -64,6 +70,9 @@ import { resolveModule } from "../util/resolve"
 >>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 =======
 import { createUpdateInfoTasks, UpdateInfoFileTask, writeUpdateInfoFiles } from "./updateInfoBuilder.js.js"
+=======
+import { createUpdateInfoTasks, UpdateInfoFileTask, writeUpdateInfoFiles } from "./updateInfoBuilder.js"
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 import { resolveModule } from "../util/resolve.js"
 >>>>>>> d26567f58 (tmp save)
 

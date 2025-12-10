@@ -7,6 +7,7 @@ import { createReadStream } from "fs"
 import * as path from "path"
 import { createServer, IncomingMessage, Server, ServerResponse } from "http"
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { AppAdapter } from "./AppAdapter.js"
 import { AppUpdater, DownloadUpdateOptions } from "./AppUpdater.js"
 import { ResolvedUpdateFileInfo } from "./types.js"
@@ -19,6 +20,13 @@ import { AppUpdater, DownloadUpdateOptions } from "./AppUpdater.js.js"
 import { ResolvedUpdateFileInfo } from "./main.js.js"
 import { UpdateDownloadedEvent } from "./types.js.js"
 import { findFile } from "./providers/Provider.js.js"
+=======
+import { AppAdapter } from "./AppAdapter.js"
+import { AppUpdater, DownloadUpdateOptions } from "./AppUpdater.js"
+import { ResolvedUpdateFileInfo } from "./main.js"
+import { UpdateDownloadedEvent } from "./types.js"
+import { findFile } from "./providers/Provider.js"
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 import AutoUpdater = Electron.AutoUpdater
 >>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 import { execFileSync } from "child_process"

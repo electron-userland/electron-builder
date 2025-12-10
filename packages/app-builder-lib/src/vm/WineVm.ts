@@ -18,9 +18,13 @@ type WineOptions = {
 import { execWine } from "../wine"
 =======
 import { execWine } from "../wine.js"
+<<<<<<< HEAD
 >>>>>>> d26567f58 (tmp save)
 import { VmManager } from "./vm.js.js"
 >>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
+=======
+import { VmManager } from "./vm.js"
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 
 export class WineVmManager extends VmManager {
   constructor(private readonly wineToolset: ToolsetConfig["wine"]) {

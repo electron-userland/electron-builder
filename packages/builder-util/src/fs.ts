@@ -7,12 +7,17 @@ import * as path from "path"
 import statMode from "stat-mode"
 import asyncPool from "tiny-async-pool"
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { log } from "./log.js"
 import { orIfFileNotExist, orNullIfFileNotExist } from "./promise.js"
 =======
 import { log } from "./log.js.js"
 import { orIfFileNotExist, orNullIfFileNotExist } from "./promise.js.js"
 >>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
+=======
+import { log } from "./log.js"
+import { orIfFileNotExist, orNullIfFileNotExist } from "./promise.js"
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 
 export const MAX_FILE_REQUESTS = 8
 

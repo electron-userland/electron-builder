@@ -38,11 +38,15 @@ import { archive, ArchiveOptions } from "../archive.js"
 import { appendBlockmap, configureDifferentialAwareArchiveOptions, createBlockmap, createNsisWebDifferentialUpdateInfo } from "../differentialUpdateInfoBuilder.js"
 import { getWindowsInstallationAppPackageName, getWindowsInstallationDirName } from "../targetUtil.js"
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 import { Commands } from "./Commands.js"
 import { Defines } from "./Defines.js"
 import { addCustomMessageFileInclude, createAddLangsMacro, LangConfigurator } from "./nsisLang.js"
 import { computeLicensePage } from "./nsisLicense.js"
 import { NsisOptions, PortableOptions } from "./nsisOptions.js"
+<<<<<<< HEAD
 import { NsisScriptGenerator, nsisEscapeString } from "./nsisScriptGenerator.js"
 import { getMakeNsisPath, getNsisPluginsPath } from "../../toolsets/windows.js"
 import { AppPackageHelper, nsisTemplatesDir, UninstallerReader } from "./nsisUtil.js"
@@ -71,6 +75,10 @@ import { NsisOptions, PortableOptions } from "./nsisOptions.js.js"
 import { NsisScriptGenerator } from "./nsisScriptGenerator.js.js"
 import { AppPackageHelper, NSIS_PATH, NSIS_RESOURCES_PATH, NsisTargetOptions, nsisTemplatesDir, UninstallerReader } from "./nsisUtil.js.js"
 >>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
+=======
+import { NsisScriptGenerator } from "./nsisScriptGenerator.js"
+import { AppPackageHelper, NSIS_PATH, NSIS_RESOURCES_PATH, NsisTargetOptions, nsisTemplatesDir, UninstallerReader } from "./nsisUtil.js"
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 
 const debug = _debug("electron-builder:nsis")
 

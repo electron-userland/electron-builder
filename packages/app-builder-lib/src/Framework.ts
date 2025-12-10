@@ -1,5 +1,6 @@
 import { FileTransformer } from "builder-util"
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { AsarIntegrity } from "./asar/integrity.js"
 import { AfterPackContext } from "./configuration.js"
 import { Platform } from "./core.js"
@@ -9,6 +10,10 @@ import type { PlatformPackager } from "./platformPackager.js"
 import { AsarIntegrity } from "./asar/integrity.js.js"
 import { AfterPackContext, ElectronPlatformName, Platform, PlatformPackager } from "./index.js.js"
 >>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
+=======
+import { AsarIntegrity } from "./asar/integrity.js"
+import { AfterPackContext, ElectronPlatformName, Platform, PlatformPackager } from "./index.js"
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 
 export interface Framework {
   readonly name: string

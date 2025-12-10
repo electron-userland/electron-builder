@@ -2,6 +2,7 @@ import { Arch, httpExecutor, InvalidConfigurationError, isEmptyOrSpaces, log } f
 import { configureRequestOptions, HttpExecutor } from "builder-util-runtime"
 import { BitbucketOptions } from "builder-util-runtime"
 import FormData from "form-data"
+<<<<<<< HEAD
 import fsExtra from "fs-extra"
 import { ClientRequest, RequestOptions } from "http"
 <<<<<<< HEAD
@@ -11,6 +12,12 @@ import { HttpPublisher } from "./httpPublisher.js"
 import { PublishContext } from "./"
 import { HttpPublisher } from "./httpPublisher.js.js"
 >>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
+=======
+import { readFile } from "fs-extra"
+import { ClientRequest, RequestOptions } from "http"
+import { PublishContext } from "./index.js"
+import { HttpPublisher } from "./httpPublisher.js"
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 
 export class BitbucketPublisher extends HttpPublisher {
   readonly providerName = "bitbucket"

@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 import { InvalidConfigurationError, log } from "builder-util"
+=======
+import { log } from "builder-util"
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 import debug from "debug"
 import { realpath } from "fs/promises"
 import { createRequire } from "node:module"

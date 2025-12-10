@@ -16,6 +16,7 @@ import { ArtifactCreated } from "../packagerApi.js"
 import { PlatformPackager } from "../platformPackager.js"
 import { hashFile } from "../util/hash.js"
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { computeDownloadUrl, getPublishConfigsForUpdateInfo } from "./PublishManager.js"
 =======
 import { Platform } from "../core"
@@ -28,6 +29,9 @@ import { hashFile } from "../util/hash"
 >>>>>>> d26567f58 (tmp save)
 import { computeDownloadUrl, getPublishConfigsForUpdateInfo } from "./PublishManager.js.js"
 >>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
+=======
+import { computeDownloadUrl, getPublishConfigsForUpdateInfo } from "./PublishManager.js"
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 
 async function getReleaseInfo(packager: PlatformPackager<any>) {
   const releaseInfo: ReleaseInfo = { ...(packager.platformSpecificBuildOptions.releaseInfo || packager.config.releaseInfo) }

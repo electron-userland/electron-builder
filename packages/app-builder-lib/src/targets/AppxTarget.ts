@@ -3,6 +3,7 @@ import { deepAssign, Nullish } from "builder-util-runtime"
 
 import * as path from "path"
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { AppXOptions } from "../index.js"
 import { getWindowsKitsBundle } from "../toolsets/windows.js"
 import { Target } from "../core.js"
@@ -16,13 +17,20 @@ import _fsExtra from "fs-extra"
 const { emptyDir, readdir, readFile, writeFile } = _fsExtra
 =======
 import { AppXOptions } from "../"
+=======
+import { AppXOptions } from "../index.js"
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 import { getSignVendorPath, isOldWin6 } from "../codeSign/windowsSignToolManager.js"
 import { Target } from "../core.js"
 import { getTemplatePath } from "../util/pathManager.js"
 import { VmManager } from "../vm/vm.js"
 import { WinPackager } from "../winPackager.js"
+<<<<<<< HEAD
 import { createStageDir } from "./targetUtil.js.js"
 >>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
+=======
+import { createStageDir } from "./targetUtil.js"
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 
 const APPX_ASSETS_DIR_NAME = "appx"
 
@@ -61,7 +69,7 @@ const restrictedApplicationIdValues = [
 const DEFAULT_RESOURCE_LANG = "en-US"
 
 export default class AppXTarget extends Target {
-  readonly options: AppXOptions = deepAssign({}, this.packager.platformSpecificBuildOptions, this.packager.config.appx)
+  readonly options: AppXOptions
 
   isAsyncSupported = false
 
@@ -70,6 +78,7 @@ export default class AppXTarget extends Target {
     readonly outDir: string
   ) {
     super("appx")
+    this.options = deepAssign({}, this.packager.platformSpecificBuildOptions, this.packager.config.appx)
 
     if (process.platform !== "darwin" && (process.platform !== "win32" || isOldWin6())) {
       throw new Error("AppX is supported only on Windows 10 or Windows Server 2012 R2 (version number 6.3+)")

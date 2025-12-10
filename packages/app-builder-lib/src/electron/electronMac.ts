@@ -12,6 +12,7 @@ import { MacPackager } from "../macPackager.js"
 import { normalizeExt } from "../platformPackager.js"
 import { savePlistFile, parsePlistFile, PlistObject, PlistValue } from "../util/plist.js"
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { createBrandingOpts } from "./ElectronFramework.js"
 =======
 import { filterCFBundleIdentifier } from "../appInfo"
@@ -23,6 +24,9 @@ import { savePlistFile, parsePlistFile, PlistObject, PlistValue } from "../util/
 >>>>>>> d26567f58 (tmp save)
 import { createBrandingOpts } from "./ElectronFramework.js.js"
 >>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
+=======
+import { createBrandingOpts } from "./ElectronFramework.js"
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 
 function doRename(basePath: string, oldName: string, newName: string) {
   return rename(path.join(basePath, oldName), path.join(basePath, newName))

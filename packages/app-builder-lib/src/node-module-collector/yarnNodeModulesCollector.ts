@@ -6,10 +6,16 @@ import { NpmDependency } from "./types.js"
 import { log } from "builder-util"
 import { Lazy } from "lazy-val"
 import * as path from "path"
+<<<<<<< HEAD
 import { NodeModulesCollector } from "./nodeModulesCollector.js.js"
 import { PM } from "./packageManager.js.js"
 import { PackageJson, YarnDependency } from "./types.js.js"
 >>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
+=======
+import { NodeModulesCollector } from "./nodeModulesCollector.js"
+import { PM } from "./packageManager.js"
+import { PackageJson, YarnDependency } from "./types.js"
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 
 // Yarn Classic (v1) produces a hoisted node_modules structure similar to npm.
 // Instead of parsing Yarn's custom NDJSON output, we leverage npm's list command

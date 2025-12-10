@@ -14,10 +14,15 @@ import { getTemplatePath } from "../../util/pathManager"
 =======
 import { getBinFromCustomLoc, getBinFromUrl } from "../../binDownload.js"
 import { getTemplatePath } from "../../util/pathManager.js"
+<<<<<<< HEAD
 >>>>>>> d26567f58 (tmp save)
 import { NsisOptions } from "./nsisOptions.js.js"
 import { NsisTarget } from "./NsisTarget.js.js"
 >>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
+=======
+import { NsisOptions } from "./nsisOptions.js"
+import { NsisTarget } from "./NsisTarget.js"
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 
 export const nsisTemplatesDir = getTemplatePath("nsis")
 

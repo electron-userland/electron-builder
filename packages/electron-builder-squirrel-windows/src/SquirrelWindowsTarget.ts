@@ -1,9 +1,16 @@
+<<<<<<< HEAD
 import { createRequire } from "node:module"
 import { InvalidConfigurationError, log, isEmptyOrSpaces, exists } from "builder-util"
 
 const _requireResolve = createRequire(import.meta.url).resolve
 import { getBinFromUrl, withToolsetLock } from "app-builder-lib/internal"
 import { sanitizeFileName } from "builder-util/internal"
+=======
+import { InvalidConfigurationError, log, isEmptyOrSpaces } from "builder-util"
+import { execWine } from "app-builder-lib/out/wine"
+import { getBinFromUrl } from "app-builder-lib/out/binDownload"
+import { sanitizeFileName } from "builder-util"
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 import { Arch, getArchSuffix, SquirrelWindowsOptions, Target, WinPackager } from "app-builder-lib"
 import * as path from "path"
 import * as fs from "fs"

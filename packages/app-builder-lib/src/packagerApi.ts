@@ -2,16 +2,22 @@ import { Arch } from "builder-util"
 import { PublishConfiguration } from "builder-util-runtime"
 import { UploadTask } from "electron-publish"
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 import { Configuration } from "./configuration.js"
 import { Platform, Target } from "./core.js"
 import { Packager } from "./packager.js"
 import { PlatformPackager } from "./platformPackager.js"
+<<<<<<< HEAD
 =======
 import { Configuration } from "./configuration.js.js"
 import { Platform, Target } from "./core.js.js"
 import { Packager } from "./packager.js.js"
 import { PlatformPackager } from "./platformPackager.js.js"
 >>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
+=======
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 
 export interface PackagerOptions {
   targets?: Map<Platform, Map<Arch, Array<string>>>

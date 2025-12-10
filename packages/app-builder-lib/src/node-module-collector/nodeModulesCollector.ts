@@ -11,10 +11,10 @@ import { getPackageManagerCommand, PM } from "./packageManager.js"
 import type { Dependency, DependencyGraph, NodeModuleInfo, PackageJson } from "./types.js"
 =======
 import * as semver from "semver"
-import { hoist, type HoisterResult, type HoisterTree } from "./hoist.js.js"
-import { ModuleCache } from "./moduleCache.js.js"
-import { getPackageManagerCommand, PM } from "./packageManager.js.js"
-import type { Dependency, DependencyGraph, NodeModuleInfo } from "./types.js.js"
+import { hoist, type HoisterResult, type HoisterTree } from "./hoist.js"
+import { ModuleCache } from "./moduleCache.js"
+import { getPackageManagerCommand, PM } from "./packageManager.js"
+import type { Dependency, DependencyGraph, NodeModuleInfo } from "./types.js"
 type Result = { packageDir: string; version: string } | null
 >>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
 

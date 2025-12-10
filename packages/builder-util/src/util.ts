@@ -7,6 +7,7 @@ import { dump } from "js-yaml"
 import * as path from "path"
 import { install as installSourceMap } from "source-map-support"
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { debug, log } from "./log.js"
 import { exists } from "./fs.js"
 import _fsExtra from "fs-extra"
@@ -16,12 +17,20 @@ import { isEmptyOrSpaces } from "./stringUtil.js"
 import { getPath7za } from "./7za.js.js"
 import { debug, log } from "./log.js.js"
 >>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
+=======
+import { getPath7za } from "./7za.js"
+import { debug, log } from "./log.js"
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 
 if (process.env.JEST_WORKER_ID == null) {
   installSourceMap()
 }
 
+<<<<<<< HEAD
 export { isEmptyOrSpaces } from "./stringUtil.js"
+=======
+export { getCompleteExtname, sanitizeFileName } from "./filename"
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 export { safeStringifyJson, retry } from "builder-util-runtime"
 export { TmpDir } from "temp-file"
 export * from "./arch.js"

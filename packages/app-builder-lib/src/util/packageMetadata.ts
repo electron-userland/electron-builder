@@ -7,6 +7,7 @@ import * as semver from "semver"
 <<<<<<< HEAD
 import { Metadata } from "../options/metadata.js"
 import { normalizePackageData } from "./normalizePackageData.js"
+<<<<<<< HEAD
 =======
 import { Metadata } from "../options/metadata"
 =======
@@ -14,6 +15,8 @@ import { Metadata } from "../options/metadata.js"
 >>>>>>> d26567f58 (tmp save)
 import { normalizePackageData } from "./normalizePackageData.js.js"
 >>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
+=======
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 
 /** @internal */
 export async function readPackageJson(file: string): Promise<any> {

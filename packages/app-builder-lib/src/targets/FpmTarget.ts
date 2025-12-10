@@ -24,6 +24,7 @@ import { hashFile } from "../util/hash.js"
 import { isMacOsSierra } from "../util/macosVersion.js"
 import { getTemplatePath } from "../util/pathManager.js"
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { installPrefix, LinuxTargetHelper } from "./LinuxTargetHelper.js"
 import { getFpmPath, getLinuxToolsPath } from "../toolsets/linux.js"
 import _fsExtra from "fs-extra"
@@ -46,6 +47,10 @@ import { getTemplatePath } from "../util/pathManager"
 import { installPrefix, LinuxTargetHelper } from "./LinuxTargetHelper.js.js"
 import { getFpmPath, getLinuxToolsPath } from "./tools.js.js"
 >>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
+=======
+import { installPrefix, LinuxTargetHelper } from "./LinuxTargetHelper.js"
+import { getFpmPath, getLinuxToolsPath } from "./tools.js"
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 
 interface FpmOptions {
   name: string
@@ -61,7 +66,11 @@ interface ScriptFiles {
 }
 
 export default class FpmTarget extends Target {
+<<<<<<< HEAD
   readonly options: LinuxTargetSpecificOptions = deepAssign({}, this.packager.platformSpecificBuildOptions, (this.packager.config as any)[this.name])
+=======
+  readonly options: LinuxTargetSpecificOptions
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 
   private readonly scriptFiles: Promise<ScriptFiles>
 
@@ -72,6 +81,7 @@ export default class FpmTarget extends Target {
     readonly outDir: string
   ) {
     super(name, false)
+    this.options = { ...this.packager.platformSpecificBuildOptions, ...(this.packager.config as any)[this.name] }
 
     this.scriptFiles = this.createScripts()
   }

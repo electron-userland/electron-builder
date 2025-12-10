@@ -2,6 +2,7 @@ import { createHttpError, safeGetHeader } from "builder-util-runtime"
 import { IncomingMessage } from "http"
 import { Writable } from "stream"
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { copyData, DataSplitter, PartListDataTask } from "./DataSplitter.js"
 import { DifferentialDownloader } from "./DifferentialDownloader.js"
 import { Operation, OperationKind } from "./downloadPlanBuilder.js"
@@ -10,6 +11,11 @@ import { copyData, DataSplitter, PartListDataTask } from "./DataSplitter.js.js"
 import { DifferentialDownloader } from "./DifferentialDownloader.js.js"
 import { Operation, OperationKind } from "./downloadPlanBuilder.js.js"
 >>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
+=======
+import { copyData, DataSplitter, PartListDataTask } from "./DataSplitter.js"
+import { DifferentialDownloader } from "./DifferentialDownloader.js"
+import { Operation, OperationKind } from "./downloadPlanBuilder.js"
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 
 export function executeTasksUsingMultipleRangeRequests(
   differentialDownloader: DifferentialDownloader,

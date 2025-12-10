@@ -5,6 +5,7 @@ import * as path from "path"
 <<<<<<< HEAD
 <<<<<<< HEAD
 import { Configuration } from "../configuration.js"
+<<<<<<< HEAD
 import { PM, getPackageManagerCommand } from "../node-module-collector/index.js"
 import { detectPackageManager } from "../node-module-collector/packageManager.js"
 import { rebuild as remoteRebuild } from "./rebuild.js"
@@ -19,6 +20,13 @@ import { detectPackageManager } from "../node-module-collector/packageManager.js
 import { NodeModuleDirInfo } from "./packageDependencies.js.js"
 import { rebuild as remoteRebuild } from "./rebuild.js.js"
 >>>>>>> 5a5d2b7d9 (tmp save for .js extension migration)
+=======
+import { executeAppBuilderAndWriteJson } from "./appBuilder.js"
+import { PM, getPackageManagerCommand } from "../node-module-collector/index.js"
+import { detectPackageManager } from "../node-module-collector/packageManager.js"
+import { NodeModuleDirInfo } from "./packageDependencies.js"
+import { rebuild as remoteRebuild } from "./rebuild.js"
+>>>>>>> c92b22265 (tmp save for .js extension migration)
 import * as which from "which"
 import type { RebuildOptions as ElectronRebuildOptions } from "@electron/rebuild"
 import { Nullish } from "builder-util-runtime"
