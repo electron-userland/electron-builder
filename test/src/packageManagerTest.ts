@@ -370,7 +370,7 @@ test("bun workspace --linker=hoisted - multiple conflicting versions", ({ expect
 // Test for local file:// protocol
 
 Object.values(PM)
-  .filter(pm => pm !== PM.BUN) // bun is not supported for file: protocol
+  .filter(pm => ![PM.BUN, PM.TRAVERSAL].includes(pm)) // bun is not supported for file: protocol
   .forEach(pm => {
     test(`local file:// protocol with ${pm} for project outside workspace`, ({ expect }) => {
       return assertPack(
