@@ -29,7 +29,7 @@ import { GenericProvider } from "./providers/GenericProvider"
 import { createClient, isUrlProbablySupportMultiRangeRequests } from "./providerFactory"
 import { Provider, ProviderPlatform } from "./providers/Provider"
 import type { TypedEmitter } from "tiny-typed-emitter"
-import Session = Electron.Session
+import { Session, Notification } from "electron"
 import type { AuthInfo } from "electron"
 import { gunzipSync, gzipSync } from "zlib"
 import { DifferentialDownloaderOptions } from "./differentialDownloader/DifferentialDownloader"
@@ -365,7 +365,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   }
 
   // noinspection JSUnusedGlobalSymbols
-  checkForUpdatesAndNotify(downloadNotification?: DownloadNotification): Promise<UpdateCheckResult | null> {
+  checkForUpdatesAndNotify(downloadNotification: Notification | DownloadNotification): Promise<UpdateCheckResult | null> {
     return this.checkForUpdates().then(it => {
       if (!it?.downloadPromise) {
         if (this._logger.debug != null) {
@@ -375,9 +375,19 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       }
 
       void it.downloadPromise.then(() => {
-        const notificationContent = AppUpdater.formatDownloadNotification(it.updateInfo.version, this.app.name, downloadNotification)
-        new (require("electron").Notification)(notificationContent).show()
-      })
+          const version = it.updateInfo.version
+          const appName = this.app.name
+
+          if (downloadNotification instanceof Notification) {
+            // Allow custom electron Notification
+            downloadNotification.title = downloadNotification.title.replace("{appName}", appName).replace("{version}", version)
+            downloadNotification.body = downloadNotification.body.replace("{appName}", appName).replace("{version}", version)
+            downloadNotification.show()
+          } else {
+            const notificationContent = AppUpdater.formatDownloadNotification(version, appName, downloadNotification)
+            new (require("electron").Notification)(notificationContent).show()
+          }
+        });
 
       return it
     })
