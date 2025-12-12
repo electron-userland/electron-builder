@@ -1,5 +1,23 @@
 # app-builder-lib
 
+## 26.3.6
+
+### Patch Changes
+
+- Fix: ensure correct dependency graph extraction order and yarn berry \_dependencies support _[`#9439`](https://github.com/electron-userland/electron-builder/pull/9439) [`bdfc76b`](https://github.com/electron-userland/electron-builder/commit/bdfc76bf18cb02a38aa7b3624c9fb865c910c393) [@beyondkmp](https://github.com/beyondkmp)_
+- Chore: retry cleanup on EBUSY errors _[`#9432`](https://github.com/electron-userland/electron-builder/pull/9432) [`693629c`](https://github.com/electron-userland/electron-builder/commit/693629c7990958ccbf60bd7d59824afc139dc1c2) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+</small>
+
+- `dmg-builder@26.3.6`
+- `electron-builder-squirrel-windows@26.3.6`
+
+</details>
+
 ## 26.3.5
 
 ### Patch Changes
