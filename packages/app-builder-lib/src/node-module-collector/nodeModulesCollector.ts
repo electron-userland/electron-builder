@@ -468,7 +468,6 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
 
       const child = childProcess.spawn(command, args, {
         cwd,
-        env: { COREPACK_ENABLE_STRICT: "0", ...process.env },
         shell: false, // required to prevent console logs polution from shell profile loading when `true`
       })
 
