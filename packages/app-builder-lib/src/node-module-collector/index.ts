@@ -15,18 +15,18 @@ import { TraversalNodeModulesCollector } from "./traversalNodeModulesCollector"
 
 export { getPackageManagerCommand, PM }
 
-export function getCollectorByPackageManager(pm: PM, rootDir: string, tempDirManager: TmpDir) {
+export function getCollectorByPackageManager(pm: PM, rootDir: string, tempDirManager: TmpDir, cancellationToken: CancellationToken) {
   switch (pm) {
     case PM.PNPM:
-      return new PnpmNodeModulesCollector(rootDir, tempDirManager)
+      return new PnpmNodeModulesCollector(rootDir, tempDirManager, cancellationToken)
     case PM.YARN:
-      return new YarnNodeModulesCollector(rootDir, tempDirManager)
+      return new YarnNodeModulesCollector(rootDir, tempDirManager, cancellationToken )
     case PM.YARN_BERRY:
-      return new YarnBerryNodeModulesCollector(rootDir, tempDirManager)
+      return new YarnBerryNodeModulesCollector(rootDir, tempDirManager, cancellationToken)
     case PM.BUN:
-      return new BunNodeModulesCollector(rootDir, tempDirManager)
+      return new BunNodeModulesCollector(rootDir, tempDirManager, cancellationToken)
     case PM.NPM:
-      return new NpmNodeModulesCollector(rootDir, tempDirManager)
+      return new NpmNodeModulesCollector(rootDir, tempDirManager, cancellationToken)
     // should never access this case (as it's internally a fallback), but TS needs a default and we need to satisfy it
     case PM.TRAVERSAL:
       return new TraversalNodeModulesCollector(rootDir, tempDirManager)
@@ -47,8 +47,8 @@ export function getNodeModules(
     packageName: string
   }
 ): Promise<NodeModuleInfo[]> {
-  const collector = getCollectorByPackageManager(pm, rootDir, tempDirManager)
-  return collector.getNodeModules({ cancellationToken, packageName })
+  const collector = getCollectorByPackageManager(pm, rootDir, tempDirManager, cancellationToken)
+  return collector.getNodeModules({ packageName })
 }
 
 export const determinePackageManagerEnv = ({ projectDir, appDir, workspaceRoot }: { projectDir: string; appDir: string; workspaceRoot: string | Nullish }) =>

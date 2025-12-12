@@ -186,10 +186,6 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
   const pmApproaches = [await packager.getPackageManager(), PM.TRAVERSAL]
   for (const pm of pmApproaches) {
     for (const dir of searchDirectories) {
-      if (cancellationToken.cancelled) {
-        throw new Error("user cancelled")
-      }
-
       const options = { rootDir: dir, tempDirManager, cancellationToken, packageName: packager.metadata.name! }
       deps = await getNodeModules(pm, options)
       if (deps.length > 0) {

@@ -16,7 +16,6 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
   protected readonly allDependencies: Map<string, ProdDepType> = new Map()
   protected readonly productionGraph: DependencyGraph = {}
   protected readonly cache: ModuleCache = new ModuleCache()
-  // private readonly manualNodeModulesCollector = new TraversalNodeModulesCollector<ProdDepType, OptionalDepType>(this.rootDir, this.tempDirManager)
 
   protected isHoisted = new Lazy<boolean>(async () => {
     const { manager } = this.installOptions
@@ -36,10 +35,11 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
 
   constructor(
     protected readonly rootDir: string,
-    private readonly tempDirManager: TmpDir
+    private readonly tempDirManager: TmpDir,
+    protected readonly cancellationToken: CancellationToken
   ) {}
 
-  public async getNodeModules({ packageName }: { cancellationToken: CancellationToken; packageName: string }): Promise<NodeModuleInfo[]> {
+  public async getNodeModules({ packageName }: { packageName: string }): Promise<NodeModuleInfo[]> {
     const tree: ProdDepType = await this.getDependenciesTree(this.installOptions.manager)
     await this.collectAllDependencies(tree, packageName)
     const realTree: ProdDepType = await this.getTreeFromWorkspaces(tree, packageName)
@@ -493,11 +493,6 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
         const shouldResolve = code === 0 || shouldIgnore
         return shouldResolve ? resolve() : reject(new Error(`Node module collector process exited with code ${code}:\n${stderr}`))
       })
-      // this.cancellationToken.onCancel(() => {
-      //   outStream.close()
-      //   child.kill("SIGINT")
-      //   reject(new Error("Node module collector process was cancelled"))
-      // })
     })
   }
 }
