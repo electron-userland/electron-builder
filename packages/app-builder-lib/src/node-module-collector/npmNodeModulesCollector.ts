@@ -45,17 +45,18 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
     // After initialization, if there are libraries with the same name+version later, they will not be searched recursively again
     // This will prevents infinite loops when circular dependencies are encountered.
     this.productionGraph[dependencyId] = { dependencies: [] }
-    const productionDeps = Object.entries(resolvedDeps || {})
-      .filter(([packageName]) => this.isProdDependency(packageName, tree))
-      .map(async ([, dependency]) => {
-        const childDependencyId = this.packageVersionString(dependency)
-        await this.extractProductionDependencyGraph(dependency, childDependencyId)
-        return childDependencyId
-      })
 
     const collectedDependencies: string[] = []
-    for (const dep of productionDeps) {
-      collectedDependencies.push(await dep)
+    if (resolvedDeps && Object.keys(resolvedDeps).length > 0) {
+      for (const packageName in resolvedDeps) {
+        if (!this.isProdDependency(packageName, tree)) {
+          continue
+        }
+        const dependency = resolvedDeps[packageName]
+        const childDependencyId = this.packageVersionString(dependency)
+        await this.extractProductionDependencyGraph(dependency, childDependencyId)
+        collectedDependencies.push(childDependencyId)
+      }
     }
     this.productionGraph[dependencyId] = { dependencies: collectedDependencies }
   }
