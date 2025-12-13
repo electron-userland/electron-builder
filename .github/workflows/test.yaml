@@ -254,7 +254,7 @@ jobs:
         testFiles:
           - oneClickInstallerTest,assistedInstallerTest,webInstallerTest,packageManagerTest,HoistedNodeModuleTest,rebuilderTest
           - winPackagerTest,winCodeSignTest,BuildTest,blackboxUpdateTest,debTest
-          - masTest,dmgTest,filesTest,macPackagerTest,macArchiveTest
+          - masTest,dmgTest,filesTest,macPackagerTest,macArchiveTest,assistedInstallerTest
           - concurrentBuildsTest,macIconTest
     steps:
       - name: Checkout code repository
