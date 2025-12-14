@@ -390,7 +390,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
       let entries: string[]
       try {
         entries = await fs.readdir(dir)
-      } catch (e) {
+      } catch {
         continue
       }
       for (const entry of entries) {
