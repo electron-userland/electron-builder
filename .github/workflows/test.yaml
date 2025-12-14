@@ -68,7 +68,7 @@ jobs:
       matrix:
         testFiles:
           - ArtifactPublisherTest,BuildTest,ExtraBuildTest,RepoSlugTest,binDownloadTest,configurationValidationTest,filenameUtilTest,filesTest,globTest,httpExecutorTest,ignoreTest,macroExpanderTest,mainEntryTest,urlUtilTest,extraMetadataTest,linuxArchiveTest,linuxPackagerTest,HoistedNodeModuleTest,MemoLazyTest,HoistTest,ExtraBuildResourcesTest,utilTest
-          - snapTest,debTest,fpmTest,protonTest,rebuilderTest
+          - debTest,fpmTest,protonTest,rebuilderTest
           - winPackagerTest,winCodeSignTest,webInstallerTest
           - oneClickInstallerTest,assistedInstallerTest,packageManagerTest
           - concurrentBuildsTest
@@ -254,7 +254,7 @@ jobs:
         testFiles:
           - oneClickInstallerTest,assistedInstallerTest,webInstallerTest,packageManagerTest,HoistedNodeModuleTest,rebuilderTest
           - winPackagerTest,winCodeSignTest,BuildTest,blackboxUpdateTest,debTest
-          - masTest,dmgTest,filesTest,macPackagerTest,macArchiveTest
+          - masTest,dmgTest,filesTest,macPackagerTest,macArchiveTest,snapTest
           - concurrentBuildsTest,macIconTest
     steps:
       - name: Checkout code repository
@@ -270,7 +270,7 @@ jobs:
         run: |
           brew install powershell/tap/powershell
           brew install --cask wine-stable
-          brew install rpm
+          brew install rpm snapcraft
 
       - name: Test
         run: pnpm ci:test
@@ -303,9 +303,9 @@ jobs:
         run: pnpm ci:test
         env:
           TEST_FILES: ${{ matrix.testFiles }}
-<<<<<<< HEAD
           FORCE_COLOR: 1
 
+  # snap tests require snapcraft which must be on a GH ubuntu runner
   test-snap:
     runs-on: ubuntu-22.04
     timeout-minutes: 20
@@ -330,6 +330,3 @@ jobs:
         env:
           TEST_FILES: snapTest
           FORCE_COLOR: 1
-=======
-          FORCE_COLOR: 1
->>>>>>> bdfc76bf18cb02a38aa7b3624c9fb865c910c393
