@@ -197,7 +197,7 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
           console.warn("⚠️ Yarn prepare failed:", err.message)
         }
       }
-      const collector = getCollectorByPackageManager(pm, projectDir, tmpDir)
+      const collector = getCollectorByPackageManager(pm, projectDir, tmpDir, new CancellationToken())
       const collectorOptions = collector.installOptions
 
       const destLockfile = path.join(projectDir, collectorOptions.lockfile)
