@@ -20,7 +20,7 @@ export function getCollectorByPackageManager(pm: PM, rootDir: string, tempDirMan
     case PM.PNPM:
       return new PnpmNodeModulesCollector(rootDir, tempDirManager, cancellationToken)
     case PM.YARN:
-      return new YarnNodeModulesCollector(rootDir, tempDirManager, cancellationToken )
+      return new YarnNodeModulesCollector(rootDir, tempDirManager, cancellationToken)
     case PM.YARN_BERRY:
       return new YarnBerryNodeModulesCollector(rootDir, tempDirManager, cancellationToken)
     case PM.BUN:
@@ -29,7 +29,7 @@ export function getCollectorByPackageManager(pm: PM, rootDir: string, tempDirMan
       return new NpmNodeModulesCollector(rootDir, tempDirManager, cancellationToken)
     // should never access this case (as it's internally a fallback), but TS needs a default and we need to satisfy it
     case PM.TRAVERSAL:
-      return new TraversalNodeModulesCollector(rootDir, tempDirManager)
+      return new TraversalNodeModulesCollector(rootDir, tempDirManager, cancellationToken)
   }
 }
 
