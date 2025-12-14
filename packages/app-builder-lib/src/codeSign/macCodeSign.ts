@@ -88,10 +88,11 @@ export async function reportError(isMas: boolean, certificateTypes: CertType[], 
       .join("\n")
   }
 
+  const skipMessage = "skipped macOS application code signing"
   if (isMas || isForceCodeSigning) {
-    throw new Error(Logger.createMessage("skipped macOS application code signing", logFields, "error", it => it))
+    throw new Error(Logger.createMessage(skipMessage, logFields, "error", it => it))
   } else {
-    log.warn(logFields, "skipped macOS application code signing")
+    log.warn(logFields, skipMessage)
   }
 }
 
@@ -199,7 +200,7 @@ export async function createKeychain({ tmpDir, cscLink, cscKeyPassword, cscILink
 
 async function importCerts(keychainFile: string, paths: Array<string>, keyPasswords: Array<string>): Promise<CodeSigningInfo> {
   for (let i = 0; i < paths.length; i++) {
-    const password = keyPasswords[i]
+    const password = keyPasswords[i] ?? ""
     await exec("/usr/bin/security", ["import", paths[i], "-k", keychainFile, "-T", "/usr/bin/codesign", "-T", "/usr/bin/productbuild", "-P", password])
 
     // https://stackoverflow.com/questions/39868578/security-codesign-in-sierra-keychain-ignores-access-control-settings-and-ui-p
@@ -213,7 +214,11 @@ async function importCerts(keychainFile: string, paths: Array<string>, keyPasswo
 }
 
 export async function sign(opts: SignOptions): Promise<void> {
-  return retry(() => signAsync(opts), 3, 5000, 5000)
+  return retry(() => signAsync(opts), {
+    retries: 3,
+    interval: 5000,
+    backoff: 5000,
+  })
 }
 
 export let findIdentityRawResult: Promise<Array<string>> | null = null

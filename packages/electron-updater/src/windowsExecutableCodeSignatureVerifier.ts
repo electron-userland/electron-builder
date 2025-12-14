@@ -1,8 +1,23 @@
 import { parseDn } from "builder-util-runtime"
-import { execFile, execFileSync } from "child_process"
+import { execFile, execFileSync, ExecFileOptions } from "child_process"
 import * as os from "os"
 import { Logger } from "./types"
 import * as path from "path"
+
+function preparePowerShellExec(command: string, timeout?: number) {
+  // https://github.com/electron-userland/electron-builder/issues/2421
+  // https://github.com/electron-userland/electron-builder/issues/2535
+  // Resetting PSModulePath is necessary https://github.com/electron-userland/electron-builder/issues/7127
+  // semicolon wont terminate the set command and run chcp thus leading to verification errors on certificats with special chars like german umlauts, so rather
+  //   join commands using & https://github.com/electron-userland/electron-builder/issues/8162
+  const executable = `set "PSModulePath=" & chcp 65001 >NUL & powershell.exe`
+  const args = ["-NoProfile", "-NonInteractive", "-InputFormat", "None", "-Command", command]
+  const options: ExecFileOptions = {
+    shell: true,
+    timeout,
+  }
+  return [executable, args, options] as const
+}
 
 // $certificateInfo = (Get-AuthenticodeSignature 'xxx\yyy.exe'
 // | where {$_.Status.Equals([System.Management.Automation.SignatureStatus]::Valid) -and $_.SignerCertificate.Subject.Contains("CN=siemens.com")})
@@ -30,70 +45,57 @@ export function verifySignature(publisherNames: Array<string>, unescapedTempUpda
     const tempUpdateFile = unescapedTempUpdateFile.replace(/'/g, "''")
     logger.info(`Verifying signature ${tempUpdateFile}`)
 
-    // https://github.com/electron-userland/electron-builder/issues/2421
-    // https://github.com/electron-userland/electron-builder/issues/2535
-    // Resetting PSModulePath is necessary https://github.com/electron-userland/electron-builder/issues/7127
-    // semicolon wont terminate the set command and run chcp thus leading to verification errors on certificats with special chars like german umlauts, so rather
-    //   join commands using & https://github.com/electron-userland/electron-builder/issues/8162
-    execFile(
-      `set "PSModulePath=" & chcp 65001 >NUL & powershell.exe`,
-      ["-NoProfile", "-NonInteractive", "-InputFormat", "None", "-Command", `"Get-AuthenticodeSignature -LiteralPath '${tempUpdateFile}' | ConvertTo-Json -Compress"`],
-      {
-        shell: true,
-        timeout: 20 * 1000,
-      },
-      (error, stdout, stderr) => {
-        try {
-          if (error != null || stderr) {
-            handleError(logger, error, stderr, reject)
-            resolve(null)
-            return
-          }
-          const data = parseOut(stdout)
-          if (data.Status === 0) {
-            try {
-              const normlaizedUpdateFilePath = path.normalize(data.Path)
-              const normalizedTempUpdateFile = path.normalize(unescapedTempUpdateFile)
-              logger.info(`LiteralPath: ${normlaizedUpdateFilePath}. Update Path: ${normalizedTempUpdateFile}`)
-              if (normlaizedUpdateFilePath !== normalizedTempUpdateFile) {
-                handleError(logger, new Error(`LiteralPath of ${normlaizedUpdateFilePath} is different than ${normalizedTempUpdateFile}`), stderr, reject)
-                resolve(null)
-                return
-              }
-            } catch (error: any) {
-              logger.warn(`Unable to verify LiteralPath of update asset due to missing data.Path. Skipping this step of validation. Message: ${error.message ?? error.stack}`)
-            }
-            const subject = parseDn(data.SignerCertificate.Subject)
-            let match = false
-            for (const name of publisherNames) {
-              const dn = parseDn(name)
-              if (dn.size) {
-                // if we have a full DN, compare all values
-                const allKeys = Array.from(dn.keys())
-                match = allKeys.every(key => {
-                  return dn.get(key) === subject.get(key)
-                })
-              } else if (name === subject.get("CN")!) {
-                logger.warn(`Signature validated using only CN ${name}. Please add your full Distinguished Name (DN) to publisherNames configuration`)
-                match = true
-              }
-              if (match) {
-                resolve(null)
-                return
-              }
-            }
-          }
-
-          const result = `publisherNames: ${publisherNames.join(" | ")}, raw info: ` + JSON.stringify(data, (name, value) => (name === "RawData" ? undefined : value), 2)
-          logger.warn(`Sign verification failed, installer signed with incorrect certificate: ${result}`)
-          resolve(result)
-        } catch (e: any) {
-          handleError(logger, e, null, reject)
+    execFile(...preparePowerShellExec(`"Get-AuthenticodeSignature -LiteralPath '${tempUpdateFile}' | ConvertTo-Json -Compress"`, 20 * 1000), (error, stdout, stderr) => {
+      try {
+        if (error != null || stderr) {
+          handleError(logger, error, stderr, reject)
           resolve(null)
           return
         }
+        const data = parseOut(stdout)
+        if (data.Status === 0) {
+          try {
+            const normlaizedUpdateFilePath = path.normalize(data.Path)
+            const normalizedTempUpdateFile = path.normalize(unescapedTempUpdateFile)
+            logger.info(`LiteralPath: ${normlaizedUpdateFilePath}. Update Path: ${normalizedTempUpdateFile}`)
+            if (normlaizedUpdateFilePath !== normalizedTempUpdateFile) {
+              handleError(logger, new Error(`LiteralPath of ${normlaizedUpdateFilePath} is different than ${normalizedTempUpdateFile}`), stderr, reject)
+              resolve(null)
+              return
+            }
+          } catch (error: any) {
+            logger.warn(`Unable to verify LiteralPath of update asset due to missing data.Path. Skipping this step of validation. Message: ${error.message ?? error.stack}`)
+          }
+          const subject = parseDn(data.SignerCertificate.Subject)
+          let match = false
+          for (const name of publisherNames) {
+            const dn = parseDn(name)
+            if (dn.size) {
+              // if we have a full DN, compare all values
+              const allKeys = Array.from(dn.keys())
+              match = allKeys.every(key => {
+                return dn.get(key) === subject.get(key)
+              })
+            } else if (name === subject.get("CN")!) {
+              logger.warn(`Signature validated using only CN ${name}. Please add your full Distinguished Name (DN) to publisherNames configuration`)
+              match = true
+            }
+            if (match) {
+              resolve(null)
+              return
+            }
+          }
+        }
+
+        const result = `publisherNames: ${publisherNames.join(" | ")}, raw info: ` + JSON.stringify(data, (name, value) => (name === "RawData" ? undefined : value), 2)
+        logger.warn(`Sign verification failed, installer signed with incorrect certificate: ${result}`)
+        resolve(result)
+      } catch (e: any) {
+        handleError(logger, e, null, reject)
+        resolve(null)
+        return
       }
-    )
+    })
   })
 }
 
@@ -123,7 +125,7 @@ function handleError(logger: Logger, error: Error | null, stderr: string | null,
   }
 
   try {
-    execFileSync("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", "ConvertTo-Json test"], { timeout: 10 * 1000 } as any)
+    execFileSync(...preparePowerShellExec("ConvertTo-Json test", 10 * 1000))
   } catch (testError: any) {
     logger.warn(
       `Cannot execute ConvertTo-Json: ${testError.message}. Ignoring signature validation due to unsupported powershell version. Please upgrade to powershell 3 or higher.`

@@ -29,7 +29,7 @@ Two options are available — [include](#NsisOptions-include) and [script](#Nsis
 Keep in mind — if you customize NSIS script, you should always state about it in the issue reports. And don't expect that your issue will be resolved.
 
 1. Add file `build/installer.nsh`.
-2. Define wanted macro to customise: `customHeader`, `preInit`, `customInit`, `customUnInit`, `customInstall`, `customUnInstall`, `customRemoveFiles`, `customInstallMode`, `customWelcomePage`, `customUnWelcomePage`.
+2. Define wanted macro to customise: `customHeader`, `preInit`, `customInit`, `customUnInit`, `customInstall`, `customUnInstall`, `customRemoveFiles`, `customInstallMode`, `customWelcomePage`, `customUnWelcomePage`, `customUnInstallSection`.
 
     !!! example
         ```nsis
@@ -64,6 +64,13 @@ Keep in mind — if you customize NSIS script, you should always state about it 
           !define MUI_WELCOMEPAGE_TITLE "custom title for uninstaller welcome page"
           !define MUI_WELCOMEPAGE_TEXT "custom text for uninstaller welcome page $\r$\n more"
           !insertmacro MUI_UNPAGE_WELCOME
+        !macroend
+
+        !macro customUnInstallSection
+          Section /o "un.Some cool checkbox"
+            ; You can add some uninstall section as component page
+            ; If defined, then always run after `customUnInstall`
+          SectionEnd
         !macroend
         ```
 

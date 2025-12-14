@@ -4,10 +4,12 @@ const fs = require("fs-extra")
 const path = require("path")
 const knownUnusedDevDependencies = new Set([
   "@babel/plugin-transform-modules-commonjs", // Not sure what this is used for, but keeping just in case (for now)
-  "@changesets/changelog-github", // Used in package.json CI/CD logic
+  "changesets-changelog-clean", // Used in package.json CI/CD logic
   "typedoc-plugin-markdown", // Used in typedoc config
   // Eslint config doesn't get scanned by depCheck
   "@stylistic/eslint-plugin",
+  "@eslint/js",
+  "@eslint/eslintrc",
   "@typescript-eslint/eslint-plugin",
   "@typescript-eslint/parser",
   "eslint-config-prettier",

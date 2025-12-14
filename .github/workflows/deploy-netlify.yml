@@ -17,7 +17,7 @@ jobs:
 
     steps:
       - name: Checkout code repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Install deps and audit
         uses: ./.github/actions/pnpm
@@ -25,7 +25,7 @@ jobs:
       - name: Build typdoc site
         run: pnpm docs:all
 
-      - uses: jsmrcaga/action-netlify-deploy@06b6a09e152823cce0d76c0dbb22b914934de198 # v2.3.0
+      - uses: jsmrcaga/action-netlify-deploy@ae36ac1b3d1ad3646eecb5631977e7314d3a6a2f # v2.4.0
         with:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}

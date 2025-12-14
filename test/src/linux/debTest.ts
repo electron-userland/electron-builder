@@ -2,19 +2,19 @@ import { Arch, Platform } from "electron-builder"
 import * as fs from "fs/promises"
 import { app, execShell, getTarExecutable } from "../helpers/packTester"
 
-test.ifNotWindows(
-  "deb",
-  app({
-    targets: Platform.LINUX.createTarget("deb"),
+const defaultDebTarget = Platform.LINUX.createTarget("deb", Arch.x64)
+
+test.ifNotWindows("deb", ({ expect }) =>
+  app(expect, {
+    targets: defaultDebTarget,
   })
 )
 
-test.ifNotWindows("arm", app({ targets: Platform.LINUX.createTarget("deb", Arch.armv7l, Arch.arm64) }))
+test.ifNotWindows("arm", ({ expect }) => app(expect, { targets: Platform.LINUX.createTarget("deb", Arch.armv7l, Arch.arm64) }))
 
-test.ifNotWindows(
-  "custom depends",
-  app({
-    targets: Platform.LINUX.createTarget("deb"),
+test.ifNotWindows("custom depends", ({ expect }) =>
+  app(expect, {
+    targets: defaultDebTarget,
     config: {
       linux: {
         executableName: "Boo",
@@ -36,10 +36,9 @@ test.ifNotWindows(
   })
 )
 
-test.ifNotWindows(
-  "top-level exec name",
-  app({
-    targets: Platform.LINUX.createTarget("deb"),
+test.ifNotWindows("top-level exec name", ({ expect }) =>
+  app(expect, {
+    targets: defaultDebTarget,
     config: {
       productName: "foo",
       executableName: "Boo",
@@ -47,10 +46,9 @@ test.ifNotWindows(
   })
 )
 
-test.ifNotWindows(
-  "no quotes for safe exec name",
-  app({
-    targets: Platform.LINUX.createTarget("deb"),
+test.ifNotWindows("no quotes for safe exec name", ({ expect }) =>
+  app(expect, {
+    targets: defaultDebTarget,
     config: {
       productName: "foo",
       linux: {
@@ -65,11 +63,11 @@ test.ifNotWindows(
   })
 )
 
-test.ifNotWindows(
-  "executable path in postinst script",
+test.ifNotWindows("executable path in postinst script", ({ expect }) =>
   app(
+    expect,
     {
-      targets: Platform.LINUX.createTarget("deb"),
+      targets: defaultDebTarget,
       config: {
         productName: "foo",
         linux: {
@@ -80,7 +78,7 @@ test.ifNotWindows(
     {
       packed: async context => {
         const postinst = (
-          await execShell(`ar p '${context.outDir}/TestApp_1.1.0_amd64.deb' control.tar.gz | ${await getTarExecutable()} zx --to-stdout ./postinst`, {
+          await execShell(`ar p '${context.outDir}/TestApp_1.1.0_amd64.deb' control.tar.xz | ${await getTarExecutable()} -Jx --to-stdout ./postinst`, {
             maxBuffer: 10 * 1024 * 1024,
           })
         ).stdout
@@ -90,11 +88,11 @@ test.ifNotWindows(
   )
 )
 
-test.ifNotWindows(
-  "deb file associations",
+test.ifNotWindows("deb file associations", ({ expect }) =>
   app(
+    expect,
     {
-      targets: Platform.LINUX.createTarget("deb"),
+      targets: defaultDebTarget,
       config: {
         fileAssociations: [
           {
@@ -108,7 +106,7 @@ test.ifNotWindows(
     {
       packed: async context => {
         const mime = (
-          await execShell(`ar p '${context.outDir}/TestApp_1.1.0_amd64.deb' data.tar.xz | ${await getTarExecutable()} Jx --to-stdout ./usr/share/mime/packages/testapp.xml`, {
+          await execShell(`ar p '${context.outDir}/TestApp_1.1.0_amd64.deb' data.tar.xz | ${await getTarExecutable()} -Jx --to-stdout './usr/share/mime/packages/testapp.xml'`, {
             maxBuffer: 10 * 1024 * 1024,
           })
         ).stdout

@@ -319,12 +319,67 @@ Please double check that your authentication token is correct. Due to security r
     const newOptions = configureRequestOptionsFromUrl(redirectUrl, { ...options })
     const headers = newOptions.headers
     if (headers?.authorization) {
-      const parsedNewUrl = new URL(redirectUrl)
-      if (parsedNewUrl.hostname.endsWith(".amazonaws.com") || parsedNewUrl.searchParams.has("X-Amz-Credential")) {
+      // Parse original and redirect URLs to compare origins
+      const originalUrl = HttpExecutor.reconstructOriginalUrl(options)
+      const parsedRedirectUrl = parseUrl(redirectUrl, options)
+
+      // Strip authorization header on cross-origin redirects (different protocol, hostname, or port)
+      if (HttpExecutor.isCrossOriginRedirect(originalUrl, parsedRedirectUrl)) {
+        if (debug.enabled) {
+          debug(`Given the cross-origin redirect (from ${originalUrl.host} to ${parsedRedirectUrl.host}), the Authorization header will be stripped out.`)
+        }
         delete headers.authorization
       }
     }
     return newOptions
+  }
+
+  private static reconstructOriginalUrl(options: RequestOptions): URL {
+    const protocol = options.protocol || "https:"
+    if (!options.hostname) {
+      throw new Error("Missing hostname in request options")
+    }
+    const hostname = options.hostname
+    const port = options.port ? `:${options.port}` : ""
+    const path = options.path || "/"
+    return new URL(`${protocol}//${hostname}${port}${path}`)
+  }
+
+  private static isCrossOriginRedirect(originalUrl: URL, redirectUrl: URL): boolean {
+    // Case-insensitive hostname comparison
+    if (originalUrl.hostname.toLowerCase() !== redirectUrl.hostname.toLowerCase()) {
+      return true
+    }
+
+    // Special case: allow http -> https redirect on same host with standard ports
+    // This matches the behavior of Python requests library for backward compatibility
+    // url.port returns an empty string if the port is omitted
+    // or explicitly set to the default port for a given protocol.
+    if (
+      originalUrl.protocol === "http:" &&
+      // This can be replaced with `!originalUrl.port`, but for the sake of clarity.
+      ["80", ""].includes(originalUrl.port) &&
+      redirectUrl.protocol === "https:" &&
+      // This can be replaced with `!redirectUrl.port`, but for the sake of clarity.
+      ["443", ""].includes(redirectUrl.port)
+    ) {
+      return false
+    }
+
+    // According to RFC 7235, a change in protocol or port constitutes a cross-origin request.
+    // Forwarding authentication headers to a different origin can be a security risk.
+    // For example, https://example.com:443 and http://example.com:80 are different origins.
+    // We only make an exception for HTTP -> HTTPS upgrades on standard ports for backward compatibility.
+
+    // Strip auth on any other protocol change
+    if (originalUrl.protocol !== redirectUrl.protocol) {
+      return true
+    }
+
+    // Strip auth on port change (accounting for default ports)
+    const originalPort = originalUrl.port
+    const redirectPort = redirectUrl.port
+    return originalPort !== redirectPort
   }
 
   static retryOnServerError(task: () => Promise<any>, maxRetries = 3) {
@@ -351,9 +406,24 @@ export interface DownloadCallOptions {
   destination: string | null
 }
 
+function parseUrl(url: string, options: RequestOptions): URL {
+  try {
+    // Would throw exception if url is not absolute
+    return new URL(url)
+  } catch {
+    // Relative URL - construct base URL from original options
+    const hostname = options.hostname
+    const protocol = options.protocol || "https:"
+    const port = options.port ? `:${options.port}` : ""
+    const baseUrl = `${protocol}//${hostname}${port}`
+    return new URL(url, baseUrl)
+  }
+}
+
 export function configureRequestOptionsFromUrl(url: string, options: RequestOptions) {
   const result = configureRequestOptions(options)
-  configureRequestUrl(new URL(url), result)
+  const parsedUrl = parseUrl(url, options)
+  configureRequestUrl(parsedUrl, result)
   return result
 }
 

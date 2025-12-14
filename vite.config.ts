@@ -1,12 +1,11 @@
 import { defineConfig } from "vitest/config"
 import fs from "fs"
+import isCI from "is-ci"
 
 export default () => {
-  const testRegex = process.env.TEST_FILES?.split(",") ?? ["*Test"]
+  const testRegex = process.env.TEST_FILES?.split(",") ?? ["*Test", "*test"]
   const includeRegex = `(${testRegex.join("|")})`
   console.log("TEST_FILES pattern", includeRegex)
-
-  const isWindows = process.platform === "win32"
 
   return defineConfig({
     server: {
@@ -16,13 +15,19 @@ export default () => {
       },
     },
     test: {
+      // if using `toMatchSnapshot`, it MUST be passed in through the test context
+      // e.g. test("name", ({ expect }) => { ... })
       globals: true,
+      allowOnly: !isCI,
+      expandSnapshotDiff: true,
+
       setupFiles: "./test/vitest-setup.ts",
       include: [`test/src/**/${includeRegex}.ts`],
       update: process.env.UPDATE_SNAPSHOT === "true",
 
       name: "node",
       environment: "node",
+      printConsoleTrace: true,
 
       server: {
         deps: {
@@ -38,18 +43,12 @@ export default () => {
         },
       },
 
-      // Speed things up a bit -- these help but probably won't be needed someday
-      maxConcurrency: 20,
-      pool: "forks",
-      poolOptions: {
-        forks: {
-          isolate: false,
-        },
+      sequence: {
+        concurrent: process.env.TEST_SEQUENTIAL !== "true",
       },
-      isolate: false, // only safe with the poolOptions above
 
-      slowTestThreshold: 10 * 1000,
-      testTimeout: (isWindows ? 8 : 5) * 1000 * 60, // disk operations can be slow. We're generous with the timeout here to account for less-performant hardware
+      slowTestThreshold: 60 * 1000,
+      testTimeout: 10 * 60 * 1000, // disk operations can be slow. We're generous with the timeout here to account for less-performant hardware
       coverage: {
         reporter: ["lcov", "text"],
       },

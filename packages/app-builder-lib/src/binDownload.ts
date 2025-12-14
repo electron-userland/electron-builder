@@ -1,5 +1,7 @@
 import { executeAppBuilder } from "builder-util"
 import { Nullish } from "builder-util-runtime"
+import { sanitizeFileName } from "builder-util/out/filename"
+import * as path from "path"
 
 const versionToPromise = new Map<string, Promise<string>>()
 
@@ -16,41 +18,40 @@ export function getBinFromCustomLoc(name: string, version: string, binariesLocUr
   return getBin(dirName, binariesLocUrl, checksum)
 }
 
-export function getBinFromUrl(name: string, version: string, checksum: string, fileName = `${name}-${version}`): Promise<string> {
-  const dirName = `${name}-${version}`
+export function getBinFromUrl(releaseName: string, filenameWithExt: string, checksum: string, githubOrgRepo = "electron-userland/electron-builder-binaries"): Promise<string> {
   let url: string
   if (process.env.ELECTRON_BUILDER_BINARIES_DOWNLOAD_OVERRIDE_URL) {
-    url = process.env.ELECTRON_BUILDER_BINARIES_DOWNLOAD_OVERRIDE_URL + "/" + dirName + ".7z"
+    url = process.env.ELECTRON_BUILDER_BINARIES_DOWNLOAD_OVERRIDE_URL + "/" + filenameWithExt
   } else {
     const baseUrl =
       process.env.NPM_CONFIG_ELECTRON_BUILDER_BINARIES_MIRROR ||
       process.env.npm_config_electron_builder_binaries_mirror ||
       process.env.npm_package_config_electron_builder_binaries_mirror ||
       process.env.ELECTRON_BUILDER_BINARIES_MIRROR ||
-      "https://github.com/electron-userland/electron-builder-binaries/releases/download/"
+      `https://github.com/${githubOrgRepo}/releases/download/`
     const middleUrl =
       process.env.NPM_CONFIG_ELECTRON_BUILDER_BINARIES_CUSTOM_DIR ||
       process.env.npm_config_electron_builder_binaries_custom_dir ||
       process.env.npm_package_config_electron_builder_binaries_custom_dir ||
       process.env.ELECTRON_BUILDER_BINARIES_CUSTOM_DIR ||
-      dirName
-    const urlSuffix = fileName + ".7z"
-    url = `${baseUrl}${middleUrl}/${urlSuffix}`
+      releaseName
+    url = `${baseUrl}${middleUrl}/${filenameWithExt}`
   }
 
-  return getBin(dirName, url, checksum)
+  const cacheKey = `${releaseName}-${path.basename(filenameWithExt, path.extname(filenameWithExt))}`
+  return getBin(cacheKey, url, checksum)
 }
 
-export function getBin(name: string, url?: string | null, checksum?: string | null): Promise<string> {
+export function getBin(cacheKey: string, url?: string | null, checksum?: string | null): Promise<string> {
   // Old cache is ignored if cache environment variable changes
-  const cacheName = `${process.env.ELECTRON_BUILDER_CACHE}${name}`
+  const cacheName = sanitizeFileName(`${process.env.ELECTRON_BUILDER_CACHE ?? ""}${cacheKey}`)
   let promise = versionToPromise.get(cacheName) // if rejected, we will try to download again
 
   if (promise != null) {
     return promise
   }
 
-  promise = doGetBin(name, url, checksum)
+  promise = doGetBin(cacheKey, url, checksum)
   versionToPromise.set(cacheName, promise)
   return promise
 }

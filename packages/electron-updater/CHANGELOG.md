@@ -1,5 +1,111 @@
 ## 4.3.0
 
+## 6.7.3
+
+### Patch Changes
+
+- Chore(deps): unpinning semver and updating it for app-builder-lib and electron-updater _[`#9349`](https://github.com/electron-userland/electron-builder/pull/9349) [`e043df5`](https://github.com/electron-userland/electron-builder/commit/e043df57604fb029fd8f9cf7d835b8366ee71aa6) [@panther7](https://github.com/panther7)_
+
+## 6.7.2
+
+### Patch Changes
+
+- Chore: bumping version packages of all packages to trigger Trusted Signing provedance release _[`#9362`](https://github.com/electron-userland/electron-builder/pull/9362) [`030269b`](https://github.com/electron-userland/electron-builder/commit/030269bca94b5e3621dbf8883976e1f85a1524f0) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 1 dependency</summary>
+
+<small>
+
+[`030269b`](https://github.com/electron-userland/electron-builder/commit/030269bca94b5e3621dbf8883976e1f85a1524f0)
+
+</small>
+
+- `builder-util-runtime@9.5.1`
+
+</details>
+
+## 6.7.1
+
+### Patch Changes
+
+- [#9334](https://github.com/electron-userland/electron-builder/pull/9334) [`21623e1b037e4509af04e767ca1c1458682b0eba`](https://github.com/electron-userland/electron-builder/commit/21623e1b037e4509af04e767ca1c1458682b0eba) Thanks [@mmaietta](https://github.com/mmaietta)! - chore: remove "beta" labels from a few features
+
+## 6.7.0
+
+### Minor Changes
+
+- [#9209](https://github.com/electron-userland/electron-builder/pull/9209) [`6fd391d9e8390c00c8b0674d8ac3a5b7b6f0f19f`](https://github.com/electron-userland/electron-builder/commit/6fd391d9e8390c00c8b0674d8ac3a5b7b6f0f19f) Thanks [@daihere1993](https://github.com/daihere1993)! - feat: Support gitlab publisher
+
+### Patch Changes
+
+- [#9301](https://github.com/electron-userland/electron-builder/pull/9301) [`85cb4d031a060976b2519665b98294bb3c735aa0`](https://github.com/electron-userland/electron-builder/commit/85cb4d031a060976b2519665b98294bb3c735aa0) Thanks [@mmaietta](https://github.com/mmaietta)! - chore(deps): updating semver to 7.7.2
+
+- Updated dependencies [[`6fd391d9e8390c00c8b0674d8ac3a5b7b6f0f19f`](https://github.com/electron-userland/electron-builder/commit/6fd391d9e8390c00c8b0674d8ac3a5b7b6f0f19f)]:
+  - builder-util-runtime@9.5.0
+
+## 6.6.8
+
+### Patch Changes
+
+- [#9248](https://github.com/electron-userland/electron-builder/pull/9248) [`8cbf079e`](https://github.com/electron-userland/electron-builder/commit/8cbf079ec20bbc642f9b6c306e3e9141a1fcc385) Thanks [@DamonYu6](https://github.com/DamonYu6)! - fix: uncaught exception during differential downloading via multipleRangDownloader
+
+- [#9232](https://github.com/electron-userland/electron-builder/pull/9232) [`cfc4f36a`](https://github.com/electron-userland/electron-builder/commit/cfc4f36a5af20fb6c61dc7dfa6202cbc0fd9f201) Thanks [@michalzaq12](https://github.com/michalzaq12)! - fix: auto-update powershell script
+
+- [#9225](https://github.com/electron-userland/electron-builder/pull/9225) [`d27ac523`](https://github.com/electron-userland/electron-builder/commit/d27ac523bb1581f274c018952d55162315e7a9b8) Thanks [@yannishuber](https://github.com/yannishuber)! - fix(electron-updater): do not use quotes when installing update with sudo
+
+- Updated dependencies [[`44b28997`](https://github.com/electron-userland/electron-builder/commit/44b28997f15314730d1bb69303a47dc26f7950d1), [`7c7fd6ca`](https://github.com/electron-userland/electron-builder/commit/7c7fd6ca240eda72048835f754adac92c4ab4e8c)]:
+  - builder-util-runtime@9.4.0
+
+## 6.6.7
+
+### Patch Changes
+
+- [#9186](https://github.com/electron-userland/electron-builder/pull/9186) [`1a6ea016`](https://github.com/electron-userland/electron-builder/commit/1a6ea016b7793c75e7586e0e14d5f26d3535c292) Thanks [@daihere1993](https://github.com/daihere1993)! - feat(electron-updater): add GitLab provider support
+
+- [#9177](https://github.com/electron-userland/electron-builder/pull/9177) [`35f5f6e5`](https://github.com/electron-userland/electron-builder/commit/35f5f6e55762ffc377fcd5587a8cea8753184d50) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: remove `shell: true` from node_modules collector so as to prevent shell console logging from malforming the json output
+
+- Updated dependencies [[`1a6ea016`](https://github.com/electron-userland/electron-builder/commit/1a6ea016b7793c75e7586e0e14d5f26d3535c292), [`35f5f6e5`](https://github.com/electron-userland/electron-builder/commit/35f5f6e55762ffc377fcd5587a8cea8753184d50)]:
+  - builder-util-runtime@9.3.3
+
+## 6.6.6
+
+### Patch Changes
+
+- [#9172](https://github.com/electron-userland/electron-builder/pull/9172) [`cb651ddb`](https://github.com/electron-userland/electron-builder/commit/cb651ddb732dd0b8614b1af25054261b978900dd) Thanks [@beyondkmp](https://github.com/beyondkmp)! - feat(updater): Cache the new blockmap file and allow customization of the old blockmap file base URL
+
+## 6.6.5
+
+### Patch Changes
+
+- [#9113](https://github.com/electron-userland/electron-builder/pull/9113) [`8ba9be48`](https://github.com/electron-userland/electron-builder/commit/8ba9be481e3b777aa77884d265fd9b7f927a8a99) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: don't error out when trying to determine package manager
+
+## 6.6.4
+
+### Patch Changes
+
+- [#9059](https://github.com/electron-userland/electron-builder/pull/9059) [`cb775088`](https://github.com/electron-userland/electron-builder/commit/cb775088427d25e9ce0489067445716d35e09997) Thanks [@beyondkmp](https://github.com/beyondkmp)! - feat: support upgrading from ARM to ARM, rather than upgrading to x64 in window and linux
+
+- [#9064](https://github.com/electron-userland/electron-builder/pull/9064) [`444b791f`](https://github.com/electron-userland/electron-builder/commit/444b791f9d2812f2a0f60481f7b25297585d9c5a) Thanks [@beyondkmp](https://github.com/beyondkmp)! - fix: update regex for multipart content-type parsing in multipleRange
+
+- [#9024](https://github.com/electron-userland/electron-builder/pull/9024) [`e641751c`](https://github.com/electron-userland/electron-builder/commit/e641751ce36cdf099d62a897c591b2763705dbff) Thanks [@Lemonexe](https://github.com/Lemonexe)! - fix: allow forceDevUpdateConfig also on Linux
+
+## 6.6.3
+
+### Patch Changes
+
+- [#9021](https://github.com/electron-userland/electron-builder/pull/9021) [`cf43f056`](https://github.com/electron-userland/electron-builder/commit/cf43f0567c6addaf3cefd7eadada95bd543165e1) Thanks [@Lemonexe](https://github.com/Lemonexe)! - feat: allow overriding AppUpdater.isStagingMatch
+
+- [#8992](https://github.com/electron-userland/electron-builder/pull/8992) [`1f505400`](https://github.com/electron-userland/electron-builder/commit/1f5054004468f76d316cee33ef6cc8717987b146) Thanks [@Sytten](https://github.com/Sytten)! - Fixed missing lowercase in extension comparison.
+
+- Updated dependencies [[`a2f7f735`](https://github.com/electron-userland/electron-builder/commit/a2f7f7350be2379c4917417c92ece5a6ab241708)]:
+  - builder-util-runtime@9.3.2
+
+## 6.6.2
+
+### Patch Changes
+
+- [#8933](https://github.com/electron-userland/electron-builder/pull/8933) [`324032c5`](https://github.com/electron-userland/electron-builder/commit/324032c5ea94b983cda8a5510fcc1a3fb752a1a1) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: re-export `CancellationToken`, `PackageFileInfo`, `ProgressInfo`, `UpdateFileInfo`, `UpdateInfo` from electron-updater
+
 ## 6.6.1
 
 ### Patch Changes

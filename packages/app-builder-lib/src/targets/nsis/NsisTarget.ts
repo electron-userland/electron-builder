@@ -20,7 +20,6 @@ import _debug from "debug"
 import * as fs from "fs"
 import { readFile, stat, unlink } from "fs-extra"
 import * as path from "path"
-import { getBinFromUrl } from "../../binDownload"
 import { Target } from "../../core"
 import { DesktopShortcutCreationPolicy, getEffectiveOptions } from "../../options/CommonWindowsInstallerConfiguration"
 import { chooseNotNull, computeSafeArtifactNameIfNeeded, normalizeExt } from "../../platformPackager"
@@ -38,15 +37,12 @@ import { addCustomMessageFileInclude, createAddLangsMacro, LangConfigurator } fr
 import { computeLicensePage } from "./nsisLicense"
 import { NsisOptions, PortableOptions } from "./nsisOptions"
 import { NsisScriptGenerator } from "./nsisScriptGenerator"
-import { AppPackageHelper, NSIS_PATH, NsisTargetOptions, nsisTemplatesDir, UninstallerReader } from "./nsisUtil"
+import { AppPackageHelper, NSIS_PATH, NSIS_RESOURCES_PATH, NsisTargetOptions, nsisTemplatesDir, UninstallerReader } from "./nsisUtil"
 
 const debug = _debug("electron-builder:nsis")
 
 // noinspection SpellCheckingInspection
 const ELECTRON_BUILDER_NS_UUID = UUID.parse("50e065bc-3134-11e6-9bab-38c9862bdaf3")
-
-// noinspection SpellCheckingInspection
-const nsisResourcePathPromise = () => getBinFromUrl("nsis-resources", "3.4.1", "Dqd6g+2buwwvoG1Vyf6BHR1b+25QMmPcwZx40atOT57gH27rkjOei1L0JTldxZu4NFoEmW4kJgZ3DlSWVON3+Q==")
 
 const USE_NSIS_BUILT_IN_COMPRESSOR = false
 
@@ -152,6 +148,7 @@ export class NsisTarget extends Target {
 
   async finishBuild(): Promise<any> {
     if (!this.shouldBuildUniversalInstaller) {
+      await super.finishBuild()
       return this.packageHelper.finishBuild()
     }
     try {
@@ -165,6 +162,7 @@ export class NsisTarget extends Target {
         await this.buildInstaller(archs)
       }
     } finally {
+      await super.finishBuild()
       await this.packageHelper.finishBuild()
     }
   }
@@ -227,6 +225,12 @@ export class NsisTarget extends Target {
       defines.UNINSTALL_REGISTRY_KEY_2 = `Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\${guid}`
     }
 
+    const { homepage } = this.packager.info.metadata
+    use(options.uninstallUrlHelp || homepage, it => (defines.UNINSTALL_URL_HELP = it))
+    use(options.uninstallUrlInfoAbout || homepage, it => (defines.UNINSTALL_URL_INFO_ABOUT = it))
+    use(options.uninstallUrlUpdateInfo || homepage, it => (defines.UNINSTALL_URL_UPDATE_INFO = it))
+    use(options.uninstallUrlReadme || homepage, it => (defines.UNINSTALL_URL_README = it))
+
     const commands: Commands = {
       OutFile: `"${installerPath}"`,
       VIProductVersion: appInfo.getVersionInWeirdWindowsForm(),
@@ -274,7 +278,12 @@ export class NsisTarget extends Target {
           defines[defineUnpackedSizeKey] = Math.ceil(unpackedSize / 1024).toString()
 
           if (this.isWebInstaller) {
-            await packager.dispatchArtifactCreated(file, this, arch)
+            await packager.info.emitArtifactBuildCompleted({
+              file,
+              target: this,
+              arch,
+              packager,
+            })
             packageFiles[Arch[arch]] = fileInfo
           }
           const path7za = await getPath7za()
@@ -340,37 +349,39 @@ export class NsisTarget extends Target {
       commandsUninstaller.VIAddVersionKey = this.computeVersionKey(true)
     }
 
-    const sharedHeader = await this.computeCommonInstallerScriptHeader()
-    const script = isPortable
-      ? await readFile(path.join(nsisTemplatesDir, "portable.nsi"), "utf8")
-      : await this.computeScriptAndSignUninstaller(definesUninstaller, commandsUninstaller, installerPath, sharedHeader, archs)
+    this.buildQueueManager.add(async () => {
+      const sharedHeader = await this.computeCommonInstallerScriptHeader()
+      const script = isPortable
+        ? await readFile(path.join(nsisTemplatesDir, "portable.nsi"), "utf8")
+        : await this.computeScriptAndSignUninstaller(definesUninstaller, commandsUninstaller, installerPath, sharedHeader, archs)
 
-    // copy outfile name into main options, as the computeScriptAndSignUninstaller function was kind enough to add important data to temporary defines.
-    defines.UNINSTALLER_OUT_FILE = definesUninstaller.UNINSTALLER_OUT_FILE
+      // copy outfile name into main options, as the computeScriptAndSignUninstaller function was kind enough to add important data to temporary defines.
+      defines.UNINSTALLER_OUT_FILE = definesUninstaller.UNINSTALLER_OUT_FILE
 
-    await this.executeMakensis(defines, commands, sharedHeader + (await this.computeFinalScript(script, true, archs)))
-    await Promise.all<any>([packager.sign(installerPath), defines.UNINSTALLER_OUT_FILE == null ? Promise.resolve() : unlink(defines.UNINSTALLER_OUT_FILE)])
+      await this.executeMakensis(defines, commands, sharedHeader + (await this.computeFinalScript(script, true, archs)))
+      await Promise.all<any>([packager.signIf(installerPath), defines.UNINSTALLER_OUT_FILE == null ? Promise.resolve() : unlink(defines.UNINSTALLER_OUT_FILE)])
 
-    const safeArtifactName = computeSafeArtifactNameIfNeeded(installerFilename, () => this.generateGitHubInstallerName(primaryArch, defaultArch))
-    let updateInfo: any
-    if (this.isWebInstaller) {
-      updateInfo = createNsisWebDifferentialUpdateInfo(installerPath, packageFiles)
-    } else if (this.isBuildDifferentialAware) {
-      updateInfo = await createBlockmap(installerPath, this, packager, safeArtifactName)
-    }
+      const safeArtifactName = computeSafeArtifactNameIfNeeded(installerFilename, () => this.generateGitHubInstallerName(primaryArch, defaultArch))
+      let updateInfo: any
+      if (this.isWebInstaller) {
+        updateInfo = createNsisWebDifferentialUpdateInfo(installerPath, packageFiles)
+      } else if (this.isBuildDifferentialAware) {
+        updateInfo = await createBlockmap(installerPath, this, packager, safeArtifactName)
+      }
 
-    if (updateInfo != null && isPerMachine && (oneClick || options.packElevateHelper)) {
-      updateInfo.isAdminRightsRequired = true
-    }
+      if (updateInfo != null && isPerMachine && (oneClick || options.packElevateHelper)) {
+        updateInfo.isAdminRightsRequired = true
+      }
 
-    await packager.info.emitArtifactBuildCompleted({
-      file: installerPath,
-      updateInfo,
-      target: this,
-      packager,
-      arch: primaryArch,
-      safeArtifactName,
-      isWriteUpdateInfo: !this.isPortable,
+      await packager.info.emitArtifactBuildCompleted({
+        file: installerPath,
+        updateInfo,
+        target: this,
+        packager,
+        arch: primaryArch,
+        safeArtifactName,
+        isWriteUpdateInfo: !this.isPortable,
+      })
     })
   }
 
@@ -401,7 +412,8 @@ export class NsisTarget extends Target {
 
     // https://github.com/electron-userland/electron-builder/issues/2103
     // it is more safe and reliable to write uninstaller to our out dir
-    const uninstallerPath = path.join(this.outDir, `__uninstaller-${this.name}-${this.packager.appInfo.sanitizedName}.exe`)
+    // to support parallel builds, the uninstaller path must be unique to each target and arch combination
+    const uninstallerPath = path.join(this.outDir, `${path.basename(installerPath, "exe")}__uninstaller.exe`)
     const isWin = process.platform === "win32"
     defines.BUILD_UNINSTALLER = null
     defines.UNINSTALLER_OUT_FILE = isWin ? uninstallerPath : path.win32.join("Z:", uninstallerPath)
@@ -426,7 +438,7 @@ export class NsisTarget extends Target {
     } else {
       await execWine(installerPath, null, [], { env: { __COMPAT_LAYER: "RunAsInvoker" } })
     }
-    await packager.sign(uninstallerPath)
+    await packager.signIf(uninstallerPath)
 
     delete defines.BUILD_UNINSTALLER
     // platform-specific path, not wine
@@ -656,7 +668,7 @@ export class NsisTarget extends Target {
 
     const pluginArch = this.isUnicodeEnabled ? "x86-unicode" : "x86-ansi"
     taskManager.add(async () => {
-      scriptGenerator.addPluginDir(pluginArch, path.join(await nsisResourcePathPromise(), "plugins", pluginArch))
+      scriptGenerator.addPluginDir(pluginArch, path.join(await NSIS_RESOURCES_PATH(), "plugins", pluginArch))
     })
 
     taskManager.add(async () => {

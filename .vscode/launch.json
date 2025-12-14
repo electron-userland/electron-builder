@@ -1,17 +1,25 @@
 {
   "version": "0.2.0",
   "configurations": [
-      {
-          "type": "node",
-          "request": "launch",
-          "name": "Vitest TEST_FILES",
-          "runtimeExecutable": "pnpm",
-          "program": "ci:test",
-          "console": "integratedTerminal",
-          "internalConsoleOptions": "openOnFirstSessionStart",
-          "env": {
-            "TEST_FILES": "BuildTest"
-          }
-      }
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Vitest TEST_FILES",
+      "runtimeExecutable": "pnpm",
+      "program": "ci:test",
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "openOnFirstSessionStart",
+      "env": {
+        "TEST_FILES": "packageManagerTest",
+        "UPDATE_SNAPSHOT": "false",
+        "DEBUG": "electron-builder",
+        "TEST_SEQUENTIAL": "true" // Run tests sequentially to debug issues that may be hidden by concurrency (console log pollution when DEBUG flag set)
+      },
+      "skipFiles": [
+        "<node_internals>/**", // Skip Node’s internal modules
+        "${workspaceFolder}/**/node_modules/**/*.js", // Skip libraries
+        "**/*.js" // Optionally skip all compiled JS
+      ]
+    }
   ]
 }

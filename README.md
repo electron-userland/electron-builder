@@ -1,5 +1,5 @@
 # electron-builder [![npm version](https://img.shields.io/npm/v/electron-builder.svg?label=latest)](https://www.npmjs.com/package/electron-builder) [![downloads per month](https://img.shields.io/npm/dm/electron-builder.svg)](https://yarn.pm/electron-builder) [![donate](https://img.shields.io/badge/donate-donorbox-brightgreen.svg)](https://www.electron.build/donate)
-A complete solution to package and build a ready for distribution [Electron](https://electronjs.org), [Proton Native](https://proton-native.js.org/) app for macOS, Windows and Linux with “auto update” support out of the box. :shipit:
+A complete solution to package and build a ready for distribution [Electron](https://electronjs.org), [Proton Native](https://proton-native.js.org/) app for macOS, Windows and Linux with “auto update” support out of the box. 📦
 
 Always looking for community contributions! 👀 Setting up a [dev environment](https://github.com/electron-userland/electron-builder/blob/master/CONTRIBUTING.md) is easy to do 🪩
 
@@ -96,25 +96,26 @@ See the full documentation on [electron.build](https://www.electron.build).
 | “I want to support development”        | [Donate](https://www.electron.build/donate)                                       |
 
 ## Installation
-[Yarn](http://yarnpkg.com/) is [strongly](https://github.com/electron-userland/electron-builder/issues/1147#issuecomment-276284477) recommended instead of npm.
-
-`yarn add electron-builder --dev`
+```
+yarn add electron-builder --dev
+// or npm, pnpm, bun
+```
 
 ### Note for Yarn 3
 
-Yarn 3 use PnP by default, but electron-builder still need node-modules(ref: [yarnpkg/berry#4804](https://github.com/yarnpkg/berry/issues/4804#issuecomment-1234407305)). Add configuration in the `.yarnrc.yaml` as follows:
+Yarn 3 use PnP by default, but electron-builder still needs node-modules (ref: [yarnpkg/berry#4804](https://github.com/yarnpkg/berry/issues/4804#issuecomment-1234407305)). Add configuration in the `.yarnrc.yaml` as follows:
 ```
 nodeLinker: "node-modules"
 ```
-will declare to use node-modules instead of PnP.
+This will declare to use node-modules instead of PnP.
 
 ## Quick Setup Guide
 
 [electron-webpack-quick-start](https://github.com/electron-userland/electron-webpack-quick-start) is a recommended way to create a new Electron application. See [Boilerplates](https://www.electron.build/#boilerplates).
 
-1. Specify the standard fields in the application `package.json` — [name](https://electron.build./configuration.md#metadata), `description`, `version` and [author](https://docs.npmjs.com/files/package.json#people-fields-author-contributors).
+1. Specify the standard fields in the application `package.json` — [name](https://electron.build/configuration.html#metadata), `description`, `version` and [author](https://docs.npmjs.com/files/package.json#people-fields-author-contributors).
 
-2. Specify the [build](https://electron.build./configuration.md#build) configuration in the `package.json` as follows:
+2. Specify the [build](https://www.electron.build/configuration.html#build) configuration in the `package.json` as follows:
     ```json
     "build": {
       "appId": "your.id",
@@ -124,7 +125,7 @@ will declare to use node-modules instead of PnP.
     }
     ```
    See [all options](https://www.electron.build/configuration). Option [files](https://www.electron.build/contents#files) to indicate which files should be packed in the final application, including the entry file, maybe required.
-   You can also use separate configuration files, such as `js`, `ts`, `yml`, and `json`/`json5`. See [read-config-file](https://www.npmjs.com/package/read-config-file) for supported extensions. [JS Example for programmatic API](https://www.electron.build/api/programmatic-usage)
+   You can also use separate configuration files, such as `js`, `ts`, `yml`, and `json`/`json5`. See [read-config-file](https://www.npmjs.com/package/read-config-file) for supported extensions. [JS Example for programmatic API](https://www.electron.build/programmatic-usage)
 
 3. Add [icons](https://www.electron.build/icons).
 
@@ -139,16 +140,16 @@ will declare to use node-modules instead of PnP.
 
     To ensure your native dependencies are always matched electron version, simply add script `"postinstall": "electron-builder install-app-deps"` to your `package.json`.
 
-5. If you have native addons of your own that are part of the application (not as a dependency), set [nodeGypRebuild](https://www.electron.build./configuration.md#nodeGypRebuild) to `true`.
+5. If you have native addons of your own that are part of the application (not as a dependency), set [nodeGypRebuild](https://www.electron.build/configuration.html#nodegyprebuild) to `true`.
 
-Please note that everything is packaged into an asar archive [by default](https://electron.build./configuration.md#asar).
+Please note that everything is packaged into an asar archive [by default](https://electron.build/configuration.html#asar).
 
 For an app that will be shipped to production, you should sign your application. See [Where to buy code signing certificates](https://www.electron.build/code-signing#where-to-buy-code-signing-certificate).
 
 ## Programmatic Usage
-See `node_modules/electron-builder/out/index.d.ts`. Typings for TypeScript are provided and also can be found [here](./electron-builder.md).
+See `node_modules/electron-builder/out/index.d.ts`. Typings for TypeScript are provided and also can be found [here](https://www.electron.build/electron-builder/globals).
 
-Code snippet provided below is also shown "in action" [here](./programmatic-usage.md) as well.
+Code snippet provided below is also shown "in action" [here](https://www.electron.build/programmatic-usage) as well.
 ```js
 "use strict"
 
@@ -159,7 +160,7 @@ const Platform = builder.Platform
 builder.build({
   targets: Platform.MAC.createTarget(),
   config: {
-   "//": "build options, see https://goo.gl/QQXmcV"
+   "//": "build options, see https://www.electron.build/"
   }
 })
   .then(() => {
@@ -170,13 +171,9 @@ builder.build({
   })
 ```
 
-## Boilerplates
+## Community Boilerplates
 
-* [electron-webpack-quick-start](https://github.com/electron-userland/electron-webpack-quick-start) — A bare minimum project structure to get started developing with [electron-webpack](https://github.com/electron-userland/electron-webpack). Recommended.
 * [electron-react-boilerplate](https://github.com/chentsulin/electron-react-boilerplate) A boilerplate for scalable cross-platform desktop apps.
-* [electron-react-redux-boilerplate](https://github.com/jschr/electron-react-redux-boilerplate) A minimal boilerplate to get started with Electron, React and Redux.
-* [electron-boilerplate](https://github.com/szwacz/electron-boilerplate) A minimalistic yet comprehensive boilerplate application.
-* [Vue CLI 3 plugin for Electron](https://nklayman.github.io/vue-cli-plugin-electron-builder) A Vue CLI 3 plugin for Electron with no required configuration.
 * [electron-vue-vite](https://github.com/caoxiemeihao/electron-vue-vite) A real simple Electron + Vue3 + Vite5 boilerplate.
 * [vite-electron-builder](https://github.com/cawa-93/vite-electron-builder) Secure boilerplate for Electron app based on Vite. Supports multiple frameworks.
 * [electronjs-with-nextjs](https://github.com/saulotarsobc/electronjs-with-nextjs) ElectronJS application with NextJS and TypeScript.
@@ -201,7 +198,7 @@ DEBUG=electron-builder
 !!! tip "PowerShell"
     PowerShell uses different syntax to set environment variables.
     ```bash
-    $env:DEBUG=electron-builder
+    $env:DEBUG = "electron-builder"
     ```
 
 ## Donate

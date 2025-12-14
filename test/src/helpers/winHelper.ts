@@ -8,8 +8,9 @@ import * as path from "path"
 import { assertThat } from "./fileAssert"
 import { PackedContext } from "./packTester"
 import { diff, WineManager } from "./wine"
+import { ExpectStatic } from "vitest"
 
-export async function expectUpdateMetadata(context: PackedContext, arch: Arch = Arch.ia32, requireCodeSign: boolean = false): Promise<void> {
+export async function expectUpdateMetadata(expect: ExpectStatic, context: PackedContext, arch: Arch = Arch.ia32, requireCodeSign: boolean = false): Promise<void> {
   const data = load(await fs.readFile(path.join(context.getResources(Platform.WINDOWS, arch), "app-update.yml"), "utf-8")) as any
   if (requireCodeSign) {
     expect(data.publisherName).toEqual(["Foo, Inc"])
@@ -19,16 +20,24 @@ export async function expectUpdateMetadata(context: PackedContext, arch: Arch = 
   expect(data).toMatchSnapshot()
 }
 
-export async function checkHelpers(resourceDir: string, isPackElevateHelper: boolean) {
+export async function checkHelpers(expect: ExpectStatic, resourceDir: string, isPackElevateHelper: boolean) {
   const elevateHelperExecutable = path.join(resourceDir, "elevate.exe")
   if (isPackElevateHelper) {
-    await assertThat(elevateHelperExecutable).isFile()
+    await assertThat(expect, elevateHelperExecutable).isFile()
   } else {
-    await assertThat(elevateHelperExecutable).doesNotExist()
+    await assertThat(expect, elevateHelperExecutable).doesNotExist()
   }
 }
 
-export async function doTest(outDir: string, perUser: boolean, productFilename = "TestApp Setup", name = "TestApp", menuCategory: string | null = null, packElevateHelper = true) {
+export async function doTest(
+  expect: ExpectStatic,
+  outDir: string,
+  perUser: boolean,
+  productFilename = "TestApp Setup",
+  name = "TestApp",
+  menuCategory: string | null = null,
+  packElevateHelper = true
+) {
   if (process.env.DO_WINE !== "true") {
     return Promise.resolve()
   }
@@ -65,13 +74,13 @@ export async function doTest(outDir: string, perUser: boolean, productFilename =
     if (menuCategory != null) {
       startMenuDir = path.join(startMenuDir, menuCategory)
     }
-    await assertThat(path.join(startMenuDir, `${productFilename}.lnk`)).isFile()
+    await assertThat(expect, path.join(startMenuDir, `${productFilename}.lnk`)).isFile()
   }
 
   if (packElevateHelper) {
-    await assertThat(path.join(instDir, name, "resources", "elevate.exe")).isFile()
+    await assertThat(expect, path.join(instDir, name, "resources", "elevate.exe")).isFile()
   } else {
-    await assertThat(path.join(instDir, name, "resources", "elevate.exe")).doesNotExist()
+    await assertThat(expect, path.join(instDir, name, "resources", "elevate.exe")).doesNotExist()
   }
 
   let fsAfter = await listFiles()
@@ -91,8 +100,8 @@ export async function doTest(outDir: string, perUser: boolean, productFilename =
   expect(fsChanges.added).toEqual([])
   expect(fsChanges.deleted).toEqual([])
 
-  await assertThat(appDataFile).isFile()
+  await assertThat(expect, appDataFile).isFile()
 
   await wine.exec(path.join(outDir, `${productFilename} Setup 1.1.0.exe`), "/S", "--delete-app-data")
-  await assertThat(appDataFile).doesNotExist()
+  await assertThat(expect, appDataFile).doesNotExist()
 }

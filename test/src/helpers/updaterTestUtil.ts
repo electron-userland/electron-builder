@@ -1,11 +1,12 @@
 import { NodeHttpExecutor, serializeToYaml, TmpDir } from "builder-util"
 import { AllPublishOptions, DownloadOptions } from "builder-util-runtime"
-import { AppUpdater, MacUpdater, NoOpLogger, NsisUpdater } from "electron-updater"
-import { TestOnlyUpdaterOptions } from "electron-updater/out/AppUpdater"
+import { AppUpdater, MacUpdater, NsisUpdater } from "electron-updater"
+import { NoOpLogger, TestOnlyUpdaterOptions } from "electron-updater/out/AppUpdater"
 import { outputFile, writeFile } from "fs-extra"
 import * as path from "path"
 import { assertThat } from "./fileAssert"
 import { TestAppAdapter } from "./TestAppAdapter"
+import { ExpectStatic } from "vitest"
 
 const tmpDir = new TmpDir("updater-test-util")
 
@@ -27,7 +28,7 @@ export async function writeUpdateConfig<T extends AllPublishOptions>(data: T): P
   return updateConfigPath
 }
 
-export async function validateDownload(updater: AppUpdater, expectDownloadPromise = true) {
+export async function validateDownload(expect: ExpectStatic, updater: AppUpdater, expectDownloadPromise = true) {
   const actualEvents = trackEvents(updater)
 
   const updateCheckResult = await updater.checkForUpdates()
@@ -46,7 +47,7 @@ export async function validateDownload(updater: AppUpdater, expectDownloadPromis
     if (updater instanceof MacUpdater) {
       expect(downloadResult).toEqual([])
     } else {
-      await assertThat(path.join(downloadResult![0])).isFile()
+      await assertThat(expect, path.join(downloadResult![0])).isFile()
     }
   } else {
     // noinspection JSIgnoredPromiseFromCall
@@ -86,3 +87,7 @@ export function trackEvents(updater: AppUpdater) {
   }
   return actualEvents
 }
+export const OLD_VERSION_NUMBER = "1.0.0"
+export const NEW_VERSION_NUMBER = "1.0.1"
+
+export const testAppCacheDirName = "testapp-updater"

@@ -1,7 +1,5 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`electronDist 1`] = `"corrupted Electron dist"`;
-
 exports[`multiple asar resources 1`] = `
 {
   "mac": [
@@ -76,6 +74,7 @@ exports[`multiple asar resources 2`] = `
   "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
   "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
+  "NSPrefersDisplaySafeAreaCompatibilityMode": false,
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
 }
@@ -97,6 +96,23 @@ exports[`one-package 1`] = `
       "arch": "x64",
       "file": "Test App ßW-1.1.0.dmg",
       "safeArtifactName": "TestApp-1.1.0.dmg",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "arch": "x64",
+      "file": "Test App ßW-1.1.0-mac.zip",
+      "safeArtifactName": "TestApp-1.1.0-mac.zip",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "Test App ßW-1.1.0-mac.zip.blockmap",
+      "safeArtifactName": "Test App ßW-1.1.0-mac.zip.blockmap",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
@@ -129,23 +145,6 @@ exports[`one-package 1`] = `
         "releaseDate": "@releaseDate",
         "sha512": "@sha512",
         "version": "1.1.0",
-      },
-    },
-    {
-      "arch": "x64",
-      "file": "Test App ßW-1.1.0-mac.zip",
-      "safeArtifactName": "TestApp-1.1.0-mac.zip",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "file": "Test App ßW-1.1.0-mac.zip.blockmap",
-      "safeArtifactName": "Test App ßW-1.1.0-mac.zip.blockmap",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
       },
     },
   ],
@@ -233,6 +232,7 @@ exports[`one-package 2`] = `
   "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
   "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
+  "NSPrefersDisplaySafeAreaCompatibilityMode": false,
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
 }
@@ -242,15 +242,16 @@ exports[`two-package 1`] = `
 {
   "mac": [
     {
-      "arch": "arm64",
-      "file": "TestApp-1.1.0-mac-arm64.dmg",
+      "arch": "x64",
+      "file": "TestApp-1.1.0-mac-x64.dmg",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
     {
-      "file": "TestApp-1.1.0-mac-arm64.dmg.blockmap",
+      "arch": "arm64",
+      "file": "TestApp-1.1.0-mac-arm64.dmg",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
@@ -265,6 +266,45 @@ exports[`two-package 1`] = `
       },
     },
     {
+      "arch": "x64",
+      "file": "TestApp-1.1.0-mac-x64.zip",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "arch": "arm64",
+      "file": "TestApp-1.1.0-mac-arm64.zip",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "arch": "universal",
+      "file": "TestApp-1.1.0-mac-universal.zip",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "TestApp-1.1.0-mac-arm64.dmg.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "TestApp-1.1.0-mac-arm64.zip.blockmap",
+      "safeArtifactName": "TestApp-1.1.0-mac-arm64.zip.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
       "file": "TestApp-1.1.0-mac-universal.dmg.blockmap",
       "updateInfo": {
         "sha512": "@sha512",
@@ -272,8 +312,8 @@ exports[`two-package 1`] = `
       },
     },
     {
-      "arch": "x64",
-      "file": "TestApp-1.1.0-mac-x64.dmg",
+      "file": "TestApp-1.1.0-mac-universal.zip.blockmap",
+      "safeArtifactName": "TestApp-1.1.0-mac-universal.zip.blockmap",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
@@ -281,6 +321,14 @@ exports[`two-package 1`] = `
     },
     {
       "file": "TestApp-1.1.0-mac-x64.dmg.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "TestApp-1.1.0-mac-x64.zip.blockmap",
+      "safeArtifactName": "TestApp-1.1.0-mac-x64.zip.blockmap",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
@@ -325,54 +373,6 @@ exports[`two-package 1`] = `
         "releaseDate": "@releaseDate",
         "sha512": "@sha512",
         "version": "1.1.0",
-      },
-    },
-    {
-      "arch": "arm64",
-      "file": "TestApp-1.1.0-mac-arm64.zip",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "file": "TestApp-1.1.0-mac-arm64.zip.blockmap",
-      "safeArtifactName": "TestApp-1.1.0-mac-arm64.zip.blockmap",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "arch": "universal",
-      "file": "TestApp-1.1.0-mac-universal.zip",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "file": "TestApp-1.1.0-mac-universal.zip.blockmap",
-      "safeArtifactName": "TestApp-1.1.0-mac-universal.zip.blockmap",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "arch": "x64",
-      "file": "TestApp-1.1.0-mac-x64.zip",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "file": "TestApp-1.1.0-mac-x64.zip.blockmap",
-      "safeArtifactName": "TestApp-1.1.0-mac-x64.zip.blockmap",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
       },
     },
   ],
@@ -421,6 +421,7 @@ exports[`two-package 2`] = `
   "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
   "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
+  "NSPrefersDisplaySafeAreaCompatibilityMode": false,
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
 }
@@ -437,6 +438,20 @@ exports[`two-package 3`] = `
 `;
 
 exports[`two-package 4`] = `
+[
+  "Info.plist",
+  "MainMenu.nib",
+  "bn.lproj",
+  "chrome_100_percent.pak",
+  "chrome_200_percent.pak",
+  "en.lproj",
+  "icudtl.dat",
+  "resources.pak",
+  "v8_context_snapshot.x86_64.bin",
+]
+`;
+
+exports[`two-package 5`] = `
 {
   "CFBundleDisplayName": "TestApp",
   "CFBundleExecutable": "TestApp",
@@ -478,12 +493,13 @@ exports[`two-package 4`] = `
   "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
   "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
+  "NSPrefersDisplaySafeAreaCompatibilityMode": false,
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
 }
 `;
 
-exports[`two-package 5`] = `
+exports[`two-package 6`] = `
 [
   "app-update.yml",
   "app.asar",
@@ -493,7 +509,21 @@ exports[`two-package 5`] = `
 ]
 `;
 
-exports[`two-package 6`] = `
+exports[`two-package 7`] = `
+[
+  "Info.plist",
+  "MainMenu.nib",
+  "bn.lproj",
+  "chrome_100_percent.pak",
+  "chrome_200_percent.pak",
+  "en.lproj",
+  "icudtl.dat",
+  "resources.pak",
+  "v8_context_snapshot.arm64.bin",
+]
+`;
+
+exports[`two-package 8`] = `
 {
   "CFBundleDisplayName": "TestApp",
   "CFBundleExecutable": "TestApp",
@@ -535,18 +565,34 @@ exports[`two-package 6`] = `
   "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
   "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
+  "NSPrefersDisplaySafeAreaCompatibilityMode": false,
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
 }
 `;
 
-exports[`two-package 7`] = `
+exports[`two-package 9`] = `
 [
   "app-update.yml",
   "app.asar",
   "bn.lproj",
   "en.lproj",
   "icon.icns",
+]
+`;
+
+exports[`two-package 10`] = `
+[
+  "Info.plist",
+  "MainMenu.nib",
+  "bn.lproj",
+  "chrome_100_percent.pak",
+  "chrome_200_percent.pak",
+  "en.lproj",
+  "icudtl.dat",
+  "resources.pak",
+  "v8_context_snapshot.arm64.bin",
+  "v8_context_snapshot.x86_64.bin",
 ]
 `;
 
@@ -653,6 +699,23 @@ exports[`yarn two package.json w/ native module 3`] = `
               "files": {
                 "debug.js": {
                   "size": "<size>",
+                },
+              },
+            },
+            "node_modules": {
+              "files": {
+                "ms": {
+                  "files": {
+                    "index.js": {
+                      "size": "<size>",
+                    },
+                    "license.md": {
+                      "size": "<size>",
+                    },
+                    "package.json": {
+                      "size": "<size>",
+                    },
+                  },
                 },
               },
             },
@@ -797,6 +860,22 @@ exports[`yarn two package.json w/ native module 3`] = `
             },
             "node_modules": {
               "files": {
+                "bindings": {
+                  "files": {
+                    "LICENSE.md": {
+                      "size": "<size>",
+                      "unpacked": true,
+                    },
+                    "bindings.js": {
+                      "size": "<size>",
+                      "unpacked": true,
+                    },
+                    "package.json": {
+                      "size": "<size>",
+                      "unpacked": true,
+                    },
+                  },
+                },
                 "node-addon-api": {
                   "files": {
                     "LICENSE.md": {
@@ -891,14 +970,6 @@ exports[`yarn two package.json w/ native module 3`] = `
               "files": {
                 "Release": {
                   "files": {
-                    "node-addon-api": {
-                      "files": {
-                        "node_addon_api_except.stamp": {
-                          "size": "<size>",
-                          "unpacked": true,
-                        },
-                      },
-                    },
                     "pty.node": {
                       "size": "<size>",
                       "unpacked": true,
@@ -1475,11 +1546,87 @@ exports[`yarn two package.json w/ native module 3`] = `
                 },
               },
             },
-            "node-addon-api": {
+            "node_modules": {
               "files": {
-                "node_addon_api.Makefile": {
-                  "size": "<size>",
-                  "unpacked": true,
+                "node-addon-api": {
+                  "files": {
+                    "LICENSE.md": {
+                      "size": "<size>",
+                      "unpacked": true,
+                    },
+                    "common.gypi": {
+                      "size": "<size>",
+                      "unpacked": true,
+                    },
+                    "except.gypi": {
+                      "size": "<size>",
+                      "unpacked": true,
+                    },
+                    "index.js": {
+                      "size": "<size>",
+                      "unpacked": true,
+                    },
+                    "napi-inl.deprecated.h": {
+                      "size": "<size>",
+                      "unpacked": true,
+                    },
+                    "napi-inl.h": {
+                      "size": "<size>",
+                      "unpacked": true,
+                    },
+                    "napi.h": {
+                      "size": "<size>",
+                      "unpacked": true,
+                    },
+                    "node_addon_api.gyp": {
+                      "size": "<size>",
+                      "unpacked": true,
+                    },
+                    "node_api.gyp": {
+                      "size": "<size>",
+                      "unpacked": true,
+                    },
+                    "noexcept.gypi": {
+                      "size": "<size>",
+                      "unpacked": true,
+                    },
+                    "nothing.c": {
+                      "size": "<size>",
+                      "unpacked": true,
+                    },
+                    "package-support.json": {
+                      "size": "<size>",
+                      "unpacked": true,
+                    },
+                    "package.json": {
+                      "size": "<size>",
+                      "unpacked": true,
+                    },
+                    "tools": {
+                      "files": {
+                        "README.md": {
+                          "size": "<size>",
+                          "unpacked": true,
+                        },
+                        "check-napi.js": {
+                          "size": "<size>",
+                          "unpacked": true,
+                        },
+                        "clang-format.js": {
+                          "size": "<size>",
+                          "unpacked": true,
+                        },
+                        "conversion.js": {
+                          "size": "<size>",
+                          "unpacked": true,
+                        },
+                        "eslint-format.js": {
+                          "size": "<size>",
+                          "unpacked": true,
+                        },
+                      },
+                    },
+                  },
                 },
               },
             },
@@ -1680,7 +1827,63 @@ exports[`yarn two package.json w/ native module 4`] = `
   "app.asar.unpacked/node_modules/node-pty/src/shared/conout.ts",
   "app.asar.unpacked/node_modules/node-pty/scripts/post-install.js",
   "app.asar.unpacked/node_modules/node-pty/scripts/publish.js",
-  "app.asar.unpacked/node_modules/node-pty/node-addon-api/node_addon_api.Makefile",
+  "app.asar.unpacked/node_modules/node-pty/node_modules/node-addon-api/LICENSE.md",
+  "app.asar.unpacked/node_modules/node-pty/node_modules/node-addon-api/common.gypi",
+  "app.asar.unpacked/node_modules/node-pty/node_modules/node-addon-api/except.gypi",
+  "app.asar.unpacked/node_modules/node-pty/node_modules/node-addon-api/index.js",
+  "app.asar.unpacked/node_modules/node-pty/node_modules/node-addon-api/napi-inl.deprecated.h",
+  "app.asar.unpacked/node_modules/node-pty/node_modules/node-addon-api/napi-inl.h",
+  "app.asar.unpacked/node_modules/node-pty/node_modules/node-addon-api/napi.h",
+  "app.asar.unpacked/node_modules/node-pty/node_modules/node-addon-api/node_addon_api.gyp",
+  "app.asar.unpacked/node_modules/node-pty/node_modules/node-addon-api/node_api.gyp",
+  "app.asar.unpacked/node_modules/node-pty/node_modules/node-addon-api/noexcept.gypi",
+  "app.asar.unpacked/node_modules/node-pty/node_modules/node-addon-api/nothing.c",
+  "app.asar.unpacked/node_modules/node-pty/node_modules/node-addon-api/package-support.json",
+  {
+    "content": "{
+  "description": "Node.js API (Node-API)",
+  "devDependencies": {
+    "benchmark": "^2.1.4",
+    "bindings": "^1.5.0",
+    "clang-format": "^1.4.0",
+    "eslint": "^7.32.0",
+    "eslint-config-semistandard": "^16.0.0",
+    "eslint-config-standard": "^16.0.3",
+    "eslint-plugin-import": "^2.24.2",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^5.1.0",
+    "fs-extra": "^11.1.1",
+    "path": "^0.12.7",
+    "pre-commit": "^1.2.2",
+    "safe-buffer": "^5.1.1"
+  },
+  "directories": {},
+  "gypfile": false,
+  "homepage": "https://github.com/nodejs/node-addon-api",
+  "license": "MIT",
+  "main": "index.js",
+  "name": "node-addon-api",
+  "readme": "README.md",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/nodejs/node-addon-api.git"
+  },
+  "files": [
+    "*.{c,h,gyp,gypi}",
+    "package-support.json",
+    "tools/"
+  ],
+  "pre-commit": "lint",
+  "version": "7.1.1",
+  "support": true
+}",
+    "name": "app.asar.unpacked/node_modules/node-pty/node_modules/node-addon-api/package.json",
+  },
+  "app.asar.unpacked/node_modules/node-pty/node_modules/node-addon-api/tools/README.md",
+  "app.asar.unpacked/node_modules/node-pty/node_modules/node-addon-api/tools/check-napi.js",
+  "app.asar.unpacked/node_modules/node-pty/node_modules/node-addon-api/tools/clang-format.js",
+  "app.asar.unpacked/node_modules/node-pty/node_modules/node-addon-api/tools/conversion.js",
+  "app.asar.unpacked/node_modules/node-pty/node_modules/node-addon-api/tools/eslint-format.js",
   "app.asar.unpacked/node_modules/node-pty/lib/conpty_console_list_agent.js",
   "app.asar.unpacked/node_modules/node-pty/lib/conpty_console_list_agent.js.map",
   "app.asar.unpacked/node_modules/node-pty/lib/eventEmitter2.js",
@@ -1808,7 +2011,6 @@ exports[`yarn two package.json w/ native module 4`] = `
   "app.asar.unpacked/node_modules/node-pty/deps/winpty/misc/Font-Report-June2016/Windows10SetFontBugginess.txt",
   "app.asar.unpacked/node_modules/node-pty/build/Release/pty.node",
   "app.asar.unpacked/node_modules/node-pty/build/Release/spawn-helper",
-  "app.asar.unpacked/node_modules/node-pty/build/Release/node-addon-api/node_addon_api_except.stamp",
   "app.asar.unpacked/node_modules/node-mac-permissions/LICENSE",
   "app.asar.unpacked/node_modules/node-mac-permissions/index.js",
   {
@@ -1902,6 +2104,27 @@ exports[`yarn two package.json w/ native module 4`] = `
   "app.asar.unpacked/node_modules/node-mac-permissions/node_modules/node-addon-api/tools/check-napi.js",
   "app.asar.unpacked/node_modules/node-mac-permissions/node_modules/node-addon-api/tools/clang-format.js",
   "app.asar.unpacked/node_modules/node-mac-permissions/node_modules/node-addon-api/tools/conversion.js",
+  "app.asar.unpacked/node_modules/node-mac-permissions/node_modules/bindings/LICENSE.md",
+  "app.asar.unpacked/node_modules/node-mac-permissions/node_modules/bindings/bindings.js",
+  {
+    "content": "{
+  "name": "bindings",
+  "description": "Helper module for loading your native module's .node file",
+  "version": "1.5.0",
+  "author": "Nathan Rajlich <nathan@tootallnate.net> (http://tootallnate.net)",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/TooTallNate/node-bindings.git"
+  },
+  "main": "./bindings.js",
+  "homepage": "https://github.com/TooTallNate/node-bindings",
+  "license": "MIT",
+  "dependencies": {
+    "file-uri-to-path": "1.0.0"
+  }
+}",
+    "name": "app.asar.unpacked/node_modules/node-mac-permissions/node_modules/bindings/package.json",
+  },
   "app.asar.unpacked/node_modules/node-mac-permissions/build/Release/permissions.node",
 ]
 `;

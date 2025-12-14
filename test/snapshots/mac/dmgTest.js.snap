@@ -1,152 +1,5 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`background color 1`] = `
-{
-  "backgroundColor": "orange",
-  "contents": [
-    {
-      "x": 130,
-      "y": 220,
-    },
-    {
-      "path": "/Applications",
-      "type": "link",
-      "x": 410,
-      "y": 220,
-    },
-  ],
-  "format": "UDRO",
-  "writeUpdateInfo": false,
-}
-`;
-
-exports[`background color 2`] = `
-{
-  "mac": [
-    {
-      "arch": "x64",
-      "file": "BackgroundColor-1.1.0.dmg",
-    },
-  ],
-}
-`;
-
-exports[`background color 3`] = `
-{
-  "CFBundleDisplayName": "BackgroundColor",
-  "CFBundleExecutable": "BackgroundColor",
-  "CFBundleIconFile": "icon.icns",
-  "CFBundleIdentifier": "org.electron-builder.testApp",
-  "CFBundleInfoDictionaryVersion": "6.0",
-  "CFBundleName": "BackgroundColor",
-  "CFBundlePackageType": "APPL",
-  "CFBundleShortVersionString": "1.1.0",
-  "ElectronAsarIntegrity": {
-    "Resources/app.asar": {
-      "algorithm": "SHA256",
-      "hash": "hash",
-    },
-  },
-  "LSApplicationCategoryType": "your.app.category.type",
-  "LSEnvironment": {
-    "MallocNanoZone": "0",
-  },
-  "NSAppTransportSecurity": {
-    "NSAllowsLocalNetworking": true,
-    "NSExceptionDomains": {
-      "127.0.0.1": {
-        "NSIncludesSubdomains": false,
-        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
-        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
-        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
-        "NSTemporaryExceptionRequiresForwardSecrecy": false,
-      },
-      "localhost": {
-        "NSIncludesSubdomains": false,
-        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
-        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
-        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
-        "NSTemporaryExceptionRequiresForwardSecrecy": false,
-      },
-    },
-  },
-  "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
-  "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
-  "NSHighResolutionCapable": true,
-  "NSPrincipalClass": "AtomApplication",
-  "NSSupportsAutomaticGraphicsSwitching": true,
-}
-`;
-
-exports[`bundleShortVersion 1`] = `
-{
-  "mac": [
-    {
-      "arch": "x64",
-      "file": "BundleShortVersion-2017.1-alpha5.dmg",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "file": "BundleShortVersion-2017.1-alpha5.dmg.blockmap",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-  ],
-}
-`;
-
-exports[`bundleShortVersion 2`] = `
-{
-  "CFBundleDisplayName": "BundleShortVersion",
-  "CFBundleExecutable": "BundleShortVersion",
-  "CFBundleIconFile": "icon.icns",
-  "CFBundleIdentifier": "org.electron-builder.testApp",
-  "CFBundleInfoDictionaryVersion": "6.0",
-  "CFBundleName": "BundleShortVersion",
-  "CFBundlePackageType": "APPL",
-  "CFBundleShortVersionString": "2017.1-alpha5",
-  "ElectronAsarIntegrity": {
-    "Resources/app.asar": {
-      "algorithm": "SHA256",
-      "hash": "hash",
-    },
-  },
-  "LSApplicationCategoryType": "your.app.category.type",
-  "LSEnvironment": {
-    "MallocNanoZone": "0",
-  },
-  "NSAppTransportSecurity": {
-    "NSAllowsLocalNetworking": true,
-    "NSExceptionDomains": {
-      "127.0.0.1": {
-        "NSIncludesSubdomains": false,
-        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
-        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
-        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
-        "NSTemporaryExceptionRequiresForwardSecrecy": false,
-      },
-      "localhost": {
-        "NSIncludesSubdomains": false,
-        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
-        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
-        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
-        "NSTemporaryExceptionRequiresForwardSecrecy": false,
-      },
-    },
-  },
-  "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
-  "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
-  "NSHighResolutionCapable": true,
-  "NSPrincipalClass": "AtomApplication",
-  "NSSupportsAutomaticGraphicsSwitching": true,
-}
-`;
-
 exports[`custom background - new way 1`] = `
 {
   "mac": [
@@ -289,36 +142,49 @@ exports[`disable dmg icon (light), bundleVersion 2`] = `
 }
 `;
 
-exports[`dmg 1`] = `
+exports[`dmg > background color 1`] = `
+{
+  "backgroundColor": "orange",
+  "contents": [
+    {
+      "name": "BackgroundColor.app",
+      "path": "dist/mac/BackgroundColor.app",
+      "type": "file",
+      "x": 130,
+      "y": 220,
+    },
+    {
+      "path": "/Applications",
+      "type": "link",
+      "x": 410,
+      "y": 220,
+    },
+  ],
+  "format": "UDRO",
+  "title": "Bar",
+  "writeUpdateInfo": false,
+}
+`;
+
+exports[`dmg > background color 2`] = `
 {
   "mac": [
     {
       "arch": "x64",
-      "file": "DefaultDmg-1.1.0.dmg",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "file": "DefaultDmg-1.1.0.dmg.blockmap",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
+      "file": "BackgroundColor-1.1.0.dmg",
     },
   ],
 }
 `;
 
-exports[`dmg 2`] = `
+exports[`dmg > background color 3`] = `
 {
-  "CFBundleDisplayName": "DefaultDmg",
-  "CFBundleExecutable": "DefaultDmg",
+  "CFBundleDisplayName": "BackgroundColor",
+  "CFBundleExecutable": "BackgroundColor",
   "CFBundleIconFile": "icon.icns",
   "CFBundleIdentifier": "org.electron-builder.testApp",
   "CFBundleInfoDictionaryVersion": "6.0",
-  "CFBundleName": "DefaultDmg",
+  "CFBundleName": "BackgroundColor",
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
   "ElectronAsarIntegrity": {
@@ -353,12 +219,295 @@ exports[`dmg 2`] = `
   "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
   "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
+  "NSPrefersDisplaySafeAreaCompatibilityMode": false,
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
 }
 `;
 
-exports[`license buttons config 1`] = `
+exports[`dmg > bundleShortVersion 1`] = `
+{
+  "mac": [
+    {
+      "arch": "x64",
+      "file": "Bundle-ShortVersion-2017.1-alpha5.dmg",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "Bundle-ShortVersion-2017.1-alpha5.dmg.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`dmg > bundleShortVersion 2`] = `
+{
+  "CFBundleDisplayName": "Bundle-ShortVersion",
+  "CFBundleExecutable": "Bundle-ShortVersion",
+  "CFBundleIconFile": "icon.icns",
+  "CFBundleIdentifier": "org.electron-builder.testApp",
+  "CFBundleInfoDictionaryVersion": "6.0",
+  "CFBundleName": "Bundle-ShortVersion",
+  "CFBundlePackageType": "APPL",
+  "CFBundleShortVersionString": "2017.1-alpha5",
+  "ElectronAsarIntegrity": {
+    "Resources/app.asar": {
+      "algorithm": "SHA256",
+      "hash": "hash",
+    },
+  },
+  "LSApplicationCategoryType": "your.app.category.type",
+  "LSEnvironment": {
+    "MallocNanoZone": "0",
+  },
+  "NSAppTransportSecurity": {
+    "NSAllowsLocalNetworking": true,
+    "NSExceptionDomains": {
+      "127.0.0.1": {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+      "localhost": {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+    },
+  },
+  "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
+  "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
+  "NSHighResolutionCapable": true,
+  "NSPrefersDisplaySafeAreaCompatibilityMode": false,
+  "NSPrincipalClass": "AtomApplication",
+  "NSSupportsAutomaticGraphicsSwitching": true,
+}
+`;
+
+exports[`dmg > custom background - new way 1`] = `
+{
+  "mac": [
+    {
+      "arch": "x64",
+      "file": "CustomBackground-1.1.0-mac.zip",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "CustomBackground-1.1.0-mac.zip.blockmap",
+      "safeArtifactName": "CustomBackground-1.1.0-mac.zip.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`dmg > custom background - new way 2`] = `
+{
+  "CFBundleDisplayName": "CustomBackground",
+  "CFBundleExecutable": "CustomBackground",
+  "CFBundleIconFile": "icon.icns",
+  "CFBundleIdentifier": "org.electron-builder.testApp",
+  "CFBundleInfoDictionaryVersion": "6.0",
+  "CFBundleName": "CustomBackground",
+  "CFBundlePackageType": "APPL",
+  "CFBundleShortVersionString": "1.1.0",
+  "ElectronAsarIntegrity": {
+    "Resources/app.asar": {
+      "algorithm": "SHA256",
+      "hash": "hash",
+    },
+  },
+  "LSApplicationCategoryType": "your.app.category.type",
+  "LSEnvironment": {
+    "MallocNanoZone": "0",
+  },
+  "NSAppTransportSecurity": {
+    "NSAllowsLocalNetworking": true,
+    "NSExceptionDomains": {
+      "127.0.0.1": {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+      "localhost": {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+    },
+  },
+  "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
+  "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
+  "NSHighResolutionCapable": true,
+  "NSPrefersDisplaySafeAreaCompatibilityMode": false,
+  "NSPrincipalClass": "AtomApplication",
+  "NSSupportsAutomaticGraphicsSwitching": true,
+}
+`;
+
+exports[`dmg > disable dmg icon (light), bundleVersion 1`] = `
+{
+  "mac": [
+    {
+      "arch": "x64",
+      "file": "Disable-Icon-1.1.0-mac.zip",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "Disable-Icon-1.1.0-mac.zip.blockmap",
+      "safeArtifactName": "Disable-Icon-1.1.0-mac.zip.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`dmg > disable dmg icon (light), bundleVersion 2`] = `
+{
+  "CFBundleDisplayName": "Disable-Icon",
+  "CFBundleExecutable": "Disable-Icon",
+  "CFBundleIconFile": "icon.icns",
+  "CFBundleIdentifier": "org.electron-builder.testApp",
+  "CFBundleInfoDictionaryVersion": "6.0",
+  "CFBundleName": "Disable-Icon",
+  "CFBundlePackageType": "APPL",
+  "CFBundleShortVersionString": "1.1.0",
+  "ElectronAsarIntegrity": {
+    "Resources/app.asar": {
+      "algorithm": "SHA256",
+      "hash": "hash",
+    },
+  },
+  "LSApplicationCategoryType": "your.app.category.type",
+  "LSEnvironment": {
+    "MallocNanoZone": "0",
+  },
+  "NSAppTransportSecurity": {
+    "NSAllowsLocalNetworking": true,
+    "NSExceptionDomains": {
+      "127.0.0.1": {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+      "localhost": {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+    },
+  },
+  "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
+  "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
+  "NSHighResolutionCapable": true,
+  "NSPrefersDisplaySafeAreaCompatibilityMode": false,
+  "NSPrincipalClass": "AtomApplication",
+  "NSSupportsAutomaticGraphicsSwitching": true,
+}
+`;
+
+exports[`dmg > dmg 1`] = `
+{
+  "mac": [
+    {
+      "arch": "x64",
+      "file": "Default-Dmg-1.1.0.dmg",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "Default-Dmg-1.1.0.dmg.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`dmg > dmg 2`] = `
+{
+  "CFBundleDisplayName": "Default-Dmg",
+  "CFBundleExecutable": "Default-Dmg",
+  "CFBundleIconFile": "icon.icns",
+  "CFBundleIdentifier": "org.electron-builder.testApp",
+  "CFBundleInfoDictionaryVersion": "6.0",
+  "CFBundleName": "Default-Dmg",
+  "CFBundlePackageType": "APPL",
+  "CFBundleShortVersionString": "1.1.0",
+  "ElectronAsarIntegrity": {
+    "Resources/app.asar": {
+      "algorithm": "SHA256",
+      "hash": "hash",
+    },
+  },
+  "LSApplicationCategoryType": "your.app.category.type",
+  "LSEnvironment": {
+    "MallocNanoZone": "0",
+  },
+  "NSAppTransportSecurity": {
+    "NSAllowsLocalNetworking": true,
+    "NSExceptionDomains": {
+      "127.0.0.1": {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+      "localhost": {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+    },
+  },
+  "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
+  "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
+  "NSHighResolutionCapable": true,
+  "NSPrefersDisplaySafeAreaCompatibilityMode": false,
+  "NSPrincipalClass": "AtomApplication",
+  "NSSupportsAutomaticGraphicsSwitching": true,
+}
+`;
+
+exports[`dmg > license buttons config 1`] = `
 {
   "$schema": "https://github.com/argv-minus-one/dmg-license/raw/master/schema.json",
   "body": [
@@ -416,21 +565,19 @@ exports[`license buttons config 1`] = `
 }
 `;
 
-exports[`license buttons config 2`] = `
+exports[`dmg > license buttons config 2`] = `
 {
   "mac": [
     {
       "arch": "x64",
-      "file": "Test App ßW-1.1.0.dmg",
-      "safeArtifactName": "TestApp-1.1.0.dmg",
+      "file": "Foo-5-1.1.0.dmg",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
     {
-      "file": "Test App ßW-1.1.0.dmg.blockmap",
-      "safeArtifactName": "TestApp-1.1.0.dmg.blockmap",
+      "file": "Foo-5-1.1.0.dmg.blockmap",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
@@ -440,14 +587,14 @@ exports[`license buttons config 2`] = `
 }
 `;
 
-exports[`license buttons config 3`] = `
+exports[`dmg > license buttons config 3`] = `
 {
-  "CFBundleDisplayName": "Test App ßW",
-  "CFBundleExecutable": "Test App ßW",
+  "CFBundleDisplayName": "Foo-5",
+  "CFBundleExecutable": "Foo-5",
   "CFBundleIconFile": "icon.icns",
   "CFBundleIdentifier": "org.electron-builder.testApp",
   "CFBundleInfoDictionaryVersion": "6.0",
-  "CFBundleName": "Test App ßW",
+  "CFBundleName": "Foo-5",
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
   "ElectronAsarIntegrity": {
@@ -482,26 +629,25 @@ exports[`license buttons config 3`] = `
   "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
   "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
+  "NSPrefersDisplaySafeAreaCompatibilityMode": false,
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
 }
 `;
 
-exports[`license en 1`] = `
+exports[`dmg > license en 1`] = `
 {
   "mac": [
     {
       "arch": "x64",
-      "file": "Test App ßW-1.1.0.dmg",
-      "safeArtifactName": "TestApp-1.1.0.dmg",
+      "file": "Foo-3-1.1.0.dmg",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
     {
-      "file": "Test App ßW-1.1.0.dmg.blockmap",
-      "safeArtifactName": "TestApp-1.1.0.dmg.blockmap",
+      "file": "Foo-3-1.1.0.dmg.blockmap",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
@@ -511,14 +657,14 @@ exports[`license en 1`] = `
 }
 `;
 
-exports[`license en 2`] = `
+exports[`dmg > license en 2`] = `
 {
-  "CFBundleDisplayName": "Test App ßW",
-  "CFBundleExecutable": "Test App ßW",
+  "CFBundleDisplayName": "Foo-3",
+  "CFBundleExecutable": "Foo-3",
   "CFBundleIconFile": "icon.icns",
   "CFBundleIdentifier": "org.electron-builder.testApp",
   "CFBundleInfoDictionaryVersion": "6.0",
-  "CFBundleName": "Test App ßW",
+  "CFBundleName": "Foo-3",
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
   "ElectronAsarIntegrity": {
@@ -553,26 +699,25 @@ exports[`license en 2`] = `
   "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
   "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
+  "NSPrefersDisplaySafeAreaCompatibilityMode": false,
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
 }
 `;
 
-exports[`license ja 1`] = `
+exports[`dmg > license ja 1`] = `
 {
   "mac": [
     {
       "arch": "x64",
-      "file": "Test App ßW-1.1.0.dmg",
-      "safeArtifactName": "TestApp-1.1.0.dmg",
+      "file": "Foo-2-1.1.0.dmg",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
     {
-      "file": "Test App ßW-1.1.0.dmg.blockmap",
-      "safeArtifactName": "TestApp-1.1.0.dmg.blockmap",
+      "file": "Foo-2-1.1.0.dmg.blockmap",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
@@ -582,14 +727,14 @@ exports[`license ja 1`] = `
 }
 `;
 
-exports[`license ja 2`] = `
+exports[`dmg > license ja 2`] = `
 {
-  "CFBundleDisplayName": "Test App ßW",
-  "CFBundleExecutable": "Test App ßW",
+  "CFBundleDisplayName": "Foo-2",
+  "CFBundleExecutable": "Foo-2",
   "CFBundleIconFile": "icon.icns",
   "CFBundleIdentifier": "org.electron-builder.testApp",
   "CFBundleInfoDictionaryVersion": "6.0",
-  "CFBundleName": "Test App ßW",
+  "CFBundleName": "Foo-2",
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
   "ElectronAsarIntegrity": {
@@ -624,26 +769,25 @@ exports[`license ja 2`] = `
   "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
   "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
+  "NSPrefersDisplaySafeAreaCompatibilityMode": false,
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
 }
 `;
 
-exports[`license rtf 1`] = `
+exports[`dmg > license rtf 1`] = `
 {
   "mac": [
     {
       "arch": "x64",
-      "file": "Test App ßW-1.1.0.dmg",
-      "safeArtifactName": "TestApp-1.1.0.dmg",
+      "file": "Foo-4-1.1.0.dmg",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
     {
-      "file": "Test App ßW-1.1.0.dmg.blockmap",
-      "safeArtifactName": "TestApp-1.1.0.dmg.blockmap",
+      "file": "Foo-4-1.1.0.dmg.blockmap",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
@@ -653,14 +797,14 @@ exports[`license rtf 1`] = `
 }
 `;
 
-exports[`license rtf 2`] = `
+exports[`dmg > license rtf 2`] = `
 {
-  "CFBundleDisplayName": "Test App ßW",
-  "CFBundleExecutable": "Test App ßW",
+  "CFBundleDisplayName": "Foo-4",
+  "CFBundleExecutable": "Foo-4",
   "CFBundleIconFile": "icon.icns",
   "CFBundleIdentifier": "org.electron-builder.testApp",
   "CFBundleInfoDictionaryVersion": "6.0",
-  "CFBundleName": "Test App ßW",
+  "CFBundleName": "Foo-4",
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
   "ElectronAsarIntegrity": {
@@ -695,26 +839,25 @@ exports[`license rtf 2`] = `
   "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
   "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
+  "NSPrefersDisplaySafeAreaCompatibilityMode": false,
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
 }
 `;
 
-exports[`multi language license 1`] = `
+exports[`dmg > multi language license 1`] = `
 {
   "mac": [
     {
       "arch": "x64",
-      "file": "Test App ßW-1.1.0.dmg",
-      "safeArtifactName": "TestApp-1.1.0.dmg",
+      "file": "Foo-1-1.1.0.dmg",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
     {
-      "file": "Test App ßW-1.1.0.dmg.blockmap",
-      "safeArtifactName": "TestApp-1.1.0.dmg.blockmap",
+      "file": "Foo-1-1.1.0.dmg.blockmap",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
@@ -724,14 +867,14 @@ exports[`multi language license 1`] = `
 }
 `;
 
-exports[`multi language license 2`] = `
+exports[`dmg > multi language license 2`] = `
 {
-  "CFBundleDisplayName": "Test App ßW",
-  "CFBundleExecutable": "Test App ßW",
+  "CFBundleDisplayName": "Foo-1",
+  "CFBundleExecutable": "Foo-1",
   "CFBundleIconFile": "icon.icns",
   "CFBundleIdentifier": "org.electron-builder.testApp",
   "CFBundleInfoDictionaryVersion": "6.0",
-  "CFBundleName": "Test App ßW",
+  "CFBundleName": "Foo-1",
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
   "ElectronAsarIntegrity": {
@@ -766,166 +909,88 @@ exports[`multi language license 2`] = `
   "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
   "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
+  "NSPrefersDisplaySafeAreaCompatibilityMode": false,
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
 }
 `;
 
-exports[`no Applications link 1`] = `
+exports[`dmg > no background 1`] = `
+{
+  "mac": [
+    {
+      "arch": "x64",
+      "file": "No-Background-1.1.0.dmg",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "No-Background-1.1.0.dmg.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`dmg > no background 2`] = `
+{
+  "CFBundleDisplayName": "No-Background",
+  "CFBundleExecutable": "No-Background",
+  "CFBundleIconFile": "icon.icns",
+  "CFBundleIdentifier": "org.electron-builder.testApp",
+  "CFBundleInfoDictionaryVersion": "6.0",
+  "CFBundleName": "No-Background",
+  "CFBundlePackageType": "APPL",
+  "CFBundleShortVersionString": "1.1.0",
+  "ElectronAsarIntegrity": {
+    "Resources/app.asar": {
+      "algorithm": "SHA256",
+      "hash": "hash",
+    },
+  },
+  "LSApplicationCategoryType": "your.app.category.type",
+  "LSEnvironment": {
+    "MallocNanoZone": "0",
+  },
+  "NSAppTransportSecurity": {
+    "NSAllowsLocalNetworking": true,
+    "NSExceptionDomains": {
+      "127.0.0.1": {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+      "localhost": {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+    },
+  },
+  "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
+  "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
+  "NSHighResolutionCapable": true,
+  "NSPrefersDisplaySafeAreaCompatibilityMode": false,
+  "NSPrincipalClass": "AtomApplication",
+  "NSSupportsAutomaticGraphicsSwitching": true,
+}
+`;
+
+exports[`dmg > no build directory 1`] = `
 [
   {
-    "x": 110,
-    "y": 150,
-  },
-  {
-    "path": "/Applications/TextEdit.app",
-    "type": "link",
-    "x": 410,
-    "y": 440,
-  },
-]
-`;
-
-exports[`no Applications link 2`] = `
-{
-  "mac": [
-    {
-      "arch": "x64",
-      "file": "NoApplicationsLink-1.1.0.dmg",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "file": "NoApplicationsLink-1.1.0.dmg.blockmap",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "arch": "x64",
-      "file": "NoApplicationsLink-1.1.0-mac.zip",
-      "updateInfo": {
-        "blockMapSize": "@blockMapSize",
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-  ],
-}
-`;
-
-exports[`no Applications link 3`] = `
-{
-  "CFBundleDisplayName": "NoApplicationsLink",
-  "CFBundleExecutable": "NoApplicationsLink",
-  "CFBundleIconFile": "icon.icns",
-  "CFBundleIdentifier": "org.electron-builder.testApp",
-  "CFBundleInfoDictionaryVersion": "6.0",
-  "CFBundleName": "NoApplicationsLink",
-  "CFBundlePackageType": "APPL",
-  "CFBundleShortVersionString": "1.1.0",
-  "LSApplicationCategoryType": "your.app.category.type",
-  "LSRequiresNativeExecution": true,
-  "NSAppTransportSecurity": {
-    "NSAllowsLocalNetworking": true,
-    "NSExceptionDomains": {
-      "127.0.0.1": {
-        "NSIncludesSubdomains": false,
-        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
-        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
-        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
-        "NSTemporaryExceptionRequiresForwardSecrecy": false,
-      },
-      "localhost": {
-        "NSIncludesSubdomains": false,
-        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
-        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
-        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
-        "NSTemporaryExceptionRequiresForwardSecrecy": false,
-      },
-    },
-  },
-  "NSHighResolutionCapable": true,
-  "NSPrincipalClass": "AtomApplication",
-  "NSSupportsAutomaticGraphicsSwitching": true,
-}
-`;
-
-exports[`no background 1`] = `
-{
-  "mac": [
-    {
-      "arch": "x64",
-      "file": "NoBackground-1.1.0.dmg",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "file": "NoBackground-1.1.0.dmg.blockmap",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-  ],
-}
-`;
-
-exports[`no background 2`] = `
-{
-  "CFBundleDisplayName": "NoBackground",
-  "CFBundleExecutable": "NoBackground",
-  "CFBundleIconFile": "icon.icns",
-  "CFBundleIdentifier": "org.electron-builder.testApp",
-  "CFBundleInfoDictionaryVersion": "6.0",
-  "CFBundleName": "NoBackground",
-  "CFBundlePackageType": "APPL",
-  "CFBundleShortVersionString": "1.1.0",
-  "ElectronAsarIntegrity": {
-    "Resources/app.asar": {
-      "algorithm": "SHA256",
-      "hash": "hash",
-    },
-  },
-  "LSApplicationCategoryType": "your.app.category.type",
-  "LSEnvironment": {
-    "MallocNanoZone": "0",
-  },
-  "NSAppTransportSecurity": {
-    "NSAllowsLocalNetworking": true,
-    "NSExceptionDomains": {
-      "127.0.0.1": {
-        "NSIncludesSubdomains": false,
-        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
-        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
-        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
-        "NSTemporaryExceptionRequiresForwardSecrecy": false,
-      },
-      "localhost": {
-        "NSIncludesSubdomains": false,
-        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
-        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
-        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
-        "NSTemporaryExceptionRequiresForwardSecrecy": false,
-      },
-    },
-  },
-  "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
-  "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
-  "NSHighResolutionCapable": true,
-  "NSPrincipalClass": "AtomApplication",
-  "NSSupportsAutomaticGraphicsSwitching": true,
-}
-`;
-
-exports[`no build directory 1`] = `
-[
-  {
+    "name": "NoBuildDirectory.app",
+    "path": "NoBuildDirectory.app",
+    "type": "file",
     "x": 130,
     "y": 220,
   },
@@ -938,7 +1003,7 @@ exports[`no build directory 1`] = `
 ]
 `;
 
-exports[`no build directory 2`] = `
+exports[`dmg > no build directory 2`] = `
 {
   "mac": [
     {
@@ -960,7 +1025,7 @@ exports[`no build directory 2`] = `
 }
 `;
 
-exports[`no build directory 3`] = `
+exports[`dmg > no build directory 3`] = `
 {
   "CFBundleDisplayName": "NoBuildDirectory",
   "CFBundleExecutable": "NoBuildDirectory",
@@ -1002,6 +1067,148 @@ exports[`no build directory 3`] = `
   "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
   "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
+  "NSPrefersDisplaySafeAreaCompatibilityMode": false,
+  "NSPrincipalClass": "AtomApplication",
+  "NSSupportsAutomaticGraphicsSwitching": true,
+}
+`;
+
+exports[`dmg > retina background as 2 png 1`] = `
+{
+  "mac": [
+    {
+      "arch": "x64",
+      "file": "RetinaBackground-1.1.0-mac.zip",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "RetinaBackground-1.1.0-mac.zip.blockmap",
+      "safeArtifactName": "RetinaBackground-1.1.0-mac.zip.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`dmg > retina background as 2 png 2`] = `
+{
+  "CFBundleDisplayName": "RetinaBackground",
+  "CFBundleExecutable": "RetinaBackground",
+  "CFBundleIconFile": "icon.icns",
+  "CFBundleIdentifier": "org.electron-builder.testApp",
+  "CFBundleInfoDictionaryVersion": "6.0",
+  "CFBundleName": "RetinaBackground",
+  "CFBundlePackageType": "APPL",
+  "CFBundleShortVersionString": "1.1.0",
+  "ElectronAsarIntegrity": {
+    "Resources/app.asar": {
+      "algorithm": "SHA256",
+      "hash": "hash",
+    },
+  },
+  "LSApplicationCategoryType": "your.app.category.type",
+  "LSEnvironment": {
+    "MallocNanoZone": "0",
+  },
+  "NSAppTransportSecurity": {
+    "NSAllowsLocalNetworking": true,
+    "NSExceptionDomains": {
+      "127.0.0.1": {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+      "localhost": {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+    },
+  },
+  "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
+  "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
+  "NSHighResolutionCapable": true,
+  "NSPrefersDisplaySafeAreaCompatibilityMode": false,
+  "NSPrincipalClass": "AtomApplication",
+  "NSSupportsAutomaticGraphicsSwitching": true,
+}
+`;
+
+exports[`dmg > unset dmg icon 1`] = `
+{
+  "mac": [
+    {
+      "arch": "x64",
+      "file": "No_Volume_Icon-1.1.0.dmg",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "No_Volume_Icon-1.1.0.dmg.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`dmg > unset dmg icon 2`] = `
+{
+  "CFBundleDisplayName": "No_Volume_Icon",
+  "CFBundleExecutable": "No_Volume_Icon",
+  "CFBundleIconFile": "icon.icns",
+  "CFBundleIdentifier": "org.electron-builder.testApp",
+  "CFBundleInfoDictionaryVersion": "6.0",
+  "CFBundleName": "No_Volume_Icon",
+  "CFBundlePackageType": "APPL",
+  "CFBundleShortVersionString": "1.1.0",
+  "ElectronAsarIntegrity": {
+    "Resources/app.asar": {
+      "algorithm": "SHA256",
+      "hash": "hash",
+    },
+  },
+  "LSApplicationCategoryType": "your.app.category.type",
+  "LSEnvironment": {
+    "MallocNanoZone": "0",
+  },
+  "NSAppTransportSecurity": {
+    "NSAllowsLocalNetworking": true,
+    "NSExceptionDomains": {
+      "127.0.0.1": {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+      "localhost": {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+    },
+  },
+  "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
+  "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
+  "NSHighResolutionCapable": true,
+  "NSPrefersDisplaySafeAreaCompatibilityMode": false,
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
 }
@@ -1039,77 +1246,6 @@ exports[`retina background as 2 png 2`] = `
   "CFBundleIdentifier": "org.electron-builder.testApp",
   "CFBundleInfoDictionaryVersion": "6.0",
   "CFBundleName": "Test App ßW",
-  "CFBundlePackageType": "APPL",
-  "CFBundleShortVersionString": "1.1.0",
-  "ElectronAsarIntegrity": {
-    "Resources/app.asar": {
-      "algorithm": "SHA256",
-      "hash": "hash",
-    },
-  },
-  "LSApplicationCategoryType": "your.app.category.type",
-  "LSEnvironment": {
-    "MallocNanoZone": "0",
-  },
-  "NSAppTransportSecurity": {
-    "NSAllowsLocalNetworking": true,
-    "NSExceptionDomains": {
-      "127.0.0.1": {
-        "NSIncludesSubdomains": false,
-        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
-        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
-        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
-        "NSTemporaryExceptionRequiresForwardSecrecy": false,
-      },
-      "localhost": {
-        "NSIncludesSubdomains": false,
-        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
-        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
-        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
-        "NSTemporaryExceptionRequiresForwardSecrecy": false,
-      },
-    },
-  },
-  "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
-  "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
-  "NSHighResolutionCapable": true,
-  "NSPrincipalClass": "AtomApplication",
-  "NSSupportsAutomaticGraphicsSwitching": true,
-}
-`;
-
-exports[`unset dmg icon 1`] = `
-{
-  "mac": [
-    {
-      "arch": "x64",
-      "file": "Test ß No Volume Icon-1.1.0.dmg",
-      "safeArtifactName": "TestApp-1.1.0.dmg",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "file": "Test ß No Volume Icon-1.1.0.dmg.blockmap",
-      "safeArtifactName": "TestApp-1.1.0.dmg.blockmap",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-  ],
-}
-`;
-
-exports[`unset dmg icon 2`] = `
-{
-  "CFBundleDisplayName": "Test ß No Volume Icon",
-  "CFBundleExecutable": "Test ß No Volume Icon",
-  "CFBundleIconFile": "icon.icns",
-  "CFBundleIdentifier": "org.electron-builder.testApp",
-  "CFBundleInfoDictionaryVersion": "6.0",
-  "CFBundleName": "Test ß No Volume Icon",
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
   "ElectronAsarIntegrity": {

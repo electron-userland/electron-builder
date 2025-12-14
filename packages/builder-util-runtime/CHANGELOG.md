@@ -1,5 +1,54 @@
 # builder-util-runtime
 
+## 9.5.1
+
+### Patch Changes
+
+- Chore: bumping version packages of all packages to trigger Trusted Signing provedance release _[`#9362`](https://github.com/electron-userland/electron-builder/pull/9362) [`030269b`](https://github.com/electron-userland/electron-builder/commit/030269bca94b5e3621dbf8883976e1f85a1524f0) [@mmaietta](https://github.com/mmaietta)_
+
+## 9.5.0
+
+### Minor Changes
+
+- [#9209](https://github.com/electron-userland/electron-builder/pull/9209) [`6fd391d9e8390c00c8b0674d8ac3a5b7b6f0f19f`](https://github.com/electron-userland/electron-builder/commit/6fd391d9e8390c00c8b0674d8ac3a5b7b6f0f19f) Thanks [@daihere1993](https://github.com/daihere1993)! - feat: Support gitlab publisher
+
+## 9.4.0
+
+### Minor Changes
+
+- [#9211](https://github.com/electron-userland/electron-builder/pull/9211) [`7c7fd6ca`](https://github.com/electron-userland/electron-builder/commit/7c7fd6ca240eda72048835f754adac92c4ab4e8c) Thanks [@FringeNet](https://github.com/FringeNet)! - fix: implement industry-standard cross-origin redirect auth handling
+
+  Replace hardcoded service-specific hostname checks with sophisticated cross-origin redirect detection that matches industry standards from Python requests library and Apache HttpClient.
+
+  **Key improvements:**
+
+  - **Case-insensitive hostname comparison** for robust origin detection
+  - **HTTP→HTTPS upgrade allowance** on standard ports (80→443) for backward compatibility
+  - **Proper default port handling** that treats implicit and explicit default ports as equivalent
+  - **Standards-compliant cross-origin detection** following RFC specifications
+
+  **Fixes GitHub issue #9207:** GitHub release asset downloads failing with 403 Forbidden when redirected from `api.github.com` to `release-assets.githubusercontent.com` (Azure backend) or other cloud storage services that don't accept GitHub tokens.
+
+  The implementation now handles all cross-origin redirect scenarios while maintaining compatibility with legitimate same-origin redirects and industry-standard HTTP→HTTPS upgrades.
+
+### Patch Changes
+
+- [#9216](https://github.com/electron-userland/electron-builder/pull/9216) [`44b28997`](https://github.com/electron-userland/electron-builder/commit/44b28997f15314730d1bb69303a47dc26f7950d1) Thanks [@taylorhadden](https://github.com/taylorhadden)! - feat(github): Add `tagNamePrefix` option and deprecate `vPrefixedTagName`
+
+## 9.3.3
+
+### Patch Changes
+
+- [#9186](https://github.com/electron-userland/electron-builder/pull/9186) [`1a6ea016`](https://github.com/electron-userland/electron-builder/commit/1a6ea016b7793c75e7586e0e14d5f26d3535c292) Thanks [@daihere1993](https://github.com/daihere1993)! - feat(electron-updater): add GitLab provider support
+
+- [#9177](https://github.com/electron-userland/electron-builder/pull/9177) [`35f5f6e5`](https://github.com/electron-userland/electron-builder/commit/35f5f6e55762ffc377fcd5587a8cea8753184d50) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: remove `shell: true` from node_modules collector so as to prevent shell console logging from malforming the json output
+
+## 9.3.2
+
+### Patch Changes
+
+- [#9018](https://github.com/electron-userland/electron-builder/pull/9018) [`a2f7f735`](https://github.com/electron-userland/electron-builder/commit/a2f7f7350be2379c4917417c92ece5a6ab241708) Thanks [@gtluszcz](https://github.com/gtluszcz)! - Add information how to use electron-publish s3 with credentials stored in ~/.aws/config file.
+
 ## 9.3.1
 
 ### Patch Changes

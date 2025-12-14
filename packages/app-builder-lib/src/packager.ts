@@ -9,14 +9,15 @@ import {
   getArtifactArchName,
   InvalidConfigurationError,
   log,
+  MAX_FILE_REQUESTS,
   orNullIfFileNotExist,
   safeStringifyJson,
   serializeToYaml,
   TmpDir,
 } from "builder-util"
-import { CancellationToken } from "builder-util-runtime"
+import { CancellationToken, retry } from "builder-util-runtime"
 import { chmod, mkdirs, outputFile } from "fs-extra"
-import * as isCI from "is-ci"
+import { isCI } from "ci-info"
 import { Lazy } from "lazy-val"
 import { release as getOsRelease } from "os"
 import * as path from "path"
@@ -41,6 +42,8 @@ import { resolveFunction } from "./util/resolve"
 import { installOrRebuild, nodeGypRebuild } from "./util/yarn"
 import { PACKAGE_VERSION } from "./version"
 import { AsyncEventEmitter, HandlerType } from "./util/asyncEventEmitter"
+import asyncPool from "tiny-async-pool"
+import { determinePackageManagerEnv, PM } from "./node-module-collector"
 
 async function createFrameworkInfo(configuration: Configuration, packager: Packager): Promise<Framework> {
   let framework = configuration.framework
@@ -93,6 +96,14 @@ export class Packager {
     return this._appDir
   }
 
+  private readonly _packageManager: Lazy<{ pm: PM; workspaceRoot: Promise<string | undefined> }>
+  async getPackageManager(): Promise<PM> {
+    return (await this._packageManager.value).pm
+  }
+  async getWorkspaceRoot(): Promise<string> {
+    return (await (await this._packageManager.value).workspaceRoot) || this.projectDir
+  }
+
   private _metadata: Metadata | null = null
   get metadata(): Metadata {
     return this._metadata!
@@ -143,6 +154,8 @@ export class Packager {
   }
 
   private nodeDependencyInfo = new Map<string, Lazy<Array<any>>>()
+
+  private runtimeEnvironmentVariables: NodeJS.ProcessEnv = {}
 
   getNodeDependencyInfo(platform: Platform | null, flatten: boolean = true): Lazy<Array<NodeModuleInfo | NodeModuleDirInfo>> {
     let key = "" + flatten.toString()
@@ -252,6 +265,8 @@ export class Packager {
 
     this.projectDir = options.projectDir == null ? process.cwd() : path.resolve(options.projectDir)
     this._appDir = this.projectDir
+    this._packageManager = determinePackageManagerEnv({ projectDir: this.projectDir, appDir: this.appDir, workspaceRoot: undefined })
+
     this.options = {
       ...options,
       prepackaged: options.prepackaged == null ? null : path.resolve(this.projectDir, options.prepackaged),
@@ -260,7 +275,7 @@ export class Packager {
     log.info({ version: PACKAGE_VERSION, os: getOsRelease() }, "electron-builder")
   }
 
-  async addPackagerEventHandlers() {
+  private async addPackagerEventHandlers() {
     const { type } = this.appInfo
     this.eventEmitter.on("artifactBuildStarted", await resolveFunction(type, this.config.artifactBuildStarted, "artifactBuildStarted"), "user")
     this.eventEmitter.on("artifactBuildCompleted", await resolveFunction(type, this.config.artifactBuildCompleted, "artifactBuildCompleted"), "user")
@@ -359,9 +374,8 @@ export class Packager {
 
     const devMetadata = this.devMetadata
     const configuration = await getConfig(projectDir, configPath, configFromOptions, new Lazy(() => Promise.resolve(devMetadata)))
-    if (log.isDebugEnabled) {
-      log.debug({ config: getSafeEffectiveConfig(configuration) }, "effective config")
-    }
+
+    log.debug({ config: getSafeEffectiveConfig(configuration) }, "effective config")
 
     this._appDir = await computeDefaultAppDirectory(projectDir, configuration.directories!.app)
     this.isTwoPackageJsonProjectLayoutUsed = this._appDir !== projectDir
@@ -421,7 +435,26 @@ export class Packager {
       }
     })
 
-    this.disposeOnBuildFinish(() => this.tempDirManager.cleanup())
+    this.disposeOnBuildFinish(() =>
+      retry(() => this.tempDirManager.cleanup(), {
+        retries: 2,
+        interval: 2000,
+        backoff: 2000,
+        cancellationToken: this.cancellationToken,
+        shouldRetry: e => {
+          const message: string = e?.message || ""
+          const code = e?.code
+          // windows file locks
+          const resourceIsBusy = message.includes("EBUSY") || code === "EBUSY"
+          if (resourceIsBusy) {
+            log.debug({ error: message || code }, "retrying temporary directory cleanup")
+            return true
+          }
+          return false
+        },
+      })
+    )
+
     const platformToTargets = await executeFinally(this.doBuild(), async () => {
       if (this.debugLogger.isEnabled) {
         await this.debugLogger.save(path.join(commonOutDirWithoutPossibleOsMacro, "builder-debug.yml"))
@@ -479,6 +512,18 @@ export class Packager {
       const nameToTarget: Map<string, Target> = new Map()
       platformToTarget.set(platform, nameToTarget)
 
+      let poolCount = Math.floor(packager.config.concurrency?.jobs || 1)
+      if (poolCount < 1) {
+        log.warn({ concurrency: poolCount }, "concurrency is invalid, overriding with job count: 1")
+        poolCount = 1
+      } else if (poolCount > MAX_FILE_REQUESTS) {
+        log.warn(
+          { concurrency: poolCount, MAX_FILE_REQUESTS },
+          `job concurrency is greater than recommended MAX_FILE_REQUESTS, this may lead to File Descriptor errors (too many files open). Proceed with caution (e.g. this is an experimental feature)`
+        )
+      }
+      const packPromises: Promise<any>[] = []
+
       for (const [arch, targetNames] of computeArchToTargetNamesMap(archToType, packager, platform)) {
         if (this.cancellationToken.cancelled) {
           break
@@ -488,8 +533,20 @@ export class Packager {
         const outDir = path.resolve(this.projectDir, packager.expandMacro(this.config.directories!.output!, Arch[arch]))
         const targetList = createTargets(nameToTarget, targetNames.length === 0 ? packager.defaultTarget : targetNames, outDir, packager)
         await createOutDirIfNeed(targetList, createdOutDirs)
-        await packager.pack(outDir, arch, targetList, taskManager)
+        const promise = packager.pack(outDir, arch, targetList, taskManager)
+        if (poolCount < 2) {
+          await promise
+        } else {
+          packPromises.push(promise)
+        }
       }
+
+      await asyncPool(poolCount, packPromises, async it => {
+        if (this.cancellationToken.cancelled) {
+          return
+        }
+        await it
+      })
 
       if (this.cancellationToken.cancelled) {
         break
@@ -507,6 +564,9 @@ export class Packager {
     await taskManager.awaitTasks()
 
     for (const target of syncTargetsIfAny) {
+      if (this.cancellationToken.cancelled) {
+        break
+      }
       await target.finishBuild()
     }
     return platformToTarget
@@ -571,12 +631,18 @@ export class Packager {
     if (config.buildDependenciesFromSource === true && platform.nodeName !== process.platform) {
       log.info({ reason: "platform is different and buildDependenciesFromSource is set to true" }, "skipped dependencies rebuild")
     } else {
-      await installOrRebuild(config, this.appDir, {
-        frameworkInfo,
-        platform: platform.nodeName,
-        arch: Arch[arch],
-        productionDeps: this.getNodeDependencyInfo(null, false) as Lazy<Array<NodeModuleDirInfo>>,
-      })
+      await installOrRebuild(
+        config,
+        { appDir: this.appDir, projectDir: this.projectDir, workspaceRoot: await this.getWorkspaceRoot() },
+        {
+          frameworkInfo,
+          platform: platform.nodeName,
+          arch: Arch[arch],
+          productionDeps: this.getNodeDependencyInfo(null, false) as Lazy<Array<NodeModuleDirInfo>>,
+        },
+        false,
+        this.runtimeEnvironmentVariables
+      )
     }
   }
 }

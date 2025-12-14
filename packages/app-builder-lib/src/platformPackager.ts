@@ -20,6 +20,8 @@ import { readdir } from "fs/promises"
 import { Lazy } from "lazy-val"
 import { Minimatch } from "minimatch"
 import * as path from "path"
+import * as fs from "fs/promises"
+import * as os from "os"
 import { AppInfo } from "./appInfo"
 import { checkFileInArchive } from "./asar/asarFileChecker"
 import { AsarPackager } from "./asar/asarUtil"
@@ -46,6 +48,7 @@ import {
 import { executeAppBuilderAsJson } from "./util/appBuilder"
 import { computeFileSets, computeNodeModuleFileSets, copyAppFiles, ELECTRON_COMPILE_SHIM_FILENAME, transformFiles } from "./util/appFileCopier"
 import { expandMacro as doExpandMacro } from "./util/macroExpander"
+import { AssetCatalogResult, generateAssetCatalogForIcon } from "./util/macosIconComposer"
 
 export type DoPackOptions<DC extends PlatformSpecificBuildOptions> = {
   outDir: string
@@ -151,16 +154,6 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
         `${this.platform.buildConfigurationKey}${getArchSuffix(arch, this.platformSpecificBuildOptions.defaultArch)}${this.platform === Platform.MAC ? "" : "-unpacked"}`
       )
     )
-  }
-
-  dispatchArtifactCreated(file: string, target: Target | null, arch: Arch | null, safeArtifactName?: string | null): Promise<void> {
-    return this.info.emitArtifactBuildCompleted({
-      file,
-      safeArtifactName,
-      target,
-      arch,
-      packager: this,
-    })
   }
 
   async pack(outDir: string, arch: Arch, targets: Array<Target>, taskManager: AsyncTaskManager): Promise<any> {
@@ -422,6 +415,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
     const ext = {
       darwin: ".app",
+      mas: ".app",
       win32: ".exe",
       linux: "",
     }[electronPlatformName]
@@ -617,13 +611,17 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   getResourcesDir(appOutDir: string): string {
     if (this.platform === Platform.MAC) {
       return this.getMacOsResourcesDir(appOutDir)
-    } else if (isElectronBased(this.info.framework)) {
-      return path.join(appOutDir, "resources")
-    } else {
-      return appOutDir
     }
+    if (isElectronBased(this.info.framework)) {
+      return path.join(appOutDir, "resources")
+    }
+    return appOutDir
   }
 
+  public getMacOsElectronFrameworkResourcesDir(appOutDir: string): string {
+    const electronFrameworkName = path.basename(this.info.framework.distMacOsAppName, ".app") + " " + "Framework.framework"
+    return path.join(appOutDir, `${this.appInfo.productFilename}.app`, "Contents", "Frameworks", electronFrameworkName, "Resources")
+  }
   public getMacOsResourcesDir(appOutDir: string): string {
     return path.join(appOutDir, `${this.appInfo.productFilename}.app`, "Contents", "Resources")
   }
@@ -784,7 +782,53 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return (forceCodeSigningPlatform == null ? this.config.forceCodeSigning : forceCodeSigningPlatform) || false
   }
 
+  private assetCatalogResults = new Map<string, Promise<AssetCatalogResult>>()
+  protected generateAssetCatalogData(iconPath: string): Promise<AssetCatalogResult> {
+    // Cache results
+    const cachedPromise = this.assetCatalogResults.get(iconPath)
+    if (cachedPromise) {
+      return cachedPromise
+    }
+
+    const promise = generateAssetCatalogForIcon(iconPath)
+    this.assetCatalogResults.set(iconPath, promise)
+    return promise
+  }
+
+  private cachedIcnsFromIconFile = new Map<string, Promise<string>>()
+  private async generateIcnsFromIcon(iconPath: string): Promise<string> {
+    const cachedPromise = this.cachedIcnsFromIconFile.get(iconPath)
+    if (cachedPromise) {
+      return cachedPromise
+    }
+
+    const runner = async () => {
+      const { icnsFile } = await this.generateAssetCatalogData(iconPath)
+
+      // Generate icns file
+      const tempDir = await fs.mkdtemp(path.resolve(os.tmpdir(), "icon-compile-"))
+      const tempIcnsPath = path.resolve(tempDir, "Icon.icns")
+      await fs.writeFile(tempIcnsPath, icnsFile)
+
+      return tempIcnsPath
+    }
+    const promise = runner()
+    this.cachedIcnsFromIconFile.set(iconPath, promise)
+    return promise
+  }
+
   protected async getOrConvertIcon(format: IconFormat): Promise<string | null> {
+    if (format === "icns") {
+      const configuredIcon = this.platformSpecificBuildOptions.icon
+      // If it is a .icon file, generate the icns file and return the path to the icns file
+      if (configuredIcon?.endsWith(".icon")) {
+        const iconPath = await this.getResource(configuredIcon)
+        if (iconPath) {
+          return this.generateIcnsFromIcon(iconPath)
+        }
+      }
+    }
+
     const result = await this.resolveIcon(asArray(this.platformSpecificBuildOptions.icon || this.config.icon), [], format)
     if (result.length === 0) {
       const framework = this.info.framework
@@ -819,9 +863,17 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       path.resolve(this.projectDir, output, `.icon-${outputFormat}`),
     ]
     for (const source of sources) {
+      if (source.endsWith(".icon")) {
+        // Ignore .icon files: they will cause the format conversion to fail
+        continue
+      }
       args.push("--input", source)
     }
     for (const source of fallbackSources) {
+      if (source.endsWith(".icon")) {
+        // Ignore .icon files: they will cause the format conversion to fail
+        continue
+      }
       args.push("--fallback-input", source)
     }
 

@@ -8,6 +8,13 @@ Function un.onInit
   
   !insertmacro check64BitAndSetRegView
 
+  # Parse command line for /S flag and set silent mode
+  ${GetParameters} $R0
+  ${GetOptions} $R0 "/S" $R1
+  ${IfNot} ${Errors}
+    SetSilent silent
+  ${EndIf}
+  
   ${If} ${Silent}
     call un.checkAppRunning
   ${else}
@@ -131,7 +138,12 @@ Function un.restoreFiles
     Exch $R0
 FunctionEnd
 
-Section "un.install"
+!ifndef UNINSTALL_SECTION_NAME
+  !define UNINSTALL_SECTION_NAME "Uninstall"
+!endif
+
+Section "un.${UNINSTALL_SECTION_NAME}"
+  SectionIn RO
   # for assisted installer we check it here to show progress
   !ifndef ONE_CLICK
     ${IfNot} ${Silent}
@@ -243,3 +255,7 @@ Section "un.install"
     !insertmacro quitSuccess
   !endif
 SectionEnd
+
+!ifmacrodef customUnInstallSection
+  !insertmacro customUnInstallSection
+!endif

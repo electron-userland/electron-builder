@@ -2,7 +2,7 @@ import { Arch, Platform } from "electron-builder"
 import { copyFile, writeFile } from "fs-extra"
 import * as path from "path"
 import { assertThat } from "../helpers/fileAssert"
-import { app, assertPack, copyTestAsset, modifyPackageJson } from "../helpers/packTester"
+import { app, assertPack, copyTestAsset, EXTENDED_TIMEOUT, modifyPackageJson } from "../helpers/packTester"
 import { checkHelpers, doTest, expectUpdateMetadata } from "../helpers/winHelper"
 
 const nsisTarget = Platform.WINDOWS.createTarget(["nsis"], Arch.x64)
@@ -25,9 +25,9 @@ function pickSnapshotDefines(defines: any) {
   }
 }
 
-test(
-  "one-click",
+test("one-click", { timeout: EXTENDED_TIMEOUT }, ({ expect }) =>
   app(
+    expect,
     {
       targets: Platform.WINDOWS.createTarget(["nsis"], Arch.x64),
       config: {
@@ -60,17 +60,16 @@ test(
     {
       signedWin: true,
       packed: async context => {
-        await checkHelpers(context.getResources(Platform.WINDOWS, Arch.x64), false)
-        await doTest(context.outDir, true, "TestApp Setup", "TestApp", null, false)
-        await expectUpdateMetadata(context, Arch.x64, true)
+        await checkHelpers(expect, context.getResources(Platform.WINDOWS, Arch.x64), false)
+        await doTest(expect, context.outDir, true, "TestApp Setup", "TestApp", null, false)
+        await expectUpdateMetadata(expect, context, Arch.x64, true)
       },
     }
   )
 )
 
-test(
-  "custom guid",
-  app({
+test("custom guid", { timeout: EXTENDED_TIMEOUT }, ({ expect }) =>
+  app(expect, {
     targets: Platform.WINDOWS.createTarget(["nsis"], Arch.ia32),
     config: {
       appId: "boo",
@@ -83,9 +82,9 @@ test(
   })
 )
 
-test(
-  "multi language license",
+test("multi language license", { timeout: EXTENDED_TIMEOUT }, ({ expect }) =>
   app(
+    expect,
     {
       targets: Platform.WINDOWS.createTarget("nsis", Arch.x64),
       config: {
@@ -109,9 +108,9 @@ test(
   )
 )
 
-test(
-  "html license",
+test("html license", { timeout: EXTENDED_TIMEOUT }, ({ expect }) =>
   app(
+    expect,
     {
       targets: Platform.WINDOWS.createTarget("nsis", Arch.x64),
       config: {
@@ -132,9 +131,8 @@ test(
   )
 )
 
-test.ifDevOrWinCi(
-  "createDesktopShortcut always",
-  app({
+test.ifDevOrWinCi("createDesktopShortcut always", { timeout: EXTENDED_TIMEOUT }, ({ expect }) =>
+  app(expect, {
     targets: Platform.WINDOWS.createTarget("nsis"),
     config: {
       publish: null,
@@ -145,9 +143,9 @@ test.ifDevOrWinCi(
   })
 )
 
-test.ifDevOrLinuxCi(
-  "perMachine, no run after finish",
+test.ifDevOrLinuxCi("perMachine, no run after finish", { timeout: EXTENDED_TIMEOUT }, ({ expect }) =>
   app(
+    expect,
     {
       targets: Platform.WINDOWS.createTarget(["nsis"], Arch.ia32),
       config: {
@@ -181,24 +179,25 @@ test.ifDevOrLinuxCi(
         ])
       },
       packed: async context => {
-        await expectUpdateMetadata(context)
-        await checkHelpers(context.getResources(Platform.WINDOWS, Arch.ia32), true)
-        await doTest(context.outDir, false)
+        await expectUpdateMetadata(expect, context)
+        await checkHelpers(expect, context.getResources(Platform.WINDOWS, Arch.ia32), true)
+        await doTest(expect, context.outDir, false)
       },
     }
   )
 )
 
-test.skip("installerHeaderIcon", () => {
+test.skip("installerHeaderIcon", { timeout: EXTENDED_TIMEOUT }, ({ expect }) => {
   let headerIconPath: string | null = null
   return assertPack(
+    expect,
     "test-app-one",
     {
       targets: nsisTarget,
       effectiveOptionComputed: async it => {
         const defines = it[0]
         expect(defines.HEADER_ICO).toEqual(headerIconPath)
-        return false
+        return Promise.resolve(false)
       },
     },
     {
@@ -210,25 +209,25 @@ test.skip("installerHeaderIcon", () => {
   )
 })
 
-test.ifDevOrLinuxCi(
-  "custom include",
+test.ifDevOrLinuxCi("custom include", { timeout: EXTENDED_TIMEOUT }, ({ expect }) =>
   app(
+    expect,
     { targets: nsisTarget },
     {
       projectDirCreated: projectDir => copyTestAsset("installer.nsh", path.join(projectDir, "build", "installer.nsh")),
       packed: context =>
         Promise.all([
-          assertThat(path.join(context.projectDir, "build", "customHeader")).isFile(),
-          assertThat(path.join(context.projectDir, "build", "customInit")).isFile(),
-          assertThat(path.join(context.projectDir, "build", "customInstall")).isFile(),
+          assertThat(expect, path.join(context.projectDir, "build", "customHeader")).isFile(),
+          assertThat(expect, path.join(context.projectDir, "build", "customInit")).isFile(),
+          assertThat(expect, path.join(context.projectDir, "build", "customInstall")).isFile(),
         ]),
     }
   )
 )
 
-test.skip(
-  "big file pack",
+test.skip("big file pack", { timeout: EXTENDED_TIMEOUT }, ({ expect }) =>
   app(
+    expect,
     {
       targets: nsisTarget,
       config: {
@@ -246,20 +245,20 @@ test.skip(
   )
 )
 
-test.ifDevOrLinuxCi(
-  "custom script",
+test.ifDevOrLinuxCi("custom script", { timeout: EXTENDED_TIMEOUT }, ({ expect }) =>
   app(
+    expect,
     { targets: nsisTarget },
     {
       projectDirCreated: projectDir => copyTestAsset("installer.nsi", path.join(projectDir, "build", "installer.nsi")),
-      packed: context => assertThat(path.join(context.projectDir, "build", "customInstallerScript")).isFile(),
+      packed: context => assertThat(expect, path.join(context.projectDir, "build", "customInstallerScript")).isFile(),
     }
   )
 )
 
-test(
-  "menuCategory",
+test("menuCategory", { timeout: EXTENDED_TIMEOUT }, ({ expect }) =>
   app(
+    expect,
     {
       targets: Platform.WINDOWS.createTarget(["nsis"], Arch.ia32),
       config: {
@@ -281,15 +280,15 @@ test(
           data.name = "test-menu-category"
         }),
       packed: context => {
-        return doTest(context.outDir, false, "Test Menu Category", "test-menu-category", "Foo Bar")
+        return doTest(expect, context.outDir, false, "Test Menu Category", "test-menu-category", "Foo Bar")
       },
     }
   )
 )
 
-test(
-  "string menuCategory",
+test("string menuCategory", { timeout: EXTENDED_TIMEOUT }, ({ expect }) =>
   app(
+    expect,
     {
       targets: Platform.WINDOWS.createTarget(["nsis"], Arch.ia32),
       config: {
@@ -313,15 +312,14 @@ test(
           data.name = "test-menu-category"
         }),
       packed: async context => {
-        await doTest(context.outDir, false, "Test Menu Category", "test-menu-category", "Foo Bar")
+        await doTest(expect, context.outDir, false, "Test Menu Category", "test-menu-category", "Foo Bar")
       },
     }
   )
 )
 
-test.ifDevOrLinuxCi(
-  "file associations per user",
-  app({
+test.ifDevOrLinuxCi("file associations per user", { timeout: EXTENDED_TIMEOUT }, ({ expect }) =>
+  app(expect, {
     targets: Platform.WINDOWS.createTarget(["nsis"], Arch.ia32),
     config: {
       publish: null,
@@ -335,9 +333,8 @@ test.ifDevOrLinuxCi(
   })
 )
 
-test.ifWindows.skip(
-  "custom exec name",
-  app({
+test.ifWindows.skip("custom exec name", { timeout: EXTENDED_TIMEOUT }, ({ expect }) =>
+  app(expect, {
     targets: nsisTarget,
     config: {
       productName: "foo",
@@ -357,14 +354,13 @@ test.ifWindows.skip(
     },
     effectiveOptionComputed: async it => {
       expect(pickSnapshotDefines(it[0])).toMatchSnapshot()
-      return false
+      return Promise.resolve(false)
     },
   })
 )
 
-test.ifWindows.skip(
-  "top-level custom exec name",
-  app({
+test.ifWindows.skip("top-level custom exec name", { timeout: EXTENDED_TIMEOUT }, ({ expect }) =>
+  app(expect, {
     targets: nsisTarget,
     config: {
       publish: null,
@@ -373,7 +369,7 @@ test.ifWindows.skip(
     },
     effectiveOptionComputed: async it => {
       expect(pickSnapshotDefines(it[0])).toMatchSnapshot()
-      return false
+      return Promise.resolve(false)
     },
   })
 )

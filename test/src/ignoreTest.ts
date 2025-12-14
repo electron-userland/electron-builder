@@ -3,12 +3,13 @@ import { outputFile } from "fs-extra"
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert"
 import { app, checkDirContents, linuxDirTarget, modifyPackageJson } from "./helpers/packTester"
+import { PM } from "app-builder-lib/out/node-module-collector/packageManager"
 
 const currentProcessTarget = Platform.LINUX.createTarget(DIR_TARGET, archFromString(process.arch))
 
-test.ifDevOrLinuxCi(
-  "ignore build resources",
+test.ifDevOrLinuxCi("ignore build resources", ({ expect }) =>
   app(
+    expect,
     {
       targets: linuxDirTarget,
       config: {
@@ -20,15 +21,15 @@ test.ifDevOrLinuxCi(
         return outputFile(path.join(projectDir, "one/build/foo.txt"), "data")
       },
       packed: context => {
-        return assertThat(path.join(context.getResources(Platform.LINUX), "app", "one", "build", "foo.txt")).isFile()
+        return assertThat(expect, path.join(context.getResources(Platform.LINUX), "app", "one", "build", "foo.txt")).isFile()
       },
     }
   )
 )
 
-test.ifDevOrLinuxCi(
-  "2 ignore",
+test.ifDevOrLinuxCi("2 ignore", ({ expect }) =>
   app(
+    expect,
     {
       targets: linuxDirTarget,
       config: {
@@ -49,15 +50,15 @@ test.ifDevOrLinuxCi(
         return outputFile(path.join(projectDir, "electron/foo.txt"), "data")
       },
       packed: context => {
-        return assertThat(path.join(context.getResources(Platform.LINUX), "app", "electron", "foo.txt")).doesNotExist()
+        return assertThat(expect, path.join(context.getResources(Platform.LINUX), "app", "electron", "foo.txt")).doesNotExist()
       },
     }
   )
 )
 
-test.ifDevOrLinuxCi(
-  "ignore known ignored files",
+test.ifDevOrLinuxCi("ignore known ignored files", ({ expect }) =>
   app(
+    expect,
     {
       targets: linuxDirTarget,
       config: {
@@ -72,15 +73,15 @@ test.ifDevOrLinuxCi(
           outputFile(path.join(projectDir, "node_modules", ".bin", "f.txt"), "data"),
           outputFile(path.join(projectDir, "node_modules", ".bin2", "f.txt"), "data"),
         ]),
-      packed: context => checkDirContents(path.join(context.getResources(Platform.LINUX), "app")),
+      packed: context => checkDirContents(expect, path.join(context.getResources(Platform.LINUX), "app")),
     }
   )
 )
 
 // skip on macOS because we want test only / and \
-test.ifNotCiMac(
-  "ignore node_modules dev dep",
+test.ifNotCiMac.sequential("ignore node_modules dev dep", ({ expect }) =>
   app(
+    expect,
     {
       targets: linuxDirTarget,
       config: {
@@ -89,8 +90,8 @@ test.ifNotCiMac(
       },
     },
     {
-      isInstallDepsBefore: true,
-      projectDirCreated: projectDir => {
+      packageManager: PM.NPM,
+      projectDirCreated: async projectDir => {
         return Promise.all([
           modifyPackageJson(projectDir, data => {
             data.devDependencies = {
@@ -101,15 +102,15 @@ test.ifNotCiMac(
         ])
       },
       packed: context => {
-        return Promise.all([assertThat(path.join(context.getResources(Platform.LINUX), "app", "node_modules", "semver")).doesNotExist()])
+        return Promise.all([assertThat(expect, path.join(context.getResources(Platform.LINUX), "app", "node_modules", "semver")).doesNotExist()])
       },
     }
   )
 )
 
-test.ifDevOrLinuxCi(
-  "copied sub node_modules of the rootDir/node_modules",
+test.ifDevOrLinuxCi.sequential("copied sub node_modules of the rootDir/node_modules", ({ expect }) =>
   app(
+    expect,
     {
       targets: currentProcessTarget,
       config: {
@@ -118,8 +119,8 @@ test.ifDevOrLinuxCi(
       },
     },
     {
-      isInstallDepsBefore: true,
-      projectDirCreated: projectDir => {
+      packageManager: PM.NPM,
+      projectDirCreated: async projectDir => {
         return Promise.all([
           modifyPackageJson(projectDir, data => {
             data.dependencies = {
@@ -134,19 +135,22 @@ test.ifDevOrLinuxCi(
       },
       packed: context => {
         return Promise.all([
-          assertThat(path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "node_modules", "electron-updater", "node_modules")).isDirectory(),
-          assertThat(path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "others", "node_modules")).doesNotExist(),
-          assertThat(path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "submodule-1-test", "node_modules")).isDirectory(),
-          assertThat(path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "submodule-1-test", "node_modules", "package.json")).isFile(),
+          assertThat(
+            expect,
+            path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "node_modules", "electron-updater", "node_modules")
+          ).isDirectory(),
+          assertThat(expect, path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "others", "node_modules")).doesNotExist(),
+          assertThat(expect, path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "submodule-1-test", "node_modules")).isDirectory(),
+          assertThat(expect, path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "submodule-1-test", "node_modules", "package.json")).isFile(),
         ])
       },
     }
   )
 )
 
-test.ifDevOrLinuxCi(
-  "Don't copy sub node_modules of the other dir instead of rootDir",
+test.ifDevOrLinuxCi("Don't copy sub node_modules of the other dir instead of rootDir", ({ expect }) =>
   app(
+    expect,
     {
       targets: currentProcessTarget,
       config: {
@@ -169,21 +173,21 @@ test.ifDevOrLinuxCi(
       },
       packed: context => {
         return Promise.all([
-          assertThat(path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "others", "node_modules")).doesNotExist(),
-          assertThat(path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "others", "test1")).isDirectory(),
-          assertThat(path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "others", "test1", "package.json")).isFile(),
-          assertThat(path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "others", "submodule-2-test", "node_modules")).doesNotExist(),
-          assertThat(path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "others", "submodule-2-test", "test2")).isDirectory(),
-          assertThat(path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "others", "submodule-2-test", "test2", "package.json")).isFile(),
+          assertThat(expect, path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "others", "node_modules")).doesNotExist(),
+          assertThat(expect, path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "others", "test1")).isDirectory(),
+          assertThat(expect, path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "others", "test1", "package.json")).isFile(),
+          assertThat(expect, path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "others", "submodule-2-test", "node_modules")).doesNotExist(),
+          assertThat(expect, path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "others", "submodule-2-test", "test2")).isDirectory(),
+          assertThat(expect, path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "others", "submodule-2-test", "test2", "package.json")).isFile(),
         ])
       },
     }
   )
 )
 
-test.ifDevOrLinuxCi(
-  "copied select submodule node_modules",
+test.ifDevOrLinuxCi("copied select submodule node_modules", ({ expect }) =>
   app(
+    expect,
     {
       targets: currentProcessTarget,
       config: {
@@ -208,18 +212,18 @@ test.ifDevOrLinuxCi(
       },
       packed: context => {
         return Promise.all([
-          assertThat(path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "submodule-1-test", "node_modules")).isDirectory(),
-          assertThat(path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "submodule-1-test", "node_modules", "package.json")).isFile(),
-          assertThat(path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "submodule-2-test", "node_modules")).doesNotExist(),
+          assertThat(expect, path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "submodule-1-test", "node_modules")).isDirectory(),
+          assertThat(expect, path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "submodule-1-test", "node_modules", "package.json")).isFile(),
+          assertThat(expect, path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "submodule-2-test", "node_modules")).doesNotExist(),
         ])
       },
     }
   )
 )
 
-test.ifDevOrLinuxCi(
-  "cannot copied select submodule node_modules by */",
+test.ifDevOrLinuxCi("cannot copied select submodule node_modules by */", ({ expect }) =>
   app(
+    expect,
     {
       targets: currentProcessTarget,
       config: {
@@ -239,15 +243,17 @@ test.ifDevOrLinuxCi(
         ])
       },
       packed: context => {
-        return Promise.all([assertThat(path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "submodule-1-test", "node_modules")).doesNotExist()])
+        return Promise.all([
+          assertThat(expect, path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "submodule-1-test", "node_modules")).doesNotExist(),
+        ])
       },
     }
   )
 )
 
-test.ifDevOrLinuxCi(
-  "cannot copied select submodule node_modules by **/submodule-1-test/node_modules",
+test.ifDevOrLinuxCi("cannot copied select submodule node_modules by **/submodule-1-test/node_modules", ({ expect }) =>
   app(
+    expect,
     {
       targets: currentProcessTarget,
       config: {
@@ -267,7 +273,9 @@ test.ifDevOrLinuxCi(
         ])
       },
       packed: context => {
-        return Promise.all([assertThat(path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "submodule-1-test", "node_modules")).doesNotExist()])
+        return Promise.all([
+          assertThat(expect, path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "submodule-1-test", "node_modules")).doesNotExist(),
+        ])
       },
     }
   )

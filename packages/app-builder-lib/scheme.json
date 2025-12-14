@@ -8,6 +8,9 @@
           "$ref": "#/definitions/GithubOptions"
         },
         {
+          "$ref": "#/definitions/GitlabOptions"
+        },
+        {
           "$ref": "#/definitions/S3Options"
         },
         {
@@ -107,6 +110,9 @@
           "anyOf": [
             {
               "$ref": "#/definitions/GithubOptions"
+            },
+            {
+              "$ref": "#/definitions/GitlabOptions"
             },
             {
               "$ref": "#/definitions/S3Options"
@@ -255,6 +261,9 @@
           "anyOf": [
             {
               "$ref": "#/definitions/GithubOptions"
+            },
+            {
+              "$ref": "#/definitions/GitlabOptions"
             },
             {
               "$ref": "#/definitions/S3Options"
@@ -428,6 +437,20 @@
       ],
       "type": "object"
     },
+    "Concurrency": {
+      "additionalProperties": false,
+      "properties": {
+        "jobs": {
+          "default": 1,
+          "description": "The maximum number of concurrent jobs to run.",
+          "type": "number"
+        }
+      },
+      "required": [
+        "jobs"
+      ],
+      "type": "object"
+    },
     "CustomNsisBinary": {
       "additionalProperties": false,
       "properties": {
@@ -446,7 +469,7 @@
           ]
         },
         "url": {
-          "default": "https://github.com/electron-userland/electron-builder-binaries/releases/download",
+          "default": "https://github.com/electron-userland/electron-builder-binaries/releases/download/nsis-3.0.4.1/nsis-3.0.4.1.7z",
           "type": [
             "null",
             "string"
@@ -462,6 +485,29 @@
       },
       "required": [
         "url"
+      ],
+      "type": "object"
+    },
+    "CustomNsisResources": {
+      "additionalProperties": false,
+      "properties": {
+        "checksum": {
+          "default": "Dqd6g+2buwwvoG1Vyf6BHR1b+25QMmPcwZx40atOT57gH27rkjOei1L0JTldxZu4NFoEmW4kJgZ3DlSWVON3+Q==",
+          "type": "string"
+        },
+        "url": {
+          "default": "https://github.com/electron-userland/electron-builder-binaries/releases/download/nsis-resources-3.4.1/nsis-resources-3.4.1.7z",
+          "type": "string"
+        },
+        "version": {
+          "default": "3.4.1",
+          "type": "string"
+        }
+      },
+      "required": [
+        "checksum",
+        "url",
+        "version"
       ],
       "type": "object"
     },
@@ -696,6 +742,9 @@
               "$ref": "#/definitions/GithubOptions"
             },
             {
+              "$ref": "#/definitions/GitlabOptions"
+            },
+            {
               "$ref": "#/definitions/S3Options"
             },
             {
@@ -873,6 +922,9 @@
           "anyOf": [
             {
               "$ref": "#/definitions/GithubOptions"
+            },
+            {
+              "$ref": "#/definitions/GitlabOptions"
             },
             {
               "$ref": "#/definitions/S3Options"
@@ -1234,6 +1286,9 @@
               "$ref": "#/definitions/GithubOptions"
             },
             {
+              "$ref": "#/definitions/GitlabOptions"
+            },
+            {
               "$ref": "#/definitions/S3Options"
             },
             {
@@ -1523,6 +1578,10 @@
           "$ref": "#/definitions/OutgoingHttpHeaders",
           "description": "Any custom request headers"
         },
+        "tagNamePrefix": {
+          "description": "If defined, sets the prefix of the tag name that comes before the semver number.\ne.g. \"v\" in \"v1.2.3\" or \"test\" of \"test1.2.3\".\nOverrides `vPrefixedTagName`",
+          "type": "string"
+        },
         "timeout": {
           "default": 120000,
           "description": "Request timeout in milliseconds. (Default is 2 minutes; O is ignored)",
@@ -1543,6 +1602,109 @@
             "null",
             "string"
           ]
+        },
+        "vPrefixedTagName": {
+          "default": true,
+          "description": "Whether to use `v`-prefixed tag name.",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "provider"
+      ],
+      "type": "object"
+    },
+    "GitlabOptions": {
+      "additionalProperties": false,
+      "description": "[GitLab](https://docs.gitlab.com/ee/user/project/releases/) options.\n\nGitLab [personal access token](https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html) is required for private repositories. You can generate one by going to your GitLab profile settings.\nDefine `GITLAB_TOKEN` environment variable.",
+      "properties": {
+        "channel": {
+          "default": "latest",
+          "description": "The channel.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "host": {
+          "default": "gitlab.com",
+          "description": "The GitLab host (including the port if need).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "projectId": {
+          "description": "The GitLab project ID or path (e.g., \"12345678\" or \"namespace/project\").",
+          "type": [
+            "null",
+            "string",
+            "number"
+          ]
+        },
+        "provider": {
+          "const": "gitlab",
+          "description": "The provider. Must be `gitlab`.",
+          "type": "string"
+        },
+        "publishAutoUpdate": {
+          "default": true,
+          "description": "Whether to publish auto update info files.\n\nAuto update relies only on the first provider in the list (you can specify several publishers).\nThus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.",
+          "type": "boolean"
+        },
+        "publisherName": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "requestHeaders": {
+          "$ref": "#/definitions/OutgoingHttpHeaders",
+          "description": "Any custom request headers"
+        },
+        "timeout": {
+          "default": 120000,
+          "description": "Request timeout in milliseconds. (Default is 2 minutes; O is ignored)",
+          "type": [
+            "null",
+            "number"
+          ]
+        },
+        "token": {
+          "description": "The access token to support auto-update from private GitLab repositories. Never specify it in the configuration files.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "updaterCacheDirName": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "uploadTarget": {
+          "anyOf": [
+            {
+              "enum": [
+                "generic_package",
+                "project_upload"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "project_upload",
+          "description": "Upload target method. Can be \"project_upload\" for GitLab project uploads or \"generic_package\" for GitLab generic packages."
         },
         "vPrefixedTagName": {
           "default": true,
@@ -1803,7 +1965,7 @@
           "description": "The executable parameters. Pass to executableName"
         },
         "executableName": {
-          "description": "The executable name. Defaults to `productName`.",
+          "description": "The executable name. Defaults to `productName`\nNote: Except for Linux, where this would constitute a breaking change in previous behavior and lead to both invalid executable names and Desktop files. Ref comments in: https://github.com/electron-userland/electron-builder/pull/9068",
           "type": [
             "null",
             "string"
@@ -1963,6 +2125,9 @@
           "anyOf": [
             {
               "$ref": "#/definitions/GithubOptions"
+            },
+            {
+              "$ref": "#/definitions/GitlabOptions"
             },
             {
               "$ref": "#/definitions/S3Options"
@@ -2237,6 +2402,9 @@
               "$ref": "#/definitions/GithubOptions"
             },
             {
+              "$ref": "#/definitions/GitlabOptions"
+            },
+            {
               "$ref": "#/definitions/S3Options"
             },
             {
@@ -2491,7 +2659,7 @@
           ]
         },
         "executableName": {
-          "description": "The executable name. Defaults to `productName`.",
+          "description": "The executable name. Defaults to `productName`\nNote: Except for Linux, where this would constitute a breaking change in previous behavior and lead to both invalid executable names and Desktop files. Ref comments in: https://github.com/electron-userland/electron-builder/pull/9068",
           "type": [
             "null",
             "string"
@@ -2681,14 +2849,14 @@
         },
         "icon": {
           "default": "build/icon.icns",
-          "description": "The path to application icon.",
+          "description": "The path to application icon.\nAccepts `.icns` (legacy) or `.icon` (Icon Composer asset).\nIf a `.icon` asset is provided, it will be preferred and compiled to an asset catalog.",
           "type": [
             "null",
             "string"
           ]
         },
         "identity": {
-          "description": "The name of certificate to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](./code-signing.md) instead of specifying this option.\nMAS installer identity is specified in the [mas](./mas.md).",
+          "description": "The name of certificate to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](./code-signing.md) instead of specifying this option.\nMAS installer identity is specified in the [mas](./mas.md).\n\nSet to `-` to use an ad-hoc identity for signing. Set to `null` to skip signing entirely.",
           "type": [
             "null",
             "string"
@@ -2740,6 +2908,9 @@
           "anyOf": [
             {
               "$ref": "#/definitions/GithubOptions"
+            },
+            {
+              "$ref": "#/definitions/GitlabOptions"
             },
             {
               "$ref": "#/definitions/S3Options"
@@ -3123,7 +3294,7 @@
           ]
         },
         "executableName": {
-          "description": "The executable name. Defaults to `productName`.",
+          "description": "The executable name. Defaults to `productName`\nNote: Except for Linux, where this would constitute a breaking change in previous behavior and lead to both invalid executable names and Desktop files. Ref comments in: https://github.com/electron-userland/electron-builder/pull/9068",
           "type": [
             "null",
             "string"
@@ -3313,14 +3484,14 @@
         },
         "icon": {
           "default": "build/icon.icns",
-          "description": "The path to application icon.",
+          "description": "The path to application icon.\nAccepts `.icns` (legacy) or `.icon` (Icon Composer asset).\nIf a `.icon` asset is provided, it will be preferred and compiled to an asset catalog.",
           "type": [
             "null",
             "string"
           ]
         },
         "identity": {
-          "description": "The name of certificate to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](./code-signing.md) instead of specifying this option.\nMAS installer identity is specified in the [mas](./mas.md).",
+          "description": "The name of certificate to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](./code-signing.md) instead of specifying this option.\nMAS installer identity is specified in the [mas](./mas.md).\n\nSet to `-` to use an ad-hoc identity for signing. Set to `null` to skip signing entirely.",
           "type": [
             "null",
             "string"
@@ -3372,6 +3543,9 @@
           "anyOf": [
             {
               "$ref": "#/definitions/GithubOptions"
+            },
+            {
+              "$ref": "#/definitions/GitlabOptions"
             },
             {
               "$ref": "#/definitions/S3Options"
@@ -3656,6 +3830,9 @@
               "$ref": "#/definitions/GithubOptions"
             },
             {
+              "$ref": "#/definitions/GitlabOptions"
+            },
+            {
               "$ref": "#/definitions/S3Options"
             },
             {
@@ -3782,6 +3959,9 @@
               "$ref": "#/definitions/GithubOptions"
             },
             {
+              "$ref": "#/definitions/GitlabOptions"
+            },
+            {
               "$ref": "#/definitions/S3Options"
             },
             {
@@ -3900,6 +4080,17 @@
           ],
           "description": "Allows you to provide your own `makensis`, such as one with support for debug logging via LogSet and LogText. (Logging also requires option `debugLogging = true`)"
         },
+        "customNsisResources": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/CustomNsisResources"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Allows you to provide your own `nsis-resources`"
+        },
         "deleteAppDataOnUninstall": {
           "default": false,
           "description": "*one-click installer only.* Whether to delete app data on uninstall.",
@@ -4048,6 +4239,9 @@
               "$ref": "#/definitions/GithubOptions"
             },
             {
+              "$ref": "#/definitions/GitlabOptions"
+            },
+            {
               "$ref": "#/definitions/S3Options"
             },
             {
@@ -4119,7 +4313,38 @@
         "uninstallDisplayName": {
           "default": "${productName} ${version}",
           "description": "The uninstaller display name in the control panel.",
-          "type": "string"
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "uninstallUrlHelp": {
+          "description": "The URL to the uninstaller help page in the control panel. Defaults to [homepage](./configuration.md#homepage) from application package.json.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "uninstallUrlInfoAbout": {
+          "description": "The URL to the uninstaller info about page in the control panel. Defaults to [homepage](./configuration.md#homepage) from application package.json.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "uninstallUrlReadme": {
+          "description": "The URL to the uninstaller readme page in the control panel. Defaults to [homepage](./configuration.md#homepage) from application package.json.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "uninstallUrlUpdateInfo": {
+          "description": "The URL to the uninstaller update info page in the control panel. Defaults to [homepage](./configuration.md#homepage) from application package.json.",
+          "type": [
+            "null",
+            "string"
+          ]
         },
         "uninstallerIcon": {
           "description": "The path to uninstaller icon, relative to the [build resources](./contents.md#extraresources) or to the project directory.\nDefaults to `build/uninstallerIcon.ico` or application icon.",
@@ -4206,6 +4431,17 @@
           ],
           "description": "Allows you to provide your own `makensis`, such as one with support for debug logging via LogSet and LogText. (Logging also requires option `debugLogging = true`)"
         },
+        "customNsisResources": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/CustomNsisResources"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Allows you to provide your own `nsis-resources`"
+        },
         "deleteAppDataOnUninstall": {
           "default": false,
           "description": "*one-click installer only.* Whether to delete app data on uninstall.",
@@ -4354,6 +4590,9 @@
               "$ref": "#/definitions/GithubOptions"
             },
             {
+              "$ref": "#/definitions/GitlabOptions"
+            },
+            {
               "$ref": "#/definitions/S3Options"
             },
             {
@@ -4425,7 +4664,38 @@
         "uninstallDisplayName": {
           "default": "${productName} ${version}",
           "description": "The uninstaller display name in the control panel.",
-          "type": "string"
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "uninstallUrlHelp": {
+          "description": "The URL to the uninstaller help page in the control panel. Defaults to [homepage](./configuration.md#homepage) from application package.json.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "uninstallUrlInfoAbout": {
+          "description": "The URL to the uninstaller info about page in the control panel. Defaults to [homepage](./configuration.md#homepage) from application package.json.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "uninstallUrlReadme": {
+          "description": "The URL to the uninstaller readme page in the control panel. Defaults to [homepage](./configuration.md#homepage) from application package.json.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "uninstallUrlUpdateInfo": {
+          "description": "The URL to the uninstaller update info page in the control panel. Defaults to [homepage](./configuration.md#homepage) from application package.json.",
+          "type": [
+            "null",
+            "string"
+          ]
         },
         "uninstallerIcon": {
           "description": "The path to uninstaller icon, relative to the [build resources](./contents.md#extraresources) or to the project directory.\nDefaults to `build/uninstallerIcon.ico` or application icon.",
@@ -5074,6 +5344,9 @@
               "$ref": "#/definitions/GithubOptions"
             },
             {
+              "$ref": "#/definitions/GitlabOptions"
+            },
+            {
               "$ref": "#/definitions/S3Options"
             },
             {
@@ -5150,6 +5423,11 @@
             "string"
           ]
         },
+        "buildUniversalInstaller": {
+          "default": true,
+          "description": "Disable building an universal installer of the archs specified in the target configuration",
+          "type": "boolean"
+        },
         "customNsisBinary": {
           "anyOf": [
             {
@@ -5160,6 +5438,17 @@
             }
           ],
           "description": "Allows you to provide your own `makensis`, such as one with support for debug logging via LogSet and LogText. (Logging also requires option `debugLogging = true`)"
+        },
+        "customNsisResources": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/CustomNsisResources"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Allows you to provide your own `nsis-resources`"
         },
         "guid": {
           "description": "See [GUID vs Application Name](./nsis.md#guid-vs-application-name).",
@@ -5172,6 +5461,9 @@
           "anyOf": [
             {
               "$ref": "#/definitions/GithubOptions"
+            },
+            {
+              "$ref": "#/definitions/GitlabOptions"
             },
             {
               "$ref": "#/definitions/S3Options"
@@ -5326,7 +5618,7 @@
     },
     "S3Options": {
       "additionalProperties": false,
-      "description": "[Amazon S3](https://aws.amazon.com/s3/) options.\nAWS credentials are required, please see [getting your credentials](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/getting-your-credentials.html).\nDefine `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` [environment variables](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/loading-node-credentials-environment.html).\nOr in the [~/.aws/credentials](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/loading-node-credentials-shared.html).\n\nExample configuration:\n\n```json\n{\n\"build\":\n \"publish\": {\n   \"provider\": \"s3\",\n   \"bucket\": \"bucket-name\"\n }\n}\n}\n```",
+      "description": "[Amazon S3](https://aws.amazon.com/s3/) options.\nAWS credentials are required, please see [getting your credentials](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/getting-your-credentials.html).\nTo set credentials define `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` [environment variables](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/loading-node-credentials-environment.html) directly,\nor use [~/.aws/credentials](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/loading-node-credentials-shared.html) file,\nor use [~/.aws/config](https://docs.aws.amazon.com/sdkref/latest/guide/file-format.html) file. For the last method to work you will also need to define `AWS_SDK_LOAD_CONFIG=1` environment variable.\n\nExample configuration:\n\n```json\n{\n\"build\":\n \"publish\": {\n   \"provider\": \"s3\",\n   \"bucket\": \"bucket-name\"\n }\n}\n}\n```",
       "properties": {
         "accelerate": {
           "description": "If set to true, this will enable the s3 accelerated endpoint\nThese endpoints have a particular format of:\n ${bucketname}.s3-accelerate.amazonaws.com",
@@ -5731,6 +6023,9 @@
               "$ref": "#/definitions/GithubOptions"
             },
             {
+              "$ref": "#/definitions/GitlabOptions"
+            },
+            {
               "$ref": "#/definitions/S3Options"
             },
             {
@@ -6010,7 +6305,7 @@
           ]
         },
         "customSquirrelVendorDir": {
-          "description": "The custom squirrel vender dir. If not specified will use the Squirrel.Windows that is shipped with electron-installer(https://github.com/electron/windows-installer/tree/main/vendor).\nAfter https://github.com/electron-userland/electron-builder-binaries/pull/56 merged, will add `electron-builder-binaries` to get the latest version of squirrel.",
+          "description": "The custom squirrel vendor dir. If not specified will use the Squirrel.Windows that is shipped with electron-installer(https://github.com/electron/windows-installer/tree/main/vendor).\nAfter https://github.com/electron-userland/electron-builder-binaries/pull/56 merged, will add `electron-builder-binaries` to get the latest version of squirrel.",
           "type": "string"
         },
         "iconUrl": {
@@ -6039,6 +6334,9 @@
           "anyOf": [
             {
               "$ref": "#/definitions/GithubOptions"
+            },
+            {
+              "$ref": "#/definitions/GitlabOptions"
             },
             {
               "$ref": "#/definitions/S3Options"
@@ -6238,7 +6536,7 @@
               "type": "null"
             }
           ],
-          "description": "Options for usage of Azure Trusted Signing (beta)\nCannot be used in conjunction with `signtoolOptions`, signing will default to Azure Trusted Signing"
+          "description": "Options for usage of Azure Trusted Signing service\nCannot be used in conjunction with `signtoolOptions`, signing will default to Azure Trusted Signing"
         },
         "compression": {
           "anyOf": [
@@ -6307,7 +6605,7 @@
           ]
         },
         "executableName": {
-          "description": "The executable name. Defaults to `productName`.",
+          "description": "The executable name. Defaults to `productName`\nNote: Except for Linux, where this would constitute a breaking change in previous behavior and lead to both invalid executable names and Desktop files. Ref comments in: https://github.com/electron-userland/electron-builder/pull/9068",
           "type": [
             "null",
             "string"
@@ -6452,6 +6750,9 @@
               "$ref": "#/definitions/GithubOptions"
             },
             {
+              "$ref": "#/definitions/GitlabOptions"
+            },
+            {
               "$ref": "#/definitions/S3Options"
             },
             {
@@ -6510,7 +6811,7 @@
         },
         "signAndEditExecutable": {
           "default": true,
-          "description": "Whether to sign and add metadata to executable. Advanced option.",
+          "description": "Whether to sign and add metadata to executable.\nMetadata includes information about the app name/description/version, publisher, copyright, etc.\nThis property also is responsible for adding the app icon and setting execution level.\n(Advanced option leveraging `rcedit`)",
           "type": "boolean"
         },
         "signExts": {
@@ -6526,7 +6827,7 @@
             }
           ],
           "default": null,
-          "description": "Explicit file extensions to also sign. Advanced option."
+          "description": "Explicit file name/extensions (`str.endsWith`) to also sign. Advanced option.\nSupports negative patterns, e.g. example that excludes `.appx` files: `[\"somefilename\", \".dll\", \"!.appx\"]`."
         },
         "signtoolOptions": {
           "anyOf": [
@@ -6924,6 +7225,17 @@
       "default": "normal",
       "description": "The compression level. If you want to rapidly test build, `store` can reduce build time significantly. `maximum` doesn't lead to noticeable size difference, but increase build time."
     },
+    "concurrency": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/Concurrency"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "[Experimental] Configuration for concurrent builds."
+    },
     "copyright": {
       "default": "Copyright © year ${author}",
       "description": "The human-readable copyright line for the app.",
@@ -7068,7 +7380,7 @@
       ]
     },
     "executableName": {
-      "description": "The executable name. Defaults to `productName`.",
+      "description": "The executable name. Defaults to `productName`\nNote: Except for Linux, where this would constitute a breaking change in previous behavior and lead to both invalid executable names and Desktop files. Ref comments in: https://github.com/electron-userland/electron-builder/pull/9068",
       "type": [
         "null",
         "string"
@@ -7475,6 +7787,9 @@
       "anyOf": [
         {
           "$ref": "#/definitions/GithubOptions"
+        },
+        {
+          "$ref": "#/definitions/GitlabOptions"
         },
         {
           "$ref": "#/definitions/S3Options"

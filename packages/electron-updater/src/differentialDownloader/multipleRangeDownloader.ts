@@ -69,6 +69,8 @@ function doExecuteTasks(differentialDownloader: DifferentialDownloader, options:
         const requestOptions = differentialDownloader.createRequestOptions()
         requestOptions.headers!.Range = `bytes=${task.start}-${task.end - 1}`
         const request = differentialDownloader.httpExecutor.createRequest(requestOptions, response => {
+          response.on("error", reject)
+
           if (!checkIsRangesSupported(response, reject)) {
             return
           }
@@ -95,7 +97,7 @@ function doExecuteTasks(differentialDownloader: DifferentialDownloader, options:
     }
 
     const contentType = safeGetHeader(response, "content-type")
-    const m = /^multipart\/.+?(?:; boundary=(?:(?:"(.+)")|(?:([^\s]+))))$/i.exec(contentType)
+    const m = /^multipart\/.+?\s*;\s*boundary=(?:"([^"]+)"|([^\s";]+))\s*$/i.exec(contentType)
     if (m == null) {
       reject(new Error(`Content-Type "multipart/byteranges" is expected, but got "${contentType}"`))
       return

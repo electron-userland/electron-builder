@@ -136,8 +136,7 @@ export default class SnapTarget extends Target {
       delete snap.plugs
     } else {
       const archTriplet = archNameToTriplet(arch)
-      appDescriptor.environment = {
-        DISABLE_WAYLAND: options.allowNativeWayland ? "" : "1",
+      const environment: Record<string, string> = {
         PATH: "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         SNAP_DESKTOP_RUNTIME: "$SNAP/gnome-platform",
         LD_LIBRARY_PATH: [
@@ -148,6 +147,20 @@ export default class SnapTarget extends Target {
         ].join(":"),
         ...options.environment,
       }
+      // Determine whether Wayland should be disabled based on:
+      // - Electron version (<38 historically had Wayland disabled)
+      // - Explicit allowNativeWayland override.
+      // https://github.com/electron-userland/electron-builder/issues/9320
+      const allow = options.allowNativeWayland
+      const isOldElectron = !this.isElectronVersionGreaterOrEqualThan("38.0.0")
+      if (
+        (allow == null && isOldElectron) || // No explicit option -> use legacy behavior for old Electron
+        allow === false // Explicitly disallowed
+      ) {
+        environment.DISABLE_WAYLAND = "1"
+      }
+
+      appDescriptor.environment = environment
 
       if (plugs != null) {
         for (const plugName of plugNames) {

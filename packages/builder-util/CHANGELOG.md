@@ -1,5 +1,90 @@
 # builder-util
 
+## 26.3.4
+
+### Patch Changes
+
+- Chore: resolve lint-deps issue now that ci-info isn't used _[`#9412`](https://github.com/electron-userland/electron-builder/pull/9412) [`2faee4d`](https://github.com/electron-userland/electron-builder/commit/2faee4d941d16c6f52d6c793c709a77ccfb79d0a) [@mmaietta](https://github.com/mmaietta)_
+- Fix: only use hardlinks during unit tests to avoid breaking debian builds where /opt is on a different drive _[`#9397`](https://github.com/electron-userland/electron-builder/pull/9397) [`da1d768`](https://github.com/electron-userland/electron-builder/commit/da1d7687c6d2d2db8e319e371ba001c946bf130c) [@mmaietta](https://github.com/mmaietta)_
+
+## 26.3.1
+
+### Patch Changes
+
+- Fix: properly collect node*modules when they're ESM and we're node>=16 *[`#9380`](https://github.com/electron-userland/electron-builder/pull/9380) [`ec0a851`](https://github.com/electron-userland/electron-builder/commit/ec0a85179b4508c372667f55e395d8b27c58a046) [@mmaietta](https://github.com/mmaietta)\_
+
+## 26.3.0
+
+### Patch Changes
+
+- Chore: bumping version packages of all packages to trigger Trusted Signing provedance release _[`#9362`](https://github.com/electron-userland/electron-builder/pull/9362) [`030269b`](https://github.com/electron-userland/electron-builder/commit/030269bca94b5e3621dbf8883976e1f85a1524f0) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 1 dependency</summary>
+
+<small>
+
+[`030269b`](https://github.com/electron-userland/electron-builder/commit/030269bca94b5e3621dbf8883976e1f85a1524f0)
+
+</small>
+
+- `builder-util-runtime@9.5.1`
+
+</details>
+
+## 26.1.0
+
+### Patch Changes
+
+- Updated dependencies [[`6fd391d9e8390c00c8b0674d8ac3a5b7b6f0f19f`](https://github.com/electron-userland/electron-builder/commit/6fd391d9e8390c00c8b0674d8ac3a5b7b6f0f19f)]:
+  - builder-util-runtime@9.5.0
+
+## 26.0.20
+
+### Patch Changes
+
+- [#9182](https://github.com/electron-userland/electron-builder/pull/9182) [`c54a0609`](https://github.com/electron-userland/electron-builder/commit/c54a0609753a11d032f87e727eccbab1f6836081) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: scrubbing more aggressively anything in the logs that MIGHT be password affiliated (handling spaces in secrets)
+
+- Updated dependencies [[`44b28997`](https://github.com/electron-userland/electron-builder/commit/44b28997f15314730d1bb69303a47dc26f7950d1), [`7c7fd6ca`](https://github.com/electron-userland/electron-builder/commit/7c7fd6ca240eda72048835f754adac92c4ab4e8c)]:
+  - builder-util-runtime@9.4.0
+
+## 26.0.19
+
+### Patch Changes
+
+- [#9177](https://github.com/electron-userland/electron-builder/pull/9177) [`35f5f6e5`](https://github.com/electron-userland/electron-builder/commit/35f5f6e55762ffc377fcd5587a8cea8753184d50) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: remove `shell: true` from node_modules collector so as to prevent shell console logging from malforming the json output
+
+- Updated dependencies [[`1a6ea016`](https://github.com/electron-userland/electron-builder/commit/1a6ea016b7793c75e7586e0e14d5f26d3535c292), [`35f5f6e5`](https://github.com/electron-userland/electron-builder/commit/35f5f6e55762ffc377fcd5587a8cea8753184d50)]:
+  - builder-util-runtime@9.3.3
+
+## 26.0.17
+
+### Patch Changes
+
+- [#9138](https://github.com/electron-userland/electron-builder/pull/9138) [`a6be444c`](https://github.com/electron-userland/electron-builder/commit/a6be444c90e59bbe92c53e94d7a5070f1399651f) Thanks [@mmaietta](https://github.com/mmaietta)! - chore: wrapping Error in exec rejection so as to pass through error code to downstream logic
+
+- [#9142](https://github.com/electron-userland/electron-builder/pull/9142) [`3128991a`](https://github.com/electron-userland/electron-builder/commit/3128991a1b0057e9a98903ff379022954da28135) Thanks [@mmaietta](https://github.com/mmaietta)! - chore: adding additional docs to signAndEditExecutable for windows
+
+## 26.0.16
+
+### Patch Changes
+
+- [#9117](https://github.com/electron-userland/electron-builder/pull/9117) [`b62737d8`](https://github.com/electron-userland/electron-builder/commit/b62737d8c4528c04c78a490cc4dca8cdadbeaaac) Thanks [@talentlessguy](https://github.com/talentlessguy)! - chore(deps): replace `is-ci` with `ci-info`
+
+## 26.0.13
+
+### Patch Changes
+
+- [#8962](https://github.com/electron-userland/electron-builder/pull/8962) [`106640dd`](https://github.com/electron-userland/electron-builder/commit/106640dd42a3db08bfbe3a3a32fe333e93ba5c10) Thanks [@mmaietta](https://github.com/mmaietta)! - chore(refactor): enable parallel packaging of archs and targets with `concurrency` config prop
+
+- Updated dependencies [[`a2f7f735`](https://github.com/electron-userland/electron-builder/commit/a2f7f7350be2379c4917417c92ece5a6ab241708)]:
+  - builder-util-runtime@9.3.2
+
+## 26.0.11
+
+### Patch Changes
+
+- [#8919](https://github.com/electron-userland/electron-builder/pull/8919) [`53a81939`](https://github.com/electron-userland/electron-builder/commit/53a81939b8c46061027ab36d8f9114c35b250a7e) Thanks [@mmaietta](https://github.com/mmaietta)! - chore(test): parallel test execution! Updates base Logger to squelch noisy/concurrent logging when VITEST env var and DEBUG=electron-builder are set.
+
 ## 26.0.7
 
 ### Patch Changes

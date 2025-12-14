@@ -178,8 +178,31 @@ function validateFileSet(fileSet: ResolvedFileSet): ResolvedFileSet {
 
 /** @internal */
 export async function computeNodeModuleFileSets(platformPackager: PlatformPackager<any>, mainMatcher: FileMatcher): Promise<Array<ResolvedFileSet>> {
-  const deps = await getNodeModules(platformPackager.info.appDir)
-  log.debug({ nodeModules: deps }, "collected node modules")
+  const packager = platformPackager.info
+  const { tempDirManager, cancellationToken, appDir, projectDir } = packager
+
+  let deps: Array<NodeModuleInfo> = []
+  const searchDirectories = Array.from(new Set([projectDir, appDir, await packager.getWorkspaceRoot()])).filter((it): it is string => it != null)
+  for (const dir of searchDirectories) {
+    if (cancellationToken.cancelled) {
+      throw new Error("user cancelled")
+    }
+
+    const dirDeps = await getNodeModules(await packager.getPackageManager(), { rootDir: dir, tempDirManager, cancellationToken, packageName: packager.metadata.name! })
+    if (dirDeps.length > 0) {
+      log.debug({ dir, nodeModules: dirDeps }, "collected node modules")
+      deps = dirDeps
+      break
+    }
+    const attempt = searchDirectories.indexOf(dir)
+    if (attempt < searchDirectories.length - 1) {
+      log.info({ searchDir: dir, attempt }, "no node modules found in collection, trying next search directory")
+    }
+  }
+  if (deps.length === 0) {
+    log.warn({ searchDirectories: searchDirectories.map(it => log.filePath(it)) }, "no node modules returned while searching directories")
+    return []
+  }
 
   const nodeModuleExcludedExts = getNodeModuleExcludedExts(platformPackager)
   // serial execution because copyNodeModules is concurrent and so, no need to increase queue/pressure
@@ -194,6 +217,8 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
     const files = await copier.collectNodeModules(dep, nodeModuleExcludedExts, path.relative(mainMatcher.to, destination))
     result[index++] = validateFileSet({ src: source, destination, files, metadata: copier.metadata })
 
+    log.debug({ dep: dep.name, from: log.filePath(source), to: log.filePath(destination), filesCount: files.length }, "prepared to copy node module")
+
     if (dep.dependencies) {
       for (const c of dep.dependencies) {
         await collectNodeModules(c, path.join(destination, NODE_MODULES, c.name))
@@ -205,7 +230,6 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
     const destination = path.join(mainMatcher.to, NODE_MODULES, dep.name)
     await collectNodeModules(dep, destination)
   }
-
   return result
 }
 

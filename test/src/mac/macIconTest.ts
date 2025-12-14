@@ -1,10 +1,12 @@
+import { parsePlistFile, PlistObject } from "app-builder-lib/out/util/plist"
 import { Arch, DIR_TARGET, Platform } from "electron-builder"
 import * as fs from "fs/promises"
 import * as path from "path"
 import { CheckingMacPackager } from "../helpers/CheckingPackager"
 import { app } from "../helpers/packTester"
+import { ExpectStatic } from "vitest"
 
-async function assertIcon(platformPackager: CheckingMacPackager) {
+async function assertIcon(expect: ExpectStatic, platformPackager: CheckingMacPackager) {
   const file = await platformPackager.getIconPath()
   expect(file).toBeDefined()
 
@@ -17,23 +19,63 @@ async function assertIcon(platformPackager: CheckingMacPackager) {
 
 const targets = Platform.MAC.createTarget(DIR_TARGET, Arch.x64)
 
-test.ifMac("icon set", () => {
+const iconComposerFixture = path.join(__dirname, "..", "..", "fixtures", "macos-icon-composer-assets", "electron.icon")
+
+test.ifMac("icon composer generate asset catalog", ({ expect }) => {
+  return app(
+    expect,
+    {
+      targets,
+      config: {
+        mac: {
+          icon: "icon.icon",
+        },
+      },
+    },
+    {
+      projectDirCreated: async projectDir => {
+        await Promise.all([fs.unlink(path.join(projectDir, "build", "icon.icns")), fs.unlink(path.join(projectDir, "build", "icon.ico"))])
+
+        await fs.cp(iconComposerFixture, path.join(projectDir, "build", "icon.icon"), {
+          recursive: true,
+        })
+      },
+      packed: async context => {
+        const resourcesDir = context.getResources(Platform.MAC, Arch.x64)
+        const contentsDir = context.getContent(Platform.MAC, Arch.x64)
+        const infoPlistPath = path.join(contentsDir, "Info.plist")
+
+        const info = await parsePlistFile<PlistObject>(infoPlistPath)
+        expect(info.CFBundleIconName).toBe("Icon")
+        expect(info.CFBundleIconFile).toBe("icon.icns")
+
+        const assetCatalogPath = path.join(resourcesDir, "Assets.car")
+        const writtenCatalog = await fs.readFile(assetCatalogPath)
+        expect(writtenCatalog.length).toBeGreaterThan(0)
+      },
+    }
+  )
+})
+
+test.ifMac("icon set", ({ expect }) => {
   let platformPackager: CheckingMacPackager | null = null
   return app(
+    expect,
     {
       targets,
       platformPackagerFactory: packager => (platformPackager = new CheckingMacPackager(packager)),
     },
     {
       projectDirCreated: projectDir => Promise.all([fs.unlink(path.join(projectDir, "build", "icon.icns")), fs.unlink(path.join(projectDir, "build", "icon.ico"))]),
-      packed: () => assertIcon(platformPackager!),
+      packed: () => assertIcon(expect, platformPackager!),
     }
-  )()
+  )
 })
 
-test.ifMac("custom icon set", () => {
+test.ifMac("custom icon set", ({ expect }) => {
   let platformPackager: CheckingMacPackager | null = null
   return app(
+    expect,
     {
       targets,
       config: {
@@ -50,14 +92,15 @@ test.ifMac("custom icon set", () => {
           fs.unlink(path.join(projectDir, "build", "icon.ico")),
           fs.rename(path.join(projectDir, "build", "icons"), path.join(projectDir, "customIconSet")),
         ]),
-      packed: () => assertIcon(platformPackager!),
+      packed: () => assertIcon(expect, platformPackager!),
     }
-  )()
+  )
 })
 
-test.ifMac("custom icon set with only 512 and 128", () => {
+test.ifMac("custom icon set with only 512 and 128", ({ expect }) => {
   let platformPackager: CheckingMacPackager | null = null
   return app(
+    expect,
     {
       targets,
       config: {
@@ -75,14 +118,15 @@ test.ifMac("custom icon set with only 512 and 128", () => {
           fs.copyFile(path.join(projectDir, "build", "icons", "512x512.png"), path.join(projectDir, "512x512.png")),
           fs.copyFile(path.join(projectDir, "build", "icons", "128x128.png"), path.join(projectDir, "128x128.png")),
         ]),
-      packed: () => assertIcon(platformPackager!),
+      packed: () => assertIcon(expect, platformPackager!),
     }
-  )()
+  )
 })
 
-test.ifMac("png icon", () => {
+test.ifMac("png icon", ({ expect }) => {
   let platformPackager: CheckingMacPackager | null = null
   return app(
+    expect,
     {
       targets,
       config: {
@@ -94,14 +138,15 @@ test.ifMac("png icon", () => {
     },
     {
       projectDirCreated: projectDir => Promise.all([fs.unlink(path.join(projectDir, "build", "icon.icns")), fs.unlink(path.join(projectDir, "build", "icon.ico"))]),
-      packed: () => assertIcon(platformPackager!),
+      packed: () => assertIcon(expect, platformPackager!),
     }
-  )()
+  )
 })
 
-test.ifMac("default png icon", () => {
+test.ifMac("default png icon", ({ expect }) => {
   let platformPackager: CheckingMacPackager | null = null
   return app(
+    expect,
     {
       targets,
       platformPackagerFactory: packager => (platformPackager = new CheckingMacPackager(packager)),
@@ -115,14 +160,15 @@ test.ifMac("default png icon", () => {
             .copyFile(path.join(projectDir, "build", "icons", "512x512.png"), path.join(projectDir, "build", "icon.png"))
             .then(() => fs.rm(path.join(projectDir, "build", "icons"), { recursive: true, force: true })),
         ]),
-      packed: () => assertIcon(platformPackager!),
+      packed: () => assertIcon(expect, platformPackager!),
     }
-  )()
+  )
 })
 
-test.ifMac("png icon small", () => {
+test.ifMac("png icon small", ({ expect }) => {
   let platformPackager: CheckingMacPackager | null = null
   return app(
+    expect,
     {
       targets,
       config: {
@@ -147,5 +193,5 @@ test.ifMac("png icon small", () => {
         throw new Error("error expected")
       },
     }
-  )()
+  )
 })

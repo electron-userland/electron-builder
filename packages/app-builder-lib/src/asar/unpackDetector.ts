@@ -39,9 +39,7 @@ export function detectUnpackedDirs(fileSet: ResolvedFileSet, autoUnpackDirs: Set
       continue
     }
 
-    if (log.isDebugEnabled) {
-      log.debug({ file: stat.moduleFullFilePath, reason: "contains executable code" }, "not packed into asar archive")
-    }
+    log.debug({ file: stat.moduleFullFilePath, reason: "contains executable code" }, "not packed into asar archive")
     autoUnpackDirs.add(stat.moduleRootPath)
   }
 }

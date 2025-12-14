@@ -3,7 +3,7 @@ import { TargetSpecificOptions } from "../../core"
 
 export interface CustomNsisBinary {
   /**
-   * @default https://github.com/electron-userland/electron-builder-binaries/releases/download
+   * @default https://github.com/electron-userland/electron-builder-binaries/releases/download/nsis-3.0.4.1/nsis-3.0.4.1.7z
    */
   readonly url: string | null
 
@@ -24,6 +24,22 @@ export interface CustomNsisBinary {
    * In your custom nsis scripts, you can leverage this functionality via `LogSet` and `LogText`
    */
   readonly debugLogging?: boolean | null
+}
+export interface CustomNsisResources {
+  /**
+   * @default https://github.com/electron-userland/electron-builder-binaries/releases/download/nsis-resources-3.4.1/nsis-resources-3.4.1.7z
+   */
+  readonly url: string
+
+  /**
+   * @default Dqd6g+2buwwvoG1Vyf6BHR1b+25QMmPcwZx40atOT57gH27rkjOei1L0JTldxZu4NFoEmW4kJgZ3DlSWVON3+Q==
+   */
+  readonly checksum: string
+
+  /**
+   * @default 3.4.1
+   */
+  readonly version: string
 }
 export interface CommonNsisOptions {
   /**
@@ -53,6 +69,11 @@ export interface CommonNsisOptions {
    * Allows you to provide your own `makensis`, such as one with support for debug logging via LogSet and LogText. (Logging also requires option `debugLogging = true`)
    */
   readonly customNsisBinary?: CustomNsisBinary | null
+
+  /**
+   * Allows you to provide your own `nsis-resources`
+   */
+  readonly customNsisResources?: CustomNsisResources | null
 }
 
 export interface NsisOptions extends CommonNsisOptions, CommonWindowsInstallerConfiguration, TargetSpecificOptions {
@@ -133,7 +154,23 @@ export interface NsisOptions extends CommonNsisOptions, CommonWindowsInstallerCo
    * The uninstaller display name in the control panel.
    * @default ${productName} ${version}
    */
-  readonly uninstallDisplayName?: string
+  readonly uninstallDisplayName?: string | null
+  /**
+   * The URL to the uninstaller help page in the control panel. Defaults to [homepage](./configuration.md#homepage) from application package.json.
+   */
+  readonly uninstallUrlHelp?: string | null
+  /**
+   * The URL to the uninstaller info about page in the control panel. Defaults to [homepage](./configuration.md#homepage) from application package.json.
+   */
+  readonly uninstallUrlInfoAbout?: string | null
+  /**
+   * The URL to the uninstaller update info page in the control panel. Defaults to [homepage](./configuration.md#homepage) from application package.json.
+   */
+  readonly uninstallUrlUpdateInfo?: string | null
+  /**
+   * The URL to the uninstaller readme page in the control panel. Defaults to [homepage](./configuration.md#homepage) from application package.json.
+   */
+  readonly uninstallUrlReadme?: string | null
 
   /**
    * The path to NSIS include script to customize installer. Defaults to `build/installer.nsh`. See [Custom NSIS script](#custom-nsis-script).
@@ -231,6 +268,12 @@ export interface PortableOptions extends TargetSpecificOptions, CommonNsisOption
    * The image to show while the portable executable is extracting. This image must be a bitmap (`.bmp`) image.
    */
   readonly splashImage?: string | null
+
+  /**
+   * Disable building an universal installer of the archs specified in the target configuration
+   * @default true
+   */
+  readonly buildUniversalInstaller?: boolean
 }
 
 /**

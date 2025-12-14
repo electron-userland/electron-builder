@@ -1,4 +1,4 @@
-import { Arch, asArray, executeAppBuilder, getArchSuffix, getPath7za, log, serializeToYaml, TmpDir, toLinuxArchString, unlinkIfExists, use } from "builder-util"
+import { Arch, asArray, exec, getArchSuffix, log, serializeToYaml, TmpDir, toLinuxArchString, unlinkIfExists, use } from "builder-util"
 import { Nullish } from "builder-util-runtime"
 import { copyFile, outputFile, stat } from "fs-extra"
 import { mkdir, readFile } from "fs/promises"
@@ -16,7 +16,7 @@ import { hashFile } from "../util/hash"
 import { isMacOsSierra } from "../util/macosVersion"
 import { getTemplatePath } from "../util/pathManager"
 import { installPrefix, LinuxTargetHelper } from "./LinuxTargetHelper"
-import { getLinuxToolsPath } from "./tools"
+import { getFpmPath, getLinuxToolsPath } from "./tools"
 
 interface FpmOptions {
   name: string
@@ -202,13 +202,10 @@ export default class FpmTarget extends Target {
     if (depends != null) {
       if (Array.isArray(depends)) {
         fpmConfiguration.customDepends = depends
+      } else if (typeof depends === "string") {
+        fpmConfiguration.customDepends = [depends as string]
       } else {
-        // noinspection SuspiciousTypeOfGuard
-        if (typeof depends === "string") {
-          fpmConfiguration.customDepends = [depends as string]
-        } else {
-          throw new Error(`depends must be Array or String, but specified as: ${depends}`)
-        }
+        throw new Error(`depends must be Array or String, but specified as: ${depends}`)
       }
     } else {
       fpmConfiguration.customDepends = this.getDefaultDepends(target)
@@ -256,8 +253,6 @@ export default class FpmTarget extends Target {
 
     const env = {
       ...process.env,
-      SZA_PATH: await getPath7za(),
-      SZA_COMPRESSION_LEVEL: packager.compression === "store" ? "0" : "9",
     }
 
     // rpmbuild wants directory rpm with some default config files. Even if we can use dylibbundler, path to such config files are not changed (we need to replace in the binary)
@@ -270,7 +265,7 @@ export default class FpmTarget extends Target {
       })
     }
 
-    await executeAppBuilder(["fpm", "--configuration", JSON.stringify(fpmConfiguration)], undefined, { env })
+    await this.executeFpm(target, fpmConfiguration, env)
 
     let info: ArtifactCreated = {
       file: artifactPath,
@@ -290,6 +285,56 @@ export default class FpmTarget extends Target {
       }
     }
     await packager.info.emitArtifactBuildCompleted(info)
+  }
+
+  private async executeFpm(target: string, fpmConfiguration: FpmConfiguration, env: any) {
+    const fpmArgs = ["-s", "dir", "--force", "-t", target]
+    const forceDebugLogging = process.env.FPM_DEBUG === "true"
+    if (forceDebugLogging) {
+      fpmArgs.push("--debug")
+    }
+    if (log.isDebugEnabled) {
+      fpmArgs.push("--log", "debug")
+    }
+    fpmConfiguration.customDepends?.forEach(it => fpmArgs.push("-d", it))
+    if (target === "deb") {
+      fpmConfiguration.customRecommends?.forEach(it => fpmArgs.push("--deb-recommends", it))
+    }
+
+    fpmArgs.push(...this.configureTargetSpecificOptions(target, fpmConfiguration.compression ?? "xz"))
+    fpmArgs.push(...fpmConfiguration.args)
+
+    const fpmPath = await getFpmPath()
+
+    await exec(fpmPath, fpmArgs, { env }).catch(e => {
+      if (e.message.includes("Need executable 'rpmbuild' to convert dir to rpm")) {
+        const hint = "to build rpm, executable rpmbuild is required, please install rpm package on your system. "
+        if (process.platform === "darwin") {
+          log.error(null, hint + "(brew install rpm)")
+        } else {
+          log.error(null, hint + "(sudo apt-get install rpm)")
+        }
+      }
+      if (e.message.includes("xz: not found")) {
+        const hint = "to build rpm, executable xz is required, please install xz package on your system. "
+        if (process.platform === "darwin") {
+          log.error(null, hint + "(brew install xz)")
+        } else {
+          log.error(null, hint + "(sudo apt-get install xz-utils)")
+        }
+      }
+      if (e.message.includes("error: File not found")) {
+        log.error(
+          { fpmArgs, ...fpmConfiguration },
+          "fpm failed to find the specified files. Please check your configuration and ensure all paths are correct. To see what files triggered this, set the environment variable FPM_DEBUG=true"
+        )
+        if (forceDebugLogging) {
+          log.error(null, e.message)
+        }
+        throw new Error(`FPM failed to find the specified files. Please check your configuration and ensure all paths are correct. Command: ${fpmPath} ${fpmArgs.join(" ")}`)
+      }
+      throw e
+    })
   }
 
   private supportsAutoUpdate(target: string) {
@@ -328,6 +373,18 @@ export default class FpmTarget extends Target {
       default:
         return []
     }
+  }
+
+  private configureTargetSpecificOptions(target: string, compression: string): string[] {
+    switch (target) {
+      case "rpm":
+        return ["--rpm-os", "linux", "--rpm-compression", compression == "xz" ? "xzmt" : compression]
+      case "deb":
+        return ["--deb-compression", compression]
+      case "pacman":
+        return ["--pacman-compression", compression]
+    }
+    return []
   }
 }
 

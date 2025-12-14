@@ -20,7 +20,14 @@ export type LogLevel = "info" | "warn" | "debug" | "notice" | "error"
 export const PADDING = 2
 
 export class Logger {
-  constructor(protected readonly stream: WritableStream) {}
+  // clean up logs since concurrent tests are impossible to track logic execution with console concurrency "noise"
+  private readonly shouldDisableNonErrorLoggingVitest = process.env.VITEST && !this.isDebugEnabled
+
+  constructor(protected readonly stream: WritableStream) {
+    if (this.shouldDisableNonErrorLoggingVitest) {
+      this.log(`non-error logging is silenced during VITEST workflow when DEBUG=electron-builder flag is not set`)
+    }
+  }
 
   messageTransformer: (message: string, level: LogLevel) => string = it => it
 
@@ -61,6 +68,19 @@ export class Logger {
   }
 
   private _doLog(message: string | Error, fields: Fields | null, level: LogLevel) {
+    if (this.shouldDisableNonErrorLoggingVitest) {
+      if (
+        [
+          // "warn", // is actually a bit too noisy
+          "error",
+        ].includes(level)
+      ) {
+        // log error message to console so VITEST can capture stacktrace as well
+        console.log(message, fields)
+      }
+      return // ignore info/warn message during VITEST workflow if debug flag is disabled
+    }
+
     // noinspection SuspiciousInstanceOfGuard
     if (message instanceof Error) {
       message = message.stack || message.toString()

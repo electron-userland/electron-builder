@@ -1,4 +1,6 @@
 import { InvalidConfigurationError, log, isEmptyOrSpaces } from "builder-util"
+import { execWine } from "app-builder-lib/out/wine"
+import { getBinFromUrl } from "app-builder-lib/out/binDownload"
 import { sanitizeFileName } from "builder-util/out/filename"
 import { Arch, getArchSuffix, SquirrelWindowsOptions, Target, WinPackager } from "app-builder-lib"
 import * as path from "path"
@@ -10,6 +12,8 @@ export default class SquirrelWindowsTarget extends Target {
   //tslint:disable-next-line:no-object-literal-type-assertion
   readonly options: SquirrelWindowsOptions = { ...this.packager.platformSpecificBuildOptions, ...this.packager.config.squirrelWindows } as SquirrelWindowsOptions
 
+  isAsyncSupported = false
+
   constructor(
     private readonly packager: WinPackager,
     readonly outDir: string
@@ -18,29 +22,54 @@ export default class SquirrelWindowsTarget extends Target {
   }
 
   private async prepareSignedVendorDirectory(): Promise<string> {
-    // If not specified will use the Squirrel.Windows that is shipped with electron-installer(https://github.com/electron/windows-installer/tree/main/vendor)
-    // After https://github.com/electron-userland/electron-builder-binaries/pull/56 merged, will add `electron-builder-binaries` to get the latest version of squirrel.
-    let vendorDirectory = this.options.customSquirrelVendorDir || path.join(require.resolve("electron-winstaller/package.json"), "..", "vendor")
-    if (isEmptyOrSpaces(vendorDirectory) || !fs.existsSync(vendorDirectory)) {
-      log.warn({ vendorDirectory }, "unable to access Squirrel.Windows vendor directory, falling back to default electron-winstaller")
-      vendorDirectory = path.join(require.resolve("electron-winstaller/package.json"), "..", "vendor")
-    }
-
+    const customSquirrelVendorDirectory = this.options.customSquirrelVendorDir
     const tmpVendorDirectory = await this.packager.info.tempDirManager.createTempDir({ prefix: "squirrel-windows-vendor" })
-    // Copy entire vendor directory to temp directory
-    await fs.promises.cp(vendorDirectory, tmpVendorDirectory, { recursive: true })
-    log.debug({ from: vendorDirectory, to: tmpVendorDirectory }, "copied vendor directory")
+
+    if (isEmptyOrSpaces(customSquirrelVendorDirectory) || !fs.existsSync(customSquirrelVendorDirectory)) {
+      log.warn({ customSquirrelVendorDirectory: customSquirrelVendorDirectory }, "unable to access custom Squirrel.Windows vendor directory, falling back to default vendor ")
+      const windowInstallerPackage = require.resolve("electron-winstaller/package.json")
+      const vendorDirectory = path.join(path.dirname(windowInstallerPackage), "vendor")
+
+      const squirrelBin = await getBinFromUrl(
+        "squirrel.windows@1.0.0",
+        "squirrel.windows-2.0.1-patched.7z",
+        "DWijIRRElidu/Rq0yegAKqo2g6aVJUPvcRyvkzUoBPbRasIk61P6xY2fBMdXw6wT17md7NzrTI9/zA1wT9vEqg=="
+      )
+
+      await fs.promises.cp(vendorDirectory, tmpVendorDirectory, { recursive: true })
+      // copy the patched squirrel to tmp vendor directory
+      await fs.promises.cp(path.join(squirrelBin, "electron-winstaller", "vendor"), tmpVendorDirectory, { recursive: true })
+    } else {
+      // copy the custom squirrel vendor directory to tmp vendor directory
+      await fs.promises.cp(customSquirrelVendorDirectory, tmpVendorDirectory, { recursive: true })
+    }
 
     const files = await fs.promises.readdir(tmpVendorDirectory)
-    for (const file of files) {
-      if (["Squirrel.exe", "StubExecutable.exe"].includes(file)) {
-        const filePath = path.join(tmpVendorDirectory, file)
-        log.debug({ file: filePath }, "signing vendor executable")
-        await this.packager.sign(filePath)
-      }
+    const squirrelExe = files.find(f => f === "Squirrel.exe")
+    if (squirrelExe) {
+      const filePath = path.join(tmpVendorDirectory, squirrelExe)
+      log.debug({ file: filePath }, "signing vendor executable")
+      await this.packager.signIf(filePath)
+    } else {
+      log.warn("Squirrel.exe not found in vendor directory, skipping signing")
+    }
+    return tmpVendorDirectory
+  }
+
+  private async generateStubExecutableExe(appOutDir: string, vendorDir: string) {
+    const files = await fs.promises.readdir(appOutDir, { withFileTypes: true })
+    const appExe = files.find(f => f.name === `${this.exeName}.exe`)
+    if (!appExe) {
+      throw new Error(`App executable not found in app directory: ${appOutDir}`)
     }
 
-    return tmpVendorDirectory
+    const filePath = path.join(appOutDir, appExe.name)
+    const stubExePath = path.join(appOutDir, `${this.exeName}_ExecutionStub.exe`)
+    await fs.promises.copyFile(path.join(vendorDir, "StubExecutable.exe"), stubExePath)
+    await execWine(path.join(vendorDir, "WriteZipToSetup.exe"), null, ["--copy-stub-resources", filePath, stubExePath])
+    await this.packager.signIf(stubExePath)
+    log.debug({ file: filePath }, "signing app executable")
+    await this.packager.signIf(filePath)
   }
 
   async build(appOutDir: string, arch: Arch) {
@@ -53,66 +82,74 @@ export default class SquirrelWindowsTarget extends Target {
     const artifactPath = path.join(installerOutDir, setupFile)
     const msiArtifactPath = path.join(installerOutDir, packager.expandArtifactNamePattern(this.options, "msi", arch, "${productName} Setup ${version}.${ext}"))
 
-    await packager.info.emitArtifactBuildStarted({
-      targetPresentableName: "Squirrel.Windows",
-      file: artifactPath,
-      arch,
-    })
+    this.buildQueueManager.add(async () => {
+      await packager.info.emitArtifactBuildStarted({
+        targetPresentableName: "Squirrel.Windows",
+        file: artifactPath,
+        arch,
+      })
+      const distOptions = await this.computeEffectiveDistOptions(appOutDir, installerOutDir, setupFile)
+      await this.generateStubExecutableExe(appOutDir, distOptions.vendorDirectory!)
+      await createWindowsInstaller(distOptions)
 
-    const distOptions = await this.computeEffectiveDistOptions(appOutDir, installerOutDir, setupFile)
-    await createWindowsInstaller(distOptions)
+      await packager.signAndEditResources(artifactPath, arch, installerOutDir)
 
-    await packager.signAndEditResources(artifactPath, arch, installerOutDir)
-    if (this.options.msi) {
-      await packager.sign(msiArtifactPath)
-    }
+      if (this.options.msi) {
+        await packager.signIf(msiArtifactPath)
+      }
 
-    const safeArtifactName = (ext: string) => `${sanitizedName}-Setup-${version}${getArchSuffix(arch)}.${ext}`
+      const safeArtifactName = (ext: string) => `${sanitizedName}-Setup-${version}${getArchSuffix(arch)}.${ext}`
 
-    await packager.info.emitArtifactBuildCompleted({
-      file: artifactPath,
-      target: this,
-      arch,
-      safeArtifactName: safeArtifactName("exe"),
-      packager: this.packager,
-    })
-
-    if (this.options.msi) {
       await packager.info.emitArtifactBuildCompleted({
-        file: msiArtifactPath,
+        file: artifactPath,
         target: this,
         arch,
-        safeArtifactName: safeArtifactName("msi"),
+        safeArtifactName: safeArtifactName("exe"),
         packager: this.packager,
       })
-    }
 
-    const packagePrefix = `${this.appName}-${convertVersion(version)}-`
-    await packager.info.emitArtifactCreated({
-      file: path.join(installerOutDir, `${packagePrefix}full.nupkg`),
-      target: this,
-      arch,
-      packager,
-    })
-    if (distOptions.remoteReleases != null) {
+      if (this.options.msi) {
+        await packager.info.emitArtifactCreated({
+          file: msiArtifactPath,
+          target: this,
+          arch,
+          safeArtifactName: safeArtifactName("msi"),
+          packager: this.packager,
+        })
+      }
+
+      const packagePrefix = `${this.appName}-${convertVersion(version)}-`
       await packager.info.emitArtifactCreated({
-        file: path.join(installerOutDir, `${packagePrefix}delta.nupkg`),
+        file: path.join(installerOutDir, `${packagePrefix}full.nupkg`),
         target: this,
         arch,
         packager,
       })
-    }
+      if (distOptions.remoteReleases != null) {
+        await packager.info.emitArtifactCreated({
+          file: path.join(installerOutDir, `${packagePrefix}delta.nupkg`),
+          target: this,
+          arch,
+          packager,
+        })
+      }
 
-    await packager.info.emitArtifactCreated({
-      file: path.join(installerOutDir, "RELEASES"),
-      target: this,
-      arch,
-      packager,
+      await packager.info.emitArtifactCreated({
+        file: path.join(installerOutDir, "RELEASES"),
+        target: this,
+        arch,
+        packager,
+      })
     })
+    return Promise.resolve()
   }
 
   private get appName() {
     return this.options.name || this.packager.appInfo.name
+  }
+
+  private get exeName() {
+    return this.packager.appInfo.productFilename || this.options.name || this.packager.appInfo.productName
   }
 
   private select7zipArch(vendorDirectory: string) {
@@ -198,7 +235,9 @@ export default class SquirrelWindowsTarget extends Target {
       options.remoteReleases = this.options.remoteReleases
     }
 
-    if (!("loadingGif" in options)) {
+    if (this.options.loadingGif) {
+      options.loadingGif = path.resolve(packager.projectDir, this.options.loadingGif)
+    } else {
       const resourceList = await packager.resourceList
       if (resourceList.includes("install-spinner.gif")) {
         options.loadingGif = path.join(packager.buildResourcesDir, "install-spinner.gif")

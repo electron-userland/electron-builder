@@ -1,13 +1,18 @@
 import { Arch, build, PackagerOptions, Platform } from "electron-builder"
-import * as fs from "fs/promises"
+import * as fs from "fs"
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert"
 import { app, assertPack, linuxDirTarget, modifyPackageJson } from "./helpers/packTester"
-import { getElectronCacheDir } from "./helpers/testConfig"
+import { ELECTRON_VERSION, getElectronCacheDir } from "./helpers/testConfig"
 import { expectUpdateMetadata } from "./helpers/winHelper"
+import { ExpectStatic } from "vitest"
+import * as unzipper from "unzipper"
+import { TmpDir } from "temp-file"
+import { readdir } from "fs/promises"
 
-function createBuildResourcesTest(packagerOptions: PackagerOptions) {
+function createBuildResourcesTest(expect: ExpectStatic, packagerOptions: PackagerOptions) {
   return app(
+    expect,
     {
       ...packagerOptions,
       config: {
@@ -29,20 +34,20 @@ function createBuildResourcesTest(packagerOptions: PackagerOptions) {
     },
     {
       packed: async context => {
-        await assertThat(path.join(context.projectDir, "customDist", "latest")).isDirectory()
+        await assertThat(expect, path.join(context.projectDir, "customDist", "latest")).isDirectory()
       },
-      projectDirCreated: projectDir => fs.rename(path.join(projectDir, "build"), path.join(projectDir, "custom")),
+      projectDirCreated: projectDir => Promise.resolve(fs.renameSync(path.join(projectDir, "build"), path.join(projectDir, "custom"))),
     }
   )
 }
 
-test.ifNotWindows("custom buildResources and output dirs: mac", createBuildResourcesTest({ mac: ["dir"] }))
-test.ifNotCiMac("custom buildResources and output dirs: win", createBuildResourcesTest({ win: ["nsis"] }))
-test.ifNotWindows("custom buildResources and output dirs: linux", createBuildResourcesTest({ linux: ["appimage"] }))
+test.ifNotWindows("custom buildResources and output dirs: mac", ({ expect }) => createBuildResourcesTest(expect, { mac: ["dir"] }))
+test.ifNotCiMac("custom buildResources and output dirs: win", ({ expect }) => createBuildResourcesTest(expect, { win: ["nsis"] }))
+test.ifNotWindows("custom buildResources and output dirs: linux", ({ expect }) => createBuildResourcesTest(expect, { linux: ["appimage"] }))
 
-test.ifLinuxOrDevMac(
-  "prepackaged",
+test.ifLinuxOrDevMac("prepackaged", ({ expect }) =>
   app(
+    expect,
     {
       targets: linuxDirTarget,
     },
@@ -63,15 +68,15 @@ test.ifLinuxOrDevMac(
             compression: "store",
           },
         })
-        await assertThat(path.join(context.projectDir, "dist", "TestApp_1.1.0_i386.deb")).isFile()
+        await assertThat(expect, path.join(context.projectDir, "dist", "TestApp_1.1.0_i386.deb")).isFile()
       },
     }
   )
 )
 
-test.ifLinuxOrDevMac(
-  "retrieve latest electron version",
+test.ifLinuxOrDevMac("retrieve latest electron version", ({ expect }) =>
   app(
+    expect,
     {
       targets: linuxDirTarget,
     },
@@ -88,9 +93,9 @@ test.ifLinuxOrDevMac(
   )
 )
 
-test.ifLinuxOrDevMac(
-  "retrieve latest electron-nightly version",
+test.ifLinuxOrDevMac("retrieve latest electron-nightly version", ({ expect }) =>
   app(
+    expect,
     {
       targets: linuxDirTarget,
     },
@@ -107,9 +112,9 @@ test.ifLinuxOrDevMac(
   )
 )
 
-test.ifNotWindows(
-  "override targets in the config",
+test.ifNotWindows("override targets in the config", ({ expect }) =>
   app(
+    expect,
     {
       targets: linuxDirTarget,
     },
@@ -133,9 +138,9 @@ test.ifNotWindows(
 )
 
 // test https://github.com/electron-userland/electron-builder/issues/1182 also
-test.ifDevOrWinCi(
-  "override targets in the config - only arch",
+test.ifDevOrWinCi("override targets in the config - only arch", ({ expect }) =>
   app(
+    expect,
     {
       targets: Platform.WINDOWS.createTarget(null, Arch.ia32),
       config: {
@@ -157,9 +162,9 @@ test.ifDevOrWinCi(
     {
       packed: context => {
         return Promise.all([
-          assertThat(path.join(context.projectDir, "dist", "win-unpacked")).doesNotExist(),
-          assertThat(path.join(context.projectDir, "dist", "latest.yml")).doesNotExist(),
-          expectUpdateMetadata(context, Arch.ia32),
+          assertThat(expect, path.join(context.projectDir, "dist", "win-unpacked")).doesNotExist(),
+          assertThat(expect, path.join(context.projectDir, "dist", "latest.yml")).doesNotExist(),
+          expectUpdateMetadata(expect, context, Arch.ia32),
         ])
       },
     }
@@ -167,11 +172,10 @@ test.ifDevOrWinCi(
 )
 
 // test on all CI to check path separators
-test("do not exclude build entirely (respect files)", () => assertPack("test-app-build-sub", { targets: linuxDirTarget }))
+test("do not exclude build entirely (respect files)", ({ expect }) => assertPack(expect, "test-app-build-sub", { targets: linuxDirTarget }))
 
-test.ifNotWindows(
-  "electronDist as path to local folder with electron builds zipped ",
-  app({
+test.ifNotWindows("electronDist as path to local folder with electron builds zipped ", ({ expect }) =>
+  app(expect, {
     targets: linuxDirTarget,
     config: {
       electronDist: getElectronCacheDir(),
@@ -179,9 +183,8 @@ test.ifNotWindows(
   })
 )
 
-test.ifNotWindows(
-  "electronDist as callback function for path to local folder with electron builds zipped ",
-  app({
+test.ifNotWindows("electronDist as callback function for path to local folder with electron builds zipped ", ({ expect }) =>
+  app(expect, {
     targets: linuxDirTarget,
     config: {
       electronDist: _context => {
@@ -191,13 +194,76 @@ test.ifNotWindows(
   })
 )
 
+test.ifLinux("electronDist as standard path to node_modules electron", ({ expect }) => {
+  return app(
+    expect,
+    {
+      targets: linuxDirTarget,
+      config: {
+        electronDist: "node_modules/electron/dist",
+      },
+    },
+    {
+      projectDirCreated: async projectDir => {
+        await modifyPackageJson(projectDir, data => {
+          data.devDependencies = {
+            ...data.devDependencies,
+            electron: ELECTRON_VERSION,
+          }
+          delete data.build.electronVersion
+        })
+      },
+      packed: async context => {
+        const contents = await readdir(context.getAppPath(Platform.LINUX, Arch.x64))
+        expect(contents).toMatchSnapshot()
+      },
+    }
+  )
+})
+
+test.ifNotWindows("electronDist as callback function for path to locally unzipped", ({ expect }) => {
+  const tmpDir = new TmpDir()
+
+  return app(
+    expect,
+    {
+      targets: linuxDirTarget,
+      config: {
+        electronDist: async context => {
+          const { platformName, arch, version } = context
+          const fileName = `electron-v${version}-${platformName}-${arch}.zip`
+          const electronUrl = `https://github.com/electron/electron/releases/download/v${version}/${fileName}`
+
+          const tempDir = await tmpDir.getTempDir()
+          if (!fs.existsSync(tempDir)) {
+            fs.mkdirSync(tempDir)
+          }
+          const electronPath = path.join(tempDir, "electron-dist")
+
+          const directory = await unzipper.Open.url(require("request"), electronUrl)
+          await directory.extract({ path: electronPath, concurrency: 5, forceStream: true })
+
+          return electronPath
+        },
+      },
+    },
+    {
+      packed: async context => {
+        const contents = await readdir(context.getAppPath(Platform.LINUX, Arch.x64))
+        expect(contents).toMatchSnapshot()
+        await tmpDir.cleanup()
+      },
+    }
+  )
+})
+
 const overridePublishChannel: any = {
   channel: "beta",
 }
 
-test.ifDevOrLinuxCi(
-  "overriding the publish channel",
+test.ifDevOrLinuxCi("overriding the publish channel", ({ expect }) =>
   app(
+    expect,
     {
       targets: linuxDirTarget,
       config: {
@@ -217,6 +283,7 @@ test.ifDevOrLinuxCi(
         }),
       packed: async context => {
         expect(context.packager.config.publish).toMatchSnapshot()
+        return Promise.resolve()
       },
     }
   )

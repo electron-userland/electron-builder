@@ -13,6 +13,22 @@ import { getNotLocalizedLicenseFile } from "../util/license"
 
 const certType = "Developer ID Installer"
 
+// Maps electron-builder Arch to Apple's architecture names for productbuild requirements plist
+function archToAppleArchitectures(arch: Arch): string[] {
+  switch (arch) {
+    case Arch.arm64:
+      return ["arm64"]
+    case Arch.x64:
+      return ["x86_64"]
+    case Arch.universal:
+      return ["arm64", "x86_64"]
+    case Arch.ia32:
+      return ["i386"]
+    default:
+      return ["arm64", "x86_64"]
+  }
+}
+
 type ExtraPackages = {
   packagePath: string
   packages: string[]
@@ -65,7 +81,7 @@ export class PkgTarget extends Target {
     const identity = (
       await Promise.all([
         findIdentity(certType, options.identity || packager.platformSpecificBuildOptions.identity, keychainFile),
-        this.customizeDistributionConfiguration(distInfoFile, appPath, extraPackages),
+        this.customizeDistributionConfiguration(distInfoFile, appPath, extraPackages, arch),
         this.buildComponentPackage(appPath, componentPropertyListFile, innerPackageFile),
       ])
     )[0]
@@ -86,7 +102,13 @@ export class PkgTarget extends Target {
     })
     await Promise.all([unlink(innerPackageFile), unlink(distInfoFile)])
     await packager.notarizeIfProvided(artifactPath)
-    await packager.dispatchArtifactCreated(artifactPath, this, arch, packager.computeSafeArtifactName(artifactName, "pkg", arch))
+    await packager.info.emitArtifactBuildCompleted({
+      file: artifactPath,
+      target: this,
+      arch,
+      safeArtifactName: packager.computeSafeArtifactName(artifactName, "pkg", arch),
+      packager,
+    })
   }
 
   private getExtraPackages(): ExtraPackages | null {
@@ -112,9 +134,28 @@ export class PkgTarget extends Target {
     return { packagePath, packages }
   }
 
-  private async customizeDistributionConfiguration(distInfoFile: string, appPath: string, extraPackages: ExtraPackages | null) {
+  private async customizeDistributionConfiguration(distInfoFile: string, appPath: string, extraPackages: ExtraPackages | null, arch: Arch) {
     const options = this.options
-    const args = ["--synthesize", "--component", appPath]
+
+    // Build requirements plist for productbuild to generate correct hostArchitectures and allowed-os-versions
+    // This is the Apple-recommended way to specify architecture and OS requirements
+    // See: man productbuild, section "PRE-INSTALL REQUIREMENTS PROPERTY LIST"
+    const requirements: Record<string, any> = {}
+
+    // Set architecture based on build target - productbuild will generate correct hostArchitectures in distribution XML
+    // On macOS Big Sur+, productbuild defaults to both arm64 and x86_64 unless we specify otherwise
+    requirements.arch = archToAppleArchitectures(arch)
+
+    // Set minimum OS version - productbuild will generate allowed-os-versions in distribution XML
+    const minimumSystemVersion = this.packager.platformSpecificBuildOptions.minimumSystemVersion
+    if (minimumSystemVersion != null) {
+      requirements.os = [minimumSystemVersion]
+    }
+
+    const requirementsPlistFile = await this.packager.info.tempDirManager.getTempFile({ suffix: ".plist", prefix: "productbuild-requirements" })
+    await savePlistFile(requirementsPlistFile, requirements)
+
+    const args = ["--synthesize", "--product", requirementsPlistFile, "--component", appPath]
     if (extraPackages) {
       extraPackages.packages.forEach(pkg => {
         args.push("--package", path.join(extraPackages.packagePath, pkg))

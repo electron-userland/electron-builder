@@ -5,6 +5,8 @@ import { URL } from "url"
 import { ElectronHttpExecutor } from "../electronHttpExecutor"
 import { ResolvedUpdateFileInfo } from "../types"
 import { newUrlFromBase } from "../util"
+// @ts-ignore
+import * as escapeRegExp from "lodash.escaperegexp"
 
 export type ProviderPlatform = "darwin" | "linux" | "win32"
 
@@ -21,6 +23,18 @@ export abstract class Provider<T extends UpdateInfo> {
 
   protected constructor(private readonly runtimeOptions: ProviderRuntimeOptions) {
     this.executor = runtimeOptions.executor
+  }
+
+  // By default, the blockmap file is in the same directory as the main file
+  // But some providers may have a different blockmap file, so we need to override this method
+  getBlockMapFiles(baseUrl: URL, oldVersion: string, newVersion: string, oldBlockMapFileBaseUrl: string | null = null): URL[] | Promise<URL[]> {
+    const newBlockMapUrl = newUrlFromBase(`${baseUrl.pathname}.blockmap`, baseUrl)
+    const oldBlockMapUrl = newUrlFromBase(
+      `${baseUrl.pathname.replace(new RegExp(escapeRegExp(newVersion), "g"), oldVersion)}.blockmap`,
+      oldBlockMapFileBaseUrl ? new URL(oldBlockMapFileBaseUrl) : baseUrl
+    )
+
+    return [oldBlockMapUrl, newBlockMapUrl]
   }
 
   get isUseMultipleRangeRequest(): boolean {
@@ -85,13 +99,15 @@ export function findFile(files: Array<ResolvedUpdateFileInfo>, extension: string
     throw newError("No files provided", "ERR_UPDATER_NO_FILES_PROVIDED")
   }
 
-  const result = files.find(it => it.url.pathname.toLowerCase().endsWith(`.${extension}`))
-  if (result != null) {
+  const filteredFiles = files.filter(it => it.url.pathname.toLowerCase().endsWith(`.${extension.toLowerCase()}`))
+  const result = filteredFiles.find(it => [it.url.pathname, it.info.url].some(n => n.includes(process.arch))) ?? filteredFiles.shift()
+
+  if (result) {
     return result
   } else if (not == null) {
     return files[0]
   } else {
-    return files.find(fileInfo => !not.some(ext => fileInfo.url.pathname.toLowerCase().endsWith(`.${ext}`)))
+    return files.find(fileInfo => !not.some(ext => fileInfo.url.pathname.toLowerCase().endsWith(`.${ext.toLowerCase()}`)))
   }
 }
 

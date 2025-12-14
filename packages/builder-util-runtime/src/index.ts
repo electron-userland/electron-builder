@@ -26,12 +26,16 @@ export {
   getS3LikeProviderBaseUrl,
   GithubOptions,
   githubUrl,
+  githubTagPrefix,
+  GitlabOptions,
   KeygenOptions,
   PublishConfiguration,
   PublishProvider,
   S3Options,
   SnapStoreOptions,
   SpacesOptions,
+  GitlabReleaseInfo,
+  GitlabReleaseAsset,
 } from "./publishOptions"
 export { retry } from "./retry"
 export { parseDn } from "./rfc2253Parser"
