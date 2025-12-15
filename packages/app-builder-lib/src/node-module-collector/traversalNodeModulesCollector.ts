@@ -6,11 +6,6 @@ import * as path from "path"
 
 // manual traversal of node_modules for package managers without CLI support for dependency tree extraction (e.g., bun) OR as a fallback (e.g. corepack enabled w/ strict mode)
 export class TraversalNodeModulesCollector extends NodeModulesCollector<TraversedDependency, string> {
-  // so that tests can still install deps and verify manual collection
-  // public installOptions = {
-  //   manager: PM.NPM,
-  //   lockfile: "package-lock.json",
-  // }
   public installOptions = {
     manager: PM.TRAVERSAL,
     lockfile: "none",
@@ -20,6 +15,7 @@ export class TraversalNodeModulesCollector extends NodeModulesCollector<Traverse
   }
 
   protected getDependenciesTree(_pm: PM): Promise<TraversedDependency> {
+    log.info(null, "using manual traversal of node_modules to build dependency tree")
     return this.buildNodeModulesTreeManually(this.rootDir)
   }
 

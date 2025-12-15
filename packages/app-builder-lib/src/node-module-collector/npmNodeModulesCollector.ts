@@ -59,7 +59,7 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
 
   // `npm list` provides explicit list of deps in _dependencies
   protected isProdDependency(packageName: string, tree: NpmDependency) {
-    return tree._dependencies?.[packageName] != null // || super.isProdDependency(packageName, tree)
+    return tree._dependencies?.[packageName] != null
   }
 
   protected async parseDependenciesTree(jsonBlob: string): Promise<NpmDependency> {
