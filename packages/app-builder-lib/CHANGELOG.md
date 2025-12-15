@@ -1,5 +1,42 @@
 # app-builder-lib
 
+## 26.3.6
+
+### Patch Changes
+
+- Fix: ensure correct dependency graph extraction order and yarn berry \_dependencies support _[`#9439`](https://github.com/electron-userland/electron-builder/pull/9439) [`bdfc76b`](https://github.com/electron-userland/electron-builder/commit/bdfc76bf18cb02a38aa7b3624c9fb865c910c393) [@beyondkmp](https://github.com/beyondkmp)_
+- Chore: retry cleanup on EBUSY errors _[`#9432`](https://github.com/electron-userland/electron-builder/pull/9432) [`693629c`](https://github.com/electron-userland/electron-builder/commit/693629c7990958ccbf60bd7d59824afc139dc1c2) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+</small>
+
+- `dmg-builder@26.3.6`
+- `electron-builder-squirrel-windows@26.3.6`
+
+</details>
+
+## 26.3.5
+
+### Patch Changes
+
+- Fix: validate package version when traversing directories in search of a matching node module _[`#9424`](https://github.com/electron-userland/electron-builder/pull/9424) [`e3f3592`](https://github.com/electron-userland/electron-builder/commit/e3f3592cfa8043c646d1791fa7f41feb45556ea9) [@mmaietta](https://github.com/mmaietta)_
+- Fix: check if custom nsis and/or nsis resources paths is not purely white space _[`#9420`](https://github.com/electron-userland/electron-builder/pull/9420) [`05e0bc7`](https://github.com/electron-userland/electron-builder/commit/05e0bc7becf4057e7f7794597a57f33d23894f4b) [@mmaietta](https://github.com/mmaietta)_
+- Chore(deps): unpinning semver and updating it for app-builder-lib and electron-updater _[`#9349`](https://github.com/electron-userland/electron-builder/pull/9349) [`e043df5`](https://github.com/electron-userland/electron-builder/commit/e043df57604fb029fd8f9cf7d835b8366ee71aa6) [@panther7](https://github.com/panther7)_
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+</small>
+
+- `dmg-builder@26.3.5`
+- `electron-builder-squirrel-windows@26.3.5`
+
+</details>
+
 ## 26.3.4
 
 ### Patch Changes
