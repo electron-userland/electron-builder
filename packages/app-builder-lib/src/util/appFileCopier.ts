@@ -182,7 +182,7 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
   const { tempDirManager, cancellationToken, appDir, projectDir } = packager
 
   let deps: Array<NodeModuleInfo> = []
-  const searchDirectories = Array.from(new Set([projectDir, appDir, await packager.getWorkspaceRoot()])).filter((it): it is string => it != null)
+  const searchDirectories = Array.from(new Set([appDir, projectDir, await packager.getWorkspaceRoot()])).filter((it): it is string => it != null)
   for (const dir of searchDirectories) {
     if (cancellationToken.cancelled) {
       throw new Error("user cancelled")
