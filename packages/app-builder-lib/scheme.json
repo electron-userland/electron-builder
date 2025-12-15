@@ -7731,6 +7731,27 @@
         }
       ]
     },
+    "packageManager": {
+      "anyOf": [
+        {
+          "enum": [
+            "auto",
+            "bun",
+            "npm",
+            "pnpm",
+            "traversal",
+            "yarn",
+            "yarn-berry"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": "auto",
+      "description": "The package manager to use for installing dependencies and node module collections."
+    },
     "pacman": {
       "anyOf": [
         {

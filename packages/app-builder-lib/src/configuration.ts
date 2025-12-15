@@ -16,6 +16,7 @@ import { BuildResult } from "./packager"
 import { ArtifactBuildStarted, ArtifactCreated } from "./packagerApi"
 import { PlatformPackager } from "./platformPackager"
 import { NsisOptions, NsisWebOptions, PortableOptions } from "./targets/nsis/nsisOptions"
+import { PM } from "./node-module-collector"
 
 // duplicate appId here because it is important
 /**
@@ -133,6 +134,12 @@ export interface CommonConfiguration {
    * @default sequential
    */
   readonly nativeRebuilder?: "legacy" | "sequential" | "parallel" | null
+
+  /**
+   * The package manager to use for installing dependencies and node module collections.
+   * @default auto
+   */
+  readonly packageManager?: "auto" | PM | null
 
   /**
    * The build number. Maps to the `--iteration` flag for builds using FPM on Linux.

@@ -367,10 +367,81 @@ test("bun workspace --linker=hoisted - multiple conflicting versions", ({ expect
     }
   ))
 
+  test("traversal hoisted", ({ expect }) =>
+  assertPack(
+    expect,
+    "test-app-yarn-hoisted",
+    {
+      targets: linuxDirTarget,
+      config: {
+        packageManager: PM.TRAVERSAL,
+      },
+    },
+    {
+      packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
+      projectDirCreated: async projectDir => {
+        await modifyPackageJson(
+          projectDir,
+          data => {
+            data.packageManager = yarnBerryVersion
+          },
+          false
+        )
+        await modifyPackageJson(projectDir, data => packageConfig(data, yarnBerryVersion), true)
+        await writeFile(path.join(projectDir, "yarn.lock"), "")
+        await writeFile(path.join(projectDir, "app", "yarn.lock"), "")
+      },
+    }
+  ))
+
+test("traversal workspace", ({ expect }) =>
+  assertPack(
+    expect,
+    "test-app-yarn-workspace",
+    {
+      targets: linuxDirTarget,
+      projectDir: "packages/test-app",
+      config: {
+        packageManager: PM.TRAVERSAL,
+      },
+    },
+    {
+      packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
+      projectDirCreated: async projectDir => {
+        await modifyPackageJson(projectDir, data => {
+          data.packageManager = yarnBerryVersion
+        })
+        await modifyPackageJson(path.join(projectDir, "packages", "test-app"), data => packageConfig(data, yarnBerryVersion))
+      },
+    }
+  ))
+
+test("traversal multi-package workspace", ({ expect }) =>
+  assertPack(
+    expect,
+    "test-app-yarn-several-workspace",
+    {
+      targets: linuxDirTarget,
+      projectDir: "packages/test-app",
+      config: {
+        packageManager: PM.TRAVERSAL,
+      },
+    },
+    {
+      packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
+      projectDirCreated: async projectDir => {
+        await modifyPackageJson(projectDir, data => {
+          data.packageManager = yarnBerryVersion
+        })
+        await modifyPackageJson(path.join(projectDir, "packages", "test-app"), data => packageConfig(data, yarnVersion))
+      },
+    }
+  ))
+
 // Test for local file:// protocol
 
 Object.values(PM)
-  .filter(pm => ![PM.BUN, PM.TRAVERSAL].includes(pm)) // bun is not supported for file: protocol
+  .filter(pm => ![PM.BUN].includes(pm)) // bun is not supported for file: protocol
   .forEach(pm => {
     test(`local file:// protocol with ${pm} for project outside workspace`, ({ expect }) => {
       return assertPack(

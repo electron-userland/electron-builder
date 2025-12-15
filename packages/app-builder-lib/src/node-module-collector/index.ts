@@ -12,6 +12,7 @@ import { spawn, log, exists } from "builder-util"
 import * as fs from "fs-extra"
 import * as path from "path"
 import { TraversalNodeModulesCollector } from "./traversalNodeModulesCollector"
+import { Configuration } from "../configuration"
 
 export { getPackageManagerCommand, PM }
 
@@ -51,10 +52,24 @@ export function getNodeModules(
   return collector.getNodeModules({ packageName })
 }
 
-export const determinePackageManagerEnv = ({ projectDir, appDir, workspaceRoot }: { projectDir: string; appDir: string; workspaceRoot: string | Nullish }) =>
+export const determinePackageManagerEnv = ({
+  projectDir,
+  appDir,
+  workspaceRoot,
+  packageManagerOverride,
+}: {
+  projectDir: string
+  appDir: string
+  workspaceRoot: string | Nullish
+  packageManagerOverride: Configuration["packageManager"]
+}) =>
   new Lazy(async () => {
     const availableDirs = [projectDir, appDir, workspaceRoot].filter((it): it is string => it != null)
-    const pm = await detectPackageManager(availableDirs)
+    const override =
+      packageManagerOverride != null && packageManagerOverride !== "auto"
+        ? { pm: packageManagerOverride, resolvedDirectory: availableDirs[0], corepackConfig: undefined, detectionMethod: "override" }
+        : null
+    const pm = override ?? (await detectPackageManager(availableDirs))
     const root = await findWorkspaceRoot(pm.pm, projectDir)
     if (root != null) {
       // re-detect package manager from workspace root, this seems particularly necessary for pnpm workspaces
@@ -97,7 +112,11 @@ async function findWorkspaceRoot(pm: PM, cwd: string): Promise<string | undefine
       break
   }
 
-  const output = await spawn(command.command, command.args, { cwd, stdio: ["ignore", "pipe", "ignore"] })
+  const output = await spawn(command.command, command.args, {
+    cwd,
+    env: { COREPACK_ENABLE_STRICT: "0", ...process.env }, // allow `process.env` overrides
+    stdio: ["ignore", "pipe", "ignore"],
+  })
     .then(async it => {
       const out: string | undefined = it?.trim()
       if (!out) {
