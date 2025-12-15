@@ -2,6 +2,7 @@ import { newError } from "builder-util-runtime"
 import { createReadStream } from "fs"
 import { Writable } from "stream"
 import { Operation, OperationKind } from "./downloadPlanBuilder"
+import { ProgressInfo } from "./ProgressDifferentialDownloadCallbackTransform"
 
 const DOUBLE_CRLF = Buffer.from("\r\n\r\n")
 
@@ -34,6 +35,11 @@ export function copyData(task: Operation, out: Writable, oldFileFd: number, reje
 }
 
 export class DataSplitter extends Writable {
+  private start = Date.now()
+  private nextUpdate = this.start + 1000
+  private transferred = 0
+  private delta = 0
+
   partIndex = -1
 
   private headerListBuffer: Buffer | null = null
@@ -49,7 +55,9 @@ export class DataSplitter extends Writable {
     private readonly partIndexToTaskIndex: Map<number, number>,
     boundary: string,
     private readonly partIndexToLength: Array<number>,
-    private readonly finishHandler: () => any
+    private readonly finishHandler: () => any,
+    private readonly grandTotalBytes: number,
+    private readonly onProgress?: (info: ProgressInfo) => any
   ) {
     super()
 
@@ -69,7 +77,27 @@ export class DataSplitter extends Writable {
       return
     }
 
-    this.handleData(data).then(callback).catch(callback)
+    this.handleData(data)
+      .then(() => {
+        if (this.onProgress) {
+          const now = Date.now()
+          if (now >= this.nextUpdate || this.transferred === this.grandTotalBytes) {
+            this.nextUpdate = now + 1000
+
+            this.onProgress({
+              total: this.grandTotalBytes,
+              delta: this.delta,
+              transferred: this.transferred,
+              percent: (this.transferred / this.grandTotalBytes) * 100,
+              bytesPerSecond: Math.round(this.transferred / ((now - this.start) / 1000)),
+            })
+            this.delta = 0
+          }
+        }
+
+        callback()
+      })
+      .catch(callback)
   }
 
   private async handleData(chunk: Buffer): Promise<undefined> {
@@ -217,6 +245,8 @@ export class DataSplitter extends Writable {
 
   private processPartData(data: Buffer, start: number, end: number): Promise<void> {
     this.actualPartLength += end - start
+    this.transferred += end - start
+    this.delta += end - start
     const out = this.out
     if (out.write(start === 0 && data.length === end ? data : data.slice(start, end))) {
       return Promise.resolve()
