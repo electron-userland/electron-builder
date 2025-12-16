@@ -19,7 +19,7 @@ export default () => {
       // e.g. test("name", ({ expect }) => { ... })
       globals: true,
       allowOnly: !isCI,
-      expandSnapshotDiff: true,
+      expandSnapshotDiff: isCI,
 
       setupFiles: "./test/vitest-setup.ts",
       include: [`test/src/**/${includeRegex}.ts`],
