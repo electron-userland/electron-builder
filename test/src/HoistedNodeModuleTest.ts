@@ -445,18 +445,17 @@ test("yarn ms", ({ expect }) =>
     },
     {
       packageManager: PM.YARN,
-      projectDirCreated: projectDir => {
-        return Promise.all([
-          modifyPackageJson(projectDir, data => {
-            data.dependencies = {
-              "@sentry/electron": "5.11.0",
-              "electron-clear-data": "^1.0.5",
-            }
-            data.devDependencies = {
-              electron: "34.0.2",
-            }
-          }),
-        ])
+      projectDirCreated: async projectDir => {
+        await modifyPackageJson(projectDir, data => {
+          data.dependencies = {
+            "@sentry/electron": "5.11.0",
+            "electron-clear-data": "^1.0.5",
+          }
+          data.devDependencies = {
+            electron: "34.0.2",
+          }
+        })
+        execSync("yarn install", { cwd: projectDir })
       },
       packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
     }
