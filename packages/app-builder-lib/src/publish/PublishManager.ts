@@ -42,6 +42,7 @@ import { expandMacro } from "../util/macroExpander"
 import { WinPackager } from "../winPackager"
 import { createUpdateInfoTasks, UpdateInfoFileTask, writeUpdateInfoFiles } from "./updateInfoBuilder"
 import { resolveModule } from "../util/resolve"
+import { parseUrl } from "../util/pathManager"
 
 const publishForPrWarning =
   "There are serious security concerns with PUBLISH_FOR_PULL_REQUEST=true (see the  CircleCI documentation (https://circleci.com/docs/1.0/fork-pr-builds/) for details)" +
@@ -387,8 +388,8 @@ export function computeDownloadUrl(publishConfiguration: PublishConfiguration, f
       return baseUrlString
     }
 
-    const baseUrl = new url.URL(baseUrlString)
-    return url.format({ ...baseUrl, pathname: path.posix.resolve(baseUrl.pathname || "/", encodeURI(fileName)) })
+    const baseUrl = parseUrl(baseUrlString)
+    return url.format({ ...baseUrl, pathname: path.posix.resolve(baseUrl?.pathname || "/", encodeURI(fileName)) })
   }
 
   let baseUrl
