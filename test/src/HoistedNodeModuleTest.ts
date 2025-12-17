@@ -16,6 +16,7 @@ test("yarn workspace", ({ expect }) =>
       projectDir: "packages/test-app",
     },
     {
+      storeDepsLockfileSnapshot: true,
       packageManager: PM.YARN,
       packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
     }
@@ -30,6 +31,7 @@ test("conflict versions", ({ expect }) =>
       projectDir: "packages/test-app",
     },
     {
+      storeDepsLockfileSnapshot: true,
       packageManager: PM.YARN,
       packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
     }
@@ -44,6 +46,7 @@ test("yarn several workspaces", ({ expect }) =>
       projectDir: "packages/test-app",
     },
     {
+      storeDepsLockfileSnapshot: true,
       packageManager: PM.YARN,
       packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
     }
@@ -61,6 +64,7 @@ test("yarn several workspaces and asarUnpack", ({ expect }) =>
       },
     },
     {
+      storeDepsLockfileSnapshot: true,
       packageManager: PM.YARN,
       packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
     }
@@ -74,6 +78,7 @@ test.ifLinux("yarn two package.json w/ native mac-only module (optional dep)", (
       targets: linuxDirTarget,
     },
     {
+      storeDepsLockfileSnapshot: true,
       packageManager: PM.YARN,
       packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
     }
@@ -88,6 +93,7 @@ test("yarn two package.json", ({ expect }) =>
       targets: linuxDirTarget,
     },
     {
+      storeDepsLockfileSnapshot: true,
       packageManager: PM.YARN,
       projectDirCreated: async projectDir => {
         await modifyPackageJson(projectDir, data => {
@@ -133,6 +139,7 @@ test("yarn two package.json without node_modules", ({ expect }) =>
       targets: linuxDirTarget,
     },
     {
+      storeDepsLockfileSnapshot: true,
       packageManager: PM.YARN,
       projectDirCreated: async projectDir => {
         await modifyPackageJson(projectDir, data => {
@@ -186,6 +193,7 @@ test.ifWindows("should throw when attempting to package a system file", async ({
       },
     },
     {
+      storeDepsLockfileSnapshot: true,
       packageManager: PM.YARN,
     },
     error => {
@@ -230,6 +238,7 @@ test("yarn workspace for scope name", ({ expect }) =>
       projectDir: "packages/test-app",
     },
     {
+      storeDepsLockfileSnapshot: true,
       packageManager: PM.YARN,
       projectDirCreated: async projectDir => {
         const subAppDir = path.join(projectDir, "packages", "test-app")
@@ -253,6 +262,7 @@ test("pnpm es5-ext without hoisted config", ({ expect }) =>
       targets: linuxDirTarget,
     },
     {
+      storeDepsLockfileSnapshot: true,
       packageManager: PM.PNPM,
       projectDirCreated: projectDir => {
         return Promise.all([
@@ -275,6 +285,7 @@ test("pnpm optional dependencies", ({ expect }) =>
       targets: linuxDirTarget,
     },
     {
+      storeDepsLockfileSnapshot: true,
       packageManager: PM.PNPM,
       projectDirCreated: projectDir => {
         return Promise.all([
@@ -300,6 +311,7 @@ test.ifLinux("pnpm optional dependency not installable on linux", ({ expect }) =
       targets: linuxDirTarget,
     },
     {
+      storeDepsLockfileSnapshot: true,
       packageManager: PM.PNPM,
       projectDirCreated: projectDir => {
         return Promise.all([
@@ -326,6 +338,7 @@ test("yarn electron-clear-data", ({ expect }) =>
       targets: Platform.WINDOWS.createTarget(DIR_TARGET, Arch.x64),
     },
     {
+      storeDepsLockfileSnapshot: true,
       packageManager: PM.YARN,
       projectDirCreated: projectDir => {
         return Promise.all([
@@ -351,6 +364,7 @@ test("npm electron-clear-data", ({ expect }) =>
       targets: Platform.WINDOWS.createTarget(DIR_TARGET, Arch.x64),
     },
     {
+      storeDepsLockfileSnapshot: true,
       packageManager: PM.NPM,
       projectDirCreated: projectDir => {
         return Promise.all([
@@ -377,6 +391,7 @@ test("yarn some module add by manual instead of install", ({ expect }) =>
       targets: Platform.WINDOWS.createTarget(DIR_TARGET, Arch.x64),
     },
     {
+      storeDepsLockfileSnapshot: true,
       packageManager: PM.YARN,
       projectDirCreated: async projectDir => {
         await outputFile(path.join(projectDir, "node_modules", "foo", "package.json"), `{"name":"foo","version":"9.0.0","main":"index.js","license":"MIT"}`)
@@ -399,6 +414,7 @@ test("yarn max stack", ({ expect }) =>
       targets: linuxDirTarget,
     },
     {
+      storeDepsLockfileSnapshot: true,
       packageManager: PM.YARN,
       projectDirCreated: projectDir => {
         return Promise.all([
@@ -421,6 +437,7 @@ test("pnpm max stack", ({ expect }) =>
       targets: linuxDirTarget,
     },
     {
+      storeDepsLockfileSnapshot: true,
       packageManager: PM.PNPM,
       projectDirCreated: projectDir => {
         return Promise.all([
@@ -444,6 +461,7 @@ test("yarn ms", ({ expect }) =>
       targets: linuxDirTarget,
     },
     {
+      storeDepsLockfileSnapshot: true,
       packageManager: PM.YARN,
       projectDirCreated: async projectDir => {
         await modifyPackageJson(projectDir, data => {
@@ -470,6 +488,7 @@ test("yarn parse-asn1", ({ expect }) =>
       targets: linuxDirTarget,
     },
     {
+      storeDepsLockfileSnapshot: true,
       packageManager: PM.YARN,
       projectDirCreated: projectDir => {
         return Promise.all([
@@ -493,6 +512,7 @@ test("npm tar", ({ expect }) =>
       targets: linuxDirTarget,
     },
     {
+      storeDepsLockfileSnapshot: true,
       packageManager: PM.NPM,
       projectDirCreated: projectDir => {
         return Promise.all([
@@ -516,6 +536,7 @@ test("pnpm node-linker=hoisted", ({ expect }) =>
       targets: linuxDirTarget,
     },
     {
+      storeDepsLockfileSnapshot: true,
       packageManager: PM.PNPM,
       projectDirCreated: projectDir => {
         return Promise.all([
@@ -538,6 +559,7 @@ test("pnpm shamefully-hoist=true", ({ expect }) =>
       targets: linuxDirTarget,
     },
     {
+      storeDepsLockfileSnapshot: true,
       packageManager: PM.PNPM,
       projectDirCreated: projectDir => {
         return Promise.all([
@@ -560,6 +582,7 @@ test("pnpm public-hoist-pattern=*", ({ expect }) =>
       targets: linuxDirTarget,
     },
     {
+      storeDepsLockfileSnapshot: true,
       packageManager: PM.PNPM,
       projectDirCreated: projectDir => {
         return Promise.all([
@@ -594,6 +617,7 @@ test("pnpm workspace with native module", ({ expect }) =>
       },
     },
     {
+      storeDepsLockfileSnapshot: true,
       packageManager: PM.PNPM,
       projectDirCreated: projectDir => {
         return Promise.all([
