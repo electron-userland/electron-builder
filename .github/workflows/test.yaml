@@ -90,7 +90,7 @@ jobs:
       - name: Download test-runner if exists
         if: needs.run-docker-build.result == 'success'
         id: download-test-runner-image
-        uses: actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806 # v4.1.9
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           name: electron-builder-all-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}
           path: ${{ runner.temp }}
@@ -136,7 +136,7 @@ jobs:
 
       - name: Download test-runner if exists
         if: needs.run-docker-build.result == 'success'
-        uses: actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806 # v4.1.9
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           name: electron-builder-all-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}
           path: ${{ runner.temp }}
@@ -167,11 +167,32 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        TEST_RUNNER_IMAGE_TAG:
-          - dockerfile-archlinux
-          - dockerfile-rpm
-          - dockerfile-debian
-          - dockerfile-appimage
+        test_config:
+          - file: dockerfile-archlinux
+            env:
+              PACKAGE_MANAGER_TO_TEST: pacman
+          - file: dockerfile-rpm
+            env:
+              PACKAGE_MANAGER_TO_TEST: dnf
+          - file: dockerfile-rpm
+            env:
+              PACKAGE_MANAGER_TO_TEST: zypper
+          - file: dockerfile-rpm
+            env:
+              PACKAGE_MANAGER_TO_TEST: yum
+          - file: dockerfile-rpm
+            env:
+              PACKAGE_MANAGER_TO_TEST: rpm
+          - file: dockerfile-debian
+            env:
+              PACKAGE_MANAGER_TO_TEST: apt
+          - file: dockerfile-debian
+            env:
+              PACKAGE_MANAGER_TO_TEST: dpkg
+          - file: dockerfile-appimage
+            env:
+              RUN_APP_IMAGE_TEST: true
+
     steps:
       - name: Checkout code repository
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
@@ -187,13 +208,12 @@ jobs:
 
       - name: e2e Linux Updater tests (install, auto-update, uninstall)
         run: |
-          docker build --platform=linux/amd64 -t $TEST_RUNNER_IMAGE_TAG -f ./test/src/updater/$TEST_RUNNER_IMAGE_TAG .
-          pnpm test-linux
+          docker build --platform=linux/amd64 -t ${{ matrix.test_config.file }} -f ./test/src/updater/${{ matrix.test_config.file }} .
+          TEST_RUNNER_IMAGE_TAG=${{ matrix.test_config.file }} pnpm test-linux
         env:
-          TEST_RUNNER_IMAGE_TAG: ${{ matrix.TEST_RUNNER_IMAGE_TAG }}
           TEST_FILES: blackboxUpdateTest,linuxUpdaterTest
           DEBUG: electron-updater,electron-builder
-          ADDITIONAL_DOCKER_ARGS: "-e RUN_APP_IMAGE_TEST=true"
+          ADDITIONAL_DOCKER_ARGS: "-e PACKAGE_MANAGER_TO_TEST=${{ matrix.test_config.env.PACKAGE_MANAGER_TO_TEST }} -e RUN_APP_IMAGE_TEST=${{ matrix.test_config.env.RUN_APP_IMAGE_TEST || false }}"
 
 
   test-windows:
@@ -225,9 +245,8 @@ jobs:
           TEST_FILES: ${{ matrix.testFiles }}
           FORCE_COLOR: 1
 
-  # Some tests fails while on macOS 26, so we'll keep it this way for now
   test-mac:
-    runs-on: macos-latest
+    runs-on: macos-26
     timeout-minutes: 20
     strategy:
       fail-fast: false
@@ -235,8 +254,8 @@ jobs:
         testFiles:
           - oneClickInstallerTest,assistedInstallerTest,webInstallerTest,packageManagerTest,HoistedNodeModuleTest,rebuilderTest
           - winPackagerTest,winCodeSignTest,BuildTest,blackboxUpdateTest,debTest
-          - masTest,dmgTest,filesTest,macPackagerTest,differentialUpdateTest,macArchiveTest
-          - concurrentBuildsTest
+          - masTest,filesTest,macPackagerTest,macArchiveTest
+          - concurrentBuildsTest,macIconTest
     steps:
       - name: Checkout code repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -258,17 +277,15 @@ jobs:
         env:
           TEST_FILES: ${{ matrix.testFiles }}
           FORCE_COLOR: 1
-          TEST_SEQUENTIAL: true
-          DEBUG: electron-builder
 
-  test-mac-26:
-    runs-on: macos-26
+  test-mac-old:
+    runs-on: macos-latest
     timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
         testFiles:
-          - macIconTest
+          - differentialUpdateTest,blackboxUpdateTest,dmgTest
     steps:
       - name: Checkout code repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2

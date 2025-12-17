@@ -1,5 +1,53 @@
 # electron-forge-maker-appimage
 
+## 26.3.6
+
+### Patch Changes
+
+<details><summary>Updated 1 dependency</summary>
+
+<small>
+
+[`bdfc76b`](https://github.com/electron-userland/electron-builder/commit/bdfc76bf18cb02a38aa7b3624c9fb865c910c393) [`693629c`](https://github.com/electron-userland/electron-builder/commit/693629c7990958ccbf60bd7d59824afc139dc1c2)
+
+</small>
+
+- `app-builder-lib@26.3.6`
+
+</details>
+
+## 26.3.5
+
+### Patch Changes
+
+<details><summary>Updated 1 dependency</summary>
+
+<small>
+
+[`e3f3592`](https://github.com/electron-userland/electron-builder/commit/e3f3592cfa8043c646d1791fa7f41feb45556ea9) [`05e0bc7`](https://github.com/electron-userland/electron-builder/commit/05e0bc7becf4057e7f7794597a57f33d23894f4b) [`e043df5`](https://github.com/electron-userland/electron-builder/commit/e043df57604fb029fd8f9cf7d835b8366ee71aa6)
+
+</small>
+
+- `app-builder-lib@26.3.5`
+
+</details>
+
+## 26.3.4
+
+### Patch Changes
+
+<details><summary>Updated 1 dependency</summary>
+
+<small>
+
+[`e34be3b`](https://github.com/electron-userland/electron-builder/commit/e34be3b3e8486c20cac316b4ae978ce275ea9cf7) [`ada111e`](https://github.com/electron-userland/electron-builder/commit/ada111ebe82d9487c27441969ab15899bafad4c9) [`4d24ebd`](https://github.com/electron-userland/electron-builder/commit/4d24ebd79ea33d8d9afa4a4bf18af90e968d0ff3) [`b81c253`](https://github.com/electron-userland/electron-builder/commit/b81c2539c4da4630b9e955f3afa6ec76cb30447b)
+
+</small>
+
+- `app-builder-lib@26.3.4`
+
+</details>
+
 ## 26.3.3
 
 ### Patch Changes

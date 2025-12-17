@@ -20,7 +20,7 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
       const packageName = depTree.name || depTree.from
       if (packageName) {
         const hoistedPath = path.join(this.rootDir, "node_modules", packageName)
-        if (await this.existsMemoized(hoistedPath)) {
+        if (await this.cache.exists[hoistedPath]) {
           return hoistedPath
         }
       }
@@ -36,24 +36,19 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
       throw new Error(`Cannot compute production dependencies for package with empty name: ${packageName}`)
     }
 
-    const pkgJsonPath = await this.resolvePackage(packageName, depTree.path)
+    const actualPath = await this.resolveActualPath(depTree)
+    const resolvedLocalPath = await this.cache.realPath[actualPath]
+    const p = path.normalize(resolvedLocalPath)
+    const pkgJsonPath = path.join(p, "package.json")
 
-    if (pkgJsonPath == null) {
-      log.warn({ packageName, path: depTree.path, version: depTree.version }, `Cannot find package.json for dependency`)
-      return { path: depTree.path, prodDeps: {}, optionalDependencies: {} }
-    }
     let packageJson: PackageJson
     try {
-      packageJson = await this.readJsonMemoized(pkgJsonPath.entry)
+      packageJson = await this.cache.packageJson[pkgJsonPath]
     } catch (error: any) {
-      log.warn(pkgJsonPath, `Failed to read package.json: ${error.message}`)
-      return { path: pkgJsonPath.packageDir, prodDeps: {}, optionalDependencies: {} }
+      log.warn(null, `Failed to read package.json for ${p}: ${error.message}`)
+      return { path: p, prodDeps: {}, optionalDependencies: {} }
     }
-    return {
-      path: pkgJsonPath.packageDir,
-      prodDeps: { ...packageJson.dependencies, ...packageJson.optionalDependencies },
-      optionalDependencies: { ...packageJson.optionalDependencies },
-    }
+    return { path: p, prodDeps: { ...packageJson.dependencies, ...packageJson.optionalDependencies }, optionalDependencies: { ...packageJson.optionalDependencies } }
   }
 
   protected async extractProductionDependencyGraph(tree: PnpmDependency, dependencyId: string) {
@@ -79,7 +74,7 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
       // Then check if optional dependency path exists (using actual resolved path)
       if (json?.optionalDependencies?.[packageName]) {
         const actualPath = await this.resolveActualPath(dependency)
-        if (!(await this.existsMemoized(actualPath))) {
+        if (!(await this.cache.exists[actualPath])) {
           log.debug(null, `Optional dependency ${packageName}@${dependency.version} path doesn't exist: ${actualPath}`)
           return undefined
         }

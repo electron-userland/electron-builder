@@ -194,6 +194,10 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
       deps = dirDeps
       break
     }
+    const attempt = searchDirectories.indexOf(dir)
+    if (attempt < searchDirectories.length - 1) {
+      log.info({ searchDir: dir, attempt }, "no node modules found in collection, trying next search directory")
+    }
   }
   if (deps.length === 0) {
     log.warn({ searchDirectories: searchDirectories.map(it => log.filePath(it)) }, "no node modules returned while searching directories")

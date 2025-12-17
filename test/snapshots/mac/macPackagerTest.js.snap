@@ -695,30 +695,6 @@ exports[`yarn two package.json w/ native module 3`] = `
             "LICENSE": {
               "size": "<size>",
             },
-            "dist": {
-              "files": {
-                "debug.js": {
-                  "size": "<size>",
-                },
-              },
-            },
-            "node_modules": {
-              "files": {
-                "ms": {
-                  "files": {
-                    "index.js": {
-                      "size": "<size>",
-                    },
-                    "license.md": {
-                      "size": "<size>",
-                    },
-                    "package.json": {
-                      "size": "<size>",
-                    },
-                  },
-                },
-              },
-            },
             "package.json": {
               "size": "<size>",
             },
@@ -906,10 +882,6 @@ exports[`yarn two package.json w/ native module 3`] = `
                       "size": "<size>",
                       "unpacked": true,
                     },
-                    "node_addon_api.gyp": {
-                      "size": "<size>",
-                      "unpacked": true,
-                    },
                     "node_api.gyp": {
                       "size": "<size>",
                       "unpacked": true,
@@ -945,10 +917,6 @@ exports[`yarn two package.json w/ native module 3`] = `
                           "unpacked": true,
                         },
                         "conversion.js": {
-                          "size": "<size>",
-                          "unpacked": true,
-                        },
-                        "eslint-format.js": {
                           "size": "<size>",
                           "unpacked": true,
                         },
@@ -2070,7 +2038,6 @@ exports[`yarn two package.json w/ native module 4`] = `
   "app.asar.unpacked/node_modules/node-mac-permissions/node_modules/node-addon-api/napi-inl.deprecated.h",
   "app.asar.unpacked/node_modules/node-mac-permissions/node_modules/node-addon-api/napi-inl.h",
   "app.asar.unpacked/node_modules/node-mac-permissions/node_modules/node-addon-api/napi.h",
-  "app.asar.unpacked/node_modules/node-mac-permissions/node_modules/node-addon-api/node_addon_api.gyp",
   "app.asar.unpacked/node_modules/node-mac-permissions/node_modules/node-addon-api/node_api.gyp",
   "app.asar.unpacked/node_modules/node-mac-permissions/node_modules/node-addon-api/noexcept.gypi",
   "app.asar.unpacked/node_modules/node-mac-permissions/node_modules/node-addon-api/nothing.c",
@@ -2082,14 +2049,7 @@ exports[`yarn two package.json w/ native module 4`] = `
     "benchmark": "^2.1.4",
     "bindings": "^1.5.0",
     "clang-format": "^1.4.0",
-    "eslint": "^7.32.0",
-    "eslint-config-semistandard": "^16.0.0",
-    "eslint-config-standard": "^16.0.3",
-    "eslint-plugin-import": "^2.24.2",
-    "eslint-plugin-node": "^11.1.0",
-    "eslint-plugin-promise": "^5.1.0",
-    "fs-extra": "^11.1.1",
-    "path": "^0.12.7",
+    "fs-extra": "^9.0.1",
     "pre-commit": "^1.2.2",
     "safe-buffer": "^5.1.1"
   },
@@ -2099,6 +2059,7 @@ exports[`yarn two package.json w/ native module 4`] = `
   "license": "MIT",
   "main": "index.js",
   "name": "node-addon-api",
+  "optionalDependencies": {},
   "readme": "README.md",
   "repository": {
     "type": "git",
@@ -2110,7 +2071,7 @@ exports[`yarn two package.json w/ native module 4`] = `
     "tools/"
   ],
   "pre-commit": "lint",
-  "version": "7.1.1",
+  "version": "3.2.1",
   "support": true
 }",
     "name": "app.asar.unpacked/node_modules/node-mac-permissions/node_modules/node-addon-api/package.json",
@@ -2119,7 +2080,6 @@ exports[`yarn two package.json w/ native module 4`] = `
   "app.asar.unpacked/node_modules/node-mac-permissions/node_modules/node-addon-api/tools/check-napi.js",
   "app.asar.unpacked/node_modules/node-mac-permissions/node_modules/node-addon-api/tools/clang-format.js",
   "app.asar.unpacked/node_modules/node-mac-permissions/node_modules/node-addon-api/tools/conversion.js",
-  "app.asar.unpacked/node_modules/node-mac-permissions/node_modules/node-addon-api/tools/eslint-format.js",
   "app.asar.unpacked/node_modules/node-mac-permissions/node_modules/bindings/LICENSE.md",
   "app.asar.unpacked/node_modules/node-mac-permissions/node_modules/bindings/bindings.js",
   {
