@@ -42,7 +42,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     await manager.initialize()
     return manager
   })
-  private readonly signingQueue = Promise.resolve(true)
+  private signingQueue = Promise.resolve(true)
 
   get isForceCodeSigningVerification(): boolean {
     return this.platformSpecificBuildOptions.verifyUpdateCodeSignature !== false
@@ -127,12 +127,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
       return false
     }
 
-    this.signingQueue
-      .then(() => this._sign(file))
-      .catch(e => {
-        log.error(logFields, `cannot sign file: ${e.message || e.stack}`)
-        return false
-      })
+    this.signingQueue = this.signingQueue.then(() => this._sign(file))
     return this.signingQueue
   }
 
