@@ -1,5 +1,5 @@
 ---
-"app-builder-lib": patch
+"app-builder-lib": minor
 ---
 
-chore: move the manual node module traversal to the separate class. Add `env: { COREPACK_ENABLE_STRICT: "0", ...process.env },` to allow `npm list` to work across environments.
+feat: move the manual node module traversal to the separate class. Add a property to allow overrides on `packageManager`
