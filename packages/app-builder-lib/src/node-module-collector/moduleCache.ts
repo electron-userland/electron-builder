@@ -32,7 +32,14 @@ export class ModuleCache {
     this.packageJson = this.createAsyncProxy(this.packageJsonMap, (path: string) => fs.readJson(path))
     this.exists = this.createAsyncProxy(this.existsMap, (path: string) => exists(path))
     this.lstat = this.createAsyncProxy(this.lstatMap, (path: string) => fs.lstat(path))
-    this.requireResolve = this.createAsyncProxy(this.requireResolveMap, (path: string) => require.resolve(path))
+    this.requireResolve = this.createAsyncProxy(this.requireResolveMap, (cacheKey: string) => {
+      try {
+        const [name, path] = cacheKey.split("::")
+        return Promise.resolve(require.resolve(name, { paths: [path] }))
+      } catch {
+        return Promise.resolve(null)
+      }
+    })
     this.realPath = this.createAsyncProxy(this.realPathMap, async (path: string) => {
       const p = resolve(path)
       try {

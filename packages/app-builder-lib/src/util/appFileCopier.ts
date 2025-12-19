@@ -1,4 +1,4 @@
-import { AsyncTaskManager, FileCopier, FileTransformer, Link, log, MAX_FILE_REQUESTS, statOrNull, walk } from "builder-util"
+import { AsyncTaskManager, FileCopier, FileTransformer, isEmptyOrSpaces, Link, log, MAX_FILE_REQUESTS, statOrNull, walk } from "builder-util"
 import { Stats } from "fs"
 import { ensureSymlink } from "fs-extra"
 import { mkdir, readlink } from "fs/promises"
@@ -182,7 +182,7 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
   const { tempDirManager, cancellationToken, appDir, projectDir } = packager
 
   let deps: Array<NodeModuleInfo> = []
-  const searchDirectories = Array.from(new Set([appDir, projectDir, await packager.getWorkspaceRoot()])).filter((it): it is string => it != null)
+  const searchDirectories = Array.from(new Set([appDir, projectDir, await packager.getWorkspaceRoot()])).filter((it): it is string => !isEmptyOrSpaces(it))
   for (const dir of searchDirectories) {
     if (cancellationToken.cancelled) {
       throw new Error("user cancelled")

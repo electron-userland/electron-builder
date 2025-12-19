@@ -122,13 +122,18 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     )
   }
 
-  protected cacheKey(pkg: ProdDepType): string {
+  protected cacheKey(pkg: Pick<ProdDepType, "name" | "version" | "path">): string {
     const rel = path.relative(this.rootDir, pkg.path)
     return `${pkg.name}::${pkg.version}::${rel ?? "."}`
   }
 
-  protected packageVersionString(pkg: ProdDepType): string {
+  protected packageVersionString(pkg: Pick<ProdDepType, "name" | "version">): string {
     return `${pkg.name}@${pkg.version}`
+  }
+
+  protected isProdDependency(depName: string, pkg: ProdDepType): boolean {
+    const prodDeps = { ...pkg.dependencies, ...pkg.optionalDependencies }
+    return prodDeps[depName] != null
   }
 
   /**
@@ -464,6 +469,63 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
       }
     }
 
+    return null
+  }
+
+  protected async resolvePackage(packageName: string, fromDir: string): Promise<string | null> {
+    const key = (searchPath: string) => {
+      return this.cacheKey({
+        name: packageName,
+        version: "",
+        path: searchPath,
+      })
+    }
+
+    const cache = await this.cache.requireResolve[key(fromDir)]
+    if (cache) {
+      return cache
+    }
+
+    // 1. NESTED under fromDir/node_modules/<name>
+    let candidate = path.join(fromDir, "node_modules", packageName)
+    let pkgJson = path.join(candidate, "package.json")
+    let pkg = (await this.cache.exists[pkgJson]) ? await this.cache.requireResolve[key(candidate)] : null
+    if (pkg) {
+      return pkg
+    }
+
+    // 2. HOISTED under rootDir/node_modules/<name>
+    candidate = path.join(this.rootDir, "node_modules", packageName)
+    pkgJson = path.join(candidate, "package.json")
+    pkg = (await this.cache.exists[pkgJson]) ? await this.cache.requireResolve[key(candidate)] : null
+    if (pkg) {
+      return pkg
+    }
+
+    // 3. FALLBACK: try parent directories BFS (classic Node-style search)
+    let current = fromDir
+    while (true) {
+      const nm = path.join(current, "node_modules", packageName)
+      const pkgJson = path.join(nm, "package.json")
+
+      const pkg = (await this.cache.exists[pkgJson]) ? await this.cache.requireResolve[key(nm)] : null
+      if (pkg) {
+        return pkg
+      }
+
+      if (current === this.rootDir || current === path.parse(current).root) {
+        break
+      }
+
+      const parent = path.dirname(current)
+      if (parent === current) {
+        break
+      }
+      current = parent
+    }
+
+    // 4. LAST RESORT: DO NOT throw — just return null. You must set cache to null to avoid repeated lookups
+    this.cache.requireResolve[key(fromDir)] = Promise.resolve(null)
     return null
   }
 }
