@@ -1,5 +1,30 @@
 # app-builder-lib
 
+## 26.4.0
+
+### Minor Changes
+
+- Feat: allow platform specific build options to override top-level publish configuration _[`#9425`](https://github.com/electron-userland/electron-builder/pull/9425) [`5f962f9`](https://github.com/electron-userland/electron-builder/commit/5f962f9cae875da1208caa96fe040b2fe9224ea7) [@mmaietta](https://github.com/mmaietta)_
+
+### Patch Changes
+
+- Fix: disable corepack strict mode (with optional override) to allow `npm list` to work on yarn berry and bun project setups _[`#9443`](https://github.com/electron-userland/electron-builder/pull/9443) [`e70da99`](https://github.com/electron-userland/electron-builder/commit/e70da99e34c1cc913b237c5a58456bf752a378bc) [@mmaietta](https://github.com/mmaietta)_
+- Fix: add signing queue for Windows packager to avoid concurrent signing with AzureTrustedSigning _[`#9454`](https://github.com/electron-userland/electron-builder/pull/9454) [`b66832d`](https://github.com/electron-userland/electron-builder/commit/b66832d6fc633b4b12ccdffc0501c6d31b48a85e) [@mmaietta](https://github.com/mmaietta)_
+- Chore: The url.parse() function has been deprecated in Node 24. Migrating to `url.URL` _[`#9417`](https://github.com/electron-userland/electron-builder/pull/9417) [`9110cb4`](https://github.com/electron-userland/electron-builder/commit/9110cb432e273d526e40f02337167544ed371605) [@mmaietta](https://github.com/mmaietta)_
+- Fix: search app directory before package directory to respect two-package.json project setups _[`#9450`](https://github.com/electron-userland/electron-builder/pull/9450) [`39ae6a7`](https://github.com/electron-userland/electron-builder/commit/39ae6a7fb7109e8ab865fd1438592440110f4b71) [@mmaietta](https://github.com/mmaietta)_
+- Chore: cleanup logging for node module collectors by detecting non-installed optional deps _[`#9456`](https://github.com/electron-userland/electron-builder/pull/9456) [`78910a9`](https://github.com/electron-userland/electron-builder/commit/78910a913bb93c9e429bf8699338a8bf58f5d411) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+</small>
+
+- `dmg-builder@26.4.0`
+- `electron-builder-squirrel-windows@26.4.0`
+
+</details>
+
 ## 26.3.6
 
 ### Patch Changes
