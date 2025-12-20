@@ -95,7 +95,7 @@ export class AsarPackager {
     const streamOrdering: string[] = []
     const normalizedUnpackedPaths = Array.from(unpackedPaths).map(p => path.normalize(p))
 
-    // Optimized unpacked check with short-circuit evaluation
+    // Check whether a file or directory should be unpacked, using pre-normalized unpacked paths and early returns
     const isUnpacked = (dir: string, file?: string, stat?: FilterStats): boolean => {
       const normalizedDir = path.normalize(dir)
 
@@ -301,7 +301,9 @@ export class AsarPackager {
 
   private async checkAgainstRoots(target: string, allowRoots: string[]): Promise<boolean> {
     const resolved = await resolvePath(target)
-    if (!resolved) return false
+    if (resolved == null || isEmptyOrSpaces(resolved)) {
+      return false
+    }
 
     for (const root of allowRoots) {
       if (resolved === root || resolved.startsWith(root + path.sep)) {
