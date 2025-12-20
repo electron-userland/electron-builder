@@ -149,7 +149,13 @@ export class AsarPackager {
     }
 
     // Build final results array maintaining processing order
-    return streamOrdering.map(path => resultsMap.get(path)!).filter(Boolean)
+    return streamOrdering.reduce<AsarStreamType[]>((streams, path) => {
+      const stream = resultsMap.has(path) ? resultsMap.get(path) : null
+      if (stream != null) {
+        streams.push(stream)
+      }
+      return streams
+    }, [])
   }
 
   private ensureParentDirectories(destination: string, resultsMap: Map<string, AsarStreamType>, streamOrdering: string[]): void {
