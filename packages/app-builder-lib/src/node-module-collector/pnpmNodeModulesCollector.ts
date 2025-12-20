@@ -14,21 +14,6 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
     return ["list", "--prod", "--json", "--depth", "Infinity", "--long"]
   }
 
-  private async resolveActualPath(depTree: PnpmDependency): Promise<string> {
-    // If using hoisted mode, try to find the package at the hoisted location first
-    if (await this.isHoisted.value) {
-      const packageName = depTree.name || depTree.from
-      if (packageName) {
-        const hoistedPath = path.join(this.rootDir, "node_modules", packageName)
-        if (await this.cache.exists[hoistedPath]) {
-          return hoistedPath
-        }
-      }
-    }
-    // Fall back to the reported path (which might be the .pnpm store path)
-    return depTree.path
-  }
-
   private async getProductionDependencies(depTree: PnpmDependency): Promise<{ path: string; dependencies: Record<string, string>; optionalDependencies: Record<string, string> }> {
     const packageName = depTree.name || depTree.from
     if (isEmptyOrSpaces(packageName)) {
@@ -36,8 +21,8 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
       throw new Error(`Cannot compute production dependencies for package with empty name: ${packageName}`)
     }
 
-    const actualPath = await this.resolveActualPath(depTree)
-    const resolvedLocalPath = await this.cache.realPath[actualPath]
+    const actualPath = await this.locatePackageVersion(depTree.path, packageName, depTree.version).then(it => it?.packageDir)
+    const resolvedLocalPath = await this.cache.realPath[actualPath ?? depTree.path]
     const p = path.normalize(resolvedLocalPath)
     const pkgJsonPath = path.join(p, "package.json")
 
