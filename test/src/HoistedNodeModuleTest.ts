@@ -528,7 +528,7 @@ test("npm tar", ({ expect }) =>
   ))
 
 //github.com/electron-userland/electron-builder/issues/8881
-test.only("pnpm node-linker=hoisted", ({ expect }) =>
+test("pnpm node-linker=hoisted", ({ expect }) =>
   assertPack(
     expect,
     "test-app-hoisted",
