@@ -109,11 +109,7 @@ async function findWorkspaceRoot(pm: PM, cwd: string): Promise<string | undefine
       break
   }
 
-  const output = await spawn(command.command, command.args, {
-    cwd,
-    env: { COREPACK_ENABLE_STRICT: "0", ...process.env }, // allow `process.env` overrides
-    stdio: ["ignore", "pipe", "ignore"],
-  })
+  const output = await spawn(command.command, command.args, { cwd, stdio: ["ignore", "pipe", "ignore"] })
     .then(async it => {
       const out: string | undefined = it?.trim()
       if (!out) {
