@@ -79,7 +79,7 @@ export class ModuleManager {
     return { ...result, packageDir: await this.realPath[result.packageDir] }
   }
 
-  public async locatePackageVersion({parentDir, pkgName, requiredRange}: {parentDir: string, pkgName: string, requiredRange?: string}): Promise<Package | null> {
+  public async locatePackageVersion({ parentDir, pkgName, requiredRange }: { parentDir: string; pkgName: string; requiredRange?: string }): Promise<Package | null> {
     // 1) check direct parent node_modules/pkgName first
     const direct = path.join(path.resolve(parentDir), "node_modules", pkgName, "package.json")
     if (await this.exists[direct]) {
