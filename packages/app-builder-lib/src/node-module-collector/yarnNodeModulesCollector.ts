@@ -145,7 +145,7 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
       }
 
       // Find the correct package path that matches the required version
-      const pkg = await this.locatePackageVersion(parentPath, pkgName, version)
+      const pkg = await this.locatePackageWithVersion({ name: pkgName, version, path: parentPath })
       const pkgPath = pkg?.packageDir
 
       if (!pkgPath) {

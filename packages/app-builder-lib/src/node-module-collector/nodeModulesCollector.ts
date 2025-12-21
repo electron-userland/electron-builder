@@ -1,4 +1,4 @@
-import { isEmptyOrSpaces, log, retry, TmpDir } from "builder-util"
+import { log, retry, TmpDir } from "builder-util"
 import * as childProcess from "child_process"
 import * as fs from "fs-extra"
 import { createWriteStream } from "fs-extra"
@@ -8,7 +8,6 @@ import { hoist, type HoisterResult, type HoisterTree } from "./hoist"
 import { ModuleManager } from "./moduleCache"
 import { getPackageManagerCommand, PM } from "./packageManager"
 import type { Dependency, DependencyGraph, NodeModuleInfo, PackageJson } from "./types"
-
 
 export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDepType, OptionalDepType>, OptionalDepType> {
   private readonly nodeModules: NodeModuleInfo[] = []
@@ -61,6 +60,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
 
   protected abstract getArgs(): string[]
   protected abstract parseDependenciesTree(jsonBlob: string): Promise<ProdDepType>
+  protected abstract extractProductionDependencyGraph(tree: Dependency<ProdDepType, OptionalDepType>, dependencyId: string): Promise<void>
   protected abstract collectAllDependencies(tree: Dependency<ProdDepType, OptionalDepType>, appPackageName: string): Promise<void>
 
   protected async getDependenciesTree(pm: PM): Promise<ProdDepType> {
@@ -110,87 +110,9 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     )
   }
 
-    protected async extractProductionDependencyGraph(tree: ProdDepType, dependencyId: string): Promise<void> {
-    const packageName = tree.name
-
-    if (this.productionGraph[dependencyId]) {
-      return
-    }
-    // Initialize with empty dependencies array first to mark this dependency as "in progress"
-    // After initialization, if there are libraries with the same name+version later, they will not be searched recursively again
-    // This will prevents infinite loops when circular dependencies are encountered.
-    this.productionGraph[dependencyId] = { dependencies: [] }
-
-    const treeDep = { ...(tree.dependencies || {}), ...(tree.optionalDependencies || {}) }
-    const json = packageName === dependencyId ? null : await this.getProductionDependencies(tree)
-    const prodDependencies = json ? { ...json.dependencies, ...json.optionalDependencies } : treeDep
-
-    const collectedDependencies: string[] = []
-
-    if (json == null) {
-      for (const packageName in tree.dependencies) {
-        if (!this.isProdDependency(packageName, tree)) {
-          continue
-        }
-        const dependency = tree.dependencies[packageName]
-        const childDependencyId = this.packageVersionString(dependency)
-        await this.extractProductionDependencyGraph(dependency, childDependencyId)
-        collectedDependencies.push(childDependencyId)
-      }
-      this.productionGraph[dependencyId] = { dependencies: collectedDependencies }
-
-      // Return early since we have processed all dependencies
-      return
-    }
-
-    // First collect regular dependencies
-    for (const packageName in json.dependencies) {
-      if (!this.isProdDependency(packageName, tree)) {
-        continue
-      }
-      const version = json.dependencies[packageName]
-      const childDependencyId = this.packageVersionString({ name: packageName, version })
-      collectedDependencies.push(childDependencyId)
-    }
-
-    // Then collect optional dependencies if they exist
-
-
-    for (const packageName in treeDep) {
-      if (!prodDependencies[packageName]) {
-        continue
-      }
-
-      // Then check if optional dependency path exists (using actual resolved path)
-      const version = json?.optionalDependencies?.[packageName] || tree.optionalDependencies?.[packageName]?.version
-    const result = await this.cache.packageData[this.cache.versionedCacheKey({ name: packageName, semver: depTree.version, path: depTree.path })]
-      const actualPath = result?.packageDir
-      if (actualPath == null || !(await this.cache.exists[actualPath])) {
-        log.debug({ packageName, version: version, searchPath: actualPath }, `optional dependency not installed, skipping`)
-        continue
-      }
-      const dependency = treeDep[packageName]
-      const childDependencyId = this.packageVersionString(dependency)
-      await this.extractProductionDependencyGraph(dependency, childDependencyId)
-      collectedDependencies.push(childDependencyId)
-    }
-    this.productionGraph[dependencyId] = { dependencies: collectedDependencies }
-  }
-
-protected async getProductionDependencies(depTree: ProdDepType): Promise<{ path: string; dependencies: Record<string, string>; optionalDependencies: Record<string, string> }> {
-    const packageName = depTree.name
-    if (isEmptyOrSpaces(packageName)) {
-      log.error(depTree, `Cannot determine production dependencies for package with empty name`)
-      throw new Error(`Cannot compute production dependencies for package with empty name: ${packageName}`)
-    }
-
-    const result = await this.cache.packageData[this.cache.versionedCacheKey({ name: packageName, semver: depTree.version, path: depTree.path })]
-    if (result == null) {
-      return { path: path.resolve(depTree.path), dependencies: {}, optionalDependencies: {} }
-    }
-
-    const { dependencies, optionalDependencies } = result.packageJson
-    return { path: result.packageDir, dependencies: { ...dependencies }, optionalDependencies: { ...optionalDependencies } }
+  protected cacheKey(pkg: Pick<ProdDepType, "name" | "version" | "path">): string {
+    const rel = path.relative(this.rootDir, pkg.path)
+    return `${pkg.name}::${pkg.version}::${rel ?? "."}`
   }
 
   protected packageVersionString(pkg: Pick<ProdDepType, "name" | "version">): string {
@@ -202,7 +124,7 @@ protected async getProductionDependencies(depTree: ProdDepType): Promise<{ path:
     return prodDeps[depName] != null
   }
 
-  protected async locatePackageVersion(depTree: ProdDepType): Promise<{ packageDir: string; packageJson: PackageJson } | null> {
+  protected async locatePackageWithVersion(depTree: Pick<ProdDepType, "name" | "version" | "path">): Promise<{ packageDir: string; packageJson: PackageJson } | null> {
     const key = this.cache.versionedCacheKey({ name: depTree.name, semver: depTree.version, path: depTree.path })
     const result = await this.cache.packageData[key]
     return result
@@ -360,6 +282,4 @@ protected async getProductionDependencies(depTree: ProdDepType): Promise<{ path:
       })
     })
   }
-
-
 }

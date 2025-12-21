@@ -4,14 +4,13 @@ import * as fs from "fs-extra"
 import * as path from "path"
 import * as semver from "semver"
 
-
 export type Package = { packageDir: string; packageJson: PackageJson }
 
 // Type aliases for clarity
 type JsonCache = Record<string, Promise<PackageJson>>
 type RealPathCache = Record<string, Promise<string>>
 type ExistsCache = Record<string, Promise<boolean>>
-type LstatCache = Record<string, Promise<fs.Stats>>
+type LstatCache = Record<string, Promise<fs.Stats | null>>
 type PackageCache = Record<string, Promise<Package | null>>
 
 export class ModuleManager {
@@ -36,19 +35,11 @@ export class ModuleManager {
     this.packageData = this.createAsyncProxy(this.packageDataMap, this.locatePackageVersionFromCacheKey.bind(this))
     this.json = this.createAsyncProxy(this.jsonMap, (p: string) => fs.readJson(p).catch(() => null))
     this.exists = this.createAsyncProxy(this.existsMap, (p: string) => exists(p))
-    this.lstat = this.createAsyncProxy(this.lstatMap, (p: string) => fs.lstat(p))
+    this.lstat = this.createAsyncProxy(this.lstatMap, (p: string) => fs.lstat(p).catch(() => null))
     this.realPath = this.createAsyncProxy(this.realPathMap, async (p: string) => {
       const filePath = path.resolve(p)
-      try {
-        const stats = await this.lstat[filePath]
-        if (stats.isSymbolicLink()) {
-          return await fs.realpath(filePath)
-        }
-        return filePath
-      } catch (error: any) {
-        log.debug({ filePath: filePath, message: error.message || error.stack }, "error resolving path")
-      }
-      return filePath
+      const stat = await this.lstat[filePath]
+      return stat?.isSymbolicLink() ? fs.realpath(filePath) : filePath
     })
   }
 
@@ -170,7 +161,7 @@ export class ModuleManager {
    */
   private async downwardSearch(parentDir: string, pkgName: string, requiredRange?: string, maxExplored = 2000, maxDepth = 6): Promise<Package | null> {
     const start = path.join(path.resolve(parentDir), "node_modules")
-    if (!(await this.exists[start]) || !(await this.lstat[start]).isDirectory()) {
+    if (!(await this.exists[start]) || !(await this.lstat[start])?.isDirectory()) {
       return null
     }
 
@@ -200,7 +191,7 @@ export class ModuleManager {
         // handle scoped packages @scope/name
         if (entry.startsWith("@")) {
           // queue the scope directory itself to explore its children
-          if ((await this.exists[entryPath]) && (await this.lstat[entryPath]).isDirectory()) {
+          if ((await this.exists[entryPath]) && (await this.lstat[entryPath])?.isDirectory()) {
             const scopeEntries = await fs.readdir(entryPath)
             for (const sc of scopeEntries) {
               const scPath = path.join(entryPath, sc)
@@ -214,7 +205,7 @@ export class ModuleManager {
               }
               // enqueue scPath/node_modules to explore further
               const scNodeModules = path.join(scPath, "node_modules")
-              if ((await this.exists[scNodeModules]) && (await this.lstat[scNodeModules]).isDirectory()) {
+              if ((await this.exists[scNodeModules]) && (await this.lstat[scNodeModules])?.isDirectory()) {
                 if (!visited.has(scNodeModules)) {
                   visited.add(scNodeModules)
                   queue.push({ dir: scNodeModules, depth: depth + 1 })
@@ -228,7 +219,7 @@ export class ModuleManager {
         // check for direct candidate: entry/node_modules/pkgName
         try {
           const stat = await this.lstat[entryPath]
-          if (!stat.isDirectory()) {
+          if (!stat?.isDirectory()) {
             continue
           }
         } catch {
@@ -254,7 +245,7 @@ export class ModuleManager {
 
         // enqueue entry/node_modules for deeper traversal
         const nextNodeModules = path.join(entryPath, "node_modules")
-        if ((await this.exists[nextNodeModules]) && (await this.lstat[nextNodeModules]).isDirectory()) {
+        if ((await this.exists[nextNodeModules]) && (await this.lstat[nextNodeModules])?.isDirectory()) {
           if (!visited.has(nextNodeModules)) {
             visited.add(nextNodeModules)
             queue.push({ dir: nextNodeModules, depth: depth + 1 })
