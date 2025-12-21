@@ -125,8 +125,11 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
   }
 
   protected async locatePackageWithVersion(depTree: Pick<ProdDepType, "name" | "version" | "path">): Promise<{ packageDir: string; packageJson: PackageJson } | null> {
-    const key = this.cache.versionedCacheKey({ name: depTree.name, semver: depTree.version, path: depTree.path })
-    const result = await this.cache.packageData[key]
+    const result = await this.cache.locatePackageVersion({
+      parentDir: depTree.path,
+      pkgName: depTree.name,
+      requiredRange: depTree.version,
+    })
     return result
   }
   /**

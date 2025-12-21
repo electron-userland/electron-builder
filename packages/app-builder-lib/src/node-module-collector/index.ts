@@ -1,4 +1,4 @@
-import { CancellationToken, Nullish } from "builder-util-runtime"
+import { Nullish } from "builder-util-runtime"
 import { TmpDir } from "temp-file"
 import { NpmNodeModulesCollector } from "./npmNodeModulesCollector"
 import { detectPackageManager, getPackageManagerCommand, PM } from "./packageManager"
@@ -8,7 +8,7 @@ import { YarnBerryNodeModulesCollector } from "./yarnBerryNodeModulesCollector"
 import { YarnNodeModulesCollector } from "./yarnNodeModulesCollector"
 import { BunNodeModulesCollector } from "./bunNodeModulesCollector"
 import { Lazy } from "lazy-val"
-import { spawn, log, exists } from "builder-util"
+import { spawn, log, exists, isEmptyOrSpaces } from "builder-util"
 import * as fs from "fs-extra"
 import * as path from "path"
 import { TraversalNodeModulesCollector } from "./traversalNodeModulesCollector"
@@ -38,12 +38,10 @@ export function getNodeModules(
   {
     rootDir,
     tempDirManager,
-    cancellationToken,
     packageName,
   }: {
     rootDir: string
     tempDirManager: TmpDir
-    cancellationToken: CancellationToken
     packageName: string
   }
 ): Promise<NodeModuleInfo[]> {
@@ -63,7 +61,7 @@ export const determinePackageManagerEnv = ({
   packageManagerOverride: Configuration["packageManager"]
 }) =>
   new Lazy(async () => {
-    const availableDirs = [projectDir, appDir, workspaceRoot].filter((it): it is string => it != null)
+    const availableDirs = [workspaceRoot, projectDir, appDir].filter((it): it is string => !isEmptyOrSpaces(it))
     const override =
       packageManagerOverride != null && packageManagerOverride !== "auto"
         ? { pm: packageManagerOverride, resolvedDirectory: availableDirs[0], corepackConfig: undefined, detectionMethod: "override" }

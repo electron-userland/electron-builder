@@ -14,15 +14,15 @@ type LstatCache = Record<string, Promise<fs.Stats | null>>
 type PackageCache = Record<string, Promise<Package | null>>
 
 export class ModuleManager {
-  /** Cache for package.json contents (readJson/require) */
+  /** Cache for package.json contents (readJson) */
   readonly json: JsonCache
-  /** Cache for resolved real paths (realpath) */
+  /** Cache for resolved real paths (if symlink, realpath; otherwise resolve) */
   readonly realPath: RealPathCache
   /** Cache for file/directory existence checks */
   readonly exists: ExistsCache
   /** Cache for lstat results */
   readonly lstat: LstatCache
-  /** Cache for package lookups (key: "packageName||fromDir||semverRange") */
+  /** Cache for package lookups (key: "packageName||fromDir||semverRange"). Use helper function `versionedCacheKey` */
   readonly packageData: PackageCache
 
   private readonly jsonMap: Map<string, PackageJson | null> = new Map()
@@ -72,14 +72,14 @@ export class ModuleManager {
 
   protected async locatePackageVersionFromCacheKey(key: string): Promise<Package | null> {
     const [name, fromDir, semverRange] = key.split("||")
-    const result = await this.locatePackageVersion(fromDir, name, semverRange)
+    const result = await this.locatePackageVersion({ parentDir: fromDir, pkgName: name, requiredRange: semverRange })
     if (result == null) {
       return null
     }
     return { ...result, packageDir: await this.realPath[result.packageDir] }
   }
 
-  private async locatePackageVersion(parentDir: string, pkgName: string, requiredRange?: string): Promise<Package | null> {
+  public async locatePackageVersion({parentDir, pkgName, requiredRange}: {parentDir: string, pkgName: string, requiredRange?: string}): Promise<Package | null> {
     // 1) check direct parent node_modules/pkgName first
     const direct = path.join(path.resolve(parentDir), "node_modules", pkgName, "package.json")
     if (await this.exists[direct]) {

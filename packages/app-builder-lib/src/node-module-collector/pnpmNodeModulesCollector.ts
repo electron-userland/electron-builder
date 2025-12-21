@@ -21,7 +21,7 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
       throw new Error(`Cannot compute production dependencies for package with empty name: ${packageName}`)
     }
 
-    const result = await this.cache.packageData[this.cache.versionedCacheKey({ name: packageName, semver: depTree.version, path: depTree.path })]
+    const result = await this.cache.locatePackageVersion({ parentDir: depTree.path, pkgName: packageName, requiredRange: depTree.version })
     if (result == null) {
       return { path: path.resolve(depTree.path), dependencies: {}, optionalDependencies: {} }
     }
