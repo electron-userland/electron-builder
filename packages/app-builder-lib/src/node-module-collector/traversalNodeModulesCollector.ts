@@ -54,7 +54,7 @@ export class TraversalNodeModulesCollector extends NodeModulesCollector<Traverse
         throw new Error(`package.json not found at ${pkgPath}`)
       }
 
-      const pkg: PackageJson = await this.cache.packageJson[pkgPath]
+      const pkg: PackageJson = await this.cache.json[pkgPath]
       const resolvedPackageDir = await this.cache.realPath[packageDir]
 
       // Use resolved path as the unique identifier to prevent circular dependencies

@@ -28,7 +28,7 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
 
     let packageJson: PackageJson
     try {
-      packageJson = await this.cache.packageJson[pkgJsonPath]
+      packageJson = await this.cache.json[pkgJsonPath]
     } catch (error: any) {
       log.warn(null, `Failed to read package.json for ${p}: ${error.message}`)
       return { path: p, dependencies: {}, optionalDependencies: {} }

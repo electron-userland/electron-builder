@@ -86,7 +86,7 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
     if (!parsedTree) {
       throw new Error('Failed to extract Yarn tree: no "type":"tree" line found in console output')
     }
-    const rootPkgJson = await this.cache.packageJson[path.join(this.rootDir, "package.json")]
+    const rootPkgJson = await this.cache.json[path.join(this.rootDir, "package.json")]
 
     const normalizedTree = await this.normalizeTree({ tree: parsedTree, seen: new Set<string>(), appName: rootPkgJson.name, parentPath: this.rootDir, parentPkgJson: rootPkgJson })
 
@@ -119,7 +119,7 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
     if (!parentPkgJson && parentPath) {
       const parentPkgPath = path.join(parentPath, "package.json")
       try {
-        parentPkgJson = await this.cache.packageJson[parentPkgPath]
+        parentPkgJson = await this.cache.json[parentPkgPath]
       } catch {
         // Parent might not have package.json (e.g., root workspace)
       }
@@ -165,7 +165,7 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
 
       // Recursively process children, passing this package's info
       if (node.children && node.children.length > 0) {
-        const childPkgJson = await this.cache.packageJson[path.join(pkgPath, "package.json")]
+        const childPkgJson = await this.cache.json[path.join(pkgPath, "package.json")]
         const childDeps = await this.normalizeTree({
           tree: node.children,
           seen,
@@ -186,7 +186,7 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
   }
 
   protected async collectAllDependencies(tree: YarnDependency, packageToExclude: string) {
-    const rootPkgJson = await this.cache.packageJson[path.join(this.rootDir, "package.json")]
+    const rootPkgJson = await this.cache.json[path.join(this.rootDir, "package.json")]
     const failedPackages = new Set<string>()
 
     const collect = async (

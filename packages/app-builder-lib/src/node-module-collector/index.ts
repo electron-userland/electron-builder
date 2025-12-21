@@ -16,21 +16,21 @@ import { Configuration } from "../configuration"
 
 export { getPackageManagerCommand, PM }
 
-export function getCollectorByPackageManager(pm: PM, rootDir: string, tempDirManager: TmpDir, cancellationToken: CancellationToken) {
+export function getCollectorByPackageManager(pm: PM, rootDir: string, tempDirManager: TmpDir) {
   switch (pm) {
     case PM.PNPM:
-      return new PnpmNodeModulesCollector(rootDir, tempDirManager, cancellationToken)
+      return new PnpmNodeModulesCollector(rootDir, tempDirManager)
     case PM.YARN:
-      return new YarnNodeModulesCollector(rootDir, tempDirManager, cancellationToken)
+      return new YarnNodeModulesCollector(rootDir, tempDirManager)
     case PM.YARN_BERRY:
-      return new YarnBerryNodeModulesCollector(rootDir, tempDirManager, cancellationToken)
+      return new YarnBerryNodeModulesCollector(rootDir, tempDirManager)
     case PM.BUN:
-      return new BunNodeModulesCollector(rootDir, tempDirManager, cancellationToken)
+      return new BunNodeModulesCollector(rootDir, tempDirManager)
     case PM.NPM:
-      return new NpmNodeModulesCollector(rootDir, tempDirManager, cancellationToken)
+      return new NpmNodeModulesCollector(rootDir, tempDirManager)
     // should never access this case (as it's internally a fallback), but TS needs a default and we need to satisfy it
     case PM.TRAVERSAL:
-      return new TraversalNodeModulesCollector(rootDir, tempDirManager, cancellationToken)
+      return new TraversalNodeModulesCollector(rootDir, tempDirManager)
   }
 }
 
@@ -48,7 +48,7 @@ export function getNodeModules(
     packageName: string
   }
 ): Promise<NodeModuleInfo[]> {
-  const collector = getCollectorByPackageManager(pm, rootDir, tempDirManager, cancellationToken)
+  const collector = getCollectorByPackageManager(pm, rootDir, tempDirManager)
   return collector.getNodeModules({ packageName })
 }
 
