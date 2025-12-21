@@ -189,8 +189,6 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
     const rootPkgJson = await this.cache.packageJson[path.join(this.rootDir, "package.json")]
     const failedPackages = new Set<string>()
 
-    log.debug({ packageToExclude, hasWorkspaces: !!tree.workspaces }, "collectAllDependencies starting")
-
     const collect = async (
       deps: YarnDependency["dependencies"] | YarnDependency["optionalDependencies"] = {},
       isOptionalDependency: boolean,
@@ -202,7 +200,6 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
         const treatAsOptional = isOptionalDependency || parentIsOptional || isRootOptional
 
         const logFields = { name: value.name, version: value.version, path: value.path }
-        log.debug(logFields, "collecting dependency")
         const p = await this.cache.realPath[value.path]
         if (!(await this.cache.exists[p])) {
           if (treatAsOptional) {

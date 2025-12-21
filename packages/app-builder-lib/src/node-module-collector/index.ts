@@ -152,11 +152,11 @@ async function findWorkspaceRoot(pm: PM, cwd: string): Promise<string | undefine
 async function findNearestPackageJsonWithWorkspacesField(dir: string): Promise<string | undefined> {
   let current = dir
   while (true) {
-    log.debug({ path: current }, "checking for potential workspace root")
     const pkgPath = path.join(current, "package.json")
     try {
       const pkg = JSON.parse(await fs.readFile(pkgPath, "utf8"))
       if (pkg.workspaces) {
+        log.debug({ path: current }, "identified workspace root")
         return current
       }
     } catch {
