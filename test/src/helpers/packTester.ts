@@ -146,10 +146,10 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
 
   await executeFinally(
     (async () => {
-      const packageManagerOverride = checkOptions.packageManager || PM.NPM
+      const packageManagerOverride = checkOptions.packageManager
       await modifyPackageJson(projectDir, data => {
-        if (data.packageManager == null) {
-          data.packageManager = getPackageManagerWithVersion(packageManagerOverride).prepareEntry
+        if (data.packageManager == null || packageManagerOverride) {
+          data.packageManager = getPackageManagerWithVersion(packageManagerOverride || PM.NPM).prepareEntry
         }
       })
 

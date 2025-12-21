@@ -88,7 +88,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
       async () => {
         await this.streamCollectorCommandToFile(command, args, this.rootDir, tempOutputFile)
         const shellOutput = await fs.readFile(tempOutputFile, { encoding: "utf8" })
-        return await this.parseDependenciesTree(shellOutput)
+        return await this.parseDependenciesTree(shellOutput.trim())
       },
       {
         retries: 1,
@@ -122,13 +122,18 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     )
   }
 
-  protected cacheKey(pkg: ProdDepType): string {
+  protected cacheKey(pkg: Pick<ProdDepType, "name" | "version" | "path">): string {
     const rel = path.relative(this.rootDir, pkg.path)
     return `${pkg.name}::${pkg.version}::${rel ?? "."}`
   }
 
-  protected packageVersionString(pkg: ProdDepType): string {
+  protected packageVersionString(pkg: Pick<ProdDepType, "name" | "version">): string {
     return `${pkg.name}@${pkg.version}`
+  }
+
+  protected isProdDependency(depName: string, pkg: ProdDepType): boolean {
+    const prodDeps = { ...pkg.dependencies, ...pkg.optionalDependencies }
+    return prodDeps[depName] != null
   }
 
   /**
