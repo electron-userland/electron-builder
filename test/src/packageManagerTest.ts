@@ -441,7 +441,7 @@ test("traversal multi-package workspace", ({ expect }) =>
 // Test for local file:// protocol
 
 Object.values(PM)
-  .filter(pm => ![PM.BUN].includes(pm)) // bun is not supported for file: protocol
+  .filter(pm => pm !== PM.BUN) // bun is not supported for file: protocol
   .forEach(pm => {
     test(`local file:// protocol with ${pm} for project outside workspace`, ({ expect }) => {
       return assertPack(

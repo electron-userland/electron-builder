@@ -147,14 +147,10 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
 
   await executeFinally(
     (async () => {
-      const packageManagerOverride = checkOptions.packageManager || PM.NPM
+      const packageManagerOverride = checkOptions.packageManager
       await modifyPackageJson(projectDir, data => {
-        if (
-          data.packageManager == null &&
-          // these will block `npm list` with "Unsupported package manager specification (bun@1.3.2)"
-          ![PM.BUN, PM.TRAVERSAL].includes(packageManagerOverride)
-        ) {
-          data.packageManager = getPackageManagerWithVersion(packageManagerOverride).prepareEntry
+        if (data.packageManager == null || packageManagerOverride) {
+          data.packageManager = getPackageManagerWithVersion(packageManagerOverride || PM.NPM).prepareEntry
         }
       })
 
