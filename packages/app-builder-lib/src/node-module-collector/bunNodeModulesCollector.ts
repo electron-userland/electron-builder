@@ -7,7 +7,7 @@ export class BunNodeModulesCollector extends TraversalNodeModulesCollector {
   public readonly installOptions = { manager: PM.BUN, lockfile: "bun.lock" }
 
   protected async getDependenciesTree(pm: PM): Promise<TraversedDependency> {
-    log.info(null, "note: bun does not support any CLI for dependency tree extraction, utilizing NPM node module collector instead")
+    log.info(null, "note: bun does not support any CLI for dependency tree extraction, utilizing file traversal collector instead")
     return super.getDependenciesTree(pm)
   }
 }

@@ -5,7 +5,7 @@ import { createWriteStream } from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { hoist, type HoisterResult, type HoisterTree } from "./hoist"
-import { ModuleManager } from "./moduleCache"
+import { ModuleManager } from "./moduleManager"
 import { getPackageManagerCommand, PM } from "./packageManager"
 import type { Dependency, DependencyGraph, NodeModuleInfo, PackageJson } from "./types"
 
