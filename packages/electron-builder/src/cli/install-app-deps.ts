@@ -6,7 +6,8 @@ import { orNullIfFileNotExist } from "app-builder-lib/out/util/config/load"
 import { createLazyProductionDeps } from "app-builder-lib/out/util/packageDependencies"
 import { installOrRebuild } from "app-builder-lib/out/util/yarn"
 import { PACKAGE_VERSION } from "app-builder-lib/out/version"
-import { getArchCliNames, log, printErrorAndExit, use } from "builder-util"
+import { determinePackageManagerEnv } from "app-builder-lib/out/node-module-collector"
+import { getArchCliNames, log, printErrorAndExit } from "builder-util"
 import { readJson } from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
@@ -46,13 +47,9 @@ export async function installAppDeps(args: any) {
   const projectDir = process.cwd()
   const packageMetadata = new Lazy(() => orNullIfFileNotExist(readJson(path.join(projectDir, "package.json"))))
   const config = await getConfig(projectDir, null, null, packageMetadata)
-  const [appDir, version] = await Promise.all<string>([
-    computeDefaultAppDirectory(
-      projectDir,
-      use(config.directories, it => it.app)
-    ),
-    getElectronVersion(projectDir, config),
-  ])
+  const [appDir, version] = await Promise.all<string>([computeDefaultAppDirectory(projectDir, config.directories?.app), getElectronVersion(projectDir, config)])
+
+  const packageManagerEnv = determinePackageManagerEnv({ projectDir, appDir, workspaceRoot: undefined })
 
   // if two package.json — force full install (user wants to install/update app deps in addition to dev)
   await installOrRebuild(
@@ -60,6 +57,7 @@ export async function installAppDeps(args: any) {
     {
       appDir,
       projectDir,
+      workspaceRoot: await (await packageManagerEnv.value).workspaceRoot,
     },
     {
       frameworkInfo: { version, useCustomDist: true },
@@ -67,7 +65,8 @@ export async function installAppDeps(args: any) {
       arch: args.arch,
       productionDeps: createLazyProductionDeps(appDir, null, false),
     },
-    appDir !== projectDir
+    appDir !== projectDir,
+    {}
   )
 }
 

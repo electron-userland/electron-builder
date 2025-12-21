@@ -2,7 +2,6 @@ import { Nullish } from "builder-util-runtime"
 import { Stats } from "fs"
 import { copyFile as _nodeCopyFile } from "fs-extra"
 import { access, chmod, link, lstat, mkdir, readdir, readlink, stat, symlink, unlink, writeFile } from "fs/promises"
-import { isCI } from "ci-info"
 import { platform } from "os"
 import * as path from "path"
 import { Mode } from "stat-mode"
@@ -149,7 +148,10 @@ export async function walk(initialDirPath: string, filter?: Filter | null, consu
   return result
 }
 
-const _isUseHardLink = process.platform !== "win32" && process.env.USE_HARD_LINKS !== "false" && (isCI || process.env.USE_HARD_LINKS === "true")
+// performance optimization. only enable hard links during unit tests on non-Windows platforms by default
+// This is to optimize disk space and speed during tests, while avoiding potential issues with hard links in distribution builds
+// https://github.com/electron-userland/electron-builder/issues/5721
+const _isUseHardLink = process.platform !== "win32" && (process.env.USE_HARD_LINKS === "true" || process.env.VITEST != null)
 
 export function copyFile(src: string, dest: string, isEnsureDir = true) {
   return (isEnsureDir ? mkdir(path.dirname(dest), { recursive: true }) : Promise.resolve()).then(() => copyOrLinkFile(src, dest, null, false))
@@ -293,9 +295,7 @@ export interface CopyDirOptions {
 export async function copyDir(src: string, destination: string, options: CopyDirOptions = {}): Promise<any> {
   const fileCopier = new FileCopier(options.isUseHardLink, options.transformer)
 
-  if (log.isDebugEnabled) {
-    log.debug({ src, destination }, `copying${fileCopier.isUseHardLink ? " using hard links" : ""}`)
-  }
+  log.debug({ src, destination }, `copying${fileCopier.isUseHardLink ? " using hard links" : ""}`)
 
   const createdSourceDirs = new Set<string>()
   const links: Array<Link> = []

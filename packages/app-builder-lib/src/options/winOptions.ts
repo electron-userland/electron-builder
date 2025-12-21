@@ -31,7 +31,7 @@ export interface WindowsConfiguration extends PlatformSpecificBuildOptions {
   readonly signtoolOptions?: WindowsSigntoolConfiguration | null
 
   /**
-   * Options for usage of Azure Trusted Signing (beta)
+   * Options for usage of Azure Trusted Signing service
    * Cannot be used in conjunction with `signtoolOptions`, signing will default to Azure Trusted Signing
    */
   readonly azureSignOptions?: WindowsAzureSigningConfiguration | null
@@ -61,7 +61,8 @@ export interface WindowsConfiguration extends PlatformSpecificBuildOptions {
   readonly signAndEditExecutable?: boolean
 
   /**
-   * Explicit file extensions to also sign. Advanced option.
+   * Explicit file name/extensions (`str.endsWith`) to also sign. Advanced option.
+   * Supports negative patterns, e.g. example that excludes `.appx` files: `["somefilename", ".dll", "!.appx"]`.
    * @see https://github.com/electron-userland/electron-builder/issues/7329
    * @default null
    */

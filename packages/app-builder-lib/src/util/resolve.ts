@@ -1,24 +1,14 @@
 import { log } from "builder-util/out/log"
 import debug from "debug"
 import * as path from "path"
-import { pathToFileURL } from "url"
+import * as requireMaybe from "../../helpers/dynamic-import"
 
 export async function resolveModule<T>(type: string | undefined, name: string): Promise<T> {
-  const extension = path.extname(name).toLowerCase()
-  const isModuleType = type === "module"
   try {
-    if (extension === ".mjs" || (extension === ".js" && isModuleType)) {
-      const fileUrl = pathToFileURL(name).href
-      return await eval("import ('" + fileUrl + "')")
-    }
+    return requireMaybe.dynamicImportMaybe(name)
   } catch (error: any) {
-    log.debug({ moduleName: name, message: error.message ?? error.stack }, "Unable to dynamically import , falling back to `require`")
-  }
-  try {
-    return require(name)
-  } catch (error: any) {
-    log.error({ moduleName: name, message: error.message ?? error.stack }, "Unable to `require`")
-    throw new Error(error.message ?? error.stack)
+    log.error({ moduleName: name, message: error.message ?? error.stack }, "Unable to dynamically `import` or `require`")
+    throw error
   }
 }
 

@@ -1,0 +1,210 @@
+name: "Cleanup Runner Disk Space"
+description: "Frees disk space on the current LINUX GitHub Actions runner"
+
+inputs:
+# default false entries
+  clean_toolcache:
+    description: "Remove GitHub hostedtoolcache"
+    default: "false"
+  clean_node:
+    description: "Remove Node/NVM"
+    default: "false"
+# default true entries
+  clean_android:
+    description: "Remove Android SDK"
+    default: "true"
+  clean_dotnet:
+    description: "Remove .NET SDK"
+    default: "true"
+  clean_go:
+    description: "Remove Go toolchain"
+    default: "true"
+  clean_java:
+    description: "Remove Java JDKs"
+    default: "true"
+  clean_rust:
+    description: "Remove Rust toolchains"
+    default: "true"
+  clean_ruby:
+    description: "Remove Ruby toolchains"
+    default: "true"
+  clean_homebrew:
+    description: "Remove Homebrew"
+    default: "true"
+  clean_apt:
+    description: "Clean APT (cache, autoremove)"
+    default: "true"
+  clean_logs:
+    description: "Clean system logs"
+    default: "true"
+  clean_docker:
+    description: "Prune Docker unused data"
+    default: "true"
+  clean_misc:
+    description: "Clean misc caches (/tmp, /var/cache, etc.)"
+    default: "true"
+
+runs:
+  using: "composite"
+  steps:
+    #########################################################
+    # Safety Check: Abort if not Linux
+    #########################################################
+    - name: Verify OS is Linux
+      shell: bash
+      run: |
+        echo "Runner OS: $RUNNER_OS"
+        if [[ "$RUNNER_OS" != "Linux" ]]; then
+          echo "❌ This cleanup action only supports Linux runners."
+          exit 1
+        fi
+
+    - name: Size check
+      shell: bash
+      run: df -h
+
+    #########################################################
+    # Phase 1: Toolcache
+    #########################################################
+    - name: Remove GitHub hosted toolcache
+      if: ${{ inputs.clean_toolcache == 'true' }}
+      shell: bash
+      run: |
+        echo "Cleaning /opt/hostedtoolcache ..."
+        sudo rm -rf /opt/hostedtoolcache/*
+
+    #########################################################
+    # Phase 2: Android SDK
+    #########################################################
+    - name: Remove Android SDK
+      if: ${{ inputs.clean_android == 'true' }}
+      shell: bash
+      run: |
+        echo "Removing Android SDK ..."
+        sudo rm -rf /usr/local/lib/android
+        sudo rm -rf $ANDROID_HOME || true
+        sudo rm -rf /opt/android || true
+
+    #########################################################
+    # Phase 3: .NET
+    #########################################################
+    - name: Remove .NET SDK
+      if: ${{ inputs.clean_dotnet == 'true' }}
+      shell: bash
+      run: |
+        echo "Removing .NET SDK ..."
+        sudo rm -rf /usr/share/dotnet
+
+    #########################################################
+    # Phase 4: Node / NVM
+    #########################################################
+    - name: Remove Node & NVM
+      if: ${{ inputs.clean_node == 'true' }}
+      shell: bash
+      run: |
+        echo "Removing Node.js + NVM ..."
+        sudo rm -rf /usr/local/nvm
+        sudo rm -rf /usr/local/lib/node_modules
+        sudo rm -rf /opt/nodejs || true
+
+    #########################################################
+    # Phase 5: Go
+    #########################################################
+    - name: Remove Go toolchain
+      if: ${{ inputs.clean_go == 'true' }}
+      shell: bash
+      run: |
+        echo "Removing Go toolchain ..."
+        sudo rm -rf /usr/local/go
+
+    #########################################################
+    # Phase 6: Java
+    #########################################################
+    - name: Remove Java JDKs
+      if: ${{ inputs.clean_java == 'true' }}
+      shell: bash
+      run: |
+        echo "Removing JDKs ..."
+        sudo rm -rf /usr/lib/jvm/*
+
+    #########################################################
+    # Phase 7: Rust
+    #########################################################
+    - name: Remove Rust toolchain
+      if: ${{ inputs.clean_rust == 'true' }}
+      shell: bash
+      run: |
+        echo "Removing Rust toolchains ..."
+        sudo rm -rf ~/.cargo || true
+        sudo rm -rf ~/.rustup || true
+
+    #########################################################
+    # Phase 8: Ruby
+    #########################################################
+    - name: Remove Ruby toolchains
+      if: ${{ inputs.clean_ruby == 'true' }}
+      shell: bash
+      run: |
+        echo "Removing Ruby versions ..."
+        sudo rm -rf /opt/hostedtoolcache/Ruby || true
+        sudo rm -rf /usr/local/lib/ruby || true
+
+    #########################################################
+    # Phase 9: Homebrew
+    #########################################################
+    - name: Remove Homebrew
+      if: ${{ inputs.clean_homebrew == 'true' }}
+      shell: bash
+      run: |
+        echo "Removing Homebrew ..."
+        sudo rm -rf /home/linuxbrew/.linuxbrew
+        sudo rm -rf /home/linuxbrew/.cache/*
+
+    #########################################################
+    # Phase 10: APT
+    #########################################################
+    - name: APT Cleanup
+      if: ${{ inputs.clean_apt == 'true' }}
+      shell: bash
+      run: |
+        echo "Cleaning APT caches ..."
+        sudo apt-get clean
+        sudo apt-get autoremove -y
+        sudo apt-get autoclean
+
+    #########################################################
+    # Phase 11: Logs
+    #########################################################
+    - name: Clean system logs
+      if: ${{ inputs.clean_logs == 'true' }}
+      shell: bash
+      run: |
+        echo "Cleaning journal logs ..."
+        sudo journalctl --vacuum-time=1s
+
+    #########################################################
+    # Phase 12: Docker
+    #########################################################
+    - name: Prune Docker
+      if: ${{ inputs.clean_docker == 'true' }}
+      shell: bash
+      run: |
+        echo "Pruning Docker resources ..."
+        docker system prune -af
+        docker volume prune -f
+
+    #########################################################
+    # Phase 13: Misc caches
+    #########################################################
+    - name: Remove miscellaneous caches
+      if: ${{ inputs.clean_misc == 'true' }}
+      shell: bash
+      run: |
+        echo "Cleaning miscellaneous caches ..."
+        sudo rm -rf /var/lib/apt/lists/*
+        sudo rm -rf /var/cache/apt/*
+        sudo rm -rf /tmp/*
+
+    - name: Size check
+      shell: bash
+      run: df -h

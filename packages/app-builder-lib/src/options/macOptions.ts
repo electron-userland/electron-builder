@@ -28,6 +28,8 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
 
   /**
    * The path to application icon.
+   * Accepts `.icns` (legacy) or `.icon` (Icon Composer asset).
+   * If a `.icon` asset is provided, it will be preferred and compiled to an asset catalog.
    * @default build/icon.icns
    */
   readonly icon?: string | null

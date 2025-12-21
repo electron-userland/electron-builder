@@ -1,0 +1,15 @@
+FROM node:20-bookworm
+
+# Install system + Electron runtime deps
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends \
+      curl gnupg xz-utils xvfb zypper binutils \
+      libasound2 libgtk-3-0 libnotify4 libnss3 libxss1 libxtst6 \
+      xdg-utils libatspi2.0-0 libsecret-1-0 libgbm1 \
+ && rm -rf /var/lib/apt/lists/*
+
+ RUN npm --silent install --global --depth 0 pnpm corepack \
+ && corepack enable
+
+
+ WORKDIR /project

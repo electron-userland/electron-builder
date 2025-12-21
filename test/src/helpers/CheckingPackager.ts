@@ -23,7 +23,7 @@ export class CheckingWinPackager extends WinPackager {
     const setupFile = this.expandArtifactNamePattern(newClass.options, "exe", arch, "${productName} Setup ${version}.${ext}")
     const installerOutDir = path.join(outDir, `squirrel-windows${getArchSuffix(arch)}`)
     this.effectiveDistOptions = await newClass.computeEffectiveDistOptions(installerOutDir, outDir, setupFile)
-    await this.sign(this.computeAppOutDir(outDir, arch))
+    await this.signIf(this.computeAppOutDir(outDir, arch))
   }
 
   //noinspection JSUnusedLocalSymbols

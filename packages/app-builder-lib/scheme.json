@@ -1628,15 +1628,16 @@
         },
         "host": {
           "default": "gitlab.com",
-          "description": "The host (including the port if needed).",
+          "description": "The GitLab host (including the port if need).",
           "type": [
             "null",
             "string"
           ]
         },
         "projectId": {
-          "description": "The GitLab project ID or namespace/project-name.",
+          "description": "The GitLab project ID or path (e.g., \"12345678\" or \"namespace/project\").",
           "type": [
+            "null",
             "string",
             "number"
           ]
@@ -1677,7 +1678,7 @@
           ]
         },
         "token": {
-          "description": "The access token to support auto-update from private GitLab repositories. Never specify it in the configuration files. Only for [setFeedURL](./auto-update.md#appupdatersetfeedurloptions).",
+          "description": "The access token to support auto-update from private GitLab repositories. Never specify it in the configuration files.",
           "type": [
             "null",
             "string"
@@ -1688,10 +1689,30 @@
             "null",
             "string"
           ]
+        },
+        "uploadTarget": {
+          "anyOf": [
+            {
+              "enum": [
+                "generic_package",
+                "project_upload"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "project_upload",
+          "description": "Upload target method. Can be \"project_upload\" for GitLab project uploads or \"generic_package\" for GitLab generic packages."
+        },
+        "vPrefixedTagName": {
+          "default": true,
+          "description": "Whether to use `v`-prefixed tag name.",
+          "type": "boolean"
         }
       },
       "required": [
-        "projectId",
         "provider"
       ],
       "type": "object"
@@ -1944,7 +1965,7 @@
           "description": "The executable parameters. Pass to executableName"
         },
         "executableName": {
-          "description": "The executable name. Defaults to `productName`.",
+          "description": "The executable name. Defaults to `productName`\nNote: Except for Linux, where this would constitute a breaking change in previous behavior and lead to both invalid executable names and Desktop files. Ref comments in: https://github.com/electron-userland/electron-builder/pull/9068",
           "type": [
             "null",
             "string"
@@ -2638,7 +2659,7 @@
           ]
         },
         "executableName": {
-          "description": "The executable name. Defaults to `productName`.",
+          "description": "The executable name. Defaults to `productName`\nNote: Except for Linux, where this would constitute a breaking change in previous behavior and lead to both invalid executable names and Desktop files. Ref comments in: https://github.com/electron-userland/electron-builder/pull/9068",
           "type": [
             "null",
             "string"
@@ -2828,7 +2849,7 @@
         },
         "icon": {
           "default": "build/icon.icns",
-          "description": "The path to application icon.",
+          "description": "The path to application icon.\nAccepts `.icns` (legacy) or `.icon` (Icon Composer asset).\nIf a `.icon` asset is provided, it will be preferred and compiled to an asset catalog.",
           "type": [
             "null",
             "string"
@@ -3273,7 +3294,7 @@
           ]
         },
         "executableName": {
-          "description": "The executable name. Defaults to `productName`.",
+          "description": "The executable name. Defaults to `productName`\nNote: Except for Linux, where this would constitute a breaking change in previous behavior and lead to both invalid executable names and Desktop files. Ref comments in: https://github.com/electron-userland/electron-builder/pull/9068",
           "type": [
             "null",
             "string"
@@ -3463,7 +3484,7 @@
         },
         "icon": {
           "default": "build/icon.icns",
-          "description": "The path to application icon.",
+          "description": "The path to application icon.\nAccepts `.icns` (legacy) or `.icon` (Icon Composer asset).\nIf a `.icon` asset is provided, it will be preferred and compiled to an asset catalog.",
           "type": [
             "null",
             "string"
@@ -6515,7 +6536,7 @@
               "type": "null"
             }
           ],
-          "description": "Options for usage of Azure Trusted Signing (beta)\nCannot be used in conjunction with `signtoolOptions`, signing will default to Azure Trusted Signing"
+          "description": "Options for usage of Azure Trusted Signing service\nCannot be used in conjunction with `signtoolOptions`, signing will default to Azure Trusted Signing"
         },
         "compression": {
           "anyOf": [
@@ -6584,7 +6605,7 @@
           ]
         },
         "executableName": {
-          "description": "The executable name. Defaults to `productName`.",
+          "description": "The executable name. Defaults to `productName`\nNote: Except for Linux, where this would constitute a breaking change in previous behavior and lead to both invalid executable names and Desktop files. Ref comments in: https://github.com/electron-userland/electron-builder/pull/9068",
           "type": [
             "null",
             "string"
@@ -6806,7 +6827,7 @@
             }
           ],
           "default": null,
-          "description": "Explicit file extensions to also sign. Advanced option."
+          "description": "Explicit file name/extensions (`str.endsWith`) to also sign. Advanced option.\nSupports negative patterns, e.g. example that excludes `.appx` files: `[\"somefilename\", \".dll\", \"!.appx\"]`."
         },
         "signtoolOptions": {
           "anyOf": [
@@ -7359,7 +7380,7 @@
       ]
     },
     "executableName": {
-      "description": "The executable name. Defaults to `productName`.",
+      "description": "The executable name. Defaults to `productName`\nNote: Except for Linux, where this would constitute a breaking change in previous behavior and lead to both invalid executable names and Desktop files. Ref comments in: https://github.com/electron-userland/electron-builder/pull/9068",
       "type": [
         "null",
         "string"
