@@ -82,7 +82,10 @@ export class ModuleManager {
   protected async locatePackageVersionFromCacheKey(key: string): Promise<Package | null> {
     const [name, fromDir, semverRange] = key.split("||")
     const result = await this.locatePackageVersion(fromDir, name, semverRange)
-    return result
+    if (result == null) {
+      return null
+    }
+    return { ...result, packageDir: await this.realPath[result.packageDir] }
   }
 
   private async locatePackageVersion(parentDir: string, pkgName: string, requiredRange?: string): Promise<Package | null> {

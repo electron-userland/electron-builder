@@ -1,12 +1,11 @@
-import { log, retry, TmpDir } from "builder-util"
+import { isEmptyOrSpaces, log, retry, TmpDir } from "builder-util"
 import * as childProcess from "child_process"
 import * as fs from "fs-extra"
 import { createWriteStream } from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
-import * as semver from "semver"
 import { hoist, type HoisterResult, type HoisterTree } from "./hoist"
-import { ModuleManager, Package } from "./moduleCache"
+import { ModuleManager } from "./moduleCache"
 import { getPackageManagerCommand, PM } from "./packageManager"
 import type { Dependency, DependencyGraph, NodeModuleInfo, PackageJson } from "./types"
 
@@ -112,6 +111,8 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
   }
 
     protected async extractProductionDependencyGraph(tree: ProdDepType, dependencyId: string): Promise<void> {
+    const packageName = tree.name
+
     if (this.productionGraph[dependencyId]) {
       return
     }
@@ -125,6 +126,36 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     const prodDependencies = json ? { ...json.dependencies, ...json.optionalDependencies } : treeDep
 
     const collectedDependencies: string[] = []
+
+    if (json == null) {
+      for (const packageName in tree.dependencies) {
+        if (!this.isProdDependency(packageName, tree)) {
+          continue
+        }
+        const dependency = tree.dependencies[packageName]
+        const childDependencyId = this.packageVersionString(dependency)
+        await this.extractProductionDependencyGraph(dependency, childDependencyId)
+        collectedDependencies.push(childDependencyId)
+      }
+      this.productionGraph[dependencyId] = { dependencies: collectedDependencies }
+
+      // Return early since we have processed all dependencies
+      return
+    }
+
+    // First collect regular dependencies
+    for (const packageName in json.dependencies) {
+      if (!this.isProdDependency(packageName, tree)) {
+        continue
+      }
+      const version = json.dependencies[packageName]
+      const childDependencyId = this.packageVersionString({ name: packageName, version })
+      collectedDependencies.push(childDependencyId)
+    }
+
+    // Then collect optional dependencies if they exist
+
+
     for (const packageName in treeDep) {
       if (!prodDependencies[packageName]) {
         continue
@@ -132,7 +163,8 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
 
       // Then check if optional dependency path exists (using actual resolved path)
       const version = json?.optionalDependencies?.[packageName] || tree.optionalDependencies?.[packageName]?.version
-      const actualPath = await this.locatePackageVersion(json?.path ?? tree.path, packageName, version).then(it => it?.packageDir)
+    const result = await this.cache.packageData[this.cache.versionedCacheKey({ name: packageName, semver: depTree.version, path: depTree.path })]
+      const actualPath = result?.packageDir
       if (actualPath == null || !(await this.cache.exists[actualPath])) {
         log.debug({ packageName, version: version, searchPath: actualPath }, `optional dependency not installed, skipping`)
         continue
@@ -145,7 +177,21 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     this.productionGraph[dependencyId] = { dependencies: collectedDependencies }
   }
 
+protected async getProductionDependencies(depTree: ProdDepType): Promise<{ path: string; dependencies: Record<string, string>; optionalDependencies: Record<string, string> }> {
+    const packageName = depTree.name
+    if (isEmptyOrSpaces(packageName)) {
+      log.error(depTree, `Cannot determine production dependencies for package with empty name`)
+      throw new Error(`Cannot compute production dependencies for package with empty name: ${packageName}`)
+    }
 
+    const result = await this.cache.packageData[this.cache.versionedCacheKey({ name: packageName, semver: depTree.version, path: depTree.path })]
+    if (result == null) {
+      return { path: path.resolve(depTree.path), dependencies: {}, optionalDependencies: {} }
+    }
+
+    const { dependencies, optionalDependencies } = result.packageJson
+    return { path: result.packageDir, dependencies: { ...dependencies }, optionalDependencies: { ...optionalDependencies } }
+  }
 
   protected packageVersionString(pkg: Pick<ProdDepType, "name" | "version">): string {
     return `${pkg.name}@${pkg.version}`
@@ -156,6 +202,11 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     return prodDeps[depName] != null
   }
 
+  protected async locatePackageVersion(depTree: ProdDepType): Promise<{ packageDir: string; packageJson: PackageJson } | null> {
+    const key = this.cache.versionedCacheKey({ name: depTree.name, semver: depTree.version, path: depTree.path })
+    const result = await this.cache.packageData[key]
+    return result
+  }
   /**
    * Parse a dependency identifier like "@scope/pkg@1.2.3" or "pkg@1.2.3"
    */
