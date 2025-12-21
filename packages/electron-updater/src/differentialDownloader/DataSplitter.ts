@@ -35,10 +35,11 @@ export function copyData(task: Operation, out: Writable, oldFileFd: number, reje
 }
 
 export class DataSplitter extends Writable {
-  private start = Date.now()
-  private nextUpdate = this.start + 1000
-  private transferred = 0
-  private delta = 0
+  // properties for progress update calculations
+  private start = Date.now() // download start time used to calculate average rate
+  private nextUpdate = this.start + 1000 // timestamp of next update to prevent updates more often than once per second
+  private transferred = 0 // total number of bytes transferred
+  private delta = 0 // number of bytes transferred since last update, reset after each update
 
   partIndex = -1
 
@@ -81,7 +82,7 @@ export class DataSplitter extends Writable {
       .then(() => {
         if (this.onProgress) {
           const now = Date.now()
-          if (now >= this.nextUpdate || this.transferred === this.grandTotalBytes) {
+          if ((now >= this.nextUpdate || this.transferred === this.grandTotalBytes) && this.grandTotalBytes && (now - this.start) / 1000) {
             this.nextUpdate = now + 1000
 
             this.onProgress({
