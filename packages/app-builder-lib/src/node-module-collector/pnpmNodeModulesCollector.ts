@@ -70,7 +70,7 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
     const allDeps = { ...(tree.dependencies || {}), ...(tree.optionalDependencies || {}) }
     for (const packageName in allDeps) {
       const dependency = allDeps[packageName]
-      const result = await this.getProductionDependencies(dependency)
+      const result = await this.getProductionDependencies({ ...dependency, name: packageName })
       this.allDependencies.set(`${result.name}@${result.version}`, { ...dependency, path: result.path })
       await this.collectAllDependencies(dependency)
     }
