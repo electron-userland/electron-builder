@@ -7,7 +7,7 @@ import * as semver from "semver"
 export type Package = { packageDir: string; packageJson: PackageJson }
 
 // Type aliases for clarity
-type JsonCache = Record<string, Promise<PackageJson>>
+type JsonCache = Record<string, Promise<PackageJson | null>>
 type RealPathCache = Record<string, Promise<string>>
 type ExistsCache = Record<string, Promise<boolean>>
 type LstatCache = Record<string, Promise<fs.Stats | null>>
@@ -28,14 +28,14 @@ export class ModuleManager {
   private readonly jsonMap: Map<string, PackageJson | null> = new Map()
   private readonly realPathMap: Map<string, string> = new Map()
   private readonly existsMap: Map<string, boolean> = new Map()
-  private readonly lstatMap: Map<string, fs.Stats> = new Map()
-  private readonly packageDataMap: Map<string, Package> = new Map()
+  private readonly lstatMap: Map<string, fs.Stats | null> = new Map()
+  private readonly packageDataMap: Map<string, Package | null> = new Map()
 
   constructor() {
-    this.packageData = this.createAsyncProxy(this.packageDataMap, this.locatePackageVersionFromCacheKey.bind(this))
-    this.json = this.createAsyncProxy(this.jsonMap, (p: string) => fs.readJson(p).catch(() => null))
     this.exists = this.createAsyncProxy(this.existsMap, (p: string) => exists(p))
+    this.json = this.createAsyncProxy(this.jsonMap, (p: string) => fs.readJson(p).catch(() => null))
     this.lstat = this.createAsyncProxy(this.lstatMap, (p: string) => fs.lstat(p).catch(() => null))
+    this.packageData = this.createAsyncProxy(this.packageDataMap, (p: string) => this.locatePackageVersionFromCacheKey(p).catch(() => null))
     this.realPath = this.createAsyncProxy(this.realPathMap, async (p: string) => {
       const filePath = path.resolve(p)
       const stat = await this.lstat[filePath]
