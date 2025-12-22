@@ -60,18 +60,12 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
   }
 
   protected async collectAllDependencies(tree: PnpmDependency) {
-    // Collect regular dependencies
-    for (const [key, value] of Object.entries(tree.dependencies || {})) {
-      const json = await this.getProductionDependencies({ ...value, name: key })
-      this.allDependencies.set(`${key}@${value.version}`, { ...value, path: json.path })
-      await this.collectAllDependencies(value)
-    }
-
-    // Collect optional dependencies if they exist
-    for (const [key, value] of Object.entries(tree.optionalDependencies || {})) {
-      const json = await this.getProductionDependencies(value)
-      this.allDependencies.set(`${key}@${value.version}`, { ...value, path: json.path })
-      await this.collectAllDependencies(value)
+    const allDeps = { ...(tree.dependencies || {}), ...(tree.optionalDependencies || {}) }
+    for (const packageName in allDeps) {
+      const dependency = allDeps[packageName]
+      const result = await this.getProductionDependencies({ ...dependency, name: packageName })
+      this.allDependencies.set(this.packageVersionString(dependency), { ...dependency, path: result.path })
+      await this.collectAllDependencies(dependency)
     }
   }
 
