@@ -91,6 +91,17 @@ function doExecuteTasks(differentialDownloader: DifferentialDownloader, options:
 
   const requestOptions = differentialDownloader.createRequestOptions()
   requestOptions.headers!.Range = ranges.substring(0, ranges.length - 2)
+
+  let timeoutId: NodeJS.Timeout | null = null
+
+  const wrappedResolve = () => {
+    if (timeoutId !== null) {
+      clearTimeout(timeoutId)
+      timeoutId = null
+    }
+    resolve()
+  }
+
   const request = differentialDownloader.httpExecutor.createRequest(requestOptions, response => {
     if (!checkIsRangesSupported(response, reject)) {
       return
@@ -103,15 +114,16 @@ function doExecuteTasks(differentialDownloader: DifferentialDownloader, options:
       return
     }
 
-    const dicer = new DataSplitter(out, options, partIndexToTaskIndex, m[1] || m[2], partIndexToLength, resolve)
+    const dicer = new DataSplitter(out, options, partIndexToTaskIndex, m[1] || m[2], partIndexToLength, wrappedResolve)
     dicer.on("error", reject)
     response.pipe(dicer)
 
     response.on("end", () => {
-      setTimeout(() => {
+      timeoutId = setTimeout(() => {
+        timeoutId = null
         request.abort()
         reject(new Error("Response ends without calling any handlers"))
-      }, 10000)
+      }, 30000)
     })
   })
   differentialDownloader.httpExecutor.addErrorAndTimeoutHandlers(request, reject)
