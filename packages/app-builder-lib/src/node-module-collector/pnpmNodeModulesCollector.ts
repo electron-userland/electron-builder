@@ -35,22 +35,24 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
     const packageName = tree.name || tree.from
 
     const treeDep = { ...(tree.dependencies || {}), ...(tree.optionalDependencies || {}) }
-    const json = packageName === dependencyId ? null : await this.getProductionDependencies(tree)
+    const isRoot = packageName === dependencyId
+    const json = isRoot ? null : await this.getProductionDependencies(tree)
     const prodDependencies = json ? { ...json.dependencies, ...json.optionalDependencies } : treeDep
 
     const collectedDependencies: string[] = []
     for (const packageName in treeDep) {
+      // First check if it's a production dependency
       if (!prodDependencies[packageName]) {
         continue
       }
-
       // Then check if optional dependency path exists (using actual resolved path)
-      const version = json?.optionalDependencies?.[packageName] || tree.optionalDependencies?.[packageName]?.version || ""
-      const result = await this.locatePackageWithVersion({ name: packageName, version, path: json?.path ?? tree.path })
-      if (result == null || !(await this.cache.exists[result.packageDir])) {
-        log.debug({ packageName, version: version, searchPath: result?.packageDir }, `optional dependency not installed, skipping`)
+      const version = json?.optionalDependencies?.[packageName] || tree.optionalDependencies?.[packageName]?.version
+      // execute function in if-statement so that we only search when we know it's an optional dependency
+      if (version != null && (await this.locatePackageWithVersion({ name: packageName, version, path: json?.path ?? tree.path })) == null) {
+        log.debug({ packageName, version: version }, `optional dependency not installed, skipping`)
         continue
       }
+
       const dependency = treeDep[packageName]
       const childDependencyId = this.packageVersionString(dependency)
       await this.extractProductionDependencyGraph(dependency, childDependencyId)

@@ -254,7 +254,7 @@ test("yarn workspace for scope name", ({ expect }) =>
   ))
 
 // https://github.com/electron-userland/electron-builder/issues/8493
-test.only("pnpm es5-ext without hoisted config", ({ expect }) =>
+test("pnpm es5-ext without hoisted config", ({ expect }) =>
   assertPack(
     expect,
     "test-app-hoisted",
