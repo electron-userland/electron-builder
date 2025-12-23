@@ -85,16 +85,15 @@ export default class AppXTarget extends Target {
     }
 
     const mappingList: Array<Array<string>> = []
+    const dirContents = await walk(appOutDir)
     mappingList.push(
-      await Promise.all(
-        (await walk(appOutDir)).map(file => {
-          let appxPath = file.substring(appOutDir.length + 1)
-          if (path.sep !== "\\") {
-            appxPath = appxPath.replace(/\//g, "\\")
-          }
-          return `"${vm.toVmFile(file)}" "app\\${appxPath}"`
-        })
-      )
+      dirContents.map(file => {
+        let appxPath = file.substring(appOutDir.length + 1)
+        if (path.sep !== "\\") {
+          appxPath = appxPath.replace(/\//g, "\\")
+        }
+        return `"${vm.toVmFile(file)}" "app\\${appxPath}"`
+      })
     )
 
     const userAssetDir = await this.packager.getResource(undefined, APPX_ASSETS_DIR_NAME)
