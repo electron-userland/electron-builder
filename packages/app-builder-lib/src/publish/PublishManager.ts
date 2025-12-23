@@ -35,13 +35,14 @@ import { isCI } from "ci-info"
 import * as path from "path"
 import { WriteStream as TtyWriteStream } from "tty"
 import * as url from "url"
-import { AppInfo, ArtifactCreated, Configuration, Platform, PlatformSpecificBuildOptions, Target } from "../index"
+import { AppInfo, ArtifactCreated, Configuration, Platform, PlatformSpecificBuildOptions, Target, TargetSpecificOptions } from "../index"
 import { Packager } from "../packager"
 import { PlatformPackager } from "../platformPackager"
 import { expandMacro } from "../util/macroExpander"
 import { WinPackager } from "../winPackager"
 import { createUpdateInfoTasks, UpdateInfoFileTask, writeUpdateInfoFiles } from "./updateInfoBuilder"
 import { resolveModule } from "../util/resolve"
+import { parseUrl } from "../util/pathManager"
 
 const publishForPrWarning =
   "There are serious security concerns with PUBLISH_FOR_PULL_REQUEST=true (see the  CircleCI documentation (https://circleci.com/docs/1.0/fork-pr-builds/) for details)" +
@@ -125,7 +126,7 @@ export class PublishManager implements PublishContext {
         }
       }
 
-      const publishConfig = await getAppUpdatePublishConfiguration(packager, event.arch, this.isPublish)
+      const publishConfig = await getAppUpdatePublishConfiguration(packager, null, event.arch, this.isPublish)
       if (publishConfig != null) {
         await writeFile(path.join(packager.getResourcesDir(event.appOutDir), "app-update.yml"), serializeToYaml(publishConfig))
       }
@@ -254,7 +255,12 @@ export class PublishManager implements PublishContext {
   }
 }
 
-export async function getAppUpdatePublishConfiguration(packager: PlatformPackager<any>, arch: Arch, errorIfCannot: boolean) {
+export async function getAppUpdatePublishConfiguration(
+  packager: PlatformPackager<any>,
+  targetSpecificOptions: TargetSpecificOptions | Nullish,
+  arch: Arch,
+  errorIfCannot: boolean
+): Promise<PublishConfiguration | null> {
   const publishConfigs = await getPublishConfigsForUpdateInfo(packager, await getPublishConfigs(packager, null, arch, errorIfCannot), arch)
   if (publishConfigs == null || publishConfigs.length === 0) {
     return null
@@ -387,8 +393,8 @@ export function computeDownloadUrl(publishConfiguration: PublishConfiguration, f
       return baseUrlString
     }
 
-    const baseUrl = url.parse(baseUrlString)
-    return url.format({ ...(baseUrl as url.UrlObject), pathname: path.posix.resolve(baseUrl.pathname || "/", encodeURI(fileName)) })
+    const baseUrl = parseUrl(baseUrlString)
+    return url.format({ ...baseUrl, pathname: path.posix.resolve(baseUrl?.pathname || "/", encodeURI(fileName)) })
   }
 
   let baseUrl

@@ -695,30 +695,6 @@ exports[`yarn two package.json w/ native module 3`] = `
             "LICENSE": {
               "size": "<size>",
             },
-            "dist": {
-              "files": {
-                "debug.js": {
-                  "size": "<size>",
-                },
-              },
-            },
-            "node_modules": {
-              "files": {
-                "ms": {
-                  "files": {
-                    "index.js": {
-                      "size": "<size>",
-                    },
-                    "license.md": {
-                      "size": "<size>",
-                    },
-                    "package.json": {
-                      "size": "<size>",
-                    },
-                  },
-                },
-              },
-            },
             "package.json": {
               "size": "<size>",
             },
