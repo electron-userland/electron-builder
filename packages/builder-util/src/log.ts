@@ -71,7 +71,7 @@ export class Logger {
     if (this.shouldDisableNonErrorLoggingVitest) {
       if (
         [
-          // "warn", // is actually a bit too noisy
+          // "warn", // is sometimes a bit too noisy
           "error",
         ].includes(level)
       ) {
