@@ -49,9 +49,9 @@ test.ifNotWindows.ifDevOrLinuxCi("generic, github and spaces", ({ expect }) =>
   })
 )
 
-test.only("github and spaces (publishAutoUpdate)", ({ expect }) =>
+test("github and spaces (publishAutoUpdate)", ({ expect }) =>
   app(expect, {
-    targets: Platform.LINUX.createTarget("AppImage"),
+    targets: Platform.LINUX.createTarget("AppImage", Arch.x64),
     config: {
       mac: {
         electronUpdaterCompatibility: ">=2.16",
@@ -88,7 +88,7 @@ test.ifNotWindows("os macro", ({ expect }) =>
   app(
     expect,
     {
-      targets: createTargets([Platform.LINUX, Platform.MAC], "zip"),
+      targets: createTargets([Platform.LINUX, Platform.MAC], "zip", "x64"),
       config: {
         publish: {
           provider: "s3",
@@ -102,6 +102,7 @@ test.ifNotWindows("os macro", ({ expect }) =>
       publish: "always",
       projectDirCreated: async projectDir => {
         process.env.__TEST_S3_PUBLISHER__ = path.join(projectDir, "dist/s3")
+        return Promise.resolve()
       },
       packed: async context => {
         const dir = path.join(context.projectDir, "dist/s3")
@@ -119,7 +120,7 @@ test.ifNotCi("dotted s3 bucket", ({ expect }) =>
   app(
     expect,
     {
-      targets: createTargets([Platform.LINUX], "zip"),
+      targets: createTargets([Platform.LINUX], "zip", "x64"),
       config: {
         publish: {
           provider: "s3",
@@ -138,7 +139,7 @@ test.ifNotWindows("custom provider", ({ expect }) =>
   app(
     expect,
     {
-      targets: createTargets([Platform.LINUX], "deb"),
+      targets: createTargets([Platform.LINUX], "deb", "x64"),
       config: {
         publish: {
           provider: "custom",

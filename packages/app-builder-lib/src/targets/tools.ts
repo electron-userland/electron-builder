@@ -20,10 +20,10 @@ export async function getAppImageTools(targetArch: Arch) {
   const libraryArch = targetArch === Arch.armv7l ? "arm32" : runtimeArch
 
   return {
-    mksquashfs: path.join(toolPath, "mksquashfs"),
-    desktopFileValidate: path.join(toolPath, "desktop-file-validate"),
-    libraries: path.join(artifact, "lib", libraryArch),
-    runtime: path.join(artifact, "runtimes", `runtime-${runtimeArch}`),
+    mksquashfs: process.env.CUSTOM_MKSQUASHFS_PATH?.trim() || path.join(toolPath, "mksquashfs"),
+    desktopFileValidate: process.env.CUSTOM_DESKTOP_FILE_VALIDATE_PATH?.trim() || path.join(toolPath, "desktop-file-validate"),
+    libraries: process.env.CUSTOM_LIBS_PATH?.trim() || path.join(artifact, "lib", libraryArch),
+    runtime: process.env.CUSTOM_RUNTIME_PATH?.trim() || path.join(artifact, "runtimes", `runtime-${runtimeArch}`),
   }
 }
 

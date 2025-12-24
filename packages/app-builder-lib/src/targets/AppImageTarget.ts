@@ -11,6 +11,7 @@ import { getNotLocalizedLicenseFile } from "../util/license"
 import { buildAppImage } from "./appimage/appImageUtil"
 import { LinuxTargetHelper } from "./LinuxTargetHelper"
 import { createStageDir } from "./targetUtil"
+import { appendBlockmap, createBlockmap } from "./differentialUpdateInfoBuilder"
 
 // https://unix.stackexchange.com/questions/375191/append-to-sub-directory-inside-squashfs-file
 export default class AppImageTarget extends Target {
@@ -76,7 +77,7 @@ export default class AppImageTarget extends Target {
       },
     })
 
-    const info = undefined // await executeAppBuilderAsJson(args)
+    const info = await appendBlockmap(artifactPath)
     // await packager.info.emitArtifactBuildCompleted({
     //   file: artifactPath,
     //   safeArtifactName: packager.computeSafeArtifactName(artifactName, "AppImage", arch, false),
