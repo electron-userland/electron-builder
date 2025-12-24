@@ -1,29 +1,40 @@
+import { Arch } from "builder-util"
 import * as path from "path"
 import { getBinFromUrl } from "../binDownload"
-import { Arch } from "builder-util"
 
 export function getLinuxToolsPath() {
   return getBinFromUrl("linux-tools-mac-10.12.3", "linux-tools-mac-10.12.3.7z", "SQ8fqIRVXuQVWnVgaMTDWyf2TLAJjJYw3tRSqQJECmgF6qdM7Kogfa6KD49RbGzzMYIFca9Uw3MdsxzOPRWcYw==")
 }
 
 export async function getAppImageTools(targetArch: Arch) {
-  const artifact = await getBinFromUrl(
-    "appimage@1.0.1",
-    "appimage-tools-runtime-20251108.zip",
-    "JYxcYr6TMvDfNyHQT1INaPx87XQFQDNuvVO5carww3OupKM8NO7tDnLpLb90iWbawaw61/Ww7e0fuZOsH2HygA=="
-  )
+  const override = process.env.APPIMAGE_TOOLS_PATH?.trim()
+  const artifact =
+    override ||
+    (await getBinFromUrl(
+      // https://github.com/electron-userland/electron-builder-binaries/releases/tag/appimage%401.0.1
+      "appimage@1.0.1",
+      "appimage-tools-runtime-20251108.zip",
+      "JYxcYr6TMvDfNyHQT1INaPx87XQFQDNuvVO5carww3OupKM8NO7tDnLpLb90iWbawaw61/Ww7e0fuZOsH2HygA=="
+    ))
+
   // stupid arch missnaming for folder names in the AppImage tools in electron-builder-binaries
-  const toolArch = process.arch === "arm64" ? "arm64" : process.arch === "ia32" ? "ia32" : process.arch === "arm" ? "arm32" : process.platform === "darwin" ? "x86_64" : "x64"
-  const toolPath = path.join(artifact, process.platform === "darwin" ? "darwin" : "linux", toolArch)
-
-  const runtimeArch = targetArch === Arch.arm64 ? "arm64" : targetArch === Arch.ia32 ? "ia32" : targetArch === Arch.armv7l ? "armh7l" : "x64"
-  const libraryArch = targetArch === Arch.armv7l ? "arm32" : runtimeArch
-
+  const { runtimeArch, libraryArch, toolArch } = (() => {
+    if (targetArch === Arch.arm64) {
+      return { runtimeArch: "arm64", libraryArch: "arm64", toolArch: "arm64" }
+    } else if (targetArch === Arch.ia32) {
+      return { runtimeArch: "ia32", libraryArch: "ia32", toolArch: "ia32" }
+    } else if (targetArch === Arch.armv7l) {
+      return { runtimeArch: "armv7l", libraryArch: "arm32", toolArch: "arm32" }
+    } else {
+      return { runtimeArch: "x64", libraryArch: "x64", toolArch: process.platform === "darwin" ? "x86_64" : "x64" }
+    }
+  })()
+  const toolPath = path.resolve(artifact, process.platform, toolArch)
   return {
-    mksquashfs: process.env.CUSTOM_MKSQUASHFS_PATH?.trim() || path.join(toolPath, "mksquashfs"),
-    desktopFileValidate: process.env.CUSTOM_DESKTOP_FILE_VALIDATE_PATH?.trim() || path.join(toolPath, "desktop-file-validate"),
-    libraries: process.env.CUSTOM_LIBS_PATH?.trim() || path.join(artifact, "lib", libraryArch),
-    runtime: process.env.CUSTOM_RUNTIME_PATH?.trim() || path.join(artifact, "runtimes", `runtime-${runtimeArch}`),
+    mksquashfs: path.join(toolPath, "mksquashfs"),
+    desktopFileValidate: path.join(toolPath, "desktop-file-validate"),
+    libraries: path.join(artifact, "lib", libraryArch),
+    runtime: path.join(artifact, "runtimes", `runtime-${runtimeArch}`),
   }
 }
 

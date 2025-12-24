@@ -29,12 +29,10 @@ export interface AppImageBuilderOptions {
 
 export async function buildAppImage(opts: AppImageBuilderOptions): Promise<void> {
   const { stageDir, output, appDir, removeStage, options, arch } = opts
+  await fs.remove(output)
 
   // Write AppRun launcher and related files
   await writeAppLauncherAndRelatedFiles(opts)
-
-  // Remove existing output file if it exists
-  await fs.remove(output)
 
   const { libraries, runtime, mksquashfs } = await getAppImageTools(arch)
   await copyUsingHardlink(libraries, path.join(stageDir, "usr", "lib"))
@@ -46,8 +44,6 @@ export async function buildAppImage(opts: AppImageBuilderOptions): Promise<void>
   const runtimeData = await fs.readFile(runtime)
 
   // Create squashfs with offset for runtime
-  // await createSquashFs(options, runtimeData.length)
-
   const args: string[] = [stageDir, output, "-offset", runtimeData.length.toString(), "-all-root", "-noappend", "-no-progress", "-quiet", "-no-xattrs", "-no-fragments"]
   if (options.compression) {
     args.push("-comp", options.compression)
