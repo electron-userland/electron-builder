@@ -22,11 +22,8 @@ export async function tar(compression: CompressionLevel | any, format: string, o
     tarDirectory = path.basename(dirToArchive)
   }
 
-  await Promise.all([
-    create(tarArgs, [tarDirectory]),
-    // remove file before - 7z doesn't overwrite file, but update
-    unlinkIfExists(outFile),
-  ])
+  create(tarArgs, [tarDirectory])
+  await unlinkIfExists(outFile)
 
   if (format === "tar.lz") {
     // noinspection SpellCheckingInspection
