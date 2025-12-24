@@ -1,5 +1,22 @@
 # app-builder-lib
 
+## 26.4.1
+
+### Patch Changes
+
+- Fix: post-process parent directories of unpacked files to avoid overeager unpacking _[`#9419`](https://github.com/electron-userland/electron-builder/pull/9419) [`1c94529`](https://github.com/electron-userland/electron-builder/commit/1c945290a38cc4b6070a4e756db58354aee5e683) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+</small>
+
+- `dmg-builder@26.4.1`
+- `electron-builder-squirrel-windows@26.4.1`
+
+</details>
+
 ## 26.4.0
 
 ### Minor Changes
