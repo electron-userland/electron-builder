@@ -24,7 +24,6 @@ export async function getAppImageTools(targetArch: Arch) {
     desktopFileValidate: path.join(toolPath, "desktop-file-validate"),
     libraries: path.join(artifact, "lib", libraryArch),
     runtime: path.join(artifact, "runtimes", `runtime-${runtimeArch}`),
-    template: path.join(__dirname, "appimage","templates", "AppRun.sh"),
   }
 }
 

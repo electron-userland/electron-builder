@@ -60,56 +60,24 @@ export default class AppImageTarget extends Target {
       return
     }
 
-
     await buildAppImage({
       appDir: appOutDir,
       stageDir: stageDir.dir,
       arch,
       output: artifactPath,
-      template: options.template,
-      license: options.license,
-      configuration: {
+      options: {
+        license: options.license,
         productName: this.packager.appInfo.productName,
         productFilename: this.packager.appInfo.productFilename,
         desktopEntry: await this.desktopEntry.value,
         executableName: this.packager.executableName,
         icons: await this.helper.icons,
         fileAssociations: this.packager.fileAssociations,
-        ...options,
+        compression: this.packager.compression === "maximum" ? "xz" : undefined,
       },
-      compression: packager.compression === "maximum" ? "xz" : undefined,
     })
 
-
-    // const args = [
-    //   "appimage",
-    //   "--stage",
-    //   stageDir.dir,
-    //   "--arch",
-    //   Arch[arch],
-    //   "--output",
-    //   artifactPath,
-    //   "--app",
-    //   appOutDir,
-    //   "--configuration",
-    //   JSON.stringify({
-    //     productName: this.packager.appInfo.productName,
-    //     productFilename: this.packager.appInfo.productFilename,
-    //     desktopEntry: await this.desktopEntry.value,
-    //     executableName: this.packager.executableName,
-    //     icons: this.helper.icons,
-    //     fileAssociations: this.packager.fileAssociations,
-    //     ...options,
-    //   }),
-    // ]
-    // objectToArgs(args, {
-    //   license: await getNotLocalizedLicenseFile(options.license, this.packager, ["txt", "html"]),
-    // })
-    // if (packager.compression === "maximum") {
-    //   args.push("--compression", "xz")
-    // }
-
-    // const updateInfo = await executeAppBuilderAsJson(args)
+    // const updateInfo = undefined // await executeAppBuilderAsJson(args)
     // await packager.info.emitArtifactBuildCompleted({
     //   file: artifactPath,
     //   safeArtifactName: packager.computeSafeArtifactName(artifactName, "AppImage", arch, false),
@@ -119,5 +87,44 @@ export default class AppImageTarget extends Target {
     //   isWriteUpdateInfo: true,
     //   updateInfo,
     // })
+
+    const args = [
+      "appimage",
+      "--stage",
+      stageDir.dir,
+      "--arch",
+      Arch[arch],
+      "--output",
+      artifactPath,
+      "--app",
+      appOutDir,
+      "--configuration",
+      JSON.stringify({
+        productName: this.packager.appInfo.productName,
+        productFilename: this.packager.appInfo.productFilename,
+        desktopEntry: await this.desktopEntry.value,
+        executableName: this.packager.executableName,
+        icons: this.helper.icons,
+        fileAssociations: this.packager.fileAssociations,
+        ...options,
+      }),
+    ]
+    objectToArgs(args, {
+      license: await getNotLocalizedLicenseFile(options.license, this.packager, ["txt", "html"]),
+    })
+    if (packager.compression === "maximum") {
+      args.push("--compression", "xz")
+    }
+
+    const info = await executeAppBuilderAsJson(args)
+    await packager.info.emitArtifactBuildCompleted({
+      file: artifactPath,
+      safeArtifactName: packager.computeSafeArtifactName(artifactName, "AppImage", arch, false),
+      target: this,
+      arch,
+      packager,
+      isWriteUpdateInfo: true,
+      updateInfo: info,
+    })
   }
 }
