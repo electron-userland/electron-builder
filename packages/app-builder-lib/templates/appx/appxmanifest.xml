@@ -3,6 +3,11 @@
 <Package
    xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
    xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+   xmlns:uap2="http://schemas.microsoft.com/appx/manifest/uap/windows10/2"
+   xmlns:uap4="http://schemas.microsoft.com/appx/manifest/uap/windows10/4"
+   xmlns:uap6="http://schemas.microsoft.com/appx/manifest/uap/windows10/6"
+   xmlns:uap7="http://schemas.microsoft.com/appx/manifest/uap/windows10/7"
+   xmlns:uap11="http://schemas.microsoft.com/appx/manifest/uap/windows10/11"
    xmlns:desktop="http://schemas.microsoft.com/appx/manifest/desktop/windows10"
    xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities">
   <!-- use single quotes to avoid double quotes escaping in the publisher value  -->
@@ -22,9 +27,7 @@
   <Dependencies>
     <TargetDeviceFamily Name="Windows.Desktop" MinVersion="${minVersion}" MaxVersionTested="${maxVersionTested}" />
   </Dependencies>
-  <Capabilities>
-    <rescap:Capability Name="runFullTrust"/>
-  </Capabilities>
+  ${capabilities}
   <Applications>
     <Application Id="${applicationId}" Executable="${executable}" EntryPoint="Windows.FullTrustApplication">
       <uap:VisualElements
