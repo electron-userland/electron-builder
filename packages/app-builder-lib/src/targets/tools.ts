@@ -1,8 +1,31 @@
 import * as path from "path"
 import { getBinFromUrl } from "../binDownload"
+import { Arch } from "builder-util"
 
 export function getLinuxToolsPath() {
   return getBinFromUrl("linux-tools-mac-10.12.3", "linux-tools-mac-10.12.3.7z", "SQ8fqIRVXuQVWnVgaMTDWyf2TLAJjJYw3tRSqQJECmgF6qdM7Kogfa6KD49RbGzzMYIFca9Uw3MdsxzOPRWcYw==")
+}
+
+export async function getAppImageTools(targetArch: Arch) {
+  const artifact = await getBinFromUrl(
+    "appimage@1.0.1",
+    "lappimage-tools-runtime-20251108.zip",
+    "JYxcYr6TMvDfNyHQT1INaPx87XQFQDNuvVO5carww3OupKM8NO7tDnLpLb90iWbawaw61/Ww7e0fuZOsH2HygA=="
+  )
+  // stupid arch missnaming for folder names in the AppImage tools in electron-builder-binaries
+  const toolArch = process.arch === "arm64" ? "arm64" : process.arch === "ia32" ? "ia32" : process.arch === "arm" ? "arm32" : process.platform === "darwin" ? "x86_64" : "x64"
+  const toolPath = path.join(artifact, process.platform === "darwin" ? "darwin" : "linux", toolArch)
+
+  const runtimeArch = targetArch === Arch.arm64 ? "arm64" : targetArch === Arch.ia32 ? "ia32" : targetArch === Arch.armv7l ? "armh7l" : "x64"
+  const libraryArch = targetArch === Arch.armv7l ? "arm32" : runtimeArch
+
+  return {
+    mksquashfs: path.join(toolPath, "mksquashfs"),
+    desktopFileValidate: path.join(toolPath, "desktop-file-validate"),
+    libraries: path.join(artifact, "lib", libraryArch),
+    runtime: path.join(artifact, "runtimes", `runtime-${runtimeArch}`),
+    template: path.join(__dirname, "appimage","templates", "AppRun.sh"),
+  }
 }
 
 export async function getFpmPath() {
