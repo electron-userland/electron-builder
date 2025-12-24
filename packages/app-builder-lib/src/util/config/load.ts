@@ -6,6 +6,7 @@ import { createJiti } from "jiti"
 import { load } from "js-yaml"
 import { Lazy } from "lazy-val"
 import * as path from "path"
+import { resolveFromProject } from "../projectModuleResolver"
 import { resolveModule } from "../resolve"
 
 const jiti = createJiti(__filename)
@@ -107,11 +108,20 @@ export async function loadParentConfig<T>(request: ReadConfigRequest, spec: stri
 
   let parentConfig = await orNullIfFileNotExist(readConfig<T>(path.resolve(request.projectDir, spec), request))
   if (parentConfig == null && isFileSpec !== true) {
-    let resolved: string | null = null
-    try {
-      resolved = require.resolve(spec)
-    } catch (_e) {
-      // ignore
+    // First try to resolve from the project directory (for pnpm compatibility)
+    let resolved = resolveFromProject({
+      projectDir: request.projectDir,
+      moduleSpecifier: spec,
+      optional: true,
+    })
+
+    // Fallback: try standard resolution (for electron-builder's own dependencies)
+    if (resolved === null) {
+      try {
+        resolved = require.resolve(spec)
+      } catch (_e) {
+        // ignore
+      }
     }
 
     if (resolved != null) {

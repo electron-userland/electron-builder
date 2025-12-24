@@ -36,7 +36,7 @@ void createYargs()
   )
   .command(
     "start",
-    "Run application in a development mode using electron-webpack",
+    "[DEPRECATED] Run application in dev mode (requires electron-webpack)",
     yargs => yargs,
     wrap(() => start())
   )

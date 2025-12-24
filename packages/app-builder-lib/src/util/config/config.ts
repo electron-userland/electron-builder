@@ -7,6 +7,7 @@ import { Configuration } from "../../configuration"
 import { FileSet } from "../../options/PlatformSpecificBuildOptions"
 import { reactCra } from "../../presets/rectCra"
 import { PACKAGE_VERSION } from "../../version"
+import { resolveFromProject } from "../projectModuleResolver"
 import { getConfig as _getConfig, loadParentConfig, orNullIfFileNotExist, ReadConfigRequest } from "./load"
 const validateSchema = require("@develar/schema-utils")
 
@@ -57,13 +58,29 @@ export async function getConfig(
     if ((dependencies != null && "react-scripts" in dependencies) || (devDependencies != null && "react-scripts" in devDependencies)) {
       config.extends = "react-cra"
     } else if (devDependencies != null && "electron-webpack" in devDependencies) {
-      let file = "electron-webpack/out/electron-builder.js"
-      try {
-        file = require.resolve(file)
-      } catch (_ignore) {
-        file = require.resolve("electron-webpack/electron-builder.yml")
+      // Note: electron-webpack is deprecated. This support is maintained for legacy projects.
+      let file = resolveFromProject({
+        projectDir,
+        moduleSpecifier: "electron-webpack/out/electron-builder.js",
+        optional: true,
+      })
+
+      if (file === null) {
+        file = resolveFromProject({
+          projectDir,
+          moduleSpecifier: "electron-webpack/electron-builder.yml",
+          optional: true,
+        })
       }
-      config.extends = `file:${file}`
+
+      if (file !== null) {
+        config.extends = `file:${file}`
+      } else {
+        log.warn(
+          { package: "electron-webpack" },
+          "electron-webpack is listed in devDependencies but could not be resolved. " + "Note: electron-webpack is deprecated. Consider migrating to a modern build tool."
+        )
+      }
     }
   }
 
