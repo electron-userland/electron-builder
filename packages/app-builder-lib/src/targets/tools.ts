@@ -9,7 +9,7 @@ export function getLinuxToolsPath() {
 export async function getAppImageTools(targetArch: Arch) {
   const artifact = await getBinFromUrl(
     "appimage@1.0.1",
-    "lappimage-tools-runtime-20251108.zip",
+    "appimage-tools-runtime-20251108.zip",
     "JYxcYr6TMvDfNyHQT1INaPx87XQFQDNuvVO5carww3OupKM8NO7tDnLpLb90iWbawaw61/Ww7e0fuZOsH2HygA=="
   )
   // stupid arch missnaming for folder names in the AppImage tools in electron-builder-binaries

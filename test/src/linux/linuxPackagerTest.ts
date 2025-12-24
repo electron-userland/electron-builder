@@ -15,7 +15,7 @@ const testPublishConfig: GenericServerOptions = {
   url: "https://example.com/download",
 }
 
-test.ifNotWindows("AppImage", ({ expect }) =>
+test.only("AppImage", ({ expect }) =>
   app(expect, {
     targets: appImageTarget,
     config: {

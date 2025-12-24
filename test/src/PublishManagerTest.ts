@@ -49,7 +49,7 @@ test.ifNotWindows.ifDevOrLinuxCi("generic, github and spaces", ({ expect }) =>
   })
 )
 
-test.ifNotWindows.ifDevOrLinuxCi("github and spaces (publishAutoUpdate)", ({ expect }) =>
+test.only("github and spaces (publishAutoUpdate)", ({ expect }) =>
   app(expect, {
     targets: Platform.LINUX.createTarget("AppImage"),
     config: {

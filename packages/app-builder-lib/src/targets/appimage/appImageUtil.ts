@@ -120,14 +120,17 @@ async function writeAppLauncherAndRelatedFiles(opts: AppImageBuilderOptions): Pr
   await fs.writeFile(path.join(stageDir, desktopFileName), desktopEntry, { mode: 0o666 })
   await copyIcons(opts)
 
-  const mimeTypeFile = await copyMimeTypes(opts)
   const templateConfig: Record<string, string> = {
     DesktopFileName: desktopFileName,
     ExecutableName: executableName,
     ProductName: productName,
     ProductFilename: productFilename,
     ResourceName: `appimagekit-${executableName}`,
-    MimeTypeFile: mimeTypeFile,
+  }
+
+  const mimeTypeFile = await copyMimeTypes(opts)
+  if (mimeTypeFile) {
+    templateConfig.MimeTypeFile = mimeTypeFile
   }
 
   // Copy license file if provided
@@ -138,7 +141,7 @@ async function writeAppLauncherAndRelatedFiles(opts: AppImageBuilderOptions): Pr
   }
 
   // Generate AppRun script
-  const scriptTemplate = await fs.readFile(getTemplatePath(path.join("templates", "AppRun.sh")), "utf-8")
+  const scriptTemplate = await fs.readFile(getTemplatePath(path.join("appimage", "AppRun.sh")), "utf-8")
   const appRunContent = renderTemplate(scriptTemplate, templateConfig)
   await fs.writeFile(path.join(stageDir, "AppRun"), appRunContent, { mode: 0o755 })
 }

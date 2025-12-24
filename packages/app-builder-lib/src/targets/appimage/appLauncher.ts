@@ -54,12 +54,14 @@ export async function copyIcons(options: AppImageBuilderOptions): Promise<void> 
   )
 }
 
-export async function copyMimeTypes(options: AppImageBuilderOptions): Promise<string> {
-  const { stageDir, configuration } = options
-  const fileAssociations = configuration.fileAssociations
+export async function copyMimeTypes(options: AppImageBuilderOptions): Promise<string | null> {
+  const {
+    stageDir,
+    options: { fileAssociations, productName, executableName },
+  } = options
 
   if (!fileAssociations || fileAssociations.length === 0) {
-    return ""
+    return null
   }
 
   const mimeTypeParts: string[] = []
@@ -70,7 +72,7 @@ export async function copyMimeTypes(options: AppImageBuilderOptions): Promise<st
     }
 
     mimeTypeParts.push(`<mime-type type="${fileAssociation.mimeType}">`)
-    mimeTypeParts.push(`  <comment>${configuration.productName} document</comment>`)
+    mimeTypeParts.push(`  <comment>${productName} document</comment>`)
 
     // Handle extension(s)
     const extensions = Array.isArray(fileAssociation.ext) ? fileAssociation.ext : [fileAssociation.ext]
@@ -83,13 +85,13 @@ export async function copyMimeTypes(options: AppImageBuilderOptions): Promise<st
     mimeTypeParts.push("</mime-type>")
   }
 
-  // If no mime-types were generated, return empty string
+  // If no mime-types were generated, return null
   if (mimeTypeParts.length === 0) {
-    return ""
+    return null
   }
 
   const mimeTypeDir = path.join(stageDir, MIME_TYPE_DIR_RELATIVE_PATH)
-  const fileName = `${configuration.executableName}.xml`
+  const fileName = `${executableName}.xml`
   const mimeTypeFile = path.join(mimeTypeDir, fileName)
 
   await fs.ensureDir(mimeTypeDir)

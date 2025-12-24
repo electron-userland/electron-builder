@@ -8,10 +8,9 @@ import { AppImageOptions } from "../options/linuxOptions"
 import { getAppUpdatePublishConfiguration } from "../publish/PublishManager"
 import { executeAppBuilderAsJson, objectToArgs } from "../util/appBuilder"
 import { getNotLocalizedLicenseFile } from "../util/license"
+import { buildAppImage } from "./appimage/appImageUtil"
 import { LinuxTargetHelper } from "./LinuxTargetHelper"
 import { createStageDir } from "./targetUtil"
-import { AppImageBuilderOptions, buildAppImage } from "./appimage/appImageUtil"
-import { getAppImageTools, getAppImageToolsPath } from "./tools"
 
 // https://unix.stackexchange.com/questions/375191/append-to-sub-directory-inside-squashfs-file
 export default class AppImageTarget extends Target {
@@ -46,7 +45,7 @@ export default class AppImageTarget extends Target {
       arch,
     })
 
-    const publishConfig = getAppUpdatePublishConfiguration(packager, options, arch, false)
+    const publishConfig = await getAppUpdatePublishConfiguration(packager, options, arch, false)
     const stageDir = await createStageDir(this, packager, arch)
 
     if (publishConfig != null) {
@@ -77,7 +76,7 @@ export default class AppImageTarget extends Target {
       },
     })
 
-    // const updateInfo = undefined // await executeAppBuilderAsJson(args)
+    const info = undefined // await executeAppBuilderAsJson(args)
     // await packager.info.emitArtifactBuildCompleted({
     //   file: artifactPath,
     //   safeArtifactName: packager.computeSafeArtifactName(artifactName, "AppImage", arch, false),
@@ -88,35 +87,35 @@ export default class AppImageTarget extends Target {
     //   updateInfo,
     // })
 
-    const args = [
-      "appimage",
-      "--stage",
-      stageDir.dir,
-      "--arch",
-      Arch[arch],
-      "--output",
-      artifactPath,
-      "--app",
-      appOutDir,
-      "--configuration",
-      JSON.stringify({
-        productName: this.packager.appInfo.productName,
-        productFilename: this.packager.appInfo.productFilename,
-        desktopEntry: await this.desktopEntry.value,
-        executableName: this.packager.executableName,
-        icons: this.helper.icons,
-        fileAssociations: this.packager.fileAssociations,
-        ...options,
-      }),
-    ]
-    objectToArgs(args, {
-      license: await getNotLocalizedLicenseFile(options.license, this.packager, ["txt", "html"]),
-    })
-    if (packager.compression === "maximum") {
-      args.push("--compression", "xz")
-    }
+    // const args = [
+    //   "appimage",
+    //   "--stage",
+    //   stageDir.dir,
+    //   "--arch",
+    //   Arch[arch],
+    //   "--output",
+    //   artifactPath,
+    //   "--app",
+    //   appOutDir,
+    //   "--configuration",
+    //   JSON.stringify({
+    //     productName: this.packager.appInfo.productName,
+    //     productFilename: this.packager.appInfo.productFilename,
+    //     desktopEntry: await this.desktopEntry.value,
+    //     executableName: this.packager.executableName,
+    //     icons: this.helper.icons,
+    //     fileAssociations: this.packager.fileAssociations,
+    //     ...options,
+    //   }),
+    // ]
+    // objectToArgs(args, {
+    //   license: await getNotLocalizedLicenseFile(options.license, this.packager, ["txt", "html"]),
+    // })
+    // if (packager.compression === "maximum") {
+    //   args.push("--compression", "xz")
+    // }
 
-    const info = await executeAppBuilderAsJson(args)
+    // const info = await executeAppBuilderAsJson(args)
     await packager.info.emitArtifactBuildCompleted({
       file: artifactPath,
       safeArtifactName: packager.computeSafeArtifactName(artifactName, "AppImage", arch, false),
