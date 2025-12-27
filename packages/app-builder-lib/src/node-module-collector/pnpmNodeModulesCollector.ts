@@ -11,7 +11,7 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
   }
 
   protected getArgs(): string[] {
-    return ["list", "--prod", "--json", "--depth", "Infinity", "--long"]
+    return ["list", "--prod", "--json", "--depth", "Infinity"]
   }
 
   private async getProductionDependencies(depTree: PnpmDependency): Promise<{ path: string; dependencies: Record<string, string>; optionalDependencies: Record<string, string> }> {
