@@ -34,7 +34,7 @@ export async function buildAppImage(opts: AppImageBuilderOptions): Promise<void>
   // Write AppRun launcher and related files
   await writeAppLauncherAndRelatedFiles(opts)
 
-  const { libraries, runtime, mksquashfs } = await getAppImageTools(arch)
+  const { runtimeLibraries: libraries, runtime, mksquashfs } = await getAppImageTools(arch)
   await copyUsingHardlink(libraries, path.join(stageDir, "usr", "lib"))
 
   // Copy app directory to stage

@@ -12,28 +12,32 @@ export async function getAppImageTools(targetArch: Arch) {
     override ||
     (await getBinFromUrl(
       // https://github.com/electron-userland/electron-builder-binaries/releases/tag/appimage%401.0.1
-      "appimage@1.0.1",
+      "appimage@1.0.2",
       "appimage-tools-runtime-20251108.zip",
-      "JYxcYr6TMvDfNyHQT1INaPx87XQFQDNuvVO5carww3OupKM8NO7tDnLpLb90iWbawaw61/Ww7e0fuZOsH2HygA=="
+      "zFS/e7ejDFYT620l7QnFS3eS6YNgXHfF9Wj9GheEkpz5wp/H1KM/r08hqWXYAhMjn5iu35HMQU3tUBGs0Zdltw==",
+      "mmaietta/electron-builder-binaries"
     ))
 
   // stupid arch missnaming for folder names in the AppImage tools in electron-builder-binaries
-  const { runtimeArch, libraryArch, toolArch } = (() => {
+  const { runtimeArch, libraryArch } = (() => {
+    // `toolArch` is used to get correct mksquashfs and desktop-file-validate binaries for the packaging process.
+    // The other `Arch`s are used to get correct runtime and library files for the AppImage.
     if (targetArch === Arch.arm64) {
-      return { runtimeArch: "arm64", libraryArch: "arm64", toolArch: "arm64" }
+      return { runtimeArch: "arm64", libraryArch: "arm64" }
     } else if (targetArch === Arch.ia32) {
-      return { runtimeArch: "ia32", libraryArch: "ia32", toolArch: "ia32" }
+      return { runtimeArch: "ia32", libraryArch: "ia32" }
     } else if (targetArch === Arch.armv7l) {
-      return { runtimeArch: "armv7l", libraryArch: "arm32", toolArch: "arm32" }
+      return { runtimeArch: "arm32", libraryArch: "arm32" }
     } else {
-      return { runtimeArch: "x64", libraryArch: "x64", toolArch: process.platform === "darwin" ? "x86_64" : "x64" }
+      return { runtimeArch: "x64", libraryArch: "x64" }
     }
   })()
+  const toolArch = process.arch === "arm" ? "arm32" : process.arch
   const toolPath = path.resolve(artifact, process.platform, toolArch)
   return {
     mksquashfs: path.join(toolPath, "mksquashfs"),
     desktopFileValidate: path.join(toolPath, "desktop-file-validate"),
-    libraries: path.join(artifact, "lib", libraryArch),
+    runtimeLibraries: path.join(artifact, "lib", libraryArch),
     runtime: path.join(artifact, "runtimes", `runtime-${runtimeArch}`),
   }
 }
