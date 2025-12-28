@@ -31,7 +31,7 @@ jobs:
       force-docker-build: ${{ steps.changes.outputs.docker == 'true' || steps.changes.outputs.workflow == 'true' }}
     steps:
       - name: Checkout code repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           fetch-depth: 0
 
@@ -74,7 +74,7 @@ jobs:
           - concurrentBuildsTest
     steps:
       - name: Checkout code repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           fetch-depth: 2
 
@@ -90,7 +90,7 @@ jobs:
       - name: Download test-runner if exists
         if: needs.run-docker-build.result == 'success'
         id: download-test-runner-image
-        uses: actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806 # v4.1.9
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           name: electron-builder-all-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}
           path: ${{ runner.temp }}
@@ -123,7 +123,7 @@ jobs:
       (needs.run-docker-build.result == 'success' || needs.run-docker-build.result == 'skipped')
     steps:
       - name: Checkout code repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
 
       - name: Cleanup runner
         uses: ./.github/actions/cleanup-runner
@@ -136,7 +136,7 @@ jobs:
 
       - name: Download test-runner if exists
         if: needs.run-docker-build.result == 'success'
-        uses: actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806 # v4.1.9
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           name: electron-builder-all-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}
           path: ${{ runner.temp }}
@@ -164,9 +164,38 @@ jobs:
   test-e2e:
     runs-on: ubuntu-22.04
     timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        test_config:
+          - file: dockerfile-archlinux
+            env:
+              PACKAGE_MANAGER_TO_TEST: pacman
+          - file: dockerfile-rpm
+            env:
+              PACKAGE_MANAGER_TO_TEST: dnf
+          - file: dockerfile-rpm
+            env:
+              PACKAGE_MANAGER_TO_TEST: zypper
+          - file: dockerfile-rpm
+            env:
+              PACKAGE_MANAGER_TO_TEST: yum
+          - file: dockerfile-rpm
+            env:
+              PACKAGE_MANAGER_TO_TEST: rpm
+          - file: dockerfile-debian
+            env:
+              PACKAGE_MANAGER_TO_TEST: apt
+          - file: dockerfile-debian
+            env:
+              PACKAGE_MANAGER_TO_TEST: dpkg
+          - file: dockerfile-appimage
+            env:
+              RUN_APP_IMAGE_TEST: true
+
     steps:
       - name: Checkout code repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
 
       - name: Setup Tests
         uses: ./.github/actions/pretest
@@ -179,7 +208,13 @@ jobs:
 
       - name: e2e Linux Updater tests (install, auto-update, uninstall)
         run: |
-          sh test/src/updater/test-specific-platforms.sh
+          docker build --platform=linux/amd64 -t ${{ matrix.test_config.file }} -f ./test/src/updater/${{ matrix.test_config.file }} .
+          TEST_RUNNER_IMAGE_TAG=${{ matrix.test_config.file }} pnpm test-linux
+        env:
+          TEST_FILES: blackboxUpdateTest,linuxUpdaterTest
+          DEBUG: electron-updater,electron-builder
+          ADDITIONAL_DOCKER_ARGS: "-e PACKAGE_MANAGER_TO_TEST=${{ matrix.test_config.env.PACKAGE_MANAGER_TO_TEST }} -e RUN_APP_IMAGE_TEST=${{ matrix.test_config.env.RUN_APP_IMAGE_TEST || false }}"
+
 
   test-windows:
     runs-on: windows-2022
@@ -195,7 +230,7 @@ jobs:
           - blackboxUpdateTest
     steps:
       - name: Checkout code repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
 
       - name: Setup Tests
         uses: ./.github/actions/pretest
@@ -210,21 +245,20 @@ jobs:
           TEST_FILES: ${{ matrix.testFiles }}
           FORCE_COLOR: 1
 
-  # Some tests fails while on macOS 26, so we'll keep it this way for now
   test-mac:
-    runs-on: macos-latest
+    runs-on: macos-26
     timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
         testFiles:
           - oneClickInstallerTest,assistedInstallerTest,webInstallerTest,packageManagerTest,HoistedNodeModuleTest,rebuilderTest
-          - winPackagerTest,winCodeSignTest,BuildTest,blackboxUpdateTest
-          - masTest,dmgTest,filesTest,macPackagerTest,differentialUpdateTest,macArchiveTest
-          - concurrentBuildsTest
+          - winPackagerTest,winCodeSignTest,BuildTest,blackboxUpdateTest,debTest
+          - masTest,filesTest,macPackagerTest,macArchiveTest
+          - concurrentBuildsTest,macIconTest
     steps:
       - name: Checkout code repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
 
       - name: Setup Tests
         uses: ./.github/actions/pretest
@@ -244,17 +278,17 @@ jobs:
           TEST_FILES: ${{ matrix.testFiles }}
           FORCE_COLOR: 1
 
-  test-mac-26:
-    runs-on: macos-26
+  test-mac-old:
+    runs-on: macos-latest
     timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
         testFiles:
-          - macIconTest
+          - differentialUpdateTest,blackboxUpdateTest,dmgTest
     steps:
       - name: Checkout code repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
 
       - name: Setup Tests
         uses: ./.github/actions/pretest

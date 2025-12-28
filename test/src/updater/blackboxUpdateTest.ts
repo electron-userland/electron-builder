@@ -1,10 +1,10 @@
 import { getBinFromUrl } from "app-builder-lib/out/binDownload"
 import { GenericServerOptions, Nullish } from "builder-util-runtime"
-import { archFromString, doSpawn, getArchSuffix, log, TmpDir } from "builder-util/out/util"
+import { archFromString, doSpawn, getArchSuffix, isEmptyOrSpaces, log, TmpDir } from "builder-util/out/util"
 import { Arch, Configuration, Platform } from "electron-builder"
 import fs, { existsSync, outputFile } from "fs-extra"
 import path from "path"
-import { afterAll, beforeAll, describe, expect, ExpectStatic } from "vitest"
+import { afterAll, beforeAll, describe, ExpectStatic, TestContext } from "vitest"
 import { launchAndWaitForQuit } from "../helpers/launchAppCrossPlatform"
 import { assertPack, modifyPackageJson, PackedContext } from "../helpers/packTester"
 import { ELECTRON_VERSION } from "../helpers/testConfig"
@@ -24,36 +24,38 @@ describe("Electron autoupdate (fresh install & update)", () => {
   })
 
   // Signing is required for macOS autoupdate
-  test.ifMac.ifEnv(process.env.CSC_KEY_PASSWORD)("mac", async () => {
-    await runTest("zip")
+  test.ifMac.ifEnv(process.env.CSC_KEY_PASSWORD)("mac", async context => {
+    await runTest(context, "mac", "zip")
   })
 
-  test.ifWindows("win", async () => {
-    await runTest("nsis")
+  test.ifWindows("win", async context => {
+    await runTest(context, "nsis", "nsis")
   })
 
   // must be sequential in order for process.env.ELECTRON_BUILDER_LINUX_PACKAGE_MANAGER to be respected per-test
   describe.runIf(process.platform === "linux")("linux", { sequential: true }, () => {
-    test.ifEnv(process.env.RUN_APP_IMAGE_TEST && process.arch === "arm64")("AppImage - arm64", async () => {
-      await runTest("AppImage", Arch.arm64)
+    test.ifEnv(process.env.RUN_APP_IMAGE_TEST === "true" && process.arch === "arm64")("AppImage - arm64", async context => {
+      await runTest(context, "AppImage", "appimage", Arch.arm64)
     })
 
     // only works on x64, so this will fail on arm64 macs due to arch mismatch
-    test.ifEnv(process.env.RUN_APP_IMAGE_TEST && process.arch === "x64")("AppImage - x64", async () => {
-      await runTest("AppImage", Arch.x64)
+    test.ifEnv(process.env.RUN_APP_IMAGE_TEST === "true" && process.arch === "x64")("AppImage - x64", async context => {
+      await runTest(context, "AppImage", "appimage", Arch.x64)
     })
 
     // package manager tests specific to each distro (and corresponding docker image)
     for (const distro in packageManagerMap) {
       const { pms, target } = packageManagerMap[distro as keyof typeof packageManagerMap]
       for (const pm of pms) {
-        test(`${distro} - (${pm})`, async context => {
+        test(`${distro} - (${pm})`, { sequential: true }, async context => {
           if (!determineEnvironment(distro)) {
             context.skip()
           }
-          process.env.ELECTRON_BUILDER_LINUX_PACKAGE_MANAGER = pm
-          await runTest(target, Arch.x64)
-          delete process.env.ELECTRON_BUILDER_LINUX_PACKAGE_MANAGER
+          // skip if already set to avoid interfering with other package manager tests
+          if (!isEmptyOrSpaces(process.env.PACKAGE_MANAGER_TO_TEST) && process.env.PACKAGE_MANAGER_TO_TEST !== pm) {
+            context.skip()
+          }
+          await runTest(context, target, pm, Arch.x64)
         })
       }
     }
@@ -84,7 +86,9 @@ const packageManagerMap: {
   },
 }
 
-async function runTest(target: string, arch: Arch = Arch.x64) {
+async function runTest(context: TestContext, target: string, packageManager: string, arch: Arch = Arch.x64) {
+  const { expect } = context
+
   const tmpDir = new TmpDir("auto-update")
   const outDirs: ApplicationUpdatePaths[] = []
   await doBuild(expect, outDirs, Platform.current().createTarget([target], arch), tmpDir, process.platform === "win32")
@@ -100,27 +104,43 @@ async function runTest(target: string, arch: Arch = Arch.x64) {
     throw new Error(`App not found: ${appPath}`)
   }
 
-  await runTestWithinServer(async (rootDirectory: string, updateConfigPath: string) => {
-    // Move app update to the root directory of the server
-    await fs.copy(newAppDir.dir, rootDirectory, { recursive: true, overwrite: true })
+  let queuedError: Error | null = null
+  try {
+    await runTestWithinServer(async (rootDirectory: string, updateConfigPath: string) => {
+      // Move app update to the root directory of the server
+      await fs.copy(newAppDir.dir, rootDirectory, { recursive: true, overwrite: true })
 
-    const verifyAppVersion = async (expectedVersion: string) => await launchAndWaitForQuit({ appPath, timeoutMs: 2 * 60 * 1000, updateConfigPath, expectedVersion })
+      const verifyAppVersion = async (expectedVersion: string) =>
+        await launchAndWaitForQuit({ appPath, timeoutMs: 2 * 60 * 1000, updateConfigPath, expectedVersion, packageManagerToTest: packageManager })
 
-    const result = await verifyAppVersion(OLD_VERSION_NUMBER)
-    log.debug(result, "Test App version")
-    expect(result.version).toMatch(OLD_VERSION_NUMBER)
+      const result = await verifyAppVersion(OLD_VERSION_NUMBER)
+      log.debug(result, "Test App version")
+      expect(result.version).toMatch(OLD_VERSION_NUMBER)
 
-    // Wait for quitAndInstall to take effect, increase delay if updates are slower
-    // (shouldn't be the case for such a small test app, but Windows with Debugger attached is pretty dam slow)
-    const delay = 60 * 1000
-    await new Promise(resolve => setTimeout(resolve, delay))
+      // Wait for quitAndInstall to take effect, increase delay if updates are slower
+      // (shouldn't be the case for such a small test app, but Windows with Debugger attached is pretty dam slow)
+      const delay = 60 * 1000
+      await new Promise(resolve => setTimeout(resolve, delay))
 
-    expect((await verifyAppVersion(NEW_VERSION_NUMBER)).version).toMatch(NEW_VERSION_NUMBER)
-  })
-  // windows needs to release file locks, so a delay seems to be needed
-  await new Promise(resolve => setTimeout(resolve, 1000))
-  await handleCleanupPerOS({ target })
-  await tmpDir.cleanup()
+      expect((await verifyAppVersion(NEW_VERSION_NUMBER)).version).toMatch(NEW_VERSION_NUMBER)
+    })
+  } catch (error: any) {
+    log.error({ error: error.message }, "Blackbox Updater Test failed to run")
+    queuedError = error
+  } finally {
+    // windows needs to release file locks, so a delay seems to be needed
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    await tmpDir.cleanup()
+    try {
+      await handleCleanupPerOS({ target })
+    } catch (error: any) {
+      log.error({ error: error.message }, "Blackbox Updater Test cleanup failed")
+      // ignore
+    }
+  }
+  if (queuedError) {
+    throw queuedError
+  }
 }
 
 type ApplicationUpdatePaths = {
@@ -159,7 +179,7 @@ async function doBuild(
             version,
           },
           ...extraConfig,
-          // compression: "store",
+          compression: "store",
           publish: {
             provider: "s3",
             bucket: "develar",
@@ -307,11 +327,11 @@ async function handleInitialInstallPerOS({ target, dirPath, arch }: { target: st
 }
 
 async function handleCleanupPerOS({ target }: { target: string }) {
+  // TODO: ignore for now, this doesn't block CI, but proper uninstall logic should be implemented
   if (target === "deb") {
-    // TODO: ignore for now, this doesn't block CI, but proper uninstall logic should be implemented
     //   execSync("dpkg -r testapp", { stdio: "inherit" });
   } else if (target === "rpm") {
-    execSync(`zypper rm -y testapp`, { stdio: "inherit" })
+    // execSync(`zypper rm -y testapp`, { stdio: "inherit" })
   } else if (target === "pacman") {
     execSync(`pacman -R --noconfirm testapp`, { stdio: "inherit" })
   } else if (process.platform === "win32") {

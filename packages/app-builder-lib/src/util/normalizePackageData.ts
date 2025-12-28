@@ -1,6 +1,6 @@
 import { fromUrl } from "hosted-git-info"
 import * as semver from "semver"
-import * as url from "url"
+import { parseUrl } from "./pathManager"
 
 export function normalizePackageData(data: any) {
   for (const it of check) {
@@ -96,7 +96,7 @@ const check = [
       if (typeof data.bugs == "string") {
         if (emailRe.test(data.bugs)) {
           data.bugs = { email: data.bugs }
-        } else if (url.parse(data.bugs).protocol) {
+        } else if (parseUrl(data.bugs)?.protocol) {
           data.bugs = { url: data.bugs }
         }
       } else {
@@ -104,7 +104,7 @@ const check = [
         const oldBugs = data.bugs
         data.bugs = {}
         if (oldBugs.url) {
-          if (typeof oldBugs.url == "string" && url.parse(oldBugs.url).protocol) {
+          if (typeof oldBugs.url == "string" && parseUrl(oldBugs.url)?.protocol) {
             data.bugs.url = oldBugs.url
           }
         }
@@ -177,7 +177,7 @@ const check = [
     if (typeof data.homepage !== "string") {
       delete data.homepage
     }
-    if (!url.parse(data.homepage).protocol) {
+    if (!parseUrl(data.homepage)?.protocol) {
       data.homepage = `https://${data.homepage}`
     }
     return

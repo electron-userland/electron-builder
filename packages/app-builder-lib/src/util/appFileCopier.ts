@@ -1,4 +1,4 @@
-import { AsyncTaskManager, FileCopier, FileTransformer, Link, log, MAX_FILE_REQUESTS, statOrNull, walk } from "builder-util"
+import { AsyncTaskManager, FileCopier, FileTransformer, isEmptyOrSpaces, Link, log, MAX_FILE_REQUESTS, statOrNull, walk } from "builder-util"
 import { Stats } from "fs"
 import { ensureSymlink } from "fs-extra"
 import { mkdir, readlink } from "fs/promises"
@@ -182,7 +182,7 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
   const { tempDirManager, cancellationToken, appDir, projectDir } = packager
 
   let deps: Array<NodeModuleInfo> = []
-  const searchDirectories = Array.from(new Set([appDir, projectDir, await packager.getWorkspaceRoot()])).filter((it): it is string => it != null)
+  const searchDirectories = Array.from(new Set([appDir, projectDir, await packager.getWorkspaceRoot()])).filter((it): it is string => !isEmptyOrSpaces(it))
   for (const dir of searchDirectories) {
     if (cancellationToken.cancelled) {
       throw new Error("user cancelled")
@@ -190,9 +190,13 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
 
     const dirDeps = await getNodeModules(await packager.getPackageManager(), { rootDir: dir, tempDirManager, cancellationToken, packageName: packager.metadata.name! })
     if (dirDeps.length > 0) {
-      log.debug({ dir, nodeModules: dirDeps.map(it => ({ ...it, dir: log.filePath(it.dir) })) }, "collected node modules")
+      log.debug({ dir, nodeModules: dirDeps }, "collected node modules")
       deps = dirDeps
       break
+    }
+    const attempt = searchDirectories.indexOf(dir)
+    if (attempt < searchDirectories.length - 1) {
+      log.info({ searchDir: dir, attempt }, "no node modules found in collection, trying next search directory")
     }
   }
   if (deps.length === 0) {
@@ -213,6 +217,8 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
     const files = await copier.collectNodeModules(dep, nodeModuleExcludedExts, path.relative(mainMatcher.to, destination))
     result[index++] = validateFileSet({ src: source, destination, files, metadata: copier.metadata })
 
+    log.debug({ dep: dep.name, from: log.filePath(source), to: log.filePath(destination), filesCount: files.length }, "identified module")
+
     if (dep.dependencies) {
       for (const c of dep.dependencies) {
         await collectNodeModules(c, path.join(destination, NODE_MODULES, c.name))
@@ -224,7 +230,6 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
     const destination = path.join(mainMatcher.to, NODE_MODULES, dep.name)
     await collectNodeModules(dep, destination)
   }
-
   return result
 }
 

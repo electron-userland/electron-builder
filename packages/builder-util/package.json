@@ -1,6 +1,6 @@
 {
   "name": "builder-util",
-  "version": "26.3.0",
+  "version": "26.3.4",
   "main": "out/util.js",
   "author": "Vladimir Krivosheev",
   "license": "MIT",
@@ -20,7 +20,6 @@
     "app-builder-bin": "5.0.0-alpha.12",
     "builder-util-runtime": "workspace:*",
     "chalk": "^4.1.2",
-    "ci-info": "^4.2.0",
     "cross-spawn": "^7.0.6",
     "debug": "^4.3.4",
     "fs-extra": "^10.1.0",

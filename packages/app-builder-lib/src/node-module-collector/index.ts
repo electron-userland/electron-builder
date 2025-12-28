@@ -8,7 +8,7 @@ import { YarnBerryNodeModulesCollector } from "./yarnBerryNodeModulesCollector"
 import { YarnNodeModulesCollector } from "./yarnNodeModulesCollector"
 import { BunNodeModulesCollector } from "./bunNodeModulesCollector"
 import { Lazy } from "lazy-val"
-import { spawn, log } from "builder-util"
+import { spawn, log, exists } from "builder-util"
 import * as fs from "fs-extra"
 import * as path from "path"
 
@@ -25,7 +25,6 @@ export function getCollectorByPackageManager(pm: PM, rootDir: string, tempDirMan
     case PM.BUN:
       return new BunNodeModulesCollector(rootDir, tempDirManager)
     case PM.NPM:
-    default:
       return new NpmNodeModulesCollector(rootDir, tempDirManager)
   }
 }
@@ -56,6 +55,10 @@ export const determinePackageManagerEnv = ({ projectDir, appDir, workspaceRoot }
     if (root != null) {
       // re-detect package manager from workspace root, this seems particularly necessary for pnpm workspaces
       const actualPm = await detectPackageManager([root])
+      log.info(
+        { pm: actualPm.pm, config: actualPm.corepackConfig, resolved: actualPm.resolvedDirectory, projectDir },
+        `detected workspace root for project using ${actualPm.detectionMethod}`
+      )
       return {
         pm: actualPm.pm,
         workspaceRoot: Promise.resolve(actualPm.resolvedDirectory),
@@ -68,26 +71,22 @@ export const determinePackageManagerEnv = ({ projectDir, appDir, workspaceRoot }
   })
 
 async function findWorkspaceRoot(pm: PM, cwd: string): Promise<string | undefined> {
-  let command: { command: string; args: string[] } | undefined
+  let command: { command: string; args: string[] }
 
   switch (pm) {
     case PM.PNPM:
-      command = { command: "pnpm", args: ["root", "-w"] }
+      command = { command: "pnpm", args: ["--workspace-root", "exec", "pwd"] }
       break
-
     case PM.YARN_BERRY:
-      command = { command: "yarn", args: ["config", "get", "workspaceRoot"] }
+      command = { command: "yarn", args: ["workspaces", "list", "--json"] }
       break
-
     case PM.YARN: {
       command = { command: "yarn", args: ["workspaces", "info", "--silent"] }
       break
     }
-
     case PM.BUN:
       command = { command: "bun", args: ["pm", "ls", "--json"] }
       break
-
     case PM.NPM:
     default:
       command = { command: "npm", args: ["prefix", "-w"] }
@@ -95,32 +94,46 @@ async function findWorkspaceRoot(pm: PM, cwd: string): Promise<string | undefine
   }
 
   const output = await spawn(command.command, command.args, { cwd, stdio: ["ignore", "pipe", "ignore"] })
-    .then(it => {
-      const out = it?.trim()
+    .then(async it => {
+      const out: string | undefined = it?.trim()
+      if (!out) {
+        return undefined
+      }
       if (pm === PM.YARN) {
         JSON.parse(out) // if JSON valid, workspace detected
-        return findNearestWithWorkspacesField(cwd)
+        return findNearestPackageJsonWithWorkspacesField(cwd)
       } else if (pm === PM.BUN) {
         const json = JSON.parse(out)
         if (Array.isArray(json) && json.length > 0) {
-          return findNearestWithWorkspacesField(cwd)
+          return findNearestPackageJsonWithWorkspacesField(cwd)
+        }
+      } else if (pm === PM.YARN_BERRY) {
+        const lines = out
+          .split("\n")
+          .map(l => l.trim())
+          .filter(Boolean)
+        for (const line of lines) {
+          const parsed = JSON.parse(line)
+          if (parsed.location != null) {
+            const potential = path.resolve(cwd, parsed.location)
+            return (await exists(potential)) ? findNearestPackageJsonWithWorkspacesField(potential) : undefined
+          }
         }
       }
-      return !out?.length || out === "undefined" ? undefined : out
+      return out.length === 0 || out === "undefined" ? undefined : out
     })
-    .catch(() => findNearestWithWorkspacesField(cwd))
-
-  log.debug({ root: output || cwd }, output ? "workspace root detected" : "workspace root not detected, using project root")
+    .catch(() => findNearestPackageJsonWithWorkspacesField(cwd))
   return output
 }
 
-async function findNearestWithWorkspacesField(dir: string): Promise<string | undefined> {
+async function findNearestPackageJsonWithWorkspacesField(dir: string): Promise<string | undefined> {
   let current = dir
   while (true) {
     const pkgPath = path.join(current, "package.json")
     try {
       const pkg = JSON.parse(await fs.readFile(pkgPath, "utf8"))
       if (pkg.workspaces) {
+        log.debug({ path: current }, "identified workspace root")
         return current
       }
     } catch {

@@ -1,5 +1,117 @@
 # electron-forge-maker-nsis-web
 
+## 26.4.0
+
+### Patch Changes
+
+<details><summary>Updated 1 dependency</summary>
+
+<small>
+
+[`e70da99`](https://github.com/electron-userland/electron-builder/commit/e70da99e34c1cc913b237c5a58456bf752a378bc) [`b66832d`](https://github.com/electron-userland/electron-builder/commit/b66832d6fc633b4b12ccdffc0501c6d31b48a85e) [`9110cb4`](https://github.com/electron-userland/electron-builder/commit/9110cb432e273d526e40f02337167544ed371605) [`39ae6a7`](https://github.com/electron-userland/electron-builder/commit/39ae6a7fb7109e8ab865fd1438592440110f4b71) [`78910a9`](https://github.com/electron-userland/electron-builder/commit/78910a913bb93c9e429bf8699338a8bf58f5d411) [`5f962f9`](https://github.com/electron-userland/electron-builder/commit/5f962f9cae875da1208caa96fe040b2fe9224ea7)
+
+</small>
+
+- `app-builder-lib@26.4.0`
+
+</details>
+
+## 26.3.6
+
+### Patch Changes
+
+<details><summary>Updated 1 dependency</summary>
+
+<small>
+
+[`bdfc76b`](https://github.com/electron-userland/electron-builder/commit/bdfc76bf18cb02a38aa7b3624c9fb865c910c393) [`693629c`](https://github.com/electron-userland/electron-builder/commit/693629c7990958ccbf60bd7d59824afc139dc1c2)
+
+</small>
+
+- `app-builder-lib@26.3.6`
+
+</details>
+
+## 26.3.5
+
+### Patch Changes
+
+<details><summary>Updated 1 dependency</summary>
+
+<small>
+
+[`e3f3592`](https://github.com/electron-userland/electron-builder/commit/e3f3592cfa8043c646d1791fa7f41feb45556ea9) [`05e0bc7`](https://github.com/electron-userland/electron-builder/commit/05e0bc7becf4057e7f7794597a57f33d23894f4b) [`e043df5`](https://github.com/electron-userland/electron-builder/commit/e043df57604fb029fd8f9cf7d835b8366ee71aa6)
+
+</small>
+
+- `app-builder-lib@26.3.5`
+
+</details>
+
+## 26.3.4
+
+### Patch Changes
+
+<details><summary>Updated 1 dependency</summary>
+
+<small>
+
+[`e34be3b`](https://github.com/electron-userland/electron-builder/commit/e34be3b3e8486c20cac316b4ae978ce275ea9cf7) [`ada111e`](https://github.com/electron-userland/electron-builder/commit/ada111ebe82d9487c27441969ab15899bafad4c9) [`4d24ebd`](https://github.com/electron-userland/electron-builder/commit/4d24ebd79ea33d8d9afa4a4bf18af90e968d0ff3) [`b81c253`](https://github.com/electron-userland/electron-builder/commit/b81c2539c4da4630b9e955f3afa6ec76cb30447b)
+
+</small>
+
+- `app-builder-lib@26.3.4`
+
+</details>
+
+## 26.3.3
+
+### Patch Changes
+
+<details><summary>Updated 1 dependency</summary>
+
+<small>
+
+[`241c53a`](https://github.com/electron-userland/electron-builder/commit/241c53a598d9eb566de06059b4aa2f2d97d8712c)
+
+</small>
+
+- `app-builder-lib@26.3.3`
+
+</details>
+
+## 26.3.2
+
+### Patch Changes
+
+<details><summary>Updated 1 dependency</summary>
+
+<small>
+
+[`0cd0831`](https://github.com/electron-userland/electron-builder/commit/0cd0831ec1c23b4fb4d701c10d586cb83d4ed2ed) [`7f7113d`](https://github.com/electron-userland/electron-builder/commit/7f7113dc435a427ca4ff041fb138512ac0bdeaaa) [`65eecac`](https://github.com/electron-userland/electron-builder/commit/65eecac1bec8fb5667621bdba4f1d2b1c75230b5)
+
+</small>
+
+- `app-builder-lib@26.3.2`
+
+</details>
+
+## 26.3.1
+
+### Patch Changes
+
+<details><summary>Updated 1 dependency</summary>
+
+<small>
+
+[`ec0a851`](https://github.com/electron-userland/electron-builder/commit/ec0a85179b4508c372667f55e395d8b27c58a046) [`2f3e7e1`](https://github.com/electron-userland/electron-builder/commit/2f3e7e1e67dd30c4987c33172ca6857ee0a2fc14) [`6171472`](https://github.com/electron-userland/electron-builder/commit/617147281ceb53e9d40be852678131d2832abd79) [`ef364d3`](https://github.com/electron-userland/electron-builder/commit/ef364d32c4fa78200249916af934b5235e04ba3e) [`45a1683`](https://github.com/electron-userland/electron-builder/commit/45a1683400b6525998256d83059ce7b562098eb1) [`1607820`](https://github.com/electron-userland/electron-builder/commit/160782067f904b61d53eb28368aea58022fe1717) [`ed8ea12`](https://github.com/electron-userland/electron-builder/commit/ed8ea12f7c2ccf3e52079a5aa9517f1342448c52)
+
+</small>
+
+- `app-builder-lib@26.3.1`
+
+</details>
+
 ## 26.3.0
 
 ### Patch Changes

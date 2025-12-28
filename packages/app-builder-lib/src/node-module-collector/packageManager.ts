@@ -4,11 +4,11 @@ import * as path from "path"
 import * as which from "which"
 
 export enum PM {
-  NPM = "npm",
-  YARN = "yarn",
   PNPM = "pnpm",
+  YARN = "yarn",
   YARN_BERRY = "yarn-berry",
   BUN = "bun",
+  NPM = "npm",
 }
 
 // Cache for resolved paths
@@ -45,7 +45,14 @@ export function getPackageManagerCommand(pm: PM) {
   return resolved
 }
 
-export async function detectPackageManager(searchPaths: string[]): Promise<{ pm: PM; corepackConfig: string | undefined; resolvedDirectory: string | undefined }> {
+type PackageManagerSetup = {
+  pm: PM
+  corepackConfig: string | undefined
+  resolvedDirectory: string | undefined
+  detectionMethod: string
+}
+
+export async function detectPackageManager(searchPaths: string[]): Promise<PackageManagerSetup> {
   let pm: PM | null = null
   const dedupedPaths = Array.from(new Set(searchPaths)) // reduce file operations, dedupe paths since primary use case has projectDir === appDir
 
@@ -58,24 +65,22 @@ export async function detectPackageManager(searchPaths: string[]): Promise<{ pm:
       const [pm, version] = packageManager.split("@")
       if (Object.values(PM).includes(pm as PM)) {
         const resolvedPackageManager = await resolveIfYarn(pm as PM, version, dir)
-        log.debug({ resolvedPackageManager, packageManager, cwd: dir }, "packageManager field detected in package.json")
-        return { pm: resolvedPackageManager, corepackConfig: packageManager, resolvedDirectory: dir }
+        return { pm: resolvedPackageManager, corepackConfig: packageManager, resolvedDirectory: dir, detectionMethod: "packageManager field" }
       }
     }
 
     pm = await detectPackageManagerByFile(dir)
     if (pm) {
       const resolvedPackageManager = await resolveIfYarn(pm, "", dir)
-      log.debug({ resolvedPackageManager, cwd: dir }, "packageManager detected by file")
-      return { pm: resolvedPackageManager, resolvedDirectory: dir, corepackConfig: undefined }
+      return { pm: resolvedPackageManager, resolvedDirectory: dir, corepackConfig: undefined, detectionMethod: "lock file" }
     }
   }
 
   pm = detectPackageManagerByEnv() || PM.NPM
   const cwd = process.env.npm_package_json ? path.dirname(process.env.npm_package_json) : (process.env.INIT_CWD ?? process.cwd())
   const resolvedPackageManager = await resolveIfYarn(pm, "", cwd)
-  log.debug({ resolvedPackageManager, detected: cwd }, "packageManager not detected by file, falling back to environment detection")
-  return { pm: resolvedPackageManager, resolvedDirectory: undefined, corepackConfig: undefined }
+  log.info({ resolvedPackageManager, detected: cwd }, "packageManager not detected by file, falling back to environment detection")
+  return { pm: resolvedPackageManager, resolvedDirectory: undefined, corepackConfig: undefined, detectionMethod: "process environment" }
 }
 
 function detectPackageManagerByEnv(): PM | null {
