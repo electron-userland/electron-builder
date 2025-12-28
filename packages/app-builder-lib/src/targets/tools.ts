@@ -12,9 +12,9 @@ export async function getAppImageTools(targetArch: Arch) {
     override ||
     (await getBinFromUrl(
       // https://github.com/electron-userland/electron-builder-binaries/releases/tag/appimage%401.0.1
-      "appimage@1.0.2",
+      "appimage@1.0.3",
       "appimage-tools-runtime-20251108.zip",
-      "zFS/e7ejDFYT620l7QnFS3eS6YNgXHfF9Wj9GheEkpz5wp/H1KM/r08hqWXYAhMjn5iu35HMQU3tUBGs0Zdltw==",
+      "Nj1Lqcaijg/dN/bm+grzkc6XHYJRciM86cJIlu29fVags2D3gKznujj6NhqVfH5/famGA7tx+Sp+eTxb4cxYIQ==",
       "mmaietta/electron-builder-binaries"
     ))
 
