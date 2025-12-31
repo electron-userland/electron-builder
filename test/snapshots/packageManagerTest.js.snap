@@ -862,6 +862,18 @@ exports[`pnpm 2`] = `
 }
 `;
 
+exports[`pnpm workspace - conflicting versions 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`pnpm workspace 1`] = `
+{
+  "linux": [],
+}
+`;
+
 exports[`yarn 1`] = `
 {
   "linux": [],
@@ -1126,6 +1138,12 @@ exports[`yarn berry multi-package workspace 2`] = `
       "size": 321,
     },
   },
+}
+`;
+
+exports[`yarn berry pnp workspace 1`] = `
+{
+  "linux": [],
 }
 `;
 

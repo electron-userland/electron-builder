@@ -1,0 +1,14 @@
+{
+  "name": "yarn-pnp-test-app",
+  "version": "1.0.0",
+  "main": "index.js",
+  "private": true,
+  "build": {
+    "appId": "org.electron-builder.yarnPnpTestApp",
+    "compression": "store",
+    "npmRebuild": false,
+    "mac": {
+      "category": "your.app.category.type"
+    }
+  }
+}

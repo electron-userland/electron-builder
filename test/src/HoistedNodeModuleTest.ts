@@ -635,3 +635,21 @@ test("pnpm workspace with native module", ({ expect }) =>
       packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
     }
   ))
+
+// Test pnpm workspace with workspace:* dependencies (link: protocol)
+// This specifically tests that packages using "workspace:*" protocol are correctly
+// resolved and bundled. The "lib" package is a workspace dependency of "app".
+test("pnpm workspace with workspace protocol dependencies", ({ expect }) =>
+  assertPack(
+    expect,
+    "test-app-pnpm-workspace",
+    {
+      targets: linuxDirTarget,
+      projectDir: "packages/app",
+    },
+    {
+      storeDepsLockfileSnapshot: true,
+      packageManager: PM.PNPM,
+      packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
+    }
+  ))

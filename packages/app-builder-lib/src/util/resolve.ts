@@ -2,6 +2,7 @@ import { log } from "builder-util/out/log"
 import debug from "debug"
 import * as path from "path"
 import * as requireMaybe from "../../helpers/dynamic-import"
+import { resolveFromProject } from "./projectModuleResolver"
 
 export async function resolveModule<T>(type: string | undefined, name: string): Promise<T> {
   try {
@@ -12,7 +13,7 @@ export async function resolveModule<T>(type: string | undefined, name: string): 
   }
 }
 
-export async function resolveFunction<T>(type: string | undefined, executor: T | string, name: string): Promise<T> {
+export async function resolveFunction<T>(type: string | undefined, executor: T | string, name: string, projectDir?: string): Promise<T> {
   if (executor == null || typeof executor !== "string") {
     // is already function or explicitly ignored by user
     return executor
@@ -20,14 +21,29 @@ export async function resolveFunction<T>(type: string | undefined, executor: T |
 
   let p = executor as string
   if (p.startsWith(".")) {
-    p = path.resolve(p)
+    p = path.resolve(projectDir || process.cwd(), p)
   }
 
   try {
-    p = require.resolve(p)
+    // First try project context resolution (for pnpm compatibility)
+    if (projectDir && !path.isAbsolute(p)) {
+      const resolved = resolveFromProject({
+        projectDir,
+        moduleSpecifier: p,
+        optional: true,
+      })
+      if (resolved !== null) {
+        p = resolved
+      }
+    }
+
+    // Fallback to standard resolution
+    if (!path.isAbsolute(p)) {
+      p = require.resolve(p)
+    }
   } catch (e: any) {
     debug(e)
-    p = path.resolve(p)
+    p = path.resolve(projectDir || process.cwd(), p)
   }
 
   const m: any = await resolveModule(type, p)
@@ -38,3 +54,6 @@ export async function resolveFunction<T>(type: string | undefined, executor: T |
     return namedExport
   }
 }
+
+// Re-export for convenience
+export { resolveFromProject, moduleExistsInProject } from "./projectModuleResolver"

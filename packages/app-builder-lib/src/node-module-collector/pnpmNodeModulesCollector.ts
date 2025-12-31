@@ -11,7 +11,7 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
   }
 
   protected getArgs(): string[] {
-    return ["list", "--prod", "--json", "--depth", "Infinity", "--long"]
+    return ["list", "--prod", "--json", "--depth", "Infinity"]
   }
 
   private async getProductionDependencies(depTree: PnpmDependency): Promise<{ path: string; dependencies: Record<string, string>; optionalDependencies: Record<string, string> }> {
@@ -21,8 +21,46 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
       throw new Error(`Cannot compute production dependencies for package with empty name: ${packageName}`)
     }
 
-    const actualPath = await this.locatePackageVersion(depTree.path, packageName, depTree.version).then(it => it?.packageDir)
-    const resolvedLocalPath = await this.cache.realPath[actualPath ?? depTree.path]
+    // Handle link: protocol for pnpm workspace packages - the path is already the package directory
+    if (depTree.version?.startsWith("link:")) {
+      const linkPath = depTree.path
+      const pkgJsonPath = path.join(linkPath, "package.json")
+
+      if (await this.cache.exists[pkgJsonPath]) {
+        const resolvedLocalPath = await this.cache.realPath[linkPath]
+        const p = path.normalize(resolvedLocalPath)
+        try {
+          const packageJson = await this.cache.packageJson[path.join(p, "package.json")]
+          return { path: p, dependencies: { ...packageJson.dependencies }, optionalDependencies: { ...packageJson.optionalDependencies } }
+        } catch (error: any) {
+          log.warn(null, `Failed to read package.json for workspace package ${p}: ${error.message}`)
+          return { path: p, dependencies: {}, optionalDependencies: {} }
+        }
+      }
+      // If the link path doesn't exist, log at debug level and return empty deps
+      log.debug({ packageName, version: depTree.version, linkPath }, `Workspace package path does not exist`)
+      return { path: linkPath, dependencies: {}, optionalDependencies: {} }
+    }
+
+    // In hoisted mode, pnpm list returns paths in .pnpm/ format that don't exist.
+    // Use rootDir as search base when hoisted, otherwise try depTree.path first.
+    const hoisted = await this.isHoisted.value
+    const searchBase = hoisted ? this.rootDir : depTree.path
+
+    // Try to locate the package, starting from appropriate base
+    let actualPath = await this.locatePackageVersion(searchBase, packageName, depTree.version).then(it => it?.packageDir)
+
+    // If not found and we started from depTree.path, try from rootDir as fallback
+    if (!actualPath && !hoisted && depTree.path !== this.rootDir) {
+      actualPath = await this.locatePackageVersion(this.rootDir, packageName, depTree.version).then(it => it?.packageDir)
+    }
+
+    if (!actualPath) {
+      log.debug({ packageName, version: depTree.version, searchBase }, `Failed to locate package`)
+      return { path: searchBase, dependencies: {}, optionalDependencies: {} }
+    }
+
+    const resolvedLocalPath = await this.cache.realPath[actualPath]
     const p = path.normalize(resolvedLocalPath)
     const pkgJsonPath = path.join(p, "package.json")
 
@@ -43,6 +81,7 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
     this.productionGraph[dependencyId] = { dependencies: [] }
 
     const packageName = tree.name || tree.from
+    const hoisted = await this.isHoisted.value
 
     const treeDep = { ...(tree.dependencies || {}), ...(tree.optionalDependencies || {}) }
     const json = packageName === dependencyId ? null : await this.getProductionDependencies(tree)
@@ -55,8 +94,10 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
       }
 
       // Then check if optional dependency path exists (using actual resolved path)
+      // In hoisted mode, use rootDir as search base since tree.path points to non-existent .pnpm/ paths
       const version = json?.optionalDependencies?.[packageName] || tree.optionalDependencies?.[packageName]?.version
-      const actualPath = await this.locatePackageVersion(json?.path ?? tree.path, packageName, version).then(it => it?.packageDir)
+      const searchBase = hoisted ? this.rootDir : (json?.path ?? tree.path)
+      const actualPath = await this.locatePackageVersion(searchBase, packageName, version).then(it => it?.packageDir)
       if (actualPath == null || !(await this.cache.exists[actualPath])) {
         log.debug({ packageName, version: version, searchPath: actualPath }, `optional dependency not installed, skipping`)
         continue

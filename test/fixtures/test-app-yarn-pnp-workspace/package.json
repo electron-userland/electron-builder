@@ -1,0 +1,7 @@
+{
+  "name": "test-app-yarn-pnp-workspace",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ]
+}

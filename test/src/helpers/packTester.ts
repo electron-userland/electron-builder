@@ -179,6 +179,15 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
       const { cli, prepareEntry, version } = getPackageManagerWithVersion(pm, packageManager)
       if (pm === PM.BUN) {
         log.info({ pm, version: version, projectDir }, "installing dependencies with bun; corepack does not support it currently and it must be installed separately")
+      } else if (pm === PM.NPM) {
+        // npm is already installed as part of Node.js, so we just need to prepare the specific version
+        // Skip `corepack enable npm` to avoid race conditions in parallel tests (EEXIST errors)
+        log.info({ pm, version: version, projectDir }, "preparing npm version via corepack")
+        try {
+          execSync(`corepack prepare ${prepareEntry} --activate`, { env: runtimeEnv, cwd: projectDir, stdio: "inherit" })
+        } catch (err: any) {
+          console.warn("⚠️ Corepack prepare npm failed:", err.message)
+        }
       } else {
         log.info({ pm, version: version, projectDir }, "activating corepack")
         try {
@@ -189,7 +198,7 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
         try {
           execSync(`corepack prepare ${prepareEntry} --activate`, { env: runtimeEnv, cwd: projectDir, stdio: "inherit" })
         } catch (err: any) {
-          console.warn("⚠️ Yarn prepare failed:", err.message)
+          console.warn("⚠️ Corepack prepare failed:", err.message)
         }
       }
       const collector = getCollectorByPackageManager(pm, projectDir, tmpDir)

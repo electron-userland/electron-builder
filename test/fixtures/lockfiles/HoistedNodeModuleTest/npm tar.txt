@@ -9,7 +9,7 @@
       "version": "1.1.0",
       "license": "MIT",
       "dependencies": {
-        "tar": "7.4.3"
+        "tar": "^6.1.2"
       }
     },
     "node_modules/@isaacs/fs-minipass": {

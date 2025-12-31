@@ -348,7 +348,7 @@ async function handleCleanupPerOS({ target }: { target: string }) {
 
 async function runTestWithinServer(doTest: (rootDirectory: string, updateConfigPath: string) => Promise<void>) {
   const tmpDir = new TmpDir("blackbox-update-test")
-  const root = await tmpDir.getTempDir({ prefix: "server-root" })
+  const root = await tmpDir.createTempDir({ prefix: "server-root" })
 
   // 65535 is the max port number
   // Math.random() / Math.random() is used to avoid zero

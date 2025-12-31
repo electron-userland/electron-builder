@@ -7,6 +7,7 @@ import * as semver from "semver"
 import { Configuration } from "../configuration"
 import { getConfig } from "../util/config/config"
 import { orNullIfFileNotExist } from "../util/config/load"
+import { resolveFromProject } from "../util/projectModuleResolver"
 import { getProjectRootPath } from "./search-module"
 
 export type MetadataValue = Lazy<Record<string, any> | null>
@@ -26,6 +27,16 @@ export async function getElectronVersion(projectDir: string, config?: Configurat
 export async function getElectronVersionFromInstalled(projectDir: string): Promise<string | null> {
   for (const name of electronPackages) {
     try {
+      // First try using resolveFromProject for pnpm compatibility
+      const packageJsonPath = resolveFromProject({
+        projectDir,
+        moduleSpecifier: `${name}/package.json`,
+        optional: true,
+      })
+      if (packageJsonPath) {
+        return (await readJson(packageJsonPath)).version
+      }
+      // Fallback to direct path check
       return (await readJson(path.join(projectDir, "node_modules", name, "package.json"))).version
     } catch (e: any) {
       if (e.code !== "ENOENT") {
@@ -39,6 +50,16 @@ export async function getElectronVersionFromInstalled(projectDir: string): Promi
 export async function getElectronPackage(projectDir: string) {
   for (const name of electronPackages) {
     try {
+      // First try using resolveFromProject for pnpm compatibility
+      const packageJsonPath = resolveFromProject({
+        projectDir,
+        moduleSpecifier: `${name}/package.json`,
+        optional: true,
+      })
+      if (packageJsonPath) {
+        return await readJson(packageJsonPath)
+      }
+      // Fallback to direct path check
       return await readJson(path.join(projectDir, "node_modules", name, "package.json"))
     } catch (e: any) {
       if (e.code !== "ENOENT") {

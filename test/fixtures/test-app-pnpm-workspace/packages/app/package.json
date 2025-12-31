@@ -1,0 +1,18 @@
+{
+  "name": "pnpm-test-app",
+  "version": "1.0.0",
+  "main": "index.js",
+  "private": true,
+  "dependencies": {
+    "lib": "workspace:*"
+  },
+  "build": {
+    "electronVersion": "35.7.5",
+    "appId": "org.electron-builder.pnpmTestApp",
+    "compression": "store",
+    "npmRebuild": false,
+    "mac": {
+      "category": "your.app.category.type"
+    }
+  }
+}
