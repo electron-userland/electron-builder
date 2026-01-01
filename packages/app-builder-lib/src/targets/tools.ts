@@ -18,27 +18,12 @@ export async function getAppImageTools(targetArch: Arch) {
       "mmaietta/electron-builder-binaries"
     ))
 
-  // stupid arch missnaming for folder names in the AppImage tools in electron-builder-binaries
-  const { runtimeArch, libraryArch } = (() => {
-    // `toolArch` is used to get correct mksquashfs and desktop-file-validate binaries for the packaging process.
-    // The other `Arch`s are used to get correct runtime and library files for the AppImage.
-    if (targetArch === Arch.arm64) {
-      return { runtimeArch: "arm64", libraryArch: "arm64" }
-    } else if (targetArch === Arch.ia32) {
-      return { runtimeArch: "ia32", libraryArch: "ia32" }
-    } else if (targetArch === Arch.armv7l) {
-      return { runtimeArch: "arm32", libraryArch: "arm32" }
-    } else {
-      return { runtimeArch: "x64", libraryArch: "x64" }
-    }
-  })()
-  const toolArch = process.arch === "arm" ? "arm32" : process.arch
-  const toolPath = path.resolve(artifact, process.platform, toolArch)
+  const runtimeArch = targetArch === Arch.armv7l ? "arm32" : targetArch === Arch.arm64 ? "arm64" : targetArch === Arch.ia32 ? "ia32" : "x64"
   return {
-    mksquashfs: path.join(toolPath, "mksquashfs"),
-    desktopFileValidate: path.join(toolPath, "desktop-file-validate"),
-    runtimeLibraries: path.join(artifact, "lib", libraryArch),
+    mksquashfs: path.join(artifact, "mksquashfs"),
+    desktopFileValidate: path.join(artifact, "desktop-file-validate"),
     runtime: path.join(artifact, "runtimes", `runtime-${runtimeArch}`),
+    runtimeLibraries: path.join(artifact, "lib", runtimeArch),
   }
 }
 

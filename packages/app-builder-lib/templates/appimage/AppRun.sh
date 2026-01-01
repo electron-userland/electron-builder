@@ -1,11 +1,6 @@
 #!/bin/bash
 set -e
 
-if [ ! -z "$DEBUG" ] ; then
-  env
-  set -x
-fi
-
 THIS="$0"
 # http://stackoverflow.com/questions/3190818/
 args=("$@")
