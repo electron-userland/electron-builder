@@ -378,8 +378,8 @@ importers:
         specifier: 4.1.7
         version: 4.1.7
       '@types/sax':
-        specifier: 1.2.3
-        version: 1.2.3
+        specifier: 1.2.7
+        version: 1.2.7
 
   packages/dmg-builder:
     dependencies:
@@ -2378,8 +2378,8 @@ packages:
   '@types/responselike@1.0.3':
     resolution: {integrity: sha512-H/+L+UkTV33uf49PH5pCAUBVPNj2nDBXTN+qS1dOwyyg24l3CcicicCA7ca+HMvJBZcFgl5r8e+RR6elsb4Lyw==}
 
-  '@types/sax@1.2.3':
-    resolution: {integrity: sha512-+QSw6Tqvs/KQpZX8DvIl3hZSjNFLW/OqE5nlyHXtTwODaJvioN2rOWpBNEWZp2HZUFhOh+VohmJku/WxEXU2XA==}
+  '@types/sax@1.2.7':
+    resolution: {integrity: sha512-rO73L89PJxeYM3s3pPPjiPgVVcymqU490g0YO5n5By0k2Erzj6tay/4lr1CHAAU4JyOWd1rpQ8bCf6cZfHU96A==}
 
   '@types/semver@7.7.1':
     resolution: {integrity: sha512-FmgJfu+MOcQ370SD0ev7EI8TlCAfKYU+B4m5T3yXc1CiRN94g/SZPtsCkk506aUDtlMnFZvasDwHHUcZUEaYuA==}
@@ -7430,7 +7430,7 @@ snapshots:
     dependencies:
       '@types/node': 22.13.17
 
-  '@types/sax@1.2.3':
+  '@types/sax@1.2.7':
     dependencies:
       '@types/node': 22.13.17
 
