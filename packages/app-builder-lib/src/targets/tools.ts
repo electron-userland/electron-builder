@@ -1,6 +1,8 @@
 import { Arch } from "builder-util"
 import * as path from "path"
 import { getBinFromUrl } from "../binDownload"
+import * as tar from "tar"
+import { mkdir } from "fs/promises"
 
 export function getLinuxToolsPath() {
   return getBinFromUrl("linux-tools-mac-10.12.3", "linux-tools-mac-10.12.3.7z", "SQ8fqIRVXuQVWnVgaMTDWyf2TLAJjJYw3tRSqQJECmgF6qdM7Kogfa6KD49RbGzzMYIFca9Uw3MdsxzOPRWcYw==")
@@ -8,22 +10,36 @@ export function getLinuxToolsPath() {
 
 export async function getAppImageTools(targetArch: Arch) {
   const override = process.env.APPIMAGE_TOOLS_PATH?.trim()
-  const artifact =
+  let artifactPath =
     override ||
     (await getBinFromUrl(
       // https://github.com/electron-userland/electron-builder-binaries/releases/tag/appimage%401.0.1
-      "appimage@1.0.3",
-      "appimage-tools-runtime-20251108.zip",
-      "Nj1Lqcaijg/dN/bm+grzkc6XHYJRciM86cJIlu29fVags2D3gKznujj6NhqVfH5/famGA7tx+Sp+eTxb4cxYIQ==",
+      "appimage@1.0.4",
+      "appimage-tools-runtime-20251108.tar.gz",
+      "v7qGPmOdcKK4lQ2wkh2O59BfkeGesNm/AXRak3TVTk2GdXYqMejOZqh+Tw3rd/ZebNH5yuuCJhW1rvOuu+7OyQ==",
       "mmaietta/electron-builder-binaries"
     ))
 
+  if (artifactPath.endsWith(".tar")) {
+    const dir = path.dirname(artifactPath)
+    const base = path.basename(artifactPath, ".tar")
+    const outDir = path.join(dir, base)
+
+    await mkdir(outDir, { recursive: true })
+
+    await tar.extract({
+      file: artifactPath,
+      cwd: outDir,
+    })
+    artifactPath = outDir
+  }
+
   const runtimeArch = targetArch === Arch.armv7l ? "arm32" : targetArch === Arch.arm64 ? "arm64" : targetArch === Arch.ia32 ? "ia32" : "x64"
   return {
-    mksquashfs: path.join(artifact, "mksquashfs"),
-    desktopFileValidate: path.join(artifact, "desktop-file-validate"),
-    runtime: path.join(artifact, "runtimes", `runtime-${runtimeArch}`),
-    runtimeLibraries: path.join(artifact, "lib", runtimeArch),
+    mksquashfs: path.join(artifactPath, "mksquashfs"),
+    desktopFileValidate: path.join(artifactPath, "desktop-file-validate"),
+    runtime: path.join(artifactPath, "runtimes", `runtime-${runtimeArch}`),
+    runtimeLibraries: path.join(artifactPath, "lib", runtimeArch),
   }
 }
 
