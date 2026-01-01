@@ -1,4 +1,4 @@
-import { Arch } from "builder-util"
+import { Arch, exists } from "builder-util"
 import * as path from "path"
 import { getBinFromUrl } from "../binDownload"
 import * as tar from "tar"
@@ -13,18 +13,15 @@ export async function getAppImageTools(targetArch: Arch) {
   let artifactPath =
     override ||
     (await getBinFromUrl(
-      // https://github.com/electron-userland/electron-builder-binaries/releases/tag/appimage%401.0.1
-      "appimage@1.0.4",
+      // https://github.com/electron-userland/electron-builder-binaries/releases/tag/appimage%401.0.2
+      "appimage@1.0.5",
       "appimage-tools-runtime-20251108.tar.gz",
-      "v7qGPmOdcKK4lQ2wkh2O59BfkeGesNm/AXRak3TVTk2GdXYqMejOZqh+Tw3rd/ZebNH5yuuCJhW1rvOuu+7OyQ==",
+      "/ULnsylWhQlomNy6xAAcDg5OVwndQIZpMNXyHLJ2h/hIgSdqHNT4BMmdiOXCJK3oP1mZr++QVM2IjftjfdLzOQ==",
       "mmaietta/electron-builder-binaries"
     ))
 
-  if (artifactPath.endsWith(".tar")) {
-    const dir = path.dirname(artifactPath)
-    const base = path.basename(artifactPath, ".tar")
-    const outDir = path.join(dir, base)
-
+  const outDir = path.join(path.dirname(artifactPath), "extracted-appimage-tools")
+  if (path.extname(artifactPath).includes(".tar") && !(await exists(outDir))) {
     await mkdir(outDir, { recursive: true })
 
     await tar.extract({
