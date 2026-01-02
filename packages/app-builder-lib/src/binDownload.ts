@@ -1,7 +1,10 @@
-import { executeAppBuilder } from "builder-util"
+import { executeAppBuilder, exists, log } from "builder-util"
 import { Nullish } from "builder-util-runtime"
 import { sanitizeFileName } from "builder-util/out/filename"
 import * as path from "path"
+import { getToolCacheDirectory } from "./targets/tools"
+import * as tar from "tar"
+import { mkdir, rm } from "fs-extra"
 
 const versionToPromise = new Map<string, Promise<string>>()
 
@@ -11,6 +14,69 @@ export function download(url: string, output: string, checksum?: string | null):
     args.push("--sha512", checksum)
   }
   return executeAppBuilder(args) as Promise<any>
+}
+
+export function downloadGithubAsset(
+  releaseName: string,
+  filenameWithExt: string,
+  checksum: string,
+  githubOrgRepo = "electron-userland/electron-builder-binaries"
+): Promise<string> {
+  let url: string
+  if (process.env.ELECTRON_BUILDER_BINARIES_DOWNLOAD_OVERRIDE_URL) {
+    url = process.env.ELECTRON_BUILDER_BINARIES_DOWNLOAD_OVERRIDE_URL + "/" + filenameWithExt
+  } else {
+    const baseUrl =
+      process.env.NPM_CONFIG_ELECTRON_BUILDER_BINARIES_MIRROR ||
+      process.env.npm_config_electron_builder_binaries_mirror ||
+      process.env.npm_package_config_electron_builder_binaries_mirror ||
+      process.env.ELECTRON_BUILDER_BINARIES_MIRROR ||
+      `https://github.com/${githubOrgRepo}/releases/download/`
+    const middleUrl =
+      process.env.NPM_CONFIG_ELECTRON_BUILDER_BINARIES_CUSTOM_DIR ||
+      process.env.npm_config_electron_builder_binaries_custom_dir ||
+      process.env.npm_package_config_electron_builder_binaries_custom_dir ||
+      process.env.ELECTRON_BUILDER_BINARIES_CUSTOM_DIR ||
+      releaseName
+    url = `${baseUrl}${middleUrl}/${filenameWithExt}`
+  }
+
+  const cacheKey = `${releaseName}-${path.basename(filenameWithExt).replace(/\./g, "-")}`
+
+  const outDir = path.join(getToolCacheDirectory(), cacheKey)
+  const file = path.resolve(outDir, filenameWithExt)
+
+  const cacheName = sanitizeFileName(`${process.env.ELECTRON_BUILDER_CACHE ?? ""}${cacheKey}`)
+  let promise = versionToPromise.get(cacheName)
+
+  if (promise != null) {
+    return promise
+  }
+
+  const args = ["download", "--url", url, "--output", file]
+  if (checksum != null) {
+    args.push("--sha512", checksum)
+  }
+  promise = executeAppBuilder(args).then(async () => {
+    const extractedDir = path.join(outDir, "extracted-files")
+    if (filenameWithExt.endsWith(".tar") || filenameWithExt.endsWith(".tar.gz") || filenameWithExt.endsWith(".tgz")) {
+      log.debug({ file: filenameWithExt, destination: extractedDir }, `extracting toolset`)
+      await rm(extractedDir, { recursive: true, force: true })
+      await mkdir(extractedDir)
+      await tar.extract({
+        file,
+        cwd: extractedDir,
+        strict: true,
+      })
+    }
+    if (await exists(extractedDir)) {
+      return extractedDir
+    }
+    return outDir
+  })
+
+  versionToPromise.set(cacheName, promise)
+  return promise
 }
 
 export function getBinFromCustomLoc(name: string, version: string, binariesLocUrl: string, checksum: string): Promise<string> {

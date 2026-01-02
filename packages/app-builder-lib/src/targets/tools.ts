@@ -1,8 +1,46 @@
 import { Arch, exists } from "builder-util"
 import * as path from "path"
-import { getBinFromUrl } from "../binDownload"
+import { downloadGithubAsset, getBinFromUrl } from "../binDownload"
 import * as tar from "tar"
 import { mkdir } from "fs/promises"
+import * as os from "os"
+
+export function getToolCacheDirectory(isAvoidSystemOnWindows: boolean = true): string {
+  const appName = "electron-builder"
+  const env = process.env.ELECTRON_BUILDER_CACHE?.trim()
+  if (env && env.length !== 0) {
+    return env
+  }
+
+  if (process.platform === "darwin") {
+    const userHomeDir = os.homedir()
+    return path.join(userHomeDir, "Library", "Caches", appName)
+  }
+
+  if (process.platform === "win32") {
+    const localAppData = process.env.LOCALAPPDATA?.trim()
+    if (localAppData && localAppData.length !== 0) {
+      // https://github.com/electron-userland/electron-builder/issues/1164
+      const username = (process.env.USERNAME || "").toLowerCase()
+      const localAppDataLower = localAppData.toLowerCase()
+
+      if ((isAvoidSystemOnWindows && localAppDataLower.includes("\\windows\\system32\\")) || username === "system") {
+        return path.join(os.tmpdir(), `${appName}-cache`)
+      }
+
+      // https://github.com/sindresorhus/env-paths/blob/master/index.js
+      return path.join(localAppData, appName, "Cache")
+    }
+  }
+
+  const xdgCache = process.env.XDG_CACHE_HOME?.trim()
+  if (xdgCache && xdgCache.length !== 0) {
+    return path.join(xdgCache, appName)
+  }
+
+  const userHomeDir = os.homedir()
+  return path.join(userHomeDir, ".cache", appName)
+}
 
 export function getLinuxToolsPath() {
   return getBinFromUrl("linux-tools-mac-10.12.3", "linux-tools-mac-10.12.3.7z", "SQ8fqIRVXuQVWnVgaMTDWyf2TLAJjJYw3tRSqQJECmgF6qdM7Kogfa6KD49RbGzzMYIFca9Uw3MdsxzOPRWcYw==")
@@ -12,7 +50,7 @@ export async function getAppImageTools(targetArch: Arch) {
   const override = process.env.APPIMAGE_TOOLS_PATH?.trim()
   let artifactPath =
     override ||
-    (await getBinFromUrl(
+    (await downloadGithubAsset(
       // https://github.com/electron-userland/electron-builder-binaries/releases/tag/appimage%401.0.2
       "appimage@1.0.5",
       "appimage-tools-runtime-20251108.tar.gz",
