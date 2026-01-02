@@ -22,12 +22,15 @@ export async function getAppImageTools(targetArch: Arch) {
 
   const outDir = path.join(path.dirname(artifactPath), "extracted-appimage-tools")
   if (path.extname(artifactPath).includes(".tar") && !(await exists(outDir))) {
-    await mkdir(outDir, { recursive: true })
+    // await mkdir(outDir, { recursive: true })
 
     await tar.extract({
       file: artifactPath,
       cwd: outDir,
+      strict: true,
     })
+  }
+  if (await exists(outDir)) {
     artifactPath = outDir
   }
 

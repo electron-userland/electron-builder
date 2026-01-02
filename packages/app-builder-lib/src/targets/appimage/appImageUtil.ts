@@ -245,19 +245,19 @@ fi
 
 if ${hasEula ? 'true' : 'false'}; then
   if [ -z "$APPIMAGE_SILENT_INSTALL" ] ; then
-    EULA_MARK_DIR="\${XDG_CONFIG_HOME:-$HOME/.config}/${config.ProductFilename || ''}"
+    EULA_MARK_DIR="\${XDG_CONFIG_HOME:-$HOME/.config}/${config.ProductFilename}"
     EULA_MARK_FILE="$EULA_MARK_DIR/eulaAccepted"
     # show EULA only if desktop file doesn't exist
     if [ ! -e "$EULA_MARK_FILE" ] ; then
       if [ -x /usr/bin/zenity ] ; then
         # on cancel simply exits and our trap handler launches app, so, $isEulaAccepted is set here to 0 and then to 1 if EULA accepted
         isEulaAccepted=0
-        LD_LIBRARY_PATH="" zenity --text-info --title="${config.ProductName || ''}" --filename="$APPDIR/${config.EulaFile || ''}" --ok-label=Agree --cancel-label=Disagree ${config.IsHtmlEula ? '--html' : ''}
+        LD_LIBRARY_PATH="" zenity --text-info --title="${config.ProductName}" --filename="$APPDIR/${config.EulaFile}" --ok-label=Agree --cancel-label=Disagree ${config.IsHtmlEula ? '--html' : ''}
         echo "r: $?"
       elif [ -x /usr/bin/kdialog ] ; then
         # cannot find any option to force Agree/Disagree buttons for kdialog. And official example exactly with OK button https://techbase.kde.org/Development/Tutorials/Shell_Scripting_with_KDE_Dialogs#Example_21._--textbox_dialog_box
         # in any case we pass labels text
-        LD_LIBRARY_PATH="" kdialog --textbox "$APPDIR/${config.EulaFile || ''}" --yes-label Agree --cancel-label "Disagree"
+        LD_LIBRARY_PATH="" kdialog --textbox "$APPDIR/${config.EulaFile}" --yes-label Agree --cancel-label "Disagree"
       fi
 
       case $? in
