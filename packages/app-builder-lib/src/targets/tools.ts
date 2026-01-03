@@ -48,29 +48,15 @@ export function getLinuxToolsPath() {
 
 export async function getAppImageTools(targetArch: Arch) {
   const override = process.env.APPIMAGE_TOOLS_PATH?.trim()
-  let artifactPath =
+  const artifactPath =
     override ||
     (await downloadGithubAsset(
       // https://github.com/electron-userland/electron-builder-binaries/releases/tag/appimage%401.0.2
-      "appimage@1.0.5",
+      "appimage@1.0.6",
       "appimage-tools-runtime-20251108.tar.gz",
-      "/ULnsylWhQlomNy6xAAcDg5OVwndQIZpMNXyHLJ2h/hIgSdqHNT4BMmdiOXCJK3oP1mZr++QVM2IjftjfdLzOQ==",
+      "wGxMLO9Zu+r2MzVF/4xzAqn1ZYGH+MlN1kmG2xjxtIzrb80wERKTcEwl1TqWVB7nZ72625GEXdSi5Pj5Gd3vUA==",
       "mmaietta/electron-builder-binaries"
     ))
-
-  const outDir = path.join(path.dirname(artifactPath), "extracted-appimage-tools")
-  if (path.extname(artifactPath).includes(".tar") && !(await exists(outDir))) {
-    // await mkdir(outDir, { recursive: true })
-
-    await tar.extract({
-      file: artifactPath,
-      cwd: outDir,
-      strict: true,
-    })
-  }
-  if (await exists(outDir)) {
-    artifactPath = outDir
-  }
 
   const runtimeArch = targetArch === Arch.armv7l ? "arm32" : targetArch === Arch.arm64 ? "arm64" : targetArch === Arch.ia32 ? "ia32" : "x64"
   return {
