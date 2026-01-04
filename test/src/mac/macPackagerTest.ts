@@ -81,6 +81,8 @@ test.ifMac("one-package", ({ expect }) =>
                 LSItemContentTypes: ["public.folder"],
               },
             ],
+            // test unsetting a default electron plist value
+            NSMicrophoneUsageDescription: undefined,
           },
           minimumSystemVersion: "10.12.0",
           fileAssociations: [
