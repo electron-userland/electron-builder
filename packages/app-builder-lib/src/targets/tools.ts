@@ -52,9 +52,9 @@ export async function getAppImageTools(targetArch: Arch) {
     override ||
     (await downloadGithubAsset(
       // https://github.com/electron-userland/electron-builder-binaries/releases/tag/appimage%401.0.2
-      "appimage@1.0.6",
+      "appimage@1.0.7",
       "appimage-tools-runtime-20251108.tar.gz",
-      "wGxMLO9Zu+r2MzVF/4xzAqn1ZYGH+MlN1kmG2xjxtIzrb80wERKTcEwl1TqWVB7nZ72625GEXdSi5Pj5Gd3vUA==",
+      "KmFJ+NpcNcYRmWXOKSS/3GitRkIfxP8RnvNP5CJuWESZU9SnpbL1wyvUmDvkmqpSk7PKFEnExBQ1WRmRY0+xLA==",
       "mmaietta/electron-builder-binaries"
     ))
 
