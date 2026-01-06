@@ -104,7 +104,6 @@ test("yarn two package.json", ({ expect }) =>
           }
           data.devDependencies = {
             electron: "23.2.0",
-            "del-cli": "6",
             "electron-builder": "26",
             "fs-extra": "11",
           }
@@ -150,7 +149,6 @@ test("yarn two package.json without node_modules", ({ expect }) =>
           }
           data.devDependencies = {
             electron: "23.2.0",
-            "del-cli": "6",
             "electron-builder": "26",
             "fs-extra": "11",
           }
