@@ -1,8 +1,14 @@
+import { getBinFromUrl } from "app-builder-lib/src/binDownload"
 import { isEmptyOrSpaces } from "builder-util"
 import { ChildProcess, spawn } from "child_process"
 import { chmodSync } from "fs"
 import os from "os"
 import path from "path"
+
+export async function getRanLocalServerPath() {
+  const serverBin = await getBinFromUrl("ran@1.0.0", "ran-v0.1.6-all-platforms.zip", "8OW8qc8CHG4dT0/R/ccNSO7AJAOgSRxJwxHF6vaiYoyh3eVp7rHdkYBkqnXx54Eqdo4WY8RUxEwKzKaAu1ISFA==")
+  return path.join(serverBin, process.platform, process.platform === "win32" ? "ran.exe" : "ran")
+}
 
 interface LaunchResult {
   version?: string
