@@ -31,7 +31,6 @@ import {
 } from "electron-publish"
 import { MultiProgress } from "electron-publish/out/multiProgress"
 import { writeFile } from "fs/promises"
-import { isCI } from "ci-info"
 import * as path from "path"
 import { WriteStream as TtyWriteStream } from "tty"
 import * as url from "url"
@@ -84,21 +83,6 @@ export class PublishManager implements PublishContext {
 
     const forcePublishForPr = process.env.PUBLISH_FOR_PULL_REQUEST === "true"
     if (!isPullRequest() || forcePublishForPr) {
-      if (publishOptions.publish === undefined) {
-        if (process.env.npm_lifecycle_event === "release") {
-          publishOptions.publish = "always"
-        } else {
-          const tag = getCiTag()
-          if (tag != null) {
-            log.info({ reason: "tag is defined", tag }, "artifacts will be published")
-            publishOptions.publish = "onTag"
-          } else if (isCI) {
-            log.info({ reason: "CI detected" }, "artifacts will be published if draft release exists")
-            publishOptions.publish = "onTagOrDraft"
-          }
-        }
-      }
-
       const publishPolicy = publishOptions.publish
       this.isPublish = publishPolicy != null && publishOptions.publish !== "never" && (publishPolicy !== "onTag" || getCiTag() != null)
       if (this.isPublish && forcePublishForPr) {
