@@ -6,8 +6,30 @@ import os from "os"
 import path from "path"
 
 export async function getRanLocalServerPath() {
+  /**
+   * Folder structure inside the tools zip is:
+   * ran-v0.1.6-all-platforms/
+   *   /Users/mikemaietta/Library/Caches/electron-builder/ran@1.0.0/ran@1.0.0-ran-v0.1.6-all-platforms/
+   *    ├── VERSION.txt
+   *    ├── darwin
+   *    │ └── amd64
+   *    │     └── ran
+   *    ├── linux
+   *    │ ├── 386
+   *    │ │ └── ran
+   *    │ ├── amd64
+   *    │ │ └── ran
+   *    │ └── arm64
+   *    │     └── ran
+   *    └── win
+   *        ├── amd64
+   *        │ └── ran.exe
+   *        └── ia32
+   *          └── ran.exe
+   */
   const serverBin = await getBinFromUrl("ran@1.0.0", "ran-v0.1.6-all-platforms.zip", "8OW8qc8CHG4dT0/R/ccNSO7AJAOgSRxJwxHF6vaiYoyh3eVp7rHdkYBkqnXx54Eqdo4WY8RUxEwKzKaAu1ISFA==")
-  return path.join(serverBin, process.platform, process.platform === "win32" ? "ran.exe" : "ran")
+  const arch = process.arch === "x64" || process.platform === "darwin" ? "amd64" : process.arch === "ia32" && process.platform === "linux" ? "386" : process.arch
+  return path.join(serverBin, process.platform, arch, process.platform === "win32" ? "ran.exe" : "ran")
 }
 
 interface LaunchResult {
