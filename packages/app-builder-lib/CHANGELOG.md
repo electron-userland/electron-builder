@@ -1,5 +1,27 @@
 # app-builder-lib
 
+## 26.4.1
+
+### Patch Changes
+
+- Fix: delete default macOS appPlist keys using extendInfo when set Nullish _[`#9481`](https://github.com/electron-userland/electron-builder/pull/9481) [`cb5b9c6`](https://github.com/electron-userland/electron-builder/commit/cb5b9c6e47686b0329dbf808b36587a82db03d3b) [@Lemonexe](https://github.com/Lemonexe)_
+- Fix: pnpm "Invalid string length" errors during node module collection _[`#9470`](https://github.com/electron-userland/electron-builder/pull/9470) [`d38ae8e`](https://github.com/electron-userland/electron-builder/commit/d38ae8e666ca3769dfa091643ef816632f6e206f) [@danteissaias](https://github.com/danteissaias)_
+- Fix: post-process parent directories of unpacked files to avoid overeager unpacking _[`#9419`](https://github.com/electron-userland/electron-builder/pull/9419) [`1c94529`](https://github.com/electron-userland/electron-builder/commit/1c945290a38cc4b6070a4e756db58354aee5e683) [@mmaietta](https://github.com/mmaietta)_
+- Deprecate: warn about implicit publishing in CI _[`#9475`](https://github.com/electron-userland/electron-builder/pull/9475) [`ef43f42`](https://github.com/electron-userland/electron-builder/commit/ef43f42c2532ae3501071c6329f3dd058a91fd7f) [@biw](https://github.com/biw)_
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+[`c3af390`](https://github.com/electron-userland/electron-builder/commit/c3af390ec67becfe548a8c83f0d3ba828c28b751)
+
+</small>
+
+- `dmg-builder@26.4.1`
+- `electron-builder-squirrel-windows@26.4.1`
+
+</details>
+
 ## 26.4.0
 
 ### Minor Changes
