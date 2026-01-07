@@ -9,7 +9,6 @@ export async function getRanLocalServerPath() {
   /**
    * Folder structure inside the tools zip is:
    * ran-v0.1.6-all-platforms/
-   *   /Users/mikemaietta/Library/Caches/electron-builder/ran@1.0.0/ran@1.0.0-ran-v0.1.6-all-platforms/
    *    ├── VERSION.txt
    *    ├── darwin
    *    │ └── amd64
