@@ -257,7 +257,7 @@ _x11_colors = {
 
 _ws_re = re.compile(r"\s+")
 _token_re = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
-_hex_re = re.compile(r"#([0-9a-f]{3}(?:[0-9a-f]{3})?)$")
+_hex_re = re.compile(r"#([0-9a-f]{3}(?:[0-9a-f]{3})?)$", re.IGNORECASE)
 _number_re = re.compile(r"[0-9]*(\.[0-9]*)")
 
 
