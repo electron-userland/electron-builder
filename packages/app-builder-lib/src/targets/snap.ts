@@ -1,6 +1,6 @@
 import { replaceDefault as _replaceDefault, Arch, deepAssign, executeAppBuilder, InvalidConfigurationError, log, serializeToYaml, toLinuxArchString } from "builder-util"
 import { asArray, Nullish, SnapStoreOptions } from "builder-util-runtime"
-import { outputFile, readFile } from "fs-extra"
+import { mkdirSync, outputFile, readdirSync, readFile, statSync } from "fs-extra"
 import { load } from "js-yaml"
 import * as path from "path"
 import * as semver from "semver"
@@ -11,6 +11,8 @@ import { PlugDescriptor, SnapOptions } from "../options/SnapOptions"
 import { getTemplatePath } from "../util/pathManager"
 import { LinuxTargetHelper } from "./LinuxTargetHelper"
 import { createStageDirPath } from "./targetUtil"
+import { execSync } from "child_process"
+import { expandMacro } from "../util/macroExpander"
 
 const defaultPlugs = ["desktop", "desktop-legacy", "home", "x11", "wayland", "unity7", "browser-support", "network", "gsettings", "audio-playback", "pulseaudio", "opengl"]
 
@@ -203,6 +205,14 @@ export default class SnapTarget extends Target {
 
     const stageDir = await createStageDirPath(this, packager, arch)
     const snapArch = toLinuxArchString(arch, "snap")
+
+    if (options.base != null) {
+      // core24 upgrade/migration
+      if (Number(options.base.split("core")[1]) === 24) {
+        return await buildSnapCore24({ SNAP_DIR: appOutDir, APP_NAME: this.packager.appInfo.name, DIST_DIR: this.outDir, USE_CLASSIC: false, VERSION: expandMacro("${version}", null, this.packager.appInfo})
+      }
+    }
+
     const args = ["snap", "--app", appOutDir, "--stage", stageDir, "--arch", snapArch, "--output", artifactPath, "--executable", this.packager.executableName]
 
     await this.helper.icons
@@ -393,4 +403,125 @@ function getDefaultStagePackages() {
   // libxss1 - was "error while loading shared libraries: libXss.so.1" on Xubuntu 16.04
   // noinspection SpellCheckingInspection
   return ["libnspr4", "libnss3", "libxss1", "libappindicator3-1", "libsecret-1-0"]
+}
+
+function detectElectronBinary(appOutDir: string): string {
+  const files = readdirSync(appOutDir)
+  for (const file of files) {
+    const fullPath = path.join(appOutDir, file)
+    if (statSync(fullPath).isFile()) {
+      try {
+        execSync(`test -x "${fullPath}"`)
+        return file
+      } catch {
+        // ignore
+      }
+    }
+  }
+  throw new Error(`Cannot detect Electron binary in ${appOutDir}`)
+}
+
+// Strip debug symbols to reduce size
+function stripBinary(binaryPath: string) {
+  try {
+    execSync(`strip "${binaryPath}"`)
+    console.log(`✅ Stripped debug symbols from ${binaryPath}`)
+  } catch {
+    console.warn(`⚠ Could not strip ${binaryPath}`)
+  }
+}
+
+// Ensure Multipass VM
+function ensureMultipassVM() {
+  try {
+    execSync(`multipass info snap-builder`, { stdio: "ignore" })
+    console.log("✅ Multipass VM exists")
+  } catch {
+    execSync(`multipass launch --name snap-builder --cpus 4 --memory 8G --disk 20G`, { stdio: "inherit" })
+  }
+}
+
+// Build Snap
+async function buildSnapCore24(options: { SNAP_DIR: string; DIST_DIR: string; APP_NAME: string; VERSION: string; USE_CLASSIC: boolean }) {
+  const { SNAP_DIR, DIST_DIR, APP_NAME, VERSION, USE_CLASSIC } = options
+  mkdirSync(SNAP_DIR, { recursive: true })
+
+  const binaryName = detectElectronBinary(DIST_DIR)
+  const binaryPath = path.join(DIST_DIR, binaryName)
+
+  stripBinary(binaryPath)
+
+  // Generate modern snapcraft.yaml
+  const snapcraftYaml = `
+name: ${APP_NAME}
+base: core24
+version: '${VERSION}'
+summary: ${APP_NAME}
+description: |
+  ${APP_NAME} Electron application
+
+grade: stable
+confinement: ${USE_CLASSIC ? "classic" : "strict"}
+
+platforms:
+  - amd64
+  - arm64
+
+apps:
+  ${APP_NAME}:
+    command: ${binaryName}
+    extensions: [gnome]
+    environment:
+      ELECTRON_DISABLE_SANDBOX: "1"
+    plugs:
+      - network
+      - home
+      - desktop
+      - desktop-legacy
+      - wayland
+      - x11
+      - audio-playback
+      - opengl
+
+parts:
+  ${APP_NAME}:
+    plugin: dump
+    source: ../${DIST_DIR}
+    stage-packages:
+      - libnss3
+      - libatk-bridge2.0-0
+      - libgtk-3-0
+      - libx11-xcb1
+      - libxcomposite1
+      - libxrandr2
+      - libxdamage1
+      - libxfixes3
+      - libasound2
+      - libgbm1
+      - libdrm2
+    stage:
+      - -usr/share/locale/*  # strip all locales
+      - usr/share/locale/en   # keep only English
+`
+
+  const snapcraftYamlPath = path.join(SNAP_DIR, "snapcraft.yaml")
+  await outputFile(snapcraftYamlPath, snapcraftYaml)
+
+  ensureMultipassVM()
+
+  // Install snapcraft in VM
+  execSync(`multipass exec snap-builder -- bash -c "sudo snap install snapcraft --classic || true"`, { stdio: "inherit" })
+
+  // QEMU for ARM64
+  execSync(`multipass exec snap-builder -- bash -c "sudo apt-get update && sudo apt-get install -y qemu-user-static"`, { stdio: "inherit" })
+
+  // Run Snapcraft CLI inside Multipass (multi-arch with core24)
+  execSync(`multipass exec snap-builder -- bash -c "cd /home/ubuntu/app && snapcraft --destructive-mode"`, { stdio: "inherit" })
+
+  // Copy all snaps back
+  execSync(`multipass transfer snap-builder:/home/ubuntu/app/*.snap ./`, {
+    stdio: "inherit",
+  })
+
+  console.log("🎉 Snap build complete! Check the current folder for .snap files.")
 }
