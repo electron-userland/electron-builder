@@ -52,6 +52,14 @@ export interface AppXOptions extends TargetSpecificOptions {
   readonly customExtensionsPath?: string
 
   /**
+   * The list of [capabilities](https://learn.microsoft.com/en-us/windows/uwp/packaging/app-capability-declarations) to be added to an `appmanifest.xml`.
+   * The `runFullTrust` capability is obligatory for electron apps and will be auto added if not specified here.
+   * Defaults to `['runFullTrust']` if omitted
+   * Example:  `['runFullTrust', 'privateNetworkClientServer', 'webcam']`
+   */
+  readonly capabilities?: Array<string> | null
+
+  /**
    * (Advanced Option) Relative path to custom `appmanifest.xml` (file name doesn't matter, it'll be renamed) located in build resources directory.
    * Supports the following template macros:
    *
@@ -72,6 +80,7 @@ export interface AppXOptions extends TargetSpecificOptions {
    * - ${splashScreen}
    * - ${arch}
    * - ${resourceLanguages}
+   * - ${capabilities}
    * - ${extensions}
    * - ${minVersion}
    * - ${maxVersionTested}
