@@ -84,6 +84,43 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
       suffix: "output.json",
     })
 
+    const extractJsonFromPollutedOutput = (output: string): string | null => {
+      try {
+        JSON.parse(output.trim())
+        return output.trim()
+      } catch {
+        // Continue
+      }
+
+      const lines = output.split("\n")
+
+      // Find the first line that starts with { or [
+      const jsonStartIdx = lines.findIndex(line => {
+        const trimmed = line.trim()
+        return trimmed.startsWith("{") || trimmed.startsWith("[")
+      })
+
+      if (jsonStartIdx === -1) {
+        return null // No JSON found
+      }
+
+      // Try progressively longer slices until we get valid JSON
+      for (let endIdx = jsonStartIdx; endIdx < lines.length; endIdx++) {
+        const candidate = lines
+          .slice(jsonStartIdx, endIdx + 1)
+          .join("\n")
+          .trim()
+
+        try {
+          JSON.parse(candidate)
+          return candidate // First valid JSON we find
+        } catch {
+          // Keep trying longer slices
+        }
+      }
+
+      return null
+    }
     return retry(
       async () => {
         await this.streamCollectorCommandToFile(command, args, this.rootDir, tempOutputFile)
@@ -262,7 +299,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
       const child = childProcess.spawn(command, args, {
         cwd,
         env: { COREPACK_ENABLE_STRICT: "0", ...process.env }, // allow `process.env` overrides
-        shell: false, // required to prevent console logs polution from shell profile loading when `true`
+        shell: true,
       })
 
       let stderr = ""
