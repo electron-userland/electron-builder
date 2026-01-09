@@ -84,11 +84,50 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
       suffix: "output.json",
     })
 
+    const extractJsonFromPossiblyPollutedOutput = (output: string): string => {
+      const consoleOutput = output.trim()
+      try {
+        JSON.parse(consoleOutput)
+        return consoleOutput
+      } catch {
+        // Continue
+      }
+
+      const lines = output.split("\n")
+
+      // Find the first line that starts with { or [
+      const jsonStartIdx = lines.findIndex(line => {
+        const trimmed = line.trim()
+        return trimmed.startsWith("{") || trimmed.startsWith("[")
+      })
+
+      if (jsonStartIdx === -1) {
+        return consoleOutput // No JSON found
+      }
+
+      // Try progressively longer slices until we get valid JSON
+      for (let endIdx = jsonStartIdx; endIdx < lines.length; endIdx++) {
+        const candidate = lines
+          .slice(jsonStartIdx, endIdx + 1)
+          .join("\n")
+          .trim()
+
+        try {
+          JSON.parse(candidate)
+          return candidate // First valid JSON we find
+        } catch {
+          // Keep trying longer slices
+        }
+      }
+
+      return consoleOutput // Fallback to original output
+    }
+
     return retry(
       async () => {
         await this.streamCollectorCommandToFile(command, args, this.rootDir, tempOutputFile)
         const shellOutput = await fs.readFile(tempOutputFile, { encoding: "utf8" })
-        return await this.parseDependenciesTree(shellOutput.trim())
+        return await this.parseDependenciesTree(extractJsonFromPossiblyPollutedOutput(shellOutput))
       },
       {
         retries: 1,
@@ -262,7 +301,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
       const child = childProcess.spawn(command, args, {
         cwd,
         env: { COREPACK_ENABLE_STRICT: "0", ...process.env }, // allow `process.env` overrides
-        shell: false, // required to prevent console logs polution from shell profile loading when `true`
+        shell: true,
       })
 
       let stderr = ""
