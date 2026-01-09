@@ -15,6 +15,7 @@ import { execSync } from "child_process"
 import { expandMacro } from "../util/macroExpander"
 
 const defaultPlugs = ["desktop", "desktop-legacy", "home", "x11", "wayland", "unity7", "browser-support", "network", "gsettings", "audio-playback", "pulseaudio", "opengl"]
+const VM_NAME = "snap-builder";
 
 export default class SnapTarget extends Target {
   readonly options: SnapOptions = { ...this.packager.platformSpecificBuildOptions, ...(this.packager.config as any)[this.name] }
@@ -117,7 +118,7 @@ export default class SnapTarget extends Target {
       summary: options.summary || appInfo.productName,
       compression: options.compression,
       description: this.helper.getDescription(options),
-      architectures: [toLinuxArchString(arch, "snap")],
+      platforms: [toLinuxArchString(arch, "snap")],
       apps: {
         [snapName]: appDescriptor,
       },
@@ -208,8 +209,14 @@ export default class SnapTarget extends Target {
 
     if (options.base != null) {
       // core24 upgrade/migration
-      if (Number(options.base.split("core")[1]) === 24) {
-        return await buildSnapCore24({ SNAP_DIR: appOutDir, APP_NAME: this.packager.appInfo.name, DIST_DIR: this.outDir, USE_CLASSIC: false, VERSION: expandMacro("${version}", null, this.packager.appInfo})
+      if (options.base.split("core")[1] === "24") {
+        return await buildSnapCore24({
+          SNAP_DIR: appOutDir,
+          APP_NAME: this.packager.appInfo.name,
+          DIST_DIR: log.filePath(appOutDir),
+          USE_CLASSIC: false,
+          VERSION: expandMacro("${version}", null, this.packager.appInfo),
+        })
       }
     }
 
@@ -431,6 +438,11 @@ function stripBinary(binaryPath: string) {
   }
 }
 
+function run(cmd: string) {
+  console.log(`\n▶ ${cmd}`)
+  execSync(cmd, { stdio: "inherit" })
+}
+
 // Ensure Multipass VM
 function ensureMultipassVM() {
   try {
@@ -442,16 +454,26 @@ function ensureMultipassVM() {
 }
 
 // Build Snap
-async function buildSnapCore24(options: { SNAP_DIR: string; DIST_DIR: string; APP_NAME: string; VERSION: string; USE_CLASSIC: boolean }) {
+async function buildSnapCore24(options: {
+  SNAP_DIR: string
+  DIST_DIR: string
+  APP_NAME: string
+  VERSION: string
+  USE_CLASSIC: boolean
+}) {
   const { SNAP_DIR, DIST_DIR, APP_NAME, VERSION, USE_CLASSIC } = options
-  mkdirSync(SNAP_DIR, { recursive: true })
-
+if (path.isAbsolute(DIST_DIR)) {
+  throw new Error("snapcraft.yaml source must be relative, absolute paths are invalid")
+}
+  // Detect Electron binary and strip debug symbols
   const binaryName = detectElectronBinary(DIST_DIR)
   const binaryPath = path.join(DIST_DIR, binaryName)
-
   stripBinary(binaryPath)
 
-  // Generate modern snapcraft.yaml
+  // Create snap directory
+  mkdirSync(SNAP_DIR, { recursive: true })
+
+  // Generate Snapcraft YAML with flat lists (no nested lists)
   const snapcraftYaml = `
 name: ${APP_NAME}
 base: core24
@@ -464,8 +486,12 @@ grade: stable
 confinement: ${USE_CLASSIC ? "classic" : "strict"}
 
 platforms:
-  - amd64
-  - arm64
+  amd64:
+    build-on: amd64
+    build-for: amd64
+  arm64:
+    build-on: arm64
+    build-for: arm64
 
 apps:
   ${APP_NAME}:
@@ -486,7 +512,7 @@ apps:
 parts:
   ${APP_NAME}:
     plugin: dump
-    source: ../${DIST_DIR}
+    source: app
     stage-packages:
       - libnss3
       - libatk-bridge2.0-0
@@ -500,28 +526,52 @@ parts:
       - libgbm1
       - libdrm2
     stage:
-      - -usr/share/locale/*  # strip all locales
-      - usr/share/locale/en   # keep only English
-`
+      - usr/share/locale
+    override-stage: |
+      snapcraftctl stage
+      mkdir -p $SNAPCRAFT_PART_INSTALL/usr/share/locale
+`.trimStart()
 
   const snapcraftYamlPath = path.join(SNAP_DIR, "snapcraft.yaml")
   await outputFile(snapcraftYamlPath, snapcraftYaml)
 
-  ensureMultipassVM()
+  try {
+    // Ensure Multipass VM exists
+    ensureMultipassVM()
 
-  // Install snapcraft in VM
-  execSync(`multipass exec snap-builder -- bash -c "sudo snap install snapcraft --classic || true"`, { stdio: "inherit" })
+    // Make sure /home/ubuntu/app exists in VM
+    run(`multipass exec ${VM_NAME} -- mkdir -p /home/ubuntu/app/app`)
 
-  // QEMU for ARM64
-  execSync(`multipass exec snap-builder -- bash -c "sudo apt-get update && sudo apt-get install -y qemu-user-static"`, { stdio: "inherit" })
+    // Transfer project files into VM
+    const hostSnapDir = path.resolve(SNAP_DIR)
+    run(`multipass transfer -r ${hostSnapDir}/snapcraft.yaml ${VM_NAME}:/home/ubuntu/app`)
+    run(`multipass transfer -r ${hostSnapDir}/* ${VM_NAME}:/home/ubuntu/app/app`)
 
-  // Run Snapcraft CLI inside Multipass (multi-arch with core24)
-  execSync(`multipass exec snap-builder -- bash -c "cd /home/ubuntu/app && snapcraft --destructive-mode"`, { stdio: "inherit" })
+    // Install Snapcraft if missing
+    run(`multipass exec ${VM_NAME} -- bash -c "sudo snap install snapcraft --classic || true"`)
 
-  // Copy all snaps back
-  execSync(`multipass transfer snap-builder:/home/ubuntu/app/*.snap ./`, {
-    stdio: "inherit",
-  })
+    // Install QEMU for ARM64 cross-builds
+    run(`multipass exec ${VM_NAME} -- bash -c "sudo apt-get update && sudo apt-get install -y qemu-user-static"`)
 
-  console.log("🎉 Snap build complete! Check the current folder for .snap files.")
+    // Build snap inside VM
+    // run(`multipass exec ${VM_NAME} -- bash -c "cd /home/ubuntu/app && ls -lRh && snapcraft validate"`)
+    run(`multipass exec ${VM_NAME} -- bash -c "cd /home/ubuntu/app && snapcraft pack --verbosity debug"`)
+
+    // Copy built snaps back to host
+    run(`multipass transfer ${VM_NAME}:/home/ubuntu/app/*.snap ./`)
+
+    console.log("🎉 Snap build complete! Check the current folder for .snap files.")
+  } finally {
+    run(`multipass exec snap-builder -- bash -lc  "ls -lh ~/.local/state/snapcraft/log && cat ~/.local/state/snapcraft/log/*.log"`)
+    cleanupMultipass()
+  }
+}
+
+function cleanupMultipass() {
+  try {
+    run(`multipass delete --purge ${VM_NAME}`)
+    console.log("✅ Multipass VM cleaned up")
+  } catch (err) {
+    console.warn("⚠ Failed to cleanup Multipass VM", err)
+  }
 }
