@@ -84,10 +84,11 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
       suffix: "output.json",
     })
 
-    const extractJsonFromPollutedOutput = (output: string): string | null => {
+    const extractJsonFromPossiblyPollutedOutput = (output: string): string => {
+      const consoleOutput = output.trim()
       try {
-        JSON.parse(output.trim())
-        return output.trim()
+        JSON.parse(consoleOutput)
+        return consoleOutput
       } catch {
         // Continue
       }
@@ -101,7 +102,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
       })
 
       if (jsonStartIdx === -1) {
-        return null // No JSON found
+        return consoleOutput // No JSON found
       }
 
       // Try progressively longer slices until we get valid JSON
@@ -119,13 +120,14 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
         }
       }
 
-      return null
+      return consoleOutput // Fallback to original output
     }
+
     return retry(
       async () => {
         await this.streamCollectorCommandToFile(command, args, this.rootDir, tempOutputFile)
         const shellOutput = await fs.readFile(tempOutputFile, { encoding: "utf8" })
-        return await this.parseDependenciesTree(shellOutput.trim())
+        return await this.parseDependenciesTree(extractJsonFromPossiblyPollutedOutput(shellOutput))
       },
       {
         retries: 1,
