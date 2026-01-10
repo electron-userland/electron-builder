@@ -10,8 +10,4 @@ export class BunNodeModulesCollector extends NpmNodeModulesCollector {
     log.info(null, "note: bun does not support any CLI for dependency tree extraction, utilizing NPM node module collector instead")
     return super.getDependenciesTree(PM.NPM)
   }
-
-  protected isProdDependency(packageName: string, tree: NpmDependency): boolean {
-    return tree.dependencies?.[packageName] != null || tree.optionalDependencies?.[packageName] != null
-  }
 }
