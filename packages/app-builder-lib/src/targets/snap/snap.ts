@@ -4,15 +4,15 @@ import { mkdirSync, outputFile, readdirSync, readFile, statSync } from "fs-extra
 import { load } from "js-yaml"
 import * as path from "path"
 import * as semver from "semver"
-import { Configuration } from "../configuration"
-import { Publish, Target } from "../core"
-import { LinuxPackager } from "../linuxPackager"
-import { PlugDescriptor, SnapOptions } from "../options/SnapOptions"
-import { getTemplatePath } from "../util/pathManager"
-import { LinuxTargetHelper } from "./LinuxTargetHelper"
-import { createStageDirPath } from "./targetUtil"
+import { Configuration } from "../../configuration"
+import { Publish, Target } from "../../core"
+import { LinuxPackager } from "../../linuxPackager"
+import { PlugDescriptor, SnapOptions } from "../../options/SnapOptions"
+import { getTemplatePath } from "../../util/pathManager"
+import { LinuxTargetHelper } from "../LinuxTargetHelper"
+import { createStageDirPath } from "../targetUtil"
 import { execSync } from "child_process"
-import { expandMacro } from "../util/macroExpander"
+import { expandMacro } from "../../util/macroExpander"
 
 const defaultPlugs = ["desktop", "desktop-legacy", "home", "x11", "wayland", "unity7", "browser-support", "network", "gsettings", "audio-playback", "pulseaudio", "opengl"]
 const VM_NAME = "snap-builder";
