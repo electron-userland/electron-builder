@@ -40,7 +40,9 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
     }
 
     const isDuplicateDep = this.isDuplicatedNpmDependency(tree)
-    const resolvedDeps = isDuplicateDep ? this.allDependencies.get(dependencyId)?.dependencies : tree.dependencies
+    // When dealing with duplicate/hoisted deps, get the full dependency info from allDependencies
+    const resolvedTree = isDuplicateDep ? this.allDependencies.get(dependencyId) : tree
+    const resolvedDeps = resolvedTree?.dependencies
     // Initialize with empty dependencies array first to mark this dependency as "in progress"
     // After initialization, if there are libraries with the same name+version later, they will not be searched recursively again
     // This will prevents infinite loops when circular dependencies are encountered.
@@ -49,7 +51,9 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
     const collectedDependencies: string[] = []
     if (resolvedDeps && Object.keys(resolvedDeps).length > 0) {
       for (const packageName in resolvedDeps) {
-        if (!this.isProdDependency(packageName, tree)) {
+        // Use resolvedTree for isProdDependency check since it has the actual dependencies
+        // (tree might have empty dependencies if it's a hoisted duplicate)
+        if (!resolvedTree || !this.isProdDependency(packageName, resolvedTree)) {
           continue
         }
         const dependency = resolvedDeps[packageName]
