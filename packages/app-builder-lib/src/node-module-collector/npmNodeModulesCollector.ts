@@ -25,7 +25,7 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
   }
 
   protected async collectAllDependencies(tree: NpmDependency) {
-    for (const [, value] of Object.entries(tree.dependencies || {})) {
+    for (const [key, value] of Object.entries(tree.dependencies || {})) {
       if (this.isDuplicatedNpmDependency(value)) {
         continue
       }
@@ -47,7 +47,8 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
       // Use the key (alias name) instead of value.name for npm aliased packages
       // e.g., { "foo": { name: "@scope/bar", ... } } should be stored as "foo@version"
       // This ensures aliased packages are copied to the correct location in node_modules
-      this.allDependencies.set(this.packageVersionString(value), value)
+      const normalizedDep: NpmDependency = key !== value.name ? { ...value, name: key } : value
+      this.allDependencies.set(this.packageVersionString(normalizedDep), normalizedDep)
       await this.collectAllDependencies(value)
     }
   }
@@ -75,11 +76,12 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
           continue
         }
         const dependency = resolvedDeps[packageName]
-        const childDependencyId = this.packageVersionString(dependency)
+        // Use the key (alias name) for aliased packages to match how they're stored in allDependencies
+        const normalizedName = packageName !== dependency.name ? packageName : dependency.name
+        const childDependencyId = `${normalizedName}@${dependency.version}`
 
-        // Skip dependencies that weren't collected (e.g., missing optional deps with no valid path)
         if (!this.allDependencies.has(childDependencyId)) {
-          log.debug({ name: dependency.name, version: dependency.version }, "dependency not in allDependencies, skipping (likely uninstalled optional dependency)")
+          log.debug({ name: normalizedName, version: dependency.version }, "dependency not in allDependencies, skipping (likely uninstalled optional dependency)")
           continue
         }
 
@@ -112,8 +114,12 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
 
     /**
      * Recursively builds dependency tree starting from a package directory.
+     * @param packageDir - The directory of the package to process
+     * @param aliasName - Optional alias name for npm aliased dependencies (e.g., "foo": "npm:@scope/bar@1.0.0")
+     *                    When provided, this name is used instead of the package.json name for the module name,
+     *                    ensuring the package is copied to the correct location in node_modules.
      */
-    const buildFromPackage = async (packageDir: string): Promise<NpmDependency> => {
+    const buildFromPackage = async (packageDir: string, aliasName?: string): Promise<NpmDependency> => {
       const pkgPath = path.join(packageDir, "package.json")
 
       log.debug({ pkgPath }, "building dependency node from package.json")
@@ -125,11 +131,15 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
       const pkg: PackageJson = await this.cache.packageJson[pkgPath]
       const resolvedPackageDir = await this.cache.realPath[packageDir]
 
+      // Use the alias name if provided, otherwise fall back to the package.json name
+      // This ensures npm aliased packages are copied to the correct location
+      const moduleName = aliasName ?? pkg.name
+
       // Use resolved path as the unique identifier to prevent circular dependencies
       if (visited.has(resolvedPackageDir)) {
-        log.debug({ name: pkg.name, version: pkg.version, path: resolvedPackageDir }, "skipping already visited package")
+        log.debug({ name: moduleName, version: pkg.version, path: resolvedPackageDir }, "skipping already visited package")
         return {
-          name: pkg.name,
+          name: moduleName,
           version: pkg.version,
           path: resolvedPackageDir,
         }
@@ -149,12 +159,12 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
           const depPath = await this.locatePackageVersion(resolvedPackageDir, depName, depVersion)
 
           if (!depPath || depPath.packageDir.length === 0) {
-            log.warn({ package: pkg.name, dependency: depName, version: depVersion }, "dependency not found, skipping")
+            log.warn({ package: moduleName, dependency: depName, version: depVersion }, "dependency not found, skipping")
             continue
           }
 
           const resolvedDepPath = await this.cache.realPath[depPath.packageDir]
-          const logFields = { package: pkg.name, dependency: depName, resolvedPath: resolvedDepPath }
+          const logFields = { package: moduleName, dependency: depName, resolvedPath: resolvedDepPath }
 
           // Skip if this dependency resolves to the base directory or any parent we're already processing
           if (resolvedDepPath === resolvedPackageDir || resolvedDepPath === (await this.cache.realPath[baseDir])) {
@@ -165,14 +175,15 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
           log.debug(logFields, "processing production dependency")
 
           // Recursively build the dependency tree for this dependency
-          prodDeps[depName] = await buildFromPackage(resolvedDepPath)
+          // Pass depName as the alias - it will be used as the module name if different from the actual package name
+          prodDeps[depName] = await buildFromPackage(resolvedDepPath, depName)
         } catch (error: any) {
-          log.warn({ package: pkg.name, dependency: depName, error: error.message }, "failed to process dependency, skipping")
+          log.warn({ package: moduleName, dependency: depName, error: error.message }, "failed to process dependency, skipping")
         }
       }
 
       return {
-        name: pkg.name,
+        name: moduleName,
         version: pkg.version,
         path: resolvedPackageDir,
         dependencies: Object.keys(prodDeps).length > 0 ? prodDeps : undefined,
