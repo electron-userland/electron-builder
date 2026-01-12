@@ -37,6 +37,7 @@ const PACKAGE_MANAGER_VERSION_MAP = {
   [PM.YARN_BERRY]: { cli: "yarn", version: "3.5.0" },
   [PM.PNPM]: { cli: "pnpm", version: "10.18.0" },
   [PM.BUN]: { cli: "bun", version: "1.3.2" },
+  [PM.TRAVERSAL]: { cli: "npm", version: "9.8.1" }, // use npm to install, we're testing manual node traversal, but we still need something to install the dependencies
 }
 
 export function getPackageManagerWithVersion(pm: PM, packageManagerAndVersionString?: string) {
