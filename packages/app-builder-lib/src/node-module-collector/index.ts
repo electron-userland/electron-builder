@@ -12,7 +12,6 @@ import { spawn, log, exists, isEmptyOrSpaces } from "builder-util"
 import * as fs from "fs-extra"
 import * as path from "path"
 import { TraversalNodeModulesCollector } from "./traversalNodeModulesCollector"
-import { Configuration } from "../configuration"
 
 export { getPackageManagerCommand, PM }
 
@@ -49,24 +48,10 @@ export function getNodeModules(
   return collector.getNodeModules({ packageName })
 }
 
-export const determinePackageManagerEnv = ({
-  projectDir,
-  appDir,
-  workspaceRoot,
-  packageManagerOverride,
-}: {
-  projectDir: string
-  appDir: string
-  workspaceRoot: string | Nullish
-  packageManagerOverride: Configuration["packageManager"]
-}) =>
+export const determinePackageManagerEnv = ({ projectDir, appDir, workspaceRoot }: { projectDir: string; appDir: string; workspaceRoot: string | Nullish }) =>
   new Lazy(async () => {
     const availableDirs = [workspaceRoot, projectDir, appDir].filter((it): it is string => !isEmptyOrSpaces(it))
-    const override =
-      packageManagerOverride != null && packageManagerOverride !== "auto"
-        ? { pm: packageManagerOverride, resolvedDirectory: availableDirs[0], corepackConfig: undefined, detectionMethod: "override" }
-        : null
-    const pm = override ?? (await detectPackageManager(availableDirs))
+    const pm = await detectPackageManager(availableDirs)
     const root = await findWorkspaceRoot(pm.pm, projectDir)
     if (root != null) {
       // re-detect package manager from workspace root, this seems particularly necessary for pnpm workspaces

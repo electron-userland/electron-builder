@@ -142,7 +142,7 @@ test("yarn multi-package workspace", ({ expect }) =>
     }
   ))
 
- // yarn berry multi-package workspace
+// yarn berry multi-package workspace
 test("yarn berry multi-package workspace", ({ expect }) =>
   assertPack(
     expect,
@@ -367,17 +367,15 @@ test("bun workspace --linker=hoisted - multiple conflicting versions", ({ expect
     }
   ))
 
-  test("traversal hoisted", ({ expect }) =>
+test("traversal hoisted", ({ expect }) =>
   assertPack(
     expect,
     "test-app-yarn-hoisted",
     {
       targets: linuxDirTarget,
-      config: {
-        packageManager: PM.TRAVERSAL,
-      },
     },
     {
+      packageManager: PM.TRAVERSAL,
       packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
       projectDirCreated: async projectDir => {
         await modifyPackageJson(
@@ -401,11 +399,9 @@ test("traversal workspace", ({ expect }) =>
     {
       targets: linuxDirTarget,
       projectDir: "packages/test-app",
-      config: {
-        packageManager: PM.TRAVERSAL,
-      },
     },
     {
+      packageManager: PM.TRAVERSAL,
       packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
       projectDirCreated: async projectDir => {
         await modifyPackageJson(projectDir, data => {
@@ -423,11 +419,9 @@ test("traversal multi-package workspace", ({ expect }) =>
     {
       targets: linuxDirTarget,
       projectDir: "packages/test-app",
-      config: {
-        packageManager: PM.TRAVERSAL,
-      },
     },
     {
+      packageManager: PM.TRAVERSAL,
       packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
       projectDirCreated: async projectDir => {
         await modifyPackageJson(projectDir, data => {

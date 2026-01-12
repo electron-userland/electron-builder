@@ -49,7 +49,7 @@ export async function installAppDeps(args: any) {
   const config = await getConfig(projectDir, null, null, packageMetadata)
   const [appDir, version] = await Promise.all<string>([computeDefaultAppDirectory(projectDir, config.directories?.app), getElectronVersion(projectDir, config)])
 
-  const packageManagerEnv = determinePackageManagerEnv({ projectDir, appDir, workspaceRoot: undefined, packageManagerOverride: config.packageManager })
+  const packageManagerEnv = determinePackageManagerEnv({ projectDir, appDir, workspaceRoot: undefined })
 
   // if two package.json — force full install (user wants to install/update app deps in addition to dev)
   await installOrRebuild(

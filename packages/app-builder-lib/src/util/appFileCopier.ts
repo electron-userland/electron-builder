@@ -183,8 +183,7 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
 
   let deps: Array<NodeModuleInfo> = []
   const searchDirectories = Array.from(new Set([appDir, projectDir, await packager.getWorkspaceRoot()])).filter((it): it is string => isEmptyOrSpaces(it) === false)
-  const pmApproaches =
-    packager.config.packageManager !== "auto" && packager.config.packageManager != null ? [packager.config.packageManager] : [await packager.getPackageManager(), PM.TRAVERSAL]
+  const pmApproaches = [await packager.getPackageManager(), PM.TRAVERSAL]
   for (const pm of pmApproaches) {
     for (const dir of searchDirectories) {
       log.info({ pm, searchDir: dir }, "searching for node modules")

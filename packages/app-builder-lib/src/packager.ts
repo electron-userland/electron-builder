@@ -96,12 +96,12 @@ export class Packager {
     return this._appDir
   }
 
-  private _packageManager: null | Lazy<{ pm: PM; workspaceRoot: Promise<string | undefined> }> = null
+  private readonly _packageManager: Lazy<{ pm: PM; workspaceRoot: Promise<string | undefined> }>
   async getPackageManager(): Promise<PM> {
-    return (await this._packageManager!.value).pm
+    return (await this._packageManager.value).pm
   }
   async getWorkspaceRoot(): Promise<string> {
-    return (await (await this._packageManager!.value).workspaceRoot) || this.projectDir
+    return (await (await this._packageManager.value).workspaceRoot) || this.projectDir
   }
 
   private _metadata: Metadata | null = null
@@ -265,6 +265,7 @@ export class Packager {
 
     this.projectDir = options.projectDir == null ? process.cwd() : path.resolve(options.projectDir)
     this._appDir = this.projectDir
+    this._packageManager = determinePackageManagerEnv({ projectDir: this.projectDir, appDir: this.appDir, workspaceRoot: undefined })
 
     this.options = {
       ...options,
@@ -398,13 +399,6 @@ export class Packager {
 
     this._configuration = configuration
     this._devMetadata = devMetadata
-
-    this._packageManager = determinePackageManagerEnv({
-      projectDir: this.projectDir,
-      appDir: this.appDir,
-      workspaceRoot: undefined,
-      packageManagerOverride: this.config?.packageManager,
-    })
   }
 
   // external caller of this method always uses isTwoPackageJsonProjectLayoutUsed=false and appDir=projectDir, no way (and need) to use another values

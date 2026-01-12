@@ -49,7 +49,7 @@ export { WindowsAzureSigningConfiguration, WindowsConfiguration, WindowsSigntool
 export { BuildResult, Packager } from "./packager"
 export { ArtifactBuildStarted, ArtifactCreated, PackagerOptions } from "./packagerApi"
 export { CommonNsisOptions, CustomNsisBinary, NsisOptions, NsisWebOptions, PortableOptions } from "./targets/nsis/nsisOptions"
-export { PM } from "./node-module-collector/packageManager"
+
 export { CancellationToken, ProgressInfo } from "builder-util-runtime"
 export { PublishOptions, UploadTask } from "electron-publish"
 export { WindowsSignOptions } from "./codeSign/windowsCodeSign"
