@@ -86,14 +86,15 @@ export class PublishManager implements PublishContext {
     if (!isPullRequest() || forcePublishForPr) {
       if (publishOptions.publish === undefined) {
         if (process.env.npm_lifecycle_event === "release") {
+          log.warn("Implicit publishing triggered by npm lifecycle event 'release'. This behavior will be disabled in electron-builder v27. Please use --publish explicitly.")
           publishOptions.publish = "always"
         } else {
           const tag = getCiTag()
           if (tag != null) {
-            log.info({ reason: "tag is defined", tag }, "artifacts will be published")
+            log.warn({ tag }, "Implicit publishing triggered by git tag. This behavior will be disabled in electron-builder v27. Please use --publish explicitly.")
             publishOptions.publish = "onTag"
           } else if (isCI) {
-            log.info({ reason: "CI detected" }, "artifacts will be published if draft release exists")
+            log.warn("Implicit publishing triggered by CI detection. This behavior will be disabled in electron-builder v27. Please use --publish explicitly.")
             publishOptions.publish = "onTagOrDraft"
           }
         }

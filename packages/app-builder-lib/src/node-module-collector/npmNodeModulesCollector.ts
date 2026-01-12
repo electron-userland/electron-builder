@@ -13,11 +13,15 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
   }
 
   protected async collectAllDependencies(tree: NpmDependency) {
-    for (const [, value] of Object.entries(tree.dependencies || {})) {
+    for (const [key, value] of Object.entries(tree.dependencies || {})) {
       if (this.isDuplicatedNpmDependency(value)) {
         continue
       }
-      this.allDependencies.set(this.packageVersionString(value), value)
+      // Use the key (alias name) instead of value.name for npm aliased packages
+      // e.g., { "foo": { name: "@scope/bar", ... } } should be stored as "foo@version"
+      // This ensures aliased packages are copied to the correct location in node_modules
+      const normalizedDep: NpmDependency = key !== value.name ? { ...value, name: key } : value
+      this.allDependencies.set(this.packageVersionString(normalizedDep), normalizedDep)
       await this.collectAllDependencies(value)
     }
   }
@@ -41,7 +45,9 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
           continue
         }
         const dependency = resolvedDeps[packageName]
-        const childDependencyId = this.packageVersionString(dependency)
+        // Use the key (alias name) for aliased packages to match how they're stored in allDependencies
+        const normalizedName = packageName !== dependency.name ? packageName : dependency.name
+        const childDependencyId = `${normalizedName}@${dependency.version}`
         await this.extractProductionDependencyGraph(dependency, childDependencyId)
         collectedDependencies.push(childDependencyId)
       }
