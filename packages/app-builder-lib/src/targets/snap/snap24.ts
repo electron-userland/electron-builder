@@ -13,33 +13,13 @@ import { LinuxTargetHelper } from "../LinuxTargetHelper"
 import { createStageDirPath } from "../targetUtil"
 import { execSync } from "child_process"
 import { expandMacro } from "../../util/macroExpander"
+import SnapTarget from "./snap"
 
 const defaultPlugs = ["desktop", "desktop-legacy", "home", "x11", "wayland", "unity7", "browser-support", "network", "gsettings", "audio-playback", "pulseaudio", "opengl"]
 const VM_NAME = "snap-builder";
 
-export default class SnapTarget extends Target {
-  readonly options: SnapOptions = { ...this.packager.platformSpecificBuildOptions, ...(this.packager.config as any)[this.name] }
-
-  public isUseTemplateApp = false
-
-  constructor(
-    name: string,
-    protected readonly packager: LinuxPackager,
-    protected readonly helper: LinuxTargetHelper,
-    readonly outDir: string
-  ) {
-    super(name)
-  }
-
-  protected replaceDefault(inList: Array<string> | Nullish, defaultList: Array<string>) {
-    const result = _replaceDefault(inList, defaultList)
-    if (result !== defaultList) {
-      this.isUseTemplateApp = false
-    }
-    return result
-  }
-
-  protected async createDescriptor(arch: Arch): Promise<any> {
+export default class SnapTarget24 extends SnapTarget {
+  private async createDescriptor(arch: Arch): Promise<any> {
     if (!this.isElectronVersionGreaterOrEqualThan("4.0.0")) {
       if (!this.isElectronVersionGreaterOrEqualThan("2.0.0-beta.1")) {
         throw new InvalidConfigurationError("Electron 2 and higher is required to build Snap")
@@ -293,143 +273,13 @@ export default class SnapTarget extends Target {
     })
   }
 
-  protected isElectronVersionGreaterOrEqualThan(version: string) {
+  private isElectronVersionGreaterOrEqualThan(version: string) {
     return semver.gte(this.packager.config.electronVersion || "7.0.0", version)
   }
 }
 
-function findSnapPublishConfig(config?: Configuration): SnapStoreOptions | null {
-  const fallback: SnapStoreOptions = { provider: "snapStore" }
-
-  if (!config) {
-    return fallback
-  }
-
-  if (config.snap?.publish) {
-    return findSnapPublishConfigInPublishNode(config.snap.publish)
-  }
-
-  if (config.linux?.publish) {
-    const configCandidate = findSnapPublishConfigInPublishNode(config.linux.publish)
-
-    if (configCandidate) {
-      return configCandidate
-    }
-  }
-
-  if (config.publish) {
-    const configCandidate = findSnapPublishConfigInPublishNode(config.publish)
-
-    if (configCandidate) {
-      return configCandidate
-    }
-  }
-
-  return fallback
-}
-
-function findSnapPublishConfigInPublishNode(configPublishNode: Publish): SnapStoreOptions | null {
-  if (!configPublishNode) {
-    return null
-  }
-
-  if (Array.isArray(configPublishNode)) {
-    for (const configObj of configPublishNode) {
-      if (isSnapStoreOptions(configObj)) {
-        return configObj
-      }
-    }
-  }
-
-  if (typeof configPublishNode === `object` && isSnapStoreOptions(configPublishNode)) {
-    return configPublishNode
-  }
-
-  return null
-}
-
-function isSnapStoreOptions(configPublishNode: Publish): configPublishNode is SnapStoreOptions {
-  const snapStoreOptionsCandidate = configPublishNode as SnapStoreOptions
-  return snapStoreOptionsCandidate?.provider === `snapStore`
-}
-
-function archNameToTriplet(arch: Arch): string {
-  switch (arch) {
-    case Arch.x64:
-      return "x86_64-linux-gnu"
-    case Arch.ia32:
-      return "i386-linux-gnu"
-    case Arch.armv7l:
-      // noinspection SpellCheckingInspection
-      return "arm-linux-gnueabihf"
-    case Arch.arm64:
-      return "aarch64-linux-gnu"
-
-    default:
-      throw new Error(`Unsupported arch ${arch}`)
-  }
-}
-
-
-
-function normalizePlugConfiguration(raw: Array<string | PlugDescriptor> | PlugDescriptor | Nullish): Record<string, Record<string, any> | null> | null {
-  if (raw == null) {
-    return null
-  }
-
-  const result: any = {}
-  for (const item of Array.isArray(raw) ? raw : [raw]) {
-    if (typeof item === "string") {
-      result[item] = null
-    } else {
-      Object.assign(result, item)
-    }
-  }
-  return result
-}
-
-function isBrowserSandboxAllowed(snap: any): boolean {
-  if (snap.plugs != null) {
-    for (const plugName of Object.keys(snap.plugs)) {
-      const plug = snap.plugs[plugName]
-      if (plug.interface === "browser-support" && plug["allow-sandbox"] === true) {
-        return true
-      }
-    }
-  }
-  return false
-}
-
 function getDefaultStagePackages() {
-  // libxss1 - was "error while loading shared libraries: libXss.so.1" on Xubuntu 16.04
-  // noinspection SpellCheckingInspection
   return ["libnspr4", "libnss3", "libxss1", "libappindicator3-1", "libsecret-1-0"]
-}
-
-function detectElectronBinary(appOutDir: string): string {
-  const files = readdirSync(appOutDir)
-  for (const file of files) {
-    const fullPath = path.join(appOutDir, file)
-    if (statSync(fullPath).isFile()) {
-      try {
-        execSync(`test -x "${fullPath}"`)
-        return file
-      } catch {
-        // ignore
-      }
-    }
-  }
-  throw new Error(`Cannot detect Electron binary in ${appOutDir}`)
-}
-
-// Strip debug symbols to reduce size
-function stripBinary(binaryPath: string) {
-  try {
-    execSync(`strip "${binaryPath}"`)
-    console.log(`✅ Stripped debug symbols from ${binaryPath}`)
-  } catch {
-    console.warn(`⚠ Could not strip ${binaryPath}`)
-  }
 }
 
 function run(cmd: string) {

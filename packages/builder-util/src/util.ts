@@ -316,6 +316,14 @@ export function addValue<K, T>(map: Map<K, Array<T>>, key: K, value: T) {
   }
 }
 
+export function isArrayEqualRegardlessOfSort(a: Array<string>, b: Array<string>) {
+  a = a.slice()
+  b = b.slice()
+  a.sort()
+  b.sort()
+  return a.length === b.length && a.every((value, index) => value === b[index])
+}
+
 export function replaceDefault(inList: Array<string> | Nullish, defaultList: Array<string>): Array<string> {
   if (inList == null || (inList.length === 1 && inList[0] === "default")) {
     return defaultList

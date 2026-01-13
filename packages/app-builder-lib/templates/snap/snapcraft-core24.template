@@ -31,16 +31,11 @@ apps:
       - desktop  # Access to common desktop locations
       - desktop-legacy
       - unity7  # For system tray on older systems
-    environment:
-      # Fix TMPDIR for Chromium/Electron
-      TMPDIR: $XDG_RUNTIME_DIR
-      # Disable GPU in some cases if needed
-      # DISABLE_WAYLAND: 1
 
 parts:
   app:
     plugin: dump
-    source: app/  # Path to your built Electron app
+    source: app/
     organize:
       '*': app/
     stage-packages:
