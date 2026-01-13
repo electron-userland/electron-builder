@@ -141,7 +141,7 @@ export interface Part {
   after?: string[]
 
   // Plugin-specific options (allow any additional properties)
-  [key: string]: unknown
+  // [key: string]: unknown
 }
 
 // === Platform Definition (Core24+) ===

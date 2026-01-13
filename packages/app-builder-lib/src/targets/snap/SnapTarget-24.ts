@@ -1,54 +1,20 @@
-import {
-  replaceDefault as _replaceDefault,
-  Arch,
-  deepAssign,
-  executeAppBuilder,
-  InvalidConfigurationError,
-  isArrayEqualRegardlessOfSort,
-  log,
-  serializeToYaml,
-  stripUndefinedRecursively,
-  toLinuxArchString,
-} from "builder-util"
-import { asArray, Nullish, SnapStoreOptions } from "builder-util-runtime"
-import { mkdirSync, outputFile, readdirSync, readFile, statSync } from "fs-extra"
-import { load } from "js-yaml"
+import { replaceDefault as _replaceDefault, Arch, InvalidConfigurationError, log, stripUndefinedRecursively, toLinuxArchString } from "builder-util"
+import { asArray } from "builder-util-runtime"
+import { readdir } from "fs-extra"
 import * as path from "path"
-import * as semver from "semver"
-import { Configuration } from "../../configuration"
-import { Publish, Target } from "../../core"
-import { LinuxPackager } from "../../linuxPackager"
-import { PlugDescriptor, SnapOptions } from "../../options/SnapOptions"
-import { getTemplatePath } from "../../util/pathManager"
-import { LinuxTargetHelper } from "../LinuxTargetHelper"
-import { createStageDirPath } from "../targetUtil"
-import { execSync } from "child_process"
-import { expandMacro } from "../../util/macroExpander"
+import { PlugDescriptor } from "../../options/SnapOptions"
 import SnapTarget from "./snap"
-import { Platform, SnapcraftYAML } from "./snapcraft"
-import { SlotDescriptor } from "app-builder-lib/out"
+import { SnapcraftYAML } from "./snapcraft"
 
 const defaultPlugs = ["desktop", "desktop-legacy", "home", "x11", "wayland", "unity7", "browser-support", "network", "gsettings", "audio-playback", "pulseaudio", "opengl"]
-const VM_NAME = "snap-builder"
-
 export default class SnapTarget24 extends SnapTarget {
-  createDescriptor(arch: Arch): Promise<any> {
-    if (!this.isElectronVersionGreaterOrEqualThan("4.0.0")) {
-      if (!this.isElectronVersionGreaterOrEqualThan("2.0.0-beta.1")) {
-        throw new InvalidConfigurationError("Electron 2 and higher is required to build Snap")
-      }
-
-      log.warn("Electron 4 and higher is highly recommended for Snap")
-    }
-
+  async createDescriptor(arch: Arch): Promise<any> {
     const appInfo = this.packager.appInfo
     const snapName = this.packager.executableName.toLowerCase()
     const options = this.options
 
-    const plugs = this.normalizePlugConfiguration(this.options.plugs)
-
-    const plugNames = this.replaceDefault(plugs == null ? null : Object.getOwnPropertyNames(plugs), defaultPlugs)
-    const { app: appSlots, root: rootSlots } = this.convertPlugArrayToObject(options.slots)
+    const { app: appPlugs, root: rootPlugs } = this.convertPlugArrayToObject(defaultPlugs, options.plugs ? asArray(options.plugs) : [])
+    const { app: appSlots, root: rootSlots } = this.convertPlugArrayToObject([], options.slots ? asArray(options.slots) : [])
     const buildPackages = asArray(options.buildPackages)
     const defaultStagePackages = this.getDefaultStagePackages()
     const stagePackages = this.replaceDefault(options.stagePackages, defaultStagePackages)
@@ -60,6 +26,13 @@ export default class SnapTarget24 extends SnapTarget {
             ...options.environment,
           }
         : options.environment || undefined
+
+    const hooks = options.hooks
+      ? (await readdir(path.resolve(this.packager.buildResourcesDir, options.hooks))).reduce((acc, hookPath) => {
+          acc[path.basename(hookPath, path.extname(hookPath))] = hookPath
+          return acc
+        }, {} as any)
+      : undefined
 
     const snap: SnapcraftYAML = {
       base: "core24",
@@ -77,62 +50,55 @@ export default class SnapTarget24 extends SnapTarget {
       assumes: options.assumes ? asArray(options.assumes) : undefined,
 
       slots: Object.keys(rootSlots).length > 0 ? rootSlots : undefined,
+      plugs: Object.keys(rootPlugs).length > 0 ? rootPlugs : undefined,
+
+      hooks: hooks,
       platforms: {
         app: {
           "build-on": toLinuxArchString(arch, "snap"),
           "build-for": toLinuxArchString(arch, "snap"),
         },
       },
-
+      apps: {
+        [snapName]: {
+          autostart: options.autoStart ? `${snapName}.desktop` : undefined,
+          command: `app/${this.packager.executableName}`,
+          extensions: ["gnome"],
+          plugs: appPlugs.length > 0 ? appPlugs : undefined,
+          slots: appSlots.length > 0 ? appSlots : undefined,
+        },
+      },
       parts: {
         app: {
-          autostart: options.autoStart ? `${snapName}.desktop` : undefined,
           "stage-packages": stagePackages.length > 0 ? stagePackages : undefined,
           "build-packages": buildPackages.length > 0 ? buildPackages : undefined,
           after: options.after || undefined,
           plugin: "dump",
           source: "./app",
-          stage: options.appPartStage || ["user/share/locale"],
-          slots: appSlots.length > 0 ? appSlots : undefined,
+          stage: options.appPartStage || undefined,
         },
       },
 
-      layout: options.layout || {
-        "/usr/share/locale": {
-          "bind-file": "usr/share/locale",
-        },
-      },
-      apps: {
-        [snapName]: {
-          command: `app/${this.packager.executableName}`,
-          extensions: ["gnome"],
-          plugs: plugNames,
-        },
-      },
-      plugs: {
-        "browser-support": {
-          "allow-sandbox": true,
-        },
-      },
+      layout: options.layout || undefined,
     }
     const cleaned = stripUndefinedRecursively(snap)
     return cleaned
   }
 
-  private convertPlugArrayToObject<T extends string | PlugDescriptor | SlotDescriptor>(plugsOrSlots: Array<T> | Nullish): { app: string[]; root: Record<string, T> } {
-    const slots = this.normalizePlugConfiguration(plugsOrSlots)
-    const app = Object.getOwnPropertyNames(slots)
-    const root = Object.entries(slots || {}).reduce<Record<string, any>>((acc, slot) => {
-      if (slot[1] == null) {
-        return acc
+  private convertPlugArrayToObject(defaults: string[], plugsOrSlots: Array<string | PlugDescriptor>): { app: string[]; root: Record<string, any> } {
+    const plugs = this.normalizePlugConfiguration(plugsOrSlots)
+    const app = this.replaceDefault(plugs == null ? null : Object.getOwnPropertyNames(plugs), defaults)
+    const root = app.reduce<Record<string, any>>((acc, key) => {
+      const val = plugs?.[key]
+      if (val != null) {
+        acc[key] = val
       }
-      acc[slot[0]] = slot[1]
       return acc
     }, {})
     return { app, root }
   }
 
-  protected buildSnap(snap: any, appOutDir: string, stageDir: string, snapArch: string, artifactPath: string): Promise<void> {}
+  // protected buildSnap(snap: any, appOutDir: string, stageDir: string, snapArch: string, artifactPath: string): Promise<void> {}
 
   // protected getDefaultStagePackages() {
   //   return ["libnspr4", "libnss3", "libxss1", "libappindicator3-1", "libsecret-1-0"]
@@ -248,24 +214,24 @@ export default class SnapTarget24 extends SnapTarget {
   //   }
   // }
 
-  protected ensureMultipassVM() {
-    try {
-      execSync(`multipass info snap-builder`, { stdio: "ignore" })
-      console.log("✅ Multipass VM exists")
-    } catch {
-      execSync(`multipass launch --name snap-builder --cpus 4 --memory 8G --disk 20G`, { stdio: "inherit" })
-    }
-  }
-  protected cleanupMultipass() {
-    try {
-      run(`multipass delete --purge ${VM_NAME}`)
-      console.log("✅ Multipass VM cleaned up")
-    } catch (err) {
-      console.warn("⚠ Failed to cleanup Multipass VM", err)
-    }
-  }
-  run(cmd: string) {
-    console.log(`\n▶ ${cmd}`)
-    execSync(cmd, { stdio: "inherit" })
-  }
+  //   protected ensureMultipassVM() {
+  //     try {
+  //       execSync(`multipass info snap-builder`, { stdio: "ignore" })
+  //       console.log("✅ Multipass VM exists")
+  //     } catch {
+  //       execSync(`multipass launch --name snap-builder --cpus 4 --memory 8G --disk 20G`, { stdio: "inherit" })
+  //     }
+  //   }
+  //   protected cleanupMultipass() {
+  //     try {
+  //       run(`multipass delete --purge ${VM_NAME}`)
+  //       console.log("✅ Multipass VM cleaned up")
+  //     } catch (err) {
+  //       console.warn("⚠ Failed to cleanup Multipass VM", err)
+  //     }
+  //   }
+  //   run(cmd: string) {
+  //     console.log(`\n▶ ${cmd}`)
+  //     execSync(cmd, { stdio: "inherit" })
+  //   }
 }
