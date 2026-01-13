@@ -324,6 +324,25 @@ export function isArrayEqualRegardlessOfSort(a: Array<string>, b: Array<string>)
   return a.length === b.length && a.every((value, index) => value === b[index])
 }
 
+export function stripUndefinedRecursively(value: any): any {
+  if (Array.isArray(value)) {
+    return value.map(stripUndefinedRecursively).filter(v => v !== undefined)
+  }
+
+  if (value && typeof value === "object") {
+    const result: Record<string, any> = {}
+    for (const key of Object.keys(value)) {
+      const v = value[key]
+      if (v !== undefined) {
+        result[key] = stripUndefinedRecursively(v)
+      }
+    }
+    return result
+  }
+
+  return value
+}
+
 export function replaceDefault(inList: Array<string> | Nullish, defaultList: Array<string>): Array<string> {
   if (inList == null || (inList.length === 1 && inList[0] === "default")) {
     return defaultList

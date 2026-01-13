@@ -1,4 +1,15 @@
-import { replaceDefault as _replaceDefault, Arch, deepAssign, executeAppBuilder, InvalidConfigurationError, isArrayEqualRegardlessOfSort, log, serializeToYaml, toLinuxArchString } from "builder-util"
+import {
+  replaceDefault as _replaceDefault,
+  Arch,
+  deepAssign,
+  executeAppBuilder,
+  InvalidConfigurationError,
+  isArrayEqualRegardlessOfSort,
+  log,
+  serializeToYaml,
+  stripUndefinedRecursively,
+  toLinuxArchString,
+} from "builder-util"
 import { asArray, Nullish, SnapStoreOptions } from "builder-util-runtime"
 import { mkdirSync, outputFile, readdirSync, readFile, statSync } from "fs-extra"
 import { load } from "js-yaml"
@@ -15,12 +26,13 @@ import { execSync } from "child_process"
 import { expandMacro } from "../../util/macroExpander"
 import SnapTarget from "./snap"
 import { Platform, SnapcraftYAML } from "./snapcraft"
+import { SlotDescriptor } from "app-builder-lib/out"
 
 const defaultPlugs = ["desktop", "desktop-legacy", "home", "x11", "wayland", "unity7", "browser-support", "network", "gsettings", "audio-playback", "pulseaudio", "opengl"]
 const VM_NAME = "snap-builder"
 
 export default class SnapTarget24 extends SnapTarget {
-  async createDescriptor(arch: Arch): Promise<any> {
+  createDescriptor(arch: Arch): Promise<any> {
     if (!this.isElectronVersionGreaterOrEqualThan("4.0.0")) {
       if (!this.isElectronVersionGreaterOrEqualThan("2.0.0-beta.1")) {
         throw new InvalidConfigurationError("Electron 2 and higher is required to build Snap")
@@ -36,184 +48,95 @@ export default class SnapTarget24 extends SnapTarget {
     const plugs = this.normalizePlugConfiguration(this.options.plugs)
 
     const plugNames = this.replaceDefault(plugs == null ? null : Object.getOwnPropertyNames(plugs), defaultPlugs)
-
-    const slots = this.normalizePlugConfiguration(this.options.slots)
+    const { app: appSlots, root: rootSlots } = this.convertPlugArrayToObject(options.slots)
     const buildPackages = asArray(options.buildPackages)
     const defaultStagePackages = this.getDefaultStagePackages()
     const stagePackages = this.replaceDefault(options.stagePackages, defaultStagePackages)
 
+    const environment =
+      options.allowNativeWayland === false
+        ? {
+            DISABLE_WAYLAND: "1",
+            ...options.environment,
+          }
+        : options.environment || undefined
+
     const snap: SnapcraftYAML = {
-    name: snapName,
-    version: appInfo.version,
-    summary: options.summary || appInfo.productName,
-    description: appInfo.description,
-base: "core24",
-    grade: options.grade || "stable",
-
-    platforms: {
-      "app": {
-        "build-on": toLinuxArchString(arch, "snap"),
-        "build-for": toLinuxArchString(arch, "snap"),
-      },
-    },
-
-    parts: {
-      app: {
-        "stage-packages": options.stagePackages || ["libnspr4", "libnss3", "libxss1", "libappindicator3-1", "libsecret-1-0"],
-        plugin: "dump",
-        source: "./app",
-      },
-    },
-
-    // Default apps section
-    apps: {
-      [snapName]: {
-        command: `app/${this.packager.executableName}`,
-        extensions: ["gnome"],
-        plugs: plugNames,
-        environment: this.options.allowNativeWayland === false
-          ? {
-              DISABLE_WAYLAND: "1",
-            }
-          : undefined,
-      },
-    },
-
-    // Default plugs section
-    plugs: {
-          "browser-support": {
-            "allow-sandbox": true,
-          },
-        },
-    confinement: options.confinement || "strict",
-
-    parts: {
-      app: {
-        "stage-packages": options.stagePackages || ["libnspr4", "libnss3", "libxss1", "libappindicator3-1", "libsecret-1-0"],
-        plugin: "dump",
-        source: "./app",
-      },
-    },
-  }
-}
-
-    const appDescriptor: any = {
-      command: "command.sh",
-      plugs: plugNames,
-    }
-
-    if (options.grade != null) {
-      snap.grade = options.grade
-    }
-    if (options.confinement != null) {
-      snap.confinement = options.confinement
-    }
-    if (options.appPartStage != null) {
-      snap.parts.app.stage = options.appPartStage
-    }
-    if (options.layout != null) {
-      snap.layout = options.layout
-    }
-    if (slots != null) {
-      appDescriptor.slots = Object.getOwnPropertyNames(slots)
-      for (const slotName of appDescriptor.slots) {
-        const slotOptions = slots[slotName]
-        if (slotOptions == null) {
-          continue
-        }
-        if (!snap.slots) {
-          snap.slots = {}
-        }
-        snap.slots[slotName] = slotOptions
-      }
-    }
-
-    deepAssign(snap, {
+      base: "core24",
       name: snapName,
       version: appInfo.version,
       title: options.title || appInfo.productName,
       summary: options.summary || appInfo.productName,
-      compression: options.compression,
       description: this.helper.getDescription(options),
-      platforms: [toLinuxArchString(arch, "snap")],
-      apps: {
-        [snapName]: appDescriptor,
-      },
-      parts: {
+
+      compression: options.compression || undefined,
+      grade: options.grade || "stable",
+      confinement: options.confinement || "strict",
+      environment: environment,
+
+      assumes: options.assumes ? asArray(options.assumes) : undefined,
+
+      slots: Object.keys(rootSlots).length > 0 ? rootSlots : undefined,
+      platforms: {
         app: {
-          "stage-packages": stagePackages,
+          "build-on": toLinuxArchString(arch, "snap"),
+          "build-for": toLinuxArchString(arch, "snap"),
         },
       },
-    })
 
-    if (options.autoStart) {
-      appDescriptor.autostart = `${snap.name}.desktop`
+      parts: {
+        app: {
+          autostart: options.autoStart ? `${snapName}.desktop` : undefined,
+          "stage-packages": stagePackages.length > 0 ? stagePackages : undefined,
+          "build-packages": buildPackages.length > 0 ? buildPackages : undefined,
+          after: options.after || undefined,
+          plugin: "dump",
+          source: "./app",
+          stage: options.appPartStage || ["user/share/locale"],
+          slots: appSlots.length > 0 ? appSlots : undefined,
+        },
+      },
+
+      layout: options.layout || {
+        "/usr/share/locale": {
+          "bind-file": "usr/share/locale",
+        },
+      },
+      apps: {
+        [snapName]: {
+          command: `app/${this.packager.executableName}`,
+          extensions: ["gnome"],
+          plugs: plugNames,
+        },
+      },
+      plugs: {
+        "browser-support": {
+          "allow-sandbox": true,
+        },
+      },
     }
-
-    if (options.confinement === "classic") {
-      delete appDescriptor.plugs
-      delete snap.plugs
-    } else {
-      const archTriplet = this.archNameToTriplet(arch)
-      const environment: Record<string, string> = {
-        PATH: "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
-        SNAP_DESKTOP_RUNTIME: "$SNAP/gnome-platform",
-        LD_LIBRARY_PATH: [
-          "$SNAP_LIBRARY_PATH",
-          "$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/" + archTriplet + ":$SNAP/usr/lib/" + archTriplet,
-          "$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib",
-          "$SNAP/lib/" + archTriplet + ":$SNAP/usr/lib/" + archTriplet,
-        ].join(":"),
-        ...options.environment,
-      }
-      // Determine whether Wayland should be disabled based on:
-      // - Electron version (<38 historically had Wayland disabled)
-      // - Explicit allowNativeWayland override.
-      // https://github.com/electron-userland/electron-builder/issues/9320
-      const allow = options.allowNativeWayland
-      const isOldElectron = !this.isElectronVersionGreaterOrEqualThan("38.0.0")
-      if (
-        (allow == null && isOldElectron) || // No explicit option -> use legacy behavior for old Electron
-        allow === false // Explicitly disallowed
-      ) {
-        environment.DISABLE_WAYLAND = "1"
-      }
-
-      appDescriptor.environment = environment
-
-      if (plugs != null) {
-        for (const plugName of plugNames) {
-          const plugOptions = plugs[plugName]
-          if (plugOptions == null) {
-            continue
-          }
-
-          snap.plugs[plugName] = plugOptions
-        }
-      }
-    }
-
-    if (buildPackages.length > 0) {
-      snap.parts.app["build-packages"] = buildPackages
-    }
-    if (options.after != null) {
-      snap.parts.app.after = options.after
-    }
-
-    if (options.assumes != null) {
-      snap.assumes = asArray(options.assumes)
-    }
-
-    return snap
+    const cleaned = stripUndefinedRecursively(snap)
+    return cleaned
   }
 
-  protected buildSnap(snap: any, appOutDir: string, stageDir: string, snapArch: string, artifactPath: string): Promise<void> {
-
+  private convertPlugArrayToObject<T extends string | PlugDescriptor | SlotDescriptor>(plugsOrSlots: Array<T> | Nullish): { app: string[]; root: Record<string, T> } {
+    const slots = this.normalizePlugConfiguration(plugsOrSlots)
+    const app = Object.getOwnPropertyNames(slots)
+    const root = Object.entries(slots || {}).reduce<Record<string, any>>((acc, slot) => {
+      if (slot[1] == null) {
+        return acc
+      }
+      acc[slot[0]] = slot[1]
+      return acc
+    }, {})
+    return { app, root }
   }
 
-  protected getDefaultStagePackages() {
-    return ["libnspr4", "libnss3", "libxss1", "libappindicator3-1", "libsecret-1-0"]
-  }
+  protected buildSnap(snap: any, appOutDir: string, stageDir: string, snapArch: string, artifactPath: string): Promise<void> {}
+
+  // protected getDefaultStagePackages() {
+  //   return ["libnspr4", "libnss3", "libxss1", "libappindicator3-1", "libsecret-1-0"]
+  // }
   // protected buildSnapCore24(options: {
   //   SNAP_DIR: string
   //   DIST_DIR: string
