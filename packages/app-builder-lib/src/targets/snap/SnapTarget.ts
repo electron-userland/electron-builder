@@ -19,8 +19,6 @@ export abstract class SnapCore<T extends SnapBaseOptions> {
 
   abstract createDescriptor(arch: Arch): Promise<any>
   abstract buildSnap(params: { snap: any; appOutDir: string; stageDir: string; snapArch: Arch; artifactPath: string }): Promise<void>
-
-
 }
 
 export default class SnapTarget extends Target {

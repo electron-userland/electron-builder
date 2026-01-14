@@ -134,9 +134,9 @@ test.ifDevOrLinuxCi("plugs option", async ({ expect }) => {
           core: "core22",
           core22: {
             plugs: p,
-          // otherwise "parts" will be removed
-          useTemplateApp: false,
-          }
+            // otherwise "parts" will be removed
+            useTemplateApp: false,
+          },
         },
       },
       effectiveOptionComputed: async ({ snap, args }) => {

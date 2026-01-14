@@ -32,7 +32,6 @@ export interface SnapOptionsMapping {
 const defaultStagePackages = ["libnspr4", "libnss3", "libxss1", "libappindicator3-1", "libsecret-1-0"]
 
 export class SnapCore24 extends SnapCore<SnapOptions24> {
-
   defaultPlugs = ["desktop", "desktop-legacy", "home", "x11", "wayland", "unity7", "browser-support", "network", "gsettings", "audio-playback", "pulseaudio", "opengl"]
 
   async buildSnap(params: { snap: any; appOutDir: string; stageDir: string; snapArch: Arch; artifactPath: string }): Promise<void> {
@@ -60,8 +59,8 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
     return snap
   }
 
-  async mapSnapOptionsToSnapcraftYAML({ arch, command }: { arch: Arch;   command: string }): Promise<SnapcraftYAML> {
-        const appInfo = this.packager.appInfo
+  async mapSnapOptionsToSnapcraftYAML({ arch, command }: { arch: Arch; command: string }): Promise<SnapcraftYAML> {
+    const appInfo = this.packager.appInfo
     const appName = this.packager.executableName.toLowerCase()
     const options = this.options
 

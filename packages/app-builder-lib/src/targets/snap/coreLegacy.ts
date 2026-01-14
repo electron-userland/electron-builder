@@ -1,13 +1,5 @@
 import { getTemplatePath } from "app-builder-lib/src/util/pathManager"
-import {
-  replaceDefault as _replaceDefault,
-  Arch,
-  deepAssign,
-  executeAppBuilder,
-  isArrayEqualRegardlessOfSort,
-  serializeToYaml,
-  toLinuxArchString
-} from "builder-util"
+import { replaceDefault as _replaceDefault, Arch, deepAssign, executeAppBuilder, isArrayEqualRegardlessOfSort, serializeToYaml, toLinuxArchString } from "builder-util"
 import { asArray, Nullish } from "builder-util-runtime/src"
 import { outputFile, readFile } from "fs-extra"
 import { load } from "js-yaml"
@@ -246,7 +238,6 @@ export class SnapCoreLegacy extends SnapCore<SnapOptionsLegacy> {
 
     await executeAppBuilder(args)
   }
-
 
   private normalizePlugConfiguration(raw: Array<string | PlugDescriptor> | PlugDescriptor | Nullish): Record<string, Record<string, any> | null> | null {
     if (raw == null) {
