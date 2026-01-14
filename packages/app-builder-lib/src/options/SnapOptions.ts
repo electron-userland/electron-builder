@@ -7,14 +7,13 @@ export interface SnapOptions extends TargetSpecificOptions {
    * @default core24
    */
   readonly core: "core18" | "core20" | "core22" | "core24"
-  readonly core18?: SnapOptionsLegacy<"core18"> | null
-  readonly core20?: SnapOptionsLegacy<"core20"> | null
-  readonly core22?: SnapOptionsLegacy<"core22"> | null
+  readonly core18?: SnapOptionsLegacy | null
+  readonly core20?: SnapOptionsLegacy | null
+  readonly core22?: SnapOptionsLegacy | null
   readonly core24?: SnapOptions24 | null
 }
 
-export interface SnapOptionsLegacy<T extends "core18" | "core20" | "core22"> extends SnapBaseOptions {
-  base: T
+export interface SnapOptionsLegacy extends SnapBaseOptions {
   /**
    * Whether to use template snap. Defaults to `true` if `stagePackages` is not specified.
    */

@@ -45,18 +45,21 @@ test.ifDevOrLinuxCi("default stagePackages", async ({ expect }) => {
         },
         productName: "Sep",
         snap: {
-          stagePackages: p,
-          plugs: p,
-          confinement: "classic",
-          // otherwise "parts" will be removed
-          useTemplateApp: false,
+          core: "core22",
+          core22: {
+            stagePackages: p,
+            plugs: p,
+            confinement: "classic",
+            // otherwise "parts" will be removed
+            useTemplateApp: false,
+          },
         },
       },
       effectiveOptionComputed: async ({ snap, args }) => {
         delete snap.parts.app.source
         expect(snap).toMatchSnapshot()
         expect(args).not.toContain("--exclude")
-        return true
+        return Promise.resolve(true)
       },
     })
   }
@@ -71,7 +74,10 @@ test.ifDevOrLinuxCi("classic confinement", ({ expect }) =>
       },
       productName: "Snap Electron App (classic confinement)",
       snap: {
-        confinement: "classic",
+        core: "core22",
+        core22: {
+          confinement: "classic",
+        },
       },
     },
   })
@@ -86,15 +92,18 @@ test.ifDevOrLinuxCi("buildPackages", async ({ expect }) => {
       },
       productName: "Sep",
       snap: {
-        buildPackages: ["foo1", "default", "foo2"],
-        // otherwise "parts" will be removed
-        useTemplateApp: false,
+        core: "core22",
+        core22: {
+          buildPackages: ["foo1", "default", "foo2"],
+          // otherwise "parts" will be removed
+          useTemplateApp: false,
+        },
       },
     },
     effectiveOptionComputed: async ({ snap }) => {
       delete snap.parts.app.source
       expect(snap).toMatchSnapshot()
-      return true
+      return Promise.resolve(true)
     },
   })
 })
@@ -131,7 +140,7 @@ test.ifDevOrLinuxCi("plugs option", async ({ expect }) => {
         delete snap.parts.app.source
         expect(snap).toMatchSnapshot()
         expect(args).not.toContain("--exclude")
-        return true
+        return Promise.resolve(true)
       },
     })
   }
@@ -158,12 +167,15 @@ test.ifDevOrLinuxCi("slots option", async ({ expect }) => {
         },
         productName: "Sep",
         snap: {
-          slots,
+          core: "core22",
+          core22: {
+            slots,
+          },
         },
       },
       effectiveOptionComputed: async ({ snap, args }) => {
         expect(snap).toMatchSnapshot()
-        return true
+        return Promise.resolve(true)
       },
     })
   }
@@ -178,14 +190,17 @@ test.ifDevOrLinuxCi("custom env", ({ expect }) =>
       },
       productName: "Sep",
       snap: {
-        environment: {
-          FOO: "bar",
+        core: "core22",
+        core22: {
+          environment: {
+            FOO: "bar",
+          },
         },
       },
     },
     effectiveOptionComputed: async ({ snap }) => {
       expect(snap).toMatchSnapshot()
-      return true
+      return Promise.resolve(true)
     },
   })
 )
@@ -199,12 +214,15 @@ test.ifDevOrLinuxCi("custom after, no desktop", ({ expect }) =>
       },
       productName: "Sep",
       snap: {
-        after: ["bar"],
+        core: "core22",
+        core22: {
+          after: ["bar"],
+        },
       },
     },
     effectiveOptionComputed: async ({ snap }) => {
       expect(snap).toMatchSnapshot()
-      return true
+      return Promise.resolve(true)
     },
   })
 )
@@ -218,13 +236,16 @@ test.ifDevOrLinuxCi("no desktop plugs", ({ expect }) =>
       },
       productName: "Sep",
       snap: {
-        plugs: ["foo", "bar"],
+        core: "core22",
+        core22: {
+          plugs: ["foo", "bar"],
+        },
       },
     },
     effectiveOptionComputed: async ({ snap, args }) => {
       expect(snap).toMatchSnapshot()
       expect(args).toContain("--exclude")
-      return true
+      return Promise.resolve(true)
     },
   })
 )
@@ -238,13 +259,16 @@ test.ifDevOrLinuxCi("auto start", ({ expect }) =>
       },
       productName: "Sep",
       snap: {
-        autoStart: true,
+        core: "core22",
+        core22: {
+          autoStart: true,
+        },
       },
     },
     effectiveOptionComputed: async ({ snap, args }) => {
       expect(snap).toMatchSnapshot()
       expect(snap.apps.sep.autostart).toEqual("sep.desktop")
-      return true
+      return Promise.resolve(true)
     },
   })
 )
@@ -260,7 +284,7 @@ test.ifDevOrLinuxCi("default compression", ({ expect }) =>
     },
     effectiveOptionComputed: async ({ snap, args }) => {
       expect(snap).toMatchSnapshot()
-      return true
+      return Promise.resolve(true)
     },
   })
 )
@@ -274,15 +298,18 @@ test.ifDevOrLinuxCi("compression option", ({ expect }) =>
       },
       productName: "Sep",
       snap: {
-        useTemplateApp: false,
-        compression: "xz",
+        core: "core22",
+        core22: {
+          useTemplateApp: false,
+          compression: "xz",
+        },
       },
     },
     effectiveOptionComputed: async ({ snap, args }) => {
       expect(snap).toMatchSnapshot()
       expect(snap.compression).toBe("xz")
       expect(args).toEqual(expect.arrayContaining(["--compression", "xz"]))
-      return true
+      return Promise.resolve(true)
     },
   })
 )
@@ -296,7 +323,7 @@ test.ifDevOrLinuxCi("default base", ({ expect }) =>
     effectiveOptionComputed: async ({ snap }) => {
       expect(snap).toMatchSnapshot()
       expect(snap.base).toBe("core20")
-      return true
+      return Promise.resolve(true)
     },
   })
 )
@@ -307,13 +334,16 @@ test.ifDevOrLinuxCi("base option", ({ expect }) =>
     config: {
       productName: "Sep",
       snap: {
-        base: "core22",
+        core: "core22",
+        core22: {
+          base: "core22",
+        },
       },
     },
     effectiveOptionComputed: async ({ snap }) => {
       expect(snap).toMatchSnapshot()
       expect(snap.base).toBe("core22")
-      return true
+      return Promise.resolve(true)
     },
   })
 )
@@ -323,8 +353,11 @@ test.ifDevOrLinuxCi("use template app", ({ expect }) =>
     targets: snapTarget,
     config: {
       snap: {
-        useTemplateApp: true,
-        compression: "xz",
+        core: "core22",
+        core22: {
+          useTemplateApp: true,
+          compression: "xz",
+        },
       },
     },
     effectiveOptionComputed: async ({ snap, args }) => {
@@ -338,7 +371,7 @@ test.ifDevOrLinuxCi("use template app", ({ expect }) =>
       expect(snap["source-code"]).toBeUndefined()
       expect(snap.website).toBeUndefined()
       expect(args).toEqual(expect.arrayContaining(["--exclude", "chrome-sandbox", "--compression", "xz"]))
-      return true
+      return Promise.resolve(true)
     },
   })
 )

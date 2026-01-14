@@ -12,7 +12,7 @@ test("snap full", ({ expect }) =>
       },
       productName: "Snap Electron App (full build)",
       snap: {
-        useTemplateApp: false,
+        core: "core24",
       },
       electronFuses: {
         runAsNode: true,
@@ -37,7 +37,7 @@ test("snap full (armhf)", ({ expect }) =>
       },
       productName: "Snap Electron App (full build)",
       snap: {
-        useTemplateApp: false,
+        core: "core24",
       },
     },
   }))
