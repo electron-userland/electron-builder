@@ -36,9 +36,6 @@ interface BuildSnapOptions {
 export async function buildSnap(options: BuildSnapOptions): Promise<string> {
   const { snapcraftConfig, remoteBuild, outputFileName, appOutDir, stageDir, useLXD = false, useMultipass = false, useDestructiveMode = false, env = {} } = options
 
-  // // Ensure output directory exists
-  // await mkdir(outputDir, { recursive: true })
-
   // Create snap directory structure
   const snapDir = path.join(stageDir, "snap")
   await mkdir(snapDir, { recursive: true })

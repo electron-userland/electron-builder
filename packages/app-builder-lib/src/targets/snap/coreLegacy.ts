@@ -12,7 +12,7 @@ import {
 import { asArray, Nullish } from "builder-util-runtime/src"
 import * as path from "path"
 import { PlugDescriptor, SnapBaseOptions, SnapOptions24, SnapOptionsLegacy } from "../../options/SnapOptions"
-import { SnapCore } from "./snap"
+import { SnapCore } from "./SnapTarget"
 import { outputFile, readFile } from "fs-extra"
 import { load } from "js-yaml"
 import { getTemplatePath } from "app-builder-lib/src/util/pathManager"

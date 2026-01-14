@@ -6,7 +6,7 @@ import * as semver from "semver"
 import { LinuxPackager } from "../linuxPackager"
 import { LinuxTargetSpecificOptions } from "../options/linuxOptions"
 import { IconInfo } from "../platformPackager"
-import { SnapCore } from "./snap/snap"
+import { SnapCore } from "./snap/SnapTarget"
 import { getElectronVersion } from "../electron/electronVersion"
 import { SnapBaseOptions } from "../options/SnapOptions"
 

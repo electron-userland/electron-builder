@@ -3,7 +3,7 @@ import { Arch, executeAppBuilder, removeNullish, toLinuxArchString } from "build
 import { readdir } from "fs-extra"
 import * as path from "path"
 import { PlugDescriptor, SlotDescriptor, SnapBaseOptions, SnapOptions24 } from "../../options/SnapOptions"
-import { SnapCore } from "./snap"
+import { SnapCore } from "./SnapTarget"
 import { App, Part, SnapcraftYAML } from "./snapcraft"
 import { buildSnap } from "./snapcraftBuilder"
 
