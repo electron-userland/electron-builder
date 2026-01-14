@@ -126,11 +126,7 @@ async function executeWithRetry<T>(
     retryableErrors?: string[]
   } = {}
 ): Promise<T> {
-  const {
-    maxRetries = 3,
-    retryDelay = 5000,
-    retryableErrors = ["network timeout", "connection refused", "temporary failure", "snap store error"],
-  } = options
+  const { maxRetries = 3, retryDelay = 5000, retryableErrors = ["network timeout", "connection refused", "temporary failure", "snap store error"] } = options
 
   let lastError: Error | undefined
 
@@ -324,8 +320,7 @@ async function ensureRemoteBuildAuthentication(remoteBuild: RemoteBuildOptions, 
     } catch (error: any) {
       log.error({ error: error.message, file: remoteBuild.credentialsFile }, "failed to read credentials file")
       throw new Error(
-        `Failed to read credentials file '${remoteBuild.credentialsFile}': ${error.message}\n` +
-          `Generate credentials with: snapcraft export-login ${remoteBuild.credentialsFile}`
+        `Failed to read credentials file '${remoteBuild.credentialsFile}': ${error.message}\n` + `Generate credentials with: snapcraft export-login ${remoteBuild.credentialsFile}`
       )
     }
   }

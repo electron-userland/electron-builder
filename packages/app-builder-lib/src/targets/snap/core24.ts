@@ -1,4 +1,4 @@
-import { Arch, archFromString, removeNullish, toLinuxArchString } from "builder-util"
+import { Arch, archFromString, log, removeNullish, toLinuxArchString } from "builder-util"
 import { readdir } from "fs-extra"
 import * as path from "path"
 import { PlugDescriptor, SlotDescriptor, SnapOptions24 } from "../../options/SnapOptions"
@@ -35,7 +35,7 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
   defaultPlugs = ["desktop", "desktop-legacy", "home", "x11", "wayland", "unity7", "browser-support", "network", "gsettings", "audio-playback", "pulseaudio", "opengl"]
 
   async buildSnap(params: { snap: any; appOutDir: string; stageDir: string; snapArch: Arch; artifactPath: string }): Promise<void> {
-    const { snap: snapcraftConfig, appOutDir, stageDir, snapArch, artifactPath } = params
+    const { snap: snapcraftConfig, appOutDir, stageDir, artifactPath } = params
     await buildSnap({
       snapcraftConfig,
       appOutDir,
@@ -89,9 +89,7 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
 
     // Process hooks if configured
     const hooksConfig = options.hooks
-    const hooks = hooksConfig
-      ? await this.processHooks(hooksConfig)
-      : undefined
+    const hooks = hooksConfig ? await this.processHooks(hooksConfig) : undefined
 
     // Build the snapcraft configuration
     const snapcraft: SnapcraftYAML = {
@@ -191,9 +189,9 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
       }
 
       return hooks
-    } catch (error) {
-      // If hooks directory doesn't exist or can't be read, return undefined
-      return undefined
+    } catch (e: any) {
+      log.error({ message: e.message }, "error processing Snap hooks directory")
+      throw e
     }
   }
 
@@ -234,9 +232,7 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
   /**
    * Process plugs or slots into root-level definitions and app-level references
    */
-  processPlugOrSlots(
-    items: Array<string | SlotDescriptor | PlugDescriptor> | SlotDescriptor | PlugDescriptor | null
-  ): {
+  processPlugOrSlots(items: Array<string | SlotDescriptor | PlugDescriptor> | SlotDescriptor | PlugDescriptor | null): {
     root: Record<string, unknown>
     app: string[]
   } {
@@ -278,10 +274,7 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
   /**
    * Expand "default" keyword in arrays of plugs/slots
    */
-  private expandDefaultsInArray(
-    items: Array<string | SlotDescriptor | PlugDescriptor>,
-    defaults: string[]
-  ): Array<string | SlotDescriptor | PlugDescriptor> {
+  private expandDefaultsInArray(items: Array<string | SlotDescriptor | PlugDescriptor>, defaults: string[]): Array<string | SlotDescriptor | PlugDescriptor> {
     const result: Array<string | SlotDescriptor | PlugDescriptor> = []
     let hasDefault = false
 
@@ -300,115 +293,3 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
     return result.length > 0 ? result : defaults
   }
 }
-
-/**
- * Builder pattern for creating snapcraft configurations programmatically
- */
-export class SnapcraftConfigBuilder {
-  private config: Partial<SnapcraftYAML>
-
-  constructor(name: string, base: SnapcraftYAML["base"] = "core24") {
-    this.config = {
-      name,
-      base,
-      confinement: "strict",
-      parts: {},
-    }
-  }
-
-  withConfinement(confinement: SnapcraftYAML["confinement"]): this {
-    this.config.confinement = confinement
-    return this
-  }
-
-  withMetadata(metadata: {
-    version?: string
-    summary?: string
-    description?: string
-    title?: string
-    grade?: "stable" | "devel"
-    license?: string
-  }): this {
-    Object.assign(this.config, metadata)
-    return this
-  }
-
-  addPart(name: string, part: Part): this {
-    if (!this.config.parts) {
-      this.config.parts = {}
-    }
-    this.config.parts[name] = part
-    return this
-  }
-
-  addApp(name: string, app: App): this {
-    if (!this.config.apps) {
-      this.config.apps = {}
-    }
-    this.config.apps[name] = app
-    return this
-  }
-
-  withEnvironment(env: Record<string, string | null>): this {
-    this.config.environment = { ...this.config.environment, ...env }
-    return this
-  }
-
-  withPlugs(plugs: Record<string, unknown>): this {
-    this.config.plugs = { ...this.config.plugs, ...plugs }
-    return this
-  }
-
-  withSlots(slots: Record<string, unknown>): this {
-    this.config.slots = { ...this.config.slots, ...slots }
-    return this
-  }
-
-  withPlatform(arch: string, buildOn?: string | string[], buildFor?: string | string[]): this {
-    if (!this.config.platforms) {
-      this.config.platforms = {}
-    }
-    this.config.platforms[arch] = {
-      "build-on": buildOn || arch,
-      "build-for": buildFor || arch,
-    }
-    return this
-  }
-
-  build(): SnapcraftYAML {
-    // Basic validation
-    if (!this.config.name || !this.config.base || !this.config.confinement) {
-      throw new Error("Missing required fields: name, base, or confinement")
-    }
-    if (!this.config.parts || Object.keys(this.config.parts).length === 0) {
-      throw new Error("At least one part is required")
-    }
-
-    return removeNullish(this.config as SnapcraftYAML)
-  }
-}
-
-/**
- * Example usage:
- *
- * const config = new SnapcraftConfigBuilder("my-app")
- *   .withConfinement("strict")
- *   .withMetadata({
- *     version: "1.0.0",
- *     summary: "My awesome application",
- *     description: "A longer description of my app",
- *     grade: "stable"
- *   })
- *   .addPart("my-app", {
- *     plugin: "dump",
- *     source: "app",
- *     "stage-packages": ["libfoo", "libbar"]
- *   })
- *   .addApp("my-app", {
- *     command: "desktop-launch $SNAP/my-app",
- *     extensions: ["gnome"],
- *     plugs: ["home", "network"]
- *   })
- *   .withPlatform("amd64")
- *   .build()
- */
