@@ -1,6 +1,6 @@
-import { getTemplatePath } from "app-builder-lib/src/util/pathManager"
+import { getTemplatePath } from "../../util/pathManager"
 import { replaceDefault as _replaceDefault, Arch, deepAssign, executeAppBuilder, isArrayEqualRegardlessOfSort, serializeToYaml, toLinuxArchString } from "builder-util"
-import { asArray, Nullish } from "builder-util-runtime/src"
+import { asArray, Nullish } from "builder-util-runtime"
 import { outputFile, readFile } from "fs-extra"
 import { load } from "js-yaml"
 import * as path from "path"
