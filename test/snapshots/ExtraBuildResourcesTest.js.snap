@@ -57,7 +57,6 @@ exports[`electronDist as callback function for path to locally unzipped 2`] = `
 [
   "LICENSE.electron.txt",
   "LICENSES.chromium.html",
-  "Test App ßW",
   "chrome-sandbox",
   "chrome_100_percent.pak",
   "chrome_200_percent.pak",
@@ -72,6 +71,7 @@ exports[`electronDist as callback function for path to locally unzipped 2`] = `
   "resources",
   "resources.pak",
   "snapshot_blob.bin",
+  "testapp",
   "v8_context_snapshot.bin",
   "version",
   "vk_swiftshader_icd.json",
@@ -94,7 +94,6 @@ exports[`electronDist as standard path to node_modules electron 2`] = `
 [
   "LICENSE.electron.txt",
   "LICENSES.chromium.html",
-  "Test App ßW",
   "chrome-sandbox",
   "chrome_100_percent.pak",
   "chrome_200_percent.pak",
@@ -109,6 +108,7 @@ exports[`electronDist as standard path to node_modules electron 2`] = `
   "resources",
   "resources.pak",
   "snapshot_blob.bin",
+  "testapp",
   "v8_context_snapshot.bin",
   "version",
   "vk_swiftshader_icd.json",
