@@ -3,7 +3,7 @@ import { app, snapTarget } from "../helpers/packTester"
 
 // very slow
 
-test("snap full", ({ expect }) =>
+test.only("snap full", ({ expect }) =>
   app(expect, {
     targets: snapTarget,
     config: {

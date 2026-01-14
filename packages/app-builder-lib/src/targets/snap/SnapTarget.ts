@@ -45,7 +45,7 @@ export default class SnapTarget extends Target {
       arch,
     })
 
-    const core = await this.helper.getSnapCore()
+    const core = this.helper.getSnapCore()
 
     const snap = await core.createDescriptor(arch)
 
