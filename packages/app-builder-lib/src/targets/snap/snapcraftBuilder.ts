@@ -56,7 +56,39 @@ class SnapBuildProgress {
 }
 
 /**
- * Validates snapcraft.yaml configuration before building
+ * Validates snapcraft.yaml using snapcraft's built-in validation
+ * This runs snapcraft expand-extensions which validates without building
+ */
+async function validateSnapcraftYamlWithCLI(workDir: string): Promise<void> {
+  try {
+    log.debug(null, "validating snapcraft.yaml with snapcraft expand-extensions")
+
+    // Run expand-extensions to validate the YAML
+    // This checks syntax, required fields, and expands extensions
+    const { stdout, stderr } = await execAsync("snapcraft expand-extensions", {
+      cwd: workDir,
+      timeout: 30000, // 30 second timeout
+    })
+
+    log.debug(null, "snapcraft.yaml validation passed")
+
+    // Optionally log the expanded YAML for debugging
+    if (process.env.DEBUG_SNAPCRAFT) {
+      log.debug({ expandedYaml: stdout }, "expanded snapcraft.yaml")
+    }
+  } catch (error: any) {
+    log.error({ error: error.message, stderr: error.stderr }, "snapcraft.yaml validation failed")
+    throw new Error(
+      `Invalid snapcraft.yaml: ${error.message}\n` +
+        `Snapcraft output: ${error.stderr || error.stdout || "No output"}\n` +
+        `Run 'snapcraft expand-extensions' in ${workDir} for more details`
+    )
+  }
+}
+
+/**
+ * Validates snapcraft.yaml configuration with basic client-side checks
+ * This is a fast pre-check before running the full CLI validation
  */
 function validateSnapcraftConfig(config: SnapcraftYAML): void {
   const errors: string[] = []
@@ -191,7 +223,7 @@ export async function buildSnap(options: BuildSnapOptions): Promise<string> {
   const { snapcraftConfig, remoteBuild, outputFileName, appOutDir, stageDir, useLXD = false, useMultipass = false, useDestructiveMode = false, env = {} } = options
 
   try {
-    // Step 1: Validate configuration
+    // Step 1: Validate configuration (client-side checks)
     progress.logStage("preparing", "validating snapcraft configuration", 10)
     validateSnapcraftConfig(snapcraftConfig)
 
@@ -210,6 +242,10 @@ export async function buildSnap(options: BuildSnapOptions): Promise<string> {
     })
     await writeFile(snapcraftYamlPath, yamlContent, "utf8")
     log.debug(snapcraftConfig, "generated snapcraft.yaml")
+
+    // Step 3.5: Validate with snapcraft CLI (catches issues before VM boots)
+    progress.logStage("preparing", "validating with snapcraft CLI", 35)
+    await validateSnapcraftYamlWithCLI(stageDir)
 
     // Step 4: Copy source files to output directory if different
     if (path.resolve(stageDir) !== path.resolve(appOutDir)) {
