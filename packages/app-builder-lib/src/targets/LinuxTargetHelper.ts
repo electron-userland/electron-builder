@@ -1,10 +1,14 @@
-import { asArray, exists, isEmptyOrSpaces, log } from "builder-util"
+import { asArray, exists, InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
 import { outputFile } from "fs-extra"
 import { Lazy } from "lazy-val"
 import { join } from "path"
+import * as semver from "semver"
 import { LinuxPackager } from "../linuxPackager"
 import { LinuxTargetSpecificOptions } from "../options/linuxOptions"
 import { IconInfo } from "../platformPackager"
+import { SnapCore } from "./snap/snap"
+import { getElectronVersion } from "../electron/electronVersion"
+import { SnapBaseOptions } from "../options/SnapOptions"
 
 export const installPrefix = "/opt"
 
@@ -23,6 +27,41 @@ export class LinuxTargetHelper {
 
   get mimeTypeFiles(): Promise<string | null> {
     return this.mimeTypeFilesPromise.value
+  }
+
+  async getSnapCore(): Promise<SnapCore<SnapBaseOptions>> {
+    const snap = this.packager.config.snap!
+    const core = snap.core || "core18"
+    const SnapCoreLegacy = import("./snap/coreLegacy")
+    const SnapCore24 = import("./snap/core24")
+    switch (core) {
+      case "core18":
+      case "core20":
+      case "core22":
+        if (!this.isElectronVersionGreaterOrEqualThan("4.0.0")) {
+          if (!this.isElectronVersionGreaterOrEqualThan("2.0.0-beta.1")) {
+            throw new InvalidConfigurationError("Electron 2 and higher is required to build Snap with core18/core20/core22")
+          }
+          log.warn("Electron 4 and higher is highly recommended for Snap with core18/core20/core22")
+        }
+        return new (await SnapCoreLegacy).SnapCoreLegacy(this.packager, (snap as any)[core])
+      case "core24":
+        if (!this.isElectronVersionGreaterOrEqualThan("28.0.0")) {
+          if (!this.isElectronVersionGreaterOrEqualThan("25.0.0")) {
+            throw new InvalidConfigurationError("Electron 25 and higher is required to build Snap with core24")
+          }
+          log.warn("Electron 28 and higher is highly recommended for Snap with core24")
+        }
+        return new (await SnapCore24).SnapCore24(this.packager, snap.core24!)
+      default:
+        break
+    }
+    throw new Error(`Unsupported snap core: ${core}`)
+  }
+
+  protected isElectronVersionGreaterOrEqualThan(version: string) {
+    return true
+    // return semver.gte(await getElectronVersion(this.packager), version)
   }
 
   private async computeMimeTypeFiles(): Promise<string | null> {

@@ -1,7 +1,35 @@
 import { TargetSpecificOptions } from "../core"
 import { CommonLinuxOptions } from "./linuxOptions"
 
-export interface SnapOptions extends CommonLinuxOptions, TargetSpecificOptions {
+export interface SnapOptions extends  TargetSpecificOptions {
+  /**
+   * A snap of type base to be used as the execution environment for this snap. Examples: `core`, `core18`, `core20`, `core22`, `core24`.
+   * @default core24
+   */
+  readonly core: "core18" | "core20" | "core22" | "core24"
+  readonly core18?: SnapOptionsLegacy<"core18"> | null
+  readonly core20?: SnapOptionsLegacy<"core20"> | null
+  readonly core22?: SnapOptionsLegacy<"core22"> | null
+  readonly core24?: SnapOptions24 | null
+}
+
+export interface SnapOptionsLegacy<T extends string> extends SnapBaseOptions {
+  base: T
+  /**
+   * Whether to use template snap. Defaults to `true` if `stagePackages` not specified.
+   */
+  readonly useTemplateApp?: boolean
+}
+
+export interface SnapOptions24 extends SnapBaseOptions {
+  base: "core24"
+  /**
+   * The list of debian packages needs to be installed for building this snap.
+   * @default ["gnome"]
+   */
+  readonly extensions?: Array<string> | null
+}
+export interface SnapBaseOptions extends CommonLinuxOptions {
   /**
    * A snap of type base to be used as the execution environment for this snap. Examples: `core`, `core18`, `core20`, `core22`, `core24`. Defaults to `core24`
    */
@@ -34,6 +62,7 @@ export interface SnapOptions extends CommonLinuxOptions, TargetSpecificOptions {
    */
   readonly assumes?: Array<string> | string | null
 
+  /**
   /**
    * The list of debian packages needs to be installed for building this snap.
    */
@@ -104,11 +133,6 @@ export interface SnapOptions extends CommonLinuxOptions, TargetSpecificOptions {
   readonly after?: Array<string> | null
 
   /**
-   * Whether to use template snap. Defaults to `true` if `stagePackages` not specified.
-   */
-  readonly useTemplateApp?: boolean
-
-  /**
    * Whether or not the snap should automatically start on login.
    * @default false
    */
@@ -122,7 +146,7 @@ export interface SnapOptions extends CommonLinuxOptions, TargetSpecificOptions {
   /**
    * Specifies which files from the app part to stage and which to exclude. Individual files, directories, wildcards, globstars, and exclusions are accepted. See [Snapcraft filesets](https://snapcraft.io/docs/snapcraft-filesets) to learn more about the format.
    *
-   * The defaults can be found in [snap.ts](https://github.com/electron-userland/electron-builder/blob/master/packages/app-builder-lib/templates/snap/snapcraft.yaml#L29).
+   * The defaults can be found in [snapcraft.ts](https://github.com/electron-userland/electron-builder/blob/master/packages/app-builder-lib/src/targets/snap/snapcraft.ts).
    */
   readonly appPartStage?: Array<string> | null
 

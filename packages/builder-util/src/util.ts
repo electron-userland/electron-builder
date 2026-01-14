@@ -324,23 +324,25 @@ export function isArrayEqualRegardlessOfSort(a: Array<string>, b: Array<string>)
   return a.length === b.length && a.every((value, index) => value === b[index])
 }
 
-export function stripUndefinedRecursively(value: any): any {
-  if (Array.isArray(value)) {
-    return value.map(stripUndefinedRecursively).filter(v => v !== undefined)
+/**
+ * Recursively removes all undefined and null values from an object
+ */
+export function removeNullish<T>(obj: T): T {
+  if (obj === null || typeof obj !== "object") {
+    return obj
   }
 
-  if (value && typeof value === "object") {
-    const result: Record<string, any> = {}
-    for (const key of Object.keys(value)) {
-      const v = value[key]
-      if (v !== undefined) {
-        result[key] = stripUndefinedRecursively(v)
-      }
+  if (Array.isArray(obj)) {
+    return obj.map(removeNullish) as T
+  }
+
+  const result: Record<string, any> = {}
+  for (const [key, value] of Object.entries(obj)) {
+    if (value != null) {
+      result[key] = removeNullish(value)
     }
-    return result
   }
-
-  return value
+  return result as T
 }
 
 export function replaceDefault(inList: Array<string> | Nullish, defaultList: Array<string>): Array<string> {
