@@ -214,7 +214,7 @@ export default class SnapTarget extends Target {
     const stageDir = await createStageDirPath(this, packager, arch)
     const snapArch = toLinuxArchString(arch, "snap")
 
-    await this.buildSnap(snap, appOutDir, stageDir, snapArch, artifactPath)
+    await this.buildSnap({ snap, appOutDir, stageDir, snapArch, artifactPath })
 
     const publishConfig = this.findSnapPublishConfig(packager.config)
 
@@ -228,7 +228,8 @@ export default class SnapTarget extends Target {
     })
   }
 
-  protected async buildSnap(snap: any, appOutDir: string, stageDir: string, snapArch: string, artifactPath: string) {
+  protected async buildSnap(props: { snap: any; appOutDir: string; stageDir: string; snapArch: string; artifactPath: string }) {
+    const { snap, appOutDir, stageDir, snapArch, artifactPath } = props
     const args = ["snap", "--app", appOutDir, "--stage", stageDir, "--arch", snapArch, "--output", artifactPath, "--executable", this.packager.executableName]
 
     await this.helper.icons
