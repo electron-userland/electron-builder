@@ -31,7 +31,7 @@ export class LinuxTargetHelper {
 
   async getSnapCore(): Promise<SnapCore<SnapBaseOptions>> {
     const snap = this.packager.config.snap!
-    const core = snap.core || "core18"
+    const core = snap.core || "core24"
     const SnapCoreLegacy = import("./snap/coreLegacy")
     const SnapCore24 = import("./snap/core24")
     switch (core) {
@@ -44,7 +44,7 @@ export class LinuxTargetHelper {
           }
           log.warn("Electron 4 and higher is highly recommended for Snap with core18/core20/core22")
         }
-        return new (await SnapCoreLegacy).SnapCoreLegacy(this.packager, (snap as any)[core])
+        return new (await SnapCoreLegacy).SnapCoreLegacy(this.packager, this, (snap as any)[core])
       case "core24":
         if (!this.isElectronVersionGreaterOrEqualThan("28.0.0")) {
           if (!this.isElectronVersionGreaterOrEqualThan("25.0.0")) {
@@ -52,14 +52,14 @@ export class LinuxTargetHelper {
           }
           log.warn("Electron 28 and higher is highly recommended for Snap with core24")
         }
-        return new (await SnapCore24).SnapCore24(this.packager, snap.core24!)
+        return new (await SnapCore24).SnapCore24(this.packager, this, snap.core24!)
       default:
         break
     }
     throw new Error(`Unsupported snap core: ${core}`)
   }
 
-  protected isElectronVersionGreaterOrEqualThan(version: string) {
+  isElectronVersionGreaterOrEqualThan(version: string) {
     return true
     // return semver.gte(await getElectronVersion(this.packager), version)
   }

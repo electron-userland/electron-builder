@@ -1,9 +1,9 @@
 import { TargetSpecificOptions } from "../core"
 import { CommonLinuxOptions } from "./linuxOptions"
 
-export interface SnapOptions extends  TargetSpecificOptions {
+export interface SnapOptions extends TargetSpecificOptions {
   /**
-   * A snap of type base to be used as the execution environment for this snap. Examples: `core`, `core18`, `core20`, `core22`, `core24`.
+   * A snap of type base to be used as the execution environment for this snap. Examples: `core18`, `core20`, `core22`, `core24`.
    * @default core24
    */
   readonly core: "core18" | "core20" | "core22" | "core24"
@@ -13,22 +13,63 @@ export interface SnapOptions extends  TargetSpecificOptions {
   readonly core24?: SnapOptions24 | null
 }
 
-export interface SnapOptionsLegacy<T extends string> extends SnapBaseOptions {
+export interface SnapOptionsLegacy<T extends "core18" | "core20" | "core22"> extends SnapBaseOptions {
   base: T
   /**
-   * Whether to use template snap. Defaults to `true` if `stagePackages` not specified.
+   * Whether to use template snap. Defaults to `true` if `stagePackages` is not specified.
    */
   readonly useTemplateApp?: boolean
 }
 
+export interface RemoteBuildOptions {
+  // Whether to enable remote build. Explicit true/false required.
+  enabled: boolean
+
+  // Your Launchpad ID
+  launchpadUsername?: string
+
+  // Remote build (multi-architecture)
+  // Example - buildFor: ['amd64', 'arm64', 'armhf']
+  buildFor?: string[] // Target architectures
+
+  // Auto-accept public upload
+  acceptPublicUpload?: boolean
+
+  // Remote build with private project
+  privateProject?: string
+
+  // Example: Remote build with credentials file (for CI/CD)
+  sshKeyPath?: string
+  // OR, generate credentials: snapcraft export-login credentials.txt
+  credentialsFile?: string
+
+  // Resume interrupted build
+  recover?: boolean
+
+  // Build timeout in seconds
+  timeout?: number
+
+  strategy?: "disable-fallback" | "force-fallback"
+}
+
 export interface SnapOptions24 extends SnapBaseOptions {
+  /**
+   * Tnap core to be used
+   */
   base: "core24"
   /**
    * The list of debian packages needs to be installed for building this snap.
    * @default ["gnome"]
    */
   readonly extensions?: Array<string> | null
+
+  readonly remoteBuild?: RemoteBuildOptions | null
+
+  readonly useLXD?: boolean | null
+  readonly useMultipass?: boolean | null
+  readonly useDestructiveMode?: boolean | null
 }
+
 export interface SnapBaseOptions extends CommonLinuxOptions {
   /**
    * A snap of type base to be used as the execution environment for this snap. Examples: `core`, `core18`, `core20`, `core22`, `core24`. Defaults to `core24`

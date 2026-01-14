@@ -13,28 +13,14 @@ export abstract class SnapCore<T extends SnapBaseOptions> {
 
   constructor(
     protected readonly packager: LinuxPackager,
+    protected readonly helper: LinuxTargetHelper,
     protected readonly options: T
   ) {}
 
   abstract createDescriptor(arch: Arch): Promise<any>
   abstract buildSnap(params: { snap: any; appOutDir: string; stageDir: string; snapArch: Arch; artifactPath: string }): Promise<void>
 
-  protected archNameToTriplet(arch: Arch): string {
-    switch (arch) {
-      case Arch.x64:
-        return "x86_64-linux-gnu"
-      case Arch.ia32:
-        return "i386-linux-gnu"
-      case Arch.armv7l:
-        // noinspection SpellCheckingInspection
-        return "arm-linux-gnueabihf"
-      case Arch.arm64:
-        return "aarch64-linux-gnu"
 
-      default:
-        throw new Error(`Unsupported arch ${arch}`)
-    }
-  }
 }
 
 export default class SnapTarget extends Target {

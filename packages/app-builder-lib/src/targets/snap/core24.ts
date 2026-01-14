@@ -1,10 +1,11 @@
 import { LinuxPackager } from "app-builder-lib/src/linuxPackager"
-import { Arch, removeNullish, toLinuxArchString } from "builder-util"
+import { Arch, executeAppBuilder, removeNullish, toLinuxArchString } from "builder-util"
 import { readdir } from "fs-extra"
 import * as path from "path"
 import { PlugDescriptor, SlotDescriptor, SnapBaseOptions, SnapOptions24 } from "../../options/SnapOptions"
 import { SnapCore } from "./snap"
 import { App, Part, SnapcraftYAML } from "./snapcraft"
+import { buildSnap } from "./snapcraftBuilder"
 
 // Mapping of SnapOptions to SnapcraftYAML
 export interface SnapOptionsMapping {
@@ -35,18 +36,36 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
 
   defaultPlugs = ["desktop", "desktop-legacy", "home", "x11", "wayland", "unity7", "browser-support", "network", "gsettings", "audio-playback", "pulseaudio", "opengl"]
 
+  async buildSnap(params: { snap: any; appOutDir: string; stageDir: string; snapArch: Arch; artifactPath: string }): Promise<void> {
+    const { snap: snapcraftConfig, appOutDir, stageDir, snapArch, artifactPath } = params
+    await buildSnap({
+      snapcraftConfig,
+      appOutDir,
+      stageDir,
+      outputFileName: path.basename(artifactPath),
+      remoteBuild: this.options.remoteBuild || undefined,
+      useLXD: this.options.useLXD === true,
+      useMultipass: this.options.useMultipass === true,
+      useDestructiveMode: this.options.useDestructiveMode === true,
+      env: {
+        SNAPCRAFT_BUILD_ENVIRONMENT_ARCH: toLinuxArchString(snapArch, "snap"),
+      },
+    })
+  }
+
   async createDescriptor(arch: Arch): Promise<any> {
     const snap = await this.mapSnapOptionsToSnapcraftYAML({
       arch,
-      options: this.options,
-      appName: this.packager.executableName,
       command: `desktop-launch $SNAP/${this.packager.executableName}`,
     })
     return snap
   }
 
-  async mapSnapOptionsToSnapcraftYAML({ arch, options, appName, command }: { arch: Arch; options: SnapBaseOptions; appName: string; command: string }): Promise<SnapcraftYAML> {
-    const appInfo = this.packager.appInfo
+  async mapSnapOptionsToSnapcraftYAML({ arch, command }: { arch: Arch;   command: string }): Promise<SnapcraftYAML> {
+        const appInfo = this.packager.appInfo
+    const appName = this.packager.executableName.toLowerCase()
+    const options = this.options
+
     // Create the app part
     const appPart: Part = {
       plugin: "dump",
@@ -67,7 +86,7 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
 
     // Create the app configuration
     const app: App = {
-      command: command,
+      command: `desktop-launch $SNAP/${this.packager.executableName}`,
       plugs: appPlugs.length ? appPlugs : undefined,
       slots: appSlots.length ? appSlots : undefined,
       autostart: options.autoStart ? `${appName}.desktop` : undefined,
@@ -184,30 +203,4 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
 
     return { root: root, app: app }
   }
-
-  // Example usage:
-  /*
-const snapOptions: SnapOptions = {
-  base: 'core24',
-  confinement: 'strict',
-  summary: 'My awesome app',
-  stagePackages: ['default', 'libfoo'],
-  plugs: [
-    'default',
-    {
-      'browser-sandbox': {
-        interface: 'browser-support',
-        'allow-sandbox': true,
-      },
-    },
-  ],
-  autoStart: true,
-};
-
-const snapcraft = mapSnapOptionsToSnapcraftYAML(
-  snapOptions,
-  'my-app',
-  'desktop-launch $SNAP/my-app'
-);
-*/
 }

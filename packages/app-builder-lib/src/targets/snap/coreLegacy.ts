@@ -11,15 +11,18 @@ import {
 } from "builder-util"
 import { asArray, Nullish } from "builder-util-runtime/src"
 import * as path from "path"
-import { PlugDescriptor, SnapOptions24 } from "../../options/SnapOptions"
+import { PlugDescriptor, SnapBaseOptions, SnapOptions24, SnapOptionsLegacy } from "../../options/SnapOptions"
 import { SnapCore } from "./snap"
+import { outputFile, readFile } from "fs-extra"
+import { load } from "js-yaml"
+import { getTemplatePath } from "app-builder-lib/src/util/pathManager"
 
-export class SnapCoreLegacy extends SnapCore<SnapOptions24> {
-  public isUseTemplateApp = false
+export class SnapCoreLegacy<T extends "core18" | "core20" | "core22" > extends SnapCore<SnapOptionsLegacy<T>> {
+  private isUseTemplateApp = false
 
   defaultPlugs = ["desktop", "desktop-legacy", "home", "x11", "wayland", "unity7", "browser-support", "network", "gsettings", "audio-playback", "pulseaudio", "opengl"]
 
-  protected replaceDefault(inList: Array<string> | Nullish, defaultList: Array<string>) {
+  private replaceDefault(inList: Array<string> | Nullish, defaultList: Array<string>) {
     const result = _replaceDefault(inList, defaultList)
     if (result !== defaultList) {
       this.isUseTemplateApp = false
@@ -28,15 +31,13 @@ export class SnapCoreLegacy extends SnapCore<SnapOptions24> {
   }
 
   async createDescriptor(arch: Arch): Promise<any> {
-
-
     const appInfo = this.packager.appInfo
     const snapName = this.packager.executableName.toLowerCase()
     const options = this.options
 
     const plugs = this.normalizePlugConfiguration(this.options.plugs)
 
-    const plugNames = this.replaceDefault(plugs == null ? null : Object.getOwnPropertyNames(plugs), defaultPlugs)
+    const plugNames = this.replaceDefault(plugs == null ? null : Object.getOwnPropertyNames(plugs), this.defaultPlugs)
 
     const slots = this.normalizePlugConfiguration(this.options.slots)
 
@@ -136,7 +137,7 @@ export class SnapCoreLegacy extends SnapCore<SnapOptions24> {
       // - Explicit allowNativeWayland override.
       // https://github.com/electron-userland/electron-builder/issues/9320
       const allow = options.allowNativeWayland
-      const isOldElectron = !this.isElectronVersionGreaterOrEqualThan("38.0.0")
+      const isOldElectron = !this.helper.isElectronVersionGreaterOrEqualThan("38.0.0")
       if (
         (allow == null && isOldElectron) || // No explicit option -> use legacy behavior for old Electron
         allow === false // Explicitly disallowed
@@ -172,7 +173,7 @@ export class SnapCoreLegacy extends SnapCore<SnapOptions24> {
     return snap
   }
 
-  protected async buildSnap(props: { snap: any; appOutDir: string; stageDir: string; snapArch: Arch; artifactPath: string }) {
+  async buildSnap(props: { snap: any; appOutDir: string; stageDir: string; snapArch: Arch; artifactPath: string }) {
     const { snap, appOutDir, stageDir, snapArch, artifactPath } = props
     const args = [
       "snap",
@@ -205,7 +206,7 @@ export class SnapCoreLegacy extends SnapCore<SnapOptions24> {
     })
 
     const extraAppArgs: Array<string> = this.options.executableArgs ?? []
-    if (this.isElectronVersionGreaterOrEqualThan("5.0.0") && !this.isBrowserSandboxAllowed(snap)) {
+    if (this.helper.isElectronVersionGreaterOrEqualThan("5.0.0") && !this.isBrowserSandboxAllowed(snap)) {
       const noSandboxArg = "--no-sandbox"
       if (!extraAppArgs.includes(noSandboxArg)) {
         extraAppArgs.push(noSandboxArg)
@@ -249,7 +250,7 @@ export class SnapCoreLegacy extends SnapCore<SnapOptions24> {
   }
 
 
-  protected normalizePlugConfiguration(raw: Array<string | PlugDescriptor> | PlugDescriptor | Nullish): Record<string, Record<string, any> | null> | null {
+  private normalizePlugConfiguration(raw: Array<string | PlugDescriptor> | PlugDescriptor | Nullish): Record<string, Record<string, any> | null> | null {
     if (raw == null) {
       return null
     }
@@ -265,7 +266,7 @@ export class SnapCoreLegacy extends SnapCore<SnapOptions24> {
     return result
   }
 
-  protected isBrowserSandboxAllowed(snap: any): boolean {
+  private isBrowserSandboxAllowed(snap: any): boolean {
     if (snap.plugs != null) {
       for (const plugName of Object.keys(snap.plugs)) {
         const plug = snap.plugs[plugName]
@@ -277,8 +278,25 @@ export class SnapCoreLegacy extends SnapCore<SnapOptions24> {
     return false
   }
 
-  protected getDefaultStagePackages(): Array<string> {
+  private getDefaultStagePackages(): Array<string> {
     // libxss1 - was "error while loading shared libraries: libXss.so.1" on Xubuntu 16.04
     return ["libnspr4", "libnss3", "libxss1", "libappindicator3-1", "libsecret-1-0"]
+  }
+
+  private archNameToTriplet(arch: Arch): string {
+    switch (arch) {
+      case Arch.x64:
+        return "x86_64-linux-gnu"
+      case Arch.ia32:
+        return "i386-linux-gnu"
+      case Arch.armv7l:
+        // noinspection SpellCheckingInspection
+        return "arm-linux-gnueabihf"
+      case Arch.arm64:
+        return "aarch64-linux-gnu"
+
+      default:
+        throw new Error(`Unsupported arch ${arch}`)
+    }
   }
 }
