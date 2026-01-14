@@ -61,7 +61,7 @@ test.ifDevOrLinuxCi("extraFiles", ({ expect }) =>
   })
 )
 
-test.ifDevOrLinuxCi("files", ({ expect }) => {
+test.ifDevOrLinuxCi("files", () => {
   return validateConfiguration(
     {
       appId: "com.example.myapp",

@@ -161,7 +161,7 @@ test.ifDevOrLinuxCi("slots option", async ({ expect }) => {
           slots,
         },
       },
-      effectiveOptionComputed: async ({ snap, args }) => {
+      effectiveOptionComputed: async ({ snap }) => {
         expect(snap).toMatchSnapshot()
         return Promise.resolve(true)
       },
@@ -241,7 +241,7 @@ test.ifDevOrLinuxCi("auto start", ({ expect }) =>
         autoStart: true,
       },
     },
-    effectiveOptionComputed: async ({ snap, args }) => {
+    effectiveOptionComputed: async ({ snap }) => {
       expect(snap).toMatchSnapshot()
       expect(snap.apps.sep.autostart).toEqual("sep.desktop")
       return Promise.resolve(true)
@@ -258,7 +258,7 @@ test.ifDevOrLinuxCi("default compression", ({ expect }) =>
       },
       productName: "Sep",
     },
-    effectiveOptionComputed: async ({ snap, args }) => {
+    effectiveOptionComputed: async ({ snap }) => {
       expect(snap).toMatchSnapshot()
       return Promise.resolve(true)
     },

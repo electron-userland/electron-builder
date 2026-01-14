@@ -443,7 +443,7 @@ test.ifWindows("test custom signature verifier", config, async ({ expect }) => {
     repo: "__test_nsis_release",
     publisherName: ["CN=Vladimir Krivosheev, O=Vladimir Krivosheev, L=Grunwald, S=Bayern, C=DE"],
   })
-  updater.verifyUpdateCodeSignature = (publisherName: string[], path: string) => {
+  updater.verifyUpdateCodeSignature = (_publisherName: string[], _path: string) => {
     return Promise.resolve(null)
   }
   await validateDownload(expect, updater)
@@ -457,7 +457,7 @@ test.ifWindows("test custom signature verifier - signing error message", config,
     repo: "__test_nsis_release",
     publisherName: ["CN=Vladimir Krivosheev, O=Vladimir Krivosheev, L=Grunwald, S=Bayern, C=DE"],
   })
-  updater.verifyUpdateCodeSignature = (publisherName: string[], path: string) => {
+  updater.verifyUpdateCodeSignature = (_publisherName: string[], _path: string) => {
     return Promise.resolve("signature verification failed")
   }
   const actualEvents = trackEvents(updater)
