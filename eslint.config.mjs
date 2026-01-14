@@ -20,9 +20,13 @@ export default [{
       "**/out",
       // used for CLI
       "**/main.js",
+      "test/vitest-setup.ts",
       "packages/app-builder-lib/helpers",
       "packages/electron-builder/cli.js",
-      "packages/electron-builder/install-app-deps.js"
+      "packages/electron-builder/install-app-deps.js",
+      "packages/app-builder-lib/src/node-module-collector/hoist.ts", // @yarn/pkg vendor code
+      "test/fixtures/**",
+      "test/src/helpers/**",
     ],
 }, ...compat.extends(
     "eslint:recommended",
@@ -51,6 +55,9 @@ export default [{
         semi: "off",
         "prettier/prettier": "warn",
         "@typescript-eslint/prefer-promise-reject-errors": "off",
+
+        "curly": ["error", "all"],
+        "nonblock-statement-body-position": ["error", "below"],
 
         "@stylistic/member-delimiter-style": ["error", {
             multiline: {

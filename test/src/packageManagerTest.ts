@@ -238,8 +238,7 @@ test("bun workspace --linker=isolated", ({ expect }) =>
       },
       packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
     }
-  )
-)
+  ))
 
 test("bun workspace --linker=isolated - multiple conflicting versions", ({ expect }) =>
   assertPack(
@@ -281,8 +280,7 @@ test("bun workspace --linker=isolated - multiple conflicting versions", ({ expec
       },
       packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
     }
-  )
-)
+  ))
 
 test("bun workspace --linker=hoisted", ({ expect }) =>
   assertPack(
@@ -322,8 +320,7 @@ test("bun workspace --linker=hoisted", ({ expect }) =>
       },
       packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
     }
-  )
-)
+  ))
 
 test("bun workspace --linker=hoisted - multiple conflicting versions", ({ expect }) =>
   assertPack(
