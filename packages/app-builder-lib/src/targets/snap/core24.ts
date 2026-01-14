@@ -1,10 +1,12 @@
-import { Arch, archFromString, log, removeNullish, toLinuxArchString } from "builder-util"
-import { readdir } from "fs-extra"
+import { Arch, archFromString, copyDir, log, removeNullish, toLinuxArchString } from "builder-util"
+import { mkdir, readdir, writeFile } from "fs-extra"
 import * as path from "path"
 import { PlugDescriptor, SlotDescriptor, SnapOptions24 } from "../../options/SnapOptions"
 import { SnapCore } from "./SnapTarget"
 import { App, Part, SnapcraftYAML } from "./snapcraft"
 import { buildSnap } from "./snapcraftBuilder"
+import * as yaml from "js-yaml"
+import { Nullish } from "builder-util-runtime"
 
 // Mapping of SnapOptions to SnapcraftYAML
 export interface SnapOptionsMapping {
@@ -34,13 +36,46 @@ const defaultStagePackages = ["libnspr4", "libnss3", "libxss1", "libappindicator
 export class SnapCore24 extends SnapCore<SnapOptions24> {
   defaultPlugs = ["desktop", "desktop-legacy", "home", "x11", "wayland", "unity7", "browser-support", "network", "gsettings", "audio-playback", "pulseaudio", "opengl"]
 
-  async buildSnap(params: { snap: any; appOutDir: string; stageDir: string; snapArch: Arch; artifactPath: string }): Promise<void> {
+  async buildSnap(params: { snap: SnapcraftYAML; appOutDir: string; stageDir: string; snapArch: Arch; artifactPath: string }): Promise<void> {
     const { snap: snapcraftConfig, appOutDir, stageDir, artifactPath } = params
+
+    const configRelativePath = "snap"
+    const snapDir = path.resolve(stageDir, configRelativePath)
+    const snapcraftYamlPath = path.join(snapDir, "snapcraft.yaml")
+
+    await mkdir(path.resolve(snapDir, "gui"), { recursive: true })
+
+    log.debug({ path: snapcraftYamlPath }, "preparing writing snapcraft.yaml")
+    const yamlContent = yaml.dump(snapcraftConfig, {
+      indent: 2,
+      lineWidth: -1, // No line wrapping
+      noRefs: true,
+    })
+    await writeFile(snapcraftYamlPath, yamlContent, "utf8")
+    log.debug(snapcraftConfig, "generated snapcraft.yaml")
+
+    await this.helper.icons
+    if (this.helper.maxIconPath != null) {
+      snapcraftConfig.icon = `\${SNAP}/${configRelativePath}/icon.png`
+    }
+
+    const desktopFilePath = path.join(stageDir, configRelativePath, `${snapcraftConfig.name}.desktop`)
+    await this.helper.writeDesktopEntry(this.options, this.packager.executableName + " %U", desktopFilePath, {
+      Icon: `\${SNAP}/${configRelativePath}/icon.png`,
+    })
+
+    const appDir = path.resolve(stageDir, "app")
+    if (path.resolve(stageDir) !== path.resolve(appOutDir)) {
+      log.info("preparing", "copying source files")
+      await copyDir(appOutDir, appDir)
+      log.debug({ to: log.filePath(appDir), from: log.filePath(appOutDir) }, "copied app files")
+    }
+
     await buildSnap({
       snapcraftConfig,
-      appOutDir,
+      desktopFile: path.posix.join(configRelativePath, `${snapcraftConfig.name}.desktop`),
+      artifactPath,
       stageDir,
-      outputFileName: path.basename(artifactPath),
       remoteBuild: this.options.remoteBuild || undefined,
       useLXD: this.options.useLXD === true,
       useMultipass: this.options.useMultipass === true,
@@ -63,7 +98,7 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
       source: "app",
       "build-packages": options.buildPackages?.length ? options.buildPackages : undefined,
       "stage-packages": this.processDefaultList(options.stagePackages || ["default"], defaultStagePackages),
-      after: this.processDefaultList(options.after || ["default"], ["desktop-gtk2"]),
+      after: this.processDefaultList(options.after ?? [], []),
       stage: options.appPartStage?.length ? options.appPartStage : undefined,
     }
 
@@ -78,7 +113,7 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
 
     // Create the app configuration
     const app: App = {
-      command: `desktop-launch $SNAP/${this.packager.executableName}`,
+      command: `desktop-launch $SNAP/app/${this.packager.executableName}`,
       plugs: appPlugs.length ? appPlugs : undefined,
       slots: appSlots.length ? appSlots : undefined,
       autostart: options.autoStart ? `${appName}.desktop` : undefined,
@@ -209,7 +244,7 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
   /**
    * Process lists that support "default" keyword
    */
-  processDefaultList(list: Array<string>, defaults: Array<string>): Array<string> | undefined {
+  processDefaultList(list: Array<string>, defaults: Array<string> = []): Array<string> | undefined {
     const result: string[] = []
     let hasDefault = false
 

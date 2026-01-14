@@ -1,9 +1,10 @@
 import { Arch, Platform } from "app-builder-lib"
-import { app, snapTarget } from "../helpers/packTester"
+import { app, EXTENDED_TIMEOUT, snapTarget } from "../helpers/packTester"
 
 // very slow
+const options = { timeout: EXTENDED_TIMEOUT }
 
-test.only("snap full", ({ expect }) =>
+test.only("snap full", options, ({ expect }) =>
   app(expect, {
     targets: snapTarget,
     config: {
@@ -28,7 +29,7 @@ test.only("snap full", ({ expect }) =>
   }))
 
 // very slow
-test("snap full (armhf)", ({ expect }) =>
+test("snap full (armhf)", options, ({ expect }) =>
   app(expect, {
     targets: Platform.LINUX.createTarget("snap", Arch.armv7l),
     config: {

@@ -13,8 +13,8 @@ const execAsync = util.promisify(childProcess.exec)
 interface BuildSnapOptions {
   /** The snapcraft YAML configuration */
   snapcraftConfig: SnapcraftYAML
-  /** The output directory for the template and build artifacts */
-  appOutDir: string
+  /** The .desktop file path */
+  desktopFile: string
   /** The source files to package */
   stageDir: string
   /** Whether to use remote build (builds on Launchpad) */
@@ -27,8 +27,8 @@ interface BuildSnapOptions {
   useDestructiveMode?: boolean
   /** Additional environment variables for the build */
   env?: Record<string, string>
-  /** The output filename for the snap (e.g., 'my-app_1.0.0_amd64.snap') */
-  outputFileName: string
+  /** The snap output path */
+  artifactPath: string
 }
 
 /**
@@ -61,27 +61,19 @@ class SnapBuildProgress {
  */
 async function validateSnapcraftYamlWithCLI(workDir: string): Promise<void> {
   try {
-    log.debug(null, "validating snapcraft.yaml with snapcraft expand-extensions")
-
     // Run expand-extensions to validate the YAML
     // This checks syntax, required fields, and expands extensions
-    const { stdout, stderr } = await execAsync("snapcraft expand-extensions", {
+    const { stdout } = await execAsync("snapcraft expand-extensions", {
       cwd: workDir,
-      timeout: 30000, // 30 second timeout
+      timeout: 30000,
     })
-
-    log.debug(null, "snapcraft.yaml validation passed")
-
-    // Optionally log the expanded YAML for debugging
-    if (process.env.DEBUG_SNAPCRAFT) {
-      log.debug({ expandedYaml: stdout }, "expanded snapcraft.yaml")
-    }
+    log.debug({ expandedYaml: stdout }, "validated extended snapcraft.yaml")
   } catch (error: any) {
     log.error({ error: error.message, stderr: error.stderr }, "snapcraft.yaml validation failed")
     throw new Error(
       `Invalid snapcraft.yaml: ${error.message}\n` +
-        `Snapcraft output: ${error.stderr || error.stdout || "No output"}\n` +
-        `Run 'snapcraft expand-extensions' in ${workDir} for more details`
+      `Snapcraft output: ${error.stderr || error.stdout || "No output"}\n` +
+      `Run 'snapcraft expand-extensions' in ${workDir} for more details`
     )
   }
 }
@@ -179,7 +171,7 @@ async function executeWithRetry<T>(
     }
   }
 
-  throw lastError
+  throw lastError!
 }
 
 /**
@@ -220,44 +212,14 @@ async function cleanupBuildArtifacts(workDir: string, keepArtifacts: boolean = f
  */
 export async function buildSnap(options: BuildSnapOptions): Promise<string> {
   const progress = new SnapBuildProgress()
-  const { snapcraftConfig, remoteBuild, outputFileName, appOutDir, stageDir, useLXD = false, useMultipass = false, useDestructiveMode = false, env = {} } = options
+  const { snapcraftConfig, artifactPath, remoteBuild, stageDir, useLXD = false, useMultipass = false, useDestructiveMode = false, env = {} } = options
 
   try {
-    // Step 1: Validate configuration (client-side checks)
     progress.logStage("preparing", "validating snapcraft configuration", 10)
     validateSnapcraftConfig(snapcraftConfig)
 
-    // Step 2: Create snap directory structure
-    progress.logStage("preparing", "creating snap directory structure", 20)
-    const snapDir = path.join(stageDir, "snap")
-    await mkdir(snapDir, { recursive: true })
-
-    // Step 3: Write snapcraft.yaml
-    progress.logStage("preparing", "writing snapcraft.yaml", 30)
-    const snapcraftYamlPath = path.join(snapDir, "snapcraft.yaml")
-    const yamlContent = yaml.dump(snapcraftConfig, {
-      indent: 2,
-      lineWidth: -1, // No line wrapping
-      noRefs: true,
-    })
-    await writeFile(snapcraftYamlPath, yamlContent, "utf8")
-    log.debug(snapcraftConfig, "generated snapcraft.yaml")
-
-    // Step 3.5: Validate with snapcraft CLI (catches issues before VM boots)
     progress.logStage("preparing", "validating with snapcraft CLI", 35)
     await validateSnapcraftYamlWithCLI(stageDir)
-
-    // Step 4: Copy source files to output directory if different
-    if (path.resolve(stageDir) !== path.resolve(appOutDir)) {
-      progress.logStage("preparing", "copying source files", 40)
-      await copyDir(appOutDir, stageDir, {
-        filter: filePath => {
-          // Exclude snap directory to avoid conflicts
-          return !filePath.includes(path.sep + "snap" + path.sep)
-        },
-      })
-      log.debug({ to: log.filePath(stageDir), from: log.filePath(appOutDir) }, "copied source files")
-    }
 
     // Step 5: Detect platform and determine build strategy
     progress.logStage("preparing", "detecting platform and build method", 50)
@@ -280,7 +242,7 @@ export async function buildSnap(options: BuildSnapOptions): Promise<string> {
         executeSnapcraftBuild({
           workDir: stageDir,
           remoteBuild,
-          outputFileName: outputFileName,
+          outputSnap: artifactPath,
           useLXD: useLXD || (isLinux && !useDestructiveMode && !useMultipass && !remoteBuild?.enabled),
           useMultipass: useMultipass || ((isMac || isWindows) && !remoteBuild?.enabled),
           useDestructiveMode: useDestructiveMode && isLinux && !remoteBuild?.enabled,
@@ -300,7 +262,6 @@ export async function buildSnap(options: BuildSnapOptions): Promise<string> {
   } catch (error: any) {
     log.error({ error: error.message, stack: error.stack }, "snap build failed")
 
-    // Cleanup on failure
     try {
       await cleanupBuildArtifacts(stageDir, false)
     } catch (cleanupError: any) {
@@ -383,10 +344,10 @@ async function ensureRemoteBuildAuthentication(remoteBuild: RemoteBuildOptions, 
     log.error({ sshKeyPath, publicKeyPath }, "SSH key not found - remote build requires SSH authentication")
     throw new Error(
       `SSH key not found at ${sshKeyPath}\n` +
-        `To set up remote build:\n` +
-        `1. Generate SSH key: ssh-keygen -t rsa -b 4096 -f ${sshKeyPath}\n` +
-        `2. Add public key to Launchpad: https://launchpad.net/~/+editsshkeys\n` +
-        `3. Login to Snapcraft: snapcraft login`
+      `To set up remote build:\n` +
+      `1. Generate SSH key: ssh-keygen -t rsa -b 4096 -f ${sshKeyPath}\n` +
+      `2. Add public key to Launchpad: https://launchpad.net/~/+editsshkeys\n` +
+      `3. Login to Snapcraft: snapcraft login`
     )
   }
 
@@ -394,16 +355,16 @@ async function ensureRemoteBuildAuthentication(remoteBuild: RemoteBuildOptions, 
   log.error(null, "not authenticated with snapcraft")
   throw new Error(
     "Snapcraft authentication required for remote build\n" +
-      "Authenticate with one of:\n" +
-      "  1. Run: snapcraft login\n" +
-      `  2. Export credentials: snapcraft export-login credentials.txt\n` +
-      "  3. Set SNAPCRAFT_STORE_CREDENTIALS environment variable"
+    "Authenticate with one of:\n" +
+    "  1. Run: snapcraft login\n" +
+    `  2. Export credentials: snapcraft export-login credentials.txt\n` +
+    "  3. Set SNAPCRAFT_STORE_CREDENTIALS environment variable"
   )
 }
 
 interface ExecuteSnapcraftOptions {
   workDir: string
-  outputFileName: string
+  outputSnap: string
   remoteBuild?: RemoteBuildOptions
   useLXD: boolean
   useMultipass: boolean
@@ -415,7 +376,7 @@ interface ExecuteSnapcraftOptions {
  * Executes the snapcraft build command
  */
 async function executeSnapcraftBuild(options: ExecuteSnapcraftOptions): Promise<string> {
-  const { workDir, outputFileName, remoteBuild, useLXD, useMultipass, useDestructiveMode, env } = options
+  const { workDir, outputSnap: outputFileName, remoteBuild, useLXD, useMultipass, useDestructiveMode, env } = options
 
   const command = "snapcraft"
   const args: string[] = []
@@ -477,6 +438,9 @@ async function executeSnapcraftBuild(options: ExecuteSnapcraftOptions): Promise<
   }
 
   args.push("--output", outputFileName)
+  if (log.isDebugEnabled) {
+    args.push("--verbose")
+  }
 
   log.info({ command: `${command} ${args.join(" ")}`, workDir: log.filePath(workDir) }, "executing snapcraft build")
 

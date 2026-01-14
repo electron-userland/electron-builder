@@ -1,4 +1,5 @@
 import { TargetSpecificOptions } from "../core"
+import { SnapcraftYAML } from "../targets/snap/snapcraft"
 import { CommonLinuxOptions } from "./linuxOptions"
 
 export interface SnapOptions extends TargetSpecificOptions {
@@ -6,11 +7,12 @@ export interface SnapOptions extends TargetSpecificOptions {
    * A snap of type base to be used as the execution environment for this snap. Examples: `core18`, `core20`, `core22`, `core24`.
    * @default core24
    */
-  readonly core: "core18" | "core20" | "core22" | "core24"
+  readonly core: "core18" | "core20" | "core22" | "core24" | "custom"
   readonly core18?: SnapOptionsLegacy | null
   readonly core20?: SnapOptionsLegacy | null
   readonly core22?: SnapOptionsLegacy | null
   readonly core24?: SnapOptions24 | null
+  readonly custom?: SnapcraftYAML | null
 }
 
 export interface SnapOptionsLegacy extends SnapBaseOptions {
@@ -49,6 +51,13 @@ export interface RemoteBuildOptions {
   timeout?: number
 
   strategy?: "disable-fallback" | "force-fallback"
+
+  /**
+   * Allow running the program with native wayland support with --ozone-platform=wayland.
+   * Disabled by default because of this issue in older Electron/Snap versions: https://github.com/electron-userland/electron-builder/issues/4007
+   * @default false
+   */
+  readonly allowNativeWayland?: boolean | null
 }
 
 export interface SnapOptions24 extends SnapBaseOptions {
@@ -63,6 +72,12 @@ export interface SnapOptions24 extends SnapBaseOptions {
   readonly useLXD?: boolean | null
   readonly useMultipass?: boolean | null
   readonly useDestructiveMode?: boolean | null
+
+  /**
+   * Whether or not to enable Wayland support natively.
+   * @default true
+   */
+  readonly allowNativeWayland?: boolean | null
 }
 
 export interface SnapBaseOptions extends CommonLinuxOptions {
@@ -197,8 +212,7 @@ export interface SnapBaseOptions extends CommonLinuxOptions {
   readonly compression?: "xz" | "lzo" | null
 
   /**
-   * Allow running the program with native wayland support with --ozone-platform=wayland.
-   * Disabled by default because of this issue in older Electron/Snap versions: https://github.com/electron-userland/electron-builder/issues/4007
+   * Allow running the program with native wayland support.
    */
   readonly allowNativeWayland?: boolean | null
 }

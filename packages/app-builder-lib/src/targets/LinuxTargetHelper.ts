@@ -40,7 +40,7 @@ export class LinuxTargetHelper {
           if (!this.isElectronVersionGreaterOrEqualThan("2.0.0-beta.1")) {
             throw new InvalidConfigurationError("Electron 2 and higher is required to build Snap with core18/core20/core22")
           }
-          log.warn("Electron 4 and higher is highly recommended for Snap with core18/core20/core22")
+          log.warn(null, "electron 4 and higher is highly recommended for Snap with core18/core20/core22")
         }
         return new SnapCoreLegacy(this.packager, this, (snap as any)[core] || {})
       case "core24":
@@ -48,18 +48,17 @@ export class LinuxTargetHelper {
           if (!this.isElectronVersionGreaterOrEqualThan("25.0.0")) {
             throw new InvalidConfigurationError("Electron 25 and higher is required to build Snap with core24")
           }
-          log.warn("Electron 28 and higher is highly recommended for Snap with core24")
+          log.warn(null, "electron 28 and higher is highly recommended for Snap with core24")
         }
         return new SnapCore24(this.packager, this, snap.core24 || {})
-      default:
-        break
+      case "custom":
+        throw new InvalidConfigurationError("Custom snapcraft.yaml is not yet supported")
     }
-    throw new Error(`Unsupported snap core: ${core}`)
   }
 
   isElectronVersionGreaterOrEqualThan(version: string) {
     return true
-    // return semver.gte(await getElectronVersion(this.packager), version)
+    // return semver.gte(this.packager.config.electronVersion, version)
   }
 
   private async computeMimeTypeFiles(): Promise<string | null> {
