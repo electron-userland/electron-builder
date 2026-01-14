@@ -29,7 +29,9 @@ const getTreeHeight = (tree: HoisterResult): number => {
   const seen = new Set<HoisterResult>()
 
   const visitNode = (node: HoisterResult) => {
-    if (seen.has(node)) return
+    if (seen.has(node)) {
+      return
+    }
     seen.add(node)
 
     height += 1
