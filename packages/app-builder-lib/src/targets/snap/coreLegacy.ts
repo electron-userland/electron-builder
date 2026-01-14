@@ -1,23 +1,21 @@
+import { getTemplatePath } from "app-builder-lib/src/util/pathManager"
 import {
   replaceDefault as _replaceDefault,
   Arch,
   deepAssign,
   executeAppBuilder,
-  InvalidConfigurationError,
   isArrayEqualRegardlessOfSort,
-  log,
   serializeToYaml,
-  toLinuxArchString,
+  toLinuxArchString
 } from "builder-util"
 import { asArray, Nullish } from "builder-util-runtime/src"
-import * as path from "path"
-import { PlugDescriptor, SnapBaseOptions, SnapOptions24, SnapOptionsLegacy } from "../../options/SnapOptions"
-import { SnapCore } from "./SnapTarget"
 import { outputFile, readFile } from "fs-extra"
 import { load } from "js-yaml"
-import { getTemplatePath } from "app-builder-lib/src/util/pathManager"
+import * as path from "path"
+import { PlugDescriptor, SnapOptionsLegacy } from "../../options/SnapOptions"
+import { SnapCore } from "./SnapTarget"
 
-export class SnapCoreLegacy<T extends "core18" | "core20" | "core22" > extends SnapCore<SnapOptionsLegacy<T>> {
+export class SnapCoreLegacy extends SnapCore<SnapOptionsLegacy> {
   private isUseTemplateApp = false
 
   defaultPlugs = ["desktop", "desktop-legacy", "home", "x11", "wayland", "unity7", "browser-support", "network", "gsettings", "audio-playback", "pulseaudio", "opengl"]

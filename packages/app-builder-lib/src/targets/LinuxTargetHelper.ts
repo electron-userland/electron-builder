@@ -2,12 +2,10 @@ import { asArray, exists, InvalidConfigurationError, isEmptyOrSpaces, log } from
 import { outputFile } from "fs-extra"
 import { Lazy } from "lazy-val"
 import { join } from "path"
-import * as semver from "semver"
 import { LinuxPackager } from "../linuxPackager"
 import { LinuxTargetSpecificOptions } from "../options/linuxOptions"
 import { IconInfo } from "../platformPackager"
 import { SnapCore } from "./snap/SnapTarget"
-import { getElectronVersion } from "../electron/electronVersion"
 import { SnapBaseOptions } from "../options/SnapOptions"
 
 export const installPrefix = "/opt"

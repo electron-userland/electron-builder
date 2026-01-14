@@ -53,10 +53,6 @@ export interface RemoteBuildOptions {
 
 export interface SnapOptions24 extends SnapBaseOptions {
   /**
-   * Tnap core to be used
-   */
-  base: "core24"
-  /**
    * The list of debian packages needs to be installed for building this snap.
    * @default ["gnome"]
    */

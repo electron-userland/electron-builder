@@ -131,9 +131,12 @@ test.ifDevOrLinuxCi("plugs option", async ({ expect }) => {
       targets: snapTarget,
       config: {
         snap: {
-          plugs: p,
+          core: "core22",
+          core22: {
+            plugs: p,
           // otherwise "parts" will be removed
           useTemplateApp: false,
+          }
         },
       },
       effectiveOptionComputed: async ({ snap, args }) => {
