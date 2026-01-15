@@ -84,7 +84,8 @@ test.ifMac("one-package", ({ expect }) =>
             // test unsetting a default electron plist value
             NSMicrophoneUsageDescription: undefined,
           },
-          minimumSystemVersion: "10.12.0",
+          minimumSystemVersion: "22.0.4",
+          LSMinimumSystemVersion: "10.12.0",
           fileAssociations: [
             {
               ext: "foo",
