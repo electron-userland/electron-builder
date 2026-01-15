@@ -1,12 +1,12 @@
-import { Arch, archFromString, Platform } from "electron-builder"
+import { Arch, Platform } from "electron-builder"
 import * as fs from "fs/promises"
 import * as path from "path"
 import { app, assertPack, copyTestAsset } from "../helpers/packTester"
 import { checkHelpers, doTest, expectUpdateMetadata } from "../helpers/winHelper"
 
-const nsisTarget = Platform.WINDOWS.createTarget(["nsis"])
+const nsisTarget = Platform.WINDOWS.createTarget(["nsis"], Arch.x64)
 
-test.ifNotCiMac("assisted", ({ expect }) =>
+test("assisted", ({ expect }) =>
   app(
     expect,
     {
@@ -38,7 +38,7 @@ test.ifNotCiMac("assisted", ({ expect }) =>
   )
 )
 
-test.ifNotCiMac("allowElevation false, app requestedExecutionLevel admin", ({ expect }) =>
+test("allowElevation false, app requestedExecutionLevel admin", ({ expect }) =>
   app(expect, {
     targets: nsisTarget,
     config: {
@@ -63,7 +63,7 @@ test.ifNotCiMac("allowElevation false, app requestedExecutionLevel admin", ({ ex
   })
 )
 
-test.ifNotCiMac("assisted, MUI_HEADER", ({ expect }) => {
+test("assisted, MUI_HEADER", ({ expect }) => {
   let installerHeaderPath: string | null = null
   return assertPack(
     expect,
@@ -95,7 +95,7 @@ test.ifNotCiMac("assisted, MUI_HEADER", ({ expect }) => {
   )
 })
 
-test.ifNotCiMac("assisted, MUI_HEADER as option", ({ expect }) => {
+test("assisted, MUI_HEADER as option", ({ expect }) => {
   let installerHeaderPath: string | null = null
   return assertPack(
     expect,
@@ -128,7 +128,7 @@ test.ifNotCiMac("assisted, MUI_HEADER as option", ({ expect }) => {
   )
 })
 
-test.ifNotCiMac.skip("debug logging enabled", ({ expect }) =>
+test.skip("debug logging enabled", ({ expect }) =>
   app(expect, {
     targets: nsisTarget,
     config: {
@@ -144,7 +144,7 @@ test.ifNotCiMac.skip("debug logging enabled", ({ expect }) =>
   })
 )
 
-test.ifNotCiMac("assisted, only perMachine", ({ expect }) =>
+test("assisted, only perMachine", ({ expect }) =>
   app(expect, {
     targets: nsisTarget,
     config: {
@@ -156,7 +156,7 @@ test.ifNotCiMac("assisted, only perMachine", ({ expect }) =>
   })
 )
 
-test.ifNotCiMac("assisted, only perMachine and elevated", ({ expect }) =>
+test("assisted, only perMachine and elevated", ({ expect }) =>
   app(expect, {
     targets: nsisTarget,
     config: {
@@ -170,7 +170,7 @@ test.ifNotCiMac("assisted, only perMachine and elevated", ({ expect }) =>
 )
 
 // test release notes also
-test.ifNotCiMac("allowToChangeInstallationDirectory", ({ expect }) =>
+test("allowToChangeInstallationDirectory", ({ expect }) =>
   app(
     expect,
     {
@@ -194,7 +194,7 @@ test.ifNotCiMac("allowToChangeInstallationDirectory", ({ expect }) =>
         await copyTestAsset("license.txt", path.join(projectDir, "build", "license.txt"))
       },
       packed: async context => {
-        await expectUpdateMetadata(expect, context, archFromString(process.arch))
+        await expectUpdateMetadata(expect, context, Arch.x64)
         await checkHelpers(expect, context.getResources(Platform.WINDOWS), true)
         await doTest(expect, context.outDir, false)
       },
