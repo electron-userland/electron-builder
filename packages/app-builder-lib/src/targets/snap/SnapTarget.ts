@@ -47,11 +47,13 @@ export default class SnapTarget extends Target {
 
     const core = this.helper.getSnapCore()
 
-    const snap = await core.createDescriptor(arch)
-
-    const stageDir = await createStageDirPath(this, packager, arch)
-
-    await core.buildSnap({ snap, appOutDir, stageDir, snapArch: arch, artifactPath })
+    await core.buildSnap({
+      snap: await core.createDescriptor(arch),
+      appOutDir,
+      stageDir: await createStageDirPath(this, packager, arch),
+      snapArch: arch,
+      artifactPath,
+    })
 
     const publishConfig = this.findSnapPublishConfig(packager.config)
 
