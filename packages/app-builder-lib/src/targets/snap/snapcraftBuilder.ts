@@ -13,8 +13,6 @@ const execAsync = util.promisify(childProcess.exec)
 interface BuildSnapOptions {
   /** The snapcraft YAML configuration */
   snapcraftConfig: SnapcraftYAML
-  /** The .desktop file path */
-  desktopFile: string
   /** The source files to package */
   stageDir: string
   /** Whether to use remote build (builds on Launchpad) */
@@ -72,8 +70,8 @@ async function validateSnapcraftYamlWithCLI(workDir: string): Promise<void> {
     log.error({ error: error.message, stderr: error.stderr }, "snapcraft.yaml validation failed")
     throw new Error(
       `Invalid snapcraft.yaml: ${error.message}\n` +
-      `Snapcraft output: ${error.stderr || error.stdout || "No output"}\n` +
-      `Run 'snapcraft expand-extensions' in ${workDir} for more details`
+        `Snapcraft output: ${error.stderr || error.stdout || "No output"}\n` +
+        `Run 'snapcraft expand-extensions' in ${workDir} for more details`
     )
   }
 }
@@ -212,7 +210,20 @@ async function cleanupBuildArtifacts(workDir: string, keepArtifacts: boolean = f
  */
 export async function buildSnap(options: BuildSnapOptions): Promise<string> {
   const progress = new SnapBuildProgress()
-  const { snapcraftConfig, artifactPath, remoteBuild, stageDir, useLXD = false, useMultipass = false, useDestructiveMode = false, env = {} } = options
+  const { SNAPCRAFT_BUILD_ENVIRONMENT = "host", SNAPCRAFT_NO_NETWORK = 1 } = process.env
+  const {
+    snapcraftConfig,
+    artifactPath,
+    remoteBuild,
+    stageDir,
+    useLXD = false,
+    useMultipass = false,
+    useDestructiveMode = false,
+    env = {
+      SNAPCRAFT_BUILD_ENVIRONMENT,
+      SNAPCRAFT_NO_NETWORK,
+    },
+  } = options
 
   try {
     progress.logStage("preparing", "validating snapcraft configuration", 10)
@@ -344,10 +355,10 @@ async function ensureRemoteBuildAuthentication(remoteBuild: RemoteBuildOptions, 
     log.error({ sshKeyPath, publicKeyPath }, "SSH key not found - remote build requires SSH authentication")
     throw new Error(
       `SSH key not found at ${sshKeyPath}\n` +
-      `To set up remote build:\n` +
-      `1. Generate SSH key: ssh-keygen -t rsa -b 4096 -f ${sshKeyPath}\n` +
-      `2. Add public key to Launchpad: https://launchpad.net/~/+editsshkeys\n` +
-      `3. Login to Snapcraft: snapcraft login`
+        `To set up remote build:\n` +
+        `1. Generate SSH key: ssh-keygen -t rsa -b 4096 -f ${sshKeyPath}\n` +
+        `2. Add public key to Launchpad: https://launchpad.net/~/+editsshkeys\n` +
+        `3. Login to Snapcraft: snapcraft login`
     )
   }
 
@@ -355,10 +366,10 @@ async function ensureRemoteBuildAuthentication(remoteBuild: RemoteBuildOptions, 
   log.error(null, "not authenticated with snapcraft")
   throw new Error(
     "Snapcraft authentication required for remote build\n" +
-    "Authenticate with one of:\n" +
-    "  1. Run: snapcraft login\n" +
-    `  2. Export credentials: snapcraft export-login credentials.txt\n` +
-    "  3. Set SNAPCRAFT_STORE_CREDENTIALS environment variable"
+      "Authenticate with one of:\n" +
+      "  1. Run: snapcraft login\n" +
+      `  2. Export credentials: snapcraft export-login credentials.txt\n` +
+      "  3. Set SNAPCRAFT_STORE_CREDENTIALS environment variable"
   )
 }
 
