@@ -42,6 +42,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     await manager.initialize()
     return manager
   })
+  private signingQueue = Promise.resolve(true)
 
   get isForceCodeSigningVerification(): boolean {
     return this.platformSpecificBuildOptions.verifyUpdateCodeSignature !== false
@@ -120,11 +121,17 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
   }
 
   async signIf(file: string): Promise<boolean> {
+    const logFields = { file: log.filePath(file) }
     if (!this.shouldSignFile(file, true)) {
-      log.info({ file: log.filePath(file) }, "file signing skipped via signExts configuration")
+      log.info(logFields, "file signing skipped via signExts configuration")
       return false
     }
 
+    this.signingQueue = this.signingQueue.then(() => this._sign(file))
+    return this.signingQueue
+  }
+
+  private async _sign(file: string): Promise<boolean> {
     const signOptions: WindowsSignOptions = {
       path: file,
       options: this.platformSpecificBuildOptions,

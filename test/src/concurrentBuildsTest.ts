@@ -15,7 +15,7 @@ const config: Configuration = {
   artifactName: "${productName}-${version}-${arch}.${ext}",
   compression: "store",
 }
-const projectDirCreated = async (projectDir: string, tmpDir: TmpDir) => {
+const projectDirCreated = async (projectDir: string, _tmpDir: TmpDir) => {
   const buildConfig = (data: any, isApp: boolean) => {
     deepAssign(data, {
       name: "concurrent", // needs to be lowercase for fpm targets (can't use default fixture TestApp)

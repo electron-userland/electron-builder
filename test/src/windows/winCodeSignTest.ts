@@ -43,7 +43,7 @@ test("sign nested asar unpacked executables", ({ expect }) =>
 function testCustomSign(expect: ExpectStatic, sign: any) {
   return app(expect, {
     targets: Platform.WINDOWS.createTarget(DIR_TARGET),
-    platformPackagerFactory: (packager, platform) => new CheckingWinPackager(packager),
+    platformPackagerFactory: (packager, _platform) => new CheckingWinPackager(packager),
     config: {
       win: {
         signtoolOptions: {
@@ -73,7 +73,7 @@ test("custom sign if no code sign info", ({ expect }) => {
     expect,
     {
       targets: Platform.WINDOWS.createTarget(DIR_TARGET),
-      platformPackagerFactory: (packager, platform) => new CheckingWinPackager(packager),
+      platformPackagerFactory: (packager, _platform) => new CheckingWinPackager(packager),
       config: {
         win: {
           // to be sure that sign code will be executed
@@ -81,6 +81,7 @@ test("custom sign if no code sign info", ({ expect }) => {
           signtoolOptions: {
             sign: async () => {
               called = true
+              return Promise.resolve()
             },
           },
         },
@@ -89,6 +90,7 @@ test("custom sign if no code sign info", ({ expect }) => {
     {
       packed: async () => {
         expect(called).toBe(true)
+        return Promise.resolve()
       },
     }
   )

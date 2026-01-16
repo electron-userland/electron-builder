@@ -1,22 +1,19 @@
 import { log, retry, TmpDir } from "builder-util"
-import { CancellationToken } from "builder-util-runtime"
 import * as childProcess from "child_process"
 import * as fs from "fs-extra"
 import { createWriteStream } from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
-import * as semver from "semver"
 import { hoist, type HoisterResult, type HoisterTree } from "./hoist"
-import { ModuleCache } from "./moduleCache"
+import { ModuleManager } from "./moduleManager"
 import { getPackageManagerCommand, PM } from "./packageManager"
-import type { Dependency, DependencyGraph, NodeModuleInfo } from "./types"
-type Result = { packageDir: string; version: string } | null
+import type { Dependency, DependencyGraph, NodeModuleInfo, PackageJson } from "./types"
 
 export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDepType, OptionalDepType>, OptionalDepType> {
   private readonly nodeModules: NodeModuleInfo[] = []
   protected readonly allDependencies: Map<string, ProdDepType> = new Map()
   protected readonly productionGraph: DependencyGraph = {}
-  protected readonly cache: ModuleCache = new ModuleCache()
+  protected readonly cache: ModuleManager = new ModuleManager()
 
   protected isHoisted = new Lazy<boolean>(async () => {
     const { manager } = this.installOptions
@@ -39,21 +36,12 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     private readonly tempDirManager: TmpDir
   ) {}
 
-  public async getNodeModules({ cancellationToken, packageName }: { cancellationToken: CancellationToken; packageName: string }): Promise<NodeModuleInfo[]> {
+  public async getNodeModules({ packageName }: { packageName: string }): Promise<NodeModuleInfo[]> {
     const tree: ProdDepType = await this.getDependenciesTree(this.installOptions.manager)
 
-    if (cancellationToken.cancelled) {
-      throw new Error("getNodeModules cancelled after fetching dependency tree")
-    }
-
     await this.collectAllDependencies(tree, packageName)
-
     const realTree: ProdDepType = await this.getTreeFromWorkspaces(tree, packageName)
     await this.extractProductionDependencyGraph(realTree, packageName)
-
-    if (cancellationToken.cancelled) {
-      throw new Error("getNodeModules cancelled after building production graph")
-    }
 
     const hoisterResult: HoisterResult = hoist(this.transformToHoisterTree(this.productionGraph, packageName), {
       check: log.isDebugEnabled,
@@ -88,7 +76,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
       async () => {
         await this.streamCollectorCommandToFile(command, args, this.rootDir, tempOutputFile)
         const shellOutput = await fs.readFile(tempOutputFile, { encoding: "utf8" })
-        return await this.parseDependenciesTree(shellOutput)
+        return await this.parseDependenciesTree(shellOutput.trim())
       },
       {
         retries: 1,
@@ -122,15 +110,28 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     )
   }
 
-  protected cacheKey(pkg: ProdDepType): string {
+  protected cacheKey(pkg: Pick<ProdDepType, "name" | "version" | "path">): string {
     const rel = path.relative(this.rootDir, pkg.path)
     return `${pkg.name}::${pkg.version}::${rel ?? "."}`
   }
 
-  protected packageVersionString(pkg: ProdDepType): string {
+  protected packageVersionString(pkg: Pick<ProdDepType, "name" | "version">): string {
     return `${pkg.name}@${pkg.version}`
   }
 
+  protected isProdDependency(depName: string, pkg: ProdDepType): boolean {
+    const prodDeps = { ...pkg.dependencies, ...pkg.optionalDependencies }
+    return prodDeps[depName] != null
+  }
+
+  protected async locatePackageWithVersion(depTree: Pick<ProdDepType, "name" | "version" | "path">): Promise<{ packageDir: string; packageJson: PackageJson } | null> {
+    const result = await this.cache.locatePackageVersion({
+      parentDir: depTree.path,
+      pkgName: depTree.name,
+      requiredRange: depTree.version,
+    })
+    return result
+  }
   /**
    * Parse a dependency identifier like "@scope/pkg@1.2.3" or "pkg@1.2.3"
    */
@@ -283,187 +284,5 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
         return shouldResolve ? resolve() : reject(new Error(`Node module collector process exited with code ${code}:\n${stderr}`))
       })
     })
-  }
-
-  protected async locatePackageVersion(parentDir: string, pkgName: string, requiredRange?: string): Promise<Result | null> {
-    // 1) check direct parent node_modules/pkgName first
-    const direct = path.join(path.resolve(parentDir), "node_modules", pkgName, "package.json")
-    if (await this.cache.exists[direct]) {
-      const ver = await this.readPackageVersion(direct)
-      if (ver && this.semverSatisfies(ver, requiredRange)) {
-        return { packageDir: path.dirname(direct), version: ver }
-      }
-    }
-
-    // 2) upward hoisted search, then 3) downward non-hoisted search
-    return (await this.upwardSearch(parentDir, pkgName, requiredRange)) || (await this.downwardSearch(parentDir, pkgName, requiredRange)) || null
-  }
-
-  protected async readPackageVersion(pkgJsonPath: string): Promise<string | null> {
-    return await this.cache.packageJson[pkgJsonPath].then(pkg => pkg.version).catch(() => null)
-  }
-
-  protected semverSatisfies(found: string, range?: string): boolean {
-    if (!range || range === "*" || range === "") {
-      return true
-    }
-
-    if (range === found) {
-      return true
-    }
-
-    if (semver.validRange(range) == null) {
-      // ignore, we can't verify non-semver ranges
-      // e.g. git urls, file:, patch:, etc. Example:
-      // "@ai-sdk/google": "patch:@ai-sdk/google@npm%3A2.0.43#~/.yarn/patches/@ai-sdk-google-npm-2.0.43-689ed559b3.patch"
-      log.debug({ found, range }, "unable to validate semver version range, assuming match")
-      return true
-    }
-
-    try {
-      return semver.satisfies(found, range)
-    } catch {
-      // fallback: simple equality or basic prefix handling (^, ~)
-      if (range.startsWith("^") || range.startsWith("~")) {
-        const r = range.slice(1)
-        return r === found
-      }
-      // if range is like "8.x" or "8.*" match major
-      const m = range.match(/^(\d+)[.(*|x)]*/)
-      const fm = found.match(/^(\d+)\./)
-      if (m && fm) {
-        return m[1] === fm[1]
-      }
-      return false
-    }
-  }
-
-  /**
-   * Upward search (hoisted)
-   */
-  private async upwardSearch(parentDir: string, pkgName: string, requiredRange?: string): Promise<Result> {
-    let current = path.resolve(parentDir)
-    const root = path.parse(current).root
-    while (true) {
-      const candidate = path.join(current, "node_modules", pkgName, "package.json")
-      if (await this.cache.exists[candidate]) {
-        const ver = await this.readPackageVersion(candidate)
-        if (ver && this.semverSatisfies(ver, requiredRange)) {
-          return { packageDir: path.dirname(candidate), version: ver }
-        }
-        // otherwise keep searching upward (we may find a different hoisted version)
-      }
-      if (current === root) {
-        break
-      }
-      const parent = path.dirname(current)
-      if (parent === current) {
-        break
-      }
-      current = parent
-    }
-    return null
-  }
-
-  /**
-   * Breadth-first downward search from parentDir/node_modules
-   * Looks for node_modules/\*\/node_modules/pkgName (and deeper)
-   */
-  private async downwardSearch(parentDir: string, pkgName: string, requiredRange?: string, maxExplored = 2000, maxDepth = 6): Promise<Result> {
-    const start = path.join(path.resolve(parentDir), "node_modules")
-    if (!(await this.cache.exists[start]) || !(await this.cache.lstat[start]).isDirectory()) {
-      return null
-    }
-
-    const visited = new Set<string>()
-    const queue: Array<{ dir: string; depth: number }> = [{ dir: start, depth: 0 }]
-    let explored = 0
-
-    while (queue.length > 0) {
-      const { dir, depth } = queue.shift()!
-      if (explored++ > maxExplored) {
-        break
-      }
-      if (depth > maxDepth) {
-        continue
-      }
-      let entries: string[]
-      try {
-        entries = await fs.readdir(dir)
-      } catch {
-        continue
-      }
-      for (const entry of entries) {
-        if (entry.startsWith(".")) {
-          continue
-        }
-        const entryPath = path.join(dir, entry)
-        // handle scoped packages @scope/name
-        if (entry.startsWith("@")) {
-          // queue the scope directory itself to explore its children
-          if ((await this.cache.exists[entryPath]) && (await this.cache.lstat[entryPath]).isDirectory()) {
-            const scopeEntries = await fs.readdir(entryPath)
-            for (const sc of scopeEntries) {
-              const scPath = path.join(entryPath, sc)
-              // check scPath/node_modules/pkgName
-              const candidatePkgJson = path.join(scPath, "node_modules", pkgName, "package.json")
-              if (await this.cache.exists[candidatePkgJson]) {
-                const ver = await this.readPackageVersion(candidatePkgJson)
-                if (ver && this.semverSatisfies(ver, requiredRange)) {
-                  return { packageDir: path.dirname(candidatePkgJson), version: ver }
-                }
-              }
-              // enqueue scPath/node_modules to explore further
-              const scNodeModules = path.join(scPath, "node_modules")
-              if ((await this.cache.exists[scNodeModules]) && (await this.cache.lstat[scNodeModules]).isDirectory()) {
-                if (!visited.has(scNodeModules)) {
-                  visited.add(scNodeModules)
-                  queue.push({ dir: scNodeModules, depth: depth + 1 })
-                }
-              }
-            }
-          }
-          continue
-        }
-
-        // check for direct candidate: entry/node_modules/pkgName
-        try {
-          const stat = await this.cache.lstat[entryPath]
-          if (!stat.isDirectory()) {
-            continue
-          }
-        } catch {
-          continue
-        }
-
-        const candidatePkgJson = path.join(entryPath, "node_modules", pkgName, "package.json")
-        if (await this.cache.exists[candidatePkgJson]) {
-          const ver = await this.readPackageVersion(candidatePkgJson)
-          if (ver && this.semverSatisfies(ver, requiredRange)) {
-            return { packageDir: path.dirname(candidatePkgJson), version: ver }
-          }
-        }
-
-        // also check entry/node_modules directly for pkgName (some layouts)
-        const candidateDirect = path.join(entryPath, pkgName, "package.json")
-        if (await this.cache.exists[candidateDirect]) {
-          const ver = await this.readPackageVersion(candidateDirect)
-          if (ver && this.semverSatisfies(ver, requiredRange)) {
-            return { packageDir: path.dirname(candidateDirect), version: ver }
-          }
-        }
-
-        // enqueue entry/node_modules for deeper traversal
-        const nextNodeModules = path.join(entryPath, "node_modules")
-        if ((await this.cache.exists[nextNodeModules]) && (await this.cache.lstat[nextNodeModules]).isDirectory()) {
-          if (!visited.has(nextNodeModules)) {
-            visited.add(nextNodeModules)
-            queue.push({ dir: nextNodeModules, depth: depth + 1 })
-          }
-        }
-      }
-    }
-
-    return null
   }
 }

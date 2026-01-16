@@ -81,6 +81,8 @@ test.ifMac("one-package", ({ expect }) =>
                 LSItemContentTypes: ["public.folder"],
               },
             ],
+            // test unsetting a default electron plist value
+            NSMicrophoneUsageDescription: undefined,
           },
           minimumSystemVersion: "10.12.0",
           fileAssociations: [
@@ -115,7 +117,7 @@ test.ifMac("one-package", ({ expect }) =>
           copyOrLinkFile(path.join(projectDir, "build", "icon.icns"), path.join(projectDir, "build", "foo.icns")),
           copyOrLinkFile(path.join(projectDir, "build", "icon.icns"), path.join(projectDir, "build", "someFoo.icns")),
         ]),
-      checkMacApp: async (appDir, info) => {
+      checkMacApp: async (appDir, _info) => {
         await assertThat(expect, path.join(appDir, "Contents", "Resources", "foo.icns")).isFile()
         await assertThat(expect, path.join(appDir, "Contents", "Resources", "someFoo.icns")).isFile()
       },
@@ -177,7 +179,7 @@ test("multiple asar resources", ({ expect }) =>
         await fs.mkdir(path.join(projectDir, "build", "subdir"))
         await fs.copyFile(path.join(projectDir, "build", "extraAsar.asar"), path.join(projectDir, "build", "subdir", "extraAsar2.asar"))
       },
-      checkMacApp: async (appDir, info) => {
+      checkMacApp: async (appDir, _info) => {
         await checkDirContents(expect, path.join(appDir, "Contents", "Resources"))
       },
     }

@@ -9,3 +9,11 @@ export function getTemplatePath(file: string) {
 export function getVendorPath(file?: string) {
   return file == null ? path.join(root, "vendor") : path.join(root, "vendor", file)
 }
+
+export const parseUrl = (url: string): URL | undefined => {
+  try {
+    return new URL(url)
+  } catch {
+    return undefined
+  }
+}
