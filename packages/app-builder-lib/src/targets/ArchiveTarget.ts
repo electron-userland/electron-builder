@@ -2,20 +2,30 @@ import { Arch, defaultArchFromString } from "builder-util"
 import * as path from "path"
 import { Platform, Target, TargetSpecificOptions } from "../core"
 import { copyFiles, getFileMatchers } from "../fileMatcher"
+import { ZipOptions } from "../options/macOptions"
 import { PlatformPackager } from "../platformPackager"
 import { archive, tar } from "./archive"
 import { appendBlockmap, createBlockmap } from "./differentialUpdateInfoBuilder"
 
 export class ArchiveTarget extends Target {
-  readonly options: TargetSpecificOptions = (this.packager.config as any)[this.name]
+  readonly options: TargetSpecificOptions = (this.packager.config as any)[this.name] ?? {}
 
   constructor(
     name: string,
     readonly outDir: string,
     private readonly packager: PlatformPackager<any>,
-    private readonly isWriteUpdateInfo = false
+    private readonly isWriteUpdateInfo: boolean | null = null
   ) {
     super(name)
+  }
+
+  private shouldWriteUpdateInfo(): boolean {
+    // Constructor parameter takes precedence (for backward compatibility)
+    if (this.isWriteUpdateInfo !== null) {
+      return this.isWriteUpdateInfo
+    }
+    // Otherwise read from options, default to true
+    return (this.options as ZipOptions).writeUpdateInfo !== false
   }
 
   async build(appOutDir: string, arch: Arch): Promise<any> {
@@ -70,7 +80,7 @@ export class ArchiveTarget extends Target {
         }
         await archive(format, artifactPath, dirToArchive, archiveOptions)
 
-        if (this.isWriteUpdateInfo && format === "zip") {
+        if (this.shouldWriteUpdateInfo() && format === "zip") {
           if (isMac) {
             updateInfo = await createBlockmap(artifactPath, this, packager, artifactName)
           } else {
@@ -94,7 +104,7 @@ export class ArchiveTarget extends Target {
         target: this,
         arch,
         packager,
-        isWriteUpdateInfo: this.isWriteUpdateInfo,
+        isWriteUpdateInfo: this.shouldWriteUpdateInfo(),
       })
     })
     return Promise.resolve()

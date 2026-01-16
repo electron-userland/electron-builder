@@ -236,12 +236,6 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
    * For security reasons it is recommended to use the first option (see https://github.com/electron-userland/electron-builder/issues/7859)
    */
   readonly notarize?: boolean
-
-  /**
-   * @private
-   * @default true
-   */
-  writeUpdateInfo?: boolean
 }
 
 export interface DmgOptions extends TargetSpecificOptions {
@@ -386,4 +380,12 @@ export interface MasConfiguration extends MacConfiguration {
    * Paths of any extra binaries that need to be signed.
    */
   readonly binaries?: Array<string> | null
+}
+
+export interface ZipOptions extends TargetSpecificOptions {
+  /**
+   * @private
+   * @default true
+   */
+  writeUpdateInfo?: boolean
 }
