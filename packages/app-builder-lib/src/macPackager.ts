@@ -590,11 +590,25 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
   }
 
   protected async signApp(packContext: AfterPackContext, isAsar: boolean): Promise<boolean> {
+    // Determine if this is a MAS build and construct appropriate options
+    const isMas = packContext.electronPlatformName === "mas"
+    let masOptions: MasConfiguration | null = null
+    if (isMas) {
+      masOptions = deepAssign({}, this.platformSpecificBuildOptions, this.config.mas)
+      // Check if this is a mas-dev build
+      const isMasDev = packContext.targets.some(t => t.name === "mas-dev")
+      if (isMasDev) {
+        deepAssign(masOptions, this.config.masDev, {
+          type: "development",
+        })
+      }
+    }
+
     const readDirectoryAndSign = async (sourceDirectory: string, directories: string[], shouldSign: (file: string) => boolean): Promise<boolean> => {
       await Promise.all(
         directories.map(async (file: string) => {
           if (shouldSign(file)) {
-            await this.sign(path.join(sourceDirectory, file), null, null, packContext.arch)
+            await this.sign(path.join(sourceDirectory, file), packContext.outDir, masOptions, packContext.arch)
           }
         })
       )
