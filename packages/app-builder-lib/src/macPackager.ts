@@ -590,6 +590,16 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
   }
 
   protected async signApp(packContext: AfterPackContext, isAsar: boolean): Promise<boolean> {
+    // For MAS builds, skip signing here entirely. The pack() method will call sign()
+    // with the correct MAS options and also create the .pkg installer.
+    // Signing here would use incorrect darwin options since signApp() doesn't have
+    // access to the MAS-specific configuration.
+    // Note: @electron/osx-sign performs recursive signing, so nested .app bundles
+    // in asar.unpacked will be signed when pack() signs the main app.
+    if (packContext.electronPlatformName === "mas") {
+      return true
+    }
+
     const readDirectoryAndSign = async (sourceDirectory: string, directories: string[], shouldSign: (file: string) => boolean): Promise<boolean> => {
       await Promise.all(
         directories.map(async (file: string) => {
