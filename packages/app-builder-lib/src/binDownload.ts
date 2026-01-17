@@ -1,6 +1,6 @@
 import * as get from "@electron/get"
-import { ElectronDownloadRequest, ElectronDownloadRequestOptions, GotDownloaderOptions } from "@electron/get"
-import { executeAppBuilder, PADDING } from "builder-util"
+import { ElectronDownloadCacheMode, ElectronDownloadRequest, ElectronDownloadRequestOptions, GotDownloaderOptions } from "@electron/get"
+import { executeAppBuilder, log, PADDING } from "builder-util"
 import { Nullish } from "builder-util-runtime"
 import { sanitizeFileName } from "builder-util/out/filename"
 import * as crypto from "crypto"
@@ -92,10 +92,12 @@ export async function downloadArtifact(options: { releaseName: string; filenameW
   const { releaseName, filenameWithExt, checksums, githubOrgRepo = "electron-userland/electron-builder-binaries" } = options
   const progress = (process.stdout as TtyWriteStream).isTTY ? new MultiProgress() : null
 
+  log.info({ releaseName, filenameWithExt, githubOrgRepo }, "downloading")
   const progressBar = progress?.createBar(`${" ".repeat(PADDING + 2)}[:bar] :percent | ${filenameWithExt}`, { total: 100 })
   progressBar?.render()
 
   const file = await _downloadArtifact(`https://github.com/${githubOrgRepo}/releases/download/`, releaseName, filenameWithExt, checksums, info => {
+    log.debug({ stage: info.stage, message: info.message }, "download artifact")
     progressBar?.update(info.percent != null ? Math.floor(info.percent * 100) : 0)
   })
 
@@ -166,9 +168,10 @@ async function _downloadArtifact(baseUrl: string, releaseName: string, filenameW
       },
     }
 
+    const cacheMode = process.env.ELECTRON_BUILDER_FORCE_DOWNLOADS === "true" ? ElectronDownloadCacheMode.WriteOnly : ElectronDownloadCacheMode.ReadWrite
     const options: ElectronDownloadRequestOptions = {
       cacheRoot: downloadDir,
-      force: process.env.ELECTRON_BUILDER_FORCE_DOWNLOADS === "true",
+      cacheMode,
       downloadOptions,
       checksums,
       mirrorOptions: {

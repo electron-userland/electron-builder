@@ -14,20 +14,23 @@ export function getDmgTemplatePath() {
   return path.join(root, "templates")
 }
 
-export async function getDmgVendorPath(): Promise<string> {
+async function getDmgVendorPath(): Promise<string> {
   const version = "1.6.7"
   const arch = process.arch === "arm64" ? "arm64" : "x86_64"
   const config = {
-    arm64: "egyeVf8nTykmLn08I2Znpvjw3E8FJEvNEVgk5650CfJYD00ffp9MMFb4hawd2c6DFgDRI2cfwdZIDdBIC2S/Ig==",
-    x86_64: "bwLvCljFyIPVUH7Z/bjlSwO/tac1rO5AXcQKHrYRbSpg5GtZ1kZ0ZEibCf+PM0PnnA8+YpUxU6ZgLW/raeoKYA==",
+    [`dmgbuild-bundle-arm64-1.6.7.tar.gz`]: "egyeVf8nTykmLn08I2Znpvjw3E8FJEvNEVgk5650CfJYD00ffp9MMFb4hawd2c6DFgDRI2cfwdZIDdBIC2S/Ig==",
+    [`dmgbuild-bundle-x86_64-1.6.7.tar.gz`]: "bwLvCljFyIPVUH7Z/bjlSwO/tac1rO5AXcQKHrYRbSpg5GtZ1kZ0ZEibCf+PM0PnnA8+YpUxU6ZgLW/raeoKYA==",
   }
+  const filename: keyof typeof config = `dmgbuild-bundle-${arch}-${version}.tar.gz`
   const file = await downloadArtifact({
     releaseName: "dmg-builder@1.1.0",
-    filenameWithExt: `dmgbuild-bundle-${arch}-${version}.tar.gz`,
+    filenameWithExt: filename,
     checksums: {
-      [arch]: config[arch],
+      [filename]: config[filename],
     },
     githubOrgRepo: "mmaietta/electron-builder-binaries",
+  }).catch(e => {
+    throw new Error(`Cannot download dmgbuild binary for ${arch} arch: ${e}`)
   })
   return path.resolve(file, "dmgbuild")
 }
