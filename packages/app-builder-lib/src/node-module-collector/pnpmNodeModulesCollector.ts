@@ -85,8 +85,8 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
   }
 
   protected async parseDependenciesTree(jsonBlob: string): Promise<PnpmDependency> {
-    const dependencyTree: PnpmDependency[] = JSON.parse(jsonBlob)
     // pnpm returns an array of dependency trees
-    return Promise.resolve(dependencyTree[0])
+    const dependencyTree: PnpmDependency[] = await super.parseDependenciesTree(jsonBlob)
+    return dependencyTree[0]
   }
 }

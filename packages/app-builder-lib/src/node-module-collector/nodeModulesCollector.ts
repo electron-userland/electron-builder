@@ -34,7 +34,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
   constructor(
     protected readonly rootDir: string,
     private readonly tempDirManager: TmpDir
-  ) {}
+  ) { }
 
   public async getNodeModules({ packageName }: { packageName: string }): Promise<NodeModuleInfo[]> {
     const tree: ProdDepType = await this.getDependenciesTree(this.installOptions.manager)
@@ -59,7 +59,6 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
   }
 
   protected abstract getArgs(): string[]
-  protected abstract parseDependenciesTree(jsonBlob: string): Promise<ProdDepType>
   protected abstract extractProductionDependencyGraph(tree: Dependency<ProdDepType, OptionalDepType>, dependencyId: string): Promise<void>
   protected abstract collectAllDependencies(tree: Dependency<ProdDepType, OptionalDepType>, appPackageName: string): Promise<void>
 
@@ -72,50 +71,11 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
       suffix: "output.json",
     })
 
-    const extractJsonFromPossiblyPollutedOutput = (output: string): string => {
-      const consoleOutput = output.trim()
-      try {
-        JSON.parse(consoleOutput)
-        return consoleOutput
-      } catch {
-        // Continue
-      }
-
-      const lines = output.split("\n")
-
-      // Find the first line that starts with { or [
-      const jsonStartIdx = lines.findIndex(line => {
-        const trimmed = line.trim()
-        return trimmed.startsWith("{") || trimmed.startsWith("[")
-      })
-
-      if (jsonStartIdx === -1) {
-        return consoleOutput // No JSON found
-      }
-
-      // Try progressively longer slices until we get valid JSON
-      for (let endIdx = jsonStartIdx; endIdx < lines.length; endIdx++) {
-        const candidate = lines
-          .slice(jsonStartIdx, endIdx + 1)
-          .join("\n")
-          .trim()
-
-        try {
-          JSON.parse(candidate)
-          return candidate // First valid JSON we find
-        } catch {
-          // Keep trying longer slices
-        }
-      }
-
-      return consoleOutput // Fallback to original output
-    }
-
     return retry(
       async () => {
         await this.streamCollectorCommandToFile(command, args, this.rootDir, tempOutputFile)
         const shellOutput = await fs.readFile(tempOutputFile, { encoding: "utf8" })
-        return await this.parseDependenciesTree(extractJsonFromPossiblyPollutedOutput(shellOutput))
+        return await this.parseDependenciesTree(shellOutput)
       },
       {
         retries: 1,
@@ -147,6 +107,54 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
         },
       }
     )
+  }
+  protected async parseDependenciesTree(shellOutput: string): Promise<any> {
+    const parse = (lines: string[], start: number, end: number): any => {
+      // Extract the slice between start and end lines
+      const candidate = lines
+        .slice(start, end + 1)
+        .join("\n")
+        .trim()
+      return JSON.parse(candidate)
+    }
+
+    // uses trimmed original output as fallback to let super classes handle explicit parsing/errors
+    const extractJsonFromPossiblyPollutedOutput = (output: string): any | string => {
+      const consoleOutput = output.trim()
+      try {
+        return JSON.parse(consoleOutput)
+      } catch {
+        // Continue
+      }
+      const lines = output.split("\n")
+
+      // Find the first line that starts with { or [
+      const jsonStartIdx = lines.findIndex(line => {
+        const trimmed = line.trim()
+        return trimmed.startsWith("{") || trimmed.startsWith("[")
+      })
+
+      if (jsonStartIdx === -1) {
+        return consoleOutput // No JSON start found
+      }
+
+      // Find the last line that ends with } or ]
+      let jsonEndIdx = -1
+      for (let i = lines.length - 1; i >= jsonStartIdx; i--) {
+        const trimmed = lines[i].trim()
+        if (trimmed.endsWith("}") || trimmed.endsWith("]")) {
+          jsonEndIdx = i
+          try {
+            // make sure we have valid JSON
+            return parse(lines, jsonStartIdx, jsonEndIdx)
+          } catch {
+            // ignore and continue searching upwards
+          }
+        }
+      }
+      return consoleOutput // No JSON end found, just return for upstream handling
+    }
+    return Promise.resolve(extractJsonFromPossiblyPollutedOutput(shellOutput))
   }
 
   protected cacheKey(pkg: Pick<ProdDepType, "name" | "version" | "path">): string {
