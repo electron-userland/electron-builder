@@ -189,8 +189,15 @@
           "description": "Relative path to custom extensions xml to be included in an `appmanifest.xml`.",
           "type": "string"
         },
+        "capabilities": {
+          "description": "windows uwp capabilities",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
         "customManifestPath": {
-          "description": "(Advanced Option) Relative path to custom `appmanifest.xml` (file name doesn't matter, it'll be renamed) located in build resources directory.\nSupports the following template macros:\n\n- ${publisher}\n- ${publisherDisplayName}\n- ${version}\n- ${applicationId}\n- ${identityName}\n- ${executable}\n- ${displayName}\n- ${description}\n- ${backgroundColor}\n- ${logo}\n- ${square150x150Logo}\n- ${square44x44Logo}\n- ${lockScreen}\n- ${defaultTile}\n- ${splashScreen}\n- ${arch}\n- ${resourceLanguages}\n- ${extensions}\n- ${minVersion}\n- ${maxVersionTested}",
+          "description": "(Advanced Option) Relative path to custom `appmanifest.xml` (file name doesn't matter, it'll be renamed) located in build resources directory.\nSupports the following template macros:\n\n- ${publisher}\n- ${publisherDisplayName}\n- ${version}\n- ${applicationId}\n- ${identityName}\n- ${executable}\n- ${displayName}\n- ${description}\n- ${backgroundColor}\n- ${logo}\n- ${square150x150Logo}\n- ${square44x44Logo}\n- ${lockScreen}\n- ${defaultTile}\n- ${splashScreen}\n- ${arch}\n- ${resourceLanguages}\n- ${capabilities}\n- ${extensions}\n- ${minVersion}\n- ${maxVersionTested}",
           "type": "string"
         },
         "displayName": {
