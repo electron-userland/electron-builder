@@ -583,7 +583,9 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
       Object.assign(appPlist, extendInfo)
     }
     for (const [k, v] of Object.entries(appPlist)) {
-      if (v === null || v === undefined) delete appPlist[k]
+      if (v === null || v === undefined) {
+        delete appPlist[k]
+      }
     }
   }
 

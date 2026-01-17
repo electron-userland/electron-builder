@@ -29,12 +29,16 @@ const getTreeHeight = (tree: HoisterResult): number => {
   const seen = new Set<HoisterResult>()
 
   const visitNode = (node: HoisterResult) => {
-    if (seen.has(node)) return
+    if (seen.has(node)) {
+      return
+    }
     seen.add(node)
 
     height += 1
     maxHeight = Math.max(height, maxHeight)
-    for (const dep of node.dependencies) visitNode(dep)
+    for (const dep of node.dependencies) {
+      visitNode(dep)
+    }
     height -= 1
   }
 
