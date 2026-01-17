@@ -4,6 +4,7 @@ import * as path from "path"
 import { hdiUtil, hdiutilTransientExitCodes } from "./hdiuil"
 import { writeFile } from "fs-extra"
 import { DmgBuildConfig } from "./dmg"
+import { getBinFromUrl } from "app-builder-lib/src/binDownload"
 
 export { DmgTarget } from "./dmg"
 
@@ -13,8 +14,9 @@ export function getDmgTemplatePath() {
   return path.join(root, "templates")
 }
 
-export function getDmgVendorPath() {
-  return path.join(root, "vendor")
+export function getDmgVendorPath(): string {
+
+
 }
 
 export async function attachAndExecute(dmgPath: string, readWrite: boolean, task: (devicePath: string) => Promise<any>) {
@@ -156,14 +158,8 @@ export async function customizeDmg({ appPath, artifactPath, volumeName, specific
   const settingsFile = await packager.getTempFile(".json")
   await writeFile(settingsFile, JSON.stringify(settings, null, 2))
 
-  const python3Check = () => exec("command", ["-v", "python3"])
-  const pythonCheck = () => exec("command", ["-v", "python"])
-  const pythonPath = process.env.PYTHON_PATH || (await python3Check().catch(pythonCheck)) || (await pythonCheck())
-  if (pythonPath == null || isEmptyOrSpaces(pythonPath.trim())) {
-    throw new Error("Cannot find 'python' or 'python3' executable, please ensure Python is installed and available in PATH or set PYTHON_PATH environment variable")
-  }
   const vendorDir = getDmgVendorPath()
-  await exec(pythonPath.trim(), [path.join(vendorDir, "run_dmgbuild.py"), "-s", settingsFile, path.basename(volumePath), artifactPath], {
+  await exec(vendorDir, ["-s", settingsFile, path.basename(volumePath), artifactPath], {
     cwd: vendorDir,
     env: {
       ...process.env,
