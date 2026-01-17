@@ -109,7 +109,6 @@
     "@types/js-yaml": "4.0.3",
     "@types/plist": "3.0.5",
     "@types/semver": "7.7.1",
-    "@types/tar": "7.5.3",
     "@types/tiny-async-pool": "^1",
     "@types/which": "^3.0.4",
     "dmg-builder": "workspace:*",
