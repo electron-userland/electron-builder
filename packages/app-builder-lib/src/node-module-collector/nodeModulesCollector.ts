@@ -108,8 +108,8 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
       }
     )
   }
+
   protected async parseDependenciesTree(shellOutput: string): Promise<any> {
-    // uses trimmed original output as fallback to let super classes handle explicit parsing/errors
     const extractJsonFromPossiblyPollutedOutput = (output: string): any | string => {
       const consoleOutput = output.trim()
       try {
@@ -117,6 +117,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
       } catch {
         // Continue
       }
+
       const lines = output.split("\n")
 
       // Find the first line that starts with { or [
@@ -129,26 +130,45 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
         return consoleOutput // No JSON start found
       }
 
-      // Find the last line that ends with } or ]
+      // Find matching closing bracket using bracket counting
+      let depth = 0
       let jsonEndIdx = -1
-      for (let i = lines.length - 1; i >= jsonStartIdx; i--) {
-        const trimmed = lines[i].trim()
-        if (trimmed.endsWith("}") || trimmed.endsWith("]")) {
-          jsonEndIdx = i
-          try {
-            // Extract the slice between start and end lines and attempt to parse
-            const candidate = lines
-              .slice(jsonStartIdx, jsonEndIdx + 1)
-              .join("\n")
-              .trim()
-            return JSON.parse(candidate)
-          } catch {
-            // ignore and continue searching upwards
+
+      for (let i = jsonStartIdx; i < lines.length; i++) {
+        const line = lines[i]
+        for (const char of line) {
+          if (char === "{" || char === "[") {
+            depth++
+          } else if (char === "}" || char === "]") {
+            depth--
+            if (depth === 0) {
+              jsonEndIdx = i
+              break
+            }
           }
         }
+        if (jsonEndIdx !== -1) {
+          break
+        }
       }
-      return consoleOutput // No JSON end found, just return for upstream handling
+
+      if (jsonEndIdx === -1) {
+        return consoleOutput // No matching closing bracket found
+      }
+
+      // Parse the matched JSON section
+      const candidate = lines
+        .slice(jsonStartIdx, jsonEndIdx + 1)
+        .join("\n")
+        .trim()
+
+      try {
+        return JSON.parse(candidate)
+      } catch {
+        return consoleOutput // Invalid JSON, fallback
+      }
     }
+
     return Promise.resolve(extractJsonFromPossiblyPollutedOutput(shellOutput))
   }
 
