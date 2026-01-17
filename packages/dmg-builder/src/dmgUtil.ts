@@ -1,10 +1,10 @@
 import { DmgOptions, MacPackager, PlatformPackager } from "app-builder-lib"
+import { downloadArtifact } from "app-builder-lib/src/binDownload"
 import { exec, executeFinally, exists, isEmptyOrSpaces, TmpDir } from "builder-util"
-import * as path from "path"
-import { hdiUtil, hdiutilTransientExitCodes } from "./hdiuil"
 import { writeFile } from "fs-extra"
+import * as path from "path"
 import { DmgBuildConfig } from "./dmg"
-import { getBinFromUrl } from "app-builder-lib/src/binDownload"
+import { hdiUtil, hdiutilTransientExitCodes } from "./hdiuil"
 
 export { DmgTarget } from "./dmg"
 
@@ -14,9 +14,22 @@ export function getDmgTemplatePath() {
   return path.join(root, "templates")
 }
 
-export function getDmgVendorPath(): string {
-
-
+export async function getDmgVendorPath(): Promise<string> {
+  const version = "1.6.7"
+  const arch = process.arch === "arm64" ? "arm64" : "x86_64"
+  const config = {
+    arm64: "egyeVf8nTykmLn08I2Znpvjw3E8FJEvNEVgk5650CfJYD00ffp9MMFb4hawd2c6DFgDRI2cfwdZIDdBIC2S/Ig==",
+    x86_64: "bwLvCljFyIPVUH7Z/bjlSwO/tac1rO5AXcQKHrYRbSpg5GtZ1kZ0ZEibCf+PM0PnnA8+YpUxU6ZgLW/raeoKYA==",
+  }
+  const file = await downloadArtifact({
+    releaseName: "dmg-builder@1.1.0",
+    filenameWithExt: `dmgbuild-bundle-${arch}-${version}.tar.gz`,
+    checksums: {
+      [arch]: config[arch],
+    },
+    githubOrgRepo: "mmaietta/electron-builder-binaries",
+  })
+  return path.resolve(file, "dmgbuild")
 }
 
 export async function attachAndExecute(dmgPath: string, readWrite: boolean, task: (devicePath: string) => Promise<any>) {
