@@ -1,49 +1,81 @@
-import * as fs from "fs"
+import { executeAppBuilder, log } from "builder-util"
+import { MultiProgress } from "electron-publish/out/multiProgress"
+import * as fs from "fs-extra"
 import * as path from "path"
-import { ElectronPlatformName } from "./ElectronFramework"
-
-import { log } from "builder-util"
-import { getBin } from "../binDownload"
 import { PrepareApplicationStageDirectoryOptions } from "../Framework"
+import { downloadArtifact } from "../util/electronGet"
+import { ElectronBrandingOptions } from "./ElectronFramework"
+import { Platform } from "../core"
 
-// NOTE: Adapted from https://github.com/MarshallOfSound/electron-packager-plugin-non-proprietary-codecs-ffmpeg to resolve dependency vulnerabilities
-const downloadFFMPEG = async (electronVersion: string, platform: ElectronPlatformName, arch: string) => {
-  const ffmpegFileName = `ffmpeg-v${electronVersion}-${platform}-${arch}.zip`
-  const url = `https://github.com/electron/electron/releases/download/v${electronVersion}/${ffmpegFileName}`
+export class FFMPEGInjector {
+  constructor(
+    private readonly progress: MultiProgress | null,
+    private readonly options: PrepareApplicationStageDirectoryOptions,
+    private readonly electronVersion: string,
+    private readonly branding: Required<ElectronBrandingOptions>
+  ) {}
 
-  log.info({ file: ffmpegFileName }, "downloading non-proprietary FFMPEG")
-  return getBin(ffmpegFileName, url)
-}
+  async inject() {
+    const libPath =
+      this.options.platformName === Platform.MAC.nodeName
+        ? path.join(this.options.appOutDir, `${this.branding.productName}.app`, `/Contents/Frameworks/${this.branding.productName} Framework.framework/Versions/A/Libraries`)
+        : this.options.appOutDir
 
-const copyFFMPEG = (targetPath: string, platform: ElectronPlatformName) => (sourcePath: string) => {
-  let fileName = "ffmpeg.dll"
-  if (["darwin", "mas"].includes(platform)) {
-    fileName = "libffmpeg.dylib"
-  } else if (platform === "linux") {
-    fileName = "libffmpeg.so"
+    const ffmpegDir = await this.downloadFFMPEG()
+    return this.copyFFMPEG(libPath, ffmpegDir)
   }
 
-  const libPath = path.resolve(sourcePath, fileName)
-  const libTargetPath = path.resolve(targetPath, fileName)
-  log.info({ lib: log.filePath(libPath), target: log.filePath(libTargetPath) }, "copying non-proprietary FFMPEG")
+  private async downloadFFMPEG(): Promise<string> {
+    const ffmpegFileName = `ffmpeg-v${this.electronVersion}-${this.options.platformName}-${this.options.arch}`
 
-  // If the source doesn't exist we have a problem
-  if (!fs.existsSync(libPath)) {
-    throw new Error(`Failed to find FFMPEG library file at path: ${libPath}`)
+    log.info({ ffmpegFileName }, "downloading")
+
+    const {
+      packager: {
+        config: { electronDownload },
+      },
+      platformName,
+      arch,
+    } = this.options
+
+    const file = await downloadArtifact(
+      {
+        electronDownload,
+        artifactName: "ffmpeg",
+        platformName,
+        arch,
+        version: this.electronVersion,
+      },
+      this.progress
+    )
+
+    const ffmpegDir = await this.options.packager.info.tempDirManager.getTempDir({ prefix: "ffmpeg" })
+    log.debug(null, "extracting FFMPEG zip")
+    await executeAppBuilder(["unzip", "--input", file, "--output", ffmpegDir])
+    return ffmpegDir
   }
 
-  // If we are copying to the source we can stop immediately
-  if (libPath !== libTargetPath) {
-    fs.copyFileSync(libPath, libTargetPath)
-  }
-  return libTargetPath
-}
+  async copyFFMPEG(targetPath: string, sourcePath: string) {
+    let fileName = "ffmpeg.dll"
+    if (["darwin", "mas"].includes(this.options.platformName)) {
+      fileName = "libffmpeg.dylib"
+    } else if (this.options.platformName === "linux") {
+      fileName = "libffmpeg.so"
+    }
 
-export default function injectFFMPEG(options: PrepareApplicationStageDirectoryOptions, electrionVersion: string) {
-  let libPath = options.appOutDir
-  if (options.platformName === "darwin") {
-    libPath = path.resolve(options.appOutDir, "Electron.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Libraries")
-  }
+    const libPath = path.resolve(sourcePath, fileName)
+    const libTargetPath = path.resolve(targetPath, fileName)
+    log.info({ lib: log.filePath(libPath), target: libTargetPath }, "copying non-proprietary FFMPEG")
 
-  return downloadFFMPEG(electrionVersion, options.platformName, options.arch).then(copyFFMPEG(libPath, options.platformName))
+    // If the source doesn't exist we have a problem
+    if (!fs.existsSync(libPath)) {
+      throw new Error(`Failed to find FFMPEG library file at path: ${libPath}`)
+    }
+
+    // If we are copying to the source we can stop immediately
+    if (libPath !== libTargetPath) {
+      await fs.copyFile(libPath, libTargetPath)
+    }
+    return libTargetPath
+  }
 }

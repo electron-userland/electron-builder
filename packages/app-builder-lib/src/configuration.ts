@@ -1,6 +1,6 @@
 import { Arch } from "builder-util"
 import { BeforeBuildContext, Target } from "./core"
-import { ElectronBrandingOptions, ElectronDownloadOptions } from "./electron/ElectronFramework"
+import { ElectronBrandingOptions } from "./electron/ElectronFramework"
 import { PrepareApplicationStageDirectoryOptions } from "./Framework"
 import { AppXOptions } from "./options/AppXOptions"
 import { AppImageOptions, DebOptions, FlatpakOptions, LinuxConfiguration, LinuxTargetSpecificOptions } from "./options/linuxOptions"
@@ -16,6 +16,7 @@ import { BuildResult } from "./packager"
 import { ArtifactBuildStarted, ArtifactCreated } from "./packagerApi"
 import { PlatformPackager } from "./platformPackager"
 import { NsisOptions, NsisWebOptions, PortableOptions } from "./targets/nsis/nsisOptions"
+import { ElectronDownloadOptions, ElectronGetOptions } from "./util/electronGet"
 
 // duplicate appId here because it is important
 /**
@@ -201,9 +202,10 @@ export interface Configuration extends CommonConfiguration, PlatformSpecificBuil
   readonly electronCompile?: boolean
 
   /**
-   * The [electron-download](https://github.com/electron-userland/electron-download#usage) options.
+   * The [electron-download](https://github.com/electron-userland/electron-download#usage) options. (legacy)
+   * Alternatively, you can use [electron/get](https://github.com/electron/get#usage) options.
    */
-  readonly electronDownload?: ElectronDownloadOptions
+  readonly electronDownload?: ElectronDownloadOptions | ElectronGetOptions | null
 
   /**
    * The branding used by Electron's distributables. This is needed if a fork has modified Electron's BRANDING.json file.

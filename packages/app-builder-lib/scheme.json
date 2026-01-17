@@ -1078,9 +1078,33 @@
         },
         "version": {
           "type": "string"
+        },
+        "checksums": {
+          "type": "object"
         }
       },
       "type": "object"
+    },
+    "ElectronGetOptions": {
+      "additionalProperties": false,
+      "properties": {
+        "checksums": {
+          "$ref": "#/definitions/Record<string,string>",
+          "description": "Provides checksums for the artifact as strings.\nCan be used if you already know the checksums of the Electron artifact\nyou are downloading and want to skip the checksum file download\nwithout skipping the checksum validation.\n\nThis should be an object whose keys are the file names of the artifacts and\nthe values are their respective SHA256 checksums."
+        },
+        "force": {
+          "description": "Whether to download an artifact regardless of whether it's in the cache directory.",
+          "type": "boolean"
+        },
+        "isGeneric": {
+          "const": false,
+          "type": "boolean"
+        },
+        "unsafelyDisableChecksums": {
+          "description": "When set to `true`, disables checking that the artifact download completed successfully\nwith the correct payload.",
+          "type": "boolean"
+        }
+      }
     },
     "FileAssociation": {
       "additionalProperties": false,
@@ -5581,6 +5605,10 @@
       ],
       "type": "object"
     },
+    "Record<string,string>": {
+      "additionalProperties": false,
+      "type": "object"
+    },
     "ReleaseInfo": {
       "additionalProperties": false,
       "properties": {
@@ -7344,8 +7372,18 @@
       "description": "The function (or path to file or module id) to be run when staging the electron artifact environment.\nReturns the path to custom Electron build (e.g. `~/electron/out/R`) or folder of electron zips.\n\nZip files must follow the pattern `electron-v${version}-${platformName}-${arch}.zip`, otherwise it will be assumed to be an unpacked Electron app directory"
     },
     "electronDownload": {
-      "$ref": "#/definitions/ElectronDownloadOptions",
-      "description": "The [electron-download](https://github.com/electron-userland/electron-download#usage) options."
+      "anyOf": [
+        {
+          "$ref": "#/definitions/ElectronDownloadOptions"
+        },
+        {
+          "$ref": "#/definitions/ElectronGetOptions"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "The [electron-download](https://github.com/electron-userland/electron-download#usage) options. (legacy)\nAlternatively, you can use [electron/get](https://github.com/electron/get#usage) options."
     },
     "electronFuses": {
       "anyOf": [

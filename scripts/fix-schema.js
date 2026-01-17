@@ -9,20 +9,21 @@ delete o.typeof
 o.type = "object"
 
 schema.definitions.OutgoingHttpHeaders.additionalProperties = {
-  "anyOf": [
+  anyOf: [
     {
-      "items": {
-        "type": "string"
+      items: {
+        type: "string",
       },
-      "type": "array"
+      type: "array",
     },
     {
-      "type": [
-        "string",
-        "number"
-      ]
-    }
-  ]
+      type: ["string", "number"],
+    },
+  ],
+}
+
+schema.definitions.ElectronDownloadOptions.properties.checksums = {
+  type: "object",
 }
 
 o = schema.definitions.SnapOptions.properties.environment.anyOf[0] = {
@@ -31,8 +32,8 @@ o = schema.definitions.SnapOptions.properties.environment.anyOf[0] = {
 }
 
 o = schema.properties["$schema"] = {
-  "description": "JSON Schema for this document.",
-  "type": ["null", "string"],
+  description: "JSON Schema for this document.",
+  type: ["null", "string"],
 }
 
 fs.writeFileSync(schemaFile, JSON.stringify(schema, null, 2))

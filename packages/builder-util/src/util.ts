@@ -10,6 +10,8 @@ import * as path from "path"
 import { install as installSourceMap } from "source-map-support"
 import { getPath7za } from "./7za"
 import { debug, log } from "./log"
+import { exists } from "./fs"
+import { mkdir } from "fs-extra"
 
 if (process.env.JEST_WORKER_ID == null) {
   installSourceMap()
@@ -305,6 +307,18 @@ export function isEmptyOrSpaces(s: string | Nullish): s is "" | Nullish {
 
 export function isTokenCharValid(token: string) {
   return /^[.\w/=+-]+$/.test(token)
+}
+
+export async function getUserDefinedCacheDir() {
+  let cacheEnv = process.env.ELECTRON_BUILDER_CACHE
+  if (!isEmptyOrSpaces(cacheEnv)) {
+    cacheEnv = path.resolve(cacheEnv)
+    if (!(await exists(cacheEnv))) {
+      await mkdir(cacheEnv)
+    }
+    return cacheEnv
+  }
+  return undefined
 }
 
 export function addValue<K, T>(map: Map<K, Array<T>>, key: K, value: T) {
