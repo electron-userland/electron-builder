@@ -171,9 +171,8 @@ export async function customizeDmg({ appPath, artifactPath, volumeName, specific
   const settingsFile = await packager.getTempFile(".json")
   await writeFile(settingsFile, JSON.stringify(settings, null, 2))
 
-  const vendorDir = getDmgVendorPath()
-  await exec(vendorDir, ["-s", settingsFile, path.basename(volumePath), artifactPath], {
-    cwd: vendorDir,
+  const dmgbuild = await getDmgVendorPath()
+  await exec(dmgbuild, ["-s", settingsFile, path.basename(volumePath), artifactPath], {
     env: {
       ...process.env,
       PYTHONIOENCODING: "utf8",
