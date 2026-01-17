@@ -34,7 +34,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
   constructor(
     protected readonly rootDir: string,
     private readonly tempDirManager: TmpDir
-  ) { }
+  ) {}
 
   public async getNodeModules({ packageName }: { packageName: string }): Promise<NodeModuleInfo[]> {
     const tree: ProdDepType = await this.getDependenciesTree(this.installOptions.manager)
@@ -109,15 +109,6 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     )
   }
   protected async parseDependenciesTree(shellOutput: string): Promise<any> {
-    const parse = (lines: string[], start: number, end: number): any => {
-      // Extract the slice between start and end lines
-      const candidate = lines
-        .slice(start, end + 1)
-        .join("\n")
-        .trim()
-      return JSON.parse(candidate)
-    }
-
     // uses trimmed original output as fallback to let super classes handle explicit parsing/errors
     const extractJsonFromPossiblyPollutedOutput = (output: string): any | string => {
       const consoleOutput = output.trim()
@@ -145,8 +136,12 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
         if (trimmed.endsWith("}") || trimmed.endsWith("]")) {
           jsonEndIdx = i
           try {
-            // make sure we have valid JSON
-            return parse(lines, jsonStartIdx, jsonEndIdx)
+            // Extract the slice between start and end lines and attempt to parse
+            const candidate = lines
+              .slice(jsonStartIdx, jsonEndIdx + 1)
+              .join("\n")
+              .trim()
+            return JSON.parse(candidate)
           } catch {
             // ignore and continue searching upwards
           }
