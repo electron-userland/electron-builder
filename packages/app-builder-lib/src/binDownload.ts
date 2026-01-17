@@ -10,6 +10,7 @@ import * as os from "os"
 import * as path from "path"
 import * as lockfile from "proper-lockfile"
 import * as tar from "tar"
+import { WriteStream as TtyWriteStream } from "tty"
 
 /**
  * Deterministic <length>-character URL-safe hash (a–z0–9)
@@ -89,17 +90,17 @@ export type ProgressCallback = (info: { stage: "download" | "extract"; message: 
  */
 export async function downloadArtifact(options: { releaseName: string; filenameWithExt: string; checksums: Record<string, string>; githubOrgRepo?: string }): Promise<string> {
   const { releaseName, filenameWithExt, checksums, githubOrgRepo = "electron-userland/electron-builder-binaries" } = options
-  const progress = new MultiProgress()
+  const progress = (process.stdout as TtyWriteStream).isTTY ? new MultiProgress() : null
 
-  const progressBar = progress.createBar(`${" ".repeat(PADDING + 2)}[:bar] :percent | ${filenameWithExt}`, { total: 100 })
-  progressBar.render()
+  const progressBar = progress?.createBar(`${" ".repeat(PADDING + 2)}[:bar] :percent | ${filenameWithExt}`, { total: 100 })
+  progressBar?.render()
 
-  const file = await _downloadArtifact(`https://github.com/${githubOrgRepo}/releases/download`, releaseName, filenameWithExt, checksums, info => {
-    progressBar.update(info.percent != null ? Math.floor(info.percent * 100) : 0)
+  const file = await _downloadArtifact(`https://github.com/${githubOrgRepo}/releases/download/`, releaseName, filenameWithExt, checksums, info => {
+    progressBar?.update(info.percent != null ? Math.floor(info.percent * 100) : 0)
   })
 
-  progressBar.update(100)
-  progressBar.terminate()
+  progressBar?.update(100)
+  progressBar?.terminate()
   return file
 }
 
