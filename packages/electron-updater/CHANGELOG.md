@@ -1,5 +1,11 @@
 ## 4.3.0
 
+## 6.8.0
+
+### Minor Changes
+
+- Emit download-progress events when downloading with multiple range differential downloader _[`#9448`](https://github.com/electron-userland/electron-builder/pull/9448) [`3533a3e`](https://github.com/electron-userland/electron-builder/commit/3533a3eb5af01416db3ecac703d6da031b05e615) [@eliotschu](https://github.com/eliotschu)_
+
 ## 6.7.3
 
 ### Patch Changes

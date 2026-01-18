@@ -110,6 +110,7 @@ export async function customizeDmg({ appPath, artifactPath, volumeName, specific
   const settings: DmgBuildConfig = {
     title: path.basename(volumePath),
     icon: await packager.getResource(specification.icon),
+    "badge-icon": await packager.getResource(specification.badgeIcon),
     "icon-size": specification.iconSize,
     "text-size": iconTextSize,
 
