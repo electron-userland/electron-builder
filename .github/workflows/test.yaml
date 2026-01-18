@@ -304,3 +304,37 @@ jobs:
         env:
           TEST_FILES: ${{ matrix.testFiles }}
           FORCE_COLOR: 1
+
+  build-snap:
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-15]
+    steps:
+      - name: Checkout code repository
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+
+      - name: Install Snapcraft (Ubuntu)
+        if: runner.os == 'Linux'
+        run: |
+          sudo snap install snapcraft --classic
+
+      - name: Install Snapcraft (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          brew install snapcraft
+
+      - name: Setup Tests
+        uses: ./.github/actions/pretest
+        with:
+          cache-path: ~/Library/Caches/electron
+          cache-key: v-23.3.10-${{ matrix.os }}-electron
+
+      - name: Test
+        run: |
+          pnpm ci:test
+        env:
+          TEST_FILES: snapHeavyTest
+          FORCE_COLOR: 1
