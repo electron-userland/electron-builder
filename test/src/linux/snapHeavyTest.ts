@@ -4,7 +4,7 @@ import { app, EXTENDED_TIMEOUT, snapTarget } from "../helpers/packTester"
 // very slow
 const options = { timeout: EXTENDED_TIMEOUT }
 
-test.only("snap full", options, ({ expect }) =>
+test("snap full", options, ({ expect }) =>
   app(expect, {
     targets: snapTarget,
     config: {
@@ -14,9 +14,6 @@ test.only("snap full", options, ({ expect }) =>
       productName: "Snap Electron App (full build)",
       snap: {
         core: "core24",
-                core24: {
-          useMultipass: true,
-        },  
       },
       electronFuses: {
         runAsNode: true,
@@ -42,9 +39,6 @@ test("snap full (armhf)", options, ({ expect }) =>
       productName: "Snap Electron App (full build)",
       snap: {
         core: "core24",
-        core24: {
-          useMultipass: true,
-        },
       },
     },
   }))
