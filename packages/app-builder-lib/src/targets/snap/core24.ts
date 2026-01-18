@@ -99,8 +99,8 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
       plugin: "dump",
       source: "app",
       "build-packages": options.buildPackages?.length ? options.buildPackages : undefined,
-      "stage-packages": this.processDefaultList(options.stagePackages, defaultStagePackages),
-      after: this.processDefaultList(options.after, []),
+      "stage-packages": this.expandDefaultsInArray(options.stagePackages, defaultStagePackages),
+      after: this.expandDefaultsInArray(options.after, []),
       stage: options.appPartStage?.length ? options.appPartStage : undefined,
     }
 
@@ -108,22 +108,23 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
     const { root: rootPlugs, app: appPlugs } = options.plugs
       ? this.processPlugOrSlots(options.plugs)
       : {
-        root: {},
-        app: this.defaultPlugs,
-      }
+          root: {},
+          app: this.defaultPlugs,
+        }
     const { root: rootSlots, app: appSlots } = options.slots ? this.processPlugOrSlots(options.slots) : { root: {}, app: [] }
 
     // Create the app configuration
     const app: App = {
       command: `desktop-launch $SNAP/app/${this.packager.executableName}`,
-      plugs: appPlugs.length ? appPlugs : undefined,
-      slots: appSlots.length ? appSlots : undefined,
+      plugs: appPlugs,
+      slots: appSlots,
       autostart: options.autoStart ? `${appName}.desktop` : undefined,
       // extensions: ["gnome"],
       desktop: `${appName}.desktop`,
     }
 
-    const iconPath = (await this.helper.icons) && this.helper.maxIconPath != null ? `\${SNAP}/${this.guiRelativePath}/${appName}.${path.extname(this.helper.maxIconPath)}` : undefined
+    const iconPath =
+      (await this.helper.icons) && this.helper.maxIconPath != null ? `\${SNAP}/${this.guiRelativePath}/${appName}.${path.extname(this.helper.maxIconPath)}` : undefined
 
     // Process hooks if configured
     const hooksConfig = options.hooks
@@ -167,8 +168,8 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
       layout: options.layout || undefined,
 
       // Interfaces
-      plugs: Object.keys(rootPlugs).length ? rootPlugs : undefined,
-      slots: Object.keys(rootSlots).length ? rootSlots : undefined,
+      plugs:  rootPlugs,
+      slots:rootSlots,
 
       // Hooks
       hooks: hooks,
@@ -246,45 +247,17 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
   }
 
   /**
-   * Process lists that support "default" keyword
-   */
-  processDefaultList(list: Array<string> | Nullish, defaults: Array<string> = []): Array<string> | undefined {
-    if (!list) {
-      return defaults.length ? defaults : undefined
-    }
-
-    const result: string[] = []
-    let hasDefault = false
-
-    for (const item of list) {
-      if (item === "default") {
-        hasDefault = true
-      } else {
-        result.push(item)
-      }
-    }
-
-    if (hasDefault) {
-      const merged = [...defaults, ...result]
-      return merged.length ? merged : undefined
-    }
-
-    return result.length ? result : defaults.length ? defaults : undefined
-  }
-
-  /**
    * Process plugs or slots into root-level definitions and app-level references
    */
-  processPlugOrSlots(items: Array<string | SlotDescriptor | PlugDescriptor> | SlotDescriptor | PlugDescriptor | null): {
-    root: Record<string, unknown>
-    app: string[]
+  processPlugOrSlots<T extends Array<string | SlotDescriptor | PlugDescriptor> | SlotDescriptor | PlugDescriptor | null>(items: T): {
+    root: Record<string, unknown> | undefined
+    app: string[] | undefined
   } {
+    if (!items || (Array.isArray(items) && items.length === 0)) {
+      return { root: undefined, app: undefined }
+    }
     const root: Record<string, unknown> = {}
     const app: string[] = []
-
-    if (!items) {
-      return { root, app }
-    }
 
     // Handle single descriptor object
     if (!Array.isArray(items)) {
@@ -297,8 +270,7 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
 
     // Handle array - support "default" keyword
     const processedItems = this.expandDefaultsInArray(items, this.defaultPlugs)
-
-    for (const item of processedItems) {
+    for (const item of processedItems ?? []) {
       if (typeof item === "string") {
         // Simple string reference
         app.push(item)
@@ -311,28 +283,21 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
       }
     }
 
-    return { root, app }
+    return { root: Object.keys(root).length > 0 ? root : undefined, app: app.length > 0 ? app : undefined }
   }
 
   /**
-   * Expand "default" keyword in arrays of plugs/slots
+   * Expand "default" keyword in arrays of anything
    */
-  private expandDefaultsInArray(items: Array<string | SlotDescriptor | PlugDescriptor>, defaults: string[]): Array<string | SlotDescriptor | PlugDescriptor> {
-    const result: Array<string | SlotDescriptor | PlugDescriptor> = []
-    let hasDefault = false
-
-    for (const item of items) {
+  private expandDefaultsInArray<T>(items: T[] | Nullish, defaults: T[]): T[] | undefined {
+    const result: Array<T> = []
+    for (const item of items ?? []) {
       if (typeof item === "string" && item === "default") {
-        hasDefault = true
+        result.push(...defaults)
       } else {
         result.push(item)
       }
     }
-
-    if (hasDefault) {
-      return [...defaults, ...result]
-    }
-
-    return result.length > 0 ? result : defaults
+    return result.length > 0 ? result : undefined
   }
 }

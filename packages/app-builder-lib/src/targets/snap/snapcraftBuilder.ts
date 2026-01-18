@@ -210,7 +210,7 @@ async function cleanupBuildArtifacts(workDir: string, keepArtifacts: boolean = f
  */
 export async function buildSnap(options: BuildSnapOptions): Promise<string> {
   const progress = new SnapBuildProgress()
-  const { SNAPCRAFT_BUILD_ENVIRONMENT = "host", SNAPCRAFT_NO_NETWORK = 1 } = process.env
+  const { SNAPCRAFT_BUILD_ENVIRONMENT = "host", SNAPCRAFT_NO_NETWORK = "1" } = process.env
   const {
     snapcraftConfig,
     artifactPath,
