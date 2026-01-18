@@ -1,4 +1,3 @@
-import { Lazy } from "lazy-val"
 import { NpmNodeModulesCollector } from "./npmNodeModulesCollector"
 import { PM } from "./packageManager"
 import { NpmDependency } from "./types"
@@ -12,13 +11,7 @@ export class YarnNodeModulesCollector extends NpmNodeModulesCollector {
     lockfile: "yarn.lock",
   }
 
-  protected isHoisted: Lazy<boolean> = new Lazy<boolean>(async () => true)
-
   protected async getDependenciesTree(_pm: PM): Promise<NpmDependency> {
     return super.getDependenciesTree(PM.NPM)
-  }
-
-  protected isProdDependency(packageName: string, tree: NpmDependency): boolean {
-    return super.isProdDependency(packageName, tree) || tree.dependencies?.[packageName] != null || tree.optionalDependencies?.[packageName] != null
   }
 }
