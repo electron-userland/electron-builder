@@ -67,8 +67,4 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
   protected isProdDependency(packageName: string, tree: NpmDependency) {
     return tree._dependencies?.[packageName] != null
   }
-
-  protected async parseDependenciesTree(jsonBlob: string): Promise<NpmDependency> {
-    return Promise.resolve(JSON.parse(jsonBlob))
-  }
 }

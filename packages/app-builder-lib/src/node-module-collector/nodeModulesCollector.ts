@@ -59,7 +59,6 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
   }
 
   protected abstract getArgs(): string[]
-  protected abstract parseDependenciesTree(jsonBlob: string): Promise<ProdDepType>
   protected abstract extractProductionDependencyGraph(tree: Dependency<ProdDepType, OptionalDepType>, dependencyId: string): Promise<void>
   protected abstract collectAllDependencies(tree: Dependency<ProdDepType, OptionalDepType>, appPackageName: string): Promise<void>
 
@@ -76,7 +75,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
       async () => {
         await this.streamCollectorCommandToFile(command, args, this.rootDir, tempOutputFile)
         const shellOutput = await fs.readFile(tempOutputFile, { encoding: "utf8" })
-        return await this.parseDependenciesTree(shellOutput.trim())
+        return await this.parseDependenciesTree(shellOutput)
       },
       {
         retries: 1,
@@ -108,6 +107,69 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
         },
       }
     )
+  }
+
+  protected async parseDependenciesTree(shellOutput: string): Promise<any> {
+    const extractJsonFromPossiblyPollutedOutput = (output: string): any | string => {
+      const consoleOutput = output.trim()
+      try {
+        return JSON.parse(consoleOutput)
+      } catch {
+        // Continue
+      }
+
+      const lines = output.split("\n")
+
+      // Find the first line that starts with { or [
+      const jsonStartIdx = lines.findIndex(line => {
+        const trimmed = line.trim()
+        return trimmed.startsWith("{") || trimmed.startsWith("[")
+      })
+
+      if (jsonStartIdx === -1) {
+        return consoleOutput // No JSON start found
+      }
+
+      // Find matching closing bracket using bracket counting
+      let depth = 0
+      let jsonEndIdx = -1
+
+      for (let i = jsonStartIdx; i < lines.length; i++) {
+        const line = lines[i]
+        for (const char of line) {
+          if (char === "{" || char === "[") {
+            depth++
+          } else if (char === "}" || char === "]") {
+            depth--
+            if (depth === 0) {
+              jsonEndIdx = i
+              break
+            }
+          }
+        }
+        if (jsonEndIdx !== -1) {
+          break
+        }
+      }
+
+      if (jsonEndIdx === -1) {
+        return consoleOutput // No matching closing bracket found
+      }
+
+      // Parse the matched JSON section
+      const candidate = lines
+        .slice(jsonStartIdx, jsonEndIdx + 1)
+        .join("\n")
+        .trim()
+
+      try {
+        return JSON.parse(candidate)
+      } catch {
+        return consoleOutput // Invalid JSON, fallback
+      }
+    }
+
+    return Promise.resolve(extractJsonFromPossiblyPollutedOutput(shellOutput))
   }
 
   protected cacheKey(pkg: Pick<ProdDepType, "name" | "version" | "path">): string {
@@ -258,7 +320,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
       const child = childProcess.spawn(command, args, {
         cwd,
         env: { COREPACK_ENABLE_STRICT: "0", ...process.env }, // allow `process.env` overrides
-        shell: false, // required to prevent console logs polution from shell profile loading when `true`
+        shell: true,
       })
 
       let stderr = ""
