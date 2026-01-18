@@ -1,5 +1,24 @@
 # dmg-builder
 
+## 26.4.1
+
+### Patch Changes
+
+- Fix: update the `dmgbuild` hex regex for `backgroundColor` to be case insensitive _[`#9487`](https://github.com/electron-userland/electron-builder/pull/9487) [`c3af390`](https://github.com/electron-userland/electron-builder/commit/c3af390ec67becfe548a8c83f0d3ba828c28b751) [@Kilian](https://github.com/Kilian)_
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+[`cb5b9c6`](https://github.com/electron-userland/electron-builder/commit/cb5b9c6e47686b0329dbf808b36587a82db03d3b) [`d38ae8e`](https://github.com/electron-userland/electron-builder/commit/d38ae8e666ca3769dfa091643ef816632f6e206f) [`1c94529`](https://github.com/electron-userland/electron-builder/commit/1c945290a38cc4b6070a4e756db58354aee5e683) [`ef43f42`](https://github.com/electron-userland/electron-builder/commit/ef43f42c2532ae3501071c6329f3dd058a91fd7f) [`25b5dd2`](https://github.com/electron-userland/electron-builder/commit/25b5dd2b4a87554640c99ffef376af8703f69a3d) [`97e5503`](https://github.com/electron-userland/electron-builder/commit/97e5503cecfcdfd9dddf1c4b321d52b5d5a94f83)
+
+</small>
+
+- `app-builder-lib@26.4.1`
+- `builder-util@26.4.1`
+
+</details>
+
 ## 26.4.0
 
 ### Patch Changes
