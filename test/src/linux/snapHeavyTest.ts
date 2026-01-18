@@ -26,7 +26,8 @@ test("snap full", options, ({ expect }) =>
         grantFileProtocolExtraPrivileges: undefined, // unsupported on current electron version in our tests
       },
     },
-  }))
+  })
+)
 
 // very slow
 test("snap full (armhf)", options, ({ expect }) =>
@@ -41,4 +42,5 @@ test("snap full (armhf)", options, ({ expect }) =>
         core: "core24",
       },
     },
-  }))
+  })
+)

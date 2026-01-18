@@ -168,8 +168,8 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
       layout: options.layout || undefined,
 
       // Interfaces
-      plugs:  rootPlugs,
-      slots:rootSlots,
+      plugs: rootPlugs,
+      slots: rootSlots,
 
       // Hooks
       hooks: hooks,
@@ -249,7 +249,9 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
   /**
    * Process plugs or slots into root-level definitions and app-level references
    */
-  processPlugOrSlots<T extends Array<string | SlotDescriptor | PlugDescriptor> | SlotDescriptor | PlugDescriptor | null>(items: T): {
+  processPlugOrSlots<T extends Array<string | SlotDescriptor | PlugDescriptor> | SlotDescriptor | PlugDescriptor | null>(
+    items: T
+  ): {
     root: Record<string, unknown> | undefined
     app: string[] | undefined
   } {
