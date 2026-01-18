@@ -14,6 +14,9 @@ test.only("snap full", options, ({ expect }) =>
       productName: "Snap Electron App (full build)",
       snap: {
         core: "core24",
+                core24: {
+          useMultipass: true,
+        },  
       },
       electronFuses: {
         runAsNode: true,
@@ -39,6 +42,9 @@ test("snap full (armhf)", options, ({ expect }) =>
       productName: "Snap Electron App (full build)",
       snap: {
         core: "core24",
+        core24: {
+          useMultipass: true,
+        },
       },
     },
   }))

@@ -254,9 +254,9 @@ export async function buildSnap(options: BuildSnapOptions): Promise<string> {
           workDir: stageDir,
           remoteBuild,
           outputSnap: artifactPath,
-          useLXD: useLXD || (isLinux && !useDestructiveMode && !useMultipass && !remoteBuild?.enabled),
-          useMultipass: useMultipass || ((isMac || isWindows) && !remoteBuild?.enabled),
-          useDestructiveMode: useDestructiveMode && isLinux && !remoteBuild?.enabled,
+          useLXD: useLXD, //|| (isLinux && !useDestructiveMode && !useMultipass && !remoteBuild?.enabled),
+          useMultipass: useMultipass, //|| ((isMac || isWindows) && !remoteBuild?.enabled),
+          useDestructiveMode: useDestructiveMode, //&& isLinux && !remoteBuild?.enabled,
           env,
         }),
       {
