@@ -92,15 +92,15 @@ export async function downloadArtifact(options: { releaseName: string; filenameW
   const { releaseName, filenameWithExt, checksums, githubOrgRepo = "electron-userland/electron-builder-binaries" } = options
   const progress = (process.stdout as TtyWriteStream).isTTY ? new MultiProgress() : null
 
-  log.info({ releaseName, filenameWithExt, githubOrgRepo }, "downloading")
+  log.info({ release: releaseName, file: filenameWithExt }, "downloading")
   const progressBar = progress?.createBar(`${" ".repeat(PADDING + 2)}[:bar] :percent | ${filenameWithExt}`, { total: 100 })
   progressBar?.render()
 
   const file = await _downloadArtifact(`https://github.com/${githubOrgRepo}/releases/download/`, releaseName, filenameWithExt, checksums, info => {
-    log.debug({ stage: info.stage, message: info.message }, "download artifact")
     progressBar?.update(info.percent != null ? Math.floor(info.percent * 100) : 0)
   })
 
+  log.debug({ file: filenameWithExt, path: file }, "downloaded")
   progressBar?.update(100)
   progressBar?.terminate()
   return file
