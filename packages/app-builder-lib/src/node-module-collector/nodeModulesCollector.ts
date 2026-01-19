@@ -34,7 +34,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
   constructor(
     protected readonly rootDir: string,
     private readonly tempDirManager: TmpDir
-  ) {}
+  ) { }
 
   public async getNodeModules({ packageName }: { packageName: string }): Promise<NodeModuleInfo[]> {
     const tree: ProdDepType = await this.getDependenciesTree(this.installOptions.manager)
@@ -75,7 +75,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
       async () => {
         await this.streamCollectorCommandToFile(command, args, this.rootDir, tempOutputFile)
         const shellOutput = await fs.readFile(tempOutputFile, { encoding: "utf8" })
-        return await this.parseDependenciesTree(shellOutput)
+        return this.parseDependenciesTree(shellOutput)
       },
       {
         retries: 1,
@@ -109,67 +109,76 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     )
   }
 
-  protected async parseDependenciesTree(shellOutput: string): Promise<any> {
-    const extractJsonFromPossiblyPollutedOutput = (output: string): any | string => {
-      const consoleOutput = output.trim()
-      try {
-        return JSON.parse(consoleOutput)
-      } catch {
-        // Continue
-      }
+  /**
+   * Parses the dependencies tree from shell command output.
+   * 
+   * This method attempts to extract and parse JSON data from shell output that may contain
+   * additional non-JSON content (like warnings or informational messages). It first tries
+   * to parse the entire output as JSON, and if that fails, it intelligently searches for
+   * JSON content within the output by:
+   * 1. Finding the first line that starts with `{` or `[`
+   * 2. Tracking bracket depth to find the matching closing bracket
+   * 3. Extracting only the valid JSON portion
+   * 
+   * @param shellOutput - The raw output from a shell command, potentially containing JSON
+   * @returns The parsed dependencies tree object
+   * @throws {Error} If no JSON content is found in the output
+   * @throws {Error} If no matching closing bracket is found in the output
+   * @throws {SyntaxError} If the extracted content is not valid JSON
+   */
+  protected parseDependenciesTree(shellOutput: string): ProdDepType {
+    const consoleOutput = shellOutput.trim()
+    try {
+      return JSON.parse(consoleOutput)
+    } catch {
+      // Continue
+    }
 
-      const lines = output.split("\n")
+    const lines = consoleOutput.split("\n")
 
-      // Find the first line that starts with { or [
-      const jsonStartIdx = lines.findIndex(line => {
-        const trimmed = line.trim()
-        return trimmed.startsWith("{") || trimmed.startsWith("[")
-      })
+    // Find the first line that starts with { or [
+    const jsonStartIdx = lines.findIndex(line => {
+      const trimmed = line.trim()
+      return trimmed.startsWith("{") || trimmed.startsWith("[")
+    })
 
-      if (jsonStartIdx === -1) {
-        return consoleOutput // No JSON start found
-      }
+    if (jsonStartIdx === -1) {
+      throw new Error("No JSON content found in output")
+    }
 
-      // Find matching closing bracket using bracket counting
-      let depth = 0
-      let jsonEndIdx = -1
+    // Find matching closing bracket using bracket counting
+    let depth = 0
+    let jsonEndIdx = -1
 
-      for (let i = jsonStartIdx; i < lines.length; i++) {
-        const line = lines[i]
-        for (const char of line) {
-          if (char === "{" || char === "[") {
-            depth++
-          } else if (char === "}" || char === "]") {
-            depth--
-            if (depth === 0) {
-              jsonEndIdx = i
-              break
-            }
+    for (let i = jsonStartIdx; i < lines.length; i++) {
+      const line = lines[i]
+      for (const char of line) {
+        if (char === "{" || char === "[") {
+          depth++
+        } else if (char === "}" || char === "]") {
+          depth--
+          if (depth === 0) {
+            jsonEndIdx = i
+            break
           }
         }
-        if (jsonEndIdx !== -1) {
-          break
-        }
       }
-
-      if (jsonEndIdx === -1) {
-        return consoleOutput // No matching closing bracket found
-      }
-
-      // Parse the matched JSON section
-      const candidate = lines
-        .slice(jsonStartIdx, jsonEndIdx + 1)
-        .join("\n")
-        .trim()
-
-      try {
-        return JSON.parse(candidate)
-      } catch {
-        return consoleOutput // Invalid JSON, fallback
+      if (jsonEndIdx !== -1) {
+        break
       }
     }
 
-    return Promise.resolve(extractJsonFromPossiblyPollutedOutput(shellOutput))
+    if (jsonEndIdx === -1) {
+      throw new Error("No matching closing bracket found in output")
+    }
+
+    // Parse the matched JSON section
+    const candidate = lines
+      .slice(jsonStartIdx, jsonEndIdx + 1)
+      .join("\n")
+      .trim()
+
+    return JSON.parse(candidate)
   }
 
   protected cacheKey(pkg: Pick<ProdDepType, "name" | "version" | "path">): string {
