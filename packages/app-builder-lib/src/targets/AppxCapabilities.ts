@@ -1,286 +1,276 @@
 export interface Capability {
+  readonly nsAlias: string | null
+  readonly nsURI: string | null
+  readonly name: string
 
-  readonly nsAlias:string|null
-
-  /**
-   * see https://learn.microsoft.com/en-us/uwp/schemas/appxpackage/uapmanifestschema/element-capabilities
-   */
-  readonly nsURI:string|null
-
-  readonly name:string
-
-  toXMLString():string
+  toXMLString(): string
 }
 
-abstract class BaseCapability implements Capability{
-
-  protected constructor(public readonly nsAlias:string | null,
-                        public readonly nsURI:string | null,
-                        protected readonly elementName:string,
-                        public readonly name:string) {
-  }
-
-  toXMLString(){
-    if(this.nsAlias)
-      return `<${this.nsAlias}:${this.elementName} Name="${this.name}"/>`;
-    return `<${this.elementName} Name="${this.name}"/>`;
-  }
+type CapabilityConfig = {
+  nsAlias: string | null
+  nsURI: string | null
+  declareNS: boolean
+  elementName: string
 }
 
-abstract class NSBaseCapability extends BaseCapability{
-
-  protected constructor(nsAlias:string|null, nsURI:string, elementName:string, name:string) {
-    super(nsAlias, nsURI, elementName, name);
+class AppxCapability implements Capability {
+  constructor(
+    public readonly nsAlias: string | null,
+    public readonly nsURI: string | null,
+    private readonly declareNS: boolean,
+    private readonly elementName: string,
+    public readonly name: string
+  ) {
+    if (!this.nsAlias && this.declareNS) throw new Error("local declaration of namespace without prefix is not supported")
   }
 
-}
-
-abstract class FoundationCapability extends NSBaseCapability{
-
-  protected constructor(elementName:string, name:string) {
-    // http://schemas.microsoft.com/appx/manifest/foundation/windows10
-    super(null, "http://schemas.microsoft.com/appx/manifest/foundation/windows10", elementName, name);
+  toXMLString(): string {
+    const tagName = this.nsAlias ? `${this.nsAlias}:${this.elementName}` : this.elementName
+    const ns = this.declareNS ? `xmlns:${this.nsAlias}="${this.nsURI}"` : ""
+    return `<${tagName} ${ns} Name="${this.name}"/>`
   }
 }
 
-class CommonCapability extends FoundationCapability{
+// Capability type configurations
+const CAPABILITY_TYPES: Record<string, CapabilityConfig> = {
+  common: {
+    nsAlias: null,
+    nsURI: "http://schemas.microsoft.com/appx/manifest/foundation/windows10",
+    declareNS: false,
+    elementName: "Capability",
+  },
+  device: {
+    nsAlias: null,
+    nsURI: "http://schemas.microsoft.com/appx/manifest/foundation/windows10",
+    declareNS: false,
+    elementName: "DeviceCapability",
+  },
+  uap: {
+    nsAlias: "uap",
+    nsURI: "http://schemas.microsoft.com/appx/manifest/uap/windows10",
+    declareNS: false, // ns already declared in template
+    elementName: "Capability",
+  },
+  uap6: {
+    nsAlias: "uap6",
+    nsURI: "http://schemas.microsoft.com/appx/manifest/uap/windows10/6",
+    declareNS: true,
+    elementName: "Capability",
+  },
+  uap7: {
+    nsAlias: "uap7",
+    nsURI: "http://schemas.microsoft.com/appx/manifest/uap/windows10/7",
+    declareNS: true,
+    elementName: "Capability",
+  },
+  uap11: {
+    nsAlias: "uap11",
+    nsURI: "http://schemas.microsoft.com/appx/manifest/uap/windows10/11",
+    declareNS: true,
+    elementName: "Capability",
+  },
+  mobile: {
+    nsAlias: "mobile",
+    nsURI: "http://schemas.microsoft.com/appx/manifest/mobile/windows10",
+    declareNS: true,
+    elementName: "Capability",
+  },
+  rescap: {
+    nsAlias: "rescap",
+    nsURI: "http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities",
+    declareNS: false, // ns already declared in template
+    elementName: "Capability",
+  },
+} as const
 
-  constructor(name:string) {
-    super("Capability", name);
-  }
+type CapabilityType = keyof typeof CAPABILITY_TYPES
+
+// Map of capability types to their capability names (grouped by type)
+const CAPABILITY_MAP = new Map<CapabilityType, string[]>([
+  // Common capabilities
+  [
+    "common",
+    [
+      "internetClient",
+      "internetClientServer",
+      "privateNetworkClientServer",
+      "codeGeneration",
+      "allJoyn",
+      "backgroundMediaPlayback",
+      "remoteSystem",
+      "spatialPerception",
+      "userDataTasks",
+      "userNotificationListener",
+    ],
+  ],
+
+  // UAP capabilities
+  [
+    "uap",
+    [
+      "musicLibrary",
+      "picturesLibrary",
+      "videosLibrary",
+      "removableStorage",
+      "appointments",
+      "contacts",
+      "phoneCall",
+      "phoneCallHistoryPublic",
+      "userAccountInformation",
+      "voipCall",
+      "objects3D",
+      "chat",
+      "blockedChatMessages",
+      "enterpriseAuthentication",
+      "sharedUserCertificates",
+      "documentsLibrary",
+    ],
+  ],
+
+  // Device capabilities
+  [
+    "device",
+    [
+      "location",
+      "microphone",
+      "webcam",
+      "proximity",
+      "pointOfService",
+      "wiFiControl",
+      "radios",
+      "optical",
+      "activity",
+      "humanPresence",
+      "serialcommunication",
+      "gazeInput",
+      "lowLevel",
+      "packageQuery",
+    ],
+  ],
+
+  // Mobile capabilities
+  ["mobile", ["recordedCallsFolder"]],
+
+  // Restricted capabilities
+  [
+    "rescap",
+    [
+      "enterpriseDataPolicy",
+      "appCaptureSettings",
+      "cellularDeviceControl",
+      "cellularDeviceIdentity",
+      "cellularMessaging",
+      "deviceUnlock",
+      "dualSimTiles",
+      "enterpriseDeviceLockdown",
+      "inputInjectionBrokered",
+      "inputObservation",
+      "inputSuppression",
+      "networkingVpnProvider",
+      "packageManagement",
+      "screenDuplication",
+      "userPrincipalName",
+      "walletSystem",
+      "locationHistory",
+      "confirmAppClose",
+      "phoneCallHistory",
+      "appointmentsSystem",
+      "chatSystem",
+      "contactsSystem",
+      "email",
+      "emailSystem",
+      "phoneCallHistorySystem",
+      "smsSend",
+      "userDataSystem",
+      "previewStore",
+      "firstSignInSettings",
+      "teamEditionExperience",
+      "remotePassportAuthentication",
+      "previewUiComposition",
+      "secureAssessment",
+      "networkConnectionManagerProvisioning",
+      "networkDataPlanProvisioning",
+      "slapiQueryLicenseValue",
+      "extendedBackgroundTaskTime",
+      "extendedExecutionBackgroundAudio",
+      "extendedExecutionCritical",
+      "extendedExecutionUnconstrained",
+      "deviceManagementDmAccount",
+      "deviceManagementFoundation",
+      "deviceManagementWapSecurityPolicies",
+      "deviceManagementEmailAccount",
+      "packagePolicySystem",
+      "gameList",
+      "xboxAccessoryManagement",
+      "cortanaSpeechAccessory",
+      "accessoryManager",
+      "interopServices",
+      "inputForegroundObservation",
+      "oemDeployment",
+      "oemPublicDirectory",
+      "appLicensing",
+      "locationSystem",
+      "userDataAccountsProvider",
+      "previewPenWorkspace",
+      "secondaryAuthenticationFactor",
+      "storeLicenseManagement",
+      "userSystemId",
+      "targetedContent",
+      "uiAutomation",
+      "gameBarServices",
+      "appCaptureServices",
+      "appBroadcastServices",
+      "audioDeviceConfiguration",
+      "backgroundMediaRecording",
+      "previewInkWorkspace",
+      "startScreenManagement",
+      "cortanaPermissions",
+      "allAppMods",
+      "expandedResources",
+      "protectedApp",
+      "gameMonitor",
+      "appDiagnostics",
+      "devicePortalProvider",
+      "enterpriseCloudSSO",
+      "backgroundVoIP",
+      "oneProcessVoIP",
+      "developmentModeNetwork",
+      "broadFileSystemAccess",
+      "smbios",
+      "runFullTrust",
+      "allowElevation",
+      "teamEditionDeviceCredential",
+      "teamEditionView",
+      "cameraProcessingExtension",
+      "networkDataUsageManagement",
+      "phoneLineTransportManagement",
+      "unvirtualizedResources",
+      "modifiableApp",
+      "packageWriteRedirectionCompatibilityShim",
+      "customInstallActions",
+      "packagedServices",
+      "localSystemServices",
+      "backgroundSpatialPerception",
+      "uiAccess",
+    ],
+  ],
+
+  // UAP6 capabilities
+  ["uap6", ["graphicsCapture"]],
+
+  // UAP7 capabilities
+  ["uap7", ["globalMediaControl"]],
+
+  // UAP11 capabilities
+  ["uap11", ["graphicsCaptureWithoutBorder", "graphicsCaptureProgrammatic"]],
+])
+
+// Factory function to create capabilities
+function createCapability(type: CapabilityType, name: string): Capability {
+  const config = CAPABILITY_TYPES[type]
+  if (!config) throw new Error(`unknown capability type '${type}'`)
+  return new AppxCapability(config.nsAlias, config.nsURI, config.declareNS, config.elementName, name)
 }
 
-/**
- * https://learn.microsoft.com/de-de/uwp/schemas/appxpackage/how-to-specify-device-capabilities-in-a-package-manifest
- */
-class DeviceCapability extends FoundationCapability{
-
-  constructor(name:string) {
-    super("DeviceCapability", name);
-  }
-}
-
-
-
-class UAPCapability extends NSBaseCapability{
-
-  constructor(name:string) {
-    super("uap", "http://schemas.microsoft.com/appx/manifest/uap/windows10", "Capability", name);
-  }
-}
-
-class UAP6Capability extends NSBaseCapability{
-
-  constructor(name:string) {
-    super("uap6", "http://schemas.microsoft.com/appx/manifest/uap/windows10/6", "Capability", name);
-  }
-}
-
-class UAP7Capability extends NSBaseCapability{
-
-  constructor(name:string) {
-    super("uap7", "http://schemas.microsoft.com/appx/manifest/uap/windows10/7", "Capability", name);
-  }
-}
-
-class UAP11Capability extends NSBaseCapability{
-
-  constructor(name:string) {
-    super("uap11", "http://schemas.microsoft.com/appx/manifest/uap/windows10/11", "Capability", name);
-  }
-}
-
-class MobileCapability extends NSBaseCapability{
-
-  constructor(name:string) {
-    super("mobile", "http://schemas.microsoft.com/appx/manifest/mobile/windows10", "Capability", name);
-  }
-}
-
-// class IOTCapability extends NSBaseCapability{
-//
-//   constructor(name:string) {
-//     super('iot', '?????', 'Capability', name);
-//   }
-// }
-
-class ResCapCapability extends NSBaseCapability{
-
-  constructor(name:string) {
-    super("rescap", "http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities", "Capability", name);
-  }
-}
-
-// order matters
-// see https://learn.microsoft.com/en-us/uwp/schemas/appxpackage/uapmanifestschema/element-capabilities
-
-export const CAPABILITIES = [
-
-
-  new CommonCapability("internetClient"),
-  new CommonCapability("internetClientServer"),
-  new CommonCapability("privateNetworkClientServer"),
-  new CommonCapability("codeGeneration"), // ???
-  new CommonCapability("allJoyn"), // ???
-  new CommonCapability("backgroundMediaPlayback"),
-  new CommonCapability("remoteSystem"),
-  new CommonCapability("spatialPerception"),
-  new CommonCapability("userDataTasks"),
-  new CommonCapability("userNotificationListener"),
-
-
-  new UAPCapability("musicLibrary"),
-  new UAPCapability("picturesLibrary"),
-  new UAPCapability("videosLibrary"),
-  new UAPCapability("removableStorage"),
-  new UAPCapability("appointments"),
-  new UAPCapability("contacts"),
-  new UAPCapability("phoneCall"),
-  new UAPCapability("phoneCallHistoryPublic"),
-  new UAPCapability("userAccountInformation"),
-  new UAPCapability("voipCall"),
-  new UAPCapability("objects3D"),
-  new UAPCapability("chat"),
-  new UAPCapability("blockedChatMessages"),
-
-  new UAPCapability("enterpriseAuthentication"),
-  new UAPCapability("sharedUserCertificates"),
-
-  new UAPCapability("documentsLibrary"),
-
-
-
-  new DeviceCapability("location"),
-  new DeviceCapability("microphone"),
-  new DeviceCapability("webcam"),
-
-  new DeviceCapability("proximity"),
-
-  // new DeviceCapability("usb"), // not supported, needs nested elements
-  // new DeviceCapability("humaninterfacedevice"), // not supported, needs nested elements
-  new DeviceCapability("pointOfService"),
-  // new DeviceCapability("bluetooth"),  // not supported, needs nested elements
-  new DeviceCapability("wiFiControl"),
-  new DeviceCapability("radios"),
-  new DeviceCapability("optical"),
-  new DeviceCapability("activity"),
-  new DeviceCapability("humanPresence"),
-  new DeviceCapability("serialcommunication"),
-  new DeviceCapability("gazeInput"),
-  new DeviceCapability("lowLevel"),
-
-  new DeviceCapability("packageQuery"), // correct namespace??
-
-
-  new MobileCapability("recordedCallsFolder"),
-
-  new ResCapCapability("enterpriseDataPolicy"),
-  new ResCapCapability("appCaptureSettings"),
-  new ResCapCapability("cellularDeviceControl"),
-  new ResCapCapability("cellularDeviceIdentity"),
-  new ResCapCapability("cellularMessaging"),
-  new ResCapCapability("deviceUnlock"),
-  new ResCapCapability("dualSimTiles"),
-  new ResCapCapability("enterpriseDeviceLockdown"),
-  new ResCapCapability("inputInjectionBrokered"),
-  new ResCapCapability("inputObservation"),
-  new ResCapCapability("inputSuppression"),
-  new ResCapCapability("networkingVpnProvider"),
-  new ResCapCapability("packageManagement"),
-  new ResCapCapability("screenDuplication"),
-  new ResCapCapability("userPrincipalName"),
-  new ResCapCapability("walletSystem"),
-  new ResCapCapability("locationHistory"),
-  new ResCapCapability("confirmAppClose"),
-  new ResCapCapability("phoneCallHistory"),
-  new ResCapCapability("appointmentsSystem"),
-  new ResCapCapability("chatSystem"),
-  new ResCapCapability("contactsSystem"),
-  new ResCapCapability("email"),
-  new ResCapCapability("emailSystem"),
-  new ResCapCapability("phoneCallHistorySystem"),
-  new ResCapCapability("smsSend"),
-  new ResCapCapability("userDataSystem"),
-  new ResCapCapability("previewStore"),
-  new ResCapCapability("firstSignInSettings"),
-  new ResCapCapability("teamEditionExperience"),
-  new ResCapCapability("remotePassportAuthentication"),
-  new ResCapCapability("previewUiComposition"),
-  new ResCapCapability("secureAssessment"),
-  new ResCapCapability("networkConnectionManagerProvisioning"),
-  new ResCapCapability("networkDataPlanProvisioning"),
-  new ResCapCapability("slapiQueryLicenseValue"),
-  new ResCapCapability("extendedBackgroundTaskTime"),
-  new ResCapCapability("extendedExecutionBackgroundAudio"),
-  new ResCapCapability("extendedExecutionCritical"),
-  new ResCapCapability("extendedExecutionUnconstrained"),
-  new ResCapCapability("deviceManagementDmAccount"),
-  new ResCapCapability("deviceManagementFoundation"),
-  new ResCapCapability("deviceManagementWapSecurityPolicies"),
-  new ResCapCapability("deviceManagementEmailAccount"),
-  new ResCapCapability("packagePolicySystem"),
-  new ResCapCapability("gameList"),
-  new ResCapCapability("xboxAccessoryManagement"),
-  new ResCapCapability("cortanaSpeechAccessory"),
-  new ResCapCapability("accessoryManager"),
-  new ResCapCapability("interopServices"),
-  new ResCapCapability("inputForegroundObservation"),
-  new ResCapCapability("oemDeployment"),
-  new ResCapCapability("oemPublicDirectory"),
-  new ResCapCapability("appLicensing"),
-  new ResCapCapability("locationSystem"),
-  new ResCapCapability("userDataAccountsProvider"),
-  new ResCapCapability("previewPenWorkspace"), // correct namespace??
-  new ResCapCapability("secondaryAuthenticationFactor"), // correct namespace??
-  new ResCapCapability("storeLicenseManagement"), // correct namespace??
-  new ResCapCapability("userSystemId"), // correct namespace??
-  new ResCapCapability("targetedContent"), // correct namespace??
-  new ResCapCapability("targetedContent"), // correct namespace??
-  new ResCapCapability("uiAutomation"), // correct namespace??
-  new ResCapCapability("gameBarServices"), // correct namespace??
-  new ResCapCapability("appCaptureServices"), // correct namespace??
-  new ResCapCapability("appBroadcastServices"), // correct namespace??
-  new ResCapCapability("audioDeviceConfiguration"), // correct namespace??
-  new ResCapCapability("backgroundMediaRecording"), // correct namespace??
-  new ResCapCapability("previewInkWorkspace"), // correct namespace??
-  new ResCapCapability("startScreenManagement"), // correct namespace??
-  new ResCapCapability("cortanaPermissions"), // correct namespace??
-  new ResCapCapability("allAppMods"), // correct namespace??
-  new ResCapCapability("expandedResources"), // correct namespace??
-  new ResCapCapability("protectedApp"), // correct namespace??
-  new ResCapCapability("gameMonitor"), // correct namespace??
-  new ResCapCapability("appDiagnostics"), // correct namespace??
-  new ResCapCapability("devicePortalProvider"), // correct namespace??
-  new ResCapCapability("enterpriseCloudSSO"), // correct namespace??
-  new ResCapCapability("backgroundVoIP"), // correct namespace??
-  new ResCapCapability("oneProcessVoIP"), // correct namespace??
-  new ResCapCapability("developmentModeNetwork"), // correct namespace??
-  new ResCapCapability("broadFileSystemAccess"), // correct namespace??
-  new ResCapCapability("smbios"), // correct namespace??
-  new ResCapCapability("runFullTrust"),
-  new ResCapCapability("allowElevation"),
-  new ResCapCapability("teamEditionDeviceCredential"),
-  new ResCapCapability("teamEditionView"),
-  new ResCapCapability("cameraProcessingExtension"),
-  new ResCapCapability("networkDataUsageManagement"),
-  new ResCapCapability("phoneLineTransportManagement"),
-  new ResCapCapability("unvirtualizedResources"),
-  new ResCapCapability("modifiableApp"),
-  new ResCapCapability("packageWriteRedirectionCompatibilityShim"),
-  new ResCapCapability("customInstallActions"),
-  new ResCapCapability("packagedServices"),
-  new ResCapCapability("localSystemServices"),
-  new ResCapCapability("backgroundSpatialPerception"),
-  new ResCapCapability("uiAccess"),
-
-  new UAP6Capability("graphicsCapture"),
-
-  new UAP7Capability("globalMediaControl"),
-
-  new UAP11Capability("graphicsCaptureWithoutBorder"),
-  new UAP11Capability("graphicsCaptureProgrammatic"),
-
-];
-
-
-
+// Export ordered list of all capabilities (order matters per Microsoft docs)
+export const CAPABILITIES: Capability[] = Array.from(CAPABILITY_MAP.entries()).flatMap(([type, names]) => names.map(name => createCapability(type, name)))
