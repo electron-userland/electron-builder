@@ -1,1 +1,1 @@
-module.exports = console.log
+module.exports = ({packager, target, ...obj}) => console.log(obj)

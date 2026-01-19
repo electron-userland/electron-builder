@@ -18,10 +18,10 @@ class RGB:
 
 
 class HSL(Color):
-    def __init__(self, h, s, l):  # noqa; E741
+    def __init__(self, h, s, l):  # noqa: E741
         self.h = h
         self.s = s
-        self.l = l  # noqa; E741
+        self.l = l  # noqa: E741
 
     @staticmethod
     def _hue_to_rgb(t1, t2, hue):
@@ -41,7 +41,7 @@ class HSL(Color):
 
     def to_rgb(self):
         hue = self.h / 60.0
-        if self.l <= 0.5:  # noqa; E741
+        if self.l <= 0.5:  # noqa: E741
             t2 = self.l * (self.s + 1)
         else:
             t2 = self.l + self.s - (self.l * self.s)
@@ -257,7 +257,7 @@ _x11_colors = {
 
 _ws_re = re.compile(r"\s+")
 _token_re = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
-_hex_re = re.compile(r"#([0-9a-f]{3}(?:[0-9a-f]{3})?)$")
+_hex_re = re.compile(r"#([0-9a-f]{3}(?:[0-9a-f]{3})?)$", re.IGNORECASE)
 _number_re = re.compile(r"[0-9]*(\.[0-9]*)")
 
 
@@ -281,7 +281,7 @@ class ColorParser:
 
     def expectEnd(self):
         if self._pos != len(self._string):
-            raise ValueError('junk at end of color "%s"' % self._string)
+            raise ValueError(f'junk at end of color "{self._string}"')
 
     def getToken(self):
         m = _token_re.match(self._string, self._pos)
@@ -318,7 +318,7 @@ class ColorParser:
             try:
                 r, g, b = _x11_colors[token]
             except KeyError:
-                raise ValueError('unknown color name "%s"' % token)
+                raise ValueError(f'unknown color name "{token}"')
 
             self.expectEnd()
 
@@ -344,7 +344,7 @@ class ColorParser:
 
             return RGB(r / 255.0, g / 255.0, b / 255.0)
 
-        raise ValueError('bad color syntax "%s"' % self._string)
+        raise ValueError(f'bad color syntax "{self._string}"')
 
     def parseRGB(self):
         self.expect("(", 'after "rgb"')
@@ -388,7 +388,7 @@ class ColorParser:
         self.expect(",", 'in "hsl"')
         self.skipws()
 
-        l = self.parseValue()  # noqa; E741
+        l = self.parseValue()  # noqa: E741
 
         self.skipws()
         self.expect(")", 'at end of "hsl"')
@@ -487,12 +487,12 @@ class ColorParser:
         elif tok == "grad" or tok == "gon":
             n = n * 0.9
         elif tok != "deg":
-            raise ValueError('bad angle unit "%s"' % tok)
+            raise ValueError(f'bad angle unit "{tok}"')
         return n
 
 
 _color_re = re.compile(
-    r"\s*(#|rgb|hsl|hwb|cmyk|gray|grey|%s)" % "|".join(_x11_colors.keys())
+    r"\s*(#|rgb|hsl|hwb|cmyk|gray|grey|{})".format("|".join(_x11_colors.keys()))
 )
 
 
