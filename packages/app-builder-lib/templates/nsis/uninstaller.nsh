@@ -181,6 +181,8 @@ Section "un.${UNINSTALL_SECTION_NAME}"
 
     ${endif}
 
+    # Move out of $INSTDIR so it can be removed
+    SetOutPath $TEMP
     # Remove all files (or remaining shallow directories from the block above)
     RMDir /r $INSTDIR
   !endif
