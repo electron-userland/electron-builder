@@ -1,4 +1,4 @@
-import { CancellationToken, Nullish } from "builder-util-runtime"
+import { Nullish } from "builder-util-runtime"
 import { TmpDir } from "temp-file"
 import { NpmNodeModulesCollector } from "./npmNodeModulesCollector"
 import { detectPackageManager, getPackageManagerCommand, PM } from "./packageManager"
@@ -8,9 +8,10 @@ import { YarnBerryNodeModulesCollector } from "./yarnBerryNodeModulesCollector"
 import { YarnNodeModulesCollector } from "./yarnNodeModulesCollector"
 import { BunNodeModulesCollector } from "./bunNodeModulesCollector"
 import { Lazy } from "lazy-val"
-import { spawn, log, exists } from "builder-util"
+import { spawn, log, exists, isEmptyOrSpaces } from "builder-util"
 import * as fs from "fs-extra"
 import * as path from "path"
+import { TraversalNodeModulesCollector } from "./traversalNodeModulesCollector"
 
 export { getPackageManagerCommand, PM }
 
@@ -26,6 +27,8 @@ export function getCollectorByPackageManager(pm: PM, rootDir: string, tempDirMan
       return new BunNodeModulesCollector(rootDir, tempDirManager)
     case PM.NPM:
       return new NpmNodeModulesCollector(rootDir, tempDirManager)
+    case PM.TRAVERSAL:
+      return new TraversalNodeModulesCollector(rootDir, tempDirManager)
   }
 }
 
@@ -34,22 +37,20 @@ export function getNodeModules(
   {
     rootDir,
     tempDirManager,
-    cancellationToken,
     packageName,
   }: {
     rootDir: string
     tempDirManager: TmpDir
-    cancellationToken: CancellationToken
     packageName: string
   }
 ): Promise<NodeModuleInfo[]> {
   const collector = getCollectorByPackageManager(pm, rootDir, tempDirManager)
-  return collector.getNodeModules({ cancellationToken, packageName })
+  return collector.getNodeModules({ packageName })
 }
 
 export const determinePackageManagerEnv = ({ projectDir, appDir, workspaceRoot }: { projectDir: string; appDir: string; workspaceRoot: string | Nullish }) =>
   new Lazy(async () => {
-    const availableDirs = [projectDir, appDir, workspaceRoot].filter((it): it is string => it != null)
+    const availableDirs = [workspaceRoot, projectDir, appDir].filter((it): it is string => !isEmptyOrSpaces(it))
     const pm = await detectPackageManager(availableDirs)
     const root = await findWorkspaceRoot(pm.pm, projectDir)
     if (root != null) {
@@ -129,11 +130,11 @@ async function findWorkspaceRoot(pm: PM, cwd: string): Promise<string | undefine
 async function findNearestPackageJsonWithWorkspacesField(dir: string): Promise<string | undefined> {
   let current = dir
   while (true) {
-    log.debug({ path: current }, "checking for potential workspace root")
     const pkgPath = path.join(current, "package.json")
     try {
       const pkg = JSON.parse(await fs.readFile(pkgPath, "utf8"))
       if (pkg.workspaces) {
+        log.debug({ path: current }, "identified workspace root")
         return current
       }
     } catch {

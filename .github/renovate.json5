@@ -15,7 +15,7 @@
     extends: [
       ":noUnscheduledUpdates",
       ":maintainLockFilesWeekly",
-      "npm:unpublishSafe",
+      "security:minimumReleaseAgeNpm",
       "helpers:disableTypesNodeMajor",
     ],
     schedule: ["before 3am on the first day of the month"],

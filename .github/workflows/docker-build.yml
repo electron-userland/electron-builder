@@ -21,7 +21,7 @@ jobs:
         ]
     steps:
       - name: Checkout code repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
 
       - name: Cleanup runner
         uses: ./.github/actions/cleanup-runner
@@ -41,7 +41,7 @@ jobs:
           docker save -o ${{ runner.temp }}/electron-builder-all-${{ env.NODE_TAG }}.tar electronuserland/builder
 
       - name: Bundle all images
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: electron-builder-all-${{ env.NODE_TAG }}
           path: ${{ runner.temp }}/electron-builder-all-${{ env.NODE_TAG }}.tar
