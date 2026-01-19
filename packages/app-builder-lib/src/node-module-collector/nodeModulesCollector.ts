@@ -101,7 +101,8 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
       async () => {
         await this.streamCollectorCommandToFile(command, args, this.rootDir, tempOutputFile)
         const shellOutput = await fs.readFile(tempOutputFile, { encoding: "utf8" })
-        return this.parseDependenciesTree(shellOutput)
+        const result = Promise.resolve(this.parseDependenciesTree(shellOutput))
+        return result
       },
       {
         retries: 1,
@@ -138,6 +139,12 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
   /**
    * Parses the dependencies tree from shell command output.
    *
+   **/
+  protected parseDependenciesTree(shellOutput: string): ProdDepType | Promise<ProdDepType> {
+    return this.extractJsonFromPollutedOutput<ProdDepType>(shellOutput)
+  }
+  /**
+   *
    * This method attempts to extract and parse JSON data from shell output that may contain
    * additional non-JSON content (like warnings or informational messages). It first tries
    * to parse the entire output as JSON, and if that fails, it intelligently searches for
@@ -152,7 +159,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
    * @throws {Error} If no matching closing bracket is found in the output
    * @throws {SyntaxError} If the extracted content is not valid JSON
    */
-  protected parseDependenciesTree(shellOutput: string): Promise<ProdDepType> {
+  protected extractJsonFromPollutedOutput<T>(shellOutput: string): T {
     const consoleOutput = shellOutput.trim()
     try {
       return JSON.parse(consoleOutput)
@@ -204,7 +211,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
       .join("\n")
       .trim()
 
-    return Promise.resolve(JSON.parse(candidate))
+    return JSON.parse(candidate)
   }
 
   protected cacheKey(pkg: Pick<ProdDepType, "name" | "version" | "path">): string {
