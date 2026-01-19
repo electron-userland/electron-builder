@@ -339,17 +339,15 @@ export default class AppXTarget extends Target {
 
   private getCapabilities(): string {
     const caps = asArray(this.options.capabilities)
-    if(caps.indexOf("runFullTrust") < 0)
-      caps.push("runFullTrust");
 
-    let capabilities = "<Capabilities>"
-    for(const cap of CAPABILITIES)
-    {
-      if(caps.indexOf(cap.name)>=0)
-        capabilities += "\n  " + cap.toXMLString();
-    }
-    capabilities += "\n</Capabilities>";
-    return capabilities
+    // Ensure runFullTrust is always included
+    const capSet = new Set(caps)
+    capSet.add("runFullTrust")
+
+    // Filter and map in one pass
+    const capabilityStrings = CAPABILITIES.filter(cap => capSet.has(cap.name)).map(cap => `  ${cap.toXMLString()}`)
+
+    return `<Capabilities>\n${capabilityStrings.join("\n")}\n</Capabilities>`
   }
 
   private async getExtensions(executable: string, displayName: string): Promise<string> {
