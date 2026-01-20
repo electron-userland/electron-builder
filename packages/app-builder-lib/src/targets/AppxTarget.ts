@@ -9,7 +9,7 @@ import { getTemplatePath } from "../util/pathManager"
 import { VmManager } from "../vm/vm"
 import { WinPackager } from "../winPackager"
 import { createStageDir } from "./targetUtil"
-import { CAPABILITIES } from "./AppxCapabilities"
+import { CAPABILITIES, isValidCapabilityName } from "./AppxCapabilities"
 
 const APPX_ASSETS_DIR_NAME = "appx"
 
@@ -340,8 +340,14 @@ export default class AppXTarget extends Target {
   private getCapabilities(): string {
     const caps = asArray(this.options.capabilities)
 
-    // Ensure runFullTrust is always included
     const capSet = new Set(caps)
+
+    const invalid = Array.from(capSet).filter(cap => !isValidCapabilityName(cap));
+    if (invalid.length > 0) {
+      throw new Error(`invalid windows capabilit${invalid.length === 1 ? "y" : "ies"} specified: ${invalid.join(", ")}`)
+    }
+
+    // Ensure runFullTrust is always included
     capSet.add("runFullTrust")
 
     // Filter and map in one pass

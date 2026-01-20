@@ -28,7 +28,7 @@ class AppxCapability implements Capability {
 
   toXMLString(): string {
     const tagName = this.nsAlias ? `${this.nsAlias}:${this.elementName}` : this.elementName
-    if(this.declareNS)
+    if (this.declareNS)
       return `<${tagName} xmlns:${this.nsAlias}="${this.nsURI}" Name="${this.name}"/>`
     return `<${tagName} Name="${this.name}"/>`
   }
@@ -279,3 +279,9 @@ function createCapability(type: CapabilityType, name: string): Capability {
 
 // Export ordered list of all capabilities (order matters per Microsoft docs)
 export const CAPABILITIES: Capability[] = Array.from(CAPABILITY_MAP.entries()).flatMap(([type, names]) => names.map(name => createCapability(type, name)))
+
+const CAPABILITY_NAMES: Set<string> = new Set<string>(Array.from(CAPABILITY_MAP.values()).flat())
+
+export function isValidCapabilityName(name: string | null | undefined): boolean {
+  return !!name && CAPABILITY_NAMES.has(name)
+}
