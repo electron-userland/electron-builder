@@ -28,8 +28,9 @@ class AppxCapability implements Capability {
 
   toXMLString(): string {
     const tagName = this.nsAlias ? `${this.nsAlias}:${this.elementName}` : this.elementName
-    const ns = this.declareNS ? `xmlns:${this.nsAlias}="${this.nsURI}"` : ""
-    return `<${tagName} ${ns} Name="${this.name}"/>`
+    if(this.declareNS)
+      return `<${tagName} xmlns:${this.nsAlias}="${this.nsURI}" Name="${this.name}"/>`
+    return `<${tagName} Name="${this.name}"/>`
   }
 }
 
