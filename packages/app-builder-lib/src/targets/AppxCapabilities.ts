@@ -21,7 +21,9 @@ class AppxCapability implements Capability {
     private readonly elementName: string,
     public readonly name: string
   ) {
-    if (!this.nsAlias && this.declareNS) throw new Error("local declaration of namespace without prefix is not supported")
+    if (!this.nsAlias && this.declareNS) {
+      throw new Error("local declaration of namespace without prefix is not supported")
+    }
   }
 
   toXMLString(): string {
@@ -268,7 +270,9 @@ const CAPABILITY_MAP = new Map<CapabilityType, string[]>([
 // Factory function to create capabilities
 function createCapability(type: CapabilityType, name: string): Capability {
   const config = CAPABILITY_TYPES[type]
-  if (!config) throw new Error(`unknown capability type '${type}'`)
+  if (!config) {
+    throw new Error(`unknown capability type '${type}'`)
+  }
   return new AppxCapability(config.nsAlias, config.nsURI, config.declareNS, config.elementName, name)
 }
 
