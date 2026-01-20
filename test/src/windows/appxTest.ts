@@ -125,3 +125,48 @@ it("custom raw appmanifest.xml", ({ expect }) =>
       },
     },
   }))
+
+
+it("valid capabilities (windows store only)", ({ expect }) =>
+  app(expect, {
+    targets: Platform.WINDOWS.createTarget(["appx"], Arch.x64),
+    config: {
+      cscLink: protectedCscLink,
+      cscKeyPassword: "test",
+      appx: {
+        capabilities: [
+          "internetClient",
+          "picturesLibrary",
+          "webcam",
+          "screenDuplication",
+          "graphicsCapture",
+          "globalMediaControl",
+          "graphicsCaptureProgrammatic"
+        ],
+      },
+      appxManifestCreated: async filepath => {
+        const fileContent = await readFile(filepath, "utf-8")
+        expect(fileContent).toContain('<rescap:Capability Name="runFullTrust"/>')
+        expect(fileContent).toContain('<Capability Name="internetClient"/>')
+        expect(fileContent).toContain('<uap:Capability Name="picturesLibrary"/>')
+        expect(fileContent).toContain('<DeviceCapability Name="webcam"/>')
+        expect(fileContent).toContain('<rescap:Capability Name="screenDuplication"/>')
+        expect(fileContent).toContain('<uap6:Capability xmlns:uap6="http://schemas.microsoft.com/appx/manifest/uap/windows10/6" Name="graphicsCapture"/>')
+        expect(fileContent).toContain('<uap7:Capability xmlns:uap7="http://schemas.microsoft.com/appx/manifest/uap/windows10/7" Name="globalMediaControl"/>')
+        expect(fileContent).toContain('<uap11:Capability xmlns:uap11="http://schemas.microsoft.com/appx/manifest/uap/windows10/11" Name="graphicsCaptureProgrammatic"/>')
+      },
+
+    },
+  }))
+
+it("invalid capabilities (windows store only)", ({ expect }) =>
+  expect(()=>app(expect, {
+    targets: Platform.WINDOWS.createTarget(["appx"], Arch.x64),
+    config: {
+      cscLink: protectedCscLink,
+      cscKeyPassword: "test",
+      appx: {
+        capabilities: ["invalid01", "invalid02"],
+      },
+    },
+  }))).toThrowError('invalid windows capabilities')
