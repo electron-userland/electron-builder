@@ -169,4 +169,4 @@ it("invalid capabilities (windows store only)", ({ expect }) =>
         capabilities: ["invalid01", "invalid02"],
       },
     },
-  }))).toThrowError('invalid windows capabilities')
+  })).toThrowError('invalid windows capabilities'))
