@@ -652,7 +652,7 @@ importers:
         specifier: 7.15.6
         version: 7.15.6(@babel/core@7.24.9)
       '@babel/preset-typescript':
-        specifier: ^7.28.5
+        specifier: ^7.23.3
         version: 7.28.5(@babel/core@7.24.9)
       '@jest/globals':
         specifier: ^29.7.0
@@ -664,10 +664,10 @@ importers:
         specifier: ^9.0.11
         version: 9.0.13
       '@types/js-yaml':
-        specifier: ^4.0.9
-        version: 4.0.9
+        specifier: ^4.0.1
+        version: 4.0.3
       '@types/request':
-        specifier: ^2.48.13
+        specifier: ^2.48.12
         version: 2.48.13
       '@types/semver':
         specifier: 7.7.1
@@ -682,7 +682,7 @@ importers:
         specifier: ^1.6.3
         version: 1.6.3
       vitest:
-        specifier: ^3.2.4
+        specifier: ^3.0.4
         version: 3.2.4(@types/node@22.13.17)(@vitest/ui@3.0.4(vitest@3.2.4))(jiti@2.4.2)(sass@1.86.1)(yaml@2.7.1)
       vitest-mock-commonjs:
         specifier: ^1.0.2
@@ -2301,9 +2301,6 @@ packages:
 
   '@types/js-yaml@4.0.3':
     resolution: {integrity: sha512-5t9BhoORasuF5uCPr+d5/hdB++zRFUTMIZOzbNkr+jZh3yQht4HYbRDyj9fY8n2TZT30iW9huzav73x4NikqWg==}
-
-  '@types/js-yaml@4.0.9':
-    resolution: {integrity: sha512-k4MGaQl5TGo/iipqb2UDG2UwjXziSWkh0uysQelTlJpX1qGlpUZYm8PnO4DxG1qBomtJUdYJ6qR6xdIah10JLg==}
 
   '@types/json-schema@7.0.15':
     resolution: {integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==}
@@ -7100,8 +7097,6 @@ snapshots:
       '@types/istanbul-lib-report': 3.0.3
 
   '@types/js-yaml@4.0.3': {}
-
-  '@types/js-yaml@4.0.9': {}
 
   '@types/json-schema@7.0.15': {}
 
