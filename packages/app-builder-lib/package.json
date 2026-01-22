@@ -74,7 +74,7 @@
     "js-yaml": "^4.1.0",
     "json5": "^2.2.3",
     "lazy-val": "^1.0.5",
-    "minimatch": "^10.0.3",
+  "minimatch": "^10.0.3",
     "plist": "3.1.0",
     "proper-lockfile": "^4.1.2",
     "resedit": "^1.7.0",

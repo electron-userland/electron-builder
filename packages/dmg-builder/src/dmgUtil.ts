@@ -15,13 +15,13 @@ export function getDmgTemplatePath() {
 }
 
 async function getDmgVendorPath(): Promise<string> {
-  const version = "1.6.7"
+  const releaseVersion = "9614277"
   const arch = process.arch === "arm64" ? "arm64" : "x86_64"
   const config = {
-    [`dmgbuild-bundle-arm64-1.6.7.tar.gz`]: "egyeVf8nTykmLn08I2Znpvjw3E8FJEvNEVgk5650CfJYD00ffp9MMFb4hawd2c6DFgDRI2cfwdZIDdBIC2S/Ig==",
-    [`dmgbuild-bundle-x86_64-1.6.7.tar.gz`]: "bwLvCljFyIPVUH7Z/bjlSwO/tac1rO5AXcQKHrYRbSpg5GtZ1kZ0ZEibCf+PM0PnnA8+YpUxU6ZgLW/raeoKYA==",
+    ["dmgbuild-bundle-arm64-9614277.tar.gz"]: "sMCyTjseczMclb6Xkhe7DrMoOKPQo0UFGTwB4a+uw14E9asGE+SIMt5iCPCMJVYhAiTeqdBGQvfHmbWZWKkgWQ==",
+    ["dmgbuild-bundle-x86_64-9614277.tar.gz"]: "ty+HxK3vLlimemF0ie9KMNv4RQAglXikGAEekjI3USwy/W8qMVJ3SLWhSQPfJ5kmrIzZ2RT/FREHPEghulKMig==",
   }
-  const filename: keyof typeof config = `dmgbuild-bundle-${arch}-${version}.tar.gz`
+  const filename: keyof typeof config = `dmgbuild-bundle-${arch}-${releaseVersion}.tar.gz`
   const file = await downloadArtifact({
     releaseName: "dmg-builder@1.1.0",
     filenameWithExt: filename,
