@@ -19,7 +19,7 @@
     "builder-util": "workspace:*",
     "builder-util-runtime": "workspace:*",
     "chalk": "^4.1.2",
-    "form-data": "^4.0.0",
+    "form-data": "^4.0.5",
     "fs-extra": "^10.1.0",
     "lazy-val": "^1.0.5",
     "mime": "^2.5.2"
