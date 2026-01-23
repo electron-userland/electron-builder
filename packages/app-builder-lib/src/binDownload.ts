@@ -1,9 +1,8 @@
 import * as get from "@electron/get"
 import { ElectronDownloadCacheMode, ElectronDownloadRequest, ElectronDownloadRequestOptions, GotDownloaderOptions } from "@electron/get"
-import { executeAppBuilder, log, PADDING } from "builder-util"
+import { executeAppBuilder, exists, log, PADDING } from "builder-util"
 import { Nullish } from "builder-util-runtime"
 import { sanitizeFileName } from "builder-util/out/filename"
-import * as crypto from "crypto"
 import { MultiProgress } from "electron-publish/out/multiProgress"
 import * as fs from "fs/promises"
 import * as os from "os"
@@ -50,34 +49,22 @@ export function getCacheDirectory(isAvoidSystemOnWindows = false): string {
   }
 
   if (platform === "win32") {
-    const localAppData = process.env.LOCALAPPDATA
-    if (localAppData) {
-      const lowerLocalAppData = localAppData.toLowerCase()
-      const username = (process.env.USERNAME || "").toLowerCase()
-
-      if (isAvoidSystemOnWindows && (lowerLocalAppData.includes("\\windows\\system32\\") || username === "system")) {
-        return path.join(os.tmpdir(), `${appName}-cache`)
-      }
-      return path.join(localAppData, appName, "Cache")
+    const localAppData = process.env.LOCALAPPDATA?.trim()
+    const username = process.env.USERNAME?.trim()?.toLowerCase()
+    const isSystemUser = isAvoidSystemOnWindows && (localAppData?.toLowerCase()?.includes("\\windows\\system32\\") || username === "system")
+    if (!localAppData || isSystemUser) {
+      return path.join(os.tmpdir(), `${appName}-cache`)
     }
+    return path.join(localAppData, appName, "Cache")
   }
 
+  // linux
   const xdgCache = process.env.XDG_CACHE_HOME
   if (xdgCache) {
     return path.join(xdgCache, appName)
   }
 
   return path.join(homeDir, ".cache", appName)
-}
-
-/**
- * Calculate SHA256 checksum of a file
- */
-export async function calculateChecksum(filePath: string): Promise<string> {
-  const fileBuffer = await fs.readFile(filePath)
-  const hash = crypto.createHash("sha256")
-  hash.update(fileBuffer)
-  return hash.digest("hex")
 }
 
 /**
@@ -110,51 +97,38 @@ export async function downloadArtifact(options: { releaseName: string; filenameW
  * Downloads, validates, and extracts a binary from a release URL
  */
 async function _downloadArtifact(baseUrl: string, releaseName: string, filenameWithExt: string, checksums: Record<string, string>, onProgress?: ProgressCallback): Promise<string> {
-  const cacheDir = getCacheDirectory()
-
-  const downloadDir = path.join(cacheDir, releaseName, hashUrlSafe(baseUrl))
-  const extractDir = path.join(downloadDir, filenameWithExt.replace(/\.(tar\.gz|tgz)$/, ""))
-  const lockFilePath = path.join(downloadDir, `${filenameWithExt}.lock`)
+  const folderName = `${filenameWithExt.replace(/\.(tar\.gz|tgz)$/, "")}-${hashUrlSafe(baseUrl)}`
+  const downloadDir = path.join(getCacheDirectory(), releaseName, folderName)
+  const extractionCompleteMarker = path.join(downloadDir, ".complete")
 
   // Ensure download directory exists before trying to lock
   await fs.mkdir(downloadDir, { recursive: true })
 
-  // Create a lock file to ensure only one process downloads at a time
-  try {
-    await fs.writeFile(lockFilePath, "", { flag: "wx" })
-  } catch {
-    // File already exists, that's fine
-  }
-
   // Acquire the lock
   let release: (() => Promise<void>) | undefined
   try {
-    release = await lockfile.lock(lockFilePath, {
+    release = await lockfile.lock(downloadDir, {
       retries: {
-        retries: 60,
+        retries: 5,
         minTimeout: 1000,
         maxTimeout: 5000,
       },
       stale: 60000, // Consider lock stale after 60 seconds
     })
 
-    // Check if already extracted and valid
-    try {
-      await fs.access(extractDir)
+    if (await exists(extractionCompleteMarker)) {
       onProgress?.({
         stage: "extract",
         message: "Using cached extraction",
         percent: 100,
       })
-      return extractDir
-    } catch {
-      // Not extracted yet, continue
+      return downloadDir
     }
 
     // These are just stubs. Overrides are in `mirrorOptions` below.
     const details: ElectronDownloadRequest = {
       version: "0.0.0",
-      artifactName: "stub",
+      artifactName: filenameWithExt, // also is the output filename
     }
 
     const downloadOptions: GotDownloaderOptions = {
@@ -168,10 +142,14 @@ async function _downloadArtifact(baseUrl: string, releaseName: string, filenameW
       },
     }
 
-    const cacheMode = process.env.ELECTRON_BUILDER_FORCE_DOWNLOADS === "true" ? ElectronDownloadCacheMode.WriteOnly : ElectronDownloadCacheMode.ReadWrite
+    const cacheMode = Number(process.env.ELECTRON_BUILDER_CACHE_MODE?.trim())
+    if (cacheMode in ElectronDownloadCacheMode) {
+      log.debug({ mode: ElectronDownloadCacheMode[cacheMode] }, "using cache mode from ELECTRON_BUILDER_CACHE_MODE")
+    }
+
     const options: ElectronDownloadRequestOptions = {
       cacheRoot: downloadDir,
-      cacheMode,
+      cacheMode: cacheMode in ElectronDownloadCacheMode ? cacheMode : ElectronDownloadCacheMode.ReadWrite,
       downloadOptions,
       checksums,
       mirrorOptions: {
@@ -194,12 +172,10 @@ async function _downloadArtifact(baseUrl: string, releaseName: string, filenameW
       percent: 0,
     })
 
-    await fs.mkdir(extractDir, { recursive: true })
-
     let entriesExtracted = 0
     await tar.extract({
       file: downloadedFile,
-      cwd: extractDir,
+      cwd: downloadDir,
       strip: 1, // Strip the top-level directory from the archive
       onentry: entry => {
         entriesExtracted++
@@ -211,6 +187,8 @@ async function _downloadArtifact(baseUrl: string, releaseName: string, filenameW
       },
     })
 
+    await fs.writeFile(extractionCompleteMarker, "")
+
     onProgress?.({
       stage: "extract",
       message: `Extraction complete (${entriesExtracted} files)`,
@@ -218,7 +196,7 @@ async function _downloadArtifact(baseUrl: string, releaseName: string, filenameW
       current: entriesExtracted,
       total: entriesExtracted,
     })
-    return extractDir
+    return downloadDir
   } finally {
     // Release the lock
     if (release) {
