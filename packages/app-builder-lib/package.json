@@ -1,7 +1,7 @@
 {
   "name": "app-builder-lib",
   "description": "electron-builder lib",
-  "version": "26.4.1",
+  "version": "26.5.0",
   "main": "out/index.js",
   "files": [
     "out",
@@ -79,7 +79,7 @@
     "proper-lockfile": "^4.1.2",
     "resedit": "^1.7.0",
     "semver": "~7.7.3",
-    "tar": "^6.1.12",
+    "tar": "7.5.3",
     "temp-file": "^3.4.0",
     "tiny-async-pool": "1.3.0",
     "which": "^5.0.0"
@@ -112,7 +112,6 @@
     "@types/plist": "3.0.5",
     "@types/proper-lockfile": "^4.1.4",
     "@types/semver": "7.7.1",
-    "@types/tar": "^6.1.3",
     "@types/tiny-async-pool": "^1",
     "@types/which": "^3.0.4",
     "dmg-builder": "workspace:*",
