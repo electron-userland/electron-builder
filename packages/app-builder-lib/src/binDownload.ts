@@ -9,7 +9,6 @@ import * as os from "os"
 import * as path from "path"
 import * as lockfile from "proper-lockfile"
 import * as tar from "tar"
-import { WriteStream as TtyWriteStream } from "tty"
 
 /**
  * Deterministic <length>-character URL-safe hash (a–z0–9)
@@ -31,7 +30,7 @@ export function hashUrlSafe(input: string, length = 6): string {
 }
 
 /**
- * Get cache directory with fallback logic converted from Go code
+ * Get cache directory for electron-builder
  */
 export function getCacheDirectory(isAvoidSystemOnWindows = false): string {
   const env = process.env.ELECTRON_BUILDER_CACHE?.trim()
@@ -68,35 +67,20 @@ export function getCacheDirectory(isAvoidSystemOnWindows = false): string {
 }
 
 /**
- * Progress callback type
- */
-export type ProgressCallback = (info: { stage: "download" | "extract"; message: string; percent?: number; current?: number; total?: number }) => void
-
-/**
  * Downloads an artifact from GitHub releases (convenience wrapper)
  */
 export async function downloadArtifact(options: { releaseName: string; filenameWithExt: string; checksums: Record<string, string>; githubOrgRepo?: string }): Promise<string> {
   const { releaseName, filenameWithExt, checksums, githubOrgRepo = "electron-userland/electron-builder-binaries" } = options
-  const progress = (process.stdout as TtyWriteStream).isTTY ? new MultiProgress() : null
 
-  log.info({ release: releaseName, file: filenameWithExt }, "downloading")
-  const progressBar = progress?.createBar(`${" ".repeat(PADDING + 2)}[:bar] :percent | ${filenameWithExt}`, { total: 100 })
-  progressBar?.render()
+  const file = await _downloadArtifact(`https://github.com/${githubOrgRepo}/releases/download/`, releaseName, filenameWithExt, checksums)
 
-  const file = await _downloadArtifact(`https://github.com/${githubOrgRepo}/releases/download/`, releaseName, filenameWithExt, checksums, info => {
-    progressBar?.update(info.percent != null ? Math.floor(info.percent * 100) : 0)
-  })
-
-  log.debug({ file: filenameWithExt, path: file }, "downloaded")
-  progressBar?.update(100)
-  progressBar?.terminate()
   return file
 }
 
 /**
  * Downloads, validates, and extracts a .tar.gz from a release URL
  */
-async function _downloadArtifact(baseUrl: string, releaseName: string, filenameWithExt: string, checksums: Record<string, string>, onProgress?: ProgressCallback): Promise<string> {
+async function _downloadArtifact(baseUrl: string, releaseName: string, filenameWithExt: string, checksums: Record<string, string>): Promise<string> {
   const suffix = hashUrlSafe(`${baseUrl}-${releaseName}-${filenameWithExt}`, 5)
   const folderName = `${filenameWithExt.replace(/\.(tar\.gz|tgz)$/, "")}-${suffix}`
   const extractDir = path.join(getCacheDirectory(), releaseName, folderName)
@@ -125,11 +109,7 @@ async function _downloadArtifact(baseUrl: string, releaseName: string, filenameW
     }
 
     if ((await exists(extractionCompleteMarker)) || cacheMode === ElectronDownloadCacheMode.ReadOnly) {
-      onProgress?.({
-        stage: "extract",
-        message: "Using cached extraction",
-        percent: 100,
-      })
+      log.debug({ file: filenameWithExt, path: extractDir }, "using cache - skipping download/extract")
       return extractDir
     }
 
@@ -141,13 +121,14 @@ async function _downloadArtifact(baseUrl: string, releaseName: string, filenameW
       artifactName: filenameWithExt, // also is the output filename
     }
 
+    const progress = process.stdout ? new MultiProgress() : null
+
+    const progressBar = progress?.createBar(`${" ".repeat(PADDING + 2)}[:bar] :percent | ${filenameWithExt}`, { total: 100 })
+    progressBar?.render()
+
     const downloadOptions: GotDownloaderOptions = {
-      getProgressCallback: progressInfo => {
-        onProgress?.({
-          stage: "download",
-          message: `Downloading ${filenameWithExt}`,
-          percent: progressInfo.percent,
-        })
+      getProgressCallback: info => {
+        progressBar?.update(info.percent != null ? Math.floor(info.percent * 100) : 0)
         return Promise.resolve()
       },
     }
@@ -164,44 +145,26 @@ async function _downloadArtifact(baseUrl: string, releaseName: string, filenameW
       },
     }
 
+    log.info({ release: releaseName, file: filenameWithExt }, "downloading")
     const downloadedFile = await get.downloadArtifact({
       ...details,
       ...options,
       isGeneric: true,
     })
 
-    // Extract the tar.gz file with progress tracking
-    onProgress?.({
-      stage: "extract",
-      message: "Extracting archive",
-      percent: 0,
-    })
-
-    let entriesExtracted = 0
     await tar.extract({
       file: downloadedFile,
       cwd: extractDir,
       strip: 1, // Strip the top-level directory from the archive
-      onentry: entry => {
-        entriesExtracted++
-        onProgress?.({
-          stage: "extract",
-          message: `Extracting: ${entry.path}`,
-          current: entriesExtracted,
-        })
-      },
     })
 
     // Write the extraction complete marker file to indicate successful extraction and prevent future re-extraction
     await fs.writeFile(extractionCompleteMarker, "")
 
-    onProgress?.({
-      stage: "extract",
-      message: `Extraction complete (${entriesExtracted} files)`,
-      percent: 100,
-      current: entriesExtracted,
-      total: entriesExtracted,
-    })
+    log.debug({ file: filenameWithExt, path: extractDir }, "downloaded")
+    progressBar?.update(100)
+    progressBar?.terminate()
+
     return extractDir
   } finally {
     // Release the lock
