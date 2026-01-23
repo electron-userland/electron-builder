@@ -121,7 +121,7 @@ async function _downloadArtifact(baseUrl: string, releaseName: string, filenameW
       artifactName: filenameWithExt, // also is the output filename
     }
 
-    const progress = process.stdout ? new MultiProgress() : null
+    const progress = process.stdout.isTTY ? new MultiProgress() : null
 
     const progressBar = progress?.createBar(`${" ".repeat(PADDING + 2)}[:bar] :percent | ${filenameWithExt}`, { total: 100 })
 
