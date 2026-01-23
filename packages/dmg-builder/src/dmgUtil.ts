@@ -15,6 +15,11 @@ export function getDmgTemplatePath() {
 }
 
 async function getDmgVendorPath(): Promise<string> {
+  const customDmgbuildPath = process.env.CUSTOM_DMGBUILD_PATH?.trim()
+  if (customDmgbuildPath) {
+    return path.resolve(customDmgbuildPath)
+  }
+
   const releaseVersion = "9614277"
   const arch = process.arch === "arm64" ? "arm64" : "x86_64"
   const config = {
@@ -123,12 +128,9 @@ export async function customizeDmg({ appPath, artifactPath, volumeName, specific
   const iconTextSize = isValidIconTextSize ? specification.iconTextSize : 12
   const volumePath = path.join("/Volumes", volumeName)
   // https://github.com/electron-userland/electron-builder/issues/2115
-  const backgroundFile = specification.background == null ? null : await transformBackgroundFileIfNeed(specification.background, packager.info.tempDirManager)
 
   const settings: DmgBuildConfig = {
     title: path.basename(volumePath),
-    icon: await packager.getResource(specification.icon),
-    "badge-icon": await packager.getResource(specification.badgeIcon),
     "icon-size": specification.iconSize,
     "text-size": iconTextSize,
 
@@ -144,6 +146,16 @@ export async function customizeDmg({ appPath, artifactPath, volumeName, specific
         type: c.type === "dir" ? "file" : c.type, // appdmg expects "file" for directories
         // hide_extension: c.hideExtension,
       })) || [],
+  }
+
+  if (specification.badgeIcon) {
+    let badgeIcon = await packager.getResource(specification.badgeIcon)
+    if (badgeIcon && badgeIcon.toLowerCase().endsWith(".icon")) {
+      badgeIcon = await packager.generateIcnsFromIcon(badgeIcon)
+    }
+    settings["badge-icon"] = badgeIcon
+  } else {
+    settings.icon = await packager.getResource(specification.icon)
   }
 
   if (specification.backgroundColor != null || specification.background == null) {
@@ -163,8 +175,7 @@ export async function customizeDmg({ appPath, artifactPath, volumeName, specific
       }
     }
   } else {
-    settings.background = backgroundFile
-    delete settings["background-color"]
+    settings.background = specification.background == null ? null : await transformBackgroundFileIfNeed(specification.background, packager.info.tempDirManager)
   }
 
   if (!isEmptyOrSpaces(settings.background)) {

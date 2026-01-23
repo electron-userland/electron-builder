@@ -139,6 +139,7 @@ describe("dmg", { concurrent: true }, () => {
           publish: null,
           dmg: {
             title: "Retina Background",
+            badgeIcon: "foo.icns",
           },
         },
         effectiveOptionComputed: async it => {
@@ -150,6 +151,7 @@ describe("dmg", { concurrent: true }, () => {
         projectDirCreated: async projectDir => {
           const resourceDir = path.join(projectDir, "build")
           await copyFile(path.join(getDmgTemplatePath(), "background.tiff"), path.join(resourceDir, "background.tiff"))
+          await copyFile(path.join(projectDir, "build", "icon.icns"), path.join(projectDir, "foo.icns"))
 
           async function extractPng(index: number, suffix: string) {
             await exec("tiffutil", ["-extract", index.toString(), path.join(getDmgTemplatePath(), "background.tiff")], {
