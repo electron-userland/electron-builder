@@ -124,7 +124,6 @@ async function _downloadArtifact(baseUrl: string, releaseName: string, filenameW
     const progress = process.stdout ? new MultiProgress() : null
 
     const progressBar = progress?.createBar(`${" ".repeat(PADDING + 2)}[:bar] :percent | ${filenameWithExt}`, { total: 100 })
-    progressBar?.render()
 
     const downloadOptions: GotDownloaderOptions = {
       getProgressCallback: info => {
@@ -146,6 +145,7 @@ async function _downloadArtifact(baseUrl: string, releaseName: string, filenameW
     }
 
     log.info({ release: releaseName, file: filenameWithExt }, "downloading")
+    progressBar?.render()
     const downloadedFile = await get.downloadArtifact({
       ...details,
       ...options,
