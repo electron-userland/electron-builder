@@ -24,16 +24,14 @@ async function getDmgVendorPath(): Promise<string> {
   const releaseVersion = "9614277"
   const arch = process.arch === "arm64" ? "arm64" : "x86_64"
   const config = {
-    "dmgbuild-bundle-arm64-9614277.tar.gz": "7E/a1nWWQbj5KuWDcWNqxx+FELnIAw23pr7snN/tBYOggP5lDlKYo/pYqroZOY2DoIAGqsshJyQeIR0GqnOTLQ==",
-    "dmgbuild-bundle-x86_64-9614277.tar.gz": "5K9r0YCggUWj/xyml+i5UZ1SEpdxPeRCoc0rzdekkTs+YyApfzfeAUT/TtaHBd5H51r3EiT2bfpygxgXVTYpUA==",
+    "dmgbuild-bundle-arm64-9614277.tar.gz": "28e11550cf990f78180a2d82090f35a24588beda3d9165098837714f90ee47ce",
+    "dmgbuild-bundle-x86_64-9614277.tar.gz": "4dbf1cc186af62921f8b6f4a5956b28d8622d211797a8b05eb75a260ee9c3fdb",
   }
   const filename: keyof typeof config = `dmgbuild-bundle-${arch}-${releaseVersion}.tar.gz`
   const file = await downloadArtifact({
     releaseName: "dmg-builder@1.1.0",
     filenameWithExt: filename,
-    checksums: {
-      [filename]: config[filename],
-    },
+    checksums: config,
     githubOrgRepo: "electron-userland/electron-builder-binaries",
   })
   return path.resolve(file, "dmgbuild")
@@ -82,7 +80,8 @@ async function findMountPath(devName: string, index: number = 1): Promise<string
 
 export async function detach(name: string) {
   return hdiUtil(["detach", "-quiet", name]).catch(async e => {
-    if (hdiutilTransientExitCodes.has(e.code)) {
+    // always force unmount if regular unmount fails during CI (parallel tests)
+    if (hdiutilTransientExitCodes.has(e.code) || !!process.env.VITEST) {
       // Delay then force unmount with verbose output
       await new Promise(resolve => setTimeout(resolve, 3000))
       return hdiUtil(["detach", "-force", name])

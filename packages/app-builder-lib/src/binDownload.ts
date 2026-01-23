@@ -94,40 +94,50 @@ export async function downloadArtifact(options: { releaseName: string; filenameW
 }
 
 /**
- * Downloads, validates, and extracts a binary from a release URL
+ * Downloads, validates, and extracts a .tar.gz from a release URL
  */
 async function _downloadArtifact(baseUrl: string, releaseName: string, filenameWithExt: string, checksums: Record<string, string>, onProgress?: ProgressCallback): Promise<string> {
-  const folderName = `${filenameWithExt.replace(/\.(tar\.gz|tgz)$/, "")}-${hashUrlSafe(baseUrl)}`
-  const downloadDir = path.join(getCacheDirectory(), releaseName, folderName)
-  const extractionCompleteMarker = path.join(downloadDir, ".complete")
+  const suffix = hashUrlSafe(`${baseUrl}-${releaseName}-${filenameWithExt}`, 5)
+  const folderName = `${filenameWithExt.replace(/\.(tar\.gz|tgz)$/, "")}-${suffix}`
+  const extractDir = path.join(getCacheDirectory(), releaseName, folderName)
+  const extractionCompleteMarker = `${extractDir}.complete`
 
   // Ensure download directory exists before trying to lock
-  await fs.mkdir(downloadDir, { recursive: true })
+  await fs.mkdir(extractDir, { recursive: true })
 
   // Acquire the lock
   let release: (() => Promise<void>) | undefined
   try {
-    release = await lockfile.lock(downloadDir, {
+    release = await lockfile.lock(extractDir, {
       retries: {
         retries: 5,
         minTimeout: 1000,
         maxTimeout: 5000,
       },
-      stale: 60000, // Consider lock stale after 60 seconds
+      stale: 60000,
     })
 
-    if (await exists(extractionCompleteMarker)) {
+    let cacheMode: ElectronDownloadCacheMode = ElectronDownloadCacheMode.ReadWrite
+    const cacheOverride = process.env.ELECTRON_BUILDER_CACHE_MODE?.trim()
+    if (cacheOverride && Number(cacheOverride) in ElectronDownloadCacheMode) {
+      cacheMode = Number(cacheOverride)
+      log.debug({ mode: cacheMode }, "cache mode overridden via env var ELECTRON_BUILDER_CACHE_MODE")
+    }
+
+    if ((await exists(extractionCompleteMarker)) || cacheMode === ElectronDownloadCacheMode.ReadOnly) {
       onProgress?.({
         stage: "extract",
         message: "Using cached extraction",
         percent: 100,
       })
-      return downloadDir
+      return extractDir
     }
 
     // These are just stubs. Overrides are in `mirrorOptions` below.
     const details: ElectronDownloadRequest = {
-      version: "0.0.0",
+      // Needs to be higher than 1.3.2 to avoid @electron/get validation shortcut
+      // https://github.com/electron/get/blob/05c466d4fc60fa0c83064df28dce245eb83d63c9/src/index.ts#L60
+      version: "9.9.9",
       artifactName: filenameWithExt, // also is the output filename
     }
 
@@ -142,14 +152,9 @@ async function _downloadArtifact(baseUrl: string, releaseName: string, filenameW
       },
     }
 
-    const cacheMode = Number(process.env.ELECTRON_BUILDER_CACHE_MODE?.trim())
-    if (cacheMode in ElectronDownloadCacheMode) {
-      log.debug({ mode: ElectronDownloadCacheMode[cacheMode] }, "using cache mode from ELECTRON_BUILDER_CACHE_MODE")
-    }
-
     const options: ElectronDownloadRequestOptions = {
-      cacheRoot: downloadDir,
-      cacheMode: cacheMode in ElectronDownloadCacheMode ? cacheMode : ElectronDownloadCacheMode.ReadWrite,
+      cacheRoot: path.resolve(getCacheDirectory(), "downloads"),
+      cacheMode,
       downloadOptions,
       checksums,
       mirrorOptions: {
@@ -175,7 +180,7 @@ async function _downloadArtifact(baseUrl: string, releaseName: string, filenameW
     let entriesExtracted = 0
     await tar.extract({
       file: downloadedFile,
-      cwd: downloadDir,
+      cwd: extractDir,
       strip: 1, // Strip the top-level directory from the archive
       onentry: entry => {
         entriesExtracted++
@@ -187,6 +192,7 @@ async function _downloadArtifact(baseUrl: string, releaseName: string, filenameW
       },
     })
 
+    // Write the extraction complete marker file to indicate successful extraction and prevent future re-extraction
     await fs.writeFile(extractionCompleteMarker, "")
 
     onProgress?.({
@@ -196,7 +202,7 @@ async function _downloadArtifact(baseUrl: string, releaseName: string, filenameW
       current: entriesExtracted,
       total: entriesExtracted,
     })
-    return downloadDir
+    return extractDir
   } finally {
     // Release the lock
     if (release) {
