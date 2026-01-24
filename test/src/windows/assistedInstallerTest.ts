@@ -35,8 +35,7 @@ test("assisted", ({ expect }) =>
       signedWin: true,
       projectDirCreated: projectDir => copyTestAsset("license.txt", path.join(projectDir, "build", "license.txt")),
     }
-  )
-)
+  ))
 
 test("allowElevation false, app requestedExecutionLevel admin", ({ expect }) =>
   app(expect, {
@@ -60,8 +59,7 @@ test("allowElevation false, app requestedExecutionLevel admin", ({ expect }) =>
         differentialPackage: false,
       },
     },
-  })
-)
+  }))
 
 test("assisted, MUI_HEADER", ({ expect }) => {
   let installerHeaderPath: string | null = null
@@ -141,8 +139,7 @@ test.skip("debug logging enabled", ({ expect }) =>
         },
       },
     },
-  })
-)
+  }))
 
 test("assisted, only perMachine", ({ expect }) =>
   app(expect, {
@@ -153,8 +150,7 @@ test("assisted, only perMachine", ({ expect }) =>
         perMachine: true,
       },
     },
-  })
-)
+  }))
 
 test("assisted, only perMachine and elevated", ({ expect }) =>
   app(expect, {
@@ -166,8 +162,7 @@ test("assisted, only perMachine and elevated", ({ expect }) =>
         packElevateHelper: true,
       },
     },
-  })
-)
+  }))
 
 // test release notes also
 test("allowToChangeInstallationDirectory", ({ expect }) =>
@@ -199,5 +194,4 @@ test("allowToChangeInstallationDirectory", ({ expect }) =>
         await doTest(expect, context.outDir, false)
       },
     }
-  )
-)
+  ))

@@ -7,15 +7,13 @@ import { Target } from "../core"
 import { WindowsConfiguration } from "../options/winOptions"
 import AppXTarget from "../targets/AppxTarget"
 import { executeAppBuilderAsJson } from "../util/appBuilder"
-import { ToolInfo } from "../util/bundledTool"
-import { isUseSystemSigncode } from "../util/flags"
 import { resolveFunction } from "../util/resolve"
 import { VmManager } from "../vm/vm"
 import { WinPackager } from "../winPackager"
 import { importCertificate } from "./codesign"
 import { SignManager } from "./signManager"
 import { WindowsSignOptions } from "./windowsCodeSign"
-import { getOsslSigncodeBundle, getWindowsKitsBundle } from "../targets/tools"
+import { getSignToolPath } from "../targets/tools"
 
 export type CustomWindowsSign = (configuration: CustomWindowsSignTaskConfiguration, packager?: WinPackager) => Promise<any>
 
@@ -382,27 +380,6 @@ export class WindowsSignToolManager implements SignManager {
     return path.join(path.dirname(inputPath), `${path.basename(inputPath, extension)}-signed-${hash}${extension}`)
   }
 
-  async getToolPath(isWin = process.platform === "win32"): Promise<ToolInfo> {
-    if (isUseSystemSigncode()) {
-      return { path: "osslsigncode" }
-    }
-
-    const result = process.env.SIGNTOOL_PATH
-    if (result) {
-      return { path: result }
-    }
-
-    const isLegacyWindowsCodeSign = !(this.packager.config.win?.winCodeSign !== "0.0.0") // default to legacy 0.0.0
-    if (isWin) {
-      const vendorPath = await getWindowsKitsBundle({ useLegacy: isLegacyWindowsCodeSign, arch: process.arch })
-      const signToolExePath = path.join(vendorPath.kit, "signtool.exe")
-      return { path: signToolExePath }
-    } else {
-      const vendor = await getOsslSigncodeBundle({ useLegacy: isLegacyWindowsCodeSign })
-      return { path: vendor.path, env: vendor.env }
-    }
-  }
-
   async getCertificateFromStoreInfo(options: WindowsConfiguration, vm: VmManager): Promise<CertificateFromStoreInfo> {
     const certificateSubjectName = options.signtoolOptions?.certificateSubjectName
     const certificateSha1 = options.signtoolOptions?.certificateSha1?.toUpperCase()
@@ -448,7 +425,7 @@ export class WindowsSignToolManager implements SignManager {
     let vm: VmManager
     const useVmIfNotOnWin = configuration.path.endsWith(".appx") || !("file" in configuration.cscInfo!) /* certificateSubjectName and other such options */
     const isWin = process.platform === "win32" || useVmIfNotOnWin
-    const toolInfo = await this.getToolPath(isWin)
+    const toolInfo = await getSignToolPath(this.packager.config.win?.winCodeSign, isWin)
     const tool = toolInfo.path
     if (useVmIfNotOnWin) {
       vm = await packager.vm.value

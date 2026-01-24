@@ -3,7 +3,9 @@ import { getBin, getBinFromUrl } from "../binDownload"
 import { isEmptyOrSpaces, log } from "builder-util"
 import { Nullish } from "builder-util-runtime"
 import * as os from "os"
-import { computeToolEnv } from "../util/bundledTool"
+import { computeToolEnv, ToolInfo } from "../util/bundledTool"
+import { WindowsConfiguration } from "../options/winOptions"
+import { isUseSystemSigncode } from "../util/flags"
 
 const wincodesignChecksums = {
   "rcedit-windows-2_0_0.zip": "NrBrX6M6qMG5vhUlMsD1P+byOfBq45KAD12Ono0lEfX8ynu3t0DmwJEMsRIjV/l0/SlptzM/eQXtY6+mOsvyjw==",
@@ -58,7 +60,25 @@ export async function getFpmPath() {
   return path.join(fpmPath, exec)
 }
 
-export async function getWindowsKitsBundle({ useLegacy, arch }: { useLegacy: boolean | Nullish; arch: NodeJS.Architecture }) {
+export async function getSignToolPath(winCodeSign: WindowsConfiguration["winCodeSign"] | Nullish, isWin = process.platform === "win32"): Promise<ToolInfo> {
+  if (isUseSystemSigncode()) {
+    return { path: "osslsigncode" }
+  }
+
+  const result = process.env.SIGNTOOL_PATH?.trim()
+  if (result) {
+    return { path: path.resolve(result) }
+  }
+
+  if (isWin) {
+    return { path: await getWindowsSignToolExe({ winCodeSign }) }
+  } else {
+    const vendor = await getOsslSigncodeBundle({ winCodeSign })
+    return { path: vendor.path, env: vendor.env }
+  }
+}
+
+export async function getWindowsKitsBundle({ winCodeSign, arch }: { winCodeSign: WindowsConfiguration["winCodeSign"] | Nullish; arch: NodeJS.Architecture }) {
   const overridePath = process.env.ELECTRON_BUILDER_WINDOWS_KITS_PATH
   if (!isEmptyOrSpaces(overridePath)) {
     return { kit: overridePath, appxAssets: overridePath }
@@ -66,13 +86,14 @@ export async function getWindowsKitsBundle({ useLegacy, arch }: { useLegacy: boo
 
   const windowsKitArch = (x86: string) => (arch === "ia32" ? x86 : arch === "arm64" ? "arm64" : "x64")
 
+  const useLegacy = winCodeSign == null || winCodeSign === "0.0.0"
   if (useLegacy === true) {
     const vendorPath = await getBin("winCodeSign")
-    return { kit: path.join(vendorPath, "windows-10", windowsKitArch("ia32")), appxAssets: vendorPath }
+    return { kit: path.resolve(vendorPath, "windows-10", windowsKitArch("ia32")), appxAssets: vendorPath }
   }
   const file = "windows-kits-bundle-10_0_26100_0.zip"
   const vendorPath = await getBinFromUrl("win-codesign@1.0.0", file, wincodesignChecksums[file])
-  return { kit: path.join(vendorPath, windowsKitArch("x86")), appxAssets: vendorPath }
+  return { kit: path.resolve(vendorPath, windowsKitArch("x86")), appxAssets: vendorPath }
 }
 
 export function isOldWin6() {
@@ -80,21 +101,21 @@ export function isOldWin6() {
   return winVersion.startsWith("6.") && !winVersion.startsWith("6.3")
 }
 
-export async function getLegacyWinSignTool({ useLegacy }: { useLegacy: boolean | Nullish }) {
-  if (useLegacy === true) {
+async function getWindowsSignToolExe({ winCodeSign }: { winCodeSign: WindowsConfiguration["winCodeSign"] | Nullish }) {
+  if (winCodeSign === "0.0.0" || winCodeSign == null) {
     // use modern signtool on Windows Server 2012 R2 to be able to sign AppX
     const vendorPath = await getBin("winCodeSign")
     if (isOldWin6()) {
-      return path.join(vendorPath, "windows-6", "signtool.exe")
+      return path.resolve(vendorPath, "windows-6", "signtool.exe")
     } else {
-      return path.join(vendorPath, "windows-10", process.arch, "signtool.exe")
+      return path.resolve(vendorPath, "windows-10", process.arch, "signtool.exe")
     }
   }
-  const vendorPath = await getWindowsKitsBundle({ useLegacy, arch: process.arch  })
-  return path.join(vendorPath.kit, "signtool.exe")
+  const vendorPath = await getWindowsKitsBundle({ winCodeSign, arch: process.arch })
+  return path.resolve(vendorPath.kit, "signtool.exe")
 }
 
-export async function getOsslSigncodeBundle({ useLegacy }: { useLegacy: boolean | Nullish }) {
+async function getOsslSigncodeBundle({ winCodeSign }: { winCodeSign: WindowsConfiguration["winCodeSign"] | Nullish }) {
   const overridePath = process.env.ELECTRON_BUILDER_OSSL_SIGNCODE_PATH
   if (!isEmptyOrSpaces(overridePath)) {
     return { path: overridePath }
@@ -103,10 +124,10 @@ export async function getOsslSigncodeBundle({ useLegacy }: { useLegacy: boolean 
     return { path: "osslsigncode" }
   }
 
-  if (useLegacy === true) {
-    const vendorBase = path.join(await getBin("winCodeSign"), process.platform)
-    const vendorPath = process.platform === "darwin" ? path.join(vendorBase, "10.12") : vendorBase
-    return { path: path.join(vendorPath, "osslsigncode"), env: process.platform === "darwin" ? computeToolEnv([path.join(vendorPath, "lib")]) : undefined }
+  if (winCodeSign === "0.0.0" || winCodeSign == null) {
+    const vendorBase = path.resolve(await getBin("winCodeSign"), process.platform)
+    const vendorPath = process.platform === "darwin" ? path.resolve(vendorBase, "10.12") : vendorBase
+    return { path: path.resolve(vendorPath, "osslsigncode"), env: process.platform === "darwin" ? computeToolEnv([path.resolve(vendorPath, "lib")]) : undefined }
   }
 
   const filename = (() => {
@@ -125,10 +146,10 @@ export async function getOsslSigncodeBundle({ useLegacy }: { useLegacy: boolean 
     return "win-codesign-darwin-x86_64.zip"
   })()
   const toolPath = await getBinFromUrl("win-codesign@1.0.0", filename, wincodesignChecksums[filename])
-  return { path: path.join(toolPath, "osslsigncode") }
+  return { path: path.resolve(toolPath, "osslsigncode") }
 }
 
-export async function getRceditBundle({ useLegacy }: { useLegacy: boolean | Nullish }) {
+export async function getRceditBundle({ winCodeSign }: { winCodeSign: WindowsConfiguration["winCodeSign"] | Nullish }) {
   const ia32 = "rcedit-ia32.exe"
   const x86 = "rcedit-x86.exe"
   const x64 = "rcedit-x64.exe"
@@ -137,7 +158,7 @@ export async function getRceditBundle({ useLegacy }: { useLegacy: boolean | Null
     log.debug({ searchFiles: [x86, x64], overridePath }, `Using RCEdit from ELECTRON_BUILDER_RCEDIT_PATH`)
     return { x86: path.join(overridePath, x86), x64: path.join(overridePath, x64) }
   }
-  if (useLegacy === true) {
+  if (winCodeSign === "0.0.0" || winCodeSign == null) {
     const vendorPath = await getBin("winCodeSign")
     return { x86: path.join(vendorPath, ia32), x64: path.join(vendorPath, x64) }
   }

@@ -74,7 +74,7 @@ export default class AppXTarget extends Target {
       arch,
     })
 
-    const vendorPath = await getWindowsKitsBundle({ useLegacy: this.packager.config.win?.winCodeSign === "legacy", arch })
+    const vendorPath = await getWindowsKitsBundle({ winCodeSign: this.packager.config.win?.winCodeSign, arch: process.arch })
     const vm = await packager.vm.value
 
     const stageDir = await createStageDir(this, packager, arch)

@@ -6884,8 +6884,8 @@
           "anyOf": [
             {
               "enum": [
-                "1.0",
-                "legacy"
+                "0.0.0",
+                "1.0.0"
               ],
               "type": "string"
             },
@@ -6893,8 +6893,8 @@
               "type": "null"
             }
           ],
-          "default": "1.0",
-          "description": "Whether or not to use legacy Windows code signing resources from electron-builder-binaries\nNote: this option is temporary for backward-compatibility and will be removed in a future major release"
+          "default": "0.0.0",
+          "description": "`win-codesign` version to use for signing Windows artifacts.\nLocated at https://github.com/electron-userland/electron-builder-binaries/releases?q=win-codesign&expanded=true\n0.0.0 - legacy toolset (winCodeSign)\n1.0.0 - windows-kits-bundle-10_0_26100_0"
         }
       },
       "type": "object"

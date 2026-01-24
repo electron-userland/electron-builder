@@ -27,7 +27,7 @@ export interface WindowsConfiguration extends PlatformSpecificBuildOptions {
   /**
    * `win-codesign` version to use for signing Windows artifacts.
    * Located at https://github.com/electron-userland/electron-builder-binaries/releases?q=win-codesign&expanded=true
-   * 0.0.0 - legacy toolset (default)
+   * 0.0.0 - legacy toolset (winCodeSign)
    * 1.0.0 - windows-kits-bundle-10_0_26100_0
    * @default "0.0.0"
    *
