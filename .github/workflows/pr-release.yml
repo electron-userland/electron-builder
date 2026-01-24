@@ -37,7 +37,7 @@ jobs:
           export-git-user: true
           creds: ${{ secrets.RELEASE_BOT_APP_CREDS }}
 
-      - name: Determine dist-tag and version strategy
+      - name: Determine dist-tag and changeset config
         id: dist-tag
         run: |
           BRANCH="${{ github.ref_name }}"
@@ -45,14 +45,61 @@ jobs:
           if [ "$BRANCH" == "master" ]; then
             echo "tag=next" >> $GITHUB_OUTPUT
             echo "branch_type=prerelease" >> $GITHUB_OUTPUT
-          elif [[ "$BRANCH" =~ ^release/ ]]; then
-            # Extract version from branch name (e.g., release/v1.x -> v1)
-            VERSION=$(echo "$BRANCH" | sed 's/release\/v\([0-9]*\)\.x/v\1/')
+            echo "config_file=config.json" >> $GITHUB_OUTPUT
+          elif [[ "$BRANCH" =~ ^release/v[0-9]+\.x$ ]]; then
+            # Extract version from branch name (e.g., release/v26.x -> v26)
+            VERSION=$(echo "$BRANCH" | sed -E 's/^release\/v([0-9]+)\.x$/v\1/')
+
+            # Validate that sed extraction worked correctly
+            if [[ ! "$VERSION" =~ ^v[0-9]+$ ]]; then
+              echo "::error::Failed to extract valid version from branch: $BRANCH"
+              echo "::error::Expected format: release/v{major}.x (e.g., release/v26.x)"
+              echo "::error::Extracted version: $VERSION"
+              exit 1
+            fi
+
             echo "tag=$VERSION" >> $GITHUB_OUTPUT
             echo "branch_type=lts" >> $GITHUB_OUTPUT
+            echo "config_file=config.release-$VERSION.json" >> $GITHUB_OUTPUT
           else
-            echo "Error: Unsupported branch for release: $BRANCH"
+            echo "::error::Unsupported branch for release: $BRANCH"
+            echo "::error::Expected 'master' or 'release/v{major}.x' (e.g., 'release/v26.x')"
             exit 1
+          fi
+
+          # Log the determined values for debugging
+          echo "Branch: $BRANCH"
+          echo "Dist-tag: $(cat $GITHUB_OUTPUT | grep '^tag=' | cut -d= -f2)"
+          echo "Branch type: $(cat $GITHUB_OUTPUT | grep '^branch_type=' | cut -d= -f2)"
+          echo "Config file: $(cat $GITHUB_OUTPUT | grep '^config_file=' | cut -d= -f2)"
+
+      - name: Link changeset config for this branch
+        run: |
+          CONFIG_PATH=".changeset/${{ steps.dist-tag.outputs.config_file }}"
+
+          # Verify config exists
+          if [ ! -f "$CONFIG_PATH" ]; then
+            echo "::error::Changeset config not found: $CONFIG_PATH"
+            echo "::error::Please create $CONFIG_PATH with the appropriate baseBranch setting"
+            exit 1
+          fi
+
+          # Only create symlink if it's not already the default config.json
+          if [ "${{ steps.dist-tag.outputs.config_file }}" != "config.json" ]; then
+            # Remove existing config.json if it exists (could be a file or symlink)
+            rm -f .changeset/config.json
+
+            # Create symbolic link
+            ln -s "$(basename $CONFIG_PATH)" .changeset/config.json
+            echo "Linked .changeset/config.json -> $CONFIG_PATH"
+
+            # Verify the link worked
+            if [ ! -L ".changeset/config.json" ]; then
+              echo "::error::Failed to create symbolic link"
+              exit 1
+            fi
+          else
+            echo "Using default config: $CONFIG_PATH (no symlink needed)"
           fi
 
       - name: Create versions PR & prepare publish
