@@ -59,8 +59,8 @@ jobs:
         id: changesets
         uses: changesets/action@7af85527bb2f43a404b5823a6cad47661be255c1 # v1.5.3 - @marshallofsound fork
         with:
-          commit: 'chore(deploy): Release (${{ github.ref_name }})'
-          title: 'chore(deploy): Release (${{ github.ref_name }})'
+          commit: 'chore(deploy): Release (${{ steps.dist-tag.outputs.tag }})'
+          title: 'chore(deploy): Release (${{ steps.dist-tag.outputs.tag }})'
           version: pnpm ci:version
           publish: pnpm ci:publish
           setupGitUser: false
