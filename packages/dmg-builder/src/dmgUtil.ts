@@ -37,7 +37,7 @@ async function getDmgVendorPath(): Promise<string> {
   return path.resolve(file, "dmgbuild")
 }
 
-export async function attachAndExecute(dmgPath: string, readWrite: boolean, task: (devicePath: string) => Promise<any>) {
+export async function attachAndExecute(dmgPath: string, readWrite: boolean, forceDetach: boolean, task: (devicePath: string) => Promise<any>) {
   //noinspection SpellCheckingInspection
   const args = ["attach", "-noverify", "-noautoopen"]
   if (readWrite) {
@@ -56,7 +56,7 @@ export async function attachAndExecute(dmgPath: string, readWrite: boolean, task
     throw new Error(`Cannot find volume mount path for device: ${device}`)
   }
 
-  return await executeFinally(task(volumePath), () => detach(device))
+  return await executeFinally(task(volumePath), () => detach(device, forceDetach))
 }
 
 /**
@@ -78,10 +78,9 @@ async function findMountPath(devName: string, index: number = 1): Promise<string
   return matches.length >= index ? matches[index - 1] : null
 }
 
-export async function detach(name: string) {
+export async function detach(name: string, alwaysForce: boolean) {
   return hdiUtil(["detach", "-quiet", name]).catch(async e => {
-    // always force unmount if regular unmount fails during CI (parallel tests)
-    if (hdiutilTransientExitCodes.has(e.code) || !!process.env.VITEST) {
+    if (hdiutilTransientExitCodes.has(e.code) || alwaysForce) {
       // Delay then force unmount with verbose output
       await new Promise(resolve => setTimeout(resolve, 3000))
       return hdiUtil(["detach", "-force", name])
@@ -195,7 +194,7 @@ export async function customizeDmg({ appPath, artifactPath, volumeName, specific
   // effectiveOptionComputed, when present, is purely for verifying result during test execution
   return (
     packager.packagerOptions.effectiveOptionComputed == null ||
-    (await attachAndExecute(artifactPath, false, async volumePath => {
+    (await attachAndExecute(artifactPath, false, true, async volumePath => {
       return !(await packager.packagerOptions.effectiveOptionComputed!({
         volumePath,
         specification: {

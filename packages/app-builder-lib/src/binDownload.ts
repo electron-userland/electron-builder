@@ -108,12 +108,12 @@ async function _downloadArtifact(baseUrl: string, releaseName: string, filenameW
       log.debug({ mode: cacheMode }, "cache mode overridden via env var ELECTRON_BUILDER_CACHE_MODE")
     }
 
-    if ((await exists(extractionCompleteMarker)) || cacheMode === ElectronDownloadCacheMode.ReadOnly) {
-      log.debug({ file: filenameWithExt, path: extractDir }, "using cache - skipping download/extract")
+    if (await exists(extractionCompleteMarker)) {
+      log.debug({ file: filenameWithExt, path: extractDir }, "using cached artifact - skipping download/extract")
       return extractDir
     }
 
-    // These are just stubs. Overrides are in `mirrorOptions` below.
+    // These are just stubs. Actual url construction/file naming are in `mirrorOptions` below.
     const details: ElectronDownloadRequest = {
       // Needs to be higher than 1.3.2 to avoid @electron/get validation shortcut
       // https://github.com/electron/get/blob/05c466d4fc60fa0c83064df28dce245eb83d63c9/src/index.ts#L60
@@ -122,7 +122,6 @@ async function _downloadArtifact(baseUrl: string, releaseName: string, filenameW
     }
 
     const progress = process.stdout.isTTY ? new MultiProgress() : null
-
     const progressBar = progress?.createBar(`${" ".repeat(PADDING + 2)}[:bar] :percent | ${filenameWithExt}`, { total: 100 })
 
     const downloadOptions: GotDownloaderOptions = {
@@ -131,13 +130,13 @@ async function _downloadArtifact(baseUrl: string, releaseName: string, filenameW
         return Promise.resolve()
       },
     }
-
     const options: ElectronDownloadRequestOptions = {
       cacheRoot: path.resolve(getCacheDirectory(), "downloads"),
       cacheMode,
       downloadOptions,
       checksums,
       mirrorOptions: {
+        // `${opts.mirror}${opts.customDir}/${opts.customFilename}`
         mirror: baseUrl,
         customDir: releaseName,
         customFilename: filenameWithExt,
