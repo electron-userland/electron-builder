@@ -353,7 +353,7 @@ export class WindowsSignToolManager implements SignManager {
 
   private addCommonSigningArgs(args: Array<string>, options: WindowsSignTaskConfiguration, vm: VmManager, isWin: boolean): void {
     if (options.name) {
-      args.push(isWin ? "/d" : "-n", `"${options.name}"`)
+      args.push(isWin ? "/d" : "-n", options.name)
     }
 
     if (options.site) {
