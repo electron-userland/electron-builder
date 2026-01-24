@@ -101,11 +101,13 @@ async function _downloadArtifact(baseUrl: string, releaseName: string, filenameW
       stale: 60000,
     })
 
+    const varName = "ELECTRON_DOWNLOAD_CACHE_MODE"
+    const cacheOverride = process.env[varName]?.trim()
+
     let cacheMode: ElectronDownloadCacheMode = ElectronDownloadCacheMode.ReadWrite
-    const cacheOverride = process.env.ELECTRON_BUILDER_CACHE_MODE?.trim()
     if (cacheOverride && Number(cacheOverride) in ElectronDownloadCacheMode) {
       cacheMode = Number(cacheOverride)
-      log.debug({ mode: cacheMode }, "cache mode overridden via env var ELECTRON_BUILDER_CACHE_MODE")
+      log.debug({ mode: cacheMode }, `cache mode overridden via env var ${varName}`)
     }
 
     if (await exists(extractionCompleteMarker)) {
