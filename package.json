@@ -22,7 +22,7 @@
     "generate-all": "pnpm generate-schema && pnpm prettier",
     "ci:test": "vitest run",
     "ci:version": "pnpm i && pnpm changelog && changeset version && node scripts/update-package-version-export.js && pnpm compile && pnpm generate-all && git add .",
-    "ci:publish": "pnpm i && pnpm compile && changeset publish --tag ${NPM_DIST_TAG:-next}",
+    "ci:publish": "pnpm i && pnpm compile && pnpm publish -r --tag ${NPM_DIST_TAG:-next} && changeset tag",
     "docs:prebuild": "docker build -t mkdocs-dockerfile -f mkdocs-dockerfile . ",
     "docs:build": "pnpm compile && ts-node scripts/renderer/src/typedoc2html.ts",
     "docs:mkdocs": "docker run --rm -v ${PWD}:/docs -v ${PWD}/site:/site mkdocs-dockerfile build",
