@@ -192,6 +192,9 @@ async function doBuild(
             oneClick: true,
             runAfterFinish: false,
           },
+          win: {
+            winCodeSign: "1.0.0",
+          },
         },
       },
       {
