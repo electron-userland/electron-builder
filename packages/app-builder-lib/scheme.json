@@ -870,6 +870,13 @@
             "string"
           ]
         },
+        "badgeIcon": {
+          "description": "The path to DMG icon (badge icon), which will be shown when mounted, relative to the [build resources](./contents.md#extraresources) or to the project directory.\nDefaults to the application icon (`build/icon.icns`).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
         "contents": {
           "description": "The content — to customize icon locations. The x and y coordinates refer to the position of the **center** of the icon (at 1x scale), and do not take the label into account.",
           "items": {

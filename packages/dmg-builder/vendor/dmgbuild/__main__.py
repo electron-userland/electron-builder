@@ -9,7 +9,10 @@ def main():
     parser.add_argument(
         "volume_name",
         metavar="volume-name",
-        help="The name to give to the volume (this will appear in the title bar when the user mounts the disk image).",
+        help=(
+            "The name to give to the volume (this will appear in the title "
+            "bar when the user mounts the disk image)."
+        ),
     )
     parser.add_argument(
         "filename",

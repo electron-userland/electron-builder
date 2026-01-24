@@ -17,7 +17,7 @@ test.ifMac("create keychain with installers", async ({ expect }) => {
   expect(result.keychainFile).not.toEqual("")
 })
 
-test.ifDevOrLinuxCi("remove password from log", async ({ expect }) => {
+test.ifDevOrLinuxCi("remove password from log", ({ expect }) => {
   expect(removePassword("seq -P foo -B")).toMatchSnapshot()
   expect(removePassword("pass:foo")).toMatchSnapshot()
   // noinspection SpellCheckingInspection

@@ -84,7 +84,7 @@ exports[`auto start 2`] = `
 exports[`base option 1`] = `
 {
   "apps": {
-    "sep": {
+    "testapp": {
       "command": "command.sh",
       "environment": {
         "DISABLE_WAYLAND": "1",
@@ -115,7 +115,7 @@ exports[`base option 1`] = `
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
-  "name": "sep",
+  "name": "testapp",
   "plugs": {
     "gnome-3-28-1804": {
       "default-provider": "gnome-3-28-1804",
@@ -723,7 +723,7 @@ exports[`custom env 2`] = `
 exports[`default base 1`] = `
 {
   "apps": {
-    "sep": {
+    "testapp": {
       "command": "command.sh",
       "environment": {
         "DISABLE_WAYLAND": "1",
@@ -754,7 +754,7 @@ exports[`default base 1`] = `
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
-  "name": "sep",
+  "name": "testapp",
   "plugs": {
     "gnome-3-28-1804": {
       "default-provider": "gnome-3-28-1804",
@@ -1584,7 +1584,7 @@ exports[`no desktop plugs 2`] = `
 exports[`plugs option 1`] = `
 {
   "apps": {
-    "test app ßw": {
+    "testapp": {
       "adapter": "none",
       "command": "command.sh",
       "environment": {
@@ -1607,7 +1607,7 @@ exports[`plugs option 1`] = `
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
   "icon": "snap/gui/icon.png",
-  "name": "test app ßw",
+  "name": "testapp",
   "parts": {
     "app": {
       "plugin": "nil",
@@ -1785,7 +1785,7 @@ exports[`plugs option 2`] = `
 exports[`plugs option 3`] = `
 {
   "apps": {
-    "test app ßw": {
+    "testapp": {
       "adapter": "none",
       "command": "command.sh",
       "environment": {
@@ -1808,7 +1808,7 @@ exports[`plugs option 3`] = `
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
   "icon": "snap/gui/icon.png",
-  "name": "test app ßw",
+  "name": "testapp",
   "parts": {
     "app": {
       "plugin": "nil",
@@ -2149,7 +2149,7 @@ exports[`snap 1`] = `
 exports[`use template app 1`] = `
 {
   "apps": {
-    "test app ßw": {
+    "testapp": {
       "command": "command.sh",
       "environment": {
         "DISABLE_WAYLAND": "1",
@@ -2180,7 +2180,7 @@ exports[`use template app 1`] = `
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
-  "name": "test app ßw",
+  "name": "testapp",
   "plugs": {
     "gnome-3-28-1804": {
       "default-provider": "gnome-3-28-1804",

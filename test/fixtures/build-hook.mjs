@@ -1,4 +1,4 @@
-const func = console.log
+const func = ({packager, target, ...obj}) => console.log(obj)
 
 export const artifactBuildStarted = func
 export const artifactBuildCompleted = func

@@ -83,7 +83,7 @@ test("assisted, MUI_HEADER", ({ expect }) => {
         expect(defines.MUI_HEADERIMAGE_BITMAP).toEqual(installerHeaderPath)
         expect(defines.MUI_HEADERIMAGE_RIGHT).toBeNull()
         // speedup, do not build - another MUI_HEADER test will test build
-        return true
+        return Promise.resolve(true)
       },
     },
     {
@@ -116,7 +116,7 @@ test("assisted, MUI_HEADER as option", ({ expect }) => {
         expect(defines.MUI_HEADERIMAGE_BITMAP).toEqual(installerHeaderPath)
         expect(defines.MUI_HEADERIMAGE_RIGHT).toBeNull()
         // test that we can build such installer
-        return false
+        return Promise.resolve(false)
       },
     },
     {

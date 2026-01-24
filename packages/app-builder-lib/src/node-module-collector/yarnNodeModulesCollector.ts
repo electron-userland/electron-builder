@@ -3,7 +3,7 @@ import { Lazy } from "lazy-val"
 import * as path from "path"
 import { NodeModulesCollector } from "./nodeModulesCollector"
 import { PM } from "./packageManager"
-import { PackageJson, YarnDependency } from "./types"
+import { YarnDependency } from "./types"
 
 type YarnListJsonLine =
   | {
@@ -64,22 +64,6 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
     this.productionGraph[dependencyId] = { dependencies }
   }
 
-  protected getDependencyType(pkgName: string, parentPkgJson: PackageJson): "prod" | "dev" | "optional" {
-    if (parentPkgJson.optionalDependencies?.[pkgName]) {
-      return "optional"
-    }
-
-    if (parentPkgJson.devDependencies?.[pkgName]) {
-      return "dev"
-    }
-
-    if (parentPkgJson.dependencies?.[pkgName]) {
-      return "prod"
-    }
-
-    return "prod"
-  }
-
   protected async parseDependenciesTree(jsonBlob: string): Promise<YarnDependency> {
     const lines = jsonBlob
       .split("\n")
@@ -102,9 +86,9 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
     if (!parsedTree) {
       throw new Error('Failed to extract Yarn tree: no "type":"tree" line found in console output')
     }
-    const rootPkgJson = await this.cache.packageJson[path.join(this.rootDir, "package.json")]
+    const rootPkgJson = (await this.cache.json[path.join(this.rootDir, "package.json")])!
 
-    const normalizedTree = await this.normalizeTree({ tree: parsedTree, seen: new Set<string>(), appName: rootPkgJson.name, parentPath: this.rootDir, parentPkgJson: rootPkgJson })
+    const normalizedTree = await this.normalizeTree({ tree: parsedTree, seen: new Set<string>(), appName: rootPkgJson.name, parentPath: this.rootDir })
 
     const dependencies: Record<string, YarnDependency> = {}
     for (const [name, dep] of Object.entries(normalizedTree)) {
@@ -120,26 +104,9 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
     })
   }
 
-  private async normalizeTree(options: {
-    tree: YarnListTree[]
-    seen: Set<string>
-    appName?: string
-    parentPath: string
-    parentPkgJson?: PackageJson // Add parent's package.json
-  }): Promise<Record<string, YarnDependency>> {
+  private async normalizeTree(options: { tree: YarnListTree[]; seen: Set<string>; appName?: string; parentPath: string }): Promise<Record<string, YarnDependency>> {
     const { tree, seen, appName, parentPath = this.rootDir } = options
-    let parentPkgJson = options.parentPkgJson
     const normalized: Record<string, YarnDependency> = {}
-
-    // Load parent's package.json if not provided
-    if (!parentPkgJson && parentPath) {
-      const parentPkgPath = path.join(parentPath, "package.json")
-      try {
-        parentPkgJson = await this.cache.packageJson[parentPkgPath]
-      } catch {
-        // Parent might not have package.json (e.g., root workspace)
-      }
-    }
 
     for (const node of tree) {
       const match = node.name.match(/^(.*)@([^@]+)$/)
@@ -161,7 +128,7 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
       }
 
       // Find the correct package path that matches the required version
-      const pkg = await this.locatePackageVersion(parentPath, pkgName, version)
+      const pkg = await this.locatePackageWithVersion({ name: pkgName, version, path: parentPath })
       const pkgPath = pkg?.packageDir
 
       if (!pkgPath) {
@@ -181,13 +148,11 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
 
       // Recursively process children, passing this package's info
       if (node.children && node.children.length > 0) {
-        const childPkgJson = await this.cache.packageJson[path.join(pkgPath, "package.json")]
         const childDeps = await this.normalizeTree({
           tree: node.children,
           seen,
           appName,
           parentPath: pkgPath,
-          parentPkgJson: childPkgJson, // Pass this package's package.json to children
         })
 
         for (const [childDepName, childDep] of Object.entries(childDeps)) {
@@ -202,7 +167,7 @@ export class YarnNodeModulesCollector extends NodeModulesCollector<YarnDependenc
   }
 
   protected async collectAllDependencies(tree: YarnDependency, packageToExclude: string) {
-    const rootPkgJson = await this.cache.packageJson[path.join(this.rootDir, "package.json")]
+    const rootPkgJson = (await this.cache.json[path.join(this.rootDir, "package.json")])!
     const failedPackages = new Set<string>()
 
     const collect = async (

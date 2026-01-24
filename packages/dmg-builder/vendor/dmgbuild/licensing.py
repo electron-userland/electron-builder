@@ -27,7 +27,8 @@ language_info_map = {
         "buttons": "Japanese",
         "name": "Japanese",
         "language_id": 14,
-        "encoding": "shift_jis",  # not sure if this is correct encoding, but seems to be working
+        # not sure if this is correct encoding, but seems to be working
+        "encoding": "shift_jis",
         "multibyte": True,
     },
     "ko_KR": {
@@ -78,7 +79,7 @@ default_buttons = {
         "Disagree",
         "Print",
         "Save",
-        'If you agree with the terms of this license, press "Agree" to install the software.  If you do not agree, press "Disagree".',  # noqa; E501
+        'If you agree with the terms of this license, press "Agree" to install the software.  If you do not agree, press "Disagree".',  # noqa: E501
     ),
     "German": (
         "Deutsch",
@@ -86,7 +87,7 @@ default_buttons = {
         "Ablehnen",
         "Drucken",
         "Sichern...",
-        'Klicken Sie in "Akzeptieren", wenn Sie mit den Bestimmungen des Software-Lizenzvertrags einverstanden sind. Falls nicht, bitte "Ablehnen" anklicken. Sie können die Software nur installieren, wenn Sie "Akzeptieren" angeklickt haben.',  # noqa; E501
+        'Klicken Sie in "Akzeptieren", wenn Sie mit den Bestimmungen des Software-Lizenzvertrags einverstanden sind. Falls nicht, bitte "Ablehnen" anklicken. Sie können die Software nur installieren, wenn Sie "Akzeptieren" angeklickt haben.',  # noqa: E501
     ),
     "Spanish": (
         "Español",
@@ -94,7 +95,7 @@ default_buttons = {
         "No aceptar",
         "Imprimir",
         "Guardar...",
-        'Si está de acuerdo con los términos de esta licencia, pulse "Aceptar" para instalar el software. En el supuesto de que no esté de acuerdo con los términos de esta licencia, pulse "No aceptar."',  # noqa; E501
+        'Si está de acuerdo con los términos de esta licencia, pulse "Aceptar" para instalar el software. En el supuesto de que no esté de acuerdo con los términos de esta licencia, pulse "No aceptar."',  # noqa: E501
     ),
     "French": (
         "Français",
@@ -102,7 +103,7 @@ default_buttons = {
         "Refuser",
         "Imprimer",
         "Enregistrer...",
-        'Si vous acceptez les termes de la présente licence, cliquez sur "Accepter" afin d\'installer le logiciel. Si vous n\'êtes pas d\'accord avec les termes de la licence, cliquez sur "Refuser".',  # noqa; E501
+        'Si vous acceptez les termes de la présente licence, cliquez sur "Accepter" afin d\'installer le logiciel. Si vous n\'êtes pas d\'accord avec les termes de la licence, cliquez sur "Refuser".',  # noqa: E501
     ),
     "Italian": (
         "Italiano",
@@ -110,7 +111,7 @@ default_buttons = {
         "Rifiuto",
         "Stampa",
         "Registra...",
-        'Se accetti le condizioni di questa licenza, fai clic su "Accetto" per installare il software. Altrimenti fai clic su "Rifiuto".',  # noqa; E501
+        'Se accetti le condizioni di questa licenza, fai clic su "Accetto" per installare il software. Altrimenti fai clic su "Rifiuto".',  # noqa: E501
     ),
     "Japanese": (
         "日本語",
@@ -118,7 +119,7 @@ default_buttons = {
         "同意しません",
         "印刷する",
         "保存...",
-        "本ソフトウエア使用許諾契約の条件に同意される場合には、ソフトウエアをインストールするために「同意します」を押してください。\u3000同意されない場合には、「同意しません」を押してください。",  # noqa; E501
+        "本ソフトウエア使用許諾契約の条件に同意される場合には、ソフトウエアをインストールするために「同意します」を押してください。\u3000同意されない場合には、「同意しません」を押してください。",  # noqa: E501
     ),
     "Dutch": (
         "Nederlands",
@@ -126,7 +127,7 @@ default_buttons = {
         "Nee",
         "Print",
         "Bewaar...",
-        "Indien u akkoord gaat met de voorwaarden van deze licentie, kunt u op 'Ja' klikken om de programmatuur te installeren. Indien u niet akkoord gaat, klikt u op 'Nee'.",  # noqa; E501
+        "Indien u akkoord gaat met de voorwaarden van deze licentie, kunt u op 'Ja' klikken om de programmatuur te installeren. Indien u niet akkoord gaat, klikt u op 'Nee'.",  # noqa: E501
     ),
     "Russian": (
         "Русский",
@@ -134,7 +135,7 @@ default_buttons = {
         "Не согласен",
         "Распечатать",
         "Сохранить",
-        "Если вы согласны с условиями данной лицензии, нажмите «Согласен», чтобы установить программное обеспечение. Если вы не согласны, нажмите «Не согласен».",  # noqa; E501
+        "Если вы согласны с условиями данной лицензии, нажмите «Согласен», чтобы установить программное обеспечение. Если вы не согласны, нажмите «Не согласен».",  # noqa: E501
     ),
     "Swedish": (
         "Svensk",
@@ -142,7 +143,7 @@ default_buttons = {
         "Avböjs",
         "Skriv ut",
         "Spara...",
-        'Om Du godkänner licensvillkoren klicka på "Godkänns" för att installera programprodukten. Om Du inte godkänner licensvillkoren, klicka på "Avböjs".',  # noqa; E501
+        'Om Du godkänner licensvillkoren klicka på "Godkänns" för att installera programprodukten. Om Du inte godkänner licensvillkoren, klicka på "Avböjs".',  # noqa: E501
     ),
     "Portuguese": (
         "Português",
@@ -150,7 +151,7 @@ default_buttons = {
         "Discordar",
         "Imprimir",
         "Salvar...",
-        'Se está de acordo com os termos desta licença, pressione "Concordar" para instalar o software. Se não está de acordo, pressione "Discordar".',  # noqa; E501
+        'Se está de acordo com os termos desta licença, pressione "Concordar" para instalar o software. Se não está de acordo, pressione "Discordar".',  # noqa: E501
     ),
     "Simplified Chinese": (
         "汉语",
@@ -158,7 +159,7 @@ default_buttons = {
         "不同意",
         "打印",
         "存储…",
-        "如果您同意本许可协议的条款，请按“同意”来安装此软件。如果您不同意，请按“不同意”。",  # noqa; E501
+        "如果您同意本许可协议的条款，请按“同意”来安装此软件。如果您不同意，请按“不同意”。",  # noqa: E501
     ),
     "Traditional Chinese": (
         "漢語",
@@ -166,7 +167,7 @@ default_buttons = {
         "不同意",
         "列印",
         "儲存…",
-        "如果您同意本許可證裡的條款，請按“同意”以安裝軟體。如果不同意，請按“不同意”。",  # noqa; E501
+        "如果您同意本許可證裡的條款，請按“同意”以安裝軟體。如果不同意，請按“不同意”。",  # noqa: E501
     ),
     "Danish": (
         "Dansk",
@@ -174,7 +175,7 @@ default_buttons = {
         "Uenig",
         "Udskriv",
         "Arkiver...",
-        "Hvis du accepterer betingelserne i licensaftalen, skal du klikke på “Enig” for at installere softwaren. Klik på “Uenig” for at annullere installeringen.",  # noqa; E501
+        "Hvis du accepterer betingelserne i licensaftalen, skal du klikke på “Enig” for at installere softwaren. Klik på “Uenig” for at annullere installeringen.",  # noqa: E501
     ),
     "Finnish": (
         "Suomi",
@@ -182,7 +183,7 @@ default_buttons = {
         "En hyväksy",
         "Tulosta",
         "Tallenna…",
-        'Hyväksy lisenssisopimuksen ehdot osoittamalla "Hyväksy". Jos et hyväksy sopimuksen ehtoja, osoita "En hyväksy".',  # noqa; E501
+        'Hyväksy lisenssisopimuksen ehdot osoittamalla "Hyväksy". Jos et hyväksy sopimuksen ehtoja, osoita "En hyväksy".',  # noqa: E501
     ),
     "Korean": (
         "한국어",
@@ -190,7 +191,7 @@ default_buttons = {
         "동의 안함",
         "프린트",
         "저장...",
-        '사용 계약서의 내용에 동의하면, "동의" 단추를 눌러 소프트웨어를 설치하십시오. 동의하지 않는다면, "동의 안함" 단추를 누르십시오.',  # noqa; E501
+        '사용 계약서의 내용에 동의하면, "동의" 단추를 눌러 소프트웨어를 설치하십시오. 동의하지 않는다면, "동의 안함" 단추를 누르십시오.',  # noqa: E501
     ),
     "Norwegian": (
         "Norsk",
@@ -198,7 +199,7 @@ default_buttons = {
         "Ikke enig",
         "Skriv ut",
         "Arkiver...",
-        'Hvis De er enig i bestemmelsene i denne lisensavtalen, klikker De på "Enig"-knappen for å installere programvaren. Hvis De ikke er enig, klikker De på "Ikke enig".',  # noqa; E501
+        'Hvis De er enig i bestemmelsene i denne lisensavtalen, klikker De på "Enig"-knappen for å installere programvaren. Hvis De ikke er enig, klikker De på "Ikke enig".',  # noqa: E501
     ),
 }
 
@@ -241,7 +242,7 @@ def build_license(license_info):
 
     lpic = b""
     # The first field is the default language ID.
-    lpic += int(5000).to_bytes(2, "big")
+    lpic += (5000).to_bytes(2, "big")
     # The second field is the count of language ID to license resource mappings.
     lpic += len(licenses.items()).to_bytes(2, "big")
 
@@ -258,7 +259,8 @@ def build_license(license_info):
         language_buttons = language_info["buttons"]
         language_name = language_info["name"]
         language_id = language_info["language_id"]
-        # for simplicity we use the same id for the resource as system language id + 5000
+        # for simplicity we use the same id for the resource
+        # as system language id + 5000
         resource_id = language_id + 5000
         language_encoding = language_info.get("encoding", "mac_roman")
         multibyte_encoding = language_info.get("multibyte_encoding", False)

@@ -336,9 +336,10 @@ const decoupleGraphNode = (parent: HoisterWorkTree, node: HoisterWorkTree): Hois
     hoistedTo: new Map(hoistedTo),
   }
   const selfDep = clone.dependencies.get(name)
-  if (selfDep && selfDep.ident == clone.ident)
-    // Update self-reference
+  if (selfDep && selfDep.ident == clone.ident) // Update self-reference
+  {
     clone.dependencies.set(name, clone)
+  }
 
   parent.dependencies.set(clone.name, clone)
 
@@ -536,10 +537,11 @@ const getNodeHoistInfo = (
   let reasonRoot
   let reason: string | null = null
   let dependsOn: Set<HoisterWorkTree> | null = new Set()
-  if (outputReason)
+  if (outputReason) {
     reasonRoot = `${Array.from(rootNodePathLocators)
       .map(x => prettyPrintLocator(x))
       .join(`→`)}`
+  }
 
   const parentNode = nodePath[nodePath.length - 1]
   // We cannot hoist self-references
@@ -585,11 +587,12 @@ const getNodeHoistInfo = (
             shadowedNodes.set(parentNode, shadowedNames)
           }
           shadowedNames.add(node.name)
-          if (outputReason)
+          if (outputReason) {
             reason = `- filled by ${prettyPrintLocator(parentDep.locator)} at ${nodePath
               .slice(0, idx)
               .map(x => prettyPrintLocator(x.locator))
               .join(`→`)}`
+          }
           break
         }
       }

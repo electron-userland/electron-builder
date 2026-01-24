@@ -142,7 +142,7 @@ test("yarn multi-package workspace", ({ expect }) =>
     }
   ))
 
- // yarn berry multi-package workspace
+// yarn berry multi-package workspace
 test("yarn berry multi-package workspace", ({ expect }) =>
   assertPack(
     expect,
@@ -238,8 +238,7 @@ test("bun workspace --linker=isolated", ({ expect }) =>
       },
       packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
     }
-  )
-)
+  ))
 
 test("bun workspace --linker=isolated - multiple conflicting versions", ({ expect }) =>
   assertPack(
@@ -281,8 +280,7 @@ test("bun workspace --linker=isolated - multiple conflicting versions", ({ expec
       },
       packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
     }
-  )
-)
+  ))
 
 test("bun workspace --linker=hoisted", ({ expect }) =>
   assertPack(
@@ -322,8 +320,7 @@ test("bun workspace --linker=hoisted", ({ expect }) =>
       },
       packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
     }
-  )
-)
+  ))
 
 test("bun workspace --linker=hoisted - multiple conflicting versions", ({ expect }) =>
   assertPack(
@@ -364,6 +361,71 @@ test("bun workspace --linker=hoisted - multiple conflicting versions", ({ expect
         ])
       },
       packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
+    }
+  ))
+
+test("traversal hoisted", ({ expect }) =>
+  assertPack(
+    expect,
+    "test-app-yarn-hoisted",
+    {
+      targets: linuxDirTarget,
+    },
+    {
+      packageManager: PM.TRAVERSAL,
+      packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
+      projectDirCreated: async projectDir => {
+        await modifyPackageJson(
+          projectDir,
+          data => {
+            data.packageManager = yarnBerryVersion
+          },
+          false
+        )
+        await modifyPackageJson(projectDir, data => packageConfig(data, yarnBerryVersion), true)
+        await writeFile(path.join(projectDir, "yarn.lock"), "")
+        await writeFile(path.join(projectDir, "app", "yarn.lock"), "")
+      },
+    }
+  ))
+
+test("traversal workspace", ({ expect }) =>
+  assertPack(
+    expect,
+    "test-app-yarn-workspace",
+    {
+      targets: linuxDirTarget,
+      projectDir: "packages/test-app",
+    },
+    {
+      packageManager: PM.TRAVERSAL,
+      packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
+      projectDirCreated: async projectDir => {
+        await modifyPackageJson(projectDir, data => {
+          data.packageManager = yarnBerryVersion
+        })
+        await modifyPackageJson(path.join(projectDir, "packages", "test-app"), data => packageConfig(data, yarnBerryVersion))
+      },
+    }
+  ))
+
+test("traversal multi-package workspace", ({ expect }) =>
+  assertPack(
+    expect,
+    "test-app-yarn-several-workspace",
+    {
+      targets: linuxDirTarget,
+      projectDir: "packages/test-app",
+    },
+    {
+      packageManager: PM.TRAVERSAL,
+      packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
+      projectDirCreated: async projectDir => {
+        await modifyPackageJson(projectDir, data => {
+          data.packageManager = yarnBerryVersion
+        })
+        await modifyPackageJson(path.join(projectDir, "packages", "test-app"), data => packageConfig(data, yarnVersion))
+      },
     }
   ))
 

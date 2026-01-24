@@ -15,7 +15,7 @@ except ImportError:
     from importlib import resources
 
 from ds_store import DSStore
-from mac_alias import Alias, Bookmark
+from mac_alias import Alias
 
 from . import colors, licensing
 
@@ -25,7 +25,7 @@ except ImportError:
     badge = None
 
 
-_hexcolor_re = re.compile(r"#[0-9a-f]{3}(?:[0-9a-f]{3})?")
+_hexcolor_re = re.compile(r"#[0-9a-f]{3}(?:[0-9a-f]{3})?", re.IGNORECASE)
 
 # The first element in the platform.mac_ver() tuple is a string containing the
 # macOS version (e.g., '10.15.6'). Parse into an integer tuple.
@@ -159,16 +159,20 @@ def load_json(filename, settings):
     settings["icon_locations"] = icon_locations
 
 
-def build_dmg(  # noqa; C901
+def build_dmg(  # noqa: C901
     filename,
     volume_name,
     settings_file=None,
-    settings={},
-    defines={},
+    settings=None,
+    defines=None,
     lookForHiDPI=True,
     detach_retries=12,
     callback=quiet_callback,
 ):
+    if defines is None:
+        defines = {}
+    if settings is None:
+        settings = {}
     options = {
         # Default settings
         "filename": filename,
@@ -269,8 +273,8 @@ def build_dmg(  # noqa; C901
     # Set up the finder data
     bounds = options["window_rect"]
 
-    bounds_string = "{{{{{}, {}}}, {{{}, {}}}}}".format(
-        bounds[0][0], bounds[0][1], bounds[1][0], bounds[1][1]
+    bounds_string = (
+        f"{{{{{bounds[0][0]}, {bounds[0][1]}}}, {{{bounds[1][0]}, {bounds[1][1]}}}}}"
     )
     bwsp = {
         "ShowStatusBar": options["show_status_bar"],
@@ -373,8 +377,11 @@ def build_dmg(  # noqa; C901
     for n, column in enumerate(options["list_columns"]):
         cndx[column] = n
         width = options["list_column_widths"].get(column, default_widths[column])
-        asc = "ascending" == options["list_column_sort_directions"].get(
-            column, default_sort_directions[column]
+        asc = (
+            options["list_column_sort_directions"].get(
+                column, default_sort_directions[column]
+            )
+            == "ascending"
         )
 
         lsvp["columns"][columns[column]] = {
@@ -387,10 +394,10 @@ def build_dmg(  # noqa; C901
 
     n = len(options["list_columns"])
     for k in columns:
-        if cndx.get(k, None) is None:
+        if cndx.get(k) is None:
             cndx[k] = n
             width = default_widths[k]
-            asc = "ascending" == default_sort_directions[k]
+            asc = default_sort_directions[k] == "ascending"
 
         lsvp["columns"][columns[column]] = {
             "index": n,
@@ -453,7 +460,7 @@ def build_dmg(  # noqa; C901
                 path = path[0]
 
             if not os.path.islink(path) and os.path.isdir(path):
-                for dirpath, dirnames, filenames in os.walk(path):
+                for dirpath, _dirnames, filenames in os.walk(path):
                     for f in filenames:
                         fp = os.path.join(dirpath, f)
                         total_size += roundup(os.lstat(fp).st_size, 4096)
@@ -566,8 +573,6 @@ def build_dmg(  # noqa; C901
         if icon or badge_icon:
             subprocess.call(["/usr/bin/SetFile", "-a", "C", mount_point])
 
-        background_bmk = None
-
         callback(
             {
                 "type": "operation::start",
@@ -627,8 +632,8 @@ def build_dmg(  # noqa; C901
                         except Exception as e:
                             output.seek(0)
                             raise ValueError(
-                                'unable to compile combined HiDPI file "%s" got error: %s\noutput: %s'
-                                % (background, str(e), output.read())
+                                f"unable to compile combined HiDPI file {background!r} "
+                                f"got error: {str(e)}\noutput: {output.read()}"
                             )
 
                 _, kind = os.path.splitext(background)
@@ -645,10 +650,9 @@ def build_dmg(  # noqa; C901
                         with open(path_in_image, "wb") as out_file:
                             out_file.write(in_file.read())
                 else:
-                    raise ValueError('background file "%s" not found' % background)
+                    raise ValueError(f'background file "{background}" not found')
 
             alias = Alias.for_file(path_in_image)
-            background_bmk = Bookmark.for_file(path_in_image)
 
             icvp["backgroundType"] = 2
             icvp["backgroundImageAlias"] = alias.to_bytes()
@@ -767,7 +771,7 @@ def build_dmg(  # noqa; C901
             }
         )
 
-        userfn = options.get("create_hook", None)
+        userfn = options.get("create_hook")
         if callable(userfn):
             userfn(mount_point, options)
 
@@ -785,8 +789,6 @@ def build_dmg(  # noqa; C901
             d["."]["bwsp"] = bwsp
             if include_icon_view_settings:
                 d["."]["icvp"] = icvp
-                if background_bmk:
-                    d["."]["pBBk"] = background_bmk
             if include_list_view_settings:
                 d["."]["lsvp"] = lsvp
             d["."]["icvl"] = icvl
@@ -819,7 +821,7 @@ def build_dmg(  # noqa; C901
     subprocess.check_call(("sync", "--file-system", mount_point))
 
     retry_time = 1
-    for tries in range(detach_retries):
+    for _ in range(detach_retries):
         callback(
             {
                 "type": "command::start",
@@ -833,8 +835,8 @@ def build_dmg(  # noqa; C901
             {
                 "type": "command::finished",
                 "command": "hdiutil::detach",
-                "ret:": ret,
-                "output:": output,
+                "ret": ret,
+                "output": output,
             }
         )
 
