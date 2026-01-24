@@ -392,12 +392,13 @@ export class WindowsSignToolManager implements SignManager {
       return { path: result }
     }
 
+    const isLegacyWindowsCodeSign = !(this.packager.config.win?.winCodeSign !== "0.0.0") // default to legacy 0.0.0
     if (isWin) {
-      const vendorPath = await getWindowsKitsBundle({ useLegacy: this.packager.config.win?.winCodeSign === "legacy", arch: process.arch as any })
+      const vendorPath = await getWindowsKitsBundle({ useLegacy: isLegacyWindowsCodeSign, arch: process.arch })
       const signToolExePath = path.join(vendorPath.kit, "signtool.exe")
       return { path: signToolExePath }
     } else {
-      const vendor = await getOsslSigncodeBundle({ useLegacy: this.packager.config.win?.winCodeSign === "legacy" })
+      const vendor = await getOsslSigncodeBundle({ useLegacy: isLegacyWindowsCodeSign })
       return { path: vendor.path, env: vendor.env }
     }
   }

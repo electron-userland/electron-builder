@@ -25,12 +25,14 @@ export interface WindowsConfiguration extends PlatformSpecificBuildOptions {
   readonly legalTrademarks?: string | null
 
   /**
-   * Whether or not to use legacy Windows code signing resources from electron-builder-binaries
-   * Note: this option is temporary for backward-compatibility and will be removed in a future major release
-   * @default "1.0"
+   * `win-codesign` version to use for signing Windows artifacts.
+   * Located at https://github.com/electron-userland/electron-builder-binaries/releases?q=win-codesign&expanded=true
+   * 0.0.0 - legacy toolset (default)
+   * 1.0.0 - windows-kits-bundle-10_0_26100_0
+   * @default "0.0.0"
    *
    */
-  readonly winCodeSign?: "legacy" | "1.0" | null
+  readonly winCodeSign?: "0.0.0" | "1.0.0" | null
 
   /**
    * Options for usage with signtool.exe

@@ -1,6 +1,6 @@
 import * as path from "path"
 import { getBin, getBinFromUrl } from "../binDownload"
-import { Arch, isEmptyOrSpaces, log } from "builder-util"
+import { isEmptyOrSpaces, log } from "builder-util"
 import { Nullish } from "builder-util-runtime"
 import * as os from "os"
 import { computeToolEnv } from "../util/bundledTool"
@@ -58,13 +58,13 @@ export async function getFpmPath() {
   return path.join(fpmPath, exec)
 }
 
-export async function getWindowsKitsBundle({ useLegacy, arch }: { useLegacy: boolean | Nullish; arch: Arch }) {
+export async function getWindowsKitsBundle({ useLegacy, arch }: { useLegacy: boolean | Nullish; arch: NodeJS.Architecture }) {
   const overridePath = process.env.ELECTRON_BUILDER_WINDOWS_KITS_PATH
   if (!isEmptyOrSpaces(overridePath)) {
     return { kit: overridePath, appxAssets: overridePath }
   }
 
-  const windowsKitArch = (x86: string) => (arch === Arch.ia32 ? x86 : arch === Arch.arm64 ? "arm64" : "x64")
+  const windowsKitArch = (x86: string) => (arch === "ia32" ? x86 : arch === "arm64" ? "arm64" : "x64")
 
   if (useLegacy === true) {
     const vendorPath = await getBin("winCodeSign")
@@ -90,7 +90,7 @@ export async function getLegacyWinSignTool({ useLegacy }: { useLegacy: boolean |
       return path.join(vendorPath, "windows-10", process.arch, "signtool.exe")
     }
   }
-  const vendorPath = await getWindowsKitsBundle({ useLegacy, arch: process.arch as any })
+  const vendorPath = await getWindowsKitsBundle({ useLegacy, arch: process.arch  })
   return path.join(vendorPath.kit, "signtool.exe")
 }
 

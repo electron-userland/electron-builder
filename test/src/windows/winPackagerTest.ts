@@ -69,7 +69,7 @@ test("zip artifactName", ({ expect }) =>
         //tslint:disable-next-line:no-invalid-template-strings
         artifactName: "${productName}-${version}-${os}-${arch}.${ext}",
         win: {
-          winCodeSign: "1.0",
+          winCodeSign: "1.0.0",
         },
       },
     },
@@ -85,7 +85,7 @@ test("legacy win-codesign", ({ expect }) =>
       targets: Platform.WINDOWS.createTarget(["zip"], Arch.x64),
       config: {
         win: {
-          winCodeSign: "legacy",
+          winCodeSign: "0.0.0",
         },
       },
     },
