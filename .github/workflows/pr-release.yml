@@ -4,9 +4,11 @@ on:
   push:
     branches:
       - master
+      - 'release/**'
 
-env:
-  HUSKY: 0 # Bypass husky commit hook for CI
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
 
 permissions: {}
 
@@ -35,13 +37,50 @@ jobs:
           export-git-user: true
           creds: ${{ secrets.RELEASE_BOT_APP_CREDS }}
 
+      - name: Determine dist-tag and version strategy
+        id: dist-tag
+        run: |
+          BRANCH="${{ github.ref_name }}"
+
+          if [ "$BRANCH" == "master" ]; then
+            echo "tag=next" >> $GITHUB_OUTPUT
+            echo "branch_type=prerelease" >> $GITHUB_OUTPUT
+          elif [[ "$BRANCH" =~ ^release/ ]]; then
+            # Extract version from branch name (e.g., release/v1.x -> v1)
+            VERSION=$(echo "$BRANCH" | sed 's/release\/v\([0-9]*\)\.x/v\1/')
+            echo "tag=$VERSION" >> $GITHUB_OUTPUT
+            echo "branch_type=lts" >> $GITHUB_OUTPUT
+          else
+            echo "Error: Unsupported branch for release: $BRANCH"
+            exit 1
+          fi
+
       - name: Create versions PR & prepare publish
+        id: changesets
         uses: changesets/action@7af85527bb2f43a404b5823a6cad47661be255c1 # v1.5.3 - @marshallofsound fork
         with:
+          commit: 'chore(deploy): Release (${{ github.ref_name }})'
+          title: 'chore(deploy): Release (${{ github.ref_name }})'
           version: pnpm ci:version
-          commit: 'chore(deploy): Release'
-          title: 'chore(deploy): Release'
           publish: pnpm ci:publish
           setupGitUser: false
         env:
           GITHUB_TOKEN: ${{ steps.generate-token.outputs.token }}
+          NPM_DIST_TAG: ${{ steps.dist-tag.outputs.tag }}
+
+      - name: Publish Summary
+        if: steps.changesets.outputs.published == 'true'
+        run: |
+          echo "## 📦 Published Packages" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch:** \`${{ github.ref_name }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Dist-tag:** \`${{ steps.dist-tag.outputs.tag }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Type:** \`${{ steps.dist-tag.outputs.branch_type }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```json' >> $GITHUB_STEP_SUMMARY
+          echo '${{ steps.changesets.outputs.publishedPackages }}' >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      - name: No changes to publish
+        if: steps.changesets.outputs.published != 'true'
+        run: echo "No changesets to publish"
