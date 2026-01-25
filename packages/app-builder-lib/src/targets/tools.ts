@@ -7,15 +7,30 @@ import { computeToolEnv, ToolInfo } from "../util/bundledTool"
 import { WindowsConfiguration } from "../options/winOptions"
 import { isUseSystemSigncode } from "../util/flags"
 
-const wincodesignChecksums = {
-  "rcedit-windows-2_0_0.zip": "NrBrX6M6qMG5vhUlMsD1P+byOfBq45KAD12Ono0lEfX8ynu3t0DmwJEMsRIjV/l0/SlptzM/eQXtY6+mOsvyjw==",
-  "win-codesign-darwin-arm64.zip": "D2w1EXL+4yTZ4vLvc2R+fox1nCl3D+o4m8CPo8BcIXNXHy5evnIgRGycb1nXNwRvyzS7trmOdVabW4W+A8CY7w==",
-  "win-codesign-darwin-x86_64.zip": "eF8TsYdSnPp2apYx/LoJMwwOvUAWo0ew0yqPxKfW6VflND2lmloJKxyfJzcBqhb1bvUNZAJtGuXU6KKOrUtPPQ==",
-  "win-codesign-linux-amd64.zip": "bHk5IbCv90BELGQxN7YUiiwVjQ10tEmIgLWn30/+9ejCGW6Hx1ammuX+katIxSm0osCrSGkHKY+E9Lo2qZCx5A==",
-  "win-codesign-linux-arm64.zip": "KLxwF6pvbyg37PI+IES17oOmrynaK3HR5fsFS7lUDzm7cNR8CUDirarwFP+G60Rl4cRC8hKbwNPumnPGStBXWQ==",
-  "win-codesign-linux-i386.zip": "sgI+axxrzKGbrKey9cIHg+FfniQqD6+u80xN6OQfcPcGmA3+z1R1Q0W/Wxy+qJkylhIgcRgeHgjzWkdDDNucyA==",
-  "win-codesign-windows-x64.zip": "XixPi+4XhoOdN5j90jx9rDgVAI0KHuM50D3dcWsn9NCxlZ5iTbDscvU7ARQG9h4+tWnprYZ2qbSoJiCvqlWZ4g==",
-  "windows-kits-bundle-10_0_26100_0.zip": "vvvH4J0JG2FoUcpRzXxrQHyONCALUZjQigff5CawjDP1DuwwwdVcZdfE33IQoRl4TqMOSu56hOy7nN72hskqyg==",
+const wincodesignChecksums: Record<NonNullable<WindowsConfiguration["winCodeSign"]>, Record<string, string>> = {
+  "0.0.0": {
+    // legacy
+  },
+  "1.0.0": {
+    "rcedit-windows-2_0_0.zip": "NrBrX6M6qMG5vhUlMsD1P+byOfBq45KAD12Ono0lEfX8ynu3t0DmwJEMsRIjV/l0/SlptzM/eQXtY6+mOsvyjw==",
+    "win-codesign-darwin-arm64.zip": "D2w1EXL+4yTZ4vLvc2R+fox1nCl3D+o4m8CPo8BcIXNXHy5evnIgRGycb1nXNwRvyzS7trmOdVabW4W+A8CY7w==",
+    "win-codesign-darwin-x86_64.zip": "eF8TsYdSnPp2apYx/LoJMwwOvUAWo0ew0yqPxKfW6VflND2lmloJKxyfJzcBqhb1bvUNZAJtGuXU6KKOrUtPPQ==",
+    "win-codesign-linux-amd64.zip": "bHk5IbCv90BELGQxN7YUiiwVjQ10tEmIgLWn30/+9ejCGW6Hx1ammuX+katIxSm0osCrSGkHKY+E9Lo2qZCx5A==",
+    "win-codesign-linux-arm64.zip": "KLxwF6pvbyg37PI+IES17oOmrynaK3HR5fsFS7lUDzm7cNR8CUDirarwFP+G60Rl4cRC8hKbwNPumnPGStBXWQ==",
+    "win-codesign-linux-i386.zip": "sgI+axxrzKGbrKey9cIHg+FfniQqD6+u80xN6OQfcPcGmA3+z1R1Q0W/Wxy+qJkylhIgcRgeHgjzWkdDDNucyA==",
+    "win-codesign-windows-x64.zip": "XixPi+4XhoOdN5j90jx9rDgVAI0KHuM50D3dcWsn9NCxlZ5iTbDscvU7ARQG9h4+tWnprYZ2qbSoJiCvqlWZ4g==",
+    "windows-kits-bundle-10_0_26100_0.zip": "vvvH4J0JG2FoUcpRzXxrQHyONCALUZjQigff5CawjDP1DuwwwdVcZdfE33IQoRl4TqMOSu56hOy7nN72hskqyg==",
+  },
+  "1.1.0": {
+    "rcedit-windows-2_0_0.zip": "sGDrjBJTVuhvcwbGAHv3/RVd9SA0HKBIDrtLk7NaAW1gSsmY0QZGn9fuhs/cjYHxZf39+PY2dOzqgLilhyeftA==",
+    "win-codesign-darwin-arm64.zip": "d0M76FslJ8+WxTJmHZjaGxYA/9yLS++zETrrZ57qf+ia/MUy9sRRohpPhZ62VgpUusUdNqqL6y3Zu1Oux/CBbQ==",
+    "win-codesign-darwin-x86_64.zip": "JgPwyRgt9MREDyjrUlccaeEVwfcXyBokSoiEvtJOipcPIAdOh6ECwj7ScjyzClWmh1WSnTEWKw6cFKwMXwxPTw==",
+    "win-codesign-linux-amd64.zip": "xqlwK9INio4Twp2sMH98uUKG+BuOLG8GJTeypD+Ay26TpV+/TIanOMvWMi2UB6dFW/B/XMVC2JDr+rlWikVJ0A==",
+    "win-codesign-linux-arm64.zip": "DQES7Koe6bOBbjuJWSRTFu41YfNeja5PLgL24ArklM1iSXZSb6AawgS0cSlwgIxmKfa08/xQ6emxfumg8sSA5A==",
+    "win-codesign-linux-i386.zip": "B+zhnU+5hJwmyXFs2ZK3lvIziqmz8dHStgZmSVgSXbKPx1SjZCm7JXk1FgLxk9O/mob5Hk/rJfrsO0WMjwgSAQ==",
+    "win-codesign-windows-x64.zip": "lLEOXdJP3dzjRI+/E3Rf8e3RqEh1qs0DRMRgmxHDbuSmXABAwEzhW+tj8g/VMIlxPTD12cyvWIyMbRZq4RxvsA==",
+    "windows-kits-bundle-10_0_26100_0.zip": "09Fh+zSwEiJMA6R2cW6tvpAlUDAq3h7kFzXt4scos62fygTMAK/G+JoRV4FMwBLcNiwUcn+A5ju2sJLHEfVdKA==",
+  },
 }
 
 // It's just easier to copy the map of checksums here rather then adding them to within each if-statement. Also, easy copy-paste from the releases page
@@ -87,12 +102,12 @@ export async function getWindowsKitsBundle({ winCodeSign, arch }: { winCodeSign:
   const windowsKitArch = (x86: string) => (arch === "ia32" ? x86 : arch === "arm64" ? "arm64" : "x64")
 
   const useLegacy = winCodeSign == null || winCodeSign === "0.0.0"
-  if (useLegacy === true) {
+  if (useLegacy) {
     const vendorPath = await getBin("winCodeSign")
     return { kit: path.resolve(vendorPath, "windows-10", windowsKitArch("ia32")), appxAssets: vendorPath }
   }
   const file = "windows-kits-bundle-10_0_26100_0.zip"
-  const vendorPath = await getBinFromUrl("win-codesign@1.0.0", file, wincodesignChecksums[file])
+  const vendorPath = await getBinFromUrl("win-codesign@1.0.0", file, wincodesignChecksums[winCodeSign][file])
   return { kit: path.resolve(vendorPath, windowsKitArch("x86")), appxAssets: vendorPath }
 }
 
@@ -145,7 +160,7 @@ async function getOsslSigncodeBundle({ winCodeSign }: { winCodeSign: WindowsConf
     }
     return "win-codesign-darwin-x86_64.zip"
   })()
-  const toolPath = await getBinFromUrl("win-codesign@1.0.0", filename, wincodesignChecksums[filename])
+  const toolPath = await getBinFromUrl("win-codesign@1.0.0", filename, wincodesignChecksums[winCodeSign][filename])
   return { path: path.resolve(toolPath, "osslsigncode") }
 }
 
@@ -163,6 +178,6 @@ export async function getRceditBundle({ winCodeSign }: { winCodeSign: WindowsCon
     return { x86: path.join(vendorPath, ia32), x64: path.join(vendorPath, x64) }
   }
   const file = "rcedit-windows-2_0_0.zip"
-  const vendorPath = await getBinFromUrl("win-codesign@1.0.0", file, wincodesignChecksums[file])
+  const vendorPath = await getBinFromUrl("win-codesign@1.0.0", file, wincodesignChecksums[winCodeSign][file])
   return { x86: path.join(vendorPath, x86), x64: path.join(vendorPath, x64) }
 }

@@ -6885,7 +6885,8 @@
             {
               "enum": [
                 "0.0.0",
-                "1.0.0"
+                "1.0.0",
+                "1.1.0"
               ],
               "type": "string"
             },
@@ -6894,7 +6895,7 @@
             }
           ],
           "default": "0.0.0",
-          "description": "`win-codesign` version to use for signing Windows artifacts.\nLocated at https://github.com/electron-userland/electron-builder-binaries/releases?q=win-codesign&expanded=true\n0.0.0 - legacy toolset (winCodeSign)\n1.0.0 - windows-kits-bundle-10_0_26100_0"
+          "description": "`win-codesign` version to use for signing Windows artifacts.\nLocated at https://github.com/electron-userland/electron-builder-binaries/releases?q=win-codesign&expanded=true\n0.0.0 - legacy toolset (winCodeSign)\n1.0.0 - windows-kits-bundle-10_0_26100_0\n1.1.0 - windows-kits-bundle-10_0_26100_0 with updated osslsigncode"
         }
       },
       "type": "object"

@@ -4,7 +4,7 @@ import * as path from "path"
 import { CheckingWinPackager } from "../helpers/CheckingPackager"
 import { app, appThrows, assertPack, platform } from "../helpers/packTester"
 
-const winCodeSignVersions: WindowsConfiguration["winCodeSign"][] = ["0.0.0", "1.0.0"]
+const winCodeSignVersions: WindowsConfiguration["winCodeSign"][] = ["0.0.0", "1.0.0", "1.1.0"]
 
 for (const winCodeSign of winCodeSignVersions) {
   describe(`winCodeSign: ${winCodeSign}`, () => {
