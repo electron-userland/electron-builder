@@ -14,51 +14,79 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
     return ["list", "--prod", "--json", "--depth", "Infinity"]
   }
 
-  private async getProductionDependencies(depTree: PnpmDependency): Promise<{ path: string; dependencies: Record<string, string>; optionalDependencies: Record<string, string> }> {
+  private async resolveActualPath(depTree: PnpmDependency): Promise<string> {
+    // If using hoisted mode, try to find the package at the hoisted location first
+    if (await this.isHoisted.value) {
+      const packageName = depTree.name || depTree.from
+      if (packageName) {
+        const hoistedPath = path.join(this.rootDir, "node_modules", packageName)
+        if (await this.cache.exists[hoistedPath]) {
+          return hoistedPath
+        }
+      }
+    }
+    // Fall back to the reported path (which might be the .pnpm store path)
+    return depTree.path
+  }
+
+  private async getProductionDependencies(depTree: PnpmDependency): Promise<{ path: string; prodDeps: Record<string, string>; optionalDependencies: Record<string, string> }> {
     const packageName = depTree.name || depTree.from
     if (isEmptyOrSpaces(packageName)) {
       log.error(depTree, `Cannot determine production dependencies for package with empty name`)
       throw new Error(`Cannot compute production dependencies for package with empty name: ${packageName}`)
     }
 
-    const result = await this.cache.locatePackageVersion({ parentDir: depTree.path, pkgName: packageName, requiredRange: depTree.version })
-    if (result == null) {
-      return { path: path.resolve(depTree.path), dependencies: {}, optionalDependencies: {} }
-    }
+    const actualPath = await this.resolveActualPath(depTree)
+    const resolvedLocalPath = await this.cache.realPath[actualPath]
+    const p = path.normalize(resolvedLocalPath)
+    const pkgJsonPath = path.join(p, "package.json")
 
-    const { dependencies, optionalDependencies } = result.packageJson
-    return { path: result.packageDir, dependencies: { ...dependencies }, optionalDependencies: { ...optionalDependencies } }
+    const packageJson = await this.cache.json[pkgJsonPath]
+    if (packageJson == null) {
+      return { path: p, prodDeps: {}, optionalDependencies: {} }
+    }
+    return { path: p, prodDeps: { ...packageJson.dependencies, ...packageJson.optionalDependencies }, optionalDependencies: { ...packageJson.optionalDependencies } }
   }
 
   protected async extractProductionDependencyGraph(tree: PnpmDependency, dependencyId: string) {
     if (this.productionGraph[dependencyId]) {
       return
     }
-    this.productionGraph[dependencyId] = { dependencies: [] }
 
     const packageName = tree.name || tree.from
-
-    const treeDep = { ...(tree.dependencies || {}), ...(tree.optionalDependencies || {}) }
     const json = packageName === dependencyId ? null : await this.getProductionDependencies(tree)
-    const prodDependencies = json ? { ...json.dependencies, ...json.optionalDependencies } : treeDep
-
-    const collectedDependencies: string[] = []
-    for (const packageName in treeDep) {
+    const prodDependencies = json?.prodDeps ?? { ...(tree.dependencies || {}), ...(tree.optionalDependencies || {}) }
+    if (prodDependencies == null) {
+      this.productionGraph[dependencyId] = { dependencies: [] }
+      return
+    }
+    const deps = { ...(tree.dependencies || {}), ...(tree.optionalDependencies || {}) }
+    this.productionGraph[dependencyId] = { dependencies: [] }
+    const depPromises = Object.entries(deps).map(async ([packageName, dependency]) => {
+      // First check if it's in production dependencies
       if (!prodDependencies[packageName]) {
-        continue
+        return undefined
       }
 
       // Then check if optional dependency path exists (using actual resolved path)
-      const version = json?.optionalDependencies?.[packageName] || tree.optionalDependencies?.[packageName]?.version || ""
-      const result = await this.locatePackageWithVersion({ name: packageName, version, path: json?.path ?? tree.path })
-      if (result == null || !(await this.cache.exists[result.packageDir])) {
-        log.debug({ packageName, version: version, searchPath: result?.packageDir }, `optional dependency not installed, skipping`)
-        continue
+      if (json?.optionalDependencies?.[packageName]) {
+        const actualPath = await this.resolveActualPath(dependency)
+        if (!(await this.cache.exists[actualPath])) {
+          log.debug(null, `Optional dependency ${packageName}@${dependency.version} path doesn't exist: ${actualPath}`)
+          return undefined
+        }
       }
-      const dependency = treeDep[packageName]
       const childDependencyId = this.packageVersionString(dependency)
       await this.extractProductionDependencyGraph(dependency, childDependencyId)
-      collectedDependencies.push(childDependencyId)
+      return childDependencyId
+    })
+
+    const collectedDependencies: string[] = []
+    for (const dep of depPromises) {
+      const result = await dep
+      if (result !== undefined) {
+        collectedDependencies.push(result)
+      }
     }
     this.productionGraph[dependencyId] = { dependencies: collectedDependencies }
   }
