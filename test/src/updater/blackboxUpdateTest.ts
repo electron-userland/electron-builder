@@ -1,6 +1,6 @@
 import { GenericServerOptions, Nullish } from "builder-util-runtime"
 import { archFromString, doSpawn, getArchSuffix, isEmptyOrSpaces, log, TmpDir } from "builder-util/out/util"
-import { Arch, Configuration, Platform } from "electron-builder"
+import { Arch, Configuration, Platform, WindowsConfiguration } from "electron-builder"
 import fs, { existsSync, outputFile } from "fs-extra"
 import path from "path"
 import { afterAll, beforeAll, describe, ExpectStatic, TestContext } from "vitest"
@@ -29,7 +29,13 @@ describe("Electron autoupdate (fresh install & update)", () => {
   })
 
   test.ifWindows("win", async context => {
-    await runTest(context, "nsis", "nsis")
+    await runTest(context, "nsis", "nsis", Arch.x64, { winCodeSign: "0.0.0" })
+  })
+  test.ifWindows("win - codesign 1.0.0", async context => {
+    await runTest(context, "nsis", "nsis", Arch.x64, { winCodeSign: "1.0.0" })
+  })
+  test.ifWindows("win - codesign 1.1.0", async context => {
+    await runTest(context, "nsis", "nsis", Arch.x64, { winCodeSign: "1.1.0" })
   })
 
   // must be sequential in order for process.env.ELECTRON_BUILDER_LINUX_PACKAGE_MANAGER to be respected per-test
@@ -86,12 +92,12 @@ const packageManagerMap: {
   },
 }
 
-async function runTest(context: TestContext, target: string, packageManager: string, arch: Arch = Arch.x64) {
+async function runTest(context: TestContext, target: string, packageManager: string, arch: Arch = Arch.x64, windowsOptions: { winCodeSign?: WindowsConfiguration["winCodeSign"] | null } | null = null) {
   const { expect } = context
 
   const tmpDir = new TmpDir("auto-update")
   const outDirs: ApplicationUpdatePaths[] = []
-  await doBuild(expect, outDirs, Platform.current().createTarget([target], arch), tmpDir, process.platform === "win32")
+  await doBuild(expect, outDirs, Platform.current().createTarget([target], arch), tmpDir, windowsOptions)
 
   const oldAppDir = outDirs[0]
   const newAppDir = outDirs[1]
@@ -153,7 +159,7 @@ async function doBuild(
   outDirs: Array<ApplicationUpdatePaths>,
   targets: Map<Platform, Map<Arch, Array<string>>>,
   tmpDir: TmpDir,
-  isWindows: boolean,
+  windowsOptions: { winCodeSign?: WindowsConfiguration["winCodeSign"] | null } | null,
   extraConfig?: Configuration | null
 ) {
   async function buildApp(
@@ -193,14 +199,14 @@ async function doBuild(
             runAfterFinish: false,
           },
           win: {
-            winCodeSign: "1.0.0",
+            winCodeSign: windowsOptions?.winCodeSign ?? "0.0.0",
           },
         },
       },
       {
         storeDepsLockfileSnapshot: false,
         signed: true,
-        signedWin: isWindows,
+        signedWin: windowsOptions != null,
         packed,
         projectDirCreated: async projectDir => {
           await Promise.all([
