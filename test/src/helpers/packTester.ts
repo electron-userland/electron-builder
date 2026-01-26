@@ -106,7 +106,7 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
   let configuration = packagerOptions.config as Configuration
   if (configuration == null) {
     configuration = {}
-    ;(packagerOptions as any).config = configuration
+      ; (packagerOptions as any).config = configuration
   }
 
   if (checkOptions.signed) {
@@ -169,7 +169,7 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
         // yarn
         HOME: tmpHome,
         USERPROFILE: tmpHome, // for Windows compatibility
-        YARN_CACHE_FOLDER: tmpCache,
+        YARN_CACHE_FOLDER: tmpCache, // this doesn't seem to always work in concurrent tests? So we must set manually
         // YARN_DISABLE_TELEMETRY: "1",
         // YARN_ENABLE_TELEMETRY: "false",
         YARN_IGNORE_PATH: "1", // ignore globally installed yarn binaries
@@ -192,6 +192,9 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
         } catch (err: any) {
           console.warn("⚠️ Yarn prepare failed:", err.message)
         }
+      }
+      if (pm === PM.YARN) {
+        execSync(`yarn config set cache-folder ${tmpCache}`, { env: runtimeEnv, cwd: projectDir, stdio: "inherit" })
       }
       const collector = getCollectorByPackageManager(pm, projectDir, tmpDir)
       const collectorOptions = collector.installOptions
@@ -380,7 +383,7 @@ async function packAndCheck(
 ): Promise<{ packager: Packager; outDir: string }> {
   const cancellationToken = new CancellationToken()
   const packager = new Packager(packagerOptions, cancellationToken)
-  ;(packager as any).runtimeEnvironmentVariables = runtimeEnv
+    ; (packager as any).runtimeEnvironmentVariables = runtimeEnv
   const publishManager = new PublishManager(packager, { publish: "publish" in checkOptions ? checkOptions.publish : "never" })
 
   const artifacts: Map<Platform, Array<ArtifactCreated>> = new Map()
@@ -562,7 +565,7 @@ async function checkMacResult(expect: ExpectStatic, packager: Packager, packager
 
   if (checksumData != null) {
     for (const name of Object.keys(checksumData)) {
-      ;(checksumData as Record<string, any>)[name] = { algorithm: "SHA256", hash: "hash" }
+      ; (checksumData as Record<string, any>)[name] = { algorithm: "SHA256", hash: "hash" }
     }
     snapshot.ElectronAsarIntegrity = checksumData
   }
@@ -723,9 +726,9 @@ export function signed(packagerOptions: PackagerOptions): PackagerOptions {
     log.warn({ reason: "CSC_KEY_PASSWORD is not defined" }, "macOS code signing is not tested")
   } else {
     if (packagerOptions.config == null) {
-      ;(packagerOptions as any).config = {}
+      ; (packagerOptions as any).config = {}
     }
-    ;(packagerOptions.config as any).cscLink = CSC_LINK
+    ; (packagerOptions.config as any).cscLink = CSC_LINK
   }
   return packagerOptions
 }

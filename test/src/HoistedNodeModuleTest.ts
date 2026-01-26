@@ -516,7 +516,7 @@ test("npm tar", ({ expect }) =>
         return Promise.all([
           modifyPackageJson(projectDir, data => {
             data.dependencies = {
-              tar: "7.4.3",
+              tar: "7.5.6",
             }
           }),
         ])
