@@ -101,7 +101,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
       async () => {
         await this.streamCollectorCommandToFile(command, args, this.rootDir, tempOutputFile)
         const shellOutput = await fs.readFile(tempOutputFile, { encoding: "utf8" })
-        const result = Promise.resolve(this.parseDependenciesTree(shellOutput))
+        const result = await Promise.resolve(this.parseDependenciesTree(shellOutput))
         return result
       },
       {
