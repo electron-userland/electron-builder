@@ -198,11 +198,8 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 
   private getExtraFileMatchers(isResources: boolean, appOutDir: string, options: GetFileMatchersOptions): Array<FileMatcher> | null {
-    const base = isResources
-      ? this.getResourcesDir(appOutDir)
-      : this.platform === Platform.MAC
-        ? path.join(appOutDir, `${this.appInfo.productFilename}.app`, "Contents")
-        : appOutDir
+    const outDir = this.platform === Platform.MAC ? path.join(appOutDir, this.info.framework.distMacOsAppName, "Contents") : appOutDir
+    const base = isResources ? this.getResourcesDir(appOutDir) : outDir
     return getFileMatchers(this.config, isResources ? "extraResources" : "extraFiles", base, options)
   }
 
