@@ -1,5 +1,5 @@
 {
-  "$schema": "https://unpkg.com/@changesets/config@1.6.0/schema.json",
+  "$schema": "https://unpkg.com/@changesets/config@3.0.0/schema.json",
   "changelog": ["changesets-changelog-clean", { "repo": "electron-userland/electron-builder" }],
   "commit": false,
   "linked": [[
@@ -17,8 +17,5 @@
   "access": "public",
   "baseBranch": "master",
   "updateInternalDependencies": "patch",
-  "ignore": ["@electron-builder/test"],
-  "___experimentalUnsafeOptions_WILL_CHANGE_IN_PATCH": {
-    "onlyUpdatePeerDependentsWhenOutOfRange": false
-  }
+  "ignore": ["@electron-builder/test"]
 }
