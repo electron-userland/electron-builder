@@ -42,12 +42,6 @@ const CAPABILITY_TYPES: Record<string, CapabilityConfig> = {
     declareNS: false,
     elementName: "Capability",
   },
-  device: {
-    nsAlias: null,
-    nsURI: "http://schemas.microsoft.com/appx/manifest/foundation/windows10",
-    declareNS: false,
-    elementName: "DeviceCapability",
-  },
   uap: {
     nsAlias: "uap",
     nsURI: "http://schemas.microsoft.com/appx/manifest/uap/windows10",
@@ -84,6 +78,12 @@ const CAPABILITY_TYPES: Record<string, CapabilityConfig> = {
     declareNS: false, // ns already declared in template
     elementName: "Capability",
   },
+  device: {
+    nsAlias: null,
+    nsURI: "http://schemas.microsoft.com/appx/manifest/foundation/windows10",
+    declareNS: false,
+    elementName: "DeviceCapability",
+  }
 } as const
 
 type CapabilityType = keyof typeof CAPABILITY_TYPES
@@ -278,6 +278,11 @@ function createCapability(type: CapabilityType, name: string): Capability {
 }
 
 // Export ordered list of all capabilities (order matters per Microsoft docs)
+// Schema: https://learn.microsoft.com/en-us/uwp/schemas/appxpackage/uapmanifestschema/schema-root
+// Packaging: https://learn.microsoft.com/en-us/windows/uwp/packaging/app-capability-declarations
+// !! the docs are not clear in which order is correct. the schema doc specifies an order that differs from the order described in packaging doc !!
+// https://learn.microsoft.com/en-us/answers/questions/92754/why-does-the-order-of-items-in-(capabilities)-of-p
+// as stated in the above post the packaging docs is the one to follow as MakeAppx.exe is following this specification when it checks the manifests validity
 export const CAPABILITIES: Capability[] = Array.from(CAPABILITY_MAP.entries()).flatMap(([type, names]) => names.map(name => createCapability(type, name)))
 
 const CAPABILITY_NAMES: Set<string> = new Set<string>(Array.from(CAPABILITY_MAP.values()).flat())
