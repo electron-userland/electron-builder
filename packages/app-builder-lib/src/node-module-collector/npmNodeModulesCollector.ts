@@ -45,9 +45,7 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
           continue
         }
         const dependency = resolvedDeps[packageName]
-        // Use the key (alias name) for aliased packages to match how they're stored in allDependencies
-        const normalizedName = packageName !== dependency.name ? packageName : dependency.name
-        const childDependencyId = `${normalizedName}@${dependency.version}`
+        const childDependencyId = this.packageVersionString({ name: packageName, version: dependency.version })
         await this.extractProductionDependencyGraph(dependency, childDependencyId)
         collectedDependencies.push(childDependencyId)
       }
