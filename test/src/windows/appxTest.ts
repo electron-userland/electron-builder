@@ -1,8 +1,9 @@
 import { Arch, Platform } from "electron-builder"
-import { readFile } from "fs-extra"
+import {outputFile, readFile} from "fs-extra"
 import { mkdir } from "fs/promises"
 import * as path from "path"
-import { app, copyTestAsset } from "../helpers/packTester"
+import {app, appThrows, copyTestAsset, linuxDirTarget} from "../helpers/packTester"
+import fs from "fs/promises"
 
 // test that we can get info from protected pfx
 const protectedCscLink =
@@ -160,13 +161,20 @@ it("valid capabilities (windows store only)", ({ expect }) =>
   }))
 
 it("invalid capabilities (windows store only)", ({ expect }) =>
-  expect(()=>app(expect, {
-    targets: Platform.WINDOWS.createTarget(["appx"], Arch.x64),
-    config: {
-      cscLink: protectedCscLink,
-      cscKeyPassword: "test",
-      appx: {
-        capabilities: ["invalid01", "invalid02"],
-      },
+  appThrows(
+    expect,
+    {
+      targets: Platform.WINDOWS.createTarget(["appx"], Arch.x64),
+      config: {
+        cscLink: protectedCscLink,
+        cscKeyPassword: "test",
+        appx: {
+          capabilities: ["invalid01", "invalid02"],
+        },
+      }
     },
-  })).toThrowError('invalid windows capabilities'))
+    {},
+    error => {
+      expect(error.message).toContain("invalid windows capabilities")
+    }
+  ))
