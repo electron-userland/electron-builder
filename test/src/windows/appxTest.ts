@@ -1,9 +1,8 @@
 import { Arch, Platform } from "electron-builder"
-import {outputFile, readFile} from "fs-extra"
+import {readFile} from "fs-extra"
 import { mkdir } from "fs/promises"
 import * as path from "path"
-import {app, appThrows, copyTestAsset, linuxDirTarget} from "../helpers/packTester"
-import fs from "fs/promises"
+import {app, appThrows, copyTestAsset} from "../helpers/packTester"
 
 // test that we can get info from protected pfx
 const protectedCscLink =
