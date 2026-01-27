@@ -55,7 +55,7 @@ export const linuxDirTarget = Platform.LINUX.createTarget(DIR_TARGET, Arch.x64)
 export const snapTarget = Platform.LINUX.createTarget("snap", Arch.x64)
 
 export interface AssertPackOptions {
-  readonly projectDirCreated?: (projectDir: string, tmpDir: TmpDir) => Promise<any> | (() => Promise<any>)
+  readonly projectDirCreated?: (projectDir: string, tmpDir: TmpDir, testEnv: NodeJS.ProcessEnv) => Promise<any> | (() => Promise<any>)
   readonly packed?: (context: PackedContext) => Promise<any>
   readonly expectedArtifacts?: Array<string>
 
@@ -154,12 +154,7 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
         }
       })
 
-      const postNodeModulesInstallHook = checkOptions.projectDirCreated ? await checkOptions.projectDirCreated(projectDir, tmpDir) : null
-
-      // Check again. Package manager could have been changed in package.json during `projectDirCreated`
-      const { pm, corepackConfig: packageManager } = await detectPackageManager([projectDir])
-
-      const tmpCache = await tmpDir.createTempDir({ prefix: "cache-" })
+            const tmpCache = await tmpDir.createTempDir({ prefix: "cache-" })
       const tmpHome = await tmpDir.createTempDir({ prefix: "home-" })
       const runtimeEnv = {
         ...process.env,
@@ -177,7 +172,12 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
         // YARN_NODE_LINKER: "node-modules", // force to not use pnp (as there's no way to access virtual packages within the paths returned by pnpm)
         npm_config_cache: tmpCache, // prevent npm fallback caching
       }
+      const postNodeModulesInstallHook = checkOptions.projectDirCreated ? await checkOptions.projectDirCreated(projectDir, tmpDir, runtimeEnv) : null
+
+      // Check again. Package manager could have been changed in package.json during `projectDirCreated`
+      const { pm, corepackConfig: packageManager } = await detectPackageManager([projectDir])
       const { cli, prepareEntry, version } = getPackageManagerWithVersion(pm, packageManager)
+
       if (pm === PM.BUN) {
         log.info({ pm, version: version, projectDir }, "installing dependencies with bun; corepack does not support it currently and it must be installed separately")
       } else {
@@ -192,9 +192,6 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
         } catch (err: any) {
           console.warn("⚠️ Yarn prepare failed:", err.message)
         }
-      }
-      if (pm === PM.YARN) {
-        execSync(`yarn config set cache-folder ${tmpCache}`, { env: runtimeEnv, cwd: projectDir, stdio: "inherit" })
       }
       const collector = getCollectorByPackageManager(pm, projectDir, tmpDir)
       const collectorOptions = collector.installOptions
