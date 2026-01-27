@@ -134,6 +134,7 @@ export async function customizeDmg({ appPath, artifactPath, volumeName, specific
     "compression-level": Number(process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL || "9"),
     // filesystem: specification.filesystem || "HFS+",
     format: specification.format,
+    size: specification.size,
     contents:
       specification.contents?.map(c => ({
         path: c.path || appPath, // path is required, when ommitted, appPath is used (backward compatibility

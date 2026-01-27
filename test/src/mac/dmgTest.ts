@@ -81,6 +81,27 @@ describe("dmg", { concurrent: true }, () => {
     })
   )
 
+  test.ifMac("explicit size", ({ expect }) =>
+    app(expect, {
+      targets: dmgTarget,
+      config: {
+        // dmg can mount only one volume name, so, to test in parallel, we set different product name
+        productName: "ExplicitSize",
+        publish: null,
+        dmg: {
+          size: "500m",
+          // speed-up test
+          writeUpdateInfo: false,
+          title: "Explicit Size",
+        },
+      },
+      effectiveOptionComputed: async it => {
+        expect(it.specification.size).toEqual("500m")
+        return Promise.resolve(true)
+      },
+    })
+  )
+
   test.ifMac("custom background - new way", ({ expect }) => {
     const customBackground = "customBackground.png"
     return assertPack(
