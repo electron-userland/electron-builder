@@ -3,4 +3,4 @@
 "app-builder-lib": patch
 ---
 
-chore(deps): updating tar and form-data
+chore(deps): updating electron/rebuild, tar, and form-data to latest releases
