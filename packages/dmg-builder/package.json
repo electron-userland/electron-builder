@@ -1,6 +1,6 @@
 {
 	"name": "dmg-builder",
-	"version": "26.4.1",
+	"version": "26.5.0",
 	"main": "out/dmgUtil.js",
 	"author": "Vladimir Krivosheev",
 	"license": "MIT",
@@ -13,8 +13,7 @@
 	"homepage": "https://github.com/electron-userland/electron-builder",
 	"files": [
 		"out",
-		"templates",
-		"vendor"
+		"templates"
 	],
 	"dependencies": {
 		"app-builder-lib": "workspace:*",

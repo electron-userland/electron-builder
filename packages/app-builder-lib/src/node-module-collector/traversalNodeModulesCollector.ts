@@ -46,10 +46,6 @@ export class TraversalNodeModulesCollector extends NodeModulesCollector<Traverse
     this.productionGraph[dependencyId] = { dependencies: collectedDependencies }
   }
 
-  protected async parseDependenciesTree(jsonBlob: string): Promise<TraversedDependency> {
-    return Promise.resolve(JSON.parse(jsonBlob))
-  }
-
   /**
    * Builds a dependency tree using only package.json dependencies and optionalDependencies.
    * This skips devDependencies and uses Node.js module resolution (require.resolve).

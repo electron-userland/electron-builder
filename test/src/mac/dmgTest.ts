@@ -11,15 +11,14 @@ const dmgTarget = Platform.MAC.createTarget("dmg", Arch.x64)
 const defaultTarget = Platform.MAC.createTarget(undefined, Arch.x64)
 
 describe("dmg", { concurrent: true }, () => {
-  test.ifMac("dmg", ({ expect }) =>
+  test("dmg", ({ expect }) =>
     app(expect, {
       targets: dmgTarget,
       config: {
         productName: "Default-Dmg",
         publish: null,
       },
-    })
-  )
+    }))
 
   test.ifMac("no build directory", ({ expect }) =>
     app(
@@ -139,6 +138,7 @@ describe("dmg", { concurrent: true }, () => {
           publish: null,
           dmg: {
             title: "Retina Background",
+            badgeIcon: "foo.icns",
           },
         },
         effectiveOptionComputed: async it => {
@@ -150,6 +150,7 @@ describe("dmg", { concurrent: true }, () => {
         projectDirCreated: async projectDir => {
           const resourceDir = path.join(projectDir, "build")
           await copyFile(path.join(getDmgTemplatePath(), "background.tiff"), path.join(resourceDir, "background.tiff"))
+          await copyFile(path.join(projectDir, "build", "icon.icns"), path.join(projectDir, "foo.icns"))
 
           async function extractPng(index: number, suffix: string) {
             await exec("tiffutil", ["-extract", index.toString(), path.join(getDmgTemplatePath(), "background.tiff")], {
@@ -224,7 +225,7 @@ describe("dmg", { concurrent: true }, () => {
       },
       {
         packed: context => {
-          return attachAndExecute(path.join(context.outDir, "No_Volume_Icon-1.1.0.dmg"), false, () => {
+          return attachAndExecute(path.join(context.outDir, "No_Volume_Icon-1.1.0.dmg"), false, true, () => {
             return Promise.all([
               assertThat(expect, path.join("/Volumes/No_Volume_Icon 1.1.0/.background.tiff")).isFile(),
               assertThat(expect, path.join("/Volumes/No_Volume_Icon 1.1.0/.VolumeIcon.icns")).doesNotExist(),
@@ -253,7 +254,7 @@ describe("dmg", { concurrent: true }, () => {
       },
       {
         packed: context => {
-          return attachAndExecute(path.join(context.outDir, "No-Background-1.1.0.dmg"), false, () => {
+          return attachAndExecute(path.join(context.outDir, "No-Background-1.1.0.dmg"), false, true, () => {
             return assertThat(expect, path.join("/Volumes/No-Background 1.1.0/.background.tiff")).doesNotExist()
           })
         },

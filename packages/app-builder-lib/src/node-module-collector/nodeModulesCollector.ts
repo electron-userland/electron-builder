@@ -1,4 +1,4 @@
-import { log, retry, TmpDir } from "builder-util"
+import { exists, log, retry, TmpDir } from "builder-util"
 import * as childProcess from "child_process"
 import * as fs from "fs-extra"
 import { createWriteStream } from "fs-extra"
@@ -36,6 +36,21 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     private readonly tempDirManager: TmpDir
   ) {}
 
+  /**
+   * Retrieves and collects all Node.js modules for a given package.
+   *
+   * This method orchestrates the entire module collection process by:
+   * 1. Fetching the dependency tree from the package manager
+   * 2. Collecting all dependencies recursively
+   * 3. Extracting workspace references if applicable
+   * 4. Building a production dependency graph
+   * 5. Hoisting the dependencies to their final locations
+   * 6. Resolving and returning module information
+   *
+   * @param options - Configuration object
+   * @param options.packageName - The name of the package to collect modules for
+   * @returns Promise resolving to an array of NodeModuleInfo objects representing all collected modules
+   */
   public async getNodeModules({ packageName }: { packageName: string }): Promise<NodeModuleInfo[]> {
     const tree: ProdDepType = await this.getDependenciesTree(this.installOptions.manager)
 
@@ -59,10 +74,20 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
   }
 
   protected abstract getArgs(): string[]
-  protected abstract parseDependenciesTree(jsonBlob: string): Promise<ProdDepType>
   protected abstract extractProductionDependencyGraph(tree: Dependency<ProdDepType, OptionalDepType>, dependencyId: string): Promise<void>
   protected abstract collectAllDependencies(tree: Dependency<ProdDepType, OptionalDepType>, appPackageName: string): Promise<void>
 
+  /**
+   * Retrieves the dependency tree from the package manager.
+   *
+   * Executes the appropriate package manager command to fetch the dependency tree and writes
+   * the output to a temporary file. Includes retry logic to handle transient failures such as
+   * incomplete JSON output or missing files. Will retry up to 1 time with exponential backoff.
+   *
+   * @param pm - The package manager to use (npm, yarn, pnpm, etc.)
+   * @returns Promise resolving to the parsed dependency tree
+   * @throws {Error} If the dependency tree cannot be retrieved after retries
+   */
   protected async getDependenciesTree(pm: PM): Promise<ProdDepType> {
     const command = getPackageManagerCommand(pm)
     const args = this.getArgs()
@@ -76,7 +101,8 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
       async () => {
         await this.streamCollectorCommandToFile(command, args, this.rootDir, tempOutputFile)
         const shellOutput = await fs.readFile(tempOutputFile, { encoding: "utf8" })
-        return await this.parseDependenciesTree(shellOutput.trim())
+        const result = await Promise.resolve(this.parseDependenciesTree(shellOutput))
+        return result
       },
       {
         retries: 1,
@@ -85,7 +111,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
         shouldRetry: async (error: any) => {
           const logFields = { error: error.message, tempOutputFile, cwd: this.rootDir }
 
-          if (!(await this.cache.exists[tempOutputFile])) {
+          if (!(await exists(tempOutputFile))) {
             log.debug(logFields, "dependency tree output file missing, retrying")
             return true
           }
@@ -110,6 +136,84 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     )
   }
 
+  /**
+   * Parses the dependencies tree from shell command output.
+   *
+   **/
+  protected parseDependenciesTree(shellOutput: string): ProdDepType | Promise<ProdDepType> {
+    return this.extractJsonFromPollutedOutput<ProdDepType>(shellOutput)
+  }
+  /**
+   *
+   * This method attempts to extract and parse JSON data from shell output that may contain
+   * additional non-JSON content (like warnings or informational messages). It first tries
+   * to parse the entire output as JSON, and if that fails, it intelligently searches for
+   * JSON content within the output by:
+   * 1. Finding the first line that starts with `{` or `[`
+   * 2. Tracking bracket depth to find the matching closing bracket
+   * 3. Extracting only the valid JSON portion
+   *
+   * @param shellOutput - The raw output from a shell command, potentially containing JSON
+   * @returns The parsed dependencies tree object
+   * @throws {Error} If no JSON content is found in the output
+   * @throws {Error} If no matching closing bracket is found in the output
+   * @throws {SyntaxError} If the extracted content is not valid JSON
+   */
+  protected extractJsonFromPollutedOutput<T>(shellOutput: string): T {
+    const consoleOutput = shellOutput.trim()
+    try {
+      return JSON.parse(consoleOutput)
+    } catch {
+      // Continue
+    }
+
+    const lines = consoleOutput.split("\n")
+
+    // Find the first line that starts with { or [
+    const jsonStartIdx = lines.findIndex(line => {
+      const trimmed = line.trim()
+      return trimmed.startsWith("{") || trimmed.startsWith("[")
+    })
+
+    if (jsonStartIdx === -1) {
+      throw new Error("No JSON content found in output")
+    }
+
+    // Find matching closing bracket using bracket counting
+    let depth = 0
+    let jsonEndIdx = -1
+
+    for (let i = jsonStartIdx; i < lines.length; i++) {
+      const line = lines[i]
+      for (const char of line) {
+        if (char === "{" || char === "[") {
+          depth++
+        } else if (char === "}" || char === "]") {
+          depth--
+          if (depth === 0) {
+            jsonEndIdx = i
+            break
+          }
+        }
+      }
+      if (jsonEndIdx !== -1) {
+        break
+      }
+    }
+
+    if (jsonEndIdx === -1) {
+      throw new Error("No matching closing bracket found in output")
+    }
+
+    // Parse the matched JSON section
+    const candidate = lines
+      .slice(jsonStartIdx, jsonEndIdx + 1)
+      .join("\n")
+      .trim()
+
+    return JSON.parse(candidate)
+  }
+
   protected cacheKey(pkg: Pick<ProdDepType, "name" | "version" | "path">): string {
     const rel = path.relative(this.rootDir, pkg.path)
     return `${pkg.name}::${pkg.version}::${rel ?? "."}`
@@ -119,6 +223,16 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     return `${pkg.name}@${pkg.version}`
   }
 
+  /**
+   * Determines if a given dependency is a production dependency of a package.
+   *
+   * Checks both the dependencies and optionalDependencies of a package to see if
+   * the specified dependency name is listed.
+   *
+   * @param depName - The name of the dependency to check
+   * @param pkg - The package to search for the dependency in
+   * @returns True if the dependency is found in either dependencies or optionalDependencies, false otherwise
+   */
   protected isProdDependency(depName: string, pkg: ProdDepType): boolean {
     const prodDeps = { ...pkg.dependencies, ...pkg.optionalDependencies }
     return prodDeps[depName] != null
@@ -133,7 +247,11 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     return result
   }
   /**
-   * Parse a dependency identifier like "@scope/pkg@1.2.3" or "pkg@1.2.3"
+   * Parses a dependency identifier string into name and version components.
+   *
+   * Handles both scoped packages (e.g., "@scope/pkg@1.2.3") and regular packages (e.g., "pkg@1.2.3").
+   * If the identifier is malformed or cannot be parsed, defaults to treating the entire string as
+   * the package name with an "unknown" version.
    */
   protected parseNameVersion(identifier: string): { name: string; version: string } {
     const lastAt = identifier.lastIndexOf("@")
@@ -146,6 +264,17 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     return { name, version }
   }
 
+  /**
+   * Retrieves the dependency tree and handles workspace package self-references.
+   *
+   * If the project is a workspace project, this method removes the root package's self-reference
+   * from the dependency tree to avoid circular dependencies. It promotes the root package's
+   * direct dependencies to the top level of the tree.
+   *
+   * @param tree - The original dependency tree
+   * @param packageName - The name of the package to check for and remove from the tree
+   * @returns Promise resolving to the pruned dependency tree
+   */
   protected async getTreeFromWorkspaces(tree: ProdDepType, packageName: string): Promise<ProdDepType> {
     if (!(tree.workspaces && tree.dependencies)) {
       return tree
@@ -234,6 +363,22 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     }
   }
 
+  /**
+   * Executes a command and streams its output to a file.
+   *
+   * Spawns a child process to execute the specified command with arguments, capturing stdout
+   * to a file. Handles Windows-specific quirks by wrapping .cmd files in a temporary .bat file
+   * when necessary. Enables corepack strict mode by default but allows process.env overrides.
+   *
+   * Special handling for `npm list` exit code 1, which is expected in certain scenarios.
+   *
+   * @param command - The command to execute
+   * @param args - Array of command-line arguments
+   * @param cwd - The working directory to execute the command in
+   * @param tempOutputFile - The path to the temporary file where stdout will be written
+   * @returns Promise that resolves when the command completes successfully or rejects if it fails
+   * @throws {Error} If the child process spawn fails or exits with a non-zero code
+   */
   async streamCollectorCommandToFile(command: string, args: string[], cwd: string, tempOutputFile: string) {
     const execName = path.basename(command, path.extname(command))
     const isWindowsScriptFile = process.platform === "win32" && path.extname(command).toLowerCase() === ".cmd"
@@ -258,7 +403,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
       const child = childProcess.spawn(command, args, {
         cwd,
         env: { COREPACK_ENABLE_STRICT: "0", ...process.env }, // allow `process.env` overrides
-        shell: false, // required to prevent console logs polution from shell profile loading when `true`
+        shell: true, // `true`` is now required: https://github.com/electron-userland/electron-builder/issues/9488
       })
 
       let stderr = ""
