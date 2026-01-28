@@ -167,7 +167,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
       // Continue
     }
 
-    const lines = consoleOutput.split("\n")
+    const lines = consoleOutput.split("\n").map(line => line.trim())
 
     // Find the first line that starts with { or [
     const jsonStartIdx = lines.findIndex(line => {
