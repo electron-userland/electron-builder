@@ -47,6 +47,12 @@ const CAPABILITY_TYPES: Record<string, CapabilityConfig> = {
     declareNS: false, // ns already declared in template
     elementName: "Capability",
   },
+  device: {
+    nsAlias: null,
+    nsURI: "http://schemas.microsoft.com/appx/manifest/foundation/windows10",
+    declareNS: false,
+    elementName: "DeviceCapability",
+  },
   uap6: {
     nsAlias: "uap6",
     nsURI: "http://schemas.microsoft.com/appx/manifest/uap/windows10/6",
@@ -56,12 +62,6 @@ const CAPABILITY_TYPES: Record<string, CapabilityConfig> = {
   uap7: {
     nsAlias: "uap7",
     nsURI: "http://schemas.microsoft.com/appx/manifest/uap/windows10/7",
-    declareNS: true,
-    elementName: "Capability",
-  },
-  uap11: {
-    nsAlias: "uap11",
-    nsURI: "http://schemas.microsoft.com/appx/manifest/uap/windows10/11",
     declareNS: true,
     elementName: "Capability",
   },
@@ -76,12 +76,6 @@ const CAPABILITY_TYPES: Record<string, CapabilityConfig> = {
     nsURI: "http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities",
     declareNS: false, // ns already declared in template
     elementName: "Capability",
-  },
-  device: {
-    nsAlias: null,
-    nsURI: "http://schemas.microsoft.com/appx/manifest/foundation/windows10",
-    declareNS: false,
-    elementName: "DeviceCapability",
   },
 } as const
 
@@ -126,27 +120,6 @@ const CAPABILITY_MAP = new Map<CapabilityType, string[]>([
       "enterpriseAuthentication",
       "sharedUserCertificates",
       "documentsLibrary",
-    ],
-  ],
-
-  // Device capabilities
-  [
-    "device",
-    [
-      "location",
-      "microphone",
-      "webcam",
-      "proximity",
-      "pointOfService",
-      "wiFiControl",
-      "radios",
-      "optical",
-      "activity",
-      "humanPresence",
-      "serialcommunication",
-      "gazeInput",
-      "lowLevel",
-      "packageQuery",
     ],
   ],
 
@@ -263,8 +236,26 @@ const CAPABILITY_MAP = new Map<CapabilityType, string[]>([
   // UAP7 capabilities
   ["uap7", ["globalMediaControl"]],
 
-  // UAP11 capabilities
-  ["uap11", ["graphicsCaptureWithoutBorder", "graphicsCaptureProgrammatic"]],
+  // Device capabilities
+  [
+    "device",
+    [
+      "location",
+      "microphone",
+      "webcam",
+      "proximity",
+      "pointOfService",
+      "wiFiControl",
+      "radios",
+      "optical",
+      "activity",
+      "humanPresence",
+      "serialcommunication",
+      "gazeInput",
+      "lowLevel",
+      "packageQuery",
+    ],
+  ],
 ])
 
 // Factory function to create capabilities
