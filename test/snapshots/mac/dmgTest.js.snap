@@ -509,7 +509,12 @@ exports[`dmg > dmg 2`] = `
 
 exports[`dmg > explicit size 1`] = `
 {
-  "mac": [],
+  "mac": [
+    {
+      "arch": "x64",
+      "file": "ExplicitSize-1.1.0.dmg",
+    },
+  ],
 }
 `;
 

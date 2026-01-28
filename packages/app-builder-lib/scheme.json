@@ -904,6 +904,11 @@
             "string"
           ]
         },
+        "shrink": {
+          "default": true,
+          "description": "Whether to shrink the DMG filesystem to the minimum size after copying files. Set to `false` to preserve the explicit `size` you specified.",
+          "type": "boolean"
+        },
         "icon": {
           "description": "The path to DMG icon (volume icon), which will be shown when mounted, relative to the [build resources](./contents.md#extraresources) or to the project directory.\nDefaults to the application icon (`build/icon.icns`).",
           "type": [

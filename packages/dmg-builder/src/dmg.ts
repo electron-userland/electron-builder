@@ -30,6 +30,7 @@ export interface DmgBuildConfig {
   }
   format?: string
   size?: string | null
+  shrink?: boolean
   filesystem?: string
   "compression-level"?: number | null
   license?: string | null

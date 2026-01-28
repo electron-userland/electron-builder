@@ -135,6 +135,7 @@ export async function customizeDmg({ appPath, artifactPath, volumeName, specific
     // filesystem: specification.filesystem || "HFS+",
     format: specification.format,
     size: specification.size,
+    shrink: specification.shrink,
     contents:
       specification.contents?.map(c => ({
         path: c.path || appPath, // path is required, when ommitted, appPath is used (backward compatibility
