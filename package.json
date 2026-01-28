@@ -18,7 +18,7 @@
     "docker-push": "docker/push.sh",
     "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s && git add CHANGELOG.md",
     "generate-changeset": "pnpm changeset",
-    "generate-schema": "typescript-json-schema packages/app-builder-lib/tsconfig-scheme.json Configuration --out packages/app-builder-lib/scheme.json --noExtraProps --useTypeOfKeyword --strictNullChecks --required && node ./scripts/fix-schema.js",
+    "generate-schema": "ts-node scripts/generate-schema.ts",
     "generate-all": "pnpm generate-schema && pnpm prettier",
     "ci:test": "vitest run",
     "ci:version": "pnpm i && pnpm changelog && changeset version && node scripts/update-package-version-export.js && pnpm compile && pnpm generate-all && git add .",
