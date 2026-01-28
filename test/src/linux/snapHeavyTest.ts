@@ -1,9 +1,10 @@
 import { Arch, Platform } from "app-builder-lib"
-import { app, snapTarget } from "../helpers/packTester"
+import { app, EXTENDED_TIMEOUT, snapTarget } from "../helpers/packTester"
 
 // very slow
+const options = { timeout: EXTENDED_TIMEOUT }
 
-test("snap full", ({ expect }) =>
+test("snap full", options, ({ expect }) =>
   app(expect, {
     targets: snapTarget,
     config: {
@@ -12,7 +13,7 @@ test("snap full", ({ expect }) =>
       },
       productName: "Snap Electron App (full build)",
       snap: {
-        useTemplateApp: false,
+        core: "core24",
       },
       electronFuses: {
         runAsNode: true,
@@ -25,10 +26,11 @@ test("snap full", ({ expect }) =>
         grantFileProtocolExtraPrivileges: undefined, // unsupported on current electron version in our tests
       },
     },
-  }))
+  })
+)
 
 // very slow
-test("snap full (armhf)", ({ expect }) =>
+test("snap full (armhf)", options, ({ expect }) =>
   app(expect, {
     targets: Platform.LINUX.createTarget("snap", Arch.armv7l),
     config: {
@@ -37,7 +39,8 @@ test("snap full (armhf)", ({ expect }) =>
       },
       productName: "Snap Electron App (full build)",
       snap: {
-        useTemplateApp: false,
+        core: "core24",
       },
     },
-  }))
+  })
+)
