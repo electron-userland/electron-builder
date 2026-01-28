@@ -885,7 +885,7 @@
           ]
         },
         "badgeIcon": {
-          "description": "The path to DMG icon (badge icon), which will be shown when mounted, relative to the [build resources](./contents.md#extraresources) or to the project directory.\nDefaults to the application icon (`build/icon.icns`).",
+          "description": "The path to DMG icon (badge icon), which will be shown when mounted, relative to the [build resources](./contents.md#extraresources) or to the project directory.",
           "type": [
             "null",
             "string"

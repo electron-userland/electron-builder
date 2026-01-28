@@ -796,7 +796,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 
   private cachedIcnsFromIconFile = new Map<string, Promise<string>>()
-  private async generateIcnsFromIcon(iconPath: string): Promise<string> {
+  async generateIcnsFromIcon(iconPath: string): Promise<string> {
     const cachedPromise = this.cachedIcnsFromIconFile.get(iconPath)
     if (cachedPromise) {
       return cachedPromise
