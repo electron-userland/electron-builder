@@ -170,6 +170,7 @@ async function createUpdateInfo(version: string, event: ArtifactCreated, release
   const customUpdateInfo = event.updateInfo
   const url = path.basename(event.file)
   const sha512 = (customUpdateInfo == null ? null : customUpdateInfo.sha512) || (await hashFile(event.file))
+  const minimumSystemVersion = customUpdateInfo == null ? null : customUpdateInfo.minimumSystemVersion
   const files = [{ url, sha512 }]
   const result: UpdateInfo = {
     // @ts-ignore
@@ -180,10 +181,14 @@ async function createUpdateInfo(version: string, event: ArtifactCreated, release
     path: url /* backward compatibility, electron-updater 1.x - electron-updater 2.15.0 */,
     // @ts-ignore
     sha512 /* backward compatibility, electron-updater 1.x - electron-updater 2.15.0 */,
+    minimumSystemVersion,
     ...(releaseInfo as UpdateInfo),
   }
 
   if (customUpdateInfo != null) {
+    if (customUpdateInfo.minimumSystemVersion) {
+      delete customUpdateInfo.minimumSystemVersion
+    }
     // file info or nsis web installer packages info
     Object.assign("sha512" in customUpdateInfo ? files[0] : result, customUpdateInfo)
   }
