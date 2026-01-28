@@ -58,6 +58,7 @@
     "chalk": "^4.1.2",
     "ci-info": "^4.2.0",
     "dmg-builder": "workspace:*",
+    "electron-publish": "workspace:*",
     "fs-extra": "^10.1.0",
     "lazy-val": "^1.0.5",
     "simple-update-notifier": "2.0.0",
