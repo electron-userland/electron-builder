@@ -23,6 +23,9 @@ test("sign nested asar unpacked executables", ({ expect }) =>
       config: {
         publish: "never",
         asarUnpack: ["assets"],
+        win: {
+          winCodeSign: "1.0.0",
+        },
       },
     },
     {
@@ -35,7 +38,7 @@ test("sign nested asar unpacked executables", ({ expect }) =>
       if (process.platform === "win32") {
         expect(error.message).toContain("This file format cannot be signed because it is not recognized.")
       } else {
-        expect(error.message).toContain("Unrecognized file type")
+        expect(error.message).toContain("Initialization error or unsupported input file type.")
       }
     }
   ))
