@@ -106,7 +106,7 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
   let configuration = packagerOptions.config as Configuration
   if (configuration == null) {
     configuration = {}
-      ; (packagerOptions as any).config = configuration
+    ;(packagerOptions as any).config = configuration
   }
 
   if (checkOptions.signed) {
@@ -154,7 +154,7 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
         }
       })
 
-            const tmpCache = await tmpDir.createTempDir({ prefix: "cache-" })
+      const tmpCache = await tmpDir.createTempDir({ prefix: "cache-" })
       const tmpHome = await tmpDir.createTempDir({ prefix: "home-" })
       const runtimeEnv = {
         ...process.env,
@@ -380,7 +380,7 @@ async function packAndCheck(
 ): Promise<{ packager: Packager; outDir: string }> {
   const cancellationToken = new CancellationToken()
   const packager = new Packager(packagerOptions, cancellationToken)
-    ; (packager as any).runtimeEnvironmentVariables = runtimeEnv
+  ;(packager as any).runtimeEnvironmentVariables = runtimeEnv
   const publishManager = new PublishManager(packager, { publish: "publish" in checkOptions ? checkOptions.publish : "never" })
 
   const artifacts: Map<Platform, Array<ArtifactCreated>> = new Map()
@@ -562,7 +562,7 @@ async function checkMacResult(expect: ExpectStatic, packager: Packager, packager
 
   if (checksumData != null) {
     for (const name of Object.keys(checksumData)) {
-      ; (checksumData as Record<string, any>)[name] = { algorithm: "SHA256", hash: "hash" }
+      ;(checksumData as Record<string, any>)[name] = { algorithm: "SHA256", hash: "hash" }
     }
     snapshot.ElectronAsarIntegrity = checksumData
   }
@@ -723,9 +723,9 @@ export function signed(packagerOptions: PackagerOptions): PackagerOptions {
     log.warn({ reason: "CSC_KEY_PASSWORD is not defined" }, "macOS code signing is not tested")
   } else {
     if (packagerOptions.config == null) {
-      ; (packagerOptions as any).config = {}
+      ;(packagerOptions as any).config = {}
     }
-    ; (packagerOptions.config as any).cscLink = CSC_LINK
+    ;(packagerOptions.config as any).cscLink = CSC_LINK
   }
   return packagerOptions
 }
