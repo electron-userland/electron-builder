@@ -582,6 +582,11 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
     if (extendInfo != null) {
       Object.assign(appPlist, extendInfo)
     }
+    for (const [k, v] of Object.entries(appPlist)) {
+      if (v === null || v === undefined) {
+        delete appPlist[k]
+      }
+    }
   }
 
   protected async signApp(packContext: AfterPackContext, isAsar: boolean): Promise<boolean> {

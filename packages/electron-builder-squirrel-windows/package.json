@@ -1,8 +1,7 @@
 {
   "name": "electron-builder-squirrel-windows",
-  "version": "26.3.6",
-  "type": "module",
-  "exports": "./out/SquirrelWindowsTarget.js",
+  "version": "26.6.0",
+  "main": "out/SquirrelWindowsTarget.js",
   "author": "Vladimir Krivosheev",
   "license": "MIT",
   "repository": {
@@ -20,9 +19,6 @@
     "app-builder-lib": "workspace:*",
     "builder-util": "workspace:*",
     "electron-winstaller": "5.4.0"
-  },
-  "engines": {
-    "node": ">=22.12.0"
   },
   "devDependencies": {
     "@types/archiver": "5.3.1",

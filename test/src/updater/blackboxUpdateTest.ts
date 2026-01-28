@@ -1,6 +1,5 @@
-import { getBinFromUrl } from "app-builder-lib"
 import { GenericServerOptions, Nullish } from "builder-util-runtime"
-import { archFromString, doSpawn, getArchSuffix, isEmptyOrSpaces, log, TmpDir } from "builder-util"
+import { archFromString, doSpawn, getArchSuffix, isEmptyOrSpaces, log, TmpDir } from "builder-util/out/util"
 import { Arch, Configuration, Platform } from "electron-builder"
 import fs, { existsSync, outputFile } from "fs-extra"
 import path from "path"
@@ -12,6 +11,7 @@ import { NEW_VERSION_NUMBER, OLD_VERSION_NUMBER, writeUpdateConfig } from "../he
 import { execFileSync, execSync } from "child_process"
 import { homedir } from "os"
 import { DebUpdater, PacmanUpdater, RpmUpdater } from "electron-updater"
+import { getRanLocalServerPath } from "../helpers/launchAppCrossPlatform"
 
 // Linux Tests MUST be run in docker containers for proper ephemeral testing environment (e.g. fresh install + update + relaunch)
 // Currently this test logic does not handle uninstalling packages (yet)
@@ -354,8 +354,8 @@ async function runTestWithinServer(doTest: (rootDirectory: string, updateConfigP
   // Math.random() / Math.random() is used to avoid zero
   // Math.floor(((Math.random() / Math.random()) * 1000) % 65535) is used to avoid port number collision
   const port = 8000 + Math.floor(((Math.random() / Math.random()) * 1000) % 65535)
-  const serverBin = await getBinFromUrl("ran-0.1.3", "ran-0.1.3.7z", "imfA3LtT6umMM0BuQ29MgO3CJ9uleN5zRBi3sXzcTbMOeYZ6SQeN7eKr3kXZikKnVOIwbH+DDO43wkiR/qTdkg==")
-  const httpServerProcess = doSpawn(path.join(serverBin, process.platform, "ran"), [`-root=${root}`, `-port=${port}`, "-gzip=false", "-listdir=true"])
+  const serverBin = await getRanLocalServerPath()
+  const httpServerProcess = doSpawn(serverBin, [`-root=${root}`, `-port=${port}`, "-gzip=false", "-listdir=true"])
 
   const updateConfig = await writeUpdateConfig<GenericServerOptions>({
     provider: "generic",

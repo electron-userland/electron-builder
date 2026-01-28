@@ -17,6 +17,282 @@ exports[`yarn berry workspace 2`] = `
     },
     "node_modules": {
       "files": {
+        "@isaacs": {
+          "files": {
+            "balanced-match": {
+              "files": {
+                "LICENSE.md": {
+                  "size": "<size>",
+                },
+                "dist": {
+                  "files": {
+                    "commonjs": {
+                      "files": {
+                        "index.d.ts.map": {
+                          "size": "<size>",
+                        },
+                        "index.js": {
+                          "size": "<size>",
+                        },
+                        "index.js.map": {
+                          "size": "<size>",
+                        },
+                        "package.json": {
+                          "size": "<size>",
+                        },
+                      },
+                    },
+                    "esm": {
+                      "files": {
+                        "index.d.ts.map": {
+                          "size": "<size>",
+                        },
+                        "index.js": {
+                          "size": "<size>",
+                        },
+                        "index.js.map": {
+                          "size": "<size>",
+                        },
+                        "package.json": {
+                          "size": "<size>",
+                        },
+                      },
+                    },
+                  },
+                },
+                "package.json": {
+                  "size": "<size>",
+                },
+              },
+            },
+            "brace-expansion": {
+              "files": {
+                "LICENSE": {
+                  "size": "<size>",
+                },
+                "dist": {
+                  "files": {
+                    "commonjs": {
+                      "files": {
+                        "index.d.ts.map": {
+                          "size": "<size>",
+                        },
+                        "index.js": {
+                          "size": "<size>",
+                        },
+                        "index.js.map": {
+                          "size": "<size>",
+                        },
+                        "package.json": {
+                          "size": "<size>",
+                        },
+                      },
+                    },
+                    "esm": {
+                      "files": {
+                        "index.d.ts.map": {
+                          "size": "<size>",
+                        },
+                        "index.js": {
+                          "size": "<size>",
+                        },
+                        "index.js.map": {
+                          "size": "<size>",
+                        },
+                        "package.json": {
+                          "size": "<size>",
+                        },
+                      },
+                    },
+                  },
+                },
+                "package.json": {
+                  "size": "<size>",
+                },
+              },
+            },
+            "fs-minipass": {
+              "files": {
+                "LICENSE": {
+                  "size": "<size>",
+                },
+                "dist": {
+                  "files": {
+                    "commonjs": {
+                      "files": {
+                        "index.d.ts.map": {
+                          "size": "<size>",
+                        },
+                        "index.js": {
+                          "size": "<size>",
+                        },
+                        "index.js.map": {
+                          "size": "<size>",
+                        },
+                        "package.json": {
+                          "size": "<size>",
+                        },
+                      },
+                    },
+                    "esm": {
+                      "files": {
+                        "index.d.ts.map": {
+                          "size": "<size>",
+                        },
+                        "index.js": {
+                          "size": "<size>",
+                        },
+                        "index.js.map": {
+                          "size": "<size>",
+                        },
+                        "package.json": {
+                          "size": "<size>",
+                        },
+                      },
+                    },
+                  },
+                },
+                "package.json": {
+                  "size": "<size>",
+                },
+              },
+            },
+          },
+        },
+        "@npmcli": {
+          "files": {
+            "agent": {
+              "files": {
+                "lib": {
+                  "files": {
+                    "agents.js": {
+                      "size": "<size>",
+                    },
+                    "dns.js": {
+                      "size": "<size>",
+                    },
+                    "errors.js": {
+                      "size": "<size>",
+                    },
+                    "index.js": {
+                      "size": "<size>",
+                    },
+                    "options.js": {
+                      "size": "<size>",
+                    },
+                    "proxy.js": {
+                      "size": "<size>",
+                    },
+                  },
+                },
+                "package.json": {
+                  "size": "<size>",
+                },
+              },
+            },
+            "fs": {
+              "files": {
+                "LICENSE.md": {
+                  "size": "<size>",
+                },
+                "lib": {
+                  "files": {
+                    "common": {
+                      "files": {
+                        "get-options.js": {
+                          "size": "<size>",
+                        },
+                        "node.js": {
+                          "size": "<size>",
+                        },
+                      },
+                    },
+                    "cp": {
+                      "files": {
+                        "LICENSE": {
+                          "size": "<size>",
+                        },
+                        "errors.js": {
+                          "size": "<size>",
+                        },
+                        "index.js": {
+                          "size": "<size>",
+                        },
+                        "polyfill.js": {
+                          "size": "<size>",
+                        },
+                      },
+                    },
+                    "index.js": {
+                      "size": "<size>",
+                    },
+                    "move-file.js": {
+                      "size": "<size>",
+                    },
+                    "readdir-scoped.js": {
+                      "size": "<size>",
+                    },
+                    "with-temp-dir.js": {
+                      "size": "<size>",
+                    },
+                  },
+                },
+                "package.json": {
+                  "size": "<size>",
+                },
+              },
+            },
+          },
+        },
+        "abbrev": {
+          "files": {
+            "LICENSE": {
+              "size": "<size>",
+            },
+            "lib": {
+              "files": {
+                "index.js": {
+                  "size": "<size>",
+                },
+              },
+            },
+            "package.json": {
+              "size": "<size>",
+            },
+          },
+        },
+        "agent-base": {
+          "files": {
+            "LICENSE": {
+              "size": "<size>",
+            },
+            "dist": {
+              "files": {
+                "helpers.d.ts.map": {
+                  "size": "<size>",
+                },
+                "helpers.js": {
+                  "size": "<size>",
+                },
+                "helpers.js.map": {
+                  "size": "<size>",
+                },
+                "index.d.ts.map": {
+                  "size": "<size>",
+                },
+                "index.js": {
+                  "size": "<size>",
+                },
+                "index.js.map": {
+                  "size": "<size>",
+                },
+              },
+            },
+            "package.json": {
+              "size": "<size>",
+            },
+          },
+        },
         "base64-js": {
           "files": {
             "LICENSE": {
@@ -226,13 +502,110 @@ exports[`yarn berry workspace 2`] = `
             },
           },
         },
-        "chownr": {
+        "cacache": {
           "files": {
-            "LICENSE": {
+            "LICENSE.md": {
               "size": "<size>",
             },
-            "chownr.js": {
+            "lib": {
+              "files": {
+                "content": {
+                  "files": {
+                    "path.js": {
+                      "size": "<size>",
+                    },
+                    "read.js": {
+                      "size": "<size>",
+                    },
+                    "rm.js": {
+                      "size": "<size>",
+                    },
+                    "write.js": {
+                      "size": "<size>",
+                    },
+                  },
+                },
+                "entry-index.js": {
+                  "size": "<size>",
+                },
+                "get.js": {
+                  "size": "<size>",
+                },
+                "index.js": {
+                  "size": "<size>",
+                },
+                "memoization.js": {
+                  "size": "<size>",
+                },
+                "put.js": {
+                  "size": "<size>",
+                },
+                "rm.js": {
+                  "size": "<size>",
+                },
+                "util": {
+                  "files": {
+                    "glob.js": {
+                      "size": "<size>",
+                    },
+                    "hash-to-segments.js": {
+                      "size": "<size>",
+                    },
+                    "tmp.js": {
+                      "size": "<size>",
+                    },
+                  },
+                },
+                "verify.js": {
+                  "size": "<size>",
+                },
+              },
+            },
+            "package.json": {
               "size": "<size>",
+            },
+          },
+        },
+        "chownr": {
+          "files": {
+            "LICENSE.md": {
+              "size": "<size>",
+            },
+            "dist": {
+              "files": {
+                "commonjs": {
+                  "files": {
+                    "index.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "index.js": {
+                      "size": "<size>",
+                    },
+                    "index.js.map": {
+                      "size": "<size>",
+                    },
+                    "package.json": {
+                      "size": "<size>",
+                    },
+                  },
+                },
+                "esm": {
+                  "files": {
+                    "index.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "index.js": {
+                      "size": "<size>",
+                    },
+                    "index.js.map": {
+                      "size": "<size>",
+                    },
+                    "package.json": {
+                      "size": "<size>",
+                    },
+                  },
+                },
+              },
             },
             "package.json": {
               "size": "<size>",
@@ -324,12 +697,67 @@ exports[`yarn berry workspace 2`] = `
             },
           },
         },
+        "encoding": {
+          "files": {
+            ".prettierrc.js": {
+              "size": "<size>",
+            },
+            "LICENSE": {
+              "size": "<size>",
+            },
+            "lib": {
+              "files": {
+                "encoding.js": {
+                  "size": "<size>",
+                },
+              },
+            },
+            "package.json": {
+              "size": "<size>",
+            },
+          },
+        },
         "end-of-stream": {
           "files": {
             "LICENSE": {
               "size": "<size>",
             },
             "index.js": {
+              "size": "<size>",
+            },
+            "package.json": {
+              "size": "<size>",
+            },
+          },
+        },
+        "env-paths": {
+          "files": {
+            "index.js": {
+              "size": "<size>",
+            },
+            "license": {
+              "size": "<size>",
+            },
+            "package.json": {
+              "size": "<size>",
+            },
+          },
+        },
+        "err-code": {
+          "files": {
+            ".editorconfig": {
+              "size": "<size>",
+            },
+            ".eslintrc.json": {
+              "size": "<size>",
+            },
+            "bower.json": {
+              "size": "<size>",
+            },
+            "index.js": {
+              "size": "<size>",
+            },
+            "index.umd.js": {
               "size": "<size>",
             },
             "package.json": {
@@ -349,6 +777,200 @@ exports[`yarn berry workspace 2`] = `
               "size": "<size>",
             },
             "test.js": {
+              "size": "<size>",
+            },
+          },
+        },
+        "exponential-backoff": {
+          "files": {
+            "LICENSE": {
+              "size": "<size>",
+            },
+            "dist": {
+              "files": {
+                "backoff.js": {
+                  "size": "<size>",
+                },
+                "backoff.js.map": {
+                  "size": "<size>",
+                },
+                "delay": {
+                  "files": {
+                    "always": {
+                      "files": {
+                        "always.delay.js": {
+                          "size": "<size>",
+                        },
+                        "always.delay.js.map": {
+                          "size": "<size>",
+                        },
+                      },
+                    },
+                    "delay.base.js": {
+                      "size": "<size>",
+                    },
+                    "delay.base.js.map": {
+                      "size": "<size>",
+                    },
+                    "delay.factory.js": {
+                      "size": "<size>",
+                    },
+                    "delay.factory.js.map": {
+                      "size": "<size>",
+                    },
+                    "delay.interface.js": {
+                      "size": "<size>",
+                    },
+                    "delay.interface.js.map": {
+                      "size": "<size>",
+                    },
+                    "skip-first": {
+                      "files": {
+                        "skip-first.delay.js": {
+                          "size": "<size>",
+                        },
+                        "skip-first.delay.js.map": {
+                          "size": "<size>",
+                        },
+                      },
+                    },
+                  },
+                },
+                "jitter": {
+                  "files": {
+                    "full": {
+                      "files": {
+                        "full.jitter.js": {
+                          "size": "<size>",
+                        },
+                        "full.jitter.js.map": {
+                          "size": "<size>",
+                        },
+                      },
+                    },
+                    "jitter.factory.js": {
+                      "size": "<size>",
+                    },
+                    "jitter.factory.js.map": {
+                      "size": "<size>",
+                    },
+                    "no": {
+                      "files": {
+                        "no.jitter.js": {
+                          "size": "<size>",
+                        },
+                        "no.jitter.js.map": {
+                          "size": "<size>",
+                        },
+                      },
+                    },
+                  },
+                },
+                "options.js": {
+                  "size": "<size>",
+                },
+                "options.js.map": {
+                  "size": "<size>",
+                },
+              },
+            },
+            "package.json": {
+              "size": "<size>",
+            },
+            "src": {
+              "files": {
+                "backoff.spec.ts": {
+                  "size": "<size>",
+                },
+                "backoff.ts": {
+                  "size": "<size>",
+                },
+                "delay": {
+                  "files": {
+                    "always": {
+                      "files": {
+                        "always.delay.spec.ts": {
+                          "size": "<size>",
+                        },
+                        "always.delay.ts": {
+                          "size": "<size>",
+                        },
+                      },
+                    },
+                    "delay.base.ts": {
+                      "size": "<size>",
+                    },
+                    "delay.factory.ts": {
+                      "size": "<size>",
+                    },
+                    "delay.interface.ts": {
+                      "size": "<size>",
+                    },
+                    "skip-first": {
+                      "files": {
+                        "skip-first.delay.ts": {
+                          "size": "<size>",
+                        },
+                      },
+                    },
+                  },
+                },
+                "jitter": {
+                  "files": {
+                    "full": {
+                      "files": {
+                        "full.jitter.spec.ts": {
+                          "size": "<size>",
+                        },
+                        "full.jitter.ts": {
+                          "size": "<size>",
+                        },
+                      },
+                    },
+                    "jitter.factory.ts": {
+                      "size": "<size>",
+                    },
+                    "no": {
+                      "files": {
+                        "no.jitter.spec.ts": {
+                          "size": "<size>",
+                        },
+                        "no.jitter.ts": {
+                          "size": "<size>",
+                        },
+                      },
+                    },
+                  },
+                },
+                "options.ts": {
+                  "size": "<size>",
+                },
+              },
+            },
+          },
+        },
+        "fdir": {
+          "files": {
+            "LICENSE": {
+              "size": "<size>",
+            },
+            "dist": {
+              "files": {
+                "index.cjs": {
+                  "size": "<size>",
+                },
+                "index.d.cts": {
+                  "size": "<size>",
+                },
+                "index.d.mts": {
+                  "size": "<size>",
+                },
+                "index.mjs": {
+                  "size": "<size>",
+                },
+              },
+            },
+            "package.json": {
               "size": "<size>",
             },
           },
@@ -385,6 +1007,23 @@ exports[`yarn berry workspace 2`] = `
             },
           },
         },
+        "fs-minipass": {
+          "files": {
+            "LICENSE": {
+              "size": "<size>",
+            },
+            "lib": {
+              "files": {
+                "index.js": {
+                  "size": "<size>",
+                },
+              },
+            },
+            "package.json": {
+              "size": "<size>",
+            },
+          },
+        },
         "github-from-package": {
           "files": {
             "LICENSE": {
@@ -398,12 +1037,354 @@ exports[`yarn berry workspace 2`] = `
             },
           },
         },
+        "glob": {
+          "files": {
+            "LICENSE.md": {
+              "size": "<size>",
+            },
+            "dist": {
+              "files": {
+                "commonjs": {
+                  "files": {
+                    "glob.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "glob.js": {
+                      "size": "<size>",
+                    },
+                    "glob.js.map": {
+                      "size": "<size>",
+                    },
+                    "has-magic.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "has-magic.js": {
+                      "size": "<size>",
+                    },
+                    "has-magic.js.map": {
+                      "size": "<size>",
+                    },
+                    "ignore.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "ignore.js": {
+                      "size": "<size>",
+                    },
+                    "ignore.js.map": {
+                      "size": "<size>",
+                    },
+                    "index.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "index.js": {
+                      "size": "<size>",
+                    },
+                    "index.js.map": {
+                      "size": "<size>",
+                    },
+                    "package.json": {
+                      "size": "<size>",
+                    },
+                    "pattern.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "pattern.js": {
+                      "size": "<size>",
+                    },
+                    "pattern.js.map": {
+                      "size": "<size>",
+                    },
+                    "processor.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "processor.js": {
+                      "size": "<size>",
+                    },
+                    "processor.js.map": {
+                      "size": "<size>",
+                    },
+                    "walker.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "walker.js": {
+                      "size": "<size>",
+                    },
+                    "walker.js.map": {
+                      "size": "<size>",
+                    },
+                  },
+                },
+                "esm": {
+                  "files": {
+                    "glob.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "glob.js": {
+                      "size": "<size>",
+                    },
+                    "glob.js.map": {
+                      "size": "<size>",
+                    },
+                    "has-magic.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "has-magic.js": {
+                      "size": "<size>",
+                    },
+                    "has-magic.js.map": {
+                      "size": "<size>",
+                    },
+                    "ignore.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "ignore.js": {
+                      "size": "<size>",
+                    },
+                    "ignore.js.map": {
+                      "size": "<size>",
+                    },
+                    "index.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "index.js": {
+                      "size": "<size>",
+                    },
+                    "index.js.map": {
+                      "size": "<size>",
+                    },
+                    "package.json": {
+                      "size": "<size>",
+                    },
+                    "pattern.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "pattern.js": {
+                      "size": "<size>",
+                    },
+                    "pattern.js.map": {
+                      "size": "<size>",
+                    },
+                    "processor.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "processor.js": {
+                      "size": "<size>",
+                    },
+                    "processor.js.map": {
+                      "size": "<size>",
+                    },
+                    "walker.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "walker.js": {
+                      "size": "<size>",
+                    },
+                    "walker.js.map": {
+                      "size": "<size>",
+                    },
+                  },
+                },
+              },
+            },
+            "package.json": {
+              "size": "<size>",
+            },
+          },
+        },
+        "graceful-fs": {
+          "files": {
+            "LICENSE": {
+              "size": "<size>",
+            },
+            "clone.js": {
+              "size": "<size>",
+            },
+            "graceful-fs.js": {
+              "size": "<size>",
+            },
+            "legacy-streams.js": {
+              "size": "<size>",
+            },
+            "package.json": {
+              "size": "<size>",
+            },
+            "polyfills.js": {
+              "size": "<size>",
+            },
+          },
+        },
+        "http-cache-semantics": {
+          "files": {
+            "LICENSE": {
+              "size": "<size>",
+            },
+            "index.js": {
+              "size": "<size>",
+            },
+            "package.json": {
+              "size": "<size>",
+            },
+          },
+        },
+        "http-proxy-agent": {
+          "files": {
+            "LICENSE": {
+              "size": "<size>",
+            },
+            "dist": {
+              "files": {
+                "index.d.ts.map": {
+                  "size": "<size>",
+                },
+                "index.js": {
+                  "size": "<size>",
+                },
+                "index.js.map": {
+                  "size": "<size>",
+                },
+              },
+            },
+            "package.json": {
+              "size": "<size>",
+            },
+          },
+        },
+        "https-proxy-agent": {
+          "files": {
+            "LICENSE": {
+              "size": "<size>",
+            },
+            "dist": {
+              "files": {
+                "index.d.ts.map": {
+                  "size": "<size>",
+                },
+                "index.js": {
+                  "size": "<size>",
+                },
+                "index.js.map": {
+                  "size": "<size>",
+                },
+                "parse-proxy-response.d.ts.map": {
+                  "size": "<size>",
+                },
+                "parse-proxy-response.js": {
+                  "size": "<size>",
+                },
+                "parse-proxy-response.js.map": {
+                  "size": "<size>",
+                },
+              },
+            },
+            "package.json": {
+              "size": "<size>",
+            },
+          },
+        },
+        "iconv-lite": {
+          "files": {
+            "LICENSE": {
+              "size": "<size>",
+            },
+            "encodings": {
+              "files": {
+                "dbcs-codec.js": {
+                  "size": "<size>",
+                },
+                "dbcs-data.js": {
+                  "size": "<size>",
+                },
+                "index.js": {
+                  "size": "<size>",
+                },
+                "internal.js": {
+                  "size": "<size>",
+                },
+                "sbcs-codec.js": {
+                  "size": "<size>",
+                },
+                "sbcs-data-generated.js": {
+                  "size": "<size>",
+                },
+                "sbcs-data.js": {
+                  "size": "<size>",
+                },
+                "tables": {
+                  "files": {
+                    "big5-added.json": {
+                      "size": "<size>",
+                    },
+                    "cp936.json": {
+                      "size": "<size>",
+                    },
+                    "cp949.json": {
+                      "size": "<size>",
+                    },
+                    "cp950.json": {
+                      "size": "<size>",
+                    },
+                    "eucjp.json": {
+                      "size": "<size>",
+                    },
+                    "gb18030-ranges.json": {
+                      "size": "<size>",
+                    },
+                    "gbk-added.json": {
+                      "size": "<size>",
+                    },
+                    "shiftjis.json": {
+                      "size": "<size>",
+                    },
+                  },
+                },
+                "utf16.js": {
+                  "size": "<size>",
+                },
+                "utf32.js": {
+                  "size": "<size>",
+                },
+                "utf7.js": {
+                  "size": "<size>",
+                },
+              },
+            },
+            "lib": {
+              "files": {
+                "bom-handling.js": {
+                  "size": "<size>",
+                },
+                "index.js": {
+                  "size": "<size>",
+                },
+                "streams.js": {
+                  "size": "<size>",
+                },
+              },
+            },
+            "package.json": {
+              "size": "<size>",
+            },
+          },
+        },
         "ieee754": {
           "files": {
             "LICENSE": {
               "size": "<size>",
             },
             "index.js": {
+              "size": "<size>",
+            },
+            "package.json": {
+              "size": "<size>",
+            },
+          },
+        },
+        "imurmurhash": {
+          "files": {
+            "imurmurhash.js": {
+              "size": "<size>",
+            },
+            "imurmurhash.min.js": {
               "size": "<size>",
             },
             "package.json": {
@@ -440,6 +1421,354 @@ exports[`yarn berry workspace 2`] = `
             },
           },
         },
+        "ip-address": {
+          "files": {
+            "LICENSE": {
+              "size": "<size>",
+            },
+            "dist": {
+              "files": {
+                "address-error.d.ts.map": {
+                  "size": "<size>",
+                },
+                "address-error.js": {
+                  "size": "<size>",
+                },
+                "address-error.js.map": {
+                  "size": "<size>",
+                },
+                "common.d.ts.map": {
+                  "size": "<size>",
+                },
+                "common.js": {
+                  "size": "<size>",
+                },
+                "common.js.map": {
+                  "size": "<size>",
+                },
+                "ip-address.d.ts.map": {
+                  "size": "<size>",
+                },
+                "ip-address.js": {
+                  "size": "<size>",
+                },
+                "ip-address.js.map": {
+                  "size": "<size>",
+                },
+                "ipv4.d.ts.map": {
+                  "size": "<size>",
+                },
+                "ipv4.js": {
+                  "size": "<size>",
+                },
+                "ipv4.js.map": {
+                  "size": "<size>",
+                },
+                "ipv6.d.ts.map": {
+                  "size": "<size>",
+                },
+                "ipv6.js": {
+                  "size": "<size>",
+                },
+                "ipv6.js.map": {
+                  "size": "<size>",
+                },
+                "v4": {
+                  "files": {
+                    "constants.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "constants.js": {
+                      "size": "<size>",
+                    },
+                    "constants.js.map": {
+                      "size": "<size>",
+                    },
+                  },
+                },
+                "v6": {
+                  "files": {
+                    "constants.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "constants.js": {
+                      "size": "<size>",
+                    },
+                    "constants.js.map": {
+                      "size": "<size>",
+                    },
+                    "helpers.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "helpers.js": {
+                      "size": "<size>",
+                    },
+                    "helpers.js.map": {
+                      "size": "<size>",
+                    },
+                    "regular-expressions.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "regular-expressions.js": {
+                      "size": "<size>",
+                    },
+                    "regular-expressions.js.map": {
+                      "size": "<size>",
+                    },
+                  },
+                },
+              },
+            },
+            "package.json": {
+              "size": "<size>",
+            },
+            "src": {
+              "files": {
+                "address-error.ts": {
+                  "size": "<size>",
+                },
+                "common.ts": {
+                  "size": "<size>",
+                },
+                "ip-address.ts": {
+                  "size": "<size>",
+                },
+                "ipv4.ts": {
+                  "size": "<size>",
+                },
+                "ipv6.ts": {
+                  "size": "<size>",
+                },
+                "v4": {
+                  "files": {
+                    "constants.ts": {
+                      "size": "<size>",
+                    },
+                  },
+                },
+                "v6": {
+                  "files": {
+                    "constants.ts": {
+                      "size": "<size>",
+                    },
+                    "helpers.ts": {
+                      "size": "<size>",
+                    },
+                    "regular-expressions.ts": {
+                      "size": "<size>",
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        "isexe": {
+          "files": {
+            "LICENSE": {
+              "size": "<size>",
+            },
+            "dist": {
+              "files": {
+                "cjs": {
+                  "files": {
+                    "index.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "index.js": {
+                      "size": "<size>",
+                    },
+                    "index.js.map": {
+                      "size": "<size>",
+                    },
+                    "options.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "options.js": {
+                      "size": "<size>",
+                    },
+                    "options.js.map": {
+                      "size": "<size>",
+                    },
+                    "package.json": {
+                      "size": "<size>",
+                    },
+                    "posix.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "posix.js": {
+                      "size": "<size>",
+                    },
+                    "posix.js.map": {
+                      "size": "<size>",
+                    },
+                    "win32.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "win32.js": {
+                      "size": "<size>",
+                    },
+                    "win32.js.map": {
+                      "size": "<size>",
+                    },
+                  },
+                },
+                "mjs": {
+                  "files": {
+                    "index.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "index.js": {
+                      "size": "<size>",
+                    },
+                    "index.js.map": {
+                      "size": "<size>",
+                    },
+                    "options.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "options.js": {
+                      "size": "<size>",
+                    },
+                    "options.js.map": {
+                      "size": "<size>",
+                    },
+                    "package.json": {
+                      "size": "<size>",
+                    },
+                    "posix.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "posix.js": {
+                      "size": "<size>",
+                    },
+                    "posix.js.map": {
+                      "size": "<size>",
+                    },
+                    "win32.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "win32.js": {
+                      "size": "<size>",
+                    },
+                    "win32.js.map": {
+                      "size": "<size>",
+                    },
+                  },
+                },
+              },
+            },
+            "package.json": {
+              "size": "<size>",
+            },
+          },
+        },
+        "lru-cache": {
+          "files": {
+            "LICENSE.md": {
+              "size": "<size>",
+            },
+            "dist": {
+              "files": {
+                "commonjs": {
+                  "files": {
+                    "index.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "index.js": {
+                      "size": "<size>",
+                    },
+                    "index.js.map": {
+                      "size": "<size>",
+                    },
+                    "index.min.js": {
+                      "size": "<size>",
+                    },
+                    "index.min.js.map": {
+                      "size": "<size>",
+                    },
+                    "package.json": {
+                      "size": "<size>",
+                    },
+                  },
+                },
+                "esm": {
+                  "files": {
+                    "index.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "index.js": {
+                      "size": "<size>",
+                    },
+                    "index.js.map": {
+                      "size": "<size>",
+                    },
+                    "index.min.js": {
+                      "size": "<size>",
+                    },
+                    "index.min.js.map": {
+                      "size": "<size>",
+                    },
+                    "package.json": {
+                      "size": "<size>",
+                    },
+                  },
+                },
+              },
+            },
+            "package.json": {
+              "size": "<size>",
+            },
+          },
+        },
+        "make-fetch-happen": {
+          "files": {
+            "LICENSE": {
+              "size": "<size>",
+            },
+            "lib": {
+              "files": {
+                "cache": {
+                  "files": {
+                    "entry.js": {
+                      "size": "<size>",
+                    },
+                    "errors.js": {
+                      "size": "<size>",
+                    },
+                    "index.js": {
+                      "size": "<size>",
+                    },
+                    "key.js": {
+                      "size": "<size>",
+                    },
+                    "policy.js": {
+                      "size": "<size>",
+                    },
+                  },
+                },
+                "fetch.js": {
+                  "size": "<size>",
+                },
+                "index.js": {
+                  "size": "<size>",
+                },
+                "options.js": {
+                  "size": "<size>",
+                },
+                "pipeline.js": {
+                  "size": "<size>",
+                },
+                "remote.js": {
+                  "size": "<size>",
+                },
+              },
+            },
+            "package.json": {
+              "size": "<size>",
+            },
+          },
+        },
         "mimic-response": {
           "files": {
             "index.js": {
@@ -447,6 +1776,142 @@ exports[`yarn berry workspace 2`] = `
             },
             "license": {
               "size": "<size>",
+            },
+            "package.json": {
+              "size": "<size>",
+            },
+          },
+        },
+        "minimatch": {
+          "files": {
+            "LICENSE.md": {
+              "size": "<size>",
+            },
+            "dist": {
+              "files": {
+                "commonjs": {
+                  "files": {
+                    "assert-valid-pattern.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "assert-valid-pattern.js": {
+                      "size": "<size>",
+                    },
+                    "assert-valid-pattern.js.map": {
+                      "size": "<size>",
+                    },
+                    "ast.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "ast.js": {
+                      "size": "<size>",
+                    },
+                    "ast.js.map": {
+                      "size": "<size>",
+                    },
+                    "brace-expressions.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "brace-expressions.js": {
+                      "size": "<size>",
+                    },
+                    "brace-expressions.js.map": {
+                      "size": "<size>",
+                    },
+                    "escape.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "escape.js": {
+                      "size": "<size>",
+                    },
+                    "escape.js.map": {
+                      "size": "<size>",
+                    },
+                    "index.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "index.js": {
+                      "size": "<size>",
+                    },
+                    "index.js.map": {
+                      "size": "<size>",
+                    },
+                    "package.json": {
+                      "size": "<size>",
+                    },
+                    "unescape.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "unescape.js": {
+                      "size": "<size>",
+                    },
+                    "unescape.js.map": {
+                      "size": "<size>",
+                    },
+                  },
+                },
+                "esm": {
+                  "files": {
+                    "assert-valid-pattern.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "assert-valid-pattern.js": {
+                      "size": "<size>",
+                    },
+                    "assert-valid-pattern.js.map": {
+                      "size": "<size>",
+                    },
+                    "ast.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "ast.js": {
+                      "size": "<size>",
+                    },
+                    "ast.js.map": {
+                      "size": "<size>",
+                    },
+                    "brace-expressions.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "brace-expressions.js": {
+                      "size": "<size>",
+                    },
+                    "brace-expressions.js.map": {
+                      "size": "<size>",
+                    },
+                    "escape.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "escape.js": {
+                      "size": "<size>",
+                    },
+                    "escape.js.map": {
+                      "size": "<size>",
+                    },
+                    "index.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "index.js": {
+                      "size": "<size>",
+                    },
+                    "index.js.map": {
+                      "size": "<size>",
+                    },
+                    "package.json": {
+                      "size": "<size>",
+                    },
+                    "unescape.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "unescape.js": {
+                      "size": "<size>",
+                    },
+                    "unescape.js.map": {
+                      "size": "<size>",
+                    },
+                  },
+                },
+              },
             },
             "package.json": {
               "size": "<size>",
@@ -463,6 +1928,257 @@ exports[`yarn berry workspace 2`] = `
             },
             "index.js": {
               "size": "<size>",
+            },
+            "package.json": {
+              "size": "<size>",
+            },
+          },
+        },
+        "minipass": {
+          "files": {
+            "LICENSE": {
+              "size": "<size>",
+            },
+            "dist": {
+              "files": {
+                "commonjs": {
+                  "files": {
+                    "index.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "index.js": {
+                      "size": "<size>",
+                    },
+                    "index.js.map": {
+                      "size": "<size>",
+                    },
+                    "package.json": {
+                      "size": "<size>",
+                    },
+                  },
+                },
+                "esm": {
+                  "files": {
+                    "index.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "index.js": {
+                      "size": "<size>",
+                    },
+                    "index.js.map": {
+                      "size": "<size>",
+                    },
+                    "package.json": {
+                      "size": "<size>",
+                    },
+                  },
+                },
+              },
+            },
+            "package.json": {
+              "size": "<size>",
+            },
+          },
+        },
+        "minipass-collect": {
+          "files": {
+            "LICENSE": {
+              "size": "<size>",
+            },
+            "index.js": {
+              "size": "<size>",
+            },
+            "package.json": {
+              "size": "<size>",
+            },
+          },
+        },
+        "minipass-fetch": {
+          "files": {
+            "LICENSE": {
+              "size": "<size>",
+            },
+            "lib": {
+              "files": {
+                "abort-error.js": {
+                  "size": "<size>",
+                },
+                "blob.js": {
+                  "size": "<size>",
+                },
+                "body.js": {
+                  "size": "<size>",
+                },
+                "fetch-error.js": {
+                  "size": "<size>",
+                },
+                "headers.js": {
+                  "size": "<size>",
+                },
+                "index.js": {
+                  "size": "<size>",
+                },
+                "request.js": {
+                  "size": "<size>",
+                },
+                "response.js": {
+                  "size": "<size>",
+                },
+              },
+            },
+            "package.json": {
+              "size": "<size>",
+            },
+          },
+        },
+        "minipass-flush": {
+          "files": {
+            "LICENSE": {
+              "size": "<size>",
+            },
+            "index.js": {
+              "size": "<size>",
+            },
+            "node_modules": {
+              "files": {
+                "minipass": {
+                  "files": {
+                    "LICENSE": {
+                      "size": "<size>",
+                    },
+                    "index.js": {
+                      "size": "<size>",
+                    },
+                    "package.json": {
+                      "size": "<size>",
+                    },
+                  },
+                },
+              },
+            },
+            "package.json": {
+              "size": "<size>",
+            },
+          },
+        },
+        "minipass-pipeline": {
+          "files": {
+            "LICENSE": {
+              "size": "<size>",
+            },
+            "index.js": {
+              "size": "<size>",
+            },
+            "node_modules": {
+              "files": {
+                "minipass": {
+                  "files": {
+                    "LICENSE": {
+                      "size": "<size>",
+                    },
+                    "index.js": {
+                      "size": "<size>",
+                    },
+                    "package.json": {
+                      "size": "<size>",
+                    },
+                  },
+                },
+              },
+            },
+            "package.json": {
+              "size": "<size>",
+            },
+          },
+        },
+        "minipass-sized": {
+          "files": {
+            "LICENSE": {
+              "size": "<size>",
+            },
+            "index.js": {
+              "size": "<size>",
+            },
+            "node_modules": {
+              "files": {
+                "minipass": {
+                  "files": {
+                    "LICENSE": {
+                      "size": "<size>",
+                    },
+                    "index.js": {
+                      "size": "<size>",
+                    },
+                    "package.json": {
+                      "size": "<size>",
+                    },
+                  },
+                },
+              },
+            },
+            "package.json": {
+              "size": "<size>",
+            },
+          },
+        },
+        "minizlib": {
+          "files": {
+            "LICENSE": {
+              "size": "<size>",
+            },
+            "dist": {
+              "files": {
+                "commonjs": {
+                  "files": {
+                    "constants.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "constants.js": {
+                      "size": "<size>",
+                    },
+                    "constants.js.map": {
+                      "size": "<size>",
+                    },
+                    "index.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "index.js": {
+                      "size": "<size>",
+                    },
+                    "index.js.map": {
+                      "size": "<size>",
+                    },
+                    "package.json": {
+                      "size": "<size>",
+                    },
+                  },
+                },
+                "esm": {
+                  "files": {
+                    "constants.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "constants.js": {
+                      "size": "<size>",
+                    },
+                    "constants.js.map": {
+                      "size": "<size>",
+                    },
+                    "index.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "index.js": {
+                      "size": "<size>",
+                    },
+                    "index.js.map": {
+                      "size": "<size>",
+                    },
+                    "package.json": {
+                      "size": "<size>",
+                    },
+                  },
+                },
+              },
             },
             "package.json": {
               "size": "<size>",
@@ -511,6 +2227,38 @@ exports[`yarn berry workspace 2`] = `
             },
           },
         },
+        "negotiator": {
+          "files": {
+            "HISTORY.md": {
+              "size": "<size>",
+            },
+            "LICENSE": {
+              "size": "<size>",
+            },
+            "index.js": {
+              "size": "<size>",
+            },
+            "lib": {
+              "files": {
+                "charset.js": {
+                  "size": "<size>",
+                },
+                "encoding.js": {
+                  "size": "<size>",
+                },
+                "language.js": {
+                  "size": "<size>",
+                },
+                "mediaType.js": {
+                  "size": "<size>",
+                },
+              },
+            },
+            "package.json": {
+              "size": "<size>",
+            },
+          },
+        },
         "node-abi": {
           "files": {
             "LICENSE": {
@@ -527,6 +2275,410 @@ exports[`yarn berry workspace 2`] = `
             },
           },
         },
+        "node-gyp": {
+          "files": {
+            ".release-please-manifest.json": {
+              "size": "<size>",
+            },
+            "CODE_OF_CONDUCT.md": {
+              "size": "<size>",
+            },
+            "CONTRIBUTING.md": {
+              "size": "<size>",
+            },
+            "LICENSE": {
+              "size": "<size>",
+            },
+            "SECURITY.md": {
+              "size": "<size>",
+            },
+            "addon.gypi": {
+              "size": "<size>",
+            },
+            "bin": {
+              "files": {
+                "node-gyp.js": {
+                  "executable": true,
+                  "size": "<size>",
+                },
+              },
+            },
+            "eslint.config.js": {
+              "size": "<size>",
+            },
+            "gyp": {
+              "files": {
+                ".release-please-manifest.json": {
+                  "size": "<size>",
+                },
+                "LICENSE": {
+                  "size": "<size>",
+                },
+                "data": {
+                  "files": {
+                    "ninja": {
+                      "files": {
+                        "build.ninja": {
+                          "size": "<size>",
+                        },
+                      },
+                    },
+                  },
+                },
+                "docs": {
+                  "files": {
+                    "GypVsCMake.md": {
+                      "size": "<size>",
+                    },
+                    "Hacking.md": {
+                      "size": "<size>",
+                    },
+                    "InputFormatReference.md": {
+                      "size": "<size>",
+                    },
+                    "LanguageSpecification.md": {
+                      "size": "<size>",
+                    },
+                    "README.md": {
+                      "size": "<size>",
+                    },
+                    "Testing.md": {
+                      "size": "<size>",
+                    },
+                    "UserDocumentation.md": {
+                      "size": "<size>",
+                    },
+                  },
+                },
+                "gyp": {
+                  "executable": true,
+                  "size": "<size>",
+                },
+                "gyp.bat": {
+                  "executable": true,
+                  "size": "<size>",
+                },
+                "gyp_main.py": {
+                  "executable": true,
+                  "size": "<size>",
+                },
+                "pylib": {
+                  "files": {
+                    "gyp": {
+                      "files": {
+                        "MSVSNew.py": {
+                          "size": "<size>",
+                        },
+                        "MSVSProject.py": {
+                          "size": "<size>",
+                        },
+                        "MSVSSettings.py": {
+                          "size": "<size>",
+                        },
+                        "MSVSSettings_test.py": {
+                          "executable": true,
+                          "size": "<size>",
+                        },
+                        "MSVSToolFile.py": {
+                          "size": "<size>",
+                        },
+                        "MSVSUserFile.py": {
+                          "size": "<size>",
+                        },
+                        "MSVSUtil.py": {
+                          "size": "<size>",
+                        },
+                        "MSVSVersion.py": {
+                          "size": "<size>",
+                        },
+                        "__init__.py": {
+                          "executable": true,
+                          "size": "<size>",
+                        },
+                        "common.py": {
+                          "size": "<size>",
+                        },
+                        "common_test.py": {
+                          "executable": true,
+                          "size": "<size>",
+                        },
+                        "easy_xml.py": {
+                          "size": "<size>",
+                        },
+                        "easy_xml_test.py": {
+                          "executable": true,
+                          "size": "<size>",
+                        },
+                        "flock_tool.py": {
+                          "executable": true,
+                          "size": "<size>",
+                        },
+                        "generator": {
+                          "files": {
+                            "__init__.py": {
+                              "size": "<size>",
+                            },
+                            "analyzer.py": {
+                              "size": "<size>",
+                            },
+                            "android.py": {
+                              "size": "<size>",
+                            },
+                            "cmake.py": {
+                              "size": "<size>",
+                            },
+                            "compile_commands_json.py": {
+                              "size": "<size>",
+                            },
+                            "dump_dependency_json.py": {
+                              "size": "<size>",
+                            },
+                            "eclipse.py": {
+                              "size": "<size>",
+                            },
+                            "gypd.py": {
+                              "size": "<size>",
+                            },
+                            "gypsh.py": {
+                              "size": "<size>",
+                            },
+                            "make.py": {
+                              "size": "<size>",
+                            },
+                            "msvs.py": {
+                              "size": "<size>",
+                            },
+                            "msvs_test.py": {
+                              "executable": true,
+                              "size": "<size>",
+                            },
+                            "ninja.py": {
+                              "size": "<size>",
+                            },
+                            "ninja_test.py": {
+                              "size": "<size>",
+                            },
+                            "xcode.py": {
+                              "size": "<size>",
+                            },
+                            "xcode_test.py": {
+                              "size": "<size>",
+                            },
+                          },
+                        },
+                        "input.py": {
+                          "size": "<size>",
+                        },
+                        "input_test.py": {
+                          "executable": true,
+                          "size": "<size>",
+                        },
+                        "mac_tool.py": {
+                          "executable": true,
+                          "size": "<size>",
+                        },
+                        "msvs_emulation.py": {
+                          "size": "<size>",
+                        },
+                        "ninja_syntax.py": {
+                          "size": "<size>",
+                        },
+                        "simple_copy.py": {
+                          "size": "<size>",
+                        },
+                        "win_tool.py": {
+                          "executable": true,
+                          "size": "<size>",
+                        },
+                        "xcode_emulation.py": {
+                          "size": "<size>",
+                        },
+                        "xcode_emulation_test.py": {
+                          "size": "<size>",
+                        },
+                        "xcode_ninja.py": {
+                          "size": "<size>",
+                        },
+                        "xcodeproj_file.py": {
+                          "size": "<size>",
+                        },
+                        "xml_fix.py": {
+                          "size": "<size>",
+                        },
+                      },
+                    },
+                    "packaging": {
+                      "files": {
+                        "LICENSE": {
+                          "size": "<size>",
+                        },
+                        "LICENSE.APACHE": {
+                          "size": "<size>",
+                        },
+                        "LICENSE.BSD": {
+                          "size": "<size>",
+                        },
+                        "__init__.py": {
+                          "size": "<size>",
+                        },
+                        "_elffile.py": {
+                          "size": "<size>",
+                        },
+                        "_manylinux.py": {
+                          "size": "<size>",
+                        },
+                        "_musllinux.py": {
+                          "size": "<size>",
+                        },
+                        "_parser.py": {
+                          "size": "<size>",
+                        },
+                        "_structures.py": {
+                          "size": "<size>",
+                        },
+                        "_tokenizer.py": {
+                          "size": "<size>",
+                        },
+                        "markers.py": {
+                          "size": "<size>",
+                        },
+                        "metadata.py": {
+                          "size": "<size>",
+                        },
+                        "py.typed": {
+                          "size": "<size>",
+                        },
+                        "requirements.py": {
+                          "size": "<size>",
+                        },
+                        "specifiers.py": {
+                          "size": "<size>",
+                        },
+                        "tags.py": {
+                          "size": "<size>",
+                        },
+                        "utils.py": {
+                          "size": "<size>",
+                        },
+                        "version.py": {
+                          "size": "<size>",
+                        },
+                      },
+                    },
+                  },
+                },
+                "pyproject.toml": {
+                  "size": "<size>",
+                },
+                "release-please-config.json": {
+                  "size": "<size>",
+                },
+                "test_gyp.py": {
+                  "executable": true,
+                  "size": "<size>",
+                },
+              },
+            },
+            "lib": {
+              "files": {
+                "Find-VisualStudio.cs": {
+                  "size": "<size>",
+                },
+                "build.js": {
+                  "size": "<size>",
+                },
+                "clean.js": {
+                  "size": "<size>",
+                },
+                "configure.js": {
+                  "size": "<size>",
+                },
+                "create-config-gypi.js": {
+                  "size": "<size>",
+                },
+                "download.js": {
+                  "size": "<size>",
+                },
+                "find-node-directory.js": {
+                  "size": "<size>",
+                },
+                "find-python.js": {
+                  "size": "<size>",
+                },
+                "find-visualstudio.js": {
+                  "size": "<size>",
+                },
+                "install.js": {
+                  "size": "<size>",
+                },
+                "list.js": {
+                  "size": "<size>",
+                },
+                "log.js": {
+                  "size": "<size>",
+                },
+                "node-gyp.js": {
+                  "size": "<size>",
+                },
+                "process-release.js": {
+                  "size": "<size>",
+                },
+                "rebuild.js": {
+                  "size": "<size>",
+                },
+                "remove.js": {
+                  "size": "<size>",
+                },
+                "util.js": {
+                  "size": "<size>",
+                },
+              },
+            },
+            "macOS_Catalina_acid_test.sh": {
+              "size": "<size>",
+            },
+            "package.json": {
+              "size": "<size>",
+            },
+            "release-please-config.json": {
+              "size": "<size>",
+            },
+          },
+        },
+        "nopt": {
+          "files": {
+            "LICENSE": {
+              "size": "<size>",
+            },
+            "bin": {
+              "files": {
+                "nopt.js": {
+                  "executable": true,
+                  "size": "<size>",
+                },
+              },
+            },
+            "lib": {
+              "files": {
+                "debug.js": {
+                  "size": "<size>",
+                },
+                "nopt-lib.js": {
+                  "size": "<size>",
+                },
+                "nopt.js": {
+                  "size": "<size>",
+                },
+                "type-defs.js": {
+                  "size": "<size>",
+                },
+              },
+            },
+            "package.json": {
+              "size": "<size>",
+            },
+          },
+        },
         "once": {
           "files": {
             "LICENSE": {
@@ -536,6 +2688,100 @@ exports[`yarn berry workspace 2`] = `
               "size": "<size>",
             },
             "package.json": {
+              "size": "<size>",
+            },
+          },
+        },
+        "p-map": {
+          "files": {
+            "index.js": {
+              "size": "<size>",
+            },
+            "license": {
+              "size": "<size>",
+            },
+            "package.json": {
+              "size": "<size>",
+            },
+          },
+        },
+        "path-scurry": {
+          "files": {
+            "LICENSE.md": {
+              "size": "<size>",
+            },
+            "dist": {
+              "files": {
+                "commonjs": {
+                  "files": {
+                    "index.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "index.js": {
+                      "size": "<size>",
+                    },
+                    "index.js.map": {
+                      "size": "<size>",
+                    },
+                    "package.json": {
+                      "size": "<size>",
+                    },
+                  },
+                },
+                "esm": {
+                  "files": {
+                    "index.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "index.js": {
+                      "size": "<size>",
+                    },
+                    "index.js.map": {
+                      "size": "<size>",
+                    },
+                    "package.json": {
+                      "size": "<size>",
+                    },
+                  },
+                },
+              },
+            },
+            "package.json": {
+              "size": "<size>",
+            },
+          },
+        },
+        "picomatch": {
+          "files": {
+            "LICENSE": {
+              "size": "<size>",
+            },
+            "index.js": {
+              "size": "<size>",
+            },
+            "lib": {
+              "files": {
+                "constants.js": {
+                  "size": "<size>",
+                },
+                "parse.js": {
+                  "size": "<size>",
+                },
+                "picomatch.js": {
+                  "size": "<size>",
+                },
+                "scan.js": {
+                  "size": "<size>",
+                },
+                "utils.js": {
+                  "size": "<size>",
+                },
+              },
+            },
+            "package.json": {
+              "size": "<size>",
+            },
+            "posix.js": {
               "size": "<size>",
             },
           },
@@ -580,6 +2826,39 @@ exports[`yarn berry workspace 2`] = `
               "size": "<size>",
             },
             "util.js": {
+              "size": "<size>",
+            },
+          },
+        },
+        "proc-log": {
+          "files": {
+            "LICENSE": {
+              "size": "<size>",
+            },
+            "lib": {
+              "files": {
+                "index.js": {
+                  "size": "<size>",
+                },
+              },
+            },
+            "package.json": {
+              "size": "<size>",
+            },
+          },
+        },
+        "promise-retry": {
+          "files": {
+            ".editorconfig": {
+              "size": "<size>",
+            },
+            "LICENSE": {
+              "size": "<size>",
+            },
+            "index.js": {
+              "size": "<size>",
+            },
+            "package.json": {
               "size": "<size>",
             },
           },
@@ -728,6 +3007,35 @@ exports[`yarn berry workspace 2`] = `
             },
           },
         },
+        "retry": {
+          "files": {
+            "License": {
+              "size": "<size>",
+            },
+            "Makefile": {
+              "size": "<size>",
+            },
+            "equation.gif": {
+              "size": "<size>",
+            },
+            "index.js": {
+              "size": "<size>",
+            },
+            "lib": {
+              "files": {
+                "retry.js": {
+                  "size": "<size>",
+                },
+                "retry_operation.js": {
+                  "size": "<size>",
+                },
+              },
+            },
+            "package.json": {
+              "size": "<size>",
+            },
+          },
+        },
         "safe-buffer": {
           "files": {
             "LICENSE": {
@@ -737,6 +3045,28 @@ exports[`yarn berry workspace 2`] = `
               "size": "<size>",
             },
             "package.json": {
+              "size": "<size>",
+            },
+          },
+        },
+        "safer-buffer": {
+          "files": {
+            "LICENSE": {
+              "size": "<size>",
+            },
+            "Porting-Buffer.md": {
+              "size": "<size>",
+            },
+            "dangerous.js": {
+              "size": "<size>",
+            },
+            "package.json": {
+              "size": "<size>",
+            },
+            "safer.js": {
+              "size": "<size>",
+            },
+            "tests.js": {
               "size": "<size>",
             },
           },
@@ -945,6 +3275,192 @@ exports[`yarn berry workspace 2`] = `
             },
           },
         },
+        "smart-buffer": {
+          "files": {
+            ".prettierrc.yaml": {
+              "size": "<size>",
+            },
+            "LICENSE": {
+              "size": "<size>",
+            },
+            "build": {
+              "files": {
+                "smartbuffer.js": {
+                  "size": "<size>",
+                },
+                "smartbuffer.js.map": {
+                  "size": "<size>",
+                },
+                "utils.js": {
+                  "size": "<size>",
+                },
+                "utils.js.map": {
+                  "size": "<size>",
+                },
+              },
+            },
+            "docs": {
+              "files": {
+                "README_v3.md": {
+                  "size": "<size>",
+                },
+                "ROADMAP.md": {
+                  "size": "<size>",
+                },
+              },
+            },
+            "package.json": {
+              "size": "<size>",
+            },
+          },
+        },
+        "socks": {
+          "files": {
+            ".eslintrc.cjs": {
+              "size": "<size>",
+            },
+            ".prettierrc.yaml": {
+              "size": "<size>",
+            },
+            "LICENSE": {
+              "size": "<size>",
+            },
+            "build": {
+              "files": {
+                "client": {
+                  "files": {
+                    "socksclient.js": {
+                      "size": "<size>",
+                    },
+                    "socksclient.js.map": {
+                      "size": "<size>",
+                    },
+                  },
+                },
+                "common": {
+                  "files": {
+                    "constants.js": {
+                      "size": "<size>",
+                    },
+                    "constants.js.map": {
+                      "size": "<size>",
+                    },
+                    "helpers.js": {
+                      "size": "<size>",
+                    },
+                    "helpers.js.map": {
+                      "size": "<size>",
+                    },
+                    "receivebuffer.js": {
+                      "size": "<size>",
+                    },
+                    "receivebuffer.js.map": {
+                      "size": "<size>",
+                    },
+                    "util.js": {
+                      "size": "<size>",
+                    },
+                    "util.js.map": {
+                      "size": "<size>",
+                    },
+                  },
+                },
+                "index.js": {
+                  "size": "<size>",
+                },
+                "index.js.map": {
+                  "size": "<size>",
+                },
+              },
+            },
+            "docs": {
+              "files": {
+                "examples": {
+                  "files": {
+                    "index.md": {
+                      "size": "<size>",
+                    },
+                    "javascript": {
+                      "files": {
+                        "associateExample.md": {
+                          "size": "<size>",
+                        },
+                        "bindExample.md": {
+                          "size": "<size>",
+                        },
+                        "connectExample.md": {
+                          "size": "<size>",
+                        },
+                      },
+                    },
+                    "typescript": {
+                      "files": {
+                        "associateExample.md": {
+                          "size": "<size>",
+                        },
+                        "bindExample.md": {
+                          "size": "<size>",
+                        },
+                        "connectExample.md": {
+                          "size": "<size>",
+                        },
+                      },
+                    },
+                  },
+                },
+                "index.md": {
+                  "size": "<size>",
+                },
+                "migratingFromV1.md": {
+                  "size": "<size>",
+                },
+              },
+            },
+            "package.json": {
+              "size": "<size>",
+            },
+          },
+        },
+        "socks-proxy-agent": {
+          "files": {
+            "LICENSE": {
+              "size": "<size>",
+            },
+            "dist": {
+              "files": {
+                "index.d.ts.map": {
+                  "size": "<size>",
+                },
+                "index.js": {
+                  "size": "<size>",
+                },
+                "index.js.map": {
+                  "size": "<size>",
+                },
+              },
+            },
+            "package.json": {
+              "size": "<size>",
+            },
+          },
+        },
+        "ssri": {
+          "files": {
+            "LICENSE.md": {
+              "size": "<size>",
+            },
+            "lib": {
+              "files": {
+                "index.js": {
+                  "size": "<size>",
+                },
+              },
+            },
+            "package.json": {
+              "size": "<size>",
+            },
+          },
+        },
         "string_decoder": {
           "files": {
             "LICENSE": {
@@ -975,6 +3491,606 @@ exports[`yarn berry workspace 2`] = `
             },
           },
         },
+        "tar": {
+          "files": {
+            "LICENSE.md": {
+              "size": "<size>",
+            },
+            "dist": {
+              "files": {
+                "commonjs": {
+                  "files": {
+                    "create.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "create.js": {
+                      "size": "<size>",
+                    },
+                    "create.js.map": {
+                      "size": "<size>",
+                    },
+                    "cwd-error.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "cwd-error.js": {
+                      "size": "<size>",
+                    },
+                    "cwd-error.js.map": {
+                      "size": "<size>",
+                    },
+                    "extract.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "extract.js": {
+                      "size": "<size>",
+                    },
+                    "extract.js.map": {
+                      "size": "<size>",
+                    },
+                    "get-write-flag.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "get-write-flag.js": {
+                      "size": "<size>",
+                    },
+                    "get-write-flag.js.map": {
+                      "size": "<size>",
+                    },
+                    "header.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "header.js": {
+                      "size": "<size>",
+                    },
+                    "header.js.map": {
+                      "size": "<size>",
+                    },
+                    "index.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "index.js": {
+                      "size": "<size>",
+                    },
+                    "index.js.map": {
+                      "size": "<size>",
+                    },
+                    "large-numbers.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "large-numbers.js": {
+                      "size": "<size>",
+                    },
+                    "large-numbers.js.map": {
+                      "size": "<size>",
+                    },
+                    "list.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "list.js": {
+                      "size": "<size>",
+                    },
+                    "list.js.map": {
+                      "size": "<size>",
+                    },
+                    "make-command.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "make-command.js": {
+                      "size": "<size>",
+                    },
+                    "make-command.js.map": {
+                      "size": "<size>",
+                    },
+                    "mkdir.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "mkdir.js": {
+                      "size": "<size>",
+                    },
+                    "mkdir.js.map": {
+                      "size": "<size>",
+                    },
+                    "mode-fix.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "mode-fix.js": {
+                      "size": "<size>",
+                    },
+                    "mode-fix.js.map": {
+                      "size": "<size>",
+                    },
+                    "normalize-unicode.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "normalize-unicode.js": {
+                      "size": "<size>",
+                    },
+                    "normalize-unicode.js.map": {
+                      "size": "<size>",
+                    },
+                    "normalize-windows-path.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "normalize-windows-path.js": {
+                      "size": "<size>",
+                    },
+                    "normalize-windows-path.js.map": {
+                      "size": "<size>",
+                    },
+                    "options.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "options.js": {
+                      "size": "<size>",
+                    },
+                    "options.js.map": {
+                      "size": "<size>",
+                    },
+                    "pack.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "pack.js": {
+                      "size": "<size>",
+                    },
+                    "pack.js.map": {
+                      "size": "<size>",
+                    },
+                    "package.json": {
+                      "size": "<size>",
+                    },
+                    "parse.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "parse.js": {
+                      "size": "<size>",
+                    },
+                    "parse.js.map": {
+                      "size": "<size>",
+                    },
+                    "path-reservations.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "path-reservations.js": {
+                      "size": "<size>",
+                    },
+                    "path-reservations.js.map": {
+                      "size": "<size>",
+                    },
+                    "pax.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "pax.js": {
+                      "size": "<size>",
+                    },
+                    "pax.js.map": {
+                      "size": "<size>",
+                    },
+                    "read-entry.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "read-entry.js": {
+                      "size": "<size>",
+                    },
+                    "read-entry.js.map": {
+                      "size": "<size>",
+                    },
+                    "replace.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "replace.js": {
+                      "size": "<size>",
+                    },
+                    "replace.js.map": {
+                      "size": "<size>",
+                    },
+                    "strip-absolute-path.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "strip-absolute-path.js": {
+                      "size": "<size>",
+                    },
+                    "strip-absolute-path.js.map": {
+                      "size": "<size>",
+                    },
+                    "strip-trailing-slashes.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "strip-trailing-slashes.js": {
+                      "size": "<size>",
+                    },
+                    "strip-trailing-slashes.js.map": {
+                      "size": "<size>",
+                    },
+                    "symlink-error.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "symlink-error.js": {
+                      "size": "<size>",
+                    },
+                    "symlink-error.js.map": {
+                      "size": "<size>",
+                    },
+                    "types.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "types.js": {
+                      "size": "<size>",
+                    },
+                    "types.js.map": {
+                      "size": "<size>",
+                    },
+                    "unpack.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "unpack.js": {
+                      "size": "<size>",
+                    },
+                    "unpack.js.map": {
+                      "size": "<size>",
+                    },
+                    "update.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "update.js": {
+                      "size": "<size>",
+                    },
+                    "update.js.map": {
+                      "size": "<size>",
+                    },
+                    "warn-method.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "warn-method.js": {
+                      "size": "<size>",
+                    },
+                    "warn-method.js.map": {
+                      "size": "<size>",
+                    },
+                    "winchars.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "winchars.js": {
+                      "size": "<size>",
+                    },
+                    "winchars.js.map": {
+                      "size": "<size>",
+                    },
+                    "write-entry.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "write-entry.js": {
+                      "size": "<size>",
+                    },
+                    "write-entry.js.map": {
+                      "size": "<size>",
+                    },
+                  },
+                },
+                "esm": {
+                  "files": {
+                    "create.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "create.js": {
+                      "size": "<size>",
+                    },
+                    "create.js.map": {
+                      "size": "<size>",
+                    },
+                    "cwd-error.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "cwd-error.js": {
+                      "size": "<size>",
+                    },
+                    "cwd-error.js.map": {
+                      "size": "<size>",
+                    },
+                    "extract.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "extract.js": {
+                      "size": "<size>",
+                    },
+                    "extract.js.map": {
+                      "size": "<size>",
+                    },
+                    "get-write-flag.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "get-write-flag.js": {
+                      "size": "<size>",
+                    },
+                    "get-write-flag.js.map": {
+                      "size": "<size>",
+                    },
+                    "header.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "header.js": {
+                      "size": "<size>",
+                    },
+                    "header.js.map": {
+                      "size": "<size>",
+                    },
+                    "index.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "index.js": {
+                      "size": "<size>",
+                    },
+                    "index.js.map": {
+                      "size": "<size>",
+                    },
+                    "large-numbers.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "large-numbers.js": {
+                      "size": "<size>",
+                    },
+                    "large-numbers.js.map": {
+                      "size": "<size>",
+                    },
+                    "list.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "list.js": {
+                      "size": "<size>",
+                    },
+                    "list.js.map": {
+                      "size": "<size>",
+                    },
+                    "make-command.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "make-command.js": {
+                      "size": "<size>",
+                    },
+                    "make-command.js.map": {
+                      "size": "<size>",
+                    },
+                    "mkdir.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "mkdir.js": {
+                      "size": "<size>",
+                    },
+                    "mkdir.js.map": {
+                      "size": "<size>",
+                    },
+                    "mode-fix.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "mode-fix.js": {
+                      "size": "<size>",
+                    },
+                    "mode-fix.js.map": {
+                      "size": "<size>",
+                    },
+                    "normalize-unicode.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "normalize-unicode.js": {
+                      "size": "<size>",
+                    },
+                    "normalize-unicode.js.map": {
+                      "size": "<size>",
+                    },
+                    "normalize-windows-path.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "normalize-windows-path.js": {
+                      "size": "<size>",
+                    },
+                    "normalize-windows-path.js.map": {
+                      "size": "<size>",
+                    },
+                    "options.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "options.js": {
+                      "size": "<size>",
+                    },
+                    "options.js.map": {
+                      "size": "<size>",
+                    },
+                    "pack.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "pack.js": {
+                      "size": "<size>",
+                    },
+                    "pack.js.map": {
+                      "size": "<size>",
+                    },
+                    "package.json": {
+                      "size": "<size>",
+                    },
+                    "parse.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "parse.js": {
+                      "size": "<size>",
+                    },
+                    "parse.js.map": {
+                      "size": "<size>",
+                    },
+                    "path-reservations.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "path-reservations.js": {
+                      "size": "<size>",
+                    },
+                    "path-reservations.js.map": {
+                      "size": "<size>",
+                    },
+                    "pax.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "pax.js": {
+                      "size": "<size>",
+                    },
+                    "pax.js.map": {
+                      "size": "<size>",
+                    },
+                    "read-entry.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "read-entry.js": {
+                      "size": "<size>",
+                    },
+                    "read-entry.js.map": {
+                      "size": "<size>",
+                    },
+                    "replace.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "replace.js": {
+                      "size": "<size>",
+                    },
+                    "replace.js.map": {
+                      "size": "<size>",
+                    },
+                    "strip-absolute-path.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "strip-absolute-path.js": {
+                      "size": "<size>",
+                    },
+                    "strip-absolute-path.js.map": {
+                      "size": "<size>",
+                    },
+                    "strip-trailing-slashes.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "strip-trailing-slashes.js": {
+                      "size": "<size>",
+                    },
+                    "strip-trailing-slashes.js.map": {
+                      "size": "<size>",
+                    },
+                    "symlink-error.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "symlink-error.js": {
+                      "size": "<size>",
+                    },
+                    "symlink-error.js.map": {
+                      "size": "<size>",
+                    },
+                    "types.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "types.js": {
+                      "size": "<size>",
+                    },
+                    "types.js.map": {
+                      "size": "<size>",
+                    },
+                    "unpack.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "unpack.js": {
+                      "size": "<size>",
+                    },
+                    "unpack.js.map": {
+                      "size": "<size>",
+                    },
+                    "update.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "update.js": {
+                      "size": "<size>",
+                    },
+                    "update.js.map": {
+                      "size": "<size>",
+                    },
+                    "warn-method.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "warn-method.js": {
+                      "size": "<size>",
+                    },
+                    "warn-method.js.map": {
+                      "size": "<size>",
+                    },
+                    "winchars.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "winchars.js": {
+                      "size": "<size>",
+                    },
+                    "winchars.js.map": {
+                      "size": "<size>",
+                    },
+                    "write-entry.d.ts.map": {
+                      "size": "<size>",
+                    },
+                    "write-entry.js": {
+                      "size": "<size>",
+                    },
+                    "write-entry.js.map": {
+                      "size": "<size>",
+                    },
+                  },
+                },
+              },
+            },
+            "node_modules": {
+              "files": {
+                "yallist": {
+                  "files": {
+                    "LICENSE.md": {
+                      "size": "<size>",
+                    },
+                    "dist": {
+                      "files": {
+                        "commonjs": {
+                          "files": {
+                            "index.d.ts.map": {
+                              "size": "<size>",
+                            },
+                            "index.js": {
+                              "size": "<size>",
+                            },
+                            "index.js.map": {
+                              "size": "<size>",
+                            },
+                            "package.json": {
+                              "size": "<size>",
+                            },
+                          },
+                        },
+                        "esm": {
+                          "files": {
+                            "index.d.ts.map": {
+                              "size": "<size>",
+                            },
+                            "index.js": {
+                              "size": "<size>",
+                            },
+                            "index.js.map": {
+                              "size": "<size>",
+                            },
+                            "package.json": {
+                              "size": "<size>",
+                            },
+                          },
+                        },
+                      },
+                    },
+                    "package.json": {
+                      "size": "<size>",
+                    },
+                  },
+                },
+              },
+            },
+            "package.json": {
+              "size": "<size>",
+            },
+          },
+        },
         "tar-fs": {
           "files": {
             "LICENSE": {
@@ -982,6 +4098,23 @@ exports[`yarn berry workspace 2`] = `
             },
             "index.js": {
               "size": "<size>",
+            },
+            "node_modules": {
+              "files": {
+                "chownr": {
+                  "files": {
+                    "LICENSE": {
+                      "size": "<size>",
+                    },
+                    "chownr.js": {
+                      "size": "<size>",
+                    },
+                    "package.json": {
+                      "size": "<size>",
+                    },
+                  },
+                },
+              },
             },
             "package.json": {
               "size": "<size>",
@@ -1013,6 +4146,32 @@ exports[`yarn berry workspace 2`] = `
             },
           },
         },
+        "tinyglobby": {
+          "files": {
+            "LICENSE": {
+              "size": "<size>",
+            },
+            "dist": {
+              "files": {
+                "index.cjs": {
+                  "size": "<size>",
+                },
+                "index.d.cts": {
+                  "size": "<size>",
+                },
+                "index.d.mts": {
+                  "size": "<size>",
+                },
+                "index.mjs": {
+                  "size": "<size>",
+                },
+              },
+            },
+            "package.json": {
+              "size": "<size>",
+            },
+          },
+        },
         "tunnel-agent": {
           "files": {
             "LICENSE": {
@@ -1020,6 +4179,40 @@ exports[`yarn berry workspace 2`] = `
             },
             "index.js": {
               "size": "<size>",
+            },
+            "package.json": {
+              "size": "<size>",
+            },
+          },
+        },
+        "unique-filename": {
+          "files": {
+            "LICENSE": {
+              "size": "<size>",
+            },
+            "lib": {
+              "files": {
+                "index.js": {
+                  "size": "<size>",
+                },
+              },
+            },
+            "package.json": {
+              "size": "<size>",
+            },
+          },
+        },
+        "unique-slug": {
+          "files": {
+            "LICENSE": {
+              "size": "<size>",
+            },
+            "lib": {
+              "files": {
+                "index.js": {
+                  "size": "<size>",
+                },
+              },
             },
             "package.json": {
               "size": "<size>",
@@ -1045,6 +4238,31 @@ exports[`yarn berry workspace 2`] = `
             },
           },
         },
+        "which": {
+          "files": {
+            "LICENSE": {
+              "size": "<size>",
+            },
+            "bin": {
+              "files": {
+                "which.js": {
+                  "executable": true,
+                  "size": "<size>",
+                },
+              },
+            },
+            "lib": {
+              "files": {
+                "index.js": {
+                  "size": "<size>",
+                },
+              },
+            },
+            "package.json": {
+              "size": "<size>",
+            },
+          },
+        },
         "wrappy": {
           "files": {
             "LICENSE": {
@@ -1054,6 +4272,22 @@ exports[`yarn berry workspace 2`] = `
               "size": "<size>",
             },
             "wrappy.js": {
+              "size": "<size>",
+            },
+          },
+        },
+        "yallist": {
+          "files": {
+            "LICENSE": {
+              "size": "<size>",
+            },
+            "iterator.js": {
+              "size": "<size>",
+            },
+            "package.json": {
+              "size": "<size>",
+            },
+            "yallist.js": {
               "size": "<size>",
             },
           },

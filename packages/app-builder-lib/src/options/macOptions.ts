@@ -252,6 +252,11 @@ export interface DmgOptions extends TargetSpecificOptions {
   backgroundColor?: string | null
 
   /**
+   * The path to DMG icon (badge icon), which will be shown when mounted, relative to the [build resources](./contents.md#extraresources) or to the project directory.
+   */
+  badgeIcon?: string | null
+
+  /**
    * The path to DMG icon (volume icon), which will be shown when mounted, relative to the [build resources](./contents.md#extraresources) or to the project directory.
    * Defaults to the application icon (`build/icon.icns`).
    */

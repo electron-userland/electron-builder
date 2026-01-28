@@ -949,6 +949,9 @@ exports[`posix smart unpack 3`] = `
                 "detect-libc.js": {
                   "size": "<size>",
                 },
+                "elf.js": {
+                  "size": "<size>",
+                },
                 "filesystem.js": {
                   "size": "<size>",
                 },

@@ -50,7 +50,7 @@ export default class AppImageTarget extends Target {
     const c = await Promise.all([
       this.desktopEntry.value,
       this.helper.icons,
-      getAppUpdatePublishConfiguration(packager, arch, false /* in any case validation will be done on publish */),
+      getAppUpdatePublishConfiguration(packager, options, arch, false /* in any case validation will be done on publish */),
       getNotLocalizedLicenseFile(options.license, this.packager, ["txt", "html"]),
       createStageDir(this, packager, arch),
     ])

@@ -141,10 +141,10 @@ export default class FpmTarget extends Target {
     const resourceDir = packager.getResourcesDir(linuxDistType)
 
     const publishConfig = this.supportsAutoUpdate(target)
-      ? await getAppUpdatePublishConfiguration(packager, arch, false /* in any case validation will be done on publish */)
+      ? await getAppUpdatePublishConfiguration(packager, this.options, arch, false /* in any case validation will be done on publish step */)
       : null
     if (publishConfig != null) {
-      log.info({ resourceDir: log.filePath(resourceDir) }, `adding autoupdate files for: ${target}. (Beta feature)`)
+      log.info({ resourceDir: log.filePath(resourceDir) }, `adding autoupdate files for: ${target}`)
       await outputFile(path.join(resourceDir, "app-update.yml"), serializeToYaml(publishConfig))
       // Extra file needed for auto-updater to detect installation method
       await outputFile(path.join(resourceDir, "package-type"), target)

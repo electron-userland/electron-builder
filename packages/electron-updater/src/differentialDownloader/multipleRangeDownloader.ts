@@ -41,6 +41,7 @@ export function executeTasksUsingMultipleRangeRequests(
 function doExecuteTasks(differentialDownloader: DifferentialDownloader, options: PartListDataTask, out: Writable, resolve: () => void, reject: (error: Error) => void): void {
   let ranges = "bytes="
   let partCount = 0
+  let grandTotalBytes = 0
   const partIndexToTaskIndex = new Map<number, number>()
   const partIndexToLength: Array<number> = []
   for (let i = options.start; i < options.end; i++) {
@@ -50,6 +51,7 @@ function doExecuteTasks(differentialDownloader: DifferentialDownloader, options:
       partIndexToTaskIndex.set(partCount, i)
       partCount++
       partIndexToLength.push(task.end - task.start)
+      grandTotalBytes += task.end - task.start
     }
   }
 
@@ -103,7 +105,7 @@ function doExecuteTasks(differentialDownloader: DifferentialDownloader, options:
       return
     }
 
-    const dicer = new DataSplitter(out, options, partIndexToTaskIndex, m[1] || m[2], partIndexToLength, resolve)
+    const dicer = new DataSplitter(out, options, partIndexToTaskIndex, m[1] || m[2], partIndexToLength, resolve, grandTotalBytes, differentialDownloader.options.onProgress)
     dicer.on("error", reject)
     response.pipe(dicer)
 

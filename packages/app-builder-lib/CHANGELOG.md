@@ -1,5 +1,108 @@
 # app-builder-lib
 
+## 26.6.0
+
+### Minor Changes
+
+- Feat(flatpak): use configuration for `executableArgs` _[`#9530`](https://github.com/electron-userland/electron-builder/pull/9530) [`d56550f`](https://github.com/electron-userland/electron-builder/commit/d56550f75828ef3c097377264336794f2f65da86) [@mmaietta](https://github.com/mmaietta)_
+
+### Patch Changes
+
+- Fix(nsis): allow $INSTDIR to be removed _[`#9520`](https://github.com/electron-userland/electron-builder/pull/9520) [`cf10da8`](https://github.com/electron-userland/electron-builder/commit/cf10da8d4988399232e5db62fe533789bdc816b2) [@liamcmitchell](https://github.com/liamcmitchell)_
+- Feat: update `dmgbuild` and migrate to portable `dmgbuild` python bundle. Fixes `badge-icon` property _[`#9516`](https://github.com/electron-userland/electron-builder/pull/9516) [`9b1dbb2`](https://github.com/electron-userland/electron-builder/commit/9b1dbb2f56662b2072662ed7432228e1c4437640) [@mmaietta](https://github.com/mmaietta)_
+- Chore(deps): updating electron/rebuild, tar, and form-data to latest releases _[`#9528`](https://github.com/electron-userland/electron-builder/pull/9528) [`e46b407`](https://github.com/electron-userland/electron-builder/commit/e46b4074edf8c74849738d2dafcdb106da47e27c) [@mmaietta](https://github.com/mmaietta)_
+- Fix: pnpm collector returning zero modules _[`#9535`](https://github.com/electron-userland/electron-builder/pull/9535) [`88070e9`](https://github.com/electron-userland/electron-builder/commit/88070e95e602aa1e6985d770cb4c279fea58a4a6) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 3 dependencies</summary>
+
+<small>
+
+[`9b1dbb2`](https://github.com/electron-userland/electron-builder/commit/9b1dbb2f56662b2072662ed7432228e1c4437640) [`e46b407`](https://github.com/electron-userland/electron-builder/commit/e46b4074edf8c74849738d2dafcdb106da47e27c)
+
+</small>
+
+- `dmg-builder@26.6.0`
+- `electron-publish@26.6.0`
+- `electron-builder-squirrel-windows@26.6.0`
+
+</details>
+
+## 26.5.0
+
+### Minor Changes
+
+- Feat: add support for dmgbuild's badge-icon configuration _[`#9513`](https://github.com/electron-userland/electron-builder/pull/9513) [`b1d6e24`](https://github.com/electron-userland/electron-builder/commit/b1d6e2417001977d12dc8365e6c5ceb5ac9d49c9) [@mmaietta](https://github.com/mmaietta)_
+
+### Patch Changes
+
+- Chore: running `eslint --fix` on more files _[`#9502`](https://github.com/electron-userland/electron-builder/pull/9502) [`6c20eeb`](https://github.com/electron-userland/electron-builder/commit/6c20eeb1cf9fd10980cde3c9ce0602fa6b7c6972) [@mmaietta](https://github.com/mmaietta)_
+- Fix: Windows build fails with spawn EINVAL after Node.js security fix _[`#9489`](https://github.com/electron-userland/electron-builder/pull/9489) [`3022f0f`](https://github.com/electron-userland/electron-builder/commit/3022f0f840c893d14beb82d638bedb8ed27d7ae6) [@mmaietta](https://github.com/mmaietta)_
+- Chore: update tar to latest release 7.5.3 to resolve dependabot _[`#9514`](https://github.com/electron-userland/electron-builder/pull/9514) [`2c11709`](https://github.com/electron-userland/electron-builder/commit/2c11709b6a330628095ec46c51435a40b6761710) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+[`666d85a`](https://github.com/electron-userland/electron-builder/commit/666d85a8b626492c8195355d3d152f76c96bcb8f) [`b1d6e24`](https://github.com/electron-userland/electron-builder/commit/b1d6e2417001977d12dc8365e6c5ceb5ac9d49c9)
+
+</small>
+
+- `dmg-builder@26.5.0`
+- `electron-builder-squirrel-windows@26.5.0`
+
+</details>
+
+## 26.4.1
+
+### Patch Changes
+
+- Fix: delete default macOS appPlist keys using extendInfo when set Nullish _[`#9481`](https://github.com/electron-userland/electron-builder/pull/9481) [`cb5b9c6`](https://github.com/electron-userland/electron-builder/commit/cb5b9c6e47686b0329dbf808b36587a82db03d3b) [@Lemonexe](https://github.com/Lemonexe)_
+- Fix: pnpm "Invalid string length" errors during node module collection _[`#9470`](https://github.com/electron-userland/electron-builder/pull/9470) [`d38ae8e`](https://github.com/electron-userland/electron-builder/commit/d38ae8e666ca3769dfa091643ef816632f6e206f) [@danteissaias](https://github.com/danteissaias)_
+- Fix: post-process parent directories of unpacked files to avoid overeager unpacking _[`#9419`](https://github.com/electron-userland/electron-builder/pull/9419) [`1c94529`](https://github.com/electron-userland/electron-builder/commit/1c945290a38cc4b6070a4e756db58354aee5e683) [@mmaietta](https://github.com/mmaietta)_
+- Deprecate: warn about implicit publishing in CI _[`#9475`](https://github.com/electron-userland/electron-builder/pull/9475) [`ef43f42`](https://github.com/electron-userland/electron-builder/commit/ef43f42c2532ae3501071c6329f3dd058a91fd7f) [@biw](https://github.com/biw)_
+- Fix: aliased packages not packaged with the correct name _[`#9492`](https://github.com/electron-userland/electron-builder/pull/9492) [`25b5dd2`](https://github.com/electron-userland/electron-builder/commit/25b5dd2b4a87554640c99ffef376af8703f69a3d) [@iamEvanYT](https://github.com/iamEvanYT)_
+- Chore: migrating manual Node Module collector to seperate filesystem traversal class _[`#9440`](https://github.com/electron-userland/electron-builder/pull/9440) [`97e5503`](https://github.com/electron-userland/electron-builder/commit/97e5503cecfcdfd9dddf1c4b321d52b5d5a94f83) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 4 dependencies</summary>
+
+<small>
+
+[`c3af390`](https://github.com/electron-userland/electron-builder/commit/c3af390ec67becfe548a8c83f0d3ba828c28b751) [`97e5503`](https://github.com/electron-userland/electron-builder/commit/97e5503cecfcdfd9dddf1c4b321d52b5d5a94f83)
+
+</small>
+
+- `dmg-builder@26.4.1`
+- `builder-util@26.4.1`
+- `electron-builder-squirrel-windows@26.4.1`
+- `electron-publish@26.4.1`
+
+</details>
+
+## 26.4.0
+
+### Minor Changes
+
+- Feat: allow platform specific build options to override top-level publish configuration _[`#9425`](https://github.com/electron-userland/electron-builder/pull/9425) [`5f962f9`](https://github.com/electron-userland/electron-builder/commit/5f962f9cae875da1208caa96fe040b2fe9224ea7) [@mmaietta](https://github.com/mmaietta)_
+
+### Patch Changes
+
+- Fix: disable corepack strict mode (with optional override) to allow `npm list` to work on yarn berry and bun project setups _[`#9443`](https://github.com/electron-userland/electron-builder/pull/9443) [`e70da99`](https://github.com/electron-userland/electron-builder/commit/e70da99e34c1cc913b237c5a58456bf752a378bc) [@mmaietta](https://github.com/mmaietta)_
+- Fix: add signing queue for Windows packager to avoid concurrent signing with AzureTrustedSigning _[`#9454`](https://github.com/electron-userland/electron-builder/pull/9454) [`b66832d`](https://github.com/electron-userland/electron-builder/commit/b66832d6fc633b4b12ccdffc0501c6d31b48a85e) [@mmaietta](https://github.com/mmaietta)_
+- Chore: The url.parse() function has been deprecated in Node 24. Migrating to `url.URL` _[`#9417`](https://github.com/electron-userland/electron-builder/pull/9417) [`9110cb4`](https://github.com/electron-userland/electron-builder/commit/9110cb432e273d526e40f02337167544ed371605) [@mmaietta](https://github.com/mmaietta)_
+- Fix: search app directory before package directory to respect two-package.json project setups _[`#9450`](https://github.com/electron-userland/electron-builder/pull/9450) [`39ae6a7`](https://github.com/electron-userland/electron-builder/commit/39ae6a7fb7109e8ab865fd1438592440110f4b71) [@mmaietta](https://github.com/mmaietta)_
+- Chore: cleanup logging for node module collectors by detecting non-installed optional deps _[`#9456`](https://github.com/electron-userland/electron-builder/pull/9456) [`78910a9`](https://github.com/electron-userland/electron-builder/commit/78910a913bb93c9e429bf8699338a8bf58f5d411) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+</small>
+
+- `dmg-builder@26.4.0`
+- `electron-builder-squirrel-windows@26.4.0`
+
+</details>
+
 ## 26.3.6
 
 ### Patch Changes

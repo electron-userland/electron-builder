@@ -105,7 +105,7 @@ describe("squirrel.windows", { sequential: true }, () => {
       "test-app-one",
       {
         targets: Platform.WINDOWS.createTarget("squirrel"),
-        platformPackagerFactory: (packager, platform) => (platformPackager = new CheckingWinPackager(packager)),
+        platformPackagerFactory: (packager, _platform) => (platformPackager = new CheckingWinPackager(packager)),
       },
       {
         projectDirCreated: it => {
@@ -114,6 +114,7 @@ describe("squirrel.windows", { sequential: true }, () => {
         },
         packed: async () => {
           expect(platformPackager!.effectiveDistOptions.loadingGif).toEqual(loadingGifPath)
+          return Promise.resolve()
         },
       }
     )

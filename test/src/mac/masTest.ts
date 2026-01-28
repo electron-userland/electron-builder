@@ -24,7 +24,7 @@ describe.runIf(process.platform === "darwin" && process.env.CSC_KEY_PASSWORD != 
       "test-app-one",
       signed({
         targets,
-        platformPackagerFactory: (packager, platform) => (platformPackager = new CheckingMacPackager(packager)),
+        platformPackagerFactory: (packager, _platform) => (platformPackager = new CheckingMacPackager(packager)),
         config: {
           mac: {
             target: ["mas"],
@@ -33,7 +33,7 @@ describe.runIf(process.platform === "darwin" && process.env.CSC_KEY_PASSWORD != 
         },
       }),
       {
-        checkMacApp(appDir, info) {
+        checkMacApp(appDir, _info) {
           const appEntitlements = (filePath: string) => platformPackager!.effectiveSignOptions?.optionsForFile?.(filePath)
           expect(appEntitlements(appDir)?.entitlements).toBe(entitlementsConfig.entitlements)
           expect(appEntitlements("Library/LoginItems")?.entitlements).toBe(entitlementsConfig.entitlementsLoginHelper)
@@ -53,13 +53,13 @@ describe.runIf(process.platform === "darwin" && process.env.CSC_KEY_PASSWORD != 
       "test-app-one",
       signed({
         targets,
-        platformPackagerFactory: (packager, platform) => (platformPackager = new CheckingMacPackager(packager)),
+        platformPackagerFactory: (packager, _platform) => (platformPackager = new CheckingMacPackager(packager)),
         config: {
           mac: entitlementsConfig,
         },
       }),
       {
-        checkMacApp(appDir, info) {
+        checkMacApp(appDir, _info) {
           const appEntitlements = (filePath: string) => platformPackager!.effectiveSignOptions?.optionsForFile?.(filePath)
           expect(appEntitlements(appDir)?.entitlements).toBe(entitlementsConfig.entitlements)
           expect(appEntitlements("Library/LoginItems")?.entitlements).toBe(entitlementsConfig.entitlementsLoginHelper)
@@ -79,10 +79,10 @@ describe.runIf(process.platform === "darwin" && process.env.CSC_KEY_PASSWORD != 
       "test-app-one",
       signed({
         targets,
-        platformPackagerFactory: (packager, platform) => (platformPackager = new CheckingMacPackager(packager)),
+        platformPackagerFactory: (packager, _platform) => (platformPackager = new CheckingMacPackager(packager)),
       }),
       {
-        checkMacApp(appDir, info) {
+        checkMacApp(appDir, _info) {
           const appEntitlements = (filePath: string) => platformPackager!.effectiveSignOptions?.optionsForFile?.(filePath)
           expect(appEntitlements(appDir)?.entitlements).toBe(entitlementsConfig.entitlements)
           expect(appEntitlements("Library/LoginItems")?.entitlements).toBe(entitlementsConfig.entitlements)

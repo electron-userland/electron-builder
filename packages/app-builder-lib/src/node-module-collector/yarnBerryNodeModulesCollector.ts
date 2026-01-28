@@ -1,8 +1,8 @@
 import { log } from "builder-util"
 import { Lazy } from "lazy-val"
-import { NpmNodeModulesCollector } from "./npmNodeModulesCollector.js"
-import { PM } from "./packageManager.js"
-import { NpmDependency } from "./types.js"
+import { NpmNodeModulesCollector } from "./npmNodeModulesCollector"
+import { PM } from "./packageManager"
+import { NpmDependency } from "./types"
 
 type YarnSetupInfo = {
   yarnVersion: string | null
@@ -36,7 +36,7 @@ export class YarnBerryNodeModulesCollector extends NpmNodeModulesCollector {
   }
 
   protected isProdDependency(packageName: string, tree: NpmDependency): boolean {
-    return super.isProdDependency(packageName, tree) || tree.dependencies?.[packageName] != null || tree.optionalDependencies?.[packageName] == null
+    return super.isProdDependency(packageName, tree) || tree.dependencies?.[packageName] != null || tree.optionalDependencies?.[packageName] != null
   }
 
   private async detectYarnSetup(rootDir: string): Promise<YarnSetupInfo> {

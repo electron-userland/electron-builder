@@ -1,6 +1,6 @@
 {
   "name": "electron-updater",
-  "version": "6.7.3",
+  "version": "6.8.1",
   "description": "Cross platform updater for electron applications",
   "type": "module",
   "exports": "./out/index.js",

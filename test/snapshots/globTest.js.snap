@@ -61,10 +61,8 @@ exports[`asarUnpack node_modules 2`] = `
           "unpacked": true,
         },
       },
-      "unpacked": true,
     },
   },
-  "unpacked": true,
 }
 `;
 
@@ -28941,10 +28939,8 @@ exports[`unpackDir 2`] = `
               "unpacked": true,
             },
           },
-          "unpacked": true,
         },
       },
-      "unpacked": true,
     },
     "b2": {
       "files": {
@@ -28953,7 +28949,6 @@ exports[`unpackDir 2`] = `
           "unpacked": true,
         },
       },
-      "unpacked": true,
     },
     "do-not-unpack-dir": {
       "files": {
@@ -29060,10 +29055,8 @@ exports[`unpackDir one 2`] = `
               "unpacked": true,
             },
           },
-          "unpacked": true,
         },
       },
-      "unpacked": true,
     },
     "b2": {
       "files": {
@@ -29072,7 +29065,6 @@ exports[`unpackDir one 2`] = `
           "unpacked": true,
         },
       },
-      "unpacked": true,
     },
     "do-not-unpack-dir": {
       "files": {

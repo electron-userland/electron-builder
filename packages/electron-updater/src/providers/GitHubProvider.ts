@@ -81,7 +81,9 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
             const hrefElement = hrefRegExp.exec(element.element("link").attribute("href"))!
 
             // If this is null then something is wrong and skip this release
-            if (hrefElement === null) continue
+            if (hrefElement === null) {
+              continue
+            }
 
             // This Release's Tag
             const hrefTag = hrefElement[1]

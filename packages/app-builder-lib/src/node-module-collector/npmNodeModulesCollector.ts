@@ -13,11 +13,15 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
   }
 
   protected async collectAllDependencies(tree: NpmDependency) {
-    for (const [, value] of Object.entries(tree.dependencies || {})) {
+    for (const [key, value] of Object.entries(tree.dependencies || {})) {
       if (this.isDuplicatedNpmDependency(value)) {
         continue
       }
-      this.allDependencies.set(this.packageVersionString(value), value)
+      // Use the key (alias name) instead of value.name for npm aliased packages
+      // e.g., { "foo": { name: "@scope/bar", ... } } should be stored as "foo@version"
+      // This ensures aliased packages are copied to the correct location in node_modules
+      const normalizedDep: NpmDependency = key !== value.name ? { ...value, name: key } : value
+      this.allDependencies.set(this.packageVersionString(normalizedDep), normalizedDep)
       await this.collectAllDependencies(value)
     }
   }
@@ -41,7 +45,7 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
           continue
         }
         const dependency = resolvedDeps[packageName]
-        const childDependencyId = this.packageVersionString(dependency)
+        const childDependencyId = this.packageVersionString({ name: packageName, version: dependency.version })
         await this.extractProductionDependencyGraph(dependency, childDependencyId)
         collectedDependencies.push(childDependencyId)
       }
@@ -59,10 +63,6 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
 
   // `npm list` provides explicit list of deps in _dependencies
   protected isProdDependency(packageName: string, tree: NpmDependency) {
-    return tree._dependencies?.[packageName] != null // || super.isProdDependency(packageName, tree)
-  }
-
-  protected async parseDependenciesTree(jsonBlob: string): Promise<NpmDependency> {
-    return Promise.resolve(JSON.parse(jsonBlob))
+    return tree._dependencies?.[packageName] != null
   }
 }

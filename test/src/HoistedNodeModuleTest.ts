@@ -1,11 +1,11 @@
 import { PM } from "app-builder-lib"
 import { spawn } from "builder-util"
 import { Arch, DIR_TARGET, Platform } from "electron-builder"
-import { copySync, mkdirSync, outputFile, readJsonSync, rmSync, symlink, writeJsonSync } from "fs-extra"
 import * as path from "path"
 import { appTwoThrows, assertPack, linuxDirTarget, modifyPackageJson, verifyAsarFileTree } from "./helpers/packTester.js"
 import { ELECTRON_VERSION } from "./helpers/testConfig.js"
 import { execSync } from "child_process"
+import { copy, mkdir, outputFile, readJson, rm, symlink, writeJson } from "fs-extra"
 
 test("yarn workspace", ({ expect }) =>
   assertPack(
@@ -16,6 +16,7 @@ test("yarn workspace", ({ expect }) =>
       projectDir: "packages/test-app",
     },
     {
+      storeDepsLockfileSnapshot: true,
       packageManager: PM.YARN,
       packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
     }
@@ -30,6 +31,7 @@ test("conflict versions", ({ expect }) =>
       projectDir: "packages/test-app",
     },
     {
+      storeDepsLockfileSnapshot: true,
       packageManager: PM.YARN,
       packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
     }
@@ -44,6 +46,7 @@ test("yarn several workspaces", ({ expect }) =>
       projectDir: "packages/test-app",
     },
     {
+      storeDepsLockfileSnapshot: true,
       packageManager: PM.YARN,
       packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
     }
@@ -61,6 +64,7 @@ test("yarn several workspaces and asarUnpack", ({ expect }) =>
       },
     },
     {
+      storeDepsLockfileSnapshot: true,
       packageManager: PM.YARN,
       packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
     }
@@ -74,6 +78,7 @@ test.ifLinux("yarn two package.json w/ native mac-only module (optional dep)", (
       targets: linuxDirTarget,
     },
     {
+      storeDepsLockfileSnapshot: true,
       packageManager: PM.YARN,
       packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
     }
@@ -88,8 +93,9 @@ test("yarn two package.json", ({ expect }) =>
       targets: linuxDirTarget,
     },
     {
+      storeDepsLockfileSnapshot: true,
       packageManager: PM.YARN,
-      projectDirCreated: async projectDir => {
+      projectDirCreated: async (projectDir, _tmpDir, testEnv) => {
         await modifyPackageJson(projectDir, data => {
           data.dependencies = {
             "electron-updater": "6",
@@ -98,7 +104,6 @@ test("yarn two package.json", ({ expect }) =>
           }
           data.devDependencies = {
             electron: "23.2.0",
-            "del-cli": "6",
             "electron-builder": "26",
             "fs-extra": "11",
           }
@@ -107,19 +112,25 @@ test("yarn two package.json", ({ expect }) =>
           }
         })
 
-        mkdirSync(path.join(projectDir, "app"))
-        copySync(path.join(projectDir, "index.html"), path.join(projectDir, "app", "index.html"))
-        copySync(path.join(projectDir, "index.js"), path.join(projectDir, "app", "index.js"))
+        await mkdir(path.join(projectDir, "app"))
+        await copy(path.join(projectDir, "index.html"), path.join(projectDir, "app", "index.html"))
+        await copy(path.join(projectDir, "index.js"), path.join(projectDir, "app", "index.js"))
 
         // delete package.json devDependencies
-        const packageJson = readJsonSync(path.join(projectDir, "package.json"))
+        const packageJson = await readJson(path.join(projectDir, "package.json"))
         delete packageJson.devDependencies
         delete packageJson.build
         delete packageJson.scripts
-        writeJsonSync(path.join(projectDir, "app", "package.json"), packageJson)
+        await writeJson(path.join(projectDir, "app", "package.json"), packageJson)
 
-        execSync("yarn install", { cwd: projectDir })
-        execSync("yarn install", { cwd: path.join(projectDir, "app") })
+        await spawn("yarn", ["install"], {
+          cwd: projectDir,
+          env: testEnv,
+        })
+        await spawn("yarn", ["install"], {
+          cwd: path.join(projectDir, "app"),
+          env: testEnv,
+        })
       },
       packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
     }
@@ -133,8 +144,9 @@ test("yarn two package.json without node_modules", ({ expect }) =>
       targets: linuxDirTarget,
     },
     {
+      storeDepsLockfileSnapshot: true,
       packageManager: PM.YARN,
-      projectDirCreated: async projectDir => {
+      projectDirCreated: async (projectDir, _tmpDir, testEnv) => {
         await modifyPackageJson(projectDir, data => {
           data.dependencies = {
             "electron-updater": "6",
@@ -143,7 +155,6 @@ test("yarn two package.json without node_modules", ({ expect }) =>
           }
           data.devDependencies = {
             electron: "23.2.0",
-            "del-cli": "6",
             "electron-builder": "26",
             "fs-extra": "11",
           }
@@ -155,19 +166,20 @@ test("yarn two package.json without node_modules", ({ expect }) =>
         // install dependencies in project dir
         await spawn("yarn", ["install"], {
           cwd: projectDir,
+          env: testEnv,
         })
 
-        mkdirSync(path.join(projectDir, "app"))
-        rmSync(path.join(projectDir, "app", "node_modules"), { recursive: true, force: true })
-        copySync(path.join(projectDir, "index.html"), path.join(projectDir, "app", "index.html"))
-        copySync(path.join(projectDir, "index.js"), path.join(projectDir, "app", "index.js"))
+        await mkdir(path.join(projectDir, "app"))
+        await rm(path.join(projectDir, "app", "node_modules"), { recursive: true, force: true })
+        await copy(path.join(projectDir, "index.html"), path.join(projectDir, "app", "index.html"))
+        await copy(path.join(projectDir, "index.js"), path.join(projectDir, "app", "index.js"))
 
         // delete package.json devDependencies
-        const packageJson = readJsonSync(path.join(projectDir, "package.json"))
+        const packageJson = await readJson(path.join(projectDir, "package.json"))
         delete packageJson.devDependencies
         delete packageJson.build
         delete packageJson.scripts
-        writeJsonSync(path.join(projectDir, "app", "package.json"), packageJson)
+        await writeJson(path.join(projectDir, "app", "package.json"), packageJson)
       },
       packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
     }
@@ -186,6 +198,7 @@ test.ifWindows("should throw when attempting to package a system file", async ({
       },
     },
     {
+      storeDepsLockfileSnapshot: true,
       packageManager: PM.YARN,
     },
     error => {
@@ -230,6 +243,7 @@ test("yarn workspace for scope name", ({ expect }) =>
       projectDir: "packages/test-app",
     },
     {
+      storeDepsLockfileSnapshot: true,
       packageManager: PM.YARN,
       projectDirCreated: async projectDir => {
         const subAppDir = path.join(projectDir, "packages", "test-app")
@@ -253,6 +267,7 @@ test("pnpm es5-ext without hoisted config", ({ expect }) =>
       targets: linuxDirTarget,
     },
     {
+      storeDepsLockfileSnapshot: true,
       packageManager: PM.PNPM,
       projectDirCreated: projectDir => {
         return Promise.all([
@@ -275,6 +290,7 @@ test("pnpm optional dependencies", ({ expect }) =>
       targets: linuxDirTarget,
     },
     {
+      storeDepsLockfileSnapshot: true,
       packageManager: PM.PNPM,
       projectDirCreated: projectDir => {
         return Promise.all([
@@ -300,6 +316,7 @@ test.ifLinux("pnpm optional dependency not installable on linux", ({ expect }) =
       targets: linuxDirTarget,
     },
     {
+      storeDepsLockfileSnapshot: true,
       packageManager: PM.PNPM,
       projectDirCreated: projectDir => {
         return Promise.all([
@@ -326,6 +343,7 @@ test("yarn electron-clear-data", ({ expect }) =>
       targets: Platform.WINDOWS.createTarget(DIR_TARGET, Arch.x64),
     },
     {
+      storeDepsLockfileSnapshot: true,
       packageManager: PM.YARN,
       projectDirCreated: projectDir => {
         return Promise.all([
@@ -351,6 +369,7 @@ test("npm electron-clear-data", ({ expect }) =>
       targets: Platform.WINDOWS.createTarget(DIR_TARGET, Arch.x64),
     },
     {
+      storeDepsLockfileSnapshot: true,
       packageManager: PM.NPM,
       projectDirCreated: projectDir => {
         return Promise.all([
@@ -377,6 +396,7 @@ test("yarn some module add by manual instead of install", ({ expect }) =>
       targets: Platform.WINDOWS.createTarget(DIR_TARGET, Arch.x64),
     },
     {
+      storeDepsLockfileSnapshot: true,
       packageManager: PM.YARN,
       projectDirCreated: async projectDir => {
         await outputFile(path.join(projectDir, "node_modules", "foo", "package.json"), `{"name":"foo","version":"9.0.0","main":"index.js","license":"MIT"}`)
@@ -399,6 +419,7 @@ test("yarn max stack", ({ expect }) =>
       targets: linuxDirTarget,
     },
     {
+      storeDepsLockfileSnapshot: true,
       packageManager: PM.YARN,
       projectDirCreated: projectDir => {
         return Promise.all([
@@ -421,6 +442,7 @@ test("pnpm max stack", ({ expect }) =>
       targets: linuxDirTarget,
     },
     {
+      storeDepsLockfileSnapshot: true,
       packageManager: PM.PNPM,
       projectDirCreated: projectDir => {
         return Promise.all([
@@ -444,19 +466,19 @@ test("yarn ms", ({ expect }) =>
       targets: linuxDirTarget,
     },
     {
+      storeDepsLockfileSnapshot: true,
       packageManager: PM.YARN,
-      projectDirCreated: projectDir => {
-        return Promise.all([
-          modifyPackageJson(projectDir, data => {
-            data.dependencies = {
-              "@sentry/electron": "5.11.0",
-              "electron-clear-data": "^1.0.5",
-            }
-            data.devDependencies = {
-              electron: "34.0.2",
-            }
-          }),
-        ])
+      projectDirCreated: async (projectDir, _tmpDir, testEnv) => {
+        await modifyPackageJson(projectDir, data => {
+          data.dependencies = {
+            "@sentry/electron": "5.11.0",
+            "electron-clear-data": "^1.0.5",
+          }
+          data.devDependencies = {
+            electron: "34.0.2",
+          }
+        })
+        execSync("yarn install", { cwd: projectDir, env: testEnv })
       },
       packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
     }
@@ -471,6 +493,7 @@ test("yarn parse-asn1", ({ expect }) =>
       targets: linuxDirTarget,
     },
     {
+      storeDepsLockfileSnapshot: true,
       packageManager: PM.YARN,
       projectDirCreated: projectDir => {
         return Promise.all([
@@ -494,12 +517,13 @@ test("npm tar", ({ expect }) =>
       targets: linuxDirTarget,
     },
     {
+      storeDepsLockfileSnapshot: true,
       packageManager: PM.NPM,
       projectDirCreated: projectDir => {
         return Promise.all([
           modifyPackageJson(projectDir, data => {
             data.dependencies = {
-              tar: "7.4.3",
+              tar: "7.5.6",
             }
           }),
         ])
@@ -517,6 +541,7 @@ test("pnpm node-linker=hoisted", ({ expect }) =>
       targets: linuxDirTarget,
     },
     {
+      storeDepsLockfileSnapshot: true,
       packageManager: PM.PNPM,
       projectDirCreated: projectDir => {
         return Promise.all([
@@ -539,6 +564,7 @@ test("pnpm shamefully-hoist=true", ({ expect }) =>
       targets: linuxDirTarget,
     },
     {
+      storeDepsLockfileSnapshot: true,
       packageManager: PM.PNPM,
       projectDirCreated: projectDir => {
         return Promise.all([
@@ -561,6 +587,7 @@ test("pnpm public-hoist-pattern=*", ({ expect }) =>
       targets: linuxDirTarget,
     },
     {
+      storeDepsLockfileSnapshot: true,
       packageManager: PM.PNPM,
       projectDirCreated: projectDir => {
         return Promise.all([
@@ -595,6 +622,7 @@ test("pnpm workspace with native module", ({ expect }) =>
       },
     },
     {
+      storeDepsLockfileSnapshot: true,
       packageManager: PM.PNPM,
       projectDirCreated: projectDir => {
         return Promise.all([

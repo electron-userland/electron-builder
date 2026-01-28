@@ -1,5 +1,17 @@
 ## 4.3.0
 
+## 6.8.1
+
+### Patch Changes
+
+- Chore: running `eslint --fix` on more files _[`#9502`](https://github.com/electron-userland/electron-builder/pull/9502) [`6c20eeb`](https://github.com/electron-userland/electron-builder/commit/6c20eeb1cf9fd10980cde3c9ce0602fa6b7c6972) [@mmaietta](https://github.com/mmaietta)_
+
+## 6.8.0
+
+### Minor Changes
+
+- Emit download-progress events when downloading with multiple range differential downloader _[`#9448`](https://github.com/electron-userland/electron-builder/pull/9448) [`3533a3e`](https://github.com/electron-userland/electron-builder/commit/3533a3eb5af01416db3ecac703d6da031b05e615) [@eliotschu](https://github.com/eliotschu)_
+
 ## 6.7.3
 
 ### Patch Changes

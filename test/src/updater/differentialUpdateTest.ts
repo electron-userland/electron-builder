@@ -1,5 +1,4 @@
 import { Arch, Configuration, Platform } from "app-builder-lib"
-import { getBinFromUrl } from "app-builder-lib"
 import { doSpawn, getArchSuffix } from "builder-util"
 import { GenericServerOptions, Nullish, S3Options } from "builder-util-runtime"
 import { AppImageUpdater, BaseUpdater, MacUpdater, NsisUpdater } from "electron-updater"
@@ -12,6 +11,7 @@ import { EXTENDED_TIMEOUT, PackedContext, assertPack, removeUnstableProperties }
 import { NEW_VERSION_NUMBER, OLD_VERSION_NUMBER, testAppCacheDirName, tuneTestUpdater, writeUpdateConfig } from "../helpers/updaterTestUtil"
 import { mockForNodeRequire } from "vitest-mock-commonjs"
 import { ExpectStatic } from "vitest"
+import { getRanLocalServerPath } from "../helpers/launchAppCrossPlatform"
 
 async function doBuild(
   expect: ExpectStatic,
@@ -188,8 +188,8 @@ async function testBlockMap(expect: ExpectStatic, oldDir: string, newDir: string
   )
   const port = 8000 + (updaterClass.name.charCodeAt(0) as number) + Math.floor(Math.random() * 10000)
 
-  const serverBin = await getBinFromUrl("ran-0.1.3", "ran-0.1.3.7z", "imfA3LtT6umMM0BuQ29MgO3CJ9uleN5zRBi3sXzcTbMOeYZ6SQeN7eKr3kXZikKnVOIwbH+DDO43wkiR/qTdkg==")
-  const httpServerProcess = doSpawn(path.join(serverBin, process.platform, "ran"), [`-root=${newDir}`, `-port=${port}`, "-gzip=false", "-listdir=true"])
+  const serverBin = await getRanLocalServerPath()
+  const httpServerProcess = doSpawn(serverBin, [`-root=${newDir}`, `-port=${port}`, "-gzip=false", "-listdir=true"])
 
   // Mac uses electron's native autoUpdater to serve updates to, we mock here since electron API isn't available within jest runtime
   const mockNativeUpdater = new TestNativeUpdater()

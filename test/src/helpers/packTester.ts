@@ -1,24 +1,35 @@
-import AdmZip from "adm-zip"
-import { AsarIntegrity, computeArchToTargetNamesMap, computeDefaultAppDirectory, createLazyProductionDeps, detectPackageManager, getCollectorByPackageManager, getLinuxToolsPath, installDependencies, parsePlistFile, PlistObject, PM, PublishManager, readAsar } from "app-builder-lib"
+import { PublishManager } from "app-builder-lib"
+import { readAsar } from "app-builder-lib/out/asar/asar"
+import { computeArchToTargetNamesMap } from "app-builder-lib/out/targets/targetFactory"
+import { getLinuxToolsPath } from "app-builder-lib/out/targets/tools"
+import { parsePlistFile, PlistObject } from "app-builder-lib/out/util/plist"
+import { AsarIntegrity } from "app-builder-lib/out/asar/integrity"
 import { addValue, copyDir, deepAssign, exec, executeFinally, exists, FileCopier, log, USE_HARD_LINKS, walk } from "builder-util"
 import { CancellationToken, UpdateFileInfo } from "builder-util-runtime"
-import { execSync } from "child_process"
 import { Arch, ArtifactCreated, Configuration, DIR_TARGET, getArchSuffix, MacOsTargetName, Packager, PackagerOptions, Platform, Target } from "electron-builder"
-import { PublishPolicy } from "electron-publish"
 import { convertVersion } from "electron-winstaller"
+import { PublishPolicy } from "electron-publish"
 import { copyFile, emptyDir, mkdir, writeJson } from "fs-extra"
 import * as fs from "fs/promises"
 import { load } from "js-yaml"
 import * as path from "path"
 import pathSorter from "path-sort"
 import { NtExecutable, NtExecutableResource } from "resedit"
-import sanitizeFileName from "sanitize-filename"
 import { TmpDir } from "temp-file"
+import { getCollectorByPackageManager, PM } from "app-builder-lib/out/node-module-collector"
 import { promisify } from "util"
+import { CSC_LINK, WIN_CSC_LINK } from "./codeSignData"
+import { assertThat } from "./fileAssert"
+import AdmZip from "adm-zip"
+// @ts-ignore
+import sanitizeFileName from "sanitize-filename"
 import type { ExpectStatic } from "vitest"
-import { CSC_LINK, WIN_CSC_LINK } from "./codeSignData.js"
-import { assertThat } from "./fileAssert.js"
-import { ELECTRON_VERSION } from "./testConfig.js"
+import { computeDefaultAppDirectory } from "app-builder-lib/out/util/config/config"
+import { installDependencies } from "app-builder-lib/out/util/yarn"
+import { ELECTRON_VERSION } from "./testConfig"
+import { createLazyProductionDeps } from "app-builder-lib/out/util/packageDependencies"
+import { execSync } from "child_process"
+import { detectPackageManager } from "app-builder-lib/out/node-module-collector/packageManager"
 
 const PACKAGE_MANAGER_VERSION_MAP = {
   [PM.NPM]: { cli: "npm", version: "9.8.1" },
@@ -44,7 +55,7 @@ export const linuxDirTarget = Platform.LINUX.createTarget(DIR_TARGET, Arch.x64)
 export const snapTarget = Platform.LINUX.createTarget("snap", Arch.x64)
 
 export interface AssertPackOptions {
-  readonly projectDirCreated?: (projectDir: string, tmpDir: TmpDir) => Promise<any> | (() => Promise<any>)
+  readonly projectDirCreated?: (projectDir: string, tmpDir: TmpDir, testEnv: NodeJS.ProcessEnv) => Promise<any> | (() => Promise<any>)
   readonly packed?: (context: PackedContext) => Promise<any>
   readonly expectedArtifacts?: Array<string>
 
@@ -136,21 +147,12 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
 
   await executeFinally(
     (async () => {
-      const packageManagerOverride = checkOptions.packageManager || PM.NPM
+      const packageManagerOverride = checkOptions.packageManager
       await modifyPackageJson(projectDir, data => {
-        if (
-          data.packageManager == null &&
-          // these will block `npm list` with "Unsupported package manager specification (bun@1.3.2)"
-          ![PM.BUN, PM.TRAVERSAL].includes(packageManagerOverride)
-        ) {
-          data.packageManager = getPackageManagerWithVersion(packageManagerOverride).prepareEntry
+        if (data.packageManager == null || packageManagerOverride) {
+          data.packageManager = getPackageManagerWithVersion(packageManagerOverride || PM.NPM).prepareEntry
         }
       })
-
-      const postNodeModulesInstallHook = checkOptions.projectDirCreated ? await checkOptions.projectDirCreated(projectDir, tmpDir) : null
-
-      // Check again. Package manager could have been changed in package.json during `projectDirCreated`
-      const { pm, corepackConfig: packageManager } = await detectPackageManager([projectDir])
 
       const tmpCache = await tmpDir.createTempDir({ prefix: "cache-" })
       const tmpHome = await tmpDir.createTempDir({ prefix: "home-" })
@@ -162,7 +164,7 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
         // yarn
         HOME: tmpHome,
         USERPROFILE: tmpHome, // for Windows compatibility
-        YARN_CACHE_FOLDER: tmpCache,
+        YARN_CACHE_FOLDER: tmpCache, // this doesn't seem to always work in concurrent tests? So we must set manually
         // YARN_DISABLE_TELEMETRY: "1",
         // YARN_ENABLE_TELEMETRY: "false",
         YARN_IGNORE_PATH: "1", // ignore globally installed yarn binaries
@@ -170,7 +172,12 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
         // YARN_NODE_LINKER: "node-modules", // force to not use pnp (as there's no way to access virtual packages within the paths returned by pnpm)
         npm_config_cache: tmpCache, // prevent npm fallback caching
       }
+      const postNodeModulesInstallHook = checkOptions.projectDirCreated ? await checkOptions.projectDirCreated(projectDir, tmpDir, runtimeEnv) : null
+
+      // Check again. Package manager could have been changed in package.json during `projectDirCreated`
+      const { pm, corepackConfig: packageManager } = await detectPackageManager([projectDir])
       const { cli, prepareEntry, version } = getPackageManagerWithVersion(pm, packageManager)
+
       if (pm === PM.BUN) {
         log.info({ pm, version: version, projectDir }, "installing dependencies with bun; corepack does not support it currently and it must be installed separately")
       } else {
