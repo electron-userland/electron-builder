@@ -342,7 +342,7 @@ export default class AppXTarget extends Target {
 
     const capSet = new Set(caps)
 
-    const invalid = Array.from(capSet).filter(cap => !isValidCapabilityName(cap));
+    const invalid = Array.from(capSet).filter(cap => !isValidCapabilityName(cap))
     if (invalid.length > 0) {
       throw new Error(`invalid windows capabilit${invalid.length === 1 ? "y" : "ies"} specified: ${invalid.join(", ")}`)
     }

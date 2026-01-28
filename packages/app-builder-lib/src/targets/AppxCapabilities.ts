@@ -28,8 +28,7 @@ class AppxCapability implements Capability {
 
   toXMLString(): string {
     const tagName = this.nsAlias ? `${this.nsAlias}:${this.elementName}` : this.elementName
-    if (this.declareNS)
-      return `<${tagName} xmlns:${this.nsAlias}="${this.nsURI}" Name="${this.name}"/>`
+    if (this.declareNS) return `<${tagName} xmlns:${this.nsAlias}="${this.nsURI}" Name="${this.name}"/>`
     return `<${tagName} Name="${this.name}"/>`
   }
 }
@@ -83,7 +82,7 @@ const CAPABILITY_TYPES: Record<string, CapabilityConfig> = {
     nsURI: "http://schemas.microsoft.com/appx/manifest/foundation/windows10",
     declareNS: false,
     elementName: "DeviceCapability",
-  }
+  },
 } as const
 
 type CapabilityType = keyof typeof CAPABILITY_TYPES
