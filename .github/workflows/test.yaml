@@ -277,6 +277,7 @@ jobs:
         env:
           TEST_FILES: ${{ matrix.testFiles }}
           FORCE_COLOR: 1
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
 
   test-mac-old:
     runs-on: macos-latest
@@ -304,3 +305,4 @@ jobs:
         env:
           TEST_FILES: ${{ matrix.testFiles }}
           FORCE_COLOR: 1
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
