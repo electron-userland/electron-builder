@@ -640,3 +640,54 @@ test("pnpm workspace with native module", ({ expect }) =>
       packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
     }
   ))
+
+test.only("yarn berry hoisted versions", ({ expect }) =>
+  assertPack(
+    expect,
+    "test-app-yarn-workspace-version-conflict",
+    {
+      targets: linuxDirTarget,
+      projectDir: "packages/test-app",
+    },
+    {
+      storeDepsLockfileSnapshot: true,
+      packageManager: PM.YARN_BERRY,
+      projectDirCreated: async (projectDir, _tmpDir, testEnv) => {
+        await modifyPackageJson(path.join(projectDir, "packages", "test-app"), data => {
+          data.dependencies = {
+            jsdom: "^27.4.0",
+            "markdown-it": "^14.1.0",
+          }
+        })
+      },
+      packed: async context => {
+        await verifyAsarFileTree(expect, context.getResources(Platform.LINUX))
+      },
+    }
+  ))
+
+test.only("yarn berry react native", ({ expect }) =>
+  assertPack(
+    expect,
+    "test-app-yarn-workspace-version-conflict",
+    {
+      targets: linuxDirTarget,
+      projectDir: "packages/test-app",
+    },
+    {
+      storeDepsLockfileSnapshot: true,
+      packageManager: PM.YARN_BERRY,
+      projectDirCreated: async (projectDir, _tmpDir, testEnv) => {
+        await modifyPackageJson(path.join(projectDir, "packages", "test-app"), data => {
+          data.dependencies = {
+            "@react-native-async-storage/async-storage": "2.2.0",
+            "@react-native-picker/picker": "2.11.4",
+          }
+        })
+      },
+      packed: async context => {
+        await verifyAsarFileTree(expect, context.getResources(Platform.LINUX))
+      },
+    }
+  ))
+

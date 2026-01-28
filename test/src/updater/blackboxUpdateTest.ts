@@ -25,7 +25,7 @@ describe("Electron autoupdate (fresh install & update)", () => {
 
   // Signing is required for macOS autoupdate
   test.ifMac.ifEnv(process.env.CSC_KEY_PASSWORD)("mac", async context => {
-    await runTest(context, "mac", "zip")
+    await runTest(context, "zip", "zip")
   })
 
   test.ifWindows("win", async context => {

@@ -2,6 +2,7 @@
 
 const electron = require("electron")
 const path = require("path")
+const sharp = require("sharp") // only matters during blackboxUpdateTest
 
 const app = electron.app
 const BrowserWindow = electron.BrowserWindow
@@ -29,13 +30,15 @@ async function init() {
   if (!app.isReady()) {
     await app.whenReady()
   }
-  isReady()
+  await isReady()
 }
 
-function isReady() {
+async function isReady() {
   console.log(`APP_VERSION: ${app.getVersion()}`)
 
   createWindow()
+
+  await sharp();
 
   if (shouldTestAutoUpdater) {
     const { autoUpdater } = require("electron-updater")
