@@ -47,11 +47,11 @@ export class PkgTarget extends Target {
   ) {
     super("pkg")
     this.options = {
-    allowAnywhere: true,
-    allowCurrentUserHome: true,
-    allowRootDirectory: true,
-    ...this.packager.config.pkg,
-  }
+      allowAnywhere: true,
+      allowCurrentUserHome: true,
+      allowRootDirectory: true,
+      ...this.packager.config.pkg,
+    }
   }
 
   async build(appPath: string, arch: Arch): Promise<any> {

@@ -23,7 +23,7 @@ export default class AppImageTarget extends Target {
     readonly outDir: string
   ) {
     super("appImage")
-    this.options  = { ...this.packager.platformSpecificBuildOptions, ...(this.packager.config as any)[this.name] }
+    this.options = { ...this.packager.platformSpecificBuildOptions, ...(this.packager.config as any)[this.name] }
 
     this.desktopEntry = new Lazy<string>(() => {
       const args = this.options.executableArgs?.join(" ") || "--no-sandbox"

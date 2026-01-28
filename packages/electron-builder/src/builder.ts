@@ -3,7 +3,7 @@ import { addValue, Arch, archFromString, deepAssign } from "builder-util"
 import * as chalk from "chalk"
 import { PublishOptions } from "electron-publish"
 import yargs, { Argv } from "yargs"
-import { hideBin } from 'yargs/helpers';
+import { hideBin } from "yargs/helpers"
 
 export function createYargs(): Argv<unknown> {
   return yargs(hideBin(process.argv)).parserConfiguration({

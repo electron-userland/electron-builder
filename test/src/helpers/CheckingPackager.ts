@@ -17,7 +17,7 @@ export class CheckingWinPackager extends WinPackager {
   //noinspection JSUnusedLocalSymbols
   async pack(outDir: string, arch: Arch, targets: Array<Target>, taskManager: AsyncTaskManager): Promise<any> {
     // skip pack
-    const helperClass =  (await import("electron-builder-squirrel-windows")).default
+    const helperClass = (await import("electron-builder-squirrel-windows")).default
     const newClass = new (helperClass as any)(this, outDir)
     const setupFile = this.expandArtifactNamePattern(newClass.options, "exe", arch, "${productName} Setup ${version}.${ext}")
     const installerOutDir = path.join(outDir, `squirrel-windows${getArchSuffix(arch)}`)

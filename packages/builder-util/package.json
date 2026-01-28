@@ -1,7 +1,8 @@
 {
   "name": "builder-util",
   "version": "26.4.1",
-  "main": "out/util.js",
+  "type": "module",
+  "exports": "./out/util.js",
   "author": "Vladimir Krivosheev",
   "license": "MIT",
   "repository": {

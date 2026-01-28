@@ -9,7 +9,6 @@ import { UpdateInfo } from "builder-util-runtime"
 export { BaseUpdater } from "./BaseUpdater.js"
 export { AppUpdater, NoOpLogger, TestOnlyUpdaterOptions } from "./AppUpdater.js"
 
-
 export { AppImageUpdater } from "./AppImageUpdater.js"
 export { DebUpdater } from "./DebUpdater.js"
 export { PacmanUpdater } from "./PacmanUpdater.js"
@@ -17,11 +16,9 @@ export { RpmUpdater } from "./RpmUpdater.js"
 export { MacUpdater } from "./MacUpdater.js"
 export { NsisUpdater } from "./NsisUpdater.js"
 
-
 export { Provider } from "./providers/Provider.js"
 export { GitHubProvider } from "./providers/GitHubProvider.js"
 export { GitLabProvider } from "./providers/GitLabProvider.js"
-
 
 export * from "./types.js"
 export * as utils from "./util.js"

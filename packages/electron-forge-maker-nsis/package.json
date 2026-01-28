@@ -1,7 +1,8 @@
 {
   "name": "electron-forge-maker-nsis",
   "version": "26.6.0",
-  "main": "main.js",
+  "type": "module",
+  "exports": "./main.js",
   "author": "Vladimir Krivosheev",
   "license": "MIT",
   "repository": {

@@ -112,6 +112,7 @@ export { DoPackOptions } from "./platformPackager.js"
 
 export { createKeychain } from "./codeSign/macCodeSign.js"
 
+export { downloadArtifact } from "./binDownload.js"
 
 const expectedOptions = new Set(["publish", "targets", "mac", "win", "linux", "projectDir", "platformPackagerFactory", "config", "effectiveOptionComputed", "prepackaged"])
 

@@ -1,5 +1,5 @@
 import { log } from "builder-util"
-import { NodeModulesCollector } from "./nodeModulesCollector"
+import { NodeModulesCollector } from "./nodeModulesCollector.js"
 import { PM } from "./packageManager.js"
 import { TraversedDependency } from "./types.js"
 import * as path from "path"

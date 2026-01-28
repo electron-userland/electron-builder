@@ -8,7 +8,7 @@ import { InvalidConfigurationError, archFromString, log, printErrorAndExit } fro
 import { PublishPolicy } from "electron-publish"
 import * as chalk from "chalk"
 import * as path from "path"
-import { Argv   } from "yargs"
+import { Argv } from "yargs"
 import { BuildOptions, createYargs, normalizeOptions } from "./builder.js"
 
 /** @internal */
