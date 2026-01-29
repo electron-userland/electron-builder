@@ -280,11 +280,10 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
       return tree
     }
 
-    // Reverted to 26.3.0 behavior (pre-PR #9380)
     if (tree.workspaces && tree.dependencies) {
       for (const [key, value] of Object.entries(tree.dependencies)) {
         if (key === packageName) {
-          log.debug({ key, path: value.path }, "returning workspace tree for root dependency");
+          log.debug({ key, path: value.path }, "returning workspace tree for root dependency")
           return value
         }
       }

@@ -690,4 +690,3 @@ test("yarn berry react native", ({ expect }) =>
       },
     }
   ))
-
