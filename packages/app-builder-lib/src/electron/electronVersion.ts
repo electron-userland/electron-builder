@@ -4,10 +4,10 @@ import { readJson } from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import * as semver from "semver"
-import { Configuration } from "../configuration"
-import { getConfig } from "../util/config/config"
-import { orNullIfFileNotExist } from "../util/config/load"
-import { getProjectRootPath } from "./search-module"
+import { Configuration } from "../configuration.js"
+import { getConfig } from "../util/config/config.js"
+import { orNullIfFileNotExist } from "../util/config/load.js"
+import { getProjectRootPath } from "./search-module.js"
 
 export type MetadataValue = Lazy<Record<string, any> | null>
 

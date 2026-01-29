@@ -1,5 +1,5 @@
-import { TargetSpecificOptions } from "../core"
-import { CommonLinuxOptions } from "./linuxOptions"
+import { TargetSpecificOptions } from "../core.js"
+import { CommonLinuxOptions } from "./linuxOptions.js"
 
 export interface SnapOptions extends CommonLinuxOptions, TargetSpecificOptions {
   /**

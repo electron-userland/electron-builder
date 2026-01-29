@@ -1,7 +1,8 @@
 {
   "name": "builder-util-runtime",
   "version": "9.5.1",
-  "main": "out/index.js",
+  "type": "module",
+  "exports": "./out/index.js",
   "author": "Vladimir Krivosheev",
   "license": "MIT",
   "repository": {
@@ -15,7 +16,7 @@
     "out"
   ],
   "engines": {
-    "node": ">=12.0.0"
+    "node": ">=22.12.0"
   },
   "dependencies": {
     "debug": "^4.3.4",

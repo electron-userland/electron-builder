@@ -1,7 +1,7 @@
 import { Arch, Configuration, DIR_TARGET, Platform } from "app-builder-lib"
 import { deepAssign } from "builder-util"
 import { TmpDir } from "temp-file"
-import { assertPack, modifyPackageJson } from "./helpers/packTester"
+import { assertPack, modifyPackageJson } from "./helpers/packTester.js"
 
 const options = { timeout: 20 * 60 * 1000 }
 

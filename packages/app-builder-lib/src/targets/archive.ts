@@ -1,11 +1,10 @@
 import { debug7z, exec, exists, getPath7za, log, statOrNull, unlinkIfExists } from "builder-util"
 import { move } from "fs-extra"
 import * as path from "path"
-import { create } from "tar"
+import { create, TarOptionsWithAliasesAsync } from "tar"
 import { TmpDir } from "temp-file"
-import { CompressionLevel } from "../core"
-import { getLinuxToolsPath } from "./tools"
-import { TarOptionsWithAliasesAsync } from "tar/dist/commonjs/options"
+import { CompressionLevel } from "../core.js"
+import { getLinuxToolsPath } from "./tools.js"
 
 /** @internal */
 export async function tar(compression: CompressionLevel | any, format: string, outFile: string, dirToArchive: string, isMacApp: boolean, tempDirManager: TmpDir): Promise<void> {

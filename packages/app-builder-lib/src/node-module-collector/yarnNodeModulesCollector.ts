@@ -1,9 +1,9 @@
 import { log } from "builder-util"
 import { Lazy } from "lazy-val"
 import * as path from "path"
-import { NodeModulesCollector } from "./nodeModulesCollector"
-import { PM } from "./packageManager"
-import { YarnDependency } from "./types"
+import { NodeModulesCollector } from "./nodeModulesCollector.js"
+import { PM } from "./packageManager.js"
+import { YarnDependency } from "./types.js"
 
 type YarnListJsonLine =
   | {

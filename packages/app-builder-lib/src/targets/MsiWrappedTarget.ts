@@ -1,11 +1,11 @@
 import { Arch, deepAssign } from "builder-util"
 import { UUID } from "builder-util-runtime"
 import * as path from "path"
-import { MsiWrappedOptions } from "../"
-import { TargetConfiguration } from "../core"
-import { FinalCommonWindowsInstallerOptions } from "../options/CommonWindowsInstallerConfiguration"
-import { WinPackager } from "../winPackager"
-import MsiTarget from "./MsiTarget"
+import { MsiWrappedOptions } from "../index.js"
+import { TargetConfiguration } from "../core.js"
+import { FinalCommonWindowsInstallerOptions } from "../options/CommonWindowsInstallerConfiguration.js"
+import { WinPackager } from "../winPackager.js"
+import MsiTarget from "./MsiTarget.js"
 
 const ELECTRON_MSI_WRAPPED_NS_UUID = UUID.parse("467f7bb2-a83c-442f-b776-394d316e8e53")
 

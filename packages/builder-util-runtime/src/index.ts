@@ -1,6 +1,6 @@
-export { BlockMap } from "./blockMapApi"
-export { CancellationError, CancellationToken } from "./CancellationToken"
-export { newError } from "./error"
+export { BlockMap, BlockMapFile } from "./blockMapApi.js"
+export { CancellationError, CancellationToken } from "./CancellationToken.js"
+export { newError } from "./error.js"
 export {
   configureRequestOptions,
   configureRequestOptionsFromUrl,
@@ -14,9 +14,9 @@ export {
   RequestHeaders,
   safeGetHeader,
   safeStringifyJson,
-} from "./httpExecutor"
-export { MemoLazy } from "./MemoLazy"
-export { ProgressCallbackTransform, ProgressInfo } from "./ProgressCallbackTransform"
+} from "./httpExecutor.js"
+export { MemoLazy } from "./MemoLazy.js"
+export { ProgressCallbackTransform, ProgressInfo } from "./ProgressCallbackTransform.js"
 export {
   AllPublishOptions,
   BaseS3Options,
@@ -36,12 +36,12 @@ export {
   SpacesOptions,
   GitlabReleaseInfo,
   GitlabReleaseAsset,
-} from "./publishOptions"
-export { retry } from "./retry"
-export { parseDn } from "./rfc2253Parser"
-export { BlockMapDataHolder, PackageFileInfo, ReleaseNoteInfo, UpdateFileInfo, UpdateInfo, WindowsUpdateInfo } from "./updateInfo"
-export { UUID } from "./uuid"
-export { parseXml, XElement } from "./xml"
+} from "./publishOptions.js"
+export { retry } from "./retry.js"
+export { parseDn } from "./rfc2253Parser.js"
+export { BlockMapDataHolder, PackageFileInfo, ReleaseNoteInfo, UpdateFileInfo, UpdateInfo, WindowsUpdateInfo } from "./updateInfo.js"
+export { UUID } from "./uuid.js"
+export { parseXml, XElement } from "./xml.js"
 
 // nsis
 export const CURRENT_APP_INSTALLER_FILE_NAME = "installer.exe"

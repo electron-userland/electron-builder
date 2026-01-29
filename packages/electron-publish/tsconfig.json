@@ -12,10 +12,6 @@
       "path": "../builder-util-runtime"
     }
   ],
-  "jsdoc": {
-    "out": "../../scripts/jsdoc/out/index",
-    "access": "public"
-  },
   "include": [
     "src/**/*.ts",
     "../../typings/mime.d.ts"

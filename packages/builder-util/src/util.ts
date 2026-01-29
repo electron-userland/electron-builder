@@ -8,29 +8,29 @@ import _debug from "debug"
 import { dump } from "js-yaml"
 import * as path from "path"
 import { install as installSourceMap } from "source-map-support"
-import { getPath7za } from "./7za"
-import { debug, log } from "./log"
+import { getPath7za } from "./7za.js"
+import { debug, log } from "./log.js"
 
 if (process.env.JEST_WORKER_ID == null) {
   installSourceMap()
 }
 
+export { getCompleteExtname, sanitizeFileName } from "./filename.js"
 export { safeStringifyJson, retry } from "builder-util-runtime"
 export { TmpDir } from "temp-file"
-export * from "./arch"
-export { Arch, archFromString, ArchType, defaultArchFromString, getArchCliNames, getArchSuffix, toLinuxArchString } from "./arch"
-export { AsyncTaskManager } from "./asyncTaskManager"
-export { DebugLogger } from "./DebugLogger"
-export * from "./log"
-export { httpExecutor, NodeHttpExecutor } from "./nodeHttpExecutor"
-export * from "./promise"
-
+export * from "./arch.js"
+export { Arch, archFromString, ArchType, defaultArchFromString, getArchCliNames, getArchSuffix, toLinuxArchString } from "./arch.js"
+export { AsyncTaskManager } from "./asyncTaskManager.js"
+export { DebugLogger } from "./DebugLogger.js"
+export * from "./log.js"
+export { httpExecutor, NodeHttpExecutor } from "./nodeHttpExecutor.js"
+export * from "./promise.js"
 export { asArray } from "builder-util-runtime"
-export * from "./fs"
+export * from "./fs.js"
 
-export { deepAssign } from "./deepAssign"
+export { deepAssign } from "./deepAssign.js"
 
-export { getPath7x, getPath7za } from "./7za"
+export { getPath7x, getPath7za } from "./7za.js"
 
 export const debug7z = _debug("electron-builder:7z")
 

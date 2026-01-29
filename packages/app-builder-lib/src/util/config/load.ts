@@ -6,7 +6,7 @@ import { createJiti } from "jiti"
 import { load } from "js-yaml"
 import { Lazy } from "lazy-val"
 import * as path from "path"
-import { resolveModule } from "../resolve"
+import { resolveModule } from "../resolve.js"
 
 const jiti = createJiti(__filename)
 

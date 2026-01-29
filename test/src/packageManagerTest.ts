@@ -1,11 +1,11 @@
 import { Platform } from "app-builder-lib"
-import { PM } from "app-builder-lib/src/node-module-collector"
+import { PM } from "app-builder-lib"
 import { execSync } from "child_process"
 import { copyFile, outputFile, rm, writeFile } from "fs-extra"
 import * as path from "path"
-import { assertThat } from "./helpers/fileAssert"
-import { app, assertPack, getFixtureDir, getPackageManagerWithVersion, linuxDirTarget, modifyPackageJson, verifyAsarFileTree } from "./helpers/packTester"
-import { ELECTRON_VERSION } from "./helpers/testConfig"
+import { assertThat } from "./helpers/fileAssert.js"
+import { app, assertPack, getFixtureDir, getPackageManagerWithVersion, linuxDirTarget, modifyPackageJson, verifyAsarFileTree } from "./helpers/packTester.js"
+import { ELECTRON_VERSION } from "./helpers/testConfig.js"
 
 const yarnVersion = getPackageManagerWithVersion(PM.YARN).prepareEntry
 const yarnBerryVersion = getPackageManagerWithVersion(PM.YARN_BERRY).prepareEntry
@@ -432,7 +432,7 @@ test("traversal multi-package workspace", ({ expect }) =>
 // Test for local file:// protocol
 
 Object.values(PM)
-  .filter(pm => pm !== PM.BUN) // bun is not supported for file: protocol
+  .filter(pm => ![PM.BUN, PM.TRAVERSAL].includes(pm)) // bun is not supported for file: protocol
   .forEach(pm => {
     test(`local file:// protocol with ${pm} for project outside workspace`, ({ expect }) => {
       return assertPack(

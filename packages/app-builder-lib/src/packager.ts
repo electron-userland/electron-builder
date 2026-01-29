@@ -21,29 +21,29 @@ import { isCI } from "ci-info"
 import { Lazy } from "lazy-val"
 import { release as getOsRelease } from "os"
 import * as path from "path"
-import { AppInfo } from "./appInfo"
-import { readAsarJson } from "./asar/asar"
-import { AfterExtractContext, AfterPackContext, BeforePackContext, Configuration, Hook } from "./configuration"
-import { Platform, SourceRepositoryInfo, Target } from "./core"
-import { createElectronFrameworkSupport } from "./electron/ElectronFramework"
-import { Framework } from "./Framework"
-import { LibUiFramework } from "./frameworks/LibUiFramework"
-import { Metadata } from "./options/metadata"
-import { ArtifactBuildStarted, ArtifactCreated, PackagerOptions } from "./packagerApi"
-import { PlatformPackager } from "./platformPackager"
-import { ProtonFramework } from "./ProtonFramework"
-import { computeArchToTargetNamesMap, createTargets, NoOpTarget } from "./targets/targetFactory"
-import { computeDefaultAppDirectory, getConfig, validateConfiguration } from "./util/config/config"
-import { expandMacro } from "./util/macroExpander"
-import { createLazyProductionDeps, NodeModuleDirInfo, NodeModuleInfo } from "./util/packageDependencies"
-import { checkMetadata, readPackageJson } from "./util/packageMetadata"
-import { getRepositoryInfo } from "./util/repositoryInfo"
-import { resolveFunction } from "./util/resolve"
-import { installOrRebuild, nodeGypRebuild } from "./util/yarn"
-import { PACKAGE_VERSION } from "./version"
-import { AsyncEventEmitter, HandlerType } from "./util/asyncEventEmitter"
+import { AppInfo } from "./appInfo.js"
+import { readAsarJson } from "./asar/asar.js"
+import { AfterExtractContext, AfterPackContext, BeforePackContext, Configuration, Hook } from "./configuration.js"
+import { Platform, SourceRepositoryInfo, Target } from "./core.js"
+import { createElectronFrameworkSupport } from "./electron/ElectronFramework.js"
+import { Framework } from "./Framework.js"
+import { LibUiFramework } from "./frameworks/LibUiFramework.js"
+import { Metadata } from "./options/metadata.js"
+import { ArtifactBuildStarted, ArtifactCreated, PackagerOptions } from "./packagerApi.js"
+import { PlatformPackager } from "./platformPackager.js"
+import { ProtonFramework } from "./ProtonFramework.js"
+import { computeArchToTargetNamesMap, createTargets, NoOpTarget } from "./targets/targetFactory.js"
+import { computeDefaultAppDirectory, getConfig, validateConfiguration } from "./util/config/config.js"
+import { expandMacro } from "./util/macroExpander.js"
+import { createLazyProductionDeps, NodeModuleDirInfo, NodeModuleInfo } from "./util/packageDependencies.js"
+import { checkMetadata, readPackageJson } from "./util/packageMetadata.js"
+import { getRepositoryInfo } from "./util/repositoryInfo.js"
+import { resolveFunction } from "./util/resolve.js"
+import { installOrRebuild, nodeGypRebuild } from "./util/yarn.js"
+import { PACKAGE_VERSION } from "./version.js"
+import { AsyncEventEmitter, HandlerType } from "./util/asyncEventEmitter.js"
 import asyncPool from "tiny-async-pool"
-import { determinePackageManagerEnv, PM } from "./node-module-collector"
+import { determinePackageManagerEnv, PM } from "./node-module-collector/index.js"
 
 async function createFrameworkInfo(configuration: Configuration, packager: Packager): Promise<Framework> {
   let framework = configuration.framework
@@ -579,17 +579,17 @@ export class Packager {
 
     switch (platform) {
       case Platform.MAC: {
-        const helperClass = (await import("./macPackager")).MacPackager
+        const helperClass = (await import("./macPackager.js")).MacPackager
         return new helperClass(this)
       }
 
       case Platform.WINDOWS: {
-        const helperClass = (await import("./winPackager")).WinPackager
+        const helperClass = (await import("./winPackager.js")).WinPackager
         return new helperClass(this)
       }
 
       case Platform.LINUX:
-        return new (await import("./linuxPackager")).LinuxPackager(this)
+        return new (await import("./linuxPackager.js")).LinuxPackager(this)
 
       default:
         throw new Error(`Unknown platform: ${platform}`)

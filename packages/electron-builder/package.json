@@ -2,7 +2,8 @@
   "name": "electron-builder",
   "description": "A complete solution to package and build a ready for distribution Electron app for MacOS, Windows and Linux with “auto update” support out of the box",
   "version": "26.6.0",
-  "main": "out/index.js",
+  "type": "module",
+  "exports": "./out/index.js",
   "files": [
     "out"
   ],
@@ -16,7 +17,7 @@
     "directory": "packages/electron-builder"
   },
   "engines": {
-    "node": ">=14.0.0"
+    "node": ">=22.12.0"
   },
   "keywords": [
     "electron",
@@ -57,6 +58,7 @@
     "chalk": "^4.1.2",
     "ci-info": "^4.2.0",
     "dmg-builder": "workspace:*",
+    "electron-publish": "workspace:*",
     "fs-extra": "^10.1.0",
     "lazy-val": "^1.0.5",
     "simple-update-notifier": "2.0.0",

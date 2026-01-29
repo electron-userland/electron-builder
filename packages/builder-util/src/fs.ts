@@ -6,8 +6,8 @@ import { platform } from "os"
 import * as path from "path"
 import { Mode } from "stat-mode"
 import asyncPool from "tiny-async-pool"
-import { log } from "./log"
-import { orIfFileNotExist, orNullIfFileNotExist } from "./promise"
+import { log } from "./log.js"
+import { orIfFileNotExist, orNullIfFileNotExist } from "./promise.js"
 
 export const MAX_FILE_REQUESTS = 8
 

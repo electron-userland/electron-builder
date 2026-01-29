@@ -4,10 +4,10 @@ import * as fs from "fs-extra"
 import { createWriteStream } from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
-import { hoist, type HoisterResult, type HoisterTree } from "./hoist"
-import { ModuleManager } from "./moduleManager"
-import { getPackageManagerCommand, PM } from "./packageManager"
-import type { Dependency, DependencyGraph, NodeModuleInfo, PackageJson } from "./types"
+import { hoist, type HoisterResult, type HoisterTree } from "./hoist.js"
+import { ModuleManager } from "./moduleManager.js"
+import { getPackageManagerCommand, PM } from "./packageManager.js"
+import type { Dependency, DependencyGraph, NodeModuleInfo, PackageJson } from "./types.js"
 
 export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDepType, OptionalDepType>, OptionalDepType> {
   private readonly nodeModules: NodeModuleInfo[] = []

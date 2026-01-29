@@ -1,6 +1,6 @@
-import { getSignVendorPath } from "app-builder-lib/out/codeSign/windowsSignToolManager"
+import { getSignVendorPath } from "app-builder-lib"
 import { exec, log, spawn, TmpDir, unlinkIfExists } from "builder-util"
-import { sanitizeFileName } from "builder-util/out/filename"
+import { sanitizeFileName } from "builder-util"
 import * as chalk from "chalk"
 import { mkdir } from "fs/promises"
 import * as path from "path"

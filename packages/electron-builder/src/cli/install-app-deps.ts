@@ -1,20 +1,20 @@
 #! /usr/bin/env node
-
-import { getElectronVersion } from "app-builder-lib/out/electron/electronVersion"
-import { computeDefaultAppDirectory, getConfig } from "app-builder-lib/out/util/config/config"
-import { orNullIfFileNotExist } from "app-builder-lib/out/util/config/load"
-import { createLazyProductionDeps } from "app-builder-lib/out/util/packageDependencies"
-import { installOrRebuild } from "app-builder-lib/out/util/yarn"
-import { PACKAGE_VERSION } from "app-builder-lib/out/version"
-import { determinePackageManagerEnv } from "app-builder-lib/out/node-module-collector"
-import { getArchCliNames, log, printErrorAndExit } from "builder-util"
+import { getElectronVersion } from "app-builder-lib"
+import { determinePackageManagerEnv } from "app-builder-lib/src/node-module-collector/index.js"
+import { computeDefaultAppDirectory } from "app-builder-lib/src/util/config/config.js"
+import { getConfig } from "app-builder-lib/src/util/config/config.js"
+import { createLazyProductionDeps } from "app-builder-lib/src/util/packageDependencies.js"
+import { installOrRebuild } from "app-builder-lib/src/util/yarn.js"
+import { PACKAGE_VERSION } from "app-builder-lib/src/version.js"
+import { getArchCliNames, log, orNullIfFileNotExist, printErrorAndExit } from "builder-util"
 import { readJson } from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
-import * as yargs from "yargs"
+import { Argv } from "yargs"
+import { createYargs } from "../builder.js"
 
 /** @internal */
-export function configureInstallAppDepsCommand(yargs: yargs.Argv): yargs.Argv {
+export function configureInstallAppDepsCommand(yargs: Argv): Argv {
   // https://github.com/yargs/yargs/issues/760
   // demandOption is required to be set
   return yargs
@@ -71,7 +71,7 @@ export async function installAppDeps(args: any) {
 }
 
 function main() {
-  return installAppDeps(configureInstallAppDepsCommand(yargs).argv)
+  return installAppDeps(configureInstallAppDepsCommand(createYargs()).argv)
 }
 
 if (require.main === module) {

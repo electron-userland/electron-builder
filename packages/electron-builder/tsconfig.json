@@ -18,11 +18,6 @@
       "path": "../dmg-builder"
     }
   ],
-  "jsdoc": {
-    "out": "../../scripts/jsdoc/out/builder",
-    "examples": "../../scripts/jsdoc/examples",
-    "access": "public"
-  },
   "include": [
     "src/**/*.ts",
     "../../typings/*.d.ts"

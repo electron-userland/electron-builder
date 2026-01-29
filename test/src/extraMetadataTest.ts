@@ -1,10 +1,10 @@
-import { readAsarJson } from "app-builder-lib/out/asar/asar"
+import { readAsarJson } from "app-builder-lib"
 import { Platform } from "electron-builder"
-import { coerceTypes } from "electron-builder/out/builder"
+import { coerceTypes } from "electron-builder"
 import { readJson } from "fs-extra"
 import * as path from "path"
-import { assertThat } from "./helpers/fileAssert"
-import { app, linuxDirTarget, modifyPackageJson } from "./helpers/packTester"
+import { assertThat } from "./helpers/fileAssert.js"
+import { app, linuxDirTarget, modifyPackageJson } from "./helpers/packTester.js"
 import { ExpectStatic } from "vitest"
 
 function createExtraMetadataTest(expect: ExpectStatic, asar: boolean) {
@@ -56,7 +56,7 @@ test("extra metadata (no asar)", ({ expect }) => createExtraMetadataTest(expect,
 
 test("cli", ({ expect }) => {
   // because these methods are internal
-  const { configureBuildCommand, normalizeOptions } = require("electron-builder/out/builder")
+  const { configureBuildCommand, normalizeOptions } = require("electron-builder/out/builder.js")
   const yargs = require("yargs")
     .strict()
     .fail((message: string, error: Error | null) => {
