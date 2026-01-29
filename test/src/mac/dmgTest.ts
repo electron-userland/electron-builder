@@ -81,6 +81,54 @@ describe("dmg", { concurrent: true }, () => {
     })
   )
 
+  test.ifMac("explicit size", ({ expect }) =>
+    app(
+      expect,
+      {
+        targets: dmgTarget,
+        config: {
+          // dmg can mount only one volume name, so, to test in parallel, we set different product name
+          productName: "ExplicitSize",
+          publish: null,
+          dmg: {
+            size: "500m",
+            shrink: false,
+            // speed-up test
+            writeUpdateInfo: false,
+            title: "Explicit Size",
+          },
+        },
+        effectiveOptionComputed: async it => {
+          // effectiveOptionComputed is called multiple times with different payloads
+          // Only check specification when volumePath is present (first call from customizeDmg)
+          if (!("volumePath" in it)) {
+            return false
+          }
+          expect(it.specification.size).toEqual("500m")
+          expect(it.specification.shrink).toEqual(false)
+          return Promise.resolve(false)
+        },
+      },
+      {
+        packed: context => {
+          return attachAndExecute(path.join(context.outDir, "ExplicitSize-1.1.0.dmg"), false, true, async volumePath => {
+            // Verify filesystem size using Node.js statfs (more robust than parsing df output)
+            const stats = await fs.statfs(volumePath)
+            const totalBytes = stats.bsize * stats.blocks
+
+            // 500m should give ~524,288,000 bytes (500 * 1024 * 1024)
+            // Allow margin for filesystem overhead (450MB to 600MB)
+            const minBytes = 450 * 1024 * 1024
+            const maxBytes = 600 * 1024 * 1024
+
+            expect(totalBytes).toBeGreaterThan(minBytes)
+            expect(totalBytes).toBeLessThan(maxBytes)
+          })
+        },
+      }
+    )
+  )
+
   test.ifMac("custom background - new way", ({ expect }) => {
     const customBackground = "customBackground.png"
     return assertPack(

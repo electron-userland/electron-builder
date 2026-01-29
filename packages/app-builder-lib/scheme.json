@@ -2918,6 +2918,15 @@
           ],
           "type": "string"
         },
+        "size": {
+          "description": "The initial size of the DMG filesystem. Accepts the same syntax as the `-size` argument to `hdiutil`, e.g. `\"150m\"`, `\"4g\"`.\nIf not specified, the size is calculated automatically.\nSet this explicitly for large apps or apps with sparse files to avoid \"No space left on device\" errors.",
+          "type": "string"
+        },
+        "shrink": {
+          "description": "Whether to shrink the DMG filesystem to the minimum size after copying files.\nSet to `false` to preserve the explicit `size` you specified.",
+          "default": true,
+          "type": "boolean"
+        },
         "window": {
           "$ref": "#/definitions/DmgWindow",
           "description": "The DMG window position and size. With y co-ordinates running from bottom to top.\n\nThe Finder makes sure that the window will be on the user’s display, so if you want your window at the top left of the display you could use `\"x\": 0, \"y\": 100000` as the x, y co-ordinates.\nIt is not to be possible to position the window relative to the [top left](https://github.com/electron-userland/electron-builder/issues/3990#issuecomment-512960957) or relative to the center of the user’s screen."
