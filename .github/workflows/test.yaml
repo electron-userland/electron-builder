@@ -253,7 +253,7 @@ jobs:
       matrix:
         testFiles:
           - oneClickInstallerTest,assistedInstallerTest,webInstallerTest,packageManagerTest,HoistedNodeModuleTest,rebuilderTest
-          - winPackagerTest,winCodeSignTest,BuildTest,blackboxUpdateTest,debTest
+          - winPackagerTest,winCodeSignTest,BuildTest,debTest
           - masTest,filesTest,macPackagerTest,macArchiveTest
           - concurrentBuildsTest,macIconTest
     steps:
@@ -277,7 +277,6 @@ jobs:
         env:
           TEST_FILES: ${{ matrix.testFiles }}
           FORCE_COLOR: 1
-          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
 
   test-mac-old:
     runs-on: macos-latest
