@@ -185,12 +185,26 @@
             "string"
           ]
         },
+        "capabilities": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The list of [capabilities](https://learn.microsoft.com/en-us/windows/uwp/packaging/app-capability-declarations) to be added to an `appmanifest.xml`.\nThe `runFullTrust` capability is obligatory for electron apps and will be auto added if not specified here.\nDefaults to `['runFullTrust']` if omitted\nExample:  `['runFullTrust', 'privateNetworkClientServer', 'webcam']`"
+        },
         "customExtensionsPath": {
           "description": "Relative path to custom extensions xml to be included in an `appmanifest.xml`.",
           "type": "string"
         },
         "customManifestPath": {
-          "description": "(Advanced Option) Relative path to custom `appmanifest.xml` (file name doesn't matter, it'll be renamed) located in build resources directory.\nSupports the following template macros:\n\n- ${publisher}\n- ${publisherDisplayName}\n- ${version}\n- ${applicationId}\n- ${identityName}\n- ${executable}\n- ${displayName}\n- ${description}\n- ${backgroundColor}\n- ${logo}\n- ${square150x150Logo}\n- ${square44x44Logo}\n- ${lockScreen}\n- ${defaultTile}\n- ${splashScreen}\n- ${arch}\n- ${resourceLanguages}\n- ${extensions}\n- ${minVersion}\n- ${maxVersionTested}",
+          "description": "(Advanced Option) Relative path to custom `appmanifest.xml` (file name doesn't matter, it'll be renamed) located in build resources directory.\nSupports the following template macros:\n\n- ${publisher}\n- ${publisherDisplayName}\n- ${version}\n- ${applicationId}\n- ${identityName}\n- ${executable}\n- ${displayName}\n- ${description}\n- ${backgroundColor}\n- ${logo}\n- ${square150x150Logo}\n- ${square44x44Logo}\n- ${lockScreen}\n- ${defaultTile}\n- ${splashScreen}\n- ${arch}\n- ${resourceLanguages}\n- ${capabilities}\n- ${extensions}\n- ${minVersion}\n- ${maxVersionTested}",
           "type": "string"
         },
         "displayName": {
