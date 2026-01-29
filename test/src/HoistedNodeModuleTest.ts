@@ -641,7 +641,7 @@ test("pnpm workspace with native module", ({ expect }) =>
     }
   ))
 
-test.only("yarn berry hoisted versions", ({ expect }) =>
+test("yarn berry hoisted versions", ({ expect }) =>
   assertPack(
     expect,
     "test-app-yarn-workspace-version-conflict",
@@ -666,7 +666,7 @@ test.only("yarn berry hoisted versions", ({ expect }) =>
     }
   ))
 
-test.only("yarn berry react native", ({ expect }) =>
+test("yarn berry react native", ({ expect }) =>
   assertPack(
     expect,
     "test-app-yarn-workspace-version-conflict",
