@@ -167,7 +167,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
       // Continue
     }
 
-    const lines = consoleOutput.split("\n")
+    const lines = consoleOutput.split("\n").map(line => line.trim())
 
     // Find the first line that starts with { or [
     const jsonStartIdx = lines.findIndex(line => {
@@ -280,14 +280,13 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
       return tree
     }
 
-    if (tree.dependencies?.[packageName]) {
-      const { name, path, dependencies } = tree.dependencies[packageName]
-      log.debug({ name, path, dependencies: JSON.stringify(dependencies) }, "pruning root app/self reference from workspace tree")
-      for (const [name, pkg] of Object.entries(dependencies ?? {})) {
-        tree.dependencies[name] = pkg
-        this.allDependencies.set(this.packageVersionString(pkg), pkg)
+    if (tree.workspaces && tree.dependencies) {
+      for (const [key, value] of Object.entries(tree.dependencies)) {
+        if (key === packageName) {
+          log.debug({ key, path: value.path }, "returning workspace tree for root dependency")
+          return value
+        }
       }
-      delete tree.dependencies[packageName]
     }
     return Promise.resolve(tree)
   }

@@ -15,7 +15,7 @@ import { getRanLocalServerPath } from "../helpers/launchAppCrossPlatform"
 
 // Linux Tests MUST be run in docker containers for proper ephemeral testing environment (e.g. fresh install + update + relaunch)
 // Currently this test logic does not handle uninstalling packages (yet)
-describe("Electron autoupdate (fresh install & update)", () => {
+describe("Electron autoupdate (fresh install & update)", { sequential: true }, () => {
   beforeAll(() => {
     process.env.AUTO_UPDATER_TEST = "1"
   })
@@ -25,7 +25,7 @@ describe("Electron autoupdate (fresh install & update)", () => {
 
   // Signing is required for macOS autoupdate
   test.ifMac.ifEnv(process.env.CSC_KEY_PASSWORD)("mac", async context => {
-    await runTest(context, "mac", "zip")
+    await runTest(context, "zip", "zip")
   })
 
   test.ifWindows("win", async context => {
@@ -172,6 +172,10 @@ async function doBuild(
           executableName: "TestApp",
           appId: "com.test.app",
           artifactName: "${productName}.${ext}",
+          asarUnpack: [
+            "**/node_modules/sharp/**", // https://sharp.pixelplumbing.com/install#electron
+            "**/node_modules/@img/**", // https://sharp.pixelplumbing.com/install#electron
+          ],
           // asar: false, // not necessarily needed, just easier debugging tbh
           electronLanguages: ["en"],
           extraMetadata: {
@@ -199,7 +203,7 @@ async function doBuild(
         signed: true,
         signedWin: isWindows,
         packed,
-        projectDirCreated: async projectDir => {
+        projectDirCreated: async (projectDir, tmpDir, runtimeEnv) => {
           await Promise.all([
             outputFile(path.join(projectDir, "package-lock.json"), "{}"),
             outputFile(path.join(projectDir, ".npmrc"), "node-linker=hoisted"),
@@ -211,8 +215,11 @@ async function doBuild(
                 }
                 data.dependencies = {
                   ...data.dependencies,
-                  "@electron/remote": "^2.1.2", // for debugging live application with GUI so that app.getVersion is accessible in renderer process
+                  "@electron/remote": "2.1.2", // for debugging live application with GUI so that app.getVersion is accessible in renderer process
                   "electron-updater": `file:${__dirname}/../../../packages/electron-updater`,
+                  sharp: "^0.30.0", // to trigger native module handling
+                  bindings: "1.5.0",
+                  "node-addon-api": "7.0.0",
                 }
                 data.pnpm = {
                   overrides: {
@@ -242,7 +249,7 @@ async function doBuild(
               false
             ),
           ])
-          execSync("npm install", { cwd: projectDir, stdio: "inherit" })
+          execSync("npm install", { cwd: projectDir, stdio: "inherit", env: runtimeEnv })
         },
       }
     )
