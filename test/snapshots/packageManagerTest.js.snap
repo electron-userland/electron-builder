@@ -658,6 +658,12 @@ exports[`local file:// protocol with npm for project outside workspace 1`] = `
 }
 `;
 
+exports[`local file:// protocol with pnpm for project outside workspace 1`] = `
+{
+  "linux": [],
+}
+`;
+
 exports[`local file:// protocol with traversal for project outside workspace 1`] = `
 {
   "linux": [],
