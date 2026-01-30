@@ -1518,22 +1518,22 @@ exports[`yarn multi-package workspace 2`] = `
           "files": {
             "index.js": {
               "offset": "20271",
-              "size": 3024,
+              "size": 2764,
             },
             "license.md": {
-              "offset": "23133",
-              "size": 1079,
+              "offset": "23035",
+              "size": 1077,
             },
             "package.json": {
-              "offset": "24212",
-              "size": 497,
+              "offset": "24112",
+              "size": 469,
             },
           },
         },
       },
     },
     "package.json": {
-      "offset": "28051",
+      "offset": "27923",
       "size": 353,
     },
   },
