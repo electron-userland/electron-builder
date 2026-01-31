@@ -18,7 +18,7 @@ import { NtExecutable, NtExecutableResource } from "resedit"
 import { TmpDir } from "temp-file"
 import { getCollectorByPackageManager, PM } from "app-builder-lib/out/node-module-collector"
 import { promisify } from "util"
-import { CSC_LINK, WIN_CSC_LINK } from "./codeSignData"
+import { MAC_CSC_LINK, WIN_CSC_LINK } from "./codeSignData"
 import { assertThat } from "./fileAssert"
 import AdmZip from "adm-zip"
 // @ts-ignore
@@ -30,6 +30,7 @@ import { ELECTRON_VERSION } from "./testConfig"
 import { createLazyProductionDeps } from "app-builder-lib/out/util/packageDependencies"
 import { execSync } from "child_process"
 import { detectPackageManager } from "app-builder-lib/out/node-module-collector/packageManager"
+import { isAutoDiscoveryCodeSignIdentity } from "app-builder-lib/out/util/flags"
 
 const PACKAGE_MANAGER_VERSION_MAP = {
   [PM.NPM]: { cli: "npm", version: "9.8.1" },
@@ -115,7 +116,7 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
   if (checkOptions.signedWin) {
     configuration.cscLink = WIN_CSC_LINK
     configuration.cscKeyPassword = ""
-  } else if (configuration.cscLink == null) {
+  } else if (configuration.cscLink == null && !isAutoDiscoveryCodeSignIdentity()) {
     packagerOptions = deepAssign({}, packagerOptions, { config: { mac: { identity: null } } })
   }
 
@@ -719,13 +720,13 @@ export function platform(platform: Platform): PackagerOptions {
 }
 
 export function signed(packagerOptions: PackagerOptions): PackagerOptions {
-  if (process.env.CSC_KEY_PASSWORD == null) {
+  if (process.env.CSC_KEY_PASSWORD == null && !isAutoDiscoveryCodeSignIdentity()) {
     log.warn({ reason: "CSC_KEY_PASSWORD is not defined" }, "macOS code signing is not tested")
   } else {
     if (packagerOptions.config == null) {
       ;(packagerOptions as any).config = {}
     }
-    ;(packagerOptions.config as any).cscLink = CSC_LINK
+    ;(packagerOptions.config as any).cscLink = MAC_CSC_LINK
   }
   return packagerOptions
 }

@@ -55,7 +55,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     const tree: ProdDepType = await this.getDependenciesTree(this.installOptions.manager)
 
     await this.collectAllDependencies(tree, packageName)
-    const realTree: ProdDepType = await this.getTreeFromWorkspaces(tree, packageName)
+    const realTree: ProdDepType = this.getTreeFromWorkspaces(tree, packageName)
     await this.extractProductionDependencyGraph(realTree, packageName)
 
     const hoisterResult: HoisterResult = hoist(this.transformToHoisterTree(this.productionGraph, packageName), {
@@ -167,7 +167,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
       // Continue
     }
 
-    const lines = consoleOutput.split("\n")
+    const lines = consoleOutput.split("\n").map(line => line.trim())
 
     // Find the first line that starts with { or [
     const jsonStartIdx = lines.findIndex(line => {
@@ -273,23 +273,18 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
    *
    * @param tree - The original dependency tree
    * @param packageName - The name of the package to check for and remove from the tree
-   * @returns Promise resolving to the pruned dependency tree
+   * @returns The extracted dependency subtree
    */
-  protected async getTreeFromWorkspaces(tree: ProdDepType, packageName: string): Promise<ProdDepType> {
-    if (!(tree.workspaces && tree.dependencies)) {
-      return tree
+  protected getTreeFromWorkspaces(tree: ProdDepType, packageName: string): ProdDepType {
+    if (tree.workspaces && tree.dependencies) {
+      for (const [key, value] of Object.entries(tree.dependencies)) {
+        if (key === packageName) {
+          return value
+        }
+      }
     }
 
-    if (tree.dependencies?.[packageName]) {
-      const { name, path, dependencies } = tree.dependencies[packageName]
-      log.debug({ name, path, dependencies: JSON.stringify(dependencies) }, "pruning root app/self reference from workspace tree")
-      for (const [name, pkg] of Object.entries(dependencies ?? {})) {
-        tree.dependencies[name] = pkg
-        this.allDependencies.set(this.packageVersionString(pkg), pkg)
-      }
-      delete tree.dependencies[packageName]
-    }
-    return Promise.resolve(tree)
+    return tree
   }
 
   private transformToHoisterTree(obj: DependencyGraph, key: string, nodes: Map<string, HoisterTree> = new Map()): HoisterTree {
