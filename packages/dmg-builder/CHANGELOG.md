@@ -1,5 +1,25 @@
 # dmg-builder
 
+## 26.7.0
+
+### Minor Changes
+
+- Feat: add `size` and `shrink` options to DmgOptions for explicit DMG filesystem size control _[`#9543`](https://github.com/electron-userland/electron-builder/pull/9543) [`bfee115`](https://github.com/electron-userland/electron-builder/commit/bfee115b185fa4dcb14b0fae6ccee1adc4d4590e) [@BarakXYZ](https://github.com/BarakXYZ)_
+
+### Patch Changes
+
+<details><summary>Updated 1 dependency</summary>
+
+<small>
+
+[`bfee115`](https://github.com/electron-userland/electron-builder/commit/bfee115b185fa4dcb14b0fae6ccee1adc4d4590e) [`3fa2d89`](https://github.com/electron-userland/electron-builder/commit/3fa2d894ac609d0d819d7adb80ff50bfca08039f) [`ec9e2db`](https://github.com/electron-userland/electron-builder/commit/ec9e2dbbd864f0858cf0d3b719ad75a84c59f29c) [`aec9157`](https://github.com/electron-userland/electron-builder/commit/aec9157b5124acf9409a46461eca86cb1212831b) [`64b40fe`](https://github.com/electron-userland/electron-builder/commit/64b40fe75a5464db19721e5a6dd9a6930196aaac)
+
+</small>
+
+- `app-builder-lib@26.7.0`
+
+</details>
+
 ## 26.6.0
 
 ### Patch Changes
