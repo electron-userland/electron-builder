@@ -2,6 +2,7 @@
 
 const electron = require("electron")
 const path = require("path")
+const sqlite3 = require("sqlite3").verbose() // injected during blackboxUpdateTest
 
 const app = electron.app
 const BrowserWindow = electron.BrowserWindow
@@ -29,13 +30,31 @@ async function init() {
   if (!app.isReady()) {
     await app.whenReady()
   }
-  isReady()
+  await isReady()
 }
 
-function isReady() {
+async function isReady() {
   console.log(`APP_VERSION: ${app.getVersion()}`)
 
   createWindow()
+
+  // test native module loading
+  const db = new sqlite3.Database(":memory:")
+  db.serialize(() => {
+    db.run("CREATE TABLE lorem (info TEXT)")
+
+    const stmt = db.prepare("INSERT INTO lorem VALUES (?)")
+    for (let i = 0; i < 3; i++) {
+      stmt.run("Ipsum " + i)
+    }
+    stmt.finalize()
+
+    db.each("SELECT rowid AS id, info FROM lorem", (err, row) => {
+      console.log(row.id + ": " + row.info)
+    })
+  })
+
+  db.close()
 
   if (shouldTestAutoUpdater) {
     const { autoUpdater } = require("electron-updater")
@@ -53,9 +72,9 @@ function isReady() {
     })
     autoUpdater.on("update-downloaded", () => {
       console.log("Update downloaded, starting quitAndInstall")
-      // autoUpdater.quitAndInstall(true, false) // must be false, do not auto-restart app as the unit tests will lose stdout piping/access
-      autoUpdater.autoInstallOnAppQuit = true
-      app.quit()
+      autoUpdater.quitAndInstall(true, false) // must be false, do not auto-restart app as the unit tests will lose stdout piping/access
+      // autoUpdater.autoInstallOnAppQuit = true
+      // app.quit()
     })
     autoUpdater.on("update-not-available", () => {
       console.log("Update not available")

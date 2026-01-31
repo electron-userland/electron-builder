@@ -4,7 +4,6 @@ import { Arch, DIR_TARGET, Platform } from "electron-builder"
 import * as path from "path"
 import { appTwoThrows, assertPack, linuxDirTarget, modifyPackageJson, verifyAsarFileTree } from "./helpers/packTester"
 import { ELECTRON_VERSION } from "./helpers/testConfig"
-import { execSync } from "child_process"
 import { copy, mkdir, outputFile, readJson, rm, symlink, writeJson } from "fs-extra"
 
 test("yarn workspace", ({ expect }) =>
@@ -126,10 +125,12 @@ test("yarn two package.json", ({ expect }) =>
         await spawn("yarn", ["install"], {
           cwd: projectDir,
           env: testEnv,
+          stdio: "ignore",
         })
         await spawn("yarn", ["install"], {
           cwd: path.join(projectDir, "app"),
           env: testEnv,
+          stdio: "ignore",
         })
       },
       packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
@@ -162,11 +163,10 @@ test("yarn two package.json without node_modules", ({ expect }) =>
             app: "app",
           }
         })
-
-        // install dependencies in project dir
         await spawn("yarn", ["install"], {
           cwd: projectDir,
           env: testEnv,
+          stdio: "ignore",
         })
 
         await mkdir(path.join(projectDir, "app"))
@@ -478,7 +478,11 @@ test("yarn ms", ({ expect }) =>
             electron: "34.0.2",
           }
         })
-        execSync("yarn install", { cwd: projectDir, env: testEnv })
+        await spawn("yarn", ["install"], {
+          cwd: projectDir,
+          env: testEnv,
+          stdio: "ignore",
+        })
       },
       packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
     }

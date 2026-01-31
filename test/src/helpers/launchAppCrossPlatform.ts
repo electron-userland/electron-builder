@@ -79,8 +79,7 @@ export async function launchAndWaitForQuit({
   const platform = os.platform()
   switch (platform) {
     case "darwin": {
-      const binary = path.join(appPath, "Contents", "MacOS", path.basename(appPath, ".app"))
-      child = spawnApp(binary)
+      child = spawnApp(appPath)
       break
     }
 

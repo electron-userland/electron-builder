@@ -55,7 +55,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     const tree: ProdDepType = await this.getDependenciesTree(this.installOptions.manager)
 
     await this.collectAllDependencies(tree, packageName)
-    const realTree: ProdDepType = await this.getTreeFromWorkspaces(tree, packageName)
+    const realTree: ProdDepType = this.getTreeFromWorkspaces(tree, packageName)
     await this.extractProductionDependencyGraph(realTree, packageName)
 
     const hoisterResult: HoisterResult = hoist(this.transformToHoisterTree(this.productionGraph, packageName), {
@@ -109,19 +109,29 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
         interval: 2000,
         backoff: 2000,
         shouldRetry: async (error: any) => {
-          const logFields = { error: error.message, tempOutputFile, cwd: this.rootDir }
+          const fields: Record<string, string> = { error: error.message, tempOutputFile, cwd: this.rootDir, packageManager: pm }
 
           if (!(await exists(tempOutputFile))) {
-            log.debug(logFields, "dependency tree output file missing, retrying")
+            log.debug(fields, "dependency tree output file missing, retrying")
             return true
           }
 
           const fileContent = await fs.readFile(tempOutputFile, { encoding: "utf8" })
-          const fields = { ...logFields, fileContent }
+          fields.fileContentLength = fileContent.length.toString()
 
           if (fileContent.trim().length === 0) {
             log.debug(fields, "dependency tree output file empty, retrying")
             return true
+          }
+
+          // extract small start/end sample for debugging purposes (e.g. polluted console output)
+          const lines = fileContent.split("\n")
+          const lineSampleSize = Math.min(5, lines.length / 2)
+          if (2 * lineSampleSize > 5) {
+            fields.sampleStart = lines.slice(0, lineSampleSize).join("\n")
+            fields.sampleEnd = lines.slice(-lineSampleSize).join("\n")
+          } else {
+            fields.content = fileContent
           }
 
           if (error.message?.includes("Unexpected end of JSON input")) {
@@ -143,75 +153,32 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
   protected parseDependenciesTree(shellOutput: string): ProdDepType | Promise<ProdDepType> {
     return this.extractJsonFromPollutedOutput<ProdDepType>(shellOutput)
   }
-  /**
-   *
-   * This method attempts to extract and parse JSON data from shell output that may contain
-   * additional non-JSON content (like warnings or informational messages). It first tries
-   * to parse the entire output as JSON, and if that fails, it intelligently searches for
-   * JSON content within the output by:
-   * 1. Finding the first line that starts with `{` or `[`
-   * 2. Tracking bracket depth to find the matching closing bracket
-   * 3. Extracting only the valid JSON portion
-   *
-   * @param shellOutput - The raw output from a shell command, potentially containing JSON
-   * @returns The parsed dependencies tree object
-   * @throws {Error} If no JSON content is found in the output
-   * @throws {Error} If no matching closing bracket is found in the output
-   * @throws {SyntaxError} If the extracted content is not valid JSON
-   */
+
   protected extractJsonFromPollutedOutput<T>(shellOutput: string): T {
     const consoleOutput = shellOutput.trim()
     try {
+      // Please for the love of all that is holy, this should cover 99% of cases where npm/pnpm/yarn output is clean JSON
       return JSON.parse(consoleOutput)
     } catch {
-      // Continue
+      // ignore
     }
 
-    const lines = consoleOutput.split("\n")
+    // DEDICATED FALLBACK FOR POLLUTED OUTPUT, non-trivial to implement correctly, not needed in most cases, and highly inefficient
 
-    // Find the first line that starts with { or [
-    const jsonStartIdx = lines.findIndex(line => {
-      const trimmed = line.trim()
-      return trimmed.startsWith("{") || trimmed.startsWith("[")
-    })
+    // Find the first index that starts with { or [
+    const bracketOpen = Math.max(consoleOutput.indexOf("{"), 0)
+    const bracketOpenSquare = Math.max(consoleOutput.indexOf("["), 0)
+    const start = Math.min(bracketOpen, bracketOpenSquare) // always non-negative due to Math.max above
 
-    if (jsonStartIdx === -1) {
-      throw new Error("No JSON content found in output")
-    }
-
-    // Find matching closing bracket using bracket counting
-    let depth = 0
-    let jsonEndIdx = -1
-
-    for (let i = jsonStartIdx; i < lines.length; i++) {
-      const line = lines[i]
-      for (const char of line) {
-        if (char === "{" || char === "[") {
-          depth++
-        } else if (char === "}" || char === "]") {
-          depth--
-          if (depth === 0) {
-            jsonEndIdx = i
-            break
-          }
-        }
-      }
-      if (jsonEndIdx !== -1) {
-        break
+    for (let i = start; i < consoleOutput.length; i++) {
+      const slice = consoleOutput.slice(start, i + 1)
+      try {
+        return JSON.parse(slice)
+      } catch {
+        // ignore, try next
       }
     }
-
-    if (jsonEndIdx === -1) {
-      throw new Error("No matching closing bracket found in output")
-    }
-
-    // Parse the matched JSON section
-    const candidate = lines
-      .slice(jsonStartIdx, jsonEndIdx + 1)
-      .join("\n")
-      .trim()
-
-    return JSON.parse(candidate)
+    throw new Error("No JSON content found in output")
   }
 
   protected cacheKey(pkg: Pick<ProdDepType, "name" | "version" | "path">): string {
@@ -273,23 +240,18 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
    *
    * @param tree - The original dependency tree
    * @param packageName - The name of the package to check for and remove from the tree
-   * @returns Promise resolving to the pruned dependency tree
+   * @returns The extracted dependency subtree
    */
-  protected async getTreeFromWorkspaces(tree: ProdDepType, packageName: string): Promise<ProdDepType> {
-    if (!(tree.workspaces && tree.dependencies)) {
-      return tree
+  protected getTreeFromWorkspaces(tree: ProdDepType, packageName: string): ProdDepType {
+    if (tree.workspaces && tree.dependencies) {
+      for (const [key, value] of Object.entries(tree.dependencies)) {
+        if (key === packageName) {
+          return value
+        }
+      }
     }
 
-    if (tree.dependencies?.[packageName]) {
-      const { name, path, dependencies } = tree.dependencies[packageName]
-      log.debug({ name, path, dependencies: JSON.stringify(dependencies) }, "pruning root app/self reference from workspace tree")
-      for (const [name, pkg] of Object.entries(dependencies ?? {})) {
-        tree.dependencies[name] = pkg
-        this.allDependencies.set(this.packageVersionString(pkg), pkg)
-      }
-      delete tree.dependencies[packageName]
-    }
-    return Promise.resolve(tree)
+    return tree
   }
 
   private transformToHoisterTree(obj: DependencyGraph, key: string, nodes: Map<string, HoisterTree> = new Map()): HoisterTree {
