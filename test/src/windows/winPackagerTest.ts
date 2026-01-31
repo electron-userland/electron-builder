@@ -1,10 +1,11 @@
-import { Arch, DIR_TARGET, Platform, WindowsConfiguration } from "electron-builder"
+import { ToolsetConfig } from "app-builder-lib/src/configuration"
+import { Arch, DIR_TARGET, Platform } from "electron-builder"
 import * as fs from "fs/promises"
 import * as path from "path"
 import { CheckingWinPackager } from "../helpers/CheckingPackager"
 import { app, appThrows, assertPack, platform } from "../helpers/packTester"
 
-const winCodeSignVersions: WindowsConfiguration["winCodeSign"][] = ["0.0.0", "1.0.0", "1.1.0"]
+const winCodeSignVersions: ToolsetConfig["winCodeSign"][] = ["0.0.0", "1.0.0", "1.1.0"]
 
 for (const winCodeSign of winCodeSignVersions) {
   describe(`winCodeSign: ${winCodeSign}`, () => {
@@ -20,7 +21,7 @@ for (const winCodeSign of winCodeSignVersions) {
             nsis: {
               buildUniversalInstaller: false,
             },
-            win: {
+            toolsets: {
               winCodeSign,
             },
           },
@@ -41,7 +42,7 @@ for (const winCodeSign of winCodeSignVersions) {
               { from: "build", to: "./", filter: "*.asar" },
               { from: "build/subdir", to: "./subdir", filter: "*.asar" },
             ],
-            win: {
+            toolsets: {
               winCodeSign,
             },
             electronLanguages: "en",
@@ -75,7 +76,7 @@ for (const winCodeSign of winCodeSignVersions) {
           config: {
             //tslint:disable-next-line:no-invalid-template-strings
             artifactName: "${productName}-${version}-${os}-${arch}.${ext}",
-            win: {
+            toolsets: {
               winCodeSign,
             },
           },
@@ -91,7 +92,7 @@ for (const winCodeSign of winCodeSignVersions) {
         {
           targets: Platform.WINDOWS.createTarget(["zip"], Arch.x64),
           config: {
-            win: {
+            toolsets: {
               winCodeSign,
             },
           },
@@ -127,6 +128,8 @@ for (const winCodeSign of winCodeSignVersions) {
           config: {
             win: {
               icon: "customIcon",
+            },
+            toolsets: {
               winCodeSign,
             },
           },
@@ -150,7 +153,7 @@ for (const winCodeSign of winCodeSignVersions) {
             mac: {
               icon: "icons/icon.icns",
             },
-            win: {
+            toolsets: {
               winCodeSign,
             },
           },

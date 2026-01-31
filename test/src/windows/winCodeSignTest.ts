@@ -23,7 +23,7 @@ test("sign nested asar unpacked executables", ({ expect }) =>
       config: {
         publish: "never",
         asarUnpack: ["assets"],
-        win: {
+        toolsets: {
           winCodeSign: "1.0.0",
         },
       },
