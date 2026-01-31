@@ -1,5 +1,5 @@
 import * as path from "path"
-import { getBinFromUrl } from "../binDownload"
+import { getBinFromUrl } from "../binDownload.js"
 
 export function getLinuxToolsPath() {
   return getBinFromUrl("linux-tools-mac-10.12.3", "linux-tools-mac-10.12.3.7z", "SQ8fqIRVXuQVWnVgaMTDWyf2TLAJjJYw3tRSqQJECmgF6qdM7Kogfa6KD49RbGzzMYIFca9Uw3MdsxzOPRWcYw==")

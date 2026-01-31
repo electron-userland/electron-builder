@@ -1,6 +1,6 @@
 import { InvalidConfigurationError } from "builder-util"
 import { Nullish } from "builder-util-runtime"
-import { AppInfo } from "../appInfo"
+import { AppInfo } from "../appInfo.js"
 
 export function expandMacro(pattern: string, arch: string | Nullish, appInfo: AppInfo, extra: any = {}, isProductNameSanitized = true): string {
   if (arch == null) {

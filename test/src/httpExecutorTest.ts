@@ -1,5 +1,5 @@
 import { expect, test, describe } from "vitest"
-import { HttpExecutor } from "builder-util-runtime/src/httpExecutor"
+import { HttpExecutor } from "builder-util-runtime"
 import { RequestOptions } from "http"
 
 describe("HttpExecutor.prepareRedirectUrlOptions", () => {

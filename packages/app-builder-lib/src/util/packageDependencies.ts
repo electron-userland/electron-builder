@@ -1,5 +1,5 @@
 import { Lazy } from "lazy-val"
-import { executeAppBuilderAsJson } from "./appBuilder"
+import { executeAppBuilderAsJson } from "./appBuilder.js"
 
 export function createLazyProductionDeps<T extends boolean>(projectDir: string, excludedDependencies: Array<string> | null, flatten: T) {
   return new Lazy(async () => {

@@ -5,7 +5,7 @@ import * as fs from "fs/promises"
 import * as path from "path"
 import { assertThat } from "../helpers/fileAssert"
 import { app, assertPack, copyTestAsset } from "../helpers/packTester"
-import { attachAndExecute, getDmgTemplatePath } from "dmg-builder/out/dmgUtil"
+import { attachAndExecute, getDmgTemplatePath } from "dmg-builder"
 
 const dmgTarget = Platform.MAC.createTarget("dmg", Arch.x64)
 const defaultTarget = Platform.MAC.createTarget(undefined, Arch.x64)

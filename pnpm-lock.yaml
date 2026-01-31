@@ -38,6 +38,9 @@ importers:
       '@stylistic/eslint-plugin':
         specifier: ^2.8.0
         version: 2.13.0(eslint@9.39.2(jiti@2.4.2))(typescript@5.8.2)
+      '@tsconfig/node22':
+        specifier: ^22.0.5
+        version: 22.0.5
       '@types/node':
         specifier: ^22.7.4
         version: 22.13.17
@@ -439,6 +442,9 @@ importers:
       dmg-builder:
         specifier: workspace:*
         version: link:../dmg-builder
+      electron-publish:
+        specifier: workspace:*
+        version: link:../electron-publish
       fs-extra:
         specifier: ^10.1.0
         version: 10.1.0
@@ -2248,6 +2254,9 @@ packages:
 
   '@tsconfig/node16@1.0.4':
     resolution: {integrity: sha512-vxhUy4J8lyeyinH7Azl1pdd43GJhZH/tP2weN8TntQblOY+A0XbT8DJk1/oCPuOOyg/Ja757rG0CgHcWC8OfMA==}
+
+  '@tsconfig/node22@22.0.5':
+    resolution: {integrity: sha512-hLf2ld+sYN/BtOJjHUWOk568dvjFQkHnLNa6zce25GIH+vxKfvTgm3qpaH6ToF5tu/NN0IH66s+Bb5wElHrLcw==}
 
   '@types/adm-zip@0.5.6':
     resolution: {integrity: sha512-lRlcSLg5Yoo7C2H2AUiAoYlvifWoCx/se7iUNiCBTfEVVYFVn+Tr9ZGed4K73tYgLe9O4PjdJvbxlkdAOx/qiw==}
@@ -7031,6 +7040,8 @@ snapshots:
   '@tsconfig/node14@1.0.3': {}
 
   '@tsconfig/node16@1.0.4': {}
+
+  '@tsconfig/node22@22.0.5': {}
 
   '@types/adm-zip@0.5.6':
     dependencies:

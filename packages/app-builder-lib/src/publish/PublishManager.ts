@@ -29,20 +29,20 @@ import {
   SpacesPublisher,
   UploadTask,
 } from "electron-publish"
-import { MultiProgress } from "electron-publish/out/multiProgress"
+import { MultiProgress } from "electron-publish/out/multiProgress.js"
 import { writeFile } from "fs/promises"
 import { isCI } from "ci-info"
 import * as path from "path"
 import { WriteStream as TtyWriteStream } from "tty"
 import * as url from "url"
-import { AppInfo, ArtifactCreated, Configuration, Platform, PlatformSpecificBuildOptions, Target, TargetSpecificOptions } from "../index"
-import { Packager } from "../packager"
-import { PlatformPackager } from "../platformPackager"
-import { expandMacro } from "../util/macroExpander"
-import { WinPackager } from "../winPackager"
-import { createUpdateInfoTasks, UpdateInfoFileTask, writeUpdateInfoFiles } from "./updateInfoBuilder"
-import { resolveModule } from "../util/resolve"
-import { parseUrl } from "../util/pathManager"
+import { AppInfo, ArtifactCreated, Configuration, Platform, PlatformSpecificBuildOptions, Target, TargetSpecificOptions } from "../index.js"
+import { Packager } from "../packager.js"
+import { PlatformPackager } from "../platformPackager.js"
+import { expandMacro } from "../util/macroExpander.js"
+import { WinPackager } from "../winPackager.js"
+import { createUpdateInfoTasks, UpdateInfoFileTask, writeUpdateInfoFiles } from "./updateInfoBuilder.js"
+import { resolveModule } from "../util/resolve.js"
+import { parseUrl } from "../util/pathManager.js"
 
 const publishForPrWarning =
   "There are serious security concerns with PUBLISH_FOR_PULL_REQUEST=true (see the  CircleCI documentation (https://circleci.com/docs/1.0/fork-pr-builds/) for details)" +

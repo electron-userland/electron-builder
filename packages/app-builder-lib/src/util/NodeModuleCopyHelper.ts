@@ -3,11 +3,11 @@ import { realpathSync } from "fs"
 import { lstat, lstatSync, readdir } from "fs-extra"
 import * as path from "path"
 import asyncPool from "tiny-async-pool"
-import { excludedNames, FileMatcher } from "../fileMatcher"
-import { Packager } from "../packager"
-import { FileCopyHelper } from "./AppFileWalker"
-import { NodeModuleInfo } from "./packageDependencies"
-import { resolveFunction } from "./resolve"
+import { excludedNames, FileMatcher } from "../fileMatcher.js"
+import { Packager } from "../packager.js"
+import { FileCopyHelper } from "./AppFileWalker.js"
+import { NodeModuleInfo } from "./packageDependencies.js"
+import { resolveFunction } from "./resolve.js"
 
 const excludedFiles = new Set(
   [

@@ -1,5 +1,5 @@
 import { exists, isEmptyOrSpaces, log } from "builder-util"
-import { PackageJson } from "./types"
+import { PackageJson } from "./types.js"
 import * as fs from "fs-extra"
 import * as path from "path"
 import * as semver from "semver"

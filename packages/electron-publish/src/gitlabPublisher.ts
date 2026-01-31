@@ -6,10 +6,10 @@ import { configureRequestOptions, GitlabOptions, GitlabReleaseInfo, parseJson, H
 import { ClientRequest } from "http"
 import { Lazy } from "lazy-val"
 import * as mime from "mime"
-import * as FormData from "form-data"
+import FormData from "form-data"
 import { URL } from "url"
-import { HttpPublisher } from "./httpPublisher"
-import { PublishContext } from "./index"
+import { HttpPublisher } from "./httpPublisher.js"
+import { PublishContext } from "./index.js"
 
 type RequestProcessor = (request: ClientRequest, reject: (error: Error) => void) => void
 

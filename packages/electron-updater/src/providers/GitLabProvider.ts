@@ -2,10 +2,10 @@ import { CancellationToken, GitlabOptions, HttpError, newError, UpdateFileInfo, 
 import { URL } from "url"
 // @ts-ignore
 import * as escapeRegExp from "lodash.escaperegexp"
-import { AppUpdater } from "../AppUpdater"
-import { ResolvedUpdateFileInfo } from "../types"
-import { getChannelFilename, newBaseUrl, newUrlFromBase } from "../util"
-import { getFileList, parseUpdateInfo, Provider, ProviderRuntimeOptions } from "./Provider"
+import { AppUpdater } from "../AppUpdater.js"
+import { ResolvedUpdateFileInfo } from "../types.js"
+import { getChannelFilename, newBaseUrl, newUrlFromBase } from "../util.js"
+import { getFileList, parseUpdateInfo, Provider, ProviderRuntimeOptions } from "./Provider.js"
 
 interface GitlabUpdateInfo extends UpdateInfo {
   tag: string

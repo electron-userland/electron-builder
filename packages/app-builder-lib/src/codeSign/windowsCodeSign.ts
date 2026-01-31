@@ -1,6 +1,6 @@
 import { log, retry } from "builder-util"
-import { WindowsConfiguration } from "../options/winOptions"
-import { WinPackager } from "../winPackager"
+import { WindowsConfiguration } from "../options/winOptions.js"
+import { WinPackager } from "../winPackager.js"
 
 export interface WindowsSignOptions {
   readonly path: string

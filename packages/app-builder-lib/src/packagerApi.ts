@@ -1,10 +1,10 @@
 import { Arch } from "builder-util"
 import { PublishConfiguration } from "builder-util-runtime"
 import { UploadTask } from "electron-publish"
-import { Configuration } from "./configuration"
-import { Platform, Target } from "./core"
-import { Packager } from "./packager"
-import { PlatformPackager } from "./platformPackager"
+import { Configuration } from "./configuration.js"
+import { Platform, Target } from "./core.js"
+import { Packager } from "./packager.js"
+import { PlatformPackager } from "./platformPackager.js"
 
 export interface PackagerOptions {
   targets?: Map<Platform, Map<Arch, Array<string>>>

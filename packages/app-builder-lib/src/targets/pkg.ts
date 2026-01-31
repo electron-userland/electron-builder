@@ -3,13 +3,13 @@ import { Nullish } from "builder-util-runtime"
 import { readdirSync } from "fs"
 import { readFile, unlink, writeFile } from "fs/promises"
 import * as path from "path"
-import { filterCFBundleIdentifier } from "../appInfo"
-import { findIdentity, Identity } from "../codeSign/macCodeSign"
-import { Target } from "../core"
-import { MacPackager } from "../macPackager"
-import { PkgOptions } from "../options/pkgOptions"
-import { savePlistFile, parsePlistFile, PlistObject } from "../util/plist"
-import { getNotLocalizedLicenseFile } from "../util/license"
+import { filterCFBundleIdentifier } from "../appInfo.js"
+import { findIdentity, Identity } from "../codeSign/macCodeSign.js"
+import { Target } from "../core.js"
+import { MacPackager } from "../macPackager.js"
+import { PkgOptions } from "../options/pkgOptions.js"
+import { savePlistFile, parsePlistFile, PlistObject } from "../util/plist.js"
+import { getNotLocalizedLicenseFile } from "../util/license.js"
 
 const certType = "Developer ID Installer"
 
@@ -39,18 +39,19 @@ type ExtraPackages = {
 // productbuild --scripts doesn't work (because scripts in this case not added to our package)
 // https://github.com/electron-userland/@electron/osx-sign/issues/96#issuecomment-274986942
 export class PkgTarget extends Target {
-  readonly options: PkgOptions = {
-    allowAnywhere: true,
-    allowCurrentUserHome: true,
-    allowRootDirectory: true,
-    ...this.packager.config.pkg,
-  }
+  readonly options: PkgOptions
 
   constructor(
     private readonly packager: MacPackager,
     readonly outDir: string
   ) {
     super("pkg")
+    this.options = {
+      allowAnywhere: true,
+      allowCurrentUserHome: true,
+      allowRootDirectory: true,
+      ...this.packager.config.pkg,
+    }
   }
 
   async build(appPath: string, arch: Arch): Promise<any> {

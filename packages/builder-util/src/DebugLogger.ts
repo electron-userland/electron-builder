@@ -1,6 +1,6 @@
 import { outputFile } from "fs-extra"
-import { serializeToYaml } from "./util"
-import { mapToObject } from "./mapper"
+import { serializeToYaml } from "./util.js"
+import { mapToObject } from "./mapper.js"
 
 export class DebugLogger {
   readonly data = new Map<string, any>()

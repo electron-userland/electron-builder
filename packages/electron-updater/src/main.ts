@@ -1,19 +1,27 @@
 import { existsSync, readFileSync } from "fs-extra"
 import * as path from "path"
-import { AppUpdater } from "./AppUpdater"
+import { AppUpdater } from "./AppUpdater.js"
+
+export { ElectronAppAdapter } from "./ElectronAppAdapter.js"
+
 import { UpdateInfo } from "builder-util-runtime"
 
-export { BaseUpdater } from "./BaseUpdater"
-export { AppUpdater, NoOpLogger } from "./AppUpdater"
-export { Provider } from "./providers/Provider"
-export { AppImageUpdater } from "./AppImageUpdater"
-export { DebUpdater } from "./DebUpdater"
-export { PacmanUpdater } from "./PacmanUpdater"
-export { RpmUpdater } from "./RpmUpdater"
-export { MacUpdater } from "./MacUpdater"
-export { NsisUpdater } from "./NsisUpdater"
+export { BaseUpdater } from "./BaseUpdater.js"
+export { AppUpdater, NoOpLogger, TestOnlyUpdaterOptions } from "./AppUpdater.js"
 
-export * from "./types"
+export { AppImageUpdater } from "./AppImageUpdater.js"
+export { DebUpdater } from "./DebUpdater.js"
+export { PacmanUpdater } from "./PacmanUpdater.js"
+export { RpmUpdater } from "./RpmUpdater.js"
+export { MacUpdater } from "./MacUpdater.js"
+export { NsisUpdater } from "./NsisUpdater.js"
+
+export { Provider } from "./providers/Provider.js"
+export { GitHubProvider } from "./providers/GitHubProvider.js"
+export { GitLabProvider } from "./providers/GitLabProvider.js"
+
+export * from "./types.js"
+export * as utils from "./util.js"
 
 // autoUpdater to mimic electron bundled autoUpdater
 let _autoUpdater: any

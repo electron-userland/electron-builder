@@ -1,5 +1,5 @@
 import { OutgoingHttpHeaders } from "http"
-import { Nullish } from "."
+import { Nullish } from "./index.js"
 
 export type PublishProvider = "github" | "gitlab" | "s3" | "spaces" | "generic" | "custom" | "snapStore" | "keygen" | "bitbucket"
 

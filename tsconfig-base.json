@@ -1,15 +1,14 @@
 {
+  "extends": "@tsconfig/node22/tsconfig.json",
   "compilerOptions": {
-    "target": "es2019",
-    "module": "CommonJS",
-    "esModuleInterop": false,
+    "lib": ["es2024", "WebWorker", "esnext"],
+
     "forceConsistentCasingInFileNames": true,
-    "moduleResolution": "node",
-    "skipLibCheck": true,
-    "strict": true,
+
     "noUnusedLocals": true,
     "noFallthroughCasesInSwitch": true,
     "noImplicitReturns": true,
+
     "allowJs": true,
 
     "inlineSources": true,

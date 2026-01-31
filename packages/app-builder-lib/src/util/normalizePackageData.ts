@@ -1,6 +1,6 @@
 import { fromUrl } from "hosted-git-info"
 import * as semver from "semver"
-import { parseUrl } from "./pathManager"
+import { parseUrl } from "./pathManager.js"
 
 export function normalizePackageData(data: any) {
   for (const it of check) {

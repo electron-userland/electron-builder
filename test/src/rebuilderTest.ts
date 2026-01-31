@@ -1,10 +1,10 @@
 import { Configuration, Platform } from "app-builder-lib"
-import { PM } from "app-builder-lib/out/node-module-collector"
-import { exists } from "builder-util/src/util"
+import { PM } from "app-builder-lib"
+import { exists } from "builder-util"
 import path from "path"
-import { assertPack, linuxDirTarget, modifyPackageJson } from "./helpers/packTester"
-import { ELECTRON_VERSION } from "./helpers/testConfig"
-import { verifySmartUnpack } from "./helpers/verifySmartUnpack"
+import { assertPack, linuxDirTarget, modifyPackageJson } from "./helpers/packTester.js"
+import { ELECTRON_VERSION } from "./helpers/testConfig.js"
+import { verifySmartUnpack } from "./helpers/verifySmartUnpack.js"
 
 const packageConfig = (data: any) => {
   data.name = "@packageManagers/test-app-yarn-workspace"

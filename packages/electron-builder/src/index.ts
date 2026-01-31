@@ -1,6 +1,6 @@
 export { getArchSuffix, Arch, archFromString, log } from "builder-util"
-export { build, CliOptions, createTargets } from "./builder"
-export { publish, publishArtifactsWithOptions } from "./publish"
+export { build, CliOptions, configureBuildCommand, createYargs, normalizeOptions, coerceTypes, createTargets } from "./builder.js"
+export { publish, publishArtifactsWithOptions } from "./publish.js"
 export {
   TargetConfiguration,
   Platform,

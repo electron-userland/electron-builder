@@ -1,6 +1,6 @@
 import { AllPublishOptions } from "builder-util-runtime"
-import { AppAdapter } from "./AppAdapter"
-import { BaseUpdater } from "./BaseUpdater"
+import { AppAdapter } from "./AppAdapter.js"
+import { BaseUpdater } from "./BaseUpdater.js"
 
 export abstract class LinuxUpdater extends BaseUpdater {
   constructor(options?: AllPublishOptions | null, app?: AppAdapter) {

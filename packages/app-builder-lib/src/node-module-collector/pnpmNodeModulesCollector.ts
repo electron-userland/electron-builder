@@ -1,7 +1,7 @@
 import { log } from "builder-util"
-import { NodeModulesCollector } from "./nodeModulesCollector"
-import { PM } from "./packageManager"
-import { PnpmDependency } from "./types"
+import { NodeModulesCollector } from "./nodeModulesCollector.js"
+import { PM } from "./packageManager.js"
+import { PnpmDependency } from "./types.js"
 
 export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependency, PnpmDependency> {
   public readonly installOptions = {
