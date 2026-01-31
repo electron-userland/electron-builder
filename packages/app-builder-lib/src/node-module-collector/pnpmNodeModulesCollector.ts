@@ -10,7 +10,7 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
   }
 
   protected getArgs(): string[] {
-    return ["list", "--prod", "--json", "--depth", "Infinity"]
+    return ["list", "--prod", "--json", "--depth", "Infinity", "--silent", "--loglevel=error"]
   }
 
   protected async extractProductionDependencyGraph(tree: PnpmDependency, dependencyId: string) {
