@@ -17,11 +17,13 @@ RUN dnf install -y \
     curl \
     xz \
     zypper \
-    at-spi2-core
-
-# Optional: for better font rendering or Chromium deps
-RUN dnf install -y liberation-fonts fontconfig gtk3 xdg-utils xorg-x11-server-Xvfb
-
+    at-spi2-core \
+    liberation-fonts \
+    fontconfig \
+    gtk3 \
+    xdg-utils \
+    xorg-x11-server-Xvfb \
+    && dnf clean all
 
 RUN npm --silent install --global --depth 0 pnpm corepack \
  && corepack enable

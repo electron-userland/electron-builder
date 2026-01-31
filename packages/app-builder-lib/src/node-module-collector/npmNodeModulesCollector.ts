@@ -9,7 +9,7 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
   }
 
   protected getArgs(): string[] {
-    return ["list", "-a", "--include", "prod", "--include", "optional", "--omit", "dev", "--json", "--long", "--silent"]
+    return ["list", "-a", "--include", "prod", "--include", "optional", "--omit", "dev", "--json", "--long", "--silent", "--loglevel=error"]
   }
 
   protected async collectAllDependencies(tree: NpmDependency) {
@@ -32,19 +32,25 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
     }
 
     const isDuplicateDep = this.isDuplicatedNpmDependency(tree)
-    const resolvedDeps = isDuplicateDep ? this.allDependencies.get(dependencyId)?.dependencies : tree.dependencies
+    const targetTree = isDuplicateDep ? this.allDependencies.get(dependencyId) : tree
+
     // Initialize with empty dependencies array first to mark this dependency as "in progress"
     // After initialization, if there are libraries with the same name+version later, they will not be searched recursively again
     // This will prevents infinite loops when circular dependencies are encountered.
     this.productionGraph[dependencyId] = { dependencies: [] }
 
     const collectedDependencies: string[] = []
-    if (resolvedDeps && Object.keys(resolvedDeps).length > 0) {
-      for (const packageName in resolvedDeps) {
-        if (!this.isProdDependency(packageName, tree)) {
+    if (targetTree?.dependencies) {
+      for (const packageName in targetTree.dependencies) {
+        // Check against matching _dependencies
+        if (!this.isProdDependency(packageName, targetTree)) {
           continue
         }
-        const dependency = resolvedDeps[packageName]
+        const dependency = targetTree.dependencies[packageName]
+        // Match first version's empty check
+        if (Object.keys(dependency).length === 0) {
+          continue
+        }
         const childDependencyId = this.packageVersionString({ name: packageName, version: dependency.version })
         await this.extractProductionDependencyGraph(dependency, childDependencyId)
         collectedDependencies.push(childDependencyId)
