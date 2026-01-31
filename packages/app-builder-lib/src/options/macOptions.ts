@@ -294,6 +294,20 @@ export interface DmgOptions extends TargetSpecificOptions {
   format?: "UDRW" | "UDRO" | "UDCO" | "UDZO" | "UDBZ" | "ULFO"
 
   /**
+   * The initial size of the DMG filesystem. Accepts the same syntax as the `-size` argument to `hdiutil`, e.g. `"150m"`, `"4g"`.
+   * If not specified, the size is calculated automatically.
+   * Set this explicitly for large apps or apps with sparse files to avoid "No space left on device" errors.
+   */
+  readonly size?: string | null
+
+  /**
+   * Whether to shrink the DMG filesystem to the minimum size after copying files.
+   * Set to `false` to preserve the explicit `size` you specified.
+   * @default true
+   */
+  readonly shrink?: boolean
+
+  /**
    * The DMG window position and size. With y co-ordinates running from bottom to top.
    *
    * The Finder makes sure that the window will be on the user’s display, so if you want your window at the top left of the display you could use `"x": 0, "y": 100000` as the x, y co-ordinates.
