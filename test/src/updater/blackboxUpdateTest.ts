@@ -1,9 +1,9 @@
 import { GenericServerOptions, Nullish } from "builder-util-runtime"
-import { archFromString, doSpawn, getArchSuffix, isEmptyOrSpaces, log, TmpDir } from "builder-util/out/util"
+import { archFromString, doSpawn, getArchSuffix, isEmptyOrSpaces, log, spawn, TmpDir } from "builder-util/out/util"
 import { Arch, Configuration, Platform } from "electron-builder"
 import fs, { existsSync, outputFile } from "fs-extra"
 import path from "path"
-import { afterAll, beforeAll, describe, ExpectStatic, TestContext } from "vitest"
+import { describe, ExpectStatic, TestContext } from "vitest"
 import { launchAndWaitForQuit } from "../helpers/launchAppCrossPlatform"
 import { assertPack, modifyPackageJson, PackedContext } from "../helpers/packTester"
 import { ELECTRON_VERSION } from "../helpers/testConfig"
@@ -12,18 +12,10 @@ import { execFileSync, execSync } from "child_process"
 import { homedir } from "os"
 import { DebUpdater, PacmanUpdater, RpmUpdater } from "electron-updater"
 import { getRanLocalServerPath } from "../helpers/launchAppCrossPlatform"
-import { verifySmartUnpack } from "../helpers/verifySmartUnpack"
 
 // Linux Tests MUST be run in docker containers for proper ephemeral testing environment (e.g. fresh install + update + relaunch)
 // Currently this test logic does not handle uninstalling packages (yet)
 describe("Electron autoupdate (fresh install & update)", { sequential: true }, () => {
-  beforeAll(() => {
-    process.env.AUTO_UPDATER_TEST = "1"
-  })
-  afterAll(() => {
-    delete process.env.AUTO_UPDATER_TEST
-  })
-
   // can test on x64 and also arm64 (via rosetta)
   test.ifMac("mac - x64", async context => {
     await runTest(context, "zip", "", Arch.x64)
@@ -214,55 +206,42 @@ async function doBuild(
       },
       {
         storeDepsLockfileSnapshot: false,
-        signed: true,
+        signed: !isWindows,
         signedWin: isWindows,
         packed,
         projectDirCreated: async (projectDir, _tmpDir, runtimeEnv) => {
-          await Promise.all([
-            outputFile(path.join(projectDir, "package-lock.json"), "{}"),
-            outputFile(path.join(projectDir, ".npmrc"), "node-linker=hoisted"),
-            modifyPackageJson(
-              projectDir,
-              data => {
-                data.devDependencies = {
-                  electron: ELECTRON_VERSION,
-                  "node-addon-api": "^8",
-                }
-                data.dependencies = {
-                  ...data.dependencies,
-                  "@electron/remote": "2.1.2", // for debugging live application with GUI so that app.getVersion is accessible in renderer process
-                  "electron-updater": `file:${__dirname}/../../../packages/electron-updater`,
-                  sqlite3: "5.1.7",
-                }
-                data.pnpm = {
-                  overrides: {
-                    "builder-util-runtime": `file:${__dirname}/../../../packages/builder-util-runtime`,
-                  },
-                }
-              },
-              true
-            ),
-            modifyPackageJson(
-              projectDir,
-              data => {
-                data.devDependencies = {
-                  electron: ELECTRON_VERSION,
-                }
-                data.dependencies = {
-                  ...data.dependencies,
-                  "@electron/remote": "^2.1.2", // for debugging live application with GUI so that app.getVersion is accessible in renderer process
-                  "electron-updater": `file:${__dirname}/../../../packages/electron-updater`,
-                }
-                data.pnpm = {
-                  overrides: {
-                    "builder-util-runtime": `file:${__dirname}/../../../packages/builder-util-runtime`,
-                  },
-                }
-              },
-              false
-            ),
-          ])
-          execSync("npm install", { cwd: projectDir, stdio: "inherit", env: runtimeEnv })
+          await outputFile(path.join(projectDir, "package-lock.json"), "{}")
+          await outputFile(path.join(projectDir, ".npmrc"), "node-linker=hoisted")
+
+          await modifyPackageJson(
+            projectDir,
+            data => {
+              data.devDependencies = {
+                electron: ELECTRON_VERSION,
+                "node-addon-api": "^8",
+              }
+              data.dependencies = {
+                ...data.dependencies,
+                "@electron/remote": "2.1.2", // for debugging live application with GUI so that app.getVersion is accessible in renderer process
+                "electron-updater": `file:${__dirname}/../../../packages/electron-updater`,
+                sqlite3: "5.1.7",
+              }
+            },
+            true
+          )
+          await modifyPackageJson(
+            projectDir,
+            data => {
+              data.pnpm = {
+                supportedArchitectures: {
+                  os: ["current"],
+                  cpu: ["x64", "arm64"],
+                },
+              }
+            },
+            false
+          )
+          await spawn("npm", ["install"], { cwd: projectDir, stdio: "ignore", env: runtimeEnv })
         },
       }
     )

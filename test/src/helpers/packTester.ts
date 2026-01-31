@@ -30,7 +30,6 @@ import { ELECTRON_VERSION } from "./testConfig"
 import { createLazyProductionDeps } from "app-builder-lib/out/util/packageDependencies"
 import { execSync } from "child_process"
 import { detectPackageManager } from "app-builder-lib/out/node-module-collector/packageManager"
-import { isAutoDiscoveryCodeSignIdentity } from "app-builder-lib/out/util/flags"
 
 const PACKAGE_MANAGER_VERSION_MAP = {
   [PM.NPM]: { cli: "npm", version: "9.8.1" },
@@ -116,7 +115,7 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
   if (checkOptions.signedWin) {
     configuration.cscLink = WIN_CSC_LINK
     configuration.cscKeyPassword = ""
-  } else if (configuration.cscLink == null && !isAutoDiscoveryCodeSignIdentity()) {
+  } else if (configuration.cscLink == null) {
     packagerOptions = deepAssign({}, packagerOptions, { config: { mac: { identity: null } } })
   }
 
@@ -184,14 +183,14 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
       } else {
         log.info({ pm, version: version, projectDir }, "activating corepack")
         try {
-          execSync(`corepack enable ${cli}`, { env: runtimeEnv, cwd: projectDir, stdio: "inherit" })
+          execSync(`corepack enable ${cli}`, { env: runtimeEnv, cwd: projectDir, stdio: "ignore" })
         } catch (err: any) {
-          console.warn("⚠️ Corepack enable failed (possibly already enabled):", err.message)
+          log.warn({ message: err.message }, "⚠️ corepack enable failed (possibly already enabled)")
         }
         try {
-          execSync(`corepack prepare ${prepareEntry} --activate`, { env: runtimeEnv, cwd: projectDir, stdio: "inherit" })
+          execSync(`corepack prepare ${prepareEntry} --activate`, { env: runtimeEnv, cwd: projectDir, stdio: "ignore" })
         } catch (err: any) {
-          console.warn("⚠️ Yarn prepare failed:", err.message)
+          log.warn({ message: err.message }, "⚠️ corepack prepare failed")
         }
       }
       const collector = getCollectorByPackageManager(pm, projectDir, tmpDir)
@@ -203,6 +202,11 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
       // check for lockfile fixture so we can use `--frozen-lockfile`
       if ((await exists(testFixtureLockfile)) && !shouldUpdateLockfiles) {
         await copyFile(testFixtureLockfile, destLockfile)
+      }
+
+      if (!(await exists(destLockfile))) {
+        log.info({ lockfile: collectorOptions.lockfile }, "lockfile not found, creating empty stub to prevent package manager prompts")
+        await fs.writeFile(destLockfile, "")
       }
 
       const appDir = await computeDefaultAppDirectory(projectDir, configuration.directories?.app)
@@ -720,7 +724,7 @@ export function platform(platform: Platform): PackagerOptions {
 }
 
 export function signed(packagerOptions: PackagerOptions): PackagerOptions {
-  if (process.env.CSC_KEY_PASSWORD == null && !isAutoDiscoveryCodeSignIdentity()) {
+  if (process.env.CSC_KEY_PASSWORD == null) {
     log.warn({ reason: "CSC_KEY_PASSWORD is not defined" }, "macOS code signing is not tested")
   } else {
     if (packagerOptions.config == null) {

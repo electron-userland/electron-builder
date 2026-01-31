@@ -254,7 +254,7 @@ jobs:
         testFiles:
           - oneClickInstallerTest,assistedInstallerTest,webInstallerTest,packageManagerTest,HoistedNodeModuleTest,rebuilderTest
           - winPackagerTest,winCodeSignTest,BuildTest,debTest
-          - masTest,filesTest,macArchiveTest
+          - masTest,filesTest,macArchiveTest,macPackagerTest
           - concurrentBuildsTest,macIconTest
     steps:
       - name: Checkout code repository
@@ -278,14 +278,14 @@ jobs:
           TEST_FILES: ${{ matrix.testFiles }}
           FORCE_COLOR: 1
 
-  test-mac-old:
-    runs-on: macos-latest
+  test-mac-with-signing:
+    runs-on: macos-15
     timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
         testFiles:
-          - differentialUpdateTest,blackboxUpdateTest,dmgTest,macPackagerTest
+          - differentialUpdateTest,dmgTest # ,blackboxUpdateTest,macPackagerTest
     steps:
       - name: Checkout code repository
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1

@@ -9,7 +9,7 @@ export class NpmNodeModulesCollector extends NodeModulesCollector<NpmDependency,
   }
 
   protected getArgs(): string[] {
-    return ["list", "-a", "--include", "prod", "--include", "optional", "--omit", "dev", "--json", "--long", "--silent"]
+    return ["list", "-a", "--include", "prod", "--include", "optional", "--omit", "dev", "--json", "--long", "--silent", "--loglevel=error"]
   }
 
   protected async collectAllDependencies(tree: NpmDependency) {
