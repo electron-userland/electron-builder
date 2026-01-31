@@ -25,17 +25,6 @@ export interface WindowsConfiguration extends PlatformSpecificBuildOptions {
   readonly legalTrademarks?: string | null
 
   /**
-   * `win-codesign` version to use for signing Windows artifacts.
-   * Located at https://github.com/electron-userland/electron-builder-binaries/releases?q=win-codesign&expanded=true
-   * 0.0.0 - legacy toolset (winCodeSign)
-   * 1.0.0 - windows-kits-bundle-10_0_26100_0
-   * 1.1.0 - windows-kits-bundle-10_0_26100_0 with updated osslsigncode
-   * @default "0.0.0"
-   *
-   */
-  readonly winCodeSign?: "0.0.0" | "1.0.0" | "1.1.0" | null
-
-  /**
    * Options for usage with signtool.exe
    * Cannot be used in conjunction with `azureSignOptions`, signing will default to Azure Trusted Signing
    */

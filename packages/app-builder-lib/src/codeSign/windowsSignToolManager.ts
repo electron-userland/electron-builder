@@ -425,7 +425,7 @@ export class WindowsSignToolManager implements SignManager {
     let vm: VmManager
     const useVmIfNotOnWin = configuration.path.endsWith(".appx") || !("file" in configuration.cscInfo!) /* certificateSubjectName and other such options */
     const isWin = process.platform === "win32" || useVmIfNotOnWin
-    const toolInfo = await getSignToolPath(this.packager.config.win?.winCodeSign, isWin)
+    const toolInfo = await getSignToolPath(this.packager.config.toolsets?.winCodeSign, isWin)
     const tool = toolInfo.path
     if (useVmIfNotOnWin) {
       vm = await packager.vm.value
