@@ -684,6 +684,9 @@ importers:
       '@types/unzipper':
         specifier: ^0.10.11
         version: 0.10.11
+      '@types/which':
+        specifier: ^3.0.4
+        version: 3.0.4
       fast-xml-parser:
         specifier: 4.4.1
         version: 4.4.1
@@ -696,6 +699,9 @@ importers:
       vitest-mock-commonjs:
         specifier: ^1.0.2
         version: 1.0.2
+      which:
+        specifier: ^5.0.0
+        version: 5.0.0
 
 packages:
 
