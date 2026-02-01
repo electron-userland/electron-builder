@@ -43,7 +43,7 @@ for (const winCodeSign of winCodeSignVersions) {
           if (process.platform === "win32") {
             expect(error.message).toContain("This file format cannot be signed because it is not recognized.")
           } else {
-            expect(error.message).toContain("Initialization error or unsupported input file type.")
+            expect(error.message).toContain("Unrecognized file type:")
           }
         }
       ))
