@@ -319,7 +319,10 @@ jobs:
         with:
           cache-path: ~/.cache/electron
           cache-key: v-35.7.5-snap-core24-electron
-          
+
+      - name: Setup lxd
+        uses: canonical/setup-lxd@041a8c4150a6271fce99b94bc0232ddfa3c2d8fc
+
       - name: Install snapd
         run: |
           sudo apt-get update
@@ -339,7 +342,7 @@ jobs:
       # Pre-install GNOME SDK (recommended for reliability)
       - name: Install GNOME SDK
         run: sudo snap install gnome-46-2404-sdk --channel=latest/stable
-      
+
       - name: Run snap core24 tests
         run: pnpm ci:test
         env:
