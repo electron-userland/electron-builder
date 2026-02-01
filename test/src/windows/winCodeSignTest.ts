@@ -40,11 +40,27 @@ for (const winCodeSign of winCodeSignVersions) {
           },
         },
         error => {
-          if (process.platform === "win32") {
-            expect(error.message).toContain("This file format cannot be signed because it is not recognized.")
-          } else {
-            expect(error.message).toContain("Unrecognized file type:")
+          let message: string
+          switch (winCodeSign) {
+            case "0.0.0":
+              if (process.platform === "win32") {
+                message = "This file format cannot be signed because it is not recognized."
+              } else {
+                message = "Unrecognized file type:"
+              }
+              break
+            case "1.0.0":
+            case "1.1.0":
+              if (process.platform === "win32") {
+                message = "The specified file is not a valid Win32 application."
+              } else {
+                message = "Initialization error or unsupported input file type."
+              }
+              break
+            default:
+              throw new Error(`Unknown winCodeSign version: ${winCodeSign}`)
           }
+          expect(error.message).toContain(message)
         }
       ))
 
