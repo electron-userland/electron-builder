@@ -48,7 +48,7 @@
   "homepage": "https://github.com/electron-userland/electron-builder",
   "dependencies": {
     "@develar/schema-utils": "~2.6.5",
-    "@electron/asar": "3.4.1",
+    "@electron/asar": "4.0.1",
     "@electron/fuses": "^1.8.0",
     "@electron/get": "^3.0.0",
     "@electron/notarize": "2.5.0",
