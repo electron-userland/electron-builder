@@ -5,10 +5,13 @@ import * as path from "path"
 import { assertThat } from "./helpers/fileAssert"
 import { app, assertPack, getFixtureDir, getPackageManagerWithVersion, linuxDirTarget, modifyPackageJson, verifyAsarFileTree } from "./helpers/packTester"
 import { ELECTRON_VERSION } from "./helpers/testConfig"
-import { spawn } from "builder-util"
+import { isEmptyOrSpaces, spawn } from "builder-util"
+import * as which from "which"
 
 const yarnVersion = getPackageManagerWithVersion(PM.YARN).prepareEntry
 const yarnBerryVersion = getPackageManagerWithVersion(PM.YARN_BERRY).prepareEntry
+
+const hasBun = !isEmptyOrSpaces(which.sync("bun", { nothrow: true }))
 
 const packageConfig = (data: any, version: string) => {
   data.packageManager = version
@@ -218,7 +221,7 @@ test("npm", ({ expect }) =>
     }
   ))
 
-test("bun workspace --linker=isolated", ({ expect }) =>
+test.runIf(hasBun)("bun workspace --linker=isolated", ({ expect }) =>
   assertPack(
     expect,
     "test-app-bun-workspace",
@@ -256,9 +259,10 @@ test("bun workspace --linker=isolated", ({ expect }) =>
       },
       packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
     }
-  ))
+  )
+)
 
-test("bun workspace --linker=isolated - multiple conflicting versions", ({ expect }) =>
+test.runIf(hasBun)("bun workspace --linker=isolated - multiple conflicting versions", ({ expect }) =>
   assertPack(
     expect,
     "test-app-bun-workspace",
@@ -298,9 +302,10 @@ test("bun workspace --linker=isolated - multiple conflicting versions", ({ expec
       },
       packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
     }
-  ))
+  )
+)
 
-test("bun workspace --linker=hoisted", ({ expect }) =>
+test.runIf(hasBun)("bun workspace --linker=hoisted", ({ expect }) =>
   assertPack(
     expect,
     "test-app-bun-workspace",
@@ -338,9 +343,10 @@ test("bun workspace --linker=hoisted", ({ expect }) =>
       },
       packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
     }
-  ))
+  )
+)
 
-test("bun workspace --linker=hoisted - multiple conflicting versions", ({ expect }) =>
+test.runIf(hasBun)("bun workspace --linker=hoisted - multiple conflicting versions", ({ expect }) =>
   assertPack(
     expect,
     "test-app-bun-workspace",
@@ -380,7 +386,8 @@ test("bun workspace --linker=hoisted - multiple conflicting versions", ({ expect
       },
       packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
     }
-  ))
+  )
+)
 
 test("traversal hoisted", ({ expect }) =>
   assertPack(

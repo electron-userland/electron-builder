@@ -8725,6 +8725,16 @@
         }
       ]
     },
+    "toolsets": {
+      "anyOf": [
+        {
+          "typeof": "function"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
     "win": {
       "anyOf": [
         {
