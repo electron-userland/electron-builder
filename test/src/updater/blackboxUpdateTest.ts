@@ -1,10 +1,9 @@
-import { getBinFromUrl } from "app-builder-lib/out/binDownload"
 import { GenericServerOptions, Nullish } from "builder-util-runtime"
-import { archFromString, doSpawn, getArchSuffix, isEmptyOrSpaces, log, TmpDir } from "builder-util/out/util"
+import { archFromString, doSpawn, getArchSuffix, isEmptyOrSpaces, log, spawn, TmpDir } from "builder-util/out/util"
 import { Arch, Configuration, Platform } from "electron-builder"
 import fs, { existsSync, outputFile } from "fs-extra"
 import path from "path"
-import { afterAll, beforeAll, describe, ExpectStatic, TestContext } from "vitest"
+import { describe, ExpectStatic, TestContext } from "vitest"
 import { launchAndWaitForQuit } from "../helpers/launchAppCrossPlatform"
 import { assertPack, modifyPackageJson, PackedContext } from "../helpers/packTester"
 import { ELECTRON_VERSION } from "../helpers/testConfig"
@@ -12,24 +11,25 @@ import { NEW_VERSION_NUMBER, OLD_VERSION_NUMBER, writeUpdateConfig } from "../he
 import { execFileSync, execSync } from "child_process"
 import { homedir } from "os"
 import { DebUpdater, PacmanUpdater, RpmUpdater } from "electron-updater"
+import { getRanLocalServerPath } from "../helpers/launchAppCrossPlatform"
 
 // Linux Tests MUST be run in docker containers for proper ephemeral testing environment (e.g. fresh install + update + relaunch)
 // Currently this test logic does not handle uninstalling packages (yet)
-describe("Electron autoupdate (fresh install & update)", () => {
-  beforeAll(() => {
-    process.env.AUTO_UPDATER_TEST = "1"
+describe("Electron autoupdate (fresh install & update)", { sequential: true }, () => {
+  // can test on x64 and also arm64 (via rosetta)
+  test.ifMac("mac - x64", async context => {
+    await runTest(context, "zip", "", Arch.x64)
   })
-  afterAll(() => {
-    delete process.env.AUTO_UPDATER_TEST
+  test.ifMac("mac - universal", async context => {
+    await runTest(context, "zip", "", Arch.universal)
   })
-
-  // Signing is required for macOS autoupdate
-  test.ifMac.ifEnv(process.env.CSC_KEY_PASSWORD)("mac", async context => {
-    await runTest(context, "mac", "zip")
+  // only will update on arm64 mac
+  test.ifMac.ifEnv(process.arch === "arm64")("mac - arm64", async context => {
+    await runTest(context, "zip", "", Arch.arm64)
   })
 
   test.ifWindows("win", async context => {
-    await runTest(context, "nsis", "nsis")
+    await runTest(context, "nsis", "", Arch.x64)
   })
 
   // must be sequential in order for process.env.ELECTRON_BUILDER_LINUX_PACKAGE_MANAGER to be respected per-test
@@ -91,7 +91,7 @@ async function runTest(context: TestContext, target: string, packageManager: str
 
   const tmpDir = new TmpDir("auto-update")
   const outDirs: ApplicationUpdatePaths[] = []
-  await doBuild(expect, outDirs, Platform.current().createTarget([target], arch), tmpDir, process.platform === "win32")
+  await doBuild(expect, outDirs, target, arch, tmpDir, process.platform === "win32")
 
   const oldAppDir = outDirs[0]
   const newAppDir = outDirs[1]
@@ -151,23 +151,33 @@ type ApplicationUpdatePaths = {
 async function doBuild(
   expect: ExpectStatic,
   outDirs: Array<ApplicationUpdatePaths>,
-  targets: Map<Platform, Map<Arch, Array<string>>>,
+  target: string,
+  arch: Arch,
   tmpDir: TmpDir,
   isWindows: boolean,
   extraConfig?: Configuration | null
 ) {
-  async function buildApp(
-    version: string,
-    targets: Map<Platform, Map<Arch, Array<string>>>,
-    extraConfig: Configuration | Nullish,
+  const currentPlatform = Platform.current()
+  async function buildApp({
+    version,
+    target,
+    arch,
+    extraConfig,
+    packed,
+  }: {
+    version: string
+    target: string
+    arch: Arch
+    extraConfig: Configuration | Nullish
     packed: (context: PackedContext) => Promise<any>
-  ) {
+  }) {
     await assertPack(
       expect,
       "test-app",
       {
-        targets,
+        targets: currentPlatform.createTarget(target, arch),
         config: {
+          npmRebuild: true,
           productName: "TestApp",
           executableName: "TestApp",
           appId: "com.test.app",
@@ -196,65 +206,60 @@ async function doBuild(
       },
       {
         storeDepsLockfileSnapshot: false,
-        signed: true,
+        signed: !isWindows,
         signedWin: isWindows,
         packed,
-        projectDirCreated: async projectDir => {
-          await Promise.all([
-            outputFile(path.join(projectDir, "package-lock.json"), "{}"),
-            outputFile(path.join(projectDir, ".npmrc"), "node-linker=hoisted"),
-            modifyPackageJson(
-              projectDir,
-              data => {
-                data.devDependencies = {
-                  electron: ELECTRON_VERSION,
-                }
-                data.dependencies = {
-                  ...data.dependencies,
-                  "@electron/remote": "^2.1.2", // for debugging live application with GUI so that app.getVersion is accessible in renderer process
-                  "electron-updater": `file:${__dirname}/../../../packages/electron-updater`,
-                }
-                data.pnpm = {
-                  overrides: {
-                    "builder-util-runtime": `file:${__dirname}/../../../packages/builder-util-runtime`,
-                  },
-                }
-              },
-              true
-            ),
-            modifyPackageJson(
-              projectDir,
-              data => {
-                data.devDependencies = {
-                  electron: ELECTRON_VERSION,
-                }
-                data.dependencies = {
-                  ...data.dependencies,
-                  "@electron/remote": "^2.1.2", // for debugging live application with GUI so that app.getVersion is accessible in renderer process
-                  "electron-updater": `file:${__dirname}/../../../packages/electron-updater`,
-                }
-                data.pnpm = {
-                  overrides: {
-                    "builder-util-runtime": `file:${__dirname}/../../../packages/builder-util-runtime`,
-                  },
-                }
-              },
-              false
-            ),
-          ])
-          execSync("npm install", { cwd: projectDir, stdio: "inherit" })
+        projectDirCreated: async (projectDir, _tmpDir, runtimeEnv) => {
+          await outputFile(path.join(projectDir, "package-lock.json"), "{}")
+          await outputFile(path.join(projectDir, ".npmrc"), "node-linker=hoisted")
+
+          await modifyPackageJson(
+            projectDir,
+            data => {
+              data.devDependencies = {
+                electron: ELECTRON_VERSION,
+                "node-addon-api": "^8",
+              }
+              data.dependencies = {
+                ...data.dependencies,
+                "@electron/remote": "2.1.2", // for debugging live application with GUI so that app.getVersion is accessible in renderer process
+                "electron-updater": `file:${__dirname}/../../../packages/electron-updater`,
+                sqlite3: "5.1.7",
+              }
+            },
+            true
+          )
+          await modifyPackageJson(
+            projectDir,
+            data => {
+              data.pnpm = {
+                supportedArchitectures: {
+                  os: ["current"],
+                  cpu: ["x64", "arm64"],
+                },
+              }
+            },
+            false
+          )
+          await spawn("npm", ["install"], { cwd: projectDir, stdio: "ignore", env: runtimeEnv })
         },
       }
     )
   }
 
   const build = (version: string) =>
-    buildApp(version, targets, extraConfig, async context => {
-      // move dist temporarily out of project dir so each downloader can reference it
-      const dir = await tmpDir.getTempDir({ prefix: version })
-      await fs.move(context.outDir, dir)
-      const appPath = path.join(dir, path.relative(context.outDir, context.getAppPath(Platform.current(), archFromString(process.arch))))
-      outDirs.push({ dir, appPath })
+    buildApp({
+      version,
+      target,
+      arch,
+      extraConfig,
+      packed: async context => {
+        // move dist temporarily out of project dir so each downloader can reference it
+        const dir = await tmpDir.getTempDir({ prefix: version })
+        await fs.move(context.outDir, dir)
+        const appPath = path.join(dir, path.relative(context.outDir, context.getAppPath(Platform.current(), archFromString(process.arch))))
+        outDirs.push({ dir, appPath })
+      },
     })
   try {
     await build(OLD_VERSION_NUMBER)
@@ -354,8 +359,8 @@ async function runTestWithinServer(doTest: (rootDirectory: string, updateConfigP
   // Math.random() / Math.random() is used to avoid zero
   // Math.floor(((Math.random() / Math.random()) * 1000) % 65535) is used to avoid port number collision
   const port = 8000 + Math.floor(((Math.random() / Math.random()) * 1000) % 65535)
-  const serverBin = await getBinFromUrl("ran-0.1.3", "ran-0.1.3.7z", "imfA3LtT6umMM0BuQ29MgO3CJ9uleN5zRBi3sXzcTbMOeYZ6SQeN7eKr3kXZikKnVOIwbH+DDO43wkiR/qTdkg==")
-  const httpServerProcess = doSpawn(path.join(serverBin, process.platform, "ran"), [`-root=${root}`, `-port=${port}`, "-gzip=false", "-listdir=true"])
+  const serverBin = await getRanLocalServerPath()
+  const httpServerProcess = doSpawn(serverBin, [`-root=${root}`, `-port=${port}`, "-gzip=false", "-listdir=true"])
 
   const updateConfig = await writeUpdateConfig<GenericServerOptions>({
     provider: "generic",

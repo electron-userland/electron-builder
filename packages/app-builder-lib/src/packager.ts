@@ -15,7 +15,7 @@ import {
   serializeToYaml,
   TmpDir,
 } from "builder-util"
-import { CancellationToken } from "builder-util-runtime"
+import { CancellationToken, retry } from "builder-util-runtime"
 import { chmod, mkdirs, outputFile } from "fs-extra"
 import { isCI } from "ci-info"
 import { Lazy } from "lazy-val"
@@ -435,7 +435,26 @@ export class Packager {
       }
     })
 
-    this.disposeOnBuildFinish(() => this.tempDirManager.cleanup())
+    this.disposeOnBuildFinish(() =>
+      retry(() => this.tempDirManager.cleanup(), {
+        retries: 2,
+        interval: 2000,
+        backoff: 2000,
+        cancellationToken: this.cancellationToken,
+        shouldRetry: e => {
+          const message: string = e?.message || ""
+          const code = e?.code
+          // windows file locks
+          const resourceIsBusy = message.includes("EBUSY") || code === "EBUSY"
+          if (resourceIsBusy) {
+            log.debug({ error: message || code }, "retrying temporary directory cleanup")
+            return true
+          }
+          return false
+        },
+      })
+    )
+
     const platformToTargets = await executeFinally(this.doBuild(), async () => {
       if (this.debugLogger.isEnabled) {
         await this.debugLogger.save(path.join(commonOutDirWithoutPossibleOsMacro, "builder-debug.yml"))

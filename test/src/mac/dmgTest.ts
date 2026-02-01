@@ -11,15 +11,14 @@ const dmgTarget = Platform.MAC.createTarget("dmg", Arch.x64)
 const defaultTarget = Platform.MAC.createTarget(undefined, Arch.x64)
 
 describe("dmg", { concurrent: true }, () => {
-  test.ifMac("dmg", ({ expect }) =>
+  test("dmg", ({ expect }) =>
     app(expect, {
       targets: dmgTarget,
       config: {
         productName: "Default-Dmg",
         publish: null,
       },
-    })
-  )
+    }))
 
   test.ifMac("no build directory", ({ expect }) =>
     app(
@@ -82,6 +81,54 @@ describe("dmg", { concurrent: true }, () => {
     })
   )
 
+  test.ifMac("explicit size", ({ expect }) =>
+    app(
+      expect,
+      {
+        targets: dmgTarget,
+        config: {
+          // dmg can mount only one volume name, so, to test in parallel, we set different product name
+          productName: "ExplicitSize",
+          publish: null,
+          dmg: {
+            size: "500m",
+            shrink: false,
+            // speed-up test
+            writeUpdateInfo: false,
+            title: "Explicit Size",
+          },
+        },
+        effectiveOptionComputed: async it => {
+          // effectiveOptionComputed is called multiple times with different payloads
+          // Only check specification when volumePath is present (first call from customizeDmg)
+          if (!("volumePath" in it)) {
+            return false
+          }
+          expect(it.specification.size).toEqual("500m")
+          expect(it.specification.shrink).toEqual(false)
+          return Promise.resolve(false)
+        },
+      },
+      {
+        packed: context => {
+          return attachAndExecute(path.join(context.outDir, "ExplicitSize-1.1.0.dmg"), false, true, async volumePath => {
+            // Verify filesystem size using Node.js statfs (more robust than parsing df output)
+            const stats = await fs.statfs(volumePath)
+            const totalBytes = stats.bsize * stats.blocks
+
+            // 500m should give ~524,288,000 bytes (500 * 1024 * 1024)
+            // Allow margin for filesystem overhead (450MB to 600MB)
+            const minBytes = 450 * 1024 * 1024
+            const maxBytes = 600 * 1024 * 1024
+
+            expect(totalBytes).toBeGreaterThan(minBytes)
+            expect(totalBytes).toBeLessThan(maxBytes)
+          })
+        },
+      }
+    )
+  )
+
   test.ifMac("custom background - new way", ({ expect }) => {
     const customBackground = "customBackground.png"
     return assertPack(
@@ -139,6 +186,7 @@ describe("dmg", { concurrent: true }, () => {
           publish: null,
           dmg: {
             title: "Retina Background",
+            badgeIcon: "foo.icns",
           },
         },
         effectiveOptionComputed: async it => {
@@ -150,6 +198,7 @@ describe("dmg", { concurrent: true }, () => {
         projectDirCreated: async projectDir => {
           const resourceDir = path.join(projectDir, "build")
           await copyFile(path.join(getDmgTemplatePath(), "background.tiff"), path.join(resourceDir, "background.tiff"))
+          await copyFile(path.join(projectDir, "build", "icon.icns"), path.join(projectDir, "foo.icns"))
 
           async function extractPng(index: number, suffix: string) {
             await exec("tiffutil", ["-extract", index.toString(), path.join(getDmgTemplatePath(), "background.tiff")], {
@@ -224,7 +273,7 @@ describe("dmg", { concurrent: true }, () => {
       },
       {
         packed: context => {
-          return attachAndExecute(path.join(context.outDir, "No_Volume_Icon-1.1.0.dmg"), false, () => {
+          return attachAndExecute(path.join(context.outDir, "No_Volume_Icon-1.1.0.dmg"), false, true, () => {
             return Promise.all([
               assertThat(expect, path.join("/Volumes/No_Volume_Icon 1.1.0/.background.tiff")).isFile(),
               assertThat(expect, path.join("/Volumes/No_Volume_Icon 1.1.0/.VolumeIcon.icns")).doesNotExist(),
@@ -253,7 +302,7 @@ describe("dmg", { concurrent: true }, () => {
       },
       {
         packed: context => {
-          return attachAndExecute(path.join(context.outDir, "No-Background-1.1.0.dmg"), false, () => {
+          return attachAndExecute(path.join(context.outDir, "No-Background-1.1.0.dmg"), false, true, () => {
             return assertThat(expect, path.join("/Volumes/No-Background 1.1.0/.background.tiff")).doesNotExist()
           })
         },

@@ -1,5 +1,11 @@
 # builder-util
 
+## 26.4.1
+
+### Patch Changes
+
+- Chore: migrating manual Node Module collector to seperate filesystem traversal class _[`#9440`](https://github.com/electron-userland/electron-builder/pull/9440) [`97e5503`](https://github.com/electron-userland/electron-builder/commit/97e5503cecfcdfd9dddf1c4b321d52b5d5a94f83) [@mmaietta](https://github.com/mmaietta)_
+
 ## 26.3.4
 
 ### Patch Changes

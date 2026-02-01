@@ -56,7 +56,7 @@ test.ifDevOrLinuxCi("default stagePackages", async ({ expect }) => {
         delete snap.parts.app.source
         expect(snap).toMatchSnapshot()
         expect(args).not.toContain("--exclude")
-        return true
+        return Promise.resolve(true)
       },
     })
   }
@@ -94,7 +94,7 @@ test.ifDevOrLinuxCi("buildPackages", async ({ expect }) => {
     effectiveOptionComputed: async ({ snap }) => {
       delete snap.parts.app.source
       expect(snap).toMatchSnapshot()
-      return true
+      return Promise.resolve(true)
     },
   })
 })
@@ -131,7 +131,7 @@ test.ifDevOrLinuxCi("plugs option", async ({ expect }) => {
         delete snap.parts.app.source
         expect(snap).toMatchSnapshot()
         expect(args).not.toContain("--exclude")
-        return true
+        return Promise.resolve(true)
       },
     })
   }
@@ -161,9 +161,9 @@ test.ifDevOrLinuxCi("slots option", async ({ expect }) => {
           slots,
         },
       },
-      effectiveOptionComputed: async ({ snap, args }) => {
+      effectiveOptionComputed: async ({ snap }) => {
         expect(snap).toMatchSnapshot()
-        return true
+        return Promise.resolve(true)
       },
     })
   }
@@ -185,7 +185,7 @@ test.ifDevOrLinuxCi("custom env", ({ expect }) =>
     },
     effectiveOptionComputed: async ({ snap }) => {
       expect(snap).toMatchSnapshot()
-      return true
+      return Promise.resolve(true)
     },
   })
 )
@@ -204,7 +204,7 @@ test.ifDevOrLinuxCi("custom after, no desktop", ({ expect }) =>
     },
     effectiveOptionComputed: async ({ snap }) => {
       expect(snap).toMatchSnapshot()
-      return true
+      return Promise.resolve(true)
     },
   })
 )
@@ -224,7 +224,7 @@ test.ifDevOrLinuxCi("no desktop plugs", ({ expect }) =>
     effectiveOptionComputed: async ({ snap, args }) => {
       expect(snap).toMatchSnapshot()
       expect(args).toContain("--exclude")
-      return true
+      return Promise.resolve(true)
     },
   })
 )
@@ -241,10 +241,10 @@ test.ifDevOrLinuxCi("auto start", ({ expect }) =>
         autoStart: true,
       },
     },
-    effectiveOptionComputed: async ({ snap, args }) => {
+    effectiveOptionComputed: async ({ snap }) => {
       expect(snap).toMatchSnapshot()
       expect(snap.apps.sep.autostart).toEqual("sep.desktop")
-      return true
+      return Promise.resolve(true)
     },
   })
 )
@@ -258,9 +258,9 @@ test.ifDevOrLinuxCi("default compression", ({ expect }) =>
       },
       productName: "Sep",
     },
-    effectiveOptionComputed: async ({ snap, args }) => {
+    effectiveOptionComputed: async ({ snap }) => {
       expect(snap).toMatchSnapshot()
-      return true
+      return Promise.resolve(true)
     },
   })
 )
@@ -282,7 +282,7 @@ test.ifDevOrLinuxCi("compression option", ({ expect }) =>
       expect(snap).toMatchSnapshot()
       expect(snap.compression).toBe("xz")
       expect(args).toEqual(expect.arrayContaining(["--compression", "xz"]))
-      return true
+      return Promise.resolve(true)
     },
   })
 )
@@ -296,7 +296,7 @@ test.ifDevOrLinuxCi("default base", ({ expect }) =>
     effectiveOptionComputed: async ({ snap }) => {
       expect(snap).toMatchSnapshot()
       expect(snap.base).toBe("core20")
-      return true
+      return Promise.resolve(true)
     },
   })
 )
@@ -313,7 +313,7 @@ test.ifDevOrLinuxCi("base option", ({ expect }) =>
     effectiveOptionComputed: async ({ snap }) => {
       expect(snap).toMatchSnapshot()
       expect(snap.base).toBe("core22")
-      return true
+      return Promise.resolve(true)
     },
   })
 )
@@ -338,7 +338,7 @@ test.ifDevOrLinuxCi("use template app", ({ expect }) =>
       expect(snap["source-code"]).toBeUndefined()
       expect(snap.website).toBeUndefined()
       expect(args).toEqual(expect.arrayContaining(["--exclude", "chrome-sandbox", "--compression", "xz"]))
-      return true
+      return Promise.resolve(true)
     },
   })
 )

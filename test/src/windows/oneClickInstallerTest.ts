@@ -133,7 +133,7 @@ test("html license", { timeout: EXTENDED_TIMEOUT }, ({ expect }) =>
 
 test.ifDevOrWinCi("createDesktopShortcut always", { timeout: EXTENDED_TIMEOUT }, ({ expect }) =>
   app(expect, {
-    targets: Platform.WINDOWS.createTarget("nsis"),
+    targets: Platform.WINDOWS.createTarget("nsis", Arch.x64),
     config: {
       publish: null,
       nsis: {

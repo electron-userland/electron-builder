@@ -695,30 +695,6 @@ exports[`yarn two package.json w/ native module 3`] = `
             "LICENSE": {
               "size": "<size>",
             },
-            "dist": {
-              "files": {
-                "debug.js": {
-                  "size": "<size>",
-                },
-              },
-            },
-            "node_modules": {
-              "files": {
-                "ms": {
-                  "files": {
-                    "index.js": {
-                      "size": "<size>",
-                    },
-                    "license.md": {
-                      "size": "<size>",
-                    },
-                    "package.json": {
-                      "size": "<size>",
-                    },
-                  },
-                },
-              },
-            },
             "package.json": {
               "size": "<size>",
             },
@@ -860,22 +836,6 @@ exports[`yarn two package.json w/ native module 3`] = `
             },
             "node_modules": {
               "files": {
-                "bindings": {
-                  "files": {
-                    "LICENSE.md": {
-                      "size": "<size>",
-                      "unpacked": true,
-                    },
-                    "bindings.js": {
-                      "size": "<size>",
-                      "unpacked": true,
-                    },
-                    "package.json": {
-                      "size": "<size>",
-                      "unpacked": true,
-                    },
-                  },
-                },
                 "node-addon-api": {
                   "files": {
                     "LICENSE.md": {
@@ -1546,90 +1506,6 @@ exports[`yarn two package.json w/ native module 3`] = `
                 },
               },
             },
-            "node_modules": {
-              "files": {
-                "node-addon-api": {
-                  "files": {
-                    "LICENSE.md": {
-                      "size": "<size>",
-                      "unpacked": true,
-                    },
-                    "common.gypi": {
-                      "size": "<size>",
-                      "unpacked": true,
-                    },
-                    "except.gypi": {
-                      "size": "<size>",
-                      "unpacked": true,
-                    },
-                    "index.js": {
-                      "size": "<size>",
-                      "unpacked": true,
-                    },
-                    "napi-inl.deprecated.h": {
-                      "size": "<size>",
-                      "unpacked": true,
-                    },
-                    "napi-inl.h": {
-                      "size": "<size>",
-                      "unpacked": true,
-                    },
-                    "napi.h": {
-                      "size": "<size>",
-                      "unpacked": true,
-                    },
-                    "node_addon_api.gyp": {
-                      "size": "<size>",
-                      "unpacked": true,
-                    },
-                    "node_api.gyp": {
-                      "size": "<size>",
-                      "unpacked": true,
-                    },
-                    "noexcept.gypi": {
-                      "size": "<size>",
-                      "unpacked": true,
-                    },
-                    "nothing.c": {
-                      "size": "<size>",
-                      "unpacked": true,
-                    },
-                    "package-support.json": {
-                      "size": "<size>",
-                      "unpacked": true,
-                    },
-                    "package.json": {
-                      "size": "<size>",
-                      "unpacked": true,
-                    },
-                    "tools": {
-                      "files": {
-                        "README.md": {
-                          "size": "<size>",
-                          "unpacked": true,
-                        },
-                        "check-napi.js": {
-                          "size": "<size>",
-                          "unpacked": true,
-                        },
-                        "clang-format.js": {
-                          "size": "<size>",
-                          "unpacked": true,
-                        },
-                        "conversion.js": {
-                          "size": "<size>",
-                          "unpacked": true,
-                        },
-                        "eslint-format.js": {
-                          "size": "<size>",
-                          "unpacked": true,
-                        },
-                      },
-                    },
-                  },
-                },
-              },
-            },
             "package.json": {
               "size": "<size>",
               "unpacked": true,
@@ -1827,63 +1703,6 @@ exports[`yarn two package.json w/ native module 4`] = `
   "app.asar.unpacked/node_modules/node-pty/src/shared/conout.ts",
   "app.asar.unpacked/node_modules/node-pty/scripts/post-install.js",
   "app.asar.unpacked/node_modules/node-pty/scripts/publish.js",
-  "app.asar.unpacked/node_modules/node-pty/node_modules/node-addon-api/LICENSE.md",
-  "app.asar.unpacked/node_modules/node-pty/node_modules/node-addon-api/common.gypi",
-  "app.asar.unpacked/node_modules/node-pty/node_modules/node-addon-api/except.gypi",
-  "app.asar.unpacked/node_modules/node-pty/node_modules/node-addon-api/index.js",
-  "app.asar.unpacked/node_modules/node-pty/node_modules/node-addon-api/napi-inl.deprecated.h",
-  "app.asar.unpacked/node_modules/node-pty/node_modules/node-addon-api/napi-inl.h",
-  "app.asar.unpacked/node_modules/node-pty/node_modules/node-addon-api/napi.h",
-  "app.asar.unpacked/node_modules/node-pty/node_modules/node-addon-api/node_addon_api.gyp",
-  "app.asar.unpacked/node_modules/node-pty/node_modules/node-addon-api/node_api.gyp",
-  "app.asar.unpacked/node_modules/node-pty/node_modules/node-addon-api/noexcept.gypi",
-  "app.asar.unpacked/node_modules/node-pty/node_modules/node-addon-api/nothing.c",
-  "app.asar.unpacked/node_modules/node-pty/node_modules/node-addon-api/package-support.json",
-  {
-    "content": "{
-  "description": "Node.js API (Node-API)",
-  "devDependencies": {
-    "benchmark": "^2.1.4",
-    "bindings": "^1.5.0",
-    "clang-format": "^1.4.0",
-    "eslint": "^7.32.0",
-    "eslint-config-semistandard": "^16.0.0",
-    "eslint-config-standard": "^16.0.3",
-    "eslint-plugin-import": "^2.24.2",
-    "eslint-plugin-node": "^11.1.0",
-    "eslint-plugin-promise": "^5.1.0",
-    "fs-extra": "^11.1.1",
-    "path": "^0.12.7",
-    "pre-commit": "^1.2.2",
-    "safe-buffer": "^5.1.1"
-  },
-  "directories": {},
-  "gypfile": false,
-  "homepage": "https://github.com/nodejs/node-addon-api",
-  "license": "MIT",
-  "main": "index.js",
-  "name": "node-addon-api",
-  "readme": "README.md",
-  "repository": {
-    "type": "git",
-    "url": "git://github.com/nodejs/node-addon-api.git"
-  },
-  "files": [
-    "*.{c,h,gyp,gypi}",
-    "package-support.json",
-    "tools/"
-  ],
-  "pre-commit": "lint",
-  "version": "7.1.1",
-  "support": true
-}",
-    "name": "app.asar.unpacked/node_modules/node-pty/node_modules/node-addon-api/package.json",
-  },
-  "app.asar.unpacked/node_modules/node-pty/node_modules/node-addon-api/tools/README.md",
-  "app.asar.unpacked/node_modules/node-pty/node_modules/node-addon-api/tools/check-napi.js",
-  "app.asar.unpacked/node_modules/node-pty/node_modules/node-addon-api/tools/clang-format.js",
-  "app.asar.unpacked/node_modules/node-pty/node_modules/node-addon-api/tools/conversion.js",
-  "app.asar.unpacked/node_modules/node-pty/node_modules/node-addon-api/tools/eslint-format.js",
   "app.asar.unpacked/node_modules/node-pty/lib/conpty_console_list_agent.js",
   "app.asar.unpacked/node_modules/node-pty/lib/conpty_console_list_agent.js.map",
   "app.asar.unpacked/node_modules/node-pty/lib/eventEmitter2.js",
@@ -2104,27 +1923,6 @@ exports[`yarn two package.json w/ native module 4`] = `
   "app.asar.unpacked/node_modules/node-mac-permissions/node_modules/node-addon-api/tools/check-napi.js",
   "app.asar.unpacked/node_modules/node-mac-permissions/node_modules/node-addon-api/tools/clang-format.js",
   "app.asar.unpacked/node_modules/node-mac-permissions/node_modules/node-addon-api/tools/conversion.js",
-  "app.asar.unpacked/node_modules/node-mac-permissions/node_modules/bindings/LICENSE.md",
-  "app.asar.unpacked/node_modules/node-mac-permissions/node_modules/bindings/bindings.js",
-  {
-    "content": "{
-  "name": "bindings",
-  "description": "Helper module for loading your native module's .node file",
-  "version": "1.5.0",
-  "author": "Nathan Rajlich <nathan@tootallnate.net> (http://tootallnate.net)",
-  "repository": {
-    "type": "git",
-    "url": "git://github.com/TooTallNate/node-bindings.git"
-  },
-  "main": "./bindings.js",
-  "homepage": "https://github.com/TooTallNate/node-bindings",
-  "license": "MIT",
-  "dependencies": {
-    "file-uri-to-path": "1.0.0"
-  }
-}",
-    "name": "app.asar.unpacked/node_modules/node-mac-permissions/node_modules/bindings/package.json",
-  },
   "app.asar.unpacked/node_modules/node-mac-permissions/build/Release/permissions.node",
 ]
 `;

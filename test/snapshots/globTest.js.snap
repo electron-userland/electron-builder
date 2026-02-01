@@ -15,16 +15,16 @@ exports[`asarUnpack and files ignore 2`] = `
     },
     "index.js": {
       "offset": "486",
-      "size": 3013,
+      "size": 3116,
     },
     "package.json": {
-      "offset": "3499",
+      "offset": "3602",
       "size": 224,
     },
     "path": {
       "files": {
         "app.asar": {
-          "offset": "3723",
+          "offset": "3826",
           "size": 714,
         },
       },
@@ -61,10 +61,8 @@ exports[`asarUnpack node_modules 2`] = `
           "unpacked": true,
         },
       },
-      "unpacked": true,
     },
   },
-  "unpacked": true,
 }
 `;
 
@@ -8082,12 +8080,6 @@ exports[`failed peer dep 2`] = `
             "first.js": {
               "size": "<size>",
             },
-            "flake.lock": {
-              "size": "<size>",
-            },
-            "flake.nix": {
-              "size": "<size>",
-            },
             "flatMap.js": {
               "size": "<size>",
             },
@@ -9794,9 +9786,6 @@ exports[`failed peer dep 2`] = `
               "size": "<size>",
             },
             "reject.js": {
-              "size": "<size>",
-            },
-            "release.md": {
               "size": "<size>",
             },
             "remove.js": {
@@ -13349,12 +13338,6 @@ exports[`failed peer dep 2`] = `
                     "first.js": {
                       "size": "<size>",
                     },
-                    "flake.lock": {
-                      "size": "<size>",
-                    },
-                    "flake.nix": {
-                      "size": "<size>",
-                    },
                     "flatMap.js": {
                       "size": "<size>",
                     },
@@ -15061,9 +15044,6 @@ exports[`failed peer dep 2`] = `
                       "size": "<size>",
                     },
                     "reject.js": {
-                      "size": "<size>",
-                    },
-                    "release.md": {
                       "size": "<size>",
                     },
                     "remove.js": {
@@ -28941,10 +28921,8 @@ exports[`unpackDir 2`] = `
               "unpacked": true,
             },
           },
-          "unpacked": true,
         },
       },
-      "unpacked": true,
     },
     "b2": {
       "files": {
@@ -28953,7 +28931,6 @@ exports[`unpackDir 2`] = `
           "unpacked": true,
         },
       },
-      "unpacked": true,
     },
     "do-not-unpack-dir": {
       "files": {
@@ -28992,16 +28969,16 @@ exports[`unpackDir 2`] = `
     },
     "index.js": {
       "offset": "490",
-      "size": 3013,
+      "size": 3116,
     },
     "package.json": {
-      "offset": "3503",
+      "offset": "3606",
       "size": 224,
     },
     "path": {
       "files": {
         "app.asar": {
-          "offset": "3727",
+          "offset": "3830",
           "size": 714,
         },
       },
@@ -29060,10 +29037,8 @@ exports[`unpackDir one 2`] = `
               "unpacked": true,
             },
           },
-          "unpacked": true,
         },
       },
-      "unpacked": true,
     },
     "b2": {
       "files": {
@@ -29072,7 +29047,6 @@ exports[`unpackDir one 2`] = `
           "unpacked": true,
         },
       },
-      "unpacked": true,
     },
     "do-not-unpack-dir": {
       "files": {

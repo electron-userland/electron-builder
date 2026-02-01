@@ -1,11 +1,11 @@
 import { Platform } from "app-builder-lib"
 import { PM } from "app-builder-lib/src/node-module-collector"
-import { execSync } from "child_process"
 import { copyFile, outputFile, rm, writeFile } from "fs-extra"
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert"
 import { app, assertPack, getFixtureDir, getPackageManagerWithVersion, linuxDirTarget, modifyPackageJson, verifyAsarFileTree } from "./helpers/packTester"
 import { ELECTRON_VERSION } from "./helpers/testConfig"
+import { spawn } from "builder-util"
 
 const yarnVersion = getPackageManagerWithVersion(PM.YARN).prepareEntry
 const yarnBerryVersion = getPackageManagerWithVersion(PM.YARN_BERRY).prepareEntry
@@ -35,7 +35,7 @@ test("yarn", ({ expect }) =>
     {
       storeDepsLockfileSnapshot: true,
       packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
-      projectDirCreated: async projectDir => {
+      projectDirCreated: async (projectDir, _tmpDir, testEnv) => {
         await modifyPackageJson(
           projectDir,
           data => {
@@ -48,8 +48,16 @@ test("yarn", ({ expect }) =>
         await writeFile(path.join(projectDir, "app", "yarn.lock"), "")
         await copyFile(path.join(getFixtureDir(), ".pnp.cjs"), path.join(projectDir, ".pnp.cjs"))
         await rm(path.join(projectDir, ".yarnrc.yml"))
-        execSync("yarn install", { cwd: projectDir, stdio: "inherit" })
-        execSync("yarn install", { cwd: path.join(projectDir, "app"), stdio: "inherit" })
+        await spawn("yarn", ["install"], {
+          cwd: projectDir,
+          env: testEnv,
+          stdio: "ignore",
+        })
+        await spawn("yarn", ["install"], {
+          cwd: path.join(projectDir, "app"),
+          env: testEnv,
+          stdio: "ignore",
+        })
       },
     }
   ))
@@ -64,7 +72,7 @@ test("yarn berry", ({ expect }) =>
     {
       storeDepsLockfileSnapshot: true,
       packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
-      projectDirCreated: async projectDir => {
+      projectDirCreated: async (projectDir, _tmpDir, testEnv) => {
         await modifyPackageJson(
           projectDir,
           data => {
@@ -76,6 +84,16 @@ test("yarn berry", ({ expect }) =>
         await writeFile(path.join(projectDir, "yarn.lock"), "")
         await writeFile(path.join(projectDir, "app", "yarn.lock"), "")
         await copyFile(path.join(getFixtureDir(), ".pnp.cjs"), path.join(projectDir, ".pnp.cjs"))
+        await spawn("yarn", ["install"], {
+          cwd: projectDir,
+          env: testEnv,
+          stdio: "ignore",
+        })
+        await spawn("yarn", ["install"], {
+          cwd: path.join(projectDir, "app"),
+          env: testEnv,
+          stdio: "ignore",
+        })
       },
     }
   ))
@@ -142,7 +160,7 @@ test("yarn multi-package workspace", ({ expect }) =>
     }
   ))
 
- // yarn berry multi-package workspace
+// yarn berry multi-package workspace
 test("yarn berry multi-package workspace", ({ expect }) =>
   assertPack(
     expect,
@@ -238,8 +256,7 @@ test("bun workspace --linker=isolated", ({ expect }) =>
       },
       packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
     }
-  )
-)
+  ))
 
 test("bun workspace --linker=isolated - multiple conflicting versions", ({ expect }) =>
   assertPack(
@@ -281,8 +298,7 @@ test("bun workspace --linker=isolated - multiple conflicting versions", ({ expec
       },
       packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
     }
-  )
-)
+  ))
 
 test("bun workspace --linker=hoisted", ({ expect }) =>
   assertPack(
@@ -322,8 +338,7 @@ test("bun workspace --linker=hoisted", ({ expect }) =>
       },
       packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
     }
-  )
-)
+  ))
 
 test("bun workspace --linker=hoisted - multiple conflicting versions", ({ expect }) =>
   assertPack(
@@ -367,6 +382,71 @@ test("bun workspace --linker=hoisted - multiple conflicting versions", ({ expect
     }
   ))
 
+test("traversal hoisted", ({ expect }) =>
+  assertPack(
+    expect,
+    "test-app-yarn-hoisted",
+    {
+      targets: linuxDirTarget,
+    },
+    {
+      packageManager: PM.TRAVERSAL,
+      packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
+      projectDirCreated: async projectDir => {
+        await modifyPackageJson(
+          projectDir,
+          data => {
+            data.packageManager = yarnBerryVersion
+          },
+          false
+        )
+        await modifyPackageJson(projectDir, data => packageConfig(data, yarnBerryVersion), true)
+        await writeFile(path.join(projectDir, "yarn.lock"), "")
+        await writeFile(path.join(projectDir, "app", "yarn.lock"), "")
+      },
+    }
+  ))
+
+test("traversal workspace", ({ expect }) =>
+  assertPack(
+    expect,
+    "test-app-yarn-workspace",
+    {
+      targets: linuxDirTarget,
+      projectDir: "packages/test-app",
+    },
+    {
+      packageManager: PM.TRAVERSAL,
+      packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
+      projectDirCreated: async projectDir => {
+        await modifyPackageJson(projectDir, data => {
+          data.packageManager = yarnBerryVersion
+        })
+        await modifyPackageJson(path.join(projectDir, "packages", "test-app"), data => packageConfig(data, yarnBerryVersion))
+      },
+    }
+  ))
+
+test("traversal multi-package workspace", ({ expect }) =>
+  assertPack(
+    expect,
+    "test-app-yarn-several-workspace",
+    {
+      targets: linuxDirTarget,
+      projectDir: "packages/test-app",
+    },
+    {
+      packageManager: PM.TRAVERSAL,
+      packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
+      projectDirCreated: async projectDir => {
+        await modifyPackageJson(projectDir, data => {
+          data.packageManager = yarnBerryVersion
+        })
+        await modifyPackageJson(path.join(projectDir, "packages", "test-app"), data => packageConfig(data, yarnVersion))
+      },
+    }
+  ))
+
 // Test for local file:// protocol
 
 Object.values(PM)
@@ -386,14 +466,18 @@ Object.values(PM)
         {
           storeDepsLockfileSnapshot: false,
           packageManager: pm,
-          projectDirCreated: async (projectDir, tmpDir) => {
+          projectDirCreated: async (projectDir, tmpDir, testEnv) => {
             const tempDir = await tmpDir.getTempDir()
             const localPath = path.join(tempDir, "foo")
             await outputFile(path.join(localPath, "package.json"), `{"name":"foo","version":"9.0.0","main":"index.js","license":"MIT","dependencies":{"ms":"2.0.0"}}`)
             await outputFile(path.join(localPath, "index.js"), `module.exports = require("ms")`)
 
             const pmCommand = getPackageManagerWithVersion(pm).cli
-            execSync(`${pmCommand} install`, { cwd: localPath, stdio: "inherit", env: { ...process.env, YARN_ENABLE_IMMUTABLE_INSTALLS: "false" } })
+            await spawn(pmCommand, ["install"], {
+              cwd: projectDir,
+              env: { ...testEnv, YARN_ENABLE_IMMUTABLE_INSTALLS: "false" },
+              stdio: "ignore",
+            })
             await modifyPackageJson(projectDir, data => {
               data.dependencies = {
                 foo: `file:${localPath}`,
@@ -401,7 +485,11 @@ Object.values(PM)
             })
 
             //`localPath` is dynamic and changes for every which causes `--frozen-lockfile` and `npm ci` to fail
-            execSync(`${pmCommand} install`, { cwd: projectDir, stdio: "inherit", env: { ...process.env, YARN_ENABLE_IMMUTABLE_INSTALLS: "false" } })
+            await spawn(pmCommand, ["install"], {
+              cwd: projectDir,
+              env: { ...testEnv, YARN_ENABLE_IMMUTABLE_INSTALLS: "false" },
+              stdio: "ignore",
+            })
           },
           packed: async context => {
             const resources = context.getResources(Platform.LINUX)

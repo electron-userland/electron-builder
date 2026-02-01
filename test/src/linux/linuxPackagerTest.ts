@@ -163,7 +163,7 @@ test.ifNotWindows.ifNotCiMac("AppImage - default icon, custom executable and cus
             .filter(it => !it.includes("X-AppImage-BuildId") && !it.includes("X-AppImage-Version"))
             .join("\n")
         ).toMatchSnapshot()
-        return false
+        return Promise.resolve(false)
       },
     },
     {

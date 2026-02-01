@@ -5,8 +5,9 @@ on:
     branches:
       - master
 
-env:
-  HUSKY: 0 # Bypass husky commit hook for CI
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
 
 permissions: {}
 
@@ -19,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           # This makes Actions fetch all Git history so that Changesets can generate changelogs with the correct commits
           fetch-depth: 0
@@ -29,19 +30,114 @@ jobs:
         uses: ./.github/actions/pnpm
 
       - name: Generate GitHub App token
-        uses: electron/github-app-auth-action@384fd19694fe7b6dcc9a684746c6976ad78228ae
+        uses: electron/github-app-auth-action@e25ab7f5aa15b949aee0f00d7e48972f1f3e0f5a
         id: generate-token
         with:
           export-git-user: true
           creds: ${{ secrets.RELEASE_BOT_APP_CREDS }}
 
+      - name: Determine dist-tag and changeset config
+        id: dist-tag
+        run: |
+          BRANCH="${{ github.ref_name }}"
+
+          if [ "$BRANCH" == "master" ]; then
+            echo "tag=next" >> $GITHUB_OUTPUT
+            echo "branch_type=prerelease" >> $GITHUB_OUTPUT
+            echo "config_file=config.json" >> $GITHUB_OUTPUT
+          elif [[ "$BRANCH" =~ ^release/v[0-9]+\.x$ ]]; then
+            # Extract version from branch name (e.g., release/v26.x -> v26)
+            VERSION=$(echo "$BRANCH" | sed -E 's/^release\/v([0-9]+)\.x$/v\1/')
+
+            # Validate that sed extraction worked correctly
+            if [[ ! "$VERSION" =~ ^v[0-9]+$ ]]; then
+              echo "::error::Failed to extract valid version from branch: $BRANCH"
+              echo "::error::Expected format: release/v{major}.x (e.g., release/v26.x)"
+              echo "::error::Extracted version: $VERSION"
+              exit 1
+            fi
+
+            echo "tag=$VERSION" >> $GITHUB_OUTPUT
+            echo "branch_type=lts" >> $GITHUB_OUTPUT
+            echo "config_file=config.release-$VERSION.json" >> $GITHUB_OUTPUT
+          else
+            echo "::error::Unsupported branch for release: $BRANCH"
+            echo "::error::Expected 'master' or 'release/v{major}.x' (e.g., 'release/v26.x')"
+            exit 1
+          fi
+
+          # Log the determined values for debugging
+          echo "Branch: $BRANCH"
+          echo "Dist-tag: $(cat $GITHUB_OUTPUT | grep '^tag=' | cut -d= -f2)"
+          echo "Branch type: $(cat $GITHUB_OUTPUT | grep '^branch_type=' | cut -d= -f2)"
+          echo "Config file: $(cat $GITHUB_OUTPUT | grep '^config_file=' | cut -d= -f2)"
+
+      - name: Link changeset config for this branch
+        run: |
+          CONFIG_FILE="${{ steps.dist-tag.outputs.config_file }}"
+          CONFIG_PATH=".changeset/$CONFIG_FILE"
+
+          # Verify config exists
+          if [ ! -f "$CONFIG_PATH" ]; then
+            echo "::error::Changeset config not found: $CONFIG_PATH"
+            echo "::error::Please create $CONFIG_PATH with the appropriate baseBranch setting"
+            exit 1
+          fi
+
+          # Only create symlink if it's not already the default config.json
+          if [ "$CONFIG_FILE" != "config.json" ]; then
+            # Remove existing config.json if it exists (could be a file or symlink)
+            rm -f .changeset/config.json
+
+            # Create symbolic link (using relative path from .changeset/ directory)
+            cd .changeset
+            ln -s "$CONFIG_FILE" config.json
+            cd ..
+
+            echo "Linked .changeset/config.json -> .changeset/$CONFIG_FILE"
+
+            # Verify the link worked
+            if [ ! -L ".changeset/config.json" ]; then
+              echo "::error::Failed to create symbolic link"
+              exit 1
+            fi
+
+            # Verify the link points to the right file
+            LINK_TARGET=$(readlink .changeset/config.json)
+            if [ "$LINK_TARGET" != "$CONFIG_FILE" ]; then
+              echo "::error::Symlink points to wrong target: $LINK_TARGET (expected: $CONFIG_FILE)"
+              exit 1
+            fi
+          else
+            echo "Using default config: $CONFIG_PATH (no symlink needed)"
+          fi
+
       - name: Create versions PR & prepare publish
+        id: changesets
         uses: changesets/action@7af85527bb2f43a404b5823a6cad47661be255c1 # v1.5.3 - @marshallofsound fork
         with:
+          commit: 'chore(deploy): Release (${{ steps.dist-tag.outputs.tag }})'
+          title: 'chore(deploy): Release (${{ steps.dist-tag.outputs.tag }})'
           version: pnpm ci:version
-          commit: 'chore(deploy): Release'
-          title: 'chore(deploy): Release'
           publish: pnpm ci:publish
           setupGitUser: false
         env:
           GITHUB_TOKEN: ${{ steps.generate-token.outputs.token }}
+          NPM_DIST_TAG: ${{ steps.dist-tag.outputs.tag }}
+
+      - name: Publish Summary
+        if: steps.changesets.outputs.published == 'true'
+        run: |
+          echo "## 📦 Published Packages" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch:** \`${{ github.ref_name }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Dist-tag:** \`${{ steps.dist-tag.outputs.tag }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Type:** \`${{ steps.dist-tag.outputs.branch_type }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```json' >> $GITHUB_STEP_SUMMARY
+          echo '${{ steps.changesets.outputs.publishedPackages }}' >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      - name: No changes to publish
+        if: steps.changesets.outputs.published != 'true'
+        run: echo "No changesets to publish"

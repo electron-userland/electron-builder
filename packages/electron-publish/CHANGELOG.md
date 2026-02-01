@@ -1,5 +1,27 @@
 # electron-publish
 
+## 26.6.0
+
+### Patch Changes
+
+- Chore(deps): updating electron/rebuild, tar, and form-data to latest releases _[`#9528`](https://github.com/electron-userland/electron-builder/pull/9528) [`e46b407`](https://github.com/electron-userland/electron-builder/commit/e46b4074edf8c74849738d2dafcdb106da47e27c) [@mmaietta](https://github.com/mmaietta)_
+
+## 26.4.1
+
+### Patch Changes
+
+<details><summary>Updated 1 dependency</summary>
+
+<small>
+
+[`97e5503`](https://github.com/electron-userland/electron-builder/commit/97e5503cecfcdfd9dddf1c4b321d52b5d5a94f83)
+
+</small>
+
+- `builder-util@26.4.1`
+
+</details>
+
 ## 26.3.4
 
 ### Patch Changes

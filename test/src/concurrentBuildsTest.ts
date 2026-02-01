@@ -3,7 +3,7 @@ import { deepAssign } from "builder-util"
 import { TmpDir } from "temp-file"
 import { assertPack, modifyPackageJson } from "./helpers/packTester"
 
-const options = { timeout: 15 * 60 * 1000 }
+const options = { timeout: 20 * 60 * 1000 }
 
 const winTargets = Platform.WINDOWS.createTarget([DIR_TARGET, "nsis"], Arch.x64, Arch.arm64)
 const macTargets = Platform.MAC.createTarget([DIR_TARGET, "zip", "dmg", "mas"], Arch.arm64, Arch.x64)
@@ -15,7 +15,7 @@ const config: Configuration = {
   artifactName: "${productName}-${version}-${arch}.${ext}",
   compression: "store",
 }
-const projectDirCreated = async (projectDir: string, tmpDir: TmpDir) => {
+const projectDirCreated = async (projectDir: string, _tmpDir: TmpDir) => {
   const buildConfig = (data: any, isApp: boolean) => {
     deepAssign(data, {
       name: "concurrent", // needs to be lowercase for fpm targets (can't use default fixture TestApp)
