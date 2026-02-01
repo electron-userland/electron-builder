@@ -1,5 +1,83 @@
 # app-builder-lib
 
+## 26.7.0
+
+### Minor Changes
+
+- Feat: add `size` and `shrink` options to DmgOptions for explicit DMG filesystem size control _[`#9543`](https://github.com/electron-userland/electron-builder/pull/9543) [`bfee115`](https://github.com/electron-userland/electron-builder/commit/bfee115b185fa4dcb14b0fae6ccee1adc4d4590e) [@BarakXYZ](https://github.com/BarakXYZ)_
+- Adding optional config property `capabilities` to AppxOptions (#9436) _[`#9437`](https://github.com/electron-userland/electron-builder/pull/9437) [`3fa2d89`](https://github.com/electron-userland/electron-builder/commit/3fa2d894ac609d0d819d7adb80ff50bfca08039f) [@regnete](https://github.com/regnete)_
+
+### Patch Changes
+
+- Fix(linux): after-install.tpl: Fix `stdio` redirects in `update-alternative` invocation _[`#9536`](https://github.com/electron-userland/electron-builder/pull/9536) [`ec9e2db`](https://github.com/electron-userland/electron-builder/commit/ec9e2dbbd864f0858cf0d3b719ad75a84c59f29c) [@joshtriplett](https://github.com/joshtriplett)_
+- Fix: properly detecting npm duplicate entries and correlating `_dependencies` property against any duplicated `dependencies`. (npm collector also covers yarn berry) _[`#9548`](https://github.com/electron-userland/electron-builder/pull/9548) [`aec9157`](https://github.com/electron-userland/electron-builder/commit/aec9157b5124acf9409a46461eca86cb1212831b) [@mmaietta](https://github.com/mmaietta)_
+- Chore(deps): update `tar` again _[`#9547`](https://github.com/electron-userland/electron-builder/pull/9547) [`64b40fe`](https://github.com/electron-userland/electron-builder/commit/64b40fe75a5464db19721e5a6dd9a6930196aaac) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+[`bfee115`](https://github.com/electron-userland/electron-builder/commit/bfee115b185fa4dcb14b0fae6ccee1adc4d4590e)
+
+</small>
+
+- `dmg-builder@26.7.0`
+- `electron-builder-squirrel-windows@26.7.0`
+
+</details>
+
+## 26.6.0
+
+### Minor Changes
+
+- Feat(flatpak): use configuration for `executableArgs` _[`#9530`](https://github.com/electron-userland/electron-builder/pull/9530) [`d56550f`](https://github.com/electron-userland/electron-builder/commit/d56550f75828ef3c097377264336794f2f65da86) [@mmaietta](https://github.com/mmaietta)_
+
+### Patch Changes
+
+- Fix(nsis): allow $INSTDIR to be removed _[`#9520`](https://github.com/electron-userland/electron-builder/pull/9520) [`cf10da8`](https://github.com/electron-userland/electron-builder/commit/cf10da8d4988399232e5db62fe533789bdc816b2) [@liamcmitchell](https://github.com/liamcmitchell)_
+- Feat: update `dmgbuild` and migrate to portable `dmgbuild` python bundle. Fixes `badge-icon` property _[`#9516`](https://github.com/electron-userland/electron-builder/pull/9516) [`9b1dbb2`](https://github.com/electron-userland/electron-builder/commit/9b1dbb2f56662b2072662ed7432228e1c4437640) [@mmaietta](https://github.com/mmaietta)_
+- Chore(deps): updating electron/rebuild, tar, and form-data to latest releases _[`#9528`](https://github.com/electron-userland/electron-builder/pull/9528) [`e46b407`](https://github.com/electron-userland/electron-builder/commit/e46b4074edf8c74849738d2dafcdb106da47e27c) [@mmaietta](https://github.com/mmaietta)_
+- Fix: pnpm collector returning zero modules _[`#9535`](https://github.com/electron-userland/electron-builder/pull/9535) [`88070e9`](https://github.com/electron-userland/electron-builder/commit/88070e95e602aa1e6985d770cb4c279fea58a4a6) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 3 dependencies</summary>
+
+<small>
+
+[`9b1dbb2`](https://github.com/electron-userland/electron-builder/commit/9b1dbb2f56662b2072662ed7432228e1c4437640) [`e46b407`](https://github.com/electron-userland/electron-builder/commit/e46b4074edf8c74849738d2dafcdb106da47e27c)
+
+</small>
+
+- `dmg-builder@26.6.0`
+- `electron-publish@26.6.0`
+- `electron-builder-squirrel-windows@26.6.0`
+
+</details>
+
+## 26.5.0
+
+### Minor Changes
+
+- Feat: add support for dmgbuild's badge-icon configuration _[`#9513`](https://github.com/electron-userland/electron-builder/pull/9513) [`b1d6e24`](https://github.com/electron-userland/electron-builder/commit/b1d6e2417001977d12dc8365e6c5ceb5ac9d49c9) [@mmaietta](https://github.com/mmaietta)_
+
+### Patch Changes
+
+- Chore: running `eslint --fix` on more files _[`#9502`](https://github.com/electron-userland/electron-builder/pull/9502) [`6c20eeb`](https://github.com/electron-userland/electron-builder/commit/6c20eeb1cf9fd10980cde3c9ce0602fa6b7c6972) [@mmaietta](https://github.com/mmaietta)_
+- Fix: Windows build fails with spawn EINVAL after Node.js security fix _[`#9489`](https://github.com/electron-userland/electron-builder/pull/9489) [`3022f0f`](https://github.com/electron-userland/electron-builder/commit/3022f0f840c893d14beb82d638bedb8ed27d7ae6) [@mmaietta](https://github.com/mmaietta)_
+- Chore: update tar to latest release 7.5.3 to resolve dependabot _[`#9514`](https://github.com/electron-userland/electron-builder/pull/9514) [`2c11709`](https://github.com/electron-userland/electron-builder/commit/2c11709b6a330628095ec46c51435a40b6761710) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+[`666d85a`](https://github.com/electron-userland/electron-builder/commit/666d85a8b626492c8195355d3d152f76c96bcb8f) [`b1d6e24`](https://github.com/electron-userland/electron-builder/commit/b1d6e2417001977d12dc8365e6c5ceb5ac9d49c9)
+
+</small>
+
+- `dmg-builder@26.5.0`
+- `electron-builder-squirrel-windows@26.5.0`
+
+</details>
+
 ## 26.4.1
 
 ### Patch Changes

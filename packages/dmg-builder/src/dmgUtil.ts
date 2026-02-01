@@ -1,9 +1,10 @@
 import { DmgOptions, MacPackager, PlatformPackager } from "app-builder-lib"
+import { downloadArtifact } from "app-builder-lib/out/binDownload"
 import { exec, executeFinally, exists, isEmptyOrSpaces, TmpDir } from "builder-util"
-import * as path from "path"
-import { hdiUtil, hdiutilTransientExitCodes } from "./hdiuil"
 import { writeFile } from "fs-extra"
+import * as path from "path"
 import { DmgBuildConfig } from "./dmg"
+import { hdiUtil, hdiutilTransientExitCodes } from "./hdiuil"
 
 export { DmgTarget } from "./dmg"
 
@@ -13,11 +14,30 @@ export function getDmgTemplatePath() {
   return path.join(root, "templates")
 }
 
-export function getDmgVendorPath() {
-  return path.join(root, "vendor")
+async function getDmgVendorPath(): Promise<string> {
+  const customDmgbuildPath = process.env.CUSTOM_DMGBUILD_PATH?.trim()
+  if (customDmgbuildPath) {
+    return path.resolve(customDmgbuildPath)
+  }
+
+  // https://github.com/electron-userland/electron-builder-binaries/releases/tag/dmg-builder%401.2.0
+  const releaseVersion = "75c8a6c"
+  const arch = process.arch === "arm64" ? "arm64" : "x86_64"
+  const config = {
+    "dmgbuild-bundle-arm64-75c8a6c.tar.gz": "a785f2a385c8c31996a089ef8e26361904b40c772d5ea65a36001212f1fc25e0",
+    "dmgbuild-bundle-x86_64-75c8a6c.tar.gz": "87b3bb72148b11451ee90ede79cc8d59305c9173b68b0f2b50a3bea51fc4a4e2",
+  }
+  const filename: keyof typeof config = `dmgbuild-bundle-${arch}-${releaseVersion}.tar.gz`
+  const file = await downloadArtifact({
+    releaseName: "dmg-builder@1.2.0",
+    filenameWithExt: filename,
+    checksums: config,
+    githubOrgRepo: "electron-userland/electron-builder-binaries",
+  })
+  return path.resolve(file, "dmgbuild")
 }
 
-export async function attachAndExecute(dmgPath: string, readWrite: boolean, task: (devicePath: string) => Promise<any>) {
+export async function attachAndExecute(dmgPath: string, readWrite: boolean, forceDetach: boolean, task: (devicePath: string) => Promise<any>) {
   //noinspection SpellCheckingInspection
   const args = ["attach", "-noverify", "-noautoopen"]
   if (readWrite) {
@@ -36,7 +56,7 @@ export async function attachAndExecute(dmgPath: string, readWrite: boolean, task
     throw new Error(`Cannot find volume mount path for device: ${device}`)
   }
 
-  return await executeFinally(task(volumePath), () => detach(device))
+  return await executeFinally(task(volumePath), () => detach(device, forceDetach))
 }
 
 /**
@@ -58,9 +78,9 @@ async function findMountPath(devName: string, index: number = 1): Promise<string
   return matches.length >= index ? matches[index - 1] : null
 }
 
-export async function detach(name: string) {
+export async function detach(name: string, alwaysForce: boolean) {
   return hdiUtil(["detach", "-quiet", name]).catch(async e => {
-    if (hdiutilTransientExitCodes.has(e.code)) {
+    if (hdiutilTransientExitCodes.has(e.code) || alwaysForce) {
       // Delay then force unmount with verbose output
       await new Promise(resolve => setTimeout(resolve, 3000))
       return hdiUtil(["detach", "-force", name])
@@ -105,18 +125,17 @@ export async function customizeDmg({ appPath, artifactPath, volumeName, specific
   const iconTextSize = isValidIconTextSize ? specification.iconTextSize : 12
   const volumePath = path.join("/Volumes", volumeName)
   // https://github.com/electron-userland/electron-builder/issues/2115
-  const backgroundFile = specification.background == null ? null : await transformBackgroundFileIfNeed(specification.background, packager.info.tempDirManager)
 
   const settings: DmgBuildConfig = {
     title: path.basename(volumePath),
-    icon: await packager.getResource(specification.icon),
-    "badge-icon": await packager.getResource(specification.badgeIcon),
     "icon-size": specification.iconSize,
     "text-size": iconTextSize,
 
     "compression-level": Number(process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL || "9"),
     // filesystem: specification.filesystem || "HFS+",
     format: specification.format,
+    size: specification.size,
+    shrink: specification.shrink,
     contents:
       specification.contents?.map(c => ({
         path: c.path || appPath, // path is required, when ommitted, appPath is used (backward compatibility
@@ -126,6 +145,16 @@ export async function customizeDmg({ appPath, artifactPath, volumeName, specific
         type: c.type === "dir" ? "file" : c.type, // appdmg expects "file" for directories
         // hide_extension: c.hideExtension,
       })) || [],
+  }
+
+  if (specification.badgeIcon) {
+    let badgeIcon = await packager.getResource(specification.badgeIcon)
+    if (badgeIcon && badgeIcon.toLowerCase().endsWith(".icon")) {
+      badgeIcon = await packager.generateIcnsFromIcon(badgeIcon)
+    }
+    settings["badge-icon"] = badgeIcon
+  } else {
+    settings.icon = await packager.getResource(specification.icon)
   }
 
   if (specification.backgroundColor != null || specification.background == null) {
@@ -145,8 +174,7 @@ export async function customizeDmg({ appPath, artifactPath, volumeName, specific
       }
     }
   } else {
-    settings.background = backgroundFile
-    delete settings["background-color"]
+    settings.background = specification.background == null ? null : await transformBackgroundFileIfNeed(specification.background, packager.info.tempDirManager)
   }
 
   if (!isEmptyOrSpaces(settings.background)) {
@@ -157,15 +185,8 @@ export async function customizeDmg({ appPath, artifactPath, volumeName, specific
   const settingsFile = await packager.getTempFile(".json")
   await writeFile(settingsFile, JSON.stringify(settings, null, 2))
 
-  const python3Check = () => exec("command", ["-v", "python3"])
-  const pythonCheck = () => exec("command", ["-v", "python"])
-  const pythonPath = process.env.PYTHON_PATH || (await python3Check().catch(pythonCheck)) || (await pythonCheck())
-  if (pythonPath == null || isEmptyOrSpaces(pythonPath.trim())) {
-    throw new Error("Cannot find 'python' or 'python3' executable, please ensure Python is installed and available in PATH or set PYTHON_PATH environment variable")
-  }
-  const vendorDir = getDmgVendorPath()
-  await exec(pythonPath.trim(), [path.join(vendorDir, "run_dmgbuild.py"), "-s", settingsFile, path.basename(volumePath), artifactPath], {
-    cwd: vendorDir,
+  const dmgbuild = await getDmgVendorPath()
+  await exec(dmgbuild, ["-s", settingsFile, path.basename(volumePath), artifactPath], {
     env: {
       ...process.env,
       PYTHONIOENCODING: "utf8",
@@ -175,7 +196,7 @@ export async function customizeDmg({ appPath, artifactPath, volumeName, specific
   // effectiveOptionComputed, when present, is purely for verifying result during test execution
   return (
     packager.packagerOptions.effectiveOptionComputed == null ||
-    (await attachAndExecute(artifactPath, false, async volumePath => {
+    (await attachAndExecute(artifactPath, false, true, async volumePath => {
       return !(await packager.packagerOptions.effectiveOptionComputed!({
         volumePath,
         specification: {

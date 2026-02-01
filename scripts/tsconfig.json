@@ -1,0 +1,17 @@
+{
+  "extends": "../tsconfig-base.json",
+  "compilerOptions": {
+    "outDir": "out",
+    "noUnusedLocals": false,
+    "skipLibCheck": true
+  },
+  "declaration": false,
+  "include": [
+    "**/*.ts",
+  ],
+  "exclude": [
+    "node_modules",
+    "out",
+    "**/*.spec.ts"
+  ]
+}

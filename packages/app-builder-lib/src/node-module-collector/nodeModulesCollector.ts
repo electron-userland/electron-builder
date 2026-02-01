@@ -1,4 +1,4 @@
-import { log, retry, TmpDir } from "builder-util"
+import { exists, log, retry, TmpDir } from "builder-util"
 import * as childProcess from "child_process"
 import * as fs from "fs-extra"
 import { createWriteStream } from "fs-extra"
@@ -36,11 +36,26 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     private readonly tempDirManager: TmpDir
   ) {}
 
+  /**
+   * Retrieves and collects all Node.js modules for a given package.
+   *
+   * This method orchestrates the entire module collection process by:
+   * 1. Fetching the dependency tree from the package manager
+   * 2. Collecting all dependencies recursively
+   * 3. Extracting workspace references if applicable
+   * 4. Building a production dependency graph
+   * 5. Hoisting the dependencies to their final locations
+   * 6. Resolving and returning module information
+   *
+   * @param options - Configuration object
+   * @param options.packageName - The name of the package to collect modules for
+   * @returns Promise resolving to an array of NodeModuleInfo objects representing all collected modules
+   */
   public async getNodeModules({ packageName }: { packageName: string }): Promise<NodeModuleInfo[]> {
     const tree: ProdDepType = await this.getDependenciesTree(this.installOptions.manager)
 
     await this.collectAllDependencies(tree, packageName)
-    const realTree: ProdDepType = await this.getTreeFromWorkspaces(tree, packageName)
+    const realTree: ProdDepType = this.getTreeFromWorkspaces(tree, packageName)
     await this.extractProductionDependencyGraph(realTree, packageName)
 
     const hoisterResult: HoisterResult = hoist(this.transformToHoisterTree(this.productionGraph, packageName), {
@@ -59,10 +74,20 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
   }
 
   protected abstract getArgs(): string[]
-  protected abstract parseDependenciesTree(jsonBlob: string): Promise<ProdDepType>
   protected abstract extractProductionDependencyGraph(tree: Dependency<ProdDepType, OptionalDepType>, dependencyId: string): Promise<void>
   protected abstract collectAllDependencies(tree: Dependency<ProdDepType, OptionalDepType>, appPackageName: string): Promise<void>
 
+  /**
+   * Retrieves the dependency tree from the package manager.
+   *
+   * Executes the appropriate package manager command to fetch the dependency tree and writes
+   * the output to a temporary file. Includes retry logic to handle transient failures such as
+   * incomplete JSON output or missing files. Will retry up to 1 time with exponential backoff.
+   *
+   * @param pm - The package manager to use (npm, yarn, pnpm, etc.)
+   * @returns Promise resolving to the parsed dependency tree
+   * @throws {Error} If the dependency tree cannot be retrieved after retries
+   */
   protected async getDependenciesTree(pm: PM): Promise<ProdDepType> {
     const command = getPackageManagerCommand(pm)
     const args = this.getArgs()
@@ -76,26 +101,37 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
       async () => {
         await this.streamCollectorCommandToFile(command, args, this.rootDir, tempOutputFile)
         const shellOutput = await fs.readFile(tempOutputFile, { encoding: "utf8" })
-        return await this.parseDependenciesTree(shellOutput.trim())
+        const result = await Promise.resolve(this.parseDependenciesTree(shellOutput))
+        return result
       },
       {
         retries: 1,
         interval: 2000,
         backoff: 2000,
         shouldRetry: async (error: any) => {
-          const logFields = { error: error.message, tempOutputFile, cwd: this.rootDir }
+          const fields: Record<string, string> = { error: error.message, tempOutputFile, cwd: this.rootDir, packageManager: pm }
 
-          if (!(await this.cache.exists[tempOutputFile])) {
-            log.debug(logFields, "dependency tree output file missing, retrying")
+          if (!(await exists(tempOutputFile))) {
+            log.debug(fields, "dependency tree output file missing, retrying")
             return true
           }
 
           const fileContent = await fs.readFile(tempOutputFile, { encoding: "utf8" })
-          const fields = { ...logFields, fileContent }
+          fields.fileContentLength = fileContent.length.toString()
 
           if (fileContent.trim().length === 0) {
             log.debug(fields, "dependency tree output file empty, retrying")
             return true
+          }
+
+          // extract small start/end sample for debugging purposes (e.g. polluted console output)
+          const lines = fileContent.split("\n")
+          const lineSampleSize = Math.min(5, lines.length / 2)
+          if (2 * lineSampleSize > 5) {
+            fields.sampleStart = lines.slice(0, lineSampleSize).join("\n")
+            fields.sampleEnd = lines.slice(-lineSampleSize).join("\n")
+          } else {
+            fields.content = fileContent
           }
 
           if (error.message?.includes("Unexpected end of JSON input")) {
@@ -110,6 +146,41 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     )
   }
 
+  /**
+   * Parses the dependencies tree from shell command output.
+   *
+   **/
+  protected parseDependenciesTree(shellOutput: string): ProdDepType | Promise<ProdDepType> {
+    return this.extractJsonFromPollutedOutput<ProdDepType>(shellOutput)
+  }
+
+  protected extractJsonFromPollutedOutput<T>(shellOutput: string): T {
+    const consoleOutput = shellOutput.trim()
+    try {
+      // Please for the love of all that is holy, this should cover 99% of cases where npm/pnpm/yarn output is clean JSON
+      return JSON.parse(consoleOutput)
+    } catch {
+      // ignore
+    }
+
+    // DEDICATED FALLBACK FOR POLLUTED OUTPUT, non-trivial to implement correctly, not needed in most cases, and highly inefficient
+
+    // Find the first index that starts with { or [
+    const bracketOpen = Math.max(consoleOutput.indexOf("{"), 0)
+    const bracketOpenSquare = Math.max(consoleOutput.indexOf("["), 0)
+    const start = Math.min(bracketOpen, bracketOpenSquare) // always non-negative due to Math.max above
+
+    for (let i = start; i < consoleOutput.length; i++) {
+      const slice = consoleOutput.slice(start, i + 1)
+      try {
+        return JSON.parse(slice)
+      } catch {
+        // ignore, try next
+      }
+    }
+    throw new Error("No JSON content found in output")
+  }
+
   protected cacheKey(pkg: Pick<ProdDepType, "name" | "version" | "path">): string {
     const rel = path.relative(this.rootDir, pkg.path)
     return `${pkg.name}::${pkg.version}::${rel ?? "."}`
@@ -119,6 +190,16 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     return `${pkg.name}@${pkg.version}`
   }
 
+  /**
+   * Determines if a given dependency is a production dependency of a package.
+   *
+   * Checks both the dependencies and optionalDependencies of a package to see if
+   * the specified dependency name is listed.
+   *
+   * @param depName - The name of the dependency to check
+   * @param pkg - The package to search for the dependency in
+   * @returns True if the dependency is found in either dependencies or optionalDependencies, false otherwise
+   */
   protected isProdDependency(depName: string, pkg: ProdDepType): boolean {
     const prodDeps = { ...pkg.dependencies, ...pkg.optionalDependencies }
     return prodDeps[depName] != null
@@ -133,7 +214,11 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     return result
   }
   /**
-   * Parse a dependency identifier like "@scope/pkg@1.2.3" or "pkg@1.2.3"
+   * Parses a dependency identifier string into name and version components.
+   *
+   * Handles both scoped packages (e.g., "@scope/pkg@1.2.3") and regular packages (e.g., "pkg@1.2.3").
+   * If the identifier is malformed or cannot be parsed, defaults to treating the entire string as
+   * the package name with an "unknown" version.
    */
   protected parseNameVersion(identifier: string): { name: string; version: string } {
     const lastAt = identifier.lastIndexOf("@")
@@ -146,21 +231,27 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     return { name, version }
   }
 
-  protected async getTreeFromWorkspaces(tree: ProdDepType, packageName: string): Promise<ProdDepType> {
-    if (!(tree.workspaces && tree.dependencies)) {
-      return tree
+  /**
+   * Retrieves the dependency tree and handles workspace package self-references.
+   *
+   * If the project is a workspace project, this method removes the root package's self-reference
+   * from the dependency tree to avoid circular dependencies. It promotes the root package's
+   * direct dependencies to the top level of the tree.
+   *
+   * @param tree - The original dependency tree
+   * @param packageName - The name of the package to check for and remove from the tree
+   * @returns The extracted dependency subtree
+   */
+  protected getTreeFromWorkspaces(tree: ProdDepType, packageName: string): ProdDepType {
+    if (tree.workspaces && tree.dependencies) {
+      for (const [key, value] of Object.entries(tree.dependencies)) {
+        if (key === packageName) {
+          return value
+        }
+      }
     }
 
-    if (tree.dependencies?.[packageName]) {
-      const { name, path, dependencies } = tree.dependencies[packageName]
-      log.debug({ name, path, dependencies: JSON.stringify(dependencies) }, "pruning root app/self reference from workspace tree")
-      for (const [name, pkg] of Object.entries(dependencies ?? {})) {
-        tree.dependencies[name] = pkg
-        this.allDependencies.set(this.packageVersionString(pkg), pkg)
-      }
-      delete tree.dependencies[packageName]
-    }
-    return Promise.resolve(tree)
+    return tree
   }
 
   private transformToHoisterTree(obj: DependencyGraph, key: string, nodes: Map<string, HoisterTree> = new Map()): HoisterTree {
@@ -234,6 +325,22 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     }
   }
 
+  /**
+   * Executes a command and streams its output to a file.
+   *
+   * Spawns a child process to execute the specified command with arguments, capturing stdout
+   * to a file. Handles Windows-specific quirks by wrapping .cmd files in a temporary .bat file
+   * when necessary. Enables corepack strict mode by default but allows process.env overrides.
+   *
+   * Special handling for `npm list` exit code 1, which is expected in certain scenarios.
+   *
+   * @param command - The command to execute
+   * @param args - Array of command-line arguments
+   * @param cwd - The working directory to execute the command in
+   * @param tempOutputFile - The path to the temporary file where stdout will be written
+   * @returns Promise that resolves when the command completes successfully or rejects if it fails
+   * @throws {Error} If the child process spawn fails or exits with a non-zero code
+   */
   async streamCollectorCommandToFile(command: string, args: string[], cwd: string, tempOutputFile: string) {
     const execName = path.basename(command, path.extname(command))
     const isWindowsScriptFile = process.platform === "win32" && path.extname(command).toLowerCase() === ".cmd"
@@ -258,7 +365,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
       const child = childProcess.spawn(command, args, {
         cwd,
         env: { COREPACK_ENABLE_STRICT: "0", ...process.env }, // allow `process.env` overrides
-        shell: false, // required to prevent console logs polution from shell profile loading when `true`
+        shell: true, // `true`` is now required: https://github.com/electron-userland/electron-builder/issues/9488
       })
 
       let stderr = ""

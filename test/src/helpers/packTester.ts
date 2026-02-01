@@ -18,7 +18,7 @@ import { NtExecutable, NtExecutableResource } from "resedit"
 import { TmpDir } from "temp-file"
 import { getCollectorByPackageManager, PM } from "app-builder-lib/out/node-module-collector"
 import { promisify } from "util"
-import { CSC_LINK, WIN_CSC_LINK } from "./codeSignData"
+import { MAC_CSC_LINK, WIN_CSC_LINK } from "./codeSignData"
 import { assertThat } from "./fileAssert"
 import AdmZip from "adm-zip"
 // @ts-ignore
@@ -55,7 +55,7 @@ export const linuxDirTarget = Platform.LINUX.createTarget(DIR_TARGET, Arch.x64)
 export const snapTarget = Platform.LINUX.createTarget("snap", Arch.x64)
 
 export interface AssertPackOptions {
-  readonly projectDirCreated?: (projectDir: string, tmpDir: TmpDir) => Promise<any> | (() => Promise<any>)
+  readonly projectDirCreated?: (projectDir: string, tmpDir: TmpDir, testEnv: NodeJS.ProcessEnv) => Promise<any> | (() => Promise<any>)
   readonly packed?: (context: PackedContext) => Promise<any>
   readonly expectedArtifacts?: Array<string>
 
@@ -154,11 +154,6 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
         }
       })
 
-      const postNodeModulesInstallHook = checkOptions.projectDirCreated ? await checkOptions.projectDirCreated(projectDir, tmpDir) : null
-
-      // Check again. Package manager could have been changed in package.json during `projectDirCreated`
-      const { pm, corepackConfig: packageManager } = await detectPackageManager([projectDir])
-
       const tmpCache = await tmpDir.createTempDir({ prefix: "cache-" })
       const tmpHome = await tmpDir.createTempDir({ prefix: "home-" })
       const runtimeEnv = {
@@ -169,7 +164,7 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
         // yarn
         HOME: tmpHome,
         USERPROFILE: tmpHome, // for Windows compatibility
-        YARN_CACHE_FOLDER: tmpCache,
+        YARN_CACHE_FOLDER: tmpCache, // this doesn't seem to always work in concurrent tests? So we must set manually
         // YARN_DISABLE_TELEMETRY: "1",
         // YARN_ENABLE_TELEMETRY: "false",
         YARN_IGNORE_PATH: "1", // ignore globally installed yarn binaries
@@ -177,20 +172,25 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
         // YARN_NODE_LINKER: "node-modules", // force to not use pnp (as there's no way to access virtual packages within the paths returned by pnpm)
         npm_config_cache: tmpCache, // prevent npm fallback caching
       }
+      const postNodeModulesInstallHook = checkOptions.projectDirCreated ? await checkOptions.projectDirCreated(projectDir, tmpDir, runtimeEnv) : null
+
+      // Check again. Package manager could have been changed in package.json during `projectDirCreated`
+      const { pm, corepackConfig: packageManager } = await detectPackageManager([projectDir])
       const { cli, prepareEntry, version } = getPackageManagerWithVersion(pm, packageManager)
+
       if (pm === PM.BUN) {
         log.info({ pm, version: version, projectDir }, "installing dependencies with bun; corepack does not support it currently and it must be installed separately")
       } else {
         log.info({ pm, version: version, projectDir }, "activating corepack")
         try {
-          execSync(`corepack enable ${cli}`, { env: runtimeEnv, cwd: projectDir, stdio: "inherit" })
+          execSync(`corepack enable ${cli}`, { env: runtimeEnv, cwd: projectDir, stdio: "ignore" })
         } catch (err: any) {
-          console.warn("⚠️ Corepack enable failed (possibly already enabled):", err.message)
+          log.warn({ message: err.message }, "⚠️ corepack enable failed (possibly already enabled)")
         }
         try {
-          execSync(`corepack prepare ${prepareEntry} --activate`, { env: runtimeEnv, cwd: projectDir, stdio: "inherit" })
+          execSync(`corepack prepare ${prepareEntry} --activate`, { env: runtimeEnv, cwd: projectDir, stdio: "ignore" })
         } catch (err: any) {
-          console.warn("⚠️ Yarn prepare failed:", err.message)
+          log.warn({ message: err.message }, "⚠️ corepack prepare failed")
         }
       }
       const collector = getCollectorByPackageManager(pm, projectDir, tmpDir)
@@ -202,6 +202,11 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
       // check for lockfile fixture so we can use `--frozen-lockfile`
       if ((await exists(testFixtureLockfile)) && !shouldUpdateLockfiles) {
         await copyFile(testFixtureLockfile, destLockfile)
+      }
+
+      if (!(await exists(destLockfile))) {
+        log.info({ lockfile: collectorOptions.lockfile }, "lockfile not found, creating empty stub to prevent package manager prompts")
+        await fs.writeFile(destLockfile, "")
       }
 
       const appDir = await computeDefaultAppDirectory(projectDir, configuration.directories?.app)
@@ -725,7 +730,7 @@ export function signed(packagerOptions: PackagerOptions): PackagerOptions {
     if (packagerOptions.config == null) {
       ;(packagerOptions as any).config = {}
     }
-    ;(packagerOptions.config as any).cscLink = CSC_LINK
+    ;(packagerOptions.config as any).cscLink = MAC_CSC_LINK
   }
   return packagerOptions
 }

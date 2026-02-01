@@ -106,7 +106,7 @@ jobs:
           echo $TEST_RUNNER_IMAGE_TAG
           pnpm test-linux
         env:
-          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          CSC_KEY_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }} # windows signing on linux tests
           TEST_FILES: ${{ matrix.testFiles }}
           FORCE_COLOR: 1
           TEST_RUNNER_IMAGE_TAG: electronuserland/builder:${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}-wine-mono
@@ -241,7 +241,7 @@ jobs:
       - name: Test
         run: pnpm ci:test
         env:
-          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          CSC_KEY_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
           TEST_FILES: ${{ matrix.testFiles }}
           FORCE_COLOR: 1
 
@@ -253,8 +253,8 @@ jobs:
       matrix:
         testFiles:
           - oneClickInstallerTest,assistedInstallerTest,webInstallerTest,packageManagerTest,HoistedNodeModuleTest,rebuilderTest
-          - winPackagerTest,winCodeSignTest,BuildTest,blackboxUpdateTest,debTest
-          - masTest,filesTest,macPackagerTest,macArchiveTest
+          - winPackagerTest,winCodeSignTest,BuildTest,debTest
+          - masTest,filesTest,macArchiveTest,macPackagerTest
           - concurrentBuildsTest,macIconTest
     steps:
       - name: Checkout code repository
@@ -278,14 +278,14 @@ jobs:
           TEST_FILES: ${{ matrix.testFiles }}
           FORCE_COLOR: 1
 
-  test-mac-old:
-    runs-on: macos-latest
+  test-mac-with-signing:
+    runs-on: macos-15
     timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
         testFiles:
-          - differentialUpdateTest,blackboxUpdateTest,dmgTest
+          - differentialUpdateTest,dmgTest # ,blackboxUpdateTest,macPackagerTest
     steps:
       - name: Checkout code repository
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
@@ -304,37 +304,5 @@ jobs:
         env:
           TEST_FILES: ${{ matrix.testFiles }}
           FORCE_COLOR: 1
-
-  build-snap:
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 30
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, macos-15]
-    steps:
-      - name: Checkout code repository
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
-
-      - name: Install Snapcraft (Ubuntu)
-        if: runner.os == 'Linux'
-        run: |
-          sudo snap install snapcraft --classic
-
-      - name: Install Snapcraft (macOS)
-        if: runner.os == 'macOS'
-        run: |
-          brew install snapcraft
-
-      - name: Setup Tests
-        uses: ./.github/actions/pretest
-        with:
-          cache-path: ~/Library/Caches/electron
-          cache-key: v-23.3.10-${{ matrix.os }}-electron
-
-      - name: Test
-        run: |
-          pnpm ci:test
-        env:
-          TEST_FILES: snapHeavyTest
-          FORCE_COLOR: 1
+          MAC_CSC_LINK: ${{ secrets.MAC_CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.MAC_CSC_KEY_PASSWORD }}
