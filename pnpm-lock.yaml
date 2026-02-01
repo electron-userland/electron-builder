@@ -48,8 +48,8 @@ importers:
         specifier: 8.17.0
         version: 8.17.0(eslint@9.39.2(jiti@2.4.2))(typescript@5.8.2)
       '@vitest/ui':
-        specifier: 3.0.4
-        version: 3.0.4(vitest@3.2.4)
+        specifier: 3.2.4
+        version: 3.2.4(vitest@3.2.4)
       chalk:
         specifier: ^4.1.2
         version: 4.1.2
@@ -97,7 +97,7 @@ importers:
         version: 0.64.0
       vitest:
         specifier: ^3.2.2
-        version: 3.2.4(@types/node@22.13.17)(@vitest/ui@3.0.4(vitest@3.2.4))(jiti@2.4.2)(sass@1.86.1)(yaml@2.7.1)
+        version: 3.2.4(@types/node@22.13.17)(@vitest/ui@3.2.4)(jiti@2.4.2)(sass@1.86.1)(yaml@2.7.1)
 
   packages/app-builder-lib:
     dependencies:
@@ -692,7 +692,7 @@ importers:
         version: 1.6.3
       vitest:
         specifier: ^3.0.4
-        version: 3.2.4(@types/node@22.13.17)(@vitest/ui@3.0.4(vitest@3.2.4))(jiti@2.4.2)(sass@1.86.1)(yaml@2.7.1)
+        version: 3.2.4(@types/node@22.13.17)(@vitest/ui@3.2.4)(jiti@2.4.2)(sass@1.86.1)(yaml@2.7.1)
       vitest-mock-commonjs:
         specifier: ^1.0.2
         version: 1.0.2
@@ -2521,9 +2521,6 @@ packages:
       vite:
         optional: true
 
-  '@vitest/pretty-format@3.0.4':
-    resolution: {integrity: sha512-ts0fba+dEhK2aC9PFuZ9LTpULHpY/nd6jhAQ5IMU7Gaj7crPCTdCFfgvXxruRBLFS+MLraicCuFXxISEq8C93g==}
-
   '@vitest/pretty-format@3.2.4':
     resolution: {integrity: sha512-IVNZik8IVRJRTr9fxlitMKeJeXFFFN0JaB9PHPGQ8NKQbGpfjlTx9zO4RefN8gp7eqjNy8nyK3NZmBzOPeIxtA==}
 
@@ -2536,13 +2533,10 @@ packages:
   '@vitest/spy@3.2.4':
     resolution: {integrity: sha512-vAfasCOe6AIK70iP5UD11Ac4siNUNJ9i/9PZ3NKx07sG6sUxeag1LWdNrMWeKKYBLlzuK+Gn65Yd5nyL6ds+nw==}
 
-  '@vitest/ui@3.0.4':
-    resolution: {integrity: sha512-e+s2F9e9FUURkZ5aFIe1Fi3Y8M7UF6gEuShcaV/ur7y/Ldri+1tzWQ1TJq9Vas42NXnXvCAIrU39Z4U2RyET6g==}
+  '@vitest/ui@3.2.4':
+    resolution: {integrity: sha512-hGISOaP18plkzbWEcP/QvtRW1xDXF2+96HbEX6byqQhAUbiS5oH6/9JwW+QsQCIYON2bI6QZBF+2PvOmrRZ9wA==}
     peerDependencies:
-      vitest: 3.0.4
-
-  '@vitest/utils@3.0.4':
-    resolution: {integrity: sha512-8BqC1ksYsHtbWH+DfpOAKrFw3jl3Uf9J7yeFh85Pz52IWuh1hBBtyfEbRNNZNjl8H8A5yMLH9/t+k7HIKzQcZQ==}
+      vitest: 3.2.4
 
   '@vitest/utils@3.2.4':
     resolution: {integrity: sha512-fB2V0JFrQSMsCo9HiSq3Ezpdv4iYaXRG1Sx8edX3MwxfyNn83mKiGzOcH+Fkxt4MHxr3y42fQi1oeAInqgX2QA==}
@@ -7347,10 +7341,6 @@ snapshots:
     optionalDependencies:
       vite: 6.2.4(@types/node@22.13.17)(jiti@2.4.2)(sass@1.86.1)(yaml@2.7.1)
 
-  '@vitest/pretty-format@3.0.4':
-    dependencies:
-      tinyrainbow: 2.0.0
-
   '@vitest/pretty-format@3.2.4':
     dependencies:
       tinyrainbow: 2.0.0
@@ -7371,22 +7361,16 @@ snapshots:
     dependencies:
       tinyspy: 4.0.4
 
-  '@vitest/ui@3.0.4(vitest@3.2.4)':
+  '@vitest/ui@3.2.4(vitest@3.2.4)':
     dependencies:
-      '@vitest/utils': 3.0.4
+      '@vitest/utils': 3.2.4
       fflate: 0.8.2
       flatted: 3.3.3
       pathe: 2.0.3
       sirv: 3.0.1
       tinyglobby: 0.2.14
       tinyrainbow: 2.0.0
-      vitest: 3.2.4(@types/node@22.13.17)(@vitest/ui@3.0.4(vitest@3.2.4))(jiti@2.4.2)(sass@1.86.1)(yaml@2.7.1)
-
-  '@vitest/utils@3.0.4':
-    dependencies:
-      '@vitest/pretty-format': 3.0.4
-      loupe: 3.2.1
-      tinyrainbow: 2.0.0
+      vitest: 3.2.4(@types/node@22.13.17)(@vitest/ui@3.2.4)(jiti@2.4.2)(sass@1.86.1)(yaml@2.7.1)
 
   '@vitest/utils@3.2.4':
     dependencies:
@@ -10059,7 +10043,7 @@ snapshots:
 
   vitest-mock-commonjs@1.0.2: {}
 
-  vitest@3.2.4(@types/node@22.13.17)(@vitest/ui@3.0.4(vitest@3.2.4))(jiti@2.4.2)(sass@1.86.1)(yaml@2.7.1):
+  vitest@3.2.4(@types/node@22.13.17)(@vitest/ui@3.2.4)(jiti@2.4.2)(sass@1.86.1)(yaml@2.7.1):
     dependencies:
       '@types/chai': 5.2.2
       '@vitest/expect': 3.2.4
@@ -10086,7 +10070,7 @@ snapshots:
       why-is-node-running: 2.3.0
     optionalDependencies:
       '@types/node': 22.13.17
-      '@vitest/ui': 3.0.4(vitest@3.2.4)
+      '@vitest/ui': 3.2.4(vitest@3.2.4)
     transitivePeerDependencies:
       - jiti
       - less
