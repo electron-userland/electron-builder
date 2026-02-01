@@ -306,3 +306,33 @@ jobs:
           FORCE_COLOR: 1
           MAC_CSC_LINK: ${{ secrets.MAC_CSC_LINK }}
           CSC_KEY_PASSWORD: ${{ secrets.MAC_CSC_KEY_PASSWORD }}
+
+  test-snap-core24:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout code repository
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+
+      - name: Setup Tests
+        uses: ./.github/actions/pretest
+        with:
+          cache-path: ~/.cache/electron
+          cache-key: v-35.7.5-snap-core24-electron
+
+      - name: Install snapd
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y snapd
+          sudo snap install snapd
+
+      - name: Install snapcraft
+        run: |
+          sudo snap install snapcraft --classic
+
+      - name: Run snap core24 tests
+        run: pnpm ci:test
+        env:
+          TEST_FILES: snapHeavyTest
+          SNAP_CORE_VERSION: core24
+          FORCE_COLOR: 1

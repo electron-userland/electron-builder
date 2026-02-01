@@ -351,6 +351,43 @@
       ],
       "type": "string"
     },
+    "Architecture": {
+      "additionalProperties": false,
+      "properties": {
+        "build-for": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "The target architecture for the build"
+        },
+        "build-on": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "The architectures to build the snap on"
+        }
+      },
+      "required": [
+        "build-on"
+      ],
+      "type": "object"
+    },
     "AsarOptions": {
       "additionalProperties": false,
       "properties": {
@@ -5607,6 +5644,38 @@
       ],
       "type": "object"
     },
+    "Record<string,App>": {
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "Record<string,Component>": {
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "Record<string,Hook>": {
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "Record<string,Part>": {
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "Record<string,Platform>": {
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "Record<string,Record<string,string>>": {
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "Record<string,string|null>": {
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "Record<string,unknown>": {
+      "additionalProperties": false,
+      "type": "object"
+    },
     "ReleaseInfo": {
       "additionalProperties": false,
       "properties": {
@@ -5654,6 +5723,14 @@
       "properties": {
         "acceptPublicUpload": {
           "type": "boolean"
+        },
+        "allowNativeWayland": {
+          "default": false,
+          "description": "Allow running the program with native wayland support with --ozone-platform=wayland.\nDisabled by default because of this issue in older Electron/Snap versions: https://github.com/electron-userland/electron-builder/issues/4007",
+          "type": [
+            "null",
+            "boolean"
+          ]
         },
         "buildFor": {
           "items": {
@@ -5867,7 +5944,8 @@
             "core18",
             "core20",
             "core22",
-            "core24"
+            "core24",
+            "custom"
           ],
           "type": "string"
         },
@@ -5905,6 +5983,16 @@
           "anyOf": [
             {
               "$ref": "#/definitions/SnapOptions24"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "custom": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/SnapcraftYAML"
             },
             {
               "type": "null"
@@ -5978,7 +6066,8 @@
           "description": "Specifies any [parts](https://snapcraft.io/docs/reference/parts) that should be built before this part.\nDefaults to `[\"desktop-gtk2\"\"]`.\n\nIf list contains `default`, it will be replaced to default list, so, `[\"default\", \"foo\"]` can be used to add custom parts `foo` in addition to defaults."
         },
         "allowNativeWayland": {
-          "description": "Allow running the program with native wayland support with --ozone-platform=wayland.\nDisabled by default because of this issue in older Electron/Snap versions: https://github.com/electron-userland/electron-builder/issues/4007",
+          "default": true,
+          "description": "Whether or not to enable Wayland support natively.",
           "type": [
             "null",
             "boolean"
@@ -6324,7 +6413,7 @@
           "description": "Specifies any [parts](https://snapcraft.io/docs/reference/parts) that should be built before this part.\nDefaults to `[\"desktop-gtk2\"\"]`.\n\nIf list contains `default`, it will be replaced to default list, so, `[\"default\", \"foo\"]` can be used to add custom parts `foo` in addition to defaults."
         },
         "allowNativeWayland": {
-          "description": "Allow running the program with native wayland support with --ozone-platform=wayland.\nDisabled by default because of this issue in older Electron/Snap versions: https://github.com/electron-userland/electron-builder/issues/4007",
+          "description": "Allow running the program with native wayland support.",
           "type": [
             "null",
             "boolean"
@@ -6683,6 +6772,259 @@
       },
       "required": [
         "provider"
+      ],
+      "type": "object"
+    },
+    "SnapcraftYAML": {
+      "additionalProperties": false,
+      "description": "Latest TypeScript types for snapcraft.yaml\nFocuses on the most common Core24 configuration\nBased on https://snapcraft.io/docs/snapcraft-yaml-reference\n   npm install -g json-schema-to-typescript\n   curl -o snapcraft-schema.json https://raw.githubusercontent.com/canonical/snapcraft/refs/heads/main/schema/snapcraft.json\n   npx json2ts -i snapcraft-schema.json -o snapcraft.ts\n(manual edits to simplify and make more strict)",
+      "properties": {
+        "adopt-info": {
+          "description": "Selects a part to inherit metadata from",
+          "type": "string"
+        },
+        "apps": {
+          "$ref": "#/definitions/Record<string,App>",
+          "description": "The individual programs and services that the snap runs"
+        },
+        "architectures": {
+          "description": "The architectures that the snap builds and runs on (core22 and earlier)",
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/Architecture"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "type": "array"
+        },
+        "assumes": {
+          "description": "The minimum version of snapd and features the snap requires",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "base": {
+          "description": "The baseline system that the snap is built in",
+          "enum": [
+            "bare",
+            "core22",
+            "core24",
+            "core26",
+            "devel"
+          ],
+          "type": "string"
+        },
+        "build-base": {
+          "description": "The baseline system that the snap is built in",
+          "type": "string"
+        },
+        "components": {
+          "$ref": "#/definitions/Record<string,Component>",
+          "description": "Components to build in conjunction with the snap"
+        },
+        "compression": {
+          "description": "Specifies the algorithm that compresses the snap",
+          "enum": [
+            "lzo",
+            "xz"
+          ],
+          "type": "string"
+        },
+        "confinement": {
+          "description": "The amount of isolation the snap has from the host system",
+          "enum": [
+            "classic",
+            "devmode",
+            "strict"
+          ],
+          "type": "string"
+        },
+        "contact": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "The snap author's contact links and email addresses"
+        },
+        "description": {
+          "type": "string"
+        },
+        "donation": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "The snap's donation links"
+        },
+        "environment": {
+          "$ref": "#/definitions/Record<string,string|null>",
+          "description": "The snap's runtime environment variables"
+        },
+        "epoch": {
+          "description": "The epoch associated with this version of the snap",
+          "type": "string"
+        },
+        "grade": {
+          "enum": [
+            "devel",
+            "stable"
+          ],
+          "type": "string"
+        },
+        "hooks": {
+          "$ref": "#/definitions/Record<string,Hook>",
+          "description": "Configures the snap's hooks"
+        },
+        "icon": {
+          "description": "The path to the snap's icon file",
+          "type": "string"
+        },
+        "issues": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Links for submitting issues, bugs, and feature requests"
+        },
+        "layout": {
+          "$ref": "#/definitions/Record<string,Record<string,string>>",
+          "description": "The file layouts in the execution environment"
+        },
+        "license": {
+          "description": "The project's license as an SPDX expression",
+          "type": "string"
+        },
+        "lint": {
+          "description": "The linter configuration settings",
+          "typeof": "function"
+        },
+        "name": {
+          "description": "The identifying name of the snap",
+          "type": "string"
+        },
+        "package-repositories": {
+          "description": "The package repositories to use for build and stage packages",
+          "items": {
+            "$ref": "#/definitions/Record<string,unknown>"
+          },
+          "type": "array"
+        },
+        "parts": {
+          "$ref": "#/definitions/Record<string,Part>",
+          "description": "The self-contained software pieces needed to create the final artifact"
+        },
+        "passthrough": {
+          "$ref": "#/definitions/Record<string,unknown>",
+          "description": "Attributes to pass to snap's metadata file"
+        },
+        "platforms": {
+          "$ref": "#/definitions/Record<string,Platform>",
+          "description": "The platforms where the snap can be built and run (core24+)"
+        },
+        "plugs": {
+          "$ref": "#/definitions/Record<string,unknown>",
+          "description": "Declares the snap's plugs"
+        },
+        "provenance": {
+          "description": "Primary-key header for snaps signed by third parties",
+          "type": "string"
+        },
+        "slots": {
+          "$ref": "#/definitions/Record<string,unknown>",
+          "description": "Declares the snap's slots"
+        },
+        "source-code": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Links to the source code"
+        },
+        "summary": {
+          "description": "A short description of the project (max 78 chars)",
+          "type": "string"
+        },
+        "system-usernames": {
+          "$ref": "#/definitions/Record<string,unknown>",
+          "description": "The system usernames the snap can use"
+        },
+        "title": {
+          "type": "string"
+        },
+        "type": {
+          "description": "Snap type",
+          "enum": [
+            "app",
+            "base",
+            "gadget",
+            "kernel",
+            "snapd"
+          ],
+          "type": "string"
+        },
+        "ua-services": {
+          "description": "Ubuntu Pro services to enable when building",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "version": {
+          "type": "string"
+        },
+        "website": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Links to the original software's web pages"
+        }
+      },
+      "required": [
+        "base",
+        "confinement",
+        "name",
+        "parts"
       ],
       "type": "object"
     },
