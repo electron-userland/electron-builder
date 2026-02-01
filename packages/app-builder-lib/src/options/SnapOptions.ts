@@ -67,11 +67,13 @@ export interface SnapOptions24 extends SnapBaseOptions {
    */
   readonly extensions?: Array<string> | null
 
+  readonly useGnomeExtension?: boolean | null
+
   readonly remoteBuild?: RemoteBuildOptions | null
 
-  readonly useLXD?: boolean | null
+  useLXD?: boolean | null
   readonly useMultipass?: boolean | null
-  readonly useDestructiveMode?: boolean | null
+  useDestructiveMode?: boolean | null
 
   /**
    * Whether or not to enable Wayland support natively.

@@ -319,17 +319,27 @@ jobs:
         with:
           cache-path: ~/.cache/electron
           cache-key: v-35.7.5-snap-core24-electron
-
+          
       - name: Install snapd
         run: |
           sudo apt-get update
           sudo apt-get install -y snapd
           sudo snap install snapd
 
+      - name: Cache GNOME SDK
+        uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        with:
+          path: /var/lib/snapd/snaps/gnome-46-2404-sdk*.snap
+          key: gnome-sdk-${{ runner.os }}
+
       - name: Install snapcraft
         run: |
           sudo snap install snapcraft --classic
 
+      # Pre-install GNOME SDK (recommended for reliability)
+      - name: Install GNOME SDK
+        run: sudo snap install gnome-46-2404-sdk --channel=latest/stable
+      
       - name: Run snap core24 tests
         run: pnpm ci:test
         env:

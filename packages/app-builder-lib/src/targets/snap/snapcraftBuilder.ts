@@ -210,7 +210,7 @@ async function cleanupBuildArtifacts(workDir: string, keepArtifacts: boolean = f
  */
 export async function buildSnap(options: BuildSnapOptions): Promise<string> {
   const progress = new SnapBuildProgress()
-  const { SNAPCRAFT_BUILD_ENVIRONMENT = "host", SNAPCRAFT_NO_NETWORK = "1" } = process.env
+  const { SNAPCRAFT_NO_NETWORK = "1" } = process.env
   const {
     snapcraftConfig,
     artifactPath,
@@ -219,11 +219,19 @@ export async function buildSnap(options: BuildSnapOptions): Promise<string> {
     useLXD = false,
     useMultipass = false,
     useDestructiveMode = false,
-    env = {
-      SNAPCRAFT_BUILD_ENVIRONMENT,
-      SNAPCRAFT_NO_NETWORK,
-    },
+    env: userEnv,
   } = options
+
+  // Build environment: start from user-provided env, ensure network-disabled by default.
+  const env: Record<string, string> = {
+    ...(userEnv || {}),
+    SNAPCRAFT_NO_NETWORK,
+  }
+
+  // Only force host (destructive) build environment when destructive mode is explicitly requested.
+  if (useDestructiveMode) {
+    env.SNAPCRAFT_BUILD_ENVIRONMENT = "host"
+  }
 
   try {
     progress.logStage("preparing", "validating snapcraft configuration", 10)
@@ -444,6 +452,7 @@ async function executeSnapcraftBuild(options: ExecuteSnapcraftOptions): Promise<
       log.debug(null, "using LXD for build")
     } else if (useMultipass) {
       // Use Multipass (default for macOS/Windows)
+      args.push("--use-multipass")
       log.debug(null, "using Multipass for build")
     }
   }

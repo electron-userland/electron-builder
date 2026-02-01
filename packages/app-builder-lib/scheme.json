@@ -6380,6 +6380,12 @@
             "boolean"
           ]
         },
+        "useGnomeExtension": {
+          "type": [
+            "null",
+            "boolean"
+          ]
+        },
         "useLXD": {
           "type": [
             "null",

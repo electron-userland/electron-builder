@@ -2,7 +2,7 @@ import { Arch, Platform } from "app-builder-lib"
 import { app, EXTENDED_TIMEOUT, snapTarget } from "../helpers/packTester"
 
 // very slow
-const options = { timeout: EXTENDED_TIMEOUT }
+const options = { timeout: 2 * EXTENDED_TIMEOUT }
 
 test("snap full", options, ({ expect }) =>
   app(expect, {
@@ -14,6 +14,11 @@ test("snap full", options, ({ expect }) =>
       productName: "Snap Electron App (full build)",
       snap: {
         core: "core24",
+        core24: {
+          useGnomeExtension: true,
+          // useDestructiveMode: true,
+          // useMultipass: true
+        },
       },
       electronFuses: {
         runAsNode: true,

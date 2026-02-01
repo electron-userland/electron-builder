@@ -30,6 +30,9 @@ export interface SnapOptionsMapping {
   appPartStage: Part["stage"]
 
   autoStart: App["autostart"]
+
+  // Extension support
+  useGnomeExtension: boolean
 }
 
 const defaultStagePackages = ["libnspr4", "libnss3", "libxss1", "libappindicator3-1", "libsecret-1-0"]
@@ -37,6 +40,9 @@ const defaultStagePackages = ["libnspr4", "libnss3", "libxss1", "libappindicator
 export class SnapCore24 extends SnapCore<SnapOptions24> {
   defaultPlugs = ["desktop", "desktop-legacy", "home", "x11", "wayland", "unity7", "browser-support", "network", "gsettings", "audio-playback", "pulseaudio", "opengl"]
 
+  // Snap file hierarchy:
+  // - snap/gui/ gets automatically copied to meta/gui/ in the final snap
+  // - Desktop files in meta/gui/ are used for menu integration
   readonly configRelativePath = "snap"
   readonly guiRelativePath = path.join(this.configRelativePath, "gui")
 
@@ -47,9 +53,27 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
   async buildSnap(params: { snap: SnapcraftYAML; appOutDir: string; stageDir: string; snapArch: Arch; artifactPath: string }): Promise<void> {
     const { snap, appOutDir, stageDir, artifactPath } = params
 
+    // IMPORTANT: GNOME extension cannot be used with destructive-mode
+    // The extension's gnome/sdk part tries to install to system paths like /snap/command-chain/
+    // which fails with permission denied in destructive mode
+    const useGnomeExtension = this.options.useGnomeExtension !== false
+    if (useGnomeExtension && this.options.useDestructiveMode) {
+      log.warn(
+        { useGnomeExtension, useDestructiveMode: this.options.useDestructiveMode },
+        "GNOME extension cannot be used with destructive-mode. Switching to LXD container build."
+      )
+      // Override destructive mode when using extension
+      this.options.useDestructiveMode = false
+      if (!this.options.useLXD && !this.options.useMultipass && !this.options.remoteBuild) {
+        this.options.useLXD = true
+      }
+    }
+
     const snapDirResolved = path.resolve(stageDir, this.configRelativePath)
     const snapcraftYamlPath = path.join(snapDirResolved, "snapcraft.yaml")
 
+    // Create snap/gui directory for desktop files and icons
+    // Snapcraft will automatically copy snap/gui/ contents to meta/gui/ in the final snap
     const guiOutput = path.resolve(stageDir, this.guiRelativePath)
     await mkdir(guiOutput, { recursive: true })
 
@@ -61,17 +85,23 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
     await writeFile(snapcraftYamlPath, yamlContent, "utf8")
     log.debug(snap, "generated snapcraft.yaml")
 
+    // Copy icon to snap/gui/ directory
+    // Snapcraft will automatically copy this to meta/gui/ in the final snap
     const desktopExtraProps: Record<string, string> = {}
     const icon = this.helper.maxIconPath
     if (icon) {
-      const file = `${snap.name}.${path.extname(icon)}`
-      await copy(icon, path.join(guiOutput, file))
-      desktopExtraProps.Icon = `$SNAP/${this.guiRelativePath}/${file}`
+      const iconFileName = `${snap.name}${path.extname(icon)}`
+      await copy(icon, path.join(guiOutput, iconFileName))
+      // Icon path will be available at ${SNAP}/meta/gui/<icon-file> after installation
+      desktopExtraProps.Icon = `\${SNAP}/meta/gui/${iconFileName}`
     }
 
+    // Create desktop file in snap/gui/ directory
+    // Snapcraft will automatically copy this to meta/gui/ in the final snap
     const desktopFilePath = path.join(guiOutput, `${snap.name}.desktop`)
     await this.helper.writeDesktopEntry(this.options, this.packager.executableName + " %U", desktopFilePath, desktopExtraProps)
 
+    // Copy app files to the app directory in the stage
     const appDir = path.resolve(stageDir, "app")
     if (path.resolve(stageDir) !== path.resolve(appOutDir)) {
       log.debug({ to: log.filePath(appDir), from: log.filePath(appOutDir) }, "copying app files")
@@ -93,6 +123,7 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
     const appInfo = this.packager.appInfo
     const appName = this.packager.executableName.toLowerCase()
     const options = this.options
+    const useGnomeExtension = options.useGnomeExtension !== false // Default to true
 
     // Create the app part
     const appPart: Part = {
@@ -105,30 +136,97 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
     }
 
     // Process plugs and slots
-    const { root: rootPlugs, app: appPlugs } = options.plugs
-      ? this.processPlugOrSlots(options.plugs)
-      : {
-          root: {},
-          app: this.defaultPlugs,
-        }
+    // When using GNOME extension, we don't need to manually configure content snaps
+    // The extension will handle: gnome-46-2404, gtk-3-themes, icon-themes, sound-themes
+    let rootPlugs: Record<string, any> | undefined
+    let appPlugs: string[] | undefined
+
+    if (useGnomeExtension) {
+      // With GNOME extension, only process user-provided custom plugs
+      const result = options.plugs ? this.processPlugOrSlots(options.plugs) : { root: undefined, app: undefined }
+      rootPlugs = result.root
+      // Extension automatically adds common plugs, so we only add custom ones
+      appPlugs = result.app
+    } else {
+      // Without GNOME extension, we need manual content snaps
+      const defaultRootPlugs: Record<string, any> = {
+        "gtk-3-themes": {
+          interface: "content",
+          target: "$SNAP/data-dir/themes",
+          "default-provider": "gtk-common-themes",
+        },
+        "icon-themes": {
+          interface: "content",
+          target: "$SNAP/data-dir/icons",
+          "default-provider": "gtk-common-themes",
+        },
+        "sound-themes": {
+          interface: "content",
+          target: "$SNAP/data-dir/sounds",
+          "default-provider": "gtk-common-themes",
+        },
+        "gnome-46-2404": {
+          interface: "content",
+          target: "$SNAP/gnome-platform",
+          "default-provider": "gnome-46-2404",
+        },
+        "gpu-2404": {
+          interface: "content",
+          target: "$SNAP/gpu-2404",
+          "default-provider": "mesa-2404",
+        },
+      }
+
+      const result = options.plugs
+        ? this.processPlugOrSlots(options.plugs)
+        : {
+            root: defaultRootPlugs,
+            app: this.defaultPlugs,
+          }
+      rootPlugs = result.root
+      appPlugs = result.app
+    }
+
     const { root: rootSlots, app: appSlots } = options.slots ? this.processPlugOrSlots(options.slots) : { root: {}, app: [] }
 
     // Create the app configuration
     const app: App = {
-      command: `desktop-launch $SNAP/app/${this.packager.executableName}`,
+      // When using the extension, don't manually specify command or command-chain
+      // The extension handles this automatically
+      command: useGnomeExtension ? `app/${this.packager.executableName}` : `app/${this.packager.executableName}`,
+      // Don't manually add command-chain when using extension - it adds it automatically
+      "command-chain": useGnomeExtension ? undefined : ["snap/command-chain/desktop-launch"],
       plugs: appPlugs,
       slots: appSlots,
       autostart: options.autoStart ? `${appName}.desktop` : undefined,
-      // extensions: ["gnome"],
-      desktop: `${appName}.desktop`,
+      desktop: `meta/gui/${appName}.desktop`,
+      // Add GNOME extension to the app if enabled
+      extensions: useGnomeExtension ? ["gnome"] : undefined,
     }
 
-    const iconPath =
-      (await this.helper.icons) && this.helper.maxIconPath != null ? `\${SNAP}/${this.guiRelativePath}/${appName}.${path.extname(this.helper.maxIconPath)}` : undefined
+    // Icon path in the top-level metadata
+    const iconPath = (await this.helper.icons) && this.helper.maxIconPath != null ? `\${SNAP}/meta/gui/${appName}${path.extname(this.helper.maxIconPath)}` : undefined
 
     // Process hooks if configured
     const hooksConfig = options.hooks
     const hooks = hooksConfig ? await this.processHooks(hooksConfig) : undefined
+
+    // Parts configuration - the extension automatically adds a gnome/sdk part
+    // Don't manually add desktop-launch when using the extension
+    const parts: Record<string, Part> = {
+      [appName]: appPart,
+    }
+
+    // Only add desktop-launch if NOT using GNOME extension
+    if (!useGnomeExtension) {
+      parts["desktop-launch"] = {
+        plugin: "make",
+        source: "https://github.com/ubuntu/snapcraft-desktop-helpers.git",
+        "source-subdir": "gtk",
+        "build-packages": ["build-essential"],
+        stage: ["snap/command-chain/desktop-launch"],
+      }
+    }
 
     // Build the snapcraft configuration
     const snapcraft: SnapcraftYAML = {
@@ -136,9 +234,7 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
       name: appName,
       base: "core24",
       confinement: options.confinement || "strict",
-      parts: {
-        [appName]: appPart,
-      },
+      parts: parts,
 
       // Architecture/Platform
       platforms: {
@@ -164,8 +260,9 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
       // Environment
       environment: this.buildEnvironment(options),
 
-      // Layout
-      layout: options.layout || undefined,
+      // Layout - only add custom layout if NOT using GNOME extension
+      // The extension provides its own layout
+      layout: useGnomeExtension ? (options.layout ?? undefined) : this.buildDefaultLayout(options),
 
       // Interfaces
       plugs: rootPlugs,
@@ -189,10 +286,10 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
   private buildEnvironment(options: SnapOptions24): Record<string, string | null> | undefined {
     const env: Record<string, string | null> = {}
 
-    // Add default TMPDIR if not specified
-    // if (!options.environment?.TMPDIR) {
-    //   env.TMPDIR = "$XDG_RUNTIME_DIR"
-    // }
+    // Add default TMPDIR for Electron/Chromium apps
+    if (!options.environment?.TMPDIR) {
+      env.TMPDIR = "$XDG_RUNTIME_DIR"
+    }
 
     // Handle Wayland support
     if (options.allowNativeWayland === false) {
@@ -205,6 +302,36 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
     }
 
     return Object.keys(env).length > 0 ? env : undefined
+  }
+
+  /**
+   * Build default layout for core24 with GNOME platform content snaps (non-extension mode)
+   * This allows the app to access libraries from the gnome-46-2404 and mesa-2404 content snaps
+   */
+  private buildDefaultLayout(options: SnapOptions24): Record<string, any> | undefined {
+    // If user provides custom layout, use that instead
+    if (options.layout) {
+      return options.layout
+    }
+
+    // Default layout for core24 Electron apps using GNOME content snaps WITHOUT extension
+    return {
+      "/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkit2gtk-4.0": {
+        bind: "$SNAP/gnome-platform/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkit2gtk-4.0",
+      },
+      "/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkit2gtk-4.1": {
+        bind: "$SNAP/gnome-platform/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkit2gtk-4.1",
+      },
+      "/usr/share/xml/iso-codes": {
+        bind: "$SNAP/gnome-platform/usr/share/xml/iso-codes",
+      },
+      "/usr/share/libdrm": {
+        bind: "$SNAP/gpu-2404/libdrm",
+      },
+      "/usr/share/drirc.d": {
+        symlink: "$SNAP/gpu-2404/drirc.d",
+      },
+    }
   }
 
   /**
