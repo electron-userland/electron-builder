@@ -29,7 +29,7 @@ export async function getRanLocalServerPath() {
   const serverBin = await getBinFromUrl("ran@1.0.0", "ran-v0.1.6-all-platforms.zip", "8OW8qc8CHG4dT0/R/ccNSO7AJAOgSRxJwxHF6vaiYoyh3eVp7rHdkYBkqnXx54Eqdo4WY8RUxEwKzKaAu1ISFA==")
   const arch = process.arch === "x64" || process.platform === "darwin" ? "amd64" : process.arch === "ia32" && process.platform === "linux" ? "386" : process.arch
   if (process.platform === "win32") {
-    return path.join(serverBin, "win", arch, "ran.exe")
+    return path.join(serverBin, "win", process.arch === "ia32" ? "ia32" :"amd64", "ran.exe")
   }
   return path.join(serverBin, process.platform, arch, "ran")
 }

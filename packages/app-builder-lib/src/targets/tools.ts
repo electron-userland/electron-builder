@@ -123,7 +123,7 @@ async function getWindowsSignToolExe({ winCodeSign }: { winCodeSign: ToolsetConf
     if (isOldWin6()) {
       return path.resolve(vendorPath, "windows-6", "signtool.exe")
     } else {
-      return path.resolve(vendorPath, "windows-10", process.arch, "signtool.exe")
+      return path.resolve(vendorPath, "windows-10", process.arch === "ia32" ? "ia32" :"x64", "signtool.exe")
     }
   }
   const vendorPath = await getWindowsKitsBundle({ winCodeSign, arch: process.arch })
