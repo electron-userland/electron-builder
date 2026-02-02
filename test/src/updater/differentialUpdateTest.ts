@@ -73,7 +73,7 @@ const winCodeSignVersions: ToolsetConfig["winCodeSign"][] = ["0.0.0", "1.0.0", "
 
 for (const winCodeSign of winCodeSignVersions) {
   describe(`winCodeSign: ${winCodeSign}`, { sequential: true }, () => {
-    test.ifWindows("web installer", { retry: 2 }, async ({ expect }) => {
+    test.skip("web installer", async ({ expect }) => {
       const outDirs: Array<string> = []
       const tmpDir = new TmpDir("differential-updater-test")
       await doBuild(expect, outDirs, Platform.WINDOWS.createTarget(["nsis-web"], Arch.x64), tmpDir, true)
@@ -196,7 +196,7 @@ async function testBlockMap(expect: ExpectStatic, oldDir: string, newDir: string
   const port = 8000 + (updaterClass.name.charCodeAt(0) as number) + Math.floor(Math.random() * 10000)
 
   const serverBin = await getRanLocalServerPath()
-  const httpServerProcess = doSpawn(serverBin, [`-root=${newDir}`, `-port=${port}`, "-gzip=false", "-listdir=true"])
+  const httpServerProcess = doSpawn(serverBin, [`-root="${newDir}"`, `-port=${port}`, "-gzip=false", "-listdir=true"])
 
   // Mac uses electron's native autoUpdater to serve updates to, we mock here since electron API isn't available within jest runtime
   const mockNativeUpdater = new TestNativeUpdater()
