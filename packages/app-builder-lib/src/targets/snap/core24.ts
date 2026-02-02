@@ -101,10 +101,12 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
     const desktopFilePath = path.join(guiOutput, `${snap.name}.desktop`)
     await this.helper.writeDesktopEntry(this.options, this.packager.executableName + " %U", desktopFilePath, desktopExtraProps)
 
-    // Copy app files to the app directory in the stage
+    // Copy app files to the project root `app` directory so `source: app`
+    // in the generated `snapcraft.yaml` (which is under `snap/`) can be
+    // resolved by snapcraft running in the build environment.
     const appDir = path.resolve(stageDir, "app")
-    if (path.resolve(stageDir) !== path.resolve(appOutDir)) {
-      log.debug({ to: log.filePath(appDir), from: log.filePath(appOutDir) }, "copying app files")
+    if (path.resolve(appDir) !== path.resolve(appOutDir)) {
+      log.debug({ to: log.filePath(appDir), from: log.filePath(appOutDir) }, "copying app files to project root app directory")
       await copyDir(appOutDir, appDir)
     }
 
@@ -192,8 +194,11 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
     // Create the app configuration
     const app: App = {
       // When using the extension, don't manually specify command or command-chain
-      // The extension handles this automatically
-      command: useGnomeExtension ? `app/${this.packager.executableName}` : `app/${this.packager.executableName}`,
+      // The extension handles this automatically. Use the executable name (no `app/` prefix)
+      // because the `dump` plugin copies the contents of the `app` source into the
+      // part install root (so the executable ends up at the snap root), not in a
+      // nested `app/` directory inside the snap.
+      command: `${this.packager.executableName}`,
       // Don't manually add command-chain when using extension - it adds it automatically
       "command-chain": useGnomeExtension ? undefined : ["snap/command-chain/desktop-launch"],
       plugs: appPlugs,

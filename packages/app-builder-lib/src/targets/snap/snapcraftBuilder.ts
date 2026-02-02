@@ -255,6 +255,21 @@ export async function buildSnap(options: BuildSnapOptions): Promise<string> {
     }
 
     // Step 7: Execute build with retry
+    // Pre-flight: ensure the app directory exists where snapcraft expects it (stageDir/app).
+    try {
+      const { pathExists, readdir } = await import("fs-extra")
+      const projectAppDir = path.join(stageDir, "app")
+      if (!(await pathExists(projectAppDir))) {
+        log.error({ path: projectAppDir }, "snap build failed: app directory not found")
+        throw new Error(`snap build failed: expected app directory not found at ${projectAppDir}`)
+      }
+      const files = await readdir(projectAppDir)
+      log.debug({ appFiles: files.slice(0, 20) }, "app directory contents (truncated)")
+    } catch (e: any) {
+      // rethrow so executeWithRetry is not attempted when inputs are invalid
+      throw e
+    }
+
     progress.logStage("building", "running snapcraft build", 70)
     const snapFilePath = await executeWithRetry(
       () =>
