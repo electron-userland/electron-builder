@@ -119,8 +119,12 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
         const entries = await readdir(appOutDir)
         const organize: Record<string, string> = (appPart.organize as Record<string, string>) || {}
         for (const entry of entries) {
-          if (!entry) continue
-          if (organize[entry]) continue
+          if (!entry) {
+            continue
+          }
+          if (organize[entry]) {
+            continue
+          }
           organize[entry] = `app/${entry}`
         }
         appPart.organize = organize
@@ -402,7 +406,9 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
    * Normalize assumes list (can be string or array)
    */
   normalizeAssumesList(assumes: Array<string> | string | Nullish): string[] | undefined {
-    if (!assumes) return undefined
+    if (!assumes) {
+      return undefined
+    }
     if (typeof assumes === "string") {
       return [assumes]
     }

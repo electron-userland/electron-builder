@@ -1,4 +1,4 @@
-import { RemoteBuildOptions } from "app-builder-lib/src/options/SnapOptions"
+import { RemoteBuildOptions } from "../../options/SnapOptions"
 import { log, spawn } from "builder-util"
 import * as childProcess from "child_process"
 import { access, readFile } from "fs-extra"
@@ -84,9 +84,15 @@ function validateSnapcraftConfig(config: SnapcraftYAML): void {
   const warnings: string[] = []
 
   // Required fields
-  if (!config.name) errors.push("name is required")
-  if (!config.base) errors.push("base is required")
-  if (!config.confinement) errors.push("confinement is required")
+  if (!config.name) {
+    errors.push("name is required")
+  }
+  if (!config.base) {
+    errors.push("base is required")
+  }
+  if (!config.confinement) {
+    errors.push("confinement is required")
+  }
   if (!config.parts || Object.keys(config.parts).length === 0) {
     errors.push("at least one part is required")
   }
@@ -246,19 +252,14 @@ export async function buildSnap(options: BuildSnapOptions): Promise<string> {
 
     // Step 7: Execute build with retry
     // Pre-flight: ensure the app directory exists where snapcraft expects it (stageDir/app).
-    try {
-      const { pathExists, readdir } = await import("fs-extra")
-      const projectAppDir = path.join(stageDir, "app")
-      if (!(await pathExists(projectAppDir))) {
-        log.error({ path: projectAppDir }, "snap build failed: app directory not found")
-        throw new Error(`snap build failed: expected app directory not found at ${projectAppDir}`)
-      }
-      const files = await readdir(projectAppDir)
-      log.debug({ appFiles: files.slice(0, 20) }, "app directory contents (truncated)")
-    } catch (e: any) {
-      // rethrow so executeWithRetry is not attempted when inputs are invalid
-      throw e
+    const { pathExists, readdir } = await import("fs-extra")
+    const projectAppDir = path.join(stageDir, "app")
+    if (!(await pathExists(projectAppDir))) {
+      log.error({ path: projectAppDir }, "snap build failed: app directory not found")
+      throw new Error(`snap build failed: expected app directory not found at ${projectAppDir}`)
     }
+    const files = await readdir(projectAppDir)
+    log.debug({ appFiles: files.slice(0, 20) }, "app directory contents (truncated)")
 
     progress.logStage("building", "running snapcraft build", 70)
     const snapFilePath = await executeWithRetry(
