@@ -5,7 +5,7 @@ import { SnapOptions } from "app-builder-lib/out/options/SnapOptions"
 // very slow
 const options = { timeout: 3 * EXTENDED_TIMEOUT }
 
-const cores: SnapOptions['core'][] = ["core20", "core24"]
+const cores: SnapOptions["core"][] = ["core20", "core24"]
 
 for (const core of cores) {
   describe(`snap core test: ${core}`, () => {

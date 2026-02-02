@@ -210,16 +210,7 @@ async function cleanupBuildArtifacts(workDir: string, keepArtifacts: boolean = f
 export async function buildSnap(options: BuildSnapOptions): Promise<string> {
   const progress = new SnapBuildProgress()
   const { SNAPCRAFT_NO_NETWORK = "1" } = process.env
-  const {
-    snapcraftConfig,
-    artifactPath,
-    remoteBuild,
-    stageDir,
-    useLXD = false,
-    useMultipass = false,
-    useDestructiveMode = false,
-    env: userEnv,
-  } = options
+  const { snapcraftConfig, artifactPath, remoteBuild, stageDir, useLXD = false, useMultipass = false, useDestructiveMode = false, env: userEnv } = options
 
   // Build environment: start from user-provided env, ensure network-disabled by default.
   const env: Record<string, string> = {

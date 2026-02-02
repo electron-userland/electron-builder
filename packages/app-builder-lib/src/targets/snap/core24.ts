@@ -110,6 +110,33 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
       await copyDir(appOutDir, appDir)
     }
 
+    // Auto-generate `organize` mapping for the app part so top-level helper
+    // binaries and resources are placed under `app/` inside the snap. Update
+    // the already-written `snapcraft.yaml` so the build sees the mapping.
+    try {
+      const appPart = snap.parts[snap.name]
+      if (appPart) {
+        const entries = await readdir(appOutDir)
+        const organize: Record<string, string> = (appPart.organize as Record<string, string>) || {}
+        for (const entry of entries) {
+          if (!entry) continue
+          if (organize[entry]) continue
+          organize[entry] = `app/${entry}`
+        }
+        appPart.organize = organize
+
+        const updatedYaml = yaml.dump(snap, {
+          indent: 2,
+          lineWidth: -1,
+          noRefs: true,
+        })
+        await writeFile(snapcraftYamlPath, updatedYaml, "utf8")
+        log.debug({ organize }, "updated snapcraft.yaml with organize mapping")
+      }
+    } catch (e: any) {
+      log.debug({ error: e.message }, "failed to generate organize mapping")
+    }
+
     await buildSnap({
       snapcraftConfig: snap,
       artifactPath,
@@ -233,14 +260,9 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
       }
     }
 
-    // Ensure the packaged executable is placed under `app/` inside the snap.
-    // The `dump` plugin will copy files from the `app` source into the part
-    // install root; use `organize` to move the executable into `app/` so
-    // runtime `app/<exe>` paths remain valid.
-    const exeName = this.packager.executableName
-    parts[appName].organize = {
-      [exeName]: `app/${exeName}`,
-    }
+    // Note: `organize` will be generated later in `buildSnap` based on the
+    // actual contents of the built app directory so helper binaries and
+    // resources are automatically moved under `app/` in the snap.
 
     // Build the snapcraft configuration
     const snapcraft: SnapcraftYAML = {
