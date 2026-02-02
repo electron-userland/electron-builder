@@ -7939,7 +7939,8 @@
         {
           "type": "null"
         }
-      ]
+      ],
+      "description": "Configuration of toolsets utilized by electron-builder"
     },
     "win": {
       "anyOf": [

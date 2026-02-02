@@ -116,21 +116,21 @@ export function isOldWin6() {
   return winVersion.startsWith("6.") && !winVersion.startsWith("6.3")
 }
 
-async function getWindowsSignToolExe( winCodeSign: ToolsetConfig["winCodeSign"] | Nullish ) {
+async function getWindowsSignToolExe(winCodeSign: ToolsetConfig["winCodeSign"] | Nullish) {
   if (winCodeSign === "0.0.0" || winCodeSign == null) {
     // use modern signtool on Windows Server 2012 R2 to be able to sign AppX
     const vendorPath = await getBin("winCodeSign")
     if (isOldWin6()) {
       return path.resolve(vendorPath, "windows-6", "signtool.exe")
     } else {
-      return path.resolve(vendorPath, "windows-10", process.arch === "ia32" ? "ia32" :"x64", "signtool.exe")
+      return path.resolve(vendorPath, "windows-10", process.arch === "ia32" ? "ia32" : "x64", "signtool.exe")
     }
   }
   const vendorPath = await getWindowsKitsBundle({ winCodeSign, arch: process.arch })
   return path.resolve(vendorPath.kit, "signtool.exe")
 }
 
-async function getOsslSigncodeBundle( winCodeSign: ToolsetConfig["winCodeSign"] | Nullish ) {
+async function getOsslSigncodeBundle(winCodeSign: ToolsetConfig["winCodeSign"] | Nullish) {
   const overridePath = process.env.ELECTRON_BUILDER_OSSL_SIGNCODE_PATH
   if (!isEmptyOrSpaces(overridePath)) {
     return { path: overridePath }
@@ -164,7 +164,7 @@ async function getOsslSigncodeBundle( winCodeSign: ToolsetConfig["winCodeSign"] 
   return { path: path.resolve(toolPath, "osslsigncode") }
 }
 
-export async function getRceditBundle( winCodeSign: ToolsetConfig["winCodeSign"] | Nullish ) {
+export async function getRceditBundle(winCodeSign: ToolsetConfig["winCodeSign"] | Nullish) {
   const ia32 = "rcedit-ia32.exe"
   const x86 = "rcedit-x86.exe"
   const x64 = "rcedit-x64.exe"
