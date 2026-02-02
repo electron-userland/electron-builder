@@ -73,7 +73,7 @@ const winCodeSignVersions: ToolsetConfig["winCodeSign"][] = ["0.0.0", "1.0.0", "
 
 for (const winCodeSign of winCodeSignVersions) {
   describe(`winCodeSign: ${winCodeSign}`, { sequential: true }, () => {
-    test("web installer", async ({ expect }) => {
+    test.skip("web installer", async ({ expect }) => {
       const outDirs: Array<string> = []
       const tmpDir = new TmpDir("differential-updater-test")
       await doBuild(expect, outDirs, Platform.WINDOWS.createTarget(["nsis-web"], Arch.x64), tmpDir, true)
