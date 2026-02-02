@@ -198,7 +198,7 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
       // because the `dump` plugin copies the contents of the `app` source into the
       // part install root (so the executable ends up at the snap root), not in a
       // nested `app/` directory inside the snap.
-      command: `${this.packager.executableName}`,
+      command: `app/${this.packager.executableName}`,
       // Don't manually add command-chain when using extension - it adds it automatically
       "command-chain": useGnomeExtension ? undefined : ["snap/command-chain/desktop-launch"],
       plugs: appPlugs,
@@ -231,6 +231,15 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
         "build-packages": ["build-essential"],
         stage: ["snap/command-chain/desktop-launch"],
       }
+    }
+
+    // Ensure the packaged executable is placed under `app/` inside the snap.
+    // The `dump` plugin will copy files from the `app` source into the part
+    // install root; use `organize` to move the executable into `app/` so
+    // runtime `app/<exe>` paths remain valid.
+    const exeName = this.packager.executableName
+    parts[appName].organize = {
+      [exeName]: `app/${exeName}`,
     }
 
     // Build the snapcraft configuration

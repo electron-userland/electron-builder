@@ -1,12 +1,11 @@
 import { RemoteBuildOptions } from "app-builder-lib/src/options/SnapOptions"
-import { copyDir, log, spawn } from "builder-util"
-import { mkdir, writeFile, readFile, access } from "fs-extra"
-import * as yaml from "js-yaml"
-import * as path from "path"
-import * as os from "os"
-import { SnapcraftYAML } from "./snapcraft"
+import { log, spawn } from "builder-util"
 import * as childProcess from "child_process"
+import { access, readFile } from "fs-extra"
+import * as os from "os"
+import * as path from "path"
 import * as util from "util"
+import { SnapcraftYAML } from "./snapcraft"
 
 const execAsync = util.promisify(childProcess.exec)
 
