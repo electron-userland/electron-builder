@@ -1,5 +1,5 @@
 import { Arch, Configuration, Platform } from "app-builder-lib"
-import { doSpawn, getArchSuffix } from "builder-util"
+import { archFromString, doSpawn, getArchSuffix } from "builder-util"
 import { GenericServerOptions, Nullish, S3Options } from "builder-util-runtime"
 import { AppImageUpdater, BaseUpdater, MacUpdater, NsisUpdater } from "electron-updater"
 import { EventEmitter } from "events"
@@ -12,6 +12,7 @@ import { NEW_VERSION_NUMBER, OLD_VERSION_NUMBER, testAppCacheDirName, tuneTestUp
 import { mockForNodeRequire } from "vitest-mock-commonjs"
 import { ExpectStatic } from "vitest"
 import { getRanLocalServerPath } from "../helpers/launchAppCrossPlatform"
+import { ToolsetConfig } from "app-builder-lib/src/configuration"
 
 async function doBuild(
   expect: ExpectStatic,
@@ -68,29 +69,39 @@ async function doBuild(
   }
 }
 
-test.ifWindows("web installer", { retry: 2 }, async ({ expect }) => {
-  const outDirs: Array<string> = []
-  const tmpDir = new TmpDir("differential-updater-test")
-  await doBuild(expect, outDirs, Platform.WINDOWS.createTarget(["nsis-web"], Arch.x64), tmpDir, true)
+const winCodeSignVersions: ToolsetConfig["winCodeSign"][] = ["0.0.0", "1.0.0", "1.1.0"]
 
-  const oldDir = outDirs[0]
-  await move(path.join(oldDir, "nsis-web", `TestApp-${OLD_VERSION_NUMBER}-x64.nsis.7z`), path.join(getTestUpdaterCacheDir(oldDir), testAppCacheDirName, "package.7z"))
+for (const winCodeSign of winCodeSignVersions) {
+  describe(`winCodeSign: ${winCodeSign}`, { sequential: true }, () => {
+    test.ifWindows("web installer", async ({ expect }) => {
+      const outDirs: Array<string> = []
+      const tmpDir = new TmpDir("differential-updater-test")
+      // need to build both in order for this to run on both arm64 and x64 windows
+      await doBuild(expect, outDirs, Platform.WINDOWS.createTarget(["nsis-web"], Arch.x64, Arch.arm64), tmpDir, true)
 
-  await testBlockMap(expect, outDirs[0], path.join(outDirs[1], "nsis-web"), NsisUpdater, Platform.WINDOWS, Arch.x64)
-})
+      const oldDir = outDirs[0]
+      await move(
+        path.join(oldDir, "nsis-web", `TestApp-${OLD_VERSION_NUMBER}${getArchSuffix(archFromString(process.arch), "universal")}.nsis.7z`),
+        path.join(getTestUpdaterCacheDir(oldDir), testAppCacheDirName, "package.7z")
+      )
 
-test.ifWindows("nsis", async ({ expect }) => {
-  const outDirs: Array<string> = []
-  const tmpDir = new TmpDir("differential-updater-test")
-  await doBuild(expect, outDirs, Platform.WINDOWS.createTarget(["nsis"], Arch.x64), tmpDir, true)
+      await testBlockMap(expect, outDirs[0], path.join(outDirs[1], "nsis-web"), NsisUpdater, Platform.WINDOWS, archFromString(process.arch))
+    })
 
-  const oldDir = outDirs[0]
-  // move to new dir so that localhost server can read both blockmaps
-  await move(path.join(oldDir, `Test App ßW Setup ${OLD_VERSION_NUMBER}.exe`), path.join(getTestUpdaterCacheDir(oldDir), testAppCacheDirName, "installer.exe"))
-  await move(path.join(oldDir, `Test App ßW Setup ${OLD_VERSION_NUMBER}.exe.blockmap`), path.join(outDirs[1], "Test App ßW Setup 1.0.0.exe.blockmap"))
+    test.ifWindows("nsis", async ({ expect }) => {
+      const outDirs: Array<string> = []
+      const tmpDir = new TmpDir("differential-updater-test")
+      await doBuild(expect, outDirs, Platform.WINDOWS.createTarget(["nsis"], Arch.x64), tmpDir, true)
 
-  await testBlockMap(expect, outDirs[0], outDirs[1], NsisUpdater, Platform.WINDOWS, Arch.x64)
-})
+      const oldDir = outDirs[0]
+      // move to new dir so that localhost server can read both blockmaps
+      await move(path.join(oldDir, `Test App ßW Setup ${OLD_VERSION_NUMBER}.exe`), path.join(getTestUpdaterCacheDir(oldDir), testAppCacheDirName, "installer.exe"))
+      await move(path.join(oldDir, `Test App ßW Setup ${OLD_VERSION_NUMBER}.exe.blockmap`), path.join(outDirs[1], "Test App ßW Setup 1.0.0.exe.blockmap"))
+
+      await testBlockMap(expect, outDirs[0], outDirs[1], NsisUpdater, Platform.WINDOWS, Arch.x64)
+    })
+  })
+}
 
 async function testLinux(expect: ExpectStatic, arch: Arch) {
   process.env.TEST_UPDATER_ARCH = Arch[arch]

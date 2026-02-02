@@ -46,6 +46,8 @@ export interface CommonConfiguration {
    */
   readonly directories?: MetadataDirectories | null
 
+  readonly toolsets?: ToolsetConfig | null
+
   /**
    * Options related to how build macOS targets.
    */
@@ -260,6 +262,19 @@ export interface PackContext {
 export type AfterPackContext = PackContext
 export type BeforePackContext = PackContext
 export type AfterExtractContext = PackContext
+
+export type ToolsetConfig = {
+  /**
+   * `win-codesign` version to use for signing Windows artifacts.
+   * Located at https://github.com/electron-userland/electron-builder-binaries/releases?q=win-codesign&expanded=true
+   * 0.0.0 - legacy toolset (winCodeSign)
+   * 1.0.0 - windows-kits-bundle-10_0_26100_0
+   * 1.1.0 - windows-kits-bundle-10_0_26100_0 with updated osslsigncode
+   * @default "0.0.0"
+   *
+   */
+  readonly winCodeSign?: "0.0.0" | "1.0.0" | "1.1.0" | null
+}
 
 export interface Hooks {
   /**
