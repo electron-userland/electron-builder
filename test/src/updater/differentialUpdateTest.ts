@@ -1,5 +1,5 @@
 import { Arch, Configuration, Platform } from "app-builder-lib"
-import { doSpawn, getArchSuffix } from "builder-util"
+import { archFromString, doSpawn, getArchSuffix } from "builder-util"
 import { GenericServerOptions, Nullish, S3Options } from "builder-util-runtime"
 import { AppImageUpdater, BaseUpdater, MacUpdater, NsisUpdater } from "electron-updater"
 import { EventEmitter } from "events"
@@ -73,15 +73,19 @@ const winCodeSignVersions: ToolsetConfig["winCodeSign"][] = ["0.0.0", "1.0.0", "
 
 for (const winCodeSign of winCodeSignVersions) {
   describe(`winCodeSign: ${winCodeSign}`, { sequential: true }, () => {
-    test.skip("web installer", async ({ expect }) => {
+    test.ifWindows("web installer", async ({ expect }) => {
       const outDirs: Array<string> = []
       const tmpDir = new TmpDir("differential-updater-test")
-      await doBuild(expect, outDirs, Platform.WINDOWS.createTarget(["nsis-web"], Arch.x64), tmpDir, true)
+      // need to build both in order for this to run on both arm64 and x64 windows
+      await doBuild(expect, outDirs, Platform.WINDOWS.createTarget(["nsis-web"], Arch.x64, Arch.arm64), tmpDir, true)
 
       const oldDir = outDirs[0]
-      await move(path.join(oldDir, "nsis-web", `TestApp-${OLD_VERSION_NUMBER}-x64.nsis.7z`), path.join(getTestUpdaterCacheDir(oldDir), testAppCacheDirName, "package.7z"))
+      await move(
+        path.join(oldDir, "nsis-web", `TestApp-${OLD_VERSION_NUMBER}${getArchSuffix(archFromString(process.arch), "universal")}.nsis.7z`),
+        path.join(getTestUpdaterCacheDir(oldDir), testAppCacheDirName, "package.7z")
+      )
 
-      await testBlockMap(expect, outDirs[0], path.join(outDirs[1], "nsis-web"), NsisUpdater, Platform.WINDOWS, Arch.x64)
+      await testBlockMap(expect, outDirs[0], path.join(outDirs[1], "nsis-web"), NsisUpdater, Platform.WINDOWS, archFromString(process.arch))
     })
 
     test.ifWindows("nsis", async ({ expect }) => {
@@ -196,7 +200,7 @@ async function testBlockMap(expect: ExpectStatic, oldDir: string, newDir: string
   const port = 8000 + (updaterClass.name.charCodeAt(0) as number) + Math.floor(Math.random() * 10000)
 
   const serverBin = await getRanLocalServerPath()
-  const httpServerProcess = doSpawn(serverBin, [`-root="${newDir}"`, `-port=${port}`, "-gzip=false", "-listdir=true"])
+  const httpServerProcess = doSpawn(serverBin, [`-root=${newDir}`, `-port=${port}`, "-gzip=false", "-listdir=true"])
 
   // Mac uses electron's native autoUpdater to serve updates to, we mock here since electron API isn't available within jest runtime
   const mockNativeUpdater = new TestNativeUpdater()

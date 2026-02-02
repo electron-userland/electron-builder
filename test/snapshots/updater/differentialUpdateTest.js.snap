@@ -775,11 +775,17 @@ exports[`web installer 1`] = `
 {
   "win": [
     {
-      "arch": "x64",
       "file": "Test App ßW Web Setup 1.0.0.exe",
       "safeArtifactName": "TestApp-WebSetup-1.0.0.exe",
       "updateInfo": {
         "packages": {
+          "arm64": {
+            "blockMapSize": "@blockMapSize",
+            "file": "TestApp-1.0.0-arm64.nsis.7z",
+            "path": "TestApp-1.0.0-arm64.nsis.7z",
+            "sha512": "@sha512",
+            "size": "@size",
+          },
           "x64": {
             "blockMapSize": "@blockMapSize",
             "file": "TestApp-1.0.0-x64.nsis.7z",
@@ -795,6 +801,10 @@ exports[`web installer 1`] = `
       "file": "TestApp-1.0.0-x64.nsis.7z",
     },
     {
+      "arch": "arm64",
+      "file": "TestApp-1.0.0-arm64.nsis.7z",
+    },
+    {
       "file": "latest.yml",
       "fileContent": {
         "files": [
@@ -804,6 +814,13 @@ exports[`web installer 1`] = `
           },
         ],
         "packages": {
+          "arm64": {
+            "blockMapSize": "@blockMapSize",
+            "file": "TestApp-1.0.0-arm64.nsis.7z",
+            "path": "TestApp-1.0.0-arm64.nsis.7z",
+            "sha512": "@sha512",
+            "size": "@size",
+          },
           "x64": {
             "blockMapSize": "@blockMapSize",
             "file": "TestApp-1.0.0-x64.nsis.7z",
@@ -826,11 +843,17 @@ exports[`web installer 2`] = `
 {
   "win": [
     {
-      "arch": "x64",
       "file": "Test App ßW Web Setup 1.0.1.exe",
       "safeArtifactName": "TestApp-WebSetup-1.0.1.exe",
       "updateInfo": {
         "packages": {
+          "arm64": {
+            "blockMapSize": "@blockMapSize",
+            "file": "TestApp-1.0.1-arm64.nsis.7z",
+            "path": "TestApp-1.0.1-arm64.nsis.7z",
+            "sha512": "@sha512",
+            "size": "@size",
+          },
           "x64": {
             "blockMapSize": "@blockMapSize",
             "file": "TestApp-1.0.1-x64.nsis.7z",
@@ -846,6 +869,10 @@ exports[`web installer 2`] = `
       "file": "TestApp-1.0.1-x64.nsis.7z",
     },
     {
+      "arch": "arm64",
+      "file": "TestApp-1.0.1-arm64.nsis.7z",
+    },
+    {
       "file": "latest.yml",
       "fileContent": {
         "files": [
@@ -855,6 +882,13 @@ exports[`web installer 2`] = `
           },
         ],
         "packages": {
+          "arm64": {
+            "blockMapSize": "@blockMapSize",
+            "file": "TestApp-1.0.1-arm64.nsis.7z",
+            "path": "TestApp-1.0.1-arm64.nsis.7z",
+            "sha512": "@sha512",
+            "size": "@size",
+          },
           "x64": {
             "blockMapSize": "@blockMapSize",
             "file": "TestApp-1.0.1-x64.nsis.7z",
@@ -881,6 +915,13 @@ exports[`web installer 3`] = `
     },
   ],
   "packages": {
+    "arm64": {
+      "blockMapSize": "@blockMapSize",
+      "file": "TestApp-1.0.1-arm64.nsis.7z",
+      "path": "TestApp-1.0.1-arm64.nsis.7z",
+      "sha512": "@sha512",
+      "size": "@size",
+    },
     "x64": {
       "blockMapSize": "@blockMapSize",
       "file": "TestApp-1.0.1-x64.nsis.7z",
@@ -1008,11 +1049,17 @@ exports[`winCodeSign: 0.0.0 > web installer 1`] = `
 {
   "win": [
     {
-      "arch": "x64",
       "file": "Test App ßW Web Setup 1.0.0.exe",
       "safeArtifactName": "TestApp-WebSetup-1.0.0.exe",
       "updateInfo": {
         "packages": {
+          "arm64": {
+            "blockMapSize": "@blockMapSize",
+            "file": "TestApp-1.0.0-arm64.nsis.7z",
+            "path": "TestApp-1.0.0-arm64.nsis.7z",
+            "sha512": "@sha512",
+            "size": "@size",
+          },
           "x64": {
             "blockMapSize": "@blockMapSize",
             "file": "TestApp-1.0.0-x64.nsis.7z",
@@ -1028,6 +1075,10 @@ exports[`winCodeSign: 0.0.0 > web installer 1`] = `
       "file": "TestApp-1.0.0-x64.nsis.7z",
     },
     {
+      "arch": "arm64",
+      "file": "TestApp-1.0.0-arm64.nsis.7z",
+    },
+    {
       "file": "latest.yml",
       "fileContent": {
         "files": [
@@ -1037,6 +1088,13 @@ exports[`winCodeSign: 0.0.0 > web installer 1`] = `
           },
         ],
         "packages": {
+          "arm64": {
+            "blockMapSize": "@blockMapSize",
+            "file": "TestApp-1.0.0-arm64.nsis.7z",
+            "path": "TestApp-1.0.0-arm64.nsis.7z",
+            "sha512": "@sha512",
+            "size": "@size",
+          },
           "x64": {
             "blockMapSize": "@blockMapSize",
             "file": "TestApp-1.0.0-x64.nsis.7z",
@@ -1059,11 +1117,17 @@ exports[`winCodeSign: 0.0.0 > web installer 2`] = `
 {
   "win": [
     {
-      "arch": "x64",
       "file": "Test App ßW Web Setup 1.0.1.exe",
       "safeArtifactName": "TestApp-WebSetup-1.0.1.exe",
       "updateInfo": {
         "packages": {
+          "arm64": {
+            "blockMapSize": "@blockMapSize",
+            "file": "TestApp-1.0.1-arm64.nsis.7z",
+            "path": "TestApp-1.0.1-arm64.nsis.7z",
+            "sha512": "@sha512",
+            "size": "@size",
+          },
           "x64": {
             "blockMapSize": "@blockMapSize",
             "file": "TestApp-1.0.1-x64.nsis.7z",
@@ -1079,6 +1143,10 @@ exports[`winCodeSign: 0.0.0 > web installer 2`] = `
       "file": "TestApp-1.0.1-x64.nsis.7z",
     },
     {
+      "arch": "arm64",
+      "file": "TestApp-1.0.1-arm64.nsis.7z",
+    },
+    {
       "file": "latest.yml",
       "fileContent": {
         "files": [
@@ -1088,6 +1156,13 @@ exports[`winCodeSign: 0.0.0 > web installer 2`] = `
           },
         ],
         "packages": {
+          "arm64": {
+            "blockMapSize": "@blockMapSize",
+            "file": "TestApp-1.0.1-arm64.nsis.7z",
+            "path": "TestApp-1.0.1-arm64.nsis.7z",
+            "sha512": "@sha512",
+            "size": "@size",
+          },
           "x64": {
             "blockMapSize": "@blockMapSize",
             "file": "TestApp-1.0.1-x64.nsis.7z",
@@ -1104,6 +1179,43 @@ exports[`winCodeSign: 0.0.0 > web installer 2`] = `
     },
   ],
 }
+`;
+
+exports[`winCodeSign: 0.0.0 > web installer 3`] = `
+{
+  "files": [
+    {
+      "sha512": "@sha512",
+    },
+  ],
+  "packages": {
+    "arm64": {
+      "blockMapSize": "@blockMapSize",
+      "file": "TestApp-1.0.1-arm64.nsis.7z",
+      "path": "TestApp-1.0.1-arm64.nsis.7z",
+      "sha512": "@sha512",
+      "size": "@size",
+    },
+    "x64": {
+      "blockMapSize": "@blockMapSize",
+      "file": "TestApp-1.0.1-x64.nsis.7z",
+      "path": "TestApp-1.0.1-x64.nsis.7z",
+      "sha512": "@sha512",
+      "size": "@size",
+    },
+  },
+  "path": "Test App ßW Web Setup 1.0.1.exe",
+  "releaseDate": "@releaseDate",
+  "sha512": "@sha512",
+  "version": "1.0.1",
+}
+`;
+
+exports[`winCodeSign: 0.0.0 > web installer 4`] = `
+[
+  "Test App ßW Web Setup 1.0.1.exe",
+  "package-1.0.1.7z",
+]
 `;
 
 exports[`winCodeSign: 1.0.0 > nsis 1`] = `
@@ -1211,11 +1323,17 @@ exports[`winCodeSign: 1.0.0 > web installer 1`] = `
 {
   "win": [
     {
-      "arch": "x64",
       "file": "Test App ßW Web Setup 1.0.0.exe",
       "safeArtifactName": "TestApp-WebSetup-1.0.0.exe",
       "updateInfo": {
         "packages": {
+          "arm64": {
+            "blockMapSize": "@blockMapSize",
+            "file": "TestApp-1.0.0-arm64.nsis.7z",
+            "path": "TestApp-1.0.0-arm64.nsis.7z",
+            "sha512": "@sha512",
+            "size": "@size",
+          },
           "x64": {
             "blockMapSize": "@blockMapSize",
             "file": "TestApp-1.0.0-x64.nsis.7z",
@@ -1231,6 +1349,10 @@ exports[`winCodeSign: 1.0.0 > web installer 1`] = `
       "file": "TestApp-1.0.0-x64.nsis.7z",
     },
     {
+      "arch": "arm64",
+      "file": "TestApp-1.0.0-arm64.nsis.7z",
+    },
+    {
       "file": "latest.yml",
       "fileContent": {
         "files": [
@@ -1240,6 +1362,13 @@ exports[`winCodeSign: 1.0.0 > web installer 1`] = `
           },
         ],
         "packages": {
+          "arm64": {
+            "blockMapSize": "@blockMapSize",
+            "file": "TestApp-1.0.0-arm64.nsis.7z",
+            "path": "TestApp-1.0.0-arm64.nsis.7z",
+            "sha512": "@sha512",
+            "size": "@size",
+          },
           "x64": {
             "blockMapSize": "@blockMapSize",
             "file": "TestApp-1.0.0-x64.nsis.7z",
@@ -1262,11 +1391,17 @@ exports[`winCodeSign: 1.0.0 > web installer 2`] = `
 {
   "win": [
     {
-      "arch": "x64",
       "file": "Test App ßW Web Setup 1.0.1.exe",
       "safeArtifactName": "TestApp-WebSetup-1.0.1.exe",
       "updateInfo": {
         "packages": {
+          "arm64": {
+            "blockMapSize": "@blockMapSize",
+            "file": "TestApp-1.0.1-arm64.nsis.7z",
+            "path": "TestApp-1.0.1-arm64.nsis.7z",
+            "sha512": "@sha512",
+            "size": "@size",
+          },
           "x64": {
             "blockMapSize": "@blockMapSize",
             "file": "TestApp-1.0.1-x64.nsis.7z",
@@ -1282,6 +1417,10 @@ exports[`winCodeSign: 1.0.0 > web installer 2`] = `
       "file": "TestApp-1.0.1-x64.nsis.7z",
     },
     {
+      "arch": "arm64",
+      "file": "TestApp-1.0.1-arm64.nsis.7z",
+    },
+    {
       "file": "latest.yml",
       "fileContent": {
         "files": [
@@ -1291,6 +1430,13 @@ exports[`winCodeSign: 1.0.0 > web installer 2`] = `
           },
         ],
         "packages": {
+          "arm64": {
+            "blockMapSize": "@blockMapSize",
+            "file": "TestApp-1.0.1-arm64.nsis.7z",
+            "path": "TestApp-1.0.1-arm64.nsis.7z",
+            "sha512": "@sha512",
+            "size": "@size",
+          },
           "x64": {
             "blockMapSize": "@blockMapSize",
             "file": "TestApp-1.0.1-x64.nsis.7z",
@@ -1307,6 +1453,43 @@ exports[`winCodeSign: 1.0.0 > web installer 2`] = `
     },
   ],
 }
+`;
+
+exports[`winCodeSign: 1.0.0 > web installer 3`] = `
+{
+  "files": [
+    {
+      "sha512": "@sha512",
+    },
+  ],
+  "packages": {
+    "arm64": {
+      "blockMapSize": "@blockMapSize",
+      "file": "TestApp-1.0.1-arm64.nsis.7z",
+      "path": "TestApp-1.0.1-arm64.nsis.7z",
+      "sha512": "@sha512",
+      "size": "@size",
+    },
+    "x64": {
+      "blockMapSize": "@blockMapSize",
+      "file": "TestApp-1.0.1-x64.nsis.7z",
+      "path": "TestApp-1.0.1-x64.nsis.7z",
+      "sha512": "@sha512",
+      "size": "@size",
+    },
+  },
+  "path": "Test App ßW Web Setup 1.0.1.exe",
+  "releaseDate": "@releaseDate",
+  "sha512": "@sha512",
+  "version": "1.0.1",
+}
+`;
+
+exports[`winCodeSign: 1.0.0 > web installer 4`] = `
+[
+  "Test App ßW Web Setup 1.0.1.exe",
+  "package-1.0.1.7z",
+]
 `;
 
 exports[`winCodeSign: 1.1.0 > nsis 1`] = `
@@ -1414,11 +1597,17 @@ exports[`winCodeSign: 1.1.0 > web installer 1`] = `
 {
   "win": [
     {
-      "arch": "x64",
       "file": "Test App ßW Web Setup 1.0.0.exe",
       "safeArtifactName": "TestApp-WebSetup-1.0.0.exe",
       "updateInfo": {
         "packages": {
+          "arm64": {
+            "blockMapSize": "@blockMapSize",
+            "file": "TestApp-1.0.0-arm64.nsis.7z",
+            "path": "TestApp-1.0.0-arm64.nsis.7z",
+            "sha512": "@sha512",
+            "size": "@size",
+          },
           "x64": {
             "blockMapSize": "@blockMapSize",
             "file": "TestApp-1.0.0-x64.nsis.7z",
@@ -1434,6 +1623,10 @@ exports[`winCodeSign: 1.1.0 > web installer 1`] = `
       "file": "TestApp-1.0.0-x64.nsis.7z",
     },
     {
+      "arch": "arm64",
+      "file": "TestApp-1.0.0-arm64.nsis.7z",
+    },
+    {
       "file": "latest.yml",
       "fileContent": {
         "files": [
@@ -1443,6 +1636,13 @@ exports[`winCodeSign: 1.1.0 > web installer 1`] = `
           },
         ],
         "packages": {
+          "arm64": {
+            "blockMapSize": "@blockMapSize",
+            "file": "TestApp-1.0.0-arm64.nsis.7z",
+            "path": "TestApp-1.0.0-arm64.nsis.7z",
+            "sha512": "@sha512",
+            "size": "@size",
+          },
           "x64": {
             "blockMapSize": "@blockMapSize",
             "file": "TestApp-1.0.0-x64.nsis.7z",
@@ -1465,11 +1665,17 @@ exports[`winCodeSign: 1.1.0 > web installer 2`] = `
 {
   "win": [
     {
-      "arch": "x64",
       "file": "Test App ßW Web Setup 1.0.1.exe",
       "safeArtifactName": "TestApp-WebSetup-1.0.1.exe",
       "updateInfo": {
         "packages": {
+          "arm64": {
+            "blockMapSize": "@blockMapSize",
+            "file": "TestApp-1.0.1-arm64.nsis.7z",
+            "path": "TestApp-1.0.1-arm64.nsis.7z",
+            "sha512": "@sha512",
+            "size": "@size",
+          },
           "x64": {
             "blockMapSize": "@blockMapSize",
             "file": "TestApp-1.0.1-x64.nsis.7z",
@@ -1485,6 +1691,10 @@ exports[`winCodeSign: 1.1.0 > web installer 2`] = `
       "file": "TestApp-1.0.1-x64.nsis.7z",
     },
     {
+      "arch": "arm64",
+      "file": "TestApp-1.0.1-arm64.nsis.7z",
+    },
+    {
       "file": "latest.yml",
       "fileContent": {
         "files": [
@@ -1494,6 +1704,13 @@ exports[`winCodeSign: 1.1.0 > web installer 2`] = `
           },
         ],
         "packages": {
+          "arm64": {
+            "blockMapSize": "@blockMapSize",
+            "file": "TestApp-1.0.1-arm64.nsis.7z",
+            "path": "TestApp-1.0.1-arm64.nsis.7z",
+            "sha512": "@sha512",
+            "size": "@size",
+          },
           "x64": {
             "blockMapSize": "@blockMapSize",
             "file": "TestApp-1.0.1-x64.nsis.7z",
@@ -1510,4 +1727,41 @@ exports[`winCodeSign: 1.1.0 > web installer 2`] = `
     },
   ],
 }
+`;
+
+exports[`winCodeSign: 1.1.0 > web installer 3`] = `
+{
+  "files": [
+    {
+      "sha512": "@sha512",
+    },
+  ],
+  "packages": {
+    "arm64": {
+      "blockMapSize": "@blockMapSize",
+      "file": "TestApp-1.0.1-arm64.nsis.7z",
+      "path": "TestApp-1.0.1-arm64.nsis.7z",
+      "sha512": "@sha512",
+      "size": "@size",
+    },
+    "x64": {
+      "blockMapSize": "@blockMapSize",
+      "file": "TestApp-1.0.1-x64.nsis.7z",
+      "path": "TestApp-1.0.1-x64.nsis.7z",
+      "sha512": "@sha512",
+      "size": "@size",
+    },
+  },
+  "path": "Test App ßW Web Setup 1.0.1.exe",
+  "releaseDate": "@releaseDate",
+  "sha512": "@sha512",
+  "version": "1.0.1",
+}
+`;
+
+exports[`winCodeSign: 1.1.0 > web installer 4`] = `
+[
+  "Test App ßW Web Setup 1.0.1.exe",
+  "package-1.0.1.7z",
+]
 `;

@@ -3,4 +3,4 @@
 "app-builder-lib": minor
 ---
 
-feat(win): updating win-codesign tooling to latest from `electron-builder-binaries`
+feat(win): adding support for latest artifacts for win-codesign tooling to be pulled from `electron-builder-binaries`
