@@ -19,7 +19,7 @@ async function doBuild(
   outDirs: Array<string>,
   targets: Map<Platform, Map<Arch, Array<string>>>,
   tmpDir: TmpDir,
-  isWindows: boolean,
+  toolsets?: ToolsetConfig | null,
   extraConfig?: Configuration | null
 ) {
   async function buildApp(
@@ -34,6 +34,7 @@ async function doBuild(
       {
         targets,
         config: {
+          toolsets,
           extraMetadata: {
             version,
           },
@@ -47,7 +48,7 @@ async function doBuild(
         },
       },
       {
-        signedWin: isWindows,
+        signedWin: toolsets?.winCodeSign != null,
         packed,
       }
     )
@@ -77,7 +78,7 @@ for (const winCodeSign of winCodeSignVersions) {
       const outDirs: Array<string> = []
       const tmpDir = new TmpDir("differential-updater-test")
       // need to build both in order for this to run on both arm64 and x64 windows
-      await doBuild(expect, outDirs, Platform.WINDOWS.createTarget(["nsis-web"], Arch.x64, Arch.arm64), tmpDir, true)
+      await doBuild(expect, outDirs, Platform.WINDOWS.createTarget(["nsis-web"], Arch.x64, Arch.arm64), tmpDir, { winCodeSign })
 
       const oldDir = outDirs[0]
       await move(
@@ -91,7 +92,7 @@ for (const winCodeSign of winCodeSignVersions) {
     test.ifWindows("nsis", async ({ expect }) => {
       const outDirs: Array<string> = []
       const tmpDir = new TmpDir("differential-updater-test")
-      await doBuild(expect, outDirs, Platform.WINDOWS.createTarget(["nsis"], Arch.x64), tmpDir, true)
+      await doBuild(expect, outDirs, Platform.WINDOWS.createTarget(["nsis"], Arch.x64), tmpDir, { winCodeSign })
 
       const oldDir = outDirs[0]
       // move to new dir so that localhost server can read both blockmaps
@@ -109,7 +110,7 @@ async function testLinux(expect: ExpectStatic, arch: Arch) {
   const outDirs: Array<string> = []
   const tmpDir = new TmpDir("differential-updater-test")
   try {
-    await doBuild(expect, outDirs, Platform.LINUX.createTarget(["appimage"], arch), tmpDir, false)
+    await doBuild(expect, outDirs, Platform.LINUX.createTarget(["appimage"], arch), tmpDir, null)
 
     process.env.APPIMAGE = path.join(outDirs[0], `Test App ßW-${OLD_VERSION_NUMBER}${arch === Arch.ia32 ? "-i386" : ""}.AppImage`)
     await testBlockMap(expect, outDirs[0], outDirs[1], AppImageUpdater, Platform.LINUX, arch)
@@ -129,7 +130,7 @@ async function testMac(expect: ExpectStatic, arch: Arch) {
   const outDirs: Array<string> = []
   const tmpDir = new TmpDir("differential-updater-test")
   try {
-    await doBuild(expect, outDirs, Platform.MAC.createTarget(["zip"], arch), tmpDir, false, {
+    await doBuild(expect, outDirs, Platform.MAC.createTarget(["zip"], arch), tmpDir, null, {
       mac: {
         electronUpdaterCompatibility: ">=2.17.0",
       },
