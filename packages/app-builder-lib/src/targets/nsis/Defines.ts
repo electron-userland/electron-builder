@@ -114,4 +114,6 @@ export type Defines = {
   ZIP_COMPRESSION?: null
 
   COMPRESSION_METHOD?: "zip" | "7z"
+
+  WINDOWS_SEVEN_COMPATIBILITY?: null
 }

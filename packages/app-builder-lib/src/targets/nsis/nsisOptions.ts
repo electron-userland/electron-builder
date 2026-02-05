@@ -242,6 +242,12 @@ export interface NsisOptions extends CommonNsisOptions, CommonWindowsInstallerCo
    * @default true
    */
   readonly buildUniversalInstaller?: boolean
+
+  /**
+   * Handle Windows 7 per-user Program Files folders (disabling prevents usage of System.dll, which can cause installer crashes when oneClick is set to false and perUser is set by default)
+   * @default true
+   */
+  readonly windowsSevenCompatibility?: boolean
 }
 
 /**

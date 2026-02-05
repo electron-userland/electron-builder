@@ -546,6 +546,10 @@ export class NsisTarget extends Target {
       defines.DELETE_APP_DATA_ON_UNINSTALL = null
     }
 
+    if (options.windowsSevenCompatibility) {
+      defines.WINDOWS_SEVEN_COMPATIBILITY = null
+    }
+
     asyncTaskManager.add(async () => {
       const uninstallerIcon = await packager.getResource(options.uninstallerIcon, "uninstallerIcon.ico")
       if (uninstallerIcon != null) {
