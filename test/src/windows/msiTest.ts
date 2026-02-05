@@ -1,13 +1,13 @@
-import { Platform } from "electron-builder"
+import { Arch, Platform } from "electron-builder"
 import * as fs from "fs"
 import { app } from "../helpers/packTester"
 
-describe("msi", { sequential: true }, () => {
-  test.ifDevOrWinCi("msi", ({ expect }) =>
+describe.ifWindows("msi", { sequential: true }, () => {
+  test("msi", ({ expect }) =>
     app(
       expect,
       {
-        targets: Platform.WINDOWS.createTarget("msi"),
+        targets: Platform.WINDOWS.createTarget("msi", Arch.x64),
         config: {
           appId: "build.electron.test.msi.oneClick.perMachine",
           extraMetadata: {
@@ -29,14 +29,13 @@ describe("msi", { sequential: true }, () => {
       {
         // signed: true,
       }
-    )
-  )
+    ))
 
-  test.ifDevOrWinCi("msi no asar", ({ expect }) =>
+  test("msi no asar", ({ expect }) =>
     app(
       expect,
       {
-        targets: Platform.WINDOWS.createTarget("msi"),
+        targets: Platform.WINDOWS.createTarget("msi", Arch.x64),
         config: {
           appId: "build.electron.test.msi.oneClick.perMachine",
           extraMetadata: {
@@ -49,14 +48,13 @@ describe("msi", { sequential: true }, () => {
       {
         // signed: true,
       }
-    )
-  )
+    ))
 
-  test.ifDevOrWinCi("per-user", ({ expect }) =>
+  test("per-user", ({ expect }) =>
     app(
       expect,
       {
-        targets: Platform.WINDOWS.createTarget("msi"),
+        targets: Platform.WINDOWS.createTarget("msi", Arch.x64),
         config: {
           appId: "build.electron.test.msi.oneClick.perUser",
           extraMetadata: {
@@ -71,15 +69,14 @@ describe("msi", { sequential: true }, () => {
       {
         // signed: true,
       }
-    )
-  )
+    ))
 
   const wixArgsProductName = "Test WiX Args"
-  test.ifDevOrWinCi("wix args", ({ expect }) =>
+  test("wix args", ({ expect }) =>
     app(
       expect,
       {
-        targets: Platform.WINDOWS.createTarget("msi"),
+        targets: Platform.WINDOWS.createTarget("msi", Arch.x64),
         config: {
           appId: "build.electron.test.msi.oneClick.wixArgs",
           extraMetadata: {
@@ -113,12 +110,11 @@ describe("msi", { sequential: true }, () => {
       {
         // signed: true,
       }
-    )
-  )
+    ))
 
   test.skip("assisted", ({ expect }) =>
     app(expect, {
-      targets: Platform.WINDOWS.createTarget("msi"),
+      targets: Platform.WINDOWS.createTarget("msi", Arch.x64),
       config: {
         appId: "build.electron.test.msi.assisted",
         extraMetadata: {
