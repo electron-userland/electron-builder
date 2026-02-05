@@ -1,7 +1,7 @@
 {
   "tests": {
     "Hoisted Node Module Test > yarn two package.json w/ native mac-only module (optional dep)": {
-      "runs": 3,
+      "runs": 4,
       "fails": 0,
       "avgMs": 0,
       "slow": false,
@@ -29,35 +29,35 @@
       "heavy": false
     },
     "Hoisted Node Module Test > yarn several workspaces": {
-      "runs": 3,
+      "runs": 4,
       "fails": 0,
       "avgMs": 0,
       "slow": false,
       "heavy": false
     },
     "Hoisted Node Module Test > conflict versions": {
-      "runs": 3,
+      "runs": 4,
       "fails": 0,
       "avgMs": 0,
       "slow": false,
       "heavy": false
     },
     "Hoisted Node Module Test > should throw when attempting to package a system file": {
-      "runs": 3,
+      "runs": 4,
       "fails": 0,
       "avgMs": 0,
       "slow": false,
       "heavy": false
     },
     "Hoisted Node Module Test > yarn several workspaces and asarUnpack": {
-      "runs": 3,
+      "runs": 4,
       "fails": 0,
       "avgMs": 0,
       "slow": false,
       "heavy": false
     },
     "Hoisted Node Module Test > yarn workspace": {
-      "runs": 3,
+      "runs": 4,
       "fails": 0,
       "avgMs": 0,
       "slow": false,
@@ -78,7 +78,7 @@
       "heavy": false
     },
     "Hoisted Node Module Test > should throw when attempting to package a symlink to a system file": {
-      "runs": 3,
+      "runs": 4,
       "fails": 0,
       "avgMs": 0,
       "slow": false,
@@ -92,14 +92,14 @@
       "heavy": false
     },
     "Hoisted Node Module Test > yarn workspace for scope name": {
-      "runs": 3,
+      "runs": 4,
       "fails": 0,
       "avgMs": 0,
       "slow": false,
       "heavy": false
     },
     "Hoisted Node Module Test > pnpm optional dependency not installable on linux": {
-      "runs": 3,
+      "runs": 4,
       "fails": 0,
       "avgMs": 0,
       "slow": false,
@@ -162,7 +162,7 @@
       "heavy": false
     },
     "Hoisted Node Module Test > pnpm optional dependencies": {
-      "runs": 3,
+      "runs": 4,
       "fails": 0,
       "avgMs": 0,
       "slow": false,
@@ -225,14 +225,14 @@
       "heavy": false
     },
     "Hoisted Node Module Test > pnpm es5-ext without hoisted config": {
-      "runs": 3,
+      "runs": 4,
       "fails": 0,
       "avgMs": 0,
       "slow": false,
       "heavy": false
     },
     "Hoisted Node Module Test > yarn electron-clear-data": {
-      "runs": 3,
+      "runs": 4,
       "fails": 0,
       "avgMs": 0,
       "slow": false,
@@ -316,7 +316,7 @@
       "heavy": false
     },
     "Hoisted Node Module Test > yarn two package.json": {
-      "runs": 3,
+      "runs": 4,
       "fails": 0,
       "avgMs": 0,
       "slow": false,
@@ -393,7 +393,7 @@
       "heavy": false
     },
     "Hoisted Node Module Test > yarn two package.json without node_modules": {
-      "runs": 3,
+      "runs": 4,
       "fails": 0,
       "avgMs": 0,
       "slow": false,
@@ -407,7 +407,7 @@
       "heavy": false
     },
     "Hoisted Node Module Test > yarn max stack": {
-      "runs": 3,
+      "runs": 4,
       "fails": 0,
       "avgMs": 0,
       "slow": false,
@@ -421,14 +421,14 @@
       "heavy": false
     },
     "Hoisted Node Module Test > npm electron-clear-data": {
-      "runs": 3,
+      "runs": 4,
       "fails": 0,
       "avgMs": 0,
       "slow": false,
       "heavy": false
     },
     "Hoisted Node Module Test > yarn parse-asn1": {
-      "runs": 3,
+      "runs": 4,
       "fails": 0,
       "avgMs": 0,
       "slow": false,
@@ -449,59 +449,59 @@
       "heavy": false
     },
     "Hoisted Node Module Test > npm tar": {
-      "runs": 3,
+      "runs": 4,
       "fails": 0,
       "avgMs": 0,
       "slow": false,
       "heavy": false
     },
     "Hoisted Node Module Test > pnpm max stack": {
-      "runs": 3,
+      "runs": 4,
       "fails": 0,
       "avgMs": 0,
       "slow": false,
       "heavy": false
     },
     "Hoisted Node Module Test > pnpm node-linker=hoisted": {
-      "runs": 3,
+      "runs": 4,
       "fails": 0,
       "avgMs": 0,
       "slow": false,
       "heavy": false
     },
     "Hoisted Node Module Test > pnpm shamefully-hoist=true": {
-      "runs": 3,
+      "runs": 4,
       "fails": 0,
       "avgMs": 0,
       "slow": false,
       "heavy": false
     },
     "Hoisted Node Module Test > pnpm public-hoist-pattern=*": {
-      "runs": 3,
+      "runs": 4,
       "fails": 0,
       "avgMs": 0,
       "slow": false,
       "heavy": false
     },
     "Hoisted Node Module Test > pnpm workspace with native module": {
-      "runs": 3,
+      "runs": 4,
       "fails": 0,
       "avgMs": 0,
       "slow": false,
       "heavy": false
     },
     "Hoisted Node Module Test > yarn ms": {
-      "runs": 3,
+      "runs": 4,
       "fails": 0,
-      "avgMs": 64044.48583333333,
+      "avgMs": 85273.7608295,
       "slow": false,
       "heavy": false
     },
     "Hoisted Node Module Test > yarn some module add by manual instead of install": {
-      "runs": 3,
+      "runs": 4,
       "fails": 1,
-      "avgMs": 210570.554764,
-      "slow": true,
+      "avgMs": 157927.916073,
+      "slow": false,
       "heavy": false
     },
     "download binary from Github": {
@@ -3746,20 +3746,20 @@
       }
     },
     "HoistedNodeModuleTest.ts": {
-      "runs": 3,
+      "runs": 4,
       "fails": 1,
-      "avgMs": 274615.04059733334,
+      "avgMs": 243201.6769025,
       "unstable": true,
       "hasHeavyTests": false,
       "platformAvgMs": {
         "win32": 0,
         "darwin": 411922.560896,
-        "linux": 0
+        "linux": 148961.585818
       },
       "platformRuns": {
         "win32": 1,
         "darwin": 2,
-        "linux": 0
+        "linux": 1
       }
     },
     "binDownloadTest.ts": {
