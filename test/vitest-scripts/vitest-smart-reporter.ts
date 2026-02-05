@@ -33,13 +33,14 @@ export default class SmarterReporter implements Reporter {
     const runs = prev.runs + 1
     const avgMs = (prev.avgMs * prev.runs + dur) / runs
     const fails = prev.fails + (failed ? 1 : 0)
+    const isHeavy = meta.heavy === true // don't rely on previous tests, always reset off latest test `meta`
 
     this.cache.tests[id] = {
       runs,
       fails,
       avgMs,
       slow: avgMs > SLOW_TEST_MS,
-      heavy: meta.heavy === true,
+      heavy: isHeavy,
     }
 
     const file = path.basename(test.module.moduleId)
@@ -47,7 +48,7 @@ export default class SmarterReporter implements Reporter {
     if (failed) {
       this.fileFails.set(file, (this.fileFails.get(file) ?? 0) + 1)
     }
-    if (meta.heavy === true) {
+    if (isHeavy) {
       this.fileHasHeavy.set(file, true)
     }
   }
