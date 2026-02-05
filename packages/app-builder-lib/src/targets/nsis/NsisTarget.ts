@@ -546,7 +546,7 @@ export class NsisTarget extends Target {
       defines.DELETE_APP_DATA_ON_UNINSTALL = null
     }
 
-    if (options.windowsSevenCompatibility) {
+    if (options.windowsSevenCompatibility !== false) {
       defines.WINDOWS_SEVEN_COMPATIBILITY = null
     }
 
