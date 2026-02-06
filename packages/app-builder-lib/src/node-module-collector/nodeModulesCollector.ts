@@ -348,7 +348,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
       // If the command is a Windows script file (.cmd), we need to wrap it in a .bat file to ensure it runs correctly with cmd.exe
       // This is necessary because .cmd files are not directly executable in the same way as .bat files.
       // We create a temporary .bat file that calls the .cmd file with the provided arguments. The .bat file will be executed by cmd.exe.
-      // Note: This is a workaround for Windows command execution quirks for specifically when `shell: false`
+      // Note: This is a workaround for Windows command execution quirks when using `shell: true`
       const tempBatFile = await this.tempDirManager.getTempFile({
         prefix: execName,
         suffix: ".bat",
@@ -356,7 +356,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
       const batScript = `@echo off\r\n"${command}" %*\r\n` // <-- CRLF required for .bat
       await fs.writeFile(tempBatFile, batScript, { encoding: "utf8" })
       command = "cmd.exe"
-      args = ["/c", tempBatFile, ...args]
+      args = ["/c", `"${tempBatFile}"`, ...args]
     }
 
     await new Promise<void>((resolve, reject) => {
