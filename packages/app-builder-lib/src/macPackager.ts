@@ -49,7 +49,7 @@ interface PlatformConfig {
   platformName: ElectronPlatformName
 }
 
-export class MacPackager extends PlatformPackager<MacConfiguration> {
+export class MacPackager extends PlatformPackager<MacConfiguration | MasConfiguration> {
   readonly codeSigningInfo = new MemoLazy<CreateKeychainOptions | null, CodeSigningInfo>(
     () => {
       const cscLink = this.getCscLink()
