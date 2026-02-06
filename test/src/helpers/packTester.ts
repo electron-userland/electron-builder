@@ -1,7 +1,7 @@
 import { PublishManager } from "app-builder-lib"
 import { readAsar } from "app-builder-lib/out/asar/asar"
 import { computeArchToTargetNamesMap } from "app-builder-lib/out/targets/targetFactory"
-import { getLinuxToolsPath } from "app-builder-lib/out/targets/tools"
+import { getLinuxToolsPath } from "app-builder-lib/out/toolsets/linux"
 import { parsePlistFile, PlistObject } from "app-builder-lib/out/util/plist"
 import { AsarIntegrity } from "app-builder-lib/out/asar/integrity"
 import { addValue, copyDir, deepAssign, exec, executeFinally, exists, FileCopier, log, USE_HARD_LINKS, walk } from "builder-util"

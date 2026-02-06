@@ -1,4 +1,4 @@
-import { getWindowsKitsBundle } from "app-builder-lib/out/targets/tools"
+import { getWindowsKitsBundle } from "app-builder-lib/out/toolsets/windows"
 import { exec, log, spawn, TmpDir, unlinkIfExists } from "builder-util"
 import { sanitizeFileName } from "builder-util/out/filename"
 import * as chalk from "chalk"
