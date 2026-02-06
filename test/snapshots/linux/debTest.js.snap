@@ -1,6 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`arm 1`] = `
+exports[`deb > arm 1`] = `
 {
   "linux": [
     {
@@ -15,7 +15,7 @@ exports[`arm 1`] = `
 }
 `;
 
-exports[`arm 2`] = `
+exports[`deb > arm 2`] = `
 [
   "/",
   "/opt/",
@@ -73,7 +73,7 @@ exports[`arm 2`] = `
 ]
 `;
 
-exports[`arm 3`] = `
+exports[`deb > arm 3`] = `
 {
   "Architecture": "arm64",
   "Depends": "libgtk-3-0, libnotify4, libnss3, libxss1, libxtst6, xdg-utils, libatspi2.0-0, libuuid1, libsecret-1-0",
@@ -88,9 +88,9 @@ exports[`arm 3`] = `
 }
 `;
 
-exports[`arm 4`] = `"Test Application (test quite “ #378)"`;
+exports[`deb > arm 4`] = `"Test Application (test quite “ #378)"`;
 
-exports[`arm 5`] = `
+exports[`deb > arm 5`] = `
 [
   "/",
   "/opt/",
@@ -148,7 +148,7 @@ exports[`arm 5`] = `
 ]
 `;
 
-exports[`arm 6`] = `
+exports[`deb > arm 6`] = `
 {
   "Architecture": "arm64",
   "Depends": "libgtk-3-0, libnotify4, libnss3, libxss1, libxtst6, xdg-utils, libatspi2.0-0, libuuid1, libsecret-1-0",
@@ -163,9 +163,9 @@ exports[`arm 6`] = `
 }
 `;
 
-exports[`arm 7`] = `"Test Application (test quite “ #378)"`;
+exports[`deb > arm 7`] = `"Test Application (test quite “ #378)"`;
 
-exports[`custom depends 1`] = `
+exports[`deb > custom depends 1`] = `
 {
   "linux": [
     {
@@ -176,7 +176,7 @@ exports[`custom depends 1`] = `
 }
 `;
 
-exports[`custom depends 2`] = `
+exports[`deb > custom depends 2`] = `
 [
   "/",
   "/opt/",
@@ -234,7 +234,7 @@ exports[`custom depends 2`] = `
 ]
 `;
 
-exports[`custom depends 3`] = `
+exports[`deb > custom depends 3`] = `
 {
   "Architecture": "amd64",
   "Depends": "foo",
@@ -249,9 +249,9 @@ exports[`custom depends 3`] = `
 }
 `;
 
-exports[`custom depends 4`] = `"Test Application (test quite “ #378)"`;
+exports[`deb > custom depends 4`] = `"Test Application (test quite “ #378)"`;
 
-exports[`deb 1`] = `
+exports[`deb > deb 1`] = `
 {
   "linux": [
     {
@@ -262,7 +262,7 @@ exports[`deb 1`] = `
 }
 `;
 
-exports[`deb 2`] = `
+exports[`deb > deb 2`] = `
 [
   "/",
   "/opt/",
@@ -320,7 +320,7 @@ exports[`deb 2`] = `
 ]
 `;
 
-exports[`deb 3`] = `
+exports[`deb > deb 3`] = `
 {
   "Architecture": "amd64",
   "Depends": "libgtk-3-0, libnotify4, libnss3, libxss1, libxtst6, xdg-utils, libatspi2.0-0, libuuid1, libsecret-1-0",
@@ -335,9 +335,9 @@ exports[`deb 3`] = `
 }
 `;
 
-exports[`deb 4`] = `"Test Application (test quite “ #378)"`;
+exports[`deb > deb 4`] = `"Test Application (test quite “ #378)"`;
 
-exports[`deb file associations 1`] = `
+exports[`deb > deb file associations 1`] = `
 {
   "linux": [
     {
@@ -348,7 +348,7 @@ exports[`deb file associations 1`] = `
 }
 `;
 
-exports[`deb file associations 2`] = `
+exports[`deb > deb file associations 2`] = `
 [
   "/",
   "/opt/",
@@ -409,7 +409,7 @@ exports[`deb file associations 2`] = `
 ]
 `;
 
-exports[`deb file associations 3`] = `
+exports[`deb > deb file associations 3`] = `
 {
   "Architecture": "amd64",
   "Depends": "libgtk-3-0, libnotify4, libnss3, libxss1, libxtst6, xdg-utils, libatspi2.0-0, libuuid1, libsecret-1-0",
@@ -424,9 +424,9 @@ exports[`deb file associations 3`] = `
 }
 `;
 
-exports[`deb file associations 4`] = `"Test Application (test quite “ #378)"`;
+exports[`deb > deb file associations 4`] = `"Test Application (test quite “ #378)"`;
 
-exports[`deb file associations 5`] = `
+exports[`deb > deb file associations 5`] = `
 "<?xml version="1.0" encoding="utf-8"?>
 <mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">
 <mime-type type="application/x-example">
@@ -437,7 +437,7 @@ exports[`deb file associations 5`] = `
 </mime-info>"
 `;
 
-exports[`executable path in postinst script 1`] = `
+exports[`deb > executable path in postinst script 1`] = `
 {
   "linux": [
     {
@@ -448,7 +448,7 @@ exports[`executable path in postinst script 1`] = `
 }
 `;
 
-exports[`executable path in postinst script 2`] = `
+exports[`deb > executable path in postinst script 2`] = `
 [
   "/",
   "/opt/",
@@ -506,7 +506,7 @@ exports[`executable path in postinst script 2`] = `
 ]
 `;
 
-exports[`executable path in postinst script 3`] = `
+exports[`deb > executable path in postinst script 3`] = `
 {
   "Architecture": "amd64",
   "Depends": "libgtk-3-0, libnotify4, libnss3, libxss1, libxtst6, xdg-utils, libatspi2.0-0, libuuid1, libsecret-1-0",
@@ -521,9 +521,9 @@ exports[`executable path in postinst script 3`] = `
 }
 `;
 
-exports[`executable path in postinst script 4`] = `"Test Application (test quite “ #378)"`;
+exports[`deb > executable path in postinst script 4`] = `"Test Application (test quite “ #378)"`;
 
-exports[`executable path in postinst script 5`] = `
+exports[`deb > executable path in postinst script 5`] = `
 "#!/bin/bash
 
 if type update-alternatives >/dev/null 2>&1; then
@@ -583,7 +583,7 @@ if apparmor_status --enabled > /dev/null 2>&1; then
 fi"
 `;
 
-exports[`no quotes for safe exec name 1`] = `
+exports[`deb > no quotes for safe exec name 1`] = `
 "[Desktop Entry]
 Name=foo
 Exec=/opt/foo/Boo %U
@@ -596,7 +596,7 @@ Categories=Development;
 "
 `;
 
-exports[`no quotes for safe exec name 2`] = `
+exports[`deb > no quotes for safe exec name 2`] = `
 {
   "linux": [
     {
@@ -607,7 +607,7 @@ exports[`no quotes for safe exec name 2`] = `
 }
 `;
 
-exports[`no quotes for safe exec name 3`] = `
+exports[`deb > no quotes for safe exec name 3`] = `
 [
   "/",
   "/opt/",
@@ -665,7 +665,7 @@ exports[`no quotes for safe exec name 3`] = `
 ]
 `;
 
-exports[`no quotes for safe exec name 4`] = `
+exports[`deb > no quotes for safe exec name 4`] = `
 {
   "Architecture": "amd64",
   "Depends": "libgtk-3-0, libnotify4, libnss3, libxss1, libxtst6, xdg-utils, libatspi2.0-0, libuuid1, libsecret-1-0",
@@ -680,9 +680,9 @@ exports[`no quotes for safe exec name 4`] = `
 }
 `;
 
-exports[`no quotes for safe exec name 5`] = `"Test Application (test quite “ #378)"`;
+exports[`deb > no quotes for safe exec name 5`] = `"Test Application (test quite “ #378)"`;
 
-exports[`top-level exec name 1`] = `
+exports[`deb > top-level exec name 1`] = `
 {
   "linux": [
     {
@@ -693,7 +693,7 @@ exports[`top-level exec name 1`] = `
 }
 `;
 
-exports[`top-level exec name 2`] = `
+exports[`deb > top-level exec name 2`] = `
 [
   "/",
   "/opt/",
@@ -751,7 +751,7 @@ exports[`top-level exec name 2`] = `
 ]
 `;
 
-exports[`top-level exec name 3`] = `
+exports[`deb > top-level exec name 3`] = `
 {
   "Architecture": "amd64",
   "Depends": "libgtk-3-0, libnotify4, libnss3, libxss1, libxtst6, xdg-utils, libatspi2.0-0, libuuid1, libsecret-1-0",
@@ -766,4 +766,4 @@ exports[`top-level exec name 3`] = `
 }
 `;
 
-exports[`top-level exec name 4`] = `"Test Application (test quite “ #378)"`;
+exports[`deb > top-level exec name 4`] = `"Test Application (test quite “ #378)"`;

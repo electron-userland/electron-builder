@@ -3,12 +3,12 @@ import * as path from "path"
 import { CheckingWinPackager } from "../helpers/CheckingPackager"
 import { app, assertPack, copyTestAsset } from "../helpers/packTester"
 
-describe("squirrel.windows", { sequential: true }, () => {
-  test.ifNotCiMac("Squirrel.Windows", ({ expect }) =>
+describe.ifWindows("squirrel.windows", { sequential: true }, () => {
+  test("Squirrel.Windows", ({ expect }) =>
     app(
       expect,
       {
-        targets: Platform.WINDOWS.createTarget(["squirrel"]),
+        targets: Platform.WINDOWS.createTarget(["squirrel"], Arch.x64),
         config: {
           win: {
             compression: "normal",
@@ -27,20 +27,18 @@ describe("squirrel.windows", { sequential: true }, () => {
         },
       },
       { signedWin: true }
-    )
-  )
+    ))
 
-  test.ifNotCiMac("artifactName", ({ expect }) =>
+  test("artifactName", ({ expect }) =>
     app(expect, {
-      targets: Platform.WINDOWS.createTarget(["squirrel", "zip"]),
+      targets: Platform.WINDOWS.createTarget(["squirrel", "zip"], Arch.x64),
       config: {
         win: {
           // tslint:disable:no-invalid-template-strings
           artifactName: "Test ${name} foo.${ext}",
         },
       },
-    })
-  )
+    }))
 
   // very slow
   test.skip("delta and msi", ({ expect }) =>
@@ -104,7 +102,7 @@ describe("squirrel.windows", { sequential: true }, () => {
       expect,
       "test-app-one",
       {
-        targets: Platform.WINDOWS.createTarget("squirrel"),
+        targets: Platform.WINDOWS.createTarget("squirrel", Arch.x64),
         platformPackagerFactory: (packager, _platform) => (platformPackager = new CheckingWinPackager(packager)),
       },
       {

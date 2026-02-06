@@ -1,7 +1,7 @@
 {
   "extends": "../tsconfig-base.json",
   "compilerOptions": {
-    "rootDir": "src",
+    "rootDir": ".",
     "outDir": "out",
     "skipLibCheck": true,
     "baseUrl": "../packages"
@@ -27,8 +27,9 @@
   "include": [
     "../typings/*.d.ts",
     "typings/*.d.ts",
-    "src/**/*.ts"
-  ],
+    "src/**/*.ts",
+    "vitest-scripts/*.ts"
+   ],
   "types": ["vitest/globals"],
   "exclude": [
   ]

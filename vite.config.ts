@@ -1,59 +1,54 @@
-import { defineConfig } from "vitest/config"
-import fs from "fs"
 import isCI from "is-ci"
+import { defineConfig } from "vitest/config"
+import SmartSequencer from "./test/vitest-scripts/vitest-smart-sequencer"
 
-export default () => {
-  const testRegex = process.env.TEST_FILES?.split(",") ?? ["*Test", "*test"]
+export default async () => {
+  const testFilePattern = process.env.TEST_FILES?.trim() || "*Test,*test"
+  const testRegex = testFilePattern?.split(",")
   const includeRegex = `(${testRegex.join("|")})`
   console.log("TEST_FILES pattern", includeRegex)
 
   return defineConfig({
     server: {
-      https: {
-        cert: fs.readFileSync("./.vitest-cert/cert.pem"),
-        key: fs.readFileSync("./.vitest-cert/key.pem"),
-      },
+      open: false,
     },
     test: {
       // if using `toMatchSnapshot`, it MUST be passed in through the test context
       // e.g. test("name", ({ expect }) => { ... })
-      globals: true,
-      allowOnly: !isCI,
-      expandSnapshotDiff: process.env.SNAPSHOT_DIFF === "true",
+      // we manually set `globalThis.test` and `globalThis.describe` in vitest-setup.ts to make sure everything works correctly
+      globals: false,
 
-      setupFiles: "./test/vitest-setup.ts",
+      allowOnly: !isCI, // Prevent accidental commit of `test.only` in CI
+      printConsoleTrace: true,
+
+      // Allow test metadata
+      includeTaskLocation: true,
+      setupFiles: [
+        "./test/vitest-scripts/vitest-setup.ts",
+        "./test/vitest-scripts/vitest-heavy-mutex.ts",
+      ],
       include: [`test/src/**/${includeRegex}.ts`],
       update: process.env.UPDATE_SNAPSHOT === "true",
 
-      name: "node",
-      environment: "node",
-      printConsoleTrace: true,
+      reporters: [
+        'default',
+        "./test/vitest-scripts/vitest-smart-reporter"
+      ],
 
-      server: {
-        deps: {
-          inline: ["electron"],
-        },
-      },
+      maxWorkers: '50%',
+      minWorkers: 1,
 
-      deps: {
-        optimizer: {
-          web: {
-            enabled: true,
-          },
-        },
-      },
-
+      // Ensure tests from different files can run in parallel
+      // but heavy tests will be serialized by the mutex
+      fileParallelism: true,
       sequence: {
+        sequencer: SmartSequencer,
         concurrent: process.env.TEST_SEQUENTIAL !== "true",
       },
 
-      slowTestThreshold: 60 * 1000,
+      slowTestThreshold: 2 * 60 * 1000,
       testTimeout: 10 * 60 * 1000, // disk operations can be slow. We're generous with the timeout here to account for less-performant hardware
-      coverage: {
-        reporter: ["lcov", "text"],
-      },
-      reporters: ["default", "html"],
-      outputFile: "coverage/sonar-report.xml",
+
       snapshotFormat: {
         printBasicPrototype: false,
       },
