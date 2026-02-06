@@ -1,3 +1,4 @@
+// import { describe, test } from "../../vitest-scripts/vitest-setup"
 import { PlatformPackager } from "app-builder-lib"
 import { Arch, copyFile, exec } from "builder-util"
 import { Platform } from "electron-builder"
@@ -5,12 +6,23 @@ import * as fs from "fs/promises"
 import * as path from "path"
 import { assertThat } from "../helpers/fileAssert"
 import { app, assertPack, copyTestAsset } from "../helpers/packTester"
-import { attachAndExecute, getDmgTemplatePath } from "dmg-builder/out/dmgUtil"
+import { beforeAll } from "vitest"
+import type { attachAndExecute as aAndE, getDmgTemplatePath as dmgTemplate } from "dmg-builder/out/dmgUtil"
 
 const dmgTarget = Platform.MAC.createTarget("dmg", Arch.x64)
 const defaultTarget = Platform.MAC.createTarget(undefined, Arch.x64)
 
-describe("dmg", { concurrent: true }, () => {
+describe.heavy.ifMac("dmg", { sequential: true }, () => {
+  let attachAndExecute: typeof aAndE
+  let getDmgTemplatePath: typeof dmgTemplate
+
+  beforeAll(async () => {
+    // import at runtime to avoid issues on non-macOS platforms
+    const { attachAndExecute: a, getDmgTemplatePath: d } = await import("dmg-builder/out/dmgUtil")
+    attachAndExecute = a
+    getDmgTemplatePath = d
+  })
+
   test("dmg", ({ expect }) =>
     app(expect, {
       targets: dmgTarget,
@@ -20,7 +32,7 @@ describe("dmg", { concurrent: true }, () => {
       },
     }))
 
-  test.ifMac("no build directory", ({ expect }) =>
+  test("no build directory", ({ expect }) =>
     app(
       expect,
       {
@@ -53,10 +65,9 @@ describe("dmg", { concurrent: true }, () => {
       {
         projectDirCreated: projectDir => fs.rm(path.join(projectDir, "build"), { recursive: true, force: true }),
       }
-    )
-  )
+    ))
 
-  test.ifMac("background color", ({ expect }) =>
+  test("background color", ({ expect }) =>
     app(expect, {
       targets: dmgTarget,
       config: {
@@ -78,10 +89,9 @@ describe("dmg", { concurrent: true }, () => {
         expect(it.specification).toMatchSnapshot()
         return Promise.resolve(false)
       },
-    })
-  )
+    }))
 
-  test.ifMac("explicit size", ({ expect }) =>
+  test("explicit size", ({ expect }) =>
     app(
       expect,
       {
@@ -126,10 +136,9 @@ describe("dmg", { concurrent: true }, () => {
           })
         },
       }
-    )
-  )
+    ))
 
-  test.ifMac("custom background - new way", ({ expect }) => {
+  test("custom background - new way", ({ expect }) => {
     const customBackground = "customBackground.png"
     return assertPack(
       expect,
@@ -175,7 +184,7 @@ describe("dmg", { concurrent: true }, () => {
     )
   })
 
-  test.ifMac("retina background as 2 png", ({ expect }) => {
+  test("retina background as 2 png", ({ expect }) => {
     return assertPack(
       expect,
       "test-app-one",
@@ -217,7 +226,7 @@ describe("dmg", { concurrent: true }, () => {
     )
   })
 
-  test.ifMac.skip("no Applications link", ({ expect }) => {
+  test.skip("no Applications link", ({ expect }) => {
     return assertPack(expect, "test-app-one", {
       targets: defaultTarget,
       config: {
@@ -257,7 +266,7 @@ describe("dmg", { concurrent: true }, () => {
     })
   })
 
-  test.ifMac("unset dmg icon", ({ expect }) =>
+  test("unset dmg icon", ({ expect }) =>
     app(
       expect,
       {
@@ -281,11 +290,10 @@ describe("dmg", { concurrent: true }, () => {
           })
         },
       }
-    )
-  )
+    ))
 
   // test also "only dmg"
-  test.ifMac("no background", ({ expect }) =>
+  test("no background", ({ expect }) =>
     app(
       expect,
       {
@@ -307,11 +315,10 @@ describe("dmg", { concurrent: true }, () => {
           })
         },
       }
-    )
-  )
+    ))
 
   // test also darkModeSupport
-  test.ifMac("bundleShortVersion", ({ expect }) =>
+  test("bundleShortVersion", ({ expect }) =>
     app(expect, {
       targets: dmgTarget,
       config: {
@@ -326,10 +333,9 @@ describe("dmg", { concurrent: true }, () => {
           title: "bundleShortVersion",
         },
       },
-    })
-  )
+    }))
 
-  test.ifMac("disable dmg icon (light), bundleVersion", ({ expect }) => {
+  test("disable dmg icon (light), bundleVersion", ({ expect }) => {
     return assertPack(expect, "test-app-one", {
       targets: defaultTarget,
       config: {
@@ -363,7 +369,7 @@ describe("dmg", { concurrent: true }, () => {
     },
   })
 
-  test.ifMac("multi language license", ({ expect }) =>
+  test("multi language license", ({ expect }) =>
     app(expect, packagerOptions(1), {
       projectDirCreated: projectDir => {
         return Promise.all([
@@ -372,34 +378,30 @@ describe("dmg", { concurrent: true }, () => {
           fs.writeFile(path.join(projectDir, "build", "license_ja.txt"), "こんにちは"),
         ])
       },
-    })
-  )
+    }))
 
-  test.ifMac("license ja", ({ expect }) =>
+  test("license ja", ({ expect }) =>
     app(expect, packagerOptions(2), {
       projectDirCreated: projectDir => {
         return fs.writeFile(path.join(projectDir, "build", "license_ja.txt"), "こんにちは".repeat(12))
       },
-    })
-  )
+    }))
 
-  test.ifMac("license en", ({ expect }) =>
+  test("license en", ({ expect }) =>
     app(expect, packagerOptions(3), {
       projectDirCreated: projectDir => {
         return copyTestAsset("license_en.txt", path.join(projectDir, "build", "license_en.txt"))
       },
-    })
-  )
+    }))
 
-  test.ifMac("license rtf", ({ expect }) =>
+  test("license rtf", ({ expect }) =>
     app(expect, packagerOptions(4), {
       projectDirCreated: projectDir => {
         return copyTestAsset("license_de.rtf", path.join(projectDir, "build", "license_de.rtf"))
       },
-    })
-  )
+    }))
 
-  test.ifMac("license buttons config", ({ expect }) =>
+  test("license buttons config", ({ expect }) =>
     app(
       expect,
       {
@@ -428,6 +430,5 @@ describe("dmg", { concurrent: true }, () => {
             copyTestAsset("licenseButtons_ko.json", path.join(projectDir, "build", "licenseButtons_ko.json")),
           ]),
       }
-    )
-  )
+    ))
 })

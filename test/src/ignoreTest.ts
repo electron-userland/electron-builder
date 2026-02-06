@@ -7,7 +7,7 @@ import { PM } from "app-builder-lib/out/node-module-collector/packageManager"
 
 const currentProcessTarget = Platform.LINUX.createTarget(DIR_TARGET, archFromString(process.arch))
 
-test.ifDevOrLinuxCi("ignore build resources", ({ expect }) =>
+test.ifNotWindows("ignore build resources", ({ expect }) =>
   app(
     expect,
     {
@@ -27,7 +27,7 @@ test.ifDevOrLinuxCi("ignore build resources", ({ expect }) =>
   )
 )
 
-test.ifDevOrLinuxCi("2 ignore", ({ expect }) =>
+test.ifNotWindows("2 ignore", ({ expect }) =>
   app(
     expect,
     {
@@ -56,7 +56,7 @@ test.ifDevOrLinuxCi("2 ignore", ({ expect }) =>
   )
 )
 
-test.ifDevOrLinuxCi("ignore known ignored files", ({ expect }) =>
+test.ifNotWindows("ignore known ignored files", ({ expect }) =>
   app(
     expect,
     {
@@ -79,7 +79,7 @@ test.ifDevOrLinuxCi("ignore known ignored files", ({ expect }) =>
 )
 
 // skip on macOS because we want test only / and \
-test.ifNotCiMac.sequential("ignore node_modules dev dep", ({ expect }) =>
+test("ignore node_modules dev dep", ({ expect }) =>
   app(
     expect,
     {
@@ -105,10 +105,9 @@ test.ifNotCiMac.sequential("ignore node_modules dev dep", ({ expect }) =>
         return Promise.all([assertThat(expect, path.join(context.getResources(Platform.LINUX), "app", "node_modules", "semver")).doesNotExist()])
       },
     }
-  )
-)
+  ))
 
-test.ifDevOrLinuxCi.sequential("copied sub node_modules of the rootDir/node_modules", ({ expect }) =>
+test.ifNotWindows("copied sub node_modules of the rootDir/node_modules", ({ expect }) =>
   app(
     expect,
     {
@@ -148,7 +147,7 @@ test.ifDevOrLinuxCi.sequential("copied sub node_modules of the rootDir/node_modu
   )
 )
 
-test.ifDevOrLinuxCi("Don't copy sub node_modules of the other dir instead of rootDir", ({ expect }) =>
+test.ifNotWindows("Don't copy sub node_modules of the other dir instead of rootDir", ({ expect }) =>
   app(
     expect,
     {
@@ -185,7 +184,7 @@ test.ifDevOrLinuxCi("Don't copy sub node_modules of the other dir instead of roo
   )
 )
 
-test.ifDevOrLinuxCi("copied select submodule node_modules", ({ expect }) =>
+test.ifNotWindows("copied select submodule node_modules", ({ expect }) =>
   app(
     expect,
     {
@@ -221,7 +220,7 @@ test.ifDevOrLinuxCi("copied select submodule node_modules", ({ expect }) =>
   )
 )
 
-test.ifDevOrLinuxCi("cannot copied select submodule node_modules by */", ({ expect }) =>
+test.ifNotWindows("cannot copied select submodule node_modules by */", ({ expect }) =>
   app(
     expect,
     {
@@ -251,7 +250,7 @@ test.ifDevOrLinuxCi("cannot copied select submodule node_modules by */", ({ expe
   )
 )
 
-test.ifDevOrLinuxCi("cannot copied select submodule node_modules by **/submodule-1-test/node_modules", ({ expect }) =>
+test.ifNotWindows("cannot copied select submodule node_modules by **/submodule-1-test/node_modules", ({ expect }) =>
   app(
     expect,
     {

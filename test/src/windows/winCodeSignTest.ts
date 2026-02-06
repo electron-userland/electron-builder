@@ -117,7 +117,7 @@ test("electronDist", ({ expect }) =>
     error => expect(error.message).toContain("Please provide a valid path to the Electron zip file, cache directory, or electron build directory.")
   ))
 
-test("azure signing without credentials", ({ expect }) =>
+test.ifWindows("azure signing without credentials", ({ expect }) =>
   appThrows(
     expect,
     {
@@ -136,7 +136,8 @@ test("azure signing without credentials", ({ expect }) =>
     },
     {},
     error => expect(error.message).toContain("Unable to find valid azure env field AZURE_TENANT_ID for signing.")
-  ))
+  )
+)
 
 test.ifNotWindows("win code sign using pwsh", ({ expect }) =>
   app(

@@ -148,7 +148,7 @@ test("relative index", ({ expect }) =>
     }
   ))
 
-it.ifDevOrLinuxCi("electron version from electron-prebuilt dependency", ({ expect }) =>
+it.ifNotWindows("electron version from electron-prebuilt dependency", ({ expect }) =>
   app(
     expect,
     {
@@ -169,7 +169,7 @@ it.ifDevOrLinuxCi("electron version from electron-prebuilt dependency", ({ expec
   )
 )
 
-test.ifDevOrLinuxCi("electron version from electron dependency", ({ expect }) =>
+test.ifNotWindows("electron version from electron dependency", ({ expect }) =>
   app(
     expect,
     {
@@ -190,7 +190,7 @@ test.ifDevOrLinuxCi("electron version from electron dependency", ({ expect }) =>
   )
 )
 
-test.ifDevOrLinuxCi("electron version from build", ({ expect }) =>
+test.ifNotWindows("electron version from build", ({ expect }) =>
   app(
     expect,
     {
@@ -217,7 +217,7 @@ test("www as default dir", ({ expect }) =>
     }
   ))
 
-test.ifLinuxOrDevMac("hooks as functions", ({ expect }) => {
+test.ifNotWindows("hooks as functions", ({ expect }) => {
   let artifactBuildStartedCalled = 0
   let artifactBuildCompletedCalled = 0
   let beforePackCalled = 0
@@ -263,7 +263,7 @@ test.ifLinuxOrDevMac("hooks as functions", ({ expect }) => {
   )
 })
 
-test.ifLinuxOrDevMac("hooks as file - cjs", async ({ expect }) => {
+test.ifNotWindows("hooks as file - cjs", async ({ expect }) => {
   const hookScript = path.join(getFixtureDir(), "build-hook.cjs")
   return assertPack(expect, "test-app-one", {
     targets: createTargets([Platform.LINUX, Platform.MAC], "zip", "x64"),
@@ -277,7 +277,7 @@ test.ifLinuxOrDevMac("hooks as file - cjs", async ({ expect }) => {
   })
 })
 
-test.ifLinuxOrDevMac("hooks as file - mjs exported functions", async ({ expect }) => {
+test.ifNotWindows("hooks as file - mjs exported functions", async ({ expect }) => {
   const hookScript = path.join(getFixtureDir(), "build-hook.mjs")
   return assertPack(expect, "test-app-one", {
     targets: createTargets([Platform.LINUX, Platform.MAC], "zip", "x64"),
@@ -315,7 +315,7 @@ test.ifWindows("afterSign", ({ expect }) => {
   )
 })
 
-test.ifLinuxOrDevMac("beforeBuild", ({ expect }) => {
+test.ifNotWindows("beforeBuild", ({ expect }) => {
   let called = 0
   return assertPack(
     expect,
@@ -340,7 +340,7 @@ test.ifLinuxOrDevMac("beforeBuild", ({ expect }) => {
 })
 
 // https://github.com/electron-userland/electron-builder/issues/1738
-test.ifDevOrLinuxCi("win smart unpack", ({ expect }) => {
+test.ifNotWindows("win smart unpack", ({ expect }) => {
   // test onNodeModuleFile hook
   const nodeModuleFiles: Array<string> = []
   let p = ""
