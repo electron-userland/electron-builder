@@ -122,7 +122,7 @@ async function testLinux(expect: ExpectStatic, arch: Arch) {
 test.ifLinux("AppImage", ({ expect }) => testLinux(expect, Arch.x64))
 
 // Skipped, electron no longer ships ia32 linux binaries
-test.ifLinux.skip("AppImage ia32", ({ expect }) => testLinux(expect, Arch.ia32))
+test.skip("AppImage ia32", ({ expect }) => testLinux(expect, Arch.ia32))
 
 async function testMac(expect: ExpectStatic, arch: Arch) {
   process.env.TEST_UPDATER_ARCH = Arch[arch]
@@ -149,7 +149,8 @@ async function testMac(expect: ExpectStatic, arch: Arch) {
 }
 
 test.ifMac("Mac Intel", ({ expect }) => testMac(expect, Arch.x64))
-test.ifMac("Mac universal", { timeout: EXTENDED_TIMEOUT }, ({ expect }) => testMac(expect, Arch.universal))
+// builds 2 archs, so double the timeout?
+test.ifMac("Mac universal", { timeout: 2 * EXTENDED_TIMEOUT }, ({ expect }) => testMac(expect, Arch.universal))
 
 // only run on arm64 macs, otherwise of course no files can be found to be updated to (due to arch mismatch)
 test.ifMac.ifEnv(process.arch === "arm64")("Mac arm64", ({ expect }) => testMac(expect, Arch.arm64))

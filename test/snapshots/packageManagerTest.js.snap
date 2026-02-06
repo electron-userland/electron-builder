@@ -1,12 +1,12 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`bun workspace --linker=hoisted - multiple conflicting versions 1`] = `
+exports[`Package Managers > bun workspace --linker=hoisted - multiple conflicting versions 1`] = `
 {
   "linux": [],
 }
 `;
 
-exports[`bun workspace --linker=hoisted - multiple conflicting versions 2`] = `
+exports[`Package Managers > bun workspace --linker=hoisted - multiple conflicting versions 2`] = `
 {
   "files": {
     "index.js": {
@@ -177,13 +177,13 @@ exports[`bun workspace --linker=hoisted - multiple conflicting versions 2`] = `
 }
 `;
 
-exports[`bun workspace --linker=hoisted 1`] = `
+exports[`Package Managers > bun workspace --linker=hoisted 1`] = `
 {
   "linux": [],
 }
 `;
 
-exports[`bun workspace --linker=hoisted 2`] = `
+exports[`Package Managers > bun workspace --linker=hoisted 2`] = `
 {
   "files": {
     "index.js": {
@@ -326,13 +326,13 @@ exports[`bun workspace --linker=hoisted 2`] = `
 }
 `;
 
-exports[`bun workspace --linker=isolated - multiple conflicting versions 1`] = `
+exports[`Package Managers > bun workspace --linker=isolated - multiple conflicting versions 1`] = `
 {
   "linux": [],
 }
 `;
 
-exports[`bun workspace --linker=isolated - multiple conflicting versions 2`] = `
+exports[`Package Managers > bun workspace --linker=isolated - multiple conflicting versions 2`] = `
 {
   "files": {
     "index.js": {
@@ -503,13 +503,13 @@ exports[`bun workspace --linker=isolated - multiple conflicting versions 2`] = `
 }
 `;
 
-exports[`bun workspace --linker=isolated 1`] = `
+exports[`Package Managers > bun workspace --linker=isolated 1`] = `
 {
   "linux": [],
 }
 `;
 
-exports[`bun workspace --linker=isolated 2`] = `
+exports[`Package Managers > bun workspace --linker=isolated 2`] = `
 {
   "files": {
     "index.js": {
@@ -652,43 +652,43 @@ exports[`bun workspace --linker=isolated 2`] = `
 }
 `;
 
-exports[`local file:// protocol with npm for project outside workspace 1`] = `
+exports[`Package Managers > local file:// protocol with npm for project outside workspace 1`] = `
 {
   "linux": [],
 }
 `;
 
-exports[`local file:// protocol with pnpm for project outside workspace 1`] = `
+exports[`Package Managers > local file:// protocol with pnpm for project outside workspace 1`] = `
 {
   "linux": [],
 }
 `;
 
-exports[`local file:// protocol with traversal for project outside workspace 1`] = `
+exports[`Package Managers > local file:// protocol with traversal for project outside workspace 1`] = `
 {
   "linux": [],
 }
 `;
 
-exports[`local file:// protocol with yarn for project outside workspace 1`] = `
+exports[`Package Managers > local file:// protocol with yarn for project outside workspace 1`] = `
 {
   "linux": [],
 }
 `;
 
-exports[`local file:// protocol with yarn-berry for project outside workspace 1`] = `
+exports[`Package Managers > local file:// protocol with yarn-berry for project outside workspace 1`] = `
 {
   "linux": [],
 }
 `;
 
-exports[`npm 1`] = `
+exports[`Package Managers > npm 1`] = `
 {
   "linux": [],
 }
 `;
 
-exports[`npm 2`] = `
+exports[`Package Managers > npm 2`] = `
 {
   "files": {
     "app": {
@@ -775,13 +775,13 @@ exports[`npm 2`] = `
 }
 `;
 
-exports[`pnpm 1`] = `
+exports[`Package Managers > pnpm 1`] = `
 {
   "linux": [],
 }
 `;
 
-exports[`pnpm 2`] = `
+exports[`Package Managers > pnpm 2`] = `
 {
   "files": {
     "app": {
@@ -868,13 +868,13 @@ exports[`pnpm 2`] = `
 }
 `;
 
-exports[`traversal hoisted 1`] = `
+exports[`Package Managers > traversal hoisted 1`] = `
 {
   "linux": [],
 }
 `;
 
-exports[`traversal hoisted 2`] = `
+exports[`Package Managers > traversal hoisted 2`] = `
 {
   "files": {
     "index.html": {
@@ -953,13 +953,13 @@ exports[`traversal hoisted 2`] = `
 }
 `;
 
-exports[`traversal multi-package workspace 1`] = `
+exports[`Package Managers > traversal multi-package workspace 1`] = `
 {
   "linux": [],
 }
 `;
 
-exports[`traversal multi-package workspace 2`] = `
+exports[`Package Managers > traversal multi-package workspace 2`] = `
 {
   "files": {
     "index.html": {
@@ -1030,13 +1030,13 @@ exports[`traversal multi-package workspace 2`] = `
 }
 `;
 
-exports[`traversal workspace 1`] = `
+exports[`Package Managers > traversal workspace 1`] = `
 {
   "linux": [],
 }
 `;
 
-exports[`traversal workspace 2`] = `
+exports[`Package Managers > traversal workspace 2`] = `
 {
   "files": {
     "index.html": {
@@ -1107,13 +1107,13 @@ exports[`traversal workspace 2`] = `
 }
 `;
 
-exports[`yarn 1`] = `
+exports[`Package Managers > yarn 1`] = `
 {
   "linux": [],
 }
 `;
 
-exports[`yarn 2`] = `
+exports[`Package Managers > yarn 2`] = `
 {
   "files": {
     "index.html": {
@@ -1192,13 +1192,13 @@ exports[`yarn 2`] = `
 }
 `;
 
-exports[`yarn berry 1`] = `
+exports[`Package Managers > yarn berry 1`] = `
 {
   "linux": [],
 }
 `;
 
-exports[`yarn berry 2`] = `
+exports[`Package Managers > yarn berry 2`] = `
 {
   "files": {
     "index.html": {
@@ -1277,13 +1277,13 @@ exports[`yarn berry 2`] = `
 }
 `;
 
-exports[`yarn berry multi-package workspace 1`] = `
+exports[`Package Managers > yarn berry multi-package workspace 1`] = `
 {
   "linux": [],
 }
 `;
 
-exports[`yarn berry multi-package workspace 2`] = `
+exports[`Package Managers > yarn berry multi-package workspace 2`] = `
 {
   "files": {
     "index.html": {
@@ -1354,13 +1354,13 @@ exports[`yarn berry multi-package workspace 2`] = `
 }
 `;
 
-exports[`yarn berry workspace 1`] = `
+exports[`Package Managers > yarn berry workspace 1`] = `
 {
   "linux": [],
 }
 `;
 
-exports[`yarn berry workspace 2`] = `
+exports[`Package Managers > yarn berry workspace 2`] = `
 {
   "files": {
     "index.html": {
@@ -1431,13 +1431,13 @@ exports[`yarn berry workspace 2`] = `
 }
 `;
 
-exports[`yarn multi-package workspace 1`] = `
+exports[`Package Managers > yarn multi-package workspace 1`] = `
 {
   "linux": [],
 }
 `;
 
-exports[`yarn multi-package workspace 2`] = `
+exports[`Package Managers > yarn multi-package workspace 2`] = `
 {
   "files": {
     "index.html": {
@@ -1508,13 +1508,13 @@ exports[`yarn multi-package workspace 2`] = `
 }
 `;
 
-exports[`yarn workspace 1`] = `
+exports[`Package Managers > yarn workspace 1`] = `
 {
   "linux": [],
 }
 `;
 
-exports[`yarn workspace 2`] = `
+exports[`Package Managers > yarn workspace 2`] = `
 {
   "files": {
     "index.html": {

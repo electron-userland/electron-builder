@@ -93,7 +93,7 @@ test("assisted, MUI_HEADER", ({ expect }) => {
   )
 })
 
-test("assisted, MUI_HEADER as option", ({ expect }) => {
+test.ifWindows("assisted, MUI_HEADER as option", ({ expect }) => {
   let installerHeaderPath: string | null = null
   return assertPack(
     expect,

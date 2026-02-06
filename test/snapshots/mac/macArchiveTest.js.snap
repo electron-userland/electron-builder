@@ -132,24 +132,6 @@ exports[`extraDistFiles 2`] = `
 }
 `;
 
-exports[`invalid target 1`] = `
-"Invalid configuration object. electron-builder <appVersion> has been initialized using a configuration object that does not match the API schema.
- - configuration.mac should be one of these:
-   object { additionalArguments?, appId?, artifactName?, asar?, asarUnpack?, binaries?, bundleShortVersion?, bundleVersion?, category?, compression?, cscInstallerKeyPassword?, cscInstallerLink?, cscKeyPassword?, cscLink?, darkModeSupport?, defaultArch?, detectUpdateChannel?, disableDefaultIgnoredFiles?, electronLanguages?, electronUpdaterCompatibility?, entitlements?, entitlementsInherit?, entitlementsLoginHelper?, executableName?, extendInfo?, extraDistFiles?, extraFiles?, extraResources?, fileAssociations?, files?, forceCodeSigning?, gatekeeperAssess?, generateUpdatesFilesForAllChannels?, hardenedRuntime?, helperBundleId?, helperEHBundleId?, helperGPUBundleId?, helperNPBundleId?, helperPluginBundleId?, helperRendererBundleId?, icon?, identity?, mergeASARs?, minimumSystemVersion?, notarize?, preAutoEntitlements?, protocols?, provisioningProfile?, publish?, releaseInfo?, requirements?, sign?, signIgnore?, singleArchFiles?, strictVerify?, target?, timestamp?, type?, x64ArchFiles? } | null
-   -> Options related to how build macOS targets.
-   Details:
-    * configuration.mac.target[0] should be an object:
-      object { target, arch? }
-    * configuration.mac.target[0] should be one of these:
-      "7z" | "default" | "dir" | "dmg" | "mas" | "mas-dev" | "pkg" | "tar.bz2" | "tar.gz" | "tar.lz" | "tar.xz" | "zip"
-     How to fix:
-     1. Open https://www.electron.build/mac
-     2. Search the option name on the page (or type in into Search to find across the docs).
-       * Not found? The option was deprecated or not exists (check spelling).
-       * Found? Check that the option in the appropriate place. e.g. "title" only in the "dmg", not in the root.
-"
-`;
-
 exports[`only zip 1`] = `
 {
   "mac": [
@@ -244,8 +226,16 @@ exports[`pkg 2`] = `
   "CFBundleName": "Test App ßW",
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
+  "ElectronAsarIntegrity": {
+    "Resources/app.asar": {
+      "algorithm": "SHA256",
+      "hash": "hash",
+    },
+  },
   "LSApplicationCategoryType": "your.app.category.type",
-  "LSRequiresNativeExecution": true,
+  "LSEnvironment": {
+    "MallocNanoZone": "0",
+  },
   "NSAppTransportSecurity": {
     "NSAllowsLocalNetworking": true,
     "NSExceptionDomains": {
@@ -265,7 +255,10 @@ exports[`pkg 2`] = `
       },
     },
   },
+  "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
+  "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
+  "NSPrefersDisplaySafeAreaCompatibilityMode": false,
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
 }
@@ -464,66 +457,6 @@ exports[`pkg hostArchitectures for x64 1`] = `
 `;
 
 exports[`pkg hostArchitectures for x64 2`] = `
-{
-  "CFBundleDisplayName": "Test App ßW",
-  "CFBundleExecutable": "Test App ßW",
-  "CFBundleIconFile": "icon.icns",
-  "CFBundleIdentifier": "org.electron-builder.testApp",
-  "CFBundleInfoDictionaryVersion": "6.0",
-  "CFBundleName": "Test App ßW",
-  "CFBundlePackageType": "APPL",
-  "CFBundleShortVersionString": "1.1.0",
-  "ElectronAsarIntegrity": {
-    "Resources/app.asar": {
-      "algorithm": "SHA256",
-      "hash": "hash",
-    },
-  },
-  "LSApplicationCategoryType": "your.app.category.type",
-  "LSEnvironment": {
-    "MallocNanoZone": "0",
-  },
-  "NSAppTransportSecurity": {
-    "NSAllowsLocalNetworking": true,
-    "NSExceptionDomains": {
-      "127.0.0.1": {
-        "NSIncludesSubdomains": false,
-        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
-        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
-        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
-        "NSTemporaryExceptionRequiresForwardSecrecy": false,
-      },
-      "localhost": {
-        "NSIncludesSubdomains": false,
-        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
-        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
-        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
-        "NSTemporaryExceptionRequiresForwardSecrecy": false,
-      },
-    },
-  },
-  "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
-  "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
-  "NSHighResolutionCapable": true,
-  "NSPrefersDisplaySafeAreaCompatibilityMode": false,
-  "NSPrincipalClass": "AtomApplication",
-  "NSSupportsAutomaticGraphicsSwitching": true,
-}
-`;
-
-exports[`pkg hostArchitectures override 1`] = `
-{
-  "mac": [
-    {
-      "arch": "x64",
-      "file": "Test App ßW-1.1.0.pkg",
-      "safeArtifactName": "TestApp-1.1.0.pkg",
-    },
-  ],
-}
-`;
-
-exports[`pkg hostArchitectures override 2`] = `
 {
   "CFBundleDisplayName": "Test App ßW",
   "CFBundleExecutable": "Test App ßW",

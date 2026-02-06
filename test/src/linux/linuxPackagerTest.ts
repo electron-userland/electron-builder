@@ -39,7 +39,7 @@ test.ifNotWindows("AppImage", ({ expect }) =>
   })
 )
 
-test.ifNotWindows.ifNotCiMac("AppImage arm, max compression", ({ expect }) =>
+test.ifNotWindows("AppImage arm, max compression", ({ expect }) =>
   app(expect, {
     targets: Platform.LINUX.createTarget("Appimage", Arch.armv7l),
     config: {
@@ -49,7 +49,7 @@ test.ifNotWindows.ifNotCiMac("AppImage arm, max compression", ({ expect }) =>
   })
 )
 
-test.ifNotWindows.ifNotCiMac("AppImage - deprecated systemIntegration", ({ expect }) =>
+test.ifNotWindows("AppImage - deprecated systemIntegration", ({ expect }) =>
   appThrows(expect, {
     targets: appImageTarget,
     config: {
@@ -60,7 +60,7 @@ test.ifNotWindows.ifNotCiMac("AppImage - deprecated systemIntegration", ({ expec
   })
 )
 
-test.ifNotWindows.ifNotCiMac("text license and file associations", ({ expect }) =>
+test.ifNotWindows("text license and file associations", ({ expect }) =>
   app(
     expect,
     {
@@ -89,7 +89,7 @@ test.ifNotWindows.ifNotCiMac("text license and file associations", ({ expect }) 
   )
 )
 
-test.ifNotWindows.ifNotCiMac("html license", ({ expect }) =>
+test.ifNotWindows("html license", ({ expect }) =>
   app(
     expect,
     {
@@ -111,7 +111,7 @@ test.ifNotWindows.ifNotCiMac("html license", ({ expect }) =>
   )
 )
 
-test.ifNotWindows.ifNotCiMac("AppImage - default icon, custom executable and custom desktop", ({ expect }) =>
+test.ifNotWindows("AppImage - default icon, custom executable and custom desktop", ({ expect }) =>
   app(
     expect,
     {
