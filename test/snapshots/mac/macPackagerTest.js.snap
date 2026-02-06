@@ -1,12 +1,8 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`electronDist 1`] = `
-{
-  "mac": [],
-}
-`;
+exports[`macPackager > Build macOS on Windows is not supported 1`] = `"ERR_ELECTRON_BUILDER_INVALID_CONFIGURATION"`;
 
-exports[`multiple asar resources 1`] = `
+exports[`macPackager > multiple asar resources 1`] = `
 {
   "mac": [
     {
@@ -30,7 +26,7 @@ exports[`multiple asar resources 1`] = `
 }
 `;
 
-exports[`multiple asar resources 2`] = `
+exports[`macPackager > multiple asar resources 2`] = `
 {
   "CFBundleDisplayName": "Test App ßW",
   "CFBundleExecutable": "Test App ßW",
@@ -86,7 +82,7 @@ exports[`multiple asar resources 2`] = `
 }
 `;
 
-exports[`multiple asar resources 3`] = `
+exports[`macPackager > multiple asar resources 3`] = `
 [
   "app.asar",
   "extraAsar.asar",
@@ -95,7 +91,7 @@ exports[`multiple asar resources 3`] = `
 ]
 `;
 
-exports[`one-package 1`] = `
+exports[`macPackager > one-package 1`] = `
 {
   "mac": [
     {
@@ -157,7 +153,7 @@ exports[`one-package 1`] = `
 }
 `;
 
-exports[`one-package 2`] = `
+exports[`macPackager > one-package 2`] = `
 {
   "CFBundleDisplayName": "Test App ßW",
   "CFBundleDocumentTypes": [
@@ -244,7 +240,7 @@ exports[`one-package 2`] = `
 }
 `;
 
-exports[`two-package 1`] = `
+exports[`macPackager > two-package 1`] = `
 {
   "mac": [
     {
@@ -385,7 +381,7 @@ exports[`two-package 1`] = `
 }
 `;
 
-exports[`two-package 2`] = `
+exports[`macPackager > two-package 2`] = `
 {
   "CFBundleDisplayName": "TestApp",
   "CFBundleExecutable": "TestApp",
@@ -433,7 +429,7 @@ exports[`two-package 2`] = `
 }
 `;
 
-exports[`two-package 3`] = `
+exports[`macPackager > two-package 3`] = `
 [
   "app-update.yml",
   "app.asar",
@@ -443,7 +439,7 @@ exports[`two-package 3`] = `
 ]
 `;
 
-exports[`two-package 4`] = `
+exports[`macPackager > two-package 4`] = `
 [
   "Info.plist",
   "MainMenu.nib",
@@ -457,7 +453,7 @@ exports[`two-package 4`] = `
 ]
 `;
 
-exports[`two-package 5`] = `
+exports[`macPackager > two-package 5`] = `
 {
   "CFBundleDisplayName": "TestApp",
   "CFBundleExecutable": "TestApp",
@@ -505,7 +501,7 @@ exports[`two-package 5`] = `
 }
 `;
 
-exports[`two-package 6`] = `
+exports[`macPackager > two-package 6`] = `
 [
   "app-update.yml",
   "app.asar",
@@ -515,7 +511,7 @@ exports[`two-package 6`] = `
 ]
 `;
 
-exports[`two-package 7`] = `
+exports[`macPackager > two-package 7`] = `
 [
   "Info.plist",
   "MainMenu.nib",
@@ -529,7 +525,7 @@ exports[`two-package 7`] = `
 ]
 `;
 
-exports[`two-package 8`] = `
+exports[`macPackager > two-package 8`] = `
 {
   "CFBundleDisplayName": "TestApp",
   "CFBundleExecutable": "TestApp",
@@ -577,7 +573,7 @@ exports[`two-package 8`] = `
 }
 `;
 
-exports[`two-package 9`] = `
+exports[`macPackager > two-package 9`] = `
 [
   "app-update.yml",
   "app.asar",
@@ -587,7 +583,7 @@ exports[`two-package 9`] = `
 ]
 `;
 
-exports[`two-package 10`] = `
+exports[`macPackager > two-package 10`] = `
 [
   "Info.plist",
   "MainMenu.nib",
@@ -602,7 +598,7 @@ exports[`two-package 10`] = `
 ]
 `;
 
-exports[`yarn two package.json w/ native module 1`] = `
+exports[`macPackager > yarn two package.json w/ native module 1`] = `
 {
   "mac": [
     {
@@ -625,7 +621,7 @@ exports[`yarn two package.json w/ native module 1`] = `
 }
 `;
 
-exports[`yarn two package.json w/ native module 2`] = `
+exports[`macPackager > yarn two package.json w/ native module 2`] = `
 {
   "CFBundleDisplayName": "test-app-two-native-modules",
   "CFBundleExecutable": "test-app-two-native-modules",
@@ -672,7 +668,7 @@ exports[`yarn two package.json w/ native module 2`] = `
 }
 `;
 
-exports[`yarn two package.json w/ native module 3`] = `
+exports[`macPackager > yarn two package.json w/ native module 3`] = `
 {
   "files": {
     "index.html": {
@@ -1639,7 +1635,7 @@ exports[`yarn two package.json w/ native module 3`] = `
 }
 `;
 
-exports[`yarn two package.json w/ native module 4`] = `
+exports[`macPackager > yarn two package.json w/ native module 4`] = `
 [
   "app.asar",
   "electron.icns",

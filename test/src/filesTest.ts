@@ -8,7 +8,7 @@ import { assertThat } from "./helpers/fileAssert"
 import { app, appThrows, assertPack, checkDirContents, linuxDirTarget, modifyPackageJson } from "./helpers/packTester"
 import { ExpectStatic } from "vitest"
 
-test.ifDevOrLinuxCi("expand not defined env", ({ expect }) =>
+test.ifNotWindows("expand not defined env", ({ expect }) =>
   appThrows(expect, {
     targets: linuxDirTarget,
     config: {
@@ -21,7 +21,7 @@ test.ifDevOrLinuxCi("expand not defined env", ({ expect }) =>
 
 process.env.__NOT_BAR__ = "!**/bar"
 
-test.ifDevOrLinuxCi("files", ({ expect }) =>
+test.ifNotWindows("files", ({ expect }) =>
   app(
     expect,
     {
@@ -48,7 +48,7 @@ test.ifDevOrLinuxCi("files", ({ expect }) =>
   )
 )
 
-test.ifDevOrLinuxCi("files.from asar", ({ expect }) =>
+test.ifNotWindows("files.from asar", ({ expect }) =>
   app(
     expect,
     {
@@ -158,7 +158,7 @@ async function doExtraResourcesTest(expect: ExpectStatic, platform: Platform) {
   )
 }
 
-test.ifDevOrLinuxCi("extraResources on Linux", ({ expect }) => doExtraResourcesTest(expect, Platform.LINUX))
+test.ifNotWindows("extraResources on Linux", ({ expect }) => doExtraResourcesTest(expect, Platform.LINUX))
 
 // Squirrel.Windows is not supported on macOS anymore (32-bit)
 // Skipped due to bug in rimraf on Windows: `at fixWinEPERM (../node_modules/.pnpm/fs-extra@8.1.0/node_modules/fs-extra/lib/remove/rimraf.js:117:5)`
@@ -166,7 +166,7 @@ test.ifLinux("extraResources on Windows", ({ expect }) => doExtraResourcesTest(e
 
 test.ifMac("extraResources on macOS", ({ expect }) => doExtraResourcesTest(expect, Platform.MAC))
 
-test.ifNotWindows.ifNotCiWin("extraResources - two-package", ({ expect }) => {
+test.ifNotWindows("extraResources - two-package", ({ expect }) => {
   const platform = Platform.LINUX
   const osName = platform.buildConfigurationKey
 
