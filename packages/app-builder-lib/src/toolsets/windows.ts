@@ -1,4 +1,4 @@
-import { isEmptyOrSpaces, log } from "builder-util"
+import { Arch, isEmptyOrSpaces, log } from "builder-util"
 import { Nullish } from "builder-util-runtime"
 import * as os from "os"
 import * as path from "path"
@@ -39,7 +39,7 @@ function _getWindowsToolsBin<V extends CodeSignVersionKey>(winCodeSign: V, file:
   return getBinFromUrl(`win-codesign@${winCodeSign}`, file as string, wincodesignChecksums[winCodeSign][file] as string)
 }
 
-export async function getSignToolPath(winCodeSign: ToolsetConfig["winCodeSign"] | Nullish, isWin = process.platform === "win32"): Promise<ToolInfo> {
+export async function getSignToolPath(winCodeSign: ToolsetConfig["winCodeSign"] | Nullish, isWin: boolean): Promise<ToolInfo> {
   if (isUseSystemSigncode()) {
     return { path: "osslsigncode" }
   }
@@ -50,29 +50,29 @@ export async function getSignToolPath(winCodeSign: ToolsetConfig["winCodeSign"] 
   }
 
   if (isWin) {
-    return { path: await getWindowsSignToolExe(winCodeSign) }
+    // windows kits are always the target arch; signtool can be used by either arch.
+    const signtoolArch: Arch = process.arch === "x64" ? Arch.x64 : process.arch === "arm64" ? Arch.arm64 : Arch.ia32
+    return { path: await getWindowsSignToolExe({ winCodeSign, arch: signtoolArch }) }
   } else {
     const vendor = await getOsslSigncodeBundle(winCodeSign)
     return { path: vendor.path, env: vendor.env }
   }
 }
 
-export async function getWindowsKitsBundle({ winCodeSign, arch }: { winCodeSign: CodeSignVersionKey | Nullish; arch: NodeJS.Architecture }) {
+export async function getWindowsKitsBundle({ winCodeSign, arch }: { winCodeSign: CodeSignVersionKey | Nullish; arch: Arch }) {
   const overridePath = process.env.ELECTRON_BUILDER_WINDOWS_KITS_PATH
   if (!isEmptyOrSpaces(overridePath)) {
     return { kit: overridePath, appxAssets: overridePath }
   }
 
-  const windowsKitArch = (x86: string) => (arch === "ia32" ? x86 : arch === "arm64" ? "arm64" : "x64")
-
   const useLegacy = winCodeSign == null || winCodeSign === "0.0.0"
   if (useLegacy) {
     const vendorPath = await getBin("winCodeSign")
-    return { kit: path.resolve(vendorPath, "windows-10", windowsKitArch("ia32")), appxAssets: vendorPath }
+    return { kit: path.resolve(vendorPath, "windows-10", arch === Arch.arm64 ? "x64" : Arch[arch]), appxAssets: vendorPath }
   }
   const file = "windows-kits-bundle-10_0_26100_0.zip"
   const vendorPath = await _getWindowsToolsBin(winCodeSign, file)
-  return { kit: path.resolve(vendorPath, windowsKitArch("x86")), appxAssets: vendorPath }
+  return { kit: path.resolve(vendorPath, arch === Arch.ia32 ? "x86" : Arch[arch]), appxAssets: vendorPath }
 }
 
 export function isOldWin6() {
@@ -80,7 +80,7 @@ export function isOldWin6() {
   return winVersion.startsWith("6.") && !winVersion.startsWith("6.3")
 }
 
-async function getWindowsSignToolExe(winCodeSign: ToolsetConfig["winCodeSign"] | Nullish) {
+async function getWindowsSignToolExe({ winCodeSign, arch }: { winCodeSign: CodeSignVersionKey | Nullish; arch: Arch }) {
   if (winCodeSign === "0.0.0" || winCodeSign == null) {
     // use modern signtool on Windows Server 2012 R2 to be able to sign AppX
     const vendorPath = await getBin("winCodeSign")
@@ -90,7 +90,7 @@ async function getWindowsSignToolExe(winCodeSign: ToolsetConfig["winCodeSign"] |
       return path.resolve(vendorPath, "windows-10", process.arch === "ia32" ? "ia32" : "x64", "signtool.exe")
     }
   }
-  const vendorPath = await getWindowsKitsBundle({ winCodeSign, arch: process.arch })
+  const vendorPath = await getWindowsKitsBundle({ winCodeSign, arch })
   return path.resolve(vendorPath.kit, "signtool.exe")
 }
 

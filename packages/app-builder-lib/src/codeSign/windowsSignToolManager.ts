@@ -6,6 +6,7 @@ import * as path from "path"
 import { Target } from "../core"
 import { WindowsConfiguration } from "../options/winOptions"
 import AppXTarget from "../targets/AppxTarget"
+import { getSignToolPath } from "../toolsets/windows"
 import { executeAppBuilderAsJson } from "../util/appBuilder"
 import { resolveFunction } from "../util/resolve"
 import { VmManager } from "../vm/vm"
@@ -13,7 +14,6 @@ import { WinPackager } from "../winPackager"
 import { importCertificate } from "./codesign"
 import { SignManager } from "./signManager"
 import { WindowsSignOptions } from "./windowsCodeSign"
-import { getSignToolPath } from "../toolsets/windows"
 
 export type CustomWindowsSign = (configuration: CustomWindowsSignTaskConfiguration, packager?: WinPackager) => Promise<any>
 
