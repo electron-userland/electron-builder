@@ -31,7 +31,6 @@ export function normalizePath(p: string) {
 const unstableTests = [
   // General instability
   "snapHeavyTest",
-  "blackboxUpdateTest",
 ]
 const unstablePerOSTests: Record<SupportedPlatforms, string[]> = {
   darwin: ["fpmTest", "macUpdaterTest"],
