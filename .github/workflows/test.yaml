@@ -475,11 +475,9 @@ jobs:
                 const cache = JSON.parse(fs.readFileSync(cacheFile, 'utf8'));
                 filesProcessed++;
 
-                // Merge cache entries (keep most recent timestamp)
+                // Merge cache entries (later entries overwrite earlier ones, should be fine since they are all from the same test run just different shards and adding on to previous data)
                 Object.keys(cache).forEach(key => {
-                  if (!mergedCache[key] || cache[key].timestamp > mergedCache[key].timestamp) {
-                    mergedCache[key] = cache[key];
-                  }
+                  mergedCache[key] = cache[key];
                 });
               } catch (err) {
                 console.error(`Error reading cache from ${platform}:`, err.message);

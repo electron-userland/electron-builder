@@ -27,10 +27,10 @@ export default class SmartSequencer extends BaseSequencer {
     }
 
     // No sharding, just sort by priority
-    return this.sortByPriority(eligible)
+    return Promise.resolve(this.sortByPriority(eligible))
   }
 
-  private async sortWithSharding(files: TestSpecification[], shardIndex: number, shardCount: number, currentPlatform: SupportedPlatforms): Promise<TestSpecification[]> {
+  private sortWithSharding(files: TestSpecification[], shardIndex: number, shardCount: number, currentPlatform: SupportedPlatforms): TestSpecification[] {
     // Build weighted files using platform-specific durations
     const weighted = buildWeightedFiles(
       files.map(f => f.moduleId),
@@ -42,7 +42,7 @@ export default class SmartSequencer extends BaseSequencer {
 
     // Get files for this shard
     const shardFiles = shards[shardIndex] || []
-    const shardFileIds = new Set(shardFiles.map(f => f.moduleId))
+    const shardFileIds = new Set(shardFiles.map(f => f.filepath))
 
     // Filter to only files in this shard
     const shardSpecs = files.filter(f => shardFileIds.has(f.moduleId))
@@ -51,7 +51,7 @@ export default class SmartSequencer extends BaseSequencer {
     return this.sortByPriority(shardSpecs)
   }
 
-  private async sortByPriority(files: TestSpecification[]): Promise<TestSpecification[]> {
+  private sortByPriority(files: TestSpecification[]): TestSpecification[] {
     // Separate heavy test files from regular ones
     const heavyFiles: TestSpecification[] = []
     const regularFiles: TestSpecification[] = []
@@ -87,6 +87,6 @@ export default class SmartSequencer extends BaseSequencer {
 
     // Heavy tests run first, then regular tests
     // This allows heavy tests to claim workers early and run sequentially
-    return Promise.resolve([...sortedHeavy, ...sortedRegular])
+    return [...sortedHeavy, ...sortedRegular]
   }
 }

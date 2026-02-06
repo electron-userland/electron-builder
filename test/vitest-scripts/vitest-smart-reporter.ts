@@ -79,15 +79,12 @@ export default class SmarterReporter implements Reporter {
     const platformAvgMs = { ...base, ...prev.platformAvgMs }
     const platformRuns = { ...base, ...prev.platformRuns }
 
-    if (platformAvgMs && platformRuns) {
-      const prevPlatformRuns = platformRuns[this.currentPlatform] || 0
-      const prevPlatformAvg = platformAvgMs[this.currentPlatform] || 0
-      const newPlatformRuns = prevPlatformRuns + 1
-      const newPlatformAvg = (prevPlatformAvg * prevPlatformRuns + dur) / newPlatformRuns
+    const prevPlatformRuns = platformRuns[this.currentPlatform] || 0
+    const prevPlatformAvg = platformAvgMs[this.currentPlatform] || 0
 
-      platformAvgMs[this.currentPlatform] = newPlatformAvg
-      platformRuns[this.currentPlatform] = newPlatformRuns
-    }
+    const newPlatformRuns = prevPlatformRuns + 1
+    platformRuns[this.currentPlatform] = newPlatformRuns
+    platformAvgMs[this.currentPlatform] = (prevPlatformAvg * prevPlatformRuns + dur) / newPlatformRuns
 
     this.cache.files[file] = {
       runs,

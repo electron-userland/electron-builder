@@ -3,9 +3,9 @@ import { loadCache } from "./cache"
 import { DEFAULT_FILE_MS, SupportedPlatforms, TARGET_MS, TargetPlatform } from "./smart-config"
 
 export interface WeightedFile {
-  file: string
+  filename: string
   weight: number
-  moduleId: string
+  filepath: string
 }
 
 /**
@@ -27,10 +27,10 @@ export function buildWeightedFiles(files: string[], targetPlatform: TargetPlatfo
       base = stat.avgMs
     }
 
-    // Apply flaky multiplier if needed
-    const weight = stat?.flaky ? base * 1.5 : base
+    // Apply flaky multiplier if needed to prioritize fail-fast files
+    const weight = stat?.unstable ? base * 1.5 : base
 
-    return { file: basename, weight, moduleId: file }
+    return { filename: basename, weight, filepath: file }
   })
 }
 
@@ -78,5 +78,5 @@ export function getShardFiles(allFiles: string[], shardIndex: number, shardCount
     return []
   }
 
-  return shards[shardIndex].map(f => f.moduleId)
+  return shards[shardIndex].map(f => f.filepath)
 }

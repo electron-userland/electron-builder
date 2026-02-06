@@ -33,7 +33,7 @@ function main() {
   }
 
   // Extract file paths from WeightedFile objects
-  const selectedFiles = selectedShard.map(wf => wf.moduleId)
+  const selectedFiles = selectedShard.map(wf => wf.filepath)
   const estimatedDuration = selectedShard.reduce((sum, wf) => sum + (wf.weight || 0), 0)
 
   console.log(`\n=== Shard ${index + 1} of ${shardCount} ===`)
@@ -41,10 +41,10 @@ function main() {
   console.log(`Estimated duration: ${Math.round(estimatedDuration / 1000).toLocaleString()}s`)
   console.log(`\nTest files:`)
   selectedShard
-    .sort((a, b) => a.file.localeCompare(b.file))
+    .sort((a, b) => a.filename.localeCompare(b.filename))
     .forEach(wf => {
       const durationStr = wf.weight !== DEFAULT_FILE_MS ? `~${Math.round(wf.weight / 1000)}s` : "unknown"
-      console.log(`  - ${wf.file} (${durationStr})`)
+      console.log(`  - ${wf.filename} (${durationStr})`)
     })
   console.log()
 

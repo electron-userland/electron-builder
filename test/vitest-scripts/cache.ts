@@ -15,7 +15,6 @@ export interface FileStats {
   fails: number
   avgMs: number
   unstable?: boolean
-  flaky?: boolean
   hasHeavyTests?: boolean
   platformAvgMs?: Record<SupportedPlatforms, number>
   platformRuns?: Record<SupportedPlatforms, number>

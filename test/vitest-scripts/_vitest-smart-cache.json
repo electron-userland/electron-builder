@@ -2444,23 +2444,23 @@
       "heavy": false
     },
     "macos keychain > create keychain": {
-      "runs": 2,
-      "fails": 1,
-      "avgMs": 119.05202100000002,
+      "runs": 7,
+      "fails": 5,
+      "avgMs": 68.5230892857143,
       "slow": false,
       "heavy": false
     },
     "macos keychain > create keychain with installers": {
-      "runs": 2,
-      "fails": 1,
-      "avgMs": 119.05202100000002,
+      "runs": 7,
+      "fails": 5,
+      "avgMs": 68.5230892857143,
       "slow": false,
       "heavy": false
     },
     "remove password from log": {
-      "runs": 2,
+      "runs": 7,
       "fails": 0,
-      "avgMs": 119.05202100000002,
+      "avgMs": 68.5230892857143,
       "slow": false,
       "heavy": false
     },
@@ -4188,19 +4188,19 @@
       }
     },
     "macCodeSignTest.ts": {
-      "runs": 2,
-      "fails": 2,
-      "avgMs": 357.1560630000001,
+      "runs": 7,
+      "fails": 10,
+      "avgMs": 205.5692678571429,
       "unstable": true,
       "hasHeavyTests": false,
       "platformAvgMs": {
         "win32": 0,
-        "darwin": 714.3121260000001,
+        "darwin": 239.8308125000001,
         "linux": 0
       },
       "platformRuns": {
         "win32": 1,
-        "darwin": 1,
+        "darwin": 6,
         "linux": 0
       }
     },
