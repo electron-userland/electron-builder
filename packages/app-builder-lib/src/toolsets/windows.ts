@@ -1,13 +1,13 @@
-import * as path from "path"
-import { getBin, getBinFromUrl } from "../binDownload"
 import { isEmptyOrSpaces, log } from "builder-util"
 import { Nullish } from "builder-util-runtime"
 import * as os from "os"
-import { computeToolEnv, ToolInfo } from "../util/bundledTool"
-import { isUseSystemSigncode } from "../util/flags"
+import * as path from "path"
+import { getBin, getBinFromUrl } from "../binDownload"
 import { ToolsetConfig } from "../configuration"
+import { ToolInfo, computeToolEnv } from "../util/bundledTool"
+import { isUseSystemSigncode } from "../util/flags"
 
-const wincodesignChecksums: Record<NonNullable<ToolsetConfig["winCodeSign"]>, Record<string, string>> = {
+export const wincodesignChecksums = {
   "0.0.0": {
     // legacy
   },
@@ -31,48 +31,12 @@ const wincodesignChecksums: Record<NonNullable<ToolsetConfig["winCodeSign"]>, Re
     "win-codesign-windows-x64.zip": "lLEOXdJP3dzjRI+/E3Rf8e3RqEh1qs0DRMRgmxHDbuSmXABAwEzhW+tj8g/VMIlxPTD12cyvWIyMbRZq4RxvsA==",
     "windows-kits-bundle-10_0_26100_0.zip": "09Fh+zSwEiJMA6R2cW6tvpAlUDAq3h7kFzXt4scos62fygTMAK/G+JoRV4FMwBLcNiwUcn+A5ju2sJLHEfVdKA==",
   },
-}
+} as const
 
-// It's just easier to copy the map of checksums here rather then adding them to within each if-statement. Also, easy copy-paste from the releases page
-const fpmChecksums = {
-  "fpm-1.17.0-ruby-3.4.3-darwin-arm64.7z": "0n3BG/Xz1T5YIsoNNTG1bBege9E8A7rym5e3mfzHSHbiSiTS44v6GIHW4amDQk1Y5dtKtWXVq7FwjdmAf3kmMg==",
-  "fpm-1.17.0-ruby-3.4.3-darwin-x86_64.7z": "wPX3UheBznIlAXduM22W/d27i+DZVIB/MYnY5eh/qLeEEASZqHJWgN+pIckz3jT0dP37g1SQCikXXfsgxtMSPA==",
-  "fpm-1.17.0-ruby-3.4.3-linux-amd64.7z": "7miGWr6dfJSzXDD9ALqkwxvGACp7s7GR50NPcU0YwzbJL825H1SLwGJSGME+v57BxDI2xac47gFEkRZf5u9EtA==",
-  "fpm-1.17.0-ruby-3.4.3-linux-arm64v8.7z": "moRNjg6Q2iSXpkrm5sGNL2F6KilGNPagbefxhtr3VEqvAUSg2k2pMLr5xXUo0L4rZ4V+uETbwmbDCpeO3pmLyQ==",
-  "fpm-1.17.0-ruby-3.4.3-linux-i386.7z": "UPzsXhkW2T7+oHSKgFsZsFUxxmPC9lNZHsQbT+OeoTbIGsb6+qf3m7c6uP0XvRFnJiu3MM3lE1xAWQOctvajWA==",
-}
+type CodeSignVersionKey = keyof typeof wincodesignChecksums
 
-export function getLinuxToolsPath() {
-  return getBinFromUrl("linux-tools-mac-10.12.3", "linux-tools-mac-10.12.3.7z", "SQ8fqIRVXuQVWnVgaMTDWyf2TLAJjJYw3tRSqQJECmgF6qdM7Kogfa6KD49RbGzzMYIFca9Uw3MdsxzOPRWcYw==")
-}
-
-export async function getFpmPath() {
-  if (process.env.CUSTOM_FPM_PATH != null) {
-    return path.resolve(process.env.CUSTOM_FPM_PATH)
-  }
-  const exec = "fpm"
-  if (process.platform === "win32" || process.env.USE_SYSTEM_FPM === "true") {
-    return exec
-  }
-  const getKey = () => {
-    if (process.platform === "linux") {
-      if (process.arch == "x64") {
-        return "fpm-1.17.0-ruby-3.4.3-linux-amd64.7z"
-      } else if (process.arch === "arm64") {
-        return "fpm-1.17.0-ruby-3.4.3-linux-arm64v8.7z"
-      }
-      return "fpm-1.17.0-ruby-3.4.3-linux-i386.7z"
-    }
-    // darwin arm64
-    if (process.arch === "arm64") {
-      return "fpm-1.17.0-ruby-3.4.3-darwin-arm64.7z"
-    }
-    return "fpm-1.17.0-ruby-3.4.3-darwin-x86_64.7z"
-  }
-
-  const filename = getKey()
-  const fpmPath = await getBinFromUrl("fpm@2.1.4", filename, fpmChecksums[filename])
-  return path.join(fpmPath, exec)
+function _getWindowsToolsBin<V extends CodeSignVersionKey>(winCodeSign: V, file: keyof (typeof wincodesignChecksums)[V]): Promise<string> {
+  return getBinFromUrl(`win-codesign@${winCodeSign}`, file as string, wincodesignChecksums[winCodeSign][file] as string)
 }
 
 export async function getSignToolPath(winCodeSign: ToolsetConfig["winCodeSign"] | Nullish, isWin = process.platform === "win32"): Promise<ToolInfo> {
@@ -93,7 +57,7 @@ export async function getSignToolPath(winCodeSign: ToolsetConfig["winCodeSign"] 
   }
 }
 
-export async function getWindowsKitsBundle({ winCodeSign, arch }: { winCodeSign: ToolsetConfig["winCodeSign"] | Nullish; arch: NodeJS.Architecture }) {
+export async function getWindowsKitsBundle({ winCodeSign, arch }: { winCodeSign: CodeSignVersionKey | Nullish; arch: NodeJS.Architecture }) {
   const overridePath = process.env.ELECTRON_BUILDER_WINDOWS_KITS_PATH
   if (!isEmptyOrSpaces(overridePath)) {
     return { kit: overridePath, appxAssets: overridePath }
@@ -107,7 +71,7 @@ export async function getWindowsKitsBundle({ winCodeSign, arch }: { winCodeSign:
     return { kit: path.resolve(vendorPath, "windows-10", windowsKitArch("ia32")), appxAssets: vendorPath }
   }
   const file = "windows-kits-bundle-10_0_26100_0.zip"
-  const vendorPath = await getBinFromUrl("win-codesign@1.0.0", file, wincodesignChecksums[winCodeSign][file])
+  const vendorPath = await _getWindowsToolsBin(winCodeSign, file)
   return { kit: path.resolve(vendorPath, windowsKitArch("x86")), appxAssets: vendorPath }
 }
 
@@ -145,7 +109,7 @@ async function getOsslSigncodeBundle(winCodeSign: ToolsetConfig["winCodeSign"] |
     return { path: path.resolve(vendorPath, "osslsigncode"), env: process.platform === "darwin" ? computeToolEnv([path.resolve(vendorPath, "lib")]) : undefined }
   }
 
-  const filename = (() => {
+  const file = (() => {
     if (process.platform === "linux") {
       if (process.arch == "x64") {
         return "win-codesign-linux-amd64.zip"
@@ -160,8 +124,8 @@ async function getOsslSigncodeBundle(winCodeSign: ToolsetConfig["winCodeSign"] |
     }
     return "win-codesign-darwin-x86_64.zip"
   })()
-  const toolPath = await getBinFromUrl("win-codesign@1.0.0", filename, wincodesignChecksums[winCodeSign][filename])
-  return { path: path.resolve(toolPath, "osslsigncode") }
+  const vendorPath = await _getWindowsToolsBin(winCodeSign, file)
+  return { path: path.resolve(vendorPath, "osslsigncode") }
 }
 
 export async function getRceditBundle(winCodeSign: ToolsetConfig["winCodeSign"] | Nullish) {
@@ -178,6 +142,6 @@ export async function getRceditBundle(winCodeSign: ToolsetConfig["winCodeSign"] 
     return { x86: path.join(vendorPath, ia32), x64: path.join(vendorPath, x64) }
   }
   const file = "rcedit-windows-2_0_0.zip"
-  const vendorPath = await getBinFromUrl("win-codesign@1.0.0", file, wincodesignChecksums[winCodeSign][file])
+  const vendorPath = await _getWindowsToolsBin(winCodeSign, file)
   return { x86: path.join(vendorPath, x86), x64: path.join(vendorPath, x64) }
 }

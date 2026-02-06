@@ -1,9 +1,14 @@
+import { ToolsetConfig } from "app-builder-lib/src/configuration"
 import { Arch, DIR_TARGET, Platform } from "electron-builder"
 import * as fs from "fs/promises"
 import * as path from "path"
 import { CheckingWinPackager } from "../helpers/CheckingPackager"
 import { app, appThrows, assertPack, platform } from "../helpers/packTester"
 
+const winCodeSignVersions: ToolsetConfig["winCodeSign"][] = ["0.0.0", "1.0.0", "1.1.0"]
+
+for (const winCodeSign of winCodeSignVersions) {
+  describe(`winCodeSign: ${winCodeSign}`, () => {
 test("beta version", { retry: 3 }, ({ expect }) =>
   app(
     expect,
@@ -16,6 +21,9 @@ test("beta version", { retry: 3 }, ({ expect }) =>
         nsis: {
           buildUniversalInstaller: false,
         },
+            toolsets: {
+              winCodeSign,
+            },
       },
     },
     {
@@ -34,6 +42,9 @@ test("win zip", ({ expect }) =>
           { from: "build", to: "./", filter: "*.asar" },
           { from: "build/subdir", to: "./subdir", filter: "*.asar" },
         ],
+            toolsets: {
+              winCodeSign,
+            },
         electronLanguages: "en",
         downloadAlternateFFmpeg: true,
         electronFuses: {
@@ -65,6 +76,25 @@ test("zip artifactName", ({ expect }) =>
       config: {
         //tslint:disable-next-line:no-invalid-template-strings
         artifactName: "${productName}-${version}-${os}-${arch}.${ext}",
+            toolsets: {
+              winCodeSign,
+            },
+          },
+        },
+        {
+          signedWin: true,
+        }
+      ))
+
+    test("legacy win-codesign", ({ expect }) =>
+      app(
+        expect,
+        {
+          targets: Platform.WINDOWS.createTarget(["zip"], Arch.x64),
+          config: {
+            toolsets: {
+              winCodeSign,
+            },
       },
     },
     {
@@ -99,6 +129,9 @@ test.ifMac("custom icon", ({ expect }) => {
         win: {
           icon: "customIcon",
         },
+            toolsets: {
+              winCodeSign,
+            },
       },
     },
     {
@@ -120,6 +153,9 @@ test("win icon from icns", ({ expect }) => {
         mac: {
           icon: "icons/icon.icns",
         },
+            toolsets: {
+              winCodeSign,
+            },
       },
       platformPackagerFactory: packager => (platformPackager = new CheckingWinPackager(packager)),
     },
@@ -133,3 +169,5 @@ test("win icon from icns", ({ expect }) => {
     }
   )
 })
+  })
+}

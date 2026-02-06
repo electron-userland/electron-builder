@@ -13,7 +13,7 @@ import { WinPackager } from "../winPackager"
 import { importCertificate } from "./codesign"
 import { SignManager } from "./signManager"
 import { WindowsSignOptions } from "./windowsCodeSign"
-import { getSignToolPath } from "../targets/tools"
+import { getSignToolPath } from "../toolsets/windows"
 
 export type CustomWindowsSign = (configuration: CustomWindowsSignTaskConfiguration, packager?: WinPackager) => Promise<any>
 

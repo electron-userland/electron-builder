@@ -26,7 +26,7 @@ import { isBuildCacheEnabled } from "./util/flags"
 import { time } from "./util/timer"
 import { getWindowsVm, VmManager } from "./vm/vm"
 import { execWine } from "./wine"
-import { getRceditBundle } from "./targets/tools"
+import { getRceditBundle } from "./toolsets/windows"
 
 export class WinPackager extends PlatformPackager<WindowsConfiguration> {
   _iconPath = new Lazy(() => this.getOrConvertIcon("ico"))

@@ -2073,7 +2073,7 @@
       "heavy": false
     },
     "html license": {
-      "runs": 5,
+      "runs": 6,
       "fails": 0,
       "avgMs": 0,
       "slow": false,
@@ -3116,42 +3116,42 @@
       "heavy": false
     },
     "multi language license": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
       "avgMs": 0,
       "slow": false,
       "heavy": false
     },
     "perMachine, no run after finish": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
       "avgMs": 0,
       "slow": false,
       "heavy": false
     },
     "installerHeaderIcon": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
       "avgMs": 0,
       "slow": false,
       "heavy": false
     },
     "custom include": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
       "avgMs": 0,
       "slow": false,
       "heavy": false
     },
     "big file pack": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
       "avgMs": 0,
       "slow": false,
       "heavy": false
     },
     "custom script": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
       "avgMs": 0,
       "slow": false,
@@ -3165,35 +3165,35 @@
       "heavy": false
     },
     "createDesktopShortcut always": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
       "avgMs": 0,
       "slow": false,
       "heavy": false
     },
     "file associations per user": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 200892.5362915,
+      "avgMs": 220657.19394433335,
       "slow": true,
       "heavy": false
     },
     "custom exec name": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
       "avgMs": 0,
       "slow": false,
       "heavy": false
     },
     "top-level custom exec name": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
       "avgMs": 0,
       "slow": false,
       "heavy": false
     },
     "custom guid": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
       "avgMs": 0,
       "slow": false,
@@ -3207,7 +3207,7 @@
       "heavy": false
     },
     "one-click": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
       "avgMs": 0,
       "slow": false,
@@ -3221,17 +3221,17 @@
       "heavy": false
     },
     "string menuCategory": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
       "avgMs": 0,
       "slow": false,
       "heavy": false
     },
     "menuCategory": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 188024.5348545,
-      "slow": true,
+      "avgMs": 125349.689903,
+      "slow": false,
       "heavy": false
     },
     "msi > wix args": {
@@ -3249,7 +3249,7 @@
       "heavy": false
     },
     "parseDn": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
       "avgMs": 0,
       "slow": false,
@@ -3673,6 +3673,384 @@
       "fails": 0,
       "avgMs": 0,
       "slow": false,
+      "heavy": false
+    },
+    "winCodeSign: 0.0.0 > icon < 256": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
+    },
+    "winCodeSign: 0.0.0 > sign nested asar unpacked executables": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
+    },
+    "winCodeSign: 0.0.0 > icon not an image": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
+    },
+    "winCodeSign: 0.0.0 > zip artifactName": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
+    },
+    "winCodeSign: 0.0.0 > custom icon": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
+    },
+    "winCodeSign: 0.0.0 > certificateFile/password - sign as async/await": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
+    },
+    "winCodeSign: 0.0.0 > win icon from icns": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
+    },
+    "winCodeSign: 0.0.0 > certificateFile/password - sign as Promise": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
+    },
+    "winCodeSign: 0.0.0 > legacy win-codesign": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
+    },
+    "winCodeSign: 0.0.0 > win zip": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
+    },
+    "winCodeSign: 0.0.0 > certificateFile/password - sign as function": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
+    },
+    "winCodeSign: 0.0.0 > certificateFile/password - sign as path": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
+    },
+    "winCodeSign: 0.0.0 > custom sign if no code sign info": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
+    },
+    "winCodeSign: 1.0.0 > zip artifactName": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
+    },
+    "winCodeSign: 0.0.0 > forceCodeSigning": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
+    },
+    "winCodeSign: 1.0.0 > win zip": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
+    },
+    "winCodeSign: 0.0.0 > electronDist": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
+    },
+    "winCodeSign: 1.0.0 > icon < 256": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
+    },
+    "winCodeSign: 1.0.0 > custom icon": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
+    },
+    "winCodeSign: 1.0.0 > legacy win-codesign": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
+    },
+    "winCodeSign: 1.0.0 > icon not an image": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
+    },
+    "winCodeSign: 1.0.0 > win icon from icns": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
+    },
+    "winCodeSign: 0.0.0 > beta version": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
+    },
+    "winCodeSign: 1.1.0 > zip artifactName": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
+    },
+    "winCodeSign: 0.0.0 > azure signing without credentials": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
+    },
+    "winCodeSign: 1.1.0 > win zip": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
+    },
+    "winCodeSign: 1.1.0 > icon < 256": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
+    },
+    "winCodeSign: 1.1.0 > custom icon": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
+    },
+    "winCodeSign: 1.1.0 > legacy win-codesign": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
+    },
+    "winCodeSign: 1.1.0 > icon not an image": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
+    },
+    "winCodeSign: 1.1.0 > win icon from icns": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
+    },
+    "winCodeSign: 0.0.0 > win code sign using pwsh": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
+    },
+    "winCodeSign: 1.0.0 > beta version": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
+    },
+    "winCodeSign: 1.1.0 > beta version": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 236967.408916,
+      "slow": true,
+      "heavy": false
+    },
+    "winCodeSign: 1.0.0 > sign nested asar unpacked executables": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
+    },
+    "winCodeSign: 1.0.0 > certificateFile/password - sign as async/await": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
+    },
+    "winCodeSign: 1.0.0 > certificateFile/password - sign as Promise": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
+    },
+    "winCodeSign: 1.0.0 > certificateFile/password - sign as function": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
+    },
+    "winCodeSign: 1.0.0 > certificateFile/password - sign as path": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
+    },
+    "winCodeSign: 1.0.0 > custom sign if no code sign info": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
+    },
+    "winCodeSign: 1.0.0 > forceCodeSigning": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
+    },
+    "winCodeSign: 1.0.0 > electronDist": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
+    },
+    "winCodeSign: 1.0.0 > azure signing without credentials": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
+    },
+    "winCodeSign: 1.0.0 > win code sign using pwsh": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
+    },
+    "winCodeSign: 1.1.0 > sign nested asar unpacked executables": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
+    },
+    "winCodeSign: 1.1.0 > certificateFile/password - sign as async/await": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
+    },
+    "winCodeSign: 1.1.0 > certificateFile/password - sign as Promise": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
+    },
+    "winCodeSign: 1.1.0 > certificateFile/password - sign as function": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
+    },
+    "winCodeSign: 1.1.0 > certificateFile/password - sign as path": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
+    },
+    "winCodeSign: 1.1.0 > custom sign if no code sign info": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
+    },
+    "winCodeSign: 1.1.0 > forceCodeSigning": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
+    },
+    "winCodeSign: 1.1.0 > electronDist": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
+    },
+    "winCodeSign: 1.1.0 > azure signing without credentials": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
+    },
+    "winCodeSign: 1.1.0 > win code sign using pwsh": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 352318.14020799997,
+      "slow": true,
       "heavy": false
     }
   },
@@ -4392,19 +4770,19 @@
       }
     },
     "oneClickInstallerTest.ts": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 388917.071146,
+      "avgMs": 346006.8838473333,
       "unstable": false,
       "hasHeavyTests": false,
       "platformAvgMs": {
         "win32": 376049.069709,
-        "darwin": 401785.072583,
+        "darwin": 330985.79091650003,
         "linux": 0
       },
       "platformRuns": {
         "win32": 1,
-        "darwin": 1,
+        "darwin": 2,
         "linux": 0
       }
     },
@@ -4443,19 +4821,19 @@
       }
     },
     "winCodeSignTest.ts": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 70029.14370849999,
+      "avgMs": 164125.47587499997,
       "unstable": false,
       "hasHeavyTests": false,
       "platformAvgMs": {
         "win32": 76601.72566699999,
-        "darwin": 63456.56175000001,
+        "darwin": 207887.35097899998,
         "linux": 0
       },
       "platformRuns": {
         "win32": 1,
-        "darwin": 1,
+        "darwin": 2,
         "linux": 0
       }
     },
@@ -4477,19 +4855,19 @@
       }
     },
     "winPackagerTest.ts": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 125992.379479,
+      "avgMs": 162984.05595799998,
       "unstable": false,
       "hasHeavyTests": false,
       "platformAvgMs": {
         "win32": 67973.045791,
-        "darwin": 184011.71316699998,
+        "darwin": 210489.56104149998,
         "linux": 0
       },
       "platformRuns": {
         "win32": 1,
-        "darwin": 1,
+        "darwin": 2,
         "linux": 0
       }
     },
