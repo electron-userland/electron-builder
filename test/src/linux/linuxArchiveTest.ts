@@ -1,9 +1,9 @@
-import { Platform } from "electron-builder"
+import { Arch, Platform } from "electron-builder"
 import { app } from "../helpers/packTester"
 
-test.ifNotWindows.ifDevOrLinuxCi("tar", ({ expect }) =>
+test.ifNotWindows("tar", ({ expect }) =>
   app(expect, {
-    targets: Platform.LINUX.createTarget(["tar.xz", "tar.lz", "tar.bz2"]),
+    targets: Platform.LINUX.createTarget(["tar.xz", "tar.lz", "tar.bz2"], Arch.x64),
     config: {
       electronFuses: {
         runAsNode: true,

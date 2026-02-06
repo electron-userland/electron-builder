@@ -4,27 +4,24 @@ import * as path from "path"
 import { CheckingWinPackager } from "../helpers/CheckingPackager"
 import { app, appThrows, assertPack, platform } from "../helpers/packTester"
 
-test(
-  "beta version",
-  ({ expect }) =>
-    app(
-      expect,
-      {
-        targets: Platform.WINDOWS.createTarget(["nsis"], Arch.x64, Arch.arm64),
-        config: {
-          extraMetadata: {
-            version: "3.0.0-beta.2",
-          },
-          nsis: {
-            buildUniversalInstaller: false,
-          },
+test("beta version", { retry: 3 }, ({ expect }) =>
+  app(
+    expect,
+    {
+      targets: Platform.WINDOWS.createTarget(["nsis"], Arch.x64, Arch.arm64),
+      config: {
+        extraMetadata: {
+          version: "3.0.0-beta.2",
+        },
+        nsis: {
+          buildUniversalInstaller: false,
         },
       },
-      {
-        signedWin: true,
-      }
-    ),
-  { retry: 3 }
+    },
+    {
+      signedWin: true,
+    }
+  )
 )
 
 test("win zip", ({ expect }) =>

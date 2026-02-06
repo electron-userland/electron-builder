@@ -3,9 +3,9 @@ import * as path from "path"
 import { app, copyTestAsset, getFixtureDir } from "../helpers/packTester"
 
 // build in parallel - https://github.com/electron-userland/electron-builder/issues/1340#issuecomment-286061789
-test.ifNotCiMac("portable", ({ expect }) =>
+test("portable", ({ expect }) =>
   app(expect, {
-    targets: Platform.WINDOWS.createTarget(["portable", "nsis"]),
+    targets: Platform.WINDOWS.createTarget(["portable", "nsis"], Arch.x64),
     config: {
       publish: null,
       nsis: {
@@ -22,12 +22,11 @@ test.ifNotCiMac("portable", ({ expect }) =>
         grantFileProtocolExtraPrivileges: undefined, // unsupported on current electron version in our tests
       },
     },
-  })
-)
+  }))
 
-test.ifDevOrWinCi("portable zip", ({ expect }) =>
+test("portable zip", ({ expect }) =>
   app(expect, {
-    targets: Platform.WINDOWS.createTarget("portable"),
+    targets: Platform.WINDOWS.createTarget("portable", Arch.x64),
     config: {
       publish: null,
       portable: {
@@ -36,10 +35,9 @@ test.ifDevOrWinCi("portable zip", ({ expect }) =>
       },
       compression: "normal",
     },
-  })
-)
+  }))
 
-test.ifNotCi("portable zip several archs", ({ expect }) =>
+test.ifWindows("portable zip several archs", ({ expect }) =>
   app(expect, {
     targets: Platform.WINDOWS.createTarget("portable", Arch.ia32, Arch.x64),
     config: {
@@ -53,11 +51,11 @@ test.ifNotCi("portable zip several archs", ({ expect }) =>
   })
 )
 
-test.ifNotCiMac("portable - artifactName and request execution level", ({ expect }) =>
+test("portable - artifactName and request execution level", ({ expect }) =>
   app(
     expect,
     {
-      targets: Platform.WINDOWS.createTarget(["portable"]),
+      targets: Platform.WINDOWS.createTarget(["portable"], Arch.x64),
       config: {
         nsis: {
           //tslint:disable-next-line:no-invalid-template-strings
@@ -77,12 +75,11 @@ test.ifNotCiMac("portable - artifactName and request execution level", ({ expect
         return copyTestAsset("headerIcon.ico", path.join(projectDir, "build", "foo test space.ico"))
       },
     }
-  )
-)
+  ))
 
-test.ifDevOrWinCi("portable - splashImage", ({ expect }) =>
+test("portable - splashImage", ({ expect }) =>
   app(expect, {
-    targets: Platform.WINDOWS.createTarget(["portable"]),
+    targets: Platform.WINDOWS.createTarget(["portable"], Arch.x64),
     config: {
       publish: null,
       portable: {
@@ -91,5 +88,4 @@ test.ifDevOrWinCi("portable - splashImage", ({ expect }) =>
         splashImage: path.resolve(getFixtureDir(), "installerHeader.bmp"),
       },
     },
-  })
-)
+  }))
