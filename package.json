@@ -14,7 +14,7 @@
     "test-linux": "docker run --rm -e CI=\"${CI:-true}\" -e DEBUG=${DEBUG:-} -e VITEST_SHARD_INDEX=${VITEST_SHARD_INDEX:-} -e VITEST_SHARD_COUNT=${VITEST_SHARD_COUNT:-} -e UPDATE_SNAPSHOT=\"${UPDATE_SNAPSHOT:-false}\" -e TEST_FILES=\"${TEST_FILES:-}\" -w /project -v $(pwd):/project -v $(pwd)-node-modules:/project/node_modules -v $HOME/Library/Caches/electron:/root/.cache/electron -v $HOME/Library/Caches/electron-builder:/root/.cache/electron-builder ${ADDITIONAL_DOCKER_ARGS} ${TEST_RUNNER_IMAGE_TAG:-electronuserland/builder:22-wine-mono} /bin/bash -c \"bash ./docker/test-in-docker.sh\"",
     "test-update": "UPDATE_SNAPSHOT=true vitest run",
     "test": "vitest",
-    "ci:test": "ts-node test/vitest-scripts/smart-shard.ts",
+    "ci:test": "ts-node test/vitest-scripts/vitest-run.ts",
     "ci:test:count": "ts-node test/vitest-scripts/smart-shard-count.ts",
     "ci:validate": "pnpm compile && pnpm pretest && pnpm generate-all",
     "ci:version": "pnpm i && pnpm changelog && changeset version && node scripts/update-package-version-export.js && pnpm compile && pnpm generate-all && git add .",
