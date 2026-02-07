@@ -2,6 +2,7 @@ import { notarize } from "@electron/notarize"
 import { NotarizeOptionsNotaryTool, NotaryToolKeychainCredentials } from "@electron/notarize/lib/types"
 import { PerFileSignOptions, SigningDistributionType, SignOptions } from "@electron/osx-sign/dist/cjs/types"
 import { Identity } from "@electron/osx-sign/dist/cjs/util-identities"
+import { makeUniversalApp } from "@electron/universal"
 import {
   Arch,
   AsyncTaskManager,
@@ -32,11 +33,9 @@ import { chooseNotNull, DoPackOptions, PlatformPackager } from "./platformPackag
 import { ArchiveTarget } from "./targets/ArchiveTarget"
 import { PkgTarget, prepareProductBuildArgs } from "./targets/pkg"
 import { createCommonTarget, NoOpTarget } from "./targets/targetFactory"
-import { isMacOsHighSierra } from "./util/macosVersion"
+import { expandMacro as doExpandMacro } from "./util/macroExpander"
 import { getTemplatePath } from "./util/pathManager"
 import { resolveFunction } from "./util/resolve"
-import { expandMacro as doExpandMacro } from "./util/macroExpander"
-import { makeUniversalApp } from "@electron/universal"
 
 export type CustomMacSignOptions = SignOptions
 export type CustomMacSign = (configuration: CustomMacSignOptions, packager: MacPackager) => Promise<void>
@@ -136,11 +135,15 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
   }
 
   /**
-   * Get platform type from target name
+   * Get platform type from target name with always fallback to mac
    */
   private getPlatformTypeFromTarget(targetName: string): PlatformType {
-    if (targetName === "mas") return "mas"
-    if (targetName === "mas-dev") return "mas-dev"
+    if (targetName === "mas") {
+      return "mas"
+    }
+    if (targetName === "mas-dev") {
+      return "mas-dev"
+    }
     return "mac"
   }
 
@@ -192,16 +195,10 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
   }
 
   protected async doPack(config: DoPackOptions<MacConfiguration>): Promise<any> {
-    const { arch } = config
-
-    switch (arch) {
-      default: {
-        return super.doPack(config)
-      }
-      case Arch.universal: {
-        return this.doUniversalPack(config)
-      }
+    if (config.arch === Arch.universal) {
+      return this.doUniversalPack(config)
     }
+    return super.doPack(config)
   }
 
   /**
@@ -292,20 +289,11 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
     const nonMasTargets = targets.filter(it => !this.isMasTarget(it.name))
     const prepackaged = this.packagerOptions.prepackaged
 
-    // Handle MAS targets
-    if (masTargets.length > 0) {
-      await this.packMasTargets(outDir, arch, masTargets, prepackaged)
-    }
-
-    // Handle non-MAS targets
-    if (nonMasTargets.length > 0) {
-      await this.packMacTargets(outDir, arch, nonMasTargets, prepackaged, taskManager)
-    }
+    // mas always first
+    await this.packMasTargets(outDir, arch, masTargets, prepackaged)
+    await this.packMacTargets(outDir, arch, nonMasTargets, prepackaged, taskManager)
   }
 
-  /**
-   * Pack MAS targets (mas and mas-dev)
-   */
   private async packMasTargets(outDir: string, arch: Arch, targets: Array<Target>, prepackaged: string | null | undefined): Promise<void> {
     for (const target of targets) {
       const platformType = this.getPlatformTypeFromTarget(target.name)
@@ -329,10 +317,10 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
     }
   }
 
-  /**
-   * Pack Mac targets (non-MAS)
-   */
   private async packMacTargets(outDir: string, arch: Arch, targets: Array<Target>, prepackaged: string | null | undefined, taskManager: AsyncTaskManager): Promise<void> {
+    if (targets.length === 0) {
+      return
+    }
     const appPath = prepackaged == null ? path.join(this.computeAppOutDir(outDir, arch), `${this.appInfo.productFilename}.app`) : prepackaged
 
     if (prepackaged == null) {
@@ -350,9 +338,6 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
     this.packageInDistributableFormat(appPath, arch, targets, taskManager)
   }
 
-  /**
-   * Sign MAS application
-   */
   private async signMas(appPath: string, outDir: string, platformConfig: PlatformConfig, arch: Arch): Promise<boolean> {
     const signed = await this.sign(appPath, outDir, platformConfig.config as MasConfiguration, arch, true)
     return signed
@@ -385,10 +370,6 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
       return false
     }
 
-    if (!isMacOsHighSierra()) {
-      throw new InvalidConfigurationError("macOS High Sierra 10.13.6 is required to sign")
-    }
-
     const signOptions = await this.buildSignOptions(appPath, identity, type, isMas, config, keychainFile, arch)
     await this.doSign(signOptions, config, identity)
 
@@ -405,9 +386,6 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
     return true
   }
 
-  /**
-   * Handle null identity case
-   */
   private handleNullIdentity(fallBackToAdhoc: boolean): boolean {
     if (this.forceCodeSigning) {
       throw new InvalidConfigurationError("identity explicitly is set to null, but forceCodeSigning is set to true")
@@ -419,9 +397,6 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
     return false
   }
 
-  /**
-   * Find the appropriate signing identity
-   */
   private async findSigningIdentity(
     isMas: boolean,
     isDevelopment: boolean,
@@ -465,9 +440,6 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
     return identity
   }
 
-  /**
-   * Build signing options
-   */
   private async buildSignOptions(
     appPath: string,
     identity: Identity,
@@ -551,9 +523,6 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
     return signOptions
   }
 
-  /**
-   * Create MAS installer package
-   */
   private async createMasInstaller(
     appPath: string,
     outDir: string,
