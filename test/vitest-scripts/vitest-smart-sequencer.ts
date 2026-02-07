@@ -23,17 +23,14 @@ export default class SmartSequencer extends BaseSequencer {
     console.log()
     console.log("Test Platform:", currentPlatform)
     console.log("Estimated test duration:", formatDuration(estimatedDuration))
-    console.log(`\nTest files:`)
+    console.log()
+    console.log(`Test files:`)
     files
-      .map(f => {
-        const basename = path.basename(f.moduleId)
-        const stat = this.cache.files[basename]
-        const durationStr = stat?.avgMs ? `~${Math.round(stat.avgMs / 1000)}s` : "unknown"
-        return { file: path.basename(f.moduleId), durationStr }
-      })
-      .sort((a, b) => a.file.localeCompare(b.file))
+      .sort((a, b) => path.basename(a.moduleId).localeCompare(path.basename(b.moduleId)))
       .forEach(f => {
-        console.log(`  - ${f.file} (${f.durationStr})`)
+        const file = path.basename(f.moduleId)
+        const time = this.cache.files[file]?.avgMs
+        console.log(`  - ${file} (${formatDuration(time)})`)
       })
     console.log()
 
