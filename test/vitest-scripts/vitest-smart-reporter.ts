@@ -23,7 +23,7 @@ export default class SmarterReporter implements Reporter {
 
   onTestCaseResult(test: TestCase) {
     const id = test.fullName
-    const dur = test.diagnostic()?.duration ?? test.module.diagnostic()?.duration ?? 0
+    const dur = test.diagnostic()?.duration ?? 0
     const failed = test.result().state === "failed"
 
     // Access meta through the test task

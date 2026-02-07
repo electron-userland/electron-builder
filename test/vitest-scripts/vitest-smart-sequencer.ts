@@ -1,54 +1,44 @@
 import * as path from "path"
 import { BaseSequencer, TestSpecification } from "vitest/node"
 import { loadCache } from "./cache"
-import { platformAllowed } from "./file-discovery"
-import { buildWeightedFiles, splitIntoShards } from "./shard-builder"
-import { SupportedPlatforms } from "./smart-config"
+import { DEFAULT_FILE_MS, SupportedPlatforms } from "./smart-config"
 
 export default class SmartSequencer extends BaseSequencer {
   readonly cache = loadCache()
 
   async sort(files: TestSpecification[]): Promise<TestSpecification[]> {
     const currentPlatform = process.platform as SupportedPlatforms
-
-    // Filter to only files allowed on this platform
-    const eligible = files.filter(f => platformAllowed(f.moduleId))
-
-    // Check if we're in shard mode
-    const shardEnv = process.env.VITEST_SHARD
-    if (shardEnv) {
-      const [shardIndexStr, shardCountStr] = shardEnv.split("/")
-      const shardIndex = parseInt(shardIndexStr, 10) - 1 // Convert to 0-based
-      const shardCount = parseInt(shardCountStr, 10)
-
-      if (!isNaN(shardIndex) && !isNaN(shardCount)) {
-        return this.sortWithSharding(eligible, shardIndex, shardCount, currentPlatform)
+    const estimatedDuration = files.reduce((sum, f) => {
+      const basename = path.basename(f.moduleId)
+      const stat = this.cache.files[basename]
+      let base = DEFAULT_FILE_MS
+      if (stat?.platformAvgMs?.[currentPlatform] && stat?.platformRuns?.[currentPlatform]) {
+        base = stat.platformAvgMs[currentPlatform]
+      } else if (stat?.avgMs) {
+        base = stat.avgMs
       }
-    }
+      return sum + base
+    }, 0)
 
-    // No sharding, just sort by priority
-    return Promise.resolve(this.sortByPriority(eligible))
-  }
+    console.log()
+    console.log("Test Platform:", currentPlatform)
+    console.log(`Estimated test duration: ${Math.round(estimatedDuration / 1000).toLocaleString()}s`)
+    console.log(`\nTest files:`)
+    files
+      .map(f => {
+        const basename = path.basename(f.moduleId)
+        const stat = this.cache.files[basename]
+        const durationStr = stat?.avgMs ? `~${Math.round(stat.avgMs / 1000)}s` : "unknown"
+        return { file: path.basename(f.moduleId), durationStr }
+      })
+      .sort((a, b) => a.file.localeCompare(b.file))
+      .forEach(f => {
+        console.log(`  - ${f.file} (${f.durationStr})`)
+      })
+    console.log()
 
-  private sortWithSharding(files: TestSpecification[], shardIndex: number, shardCount: number, currentPlatform: SupportedPlatforms): TestSpecification[] {
-    // Build weighted files using platform-specific durations
-    const weighted = buildWeightedFiles(
-      files.map(f => f.moduleId),
-      currentPlatform
-    )
-
-    // Split into shards based on duration
-    const shards = splitIntoShards(weighted, shardCount)
-
-    // Get files for this shard
-    const shardFiles = shards[shardIndex] || []
-    const shardFileIds = new Set(shardFiles.map(f => f.filepath))
-
-    // Filter to only files in this shard
-    const shardSpecs = files.filter(f => shardFileIds.has(f.moduleId))
-
-    // Sort within shard by priority
-    return this.sortByPriority(shardSpecs)
+    // Flatten shards back into file list, preserving shard order
+    return Promise.resolve(this.sortByPriority(files))
   }
 
   private sortByPriority(files: TestSpecification[]): TestSpecification[] {

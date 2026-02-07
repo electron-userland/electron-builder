@@ -4,7 +4,7 @@ import isCI from "is-ci"
 import { startVitest } from "vitest/node"
 import { getAllTestFiles } from "./file-discovery"
 import { buildWeightedFiles, computeShardCount, splitIntoShards } from "./shard-builder"
-import { DEFAULT_FILE_MS, SHARD_INDEX, SupportedPlatforms, TEST_FILES_PATTERN } from "./smart-config"
+import { SHARD_INDEX, SupportedPlatforms, TEST_FILES_PATTERN } from "./smart-config"
 import SmartSequencer from "./vitest-smart-sequencer"
 
 const testRegex = TEST_FILES_PATTERN?.split(",")
@@ -37,19 +37,9 @@ async function main() {
 
   // Extract file paths from WeightedFile objects
   const selectedFiles = selectedShard.map(wf => wf.filepath)
-  const estimatedDuration = selectedShard.reduce((sum, wf) => sum + (wf.weight || 0), 0)
 
   console.log(`\n=== Shard ${index + 1} of ${shardCount} ===`)
   console.log(`Scanned Files: ${selectedFiles.length}`)
-  console.log(`Estimated duration: ${Math.round(estimatedDuration / 1000).toLocaleString()}s`)
-  console.log(`\nTest files:`)
-  selectedShard
-    .sort((a, b) => a.filename.localeCompare(b.filename))
-    .forEach(wf => {
-      const durationStr = wf.weight !== DEFAULT_FILE_MS ? `~${Math.round(wf.weight / 1000)}s` : "unknown"
-      console.log(`  - ${wf.filename} (${durationStr})`)
-    })
-  console.log()
 
   return startVitest("test", selectedFiles, {
     run: isCI,

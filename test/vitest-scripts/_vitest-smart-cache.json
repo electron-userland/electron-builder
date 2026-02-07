@@ -1548,23 +1548,23 @@
       "heavy": false
     },
     "${version} macro with +": {
-      "runs": 5,
+      "runs": 10,
       "fails": 0,
-      "avgMs": 5.780641400000002,
+      "avgMs": 3.5300665000000038,
       "slow": false,
       "heavy": false
     },
     "sanitized product name": {
-      "runs": 5,
+      "runs": 10,
       "fails": 0,
-      "avgMs": 5.780641400000002,
+      "avgMs": 3.4558875000000002,
       "slow": false,
       "heavy": false
     },
     "product name": {
-      "runs": 5,
+      "runs": 10,
       "fails": 0,
-      "avgMs": 5.780641400000002,
+      "avgMs": 3.4458958000000024,
       "slow": false,
       "heavy": false
     },
@@ -2360,107 +2360,107 @@
       "heavy": false
     },
     "invalid target": {
-      "runs": 5,
+      "runs": 10,
       "fails": 0,
-      "avgMs": 0,
+      "avgMs": 2646.4042541999997,
       "slow": false,
       "heavy": false
     },
     "only zip": {
-      "runs": 5,
+      "runs": 10,
       "fails": 0,
-      "avgMs": 0,
+      "avgMs": 5101.190483199999,
       "slow": false,
       "heavy": false
     },
     "tar.gz": {
-      "runs": 5,
+      "runs": 10,
       "fails": 0,
-      "avgMs": 10812.640829799999,
+      "avgMs": 19757.4492483,
       "slow": false,
       "heavy": false
     },
     "pkg": {
-      "runs": 5,
+      "runs": 10,
       "fails": 0,
       "avgMs": 0,
       "slow": false,
       "heavy": false
     },
     "empty installLocation": {
-      "runs": 5,
+      "runs": 10,
       "fails": 0,
-      "avgMs": 0,
+      "avgMs": 10075.7455667,
       "slow": false,
       "heavy": false
     },
     "extraDistFiles": {
-      "runs": 5,
+      "runs": 10,
       "fails": 0,
-      "avgMs": 0,
+      "avgMs": 6304.5591667,
       "slow": false,
       "heavy": false
     },
     "pkg extended configuration": {
-      "runs": 5,
+      "runs": 10,
       "fails": 0,
-      "avgMs": 0,
+      "avgMs": 8667.1050793,
       "slow": false,
       "heavy": false
     },
     "pkg scripts": {
-      "runs": 5,
+      "runs": 10,
       "fails": 0,
-      "avgMs": 0,
+      "avgMs": 5919.601070800001,
       "slow": false,
       "heavy": false
     },
     "pkg hostArchitectures for arm64": {
-      "runs": 5,
+      "runs": 10,
       "fails": 0,
-      "avgMs": 0,
+      "avgMs": 5450.6611291,
       "slow": false,
       "heavy": false
     },
     "pkg hostArchitectures for x64": {
-      "runs": 5,
+      "runs": 10,
       "fails": 0,
-      "avgMs": 0,
+      "avgMs": 5357.5746543000005,
       "slow": false,
       "heavy": false
     },
     "pkg minimumSystemVersion adds volume-check": {
-      "runs": 5,
+      "runs": 10,
       "fails": 0,
-      "avgMs": 0,
+      "avgMs": 4721.035774999999,
       "slow": false,
       "heavy": false
     },
     "pkg extra packages": {
-      "runs": 5,
+      "runs": 10,
       "fails": 0,
-      "avgMs": 50600.2507168,
+      "avgMs": 29867.1805209,
       "slow": false,
       "heavy": false
     },
     "macos keychain > create keychain": {
-      "runs": 9,
+      "runs": 14,
       "fails": 5,
-      "avgMs": 53.295736111111125,
+      "avgMs": 34.261544642857146,
       "slow": false,
       "heavy": false
     },
     "macos keychain > create keychain with installers": {
-      "runs": 9,
+      "runs": 14,
       "fails": 5,
-      "avgMs": 53.295736111111125,
+      "avgMs": 34.261544642857146,
       "slow": false,
       "heavy": false
     },
     "remove password from log": {
-      "runs": 9,
+      "runs": 14,
       "fails": 0,
-      "avgMs": 53.295736111111125,
+      "avgMs": 34.261544642857146,
       "slow": false,
       "heavy": false
     },
@@ -2472,79 +2472,79 @@
       "heavy": false
     },
     "icon composer generate asset catalog": {
-      "runs": 4,
+      "runs": 9,
       "fails": 0,
-      "avgMs": 22948.6747605,
+      "avgMs": 19493.293287,
       "slow": false,
       "heavy": false
     },
     "icon set": {
-      "runs": 4,
+      "runs": 9,
       "fails": 0,
-      "avgMs": 0,
+      "avgMs": 3194.5852685555556,
       "slow": false,
       "heavy": false
     },
     "custom icon set": {
-      "runs": 4,
+      "runs": 9,
       "fails": 0,
-      "avgMs": 0,
+      "avgMs": 3534.9764814444443,
       "slow": false,
       "heavy": false
     },
     "custom icon set with only 512 and 128": {
-      "runs": 4,
+      "runs": 9,
       "fails": 0,
-      "avgMs": 0,
+      "avgMs": 3882.967486222222,
       "slow": false,
       "heavy": false
     },
     "png icon": {
-      "runs": 4,
+      "runs": 9,
       "fails": 0,
-      "avgMs": 0,
+      "avgMs": 4158.732046222222,
       "slow": false,
       "heavy": false
     },
     "default png icon": {
-      "runs": 4,
+      "runs": 9,
       "fails": 0,
-      "avgMs": 0,
+      "avgMs": 3144.657472333334,
       "slow": false,
       "heavy": false
     },
     "png icon small": {
-      "runs": 4,
+      "runs": 9,
       "fails": 0,
-      "avgMs": 0,
+      "avgMs": 2130.7610276666665,
       "slow": false,
       "heavy": false
     },
     "macPackager > two-package": {
-      "runs": 4,
+      "runs": 9,
       "fails": 1,
-      "avgMs": 0,
+      "avgMs": 14332.712101888888,
       "slow": false,
       "heavy": false
     },
     "macPackager > one-package": {
-      "runs": 4,
+      "runs": 9,
       "fails": 0,
-      "avgMs": 0,
+      "avgMs": 7210.808435333333,
       "slow": false,
       "heavy": false
     },
     "macPackager > yarn two package.json w/ native module": {
-      "runs": 4,
+      "runs": 9,
       "fails": 0,
-      "avgMs": 0,
+      "avgMs": 12448.114592555554,
       "slow": false,
       "heavy": false
     },
     "macPackager > electronDist": {
-      "runs": 4,
+      "runs": 9,
       "fails": 0,
-      "avgMs": 0,
+      "avgMs": 3506.953018555555,
       "slow": false,
       "heavy": false
     },
@@ -2612,16 +2612,16 @@
       "heavy": false
     },
     "macPackager > Build macOS on Windows is not supported": {
-      "runs": 4,
+      "runs": 9,
       "fails": 0,
-      "avgMs": 744.60922925,
+      "avgMs": 3281.8566296666663,
       "slow": false,
       "heavy": false
     },
     "macPackager > multiple asar resources": {
-      "runs": 4,
+      "runs": 9,
       "fails": 0,
-      "avgMs": 105126.05589575,
+      "avgMs": 51271.06446755556,
       "slow": false,
       "heavy": false
     },
@@ -2703,9 +2703,9 @@
       "heavy": false
     },
     "mac updates": {
-      "runs": 1,
-      "fails": 0,
-      "avgMs": 0,
+      "runs": 2,
+      "fails": 1,
+      "avgMs": 2324.6608335,
       "slow": false,
       "heavy": false
     },
@@ -3899,19 +3899,19 @@
       }
     },
     "macroExpanderTest.ts": {
-      "runs": 5,
+      "runs": 10,
       "fails": 0,
-      "avgMs": 17.341924200000005,
+      "avgMs": 10.765354000000006,
       "unstable": false,
       "hasHeavyTests": false,
       "platformAvgMs": {
         "win32": 17.02249800000004,
-        "darwin": 7.370249000000001,
+        "darwin": 5.381833250000003,
         "linux": 47.57637599999998
       },
       "platformRuns": {
         "win32": 1,
-        "darwin": 3,
+        "darwin": 8,
         "linux": 1
       }
     },
@@ -4171,36 +4171,36 @@
       }
     },
     "macArchiveTest.ts": {
-      "runs": 5,
+      "runs": 10,
       "fails": 0,
-      "avgMs": 61412.891546599996,
+      "avgMs": 123812.70100690001,
       "unstable": false,
       "hasHeavyTests": false,
       "platformAvgMs": {
         "win32": 0,
-        "darwin": 84333.75119466666,
+        "darwin": 148007.97574,
         "linux": 54063.204149
       },
       "platformRuns": {
         "win32": 1,
-        "darwin": 3,
+        "darwin": 8,
         "linux": 1
       }
     },
     "macCodeSignTest.ts": {
-      "runs": 9,
+      "runs": 14,
       "fails": 10,
-      "avgMs": 159.88720833333338,
+      "avgMs": 102.78463392857147,
       "unstable": true,
       "hasHeavyTests": false,
       "platformAvgMs": {
         "win32": 0,
-        "darwin": 179.87310937500007,
+        "darwin": 110.69114423076927,
         "linux": 0
       },
       "platformRuns": {
         "win32": 1,
-        "darwin": 8,
+        "darwin": 13,
         "linux": 0
       }
     },
@@ -4222,19 +4222,19 @@
       }
     },
     "macIconTest.ts": {
-      "runs": 4,
+      "runs": 9,
       "fails": 0,
-      "avgMs": 22948.6747605,
+      "avgMs": 47545.69840733333,
       "unstable": false,
       "hasHeavyTests": false,
       "platformAvgMs": {
         "win32": 0,
-        "darwin": 30598.233013999998,
+        "darwin": 53488.91070824999,
         "linux": 0
       },
       "platformRuns": {
         "win32": 1,
-        "darwin": 3,
+        "darwin": 8,
         "linux": 0
       }
     },
@@ -4256,19 +4256,19 @@
       }
     },
     "macPackagerTest.ts": {
-      "runs": 4,
+      "runs": 9,
       "fails": 1,
-      "avgMs": 105870.665125,
-      "unstable": true,
+      "avgMs": 100737.29947244444,
+      "unstable": false,
       "hasHeavyTests": false,
       "platformAvgMs": {
         "win32": 5956.873834,
-        "darwin": 139175.26222200002,
+        "darwin": 112584.85267725002,
         "linux": 0
       },
       "platformRuns": {
         "win32": 1,
-        "darwin": 3,
+        "darwin": 8,
         "linux": 0
       }
     },
@@ -4290,19 +4290,19 @@
       }
     },
     "macUpdaterTest.ts": {
-      "runs": 1,
-      "fails": 0,
-      "avgMs": 0,
-      "unstable": false,
+      "runs": 2,
+      "fails": 1,
+      "avgMs": 2324.6608335,
+      "unstable": true,
       "hasHeavyTests": false,
       "platformAvgMs": {
         "win32": 0,
-        "darwin": 0,
+        "darwin": 4649.321667,
         "linux": 0
       },
       "platformRuns": {
         "win32": 1,
-        "darwin": 0,
+        "darwin": 1,
         "linux": 0
       }
     },
