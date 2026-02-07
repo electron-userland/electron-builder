@@ -29,16 +29,17 @@ export default class SmartSequencer extends BaseSequencer {
       .sort((a, b) => path.basename(a.moduleId).localeCompare(path.basename(b.moduleId)))
       .forEach(f => {
         const file = path.basename(f.moduleId)
-        const time = this.cache.files[file]?.avgMs
-        console.log(`  - ${file} (${formatDuration(time)})${this.cache.files[file]?.unstable ? " [unstable]" : ""}`)
+        const stat = this.cache.files[file]
+        const time = stat?.platformAvgMs?.[currentPlatform] ?? stat?.avgMs
+        console.log(`  - ${file} (${formatDuration(time)})${stat?.unstable ? " [unstable]" : ""}`)
       })
     console.log()
 
     // Flatten shards back into file list, preserving shard order
-    return Promise.resolve(this.sortByPriority(files))
+    return Promise.resolve(this.sortByPriority(files, currentPlatform))
   }
 
-  private sortByPriority(files: TestSpecification[]): TestSpecification[] {
+  private sortByPriority(files: TestSpecification[], currentPlatform: SupportedPlatforms): TestSpecification[] {
     // Separate heavy test files from regular ones
     const heavyFiles: TestSpecification[] = []
     const regularFiles: TestSpecification[] = []
@@ -58,8 +59,8 @@ export default class SmartSequencer extends BaseSequencer {
     const sortedHeavy = heavyFiles.sort((a, b) => {
       const A = this.cache.files[path.basename(a.moduleId)]
       const B = this.cache.files[path.basename(b.moduleId)]
-      const aScore = (A?.unstable ? 1_000_000 : 0) + (A?.avgMs ?? 0)
-      const bScore = (B?.unstable ? 1_000_000 : 0) + (B?.avgMs ?? 0)
+      const aScore = (A?.unstable ? 1_000_000 : 0) + (A?.platformAvgMs?.[currentPlatform] ?? A?.avgMs ?? 0)
+      const bScore = (B?.unstable ? 1_000_000 : 0) + (B?.platformAvgMs?.[currentPlatform] ?? B?.avgMs ?? 0)
       return bScore - aScore
     })
 
@@ -67,8 +68,8 @@ export default class SmartSequencer extends BaseSequencer {
     const sortedRegular = regularFiles.sort((a, b) => {
       const A = this.cache.files[path.basename(a.moduleId)]
       const B = this.cache.files[path.basename(b.moduleId)]
-      const aScore = (A?.unstable ? 1_000_000 : 0) + (A?.avgMs ?? 0)
-      const bScore = (B?.unstable ? 1_000_000 : 0) + (B?.avgMs ?? 0)
+      const aScore = (A?.unstable ? 1_000_000 : 0) + (A?.platformAvgMs?.[currentPlatform] ?? A?.avgMs ?? 0)
+      const bScore = (B?.unstable ? 1_000_000 : 0) + (B?.platformAvgMs?.[currentPlatform] ?? B?.avgMs ?? 0)
       return bScore - aScore
     })
 
