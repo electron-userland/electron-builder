@@ -1569,205 +1569,205 @@
       "heavy": false
     },
     "removePassword: --accessKey > handles unquoted value (snapshot)": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 2.0310419999999993,
+      "avgMs": 2.7048056666666676,
       "slow": false,
       "heavy": false
     },
     "removePassword: --accessKey > handles double-quoted value (snapshot)": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 1.9353959999999972,
+      "avgMs": 2.6014723333333336,
       "slow": false,
       "heavy": false
     },
     "removePassword: --accessKey > handles single-quoted value (snapshot)": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 1.9210835000000088,
+      "avgMs": 2.586861333333341,
       "slow": false,
       "heavy": false
     },
     "removePassword: --secretKey > handles unquoted value (snapshot)": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 1.9115830000000074,
+      "avgMs": 2.577305333333347,
       "slow": false,
       "heavy": false
     },
     "removePassword: --secretKey > handles double-quoted value (snapshot)": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 1.9030415000000147,
+      "avgMs": 2.5686666666666724,
       "slow": false,
       "heavy": false
     },
     "removePassword: --secretKey > handles single-quoted value (snapshot)": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 1.2410210000000035,
+      "avgMs": 1.3120000000000023,
       "slow": false,
       "heavy": false
     },
     "removePassword: -P > handles unquoted value (snapshot)": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 1.2264790000000119,
+      "avgMs": 1.2975136666666647,
       "slow": false,
       "heavy": false
     },
     "removePassword: -P > handles double-quoted value (snapshot)": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 1.216791499999971,
+      "avgMs": 1.2872776666666634,
       "slow": false,
       "heavy": false
     },
     "removePassword: -P > handles single-quoted value (snapshot)": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 1.2101254999999895,
+      "avgMs": 1.2806253333333284,
       "slow": false,
       "heavy": false
     },
     "removePassword: -p > handles unquoted value (snapshot)": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 1.134750000000011,
+      "avgMs": 1.2143470000000225,
       "slow": false,
       "heavy": false
     },
     "removePassword: -p > handles double-quoted value (snapshot)": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 0.3601459999999719,
+      "avgMs": 0.39569466666664727,
       "slow": false,
       "heavy": false
     },
     "removePassword: -p > handles single-quoted value (snapshot)": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 0.35039599999998927,
+      "avgMs": 0.3824863333333231,
       "slow": false,
       "heavy": false
     },
     "removePassword: -pass > handles unquoted value (snapshot)": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 0.34445800000000304,
+      "avgMs": 0.37623566666665437,
       "slow": false,
       "heavy": false
     },
     "removePassword: -pass > handles double-quoted value (snapshot)": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 0.33929150000001584,
+      "avgMs": 0.37098600000000675,
       "slow": false,
       "heavy": false
     },
     "removePassword: -pass > handles single-quoted value (snapshot)": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 0.33416650000000914,
+      "avgMs": 0.3659026666666705,
       "slow": false,
       "heavy": false
     },
     "removePassword: -String > handles unquoted value (snapshot)": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 0.2877500000000168,
+      "avgMs": 0.29320833333334423,
       "slow": false,
       "heavy": false
     },
     "removePassword: -String > handles double-quoted value (snapshot)": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 0.28112500000000296,
+      "avgMs": 0.286485999999987,
       "slow": false,
       "heavy": false
     },
     "removePassword: -String > handles single-quoted value (snapshot)": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 0.2751039999999847,
+      "avgMs": 0.2806806666666546,
       "slow": false,
       "heavy": false
     },
     "removePassword: /p > handles unquoted value (snapshot)": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 0.2700629999999933,
+      "avgMs": 0.27526433333332534,
       "slow": false,
       "heavy": false
     },
     "removePassword: /p > handles double-quoted value (snapshot)": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 0.26389550000001805,
+      "avgMs": 0.26943033333335126,
       "slow": false,
       "heavy": false
     },
     "removePassword: /p > handles single-quoted value (snapshot)": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 0.3204794999999905,
+      "avgMs": 0.32606966666667364,
       "slow": false,
       "heavy": false
     },
     "removePassword: /p > handles Mac host path without hashing (snapshot)": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 0.31410399999998617,
+      "avgMs": 0.31977766666665275,
       "slow": false,
       "heavy": false
     },
     "removePassword: pass: > handles unquoted value (snapshot)": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 0.3090204999999884,
+      "avgMs": 0.31425000000000597,
       "slow": false,
       "heavy": false
     },
     "removePassword: pass: > handles double-quoted value (snapshot)": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 0.3036460000000005,
+      "avgMs": 0.3086669999999856,
       "slow": false,
       "heavy": false
     },
     "removePassword: pass: > handles single-quoted value (snapshot)": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 0.2989169999999888,
+      "avgMs": 0.30397233333331997,
       "slow": false,
       "heavy": false
     },
     "removePassword: /b … /c block > handles /b … /c block (snapshot)": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 0.3532289999999847,
+      "avgMs": 0.3564443333333145,
       "slow": false,
       "heavy": false
     },
     "removePassword: multiple keys in one string > handles two keys unquoted (snapshot)": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 0.34679200000000776,
+      "avgMs": 0.3500279999999994,
       "slow": false,
       "heavy": false
     },
     "removePassword: multiple keys in one string > handles mixed quoted and unquoted keys (snapshot)": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 0.3416665000000023,
+      "avgMs": 0.344458333333345,
       "slow": false,
       "heavy": false
     },
     "removePassword: multiple keys in one string > handles several keys and /b … /c block (snapshot)": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 0.33675049999999374,
+      "avgMs": 0.3395973333333397,
       "slow": false,
       "heavy": false
     },
@@ -3872,19 +3872,19 @@
       }
     },
     "utilTest.ts": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 21.762313499999962,
+      "avgMs": 25.690514666666644,
       "unstable": false,
       "hasHeavyTests": false,
       "platformAvgMs": {
         "win32": 0,
-        "darwin": 21.762313499999962,
+        "darwin": 25.690514666666644,
         "linux": 0
       },
       "platformRuns": {
         "win32": 0,
-        "darwin": 2,
+        "darwin": 3,
         "linux": 0
       }
     },
