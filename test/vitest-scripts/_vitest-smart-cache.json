@@ -2738,65 +2738,65 @@
       "heavy": false
     },
     "AppX > AppX": {
-      "runs": 1,
-      "fails": 0,
-      "avgMs": 0,
+      "runs": 2,
+      "fails": 1,
+      "avgMs": 60066.8325415,
       "slow": false,
       "heavy": false
     },
     "AppX > auto launch": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 0,
+      "avgMs": 50506.379729,
       "slow": false,
       "heavy": false
     },
     "AppX > application id": {
-      "runs": 1,
-      "fails": 0,
-      "avgMs": 0,
+      "runs": 2,
+      "fails": 1,
+      "avgMs": 58514.29525,
       "slow": false,
       "heavy": false
     },
     "AppX > certificateSubjectName": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
       "avgMs": 0,
       "slow": false,
       "heavy": false
     },
     "AppX > languages and not signed (windows store only)": {
-      "runs": 1,
-      "fails": 0,
-      "avgMs": 0,
+      "runs": 2,
+      "fails": 1,
+      "avgMs": 70113.428729,
       "slow": false,
       "heavy": false
     },
     "AppX > custom template appmanifest.xml": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 0,
+      "avgMs": 50373.046458,
       "slow": false,
       "heavy": false
     },
     "AppX > custom raw appmanifest.xml": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 0,
+      "avgMs": 20425.947291999997,
       "slow": false,
       "heavy": false
     },
     "AppX > valid capabilities (windows store only)": {
-      "runs": 1,
-      "fails": 0,
-      "avgMs": 0,
+      "runs": 2,
+      "fails": 1,
+      "avgMs": 22566.950041999997,
       "slow": false,
       "heavy": false
     },
     "AppX > invalid capabilities (windows store only)": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 0,
+      "avgMs": 14014.57125,
       "slow": false,
       "heavy": false
     },
@@ -2871,44 +2871,44 @@
       "heavy": false
     },
     "msiWrapped > msiWrapped requires nsis": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 0,
+      "avgMs": 48213.740625,
       "slow": false,
       "heavy": false
     },
     "msiWrapped > msiWrapped allows capitalized nsis target": {
-      "runs": 1,
-      "fails": 0,
-      "avgMs": 0,
+      "runs": 2,
+      "fails": 1,
+      "avgMs": 48607.371604,
       "slow": false,
       "heavy": false
     },
     "msiWrapped > msiWrapped includes packaged exe": {
-      "runs": 1,
-      "fails": 0,
-      "avgMs": 0,
+      "runs": 2,
+      "fails": 1,
+      "avgMs": 50238.329042000005,
       "slow": false,
       "heavy": false
     },
     "msiWrapped > msiWrapped impersonate no if not provided": {
-      "runs": 1,
-      "fails": 0,
-      "avgMs": 0,
+      "runs": 2,
+      "fails": 1,
+      "avgMs": 48530.488729,
       "slow": false,
       "heavy": false
     },
     "msiWrapped > msiWrapped impersonate yes if true": {
-      "runs": 1,
-      "fails": 0,
-      "avgMs": 0,
+      "runs": 2,
+      "fails": 1,
+      "avgMs": 50283.2843125,
       "slow": false,
       "heavy": false
     },
     "msiWrapped > msiWrapped wrappedInstallerArgs provided": {
-      "runs": 1,
-      "fails": 0,
-      "avgMs": 0,
+      "runs": 2,
+      "fails": 1,
+      "avgMs": 22300.206750000005,
       "slow": false,
       "heavy": false
     },
@@ -3562,6 +3562,97 @@
       "avgMs": 0.3659579999999778,
       "slow": false,
       "heavy": false
+    },
+    "mac > x64": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
+    },
+    "mac > universal": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
+    },
+    "mac > arm64": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
+    },
+    "windows > nsis": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 364684.18983299995,
+      "slow": true,
+      "heavy": false
+    },
+    "linux > AppImage - arm64": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
+    },
+    "linux > AppImage - x64": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
+    },
+    "linux > fedora - (zypper)": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
+    },
+    "linux > fedora - (dnf)": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
+    },
+    "linux > fedora - (yum)": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
+    },
+    "linux > fedora - (rpm)": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
+    },
+    "linux > debian - (apt)": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
+    },
+    "linux > debian - (dpkg)": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
+    },
+    "linux > arch - (pacman)": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
     }
   },
   "files": {
@@ -4127,18 +4218,18 @@
       }
     },
     "appxTest.ts": {
-      "runs": 1,
-      "fails": 0,
-      "avgMs": 0,
-      "unstable": false,
+      "runs": 2,
+      "fails": 4,
+      "avgMs": 346581.45129149995,
+      "unstable": true,
       "hasHeavyTests": false,
       "platformAvgMs": {
-        "win32": 0,
+        "win32": 693162.9025829999,
         "darwin": 0,
         "linux": 0
       },
       "platformRuns": {
-        "win32": 0,
+        "win32": 1,
         "darwin": 1,
         "linux": 0
       }
@@ -4178,18 +4269,18 @@
       }
     },
     "msiWrappedTest.ts": {
-      "runs": 1,
-      "fails": 0,
-      "avgMs": 0,
-      "unstable": false,
+      "runs": 2,
+      "fails": 5,
+      "avgMs": 268173.4210625,
+      "unstable": true,
       "hasHeavyTests": false,
       "platformAvgMs": {
-        "win32": 0,
+        "win32": 536346.842125,
         "darwin": 0,
         "linux": 0
       },
       "platformRuns": {
-        "win32": 0,
+        "win32": 1,
         "darwin": 1,
         "linux": 0
       }
@@ -4412,6 +4503,23 @@
       "platformRuns": {
         "win32": 0,
         "darwin": 1,
+        "linux": 0
+      }
+    },
+    "blackboxUpdateTest.ts": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 364684.18983299995,
+      "unstable": false,
+      "hasHeavyTests": false,
+      "platformAvgMs": {
+        "win32": 364684.18983299995,
+        "darwin": 0,
+        "linux": 0
+      },
+      "platformRuns": {
+        "win32": 1,
+        "darwin": 0,
         "linux": 0
       }
     }
