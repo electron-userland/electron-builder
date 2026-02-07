@@ -70,7 +70,7 @@ export function saveCache(cache: SmartCache) {
     fs.writeFileSync(tempFile, content, "utf8")
     fs.renameSync(tempFile, CACHE_FILE)
 
-    console.log(`[saveCache] ✓ Cache saved successfully (${content.length} bytes)`)
+    console.log(`[saveCache] ✓ Cache saved successfully (${(content.length / 1024).toFixed(2)} KB)`)
   } catch (err: any) {
     console.error(`[saveCache] ✗ Error saving cache:`, err.message)
     throw err
