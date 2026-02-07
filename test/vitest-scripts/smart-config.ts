@@ -28,10 +28,9 @@ export const IS_LINUX = PLATFORM === "linux"
 export const unstableTests = [
   // General instability
   "snapHeavyTest",
-  "blackboxUpdateTest",
 ]
 export const unstablePerOSTests: Record<SupportedPlatforms, string[]> = {
-  darwin: ["fpmTest", "macUpdaterTest"],
+  darwin: ["fpmTest", "macUpdaterTest", "blackboxUpdateTest"],
   linux: ["flatpakTest"],
-  win32: ["msiWrappedTest", "appxTest"],
+  win32: [],
 }
