@@ -337,16 +337,16 @@
       "heavy": false
     },
     "cli": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 4.837770999999975,
+      "avgMs": 3.2251806666666503,
       "slow": false,
       "heavy": false
     },
     "merge configurations": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 2.336416999999983,
+      "avgMs": 4.606008499999916,
       "slow": false,
       "heavy": false
     },
@@ -456,9 +456,9 @@
       "heavy": false
     },
     "build in the app package.json": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 13558.573875,
+      "avgMs": 22525.6848875,
       "slow": false,
       "heavy": false
     },
@@ -533,16 +533,16 @@
       "heavy": false
     },
     "relative index": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 31005.604334,
+      "avgMs": 35079.606167,
       "slow": false,
       "heavy": false
     },
     "electron version from electron-prebuilt dependency": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 38921.431292,
+      "avgMs": 19460.715646,
       "slow": false,
       "heavy": false
     },
@@ -575,23 +575,23 @@
       "heavy": false
     },
     "electron version from electron dependency": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 45012.277416000004,
+      "avgMs": 22506.138708000002,
       "slow": false,
       "heavy": false
     },
     "electron version from build": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 45550.043375,
+      "avgMs": 22775.0216875,
       "slow": false,
       "heavy": false
     },
     "afterSign": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 0,
+      "avgMs": 21495.00395,
       "slow": false,
       "heavy": false
     },
@@ -799,9 +799,9 @@
       "heavy": false
     },
     "www as default dir": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 45969.1965,
+      "avgMs": 43329.42195,
       "slow": false,
       "heavy": false
     },
@@ -813,7 +813,7 @@
       "heavy": false
     },
     "outside link": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
       "avgMs": 0,
       "slow": false,
@@ -862,9 +862,9 @@
       "heavy": false
     },
     "hooks as functions": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 38795.066166,
+      "avgMs": 19397.533083,
       "slow": false,
       "heavy": false
     },
@@ -883,16 +883,16 @@
       "heavy": false
     },
     "beforeBuild": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 28156.603249999993,
+      "avgMs": 14078.301624999996,
       "slow": false,
       "heavy": false
     },
     "hooks as file - mjs exported functions": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 34704.786374999996,
+      "avgMs": 17352.393187499998,
       "slow": false,
       "heavy": false
     },
@@ -1212,9 +1212,9 @@
       "heavy": false
     },
     "hooks as file - cjs": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 45521.19825,
+      "avgMs": 22760.599125,
       "slow": false,
       "heavy": false
     },
@@ -1226,9 +1226,9 @@
       "heavy": false
     },
     "win smart unpack": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 27636.637042000002,
+      "avgMs": 13818.318521000001,
       "slow": false,
       "heavy": false
     },
@@ -1254,9 +1254,9 @@
       "heavy": false
     },
     "link": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 28051.109958,
+      "avgMs": 14025.554979,
       "slow": false,
       "heavy": false
     },
@@ -1268,16 +1268,16 @@
       "heavy": false
     },
     "smart unpack local module with dll file": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 25661.092959,
+      "avgMs": 35820.7500295,
       "slow": false,
       "heavy": false
     },
     "posix smart unpack": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 25610.946666999997,
+      "avgMs": 12805.473333499998,
       "slow": false,
       "heavy": false
     },
@@ -1310,9 +1310,9 @@
       "heavy": false
     },
     "asarUnpack and files ignore": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 29244.855167,
+      "avgMs": 14622.4275835,
       "slow": false,
       "heavy": false
     },
@@ -1352,16 +1352,16 @@
       "heavy": false
     },
     "unpackDir one": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 35112.500583,
+      "avgMs": 17556.2502915,
       "slow": false,
       "heavy": false
     },
     "unpackDir": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 39081.601,
+      "avgMs": 19540.8005,
       "slow": false,
       "heavy": false
     },
@@ -1380,9 +1380,9 @@
       "heavy": false
     },
     "symlinks everywhere with static framework": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 40787.873833,
+      "avgMs": 20393.9369165,
       "slow": false,
       "heavy": false
     },
@@ -1394,9 +1394,9 @@
       "heavy": false
     },
     "ignore node_modules": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 15590.539083999996,
+      "avgMs": 7795.269541999998,
       "slow": false,
       "heavy": false
     },
@@ -1429,16 +1429,16 @@
       "heavy": false
     },
     "asarUnpack node_modules": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 16223.758584000003,
+      "avgMs": 8111.879292000001,
       "slow": false,
       "heavy": false
     },
     "failed peer dep": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 28900.083833000004,
+      "avgMs": 14450.041916500002,
       "slow": false,
       "heavy": false
     },
@@ -2150,7 +2150,7 @@
       "heavy": false
     },
     "pkg": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
       "avgMs": 0,
       "slow": false,
@@ -2227,9 +2227,9 @@
       "heavy": false
     },
     "invalid target": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 13534.9364585,
+      "avgMs": 9023.290972333334,
       "slow": false,
       "heavy": false
     },
@@ -2255,9 +2255,9 @@
       "heavy": false
     },
     "only zip": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 22001.663062500003,
+      "avgMs": 14667.775375000003,
       "slow": false,
       "heavy": false
     },
@@ -2311,9 +2311,9 @@
       "heavy": false
     },
     "extraDistFiles": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 25386.4431455,
+      "avgMs": 16924.295430333335,
       "slow": false,
       "heavy": false
     },
@@ -2409,9 +2409,9 @@
       "heavy": false
     },
     "empty installLocation": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 46329.2522085,
+      "avgMs": 30886.168139,
       "slow": false,
       "heavy": false
     },
@@ -2423,23 +2423,23 @@
       "heavy": false
     },
     "pkg extended configuration": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 43747.788313,
+      "avgMs": 29165.192208666664,
       "slow": false,
       "heavy": false
     },
     "pkg hostArchitectures for arm64": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 37101.5407705,
+      "avgMs": 24734.36051366667,
       "slow": false,
       "heavy": false
     },
     "pkg scripts": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 42739.0173545,
+      "avgMs": 28492.678236333333,
       "slow": false,
       "heavy": false
     },
@@ -2682,9 +2682,9 @@
       "heavy": false
     },
     "pkg hostArchitectures for x64": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 42621.501875,
+      "avgMs": 28414.334583333333,
       "slow": false,
       "heavy": false
     },
@@ -2801,16 +2801,16 @@
       "heavy": false
     },
     "tar.gz": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 89098.25293799999,
+      "avgMs": 59398.835291999996,
       "slow": false,
       "heavy": false
     },
     "pkg minimumSystemVersion adds volume-check": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 37347.53925,
+      "avgMs": 24898.359500000002,
       "slow": false,
       "heavy": false
     },
@@ -2829,9 +2829,9 @@
       "heavy": false
     },
     "pkg extra packages": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 34426.347125,
+      "avgMs": 22950.898083333333,
       "slow": false,
       "heavy": false
     },
@@ -3424,21 +3424,21 @@
       "heavy": false
     },
     "GitLab Publisher - Integration Tests > Authentication > should reject invalid token": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
       "avgMs": 0,
       "slow": false,
       "heavy": false
     },
     "GitLab Publisher - Integration Tests > File Upload > should upload via project_upload, create release and link assets": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
       "avgMs": 0,
       "slow": false,
       "heavy": false
     },
     "GitLab Publisher - Integration Tests > File Upload > should upload via generic_package, create release and link assets": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
       "avgMs": 0,
       "slow": false,
@@ -3753,18 +3753,18 @@
       }
     },
     "BuildTest.ts": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 446105.793918,
+      "avgMs": 323209.567909,
       "unstable": false,
       "hasHeavyTests": false,
       "platformAvgMs": {
-        "win32": 0,
+        "win32": 200313.3419,
         "darwin": 446105.793918,
         "linux": 0
       },
       "platformRuns": {
-        "win32": 0,
+        "win32": 1,
         "darwin": 1,
         "linux": 0
       }
@@ -3804,9 +3804,9 @@
       }
     },
     "globTest.ts": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 232992.32204199999,
+      "avgMs": 116496.16102099999,
       "unstable": false,
       "hasHeavyTests": false,
       "platformAvgMs": {
@@ -3815,7 +3815,7 @@
         "linux": 0
       },
       "platformRuns": {
-        "win32": 0,
+        "win32": 1,
         "darwin": 1,
         "linux": 0
       }
@@ -4144,9 +4144,9 @@
       }
     },
     "macArchiveTest.ts": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 434334.2825010001,
+      "avgMs": 289556.18833400006,
       "unstable": false,
       "hasHeavyTests": false,
       "platformAvgMs": {
@@ -4155,7 +4155,7 @@
         "linux": 0
       },
       "platformRuns": {
-        "win32": 0,
+        "win32": 1,
         "darwin": 2,
         "linux": 0
       }
@@ -4365,7 +4365,7 @@
       }
     },
     "GitlabPublisher.integration.test.ts": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
       "avgMs": 0,
       "unstable": false,
@@ -4376,7 +4376,7 @@
         "linux": 0
       },
       "platformRuns": {
-        "win32": 0,
+        "win32": 1,
         "darwin": 1,
         "linux": 0
       }
