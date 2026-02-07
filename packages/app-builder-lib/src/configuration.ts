@@ -269,7 +269,7 @@ export type AfterExtractContext = PackContext
 /**
  * Configuration of toolsets utilized by electron-builder
  */
-export type ToolsetConfig = {
+export interface ToolsetConfig {
   /**
    * `win-codesign` version to use for signing Windows artifacts.
    * Located at https://github.com/electron-userland/electron-builder-binaries/releases?q=win-codesign&expanded=true

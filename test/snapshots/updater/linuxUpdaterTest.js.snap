@@ -1,6 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`test arch download and install (pacman) 1`] = `
+exports[`Linux Updater Test > test arch download and install (pacman) 1`] = `
 {
   "files": [
     {
@@ -35,7 +35,7 @@ exports[`test arch download and install (pacman) 1`] = `
 }
 `;
 
-exports[`test arch download and install (pacman) 2`] = `
+exports[`Linux Updater Test > test arch download and install (pacman) 2`] = `
 [
   "checking-for-update",
   "update-available",
@@ -43,7 +43,7 @@ exports[`test arch download and install (pacman) 2`] = `
 ]
 `;
 
-exports[`test debian download and install (apt) 1`] = `
+exports[`Linux Updater Test > test debian download and install (apt) 1`] = `
 {
   "files": [
     {
@@ -78,7 +78,7 @@ exports[`test debian download and install (apt) 1`] = `
 }
 `;
 
-exports[`test debian download and install (apt) 2`] = `
+exports[`Linux Updater Test > test debian download and install (apt) 2`] = `
 [
   "checking-for-update",
   "update-available",
@@ -86,7 +86,7 @@ exports[`test debian download and install (apt) 2`] = `
 ]
 `;
 
-exports[`test debian download and install (dpkg) 1`] = `
+exports[`Linux Updater Test > test debian download and install (dpkg) 1`] = `
 {
   "files": [
     {
@@ -121,7 +121,7 @@ exports[`test debian download and install (dpkg) 1`] = `
 }
 `;
 
-exports[`test debian download and install (dpkg) 2`] = `
+exports[`Linux Updater Test > test debian download and install (dpkg) 2`] = `
 [
   "checking-for-update",
   "update-available",
@@ -129,7 +129,7 @@ exports[`test debian download and install (dpkg) 2`] = `
 ]
 `;
 
-exports[`test fedora download and install (dnf) 1`] = `
+exports[`Linux Updater Test > test fedora download and install (dnf) 1`] = `
 {
   "files": [
     {
@@ -164,7 +164,7 @@ exports[`test fedora download and install (dnf) 1`] = `
 }
 `;
 
-exports[`test fedora download and install (dnf) 2`] = `
+exports[`Linux Updater Test > test fedora download and install (dnf) 2`] = `
 [
   "checking-for-update",
   "update-available",
@@ -172,7 +172,7 @@ exports[`test fedora download and install (dnf) 2`] = `
 ]
 `;
 
-exports[`test fedora download and install (rpm) 1`] = `
+exports[`Linux Updater Test > test fedora download and install (rpm) 1`] = `
 {
   "files": [
     {
@@ -207,7 +207,7 @@ exports[`test fedora download and install (rpm) 1`] = `
 }
 `;
 
-exports[`test fedora download and install (rpm) 2`] = `
+exports[`Linux Updater Test > test fedora download and install (rpm) 2`] = `
 [
   "checking-for-update",
   "update-available",
@@ -215,7 +215,7 @@ exports[`test fedora download and install (rpm) 2`] = `
 ]
 `;
 
-exports[`test fedora download and install (yum) 1`] = `
+exports[`Linux Updater Test > test fedora download and install (yum) 1`] = `
 {
   "files": [
     {
@@ -250,7 +250,7 @@ exports[`test fedora download and install (yum) 1`] = `
 }
 `;
 
-exports[`test fedora download and install (yum) 2`] = `
+exports[`Linux Updater Test > test fedora download and install (yum) 2`] = `
 [
   "checking-for-update",
   "update-available",
@@ -258,7 +258,7 @@ exports[`test fedora download and install (yum) 2`] = `
 ]
 `;
 
-exports[`test fedora download and install (zypper) 1`] = `
+exports[`Linux Updater Test > test fedora download and install (zypper) 1`] = `
 {
   "files": [
     {
@@ -293,7 +293,7 @@ exports[`test fedora download and install (zypper) 1`] = `
 }
 `;
 
-exports[`test fedora download and install (zypper) 2`] = `
+exports[`Linux Updater Test > test fedora download and install (zypper) 2`] = `
 [
   "checking-for-update",
   "update-available",

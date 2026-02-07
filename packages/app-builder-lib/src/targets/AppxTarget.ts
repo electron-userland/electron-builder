@@ -3,13 +3,13 @@ import { Nullish } from "builder-util-runtime"
 import { emptyDir, readdir, readFile, writeFile } from "fs-extra"
 import * as path from "path"
 import { AppXOptions } from "../"
-import { getWindowsKitsBundle } from "./tools"
+import { getWindowsKitsBundle } from "../toolsets/windows"
 import { Target } from "../core"
 import { getTemplatePath } from "../util/pathManager"
 import { VmManager } from "../vm/vm"
 import { WinPackager } from "../winPackager"
 import { createStageDir } from "./targetUtil"
-import { isOldWin6 } from "../targets/tools"
+import { isOldWin6 } from "../toolsets/windows"
 import { CAPABILITIES, isValidCapabilityName } from "./AppxCapabilities"
 
 const APPX_ASSETS_DIR_NAME = "appx"
@@ -75,7 +75,7 @@ export default class AppXTarget extends Target {
       arch,
     })
 
-    const vendorPath = await getWindowsKitsBundle({ winCodeSign: this.packager.config.toolsets?.winCodeSign, arch: process.arch })
+    const vendorPath = await getWindowsKitsBundle({ winCodeSign: this.packager.config.toolsets?.winCodeSign, arch: arch })
     const vm = await packager.vm.value
 
     const stageDir = await createStageDir(this, packager, arch)
