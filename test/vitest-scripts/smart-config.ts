@@ -7,6 +7,7 @@ export type TargetPlatform = "darwin" | "win32" | "linux" | "current"
 export type SupportedPlatforms = Exclude<TargetPlatform, "current">
 
 export const TEST_ROOT = "test/src"
+export const TEST_FILES_PATTERN = process.env.TEST_FILES?.trim() || "*Test,*test"
 
 export const CACHE_FILE = process.env.VITEST_SMART_CACHE_FILE || path.resolve(__dirname, "_vitest-smart-cache.json")
 
@@ -42,9 +43,4 @@ const unstablePerOSTests: Record<SupportedPlatforms, string[]> = {
 export function isUnstableTest(file: string, platform: TargetPlatform): boolean {
   const key: SupportedPlatforms = platform !== "current" ? platform : PLATFORM
   return unstableTests.some(t => file.includes(t)) || unstablePerOSTests[key]?.some(t => file.includes(t)) || false
-}
-
-export interface WeightedFile {
-  file: string
-  weight: number
 }

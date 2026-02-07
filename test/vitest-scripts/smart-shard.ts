@@ -4,11 +4,10 @@ import isCI from "is-ci"
 import { startVitest } from "vitest/node"
 import { getAllTestFiles } from "./file-discovery"
 import { buildWeightedFiles, computeShardCount, splitIntoShards } from "./shard-builder"
-import { DEFAULT_FILE_MS, SHARD_INDEX, SupportedPlatforms } from "./smart-config"
+import { DEFAULT_FILE_MS, SHARD_INDEX, SupportedPlatforms, TEST_FILES_PATTERN } from "./smart-config"
 import SmartSequencer from "./vitest-smart-sequencer"
 
-const testFilePattern = process.env.TEST_FILES?.trim() || "*Test,*test"
-const testRegex = testFilePattern?.split(",")
+const testRegex = TEST_FILES_PATTERN?.split(",")
 const includeRegex = `(${testRegex.join("|")})`
 console.log("TEST_FILES pattern", includeRegex)
 
@@ -21,10 +20,8 @@ async function main() {
 
   // Build weighted files with platform-specific durations
   const weighted = buildWeightedFiles(files, currentPlatform)
-
   const shardCount = computeShardCount(weighted)
   const shards = splitIntoShards(weighted, shardCount)
-
   const index = SHARD_INDEX ?? 0
 
   if (index >= shardCount) {
@@ -33,10 +30,9 @@ async function main() {
   }
 
   const selectedShard = shards[index]
-
   if (!selectedShard || selectedShard.length === 0) {
     console.log(`No tests in shard ${index + 1}`)
-    process.exit(0)
+    process.exit(1)
   }
 
   // Extract file paths from WeightedFile objects
@@ -56,22 +52,20 @@ async function main() {
   console.log()
 
   return startVitest("test", selectedFiles, {
-    run: true,
-    watch: false,
-    // if using `toMatchSnapshot`, it MUST be passed in through the test context
-    // e.g. test("name", ({ expect }) => { ... })
+    run: isCI,
+    watch: !isCI,
+    allowOnly: !isCI, // Prevent accidental commit of `test.only` in CI
+    update: process.env.UPDATE_SNAPSHOT === "true",
+
     // we manually set `globalThis.test` and `globalThis.describe` in vitest-setup.ts to make sure everything works correctly
     globals: false,
-
-    allowOnly: !isCI, // Prevent accidental commit of `test.only` in CI
-    printConsoleTrace: true,
 
     // Allow test metadata
     includeTaskLocation: true,
     setupFiles: [__dirname + "/vitest-setup.ts", __dirname + "/vitest-heavy-mutex.ts"],
     include: [`test/src/**/${includeRegex}.ts`],
-    update: process.env.UPDATE_SNAPSHOT === "true",
 
+    printConsoleTrace: true,
     reporters: ["default", __dirname + "/vitest-smart-reporter.ts"],
 
     maxWorkers: "50%",
