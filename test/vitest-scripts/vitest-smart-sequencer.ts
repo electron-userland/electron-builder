@@ -22,7 +22,7 @@ export default class SmartSequencer extends BaseSequencer {
 
     console.log()
     console.log("Test Platform:", currentPlatform)
-    console.log(`Estimated test duration: ${Math.round(estimatedDuration / 1000).toLocaleString()}s`)
+    console.log("Estimated test duration:", formatDuration(estimatedDuration))
     console.log(`\nTest files:`)
     files
       .map(f => {
@@ -79,4 +79,25 @@ export default class SmartSequencer extends BaseSequencer {
     // This allows heavy tests to claim workers early and run sequentially
     return [...sortedHeavy, ...sortedRegular]
   }
+}
+
+function formatDuration(ms?: number): string {
+  if (!ms || ms <= 0) {
+    return "unknown"
+  }
+  if (ms < 1000) {
+    return `~${Math.round(ms)}ms`
+  }
+  const totalSeconds = Math.round(ms / 1000)
+  if (totalSeconds < 60) {
+    return `~${totalSeconds}s`
+  }
+  const minutes = Math.floor(totalSeconds / 60)
+  const seconds = totalSeconds % 60
+  if (minutes < 60) {
+    return seconds ? `~${minutes}m ${seconds}s` : `~${minutes}m`
+  }
+  const hours = Math.floor(minutes / 60)
+  const remainingMinutes = minutes % 60
+  return remainingMinutes ? `~${hours}h ${remainingMinutes}m` : `~${hours}h`
 }
