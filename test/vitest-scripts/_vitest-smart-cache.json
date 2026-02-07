@@ -330,7 +330,7 @@
       "heavy": false
     },
     "Hoisted Node Module Test > yarn two package.json w/ native mac-only module (optional dep)": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
       "avgMs": 0,
       "slow": false,
@@ -351,7 +351,7 @@
       "heavy": false
     },
     "mac artifactName ": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
       "avgMs": 0,
       "slow": false,
@@ -393,65 +393,65 @@
       "heavy": false
     },
     "Hoisted Node Module Test > conflict versions": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 5401.12475,
+      "avgMs": 2700.562375,
       "slow": false,
       "heavy": false
     },
     "Hoisted Node Module Test > yarn several workspaces": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 5402.1170839999995,
+      "avgMs": 2701.0585419999998,
       "slow": false,
       "heavy": false
     },
     "Hoisted Node Module Test > should throw when attempting to package a system file": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
       "avgMs": 0,
       "slow": false,
       "heavy": false
     },
     "Hoisted Node Module Test > yarn several workspaces and asarUnpack": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 5403.501333,
+      "avgMs": 2701.7506665,
       "slow": false,
       "heavy": false
     },
     "Hoisted Node Module Test > yarn workspace": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 6673.283916,
+      "avgMs": 3336.641958,
       "slow": false,
       "heavy": false
     },
     "files": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 21458.622146,
+      "avgMs": 14305.748097333335,
       "slow": false,
       "heavy": false
     },
     "null string as null": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 64.37516700000003,
+      "avgMs": 32.18758350000002,
       "slow": false,
       "heavy": false
     },
     "appId as object": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 8611.770375,
+      "avgMs": 4305.8851875,
       "slow": false,
       "heavy": false
     },
     "validation": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 9096.495583,
+      "avgMs": 4548.2477915,
       "slow": false,
       "heavy": false
     },
@@ -463,21 +463,21 @@
       "heavy": false
     },
     "Hoisted Node Module Test > yarn workspace for scope name": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 5897.588042000001,
+      "avgMs": 2948.7940210000006,
       "slow": false,
       "heavy": false
     },
     "Hoisted Node Module Test > should throw when attempting to package a symlink to a system file": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 9778.416541,
+      "avgMs": 4889.2082705,
       "slow": false,
       "heavy": false
     },
     "Hoisted Node Module Test > pnpm optional dependency not installable on linux": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
       "avgMs": 0,
       "slow": false,
@@ -498,37 +498,37 @@
       "heavy": false
     },
     "extraFiles": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 27928.654083999998,
+      "avgMs": 13964.327041999999,
       "slow": false,
       "heavy": false
     },
     "github and spaces (publishAutoUpdate)": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 29462.390167,
+      "avgMs": 14731.1950835,
       "slow": false,
       "heavy": false
     },
     "dotted s3 bucket": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 29941.847875,
+      "avgMs": 46616.5204375,
       "slow": false,
       "heavy": false
     },
     "generic, github and spaces": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 34285.126083,
+      "avgMs": 17142.5630415,
       "slow": false,
       "heavy": false
     },
     "os macro": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 36387.398540999995,
+      "avgMs": 18193.699270499998,
       "slow": false,
       "heavy": false
     },
@@ -547,16 +547,16 @@
       "heavy": false
     },
     "Hoisted Node Module Test > pnpm optional dependencies": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 24362.180583999998,
+      "avgMs": 12181.090291999999,
       "slow": false,
       "heavy": false
     },
     "Hoisted Node Module Test > pnpm es5-ext without hoisted config": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 35356.972583,
+      "avgMs": 17678.4862915,
       "slow": false,
       "heavy": false
     },
@@ -568,9 +568,9 @@
       "heavy": false
     },
     "Hoisted Node Module Test > yarn electron-clear-data": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 28622.714416,
+      "avgMs": 14311.357208,
       "slow": false,
       "heavy": false
     },
@@ -806,9 +806,9 @@
       "heavy": false
     },
     "custom provider": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 66504.37991700001,
+      "avgMs": 33252.18995850001,
       "slow": false,
       "heavy": false
     },
@@ -841,16 +841,16 @@
       "heavy": false
     },
     "Hoisted Node Module Test > yarn two package.json": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 68735.092916,
+      "avgMs": 34367.546458,
       "slow": false,
       "heavy": false
     },
     "Hoisted Node Module Test > yarn some module add by manual instead of install": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 26708.43666600001,
+      "avgMs": 13354.218333000004,
       "slow": false,
       "heavy": false
     },
@@ -1219,9 +1219,9 @@
       "heavy": false
     },
     "Hoisted Node Module Test > yarn two package.json without node_modules": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 77871.505209,
+      "avgMs": 38935.7526045,
       "slow": false,
       "heavy": false
     },
@@ -1233,9 +1233,9 @@
       "heavy": false
     },
     "Hoisted Node Module Test > npm electron-clear-data": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 51515.817333,
+      "avgMs": 25757.9086665,
       "slow": false,
       "heavy": false
     },
@@ -1261,9 +1261,9 @@
       "heavy": false
     },
     "Hoisted Node Module Test > yarn parse-asn1": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 12666.982541999998,
+      "avgMs": 6333.491270999999,
       "slow": false,
       "heavy": false
     },
@@ -1345,9 +1345,9 @@
       "heavy": false
     },
     "Hoisted Node Module Test > yarn max stack": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 58577.208666,
+      "avgMs": 29288.604333,
       "slow": false,
       "heavy": false
     },
@@ -1366,9 +1366,9 @@
       "heavy": false
     },
     "Hoisted Node Module Test > npm tar": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 21198.996,
+      "avgMs": 10599.498,
       "slow": false,
       "heavy": false
     },
@@ -1387,9 +1387,9 @@
       "heavy": false
     },
     "Hoisted Node Module Test > pnpm node-linker=hoisted": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 16782.153584,
+      "avgMs": 8391.076792,
       "slow": false,
       "heavy": false
     },
@@ -1401,9 +1401,9 @@
       "heavy": false
     },
     "Hoisted Node Module Test > pnpm shamefully-hoist=true": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 15105.491083,
+      "avgMs": 7552.7455415,
       "slow": false,
       "heavy": false
     },
@@ -1415,9 +1415,9 @@
       "heavy": false
     },
     "Hoisted Node Module Test > pnpm max stack": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 51959.715625,
+      "avgMs": 25979.8578125,
       "slow": false,
       "heavy": false
     },
@@ -1450,16 +1450,16 @@
       "heavy": false
     },
     "Hoisted Node Module Test > pnpm public-hoist-pattern=*": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 13548.742499999993,
+      "avgMs": 6774.3712499999965,
       "slow": false,
       "heavy": false
     },
     "Hoisted Node Module Test > pnpm workspace with native module": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 14057.725040999998,
+      "avgMs": 7028.862520499999,
       "slow": false,
       "heavy": false
     },
@@ -1492,9 +1492,9 @@
       "heavy": false
     },
     "Hoisted Node Module Test > yarn ms": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 64763.06454200001,
+      "avgMs": 32381.532271000004,
       "slow": false,
       "heavy": false
     },
@@ -2017,9 +2017,9 @@
       "heavy": false
     },
     "deb > deb": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 97445.349375,
+      "avgMs": 48722.6746875,
       "slow": false,
       "heavy": false
     },
@@ -2031,9 +2031,9 @@
       "heavy": false
     },
     "deb > custom depends": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 103697.72925,
+      "avgMs": 51848.864625,
       "slow": false,
       "heavy": false
     },
@@ -2045,16 +2045,16 @@
       "heavy": false
     },
     "deb > top-level exec name": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 110892.305375,
+      "avgMs": 55446.1526875,
       "slow": false,
       "heavy": false
     },
     "deb > no quotes for safe exec name": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 111036.854625,
+      "avgMs": 55518.4273125,
       "slow": false,
       "heavy": false
     },
@@ -2066,9 +2066,9 @@
       "heavy": false
     },
     "deb > arm": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 121331.792416,
+      "avgMs": 60665.896208,
       "slow": false,
       "heavy": false
     },
@@ -2164,16 +2164,16 @@
       "heavy": false
     },
     "deb > executable path in postinst script": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 65973.44850000001,
+      "avgMs": 32986.72425000001,
       "slow": false,
       "heavy": false
     },
     "deb > deb file associations": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 62133.103874999986,
+      "avgMs": 31066.551937499993,
       "slow": false,
       "heavy": false
     },
@@ -2388,9 +2388,9 @@
       "heavy": false
     },
     "web installer": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 46174.7748335,
+      "avgMs": 101673.05292233331,
       "slow": false,
       "heavy": false
     },
@@ -3004,51 +3004,51 @@
       "heavy": false
     },
     "squirrel.windows > Squirrel.Windows": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 0,
+      "avgMs": 41428.9761,
       "slow": false,
       "heavy": false
     },
     "squirrel.windows > artifactName": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 0,
+      "avgMs": 32161.369799999993,
       "slow": false,
       "heavy": false
     },
     "squirrel.windows > delta and msi": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
       "avgMs": 0,
       "slow": false,
       "heavy": false
     },
     "squirrel.windows > squirrel window arm64 msi": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 0,
+      "avgMs": 61846.447700000004,
       "slow": false,
       "heavy": false
     },
     "squirrel.windows > squirrel window x64 msi": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 0,
+      "avgMs": 58735.484200000006,
       "slow": false,
       "heavy": false
     },
     "squirrel.windows > squirrel window ia32 msi": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 0,
+      "avgMs": 47145.6979,
       "slow": false,
       "heavy": false
     },
     "squirrel.windows > detect install-spinner": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 0,
+      "avgMs": 749.8016999999818,
       "slow": false,
       "heavy": false
     },
@@ -3221,16 +3221,16 @@
       "heavy": false
     },
     "web installer, safe name on github": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 80952.6975,
+      "avgMs": 138943.43645,
       "slow": false,
       "heavy": false
     },
     "web installer (default github)": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 90387.381083,
+      "avgMs": 151613.5551415,
       "slow": false,
       "heavy": false
     },
@@ -3424,21 +3424,21 @@
       "heavy": false
     },
     "GitLab Publisher - Integration Tests > Authentication > should reject invalid token": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
       "avgMs": 0,
       "slow": false,
       "heavy": false
     },
     "GitLab Publisher - Integration Tests > File Upload > should upload via project_upload, create release and link assets": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
       "avgMs": 0,
       "slow": false,
       "heavy": false
     },
     "GitLab Publisher - Integration Tests > File Upload > should upload via generic_package, create release and link assets": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
       "avgMs": 0,
       "slow": false,
@@ -3651,9 +3651,9 @@
       }
     },
     "configurationValidationTest.ts": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 45765.649667,
+      "avgMs": 22882.8248335,
       "unstable": false,
       "hasHeavyTests": false,
       "platformAvgMs": {
@@ -3662,7 +3662,7 @@
         "linux": 0
       },
       "platformRuns": {
-        "win32": 0,
+        "win32": 1,
         "darwin": 1,
         "linux": 0
       }
@@ -3702,18 +3702,18 @@
       }
     },
     "PublishManagerTest.ts": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 196581.142583,
+      "avgMs": 129936.1677915,
       "unstable": false,
       "hasHeavyTests": false,
       "platformAvgMs": {
-        "win32": 0,
+        "win32": 63291.193,
         "darwin": 196581.142583,
         "linux": 0
       },
       "platformRuns": {
-        "win32": 0,
+        "win32": 1,
         "darwin": 1,
         "linux": 0
       }
@@ -3821,9 +3821,9 @@
       }
     },
     "HoistedNodeModuleTest.ts": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 620388.8309559999,
+      "avgMs": 310194.41547799995,
       "unstable": false,
       "hasHeavyTests": false,
       "platformAvgMs": {
@@ -3832,7 +3832,7 @@
         "linux": 0
       },
       "platformRuns": {
-        "win32": 0,
+        "win32": 1,
         "darwin": 1,
         "linux": 0
       }
@@ -3991,9 +3991,9 @@
       }
     },
     "debTest.ts": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 672510.5834160001,
+      "avgMs": 336255.29170800006,
       "unstable": false,
       "hasHeavyTests": false,
       "platformAvgMs": {
@@ -4002,7 +4002,7 @@
         "linux": 0
       },
       "platformRuns": {
-        "win32": 0,
+        "win32": 1,
         "darwin": 1,
         "linux": 0
       }
@@ -4229,18 +4229,18 @@
       }
     },
     "squirrelWindowsTest.ts": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 0,
+      "avgMs": 242067.77739999996,
       "unstable": false,
       "hasHeavyTests": false,
       "platformAvgMs": {
-        "win32": 0,
+        "win32": 484135.5547999999,
         "darwin": 0,
         "linux": 0
       },
       "platformRuns": {
-        "win32": 0,
+        "win32": 1,
         "darwin": 1,
         "linux": 0
       }
@@ -4280,18 +4280,18 @@
       }
     },
     "webInstallerTest.ts": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 263689.62825,
+      "avgMs": 443066.57097500004,
       "unstable": false,
       "hasHeavyTests": false,
       "platformAvgMs": {
-        "win32": 0,
+        "win32": 622443.5137,
         "darwin": 263689.62825,
         "linux": 0
       },
       "platformRuns": {
-        "win32": 0,
+        "win32": 1,
         "darwin": 1,
         "linux": 0
       }
@@ -4365,7 +4365,7 @@
       }
     },
     "GitlabPublisher.integration.test.ts": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
       "avgMs": 0,
       "unstable": false,
@@ -4376,7 +4376,7 @@
         "linux": 0
       },
       "platformRuns": {
-        "win32": 1,
+        "win32": 2,
         "darwin": 1,
         "linux": 0
       }
