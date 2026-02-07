@@ -52,7 +52,7 @@ export default class SmarterReporter implements Reporter {
       this.fileHasHeavy.set(file, true)
     }
   }
-
+  
   onTestModuleEnd(mod: TestModule) {
     const file = path.basename(mod.moduleId)
     const dur = this.fileDurations.get(file) ?? 0
@@ -70,7 +70,6 @@ export default class SmarterReporter implements Reporter {
     }
 
     const runs = prev.runs + 1
-    const avgMs = (prev.avgMs * prev.runs + dur) / runs
     const totalFails = prev.fails + fails
     const failRatio = totalFails / runs
 
@@ -86,10 +85,13 @@ export default class SmarterReporter implements Reporter {
     platformRuns[this.currentPlatform] = newPlatformRuns
     platformAvgMs[this.currentPlatform] = (prevPlatformAvg * prevPlatformRuns + dur) / newPlatformRuns
 
+    // Set avgMs to the current platform's average
+    const avgMs = platformAvgMs[this.currentPlatform]
+
     this.cache.files[file] = {
       runs,
       fails: totalFails,
-      avgMs,
+      avgMs, // Now this is platform-specific!
       unstable: failRatio > FLAKE_FAIL_RATIO,
       hasHeavyTests: hasHeavy || prev.hasHeavyTests,
       platformAvgMs,
