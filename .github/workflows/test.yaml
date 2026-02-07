@@ -311,8 +311,6 @@ jobs:
   test-linux-native:
     name:
       Test Linux Native (non-Docker)
-      # disabled for now
-    if: false
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:

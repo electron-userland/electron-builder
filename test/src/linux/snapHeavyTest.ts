@@ -16,7 +16,7 @@ describe.heavy.ifEnv(hasSnapInstalled())("snap heavy", { sequential: true, timeo
         },
         productName: "Snap Electron App (full build)",
         snap: {
-          useTemplateApp: false,
+          core: "core24",
         },
         electronFuses: {
           runAsNode: true,
@@ -41,7 +41,7 @@ describe.heavy.ifEnv(hasSnapInstalled())("snap heavy", { sequential: true, timeo
         },
         productName: "Snap Electron App (full build)",
         snap: {
-          useTemplateApp: false,
+          core: "core24",
         },
       },
     }))
