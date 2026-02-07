@@ -3562,6 +3562,97 @@
       "avgMs": 0.3659579999999778,
       "slow": false,
       "heavy": false
+    },
+    "mac > x64": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
+    },
+    "mac > universal": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
+    },
+    "mac > arm64": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
+    },
+    "windows > nsis": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 270001.746417,
+      "slow": true,
+      "heavy": false
+    },
+    "linux > AppImage - arm64": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
+    },
+    "linux > AppImage - x64": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
+    },
+    "linux > fedora - (zypper)": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
+    },
+    "linux > fedora - (dnf)": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
+    },
+    "linux > fedora - (yum)": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
+    },
+    "linux > fedora - (rpm)": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
+    },
+    "linux > debian - (apt)": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
+    },
+    "linux > debian - (dpkg)": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
+    },
+    "linux > arch - (pacman)": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
     }
   },
   "files": {
@@ -4412,6 +4503,23 @@
       "platformRuns": {
         "win32": 0,
         "darwin": 1,
+        "linux": 0
+      }
+    },
+    "blackboxUpdateTest.ts": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 270001.746417,
+      "unstable": false,
+      "hasHeavyTests": false,
+      "platformAvgMs": {
+        "win32": 270001.746417,
+        "darwin": 0,
+        "linux": 0
+      },
+      "platformRuns": {
+        "win32": 1,
+        "darwin": 0,
         "linux": 0
       }
     }
