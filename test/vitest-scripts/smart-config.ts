@@ -11,8 +11,8 @@ export const TEST_FILES_PATTERN = process.env.TEST_FILES?.trim() || "*Test,*test
 
 export const CACHE_FILE = process.env.VITEST_SMART_CACHE_FILE || path.resolve(__dirname, "_vitest-smart-cache.json")
 
-export const DEFAULT_FILE_MS = 60 * 1000
-export const DEFAULT_TARGET_MS = 20 * 60 * 1000
+export const DEFAULT_FILE_MS = 5 * 1000
+export const DEFAULT_TARGET_MS = 35 * 60 * 1000
 export const TARGET_MS = Number(process.env.VITEST_TARGET_MS) || DEFAULT_TARGET_MS
 
 export const SHARD_INDEX = process.env.VITEST_SHARD_INDEX != null ? Number(process.env.VITEST_SHARD_INDEX) : null
@@ -30,7 +30,7 @@ export const unstableTests = [
   "snapHeavyTest",
 ]
 export const unstablePerOSTests: Record<SupportedPlatforms, string[]> = {
-  darwin: ["fpmTest", "macUpdaterTest"],
+  darwin: ["fpmTest", "macUpdaterTest", "blackboxUpdateTest"],
   linux: ["flatpakTest"],
-  win32: ["msiWrappedTest", "appxTest"],
+  win32: [],
 }
