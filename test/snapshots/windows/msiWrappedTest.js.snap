@@ -1,6 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`msiWrapped allows capitalized nsis target 1`] = `
+exports[`msiWrapped > msiWrapped allows capitalized nsis target 1`] = `
 {
   "win": [
     {
@@ -20,122 +20,6 @@ exports[`msiWrapped allows capitalized nsis target 1`] = `
     {
       "file": "Test MSI Setup 1.1.0.exe.blockmap",
       "safeArtifactName": "Test-MSI-Setup-1.1.0.exe.blockmap",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-  ],
-}
-`;
-
-exports[`msiWrapped impersonate no if not provided 1`] = `
-{
-  "win": [
-    {
-      "arch": "x64",
-      "file": "MSIWrappingEXE Setup 1.1.0.exe",
-      "safeArtifactName": "MSIWrappingEXE-Setup-1.1.0.exe",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "arch": "x64",
-      "file": "MSIWrappingEXE 1.1.0.msi",
-      "safeArtifactName": "MSIWrappingEXE-1.1.0.msi",
-    },
-    {
-      "file": "MSIWrappingEXE Setup 1.1.0.exe.blockmap",
-      "safeArtifactName": "MSIWrappingEXE-Setup-1.1.0.exe.blockmap",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-  ],
-}
-`;
-
-exports[`msiWrapped impersonate yes if true 1`] = `
-{
-  "win": [
-    {
-      "arch": "x64",
-      "file": "MSIWrappingEXE Setup 1.1.0.exe",
-      "safeArtifactName": "MSIWrappingEXE-Setup-1.1.0.exe",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "arch": "x64",
-      "file": "MSIWrappingEXE 1.1.0.msi",
-      "safeArtifactName": "MSIWrappingEXE-1.1.0.msi",
-    },
-    {
-      "file": "MSIWrappingEXE Setup 1.1.0.exe.blockmap",
-      "safeArtifactName": "MSIWrappingEXE-Setup-1.1.0.exe.blockmap",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-  ],
-}
-`;
-
-exports[`msiWrapped includes packaged exe 1`] = `
-{
-  "win": [
-    {
-      "arch": "x64",
-      "file": "MSIWrappingEXE Setup 1.1.0.exe",
-      "safeArtifactName": "MSIWrappingEXE-Setup-1.1.0.exe",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "arch": "x64",
-      "file": "MSIWrappingEXE 1.1.0.msi",
-      "safeArtifactName": "MSIWrappingEXE-1.1.0.msi",
-    },
-    {
-      "file": "MSIWrappingEXE Setup 1.1.0.exe.blockmap",
-      "safeArtifactName": "MSIWrappingEXE-Setup-1.1.0.exe.blockmap",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-  ],
-}
-`;
-
-exports[`msiWrapped wrappedInstallerArgs provided 1`] = `
-{
-  "win": [
-    {
-      "arch": "x64",
-      "file": "MSIWrappingEXE Setup 1.1.0.exe",
-      "safeArtifactName": "MSIWrappingEXE-Setup-1.1.0.exe",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "arch": "x64",
-      "file": "MSIWrappingEXE 1.1.0.msi",
-      "safeArtifactName": "MSIWrappingEXE-1.1.0.msi",
-    },
-    {
-      "file": "MSIWrappingEXE Setup 1.1.0.exe.blockmap",
-      "safeArtifactName": "MSIWrappingEXE-Setup-1.1.0.exe.blockmap",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",

@@ -30,7 +30,7 @@ export default class SmartSequencer extends BaseSequencer {
       .forEach(f => {
         const file = path.basename(f.moduleId)
         const time = this.cache.files[file]?.avgMs
-        console.log(`  - ${file} (${formatDuration(time)})`)
+        console.log(`  - ${file} (${formatDuration(time)})${this.cache.files[file]?.unstable ? " [unstable]" : ""}`)
       })
     console.log()
 

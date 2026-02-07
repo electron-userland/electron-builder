@@ -2871,44 +2871,44 @@
       "heavy": false
     },
     "msiWrapped > msiWrapped requires nsis": {
-      "runs": 2,
+      "runs": 14,
       "fails": 0,
-      "avgMs": 48213.740625,
+      "avgMs": 9931.627800571428,
       "slow": false,
       "heavy": false
     },
     "msiWrapped > msiWrapped allows capitalized nsis target": {
-      "runs": 2,
-      "fails": 1,
-      "avgMs": 48607.371604,
+      "runs": 14,
+      "fails": 12,
+      "avgMs": 41610.866152000024,
       "slow": false,
       "heavy": false
     },
     "msiWrapped > msiWrapped includes packaged exe": {
-      "runs": 2,
-      "fails": 1,
-      "avgMs": 50238.329042000005,
+      "runs": 14,
+      "fails": 3,
+      "avgMs": 10362.492291714287,
       "slow": false,
       "heavy": false
     },
     "msiWrapped > msiWrapped impersonate no if not provided": {
-      "runs": 2,
-      "fails": 1,
-      "avgMs": 48530.488729,
+      "runs": 14,
+      "fails": 3,
+      "avgMs": 10109.670952357143,
       "slow": false,
       "heavy": false
     },
     "msiWrapped > msiWrapped impersonate yes if true": {
-      "runs": 2,
-      "fails": 1,
-      "avgMs": 50283.2843125,
+      "runs": 14,
+      "fails": 3,
+      "avgMs": 10314.23444042857,
       "slow": false,
       "heavy": false
     },
     "msiWrapped > msiWrapped wrappedInstallerArgs provided": {
-      "runs": 2,
-      "fails": 1,
-      "avgMs": 22300.206750000005,
+      "runs": 14,
+      "fails": 3,
+      "avgMs": 4857.084428571429,
       "slow": false,
       "heavy": false
     },
@@ -4269,18 +4269,18 @@
       }
     },
     "msiWrappedTest.ts": {
-      "runs": 2,
-      "fails": 5,
-      "avgMs": 268173.4210625,
+      "runs": 14,
+      "fails": 47,
+      "avgMs": 147927.10901807147,
       "unstable": true,
       "hasHeavyTests": false,
       "platformAvgMs": {
-        "win32": 536346.842125,
+        "win32": 159306.11740407694,
         "darwin": 0,
         "linux": 0
       },
       "platformRuns": {
-        "win32": 1,
+        "win32": 13,
         "darwin": 1,
         "linux": 0
       }
