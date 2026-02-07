@@ -1289,23 +1289,23 @@
       "heavy": false
     },
     "${version} macro with +": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 1.5397499999999695,
+      "avgMs": 1.340104499999967,
       "slow": false,
       "heavy": false
     },
     "sanitized product name": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 1.3356660000000034,
+      "avgMs": 1.1744999999999948,
       "slow": false,
       "heavy": false
     },
     "product name": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 1.3157080000000292,
+      "avgMs": 1.156187000000017,
       "slow": false,
       "heavy": false
     },
@@ -1569,205 +1569,205 @@
       "heavy": false
     },
     "removePassword: --accessKey > handles unquoted value (snapshot)": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 2.106667000000016,
+      "avgMs": 2.0310419999999993,
       "slow": false,
       "heavy": false
     },
     "removePassword: --accessKey > handles double-quoted value (snapshot)": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 2.0184169999999995,
+      "avgMs": 1.9353959999999972,
       "slow": false,
       "heavy": false
     },
     "removePassword: --accessKey > handles single-quoted value (snapshot)": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 2.0036249999999995,
+      "avgMs": 1.9210835000000088,
       "slow": false,
       "heavy": false
     },
     "removePassword: --secretKey > handles unquoted value (snapshot)": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 1.994166000000007,
+      "avgMs": 1.9115830000000074,
       "slow": false,
       "heavy": false
     },
     "removePassword: --secretKey > handles double-quoted value (snapshot)": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 1.985708000000045,
+      "avgMs": 1.9030415000000147,
       "slow": false,
       "heavy": false
     },
     "removePassword: --secretKey > handles single-quoted value (snapshot)": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 1.4961250000000064,
+      "avgMs": 1.2410210000000035,
       "slow": false,
       "heavy": false
     },
     "removePassword: -P > handles unquoted value (snapshot)": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 1.4813330000000065,
+      "avgMs": 1.2264790000000119,
       "slow": false,
       "heavy": false
     },
     "removePassword: -P > handles double-quoted value (snapshot)": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 1.4718749999999545,
+      "avgMs": 1.216791499999971,
       "slow": false,
       "heavy": false
     },
     "removePassword: -P > handles single-quoted value (snapshot)": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 1.4653339999999844,
+      "avgMs": 1.2101254999999895,
       "slow": false,
       "heavy": false
     },
     "removePassword: -p > handles unquoted value (snapshot)": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 1.363125000000025,
+      "avgMs": 1.134750000000011,
       "slow": false,
       "heavy": false
     },
     "removePassword: -p > handles double-quoted value (snapshot)": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 0.3687079999999696,
+      "avgMs": 0.3601459999999719,
       "slow": false,
       "heavy": false
     },
     "removePassword: -p > handles single-quoted value (snapshot)": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 0.35762499999998454,
+      "avgMs": 0.35039599999998927,
       "slow": false,
       "heavy": false
     },
     "removePassword: -pass > handles unquoted value (snapshot)": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 0.35149999999998727,
+      "avgMs": 0.34445800000000304,
       "slow": false,
       "heavy": false
     },
     "removePassword: -pass > handles double-quoted value (snapshot)": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 0.34608300000002146,
+      "avgMs": 0.33929150000001584,
       "slow": false,
       "heavy": false
     },
     "removePassword: -pass > handles single-quoted value (snapshot)": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 0.3409159999999929,
+      "avgMs": 0.33416650000000914,
       "slow": false,
       "heavy": false
     },
     "removePassword: -String > handles unquoted value (snapshot)": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 0.2953340000000253,
+      "avgMs": 0.2877500000000168,
       "slow": false,
       "heavy": false
     },
     "removePassword: -String > handles double-quoted value (snapshot)": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 0.2884999999999991,
+      "avgMs": 0.28112500000000296,
       "slow": false,
       "heavy": false
     },
     "removePassword: -String > handles single-quoted value (snapshot)": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 0.28283299999998235,
+      "avgMs": 0.2751039999999847,
       "slow": false,
       "heavy": false
     },
     "removePassword: /p > handles unquoted value (snapshot)": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 0.27754199999998264,
+      "avgMs": 0.2700629999999933,
       "slow": false,
       "heavy": false
     },
     "removePassword: /p > handles double-quoted value (snapshot)": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 0.27245800000002873,
+      "avgMs": 0.26389550000001805,
       "slow": false,
       "heavy": false
     },
     "removePassword: /p > handles single-quoted value (snapshot)": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 0.32083399999999074,
+      "avgMs": 0.3204794999999905,
       "slow": false,
       "heavy": false
     },
     "removePassword: /p > handles Mac host path without hashing (snapshot)": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 0.31416699999999764,
+      "avgMs": 0.31410399999998617,
       "slow": false,
       "heavy": false
     },
     "removePassword: pass: > handles unquoted value (snapshot)": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 0.30904099999997925,
+      "avgMs": 0.3090204999999884,
       "slow": false,
       "heavy": false
     },
     "removePassword: pass: > handles double-quoted value (snapshot)": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 0.30366700000001856,
+      "avgMs": 0.3036460000000005,
       "slow": false,
       "heavy": false
     },
     "removePassword: pass: > handles single-quoted value (snapshot)": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 0.29879199999999173,
+      "avgMs": 0.2989169999999888,
       "slow": false,
       "heavy": false
     },
     "removePassword: /b … /c block > handles /b … /c block (snapshot)": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 0.3512499999999932,
+      "avgMs": 0.3532289999999847,
       "slow": false,
       "heavy": false
     },
     "removePassword: multiple keys in one string > handles two keys unquoted (snapshot)": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 0.3444170000000213,
+      "avgMs": 0.34679200000000776,
       "slow": false,
       "heavy": false
     },
     "removePassword: multiple keys in one string > handles mixed quoted and unquoted keys (snapshot)": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 0.33933300000001054,
+      "avgMs": 0.3416665000000023,
       "slow": false,
       "heavy": false
     },
     "removePassword: multiple keys in one string > handles several keys and /b … /c block (snapshot)": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 0.3344589999999812,
+      "avgMs": 0.33675049999999374,
       "slow": false,
       "heavy": false
     },
@@ -2150,7 +2150,7 @@
       "heavy": false
     },
     "pkg": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
       "avgMs": 0,
       "slow": false,
@@ -2178,21 +2178,21 @@
       "heavy": false
     },
     "macos keychain > create keychain": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
       "avgMs": 0,
       "slow": false,
       "heavy": false
     },
     "macos keychain > create keychain with installers": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
       "avgMs": 0,
       "slow": false,
       "heavy": false
     },
     "remove password from log": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
       "avgMs": 0,
       "slow": false,
@@ -2227,9 +2227,9 @@
       "heavy": false
     },
     "invalid target": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 18449.955542,
+      "avgMs": 13534.9364585,
       "slow": false,
       "heavy": false
     },
@@ -2255,9 +2255,9 @@
       "heavy": false
     },
     "only zip": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 27186.587375000003,
+      "avgMs": 22001.663062500003,
       "slow": false,
       "heavy": false
     },
@@ -2269,30 +2269,30 @@
       "heavy": false
     },
     "png icon": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 20585.569917,
+      "avgMs": 15693.046771000001,
       "slow": false,
       "heavy": false
     },
     "icon set": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 20696.354459,
+      "avgMs": 15747.475666999999,
       "slow": false,
       "heavy": false
     },
     "custom icon set with only 512 and 128": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 20697.978334,
+      "avgMs": 15744.608459,
       "slow": false,
       "heavy": false
     },
     "custom icon set": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 20703.092209,
+      "avgMs": 15749.7129795,
       "slow": false,
       "heavy": false
     },
@@ -2311,9 +2311,9 @@
       "heavy": false
     },
     "extraDistFiles": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 32033.775625,
+      "avgMs": 25386.4431455,
       "slow": false,
       "heavy": false
     },
@@ -2325,23 +2325,23 @@
       "heavy": false
     },
     "png icon small": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 8197.196708,
+      "avgMs": 7691.0520415,
       "slow": false,
       "heavy": false
     },
     "default png icon": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 8430.099167,
+      "avgMs": 7951.751499999999,
       "slow": false,
       "heavy": false
     },
     "icon composer generate asset catalog": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 42519.157708000006,
+      "avgMs": 34182.8146455,
       "slow": false,
       "heavy": false
     },
@@ -2409,9 +2409,9 @@
       "heavy": false
     },
     "empty installLocation": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 64826.294958000006,
+      "avgMs": 46329.2522085,
       "slow": false,
       "heavy": false
     },
@@ -2423,23 +2423,23 @@
       "heavy": false
     },
     "pkg extended configuration": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 62264.825916999995,
+      "avgMs": 43747.788313,
       "slow": false,
       "heavy": false
     },
     "pkg hostArchitectures for arm64": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 56576.521958000005,
+      "avgMs": 37101.5407705,
       "slow": false,
       "heavy": false
     },
     "pkg scripts": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 65889.45283400001,
+      "avgMs": 42739.0173545,
       "slow": false,
       "heavy": false
     },
@@ -2661,9 +2661,9 @@
       "heavy": false
     },
     "macPackager > two-package": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 85626.72475000001,
+      "avgMs": 61338.778291500006,
       "slow": false,
       "heavy": false
     },
@@ -2682,9 +2682,9 @@
       "heavy": false
     },
     "pkg hostArchitectures for x64": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 68576.345,
+      "avgMs": 42621.501875,
       "slow": false,
       "heavy": false
     },
@@ -2801,16 +2801,16 @@
       "heavy": false
     },
     "tar.gz": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 138233.141917,
+      "avgMs": 89098.25293799999,
       "slow": false,
       "heavy": false
     },
     "pkg minimumSystemVersion adds volume-check": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 58125.854041,
+      "avgMs": 37347.53925,
       "slow": false,
       "heavy": false
     },
@@ -2829,9 +2829,9 @@
       "heavy": false
     },
     "pkg extra packages": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 53624.09854199999,
+      "avgMs": 34426.347125,
       "slow": false,
       "heavy": false
     },
@@ -2920,9 +2920,9 @@
       "heavy": false
     },
     "macPackager > one-package": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 43086.20058399999,
+      "avgMs": 29981.246646499996,
       "slow": false,
       "heavy": false
     },
@@ -3095,9 +3095,9 @@
       "heavy": false
     },
     "macPackager > yarn two package.json w/ native module": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 126385.17241600002,
+      "avgMs": 76813.3292705,
       "slow": false,
       "heavy": false
     },
@@ -3109,23 +3109,23 @@
       "heavy": false
     },
     "macPackager > electronDist": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 9658.668249999988,
+      "avgMs": 5584.303145499995,
       "slow": false,
       "heavy": false
     },
     "macPackager > Build macOS on Windows is not supported": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
       "avgMs": 0,
       "slow": false,
       "heavy": false
     },
     "macPackager > multiple asar resources": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 8323.548749999958,
+      "avgMs": 6448.805999999982,
       "slow": false,
       "heavy": false
     },
@@ -3770,19 +3770,19 @@
       }
     },
     "macroExpanderTest.ts": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 4.191124000000002,
+      "avgMs": 3.6707914999999787,
       "unstable": false,
       "hasHeavyTests": false,
       "platformAvgMs": {
         "win32": 0,
-        "darwin": 4.191124000000002,
+        "darwin": 3.6707914999999787,
         "linux": 0
       },
       "platformRuns": {
         "win32": 0,
-        "darwin": 1,
+        "darwin": 2,
         "linux": 0
       }
     },
@@ -3872,19 +3872,19 @@
       }
     },
     "utilTest.ts": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 23.483834,
+      "avgMs": 21.762313499999962,
       "unstable": false,
       "hasHeavyTests": false,
       "platformAvgMs": {
         "win32": 0,
-        "darwin": 23.483834,
+        "darwin": 21.762313499999962,
         "linux": 0
       },
       "platformRuns": {
         "win32": 0,
-        "darwin": 1,
+        "darwin": 2,
         "linux": 0
       }
     },
@@ -4008,7 +4008,7 @@
       }
     },
     "macCodeSignTest.ts": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
       "avgMs": 0,
       "unstable": false,
@@ -4020,7 +4020,7 @@
       },
       "platformRuns": {
         "win32": 0,
-        "darwin": 1,
+        "darwin": 2,
         "linux": 0
       }
     },
@@ -4042,19 +4042,19 @@
       }
     },
     "macIconTest.ts": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 141829.448502,
+      "avgMs": 112760.4620635,
       "unstable": false,
       "hasHeavyTests": false,
       "platformAvgMs": {
         "win32": 0,
-        "darwin": 141829.448502,
+        "darwin": 112760.4620635,
         "linux": 0
       },
       "platformRuns": {
         "win32": 0,
-        "darwin": 1,
+        "darwin": 2,
         "linux": 0
       }
     },
@@ -4144,19 +4144,19 @@
       }
     },
     "macArchiveTest.ts": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 645786.8537090002,
+      "avgMs": 434334.2825010001,
       "unstable": false,
       "hasHeavyTests": false,
       "platformAvgMs": {
         "win32": 0,
-        "darwin": 645786.8537090002,
+        "darwin": 434334.2825010001,
         "linux": 0
       },
       "platformRuns": {
         "win32": 0,
-        "darwin": 1,
+        "darwin": 2,
         "linux": 0
       }
     },
@@ -4246,19 +4246,19 @@
       }
     },
     "macPackagerTest.ts": {
-      "runs": 1,
+      "runs": 2,
       "fails": 0,
-      "avgMs": 273080.31474999996,
+      "avgMs": 180166.46335399998,
       "unstable": false,
       "hasHeavyTests": false,
       "platformAvgMs": {
         "win32": 0,
-        "darwin": 273080.31474999996,
+        "darwin": 180166.46335399998,
         "linux": 0
       },
       "platformRuns": {
         "win32": 0,
-        "darwin": 1,
+        "darwin": 2,
         "linux": 0
       }
     },

@@ -42,8 +42,6 @@ async function main() {
   console.log(`Scanned Files: ${selectedFiles.length}`)
 
   return startVitest("test", selectedFiles, {
-    run: isCI,
-    watch: !isCI,
     allowOnly: !isCI, // Prevent accidental commit of `test.only` in CI
     update: process.env.UPDATE_SNAPSHOT === "true",
 
