@@ -1,11 +1,18 @@
 #!/usr/bin/env ts-node
 
-import { spawnSync } from "child_process"
+import isCI from "is-ci"
+import { startVitest } from "vitest/node"
 import { getAllTestFiles } from "./file-discovery"
 import { buildWeightedFiles, computeShardCount, splitIntoShards } from "./shard-builder"
 import { DEFAULT_FILE_MS, SHARD_INDEX, SupportedPlatforms } from "./smart-config"
+import SmartSequencer from "./vitest-smart-sequencer"
 
-function main() {
+const testFilePattern = process.env.TEST_FILES?.trim() || "*Test,*test"
+const testRegex = testFilePattern?.split(",")
+const includeRegex = `(${testRegex.join("|")})`
+console.log("TEST_FILES pattern", includeRegex)
+
+async function main() {
   const files = getAllTestFiles()
   const currentPlatform = process.platform as SupportedPlatforms
 
@@ -48,12 +55,56 @@ function main() {
     })
   console.log()
 
-  const r = spawnSync("vitest", ["run", ...selectedFiles], {
-    stdio: "inherit",
-    shell: true,
-  })
+  return startVitest("test", selectedFiles, {
+    run: true,
+    watch: false,
+    // if using `toMatchSnapshot`, it MUST be passed in through the test context
+    // e.g. test("name", ({ expect }) => { ... })
+    // we manually set `globalThis.test` and `globalThis.describe` in vitest-setup.ts to make sure everything works correctly
+    globals: false,
 
-  process.exit(r.status ?? 1)
+    allowOnly: !isCI, // Prevent accidental commit of `test.only` in CI
+    printConsoleTrace: true,
+
+    // Allow test metadata
+    includeTaskLocation: true,
+    setupFiles: [__dirname + "/vitest-setup.ts", __dirname + "/vitest-heavy-mutex.ts"],
+    include: [`test/src/**/${includeRegex}.ts`],
+    update: process.env.UPDATE_SNAPSHOT === "true",
+
+    reporters: ["default", __dirname + "/vitest-smart-reporter.ts"],
+
+    maxWorkers: "50%",
+    minWorkers: 1,
+
+    // Ensure tests from different files can run in parallel
+    // but heavy tests will be serialized by the mutex
+    fileParallelism: true,
+    sequence: {
+      sequencer: SmartSequencer,
+      concurrent: process.env.TEST_SEQUENTIAL !== "true",
+    },
+
+    slowTestThreshold: 2 * 60 * 1000,
+    testTimeout: 10 * 60 * 1000, // disk operations can be slow. We're generous with the timeout here to account for less-performant hardware
+
+    snapshotFormat: {
+      printBasicPrototype: false,
+    },
+    resolveSnapshotPath: (testPath, snapshotExtension) => {
+      return testPath
+        .replace(/\.[tj]s$/, `.js${snapshotExtension}`)
+        .replace("/src/", "/snapshots/")
+        .replace("\\src\\", "\\snapshots\\")
+    },
+  })
+    .then(() => {
+      console.log("Vitest run completed")
+    })
+    .catch(err => {
+      console.error("Error running Vitest:", err)
+      process.exit(1)
+    })
 }
 
-main()
+void main()
