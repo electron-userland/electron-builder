@@ -2738,65 +2738,65 @@
       "heavy": false
     },
     "AppX > AppX": {
-      "runs": 3,
-      "fails": 1,
-      "avgMs": 40044.55502766667,
+      "runs": 4,
+      "fails": 2,
+      "avgMs": 46054.19659375,
       "slow": false,
       "heavy": false
     },
     "AppX > auto launch": {
-      "runs": 3,
+      "runs": 4,
       "fails": 0,
-      "avgMs": 33670.919819333336,
+      "avgMs": 37680.95645825,
       "slow": false,
       "heavy": false
     },
     "AppX > application id": {
-      "runs": 3,
-      "fails": 1,
-      "avgMs": 39009.53016666667,
+      "runs": 4,
+      "fails": 2,
+      "avgMs": 43809.51279175001,
       "slow": false,
       "heavy": false
     },
     "AppX > certificateSubjectName": {
-      "runs": 3,
+      "runs": 4,
       "fails": 0,
       "avgMs": 0,
       "slow": false,
       "heavy": false
     },
     "AppX > languages and not signed (windows store only)": {
-      "runs": 3,
-      "fails": 1,
-      "avgMs": 46742.28581933334,
+      "runs": 4,
+      "fails": 2,
+      "avgMs": 52394.73662475,
       "slow": false,
       "heavy": false
     },
     "AppX > custom template appmanifest.xml": {
-      "runs": 3,
+      "runs": 4,
       "fails": 0,
-      "avgMs": 33582.030972,
+      "avgMs": 37692.4306145,
       "slow": false,
       "heavy": false
     },
     "AppX > custom raw appmanifest.xml": {
-      "runs": 3,
+      "runs": 4,
       "fails": 0,
-      "avgMs": 13617.298194666664,
+      "avgMs": 18735.170187749995,
       "slow": false,
       "heavy": false
     },
     "AppX > valid capabilities (windows store only)": {
-      "runs": 3,
-      "fails": 1,
-      "avgMs": 15044.633361333332,
+      "runs": 4,
+      "fails": 2,
+      "avgMs": 20894.90692725,
       "slow": false,
       "heavy": false
     },
     "AppX > invalid capabilities (windows store only)": {
-      "runs": 3,
+      "runs": 4,
       "fails": 0,
-      "avgMs": 9343.0475,
+      "avgMs": 13450.366229,
       "slow": false,
       "heavy": false
     },
@@ -4218,18 +4218,18 @@
       }
     },
     "appxTest.ts": {
-      "runs": 3,
-      "fails": 4,
-      "avgMs": 0,
+      "runs": 4,
+      "fails": 8,
+      "avgMs": 541424.552854,
       "unstable": true,
       "hasHeavyTests": false,
       "platformAvgMs": {
-        "win32": 693162.9025829999,
+        "win32": 541424.552854,
         "darwin": 0,
         "linux": 0
       },
       "platformRuns": {
-        "win32": 1,
+        "win32": 2,
         "darwin": 2,
         "linux": 0
       }
