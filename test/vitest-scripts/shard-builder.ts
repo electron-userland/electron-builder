@@ -19,15 +19,8 @@ export function buildWeightedFiles(files: string[], targetPlatform: TargetPlatfo
     const basename = path.basename(file)
     const stat = cache.files[basename]
 
-    // Use platform-specific average if available, otherwise fall back to overall average
-    let base = DEFAULT_FILE_MS
-    if (stat?.platformAvgMs?.[currentPlatform] && stat?.platformRuns?.[currentPlatform]) {
-      base = stat.platformAvgMs[currentPlatform]
-    } else if (stat?.avgMs) {
-      base = stat.avgMs
-    }
-
     // Apply flaky multiplier if needed to prioritize fail-fast files
+    const base = stat?.platformRuns?.[currentPlatform]?.avgMs ?? DEFAULT_FILE_MS
     const weight = stat?.unstable ? base * 1.5 : base
 
     return { filename: basename, weight, filepath: file }

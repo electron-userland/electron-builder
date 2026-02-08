@@ -1,6 +1,5 @@
 import * as path from "path"
 
-export const SLOW_TEST_MS = 3 * 60 * 1000
 export const FLAKE_FAIL_RATIO = 0.2
 
 export type TargetPlatform = "darwin" | "win32" | "linux" | "current"
