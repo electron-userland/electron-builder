@@ -19,7 +19,7 @@ const windowsDirTarget = Platform.WINDOWS.createTarget(["dir"])
 const winCodeSignVersions: ToolsetConfig["winCodeSign"][] = [
   // "0.0.0", // doesn't work for appx specifically, signtool.exe is too old.
   "1.0.0",
-  "1.1.0"
+  "1.1.0",
 ]
 
 for (const winCodeSign of winCodeSignVersions) {
