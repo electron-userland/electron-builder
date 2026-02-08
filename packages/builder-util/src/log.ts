@@ -23,8 +23,7 @@ export class Logger {
   // clean up logs since concurrent tests are impossible to track logic execution with console concurrency "noise"
   private readonly shouldDisableNonErrorLoggingVitest = process.env.VITEST && !this.isDebugEnabled
 
-  constructor(protected readonly stream: WritableStream) {
-  }
+  constructor(protected readonly stream: WritableStream) {}
 
   messageTransformer: (message: string, level: LogLevel) => string = it => it
 

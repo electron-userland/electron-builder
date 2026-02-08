@@ -4,7 +4,7 @@ import * as path from "path"
 import { create } from "tar"
 import { TmpDir } from "temp-file"
 import { CompressionLevel } from "../core"
-import { getLinuxToolsPath } from "./tools"
+import { getLinuxToolsPath } from "../toolsets/linux"
 import { TarOptionsWithAliasesAsync } from "tar/dist/commonjs/options"
 
 /** @internal */

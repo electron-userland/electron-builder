@@ -19,6 +19,7 @@ export {
   Hooks,
   MetadataDirectories,
   PackContext,
+  ToolsetConfig,
 } from "./configuration"
 export {
   BeforeBuildContext,
