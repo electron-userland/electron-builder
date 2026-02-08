@@ -219,14 +219,28 @@ export function computeReleaseNotes(currentVersion: semver.SemVer, isFullChangel
   if (!isFullChangelog) {
     return getNoteValue(latestRelease)
   }
+  const tagVersionRegex = /\/tag\/v?([^/]+)$/
+
+  let latestVersion: string | undefined
+  try {
+    latestVersion = tagVersionRegex.exec(latestRelease.element("link").attribute("href"))![1]
+  } catch (e: any) {
+    latestVersion = undefined
+  }
 
   const releaseNotes: Array<ReleaseNoteInfo> = []
   for (const release of feed.getElements("entry")) {
-    const tagVersionRegex = /\/tag\/v?([^/]+)$/
-    // noinspection TypeScriptValidateJSTypes
-    const versionRelease = tagVersionRegex.exec(release.element("link").attribute("href"))![1]
-    const latestVersion = tagVersionRegex.exec(latestRelease.element("link").attribute("href"))![1]
-    if (semver.valid(versionRelease) && semver.satisfies(versionRelease, `>${currentVersion.version} <=${latestVersion}`)) {
+    let versionRelease: string | undefined
+    try {
+      versionRelease = tagVersionRegex.exec(release.element("link").attribute("href"))![1]
+    } catch (e: any) {
+      continue
+    }
+    // check `semver.valid` to validate if an electron release, because some repositories can contain also non-electron releases (for example, with documentation or website updates)
+    const isGreaterThanCurrent = versionRelease && semver.valid(versionRelease) && semver.lt(currentVersion, versionRelease)
+    const isLessOrEqualThanLatest = latestVersion && semver.valid(latestVersion) ? semver.lte(versionRelease, latestVersion) : true
+    if (isLessOrEqualThanLatest && isGreaterThanCurrent) {
+      // if (semver.valid(versionRelease) && semver.satisfies(versionRelease, `>${currentVersion.version} <=${latestVersion}`)) {
       releaseNotes.push({
         version: versionRelease,
         note: getNoteValue(release),
