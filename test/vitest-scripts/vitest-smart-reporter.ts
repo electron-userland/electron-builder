@@ -52,7 +52,7 @@ export default class SmarterReporter implements Reporter {
       this.fileHasHeavy.set(file, true)
     }
   }
-
+  
   onTestModuleEnd(mod: TestModule) {
     const file = path.basename(mod.moduleId)
     const dur = this.fileDurations.get(file) ?? 0
@@ -70,7 +70,6 @@ export default class SmarterReporter implements Reporter {
     }
 
     const runs = prev.runs + 1
-    const avgMs = (prev.avgMs * prev.runs + dur) / runs
     const totalFails = prev.fails + fails
     const failRatio = totalFails / runs
 
@@ -85,6 +84,8 @@ export default class SmarterReporter implements Reporter {
     const newPlatformRuns = prevPlatformRuns + 1
     platformRuns[this.currentPlatform] = newPlatformRuns
     platformAvgMs[this.currentPlatform] = (prevPlatformAvg * prevPlatformRuns + dur) / newPlatformRuns
+
+    const avgMs = platformAvgMs[this.currentPlatform]
 
     this.cache.files[file] = {
       runs,

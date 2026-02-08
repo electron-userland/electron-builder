@@ -9,7 +9,7 @@ const parser = new XMLParser({
   parseTagValue: true,
 })
 
-const wrappedTarget = Platform.WINDOWS.createTarget(["msiWrapped", "NSIS"], Arch.x64)
+const wrappedTarget = Platform.WINDOWS.createTarget(["NSIS", "msiWrapped"], Arch.x64)
 
 describe.ifWindows("msiWrapped", () => {
   test("msiWrapped requires nsis", ({ expect }) =>
@@ -26,16 +26,7 @@ describe.ifWindows("msiWrapped", () => {
           win: {
             target: ["msiWrapped"],
           },
-          electronFuses: {
-            runAsNode: true,
-            enableCookieEncryption: true,
-            enableNodeOptionsEnvironmentVariable: true,
-            enableNodeCliInspectArguments: true,
-            enableEmbeddedAsarIntegrityValidation: true,
-            onlyLoadAppFromAsar: true,
-            loadBrowserProcessSpecificV8Snapshot: true,
-            grantFileProtocolExtraPrivileges: undefined, // unsupported on current electron version in our tests
-          },
+
         },
       },
       {},
@@ -58,6 +49,16 @@ describe.ifWindows("msiWrapped", () => {
           productName: "Test MSI",
           win: {
             target: ["msiWrapped", "NSIS"],
+          },
+          electronFuses: {
+            runAsNode: true,
+            enableCookieEncryption: true,
+            enableNodeOptionsEnvironmentVariable: true,
+            enableNodeCliInspectArguments: true,
+            enableEmbeddedAsarIntegrityValidation: true,
+            onlyLoadAppFromAsar: true,
+            loadBrowserProcessSpecificV8Snapshot: true,
+            grantFileProtocolExtraPrivileges: undefined, // unsupported on current electron version in our tests
           },
         },
       },
