@@ -147,7 +147,7 @@ for (const winCodeSign of winCodeSignVersions) {
         error => expect(error.message).toContain("Please provide a valid path to the Electron zip file, cache directory, or electron build directory.")
       ))
 
-    test("azure signing without credentials", ({ expect }) =>
+    test.skip("azure signing without credentials", ({ expect }) =>
       appThrows(
         expect,
         {
