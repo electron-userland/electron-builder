@@ -2873,42 +2873,42 @@
     "msiWrapped > msiWrapped requires nsis": {
       "runs": 14,
       "fails": 0,
-      "avgMs": 9931.627800571428,
+      "avgMs": 12885.735985142865,
       "slow": false,
       "heavy": false
     },
     "msiWrapped > msiWrapped allows capitalized nsis target": {
       "runs": 14,
-      "fails": 12,
-      "avgMs": 41610.866152000024,
+      "fails": 9,
+      "avgMs": 37912.51818164298,
       "slow": false,
       "heavy": false
     },
     "msiWrapped > msiWrapped includes packaged exe": {
       "runs": 14,
       "fails": 3,
-      "avgMs": 10362.492291714287,
+      "avgMs": 24991.489363142802,
       "slow": false,
       "heavy": false
     },
     "msiWrapped > msiWrapped impersonate no if not provided": {
       "runs": 14,
       "fails": 3,
-      "avgMs": 10109.670952357143,
+      "avgMs": 24693.419562499963,
       "slow": false,
       "heavy": false
     },
     "msiWrapped > msiWrapped impersonate yes if true": {
       "runs": 14,
       "fails": 3,
-      "avgMs": 10314.23444042857,
+      "avgMs": 24417.412842214315,
       "slow": false,
       "heavy": false
     },
     "msiWrapped > msiWrapped wrappedInstallerArgs provided": {
       "runs": 14,
       "fails": 3,
-      "avgMs": 4857.084428571429,
+      "avgMs": 18690.0762529999,
       "slow": false,
       "heavy": false
     },
@@ -4270,12 +4270,12 @@
     },
     "msiWrappedTest.ts": {
       "runs": 14,
-      "fails": 47,
-      "avgMs": 147927.10901807147,
+      "fails": 46,
+      "avgMs": 196330.9918157857,
       "unstable": true,
       "hasHeavyTests": false,
       "platformAvgMs": {
-        "win32": 159306.11740407694,
+        "win32": 211433.37580161542,
         "darwin": 0,
         "linux": 0
       },
