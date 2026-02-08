@@ -116,7 +116,6 @@ export interface SnapBaseOptions extends CommonLinuxOptions {
   readonly assumes?: Array<string> | string | null
 
   /**
-  /**
    * The list of debian packages needs to be installed for building this snap.
    */
   readonly buildPackages?: Array<string> | null

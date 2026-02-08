@@ -1,14 +1,14 @@
 import * as path from "path"
 import type { Reporter, TestCase, TestModule } from "vitest/node"
 import { FileStats, loadCache, saveCache, TestStats } from "./cache"
-import { FLAKE_FAIL_RATIO, SLOW_TEST_MS } from "./smart-config"
-import { SupportedPlatforms } from "./smart-config"
+import { UNSTABLE_FAIL_RATIO, SupportedPlatforms } from "./smart-config"
 
 const defaultStat: TestStats = {
-  runs: 0,
-  fails: 0,
-  avgMs: 0,
-  slow: false,
+  platformRuns: {
+    win32: { runs: 0, fails: 0, avgMs: 0 },
+    darwin: { runs: 0, fails: 0, avgMs: 0 },
+    linux: { runs: 0, fails: 0, avgMs: 0 },
+  },
   heavy: false,
 }
 
@@ -30,16 +30,29 @@ export default class SmarterReporter implements Reporter {
     const meta = (test as any).meta || {}
 
     const prev: TestStats = this.cache.tests[id] ?? { ...defaultStat }
-    const runs = prev.runs + 1
-    const avgMs = (prev.avgMs * prev.runs + dur) / runs
-    const fails = prev.fails + (failed ? 1 : 0)
-    const isHeavy = meta.heavy === true // don't rely on previous tests, always reset off latest test `meta`
+
+    // Ensure platform objects exist
+    const platformRuns = {
+      win32: { runs: 0, fails: 0, avgMs: 0 },
+      darwin: { runs: 0, fails: 0, avgMs: 0 },
+      linux: { runs: 0, fails: 0, avgMs: 0 },
+      ...prev.platformRuns,
+    }
+
+    const prevRuns = platformRuns[this.currentPlatform].runs
+    const prevFails = platformRuns[this.currentPlatform].fails
+    const prevAvg = platformRuns[this.currentPlatform].avgMs
+
+    const newRuns = prevRuns + 1
+    const newFails = prevFails + (failed ? 1 : 0)
+    const newAvg = (prevAvg * prevRuns + dur) / newRuns
+
+    platformRuns[this.currentPlatform] = { runs: newRuns, fails: newFails, avgMs: newAvg }
+
+    const isHeavy = meta.heavy === true
 
     this.cache.tests[id] = {
-      runs,
-      fails,
-      avgMs,
-      slow: avgMs > SLOW_TEST_MS,
+      platformRuns,
       heavy: isHeavy,
     }
 
@@ -60,39 +73,36 @@ export default class SmarterReporter implements Reporter {
     const hasHeavy = this.fileHasHeavy.get(file) ?? false
 
     const prev: FileStats = this.cache.files[file] ?? {
-      runs: 0,
-      fails: 0,
-      avgMs: 0,
       unstable: false,
       hasHeavyTests: false,
-      platformAvgMs: { win32: 0, darwin: 0, linux: 0 },
-      platformRuns: { win32: 0, darwin: 0, linux: 0 },
+      platformRuns: {
+        win32: { runs: 0, fails: 0, avgMs: 0 },
+        darwin: { runs: 0, fails: 0, avgMs: 0 },
+        linux: { runs: 0, fails: 0, avgMs: 0 },
+      },
     }
 
-    const runs = prev.runs + 1
-    const avgMs = (prev.avgMs * prev.runs + dur) / runs
-    const totalFails = prev.fails + fails
-    const failRatio = totalFails / runs
+    // Ensure platform objects exist
+    const platformRuns = {
+      win32: { runs: 0, fails: 0, avgMs: 0 },
+      darwin: { runs: 0, fails: 0, avgMs: 0 },
+      linux: { runs: 0, fails: 0, avgMs: 0 },
+      ...prev.platformRuns,
+    }
 
-    // Update platform-specific stats
-    const base = { win32: 0, darwin: 0, linux: 0 }
-    const platformAvgMs = { ...base, ...prev.platformAvgMs }
-    const platformRuns = { ...base, ...prev.platformRuns }
-
-    const prevPlatformRuns = platformRuns[this.currentPlatform] || 0
-    const prevPlatformAvg = platformAvgMs[this.currentPlatform] || 0
+    const prevPlatformRuns = platformRuns[this.currentPlatform].runs
+    const prevPlatformFails = platformRuns[this.currentPlatform].fails
+    const prevPlatformAvg = platformRuns[this.currentPlatform].avgMs
 
     const newPlatformRuns = prevPlatformRuns + 1
-    platformRuns[this.currentPlatform] = newPlatformRuns
-    platformAvgMs[this.currentPlatform] = (prevPlatformAvg * prevPlatformRuns + dur) / newPlatformRuns
+    const totalFails = prevPlatformFails + fails
+    const failRatio = totalFails / newPlatformRuns
+
+    platformRuns[this.currentPlatform] = { runs: newPlatformRuns, fails: totalFails, avgMs: (prevPlatformAvg * prevPlatformRuns + dur) / newPlatformRuns }
 
     this.cache.files[file] = {
-      runs,
-      fails: totalFails,
-      avgMs,
-      unstable: failRatio > FLAKE_FAIL_RATIO,
+      unstable: failRatio > UNSTABLE_FAIL_RATIO,
       hasHeavyTests: hasHeavy || prev.hasHeavyTests,
-      platformAvgMs,
       platformRuns,
     }
   }
