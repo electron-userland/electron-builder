@@ -1,17 +1,5 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`AppX > winCodeSign: 0.0.0 > auto launch 1`] = `
-{
-  "win": [
-    {
-      "arch": "x64",
-      "file": "Test App ßW 1.1.0.appx",
-      "safeArtifactName": "TestApp-1.1.0.appx",
-    },
-  ],
-}
-`;
-
 exports[`AppX > winCodeSign: 0.0.0 > custom raw appmanifest.xml 1`] = `
 "<?xml version="1.0" encoding="utf-8"?>
 <!--suppress XmlUnusedNamespaceDeclaration -->
