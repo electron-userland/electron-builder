@@ -1,6 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`msiWrapped allows capitalized nsis target 1`] = `
+exports[`msiWrapped > msiWrapped allows capitalized nsis target 1`] = `
 {
   "win": [
     {
@@ -29,7 +29,7 @@ exports[`msiWrapped allows capitalized nsis target 1`] = `
 }
 `;
 
-exports[`msiWrapped impersonate no if not provided 1`] = `
+exports[`msiWrapped > msiWrapped impersonate no if not provided 1`] = `
 {
   "win": [
     {
@@ -58,7 +58,7 @@ exports[`msiWrapped impersonate no if not provided 1`] = `
 }
 `;
 
-exports[`msiWrapped impersonate yes if true 1`] = `
+exports[`msiWrapped > msiWrapped impersonate yes if true 1`] = `
 {
   "win": [
     {
@@ -87,7 +87,7 @@ exports[`msiWrapped impersonate yes if true 1`] = `
 }
 `;
 
-exports[`msiWrapped includes packaged exe 1`] = `
+exports[`msiWrapped > msiWrapped includes packaged exe 1`] = `
 {
   "win": [
     {
@@ -116,7 +116,7 @@ exports[`msiWrapped includes packaged exe 1`] = `
 }
 `;
 
-exports[`msiWrapped wrappedInstallerArgs provided 1`] = `
+exports[`msiWrapped > msiWrapped wrappedInstallerArgs provided 1`] = `
 {
   "win": [
     {
