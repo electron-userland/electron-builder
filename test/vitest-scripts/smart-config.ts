@@ -11,6 +11,7 @@ export const CACHE_FILE = process.env.VITEST_SMART_CACHE_FILE || path.resolve(__
 export const DEFAULT_FILE_MS = 3 * 60 * 1000
 export const DEFAULT_TARGET_MS = 30 * 60 * 1000
 export const TARGET_MS = Number(process.env.VITEST_TARGET_MS) || DEFAULT_TARGET_MS
+export const SAFEGAURD_MAX_SHARDS = 7
 
 export const SHARD_INDEX = process.env.VITEST_SHARD_INDEX != null ? Number(process.env.VITEST_SHARD_INDEX) : null
 

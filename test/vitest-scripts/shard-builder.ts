@@ -1,6 +1,6 @@
 import * as path from "path"
 import { loadCache } from "./cache"
-import { DEFAULT_FILE_MS, SupportedPlatforms, TARGET_MS, TargetPlatform } from "./smart-config"
+import { DEFAULT_FILE_MS, SAFEGAURD_MAX_SHARDS, SupportedPlatforms, TARGET_MS, TargetPlatform } from "./smart-config"
 
 export interface WeightedFile {
   filename: string
@@ -36,7 +36,9 @@ export function computeShardCount(files: WeightedFile[]): number {
   }
 
   const total = files.reduce((a, b) => a + b.weight, 0)
-  return Math.max(1, Math.ceil(total / TARGET_MS))
+  const actualShardCount = Math.max(1, Math.ceil(total / TARGET_MS))
+  const safeguardedShardCount = Math.min(actualShardCount, SAFEGAURD_MAX_SHARDS)
+  return safeguardedShardCount
 }
 
 /**
