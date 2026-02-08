@@ -663,9 +663,9 @@
     "repo slug from TRAVIS_REPO_SLUG": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
-          "avgMs": 24.94429100000002
+          "avgMs": 14.66564550000001
         },
         "darwin": {
           "runs": 0,
@@ -683,9 +683,9 @@
     "repo slug from APPVEYOR": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
-          "avgMs": 23.323750000000018
+          "avgMs": 13.696525000000008
         },
         "darwin": {
           "runs": 0,
@@ -1145,7 +1145,7 @@
     "files": {
       "platformRuns": {
         "win32": {
-          "runs": 2,
+          "runs": 3,
           "fails": 0,
           "avgMs": 0
         },
@@ -1165,7 +1165,7 @@
     "null string as null": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
           "avgMs": 0
         },
@@ -1185,7 +1185,7 @@
     "appId as object": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
           "avgMs": 0
         },
@@ -1205,7 +1205,7 @@
     "validation": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
           "avgMs": 0
         },
@@ -1306,7 +1306,7 @@
     "extraFiles": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
           "avgMs": 0
         },
@@ -3871,7 +3871,7 @@
     "Package Managers > yarn berry workspace": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
           "avgMs": 0
         },
@@ -4018,7 +4018,7 @@
     "Package Managers > yarn workspace": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
           "avgMs": 0
         },
@@ -4758,7 +4758,7 @@
     "Package Managers > yarn multi-package workspace": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
           "avgMs": 0
         },
@@ -4798,7 +4798,7 @@
     "Package Managers > yarn berry": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
           "avgMs": 0
         },
@@ -4878,7 +4878,7 @@
     "Package Managers > yarn": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
           "avgMs": 0
         },
@@ -4978,7 +4978,7 @@
     "Package Managers > bun workspace --linker=isolated": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
           "avgMs": 0
         },
@@ -4998,7 +4998,7 @@
     "Package Managers > pnpm": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
           "avgMs": 0
         },
@@ -5018,7 +5018,7 @@
     "Package Managers > bun workspace --linker=isolated - multiple conflicting versions": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
           "avgMs": 0
         },
@@ -5038,7 +5038,7 @@
     "Package Managers > bun workspace --linker=hoisted": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
           "avgMs": 0
         },
@@ -5058,7 +5058,7 @@
     "Package Managers > bun workspace --linker=hoisted - multiple conflicting versions": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
           "avgMs": 0
         },
@@ -5078,7 +5078,7 @@
     "Package Managers > yarn berry multi-package workspace": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
           "avgMs": 0
         },
@@ -5118,7 +5118,7 @@
     "Package Managers > local file:// protocol with pnpm for project outside workspace": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
           "avgMs": 0
         },
@@ -5138,7 +5138,7 @@
     "Package Managers > npm": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
           "avgMs": 0
         },
@@ -5178,7 +5178,7 @@
     "Package Managers > traversal hoisted": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
           "avgMs": 0
         },
@@ -5198,7 +5198,7 @@
     "Package Managers > traversal workspace": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
           "avgMs": 0
         },
@@ -5258,7 +5258,7 @@
     "Package Managers > local file:// protocol with yarn for project outside workspace": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
           "avgMs": 0
         },
@@ -5278,7 +5278,7 @@
     "Package Managers > local file:// protocol with yarn-berry for project outside workspace": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
           "avgMs": 0
         },
@@ -5298,7 +5298,7 @@
     "Package Managers > traversal multi-package workspace": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
           "avgMs": 0
         },
@@ -5318,7 +5318,7 @@
     "Package Managers > local file:// protocol with npm for project outside workspace": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
           "avgMs": 0
         },
@@ -5358,7 +5358,7 @@
     "Package Managers > local file:// protocol with traversal for project outside workspace": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
           "avgMs": 0
         },
@@ -6158,7 +6158,7 @@
     "png icon": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
           "avgMs": 0
         },
@@ -6178,7 +6178,7 @@
     "icon set": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
           "avgMs": 0
         },
@@ -6198,7 +6198,7 @@
     "custom icon set with only 512 and 128": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
           "avgMs": 0
         },
@@ -6218,7 +6218,7 @@
     "custom icon set": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
           "avgMs": 0
         },
@@ -6318,7 +6318,7 @@
     "png icon small": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
           "avgMs": 0
         },
@@ -6338,7 +6338,7 @@
     "default png icon": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
           "avgMs": 0
         },
@@ -6358,7 +6358,7 @@
     "icon composer generate asset catalog": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
           "avgMs": 0
         },
@@ -6498,9 +6498,9 @@
     "web installer": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
-          "avgMs": 220430.839958
+          "avgMs": 198168.906279
         },
         "darwin": {
           "runs": 0,
@@ -6645,7 +6645,7 @@
     "tar": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
           "avgMs": 0
         },
@@ -8605,9 +8605,9 @@
     "web installer, safe name on github": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
-          "avgMs": 116262.582834
+          "avgMs": 137377.165717
         },
         "darwin": {
           "runs": 0,
@@ -8625,9 +8625,9 @@
     "web installer (default github)": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
-          "avgMs": 246592.96224999998
+          "avgMs": 210208.353125
         },
         "darwin": {
           "runs": 0,
@@ -12024,7 +12024,7 @@
     "node_module collectors > conflict versions": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
           "avgMs": 0
         },
@@ -12044,7 +12044,7 @@
     "node_module collectors > yarn several workspaces and asarUnpack": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
           "avgMs": 0
         },
@@ -12064,7 +12064,7 @@
     "node_module collectors > yarn workspace": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
           "avgMs": 0
         },
@@ -12084,7 +12084,7 @@
     "node_module collectors > should throw when attempting to package a system file": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
           "avgMs": 0
         },
@@ -12104,7 +12104,7 @@
     "node_module collectors > yarn several workspaces": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
           "avgMs": 0
         },
@@ -12124,7 +12124,7 @@
     "node_module collectors > yarn workspace for scope name": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
           "avgMs": 0
         },
@@ -12144,7 +12144,7 @@
     "node_module collectors > should throw when attempting to package a symlink to a system file": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
           "avgMs": 0
         },
@@ -12164,7 +12164,7 @@
     "node_module collectors > pnpm optional dependencies": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
           "avgMs": 0
         },
@@ -12184,7 +12184,7 @@
     "node_module collectors > pnpm es5-ext without hoisted config": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
           "avgMs": 0
         },
@@ -12204,7 +12204,7 @@
     "node_module collectors > yarn two package.json w/ native mac-only module (optional dep)": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
           "avgMs": 0
         },
@@ -12224,7 +12224,7 @@
     "node_module collectors > pnpm optional dependency not installable on linux": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
           "avgMs": 0
         },
@@ -12244,7 +12244,7 @@
     "node_module collectors > yarn two package.json without node_modules": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
           "avgMs": 0
         },
@@ -12264,7 +12264,7 @@
     "node_module collectors > yarn electron-clear-data": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
           "avgMs": 0
         },
@@ -12284,7 +12284,7 @@
     "node_module collectors > yarn two package.json": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
           "avgMs": 0
         },
@@ -12304,7 +12304,7 @@
     "node_module collectors > npm electron-clear-data": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
           "avgMs": 0
         },
@@ -12324,7 +12324,7 @@
     "node_module collectors > yarn some module add by manual instead of install": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
           "avgMs": 0
         },
@@ -12344,7 +12344,7 @@
     "node_module collectors > yarn parse-asn1": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
           "avgMs": 0
         },
@@ -12384,7 +12384,7 @@
     "node_module collectors > npm tar": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
           "avgMs": 0
         },
@@ -12404,7 +12404,7 @@
     "node_module collectors > yarn max stack": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
           "avgMs": 0
         },
@@ -12444,7 +12444,7 @@
     "node_module collectors > pnpm node-linker=hoisted": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
           "avgMs": 0
         },
@@ -12464,7 +12464,7 @@
     "node_module collectors > pnpm shamefully-hoist=true": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
           "avgMs": 0
         },
@@ -12484,7 +12484,7 @@
     "node_module collectors > pnpm max stack": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
           "avgMs": 0
         },
@@ -12504,7 +12504,7 @@
     "node_module collectors > pnpm public-hoist-pattern=*": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
           "avgMs": 0
         },
@@ -12524,7 +12524,7 @@
     "node_module collectors > pnpm workspace with native module": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
           "avgMs": 0
         },
@@ -12544,7 +12544,7 @@
     "node_module collectors > yarn ms": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
           "avgMs": 0
         },
@@ -13004,7 +13004,7 @@
     "assisted > winCodeSign: 0.0.0 > debug logging enabled": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
           "avgMs": 0
         },
@@ -13024,9 +13024,9 @@
     "assisted > winCodeSign: 0.0.0 > assisted, MUI_HEADER": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
-          "avgMs": 74381.208792
+          "avgMs": 64057.703846000004
         },
         "darwin": {
           "runs": 0,
@@ -13084,9 +13084,9 @@
     "assisted > winCodeSign: 0.0.0 > allowElevation false, app requestedExecutionLevel admin": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
-          "avgMs": 149927.327208
+          "avgMs": 111688.301654
         },
         "darwin": {
           "runs": 0,
@@ -13144,9 +13144,9 @@
     "assisted > winCodeSign: 0.0.0 > assisted, MUI_HEADER as option": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
-          "avgMs": 152787.759708
+          "avgMs": 120270.621654
         },
         "darwin": {
           "runs": 0,
@@ -13164,9 +13164,9 @@
     "assisted > winCodeSign: 0.0.0 > assisted, only perMachine": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
-          "avgMs": 159067.838334
+          "avgMs": 140480.818767
         },
         "darwin": {
           "runs": 0,
@@ -13184,9 +13184,9 @@
     "assisted > winCodeSign: 0.0.0 > assisted": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
-          "avgMs": 178551.206791
+          "avgMs": 161535.04094550002
         },
         "darwin": {
           "runs": 0,
@@ -13244,9 +13244,9 @@
     "assisted > winCodeSign: 1.0.0 > allowElevation false, app requestedExecutionLevel admin": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
-          "avgMs": 100102.94204199998
+          "avgMs": 69278.52517099999
         },
         "darwin": {
           "runs": 0,
@@ -13304,9 +13304,9 @@
     "assisted > winCodeSign: 1.0.0 > assisted, MUI_HEADER": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
-          "avgMs": 90986.074417
+          "avgMs": 71065.47790849999
         },
         "darwin": {
           "runs": 0,
@@ -13324,7 +13324,7 @@
     "assisted > winCodeSign: 1.0.0 > debug logging enabled": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
           "avgMs": 0
         },
@@ -13344,9 +13344,9 @@
     "assisted > winCodeSign: 0.0.0 > assisted, only perMachine and elevated": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
-          "avgMs": 199723.868167
+          "avgMs": 145496.6809835
         },
         "darwin": {
           "runs": 0,
@@ -13364,9 +13364,9 @@
     "assisted > winCodeSign: 0.0.0 > allowToChangeInstallationDirectory": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
-          "avgMs": 127583.22020800004
+          "avgMs": 126013.00125400003
         },
         "darwin": {
           "runs": 0,
@@ -13384,9 +13384,9 @@
     "assisted > winCodeSign: 1.0.0 > assisted": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
-          "avgMs": 156836.66695800002
+          "avgMs": 142793.910429
         },
         "darwin": {
           "runs": 0,
@@ -13464,9 +13464,9 @@
     "assisted > winCodeSign: 1.0.0 > allowToChangeInstallationDirectory": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
-          "avgMs": 256384.63337499998
+          "avgMs": 176954.99178749998
         },
         "darwin": {
           "runs": 0,
@@ -13484,9 +13484,9 @@
     "assisted > winCodeSign: 1.0.0 > assisted, only perMachine": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
-          "avgMs": 299709.47370800003
+          "avgMs": 211137.597054
         },
         "darwin": {
           "runs": 0,
@@ -13544,9 +13544,9 @@
     "assisted > winCodeSign: 1.0.0 > assisted, only perMachine and elevated": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
-          "avgMs": 303944.793958
+          "avgMs": 200694.42307900003
         },
         "darwin": {
           "runs": 0,
@@ -13584,9 +13584,9 @@
     "assisted > winCodeSign: 1.0.0 > assisted, MUI_HEADER as option": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
-          "avgMs": 373540.257125
+          "avgMs": 232419.0362125
         },
         "darwin": {
           "runs": 0,
@@ -13604,7 +13604,7 @@
     "assisted > winCodeSign: 1.1.0 > debug logging enabled": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
           "avgMs": 0
         },
@@ -13644,9 +13644,9 @@
     "assisted > winCodeSign: 1.1.0 > assisted, MUI_HEADER": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
-          "avgMs": 109224.91491699999
+          "avgMs": 62078.6788085
         },
         "darwin": {
           "runs": 0,
@@ -13664,9 +13664,9 @@
     "assisted > winCodeSign: 1.1.0 > allowElevation false, app requestedExecutionLevel admin": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
-          "avgMs": 161117.0299170001
+          "avgMs": 113389.73885850004
         },
         "darwin": {
           "runs": 0,
@@ -13684,9 +13684,9 @@
     "assisted > winCodeSign: 1.1.0 > assisted": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
-          "avgMs": 450130.515208
+          "avgMs": 316733.521754
         },
         "darwin": {
           "runs": 0,
@@ -13704,9 +13704,9 @@
     "assisted > winCodeSign: 1.1.0 > assisted, MUI_HEADER as option": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
-          "avgMs": 186870.49225
+          "avgMs": 149202.136925
         },
         "darwin": {
           "runs": 0,
@@ -13724,9 +13724,9 @@
     "assisted > winCodeSign: 1.1.0 > assisted, only perMachine": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
-          "avgMs": 156733.08724999998
+          "avgMs": 132492.73097499998
         },
         "darwin": {
           "runs": 0,
@@ -13744,9 +13744,9 @@
     "assisted > winCodeSign: 1.1.0 > assisted, only perMachine and elevated": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
-          "avgMs": 117402.85849999997
+          "avgMs": 111974.70384999999
         },
         "darwin": {
           "runs": 0,
@@ -13764,9 +13764,9 @@
     "assisted > winCodeSign: 1.1.0 > allowToChangeInstallationDirectory": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
-          "avgMs": 111824.63341599994
+          "avgMs": 112714.62870799997
         },
         "darwin": {
           "runs": 0,
@@ -13822,9 +13822,9 @@
       "hasHeavyTests": false,
       "platformRuns": {
         "win32": {
-          "runs": null,
-          "fails": null,
-          "avgMs": null
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 8.456299999999999
         },
         "darwin": 2,
         "linux": {
@@ -13873,9 +13873,9 @@
       "hasHeavyTests": false,
       "platformRuns": {
         "win32": {
-          "runs": null,
-          "fails": null,
-          "avgMs": null
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 0
         },
         "darwin": 3,
         "linux": {
@@ -14043,9 +14043,9 @@
       "hasHeavyTests": false,
       "platformRuns": {
         "win32": {
-          "runs": null,
-          "fails": null,
-          "avgMs": null
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 0
         },
         "darwin": 2,
         "linux": {
@@ -14175,9 +14175,9 @@
       "hasHeavyTests": false,
       "platformRuns": {
         "win32": {
-          "runs": null,
-          "fails": null,
-          "avgMs": null
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 0
         },
         "darwin": 2,
         "linux": {
@@ -14260,9 +14260,9 @@
       "hasHeavyTests": false,
       "platformRuns": {
         "win32": {
-          "runs": null,
-          "fails": null,
-          "avgMs": null
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 0
         },
         "darwin": 3,
         "linux": {
@@ -14294,9 +14294,9 @@
       "hasHeavyTests": false,
       "platformRuns": {
         "win32": {
-          "runs": null,
-          "fails": null,
-          "avgMs": null
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 0
         },
         "darwin": 2,
         "linux": {
@@ -14430,9 +14430,9 @@
       "hasHeavyTests": false,
       "platformRuns": {
         "win32": {
-          "runs": null,
-          "fails": null,
-          "avgMs": null
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 2028113.7389999998
         },
         "darwin": 2,
         "linux": {
@@ -14498,9 +14498,9 @@
       "hasHeavyTests": false,
       "platformRuns": {
         "win32": {
-          "runs": null,
-          "fails": null,
-          "avgMs": null
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 508222.4652
         },
         "darwin": 2,
         "linux": {
