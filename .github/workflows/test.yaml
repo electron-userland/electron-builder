@@ -297,7 +297,7 @@ jobs:
         env:
           TEST_FILES: nsisUpdaterTest,PublishManagerTest,differentialUpdateTest,GitlabPublisherTest,GitlabPublisher.integration.test
           TEST_RUNNER_IMAGE_TAG: electronuserland/builder:${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}-wine-mono
-          ADDITIONAL_DOCKER_ARGS: "-e KEYGEN_TOKEN=${{ secrets.KEYGEN_TOKEN }} -e BITBUCKET_TOKEN=${{ secrets.BITBUCKET_TOKEN }} -e GH_TOKEN=${{ secrets.GH_TOKEN }} -e GITLAB_TOKEN=${{ secrets.GITLAB_TOKEN }}"
+          ADDITIONAL_DOCKER_ARGS: "-e KEYGEN_TOKEN=${{ secrets.KEYGEN_TOKEN }} -e BITBUCKET_TOKEN=${{ secrets.BITBUCKET_TOKEN }} -e GH_TOKEN=${{ secrets.GH_TOKEN }} -e GITLAB_TOKEN=${{ secrets.GITLAB_TOKEN }} -e VITEST_SMART_CACHE_FILE=./test/vitest-scripts/_vitest-smart-cache.json"
 
       - name: Upload smart cache artifact
         uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1
@@ -338,6 +338,7 @@ jobs:
           pnpm ci:test
         env:
           TEST_FILES: flatpakTest,snapHeavyTest
+          VITEST_SMART_CACHE_FILE: ${{ github.workspace }}/test/vitest-scripts/_vitest-smart-cache.json
 
       - name: Upload smart cache artifact
         uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1
@@ -398,7 +399,7 @@ jobs:
           TEST_RUNNER_IMAGE_TAG: ${{ matrix.test_config.file }}
           TEST_FILES: blackboxUpdateTest,linuxUpdaterTest
           DEBUG: electron-updater,electron-builder
-          ADDITIONAL_DOCKER_ARGS: "-e PACKAGE_MANAGER_TO_TEST=${{ matrix.test_config.env.PACKAGE_MANAGER_TO_TEST }} -e RUN_APP_IMAGE_TEST=${{ matrix.test_config.env.RUN_APP_IMAGE_TEST || false }}"
+          ADDITIONAL_DOCKER_ARGS: "-e PACKAGE_MANAGER_TO_TEST=${{ matrix.test_config.env.PACKAGE_MANAGER_TO_TEST }} -e RUN_APP_IMAGE_TEST=${{ matrix.test_config.env.RUN_APP_IMAGE_TEST || false }} -e VITEST_SMART_CACHE_FILE=./test/vitest-scripts/_vitest-smart-cache.json"
 
       - name: Upload smart cache artifact
         uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1
@@ -510,3 +511,4 @@ jobs:
         with:
           path: merged-cache/_vitest-smart-cache.json
           key: vitest-smart-cache-${{ github.ref_name }}-${{ github.sha }}
+

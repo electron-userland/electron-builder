@@ -32,5 +32,5 @@ export const unstableTests = [
 export const unstablePerOSTests: Record<SupportedPlatforms, string[]> = {
   darwin: ["fpmTest", "macUpdaterTest", "blackboxUpdateTest"],
   linux: ["flatpakTest"],
-  win32: ["appxTest"],
+  win32: [],
 }
