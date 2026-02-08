@@ -6,7 +6,7 @@ import { appTwoThrows, assertPack, linuxDirTarget, modifyPackageJson, verifyAsar
 import { ELECTRON_VERSION } from "./helpers/testConfig"
 import { copy, mkdir, outputFile, readJson, rm, symlink, writeJson } from "fs-extra"
 
-describe.ifNotWindows("Hoisted Node Module Test", () => {
+describe.ifNotWindows("node_module collectors", () => {
   test("yarn workspace", ({ expect }) =>
     assertPack(
       expect,

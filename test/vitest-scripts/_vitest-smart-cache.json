@@ -4031,6 +4031,426 @@
       "avgMs": 161839.47675,
       "slow": false,
       "heavy": false
+    },
+    "AppX > winCodeSign: 0.0.0 > certificateSubjectName": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
+    },
+    "AppX > winCodeSign: 0.0.0 > languages and not signed (windows store only)": {
+      "runs": 1,
+      "fails": 1,
+      "avgMs": 47926.680499999995,
+      "slow": false,
+      "heavy": false
+    },
+    "msiWrapped > winCodeSign: 0.0.0 > msiWrapped requires nsis": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 56819.807208,
+      "slow": false,
+      "heavy": false
+    },
+    "AppX > winCodeSign: 0.0.0 > application id": {
+      "runs": 1,
+      "fails": 1,
+      "avgMs": 57345.9785,
+      "slow": false,
+      "heavy": false
+    },
+    "AppX > winCodeSign: 0.0.0 > AppX": {
+      "runs": 1,
+      "fails": 1,
+      "avgMs": 71052.074916,
+      "slow": false,
+      "heavy": false
+    },
+    "AppX > winCodeSign: 0.0.0 > auto launch": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 77820.53850000001,
+      "slow": false,
+      "heavy": false
+    },
+    "AppX > winCodeSign: 0.0.0 > custom template appmanifest.xml": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 79709.625166,
+      "slow": false,
+      "heavy": false
+    },
+    "AppX > winCodeSign: 0.0.0 > invalid capabilities (windows store only)": {
+      "runs": 1,
+      "fails": 1,
+      "avgMs": 159322.332,
+      "slow": false,
+      "heavy": false
+    },
+    "AppX > winCodeSign: 0.0.0 > custom raw appmanifest.xml": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 191884.237,
+      "slow": true,
+      "heavy": false
+    },
+    "AppX > winCodeSign: 1.0.0 > certificateSubjectName": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
+    },
+    "AppX > winCodeSign: 0.0.0 > valid capabilities (windows store only)": {
+      "runs": 1,
+      "fails": 1,
+      "avgMs": 207512.84099999996,
+      "slow": true,
+      "heavy": false
+    },
+    "AppX > winCodeSign: 1.0.0 > auto launch": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 185528.6765,
+      "slow": true,
+      "heavy": false
+    },
+    "AppX > winCodeSign: 1.0.0 > AppX": {
+      "runs": 1,
+      "fails": 1,
+      "avgMs": 193738.43883299996,
+      "slow": true,
+      "heavy": false
+    },
+    "msi > winCodeSign: 0.0.0 > msi": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 276254.9365,
+      "slow": true,
+      "heavy": false
+    },
+    "AppX > winCodeSign: 1.0.0 > application id": {
+      "runs": 1,
+      "fails": 1,
+      "avgMs": 51967.149833,
+      "slow": false,
+      "heavy": false
+    },
+    "AppX > winCodeSign: 1.0.0 > custom template appmanifest.xml": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 26799.449208999984,
+      "slow": false,
+      "heavy": false
+    },
+    "AppX > winCodeSign: 1.0.0 > custom raw appmanifest.xml": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 29899.296292000043,
+      "slow": false,
+      "heavy": false
+    },
+    "AppX > winCodeSign: 1.0.0 > valid capabilities (windows store only)": {
+      "runs": 1,
+      "fails": 1,
+      "avgMs": 23593.960334000003,
+      "slow": false,
+      "heavy": false
+    },
+    "msiWrapped > winCodeSign: 0.0.0 > msiWrapped allows capitalized nsis target": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 300828.651542,
+      "slow": true,
+      "heavy": false
+    },
+    "AppX > winCodeSign: 1.0.0 > languages and not signed (windows store only)": {
+      "runs": 1,
+      "fails": 1,
+      "avgMs": 77087.11462500002,
+      "slow": false,
+      "heavy": false
+    },
+    "AppX > winCodeSign: 1.1.0 > certificateSubjectName": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
+    },
+    "AppX > winCodeSign: 1.0.0 > invalid capabilities (windows store only)": {
+      "runs": 1,
+      "fails": 1,
+      "avgMs": 42392.373708,
+      "slow": false,
+      "heavy": false
+    },
+    "msiWrapped > winCodeSign: 0.0.0 > msiWrapped impersonate yes if true": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 372486.206542,
+      "slow": true,
+      "heavy": false
+    },
+    "AppX > winCodeSign: 1.1.0 > AppX": {
+      "runs": 1,
+      "fails": 1,
+      "avgMs": 88803.94787499995,
+      "slow": false,
+      "heavy": false
+    },
+    "AppX > winCodeSign: 1.1.0 > application id": {
+      "runs": 1,
+      "fails": 1,
+      "avgMs": 85411.80466600001,
+      "slow": false,
+      "heavy": false
+    },
+    "AppX > winCodeSign: 1.1.0 > auto launch": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 89771.882958,
+      "slow": false,
+      "heavy": false
+    },
+    "msiWrapped > winCodeSign: 1.0.0 > msiWrapped requires nsis": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 83484.53295800003,
+      "slow": false,
+      "heavy": false
+    },
+    "AppX > winCodeSign: 1.1.0 > languages and not signed (windows store only)": {
+      "runs": 1,
+      "fails": 1,
+      "avgMs": 79798.564167,
+      "slow": false,
+      "heavy": false
+    },
+    "AppX > winCodeSign: 1.1.0 > custom template appmanifest.xml": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 76050.12766600004,
+      "slow": false,
+      "heavy": false
+    },
+    "msiWrapped > winCodeSign: 0.0.0 > msiWrapped impersonate no if not provided": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 405929.710542,
+      "slow": true,
+      "heavy": false
+    },
+    "AppX > winCodeSign: 1.1.0 > valid capabilities (windows store only)": {
+      "runs": 1,
+      "fails": 1,
+      "avgMs": 37800.70587500004,
+      "slow": false,
+      "heavy": false
+    },
+    "AppX > winCodeSign: 1.1.0 > invalid capabilities (windows store only)": {
+      "runs": 1,
+      "fails": 1,
+      "avgMs": 34569.99533299997,
+      "slow": false,
+      "heavy": false
+    },
+    "AppX > winCodeSign: 1.1.0 > custom raw appmanifest.xml": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 42844.84562499996,
+      "slow": false,
+      "heavy": false
+    },
+    "msiWrapped > winCodeSign: 0.0.0 > msiWrapped includes packaged exe": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 449586.431833,
+      "slow": true,
+      "heavy": false
+    },
+    "msiWrapped > winCodeSign: 0.0.0 > msiWrapped wrappedInstallerArgs provided": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 433350.267,
+      "slow": true,
+      "heavy": false
+    },
+    "msi > winCodeSign: 0.0.0 > msi no asar": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 244673.20500000002,
+      "slow": true,
+      "heavy": false
+    },
+    "msiWrapped > winCodeSign: 1.0.0 > msiWrapped allows capitalized nsis target": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 180634.22704099998,
+      "slow": true,
+      "heavy": false
+    },
+    "msiWrapped > winCodeSign: 1.1.0 > msiWrapped requires nsis": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 19473.058250000002,
+      "slow": false,
+      "heavy": false
+    },
+    "msiWrapped > winCodeSign: 1.0.0 > msiWrapped includes packaged exe": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 194457.56195799995,
+      "slow": true,
+      "heavy": false
+    },
+    "msiWrapped > winCodeSign: 1.0.0 > msiWrapped impersonate no if not provided": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 197587.35962499998,
+      "slow": true,
+      "heavy": false
+    },
+    "msiWrapped > winCodeSign: 1.0.0 > msiWrapped impersonate yes if true": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 194112.72295900004,
+      "slow": true,
+      "heavy": false
+    },
+    "msiWrapped > winCodeSign: 1.0.0 > msiWrapped wrappedInstallerArgs provided": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 205241.04329099995,
+      "slow": true,
+      "heavy": false
+    },
+    "msi > winCodeSign: 0.0.0 > per-user": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 232402.342542,
+      "slow": true,
+      "heavy": false
+    },
+    "msiWrapped > winCodeSign: 1.1.0 > msiWrapped allows capitalized nsis target": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 264495.1631659999,
+      "slow": true,
+      "heavy": false
+    },
+    "msiWrapped > winCodeSign: 1.1.0 > msiWrapped includes packaged exe": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 313810.62054200005,
+      "slow": true,
+      "heavy": false
+    },
+    "msiWrapped > winCodeSign: 1.1.0 > msiWrapped impersonate no if not provided": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 320294.927333,
+      "slow": true,
+      "heavy": false
+    },
+    "msiWrapped > winCodeSign: 1.1.0 > msiWrapped impersonate yes if true": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 299056.55895800004,
+      "slow": true,
+      "heavy": false
+    },
+    "msiWrapped > winCodeSign: 1.1.0 > msiWrapped wrappedInstallerArgs provided": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 267217.24474999995,
+      "slow": true,
+      "heavy": false
+    },
+    "msi > winCodeSign: 0.0.0 > wix args": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 230217.571167,
+      "slow": true,
+      "heavy": false
+    },
+    "msi > winCodeSign: 0.0.0 > assisted": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
+    },
+    "msi > winCodeSign: 1.0.0 > msi": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 45754.802000000025,
+      "slow": false,
+      "heavy": false
+    },
+    "msi > winCodeSign: 1.0.0 > msi no asar": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 38604.15366599988,
+      "slow": false,
+      "heavy": false
+    },
+    "msi > winCodeSign: 1.0.0 > per-user": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 43765.75741700013,
+      "slow": false,
+      "heavy": false
+    },
+    "msi > winCodeSign: 1.0.0 > wix args": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 42798.07474999991,
+      "slow": false,
+      "heavy": false
+    },
+    "msi > winCodeSign: 1.0.0 > assisted": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
+    },
+    "msi > winCodeSign: 1.1.0 > msi": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 37998.69270899985,
+      "slow": false,
+      "heavy": false
+    },
+    "msi > winCodeSign: 1.1.0 > msi no asar": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 37761.111999999965,
+      "slow": false,
+      "heavy": false
+    },
+    "msi > winCodeSign: 1.1.0 > per-user": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 41145.55141699989,
+      "slow": false,
+      "heavy": false
+    },
+    "msi > winCodeSign: 1.1.0 > wix args": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 42741.24291599984,
+      "slow": false,
+      "heavy": false
+    },
+    "msi > winCodeSign: 1.1.0 > assisted": {
+      "runs": 1,
+      "fails": 0,
+      "avgMs": 0,
+      "slow": false,
+      "heavy": false
     }
   },
   "files": {
@@ -4596,18 +5016,18 @@
       }
     },
     "appxTest.ts": {
-      "runs": 5,
-      "fails": 11,
-      "avgMs": 539112.9196943333,
+      "runs": 6,
+      "fails": 26,
+      "avgMs": 918992.8500409999,
       "unstable": true,
       "hasHeavyTests": false,
       "platformAvgMs": {
-        "win32": 539112.9196943333,
+        "win32": 918992.8500409999,
         "darwin": 0,
         "linux": 0
       },
       "platformRuns": {
-        "win32": 3,
+        "win32": 4,
         "darwin": 2,
         "linux": 0
       }
@@ -4630,35 +5050,35 @@
       }
     },
     "msiTest.ts": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 0,
+      "avgMs": 1314117.4420839995,
       "unstable": false,
       "hasHeavyTests": false,
       "platformAvgMs": {
-        "win32": 0,
+        "win32": 1314117.4420839995,
         "darwin": 0,
         "linux": 0
       },
       "platformRuns": {
-        "win32": 0,
+        "win32": 1,
         "darwin": 2,
         "linux": 0
       }
     },
     "msiWrappedTest.ts": {
-      "runs": 15,
+      "runs": 16,
       "fails": 47,
-      "avgMs": 0,
+      "avgMs": 473560.4015536428,
       "unstable": true,
       "hasHeavyTests": false,
       "platformAvgMs": {
-        "win32": 159306.11740407694,
+        "win32": 473560.4015536428,
         "darwin": 0,
         "linux": 0
       },
       "platformRuns": {
-        "win32": 13,
+        "win32": 14,
         "darwin": 2,
         "linux": 0
       }
