@@ -1,6 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`msi > msi 1`] = `
+exports[`msi > winCodeSign: 0.0.0 > msi 1`] = `
 {
   "win": [
     {
@@ -12,7 +12,7 @@ exports[`msi > msi 1`] = `
 }
 `;
 
-exports[`msi > msi no asar 1`] = `
+exports[`msi > winCodeSign: 0.0.0 > msi no asar 1`] = `
 {
   "win": [
     {
@@ -24,7 +24,7 @@ exports[`msi > msi no asar 1`] = `
 }
 `;
 
-exports[`msi > per-user 1`] = `
+exports[`msi > winCodeSign: 0.0.0 > per-user 1`] = `
 {
   "win": [
     {
@@ -36,7 +36,103 @@ exports[`msi > per-user 1`] = `
 }
 `;
 
-exports[`msi > wix args 1`] = `
+exports[`msi > winCodeSign: 0.0.0 > wix args 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test WiX Args 1.1.0.msi",
+      "safeArtifactName": "Test-WiX-Args-1.1.0.msi",
+    },
+  ],
+}
+`;
+
+exports[`msi > winCodeSign: 1.0.0 > msi 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test MSI 1.1.0.msi",
+      "safeArtifactName": "Test-MSI-1.1.0.msi",
+    },
+  ],
+}
+`;
+
+exports[`msi > winCodeSign: 1.0.0 > msi no asar 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test MSI 1.1.0.msi",
+      "safeArtifactName": "Test-MSI-1.1.0.msi",
+    },
+  ],
+}
+`;
+
+exports[`msi > winCodeSign: 1.0.0 > per-user 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test MSI Per User 1.1.0.msi",
+      "safeArtifactName": "Test-MSI-Per-User-1.1.0.msi",
+    },
+  ],
+}
+`;
+
+exports[`msi > winCodeSign: 1.0.0 > wix args 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test WiX Args 1.1.0.msi",
+      "safeArtifactName": "Test-WiX-Args-1.1.0.msi",
+    },
+  ],
+}
+`;
+
+exports[`msi > winCodeSign: 1.1.0 > msi 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test MSI 1.1.0.msi",
+      "safeArtifactName": "Test-MSI-1.1.0.msi",
+    },
+  ],
+}
+`;
+
+exports[`msi > winCodeSign: 1.1.0 > msi no asar 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test MSI 1.1.0.msi",
+      "safeArtifactName": "Test-MSI-1.1.0.msi",
+    },
+  ],
+}
+`;
+
+exports[`msi > winCodeSign: 1.1.0 > per-user 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test MSI Per User 1.1.0.msi",
+      "safeArtifactName": "Test-MSI-Per-User-1.1.0.msi",
+    },
+  ],
+}
+`;
+
+exports[`msi > winCodeSign: 1.1.0 > wix args 1`] = `
 {
   "win": [
     {
