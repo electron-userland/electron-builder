@@ -1,7 +1,7 @@
 import * as path from "path"
 import type { Reporter, TestCase, TestModule } from "vitest/node"
 import { FileStats, loadCache, saveCache, TestStats } from "./cache"
-import { FLAKE_FAIL_RATIO, SupportedPlatforms } from "./smart-config"
+import { UNSTABLE_FAIL_RATIO, SupportedPlatforms } from "./smart-config"
 
 const defaultStat: TestStats = {
   platformRuns: {
@@ -101,7 +101,7 @@ export default class SmarterReporter implements Reporter {
     platformRuns[this.currentPlatform] = { runs: newPlatformRuns, fails: totalFails, avgMs: (prevPlatformAvg * prevPlatformRuns + dur) / newPlatformRuns }
 
     this.cache.files[file] = {
-      unstable: failRatio > FLAKE_FAIL_RATIO,
+      unstable: failRatio > UNSTABLE_FAIL_RATIO,
       hasHeavyTests: hasHeavy || prev.hasHeavyTests,
       platformRuns,
     }

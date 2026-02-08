@@ -1,7 +1,5 @@
 import * as path from "path"
 
-export const FLAKE_FAIL_RATIO = 0.2
-
 export type TargetPlatform = "darwin" | "win32" | "linux" | "current"
 export type SupportedPlatforms = Exclude<TargetPlatform, "current">
 
@@ -22,13 +20,14 @@ export const IS_MAC = PLATFORM === "darwin"
 export const IS_WIN = PLATFORM === "win32"
 export const IS_LINUX = PLATFORM === "linux"
 
-// Add here unstable tests to exclude from smart sharding
+export const UNSTABLE_FAIL_RATIO = 0.2
+// Add here broken tests to exclude from smart sharding
 // TODO: FIX ALL OF THESE 😅
-export const unstableTests = [
+export const skippedTests = [
   // General instability
   "snapHeavyTest",
 ]
-export const unstablePerOSTests: Record<SupportedPlatforms, string[]> = {
+export const skipPerOSTests: Record<SupportedPlatforms, string[]> = {
   darwin: ["fpmTest", "macUpdaterTest", "blackboxUpdateTest"],
   linux: ["flatpakTest"],
   win32: [],
