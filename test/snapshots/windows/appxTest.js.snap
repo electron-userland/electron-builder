@@ -141,6 +141,30 @@ exports[`AppX > winCodeSign: 0.0.0 > custom template appmanifest.xml 2`] = `
 }
 `;
 
+exports[`AppX > winCodeSign: 1.0.0 > AppX 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW 1.1.0.appx",
+      "safeArtifactName": "TestApp-1.1.0.appx",
+    },
+  ],
+}
+`;
+
+exports[`AppX > winCodeSign: 1.0.0 > application id 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW 1.1.0.appx",
+      "safeArtifactName": "TestApp-1.1.0.appx",
+    },
+  ],
+}
+`;
+
 exports[`AppX > winCodeSign: 1.0.0 > auto launch 1`] = `
 {
   "win": [
@@ -282,6 +306,59 @@ exports[`AppX > winCodeSign: 1.0.0 > custom template appmanifest.xml 2`] = `
 }
 `;
 
+exports[`AppX > winCodeSign: 1.0.0 > languages and not signed (windows store only) 1`] = `
+{
+  "win": [
+    {
+      "arch": "ia32",
+      "file": "Test App ßW 1.1.0 ia32.appx",
+      "safeArtifactName": "TestApp-1.1.0.appx",
+    },
+    {
+      "arch": "x64",
+      "file": "Test App ßW 1.1.0.appx",
+      "safeArtifactName": "TestApp-1.1.0.appx",
+    },
+  ],
+}
+`;
+
+exports[`AppX > winCodeSign: 1.0.0 > valid capabilities (windows store only) 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW 1.1.0.appx",
+      "safeArtifactName": "TestApp-1.1.0.appx",
+    },
+  ],
+}
+`;
+
+exports[`AppX > winCodeSign: 1.1.0 > AppX 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW 1.1.0.appx",
+      "safeArtifactName": "TestApp-1.1.0.appx",
+    },
+  ],
+}
+`;
+
+exports[`AppX > winCodeSign: 1.1.0 > application id 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW 1.1.0.appx",
+      "safeArtifactName": "TestApp-1.1.0.appx",
+    },
+  ],
+}
+`;
+
 exports[`AppX > winCodeSign: 1.1.0 > auto launch 1`] = `
 {
   "win": [
@@ -412,6 +489,35 @@ exports[`AppX > winCodeSign: 1.1.0 > custom template appmanifest.xml 1`] = `
 `;
 
 exports[`AppX > winCodeSign: 1.1.0 > custom template appmanifest.xml 2`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW 1.1.0.appx",
+      "safeArtifactName": "TestApp-1.1.0.appx",
+    },
+  ],
+}
+`;
+
+exports[`AppX > winCodeSign: 1.1.0 > languages and not signed (windows store only) 1`] = `
+{
+  "win": [
+    {
+      "arch": "ia32",
+      "file": "Test App ßW 1.1.0 ia32.appx",
+      "safeArtifactName": "TestApp-1.1.0.appx",
+    },
+    {
+      "arch": "x64",
+      "file": "Test App ßW 1.1.0.appx",
+      "safeArtifactName": "TestApp-1.1.0.appx",
+    },
+  ],
+}
+`;
+
+exports[`AppX > winCodeSign: 1.1.0 > valid capabilities (windows store only) 1`] = `
 {
   "win": [
     {

@@ -10652,7 +10652,7 @@
     "AppX > winCodeSign: 0.0.0 > certificateSubjectName": {
       "platformRuns": {
         "win32": {
-          "runs": 0,
+          "runs": 1,
           "fails": 0,
           "avgMs": 0
         },
@@ -10672,9 +10672,9 @@
     "AppX > winCodeSign: 0.0.0 > languages and not signed (windows store only)": {
       "platformRuns": {
         "win32": {
-          "runs": 0,
-          "fails": 0,
-          "avgMs": 0
+          "runs": 1,
+          "fails": 1,
+          "avgMs": 87732.876833
         },
         "darwin": {
           "runs": 0,
@@ -10712,9 +10712,9 @@
     "AppX > winCodeSign: 0.0.0 > application id": {
       "platformRuns": {
         "win32": {
-          "runs": 0,
-          "fails": 0,
-          "avgMs": 0
+          "runs": 1,
+          "fails": 1,
+          "avgMs": 67571.70583400001
         },
         "darwin": {
           "runs": 0,
@@ -10732,9 +10732,9 @@
     "AppX > winCodeSign: 0.0.0 > AppX": {
       "platformRuns": {
         "win32": {
-          "runs": 0,
-          "fails": 0,
-          "avgMs": 0
+          "runs": 1,
+          "fails": 1,
+          "avgMs": 73638.32504200001
         },
         "darwin": {
           "runs": 0,
@@ -10752,9 +10752,9 @@
     "AppX > winCodeSign: 0.0.0 > auto launch": {
       "platformRuns": {
         "win32": {
-          "runs": 0,
+          "runs": 1,
           "fails": 0,
-          "avgMs": 0
+          "avgMs": 57318.811542
         },
         "darwin": {
           "runs": 0,
@@ -10772,9 +10772,9 @@
     "AppX > winCodeSign: 0.0.0 > custom template appmanifest.xml": {
       "platformRuns": {
         "win32": {
-          "runs": 0,
+          "runs": 1,
           "fails": 0,
-          "avgMs": 0
+          "avgMs": 57275.670042
         },
         "darwin": {
           "runs": 0,
@@ -10792,9 +10792,9 @@
     "AppX > winCodeSign: 0.0.0 > invalid capabilities (windows store only)": {
       "platformRuns": {
         "win32": {
-          "runs": 0,
+          "runs": 1,
           "fails": 0,
-          "avgMs": 0
+          "avgMs": 57155.915624999994
         },
         "darwin": {
           "runs": 0,
@@ -10812,9 +10812,9 @@
     "AppX > winCodeSign: 0.0.0 > custom raw appmanifest.xml": {
       "platformRuns": {
         "win32": {
-          "runs": 0,
+          "runs": 1,
           "fails": 0,
-          "avgMs": 0
+          "avgMs": 62585.956625
         },
         "darwin": {
           "runs": 0,
@@ -10832,7 +10832,7 @@
     "AppX > winCodeSign: 1.0.0 > certificateSubjectName": {
       "platformRuns": {
         "win32": {
-          "runs": 0,
+          "runs": 1,
           "fails": 0,
           "avgMs": 0
         },
@@ -10852,9 +10852,9 @@
     "AppX > winCodeSign: 0.0.0 > valid capabilities (windows store only)": {
       "platformRuns": {
         "win32": {
-          "runs": 0,
-          "fails": 0,
-          "avgMs": 0
+          "runs": 1,
+          "fails": 1,
+          "avgMs": 78335.684125
         },
         "darwin": {
           "runs": 0,
@@ -10872,9 +10872,9 @@
     "AppX > winCodeSign: 1.0.0 > auto launch": {
       "platformRuns": {
         "win32": {
-          "runs": 0,
+          "runs": 1,
           "fails": 0,
-          "avgMs": 0
+          "avgMs": 56443.922583999985
         },
         "darwin": {
           "runs": 0,
@@ -10892,9 +10892,9 @@
     "AppX > winCodeSign: 1.0.0 > AppX": {
       "platformRuns": {
         "win32": {
-          "runs": 0,
+          "runs": 1,
           "fails": 0,
-          "avgMs": 0
+          "avgMs": 77868.708208
         },
         "darwin": {
           "runs": 0,
@@ -10932,9 +10932,9 @@
     "AppX > winCodeSign: 1.0.0 > application id": {
       "platformRuns": {
         "win32": {
-          "runs": 0,
+          "runs": 1,
           "fails": 0,
-          "avgMs": 0
+          "avgMs": 47273.51633299999
         },
         "darwin": {
           "runs": 0,
@@ -10952,9 +10952,9 @@
     "AppX > winCodeSign: 1.0.0 > custom template appmanifest.xml": {
       "platformRuns": {
         "win32": {
-          "runs": 0,
+          "runs": 1,
           "fails": 0,
-          "avgMs": 0
+          "avgMs": 29893.572874999983
         },
         "darwin": {
           "runs": 0,
@@ -10972,9 +10972,9 @@
     "AppX > winCodeSign: 1.0.0 > custom raw appmanifest.xml": {
       "platformRuns": {
         "win32": {
-          "runs": 0,
+          "runs": 1,
           "fails": 0,
-          "avgMs": 0
+          "avgMs": 37325.422416999994
         },
         "darwin": {
           "runs": 0,
@@ -10992,9 +10992,9 @@
     "AppX > winCodeSign: 1.0.0 > valid capabilities (windows store only)": {
       "platformRuns": {
         "win32": {
-          "runs": 0,
+          "runs": 1,
           "fails": 0,
-          "avgMs": 0
+          "avgMs": 50949.62349999999
         },
         "darwin": {
           "runs": 0,
@@ -11032,9 +11032,9 @@
     "AppX > winCodeSign: 1.0.0 > languages and not signed (windows store only)": {
       "platformRuns": {
         "win32": {
-          "runs": 0,
+          "runs": 1,
           "fails": 0,
-          "avgMs": 0
+          "avgMs": 77821.268875
         },
         "darwin": {
           "runs": 0,
@@ -11052,7 +11052,7 @@
     "AppX > winCodeSign: 1.1.0 > certificateSubjectName": {
       "platformRuns": {
         "win32": {
-          "runs": 0,
+          "runs": 1,
           "fails": 0,
           "avgMs": 0
         },
@@ -11072,9 +11072,9 @@
     "AppX > winCodeSign: 1.0.0 > invalid capabilities (windows store only)": {
       "platformRuns": {
         "win32": {
-          "runs": 0,
+          "runs": 1,
           "fails": 0,
-          "avgMs": 0
+          "avgMs": 43762.36725000001
         },
         "darwin": {
           "runs": 0,
@@ -11112,9 +11112,9 @@
     "AppX > winCodeSign: 1.1.0 > AppX": {
       "platformRuns": {
         "win32": {
-          "runs": 0,
+          "runs": 1,
           "fails": 0,
-          "avgMs": 0
+          "avgMs": 50977.613083000004
         },
         "darwin": {
           "runs": 0,
@@ -11132,9 +11132,9 @@
     "AppX > winCodeSign: 1.1.0 > application id": {
       "platformRuns": {
         "win32": {
-          "runs": 0,
+          "runs": 1,
           "fails": 0,
-          "avgMs": 0
+          "avgMs": 28795.33366599999
         },
         "darwin": {
           "runs": 0,
@@ -11152,9 +11152,9 @@
     "AppX > winCodeSign: 1.1.0 > auto launch": {
       "platformRuns": {
         "win32": {
-          "runs": 0,
+          "runs": 1,
           "fails": 0,
-          "avgMs": 0
+          "avgMs": 34753.62529199998
         },
         "darwin": {
           "runs": 0,
@@ -11192,9 +11192,9 @@
     "AppX > winCodeSign: 1.1.0 > languages and not signed (windows store only)": {
       "platformRuns": {
         "win32": {
-          "runs": 0,
+          "runs": 1,
           "fails": 0,
-          "avgMs": 0
+          "avgMs": 39724.050958999986
         },
         "darwin": {
           "runs": 0,
@@ -11212,9 +11212,9 @@
     "AppX > winCodeSign: 1.1.0 > custom template appmanifest.xml": {
       "platformRuns": {
         "win32": {
-          "runs": 0,
+          "runs": 1,
           "fails": 0,
-          "avgMs": 0
+          "avgMs": 16275.387374999991
         },
         "darwin": {
           "runs": 0,
@@ -11252,9 +11252,9 @@
     "AppX > winCodeSign: 1.1.0 > valid capabilities (windows store only)": {
       "platformRuns": {
         "win32": {
-          "runs": 0,
+          "runs": 1,
           "fails": 0,
-          "avgMs": 0
+          "avgMs": 22801.268125000002
         },
         "darwin": {
           "runs": 0,
@@ -11272,9 +11272,9 @@
     "AppX > winCodeSign: 1.1.0 > invalid capabilities (windows store only)": {
       "platformRuns": {
         "win32": {
-          "runs": 0,
+          "runs": 1,
           "fails": 0,
-          "avgMs": 0
+          "avgMs": 17381.989667000016
         },
         "darwin": {
           "runs": 0,
@@ -11292,9 +11292,9 @@
     "AppX > winCodeSign: 1.1.0 > custom raw appmanifest.xml": {
       "platformRuns": {
         "win32": {
-          "runs": 0,
+          "runs": 1,
           "fails": 0,
-          "avgMs": 0
+          "avgMs": 17314.98329199999
         },
         "darwin": {
           "runs": 0,
@@ -12968,7 +12968,11 @@
       "unstable": false,
       "hasHeavyTests": false,
       "platformRuns": {
-        "win32": 4,
+        "win32": {
+          "runs": null,
+          "fails": null,
+          "avgMs": null
+        },
         "darwin": 2,
         "linux": {
           "runs": null,
