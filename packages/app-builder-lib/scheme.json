@@ -3840,7 +3840,7 @@
           "type": "boolean"
         },
         "license": {
-          "description": "The path to EULA license file. Defaults to `license.txt` or `eula.txt` (or uppercase variants). In addition to `txt`, `rtf` and `html` are supported.\n\nMultiple license files for different languages are supported — use lang postfix (e.g. `_de`, `_ru`). For example, create files `license_de.txt` and `license_en.txt` in the build resources.\nIf OS language is german, `license_de.txt` will be displayed. See map of [language code to name](https://github.com/meikidd/iso-639-1/blob/master/src/data.js).\n\nAppropriate license file will be selected by language id. English is the default language.\n\nNote: This option is only applicable when `oneClick` is set to `false` (assisted installer). One-click installers do not show a license agreement page.",
+          "description": "The path to EULA license file. Defaults to `license.txt` or `eula.txt` (or uppercase variants).\n\n**Note: MSI installers only support RTF format.** The license file must be in RTF format for WiX to display it properly.\n\nMultiple license files for different languages are supported — use lang postfix (e.g. `_de`, `_ru`). For example, create files `license_de.rtf` and `license_en.rtf` in the build resources.\nIf OS language is german, `license_de.rtf` will be displayed. See map of [language code to name](https://github.com/meikidd/iso-639-1/blob/master/src/data.js).\n\nAppropriate license file will be selected by language id. English is the default language.\n\nNote: This option is only applicable when `oneClick` is set to `false` (assisted installer). One-click installers do not show a license agreement page.",
           "type": [
             "null",
             "string"

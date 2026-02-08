@@ -135,9 +135,6 @@ describe.ifWindows("msi", { sequential: true }, () => {
       targets: Platform.WINDOWS.createTarget("msi", Arch.x64),
       config: {
         appId: "build.electron.test.msi.assisted.license",
-        extraMetadata: {
-          // version: "1.0.0",
-        },
         productName: "Test MSI Assisted License",
         msi: {
           oneClick: false,
