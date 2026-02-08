@@ -1,4 +1,4 @@
-import { Arch, deepAssign } from "builder-util"
+import { Arch, deepAssign, exists, InvalidConfigurationError } from "builder-util"
 import { UUID } from "builder-util-runtime"
 import * as path from "path"
 import { MsiWrappedOptions } from "../"
@@ -58,27 +58,22 @@ export default class MsiWrappedTarget extends MsiTarget {
     return Promise.resolve()
   }
 
-async finishBuild(): Promise<any> {
-  await super.finishBuild()
-  const [arch, appOutDir] = this.archs.entries().next().value!
+  async finishBuild(): Promise<any> {
+    await super.finishBuild()
+    const [arch, appOutDir] = this.archs.entries().next().value!
 
-  this.validatePrerequisites()
+    this.validatePrerequisites()
 
-  // Wait for the NSIS executable to exist
-  const exeSourcePath = this.getExeSourcePath(arch)
-  const fs = await import("fs-extra")
-  
-  // Check if file exists, if not wait or throw helpful error
-  if (!(await fs.pathExists(exeSourcePath))) {
-    throw new Error(
-      `NSIS executable not found at ${exeSourcePath}. ` +
-      `Ensure the NSIS target builds before msiWrapped. ` +
-      `Try listing 'nsis' before 'msiWrapped' in your target configuration.`
-    )
+    const exeSourcePath = this.getExeSourcePath(arch)
+
+    if (!(await exists(exeSourcePath))) {
+      throw new InvalidConfigurationError(
+        `NSIS executable not found at ${exeSourcePath} - ensure the NSIS target builds before msiWrapped. Try listing 'nsis' before 'msiWrapped' in your target configuration.`
+      )
+    }
+
+    return super.build(appOutDir, arch)
   }
-
-  return super.build(appOutDir, arch)
-}
 
   protected get installerFilenamePattern(): string {
     // big assumption is made here for the moment that the pattern didn't change

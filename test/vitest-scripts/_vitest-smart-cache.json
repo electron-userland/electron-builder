@@ -337,16 +337,16 @@
       "heavy": false
     },
     "cli": {
-      "runs": 6,
+      "runs": 7,
       "fails": 0,
-      "avgMs": 3.6267013333333202,
+      "avgMs": 3.1086011428571316,
       "slow": false,
       "heavy": false
     },
     "merge configurations": {
-      "runs": 3,
+      "runs": 4,
       "fails": 0,
-      "avgMs": 4.592463999999988,
+      "avgMs": 5.376123000000007,
       "slow": false,
       "heavy": false
     },
@@ -358,14 +358,14 @@
       "heavy": false
     },
     "custom buildResources and output dirs: win": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 0,
+      "avgMs": 25160.15133333333,
       "slow": false,
       "heavy": false
     },
     "custom buildResources and output dirs: linux": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
       "avgMs": 0,
       "slow": false,
@@ -456,9 +456,9 @@
       "heavy": false
     },
     "build in the app package.json": {
-      "runs": 3,
+      "runs": 4,
       "fails": 0,
-      "avgMs": 18706.270091666665,
+      "avgMs": 29634.781118749997,
       "slow": false,
       "heavy": false
     },
@@ -484,16 +484,16 @@
       "heavy": false
     },
     "custom buildResources and output dirs: mac": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 24923.88425,
+      "avgMs": 16615.922833333334,
       "slow": false,
       "heavy": false
     },
     "override targets in the config - only arch": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 0,
+      "avgMs": 44993.34536666667,
       "slow": false,
       "heavy": false
     },
@@ -533,16 +533,16 @@
       "heavy": false
     },
     "relative index": {
-      "runs": 3,
+      "runs": 4,
       "fails": 0,
-      "avgMs": 30304.33869466667,
+      "avgMs": 39810.43919600001,
       "slow": false,
       "heavy": false
     },
     "electron version from electron-prebuilt dependency": {
-      "runs": 3,
+      "runs": 4,
       "fails": 0,
-      "avgMs": 18405.359222333333,
+      "avgMs": 13804.01941675,
       "slow": false,
       "heavy": false
     },
@@ -561,9 +561,9 @@
       "heavy": false
     },
     "do not exclude build entirely (respect files)": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 15538.274583499999,
+      "avgMs": 20247.557889,
       "slow": false,
       "heavy": false
     },
@@ -575,23 +575,23 @@
       "heavy": false
     },
     "electron version from electron dependency": {
-      "runs": 3,
+      "runs": 4,
       "fails": 0,
-      "avgMs": 20955.617069333337,
+      "avgMs": 15716.712802000002,
       "slow": false,
       "heavy": false
     },
     "electron version from build": {
-      "runs": 3,
+      "runs": 4,
       "fails": 0,
-      "avgMs": 20667.689347333333,
+      "avgMs": 15500.7670105,
       "slow": false,
       "heavy": false
     },
     "afterSign": {
-      "runs": 3,
+      "runs": 4,
       "fails": 0,
-      "avgMs": 14330.002633333332,
+      "avgMs": 29343.30355,
       "slow": false,
       "heavy": false
     },
@@ -792,16 +792,16 @@
       "heavy": false
     },
     "retrieve latest electron version": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 53394.282271000004,
+      "avgMs": 35596.18818066667,
       "slow": false,
       "heavy": false
     },
     "www as default dir": {
-      "runs": 3,
+      "runs": 4,
       "fails": 0,
-      "avgMs": 33007.88805,
+      "avgMs": 41871.8813375,
       "slow": false,
       "heavy": false
     },
@@ -820,23 +820,23 @@
       "heavy": false
     },
     "retrieve latest electron-nightly version": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 54568.894771,
+      "avgMs": 36379.26318066667,
       "slow": false,
       "heavy": false
     },
     "electronDist as standard path to node_modules electron": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
       "avgMs": 0,
       "slow": false,
       "heavy": false
     },
     "prepackaged": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 59775.8389165,
+      "avgMs": 39850.55927766667,
       "slow": false,
       "heavy": false
     },
@@ -855,58 +855,58 @@
       "heavy": false
     },
     "override targets in the config": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 68140.043563,
+      "avgMs": 45426.695708666666,
       "slow": false,
       "heavy": false
     },
     "hooks as functions": {
-      "runs": 3,
+      "runs": 4,
       "fails": 0,
-      "avgMs": 20312.434097,
+      "avgMs": 15234.32557275,
       "slow": false,
       "heavy": false
     },
     "electronDist as path to local folder with electron builds zipped ": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 27116.6988125,
+      "avgMs": 18077.799208333334,
       "slow": false,
       "heavy": false
     },
     "electronDist as callback function for path to local folder with electron builds zipped ": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 19948.002750000003,
+      "avgMs": 13298.668500000002,
       "slow": false,
       "heavy": false
     },
     "beforeBuild": {
-      "runs": 3,
+      "runs": 4,
       "fails": 0,
-      "avgMs": 13570.665888666665,
+      "avgMs": 10177.999416499999,
       "slow": false,
       "heavy": false
     },
     "hooks as file - mjs exported functions": {
-      "runs": 3,
+      "runs": 4,
       "fails": 0,
-      "avgMs": 18432.455861,
+      "avgMs": 13824.34189575,
       "slow": false,
       "heavy": false
     },
     "electronDist as callback function for path to locally unzipped": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 14027.086812000001,
+      "avgMs": 9351.391208000001,
       "slow": false,
       "heavy": false
     },
     "overriding the publish channel": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 13961.651291499995,
+      "avgMs": 9307.767527666663,
       "slow": false,
       "heavy": false
     },
@@ -1212,9 +1212,9 @@
       "heavy": false
     },
     "hooks as file - cjs": {
-      "runs": 3,
+      "runs": 4,
       "fails": 0,
-      "avgMs": 22500.069361,
+      "avgMs": 16875.05202075,
       "slow": false,
       "heavy": false
     },
@@ -1226,9 +1226,9 @@
       "heavy": false
     },
     "win smart unpack": {
-      "runs": 3,
+      "runs": 4,
       "fails": 0,
-      "avgMs": 15317.272861333333,
+      "avgMs": 11487.954646,
       "slow": false,
       "heavy": false
     },
@@ -1268,16 +1268,16 @@
       "heavy": false
     },
     "smart unpack local module with dll file": {
-      "runs": 3,
+      "runs": 4,
       "fails": 0,
-      "avgMs": 29861.522714000002,
+      "avgMs": 45133.9750355,
       "slow": false,
       "heavy": false
     },
     "posix smart unpack": {
-      "runs": 3,
+      "runs": 4,
       "fails": 0,
-      "avgMs": 15231.159388999999,
+      "avgMs": 11423.369541749998,
       "slow": false,
       "heavy": false
     },
@@ -1478,16 +1478,16 @@
       "heavy": false
     },
     "win": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 0,
+      "avgMs": 3697.0622,
       "slow": false,
       "heavy": false
     },
     "win ia32": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 0,
+      "avgMs": 3511.266266666667,
       "slow": false,
       "heavy": false
     },
@@ -1772,9 +1772,9 @@
       "heavy": false
     },
     "mac": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 8667.8396455,
+      "avgMs": 5778.559763666667,
       "slow": false,
       "heavy": false
     },
@@ -1814,9 +1814,9 @@
       "heavy": false
     },
     "linux": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 10495.374792,
+      "avgMs": 6996.916528000001,
       "slow": false,
       "heavy": false
     },
@@ -1947,9 +1947,9 @@
       "heavy": false
     },
     "AppImage - deprecated systemIntegration": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 20724.616292,
+      "avgMs": 13816.410861333332,
       "slow": false,
       "heavy": false
     },
@@ -1982,9 +1982,9 @@
       "heavy": false
     },
     "AppImage": {
-      "runs": 4,
+      "runs": 5,
       "fails": 0,
-      "avgMs": 32028.42745825,
+      "avgMs": 25622.7419666,
       "slow": false,
       "heavy": false
     },
@@ -1996,23 +1996,23 @@
       "heavy": false
     },
     "text license and file associations": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 74579.150292,
+      "avgMs": 49719.433528,
       "slow": false,
       "heavy": false
     },
     "html license": {
-      "runs": 5,
+      "runs": 6,
       "fails": 0,
-      "avgMs": 113965.9520666,
+      "avgMs": 94971.62672216666,
       "slow": false,
       "heavy": false
     },
     "AppImage - default icon, custom executable and custom desktop": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 69152.0718335,
+      "avgMs": 46101.38122233333,
       "slow": false,
       "heavy": false
     },
@@ -2059,9 +2059,9 @@
       "heavy": false
     },
     "AppImage arm, max compression": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 95960.182375,
+      "avgMs": 63973.45491666667,
       "slow": false,
       "heavy": false
     },
@@ -2073,37 +2073,37 @@
       "heavy": false
     },
     "icons from ICNS (mac)": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 56581.494791499994,
+      "avgMs": 37720.99652766666,
       "slow": false,
       "heavy": false
     },
     "icons from dir and one icon with suffix": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 55849.789187500006,
+      "avgMs": 37233.19279166667,
       "slow": false,
       "heavy": false
     },
     "icons dir with images without size in the filename": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 47639.2244795,
+      "avgMs": 31759.482986333333,
       "slow": false,
       "heavy": false
     },
     "icons from ICNS if nothing specified": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 58966.05472949999,
+      "avgMs": 39310.703152999995,
       "slow": false,
       "heavy": false
     },
     "no-author-email": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 25011.481125000006,
+      "avgMs": 16674.320750000003,
       "slow": false,
       "heavy": false
     },
@@ -2129,9 +2129,9 @@
       "heavy": false
     },
     "forbid desktop.Exec": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 20115.496479,
+      "avgMs": 13410.330986,
       "slow": false,
       "heavy": false
     },
@@ -2143,9 +2143,9 @@
       "heavy": false
     },
     "icons from ICNS": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 67136.0014795,
+      "avgMs": 44757.33431966667,
       "slow": false,
       "heavy": false
     },
@@ -2500,163 +2500,163 @@
       "heavy": false
     },
     "github allowPrerelease=true": {
-      "runs": 3,
+      "runs": 4,
       "fails": 0,
-      "avgMs": 658.2244583333332,
+      "avgMs": 629.62619375,
       "slow": false,
       "heavy": false
     },
     "file url keygen": {
-      "runs": 3,
+      "runs": 4,
       "fails": 0,
       "avgMs": 0,
       "slow": false,
       "heavy": false
     },
     "file url bitbucket": {
-      "runs": 3,
+      "runs": 4,
       "fails": 0,
       "avgMs": 0,
       "slow": false,
       "heavy": false
     },
     "file url generic": {
-      "runs": 3,
+      "runs": 4,
       "fails": 0,
-      "avgMs": 1020.7566863333335,
+      "avgMs": 962.5959897500002,
       "slow": false,
       "heavy": false
     },
     "downgrade (disallowed, beta)": {
-      "runs": 3,
+      "runs": 4,
       "fails": 0,
-      "avgMs": 1026.7995083333335,
+      "avgMs": 975.7884562500001,
       "slow": false,
       "heavy": false
     },
     "github allowPrerelease=false": {
-      "runs": 3,
+      "runs": 4,
       "fails": 0,
-      "avgMs": 1156.3251943333332,
+      "avgMs": 1159.97124575,
       "slow": false,
       "heavy": false
     },
     "github blockmap files - should get blockmap files": {
-      "runs": 3,
+      "runs": 4,
       "fails": 0,
-      "avgMs": 1194.913425,
+      "avgMs": 1166.83219375,
       "slow": false,
       "heavy": false
     },
     "gitlab checkForUpdates": {
-      "runs": 3,
+      "runs": 4,
       "fails": 0,
-      "avgMs": 848.020539,
+      "avgMs": 812.5457792499999,
       "slow": false,
       "heavy": false
     },
     "DigitalOcean Spaces": {
-      "runs": 3,
+      "runs": 4,
       "fails": 0,
       "avgMs": 0,
       "slow": false,
       "heavy": false
     },
     "sha512 mismatch error event": {
-      "runs": 3,
+      "runs": 4,
       "fails": 0,
       "avgMs": 0,
       "slow": false,
       "heavy": false
     },
     "gitlab blockmap files - should get blockmap files from generic_package": {
-      "runs": 3,
+      "runs": 4,
       "fails": 0,
-      "avgMs": 2805.76215,
+      "avgMs": 2305.7908125,
       "slow": false,
       "heavy": false
     },
     "file url generic - manual download": {
-      "runs": 3,
+      "runs": 4,
       "fails": 0,
-      "avgMs": 432.21740000000017,
+      "avgMs": 2752.3045,
       "slow": false,
       "heavy": false
     },
     "gitlab blockmap files - should get blockmap files from project_upload": {
-      "runs": 3,
+      "runs": 4,
       "fails": 0,
-      "avgMs": 1198.5799860000004,
+      "avgMs": 1123.0167645000001,
       "slow": false,
       "heavy": false
     },
     "checkForUpdates several times": {
-      "runs": 3,
+      "runs": 4,
       "fails": 0,
-      "avgMs": 5370.008311333334,
+      "avgMs": 7478.2868585,
       "slow": false,
       "heavy": false
     },
     "file url github private": {
-      "runs": 3,
+      "runs": 4,
       "fails": 0,
       "avgMs": 0,
       "slow": false,
       "heavy": false
     },
     "test error": {
-      "runs": 3,
+      "runs": 4,
       "fails": 0,
-      "avgMs": 69.6321110000002,
+      "avgMs": 64.84925825000028,
       "slow": false,
       "heavy": false
     },
     "test download progress": {
-      "runs": 3,
+      "runs": 4,
       "fails": 0,
       "avgMs": 0,
       "slow": false,
       "heavy": false
     },
     "file url github pre-release and fullChangelog": {
-      "runs": 3,
+      "runs": 4,
       "fails": 0,
-      "avgMs": 7664.806322,
+      "avgMs": 6891.178991500001,
       "slow": false,
       "heavy": false
     },
     "file url gitlab": {
-      "runs": 3,
+      "runs": 4,
       "fails": 0,
-      "avgMs": 26820.923422333333,
+      "avgMs": 23709.41939175,
       "slow": false,
       "heavy": false
     },
     "file url github": {
-      "runs": 3,
+      "runs": 4,
       "fails": 0,
-      "avgMs": 6271.705894666668,
+      "avgMs": 8139.886271000001,
       "slow": false,
       "heavy": false
     },
     "invalid signature": {
-      "runs": 3,
+      "runs": 4,
       "fails": 0,
-      "avgMs": 388.8351333333333,
+      "avgMs": 649.37905,
       "slow": false,
       "heavy": false
     },
     "test custom signature verifier": {
-      "runs": 3,
+      "runs": 4,
       "fails": 0,
-      "avgMs": 75.65860000000005,
+      "avgMs": 258.5816500000001,
       "slow": false,
       "heavy": false
     },
     "test custom signature verifier - signing error message": {
-      "runs": 3,
+      "runs": 4,
       "fails": 0,
-      "avgMs": 67.22853333333357,
+      "avgMs": 259.0599250000005,
       "slow": false,
       "heavy": false
     },
@@ -2668,16 +2668,16 @@
       "heavy": false
     },
     "valid signature": {
-      "runs": 3,
+      "runs": 4,
       "fails": 0,
-      "avgMs": 10154.703397,
+      "avgMs": 8008.97952275,
       "slow": false,
       "heavy": false
     },
     "90 staging percentage": {
-      "runs": 3,
+      "runs": 4,
       "fails": 0,
-      "avgMs": 4261.242166666667,
+      "avgMs": 3284.761625,
       "slow": false,
       "heavy": false
     },
@@ -2689,51 +2689,51 @@
       "heavy": false
     },
     "gitlab - manual download": {
-      "runs": 3,
+      "runs": 4,
       "fails": 0,
-      "avgMs": 18866.790655333334,
+      "avgMs": 17687.0836165,
       "slow": false,
       "heavy": false
     },
     "cancel download with progress": {
-      "runs": 3,
+      "runs": 4,
       "fails": 0,
-      "avgMs": 2558.6169803333346,
+      "avgMs": 1966.521310250001,
       "slow": false,
       "heavy": false
     },
     "test downloaded installer": {
-      "runs": 3,
+      "runs": 4,
       "fails": 0,
       "avgMs": 0,
       "slow": false,
       "heavy": false
     },
     "valid signature - multiple publisher DNs": {
-      "runs": 3,
+      "runs": 4,
       "fails": 0,
-      "avgMs": 8685.398047333334,
+      "avgMs": 6907.1083105,
       "slow": false,
       "heavy": false
     },
     "1 staging percentage": {
-      "runs": 3,
+      "runs": 4,
       "fails": 0,
-      "avgMs": 2700.8899886666673,
+      "avgMs": 2157.4559415000003,
       "slow": false,
       "heavy": false
     },
     "valid signature using DN": {
-      "runs": 3,
+      "runs": 4,
       "fails": 0,
-      "avgMs": 6924.898483333333,
+      "avgMs": 5565.0284875,
       "slow": false,
       "heavy": false
     },
     "test download and install": {
-      "runs": 3,
+      "runs": 4,
       "fails": 0,
-      "avgMs": 437.41566633333423,
+      "avgMs": 414.9922997500007,
       "slow": false,
       "heavy": false
     },
@@ -2815,14 +2815,14 @@
       "heavy": false
     },
     "assisted, MUI_HEADER as option": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 0,
+      "avgMs": 47257.339700000004,
       "slow": false,
       "heavy": false
     },
     "debug logging enabled": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
       "avgMs": 0,
       "slow": false,
@@ -2927,9 +2927,9 @@
       "heavy": false
     },
     "assisted, MUI_HEADER": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 30801.0207915,
+      "avgMs": 46243.89749433333,
       "slow": false,
       "heavy": false
     },
@@ -2955,9 +2955,9 @@
       "heavy": false
     },
     "allowElevation false, app requestedExecutionLevel admin": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 45957.0154585,
+      "avgMs": 69246.40810566668,
       "slow": false,
       "heavy": false
     },
@@ -2976,30 +2976,30 @@
       "heavy": false
     },
     "assisted, only perMachine and elevated": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 135420.13847900002,
+      "avgMs": 134740.159686,
       "slow": false,
       "heavy": false
     },
     "assisted, only perMachine": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 140260.01329149998,
+      "avgMs": 152989.40652766664,
       "slow": false,
       "heavy": false
     },
     "allowToChangeInstallationDirectory": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 109455.18402100001,
+      "avgMs": 112862.50318066667,
       "slow": false,
       "heavy": false
     },
     "assisted": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 143794.429271,
+      "avgMs": 165029.75028066666,
       "slow": false,
       "heavy": false
     },
@@ -3810,18 +3810,18 @@
       }
     },
     "ExtraBuildResourcesTest.ts": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 351394.658021,
+      "avgMs": 240126.6146,
       "unstable": false,
       "hasHeavyTests": false,
       "platformAvgMs": {
-        "win32": 0,
+        "win32": 240126.6146,
         "darwin": 351394.658021,
         "linux": 0
       },
       "platformRuns": {
-        "win32": 0,
+        "win32": 1,
         "darwin": 2,
         "linux": 0
       }
@@ -3844,18 +3844,18 @@
       }
     },
     "BuildTest.ts": {
-      "runs": 3,
+      "runs": 4,
       "fails": 0,
-      "avgMs": 337254.33566700004,
+      "avgMs": 282434.26170000003,
       "unstable": false,
       "hasHeavyTests": false,
       "platformAvgMs": {
-        "win32": 200313.3419,
+        "win32": 282434.26170000003,
         "darwin": 337254.33566700004,
         "linux": 0
       },
       "platformRuns": {
-        "win32": 1,
+        "win32": 2,
         "darwin": 2,
         "linux": 0
       }
@@ -3997,18 +3997,18 @@
       }
     },
     "protonTest.ts": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 19163.214437500003,
+      "avgMs": 21624.985399999998,
       "unstable": false,
       "hasHeavyTests": false,
       "platformAvgMs": {
-        "win32": 0,
+        "win32": 21624.985399999998,
         "darwin": 19163.214437500003,
         "linux": 0
       },
       "platformRuns": {
-        "win32": 0,
+        "win32": 1,
         "darwin": 2,
         "linux": 0
       }
@@ -4065,9 +4065,9 @@
       }
     },
     "linuxPackagerTest.ts": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 730373.2638345,
+      "avgMs": 0,
       "unstable": false,
       "hasHeavyTests": false,
       "platformAvgMs": {
@@ -4076,7 +4076,7 @@
         "linux": 0
       },
       "platformRuns": {
-        "win32": 0,
+        "win32": 1,
         "darwin": 2,
         "linux": 0
       }
@@ -4201,18 +4201,18 @@
       }
     },
     "nsisUpdaterTest.ts": {
-      "runs": 3,
+      "runs": 4,
       "fails": 0,
-      "avgMs": 112635.7271,
+      "avgMs": 99489.42285,
       "unstable": false,
       "hasHeavyTests": false,
       "platformAvgMs": {
-        "win32": 112635.7271,
+        "win32": 99489.42285,
         "darwin": 111172.66604050001,
         "linux": 0
       },
       "platformRuns": {
-        "win32": 1,
+        "win32": 2,
         "darwin": 2,
         "linux": 0
       }
@@ -4303,18 +4303,18 @@
       }
     },
     "assistedInstallerTest.ts": {
-      "runs": 2,
+      "runs": 3,
       "fails": 0,
-      "avgMs": 605687.8013125,
+      "avgMs": 973732.7923,
       "unstable": false,
       "hasHeavyTests": false,
       "platformAvgMs": {
-        "win32": 0,
+        "win32": 973732.7923,
         "darwin": 605687.8013125,
         "linux": 0
       },
       "platformRuns": {
-        "win32": 0,
+        "win32": 1,
         "darwin": 2,
         "linux": 0
       }
