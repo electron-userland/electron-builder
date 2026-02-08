@@ -129,6 +129,17 @@ export class LinuxTargetHelper {
       }
     }
 
+    // https://github.com/electron-userland/electron-builder/issues/7159
+    // Electron uses desktopName from package.json to set the app_id, which should match StartupWMClass.
+    // https://github.com/electron/electron/blob/9a7b73b5334f1d72c08e2d5e94106706ed751186/lib/browser/init.ts#L128-L133
+    const desktopName = packager.info.metadata.desktopName
+    let wmClass: string
+    if (!isEmptyOrSpaces(desktopName)) {
+      wmClass = desktopName!.replace(/\.desktop$/, "")
+    } else {
+      wmClass = appInfo.productName
+    }
+
     const desktopMeta: any = {
       Name: appInfo.productName,
       Exec: exec,
@@ -140,7 +151,7 @@ export class LinuxTargetHelper {
       // to get WM_CLASS of running window: xprop WM_CLASS
       // StartupWMClass doesn't work for unicode
       // https://github.com/electron/electron/blob/2-0-x/atom/browser/native_window_views.cc#L226
-      StartupWMClass: appInfo.productName,
+      StartupWMClass: wmClass,
       ...extra,
       ...(targetSpecificOptions.desktop?.entry ?? {}),
     }
