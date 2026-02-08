@@ -215,16 +215,18 @@ function getNoteValue(parent: XElement): string {
   return result === "No content." ? "" : result
 }
 
-export function computeReleaseNotes(currentVersion: semver.SemVer, isFullChangelog: boolean, feed: XElement, latestRelease: any): string | Array<ReleaseNoteInfo> | null {
+export function computeReleaseNotes(currentVersion: semver.SemVer, isFullChangelog: boolean, feed: XElement, latestRelease: XElement): string | Array<ReleaseNoteInfo> | null {
   if (!isFullChangelog) {
     return getNoteValue(latestRelease)
   }
 
   const releaseNotes: Array<ReleaseNoteInfo> = []
   for (const release of feed.getElements("entry")) {
+    const tagVersionRegex = /\/tag\/v?([^/]+)$/
     // noinspection TypeScriptValidateJSTypes
-    const versionRelease = /\/tag\/v?([^/]+)$/.exec(release.element("link").attribute("href"))![1]
-    if (semver.valid(versionRelease) && semver.lt(currentVersion, versionRelease)) {
+    const versionRelease = tagVersionRegex.exec(release.element("link").attribute("href"))![1]
+    const latestVersion = tagVersionRegex.exec(latestRelease.element("link").attribute("href"))![1]
+    if (semver.valid(versionRelease) && semver.satisfies(versionRelease, `>${currentVersion.version} <=${latestVersion}`)) {
       releaseNotes.push({
         version: versionRelease,
         note: getNoteValue(release),
