@@ -98,7 +98,11 @@ export default class SmarterReporter implements Reporter {
     const totalFails = prevPlatformFails + fails
     const failRatio = totalFails / newPlatformRuns
 
-    platformRuns[this.currentPlatform] = { runs: newPlatformRuns, fails: totalFails, avgMs: (prevPlatformAvg * prevPlatformRuns + dur) / newPlatformRuns }
+    platformRuns[this.currentPlatform] = {
+      runs: newPlatformRuns,
+      fails: totalFails,
+      avgMs: process.env.RESET_VITEST_SNAPSHOT === "true" ? dur : (prevPlatformAvg * prevPlatformRuns + dur) / newPlatformRuns,
+    }
 
     this.cache.files[file] = {
       unstable: failRatio > UNSTABLE_FAIL_RATIO,
