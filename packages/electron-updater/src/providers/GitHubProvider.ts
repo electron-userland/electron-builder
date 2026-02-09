@@ -237,10 +237,13 @@ export function computeReleaseNotes(currentVersion: semver.SemVer, isFullChangel
       continue
     }
     // check `semver.valid` to validate if an electron release, because some repositories can contain also non-electron releases (for example, with documentation or website updates)
-    const isGreaterThanCurrent = versionRelease && semver.valid(versionRelease) && semver.lt(currentVersion, versionRelease)
-    const isLessOrEqualThanLatest = latestVersion && semver.valid(latestVersion) ? semver.lte(versionRelease, latestVersion) : true
-    if (isLessOrEqualThanLatest && isGreaterThanCurrent) {
-      // if (semver.valid(versionRelease) && semver.satisfies(versionRelease, `>${currentVersion.version} <=${latestVersion}`)) {
+    if (!semver.valid(versionRelease) || !semver.valid(latestVersion)) {
+      continue
+    }
+
+    const isGreaterThanCurrent = semver.gt(versionRelease, currentVersion)
+    const isLessOrEqualThanLatest = semver.lte(versionRelease, latestVersion!)
+    if (isGreaterThanCurrent && isLessOrEqualThanLatest) {
       releaseNotes.push({
         version: versionRelease,
         note: getNoteValue(release),
