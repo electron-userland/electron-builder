@@ -1,6 +1,6 @@
 import * as fs from "fs"
 import * as path from "path"
-import { IS_LINUX, IS_MAC, IS_WIN, isUnstableTest, normalizePath, TargetPlatform, TEST_ROOT } from "./smart-config"
+import { IS_LINUX, IS_MAC, IS_WIN, PLATFORM, SupportedPlatforms, TargetPlatform, TEST_ROOT, skipPerOSTests, skippedTests } from "./smart-config"
 
 export function platformAllowed(file: string, platform: TargetPlatform = "current"): boolean {
   if (platform === "current") {
@@ -60,4 +60,13 @@ function collectTests(dir: string, platform: TargetPlatform = "current", out: st
 
 export function getAllTestFiles(platform: TargetPlatform = "current"): string[] {
   return collectTests(TEST_ROOT, platform).filter(file => platformAllowed(file, platform))
+}
+
+function isUnstableTest(file: string, platform: TargetPlatform): boolean {
+  const key: SupportedPlatforms = platform !== "current" ? platform : PLATFORM
+  return skippedTests.some(t => file.includes(t)) || skipPerOSTests[key]?.some(t => file.includes(t)) || false
+}
+
+function normalizePath(p: string) {
+  return p.split(path.sep).join("/")
 }

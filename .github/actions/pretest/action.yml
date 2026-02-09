@@ -7,6 +7,11 @@ inputs:
   cache-path:
     description: 'The path to the electron cache'
     required: true
+  reset-vitest-smart-cache:
+    description: "Reset Vitest smart cache (will cause all tests to run without caching for this run, then cache will be repopulated for future runs)"
+    required: false
+    type: boolean
+    default: false
 
 runs:
   using: 'composite'
@@ -26,12 +31,17 @@ runs:
 
     - name: Restore Vitest Smart Cache
       id: cache-restore
+      if: inputs.reset-vitest-smart-cache != 'true'
       uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
       with:
         path: ${{ github.workspace }}/test/vitest-scripts/_vitest-smart-cache.json
         key: vitest-smart-cache-${{ github.ref_name }}-${{ github.sha }}
         restore-keys: |
           vitest-smart-cache-${{ github.ref_name }}-
+
+    - name: Set up Vitest smart cache reset flag 
+      run: echo "RESET_VITEST_SNAPSHOT=${{ inputs.reset-vitest-smart-cache }}" >> $GITHUB_ENV
+      shell: bash
 
     - name: Log cache status
       run: |

@@ -24,9 +24,6 @@ export class Logger {
   private readonly shouldDisableNonErrorLoggingVitest = process.env.VITEST && !this.isDebugEnabled
 
   constructor(protected readonly stream: WritableStream) {
-    if (this.shouldDisableNonErrorLoggingVitest) {
-      this.log(`non-error logging is silenced during VITEST workflow when DEBUG=electron-builder flag is not set`)
-    }
   }
 
   messageTransformer: (message: string, level: LogLevel) => string = it => it
