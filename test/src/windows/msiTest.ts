@@ -129,4 +129,17 @@ describe.ifWindows("msi", { sequential: true }, () => {
         },
       },
     }))
+
+  test.skip("assisted with license", ({ expect }) =>
+    app(expect, {
+      targets: Platform.WINDOWS.createTarget("msi", Arch.x64),
+      config: {
+        appId: "build.electron.test.msi.assisted.license",
+        productName: "Test MSI Assisted License",
+        msi: {
+          oneClick: false,
+          license: "license_de.rtf",
+        },
+      },
+    }))
 })

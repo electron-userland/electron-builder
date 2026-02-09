@@ -28,4 +28,18 @@ export interface MsiOptions extends CommonWindowsInstallerConfiguration, TargetS
    * Any additional arguments to be passed to the light.ext, such as `["-cultures:ja-jp"]`
    */
   readonly additionalLightArgs?: Array<string> | null
+
+  /**
+   * The path to EULA license file. Defaults to `license.txt` or `eula.txt` (or uppercase variants).
+   * 
+   * **Note: MSI installers only support RTF format.** The license file must be in RTF format for WiX to display it properly.
+   * 
+   * Multiple license files for different languages are supported — use lang postfix (e.g. `_de`, `_ru`). For example, create files `license_de.rtf` and `license_en.rtf` in the build resources.
+   * If OS language is german, `license_de.rtf` will be displayed. See map of [language code to name](https://github.com/meikidd/iso-639-1/blob/master/src/data.js).
+   * 
+   * Appropriate license file will be selected by language id. English is the default language.
+   * 
+   * Note: This option is only applicable when `oneClick` is set to `false` (assisted installer). One-click installers do not show a license agreement page.
+   */
+  readonly license?: string | null
 }

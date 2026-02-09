@@ -11,6 +11,7 @@ import { Target } from "../core"
 import { DesktopShortcutCreationPolicy, FinalCommonWindowsInstallerOptions, getEffectiveOptions } from "../options/CommonWindowsInstallerConfiguration"
 import { normalizeExt } from "../platformPackager"
 import { getTemplatePath } from "../util/pathManager"
+import { getNotLocalizedLicenseFile } from "../util/license"
 import { VmManager } from "../vm/vm"
 import { WineVmManager } from "../vm/WineVm"
 import { WinPackager } from "../winPackager"
@@ -192,6 +193,15 @@ export default class MsiTarget extends Target {
       log.warn(`Manufacturer is not set for MSI — please set "author" in the package.json`)
     }
 
+    // Only include license file for assisted installer (oneClick === false)
+    let licenseRtfPath: string | null = null
+    if (commonOptions.isAssisted) {
+      const licenseFile = await getNotLocalizedLicenseFile(this.options.license, this.packager, ["rtf"])
+      if (licenseFile != null) {
+        licenseRtfPath = this.vm.toVmFile(licenseFile)
+      }
+    }
+
     return {
       ...commonOptions,
       iconPath: iconPath == null ? null : this.vm.toVmFile(iconPath),
@@ -202,6 +212,7 @@ export default class MsiTarget extends Target {
       upgradeCode: this.upgradeCode,
       manufacturer: companyName || appInfo.productName,
       appDescription: appInfo.description,
+      licenseRtfPath,
     }
   }
 

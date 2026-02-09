@@ -58,6 +58,10 @@
         </UI>
       {{ } -}}
 
+      {{ if (licenseRtfPath) { }}
+      <WixVariable Id="WixUILicenseRtf" Value="${licenseRtfPath}"/>
+      {{ } -}}
+
       <UIRef Id="WixUI_InstallDir"/>
       <UI>
         <Publish Dialog="WelcomeDlg" Control="Next" Event="SpawnWaitDialog" Value="WaitForCostingDlg" Order="2">1 OR CostingComplete = 1</Publish>
