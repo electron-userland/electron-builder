@@ -87,6 +87,10 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
 
             // This Release's Tag
             const hrefTag = hrefElement[1]
+            if (!semver.valid(hrefTag)) {
+              continue
+            }
+
             //Get Channel from this release's tag
             const hrefChannel = (semver.prerelease(hrefTag)?.[0] as string) || null
 
@@ -97,12 +101,14 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
 
             if (shouldFetchVersion && !isCustomChannel && !channelMismatch) {
               tag = hrefTag
+              latestRelease = element
               break
             }
 
             const isNextPreRelease = hrefChannel && hrefChannel === currentChannel
             if (isNextPreRelease) {
               tag = hrefTag
+              latestRelease = element
               break
             }
           }
