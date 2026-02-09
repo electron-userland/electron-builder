@@ -13,7 +13,7 @@ const parser = new XMLParser({
 const winCodeSignVersions: ToolsetConfig["winCodeSign"][] = ["0.0.0", "1.0.0", "1.1.0"]
 const wrappedTarget = Platform.WINDOWS.createTarget(["NSIS", "msiWrapped"], Arch.x64)
 
-describe.ifWindows("msiWrapped", () => {
+describe.ifWindows("msiWrapped", { sequential: true }, () => {
   for (const winCodeSign of winCodeSignVersions) {
     describe(`winCodeSign: ${winCodeSign}`, () => {
       const toolsets: ToolsetConfig = {

@@ -45,7 +45,7 @@ export default class SmarterReporter implements Reporter {
 
     const newRuns = prevRuns + 1
     const newFails = prevFails + (failed ? 1 : 0)
-    const newAvg = (prevAvg * prevRuns + dur) / newRuns
+    const newAvg = process.env.RESET_VITEST_SNAPSHOT === "true" ? dur : (prevAvg * prevRuns + dur) / newRuns
 
     platformRuns[this.currentPlatform] = { runs: newRuns, fails: newFails, avgMs: newAvg }
 
@@ -98,7 +98,11 @@ export default class SmarterReporter implements Reporter {
     const totalFails = prevPlatformFails + fails
     const failRatio = totalFails / newPlatformRuns
 
-    platformRuns[this.currentPlatform] = { runs: newPlatformRuns, fails: totalFails, avgMs: (prevPlatformAvg * prevPlatformRuns + dur) / newPlatformRuns }
+    platformRuns[this.currentPlatform] = {
+      runs: newPlatformRuns,
+      fails: totalFails,
+      avgMs: process.env.RESET_VITEST_SNAPSHOT === "true" ? dur : (prevPlatformAvg * prevPlatformRuns + dur) / newPlatformRuns,
+    }
 
     this.cache.files[file] = {
       unstable: failRatio > UNSTABLE_FAIL_RATIO,

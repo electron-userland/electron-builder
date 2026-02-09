@@ -279,9 +279,22 @@ export class WindowsSignToolManager implements SignManager {
     this.addCertificateArgs(args, options, vm, true)
 
     // Hash algorithm
-    args.push("/fd", options.hash.toLowerCase())
-    if (process.env.ELECTRON_BUILDER_OFFLINE !== "true" && !args.includes("/t")) {
-      args.push("/td", "sha256")
+    const isLegacyToolset = this.packager.config.toolsets?.winCodeSign === "0.0.0" || this.packager.config.toolsets?.winCodeSign == null
+    if (isLegacyToolset) {
+      // Legacy || v0.0.0: Only add /fd for non-SHA1 (original behavior)
+      if (options.hash !== "sha1") {
+        args.push("/fd", options.hash)
+        if (process.env.ELECTRON_BUILDER_OFFLINE !== "true") {
+          args.push("/td", "sha256")
+        }
+      }
+    } else {
+      // Modern: Always add /fd (required by new Windows Kits)
+      args.push("/fd", options.hash.toLowerCase())
+      // Only add /td for RFC3161 timestamps (incompatible with /t)
+      if (process.env.ELECTRON_BUILDER_OFFLINE !== "true" && (options.isNest || options.hash === "sha256")) {
+        args.push("/td", "sha256")
+      }
     }
 
     // Optional parameters
