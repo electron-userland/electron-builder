@@ -1,0 +1,7 @@
+{
+  "name": "test-app-install-app-deps-workspace",
+  "private": true,
+  "trustedDependencies": [
+    "classic-level"
+  ]
+}

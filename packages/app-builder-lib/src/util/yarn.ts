@@ -188,7 +188,7 @@ export async function rebuild(config: Configuration, { appDir, projectDir, works
   const {
     frameworkInfo: { version: electronVersion },
   } = options
-  const projectRootPath = workspaceRoot || projectDir || appDir
+  const projectRootPath = projectDir || appDir
   const logInfo = {
     electronVersion,
     arch,
