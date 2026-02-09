@@ -321,8 +321,6 @@ jobs:
   test-linux-native:
     name:
       Test Linux Native (non-Docker)
-      # disabled for now
-    if: false
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:
@@ -348,7 +346,7 @@ jobs:
         run: |
           pnpm ci:test
         env:
-          TEST_FILES: flatpakTest,snapHeavyTest
+          TEST_FILES: flatpakTest,snapHeavyTest,snapTest
           VITEST_SMART_CACHE_FILE: ${{ github.workspace }}/test/vitest-scripts/_vitest-smart-cache.json
           RESET_VITEST_SNAPSHOTS: ${{ inputs.reset-vitest-smart-cache }}
 
