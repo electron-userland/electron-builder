@@ -3,21 +3,28 @@ import * as path from "path"
 import { CACHE_FILE, SupportedPlatforms } from "./smart-config"
 
 export interface TestStats {
-  runs: number
-  fails: number
-  avgMs: number
-  slow?: boolean
+  platformRuns?: Record<
+    SupportedPlatforms,
+    {
+      runs: number
+      fails: number
+      avgMs: number
+    }
+  >
   heavy?: boolean
 }
 
 export interface FileStats {
-  runs: number
-  fails: number
-  avgMs: number
   unstable?: boolean
   hasHeavyTests?: boolean
-  platformAvgMs?: Record<SupportedPlatforms, number>
-  platformRuns?: Record<SupportedPlatforms, number>
+  platformRuns?: Record<
+    SupportedPlatforms,
+    {
+      runs: number
+      fails: number
+      avgMs: number
+    }
+  >
 }
 
 interface SmartCache {
