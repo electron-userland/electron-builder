@@ -1050,7 +1050,7 @@
     "win/linux concurrent": {
       "platformRuns": {
         "win32": {
-          "runs": 2,
+          "runs": 3,
           "fails": 0,
           "avgMs": 0
         },
@@ -1070,9 +1070,9 @@
     "win concurrent": {
       "platformRuns": {
         "win32": {
-          "runs": 2,
+          "runs": 3,
           "fails": 0,
-          "avgMs": 149866.1363625
+          "avgMs": 156560.7319
         },
         "darwin": {
           "runs": 0,
@@ -1090,9 +1090,9 @@
     "win concurrent - all targets": {
       "platformRuns": {
         "win32": {
-          "runs": 2,
+          "runs": 3,
           "fails": 0,
-          "avgMs": 528714.875917
+          "avgMs": 475705.4261
         },
         "darwin": {
           "runs": 0,
@@ -1145,7 +1145,7 @@
     "files": {
       "platformRuns": {
         "win32": {
-          "runs": 3,
+          "runs": 4,
           "fails": 0,
           "avgMs": 0
         },
@@ -3335,7 +3335,7 @@
     "expand not defined env": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
           "avgMs": 0
         },
@@ -3355,7 +3355,7 @@
     "extraResources on Windows": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
           "avgMs": 0
         },
@@ -3442,7 +3442,7 @@
     "files.from asar": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
           "avgMs": 0
         },
@@ -3462,9 +3462,9 @@
     "${version} macro with +": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
-          "avgMs": 23.507416999999805
+          "avgMs": 12.708600000000047
         },
         "darwin": {
           "runs": 0,
@@ -3482,9 +3482,9 @@
     "sanitized product name": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
-          "avgMs": 21.891458000000057
+          "avgMs": 7.959099999999921
         },
         "darwin": {
           "runs": 0,
@@ -3502,9 +3502,9 @@
     "product name": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
-          "avgMs": 21.683166999999685
+          "avgMs": 7.890699999999924
         },
         "darwin": {
           "runs": 0,
@@ -3542,7 +3542,7 @@
     "postpone symlink": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
           "avgMs": 0
         },
@@ -3562,7 +3562,7 @@
     "extraResources on Linux": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
           "avgMs": 0
         },
@@ -3582,7 +3582,7 @@
     "map resources": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
           "avgMs": 0
         },
@@ -3602,7 +3602,7 @@
     "extraResources on macOS": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
           "avgMs": 0
         },
@@ -3676,7 +3676,7 @@
     "extraResources - two-package": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
           "avgMs": 0
         },
@@ -4158,9 +4158,9 @@
     "removePassword: --accessKey > handles unquoted value (snapshot)": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
-          "avgMs": 13.260332999999946
+          "avgMs": 5.007100000000037
         },
         "darwin": {
           "runs": 0,
@@ -4178,9 +4178,9 @@
     "removePassword: --accessKey > handles double-quoted value (snapshot)": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
-          "avgMs": 12.760666000000015
+          "avgMs": 4.704000000000008
         },
         "darwin": {
           "runs": 0,
@@ -4198,9 +4198,9 @@
     "removePassword: --accessKey > handles single-quoted value (snapshot)": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
-          "avgMs": 12.691583000000037
+          "avgMs": 4.669399999999996
         },
         "darwin": {
           "runs": 0,
@@ -4218,9 +4218,9 @@
     "removePassword: --secretKey > handles unquoted value (snapshot)": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
-          "avgMs": 12.64895899999999
+          "avgMs": 4.648599999999988
         },
         "darwin": {
           "runs": 0,
@@ -4238,9 +4238,9 @@
     "removePassword: --secretKey > handles double-quoted value (snapshot)": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
-          "avgMs": 12.603250000000003
+          "avgMs": 4.6311000000000035
         },
         "darwin": {
           "runs": 0,
@@ -4258,9 +4258,9 @@
     "removePassword: --secretKey > handles single-quoted value (snapshot)": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
-          "avgMs": 12.361749999999915
+          "avgMs": 2.355000000000018
         },
         "darwin": {
           "runs": 0,
@@ -4278,9 +4278,9 @@
     "removePassword: -P > handles unquoted value (snapshot)": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
-          "avgMs": 11.97808299999997
+          "avgMs": 2.3052999999999884
         },
         "darwin": {
           "runs": 0,
@@ -4298,9 +4298,9 @@
     "removePassword: -P > handles double-quoted value (snapshot)": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
-          "avgMs": 11.963582999999971
+          "avgMs": 2.279899999999998
         },
         "darwin": {
           "runs": 0,
@@ -4318,9 +4318,9 @@
     "removePassword: -P > handles single-quoted value (snapshot)": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
-          "avgMs": 11.914708000000019
+          "avgMs": 2.2635999999999967
         },
         "darwin": {
           "runs": 0,
@@ -4338,9 +4338,9 @@
     "removePassword: -p > handles unquoted value (snapshot)": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
-          "avgMs": 11.775707999999895
+          "avgMs": 2.1947999999999865
         },
         "darwin": {
           "runs": 0,
@@ -4358,9 +4358,9 @@
     "removePassword: -p > handles double-quoted value (snapshot)": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
-          "avgMs": 5.5289169999999785
+          "avgMs": 1.1347000000000094
         },
         "darwin": {
           "runs": 0,
@@ -4378,9 +4378,9 @@
     "removePassword: -p > handles single-quoted value (snapshot)": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
-          "avgMs": 5.385917000000063
+          "avgMs": 1.1105000000000018
         },
         "darwin": {
           "runs": 0,
@@ -4398,9 +4398,9 @@
     "removePassword: -pass > handles unquoted value (snapshot)": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
-          "avgMs": 5.372500000000059
+          "avgMs": 1.09639999999996
         },
         "darwin": {
           "runs": 0,
@@ -4418,9 +4418,9 @@
     "removePassword: -pass > handles double-quoted value (snapshot)": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
-          "avgMs": 5.3436249999999745
+          "avgMs": 1.0844000000000165
         },
         "darwin": {
           "runs": 0,
@@ -4438,9 +4438,9 @@
     "removePassword: -pass > handles single-quoted value (snapshot)": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
-          "avgMs": 5.3227920000000495
+          "avgMs": 1.0710000000000264
         },
         "darwin": {
           "runs": 0,
@@ -4458,9 +4458,9 @@
     "removePassword: -String > handles unquoted value (snapshot)": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
-          "avgMs": 4.230292000000077
+          "avgMs": 0.8625000000000114
         },
         "darwin": {
           "runs": 0,
@@ -4478,9 +4478,9 @@
     "removePassword: -String > handles double-quoted value (snapshot)": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
-          "avgMs": 4.182249999999954
+          "avgMs": 0.8396999999999935
         },
         "darwin": {
           "runs": 0,
@@ -4498,9 +4498,9 @@
     "removePassword: -String > handles single-quoted value (snapshot)": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
-          "avgMs": 3.926541000000043
+          "avgMs": 0.8246999999999503
         },
         "darwin": {
           "runs": 0,
@@ -4518,9 +4518,9 @@
     "removePassword: /p > handles unquoted value (snapshot)": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
-          "avgMs": 3.7546250000000327
+          "avgMs": 0.8096999999999639
         },
         "darwin": {
           "runs": 0,
@@ -4538,9 +4538,9 @@
     "removePassword: /p > handles double-quoted value (snapshot)": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
-          "avgMs": 3.703207999999904
+          "avgMs": 0.7953999999999724
         },
         "darwin": {
           "runs": 0,
@@ -4558,9 +4558,9 @@
     "removePassword: /p > handles single-quoted value (snapshot)": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
-          "avgMs": 2.670792000000006
+          "avgMs": 1.0381999999999607
         },
         "darwin": {
           "runs": 0,
@@ -4578,9 +4578,9 @@
     "removePassword: /p > handles Mac host path without hashing (snapshot)": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
-          "avgMs": 2.2305829999999105
+          "avgMs": 1.019299999999987
         },
         "darwin": {
           "runs": 0,
@@ -4598,9 +4598,9 @@
     "removePassword: pass: > handles unquoted value (snapshot)": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
-          "avgMs": 2.2041249999999764
+          "avgMs": 1.0060999999999467
         },
         "darwin": {
           "runs": 0,
@@ -4618,9 +4618,9 @@
     "removePassword: pass: > handles double-quoted value (snapshot)": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
-          "avgMs": 2.1786659999999074
+          "avgMs": 0.988900000000001
         },
         "darwin": {
           "runs": 0,
@@ -4638,9 +4638,9 @@
     "removePassword: pass: > handles single-quoted value (snapshot)": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
-          "avgMs": 2.1586249999999154
+          "avgMs": 0.9764000000000124
         },
         "darwin": {
           "runs": 0,
@@ -4658,9 +4658,9 @@
     "removePassword: /b … /c block > handles /b … /c block (snapshot)": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
-          "avgMs": 2.47849999999994
+          "avgMs": 1.1306000000000154
         },
         "darwin": {
           "runs": 0,
@@ -4678,9 +4678,9 @@
     "removePassword: multiple keys in one string > handles two keys unquoted (snapshot)": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
-          "avgMs": 2.424541999999974
+          "avgMs": 1.1064000000000078
         },
         "darwin": {
           "runs": 0,
@@ -4698,9 +4698,9 @@
     "removePassword: multiple keys in one string > handles mixed quoted and unquoted keys (snapshot)": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
-          "avgMs": 2.3934580000000096
+          "avgMs": 1.0914000000000215
         },
         "darwin": {
           "runs": 0,
@@ -4718,9 +4718,9 @@
     "removePassword: multiple keys in one string > handles several keys and /b … /c block (snapshot)": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
-          "avgMs": 2.372082999999975
+          "avgMs": 1.0803999999999974
         },
         "darwin": {
           "runs": 0,
@@ -4898,7 +4898,7 @@
     "Linux Flatpak Test > flatpak": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
           "avgMs": 0
         },
@@ -4918,7 +4918,7 @@
     "Linux Flatpak Test > enable Wayland flags": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
           "avgMs": 0
         },
@@ -4938,7 +4938,7 @@
     "Linux Flatpak Test > custom finishArgs": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
           "avgMs": 0
         },
@@ -4958,7 +4958,7 @@
     "Linux Flatpak Test > custom runtime and base app version": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
           "avgMs": 0
         },
@@ -5098,7 +5098,7 @@
     "Rebuilder Test > yarn workspace": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
           "avgMs": 0
         },
@@ -5158,7 +5158,7 @@
     "mac/win/linux concurrent": {
       "platformRuns": {
         "win32": {
-          "runs": 2,
+          "runs": 3,
           "fails": 0,
           "avgMs": 0
         },
@@ -5218,7 +5218,7 @@
     "Rebuilder Test > yarn berry workspace": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
           "avgMs": 0
         },
@@ -5498,7 +5498,7 @@
     "mac concurrent": {
       "platformRuns": {
         "win32": {
-          "runs": 2,
+          "runs": 3,
           "fails": 0,
           "avgMs": 0
         },
@@ -7785,7 +7785,7 @@
     "linux concurrent": {
       "platformRuns": {
         "win32": {
-          "runs": 2,
+          "runs": 3,
           "fails": 0,
           "avgMs": 0
         },
@@ -7805,9 +7805,9 @@
     "portable zip several archs": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
-          "avgMs": 120123.680334
+          "avgMs": 88708.08679999999
         },
         "darwin": {
           "runs": 0,
@@ -7865,9 +7865,9 @@
     "portable - splashImage": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
-          "avgMs": 79993.820458
+          "avgMs": 76231.7907
         },
         "darwin": {
           "runs": 0,
@@ -7885,9 +7885,9 @@
     "portable - artifactName and request execution level": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
-          "avgMs": 79982.535584
+          "avgMs": 76228.43490000001
         },
         "darwin": {
           "runs": 0,
@@ -8345,9 +8345,9 @@
     "portable": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
-          "avgMs": 98216.812708
+          "avgMs": 101817.5785
         },
         "darwin": {
           "runs": 0,
@@ -8365,9 +8365,9 @@
     "portable zip": {
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
-          "avgMs": 136838.66529099998
+          "avgMs": 87286.10250000001
         },
         "darwin": {
           "runs": 0,
@@ -9364,7 +9364,7 @@
     "mac > x64": {
       "platformRuns": {
         "win32": {
-          "runs": 2,
+          "runs": 3,
           "fails": 0,
           "avgMs": 0
         },
@@ -9384,7 +9384,7 @@
     "mac > universal": {
       "platformRuns": {
         "win32": {
-          "runs": 2,
+          "runs": 3,
           "fails": 0,
           "avgMs": 0
         },
@@ -9404,7 +9404,7 @@
     "mac > arm64": {
       "platformRuns": {
         "win32": {
-          "runs": 2,
+          "runs": 3,
           "fails": 0,
           "avgMs": 0
         },
@@ -9424,9 +9424,9 @@
     "windows > nsis": {
       "platformRuns": {
         "win32": {
-          "runs": 2,
-          "fails": 1,
-          "avgMs": 529822.539296
+          "runs": 3,
+          "fails": 2,
+          "avgMs": 600003.2588
         },
         "darwin": {
           "runs": 0,
@@ -9444,7 +9444,7 @@
     "linux > AppImage - arm64": {
       "platformRuns": {
         "win32": {
-          "runs": 2,
+          "runs": 3,
           "fails": 0,
           "avgMs": 0
         },
@@ -9464,7 +9464,7 @@
     "linux > AppImage - x64": {
       "platformRuns": {
         "win32": {
-          "runs": 2,
+          "runs": 3,
           "fails": 0,
           "avgMs": 0
         },
@@ -9484,7 +9484,7 @@
     "linux > fedora - (zypper)": {
       "platformRuns": {
         "win32": {
-          "runs": 2,
+          "runs": 3,
           "fails": 0,
           "avgMs": 0
         },
@@ -9504,7 +9504,7 @@
     "linux > fedora - (dnf)": {
       "platformRuns": {
         "win32": {
-          "runs": 2,
+          "runs": 3,
           "fails": 0,
           "avgMs": 0
         },
@@ -9524,7 +9524,7 @@
     "linux > fedora - (yum)": {
       "platformRuns": {
         "win32": {
-          "runs": 2,
+          "runs": 3,
           "fails": 0,
           "avgMs": 0
         },
@@ -9544,7 +9544,7 @@
     "linux > fedora - (rpm)": {
       "platformRuns": {
         "win32": {
-          "runs": 2,
+          "runs": 3,
           "fails": 0,
           "avgMs": 0
         },
@@ -9564,7 +9564,7 @@
     "linux > debian - (apt)": {
       "platformRuns": {
         "win32": {
-          "runs": 2,
+          "runs": 3,
           "fails": 0,
           "avgMs": 0
         },
@@ -9584,7 +9584,7 @@
     "linux > debian - (dpkg)": {
       "platformRuns": {
         "win32": {
-          "runs": 2,
+          "runs": 3,
           "fails": 0,
           "avgMs": 0
         },
@@ -9604,7 +9604,7 @@
     "linux > arch - (pacman)": {
       "platformRuns": {
         "win32": {
-          "runs": 2,
+          "runs": 3,
           "fails": 0,
           "avgMs": 0
         },
@@ -13992,9 +13992,9 @@
       "hasHeavyTests": false,
       "platformRuns": {
         "win32": {
-          "runs": null,
-          "fails": null,
-          "avgMs": null
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 28.558399999999892
         },
         "darwin": 3,
         "linux": {
@@ -14009,9 +14009,9 @@
       "hasHeavyTests": false,
       "platformRuns": {
         "win32": {
-          "runs": null,
-          "fails": null,
-          "avgMs": null
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 0
         },
         "darwin": 2,
         "linux": {
@@ -14094,9 +14094,9 @@
       "hasHeavyTests": false,
       "platformRuns": {
         "win32": {
-          "runs": null,
-          "fails": null,
-          "avgMs": null
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 54.125499999999874
         },
         "darwin": 3,
         "linux": {
@@ -14145,9 +14145,9 @@
       "hasHeavyTests": false,
       "platformRuns": {
         "win32": {
-          "runs": null,
-          "fails": null,
-          "avgMs": null
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 0
         },
         "darwin": 2,
         "linux": 0
@@ -14158,9 +14158,9 @@
       "hasHeavyTests": false,
       "platformRuns": {
         "win32": {
-          "runs": null,
-          "fails": null,
-          "avgMs": null
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 0
         },
         "darwin": 2,
         "linux": {
@@ -14413,9 +14413,9 @@
       "hasHeavyTests": false,
       "platformRuns": {
         "win32": {
-          "runs": 1,
+          "runs": 2,
           "fails": 0,
-          "avgMs": 403734.4476
+          "avgMs": 632266.158
         },
         "darwin": 2,
         "linux": {
@@ -14481,9 +14481,9 @@
       "hasHeavyTests": false,
       "platformRuns": {
         "win32": {
-          "runs": null,
-          "fails": null,
-          "avgMs": null
+          "runs": 1,
+          "fails": 0,
+          "avgMs": 430271.9934
         },
         "darwin": 3,
         "linux": {
@@ -14630,13 +14630,13 @@
       }
     },
     "blackboxUpdateTest.ts": {
-      "unstable": false,
+      "unstable": true,
       "hasHeavyTests": false,
       "platformRuns": {
         "win32": {
-          "runs": 1,
-          "fails": 0,
-          "avgMs": 459473.5553
+          "runs": 2,
+          "fails": 1,
+          "avgMs": 600003.2588
         },
         "darwin": 0,
         "linux": {

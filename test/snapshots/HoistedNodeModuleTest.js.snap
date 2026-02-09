@@ -1,12 +1,910 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`Hoisted Node Module Test > conflict versions 1`] = `
+exports[`Hoisted Node Module Test > yarn two package.json w/ native mac-only module (optional dep) 1`] = `
 {
   "linux": [],
 }
 `;
 
-exports[`Hoisted Node Module Test > conflict versions 2`] = `
+exports[`Hoisted Node Module Test > yarn two package.json w/ native mac-only module (optional dep) 2`] = `
+{
+  "files": {
+    "index.html": {
+      "offset": "396326",
+      "size": 841,
+    },
+    "index.js": {
+      "offset": "397167",
+      "size": 2501,
+    },
+    "node_modules": {
+      "files": {
+        "debug": {
+          "files": {
+            "LICENSE": {
+              "offset": "0",
+              "size": 1139,
+            },
+            "package.json": {
+              "offset": "1139",
+              "size": 913,
+            },
+            "src": {
+              "files": {
+                "browser.js": {
+                  "offset": "2052",
+                  "size": 6010,
+                },
+                "common.js": {
+                  "offset": "8062",
+                  "size": 6289,
+                },
+                "index.js": {
+                  "offset": "14351",
+                  "size": 314,
+                },
+                "node.js": {
+                  "offset": "14665",
+                  "size": 4685,
+                },
+              },
+            },
+          },
+        },
+        "ms": {
+          "files": {
+            "index.js": {
+              "offset": "19350",
+              "size": 3023,
+            },
+            "license.md": {
+              "offset": "22373",
+              "size": 1077,
+            },
+            "package.json": {
+              "offset": "23450",
+              "size": 470,
+            },
+          },
+        },
+        "node-addon-api": {
+          "files": {
+            "LICENSE.md": {
+              "offset": "23920",
+              "size": 1150,
+            },
+            "common.gypi": {
+              "offset": "25070",
+              "size": 724,
+            },
+            "except.gypi": {
+              "offset": "25794",
+              "size": 560,
+            },
+            "index.js": {
+              "offset": "26354",
+              "size": 377,
+            },
+            "napi-inl.deprecated.h": {
+              "offset": "26731",
+              "size": 6323,
+            },
+            "napi-inl.h": {
+              "offset": "33054",
+              "size": 219411,
+            },
+            "napi.h": {
+              "offset": "252465",
+              "size": 115423,
+            },
+            "node_addon_api.gyp": {
+              "offset": "367888",
+              "size": 793,
+            },
+            "node_api.gyp": {
+              "offset": "368681",
+              "size": 132,
+            },
+            "noexcept.gypi": {
+              "offset": "368813",
+              "size": 639,
+            },
+            "nothing.c": {
+              "offset": "369452",
+              "size": 0,
+            },
+            "package-support.json": {
+              "offset": "369452",
+              "size": 467,
+            },
+            "package.json": {
+              "offset": "369919",
+              "size": 928,
+            },
+            "tools": {
+              "files": {
+                "README.md": {
+                  "offset": "370847",
+                  "size": 3217,
+                },
+                "check-napi.js": {
+                  "offset": "374064",
+                  "size": 3176,
+                },
+                "clang-format.js": {
+                  "offset": "377240",
+                  "size": 2002,
+                },
+                "conversion.js": {
+                  "executable": true,
+                  "offset": "379242",
+                  "size": 15013,
+                },
+                "eslint-format.js": {
+                  "offset": "394255",
+                  "size": 2071,
+                },
+              },
+            },
+          },
+        },
+        "node-pty": {
+          "files": {
+            "LICENSE": {
+              "size": 3326,
+              "unpacked": true,
+            },
+            "build": {
+              "files": {
+                "Release": {
+                  "files": {
+                    "node-addon-api": {
+                      "files": {
+                        "node_addon_api_except.stamp": {
+                          "size": 0,
+                          "unpacked": true,
+                        },
+                      },
+                      "unpacked": true,
+                    },
+                    "pty.node": {
+                      "size": 76144,
+                      "unpacked": true,
+                    },
+                  },
+                  "unpacked": true,
+                },
+              },
+              "unpacked": true,
+            },
+            "deps": {
+              "files": {
+                ".editorconfig": {
+                  "size": 55,
+                  "unpacked": true,
+                },
+                "winpty": {
+                  "files": {
+                    ".drone.yml": {
+                      "size": 439,
+                      "unpacked": true,
+                    },
+                    "LICENSE": {
+                      "size": 1085,
+                      "unpacked": true,
+                    },
+                    "Makefile": {
+                      "size": 4722,
+                      "unpacked": true,
+                    },
+                    "README.md": {
+                      "size": 5551,
+                      "unpacked": true,
+                    },
+                    "RELEASES.md": {
+                      "size": 13667,
+                      "unpacked": true,
+                    },
+                    "VERSION.txt": {
+                      "size": 10,
+                      "unpacked": true,
+                    },
+                    "configure": {
+                      "size": 6478,
+                      "unpacked": true,
+                    },
+                    "misc": {
+                      "files": {
+                        "ConinMode.ps1": {
+                          "size": 3228,
+                          "unpacked": true,
+                        },
+                        "DebugClient.py": {
+                          "size": 1558,
+                          "unpacked": true,
+                        },
+                        "DebugServer.py": {
+                          "size": 2396,
+                          "unpacked": true,
+                        },
+                        "DumpLines.py": {
+                          "size": 97,
+                          "unpacked": true,
+                        },
+                        "EnableExtendedFlags.txt": {
+                          "size": 1974,
+                          "unpacked": true,
+                        },
+                        "Font-Report-June2016": {
+                          "files": {
+                            "CP437-Consolas.txt": {
+                              "size": 16408,
+                              "unpacked": true,
+                            },
+                            "CP437-Lucida.txt": {
+                              "size": 19641,
+                              "unpacked": true,
+                            },
+                            "CP932.txt": {
+                              "size": 19593,
+                              "unpacked": true,
+                            },
+                            "CP936.txt": {
+                              "size": 19650,
+                              "unpacked": true,
+                            },
+                            "CP949.txt": {
+                              "size": 19588,
+                              "unpacked": true,
+                            },
+                            "CP950.txt": {
+                              "size": 19656,
+                              "unpacked": true,
+                            },
+                            "MinimumWindowWidths.txt": {
+                              "size": 870,
+                              "unpacked": true,
+                            },
+                            "Results.txt": {
+                              "size": 147,
+                              "unpacked": true,
+                            },
+                            "Windows10SetFontBugginess.txt": {
+                              "size": 7851,
+                              "unpacked": true,
+                            },
+                          },
+                          "unpacked": true,
+                        },
+                        "FormatChar.h": {
+                          "size": 529,
+                          "unpacked": true,
+                        },
+                        "IdentifyConsoleWindow.ps1": {
+                          "size": 1952,
+                          "unpacked": true,
+                        },
+                        "MouseInputNotes.txt": {
+                          "size": 4325,
+                          "unpacked": true,
+                        },
+                        "Notes.txt": {
+                          "size": 9856,
+                          "unpacked": true,
+                        },
+                        "Spew.py": {
+                          "size": 65,
+                          "unpacked": true,
+                        },
+                        "build32.sh": {
+                          "size": 213,
+                          "unpacked": true,
+                        },
+                        "build64.sh": {
+                          "size": 217,
+                          "unpacked": true,
+                        },
+                        "color-test.sh": {
+                          "size": 6068,
+                          "unpacked": true,
+                        },
+                        "font-notes.txt": {
+                          "size": 14988,
+                          "unpacked": true,
+                        },
+                      },
+                      "unpacked": true,
+                    },
+                    "ship": {
+                      "files": {
+                        "build-pty4j-libpty.bat": {
+                          "size": 1230,
+                          "unpacked": true,
+                        },
+                        "common_ship.py": {
+                          "size": 1698,
+                          "unpacked": true,
+                        },
+                        "make_msvc_package.py": {
+                          "size": 5415,
+                          "unpacked": true,
+                        },
+                        "ship.py": {
+                          "size": 4022,
+                          "unpacked": true,
+                        },
+                      },
+                      "unpacked": true,
+                    },
+                    "src": {
+                      "files": {
+                        "agent": {
+                          "files": {
+                            "Agent.h": {
+                              "size": 3520,
+                              "unpacked": true,
+                            },
+                            "AgentCreateDesktop.h": {
+                              "size": 1283,
+                              "unpacked": true,
+                            },
+                            "ConsoleFont.h": {
+                              "size": 1266,
+                              "unpacked": true,
+                            },
+                            "ConsoleInput.h": {
+                              "size": 3950,
+                              "unpacked": true,
+                            },
+                            "ConsoleInputReencoding.h": {
+                              "size": 1444,
+                              "unpacked": true,
+                            },
+                            "ConsoleLine.h": {
+                              "size": 1524,
+                              "unpacked": true,
+                            },
+                            "Coord.h": {
+                              "size": 2204,
+                              "unpacked": true,
+                            },
+                            "DebugShowInput.h": {
+                              "size": 1434,
+                              "unpacked": true,
+                            },
+                            "DefaultInputMap.h": {
+                              "size": 1271,
+                              "unpacked": true,
+                            },
+                            "DsrSender.h": {
+                              "size": 1242,
+                              "unpacked": true,
+                            },
+                            "EventLoop.h": {
+                              "size": 1603,
+                              "unpacked": true,
+                            },
+                            "InputMap.h": {
+                              "size": 3369,
+                              "unpacked": true,
+                            },
+                            "LargeConsoleRead.h": {
+                              "size": 2411,
+                              "unpacked": true,
+                            },
+                            "NamedPipe.h": {
+                              "size": 4130,
+                              "unpacked": true,
+                            },
+                            "Scraper.h": {
+                              "size": 3760,
+                              "unpacked": true,
+                            },
+                            "SimplePool.h": {
+                              "size": 2365,
+                              "unpacked": true,
+                            },
+                            "SmallRect.h": {
+                              "size": 4437,
+                              "unpacked": true,
+                            },
+                            "Terminal.h": {
+                              "size": 2262,
+                              "unpacked": true,
+                            },
+                            "UnicodeEncoding.h": {
+                              "size": 5298,
+                              "unpacked": true,
+                            },
+                            "Win32Console.h": {
+                              "size": 2347,
+                              "unpacked": true,
+                            },
+                            "Win32ConsoleBuffer.h": {
+                              "size": 3244,
+                              "unpacked": true,
+                            },
+                          },
+                          "unpacked": true,
+                        },
+                        "configurations.gypi": {
+                          "size": 2378,
+                          "unpacked": true,
+                        },
+                        "include": {
+                          "files": {
+                            "winpty.h": {
+                              "size": 9420,
+                              "unpacked": true,
+                            },
+                            "winpty_constants.h": {
+                              "size": 5697,
+                              "unpacked": true,
+                            },
+                          },
+                          "unpacked": true,
+                        },
+                        "libwinpty": {
+                          "files": {
+                            "AgentLocation.h": {
+                              "size": 1278,
+                              "unpacked": true,
+                            },
+                            "LibWinptyException.h": {
+                              "size": 1961,
+                              "unpacked": true,
+                            },
+                            "WinptyInternal.h": {
+                              "size": 2379,
+                              "unpacked": true,
+                            },
+                          },
+                          "unpacked": true,
+                        },
+                        "shared": {
+                          "files": {
+                            "AgentMsg.h": {
+                              "size": 1418,
+                              "unpacked": true,
+                            },
+                            "BackgroundDesktop.h": {
+                              "size": 2836,
+                              "unpacked": true,
+                            },
+                            "Buffer.h": {
+                              "size": 3376,
+                              "unpacked": true,
+                            },
+                            "DebugClient.h": {
+                              "size": 1696,
+                              "unpacked": true,
+                            },
+                            "GenRandom.h": {
+                              "size": 2015,
+                              "unpacked": true,
+                            },
+                            "GetCommitHash.bat": {
+                              "size": 274,
+                              "unpacked": true,
+                            },
+                            "Mutex.h": {
+                              "size": 2183,
+                              "unpacked": true,
+                            },
+                            "OsModule.h": {
+                              "size": 2282,
+                              "unpacked": true,
+                            },
+                            "OwnedHandle.h": {
+                              "size": 1870,
+                              "unpacked": true,
+                            },
+                            "PrecompiledHeader.h": {
+                              "size": 1528,
+                              "unpacked": true,
+                            },
+                            "StringBuilder.h": {
+                              "size": 8506,
+                              "unpacked": true,
+                            },
+                            "StringUtil.h": {
+                              "size": 2677,
+                              "unpacked": true,
+                            },
+                            "TimeMeasurement.h": {
+                              "size": 2171,
+                              "unpacked": true,
+                            },
+                            "UnixCtrlChars.h": {
+                              "size": 2019,
+                              "unpacked": true,
+                            },
+                            "UpdateGenVersion.bat": {
+                              "size": 578,
+                              "unpacked": true,
+                            },
+                            "WindowsSecurity.h": {
+                              "size": 3465,
+                              "unpacked": true,
+                            },
+                            "WindowsVersion.h": {
+                              "size": 1345,
+                              "unpacked": true,
+                            },
+                            "WinptyAssert.h": {
+                              "size": 2829,
+                              "unpacked": true,
+                            },
+                            "WinptyException.h": {
+                              "size": 1643,
+                              "unpacked": true,
+                            },
+                            "WinptyVersion.h": {
+                              "size": 1246,
+                              "unpacked": true,
+                            },
+                            "winpty_snprintf.h": {
+                              "size": 3668,
+                              "unpacked": true,
+                            },
+                          },
+                          "unpacked": true,
+                        },
+                        "unix-adapter": {
+                          "files": {
+                            "InputHandler.h": {
+                              "size": 2058,
+                              "unpacked": true,
+                            },
+                            "OutputHandler.h": {
+                              "size": 1943,
+                              "unpacked": true,
+                            },
+                            "Util.h": {
+                              "size": 1410,
+                              "unpacked": true,
+                            },
+                            "WakeupFd.h": {
+                              "size": 1549,
+                              "unpacked": true,
+                            },
+                          },
+                          "unpacked": true,
+                        },
+                        "winpty.gyp": {
+                          "size": 7684,
+                          "unpacked": true,
+                        },
+                      },
+                      "unpacked": true,
+                    },
+                    "vcbuild.bat": {
+                      "size": 2425,
+                      "unpacked": true,
+                    },
+                  },
+                  "unpacked": true,
+                },
+              },
+              "unpacked": true,
+            },
+            "lib": {
+              "files": {
+                "conpty_console_list_agent.js": {
+                  "size": 775,
+                  "unpacked": true,
+                },
+                "conpty_console_list_agent.js.map": {
+                  "size": 564,
+                  "unpacked": true,
+                },
+                "eventEmitter2.js": {
+                  "size": 1600,
+                  "unpacked": true,
+                },
+                "eventEmitter2.js.map": {
+                  "size": 1155,
+                  "unpacked": true,
+                },
+                "eventEmitter2.test.js": {
+                  "size": 1266,
+                  "unpacked": true,
+                },
+                "eventEmitter2.test.js.map": {
+                  "size": 1396,
+                  "unpacked": true,
+                },
+                "index.js": {
+                  "size": 1972,
+                  "unpacked": true,
+                },
+                "index.js.map": {
+                  "size": 964,
+                  "unpacked": true,
+                },
+                "interfaces.js": {
+                  "size": 233,
+                  "unpacked": true,
+                },
+                "interfaces.js.map": {
+                  "size": 124,
+                  "unpacked": true,
+                },
+                "shared": {
+                  "files": {
+                    "conout.js": {
+                      "size": 348,
+                      "unpacked": true,
+                    },
+                    "conout.js.map": {
+                      "size": 204,
+                      "unpacked": true,
+                    },
+                  },
+                  "unpacked": true,
+                },
+                "terminal.js": {
+                  "size": 7454,
+                  "unpacked": true,
+                },
+                "terminal.js.map": {
+                  "size": 5844,
+                  "unpacked": true,
+                },
+                "terminal.test.js": {
+                  "size": 6250,
+                  "unpacked": true,
+                },
+                "terminal.test.js.map": {
+                  "size": 4150,
+                  "unpacked": true,
+                },
+                "testUtils.test.js": {
+                  "size": 807,
+                  "unpacked": true,
+                },
+                "testUtils.test.js.map": {
+                  "size": 622,
+                  "unpacked": true,
+                },
+                "types.js": {
+                  "size": 228,
+                  "unpacked": true,
+                },
+                "types.js.map": {
+                  "size": 114,
+                  "unpacked": true,
+                },
+                "unixTerminal.js": {
+                  "size": 10231,
+                  "unpacked": true,
+                },
+                "unixTerminal.js.map": {
+                  "size": 7978,
+                  "unpacked": true,
+                },
+                "unixTerminal.test.js": {
+                  "size": 19444,
+                  "unpacked": true,
+                },
+                "unixTerminal.test.js.map": {
+                  "size": 11472,
+                  "unpacked": true,
+                },
+                "utils.js": {
+                  "size": 580,
+                  "unpacked": true,
+                },
+                "utils.js.map": {
+                  "size": 443,
+                  "unpacked": true,
+                },
+                "windowsConoutConnection.js": {
+                  "size": 6017,
+                  "unpacked": true,
+                },
+                "windowsConoutConnection.js.map": {
+                  "size": 1593,
+                  "unpacked": true,
+                },
+                "windowsPtyAgent.js": {
+                  "size": 12461,
+                  "unpacked": true,
+                },
+                "windowsPtyAgent.js.map": {
+                  "size": 8889,
+                  "unpacked": true,
+                },
+                "windowsPtyAgent.test.js": {
+                  "size": 4147,
+                  "unpacked": true,
+                },
+                "windowsPtyAgent.test.js.map": {
+                  "size": 2951,
+                  "unpacked": true,
+                },
+                "windowsTerminal.js": {
+                  "size": 7988,
+                  "unpacked": true,
+                },
+                "windowsTerminal.js.map": {
+                  "size": 5127,
+                  "unpacked": true,
+                },
+                "windowsTerminal.test.js": {
+                  "size": 9832,
+                  "unpacked": true,
+                },
+                "windowsTerminal.test.js.map": {
+                  "size": 8006,
+                  "unpacked": true,
+                },
+                "worker": {
+                  "files": {
+                    "conoutSocketWorker.js": {
+                      "size": 848,
+                      "unpacked": true,
+                    },
+                    "conoutSocketWorker.js.map": {
+                      "size": 638,
+                      "unpacked": true,
+                    },
+                  },
+                  "unpacked": true,
+                },
+              },
+              "unpacked": true,
+            },
+            "node-addon-api": {
+              "files": {
+                "node_addon_api.Makefile": {
+                  "size": 159,
+                  "unpacked": true,
+                },
+              },
+              "unpacked": true,
+            },
+            "package.json": {
+              "size": 884,
+              "unpacked": true,
+            },
+            "scripts": {
+              "files": {
+                "post-install.js": {
+                  "size": 1213,
+                  "unpacked": true,
+                },
+                "publish.js": {
+                  "size": 2369,
+                  "unpacked": true,
+                },
+              },
+              "unpacked": true,
+            },
+            "src": {
+              "files": {
+                "conpty_console_list_agent.ts": {
+                  "size": 696,
+                  "unpacked": true,
+                },
+                "eventEmitter2.test.ts": {
+                  "size": 975,
+                  "unpacked": true,
+                },
+                "eventEmitter2.ts": {
+                  "size": 1111,
+                  "unpacked": true,
+                },
+                "index.ts": {
+                  "size": 2115,
+                  "unpacked": true,
+                },
+                "interfaces.ts": {
+                  "size": 2845,
+                  "unpacked": true,
+                },
+                "shared": {
+                  "files": {
+                    "conout.ts": {
+                      "size": 291,
+                      "unpacked": true,
+                    },
+                  },
+                  "unpacked": true,
+                },
+                "terminal.test.ts": {
+                  "size": 4346,
+                  "unpacked": true,
+                },
+                "terminal.ts": {
+                  "size": 6665,
+                  "unpacked": true,
+                },
+                "testUtils.test.ts": {
+                  "size": 567,
+                  "unpacked": true,
+                },
+                "tsconfig.json": {
+                  "size": 323,
+                  "unpacked": true,
+                },
+                "types.ts": {
+                  "size": 306,
+                  "unpacked": true,
+                },
+                "unixTerminal.test.ts": {
+                  "size": 13205,
+                  "unpacked": true,
+                },
+                "unixTerminal.ts": {
+                  "size": 8195,
+                  "unpacked": true,
+                },
+                "utils.ts": {
+                  "size": 292,
+                  "unpacked": true,
+                },
+                "win": {
+                  "files": {
+                    "path_util.h": {
+                      "size": 695,
+                      "unpacked": true,
+                    },
+                  },
+                  "unpacked": true,
+                },
+                "windowsConoutConnection.ts": {
+                  "size": 2683,
+                  "unpacked": true,
+                },
+                "windowsPtyAgent.test.ts": {
+                  "size": 3419,
+                  "unpacked": true,
+                },
+                "windowsPtyAgent.ts": {
+                  "size": 10359,
+                  "unpacked": true,
+                },
+                "windowsTerminal.test.ts": {
+                  "size": 7551,
+                  "unpacked": true,
+                },
+                "windowsTerminal.ts": {
+                  "size": 5784,
+                  "unpacked": true,
+                },
+                "worker": {
+                  "files": {
+                    "conoutSocketWorker.ts": {
+                      "size": 724,
+                      "unpacked": true,
+                    },
+                  },
+                  "unpacked": true,
+                },
+              },
+              "unpacked": true,
+            },
+          },
+          "unpacked": true,
+        },
+      },
+    },
+    "package.json": {
+      "offset": "399668",
+      "size": 266,
+    },
+  },
+}
+`;
+
+exports[`node_module collectors > conflict versions 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`node_module collectors > conflict versions 2`] = `
 {
   "files": {
     "index.html": {
@@ -113,13 +1011,13 @@ exports[`Hoisted Node Module Test > conflict versions 2`] = `
 }
 `;
 
-exports[`Hoisted Node Module Test > npm electron-clear-data 1`] = `
+exports[`node_module collectors > npm electron-clear-data 1`] = `
 {
   "win": [],
 }
 `;
 
-exports[`Hoisted Node Module Test > npm electron-clear-data 2`] = `
+exports[`node_module collectors > npm electron-clear-data 2`] = `
 {
   "files": {
     "index.html": {
@@ -218,13 +1116,13 @@ exports[`Hoisted Node Module Test > npm electron-clear-data 2`] = `
 }
 `;
 
-exports[`Hoisted Node Module Test > npm tar 1`] = `
+exports[`node_module collectors > npm tar 1`] = `
 {
   "linux": [],
 }
 `;
 
-exports[`Hoisted Node Module Test > npm tar 2`] = `
+exports[`node_module collectors > npm tar 2`] = `
 {
   "files": {
     "index.html": {
@@ -1283,13 +2181,13 @@ exports[`Hoisted Node Module Test > npm tar 2`] = `
 }
 `;
 
-exports[`Hoisted Node Module Test > pnpm es5-ext without hoisted config 1`] = `
+exports[`node_module collectors > pnpm es5-ext without hoisted config 1`] = `
 {
   "linux": [],
 }
 `;
 
-exports[`Hoisted Node Module Test > pnpm es5-ext without hoisted config 2`] = `
+exports[`node_module collectors > pnpm es5-ext without hoisted config 2`] = `
 {
   "files": {
     "index.html": {
@@ -8522,13 +9420,13 @@ exports[`Hoisted Node Module Test > pnpm es5-ext without hoisted config 2`] = `
 }
 `;
 
-exports[`Hoisted Node Module Test > pnpm max stack 1`] = `
+exports[`node_module collectors > pnpm max stack 1`] = `
 {
   "linux": [],
 }
 `;
 
-exports[`Hoisted Node Module Test > pnpm max stack 2`] = `
+exports[`node_module collectors > pnpm max stack 2`] = `
 {
   "files": {
     "index.html": {
@@ -22371,13 +23269,13 @@ exports[`Hoisted Node Module Test > pnpm max stack 2`] = `
 }
 `;
 
-exports[`Hoisted Node Module Test > pnpm node-linker=hoisted 1`] = `
+exports[`node_module collectors > pnpm node-linker=hoisted 1`] = `
 {
   "linux": [],
 }
 `;
 
-exports[`Hoisted Node Module Test > pnpm node-linker=hoisted 2`] = `
+exports[`node_module collectors > pnpm node-linker=hoisted 2`] = `
 {
   "files": {
     ".npmrc": {
@@ -24052,13 +24950,13 @@ exports[`Hoisted Node Module Test > pnpm node-linker=hoisted 2`] = `
 }
 `;
 
-exports[`Hoisted Node Module Test > pnpm optional dependencies 1`] = `
+exports[`node_module collectors > pnpm optional dependencies 1`] = `
 {
   "linux": [],
 }
 `;
 
-exports[`Hoisted Node Module Test > pnpm optional dependencies 2`] = `
+exports[`node_module collectors > pnpm optional dependencies 2`] = `
 {
   "files": {
     "index.html": {
@@ -24157,13 +25055,13 @@ exports[`Hoisted Node Module Test > pnpm optional dependencies 2`] = `
 }
 `;
 
-exports[`Hoisted Node Module Test > pnpm optional dependency not installable on linux 1`] = `
+exports[`node_module collectors > pnpm optional dependency not installable on linux 1`] = `
 {
   "linux": [],
 }
 `;
 
-exports[`Hoisted Node Module Test > pnpm optional dependency not installable on linux 2`] = `
+exports[`node_module collectors > pnpm optional dependency not installable on linux 2`] = `
 {
   "files": {
     "index.html": {
@@ -24206,13 +25104,13 @@ exports[`Hoisted Node Module Test > pnpm optional dependency not installable on 
 }
 `;
 
-exports[`Hoisted Node Module Test > pnpm public-hoist-pattern=* 1`] = `
+exports[`node_module collectors > pnpm public-hoist-pattern=* 1`] = `
 {
   "linux": [],
 }
 `;
 
-exports[`Hoisted Node Module Test > pnpm public-hoist-pattern=* 2`] = `
+exports[`node_module collectors > pnpm public-hoist-pattern=* 2`] = `
 {
   "files": {
     ".npmrc": {
@@ -25887,13 +26785,13 @@ exports[`Hoisted Node Module Test > pnpm public-hoist-pattern=* 2`] = `
 }
 `;
 
-exports[`Hoisted Node Module Test > pnpm shamefully-hoist=true 1`] = `
+exports[`node_module collectors > pnpm shamefully-hoist=true 1`] = `
 {
   "linux": [],
 }
 `;
 
-exports[`Hoisted Node Module Test > pnpm shamefully-hoist=true 2`] = `
+exports[`node_module collectors > pnpm shamefully-hoist=true 2`] = `
 {
   "files": {
     ".npmrc": {
@@ -27568,13 +28466,13 @@ exports[`Hoisted Node Module Test > pnpm shamefully-hoist=true 2`] = `
 }
 `;
 
-exports[`Hoisted Node Module Test > pnpm workspace with native module 1`] = `
+exports[`node_module collectors > pnpm workspace with native module 1`] = `
 {
   "linux": [],
 }
 `;
 
-exports[`Hoisted Node Module Test > pnpm workspace with native module 2`] = `
+exports[`node_module collectors > pnpm workspace with native module 2`] = `
 {
   "files": {
     "index.html": {
@@ -28717,13 +29615,13 @@ exports[`Hoisted Node Module Test > pnpm workspace with native module 2`] = `
 }
 `;
 
-exports[`Hoisted Node Module Test > yarn electron-clear-data 1`] = `
+exports[`node_module collectors > yarn electron-clear-data 1`] = `
 {
   "win": [],
 }
 `;
 
-exports[`Hoisted Node Module Test > yarn electron-clear-data 2`] = `
+exports[`node_module collectors > yarn electron-clear-data 2`] = `
 {
   "files": {
     "index.html": {
@@ -28822,13 +29720,13 @@ exports[`Hoisted Node Module Test > yarn electron-clear-data 2`] = `
 }
 `;
 
-exports[`Hoisted Node Module Test > yarn max stack 1`] = `
+exports[`node_module collectors > yarn max stack 1`] = `
 {
   "linux": [],
 }
 `;
 
-exports[`Hoisted Node Module Test > yarn max stack 2`] = `
+exports[`node_module collectors > yarn max stack 2`] = `
 {
   "files": {
     "index.html": {
@@ -42671,13 +43569,13 @@ exports[`Hoisted Node Module Test > yarn max stack 2`] = `
 }
 `;
 
-exports[`Hoisted Node Module Test > yarn ms 1`] = `
+exports[`node_module collectors > yarn ms 1`] = `
 {
   "linux": [],
 }
 `;
 
-exports[`Hoisted Node Module Test > yarn ms 2`] = `
+exports[`node_module collectors > yarn ms 2`] = `
 {
   "files": {
     "index.html": {
@@ -65530,13 +66428,13 @@ exports[`Hoisted Node Module Test > yarn ms 2`] = `
 }
 `;
 
-exports[`Hoisted Node Module Test > yarn parse-asn1 1`] = `
+exports[`node_module collectors > yarn parse-asn1 1`] = `
 {
   "linux": [],
 }
 `;
 
-exports[`Hoisted Node Module Test > yarn parse-asn1 2`] = `
+exports[`node_module collectors > yarn parse-asn1 2`] = `
 {
   "files": {
     "index.html": {
@@ -67152,13 +68050,13 @@ exports[`Hoisted Node Module Test > yarn parse-asn1 2`] = `
 }
 `;
 
-exports[`Hoisted Node Module Test > yarn several workspaces 1`] = `
+exports[`node_module collectors > yarn several workspaces 1`] = `
 {
   "linux": [],
 }
 `;
 
-exports[`Hoisted Node Module Test > yarn several workspaces 2`] = `
+exports[`node_module collectors > yarn several workspaces 2`] = `
 {
   "files": {
     "index.html": {
@@ -67265,13 +68163,13 @@ exports[`Hoisted Node Module Test > yarn several workspaces 2`] = `
 }
 `;
 
-exports[`Hoisted Node Module Test > yarn several workspaces and asarUnpack 1`] = `
+exports[`node_module collectors > yarn several workspaces and asarUnpack 1`] = `
 {
   "linux": [],
 }
 `;
 
-exports[`Hoisted Node Module Test > yarn several workspaces and asarUnpack 2`] = `
+exports[`node_module collectors > yarn several workspaces and asarUnpack 2`] = `
 {
   "files": {
     "index.html": {
@@ -67378,13 +68276,13 @@ exports[`Hoisted Node Module Test > yarn several workspaces and asarUnpack 2`] =
 }
 `;
 
-exports[`Hoisted Node Module Test > yarn some module add by manual instead of install 1`] = `
+exports[`node_module collectors > yarn some module add by manual instead of install 1`] = `
 {
   "win": [],
 }
 `;
 
-exports[`Hoisted Node Module Test > yarn some module add by manual instead of install 2`] = `
+exports[`node_module collectors > yarn some module add by manual instead of install 2`] = `
 {
   "files": {
     "index.html": {
@@ -67463,13 +68361,13 @@ exports[`Hoisted Node Module Test > yarn some module add by manual instead of in
 }
 `;
 
-exports[`Hoisted Node Module Test > yarn two package.json 1`] = `
+exports[`node_module collectors > yarn two package.json 1`] = `
 {
   "linux": [],
 }
 `;
 
-exports[`Hoisted Node Module Test > yarn two package.json 2`] = `
+exports[`node_module collectors > yarn two package.json 2`] = `
 {
   "files": {
     "index.html": {
@@ -72139,13 +73037,13 @@ exports[`Hoisted Node Module Test > yarn two package.json 2`] = `
 }
 `;
 
-exports[`Hoisted Node Module Test > yarn two package.json w/ native mac-only module (optional dep) 1`] = `
+exports[`node_module collectors > yarn two package.json w/ native mac-only module (optional dep) 1`] = `
 {
   "linux": [],
 }
 `;
 
-exports[`Hoisted Node Module Test > yarn two package.json w/ native mac-only module (optional dep) 2`] = `
+exports[`node_module collectors > yarn two package.json w/ native mac-only module (optional dep) 2`] = `
 {
   "files": {
     "index.html": {
@@ -73037,13 +73935,13 @@ exports[`Hoisted Node Module Test > yarn two package.json w/ native mac-only mod
 }
 `;
 
-exports[`Hoisted Node Module Test > yarn two package.json without node_modules 1`] = `
+exports[`node_module collectors > yarn two package.json without node_modules 1`] = `
 {
   "linux": [],
 }
 `;
 
-exports[`Hoisted Node Module Test > yarn two package.json without node_modules 2`] = `
+exports[`node_module collectors > yarn two package.json without node_modules 2`] = `
 {
   "files": {
     "index.html": {
@@ -77713,13 +78611,13 @@ exports[`Hoisted Node Module Test > yarn two package.json without node_modules 2
 }
 `;
 
-exports[`Hoisted Node Module Test > yarn workspace 1`] = `
+exports[`node_module collectors > yarn workspace 1`] = `
 {
   "linux": [],
 }
 `;
 
-exports[`Hoisted Node Module Test > yarn workspace 2`] = `
+exports[`node_module collectors > yarn workspace 2`] = `
 {
   "files": {
     "index.html": {
@@ -78006,13 +78904,13 @@ exports[`Hoisted Node Module Test > yarn workspace 2`] = `
 }
 `;
 
-exports[`Hoisted Node Module Test > yarn workspace for scope name 1`] = `
+exports[`node_module collectors > yarn workspace for scope name 1`] = `
 {
   "linux": [],
 }
 `;
 
-exports[`Hoisted Node Module Test > yarn workspace for scope name 2`] = `
+exports[`node_module collectors > yarn workspace for scope name 2`] = `
 {
   "files": {
     "index.html": {
