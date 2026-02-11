@@ -42,6 +42,35 @@ exports[`AppImage - default icon, custom executable and custom desktop 2`] = `
 
 exports[`AppImage - deprecated systemIntegration 1`] = `"ERR_ELECTRON_BUILDER_INVALID_CONFIGURATION"`;
 
+exports[`AppImage - desktopName sets StartupWMClass 1`] = `
+"[Desktop Entry]
+Name=Signal
+Exec=AppRun --no-sandbox %U
+Terminal=false
+Type=Application
+Icon=testapp
+StartupWMClass=signal
+Comment=Test Application (test quite “ #378)
+Categories=Development;
+"
+`;
+
+exports[`AppImage - desktopName sets StartupWMClass 2`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "Signal-1.1.0.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
 exports[`AppImage 1`] = `
 {
   "linux": [

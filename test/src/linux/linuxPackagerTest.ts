@@ -319,6 +319,34 @@ test.ifNotWindows("no-author-email", ({ expect }) =>
   )
 )
 
+test.ifNotWindows("AppImage - desktopName sets StartupWMClass", ({ expect }) =>
+  app(
+    expect,
+    {
+      targets: appImageTarget,
+      config: {
+        productName: "Signal",
+      },
+      effectiveOptionComputed: async it => {
+        const content: string = it.desktop
+        expect(
+          content
+            .split("\n")
+            .filter(it => !it.includes("X-AppImage-BuildId") && !it.includes("X-AppImage-Version"))
+            .join("\n")
+        ).toMatchSnapshot()
+        return Promise.resolve(false)
+      },
+    },
+    {
+      projectDirCreated: projectDir =>
+        modifyPackageJson(projectDir, data => {
+          data.desktopName = "signal.desktop"
+        }),
+    }
+  )
+)
+
 test.ifNotWindows("forbid desktop.Exec", ({ expect }) =>
   appThrows(expect, {
     targets: appImageTarget,
