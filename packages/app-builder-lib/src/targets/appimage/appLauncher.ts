@@ -35,8 +35,8 @@ export async function copyIcons(options: AppImageBuilderOptions): Promise<void> 
     let iconSizeDir: string
 
     if (iconExtWithDot === ".svg") {
-      // SVG icons go in scalable directory
-      iconSizeDir = "scalable"
+      // SVG icons go in scalable/apps directory per freedesktop icon theme spec
+      iconSizeDir = "scalable/apps"
     } else {
       iconSizeDir = `${icon.size}x${icon.size}/apps`
     }

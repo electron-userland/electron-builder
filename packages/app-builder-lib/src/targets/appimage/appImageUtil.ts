@@ -64,13 +64,15 @@ export async function buildAppImage(opts: AppImageBuilderOptions): Promise<Block
 
     // Make executable
     await fs.chmod(output, 0o755)
+
+    // Append blockmap inside try block to ensure cleanup on failure
+    const updateInfo = await appendBlockmap(output)
+    return updateInfo
   } catch (error) {
     // Clean up partial build on failure
     await fs.remove(output).catch(() => {})
     throw error
   }
-  const updateInfo = await appendBlockmap(output)
-  return updateInfo
 }
 
 async function writeRuntimeData(filePath: string, runtimeData: Buffer): Promise<void> {
@@ -137,6 +139,9 @@ async function writeAppLauncherAndRelatedFiles(opts: AppImageBuilderOptions): Pr
 
     const licenseBaseName = path.basename(license)
     const ext = path.extname(license).toLowerCase()
+
+    // Validate license filename for shell safety
+    validateShellSafeString(licenseBaseName, "licenseBaseName")
 
     // Validate extension
     if (![".txt", ".html"].includes(ext)) {
@@ -256,7 +261,7 @@ yesno()
 check_dep()
 {
   DEP=$1
-  if [ -z $(which "$DEP") ] ; then
+  if ! command -v "$DEP" &>/dev/null ; then
     echo "$DEP is missing. Skipping \${THIS}."
     exit 0
   fi
