@@ -12,9 +12,9 @@ const defaultStat: TestStats = {
   heavy: false,
 }
 
-const shouldResetSnapshot = process.env.RESET_VITEST_SNAPSHOT === "true"
+const shouldResetSnapshot = process.env.RESET_VITEST_SHARD_CACHE === "true"
 export default class SmarterReporter implements Reporter {
-  private readonly cache = shouldResetSnapshot ? loadCache() : { tests: {}, files: {} }
+  private readonly cache = shouldResetSnapshot ? { tests: {}, files: {} } : loadCache()
   private readonly fileDurations = new Map<string, number>()
   private readonly fileFails = new Map<string, number>()
   private readonly fileHasHeavy = new Map<string, boolean>()
@@ -83,7 +83,7 @@ export default class SmarterReporter implements Reporter {
       },
     }
 
-    // Ensure platform objects exist
+    // Ensure platform objects exist (migration from v0 - can delete after next cache reset)
     const platformRuns = {
       win32: { runs: 0, fails: 0, avgMs: 0 },
       darwin: { runs: 0, fails: 0, avgMs: 0 },
@@ -102,7 +102,7 @@ export default class SmarterReporter implements Reporter {
     platformRuns[this.currentPlatform] = {
       runs: newPlatformRuns,
       fails: totalFails,
-      avgMs: process.env.RESET_VITEST_SNAPSHOT === "true" ? dur : (prevPlatformAvg * prevPlatformRuns + dur) / newPlatformRuns,
+      avgMs: shouldResetSnapshot ? dur : (prevPlatformAvg * prevPlatformRuns + dur) / newPlatformRuns,
     }
 
     this.cache.files[file] = {
