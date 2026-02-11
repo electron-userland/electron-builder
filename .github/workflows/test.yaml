@@ -404,9 +404,12 @@ jobs:
           cache-key: v-35.7.5-linux-e2e-electron
           reset-vitest-smart-cache: ${{ inputs.reset-vitest-smart-cache }}
 
-      - name: e2e Linux Updater tests (install, auto-update, uninstall)
+      - name: docker build
         run: |
           docker build --platform=linux/amd64 -t ${{ matrix.test_config.file }} -f ./test/src/updater/${{ matrix.test_config.file }} .
+
+      - name: e2e Linux Updater tests (install, auto-update, uninstall)
+        run: |
           pnpm test-linux
         env:
           TEST_RUNNER_IMAGE_TAG: ${{ matrix.test_config.file }}
